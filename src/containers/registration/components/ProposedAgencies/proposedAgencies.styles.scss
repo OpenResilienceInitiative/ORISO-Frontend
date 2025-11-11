@@ -1,0 +1,113 @@
+.agencySelectionWrapper {
+	display: flex;
+	gap: 32px;
+	flex-direction: column;
+	flex-grow: 1;
+	width: 100%;
+
+	&.loading-agencies {
+		align-items: center;
+	}
+}
+
+$maxFormElementWidth: 320px;
+$infoIconSize: 16px;
+
+.agencySelection {
+	position: relative;
+	animation: fadeIn linear 0.2s;
+	width: 100%;
+
+	.radioButton__label {
+		padding-left: 16px;
+	}
+
+	.agencyLanguages {
+		margin-left: 0;
+		margin-top: 0;
+	}
+
+	&__intro {
+		> .text__infoLargeAlternative {
+			font-weight: $font-weight-medium;
+		}
+
+		&__content {
+			margin-top: $grid-base;
+
+			ul {
+				margin: 10px 0 0;
+				padding-left: 65px;
+				font-size: $font-size-primary;
+				color: $text-high-emphasis;
+			}
+
+			li {
+				padding: 2px 0;
+				&::marker {
+					height: 5px;
+					width: 5px;
+					color: $text-high-emphasis;
+				}
+			}
+		}
+	}
+
+	&__inputContainer {
+		margin-top: $grid-base-three;
+		margin-left: 44px;
+
+		.inputField {
+			margin-top: 0;
+			margin-left: 0;
+		}
+	}
+
+	&__note {
+		margin-top: $grid-base-three;
+	}
+
+	&__proposedAgencies {
+		margin-top: 28px;
+		text-align: left;
+
+		h3 {
+			color: var(
+				--skin-color-secondary-contrast-safe,
+				$text-high-emphasis
+			);
+			font-size: $font-size-primary;
+			line-height: $line-height-primary;
+			text-align: left;
+			margin-bottom: 12px;
+		}
+
+		&--warning {
+			p {
+				margin-bottom: 20px;
+			}
+
+			a {
+				display: block;
+				text-decoration: underline;
+			}
+		}
+	}
+
+	h5 {
+		margin-bottom: 12px;
+	}
+
+	&__consultingModeInfo {
+		animation: fadeIn linear 0.2s;
+		font-size: $font-size-secondary;
+		line-height: 1.3333em;
+		max-width: $maxFormElementWidth;
+		margin: 0 auto $grid-base-four;
+
+		@include breakpoint($fromLarge) {
+			margin: 0 0 $grid-base-four;
+			text-align: left;
+		}
+	}
+}

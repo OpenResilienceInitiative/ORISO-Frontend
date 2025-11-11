@@ -1,0 +1,279 @@
+$iconSize: 24px;
+$iconContainerSize: 48px;
+$unreadBubbleSize: 8px;
+$unreadBubbleAnimation: count 500ms ease 500ms forwards;
+
+.navigation {
+	&__wrapper {
+		background-color: #f5f5f5;
+		border-right: 2px solid #d32f2f;
+
+		&--mobileHidden {
+			display: none !important;
+
+			@include breakpoint($fromLarge) {
+				display: flex !important;
+			}
+		}
+	}
+
+	&__itemContainer {
+		display: flex;
+		flex-direction: row;
+		justify-content: space-around;
+		width: 100%;
+		max-width: calc(#{$grid-base} * 62);
+		padding: $grid-base-two;
+		overflow-y: auto;
+
+		@include breakpoint($fromLarge) {
+			justify-content: space-between;
+			flex-direction: column;
+			align-items: center; /* Center buttons horizontally */
+			height: 100%;
+			max-width: none;
+			padding: $grid-base-two 0;
+			gap: 0;
+		}
+	}
+
+	&__logo {
+		display: none;
+		width: 60px;
+		align-self: center;
+		margin-bottom: 12px;
+
+		@include breakpoint($fromLarge) {
+			display: block;
+		}
+	}
+
+	&__item {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex-wrap: wrap;
+		position: relative;
+		height: $grid-base-five;
+		width: $grid-base-five;
+		margin: 0;
+		color: #d32f2f;
+		text-align: center;
+		text-decoration: none;
+		cursor: pointer;
+
+		--transition-duration: 0.3s;
+
+		.select__wrapper {
+			padding: 0;
+		}
+
+		&:focus {
+			outline: $focus-outline;
+			outline-offset: 4px;
+			border-radius: 12px;
+			transition: all 0.3s ease;
+		}
+
+		&:focus:not(:focus-visible) {
+			outline: none;
+		}
+
+		@include breakpoint($fromLarge) {
+			display: flex;
+			width: $iconContainerSize;
+			height: $iconContainerSize;
+			margin: 4px 0; /* Add vertical spacing between buttons */
+			border-radius: 12px;
+			background: rgba(211, 47, 47, 0.08);
+			transition: all 0.3s ease;
+		}
+
+		&:hover {
+			background: rgba(211, 47, 47, 0.12);
+			color: #d32f2f;
+
+			@include breakpoint($fromLarge) {
+				background: rgba(211, 47, 47, 0.18);
+			}
+		}
+
+		&__top {
+			flex: 1;
+			display: flex;
+			flex-direction: row;
+			justify-content: space-around;
+
+			@include breakpoint($fromLarge) {
+				justify-content: normal;
+				flex-direction: column;
+				align-items: center; /* Center buttons */
+				width: 100%;
+			}
+		}
+
+		&__bottom {
+			cursor: pointer;
+			transition: all 0.6s ease;
+
+			@include breakpoint($fromLarge) {
+				margin: auto 0 0 !important;
+				display: flex;
+				flex-direction: column;
+				align-items: center; /* Center buttons */
+				width: 100%;
+			}
+
+			&--consultant {
+				display: none;
+
+				@include breakpoint($fromLarge) {
+					display: flex;
+					flex-direction: column;
+					align-items: center; /* Center buttons */
+				}
+			}
+		}
+
+		&__language {
+			display: none;
+
+			@include breakpoint($fromLarge) {
+				display: flex !important; /* Force display with important */
+			}
+			
+			.select__wrapper {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				width: 100%;
+			}
+		}
+
+		&__count {
+			color: var(--skin-color-primary-contrast-safe, $primary);
+			background-color: $white;
+			transition: opacity 0.6s ease;
+			border-radius: 50%;
+			width: $unreadBubbleSize;
+			height: $unreadBubbleSize;
+			font-size: 10px;
+			line-height: 18px;
+			position: absolute;
+			top: 4px;
+			right: 4px;
+			text-align: center;
+			outline: $primary 2px solid;
+
+			@include breakpoint($fromLarge) {
+				top: 6px;
+				right: 6px;
+			}
+
+			&--initial {
+				transform: scale(0);
+				animation: $unreadBubbleAnimation;
+			}
+
+			&--reanimate {
+				transform: scale(1);
+				animation: $unreadBubbleAnimation;
+			}
+		}
+
+		.navigation__icon__filled {
+			display: none;
+		}
+		.navigation__icon__outline {
+			fill: #d32f2f;
+			color: #d32f2f;
+			display: block;
+			margin: auto;
+		}
+
+		&:hover {
+			@include breakpoint($fromLarge) {
+				background: rgba(211, 47, 47, 0.18);
+			}
+			
+			color: #d32f2f;
+			.navigation__icon__filled {
+				display: block;
+				margin: auto;
+			}
+			.navigation__icon__outline {
+				display: none;
+			}
+		}
+
+		.navigation__icon__background {
+			position: relative;
+			isolation: isolate;
+			width: fit-content;
+			margin: auto;
+		}
+
+		.navigation__icon__background::after {
+			content: '';
+			position: absolute;
+			inset: -4px;
+			border-radius: 50%;
+			background-color: rgba(211, 47, 47, 0.12);
+			opacity: 0.8;
+			transform: scale(0);
+			z-index: -1;
+			transition: transform var(--transition-duration) ease;
+			
+			@include breakpoint($fromLarge) {
+				display: none;
+			}
+		}
+
+		&--active {
+			@include breakpoint($fromLarge) {
+				background: rgba(211, 47, 47, 0.24);
+			}
+			
+			.navigation__icon__background::after {
+				transform: scale(1);
+			}
+
+			.navigation__item__count {
+				opacity: 1;
+				transition: opacity 0.3s ease;
+			}
+
+			.navigation__icon__filled {
+				display: block;
+				fill: #d32f2f;
+				
+				@include breakpoint($fromLarge) {
+					fill: #d32f2f;
+				}
+			}
+			.navigation__icon__outline {
+				display: none;
+			}
+		}
+	}
+
+	&__icon {
+		width: $iconSize;
+		height: $iconSize;
+		margin: auto;
+		text-align: center;
+		transition: color var(--transition-duration) ease;
+		fill: #d32f2f;
+		color: #d32f2f;
+	}
+
+	&__item__count {
+		color: #d32f2f;
+		background-color: #ffffff;
+		outline: #d32f2f 2px solid;
+	}
+
+	&__title {
+		display: none !important; /* Hidden for clean icon-only Element-like design */
+	}
+}

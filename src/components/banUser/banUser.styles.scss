@@ -1,0 +1,13 @@
+.banUser {
+	&__overlay {
+		.headline {
+			span {
+				color: $message-name-user;
+			}
+		}
+	}
+}
+
+.bannedUserTag {
+	margin: 0 !important; // override local styles
+}

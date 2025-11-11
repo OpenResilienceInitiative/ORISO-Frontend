@@ -1,0 +1,38 @@
+.header {
+	display: none !important; /* Hidden for clean Element-like UI */
+	visibility: hidden !important;
+	height: 0 !important;
+	flex: 0 0 0 !important;
+	padding: 0 !important;
+	margin: 0 !important;
+	overflow: hidden !important;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	flex-wrap: wrap;
+	background-color: $white;
+	width: 100%;
+
+	.headline {
+		margin-bottom: 0;
+	}
+
+	@include breakpoint($fromSmall) {
+		flex-direction: row;
+		justify-content: space-between;
+		flex-wrap: nowrap;
+	}
+
+	&__right {
+		display: flex;
+		align-items: center;
+	}
+
+	&__logo {
+		max-width: 240px;
+		max-height: 60px;
+		object-fit: contain;
+		object-position: center right;
+		margin-right: 10px;
+	}
+}

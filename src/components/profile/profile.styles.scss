@@ -1,0 +1,581 @@
+@import './AdditionalEnquiry/additionalEnquiry.styles';
+@import './statistics.styles';
+@import './spokenlanguages.styles';
+@import './locale.styles';
+
+$doubleNavHeight: 192px;
+$doubleNavHeightSmall: 168px;
+$imprintHeight: 40px;
+$iconSize: 24px;
+$profileIconSize: 40px;
+$groupChatIconSize: 40px;
+$maxFormElementWidth: 320px;
+$inputMaxWidth: 500px;
+
+$profile-content-wrapper-detail-button-text-align: center !default;
+$profile-footer-justify-content: center !default;
+
+.profile {
+	&__header &__nav {
+		line-height: 40px;
+
+		& > * {
+			padding: 0 15px;
+		}
+
+		a {
+			height: 100%;
+			display: inline-flex;
+			align-items: center;
+			color: $tertiary;
+			font-weight: $font-weight-medium;
+			border-bottom: 4px solid transparent;
+			border-radius: 0;
+
+			&.active {
+				color: var(--skin-color-primary-contrast-safe, $primary);
+				border-color: var(--skin-color-primary-contrast-safe, $primary);
+			}
+
+			&:hover {
+				color: var(--skin-color-primary-contrast-safe, $hover-primary);
+			}
+		}
+
+		.title {
+			font-size: 20px;
+			font-weight: $font-weight-medium;
+			width: 100%;
+		}
+	}
+
+	&__wrapper {
+		display: flex;
+		flex-direction: column;
+		justify-content: stretch;
+		align-items: stretch;
+		background-color: $background-light;
+		height: 100%;
+	}
+
+	&__header {
+		flex: 0;
+		width: 100%;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		padding: $grid-base-three $grid-base-two;
+
+		@include breakpoint($fromMedium) {
+			padding: $grid-base-three;
+		}
+
+		@include breakpoint($fromLarge) {
+			align-items: flex-start;
+		}
+
+		&__name {
+			width: calc(100% - 40px);
+		}
+
+		&__wrapper {
+			display: flex;
+			flex-direction: row;
+			position: relative;
+			width: 100%;
+			flex-wrap: wrap;
+		}
+
+		&__title {
+			margin: 0 auto;
+
+			@include breakpoint($fromLarge) {
+				margin: 0;
+			}
+
+			&--withBackButton {
+				@include breakpoint($fromLarge) {
+					margin-left: $grid-base;
+				}
+			}
+		}
+
+		&__username {
+			font-size: $font-size-secondary;
+			line-height: $line-height-secondary;
+			color: $tertiary;
+			margin: 0;
+
+			&--withBackButton {
+				@include breakpoint($fromLarge) {
+					margin-left: $grid-base-four;
+				}
+			}
+		}
+
+		&__actions {
+			margin-left: auto;
+
+			& > * {
+				margin-right: 10px;
+
+				&:last-child {
+					margin-right: 0;
+				}
+			}
+		}
+
+		&__logout {
+			cursor: pointer;
+
+			svg {
+				width: $iconSize;
+				height: $iconSize;
+			}
+		}
+
+		&__personal_link {
+			align-items: center;
+
+			& > span {
+				border: 2px solid;
+				padding: 5px;
+				cursor: pointer;
+			}
+
+			.tooltip {
+				margin-left: 10px;
+			}
+		}
+	}
+
+	&__nav {
+		&__item__badge {
+			margin-left: 4px;
+			background-color: $primary;
+			color: $white;
+			border-radius: 50%;
+			width: 8px;
+			height: 8px;
+			font-size: 12px;
+			line-height: 8px;
+			text-align: center;
+		}
+	}
+
+	&__innerWrapper {
+		height: 100%;
+		display: flex;
+		flex-direction: column;
+		overflow-x: hidden;
+		overflow-y: auto;
+		margin: 0;
+
+		@include breakpoint($fromLarge) {
+			overflow-y: hidden;
+
+			& > div {
+				flex: 1;
+
+				&:first-child {
+					overflow: auto;
+				}
+
+				&.profile__footer {
+					flex: 0;
+				}
+			}
+		}
+
+		&__stopButton {
+			margin-bottom: $grid-base-four;
+		}
+
+		&__editButton {
+			display: block;
+			margin-top: $grid-base-four;
+		}
+	}
+
+	&__user {
+		text-align: center;
+		padding: 0 $grid-base-two $grid-base;
+		margin-top: $grid-base-three;
+
+		@include breakpoint($fromMedium) {
+			padding: 0 $grid-base-three $grid-base;
+		}
+
+		&__personal_link {
+			& > span,
+			.generateQrCode {
+				margin-right: $grid-base-two;
+			}
+
+			& .button-as-link,
+			.generateQrCode > button {
+				&:focus {
+					outline: $focus-outline;
+					outline-offset: 1px;
+					border-radius: 4px;
+				}
+
+				&:focus:not(:focus-visible) {
+					outline: none;
+				}
+			}
+		}
+	}
+
+	&__icon {
+		background-color: $white;
+		border-radius: 50%;
+		width: $profileIconSize;
+		height: $profileIconSize;
+		margin-right: 13px;
+		position: relative;
+		display: flex;
+
+		&--avatar {
+			width: 56px;
+			height: 56px;
+			margin-right: 16px;
+			background-color: transparent;
+			box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+		}
+
+		&--active {
+			display: block;
+			width: $grid-base-two;
+			height: $grid-base-two;
+			border-radius: 50%;
+			background-color: $upload-progress;
+			position: absolute;
+			right: 0;
+			bottom: 0;
+		}
+
+		&--chatInfo {
+			width: $groupChatIconSize;
+			height: $groupChatIconSize;
+			align-self: center;
+			margin: 0 auto;
+		}
+
+		&--user {
+			width: $profileIconSize;
+			height: $profileIconSize;
+			align-self: flex-end;
+			margin: 0 auto;
+		}
+	}
+
+	&__content {
+		display: inline-block;
+		padding: 0 $grid-base-two $grid-base-ten;
+		height: auto;
+		width: 100%;
+
+		& .button-as-link {
+			border: none;
+			background: none;
+			padding: 0 !important;
+			text-decoration: $link-text-decoration;
+
+			&:hover {
+				cursor: pointer;
+			}
+		}
+
+		&:after {
+			display: block;
+			content: '';
+			clear: both;
+		}
+
+		@include breakpoint($fromMedium) {
+			padding: 0 $grid-base-three $grid-base-ten;
+		}
+
+		@include breakpoint($fromLarge) {
+			padding: 0 $grid-base-three $grid-base-eight;
+		}
+
+		.text__divider {
+			text-align: $profile-divider-text-align;
+			margin-bottom: $grid-base-three;
+		}
+
+		&__title {
+			position: relative;
+			margin-bottom: $grid-base-three;
+
+			@include breakpoint($fromLarge) {
+				text-align: left;
+			}
+
+			.text {
+				margin-top: $grid-base;
+			}
+		}
+
+		.editableData {
+			margin-top: 12px;
+
+			@include breakpoint($fromLarge) {
+				max-width: $inputMaxWidth;
+			}
+		}
+
+		&__header {
+			display: flex;
+			align-items: center;
+		}
+	}
+
+	&__item {
+		width: 100%;
+
+		@include breakpoint($fromLarge) {
+			width: calc(50% - #{$grid-base-three});
+			margin: 0 calc($grid-base-three / 2);
+			float: left;
+
+			&.left {
+				clear: left;
+			}
+
+			&.right {
+				clear: right;
+				float: right;
+			}
+
+			&.full {
+				clear: both;
+				width: 100%;
+			}
+		}
+
+		.inputField {
+			margin: 0 auto $grid-base-three;
+
+			@include breakpoint($fromLarge) {
+				max-width: $inputMaxWidth;
+				margin: 0 0 $grid-base-three;
+			}
+		}
+
+		.title {
+			color: var(--skin-color-primary-contrast-safe, $primary);
+			margin-bottom: $grid-base-two;
+		}
+	}
+
+	&__security {
+		margin: $grid-base-five 0 0;
+
+		&__title {
+			margin: 0 0 $grid-base-three;
+		}
+
+		.button__wrapper {
+			text-align: center;
+
+			@include breakpoint($fromLarge) {
+				text-align: left;
+			}
+		}
+
+		.profile__passwordLink {
+			display: inline-block;
+			line-height: 46px;
+		}
+	}
+
+	&__functions,
+	&__data {
+		> div:first-of-type {
+			margin-top: $grid-base-three;
+		}
+
+		> div:not(:first-of-type) {
+			margin-top: $grid-base-six;
+		}
+	}
+
+	&__data {
+		&__item {
+			display: flex;
+			flex-direction: column;
+			justify-content: flex-end;
+			min-height: 42px;
+			margin-top: 12px;
+			border-bottom: 1px solid $line-grey;
+
+			@include breakpoint($fromLarge) {
+				max-width: $inputMaxWidth;
+			}
+
+			&.full {
+				max-width: none;
+			}
+
+			&Wrapper {
+				.text__divider {
+					margin: $grid-base-four 0 $grid-base-two;
+				}
+
+				&:first-child .text__divider {
+					margin-top: 0;
+				}
+			}
+		}
+
+		&__label {
+			color: $tertiary;
+			font-size: $font-size-secondary;
+			line-height: $line-height-secondary;
+			margin: 0 0 6px;
+		}
+
+		&__content {
+			margin: 0 0 6px;
+
+			&--empty {
+				color: $tertiary;
+			}
+
+			&--subscriber {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				position: relative;
+			}
+
+			&--agencies {
+				border-bottom: 1px solid $line-grey;
+				padding-bottom: $grid-base-two;
+
+				&:last-child {
+					border: none;
+					padding-bottom: 0;
+				}
+
+				& .button-as-link,
+				.generateQrCode > button {
+					&:focus {
+						outline: $focus-outline;
+						outline-offset: 1px;
+						border-radius: 4px;
+					}
+
+					&:focus:not(:focus-visible) {
+						outline: none;
+					}
+				}
+			}
+		}
+
+		&__divider {
+			color: $black-25-opacity;
+			margin: 0 5px;
+		}
+
+		&__divider {
+			color: $black-25-opacity;
+			margin: 0 5px;
+		}
+	}
+
+	&__propagation-info {
+		margin-top: $grid-base-two;
+	}
+
+	&__footer {
+		flex: 0;
+		display: flex;
+		flex-wrap: wrap;
+		flex-direction: row;
+		align-items: center;
+		justify-content: $profile-footer-justify-content;
+		margin-top: auto;
+		padding: $grid-base $grid-base-two;
+		background-color: $profile-imprint-background-color;
+		width: 100%;
+
+		@include breakpoint($fromMedium) {
+			padding: 0 $grid-base-three;
+		}
+
+		@include breakpoint($fromLarge) {
+			min-height: $imprintHeight;
+			justify-content: flex-end;
+			width: 100%;
+			margin-bottom: unset;
+		}
+
+		&__item {
+			display: inline-block;
+			padding: 4px 0;
+			color: $text-low-emphasis;
+			font-size: 14px;
+			text-decoration: underline;
+		}
+
+		&__separator {
+			display: inline-block;
+			margin: 0 8px;
+		}
+	}
+
+	// Modern profile sections with Compound UI styling
+	&__content__title {
+		background-color: $white;
+		padding: 20px 24px;
+		border-radius: 8px;
+		margin-bottom: 16px;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+		border: 1px solid #e5e7eb;
+
+		.headline {
+			font-size: 18px;
+			font-weight: 600;
+			color: #1a1a1a;
+			margin-bottom: 8px;
+		}
+
+		.text {
+			color: #6b7280;
+			font-size: 14px;
+			line-height: 1.5;
+		}
+	}
+
+	&__data__content {
+		background-color: $white;
+		padding: 20px 24px;
+		border-radius: 8px;
+		margin-bottom: 16px;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+		border: 1px solid #e5e7eb;
+
+		&--agencies {
+			padding: 16px 20px;
+			font-weight: 500;
+			color: #374151;
+		}
+	}
+
+	&__propagation-info {
+		background-color: #f9fafb;
+		padding: 12px 16px;
+		border-radius: 6px;
+		margin-top: 12px;
+		border-left: 3px solid #3b82f6;
+
+		.text {
+			color: #4b5563;
+			font-size: 13px;
+		}
+	}
+}

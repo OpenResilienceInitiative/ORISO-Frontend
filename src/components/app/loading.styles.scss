@@ -1,0 +1,14 @@
+$spinnerSize: 60px;
+
+.loading {
+	width: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	opacity: 0;
+	transition: 0.5s opacity;
+
+	&--visible {
+		opacity: 1;
+	}
+}

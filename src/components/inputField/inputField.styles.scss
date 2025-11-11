@@ -1,0 +1,139 @@
+.inputField {
+	position: relative;
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+
+	&__input {
+		appearance: none;
+		-moz-appearance: textfield;
+		height: $input-field-height;
+		min-width: 0;
+		padding: 12px $grid-base-three 0 $grid-base-six;
+		flex: 1;
+		color: $text-high-emphasis;
+		border: 1px solid $border-default;
+		border-radius: $input-field-border-radius;
+		outline: 0;
+
+		&:hover {
+			border: 1px solid $border-hover;
+		}
+
+		&:focus {
+			border: 2px solid $border-active;
+		}
+
+		&::-webkit-inner-spin-button {
+			appearance: none;
+		}
+
+		&:-ms-input-placeholder {
+			color: transparent;
+		}
+
+		&::-webkit-input-placeholder {
+			color: transparent;
+		}
+
+		&::-moz-placeholder {
+			color: transparent;
+		}
+
+		&:focus + label,
+		&:not(:placeholder-shown) + label {
+			font-size: 12px;
+			top: 3px;
+			transition:
+				font-size 0.5s,
+				top 0.5s;
+			color: $text-low-emphasis;
+		}
+
+		&[disabled] {
+			background-color: $white;
+			border: 1px solid $form-input-border;
+
+			+ label {
+				color: $form-input-border;
+				cursor: not-allowed;
+			}
+		}
+
+		&[readonly] {
+			border: 1px solid $form-disabled;
+			color: $form-disabled;
+
+			&:hover,
+			&:focus {
+				cursor: not-allowed;
+				border: 1px solid $form-disabled !important;
+			}
+		}
+
+		&--invalid {
+			border: 2px solid $form-error !important;
+		}
+
+		&--valid {
+			border: 2px solid $form-success !important;
+		}
+
+		/* TODO: check if --error state still needed (class added in warningLabels.ts) */
+		&--error {
+			border-color: $form-error !important;
+			color: $form-error;
+			border-width: 2px;
+
+			&.inputField__input--valid {
+				border-color: $form-error !important;
+				color: $form-error !important;
+
+				& + label {
+					color: $form-primary;
+				}
+			}
+		}
+	}
+
+	&__label {
+		position: absolute;
+		top: 15px;
+		left: $grid-base-three;
+		transition:
+			font-size 0.5s,
+			top 0.5s;
+		color: $text-low-emphasis;
+		line-height: 18px;
+	}
+
+	&__infoText {
+		width: 100%;
+		margin: $grid-base $grid-base-three 0;
+	}
+
+	&__passwordToggle {
+		z-index: 15;
+		position: absolute;
+		top: 0;
+		right: 0;
+		margin: 14px $grid-base-two 0 0;
+		cursor: pointer;
+	}
+
+	&--withIcon & {
+		&__icon {
+			margin: $grid-base;
+			margin-left: 16px;
+			position: absolute;
+		}
+
+		&__infoText {
+			margin-left: $grid-base-seven;
+		}
+
+		&__label {
+			left: $grid-base-six;
+		}
+	}
+}

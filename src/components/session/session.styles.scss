@@ -1,0 +1,182 @@
+$navHeight: $grid-base-nine;
+$navWidth: $grid-base-twelve;
+$contentWidth: calc((100vw - #{$navWidth}) / 12 * 8);
+$textareaHeight: 72px;
+$sessionHeaderHeight: 85px;
+$unreadButtonSize: 18px;
+$session-scroll-to-bottom-radius: $button-border-radius !default;
+
+.session,
+.enquiry__wrapper {
+	position: relative;
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	min-width: 0;
+	background-color: #ffffff;
+	overflow: hidden;
+	
+	.messageSubmit__wrapper {
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		z-index: 1000;
+	}
+
+	& > div:first-child {
+		flex: 0 0 auto; /* Header stays fixed height */
+	}
+	
+	& > div:nth-child(2) {
+		flex: 1; /* Content takes remaining space */
+		min-height: 0;
+		position: relative;
+	}
+
+	.session__content.drag-in-progress * {
+		pointer-events: none;
+	}
+
+	&__wrapper {
+		flex: 1;
+		width: 100%;
+		flex-direction: row;
+		display: flex;
+		min-width: 0;
+	}
+
+	.messageSubmit__wrapper {
+		z-index: 2;
+
+		&--withTyping {
+			position: relative;
+		}
+	}
+
+	.messageItem {
+		.enquiryPreview {
+			&__divider {
+				padding-top: 5px;
+			}
+
+			&__message {
+				white-space: pre-wrap;
+			}
+		}
+
+		&--right {
+			text-align: right;
+		}
+	}
+
+	&__preview {
+		height: 100%;
+	}
+
+	&__acceptance {
+		text-align: center;
+		margin: $grid-base-four 0;
+	}
+
+	&__content {
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		overflow-x: hidden;
+		overflow-y: auto;
+		padding: $grid-base-three $grid-base-two 200px;
+		background-color: $session-content-background-color;
+
+		@include breakpoint($fromMedium) {
+			padding: $grid-base-three $grid-base-three 200px;
+		}
+	}
+
+	// Shadow removed from submit interface for clean Element-like UI
+
+	&__scrollToBottom {
+		position: fixed;
+		right: $grid-base-three;
+		bottom: calc(#{$grid-base} * 19);
+		z-index: 3;
+		animation: appear-animation 0.3s;
+
+		@include breakpoint($fromLarge) {
+			right: 33px;
+		}
+
+		&--disabled {
+			animation: disappear-animation 0.3s;
+			animation-fill-mode: forwards;
+		}
+	}
+
+	&__unreadCount {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		position: absolute;
+		top: -3px;
+		right: -9px;
+		width: $unreadButtonSize;
+		height: $unreadButtonSize;
+		background-color: var(--skin-color-primary, $primary);
+		font-weight: $font-weight-medium;
+		font-size: 10px;
+		color: $white;
+		border-radius: 100%;
+		z-index: 1;
+		pointer-events: none;
+		animation: bounce-appear-animation 0.3s;
+	}
+
+	&--empty {
+		justify-content: center;
+		align-items: center;
+		display: none;
+
+		@include breakpoint($fromLarge) {
+			display: flex;
+		}
+	}
+}
+
+@keyframes appear-animation {
+	0% {
+		opacity: 0;
+	}
+
+	100% {
+		opacity: 1;
+	}
+}
+
+@keyframes bounce-appear-animation {
+	0% {
+		opacity: 0.4;
+		transform: scale(0.8);
+	}
+
+	80% {
+		opacity: 1;
+		transform: scale(1.2);
+	}
+
+	100% {
+		transform: scale(1);
+	}
+}
+
+@keyframes disappear-animation {
+	0% {
+		opacity: 1;
+	}
+
+	100% {
+		opacity: 0;
+	}
+}

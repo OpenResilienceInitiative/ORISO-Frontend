@@ -1,0 +1,346 @@
+$illustrationSize: 170px;
+$illustrationWrapperSize: 280px;
+$iconWrapperSize: 48px;
+$iconSize: 24px;
+$selectWrapperHeight: 98px;
+$headerHeight: 80px;
+$mobileNavigationHeight: 72px;
+$tabBarHeightMobile: 77px;
+$tabBarHeightDesktop: 53px;
+
+.sessionsList,
+.session {
+	&__wrapper {
+		justify-content: stretch;
+		align-items: stretch;
+		flex: 1;
+		background-color: $sessions-list-background-color-secondary;
+		position: relative;
+		min-height: 0;
+		display: flex;
+		flex-direction: column;
+
+		.col {
+			margin-top: 0;
+		}
+	}
+
+	&__header {
+		width: 100%;
+		flex: 0;
+		display: flex;
+		flex-direction: row;
+		padding: $grid-base-three $grid-base-two;
+		background-color: $sessions-list-background-color-secondary;
+		z-index: 15;
+
+		@include breakpoint($fromMedium) {
+			padding-left: $grid-base-three;
+		}
+
+		@include breakpoint($fromLarge) {
+			padding: $grid-base-three;
+		}
+	}
+
+	&__createChatLink {
+		position: absolute;
+		right: 16px;
+		top: 14px;
+
+		@include breakpoint($fromMedium) {
+			right: $grid-base-three;
+		}
+	}
+
+	&__createChatButton {
+		width: $iconWrapperSize;
+		height: $iconWrapperSize;
+		border-radius: $grid-base-three;
+		cursor: pointer;
+		background-color: $white;
+		transition: background-color 0.6s ease;
+		overflow: hidden;
+		display: block;
+		text-align: center;
+		box-shadow: 0 3px 0 0 rgba(0, 0, 0, 0.1);
+		line-height: $iconWrapperSize;
+
+		svg {
+			width: $iconSize;
+			height: $iconSize;
+
+			* {
+				transition: fill 0.6s ease;
+				fill: var(--skin-color-secondary-contrast-safe, $secondary);
+			}
+		}
+
+		&:hover {
+			background-color: var(--skin-color-primary, $primary);
+
+			svg * {
+				fill: $white;
+			}
+		}
+	}
+
+	&__innerWrapper {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		justify-content: stretch;
+		align-items: stretch;
+		min-height: 0;
+	}
+
+	&__selectWrapper {
+		width: 100%;
+		background-color: $sessions-list-background-color-secondary;
+		z-index: 5;
+
+		@include breakpoint($fromLarge) {
+			top: $grid-base-ten;
+		}
+
+		.select__wrapper {
+			margin: 16px auto;
+		}
+	}
+
+	&__scrollContainer {
+		padding-top: $grid-base-three;
+		overflow: auto;
+		flex: 1;
+
+		@include breakpoint($fromLarge) {
+			margin-top: 0;
+			padding-top: 0;
+			position: relative;
+		}
+
+		&--hasTabs {
+			padding-top: 0;
+			margin-top: 0;
+		}
+	}
+
+	&__functionalityWrapper {
+		flex: 0;
+
+		.sessionsList__tabs + .sessionsList__selectWrapper .select__wrapper {
+			margin-top: 0;
+		}
+	}
+
+	&__tabs {
+		display: flex;
+		width: 100%;
+		padding: $grid-base-three;
+		background-color: $sessions-list-background-color-secondary;
+		z-index: 5;
+
+		@include breakpoint($fromLarge) {
+			padding: 0 $grid-base-three $grid-base-three;
+			background-color: $sessions-list-background-color-secondary;
+		}
+
+		a {
+			color: var(--skin-color-default, $tertiary);
+
+			&:last-of-type {
+				margin-left: $grid-base-three;
+			}
+
+			@media (hover: hover) {
+				&:hover .text {
+					color: var(--skin-color-default, $hover-primary);
+				}
+			}
+		}
+
+		&--active {
+			.text {
+				font-weight: $font-weight-medium;
+				color: var(--skin-color-primary-contrast-safe, $primary);
+			}
+
+			&::after {
+				content: '';
+				background: var(--skin-color-primary, $primary);
+				display: block;
+				height: 3px;
+				margin-top: 5px;
+			}
+		}
+	}
+
+	&__illustration {
+		&__wrapper {
+			padding: $grid-base-three;
+
+			@include breakpoint($fromLarge) {
+				padding: 0 $grid-base-three $grid-base-three;
+			}
+		}
+
+		&__image {
+			width: $illustrationWrapperSize;
+			height: $illustrationWrapperSize;
+			border-radius: calc($illustrationWrapperSize / 2);
+			background-color: $illustration-background-info;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			margin: 0 auto;
+
+			animation: fadeIn linear 0.5s;
+
+			@keyframes fadeIn {
+				from {
+					opacity: 0;
+				}
+
+				to {
+					opacity: 1;
+				}
+			}
+
+			svg {
+				width: $illustrationSize;
+				height: $illustrationSize;
+				margin: auto;
+
+				animation: fadeIn linear 0.8s;
+
+				@keyframes fadeIn {
+					0% {
+						opacity: 0;
+					}
+
+					50% {
+						opacity: 0;
+					}
+
+					100% {
+						opacity: 1;
+					}
+				}
+			}
+		}
+
+		&__infotext {
+			text-align: center;
+			font-weight: $font-weight-medium;
+			font-size: $font-size-subheadline;
+			margin-bottom: 0;
+		}
+	}
+
+	&__itemsWrapper {
+		overflow-x: hidden;
+
+		&--centered {
+			flex: 1;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			color: $light-grey;
+		}
+
+		@include breakpoint($fromLarge) {
+			padding: 0;
+		}
+	}
+
+	&__reloadWrapper {
+		margin: $grid-base-three auto;
+
+		.button__item {
+			margin: 0 auto;
+			width: 100%;
+			max-width: unset;
+			line-height: $grid-base-three;
+		}
+	}
+}
+
+.sessionsList {
+	&__headline {
+		align-self: center;
+		font-size: $font-size-h3;
+		font-weight: $font-weight-medium;
+		line-height: $line-height-tertiary;
+		margin-bottom: 0;
+		margin-right: $grid-base-seven;
+
+		@include breakpoint($fromLarge) {
+			margin-left: 0;
+		}
+	}
+	
+	// Icon-only mode (like Element when sidebar < 220px)
+	&__wrapper--iconOnly {
+		min-width: 80px;
+		
+		.sessionsListItem__username,
+		.sessionsListItem__subject,
+		.sessionsListItem__consultingType,
+		.sessionsListItem__topic,
+		.sessionsListItem__date,
+		.sessionsListItem__infoArea,
+		.sessionsList__headline,
+		.sessionsList__createChatLink,
+		.sessionsList__createChatButton,
+		.sessionMenuPlaceholder,
+		.tag,
+		.text {
+			display: none !important;
+		}
+		
+		.sessionsList__header {
+			justify-content: center;
+			padding: 8px;
+			min-height: 48px;
+		}
+		
+		.sessionsListItem {
+			justify-content: center;
+			align-items: center;
+			margin-bottom: 4px;
+			
+			&__content {
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				padding: 8px;
+				margin: 0 8px;
+				width: auto;
+				min-width: 48px;
+				min-height: 48px;
+				border-radius: 50%;
+			}
+			
+			&__row {
+				justify-content: center;
+				align-items: center;
+				width: auto;
+				margin-bottom: 0 !important;
+				
+				&:first-child {
+					display: none; /* Hide top row with postcode/topic/date */
+				}
+				
+				&:last-child {
+					display: none; /* Hide last message row */
+				}
+			}
+			
+			&__icon {
+				margin-right: 0 !important;
+				margin-bottom: 0 !important;
+				margin: 0;
+			}
+		}
+	}
+}

@@ -1,0 +1,72 @@
+.statistics {
+	&__periodSelect {
+		margin-bottom: 18px;
+
+		@include breakpoint($fromMedium) {
+			display: flex;
+		}
+
+		> p {
+			margin: auto 0;
+		}
+
+		.select__wrapper {
+			max-width: #{$max-input-width + $grid-base-three + $grid-base-three};
+			margin: 0;
+			padding: 0;
+
+			@include breakpoint($fromMedium) {
+				padding: 0 $grid-base-three;
+			}
+		}
+	}
+
+	&__visuals__wrapper {
+		display: flex;
+		margin: $grid-base-four 0 0;
+		justify-content: center;
+	}
+
+	&__visualization {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+
+		span {
+			display: flex;
+			flex-grow: 1;
+
+			svg {
+				width: 35px;
+				height: 35px;
+				fill: $statistics-highlight-color;
+			}
+
+			p {
+				color: $statistics-highlight-color;
+				margin: 0 0 0 $grid-base;
+				font-weight: $font-weight-medium;
+				font-size: 30px;
+				line-height: 38px;
+			}
+		}
+
+		> p {
+			font-weight: $font-weight-medium;
+		}
+	}
+
+	&__download {
+		> p {
+			margin-bottom: 12px;
+		}
+
+		a {
+			color: $statistics-highlight-color;
+
+			> svg {
+				margin-right: $grid-base;
+			}
+		}
+	}
+}

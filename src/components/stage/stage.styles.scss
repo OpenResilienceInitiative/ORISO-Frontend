@@ -1,0 +1,222 @@
+$animation-duration: 2.5s;
+$animation-duration-loader: $animation-duration * 0.25 * 3;
+$animation-duration-width: $animation-duration * 0.25;
+$animation-duration-title: calc($animation-duration / 7);
+
+$animation-easing-width: cubic-bezier(0, 0, 0.1, 1);
+$animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
+
+$iconSize: 55px;
+$gridSpacing: $grid-base-four;
+
+.stageLayout {
+	@media (min-width: $fromXLarge) {
+		&__legalLinks {
+			display: none;
+		}
+	}
+
+	&__legalLinks {
+		justify-content: center;
+	}
+
+	&__legalLinksItem {
+		color: $tertiary;
+		text-transform: none;
+		font-weight: normal;
+
+		&:hover {
+			color: var(--skin-color-primary-hover, $hover-primary);
+		}
+	}
+}
+
+.stage {
+	width: 100vw;
+	overflow: hidden;
+	transition: width $animation-duration-width $animation-easing-width;
+	transition-delay: $animation-duration - $animation-duration-width;
+	text-align: center;
+	background-color: var(--skin-color-primary, $primary);
+	color: var(--text-color-contrast-switch, $text-invert);
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	display: none;
+
+	@include breakpoint($fromXLarge) {
+		display: flex;
+	}
+
+	&--no-animation {
+		transition: none;
+
+		.stage__headline {
+			margin-bottom: $grid-base-five;
+		}
+	}
+
+	&--open {
+		left: -100%;
+
+		@include breakpoint($fromXLarge) {
+			left: 0;
+			width: 40vw;
+		}
+	}
+
+	&--ready {
+		transition-delay: unset;
+	}
+
+	&__content,
+	&__loader {
+		flex-shrink: 0;
+		flex-grow: 0;
+	}
+
+	&__content {
+		display: flex;
+		flex-direction: column;
+		height: 100%;
+		align-self: center;
+	}
+
+	&__headline {
+		display: flex;
+		flex: 1 1 0;
+		flex-direction: column;
+		flex-wrap: wrap;
+		justify-content: flex-end;
+		word-break: normal;
+		font-weight: $font-weight-medium;
+
+		@include breakpoint($fromLarge) {
+			padding: $grid-base-six $grid-base-six 120px;
+		}
+	}
+
+	&__title {
+		margin-bottom: $grid-base;
+	}
+
+	&__claim {
+		font-weight: $font-weight-regular;
+	}
+
+	&__logos {
+		display: flex;
+		flex-wrap: wrap;
+		flex: 1 1 0;
+		align-items: flex-end;
+		align-content: flex-end;
+		justify-content: center;
+		width: 335px;
+		margin: 0 auto $grid-base-five;
+		transform: scale(0.9);
+
+		@media (width >=calc(#{$xsmall} + #{$grid-base-three})) {
+			transform: scale(1);
+			margin: 0 auto $grid-base-ten;
+		}
+
+		svg {
+			width: $iconSize;
+			height: $iconSize;
+			margin-right: $gridSpacing;
+			margin-top: $gridSpacing;
+
+			&.raphaelswerk {
+				padding-top: 8px;
+				margin-left: -5px;
+				margin-right: calc(#{$gridSpacing} - 5px);
+				width: 64px;
+				height: 64px;
+			}
+
+			&:first-child {
+				margin-left: 54px;
+			}
+
+			&:nth-child(-n + 3) {
+				margin-top: 0;
+			}
+
+			&:nth-child(4) {
+				margin-left: $grid-base-two;
+				margin-right: $grid-base-three;
+			}
+
+			&:nth-child(7) {
+				margin-right: 0;
+			}
+		}
+	}
+
+	&__spinner {
+		animation-delay: 2s;
+		animation: hideSpinner 4s ease forwards;
+		margin: 0 auto;
+
+		@include breakpoint($fromXLarge) {
+			animation-duration: 2s;
+		}
+
+		@keyframes hideSpinner {
+			from {
+				opacity: 1;
+			}
+
+			to {
+				opacity: 0;
+			}
+		}
+	}
+
+	&__legalLinks {
+		display: flex;
+		align-items: center;
+		align-self: center;
+		margin: 40px 0;
+
+		.button-as-link {
+			background: none;
+			border: none;
+			cursor: pointer;
+			padding: 0;
+			white-space: nowrap;
+			color: $tertiary;
+
+			&:focus {
+				outline: $focus-outline;
+				border-radius: 4px;
+			}
+
+			&:focus:not(:focus-visible) {
+				outline: none;
+			}
+
+			&:hover {
+				color: var(--skin-color-primary-hover, $hover-primary);
+			}
+		}
+
+		.text {
+			font-size: $font-size-tertiary;
+		}
+	}
+
+	&__legalLinksItem {
+		color: $dark-grey;
+
+		&:hover {
+			color: $white;
+		}
+	}
+
+	&__legalLinksSeparator {
+		display: inline-block;
+		color: $white;
+		margin: 0 $grid-base;
+	}
+}

@@ -1,0 +1,63 @@
+.encryption-banner {
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+	padding: 12px 16px;
+	margin: 16px auto;
+	max-width: 650px;
+	border-radius: 8px;
+	background-color: #e8f5e9;
+	border: 1px solid rgba(76, 175, 80, 0.2);
+
+	&--enabled {
+		background-color: #e8f5e9;
+
+		.encryption-banner__icon svg {
+			fill: #2e7d32;
+			width: 20px;
+			height: 20px;
+		}
+	}
+
+	&--warning {
+		background-color: #fff3e0;
+		border: 1px solid rgba(255, 152, 0, 0.2);
+
+		.encryption-banner__icon svg {
+			fill: #f57c00;
+			width: 20px;
+			height: 20px;
+		}
+	}
+
+	&__icon {
+		flex-shrink: 0;
+		margin-top: 2px;
+
+		svg {
+			display: block;
+		}
+	}
+
+	&__content {
+		flex: 1;
+		min-width: 0;
+	}
+
+	&__heading {
+		font-size: 14px;
+		font-weight: 600;
+		margin: 0 0 4px;
+		color: rgba(0, 0, 0, 0.87);
+		line-height: 1.4;
+	}
+
+	&__description {
+		font-size: 13px;
+		font-weight: 400;
+		margin: 0;
+		color: rgba(0, 0, 0, 0.65);
+		line-height: 1.5;
+	}
+}
+

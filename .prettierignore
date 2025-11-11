@@ -1,0 +1,10 @@
+*.hbs
+Jenkinsfile
+.prettierignore
+.csslintrc
+.lintstagedrc
+Dockerfile
+devvars.env
+node_modules
+build
+CHANGELOG.md
