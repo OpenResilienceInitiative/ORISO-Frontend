@@ -64,7 +64,7 @@ export const TermsAndConditions = () => {
 		let hereLabel = translate('termsAndConditionOverlay.labels.here');
 		return text.replace(
 			hereLabel,
-			`<a class='link' target='_blank' href='/datenschutz'>${hereLabel}</a>`
+			`<a class='link' target='_blank' href='https://www.caritas-beratungundhilfe.de/datenschutz'>${hereLabel}</a>`
 		);
 	};
 

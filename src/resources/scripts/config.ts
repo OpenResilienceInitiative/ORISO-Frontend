@@ -86,11 +86,11 @@ export const config: AppConfigInterface = {
 	},
 	legalLinks: [
 		{
-			url: uiUrl + routePathNames.imprint,
+			url: 'https://www.caritas-beratungundhilfe.de/impressum',
 			label: 'login.legal.infoText.impressum'
 		},
 		{
-			url: uiUrl + routePathNames.privacy,
+			url: 'https://www.caritas-beratungundhilfe.de/datenschutz',
 			label: 'login.legal.infoText.dataprotection',
 			registration: true
 		}
