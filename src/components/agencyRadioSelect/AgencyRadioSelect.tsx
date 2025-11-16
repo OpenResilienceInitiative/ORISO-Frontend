@@ -29,7 +29,10 @@ export const AgencyRadioSelect = ({
 	const agencyIdAsString = agency.id.toString();
 
 	return (
-		<div className="agencyRadioSelect__wrapper">
+		<div 
+			className="agencyRadioSelect__wrapper"
+			onClick={() => console.log('🟣 Wrapper clicked!', agency.id)}
+		>
 			{prefix && (
 				<Headline semanticLevel="4" styleLevel="5" text={prefix} />
 			)}
@@ -37,16 +40,17 @@ export const AgencyRadioSelect = ({
 				className={clsx('agencyRadioSelect__radioContainer', {
 					'agencyRadioSelect__radioContainer--withHeadline': !!prefix
 				})}
+				onClick={() => console.log('🟡 RadioContainer clicked!', agency.id)}
 			>
-				<RadioButton
-					name="agencySelection"
-					handleRadioButton={() => onChange && onChange(agency)}
-					onKeyDown={(e: KeyboardEvent) => onKeyDown && onKeyDown(e)}
-					type="smaller"
-					value={agencyIdAsString}
-					checked={agencyIdAsString === checkedValue}
-					inputId={`agency-${agencyIdAsString}`}
-				>
+			<RadioButton
+				name="agencySelection"
+				handleRadioButton={(e) => onChange && onChange(agency)}
+				onKeyDown={(e: KeyboardEvent) => onKeyDown && onKeyDown(e)}
+				type="smaller"
+				value={agencyIdAsString}
+				checked={agencyIdAsString === checkedValue}
+				inputId={`agency-${agencyIdAsString}`}
+			>
 					{t([`agency.${agencyIdAsString}.name`, agency.name])}
 				</RadioButton>
 

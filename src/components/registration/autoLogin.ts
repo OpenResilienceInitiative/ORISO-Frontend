@@ -174,6 +174,12 @@ export const autoLogin = async ({
 		localStorage.setItem('matrix_device_id', matrixLoginData.deviceId);
 		console.log('🔷 Matrix credentials saved to localStorage');
 		
+		// CRITICAL: Set rc_uid and rc_token cookies for backend compatibility
+		// Backend still expects these headers even though we're using Matrix
+		setValueInCookie('rc_uid', matrixLoginData.userId);
+		setValueInCookie('rc_token', matrixLoginData.accessToken);
+		console.log('🔷 Matrix credentials saved to cookies (rc_uid, rc_token) for backend compatibility');
+		
 		const matrixClientService = new MatrixClientService();
 		console.log('🔷 Initializing Matrix client...');
 		matrixClientService.initializeClient(matrixLoginData);

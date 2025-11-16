@@ -1,26 +1,72 @@
 .additionalEnquiry {
+	position: relative;
+	z-index: 25;
+	padding: 20px 0;
+
 	&__consultingModeInfo {
-		margin: 0 0 $grid-base-four;
+		margin: 0 0 32px;
+	}
+
+	&__consultingTypeWrapper {
+		margin-bottom: 24px;
 	}
 
 	.select__wrapper {
 		padding: 0;
-		margin: $grid-base-three 0;
+		margin: 0;
 		max-width: none;
 
-		@include breakpoint($fromLarge) {
-			max-width: $max-input-width;
+		@media (min-width: 900px) {
+			max-width: 320px;
+		}
+	}
+
+	// Fix react-select dropdown z-index to appear above everything
+	.select__input__menu {
+		z-index: 9999 !important;
+	}
+
+	.select__input__menu-list {
+		z-index: 9999 !important;
+	}
+
+	.select__input__option {
+		z-index: 9999 !important;
+		cursor: pointer !important;
+		pointer-events: auto !important;
+	}
+
+	.agencySelection {
+		position: relative;
+		z-index: 25;
+		margin-top: 24px;
+		
+		// Fix postcode input padding
+		.inputField {
+			margin-top: 20px;
+			
+			input {
+				padding-left: 16px !important;
+				padding-right: 16px !important;
+			}
+		}
+
+		&__proposedAgencies {
+			margin-top: 24px;
 		}
 	}
 
 	.button {
 		&__wrapper {
 			text-align: center;
-			margin-bottom: $grid-base-four;
+			margin-top: 32px;
+			margin-bottom: 32px;
+			position: relative;
+			z-index: 25;
 
-			@include breakpoint($fromLarge) {
+			@media (min-width: 900px) {
 				text-align: right;
-				margin: 0;
+				margin-top: 32px;
 			}
 		}
 
@@ -28,8 +74,10 @@
 			padding: 0;
 			text-align: center;
 			max-width: none;
+			position: relative;
+			z-index: 25;
 
-			@include breakpoint($fromLarge) {
+			@media (min-width: 900px) {
 				text-align: right;
 			}
 		}

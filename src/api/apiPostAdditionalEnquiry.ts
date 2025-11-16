@@ -18,12 +18,14 @@ export const apiPostAdditionalEnquiry = async (
 	mainTopicId: number
 ): Promise<registrationResponse> => {
 	const url = endpoints.additionalEnquiry;
-	const data = JSON.stringify({
+	const requestBody = {
 		postcode,
 		agencyId,
-		consultingType,
+		consultingType: consultingType.toString(),
 		mainTopicId
-	});
+	};
+	console.log('🔵 Additional Enquiry Request Body:', requestBody);
+	const data = JSON.stringify(requestBody);
 
 	return fetchData({
 		url: url,

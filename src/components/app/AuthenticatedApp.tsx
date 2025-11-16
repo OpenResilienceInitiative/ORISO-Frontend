@@ -97,6 +97,13 @@ export const AuthenticatedApp = ({
 							if (matrixUserId && matrixAccessToken) {
 								console.log('🔷 Initializing Matrix client for user:', matrixUserId);
 								
+								// CRITICAL: Set rc_uid and rc_token cookies for backend compatibility
+								// Backend still expects these headers even though we're using Matrix
+								const { setValueInCookie } = await import('../sessionCookie/accessSessionCookie');
+								setValueInCookie('rc_uid', matrixUserId);
+								setValueInCookie('rc_token', matrixAccessToken);
+								console.log('🔷 Matrix credentials saved to cookies (rc_uid, rc_token) for backend compatibility');
+								
 								try {
 									const { MatrixClientService } = await import('../../services/matrixClientService');
 									const matrixClientService = new MatrixClientService();

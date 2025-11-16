@@ -102,7 +102,7 @@ export const fetchData = ({
 		const rcHeaders = rcValidation
 			? {
 				rcToken: getValueFromCookie('rc_token') || 'matrix-migration-dummy-token',
-					...(getValueFromCookie('rc_uid') && { rcUserId: getValueFromCookie('rc_uid') })
+					...(getValueFromCookie('rc_uid') && { RCUserId: getValueFromCookie('rc_uid') })
 				}
 			: null;
 

@@ -27,6 +27,11 @@ export const AdditionalAgencySelection = (
 	const [selectedPostcode, setSelectedPostcode] = useState('');
 	const [selectedAgency, setSelectedAgency] =
 		useState<AgencyDataInterface | null>(null);
+	
+	// Debug logging
+	useEffect(() => {
+		console.log('🟢 selectedAgency changed:', selectedAgency?.id);
+	}, [selectedAgency]);
 	const validPostcode = () =>
 		selectedPostcode?.length === VALID_POSTCODE_LENGTH;
 
@@ -53,7 +58,10 @@ export const AdditionalAgencySelection = (
 			apiGetAgenciesByTenant(selectedPostcode, props.selectedTopicId)
 				.then((agencies) => {
 					setProposedAgencies(agencies);
-					setSelectedAgency(agencies[0]);
+					// Only set default agency if none is selected yet
+					if (!selectedAgency) {
+						setSelectedAgency(agencies[0]);
+					}
 				})
 				.catch((err: any) => {
 					if (err.message === FETCH_ERRORS.EMPTY) {
@@ -145,15 +153,16 @@ export const AdditionalAgencySelection = (
 						{proposedAgencies ? (
 							proposedAgencies.map(
 								(proposedAgency: AgencyDataInterface) => (
-									<AgencyRadioSelect
-										key={`agency-${proposedAgency.id}`}
-										agency={proposedAgency}
-										checkedValue={proposedAgencies[0].id.toString()}
-										showTooltipAbove={true}
-										onChange={() =>
-											setSelectedAgency(proposedAgency)
-										}
-									/>
+								<AgencyRadioSelect
+									key={`agency-${proposedAgency.id}`}
+									agency={proposedAgency}
+									checkedValue={selectedAgency?.id.toString() || ''}
+									showTooltipAbove={true}
+									onChange={(agency) => {
+										console.log('🔵 Radio clicked, setting agency:', agency.id);
+										setSelectedAgency(agency);
+									}}
+								/>
 								)
 							)
 						) : (

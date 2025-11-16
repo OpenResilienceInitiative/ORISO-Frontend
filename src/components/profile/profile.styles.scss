@@ -275,6 +275,8 @@ $profile-footer-justify-content: center !default;
 		padding: 0 $grid-base-two $grid-base-ten;
 		height: auto;
 		width: 100%;
+		position: relative;
+		z-index: 25;
 
 		& .button-as-link {
 			border: none;
@@ -421,6 +423,9 @@ $profile-footer-justify-content: center !default;
 			}
 
 			&Wrapper {
+				position: relative;
+				z-index: 25;
+
 				.text__divider {
 					margin: $grid-base-four 0 $grid-base-two;
 				}
@@ -530,12 +535,12 @@ $profile-footer-justify-content: center !default;
 
 	// Modern profile sections with Compound UI styling
 	&__content__title {
-		background-color: $white;
-		padding: 20px 24px;
-		border-radius: 8px;
-		margin-bottom: 16px;
-		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-		border: 1px solid #e5e7eb;
+		background-color: transparent;
+		padding: 0;
+		border-radius: 0;
+		margin-bottom: 12px;
+		box-shadow: none;
+		border: none;
 
 		.headline {
 			font-size: 18px;
@@ -576,6 +581,26 @@ $profile-footer-justify-content: center !default;
 		.text {
 			color: #4b5563;
 			font-size: 13px;
+		}
+	}
+
+	// Remove empty box styling
+	&__data__itemWrapper {
+		.box {
+			background: transparent;
+			border: none;
+			padding: 0;
+			margin-bottom: 0;
+			box-shadow: none;
+			
+			.profile__content__title {
+				background: #fff;
+				border: 1px solid #e5e7eb;
+				border-radius: 8px;
+				box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+				padding: 20px 24px;
+				margin-bottom: 16px;
+			}
 		}
 	}
 }

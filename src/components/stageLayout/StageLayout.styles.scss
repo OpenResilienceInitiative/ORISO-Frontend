@@ -32,6 +32,7 @@
 		bottom: 0;
 		z-index: 20;
 		width: 40vw;
+		pointer-events: none;
 	}
 
 	&__header {
@@ -158,3 +159,4 @@
 		margin: 0 $grid-base;
 	}
 }
+
