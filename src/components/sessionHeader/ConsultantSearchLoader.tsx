@@ -1,0 +1,124 @@
+import * as React from 'react';
+import styled from 'styled-components';
+import './consultantSearchLoader.styles.scss';
+
+interface ConsultantSearchLoaderProps {
+	size?: string;
+}
+
+export const ConsultantSearchLoader: React.FC<ConsultantSearchLoaderProps> = ({
+	size = '40px'
+}) => {
+	return (
+		<div 
+			className="consultantSearchLoader"
+			style={{ 
+				width: size, 
+				height: size
+			}}
+		>
+			<div className="consultantSearchLoader__circle">
+				<StyledWrapper>
+					<div className="loader">
+						<div className="magnetism" />
+					</div>
+				</StyledWrapper>
+			</div>
+		</div>
+	);
+};
+
+const StyledWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: scale(0.5);
+  transform-origin: center center;
+  margin-left: -8px;
+
+  .loader {
+    position: relative;
+    background-color: red;
+    height: 40px;
+    width: 10px;
+    border-radius: 6px 0px 0px 6px;
+    animation: rotate 5s infinite;
+  }
+
+  .magnetism {
+    position: absolute;
+    color: rgb(0, 151, 252);
+    bottom: 0;
+    width: 80px;
+    left: 0%;
+    height: 40px;
+    border: solid 2px currentColor;
+    border-color: currentColor transparent transparent transparent;
+    border-radius: 50%;
+    transform: rotate(90deg);
+    animation: go 0.5s ease-in-out infinite;
+  }
+
+  .loader::before {
+    content: "";
+    left: 10px;
+    position: absolute;
+    background: rgb(255, 0, 0);
+    background: linear-gradient(
+      90deg,
+      rgba(255, 0, 0, 1) 0%,
+      rgba(255, 0, 0, 1) 50%,
+      rgba(158, 158, 158, 1) 50%,
+      rgba(184, 184, 184, 1) 100%
+    );
+    height: 10px;
+    width: 20px;
+  }
+
+  .loader::after {
+    content: "";
+    left: 10px;
+    position: absolute;
+    bottom: 0;
+    background: rgb(255, 0, 0);
+    background: linear-gradient(
+      90deg,
+      rgba(255, 0, 0, 1) 0%,
+      rgba(255, 0, 0, 1) 50%,
+      rgba(158, 158, 158, 1) 50%,
+      rgba(184, 184, 184, 1) 100%
+    );
+    height: 10px;
+    width: 20px;
+  }
+
+  @keyframes rotate {
+    0% {
+      transform: rotate(-30deg);
+    }
+    50% {
+      transform: rotate(30deg);
+    }
+    100% {
+      transform: rotate(-30deg);
+    }
+  }
+
+  @keyframes go {
+    0% {
+      left: 0%;
+      width: 30px;
+      opacity: 1;
+    }
+    50% {
+      left: 100%;
+      width: 60px;
+      opacity: 0.5;
+    }
+    100% {
+      width: 90px;
+      left: 200%;
+      opacity: 0;
+    }
+  }
+`;

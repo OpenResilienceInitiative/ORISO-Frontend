@@ -1,0 +1,220 @@
+$navWidth: $grid-base-twelve;
+$navHeight: $grid-base-nine;
+$maxWidth: 100vw;
+$listWidth: calc((100vw - #{$navWidth}) / 12 * 4);
+$contentWidth: calc((100vw - #{$navWidth}) / 12 * 8);
+$headerHeight: $grid-base-twelve;
+
+a {
+	color: var(--skin-color-primary-contrast-safe, $primary);
+
+	&:focus {
+		outline: $focus-outline;
+		outline-offset: 1px;
+		border-radius: 4px;
+	}
+
+	&:focus:not(:focus-visible) {
+		outline: none;
+	}
+}
+
+.app__container {
+	height: 100%;
+	max-height: 100%;
+	display: flex;
+	flex-direction: column;
+
+	.banner {
+		flex: 0;
+	}
+
+	.app {
+		flex: 1;
+		overflow: hidden;
+	}
+}
+
+.app {
+	&--blur {
+		> *:not(.notifications) {
+			filter: blur(5px);
+		}
+	}
+}
+
+.app__wrapper {
+	display: flex;
+	flex-direction: column;
+	justify-content: stretch;
+	align-items: stretch;
+	overflow: hidden;
+	height: 100%;
+	max-height: 100%;
+
+	@include breakpoint($fromLarge) {
+		flex-direction: row;
+	}
+
+	.navigation__wrapper {
+		display: flex;
+		flex-direction: row;
+		justify-content: space-around;
+		width: $maxWidth;
+		height: $navHeight;
+		order: 3;
+
+		@include breakpoint($fromLarge) {
+			flex-direction: column;
+			justify-content: flex-start;
+			position: relative;
+			flex: 0 0 $navWidth;
+			height: 100%;
+			order: 1;
+		}
+
+		&--inactive {
+			display: none;
+		}
+	}
+
+	.contentWrapper {
+		height: 100%;
+		max-height: 100%;
+		order: 2;
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		position: relative;
+		overflow: hidden;
+		background-color: $background-light;
+
+		@include breakpoint($fromLarge) {
+			padding-bottom: 0;
+			overflow: visible;
+		}
+
+		&__userProfile {
+			flex: 1;
+			overflow-y: auto;
+		}
+
+		.header {
+			display: none;
+
+			&--mobile {
+				display: flex;
+				z-index: 1;
+			}
+
+			@include breakpoint($fromLarge) {
+				display: flex;
+			}
+		}
+
+		&__title {
+			margin: 0;
+			font-size: $font-size-h2;
+		}
+
+		&__content {
+			flex: 1;
+			display: flex;
+			flex-direction: row;
+			min-height: 0;
+		}
+
+		&__list {
+			margin-top: 0;
+			min-height: 0;
+			width: 100vw;
+			transition: all 0.3s ease;
+			display: flex;
+			flex-direction: column;
+
+			@include breakpoint($fromLarge) {
+				width: auto;
+				flex: 0 0 auto;
+				transition: none;
+			}
+
+			&--smallInactive {
+				margin-left: -100vw;
+				transition: all 0.3s ease;
+
+				.sessionsList__header {
+					left: -100vw;
+				}
+
+				@include breakpoint($fromLarge) {
+					margin-left: 0;
+					transition: none;
+
+					.sessionsList__header {
+						left: 0;
+					}
+				}
+			}
+
+			&--hidden {
+				display: none !important;
+			}
+		}
+
+		&__detail,
+		&__booking,
+		&__profile,
+		&__tools {
+			min-height: 0;
+			width: 100%;
+			margin: 0;
+			display: flex;
+			flex-direction: column;
+			justify-content: stretch;
+			align-items: stretch;
+
+			& > * {
+				flex: 1;
+			}
+		}
+
+		&__detail {
+			margin-top: 0;
+			width: 100vw;
+			transition: all 0.3s ease;
+			flex: 1;
+			background-color: $background-lighter;
+
+			@include breakpoint($fromLarge) {
+				width: 100%; /* Use full available width */
+				flex: 1; /* Expand to fill space */
+				transition: none;
+			}
+
+			&--smallInactive {
+				margin-right: -100vw;
+				transition: all 0.3s ease;
+
+				.sessionsList__header {
+					left: 0;
+				}
+
+				@include breakpoint($fromLarge) {
+					margin-right: 0;
+					transition: none;
+				}
+			}
+		}
+
+		&__booking {
+			margin-top: 0;
+			width: 100vw;
+			transition: all 0.3s ease;
+			flex: 1;
+
+			@include breakpoint($fromLarge) {
+				width: $contentWidth;
+			}
+		}
+	}
+}

@@ -1,0 +1,52 @@
+$input-size: 24px;
+
+.agencyLanguages {
+	flex-basis: 100%;
+	margin-top: 8px;
+	text-align: left;
+
+	font-size: $font-size-primary;
+	line-height: $line-height-primary;
+	color: $text-low-emphasis;
+
+	.agencySelection__proposedAgency & {
+		margin-left: #{$input-size + $grid-base};
+	}
+
+	p {
+		margin: 0;
+	}
+
+	span {
+		display: inline-block;
+		&::after {
+			content: '|';
+			display: inline-block;
+			margin: 0 $grid-base;
+		}
+
+		&:last-child {
+			&::after {
+				display: none;
+			}
+		}
+	}
+
+	&__more {
+		color: var(--skin-color-primary-contrast-safe, $primary);
+		text-decoration: underline;
+		cursor: pointer;
+		background: none;
+		border: none;
+
+		&:focus {
+			outline: $focus-outline;
+			outline-offset: 2px;
+			border-radius: 4px;
+		}
+
+		&:focus:not(:focus-visible) {
+			outline: none;
+		}
+	}
+}

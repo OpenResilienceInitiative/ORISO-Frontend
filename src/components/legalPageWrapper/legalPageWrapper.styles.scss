@@ -1,0 +1,55 @@
+.legalPageWrapper {
+	@include breakpoint($fromLarge) {
+		.stage {
+			display: flex;
+		}
+	}
+
+	.template {
+		width: 100%;
+		max-width: 700px;
+
+		h2,
+		h3,
+		h4,
+		p {
+			margin: 0;
+		}
+
+		h2 + *,
+		h3 + *,
+		h4 + * {
+			margin-top: 20px;
+		}
+
+		ul {
+			list-style: inside;
+			padding-left: 10px;
+		}
+
+		ol {
+			counter-reset: item;
+			padding-left: 10px;
+
+			li {
+				display: block;
+			}
+
+			li::before {
+				content: counters(item, '.') '. ';
+				counter-increment: item;
+				font-weight: bold;
+			}
+
+			ol {
+				counter-reset: item;
+			}
+		}
+	}
+
+	.stageLayout__content {
+		align-items: center;
+		justify-content: flex-start;
+		padding-top: 48px;
+	}
+}

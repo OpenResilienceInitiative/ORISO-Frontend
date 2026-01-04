@@ -1,0 +1,242 @@
+// Element-style floating call widget
+.floating-call-widget {
+    z-index: 10000;
+    background: #3d3d3d; // Dark gray card
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    user-select: none;
+
+    &.minimized {
+        width: 280px;
+        height: auto;
+    }
+
+    &.normal {
+        width: 460px;
+        min-height: 560px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    &.fullscreen {
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw;
+        height: 100vh;
+        border-radius: 0;
+        
+        .call-header {
+            padding: 16px 24px;
+        }
+        
+        .call-video-area {
+            min-height: calc(100vh - 180px);
+        }
+    }
+
+    // Header with "Call" text and fullscreen icon
+    .call-header {
+        background: #3d3d3d;
+        padding: 12px 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        user-select: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .call-header-left {
+                display: flex;
+                align-items: center;
+        gap: 8px;
+        color: #b8b8b8;
+        font-size: 14px;
+        font-weight: 500;
+
+        svg {
+            opacity: 0.8;
+                    }
+                }
+                
+    .fullscreen-toggle {
+                background: transparent;
+                border: none;
+        color: #b8b8b8;
+                cursor: pointer;
+        padding: 4px;
+        display: flex;
+        align-items: center;
+        transition: color 0.2s;
+
+                &:hover {
+            color: #ffffff;
+        }
+    }
+
+    .call-video-area {
+        position: relative;
+        width: 100%;
+        flex: 1;
+        min-height: 380px;
+        background: #e8e8e8; // Light gray background
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        .remote-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .local-video {
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 3px solid white;
+            object-fit: cover;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        // Large avatar - dark red/maroon with pink letter
+        .call-avatar-large {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            background: #8B3A62; // Dark maroon/burgundy
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 72px;
+            color: #F8B4D4; // Light pink
+            font-weight: 600;
+            text-transform: uppercase;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+    }
+
+    &.fullscreen .call-video-area {
+        height: calc(100% - 120px);
+
+        .local-video {
+            width: 200px;
+            height: 150px;
+            bottom: 20px;
+            right: 20px;
+        }
+    }
+
+    .call-controls {
+        padding: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: flex-end;
+        gap: 16px;
+        background: #e8e8e8; // Match video area
+        min-height: 100px;
+    }
+
+
+        .call-btn {
+        width: 52px;
+        height: 52px;
+            padding: 0;
+            border-radius: 50%;
+            cursor: pointer;
+        transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        
+        // Default: white background with slate/gray border
+        background: #ffffff;
+        border: 2px solid #d1d5db; // Slate/gray outline
+        color: #2d2d2d;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+        svg {
+            width: 20px;
+            height: 20px;
+        }
+
+            &:hover {
+            transform: scale(1.05);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+            }
+
+            &:active {
+            transform: scale(0.95);
+            }
+
+        // Video off state - lighter background
+        &.video-off {
+            background: #e8e8e8;
+            border-color: #d1d5db;
+            color: #2d2d2d;
+        }
+
+        // Muted state
+        &.muted {
+            background: #ffffff;
+            border-color: #d1d5db;
+            color: #2d2d2d;
+        }
+
+        // Answer button (green)
+            &.answer-btn {
+                background: #10b981;
+            border-color: #10b981;
+                color: white;
+            width: 56px;
+            height: 56px;
+
+                &:hover {
+                    background: #059669;
+                border-color: #059669;
+                }
+            }
+
+        // Reject button (red)
+            &.reject-btn {
+                background: #ef4444;
+            border-color: #ef4444;
+                color: white;
+            width: 56px;
+            height: 56px;
+
+                &:hover {
+                    background: #dc2626;
+                border-color: #dc2626;
+                }
+            }
+            
+        // Hang up button - RED
+            &.hangup-btn {
+            background: #FF3B30;
+            border-color: #FF3B30;
+                color: white;
+            width: 56px;
+            height: 56px;
+
+                &:hover {
+                background: #e6342b;
+                border-color: #e6342b;
+            }
+        }
+    }
+
+    &.minimized .call-controls {
+        padding: 12px;
+
+        .call-btn {
+            padding: 8px 16px;
+            font-size: 12px;
+        }
+    }
+}
+

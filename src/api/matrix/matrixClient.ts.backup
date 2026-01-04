@@ -1,0 +1,265 @@
+/**
+ * Matrix Client Service
+ * Handles Matrix Synapse authentication and chat functionality
+ */
+
+import * as sdk from 'matrix-js-sdk';
+
+const MATRIX_BASE_URL = process.env.REACT_APP_MATRIX_URL || 'http://91.99.219.182:8089';
+const MATRIX_SERVER_NAME = 'caritas.local';
+
+let matrixClient: any = null;
+
+export interface MatrixLoginParams {
+	username: string;
+	password: string;
+}
+
+export interface MatrixLoginResult {
+	user_id: string;
+	access_token: string;
+	device_id: string;
+	home_server: string;
+}
+
+/**
+ * Login to Matrix Synapse and initialize client
+ */
+export const loginToMatrix = async ({
+	username,
+	password
+}: MatrixLoginParams): Promise<MatrixLoginResult> => {
+	console.log('🔷 Matrix: Logging in user:', username);
+
+	try {
+		// Login via Matrix API
+		const response = await fetch(`${MATRIX_BASE_URL}/_matrix/client/r0/login`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({
+				type: 'm.login.password',
+				identifier: {
+					type: 'm.id.user',
+					user: username
+				},
+				password: password
+			})
+		});
+
+		if (!response.ok) {
+			const error = await response.json();
+			console.error('🔷 Matrix: Login failed:', error);
+			throw new Error(error.error || 'Matrix login failed');
+		}
+
+		const loginData: MatrixLoginResult = await response.json();
+		console.log('🔷 Matrix: Login successful:', loginData.user_id);
+
+		// Store Matrix credentials
+		localStorage.setItem('matrix_access_token', loginData.access_token);
+		localStorage.setItem('matrix_user_id', loginData.user_id);
+		localStorage.setItem('matrix_device_id', loginData.device_id);
+
+		// Initialize Matrix client
+		await initializeMatrixClient(loginData.user_id, loginData.access_token);
+
+		return loginData;
+	} catch (error) {
+		console.error('🔷 Matrix: Login error:', error);
+		throw error;
+	}
+};
+
+/**
+ * Initialize Matrix client with existing credentials
+ */
+export const initializeMatrixClient = async (
+	userId: string,
+	accessToken: string
+): Promise<any> => {
+	console.log('🔷 Matrix: Initializing client for:', userId);
+
+	try {
+		// Create Matrix client
+		matrixClient = sdk.createClient({
+			baseUrl: MATRIX_BASE_URL,
+			accessToken: accessToken,
+			userId: userId,
+			timelineSupport: true,
+		});
+
+		// Start syncing
+		console.log('🔷 Matrix: Starting client sync...');
+		await matrixClient.startClient({ initialSyncLimit: 20 });
+
+		// Wait for initial sync
+		await new Promise((resolve, reject) => {
+			const timeout = setTimeout(() => {
+				reject(new Error('Matrix sync timeout'));
+			}, 30000); // 30 second timeout
+
+			matrixClient.once('sync', (state: string) => {
+				console.log('🔷 Matrix: Sync state:', state);
+				if (state === 'PREPARED') {
+					clearTimeout(timeout);
+					console.log('🔷 Matrix: Client ready!');
+					resolve(true);
+				}
+			});
+
+			matrixClient.on('sync', (state: string, prevState: string) => {
+				if (state === 'ERROR') {
+					clearTimeout(timeout);
+					reject(new Error('Matrix sync error'));
+				}
+			});
+		});
+
+		return matrixClient;
+	} catch (error) {
+		console.error('🔷 Matrix: Client initialization failed:', error);
+		throw error;
+	}
+};
+
+/**
+ * Get current Matrix client instance
+ */
+export const getMatrixClient = (): any => {
+	return matrixClient;
+};
+
+/**
+ * Restore Matrix client from localStorage
+ */
+export const restoreMatrixClient = async (): Promise<any> => {
+	const accessToken = localStorage.getItem('matrix_access_token');
+	const userId = localStorage.getItem('matrix_user_id');
+
+	if (!accessToken || !userId) {
+		console.log('🔷 Matrix: No stored credentials');
+		return null;
+	}
+
+	console.log('🔷 Matrix: Restoring session for:', userId);
+
+	try {
+		await initializeMatrixClient(userId, accessToken);
+		return matrixClient;
+	} catch (error) {
+		console.error('🔷 Matrix: Failed to restore session:', error);
+		// Clear invalid credentials
+		localStorage.removeItem('matrix_access_token');
+		localStorage.removeItem('matrix_user_id');
+		localStorage.removeItem('matrix_device_id');
+		return null;
+	}
+};
+
+/**
+ * Logout from Matrix
+ */
+export const logoutFromMatrix = async (): Promise<void> => {
+	console.log('🔷 Matrix: Logging out');
+
+	if (matrixClient) {
+		try {
+			await matrixClient.logout();
+			matrixClient.stopClient();
+			matrixClient = null;
+		} catch (error) {
+			console.error('🔷 Matrix: Logout error:', error);
+		}
+	}
+
+	// Clear stored credentials
+	localStorage.removeItem('matrix_access_token');
+	localStorage.removeItem('matrix_user_id');
+	localStorage.removeItem('matrix_device_id');
+};
+
+/**
+ * Send a text message to a room
+ */
+export const sendMessage = async (roomId: string, message: string): Promise<void> => {
+	if (!matrixClient) {
+		throw new Error('Matrix client not initialized');
+	}
+
+	try {
+		await matrixClient.sendTextMessage(roomId, message);
+		console.log('🔷 Matrix: Message sent to:', roomId);
+	} catch (error) {
+		console.error('🔷 Matrix: Failed to send message:', error);
+		throw error;
+	}
+};
+
+/**
+ * Get all rooms (conversations)
+ */
+export const getRooms = (): any[] => {
+	if (!matrixClient) {
+		return [];
+	}
+
+	return matrixClient.getRooms();
+};
+
+/**
+ * Create a direct message room with another user
+ */
+export const createDirectMessageRoom = async (otherUserId: string): Promise<string> => {
+	if (!matrixClient) {
+		throw new Error('Matrix client not initialized');
+	}
+
+	try {
+		const room = await matrixClient.createRoom({
+			preset: 'trusted_private_chat',
+			is_direct: true,
+			invite: [otherUserId]
+		});
+
+		console.log('🔷 Matrix: DM room created:', room.room_id);
+		return room.room_id;
+	} catch (error) {
+		console.error('🔷 Matrix: Failed to create DM room:', error);
+		throw error;
+	}
+};
+
+/**
+ * Join a room
+ */
+export const joinRoom = async (roomId: string): Promise<void> => {
+	if (!matrixClient) {
+		throw new Error('Matrix client not initialized');
+	}
+
+	try {
+		await matrixClient.joinRoom(roomId);
+		console.log('🔷 Matrix: Joined room:', roomId);
+	} catch (error) {
+		console.error('🔷 Matrix: Failed to join room:', error);
+		throw error;
+	}
+};
+
+/**
+ * Get Matrix access token (for API calls to UserService)
+ */
+export const getMatrixAccessToken = (): string | null => {
+	return localStorage.getItem('matrix_access_token');
+};
+
+/**
+ * Check if user is logged into Matrix
+ */
+export const isMatrixLoggedIn = (): boolean => {
+	const token = localStorage.getItem('matrix_access_token');
+	const userId = localStorage.getItem('matrix_user_id');
+	return !!(token && userId);
+};

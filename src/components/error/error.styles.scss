@@ -1,0 +1,167 @@
+$illustrationSize: 280px;
+$icon-size: 170px;
+$content-width: calc(
+	(100vw - (#{$grid-base-twelve} * 3) - #{$grid-base-six}) / 2
+);
+$content-width-medium: calc(
+	(100vw - (#{$grid-base-twelve} * 3) - #{$grid-base-six}) / 2
+);
+$content-width-small: calc((100vw) / 2);
+$illustrationWrapperMaxSize: 650px;
+$error-illustration-width: calc(#{$content-width-small} / 2.25) !default;
+$error-illustration-background-neutral: $illustration-background-neutral !default;
+$error-page-background: rgba($form-medium, 0.08) !default;
+
+.errorPage {
+	&__header {
+		display: flex;
+		justify-content: flex-end;
+		align-items: center;
+		flex-basis: $header-height;
+		height: $header-height;
+		width: 100%;
+		padding: 0 $grid-base-three;
+
+		&.mobile {
+			justify-content: flex-start;
+			padding: 0 $grid-base-two;
+		}
+	}
+
+	&__claim {
+		margin: auto 0 auto auto;
+		display: none;
+		margin-right: $grid-base-seven;
+
+		@media (min-width: $fromLarge) {
+			display: block;
+		}
+	}
+
+	&__main {
+		padding: 0 $grid-base-three $grid-base-three;
+		display: flex;
+		flex-direction: column;
+		height: 100%;
+
+		@media (min-width: $fromLarge) {
+			flex-direction: row;
+			padding: $grid-base-four $grid-base-three;
+			justify-content: center;
+			align-items: center;
+		}
+	}
+
+	&__illustration {
+		width: $error-illustration-width;
+		min-width: $icon-size;
+		min-height: $icon-size;
+		animation: fadeIn linear 0.8s;
+
+		@keyframes fadeIn {
+			0% {
+				opacity: 0;
+			}
+			50% {
+				opacity: 0;
+			}
+			100% {
+				opacity: 1;
+			}
+		}
+
+		&Wrapper {
+			display: flex;
+			flex-direction: row;
+			justify-content: center;
+			align-self: center;
+			background-color: $error-illustration-background-neutral;
+			min-width: $illustrationSize;
+			min-height: $illustrationSize;
+			max-width: $illustrationWrapperMaxSize;
+			max-height: $illustrationWrapperMaxSize;
+			border-radius: calc(#{$illustrationSize} / 2);
+			margin: $grid-base-three;
+
+			animation: fadeIn linear 0.5s;
+
+			@keyframes fadeIn {
+				from {
+					opacity: 0;
+				}
+				to {
+					opacity: 1;
+				}
+			}
+
+			@media (min-width: $fromMedium) {
+				margin: $grid-base-six;
+				width: $content-width-small;
+				height: $content-width-small;
+				border-radius: calc(#{$content-width-small} / 2);
+			}
+
+			@media (min-width: $fromLarge) {
+				margin: $grid-base-six;
+				width: $content-width-medium;
+				height: $content-width-medium;
+				border-radius: calc(#{$content-width-medium} / 2);
+			}
+
+			@media (min-width: $fromXLarge) {
+				margin: $grid-base-twelve;
+				width: $content-width;
+				height: $content-width;
+				border-radius: calc(#{$content-width} / 2);
+			}
+		}
+	}
+
+	&__content {
+		text-align: center;
+		align-self: center;
+		margin-top: 0;
+
+		@media (width >= 700px) {
+			width: 650px;
+		}
+
+		@media (min-width: $fromLarge) {
+			width: calc(50vw - 168px);
+			text-align: left;
+			margin-top: 0;
+		}
+	}
+
+	&__content p {
+		font-size: $font-size-h4;
+		margin: 0;
+		line-height: 28px;
+	}
+
+	&__headline {
+		font-size: $font-size-h1-mobile;
+		font-weight: $font-weight-medium;
+		margin-bottom: 12px;
+
+		@media (min-width: $fromLarge) {
+			margin-bottom: 12px;
+			font-size: $font-size-h1;
+		}
+	}
+
+	&__button {
+		margin-top: 25px;
+	}
+
+	h2 {
+		font-size: $font-size-h3;
+		font-weight: $font-weight-medium;
+		margin: auto;
+		display: block;
+
+		@media (min-width: $fromLarge) {
+			font-size: $font-size-h2;
+		}
+	}
+}

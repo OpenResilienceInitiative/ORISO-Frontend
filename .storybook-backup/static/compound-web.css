@@ -1,0 +1,2726 @@
+/*
+Copyright 2023 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE files in the repository root for full details.
+*/
+
+/* TODO: Review entire file for semantic token definiton */
+
+._alert_zx76t_10 {
+  container-type: inline-size;
+  container-name: alert;
+  display: flex;
+  align-items: start;
+  justify-content: start;
+  gap: var(--cpd-space-3x);
+  padding: var(--cpd-space-4x);
+  border-radius: 8px;
+  border: 1px solid;
+}
+
+._alert_zx76t_10[data-type="success"] {
+  background-color: var(--cpd-color-green-200);
+  border-color: var(--cpd-color-green-500);
+}
+
+._alert_zx76t_10[data-type="critical"] {
+  background-color: var(--cpd-color-red-200);
+  border-color: var(--cpd-color-red-500);
+}
+
+._alert_zx76t_10[data-type="info"] {
+  background-color: var(--cpd-color-blue-200);
+  border-color: var(--cpd-color-blue-500);
+}
+
+._content_zx76t_37 {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  gap: var(--cpd-space-3x);
+}
+
+._text-content_zx76t_44 {
+  flex: 1 1 0;
+}
+
+[data-type="success"] :is(._title_zx76t_48, ._icon_zx76t_48) {
+  color: var(--cpd-color-green-900);
+}
+
+[data-type="critical"] :is(._title_zx76t_48, ._icon_zx76t_48) {
+  color: var(--cpd-color-red-900);
+}
+
+[data-type="info"] :is(._title_zx76t_48, ._icon_zx76t_48) {
+  color: var(--cpd-color-blue-900);
+}
+
+._alert_zx76t_10 p {
+  margin: 0;
+}
+
+._actions_zx76t_64 {
+  flex: 0;
+  display: flex;
+  flex-direction: row;
+  gap: var(--cpd-space-1x);
+  align-self: center;
+}
+
+._icon_zx76t_48 {
+  flex-shrink: 0;
+}
+
+/* @TODO 600px break should be a token */
+
+/* wrap actions into a stacked layout when the alert is <=600px */
+@container alert (max-width: 600px) {
+  ._content_zx76t_37 {
+    flex-wrap: wrap;
+  }
+
+  ._text-content_zx76t_44 {
+    flex: 1 0 100%;
+  }
+}
+/*
+Copyright 2023 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE files in the repository root for full details.
+*/
+
+/**
+ * Font – Body – Extra Small
+ */
+
+._font-body-xs-regular_6v6n8_12 {
+  letter-spacing: var(--cpd-font-letter-spacing-body-xs);
+  font: var(--cpd-font-body-xs-regular);
+}
+
+._font-body-xs-semibold_6v6n8_17 {
+  letter-spacing: var(--cpd-font-letter-spacing-body-xs);
+  font: var(--cpd-font-body-xs-semibold);
+}
+
+._font-body-xs-medium_6v6n8_22 {
+  letter-spacing: var(--cpd-font-letter-spacing-body-xs);
+  font: var(--cpd-font-body-xs-medium);
+}
+
+/**
+ * Font – Body – Small
+ */
+
+._font-body-sm-regular_6v6n8_31 {
+  letter-spacing: var(--cpd-font-letter-spacing-body-sm);
+  font: var(--cpd-font-body-sm-regular);
+}
+
+._font-body-sm-semibold_6v6n8_36 {
+  letter-spacing: var(--cpd-font-letter-spacing-body-sm);
+  font: var(--cpd-font-body-sm-semibold);
+}
+
+._font-body-sm-medium_6v6n8_41 {
+  letter-spacing: var(--cpd-font-letter-spacing-body-sm);
+  font: var(--cpd-font-body-sm-medium);
+}
+
+/**
+ * Font – Body – Medium
+ */
+
+._font-body-md-regular_6v6n8_50 {
+  letter-spacing: var(--cpd-font-letter-spacing-body-md);
+  font: var(--cpd-font-body-md-regular);
+}
+
+._font-body-md-semibold_6v6n8_55 {
+  letter-spacing: var(--cpd-font-letter-spacing-body-md);
+  font: var(--cpd-font-body-md-semibold);
+}
+
+._font-body-md-medium_6v6n8_60 {
+  letter-spacing: var(--cpd-font-letter-spacing-body-md);
+  font: var(--cpd-font-body-md-medium);
+}
+
+/**
+ * Font – Body – Large
+ */
+
+._font-body-lg-regular_6v6n8_69 {
+  letter-spacing: var(--cpd-font-letter-spacing-body-lg);
+  font: var(--cpd-font-body-lg-regular);
+}
+
+._font-body-lg-semibold_6v6n8_74 {
+  letter-spacing: var(--cpd-font-letter-spacing-body-lg);
+  font: var(--cpd-font-body-lg-semibold);
+}
+
+._font-body-lg-medium_6v6n8_79 {
+  letter-spacing: var(--cpd-font-letter-spacing-body-lg);
+  font: var(--cpd-font-body-lg-medium);
+}
+
+/**
+ * Font – Heading – Small
+ */
+
+._font-heading-sm-regular_6v6n8_88 {
+  letter-spacing: var(--cpd-font-letter-spacing-heading-sm);
+  font: var(--cpd-font-heading-sm-regular);
+}
+
+._font-heading-sm-semibold_6v6n8_93 {
+  letter-spacing: var(--cpd-font-letter-spacing-heading-sm);
+  font: var(--cpd-font-heading-sm-semibold);
+}
+
+._font-heading-sm-medium_6v6n8_98 {
+  letter-spacing: var(--cpd-font-letter-spacing-heading-sm);
+  font: var(--cpd-font-heading-sm-medium);
+}
+
+/**
+ * Font – Heading – Medium
+ */
+
+._font-heading-md-regular_6v6n8_107 {
+  letter-spacing: var(--cpd-font-letter-spacing-heading-md);
+  font: var(--cpd-font-heading-md-regular);
+}
+
+._font-heading-md-semibold_6v6n8_112 {
+  letter-spacing: var(--cpd-font-letter-spacing-heading-md);
+  font: var(--cpd-font-heading-md-semibold);
+}
+
+/**
+ * Font – Heading – Large
+ */
+
+._font-heading-lg-regular_6v6n8_121 {
+  letter-spacing: var(--cpd-font-letter-spacing-heading-lg);
+  font: var(--cpd-font-heading-lg-regular);
+}
+
+._font-heading-lg-semibold_6v6n8_126 {
+  letter-spacing: var(--cpd-font-letter-spacing-heading-lg);
+  font: var(--cpd-font-heading-lg-semibold);
+}
+
+/**
+ * Font – Heading – Extra Large
+ */
+
+._font-heading-xl-regular_6v6n8_135 {
+  letter-spacing: var(--cpd-font-letter-spacing-heading-xl);
+  font: var(--cpd-font-heading-xl-regular);
+}
+
+._font-heading-xl-semibold_6v6n8_140 {
+  letter-spacing: var(--cpd-font-letter-spacing-heading-xl);
+  font: var(--cpd-font-heading-xl-semibold);
+}
+
+/**
+  * Reset font-feature-settings after letter-spacing has been tweaked.
+  * We want to apply Inter Dynamic metrics (https://rsms.me/inter/dynmetrics/)
+  * We need to tweak the `letter-spacing` property and doing so, disables by
+  * default the optional ligatures
+  * `font-feature-settings` allows us to override this behaviour and have the
+  * correct ligatures and the proper dynamic metric spacing.
+  */
+._typography_6v6n8_153 {
+  font-feature-settings: var(--cpd-font-feature-settings);
+}
+/*
+Copyright 2023 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE files in the repository root for full details.
+*/
+
+._icon-button_1pz9o_8 {
+  --cpd-icon-button-indicator-border-size: calc(
+    var(--cpd-icon-button-size) * 0.0625
+  );
+
+  inline-size: var(--cpd-icon-button-size);
+  block-size: var(--cpd-icon-button-size);
+
+  /* the icon is 0.75 the size of the button, so add padding to put it in the middle */
+  padding: calc(var(--cpd-icon-button-size) * 0.125);
+  aspect-ratio: 1 / 1;
+  border: 0;
+  appearance: none;
+  cursor: pointer;
+  border-radius: 50%;
+  position: relative;
+  background: transparent;
+  line-height: 0px;
+}
+
+._icon-button_1pz9o_8[data-kind="primary"] {
+  * {
+    color: var(--cpd-color-icon-tertiary);
+  }
+}
+
+._icon-button_1pz9o_8[data-kind="secondary"] {
+  background: var(--cpd-color-bg-subtle-secondary);
+
+  * {
+    color: var(--cpd-color-icon-secondary);
+  }
+}
+
+._no-background_1pz9o_42[data-kind="secondary"] {
+  background: transparent;
+}
+
+._icon-button_1pz9o_8[aria-disabled="true"] {
+  cursor: not-allowed;
+
+  * {
+    color: var(--cpd-color-icon-disabled);
+  }
+}
+
+/**
+ * Hover state
+ */
+
+@media (hover) {
+  ._icon-button_1pz9o_8:not([aria-disabled="true"]):hover {
+    background: var(--cpd-color-bg-subtle-primary);
+
+    * {
+      color: var(--cpd-color-icon-primary);
+    }
+  }
+}
+
+._icon-button_1pz9o_8:not([aria-disabled="true"]):active {
+  background: var(--cpd-color-bg-subtle-primary);
+
+  * {
+    color: var(--cpd-color-icon-primary);
+  }
+}
+
+@media (hover) {
+  ._icon-button_1pz9o_8:not([aria-disabled="true"])[data-indicator]:is(:hover)::before {
+    /* Same colour as the background */
+    border: var(--cpd-icon-button-indicator-border-size) solid
+      var(--cpd-color-bg-subtle-primary);
+    inset-block-start: 0;
+    inset-inline-end: 0;
+  }
+}
+
+._icon-button_1pz9o_8:not([aria-disabled="true"])[data-indicator]:is(:active)::before {
+  /* Same colour as the background */
+  border: var(--cpd-icon-button-indicator-border-size) solid
+    var(--cpd-color-bg-subtle-primary);
+  inset-block-start: 0;
+  inset-inline-end: 0;
+}
+
+@media (hover) {
+  ._icon-button_1pz9o_8:not([aria-disabled="true"])._destructive_1pz9o_95:hover {
+    background: var(--cpd-color-bg-critical-subtle-hovered);
+    outline: 1px solid var(--cpd-color-border-critical-subtle);
+  }
+}
+
+._icon-button_1pz9o_8:not([aria-disabled="true"])._destructive_1pz9o_95 {
+  * {
+    color: var(--cpd-color-icon-critical-primary);
+  }
+}
+/*
+Copyright 2024 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE files in the repository root for full details.
+*/
+
+/*
+ * Note this is very closely coupled to the indicator mask SVG as this masks out
+ * the icon behind to draw the 'stroke' around the indicator dot.
+ *
+ * The SVG is a 24x24px black square with a circle of radius 6 positioned
+ * 4px above and to the right of the canvas. This is the size of the indicator
+ * dot plus the stroke (dimensions calculated from the figma).
+ */
+
+._indicator-icon_zr2a0_17 {
+  /* This is called 'button size' but the docs say 'icon size' */
+  inline-size: var(--cpd-icon-button-size);
+  block-size: var(--cpd-icon-button-size);
+  aspect-ratio: 1 / 1;
+  color: var(--cpd-color-icon-tertiary);
+  position: relative;
+}
+
+._indicator-icon_zr2a0_17 svg {
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+._indicator-icon_zr2a0_17[data-indicator] svg {
+  mask-image: url("data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='UTF-8'?%3e%3csvg%20fill='none'%20version='1.1'%20viewBox='0%200%2024%2024'%20xmlns='http://www.w3.org/2000/svg'%3e%3cpath%20d='m0%200v24h24v-16.359a6%206%200%200%201-2%200.35938%206%206%200%200%201-6-6%206%206%200%200%201%200.35938-2h-16.359z'%20fill='%23000'%20stroke-width='0'/%3e%3c/svg%3e");
+  mask-position: center center;
+  mask-repeat: no-repeat;
+  mask-size: 100%;
+}
+
+._indicator-icon_zr2a0_17[data-indicator]::before {
+  content: "";
+  position: absolute;
+
+  /* The dot is 1/12th above & to the right of the canvas */
+  inset-block-start: -8.3333%;
+  inset-inline-end: -8.3333%;
+
+  /* and is 1/3rd the size of the canvas */
+  inline-size: 33.3333%;
+  block-size: 33.333%;
+  border-radius: 50%;
+  background: var(--cpd-color-icon-primary);
+}
+
+._indicator-icon_zr2a0_17[data-indicator="success"]::before {
+  background: var(--cpd-color-icon-success-primary);
+}
+
+._indicator-icon_zr2a0_17[data-indicator="critical"]::before {
+  background: var(--cpd-color-icon-critical-primary);
+}
+/*
+Copyright 2023, 2024 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE files in the repository root for full details.
+*/
+
+._tooltip_6ode6_8 {
+  font: var(--cpd-font-body-xs-medium);
+  padding: var(--cpd-space-1-5x) var(--cpd-space-3x);
+  background: var(--cpd-color-alpha-gray-1400);
+  color: var(--cpd-color-text-on-solid-primary);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+}
+
+._tooltip_6ode6_8._invisible_6ode6_21 {
+  /* Hide the tooltip in a way that allows it to act as an accessible label,
+  even when invisible */
+  clip-path: inset(50%);
+  pointer-events: none;
+}
+
+._caption_6ode6_28 {
+  font-weight: var(--cpd-font-weight-regular);
+  color: var(--cpd-color-text-secondary);
+}
+
+._arrow_6ode6_33 {
+  /* same color as the tooltip background */
+  fill: var(--cpd-color-alpha-gray-1400);
+}
+/*
+Copyright 2023 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE files in the repository root for full details.
+*/
+
+._avatar_1qbcf_8 {
+  display: inline-block;
+  box-sizing: border-box;
+  line-height: var(--cpd-avatar-size);
+  text-align: center;
+  font-size: min(calc(var(--cpd-avatar-size) * 0.5625), 60px);
+  text-transform: uppercase;
+  speak: none; /* stylelint-disable-line declaration-property-value-no-unknown */
+  font-family: var(--cpd-font-family-sans);
+  font-weight: bold;
+  overflow: hidden;
+  user-select: none;
+
+  /* Set a background color to help with visual consistency when displaying
+   * avatars with a translucent background */
+  background: var(--cpd-color-bg-canvas-default);
+}
+
+button._avatar_1qbcf_8 {
+  /**
+   * The avatar can be a button element, we need to reset its style
+   */
+  padding: 0;
+  border: 0;
+  appearance: none;
+  cursor: pointer;
+}
+
+button._avatar_1qbcf_8:disabled {
+  cursor: not-allowed;
+}
+
+._avatar_1qbcf_8,
+._image_1qbcf_41 {
+  aspect-ratio: 1 / 1;
+  inline-size: var(--cpd-avatar-size);
+  border-radius: var(--cpd-avatar-radius);
+}
+
+._image_1qbcf_41 {
+  object-fit: cover;
+  overflow: hidden;
+}
+
+._avatar-imageless_1qbcf_52 {
+  /* In the future we'd prefer to pass the HEX code as the data attr
+     and use `attr(data-color)` to avoid the style declaration from below
+     but this is currently not supported in all browsers */
+  background: var(--cpd-avatar-bg);
+  color: var(--cpd-avatar-color);
+}
+
+._avatar_1qbcf_8[data-color] {
+  --cpd-avatar-bg: var(--cpd-color-bg-decorative-1);
+  --cpd-avatar-color: var(--cpd-color-text-decorative-1);
+}
+
+._avatar_1qbcf_8[data-color="2"] {
+  --cpd-avatar-bg: var(--cpd-color-bg-decorative-2);
+  --cpd-avatar-color: var(--cpd-color-text-decorative-2);
+}
+
+._avatar_1qbcf_8[data-color="3"] {
+  --cpd-avatar-bg: var(--cpd-color-bg-decorative-3);
+  --cpd-avatar-color: var(--cpd-color-text-decorative-3);
+}
+
+._avatar_1qbcf_8[data-color="4"] {
+  --cpd-avatar-bg: var(--cpd-color-bg-decorative-4);
+  --cpd-avatar-color: var(--cpd-color-text-decorative-4);
+}
+
+._avatar_1qbcf_8[data-color="5"] {
+  --cpd-avatar-bg: var(--cpd-color-bg-decorative-5);
+  --cpd-avatar-color: var(--cpd-color-text-decorative-5);
+}
+
+._avatar_1qbcf_8[data-color="6"] {
+  --cpd-avatar-bg: var(--cpd-color-bg-decorative-6);
+  --cpd-avatar-color: var(--cpd-color-text-decorative-6);
+}
+
+._avatar_1qbcf_8[data-type="round"] {
+  --cpd-avatar-radius: 50%;
+}
+
+._avatar_1qbcf_8[data-type="square"] {
+  --cpd-avatar-radius: 25%;
+}
+
+/**
+ * Stacked avatars 
+ */
+
+._stacked-avatars_1qbcf_102::after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+._stacked-avatars_1qbcf_102 ._avatar_1qbcf_8 {
+  float: inline-start;
+}
+
+._stacked-avatars_1qbcf_102 ._avatar_1qbcf_8:not(:last-child) {
+  /* injected in the document from AvatarStack.tsx */
+  clip-path: url("#cpdAvatarClip");
+}
+
+._stacked-avatars_1qbcf_102 > *:not(:first-child) {
+  margin-inline-start: calc(var(--cpd-avatar-size) * -0.2);
+}
+
+._clip-path_1qbcf_121 {
+  /* In theory the SVG is invisible, but we still need to ensure it doesn't
+  affect the page's layout or otherwise make an appearance */
+  position: fixed;
+  inset-inline-start: -9999px;
+}
+/*
+Copyright 2023 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE files in the repository root for full details.
+*/
+
+._badge_1t12g_8 {
+  display: inline-flex;
+  gap: var(--cpd-space-1x);
+  align-items: center;
+  border-radius: 9999px; /* pill effect */
+  padding: var(--cpd-space-1x) var(--cpd-space-3x);
+}
+
+._badge_1t12g_8[data-kind="default"] {
+  border: 1px solid var(--cpd-color-alpha-gray-400);
+  color: var(--cpd-color-gray-1100);
+}
+
+._badge_1t12g_8[data-kind="grey"] {
+  background: var(--cpd-color-alpha-gray-300);
+  color: var(--cpd-color-gray-1100);
+}
+
+._badge_1t12g_8[data-kind="on-solid"] {
+  background: var(--cpd-color-alpha-gray-1200);
+  color: var(--cpd-color-text-on-solid-primary);
+}
+
+._badge_1t12g_8[data-kind="blue"] {
+  background: var(--cpd-color-alpha-blue-300);
+  color: var(--cpd-color-blue-1100);
+}
+
+._badge_1t12g_8[data-kind="green"] {
+  background: var(--cpd-color-alpha-green-300);
+  color: var(--cpd-color-green-1100);
+}
+
+._badge_1t12g_8[data-kind="red"] {
+  background: var(--cpd-color-alpha-red-300);
+  color: var(--cpd-color-red-1100);
+}
+/*
+Copyright 2023 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE files in the repository root for full details.
+*/
+
+._menu_1glhz_8 {
+  border-radius: var(--cpd-space-3x);
+  background: var(--cpd-color-bg-canvas-default);
+
+  /* Here we use outline to create a border internal to the container. The Radix
+  menu component may try to override it with outline: none, hence the need for
+  !important. */
+  outline: var(--cpd-border-width-1) solid
+    var(--cpd-color-border-interactive-secondary) !important;
+  outline-offset: calc(-1 * var(--cpd-border-width-1));
+  box-shadow: 0 4px 24px 0 rgb(0 0 0 / 10%);
+  inline-size: fit-content;
+  max-inline-size: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--cpd-space-1x);
+  padding-block: var(--cpd-space-5x) var(--cpd-space-4x);
+
+  --cpd-separator-spacing: 0;
+  --cpd-separator-inset: var(--cpd-space-4x);
+}
+
+@keyframes _slide-in_1glhz_1 {
+  from {
+    opacity: 0;
+    transform: translate(0, var(--cpd-space-3x));
+  }
+}
+
+@keyframes _slide-out_1glhz_1 {
+  to {
+    opacity: 0;
+    transform: translate(0, var(--cpd-space-2x));
+  }
+}
+
+._menu_1glhz_8[data-state="open"] {
+  animation: _slide-in_1glhz_1 180ms;
+}
+
+._menu_1glhz_8[data-state="closed"] {
+  animation: _slide-out_1glhz_1 110ms;
+}
+
+@keyframes _fade-in_1glhz_1 {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes _fade-out_1glhz_1 {
+  to {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion) {
+  ._menu_1glhz_8[data-state="open"] {
+    animation-name: _fade-in_1glhz_1;
+  }
+
+  ._menu_1glhz_8[data-state="closed"] {
+    animation-name: _fade-out_1glhz_1;
+  }
+}
+
+._title_1glhz_74 {
+  /** Override MenuTitle margin top **/
+  margin-block-start: 0 !important;
+}
+/*
+ * Copyright 2025 New Vector Ltd
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+ * Please see LICENSE files in the repository root for full details.
+ */
+
+._menu-title_1sgvx_8 {
+  color: var(--cpd-color-text-secondary);
+  padding-inline: var(--cpd-space-4x);
+  padding-block-end: calc(var(--cpd-space-2x) - var(--cpd-border-width-1));
+  border-block-end: var(--cpd-border-width-1) solid var(--cpd-color-gray-400);
+  margin-block: var(--cpd-space-2x);
+}
+/*
+Copyright 2023 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE files in the repository root for full details.
+*/
+
+._bg_610zp_8 {
+  position: fixed;
+  inset: 0;
+
+  /* TODO: This value is used across modals and menu drawers, so would be worth
+  tokenizing */
+  background: rgb(3 12 27 / 52.8%);
+}
+
+._drawer_610zp_17 {
+  position: fixed;
+  background: var(--cpd-color-bg-canvas-default);
+  inset-block-end: 0;
+  inset-inline: 0;
+
+  /* Cap the inline content size at 520px, filling the rest of the space with
+  padding */
+  padding-inline: max(0px, calc((100% - 520px) / 2));
+  border-start-start-radius: var(--border-radius);
+  border-start-end-radius: var(--border-radius);
+  display: flex;
+  flex-direction: column;
+
+  /* Drawer comes in the Android style by default */
+  --border-radius: 28px;
+  --handle-block-size: 4px;
+  --handle-inline-size: 32px;
+  --handle-inset-block-start: var(--cpd-space-4x);
+  --handle-inset-block-end: 0px;
+  --content-inset-block-start: calc(
+    var(--handle-inset-block-start) + var(--handle-block-size) +
+      var(--handle-inset-block-end)
+  );
+}
+
+._drawer_610zp_17[data-platform="ios"] {
+  --border-radius: 10px;
+  --handle-block-size: 5px;
+  --handle-inline-size: 36px;
+  --handle-inset-block-start: var(--cpd-space-1-5x);
+  --handle-inset-block-end: 1px;
+}
+
+._body_610zp_51 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cpd-space-2x);
+  padding-block: calc(var(--content-inset-block-start) + var(--cpd-space-6x))
+    var(--cpd-space-12x);
+  border-start-start-radius: var(--border-radius);
+  border-start-end-radius: var(--border-radius);
+
+  /* Even with overflow: auto, the content can still overflow at the corners
+  where it meets with the curved border. A contain: paint fixes that. */
+  contain: paint;
+  overflow: auto;
+  scrollbar-width: none;
+
+  --cpd-separator-spacing: 0;
+  --cpd-separator-inset: var(--cpd-space-4x);
+}
+
+._body_610zp_51::before {
+  content: "";
+  position: absolute;
+  block-size: var(--handle-block-size);
+  inset-inline: calc((100% - var(--handle-inline-size)) / 2);
+  inset-block-start: var(--handle-inset-block-start);
+  background: var(--cpd-color-icon-secondary);
+  border-radius: var(--cpd-radius-pill-effect);
+}
+/*
+ * Copyright 2025 New Vector Ltd
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+ * Please see LICENSE files in the repository root for full details.
+ */
+
+._content_vnv5k_8[data-state="closed"] {
+  animation: none;
+}
+/*
+Copyright 2023 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE files in the repository root for full details.
+*/
+
+._glass_sepwu_8 {
+  border-radius: var(--cpd-space-9x);
+  padding: var(--cpd-space-3x);
+
+  /* We use an outline here to create an "inner border", rather than one that
+  adds to the component's size */
+  outline: var(--cpd-border-width-1) solid var(--cpd-color-alpha-gray-400);
+  outline-offset: calc(-1 * var(--cpd-border-width-1));
+  background: var(--cpd-color-alpha-gray-400);
+  backdrop-filter: blur(20px);
+}
+
+._glass_sepwu_8 > :first-child {
+  border-radius: var(--cpd-space-6x);
+  inline-size: 100%;
+  block-size: 100%;
+}
+/*
+Copyright 2023 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE files in the repository root for full details.
+*/
+
+._link_1v5rz_8 {
+  display: inline-block;
+  text-decoration: underline;
+  color: var(--cpd-color-text-primary);
+  font-weight: var(--cpd-font-weight-medium);
+  border-radius: var(--cpd-radius-pill-effect);
+  padding-inline: 0.25rem;
+}
+
+._link_1v5rz_8[data-kind="primary"] {
+  color: var(--cpd-color-text-primary);
+}
+
+._link_1v5rz_8[data-kind="critical"] {
+  color: var(--cpd-color-text-critical-primary);
+}
+
+@media (hover) {
+  ._link_1v5rz_8[data-kind="primary"]:hover {
+    background: var(--cpd-color-gray-300);
+  }
+
+  ._link_1v5rz_8[data-kind="critical"]:hover {
+    background: var(--cpd-color-red-300);
+  }
+}
+
+._link_1v5rz_8:active {
+  color: var(--cpd-color-text-on-solid-primary);
+}
+
+._link_1v5rz_8[data-kind="primary"]:active {
+  background: var(--cpd-color-text-primary);
+}
+
+._link_1v5rz_8[data-kind="critical"]:active {
+  background: var(--cpd-color-text-critical-primary);
+}
+
+._link_1v5rz_8[data-size="small"] {
+  font-size: var(--cpd-font-size-body-sm);
+}
+/*
+Copyright 2023 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE files in the repository root for full details.
+*/
+
+._item_dyt4i_8 {
+  display: grid;
+  grid-template: "icon label ." auto "empty1 label empty2" auto / auto auto minmax(
+      /* Reserve space for the chevron so that the layout doesn't shift on
+      hover */
+        var(--cpd-space-2x),
+      1fr
+    );
+  place-items: center end;
+  padding-block: var(--cpd-space-2x);
+  padding-inline: var(--cpd-space-4x);
+  box-sizing: border-box;
+  inline-size: 100%;
+  min-inline-size: 200px;
+  color: var(--cpd-color-text-secondary);
+  background: var(--cpd-color-bg-action-secondary-rest);
+}
+
+._item_dyt4i_8._interactive_dyt4i_26 {
+  cursor: pointer;
+}
+
+._item_dyt4i_8._no-label_dyt4i_30 {
+  grid-template: "icon ." auto / auto 1fr;
+}
+
+._label_dyt4i_34 {
+  grid-area: label;
+  margin-inline-end: var(--cpd-space-4x);
+  text-align: start;
+  word-break: break-word; /* stylelint-disable-line declaration-property-value-keyword-no-deprecated */
+}
+
+._item_dyt4i_8._no-icon_dyt4i_41 {
+  grid-template: "label ." auto / auto 1fr;
+
+  ._label_dyt4i_34 {
+    /* Without icon, the height changes when hovered */
+    min-block-size: 24px;
+  }
+}
+
+._icon_dyt4i_50 {
+  grid-area: icon;
+  margin-inline-end: var(--cpd-space-3x);
+}
+
+._item_dyt4i_8._no-label_dyt4i_30 ._icon_dyt4i_50 {
+  margin-inline-end: var(--cpd-space-4x);
+}
+
+._nav-hint_dyt4i_59 {
+  /* Hidden until the item is hovered over */
+  display: none;
+  flex-shrink: 0;
+}
+
+button._item_dyt4i_8 {
+  appearance: none;
+  border: none;
+}
+
+._item_dyt4i_8[data-kind="primary"] > ._label_dyt4i_34 {
+  color: var(--cpd-color-text-primary);
+}
+
+._item_dyt4i_8[data-kind="primary"] > ._icon_dyt4i_50 {
+  color: var(--cpd-color-icon-primary);
+}
+
+._item_dyt4i_8[data-kind="primary"] > ._nav-hint_dyt4i_59 {
+  color: var(--cpd-color-icon-tertiary);
+}
+
+._item_dyt4i_8[data-kind="critical"] > ._label_dyt4i_34 {
+  color: var(--cpd-color-text-critical-primary);
+}
+
+._item_dyt4i_8[data-kind="critical"] > ._icon_dyt4i_50,
+._item_dyt4i_8[data-kind="critical"] > ._nav-hint_dyt4i_59 {
+  color: var(--cpd-color-icon-critical-primary);
+}
+
+@media (hover) {
+  ._item_dyt4i_8._interactive_dyt4i_26[data-kind="primary"]:hover {
+    background: var(--cpd-color-bg-action-secondary-hovered);
+  }
+
+  ._item_dyt4i_8._interactive_dyt4i_26[data-kind="critical"]:hover {
+    background: var(--cpd-color-bg-critical-subtle);
+  }
+
+  /* Replace the children with the navigation hint on hover */
+  ._item_dyt4i_8._interactive_dyt4i_26:hover > ._nav-hint_dyt4i_59 {
+    display: initial;
+  }
+
+  ._item_dyt4i_8._interactive_dyt4i_26:hover > ._nav-hint_dyt4i_59 ~ * {
+    display: none;
+  }
+}
+
+._item_dyt4i_8._interactive_dyt4i_26[data-kind="primary"]:active {
+  background: var(--cpd-color-bg-action-secondary-pressed);
+}
+
+._item_dyt4i_8._interactive_dyt4i_26[data-kind="critical"]:active {
+  background: var(--cpd-color-bg-critical-subtle-hovered);
+}
+
+._item_dyt4i_8[data-kind]._disabled_dyt4i_118 {
+  pointer-events: none;
+}
+
+._item_dyt4i_8[data-kind]._disabled_dyt4i_118 > ._label_dyt4i_34,
+._item_dyt4i_8[data-kind]._disabled_dyt4i_118 > ._icon_dyt4i_50,
+._item_dyt4i_8[data-kind]._disabled_dyt4i_118 > ._nav-hint_dyt4i_59 {
+  color: var(--cpd-color-text-disabled);
+}
+/*
+Copyright 2025 New Vector Ltd.
+Copyright 2023 The Matrix.org Foundation C.I.C.
+Copyright 2023 New Vector Ltd
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE files in the repository root for full details.
+*/
+
+._container_1e0uz_10 {
+  --size: 20px;
+
+  display: grid;
+  inline-size: var(--size);
+  block-size: var(--size);
+}
+
+._input_1e0uz_18,
+._ui_1e0uz_19 {
+  box-sizing: border-box;
+  grid-area: 1/1;
+  inline-size: var(--size);
+  block-size: var(--size);
+}
+
+._input_1e0uz_18 {
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+._ui_1e0uz_19 {
+  pointer-events: none;
+  border-radius: 50%;
+  border: 1px solid;
+  border-color: var(--cpd-color-border-interactive-primary);
+
+  /* To align the ::after pseudo-element to the center of the radio button */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+._ui_1e0uz_19::after {
+  content: "";
+  inline-size: 6px;
+  block-size: 6px;
+  border-radius: 50%;
+  background: transparent;
+}
+
+._input_1e0uz_18:checked + ._ui_1e0uz_19 {
+  background-color: var(--cpd-color-bg-accent-rest);
+  border-color: var(--cpd-color-bg-accent-rest);
+}
+
+._input_1e0uz_18:checked + ._ui_1e0uz_19::after {
+  background: var(--cpd-color-icon-on-solid-primary);
+}
+
+._input_1e0uz_18:focus-visible + ._ui_1e0uz_19 {
+  outline: 2px solid var(--cpd-color-border-focused);
+  outline-offset: 1px;
+}
+
+._input_1e0uz_18[readonly] {
+  pointer-events: none;
+}
+
+._input_1e0uz_18[readonly] + ._ui_1e0uz_19 {
+  border-color: var(--cpd-color-border-interactive-secondary);
+  background: var(--cpd-color-bg-subtle-secondary);
+}
+
+._input_1e0uz_18[disabled] + ._ui_1e0uz_19 {
+  border-color: var(--cpd-color-border-disabled);
+  background: var(--cpd-color-bg-canvas-disabled);
+}
+
+._input_1e0uz_18[disabled]:checked + ._ui_1e0uz_19 {
+  border-color: var(--cpd-color-bg-action-primary-disabled);
+  background: var(--cpd-color-bg-action-primary-disabled);
+}
+
+._input_1e0uz_18[readonly]:checked + ._ui_1e0uz_19::after {
+  background-color: var(--cpd-color-icon-secondary);
+}
+
+@media (hover) {
+  ._input_1e0uz_18:not([disabled], [readonly], :checked):hover + ._ui_1e0uz_19 {
+    border-color: var(--cpd-color-bg-accent-hovered);
+
+    /** TODO: have the shadow in the design tokens */
+    box-shadow: 0 1.2px 2.4px 0 rgb(0 0 0 / 15%);
+  }
+
+  ._input_1e0uz_18:not([disabled], [readonly], :checked):hover + ._ui_1e0uz_19::after {
+    background: var(--cpd-color-icon-quaternary);
+  }
+
+  ._input_1e0uz_18:not([disabled], [readonly]):checked:hover + ._ui_1e0uz_19 {
+    border-color: var(--cpd-color-bg-accent-hovered);
+    background: var(--cpd-color-bg-accent-hovered);
+  }
+
+  ._input_1e0uz_18[data-invalid]:not([disabled], [readonly]):checked:hover + ._ui_1e0uz_19 {
+    border-color: var(--cpd-color-bg-critical-hovered);
+    background: var(--cpd-color-bg-critical-hovered);
+  }
+}
+
+._input_1e0uz_18[data-invalid]:not([disabled], [readonly], :checked) + ._ui_1e0uz_19 {
+  border-color: var(--cpd-color-border-critical-primary);
+}
+
+._input_1e0uz_18[data-invalid]:not([disabled], [readonly]):checked + ._ui_1e0uz_19 {
+  background-color: var(--cpd-color-bg-critical-primary);
+  border-color: var(--cpd-color-bg-critical-primary);
+}
+/*
+Copyright 2024 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE files in the repository root for full details.
+*/
+
+._progress-bar_9g67e_8 {
+  position: relative;
+  background-color: var(--cpd-color-gray-200);
+  border: 1px solid var(--cpd-color-gray-400);
+  border-radius: var(--cpd-radius-pill-effect);
+  overflow: hidden;
+
+  &[data-size="sm"] {
+    block-size: var(--cpd-space-2x);
+  }
+
+  &[data-size="lg"] {
+    block-size: var(--cpd-space-4x);
+  }
+}
+
+._progress-bar-container_9g67e_24 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cpd-space-1x);
+
+  --cpd-progress-bar-main: var(--cpd-color-text-secondary);
+  --cpd-progress-bar-muted: var(--cpd-color-gray-800);
+
+  &[data-tint="green"] {
+    --cpd-progress-bar-main: var(--cpd-color-text-success-primary);
+    --cpd-progress-bar-muted: var(--cpd-color-green-800);
+  }
+
+  &[data-tint="lime"] {
+    --cpd-progress-bar-main: var(--cpd-color-lime-900);
+    --cpd-progress-bar-muted: var(--cpd-color-lime-800);
+  }
+
+  &[data-tint="orange"] {
+    --cpd-progress-bar-main: var(--cpd-color-orange-900);
+    --cpd-progress-bar-muted: var(--cpd-color-orange-800);
+  }
+
+  &[data-tint="red"] {
+    --cpd-progress-bar-main: var(--cpd-color-text-critical-primary);
+    --cpd-progress-bar-muted: var(--cpd-color-red-800);
+  }
+}
+
+._progress-bar-label_9g67e_53 {
+  font: var(--cpd-font-body-sm-medium);
+  letter-spacing: var(--cpd-font-letter-spacing-body-sm);
+  color: var(--cpd-progress-bar-main);
+}
+
+._progress-bar-indicator_9g67e_59 {
+  position: absolute;
+  inset: 0;
+  transition: transform 0.2s ease-in-out;
+  background-image: linear-gradient(
+    135deg,
+    var(--cpd-progress-bar-muted) 0%,
+    var(--cpd-progress-bar-muted) 25%,
+    var(--cpd-progress-bar-main) 25%,
+    var(--cpd-progress-bar-main) 50%,
+    var(--cpd-progress-bar-muted) 50%,
+    var(--cpd-progress-bar-muted) 75%,
+    var(--cpd-progress-bar-main) 75%,
+    var(--cpd-progress-bar-main) 100%,
+    var(--cpd-progress-bar-muted) 100%
+  );
+
+  /* sqrt(number of stripes * 2 * (stripe width)^2) = sqrt(4 * 2 * 2^2) = sqrt(32) */
+  background-size: 5.6569px 5.6569px;
+}
+/*
+Copyright 2023 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE files in the repository root for full details.
+*/
+
+._search_b2pjl_8 {
+  border: 1px solid var(--cpd-color-border-interactive-secondary);
+  border-radius: 9999px;
+  block-size: 36px;
+  box-sizing: border-box;
+  color: var(--cpd-color-text-primary);
+  display: flex;
+
+  /* !important to override Field's default flex settings */
+  flex-direction: row !important;
+  gap: var(--cpd-space-2x) !important;
+  align-items: center;
+  padding: var(--cpd-space-1-5x) var(--cpd-space-3x);
+}
+
+@media (hover) {
+  ._search_b2pjl_8:hover {
+    border-color: var(--cpd-color-border-interactive-hovered);
+  }
+}
+
+._search_b2pjl_8:active {
+  border-color: var(--cpd-color-border-interactive-hovered);
+}
+
+._search_b2pjl_8:focus-within {
+  border-color: currentcolor;
+}
+
+._icon_b2pjl_37 {
+  color: var(--cpd-color-icon-secondary);
+  flex-shrink: 0;
+}
+
+@media (hover) {
+  ._search_b2pjl_8:hover ._icon_b2pjl_37 {
+    color: var(--cpd-color-icon-primary);
+  }
+}
+
+._search_b2pjl_8:active ._icon_b2pjl_37 {
+  color: var(--cpd-color-icon-primary);
+}
+
+._input_b2pjl_52 {
+  border: 0;
+  background: inherit;
+  outline: 0;
+  flex: 1;
+  min-inline-size: 0;
+}
+
+._input_b2pjl_52::placeholder {
+  color: var(--cpd-color-text-secondary);
+}
+
+._input_b2pjl_52:focus::placeholder {
+  color: var(--cpd-color-text-secondary);
+}
+
+@media (hover) {
+  ._search_b2pjl_8:hover ._input_b2pjl_52::placeholder {
+    color: var(--cpd-color-text-secondary);
+  }
+}
+/*
+Copyright 2025 New Vector Ltd.
+Copyright 2023 The Matrix.org Foundation C.I.C.
+Copyright 2023 New Vector Ltd
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE files in the repository root for full details.
+*/
+
+/* Styling the Radix UI Form component */
+
+/**
+ * ROOT: Form Element
+ */
+
+._root_19upo_16 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cpd-space-5x);
+}
+
+/**
+ * FIELD: Wrapper around label, control and message
+ */
+
+._field_19upo_26 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cpd-space-1x);
+}
+
+._inline-field_19upo_32 {
+  display: flex;
+  flex-direction: row;
+  gap: var(--cpd-space-2x);
+}
+
+._inline-field-body_19upo_38 {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+._inline-field-control_19upo_44 {
+  /* The control should have the same height as the label */
+  block-size: calc(
+    var(--cpd-font-size-body-md) * var(--cpd-font-line-height-regular)
+  );
+
+  /* Align the control in the middle of the label */
+  display: flex;
+  align-items: center;
+}
+
+/**
+ * LABEL
+ */
+
+._label_19upo_59 {
+  font: var(--cpd-font-body-md-medium);
+  letter-spacing: var(--cpd-font-letter-spacing-body-md);
+}
+
+._label_19upo_59[for] {
+  cursor: pointer;
+}
+
+._label_19upo_59[data-invalid] {
+  color: var(--cpd-color-text-critical-primary);
+}
+
+/* Currently working everywhere but on Firefox (only behind a labs flag)
+https://developer.mozilla.org/en-US/docs/Web/CSS/:has#browser_compatibility */
+._label_19upo_59:has(~ * input[disabled]),
+._label_19upo_59:has(~ input[disabled]),
+._inline-field-control_19upo_44:has(input[disabled]) ~ ._inline-field-body_19upo_38 ._label_19upo_59 {
+  color: var(--cpd-color-text-disabled);
+  cursor: not-allowed;
+}
+
+/**
+ * Help and error messages
+ */
+
+._message_19upo_85 {
+  font: var(--cpd-font-body-sm-regular);
+  letter-spacing: var(--cpd-font-letter-spacing-body-sm);
+  margin-block-start: var(--cpd-space-1x);
+}
+
+._help-message_19upo_91 {
+  color: var(--cpd-color-text-secondary);
+}
+
+._error-message_19upo_95 {
+  color: var(--cpd-color-text-critical-primary);
+}
+
+._success-message_19upo_99 {
+  color: var(--cpd-color-text-success-primary);
+}
+
+/* Currently working everywhere but on Firefox (only behind a labs flag)
+https://developer.mozilla.org/en-US/docs/Web/CSS/:has#browser_compatibility */
+input[disabled] ~ ._message_19upo_85,
+*:has(input[disabled]) ~ ._message_19upo_85,
+._inline-field-control_19upo_44:has(input[disabled]) ~ ._inline-field-body_19upo_38 ._message_19upo_85 {
+  color: var(--cpd-color-text-disabled);
+}
+
+._message_19upo_85 > svg {
+  display: inline-block;
+  vertical-align: bottom;
+  margin-inline-end: var(--cpd-space-2x);
+
+  /* Calculate the size of the icon based on the font size and line height */
+  block-size: calc(1em * var(--cpd-font-line-height-regular));
+  inline-size: calc(1em * var(--cpd-font-line-height-regular));
+}
+/*
+Copyright 2023, 2024 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE files in the repository root for full details.
+*/
+
+._separator_7ckbw_8 {
+  --cpd-separator-color: var(--cpd-color-gray-400);
+  --cpd-separator-size: 1px;
+
+  background-color: var(--cpd-separator-color);
+}
+
+._separator_7ckbw_8[data-kind="secondary"] {
+  --cpd-separator-color: var(--cpd-color-gray-300);
+}
+
+._separator_7ckbw_8[data-kind="section"] {
+  --cpd-separator-size: 2px;
+}
+
+._separator_7ckbw_8[data-orientation="horizontal"] {
+  margin-block: var(--cpd-separator-spacing);
+  margin-inline: var(--cpd-separator-inset);
+  block-size: var(--cpd-separator-size);
+}
+
+._separator_7ckbw_8[data-orientation="vertical"] {
+  margin-inline: var(--cpd-separator-spacing);
+  margin-block: var(--cpd-separator-inset);
+  inline-size: var(--cpd-separator-size);
+}
+/*
+Copyright 2025 New Vector Ltd.
+Copyright 2023 The Matrix.org Foundation C.I.C.
+Copyright 2023 New Vector Ltd
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE files in the repository root for full details.
+*/
+
+._container_19o42_10 {
+  display: grid;
+  inline-size: 2.25rem;
+  block-size: 1.25rem;
+  box-sizing: border-box;
+}
+
+._container_19o42_10 > * {
+  grid-area: 1/1;
+  inline-size: inherit;
+  block-size: inherit;
+  box-sizing: inherit;
+}
+
+._container_19o42_10 > ._input_19o42_24 {
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+._container_19o42_10 > ._input_19o42_24[disabled] {
+  cursor: not-allowed;
+}
+
+._ui_19o42_34 {
+  pointer-events: none;
+  border-radius: var(--cpd-radius-pill-effect);
+  border: 1px solid var(--cpd-color-border-interactive-primary);
+  background: var(--cpd-color-bg-canvas-default);
+  position: relative;
+  padding: 1px;
+  transition-duration: 0.2s;
+  transition-timing-function: ease-in-out;
+  transition-property: background-color, border-color;
+}
+
+._input_19o42_24:checked + ._ui_19o42_34 {
+  background: var(--cpd-color-bg-accent-rest);
+  border-color: var(--cpd-color-bg-accent-rest);
+}
+
+._ui_19o42_34::after {
+  content: "";
+  display: block;
+  block-size: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  background: var(--cpd-color-icon-secondary);
+  transform: translateX(0);
+  transition-duration: 0.2s;
+  transition-timing-function: ease-in-out;
+  transition-property: background-color, transform;
+}
+
+/* Note the use of :focus-visible rather than :focus to avoid showing the focus
+ring after a simple click */
+._input_19o42_24:focus-visible + ._ui_19o42_34 {
+  outline: 2px solid var(--cpd-color-border-focused);
+  outline-offset: 1px;
+}
+
+:checked + ._ui_19o42_34::after {
+  transform: translateX(100%);
+  background: var(--cpd-color-icon-on-solid-primary);
+}
+
+@media (hover) {
+  :checked:not([disabled]):hover + ._ui_19o42_34 {
+    background: var(--cpd-color-bg-accent-hovered);
+    border-color: var(--cpd-color-bg-accent-hovered);
+  }
+}
+
+:checked:active + ._ui_19o42_34 {
+  background: var(--cpd-color-bg-accent-hovered);
+  border-color: var(--cpd-color-bg-accent-hovered);
+}
+
+._input_19o42_24[readonly] {
+  pointer-events: none;
+}
+
+._input_19o42_24[readonly] + ._ui_19o42_34 {
+  border-color: var(--cpd-color-border-interactive-secondary);
+  background: var(--cpd-color-bg-subtle-secondary);
+}
+
+._input_19o42_24[readonly] + ._ui_19o42_34::after {
+  background: var(--cpd-color-icon-secondary);
+}
+
+._input_19o42_24[disabled] + ._ui_19o42_34 {
+  border-color: var(--cpd-color-border-disabled);
+  background: var(--cpd-color-bg-canvas-disabled);
+}
+
+._input_19o42_24[disabled] + ._ui_19o42_34::after {
+  background: var(--cpd-color-bg-action-primary-disabled);
+}
+
+._input_19o42_24[readonly]:checked + ._ui_19o42_34 {
+  border-color: var(--cpd-color-icon-secondary);
+  background: var(--cpd-color-icon-secondary);
+}
+
+._input_19o42_24[readonly]:checked + ._ui_19o42_34::after {
+  background: var(--cpd-color-icon-on-solid-primary);
+}
+
+._input_19o42_24[disabled]:checked + ._ui_19o42_34 {
+  background: var(--cpd-color-bg-action-primary-disabled);
+  border-color: var(--cpd-color-bg-action-primary-disabled);
+}
+
+._input_19o42_24[disabled]:checked + ._ui_19o42_34::after {
+  background: var(--cpd-color-icon-on-solid-primary);
+}
+
+@media (hover) {
+  ._input_19o42_24:not(:checked, [disabled], [readonly]):hover + ._ui_19o42_34 {
+    border-color: var(--cpd-color-border-interactive-hovered);
+
+    /** TODO: have the shadow in the design tokens */
+    box-shadow: 0 1.2px 2.4px 0 rgb(0 0 0 / 15%);
+  }
+}
+
+._input_19o42_24:not(:checked, [disabled], [readonly]):active + ._ui_19o42_34 {
+  border-color: var(--cpd-color-border-interactive-hovered);
+}
+/*
+Copyright 2025 New Vector Ltd.
+Copyright 2023 The Matrix.org Foundation C.I.C.
+Copyright 2023 New Vector Ltd
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE files in the repository root for full details.
+*/
+
+._container_1hel1_10 {
+  --size: 20px;
+
+  display: grid;
+  inline-size: var(--size);
+  block-size: var(--size);
+}
+
+._input_1hel1_18,
+._ui_1hel1_19 {
+  box-sizing: border-box;
+  grid-area: 1/1;
+  inline-size: var(--size);
+  block-size: var(--size);
+}
+
+._input_1hel1_18 {
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+._ui_1hel1_19 {
+  pointer-events: none;
+  border-radius: 4px; /* TODO: Ought to be a token */
+  border: 1px solid;
+  border-color: var(--cpd-color-border-interactive-primary);
+
+  /** Default, rest state */
+  color: transparent;
+}
+
+._ui_1hel1_19 svg {
+  inline-size: var(--size);
+  block-size: var(--size);
+
+  /* compensate for the parent border */
+  margin: -1px;
+}
+
+._input_1hel1_18:checked + ._ui_1hel1_19 {
+  color: var(--cpd-color-icon-on-solid-primary);
+  background-color: var(--cpd-color-bg-accent-rest);
+  border-color: var(--cpd-color-bg-accent-rest);
+}
+
+._input_1hel1_18:focus-visible + ._ui_1hel1_19 {
+  outline: 2px solid var(--cpd-color-border-focused);
+  outline-offset: 1px;
+}
+
+._input_1hel1_18[disabled] + ._ui_1hel1_19 {
+  border-color: var(--cpd-color-border-disabled);
+  background: var(--cpd-color-bg-canvas-disabled);
+}
+
+._input_1hel1_18[readonly] {
+  pointer-events: none;
+}
+
+._input_1hel1_18[readonly] + ._ui_1hel1_19 {
+  border-color: var(--cpd-color-border-interactive-secondary);
+  background: var(--cpd-color-bg-subtle-secondary);
+}
+
+._input_1hel1_18[disabled]:checked + ._ui_1hel1_19 {
+  border-color: var(--cpd-color-bg-action-primary-disabled);
+  background: var(--cpd-color-bg-action-primary-disabled);
+}
+
+._input_1hel1_18[readonly]:checked + ._ui_1hel1_19 {
+  color: var(--cpd-color-icon-secondary);
+}
+
+@media (hover) {
+  ._input_1hel1_18:not([disabled], [readonly], :checked):hover + ._ui_1hel1_19 {
+    color: var(--cpd-color-icon-quaternary);
+    border-color: var(--cpd-color-bg-accent-hovered);
+
+    /** TODO: have the shadow in the design tokens */
+    box-shadow: 0 1.2px 2.4px 0 rgb(0 0 0 / 15%);
+  }
+
+  ._input_1hel1_18:not([disabled], [readonly]):checked:hover + ._ui_1hel1_19 {
+    border-color: var(--cpd-color-bg-accent-hovered);
+    background: var(--cpd-color-bg-accent-hovered);
+  }
+
+  ._input_1hel1_18[data-invalid]:not([disabled], [readonly]):checked:hover + ._ui_1hel1_19 {
+    border-color: var(--cpd-color-bg-critical-hovered);
+    background: var(--cpd-color-bg-critical-hovered);
+  }
+}
+
+._input_1hel1_18[data-invalid]:not([disabled], :checked, [readonly]) + ._ui_1hel1_19 {
+  border-color: var(--cpd-color-border-critical-primary);
+}
+
+._input_1hel1_18[data-invalid]:not([disabled], [readonly]):checked + ._ui_1hel1_19 {
+  background-color: var(--cpd-color-bg-critical-primary);
+  border-color: var(--cpd-color-bg-critical-primary);
+}
+/*
+Copyright 2024 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE files in the repository root for full details.
+*/
+
+._toast-container_xzz4o_8 {
+  inline-size: fit-content;
+  background-color: var(--cpd-color-alpha-gray-1300);
+  color: var(--cpd-color-text-on-solid-primary);
+  border-radius: 99px;
+  font-size: var(--cpd-font-body-sm-medium);
+  padding: var(--cpd-space-2x) var(--cpd-space-4x);
+}
+/*
+Copyright 2024 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE files in the repository root for full details.
+*/
+
+@keyframes _spin_11k6c_1 {
+  from {
+    transform: rotateZ(0deg);
+  }
+
+  to {
+    transform: rotateZ(360deg);
+  }
+}
+
+._icon_11k6c_18 {
+  color: var(--cpd-color-icon-secondary);
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  inline-size: 100%;
+  block-size: 100%;
+  animation: 1s linear _spin_11k6c_1 infinite;
+}
+/*
+Copyright 2023, 2024 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE files in the repository root for full details.
+*/
+
+._button_vczzf_8 {
+  border-radius: var(--cpd-radius-pill-effect);
+  cursor: pointer;
+  appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--cpd-space-2x);
+  box-sizing: border-box;
+  font: var(--cpd-font-body-md-semibold);
+  transition-duration: 0.1s;
+  transition-property: color, background-color, border-color;
+}
+
+a._button_vczzf_8 {
+  /* Make the width match that of a real button */
+  inline-size: max-content;
+}
+
+._button_vczzf_8 > svg {
+  transition: color 0.1s;
+}
+
+._button_vczzf_8[aria-disabled="true"] {
+  cursor: not-allowed;
+  pointer-events: all !important;
+  color: var(--cpd-color-text-disabled) !important;
+}
+
+._button_vczzf_8[aria-disabled="true"] > svg {
+  color: var(--cpd-color-icon-disabled) !important;
+}
+
+/**
+ * SIZES
+ */
+
+._button_vczzf_8[data-size="lg"] {
+  padding-block: var(--cpd-space-2x);
+  padding-inline: var(--cpd-space-8x);
+  min-block-size: var(--cpd-space-12x);
+
+  &._icon-only_vczzf_50 {
+    padding-inline: var(--cpd-space-2x);
+    block-size: var(--cpd-space-12x);
+    inline-size: var(--cpd-space-12x);
+  }
+}
+
+._button_vczzf_8[data-size="lg"]._has-icon_vczzf_57:not(._icon-only_vczzf_50) {
+  padding-inline-start: var(--cpd-space-7x);
+}
+
+._button_vczzf_8[data-size="sm"] {
+  padding-block: var(--cpd-space-1x);
+  padding-inline: var(--cpd-space-5x);
+  min-block-size: var(--cpd-space-9x);
+
+  &._icon-only_vczzf_50 {
+    padding-inline: var(--cpd-space-1x);
+    block-size: var(--cpd-space-9x);
+    inline-size: var(--cpd-space-9x);
+  }
+}
+
+._button_vczzf_8[data-size="sm"]._has-icon_vczzf_57:not(._icon-only_vczzf_50) {
+  padding-inline-start: var(--cpd-space-4x);
+}
+
+/**
+ * KINDS
+ */
+
+._button_vczzf_8[data-kind="primary"] {
+  color: var(--cpd-color-text-on-solid-primary);
+  background: var(--cpd-color-bg-action-primary-rest);
+  border-width: 0;
+}
+
+._button_vczzf_8[data-kind="primary"] > svg {
+  color: var(--cpd-color-icon-on-solid-primary);
+}
+
+@media (hover) {
+  ._button_vczzf_8[data-kind="primary"]:hover {
+    background: var(--cpd-color-bg-action-primary-hovered);
+  }
+}
+
+._button_vczzf_8[data-kind="primary"]:active,
+._button_vczzf_8[data-kind="primary"][aria-expanded="true"] {
+  background: var(--cpd-color-bg-action-primary-pressed);
+}
+
+._button_vczzf_8[data-kind="primary"][aria-disabled="true"] {
+  /* !important to override destructive background */
+  background: var(--cpd-color-bg-subtle-primary) !important;
+}
+
+._button_vczzf_8[data-kind="primary"]._destructive_vczzf_107 {
+  background: var(--cpd-color-bg-critical-primary);
+}
+
+@media (hover) {
+  ._button_vczzf_8[data-kind="primary"]._destructive_vczzf_107:hover {
+    background: var(--cpd-color-bg-critical-hovered);
+  }
+}
+
+._button_vczzf_8[data-kind="primary"]._destructive_vczzf_107:active,
+._button_vczzf_8[data-kind="primary"]._destructive_vczzf_107[aria-expanded="true"] {
+  /* TODO: We're waiting for this value to be formalized as a semantic token */
+  background: var(--cpd-color-red-1100);
+}
+
+._button_vczzf_8[data-kind="secondary"] {
+  border: 1px solid var(--cpd-color-border-interactive-secondary);
+  color: var(--cpd-color-text-primary);
+  background: var(--cpd-color-bg-canvas-default);
+}
+
+._button_vczzf_8[data-kind="secondary"] > svg {
+  color: var(--cpd-color-icon-primary);
+}
+
+@media (hover) {
+  ._button_vczzf_8[data-kind="secondary"]:hover {
+    border-color: var(--cpd-color-border-interactive-hovered);
+    background: var(--cpd-color-bg-subtle-secondary);
+  }
+}
+
+._button_vczzf_8[data-kind="secondary"]:active,
+._button_vczzf_8[data-kind="secondary"][aria-expanded="true"] {
+  border-color: var(--cpd-color-border-interactive-hovered);
+  background: var(--cpd-color-bg-subtle-primary);
+}
+
+._button_vczzf_8[data-kind="secondary"][aria-disabled="true"] {
+  /* !important to override destructive values */
+  border-color: var(--cpd-color-border-interactive-secondary) !important;
+  background: var(--cpd-color-bg-subtle-secondary) !important;
+}
+
+._button_vczzf_8[data-kind="secondary"]._destructive_vczzf_107 {
+  border-color: var(--cpd-color-border-critical-subtle);
+  color: var(--cpd-color-text-critical-primary);
+}
+
+._button_vczzf_8[data-kind="secondary"]._destructive_vczzf_107 > svg {
+  color: var(--cpd-color-icon-critical-primary);
+}
+
+@media (hover) {
+  ._button_vczzf_8[data-kind="secondary"]._destructive_vczzf_107:hover {
+    border-color: var(--cpd-color-border-critical-hovered);
+    background: var(--cpd-color-bg-critical-subtle);
+  }
+}
+
+._button_vczzf_8[data-kind="secondary"]._destructive_vczzf_107:active,
+._button_vczzf_8[data-kind="secondary"]._destructive_vczzf_107[aria-expanded="true"] {
+  border-color: var(--cpd-color-border-critical-hovered);
+  background: var(--cpd-color-bg-critical-subtle-hovered);
+}
+
+._button_vczzf_8[data-kind="tertiary"] {
+  border: none;
+  color: var(--cpd-color-text-primary);
+  text-decoration: underline;
+  background: transparent;
+}
+
+@media (hover) {
+  ._button_vczzf_8[data-kind="tertiary"]:hover {
+    background: var(--cpd-color-bg-subtle-secondary);
+  }
+}
+
+._button_vczzf_8[data-kind="tertiary"]:active,
+._button_vczzf_8[data-kind="tertiary"][aria-expanded="true"] {
+  background: var(--cpd-color-bg-subtle-primary);
+}
+
+._button_vczzf_8[data-kind="tertiary"][aria-disabled="true"] {
+  color: var(--cpd-color-text-disabled);
+
+  /* !important to override destructive background */
+  background: transparent !important;
+}
+
+._button_vczzf_8[data-kind="tertiary"]._destructive_vczzf_107 {
+  color: var(--cpd-color-text-critical-primary);
+}
+
+@media (hover) {
+  ._button_vczzf_8[data-kind="tertiary"]._destructive_vczzf_107:hover {
+    background: var(--cpd-color-bg-critical-subtle);
+  }
+}
+
+._button_vczzf_8[data-kind="tertiary"]._destructive_vczzf_107:active,
+._button_vczzf_8[data-kind="tertiary"]._destructive_vczzf_107[aria-expanded="true"] {
+  background: var(--cpd-color-bg-critical-subtle-hovered);
+}
+/*
+Copyright 2023 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE files in the repository root for full details.
+*/
+
+._container_1s836_8 {
+  display: inline-flex;
+  position: relative;
+}
+
+._control_1s836_13 {
+  flex: 1;
+  padding-inline-end: var(--cpd-space-12x) !important;
+
+  /* From the flexbox spec:
+   *   "By default, flex items won’t shrink below their minimum content size"
+   * This allows the element to shrink lower than its natural default size.
+   */
+  min-inline-size: 0;
+}
+
+._action_1s836_24 {
+  all: unset;
+  color: var(--cpd-color-icon-secondary);
+  background-color: transparent;
+  cursor: pointer;
+  position: absolute;
+  inset-block: var(--cpd-space-2x);
+  inset-inline-end: var(--cpd-space-2x);
+  padding: var(--cpd-space-1x);
+  overflow: visible;
+  border-radius: 50%;
+}
+
+._action_1s836_24 > svg {
+  inline-size: var(--cpd-space-6x);
+  block-size: var(--cpd-space-6x);
+}
+
+@media (hover) {
+  ._action_1s836_24:hover {
+    color: var(--cpd-color-icon-primary);
+    background-color: var(--cpd-color-bg-subtle-secondary);
+  }
+}
+
+._action_1s836_24:focus-visible {
+  outline: 2px solid var(--cpd-color-border-focused);
+  outline-offset: 1px;
+}
+
+._control_1s836_13[disabled] + ._action_1s836_24 {
+  pointer-events: none;
+  color: var(--cpd-color-text-disabled);
+}
+
+._control_1s836_13[readonly] + ._action_1s836_24 {
+  pointer-events: none;
+  color: var(--cpd-color-text-secondary);
+}
+/*
+Copyright 2025 New Vector Ltd.
+Copyright 2023 The Matrix.org Foundation C.I.C.
+Copyright 2023 New Vector Ltd
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE files in the repository root for full details.
+*/
+
+._control_sqdq4_10 {
+  border: 1px solid var(--cpd-color-border-interactive-primary);
+  background: var(--cpd-color-bg-canvas-default);
+  border-radius: 0.5rem;
+  padding: var(--cpd-space-3x) var(--cpd-space-4x);
+  box-sizing: border-box;
+
+  /**
+  * Disable contextual alternate ligatures in inputs
+  * https://github.com/rsms/inter/issues/222
+  * https://github.com/rsms/inter/blob/master/src/features/calt.fea
+  */
+  font-feature-settings: "calt" 0;
+}
+
+@media (hover) {
+  ._control_sqdq4_10:hover {
+    border-color: var(--cpd-color-border-interactive-hovered);
+
+    /** TODO: have the shadow in the design tokens */
+    box-shadow: 0 1.2px 2.4px 0 rgb(0 0 0 / 15%);
+  }
+}
+
+._control_sqdq4_10:active {
+  border-color: var(--cpd-color-border-interactive-hovered);
+}
+
+._control_sqdq4_10:focus {
+  outline: 2px solid var(--cpd-color-border-focused);
+  border-color: transparent;
+}
+
+._control_sqdq4_10[data-invalid] {
+  border-color: var(--cpd-color-text-critical-primary);
+}
+
+._control_sqdq4_10:disabled {
+  box-shadow: none;
+  background: var(--cpd-color-bg-canvas-disabled);
+  border-color: var(--cpd-color-border-disabled);
+  color: var(--cpd-color-text-disabled);
+  cursor: not-allowed;
+}
+
+._control_sqdq4_10[readonly] {
+  box-shadow: none;
+  background: var(--cpd-color-bg-subtle-secondary);
+  border-color: var(--cpd-color-bg-subtle-secondary);
+  color: var(--cpd-color-text-secondary);
+}
+
+._control_sqdq4_10._enable-ligatures_sqdq4_62 {
+  font-feature-settings: var(--cpd-font-feature-settings);
+}
+/*
+Copyright 2025 New Vector Ltd.
+Copyright 2023 The Matrix.org Foundation C.I.C.
+Copyright 2023 New Vector Ltd
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE files in the repository root for full details.
+*/
+
+._container_43om7_10 {
+  --gap: var(--cpd-space-3x);
+  --digit-size: var(--cpd-space-10x);
+  --digit-height: var(--cpd-space-12x);
+
+  display: flex;
+  inline-size: fit-content;
+  flex-direction: row;
+  gap: var(--gap);
+
+  /* The input is positioned absolutely
+     so the container needs to be positioned relatively */
+  position: relative;
+}
+
+._control_43om7_25 {
+  all: unset;
+
+  /** TODO: semantic token */
+  font-family: var(--cpd-font-family-mono), ui-monospace, monospace;
+  font-weight: 700;
+
+  /* Position the input to fill the container */
+  position: absolute;
+  inset: 0;
+
+  /* Spacing between digits is set to the gap
+     plus the size of one digit box
+     minus the size of one character */
+  letter-spacing: calc(var(--gap) + var(--digit-size) - 1ch);
+  line-height: var(--digit-height);
+
+  /* The padding at the start positions the first digit at the middle of the digit box */
+  padding-inline-start: calc(var(--cpd-space-10x) / 2 - (1ch / 2));
+
+  /* The negative margin at the end is to keep space for the cursor when the input is full */
+  margin-inline-end: calc(-1 * (var(--cpd-space-10x) + var(--cpd-space-3x)));
+}
+
+._digit_43om7_49 {
+  box-sizing: border-box;
+  inline-size: var(--cpd-space-10x);
+  block-size: var(--cpd-space-12x);
+  border: 1px solid var(--cpd-color-border-interactive-primary);
+  background: var(--cpd-color-bg-canvas-default);
+  border-radius: 0.5rem;
+  padding: var(--cpd-space-3x) var(--cpd-space-4x);
+}
+
+@media (hover) {
+  ._control_43om7_25:hover ~ ._digit_43om7_49 {
+    border-color: var(--cpd-color-border-interactive-hovered);
+
+    /** TODO: have the shadow in the design tokens */
+    box-shadow: 0 1.2px 2.4px 0 rgb(0 0 0 / 15%);
+  }
+}
+
+._control_43om7_25:disabled {
+  color: var(--cpd-color-text-disabled);
+  cursor: not-allowed;
+}
+
+._control_43om7_25:disabled ~ ._digit_43om7_49 {
+  box-shadow: none;
+  background: var(--cpd-color-bg-canvas-disabled);
+  border-color: var(--cpd-color-border-disabled);
+}
+
+._control_43om7_25[readonly] {
+  color: var(--cpd-color-text-secondary);
+}
+
+._control_43om7_25[readonly] ~ ._digit_43om7_49 {
+  box-shadow: none;
+  background: var(--cpd-color-bg-subtle-secondary);
+  border-color: var(--cpd-color-bg-subtle-secondary);
+}
+
+._control_43om7_25[data-invalid] ~ ._digit_43om7_49 {
+  border-color: var(--cpd-color-text-critical-primary);
+}
+
+._control_43om7_25:focus ~ ._digit_43om7_49:not([data-filled]) {
+  outline: 2px solid var(--cpd-color-border-focused);
+  border-color: transparent;
+}
+
+._digit_43om7_49[data-selected] {
+  border-color: var(--cpd-color-border-focused);
+  background-color: var(--cpd-color-bg-info-subtle);
+}
+/*
+Copyright 2024 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE files in the repository root for full details.
+*/
+
+._controls_17lij_8 {
+  display: flex;
+  gap: 15px;
+
+  & > input {
+    flex: 1;
+    min-inline-size: 0;
+  }
+}
+
+._button-group_17lij_18 {
+  display: flex;
+  inset-block-start: var(--cpd-space-1x);
+  align-items: center;
+  gap: var(--cpd-space-2x);
+}
+/*
+Copyright 2025 New Vector Ltd.
+Copyright 2023 The Matrix.org Foundation C.I.C.
+Copyright 2023 New Vector Ltd
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE files in the repository root for full details.
+*/
+
+:root {
+  --cpd-radius-pill-effect: 9999px;
+
+  /* Default icon and avatar size */
+  --cpd-icon-button-size: var(--cpd-space-8x);
+  --cpd-avatar-size: var(--cpd-space-16x);
+
+  /**
+  * We want to apply Inter Dynamic metrics (https://rsms.me/inter/dynmetrics/)
+  * We need to tweak the `letter-spacing` property and doing so, disables by
+  * default the optional ligatures
+  * `font-feature-settings` allows us to override this behaviour and have the
+  * correct ligatures and the proper dynamic metric spacing.
+  */
+  --cpd-font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+  --cpd-separator-spacing: var(--cpd-space-2x);
+  --cpd-separator-inset: 0;
+}
+
+html,
+body,
+input {
+  font: var(--cpd-font-body-md-regular);
+  color: var(--cpd-color-text-primary);
+  font-feature-settings: var(--cpd-font-feature-settings);
+}
+
+html,
+body {
+  block-size: 100%;
+  font-size: var(--cpd-font-size-root);
+}
+
+body {
+  background: var(--cpd-color-bg-canvas-default);
+}
+/*
+Copyright 2024 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE files in the repository root for full details.
+*/
+
+._content_o77nw_8 {
+  display: inline-flex;
+  background-color: var(--cpd-color-bg-subtle-secondary);
+  padding: var(--cpd-space-4x);
+  border-radius: var(--cpd-space-2x);
+  color: var(--cpd-color-icon-secondary);
+
+  > svg {
+    inline-size: 32px;
+    block-size: 32px;
+  }
+}
+
+._content_o77nw_8[data-size="medium"] {
+  padding: var(--cpd-space-3x);
+}
+
+._content_o77nw_8[data-size="small"] {
+  padding: var(--cpd-space-3x);
+
+  > svg {
+    inline-size: 24px;
+    block-size: 24px;
+  }
+}
+
+._destructive_o77nw_34 {
+  background-color: var(--cpd-color-bg-critical-subtle);
+  color: var(--cpd-color-icon-critical-primary);
+}
+
+._success_o77nw_39 {
+  background-color: var(--cpd-color-bg-success-subtle);
+  color: var(--cpd-color-icon-success-primary);
+}
+/* Copyright 2025 New Vector Ltd.
+ * Copyright 2023 The Matrix.org Foundation C.I.C.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+ * Please see LICENSE files in the repository root for full details.
+ */
+
+._nav-bar_1fp3r_8 {
+  border-block-end: var(--cpd-border-width-1) solid var(--cpd-color-gray-400);
+  margin: var(--cpd-space-6x) 0;
+  padding: 0;
+}
+
+._nav-bar-items_1fp3r_14 {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  gap: var(--cpd-space-3x);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+._nav-tab_1fp3r_25 {
+  padding: var(--cpd-space-4x) 0;
+  position: relative;
+}
+
+/* Underline effect */
+._nav-tab_1fp3r_25::before {
+  content: "";
+  position: absolute;
+  inset-block-end: 0;
+  inset-inline: 0;
+  block-size: 0;
+  border-radius: var(--cpd-radius-pill-effect) var(--cpd-radius-pill-effect) 0 0;
+  background-color: var(--cpd-color-bg-action-primary-rest);
+  transition: height 0.1s ease-in-out;
+}
+
+._nav-tab_1fp3r_25[data-current]::before {
+  /* This is not exactly right: designs says 3px, but there are no variables for that */
+  block-size: var(--cpd-border-width-4);
+}
+
+._nav-item_1fp3r_47 {
+  padding-block: var(--cpd-space-1x);
+  padding-inline: var(--cpd-space-2x);
+  border-radius: var(--cpd-radius-pill-effect);
+  cursor: pointer;
+  appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--cpd-space-2x);
+  box-sizing: border-box;
+  background: transparent;
+  border: 0;
+  font: var(--cpd-font-body-md-medium);
+  color: var(--cpd-color-text-secondary);
+  text-decoration: none;
+}
+
+@media (hover) {
+  ._nav-item_1fp3r_47:not([disabled]):hover {
+    color: var(--cpd-color-text-primary);
+    background-color: var(--cpd-color-bg-subtle-secondary);
+  }
+}
+
+._nav-item_1fp3r_47:focus-visible {
+  outline: var(--cpd-color-border-focused) var(--cpd-border-width-2) solid;
+}
+
+._nav-item_1fp3r_47:not([disabled]):active {
+  color: var(--cpd-color-text-primary);
+  background-color: var(--cpd-color-bg-subtle-primary);
+}
+
+._nav-item_1fp3r_47[aria-current],
+._nav-item_1fp3r_47[aria-selected="true"] {
+  color: var(--cpd-color-text-primary);
+}
+
+._nav-item_1fp3r_47[disabled] {
+  cursor: not-allowed;
+
+  /* Enable pointer events for svgs even with fill=none */
+  pointer-events: all !important;
+  color: var(--cpd-color-text-disabled);
+}
+/*
+Copyright 2024 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE files in the repository root for full details.
+*/
+
+._content_3xq91_8 {
+  /* 320px + 20px padding left + 20px padding right */
+  max-inline-size: 320px;
+  border-radius: var(--cpd-space-3x);
+  background: var(--cpd-color-bg-action-primary-rest);
+  padding: var(--cpd-space-5x) var(--cpd-space-6x);
+
+  /* from figma */
+  box-shadow: 0 4px 24px 0 rgb(0 0 0 / 10%);
+
+  /*
+  * Grid, we want to have the following layout:
+  * ----------------------------------
+  * -  ---------------   ----------  -
+  * -  | heading     |   |        |  -
+  * -  --------------    | button |  -
+  * -  ---------------   | button |  -
+  * -  | description |   |        |  -
+  * -  ---------------   ----------  -
+  * ----------------------------------
+  */
+  display: grid;
+  grid-template:
+    "header button" auto
+    "description button" auto;
+  align-items: center;
+  column-gap: var(--cpd-space-6x);
+}
+
+._header_3xq91_37 {
+  margin: 0;
+  color: var(--cpd-color-text-on-solid-primary);
+  grid-area: header;
+}
+
+._description_3xq91_43 {
+  color: var(--cpd-color-gray-500);
+  grid-area: description;
+}
+
+._button_3xq91_48 {
+  color: var(--cpd-color-bg-subtle-secondary);
+  grid-area: button;
+}
+
+._arrow_3xq91_53 {
+  fill: var(--cpd-color-bg-action-primary-rest);
+}
+/*
+Copyright 2024 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE files in the repository root for full details.
+*/
+
+._container_j0rlq_8 {
+  display: flex;
+  flex-direction: column;
+
+  label {
+    font: var(--cpd-font-body-md-medium);
+    margin-block-end: var(--cpd-space-1x);
+  }
+
+  button {
+    inline-size: 100%;
+    border: 1px solid var(--cpd-color-border-interactive-primary);
+    background: var(--cpd-color-bg-canvas-default);
+    border-radius: 0.5rem;
+    padding: var(--cpd-space-3x) var(--cpd-space-3x) var(--cpd-space-3x)
+      var(--cpd-space-4x);
+    box-sizing: border-box;
+    color: var(--cpd-color-text-primary);
+    font: var(--cpd-font-body-md-regular);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--cpd-space-4x);
+
+    svg {
+      transition: transform 0.1s linear;
+    }
+  }
+
+  /**
+   * When the dropdown is open, rotate the arrow icon
+   */
+  button[aria-expanded="true"] {
+    svg {
+      transform: rotate(180deg);
+    }
+  }
+
+  button._placeholder_j0rlq_47 {
+    color: var(--cpd-color-text-secondary);
+  }
+
+  ._border_j0rlq_51 {
+    display: none;
+    border-inline-start: 1px solid var(--cpd-color-border-interactive-secondary);
+    border-inline-end: 1px solid var(--cpd-color-border-interactive-secondary);
+    block-size: var(--cpd-space-1x);
+    margin-block-start: calc(var(--cpd-space-1x) * -1);
+    box-sizing: border-box;
+  }
+
+  ._content_j0rlq_60 {
+    display: none;
+    position: relative;
+
+    ul {
+      /**
+       * To make the component going over the other elements
+       */
+      position: absolute;
+      display: block;
+      inline-size: 100%;
+      background: var(--cpd-color-bg-canvas-default);
+      border: 1px solid var(--cpd-color-border-interactive-secondary);
+      border-block-start: 0;
+      border-end-start-radius: var(--cpd-space-4x);
+      border-end-end-radius: var(--cpd-space-4x);
+      box-sizing: border-box;
+      box-shadow: 0 4px 24px 0 rgb(27 29 34 / 10%);
+      margin: 0;
+      padding: 0;
+      padding-block-end: var(--cpd-space-4x);
+      cursor: pointer;
+
+      li {
+        list-style: none;
+        font: var(--cpd-font-body-md-medium);
+        padding: var(--cpd-space-3x) var(--cpd-space-4x);
+        border-block-end: 1px solid var(--cpd-color-gray-300);
+        color: var(--cpd-color-text-secondary);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: var(--cpd-space-4x);
+
+        @media (hover) {
+          &:hover {
+            background: var(--cpd-color-gray-200);
+          }
+        }
+
+        &[aria-selected="true"] {
+          color: var(--cpd-color-text-primary);
+          background: var(--cpd-color-gray-300);
+        }
+      }
+    }
+  }
+
+  ._open_j0rlq_108 {
+    display: block;
+  }
+
+  ._help_j0rlq_112 {
+    font: var(--cpd-font-body-sm-regular);
+    color: var(--cpd-color-text-secondary);
+  }
+
+  ._error_j0rlq_117 {
+    font: var(--cpd-font-body-sm-medium);
+    color: var(--cpd-color-text-critical-primary);
+    display: flex;
+    gap: var(--cpd-space-2x);
+  }
+
+  ._error_j0rlq_117,
+  ._help_j0rlq_112 {
+    margin-block-start: var(--cpd-space-2x);
+  }
+
+  &[aria-invalid="true"] {
+    label {
+      color: var(--cpd-color-text-critical-primary);
+    }
+
+    button {
+      border-color: var(--cpd-color-text-critical-primary);
+    }
+  }
+}
+/*
+Copyright 2024 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE files in the repository root for full details.
+*/
+
+._breadcrumb_1xygz_8 {
+  display: flex;
+  align-items: center;
+  block-size: 40px;
+  gap: var(--cpd-space-3x);
+  padding-block-end: var(--cpd-space-3x);
+  border-block-end: 1px solid var(--cpd-color-alpha-gray-400);
+  box-sizing: border-box;
+
+  ._pages_1xygz_17 {
+    display: flex;
+    gap: var(--cpd-space-1x);
+
+    /* override list styles */
+    list-style: none;
+    margin: 0;
+    padding: 0;
+
+    a {
+      cursor: pointer;
+    }
+
+    ._last-page_1xygz_30 {
+      font: var(--cpd-font-body-sm-regular);
+      color: var(--cpd-color-text-secondary);
+    }
+
+    /*
+     * Breadcrumb separator
+     * We want this separator to be only visual and to not be in the accessibility tree.
+     * The nav html element already provides an accessible way to separate the links.
+     */
+    li + li::before {
+      display: inline-block;
+      margin: 0 0.3em 0 0.25em;
+      transform: rotate(15deg);
+      border-inline-end: 1px solid var(--cpd-color-text-secondary);
+      block-size: var(--cpd-space-3x);
+      content: "";
+    }
+
+    /* Last page */
+    :last-child {
+      span {
+        padding-inline-start: var(--cpd-space-1x);
+      }
+    }
+  }
+}
+/*
+Copyright 2024 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE files in the repository root for full details.
+*/
+
+._visual-list_15wzx_8 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cpd-space-1x);
+  margin: 0;
+  padding: 0;
+  list-style-type: none;
+  border-radius: var(--cpd-space-3x);
+  overflow: hidden;
+}
+/*
+ * Copyright 2024 New Vector Ltd.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+ * Please see LICENSE files in the repository root for full details.
+ */
+
+._visual-list-item_1ma3e_8 {
+  display: flex;
+  gap: var(--cpd-space-3x);
+  padding: var(--cpd-space-3x) var(--cpd-space-4x);
+  background-color: var(--cpd-color-bg-subtle-secondary);
+  font: var(--cpd-font-body-md-medium);
+  align-items: center;
+}
+
+._visual-list-item-icon_1ma3e_17 {
+  flex-shrink: 0;
+  color: var(--cpd-color-icon-secondary);
+}
+
+._visual-list-item-icon-success_1ma3e_22 {
+  color: var(--cpd-color-icon-success-primary);
+}
+
+._visual-list-item-icon-destructive_1ma3e_26 {
+  color: var(--cpd-color-icon-critical-primary);
+}
+/*
+ * Copyright 2025 New Vector Ltd
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+ * Please see LICENSE files in the repository root for full details.
+ */
+
+._chat-filter_5qdp0_8 {
+  font: var(--cpd-font-body-sm-medium);
+  color: var(--cpd-color-text-primary);
+  background-color: transparent;
+  border: var(--cpd-border-width-1) solid
+    var(--cpd-color-border-interactive-secondary);
+  border-radius: 99px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--cpd-space-1x) var(--cpd-space-2x);
+}
+
+@media (hover) {
+  ._chat-filter_5qdp0_8:hover {
+    border-color: var(--cpd-color-border-interactive-primary);
+    background: var(--cpd-color-bg-subtle-primary);
+  }
+}
+
+._chat-filter_5qdp0_8[aria-selected="true"] {
+  border-color: var(--cpd-color-bg-action-primary-rest);
+  background: var(--cpd-color-bg-action-primary-rest);
+  color: var(--cpd-color-text-on-solid-primary);
+}
+/*
+ * Copyright 2025 New Vector Ltd
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+ * Please see LICENSE files in the repository root for full details.
+ */
+
+._unread-counter_9mg0k_8 {
+  border-radius: 38px;
+  font: var(--cpd-font-body-xs-semibold);
+  color: var(--cpd-color-text-on-solid-primary);
+  background-color: var(--cpd-color-icon-success-primary);
+  block-size: 20px;
+  min-inline-size: 20px;
+  padding: 0 var(--cpd-space-1-5x);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+/*
+ * Copyright 2025 New Vector Ltd
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+ * Please see LICENSE files in the repository root for full details.
+ */
+
+._pill_1pem8_8 {
+  border-radius: 38px;
+  font: var(--cpd-font-body-xs-semibold);
+  color: var(--cpd-color-text-on-solid-primary);
+  background-color: var(--cpd-color-icon-success-primary);
+  padding: 0 var(--cpd-space-2x);
+  block-size: 20px;
+  display: inline-flex;
+  align-items: center;
+}
+/*
+ * Copyright 2025 New Vector Ltd
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+ * Please see LICENSE files in the repository root for full details.
+ */
+
+._unread_1k06b_8 {
+  inline-size: 20px;
+  display: flex;
+  justify-content: center;
+
+  div {
+    block-size: 8px;
+    inline-size: 8px;
+    background-color: var(--cpd-color-icon-secondary);
+    border-radius: 100%;
+  }
+}
