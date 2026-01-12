@@ -36,11 +36,18 @@ export class MatrixClientService {
 					'✅ Matrix client SYNCED and READY for real-time events!'
 				);
 
-				// Initialize call service with this client
-				matrixCallService.initialize(this.client!);
+				// Ensure client is available before initializing services
+				if (this.client) {
+					// Initialize call service with this client
+					matrixCallService.initialize(this.client);
 
-				// Initialize live event bridge for real-time notifications
-				matrixLiveEventBridge.initialize(this.client!);
+					// Initialize live event bridge for real-time notifications
+					matrixLiveEventBridge.initialize(this.client);
+				} else {
+					console.error(
+						'❌ Matrix client is null when reaching PREPARED state'
+					);
+				}
 			}
 		});
 
@@ -58,6 +65,34 @@ export class MatrixClientService {
 	// Get current client
 	public getClient(): MatrixClient | null {
 		return this.client;
+	}
+
+	// Wait for sync state to reach a specific state
+	public async waitForSyncState(targetState: string): Promise<void> {
+		if (!this.client) {
+			throw new Error('Matrix client not initialized');
+		}
+
+		// If already in the target state, resolve immediately
+		if ((this.client as any).syncState === targetState) {
+			return Promise.resolve();
+		}
+
+		// Otherwise, wait for the sync event
+		return new Promise<void>((resolve) => {
+			const handler = (state: string) => {
+				if (state === targetState) {
+					// Remove the listener after resolving
+					(this.client as any).removeListener?.('sync', handler);
+					(this.client as any).off?.('sync', handler);
+					resolve();
+				}
+			};
+
+			// Use once for one-time check, but also set up ongoing listener
+			(this.client as any).once('sync', handler);
+			(this.client as any).on('sync', handler);
+		});
 	}
 
 	// Send message to a room
@@ -108,19 +143,30 @@ export class MatrixClientService {
 	// Listen for new messages
 	public onRoomMessage(
 		callback: (event: MatrixEvent, room: Room) => void
-	): void {
+	): () => void {
 		if (!this.client) {
-			return;
+			return () => {}; // Return no-op unsubscribe function
 		}
 
-		this.client.on(
-			'Room.timeline' as any,
-			(event: MatrixEvent, room: Room) => {
-				if (event.getType() === 'm.room.message') {
-					callback(event, room);
-				}
+		// Capture handler function separately so we can remove it later
+		const handler = (event: MatrixEvent, room: Room) => {
+			if (event.getType() === 'm.room.message') {
+				callback(event, room);
 			}
-		);
+		};
+
+		this.client.on('Room.timeline' as any, handler);
+
+		// Return unsubscribe function
+		return () => {
+			if (this.client) {
+				(this.client as any).removeListener?.(
+					'Room.timeline' as any,
+					handler
+				) ||
+					(this.client as any).off?.('Room.timeline' as any, handler);
+			}
+		};
 	}
 
 	// Send typing indicator

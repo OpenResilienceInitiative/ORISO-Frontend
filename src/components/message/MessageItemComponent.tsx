@@ -64,6 +64,7 @@ import { BanUser, BanUserOverlay } from '../banUser/BanUser';
 import { getValueFromCookie } from '../sessionCookie/accessSessionCookie';
 import { VideoChatDetails, VideoChatDetailsAlias } from './VideoChatDetails';
 import { UserAvatar } from './UserAvatar';
+import { truncateHtml } from '../../utils/htmlHelpers';
 
 export interface VideoCallMessageDTO {
 	eventType: 'IGNORED_CALL';
@@ -149,6 +150,31 @@ export const MessageItemComponent = ({
 
 	// Character limit for collapsing messages
 	const MESSAGE_CHAR_LIMIT = 300;
+
+	// Memoize truncated message to avoid expensive DOM operations on every render
+	const displayMessage = useMemo(() => {
+		if (!renderedMessage || attachments) {
+			return renderedMessage;
+		}
+
+		// Check if message is long (strip HTML tags for accurate length)
+		const textContent = renderedMessage.replace(/<[^>]*>/g, '');
+		const isLongMessage = textContent.length > MESSAGE_CHAR_LIMIT;
+
+		// Truncate message if not expanded
+		return isLongMessage && !isExpanded
+			? truncateHtml(renderedMessage, MESSAGE_CHAR_LIMIT)
+			: renderedMessage;
+	}, [renderedMessage, isExpanded, attachments]);
+
+	// Check if message is long for showing expand button
+	const isLongMessage = useMemo(() => {
+		if (!renderedMessage || attachments) {
+			return false;
+		}
+		const textContent = renderedMessage.replace(/<[^>]*>/g, '');
+		return textContent.length > MESSAGE_CHAR_LIMIT;
+	}, [renderedMessage, attachments]);
 
 	// Reset expanded state only when message ID changes (not when message content changes)
 	useEffect(() => {
@@ -461,206 +487,30 @@ export const MessageItemComponent = ({
 									: `messageItem__message`
 							}
 						>
-							{renderedMessage &&
-								!attachments &&
-								(() => {
-									// Check if message is long (strip HTML tags for accurate length)
-									const textContent = renderedMessage.replace(
-										/<[^>]*>/g,
-										''
-									);
-									const isLongMessage =
-										textContent.length > MESSAGE_CHAR_LIMIT;
-
-									// Helper function to safely truncate HTML while preserving structure
-									const truncateHtml = (
-										html: string,
-										maxLength: number
-									): string => {
-										// Check if we're in a browser environment
-										if (typeof document === 'undefined') {
-											// Fallback for SSR: simple truncation (may break HTML tags)
-											const textContent = html.replace(
-												/<[^>]*>/g,
-												''
-											);
-											if (textContent.length <= maxLength)
-												return html;
-											const truncatedText =
-												textContent.substring(
-													0,
-													maxLength
-												);
-											const lastSpace =
-												truncatedText.lastIndexOf(' ');
-											const cutPoint =
-												lastSpace > maxLength * 0.8
-													? lastSpace
-													: maxLength;
-											return (
-												html.substring(
-													0,
-													Math.min(
-														cutPoint,
-														html.length
-													)
-												) + '...'
-											);
-										}
-
-										// Create a temporary DOM element to parse HTML
-										const tempDiv =
-											document.createElement('div');
-										tempDiv.innerHTML = html;
-
-										// Get text content and find truncation point
-										const text =
-											tempDiv.textContent ||
-											tempDiv.innerText ||
-											'';
-										if (text.length <= maxLength)
-											return html;
-
-										// Find a good word boundary
-										let truncateAt = maxLength;
-										const truncatedText = text.substring(
-											0,
-											maxLength
-										);
-										const lastSpace =
-											truncatedText.lastIndexOf(' ');
-										if (
-											lastSpace > maxLength * 0.8 &&
-											lastSpace > 0
-										) {
-											truncateAt = lastSpace;
-										}
-
-										// Walk through nodes and truncate at the right point
-										let currentLength = 0;
-										const walker =
-											document.createTreeWalker(
-												tempDiv,
-												NodeFilter.SHOW_TEXT,
-												null
-											);
-
-										let node;
-										let targetNode = null;
-										let targetRemaining = 0;
-
-										while ((node = walker.nextNode())) {
-											const nodeLength =
-												node.textContent?.length || 0;
-											if (
-												currentLength + nodeLength >=
-												truncateAt
-											) {
-												targetNode = node;
-												targetRemaining =
-													truncateAt - currentLength;
-												break;
-											}
-											currentLength += nodeLength;
-										}
-
-										if (
-											targetNode &&
-											targetNode.textContent
-										) {
-											// Truncate the target node
-											targetNode.textContent =
-												targetNode.textContent.substring(
-													0,
-													targetRemaining
-												) + '...';
-
-											// Remove all following siblings of the target node's parent
-											let parent = targetNode.parentNode;
-											if (parent) {
-												let sibling =
-													targetNode.nextSibling;
-												while (sibling) {
-													const next =
-														sibling.nextSibling;
-													parent.removeChild(sibling);
-													sibling = next;
-												}
-											}
-
-											// Also remove any remaining text nodes via walker
-											let nextNode;
-											while (
-												(nextNode = walker.nextNode())
-											) {
-												if (nextNode.parentNode) {
-													nextNode.parentNode.removeChild(
-														nextNode
-													);
-												}
-											}
-										}
-
-										const result = tempDiv.innerHTML;
-										// Verify truncation worked - if result is still too long, use simple fallback
-										const resultText = result.replace(
-											/<[^>]*>/g,
-											''
-										);
-										if (
-											resultText.length >
-											maxLength + 50
-										) {
-											// Fallback: simple truncation
-											const simpleTruncated =
-												text.substring(0, truncateAt) +
-												'...';
-											return simpleTruncated;
-										}
-
-										return result;
-									};
-
-									// Truncate message if not expanded
-									const displayMessage =
-										isLongMessage && !isExpanded
-											? truncateHtml(
-													renderedMessage,
-													MESSAGE_CHAR_LIMIT
-												)
-											: renderedMessage;
-
-									return (
-										<>
-											<span
-												dangerouslySetInnerHTML={{
-													__html: displayMessage
-												}}
-											/>
-											{isLongMessage && (
-												<button
-													className={`messageItem__expandBtn ${isMyMessage ? 'messageItem__expandBtn--myMessage' : 'messageItem__expandBtn--incoming'}`}
-													onClick={(e) => {
-														e.preventDefault();
-														e.stopPropagation();
-														setIsExpanded(
-															!isExpanded
-														);
-													}}
-													type="button"
-												>
-													{isExpanded
-														? translate(
-																'message.showLess'
-															)
-														: translate(
-																'message.showMore'
-															)}
-												</button>
-											)}
-										</>
-									);
-								})()}
+							{displayMessage && !attachments && (
+								<>
+									<span
+										dangerouslySetInnerHTML={{
+											__html: displayMessage
+										}}
+									/>
+									{isLongMessage && (
+										<button
+											className={`messageItem__expandBtn ${isMyMessage ? 'messageItem__expandBtn--myMessage' : 'messageItem__expandBtn--incoming'}`}
+											onClick={(e) => {
+												e.preventDefault();
+												e.stopPropagation();
+												setIsExpanded(!isExpanded);
+											}}
+											type="button"
+										>
+											{isExpanded
+												? translate('message.showLess')
+												: translate('message.showMore')}
+										</button>
+									)}
+								</>
+							)}
 							{attachments &&
 								attachments.map((attachment, key) => (
 									<MessageAttachment

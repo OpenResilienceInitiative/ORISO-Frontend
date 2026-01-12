@@ -286,10 +286,22 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 			) : (
 				<div
 					className="messageItem__message__attachment"
+					role="button"
+					tabIndex={attachmentStatus === ENCRYPTED ? 0 : -1}
 					onClick={() =>
 						attachmentStatus === ENCRYPTED &&
 						decryptFile(buildUrl(props.attachment.title_link))
 					}
+					onKeyDown={(e) => {
+						if (
+							attachmentStatus === ENCRYPTED &&
+							(e.key === 'Enter' || e.key === ' ')
+						) {
+							e.preventDefault();
+							e.stopPropagation();
+							decryptFile(buildUrl(props.attachment.title_link));
+						}
+					}}
 					style={{
 						cursor:
 							attachmentStatus === ENCRYPTED

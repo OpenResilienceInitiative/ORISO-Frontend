@@ -27,6 +27,7 @@ export const MatrixCallView: React.FC<MatrixCallViewProps> = ({
 	const [isMuted, setIsMuted] = useState(false);
 	const [isVideoMuted, setIsVideoMuted] = useState(false);
 	const [activeCall, setActiveCall] = useState<MatrixCall | null>(null);
+	const currentCallRef = useRef<MatrixCall | null>(null);
 
 	// Initialize call ONCE on mount
 	useEffect(() => {
@@ -69,12 +70,10 @@ export const MatrixCallView: React.FC<MatrixCallViewProps> = ({
 		console.log('🔥 Incoming call exists?', !!incomingCall);
 		console.log('🔥 Is answering mode?', isAnswering);
 
-		let currentCall: MatrixCall | null = null;
-
 		if (isAnswering && incomingCall) {
 			// ANSWER MODE: Answer the existing call
 			console.log('✅ ANSWERING incoming call');
-			currentCall = incomingCall;
+			currentCallRef.current = incomingCall;
 			setActiveCall(incomingCall);
 
 			matrixCallService
@@ -99,7 +98,7 @@ export const MatrixCallView: React.FC<MatrixCallViewProps> = ({
 					remoteVideoElement: remoteVideoRef.current || undefined
 				})
 				.then((call) => {
-					currentCall = call;
+					currentCallRef.current = call;
 					setActiveCall(call);
 				})
 				.catch((err) => {
@@ -113,8 +112,11 @@ export const MatrixCallView: React.FC<MatrixCallViewProps> = ({
 		// Cleanup on unmount
 		return () => {
 			console.log('🧹 Cleaning up call...');
-			if (currentCall) {
-				(currentCall as any).hangup();
+			// Use ref to access the latest call instance (avoids stale closure)
+			const callToHangup = currentCallRef.current;
+			if (callToHangup) {
+				(callToHangup as any).hangup();
+				currentCallRef.current = null;
 			}
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -128,6 +130,8 @@ export const MatrixCallView: React.FC<MatrixCallViewProps> = ({
 			console.log('📞 Call state changed:', state);
 			setCallState(state);
 			if (state === CallState.Ended) {
+				// Clear ref when call ends naturally
+				currentCallRef.current = null;
 				onCallEnd();
 			}
 		};
@@ -155,8 +159,10 @@ export const MatrixCallView: React.FC<MatrixCallViewProps> = ({
 	};
 
 	const hangUp = () => {
-		if (activeCall) {
-			(activeCall as any).hangup();
+		const callToHangup = currentCallRef.current || activeCall;
+		if (callToHangup) {
+			(callToHangup as any).hangup();
+			currentCallRef.current = null;
 		}
 	};
 

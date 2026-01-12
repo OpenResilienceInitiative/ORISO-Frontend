@@ -114,18 +114,21 @@ export const AuthenticatedApp = ({
 								);
 
 								try {
-									const { MatrixClientService } =
+									const { matrixClientService } =
 										await import(
 											'../../services/matrixClientService'
 										);
-									const matrixClientService =
-										new MatrixClientService();
 
-									// Get homeserver URL from settings or use default
+									// Get homeserver URL from environment variable
+									// Fail loudly if missing to prevent silent failures
 									const homeserverUrl =
 										process.env
-											.REACT_APP_MATRIX_HOMESERVER_URL ||
-										'http://91.99.219.182:8008';
+											.REACT_APP_MATRIX_HOMESERVER_URL;
+									if (!homeserverUrl) {
+										throw new Error(
+											'REACT_APP_MATRIX_HOMESERVER_URL environment variable is required but not set. Please configure the Matrix homeserver URL in your environment configuration.'
+										);
+									}
 
 									matrixClientService.initializeClient({
 										userId: matrixUserId,
@@ -141,22 +144,8 @@ export const AuthenticatedApp = ({
 									console.log(
 										'✅ Matrix client initialized successfully!'
 									);
-
-									// CRITICAL: Initialize event bridge IMMEDIATELY after client init
-									// This ensures event listeners are registered BEFORE sync starts
-									const { matrixLiveEventBridge } =
-										await import(
-											'../../services/matrixLiveEventBridge'
-										);
-									console.log(
-										'📞 Initializing Matrix event bridge early...'
-									);
-									matrixLiveEventBridge.initialize(
-										matrixClientService.getClient()!
-									);
-									console.log(
-										'✅ Matrix event bridge ready for call events!'
-									);
+									// Note: matrixLiveEventBridge is automatically initialized
+									// in the matrixClientService sync handler when state reaches PREPARED
 								} catch (error) {
 									console.warn(
 										'⚠️ Matrix client initialization failed:',

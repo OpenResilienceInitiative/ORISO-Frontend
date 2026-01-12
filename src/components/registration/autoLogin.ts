@@ -159,9 +159,6 @@ export const autoLogin = async ({
 		const { getMatrixAccessToken } = await import(
 			'../sessionCookie/getMatrixAccessToken'
 		);
-		const { MatrixClientService } = await import(
-			'../../services/matrixClientService'
-		);
 
 		console.log('🔷 Calling getMatrixAccessToken...');
 		const matrixLoginData = await getMatrixAccessToken(
@@ -193,7 +190,9 @@ export const autoLogin = async ({
 			'🔷 Matrix credentials saved to cookies (rc_uid, rc_token) for backend compatibility'
 		);
 
-		const matrixClientService = new MatrixClientService();
+		const { matrixClientService } = await import(
+			'../../services/matrixClientService'
+		);
 		console.log('🔷 Initializing Matrix client...');
 		matrixClientService.initializeClient(matrixLoginData);
 

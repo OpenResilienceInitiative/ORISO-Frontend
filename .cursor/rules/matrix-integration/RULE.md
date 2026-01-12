@@ -83,7 +83,47 @@ public initializeClient(loginData: MatrixLoginData): void {
 **Always check sync state before operations:**
 
 ```typescript
-// ✅ Good: Check sync state
+// ✅ Good: Manual event listener pattern
+const sendMessage = async (roomId: string, message: string) => {
+	const client = matrixClientService.getClient();
+
+	if (!client) {
+		throw new Error('Matrix client not initialized');
+	}
+
+	// Check if already PREPARED
+	if ((client as any).syncState === 'PREPARED') {
+		await client.sendMessage(roomId, {
+			msgtype: 'm.text',
+			body: message
+		});
+		return;
+	}
+
+	// Wait for PREPARED state using event listener
+	await new Promise<void>((resolve) => {
+		const handler = (state: string) => {
+			if (state === 'PREPARED') {
+				(client as any).removeListener?.('sync', handler);
+				(client as any).off?.('sync', handler);
+				resolve();
+			}
+		};
+		(client as any).once('sync', handler);
+		(client as any).on('sync', handler);
+	});
+
+	await client.sendMessage(roomId, {
+		msgtype: 'm.text',
+		body: message
+	});
+};
+```
+
+**Alternative: Using waitForSyncState helper:**
+
+```typescript
+// ✅ Good: Check sync state using helper
 const sendMessage = async (roomId: string, message: string) => {
 	const client = matrixClientService.getClient();
 
@@ -92,7 +132,7 @@ const sendMessage = async (roomId: string, message: string) => {
 	}
 
 	// Wait for PREPARED state
-	await waitForSyncState('PREPARED');
+	await matrixClientService.waitForSyncState('PREPARED');
 
 	await client.sendMessage(roomId, {
 		msgtype: 'm.text',
