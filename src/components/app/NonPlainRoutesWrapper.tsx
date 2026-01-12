@@ -1,6 +1,5 @@
 import React, { useContext, useEffect } from 'react';
 import { E2EEContext } from '../../globalState';
-import { loadKeysFromRocketChat } from '../../utils/encryptionHelpers';
 
 interface NonPlainRoutesWrapperProps {
 	children?: React.ReactNode;

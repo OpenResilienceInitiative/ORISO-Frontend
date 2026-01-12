@@ -27,7 +27,6 @@ import {
 	useTenant,
 	ActiveSessionContext
 } from '../../globalState';
-import { RocketChatUsersOfRoomProvider } from '../../globalState/provider/RocketChatUsersOfRoomProvider';
 import './session.styles';
 import { useDebouncedCallback } from 'use-debounce';
 import { ReactComponent as ArrowDoubleDownIcon } from '../../resources/img/icons/arrow-double-down.svg';
@@ -83,28 +82,48 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	);
 
 	// MATRIX MIGRATION: Create Matrix-aware isMyMessage function
-	const isMyMessageMatrix = useCallback((messageUserId: string) => {
-		// For Matrix sessions, check if sender matches current user's username
-		if (!activeSession.rid && messageUserId?.includes('@')) {
-			// Extract username from Matrix ID: @username:domain -> username
-			const matrixUsername = messageUserId.split(':')[0]?.substring(1);
-			return matrixUsername === userData.userName;
+	const isMyMessageMatrix = useCallback(
+		(messageUserId: string) => {
+			// For Matrix sessions, check if sender matches current user's username
+			if (!activeSession.rid && messageUserId?.includes('@')) {
+				// Extract username from Matrix ID: @username:domain -> username
+				const matrixUsername = messageUserId
+					.split(':')[0]
+					?.substring(1);
+				return matrixUsername === userData.userName;
+			}
+			// For RocketChat sessions, use the standard check
+			return isMyMessage(messageUserId);
+		},
+		[activeSession.rid, userData.userName]
+	);
+
+	const enableInitialScroll = useCallback(() => {
+		if (!initialScrollCompleted) {
+			setInitialScrollCompleted(true);
+			scrollToEnd(500, true);
 		}
-		// For RocketChat sessions, use the standard check
-		return isMyMessage(messageUserId);
-	}, [activeSession.rid, userData.userName]);
+	}, [initialScrollCompleted]);
 
 	useEffect(() => {
 		const canWrite = type !== SESSION_LIST_TYPES.ENQUIRY;
-		console.log('🔥 SessionItemComponent: canWriteMessage =', canWrite, '(type:', type, ', isGroup:', activeSession.isGroup, ')');
+		console.log(
+			'🔥 SessionItemComponent: canWriteMessage =',
+			canWrite,
+			'(type:',
+			type,
+			', isGroup:',
+			activeSession.isGroup,
+			')'
+		);
 		setCanWriteMessage(canWrite);
-	}, [type, userData, activeSession, activeSession.isGroup]);
+	}, [type, userData, activeSession]);
 
 	useEffect(() => {
 		if (messages && messages.length > 0 && !initialScrollCompleted) {
 			enableInitialScroll();
 		}
-	}, [messages, initialScrollCompleted]);
+	}, [messages, initialScrollCompleted, enableInitialScroll]);
 
 	const resetUnreadCount = () => {
 		setNewMessages(0);
@@ -243,13 +262,6 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		}
 	};
 
-	const enableInitialScroll = () => {
-		if (!initialScrollCompleted) {
-			setInitialScrollCompleted(true);
-			scrollToEnd(500, true);
-		}
-	};
-
 	const isOnlyEnquiry = type === SESSION_LIST_TYPES.ENQUIRY;
 
 	const scrollBottomButtonItem: ButtonItem = {
@@ -286,7 +298,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	const handleMessageSendSuccess = () => {
 		setDraggedFile(null);
-		
+
 		// MATRIX MIGRATION: Refresh messages after sending for Matrix sessions
 		if (!activeSession.rid && props.refreshMessages) {
 			console.log('🔄 MATRIX: Refreshing messages after send...');
@@ -400,13 +412,16 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										!activeSession.rid &&
 										message.userId &&
 										!message.userId.includes(
-											activeSession.consultant?.username || ''
+											activeSession.consultant
+												?.username || ''
 										)
 											? message.userId
 											: activeSession.item.askerRcId
 									}
 									isOnlyEnquiry={isOnlyEnquiry}
-									isMyMessage={isMyMessageMatrix(message.userId)}
+									isMyMessage={isMyMessageMatrix(
+										message.userId
+									)}
 									isUserBanned={props.bannedUsers.includes(
 										message.username
 									)}

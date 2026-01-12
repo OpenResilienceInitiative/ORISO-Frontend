@@ -24,7 +24,6 @@ import { RocketChatUnreadProvider } from '../../globalState/provider/RocketChatU
 import { RocketChatPublicSettingsProvider } from '../../globalState/provider/RocketChatPublicSettingsProvider';
 import { RocketChatGetUserRolesProvider } from '../../globalState/provider/RocketChatSytemUsersProvider';
 import { useJoinGroupChat } from '../../hooks/useJoinGroupChat';
-import { useCall } from '../../globalState/provider/CallProvider';
 import { RocketChatUserStatusProvider } from '../../globalState/provider/RocketChatUserStatusProvider';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { E2EEncryptionSupportBanner } from '../E2EEncryptionSupportBanner/E2EEncryptionSupportBanner';
@@ -45,7 +44,6 @@ export const AuthenticatedApp = ({
 	const { setInformal } = useContext(InformalContext);
 	const { joinGroupChat } = useJoinGroupChat();
 	const { setNotifications } = useContext(NotificationsContext);
-	const callContext = useCall();
 
 	const [appReady, setAppReady] = useState<boolean>(false);
 	const [loading, setLoading] = useState<boolean>(true);
@@ -55,7 +53,7 @@ export const AuthenticatedApp = ({
 		// CRITICAL: Clear ALL old notifications on app mount (prevents phantom call notifications!)
 		console.log('🧹 Clearing all old notifications on app mount...');
 		setNotifications([]);
-		
+
 		// When the user has a group chat id that means that we need to join the user in the group chat
 		const gcid = new URLSearchParams(window.location.search).get('gcid');
 		joinGroupChat(gcid);
@@ -90,54 +88,77 @@ export const AuthenticatedApp = ({
 						})
 						.then(async (userProfileData) => {
 							// 🔷 CRITICAL: Initialize Matrix client for all authenticated users
-							const matrixUserId = localStorage.getItem('matrix_user_id');
-							const matrixAccessToken = localStorage.getItem('matrix_access_token');
-							const matrixDeviceId = localStorage.getItem('matrix_device_id');
-							
+							const matrixUserId =
+								localStorage.getItem('matrix_user_id');
+							const matrixAccessToken = localStorage.getItem(
+								'matrix_access_token'
+							);
+							const matrixDeviceId =
+								localStorage.getItem('matrix_device_id');
+
 							if (matrixUserId && matrixAccessToken) {
-								console.log('🔷 Initializing Matrix client for user:', matrixUserId);
-								
+								console.log(
+									'🔷 Initializing Matrix client for user:',
+									matrixUserId
+								);
+
 								// CRITICAL: Set rc_uid and rc_token cookies for backend compatibility
 								// Backend still expects these headers even though we're using Matrix
-								const { setValueInCookie } = await import('../sessionCookie/accessSessionCookie');
+								const { setValueInCookie } = await import(
+									'../sessionCookie/accessSessionCookie'
+								);
 								setValueInCookie('rc_uid', matrixUserId);
 								setValueInCookie('rc_token', matrixAccessToken);
-								console.log('🔷 Matrix credentials saved to cookies (rc_uid, rc_token) for backend compatibility');
-								
+								console.log(
+									'🔷 Matrix credentials saved to cookies (rc_uid, rc_token) for backend compatibility'
+								);
+
 								try {
-									const { MatrixClientService } = await import('../../services/matrixClientService');
-									const matrixClientService = new MatrixClientService();
-									
-									// Get homeserver URL from settings or use default
-									const homeserverUrl = process.env.REACT_APP_MATRIX_HOMESERVER_URL || 'http://91.99.219.182:8008';
-									
-								matrixClientService.initializeClient({
-									userId: matrixUserId,
-									accessToken: matrixAccessToken,
-									deviceId: matrixDeviceId || undefined,
-									homeserverUrl: homeserverUrl
-								});
-								
-								// Store globally for components to access
-								(window as any).matrixClientService = matrixClientService;
-								(window as any).callContext = callContext; // Make CallContext globally accessible
-								
-								console.log('✅ Matrix client initialized successfully!');
-								
-								// CRITICAL: Initialize event bridge IMMEDIATELY after client init
-								// This ensures event listeners are registered BEFORE sync starts
-								const { matrixLiveEventBridge } = await import('../../services/matrixLiveEventBridge');
-								console.log('📞 Initializing Matrix event bridge early...');
-								matrixLiveEventBridge.initialize(matrixClientService.getClient()!);
-								console.log('✅ Matrix event bridge ready for call events!');
+									const { matrixClientService } =
+										await import(
+											'../../services/matrixClientService'
+										);
+
+									// Get homeserver URL from environment variable
+									// Fail loudly if missing to prevent silent failures
+									const homeserverUrl =
+										process.env
+											.REACT_APP_MATRIX_HOMESERVER_URL;
+									if (!homeserverUrl) {
+										throw new Error(
+											'REACT_APP_MATRIX_HOMESERVER_URL environment variable is required but not set. Please configure the Matrix homeserver URL in your environment configuration.'
+										);
+									}
+
+									matrixClientService.initializeClient({
+										userId: matrixUserId,
+										accessToken: matrixAccessToken,
+										deviceId: matrixDeviceId || undefined,
+										homeserverUrl: homeserverUrl
+									});
+
+									// Store globally for components to access
+									(window as any).matrixClientService =
+										matrixClientService;
+
+									console.log(
+										'✅ Matrix client initialized successfully!'
+									);
+									// Note: matrixLiveEventBridge is automatically initialized
+									// in the matrixClientService sync handler when state reaches PREPARED
 								} catch (error) {
-									console.warn('⚠️ Matrix client initialization failed:', error);
+									console.warn(
+										'⚠️ Matrix client initialization failed:',
+										error
+									);
 									// Don't fail app startup if Matrix fails
 								}
 							} else {
-								console.warn('⚠️ No Matrix credentials found in localStorage');
+								console.warn(
+									'⚠️ No Matrix credentials found in localStorage'
+								);
 							}
-							
+
 							setAppReady(true);
 						})
 						.catch((error) => {

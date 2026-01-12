@@ -1,6 +1,4 @@
-import { endpoints } from '../resources/scripts/endpoints';
 import { apiMatrixSettingsPublic } from './apiMatrixSettingsPublic';
-import { FETCH_METHODS } from './fetchData';
 
 export const SETTING_E2E_ENABLE = 'E2E_Enable';
 export const SETTING_MESSAGE_MAXALLOWEDSIZE = 'Message_MaxAllowedSize';
@@ -55,9 +53,5 @@ export type TRocketChatSettingsPublicResponse = {
 export const apiRocketChatSettingsPublic = async (
 	settingsEntries: string[] = null
 ): Promise<TRocketChatSettingsPublicResponse> => {
-	const url = endpoints.rc.settings.public;
-	const query = settingsEntries
-		? '?query=' + JSON.stringify({ _id: { $in: settingsEntries } })
-		: '';
 	return apiMatrixSettingsPublic();
 };

@@ -43,9 +43,7 @@ import {
 import { Button } from '../button/Button';
 import { SessionListCreateChat } from './SessionListCreateChat';
 import './sessionsList.styles';
-import {
-	SCROLL_PAGINATE_THRESHOLD
-} from './sessionsListConfig';
+import { SCROLL_PAGINATE_THRESHOLD } from './sessionsListConfig';
 import { Text } from '../text/Text';
 import clsx from 'clsx';
 import useUpdatingRef from '../../hooks/useUpdatingRef';
@@ -61,7 +59,6 @@ import { useWatcher } from '../../hooks/useWatcher';
 import { useSearchParam } from '../../hooks/useSearchParams';
 import { apiGetChatRoomById } from '../../api/apiGetChatRoomById';
 import { useTranslation } from 'react-i18next';
-import { RocketChatUsersOfRoomProvider } from '../../globalState/provider/RocketChatUsersOfRoomProvider';
 import { EmptyListItem } from './EmptyListItem';
 
 interface SessionsListProps {
@@ -183,13 +180,13 @@ export const SessionsList = ({
 						.querySelector('.sessionsListItem')
 						.getAttribute('data-group-id')
 				: null;
-			const lastItemId = wrapper.lastElementChild && wrapper.lastElementChild.querySelector(
-				'.sessionsListItem'
-			)
-				? wrapper.lastElementChild
-						.querySelector('.sessionsListItem')
-						.getAttribute('data-group-id')
-				: null;
+			const lastItemId =
+				wrapper.lastElementChild &&
+				wrapper.lastElementChild.querySelector('.sessionsListItem')
+					? wrapper.lastElementChild
+							.querySelector('.sessionsListItem')
+							.getAttribute('data-group-id')
+					: null;
 			if (
 				initialId.current !== firstItemId &&
 				initialId.current !== lastItemId
@@ -219,24 +216,26 @@ export const SessionsList = ({
 					// Use listPath from context, fallback to hardcoded path for askers
 					const baseListPath = listPath || '/sessions/user/view';
 					// Check if we're on the base list page (exact match or with trailing slash)
-					const isOnBaseListPage = currentPath === baseListPath || 
+					const isOnBaseListPage =
+						currentPath === baseListPath ||
 						currentPath === `${baseListPath}/` ||
 						currentPath === '/sessions/user/view' ||
 						currentPath === '/sessions/user/view/';
-					
+
 					// Use sessionStorage to persist across remounts - but clear it if we're on the base page
 					// This allows re-triggering if user navigates back to list
 					const firstSession = sessions?.[0];
 					const sessionId = firstSession?.session?.id;
 					const autoOpenKey = `autoOpenedSession_${sessionId || ''}`;
-					
+
 					// Clear sessionStorage flag if we're back on the base list page (user navigated back)
 					if (isOnBaseListPage) {
 						sessionStorage.removeItem(autoOpenKey);
 					}
-					
-					const hasAutoOpened = sessionStorage.getItem(autoOpenKey) === 'true';
-					
+
+					const hasAutoOpened =
+						sessionStorage.getItem(autoOpenKey) === 'true';
+
 					console.log('🔍 Auto-open check:', {
 						sessionsCount: sessions?.length,
 						currentPath,
@@ -247,46 +246,65 @@ export const SessionsList = ({
 						hasAutoOpenedRef: hasAutoOpenedRef.current,
 						firstSession,
 						sessionId,
-						sessionStructure: firstSession ? Object.keys(firstSession) : null
+						sessionStructure: firstSession
+							? Object.keys(firstSession)
+							: null
 					});
-					
-					if (sessions?.length === 1 && !hasAutoOpened && !hasAutoOpenedRef.current && isOnBaseListPage) {
+
+					if (
+						sessions?.length === 1 &&
+						!hasAutoOpened &&
+						!hasAutoOpenedRef.current &&
+						isOnBaseListPage
+					) {
 						const session = sessions[0];
 						const sessionId = session?.session?.id;
 						const groupId = session?.session?.groupId;
-						const isEmptyEnquiry = session?.session?.status === STATUS_EMPTY;
-						
-						console.log('✅ Auto-opening session:', { 
-							sessionId, 
-							groupId, 
+						const isEmptyEnquiry =
+							session?.session?.status === STATUS_EMPTY;
+
+						console.log('✅ Auto-opening session:', {
+							sessionId,
+							groupId,
 							isEmptyEnquiry,
 							sessionStatus: session?.session?.status,
 							fullSession: session
 						});
-						
+
 						if (sessionId !== undefined) {
 							// Mark as auto-opened IMMEDIATELY in both ref and sessionStorage
 							hasAutoOpenedRef.current = true;
 							sessionStorage.setItem(autoOpenKey, 'true');
-							
+
 							// Check if groupId looks like a Matrix room ID (starts with ! or contains :)
-							const isMatrixRoomId = groupId && 
-								(groupId.startsWith('!') || groupId.includes(':'));
-							
+							const isMatrixRoomId =
+								groupId &&
+								(groupId.startsWith('!') ||
+									groupId.includes(':'));
+
 							if (isEmptyEnquiry) {
 								// Empty enquiry: go to write view
 								const targetPath = `${baseListPath}/write/${sessionId}`;
-								console.log('🚀 Navigating to write view:', targetPath);
+								console.log(
+									'🚀 Navigating to write view:',
+									targetPath
+								);
 								history.push(targetPath);
 							} else if (groupId && !isMatrixRoomId) {
 								// Original RocketChat behavior: navigate with groupId
 								const targetPath = `${baseListPath}/${groupId}/${sessionId}`;
-								console.log('🚀 Navigating with groupId:', targetPath);
+								console.log(
+									'🚀 Navigating with groupId:',
+									targetPath
+								);
 								history.push(targetPath);
 							} else {
 								// MATRIX MIGRATION FIX: Navigate by session ID for Matrix rooms or sessions without groupId
 								const targetPath = `${baseListPath}/session/${sessionId}`;
-								console.log('🚀 Navigating by session ID:', targetPath);
+								console.log(
+									'🚀 Navigating by session ID:',
+									targetPath
+								);
 								history.push(targetPath);
 							}
 						}
@@ -300,7 +318,11 @@ export const SessionsList = ({
 			console.log('🔍 CONSULTANT: Fetching sessions, type:', type);
 			getConsultantSessionList(0, initialId.current)
 				.then(({ sessions }) => {
-					console.log('📦 CONSULTANT: Got', sessions?.length, 'sessions');
+					console.log(
+						'📦 CONSULTANT: Got',
+						sessions?.length,
+						'sessions'
+					);
 					dispatch({
 						type: UPDATE_SESSIONS,
 						ready: true,
@@ -308,7 +330,10 @@ export const SessionsList = ({
 					});
 				})
 				.catch((error) => {
-					console.error('❌ CONSULTANT: Error fetching sessions:', error);
+					console.error(
+						'❌ CONSULTANT: Error fetching sessions:',
+						error
+					);
 					setIsLoading(false);
 				})
 				.then(() => setIsLoading(false))
@@ -665,14 +690,17 @@ export const SessionsList = ({
 			// Filter group chats: show if consultant is owner OR participant (subscribed)
 			if (session?.chat) {
 				// For MY_SESSION type, filter group chats by participation
-				if (type === SESSION_LIST_TYPES.MY_SESSION && !hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)) {
+				if (
+					type === SESSION_LIST_TYPES.MY_SESSION &&
+					!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)
+				) {
 					// Check if consultant is the owner
 					const isOwner = session?.consultant?.id === userData.userId;
-					
+
 					// Check if consultant is subscribed (participant in the room)
 					// subscribed=true means the consultant is a member of the room
 					const isParticipant = session?.chat?.subscribed === true;
-					
+
 					// Show if owner OR participant
 					return isOwner || isParticipant;
 				}
@@ -832,9 +860,11 @@ export const SessionsList = ({
 				ref={listRef}
 				onScroll={handleListScroll}
 			>
-			{!isLoading &&
-				isCreateChatActive &&
-				type === SESSION_LIST_TYPES.MY_SESSION && <SessionListCreateChat />}
+				{!isLoading &&
+					isCreateChatActive &&
+					type === SESSION_LIST_TYPES.MY_SESSION && (
+						<SessionListCreateChat />
+					)}
 
 				{(!isLoading || finalSessionsList.length > 0) &&
 					finalSessionsList
@@ -842,21 +872,31 @@ export const SessionsList = ({
 							buildExtendedSession(session, groupIdFromParam)
 						)
 						.sort(sortSessions)
-						.map((activeSession: ExtendedSessionInterface, index) => (
-							<ActiveSessionProvider
-								key={activeSession.item.id}
-								activeSession={activeSession}
-							>
-								<SessionListItemComponent
-									defaultLanguage={defaultLanguage}
-									itemRef={(el) => (ref_list_array.current[index] = el)}
-									handleKeyDownLisItemContent={(e) =>
-										handleKeyDownLisItemContent(e, index)
-									}
-									index={index}
-								/>
-							</ActiveSessionProvider>
-						))}
+						.map(
+							(
+								activeSession: ExtendedSessionInterface,
+								index
+							) => (
+								<ActiveSessionProvider
+									key={activeSession.item.id}
+									activeSession={activeSession}
+								>
+									<SessionListItemComponent
+										defaultLanguage={defaultLanguage}
+										itemRef={(el) =>
+											(ref_list_array.current[index] = el)
+										}
+										handleKeyDownLisItemContent={(e) =>
+											handleKeyDownLisItemContent(
+												e,
+												index
+											)
+										}
+										index={index}
+									/>
+								</ActiveSessionProvider>
+							)
+						)}
 
 				{isLoading && <SessionsListSkeleton />}
 
@@ -864,7 +904,9 @@ export const SessionsList = ({
 					<div className="sessionsList__reloadWrapper">
 						<Button
 							item={{
-								label: translate('sessionList.reloadButton.label'),
+								label: translate(
+									'sessionList.reloadButton.label'
+								),
 								function: '',
 								type: 'LINK',
 								id: 'reloadButton'
@@ -879,7 +921,10 @@ export const SessionsList = ({
 				!isCreateChatActive &&
 				!isReloadButtonVisible &&
 				finalSessionsList.length === 0 && (
-					<EmptyListItem sessionListTab={sessionListTab} type={type} />
+					<EmptyListItem
+						sessionListTab={sessionListTab}
+						type={type}
+					/>
 				)}
 		</div>
 	);

@@ -12,25 +12,19 @@ import {
 import { useSearchParam } from '../../../hooks/useSearchParams';
 import {
 	SESSION_LIST_TAB,
-	SESSION_LIST_TYPES,
-	getViewPathForType,
-	isUserModerator
+	SESSION_LIST_TYPES
 } from '../../session/sessionHelpers';
-import { isMobile } from 'react-device-detect';
 import { mobileListView } from '../../app/navigationHandler';
-import { BackIcon, CameraOnIcon, GroupChatInfoIcon } from '../../../resources/img/icons';
-import { ReactComponent as VideoCallIcon } from '../../../resources/img/illustrations/camera.svg';
+import {
+	BackIcon,
+	CameraOnIcon,
+	GroupChatInfoIcon
+} from '../../../resources/img/icons';
 import { ReactComponent as CallOnIcon } from '../../../resources/img/icons/call-on.svg';
 import { SessionMenu } from '../../sessionMenu/SessionMenu';
 import { useTranslation } from 'react-i18next';
-import { getGroupChatDate } from '../../session/sessionDateHelpers';
-import { getValueFromCookie } from '../../sessionCookie/accessSessionCookie';
 import { decodeUsername } from '../../../utils/encryptionHelpers';
-import { FlyoutMenu } from '../../flyoutMenu/FlyoutMenu';
-import { BanUser, BanUserOverlay } from '../../banUser/BanUser';
-import { Tag } from '../../tag/Tag';
 import { BUTTON_TYPES, Button, ButtonItem } from '../../button/Button';
-import { useAppConfig } from '../../../hooks/useAppConfig';
 import { SessionItemInterface } from '../../../globalState/interfaces';
 import { matrixClientService } from '../../../services/matrixClientService';
 import { RoomMember } from 'matrix-js-sdk';
@@ -47,30 +41,30 @@ export const GroupChatHeader = ({
 	isJoinGroupChatView,
 	bannedUsers
 }: GroupChatHeaderProps) => {
-	const { releaseToggles } = useAppConfig();
-
-	const [isUserBanOverlayOpen, setIsUserBanOverlayOpen] =
-		useState<boolean>(false);
 	const { t } = useTranslation(['common', 'consultingTypes', 'agencies']);
 	const { activeSession } = useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
-	
+
 	// MATRIX: Get room members from Matrix client
 	const [matrixMembers, setMatrixMembers] = useState<RoomMember[]>([]);
 	const [isLoadingMembers, setIsLoadingMembers] = useState<boolean>(true);
-	const matrixRoomId = activeSession.item.matrixRoomId || activeSession.item.groupId;
-	
+	const matrixRoomId =
+		activeSession.item.matrixRoomId || activeSession.item.groupId;
+
 	useEffect(() => {
-		console.log('🔍 GroupChatHeader: Fetching Matrix members for room:', matrixRoomId);
+		console.log(
+			'🔍 GroupChatHeader: Fetching Matrix members for room:',
+			matrixRoomId
+		);
 		setIsLoadingMembers(true);
-		
+
 		if (!matrixRoomId) {
 			console.log('❌ GroupChatHeader: No matrixRoomId found');
 			setMatrixMembers([]);
 			setIsLoadingMembers(false);
 			return;
 		}
-		
+
 		// Try to get Matrix client (from global window or imported service)
 		const getClient = () => {
 			const globalService = (window as any).matrixClientService;
@@ -79,39 +73,50 @@ export const GroupChatHeader = ({
 			}
 			return matrixClientService.getClient();
 		};
-		
+
 		// Wait for Matrix client to be available (retry up to 20 times = 10 seconds)
 		let retryCount = 0;
 		const maxRetries = 20;
-		
+
 		const tryLoadMembers = () => {
 			const client = getClient();
-			
+
 			if (!client) {
 				retryCount++;
 				if (retryCount < maxRetries) {
-					console.log(`⏳ GroupChatHeader: Matrix client not ready yet, retrying... (${retryCount}/${maxRetries})`);
+					console.log(
+						`⏳ GroupChatHeader: Matrix client not ready yet, retrying... (${retryCount}/${maxRetries})`
+					);
 					setTimeout(tryLoadMembers, 500);
 					return;
 				} else {
-					console.log('❌ GroupChatHeader: Matrix client not available after retries');
+					console.log(
+						'❌ GroupChatHeader: Matrix client not available after retries'
+					);
 					setMatrixMembers([]);
 					setIsLoadingMembers(false);
 					return;
 				}
 			}
-			
-			console.log('✅ GroupChatHeader: Matrix client found, getting room...');
+
+			console.log(
+				'✅ GroupChatHeader: Matrix client found, getting room...'
+			);
 			const room = client.getRoom(matrixRoomId);
-			
+
 			if (!room) {
-				console.log('⏳ GroupChatHeader: Room not found yet, waiting for sync...');
-				console.log('📋 Available rooms:', client.getRooms().map((r: any) => r.roomId));
-				
+				console.log(
+					'⏳ GroupChatHeader: Room not found yet, waiting for sync...'
+				);
+				console.log(
+					'📋 Available rooms:',
+					client.getRooms().map((r: any) => r.roomId)
+				);
+
 				// Wait for room to appear (up to 10 seconds)
 				let roomRetryCount = 0;
 				const maxRoomRetries = 20;
-				
+
 				const tryGetRoom = () => {
 					const updatedRoom = client.getRoom(matrixRoomId);
 					if (updatedRoom) {
@@ -121,27 +126,35 @@ export const GroupChatHeader = ({
 						if (roomRetryCount < maxRoomRetries) {
 							setTimeout(tryGetRoom, 500);
 						} else {
-							console.log('❌ GroupChatHeader: Room not found after waiting:', matrixRoomId);
+							console.log(
+								'❌ GroupChatHeader: Room not found after waiting:',
+								matrixRoomId
+							);
 							setMatrixMembers([]);
 							setIsLoadingMembers(false);
 						}
 					}
 				};
-				
+
 				setTimeout(tryGetRoom, 500);
 				return;
 			}
-			
+
 			loadMembers(room);
 		};
-		
+
 		const loadMembers = (room: any) => {
 			// Get joined members
 			const members = room.getJoinedMembers();
-			console.log('✅ GroupChatHeader: Found', members?.length || 0, 'members:', members?.map((m: any) => m.userId || m.name));
+			console.log(
+				'✅ GroupChatHeader: Found',
+				members?.length || 0,
+				'members:',
+				members?.map((m: any) => m.userId || m.name)
+			);
 			setMatrixMembers(members || []);
 			setIsLoadingMembers(false);
-			
+
 			// Poll for member changes every 5 seconds
 			const intervalId = setInterval(() => {
 				const client = getClient();
@@ -150,20 +163,23 @@ export const GroupChatHeader = ({
 					if (updatedRoom) {
 						const updatedMembers = updatedRoom.getJoinedMembers();
 						if (updatedMembers?.length !== matrixMembers.length) {
-							console.log('🔄 GroupChatHeader: Members updated:', updatedMembers?.length);
+							console.log(
+								'🔄 GroupChatHeader: Members updated:',
+								updatedMembers?.length
+							);
 							setMatrixMembers(updatedMembers || []);
 						}
 					}
 				}
 			}, 5000);
-			
+
 			// Store interval ID for cleanup
 			(window as any).__groupChatHeaderInterval = intervalId;
 		};
-		
+
 		// Start trying to load members
 		tryLoadMembers();
-		
+
 		return () => {
 			const intervalId = (window as any).__groupChatHeaderInterval;
 			if (intervalId) {
@@ -174,93 +190,107 @@ export const GroupChatHeader = ({
 	}, [matrixRoomId, matrixMembers.length]);
 	const { type, path: listPath } = useContext(SessionTypeContext);
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
-	const sessionView = getViewPathForType(type);
 	const consultingType = useConsultingType(activeSession.item.consultingType);
-	const [flyoutOpenId, setFlyoutOpenId] = useState('');
 	const isConsultant = hasUserAuthority(
 		AUTHORITIES.CONSULTANT_DEFAULT,
 		userData
 	);
-	
+
 	// Use CallManager for group calls (same as SessionMenu)
 	const handleStartVideoCall = async (isVideoActivated: boolean = true) => {
-		console.log("═══════════════════════════════════════════════");
-		console.log("🎬 GROUP CALL BUTTON CLICKED (GroupChatHeader)!");
-		console.log("═══════════════════════════════════════════════");
-		
+		console.log('═══════════════════════════════════════════════');
+		console.log('🎬 GROUP CALL BUTTON CLICKED (GroupChatHeader)!');
+		console.log('═══════════════════════════════════════════════');
+
 		try {
-			const roomId = activeSession.item.matrixRoomId || activeSession.item.groupId;
-			
+			const roomId =
+				activeSession.item.matrixRoomId || activeSession.item.groupId;
+
 			if (!roomId) {
 				console.error('❌ No Matrix room ID found for session');
-				alert('Cannot start call: No Matrix room found for this session');
+				alert(
+					'Cannot start call: No Matrix room found for this session'
+				);
 				return;
 			}
 
 			// Check HTTPS
 			if (window.location.protocol !== 'https:') {
-				console.error('❌ Not on HTTPS! Safari requires HTTPS for camera/microphone access');
-				const httpsUrl = window.location.href.replace('http://', 'https://');
-				if (window.confirm('Camera/microphone access requires HTTPS. Redirect to secure connection?')) {
+				console.error(
+					'❌ Not on HTTPS! Safari requires HTTPS for camera/microphone access'
+				);
+				const httpsUrl = window.location.href.replace(
+					'http://',
+					'https://'
+				);
+				if (
+					window.confirm(
+						'Camera/microphone access requires HTTPS. Redirect to secure connection?'
+					)
+				) {
 					window.location.href = httpsUrl;
 				}
 				return;
 			}
 
 			// Request media permissions IMMEDIATELY in click handler
-			console.log('🎤 Requesting media permissions (SYNC with user click)...');
-			
+			console.log(
+				'🎤 Requesting media permissions (SYNC with user click)...'
+			);
+
 			try {
-				const stream = await navigator.mediaDevices.getUserMedia({ 
-					video: isVideoActivated, 
-					audio: true 
+				const stream = await navigator.mediaDevices.getUserMedia({
+					video: isVideoActivated,
+					audio: true
 				});
 				console.log('✅ Media permissions granted!', stream);
-				
+
 				// Store stream globally
 				(window as any).__preRequestedMediaStream = stream;
 				(window as any).__preRequestedMediaStreamTime = Date.now();
 			} catch (mediaError: any) {
 				console.error('❌ Media permission denied:', mediaError);
-				
+
 				let errorMsg = 'Cannot access camera/microphone. ';
 				if (mediaError.name === 'NotAllowedError') {
-					errorMsg += 'Please grant permissions in your browser settings.';
+					errorMsg +=
+						'Please grant permissions in your browser settings.';
 				} else if (mediaError.name === 'NotFoundError') {
 					errorMsg += 'No camera/microphone found on this device.';
 				} else if (mediaError.name === 'NotSupportedError') {
-					errorMsg += 'Your browser does not support this feature. Please use HTTPS.';
+					errorMsg +=
+						'Your browser does not support this feature. Please use HTTPS.';
 				} else {
 					errorMsg += mediaError.message || 'Unknown error.';
 				}
-				
+
 				alert(errorMsg);
 				return;
 			}
 
-			console.log('📞 Starting call via CallManager with roomId:', roomId);
+			console.log(
+				'📞 Starting call via CallManager with roomId:',
+				roomId
+			);
 			console.log('🎯 This is a GROUP CHAT - forcing isGroup=true');
-			
+
 			// Use CallManager (works for both 1-on-1 and group calls!)
 			const { callManager } = require('../../../services/CallManager');
 			callManager.startCall(roomId, isVideoActivated, true); // Force isGroup=true for group chats
-			
+
 			console.log('✅ Call initiated!');
 		} catch (error) {
 			console.error('💥 ERROR in handleStartVideoCall:', error);
-			alert(`Call failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+			alert(
+				`Call failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+			);
 		}
-		console.log("═══════════════════════════════════════════════");
+		console.log('═══════════════════════════════════════════════');
 	};
 
 	const sessionTabPath = `${
 		sessionListTab ? `?sessionListTab=${sessionListTab}` : ''
 	}`;
-
-	const isCurrentUserModerator = isUserModerator({
-		chatItem: activeSession.item,
-		rcUserId: getValueFromCookie('rc_uid')
-	});
 
 	const userSessionData = getContact(activeSession)?.sessionData || {};
 	const isAskerInfoAvailable = () =>
@@ -270,16 +300,6 @@ export const GroupChatHeader = ({
 		((type === SESSION_LIST_TYPES.ENQUIRY &&
 			Object.entries(userSessionData).length !== 0) ||
 			SESSION_LIST_TYPES.ENQUIRY !== type);
-
-	const [isSubscriberFlyoutOpen, setIsSubscriberFlyoutOpen] = useState(false);
-
-	const handleFlyout = (e) => {
-		if (!isSubscriberFlyoutOpen) {
-			setIsSubscriberFlyoutOpen(true);
-		} else if (e.target.id === 'subscriberButton') {
-			setIsSubscriberFlyoutOpen(false);
-		}
-	};
 
 	// Voice call button
 	const buttonStartCall: ButtonItem = {
@@ -332,29 +352,35 @@ export const GroupChatHeader = ({
 				<div className="sessionInfo__username sessionInfo__username--deactivate sessionInfo__username--groupChat">
 					<div className="sessionInfo__titleRow">
 						<div className="sessionInfo__groupIcon">
-						<div className="sessionsListItem__stackedAvatars">
-	{/* Always render 2 avatar placeholders */}
-	{[0, 1].map((_, index) => (
-		<div
-			key={index}
-			className="sessionsListItem__avatarWrapper"
-		>
-			<UserAvatar
-				username={`placeholder-${index}`}
-				displayName="User"
-				userId={`placeholder-${index}`}
-				size="32px"
-			/>
-		</div>
-	))}
+							<div className="sessionsListItem__stackedAvatars">
+								{/* Always render 2 avatar placeholders */}
+								{[0, 1].map((_, index) => (
+									<div
+										key={index}
+										className="sessionsListItem__avatarWrapper"
+									>
+										<UserAvatar
+											username={`placeholder-${index}`}
+											displayName="User"
+											userId={`placeholder-${index}`}
+											size="32px"
+										/>
+									</div>
+								))}
 
-	{/* Optional third circle */}
-	<div className="sessionsListItem__avatarWrapper sessionsListItem__avatarWrapper--plus">
-		<div className="sessionsListItem__plusAvatar">+1</div>
-	</div>
-</div>
+								{/* Optional third circle */}
+								<div className="sessionsListItem__avatarWrapper sessionsListItem__avatarWrapper--plus">
+									<div className="sessionsListItem__plusAvatar">
+										+1
+									</div>
+								</div>
+							</div>
 						</div>
-						<h3>{typeof activeSession.item.topic === 'string' ? activeSession.item.topic : activeSession.item.topic?.name || ''}</h3>
+						<h3>
+							{typeof activeSession.item.topic === 'string'
+								? activeSession.item.topic
+								: activeSession.item.topic?.name || ''}
+						</h3>
 					</div>
 					{/* Matrix room participants */}
 					{isLoadingMembers ? (
@@ -364,20 +390,31 @@ export const GroupChatHeader = ({
 					) : matrixMembers.length > 0 ? (
 						<div className="sessionInfo__participants">
 							{matrixMembers
-								.filter(member => {
+								.filter((member) => {
 									// Filter out system users and current user if needed
 									const userId = member.userId || '';
-									return !userId.includes('@system') && !userId.includes('@caritas.local');
+									return (
+										!userId.includes('@system') &&
+										!userId.includes('@caritas.local')
+									);
 								})
 								.map((member, index, filteredMembers) => {
 									// Extract username from userId (format: @username:domain)
 									// Always use username from userId, ignore member.name to ensure consistency
 									const userId = member.userId || '';
-									const username = userId.split(':')[0]?.replace('@', '') || userId;
+									const username =
+										userId
+											.split(':')[0]
+											?.replace('@', '') || userId;
 									return (
-										<span key={member.userId || index} className="sessionInfo__participant">
+										<span
+											key={member.userId || index}
+											className="sessionInfo__participant"
+										>
 											{decodeUsername(username)}
-											{index < filteredMembers.length - 1 && ', '}
+											{index <
+												filteredMembers.length - 1 &&
+												', '}
 										</span>
 									);
 								})}
@@ -397,35 +434,35 @@ export const GroupChatHeader = ({
 					</Link>
 				)}
 
-				{isActive &&
-					!isJoinGroupChatView &&
-					isConsultant && (
-						<div
-							className="sessionInfo__videoCallButtons"
-							data-cy="session-header-video-call-buttons"
-						>
-							<Button
-								buttonHandle={() => handleStartVideoCall(true)}
-								item={buttonStartVideoCall}
-							/>
-							<Button
-								buttonHandle={() => handleStartVideoCall(false)}
-								item={buttonStartCall}
-							/>
-						</div>
-					)}
+				{isActive && !isJoinGroupChatView && isConsultant && (
+					<div
+						className="sessionInfo__videoCallButtons"
+						data-cy="session-header-video-call-buttons"
+					>
+						<Button
+							buttonHandle={() => handleStartVideoCall(true)}
+							item={buttonStartVideoCall}
+						/>
+						<Button
+							buttonHandle={() => handleStartVideoCall(false)}
+							item={buttonStartCall}
+						/>
+					</div>
+				)}
 
 				{/* MATRIX MIGRATION: Temporarily hide session menu for group chats */}
-				{false && <SessionMenu
-					hasUserInitiatedStopOrLeaveRequest={
-						hasUserInitiatedStopOrLeaveRequest
-					}
-					isAskerInfoAvailable={isAskerInfoAvailable()}
-					isJoinGroupChatView={isJoinGroupChatView}
-					bannedUsers={bannedUsers}
-				/>}
-		</div>
-		{/* <div className="sessionInfo__metaInfo">
+				{false && (
+					<SessionMenu
+						hasUserInitiatedStopOrLeaveRequest={
+							hasUserInitiatedStopOrLeaveRequest
+						}
+						isAskerInfoAvailable={isAskerInfoAvailable()}
+						isJoinGroupChatView={isJoinGroupChatView}
+						bannedUsers={bannedUsers}
+					/>
+				)}
+			</div>
+			{/* <div className="sessionInfo__metaInfo">
 			{activeSession.item.active &&
 				activeSession.item.subscribed &&
 				!isJoinGroupChatView && (

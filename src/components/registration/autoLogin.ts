@@ -1,9 +1,7 @@
 import CryptoJS from 'crypto-js';
 
 import { getKeycloakAccessToken } from '../sessionCookie/getKeycloakAccessToken';
-import { getRocketchatAccessToken } from '../sessionCookie/getRocketchatAccessToken';
 import { setValueInCookie } from '../sessionCookie/accessSessionCookie';
-import { generateCsrfToken } from '../../utils/generateCsrfToken';
 import {
 	createAndStoreKeys,
 	decryptPrivateKey,
@@ -58,15 +56,19 @@ const loginKeycloak = async (
 	password: string,
 	otp?: string
 ) => {
-	console.log("🔐 DEBUG: loginKeycloak called with:", { username, password: password ? "***" : "undefined", otp });
-	
+	console.log('🔐 DEBUG: loginKeycloak called with:', {
+		username,
+		password: password ? '***' : 'undefined',
+		otp
+	});
+
 	const keycloakRes = await getKeycloakAccessToken(
 		username,
 		encodeURIComponent(password),
 		otp || null
 	);
 
-	console.log("🔐 DEBUG: loginKeycloak received response:", keycloakRes);
+	console.log('🔐 DEBUG: loginKeycloak received response:', keycloakRes);
 
 	setTokens(
 		keycloakRes.access_token,
@@ -75,35 +77,19 @@ const loginKeycloak = async (
 		keycloakRes.refresh_expires_in
 	);
 
-	console.log("🔐 DEBUG: loginKeycloak tokens set successfully");
+	console.log('🔐 DEBUG: loginKeycloak tokens set successfully');
 	return keycloakRes;
-};
-
-const loginRocketChat = async (userHash: string, password: string) => {
-	const { data } = await getRocketchatAccessToken(userHash, password);
-
-	if (data.authToken) {
-		setValueInCookie('rc_token', data.authToken);
-	}
-	if (data.userId) {
-		setValueInCookie('rc_uid', data.userId);
-	}
-
-	//generate new csrf token for current session
-	generateCsrfToken(true);
-
-	// e2ee
-	await handleE2EESetup(password, data.userId, () =>
-		loginRocketChat(userHash, password)
-	);
 };
 
 export const autoLogin = async ({
 	password,
 	...autoLoginProps
 }: AutoLoginProps): Promise<any> => {
-	console.log("🔐 DEBUG: autoLogin called with:", { username: autoLoginProps.username, password: password ? "***" : "undefined" });
-	
+	console.log('🔐 DEBUG: autoLogin called with:', {
+		username: autoLoginProps.username,
+		password: password ? '***' : 'undefined'
+	});
+
 	const tenantSettings = (autoLoginProps?.tenantData?.settings ||
 		{}) as TenantDataSettingsInterface;
 
@@ -111,29 +97,41 @@ export const autoLogin = async ({
 	let username = userHash;
 	let keycloakRes;
 
-	console.log("🔐 DEBUG: autoLogin - encoded username:", username);
+	console.log('🔐 DEBUG: autoLogin - encoded username:', username);
 
 	// Login with enc username and fallback to unencrypted username
 	try {
-		console.log("🔐 DEBUG: autoLogin - attempting Keycloak login with encoded username");
+		console.log(
+			'🔐 DEBUG: autoLogin - attempting Keycloak login with encoded username'
+		);
 		keycloakRes = await loginKeycloak(
 			username,
 			password,
 			autoLoginProps.otp
 		);
-		console.log("🔐 DEBUG: autoLogin - Keycloak login successful with encoded username");
+		console.log(
+			'🔐 DEBUG: autoLogin - Keycloak login successful with encoded username'
+		);
 	} catch (e: any) {
-		console.log("🔐 DEBUG: autoLogin - Keycloak login failed with encoded username:", e.message);
+		console.log(
+			'🔐 DEBUG: autoLogin - Keycloak login failed with encoded username:',
+			e.message
+		);
 		if (e.message === FETCH_ERRORS.UNAUTHORIZED) {
 			userHash = autoLoginProps.username;
 			username = encodeURIComponent(userHash);
-			console.log("🔐 DEBUG: autoLogin - retrying with unencoded username:", username);
+			console.log(
+				'🔐 DEBUG: autoLogin - retrying with unencoded username:',
+				username
+			);
 			keycloakRes = await loginKeycloak(
 				username,
 				password,
 				autoLoginProps.otp
 			);
-			console.log("🔐 DEBUG: autoLogin - Keycloak login successful with unencoded username");
+			console.log(
+				'🔐 DEBUG: autoLogin - Keycloak login successful with unencoded username'
+			);
 		} else {
 			throw e;
 		}
@@ -151,44 +149,60 @@ export const autoLogin = async ({
 
 	// Skip RocketChat integration for now due to configuration issues
 	console.warn('Skipping RocketChat integration due to configuration issues');
-	
+
 	// MATRIX MIGRATION: Initialize Matrix client for calls and real-time sync
 	console.log('🔷🔷🔷 MATRIX LOGIN ATTEMPT STARTING 🔷🔷🔷');
 	console.log('🔷 Username for Matrix:', autoLoginProps.username);
 	console.log('🔷 Password available:', !!password);
-	
+
 	try {
-		const { getMatrixAccessToken } = await import('../sessionCookie/getMatrixAccessToken');
-		const { MatrixClientService } = await import('../../services/matrixClientService');
-		
+		const { getMatrixAccessToken } = await import(
+			'../sessionCookie/getMatrixAccessToken'
+		);
+
 		console.log('🔷 Calling getMatrixAccessToken...');
-		const matrixLoginData = await getMatrixAccessToken(autoLoginProps.username, password);
-		
+		const matrixLoginData = await getMatrixAccessToken(
+			autoLoginProps.username,
+			password
+		);
+
 		console.log('🔷 Matrix login successful! Data:', matrixLoginData);
 		console.log('🔷 Matrix User ID:', matrixLoginData.userId);
-		console.log('🔷 Matrix Access Token:', matrixLoginData.accessToken ? 'exists' : 'missing');
-		
+		console.log(
+			'🔷 Matrix Access Token:',
+			matrixLoginData.accessToken ? 'exists' : 'missing'
+		);
+
 		// Store credentials in localStorage for later use
 		localStorage.setItem('matrix_user_id', matrixLoginData.userId);
-		localStorage.setItem('matrix_access_token', matrixLoginData.accessToken);
+		localStorage.setItem(
+			'matrix_access_token',
+			matrixLoginData.accessToken
+		);
 		localStorage.setItem('matrix_device_id', matrixLoginData.deviceId);
 		console.log('🔷 Matrix credentials saved to localStorage');
-		
+
 		// CRITICAL: Set rc_uid and rc_token cookies for backend compatibility
 		// Backend still expects these headers even though we're using Matrix
 		setValueInCookie('rc_uid', matrixLoginData.userId);
 		setValueInCookie('rc_token', matrixLoginData.accessToken);
-		console.log('🔷 Matrix credentials saved to cookies (rc_uid, rc_token) for backend compatibility');
-		
-		const matrixClientService = new MatrixClientService();
+		console.log(
+			'🔷 Matrix credentials saved to cookies (rc_uid, rc_token) for backend compatibility'
+		);
+
+		const { matrixClientService } = await import(
+			'../../services/matrixClientService'
+		);
 		console.log('🔷 Initializing Matrix client...');
 		matrixClientService.initializeClient(matrixLoginData);
-		
+
 		// Store Matrix client globally for call functionality
 		(window as any).matrixClientService = matrixClientService;
-		
+
 		console.log('✅✅✅ Matrix client initialized successfully! ✅✅✅');
-		console.log('✅ Matrix client available at: window.matrixClientService');
+		console.log(
+			'✅ Matrix client available at: window.matrixClientService'
+		);
 	} catch (error) {
 		console.error('❌❌❌ Matrix client initialization FAILED! ❌❌❌');
 		console.error('❌ Error:', error);
@@ -196,7 +210,7 @@ export const autoLogin = async ({
 		console.error('❌ Error stack:', (error as Error).stack);
 		// Continue without Matrix client - chat will still work via REST API
 	}
-	
+
 	console.log('🔷🔷🔷 MATRIX LOGIN ATTEMPT COMPLETE 🔷🔷🔷');
 
 	if (tenantSettings?.featureToolsEnabled) {

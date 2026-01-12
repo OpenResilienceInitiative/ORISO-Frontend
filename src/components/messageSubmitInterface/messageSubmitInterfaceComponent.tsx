@@ -27,8 +27,7 @@ import {
 	apiSendEnquiry,
 	apiSendMessage,
 	apiUploadAttachment,
-	apiMatrixUploadFile,
-	apiMatrixSendFileMessage
+	apiMatrixUploadFile
 } from '../../api';
 import {
 	MessageSubmitInfo,
@@ -150,7 +149,7 @@ export const MessageSubmitInterfaceComponent = ({
 	handleMessageSendSuccess: onMessageSendSuccess
 }: MessageSubmitInterfaceComponentProps) => {
 	const { t: translate } = useTranslation();
-	
+
 	// Debug logging
 	useEffect(() => {
 		console.log('🔥 MessageSubmitInterface MOUNTED');
@@ -248,11 +247,10 @@ export const MessageSubmitInterfaceComponent = ({
 		);
 		setIsSessionArchived(activeSession.item.status === STATUS_ARCHIVED);
 		setIsTypingActive(activeSession.isGroup);
-	}, [activeSession, activeSession.item.status, userData]);
+	}, [activeSession, userData]);
 
 	const { onChange: onDraftMessageChange, loaded: draftLoaded } =
 		useDraftMessage(!isRequestInProgress, setEditorState);
-
 
 	useEffect(() => {
 		if (
@@ -357,12 +355,16 @@ export const MessageSubmitInterfaceComponent = ({
 	const scrollEditorToBottom = useCallback(() => {
 		const textInput: any = textareaInputRef.current;
 		if (!textInput) return;
-		
+
 		// Find all possible scrollable elements
-		const editorContent = textInput.querySelector('.public-DraftEditor-content');
+		const editorContent = textInput.querySelector(
+			'.public-DraftEditor-content'
+		);
 		const editorRoot = textInput.querySelector('.DraftEditor-root');
-		const editorContentDiv = textInput.querySelector('.public-DraftEditor-content > div');
-		
+		const editorContentDiv = textInput.querySelector(
+			'.public-DraftEditor-content > div'
+		);
+
 		// Function to perform the scroll on all possible elements
 		const doScroll = () => {
 			// Scroll the main editor content
@@ -373,7 +375,7 @@ export const MessageSubmitInterfaceComponent = ({
 					editorContent.scrollTop = scrollHeight + 1000;
 				}
 			}
-			
+
 			// Scroll the editor root container
 			if (editorRoot) {
 				const scrollHeight = editorRoot.scrollHeight;
@@ -382,24 +384,28 @@ export const MessageSubmitInterfaceComponent = ({
 					editorRoot.scrollTop = scrollHeight + 1000;
 				}
 			}
-			
+
 			// Scroll the textInput container itself
 			if (textInput.scrollHeight > textInput.clientHeight) {
 				textInput.scrollTop = textInput.scrollHeight + 1000;
 			}
-			
+
 			// Try scrollIntoView on the last element as fallback
 			if (editorContentDiv) {
 				const lastChild = editorContentDiv.lastElementChild;
 				if (lastChild) {
-					lastChild.scrollIntoView({ behavior: 'auto', block: 'end', inline: 'nearest' });
+					lastChild.scrollIntoView({
+						behavior: 'auto',
+						block: 'end',
+						inline: 'nearest'
+					});
 				}
 			}
 		};
-		
+
 		// Scroll immediately
 		doScroll();
-		
+
 		// Scroll after DOM update (requestAnimationFrame) - multiple frames for rich text
 		requestAnimationFrame(() => {
 			doScroll();
@@ -419,7 +425,7 @@ export const MessageSubmitInterfaceComponent = ({
 				}
 			});
 		});
-		
+
 		// Multiple delayed scrolls to catch late DOM updates
 		// When rich text is active with toolbar, we need even more aggressive scrolling
 		if (isRichtextActive) {
@@ -515,16 +521,21 @@ export const MessageSubmitInterfaceComponent = ({
 			}
 			return 'not-handled';
 		},
-		[editorState, handleEditorChange, isRichtextActive, scrollEditorToBottom]
+		[
+			editorState,
+			handleEditorChange,
+			isRichtextActive,
+			scrollEditorToBottom
+		]
 	);
 
 	const resizeTextarea = useCallback(() => {
 		const textInput: any = textareaInputRef.current;
 		if (!textInput) return;
-		
+
 		// Check if editor is empty - if so, reset to default height
 		const hasText = editorState.getCurrentContent().hasText();
-		
+
 		// default values
 		let textareaMaxHeight;
 		if (window.innerWidth <= 900) {
@@ -548,28 +559,42 @@ export const MessageSubmitInterfaceComponent = ({
 				? `margin-bottom: ${fileHeight}px !important;`
 				: '';
 			textInputStyles += ` ${textInputMarginTop} ${textInputMarginBottom}`;
-			
+
 			if (isRichtextActive) {
 				textInputStyles += `border-top: none !important; border-top-right-radius: 0 !important; box-shadow: none !important;`;
 			}
 			if (attachmentSelected) {
 				textInputStyles += `border-bottom: none !important; border-bottom-right-radius: 0 !important;`;
 			}
-			
+
 			textInput.setAttribute('style', textInputStyles);
-			
+
 			// Force Draft.js containers to reset height
-			const editorContainer = textInput.querySelector('.DraftEditor-root');
+			const editorContainer =
+				textInput.querySelector('.DraftEditor-root');
 			if (editorContainer) {
-				editorContainer.setAttribute('style', `height: ${defaultMinHeight}px !important; max-height: ${defaultMinHeight}px !important;`);
+				editorContainer.setAttribute(
+					'style',
+					`height: ${defaultMinHeight}px !important; max-height: ${defaultMinHeight}px !important;`
+				);
 			}
-			const editorContent = textInput.querySelector('.public-DraftEditor-content');
+			const editorContent = textInput.querySelector(
+				'.public-DraftEditor-content'
+			);
 			if (editorContent) {
-				editorContent.setAttribute('style', `height: ${defaultMinHeight}px !important; max-height: ${defaultMinHeight}px !important;`);
+				editorContent.setAttribute(
+					'style',
+					`height: ${defaultMinHeight}px !important; max-height: ${defaultMinHeight}px !important;`
+				);
 			}
-			const editorContentDiv = textInput.querySelector('.public-DraftEditor-content > div');
+			const editorContentDiv = textInput.querySelector(
+				'.public-DraftEditor-content > div'
+			);
 			if (editorContentDiv) {
-				editorContentDiv.setAttribute('style', `height: auto !important; max-height: none !important;`);
+				editorContentDiv.setAttribute(
+					'style',
+					`height: auto !important; max-height: none !important;`
+				);
 			}
 			return;
 		}
@@ -584,7 +609,7 @@ export const MessageSubmitInterfaceComponent = ({
 		textInputMaxHeight = attachmentSelected
 			? textInputMaxHeight - fileHeight
 			: textInputMaxHeight;
-		
+
 		const currentInputHeight =
 			textHeight > textInputMaxHeight ? textInputMaxHeight : textHeight;
 
@@ -618,18 +643,15 @@ export const MessageSubmitInterfaceComponent = ({
 		if (scrollButton) {
 			scrollButton.style.bottom = textareaContainerHeight + 24 + 'px';
 		}
-		
+
 		// Auto-scroll to bottom after resize completes (especially important for bullet lists)
 		scrollEditorToBottom();
-	}, [attachmentSelected, isRichtextActive, editorState, scrollEditorToBottom]);
-
-	const toggleAbsentMessage = useCallback(() => {
-		//TODO: not react way: use state and based on that set a class
-		const infoWrapper = document.querySelector('.messageSubmitInfoWrapper');
-		if (infoWrapper) {
-			infoWrapper.classList.toggle('messageSubmitInfoWrapper--hidden');
-		}
-	}, []);
+	}, [
+		attachmentSelected,
+		isRichtextActive,
+		editorState,
+		scrollEditorToBottom
+	]);
 
 	// Track focus state for styling featureWrapper border - using activeElement check
 	useEffect(() => {
@@ -641,17 +663,25 @@ export const MessageSubmitInterfaceComponent = ({
 			}
 
 			// Find the Draft.js contenteditable element
-			const editorElement = inputElement.querySelector('[contenteditable="true"]');
+			const editorElement = inputElement.querySelector(
+				'[contenteditable="true"]'
+			);
 			const activeElement = document.activeElement;
-			
+
 			// Check if editor or any child is focused
-			const isFocused = activeElement === editorElement || 
+			const isFocused =
+				activeElement === editorElement ||
 				(editorElement && editorElement.contains(activeElement)) ||
 				(activeElement && inputElement.contains(activeElement));
 
 			if (isFocused !== isInputFocused) {
 				setIsInputFocused(isFocused);
-				console.log('🎯 Focus changed:', isFocused, 'Active element:', activeElement);
+				console.log(
+					'🎯 Focus changed:',
+					isFocused,
+					'Active element:',
+					activeElement
+				);
 			}
 		};
 
@@ -700,7 +730,9 @@ export const MessageSubmitInterfaceComponent = ({
 		const isMobile = window.innerWidth <= 900;
 		if (!isMobile) return;
 
-		const editorElement = inputElement.querySelector('[contenteditable="true"]') as HTMLElement;
+		const editorElement = inputElement.querySelector(
+			'[contenteditable="true"]'
+		) as HTMLElement;
 		if (!editorElement) return;
 
 		const scrollInputIntoView = () => {
@@ -708,8 +740,8 @@ export const MessageSubmitInterfaceComponent = ({
 			if (window.visualViewport) {
 				// Wait for keyboard to appear
 				setTimeout(() => {
-					editorElement.scrollIntoView({ 
-						behavior: 'smooth', 
+					editorElement.scrollIntoView({
+						behavior: 'smooth',
 						block: 'center',
 						inline: 'nearest'
 					});
@@ -717,8 +749,8 @@ export const MessageSubmitInterfaceComponent = ({
 			} else {
 				// Fallback for older browsers
 				setTimeout(() => {
-					editorElement.scrollIntoView({ 
-						behavior: 'smooth', 
+					editorElement.scrollIntoView({
+						behavior: 'smooth',
 						block: 'center',
 						inline: 'nearest'
 					});
@@ -732,21 +764,30 @@ export const MessageSubmitInterfaceComponent = ({
 
 		// Handle visual viewport resize (keyboard appearing/disappearing)
 		const handleViewportResize = () => {
-			if (document.activeElement === editorElement || editorElement.contains(document.activeElement)) {
+			if (
+				document.activeElement === editorElement ||
+				editorElement.contains(document.activeElement)
+			) {
 				scrollInputIntoView();
 			}
 		};
 
 		editorElement.addEventListener('focus', handleFocus);
-		
+
 		if (window.visualViewport) {
-			window.visualViewport.addEventListener('resize', handleViewportResize);
+			window.visualViewport.addEventListener(
+				'resize',
+				handleViewportResize
+			);
 		}
 
 		return () => {
 			editorElement.removeEventListener('focus', handleFocus);
 			if (window.visualViewport) {
-				window.visualViewport.removeEventListener('resize', handleViewportResize);
+				window.visualViewport.removeEventListener(
+					'resize',
+					handleViewportResize
+				);
 			}
 		};
 	}, []);
@@ -802,10 +843,15 @@ export const MessageSubmitInterfaceComponent = ({
 	const sendMessage = useCallback(
 		async (message, attachment: File, isEncrypted) => {
 			const sendToRoomWithId = activeSession.rid || activeSession.item.id;
-		// MATRIX MIGRATION: Determine if this is a Matrix session
-		// Matrix sessions have either no rid, or rid is a Matrix room ID (starts with '!')
-		const isMatrixSession = (!activeSession.rid || (activeSession.rid && activeSession.rid.startsWith('!'))) && activeSession.item?.id;
-		const matrixSessionId = isMatrixSession ? activeSession.item.id : undefined;
+			// MATRIX MIGRATION: Determine if this is a Matrix session
+			// Matrix sessions have either no rid, or rid is a Matrix room ID (starts with '!')
+			const isMatrixSession =
+				(!activeSession.rid ||
+					(activeSession.rid && activeSession.rid.startsWith('!'))) &&
+				activeSession.item?.id;
+			const matrixSessionId = isMatrixSession
+				? activeSession.item.id
+				: undefined;
 			const getSendMailNotificationStatus = () => !activeSession.isGroup;
 
 			if (attachment) {
@@ -813,8 +859,11 @@ export const MessageSubmitInterfaceComponent = ({
 
 				// MATRIX MIGRATION: Use direct Matrix upload for Matrix sessions
 				if (matrixSessionId) {
-					console.log('📤 Using Matrix direct upload for session:', matrixSessionId);
-					
+					console.log(
+						'📤 Using Matrix direct upload for session:',
+						matrixSessionId
+					);
+
 					try {
 						// Upload file to Matrix via UserService
 						// UserService handles: upload + send message automatically
@@ -824,8 +873,11 @@ export const MessageSubmitInterfaceComponent = ({
 							setUploadProgress,
 							setAttachmentUpload
 						);
-						
-						console.log('✅ Matrix upload and message sent successfully!', uploadResult);
+
+						console.log(
+							'✅ Matrix upload and message sent successfully!',
+							uploadResult
+						);
 						res = { success: true };
 					} catch (error: any) {
 						console.error('❌ Matrix upload failed:', error);
@@ -894,7 +946,8 @@ export const MessageSubmitInterfaceComponent = ({
 							);
 						} else if (
 							res.status === 403 &&
-							res.getResponseHeader('X-Reason') === 'QUOTA_REACHED'
+							res.getResponseHeader('X-Reason') ===
+								'QUOTA_REACHED'
 						) {
 							handleAttachmentUploadError(
 								INFO_TYPES.ATTACHMENT_QUOTA_REACHED_ERROR
@@ -916,21 +969,23 @@ export const MessageSubmitInterfaceComponent = ({
 
 			// For Matrix: if we uploaded an attachment, the message was already sent with it
 			// Only send a separate text message if there's text and no attachment
-			const shouldSendTextMessage = getTypedMarkdownMessage() && (!attachment || !matrixSessionId);
-			
+			const shouldSendTextMessage =
+				getTypedMarkdownMessage() && (!attachment || !matrixSessionId);
+
 			if (shouldSendTextMessage) {
 				// MATRIX MIGRATION: For group chats, Matrix room ID is in activeSession.rid
-				const matrixRoomId = activeSession.rid && activeSession.rid.startsWith('!') 
-					? activeSession.rid 
-					: activeSession.item?.matrixRoomId;
-				
+				const matrixRoomId =
+					activeSession.rid && activeSession.rid.startsWith('!')
+						? activeSession.rid
+						: activeSession.item?.matrixRoomId;
+
 				await apiSendMessage(
 					message,
 					sendToRoomWithId,
 					getSendMailNotificationStatus() && !attachment,
 					isEncrypted,
 					matrixSessionId,
-					matrixRoomId  // Pass Matrix room ID for SDK sending
+					matrixRoomId // Pass Matrix room ID for SDK sending
 				)
 					.then(() => encryptRoom(setE2EEState))
 					.then(() => {
@@ -953,6 +1008,7 @@ export const MessageSubmitInterfaceComponent = ({
 		[
 			activeSession.isGroup,
 			activeSession.item.id,
+			activeSession.item?.matrixRoomId,
 			activeSession.rid,
 			cleanupAttachment,
 			encryptRoom,
@@ -1096,7 +1152,12 @@ export const MessageSubmitInterfaceComponent = ({
 			// For all other commands, delegate to original handler
 			return handleEditorKeyCommand(command);
 		},
-		[handleEditorKeyCommand, uploadProgress, isRequestInProgress, handleButtonClick]
+		[
+			handleEditorKeyCommand,
+			uploadProgress,
+			isRequestInProgress,
+			handleButtonClick
+		]
 	);
 
 	const handleAttachmentSelect = useCallback(() => {
@@ -1256,7 +1317,9 @@ export const MessageSubmitInterfaceComponent = ({
 			<form className="textarea">
 				<div className={'textarea__wrapper'}>
 					<div className="textarea__wrapper-send-message">
-						<span className={`textarea__featureWrapper ${isInputFocused ? 'textarea__featureWrapper--focused' : ''}`}>
+						<span
+							className={`textarea__featureWrapper ${isInputFocused ? 'textarea__featureWrapper--focused' : ''}`}
+						>
 							<span className="textarea__richtextToggle">
 								<RichtextToggleIcon
 									width="20"
@@ -1288,18 +1351,45 @@ export const MessageSubmitInterfaceComponent = ({
 									// Rich text mode needs more aggressive scrolling due to Draft.js DOM update delays
 									if (e.key === 'Enter' && isRichtextActive) {
 										// Multiple delayed scrolls for Enter key in rich text mode to ensure DOM has updated
-										setTimeout(() => scrollEditorToBottom(), 0);
-										setTimeout(() => scrollEditorToBottom(), 50);
-										setTimeout(() => scrollEditorToBottom(), 150);
-										setTimeout(() => scrollEditorToBottom(), 300);
-										setTimeout(() => scrollEditorToBottom(), 500);
-										setTimeout(() => scrollEditorToBottom(), 700);
+										setTimeout(
+											() => scrollEditorToBottom(),
+											0
+										);
+										setTimeout(
+											() => scrollEditorToBottom(),
+											50
+										);
+										setTimeout(
+											() => scrollEditorToBottom(),
+											150
+										);
+										setTimeout(
+											() => scrollEditorToBottom(),
+											300
+										);
+										setTimeout(
+											() => scrollEditorToBottom(),
+											500
+										);
+										setTimeout(
+											() => scrollEditorToBottom(),
+											700
+										);
 									} else if (e.key === 'Enter') {
 										// Enter key in non-rich text mode (simpler, less delays needed)
-										setTimeout(() => scrollEditorToBottom(), 0);
-										setTimeout(() => scrollEditorToBottom(), 50);
+										setTimeout(
+											() => scrollEditorToBottom(),
+											0
+										);
+										setTimeout(
+											() => scrollEditorToBottom(),
+											50
+										);
 									} else {
-										setTimeout(() => scrollEditorToBottom(), 0);
+										setTimeout(
+											() => scrollEditorToBottom(),
+											0
+										);
 									}
 								}}
 							>
@@ -1317,10 +1407,18 @@ export const MessageSubmitInterfaceComponent = ({
 								<PluginsEditor
 									editorState={editorState}
 									onChange={handleEditorChange}
-									readOnly={!draftLoaded || !!attachmentSelected || !!uploadProgress}
-									handleKeyCommand={enhancedHandleEditorKeyCommand}
+									readOnly={
+										!draftLoaded ||
+										!!attachmentSelected ||
+										!!uploadProgress
+									}
+									handleKeyCommand={
+										enhancedHandleEditorKeyCommand
+									}
 									keyBindingFn={keyBindingFn}
-									placeholder={attachmentSelected ? '' : placeholder}
+									placeholder={
+										attachmentSelected ? '' : placeholder
+									}
 									stripPastedStyles={true}
 									spellCheck={true}
 									handleBeforeInput={() =>
@@ -1396,12 +1494,16 @@ export const MessageSubmitInterfaceComponent = ({
 								handleSendButton={handleButtonClick}
 								clicked={isRequestInProgress}
 								deactivated={
-									!attachmentSelected && 
-									(!getTypedMarkdownMessage() || getTypedMarkdownMessage().trim().length === 0)
+									!attachmentSelected &&
+									(!getTypedMarkdownMessage() ||
+										getTypedMarkdownMessage().trim()
+											.length === 0)
 								}
 								isEmpty={
-									!attachmentSelected && 
-									(!getTypedMarkdownMessage() || getTypedMarkdownMessage().trim().length === 0)
+									!attachmentSelected &&
+									(!getTypedMarkdownMessage() ||
+										getTypedMarkdownMessage().trim()
+											.length === 0)
 								}
 							/>
 						</div>
