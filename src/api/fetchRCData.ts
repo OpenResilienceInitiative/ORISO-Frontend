@@ -1,8 +1,4 @@
 import { getValueFromCookie } from '../components/sessionCookie/accessSessionCookie';
-import {
-	getErrorCaseForStatus,
-	redirectToErrorPage
-} from '../components/error/errorHandling';
 import { RequestLog } from '../utils/requestCollector';
 
 export const fetchRCData = (
@@ -34,7 +30,11 @@ export const fetchRCData = (
 			if (response.status === 200) {
 				return response.json();
 			} else if (!ignoreErrors) {
-				console.warn('RocketChat API call failed:', response.status, response.statusText);
+				console.warn(
+					'RocketChat API call failed:',
+					response.status,
+					response.statusText
+				);
 				// Don't redirect to error page for RocketChat failures
 				throw new Error('api call error');
 			}

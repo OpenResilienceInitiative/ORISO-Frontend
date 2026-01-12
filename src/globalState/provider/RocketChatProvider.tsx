@@ -4,7 +4,6 @@ import {
 	createContext,
 	MutableRefObject,
 	useCallback,
-	useEffect,
 	useRef,
 	useState
 } from 'react';
@@ -379,24 +378,25 @@ export function RocketChatProvider(props) {
 		};
 	}, [getEndpoint, removeSubscription, send]);
 
-	useEffect(() => { return; // DISABLED ROCKETCHAT
-		if (!rcWebsocket.current) {
-			connect();
-		}
-		const websocket = rcWebsocket.current;
-
-		return () => {
-			if (rcWebsocketTimeout.current)
-				window.clearTimeout(rcWebsocketTimeout.current);
-			rcWebsocketTimeout.current = null;
-			if (websocket) {
-				websocket.close();
-				rcWebsocket.current = null;
-			}
-			subscriptions.current = {};
-			listeners.current = {};
-		};
-	}, [close, connect]);
+	// DISABLED ROCKETCHAT - WebSocket connection disabled for Matrix migration
+	// useEffect(() => {
+	// 	if (!rcWebsocket.current) {
+	// 		connect();
+	// 	}
+	// 	const websocket = rcWebsocket.current;
+	//
+	// 	return () => {
+	// 		if (rcWebsocketTimeout.current)
+	// 			window.clearTimeout(rcWebsocketTimeout.current);
+	// 		rcWebsocketTimeout.current = null;
+	// 		if (websocket) {
+	// 			websocket.close();
+	// 			rcWebsocket.current = null;
+	// 		}
+	// 		subscriptions.current = {};
+	// 		listeners.current = {};
+	// 	};
+	// }, [close, connect]);
 
 	return (
 		<RocketChatContext.Provider

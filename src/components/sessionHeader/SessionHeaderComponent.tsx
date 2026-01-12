@@ -2,7 +2,6 @@ import * as React from 'react';
 import { useContext, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import clsx from 'clsx';
-import { handleNumericTranslation } from '../../utils/translate';
 import { mobileListView } from '../app/navigationHandler';
 import {
 	AUTHORITIES,
@@ -23,10 +22,6 @@ import {
 	SESSION_LIST_TYPES
 } from '../session/sessionHelpers';
 import { SessionMenu } from '../sessionMenu/SessionMenu';
-import {
-	convertUserDataObjectToArray,
-	getUserDataTranslateBase
-} from '../profile/profileHelpers';
 import { ReactComponent as BackIcon } from '../../resources/img/icons/arrow-left.svg';
 import { UserAvatar } from '../message/UserAvatar';
 import { ConsultantSearchLoader } from './ConsultantSearchLoader';
@@ -59,16 +54,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	const settings = useAppConfig();
 
 	const contact = getContact(activeSession);
-	const userSessionData = contact?.sessionData;
-
-	const preparedUserSessionData =
-		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
-		userSessionData
-			? convertUserDataObjectToArray(userSessionData)
-			: null;
-	const translateBase = getUserDataTranslateBase(
-		activeSession.item.consultingType
-	);
+	const userSessionData = contact?.sessionData || {};
 
 	const [isSubscriberFlyoutOpen, setIsSubscriberFlyoutOpen] = useState(false);
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');

@@ -1,7 +1,5 @@
-import { isUserModerator } from '../session/sessionHelpers';
 import * as React from 'react';
-import { useCallback, useContext } from 'react';
-import { ActiveSessionContext } from '../../globalState';
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface MessageDisplayNameProps {
@@ -22,12 +20,6 @@ export const MessageDisplayName = ({
 	displayName
 }: MessageDisplayNameProps) => {
 	const { t: translate } = useTranslation();
-	const { activeSession } = useContext(ActiveSessionContext);
-
-	const subscriberIsModerator = isUserModerator({
-		chatItem: activeSession.item,
-		rcUserId: userId
-	});
 
 	const getUsernameWithPrefix = useCallback(() => {
 		if (isMyMessage) {
@@ -36,11 +28,7 @@ export const MessageDisplayName = ({
 			// Just show username/displayName without role prefix
 			return displayName || username;
 		}
-	}, [
-		displayName,
-		isMyMessage,
-		username
-	]);
+	}, [displayName, isMyMessage, username, translate]);
 
 	return (
 		<>

@@ -9,7 +9,6 @@ import {
 import {
 	SessionsDataContext,
 	UPDATE_SESSIONS,
-	SessionTypeContext,
 	UserDataContext
 } from '../../globalState';
 import { InputField, InputFieldItem } from '../inputField/InputField';
@@ -24,7 +23,10 @@ import './createChat.styles';
 import { useResponsive } from '../../hooks/useResponsive';
 import { apiGetSessionRoomsByGroupIds } from '../../api/apiGetSessionRooms';
 import { useTranslation } from 'react-i18next';
-import { apiGetAgencyConsultantList, Consultant } from '../../api/apiGetAgencyConsultantList';
+import {
+	apiGetAgencyConsultantList,
+	Consultant
+} from '../../api/apiGetAgencyConsultantList';
 import { apiCreateGroupChat } from '../../api/apiGroupChatSettings';
 
 export const CreateGroupChatView = () => {
@@ -38,8 +40,12 @@ export const CreateGroupChatView = () => {
 	const { dispatch } = useContext(SessionsDataContext);
 	const [selectedChatTopic, setSelectedChatTopic] = useState('');
 	const [selectedAgency, setSelectedAgency] = useState<number | null>(null);
-	const [selectedConsultants, setSelectedConsultants] = useState<string[]>([]);
-	const [availableConsultants, setAvailableConsultants] = useState<Consultant[]>([]);
+	const [selectedConsultants, setSelectedConsultants] = useState<string[]>(
+		[]
+	);
+	const [availableConsultants, setAvailableConsultants] = useState<
+		Consultant[]
+	>([]);
 	const [isCreateButtonDisabled, setIsCreateButtonDisabled] = useState(true);
 	const [chatTopicLabel, setChatTopicLabel] = useState(
 		'groupChat.create.topicInput.label'
@@ -110,18 +116,27 @@ export const CreateGroupChatView = () => {
 					// ✅ FIX 1: Filter out current user from consultant list
 					// ✅ FIX 2: Remove duplicates using consultantId as unique key
 					const currentUserId = userData?.userId;
-					const uniqueConsultants = consultants.reduce((acc, consultant) => {
-						// Skip if this is the current user
-						if (consultant.consultantId === currentUserId) {
-							return acc;
-						}
-						// Skip if we already have this consultant (remove duplicates)
-						if (acc.some(c => c.consultantId === consultant.consultantId)) {
-							return acc;
-						}
-						return [...acc, consultant];
-					}, [] as Consultant[]);
-					
+					const uniqueConsultants = consultants.reduce(
+						(acc, consultant) => {
+							// Skip if this is the current user
+							if (consultant.consultantId === currentUserId) {
+								return acc;
+							}
+							// Skip if we already have this consultant (remove duplicates)
+							if (
+								acc.some(
+									(c) =>
+										c.consultantId ===
+										consultant.consultantId
+								)
+							) {
+								return acc;
+							}
+							return [...acc, consultant];
+						},
+						[] as Consultant[]
+					);
+
 					setAvailableConsultants(uniqueConsultants);
 				})
 				.catch((error) => {
@@ -140,8 +155,12 @@ export const CreateGroupChatView = () => {
 			selectedChatTopic &&
 			selectedChatTopic.length >= TOPIC_LENGTHS.MIN &&
 			selectedChatTopic.length < TOPIC_LENGTHS.MAX;
-		
-		if (isChatTopicValid && selectedAgency && selectedConsultants.length > 0) {
+
+		if (
+			isChatTopicValid &&
+			selectedAgency &&
+			selectedConsultants.length > 0
+		) {
 			setIsCreateButtonDisabled(false);
 		} else {
 			setIsCreateButtonDisabled(true);
@@ -180,7 +199,9 @@ export const CreateGroupChatView = () => {
 	};
 
 	const handleConsultantsSelect = (selectedOptions) => {
-		const consultantIds = selectedOptions ? selectedOptions.map(opt => opt.value) : [];
+		const consultantIds = selectedOptions
+			? selectedOptions.map((opt) => opt.value)
+			: [];
 		setSelectedConsultants(consultantIds);
 	};
 
@@ -212,7 +233,9 @@ export const CreateGroupChatView = () => {
 
 	const getSelectedConsultantOptions = useCallback(() => {
 		return availableConsultants
-			.filter((consultant) => selectedConsultants.includes(consultant.consultantId))
+			.filter((consultant) =>
+				selectedConsultants.includes(consultant.consultantId)
+			)
 			.map((consultant) => ({
 				value: consultant.consultantId,
 				label: `${consultant.firstName} ${consultant.lastName}`
@@ -228,7 +251,9 @@ export const CreateGroupChatView = () => {
 			})),
 			defaultValue: getSelectedConsultantOptions(), // ✅ Show selected values inside
 			handleDropdownSelect: handleConsultantsSelect,
-			selectInputLabel: translate('groupChat.create.consultantsSelect.label') || 'Select Consultants',
+			selectInputLabel:
+				translate('groupChat.create.consultantsSelect.label') ||
+				'Select Consultants',
 			isSearchable: true,
 			menuPlacement: 'bottom',
 			isMulti: true
@@ -307,7 +332,7 @@ export const CreateGroupChatView = () => {
 			if (buttonFunction === OVERLAY_FUNCTIONS.CLOSE) {
 				if (
 					JSON.stringify(overlayItem) ===
-						JSON.stringify(createChatSuccessOverlayItem)
+					JSON.stringify(createChatSuccessOverlayItem)
 				) {
 					history.push('/sessions/consultant/sessionView');
 				} else {
@@ -316,11 +341,7 @@ export const CreateGroupChatView = () => {
 				}
 			}
 		},
-		[
-			createChatSuccessOverlayItem,
-			history,
-			overlayItem
-		]
+		[createChatSuccessOverlayItem, history, overlayItem]
 	);
 
 	return (
@@ -334,11 +355,13 @@ export const CreateGroupChatView = () => {
 						<BackIcon />
 					</span>
 					<h3 className="createChat__header__title">
-						{translate('groupChat.create.title') || 'Create Group Chat'}
+						{translate('groupChat.create.title') ||
+							'Create Group Chat'}
 					</h3>
 				</div>
 				<p className="createChat__header__subtitle">
-					{translate('groupChat.create.subtitle') || 'Create a new group chat with selected consultants'}
+					{translate('groupChat.create.subtitle') ||
+						'Create a new group chat with selected consultants'}
 				</p>
 			</div>
 

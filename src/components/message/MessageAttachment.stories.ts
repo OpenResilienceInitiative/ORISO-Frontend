@@ -15,7 +15,8 @@ const meta = {
 	parameters: {
 		docs: {
 			description: {
-				component: 'MessageAttachment component for displaying file attachments in chat messages. Supports image previews for images and document icons for PDFs and other files.'
+				component:
+					'MessageAttachment component for displaying file attachments in chat messages. Supports image previews for images and document icons for PDFs and other files.'
 			}
 		}
 	},
@@ -38,11 +39,13 @@ export const ImageAttachment: Story = {
 	args: {
 		attachment: {
 			title: 'pattern.jpg',
-			title_link: 'https://img.freepik.com/free-vector/red-irregular-organic-lines-seamless-pattern_1409-4440.jpg?semt=ais_hybrid&w=740&q=80',
+			title_link:
+				'https://img.freepik.com/free-vector/red-irregular-organic-lines-seamless-pattern_1409-4440.jpg?semt=ais_hybrid&w=740&q=80',
 			title_link_download: true,
 			type: 'image',
 			description: 'Red irregular organic lines seamless pattern',
-			image_url: 'https://img.freepik.com/free-vector/red-irregular-organic-lines-seamless-pattern_1409-4440.jpg?semt=ais_hybrid&w=740&q=80',
+			image_url:
+				'https://img.freepik.com/free-vector/red-irregular-organic-lines-seamless-pattern_1409-4440.jpg?semt=ais_hybrid&w=740&q=80',
 			image_type: 'image/jpeg',
 			image_size: 99045
 		},
@@ -51,7 +54,6 @@ export const ImageAttachment: Story = {
 			name: 'pattern.jpg',
 			type: 'image/jpeg'
 		},
-		hasRenderedMessage: false,
 		rid: 'room123',
 		t: undefined
 	}
@@ -75,7 +77,6 @@ export const DocumentAttachment: Story = {
 			name: 'ORISO (Repository Guide).pdf',
 			type: 'application/pdf'
 		},
-		hasRenderedMessage: false,
 		rid: 'room123',
 		t: undefined
 	}
@@ -86,11 +87,13 @@ export const WithRenderedMessage: Story = {
 	args: {
 		attachment: {
 			title: 'pattern.jpg',
-			title_link: 'https://img.freepik.com/free-vector/red-irregular-organic-lines-seamless-pattern_1409-4440.jpg?semt=ais_hybrid&w=740&q=80',
+			title_link:
+				'https://img.freepik.com/free-vector/red-irregular-organic-lines-seamless-pattern_1409-4440.jpg?semt=ais_hybrid&w=740&q=80',
 			title_link_download: true,
 			type: 'image',
 			description: 'Red irregular organic lines seamless pattern',
-			image_url: 'https://img.freepik.com/free-vector/red-irregular-organic-lines-seamless-pattern_1409-4440.jpg?semt=ais_hybrid&w=740&q=80',
+			image_url:
+				'https://img.freepik.com/free-vector/red-irregular-organic-lines-seamless-pattern_1409-4440.jpg?semt=ais_hybrid&w=740&q=80',
 			image_type: 'image/jpeg',
 			image_size: 99045
 		},
@@ -99,7 +102,6 @@ export const WithRenderedMessage: Story = {
 			name: 'pattern.jpg',
 			type: 'image/jpeg'
 		},
-		hasRenderedMessage: true,
 		rid: 'room123',
 		t: undefined
 	}

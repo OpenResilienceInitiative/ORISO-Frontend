@@ -24,11 +24,8 @@ import {
 import {
 	apiGetAgencyConsultantList,
 	apiGetSessionData,
-	fetchData,
-	FETCH_METHODS,
 	FETCH_ERRORS
 } from '../../api';
-import { apiUrl } from '../../resources/scripts/endpoints';
 import {
 	prepareMessages,
 	SESSION_LIST_TAB,
@@ -56,7 +53,6 @@ import {
 	IArraySetting,
 	SETTING_HIDE_SYSTEM_MESSAGES
 } from '../../api/apiRocketChatSettingsPublic';
-import { messageEventEmitter } from '../../services/messageEventEmitter';
 
 interface SessionStreamProps {
 	readonly: boolean;
@@ -82,7 +78,9 @@ export const SessionStream = ({
 	useEffect(() => {
 		console.log('🔥 SessionStream MOUNTED');
 		return () => {
-			console.log('🔥 SessionStream UNMOUNTED - Component is being destroyed!');
+			console.log(
+				'🔥 SessionStream UNMOUNTED - Component is being destroyed!'
+			);
 		};
 	}, []);
 
@@ -117,23 +115,30 @@ export const SessionStream = ({
 		abortController.current = new AbortController();
 
 		// MATRIX MIGRATION: Use Matrix API if no rcGroupId OR if rcGroupId is a Matrix room ID (starts with '!')
-		const isMatrixRoom = activeSession.rid && activeSession.rid.startsWith('!');
+		const isMatrixRoom =
+			activeSession.rid && activeSession.rid.startsWith('!');
 		if ((!activeSession.rid || isMatrixRoom) && activeSession.item?.id) {
 			const sessionId = activeSession.item.id;
 			const apiUrlBase = (window as any).Cypress
 				? (window as any).Cypress.env('REACT_APP_API_URL')
 				: process.env.REACT_APP_API_URL || '';
 			const matrixUrl = `${apiUrlBase}/service/matrix/sessions/${sessionId}/messages`;
-			
-			console.log('🚀 MATRIX: Fetching messages from Matrix API:', matrixUrl);
-			
+
+			console.log(
+				'🚀 MATRIX: Fetching messages from Matrix API:',
+				matrixUrl
+			);
+
 			// Use raw fetch to see actual response
 			const accessToken = getValueFromCookie('keycloak');
-			const csrfToken = document.cookie.split('; ').find(row => row.startsWith('CSRF-TOKEN='))?.split('=')[1];
-			
+			const csrfToken = document.cookie
+				.split('; ')
+				.find((row) => row.startsWith('CSRF-TOKEN='))
+				?.split('=')[1];
+
 			console.log('🔑 MATRIX: Auth token exists?', !!accessToken);
 			console.log('🔑 MATRIX: CSRF token exists?', !!csrfToken);
-			
+
 			return fetch(matrixUrl, {
 				method: 'GET',
 				headers: {
@@ -143,83 +148,137 @@ export const SessionStream = ({
 					'X-WHITELIST-HEADER': csrfToken || ''
 				},
 				credentials: 'include'
-			}).then(async (response) => {
-				console.log('🚀 MATRIX: Response status:', response.status);
-				
-				const responseText = await response.text();
-				console.log('🚀 MATRIX: Response body:', responseText);
-				
-				if (response.status === 200) {
-					const responseData = responseText ? JSON.parse(responseText) : {};
-					console.log('🚀 MATRIX: Parsed response:', responseData);
-					
-					// Convert Matrix messages to frontend format
-					const matrixMessages = responseData?.messages || [];
-					console.log('🚀 MATRIX: Matrix messages array:', matrixMessages);
-					
-					// MATRIX MIGRATION: Reverse message order - Matrix returns newest first, we want oldest first
-					const reversedMessages = [...matrixMessages].reverse();
-					
-					const formattedMessages = reversedMessages.map((msg: any) => {
-						const baseMessage: any = {
-							_id: msg.event_id,
-							msg: msg.content?.body || '',
-							ts: new Date(msg.origin_server_ts || Date.now()),
-							u: {
-								_id: msg.sender,
-								username: msg.sender?.split(':')[0]?.substring(1) || 'unknown'
+			})
+				.then(async (response) => {
+					console.log('🚀 MATRIX: Response status:', response.status);
+
+					const responseText = await response.text();
+					console.log('🚀 MATRIX: Response body:', responseText);
+
+					if (response.status === 200) {
+						const responseData = responseText
+							? JSON.parse(responseText)
+							: {};
+						console.log(
+							'🚀 MATRIX: Parsed response:',
+							responseData
+						);
+
+						// Convert Matrix messages to frontend format
+						const matrixMessages = responseData?.messages || [];
+						console.log(
+							'🚀 MATRIX: Matrix messages array:',
+							matrixMessages
+						);
+
+						// MATRIX MIGRATION: Reverse message order - Matrix returns newest first, we want oldest first
+						const reversedMessages = [...matrixMessages].reverse();
+
+						const formattedMessages = reversedMessages.map(
+							(msg: any) => {
+								const baseMessage: any = {
+									_id: msg.event_id,
+									msg: msg.content?.body || '',
+									ts: new Date(
+										msg.origin_server_ts || Date.now()
+									),
+									u: {
+										_id: msg.sender,
+										username:
+											msg.sender
+												?.split(':')[0]
+												?.substring(1) || 'unknown'
+									}
+								};
+
+								// Handle file/image messages
+								if (
+									msg.content?.url &&
+									msg.content?.msgtype !== 'm.text'
+								) {
+									// Convert mxc:// URL to download path directly through Nginx to Matrix
+									// mxc://server/mediaId -> /_matrix/media/r0/download/server/mediaId
+									let downloadPath = msg.content.url;
+									if (downloadPath.startsWith('mxc://')) {
+										const mxcParts = downloadPath
+											.substring(6)
+											.split('/'); // Remove 'mxc://' and split
+										const serverName = mxcParts[0];
+										const mediaId = mxcParts[1];
+										// Direct to Matrix via Nginx (no auth needed for media downloads)
+										downloadPath = `/_matrix/media/r0/download/${serverName}/${mediaId}`;
+									}
+
+									baseMessage.file = {
+										name: msg.content.body,
+										type:
+											msg.content.info?.mimetype ||
+											'application/octet-stream'
+									};
+									baseMessage.attachments = [
+										{
+											title: msg.content.body,
+											title_link: downloadPath,
+											image_url:
+												msg.content.msgtype ===
+												'm.image'
+													? downloadPath
+													: undefined,
+											type:
+												msg.content.msgtype ===
+												'm.image'
+													? 'image'
+													: 'file',
+											image_type:
+												msg.content.info?.mimetype,
+											image_size: msg.content.info?.size
+										}
+									];
+									console.log(
+										'🖼️ MATRIX: File/image message detected:',
+										msg.content.body,
+										'Path:',
+										downloadPath
+									);
+								}
+
+								return baseMessage;
 							}
-						};
-						
-						// Handle file/image messages
-						if (msg.content?.url && msg.content?.msgtype !== 'm.text') {
-							// Convert mxc:// URL to download path directly through Nginx to Matrix
-							// mxc://server/mediaId -> /_matrix/media/r0/download/server/mediaId
-							let downloadPath = msg.content.url;
-							if (downloadPath.startsWith('mxc://')) {
-								const mxcParts = downloadPath.substring(6).split('/'); // Remove 'mxc://' and split
-								const serverName = mxcParts[0];
-								const mediaId = mxcParts[1];
-								// Direct to Matrix via Nginx (no auth needed for media downloads)
-								downloadPath = `/_matrix/media/r0/download/${serverName}/${mediaId}`;
-							}
-							
-							baseMessage.file = {
-								name: msg.content.body,
-								type: msg.content.info?.mimetype || 'application/octet-stream'
-							};
-							baseMessage.attachments = [{
-								title: msg.content.body,
-								title_link: downloadPath,
-								image_url: msg.content.msgtype === 'm.image' ? downloadPath : undefined,
-								type: msg.content.msgtype === 'm.image' ? 'image' : 'file',
-								image_type: msg.content.info?.mimetype,
-								image_size: msg.content.info?.size
-							}];
-							console.log('🖼️ MATRIX: File/image message detected:', msg.content.body, 'Path:', downloadPath);
-						}
-						
-						return baseMessage;
-					});
-					
-					console.log('🚀 MATRIX: Formatted messages:', formattedMessages);
-					
-					// Apply prepareMessages to format messages correctly for the UI
-					const preparedMessages = prepareMessages(formattedMessages);
-					console.log('🚀 MATRIX: Prepared messages:', preparedMessages);
-					
-					setMessagesItem({ messages: preparedMessages });
-					setLoading(false);
-				} else {
-					console.error('🚀 MATRIX: Non-200 response:', response.status, responseText);
+						);
+
+						console.log(
+							'🚀 MATRIX: Formatted messages:',
+							formattedMessages
+						);
+
+						// Apply prepareMessages to format messages correctly for the UI
+						const preparedMessages =
+							prepareMessages(formattedMessages);
+						console.log(
+							'🚀 MATRIX: Prepared messages:',
+							preparedMessages
+						);
+
+						setMessagesItem({ messages: preparedMessages });
+						setLoading(false);
+					} else {
+						console.error(
+							'🚀 MATRIX: Non-200 response:',
+							response.status,
+							responseText
+						);
+						setLoading(false);
+						setMessagesItem(null);
+					}
+				})
+				.catch((error) => {
+					console.error(
+						'🚀 MATRIX: Failed to fetch messages:',
+						error
+					);
 					setLoading(false);
 					setMessagesItem(null);
-				}
-			}).catch((error) => {
-				console.error('🚀 MATRIX: Failed to fetch messages:', error);
-				setLoading(false);
-				setMessagesItem(null);
-			});
+				});
 		}
 
 		// Legacy RocketChat path
@@ -366,128 +425,186 @@ export const SessionStream = ({
 	useEffect(() => {
 		// Only for Matrix sessions (no Rocket.Chat rid OR rid is a Matrix room ID)
 		// For group chats, rid contains the Matrix room ID (starts with '!')
-		const isMatrixSession = (!activeSession.rid || (activeSession.rid && activeSession.rid.startsWith('!'))) && activeSession.item?.id;
-		const matrixRoomId = activeSession.rid && activeSession.rid.startsWith('!') 
-			? activeSession.rid 
-			: activeSession.item?.matrixRoomId;
-		
+		const isMatrixSession =
+			(!activeSession.rid ||
+				(activeSession.rid && activeSession.rid.startsWith('!'))) &&
+			activeSession.item?.id;
+		const matrixRoomId =
+			activeSession.rid && activeSession.rid.startsWith('!')
+				? activeSession.rid
+				: activeSession.item?.matrixRoomId;
+
 		if (isMatrixSession && matrixRoomId) {
-			const sessionId = activeSession.item.id;
-			console.log('🔷 Setting up Matrix real-time listener for room:', matrixRoomId);
+			console.log(
+				'🔷 Setting up Matrix real-time listener for room:',
+				matrixRoomId
+			);
 
 			// Get Matrix client for frontend real-time events (like Element!)
 			const matrixClientService = (window as any).matrixClientService;
 			if (!matrixClientService) {
-				console.warn('⚠️ Matrix client not initialized - messages will not appear in real-time');
+				console.warn(
+					'⚠️ Matrix client not initialized - messages will not appear in real-time'
+				);
 			} else {
 				const matrixClient = matrixClientService.getClient();
 				if (matrixClient) {
-				// Handler for Room.timeline events - INSTANT local echo like Element!
-				const handleMatrixTimeline = (event: any, room: any, toStartOfTimeline: boolean) => {
-					if (toStartOfTimeline || room.roomId !== matrixRoomId) {
-						return;
-					}
-
-					const eventType = event.getType();
-					if (eventType !== 'm.room.message') {
-						return;
-					}
-
-					console.log('📬 Matrix message received - adding to UI instantly!', event);
-					
-					// Get the message content from the event
-					const content = event.getContent();
-					const sender = event.getSender();
-					const timestamp = event.getTs();
-					const eventId = event.getId();
-					
-					// Handle file attachments (m.file, m.image, m.video, m.audio)
-					let attachments = undefined;
-					let fileObj = undefined;
-					if (content.msgtype && content.msgtype !== 'm.text' && content.url) {
-						// Convert mxc:// URL to download path
-						let downloadPath = content.url;
-						if (downloadPath.startsWith('mxc://')) {
-							const mxcParts = downloadPath.substring(6).split('/');
-							const serverName = mxcParts[0];
-							const mediaId = mxcParts[1];
-							downloadPath = `/_matrix/media/r0/download/${serverName}/${mediaId}`;
+					// Handler for Room.timeline events - INSTANT local echo like Element!
+					const handleMatrixTimeline = (
+						event: any,
+						room: any,
+						toStartOfTimeline: boolean
+					) => {
+						if (toStartOfTimeline || room.roomId !== matrixRoomId) {
+							return;
 						}
-						
-						fileObj = {
-							name: content.body || 'file',
-							type: content.info?.mimetype || 'application/octet-stream'
-						};
-						
-						attachments = [{
-							type: content.msgtype === 'm.image' ? 'image' : 'file',
-							title: content.body || 'file',
-							title_link: downloadPath,
-							title_link_download: true,
-							image_url: content.msgtype === 'm.image' ? downloadPath : undefined,
-							image_type: content.info?.mimetype || 'application/octet-stream',
-							image_size: content.info?.size || 0
-						}];
-					}
-					
-					// Create a message object in the same format as backend messages
-					const newMessage = {
-						_id: eventId,
-						rid: matrixRoomId,
-						msg: content.body || '',
-						ts: new Date(timestamp).toISOString(),
-						u: {
-							_id: sender,
-							username: sender.split(':')[0].substring(1), // Extract username from @user:domain
-							name: sender.split(':')[0].substring(1)
-						},
-						_updatedAt: new Date(timestamp).toISOString(),
-						t: content.msgtype === 'm.text' ? undefined : content.msgtype,
-						file: fileObj,
-						attachments: attachments
-					};
-					
-					console.log('📬 New message object:', newMessage);
-					
-					// Add the new message to the existing messages
-					setMessagesItem((prevMessages) => {
-						if (!prevMessages || !prevMessages.messages) {
-							return { messages: prepareMessages([newMessage]) };
+
+						const eventType = event.getType();
+						if (eventType !== 'm.room.message') {
+							return;
 						}
-						
-						// Check if message already exists (avoid duplicates)
-						const messageExists = prevMessages.messages.some(
-							(msg) => msg._id === eventId
+
+						console.log(
+							'📬 Matrix message received - adding to UI instantly!',
+							event
 						);
-						
-						if (messageExists) {
-							console.log('📬 Message already exists, skipping');
-							return prevMessages;
+
+						// Get the message content from the event
+						const content = event.getContent();
+						const sender = event.getSender();
+						const timestamp = event.getTs();
+						const eventId = event.getId();
+
+						// Handle file attachments (m.file, m.image, m.video, m.audio)
+						let attachments = undefined;
+						let fileObj = undefined;
+						if (
+							content.msgtype &&
+							content.msgtype !== 'm.text' &&
+							content.url
+						) {
+							// Convert mxc:// URL to download path
+							let downloadPath = content.url;
+							if (downloadPath.startsWith('mxc://')) {
+								const mxcParts = downloadPath
+									.substring(6)
+									.split('/');
+								const serverName = mxcParts[0];
+								const mediaId = mxcParts[1];
+								downloadPath = `/_matrix/media/r0/download/${serverName}/${mediaId}`;
+							}
+
+							fileObj = {
+								name: content.body || 'file',
+								type:
+									content.info?.mimetype ||
+									'application/octet-stream'
+							};
+
+							attachments = [
+								{
+									type:
+										content.msgtype === 'm.image'
+											? 'image'
+											: 'file',
+									title: content.body || 'file',
+									title_link: downloadPath,
+									title_link_download: true,
+									image_url:
+										content.msgtype === 'm.image'
+											? downloadPath
+											: undefined,
+									image_type:
+										content.info?.mimetype ||
+										'application/octet-stream',
+									image_size: content.info?.size || 0
+								}
+							];
 						}
-						
-						// Add new message to the end
-						const updatedMessages = [...prevMessages.messages];
-						const preparedNewMessages = prepareMessages([newMessage]);
-						updatedMessages.push(...preparedNewMessages);
-						
-						console.log('📬 Updated messages count:', updatedMessages.length);
-						return { messages: updatedMessages };
-					});
-				};
 
-				// Subscribe to Matrix Room.timeline events for instant updates!
-				console.log('📡 Subscribing to Matrix Room.timeline for instant message updates');
-				(matrixClient as any).on('Room.timeline', handleMatrixTimeline);
+						// Create a message object in the same format as backend messages
+						const newMessage = {
+							_id: eventId,
+							rid: matrixRoomId,
+							msg: content.body || '',
+							ts: new Date(timestamp).toISOString(),
+							u: {
+								_id: sender,
+								username: sender.split(':')[0].substring(1), // Extract username from @user:domain
+								name: sender.split(':')[0].substring(1)
+							},
+							_updatedAt: new Date(timestamp).toISOString(),
+							t:
+								content.msgtype === 'm.text'
+									? undefined
+									: content.msgtype,
+							file: fileObj,
+							attachments: attachments
+						};
 
-				// Cleanup Matrix listener
-				return () => {
-					console.log('🧹 Cleaning up Matrix listener');
-					(matrixClient as any).off('Room.timeline', handleMatrixTimeline);
-				};
+						console.log('📬 New message object:', newMessage);
+
+						// Add the new message to the existing messages
+						setMessagesItem((prevMessages) => {
+							if (!prevMessages || !prevMessages.messages) {
+								return {
+									messages: prepareMessages([newMessage])
+								};
+							}
+
+							// Check if message already exists (avoid duplicates)
+							const messageExists = prevMessages.messages.some(
+								(msg) => msg._id === eventId
+							);
+
+							if (messageExists) {
+								console.log(
+									'📬 Message already exists, skipping'
+								);
+								return prevMessages;
+							}
+
+							// Add new message to the end
+							const updatedMessages = [...prevMessages.messages];
+							const preparedNewMessages = prepareMessages([
+								newMessage
+							]);
+							updatedMessages.push(...preparedNewMessages);
+
+							console.log(
+								'📬 Updated messages count:',
+								updatedMessages.length
+							);
+							return { messages: updatedMessages };
+						});
+					};
+
+					// Subscribe to Matrix Room.timeline events for instant updates!
+					console.log(
+						'📡 Subscribing to Matrix Room.timeline for instant message updates'
+					);
+					(matrixClient as any).on(
+						'Room.timeline',
+						handleMatrixTimeline
+					);
+
+					// Cleanup Matrix listener
+					return () => {
+						console.log('🧹 Cleaning up Matrix listener');
+						(matrixClient as any).off(
+							'Room.timeline',
+							handleMatrixTimeline
+						);
+					};
+				}
 			}
 		}
-		}
-	}, [activeSession.rid, activeSession.item?.matrixRoomId, activeSession.item?.id, fetchSessionMessages, apiUrl]);
+	}, [
+		activeSession.rid,
+		activeSession.item?.matrixRoomId,
+		activeSession.item?.id,
+		fetchSessionMessages
+	]);
 
 	useEffect(() => {
 		if (subscribed.current) {
@@ -527,7 +644,9 @@ export const SessionStream = ({
 							subscribeTyping();
 						}
 					} else {
-						console.log('🔷 Matrix session detected - using Matrix real-time events (no RocketChat subscription)');
+						console.log(
+							'🔷 Matrix session detected - using Matrix real-time events (no RocketChat subscription)'
+						);
 					}
 
 					setLoading(false);
@@ -579,19 +698,17 @@ export const SessionStream = ({
 		};
 	}, [
 		activeSession,
-		// MATRIX MIGRATION: Removed function dependencies to prevent infinite loop
-		// Functions are stable and don't need to be in dependencies
-		// addNewUsersToEncryptedRoom,
-		// fetchSessionMessages,
-		// handleChatStopped,
-		// handleSubscriptionChanged,
-		// onDebounceMessage,
-		// setSessionRead,
-		// subscribe,
-		// subscribeTyping,
+		addNewUsersToEncryptedRoom,
+		fetchSessionMessages,
+		handleChatStopped,
+		handleSubscriptionChanged,
+		onDebounceMessage,
+		setSessionRead,
+		subscribe,
+		subscribeTyping,
 		type,
-		// unsubscribe,
-		// unsubscribeTyping,
+		unsubscribe,
+		unsubscribeTyping,
 		userData
 	]);
 

@@ -146,7 +146,7 @@ export const MessageItemComponent = ({
 	const [isExpanded, setIsExpanded] = useState(false);
 
 	const { isE2eeEnabled } = useContext(E2EEContext);
-	
+
 	// Character limit for collapsing messages
 	const MESSAGE_CHAR_LIMIT = 300;
 
@@ -212,8 +212,6 @@ export const MessageItemComponent = ({
 				: ''
 		);
 	}, [decryptedMessage]);
-
-	const hasRenderedMessage = renderedMessage && renderedMessage.length > 0;
 
 	const getMessageDate = () => {
 		if (messageDate.str || messageDate.date) {
@@ -441,158 +439,239 @@ export const MessageItemComponent = ({
 								displayName={displayName}
 							/>
 							{/* MATRIX MIGRATION: Temporarily hide message menu */}
-							{false && <MessageFlyoutMenu
-								_id={_id}
-								userId={userId}
-								username={username}
-								isUserBanned={isUserBanned}
-								isMyMessage={isMyMessage}
-								isArchived={
-									activeSession.item.status ===
-									STATUS_ARCHIVED
-								}
-							/>}
+							{false && (
+								<MessageFlyoutMenu
+									_id={_id}
+									userId={userId}
+									username={username}
+									isUserBanned={isUserBanned}
+									isMyMessage={isMyMessage}
+									isArchived={
+										activeSession.item.status ===
+										STATUS_ARCHIVED
+									}
+								/>
+							)}
 						</div>
 
-					<div
-						className={
-							isMyMessage
-								? `messageItem__message messageItem__message--myMessage`
-								: `messageItem__message`
-						}
-					>
-						{renderedMessage && !attachments && (() => {
-							// Check if message is long (strip HTML tags for accurate length)
-							const textContent = renderedMessage.replace(/<[^>]*>/g, '');
-							const isLongMessage = textContent.length > MESSAGE_CHAR_LIMIT;
-							
-							// Helper function to safely truncate HTML while preserving structure
-							const truncateHtml = (html: string, maxLength: number): string => {
-								// Check if we're in a browser environment
-								if (typeof document === 'undefined') {
-									// Fallback for SSR: simple truncation (may break HTML tags)
-									const textContent = html.replace(/<[^>]*>/g, '');
-									if (textContent.length <= maxLength) return html;
-									const truncatedText = textContent.substring(0, maxLength);
-									const lastSpace = truncatedText.lastIndexOf(' ');
-									const cutPoint = lastSpace > maxLength * 0.8 ? lastSpace : maxLength;
-									return html.substring(0, Math.min(cutPoint, html.length)) + '...';
-								}
-								
-								// Create a temporary DOM element to parse HTML
-								const tempDiv = document.createElement('div');
-								tempDiv.innerHTML = html;
-								
-								// Get text content and find truncation point
-								const text = tempDiv.textContent || tempDiv.innerText || '';
-								if (text.length <= maxLength) return html;
-								
-								// Find a good word boundary
-								let truncateAt = maxLength;
-								const truncatedText = text.substring(0, maxLength);
-								const lastSpace = truncatedText.lastIndexOf(' ');
-								if (lastSpace > maxLength * 0.8 && lastSpace > 0) {
-									truncateAt = lastSpace;
-								}
-								
-								// Walk through nodes and truncate at the right point
-								let currentLength = 0;
-								const walker = document.createTreeWalker(
-									tempDiv,
-									NodeFilter.SHOW_TEXT,
-									null
-								);
-								
-								let node;
-								let targetNode = null;
-								let targetRemaining = 0;
-								
-								while ((node = walker.nextNode())) {
-									const nodeLength = node.textContent?.length || 0;
-									if (currentLength + nodeLength >= truncateAt) {
-										targetNode = node;
-										targetRemaining = truncateAt - currentLength;
-										break;
-									}
-									currentLength += nodeLength;
-								}
-								
-								if (targetNode && targetNode.textContent) {
-									// Truncate the target node
-									targetNode.textContent = targetNode.textContent.substring(0, targetRemaining) + '...';
-									
-									// Remove all following siblings of the target node's parent
-									let parent = targetNode.parentNode;
-									if (parent) {
-										let sibling = targetNode.nextSibling;
-										while (sibling) {
-											const next = sibling.nextSibling;
-											parent.removeChild(sibling);
-											sibling = next;
+						<div
+							className={
+								isMyMessage
+									? `messageItem__message messageItem__message--myMessage`
+									: `messageItem__message`
+							}
+						>
+							{renderedMessage &&
+								!attachments &&
+								(() => {
+									// Check if message is long (strip HTML tags for accurate length)
+									const textContent = renderedMessage.replace(
+										/<[^>]*>/g,
+										''
+									);
+									const isLongMessage =
+										textContent.length > MESSAGE_CHAR_LIMIT;
+
+									// Helper function to safely truncate HTML while preserving structure
+									const truncateHtml = (
+										html: string,
+										maxLength: number
+									): string => {
+										// Check if we're in a browser environment
+										if (typeof document === 'undefined') {
+											// Fallback for SSR: simple truncation (may break HTML tags)
+											const textContent = html.replace(
+												/<[^>]*>/g,
+												''
+											);
+											if (textContent.length <= maxLength)
+												return html;
+											const truncatedText =
+												textContent.substring(
+													0,
+													maxLength
+												);
+											const lastSpace =
+												truncatedText.lastIndexOf(' ');
+											const cutPoint =
+												lastSpace > maxLength * 0.8
+													? lastSpace
+													: maxLength;
+											return (
+												html.substring(
+													0,
+													Math.min(
+														cutPoint,
+														html.length
+													)
+												) + '...'
+											);
 										}
-									}
-									
-									// Also remove any remaining text nodes via walker
-									let nextNode;
-									while ((nextNode = walker.nextNode())) {
-										if (nextNode.parentNode) {
-											nextNode.parentNode.removeChild(nextNode);
+
+										// Create a temporary DOM element to parse HTML
+										const tempDiv =
+											document.createElement('div');
+										tempDiv.innerHTML = html;
+
+										// Get text content and find truncation point
+										const text =
+											tempDiv.textContent ||
+											tempDiv.innerText ||
+											'';
+										if (text.length <= maxLength)
+											return html;
+
+										// Find a good word boundary
+										let truncateAt = maxLength;
+										const truncatedText = text.substring(
+											0,
+											maxLength
+										);
+										const lastSpace =
+											truncatedText.lastIndexOf(' ');
+										if (
+											lastSpace > maxLength * 0.8 &&
+											lastSpace > 0
+										) {
+											truncateAt = lastSpace;
 										}
-									}
-								}
-								
-								const result = tempDiv.innerHTML;
-								// Verify truncation worked - if result is still too long, use simple fallback
-								const resultText = result.replace(/<[^>]*>/g, '');
-								if (resultText.length > maxLength + 50) {
-									// Fallback: simple truncation
-									const simpleTruncated = text.substring(0, truncateAt) + '...';
-									return simpleTruncated;
-								}
-								
-								return result;
-							};
-							
-							// Truncate message if not expanded
-							const displayMessage = isLongMessage && !isExpanded
-								? truncateHtml(renderedMessage, MESSAGE_CHAR_LIMIT)
-								: renderedMessage;
-							
-							return (
-								<>
-									<span
-										dangerouslySetInnerHTML={{
-											__html: displayMessage
-										}}
+
+										// Walk through nodes and truncate at the right point
+										let currentLength = 0;
+										const walker =
+											document.createTreeWalker(
+												tempDiv,
+												NodeFilter.SHOW_TEXT,
+												null
+											);
+
+										let node;
+										let targetNode = null;
+										let targetRemaining = 0;
+
+										while ((node = walker.nextNode())) {
+											const nodeLength =
+												node.textContent?.length || 0;
+											if (
+												currentLength + nodeLength >=
+												truncateAt
+											) {
+												targetNode = node;
+												targetRemaining =
+													truncateAt - currentLength;
+												break;
+											}
+											currentLength += nodeLength;
+										}
+
+										if (
+											targetNode &&
+											targetNode.textContent
+										) {
+											// Truncate the target node
+											targetNode.textContent =
+												targetNode.textContent.substring(
+													0,
+													targetRemaining
+												) + '...';
+
+											// Remove all following siblings of the target node's parent
+											let parent = targetNode.parentNode;
+											if (parent) {
+												let sibling =
+													targetNode.nextSibling;
+												while (sibling) {
+													const next =
+														sibling.nextSibling;
+													parent.removeChild(sibling);
+													sibling = next;
+												}
+											}
+
+											// Also remove any remaining text nodes via walker
+											let nextNode;
+											while (
+												(nextNode = walker.nextNode())
+											) {
+												if (nextNode.parentNode) {
+													nextNode.parentNode.removeChild(
+														nextNode
+													);
+												}
+											}
+										}
+
+										const result = tempDiv.innerHTML;
+										// Verify truncation worked - if result is still too long, use simple fallback
+										const resultText = result.replace(
+											/<[^>]*>/g,
+											''
+										);
+										if (
+											resultText.length >
+											maxLength + 50
+										) {
+											// Fallback: simple truncation
+											const simpleTruncated =
+												text.substring(0, truncateAt) +
+												'...';
+											return simpleTruncated;
+										}
+
+										return result;
+									};
+
+									// Truncate message if not expanded
+									const displayMessage =
+										isLongMessage && !isExpanded
+											? truncateHtml(
+													renderedMessage,
+													MESSAGE_CHAR_LIMIT
+												)
+											: renderedMessage;
+
+									return (
+										<>
+											<span
+												dangerouslySetInnerHTML={{
+													__html: displayMessage
+												}}
+											/>
+											{isLongMessage && (
+												<button
+													className={`messageItem__expandBtn ${isMyMessage ? 'messageItem__expandBtn--myMessage' : 'messageItem__expandBtn--incoming'}`}
+													onClick={(e) => {
+														e.preventDefault();
+														e.stopPropagation();
+														setIsExpanded(
+															!isExpanded
+														);
+													}}
+													type="button"
+												>
+													{isExpanded
+														? translate(
+																'message.showLess'
+															)
+														: translate(
+																'message.showMore'
+															)}
+												</button>
+											)}
+										</>
+									);
+								})()}
+							{attachments &&
+								attachments.map((attachment, key) => (
+									<MessageAttachment
+										key={key}
+										attachment={attachment}
+										rid={rid}
+										file={file}
+										t={t}
 									/>
-									{isLongMessage && (
-										<button
-											className={`messageItem__expandBtn ${isMyMessage ? 'messageItem__expandBtn--myMessage' : 'messageItem__expandBtn--incoming'}`}
-											onClick={(e) => {
-												e.preventDefault();
-												e.stopPropagation();
-												setIsExpanded(!isExpanded);
-											}}
-											type="button"
-										>
-											{isExpanded ? translate('message.showLess') : translate('message.showMore')}
-										</button>
-									)}
-								</>
-							);
-						})()}
-						{attachments &&
-							attachments.map((attachment, key) => (
-								<MessageAttachment
-									key={key}
-									attachment={attachment}
-									rid={rid}
-									file={file}
-									t={t}
-									hasRenderedMessage={hasRenderedMessage}
-								/>
-							))}
-					</div>
+								))}
+						</div>
 					</>
 				);
 		}
@@ -643,7 +722,7 @@ export const MessageItemComponent = ({
 						/>
 					</div>
 				)}
-				
+
 				<div className="messageItem__content">
 					{messageContent()}
 

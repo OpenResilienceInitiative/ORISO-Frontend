@@ -114,7 +114,12 @@ export const useDraftMessage = (
 	const saveDraftMessage = useCallback(
 		async (draftMessage) => {
 			// MATRIX MIGRATION: Skip draft saving for group chats (Matrix-based)
-			if (!enabled || !loaded || !activeSession.rid || activeSession.isGroup) {
+			if (
+				!enabled ||
+				!loaded ||
+				!activeSession.rid ||
+				activeSession.isGroup
+			) {
 				return;
 			}
 			const groupId = activeSession.rid;
@@ -143,6 +148,7 @@ export const useDraftMessage = (
 		},
 		[
 			activeSession.rid,
+			activeSession.isGroup,
 			loaded,
 			encrypted,
 			isE2eeEnabled,
