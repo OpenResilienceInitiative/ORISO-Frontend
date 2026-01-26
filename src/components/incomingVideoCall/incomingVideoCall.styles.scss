@@ -1,0 +1,106 @@
+$userIconSize: 62px;
+
+.incomingVideoCall {
+	&.notification {
+		align-items: center;
+
+		.notification__header {
+			margin-bottom: $grid-base-three;
+		}
+	}
+
+	&__description,
+	&__hint {
+		color: $white;
+		margin: 0;
+		text-align: center;
+	}
+
+	&__hint {
+		margin-top: $grid-base;
+		font-size: $font-size-tertiary;
+
+		a,
+		a:hover {
+			color: $white;
+			text-decoration: underline;
+		}
+
+		button {
+			font-size: 14px;
+			height: $grid-base-four;
+			color: #fff;
+			border: 2px solid #fff;
+			background: none;
+			border-radius: $grid-base-two;
+		}
+	}
+
+	&__username,
+	&__user {
+		font-weight: $font-weight-medium;
+	}
+
+	&__user {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: $userIconSize;
+		height: $userIconSize;
+		margin: $grid-base auto 0;
+		background-color: #524b52;
+		border: 3px solid $white-50-opacity;
+		color: $white-50-opacity;
+		border-radius: 100%;
+		animation: calling 1.3s ease-out infinite;
+	}
+
+	&__buttons {
+		display: flex;
+		justify-content: center;
+		margin-bottom: $grid-base-two * -1;
+		background: rgba(0, 0, 0, 0.4);
+		width: calc(100% + #{$grid-base-four});
+
+		button {
+			height: $grid-base-six;
+			min-width: $grid-base-six;
+			margin-right: $grid-base-two;
+			border-radius: 50%;
+
+			svg {
+				height: 46%;
+				width: 46%;
+			}
+		}
+
+		.button__wrapper {
+			flex: 0;
+
+			&:last-child button {
+				margin-right: 0;
+			}
+		}
+	}
+}
+
+@keyframes calling {
+	0% {
+		box-shadow: 0px 0px 0px 0px rgba(255, 255, 255, 0.4);
+	}
+	20% {
+		box-shadow: 0px 0px 0px 2px rgba(255, 255, 255, 0.6);
+	}
+	40% {
+		box-shadow: 0px 0px 0px 4px rgba(255, 255, 255, 0.3);
+	}
+	60% {
+		box-shadow: 0px 0px 0px 6px rgba(255, 255, 255, 0.2);
+	}
+	80% {
+		box-shadow: 0px 0px 0px 8px rgba(255, 255, 255, 0.1);
+	}
+	100% {
+		box-shadow: 0px 0px 0px 10px rgba(255, 255, 255, 0);
+	}
+}

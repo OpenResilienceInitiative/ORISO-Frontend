@@ -1,0 +1,30 @@
+.consultantMatchingAnimation {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding: 20px 0;
+	width: 100%;
+	
+	// Center the animation in the message area
+	margin: 0 auto;
+	
+	// Ensure it doesn't interfere with message layout
+	clear: both;
+	
+	// Make it look like a message item but centered
+	.message-holder > & {
+		margin: 20px auto;
+		max-width: 100%;
+	}
+	
+	// Responsive sizing
+	@media screen and (max-width: 899px) {
+		padding: 15px 0;
+		max-width: 90%;
+		
+		// Larger size on mobile too
+		> div {
+			max-width: 500px !important;
+		}
+	}
+}

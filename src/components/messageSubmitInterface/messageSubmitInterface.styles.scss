@@ -1,0 +1,554 @@
+$attachmentIconSize: 20px;
+$sendIconSize: 24px;
+$message-submit-interface-textarea-shadow-color: rgb(255, 255, 255) !default;
+$message-submit-interface-textarea-box-shadow: inset 0 2px 0 0
+	$message-submit-interface-textarea-shadow-color !default;
+$navWidth: $grid-base-twelve;
+$contentWidthSmall: 100vw;
+$contentWidth: calc((100vw - #{$navWidth}) / 12 * 8);
+$inputBorder: 1px solid #fcdfdf; // Default light red border (1px)
+$inputBorderActive: 2px solid #da5248; // Active/focused red border (2px)
+$inputBoxShadow: inset 0 2px 0 0 #ffffff;
+
+.session,
+.enquiry__wrapper {
+	.textarea {
+		z-index: 100;
+		background-color: transparent;
+		padding: 20px $grid-base-two;
+		width: 100%;
+		position: absolute;
+		bottom: 0;
+
+		@include breakpoint($fromMedium) {
+			padding: 20px $grid-base-three;
+		}
+
+		// On mobile, ensure no extra spacing and proper positioning
+		@media screen and (max-width: 899px) {
+			padding: 20px $grid-base-two;
+			padding-bottom: 20px;
+			position: fixed;
+			bottom: 0;
+			left: 0;
+			right: 0;
+			background-color: #ffffff;
+			padding-bottom: calc(20px + env(safe-area-inset-bottom, 0));
+		}
+
+		.checkbox {
+			&__wrapper {
+				justify-content: flex-start;
+				margin-left: 18px;
+			}
+
+			&__input {
+				margin-bottom: 8px;
+			}
+		}
+
+		&__wrapper {
+			display: grid;
+			grid-template-columns: 100%;
+			align-items: center;
+			justify-content: center;
+
+			&-send-message {
+				display: flex;
+				width: 100%;
+				max-width: 900px;
+				flex-direction: row;
+				position: relative;
+				margin: 0 auto;
+				background-color: #ffffff !important;
+				padding: 16px 12px !important;
+				border-radius: 28px !important;
+				box-shadow: 0 2px 16px rgb(255, 255, 255, 0.05) !important;
+				border: 1px solid #fcdfdf !important;
+
+				// On mobile, ensure wrapper doesn't extend beyond viewport
+				@media screen and (max-width: 899px) {
+					margin-bottom: 0;
+					border-bottom-left-radius: 0;
+					border-bottom-right-radius: 0;
+				}
+			}
+
+			&-booking {
+				margin: 0 auto;
+				text-align: center;
+				display: grid;
+				align-content: center;
+				width: 100%;
+
+				&-headline {
+					margin: 0.75rem auto 1.25rem;
+					position: relative;
+					width: 100%;
+					max-width: 900px;
+
+					&::before {
+						content: '';
+						display: block;
+						height: 1px;
+						left: 3px;
+						right: 64px;
+						top: 50%;
+						position: absolute;
+						background-color: $line-grey;
+						z-index: -2;
+					}
+
+					&::after {
+						content: '';
+						display: block;
+						height: 10px;
+						width: 300px;
+						left: 50%;
+						top: 50%;
+						transform: translate(-50%, -50%);
+						position: absolute;
+						background-color: $dark-grey;
+						z-index: -1;
+					}
+				}
+
+				button {
+					display: flex;
+					align-items: center;
+					margin: 0 auto;
+				}
+			}
+		}
+
+		&__inputWrapper {
+			flex: 1;
+			position: relative;
+			display: flex;
+			max-height: 118px;
+			min-height: 88px;
+
+			@include breakpoint($fromLarge) {
+				max-height: 218px;
+				min-height: 106px;
+			}
+		}
+
+		&__input {
+			line-height: 20px;
+			width: 100%;
+			border: $inputBorder; // Light red when not focused
+			border-radius: 0 $enquiry-input-border-radius
+				$enquiry-input-border-radius 0;
+			background-color: $white;
+			box-sizing: border-box;
+			
+			
+			// Active/focused state - red border
+			&:focus,
+			&:focus-visible,
+			&:focus-within {
+				outline: none !important;
+				border: $inputBorderActive; // Red when focused
+			}
+
+			&::placeholder,
+			&:-ms-input-placeholder {
+				color: $form-disabled;
+				opacity: 1;
+			}
+		}
+
+		&__iconWrapper {
+			width: $grid-base-six;
+			height: $grid-base-six;
+			border-radius: $grid-base-three;
+			cursor: pointer;
+			background-color: var(--skin-color-primary, $primary);
+			margin: 4px 0 0 14px;
+			align-self: flex-start;
+			transition: background-color 0.6s ease, opacity 0.3s ease;
+			overflow: hidden;
+			
+			&--empty {
+				opacity: 0.4;
+			}
+			svg {
+				transform: translate(0);
+			}
+			&:hover {
+				background-color: var(
+					--skin-color-primary-hover,
+					$hover-primary
+				);
+			}
+			&--clicked {
+				svg {
+					animation: sendButton 1s ease forwards;
+				}
+			}
+
+			@keyframes sendButtonHover {
+				0% {
+					transform: translate(0);
+				}
+				100% {
+					transform: translate(10px);
+				}
+			}
+
+			@keyframes sendButton {
+				0% {
+					transform: translate(0px);
+					opacity: 1;
+				}
+				20% {
+					transform: translate(-7px);
+				}
+				50% {
+					transform: translate(100px);
+					opacity: 1;
+				}
+				51% {
+					opacity: 0;
+				}
+				52% {
+					opacity: 0;
+					transform: translate(-100px);
+				}
+				53% {
+					opacity: 1;
+				}
+				100% {
+					opacity: 1;
+					transform: translate(0);
+				}
+			}
+
+			&--deactivated,
+			&--deactivated:hover {
+				cursor: not-allowed;
+				pointer-events: none;
+				background-color: var(--skin-color-primary, $primary);
+				opacity: 0.4;
+
+				svg rect {
+					fill: var(--text-color-contrast-switch, $white);
+				}
+			}
+		}
+
+		&__icon {
+			width: $sendIconSize;
+			height: $sendIconSize;
+			margin: 12px 0 0 14px;
+
+			rect {
+				fill: var(--text-color-contrast-switch, $white);
+			}
+
+			&--active {
+				background-color: $line-ochre;
+			}
+
+			&--hoverstate:hover {
+				background-color: $light-brown;
+			}
+		}
+
+		&__featureWrapper {
+			display: flex;
+			flex-direction: column;
+			border-top: 1px solid #fcdfdf; // Default 1px
+			border-bottom: 1px solid #fcdfdf; // Default 1px
+			border-left: 1px solid #fcdfdf; // Default 1px
+			border-right: none;
+			justify-content: flex-end;
+			align-items: center;
+			width: $sendInputHeight;
+			padding-left: 7px;
+			border-radius: $enquiry-input-border-radius 0 0
+				$enquiry-input-border-radius;
+			background: $white;
+		
+			position: relative;
+		}
+
+		// When input is focused, featureWrapper should also have red border (top, bottom, left only) - 2px
+		&__featureWrapper--focused {
+			border-top: 2px solid #da5248 !important;
+			border-bottom: 2px solid #da5248 !important;
+			border-left: 2px solid #da5248 !important;
+			border-right: none !important;
+		}
+
+		&__richtextToggle {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			width: $grid-base-three;
+			height: $grid-base-three;
+			margin-bottom: $grid-base;
+			cursor: pointer;
+
+			@include breakpoint($fromLarge) {
+				margin-bottom: 12px;
+			}
+
+			svg {
+				align-self: flex-end;
+
+				* {
+					fill: $tertiary;
+				}
+
+				&:hover {
+					* {
+						fill: var(--skin-color-primary, $primary);
+					}
+				}
+			}
+
+			&--active {
+				svg * {
+					fill: var(--skin-color-primary, $primary);
+				}
+			}
+		}
+
+		&__toolbar {
+			width: calc(100% - 1px);
+			background-color: white;
+			display: none;
+			position: absolute;
+			top: 0;
+			border-radius: 0 24px 0 0;
+			border-top: $inputBorder;
+			border-right: $inputBorder;
+		
+			padding: $grid-base;
+			z-index: 10;
+
+			&::after {
+				content: '';
+				display: block;
+				position: absolute;
+				bottom: 0;
+				left: 0;
+				width: 100%;
+				height: 2px;
+				background-color: $form-input-border;
+			}
+
+			&--active {
+				display: flex;
+			}
+
+			&__buttonWrapper {
+				display: flex;
+			}
+
+			&__button {
+				height: $grid-base-three;
+				width: $grid-base-three;
+				padding: 0;
+				margin-right: 12px;
+				cursor: pointer;
+				background: transparent;
+				border: none;
+
+				svg * {
+					color: $tertiary;
+				}
+
+				&--active {
+					svg * {
+						color: var(--skin-color-primary, $primary);
+					}
+				}
+			}
+		}
+
+		&__attachmentSelect {
+			display: flex;
+			position: absolute;
+			right: $grid-base-two;
+			bottom: 0;
+			z-index: 2;
+
+			svg {
+				width: $attachmentIconSize;
+				height: $attachmentIconSize;
+				cursor: pointer;
+				align-self: flex-end;
+				margin-bottom: $grid-base-two;
+
+				* {
+					fill: $tertiary;
+				}
+			}
+
+			&:hover {
+				svg {
+					* {
+						fill: var(--skin-color-primary, $primary);
+					}
+				}
+			}
+		}
+
+		&__attachmentInput {
+			display: none;
+		}
+
+		&__attachmentWrapper {
+			position: absolute;
+			border-radius: 0 0 24px 0;
+			border-bottom: $inputBorder;
+			border-right: $inputBorder;
+			left: 1px;
+			bottom: 0;
+			height: 48px;
+			width: calc(100% - #{1px});
+			background-color: white;
+			z-index: 2;
+		}
+
+		&__attachmentSelected {
+			position: absolute;
+			background: $dark-grey;
+			border-radius: $grid-base-two;
+			padding: $grid-base $grid-base-two;
+			top: 4px;
+			left: $grid-base;
+
+			svg {
+				width: $attachmentIconSize;
+				height: $attachmentIconSize;
+
+				* {
+					fill: var(--skin-color-secondary-contrast-safe, $secondary);
+				}
+			}
+
+			&__progress {
+				position: absolute;
+				z-index: 1;
+				width: 0;
+				height: 100%;
+				top: 0;
+				left: 0;
+				background-color: $upload-progress;
+				border-radius: $grid-base-two;
+				transition: width 0.6s linear;
+			}
+
+			&__labelWrapper {
+				display: flex;
+				flex-direction: row;
+				position: relative;
+				z-index: 2;
+			}
+
+			&__label {
+				margin: 0 0 0 $grid-base-two;
+			}
+
+			&__remove svg {
+				cursor: pointer;
+				width: 12px;
+				height: 12px;
+				margin-left: $grid-base-two;
+			}
+
+			&--active {
+				margin-bottom: 48px;
+				display: inline-block;
+			}
+		}
+
+		&__iconBooking {
+			width: $grid-base-six;
+			height: $grid-base-six;
+			border-radius: $grid-base-three;
+			cursor: pointer;
+			border: 1px solid var(--skin-color-primary, $primary);
+			margin: 0 0 4px 14px;
+			align-self: flex-end;
+			background-color: $white;
+			transition: background-color 0.6s ease;
+			overflow: hidden;
+			&:hover {
+				background-color: $background-light;
+			}
+
+			svg {
+				fill: $primary;
+				position: relative;
+				left: 50%;
+				top: 50%;
+				transform: translate(-50%, -50%);
+			}
+		}
+
+		&__buttons {
+			display: flex;
+			flex-direction: column;
+			position: relative;
+			top: -6px;
+		}
+	}
+
+	a {
+		cursor: pointer;
+	}
+
+	.DraftEditor-root {
+		height: 100%;
+
+		.DraftEditor-editorContainer,
+		.public-DraftEditor-content {
+			height: 100%;
+		}
+
+		// Important to make placeholder not clickable
+		.DraftEditor-editorContainer {
+			cursor: pointer;
+			position: relative;
+			z-index: 1;
+			
+			// Remove focus outline
+			&:focus,
+			&:focus-visible,
+			&:focus-within {
+				outline: none !important;
+			}
+		}
+		
+		// Remove focus outline from editor content
+		.public-DraftEditor-content {
+			&:focus,
+			&:focus-visible {
+				outline: none !important;
+			}
+		}
+		
+		.public-DraftEditorPlaceholder-root {
+			position: absolute;
+			color: $message-submit-interface-textarea-placeholder-color;
+			max-width: calc(100% - #{$grid-base-six});
+			z-index: 1;
+		}
+		.public-DraftEditor-content,
+		.public-DraftEditorPlaceholder-root {
+			padding: 14px $grid-base-five 14px $grid-base;
+		}
+		
+		// Custom cursor styling - red with space from text
+		.public-DraftEditor-content {
+			caret-color: #e53841; // Caritas red
+			
+			// Add space from text by adjusting left padding
+		}
+	}
+}

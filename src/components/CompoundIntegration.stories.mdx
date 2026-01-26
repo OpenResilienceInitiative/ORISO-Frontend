@@ -1,0 +1,109 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Documentation/Compound UI Integration" />
+
+# Compound UI Integration
+
+This document demonstrates the integration of **Compound UI** (@vector-im/compound-web) into the ORISO Frontend v2 application.
+
+## Overview
+
+Compound UI is Element's official design system and component library. We've integrated it to provide:
+- Modern, accessible UI components
+- Consistent design language matching Element chat
+- Professional avatar rendering
+- Design tokens for theming
+
+## Package Information
+
+### Installed Packages
+```json
+"@vector-im/compound-design-tokens": "^6.3.0"
+"@vector-im/compound-web": "^8.2.5"
+```
+
+### React Version
+```json
+"react": "^18.3.1"
+"react-dom": "^18.3.1"
+```
+
+## Implementation Details
+
+### 1. CSS Import Strategy
+
+**File:** `src/compound.css`
+```css
+/* Import Compound Design Tokens FIRST */
+@import '@vector-im/compound-design-tokens/assets/web/css/compound-design-tokens.css';
+/* Then Import Compound UI styles */
+@import '@vector-im/compound-web/dist/style.css';
+```
+
+**Loaded in:** `src/initApp.tsx`
+```typescript
+import './compound.css';
+```
+
+### 2. Components Using Compound
+
+#### UserAvatar Component
+- **Location:** `src/components/message/UserAvatar.tsx`
+- **Compound Component:** `Avatar` from `@vector-im/compound-web`
+- **Features:**
+  - Uppercase letter display
+  - Consistent sizing (24px, 32px, 40px, 64px)
+  - Round type avatars
+  - Color-coded by user ID
+
+#### Integration Points
+1. **Chat Messages** - 32px avatars for incoming messages
+2. **Session Headers** - 40px avatars next to username
+3. **Session Lists** - 32px avatars in sidebar
+4. **Icon-Only Mode** - Avatars visible when sidebar < 220px
+
+### 3. Design Tokens Usage
+
+Compound provides CSS variables for:
+- **Colors:** `--cpd-color-*`
+- **Spacing:** `--cpd-space-*`
+- **Typography:** `--cpd-font-*`
+- **Radii:** `--cpd-radius-*`
+
+### 4. Custom Styling
+
+We override Compound styles where needed:
+```scss
+span[class*="_avatar_"] {
+  width: 32px !important;
+  height: 32px !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+}
+```
+
+## Benefits of Compound Integration
+
+✅ **Professional Design** - Element-tested UI components  
+✅ **Accessibility** - WCAG compliant out of the box  
+✅ **Consistency** - Unified design language  
+✅ **Maintenance** - Less custom code to maintain  
+✅ **Updates** - Regular improvements from Element team  
+
+## Future Enhancements
+
+Consider using more Compound components:
+- `Button` - Replace custom button components
+- `TextField` - Form inputs
+- `Menu` - Dropdown menus
+- `Dialog` - Modal windows
+- `Badge` - Notification indicators
+
+## Resources
+
+- **Compound Storybook:** https://compound.element.io
+- **GitHub:** https://github.com/vector-im/compound-web
+- **Design Tokens:** https://compound.element.io/?path=/docs/tokens-overview--docs
+
+
+

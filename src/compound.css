@@ -1,0 +1,5 @@
+/* Import Compound Design Tokens FIRST */
+@import '@vector-im/compound-design-tokens/assets/web/css/compound-design-tokens.css';
+/* Then Import Compound UI styles */
+@import '@vector-im/compound-web/dist/style.css';
+

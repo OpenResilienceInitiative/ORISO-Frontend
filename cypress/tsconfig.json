@@ -1,0 +1,13 @@
+{
+	"compilerOptions": {
+		"target": "es6",
+		"lib": ["es6", "dom"],
+		"types": ["cypress"],
+		"moduleResolution": "node"
+	},
+	"include": [
+		"**/*.ts",
+		"../src/generated/**/*.ts",
+		"../src/extensions/**/*.cy.ts"
+	]
+}

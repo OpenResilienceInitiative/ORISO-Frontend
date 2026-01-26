@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-v2
+  namespace: caritas
+  labels:
+    app: frontend-v2
+    version: v2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend-v2
+  template:
+    metadata:
+      labels:
+        app: frontend-v2
+        version: v2
+    spec:
+      containers:
+      - name: frontend-v2
+        image: caritas-frontend-v2:1762810136
+        imagePullPolicy: Never
+        env:
+        - name: NODE_ENV
+          value: production
+        - name: PORT
+          value: "80"
+        ports:
+        - containerPort: 80
+          name: http
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+      restartPolicy: Always
+

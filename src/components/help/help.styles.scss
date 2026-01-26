@@ -1,0 +1,87 @@
+.help {
+	.headline {
+		margin-bottom: $grid-base;
+	}
+
+	.browser-list {
+		max-width: unset;
+		width: 100%;
+		margin-top: $grid-base-two;
+
+		@include breakpoint($fromXLarge) {
+			display: flex;
+			flex-wrap: wrap;
+			justify-content: center;
+		}
+
+		& > div {
+			display: block;
+			margin-top: $grid-base-two;
+
+			@include breakpoint($fromXLarge) {
+				display: inline-flex;
+				align-items: center;
+				margin: $grid-base $grid-base-two 0;
+			}
+
+			img {
+				width: $grid-base-four;
+				margin-right: $grid-base-two;
+			}
+
+			a {
+				display: inline-flex;
+				align-items: center;
+			}
+
+			svg {
+				margin-right: $grid-base;
+			}
+		}
+
+		&--asker {
+			margin: $grid-base 0 $grid-base-two;
+		}
+	}
+
+	&__mid,
+	&__bottom {
+		margin-top: $grid-base-six;
+	}
+
+	ol {
+		margin-left: 0;
+		padding: 0;
+
+		list-style-position: outside;
+
+		li {
+			margin-left: $grid-base-two;
+			padding-left: $grid-base;
+		}
+
+		li + li {
+			margin-top: $grid-base;
+		}
+	}
+
+	&__copyLink {
+		display: block;
+		color: $primary;
+		width: max-content;
+
+		&:focus {
+			outline: $focus-outline;
+			outline-offset: 1px;
+			border-radius: 4px;
+		}
+
+		&:focus:not(:focus-visible) {
+			outline: none;
+		}
+
+		&:hover {
+			cursor: pointer;
+		}
+	}
+}

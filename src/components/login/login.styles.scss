@@ -1,0 +1,337 @@
+$spacingWithIcon: 52px;
+$link-hover-text-decoration: $link-text-decoration !default;
+
+.login {
+	&__tenantRegistration {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: $grid-base-four 0;
+	}
+
+	&__tenantRegistrationLink {
+		margin-left: $grid-base;
+	}
+}
+
+.loginForm {
+	margin: 0;
+	display: flex;
+	justify-content: center;
+	align-items: $login-align-items;
+	text-align: center;
+	width: 100%;
+	max-width: 520px;
+	padding: 55px 60px;
+	background: #ffffff;
+	position: relative;
+	border: 0px solid rgba(220, 38, 38, 0.3);
+	border-radius: 20px;
+	animation: fadeIn 0.5s ease-out;
+	transition: transform 0.3s ease;
+
+	&__inner {
+		position: relative;
+		z-index: 1;
+		width: 100%;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+	}
+
+	&__fields,
+	&__actions {
+		width: 100%;
+		max-width: 380px;
+		margin: 0 auto;
+		display: flex;
+		flex-direction: column;
+		align-items: stretch;
+	
+	}
+
+
+	.button-as-link {
+		border: none;
+		background: none;
+		color: $primary;
+		text-decoration: $link-text-decoration;
+		padding-left: 0px;
+		margin-top: $grid-base-four;
+
+		&:focus-visible {
+			outline: $focus-outline;
+			outline-offset: 4px;
+			border-radius: $login-button-focus-border-radius;
+		}
+
+		&:focus:not(:focus-visible) {
+			outline: none;
+		}
+
+		&:hover {
+			cursor: pointer;
+			color: var(--skin-color-primary-hover, $hover-primary);
+		}
+	}
+
+	.consulting-topics {
+		margin: 0;
+		padding: 0;
+	}
+
+	.inputField {
+		width: 100%;
+		max-width: 100%;
+		margin-bottom: 20px;
+
+		label {
+			display: none;
+		}
+
+		input,
+		.inputField__input {
+			box-sizing: border-box;
+			width: 100% !important;
+			max-width: 100% !important;
+			border-radius: 28px;
+			padding: 15px 20px;
+			padding-left: 48px;
+			border: 1.5px solid #e5e7eb;
+			background: #f9fafb;
+			font-size: 15px;
+			transition: all 0.3s ease;
+
+			&:focus {
+				border-color: #e5e7eb;
+				background: white;
+				outline: none;
+				box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.05);
+			}
+
+			&::placeholder {
+				color: #9ca3af;
+			}
+		}
+
+		// Center icons vertically
+		.inputField__icon {
+			top: 50% !important;
+			transform: translateY(-50%) !important;
+		}
+
+		.inputField__passwordToggle {
+			top: 50% !important;
+			transform: translateY(-50%) !important;
+		}
+	}
+
+	&__headline {
+		transform: $login-icon-transform;
+		margin-bottom: 20px;
+		
+		h2 {
+			font-size: 32px;
+			font-weight: 700;
+			color: #1f2937;
+			letter-spacing: -0.5px;
+			margin: 0;
+		}
+	}
+
+	&__actions {
+		align-items: center;
+
+		.button__wrapper,
+		.button__item,
+		.button {
+			width: 100%;
+			max-width: 100%;
+		}
+	}
+
+	&__securityBanner {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		gap: 8px;
+		padding: 16px 18px;
+		background: rgba(16, 185, 129, 0.12);
+		border: 1.5px solid rgba(16, 185, 129, 0.4);
+		border-radius: 12px;
+		margin-top: 20px;
+		margin-bottom: 0;
+		box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);
+		text-align: center;
+
+		.security-header {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			
+			svg {
+				flex-shrink: 0;
+				width: 20px;
+				height: 20px;
+			}
+
+			strong {
+				font-size: 14px;
+				color: #059669;
+				font-weight: 600;
+				letter-spacing: 0.3px;
+			}
+		}
+
+		span {
+			font-size: 12px;
+			color: #047857;
+			font-weight: 400;
+			line-height: 1.4;
+		}
+	}
+
+	&__otp {
+		max-height: 0;
+		overflow: hidden;
+		-webkit-transition: max-height 0.8s;
+		-moz-transition: max-height 0.8s;
+		transition: max-height 0.8s;
+
+		&--active {
+			max-height: 250px;
+			overflow: visible;
+		}
+
+		.inputField__icon {
+			top: 50%;
+			transform: translateY(-50%);
+		}
+	}
+
+	&__otpEmailResend {
+		display: inline-block;
+		margin-bottom: $grid-base-three;
+	}
+
+	&__error {
+		display: flex;
+		color: $form-error;
+		width: 280px;
+		margin-bottom: $grid-base-four;
+
+		@include breakpoint($fromLarge) {
+			width: 320px;
+		}
+	}
+
+	.button {
+		width: 100%;
+		max-width: 100%;
+	}
+
+	.button__item {
+		box-sizing: border-box;
+		width: 100%;
+		min-width: unset;
+		max-width: 100%;
+		margin-top: 25px;
+		padding: 15px 24px;
+		background: rgba(216, 0, 3);
+		border: none;
+		border-radius: 28px;
+		color: white;
+		font-size: 15px;
+		font-weight: 600;
+		letter-spacing: 0.3px;
+		box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
+		transition: all 0.3s ease;
+		transform: $login-icon-transform;
+
+		&:hover:not(:disabled) {
+			background: linear-gradient(135deg, #b91c1c 0%, #7f1d1d 100%);
+			box-shadow: 0 6px 20px rgba(220, 38, 38, 0.4);
+			transform: translateY(-2px);
+		}
+
+		&:active:not(:disabled) {
+			transform: translateY(0);
+		}
+
+		&:disabled {
+			opacity: 0.5;
+			cursor: not-allowed;
+		}
+	}
+
+	&__passwordReset {
+		color: $link-color;
+		transform: $login-icon-transform;
+		text-decoration: $link-text-decoration;
+		font-weight: $link-font-weight;
+		padding: 0;
+
+		&:hover {
+			text-decoration: $link-hover-text-decoration;
+			cursor: pointer;
+		}
+	}
+
+	&__register {
+		margin-top: $grid-base-four;
+
+		&__separator {
+			width: 100%;
+			border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+			text-align: center;
+			height: 18px;
+			margin-bottom: 15px;
+			font-size: $font-size-secondary;
+
+			span {
+				line-height: 15px;
+				padding: 0 10px;
+				background: white;
+				display: inline-block;
+				margin-top: 10px;
+				color: $text-low-emphasis;
+				text-transform: uppercase;
+				letter-spacing: 1.5px;
+				font-weight: 500;
+			}
+		}
+
+		&__content {
+			.text {
+				font-weight: 600;
+				text-align: center;
+				color: $text-high-emphasis;
+			}
+			margin-top: $grid-base-six;
+		}
+	}
+
+	&__emailHint {
+		width: 280px;
+		margin-bottom: $grid-base-three;
+
+		@include breakpoint($fromLarge) {
+			width: 320px;
+		}
+	}
+
+	.twoFactorAuthResendMail {
+		margin-bottom: $grid-base-two;
+	}
+}
+
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+		transform: translateY(20px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}

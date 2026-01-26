@@ -1,0 +1,34 @@
+.localeSwitch {
+	display: flex;
+	align-items: center;
+	font-size: 14px;
+
+	.select__wrapper {
+		margin-top: 0;
+		padding-left: 0;
+	}
+
+	span {
+		font-weight: bold;
+	}
+
+	svg {
+		margin-right: $grid-base;
+	}
+
+	&--vertical {
+		flex-direction: column;
+		color: #d32f2f;
+
+		svg,
+		span {
+			color: #d32f2f;
+			margin: 0;
+			font-weight: $font-weight-medium;
+		}
+	}
+
+	.select__input__menu-portal {
+		z-index: 1000;
+	}
+}

@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-temp
+  namespace: caritas
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend-temp
+  template:
+    metadata:
+      labels:
+        app: frontend-temp
+    spec:
+      containers:
+      - name: frontend-temp
+        image: caritas-frontend-temp:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 80
+        env:
+        - name: REACT_APP_API_URL
+          value: "https://api.oriso.site"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-temp
+  namespace: caritas
+spec:
+  selector:
+    app: frontend-temp
+  ports:
+  - port: 9001
+    targetPort: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: frontend-temp-ingress
+  namespace: caritas
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/redirect-to-https: "true"
+spec:
+  ingressClassName: traefik
+  rules:
+  - host: app-temp.oriso.site
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-temp
+            port:
+              number: 9001
+  tls:
+  - hosts:
+    - app-temp.oriso.site
+    secretName: app-temp-oriso-site-tls
+

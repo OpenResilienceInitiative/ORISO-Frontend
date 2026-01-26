@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: storybook
+  namespace: caritas
+  labels:
+    app: storybook
+spec:
+  type: LoadBalancer
+  externalIPs:
+  - 91.99.219.182
+  selector:
+    app: storybook
+  ports:
+  - port: 6006
+    targetPort: 80
+    name: http
+    protocol: TCP
+
+
+

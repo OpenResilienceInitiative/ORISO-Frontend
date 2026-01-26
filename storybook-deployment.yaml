@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: storybook
+  namespace: caritas
+  labels:
+    app: storybook
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: storybook
+  template:
+    metadata:
+      labels:
+        app: storybook
+    spec:
+      containers:
+      - name: storybook
+        image: caritas-storybook:latest
+        imagePullPolicy: Never
+        env:
+        - name: NODE_ENV
+          value: production
+        - name: PORT
+          value: "80"
+        ports:
+        - containerPort: 80
+          name: http
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+      restartPolicy: Always
+
+
+

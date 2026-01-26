@@ -1,0 +1,92 @@
+[
+	{
+		"userId": "consultant",
+		"userName": "consultant1",
+		"firstName": "firstName",
+		"lastName": "lastName",
+		"email": "con@sulta.nt",
+		"absenceMessage": null,
+		"agencies": [
+			{
+				"id": 1,
+				"name": "name",
+				"postcode": "12345",
+				"city": "city",
+				"description": "description",
+				"offline": false,
+				"consultingType": 0
+			}
+		],
+		"grantedAuthorities": [
+			"AUTHORIZATION_CONSULTANT_DEFAULT",
+			"AUTHORIZATION_VIEW_AGENCY_CONSULTANTS",
+			"AUTHORIZATION_ASSIGN_CONSULTANT_TO_SESSION"
+		],
+		"consultingTypes": null,
+		"formalLanguage": true,
+		"absent": false,
+		"languages": [],
+		"emailToggles": [
+			{
+				"name": "DAILY_ENQUIRY",
+				"state": true
+			},
+			{
+				"name": "NEW_CHAT_MESSAGE_FROM_ADVICE_SEEKER",
+				"state": true
+			}
+		]
+	},
+	{
+		"userId": "video",
+		"userName": "video-user",
+		"firstName": "Video",
+		"lastName": "User",
+		"email": "video@sulta.nt",
+		"absenceMessage": null,
+		"agencies": [
+			{
+				"id": 2,
+				"name": "name",
+				"postcode": "12345",
+				"city": "city",
+				"description": "description",
+				"offline": false,
+				"consultingType": 2
+			}
+		],
+		"grantedAuthorities": ["AUTHORIZATION_CONSULTANT_DEFAULT"],
+		"consultingTypes": null,
+		"formalLanguage": true,
+		"absent": false
+	},
+	{
+		"userId": "asker",
+		"userName": "asker1",
+		"firstName": null,
+		"lastName": null,
+		"email": null,
+		"absenceMessage": null,
+		"agencies": null,
+		"grantedAuthorities": ["AUTHORIZATION_USER_DEFAULT"],
+		"consultingTypes": {
+			"0": { "sessionData": null, "isRegistered": false, "agency": null },
+			"1": {
+				"sessionData": { "age": null, "gender": null, "state": null },
+				"isRegistered": true,
+				"agency": {
+					"id": 1,
+					"name": "agency name",
+					"postcode": "12345",
+					"city": "city",
+					"description": null,
+					"offline": false,
+					"consultingType": 1
+				}
+			},
+			"17": { "sessionData": null, "isRegistered": false, "agency": null }
+		},
+		"formalLanguage": true,
+		"absent": false
+	}
+]
