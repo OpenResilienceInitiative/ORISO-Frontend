@@ -2722,6 +2722,50 @@
 					"text": "Das Konto konnte nicht gelöscht werden. Bitte versuchen Sie es erneut."
 				}
 			}
+		},
+		"supervisor": {
+			"manage": "Supervisor verwalten",
+			"modal": {
+				"title": "Supervisor verwalten",
+				"current": "Aktuelle Supervisor",
+				"add": "Supervisor hinzufügen",
+				"noSupervisors": "Keine Supervisor hinzugefügt",
+				"noConsultants": "Keine verfügbaren Berater",
+				"selectConsultant": "Berater auswählen...",
+				"addButton": "Hinzufügen",
+				"adding": "Hinzufügen...",
+				"remove": "Entfernen",
+				"added": "Hinzugefügt",
+				"loading": "Lädt...",
+				"loadingConsultants": "Lädt Berater..."
+			},
+			"success": {
+				"add": {
+					"title": "Supervisor hinzugefügt",
+					"text": "Der Supervisor wurde erfolgreich hinzugefügt."
+				},
+				"remove": {
+					"title": "Supervisor entfernt",
+					"text": "Der Supervisor wurde erfolgreich entfernt."
+				}
+			},
+			"error": {
+				"add": {
+					"title": "Fehler",
+					"text": "Supervisor konnte nicht hinzugefügt werden."
+				},
+				"remove": {
+					"title": "Fehler",
+					"text": "Supervisor konnte nicht entfernt werden."
+				},
+				"loadConsultants": {
+					"title": "Fehler",
+					"text": "Berater konnten nicht geladen werden."
+				}
+			},
+			"remove": {
+				"confirm": "Möchten Sie diesen Supervisor wirklich entfernen?"
+			}
 		}
 	}
 }

@@ -10,7 +10,7 @@ import {
 } from '../../utils/dateHelpers';
 import { UserAvatar } from '../message/UserAvatar';
 import { ConsultantSearchLoader } from '../sessionHeader/ConsultantSearchLoader';
-import { MenuVerticalIcon } from '../../resources/img/icons';
+import { MenuVerticalIcon, ShowPasswordIcon } from '../../resources/img/icons';
 import { ReactComponent as ArchiveIcon } from '../../resources/img/icons/inbox.svg';
 import { ReactComponent as TrashIcon } from '../../resources/img/icons/trash.svg';
 import { ReactComponent as BellOffIcon } from '../../resources/img/icons/audio-off.svg';
@@ -200,6 +200,10 @@ export const SessionListItemComponent = ({
 	]);
 
 	const isAsker = hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
+	const isSupervisorView =
+		!isAsker &&
+		!!activeSession?.consultant?.id &&
+		activeSession.consultant.id !== userData.userId;
 
 	// Close dropdown when clicking outside
 	useEffect(() => {
@@ -1035,7 +1039,27 @@ export const SessionListItemComponent = ({
 				</div>
 				<div className="sessionsListItem__row">
 					<div className="sessionsListItem__icon">
-						{isAsker && !hasConsultantData ? (
+						{isSupervisorView ? (
+							<div
+								style={{
+									width: '32px',
+									height: '32px',
+									borderRadius: '50%',
+									backgroundColor: '#fde8e8',
+									display: 'flex',
+									alignItems: 'center',
+									justifyContent: 'center'
+								}}
+							>
+								<ShowPasswordIcon
+									style={{
+										width: '18px',
+										height: '18px',
+										color: '#c62828'
+									}}
+								/>
+							</div>
+						) : isAsker && !hasConsultantData ? (
 							<ConsultantSearchLoader size="32px" />
 						) : (
 							<UserAvatar

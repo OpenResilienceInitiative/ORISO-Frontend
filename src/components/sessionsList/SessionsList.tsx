@@ -634,7 +634,8 @@ export const SessionsList = ({
 	}, [loadMoreSessions]);
 
 	const showSessionListTabs =
-		userData.hasArchive && type === SESSION_LIST_TYPES.MY_SESSION;
+		type === SESSION_LIST_TYPES.MY_SESSION &&
+		!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
 
 	const sortSessions = useCallback(
 		(
@@ -687,11 +688,11 @@ export const SessionsList = ({
 				// filter my sessions
 				case SESSION_LIST_TYPES.MY_SESSION:
 					// For askers, show all their sessions (API already filtered by user)
-					// For consultants, only show sessions where they are the assigned consultant
+					// For consultants, API already filters to assigned/supervised sessions
 					if (hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)) {
 						return true; // Askers see all their own sessions
 					}
-					return session?.consultant?.id === userData.userId; // Consultants see only assigned sessions
+					return true;
 				// only show sessions without an assigned consultant in sessionPreview
 				case SESSION_LIST_TYPES.ENQUIRY:
 					return !session?.consultant; // Only show unassigned enquiries

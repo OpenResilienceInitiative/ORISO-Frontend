@@ -2646,6 +2646,50 @@
 					"text": "The account could not be deleted. Please try again."
 				}
 			}
+		},
+		"supervisor": {
+			"manage": "Manage Supervisors",
+			"modal": {
+				"title": "Manage Supervisors",
+				"current": "Current Supervisors",
+				"add": "Add Supervisor",
+				"noSupervisors": "No supervisors added",
+				"noConsultants": "No available consultants",
+				"selectConsultant": "Select consultant...",
+				"addButton": "Add",
+				"adding": "Adding...",
+				"remove": "Remove",
+				"added": "Added",
+				"loading": "Loading...",
+				"loadingConsultants": "Loading consultants..."
+			},
+			"success": {
+				"add": {
+					"title": "Supervisor Added",
+					"text": "The supervisor has been successfully added."
+				},
+				"remove": {
+					"title": "Supervisor Removed",
+					"text": "The supervisor has been successfully removed."
+				}
+			},
+			"error": {
+				"add": {
+					"title": "Error",
+					"text": "Supervisor could not be added."
+				},
+				"remove": {
+					"title": "Error",
+					"text": "Supervisor could not be removed."
+				},
+				"loadConsultants": {
+					"title": "Error",
+					"text": "Consultants could not be loaded."
+				}
+			},
+			"remove": {
+				"confirm": "Are you sure you want to remove this supervisor?"
+			}
 		}
 	}
 }

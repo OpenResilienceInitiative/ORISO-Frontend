@@ -41,6 +41,7 @@ import { apiPostError, TError } from '../../api/apiPostError';
 import { useE2EE } from '../../hooks/useE2EE';
 import { MessageSubmitInterfaceSkeleton } from '../messageSubmitInterface/messageSubmitInterfaceSkeleton';
 import { EncryptionBanner } from './EncryptionBanner';
+import { apiGetSessionSupervisors } from '../../api/apiGetSessionSupervisors';
 
 const MessageSubmitInterfaceComponent = lazy(() =>
 	import('../messageSubmitInterface/messageSubmitInterfaceComponent').then(
@@ -77,6 +78,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const dragCancelRef = useRef<NodeJS.Timeout | null>(null);
 	const [newMessages, setNewMessages] = useState(0);
 	const [canWriteMessage, setCanWriteMessage] = useState(false);
+	const [isSupervisor, setIsSupervisor] = useState(false);
 	const [headerRef, headerBounds] = useMeasure({ polyfill: ResizeObserver });
 	const { ready, key, keyID, encrypted, subscriptionKeyLost } = useE2EE(
 		activeSession.rid
@@ -106,11 +108,35 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		return isMyMessage(messageUserId);
 	}, [activeSession.rid]);
 
+	// Check if current user is a supervisor
 	useEffect(() => {
+		if (hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) && activeSession.item.id) {
+			apiGetSessionSupervisors(activeSession.item.id)
+				.then((supervisors) => {
+					const isCurrentUserSupervisor = supervisors.some(
+						s => s.supervisorConsultantId === userData.userId
+					);
+					setIsSupervisor(isCurrentUserSupervisor);
+				})
+				.catch((error) => {
+					console.error('Failed to check supervisor status:', error);
+					setIsSupervisor(false);
+				});
+		} else {
+			setIsSupervisor(false);
+		}
+	}, [activeSession.item.id, userData]);
+
+	useEffect(() => {
+		// Supervisors cannot write messages
+		if (isSupervisor) {
+			setCanWriteMessage(false);
+			return;
+		}
 		const canWrite = type !== SESSION_LIST_TYPES.ENQUIRY;
-		console.log('🔥 SessionItemComponent: canWriteMessage =', canWrite, '(type:', type, ', isGroup:', activeSession.isGroup, ')');
+		console.log('🔥 SessionItemComponent: canWriteMessage =', canWrite, '(type:', type, ', isGroup:', activeSession.isGroup, ', isSupervisor:', isSupervisor, ')');
 		setCanWriteMessage(canWrite);
-	}, [type, userData, activeSession, activeSession.isGroup]);
+	}, [type, userData, activeSession, activeSession.isGroup, isSupervisor]);
 
 	useEffect(() => {
 		if (messages && messages.length > 0 && !initialScrollCompleted) {

@@ -137,9 +137,20 @@ export const GroupChatHeader = ({
 		
 		const loadMembers = (room: any) => {
 			// Get joined members
-			const members = room.getJoinedMembers();
-			console.log('✅ GroupChatHeader: Found', members?.length || 0, 'members:', members?.map((m: any) => m.userId || m.name));
-			setMatrixMembers(members || []);
+			const allMembers = room.getJoinedMembers();
+			
+			// Filter supervisors from member list (supervisors have power level 10)
+			const activeMembers = allMembers.filter((m: any) => {
+				try {
+					const powerLevel = room.getMember(m.userId)?.powerLevel || 0;
+					return powerLevel !== 10; // Exclude supervisors (power level 10)
+				} catch (err) {
+					return true; // Include if we can't determine power level
+				}
+			});
+			
+			console.log('✅ GroupChatHeader: Found', allMembers?.length || 0, 'total members,', activeMembers?.length || 0, 'active members:', activeMembers?.map((m: any) => m.userId || m.name));
+			setMatrixMembers(activeMembers || []);
 			setIsLoadingMembers(false);
 			
 			// Poll for member changes every 5 seconds

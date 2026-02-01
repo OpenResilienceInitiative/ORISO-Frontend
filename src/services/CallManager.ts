@@ -122,12 +122,29 @@ class CallManager {
                     console.log(`   Room found: ${!!room}`);
                     
                     if (room) {
-                        const memberCount = room.getJoinedMemberCount();
-                        const members = room.getJoinedMembers();
-                        isGroup = memberCount > 0; // TEMPORARY: All calls treated as group calls
+                        const allMembers = room.getJoinedMembers();
+                        const memberCount = allMembers.length;
                         
-                        console.log(`   ✅ Room member count: ${memberCount}`);
-                        console.log(`   ✅ Joined members:`, members.map(m => m.userId));
+                        // Filter supervisors from member count (supervisors have power level 10)
+                        // Get supervisors from API to filter them out
+                        let activeMemberCount = memberCount;
+                        try {
+                            // Get session ID from room name or other source if available
+                            // For now, we'll filter by power level
+                            const activeMembers = allMembers.filter((m: any) => {
+                                const powerLevel = room.getMember(m.userId)?.powerLevel || 0;
+                                return powerLevel !== 10; // Exclude supervisors (power level 10)
+                            });
+                            activeMemberCount = activeMembers.length;
+                        } catch (err) {
+                            console.warn('Could not filter supervisors from member count:', err);
+                        }
+                        
+                        // 1-on-1 = 2 members (consultant + asker), group = more than 2
+                        isGroup = activeMemberCount > 2;
+                        
+                        console.log(`   ✅ Room member count: ${memberCount} (active: ${activeMemberCount})`);
+                        console.log(`   ✅ Joined members:`, allMembers.map(m => m.userId));
                         console.log(`   ✅ Is group call (auto-detected): ${isGroup}`);
                     } else {
                         console.warn(`   ⚠️  Room not found in Matrix client! RoomId: ${roomId}`);

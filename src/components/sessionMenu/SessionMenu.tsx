@@ -75,6 +75,7 @@ export interface SessionMenuProps {
 	isAskerInfoAvailable: boolean;
 	isJoinGroupChatView?: boolean;
 	bannedUsers?: string[];
+	isSupervisor?: boolean;
 }
 
 export const SessionMenu = (props: SessionMenuProps) => {
@@ -417,7 +418,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 	return (
 		<div className="sessionMenu__wrapper">
-			{hasVideoCallFeatures() && (
+			{hasVideoCallFeatures() && !props.isSupervisor && (
 				<div
 					className="sessionMenu__videoCallButtons"
 					data-cy="session-header-video-call-buttons"
@@ -501,7 +502,8 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 				{!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
 					type !== SESSION_LIST_TYPES.ENQUIRY &&
-					activeSession.isSession && (
+					activeSession.isSession &&
+					!props.isSupervisor && (
 						<>
 							{sessionListTab !== SESSION_LIST_TAB_ARCHIVE ? (
 								<div
@@ -523,7 +525,8 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 				{hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
 					type !== SESSION_LIST_TYPES.ENQUIRY &&
-					activeSession.isSession && (
+					activeSession.isSession &&
+					!props.isSupervisor && (
 						<DeleteSession
 							chatId={activeSession.item.id}
 							onSuccess={onSuccessDeleteSession}
