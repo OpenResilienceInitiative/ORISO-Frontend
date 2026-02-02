@@ -96,6 +96,8 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	const [isLoadingConsultants, setIsLoadingConsultants] = useState(false);
 	const [isLoadingSupervisors, setIsLoadingSupervisors] = useState(false);
 	const [selectedConsultantId, setSelectedConsultantId] = useState<string>('');
+	const [supervisionReason, setSupervisionReason] = useState<string>('');
+	const [supervisionReasonError, setSupervisionReasonError] = useState(false);
 	const [isAddingSupervisor, setIsAddingSupervisor] = useState(false);
 
 	// Prepare SelectDropdown for consultant selection
@@ -116,7 +118,17 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		},
 		selectInputLabel: translate('sessionHeader.supervisor.modal.selectConsultant', 'Berater auswählen...'),
 		isSearchable: true,
-		menuPlacement: 'bottom'
+		menuPlacement: 'bottom',
+		styleOverrides: {
+			control: (styles) => ({
+				...styles,
+				width: '100%'
+			}),
+			menu: (styles) => ({
+				...styles,
+				width: '100%'
+			})
+		}
 	}), [availableConsultants, selectedConsultantId, translate]);
 
 	// Prepare Button for add supervisor
@@ -182,11 +194,14 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			if (agencyId) {
 				try {
 					const consultants = await apiGetAgencyConsultantList(agencyId.toString());
-					setAllConsultants(consultants); // Store all consultants for name lookup
-					// Filter for available consultants (excluding current user and supervisors)
+					const uniqueConsultants = dedupeConsultants(consultants);
+					setAllConsultants(uniqueConsultants); // Store all consultants for name lookup
+					// Filter: only supervisors, exclude current user and already added supervisors
 					const supervisorIds = data.map(s => s.supervisorConsultantId);
-					const filtered = consultants.filter(
-						c => c.consultantId !== userData.userId && !supervisorIds.includes(c.consultantId)
+					const filtered = uniqueConsultants.filter(
+						c => c.isSupervisor === true && 
+							c.consultantId !== userData.userId && 
+							!supervisorIds.includes(c.consultantId)
 					);
 					setAvailableConsultants(filtered);
 				} catch (err) {
@@ -211,6 +226,16 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		return supervisor.supervisorUsername || supervisor.supervisorConsultantId;
 	};
 
+	const dedupeConsultants = (consultants: Consultant[]): Consultant[] => {
+		const uniqueById = new Map<string, Consultant>();
+		consultants.forEach(consultant => {
+			if (!uniqueById.has(consultant.consultantId)) {
+				uniqueById.set(consultant.consultantId, consultant);
+			}
+		});
+		return Array.from(uniqueById.values());
+	};
+
 	const loadAvailableConsultants = async () => {
 		// Try to get agency ID from session.agency.id or session.item.agencyId
 		const agencyId = activeSession.agency?.id || activeSession.item?.agencyId;
@@ -223,13 +248,16 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		setIsLoadingConsultants(true);
 		try {
 			const consultants = await apiGetAgencyConsultantList(agencyId.toString());
-			console.log('Loaded consultants from agency:', agencyId, consultants);
+			const uniqueConsultants = dedupeConsultants(consultants);
+			console.log('Loaded consultants from agency:', agencyId, uniqueConsultants);
 			// Store all consultants for name lookup
-			setAllConsultants(consultants);
-			// Filter out current user and already added supervisors
+			setAllConsultants(uniqueConsultants);
+			// Filter: only supervisors, exclude current user and already added supervisors
 			const supervisorIds = supervisors.map(s => s.supervisorConsultantId);
-			const filtered = consultants.filter(
-				c => c.consultantId !== userData.userId && !supervisorIds.includes(c.consultantId)
+			const filtered = uniqueConsultants.filter(
+				c => c.isSupervisor === true && 
+					c.consultantId !== userData.userId && 
+					!supervisorIds.includes(c.consultantId)
 			);
 			console.log('Filtered consultants (after removing current user and supervisors):', filtered);
 			setAvailableConsultants(filtered);
@@ -249,11 +277,24 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 
 	const handleAddSupervisor = async () => {
 		if (!selectedConsultantId || !activeSession.item.id) return;
+		if (!supervisionReason.trim()) {
+			setSupervisionReasonError(true);
+			addNotification({
+				notificationType: NOTIFICATION_TYPE_ERROR,
+				title: translate('sessionHeader.supervisor.error.reasonRequired.title', 'Grund erforderlich'),
+				text: translate('sessionHeader.supervisor.error.reasonRequired.text', 'Bitte geben Sie den Grund für die Supervision an.'),
+				closeable: true,
+				timeout: 5000
+			});
+			return;
+		}
 		setIsAddingSupervisor(true);
 		try {
-			await apiAddSessionSupervisor(activeSession.item.id, selectedConsultantId);
+			await apiAddSessionSupervisor(activeSession.item.id, selectedConsultantId, supervisionReason);
 			await loadSupervisors();
 			setSelectedConsultantId('');
+			setSupervisionReason('');
+			setSupervisionReasonError(false);
 			addNotification({
 				notificationType: NOTIFICATION_TYPE_SUCCESS,
 				title: translate('sessionHeader.supervisor.success.add.title', 'Supervisor hinzugefügt'),
@@ -639,7 +680,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 												backgroundColor: '#fff'
 											}}
 										>
-											<div>
+											<div style={{ flex: 1 }}>
 												<div style={{ fontWeight: '500', fontSize: '14px', color: '#3F373F' }}>
 													{getSupervisorName(supervisor)}
 												</div>
@@ -647,6 +688,11 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 													{translate('sessionHeader.supervisor.modal.added', 'Hinzugefügt')}:{' '}
 													{new Date(supervisor.addedDate).toLocaleDateString()}
 												</div>
+												{supervisor.notes && (
+													<div style={{ fontSize: '12px', color: '#666', marginTop: '8px', fontStyle: 'normal' }}>
+														<strong>{translate('sessionHeader.supervisor.modal.reason', 'Grund')}:</strong> {supervisor.notes}
+													</div>
+												)}
 											</div>
 											<button
 												onClick={() => handleRemoveSupervisor(supervisor.id)}
@@ -683,12 +729,44 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 								</div>
 							) : (
 								<div>
-									<SelectDropdown {...consultantSelectDropdown} />
+									<div style={{ width: '100%' }}>
+										<SelectDropdown {...consultantSelectDropdown} />
+									</div>
+									<div style={{ marginTop: '12px' }}>
+										<label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500', color: '#3F373F' }}>
+											{translate('sessionHeader.supervisor.modal.reasonLabel', 'Grund für die Supervision')}
+										</label>
+										<textarea
+											value={supervisionReason}
+											onChange={(e) => {
+												setSupervisionReason(e.target.value);
+												if (supervisionReasonError && e.target.value.trim()) {
+													setSupervisionReasonError(false);
+												}
+											}}
+											placeholder={translate('sessionHeader.supervisor.modal.reasonPlaceholder', 'Bitte geben Sie den Grund für die Supervision an...')}
+											style={{
+												width: '100%',
+												minHeight: '80px',
+												padding: '8px',
+												border: supervisionReasonError ? '1px solid #c62828' : '1px solid #ddd',
+												borderRadius: '4px',
+												fontSize: '14px',
+												fontFamily: 'inherit',
+												resize: 'vertical'
+											}}
+										/>
+										{supervisionReasonError && (
+											<div style={{ marginTop: '6px', color: '#c62828', fontSize: '12px' }}>
+												{translate('sessionHeader.supervisor.modal.reasonError', 'Bitte geben Sie einen Grund an.')}
+											</div>
+										)}
+									</div>
 									<div style={{ marginTop: '12px', display: 'flex', justifyContent: 'center' }}>
 										<Button
 											item={addSupervisorButton}
 											buttonHandle={handleAddSupervisor}
-											disabled={!selectedConsultantId || isAddingSupervisor}
+											disabled={!selectedConsultantId || !supervisionReason.trim() || isAddingSupervisor}
 										/>
 									</div>
 								</div>

@@ -7,6 +7,7 @@ export interface Consultant {
 	lastName: string;
 	displayName: string;
 	username: string;
+	isSupervisor?: boolean;
 }
 
 export const apiGetAgencyConsultantList = async (

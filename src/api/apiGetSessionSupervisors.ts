@@ -9,6 +9,7 @@ export interface SessionSupervisor {
 	addedByConsultantId: string;
 	addedDate: string;
 	matrixRoomId?: string;
+	notes?: string;
 }
 
 export const apiGetSessionSupervisors = async (

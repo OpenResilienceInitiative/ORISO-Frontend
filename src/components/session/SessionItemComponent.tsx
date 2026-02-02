@@ -79,6 +79,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const [newMessages, setNewMessages] = useState(0);
 	const [canWriteMessage, setCanWriteMessage] = useState(false);
 	const [isSupervisor, setIsSupervisor] = useState(false);
+	const [supervisionReason, setSupervisionReason] = useState<string | null>(null);
 	const [headerRef, headerBounds] = useMeasure({ polyfill: ResizeObserver });
 	const { ready, key, keyID, encrypted, subscriptionKeyLost } = useE2EE(
 		activeSession.rid
@@ -117,13 +118,19 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						s => s.supervisorConsultantId === userData.userId
 					);
 					setIsSupervisor(isCurrentUserSupervisor);
+					const currentSupervisor = supervisors.find(
+						s => s.supervisorConsultantId === userData.userId
+					);
+					setSupervisionReason(currentSupervisor?.notes || null);
 				})
 				.catch((error) => {
 					console.error('Failed to check supervisor status:', error);
 					setIsSupervisor(false);
+					setSupervisionReason(null);
 				});
 		} else {
 			setIsSupervisor(false);
+			setSupervisionReason(null);
 		}
 	}, [activeSession.item.id, userData]);
 
@@ -489,6 +496,29 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 			{type === SESSION_LIST_TYPES.ENQUIRY && (
 				<AcceptAssign btnLabel={'enquiry.acceptButton.known'} />
+			)}
+
+			{!canWriteMessage && isSupervisor && supervisionReason && (
+				<div
+					style={{
+						position: 'sticky',
+						bottom: '12px',
+						margin: '12px 16px 0',
+						padding: '12px 16px',
+						borderRadius: '8px',
+						backgroundColor: 'rgba(198, 40, 40, 0.15)',
+						border: '1px solid rgba(198, 40, 40, 0.2)',
+						backdropFilter: 'blur(2px)',
+						color: '#3F373F'
+					}}
+				>
+					<div style={{ fontWeight: 600, marginBottom: '6px' }}>
+						{translate('session.supervisor.reason.title', 'Supervisionsgrund')}
+					</div>
+					<div style={{ fontSize: '14px', lineHeight: '1.4' }}>
+						{supervisionReason}
+					</div>
+				</div>
 			)}
 
 			{canWriteMessage && (
