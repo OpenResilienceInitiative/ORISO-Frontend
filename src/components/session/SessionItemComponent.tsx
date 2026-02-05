@@ -12,6 +12,7 @@ import {
 import { ResizeObserver } from '@juggle/resize-observer';
 import clsx from 'clsx';
 import { scrollToEnd, isMyMessage, SESSION_LIST_TYPES } from './sessionHelpers';
+import { formatToHHMM } from '../../utils/dateHelpers';
 import {
 	MessageItem,
 	MessageItemComponent
@@ -42,6 +43,7 @@ import { useE2EE } from '../../hooks/useE2EE';
 import { MessageSubmitInterfaceSkeleton } from '../messageSubmitInterface/messageSubmitInterfaceSkeleton';
 import { EncryptionBanner } from './EncryptionBanner';
 import { apiGetSessionSupervisors } from '../../api/apiGetSessionSupervisors';
+import { parseMessagePrefixes } from '../message/messageConstants';
 
 const MessageSubmitInterfaceComponent = lazy(() =>
 	import('../messageSubmitInterface/messageSubmitInterfaceComponent').then(
@@ -80,6 +82,27 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const [canWriteMessage, setCanWriteMessage] = useState(false);
 	const [isSupervisor, setIsSupervisor] = useState(false);
 	const [supervisionReason, setSupervisionReason] = useState<string | null>(null);
+	const [activeThreadRootId, setActiveThreadRootId] = useState<string | null>(null);
+	const [activeThreadRootMessage, setActiveThreadRootMessage] = useState<MessageItem | null>(null);
+	const threadSummaries = useMemo(() => {
+		const map = new Map<string, { replyCount: number; lastReplyText: string }>();
+		if (!messages) {
+			return map;
+		}
+		messages.forEach((message) => {
+			const parsed = parseMessagePrefixes(message.message);
+			if (parsed.isThreadMessage && parsed.threadRootId) {
+				const existing = map.get(parsed.threadRootId) || {
+					replyCount: 0,
+					lastReplyText: ''
+				};
+				existing.replyCount += 1;
+				existing.lastReplyText = 'Last reply at ' + formatToHHMM(message.messageTime);
+				map.set(parsed.threadRootId, existing);
+			}
+		});
+		return map;
+	}, [messages]);
 	const [headerRef, headerBounds] = useMeasure({ polyfill: ResizeObserver });
 	const { ready, key, keyID, encrypted, subscriptionKeyLost } = useE2EE(
 		activeSession.rid
@@ -135,11 +158,6 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	}, [activeSession.item.id, userData]);
 
 	useEffect(() => {
-		// Supervisors cannot write messages
-		if (isSupervisor) {
-			setCanWriteMessage(false);
-			return;
-		}
 		const canWrite = type !== SESSION_LIST_TYPES.ENQUIRY;
 		console.log('🔥 SessionItemComponent: canWriteMessage =', canWrite, '(type:', type, ', isGroup:', activeSession.isGroup, ', isSupervisor:', isSupervisor, ')');
 		setCanWriteMessage(canWrite);
@@ -341,6 +359,16 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		}
 	};
 
+	const handleOpenThread = useCallback((message: MessageItem) => {
+		setActiveThreadRootId(message._id);
+		setActiveThreadRootMessage(message);
+	}, []);
+
+	const handleCloseThread = useCallback(() => {
+		setActiveThreadRootId(null);
+		setActiveThreadRootMessage(null);
+	}, []);
+
 	// Track the decryption success because we have a short timing issue when
 	// message is send before the room encryption
 	const decryptionSuccess = useRef([]);
@@ -421,12 +449,23 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				id="session-scroll-container"
 				className={clsx(
 					'session__content',
-					isDragging && 'drag-in-progress'
+					isDragging && 'drag-in-progress',
+					activeThreadRootId && 'session__content--withThread'
 				)}
 				ref={scrollContainerRef}
 				onScroll={(e) => handleScroll(e)}
 				onDragEnter={onDragEnter}
 			>
+				{isSupervisor && supervisionReason && (
+					<div className="session__supervisionReason">
+						<div className="session__supervisionReasonTitle">
+							{translate('session.supervisor.reason.title', 'Supervisionsgrund')}
+						</div>
+						<div className="session__supervisionReasonText">
+							{supervisionReason}
+						</div>
+					</div>
+				)}
 				<EncryptionBanner />
 				<div className={'message-holder'}>
 					{/* MATRIX MIGRATION: For Matrix sessions (no rid), skip E2EE ready check */}
@@ -467,6 +506,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										encrypted,
 										subscriptionKeyLost
 									}}
+									renderMode="main"
+									threadSummary={threadSummaries.get(message._id)}
+									onOpenThread={() => handleOpenThread(message)}
 									{...message}
 								/>
 							</React.Fragment>
@@ -494,35 +536,125 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				</div>
 			</div>
 
-			{type === SESSION_LIST_TYPES.ENQUIRY && (
-				<AcceptAssign btnLabel={'enquiry.acceptButton.known'} />
-			)}
-
-			{!canWriteMessage && isSupervisor && supervisionReason && (
-				<div
-					style={{
-						position: 'sticky',
-						bottom: '12px',
-						margin: '12px 16px 0',
-						padding: '12px 16px',
-						borderRadius: '8px',
-						backgroundColor: 'rgba(198, 40, 40, 0.15)',
-						border: '1px solid rgba(198, 40, 40, 0.2)',
-						backdropFilter: 'blur(2px)',
-						color: '#3F373F'
-					}}
-				>
-					<div style={{ fontWeight: 600, marginBottom: '6px' }}>
-						{translate('session.supervisor.reason.title', 'Supervisionsgrund')}
+			{activeThreadRootId && (
+				<div className="session__threadPanel">
+					<div className="session__threadHeader">
+						<div className="session__threadTitle">
+							{translate('message.thread.title', 'Thread')}
+						</div>
+						<button
+							type="button"
+							className="session__threadClose"
+							onClick={handleCloseThread}
+						>
+							×
+						</button>
 					</div>
-					<div style={{ fontSize: '14px', lineHeight: '1.4' }}>
-						{supervisionReason}
+					<div className="session__threadBody">
+						{activeThreadRootMessage && (
+							<MessageItemComponent
+								clientName={
+									getContact(activeSession)?.username ||
+									translate('sessionList.user.consultantUnknown')
+								}
+								askerRcId={
+									!activeSession.rid &&
+									activeThreadRootMessage.userId &&
+									!activeThreadRootMessage.userId.includes(
+										activeSession.consultant?.username || ''
+									)
+										? activeThreadRootMessage.userId
+										: activeSession.item.askerRcId
+								}
+								isOnlyEnquiry={isOnlyEnquiry}
+								isMyMessage={isMyMessageMatrix(activeThreadRootMessage.userId)}
+								isUserBanned={props.bannedUsers.includes(
+									activeThreadRootMessage.username
+								)}
+								handleDecryptionErrors={handleDecryptionErrors}
+								handleDecryptionSuccess={handleDecryptionSuccess}
+								e2eeParams={{
+									key,
+									keyID,
+									encrypted,
+									subscriptionKeyLost
+								}}
+								renderMode="thread"
+								forceShow={true}
+								{...activeThreadRootMessage}
+							/>
+						)}
+						{messages &&
+							(ready || !activeSession.rid) &&
+							messages.map((message: MessageItem, index) => (
+								<React.Fragment key={`thread-${message._id}-${index}`}>
+									<MessageItemComponent
+										clientName={
+											getContact(activeSession)?.username ||
+											translate('sessionList.user.consultantUnknown')
+										}
+										askerRcId={
+											!activeSession.rid &&
+											message.userId &&
+											!message.userId.includes(
+												activeSession.consultant?.username || ''
+											)
+												? message.userId
+												: activeSession.item.askerRcId
+										}
+										isOnlyEnquiry={isOnlyEnquiry}
+										isMyMessage={isMyMessageMatrix(message.userId)}
+										isUserBanned={props.bannedUsers.includes(
+											message.username
+										)}
+										handleDecryptionErrors={handleDecryptionErrors}
+										handleDecryptionSuccess={handleDecryptionSuccess}
+										e2eeParams={{
+											key,
+											keyID,
+											encrypted,
+											subscriptionKeyLost
+										}}
+										renderMode="thread"
+										threadRootId={activeThreadRootId}
+										{...message}
+									/>
+								</React.Fragment>
+							))}
+					</div>
+					<div className="session__threadInput">
+						<MessageSubmitInterfaceComponent
+							isTyping={props.isTyping}
+							className="session__submit-interface"
+							placeholder={translate(
+								'message.thread.placeholder',
+								'Reply in thread'
+							)}
+							typingUsers={props.typingUsers}
+							handleMessageSendSuccess={handleMessageSendSuccess}
+							isSupervisor={isSupervisor}
+							threadRootId={activeThreadRootId}
+						/>
 					</div>
 				</div>
 			)}
 
+			{type === SESSION_LIST_TYPES.ENQUIRY && (
+				<AcceptAssign btnLabel={'enquiry.acceptButton.known'} />
+			)}
+
 			{canWriteMessage && (
 				<>
+					{isSupervisor && (
+						<div className="session__supervisorInputNote" style={{
+							textAlign: 'center'
+						}}>
+							{translate(
+								'session.supervisor.input.note',
+								'Messages you send here are visible only to consultants.'
+							)}
+						</div>
+					)}
 					<Suspense
 						fallback={
 							<MessageSubmitInterfaceSkeleton
@@ -542,6 +674,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							typingUsers={props.typingUsers}
 							preselectedFile={draggedFile}
 							handleMessageSendSuccess={handleMessageSendSuccess}
+							isSupervisor={isSupervisor}
 						/>
 					</Suspense>
 					{!tenantData?.settings?.featureAttachmentUploadDisabled && (

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, useHistory } from 'react-router-dom';
 import { getSessionsListItemIcon, LIST_ICONS } from './sessionsListItemHelpers';
@@ -51,6 +51,7 @@ import {
 	MissingKeyError,
 	WrongKeyError
 } from '../../utils/encryptionHelpers';
+import { parseMessagePrefixes } from '../message/messageConstants';
 import { useE2EE } from '../../hooks/useE2EE';
 import { useSearchParam } from '../../hooks/useSearchParams';
 import { SessionListItemLastMessage } from './SessionListItemLastMessage';
@@ -204,6 +205,15 @@ export const SessionListItemComponent = ({
 		!isAsker &&
 		!!activeSession?.consultant?.id &&
 		activeSession.consultant.id !== userData.userId;
+
+	const displayLastMessage = useMemo(() => {
+		if (!plainTextLastMessage) return plainTextLastMessage;
+		const parsed = parseMessagePrefixes(plainTextLastMessage);
+		if (isAsker && parsed.isSupervisorFeedback) {
+			return '';
+		}
+		return parsed.cleanedMessage;
+	}, [plainTextLastMessage, isAsker]);
 
 	// Close dropdown when clicking outside
 	useEffect(() => {
@@ -748,8 +758,8 @@ export const SessionListItemComponent = ({
 					<div className="sessionsListItem__row">
 						<SessionListItemLastMessage
 							lastMessage={
-								plainTextLastMessage
-									? plainTextLastMessage
+								displayLastMessage
+									? displayLastMessage
 									: defaultSubjectText
 							}
 						/>
@@ -1082,7 +1092,7 @@ export const SessionListItemComponent = ({
 				</div>
 				<div className="sessionsListItem__row">
 					<SessionListItemLastMessage
-						lastMessage={plainTextLastMessage}
+						lastMessage={displayLastMessage}
 						lastMessageType={activeSession.item.lastMessageType}
 						language={language}
 						showLanguage={

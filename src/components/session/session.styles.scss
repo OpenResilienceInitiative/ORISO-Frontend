@@ -119,6 +119,89 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		}
 	}
 
+	&__content--withThread {
+		@include breakpoint($fromMedium) {
+			padding-right: 520px;
+		}
+	}
+
+	&__threadPanel {
+		position: absolute;
+		top: 0;
+		right: 0;
+		bottom: 0;
+		width: 520px;
+		background: #fff;
+		border-left: 1px solid #eee;
+		display: flex;
+		flex-direction: column;
+		z-index: 5;
+
+		@media screen and (max-width: 899px) {
+			position: fixed;
+			width: 100%;
+			z-index: 2000;
+		}
+	}
+
+	&__threadHeader {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: $grid-base-two $grid-base-three;
+		border-bottom: 1px solid #eee;
+	}
+
+	&__threadTitle {
+		font-weight: 600;
+	}
+
+	&__threadClose {
+		background: none;
+		border: none;
+		font-size: 20px;
+		cursor: pointer;
+		color: $text-low-emphasis;
+	}
+
+	&__threadBody {
+		flex: 1;
+		overflow-y: auto;
+		padding: $grid-base-two $grid-base-two 120px;
+	}
+
+	&__threadInput {
+		border-top: 1px solid #eee;
+		padding: $grid-base-two;
+	}
+
+	&__supervisorInputNote {
+		margin: 0 $grid-base-three 5px;
+		font-size: $font-size-secondary;
+		color: $text-low-emphasis;
+	}
+
+	&__supervisionReason {
+		display: flex;
+		max-width: 650px;
+		margin: 0px auto;
+		padding: $grid-base-two $grid-base-three;
+		border-radius: 8px;
+		background-color: rgba(198, 40, 40, 0.12);
+		border: 1px solid rgba(198, 40, 40, 0.2);
+		color: #3f373f;
+	}
+
+	&__supervisionReasonTitle {
+		font-weight: 600;
+		margin-bottom: 6px;
+	}
+
+	&__supervisionReasonText {
+		font-size: 14px;
+		margin-left: 16px;
+	}
+
 	// Shadow removed from submit interface for clean Element-like UI
 
 	&__scrollToBottom {

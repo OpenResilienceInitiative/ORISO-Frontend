@@ -12,8 +12,8 @@ import {
 } from '../../globalState';
 import { STATUS_ARCHIVED } from '../../globalState/interfaces';
 import { isUserModerator } from '../session/sessionHelpers';
-import { MessageMetaData } from './MessageMetaData';
 import { MessageDisplayName } from './MessageDisplayName';
+import { formatToHHMM } from '../../utils/dateHelpers';
 import { markdownToDraft } from 'markdown-draft-js';
 import { stateToHTML } from 'draft-js-export-html';
 import { convertFromRaw, ContentState } from 'draft-js';
@@ -64,6 +64,8 @@ import { BanUser, BanUserOverlay } from '../banUser/BanUser';
 import { getValueFromCookie } from '../sessionCookie/accessSessionCookie';
 import { VideoChatDetails, VideoChatDetailsAlias } from './VideoChatDetails';
 import { UserAvatar } from './UserAvatar';
+import clsx from 'clsx';
+import { parseMessagePrefixes } from './messageConstants';
 
 export interface VideoCallMessageDTO {
 	eventType: 'IGNORED_CALL';
@@ -102,6 +104,14 @@ interface MessageItemComponentProps extends MessageItem {
 	isMyMessage: boolean;
 	clientName: string;
 	isUserBanned: boolean;
+	renderMode?: 'main' | 'thread';
+	threadRootId?: string | null;
+	forceShow?: boolean;
+	threadSummary?: {
+		replyCount: number;
+		lastReplyText: string;
+	};
+	onOpenThread?: () => void;
 	handleDecryptionErrors: (
 		id: string,
 		messageTime: string,
@@ -131,12 +141,18 @@ export const MessageItemComponent = ({
 	handleDecryptionErrors,
 	handleDecryptionSuccess,
 	e2eeParams,
-	isVideoActive
+	isVideoActive,
+	renderMode = 'main',
+	threadRootId,
+	forceShow = false,
+	threadSummary,
+	onOpenThread
 }: MessageItemComponentProps) => {
 	const { t: translate } = useTranslation();
 	const { activeSession, reloadActiveSession } =
 		useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
+	const isAsker = hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
 
 	const [renderedMessage, setRenderedMessage] = useState<string | null>(null);
 	const [decryptedMessage, setDecryptedMessage] = useState<
@@ -195,9 +211,14 @@ export const MessageItemComponent = ({
 		handleDecryptionSuccess
 	]);
 
+	const parsedMessage = useMemo(
+		() => parseMessagePrefixes(decryptedMessage),
+		[decryptedMessage]
+	);
+
 	useEffect((): void => {
 		const rawMessageObject = markdownToDraft(
-			decryptedMessage,
+			parsedMessage.cleanedMessage,
 			markdownToDraftDefaultOptions
 		);
 		const contentStateMessage: ContentState =
@@ -213,7 +234,10 @@ export const MessageItemComponent = ({
 		);
 	}, [decryptedMessage]);
 
-	const hasRenderedMessage = renderedMessage && renderedMessage.length > 0;
+	const isSupervisorFeedback = parsedMessage.isSupervisorFeedback;
+	const renderedMessageWithoutPrefix = renderedMessage;
+
+	const hasRenderedMessage = renderedMessageWithoutPrefix && renderedMessageWithoutPrefix.length > 0;
 
 	const getMessageDate = () => {
 		if (messageDate.str || messageDate.date) {
@@ -431,7 +455,7 @@ export const MessageItemComponent = ({
 			default:
 				return (
 					<>
-						<div className="flex flex--jc-sb">
+						<div className="messageItem__header">
 							<MessageDisplayName
 								isMyMessage={isMyMessage}
 								isUser={isUserMessage()}
@@ -440,6 +464,11 @@ export const MessageItemComponent = ({
 								username={username}
 								displayName={displayName}
 							/>
+							{messageTime ? (
+								<span className="messageItem__headerTime">
+									{formatToHHMM(messageTime)}
+								</span>
+							) : null}
 							{/* MATRIX MIGRATION: Temporarily hide message menu */}
 							{false && <MessageFlyoutMenu
 								_id={_id}
@@ -461,9 +490,14 @@ export const MessageItemComponent = ({
 								: `messageItem__message`
 						}
 					>
-						{renderedMessage && !attachments && (() => {
+						{isSupervisorFeedback && (
+							<div className="messageItem__feedbackTag">
+								{translate('message.feedbackTag', 'Feedback')}
+							</div>
+						)}
+						{renderedMessageWithoutPrefix && !attachments && (() => {
 							// Check if message is long (strip HTML tags for accurate length)
-							const textContent = renderedMessage.replace(/<[^>]*>/g, '');
+							const textContent = renderedMessageWithoutPrefix.replace(/<[^>]*>/g, '');
 							const isLongMessage = textContent.length > MESSAGE_CHAR_LIMIT;
 							
 							// Helper function to safely truncate HTML while preserving structure
@@ -555,8 +589,8 @@ export const MessageItemComponent = ({
 							
 							// Truncate message if not expanded
 							const displayMessage = isLongMessage && !isExpanded
-								? truncateHtml(renderedMessage, MESSAGE_CHAR_LIMIT)
-								: renderedMessage;
+								? truncateHtml(renderedMessageWithoutPrefix, MESSAGE_CHAR_LIMIT)
+								: renderedMessageWithoutPrefix;
 							
 							return (
 								<>
@@ -610,6 +644,25 @@ export const MessageItemComponent = ({
 		return null;
 	}
 
+	// Hide supervisor feedback messages from askers
+	if (isAsker && isSupervisorFeedback) {
+		return null;
+	}
+
+	if (!forceShow) {
+		if (renderMode === 'main' && parsedMessage.isThreadMessage) {
+			return null;
+		}
+		if (renderMode === 'thread') {
+			if (!parsedMessage.isThreadMessage) {
+				return null;
+			}
+			if (threadRootId && parsedMessage.threadRootId !== threadRootId) {
+				return null;
+			}
+		}
+	}
+
 	return (
 		<div
 			className={`messageItem ${
@@ -617,7 +670,7 @@ export const MessageItemComponent = ({
 			} ${isFullWidthMessage ? 'messageItem--full' : ''} ${
 				alias?.messageType &&
 				`${alias?.messageType.toLowerCase()} systemMessage`
-			}`}
+			} ${isSupervisorFeedback ? 'messageItem--feedback' : ''}`}
 		>
 			{getMessageDate()}
 			<div
@@ -647,14 +700,41 @@ export const MessageItemComponent = ({
 				<div className="messageItem__content">
 					{messageContent()}
 
-					<MessageMetaData
-						isMyMessage={isMyMessage}
-						isNotRead={isNotRead}
-						messageTime={messageTime}
-						t={t}
-						type={getUsernameType()}
-						isReadStatusDisabled={isVideoCallMessage}
-					/>
+					{onOpenThread && renderMode === 'main' && !alias?.messageType && (
+						<button
+							type="button"
+							className={clsx(
+								'messageItem__threadButton',
+								isMyMessage && 'messageItem__threadButton--right',
+								threadSummary?.replyCount ? 'messageItem__threadButton--hasReplies' : ''
+							)}
+							onClick={(e) => {
+								e.preventDefault();
+								e.stopPropagation();
+								onOpenThread();
+							}}
+						>
+							<span className="messageItem__threadButtonMain">
+								{threadSummary?.replyCount
+									? translate(
+											'message.thread.replies',
+											'{{count}} replies',
+											{ count: threadSummary.replyCount }
+									  )
+									: translate('message.thread.reply', 'Reply')}
+							</span>
+							{threadSummary?.replyCount ? (
+								<span className="messageItem__threadButtonMeta">
+									{threadSummary.lastReplyText}
+								</span>
+							) : (
+								<span className="messageItem__threadButtonMeta">&nbsp;</span>
+							)}
+							<span className="messageItem__threadButtonHover">
+								{translate('message.thread.view', 'View thread')}
+							</span>
+						</button>
+					)}
 				</div>
 			</div>
 		</div>

@@ -86,6 +86,18 @@ $message-attachment-color: $secondary !default;
 		}
 	}
 
+	&__header {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+
+	&__headerTime {
+		font-size: $font-size-secondary;
+		color: $tertiary;
+		white-space: nowrap;
+	}
+
 	&--full {
 		.messageItem__messageWrap {
 			max-width: 100%;
@@ -347,6 +359,88 @@ $message-attachment-color: $secondary !default;
 				color: var(--text-color-contrast-switch, $white);
 			}
 		}
+	}
+
+	&__feedbackTag {
+		display: inline-flex;
+		align-items: center;
+		padding: 2px 8px;
+		border-radius: 12px;
+		background: rgba(30, 136, 229, 0.12);
+		color: #1e88e5;
+		font-size: 12px;
+		font-weight: 600;
+		margin-bottom: 6px;
+		border: 1px solid rgba(30, 136, 229, 0.35);
+	}
+
+	&--feedback {
+		.messageItem__message {
+			border: 2px solid rgba(30, 136, 229, 0.6);
+		}
+	}
+
+	&--right {
+		.messageItem__feedbackTag {
+			color: $white;
+			background: rgba(255, 255, 255, 0.18);
+			border-color: rgba(255, 255, 255, 0.4);
+		}
+	}
+
+	&__threadButton {
+		margin-top: 6px;
+		background: none;
+		border: 1px solid transparent;
+		color: $text-low-emphasis;
+		font-size: 12px;
+		cursor: pointer;
+		padding: 6px 10px;
+		border-radius: 8px;
+		align-self: flex-start;
+		display: inline-flex;
+		flex-direction: row;
+		align-items: center;
+		justify-content: space-between;
+		gap: 10px;
+		min-width: 180px;
+
+		&:hover {
+			border-color: #e6e6e6;
+			background: #fafafa;
+		}
+	}
+
+	&__threadButton--right {
+		align-self: flex-end;
+	}
+
+	&__threadButtonMain {
+		font-weight: 600;
+		color: $text-low-emphasis;
+	}
+
+	&__threadButtonMeta {
+		font-size: 11px;
+		color: $text-low-emphasis;
+	}
+
+	&__threadButtonHover {
+		display: none;
+		font-size: 11px;
+		color: $text-low-emphasis;
+	}
+
+	&__threadButton:hover .messageItem__threadButtonMain {
+		color: var(--skin-color-primary, $primary);
+	}
+
+	&__threadButton:hover .messageItem__threadButtonHover {
+		display: inline;
+	}
+
+	&__threadButton:hover .messageItem__threadButtonMeta {
+		display: none;
 	}
 
 	&__action {

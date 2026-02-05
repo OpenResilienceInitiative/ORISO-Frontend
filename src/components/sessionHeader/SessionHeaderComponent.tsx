@@ -658,6 +658,12 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 							<h3 style={{ marginBottom: '12px', fontSize: '16px', fontWeight: '600' }}>
 								{translate('sessionHeader.supervisor.modal.current', 'Aktuelle Supervisor')}
 							</h3>
+							<div style={{ marginBottom: '8px', fontSize: '12px', color: '#666' }}>
+								{translate(
+									'sessionHeader.supervisor.modal.note',
+									'If you want any supervisors to supervise in future, you can add them in advance.'
+								)}
+							</div>
 							{isLoadingSupervisors ? (
 								<div>{translate('sessionHeader.supervisor.modal.loading', 'Lädt...')}</div>
 							) : supervisors.length === 0 ? (

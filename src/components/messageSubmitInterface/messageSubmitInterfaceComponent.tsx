@@ -75,6 +75,10 @@ import { Button, ButtonItem, BUTTON_TYPES } from '../button/Button';
 import { Headline } from '../headline/Headline';
 import { useTranslation } from 'react-i18next';
 import {
+	SUPERVISOR_FEEDBACK_PREFIX,
+	buildThreadPrefix
+} from '../message/messageConstants';
+import {
 	encryptAttachment,
 	encryptText,
 	getSignature
@@ -137,6 +141,8 @@ export interface MessageSubmitInterfaceComponentProps {
 	language?: string;
 	preselectedFile?: File;
 	handleMessageSendSuccess?: Function;
+	isSupervisor?: boolean;
+	threadRootId?: string | null;
 }
 
 export const MessageSubmitInterfaceComponent = ({
@@ -147,7 +153,9 @@ export const MessageSubmitInterfaceComponent = ({
 	typingUsers,
 	language,
 	preselectedFile,
-	handleMessageSendSuccess: onMessageSendSuccess
+	handleMessageSendSuccess: onMessageSendSuccess,
+	isSupervisor,
+	threadRootId
 }: MessageSubmitInterfaceComponentProps) => {
 	const { t: translate } = useTranslation();
 	
@@ -984,6 +992,16 @@ export const MessageSubmitInterfaceComponent = ({
 		}
 
 		let message = getTypedMarkdownMessage().trim();
+		const prefixParts: string[] = [];
+		if (threadRootId) {
+			prefixParts.push(buildThreadPrefix(threadRootId));
+		}
+		if (isSupervisor) {
+			prefixParts.push(SUPERVISOR_FEEDBACK_PREFIX);
+		}
+		if (prefixParts.length && message.length > 0) {
+			message = `${prefixParts.join(' ')} ${message}`;
+		}
 		let isEncrypted = isE2eeEnabled;
 		if (message.length > 0 && isE2eeEnabled) {
 			try {
