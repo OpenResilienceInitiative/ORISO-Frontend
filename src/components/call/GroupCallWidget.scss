@@ -5,32 +5,48 @@
     cursor: move;
     user-select: none;
     touch-action: none; /* Enable touch dragging on mobile */
+    border-radius: 16px;
+    overflow: hidden;
 
     &.dragging {
         cursor: grabbing;
         opacity: 0.9;
     }
+
+    &.group-call-widget--mobile {
+        left: 0 !important;
+        top: 0 !important;
+        border-radius: 0;
+    }
+
+    &.group-call-widget--fullscreen {
+        left: 0 !important;
+        top: 0 !important;
+        border-radius: 0;
+    }
 }
 
 .incoming-call-popup,
 .connecting-popup {
-    background: #f5f5f5;
-    border-radius: 12px;
+    background: #0b0b0b;
+    border-radius: 16px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     overflow: hidden;
-    width: 400px;
+    width: min(420px, calc(100vw - 24px));
+    position: relative;
 }
 
 .livekit-room-container,
 .element-call-container {
-    background: #f5f5f5;
-    border-radius: 12px;
+    background: #000;
+    border-radius: 16px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     overflow: hidden;
-    width: 900px;
-    height: 650px;
+    width: min(520px, calc(100vw - 24px));
+    height: min(320px, calc(100vh - 24px));
     display: flex;
     flex-direction: column;
+    position: relative;
 }
 
 .element-call-iframe {
@@ -38,27 +54,61 @@
     width: 100%;
     border: none;
     background: #000;
+    border-radius: 16px;
 }
 
-.incoming-call-header,
-.connecting-header,
-.livekit-header,
-.element-call-header {
-    background: linear-gradient(135deg, #e8454e 0%, #c62828 100%);
-    padding: 14px 20px;
+.element-call-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    font-size: 20px;
+    cursor: pointer;
+    z-index: 5;
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    border-bottom: none;
-    cursor: move;
-    touch-action: none; /* Prevent default touch behaviors */
-    
-    span {
-        color: #fff;
-        font-weight: 600;
-        font-size: 15px;
-        letter-spacing: 0.5px;
+    justify-content: center;
+
+    &:hover {
+        background: rgba(0, 0, 0, 0.8);
     }
+}
+
+.element-call-fullscreen {
+    position: absolute;
+    top: 10px;
+    right: 50px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:hover {
+        background: rgba(0, 0, 0, 0.8);
+    }
+}
+
+.element-call-drag-handle {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 28px;
+    cursor: move;
+    z-index: 4;
 }
 
 .btn-end-call {
@@ -83,13 +133,13 @@
 .connecting-content {
     padding: 40px 20px;
     text-align: center;
-    background: #f5f5f5;
+    background: #0b0b0b;
 
     .call-avatar-large {
         width: 80px;
         height: 80px;
         border-radius: 50%;
-        background: linear-gradient(135deg, #e8454e 0%, #c62828 100%);
+        background: #111;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -97,19 +147,19 @@
         font-weight: 600;
         margin: 0 auto 20px;
         color: white;
-        box-shadow: 0 4px 12px rgba(232, 69, 78, 0.4);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
     }
 
     h2 {
         margin: 0 0 8px;
         font-size: 20px;
         font-weight: 600;
-        color: #333;
+        color: #f5f5f5;
     }
 
     p {
         margin: 0 0 24px;
-        color: #666;
+        color: #bdbdbd;
         font-size: 14px;
     }
 }
@@ -150,6 +200,36 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
         }
+    }
+}
+
+@media (max-width: 640px) {
+    .group-call-widget {
+        border-radius: 12px;
+    }
+
+    .livekit-room-container,
+    .element-call-container {
+        width: 100vw;
+        height: 100vh;
+        border-radius: 0;
+    }
+
+    .element-call-iframe {
+        border-radius: 0;
+    }
+}
+
+.group-call-widget--fullscreen {
+    .livekit-room-container,
+    .element-call-container {
+        width: 100vw;
+        height: 100vh;
+        border-radius: 0;
+    }
+
+    .element-call-iframe {
+        border-radius: 0;
     }
 }
 

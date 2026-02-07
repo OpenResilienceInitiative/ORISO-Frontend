@@ -668,7 +668,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							className={clsx(
 								'session__submit-interface',
 								!isScrolledToBottom &&
-									'session__submit-interface--scrolled-up'
+									'session__submit-interface--scrolled-up',
+								activeThreadRootId && 'session__submit-interface--withThread'
 							)}
 							placeholder={getPlaceholder()}
 							typingUsers={props.typingUsers}

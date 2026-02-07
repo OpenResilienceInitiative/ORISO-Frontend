@@ -35,6 +35,14 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		}
 	}
 
+	.session__submit-interface--withThread {
+		right: 520px;
+
+		@media screen and (max-width: 899px) {
+			right: 0;
+		}
+	}
+
 	& > div:first-child {
 		flex: 0 0 auto; /* Header stays fixed height */
 	}

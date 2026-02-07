@@ -12,12 +12,16 @@ export const GroupCallWidget: React.FC = () => {
     const [callData, setCallData] = useState<CallData | null>(null);
     const [callState, setCallState] = useState<string | null>(null);
     const [elementCallUrl, setElementCallUrl] = useState<string>('');
+    const [isDismissed, setIsDismissed] = useState(false);
     
     // Dragging state
     const [isDragging, setIsDragging] = useState(false);
     const [position, setPosition] = useState({ x: 100, y: 100 });
+    const [isMobileView, setIsMobileView] = useState(false);
     const dragRef = useRef<{ startX: number; startY: number; elemX: number; elemY: number } | null>(null);
     const iframeRef = useRef<HTMLIFrameElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [isFullscreen, setIsFullscreen] = useState(false);
 
     // Subscribe to CallManager
     useEffect(() => {
@@ -25,6 +29,9 @@ export const GroupCallWidget: React.FC = () => {
             console.log('📡 GroupCallWidget: CallManager update:', newCallData);
             setCallData(newCallData);
             setCallState(newCallData?.state || null);
+            if (newCallData) {
+                setIsDismissed(false);
+            }
             if (!newCallData) {
                 setElementCallUrl('');
             }
@@ -33,6 +40,61 @@ export const GroupCallWidget: React.FC = () => {
         setCallData(currentCall);
         setCallState(currentCall?.state || null);
         return () => unsubscribe();
+    }, []);
+
+    useEffect(() => {
+        const updateViewport = () => {
+            setIsMobileView(window.innerWidth <= 640);
+        };
+
+        updateViewport();
+        window.addEventListener('resize', updateViewport);
+        return () => window.removeEventListener('resize', updateViewport);
+    }, []);
+
+    useEffect(() => {
+        if (!callData || !callData.isGroup) return;
+
+        const padding = 16;
+        const maxWidth = 520;
+        const maxHeight = 320;
+        const width = Math.min(maxWidth, window.innerWidth - padding);
+        const height = Math.min(maxHeight, window.innerHeight - padding);
+
+        if (window.innerWidth <= 640) {
+            setPosition({ x: 0, y: 0 });
+            return;
+        }
+
+        setPosition({
+            x: Math.max(padding, window.innerWidth - width - padding),
+            y: Math.max(padding, window.innerHeight - height - padding),
+        });
+    }, [callData, elementCallUrl]);
+
+    useEffect(() => {
+        const handleFullscreenChange = () => {
+            setIsFullscreen(!!document.fullscreenElement);
+        };
+
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    }, []);
+
+    useEffect(() => {
+        const handleMessage = (event: MessageEvent) => {
+            const data = event.data;
+            if (!data || typeof data !== 'object') return;
+            if (data.type !== 'oriso-call-ended') return;
+            console.log('📴 Element Call ended (message from iframe)');
+            setElementCallUrl('');
+            setCallData(null);
+            setCallState(null);
+            setIsDismissed(true);
+            callManager.endCall();
+        };
+        window.addEventListener('message', handleMessage);
+        return () => window.removeEventListener('message', handleMessage);
     }, []);
 
     // Handle incoming call answer: once the call is moving past "ringing",
@@ -80,7 +142,8 @@ export const GroupCallWidget: React.FC = () => {
             // We mirror Element Call's own `getRelativeRoomUrl` format:
             //   /room/#?roomId=...&perParticipantE2EE=...
             // We also pass Matrix credentials via URL so our auto-auth script can log in.
-            const elementCallBaseUrl = 'https://call.oriso.site/room';
+            const elementCallBaseUrl =
+                `${(process.env.REACT_APP_ELEMENT_CALL_URL || '').replace(/\/+$/, '')}/room`;
 
             const params = new URLSearchParams();
             params.set('roomId', roomId);
@@ -198,6 +261,7 @@ export const GroupCallWidget: React.FC = () => {
 
     const handleDecline = () => {
         console.log('❌ User declined call');
+        setIsDismissed(true);
         callManager.endCall();
     };
 
@@ -209,14 +273,43 @@ export const GroupCallWidget: React.FC = () => {
             window.removeEventListener('message', (iframeRef.current as any).__widgetMessageHandler);
             delete (iframeRef.current as any).__widgetMessageHandler;
         }
+
+        if (iframeRef.current?.contentWindow) {
+            iframeRef.current.contentWindow.postMessage(
+                { type: 'oriso-call-action', action: 'hangup' },
+                '*',
+            );
+        }
         
+        if (iframeRef.current) {
+            iframeRef.current.src = 'about:blank';
+        }
         setElementCallUrl('');
+        setCallData(null);
+        setCallState(null);
+        setIsDismissed(true);
         callManager.endCall();
+    };
+
+    const handleToggleFullscreen = () => {
+        const container = containerRef.current;
+        if (!container) return;
+
+        if (document.fullscreenElement) {
+            document.exitFullscreen?.();
+            return;
+        }
+
+        container.requestFullscreen?.();
     };
 
     // Dragging handlers (mouse + touch)
     const handleMouseDown = (e: React.MouseEvent) => {
-        if ((e.target as HTMLElement).closest('.btn-end-call, .btn-answer, .btn-decline, iframe')) return;
+        if (isMobileView) return;
+        const target = e.target as HTMLElement;
+        const isDragHandle = !!target.closest('.element-call-drag-handle');
+        if (elementCallUrl && !isDragHandle) return;
+        if (target.closest('.btn-end-call, .btn-answer, .btn-decline, iframe, .element-call-close')) return;
         setIsDragging(true);
         dragRef.current = {
             startX: e.clientX,
@@ -227,7 +320,11 @@ export const GroupCallWidget: React.FC = () => {
     };
 
     const handleTouchStart = (e: React.TouchEvent) => {
-        if ((e.target as HTMLElement).closest('.btn-end-call, .btn-answer, .btn-decline, iframe')) return;
+        if (isMobileView) return;
+        const target = e.target as HTMLElement;
+        const isDragHandle = !!target.closest('.element-call-drag-handle');
+        if (elementCallUrl && !isDragHandle) return;
+        if (target.closest('.btn-end-call, .btn-answer, .btn-decline, iframe, .element-call-close')) return;
         const touch = e.touches[0];
         setIsDragging(true);
         dragRef.current = {
@@ -285,11 +382,11 @@ export const GroupCallWidget: React.FC = () => {
     }, [isDragging]);
 
     // Only render for group calls
-    if (!callData || !callData.isGroup) return null;
+    if (isDismissed || !callData || !callData.isGroup) return null;
 
     return (
         <div 
-            className={`group-call-widget ${isDragging ? 'dragging' : ''}`}
+            className={`group-call-widget ${isDragging ? 'dragging' : ''} ${isMobileView ? 'group-call-widget--mobile' : ''} ${isFullscreen ? 'group-call-widget--fullscreen' : ''}`}
             style={{ left: `${position.x}px`, top: `${position.y}px` }}
             onMouseDown={handleMouseDown}
             onTouchStart={handleTouchStart}
@@ -297,9 +394,13 @@ export const GroupCallWidget: React.FC = () => {
             {/* Incoming call - show answer/decline buttons */}
             {callData.isIncoming && callData.state === 'ringing' ? (
                 <div className="incoming-call-popup">
-                    <div className="incoming-call-header">
-                        <span>CALL</span>
-                    </div>
+                    <button
+                        className="element-call-close"
+                        onClick={handleDecline}
+                        aria-label="Close call"
+                    >
+                        ×
+                    </button>
                     <div className="incoming-call-content">
                         <div className="call-avatar-large">G</div>
                         <h2>Incoming Call</h2>
@@ -316,28 +417,40 @@ export const GroupCallWidget: React.FC = () => {
                 </div>
             ) : elementCallUrl ? (
                 /* Active call - show Element Call iframe */
-                <div className="element-call-container">
-                    <div className="element-call-header">
-                        <span>CALL</span>
-                        <button className="btn-end-call" onClick={handleEndCall}>
-                            Close
+                <div className="element-call-container" ref={containerRef}>
+                    <div className="element-call-drag-handle" />
+                    <button className="element-call-close" onClick={handleEndCall} aria-label="Close call">
+                        ×
+                    </button>
+                    {!isMobileView && (
+                        <button
+                            className="element-call-fullscreen"
+                            onClick={handleToggleFullscreen}
+                            aria-label={isFullscreen ? 'Exit full screen' : 'Enter full screen'}
+                            title={isFullscreen ? 'Exit full screen' : 'Full screen'}
+                        >
+                            {isFullscreen ? '⤡' : '⤢'}
                         </button>
-                    </div>
+                    )}
                     <iframe
                         ref={iframeRef}
                         src={elementCallUrl}
                         className="element-call-iframe"
                         allow="camera; microphone; display-capture; autoplay; fullscreen"
                         allowFullScreen
-                        title="Element Call - Group Video Call"
+                        title="Group video call"
                     />
                 </div>
             ) : (
                 /* Connecting state */
                 <div className="connecting-popup">
-                    <div className="connecting-header">
-                        <span>CALL</span>
-                    </div>
+                    <button
+                        className="element-call-close"
+                        onClick={handleEndCall}
+                        aria-label="Close call"
+                    >
+                        ×
+                    </button>
                     <div className="connecting-content">
                         <div className="call-avatar-large">G</div>
                         <h2>Connecting...</h2>
