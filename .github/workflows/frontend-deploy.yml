@@ -32,7 +32,7 @@ jobs:
           port: ${{ secrets.DEV_SSH_PORT || 22 }}
           script: |
             set -euo pipefail
-            bash /root/online-beratung/ORISO-Complete/caritas-workspace/ORISO-Frontend/deploy-development.sh
+            bash /home/caritas/Desktop/online-beratung/caritas-workspace/ORISO-Frontend/deploy-frontend.sh
 
   deploy-prod:
     if: ${{ github.event.inputs.environment == 'prod' }}
