@@ -32,6 +32,7 @@ jobs:
           port: ${{ secrets.DEV_SSH_PORT || 22 }}
           script: |
             set -euo pipefail
+            export KUBECONFIG="$HOME/.kube/config"
             export NVM_DIR="$HOME/.nvm"
             if [ -s "$NVM_DIR/nvm.sh" ]; then
               . "$NVM_DIR/nvm.sh"
