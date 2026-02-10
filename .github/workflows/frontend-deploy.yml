@@ -1,0 +1,52 @@
+name: "ORISO Frontend Deploy"
+
+run-name: >
+  ${{ github.event_name == 'workflow_dispatch'
+      && format('Deploy Frontend to {0}', github.event.inputs.environment)
+      || format('Deploy Frontend to {0}', 'dev') }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        type: choice
+        description: Target environment
+        required: true
+        default: dev
+        options:
+          - dev
+          - prod
+
+jobs:
+  deploy-dev:
+    if: ${{ github.event.inputs.environment == 'dev' }}
+    runs-on: ubuntu-latest
+    environment: development
+    steps:
+      - name: Deploy to development server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEV_SSH_HOST }}
+          username: ${{ secrets.DEV_SSH_USER }}
+          key: ${{ secrets.DEV_SSH_KEY }}
+          port: ${{ secrets.DEV_SSH_PORT || 22 }}
+          script: |
+            set -euo pipefail
+            bash /root/online-beratung/ORISO-Complete/caritas-workspace/ORISO-Frontend/deploy-development.sh
+
+  deploy-prod:
+    if: ${{ github.event.inputs.environment == 'prod' }}
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Deploy to production server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PROD_SSH_HOST }}
+          username: ${{ secrets.PROD_SSH_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          port: ${{ secrets.PROD_SSH_PORT || 22 }}
+          script: |
+            set -euo pipefail
+            bash /home/caritas/Desktop/online-beratung/caritas-workspace/ORISO-Frontend/deploy-production.sh
+
