@@ -5,6 +5,14 @@ import en from '../i18n/en/common.json';
 import enAgency from '../i18n/en/agency.json';
 import enConsultingTypes from '../i18n/en/consultingTypes.json';
 import enLanguages from '../i18n/en/languages.json';
+import frCommon from '../i18n/fr/common.json';
+import frLanguages from '../i18n/fr/languages.json';
+import ruCommon from '../i18n/ru/common.json';
+import ruLanguages from '../i18n/ru/languages.json';
+import tiCommon from '../i18n/ti/common.json';
+import tiLanguages from '../i18n/ti/languages.json';
+import trCommon from '../i18n/tr/common.json';
+import trLanguages from '../i18n/tr/languages.json';
 import { AppConfigInterface } from '../../globalState/interfaces';
 import {
 	OVERLAY_RELEASE_NOTE,
@@ -325,7 +333,7 @@ export const config: AppConfigInterface = {
 		'zu'
 	],
 	i18n: {
-		supportedLngs: ['en', 'de'],
+		supportedLngs: ['en', 'de', 'fr', 'ru', 'ti', 'tr'],
 		fallbackLng: {
 			en: ['de'],
 			en_informal: ['en', 'de_informal', 'de']
@@ -352,6 +360,54 @@ export const config: AppConfigInterface = {
 				},
 				languages: {
 					...enLanguages
+				}
+			},
+			fr: {
+				common: [frCommon],
+				consultingTypes: {
+					...enConsultingTypes
+				},
+				agencies: {
+					...enAgency
+				},
+				languages: {
+					...frLanguages
+				}
+			},
+			ru: {
+				common: [ruCommon],
+				consultingTypes: {
+					...enConsultingTypes
+				},
+				agencies: {
+					...enAgency
+				},
+				languages: {
+					...ruLanguages
+				}
+			},
+			ti: {
+				common: [tiCommon],
+				consultingTypes: {
+					...enConsultingTypes
+				},
+				agencies: {
+					...enAgency
+				},
+				languages: {
+					...tiLanguages
+				}
+			},
+			tr: {
+				common: [trCommon],
+				consultingTypes: {
+					...enConsultingTypes
+				},
+				agencies: {
+					...enAgency
+				},
+				languages: {
+					...trLanguages
 				}
 			}
 		}

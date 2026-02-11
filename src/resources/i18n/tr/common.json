@@ -1,0 +1,2707 @@
+{
+  "absence": {
+    "checkbox": {
+      "label": "Tavsiye isteyen kişileri yokluğum hakkında bilgilendirmek"
+    },
+    "input": {
+      "infoText": "Tavsiye isteyen kişiler bu ofis dışı mesajı görecek, ancak yine de size yazabilecekler."
+    },
+    "overlay": {
+      "button1": {
+        "label": "Evet"
+      },
+      "button2": {
+        "label": "Hayır"
+      },
+      "changeSuccess": {
+        "buttonLabel": "Kapat",
+        "headline": "Ofis dışı mesajınızın durumu başarıyla güncellendi."
+      },
+      "copy": "Ofis dışında mesajınız şu anda aktif. <br> Devre dışı bırakmak ister misiniz?",
+      "headline": "Tekrar hoş geldiniz!"
+    }
+  },
+  "aliases": {
+    "lastMessage": {
+      "e2ee_activated": "Veri güvenliğiniz hakkında bilgi",
+      "further_steps": "Bu şekilde devam ediyor",
+      "master_key_lost": "",
+      "reassign_consultant": {
+        "CONFIRMED": "yeniden tahsis edildi",
+        "REJECTED": "Görevlendirme reddedildi",
+        "REQUESTED": "Görevlendirme talebi"
+      },
+      "reassign_consultant_reset_last_message": "yeniden tahsis edildi"
+    }
+  },
+  "app": {
+    "back": "Geri",
+    "claim": "Çevrimiçi. Anonim. Güvenli.",
+    "close": "Kapat",
+    "delete": "Girişi sil",
+    "download": "İndir",
+    "faulty": "Hatalı",
+    "logout": "Oturumu kapat",
+    "menu": "Diğer fonksiyonlar",
+    "next": "Daha ileri",
+    "open": "Açık",
+    "remove": "Kaldırmak",
+    "save": "Kaydet",
+    "scrollDown": "Aşağı kaydırın",
+    "selectLanguage": "Dil seçin",
+    "stage": {
+      "title": "Danışmanlık\n& Yardım"
+    },
+    "successful": "Başarılı",
+    "title": "Danışmanlık",
+    "ui": {
+      "classic": "Klasik Görünüm",
+      "new": "Yeni Görünüm!"
+    },
+    "wait": "Lütfen bekleyin"
+  },
+  "appointments": {
+    "copy": {
+      "link": {
+        "notification": {
+          "text": "Video görüşmesine davet bağlantısı panoya kopyalandı!",
+          "title": "Bağlantı kopyalandı"
+        },
+        "text": "Bağlantıyı kopyala",
+        "title": "Davet bağlantısını panoya kopyala"
+      }
+    },
+    "newAppointment": "Yeni video randevusu",
+    "noAppointments": "Şu anda tarih yok",
+    "notification": {
+      "saved": {
+        "title": "Randevu başarıyla kaydedildi."
+      }
+    },
+    "onlineMeeting": {
+      "form": {
+        "date": "Tarih",
+        "description": "Açıklama",
+        "time": "Başlangıç (ss:dd)",
+        "title": "Başlık"
+      },
+      "overlay": {
+        "add": {
+          "button": {
+            "add": "Kaydet",
+            "cancel": "Yıkım"
+          },
+          "headline": "Yeni görüntülü arama"
+        },
+        "delete": {
+          "button": {
+            "cancel": "Yıkım",
+            "delete": "Silme"
+          },
+          "copy": "Bu görüntülü aramayı gerçekten silmek istiyor musunuz?",
+          "headline": "Görüntülü aramayı sil"
+        },
+        "edit": {
+          "headline": "Görüntülü aramayı düzenleme"
+        },
+        "start": {
+          "button": {
+            "cancel": "Yıkım",
+            "start": "Başlangıç"
+          },
+          "copy": "Şimdi video görüşmesini başlatıyorsunuz. Davet edilen katılımcılar davet bağlantısını kullanarak şimdi katılabilirler.",
+          "headline": "Görüntülü aramayı başlat"
+        }
+      },
+      "start": "Görüntülü aramayı başlat"
+    },
+    "qrCode": {
+      "headline": "Davetiye bağlantısı QR kodu",
+      "text": "QR kodunuzu biriyle paylaşırsanız, doğrudan video görüşmesine katılmak için cep telefonu kamerasıyla tarayabilir. Alternatif olarak, kodu da indirebilirsiniz."
+    },
+    "showLess": "Daha az göster",
+    "showMore": "Daha fazla göster",
+    "title": "Programa genel bakış"
+  },
+  "archive": {
+    "overlay": {
+      "session": {
+        "success": {
+          "button": "Kapat",
+          "copy": "Tavsiye arayan kişiyi başarıyla arşivlediniz."
+        }
+      }
+    },
+    "submitInfo": {
+      "headline": "İstişare toplantısı arşivlenmiştir.",
+      "message": "Siz veya tavsiye isteyen kişi bir mesaj yazar yazmaz, mesaj geçmişi tavsiye isteyen kişiler listesinde otomatik olarak yeniden düzenlenir."
+    }
+  },
+  "attachments": {
+    "download": {
+      "label": "İndir"
+    },
+    "error": {
+      "format": {
+        "headline": "Dosyanız gönderilemedi.",
+        "message": "Dosyanız gönderilemedi. Resimlere (jpg ve png) ve belgelere (docx ve pdf) izin verilir. Lütfen tekrar deneyin."
+      },
+      "other": {
+        "headline": "Dosya yüklenirken bir hata oluştu.",
+        "message": "Lütfen tekrar deneyin."
+      },
+      "quota": {
+        "headline": "Yükleme sınırına ulaştınız.",
+        "message": "Lütfen yarın tekrar deneyin."
+      },
+      "size": {
+        "headline": "Seçtiğiniz dosya çok büyük.",
+        "message": "{{attachment_filesize}}En fazla MB yükleyebilirsiniz."
+      }
+    },
+    "list": {
+      "label": {
+        "received": "Bir dosya aldınız.",
+        "sent": "Bir dosya gönderdiniz."
+      }
+    },
+    "type": {
+      "label": {
+        "docx": "DOCX",
+        "jpeg": "JPG",
+        "mb": "MB",
+        "pdf": "PDF",
+        "png": "PNG",
+        "xlsx": "XLSX"
+      }
+    }
+  },
+  "banner": {
+    "ie": {
+      "text": "<strong></strong> Bu uygulama Internet Explorer ile kullanım için optimize edilmemiştir. Optimum kullanıcı deneyimi için lütfen modern bir tarayıcı kullanın."
+    }
+  },
+  "banUser": {
+    "ban": {
+      "info": {
+        "1": "Sen varsın ",
+        "2": " Yasaklandı."
+      },
+      "overlay": {
+        "close": " Yakın not"
+      },
+      "trigger": "Sürgün"
+    },
+    "banned": {
+      "headline": "Yasaklandılar.",
+      "info": "Sizden sohbet kurallarına uymanızı istemiştik.<br/><br/>Bugün sohbet kurallarına defalarca uymadığınız için sizi bugünkü sohbetten çıkardık.<br/><br/>Sohbet kurallarını öğrenin!</br></br>Eğer sohbet kurallarına uymaya istekliyseniz, yarın sohbete tekrar hoş geldiniz!"
+    },
+    "is": {
+      "banned": " Spellbound"
+    }
+  },
+  "booking": {
+    "availability": {
+      "description": "Tavsiye almak isteyen kişilerin sizden randevu alabilmeleri için genel uygunluk durumunuzu buraya girin.",
+      "title": "Müsaitlik durumunuz"
+    },
+    "calender": {
+      "add": "Takvim ekle",
+      "integration": {
+        "apple": "Elma Takvimi",
+        "caldav": "CalDav Sunucu Takvimi",
+        "google": "Google Takvim",
+        "office365": "Office 365/ Outlook Takvim"
+      },
+      "synchronise": "Senkronize et",
+      "synchroniseCalender": {
+        "description": "Danışma merkezinizde kullandığınız takvimi çevrimiçi danışma hizmeti ile senkronize edin. Böylece müsaitlik durumunuz otomatik olarak ayarlanacak ve randevu çakışmaları önlenecektir.",
+        "title": "Takvimi senkronize edin"
+      },
+      "synchronised": {
+        "calendars": "Senkronize takvimler"
+      }
+    },
+    "event": {
+      "asker": "Tavsiye arayan",
+      "booking": {
+        "cancel": "İptaller",
+        "reschedule": "Hareket"
+      },
+      "copy": {
+        "link": {
+          "notification": {
+            "text": "Görüntülü aramanın açılış bağlantısı panoya kopyalandı!",
+            "title": "Bağlantı kopyalandı"
+          }
+        }
+      },
+      "description": "Randevu hakkındaki mesajınız",
+      "show": {
+        "less": "Daha az göster",
+        "more": "Daha fazla göster"
+      },
+      "tab": {
+        "booked": "Rezervasyonlu tarihler",
+        "canceled": "İptal Edildi",
+        "expired": "Geçmiş",
+        "settings": "Ayarlar"
+      },
+      "your": {
+        "counselor": "Danışmanınız"
+      }
+    },
+    "info": {
+      "video": "Görüntülü danışmanlık"
+    },
+    "mobile": {
+      "calendar": {
+        "label": "Randevu oluştur"
+      }
+    },
+    "my": {
+      "booking": {
+        "schedule": "Şimdi randevu alın",
+        "title": "Şu anda herhangi bir tarih planlanmamıştır."
+      }
+    },
+    "schedule": "Randevu alın",
+    "video": {
+      "button": {
+        "label": "Görüntülü aramayı başlat"
+      }
+    }
+  },
+  "chatFlyout": {
+    "archive": "Arşiv",
+    "archiveDescription": "Arşivlenen bildirimler pasiftir. Sohbet 12 ay içinde silinecek.",
+    "askerProfil": "Danışman profili",
+    "dataProtection": "Veri koruma",
+    "dearchive": "Dearchive",
+    "dearchiveDescription": "Sohbeti arşivden geri yükle.",
+    "editGroupChat": "Sohbet ayarları",
+    "groupChatInfo": "Sohbet bilgileri",
+    "imprint": "Künye",
+    "leaveGroupChat": "Sohbeti bırakın",
+    "mute": "Sessize al",
+    "muteDescription": "Bu sohbet için bildirimleri kapat.",
+    "help": "Yardım iste",
+    "helpDescription": "Veri korumasını ihmal etmeden vakayı içten veya dıştan eskale edin.",
+    "invite": "Daha fazla kişi davet et",
+    "inviteDescription": "Kimlerin davet edilebileceği yönetici ayarlarına bağlıdır.",
+    "summarize": "Sohbeti özetle",
+    "summarizeDescription": "Tamamen veri koruma uyumlu yapay zeka iş akışlarıyla zaman kazanın.",
+    "remove": "Sil",
+    "removeDescription": "Sohbeti kalıcı olarak sil.",
+    "stopGroupChat": "Sohbeti sonlandır"
+  },
+  "consultant": {
+    "absent": {
+      "message": " yok"
+    },
+    "jobTitle": "Danışman"
+  },
+  "date": {
+    "day": {
+      "0": {
+        "long": "Pazar",
+        "short": "Bu yüzden"
+      },
+      "1": {
+        "long": "Pazartesi",
+        "short": "Mo"
+      },
+      "2": {
+        "long": "Salı",
+        "short": "Salı"
+      },
+      "3": {
+        "long": "Çarşamba",
+        "short": "Mi"
+      },
+      "4": {
+        "long": "Perşembe",
+        "short": "Per"
+      },
+      "5": {
+        "long": "Cuma",
+        "short": "Cuma"
+      },
+      "6": {
+        "long": "Cumartesi",
+        "short": "Otur"
+      }
+    },
+    "month": {
+      "0": {
+        "long": "Ocak",
+        "short": "Jan"
+      },
+      "1": {
+        "long": "ŞUBAT",
+        "short": "Şubat"
+      },
+      "2": {
+        "long": "Mart",
+        "short": "Mar"
+      },
+      "3": {
+        "long": "Nisan",
+        "short": "Nisan"
+      },
+      "4": {
+        "long": "Mayıs",
+        "short": "Mayıs"
+      },
+      "5": {
+        "long": "Haziran",
+        "short": "Haziran"
+      },
+      "6": {
+        "long": "Temmuz",
+        "short": "Temmuz"
+      },
+      "7": {
+        "long": "Ağustos",
+        "short": "Ağustos"
+      },
+      "8": {
+        "long": "Eylül",
+        "short": "Eylül"
+      },
+      "9": {
+        "long": "EKİM",
+        "short": "Ekim"
+      },
+      "10": {
+        "long": "Kasım",
+        "short": "Kasım"
+      },
+      "11": {
+        "long": "Aralık",
+        "short": "Aralık"
+      }
+    }
+  },
+  "deleteAccount": {
+    "button": {
+      "label": "Hesap silme"
+    },
+    "confirmOverlay": {
+      "button": {
+        "confirm": "Evet",
+        "deny": "Hayır"
+      },
+      "copy": "<strong>Bu işlem geri alınamaz.</strong><br><br>Hesabınız önümüzdeki 48 saat içinde silinecektir. Verileriniz geçerli veri koruma düzenlemelerine uygun olarak silinecektir.<br><br>Hesabınızı şimdi silmek için lütfen şifrenizi girin.",
+      "headline": "Hesabınızı gerçekten silmek istiyor musunuz?",
+      "input": {
+        "label": "şifre",
+        "warning": "Şifreniz yanlış."
+      }
+    },
+    "successOverlay": {
+      "button": "Kapat",
+      "headline": "Caritas Beratung hesabınızı başarıyla sildiniz."
+    }
+  },
+  "deleteSession": {
+    "confirmOverlay": {
+      "button": {
+        "confirm": "evet",
+        "deny": "hayır"
+      },
+      "copy": "Sohbeti silmek istediğinizden emin misiniz?",
+      "headline": "Sohbeti sil"
+    },
+    "errorOverlay": {
+      "button": "tamam",
+      "headline": "Üzgünüz! Şu anda sohbeti silemedik. Lütfen tekrar deneyin."
+    },
+    "successOverlay": {
+      "button": "tamam",
+      "headline": "Sohbeti başarıyla sildiniz."
+    }
+  },
+  "e2ee": {
+    "attachment": {
+      "decryption_error": "Şifre çözme sırasında hata",
+      "encrypted": "İndirmek için dosyanın şifresini çözme",
+      "error": {
+        "text": "Göndericiden dosyayı yeniden göndermesini isteyin. Ardından yeni dosyayı indirin.",
+        "title": "Ne yazık ki dosyanın şifresini çözemedik ve indiremedik."
+      },
+      "is_decrypting": "Dosyanın şifresi çözüldü",
+      "save": "Dosyayı indirin"
+    },
+    "title": "Uçtan uca şifreleme etkin",
+    "hint": "Mesajlarınız uçtan uca şifrelenmiştir. Bu, bu sohbetin dışında kimsenin mesajları okuyamayacağı anlamına gelir. Çevrimiçi danışmanlık platformu bile.",
+    "inProgress": {
+      "confirm": "Lütfen şifreleme tamamlanana kadar bekleyin!",
+      "copy": "Güvenliğiniz bizim için önemli! Şu anda sohbetinizi şifreliyoruz. Bu biraz zaman alabilir.",
+      "headline": "Bir dakika lütfen."
+    },
+    "message": {
+      "encryption": {
+        "error": "Mesaj şifrelendi - şifre çözme sırasında hata",
+        "text": "Şifrelenmiş mesaj"
+      },
+      "showMore": "Daha fazla göster",
+      "showLess": "Daha az göster"
+    },
+    "roomNotFound": {
+      "notice": {
+        "line1": "Ohh!",
+        "line2": "Özür dileriz, bir şeyler ters gitmiş olmalı.",
+        "line3": "Lütfen sayfayı yeniden yükleyin ve tekrar deneyin.",
+        "link": "Sayfayı yeniden yükle"
+      }
+    },
+    "subscriptionKeyLost": {
+      "message": {
+        "more": "Daha fazla bilgi edinin",
+        "primary": "Bir sohbet katılımcısının artık mesaj geçmişine erişimi yoktur.",
+        "secondary": "Bir sohbet katılımcısı artık mesaj geçmişine erişemiyordu. Artık tüm sohbet katılımcıları mesaj geçmişine tekrar erişebilir."
+      },
+      "notice": {
+        "link": "Bildirim gönder",
+        "more": "Daha fazla bilgi edinin",
+        "text": "Şifrenizi sıfırladığınız için mesajlar şu anda sizin için okunamaz durumdadır. Bir sohbet katılımcısı sohbeti yeniden açar açmaz mesajları tekrar okuyabilir ve yenilerini yazabilirsiniz.",
+        "title": "Güvenliğiniz bizim için önemli!"
+      },
+      "overlay": {
+        "button": {
+          "close": "Kapat"
+        },
+        "copy": "Mesajlarınız güvenlik nedeniyle uçtan uca şifrelenmiştir. Bu, bu sohbetin dışında kimsenin mesajları okuyamayacağı anlamına gelir.<br/><br/>Çevrimiçi danışmanlık platformu bile. Şifre sıfırlanırsa, mesajlar geçici olarak okunamaz. Başka bir sohbet katılımcısı sohbeti tekrar açar açmaz mesajlar yeniden şifrelenebilir. Bu, tüm sohbet katılımcılarının mesajları tekrar okuyabileceği ve yazabileceği anlamına gelir.",
+        "headline": "Uçtan uca şifreleme"
+      }
+    }
+  },
+  "enquiry": {
+    "acceptButton": {
+      "anonymous": "Sohbet başlat",
+      "known": "Sorguyu kabul et"
+    },
+    "anonymous": {
+      "infoLabel": {
+        "end": ".",
+        "start": "Şimdi sohbeti şu şekilde başlatın "
+      }
+    },
+    "language": {
+      "selection": {
+        "headline": "Lütfen hangi dilde danışmanlık almak istediğinizi seçiniz."
+      }
+    },
+    "write": {
+      "infotext": {
+        "copy": {
+          "facts": "<ul><li></li><li></li><li></li><li>Ne oldu? Şu anki durumunuz nedir? Aklınızda ne var? Belirli bir sorunuz mu var ya da size neyin yardımcı olabileceğini henüz tam olarak bilmiyor musunuz?</li></ul>",
+          "title": "Belki aşağıdaki hususlar ifade konusunda size yardımcı olacaktır:"
+        },
+        "headline": "Endişeleriniz için burada yer var.",
+        "iconTitle": "Hoş geldiniz"
+      },
+      "input": {
+        "attachement": "Eklenti ekle",
+        "button": {
+          "title": "Mesaj gönder"
+        },
+        "emojies": "Emoji ekle",
+        "format": "Metni biçimlendir",
+        "placeholder": {
+          "asker": "Sizi neyin harekete geçirdiğini söyleyin.",
+          "askerAfterFirstMessage": "Bir şey mi unuttunuz? Sadece bir mesaj daha gönderin.",
+          "consultant": "Müşteriye bir mesaj yazın",
+          "groupChat": "Bir mesaj yazın"
+        },
+        "forgotSomething": {
+          "text": "Bir şey mi unuttunuz? Sadece bir mesaj daha gönderin."
+        }
+      },
+      "overlay": {
+        "button": "Mesaja",
+        "copy": "Bizden 2 iş günü içinde bir yanıt alacaksınız.",
+        "headline": "Mesajınız için teşekkür ederiz!"
+      }
+    }
+  },
+  "error": {
+    "login": "Giriş yap",
+    "statusCodes": {
+      "400": {
+        "description": "Girdiğiniz URL geçersiz.",
+        "headline": "Oops!"
+      },
+      "401": {
+        "description": "Maalesef bu sayfayı görüntüleme yetkiniz bulunmamaktadır.",
+        "headline": "Ne yazık!"
+      },
+      "404": {
+        "description": "Üzgünüz, bir şeyler ters gitmiş olmalı.<br>Aradığınız sayfayı bulamadık.",
+        "headline": "Ohh!"
+      },
+      "500": {
+        "description": "Şu anda bir sunucu sorunumuz var gibi görünüyor.<br>Daha sonra tekrar deneyin.",
+        "headline": "Oops!"
+      }
+    }
+  },
+  "furtherSteps": {
+    "arrowTitle": "Daha ileri",
+    "consultant": {
+      "info": "Tavsiye isteyen kişiye sonraki adımlar hakkında aşağıdaki şekilde bilgi verilmiştir."
+    },
+    "email": {
+      "overlay": {
+        "button1": {
+          "label": "Kaydet"
+        },
+        "button2": {
+          "label": "Kapat"
+        },
+        "headline": "E-posta adresinizi girin",
+        "input": {
+          "invalid": "E-posta adresiniz geçerli değil.",
+          "label": "e-posta",
+          "unavailable": "Bu e-posta adresi zaten kayıtlı.",
+          "valid": "E-posta adresiniz geçerlidir."
+        }
+      },
+      "success": {
+        "overlay": {
+          "headline": "E-posta adresiniz başarıyla kaydedildi."
+        }
+      }
+    },
+    "emailNotification": {
+      "button": "E-posta adresinizi girin",
+      "headline": "E-posta bildirimi alın ve şifreyi sıfırlayın",
+      "infoText": "E-posta adresinizi verirseniz (isteğe bağlı)<br><ul><li>danışmanınız size yazdığında bir e-posta bildirimi alacaksınız</li><li>şifrenizi unuttuysanız sıfırlayabilirsiniz.</li></ul>E-posta adresiniz danışmanlar tarafından görüntülenemez."
+    },
+    "headline": "Ve böyle devam ediyor:",
+    "step1": {
+      "iconTitle": "Açılmış mektup",
+      "info": "Mesajınızı aldık."
+    },
+    "step2": {
+      "iconTitle": "Danışman gözlükleri",
+      "info": "Şimdi sizin için bir danışman bulacağız."
+    },
+    "step3": {
+      "iconTitle": "Konuşma balonları",
+      "info": "Danışmanınız 2 iş günü içinde yanıt verecektir."
+    },
+    "twoFactorAuth": {
+      "button": "Hesabı koru",
+      "headline": "Verilerinizin korunması bizim için önemlidir",
+      "infoText": "Hesabınızı olası yetkisiz erişime karşı güvence altına alın. Çevrimiçi danışma merkezinde oturum açmak için ikinci bir faktör (uygulama veya e-posta) kullanın."
+    }
+  },
+  "groupChat": {
+    "active": {
+      "sessionInfo": {
+        "subscriber": "Katılımcılar"
+      }
+    },
+    "noTopicSpecified": "Konu belirtilmedi",
+    "cancel": {
+      "button": {
+        "label": "İptal"
+      }
+    },
+    "copy": {
+      "link": {
+        "notification": {
+          "text": "Bağlantı panoya kopyalandı!",
+          "title": "Bağlantı kopyalandı"
+        },
+        "text": "Davetiye bağlantısını kopyala"
+      }
+    },
+    "create": {
+      "agencySelect": {
+        "label": "Danışma Merkezi"
+      },
+      "beginDateInput": {
+        "label": "Başlangıç (ss:dd)"
+      },
+      "button": {
+        "label": "Sohbet oluşturun"
+      },
+      "consultantsSelect": {
+        "label": "Danışmanları seçin"
+      },
+      "dateInput": {
+        "label": "Tarih"
+      },
+      "durationSelect": {
+        "label": "Süre",
+        "option1": "30 dakika",
+        "option2": "1 saat",
+        "option3": "1,5 saat",
+        "option4": "2 saat",
+        "option5": "2,5 saat",
+        "option6": "3 saat"
+      },
+      "hintMessage": {
+        "explanation": "Not: Bu bilgiler grup sohbetinin tüm yöneticileri tarafından görülebilir.",
+        "label": "Not alanı"
+      },
+      "listItem": {
+        "label": "Yeni sohbet"
+      },
+      "repetitiveCheckbox": {
+        "label": "haftalık tekrarlayın"
+      },
+      "subtitle": "Sohbetin konusu",
+      "title": "Yeni sohbet",
+      "topicInput": {
+        "label": "Sohbetin konusu",
+        "warning": {
+          "long": "Konu çok uzun",
+          "short": "Konu çok kısa"
+        }
+      }
+    },
+    "createError": {
+      "overlay": {
+        "buttonLabel": "Kapat",
+        "headline": "Bir hata oluştu. Lütfen tekrar deneyin."
+      }
+    },
+    "createSuccess": {
+      "overlay": {
+        "buttonLabel": "Kapat",
+        "headline": "Başarıyla bir sohbet oluşturdunuz."
+      }
+    },
+    "edit": {
+      "title": "Sohbet ayarları"
+    },
+    "info": {
+      "headline": "Sohbet bilgileri",
+      "settings": {
+        "agency": "Danışma Merkezi",
+        "createDate": "Oluşturulma tarihi",
+        "creator": "Yaratıcı",
+        "duration": "Süre",
+        "edit": "Düzenle",
+        "headline": "Sohbet ayarları",
+        "subtitle": "Her oda ayrı ayrı özelleştirilebilir",
+        "hintMessage": "İpucu",
+        "repetition": {
+          "label": "Tekrarlar",
+          "single": "benzersiz",
+          "weekly": "haftalık"
+        },
+        "startDate": "Tarih",
+        "startTime": "Başlangıç",
+        "topic": "Sohbetin konusu"
+      },
+      "subscribers": {
+        "empty": "Mevcut katılımcı yok",
+        "headline": "Katılımcılar"
+      }
+    },
+    "join": {
+      "button": {
+        "label": {
+          "join": "Katılmak",
+          "start": "Sohbet başlat"
+        }
+      },
+      "chatClosedOverlay": {
+        "button1Label": "Genel bakış için",
+        "button2Label": "Oturumu Kapat",
+        "headline": "Sohbet çoktan sona erdi."
+      },
+      "content": {
+        "headline": "Sohbetin \"oyun kuralları\""
+      },
+      "warning": {
+        "consultant": {
+          "message": "Moderatörünüz henüz sohbeti başlatmadı. Moderatörünüz sohbeti başlatır başlatmaz bizimle sohbet edebilirsiniz. Lütfen sabırlı olun."
+        },
+        "message": "Danışmanınız/moderatörünüz henüz sohbeti başlatmadı. Danışmanınız veya moderatörünüz sohbeti başlatır başlatmaz, bizimle sohbet edebileceksiniz. Lütfen sabırlı olun."
+      }
+    },
+    "joinError": {
+      "overlay": {
+        "buttonLabel": "Kapat",
+        "headline": "Bir hata oluştu. Lütfen tekrar deneyin."
+      }
+    },
+    "leaveChat": {
+      "securityOverlay": {
+        "button1Label": "Sohbeti bırakın",
+        "button2Label": "İptal",
+        "headline": "Gerçekten sohbetten ayrılmak mı istiyorsun?"
+      },
+      "successOverlay": {
+        "button1Label": "Genel bakış için",
+        "button2Label": "Oturumu Kapat",
+        "headline": "Sohbetten başarıyla çıkıldı."
+      }
+    },
+    "listItem": {
+      "activeLabel": "Aktif",
+      "subjectEmpty": {
+        "other": "Sohbet oluşturuldu.",
+        "self": "Sohbeti oluşturdunuz."
+      }
+    },
+    "qrCode": {
+      "download": {
+        "filename": "qr-kod-{{filename}}"
+      },
+      "headline": "Grup sohbeti QR kodunuz",
+      "overlay": {
+        "close": "Kapat",
+        "download": "QR kodunu .png olarak indirin"
+      },
+      "text": "Bu QR kodunu biriyle paylaşırsanız, gruba katılmak için cep telefonu kamerasıyla tarayabilir. Kodu ayrıca indirebilirsiniz."
+    },
+    "save": {
+      "button": {
+        "label": "Kaydet"
+      }
+    },
+    "stopChat": {
+      "securityOverlay": {
+        "button1Label": "Sohbeti sonlandır",
+        "button2Label": "İptal",
+        "copyRepeat": "Sohbet geçmişi silinir ve tüm kullanıcılar kaldırılır.",
+        "copySingle": "Sohbet silinecek ve tüm kullanıcılar kaldırılacaktır.",
+        "headline": "Sohbeti gerçekten bitirmek istiyor musun?"
+      },
+      "successOverlay": {
+        "button1Label": "Genel bakış için",
+        "button2Label": "Oturumu Kapat",
+        "headline": "Sohbet başarıyla sona erdi."
+      }
+    },
+    "stopped": {
+      "overlay": {
+        "button1Label": "Genel bakış için",
+        "button2Label": "Oturumu Kapat",
+        "headline": "Sohbet sona erdi."
+      }
+    },
+    "updateSuccess": {
+      "overlay": {
+        "button1Label": "Kapat",
+        "headline": "Değişiklikleriniz başarıyla kaydedildi."
+      }
+    }
+  },
+  "help": {
+    "googleChrome": "Google Chrome",
+    "msEdge": "Microsoft Edge",
+    "openInNewTab": "Yeni sekmede aç",
+    "safari": "Safari",
+    "videoCall": {
+      "asker": {
+        "headline": "Görüntülü arama",
+        "intro": "Görüntülü aramalara katılmak için desteklenen tarayıcılardan birini kullanarak oturum açmalısınız. Sohbet danışmanlığı hala Firefox ile çalışmaktadır.",
+        "steps": {
+          "1": {
+            "1": {
+              "1": "Şu bağlantıyı takip edin: ",
+              "2": " veya ",
+              "3": " (yalnızca macOS ve iOS için kullanılabilir)"
+            }
+          },
+          "2": "Desteklenen tarayıcılardan birini indirin.",
+          "3": "Bunu PC/dizüstü/tablet/akıllı telefonunuza yükleyin.",
+          "4": {
+            "1": "Şimdi bu tarayıcı ile çevrimiçi danışmanlık hizmetini açın.",
+            "2": "Çevrimiçi danışmanlığı bu tarayıcılardan biriyle açın."
+          },
+          "5": "Çevrimiçi danışmanlık için kaydolun.",
+          "6": "Danışmanınızdan sizi tekrar aramasını isteyin.",
+          "headline": {
+            "1": "Adım adım talimatlar",
+            "2": "Zaten Google Chrome, Microsoft Edge veya Safari kullanıyor musunuz?"
+          }
+        }
+      },
+      "banner": {
+        "content": "Görüntülü aramaları etkinleştirmek için lütfen farklı bir tarayıcı kullanın.",
+        "more": "Daha fazla bilgi edinin"
+      },
+      "consultant": {
+        "headline": "Görüntülü arama",
+        "intro": "Görüntülü arama yapabilmek için desteklenen tarayıcılardan birini kullanarak giriş yapmalısınız. Sohbet danışmanlığı hala Firefox ile çalışmaktadır.",
+        "steps": {
+          "1": {
+            "1": "Şu bağlantıyı takip edin ",
+            "2": " veya ",
+            "3": " (yalnızca macOS ve iOS için kullanılabilir)"
+          },
+          "2": "Desteklenen tarayıcılardan birini indirin. Bunun için BT sisteminizin desteğine ihtiyacınız olabilir.",
+          "3": "Bunu PC/dizüstü/tablet/akıllı telefonunuza yükleyin.",
+          "4": {
+            "1": "Şimdi bu tarayıcı ile çevrimiçi danışmanlık hizmetini açın.",
+            "2": "Çevrimiçi danışmanlığı bu tarayıcılardan biriyle açın."
+          },
+          "5": "Çevrimiçi danışmanlık için kaydolun.",
+          "6": "Video görüşmesini başlatın.",
+          "headline": {
+            "1": "Adım adım talimatlar",
+            "2": "Zaten Google Chrome, Microsoft Edge veya Safari kullanıyor musunuz?"
+          }
+        }
+      },
+      "loginLink": {
+        "notification": {
+          "text": "Bağlantı panoya kopyalandı!",
+          "title": "Bağlantı kopyalandı"
+        },
+        "text": "Bağlantıyı kopyala",
+        "title": "Bağlantıyı panoya kopyala"
+      },
+      "waitingRoom": {
+        "copiedLink": "Bağlantı kopyalandı!",
+        "copyLink": "Bağlantıyı kopyala",
+        "headline": "Bu size bağlı değil, tarayıcınıza bağlı.",
+        "infoBox": {
+          "headline": "Tarayıcınız görüntülü aramaları desteklemiyor.",
+          "text": "Görüntülü aramalara katılmak için lütfen Google Chrome, Microsoft Edge veya Safari kullanın."
+        },
+        "subline1": "Henüz Google Chrome, Microsoft Edge veya Safari kullanmıyor musunuz?",
+        "subline2": "Zaten Google Chrome, Microsoft Edge veya Safari kullanıyor musunuz?",
+        "text1": "Tarayıcılardan birini indirin.",
+        "text2": "Şimdi desteklenen tarayıcılardan biriyle çevrimiçi danışmanlık bağlantınızı açın."
+      }
+    }
+  },
+  "jitsi": {
+    "btn": {
+      "copied": "Video bağlantısı panoya kopyalandı",
+      "default": "Video bağlantısını kopyala"
+    }
+  },
+  "languages": {
+    "aa": "Afar",
+    "ab": "Abhazca",
+    "ae": "Avestic",
+    "af": "Afrikanca",
+    "ak": "Akan",
+    "am": "Amharca",
+    "an": "Aragonese",
+    "ar": "Arapça",
+    "as": "Assamca",
+    "av": "Avaric",
+    "ay": "Aymara",
+    "az": "Azerice",
+    "ba": "Başkurt",
+    "be": "Belarusça",
+    "bg": "Bulgarca",
+    "bh": "Bihari",
+    "bi": "Bislama",
+    "bm": "Bambara",
+    "bn": "Bengalce",
+    "bo": "Tibetçe",
+    "br": "Breton",
+    "bs": "Boşnakça",
+    "ca": "Katalanca, Valensiya",
+    "ce": "Çeçen",
+    "ch": "Chamorro",
+    "co": "Korsikalı",
+    "cr": "Cree",
+    "cs": "Çek Cumhuriyeti",
+    "cu": "Kilise Slavcası, Eski Kilise Slavcası",
+    "cv": "Çuvaş",
+    "cy": "Welsh",
+    "da": "Danimarka",
+    "de": "Alman",
+    "dv": "Dhivehi",
+    "dz": "Dzongkha",
+    "ee": "Ewe",
+    "el": "Yunan",
+    "en": "İngilizce",
+    "eo": "Esperanto",
+    "es": "İspanyolca, Kastilya",
+    "et": "Estonca",
+    "eu": "Bask",
+    "fa": "Farsça",
+    "ff": "Fulfulde",
+    "fi": "Fince",
+    "fj": "Fiji",
+    "fo": "Faroese",
+    "fr": "Fransızca",
+    "fy": "Batı Frizce",
+    "ga": "İrlandalı",
+    "gd": "İskoç Galcesi",
+    "gl": "Galiçyaca, Galegce",
+    "gn": "Guaraní",
+    "gu": "Gujarati",
+    "gv": "Manx,\nManx Galcesi",
+    "ha": "Hausa dili",
+    "he": "İbranice",
+    "hi": "Hintçe",
+    "ho": "Hiri Motu",
+    "hr": "Hırvatça",
+    "ht": "Haitili",
+    "hu": "Macarca",
+    "hy": "Ermenice",
+    "hz": "Otjiherero",
+    "ia": "Interlingua",
+    "id": "Endonezce",
+    "ie": "Interlingue",
+    "ig": "Igbo",
+    "ii": "Yi",
+    "ik": "Inupiaq",
+    "io": "Ido",
+    "is": "İzlandaca",
+    "it": "İtalyan",
+    "iu": "Inuktitut",
+    "ja": "Japonca",
+    "jv": "Javanese",
+    "ka": "Gürcüce",
+    "kg": "Kikongo",
+    "ki": "Kikuyu",
+    "kj": "oshiKwanyama",
+    "kk": "Kazakça",
+    "kl": "Grönlandca, Kalaallisut",
+    "km": "Khmer",
+    "kn": "Kannada",
+    "ko": "Korece",
+    "kr": "Kanuri",
+    "ks": "Kashmiri",
+    "ku": "Kürtçe",
+    "kv": "Comi",
+    "kw": "Cornish",
+    "ky": "Kırgız",
+    "la": "Latince",
+    "lb": "Lüksemburgca",
+    "lg": "Luganda",
+    "li": "Limburgca, Güney Alçak Frankonca",
+    "ln": "Lingála",
+    "lo": "Laoslu",
+    "lt": "Litvanyalı",
+    "lu": "Kiluba",
+    "lv": "Letonca",
+    "mg": "Malgaşça, Malgaşça",
+    "mh": "Marshallese",
+    "mi": "Maori",
+    "mk": "Makedonca",
+    "ml": "Malayalam",
+    "mn": "Moğolca",
+    "mr": "Marathi",
+    "ms": "Malay",
+    "mt": "Maltaca",
+    "my": "Birmanya",
+    "na": "Nauruan",
+    "nb": "Bokmål",
+    "nd": "Kuzey Ndebele",
+    "ne": "Nepalce",
+    "ng": "Ndonga",
+    "nl": "Felemenkçe, Belçika Felemenkçesi",
+    "nn": "Nynorsk",
+    "no": "Norveççe",
+    "nr": "Güney Ndebele",
+    "nv": "Navajo",
+    "ny": "Chichewa",
+    "oc": "Oksitanca",
+    "oj": "Ojibwe",
+    "om": "Oromo",
+    "or": "Oriya",
+    "os": "Osetçe",
+    "pa": "Panjabi, Punjabi",
+    "pi": "Pali",
+    "pl": "Lehçe",
+    "ps": "Peştun",
+    "pt": "Portekizce",
+    "qu": "Quechua",
+    "rm": "Grisons Romansh, Romanş",
+    "rn": "Kirundi",
+    "ro": "Romence",
+    "ru": "Rusça",
+    "rw": "Kinyarwanda, Ruanda",
+    "sa": "Sanskritçe",
+    "sc": "Sardunya",
+    "sd": "Sindhi",
+    "se": "Kuzey Sami",
+    "sg": "Sango.",
+    "si": "Sinhala",
+    "sk": "Slovakça",
+    "sl": "Slovence",
+    "sm": "Samoalı",
+    "sn": "Shona",
+    "so": "Somali",
+    "sq": "Arnavutça",
+    "sr": "Sırpça",
+    "ss": "Siswati",
+    "st": "Sesotho, Güney Sotho",
+    "su": "Sundanese",
+    "sv": "İsveç",
+    "sw": "Swahili",
+    "ta": "Tamilce",
+    "te": "Telugu",
+    "tg": "Tacikçe",
+    "th": "Tayland",
+    "ti": "Tigrinya",
+    "tk": "Türkmen",
+    "tl": "Tagalogca",
+    "tn": "Setswana",
+    "to": "Tongan",
+    "tr": "Türkçe",
+    "ts": "Xitsonga",
+    "tt": "Tatar",
+    "tw": "Twi",
+    "ty": "Tahitian, Tahitian",
+    "ug": "Uygur",
+    "uk": "Ukrayna",
+    "ur": "Urduca",
+    "uz": "Özbekçe",
+    "ve": "Tshivenda",
+    "vi": "Vietnamca",
+    "vo": "Volapük",
+    "wa": "Valon",
+    "wo": "Wolof",
+    "xh": "isiXhosa",
+    "yi": "Yidiş",
+    "yo": "Yoruba",
+    "za": "Zhuang",
+    "zh": "Çince",
+    "zu": "isiZulu"
+  },
+  "login": {
+    "button": {
+      "label": "Giriş yap"
+    },
+    "consultant": {
+      "overlay": {
+        "cancel": {
+          "button": "Genel bakış için"
+        },
+        "success": {
+          "button": "Daha ileri",
+          "headline": "Sıcak bir karşılama"
+        }
+      }
+    },
+    "headline": "Giriş",
+    "legal": {
+      "infoText": {
+        "dataprotection": "Gizlilik Politikası",
+        "impressum": "Künye"
+      }
+    },
+    "password": {
+      "hide": "Şifreyi gizle",
+      "label": "şifre",
+      "reset": {
+        "warn": {
+          "overlay": {
+            "button": {
+              "accept": "Evet, sıfırla",
+              "cancel": "Girişe geri dönün"
+            },
+            "description": "Yine de şifreyi sıfırlamak ister misiniz?",
+            "title": "Parolanın sıfırlanması, mesajlarınıza erişimin artık garanti edilemeyeceği anlamına gelebilir."
+          }
+        }
+      },
+      "show": "Şifreyi göster"
+    },
+    "register": {
+      "infoText": {
+        "copy": "Aşağıdaki konularda size tavsiyelerde bulunmaktan memnuniyet duyarız:",
+        "title": "Henüz kayıt olmadınız mı?"
+      },
+      "linkLabel": "Danışmanlık konularına"
+    },
+    "security": {
+      "headline": "Güvenli ve Şifreli",
+      "description": "Gizliliğiniz uçtan uca şifreleme ile tamamen korunur."
+    },
+    "resend": {
+      "otp": {
+        "email": {
+          "label": "Tek seferlik kodu tekrar gönderin"
+        }
+      }
+    },
+    "resetPasswort": {
+      "label": "Şifrenizi mi unuttunuz?"
+    },
+    "seperator": "veya",
+    "user": {
+      "label": "Kullanıcı adı/e-posta"
+    },
+    "warning": {
+      "failed": {
+        "app": {
+          "otp": {
+            "missing": "Lütfen iki faktörlü kimlik doğrulama için uygulamanızdaki kodu girin."
+          }
+        },
+        "deletedAccount": "Hesabınız silinmek üzere işaretlendi. Verileriniz önümüzdeki 24 saat içinde silinecektir.",
+        "email": {
+          "otp": {
+            "missing": "İki faktörlü kimlik doğrulama için lütfen e-postanızdaki kodu girin."
+          }
+        },
+        "unauthorized": {
+          "otp": "Erişim verileriniz doğru değil. Lütfen tekrar deneyin.",
+          "text": "Kullanıcı adı veya şifre yanlış. Lütfen tekrar deneyiniz."
+        }
+      }
+    }
+  },
+  "message": {
+    "appointment": {
+      "component": {
+        "header": {
+          "cancellation": "Randevu iptali",
+          "change": "Tarih değişikliği",
+          "confirmation": "Atama onayı"
+        }
+      }
+    },
+    "appointmentCancelled": {
+      "title": "Randevunuz iptal edildi"
+    },
+    "appointmentRescheduled": {
+      "title": "Randevunuz ertelendi"
+    },
+    "appointmentSet": {
+      "addToCalendar": "Takvime ekle",
+      "and": "ve",
+      "between": "arasında",
+      "cancel": "Randevu iptal",
+      "info": {
+        "video": "Görüntülü danışmanlık"
+      },
+      "title": "Randevunuz oluşturuldu"
+    },
+    "copy": {
+      "title": "Mesajı panoya kopyala"
+    },
+    "dayBeforeYesterday": "Dünden önceki gün",
+    "delete": {
+      "delete": "Silme",
+      "deleted": {
+        "other": "Bu mesaj silinmiştir.",
+        "own": "Bu mesajı sildiniz."
+      },
+      "overlay": {
+        "cancel": "İptal",
+        "confirm": "Silme",
+        "copy": "Mesajı gerçekten silmek istiyor musunuz?",
+        "headline": "Mesajı sil"
+      }
+    },
+    "groupChat": "Grup sohbeti",
+    "isMyMessage": {
+      "name": "I"
+    },
+    "newEnquiry": "Yeni talep",
+    "note": {
+      "title": "Not"
+    },
+    "read": "Okuyun",
+    "sent": "teslim edildi",
+    "submit": {
+      "booking": {
+        "buttonLabel": "Danışma için bir randevu ayarlayın",
+        "headline": "Ya da şimdi randevu alın"
+      }
+    },
+    "showLess": "Daha az göster",
+    "showMore": "Daha fazla göster",
+    "today": "Bugün",
+    "tomorrow": "Yarın",
+    "unread": "okunmamış",
+    "yesterday": "Dün"
+  },
+  "navigation": {
+    "appointments": "Video - Tarihler",
+    "asker": {
+      "sessions": {
+        "large": "İstişarelerim",
+        "small": "Haberler"
+      }
+    },
+    "booking": {
+      "events": "Randevularım"
+    },
+    "consultant": {
+      "enquiries": "İlk sorgulamalar",
+      "sessions": {
+        "large": "İstişarelerim",
+        "small": "Haberler"
+      }
+    },
+    "language": "Dil",
+    "overview": "Genel Bakış",
+    "profile": "Profil",
+    "tools": "Aletlerim"
+  },
+  "notifications": {
+    "error": "Başarısız",
+    "info": "Bilgi",
+    "initialRequest": {
+      "new": "Yeni bir ilk talebiniz var!"
+    },
+    "message": {
+      "new": "Yeni bir mesajınız var!"
+    },
+    "success": "Başarılı",
+    "warning": "Uyarı"
+  },
+  "overlay": {
+    "step": {
+      "headline": {
+        "prefix": ". Adım | "
+      }
+    },
+    "timeout": {
+      "confirm": "Siteden ayrılmak istediğinize emin misiniz?",
+      "headline": "Bir dakika lütfen."
+    }
+  },
+  "overview": {
+    "appointmentsEmpty": "Bugün randevu yok, bunu değiştirmek için tavsiye isteyen kişilerden randevu alın",
+    "emptyAppointments": "Bugün randevu yok, bunu değiştirmek için tavsiye isteyen kişilerden randevu alın",
+    "emptyAppointmentsMobile": "Şu anda randevu yok, bunu değiştirmek için tavsiye isteyen kişilerden randevu alın",
+    "emptyInitialMessage": "Çok iyi, tüm ilk talepler işleme alındı!",
+    "emptyMessages": "Her şeyi görebiliyorsunuz, tüm mesajlar okunuyor!",
+    "initialInquiriesEmpty": "Çok iyi, tüm ilk talepler işleme alındı!",
+    "initialInquiriesTitle": "{{countStr}} İlk sorgulamalar",
+    "myMessagesEmpty": "Her şeyi görebiliyorsunuz, tüm mesajlar okunuyor!",
+    "myMessagesTitle": "{{countStr}} okunmamış mesajlar",
+    "start": "Başlangıç",
+    "title": "Tekrar hoş geldiniz!",
+    "upcomingAppointment": "Bir sonraki randevunuz",
+    "upcomingAppointments": "{{countStr}} Sonraki randevularınız",
+    "viewAll": "Tüm reklamlar"
+  },
+  "preconditions": {
+    "cookie": {
+      "button": "Önceki sayfaya geri dön",
+      "headline": "Devam etmek için lütfen çerezleri etkinleştirin",
+      "paragraph": {
+        "1": "Giriş yapabilmek için lütfen tarayıcınızda çerezleri etkinleştirin.",
+        "2": "Tarayıcınızda çerezleri etkinleştirdikten sonra, önceki sayfaya dönmek için aşağıdaki düğmeye tıklamanız yeterlidir."
+      }
+    }
+  },
+  "profile": {
+    "appLanguage": {
+      "info": "Uygulamanın dilini buradan ayarlayın.",
+      "title": "Dil"
+    },
+    "browserNotifications": {
+      "denied": {
+        "message": "Bu tarayıcı için bildirim almayı reddettiniz. Anlık bildirimleri etkinleştirmek için önce tarayıcı ayarlarınızda izin vermeniz gerekir."
+      },
+      "description": "Çevrimiçi iseniz, yeni bir mesaj aldığınızda sizi bu tarayıcıda bilgilendireceğiz.",
+      "initialEnquiry": {
+        "title": "Yeni bir ilk başvuru alındı"
+      },
+      "newMessage": {
+        "description": "Size atanan tavsiye arayanlardan biri şu cevabı verdi",
+        "title": "Yeni sohbet mesajı"
+      },
+      "title": "Tarayıcı bildirimleri",
+      "toggle": "Bu tarayıcıda bildirimler alın"
+    },
+    "data": {
+      "agency": {
+        "label": "Danışma Merkezi",
+        "registrationLink": {
+          "notification": {
+            "text": "Danışma merkezine kayıt bağlantısı panoya kopyalandı!",
+            "title": "Bağlantı kopyalandı"
+          },
+          "text": "Bağlantıyı kopyala",
+          "title": "Danışma merkezine kayıt bağlantısını panoya kopyalayın"
+        }
+      },
+      "displayName": "Görünen ad",
+      "edit": {
+        "button": {
+          "cancel": "İptal",
+          "edit": "Düzenle",
+          "save": "Kaydet"
+        }
+      },
+      "email": "E-posta adresi",
+      "emailInfo": "E-posta adresinizi vermek isteğe bağlıdır ve yalnızca danışmanınızdan gelen yeni yanıtları size bildirmek için kullanılacaktır. E-posta adresiniz danışmanlar tarafından görülmez.",
+      "firstName": "İlk isim",
+      "info": {
+        "private": "Bu veriler tavsiye arayanlar tarafından görüntülenemez.",
+        "public": "Reklam ismiyle tavsiye arayanların karşısına çıkacaksınız."
+      },
+      "lastName": "Soyadı",
+      "personal": {
+        "registrationLink": {
+          "notification": {
+            "text": "Bağlantı panoya başarıyla kopyalandı!",
+            "title": "Bağlantı kopyalandı"
+          },
+          "text": "İletişim bağlantısını kopyala",
+          "title": "Kişi bağlantısını panoya kopyala",
+          "tooltip": "Kişisel iletişim bağlantınızı biriyle paylaşın, böylece sizinle doğrudan çevrimiçi bir danışmanlık oturumu başlatabilirler."
+        }
+      },
+      "profileIcon": "Profil resmi",
+      "register": {
+        "button": {
+          "label": "Kayıt Olun"
+        },
+        "consultingModeInfo": {
+          "groupChats": "Kendi kendine yardımda, etkilenenler bir konuyu veya endişeyi birbirleriyle tartışırlar. Etkilenenler sorunları, duyguları ve umutları hakkında konuşur ve başkalarının sorunların üstesinden nasıl geldiğini öğrenirler. Gruplar moderatörler tarafından yönetilir.",
+          "singleChats": "Bu konularda kişiselleştirilmiş tavsiyeler alacaksınız. Sorunuz için bize yazın!"
+        },
+        "consultingTypeSelect": {
+          "label": "Konu alanları"
+        },
+        "headline": "Başka konularda da tavsiye veya yardıma mı ihtiyacınız var? <br>Size destek olmaktan mutluluk duyarız."
+      },
+      "registerError": {
+        "overlay": {
+          "button": {
+            "label": "Kapat"
+          },
+          "headline": "Bir hata oluştu. Lütfen tekrar deneyin.",
+          "xReasonAlreadyRegistered": "Bu konuda danışma merkezine zaten kayıtlısınız."
+        }
+      },
+      "registerSuccess": {
+        "overlay": {
+          "button1": {
+            "label": "Mesaj oluştur"
+          },
+          "button2": {
+            "label": "Oturumu kapat"
+          },
+          "groupChats": {
+            "button": {
+              "label": "Genel bakış için"
+            }
+          },
+          "headline": "Yeni bir konu alanı için başarıyla kaydoldunuz."
+        }
+      },
+      "title": {
+        "agencies": "Benim tavsiye merkezlerim",
+        "asker": "Benim hakkımda",
+        "information": "İletişim bilgileri",
+        "private": "Özel veriler"
+      },
+      "userName": "Kullanıcı adı"
+    },
+    "documentation": {
+      "description": "Herhangi bir sorunuz var mı? Kılavuzda, çevrimiçi danışmanlık platformunun en önemli işlevleri hakkında ayrıntılı bilgi bulacaksınız.",
+      "link": "Kılavuza",
+      "title": "Danışma platformu için el kitabı"
+    },
+    "externalRegistration": {
+      "cancel": "İptal",
+      "copy": {
+        "end": "\" diğer uygulamaya geçip orada kayıt yaptırabilir miyim?",
+        "start": "Başvurmak ister misiniz \""
+      },
+      "headline": "Seçtiğiniz danışma merkezi tavsiye için farklı bir uygulama kullanıyor",
+      "submit": "Şimdi değiştirin"
+    },
+    "footer": {
+      "dataprotection": "Veri koruma",
+      "imprint": "Künye"
+    },
+    "functions": {
+      "absence": {
+        "activated": {
+          "label": "Mesaj bırakmak veya düzenlemek için devamsızlığınızı devre dışı bırakın."
+        },
+        "label": "Ofis dışı bir mesajı saklayın",
+        "title": "Benim yokluğum"
+      },
+      "masterKey": {
+        "saveError": "Şifrenizi değiştirirken bir sorun oluştu. Lütfen tekrar deneyin."
+      },
+      "password": {
+        "reset": {
+          "confirm": {
+            "label": "Yeni şifreyi onayla"
+          },
+          "insecure": "Şifreniz güvenli değil.",
+          "instructions": "<span class=\"text--bold\">Korumalı bir danışmayı garanti etmek için şifreniz aşağıdaki kriterleri karşılamalıdır:</span><ul class=\"pl--2 my--1\"><li>Harf büyüklüğüne duyarlı</li><li>en az bir sayı</li><li>. bir sayı</li><li>en az bir özel karakter (örneğin: ?, !, +, #, &, ...)</li><li>en az 9 karakter</li></ul>",
+          "new": {
+            "label": "Yeni şifre"
+          },
+          "not": {
+            "same": "Şifreniz aynı değil."
+          },
+          "old": {
+            "incorrect": "Şifreniz yanlış.",
+            "label": "Geçerli şifre"
+          },
+          "overlay": {
+            "button": {
+              "label": "Giriş yap"
+            },
+            "headline": "Şifrenizi başarıyla değiştirdiniz. Şimdi giriş sayfasına yönlendirileceksiniz."
+          },
+          "same": "Şifreniz aynı.",
+          "secure": "Şifreniz güvende.",
+          "subtitle": "Dilerseniz şifrenizi buradan değiştirebilirsiniz. Yeni bir şifre belirlemek için önce mevcut şifrenizi girin.",
+          "title": "şifre"
+        }
+      },
+      "security": {
+        "button": "Şifre değiştirme",
+        "title": "Güvenlik"
+      },
+      "spokenLanguages": {
+        "saveError": "Kaydederken bir sorun oluştu. Lütfen tekrar deneyin."
+      },
+      "title": "Fonksiyonlar"
+    },
+    "header": {
+      "title": "Profil"
+    },
+    "noContent": "Belirtilmemiş",
+    "notifications": {
+      "appointmentNotificationEnabled": {
+        "description": "Bir randevu planlandı, ertelendi veya iptal edildi",
+        "title": "Tarihler"
+      },
+      "description": "Yeni bir mesaj aldığınızda sizi e-posta ile bilgilendireceğiz.",
+      "error": {
+        "description": "Maalesef şu anda ayarlarınızı güncelleyemiyoruz. Lütfen daha sonra tekrar deneyin.",
+        "title": "Bir şeyler ters gitti."
+      },
+      "follow": {
+        "up": {
+          "email": {
+            "label": "kabul edilmiş bir danışmandan bir mesaj aldınız."
+          }
+        }
+      },
+      "initialEnquiry": {
+        "title": "Yeni bir ilk başvuru alındı"
+      },
+      "mainEmail": {
+        "title": "E-posta bildirimlerine izin ver"
+      },
+      "newMessage": {
+        "description": "Size atanan tavsiye arayanlardan biri şu cevabı verdi",
+        "title": "Yeni sohbet mesajı"
+      },
+      "noEmail": {
+        "button": "E-posta adresi ekle",
+        "info": "Henüz bir e-posta adresi eklemediniz.",
+        "modal": {
+          "confirm": "Ekle",
+          "description": "E-posta adresinizi vermek isteğe bağlıdır ve yalnızca danışmanınızdan gelen yeni yanıtlar hakkında sizi bilgilendirmek için kullanılacaktır. E-posta adresiniz danışmanlar tarafından görülmez.",
+          "emailInput": {
+            "invalid": "E-posta adresiniz geçerli değil.",
+            "label": "e-posta",
+            "unavailable": "Bu e-posta adresi zaten kayıtlı.",
+            "valid": "E-posta adresiniz geçerlidir."
+          },
+          "errorMessage": "Maalesef şu anda e-posta adresinizi kaydedemiyoruz. Lütfen daha sonra tekrar deneyin veya destek ekibimizle iletişime geçin.",
+          "errorTitle": "Bir şeyler ters gitti.",
+          "title": "E-posta adresi ekle"
+        }
+      },
+      "reassignmentAdviceSeeker": {
+        "description": "Danışmanınız sizi yeni bir danışmana atamak için izin istedi.",
+        "title": "Danışman değişikliği"
+      },
+      "reassignmentConsultant": {
+        "description": "İş arkadaşınız size bir danışman atadı.",
+        "title": "Tavsiye isteyen bir kişinin yeniden görevlendirilmesi"
+      },
+      "subtitle": "Sizi bilgilendireceğiz:",
+      "title": "E-posta bildirimleri",
+      "toggleError": {
+        "description": "Maalesef şu anda bildirimlerinizi etkinleştiremiyoruz. Lütfen daha sonra tekrar deneyin.",
+        "title": "Bir şeyler ters gitti."
+      }
+    },
+    "routes": {
+      "activities": {
+        "absence": "Benim yokluğum",
+        "statistics": "Benim istatistiklerim",
+        "title": "Benim faaliyetlerim"
+      },
+      "display": "Ekran",
+      "general": {
+        "privat": "Özel veriler",
+        "public": "Kamu verileri",
+        "title": "Genel bilgi"
+      },
+      "help": {
+        "title": "Yardım",
+        "videoCall": "Görüntülü arama"
+      },
+      "notifications": {
+        "email": "E-posta bildirimi",
+        "title": "Bildirimler"
+      },
+      "settings": {
+        "security": {
+          "2fa": "İki faktörlü kimlik doğrulama",
+          "changePassword": "Şifre değiştirme",
+          "title": "Güvenlik"
+        },
+        "title": "Ayarlar"
+      }
+    },
+    "spokenLanguages": {
+      "info": "Tavsiye isteyenlere tavsiyede bulunabileceğiniz dil(ler)i seçin. Almanca varsayılan dil olarak önceden seçilidir ve kaldırılamaz.",
+      "title": "Benim dillerim"
+    },
+    "statistics": {
+      "complete": {
+        "download": {
+          "label": "Excel dosyasını indirin"
+        },
+        "filename": "Çevrimiçi danışmanlık istatistikleri",
+        "title": "Seçtiğiniz danışmanlık dönemi için istatistiklerinizi buradan indirebilirsiniz:"
+      },
+      "csvHeader": {
+        "numberOfAppointments": "Rezerve edilen tarihler",
+        "numberOfAssignedSessions": "İstişareler kabul edildi",
+        "numberOfSentMessages": "Yazılı Haberler",
+        "numberOfSessionsWhereConsultantWasActive": "Aktif istişareler",
+        "videoCallDuration": "Dakika:saniye cinsinden görüntülü arama süresi"
+      },
+      "period": {
+        "currentMonth": "geçerli ay",
+        "currentYear": "cari yıl",
+        "display": {
+          "default": "GG.AA.YYYY - GG.AA.YYYY",
+          "prefix": "Bu tarihten itibaren ",
+          "suffix": " sahipsin:"
+        },
+        "lastMonth": "geçen ay",
+        "lastYear": "geçen yıl",
+        "prefix": "Sizin rakamlarınız"
+      },
+      "title": "Benim istatistiklerim"
+    },
+    "unsetEmail": {
+      "confirmOverlay": {
+        "benefit": {
+          "1": "danışmanınız size yazdığında e-posta bildirimi almayacaksınız",
+          "2": "şifrenizi unuttuysanız sıfırlayamazsınız."
+        },
+        "button": {
+          "confirm": "Silme",
+          "deny": "İptal"
+        },
+        "copy": "E-posta adresinizi silerseniz:",
+        "headline": "E-posta adresinizi gerçekten silmek istiyor musunuz?"
+      },
+      "errorOverlay": {
+        "button": "Tamam.",
+        "headline": "Oops! E-posta adresini şu anda silemedik. Lütfen tekrar deneyin."
+      },
+      "successOverlay": {
+        "button": "Tamam.",
+        "headline": "E-posta adresinizi başarıyla sildiniz."
+      }
+    }
+  },
+  "qrCode": {
+    "agency": {
+      "overlay": {
+        "headline": "Danışma merkezleri QR kodu",
+        "info": "{{agency}} QR kodunu biriyle paylaşırsanız, doğrudan danışma merkezine kaydolmak için cep telefonu kamerasıyla tarayabilir. Alternatif olarak, kodu da indirebilirsiniz."
+      }
+    },
+    "download": {
+      "filename": "qr-kod-{{filename}}"
+    },
+    "iconTitle": "QR kodu",
+    "link": {
+      "text": "QR kodunu göster"
+    },
+    "overlay": {
+      "close": "Kapat",
+      "download": "QR kodunu .png olarak indirin",
+      "image": {
+        "alt": "QR kodu"
+      }
+    },
+    "personal": {
+      "overlay": {
+        "headline": "Kişisel QR kodunuz",
+        "info": "QR kodunuzu biriyle paylaşırsanız, sizinle doğrudan iletişime geçmek için cep telefonu kamerasıyla tarayabilir. Alternatif olarak, kodu da indirebilirsiniz."
+      }
+    }
+  },
+  "registration": {
+    "accordion": {
+      "item": {
+        "continueButton": {
+          "label": "Daha ileri",
+          "title": "Bir sonraki adıma geçin"
+        }
+      }
+    },
+    "age": {
+      "dropdown": "Yaş seçin*",
+      "headline": "Yaş belirtiniz"
+    },
+    "agency": {
+      "headline": "Danışma merkezinizi seçin",
+      "preselected": {
+        "prefix": "Önceden seçtiğiniz danışma merkeziniz: "
+      },
+      "result": {
+        "external": {
+          "headline": "Bulunan danışma merkezi tavsiye için farklı bir uygulama kullanıyor",
+          "link": "Şimdi değiştirin",
+          "subline": "Size yakın bir danışma merkezi bulmak için lütfen farklı bir posta kodu deneyin veya web sitemizi ziyaret edin."
+        },
+        "headline": "Posta koduna göre danışmanlık merkezleri",
+        "languages": "Bu danışma merkezi size şu konularda tavsiyelerde bulunur:"
+      },
+      "search": "Bir posta kodu arayın",
+      "summary": "Danışma merkeziniz:"
+    },
+    "agencyPreselected": {
+      "headline": "Lütfen posta kodunuzu girin",
+      "intro": {
+        "overline": "Posta kodunuza neden ihtiyacımız var?",
+        "point1": "ikamet ettiğiniz yerin çevresindeki mevcut yardımları bilmek",
+        "point2": "federal eyaletinizin yasalarını bilin",
+        "subline": "Uzmanlarımız:"
+      }
+    },
+    "agencySelection": {
+      "headline": "Bir danışma merkezi seçin",
+      "intro": {
+        "overline": "Neden yakınınızdaki bir danışma merkezi size çevrimiçi olarak da yardımcı oluyor?",
+        "point1": "bölgesel yardım yapılarını bilir,",
+        "point2": "yasal gereklilikler hakkında bilgi sahibidir,",
+        "point3": "gerekirse size yerinde de tavsiyelerde bulunabilir.",
+        "subline": "Çünkü o zaman uzman personel var:"
+      },
+      "languages": {
+        "info": "Bu danışma merkezi size şu konularda tavsiyelerde bulunur:",
+        "more": "Diller"
+      },
+      "noAgencies": "Ne yazık ki şu anda herhangi bir danışma merkezi bulunmamaktadır.",
+      "postcode": {
+        "label": "Posta kodunuz",
+        "search": "Danışma merkezi aramasına",
+        "unavailable": {
+          "text": "Ne yazık ki şu anda size yakın bir çevrimiçi danışmanlık merkezimiz bulunmamaktadır. Bölgenizdeki yerel danışmanlık merkezlerini web sitemizde bulabilirsiniz.",
+          "title": "Çevrimiçi danışma merkezi bulunamadı"
+        }
+      },
+      "title": {
+        "end": ":",
+        "start": "Posta koduna göre danışmanlık merkezleri"
+      }
+    },
+    "consultingType": {
+      "preselected": {
+        "prefix": "Önceden seçtiğiniz konu alanı: "
+      }
+    },
+    "consultingTypeAgencySelection": {
+      "agency": {
+        "headline": "Lütfen bir danışma merkezi seçin",
+        "infoText": "Danışmanınız çeşitli danışma merkezlerinde çalışmaktadır. Lütfen istediğiniz danışma merkezini seçin."
+      },
+      "consultingType": {
+        "headline": "Lütfen bir konu seçin",
+        "infoText": "Danışmanınız çeşitli konu alanlarında aktiftir. Lütfen istediğiniz konu alanını seçiniz.",
+        "select": {
+          "label": "Konu alanı"
+        }
+      },
+      "topic": {
+        "headline": "Lütfen bir konu seçin",
+        "infoText": "Danışmanınız çeşitli konu alanlarında aktiftir. Lütfen istediğiniz konu alanını seçiniz.",
+        "select": {
+          "label": "Konu alanı"
+        }
+      }
+    },
+    "dataProtection": {
+      "label": {
+        "and": " ve ",
+        "prefix": "Bende ",
+        "suffix": " not alınmıştır. Bu web sitesi kimlik doğrulama ve gezinme için çerezler kullanmaktadır."
+      }
+    },
+    "error": {
+      "required_field_missing": {
+        "text": "Lütfen daha sonra tekrar deneyin.",
+        "title": "Ne yazık ki bir şeyler ters gitti."
+      }
+    },
+    "form": {
+      "title": "Kaydı tamamlayın"
+    },
+    "headline": "Kayıt",
+    "login": {
+      "helper": "Zaten kayıtlı mısınız?",
+      "label": "Giriş yap"
+    },
+    "mainTopic": {
+      "headline": "Bu sorun alanlarından hangisi şu anda sizin için en önemli?",
+      "noTopics": "Maalesef şu anda hiçbir konu seçilemiyor. Bir sonraki adımda kayıt işlemine devam edin."
+    },
+    "overlay": {
+      "success": {
+        "button": "Mesaj oluştur",
+        "copy": "Başarıyla kayıt oldunuz.",
+        "headline": "Caritas danışmanlık hizmetine hoş geldiniz<br>."
+      }
+    },
+    "overline": "Çevrimiçi danışmanlığa hoş geldiniz",
+    "password": {
+      "confirmation": {
+        "label": "Şifreyi tekrarla"
+      },
+      "criteria": {
+        "fulfilled": "Gerçekleştirildi",
+        "length": "en az 9 karakter",
+        "number": "en az bir sayı",
+        "specialChar": "en az bir özel karakter",
+        "upperLowerCase": "Büyük/küçük harf"
+      },
+      "headline": "Parola seçin",
+      "input": {
+        "label": "şifre"
+      },
+      "insecure": "Şifreniz güvenli değil.",
+      "intro": "Korumalı danışmanlığı garanti etmek için şifrenizin aşağıdaki kriterleri karşılaması gerekir:",
+      "notSame": "Şifreniz aynı değil.",
+      "same": "Şifreniz aynı.",
+      "secure": "Şifreniz güvende."
+    },
+    "state": {
+      "dropdown": "Durum seçin*",
+      "headline": "Federal eyaleti belirtin",
+      "options": {
+        "0": "Almanya dışında",
+        "1": "Baden-Württemberg",
+        "2": "Bavyera",
+        "3": "Berlin",
+        "4": "Brandenburg",
+        "5": "Bremen",
+        "6": "Hamburg",
+        "7": "Hesse",
+        "8": "Mecklenburg-Batı Pomeranya",
+        "9": "Aşağı Saksonya",
+        "10": "Kuzey Ren-Vestfalya",
+        "11": "Rhineland-Palatinate",
+        "12": "Saarland",
+        "13": "Saksonya",
+        "14": "Saksonya-Anhalt",
+        "15": "Schleswig-Holstein",
+        "16": "Thüringen"
+      }
+    },
+    "stepbar": {
+      "of": "itibaren",
+      "step": "Adım"
+    },
+    "submitButton": {
+      "label": "Kayıt Olun"
+    },
+    "teaser": {
+      "consultant": "Danışmanınızla iletişime geçmek için lütfen kayıt olun"
+    },
+    "topic": {
+      "headline": "Hangi konuda tavsiye almak istiyorsunuz?",
+      "infoOverlay": {
+        "backButtonLabel": "Başka bir konu seçin",
+        "nextButtonLabel": "Konuyu seçin ve devam edin"
+      },
+      "oneResult": "Size şu konularda tavsiyelerde bulunuyoruz",
+      "subline": "Danışmanlık hizmetlerimizden bir konu seçin.",
+      "summary": "Senin konun:"
+    },
+    "account": {
+      "headline": "Oturum açma verilerini girin",
+      "password": {
+        "criteria1": "en az 9 karakter",
+        "criteria2": "en az bir sayı",
+        "criteria3": "Büyük/küçük harf",
+        "criteria4": "en az bir özel karakter",
+        "label": "şifre"
+      },
+      "repeatPassword": {
+        "error": "Şifreniz aynı değil.",
+        "label": "Şifreyi tekrarla",
+        "success": "Şifreniz aynı."
+      },
+      "subline": "Anonimliğinizi korumak için gerçek adınızı veya baş harflerinizi kullanmamanızı tavsiye ederiz.",
+      "username": {
+        "error": {
+          "available": "Kullanıcı adınız çok kısa.",
+          "unavailable": "Bu kullanıcı adı zaten alınmış."
+        },
+        "hint": "5 veya daha fazla karakter",
+        "label": "Kullanıcı adı",
+        "success": "Kullanıcı adınız uygun."
+      }
+    },
+    "back": "Geri",
+    "next": "Daha ileri",
+    "register": "Kayıt Olun",
+    "title": {
+      "start": "Kayıt"
+    },
+    "user": {
+      "infoText": "Anonimliğinizi korumak için gerçek adınızı veya baş harflerinizi kullanmamanızı tavsiye ederiz.<br>Lütfen en az 5 karakterli uygun bir kullanıcı adı seçin.",
+      "label": "Kullanıcı adı",
+      "suitable": "Kullanıcı adınız uygun.",
+      "unavailable": "Kullanıcı adı zaten alınmış.",
+      "unsuitable": "Kullanıcı adınız çok kısa."
+    },
+    "username": {
+      "headline": "Kullanıcı adını seçin"
+    },
+    "welcomeScreen": {
+      "info1": {
+        "text": "Kişiselleştirilmiş ve korumalı tavsiye için",
+        "title": "Basit kayıt"
+      },
+      "info2": {
+        "text": "Mesajınızı yerel bir danışma merkezine gönderirsiniz",
+        "title": "Mesaj oluştur"
+      },
+      "info3": {
+        "text": "Size 2 iş günü içinde cevap verilecektir",
+        "title": "Kişisel ve profesyonel danışmanlık"
+      },
+      "info4": {
+        "text": "Kimliğiniz gizli kalır ve ücretsiz danışmanlık hizmeti alırsınız",
+        "title": "Anonim ve ücretsiz"
+      },
+      "register": {
+        "buttonLabel": "Kayıt Olun",
+        "helperText": "Çevrimiçi danışmanlıkta yeni misiniz?"
+      },
+      "subline": "Caritas danışmanlığı nasıl çalışır?",
+      "login": {
+        "buttonLabel": "Giriş yap",
+        "helperText": "Zaten kayıtlı mısınız?"
+      }
+    },
+    "zipcode": {
+      "bullet1": "- ikamet ettiğiniz yerin çevresindeki yardımları bilmek",
+      "bullet2": "- federal eyaletinizin yasalarını bilin",
+      "headline": "Size mümkün olan en iyi tavsiyeyi verebilmemiz için posta kodunuza ihtiyacımız var",
+      "label": "Posta kodunuz",
+      "subline": "Neden mi? Çünkü o zaman uzmanlarımız:"
+    }
+  },
+  "releaseNote": {
+    "content": {
+      "checkbox": "Bu mesajı bir daha göstermeyin.",
+      "headline": "Haberlerimiz var!",
+      "intro": "Çevrimiçi danışmanlıkta aşağıdakiler değişmiştir:"
+    },
+    "overlay": {
+      "close": "Kapat"
+    }
+  },
+  "session": {
+    "acceptance": {
+      "button": {
+        "label": "Cevaplar"
+      },
+      "overlay": {
+        "headline": "İlk sorguyu başarıyla kabul ettiniz ve şimdi bunu \"Danışmanlıklarım\" altında bulabilirsiniz."
+      }
+    },
+    "alreadyAssigned": {
+      "overlay": {
+        "button": {
+          "cancel": "Kapat",
+          "redirect": "Cevaplar"
+        },
+        "headline": "Bu konsültasyonu zaten atamıştınız."
+      }
+    },
+    "anonymous": {
+      "takenByOtherConsultant": {
+        "button": {
+          "label": "Kapat"
+        },
+        "overlay": {
+          "headline": "Bu ilk talep başka bir danışman tarafından kabul edilmiştir."
+        }
+      }
+    },
+    "assignOther": {
+      "button": {
+        "label": "Kapat"
+      },
+      "inProgress": "Danışmanlık şu anda atanmış durumdadır.",
+      "overlay": {
+        "headline": {
+          "1": "{{client}} {{newConsultant}} Atamak ister misiniz?",
+          "2": "Konsültasyonu başarıyla atadınız."
+        },
+        "subtitle": {
+          "noTeam": "{{newConsultant}} bu nedenle tavsiye isteyen kişiden sorumludur ve tüm mesaj geçmişini okuyabilir. Artık mesajlara erişiminiz yoktur."
+        }
+      }
+    },
+    "assignSelf": {
+      "button1": {
+        "label": "Cevaplar"
+      },
+      "button2": {
+        "label": "Kapat"
+      },
+      "inProgress": "Şu anda size danışmanlık hizmeti verilmektedir.",
+      "overlay": {
+        "button": {
+          "assign": "Atama",
+          "cancel": "Yıkım"
+        },
+        "headline1": "Danışmanlığı başarıyla kabul ettiniz. İstişarelerim bölümüne taşındı.",
+        "headline2": "Danışmanlık atayın",
+        "subtitle": "Bu danışmanlık hizmetini gerçekten vermek istiyor musunuz?"
+      }
+    },
+    "consultant": {
+      "prefix": "Danışman - "
+    },
+    "divider": {
+      "lastRead": "Son okuma"
+    },
+    "dragAndDrop": {
+      "explanation": {
+        "insideDropArea": "Yüklemek için dosyayı buraya yerleştirin.",
+        "outsideDropArea": "Yüklemek için dosyayı alana sürükleyin."
+      },
+      "restrictions": "{{attachment_filesize}}.jpg, .png, .pdf, .docx, .xlsx maksimum MB'a kadar"
+    },
+    "empty": "Lütfen bir mesaj seçin",
+    "groupChat": {
+      "consultant": {
+        "prefix": "Moderatör - "
+      }
+    },
+    "reassign": {
+      "system": {
+        "message": {
+          "reassign": {
+            "accept": "Kabul et",
+            "accepted": {
+              "consultant": {
+                "title": "{{newConsultant}} şimdi sizinle ve endişelerinizle ilgileniyor."
+              },
+              "description": {
+                "other": "{{consultant}} {{client}} sorumludur.",
+                "self": "{{client}} Artık siz sorumlusunuz."
+              },
+              "new": {
+                "consultant": {
+                  "description": "{{newConsultant1}} 'yi bilgilendirdik. {{newConsultant2}} 'e artık mesaj gönderebilirsiniz."
+                }
+              },
+              "old": {
+                "consultant": {
+                  "description": "{{newConsultant}} {{oldConsultant}} 'nin artık sizden sorumlu olmadığını bildirdik."
+                }
+              },
+              "title": {
+                "other": "{{oldConsultant}} {{newConsultant}} {{client}}..teslim etti.",
+                "self": "{{oldConsultant}} {{client}} sana verdi."
+              }
+            },
+            "decline": "Reddet",
+            "declined": {
+              "description": {
+                "other": "{{consultant}} {{client}} hala sorumludur.",
+                "self": "{{client}} Hala sorumlu olduğunuz ."
+              },
+              "old": {
+                "consultant": {
+                  "title": "{{oldConsultant}} sizinle ve endişelerinizle ilgilenmeye devam edecektir."
+                }
+              },
+              "title": "{{client}} tahsisi reddetmiştir."
+            },
+            "description": {
+              "noTeam": "{{newConsultant}} {{oldConsultant}} bu nedenle tüm mesaj geçmişini okuyabilir ve sizden sorumludur. artık mesajlara erişimi yoktur."
+            },
+            "question": "Devir teslim işlemini kabul ediyor musunuz?",
+            "sent": {
+              "description": {
+                "noTeam": "{{client1}} {{client2}} {{newConsultant}} Görevlendirmeyi kabul eder etmez, tüm mesaj geçmişiyle birlikte aktarılır."
+              },
+              "title": "Atama için talep gönderildi"
+            },
+            "title": "{{oldConsultant}} {{newConsultant}} 'a transfer etmek istiyorum."
+          }
+        }
+      }
+    },
+    "u25": {
+      "assignment": {
+        "placeholder": "Danışmanlık atayın"
+      }
+    },
+    "unreadCount": {
+      "maxValue": "99+"
+    }
+  },
+  "sessionList": {
+    "asker": {
+      "welcome": "Tekrar hoş geldiniz!"
+    },
+    "createChat": {
+      "buttonTitle": "Sohbet oluşturun"
+    },
+    "empty": {
+      "archived": "Henüz hiçbir istişare arşivlenmedi",
+      "known": "Şu anda herhangi bir ilk talep bulunmamaktadır",
+      "mySessions": "Şu anda aktif danışmanlığınız yok"
+    },
+    "preview": {
+      "headline": "İlk sorgulamalar",
+      "registered": {
+        "tab": "İlk sorgulamalar"
+      }
+    },
+    "reloadButton": {
+      "label": "Yeniden Yükle"
+    },
+    "time": {
+      "label": {
+        "postfix": "Saat"
+      }
+    },
+    "user": {
+      "consultantUnknown": "Danışman arayışları devam ediyor",
+      "headline": "İstişarelerim",
+      "peer": "Akran",
+      "writeEnquiry": "Şimdi bir mesaj yazın"
+    },
+    "view": {
+      "archive": {
+        "tab": "Arşiv"
+      },
+      "asker": {
+        "tab": "Tavsiye arayan"
+      },
+      "headline": "İstişarelerim"
+    },
+    "anonymous": {
+      "tag": "Anonim"
+    }
+  },
+  "statusOverlay": {
+    "error": {
+      "headline": "Mesaj gönderilirken bir hata oluştu",
+      "text": "Bir sorun oluştu, lütfen tekrar deneyin"
+    },
+    "success": {
+      "headline": "Mesajınız gönderildi",
+      "text": "Sorunuz için teşekkür ederiz. İş günlerinde 48 saat içinde size cevap vereceğiz. E-posta adresinizi verdiyseniz, yanıt verir vermez bir bildirim alacaksınız."
+    }
+  },
+  "termsAndConditionOverlay": {
+    "buttons": {
+      "accept": "Katılıyorum",
+      "continue": "Daha ileri",
+      "decline": "Reddet"
+    },
+    "contentLine1": {
+      "privacy": "Çevrimiçi danışmanlık için gizlilik politikasını güncelledik. Güncel durumu burada bulabilirsiniz.",
+      "termsAndCondition": "Çevrimiçi danışmanlık için kullanım koşullarını güncelledik. Çevrimiçi danışmanlık hizmetini kullanmaya devam edebilmemiz için onayınıza ihtiyacımız var.",
+      "termsAndConditionAndPrivacy": "Çevrimiçi danışmanlık için kullanım koşullarını ve gizlilik politikasını güncelledik. Çevrimiçi danışmanlık hizmetini kullanmaya devam etmek için onayınıza ihtiyacımız var."
+    },
+    "contentLine2": {
+      "termsAndCondition": "Kullanım koşullarını dikkate aldım.\n Bu vesileyle onları kabul ettiğimi beyan ederim.",
+      "termsAndConditionAndPrivacy": "Kullanım koşullarını ve gizlilik politikasını okudum\n Bunları not aldım. Bu vesile ile mutabık olduğumu beyan ederim."
+    },
+    "labels": {
+      "here": "Burada",
+      "privacy": "Gizlilik Politikası",
+      "termsAndCondition": "Kullanım Koşulları"
+    },
+    "title": {
+      "privacy": "Gizlilik politikamızın güncellenmesi",
+      "termsAndCondition": "Kullanım şartlarımızın güncellenmesi",
+      "termsAndConditionAndPrivacy": "Kullanım şartlarımızın ve gizlilik politikamızın güncellenmesi"
+    }
+  },
+  "text": {
+    "label": {
+      "hint": "İpucu"
+    }
+  },
+  "tools": {
+    "button": {
+      "label": "Açık"
+    },
+    "calendar": {
+      "button": {
+        "label": "Açık"
+      },
+      "description": "<br/>Tatil günlerinizi veya diğer randevularınızı takvime girin, böylece tavsiye arayan kişiler bu süre zarfında sizden randevu alamazlar. Çevrimiçi danışmanlık için burada kullandığınız e-posta adresi ve şifre ile giriş yapın.",
+      "title": "Takvimim"
+    },
+    "shared": "Danışman ile paylaşıldı"
+  },
+  "twoFactorAuth": {
+    "activate": {
+      "app": {
+        "step2": {
+          "copy": "Lütfen akıllı telefonunuza veya tabletinize FreeOTP veya Google Authenticator uygulaması gibi uygun bir kimlik doğrulayıcı uygulaması yükleyin. Her iki uygulama da Google Play veya Apple App Store'da mevcuttur.",
+          "download": {
+            "apple": "Apple App Store'dan indirin",
+            "google": "Google Play Store'dan indirin"
+          },
+          "title": "Uygulamayı yükleyin",
+          "tool1": {
+            "title": "FreeOTP Uygulaması:",
+            "url": {
+              "apple": "https://apps.apple.com/de/app/freeotp-authenticator/id872559395",
+              "google": "https://play.google.com/store/apps/details?id=org.fedorahosted.freeotp"
+            }
+          },
+          "tool2": {
+            "title": "Google Authenticator Uygulaması:",
+            "url": {
+              "apple": "https://apps.apple.com/de/app/google-authenticator/id388497605",
+              "google": "https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2"
+            }
+          },
+          "visualisation": {
+            "label": "Kurulum"
+          }
+        },
+        "step3": {
+          "connect": {
+            "divider": "veya",
+            "key": "Uygulamayı açın ve aşağıdaki 32 haneli anahtarı girin:",
+            "qrCode": "Uygulamayı açın ve aşağıdaki QR kodunu tarayın:"
+          },
+          "copy": "Uygulamaya çevrimiçi danışmanlık eklemek için iki seçeneğiniz vardır:",
+          "title": "Uygulamayı hesabınıza bağlayın",
+          "visualisation": {
+            "label": "Ekle"
+          }
+        },
+        "step4": {
+          "copy": "Uygulama tarafından oluşturulan tek seferlik kodu girin ve kurulumu tamamlamak için \"Kaydet \"e tıklayın.",
+          "title": "Tek seferlik kod girin",
+          "visualisation": {
+            "label": "Bağlantı"
+          }
+        },
+        "step5": {
+          "title": "Uygulama bağlantısı başarıyla kuruldu.",
+          "visualisation": {
+            "label": "Onaylama"
+          }
+        }
+      },
+      "email": {
+        "input": {
+          "duplicate": {
+            "info": "Bu e-posta adresi zaten başka bir kişi tarafından kullanılıyor. Lütfen farklı bir e-posta adresi girin. Veya uygulamayı ikinci bir faktör olarak kullanın.",
+            "label": "E-posta adresi zaten kullanılıyor"
+          },
+          "info": "Bize yalnızca bir e-posta adresi kaydedebilirsiniz. Buradaki e-posta adresini değiştirirseniz, gelecekte de bu e-posta adresine bildirim alacaksınız.",
+          "invalid": "Geçersiz e-posta adresi",
+          "label": "E-posta adresinizi girin",
+          "valid": "E-posta adresinizi girin"
+        },
+        "resend": {
+          "headline": "İşe yaramadı mı?",
+          "hint": "E-posta adresinize bir kod gönderdik. Lütfen kodu giriniz.",
+          "new": "Yeni kod gönder",
+          "sent": "Yeni kod gönderildi"
+        },
+        "step2": {
+          "copy": "Lütfen e-posta adresinizi buraya girin.",
+          "title": "E-posta adresinizi girin",
+          "visualisation": {
+            "label": "Şartname"
+          }
+        },
+        "step3": {
+          "copy": {
+            "1": "Size az önce bir e-posta gönderdik",
+            "2": "size gönderildi. Lütfen e-postadaki kodu buraya girin."
+          },
+          "title": "E-posta adresini onayla",
+          "visualisation": {
+            "label": "Bağlantı"
+          }
+        },
+        "step4": {
+          "title": "E-posta kimlik doğrulaması başarıyla kuruldu.",
+          "visualisation": {
+            "label": "Onaylama"
+          }
+        }
+      },
+      "otp": {
+        "input": {
+          "label": {
+            "error": "Kimlik doğrulama başarısız oldu. Lütfen işlemi tekrarlayın.",
+            "short": "Girilen kod çok kısa.",
+            "text": "Tek seferlik kod"
+          }
+        }
+      },
+      "radio": {
+        "label": {
+          "app": "Uygulama",
+          "email": "E-posta adresi"
+        },
+        "tooltip": {
+          "app": "Uygulamayı yükleyin. Uygulama, oturum açtığınızda girmeniz gereken bir kod oluşturur.",
+          "email": "Kayıt olduğunuzda bir kod içeren bir e-posta alacaksınız. Daha sonra bu kodu girmelisiniz."
+        }
+      },
+      "step1": {
+        "app": "Authenticator Uygulaması ile",
+        "copy": "Akıllı telefonunuza veya tabletinize uygun bir kimlik doğrulayıcı uygulaması yükleyin. Alternatif olarak, e-posta adresinizi de ikinci bir faktör olarak kullanabilirsiniz.",
+        "disable": "Kimlik doğrulamayı devre dışı bırak",
+        "email": "E-posta ile",
+        "title": "İkinci faktörü seçin",
+        "visualisation": {
+          "label": "Seçim"
+        }
+      }
+    },
+    "edit": "Düzenle",
+    "email": {
+      "change": {
+        "confirmOverlay": {
+          "binding": {
+            "copy": {
+              "1": "E-posta adresinizi güvenli giriş için ikinci bir faktör olarak kullandığınız sürece değiştiremezsiniz.",
+              "2": "İkinci faktörü \"E-posta adresi\" yerine \"Uygulama\" olarak değiştirin. Daha sonra e-posta adresinizi değiştirebilirsiniz."
+            }
+          },
+          "button": {
+            "confirm": "Kimlik doğrulamayı devre dışı bırak",
+            "deny": "İptal"
+          },
+          "copy": {
+            "1": "Bu e-posta adresini güvenli giriş için ikinci bir faktör olarak kullanırsınız.",
+            "2": "E-posta adresini düzenlemek için iki faktörlü kimlik doğrulamayı devre dışı bırakın."
+          },
+          "title": "E-posta adresini düzenleme"
+        }
+      },
+      "delete": {
+        "confirmOverlay": {
+          "copy": "iki faktörlü kimlik doğrulama devre dışı bırakılır."
+        }
+      }
+    },
+    "nag": {
+      "button": {
+        "later": "Sonra hatırla",
+        "protect": "Şimdi koruyun"
+      },
+      "copy": "Hesabınızı olası yetkisiz erişime karşı güvence altına alın. Çevrimiçi danışma merkezinde oturum açmak için ikinci bir faktör (uygulama veya e-posta) kullanın.",
+      "obligatory": {
+        "copy": "Artık çevrimiçi danışma merkezinde oturum açmak için ikinci bir faktör (uygulama veya e-posta) girmelisiniz. Bu, güvenlik nedenlerinden dolayıdır ve hesabınızı olası yetkisiz erişime karşı korur. <br><br><b>İkinci bir faktör olmadan, artık çevrimiçi tavsiye verme yetkiniz yoktur.</b>",
+        "moment": {
+          "copy": "{{date1}} tarafından çevrimiçi danışma merkezine giriş yapmak için ikinci bir faktör (uygulama veya e-posta) girmeniz gerekir. Bu, güvenlik nedenleriyle yapılır ve hesabınızı olası yetkisiz erişimlere karşı korur. {{date2}} <br><br><b>Dikkat: İkinci bir faktör olmadan, 'den sonra artık çevrimiçi tavsiye veremezsiniz.</b>",
+          "title": "Hesabınızı şu şekilde koruyun {{date}}"
+        },
+        "title": "Hesabınızı şimdi koruyun"
+      },
+      "title": "Hesabınızı koruyun"
+    },
+    "overlayButton": {
+      "back": "Geri",
+      "close": "Kapat",
+      "confirm": "Onaylayın",
+      "next": "Daha ileri",
+      "save": "Kaydet"
+    },
+    "subtitle": "Şifrenize ek olarak, oturum açmak için ikinci bir faktör kullanın. Bu, hesabınız için ek güvenlik sağlar.",
+    "switch": {
+      "active": {
+        "label": "İki faktörlü kimlik doğrulama etkinleştirildi"
+      },
+      "deactive": {
+        "label": "İki faktörlü kimlik doğrulama devre dışı bırakıldı"
+      },
+      "type": {
+        "APP": "Uygulama",
+        "EMAIL": "e-posta",
+        "label": "İkinci faktörünüz"
+      }
+    },
+    "title": "İki faktörlü kimlik doğrulama"
+  },
+  "typingIndicator": {
+    "multipleUsers": {
+      "typing": "Katılımcılar yazıyor"
+    },
+    "singleUser": {
+      "typing": "yazıyor"
+    },
+    "twoUsers": {
+      "connector": "ve",
+      "typing": "yaz"
+    }
+  },
+  "user": {
+    "userAddiction": {
+      "addictiveDrugs": {
+        "0": "Alkol",
+        "1": "İlaçlar",
+        "2": "Yasal uçucular",
+        "3": "Tütün",
+        "4": "İlaç Tedavisi",
+        "5": "Kumar",
+        "6": "İnternet/Bilgisayar",
+        "7": "Yeme bozuklukları",
+        "8": "Diğer",
+        "headline": "Bağımlılık yapıcı maddeler"
+      },
+      "age": {
+        "0": "0-17",
+        "1": "18-20",
+        "2": "21-30",
+        "3": "31-40",
+        "4": "41-59",
+        "5": "60+",
+        "headline": "Yaş",
+        "null": "Belirtilmemiş",
+        "selectLabel": "Yaş seçin"
+      },
+      "gender": {
+        "0": "Kadın",
+        "1": "Erkek",
+        "2": "Çeşitli",
+        "headline": "Cinsiyet"
+      },
+      "relation": {
+        "0": "Etkilenen",
+        "1": "Akrabalar",
+        "2": "Diğer",
+        "headline": "Arka plan"
+      }
+    },
+    "userU25": {
+      "age": {
+        "0": "12 yaş altı",
+        "1": "12",
+        "2": "13",
+        "3": "14",
+        "4": "15",
+        "5": "16",
+        "6": "17",
+        "7": "18",
+        "8": "19",
+        "9": "20",
+        "10": "21",
+        "11": "22",
+        "12": "23",
+        "13": "24",
+        "14": "25",
+        "15": "25'in üzerinde",
+        "50": "20",
+        "51": "21",
+        "52": "22",
+        "53": "23",
+        "54": "24",
+        "55": "25",
+        "56": "26",
+        "selectLabel": "Yaş seçin*"
+      },
+      "gender": {
+        "0": "Kadın",
+        "1": "Erkek",
+        "2": "Çeşitli",
+        "headline": "Cinsiyet"
+      },
+      "relation": {
+        "0": "Etkilenen",
+        "1": "Akrabalar",
+        "2": "Diğer",
+        "headline": "Arka plan"
+      },
+      "state": {
+        "0": "Almanya dışında",
+        "1": "Baden-Württemberg",
+        "2": "Bavyera",
+        "3": "Berlin",
+        "4": "Brandenburg",
+        "5": "Bremen",
+        "6": "Hamburg",
+        "7": "Hesse",
+        "8": "Mecklenburg-Batı Pomeranya",
+        "9": "Aşağı Saksonya",
+        "10": "Kuzey Ren-Vestfalya",
+        "11": "Rhineland-Palatinate",
+        "12": "Saarland",
+        "13": "Saksonya",
+        "14": "Saksonya-Anhalt",
+        "15": "Schleswig-Holstein",
+        "16": "Thüringen",
+        "selectLabel": "Durum seçin*"
+      }
+    }
+  },
+  "userProfile": {
+    "data": {
+      "addictiveDrugs": "Bağımlılık yapıcı maddeler",
+      "age": "Yaş",
+      "gender": "Cinsiyet",
+      "postcode": "Posta kodu",
+      "relation": "Arka plan",
+      "resort": "Danışmanlık alanı",
+      "state": "Federal devlet",
+      "title": "Tavsiye isteyen kişinin detayları"
+    },
+    "reassign": {
+      "description": "Görüşmeyi başka bir ekip üyesine atayabilirsiniz. Bu kişi daha sonra tavsiye isteyen kişiden sorumlu olur.",
+      "title": "Tahsis"
+    },
+    "tools": {
+      "description": "Tavsiye isteyen kişi için araçları etkinleştirin. ",
+      "modal": {
+        "confirm": "Kilit açma",
+        "deny": "İptal",
+        "description": "Tavsiye isteyen kişinin kullanımına sunmak istediğiniz araçları seçin.",
+        "title": "Tavsiye arayanlar için araç"
+      },
+      "openModal": "Araç açıklamalarını göster",
+      "options": {
+        "saveError": "Kalıp değiştirilirken bir sorun oluştu. Lütfen tekrar deneyiniz."
+      },
+      "optionsPlaceholder": "Bir seçenek seçin...",
+      "share": {
+        "info": "Tavsiye arayanların içeriğini yalnızca atanmış danışmanlar görüntüleyebilir. İçeriğe ekip danışmanlığı oturumundan erişirseniz, tavsiye arayanlar önceden seçilmez.",
+        "sharedContent": "Paylaşılan içeriğe",
+        "title": "Sizinle hangi içeriklerin paylaşıldığını buradan görebilirsiniz."
+      },
+      "title": "Araçlar"
+    }
+  },
+  "videoCall": {
+    "button": {
+      "answerCall": "Görüntülü aramayı kabul et",
+      "answerVideoCall": "Görüntülü aramayı kabul et",
+      "rejectCall": "Görüntülü aramayı reddetme",
+      "startCall": "Sesli aramayı başlat",
+      "startVideoCall": "Görüntülü aramayı başlat"
+    },
+    "incomingCall": {
+      "description": "arar.",
+      "ignored": "sana ulaşmaya çalışıyor.",
+      "rejected": {
+        "prefix": "Denediniz",
+        "suffix": "ulaşmak için."
+      },
+      "unsupported": {
+        "button": "Açık yardım",
+        "description": "{{username}} seni aramaya çalışıyor",
+        "hint": "Tarayıcınız gerekli güvenlik gereksinimlerini karşılamıyor. Görüntülü görüşmelere katılabilmek için lütfen farklı bir tarayıcı kullanın."
+      }
+    },
+    "info": "Çağrı bilgileri",
+    "overlay": {
+      "encryption": {
+        "e2e": "Bu video görüşmesi uçtan uca şifreleme ile güvence altına alınmıştır.",
+        "transport": "Bu video görüşmesi aktarım şifrelemesiyle güvence altına alınmıştır."
+      },
+      "unsupported": {
+        "button": {
+          "close": "Kapat",
+          "manual": "Talimatlar için"
+        },
+        "copy": "Cihazınız görüntülü arama için gerekli tüm teknik gereksinimleri karşılamıyor. Görüntülü arama başlatmak için lütfen bu talimatları izleyin. BT departmanınızın desteğine ihtiyacınız olabilir.",
+        "headline": "Görüntülü arama başlatılamıyor"
+      }
+    },
+    "statusPage": {
+      "closed": {
+        "action": "Tavsiye ve Yardım bölümüne dönmek için lütfen bu sekmeyi kapatın.",
+        "title": "Görüntülü aramanız başarıyla tamamlandı."
+      },
+      "unauthorized": {
+        "action": "Tavsiye ve Yardım bölümüne dönmek için lütfen bu sekmeyi kapatın.",
+        "reason": "Maalesef bu sayfayı görüntüleme yetkiniz bulunmamaktadır.",
+        "title": "Erişim yok!"
+      }
+    }
+  },
+  "videoConference": {
+    "waitingroom": {
+      "dataProtection": {
+        "button": "Onaylayın",
+        "description": "Danışmanlarımız daha sonra sizinle bir video görüşmesi başlatabilir.",
+        "headline": "Sıcak bir karşılama!",
+        "label": {
+          "and": "ve",
+          "text": "{{legal_links}} Okudum ve anladım Bu web sitesi kimlik doğrulama ve gezinme için çerezler kullanmaktadır. Bunu kabul ettiğimi beyan ederim."
+        },
+        "subline": "Lütfen gizlilik politikamızı onaylayın."
+      },
+      "errorImageTitle": "Başarısız",
+      "errorPage": {
+        "button": "Yeniden Yükle",
+        "consultant": {
+          "description": "Bağlantınız için bir video araması bulamıyoruz çünkü video araması ya silinmiş ya da çoktan sona ermiştir."
+        },
+        "description": "Bağlantınız için bir video görüşmesi bulamıyoruz çünkü video görüşmesi ya silinmiş ya da çoktan sona ermiştir. Sorun yaşamaya devam ederseniz lütfen danışmanınıza danışın.",
+        "headline": "Görüntülü arama bulunamadı",
+        "rejected": {
+          "description": "Danışmanınız sizi reddettiği için maalesef bu video görüşmesine katılamazsınız.",
+          "headline": "Yetkili değillerdi"
+        }
+      },
+      "headline": "Lütfen sabırlı olun",
+      "paused": {
+        "headline": "Görüntülü arama sona erdi",
+        "subline": "Video görüşmesi sona ermiştir. Danışmanınız sadece devamsızlık yapıyorsa, danışmanınız video görüşmesine devam eder etmez video görüşmesine yönlendirileceksiniz."
+      },
+      "subline": "Video görüşmesi henüz başlamadı. Danışmanınız video görüşmesini başlatır başlatmaz yönlendirileceksiniz.",
+      "title": {
+        "start": "Bekleme odası"
+      },
+      "waitingImageTitle": "Kahve ile bekleyen kişi",
+      "welcomeImageTitle": "Hoş geldiniz"
+    }
+  },
+  "walkthrough": {
+    "step": {
+      "0": {
+        "intro": "Bireysel işlevleri açıklamak için sizin için kısa bir tur hazırladık. <br /><br /> İstediğiniz zaman iptal edebilir veya profilinizde yeniden başlatabilirsiniz.",
+        "title": "Tur"
+      },
+      "1": {
+        "intro": "Burada, henüz bir danışmana atanmamış tüm açık taleplere genel bir bakış bulacaksınız. Tüm ekibinizin bu genel bakışa erişimi vardır.\n<br /><br /> İlk gelen talepleri bulmanızı kolaylaştırmak için en eski talepler en üstte, en yeniler ise en altta yer alır.\n<br /><br /> 'Talebi kabul et' seçeneğine tıkladığınız anda, talep derhal 'Danışmanlıklarım' alanınıza taşınır ve diğer danışmanlar artık bunu göremez.",
+        "title": "İlk sorgulamalar"
+      },
+      "3": {
+        "intro": "Bu alanda kabul ettiğiniz tüm talepleri bulacaksınız. \n<br /><br /> En son işlenen mesaj geçmişi en üstte yer almaktadır.\nTavsiye isteyen kişi şu anda bekleme odasında çevrimiçi ise, adının hemen yanında \"Aktif\" etiketini göreceksiniz.",
+        "title": "İstişarelerim"
+      },
+      "4": {
+        "intro": "Etkin olmayan konuşmalarla dikkatinizin dağılmaması için bazı konuşmaları arşivleyebilirsiniz. <br /><br /> Bu durumda bunlar silinmez, sadece \"Arşiv\" sekmesine taşınır. <br /><br /> Siz veya tavsiye isteyen kişi arşivlenmiş bir konuşmaya her bir şey yazdığında, bu mesaj geçmişi tavsiye isteyen kişiler listesinde yeniden düzenlenir.",
+        "title": "Arşiv"
+      },
+      "6": {
+        "intro": "Profil alanında, kişisel ve genel bilgileri yönetebilir, tatiliniz sırasında ofis dışında mesajını etkinleştirebilir, şifrenizi değiştirebilir ve diğer birçok işlevi (2 faktörlü kimlik doğrulama ayarlama gibi) kullanabilirsiniz.",
+        "title": "Profil"
+      },
+      "done": "Bitti",
+      "next": "Daha ileri",
+      "of": "itibaren",
+      "prev": "Geri",
+      "step": "Adım"
+    },
+    "subtitle": "Bireysel işlevleri açıklamak için sizin için kısa bir tur hazırladık. <br /> İstediğiniz zaman iptal edebilir veya profilinizde yeniden başlatabilirsiniz.",
+    "switch": {
+      "active": {
+        "label": "Aktif tur"
+      },
+      "deactive": {
+        "label": "Tur etkinleştirildi"
+      }
+    },
+    "title": "Tur"
+  },
+  "anonymousChat": {
+    "headline": "Anonim Danışma",
+    "subline": "Bir danışma merkezi seçin ve hemen anonim danışma başlatın.",
+    "username": {
+      "info": "Bu kullanıcı adı otomatik olarak oluşturuldu"
+    },
+    "password": {
+      "warning": "Lütfen parolayı kopyalayın ve daha sonra hesabınıza erişebilmek için güvenli bir yerde saklayın.",
+      "copied": {
+        "title": "Parola kopyalandı",
+        "text": "Parola panoya kopyalandı."
+      }
+    },
+    "topics": {
+      "headline": "Danışma konularını ve danışma merkezlerini seçin",
+      "noresults": "Uygun danışma konusu yok."
+    },
+    "agencies": {
+      "noresults": "Bu konu için uygun bir danışma merkezi yok."
+    },
+    "start": "Danışmayı başlat"
+  },
+  "sessionHeader": {
+    "anonymous": {
+      "deleteAccount": {
+        "label": "Hesabı Sil",
+        "deleting": "Siliniyor...",
+        "deleted": "Silindi",
+        "confirm": "Bu anonim kullanıcının hesabını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+        "success": {
+          "title": "Hesap Silindi",
+          "text": "Anonim kullanıcı hesabı başarıyla silindi."
+        },
+        "error": {
+          "title": "Silme Hatası",
+          "text": "Hesap silinemedi. Lütfen tekrar deneyin."
+        }
+      }
+    },
+    "supervisor": {
+      "manage": "Süpervizörleri Yönet",
+      "modal": {
+        "title": "Süpervizörleri Yönet",
+        "current": "Mevcut Süpervizörler",
+        "add": "Süpervizör Ekle",
+        "noSupervisors": "Eklenmiş süpervizör yok",
+        "noConsultants": "Uygun danışman yok",
+        "selectConsultant": "Danışman seçin...",
+        "addButton": "Ekle",
+        "adding": "Ekleniyor...",
+        "remove": "Kaldır",
+        "added": "Eklendi",
+        "loading": "Yükleniyor...",
+        "loadingConsultants": "Danışmanlar yükleniyor..."
+      },
+      "success": {
+        "add": {
+          "title": "Süpervizör Eklendi",
+          "text": "Süpervizör başarıyla eklendi."
+        },
+        "remove": {
+          "title": "Süpervizör Kaldırıldı",
+          "text": "Süpervizör başarıyla kaldırıldı."
+        }
+      },
+      "error": {
+        "add": {
+          "title": "Hata",
+          "text": "Süpervizör eklenemedi."
+        },
+        "remove": {
+          "title": "Hata",
+          "text": "Süpervizör kaldırılamadı."
+        },
+        "loadConsultants": {
+          "title": "Hata",
+          "text": "Danışmanlar yüklenemedi."
+        }
+      },
+      "remove": {
+        "confirm": "Bu süpervizörü kaldırmak istediğinizden emin misiniz?"
+      }
+    }
+  }
+}

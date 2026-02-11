@@ -84,7 +84,9 @@ export const Login = () => {
 	const [showLoginError, setShowLoginError] = useState<string>('');
 	const [isRequestInProgress, setIsRequestInProgress] =
 		useState<boolean>(false);
-	const { featureToolsEnabled } = getTenantSettings();
+	const { featureToolsEnabled, featureAnonymousChatEnabled = true } =
+		getTenantSettings();
+	const isAnonymousChatEnabled = featureAnonymousChatEnabled !== false;
 
 	useEffect(() => {
 		// If we're authenticated and have a gcid, redirect to app
@@ -122,6 +124,12 @@ export const Login = () => {
 	const [pwResetOverlayActive, setPwResetOverlayActive] = useState(false);
 	const [twoFactorType, setTwoFactorType] = useState(TWO_FACTOR_TYPES.NONE);
 	const [showAnonymousChat, setShowAnonymousChat] = useState(false);
+
+	useEffect(() => {
+		if (!isAnonymousChatEnabled && showAnonymousChat) {
+			setShowAnonymousChat(false);
+		}
+	}, [isAnonymousChatEnabled, showAnonymousChat]);
 
 	const inputItemUsername: InputFieldItem = {
 		name: 'username',
@@ -326,7 +334,7 @@ export const Login = () => {
 		window.open(endpoints.loginResetPasswordLink, '_self', 'noreferrer');
 	};
 
-	if (showAnonymousChat) {
+	if (showAnonymousChat && isAnonymousChatEnabled) {
 		return <AnonymousChat onBack={() => setShowAnonymousChat(false)} />;
 	}
 
@@ -410,6 +418,7 @@ export const Login = () => {
 							)}
 						</div>
 
+						{isAnonymousChatEnabled && (
 						<div className="loginForm__register">
 							<div className="loginForm__register__separator">
 								<span>{translate('login.seperator')}</span>
@@ -431,6 +440,7 @@ export const Login = () => {
 								</button>
 							</div>
 						</div>
+						)}
 
 						{!hasTenant && (
 							<div className="loginForm__register">

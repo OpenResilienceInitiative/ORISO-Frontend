@@ -31,4 +31,6 @@ export interface TenantDataSettingsInterface {
 	featureTopicsEnabled: boolean;
 	topicsInRegistrationEnabled: boolean;
 	featureAttachmentUploadDisabled: boolean;
+	featureAnonymousChatEnabled?: boolean;
+	featureCallsEnabled?: boolean;
 }

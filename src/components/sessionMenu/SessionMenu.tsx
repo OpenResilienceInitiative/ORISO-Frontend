@@ -18,6 +18,7 @@ import {
 	REMOVE_SESSIONS
 } from '../../globalState';
 import { SessionItemInterface } from '../../globalState/interfaces';
+import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import {
 	SESSION_LIST_TAB,
 	SESSION_LIST_TAB_ARCHIVE,
@@ -326,6 +327,9 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		)
 	};
 
+	const { featureCallsEnabled = true } = getTenantSettings();
+	const isCallsEnabled = featureCallsEnabled !== false;
+
 	const hasVideoCallFeatures = () =>
 		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
 		(activeSession.isSession || activeSession.isGroup) && // 🎯 Enable for both 1-on-1 AND group chats
@@ -418,7 +422,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 	return (
 		<div className="sessionMenu__wrapper">
-			{hasVideoCallFeatures() && !props.isSupervisor && (
+			{hasVideoCallFeatures() && isCallsEnabled && !props.isSupervisor && (
 				<div
 					className="sessionMenu__videoCallButtons"
 					data-cy="session-header-video-call-buttons"

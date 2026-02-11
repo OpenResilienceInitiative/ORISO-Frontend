@@ -35,6 +35,7 @@ import { SessionItemInterface } from '../../../globalState/interfaces';
 import { matrixClientService } from '../../../services/matrixClientService';
 import { RoomMember } from 'matrix-js-sdk';
 import { UserAvatar } from '../../message/UserAvatar';
+import { getTenantSettings } from '../../../utils/tenantSettingsHelper';
 
 interface GroupChatHeaderProps {
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
@@ -318,6 +319,9 @@ export const GroupChatHeader = ({
 		)
 	};
 
+	const { featureCallsEnabled = true } = getTenantSettings();
+	const isCallsEnabled = featureCallsEnabled !== false;
+
 	const isActive = activeSession.item.active;
 	const getSessionListTab = () =>
 		`${sessionListTab ? `?sessionListTab=${sessionListTab}` : ''}`;
@@ -410,6 +414,7 @@ export const GroupChatHeader = ({
 
 				{isActive &&
 					!isJoinGroupChatView &&
+					isCallsEnabled &&
 					isConsultant && (
 						<div
 							className="sessionInfo__videoCallButtons"
