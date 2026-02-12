@@ -8,7 +8,6 @@ const fixedStage = document.getElementsByClassName(
 const fixedStageLayout = document.getElementsByClassName(
 	'stageLayout'
 ) as HTMLCollectionOf<HTMLDivElement>;
-const bannerContainer = document.getElementById('banner');
 
 export const Banner = ({
 	children,
@@ -24,6 +23,8 @@ export const Banner = ({
 	const [element] = useState(() => document.createElement('div'));
 	const { t: translate } = useTranslation();
 	const getBannersHeight = useCallback(() => {
+		// Re-resolve container at call time (it may not exist at module load, and can change across navigations).
+		const bannerContainer = document.getElementById('banner');
 		let bannersHeight = 0;
 		const banner = bannerContainer?.children ?? [];
 		for (let i = 0; i < banner.length; i++) {
@@ -37,11 +38,16 @@ export const Banner = ({
 	}, []);
 
 	useEffect(() => {
+		// Container might not exist on some pages or during transitions; Banner must not crash in cleanup.
+		const bannerContainer = document.getElementById('banner');
+		if (!bannerContainer) {
+			return;
+		}
 		if (className) {
 			element.classList.add(className);
 		}
 		element.classList.add('banner__element');
-		bannerContainer?.appendChild(element);
+		bannerContainer.appendChild(element);
 
 		if (style) {
 			Object.keys(style).forEach((s) => {
@@ -59,7 +65,10 @@ export const Banner = ({
 		}
 
 		return () => {
-			bannerContainer.removeChild(element);
+			// Avoid NotFoundError if container changed or element was already removed.
+			if (element.parentNode === bannerContainer) {
+				bannerContainer.removeChild(element);
+			}
 
 			if (fixedStage?.[0]) {
 				fixedStage[0].style.paddingTop = `0px`;

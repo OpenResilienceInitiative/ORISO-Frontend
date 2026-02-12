@@ -44,6 +44,7 @@ import { MessageSubmitInterfaceSkeleton } from '../messageSubmitInterface/messag
 import { EncryptionBanner } from './EncryptionBanner';
 import { apiGetSessionSupervisors } from '../../api/apiGetSessionSupervisors';
 import { parseMessagePrefixes } from '../message/messageConstants';
+import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 
 const MessageSubmitInterfaceComponent = lazy(() =>
 	import('../messageSubmitInterface/messageSubmitInterfaceComponent').then(
@@ -69,6 +70,19 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const { activeSession } = useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
 	const { type } = useContext(SessionTypeContext);
+
+	// Threads feature toggle (tenant-level). Master switch disables for all chat types.
+	// When enabled, per-chat-type switches decide if threads are available in 1-on-1 vs group chats.
+	const {
+		featureThreadsEnabled = true,
+		featureThreadsGroupChatsEnabled = true,
+		featureThreadsOneOnOneEnabled = true
+	} = getTenantSettings();
+	const isThreadsEnabled =
+		featureThreadsEnabled !== false &&
+		(activeSession.isGroup
+			? featureThreadsGroupChatsEnabled !== false
+			: featureThreadsOneOnOneEnabled !== false);
 
 	const messages = useMemo(() => props.messages, [props && props.messages]); // eslint-disable-line react-hooks/exhaustive-deps
 	const [initialScrollCompleted, setInitialScrollCompleted] = useState(false);
@@ -369,6 +383,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		setActiveThreadRootMessage(null);
 	}, []);
 
+	// If threads become disabled while a thread panel is open, close it immediately.
+	useEffect(() => {
+		if (!isThreadsEnabled && activeThreadRootId) {
+			handleCloseThread();
+		}
+	}, [isThreadsEnabled, activeThreadRootId, handleCloseThread]);
+
 	// Track the decryption success because we have a short timing issue when
 	// message is send before the room encryption
 	const decryptionSuccess = useRef([]);
@@ -507,8 +528,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										subscriptionKeyLost
 									}}
 									renderMode="main"
+									threadsEnabled={isThreadsEnabled}
 									threadSummary={threadSummaries.get(message._id)}
-									onOpenThread={() => handleOpenThread(message)}
+									onOpenThread={
+										isThreadsEnabled ? () => handleOpenThread(message) : undefined
+									}
 									{...message}
 								/>
 							</React.Fragment>
@@ -536,7 +560,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				</div>
 			</div>
 
-			{activeThreadRootId && (
+			{isThreadsEnabled && activeThreadRootId && (
 				<div className="session__threadPanel">
 					<div className="session__threadHeader">
 						<div className="session__threadTitle">
@@ -580,6 +604,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									subscriptionKeyLost
 								}}
 								renderMode="thread"
+								threadsEnabled={true}
 								forceShow={true}
 								{...activeThreadRootMessage}
 							/>
@@ -616,6 +641,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											subscriptionKeyLost
 										}}
 										renderMode="thread"
+										threadsEnabled={true}
 										threadRootId={activeThreadRootId}
 										{...message}
 									/>

@@ -105,6 +105,7 @@ interface MessageItemComponentProps extends MessageItem {
 	clientName: string;
 	isUserBanned: boolean;
 	renderMode?: 'main' | 'thread';
+	threadsEnabled?: boolean;
 	threadRootId?: string | null;
 	forceShow?: boolean;
 	threadSummary?: {
@@ -143,6 +144,7 @@ export const MessageItemComponent = ({
 	e2eeParams,
 	isVideoActive,
 	renderMode = 'main',
+	threadsEnabled = true,
 	threadRootId,
 	forceShow = false,
 	threadSummary,
@@ -650,10 +652,13 @@ export const MessageItemComponent = ({
 	}
 
 	if (!forceShow) {
-		if (renderMode === 'main' && parsedMessage.isThreadMessage) {
+		if (renderMode === 'main' && threadsEnabled && parsedMessage.isThreadMessage) {
 			return null;
 		}
 		if (renderMode === 'thread') {
+			if (!threadsEnabled) {
+				return null;
+			}
 			if (!parsedMessage.isThreadMessage) {
 				return null;
 			}
