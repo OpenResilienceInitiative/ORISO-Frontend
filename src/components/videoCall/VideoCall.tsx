@@ -18,13 +18,13 @@ const VideoCall = () => {
 	const roomId = encodedRoomId ? decodeURIComponent(encodedRoomId) : '';
 	const isVideoCall = type === 'video';
 
-	console.log('📞 VideoCall component loaded');
-	console.log('📞 Encoded Room ID:', encodedRoomId);
-	console.log('📞 Decoded Room ID:', roomId);
-	console.log('📞 Call Type:', type, '(video:', isVideoCall, ')');
+	// console.log('📞 VideoCall component loaded');
+	// console.log('📞 Encoded Room ID:', encodedRoomId);
+	// console.log('📞 Decoded Room ID:', roomId);
+	// console.log('📞 Call Type:', type, '(video:', isVideoCall, ')');
 
 	const handleCallEnd = () => {
-		console.log('📞 Call ended, returning to session');
+		// console.log('📞 Call ended, returning to session');
 		history.goBack();
 	};
 

@@ -22,11 +22,11 @@ export const apiMatrixUploadFile = (
 		// Upload via UserService (same auth pattern as messages)
 		const url = `${apiUrl}/service/matrix/sessions/${sessionId}/upload`;
 
-		console.log('📤 MATRIX UPLOAD: Starting upload via UserService:', url);
-		console.log('📤 MATRIX UPLOAD: File name:', attachment.name);
-		console.log('📤 MATRIX UPLOAD: File size:', attachment.size);
-		console.log('📤 MATRIX UPLOAD: File type:', attachment.type);
-		console.log('📤 MATRIX UPLOAD: Session ID:', sessionId);
+		// console.log('📤 MATRIX UPLOAD: Starting upload via UserService:', url);
+		// console.log('📤 MATRIX UPLOAD: File name:', attachment.name);
+		// console.log('📤 MATRIX UPLOAD: File size:', attachment.size);
+		// console.log('📤 MATRIX UPLOAD: File type:', attachment.type);
+		// console.log('📤 MATRIX UPLOAD: Session ID:', sessionId);
 
 		const xhr = new XMLHttpRequest();
 		xhr.withCredentials = true;
@@ -36,36 +36,36 @@ export const apiMatrixUploadFile = (
 				Math.ceil((100 * e.loaded) / e.total),
 				100
 			);
-			console.log('📤 MATRIX UPLOAD: Progress:', percentUpload + '%');
+			// console.log('📤 MATRIX UPLOAD: Progress:', percentUpload + '%');
 			uploadProgress(percentUpload);
 		};
 
 		xhr.onload = (e) => {
 			const target = e.target as XMLHttpRequest;
-			console.log('📤 MATRIX UPLOAD: Response status:', target.status);
-			console.log('📤 MATRIX UPLOAD: Response body:', target.responseText);
+			// console.log('📤 MATRIX UPLOAD: Response status:', target.status);
+			// console.log('📤 MATRIX UPLOAD: Response body:', target.responseText);
 			
 			if (target.status === 200) {
 				try {
 					const response = JSON.parse(target.responseText);
-					console.log('✅ MATRIX UPLOAD: Upload successful!', response);
+					// console.log('✅ MATRIX UPLOAD: Upload successful!', response);
 					resolve({
 						content_uri: response.content_uri,
 						file_name: attachment.name,
 						file_size: attachment.size
 					});
 				} catch (err) {
-					console.error('❌ MATRIX UPLOAD: Failed to parse response:', err);
+					// console.error('❌ MATRIX UPLOAD: Failed to parse response:', err);
 					reject(target);
 				}
 			} else {
-				console.error('❌ MATRIX UPLOAD: Upload failed with status:', target.status);
+				// console.error('❌ MATRIX UPLOAD: Upload failed with status:', target.status);
 				reject(target);
 			}
 		};
 
 		xhr.onerror = (e) => {
-			console.error('❌ MATRIX UPLOAD: Network error:', e);
+			// console.error('❌ MATRIX UPLOAD: Network error:', e);
 			reject(e.target);
 		};
 
@@ -80,7 +80,7 @@ export const apiMatrixUploadFile = (
 			xhr.setRequestHeader('X-WHITELIST-HEADER', csrfToken);
 		}
 
-		console.log('📤 MATRIX UPLOAD: Sending file...');
+		// console.log('📤 MATRIX UPLOAD: Sending file...');
 		xhr.send(formData);
 
 		handleXhr(xhr);
@@ -103,9 +103,9 @@ export const apiMatrixSendFileMessage = (
 	// Get room ID from session (same endpoint as regular messages)
 	const url = `${apiUrl}/service/matrix/sessions/${sessionId}/messages`;
 
-	console.log('📨 MATRIX: Sending file message to room');
-	console.log('📨 MATRIX: Content URI:', contentUri);
-	console.log('📨 MATRIX: File name:', fileName);
+	// console.log('📨 MATRIX: Sending file message to room');
+	// console.log('📨 MATRIX: Content URI:', contentUri);
+	// console.log('📨 MATRIX: File name:', fileName);
 
 	// Determine message type based on mime type
 	let msgtype = 'm.file';
@@ -141,13 +141,13 @@ export const apiMatrixSendFileMessage = (
 		credentials: 'include',
 		body: JSON.stringify(messageBody)
 	}).then(response => {
-		console.log('📨 MATRIX: File message response status:', response.status);
+		// console.log('📨 MATRIX: File message response status:', response.status);
 		if (!response.ok) {
 			throw new Error(`Failed to send file message: ${response.status}`);
 		}
 		return response.json();
 	}).then(data => {
-		console.log('✅ MATRIX: File message sent successfully:', data);
+		// console.log('✅ MATRIX: File message sent successfully:', data);
 		return data;
 	});
 };

@@ -149,7 +149,7 @@ const VideoConference = () => {
 						setSkipAuth(true);
 						setInitialized(false);
 					} else {
-						console.error(e);
+						// console.error(e);
 						setReady(true);
 					}
 				});

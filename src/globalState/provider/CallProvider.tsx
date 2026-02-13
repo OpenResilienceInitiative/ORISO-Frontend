@@ -41,11 +41,11 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [callMode, setCallMode] = useState<CallMode>('normal');
 
     const startCall = useCallback((roomId: string, isVideo: boolean) => {
-        console.log("═══════════════════════════════════════════════");
-        console.log("🚀 CALLPROVIDER.startCall() CALLED!");
-        console.log("═══════════════════════════════════════════════");
-        console.log('Room ID:', roomId);
-        console.log('Is Video:', isVideo);
+        // console.log("═══════════════════════════════════════════════");
+        // console.log("🚀 CALLPROVIDER.startCall() CALLED!");
+        // console.log("═══════════════════════════════════════════════");
+        // console.log('Room ID:', roomId);
+        // console.log('Is Video:', isVideo);
         
         setActiveCall({
             roomId,
@@ -53,18 +53,18 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
             isIncoming: false
         });
         
-        console.log('✅ Active call state set!');
+        // console.log('✅ Active call state set!');
         
         setCallState('connecting');
-        console.log('✅ Call state set to connecting');
+        // console.log('✅ Call state set to connecting');
         
         setCallMode('normal');
-        console.log('✅ Call mode set to normal');
-        console.log("═══════════════════════════════════════════════");
+        // console.log('✅ Call mode set to normal');
+        // console.log("═══════════════════════════════════════════════");
     }, []);
 
     const receiveCall = useCallback((roomId: string, isVideo: boolean, callId: string, callerName?: string) => {
-        console.log('📞 Receiving incoming call:', { roomId, isVideo, callId, callerName });
+        // console.log('📞 Receiving incoming call:', { roomId, isVideo, callId, callerName });
         setActiveCall({
             roomId,
             isVideo,
@@ -77,44 +77,44 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, []);
 
     const answerCall = useCallback(() => {
-        console.log('✅ Answering call');
+        // console.log('✅ Answering call');
         setCallState('connecting');
     }, []);
 
     const rejectCall = useCallback(() => {
-        console.log('❌ Rejecting call');
+        // console.log('❌ Rejecting call');
         setActiveCall(null);
         setCallState('idle');
     }, []);
 
     const hangupCall = useCallback(() => {
-        console.log("═══════════════════════════════════════════════");
-        console.log('📴 CALLPROVIDER.hangupCall() - Cleaning up call');
-        console.log("═══════════════════════════════════════════════");
+        // console.log("═══════════════════════════════════════════════");
+        // console.log('📴 CALLPROVIDER.hangupCall() - Cleaning up call');
+        // console.log("═══════════════════════════════════════════════");
         
         // Clean up Matrix call if it exists
         setActiveCall(prev => {
             if (prev?.matrixCall) {
-                console.log('🧹 Hanging up Matrix call object');
+                // console.log('🧹 Hanging up Matrix call object');
                 try {
                     (prev.matrixCall as any).hangup();
                 } catch (err) {
-                    console.warn('⚠️ Error hanging up Matrix call:', err);
+                    // console.warn('⚠️ Error hanging up Matrix call:', err);
                 }
             }
             return null;
         });
         
         setCallState('ended');
-        console.log('✅ Call state set to ended');
+        // console.log('✅ Call state set to ended');
         
         // Reset to idle after a brief delay
         setTimeout(() => {
             setCallState('idle');
-            console.log('✅ Call state reset to idle');
+            // console.log('✅ Call state reset to idle');
         }, 1000);
         
-        console.log("═══════════════════════════════════════════════");
+        // console.log("═══════════════════════════════════════════════");
     }, []);
 
     const setMatrixCall = useCallback((call: MatrixCall | null) => {

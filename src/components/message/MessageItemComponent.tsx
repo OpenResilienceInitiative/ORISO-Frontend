@@ -287,13 +287,11 @@ export const MessageItemComponent = ({
 							});
 							reloadActiveSession();
 						})
-						.catch((error) => console.log(error));
+						.catch((error) => { /* console.log(error); */ });
 				})
-				.catch((error) => console.log(error));
+				.catch((error) => { /* console.log(error); */ });
 		} else {
-			apiPatchMessage(toConsultantId, ReassignStatus.REJECTED, _id).catch(
-				(error) => console.log(error)
-			);
+			apiPatchMessage(toConsultantId, ReassignStatus.REJECTED, _id).catch((error) => { /* console.log(error); */ });
 		}
 	};
 

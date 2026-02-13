@@ -30,7 +30,7 @@ export const useMatrixReady = (): boolean => {
 					
 					if (newReady) {
 						// Once ready, we can unsubscribe (optional - keeping it subscribed is fine too)
-						console.log('✅ Matrix client is now ready!');
+						// console.log('✅ Matrix client is now ready!');
 					}
 				});
 				

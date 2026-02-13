@@ -161,9 +161,9 @@ export const MessageSubmitInterfaceComponent = ({
 	
 	// Debug logging
 	useEffect(() => {
-		console.log('🔥 MessageSubmitInterface MOUNTED');
+		// console.log('🔥 MessageSubmitInterface MOUNTED');
 		return () => {
-			console.log('🔥 MessageSubmitInterface UNMOUNTED');
+			// console.log('🔥 MessageSubmitInterface UNMOUNTED');
 		};
 	}, []);
 	const tenant = useTenant();
@@ -659,7 +659,7 @@ export const MessageSubmitInterfaceComponent = ({
 
 			if (isFocused !== isInputFocused) {
 				setIsInputFocused(isFocused);
-				console.log('🎯 Focus changed:', isFocused, 'Active element:', activeElement);
+				// console.log('🎯 Focus changed:', isFocused, 'Active element:', activeElement);
 			}
 		};
 
@@ -669,7 +669,7 @@ export const MessageSubmitInterfaceComponent = ({
 			if (inputElement && inputElement.contains(e.target as Node)) {
 				setTimeout(() => {
 					setIsInputFocused(true);
-					console.log('🎯 Focus IN detected');
+					// console.log('🎯 Focus IN detected');
 				}, 10);
 			}
 		};
@@ -679,7 +679,7 @@ export const MessageSubmitInterfaceComponent = ({
 			if (inputElement && inputElement.contains(e.target as Node)) {
 				setTimeout(() => {
 					setIsInputFocused(false);
-					console.log('🎯 Focus OUT detected');
+					// console.log('🎯 Focus OUT detected');
 				}, 10);
 			}
 		};
@@ -775,7 +775,7 @@ export const MessageSubmitInterfaceComponent = ({
 				.then(() => setEditorState(EditorState.createEmpty()))
 				.then(() => setIsRequestInProgress(false))
 				.catch((error) => {
-					console.log(error);
+					// console.log(error);
 				});
 		},
 		[
@@ -821,7 +821,7 @@ export const MessageSubmitInterfaceComponent = ({
 
 				// MATRIX MIGRATION: Use direct Matrix upload for Matrix sessions
 				if (matrixSessionId) {
-					console.log('📤 Using Matrix direct upload for session:', matrixSessionId);
+					// console.log('📤 Using Matrix direct upload for session:', matrixSessionId);
 					
 					try {
 						// Upload file to Matrix via UserService
@@ -833,10 +833,10 @@ export const MessageSubmitInterfaceComponent = ({
 							setAttachmentUpload
 						);
 						
-						console.log('✅ Matrix upload and message sent successfully!', uploadResult);
+						// console.log('✅ Matrix upload and message sent successfully!', uploadResult);
 						res = { success: true };
 					} catch (error: any) {
-						console.error('❌ Matrix upload failed:', error);
+						// console.error('❌ Matrix upload failed:', error);
 						const xhr = error as XMLHttpRequest;
 						if (xhr.status === 413) {
 							handleAttachmentUploadError(
@@ -948,7 +948,7 @@ export const MessageSubmitInterfaceComponent = ({
 					})
 					.catch((error) => {
 						setIsRequestInProgress(false);
-						console.log(error);
+						// console.log(error);
 					});
 			} else {
 				// Matrix file upload already sent the message
@@ -981,7 +981,7 @@ export const MessageSubmitInterfaceComponent = ({
 		const attachment = preselectedFile || selectedFile;
 
 		if (isE2eeEnabled && encrypted && !keyID) {
-			console.error("Can't send message without key");
+			// console.error("Can't send message without key");
 			return;
 		}
 
@@ -1067,7 +1067,7 @@ export const MessageSubmitInterfaceComponent = ({
 					}
 				})
 				.catch((error) => {
-					console.error(error);
+					// console.error(error);
 				});
 		} else {
 			prepareAndSendMessage().then();

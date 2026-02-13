@@ -178,7 +178,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			if (agencyId) {
 				loadAvailableConsultants();
 			} else {
-				console.warn('Cannot load consultants: No agency ID in session');
+				// console.warn('Cannot load consultants: No agency ID in session');
 			}
 		}
 	}, [isSupervisorModalOpen, activeSession.agency?.id, activeSession.item?.agencyId]);
@@ -205,11 +205,11 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					);
 					setAvailableConsultants(filtered);
 				} catch (err) {
-					console.error('Failed to load consultants for supervisor names:', err);
+					// console.error('Failed to load consultants for supervisor names:', err);
 				}
 			}
 		} catch (error) {
-			console.error('Failed to load supervisors:', error);
+			// console.error('Failed to load supervisors:', error);
 		} finally {
 			setIsLoadingSupervisors(false);
 		}
@@ -240,7 +240,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		// Try to get agency ID from session.agency.id or session.item.agencyId
 		const agencyId = activeSession.agency?.id || activeSession.item?.agencyId;
 		if (!agencyId) {
-			console.error('No agency ID found in session:', activeSession);
+			// console.error('No agency ID found in session:', activeSession);
 			setAvailableConsultants([]);
 			setIsLoadingConsultants(false);
 			return;
@@ -249,7 +249,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		try {
 			const consultants = await apiGetAgencyConsultantList(agencyId.toString());
 			const uniqueConsultants = dedupeConsultants(consultants);
-			console.log('Loaded consultants from agency:', agencyId, uniqueConsultants);
+			// console.log('Loaded consultants from agency:', agencyId, uniqueConsultants);
 			// Store all consultants for name lookup
 			setAllConsultants(uniqueConsultants);
 			// Filter: only supervisors, exclude current user and already added supervisors
@@ -259,10 +259,10 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					c.consultantId !== userData.userId && 
 					!supervisorIds.includes(c.consultantId)
 			);
-			console.log('Filtered consultants (after removing current user and supervisors):', filtered);
+			// console.log('Filtered consultants (after removing current user and supervisors):', filtered);
 			setAvailableConsultants(filtered);
 		} catch (error) {
-			console.error('Failed to load consultants:', error);
+			// console.error('Failed to load consultants:', error);
 			addNotification({
 				notificationType: NOTIFICATION_TYPE_ERROR,
 				title: translate('sessionHeader.supervisor.error.loadConsultants.title', 'Fehler'),
@@ -307,7 +307,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			// Close modal after successful add
 			setIsSupervisorModalOpen(false);
 		} catch (error) {
-			console.error('Failed to add supervisor:', error);
+			// console.error('Failed to add supervisor:', error);
 			addNotification({
 				notificationType: NOTIFICATION_TYPE_ERROR,
 				title: translate('sessionHeader.supervisor.error.add.title', 'Fehler'),
@@ -341,7 +341,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			// Close modal after successful remove
 			setIsSupervisorModalOpen(false);
 		} catch (error) {
-			console.error('Failed to remove supervisor:', error);
+			// console.error('Failed to remove supervisor:', error);
 			addNotification({
 				notificationType: NOTIFICATION_TYPE_ERROR,
 				title: translate('sessionHeader.supervisor.error.remove.title', 'Fehler'),
@@ -495,7 +495,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 									history.push(listPath + getSessionListTab());
 								}, 2000);
 							} catch (error) {
-								console.error('Failed to delete anonymous user account:', error);
+								// console.error('Failed to delete anonymous user account:', error);
 								setIsDeletingAccount(false);
 								addNotification({
 									notificationType: NOTIFICATION_TYPE_ERROR,

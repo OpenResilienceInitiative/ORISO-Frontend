@@ -26,7 +26,7 @@ export const useJoinVideoCall = () => {
 			
 			// Check if already a full URL (starts with /videoanruf/)
 			if (roomIdOrUrl.startsWith('/videoanruf/')) {
-				console.log('📞 Opening call in new tab with existing URL:', roomIdOrUrl);
+				// console.log('📞 Opening call in new tab with existing URL:', roomIdOrUrl);
 				window.open(roomIdOrUrl, '_blank');
 				return;
 			}
@@ -36,7 +36,7 @@ export const useJoinVideoCall = () => {
 			const callType = videoActivated ? 'video' : 'voice';
 			const callUrl = `/videoanruf/${encodedRoomId}/${callType}`;
 			
-			console.log('📞 Opening call in new tab:', callUrl);
+			// console.log('📞 Opening call in new tab:', callUrl);
 			window.open(callUrl, '_blank');
 		},
 		[urls.videoCall]
@@ -45,7 +45,7 @@ export const useJoinVideoCall = () => {
 	const onJoinConsultantCall = useCallback(
 		(roomId, videoActivated: boolean) => {
 			// MATRIX MIGRATION: Join Matrix call directly
-			console.log('📞 Joining Matrix call for room:', roomId);
+			// console.log('📞 Joining Matrix call for room:', roomId);
 			openVideoWindow(roomId, videoActivated);
 		},
 		[openVideoWindow]

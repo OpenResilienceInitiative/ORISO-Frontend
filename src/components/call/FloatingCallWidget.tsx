@@ -77,7 +77,7 @@ export const FloatingCallWidget: React.FC = () => {
         if (otherUser) {
             const username = otherUser.name || otherUser.userId;
             const initial = username.replace('@', '').charAt(0).toUpperCase();
-            console.log('👤 Other user:', username, '→ Initial:', initial);
+            // console.log('👤 Other user:', username, '→ Initial:', initial);
             setOtherUserInitial(initial);
         } else {
             // Fallback: use callerUserId if incoming
@@ -94,7 +94,7 @@ export const FloatingCallWidget: React.FC = () => {
         
         // 🚫 SKIP if this is a group call - GroupCallWidget will handle it with LiveKit
         if (callData.isGroup) {
-            console.log('🚫 FloatingCallWidget: Skipping group call (handled by GroupCallWidget)');
+            // console.log('🚫 FloatingCallWidget: Skipping group call (handled by GroupCallWidget)');
             return;
         }
         
@@ -106,7 +106,7 @@ export const FloatingCallWidget: React.FC = () => {
         const isStreamFresh = preRequestedTime && (Date.now() - preRequestedTime < 5000); // Within 5 seconds
         
         if (preRequestedStream && isStreamFresh) {
-            console.log('✅ Using pre-requested media stream (mobile-friendly!)');
+            // console.log('✅ Using pre-requested media stream (mobile-friendly!)');
             (window as any).__activeMediaStream = preRequestedStream;
             
             // Clear the pre-requested stream
@@ -124,12 +124,12 @@ export const FloatingCallWidget: React.FC = () => {
                 callManager.setMatrixCall(matrixCall);
             })
             .catch((err) => {
-                console.error("Failed to start call:", err);
+                // console.error("Failed to start call:", err);
                 alert(`Failed to start call: ${(err as Error).message}`);
                 callManager.endCall();
             });
         } else {
-            console.log('⚠️ No pre-requested stream, requesting now (may fail on mobile)');
+            // console.log('⚠️ No pre-requested stream, requesting now (may fail on mobile)');
             navigator.mediaDevices.getUserMedia({ video: callData.isVideo, audio: true })
                 .then((stream) => {
                     (window as any).__activeMediaStream = stream;
@@ -144,7 +144,7 @@ export const FloatingCallWidget: React.FC = () => {
                     callManager.setMatrixCall(matrixCall);
                 })
                 .catch((err) => {
-                    console.error("Failed to start call:", err);
+                    // console.error("Failed to start call:", err);
                     alert(`Failed to start call: ${(err as Error).message}`);
                     callManager.endCall();
                 });
@@ -225,7 +225,7 @@ export const FloatingCallWidget: React.FC = () => {
             // 🔥 Force UI re-render to hide Answer/Decline buttons and show call controls
             setTimeout(() => forceUpdate(prev => prev + 1), 100);
         } catch (err) {
-            console.error("Failed to answer:", err);
+            // console.error("Failed to answer:", err);
             alert(`Failed to answer: ${(err as Error).message}`);
             callManager.endCall();
         }

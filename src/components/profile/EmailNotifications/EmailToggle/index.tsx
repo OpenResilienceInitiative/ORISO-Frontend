@@ -30,7 +30,7 @@ export const EmailToggle = ({
 				text: t('profile.notifications.toggleError.description'),
 				notificationType: 'error'
 			});
-			console.error(ex);
+			// console.error(ex);
 		}
 	});
 

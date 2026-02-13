@@ -261,7 +261,7 @@ export const SessionListItemComponent = ({
 	
 	// MATRIX MIGRATION: If consulting type or topic is missing, render simplified card
 	if (!consultingType) {
-		console.warn('⚠️ Missing consulting type for session', activeSession.item.id);
+		// console.warn('⚠️ Missing consulting type for session', activeSession.item.id);
 		return (
 			<div
 				onClick={() => history.push(`/sessions/consultant/sessionView/${activeSession.item.id}`)}
@@ -289,14 +289,14 @@ export const SessionListItemComponent = ({
 	}
 
 	const handleOnClick = () => {
-		console.log('🖱️ CARD CLICKED:', {
-			sessionId: activeSession.item.id,
-			groupId: activeSession.item.groupId,
-			isGroup: activeSession.isGroup,
-			listPath,
-			isEmptyEnquiry: activeSession.isEmptyEnquiry,
-			isAsker: hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)
-		});
+		// console.log('🖱️ CARD CLICKED:', {
+		// sessionId: activeSession.item.id,
+		// groupId: activeSession.item.groupId,
+		// isGroup: activeSession.isGroup,
+		// listPath,
+		// isEmptyEnquiry: activeSession.isEmptyEnquiry,
+		// isAsker: hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)
+		// });
 		
 		// For sessions without groupId (Matrix migration), navigate by session ID
 		if (activeSession.item.id !== undefined) {
@@ -307,7 +307,7 @@ export const SessionListItemComponent = ({
 			if (activeSession.item.groupId && !isMatrixRoomId) {
 				// Original RocketChat behavior: navigate with groupId
 				const targetPath = `${listPath}/${activeSession.item.groupId}/${activeSession.item.id}${getSessionListTab()}`;
-				console.log('🚀 Navigating with RocketChat groupId:', targetPath);
+				// console.log('🚀 Navigating with RocketChat groupId:', targetPath);
 				history.push(targetPath);
 			} else if (
 				hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
@@ -315,12 +315,12 @@ export const SessionListItemComponent = ({
 			) {
 				// Empty enquiry: go to write view
 				const targetPath = `/sessions/user/view/write/${activeSession.item.id}`;
-				console.log('🚀 Navigating to write view:', targetPath);
+				// console.log('🚀 Navigating to write view:', targetPath);
 				history.push(targetPath);
 			} else {
 				// MATRIX MIGRATION FIX: Navigate by session ID for Matrix rooms or sessions without groupId
 				const targetPath = `${listPath}/session/${activeSession.item.id}${getSessionListTab()}`;
-				console.log('🚀 Navigating by session ID (Matrix or no groupId):', targetPath);
+				// console.log('🚀 Navigating by session ID (Matrix or no groupId):', targetPath);
 				history.push(targetPath);
 			}
 		}
@@ -371,7 +371,7 @@ export const SessionListItemComponent = ({
 				}, 1000);
 			})
 			.catch((error) => {
-				console.error(error);
+				// console.error(error);
 			});
 	};
 
@@ -399,7 +399,7 @@ export const SessionListItemComponent = ({
 					history.push(listPath);
 				})
 				.catch((error) => {
-					console.error(error);
+					// console.error(error);
 				})
 				.finally(() => {
 					setOverlayActive(false);

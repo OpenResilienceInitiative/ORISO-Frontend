@@ -89,7 +89,7 @@ export const Appointments = () => {
 				setLoading(false);
 			})
 			.catch((err) => {
-				console.error(err);
+				// console.error(err);
 			});
 	}, []);
 
@@ -129,7 +129,7 @@ export const Appointments = () => {
 					});
 				})
 				.catch((err) => {
-					console.error(err);
+					// console.error(err);
 				});
 		},
 		[addNotification, appointments, translate]

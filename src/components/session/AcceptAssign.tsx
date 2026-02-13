@@ -160,7 +160,7 @@ export const AcceptAssign = ({ assigned, btnLabel }: AcceptAssignProps) => {
 				if (error.message === FETCH_ERRORS.CONFLICT) {
 					setOverlayItem(enquiryTakenByOtherConsultantOverlayItem);
 				} else {
-					console.log(error);
+					// console.log(error);
 				}
 			});
 	};

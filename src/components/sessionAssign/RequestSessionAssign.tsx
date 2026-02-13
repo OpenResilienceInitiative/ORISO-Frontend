@@ -63,7 +63,7 @@ export const RequestSessionAssign = (props: { value?: string }) => {
 					setConsultantList(consultants);
 				})
 				.catch((error) => {
-					console.log(error);
+					// console.log(error);
 				});
 		}
 	}, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -128,7 +128,7 @@ export const RequestSessionAssign = (props: { value?: string }) => {
 				await addNewUsersToEncryptedRoom();
 				await apiDeleteUserFromRoom(sessionId, userId);
 			} catch (e) {
-				console.log('error encrypting new user key');
+				// console.log('error encrypting new user key');
 			}
 		}
 	};
@@ -158,7 +158,7 @@ export const RequestSessionAssign = (props: { value?: string }) => {
 									);
 									initOverlays(selectedOption, profileData);
 								})
-								.catch(console.log);
+								.catch((error) => { /* console.log(error); */ });
 						}
 					})
 					.catch((error) => {

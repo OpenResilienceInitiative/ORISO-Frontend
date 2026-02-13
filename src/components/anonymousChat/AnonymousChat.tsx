@@ -108,7 +108,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 				}
 			})
 			.catch((err) => {
-				console.error('Error fetching topics:', err);
+				// console.error('Error fetching topics:', err);
 				setTopics([]);
 			})
 			.finally(() => {
@@ -168,10 +168,10 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 					}
 				})
 				.catch((err) => {
-					console.error(
-						`Error fetching agencies for topic ${topic.id}:`,
-						err
-					);
+					// console.error(
+					// `Error fetching agencies for topic ${topic.id}:`,
+					// err
+					// );
 					setTopicAgencies((prev) => {
 						const newMap = new Map(prev);
 						newMap.set(topic.id, []);
@@ -253,7 +253,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 				redirectToApp();
 			})
 			.catch((error) => {
-				console.error('Anonymous chat registration failed:', error);
+				// console.error('Anonymous chat registration failed:', error);
 				setIsRegistering(false);
 				addNotification({
 					notificationType: NOTIFICATION_TYPE_ERROR,

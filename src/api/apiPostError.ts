@@ -47,14 +47,14 @@ export const apiPostError = async (
         correlationId?: string
 ): Promise<ErrorResponse> => {
         // For Matrix integration, we will just log errors to console instead of posting to logstash
-        console.warn("Matrix Frontend Error:", {
-                error: error.message,
-                level: error.level || "ERROR",
-                url: window?.location?.href,
-                timestamp: new Date().toISOString(),
-                correlationId: correlationId || uuidv4(),
-                ...(info ? { info: info } : {})
-        });
+        // console.warn("Matrix Frontend Error:", {
+        // error: error.message,
+        // level: error.level || "ERROR",
+        // url: window?.location?.href,
+        // timestamp: new Date().toISOString(),
+        // correlationId: correlationId || uuidv4(),
+        // ...(info ? { info: info } : {})
+        // });
         
         // Return a mock response to avoid breaking the calling code
         return Promise.resolve({});

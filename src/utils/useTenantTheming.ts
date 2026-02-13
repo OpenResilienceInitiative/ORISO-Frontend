@@ -264,7 +264,7 @@ const useTenantTheming = () => {
 		apiGetTenantTheming()
 			.then(onTenantServiceResponse)
 			.catch((error) => {
-				console.log('Theme could not be loaded', error);
+				// console.log('Theme could not be loaded', error);
 			})
 			.finally(() => {
 				setIsLoadingTenant(false);

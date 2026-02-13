@@ -266,17 +266,17 @@ export const init = async (
 							if (!formalIndex) return;
 
 							if (currLanguageKeys.includes(key)) {
-								console.error(
-									`[${lng}] has formal language sentence in key "${key}" near "${text.substring(
-										formalIndex.index - 25,
-										formalIndex.index + 25
-									)}"`
-								);
+								// console.error(
+								// `[${lng}] has formal language sentence in key "${key}" near "${text.substring(
+								// formalIndex.index - 25,
+								// formalIndex.index + 25
+								// )}"`
+								// );
 								return;
 							}
-							console.error(
-								`[${lng}] has no formal language form for key "${key}" ("${text}")`
-							);
+							// console.error(
+							// `[${lng}] has no formal language form for key "${key}" ("${text}")`
+							// );
 						});
 					}
 
@@ -287,13 +287,13 @@ export const init = async (
 
 					missingKeys.forEach((missingKey) => {
 						if (!deLanguageKeys.includes(missingKey)) {
-							console.error(
-								`[${lng}] has key "${missingKey}" but its missing in fallback language "${FALLBACK_LNG}"`
-							);
+							// console.error(
+							// `[${lng}] has key "${missingKey}" but its missing in fallback language "${FALLBACK_LNG}"`
+							// );
 						} else if (lng.indexOf('@informal') < 0) {
-							console.error(
-								`[${lng}] has missing key "${missingKey}"`
-							);
+							// console.error(
+							// `[${lng}] has missing key "${missingKey}"`
+							// );
 						}
 					});
 				});

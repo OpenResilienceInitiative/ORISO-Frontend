@@ -80,9 +80,9 @@ export const SessionStream = ({
 
 	// MATRIX MIGRATION: Track component mount/unmount
 	useEffect(() => {
-		console.log('🔥 SessionStream MOUNTED');
+		// console.log('🔥 SessionStream MOUNTED');
 		return () => {
-			console.log('🔥 SessionStream UNMOUNTED - Component is being destroyed!');
+			// console.log('🔥 SessionStream UNMOUNTED - Component is being destroyed!');
 		};
 	}, []);
 
@@ -125,14 +125,14 @@ export const SessionStream = ({
 				: process.env.REACT_APP_API_URL || '';
 			const matrixUrl = `${apiUrlBase}/service/matrix/sessions/${sessionId}/messages`;
 			
-			console.log('🚀 MATRIX: Fetching messages from Matrix API:', matrixUrl);
+			// console.log('🚀 MATRIX: Fetching messages from Matrix API:', matrixUrl);
 			
 			// Use raw fetch to see actual response
 			const accessToken = getValueFromCookie('keycloak');
 			const csrfToken = document.cookie.split('; ').find(row => row.startsWith('CSRF-TOKEN='))?.split('=')[1];
 			
-			console.log('🔑 MATRIX: Auth token exists?', !!accessToken);
-			console.log('🔑 MATRIX: CSRF token exists?', !!csrfToken);
+			// console.log('🔑 MATRIX: Auth token exists?', !!accessToken);
+			// console.log('🔑 MATRIX: CSRF token exists?', !!csrfToken);
 			
 			return fetch(matrixUrl, {
 				method: 'GET',
@@ -144,18 +144,18 @@ export const SessionStream = ({
 				},
 				credentials: 'include'
 			}).then(async (response) => {
-				console.log('🚀 MATRIX: Response status:', response.status);
+				// console.log('🚀 MATRIX: Response status:', response.status);
 				
 				const responseText = await response.text();
-				console.log('🚀 MATRIX: Response body:', responseText);
+				// console.log('🚀 MATRIX: Response body:', responseText);
 				
 				if (response.status === 200) {
 					const responseData = responseText ? JSON.parse(responseText) : {};
-					console.log('🚀 MATRIX: Parsed response:', responseData);
+					// console.log('🚀 MATRIX: Parsed response:', responseData);
 					
 					// Convert Matrix messages to frontend format
 					const matrixMessages = responseData?.messages || [];
-					console.log('🚀 MATRIX: Matrix messages array:', matrixMessages);
+					// console.log('🚀 MATRIX: Matrix messages array:', matrixMessages);
 					
 					// MATRIX MIGRATION: Reverse message order - Matrix returns newest first, we want oldest first
 					const reversedMessages = [...matrixMessages].reverse();
@@ -196,27 +196,27 @@ export const SessionStream = ({
 								image_type: msg.content.info?.mimetype,
 								image_size: msg.content.info?.size
 							}];
-							console.log('🖼️ MATRIX: File/image message detected:', msg.content.body, 'Path:', downloadPath);
+							// console.log('🖼️ MATRIX: File/image message detected:', msg.content.body, 'Path:', downloadPath);
 						}
 						
 						return baseMessage;
 					});
 					
-					console.log('🚀 MATRIX: Formatted messages:', formattedMessages);
+					// console.log('🚀 MATRIX: Formatted messages:', formattedMessages);
 					
 					// Apply prepareMessages to format messages correctly for the UI
 					const preparedMessages = prepareMessages(formattedMessages);
-					console.log('🚀 MATRIX: Prepared messages:', preparedMessages);
+					// console.log('🚀 MATRIX: Prepared messages:', preparedMessages);
 					
 					setMessagesItem({ messages: preparedMessages });
 					setLoading(false);
 				} else {
-					console.error('🚀 MATRIX: Non-200 response:', response.status, responseText);
+					// console.error('🚀 MATRIX: Non-200 response:', response.status, responseText);
 					setLoading(false);
 					setMessagesItem(null);
 				}
 			}).catch((error) => {
-				console.error('🚀 MATRIX: Failed to fetch messages:', error);
+				// console.error('🚀 MATRIX: Failed to fetch messages:', error);
 				setLoading(false);
 				setMessagesItem(null);
 			});
@@ -373,12 +373,12 @@ export const SessionStream = ({
 		
 		if (isMatrixSession && matrixRoomId) {
 			const sessionId = activeSession.item.id;
-			console.log('🔷 Setting up Matrix real-time listener for room:', matrixRoomId);
+			// console.log('🔷 Setting up Matrix real-time listener for room:', matrixRoomId);
 
 			// Get Matrix client for frontend real-time events (like Element!)
 			const matrixClientService = (window as any).matrixClientService;
 			if (!matrixClientService) {
-				console.warn('⚠️ Matrix client not initialized - messages will not appear in real-time');
+				// console.warn('⚠️ Matrix client not initialized - messages will not appear in real-time');
 			} else {
 				const matrixClient = matrixClientService.getClient();
 				if (matrixClient) {
@@ -393,7 +393,7 @@ export const SessionStream = ({
 						return;
 					}
 
-					console.log('📬 Matrix message received - adding to UI instantly!', event);
+					// console.log('📬 Matrix message received - adding to UI instantly!', event);
 					
 					// Get the message content from the event
 					const content = event.getContent();
@@ -447,7 +447,7 @@ export const SessionStream = ({
 						attachments: attachments
 					};
 					
-					console.log('📬 New message object:', newMessage);
+					// console.log('📬 New message object:', newMessage);
 					
 					// Add the new message to the existing messages
 					setMessagesItem((prevMessages) => {
@@ -461,7 +461,7 @@ export const SessionStream = ({
 						);
 						
 						if (messageExists) {
-							console.log('📬 Message already exists, skipping');
+							// console.log('📬 Message already exists, skipping');
 							return prevMessages;
 						}
 						
@@ -470,18 +470,18 @@ export const SessionStream = ({
 						const preparedNewMessages = prepareMessages([newMessage]);
 						updatedMessages.push(...preparedNewMessages);
 						
-						console.log('📬 Updated messages count:', updatedMessages.length);
+						// console.log('📬 Updated messages count:', updatedMessages.length);
 						return { messages: updatedMessages };
 					});
 				};
 
 				// Subscribe to Matrix Room.timeline events for instant updates!
-				console.log('📡 Subscribing to Matrix Room.timeline for instant message updates');
+				// console.log('📡 Subscribing to Matrix Room.timeline for instant message updates');
 				(matrixClient as any).on('Room.timeline', handleMatrixTimeline);
 
 				// Cleanup Matrix listener
 				return () => {
-					console.log('🧹 Cleaning up Matrix listener');
+					// console.log('🧹 Cleaning up Matrix listener');
 					(matrixClient as any).off('Room.timeline', handleMatrixTimeline);
 				};
 			}
@@ -527,14 +527,14 @@ export const SessionStream = ({
 							subscribeTyping();
 						}
 					} else {
-						console.log('🔷 Matrix session detected - using Matrix real-time events (no RocketChat subscription)');
+						// console.log('🔷 Matrix session detected - using Matrix real-time events (no RocketChat subscription)');
 					}
 
 					setLoading(false);
 				})
 				.catch((e) => {
 					if (e.message !== FETCH_ERRORS.ABORT) {
-						console.error('error fetchSessionMessages', e);
+						// console.error('error fetchSessionMessages', e);
 					}
 					// MATRIX MIGRATION: Still show UI even if messages fail to load
 					setLoading(false);
@@ -609,7 +609,7 @@ export const SessionStream = ({
 				setConsultantList(consultants);
 			})
 			.catch((error) => {
-				console.log(error);
+				// console.log(error);
 			});
 	}, [
 		activeSession.isGroup,
@@ -629,19 +629,19 @@ export const SessionStream = ({
 		}
 	};
 
-	console.log('🔥 SessionStream RENDER:', {
-		loading,
-		hasMessages: !!messagesItem,
-		messageCount: messagesItem?.messages?.length,
-		activeSessionId: activeSession?.item?.id
-	});
+	// console.log('🔥 SessionStream RENDER:', {
+	// loading,
+	// hasMessages: !!messagesItem,
+	// messageCount: messagesItem?.messages?.length,
+	// activeSessionId: activeSession?.item?.id
+	// });
 
 	if (loading) {
-		console.log('🔥 SessionStream: Showing loading spinner');
+		// console.log('🔥 SessionStream: Showing loading spinner');
 		return <Loading />;
 	}
 
-	console.log('🔥 SessionStream: Rendering session content');
+	// console.log('🔥 SessionStream: Rendering session content');
 
 	return (
 		<div className="session__wrapper">

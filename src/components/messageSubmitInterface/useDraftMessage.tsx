@@ -61,7 +61,7 @@ export const useDraftMessage = (
 					setLoaded(true);
 					return;
 				}
-				console.error('Error loading Draft Message: ', e);
+				// console.error('Error loading Draft Message: ', e);
 			});
 
 		return () => {

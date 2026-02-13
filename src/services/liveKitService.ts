@@ -54,7 +54,7 @@ class LiveKitService {
         this.onError = onError;
 
         try {
-            console.log('📞 Connecting to LiveKit room:', roomName);
+            // console.log('📞 Connecting to LiveKit room:', roomName);
 
             // Create room
             this.room = new Room({
@@ -77,11 +77,11 @@ class LiveKitService {
 
             // Connect to LiveKit server
             const wsUrl = 'wss://livekit.oriso.site';
-            console.log('🔌 Connecting to:', wsUrl);
+            // console.log('🔌 Connecting to:', wsUrl);
             
             await this.room.connect(wsUrl, token);
 
-            console.log('✅ Connected to LiveKit room');
+            // console.log('✅ Connected to LiveKit room');
 
             // Enable camera and microphone
             await this.room.localParticipant.setCameraEnabled(true);
@@ -91,7 +91,7 @@ class LiveKitService {
             setTimeout(() => this.updateParticipants(), 500);
 
         } catch (error) {
-            console.error('❌ Failed to connect to LiveKit:', error);
+            // console.error('❌ Failed to connect to LiveKit:', error);
             if (this.onError) {
                 this.onError(error as Error);
             }
@@ -104,10 +104,10 @@ class LiveKitService {
      */
     private async getAccessToken(roomName: string, userName: string): Promise<string> {
         try {
-            console.log('🔑 Requesting LiveKit token for:', { roomName, userName });
+            // console.log('🔑 Requesting LiveKit token for:', { roomName, userName });
             
             const url = `/api/livekit/token?roomName=${encodeURIComponent(roomName)}&identity=${encodeURIComponent(userName)}&_t=${Date.now()}`;
-            console.log('📡 Fetching from URL:', url);
+            // console.log('📡 Fetching from URL:', url);
             
             const response = await fetch(url, {
                 method: 'GET',
@@ -119,7 +119,7 @@ class LiveKitService {
                 cache: 'no-store'
             });
             
-            console.log('📥 Response status:', response.status, response.statusText);
+            // console.log('📥 Response status:', response.status, response.statusText);
             
             const responseText = await response.text();
             
@@ -133,11 +133,11 @@ class LiveKitService {
                 throw new Error('No token received from server');
             }
             
-            console.log('✅ Received LiveKit token');
+            // console.log('✅ Received LiveKit token');
             return data.token;
             
         } catch (error) {
-            console.error('❌ Failed to get LiveKit token:', error);
+            // console.error('❌ Failed to get LiveKit token:', error);
             throw new Error(`Could not establish signal connection: ${(error as Error).message}`);
         }
     }
@@ -148,49 +148,49 @@ class LiveKitService {
     private setupRoomListeners(): void {
         if (!this.room) return;
 
-        console.log('🎧 Setting up LiveKit listeners...');
+        // console.log('🎧 Setting up LiveKit listeners...');
 
         // Participant joined - wait for tracks before updating
         this.room.on(RoomEvent.ParticipantConnected, (participant: RemoteParticipant) => {
-            console.log('👤 Participant connected:', participant.identity);
+            // console.log('👤 Participant connected:', participant.identity);
             this.scheduleUpdate();
         });
 
         // Participant left
         this.room.on(RoomEvent.ParticipantDisconnected, (participant: RemoteParticipant) => {
-            console.log('👋 Participant disconnected:', participant.identity);
+            // console.log('👋 Participant disconnected:', participant.identity);
             this.scheduleUpdate();
         });
 
         // Track subscribed - CRITICAL for remote video
         this.room.on(RoomEvent.TrackSubscribed, (track: any, publication: RemoteTrackPublication, participant: RemoteParticipant) => {
-            console.log('📡 Track subscribed:', track.kind, 'from', participant.identity);
+            // console.log('📡 Track subscribed:', track.kind, 'from', participant.identity);
             this.scheduleUpdate();
         });
 
         // Track unsubscribed
         this.room.on(RoomEvent.TrackUnsubscribed, (track: any, publication: RemoteTrackPublication, participant: RemoteParticipant) => {
-            console.log('📴 Track unsubscribed:', track.kind, 'from', participant.identity);
+            // console.log('📴 Track unsubscribed:', track.kind, 'from', participant.identity);
             this.scheduleUpdate();
         });
 
         // Local track published
         this.room.on(RoomEvent.LocalTrackPublished, (publication: any) => {
-            console.log('📤 Local track published:', publication.kind);
+            // console.log('📤 Local track published:', publication.kind);
             this.scheduleUpdate();
         });
 
         // Connection state changed
         this.room.on(RoomEvent.ConnectionStateChanged, (state: any) => {
-            console.log('🔄 Connection state:', state);
+            // console.log('🔄 Connection state:', state);
         });
 
         // Disconnected
         this.room.on(RoomEvent.Disconnected, () => {
-            console.log('📴 Disconnected from room');
+            // console.log('📴 Disconnected from room');
         });
 
-        console.log('✅ LiveKit listeners set up');
+        // console.log('✅ LiveKit listeners set up');
     }
 
     /**
@@ -243,7 +243,7 @@ class LiveKitService {
             });
         });
 
-        console.log('👥 Participants updated:', participants.length, participants.map(p => `${p.displayName} (video: ${!!p.videoTrack})`));
+        // console.log('👥 Participants updated:', participants.length, participants.map(p => `${p.displayName} (video: ${!!p.videoTrack})`));
         
         // Notify subscribers
         this.notifySubscribers(participants);
@@ -277,13 +277,13 @@ class LiveKitService {
      */
     public async disconnect(): Promise<void> {
         if (this.room) {
-            console.log('📴 Disconnecting from LiveKit...');
+            // console.log('📴 Disconnecting from LiveKit...');
             if (this.updateTimeout) {
                 clearTimeout(this.updateTimeout);
             }
             await this.room.disconnect();
             this.room = null;
-            console.log('✅ Disconnected');
+            // console.log('✅ Disconnected');
         }
     }
 

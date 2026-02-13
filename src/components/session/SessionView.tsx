@@ -31,10 +31,10 @@ export const SessionView = () => {
 		useParams<{ rcGroupId: string; sessionId: string }>();
 	const history = useHistory();
 
-	console.log('🔥 SessionView MOUNTED:', {
-		groupIdFromParam,
-		sessionIdFromParam
-	});
+	// console.log('🔥 SessionView MOUNTED:', {
+	// groupIdFromParam,
+	// sessionIdFromParam
+	// });
 
 	const currentGroupId = useUpdatingRef(groupIdFromParam);
 	const currentSessionId = useUpdatingRef(sessionIdFromParam);
@@ -56,13 +56,13 @@ export const SessionView = () => {
 		read: readActiveSession
 	} = useSession(groupIdFromParam, sessionIdFromParam ? parseInt(sessionIdFromParam) : undefined);
 
-	console.log('🔥 SessionView STATE:', {
-		loading,
-		rcReady,
-		activeSessionReady,
-		hasActiveSession: !!activeSession,
-		sessionId: activeSession?.item?.id
-	});
+	// console.log('🔥 SessionView STATE:', {
+	// loading,
+	// rcReady,
+	// activeSessionReady,
+	// hasActiveSession: !!activeSession,
+	// sessionId: activeSession?.item?.id
+	// });
 
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
 
@@ -111,21 +111,21 @@ export const SessionView = () => {
 
 	useEffect(() => {
 		// MATRIX MIGRATION: Don't wait for RocketChat to be ready
-		console.log('🔥 SessionView useEffect:', {
-			activeSessionReady,
-			hasActiveSession: !!activeSession,
-			sessionId: activeSession?.item?.id
-		});
+		// console.log('🔥 SessionView useEffect:', {
+		// activeSessionReady,
+		// hasActiveSession: !!activeSession,
+		// sessionId: activeSession?.item?.id
+		// });
 
 		if (activeSessionReady && !activeSession) {
-			console.log('🔥 No active session - redirecting to list');
+			// console.log('🔥 No active session - redirecting to list');
 			history.push(
 				listPath +
 					(sessionListTab ? `?sessionListTab=${sessionListTab}` : '')
 			);
 			return;
 		} else if (activeSessionReady) {
-			console.log('🔥 Active session ready - setting loading false');
+			// console.log('🔥 Active session ready - setting loading false');
 			
 			// MATRIX MIGRATION: Skip RocketChat-specific redirect
 			// if (
@@ -185,28 +185,28 @@ export const SessionView = () => {
 		};
 	}, [activeSession?.item?.agencyId, setAgencyLogo]);
 
-	console.log('🔥 SessionView RENDER CHECK:', {
-		loading,
-		hasActiveSession: !!activeSession,
-		willShowLoading: loading || !activeSession
-	});
+	// console.log('🔥 SessionView RENDER CHECK:', {
+	// loading,
+	// hasActiveSession: !!activeSession,
+	// willShowLoading: loading || !activeSession
+	// });
 
 	if (loading || !activeSession) {
-		console.log('🔥 Showing loading spinner');
+		// console.log('🔥 Showing loading spinner');
 		return <Loading />;
 	}
 
-	console.log('🔥 SessionView RENDERING SESSION:', {
-		sessionId: activeSession.item.id,
-		isGroup: activeSession.isGroup
-	});
+	// console.log('🔥 SessionView RENDERING SESSION:', {
+	// sessionId: activeSession.item.id,
+	// isGroup: activeSession.isGroup
+	// });
 
 	if (
 		activeSession.isGroup &&
 		(!activeSession.item.subscribed ||
 			bannedUsers.includes(userData.userName))
 	) {
-		console.log('🔥 Showing JoinGroupChatView');
+		// console.log('🔥 Showing JoinGroupChatView');
 		return (
 			<ActiveSessionProvider
 				activeSession={activeSession}
@@ -220,7 +220,7 @@ export const SessionView = () => {
 		);
 	}
 
-	console.log('🔥 Rendering SessionStream!');
+	// console.log('🔥 Rendering SessionStream!');
 
 	return (
 		<ActiveSessionProvider

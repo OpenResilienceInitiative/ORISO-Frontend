@@ -57,7 +57,7 @@ export const FloatingCallWidget: React.FC = () => {
                 callManager.setMatrixCall(matrixCall);
             })
             .catch((err) => {
-                console.error("Failed to start call:", err);
+                // console.error("Failed to start call:", err);
                 alert(`Failed to start call: ${(err as Error).message}`);
                 callManager.endCall();
             });
@@ -134,7 +134,7 @@ export const FloatingCallWidget: React.FC = () => {
             );
             callManager.setMatrixCall(incomingCall as any);
         } catch (err) {
-            console.error("Failed to answer:", err);
+            // console.error("Failed to answer:", err);
             alert(`Failed to answer: ${(err as Error).message}`);
             callManager.endCall();
         }

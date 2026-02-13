@@ -246,7 +246,7 @@ export const fetchData = ({
 					) {
 						reject(new Error(FETCH_ERRORS.GATEWAY_TIMEOUT));
 					} else if (response.status === 401) {
-						console.log(url);
+						// console.log(url);
 						logout(true, appConfig.urls.toLogin);
 					}
 				} else {

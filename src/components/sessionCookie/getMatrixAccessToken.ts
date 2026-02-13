@@ -26,7 +26,7 @@ export const getMatrixAccessToken = (
             password: password,
         })
         .then((response) => {
-            console.log("Matrix login successful:", response);
+            // console.log("Matrix login successful:", response);
             resolve({
                 accessToken: response.access_token,
                 userId: response.user_id,
@@ -35,7 +35,7 @@ export const getMatrixAccessToken = (
             });
         })
         .catch((error) => {
-            console.error("Matrix login failed:", error);
+            // console.error("Matrix login failed:", error);
             reject(new Error("matrixLogin"));
         });
     });

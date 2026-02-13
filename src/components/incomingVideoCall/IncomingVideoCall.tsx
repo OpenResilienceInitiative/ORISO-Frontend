@@ -106,7 +106,7 @@ export const IncomingVideoCall = (props: IncomingVideoCallProps) => {
 				// Add ?answer=true to indicate we're answering an incoming call
 				const callUrl = `${props.videoCall.videoCallUrl}/${callType}?answer=true`;
 				
-				console.log('📞 Accepting Matrix call, opening in new tab:', callUrl);
+				// console.log('📞 Accepting Matrix call, opening in new tab:', callUrl);
 				window.open(callUrl, '_blank');
 				removeIncomingVideoCallNotification();
 			} else {
@@ -128,7 +128,7 @@ export const IncomingVideoCall = (props: IncomingVideoCallProps) => {
 		const isMatrixCall = props.videoCall.rcGroupId?.startsWith('!');
 		
 		if (isMatrixCall) {
-			console.log('📞 Rejecting Matrix call in room:', props.videoCall.rcGroupId);
+			// console.log('📞 Rejecting Matrix call in room:', props.videoCall.rcGroupId);
 			
 			// Get Matrix client and find the active call
 			const matrixClientService = (window as any).matrixClientService;
@@ -144,11 +144,11 @@ export const IncomingVideoCall = (props: IncomingVideoCallProps) => {
 					);
 					
 					if (activeCall) {
-						console.log('📞 Found Matrix call, rejecting...');
+						// console.log('📞 Found Matrix call, rejecting...');
 						(activeCall as any).reject();
-						console.log('✅ Matrix call rejected');
+						// console.log('✅ Matrix call rejected');
 					} else {
-						console.warn('⚠️ No active Matrix call found for room:', roomId);
+						// console.warn('⚠️ No active Matrix call found for room:', roomId);
 					}
 				}
 			}
@@ -166,7 +166,7 @@ export const IncomingVideoCall = (props: IncomingVideoCallProps) => {
 					removeIncomingVideoCallNotification();
 				})
 				.catch((err) => {
-					console.log(err);
+					// console.log(err);
 				});
 		}
 	}, [

@@ -92,7 +92,7 @@ export const AdditionalEnquiry: React.FC = () => {
 				setTenantAgenciesTopics(response);
 			})
 			.catch((error) => {
-				console.log(error);
+				// console.log(error);
 			});
 	}, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -181,7 +181,7 @@ export const AdditionalEnquiry: React.FC = () => {
 	};
 
 	const handleSuccessOverlayAction = (buttonFunction: string) => {
-		reloadUserData().catch(console.log);
+		reloadUserData().catch((error) => { /* console.log(error); */ });
 
 		if (buttonFunction === OVERLAY_FUNCTIONS.REDIRECT) {
 			mobileListView();

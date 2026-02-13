@@ -30,19 +30,19 @@ export const fetchMatrixData = (
                                 return response.json();
                         } else if (response.status === 401) {
                                 if (!ignoreErrors) {
-                                        console.warn("Matrix authentication failed");
+                                        // console.warn("Matrix authentication failed");
                                 }
                                 return { error: "Authentication failed" };
                         } else {
                                 if (!ignoreErrors) {
-                                        console.warn(`Matrix API call failed: ${response.status}`);
+                                        // console.warn(`Matrix API call failed: ${response.status}`);
                                 }
                                 return { error: `API call failed: ${response.status}` };
                         }
                 })
                 .catch((error) => {
                         if (!ignoreErrors) {
-                                console.error("Matrix API call error:", error);
+                                // console.error("Matrix API call error:", error);
                         }
                         return { error: error.message };
                 });

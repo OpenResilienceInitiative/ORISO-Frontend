@@ -237,18 +237,18 @@ export const SessionsList = ({
 					
 					const hasAutoOpened = sessionStorage.getItem(autoOpenKey) === 'true';
 					
-					console.log('🔍 Auto-open check:', {
-						sessionsCount: sessions?.length,
-						currentPath,
-						listPath,
-						baseListPath,
-						isOnBaseListPage,
-						hasAutoOpened,
-						hasAutoOpenedRef: hasAutoOpenedRef.current,
-						firstSession,
-						sessionId,
-						sessionStructure: firstSession ? Object.keys(firstSession) : null
-					});
+					// console.log('🔍 Auto-open check:', {
+					// sessionsCount: sessions?.length,
+					// currentPath,
+					// listPath,
+					// baseListPath,
+					// isOnBaseListPage,
+					// hasAutoOpened,
+					// hasAutoOpenedRef: hasAutoOpenedRef.current,
+					// firstSession,
+					// sessionId,
+					// sessionStructure: firstSession ? Object.keys(firstSession) : null
+					// });
 					
 					if (sessions?.length === 1 && !hasAutoOpened && !hasAutoOpenedRef.current && isOnBaseListPage) {
 						const session = sessions[0];
@@ -256,13 +256,13 @@ export const SessionsList = ({
 						const groupId = session?.session?.groupId;
 						const isEmptyEnquiry = session?.session?.status === STATUS_EMPTY;
 						
-						console.log('✅ Auto-opening session:', { 
-							sessionId, 
-							groupId, 
-							isEmptyEnquiry,
-							sessionStatus: session?.session?.status,
-							fullSession: session
-						});
+						// console.log('✅ Auto-opening session:', { 
+						// sessionId, 
+						// groupId, 
+						// isEmptyEnquiry,
+						// sessionStatus: session?.session?.status,
+						// fullSession: session
+						// });
 						
 						if (sessionId !== undefined) {
 							// Mark as auto-opened IMMEDIATELY in both ref and sessionStorage
@@ -276,17 +276,17 @@ export const SessionsList = ({
 							if (isEmptyEnquiry) {
 								// Empty enquiry: go to write view
 								const targetPath = `${baseListPath}/write/${sessionId}`;
-								console.log('🚀 Navigating to write view:', targetPath);
+								// console.log('🚀 Navigating to write view:', targetPath);
 								history.push(targetPath);
 							} else if (groupId && !isMatrixRoomId) {
 								// Original RocketChat behavior: navigate with groupId
 								const targetPath = `${baseListPath}/${groupId}/${sessionId}`;
-								console.log('🚀 Navigating with groupId:', targetPath);
+								// console.log('🚀 Navigating with groupId:', targetPath);
 								history.push(targetPath);
 							} else {
 								// MATRIX MIGRATION FIX: Navigate by session ID for Matrix rooms or sessions without groupId
 								const targetPath = `${baseListPath}/session/${sessionId}`;
-								console.log('🚀 Navigating by session ID:', targetPath);
+								// console.log('🚀 Navigating by session ID:', targetPath);
 								history.push(targetPath);
 							}
 						}
@@ -297,10 +297,10 @@ export const SessionsList = ({
 				});
 		} else {
 			// Fetch consulting sessionsData
-			console.log('🔍 CONSULTANT: Fetching sessions, type:', type);
+			// console.log('🔍 CONSULTANT: Fetching sessions, type:', type);
 			getConsultantSessionList(0, initialId.current)
 				.then(({ sessions }) => {
-					console.log('📦 CONSULTANT: Got', sessions?.length, 'sessions');
+					// console.log('📦 CONSULTANT: Got', sessions?.length, 'sessions');
 					dispatch({
 						type: UPDATE_SESSIONS,
 						ready: true,
@@ -308,7 +308,7 @@ export const SessionsList = ({
 					});
 				})
 				.catch((error) => {
-					console.error('❌ CONSULTANT: Error fetching sessions:', error);
+					// console.error('❌ CONSULTANT: Error fetching sessions:', error);
 					setIsLoading(false);
 				})
 				.then(() => setIsLoading(false))
@@ -971,7 +971,7 @@ const useGroupWatcher = (isLoading: boolean) => {
 				}
 			})
 			.catch((e) => {
-				console.log(e);
+				// console.log(e);
 			});
 	}, [dispatch, hasSessionChanged, history?.location?.state, sessions]);
 

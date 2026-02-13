@@ -24,7 +24,7 @@ export const apiPostAdditionalEnquiry = async (
 		consultingType: consultingType.toString(),
 		mainTopicId
 	};
-	console.log('🔵 Additional Enquiry Request Body:', requestBody);
+	// console.log('🔵 Additional Enquiry Request Body:', requestBody);
 	const data = JSON.stringify(requestBody);
 
 	return fetchData({

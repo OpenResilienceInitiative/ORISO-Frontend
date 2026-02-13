@@ -18,7 +18,7 @@ export class MatrixClientService {
         
         // CRITICAL: Start client with sync configuration (EXACTLY like Element does!)
         // NOTE: TURN/STUN servers are fetched automatically from Matrix homeserver
-        console.log('🔧 Matrix client will fetch TURN/STUN servers from homeserver');
+        // console.log('🔧 Matrix client will fetch TURN/STUN servers from homeserver');
         
         this.client.startClient({
             initialSyncLimit: 20,  // Load last 20 messages per room initially
@@ -28,10 +28,10 @@ export class MatrixClientService {
         
         // Wait for initial sync to complete before initializing other services
         (this.client as any).once('sync', (state: string) => {
-            console.log('🔷 Matrix sync state:', state);
+            // console.log('🔷 Matrix sync state:', state);
             
             if (state === 'PREPARED') {
-                console.log('✅ Matrix client SYNCED and READY for real-time events!');
+                // console.log('✅ Matrix client SYNCED and READY for real-time events!');
                 
                 // Initialize call service with this client
                 matrixCallService.initialize(this.client!);
@@ -43,10 +43,10 @@ export class MatrixClientService {
         
         // Log sync state changes
         (this.client as any).on('sync', (state: string, prevState: string | null) => {
-            console.log(`🔄 Matrix sync: ${prevState} → ${state}`);
+            // console.log(`🔄 Matrix sync: ${prevState} → ${state}`);
         });
         
-        console.log("✅ Matrix client starting with real-time sync...");
+        // console.log("✅ Matrix client starting with real-time sync...");
     }
 
     // Get current client

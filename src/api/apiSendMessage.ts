@@ -11,7 +11,7 @@ export const apiSendMessage = (
 ): Promise<any> => {
 	// MATRIX MIGRATION: Use Matrix SDK directly for INSTANT local echo (like Element!)
 	if (sessionId && matrixRoomId) {
-		console.log('🚀 MATRIX: Sending message via Matrix SDK for INSTANT sync');
+		// console.log('🚀 MATRIX: Sending message via Matrix SDK for INSTANT sync');
 		
 		// Get Matrix client
 		const matrixClientService = (window as any).matrixClientService;
@@ -20,21 +20,21 @@ export const apiSendMessage = (
 			const client = matrixClientService.getClient();
 			
 			if (client) {
-				console.log('✅ Sending via Matrix SDK to room:', matrixRoomId);
+				// console.log('✅ Sending via Matrix SDK to room:', matrixRoomId);
 				
 				// Send via Matrix SDK (this gives INSTANT local echo!)
 				return (client as any).sendMessage(matrixRoomId, {
 					msgtype: 'm.text',
 					body: messageData
 				}).then((response: any) => {
-					console.log('✅ Matrix SDK send complete - Room.timeline will fire INSTANTLY!');
+					// console.log('✅ Matrix SDK send complete - Room.timeline will fire INSTANTLY!');
 					
 					// The Room.timeline event fires IMMEDIATELY with the sent message!
 					// This is how Element achieves instant sync!
 					
 					return { success: true, event_id: response.event_id };
 				}).catch((error: any) => {
-					console.error('❌ Matrix SDK send failed, using REST API fallback:', error);
+					// console.error('❌ Matrix SDK send failed, using REST API fallback:', error);
 					const matrixUrl = `${apiUrl}/service/matrix/sessions/${sessionId}/messages`;
 					return fetchData({
 						url: matrixUrl,
@@ -47,7 +47,7 @@ export const apiSendMessage = (
 		}
 		
 		// Fallback: Use REST API if Matrix client not available
-		console.log('⚠️ Matrix client not available, using REST API fallback');
+		// console.log('⚠️ Matrix client not available, using REST API fallback');
 		const matrixUrl = `${apiUrl}/service/matrix/sessions/${sessionId}/messages`;
 		return fetchData({
 			url: matrixUrl,
@@ -55,7 +55,7 @@ export const apiSendMessage = (
 			bodyData: JSON.stringify({ message: messageData }),
 			responseHandling: []
 		}).then((response) => {
-			console.log('🚀 MATRIX: Message sent via REST API:', response);
+			// console.log('🚀 MATRIX: Message sent via REST API:', response);
 			return response;
 		});
 	}

@@ -22,7 +22,7 @@ class MatrixGroupCallService {
 
     public initialize(client: MatrixClient): void {
         this.client = client;
-        console.log('✅ MatrixGroupCallService initialized');
+        // console.log('✅ MatrixGroupCallService initialized');
     }
 
     /**
@@ -36,7 +36,7 @@ class MatrixGroupCallService {
     ): Promise<void> {
         if (!this.client) {
             const error = new Error('Matrix client not initialized');
-            console.error('❌', error);
+            // console.error('❌', error);
             throw error;
         }
 
@@ -44,24 +44,24 @@ class MatrixGroupCallService {
         this.onError = onError;
 
         try {
-            console.log('📞 Starting/joining group call in room:', roomId);
-            console.log('📞 Video enabled:', isVideo);
+            // console.log('📞 Starting/joining group call in room:', roomId);
+            // console.log('📞 Video enabled:', isVideo);
 
             // Wait for room to be ready
-            console.log('⏳ Waiting for room to be ready...');
+            // console.log('⏳ Waiting for room to be ready...');
             await this.client.waitUntilRoomReadyForGroupCalls(roomId);
-            console.log('✅ Room is ready');
+            // console.log('✅ Room is ready');
 
             // Check if group call already exists
             let groupCall = this.client.getGroupCallForRoom(roomId);
-            console.log('🔍 Existing group call:', groupCall ? 'Found' : 'Not found');
+            // console.log('🔍 Existing group call:', groupCall ? 'Found' : 'Not found');
 
             if (!groupCall) {
                 // Create new group call
-                console.log('🆕 Creating new group call...');
-                console.log('   - Room ID:', roomId);
-                console.log('   - Type:', isVideo ? 'Video' : 'Voice');
-                console.log('   - Intent: Prompt');
+                // console.log('🆕 Creating new group call...');
+                // console.log('   - Room ID:', roomId);
+                // console.log('   - Type:', isVideo ? 'Video' : 'Voice');
+                // console.log('   - Intent: Prompt');
                 
                 groupCall = await this.client.createGroupCall(
                     roomId,
@@ -71,46 +71,46 @@ class MatrixGroupCallService {
                     false, // dataChannelsEnabled
                     undefined // dataChannelOptions
                 );
-                console.log('✅ Group call created:', groupCall);
+                // console.log('✅ Group call created:', groupCall);
             } else {
-                console.log('✅ Found existing group call:', groupCall.groupCallId);
+                // console.log('✅ Found existing group call:', groupCall.groupCallId);
             }
 
             this.activeGroupCall = groupCall;
-            console.log('📌 Active group call set');
+            // console.log('📌 Active group call set');
 
             // Set up event listeners BEFORE entering
-            console.log('🎧 Setting up listeners...');
+            // console.log('🎧 Setting up listeners...');
             this.setupGroupCallListeners();
 
             // Enter the call
-            console.log('🚪 Entering group call...');
-            console.log('   - Group call state before enter:', this.activeGroupCall.state);
+            // console.log('🚪 Entering group call...');
+            // console.log('   - Group call state before enter:', this.activeGroupCall.state);
             
             await this.activeGroupCall.enter();
             
-            console.log('✅ Successfully entered group call');
-            console.log('   - Group call state after enter:', this.activeGroupCall.state);
-            console.log('   - Local call feed:', this.activeGroupCall.localCallFeed);
-            console.log('   - User media feeds:', this.activeGroupCall.userMediaFeeds);
+            // console.log('✅ Successfully entered group call');
+            // console.log('   - Group call state after enter:', this.activeGroupCall.state);
+            // console.log('   - Local call feed:', this.activeGroupCall.localCallFeed);
+            // console.log('   - User media feeds:', this.activeGroupCall.userMediaFeeds);
 
             // Set initial mute state
             if (isVideo) {
-                console.log('📹 Unmuting video...');
+                // console.log('📹 Unmuting video...');
                 await this.activeGroupCall.setLocalVideoMuted(false);
             }
-            console.log('🎤 Unmuting audio...');
+            // console.log('🎤 Unmuting audio...');
             await this.activeGroupCall.setMicrophoneMuted(false);
 
-            console.log('✅ Group call fully initialized');
+            // console.log('✅ Group call fully initialized');
 
         } catch (error) {
-            console.error('❌ Failed to start/join group call:', error);
-            console.error('❌ Error details:', {
-                name: (error as Error).name,
-                message: (error as Error).message,
-                stack: (error as Error).stack
-            });
+            // console.error('❌ Failed to start/join group call:', error);
+            // console.error('❌ Error details:', {
+            // name: (error as Error).name,
+            // message: (error as Error).message,
+            // stack: (error as Error).stack
+            // });
             if (this.onError) {
                 this.onError(error as Error);
             }
@@ -124,41 +124,41 @@ class MatrixGroupCallService {
     private setupGroupCallListeners(): void {
         if (!this.activeGroupCall) return;
 
-        console.log('🎧 Setting up group call listeners...');
+        // console.log('🎧 Setting up group call listeners...');
 
         // Listen for user media feeds (THIS IS THE KEY EVENT!)
         this.activeGroupCall.on(GroupCallEvent.UserMediaFeedsChanged, (feeds: CallFeed[]) => {
-            console.log('📡 UserMediaFeedsChanged:', feeds.length, 'feeds');
+            // console.log('📡 UserMediaFeedsChanged:', feeds.length, 'feeds');
             feeds.forEach((feed, index) => {
-                console.log(`  Feed ${index}:`, {
-                    userId: feed.userId,
-                    isLocal: feed.isLocal(),
-                    hasVideo: feed.stream?.getVideoTracks().length > 0,
-                    hasAudio: feed.stream?.getAudioTracks().length > 0
-                });
+                // console.log(`  Feed ${index}:`, {
+                // userId: feed.userId,
+                // isLocal: feed.isLocal(),
+                // hasVideo: feed.stream?.getVideoTracks().length > 0,
+                // hasAudio: feed.stream?.getAudioTracks().length > 0
+                // });
             });
             this.updateParticipants(feeds);
         });
 
         // Listen for participants changes
         this.activeGroupCall.on(GroupCallEvent.ParticipantsChanged, (participants) => {
-            console.log('👥 ParticipantsChanged:', participants.size, 'participants');
+            // console.log('👥 ParticipantsChanged:', participants.size, 'participants');
         });
 
         // Listen for state changes
         this.activeGroupCall.on(GroupCallEvent.GroupCallStateChanged, (newState, oldState) => {
-            console.log('🔄 GroupCallStateChanged:', oldState, '→', newState);
+            // console.log('🔄 GroupCallStateChanged:', oldState, '→', newState);
         });
 
         // Listen for errors
         this.activeGroupCall.on(GroupCallEvent.Error, (error) => {
-            console.error('❌ Group call error:', error);
+            // console.error('❌ Group call error:', error);
             if (this.onError) {
                 this.onError(error);
             }
         });
 
-        console.log('✅ Group call listeners set up');
+        // console.log('✅ Group call listeners set up');
     }
 
     /**
@@ -183,11 +183,11 @@ class MatrixGroupCallService {
             });
         });
 
-        console.log('✅ Updated participants:', participants.map(p => ({
-            name: p.displayName,
-            isLocal: p.isLocal,
-            hasStream: !!p.feed?.stream
-        })));
+        // console.log('✅ Updated participants:', participants.map(p => ({
+        // name: p.displayName,
+        // isLocal: p.isLocal,
+        // hasStream: !!p.feed?.stream
+        // })));
 
         this.onParticipantsChanged(participants);
     }
@@ -215,14 +215,14 @@ class MatrixGroupCallService {
      */
     public async endGroupCall(): Promise<void> {
         if (this.activeGroupCall) {
-            console.log('📴 Ending group call...');
+            // console.log('📴 Ending group call...');
             try {
                 await this.activeGroupCall.leave();
                 this.activeGroupCall.removeAllListeners();
                 this.activeGroupCall = null;
-                console.log('✅ Group call ended');
+                // console.log('✅ Group call ended');
             } catch (error) {
-                console.error('❌ Error ending group call:', error);
+                // console.error('❌ Error ending group call:', error);
             }
         }
     }

@@ -30,7 +30,7 @@ export const AdditionalAgencySelection = (
 	
 	// Debug logging
 	useEffect(() => {
-		console.log('🟢 selectedAgency changed:', selectedAgency?.id);
+		// console.log('🟢 selectedAgency changed:', selectedAgency?.id);
 	}, [selectedAgency]);
 	const validPostcode = () =>
 		selectedPostcode?.length === VALID_POSTCODE_LENGTH;
@@ -159,7 +159,7 @@ export const AdditionalAgencySelection = (
 									checkedValue={selectedAgency?.id.toString() || ''}
 										showTooltipAbove={true}
 									onChange={(agency) => {
-										console.log('🔵 Radio clicked, setting agency:', agency.id);
+										// console.log('🔵 Radio clicked, setting agency:', agency.id);
 										setSelectedAgency(agency);
 									}}
 									/>

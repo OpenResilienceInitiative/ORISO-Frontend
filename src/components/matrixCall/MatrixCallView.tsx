@@ -34,7 +34,7 @@ export const MatrixCallView: React.FC<MatrixCallViewProps> = ({
         const urlParams = new URLSearchParams(window.location.search);
         const isAnswering = urlParams.get('answer') === 'true';
         
-        console.log('🔥 MatrixCallView INIT - Room:', roomId, '| Answer mode:', isAnswering);
+        // console.log('🔥 MatrixCallView INIT - Room:', roomId, '| Answer mode:', isAnswering);
         
         const matrixClientService = (window as any).matrixClientService;
         if (!matrixClientService) {
@@ -61,12 +61,12 @@ export const MatrixCallView: React.FC<MatrixCallViewProps> = ({
             call.state === 'ringing'
         ) as MatrixCall | undefined;
         
-        console.log('🔥 Incoming call exists?', !!incomingCall);
-        console.log('🔥 Is answering mode?', isAnswering);
+        // console.log('🔥 Incoming call exists?', !!incomingCall);
+        // console.log('🔥 Is answering mode?', isAnswering);
         
         if (isAnswering && incomingCall) {
             // ANSWER MODE: Answer the existing call
-            console.log('✅ ANSWERING incoming call');
+            // console.log('✅ ANSWERING incoming call');
             setActiveCall(incomingCall);
             
             matrixCallService.answerCall(
@@ -75,12 +75,12 @@ export const MatrixCallView: React.FC<MatrixCallViewProps> = ({
                 localVideoRef.current || undefined,
                 remoteVideoRef.current || undefined
             ).catch((err) => {
-                console.error('❌ Failed to answer:', err);
+                // console.error('❌ Failed to answer:', err);
                 setError(err.message);
             });
         } else if (!isAnswering) {
             // START MODE: Start new outgoing call
-            console.log('✅ STARTING new outgoing call');
+            // console.log('✅ STARTING new outgoing call');
             
             matrixCallService.startCall({
                 roomId,
@@ -90,7 +90,7 @@ export const MatrixCallView: React.FC<MatrixCallViewProps> = ({
             }).then((call) => {
                 setActiveCall(call);
             }).catch((err) => {
-                console.error('❌ Failed to start call:', err);
+                // console.error('❌ Failed to start call:', err);
                 setError(err.message);
             });
         } else {
@@ -100,7 +100,7 @@ export const MatrixCallView: React.FC<MatrixCallViewProps> = ({
         
         // Cleanup on unmount
         return () => {
-            console.log('🧹 Cleaning up call...');
+            // console.log('🧹 Cleaning up call...');
             if (activeCall) {
                 (activeCall as any).hangup();
             }
@@ -112,7 +112,7 @@ export const MatrixCallView: React.FC<MatrixCallViewProps> = ({
         if (!activeCall) return;
         
         const handleStateChange = (state: CallState) => {
-            console.log('📞 Call state changed:', state);
+            // console.log('📞 Call state changed:', state);
             setCallState(state);
             if (state === CallState.Ended) {
                 onCallEnd();

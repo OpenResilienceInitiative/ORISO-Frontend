@@ -281,7 +281,7 @@ export const decryptAttachment = async (
 		const result = await decryptAES(vector, groupKey, cipherText);
 		return new File([result], name);
 	} catch (error) {
-		console.error('Error decrypting message: ', error, encAttachment);
+		// console.error('Error decrypting message: ', error, encAttachment);
 		throw error;
 	}
 };
@@ -437,7 +437,7 @@ export const decryptText = async (
 		const result = await decryptAES(vector, groupKey, cipherText);
 		return new TextDecoder('UTF-8').decode(result);
 	} catch (error) {
-		console.error('Error decrypting message: ', error, encMessage);
+		// console.error('Error decrypting message: ', error, encMessage);
 		throw error;
 	}
 };
@@ -488,7 +488,7 @@ export const encryptForParticipant = (
 		try {
 			userKey = await importRSAKey(JSON.parse(public_key), ['encrypt']);
 		} catch (error) {
-			console.error('Error importing user key: ', error);
+			// console.error('Error importing user key: ', error);
 			return reject(error);
 		}
 
@@ -503,7 +503,7 @@ export const encryptForParticipant = (
 				keyID + btoa(JSON.stringify(new Uint8Array(encryptedUserKey)))
 			);
 		} catch (error) {
-			console.error('Error encrypting user key: ', error);
+			// console.error('Error encrypting user key: ', error);
 			return reject(error);
 		}
 	});
@@ -521,7 +521,7 @@ export const createGroupKey = (): Promise<GroupKeyType> =>
 		try {
 			key = await generateAESKey();
 		} catch (error) {
-			console.error('Error generating group key: ', error);
+			// console.error('Error generating group key: ', error);
 			throw error;
 		}
 
@@ -532,7 +532,7 @@ export const createGroupKey = (): Promise<GroupKeyType> =>
 
 			resolve({ key, keyID, sessionKeyExportedString });
 		} catch (error) {
-			console.error('Error exporting group key: ', error);
+			// console.error('Error exporting group key: ', error);
 			throw error;
 		}
 	});
@@ -552,7 +552,7 @@ export const importGroupKey = (
 			const decryptedKey = await decryptRSA(e2eePrivateKey, groupKey);
 			sessionKeyExportedString = toString(decryptedKey);
 		} catch (error) {
-			console.error('Error decrypting group key: ', error);
+			// console.error('Error decrypting group key: ', error);
 			reject(error);
 			return;
 		}
@@ -566,7 +566,7 @@ export const importGroupKey = (
 			// Key has been obtained. E2E is now in session.
 			resolve({ key, keyID, sessionKeyExportedString });
 		} catch (error) {
-			console.error('Error decrypting group key: ', error);
+			// console.error('Error decrypting group key: ', error);
 			reject(error);
 			return;
 		}

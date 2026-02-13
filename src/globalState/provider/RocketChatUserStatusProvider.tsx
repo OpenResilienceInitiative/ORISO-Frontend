@@ -111,7 +111,7 @@ export function RocketChatUserStatusProvider({
 				);
 			})
 			.catch((err) => {
-				console.error(err);
+				// console.error(err);
 			}); // Ignore errors
 
 		return () => {

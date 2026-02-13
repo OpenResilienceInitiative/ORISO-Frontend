@@ -29,7 +29,7 @@ export const preConditionsMet = (): TPreConditionCookies => {
 		sessionStorage.getItem('some_temporary_key');
 	} catch {
 		// App is not usable
-		console.error('Cookies disabled for this page!');
+		// console.error('Cookies disabled for this page!');
 		return PRE_CONDITION_COOKIES;
 	}
 	return null;
@@ -43,7 +43,7 @@ export const PreConditions = ({ onPreConditionsMet }: PreConditionsProps) => {
 
 	useEffect(() => {
 		const interval = setInterval(() => {
-			console.log('Checking pre conditions ...');
+			// console.log('Checking pre conditions ...');
 			const failedPreCondition = preConditionsMet();
 			onPreConditionsMet(failedPreCondition);
 			setFailedPreCondition(failedPreCondition);

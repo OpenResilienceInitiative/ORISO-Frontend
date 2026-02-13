@@ -125,7 +125,7 @@ export const CreateGroupChatView = () => {
 					setAvailableConsultants(uniqueConsultants);
 				})
 				.catch((error) => {
-					console.error('Failed to fetch consultants:', error);
+					// console.error('Failed to fetch consultants:', error);
 					setAvailableConsultants([]);
 				});
 		} else {

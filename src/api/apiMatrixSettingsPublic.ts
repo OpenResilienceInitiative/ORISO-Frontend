@@ -10,7 +10,7 @@ export const SETTING_HIDE_SYSTEM_MESSAGES = "Hide_System_Messages";
 export const SETTING_MESSAGE_SHOWDELETEDSTATUS = "Message_ShowDeletedStatus";
 
 export const apiMatrixSettingsPublic = async (): Promise<TRocketChatSettingsPublicResponse> => {
-        console.log("🔧 Fetching Matrix settings (using defaults)");
+        // console.log("🔧 Fetching Matrix settings (using defaults)");
         
         const settings: TSetting[] = [
                 { _id: "E2E_Enable", enterprise: false, value: true },
@@ -21,7 +21,7 @@ export const apiMatrixSettingsPublic = async (): Promise<TRocketChatSettingsPubl
                 { _id: "Hide_System_Messages", enterprise: false, value: false }
         ] as TSetting[];
         
-        console.log("✅ Matrix settings loaded (defaults)");
+        // console.log("✅ Matrix settings loaded (defaults)");
         
         return {
                 count: settings.length,

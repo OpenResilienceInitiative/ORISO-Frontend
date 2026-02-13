@@ -123,8 +123,8 @@ export const RocketChatSubscriptionsProvider = ({
 		useCallback((args) => {
 			//const [data] = args;
 			//const { payload } = data;
-			console.log('Notification');
-			console.log(args);
+			// console.log('Notification');
+			// console.log(args);
 		}, [])
 	);
 

@@ -228,7 +228,7 @@ export const Registration = () => {
 					setRedirectOverlayActive(true);
 				})
 				.catch((error) => {
-					console.error('Registration failed:', error);
+					// console.error('Registration failed:', error);
 					setIsRegistering(false);
 					addNotification({
 						notificationType: NOTIFICATION_TYPE_ERROR,

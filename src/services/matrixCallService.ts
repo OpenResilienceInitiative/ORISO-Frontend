@@ -34,7 +34,7 @@ class MatrixCallService {
 
         // Listen for incoming calls
         this.client.on('Call.incoming' as any, (call: MatrixCall) => {
-            console.log('📞 Incoming Matrix WebRTC call from:', call.getOpponentMember()?.name);
+            // console.log('📞 Incoming Matrix WebRTC call from:', call.getOpponentMember()?.name);
             // Note: LiveKit group calls are handled separately in matrixLiveEventBridge
             // and won't trigger this event
             if (this.eventHandlers.onIncomingCall) {
@@ -42,7 +42,7 @@ class MatrixCallService {
             }
         });
 
-        console.log('✅ Matrix Call Service initialized');
+        // console.log('✅ Matrix Call Service initialized');
     }
 
     /**
@@ -54,7 +54,7 @@ class MatrixCallService {
         }
 
         if (this.activeCall) {
-            console.warn('⚠️  Active call exists, force clearing it...');
+            // console.warn('⚠️  Active call exists, force clearing it...');
             try {
                 // Just stop the tracks, don't hangup (which triggers events)
                 const localFeed = this.activeCall.localUsermediaFeed;
@@ -62,40 +62,40 @@ class MatrixCallService {
                     localFeed.stream?.getTracks().forEach(track => track.stop());
                 }
             } catch (err) {
-                console.error('❌ Error stopping old tracks:', err);
+                // console.error('❌ Error stopping old tracks:', err);
             }
             // Force clear the activeCall reference
             this.activeCall = null;
-            console.log('✅ Old call reference cleared');
+            // console.log('✅ Old call reference cleared');
         }
 
         try {
-            console.log(`📞 Starting ${options.isVideoCall ? 'video' : 'voice'} call in room:`, options.roomId);
+            // console.log(`📞 Starting ${options.isVideoCall ? 'video' : 'voice'} call in room:`, options.roomId);
 
             // Wait for Matrix client to sync and find the room
-            console.log('🔍 Looking for room:', options.roomId);
+            // console.log('🔍 Looking for room:', options.roomId);
             let room = this.client.getRoom(options.roomId);
             
             if (!room) {
-                console.log('⏳ Room not found yet, waiting for sync...');
+                // console.log('⏳ Room not found yet, waiting for sync...');
                 
                 // Wait up to 10 seconds for room to appear
                 for (let i = 0; i < 20; i++) {
                     await new Promise(resolve => setTimeout(resolve, 500));
                     room = this.client.getRoom(options.roomId);
                     if (room) {
-                        console.log('✅ Room found after waiting!');
+                        // console.log('✅ Room found after waiting!');
                         break;
                     }
                 }
                 
                 if (!room) {
-                    console.error('❌ Room still not found after 10 seconds');
-                    console.error('❌ Available rooms:', this.client.getRooms().map((r: any) => r.roomId));
+                    // console.error('❌ Room still not found after 10 seconds');
+                    // console.error('❌ Available rooms:', this.client.getRooms().map((r: any) => r.roomId));
                     throw new Error('Room not found. The Matrix client may not have finished syncing, or you may not be a member of this room.');
                 }
             } else {
-                console.log('✅ Room found immediately!');
+                // console.log('✅ Room found immediately!');
             }
 
             const call = this.client.createCall(
@@ -115,11 +115,11 @@ class MatrixCallService {
                 options.isVideoCall  // video
             );
 
-            console.log('✅ Call placed successfully');
+            // console.log('✅ Call placed successfully');
 
             return call;
         } catch (error) {
-            console.error('❌ Failed to start call:', error);
+            // console.error('❌ Failed to start call:', error);
             if (this.eventHandlers.onCallError) {
                 this.eventHandlers.onCallError(error as Error);
             }
@@ -137,7 +137,7 @@ class MatrixCallService {
         remoteVideoElement?: HTMLVideoElement
     ): Promise<void> {
         try {
-            console.log('📞 Answering call...');
+            // console.log('📞 Answering call...');
 
             this.activeCall = call;
             this.setupCallEventListeners(call, {
@@ -153,9 +153,9 @@ class MatrixCallService {
                 isVideoCall  // video
             );
 
-            console.log('✅ Call answered successfully');
+            // console.log('✅ Call answered successfully');
         } catch (error) {
-            console.error('❌ Failed to answer call:', error);
+            // console.error('❌ Failed to answer call:', error);
             if (this.eventHandlers.onCallError) {
                 this.eventHandlers.onCallError(error as Error);
             }
@@ -168,13 +168,13 @@ class MatrixCallService {
      */
     public hangupCall(): void {
         if (this.activeCall) {
-            console.log('📞 Hanging up call...');
+            // console.log('📞 Hanging up call...');
             try {
                 this.activeCall.hangup('user_hangup' as any, false);
                 this.cleanup();
-                console.log('✅ Call ended');
+                // console.log('✅ Call ended');
             } catch (error) {
-                console.error('❌ Error hanging up call:', error);
+                // console.error('❌ Error hanging up call:', error);
             }
         }
     }
@@ -183,12 +183,12 @@ class MatrixCallService {
      * Reject an incoming call
      */
     public rejectCall(call: MatrixCall): void {
-        console.log('📞 Rejecting call...');
+        // console.log('📞 Rejecting call...');
         try {
             call.reject();
-            console.log('✅ Call rejected');
+            // console.log('✅ Call rejected');
         } catch (error) {
-            console.error('❌ Error rejecting call:', error);
+            // console.error('❌ Error rejecting call:', error);
         }
     }
 
@@ -199,7 +199,7 @@ class MatrixCallService {
         if (this.activeCall) {
             const isMuted = this.activeCall.isMicrophoneMuted();
             this.activeCall.setMicrophoneMuted(!isMuted);
-            console.log(`🎤 Microphone ${!isMuted ? 'muted' : 'unmuted'}`);
+            // console.log(`🎤 Microphone ${!isMuted ? 'muted' : 'unmuted'}`);
             return !isMuted;
         }
         return false;
@@ -212,7 +212,7 @@ class MatrixCallService {
         if (this.activeCall) {
             const isVideoMuted = this.activeCall.isLocalVideoMuted();
             this.activeCall.setLocalVideoMuted(!isVideoMuted);
-            console.log(`📹 Video ${!isVideoMuted ? 'disabled' : 'enabled'}`);
+            // console.log(`📹 Video ${!isVideoMuted ? 'disabled' : 'enabled'}`);
             return !isVideoMuted;
         }
         return false;
@@ -238,7 +238,7 @@ class MatrixCallService {
     private setupCallEventListeners(call: MatrixCall, options: MatrixCallOptions): void {
         // Call state changed
         call.on(CallEvent.State as any, (state: CallState) => {
-            console.log('📞 Call state changed:', state);
+            // console.log('📞 Call state changed:', state);
 
             if (this.eventHandlers.onCallStateChanged) {
                 this.eventHandlers.onCallStateChanged(state);
@@ -246,7 +246,7 @@ class MatrixCallService {
 
             // Handle call end states
             if (state === CallState.Ended) {
-                console.log('📞 Call ended');
+                // console.log('📞 Call ended');
                 if (this.eventHandlers.onCallEnded) {
                     this.eventHandlers.onCallEnded();
                 }
@@ -256,13 +256,13 @@ class MatrixCallService {
 
         // Feeds changed (local/remote streams)
         call.on(CallEvent.FeedsChanged as any, () => {
-            console.log('📞 Feeds changed');
+            // console.log('📞 Feeds changed');
             this.handleFeedsChanged(call, options);
         });
 
         // Call error
         call.on(CallEvent.Error as any, (error: Error) => {
-            console.error('📞 Call error:', error);
+            // console.error('📞 Call error:', error);
             if (this.eventHandlers.onCallError) {
                 this.eventHandlers.onCallError(error);
             }
@@ -270,7 +270,7 @@ class MatrixCallService {
 
         // Call hangup
         call.on(CallEvent.Hangup as any, () => {
-            console.log('📞 Call hangup event');
+            // console.log('📞 Call hangup event');
             if (this.eventHandlers.onCallEnded) {
                 this.eventHandlers.onCallEnded();
             }
@@ -289,10 +289,10 @@ class MatrixCallService {
                 const localStream = localFeed.stream;
                 if (localStream) {
                     options.localVideoElement.srcObject = localStream;
-                    options.localVideoElement.play().catch(e => 
-                        console.error('Error playing local video:', e)
-                    );
-                    console.log('✅ Local video stream attached');
+                    options.localVideoElement.play().catch((e) => {
+                        // console.error('Error playing local video:', e);
+                    });
+                    // console.log('✅ Local video stream attached');
                 }
             }
 
@@ -302,14 +302,14 @@ class MatrixCallService {
                 const remoteStream = remoteFeed.stream;
                 if (remoteStream) {
                     options.remoteVideoElement.srcObject = remoteStream;
-                    options.remoteVideoElement.play().catch(e => 
-                        console.error('Error playing remote video:', e)
-                    );
-                    console.log('✅ Remote video stream attached');
+                    options.remoteVideoElement.play().catch((e) => {
+                        // console.error('Error playing remote video:', e);
+                    });
+                    // console.log('✅ Remote video stream attached');
                 }
             }
         } catch (error) {
-            console.error('❌ Error handling feeds:', error);
+            // console.error('❌ Error handling feeds:', error);
         }
     }
 
@@ -325,7 +325,7 @@ class MatrixCallService {
                     localFeed.stream?.getTracks().forEach(track => track.stop());
                 }
             } catch (error) {
-                console.error('Error stopping media tracks:', error);
+                // console.error('Error stopping media tracks:', error);
             }
 
             this.activeCall = null;
@@ -339,7 +339,7 @@ class MatrixCallService {
         this.hangupCall();
         this.client = null;
         this.eventHandlers = {};
-        console.log('✅ Matrix Call Service destroyed');
+        // console.log('✅ Matrix Call Service destroyed');
     }
 }
 

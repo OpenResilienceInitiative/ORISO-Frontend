@@ -23,7 +23,7 @@ export const SubscriptionKeyLost = () => {
 			type: ALIAS_MESSAGE_TYPES.MASTER_KEY_LOST
 		})
 			.then(reloadActiveSession)
-			.catch((e) => console.error(e));
+			.catch((e) => { /* console.error(e); */ });
 	}, [activeSession.rid, reloadActiveSession]);
 
 	return (

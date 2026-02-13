@@ -18,7 +18,7 @@ export const registerMatrixUser = async (
     registrationData: MatrixRegistrationData
 ): Promise<MatrixRegistrationResult> => {
     try {
-        console.log("🔧 Attempting Matrix registration for user:", registrationData.username);
+        // console.log("🔧 Attempting Matrix registration for user:", registrationData.username);
         
         // Matrix server URL from environment variable
         const homeserverUrl = process.env.REACT_APP_MATRIX_HOMESERVER_URL || "http://91.99.219.182:8008";
@@ -39,7 +39,7 @@ export const registerMatrixUser = async (
             } as any
         );
 
-        console.log("✅ Matrix registration successful:", response);
+        // console.log("✅ Matrix registration successful:", response);
         
         return {
             success: true,
@@ -49,11 +49,11 @@ export const registerMatrixUser = async (
         };
         
     } catch (error: any) {
-        console.error("❌ Matrix registration failed:", error);
+        // console.error("❌ Matrix registration failed:", error);
         
         // If user already exists, try to login instead
         if (error.errcode === "M_USER_IN_USE") {
-            console.log("🔄 User exists, attempting login instead...");
+            // console.log("🔄 User exists, attempting login instead...");
             try {
                 const loginResult = await loginMatrixUser(registrationData.username, registrationData.password);
                 return loginResult;
@@ -77,7 +77,7 @@ export const loginMatrixUser = async (
     password: string
 ): Promise<MatrixRegistrationResult> => {
     try {
-        console.log("🔧 Attempting Matrix login for user:", username);
+        // console.log("🔧 Attempting Matrix login for user:", username);
         
         // Matrix server URL from environment variable
         const homeserverUrl = process.env.REACT_APP_MATRIX_HOMESERVER_URL || "http://91.99.219.182:8008";
@@ -93,7 +93,7 @@ export const loginMatrixUser = async (
             password: password,
         });
 
-        console.log("✅ Matrix login successful:", response);
+        // console.log("✅ Matrix login successful:", response);
         
         return {
             success: true,
@@ -103,7 +103,7 @@ export const loginMatrixUser = async (
         };
         
     } catch (error: any) {
-        console.error("❌ Matrix login failed:", error);
+        // console.error("❌ Matrix login failed:", error);
         
         return {
             success: false,

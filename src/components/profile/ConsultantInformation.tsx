@@ -53,7 +53,7 @@ export const ConsultantInformation = () => {
 	const handleSaveEditButton = () => {
 		apiPatchUserData({ displayName: editedDisplayName })
 			.then(() => {
-				reloadUserData().catch(console.log);
+				reloadUserData().catch((error) => { /* console.log(error); */ });
 				setInitialDisplayName(editedDisplayName);
 			})
 			.catch((error) => {
@@ -64,7 +64,7 @@ export const ConsultantInformation = () => {
 					closeable: true,
 					timeout: 60000
 				});
-				console.error('Error while patching consultant', error);
+				// console.error('Error while patching consultant', error);
 			})
 			.finally(() => {
 				setIsEditEnabled(false);

@@ -69,28 +69,28 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 		stompConnect();
 
 		stompClient.onWebSocketClose = (message) => {
-			console.log('Closed', message);
+			// console.log('Closed', message);
 		};
 
 		stompClient.onWebSocketError = (error) => {
-			console.log('Error', error);
+			// console.log('Error', error);
 		};
 
 		// MATRIX EVENT BRIDGE SETUP (for real-time Matrix events)
 		// Listen to Matrix 'directMessage' events
 		const handleMatrixDirectMessage = (event: any) => {
-			console.log('📬 Matrix directMessage event received:', event);
+			// console.log('📬 Matrix directMessage event received:', event);
 			setNewStompDirectMessage(true);
 		};
 
 	// Listen to Matrix 'videoCallRequest' events
 	const handleMatrixCallRequest = (event: any) => {
-		console.log('📞 Matrix videoCallRequest event received:', event);
+		// console.log('📞 Matrix videoCallRequest event received:', event);
 		
 		// Use CallContext to trigger floating widget
 		const callContext = (window as any).callContext;
 		if (callContext) {
-			console.log('📞 Triggering incoming call via CallContext');
+			// console.log('📞 Triggering incoming call via CallContext');
 			callContext.receiveCall(
 				event.roomId,
 				true, // Assume video for now (we can enhance this later)
@@ -98,21 +98,21 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 				event.sender
 			);
 		} else {
-			console.error('❌ CallContext not available');
+			// console.error('❌ CallContext not available');
 		}
 	};
 
 		// Listen to Matrix 'callEnded' events
 		const handleMatrixCallEnded = (event: any) => {
-			console.log('📴 Matrix callEnded event received:', event);
+			// console.log('📴 Matrix callEnded event received:', event);
 			
 			// Use CallContext to end the call
 			const callContext = (window as any).callContext;
 			if (callContext) {
-				console.log('📴 Ending call via CallContext');
+				// console.log('📴 Ending call via CallContext');
 				callContext.hangupCall();
 			} else {
-				console.error('❌ CallContext not available');
+				// console.error('❌ CallContext not available');
 			}
 		};
 
@@ -121,7 +121,7 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 		matrixLiveEventBridge.on('videoCallRequest', handleMatrixCallRequest);
 		matrixLiveEventBridge.on('callEnded', handleMatrixCallEnded);
 
-		console.log('✅ WebsocketHandler: STOMP + Matrix event listeners registered');
+		// console.log('✅ WebsocketHandler: STOMP + Matrix event listeners registered');
 
 		// Cleanup function
 		return () => {
@@ -129,7 +129,7 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 			matrixLiveEventBridge.off('directMessage', handleMatrixDirectMessage);
 			matrixLiveEventBridge.off('videoCallRequest', handleMatrixCallRequest);
 			matrixLiveEventBridge.off('callEnded', handleMatrixCallEnded);
-			console.log('🧹 WebsocketHandler: Event listeners cleaned up');
+			// console.log('🧹 WebsocketHandler: Event listeners cleaned up');
 		};
 	}, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -144,7 +144,7 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 			setNewStompDirectMessage(false);
 
 			// CRITICAL: Emit event to refresh open sessions
-			console.log('🔔 LiveService directMessage event - refreshing open sessions');
+			// console.log('🔔 LiveService directMessage event - refreshing open sessions');
 			messageEventEmitter.emit({});
 
 			if (

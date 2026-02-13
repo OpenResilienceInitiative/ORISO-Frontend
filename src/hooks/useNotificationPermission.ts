@@ -10,7 +10,7 @@ export const useNotificationPermission = () => {
     useEffect(() => {
         // Check if notifications are supported
         if (!('Notification' in window)) {
-            console.warn('This browser does not support notifications');
+            // console.warn('This browser does not support notifications');
             return;
         }
 
@@ -19,14 +19,14 @@ export const useNotificationPermission = () => {
 
         // If permission is default (not asked yet), request it
         if (Notification.permission === 'default') {
-            console.log('🔔 Requesting notification permission for incoming calls...');
+            // console.log('🔔 Requesting notification permission for incoming calls...');
             
             // Small delay to not overwhelm user on first load
             const timer = setTimeout(() => {
                 Notification.requestPermission().then((permission) => {
                     setPermissionStatus(permission);
                     if (permission === 'granted') {
-                        console.log('✅ Notification permission granted');
+                        // console.log('✅ Notification permission granted');
                         // Show a test notification
                         new Notification('Benachrichtigungen aktiviert', {
                             body: 'Sie erhalten jetzt Benachrichtigungen für eingehende Anrufe.',
@@ -34,16 +34,16 @@ export const useNotificationPermission = () => {
                             tag: 'notification-enabled'
                         });
                     } else if (permission === 'denied') {
-                        console.warn('⚠️ Notification permission denied - user will not receive call notifications');
+                        // console.warn('⚠️ Notification permission denied - user will not receive call notifications');
                     }
                 });
             }, 2000); // Wait 2 seconds after app loads
 
             return () => clearTimeout(timer);
         } else if (Notification.permission === 'granted') {
-            console.log('✅ Notification permission already granted');
+            // console.log('✅ Notification permission already granted');
         } else {
-            console.warn('⚠️ Notification permission denied - user will not receive call notifications');
+            // console.warn('⚠️ Notification permission denied - user will not receive call notifications');
         }
     }, []);
 

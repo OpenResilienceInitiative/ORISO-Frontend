@@ -161,7 +161,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					setSupervisionReason(currentSupervisor?.notes || null);
 				})
 				.catch((error) => {
-					console.error('Failed to check supervisor status:', error);
+					// console.error('Failed to check supervisor status:', error);
 					setIsSupervisor(false);
 					setSupervisionReason(null);
 				});
@@ -173,7 +173,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	useEffect(() => {
 		const canWrite = type !== SESSION_LIST_TYPES.ENQUIRY;
-		console.log('🔥 SessionItemComponent: canWriteMessage =', canWrite, '(type:', type, ', isGroup:', activeSession.isGroup, ', isSupervisor:', isSupervisor, ')');
+		// console.log('🔥 SessionItemComponent: canWriteMessage =', canWrite, '(type:', type, ', isGroup:', activeSession.isGroup, ', isSupervisor:', isSupervisor, ')');
 		setCanWriteMessage(canWrite);
 	}, [type, userData, activeSession, activeSession.isGroup, isSupervisor]);
 
@@ -366,7 +366,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		
 		// MATRIX MIGRATION: Refresh messages after sending for Matrix sessions
 		if (!activeSession.rid && props.refreshMessages) {
-			console.log('🔄 MATRIX: Refreshing messages after send...');
+			// console.log('🔄 MATRIX: Refreshing messages after send...');
 			setTimeout(() => {
 				props.refreshMessages();
 			}, 500); // Small delay to ensure message is processed
@@ -441,7 +441,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					})
 			).then((a) => {
 				if (a.length > 0) {
-					console.log(`${a.length} error(s) reported.`);
+					// console.log(`${a.length} error(s) reported.`);
 				}
 			});
 		}, []),

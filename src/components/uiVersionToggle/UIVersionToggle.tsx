@@ -56,13 +56,13 @@ export const UIVersionToggle = () => {
 			document.cookie = `matrix_sso_device_id=${encodeURIComponent(matrixDeviceId || '')}; path=/; SameSite=Lax${domainStr}${secureStr}`;
 			document.cookie = `matrix_sso_hs_url=${encodeURIComponent(homeserverUrl)}; path=/; SameSite=Lax${domainStr}${secureStr}`;
 			
-			console.log('✅ Matrix credentials stored in cookies for Element SSO');
-			console.log('📍 User ID:', matrixUserId);
-			console.log('📍 Homeserver:', homeserverUrl);
-			console.log('📍 Device ID:', matrixDeviceId);
-			console.log('📍 Cookie domain:', cookieDomain || 'current host only');
+			// console.log('✅ Matrix credentials stored in cookies for Element SSO');
+			// console.log('📍 User ID:', matrixUserId);
+			// console.log('📍 Homeserver:', homeserverUrl);
+			// console.log('📍 Device ID:', matrixDeviceId);
+			// console.log('📍 Cookie domain:', cookieDomain || 'current host only');
 		} else {
-			console.warn('⚠️ No Matrix credentials found - Element will require manual login');
+			// console.warn('⚠️ No Matrix credentials found - Element will require manual login');
 		}
 		
 		// Redirect to Element (Beta UI)

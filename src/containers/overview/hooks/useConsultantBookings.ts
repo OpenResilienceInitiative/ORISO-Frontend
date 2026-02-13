@@ -15,7 +15,7 @@ export const useConsultantBookings = () => {
 		apiGetConsultantAppointments(userData.userId, BookingsStatus.ACTIVE)
 			.then(setBookings)
 			.catch((ex) => {
-				console.error(ex);
+				// console.error(ex);
 				setBookings([]);
 			})
 			.finally(() => setIsLoading(false));
