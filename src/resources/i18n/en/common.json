@@ -1131,7 +1131,7 @@
 						"missing": "Please enter the code from your app for two-factor authentication."
 					}
 				},
-				"deletedAccount": "Your account was marked for deletion. Your data will be deleted within the next 24 hours.",
+				"deletedAccount": "Your account has been closed by a counselor.",
 				"email": {
 					"otp": {
 						"missing": "Please enter the code from your email for two-factor authentication."

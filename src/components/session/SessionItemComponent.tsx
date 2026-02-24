@@ -70,19 +70,49 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const { activeSession } = useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
 	const { type } = useContext(SessionTypeContext);
+	const [isSupervisor, setIsSupervisor] = useState(false);
 
 	// Threads feature toggle (tenant-level). Master switch disables for all chat types.
 	// When enabled, per-chat-type switches decide if threads are available in 1-on-1 vs group chats.
 	const {
+		featureSupervisionEnabled = true,
+		featureSupervisionAnonymousChatsEnabled = true,
+		featureSupervisionOneOnOneChatsEnabled = true,
 		featureThreadsEnabled = true,
+		featureThreadsAnonymousChatsEnabled = true,
 		featureThreadsGroupChatsEnabled = true,
-		featureThreadsOneOnOneEnabled = true
+		featureThreadsOneOnOneEnabled = true,
+		featureThreadsSupervisionChatsEnabled = true
 	} = getTenantSettings();
+	const contact = getContact(activeSession);
+	const isAnonymousChat =
+		activeSession.item.postcode === 0 ||
+		activeSession.item.postcode?.toString() === '00000' ||
+		(activeSession.item as any).registrationType === 'ANONYMOUS' ||
+		contact?.username?.startsWith('Anonymous-') ||
+		activeSession.user?.username?.startsWith('Anonymous-');
+	const chatType: 'anonymous' | 'oneOnOne' | 'group' | 'supervision' = isSupervisor
+		? 'supervision'
+		: activeSession.isGroup
+			? 'group'
+			: isAnonymousChat
+				? 'anonymous'
+				: 'oneOnOne';
+
 	const isThreadsEnabled =
 		featureThreadsEnabled !== false &&
-		(activeSession.isGroup
+		(chatType === 'group'
 			? featureThreadsGroupChatsEnabled !== false
-			: featureThreadsOneOnOneEnabled !== false);
+			: chatType === 'anonymous'
+				? featureThreadsAnonymousChatsEnabled !== false
+				: chatType === 'supervision'
+					? featureThreadsSupervisionChatsEnabled !== false
+					: featureThreadsOneOnOneEnabled !== false);
+	const isSupervisionEnabledForCurrentChat =
+		featureSupervisionEnabled !== false &&
+		(isAnonymousChat
+			? featureSupervisionAnonymousChatsEnabled !== false
+			: featureSupervisionOneOnOneChatsEnabled !== false);
 
 	const messages = useMemo(() => props.messages, [props && props.messages]); // eslint-disable-line react-hooks/exhaustive-deps
 	const [initialScrollCompleted, setInitialScrollCompleted] = useState(false);
@@ -94,7 +124,6 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const dragCancelRef = useRef<NodeJS.Timeout | null>(null);
 	const [newMessages, setNewMessages] = useState(0);
 	const [canWriteMessage, setCanWriteMessage] = useState(false);
-	const [isSupervisor, setIsSupervisor] = useState(false);
 	const [supervisionReason, setSupervisionReason] = useState<string | null>(null);
 	const [activeThreadRootId, setActiveThreadRootId] = useState<string | null>(null);
 	const [activeThreadRootMessage, setActiveThreadRootMessage] = useState<MessageItem | null>(null);
@@ -148,6 +177,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	// Check if current user is a supervisor
 	useEffect(() => {
+		if (!isSupervisionEnabledForCurrentChat) {
+			setIsSupervisor(false);
+			setSupervisionReason(null);
+			return;
+		}
 		if (hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) && activeSession.item.id) {
 			apiGetSessionSupervisors(activeSession.item.id)
 				.then((supervisors) => {
@@ -169,7 +203,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			setIsSupervisor(false);
 			setSupervisionReason(null);
 		}
-	}, [activeSession.item.id, userData]);
+	}, [activeSession.item.id, userData, isSupervisionEnabledForCurrentChat]);
 
 	useEffect(() => {
 		const canWrite = type !== SESSION_LIST_TYPES.ENQUIRY;

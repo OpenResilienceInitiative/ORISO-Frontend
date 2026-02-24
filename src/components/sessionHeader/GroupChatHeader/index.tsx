@@ -319,8 +319,23 @@ export const GroupChatHeader = ({
 		)
 	};
 
-	const { featureCallsEnabled = true } = getTenantSettings();
+	const {
+		featureCallsEnabled = true, // legacy master: keep honoring it
+		featureAudioCallsEnabled = true,
+		featureAudioCallsGroupChatsEnabled = true,
+		featureVideoCallsEnabled = true,
+		featureVideoCallsGroupChatsEnabled = true
+	} = getTenantSettings();
+
 	const isCallsEnabled = featureCallsEnabled !== false;
+	const isAudioCallsEnabled =
+		isCallsEnabled &&
+		featureAudioCallsEnabled !== false &&
+		featureAudioCallsGroupChatsEnabled !== false;
+	const isVideoCallsEnabled =
+		isCallsEnabled &&
+		featureVideoCallsEnabled !== false &&
+		featureVideoCallsGroupChatsEnabled !== false;
 
 	const isActive = activeSession.item.active;
 	const getSessionListTab = () =>
@@ -414,20 +429,24 @@ export const GroupChatHeader = ({
 
 				{isActive &&
 					!isJoinGroupChatView &&
-					isCallsEnabled &&
+					(isAudioCallsEnabled || isVideoCallsEnabled) &&
 					isConsultant && (
 						<div
 							className="sessionInfo__videoCallButtons"
 							data-cy="session-header-video-call-buttons"
 						>
-							<Button
-								buttonHandle={() => handleStartVideoCall(true)}
-								item={buttonStartVideoCall}
-							/>
-							<Button
-								buttonHandle={() => handleStartVideoCall(false)}
-								item={buttonStartCall}
-							/>
+							{isVideoCallsEnabled && (
+								<Button
+									buttonHandle={() => handleStartVideoCall(true)}
+									item={buttonStartVideoCall}
+								/>
+							)}
+							{isAudioCallsEnabled && (
+								<Button
+									buttonHandle={() => handleStartVideoCall(false)}
+									item={buttonStartCall}
+								/>
+							)}
 						</div>
 					)}
 

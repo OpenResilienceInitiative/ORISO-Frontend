@@ -69,6 +69,16 @@ export const Routing = (props: RoutingProps) => {
 						</Route>
 					)
 				)}
+			<Route path="/notifications" exact>
+				<Redirect
+					to={
+						'/sessions/' +
+						(hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+							? 'consultant/sessionPreview'
+							: 'user/view')
+					}
+				/>
+			</Route>
 			<Route path={allRoutes()}>
 				<Walkthrough />
 				<E2EEProvider>

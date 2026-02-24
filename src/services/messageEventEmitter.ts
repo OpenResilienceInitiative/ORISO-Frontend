@@ -3,7 +3,13 @@
  * Allows WebsocketHandler to notify SessionStream about new messages.
  */
 
-type MessageEventCallback = (data: { roomId?: string; sessionId?: number }) => void;
+type MessageEventData = {
+    roomId?: string;
+    sessionId?: number;
+    timestamp?: number;
+};
+
+type MessageEventCallback = (data: MessageEventData) => void;
 
 class MessageEventEmitter {
     private listeners: Set<MessageEventCallback> = new Set();
@@ -27,7 +33,7 @@ class MessageEventEmitter {
     /**
      * Emit a new message event to all registered listeners
      */
-    public emit(data: { roomId?: string; sessionId?: number }): void {
+    public emit(data: MessageEventData): void {
         // console.log('🔔 Emitting new message event to', this.listeners.size, 'listener(s)');
         this.listeners.forEach(callback => {
             try {

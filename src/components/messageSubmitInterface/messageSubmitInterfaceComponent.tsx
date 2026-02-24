@@ -64,6 +64,7 @@ import {
 } from './richtextHelpers';
 import { ReactComponent as EmojiIcon } from '../../resources/img/icons/smiley-positive.svg';
 import { ReactComponent as ClipIcon } from '../../resources/img/icons/clip.svg';
+import { ReactComponent as AudioOnIcon } from '../../resources/img/icons/audio-on.svg';
 import { ReactComponent as RichtextToggleIcon } from '../../resources/img/icons/richtext-toggle.svg';
 import { ReactComponent as RemoveIcon } from '../../resources/img/icons/x.svg';
 import { ReactComponent as CalendarMonthIcon } from '../../resources/img/icons/calendar-month-navigation.svg';
@@ -122,6 +123,7 @@ const staticToolbarPlugin = createToolbarPlugin({
 	theme: toolbarCustomClasses
 });
 const { Toolbar } = staticToolbarPlugin;
+const VOICE_RECORDING_MAX_DURATION_SEC = 180;
 
 const INFO_TYPES = {
 	ABSENT: 'ABSENT',
@@ -129,7 +131,8 @@ const INFO_TYPES = {
 	ATTACHMENT_SIZE_ERROR: 'ATTACHMENT_SIZE_ERROR',
 	ATTACHMENT_FORMAT_ERROR: 'ATTACHMENT_FORMAT_ERROR',
 	ATTACHMENT_QUOTA_REACHED_ERROR: 'ATTACHMENT_QUOTA_REACHED_ERROR',
-	ATTACHMENT_OTHER_ERROR: 'ATTACHMENT_OTHER_ERROR'
+	ATTACHMENT_OTHER_ERROR: 'ATTACHMENT_OTHER_ERROR',
+	VOICE_RECORDING_ERROR: 'VOICE_RECORDING_ERROR'
 };
 
 export interface MessageSubmitInterfaceComponentProps {
@@ -173,6 +176,13 @@ export const MessageSubmitInterfaceComponent = ({
 	const textareaInputRef = useRef<HTMLDivElement>(null);
 	const inputWrapperRef = useRef<HTMLSpanElement>(null);
 	const attachmentInputRef = useRef<HTMLInputElement>(null);
+	const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+	const mediaStreamRef = useRef<MediaStream | null>(null);
+	const voiceRecordingTimerRef = useRef<number | null>(null);
+	const voiceRecordingDurationRef = useRef(0);
+	const voiceRecordingStartedAtRef = useRef<number | null>(null);
+	const voiceDiscardAfterStopRef = useRef(false);
+	const voiceSendAfterStopRef = useRef(false);
 
 	const { userData } = useContext(UserDataContext);
 	const { activeSession, reloadActiveSession } =
@@ -200,6 +210,40 @@ export const MessageSubmitInterfaceComponent = ({
 	);
 	const [isTypingActive, setIsTypingActive] = useState(activeSession.isGroup);
 	const [showAppointmentButton, setShowAppointmentButton] = useState(false);
+	const [isVoiceRecording, setIsVoiceRecording] = useState(false);
+	const [voiceRecordingDurationSec, setVoiceRecordingDurationSec] = useState(0);
+	const [voiceAttachmentDurationSec, setVoiceAttachmentDurationSec] = useState(0);
+	const [voicePreviewUrl, setVoicePreviewUrl] = useState<string | null>(null);
+
+	const focusEditorInput = useCallback(() => {
+		const inputElement = textareaInputRef.current;
+		if (!inputElement) {
+			return;
+		}
+
+		const editorElement = inputElement.querySelector(
+			'[contenteditable="true"]'
+		) as HTMLElement | null;
+		if (!editorElement) {
+			return;
+		}
+
+		const activeElement = document.activeElement as HTMLElement | null;
+		const activeTagName = activeElement?.tagName?.toLowerCase();
+		const isTypingInAnotherInput =
+			!!activeElement &&
+			!inputElement.contains(activeElement) &&
+			(activeElement.isContentEditable ||
+				activeTagName === 'input' ||
+				activeTagName === 'textarea' ||
+				activeTagName === 'select');
+
+		if (isTypingInAnotherInput) {
+			return;
+		}
+
+		editorElement.focus();
+	}, []);
 
 	//Emoji Picker Plugin
 	const emojiPlugin = useMemo(
@@ -350,8 +394,33 @@ export const MessageSubmitInterfaceComponent = ({
 		setUploadProgress(0);
 		setAttachmentSelected(null);
 		setAttachmentUpload(null);
+		setVoiceAttachmentDurationSec(0);
+		if (voicePreviewUrl) {
+			URL.revokeObjectURL(voicePreviewUrl);
+		}
+		setVoicePreviewUrl(null);
 		removeSelectedAttachment();
-	}, [removeSelectedAttachment]);
+	}, [removeSelectedAttachment, voicePreviewUrl]);
+
+	const cleanupVoiceRecorder = useCallback(() => {
+		if (voiceRecordingTimerRef.current) {
+			window.clearInterval(voiceRecordingTimerRef.current);
+			voiceRecordingTimerRef.current = null;
+		}
+		setIsVoiceRecording(false);
+		setVoiceRecordingDurationSec(0);
+		voiceRecordingDurationRef.current = 0;
+		voiceRecordingStartedAtRef.current = null;
+		voiceDiscardAfterStopRef.current = false;
+		voiceSendAfterStopRef.current = false;
+		if (mediaRecorderRef.current) {
+			mediaRecorderRef.current = null;
+		}
+		if (mediaStreamRef.current) {
+			mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+			mediaStreamRef.current = null;
+		}
+	}, []);
 
 	const handleAttachmentUploadError = useCallback(
 		(infoType: string) => {
@@ -360,6 +429,20 @@ export const MessageSubmitInterfaceComponent = ({
 			setTimeout(() => setIsRequestInProgress(false), 1200);
 		},
 		[cleanupAttachment]
+	);
+
+	const stopVoiceRecording = useCallback(
+		(options?: { discard?: boolean; sendAfterStop?: boolean }) => {
+			voiceDiscardAfterStopRef.current = !!options?.discard;
+			voiceSendAfterStopRef.current = !!options?.sendAfterStop;
+		const recorder = mediaRecorderRef.current;
+		if (recorder && recorder.state !== 'inactive') {
+			recorder.stop();
+			return;
+		}
+		cleanupVoiceRecorder();
+		},
+		[cleanupVoiceRecorder]
 	);
 
 	const scrollEditorToBottom = useCallback(() => {
@@ -699,6 +782,29 @@ export const MessageSubmitInterfaceComponent = ({
 			document.removeEventListener('focusout', handleBlur, true);
 		};
 	}, [isInputFocused]);
+
+	// Keep chat input ready for direct typing when opening/changing chats.
+	useEffect(() => {
+		// Do not steal focus from explicit thread reply input.
+		if (threadRootId) {
+			return;
+		}
+		if (!draftLoaded) {
+			return;
+		}
+
+		const timeoutId = window.setTimeout(() => {
+			focusEditorInput();
+		}, 0);
+
+		return () => window.clearTimeout(timeoutId);
+	}, [
+		activeSession.item.groupId,
+		activeSession.item.id,
+		draftLoaded,
+		focusEditorInput,
+		threadRootId
+	]);
 
 	// Handle mobile keyboard - scroll input into view when focused
 	useEffect(() => {
@@ -1044,6 +1150,10 @@ export const MessageSubmitInterfaceComponent = ({
 		if (uploadProgress || isRequestInProgress) {
 			return null;
 		}
+		if (isVoiceRecording) {
+			stopVoiceRecording({ sendAfterStop: true });
+			return null;
+		}
 
 		if (isSessionArchived) {
 			apiPutDearchive(activeSession.item.id)
@@ -1077,10 +1187,12 @@ export const MessageSubmitInterfaceComponent = ({
 		activeSession.item.id,
 		history,
 		isRequestInProgress,
+		isVoiceRecording,
 		isSessionArchived,
 		listPath,
 		prepareAndSendMessage,
 		reloadActiveSession,
+		stopVoiceRecording,
 		uploadProgress,
 		userData
 	]);
@@ -1156,6 +1268,12 @@ export const MessageSubmitInterfaceComponent = ({
 		handlePreselectedAttachmentChange();
 	}, [handlePreselectedAttachmentChange, preselectedFile]);
 
+	useEffect(() => {
+		return () => {
+			cleanupVoiceRecorder();
+		};
+	}, [cleanupVoiceRecorder]);
+
 	const handleAttachmentRemoval = useCallback(() => {
 		if (uploadProgress && attachmentUpload) {
 			attachmentUpload.abort();
@@ -1204,6 +1322,18 @@ export const MessageSubmitInterfaceComponent = ({
 				infoHeadline: translate('attachments.error.other.headline'),
 				infoMessage: translate('attachments.error.other.message')
 			};
+		} else if (activeInfo === INFO_TYPES.VOICE_RECORDING_ERROR) {
+			infoData = {
+				isInfo: false,
+				infoHeadline: translate(
+					'voice.recording.error.headline',
+					'Voice recording is unavailable'
+				),
+				infoMessage: translate(
+					'voice.recording.error.message',
+					'Please allow microphone access and try again.'
+				)
+			};
 		} else if (activeInfo === INFO_TYPES.ARCHIVED) {
 			infoData = {
 				isInfo: true,
@@ -1224,6 +1354,164 @@ export const MessageSubmitInterfaceComponent = ({
 			(type === SESSION_LIST_TYPES.ENQUIRY &&
 				!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData))) &&
 		!tenant?.settings?.featureAttachmentUploadDisabled;
+	const contact = getContact(activeSession);
+	const isAnonymousChat =
+		activeSession.item.postcode === 0 ||
+		activeSession.item.postcode?.toString() === '00000' ||
+		(activeSession.item as any).registrationType === 'ANONYMOUS' ||
+		contact?.username?.startsWith('Anonymous-') ||
+		activeSession.user?.username?.startsWith('Anonymous-');
+	const currentChatType: 'anonymous' | 'oneOnOne' | 'group' | 'supervision' =
+		isSupervisor
+			? 'supervision'
+			: activeSession.isGroup
+				? 'group'
+				: isAnonymousChat
+					? 'anonymous'
+					: 'oneOnOne';
+	const {
+		featureVoiceMessagesEnabled = true,
+		featureVoiceMessagesAnonymousChatsEnabled = true,
+		featureVoiceMessagesOneOnOneChatsEnabled = true,
+		featureVoiceMessagesGroupChatsEnabled = true,
+		featureVoiceMessagesSupervisionChatsEnabled = true
+	} = tenant?.settings || {};
+	const isVoiceMessageEnabledForCurrentChat =
+		featureVoiceMessagesEnabled !== false &&
+		(currentChatType === 'anonymous'
+			? featureVoiceMessagesAnonymousChatsEnabled !== false
+			: currentChatType === 'group'
+				? featureVoiceMessagesGroupChatsEnabled !== false
+				: currentChatType === 'supervision'
+					? featureVoiceMessagesSupervisionChatsEnabled !== false
+					: featureVoiceMessagesOneOnOneChatsEnabled !== false);
+
+	const startVoiceRecording = useCallback(async () => {
+		if (
+			!hasUploadFunctionality ||
+			!isVoiceMessageEnabledForCurrentChat ||
+			attachmentSelected ||
+			uploadProgress
+		) {
+			return;
+		}
+		if (
+			!navigator.mediaDevices?.getUserMedia ||
+			typeof MediaRecorder === 'undefined'
+		) {
+			setActiveInfo(INFO_TYPES.VOICE_RECORDING_ERROR);
+			return;
+		}
+
+		try {
+			const stream = await navigator.mediaDevices.getUserMedia({
+				audio: true
+			});
+			mediaStreamRef.current = stream;
+			const mimeTypeCandidates = [
+				'audio/webm;codecs=opus',
+				'audio/ogg;codecs=opus',
+				'audio/webm'
+			];
+			const supportedMimeType = mimeTypeCandidates.find((mimeType) =>
+				MediaRecorder.isTypeSupported(mimeType)
+			);
+			const recorder = supportedMimeType
+				? new MediaRecorder(stream, { mimeType: supportedMimeType })
+				: new MediaRecorder(stream);
+			const chunks: BlobPart[] = [];
+
+			recorder.ondataavailable = (event: BlobEvent) => {
+				if (event.data && event.data.size > 0) {
+					chunks.push(event.data);
+				}
+			};
+			recorder.onstop = () => {
+				const discardAfterStop = voiceDiscardAfterStopRef.current;
+				const sendAfterStop = voiceSendAfterStopRef.current;
+				voiceDiscardAfterStopRef.current = false;
+				voiceSendAfterStopRef.current = false;
+				if (discardAfterStop) {
+					cleanupVoiceRecorder();
+					return;
+				}
+
+				const mimeType = recorder.mimeType || supportedMimeType || 'audio/webm';
+				const blob = new Blob(chunks, { type: mimeType });
+				if (blob.size > 0) {
+					const elapsedMs = voiceRecordingStartedAtRef.current
+						? Math.max(1000, Date.now() - voiceRecordingStartedAtRef.current)
+						: Math.max(1000, voiceRecordingDurationRef.current * 1000);
+					const elapsedSec = Math.max(1, Math.round(elapsedMs / 1000));
+					const extension = mimeType.includes('ogg') ? 'ogg' : 'webm';
+					const voiceFile = new File(
+						[blob],
+						`voice-message-${Date.now()}-s${elapsedSec}-ms${elapsedMs}.${extension}`,
+						{
+							type: mimeType,
+							lastModified: Date.now()
+						}
+					);
+					if (sendAfterStop) {
+						setIsRequestInProgress(true);
+						sendMessage('', voiceFile, isE2eeEnabled);
+					} else {
+						if (voicePreviewUrl) {
+							URL.revokeObjectURL(voicePreviewUrl);
+						}
+						setVoicePreviewUrl(URL.createObjectURL(blob));
+						setVoiceAttachmentDurationSec(elapsedSec);
+						displayAttachmentToUpload(voiceFile);
+					}
+				}
+				cleanupVoiceRecorder();
+			};
+			recorder.onerror = () => {
+				setActiveInfo(INFO_TYPES.VOICE_RECORDING_ERROR);
+				cleanupVoiceRecorder();
+			};
+
+			mediaRecorderRef.current = recorder;
+			setActiveInfo('');
+			voiceRecordingDurationRef.current = 0;
+			setVoiceRecordingDurationSec(0);
+			voiceRecordingStartedAtRef.current = Date.now();
+			setIsVoiceRecording(true);
+			voiceRecordingTimerRef.current = window.setInterval(() => {
+				setVoiceRecordingDurationSec((value) => {
+					const next = value + 1;
+					voiceRecordingDurationRef.current = next;
+					if (next >= VOICE_RECORDING_MAX_DURATION_SEC) {
+						stopVoiceRecording();
+					}
+					return next;
+				});
+			}, 1000);
+			recorder.start();
+		} catch {
+			setActiveInfo(INFO_TYPES.VOICE_RECORDING_ERROR);
+			cleanupVoiceRecorder();
+		}
+	}, [
+		hasUploadFunctionality,
+		isVoiceMessageEnabledForCurrentChat,
+		attachmentSelected,
+		uploadProgress,
+		displayAttachmentToUpload,
+		cleanupVoiceRecorder,
+		stopVoiceRecording,
+		sendMessage,
+		isE2eeEnabled,
+		voicePreviewUrl
+	]);
+
+	const toggleVoiceRecording = useCallback(() => {
+		if (isVoiceRecording) {
+			stopVoiceRecording();
+		} else {
+			startVoiceRecording();
+		}
+	}, [isVoiceRecording, startVoiceRecording, stopVoiceRecording]);
 
 	const bookingButton: ButtonItem = useMemo(
 		() => ({
@@ -1239,6 +1527,13 @@ export const MessageSubmitInterfaceComponent = ({
 			return <Icon aria-hidden="true" focusable="false" />;
 		}
 		return null;
+	}, []);
+
+	const isVoiceAttachmentSelected = !!attachmentSelected?.type?.startsWith('audio/');
+	const formatRecordingDuration = useCallback((totalSeconds: number) => {
+		const minutes = Math.floor(totalSeconds / 60);
+		const seconds = totalSeconds % 60;
+		return `${String(minutes)}:${String(seconds).padStart(2, '0')}`;
 	}, []);
 
 	// MATRIX MIGRATION: Skip E2EE check for Matrix sessions (no rid)
@@ -1370,42 +1665,141 @@ export const MessageSubmitInterfaceComponent = ({
 							{hasUploadFunctionality &&
 								(!attachmentSelected ? (
 									<span className="textarea__attachmentSelect">
-										<ClipIcon
-											aria-label={translate(
-												'enquiry.write.input.attachement'
-											)}
-											title={translate(
-												'enquiry.write.input.attachement'
-											)}
-											onClick={handleAttachmentSelect}
-										/>
+										{isVoiceMessageEnabledForCurrentChat && isVoiceRecording ? (
+											<span className="textarea__voiceRecordingBar">
+												<span className="textarea__voiceRecordingDot"></span>
+												<span className="textarea__voiceRecordingLabel">
+													{translate(
+														'voice.recording.active',
+														'Recording...'
+													)}
+												</span>
+												<span className="textarea__voiceRecordButton__timer">
+													{formatRecordingDuration(
+														voiceRecordingDurationSec
+													)}
+												</span>
+												<button
+													type="button"
+													className="textarea__voiceActionButton textarea__voiceActionButton--cancel"
+													onClick={() =>
+														stopVoiceRecording({ discard: true })
+													}
+												>
+													{translate('app.cancel', 'Cancel')}
+												</button>
+												<button
+													type="button"
+													className="textarea__voiceActionButton textarea__voiceActionButton--stop"
+													onClick={() =>
+														stopVoiceRecording({
+															sendAfterStop: true
+														})
+													}
+												>
+													{translate('app.stop', 'Stop')}
+												</button>
+											</span>
+										) : isVoiceMessageEnabledForCurrentChat ? (
+											<>
+												<button
+													type="button"
+													className={clsx(
+														'textarea__voiceRecordButton'
+													)}
+													onClick={toggleVoiceRecording}
+													title={translate(
+														'voice.recording.toggle',
+														'Record voice message'
+													)}
+													aria-label={translate(
+														'voice.recording.toggle',
+														'Record voice message'
+													)}
+												>
+													<AudioOnIcon />
+												</button>
+												<ClipIcon
+													aria-label={translate(
+														'enquiry.write.input.attachement'
+													)}
+													title={translate(
+														'enquiry.write.input.attachement'
+													)}
+													onClick={handleAttachmentSelect}
+												/>
+											</>
+										) : (
+											<ClipIcon
+												aria-label={translate(
+													'enquiry.write.input.attachement'
+												)}
+												title={translate(
+													'enquiry.write.input.attachement'
+												)}
+												onClick={handleAttachmentSelect}
+											/>
+										)}
 									</span>
 								) : (
 									<div className="textarea__attachmentWrapper">
-										<span className="textarea__attachmentSelected">
-											<span className="textarea__attachmentSelected__progress"></span>
-											<span className="textarea__attachmentSelected__labelWrapper">
-												{getAttachmentIcon(
-													attachmentSelected.type
+										{isVoiceAttachmentSelected ? (
+											<div className="textarea__voicePreview">
+												<span className="textarea__voicePreview__meta">
+													<AudioOnIcon />
+													<span>
+														{translate(
+															'voice.recording.preview',
+															'Voice message'
+														)}
+													</span>
+													<span className="textarea__voicePreview__duration">
+														{formatRecordingDuration(
+															voiceAttachmentDurationSec
+														)}
+													</span>
+												</span>
+												{voicePreviewUrl && (
+													<audio
+														className="textarea__voicePreview__audio"
+														controls
+														src={voicePreviewUrl}
+													/>
 												)}
-												<p className="textarea__attachmentSelected__label">
-													{attachmentSelected.name}
-												</p>
 												<span className="textarea__attachmentSelected__remove">
 													<RemoveIcon
-														onClick={
-															handleAttachmentRemoval
-														}
-														title={translate(
-															'app.remove'
-														)}
-														aria-label={translate(
-															'app.remove'
-														)}
+														onClick={handleAttachmentRemoval}
+														title={translate('app.remove')}
+														aria-label={translate('app.remove')}
 													/>
 												</span>
+											</div>
+										) : (
+											<span className="textarea__attachmentSelected">
+												<span className="textarea__attachmentSelected__progress"></span>
+												<span className="textarea__attachmentSelected__labelWrapper">
+													{getAttachmentIcon(
+														attachmentSelected.type
+													)}
+													<p className="textarea__attachmentSelected__label">
+														{attachmentSelected.name}
+													</p>
+													<span className="textarea__attachmentSelected__remove">
+														<RemoveIcon
+															onClick={
+																handleAttachmentRemoval
+															}
+															title={translate(
+																'app.remove'
+															)}
+															aria-label={translate(
+																'app.remove'
+															)}
+														/>
+													</span>
+												</span>
 											</span>
-										</span>
+										)}
 									</div>
 								))}
 						</span>
@@ -1450,7 +1844,7 @@ export const MessageSubmitInterfaceComponent = ({
 						type="file"
 						id="dataUpload"
 						name="dataUpload"
-						accept="image/jpeg, image/png, .pdf, .docx, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+						accept="image/jpeg, image/png, .pdf, .docx, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, audio/webm, audio/ogg, audio/mpeg"
 					/>
 				)}
 			</form>
