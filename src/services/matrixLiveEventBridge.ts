@@ -94,12 +94,8 @@ export class MatrixLiveEventBridge {
         const msgtype = content.msgtype;
         const body = content.body;
         
-        // Check if this is our own message (don't trigger notification for own messages)
         const myUserId = this.client?.getUserId();
-        if (sender === myUserId) {
-            // console.log("📝 Own message, skipping notification");
-            return;
-        }
+        const isOwnMessage = sender === myUserId;
 
         // console.log("📬 New message from", sender, "in room", room.roomId);
         // console.log("   Content:", body?.substring(0, 100));
@@ -108,6 +104,7 @@ export class MatrixLiveEventBridge {
         this.triggerEvent('directMessage', {
             roomId: room.roomId,
             sender: sender,
+            isOwnMessage: isOwnMessage,
             msgtype: msgtype,
             body: body,
             eventId: event.getId(),

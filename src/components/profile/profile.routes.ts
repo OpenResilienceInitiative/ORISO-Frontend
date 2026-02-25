@@ -191,7 +191,7 @@ const profileRoutes = (
 		{
 			title: 'profile.routes.notifications.title',
 			url: '/notifications',
-			condition: () => settings?.releaseToggles?.enableNewNotifications,
+			condition: () => false,
 			notificationBubble:
 				isFirstVisit && !browserNotificationsSettings().visited,
 			elements: [

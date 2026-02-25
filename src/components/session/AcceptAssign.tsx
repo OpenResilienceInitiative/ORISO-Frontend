@@ -18,7 +18,6 @@ import { apiEnquiryAcceptance, FETCH_ERRORS } from '../../api';
 import { Button, BUTTON_TYPES, ButtonItem } from '../button/Button';
 import { useWatcher } from '../../hooks/useWatcher';
 import { apiGetSessionRoomBySessionId } from '../../api/apiGetSessionRooms';
-import { ReactComponent as CheckIcon } from '../../resources/img/illustrations/check.svg';
 import { ReactComponent as XIcon } from '../../resources/img/illustrations/x.svg';
 import { useTranslation } from 'react-i18next';
 import { useE2EEViewElements } from '../../hooks/useE2EEViewElements';
@@ -62,21 +61,6 @@ export const AcceptAssign = ({ assigned, btnLabel }: AcceptAssignProps) => {
 			translate('session.assignSelf.inProgress')
 		);
 
-	const enquirySuccessfullyAcceptedOverlayItem: OverlayItem = useMemo(
-		() => ({
-			svg: CheckIcon,
-			headline: translate('session.acceptance.overlay.headline'),
-			buttonSet: [
-				{
-					label: translate('session.acceptance.button.label'),
-					function: OVERLAY_FUNCTIONS.REDIRECT,
-					type: BUTTON_TYPES.PRIMARY
-				}
-			]
-		}),
-		[translate]
-	);
-
 	const enquiryTakenByOtherConsultantOverlayItem: OverlayItem = useMemo(
 		() => ({
 			svg: XIcon,
@@ -104,6 +88,24 @@ export const AcceptAssign = ({ assigned, btnLabel }: AcceptAssignProps) => {
 	}, [assigned, enquiryTakenByOtherConsultantOverlayItem]);
 
 	/** END E2EE */
+
+	const redirectToAcceptedSession = useCallback(() => {
+		if (activeSession.item.id && activeSession.item.groupId) {
+			history.push(
+				`/sessions/consultant/sessionView/${activeSession.item.groupId}/${activeSession.item.id}`
+			);
+			return;
+		}
+
+		if (activeSession.item.id) {
+			history.push(
+				`/sessions/consultant/sessionView/session/${activeSession.item.id}`
+			);
+			return;
+		}
+
+		history.push(`/sessions/consultant/sessionView/`);
+	}, [activeSession.item.groupId, activeSession.item.id, history]);
 
 	const updateActiveSession = useCallback(() => {
 		if (abortController.current) {
@@ -154,7 +156,7 @@ export const AcceptAssign = ({ assigned, btnLabel }: AcceptAssignProps) => {
 		apiEnquiryAcceptance(sessionId)
 			.then(() => encryptRoom(setE2EEState))
 			.then(() => setIsRequestInProgress(false))
-			.then(() => setOverlayItem(enquirySuccessfullyAcceptedOverlayItem))
+			.then(() => redirectToAcceptedSession())
 			.catch((error) => {
 				setIsRequestInProgress(false);
 				if (error.message === FETCH_ERRORS.CONFLICT) {
@@ -167,16 +169,6 @@ export const AcceptAssign = ({ assigned, btnLabel }: AcceptAssignProps) => {
 
 	const handleOverlayAction = (buttonFunction: string) => {
 		switch (buttonFunction) {
-			case OVERLAY_FUNCTIONS.REDIRECT:
-				setOverlayItem(null);
-				if (activeSession.item.id && activeSession.item.groupId) {
-					history.push(
-						`/sessions/consultant/sessionView/${activeSession.item.groupId}/${activeSession.item.id}`
-					);
-					return;
-				}
-				history.push(`/sessions/consultant/sessionView/`);
-				break;
 			case OVERLAY_FUNCTIONS.CLOSE:
 				setOverlayItem(null);
 				history.push(

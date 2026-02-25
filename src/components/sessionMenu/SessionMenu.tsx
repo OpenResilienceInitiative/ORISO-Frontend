@@ -9,6 +9,7 @@ import {
 import { generatePath, Link, Redirect, useHistory } from 'react-router-dom';
 import {
 	AUTHORITIES,
+	getContact,
 	hasUserAuthority,
 	SessionTypeContext,
 	useConsultingType,
@@ -327,8 +328,59 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		)
 	};
 
-	const { featureCallsEnabled = true } = getTenantSettings();
+	const contact = getContact(activeSession);
+	const isAnonymousChat =
+		activeSession.item.postcode === 0 ||
+		activeSession.item.postcode?.toString() === '00000' ||
+		(activeSession.item as any).registrationType === 'ANONYMOUS' ||
+		contact?.username?.startsWith('Anonymous-') ||
+		activeSession.user?.username?.startsWith('Anonymous-');
+	const chatType: 'anonymous' | 'oneOnOne' | 'group' | 'supervision' =
+		props.isSupervisor
+			? 'supervision'
+			: activeSession.isGroup
+				? 'group'
+				: isAnonymousChat
+					? 'anonymous'
+					: 'oneOnOne';
+
+	const {
+		featureCallsEnabled = true, // legacy master: keep honoring it
+		featureAudioCallsEnabled = true,
+		featureAudioCallsAnonymousChatsEnabled = true,
+		featureAudioCallsOneOnOneChatsEnabled = true,
+		featureAudioCallsGroupChatsEnabled = true,
+		featureAudioCallsSupervisionChatsEnabled = true,
+		featureVideoCallsEnabled = true,
+		featureVideoCallsAnonymousChatsEnabled = true,
+		featureVideoCallsOneOnOneChatsEnabled = true,
+		featureVideoCallsGroupChatsEnabled = true,
+		featureVideoCallsSupervisionChatsEnabled = true
+	} = getTenantSettings();
+
 	const isCallsEnabled = featureCallsEnabled !== false;
+
+	const isAudioCallsEnabled =
+		isCallsEnabled &&
+		featureAudioCallsEnabled !== false &&
+		(chatType === 'group'
+			? featureAudioCallsGroupChatsEnabled !== false
+			: chatType === 'anonymous'
+				? featureAudioCallsAnonymousChatsEnabled !== false
+				: chatType === 'supervision'
+					? featureAudioCallsSupervisionChatsEnabled !== false
+					: featureAudioCallsOneOnOneChatsEnabled !== false);
+
+	const isVideoCallsEnabled =
+		isCallsEnabled &&
+		featureVideoCallsEnabled !== false &&
+		(chatType === 'group'
+			? featureVideoCallsGroupChatsEnabled !== false
+			: chatType === 'anonymous'
+				? featureVideoCallsAnonymousChatsEnabled !== false
+				: chatType === 'supervision'
+					? featureVideoCallsSupervisionChatsEnabled !== false
+					: featureVideoCallsOneOnOneChatsEnabled !== false);
 
 	const hasVideoCallFeatures = () =>
 		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
@@ -422,19 +474,25 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 	return (
 		<div className="sessionMenu__wrapper">
-			{hasVideoCallFeatures() && isCallsEnabled && !props.isSupervisor && (
+			{hasVideoCallFeatures() &&
+				!props.isSupervisor &&
+				(isAudioCallsEnabled || isVideoCallsEnabled) && (
 				<div
 					className="sessionMenu__videoCallButtons"
 					data-cy="session-header-video-call-buttons"
 				>
-					<Button
-						buttonHandle={() => handleStartVideoCall(true)}
-						item={buttonStartVideoCall}
-					/>
-					<Button
-						buttonHandle={() => handleStartVideoCall()}
-						item={buttonStartCall}
-					/>
+					{isVideoCallsEnabled && (
+						<Button
+							buttonHandle={() => handleStartVideoCall(true)}
+							item={buttonStartVideoCall}
+						/>
+					)}
+					{isAudioCallsEnabled && (
+						<Button
+							buttonHandle={() => handleStartVideoCall(false)}
+							item={buttonStartCall}
+						/>
+					)}
 				</div>
 			)}
 

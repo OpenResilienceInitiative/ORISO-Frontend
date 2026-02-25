@@ -3,12 +3,14 @@ import {
 	createContext,
 	Dispatch,
 	ReactNode,
+	useEffect,
 	useCallback,
 	useState
 } from 'react';
 import { v4 as uuid } from 'uuid';
 import {
 	IncomingVideoCallProps,
+	NOTIFICATION_TYPE_CALL,
 	NotificationTypeCall
 } from '../../components/incomingVideoCall/IncomingVideoCall';
 
@@ -57,8 +59,20 @@ export type NotificationDefaultType = NotificationType & {
 	onClose?: (notification: NotificationDefaultType) => void;
 };
 
+export type NotificationFeedItem = {
+	id: string;
+	type: NotificationTypes;
+	title: string;
+	text: string;
+	createdAt: string;
+};
+
+const NOTIFICATION_FEED_STORAGE_KEY = 'oriso.notificationFeed';
+const NOTIFICATION_FEED_MAX_ITEMS = 50;
+
 type NotificationsContextProps = {
 	notifications: NotificationType[];
+	notificationFeed: NotificationFeedItem[];
 	setNotifications: Function;
 	hasNotification: Function;
 	addNotification: Dispatch<NotificationDefaultType | IncomingVideoCallProps>;
@@ -70,6 +84,33 @@ export const NotificationsContext =
 
 export function NotificationsProvider(props) {
 	const [notifications, setNotifications] = useState([]);
+	const [notificationFeed, setNotificationFeed] = useState<
+		NotificationFeedItem[]
+	>([]);
+
+	useEffect(() => {
+		try {
+			const raw = localStorage.getItem(NOTIFICATION_FEED_STORAGE_KEY);
+			if (!raw) return;
+			const parsed = JSON.parse(raw);
+			if (Array.isArray(parsed)) {
+				setNotificationFeed(parsed.slice(0, NOTIFICATION_FEED_MAX_ITEMS));
+			}
+		} catch (error) {
+			// ignore invalid persisted data
+		}
+	}, []);
+
+	useEffect(() => {
+		try {
+			localStorage.setItem(
+				NOTIFICATION_FEED_STORAGE_KEY,
+				JSON.stringify(notificationFeed)
+			);
+		} catch (error) {
+			// ignore storage errors
+		}
+	}, [notificationFeed]);
 
 	const hasNotification = useCallback(
 		(id: string | number, type: NotificationTypes): boolean =>
@@ -99,6 +140,33 @@ export function NotificationsProvider(props) {
 			}
 
 			setNotifications([...notifications, newNotification]);
+
+			const isCallNotification =
+				newNotification.notificationType === NOTIFICATION_TYPE_CALL;
+			const hasFeedContent =
+				'title' in newNotification || 'text' in newNotification;
+			if (!isCallNotification && hasFeedContent) {
+				const titleRaw =
+					'title' in newNotification ? newNotification.title : undefined;
+				const textRaw =
+					'text' in newNotification ? newNotification.text : undefined;
+				const title =
+					typeof titleRaw === 'string'
+						? titleRaw
+						: String(titleRaw ?? 'Benachrichtigung');
+				const text =
+					typeof textRaw === 'string' ? textRaw : String(textRaw ?? '');
+				const feedItem: NotificationFeedItem = {
+					id: String(newNotification.id),
+					type: newNotification.notificationType,
+					title,
+					text,
+					createdAt: new Date().toISOString()
+				};
+				setNotificationFeed((existing) =>
+					[feedItem, ...existing].slice(0, NOTIFICATION_FEED_MAX_ITEMS)
+				);
+			}
 		},
 		[hasNotification, notifications]
 	);
@@ -126,6 +194,7 @@ export function NotificationsProvider(props) {
 		<NotificationsContext.Provider
 			value={{
 				notifications,
+				notificationFeed,
 				setNotifications,
 				hasNotification,
 				addNotification,

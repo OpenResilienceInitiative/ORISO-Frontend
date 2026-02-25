@@ -605,3 +605,57 @@ $profile-footer-justify-content: center !default;
 		}
 	}
 }
+
+.notifications__content--enhanced {
+	.notifications__hero {
+		margin-bottom: 16px;
+	}
+
+	.notifications__panel {
+		background: #fff;
+		border: 1px solid #e5e7eb;
+		border-radius: 12px;
+		padding: 20px;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+	}
+
+	hr {
+		border: 0;
+		border-top: 1px solid #e5e7eb;
+		margin: 16px 0;
+	}
+
+	.notifications__feed {
+		margin-top: 16px;
+	}
+
+	.notifications__feed__list {
+		display: grid;
+		gap: 10px;
+		margin-top: 12px;
+	}
+
+	.notifications__feed__item {
+		border: 1px solid #e5e7eb;
+		border-radius: 10px;
+		padding: 12px;
+		background: #f9fafb;
+	}
+
+	.notifications__feed__item__title {
+		margin: 0 0 4px;
+		font-weight: 600;
+		color: #111827;
+	}
+
+	.notifications__feed__item__text {
+		margin: 0 0 6px;
+		color: #374151;
+	}
+
+	.notifications__feed__item__time {
+		margin: 0;
+		font-size: 12px;
+		color: #6b7280;
+	}
+}
