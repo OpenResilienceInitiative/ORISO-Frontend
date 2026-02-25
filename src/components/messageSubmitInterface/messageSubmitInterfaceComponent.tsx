@@ -146,6 +146,7 @@ export interface MessageSubmitInterfaceComponentProps {
 	handleMessageSendSuccess?: Function;
 	isSupervisor?: boolean;
 	threadRootId?: string | null;
+	threadParentPreview?: string | null;
 }
 
 export const MessageSubmitInterfaceComponent = ({
@@ -158,7 +159,8 @@ export const MessageSubmitInterfaceComponent = ({
 	preselectedFile,
 	handleMessageSendSuccess: onMessageSendSuccess,
 	isSupervisor,
-	threadRootId
+	threadRootId,
+	threadParentPreview
 }: MessageSubmitInterfaceComponentProps) => {
 	const { t: translate } = useTranslation();
 	
@@ -1044,7 +1046,14 @@ export const MessageSubmitInterfaceComponent = ({
 					getSendMailNotificationStatus() && !attachment,
 					isEncrypted,
 					matrixSessionId,
-					matrixRoomId  // Pass Matrix room ID for SDK sending
+					matrixRoomId, // Pass Matrix room ID for SDK sending
+					threadRootId || null,
+					!!isSupervisor,
+					userData?.displayName ||
+						userData?.userName ||
+						`${userData?.firstName || ''} ${userData?.lastName || ''}`.trim() ||
+						'User',
+					threadParentPreview || null
 				)
 					.then(() => encryptRoom(setE2EEState))
 					.then(() => {

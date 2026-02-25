@@ -1,5 +1,6 @@
 import { endpoints, apiUrl } from '../resources/scripts/endpoints';
 import { fetchData, FETCH_METHODS } from './fetchData';
+import { apiPostMessageEventNotification } from './apiPostMessageEventNotification';
 
 export const apiSendMessage = (
 	messageData: string,
@@ -7,7 +8,11 @@ export const apiSendMessage = (
 	sendMailNotification: boolean,
 	isEncrypted: boolean,
 	sessionId?: number,
-	matrixRoomId?: string  // NEW: Accept Matrix room ID directly
+	matrixRoomId?: string,  // NEW: Accept Matrix room ID directly
+	threadRootId?: string | null,
+	supervisorMessage?: boolean,
+	senderDisplayName?: string | null,
+	threadParentPreview?: string | null
 ): Promise<any> => {
 	// MATRIX MIGRATION: Use Matrix SDK directly for INSTANT local echo (like Element!)
 	if (sessionId && matrixRoomId) {
@@ -32,6 +37,15 @@ export const apiSendMessage = (
 					// The Room.timeline event fires IMMEDIATELY with the sent message!
 					// This is how Element achieves instant sync!
 					
+					apiPostMessageEventNotification({
+						roomId: matrixRoomId,
+						messagePreview: messageData,
+						matrixRoom: true,
+						threadRootId: threadRootId || null,
+						supervisorMessage: !!supervisorMessage,
+						senderDisplayName: senderDisplayName || null,
+						threadParentPreview: threadParentPreview || null
+					}).catch(() => undefined);
 					return { success: true, event_id: response.event_id };
 				}).catch((error: any) => {
 					// console.error('❌ Matrix SDK send failed, using REST API fallback:', error);
@@ -56,6 +70,15 @@ export const apiSendMessage = (
 			responseHandling: []
 		}).then((response) => {
 			// console.log('🚀 MATRIX: Message sent via REST API:', response);
+			apiPostMessageEventNotification({
+				roomId: matrixRoomId,
+				messagePreview: messageData,
+				matrixRoom: true,
+				threadRootId: threadRootId || null,
+				supervisorMessage: !!supervisorMessage,
+				senderDisplayName: senderDisplayName || null,
+				threadParentPreview: threadParentPreview || null
+			}).catch(() => undefined);
 			return response;
 		});
 	}

@@ -1237,6 +1237,7 @@
       }
     },
     "language": "Dil",
+    "notifications": "Bildirimler",
     "overview": "Genel Bakış",
     "profile": "Profil",
     "tools": "Aletlerim"
@@ -1251,7 +1252,16 @@
       "new": "Yeni bir mesajınız var!"
     },
     "success": "Başarılı",
-    "warning": "Uyarı"
+    "warning": "Uyarı",
+    "center": {
+      "title": "Bildirimler",
+      "subtitle": "Sohbetlerinizden son aktiviteler ve güncellemeler.",
+      "markAllRead": "Tümünü okundu işaretle",
+      "clearAll": "Tümünü temizle",
+      "empty": "Henüz bildirim yok.",
+      "emptyDetail": "Detayları görmek için bir bildirim seçin.",
+      "open": "Sohbeti aç"
+    }
   },
   "overlay": {
     "step": {
@@ -1486,6 +1496,10 @@
       },
       "initialEnquiry": {
         "title": "Yeni bir ilk başvuru alındı"
+      },
+      "inquiryAccepted": {
+        "title": "Başvuru kabul edildi",
+        "description": "Başvurunuz bir danışman tarafından kabul edildi."
       },
       "mainEmail": {
         "title": "E-posta bildirimlerine izin ver"

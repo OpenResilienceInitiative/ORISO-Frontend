@@ -35,7 +35,8 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 		useState<boolean>(false);
 	const [newStompVideoCallRequest, setNewStompVideoCallRequest] =
 		useState<VideoCallRequestProps>();
-	const { addNotification } = useContext(NotificationsContext);
+	const { addNotification, refreshNotificationFeed } =
+		useContext(NotificationsContext);
 	const { setWebsocketConnectionDeactivated } = useContext(
 		WebsocketConnectionDeactivatedContext
 	);
@@ -149,6 +150,7 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 	useEffect(() => {
 		if (newStompDirectMessage) {
 			setNewStompDirectMessage(false);
+			refreshNotificationFeed();
 
 			// CRITICAL: Emit event to refresh open sessions
 			// console.log('🔔 LiveService directMessage event - refreshing open sessions');
@@ -195,6 +197,7 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 						title: translate('profile.notifications.inquiryAccepted.title'),
 						text: translate('profile.notifications.inquiryAccepted.description')
 					});
+					refreshNotificationFeed();
 				} else if (stompEventType === 'videoCallRequest') {
 					const stompEventContent: VideoCallRequestProps =
 						stompMessageBody['eventContent'];

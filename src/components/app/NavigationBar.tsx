@@ -16,7 +16,8 @@ import {
 	SessionsDataContext,
 	SET_SESSIONS,
 	TenantContext,
-	LocaleContext
+	LocaleContext,
+	NotificationsContext
 } from '../../globalState';
 import { initNavigationHandler } from './navigationHandler';
 import { ReactComponent as LogoutIconOutline } from '../../resources/img/icons/logout_outline.svg';
@@ -58,6 +59,7 @@ export const NavigationBar = ({
 		RocketChatUnreadContext
 	);
 	const { tenant } = useContext(TenantContext);
+	const { unreadNotificationCount } = useContext(NotificationsContext);
 
 	const ref_menu = useRef<any[]>([]);
 	const ref_local = useRef<any>(null);
@@ -101,7 +103,10 @@ export const NavigationBar = ({
 			return;
 		}
 
-		if (unreadSessions.length + unreadGroup.length > 0) {
+		if (
+			unreadSessions.length + unreadGroup.length > 0 ||
+			unreadNotificationCount > 0
+		) {
 			setAnimateNavIcon(true);
 		}
 
@@ -109,13 +114,14 @@ export const NavigationBar = ({
 			setAnimateNavIcon(false);
 			animateNavIconTimeoutRef.current = null;
 		}, 1000);
-	}, [unreadSessions, unreadGroup]);
+	}, [unreadSessions, unreadGroup, unreadNotificationCount]);
 
 	const pathsToShowUnreadMessageNotification = {
 		'/sessions/consultant/sessionView':
 			unreadSessions.length + unreadGroup.length,
 		'/sessions/user/view': unreadSessions.length + unreadGroup.length,
-		'/profile': isFirstVisit && !browserNotificationsSettings().visited
+		'/profile': isFirstVisit && !browserNotificationsSettings().visited,
+		'/notifications': unreadNotificationCount
 	};
 
 	const pathToClassNameInWalkThrough = React.useCallback((to: string) => {

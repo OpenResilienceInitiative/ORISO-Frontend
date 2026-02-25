@@ -1237,6 +1237,7 @@
       }
     },
     "language": "ቋንቋ",
+    "notifications": "ሓበሬታታት",
     "overview": "ሓፈሻዊ ትሕዝቶ",
     "profile": "መግለፂ",
     "tools": "መሳርሒታተይ"
@@ -1251,7 +1252,16 @@
       "new": "ሓድሽ መልእኽቲ ኣለካ!"
     },
     "success": "ዕውት",
-    "warning": "ምኸዳን"
+    "warning": "ምኸዳን",
+    "center": {
+      "title": "ሓበሬታታት",
+      "subtitle": "ካብ ቻትኩም ዝቐረበ ንጥፈታትን ሓድሽ ሓበሬታን።",
+      "markAllRead": "ኩሉ ከም ተነብበ ምልክት ግበር",
+      "clearAll": "ኩሉ ኣጥፍእ",
+      "empty": "ገና ሓበሬታ የለን።",
+      "emptyDetail": "ዝርዝር ንምርኣይ ሓበሬታ ምረጽ።",
+      "open": "ቻት ክፈት"
+    }
   },
   "overlay": {
     "step": {
@@ -1486,6 +1496,10 @@
       },
       "initialEnquiry": {
         "title": "ሓድሽ ናይ መጀመርታ ሕቶ በጺሑ ኣሎ።"
+      },
+      "inquiryAccepted": {
+        "title": "ሕቶ ተቐቢሉ",
+        "description": "ሕቶኹም ብኣማኻሪ ተቐቢሉ ኣሎ።"
       },
       "mainEmail": {
         "title": "ናይ ኢመይል መፍለጢታት ፍቐድ"

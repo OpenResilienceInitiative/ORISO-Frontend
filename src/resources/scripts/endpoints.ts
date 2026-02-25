@@ -123,6 +123,7 @@ export const endpoints = {
 	twoFactorAuthEmail: apiUrl + '/service/users/2fa/email',
 	updateMessage: apiUrl + '/service/messages/',
 	userData: apiUrl + '/service/users/data',
+	eventNotifications: apiUrl + '/service/users/event-notifications',
 	userDataBySessionId: (sessionId: number) =>
 		apiUrl + `/service/users/consultants/sessions/${sessionId}`,
 	userSessionsListView: '/sessions/user/view',
