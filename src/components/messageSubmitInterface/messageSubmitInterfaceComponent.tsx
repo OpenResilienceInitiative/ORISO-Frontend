@@ -417,7 +417,9 @@ export const MessageSubmitInterfaceComponent = ({
 			mediaRecorderRef.current = null;
 		}
 		if (mediaStreamRef.current) {
-			mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+			mediaStreamRef.current.getTracks().forEach((track) => {
+				track.stop();
+			});
 			mediaStreamRef.current = null;
 		}
 	}, []);
@@ -1466,7 +1468,14 @@ export const MessageSubmitInterfaceComponent = ({
 				}
 				cleanupVoiceRecorder();
 			};
-			recorder.onerror = () => {
+			recorder.onerror = (ev: MediaRecorderErrorEvent) => {
+				const err = ev?.error;
+				apiPostError({
+					name: err?.name ?? 'MediaRecorderError',
+					message: err?.message ?? 'Voice recording failed',
+					stack: err?.stack,
+					level: ERROR_LEVEL_WARN
+				}).then();
 				setActiveInfo(INFO_TYPES.VOICE_RECORDING_ERROR);
 				cleanupVoiceRecorder();
 			};
@@ -1488,7 +1497,14 @@ export const MessageSubmitInterfaceComponent = ({
 				});
 			}, 1000);
 			recorder.start();
-		} catch {
+		} catch (err: unknown) {
+			const error = err instanceof Error ? err : new Error(String(err));
+			apiPostError({
+				name: error.name,
+				message: error.message,
+				stack: error.stack,
+				level: ERROR_LEVEL_WARN
+			}).then();
 			setActiveInfo(INFO_TYPES.VOICE_RECORDING_ERROR);
 			cleanupVoiceRecorder();
 		}

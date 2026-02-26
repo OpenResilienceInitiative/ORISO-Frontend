@@ -389,6 +389,9 @@
 		"upcomingAppointment": "Dein nächster Termin",
 		"upcomingAppointments": "Deine nächsten {{countStr}} Termine"
 	},
+	"navigation": {
+		"notifications": "Benachrichtigungen"
+	},
 	"preconditions": {
 		"cookie": {
 			"headline": "Bitte aktiviere Cookies, um fortzufahren",
@@ -495,6 +498,19 @@
 			},
 			"initialEnquiry": {
 				"description": "Wir informieren Dich auch, wenn Du im System angemeldet bist."
+			},
+			"newMessage": {
+				"title": "Neue Chat-Nachricht",
+				"description": "Einer der Dir zugewiesenen Ratsuchenden hat Dir geantwortet."
+			},
+			"inquiryAccepted": {
+				"title": "Anfrage angenommen",
+				"description": "Deine Anfrage wurde von einer Beraterin oder einem Berater angenommen."
+			},
+			"feed": {
+				"title": "System-Benachrichtigungen",
+				"description": "Hier siehst Du alle System-Benachrichtigungen.",
+				"empty": "Noch keine Benachrichtigungen vorhanden."
 			},
 			"newMessageAdviceSeeker": {
 				"description": "Wir informieren Dich, solange Du nicht im System angemeldet bist.",

@@ -1237,6 +1237,7 @@
       }
     },
     "language": "ቋንቋ",
+    "notifications": "መፍለጢታት",
     "overview": "ሓፈሻዊ ትሕዝቶ",
     "profile": "መግለፂ",
     "tools": "መሳርሒታተይ"
@@ -1493,6 +1494,15 @@
       "newMessage": {
         "description": "ካብቶም ዝተመደቡኻ ኣማኸርቲ ሓደ መልሲ ሂቡልካ ኣሎ።",
         "title": "ሓድሽ ናይ ቻት መልእኽቲ"
+      },
+      "inquiryAccepted": {
+        "title": "ሕቶ ተቐቢሉ",
+        "description": "ሕቶኻ ብኣማኻሪ ተቐቢሉ ኣሎ።"
+      },
+      "feed": {
+        "title": "ስርዓታዊ መፍለጢታት",
+        "description": "ኣብዚ ኩሎም ስርዓታዊ መፍለጢታት ክትርኢ ትኽእል።",
+        "empty": "ገና መፍለጢ የለን።"
       },
       "noEmail": {
         "button": "ናይ ኢመይል ኣድራሻ ወስኸሉ።",

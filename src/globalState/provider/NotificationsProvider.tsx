@@ -143,24 +143,18 @@ export function NotificationsProvider(props) {
 
 			const isCallNotification =
 				newNotification.notificationType === NOTIFICATION_TYPE_CALL;
-			const hasFeedContent =
-				'title' in newNotification || 'text' in newNotification;
-			if (!isCallNotification && hasFeedContent) {
-				const titleRaw =
-					'title' in newNotification ? newNotification.title : undefined;
-				const textRaw =
-					'text' in newNotification ? newNotification.text : undefined;
-				const title =
-					typeof titleRaw === 'string'
-						? titleRaw
-						: String(titleRaw ?? 'Benachrichtigung');
-				const text =
-					typeof textRaw === 'string' ? textRaw : String(textRaw ?? '');
+			const titleRaw =
+				'title' in newNotification ? newNotification.title : undefined;
+			const textRaw =
+				'text' in newNotification ? newNotification.text : undefined;
+			const title = typeof titleRaw === 'string' ? titleRaw : undefined;
+			const text = typeof textRaw === 'string' ? textRaw : undefined;
+			if (!isCallNotification && (title || text)) {
 				const feedItem: NotificationFeedItem = {
 					id: String(newNotification.id),
 					type: newNotification.notificationType,
-					title,
-					text,
+					title: title ?? 'Benachrichtigung',
+					text: text ?? '',
 					createdAt: new Date().toISOString()
 				};
 				setNotificationFeed((existing) =>

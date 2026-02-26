@@ -7,7 +7,9 @@ import {
 	getContact,
 	hasUserAuthority,
 	useConsultingType,
-	ActiveSessionContext
+	ActiveSessionContext,
+	NotificationsContext,
+	NOTIFICATION_TYPE_ERROR
 } from '../../../globalState';
 import { useSearchParam } from '../../../hooks/useSearchParams';
 import {
@@ -55,11 +57,29 @@ export const GroupChatHeader = ({
 	const { t } = useTranslation(['common', 'consultingTypes', 'agencies']);
 	const { activeSession } = useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
+	const { addNotification } = useContext(NotificationsContext);
 	
 	// MATRIX: Get room members from Matrix client
 	const [matrixMembers, setMatrixMembers] = useState<RoomMember[]>([]);
 	const [isLoadingMembers, setIsLoadingMembers] = useState<boolean>(true);
 	const matrixRoomId = activeSession.item.matrixRoomId || activeSession.item.groupId;
+
+	const stopPreRequestedMediaStream = React.useCallback(() => {
+		const preRequestedStream = (window as any).__preRequestedMediaStream;
+		if (preRequestedStream) {
+			preRequestedStream.getTracks().forEach((track) => {
+				track.stop();
+			});
+			delete (window as any).__preRequestedMediaStream;
+		}
+		delete (window as any).__preRequestedMediaStreamTime;
+	}, []);
+
+	useEffect(() => {
+		return () => {
+			stopPreRequestedMediaStream();
+		};
+	}, [stopPreRequestedMediaStream]);
 	
 	useEffect(() => {
 		// console.log('🔍 GroupChatHeader: Fetching Matrix members for room:', matrixRoomId);
@@ -204,8 +224,11 @@ export const GroupChatHeader = ({
 			const roomId = activeSession.item.matrixRoomId || activeSession.item.groupId;
 			
 			if (!roomId) {
-				// console.error('❌ No Matrix room ID found for session');
-				alert('Cannot start call: No Matrix room found for this session');
+				addNotification({
+					notificationType: NOTIFICATION_TYPE_ERROR,
+					title: 'Call failed',
+					text: 'Cannot start call: No Matrix room found for this session'
+				});
 				return;
 			}
 
@@ -246,7 +269,12 @@ export const GroupChatHeader = ({
 					errorMsg += mediaError.message || 'Unknown error.';
 				}
 				
-				alert(errorMsg);
+				addNotification({
+					notificationType: NOTIFICATION_TYPE_ERROR,
+					title: 'Call failed',
+					text: errorMsg
+				});
+				stopPreRequestedMediaStream();
 				return;
 			}
 
@@ -254,13 +282,18 @@ export const GroupChatHeader = ({
 			// console.log('🎯 This is a GROUP CHAT - forcing isGroup=true');
 			
 			// Use CallManager (works for both 1-on-1 and group calls!)
-			const { callManager } = require('../../../services/CallManager');
+			const { callManager } = await import('../../../services/CallManager');
 			callManager.startCall(roomId, isVideoActivated, true); // Force isGroup=true for group chats
 			
 			// console.log('✅ Call initiated!');
 		} catch (error) {
+			stopPreRequestedMediaStream();
 			// console.error('💥 ERROR in handleStartVideoCall:', error);
-			alert(`Call failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+			addNotification({
+				notificationType: NOTIFICATION_TYPE_ERROR,
+				title: 'Call failed',
+				text: error instanceof Error ? error.message : 'Unknown error'
+			});
 		}
 		// console.log("═══════════════════════════════════════════════");
 	};

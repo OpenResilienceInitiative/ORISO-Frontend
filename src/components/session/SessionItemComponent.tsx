@@ -110,7 +110,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					: featureThreadsOneOnOneEnabled !== false);
 	const isSupervisionEnabledForCurrentChat =
 		featureSupervisionEnabled !== false &&
-		(isAnonymousChat
+		(activeSession.isGroup
+			? false
+			: isAnonymousChat
 			? featureSupervisionAnonymousChatsEnabled !== false
 			: featureSupervisionOneOnOneChatsEnabled !== false);
 
@@ -177,14 +179,21 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	// Check if current user is a supervisor
 	useEffect(() => {
+		let cancelled = false;
+
 		if (!isSupervisionEnabledForCurrentChat) {
 			setIsSupervisor(false);
 			setSupervisionReason(null);
-			return;
+			return () => {
+				cancelled = true;
+			};
 		}
 		if (hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) && activeSession.item.id) {
 			apiGetSessionSupervisors(activeSession.item.id)
 				.then((supervisors) => {
+					if (cancelled) {
+						return;
+					}
 					const isCurrentUserSupervisor = supervisors.some(
 						s => s.supervisorConsultantId === userData.userId
 					);
@@ -195,6 +204,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					setSupervisionReason(currentSupervisor?.notes || null);
 				})
 				.catch((error) => {
+					if (cancelled) {
+						return;
+					}
 					// console.error('Failed to check supervisor status:', error);
 					setIsSupervisor(false);
 					setSupervisionReason(null);
@@ -203,6 +215,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			setIsSupervisor(false);
 			setSupervisionReason(null);
 		}
+
+		return () => {
+			cancelled = true;
+		};
 	}, [activeSession.item.id, userData, isSupervisionEnabledForCurrentChat]);
 
 	useEffect(() => {
