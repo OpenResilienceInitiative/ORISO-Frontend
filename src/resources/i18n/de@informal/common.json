@@ -380,6 +380,9 @@
 			"new": "Du hast eine neue Nachricht!"
 		}
 	},
+	"navigation": {
+		"notifications": "Benachrichtigungen"
+	},
 	"overlay": {
 		"timeout": {
 			"confirm": "Möchtest Du die Seite wirklich verlassen?"
@@ -388,9 +391,6 @@
 	"overview": {
 		"upcomingAppointment": "Dein nächster Termin",
 		"upcomingAppointments": "Deine nächsten {{countStr}} Termine"
-	},
-	"navigation": {
-		"notifications": "Benachrichtigungen"
 	},
 	"preconditions": {
 		"cookie": {
@@ -499,6 +499,14 @@
 			"initialEnquiry": {
 				"description": "Wir informieren Dich auch, wenn Du im System angemeldet bist."
 			},
+			"newMessageAdviceSeeker": {
+				"description": "Wir informieren Dich, solange Du nicht im System angemeldet bist.",
+				"title": "Neue Chat-Nachricht"
+			},
+			"newMessageConsultant": {
+				"description": "Einer der Dir zugewiesenen Ratsuchenden hat Dir geantwortet. Wir informieren Dich, solange Du nicht im System angemeldet bist.",
+				"title": "Neue Chat-Nachricht"
+			},
 			"newMessage": {
 				"title": "Neue Chat-Nachricht",
 				"description": "Einer der Dir zugewiesenen Ratsuchenden hat Dir geantwortet."
@@ -511,14 +519,6 @@
 				"title": "System-Benachrichtigungen",
 				"description": "Hier siehst Du alle System-Benachrichtigungen.",
 				"empty": "Noch keine Benachrichtigungen vorhanden."
-			},
-			"newMessageAdviceSeeker": {
-				"description": "Wir informieren Dich, solange Du nicht im System angemeldet bist.",
-				"title": "Neue Chat-Nachricht"
-			},
-			"newMessageConsultant": {
-				"description": "Einer der Dir zugewiesenen Ratsuchenden hat Dir geantwortet. Wir informieren Dich, solange Du nicht im System angemeldet bist.",
-				"title": "Neue Chat-Nachricht"
 			},
 			"noEmail": {
 				"info": "Du hast noch keine E-Mail-Adresse hinzugefügt.",
