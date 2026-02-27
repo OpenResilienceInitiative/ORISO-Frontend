@@ -32,6 +32,8 @@ export const MessageDisplayName = ({
 	const getUsernameWithPrefix = useCallback(() => {
 		if (isMyMessage) {
 			return translate('message.isMyMessage.name');
+		} else if (type === 'system') {
+			return translate('message.systemNotification', 'System Notification');
 		} else {
 			// Just show username/displayName without role prefix
 			return displayName || username;
@@ -39,6 +41,8 @@ export const MessageDisplayName = ({
 	}, [
 		displayName,
 		isMyMessage,
+		type,
+		translate,
 		username
 	]);
 

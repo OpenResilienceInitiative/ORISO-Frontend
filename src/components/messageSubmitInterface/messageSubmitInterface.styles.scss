@@ -463,7 +463,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			height: 8px;
 			border-radius: 50%;
 			background: #d32f2f;
-			animation: voiceDotPulse 1.2s infinite;
+			animation: voice-dot-pulse 1.2s infinite;
 		}
 
 		&__voiceRecordingLabel {
@@ -561,7 +561,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			}
 		}
 
-		@keyframes voiceDotPulse {
+		@keyframes voice-dot-pulse {
 			0% {
 				opacity: 1;
 			}

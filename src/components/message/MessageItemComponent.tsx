@@ -66,6 +66,7 @@ import { VideoChatDetails, VideoChatDetailsAlias } from './VideoChatDetails';
 import { UserAvatar } from './UserAvatar';
 import clsx from 'clsx';
 import { parseMessagePrefixes } from './messageConstants';
+import { ReactComponent as NotificationBellIcon } from '../../resources/img/icons/notification_bell.svg';
 
 export interface VideoCallMessageDTO {
 	eventType: 'IGNORED_CALL';
@@ -237,6 +238,12 @@ export const MessageItemComponent = ({
 	}, [decryptedMessage]);
 
 	const isSupervisorFeedback = parsedMessage.isSupervisorFeedback;
+	const isSystemNotification = parsedMessage.isSystemNotification;
+	const systemNotificationTitle =
+		parsedMessage.systemNotificationTitle ||
+		translate('message.systemNotificationTitle', 'System notification');
+	const systemNotificationDescription =
+		parsedMessage.systemNotificationDescription || parsedMessage.cleanedMessage;
 	const renderedMessageWithoutPrefix = renderedMessage;
 
 	const hasRenderedMessage = renderedMessageWithoutPrefix && renderedMessageWithoutPrefix.length > 0;
@@ -261,7 +268,7 @@ export const MessageItemComponent = ({
 		if (isMyMessage) {
 			return 'self';
 		}
-		if (displayName === 'system') {
+		if (displayName === 'system' || isSystemNotification) {
 			return 'system';
 		}
 		if (isUserMessage()) {
@@ -484,18 +491,36 @@ export const MessageItemComponent = ({
 						</div>
 
 					<div
-						className={
+						className={`${
 							isMyMessage
-								? `messageItem__message messageItem__message--myMessage`
-								: `messageItem__message`
-						}
+								? 'messageItem__message messageItem__message--myMessage'
+								: 'messageItem__message'
+						} ${isSystemNotification ? 'messageItem__message--systemNotification' : ''}`}
 					>
+						{isSystemNotification && (
+							<>
+								<div className="messageItem__systemNotificationTag">
+									{translate('message.systemNotification', 'System Notification')}
+								</div>
+								<div className="messageItem__systemNotificationTitle">
+									{systemNotificationTitle}
+								</div>
+								{systemNotificationDescription && (
+									<div className="messageItem__systemNotificationDescription">
+										{systemNotificationDescription}
+									</div>
+								)}
+							</>
+						)}
 						{isSupervisorFeedback && (
 							<div className="messageItem__feedbackTag">
 								{translate('message.feedbackTag', 'Feedback')}
 							</div>
 						)}
-						{renderedMessageWithoutPrefix && !attachments && (() => {
+						{!isSystemNotification &&
+							renderedMessageWithoutPrefix &&
+							!attachments &&
+							(() => {
 							// Check if message is long (strip HTML tags for accurate length)
 							const textContent = renderedMessageWithoutPrefix.replace(/<[^>]*>/g, '');
 							const isLongMessage = textContent.length > MESSAGE_CHAR_LIMIT;
@@ -689,7 +714,7 @@ export const MessageItemComponent = ({
 				`}
 			>
 				{/* Add Element-style user avatar for non-system messages */}
-				{!alias?.messageType && !isMyMessage && (
+				{!alias?.messageType && !isMyMessage && !isSystemNotification && (
 					<div className="messageItem__avatar">
 						<UserAvatar
 							username={username}
@@ -697,6 +722,11 @@ export const MessageItemComponent = ({
 							userId={userId}
 							size="32px"
 						/>
+					</div>
+				)}
+				{!alias?.messageType && !isMyMessage && isSystemNotification && (
+					<div className="messageItem__systemAvatar" aria-hidden="true">
+						<NotificationBellIcon className="messageItem__systemAvatarIcon" />
 					</div>
 				)}
 				

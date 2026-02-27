@@ -147,6 +147,28 @@ $message-attachment-color: $secondary !default;
 			border-radius: 50% !important;
 		}
 	}
+
+	&__systemAvatar {
+		width: 32px;
+		height: 32px;
+		min-width: 32px;
+		min-height: 32px;
+		border-radius: 50%;
+		background: #ffe6ea;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
+	}
+
+	&__systemAvatarIcon {
+		width: 15px;
+		height: 15px;
+
+		* {
+			fill: #e53952;
+		}
+	}
 	
 	&__content {
 		flex: 1;
@@ -211,6 +233,12 @@ $message-attachment-color: $secondary !default;
 		&--system {
 			margin: 4px 0;
 			font-size: $font-size-tertiary;
+		}
+
+		&--systemNotification {
+			background: #fff6f7;
+			border: 1px solid #ffd9df;
+			border-radius: 12px;
 		}
 
 		&--deleted {
@@ -374,6 +402,32 @@ $message-attachment-color: $secondary !default;
 		border: 1px solid rgba(30, 136, 229, 0.35);
 	}
 
+	&__systemNotificationTag {
+		display: inline-flex;
+		align-items: center;
+		padding: 2px 8px;
+		border-radius: 12px;
+		background: #ff4b63;
+		color: #fff;
+		font-size: 11px;
+		font-weight: 700;
+		margin-bottom: 8px;
+	}
+
+	&__systemNotificationTitle {
+		font-size: 24px;
+		font-weight: 700;
+		color: #1f1f1f;
+		line-height: 1.25;
+		margin-bottom: 8px;
+	}
+
+	&__systemNotificationDescription {
+		font-size: 14px;
+		line-height: 1.4;
+		color: #5a5a5a;
+	}
+
 	&--feedback {
 		.messageItem__message {
 			border: 2px solid rgba(30, 136, 229, 0.6);
@@ -385,6 +439,11 @@ $message-attachment-color: $secondary !default;
 			color: $white;
 			background: rgba(255, 255, 255, 0.18);
 			border-color: rgba(255, 255, 255, 0.4);
+		}
+
+		.messageItem__systemNotificationTitle,
+		.messageItem__systemNotificationDescription {
+			color: #fff;
 		}
 	}
 

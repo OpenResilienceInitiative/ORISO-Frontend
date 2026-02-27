@@ -10,6 +10,7 @@ import { apiGetSessionSupervisors, SessionSupervisor } from '../../api/apiGetSes
 import { apiAddSessionSupervisor } from '../../api/apiAddSessionSupervisor';
 import { apiRemoveSessionSupervisor } from '../../api/apiRemoveSessionSupervisor';
 import { apiGetAgencyConsultantList, Consultant } from '../../api/apiGetAgencyConsultantList';
+import { apiSendMessage } from '../../api/apiSendMessage';
 import { NotificationsContext, NOTIFICATION_TYPE_SUCCESS, NOTIFICATION_TYPE_ERROR } from '../../globalState';
 import {
 	AUTHORITIES,
@@ -47,6 +48,7 @@ import { SelectDropdown, SelectDropdownItem } from '../select/SelectDropdown';
 import { Button, ButtonItem, BUTTON_TYPES } from '../button/Button';
 import { ReactComponent as CloseCircle } from '../../resources/img/icons/close-circle.svg';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
+import { SYSTEM_NOTIFICATION_PREFIX } from '../message/messageConstants';
 
 export interface SessionHeaderProps {
 	consultantAbsent?: SessionConsultantInterface;
@@ -305,6 +307,49 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		}
 	};
 
+	const postSupervisorAddedSystemMessage = async (supervisorName: string) => {
+		const matrixRoomId =
+			activeSession.rid && activeSession.rid.startsWith('!')
+				? activeSession.rid
+				: activeSession.item?.matrixRoomId;
+		if (!matrixRoomId || !activeSession.item.id) {
+			return;
+		}
+		const payload = JSON.stringify({
+			title: translate('message.supervisionEnabledTitle', 'Supervision Enabled!'),
+			description: translate(
+				'message.supervisionEnabledDescription',
+				'{{name}} was added as a consultant supervisor to this chat.',
+				{ name: supervisorName }
+			)
+		});
+		try {
+			const matrixClientService = (window as any).matrixClientService;
+			const client = matrixClientService?.getClient?.();
+			if (client) {
+				await (client as any).sendMessage(matrixRoomId, {
+					msgtype: 'm.text',
+					body: `${SYSTEM_NOTIFICATION_PREFIX}${payload}`
+				});
+				return;
+			}
+			await apiSendMessage(
+				`${SYSTEM_NOTIFICATION_PREFIX}${payload}`,
+				activeSession.rid,
+				false,
+				false,
+				activeSession.item.id,
+				matrixRoomId,
+				null,
+				true,
+				'system',
+				null
+			);
+		} catch (_error) {
+			// Non-blocking: supervisor add succeeded; timeline system note can fail silently.
+		}
+	};
+
 	const handleAddSupervisor = async () => {
 		if (!selectedConsultantId || !activeSession.item.id) return;
 		if (!supervisionReason.trim()) {
@@ -331,6 +376,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			contact?.username || `Session ${activeSession.item.id}`;
 		try {
 			await apiAddSessionSupervisor(activeSession.item.id, selectedConsultantId, supervisionReason);
+			await postSupervisorAddedSystemMessage(selectedSupervisorName);
 			await loadSupervisors();
 			setSelectedConsultantId('');
 			setSupervisionReason('');
