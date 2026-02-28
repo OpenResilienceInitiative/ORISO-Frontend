@@ -892,3 +892,153 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		</div>
 	);
 };
+
+						<MessageSubmitInterfaceComponent
+							isTyping={props.isTyping}
+							className={clsx(
+								'session__submit-interface',
+								!isScrolledToBottom &&
+									'session__submit-interface--scrolled-up',
+								activeThreadRootId && 'session__submit-interface--withThread'
+							)}
+							placeholder={getPlaceholder()}
+							typingUsers={props.typingUsers}
+							preselectedFile={draggedFile}
+							handleMessageSendSuccess={handleMessageSendSuccess}
+							isSupervisor={isSupervisor}
+						/>
+					</Suspense>
+					{!tenantData?.settings?.featureAttachmentUploadDisabled && (
+						<DragAndDropArea
+							onFileDragged={onFileDragged}
+							isDragging={isDragging}
+							canDrop={isDragOverDropArea}
+							onDragLeave={onDragLeave}
+							styleOverride={{ top: headerBounds.height + 'px' }}
+						/>
+					)}
+				</>
+			)}
+		</div>
+	);
+};
+
+						<MessageSubmitInterfaceComponent
+							isTyping={props.isTyping}
+							className={clsx(
+								'session__submit-interface',
+								!isScrolledToBottom &&
+									'session__submit-interface--scrolled-up',
+								activeThreadRootId && 'session__submit-interface--withThread'
+							)}
+							placeholder={getPlaceholder()}
+							typingUsers={props.typingUsers}
+							preselectedFile={draggedFile}
+							handleMessageSendSuccess={handleMessageSendSuccess}
+							isSupervisor={isSupervisor}
+						/>
+					</Suspense>
+					{!tenantData?.settings?.featureAttachmentUploadDisabled && (
+						<DragAndDropArea
+							onFileDragged={onFileDragged}
+							isDragging={isDragging}
+							canDrop={isDragOverDropArea}
+							onDragLeave={onDragLeave}
+							styleOverride={{ top: headerBounds.height + 'px' }}
+						/>
+					)}
+				</>
+			)}
+		</div>
+	);
+};
+
+						<MessageSubmitInterfaceComponent
+							isTyping={props.isTyping}
+							className={clsx(
+								'session__submit-interface',
+								!isScrolledToBottom &&
+									'session__submit-interface--scrolled-up',
+								activeThreadRootId && 'session__submit-interface--withThread'
+							)}
+							placeholder={getPlaceholder()}
+							typingUsers={props.typingUsers}
+							preselectedFile={draggedFile}
+							handleMessageSendSuccess={handleMessageSendSuccess}
+							isSupervisor={isSupervisor}
+						/>
+					</Suspense>
+					{!tenantData?.settings?.featureAttachmentUploadDisabled && (
+						<DragAndDropArea
+							onFileDragged={onFileDragged}
+							isDragging={isDragging}
+							canDrop={isDragOverDropArea}
+							onDragLeave={onDragLeave}
+							styleOverride={{ top: headerBounds.height + 'px' }}
+						/>
+					)}
+				</>
+			)}
+		</div>
+	);
+};
+
+						<MessageSubmitInterfaceComponent
+							isTyping={props.isTyping}
+							className={clsx(
+								'session__submit-interface',
+								!isScrolledToBottom &&
+									'session__submit-interface--scrolled-up',
+								activeThreadRootId && 'session__submit-interface--withThread'
+							)}
+							placeholder={getPlaceholder()}
+							typingUsers={props.typingUsers}
+							preselectedFile={draggedFile}
+							handleMessageSendSuccess={handleMessageSendSuccess}
+							isSupervisor={isSupervisor}
+						/>
+					</Suspense>
+					{!tenantData?.settings?.featureAttachmentUploadDisabled && (
+						<DragAndDropArea
+							onFileDragged={onFileDragged}
+							isDragging={isDragging}
+							canDrop={isDragOverDropArea}
+							onDragLeave={onDragLeave}
+							styleOverride={{ top: headerBounds.height + 'px' }}
+						/>
+					)}
+				</>
+			)}
+		</div>
+	);
+};
+
+						<MessageSubmitInterfaceComponent
+							isTyping={props.isTyping}
+							className={clsx(
+								'session__submit-interface',
+								!isScrolledToBottom &&
+									'session__submit-interface--scrolled-up',
+								activeThreadRootId && 'session__submit-interface--withThread'
+							)}
+							placeholder={getPlaceholder()}
+							typingUsers={props.typingUsers}
+							preselectedFile={draggedFile}
+							handleMessageSendSuccess={handleMessageSendSuccess}
+							isSupervisor={isSupervisor}
+						/>
+					</Suspense>
+					{!tenantData?.settings?.featureAttachmentUploadDisabled && (
+						<DragAndDropArea
+							onFileDragged={onFileDragged}
+							isDragging={isDragging}
+							canDrop={isDragOverDropArea}
+							onDragLeave={onDragLeave}
+							styleOverride={{ top: headerBounds.height + 'px' }}
+						/>
+					)}
+				</>
+			)}
+		</div>
+	);
+};

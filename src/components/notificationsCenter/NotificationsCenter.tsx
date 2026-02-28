@@ -643,3 +643,2038 @@ export const NotificationsCenter = () => {
 	);
 };
 
+
+					});
+
+				setChatPreviewMessages(previewItems);
+			} catch (_error) {
+				setChatPreviewMessages([]);
+			} finally {
+				setChatPreviewLoading(false);
+			}
+		};
+
+		void fetchChatPreview();
+	}, [
+		chatPreviewRefreshToken,
+		selectedNotificationCategory,
+		selectedSessionId,
+		selectedThreadRootId
+	]);
+
+	const getNextNotificationId = (
+		fromId: string | null,
+		unreadOnly: boolean
+	): string | null => {
+		if (notificationFeed.length === 0) {
+			return null;
+		}
+		const startIndex = fromId
+			? notificationFeed.findIndex((item) => item.id === fromId)
+			: -1;
+		const matchesRule = (item: (typeof notificationFeed)[number]) =>
+			!unreadOnly || !item.readAt;
+
+		for (let i = startIndex + 1; i < notificationFeed.length; i++) {
+			if (matchesRule(notificationFeed[i])) {
+				return notificationFeed[i].id;
+			}
+		}
+		for (let i = 0; i <= startIndex; i++) {
+			if (i >= 0 && matchesRule(notificationFeed[i])) {
+				return notificationFeed[i].id;
+			}
+		}
+		return null;
+	};
+
+	const openNotification = (id: string) => {
+		setSelectedNotificationId(id);
+		markNotificationAsRead(id);
+	};
+
+	const getDefaultSessionsPath = () =>
+		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+			? '/sessions/consultant/sessionView'
+			: '/sessions/user/view';
+
+	const handleOpenAction = () => {
+		if (!selectedNotification) return;
+		const nextUnreadId = getNextNotificationId(selectedNotification.id, true);
+		markNotificationAsRead(selectedNotification.id);
+		if (nextUnreadId && nextUnreadId !== selectedNotification.id) {
+			setSelectedNotificationId(nextUnreadId);
+		}
+		if (selectedNotification.actionPath) {
+			history.push(selectedNotification.actionPath);
+			return;
+		}
+		history.push(getDefaultSessionsPath());
+	};
+
+	const handleNextNotification = () => {
+		const nextUnreadId = getNextNotificationId(selectedNotificationId, true);
+		if (nextUnreadId) {
+			openNotification(nextUnreadId);
+		}
+	};
+
+	const nextUnreadId = getNextNotificationId(selectedNotificationId, true);
+	const selectedRoomRef = resolveRoomRef(selectedNotification);
+	const canShowChatPreview = selectedNotificationCategory === 'message';
+
+	const handleSendChatReply = async () => {
+		if (
+			!canShowChatPreview ||
+			!selectedSessionId ||
+			!chatReplyText.trim() ||
+			isSendingChatReply
+		) {
+			return;
+		}
+		const accessToken = getValueFromCookie('keycloak');
+		if (!accessToken) {
+			return;
+		}
+		setIsSendingChatReply(true);
+		try {
+			const csrfToken = document.cookie
+				.split('; ')
+				.find((row) => row.startsWith('CSRF-TOKEN='))
+				?.split('=')[1];
+			const cleanMessage = chatReplyText.trim();
+			const outboundMessage = selectedThreadRootId
+				? `${buildThreadPrefix(selectedThreadRootId)} ${cleanMessage}`
+				: cleanMessage;
+
+			const response = await fetch(
+				`${apiUrl}/service/matrix/sessions/${selectedSessionId}/messages`,
+				{
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: `Bearer ${accessToken}`,
+						'X-CSRF-TOKEN': csrfToken || '',
+						'X-WHITELIST-HEADER': csrfToken || ''
+					},
+					credentials: 'include',
+					body: JSON.stringify({ message: outboundMessage })
+				}
+			);
+
+			if (!response.ok) {
+				return;
+			}
+
+			if (selectedRoomRef) {
+				void apiPostMessageEventNotification({
+					roomId: selectedRoomRef,
+					messagePreview: cleanMessage,
+					matrixRoom: selectedRoomRef.startsWith('!'),
+					threadRootId: selectedThreadRootId || null,
+					supervisorMessage: false,
+					senderDisplayName:
+						userData?.displayName || userData?.userName || null,
+					threadParentPreview: null
+				}).catch(() => undefined);
+			}
+
+			setChatReplyText('');
+			setChatPreviewRefreshToken((prev) => prev + 1);
+		} finally {
+			setIsSendingChatReply(false);
+		}
+	};
+
+	return (
+		<div className="notificationsCenter">
+			<div className="notificationsCenter__header">
+				<div className="notificationsCenter__titleBlock">
+					<h2 className="notificationsCenter__title">
+						{translate(
+							'notifications.center.title',
+							'Notifications'
+						)}
+					</h2>
+					<p className="notificationsCenter__subtitle">
+						{translate(
+							'notifications.center.subtitle',
+							'Recent activities and updates from your chats.'
+						)}
+					</p>
+				</div>
+				<div className="notificationsCenter__actions">
+					<button
+						type="button"
+						className="notificationsCenter__actionButton"
+						onClick={markAllNotificationsAsRead}
+					>
+						{translate(
+							'notifications.center.markAllRead',
+							'Mark all as read'
+						)}
+					</button>
+				</div>
+			</div>
+			<div className="notificationsCenter__content">
+				<div className="notificationsCenter__list">
+					{notificationFeed.length === 0 ? (
+						<div className="notificationsCenter__empty">
+							{translate(
+								'notifications.center.empty',
+								'No notifications yet.'
+							)}
+						</div>
+					) : (
+						notificationFeed.map((item) => (
+							(() => {
+								const category = getNotificationCategory(item);
+								const isMessage = category === 'message';
+								return (
+							<button
+								type="button"
+								key={item.id}
+								className={`notificationsCenter__listItem ${
+									selectedNotificationId === item.id
+										? 'notificationsCenter__listItem--active'
+										: ''
+								}`}
+								onClick={() => openNotification(item.id)}
+							>
+								<div className="notificationsCenter__listItemTagRow">
+									<span
+										className={`notificationsCenter__listItemTag ${
+											isMessage
+												? 'notificationsCenter__listItemTag--message'
+												: 'notificationsCenter__listItemTag--system'
+										}`}
+									>
+										{isMessage
+											? translate(
+													'notifications.center.messageTag',
+													'Message notification'
+											  )
+											: translate(
+													'notifications.center.systemTag',
+													'System notification'
+											  )}
+									</span>
+								</div>
+								<div className="notificationsCenter__listItemBody">
+									<div className="notificationsCenter__listItemIconCircle">
+										<NotificationBellIcon />
+									</div>
+									<div className="notificationsCenter__listItemContent">
+										<div className="notificationsCenter__listItemHeader">
+											<span className="notificationsCenter__listItemTitle">
+												{item.title}
+											</span>
+											<span className="notificationsCenter__listItemTime">
+												{formatRelativeTime(
+													item.createdAt,
+													i18n.language
+												)}
+											</span>
+										</div>
+										<div className="notificationsCenter__listItemText">
+											{item.text}
+										</div>
+									</div>
+								</div>
+								{!item.readAt && (
+									<span className="notificationsCenter__listItemUnread" />
+								)}
+							</button>
+								);
+							})()
+						))
+					)}
+				</div>
+				<div className="notificationsCenter__detail">
+					{selectedNotification ? (
+						<div className="notificationsCenter__detailCard">
+							<h3 className="notificationsCenter__detailTitle">
+								{selectedNotification.title}
+							</h3>
+							<p className="notificationsCenter__detailText">
+								{selectedNotification.text}
+							</p>
+							<div className="notificationsCenter__detailActions">
+								<button
+									type="button"
+									className="notificationsCenter__openButton"
+									onClick={handleOpenAction}
+								>
+									{selectedNotification.actionLabel ||
+										translate(
+											'notifications.center.open',
+											'Open chat'
+										)}
+								</button>
+								<button
+									type="button"
+									className="notificationsCenter__nextButton"
+									onClick={handleNextNotification}
+									disabled={!nextUnreadId}
+								>
+									{translate(
+										'notifications.center.next',
+										'Next notification'
+									)}
+								</button>
+							</div>
+							{canShowChatPreview && (
+								<div className="notificationsCenter__chatPreview">
+								<div className="notificationsCenter__chatPreviewHeader">
+									<div className="notificationsCenter__chatPreviewTitle">
+										{translate(
+											'notifications.center.chatPreview',
+											'Chat preview'
+										)}
+									</div>
+									{selectedSessionId && (
+										<div className="notificationsCenter__chatPreviewMeta">
+											{`#${selectedSessionId}`}
+										</div>
+									)}
+								</div>
+								<div className="notificationsCenter__chatPreviewBody">
+									{!selectedSessionId ? (
+										<div className="notificationsCenter__chatPreviewEmpty">
+											{translate(
+												'notifications.center.chatPreviewNoSession',
+												'No chat linked to this notification.'
+											)}
+										</div>
+									) : chatPreviewLoading &&
+									  chatPreviewMessages.length === 0 ? (
+										<div className="notificationsCenter__chatPreviewEmpty">
+											{translate(
+												'notifications.center.chatPreviewLoading',
+												'Loading chat preview...'
+											)}
+										</div>
+									) : chatPreviewMessages.length === 0 ? (
+										<div className="notificationsCenter__chatPreviewEmpty">
+											{translate(
+												'notifications.center.chatPreviewEmpty',
+												'No visible messages yet.'
+											)}
+										</div>
+									) : (
+										chatPreviewMessages.map((entry) => (
+											<div
+												key={entry.id}
+												className="notificationsCenter__chatPreviewMessage"
+											>
+												<div className="notificationsCenter__chatPreviewMessageAvatar">
+													<UserAvatar
+														username={entry.sender}
+														displayName={entry.sender}
+														userId={entry.sender}
+														size="28px"
+													/>
+												</div>
+												<div className="notificationsCenter__chatPreviewMessageContent">
+													<span className="notificationsCenter__chatPreviewSender">
+														{entry.sender}
+													</span>
+													<span className="notificationsCenter__chatPreviewText">
+														{entry.text}
+													</span>
+												</div>
+											</div>
+										))
+									)}
+								</div>
+								<div className="notificationsCenter__chatComposer">
+									<input
+										type="text"
+										className="notificationsCenter__chatComposerInput"
+										placeholder={
+											selectedThreadRootId
+												? translate(
+														'notifications.center.replyInThread',
+														'Reply in this thread...'
+												  )
+												: translate(
+														'notifications.center.replyInChat',
+														'Write a message...'
+												  )
+										}
+										value={chatReplyText}
+										onChange={(event) =>
+											setChatReplyText(event.target.value)
+										}
+										onKeyDown={(event) => {
+											if (event.key === 'Enter') {
+												event.preventDefault();
+												void handleSendChatReply();
+											}
+										}}
+									/>
+									<button
+										type="button"
+										className="notificationsCenter__chatComposerSend"
+										onClick={() => void handleSendChatReply()}
+										disabled={
+											isSendingChatReply ||
+											!chatReplyText.trim()
+										}
+									>
+										{isSendingChatReply
+											? translate(
+													'notifications.center.sending',
+													'Sending...'
+											  )
+											: translate(
+													'notifications.center.send',
+													'Send'
+											  )}
+									</button>
+								</div>
+							</div>
+							)}
+						</div>
+					) : (
+						<div className="notificationsCenter__emptyDetail">
+							{translate(
+								'notifications.center.emptyDetail',
+								'Select a notification to see the details.'
+							)}
+						</div>
+					)}
+				</div>
+			</div>
+		</div>
+	);
+};
+
+
+					});
+
+				setChatPreviewMessages(previewItems);
+			} catch (_error) {
+				setChatPreviewMessages([]);
+			} finally {
+				setChatPreviewLoading(false);
+			}
+		};
+
+		void fetchChatPreview();
+	}, [
+		chatPreviewRefreshToken,
+		selectedNotificationCategory,
+		selectedSessionId,
+		selectedThreadRootId
+	]);
+
+	const getNextNotificationId = (
+		fromId: string | null,
+		unreadOnly: boolean
+	): string | null => {
+		if (notificationFeed.length === 0) {
+			return null;
+		}
+		const startIndex = fromId
+			? notificationFeed.findIndex((item) => item.id === fromId)
+			: -1;
+		const matchesRule = (item: (typeof notificationFeed)[number]) =>
+			!unreadOnly || !item.readAt;
+
+		for (let i = startIndex + 1; i < notificationFeed.length; i++) {
+			if (matchesRule(notificationFeed[i])) {
+				return notificationFeed[i].id;
+			}
+		}
+		for (let i = 0; i <= startIndex; i++) {
+			if (i >= 0 && matchesRule(notificationFeed[i])) {
+				return notificationFeed[i].id;
+			}
+		}
+		return null;
+	};
+
+	const openNotification = (id: string) => {
+		setSelectedNotificationId(id);
+		markNotificationAsRead(id);
+	};
+
+	const getDefaultSessionsPath = () =>
+		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+			? '/sessions/consultant/sessionView'
+			: '/sessions/user/view';
+
+	const handleOpenAction = () => {
+		if (!selectedNotification) return;
+		const nextUnreadId = getNextNotificationId(selectedNotification.id, true);
+		markNotificationAsRead(selectedNotification.id);
+		if (nextUnreadId && nextUnreadId !== selectedNotification.id) {
+			setSelectedNotificationId(nextUnreadId);
+		}
+		if (selectedNotification.actionPath) {
+			history.push(selectedNotification.actionPath);
+			return;
+		}
+		history.push(getDefaultSessionsPath());
+	};
+
+	const handleNextNotification = () => {
+		const nextUnreadId = getNextNotificationId(selectedNotificationId, true);
+		if (nextUnreadId) {
+			openNotification(nextUnreadId);
+		}
+	};
+
+	const nextUnreadId = getNextNotificationId(selectedNotificationId, true);
+	const selectedRoomRef = resolveRoomRef(selectedNotification);
+	const canShowChatPreview = selectedNotificationCategory === 'message';
+
+	const handleSendChatReply = async () => {
+		if (
+			!canShowChatPreview ||
+			!selectedSessionId ||
+			!chatReplyText.trim() ||
+			isSendingChatReply
+		) {
+			return;
+		}
+		const accessToken = getValueFromCookie('keycloak');
+		if (!accessToken) {
+			return;
+		}
+		setIsSendingChatReply(true);
+		try {
+			const csrfToken = document.cookie
+				.split('; ')
+				.find((row) => row.startsWith('CSRF-TOKEN='))
+				?.split('=')[1];
+			const cleanMessage = chatReplyText.trim();
+			const outboundMessage = selectedThreadRootId
+				? `${buildThreadPrefix(selectedThreadRootId)} ${cleanMessage}`
+				: cleanMessage;
+
+			const response = await fetch(
+				`${apiUrl}/service/matrix/sessions/${selectedSessionId}/messages`,
+				{
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: `Bearer ${accessToken}`,
+						'X-CSRF-TOKEN': csrfToken || '',
+						'X-WHITELIST-HEADER': csrfToken || ''
+					},
+					credentials: 'include',
+					body: JSON.stringify({ message: outboundMessage })
+				}
+			);
+
+			if (!response.ok) {
+				return;
+			}
+
+			if (selectedRoomRef) {
+				void apiPostMessageEventNotification({
+					roomId: selectedRoomRef,
+					messagePreview: cleanMessage,
+					matrixRoom: selectedRoomRef.startsWith('!'),
+					threadRootId: selectedThreadRootId || null,
+					supervisorMessage: false,
+					senderDisplayName:
+						userData?.displayName || userData?.userName || null,
+					threadParentPreview: null
+				}).catch(() => undefined);
+			}
+
+			setChatReplyText('');
+			setChatPreviewRefreshToken((prev) => prev + 1);
+		} finally {
+			setIsSendingChatReply(false);
+		}
+	};
+
+	return (
+		<div className="notificationsCenter">
+			<div className="notificationsCenter__header">
+				<div className="notificationsCenter__titleBlock">
+					<h2 className="notificationsCenter__title">
+						{translate(
+							'notifications.center.title',
+							'Notifications'
+						)}
+					</h2>
+					<p className="notificationsCenter__subtitle">
+						{translate(
+							'notifications.center.subtitle',
+							'Recent activities and updates from your chats.'
+						)}
+					</p>
+				</div>
+				<div className="notificationsCenter__actions">
+					<button
+						type="button"
+						className="notificationsCenter__actionButton"
+						onClick={markAllNotificationsAsRead}
+					>
+						{translate(
+							'notifications.center.markAllRead',
+							'Mark all as read'
+						)}
+					</button>
+				</div>
+			</div>
+			<div className="notificationsCenter__content">
+				<div className="notificationsCenter__list">
+					{notificationFeed.length === 0 ? (
+						<div className="notificationsCenter__empty">
+							{translate(
+								'notifications.center.empty',
+								'No notifications yet.'
+							)}
+						</div>
+					) : (
+						notificationFeed.map((item) => (
+							(() => {
+								const category = getNotificationCategory(item);
+								const isMessage = category === 'message';
+								return (
+							<button
+								type="button"
+								key={item.id}
+								className={`notificationsCenter__listItem ${
+									selectedNotificationId === item.id
+										? 'notificationsCenter__listItem--active'
+										: ''
+								}`}
+								onClick={() => openNotification(item.id)}
+							>
+								<div className="notificationsCenter__listItemTagRow">
+									<span
+										className={`notificationsCenter__listItemTag ${
+											isMessage
+												? 'notificationsCenter__listItemTag--message'
+												: 'notificationsCenter__listItemTag--system'
+										}`}
+									>
+										{isMessage
+											? translate(
+													'notifications.center.messageTag',
+													'Message notification'
+											  )
+											: translate(
+													'notifications.center.systemTag',
+													'System notification'
+											  )}
+									</span>
+								</div>
+								<div className="notificationsCenter__listItemBody">
+									<div className="notificationsCenter__listItemIconCircle">
+										<NotificationBellIcon />
+									</div>
+									<div className="notificationsCenter__listItemContent">
+										<div className="notificationsCenter__listItemHeader">
+											<span className="notificationsCenter__listItemTitle">
+												{item.title}
+											</span>
+											<span className="notificationsCenter__listItemTime">
+												{formatRelativeTime(
+													item.createdAt,
+													i18n.language
+												)}
+											</span>
+										</div>
+										<div className="notificationsCenter__listItemText">
+											{item.text}
+										</div>
+									</div>
+								</div>
+								{!item.readAt && (
+									<span className="notificationsCenter__listItemUnread" />
+								)}
+							</button>
+								);
+							})()
+						))
+					)}
+				</div>
+				<div className="notificationsCenter__detail">
+					{selectedNotification ? (
+						<div className="notificationsCenter__detailCard">
+							<h3 className="notificationsCenter__detailTitle">
+								{selectedNotification.title}
+							</h3>
+							<p className="notificationsCenter__detailText">
+								{selectedNotification.text}
+							</p>
+							<div className="notificationsCenter__detailActions">
+								<button
+									type="button"
+									className="notificationsCenter__openButton"
+									onClick={handleOpenAction}
+								>
+									{selectedNotification.actionLabel ||
+										translate(
+											'notifications.center.open',
+											'Open chat'
+										)}
+								</button>
+								<button
+									type="button"
+									className="notificationsCenter__nextButton"
+									onClick={handleNextNotification}
+									disabled={!nextUnreadId}
+								>
+									{translate(
+										'notifications.center.next',
+										'Next notification'
+									)}
+								</button>
+							</div>
+							{canShowChatPreview && (
+								<div className="notificationsCenter__chatPreview">
+								<div className="notificationsCenter__chatPreviewHeader">
+									<div className="notificationsCenter__chatPreviewTitle">
+										{translate(
+											'notifications.center.chatPreview',
+											'Chat preview'
+										)}
+									</div>
+									{selectedSessionId && (
+										<div className="notificationsCenter__chatPreviewMeta">
+											{`#${selectedSessionId}`}
+										</div>
+									)}
+								</div>
+								<div className="notificationsCenter__chatPreviewBody">
+									{!selectedSessionId ? (
+										<div className="notificationsCenter__chatPreviewEmpty">
+											{translate(
+												'notifications.center.chatPreviewNoSession',
+												'No chat linked to this notification.'
+											)}
+										</div>
+									) : chatPreviewLoading &&
+									  chatPreviewMessages.length === 0 ? (
+										<div className="notificationsCenter__chatPreviewEmpty">
+											{translate(
+												'notifications.center.chatPreviewLoading',
+												'Loading chat preview...'
+											)}
+										</div>
+									) : chatPreviewMessages.length === 0 ? (
+										<div className="notificationsCenter__chatPreviewEmpty">
+											{translate(
+												'notifications.center.chatPreviewEmpty',
+												'No visible messages yet.'
+											)}
+										</div>
+									) : (
+										chatPreviewMessages.map((entry) => (
+											<div
+												key={entry.id}
+												className="notificationsCenter__chatPreviewMessage"
+											>
+												<div className="notificationsCenter__chatPreviewMessageAvatar">
+													<UserAvatar
+														username={entry.sender}
+														displayName={entry.sender}
+														userId={entry.sender}
+														size="28px"
+													/>
+												</div>
+												<div className="notificationsCenter__chatPreviewMessageContent">
+													<span className="notificationsCenter__chatPreviewSender">
+														{entry.sender}
+													</span>
+													<span className="notificationsCenter__chatPreviewText">
+														{entry.text}
+													</span>
+												</div>
+											</div>
+										))
+									)}
+								</div>
+								<div className="notificationsCenter__chatComposer">
+									<input
+										type="text"
+										className="notificationsCenter__chatComposerInput"
+										placeholder={
+											selectedThreadRootId
+												? translate(
+														'notifications.center.replyInThread',
+														'Reply in this thread...'
+												  )
+												: translate(
+														'notifications.center.replyInChat',
+														'Write a message...'
+												  )
+										}
+										value={chatReplyText}
+										onChange={(event) =>
+											setChatReplyText(event.target.value)
+										}
+										onKeyDown={(event) => {
+											if (event.key === 'Enter') {
+												event.preventDefault();
+												void handleSendChatReply();
+											}
+										}}
+									/>
+									<button
+										type="button"
+										className="notificationsCenter__chatComposerSend"
+										onClick={() => void handleSendChatReply()}
+										disabled={
+											isSendingChatReply ||
+											!chatReplyText.trim()
+										}
+									>
+										{isSendingChatReply
+											? translate(
+													'notifications.center.sending',
+													'Sending...'
+											  )
+											: translate(
+													'notifications.center.send',
+													'Send'
+											  )}
+									</button>
+								</div>
+							</div>
+							)}
+						</div>
+					) : (
+						<div className="notificationsCenter__emptyDetail">
+							{translate(
+								'notifications.center.emptyDetail',
+								'Select a notification to see the details.'
+							)}
+						</div>
+					)}
+				</div>
+			</div>
+		</div>
+	);
+};
+
+
+					});
+
+				setChatPreviewMessages(previewItems);
+			} catch (_error) {
+				setChatPreviewMessages([]);
+			} finally {
+				setChatPreviewLoading(false);
+			}
+		};
+
+		void fetchChatPreview();
+	}, [
+		chatPreviewRefreshToken,
+		selectedNotificationCategory,
+		selectedSessionId,
+		selectedThreadRootId
+	]);
+
+	const getNextNotificationId = (
+		fromId: string | null,
+		unreadOnly: boolean
+	): string | null => {
+		if (notificationFeed.length === 0) {
+			return null;
+		}
+		const startIndex = fromId
+			? notificationFeed.findIndex((item) => item.id === fromId)
+			: -1;
+		const matchesRule = (item: (typeof notificationFeed)[number]) =>
+			!unreadOnly || !item.readAt;
+
+		for (let i = startIndex + 1; i < notificationFeed.length; i++) {
+			if (matchesRule(notificationFeed[i])) {
+				return notificationFeed[i].id;
+			}
+		}
+		for (let i = 0; i <= startIndex; i++) {
+			if (i >= 0 && matchesRule(notificationFeed[i])) {
+				return notificationFeed[i].id;
+			}
+		}
+		return null;
+	};
+
+	const openNotification = (id: string) => {
+		setSelectedNotificationId(id);
+		markNotificationAsRead(id);
+	};
+
+	const getDefaultSessionsPath = () =>
+		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+			? '/sessions/consultant/sessionView'
+			: '/sessions/user/view';
+
+	const handleOpenAction = () => {
+		if (!selectedNotification) return;
+		const nextUnreadId = getNextNotificationId(selectedNotification.id, true);
+		markNotificationAsRead(selectedNotification.id);
+		if (nextUnreadId && nextUnreadId !== selectedNotification.id) {
+			setSelectedNotificationId(nextUnreadId);
+		}
+		if (selectedNotification.actionPath) {
+			history.push(selectedNotification.actionPath);
+			return;
+		}
+		history.push(getDefaultSessionsPath());
+	};
+
+	const handleNextNotification = () => {
+		const nextUnreadId = getNextNotificationId(selectedNotificationId, true);
+		if (nextUnreadId) {
+			openNotification(nextUnreadId);
+		}
+	};
+
+	const nextUnreadId = getNextNotificationId(selectedNotificationId, true);
+	const selectedRoomRef = resolveRoomRef(selectedNotification);
+	const canShowChatPreview = selectedNotificationCategory === 'message';
+
+	const handleSendChatReply = async () => {
+		if (
+			!canShowChatPreview ||
+			!selectedSessionId ||
+			!chatReplyText.trim() ||
+			isSendingChatReply
+		) {
+			return;
+		}
+		const accessToken = getValueFromCookie('keycloak');
+		if (!accessToken) {
+			return;
+		}
+		setIsSendingChatReply(true);
+		try {
+			const csrfToken = document.cookie
+				.split('; ')
+				.find((row) => row.startsWith('CSRF-TOKEN='))
+				?.split('=')[1];
+			const cleanMessage = chatReplyText.trim();
+			const outboundMessage = selectedThreadRootId
+				? `${buildThreadPrefix(selectedThreadRootId)} ${cleanMessage}`
+				: cleanMessage;
+
+			const response = await fetch(
+				`${apiUrl}/service/matrix/sessions/${selectedSessionId}/messages`,
+				{
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: `Bearer ${accessToken}`,
+						'X-CSRF-TOKEN': csrfToken || '',
+						'X-WHITELIST-HEADER': csrfToken || ''
+					},
+					credentials: 'include',
+					body: JSON.stringify({ message: outboundMessage })
+				}
+			);
+
+			if (!response.ok) {
+				return;
+			}
+
+			if (selectedRoomRef) {
+				void apiPostMessageEventNotification({
+					roomId: selectedRoomRef,
+					messagePreview: cleanMessage,
+					matrixRoom: selectedRoomRef.startsWith('!'),
+					threadRootId: selectedThreadRootId || null,
+					supervisorMessage: false,
+					senderDisplayName:
+						userData?.displayName || userData?.userName || null,
+					threadParentPreview: null
+				}).catch(() => undefined);
+			}
+
+			setChatReplyText('');
+			setChatPreviewRefreshToken((prev) => prev + 1);
+		} finally {
+			setIsSendingChatReply(false);
+		}
+	};
+
+	return (
+		<div className="notificationsCenter">
+			<div className="notificationsCenter__header">
+				<div className="notificationsCenter__titleBlock">
+					<h2 className="notificationsCenter__title">
+						{translate(
+							'notifications.center.title',
+							'Notifications'
+						)}
+					</h2>
+					<p className="notificationsCenter__subtitle">
+						{translate(
+							'notifications.center.subtitle',
+							'Recent activities and updates from your chats.'
+						)}
+					</p>
+				</div>
+				<div className="notificationsCenter__actions">
+					<button
+						type="button"
+						className="notificationsCenter__actionButton"
+						onClick={markAllNotificationsAsRead}
+					>
+						{translate(
+							'notifications.center.markAllRead',
+							'Mark all as read'
+						)}
+					</button>
+				</div>
+			</div>
+			<div className="notificationsCenter__content">
+				<div className="notificationsCenter__list">
+					{notificationFeed.length === 0 ? (
+						<div className="notificationsCenter__empty">
+							{translate(
+								'notifications.center.empty',
+								'No notifications yet.'
+							)}
+						</div>
+					) : (
+						notificationFeed.map((item) => (
+							(() => {
+								const category = getNotificationCategory(item);
+								const isMessage = category === 'message';
+								return (
+							<button
+								type="button"
+								key={item.id}
+								className={`notificationsCenter__listItem ${
+									selectedNotificationId === item.id
+										? 'notificationsCenter__listItem--active'
+										: ''
+								}`}
+								onClick={() => openNotification(item.id)}
+							>
+								<div className="notificationsCenter__listItemTagRow">
+									<span
+										className={`notificationsCenter__listItemTag ${
+											isMessage
+												? 'notificationsCenter__listItemTag--message'
+												: 'notificationsCenter__listItemTag--system'
+										}`}
+									>
+										{isMessage
+											? translate(
+													'notifications.center.messageTag',
+													'Message notification'
+											  )
+											: translate(
+													'notifications.center.systemTag',
+													'System notification'
+											  )}
+									</span>
+								</div>
+								<div className="notificationsCenter__listItemBody">
+									<div className="notificationsCenter__listItemIconCircle">
+										<NotificationBellIcon />
+									</div>
+									<div className="notificationsCenter__listItemContent">
+										<div className="notificationsCenter__listItemHeader">
+											<span className="notificationsCenter__listItemTitle">
+												{item.title}
+											</span>
+											<span className="notificationsCenter__listItemTime">
+												{formatRelativeTime(
+													item.createdAt,
+													i18n.language
+												)}
+											</span>
+										</div>
+										<div className="notificationsCenter__listItemText">
+											{item.text}
+										</div>
+									</div>
+								</div>
+								{!item.readAt && (
+									<span className="notificationsCenter__listItemUnread" />
+								)}
+							</button>
+								);
+							})()
+						))
+					)}
+				</div>
+				<div className="notificationsCenter__detail">
+					{selectedNotification ? (
+						<div className="notificationsCenter__detailCard">
+							<h3 className="notificationsCenter__detailTitle">
+								{selectedNotification.title}
+							</h3>
+							<p className="notificationsCenter__detailText">
+								{selectedNotification.text}
+							</p>
+							<div className="notificationsCenter__detailActions">
+								<button
+									type="button"
+									className="notificationsCenter__openButton"
+									onClick={handleOpenAction}
+								>
+									{selectedNotification.actionLabel ||
+										translate(
+											'notifications.center.open',
+											'Open chat'
+										)}
+								</button>
+								<button
+									type="button"
+									className="notificationsCenter__nextButton"
+									onClick={handleNextNotification}
+									disabled={!nextUnreadId}
+								>
+									{translate(
+										'notifications.center.next',
+										'Next notification'
+									)}
+								</button>
+							</div>
+							{canShowChatPreview && (
+								<div className="notificationsCenter__chatPreview">
+								<div className="notificationsCenter__chatPreviewHeader">
+									<div className="notificationsCenter__chatPreviewTitle">
+										{translate(
+											'notifications.center.chatPreview',
+											'Chat preview'
+										)}
+									</div>
+									{selectedSessionId && (
+										<div className="notificationsCenter__chatPreviewMeta">
+											{`#${selectedSessionId}`}
+										</div>
+									)}
+								</div>
+								<div className="notificationsCenter__chatPreviewBody">
+									{!selectedSessionId ? (
+										<div className="notificationsCenter__chatPreviewEmpty">
+											{translate(
+												'notifications.center.chatPreviewNoSession',
+												'No chat linked to this notification.'
+											)}
+										</div>
+									) : chatPreviewLoading &&
+									  chatPreviewMessages.length === 0 ? (
+										<div className="notificationsCenter__chatPreviewEmpty">
+											{translate(
+												'notifications.center.chatPreviewLoading',
+												'Loading chat preview...'
+											)}
+										</div>
+									) : chatPreviewMessages.length === 0 ? (
+										<div className="notificationsCenter__chatPreviewEmpty">
+											{translate(
+												'notifications.center.chatPreviewEmpty',
+												'No visible messages yet.'
+											)}
+										</div>
+									) : (
+										chatPreviewMessages.map((entry) => (
+											<div
+												key={entry.id}
+												className="notificationsCenter__chatPreviewMessage"
+											>
+												<div className="notificationsCenter__chatPreviewMessageAvatar">
+													<UserAvatar
+														username={entry.sender}
+														displayName={entry.sender}
+														userId={entry.sender}
+														size="28px"
+													/>
+												</div>
+												<div className="notificationsCenter__chatPreviewMessageContent">
+													<span className="notificationsCenter__chatPreviewSender">
+														{entry.sender}
+													</span>
+													<span className="notificationsCenter__chatPreviewText">
+														{entry.text}
+													</span>
+												</div>
+											</div>
+										))
+									)}
+								</div>
+								<div className="notificationsCenter__chatComposer">
+									<input
+										type="text"
+										className="notificationsCenter__chatComposerInput"
+										placeholder={
+											selectedThreadRootId
+												? translate(
+														'notifications.center.replyInThread',
+														'Reply in this thread...'
+												  )
+												: translate(
+														'notifications.center.replyInChat',
+														'Write a message...'
+												  )
+										}
+										value={chatReplyText}
+										onChange={(event) =>
+											setChatReplyText(event.target.value)
+										}
+										onKeyDown={(event) => {
+											if (event.key === 'Enter') {
+												event.preventDefault();
+												void handleSendChatReply();
+											}
+										}}
+									/>
+									<button
+										type="button"
+										className="notificationsCenter__chatComposerSend"
+										onClick={() => void handleSendChatReply()}
+										disabled={
+											isSendingChatReply ||
+											!chatReplyText.trim()
+										}
+									>
+										{isSendingChatReply
+											? translate(
+													'notifications.center.sending',
+													'Sending...'
+											  )
+											: translate(
+													'notifications.center.send',
+													'Send'
+											  )}
+									</button>
+								</div>
+							</div>
+							)}
+						</div>
+					) : (
+						<div className="notificationsCenter__emptyDetail">
+							{translate(
+								'notifications.center.emptyDetail',
+								'Select a notification to see the details.'
+							)}
+						</div>
+					)}
+				</div>
+			</div>
+		</div>
+	);
+};
+
+
+					});
+
+				setChatPreviewMessages(previewItems);
+			} catch (_error) {
+				setChatPreviewMessages([]);
+			} finally {
+				setChatPreviewLoading(false);
+			}
+		};
+
+		void fetchChatPreview();
+	}, [
+		chatPreviewRefreshToken,
+		selectedNotificationCategory,
+		selectedSessionId,
+		selectedThreadRootId
+	]);
+
+	const getNextNotificationId = (
+		fromId: string | null,
+		unreadOnly: boolean
+	): string | null => {
+		if (notificationFeed.length === 0) {
+			return null;
+		}
+		const startIndex = fromId
+			? notificationFeed.findIndex((item) => item.id === fromId)
+			: -1;
+		const matchesRule = (item: (typeof notificationFeed)[number]) =>
+			!unreadOnly || !item.readAt;
+
+		for (let i = startIndex + 1; i < notificationFeed.length; i++) {
+			if (matchesRule(notificationFeed[i])) {
+				return notificationFeed[i].id;
+			}
+		}
+		for (let i = 0; i <= startIndex; i++) {
+			if (i >= 0 && matchesRule(notificationFeed[i])) {
+				return notificationFeed[i].id;
+			}
+		}
+		return null;
+	};
+
+	const openNotification = (id: string) => {
+		setSelectedNotificationId(id);
+		markNotificationAsRead(id);
+	};
+
+	const getDefaultSessionsPath = () =>
+		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+			? '/sessions/consultant/sessionView'
+			: '/sessions/user/view';
+
+	const handleOpenAction = () => {
+		if (!selectedNotification) return;
+		const nextUnreadId = getNextNotificationId(selectedNotification.id, true);
+		markNotificationAsRead(selectedNotification.id);
+		if (nextUnreadId && nextUnreadId !== selectedNotification.id) {
+			setSelectedNotificationId(nextUnreadId);
+		}
+		if (selectedNotification.actionPath) {
+			history.push(selectedNotification.actionPath);
+			return;
+		}
+		history.push(getDefaultSessionsPath());
+	};
+
+	const handleNextNotification = () => {
+		const nextUnreadId = getNextNotificationId(selectedNotificationId, true);
+		if (nextUnreadId) {
+			openNotification(nextUnreadId);
+		}
+	};
+
+	const nextUnreadId = getNextNotificationId(selectedNotificationId, true);
+	const selectedRoomRef = resolveRoomRef(selectedNotification);
+	const canShowChatPreview = selectedNotificationCategory === 'message';
+
+	const handleSendChatReply = async () => {
+		if (
+			!canShowChatPreview ||
+			!selectedSessionId ||
+			!chatReplyText.trim() ||
+			isSendingChatReply
+		) {
+			return;
+		}
+		const accessToken = getValueFromCookie('keycloak');
+		if (!accessToken) {
+			return;
+		}
+		setIsSendingChatReply(true);
+		try {
+			const csrfToken = document.cookie
+				.split('; ')
+				.find((row) => row.startsWith('CSRF-TOKEN='))
+				?.split('=')[1];
+			const cleanMessage = chatReplyText.trim();
+			const outboundMessage = selectedThreadRootId
+				? `${buildThreadPrefix(selectedThreadRootId)} ${cleanMessage}`
+				: cleanMessage;
+
+			const response = await fetch(
+				`${apiUrl}/service/matrix/sessions/${selectedSessionId}/messages`,
+				{
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: `Bearer ${accessToken}`,
+						'X-CSRF-TOKEN': csrfToken || '',
+						'X-WHITELIST-HEADER': csrfToken || ''
+					},
+					credentials: 'include',
+					body: JSON.stringify({ message: outboundMessage })
+				}
+			);
+
+			if (!response.ok) {
+				return;
+			}
+
+			if (selectedRoomRef) {
+				void apiPostMessageEventNotification({
+					roomId: selectedRoomRef,
+					messagePreview: cleanMessage,
+					matrixRoom: selectedRoomRef.startsWith('!'),
+					threadRootId: selectedThreadRootId || null,
+					supervisorMessage: false,
+					senderDisplayName:
+						userData?.displayName || userData?.userName || null,
+					threadParentPreview: null
+				}).catch(() => undefined);
+			}
+
+			setChatReplyText('');
+			setChatPreviewRefreshToken((prev) => prev + 1);
+		} finally {
+			setIsSendingChatReply(false);
+		}
+	};
+
+	return (
+		<div className="notificationsCenter">
+			<div className="notificationsCenter__header">
+				<div className="notificationsCenter__titleBlock">
+					<h2 className="notificationsCenter__title">
+						{translate(
+							'notifications.center.title',
+							'Notifications'
+						)}
+					</h2>
+					<p className="notificationsCenter__subtitle">
+						{translate(
+							'notifications.center.subtitle',
+							'Recent activities and updates from your chats.'
+						)}
+					</p>
+				</div>
+				<div className="notificationsCenter__actions">
+					<button
+						type="button"
+						className="notificationsCenter__actionButton"
+						onClick={markAllNotificationsAsRead}
+					>
+						{translate(
+							'notifications.center.markAllRead',
+							'Mark all as read'
+						)}
+					</button>
+				</div>
+			</div>
+			<div className="notificationsCenter__content">
+				<div className="notificationsCenter__list">
+					{notificationFeed.length === 0 ? (
+						<div className="notificationsCenter__empty">
+							{translate(
+								'notifications.center.empty',
+								'No notifications yet.'
+							)}
+						</div>
+					) : (
+						notificationFeed.map((item) => (
+							(() => {
+								const category = getNotificationCategory(item);
+								const isMessage = category === 'message';
+								return (
+							<button
+								type="button"
+								key={item.id}
+								className={`notificationsCenter__listItem ${
+									selectedNotificationId === item.id
+										? 'notificationsCenter__listItem--active'
+										: ''
+								}`}
+								onClick={() => openNotification(item.id)}
+							>
+								<div className="notificationsCenter__listItemTagRow">
+									<span
+										className={`notificationsCenter__listItemTag ${
+											isMessage
+												? 'notificationsCenter__listItemTag--message'
+												: 'notificationsCenter__listItemTag--system'
+										}`}
+									>
+										{isMessage
+											? translate(
+													'notifications.center.messageTag',
+													'Message notification'
+											  )
+											: translate(
+													'notifications.center.systemTag',
+													'System notification'
+											  )}
+									</span>
+								</div>
+								<div className="notificationsCenter__listItemBody">
+									<div className="notificationsCenter__listItemIconCircle">
+										<NotificationBellIcon />
+									</div>
+									<div className="notificationsCenter__listItemContent">
+										<div className="notificationsCenter__listItemHeader">
+											<span className="notificationsCenter__listItemTitle">
+												{item.title}
+											</span>
+											<span className="notificationsCenter__listItemTime">
+												{formatRelativeTime(
+													item.createdAt,
+													i18n.language
+												)}
+											</span>
+										</div>
+										<div className="notificationsCenter__listItemText">
+											{item.text}
+										</div>
+									</div>
+								</div>
+								{!item.readAt && (
+									<span className="notificationsCenter__listItemUnread" />
+								)}
+							</button>
+								);
+							})()
+						))
+					)}
+				</div>
+				<div className="notificationsCenter__detail">
+					{selectedNotification ? (
+						<div className="notificationsCenter__detailCard">
+							<h3 className="notificationsCenter__detailTitle">
+								{selectedNotification.title}
+							</h3>
+							<p className="notificationsCenter__detailText">
+								{selectedNotification.text}
+							</p>
+							<div className="notificationsCenter__detailActions">
+								<button
+									type="button"
+									className="notificationsCenter__openButton"
+									onClick={handleOpenAction}
+								>
+									{selectedNotification.actionLabel ||
+										translate(
+											'notifications.center.open',
+											'Open chat'
+										)}
+								</button>
+								<button
+									type="button"
+									className="notificationsCenter__nextButton"
+									onClick={handleNextNotification}
+									disabled={!nextUnreadId}
+								>
+									{translate(
+										'notifications.center.next',
+										'Next notification'
+									)}
+								</button>
+							</div>
+							{canShowChatPreview && (
+								<div className="notificationsCenter__chatPreview">
+								<div className="notificationsCenter__chatPreviewHeader">
+									<div className="notificationsCenter__chatPreviewTitle">
+										{translate(
+											'notifications.center.chatPreview',
+											'Chat preview'
+										)}
+									</div>
+									{selectedSessionId && (
+										<div className="notificationsCenter__chatPreviewMeta">
+											{`#${selectedSessionId}`}
+										</div>
+									)}
+								</div>
+								<div className="notificationsCenter__chatPreviewBody">
+									{!selectedSessionId ? (
+										<div className="notificationsCenter__chatPreviewEmpty">
+											{translate(
+												'notifications.center.chatPreviewNoSession',
+												'No chat linked to this notification.'
+											)}
+										</div>
+									) : chatPreviewLoading &&
+									  chatPreviewMessages.length === 0 ? (
+										<div className="notificationsCenter__chatPreviewEmpty">
+											{translate(
+												'notifications.center.chatPreviewLoading',
+												'Loading chat preview...'
+											)}
+										</div>
+									) : chatPreviewMessages.length === 0 ? (
+										<div className="notificationsCenter__chatPreviewEmpty">
+											{translate(
+												'notifications.center.chatPreviewEmpty',
+												'No visible messages yet.'
+											)}
+										</div>
+									) : (
+										chatPreviewMessages.map((entry) => (
+											<div
+												key={entry.id}
+												className="notificationsCenter__chatPreviewMessage"
+											>
+												<div className="notificationsCenter__chatPreviewMessageAvatar">
+													<UserAvatar
+														username={entry.sender}
+														displayName={entry.sender}
+														userId={entry.sender}
+														size="28px"
+													/>
+												</div>
+												<div className="notificationsCenter__chatPreviewMessageContent">
+													<span className="notificationsCenter__chatPreviewSender">
+														{entry.sender}
+													</span>
+													<span className="notificationsCenter__chatPreviewText">
+														{entry.text}
+													</span>
+												</div>
+											</div>
+										))
+									)}
+								</div>
+								<div className="notificationsCenter__chatComposer">
+									<input
+										type="text"
+										className="notificationsCenter__chatComposerInput"
+										placeholder={
+											selectedThreadRootId
+												? translate(
+														'notifications.center.replyInThread',
+														'Reply in this thread...'
+												  )
+												: translate(
+														'notifications.center.replyInChat',
+														'Write a message...'
+												  )
+										}
+										value={chatReplyText}
+										onChange={(event) =>
+											setChatReplyText(event.target.value)
+										}
+										onKeyDown={(event) => {
+											if (event.key === 'Enter') {
+												event.preventDefault();
+												void handleSendChatReply();
+											}
+										}}
+									/>
+									<button
+										type="button"
+										className="notificationsCenter__chatComposerSend"
+										onClick={() => void handleSendChatReply()}
+										disabled={
+											isSendingChatReply ||
+											!chatReplyText.trim()
+										}
+									>
+										{isSendingChatReply
+											? translate(
+													'notifications.center.sending',
+													'Sending...'
+											  )
+											: translate(
+													'notifications.center.send',
+													'Send'
+											  )}
+									</button>
+								</div>
+							</div>
+							)}
+						</div>
+					) : (
+						<div className="notificationsCenter__emptyDetail">
+							{translate(
+								'notifications.center.emptyDetail',
+								'Select a notification to see the details.'
+							)}
+						</div>
+					)}
+				</div>
+			</div>
+		</div>
+	);
+};
+
+
+					});
+
+				setChatPreviewMessages(previewItems);
+			} catch (_error) {
+				setChatPreviewMessages([]);
+			} finally {
+				setChatPreviewLoading(false);
+			}
+		};
+
+		void fetchChatPreview();
+	}, [
+		chatPreviewRefreshToken,
+		selectedNotificationCategory,
+		selectedSessionId,
+		selectedThreadRootId
+	]);
+
+	const getNextNotificationId = (
+		fromId: string | null,
+		unreadOnly: boolean
+	): string | null => {
+		if (notificationFeed.length === 0) {
+			return null;
+		}
+		const startIndex = fromId
+			? notificationFeed.findIndex((item) => item.id === fromId)
+			: -1;
+		const matchesRule = (item: (typeof notificationFeed)[number]) =>
+			!unreadOnly || !item.readAt;
+
+		for (let i = startIndex + 1; i < notificationFeed.length; i++) {
+			if (matchesRule(notificationFeed[i])) {
+				return notificationFeed[i].id;
+			}
+		}
+		for (let i = 0; i <= startIndex; i++) {
+			if (i >= 0 && matchesRule(notificationFeed[i])) {
+				return notificationFeed[i].id;
+			}
+		}
+		return null;
+	};
+
+	const openNotification = (id: string) => {
+		setSelectedNotificationId(id);
+		markNotificationAsRead(id);
+	};
+
+	const getDefaultSessionsPath = () =>
+		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+			? '/sessions/consultant/sessionView'
+			: '/sessions/user/view';
+
+	const handleOpenAction = () => {
+		if (!selectedNotification) return;
+		const nextUnreadId = getNextNotificationId(selectedNotification.id, true);
+		markNotificationAsRead(selectedNotification.id);
+		if (nextUnreadId && nextUnreadId !== selectedNotification.id) {
+			setSelectedNotificationId(nextUnreadId);
+		}
+		if (selectedNotification.actionPath) {
+			history.push(selectedNotification.actionPath);
+			return;
+		}
+		history.push(getDefaultSessionsPath());
+	};
+
+	const handleNextNotification = () => {
+		const nextUnreadId = getNextNotificationId(selectedNotificationId, true);
+		if (nextUnreadId) {
+			openNotification(nextUnreadId);
+		}
+	};
+
+	const nextUnreadId = getNextNotificationId(selectedNotificationId, true);
+	const selectedRoomRef = resolveRoomRef(selectedNotification);
+	const canShowChatPreview = selectedNotificationCategory === 'message';
+
+	const handleSendChatReply = async () => {
+		if (
+			!canShowChatPreview ||
+			!selectedSessionId ||
+			!chatReplyText.trim() ||
+			isSendingChatReply
+		) {
+			return;
+		}
+		const accessToken = getValueFromCookie('keycloak');
+		if (!accessToken) {
+			return;
+		}
+		setIsSendingChatReply(true);
+		try {
+			const csrfToken = document.cookie
+				.split('; ')
+				.find((row) => row.startsWith('CSRF-TOKEN='))
+				?.split('=')[1];
+			const cleanMessage = chatReplyText.trim();
+			const outboundMessage = selectedThreadRootId
+				? `${buildThreadPrefix(selectedThreadRootId)} ${cleanMessage}`
+				: cleanMessage;
+
+			const response = await fetch(
+				`${apiUrl}/service/matrix/sessions/${selectedSessionId}/messages`,
+				{
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: `Bearer ${accessToken}`,
+						'X-CSRF-TOKEN': csrfToken || '',
+						'X-WHITELIST-HEADER': csrfToken || ''
+					},
+					credentials: 'include',
+					body: JSON.stringify({ message: outboundMessage })
+				}
+			);
+
+			if (!response.ok) {
+				return;
+			}
+
+			if (selectedRoomRef) {
+				void apiPostMessageEventNotification({
+					roomId: selectedRoomRef,
+					messagePreview: cleanMessage,
+					matrixRoom: selectedRoomRef.startsWith('!'),
+					threadRootId: selectedThreadRootId || null,
+					supervisorMessage: false,
+					senderDisplayName:
+						userData?.displayName || userData?.userName || null,
+					threadParentPreview: null
+				}).catch(() => undefined);
+			}
+
+			setChatReplyText('');
+			setChatPreviewRefreshToken((prev) => prev + 1);
+		} finally {
+			setIsSendingChatReply(false);
+		}
+	};
+
+	return (
+		<div className="notificationsCenter">
+			<div className="notificationsCenter__header">
+				<div className="notificationsCenter__titleBlock">
+					<h2 className="notificationsCenter__title">
+						{translate(
+							'notifications.center.title',
+							'Notifications'
+						)}
+					</h2>
+					<p className="notificationsCenter__subtitle">
+						{translate(
+							'notifications.center.subtitle',
+							'Recent activities and updates from your chats.'
+						)}
+					</p>
+				</div>
+				<div className="notificationsCenter__actions">
+					<button
+						type="button"
+						className="notificationsCenter__actionButton"
+						onClick={markAllNotificationsAsRead}
+					>
+						{translate(
+							'notifications.center.markAllRead',
+							'Mark all as read'
+						)}
+					</button>
+				</div>
+			</div>
+			<div className="notificationsCenter__content">
+				<div className="notificationsCenter__list">
+					{notificationFeed.length === 0 ? (
+						<div className="notificationsCenter__empty">
+							{translate(
+								'notifications.center.empty',
+								'No notifications yet.'
+							)}
+						</div>
+					) : (
+						notificationFeed.map((item) => (
+							(() => {
+								const category = getNotificationCategory(item);
+								const isMessage = category === 'message';
+								return (
+							<button
+								type="button"
+								key={item.id}
+								className={`notificationsCenter__listItem ${
+									selectedNotificationId === item.id
+										? 'notificationsCenter__listItem--active'
+										: ''
+								}`}
+								onClick={() => openNotification(item.id)}
+							>
+								<div className="notificationsCenter__listItemTagRow">
+									<span
+										className={`notificationsCenter__listItemTag ${
+											isMessage
+												? 'notificationsCenter__listItemTag--message'
+												: 'notificationsCenter__listItemTag--system'
+										}`}
+									>
+										{isMessage
+											? translate(
+													'notifications.center.messageTag',
+													'Message notification'
+											  )
+											: translate(
+													'notifications.center.systemTag',
+													'System notification'
+											  )}
+									</span>
+								</div>
+								<div className="notificationsCenter__listItemBody">
+									<div className="notificationsCenter__listItemIconCircle">
+										<NotificationBellIcon />
+									</div>
+									<div className="notificationsCenter__listItemContent">
+										<div className="notificationsCenter__listItemHeader">
+											<span className="notificationsCenter__listItemTitle">
+												{item.title}
+											</span>
+											<span className="notificationsCenter__listItemTime">
+												{formatRelativeTime(
+													item.createdAt,
+													i18n.language
+												)}
+											</span>
+										</div>
+										<div className="notificationsCenter__listItemText">
+											{item.text}
+										</div>
+									</div>
+								</div>
+								{!item.readAt && (
+									<span className="notificationsCenter__listItemUnread" />
+								)}
+							</button>
+								);
+							})()
+						))
+					)}
+				</div>
+				<div className="notificationsCenter__detail">
+					{selectedNotification ? (
+						<div className="notificationsCenter__detailCard">
+							<h3 className="notificationsCenter__detailTitle">
+								{selectedNotification.title}
+							</h3>
+							<p className="notificationsCenter__detailText">
+								{selectedNotification.text}
+							</p>
+							<div className="notificationsCenter__detailActions">
+								<button
+									type="button"
+									className="notificationsCenter__openButton"
+									onClick={handleOpenAction}
+								>
+									{selectedNotification.actionLabel ||
+										translate(
+											'notifications.center.open',
+											'Open chat'
+										)}
+								</button>
+								<button
+									type="button"
+									className="notificationsCenter__nextButton"
+									onClick={handleNextNotification}
+									disabled={!nextUnreadId}
+								>
+									{translate(
+										'notifications.center.next',
+										'Next notification'
+									)}
+								</button>
+							</div>
+							{canShowChatPreview && (
+								<div className="notificationsCenter__chatPreview">
+								<div className="notificationsCenter__chatPreviewHeader">
+									<div className="notificationsCenter__chatPreviewTitle">
+										{translate(
+											'notifications.center.chatPreview',
+											'Chat preview'
+										)}
+									</div>
+									{selectedSessionId && (
+										<div className="notificationsCenter__chatPreviewMeta">
+											{`#${selectedSessionId}`}
+										</div>
+									)}
+								</div>
+								<div className="notificationsCenter__chatPreviewBody">
+									{!selectedSessionId ? (
+										<div className="notificationsCenter__chatPreviewEmpty">
+											{translate(
+												'notifications.center.chatPreviewNoSession',
+												'No chat linked to this notification.'
+											)}
+										</div>
+									) : chatPreviewLoading &&
+									  chatPreviewMessages.length === 0 ? (
+										<div className="notificationsCenter__chatPreviewEmpty">
+											{translate(
+												'notifications.center.chatPreviewLoading',
+												'Loading chat preview...'
+											)}
+										</div>
+									) : chatPreviewMessages.length === 0 ? (
+										<div className="notificationsCenter__chatPreviewEmpty">
+											{translate(
+												'notifications.center.chatPreviewEmpty',
+												'No visible messages yet.'
+											)}
+										</div>
+									) : (
+										chatPreviewMessages.map((entry) => (
+											<div
+												key={entry.id}
+												className="notificationsCenter__chatPreviewMessage"
+											>
+												<div className="notificationsCenter__chatPreviewMessageAvatar">
+													<UserAvatar
+														username={entry.sender}
+														displayName={entry.sender}
+														userId={entry.sender}
+														size="28px"
+													/>
+												</div>
+												<div className="notificationsCenter__chatPreviewMessageContent">
+													<span className="notificationsCenter__chatPreviewSender">
+														{entry.sender}
+													</span>
+													<span className="notificationsCenter__chatPreviewText">
+														{entry.text}
+													</span>
+												</div>
+											</div>
+										))
+									)}
+								</div>
+								<div className="notificationsCenter__chatComposer">
+									<input
+										type="text"
+										className="notificationsCenter__chatComposerInput"
+										placeholder={
+											selectedThreadRootId
+												? translate(
+														'notifications.center.replyInThread',
+														'Reply in this thread...'
+												  )
+												: translate(
+														'notifications.center.replyInChat',
+														'Write a message...'
+												  )
+										}
+										value={chatReplyText}
+										onChange={(event) =>
+											setChatReplyText(event.target.value)
+										}
+										onKeyDown={(event) => {
+											if (event.key === 'Enter') {
+												event.preventDefault();
+												void handleSendChatReply();
+											}
+										}}
+									/>
+									<button
+										type="button"
+										className="notificationsCenter__chatComposerSend"
+										onClick={() => void handleSendChatReply()}
+										disabled={
+											isSendingChatReply ||
+											!chatReplyText.trim()
+										}
+									>
+										{isSendingChatReply
+											? translate(
+													'notifications.center.sending',
+													'Sending...'
+											  )
+											: translate(
+													'notifications.center.send',
+													'Send'
+											  )}
+									</button>
+								</div>
+							</div>
+							)}
+						</div>
+					) : (
+						<div className="notificationsCenter__emptyDetail">
+							{translate(
+								'notifications.center.emptyDetail',
+								'Select a notification to see the details.'
+							)}
+						</div>
+					)}
+				</div>
+			</div>
+		</div>
+	);
+};
+
