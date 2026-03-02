@@ -3,12 +3,12 @@ import { useContext, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { ReactComponent as NotificationBellIcon } from '../../resources/img/icons/notification_bell.svg';
 import { apiUrl } from '../../resources/scripts/endpoints';
+import { FETCH_METHODS, fetchData } from '../../api/fetchData';
 import {
 	buildThreadPrefix,
 	parseMessagePrefixes
 } from '../message/messageConstants';
 import { UserAvatar } from '../message/UserAvatar';
-import { getValueFromCookie } from '../sessionCookie/accessSessionCookie';
 import { apiPostMessageEventNotification } from '../../api/apiPostMessageEventNotification';
 import {
 	NotificationsContext,
@@ -171,37 +171,16 @@ export const NotificationsCenter = () => {
 				setChatPreviewLoading(false);
 				return;
 			}
-			const accessToken = getValueFromCookie('keycloak');
-			if (!accessToken) {
-				setChatPreviewMessages([]);
-				setChatPreviewLoading(false);
-				return;
-			}
-
 			const hasExistingPreview = chatPreviewMessages.length > 0;
 			if (!hasExistingPreview) {
 				setChatPreviewLoading(true);
 			}
 			try {
-				const csrfToken = document.cookie
-					.split('; ')
-					.find((row) => row.startsWith('CSRF-TOKEN='))
-					?.split('=')[1];
-				const response = await fetch(
-					`${apiUrl}/service/matrix/sessions/${selectedSessionId}/messages`,
-					{
-						method: 'GET',
-						headers: {
-							'Content-Type': 'application/json',
-							Authorization: `Bearer ${accessToken}`,
-							'X-CSRF-TOKEN': csrfToken || '',
-							'X-WHITELIST-HEADER': csrfToken || ''
-						},
-						credentials: 'include'
-					}
-				);
-
-				const payload = (await response.json()) as {
+				const payload = (await fetchData({
+					url: `${apiUrl}/service/matrix/sessions/${selectedSessionId}/messages`,
+					method: FETCH_METHODS.GET,
+					responseHandling: []
+				})) as {
 					messages?: Array<any>;
 				};
 				const rawMessages = payload?.messages || [];
@@ -325,39 +304,19 @@ export const NotificationsCenter = () => {
 		) {
 			return;
 		}
-		const accessToken = getValueFromCookie('keycloak');
-		if (!accessToken) {
-			return;
-		}
 		setIsSendingChatReply(true);
 		try {
-			const csrfToken = document.cookie
-				.split('; ')
-				.find((row) => row.startsWith('CSRF-TOKEN='))
-				?.split('=')[1];
 			const cleanMessage = chatReplyText.trim();
 			const outboundMessage = selectedThreadRootId
 				? `${buildThreadPrefix(selectedThreadRootId)} ${cleanMessage}`
 				: cleanMessage;
 
-			const response = await fetch(
-				`${apiUrl}/service/matrix/sessions/${selectedSessionId}/messages`,
-				{
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-						Authorization: `Bearer ${accessToken}`,
-						'X-CSRF-TOKEN': csrfToken || '',
-						'X-WHITELIST-HEADER': csrfToken || ''
-					},
-					credentials: 'include',
-					body: JSON.stringify({ message: outboundMessage })
-				}
-			);
-
-			if (!response.ok) {
-				return;
-			}
+			await fetchData({
+				url: `${apiUrl}/service/matrix/sessions/${selectedSessionId}/messages`,
+				method: FETCH_METHODS.POST,
+				bodyData: JSON.stringify({ message: outboundMessage }),
+				responseHandling: []
+			});
 
 			if (selectedRoomRef) {
 				void apiPostMessageEventNotification({

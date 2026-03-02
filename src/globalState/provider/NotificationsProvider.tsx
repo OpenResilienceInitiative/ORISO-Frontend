@@ -143,7 +143,7 @@ export function NotificationsProvider(props) {
 					createdAt: item.createdAt || new Date().toISOString(),
 					readAt: item.readAt ?? null,
 					actionPath: item.actionPath,
-					actionLabel: undefined,
+					actionLabel: item.actionLabel,
 					sourceSessionId:
 						item.sourceSessionId != null ? String(item.sourceSessionId) : undefined,
 					category: item.category === 'message' ? 'message' : 'system'
@@ -152,7 +152,9 @@ export function NotificationsProvider(props) {
 			setNotificationFeed(normalized);
 			setUnreadNotificationCount(Number(response?.unreadCount || 0));
 		} catch (error) {
-			// keep current state on network/auth errors
+			// Keep existing state but log failures to simplify diagnostics.
+			// eslint-disable-next-line no-console
+			console.warn('Failed to refresh notification feed', error);
 		}
 	}, []);
 

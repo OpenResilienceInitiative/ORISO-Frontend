@@ -55,6 +55,17 @@ export const apiSendMessage = (
 						method: FETCH_METHODS.POST,
 						bodyData: JSON.stringify({ message: messageData }),
 						responseHandling: []
+					}).then((fallbackResponse) => {
+						apiPostMessageEventNotification({
+							roomId: matrixRoomId,
+							messagePreview: messageData,
+							matrixRoom: true,
+							threadRootId: threadRootId || null,
+							supervisorMessage: !!supervisorMessage,
+							senderDisplayName: senderDisplayName || null,
+							threadParentPreview: threadParentPreview || null
+						}).catch(() => undefined);
+						return fallbackResponse;
 					});
 				});
 			}

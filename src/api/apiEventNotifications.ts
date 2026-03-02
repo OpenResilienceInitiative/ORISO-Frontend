@@ -8,6 +8,7 @@ export interface EventNotificationFeedItem {
 	title: string;
 	text: string;
 	actionPath?: string;
+	actionLabel?: string;
 	sourceSessionId?: number;
 	createdAt: string | null;
 	readAt: string | null;
