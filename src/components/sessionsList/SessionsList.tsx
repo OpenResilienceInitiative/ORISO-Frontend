@@ -89,6 +89,7 @@ export const SessionsList = ({
 	const listRef = createRef<HTMLDivElement>();
 
 	const { sessions, dispatch } = useContext(SessionsDataContext);
+	const sessionsRef = useRef(sessions);
 	const { type, path: listPath } = useContext(SessionTypeContext);
 
 	const {
@@ -107,6 +108,10 @@ export const SessionsList = ({
 	const [isReloadButtonVisible, setIsReloadButtonVisible] = useState(false);
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
 	const abortController = useRef<AbortController>(null);
+
+	useEffect(() => {
+		sessionsRef.current = sessions;
+	}, [sessions]);
 
 	useGroupWatcher(isLoading);
 
@@ -499,7 +504,7 @@ export const SessionsList = ({
 
 			const touchedSessions = ridsWithTimestamp
 				.map(({ rid, timestamp }) => {
-					const existingSession = sessions.find(
+					const existingSession = sessionsRef.current.find(
 						(s) =>
 							s?.chat?.groupId === rid ||
 							s?.session?.groupId === rid ||
@@ -541,7 +546,7 @@ export const SessionsList = ({
 				});
 			}
 		},
-		[dispatch, sessions]
+		[dispatch]
 	);
 
 	const onRoomsChanged = useCallback(
@@ -824,70 +829,77 @@ export const SessionsList = ({
 		return Number.isNaN(parsed) ? 0 : parsed;
 	}, []);
 
-	const getLastInteractionTimestamp = useCallback(
-		(session: ExtendedSessionInterface): number => {
-			const item = session?.item;
-			if (!item) {
-				return 0;
-			}
+	const sortedExtendedSessions = React.useMemo(() => {
+		const extendedSessions = finalSessionsList.map((session) =>
+			buildExtendedSession(session, groupIdFromParam)
+		);
 
-			const matrixRoomId =
-				(item as { matrixRoomId?: string })?.matrixRoomId ||
-				(typeof item.groupId === 'string' && item.groupId.startsWith('!')
-					? item.groupId
-					: null);
-			const matrixRoom = matrixRoomId
-				? matrixLiveEventBridge.getClient()?.getRoom(matrixRoomId)
-				: null;
-			const matrixLastActiveTimestamp =
-				matrixRoom?.getLastActiveTimestamp?.() ||
-				matrixRoom
-					?.getLiveTimeline?.()
-					?.getEvents?.()
-					?.slice(-1)?.[0]
-					?.getTs?.() ||
-				0;
+		if (type === SESSION_LIST_TYPES.MY_SESSION) {
+			const matrixClient = matrixLiveEventBridge.getClient();
+			const roomCache = new Map<string, any>();
+			const getRoomById = (roomId: string) => {
+				if (!roomCache.has(roomId)) {
+					roomCache.set(roomId, matrixClient?.getRoom(roomId) || null);
+				}
+				return roomCache.get(roomId);
+			};
 
-			return Math.max(
-				normalizeTimestamp(matrixLastActiveTimestamp),
-				normalizeTimestamp(session.latestMessage),
-				normalizeTimestamp(item.messageDate),
-				normalizeTimestamp(item.messageTime),
-				normalizeTimestamp(item.createDate),
-				normalizeTimestamp(item.createdAt),
-				normalizeTimestamp(item.startDate)
-			);
-		},
-		[normalizeTimestamp]
-	);
+			const getSortKey = (session: ExtendedSessionInterface): number => {
+				const item = session?.item;
+				if (!item) {
+					return 0;
+				}
 
-	const sortSessions = useCallback(
-		(
-			sessionA: ExtendedSessionInterface,
-			sessionB: ExtendedSessionInterface
-		) => {
-			switch (type) {
-				case SESSION_LIST_TYPES.ENQUIRY:
-					if (sessionA.isGroup || sessionB.isGroup) {
-						// There could be no group chats inside enquiry
-						return 0;
-					}
-					if (sessionA.item.createDate === sessionB.item.createDate) {
-						return 0;
-					}
-					return sessionA.item.createDate < sessionB.item.createDate
-						? -1
-						: 1;
-				case SESSION_LIST_TYPES.MY_SESSION:
-					return (
-						getLastInteractionTimestamp(sessionB) -
-						getLastInteractionTimestamp(sessionA)
-					);
-			}
-			return 0;
-		},
-		[getLastInteractionTimestamp, type]
-	);
+				const matrixRoomId =
+					(item as { matrixRoomId?: string })?.matrixRoomId ||
+					(typeof item.groupId === 'string' && item.groupId.startsWith('!')
+						? item.groupId
+						: null);
+				const matrixRoom = matrixRoomId ? getRoomById(matrixRoomId) : null;
+				const matrixLastActiveTimestamp =
+					matrixRoom?.getLastActiveTimestamp?.() ||
+					matrixRoom
+						?.getLiveTimeline?.()
+						?.getEvents?.()
+						?.slice(-1)?.[0]
+						?.getTs?.() ||
+					0;
+
+				return Math.max(
+					normalizeTimestamp(matrixLastActiveTimestamp),
+					normalizeTimestamp(session.latestMessage),
+					normalizeTimestamp(item.messageDate),
+					normalizeTimestamp(item.messageTime),
+					normalizeTimestamp(item.createDate),
+					normalizeTimestamp(item.createdAt),
+					normalizeTimestamp(item.startDate)
+				);
+			};
+
+			return extendedSessions
+				.map((session) => ({
+					session,
+					sortKey: getSortKey(session)
+				}))
+				.sort((a, b) => b.sortKey - a.sortKey)
+				.map(({ session }) => session);
+		}
+
+		if (type === SESSION_LIST_TYPES.ENQUIRY) {
+			return extendedSessions.sort((sessionA, sessionB) => {
+				if (sessionA.isGroup || sessionB.isGroup) {
+					// There could be no group chats inside enquiry
+					return 0;
+				}
+				if (sessionA.item.createDate === sessionB.item.createDate) {
+					return 0;
+				}
+				return sessionA.item.createDate < sessionB.item.createDate ? -1 : 1;
+			});
+		}
+
+		return extendedSessions;
+	}, [finalSessionsList, groupIdFromParam, normalizeTimestamp, type]);
 
 	const filterSessions = useCallback(
 		(session) => {
@@ -1070,12 +1082,7 @@ export const SessionsList = ({
 				type === SESSION_LIST_TYPES.MY_SESSION && <SessionListCreateChat />}
 
 				{(!isLoading || finalSessionsList.length > 0) &&
-					finalSessionsList
-						.map((session) =>
-							buildExtendedSession(session, groupIdFromParam)
-						)
-						.sort(sortSessions)
-						.map((activeSession: ExtendedSessionInterface, index) => (
+					sortedExtendedSessions.map((activeSession: ExtendedSessionInterface, index) => (
 							<ActiveSessionProvider
 								key={activeSession.item.id}
 								activeSession={activeSession}

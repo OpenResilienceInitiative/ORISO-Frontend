@@ -1509,6 +1509,15 @@
 				"description": "One of your assigned advice seekers has replied to you",
 				"title": "New chat message"
 			},
+			"inquiryAccepted": {
+				"title": "Inquiry accepted",
+				"description": "Your inquiry has been accepted by a counselor."
+			},
+			"feed": {
+				"title": "System notifications",
+				"description": "Here you can see all system notifications.",
+				"empty": "No notifications yet."
+			},
 			"noEmail": {
 				"button": "Add email address",
 				"info": "You have not yet added an email address.",

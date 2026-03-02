@@ -195,6 +195,7 @@ const profileRoutes = (
 		{
 			title: 'profile.routes.notifications.title',
 			url: '/notifications',
+			// Intentionally disabled for now; if re-enabled, also re-evaluate notificationBubble/browserNotificationsSettings usage below.
 			condition: () => false,
 			notificationBubble:
 				isFirstVisit && !browserNotificationsSettings().visited,

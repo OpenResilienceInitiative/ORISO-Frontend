@@ -196,6 +196,27 @@ export function NotificationsProvider(props) {
 			}
 
 			setNotifications([...notifications, newNotification]);
+
+			const isCallNotification =
+				newNotification.notificationType === NOTIFICATION_TYPE_CALL;
+			const titleRaw =
+				'title' in newNotification ? newNotification.title : undefined;
+			const textRaw =
+				'text' in newNotification ? newNotification.text : undefined;
+			const title = typeof titleRaw === 'string' ? titleRaw : undefined;
+			const text = typeof textRaw === 'string' ? textRaw : undefined;
+			if (!isCallNotification && (title || text)) {
+				const feedItem: NotificationFeedItem = {
+					id: String(newNotification.id),
+					type: newNotification.notificationType,
+					title: title ?? 'Benachrichtigung',
+					text: text ?? '',
+					createdAt: new Date().toISOString()
+				};
+				setNotificationFeed((existing) =>
+					[feedItem, ...existing].slice(0, NOTIFICATION_FEED_MAX_ITEMS)
+				);
+			}
 		},
 		[hasNotification, notifications]
 	);

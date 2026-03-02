@@ -1508,6 +1508,15 @@
         "description": "L'un des demandeurs de conseils qui vous a été attribué vous a répondu",
         "title": "Nouveau message de chat"
       },
+      "inquiryAccepted": {
+        "title": "Demande acceptée",
+        "description": "Votre demande a été acceptée par un conseiller."
+      },
+      "feed": {
+        "title": "Notifications système",
+        "description": "Vous pouvez voir ici toutes les notifications système.",
+        "empty": "Aucune notification pour le moment."
+      },
       "noEmail": {
         "button": "Ajouter une adresse e-mail",
         "info": "Vous n'avez pas encore ajouté d'adresse e-mail.",

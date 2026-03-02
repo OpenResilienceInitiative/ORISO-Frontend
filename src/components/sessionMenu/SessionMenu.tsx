@@ -16,6 +16,8 @@ import {
 	UserDataContext,
 	ActiveSessionContext,
 	SessionsDataContext,
+	NotificationsContext,
+	NOTIFICATION_TYPE_ERROR,
 	REMOVE_SESSIONS
 } from '../../globalState';
 import { SessionItemInterface } from '../../globalState/interfaces';
@@ -92,6 +94,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 	const { activeSession, reloadActiveSession } =
 		useContext(ActiveSessionContext);
+	const { addNotification } = useContext(NotificationsContext);
 	const consultingType = useConsultingType(activeSession.item.consultingType);
 	const { dispatch: sessionsDispatch } = useContext(SessionsDataContext);
 
@@ -388,6 +391,23 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		type !== SESSION_LIST_TYPES.ENQUIRY &&
 		consultingType.isVideoCallAllowed;
 
+	const stopPreRequestedMediaStream = useCallback(() => {
+		const preRequestedStream = (window as any).__preRequestedMediaStream;
+		if (preRequestedStream) {
+			preRequestedStream.getTracks().forEach((track) => {
+				track.stop();
+			});
+			delete (window as any).__preRequestedMediaStream;
+		}
+		delete (window as any).__preRequestedMediaStreamTime;
+	}, []);
+
+	useEffect(() => {
+		return () => {
+			stopPreRequestedMediaStream();
+		};
+	}, [stopPreRequestedMediaStream]);
+
 	const handleStartVideoCall = async (isVideoActivated: boolean = false) => {
 		// console.log("═══════════════════════════════════════════════");
 		// console.log("🎬 CALL BUTTON CLICKED!");
@@ -407,8 +427,11 @@ export const SessionMenu = (props: SessionMenuProps) => {
 			// console.log("activeSession.item.groupId:", activeSession.item.groupId);
 			
 			if (!roomId) {
-				// console.error('❌ No Matrix room ID found for session');
-				alert('Cannot start call: No Matrix room found for this session');
+				addNotification({
+					notificationType: NOTIFICATION_TYPE_ERROR,
+					title: 'Call failed',
+					text: 'Cannot start call: No Matrix room found for this session'
+				});
 				return;
 			}
 
@@ -454,20 +477,30 @@ export const SessionMenu = (props: SessionMenuProps) => {
 					errorMsg += mediaError.message || 'Unknown error.';
 				}
 				
-				alert(errorMsg);
+				addNotification({
+					notificationType: NOTIFICATION_TYPE_ERROR,
+					title: 'Call failed',
+					text: errorMsg
+				});
+				stopPreRequestedMediaStream();
 				return;
 			}
 
 			// console.log('📞 Starting call via CallManager with roomId:', roomId);
 			
 			// Use CallManager directly (works for both 1-on-1 and group calls!)
-			const { callManager } = require('../../services/CallManager');
+			const { callManager } = await import('../../services/CallManager');
 			callManager.startCall(roomId, isVideoActivated);
 			
 			// console.log('✅ Call initiated!');
 		} catch (error) {
+			stopPreRequestedMediaStream();
 			// console.error('💥 ERROR in handleStartVideoCall:', error);
-			alert(`Call failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+			addNotification({
+				notificationType: NOTIFICATION_TYPE_ERROR,
+				title: 'Call failed',
+				text: error instanceof Error ? error.message : 'Unknown error'
+			});
 		}
 		// console.log("═══════════════════════════════════════════════");
 	};
