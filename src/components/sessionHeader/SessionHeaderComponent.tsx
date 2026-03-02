@@ -10,6 +10,7 @@ import { apiGetSessionSupervisors, SessionSupervisor } from '../../api/apiGetSes
 import { apiAddSessionSupervisor } from '../../api/apiAddSessionSupervisor';
 import { apiRemoveSessionSupervisor } from '../../api/apiRemoveSessionSupervisor';
 import { apiGetAgencyConsultantList, Consultant } from '../../api/apiGetAgencyConsultantList';
+import { apiSendMessage } from '../../api/apiSendMessage';
 import { NotificationsContext, NOTIFICATION_TYPE_SUCCESS, NOTIFICATION_TYPE_ERROR } from '../../globalState';
 import {
 	AUTHORITIES,
@@ -47,6 +48,7 @@ import { SelectDropdown, SelectDropdownItem } from '../select/SelectDropdown';
 import { Button, ButtonItem, BUTTON_TYPES } from '../button/Button';
 import { ReactComponent as CloseCircle } from '../../resources/img/icons/close-circle.svg';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
+import { SYSTEM_NOTIFICATION_PREFIX } from '../message/messageConstants';
 
 export interface SessionHeaderProps {
 	consultantAbsent?: SessionConsultantInterface;
@@ -63,7 +65,8 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	]);
 	const { activeSession } = useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
-	const { addNotification } = useContext(NotificationsContext);
+	const { addNotification, addEventNotification } =
+		useContext(NotificationsContext);
 	const history = useHistory();
 	const consultingType = useConsultingType(activeSession.item.consultingType);
 	const topic = useTopic(
@@ -305,6 +308,49 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		}
 	};
 
+	const postSupervisorAddedSystemMessage = async (supervisorName: string) => {
+		const matrixRoomId =
+			activeSession.rid && activeSession.rid.startsWith('!')
+				? activeSession.rid
+				: activeSession.item?.matrixRoomId;
+		if (!matrixRoomId || !activeSession.item.id) {
+			return;
+		}
+		const payload = JSON.stringify({
+			title: translate('message.supervisionEnabledTitle', 'Supervision Enabled!'),
+			description: translate(
+				'message.supervisionEnabledDescription',
+				'{{name}} was added as a consultant supervisor to this chat.',
+				{ name: supervisorName }
+			)
+		});
+		try {
+			const matrixClientService = (window as any).matrixClientService;
+			const client = matrixClientService?.getClient?.();
+			if (client) {
+				await (client as any).sendMessage(matrixRoomId, {
+					msgtype: 'm.text',
+					body: `${SYSTEM_NOTIFICATION_PREFIX}${payload}`
+				});
+				return;
+			}
+			await apiSendMessage(
+				`${SYSTEM_NOTIFICATION_PREFIX}${payload}`,
+				activeSession.rid,
+				false,
+				false,
+				activeSession.item.id,
+				matrixRoomId,
+				null,
+				true,
+				'system',
+				null
+			);
+		} catch (_error) {
+			// Non-blocking: supervisor add succeeded; timeline system note can fail silently.
+		}
+	};
+
 	const handleAddSupervisor = async () => {
 		if (!selectedConsultantId || !activeSession.item.id) return;
 		if (!supervisionReason.trim()) {
@@ -319,8 +365,19 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			return;
 		}
 		setIsAddingSupervisor(true);
+		const selectedSupervisor = allConsultants.find(
+			(c) => c.consultantId === selectedConsultantId
+		);
+		const selectedSupervisorName = selectedSupervisor
+			? `${selectedSupervisor.firstName || ''} ${
+					selectedSupervisor.lastName || ''
+			  }`.trim()
+			: selectedConsultantId;
+		const chatDisplayName =
+			contact?.username || `Session ${activeSession.item.id}`;
 		try {
 			await apiAddSessionSupervisor(activeSession.item.id, selectedConsultantId, supervisionReason);
+			await postSupervisorAddedSystemMessage(selectedSupervisorName);
 			await loadSupervisors();
 			setSelectedConsultantId('');
 			setSupervisionReason('');
@@ -328,9 +385,28 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			addNotification({
 				notificationType: NOTIFICATION_TYPE_SUCCESS,
 				title: translate('sessionHeader.supervisor.success.add.title', 'Supervisor hinzugefügt'),
-				text: translate('sessionHeader.supervisor.success.add.text', 'Der Supervisor wurde erfolgreich hinzugefügt.'),
+				text: `${translate(
+					'sessionHeader.supervisor.success.add.text',
+					'Der Supervisor wurde erfolgreich hinzugefügt.'
+				)} (${selectedSupervisorName} -> ${chatDisplayName})`,
 				closeable: true,
 				timeout: 5000
+			});
+			addEventNotification({
+				type: NOTIFICATION_TYPE_SUCCESS,
+				eventType: 'supervisor.added',
+				title: translate(
+					'sessionHeader.supervisor.success.add.title',
+					'Supervisor hinzugefügt'
+				),
+				text: `${translate(
+					'sessionHeader.supervisor.success.add.text',
+					'Der Supervisor wurde erfolgreich hinzugefügt.'
+				)} (${selectedSupervisorName} -> ${chatDisplayName})`,
+				actionPath: history.location.pathname + history.location.search,
+				actionLabel: translate('notifications.center.open', 'Open chat'),
+				sourceSessionId: activeSession.item.id,
+				category: 'system'
 			});
 			// Reload consultants list
 			await loadAvailableConsultants();
@@ -357,6 +433,12 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		)) {
 			return;
 		}
+		const supervisorToRemove = supervisors.find((s) => s.id === supervisorId);
+		const supervisorToRemoveName = supervisorToRemove
+			? getSupervisorName(supervisorToRemove)
+			: String(supervisorId);
+		const chatDisplayName =
+			contact?.username || `Session ${activeSession.item.id}`;
 		try {
 			await apiRemoveSessionSupervisor(activeSession.item.id, supervisorId);
 			await loadSupervisors();
@@ -364,9 +446,28 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			addNotification({
 				notificationType: NOTIFICATION_TYPE_SUCCESS,
 				title: translate('sessionHeader.supervisor.success.remove.title', 'Supervisor entfernt'),
-				text: translate('sessionHeader.supervisor.success.remove.text', 'Der Supervisor wurde erfolgreich entfernt.'),
+				text: `${translate(
+					'sessionHeader.supervisor.success.remove.text',
+					'Der Supervisor wurde erfolgreich entfernt.'
+				)} (${supervisorToRemoveName} <- ${chatDisplayName})`,
 				closeable: true,
 				timeout: 5000
+			});
+			addEventNotification({
+				type: NOTIFICATION_TYPE_SUCCESS,
+				eventType: 'supervisor.removed',
+				title: translate(
+					'sessionHeader.supervisor.success.remove.title',
+					'Supervisor entfernt'
+				),
+				text: `${translate(
+					'sessionHeader.supervisor.success.remove.text',
+					'Der Supervisor wurde erfolgreich entfernt.'
+				)} (${supervisorToRemoveName} <- ${chatDisplayName})`,
+				actionPath: history.location.pathname + history.location.search,
+				actionLabel: translate('notifications.center.open', 'Open chat'),
+				sourceSessionId: activeSession.item.id,
+				category: 'system'
 			});
 			// Close modal after successful remove
 			setIsSupervisorModalOpen(false);
@@ -513,12 +614,35 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 										'sessionHeader.anonymous.deleteAccount.success.title',
 										'Konto gelöscht'
 									),
-									text: translate(
+									text: `${translate(
 										'sessionHeader.anonymous.deleteAccount.success.text',
 										'Das anonyme Benutzerkonto wurde erfolgreich gelöscht.'
-									),
+									)} (${contact?.username || 'Anonymous'} | Session ${
+										activeSession.item.id
+									})`,
 									closeable: true,
 									timeout: 5000
+								});
+								addEventNotification({
+									type: NOTIFICATION_TYPE_SUCCESS,
+									eventType: 'anonymous.account.deleted',
+									title: translate(
+										'sessionHeader.anonymous.deleteAccount.success.title',
+										'Konto gelöscht'
+									),
+									text: `${translate(
+										'sessionHeader.anonymous.deleteAccount.success.text',
+										'Das anonyme Benutzerkonto wurde erfolgreich gelöscht.'
+									)} (${contact?.username || 'Anonymous'} | Session ${
+										activeSession.item.id
+									})`,
+									actionPath: listPath + getSessionListTab(),
+									actionLabel: translate(
+										'notifications.center.open',
+										'Open chat'
+									),
+									sourceSessionId: activeSession.item.id,
+									category: 'system'
 								});
 								// Redirect to session list after a short delay
 								setTimeout(() => {

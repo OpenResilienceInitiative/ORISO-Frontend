@@ -23,11 +23,14 @@ import {
 	AUTHORITIES,
 	getContact,
 	hasUserAuthority,
+	NotificationsContext,
+	NOTIFICATION_TYPE_INFO,
 	UserDataContext,
 	SessionTypeContext,
 	useTenant,
 	ActiveSessionContext
 } from '../../globalState';
+import { useLocation } from 'react-router-dom';
 import { RocketChatUsersOfRoomProvider } from '../../globalState/provider/RocketChatUsersOfRoomProvider';
 import './session.styles';
 import { useDebouncedCallback } from 'use-debounce';
@@ -43,6 +46,7 @@ import { useE2EE } from '../../hooks/useE2EE';
 import { MessageSubmitInterfaceSkeleton } from '../messageSubmitInterface/messageSubmitInterfaceSkeleton';
 import { EncryptionBanner } from './EncryptionBanner';
 import { apiGetSessionSupervisors } from '../../api/apiGetSessionSupervisors';
+import { apiPatchNotificationActiveView } from '../../api/apiPatchNotificationActiveView';
 import { parseMessagePrefixes } from '../message/messageConstants';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 
@@ -69,7 +73,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	const { activeSession } = useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
+	const { addEventNotification } = useContext(NotificationsContext);
 	const { type } = useContext(SessionTypeContext);
+	const location = useLocation();
 	const [isSupervisor, setIsSupervisor] = useState(false);
 
 	// Threads feature toggle (tenant-level). Master switch disables for all chat types.
@@ -129,6 +135,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const [supervisionReason, setSupervisionReason] = useState<string | null>(null);
 	const [activeThreadRootId, setActiveThreadRootId] = useState<string | null>(null);
 	const [activeThreadRootMessage, setActiveThreadRootMessage] = useState<MessageItem | null>(null);
+	const knownMessageIdsRef = useRef<Set<string>>(new Set());
 	const threadSummaries = useMemo(() => {
 		const map = new Map<string, { replyCount: number; lastReplyText: string }>();
 		if (!messages) {
@@ -232,6 +239,99 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			enableInitialScroll();
 		}
 	}, [messages, initialScrollCompleted]);
+
+	useEffect(() => {
+		knownMessageIdsRef.current = new Set((messages || []).map((m) => m._id));
+	}, [activeSession.item.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+	useEffect(() => {
+		if (!messages || messages.length === 0 || !isThreadsEnabled) {
+			return;
+		}
+
+		if (knownMessageIdsRef.current.size === 0) {
+			knownMessageIdsRef.current = new Set(messages.map((m) => m._id));
+			return;
+		}
+
+		const contactName =
+			getContact(activeSession)?.username ||
+			translate('sessionList.user.consultantUnknown');
+		const newThreadReplies = messages.filter((message) => {
+			if (knownMessageIdsRef.current.has(message._id)) {
+				return false;
+			}
+			const parsed = parseMessagePrefixes(message.message);
+			if (!parsed.isThreadMessage || !parsed.threadRootId) {
+				return false;
+			}
+			if (activeThreadRootId === parsed.threadRootId) {
+				return false;
+			}
+			if (isMyMessageMatrix(message.userId)) {
+				return false;
+			}
+			return true;
+		});
+
+		newThreadReplies.forEach((message) => {
+			const parsed = parseMessagePrefixes(message.message);
+			const params = new URLSearchParams(location.search);
+			if (parsed.threadRootId) {
+				params.set('threadRootId', parsed.threadRootId);
+			}
+			params.set('threadMessageId', message._id);
+			const actionPath = `${location.pathname}?${params.toString()}`;
+			const snippet = (parsed.cleanedMessage || '')
+				.replace(/\s+/g, ' ')
+				.trim()
+				.slice(0, 120);
+			addEventNotification({
+				type: NOTIFICATION_TYPE_INFO,
+				eventType: 'thread.reply.new',
+				title: translate(
+					'notifications.threadReply.title',
+					'New thread reply'
+				),
+				text: `${contactName}: ${snippet || 'New reply in thread'}`,
+				actionPath,
+				actionLabel: translate(
+					'notifications.center.open',
+					'Open chat'
+				),
+				sourceSessionId: activeSession.item.id,
+				category: 'message'
+			});
+		});
+
+		messages.forEach((message) => knownMessageIdsRef.current.add(message._id));
+	}, [
+		messages,
+		isThreadsEnabled,
+		activeThreadRootId,
+		location.pathname,
+		location.search,
+		addEventNotification,
+		activeSession,
+		isMyMessageMatrix,
+		translate
+	]);
+
+	useEffect(() => {
+		if (!isThreadsEnabled || !messages || messages.length === 0) {
+			return;
+		}
+		const params = new URLSearchParams(location.search);
+		const threadRootId = params.get('threadRootId');
+		if (!threadRootId) {
+			return;
+		}
+		const rootMessage = messages.find((message) => message._id === threadRootId);
+		if (rootMessage) {
+			setActiveThreadRootId(rootMessage._id);
+			setActiveThreadRootMessage(rootMessage);
+		}
+	}, [location.search, isThreadsEnabled, messages]);
 
 	const resetUnreadCount = () => {
 		setNewMessages(0);
@@ -439,6 +539,40 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			handleCloseThread();
 		}
 	}, [isThreadsEnabled, activeThreadRootId, handleCloseThread]);
+
+	useEffect(() => {
+		const roomId =
+			(activeSession.rid && activeSession.rid.startsWith('!')
+				? activeSession.rid
+				: activeSession.item?.matrixRoomId || activeSession.rid || null) ||
+			null;
+		if (!roomId) {
+			return;
+		}
+
+		apiPatchNotificationActiveView({
+			roomId,
+			threadRootId: activeThreadRootId,
+			active: true
+		}).catch(() => undefined);
+
+		const heartbeat = window.setInterval(() => {
+			apiPatchNotificationActiveView({
+				roomId,
+				threadRootId: activeThreadRootId,
+				active: true
+			}).catch(() => undefined);
+		}, 10000);
+
+		return () => {
+			window.clearInterval(heartbeat);
+			apiPatchNotificationActiveView({
+				roomId,
+				threadRootId: null,
+				active: false
+			}).catch(() => undefined);
+		};
+	}, [activeSession.rid, activeSession.item?.matrixRoomId, activeThreadRootId]);
 
 	// Track the decryption success because we have a short timing issue when
 	// message is send before the room encryption
@@ -710,6 +844,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							handleMessageSendSuccess={handleMessageSendSuccess}
 							isSupervisor={isSupervisor}
 							threadRootId={activeThreadRootId}
+							threadParentPreview={
+								activeThreadRootMessage
+									? parseMessagePrefixes(activeThreadRootMessage.message)
+											.cleanedMessage
+									: null
+							}
 						/>
 					</div>
 				</div>

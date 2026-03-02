@@ -1252,7 +1252,16 @@
       "new": "Vous avez un nouveau message !"
     },
     "success": "Réussir",
-    "warning": "Avertissement"
+    "warning": "Avertissement",
+    "center": {
+      "title": "Notifications",
+      "subtitle": "Activités récentes et mises à jour de vos chats.",
+      "markAllRead": "Tout marquer comme lu",
+      "clearAll": "Tout effacer",
+      "empty": "Aucune notification pour le moment.",
+      "emptyDetail": "Sélectionnez une notification pour voir les détails.",
+      "open": "Ouvrir le chat"
+    }
   },
   "overlay": {
     "step": {
@@ -1487,6 +1496,10 @@
       },
       "initialEnquiry": {
         "title": "Une nouvelle demande initiale a été reçue"
+      },
+      "inquiryAccepted": {
+        "title": "Demande acceptée",
+        "description": "Votre demande a été acceptée par un conseiller."
       },
       "mainEmail": {
         "title": "Autoriser les notifications par e-mail"

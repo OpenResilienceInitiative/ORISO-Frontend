@@ -157,20 +157,22 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 			color: var(--skin-color-primary-contrast-safe, $primary);
 			background-color: $white;
 			transition: opacity 0.6s ease;
-			border-radius: 50%;
-			width: $unreadBubbleSize;
-			height: $unreadBubbleSize;
+			border-radius: 999px;
+			min-width: 18px;
+			height: 18px;
+			padding: 0 5px;
 			font-size: 10px;
+			font-weight: 700;
 			line-height: 18px;
 			position: absolute;
-			top: 4px;
-			right: 4px;
+			top: 2px;
+			right: 2px;
 			text-align: center;
 			outline: $primary 2px solid;
 
 			@include breakpoint($fromLarge) {
-				top: 6px;
-				right: 6px;
+				top: 4px;
+				right: 4px;
 			}
 
 			&--initial {
@@ -181,6 +183,10 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 			&--reanimate {
 				transform: scale(1);
 				animation: $unreadBubbleAnimation;
+			}
+
+			&--double {
+				min-width: 22px;
 			}
 		}
 

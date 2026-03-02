@@ -29,6 +29,7 @@ import { ReactComponent as ToolsIconOutline } from '../../resources/img/icons/to
 import { ReactComponent as ToolsIconFilled } from '../../resources/img/icons/tools_filled.svg';
 import { ReactComponent as CalendarIconOutline } from '../../resources/img/icons/calendar_outline.svg';
 import { ReactComponent as CalendarIconFilled } from '../../resources/img/icons/calendar_filled.svg';
+import { ReactComponent as NotificationBellIcon } from '../../resources/img/icons/notification_bell.svg';
 import { ToolsList } from '../tools/ToolsList';
 import { OverviewPage } from '../../containers/overview/overview';
 import { Booking } from '../../containers/bookings/components/Booking/booking';
@@ -36,6 +37,7 @@ import { BookingCancellation } from '../../containers/bookings/components/Bookin
 import { BookingEvents } from '../../containers/bookings/components/BookingEvents/bookingEvents';
 import { BookingReschedule } from '../../containers/bookings/components/BookingReschedule/bookingReschedule';
 import { hasVideoCallFeature } from '../../utils/videoCallHelpers';
+import { NotificationsCenter } from '../notificationsCenter/NotificationsCenter';
 
 const SessionView = lazy(() =>
 	import('../session/SessionView').then((m) => ({ default: m.SessionView }))
@@ -113,6 +115,14 @@ export const RouterConfigUser = (
 				titleKeys: {
 					large: 'navigation.asker.sessions.large',
 					small: 'navigation.asker.sessions.small'
+				}
+			},
+			{
+				to: '/notifications',
+				icon: NotificationBellIcon,
+				iconFilled: NotificationBellIcon,
+				titleKeys: {
+					large: 'navigation.notifications'
 				}
 			},
 			{
@@ -194,6 +204,11 @@ export const RouterConfigUser = (
 		],
 		profileRoutes: [
 			{
+				path: '/notifications',
+				exact: true,
+				component: NotificationsCenter
+			},
+			{
 				path: '/profile',
 				exact: false,
 				component: Profile
@@ -245,6 +260,14 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 				iconFilled: CalendarIconFilled,
 				titleKeys: {
 					large: 'navigation.appointments'
+				}
+			},
+			{
+				to: '/notifications',
+				icon: NotificationBellIcon,
+				iconFilled: NotificationBellIcon,
+				titleKeys: {
+					large: 'navigation.notifications'
 				}
 			},
 			{
@@ -359,6 +382,11 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 			}
 		],
 		profileRoutes: [
+			{
+				path: '/notifications',
+				exact: true,
+				component: NotificationsCenter
+			},
 			{
 				path: '/overview',
 				component: OverviewPage

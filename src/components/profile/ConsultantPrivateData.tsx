@@ -8,7 +8,7 @@ import { ReactComponent as PenIcon } from '../../resources/img/icons/pen.svg';
 import { EditableData } from '../editableData/EditableData';
 import {
 	apiDeleteTwoFactorAuth,
-	apiPutConsultantData,
+	apiPutEmail,
 	FETCH_ERRORS,
 	X_REASON
 } from '../../api';
@@ -32,8 +32,6 @@ export const ConsultantPrivateData = () => {
 	);
 	const [isEmailNotAvailable, setIsEmailNotAvailable] =
 		useState<boolean>(false);
-	const [firstName, setFirstName] = useState<string>();
-	const [lastName, setLastName] = useState<string>();
 	const [overlayActive, setOverlayActive] = useState(false);
 
 	const cancelEditButton: ButtonItem = {
@@ -54,12 +52,12 @@ export const ConsultantPrivateData = () => {
 		todaysDate >= settings.twofactor.dateTwoFactorObligatory;
 
 	useEffect(() => {
-		if (email && firstName && lastName) {
+		if (email) {
 			setIsSaveDisabled(false);
 		} else {
 			setIsSaveDisabled(true);
 		}
-	}, [email, firstName, lastName]);
+	}, [email]);
 
 	const handleCancelEditButton = () => {
 		setIsEditDisabled(true);
@@ -77,12 +75,7 @@ export const ConsultantPrivateData = () => {
 		}
 		if (!isRequestInProgress) {
 			setIsRequestInProgress(true);
-			apiPutConsultantData({
-				email: email.trim(),
-				firstname: firstName.trim(),
-				lastname: lastName.trim(),
-				languages: userData.languages
-			})
+			apiPutEmail(email)
 				.then(reloadUserData)
 				.then(() => {
 					setIsRequestInProgress(false);
@@ -217,28 +210,6 @@ export const ConsultantPrivateData = () => {
 					isEmail2faActive && setOverlayActive(true)
 				}
 				onSingleFocus={() => isEmail2faActive && setOverlayActive(true)}
-			/>
-			<EditableData
-				label={translate('profile.data.firstName')}
-				type="text"
-				initialValue={
-					userData.firstName
-						? userData.firstName
-						: translate('profile.noContent')
-				}
-				isDisabled={isEditDisabled}
-				onValueIsValid={(firstName) => setFirstName(firstName)}
-			/>
-			<EditableData
-				label={translate('profile.data.lastName')}
-				type="text"
-				initialValue={
-					userData.lastName
-						? userData.lastName
-						: translate('profile.noContent')
-				}
-				isDisabled={isEditDisabled}
-				onValueIsValid={(lastName) => setLastName(lastName)}
 			/>
 			{!isEditDisabled && (
 				<div className="editableData__buttonSet editableData__buttonSet--edit">

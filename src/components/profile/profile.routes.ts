@@ -133,7 +133,11 @@ const profileRoutes = (
 					url: '/privat',
 					elements: [
 						{
-						condition: () => false,
+							condition: (userData) =>
+								hasUserAuthority(
+									AUTHORITIES.CONSULTANT_DEFAULT,
+									userData
+								),
 							component: ConsultantPrivateData,
 							column: settings.enableWalkthrough
 								? COLUMN_LEFT

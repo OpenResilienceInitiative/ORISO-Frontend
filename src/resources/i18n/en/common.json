@@ -1205,6 +1205,10 @@
 		},
 		"showLess": "Show less",
 		"showMore": "Show more",
+		"systemNotification": "System Notification",
+		"systemNotificationTitle": "System notification",
+		"supervisionEnabledTitle": "Supervision Enabled!",
+		"supervisionEnabledDescription": "{{name}} was added as a consultant supervisor to this chat.",
 		"today": "Today",
 		"tomorrow": "Tomorrow",
 		"unread": "unread",
@@ -1244,7 +1248,21 @@
 			"new": "Sie haben eine neue Nachricht!"
 		},
 		"success": "successful",
-		"warning": "warning"
+		"warning": "warning",
+		"center": {
+			"title": "Notifications",
+			"subtitle": "Recent activities and updates from your chats.",
+			"markAllRead": "Mark all as read",
+			"clearAll": "Clear all",
+			"empty": "No notifications yet.",
+			"emptyDetail": "Select a notification to see the details.",
+			"open": "Open chat",
+			"systemTag": "System notification",
+			"messageTag": "Message notification"
+		},
+		"threadReply": {
+			"title": "New thread reply"
+		}
 	},
 	"overlay": {
 		"step": {
@@ -1479,6 +1497,10 @@
 			},
 			"initialEnquiry": {
 				"title": "Receive a new initial enquiry"
+			},
+			"inquiryAccepted": {
+				"title": "Inquiry accepted",
+				"description": "Your inquiry has been accepted by a counsellor."
 			},
 			"mainEmail": {
 				"title": "Allow email notifications"

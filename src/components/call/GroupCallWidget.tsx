@@ -18,6 +18,7 @@ export const GroupCallWidget: React.FC = () => {
     const [isDragging, setIsDragging] = useState(false);
     const [position, setPosition] = useState({ x: 100, y: 100 });
     const [isMobileView, setIsMobileView] = useState(false);
+    const [isMobileCompact, setIsMobileCompact] = useState(false);
     const dragRef = useRef<{ startX: number; startY: number; elemX: number; elemY: number } | null>(null);
     const iframeRef = useRef<HTMLIFrameElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -44,7 +45,12 @@ export const GroupCallWidget: React.FC = () => {
 
     useEffect(() => {
         const updateViewport = () => {
-            setIsMobileView(window.innerWidth <= 640);
+            const mobile = window.innerWidth <= 640;
+            setIsMobileView(mobile);
+            if (!mobile) {
+                // Compact mode is mobile-only; reset it on larger screens.
+                setIsMobileCompact(false);
+            }
         };
 
         updateViewport();
@@ -156,6 +162,11 @@ export const GroupCallWidget: React.FC = () => {
             if (deviceId) params.set('deviceId', deviceId);
             // Skip lobby and go straight into the call UI
             params.set('skipLobby', 'true');
+            // Keep embedded users inside the current room flow (no home navigation).
+            params.set('confineToRoom', 'true');
+            // Use Element Call without top app bar in embedded popup mode.
+            // This removes the duplicate left collapse control and room title.
+            params.set('header', 'none');
 
             const url = `${elementCallBaseUrl}/#?${params.toString()}`;
             
@@ -292,6 +303,11 @@ export const GroupCallWidget: React.FC = () => {
     };
 
     const handleToggleFullscreen = () => {
+        if (isMobileView) {
+            setIsMobileCompact((value) => !value);
+            return;
+        }
+
         const container = containerRef.current;
         if (!container) return;
 
@@ -386,7 +402,7 @@ export const GroupCallWidget: React.FC = () => {
 
     return (
         <div 
-            className={`group-call-widget ${isDragging ? 'dragging' : ''} ${isMobileView ? 'group-call-widget--mobile' : ''} ${isFullscreen ? 'group-call-widget--fullscreen' : ''}`}
+            className={`group-call-widget ${isDragging ? 'dragging' : ''} ${isMobileView ? 'group-call-widget--mobile' : ''} ${isMobileCompact ? 'group-call-widget--mobile-compact' : ''} ${isFullscreen ? 'group-call-widget--fullscreen' : ''}`}
             style={{ left: `${position.x}px`, top: `${position.y}px` }}
             onMouseDown={handleMouseDown}
             onTouchStart={handleTouchStart}
@@ -422,16 +438,24 @@ export const GroupCallWidget: React.FC = () => {
                     <button className="element-call-close" onClick={handleEndCall} aria-label="Close call">
                         ×
                     </button>
-                    {!isMobileView && (
-                        <button
-                            className="element-call-fullscreen"
-                            onClick={handleToggleFullscreen}
-                            aria-label={isFullscreen ? 'Exit full screen' : 'Enter full screen'}
-                            title={isFullscreen ? 'Exit full screen' : 'Full screen'}
-                        >
-                            {isFullscreen ? '⤡' : '⤢'}
-                        </button>
-                    )}
+                    <button
+                        className="element-call-fullscreen"
+                        onClick={handleToggleFullscreen}
+                        aria-label={
+                            isMobileView
+                                ? (isMobileCompact ? 'Open full view' : 'Switch to small view')
+                                : (isFullscreen ? 'Exit full screen' : 'Enter full screen')
+                        }
+                        title={
+                            isMobileView
+                                ? (isMobileCompact ? 'Full view' : 'Small view')
+                                : (isFullscreen ? 'Exit full screen' : 'Full screen')
+                        }
+                    >
+                        {isMobileView
+                            ? (isMobileCompact ? '⤢' : '⤡')
+                            : (isFullscreen ? '⤡' : '⤢')}
+                    </button>
                     <iframe
                         ref={iframeRef}
                         src={elementCallUrl}

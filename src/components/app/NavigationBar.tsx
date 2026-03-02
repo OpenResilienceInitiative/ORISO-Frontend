@@ -16,7 +16,8 @@ import {
 	SessionsDataContext,
 	SET_SESSIONS,
 	TenantContext,
-	LocaleContext
+	LocaleContext,
+	NotificationsContext
 } from '../../globalState';
 import { initNavigationHandler } from './navigationHandler';
 import { ReactComponent as LogoutIconOutline } from '../../resources/img/icons/logout_outline.svg';
@@ -58,6 +59,7 @@ export const NavigationBar = ({
 		RocketChatUnreadContext
 	);
 	const { tenant } = useContext(TenantContext);
+	const { unreadNotificationCount } = useContext(NotificationsContext);
 
 	const ref_menu = useRef<any[]>([]);
 	const ref_local = useRef<any>(null);
@@ -101,7 +103,10 @@ export const NavigationBar = ({
 			return;
 		}
 
-		if (unreadSessions.length + unreadGroup.length > 0) {
+		if (
+			unreadSessions.length + unreadGroup.length > 0 ||
+			unreadNotificationCount > 0
+		) {
 			setAnimateNavIcon(true);
 		}
 
@@ -109,13 +114,14 @@ export const NavigationBar = ({
 			setAnimateNavIcon(false);
 			animateNavIconTimeoutRef.current = null;
 		}, 1000);
-	}, [unreadSessions, unreadGroup]);
+	}, [unreadSessions, unreadGroup, unreadNotificationCount]);
 
 	const pathsToShowUnreadMessageNotification = {
 		'/sessions/consultant/sessionView':
 			unreadSessions.length + unreadGroup.length,
 		'/sessions/user/view': unreadSessions.length + unreadGroup.length,
-		'/profile': isFirstVisit && !browserNotificationsSettings().visited
+		'/profile': isFirstVisit && !browserNotificationsSettings().visited ? 1 : 0,
+		'/notifications': unreadNotificationCount
 	};
 
 	const pathToClassNameInWalkThrough = React.useCallback((to: string) => {
@@ -231,6 +237,9 @@ export const NavigationBar = ({
 							.map((item, index) => {
 								const Icon = item?.icon;
 								const IconFilled = item?.iconFilled;
+								const unreadCount = Number(
+									pathsToShowUnreadMessageNotification[item.to] || 0
+								);
 								return (
 									<Link
 										key={index}
@@ -295,11 +304,10 @@ export const NavigationBar = ({
 										{Object.keys(
 											pathsToShowUnreadMessageNotification
 										).includes(item.to) &&
-											pathsToShowUnreadMessageNotification[
-												item.to
-											] > 0 && (
+											unreadCount > 0 && (
 												<NavigationUnreadIndicator
 													animate={animateNavIcon}
+													count={unreadCount}
 												/>
 											)}
 									</Link>
@@ -381,7 +389,13 @@ const NavGroup = ({
 	return <>{children}</>;
 };
 
-const NavigationUnreadIndicator = ({ animate }: { animate: boolean }) => {
+const NavigationUnreadIndicator = ({
+	animate,
+	count
+}: {
+	animate: boolean;
+	count: number;
+}) => {
 	const [visible, setVisible] = useState(false);
 
 	useEffect(() => {
@@ -397,7 +411,10 @@ const NavigationUnreadIndicator = ({ animate }: { animate: boolean }) => {
 				!visible
 					? 'navigation__item__count--initial'
 					: `${animate && 'navigation__item__count--reanimate'}`
-			}`}
-		></span>
+			} ${count > 9 ? 'navigation__item__count--double' : ''}`}
+			aria-label={`${count} unread`}
+		>
+			{count > 99 ? '99+' : count}
+		</span>
 	);
 };

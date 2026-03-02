@@ -1220,6 +1220,10 @@
 		},
 		"showLess": "Weniger anzeigen",
 		"showMore": "Mehr anzeigen",
+		"systemNotification": "Systembenachrichtigung",
+		"systemNotificationTitle": "Systembenachrichtigung",
+		"supervisionEnabledTitle": "Supervision aktiviert!",
+		"supervisionEnabledDescription": "{{name}} wurde als Supervisor-Berater:in zu diesem Chat hinzugefügt.",
 		"today": "Heute",
 		"tomorrow": "Morgen",
 		"unread": "ungelesen",
@@ -1266,7 +1270,21 @@
 			"new": "Sie haben eine neue Nachricht!"
 		},
 		"success": "Erfolgreich",
-		"warning": "Warnung"
+		"warning": "Warnung",
+		"center": {
+			"title": "Benachrichtigungen",
+			"subtitle": "Aktuelle Ereignisse und Updates aus Ihren Chats.",
+			"markAllRead": "Alle als gelesen markieren",
+			"clearAll": "Alle löschen",
+			"empty": "Noch keine Benachrichtigungen.",
+			"emptyDetail": "Wählen Sie eine Benachrichtigung aus, um Details zu sehen.",
+			"open": "Chat öffnen",
+			"systemTag": "Systembenachrichtigung",
+			"messageTag": "Nachrichtenbenachrichtigung"
+		},
+		"threadReply": {
+			"title": "Neue Thread-Antwort"
+		}
 	},
 	"overlay": {
 		"step": {
@@ -1502,6 +1520,10 @@
 			},
 			"initialEnquiry": {
 				"title": "Eine neue Erstanfrage ist eingegangen"
+			},
+			"inquiryAccepted": {
+				"title": "Anfrage angenommen",
+				"description": "Ihre Anfrage wurde von einer Beratungsfachkraft angenommen."
 			},
 			"mainEmail": {
 				"title": "E-Mail-Benachrichtigungen zulassen"
