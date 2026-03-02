@@ -228,12 +228,6 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 				<button
 					type="button"
 					className="messageItem__voiceNote__play"
-					aria-label={
-						isAudioPlaying
-							? translate('voice.note.pause', 'Pause voice message')
-							: translate('voice.note.play', 'Play voice message')
-					}
-					aria-pressed={isAudioPlaying}
 					onClick={(e) => {
 						e.preventDefault();
 						e.stopPropagation();

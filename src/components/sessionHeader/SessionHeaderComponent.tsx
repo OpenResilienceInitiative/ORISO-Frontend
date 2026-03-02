@@ -89,7 +89,6 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		contact?.username?.startsWith('Anonymous-');
 	const isSupervisionEnabledForCurrentChat =
 		featureSupervisionEnabled !== false &&
-		// Group-chat supervision actions are gated elsewhere via !activeSession.isGroup.
 		(isAnonymousChat
 			? featureSupervisionAnonymousChatsEnabled !== false
 			: featureSupervisionOneOnOneChatsEnabled !== false);

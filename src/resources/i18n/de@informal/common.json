@@ -380,9 +380,6 @@
 			"new": "Du hast eine neue Nachricht!"
 		}
 	},
-	"navigation": {
-		"notifications": "Benachrichtigungen"
-	},
 	"overlay": {
 		"timeout": {
 			"confirm": "Möchtest Du die Seite wirklich verlassen?"
@@ -506,19 +503,6 @@
 			"newMessageConsultant": {
 				"description": "Einer der Dir zugewiesenen Ratsuchenden hat Dir geantwortet. Wir informieren Dich, solange Du nicht im System angemeldet bist.",
 				"title": "Neue Chat-Nachricht"
-			},
-			"newMessage": {
-				"title": "Neue Chat-Nachricht",
-				"description": "Einer der Dir zugewiesenen Ratsuchenden hat Dir geantwortet."
-			},
-			"inquiryAccepted": {
-				"title": "Anfrage angenommen",
-				"description": "Deine Anfrage wurde von einer Beraterin oder einem Berater angenommen."
-			},
-			"feed": {
-				"title": "System-Benachrichtigungen",
-				"description": "Hier siehst Du alle System-Benachrichtigungen.",
-				"empty": "Noch keine Benachrichtigungen vorhanden."
 			},
 			"noEmail": {
 				"info": "Du hast noch keine E-Mail-Adresse hinzugefügt.",

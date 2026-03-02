@@ -1508,15 +1508,6 @@
         "description": "Size atanan tavsiye arayanlardan biri şu cevabı verdi",
         "title": "Yeni sohbet mesajı"
       },
-      "inquiryAccepted": {
-        "title": "Talep kabul edildi",
-        "description": "Talebiniz bir danışman tarafından kabul edildi."
-      },
-      "feed": {
-        "title": "Sistem bildirimleri",
-        "description": "Tüm sistem bildirimlerini burada görebilirsiniz.",
-        "empty": "Henüz bildirim yok."
-      },
       "noEmail": {
         "button": "E-posta adresi ekle",
         "info": "Henüz bir e-posta adresi eklemediniz.",
