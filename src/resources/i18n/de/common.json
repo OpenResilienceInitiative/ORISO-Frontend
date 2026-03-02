@@ -1146,7 +1146,7 @@
 						"missing": "Bitte geben Sie den Code aus Ihrer App für die Zwei-Faktor-Authentifizierung ein."
 					}
 				},
-				"deletedAccount": "Ihr Account wurde zur Löschung vorgemerkt. Ihre Daten werden in den nächsten 24 Stunden gelöscht.",
+				"deletedAccount": "Ihr Account wurde von einer Beratungsfachkraft geschlossen.",
 				"email": {
 					"otp": {
 						"missing": "Bitte geben Sie den Code aus Ihrer E-Mail für die Zwei-Faktor-Authentifizierung ein."
@@ -1251,6 +1251,7 @@
 			}
 		},
 		"language": "Sprache",
+		"notifications": "Benachrichtigungen",
 		"overview": "Übersicht",
 		"profile": "Profil",
 		"tools": "Meine Tools"
@@ -1547,6 +1548,15 @@
 			"newMessage": {
 				"title": "Neue Chat-Nachricht",
 				"description": "Einer der Ihnen zugewiesenen Ratsuchenden hat Ihnen geantwortet"
+			},
+			"inquiryAccepted": {
+				"title": "Anfrage angenommen",
+				"description": "Ihre Anfrage wurde von einer Beraterin oder einem Berater angenommen."
+			},
+			"feed": {
+				"title": "System-Benachrichtigungen",
+				"description": "Hier sehen Sie alle System-Benachrichtigungen.",
+				"empty": "Noch keine Benachrichtigungen vorhanden."
 			}
 		},
 		"routes": {

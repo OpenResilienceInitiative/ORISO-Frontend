@@ -6,7 +6,7 @@ import {
 import { ReactComponent as DownloadIcon } from '../../resources/img/icons/download.svg';
 import { useTranslation } from 'react-i18next';
 import { apiUrl } from '../../resources/scripts/endpoints';
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { FETCH_METHODS, fetchData } from '../../api';
 import { getValueFromCookie } from '../sessionCookie/accessSessionCookie';
 import { generateCsrfToken } from '../../utils/generateCsrfToken';
@@ -56,6 +56,10 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 	const [attachmentStatus, setAttachmentStatus] = React.useState(
 		props.t === 'e2e' ? ENCRYPTED : NOT_ENCRYPTED
 	);
+	const audioRef = useRef<HTMLAudioElement | null>(null);
+	const [isAudioPlaying, setIsAudioPlaying] = React.useState(false);
+	const [audioDurationSec, setAudioDurationSec] = React.useState<number | null>(null);
+	const [audioCurrentTimeSec, setAudioCurrentTimeSec] = React.useState(0);
 
 	const decryptFile = useCallback(
 		async (url: string) => {
@@ -166,14 +170,146 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 
 	// Check if it's an image to display preview
 	const isImage = props.file.type?.startsWith('image/') || props.attachment.type === 'image';
+	const isAudio = props.file.type?.startsWith('audio/');
 	const imageUrl = isImage ? buildUrl(props.attachment.title_link) : null;
 
 	// For non-encrypted files, wrap in download link
 	const downloadUrl = buildUrl(props.attachment.title_link);
+
+	const formatAudioDuration = useCallback((duration: number | null) => {
+		if (
+			duration == null ||
+			Number.isNaN(duration) ||
+			!Number.isFinite(duration) ||
+			duration <= 0
+		) {
+			return '--:--';
+		}
+		const rounded = Math.round(duration);
+		const minutes = Math.floor(rounded / 60);
+		const seconds = rounded % 60;
+		return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+	}, []);
+
+	const getVoiceDurationFromFileName = useCallback((): number | null => {
+		const name = props.file?.name || props.attachment?.title || '';
+		const matchSec = name.match(/-s(\d+)-ms\d+\.(webm|ogg|mp3|wav)$/i);
+		if (matchSec) {
+			const valueSec = parseInt(matchSec[1], 10);
+			if (!Number.isNaN(valueSec) && valueSec > 0) {
+				return valueSec;
+			}
+		}
+		const matchMs = name.match(/-ms(\d+)\.(webm|ogg|mp3|wav)$/i);
+		if (matchMs) {
+			const valueMs = parseInt(matchMs[1], 10);
+			if (!Number.isNaN(valueMs) && valueMs > 0) {
+				return valueMs / 1000;
+			}
+		}
+		const match = name.match(/-d(\d+)\.(webm|ogg|mp3|wav)$/i);
+		if (!match) {
+			return null;
+		}
+		const value = parseInt(match[1], 10);
+		return Number.isNaN(value) ? null : value;
+	}, [props.file?.name, props.attachment?.title]);
+
+	const durationFromFileName = getVoiceDurationFromFileName();
+	const resolvedDurationSec = durationFromFileName ?? audioDurationSec;
+	const playbackProgress =
+		resolvedDurationSec && resolvedDurationSec > 0
+			? Math.min(100, Math.max(0, (audioCurrentTimeSec / resolvedDurationSec) * 100))
+			: 0;
+
+	const renderVoiceAttachment = useCallback(
+		(src: string) => (
+			<div className="messageItem__voiceNote">
+				<button
+					type="button"
+					className="messageItem__voiceNote__play"
+					aria-label={
+						isAudioPlaying
+							? translate('voice.note.pause', 'Pause voice message')
+							: translate('voice.note.play', 'Play voice message')
+					}
+					aria-pressed={isAudioPlaying}
+					onClick={(e) => {
+						e.preventDefault();
+						e.stopPropagation();
+						if (!audioRef.current) {
+							return;
+						}
+						if (audioRef.current.paused) {
+							audioRef.current.play().catch(() => {
+								// ignore autoplay/permission rejections
+							});
+						} else {
+							audioRef.current.pause();
+						}
+					}}
+				>
+					{isAudioPlaying ? '||' : '▶'}
+				</button>
+				<div className="messageItem__voiceNote__wave">
+					<div
+						className="messageItem__voiceNote__wavePlayed"
+						style={{ width: `${playbackProgress}%` }}
+					/>
+				</div>
+				<span className="messageItem__voiceNote__time">
+					{formatAudioDuration(resolvedDurationSec)}
+				</span>
+				<audio
+					ref={audioRef}
+					src={src}
+					preload="metadata"
+					onPlay={() => setIsAudioPlaying(true)}
+					onPause={() => setIsAudioPlaying(false)}
+					onEnded={() => {
+						setIsAudioPlaying(false);
+						setAudioCurrentTimeSec(0);
+					}}
+					onTimeUpdate={() => {
+						setAudioCurrentTimeSec(audioRef.current?.currentTime || 0);
+					}}
+					onLoadedMetadata={() => {
+						if (durationFromFileName != null) {
+							// Keep sender/receiver display identical by preferring canonical filename duration.
+							setAudioDurationSec(durationFromFileName);
+						} else {
+							const duration = audioRef.current?.duration ?? null;
+							if (
+								duration != null &&
+								Number.isFinite(duration) &&
+								duration > 0
+							) {
+								setAudioDurationSec(duration);
+							} else {
+								setAudioDurationSec(getVoiceDurationFromFileName());
+							}
+						}
+						setAudioCurrentTimeSec(0);
+					}}
+				/>
+			</div>
+		),
+		[
+			playbackProgress,
+			resolvedDurationSec,
+			durationFromFileName,
+			formatAudioDuration,
+			isAudioPlaying,
+			getVoiceDurationFromFileName
+		]
+	);
 	
 	return (
 		<>
 			{props.t !== 'e2e' ? (
+				isAudio ? (
+					renderVoiceAttachment(downloadUrl)
+				) : (
 				<a
 					href={downloadUrl}
 					download={props.file.name}
@@ -216,9 +352,13 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 						</span>
 					</div>
 				</a>
+				)
 			) : (
 				// Encrypted file - clickable to decrypt/download
 				encryptedFile && attachmentStatus === DECRYPTION_FINISHED ? (
+					isAudio ? (
+						renderVoiceAttachment(encryptedFile)
+					) : (
 					<a
 						href={encryptedFile}
 						download={props.file.name}
@@ -262,6 +402,7 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 							</span>
 						</div>
 					</a>
+					)
 				) : (
 					<div 
 						className="messageItem__message__attachment"

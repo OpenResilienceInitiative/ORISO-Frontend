@@ -11,6 +11,7 @@ import {
 } from '../incomingVideoCall/IncomingVideoCall';
 import {
 	NotificationsContext,
+	NOTIFICATION_TYPE_SUCCESS,
 	WebsocketConnectionDeactivatedContext
 } from '../../globalState';
 import {
@@ -80,7 +81,13 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 		// Listen to Matrix 'directMessage' events
 		const handleMatrixDirectMessage = (event: any) => {
 			// console.log('📬 Matrix directMessage event received:', event);
-			setNewStompDirectMessage(true);
+			messageEventEmitter.emit({
+				roomId: event?.roomId,
+				timestamp: event?.timestamp
+			});
+			if (!event?.isOwnMessage) {
+				setNewStompDirectMessage(true);
+			}
 		};
 
 	// Listen to Matrix 'videoCallRequest' events
@@ -176,10 +183,18 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 			reconnectAttemptCount = 0;
 			stompClient.subscribe('/user/events', function (message) {
 				const stompMessageBody = JSON.parse(message.body);
-				const stompEventType: LiveService.Schemas.EventType =
-					stompMessageBody['eventType'];
+				const stompEventType = String(stompMessageBody['eventType'] ?? '');
 				if (stompEventType === 'directMessage') {
 					setNewStompDirectMessage(true);
+				} else if (
+					stompEventType === 'anonymousEnquiryAccepted' ||
+					stompEventType === 'ANONYMOUSENQUIRYACCEPTED'
+				) {
+					addNotification({
+						notificationType: NOTIFICATION_TYPE_SUCCESS,
+						title: translate('profile.notifications.inquiryAccepted.title'),
+						text: translate('profile.notifications.inquiryAccepted.description')
+					});
 				} else if (stompEventType === 'videoCallRequest') {
 					const stompEventContent: VideoCallRequestProps =
 						stompMessageBody['eventContent'];

@@ -191,7 +191,8 @@ const profileRoutes = (
 		{
 			title: 'profile.routes.notifications.title',
 			url: '/notifications',
-			condition: () => settings?.releaseToggles?.enableNewNotifications,
+			// Intentionally disabled for now; if re-enabled, also re-evaluate notificationBubble/browserNotificationsSettings usage below.
+			condition: () => false,
 			notificationBubble:
 				isFirstVisit && !browserNotificationsSettings().visited,
 			elements: [

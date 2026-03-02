@@ -1139,7 +1139,7 @@
             "missing": "Lütfen iki faktörlü kimlik doğrulama için uygulamanızdaki kodu girin."
           }
         },
-        "deletedAccount": "Hesabınız silinmek üzere işaretlendi. Verileriniz önümüzdeki 24 saat içinde silinecektir.",
+        "deletedAccount": "Hesabınız bir danışman tarafından kapatıldı.",
         "email": {
           "otp": {
             "missing": "İki faktörlü kimlik doğrulama için lütfen e-postanızdaki kodu girin."
@@ -1237,6 +1237,7 @@
       }
     },
     "language": "Dil",
+    "notifications": "Bildirimler",
     "overview": "Genel Bakış",
     "profile": "Profil",
     "tools": "Aletlerim"
@@ -1493,6 +1494,15 @@
       "newMessage": {
         "description": "Size atanan tavsiye arayanlardan biri şu cevabı verdi",
         "title": "Yeni sohbet mesajı"
+      },
+      "inquiryAccepted": {
+        "title": "Talep kabul edildi",
+        "description": "Talebiniz bir danışman tarafından kabul edildi."
+      },
+      "feed": {
+        "title": "Sistem bildirimleri",
+        "description": "Tüm sistem bildirimlerini burada görebilirsiniz.",
+        "empty": "Henüz bildirim yok."
       },
       "noEmail": {
         "button": "E-posta adresi ekle",

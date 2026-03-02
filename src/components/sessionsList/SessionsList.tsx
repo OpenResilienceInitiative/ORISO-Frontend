@@ -63,6 +63,8 @@ import { apiGetChatRoomById } from '../../api/apiGetChatRoomById';
 import { useTranslation } from 'react-i18next';
 import { RocketChatUsersOfRoomProvider } from '../../globalState/provider/RocketChatUsersOfRoomProvider';
 import { EmptyListItem } from './EmptyListItem';
+import { matrixLiveEventBridge } from '../../services/matrixLiveEventBridge';
+import { messageEventEmitter } from '../../services/messageEventEmitter';
 
 interface SessionsListProps {
 	defaultLanguage: string;
@@ -87,6 +89,7 @@ export const SessionsList = ({
 	const listRef = createRef<HTMLDivElement>();
 
 	const { sessions, dispatch } = useContext(SessionsDataContext);
+	const sessionsRef = useRef(sessions);
 	const { type, path: listPath } = useContext(SessionTypeContext);
 
 	const {
@@ -105,6 +108,10 @@ export const SessionsList = ({
 	const [isReloadButtonVisible, setIsReloadButtonVisible] = useState(false);
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
 	const abortController = useRef<AbortController>(null);
+
+	useEffect(() => {
+		sessionsRef.current = sessions;
+	}, [sessions]);
 
 	useGroupWatcher(isLoading);
 
@@ -198,6 +205,34 @@ export const SessionsList = ({
 			}
 		}
 	}, [initialId]);
+
+	const refreshLoadedSessionsWithRoomState = useCallback(
+		(loadedSessions: ListItemInterface[]) => {
+			const rids = (loadedSessions || [])
+				.map((session) => session?.chat?.groupId || session?.session?.groupId)
+				.filter(Boolean) as string[];
+
+			if (!rids.length) {
+				return Promise.resolve();
+			}
+
+			return apiGetSessionRoomsByGroupIds(rids)
+				.then(({ sessions }) => {
+					if (!sessions?.length) {
+						return;
+					}
+
+					dispatch({
+						type: UPDATE_SESSIONS,
+						sessions
+					});
+				})
+				.catch(() => {
+					// keep list rendering stable if room-state refresh fails
+				});
+		},
+		[dispatch]
+	);
 
 	// Initially load first sessions
 	useEffect(() => {
@@ -306,6 +341,7 @@ export const SessionsList = ({
 						ready: true,
 						sessions
 					});
+					return refreshLoadedSessionsWithRoomState(sessions);
 				})
 				.catch((error) => {
 					// console.error('❌ CONSULTANT: Error fetching sessions:', error);
@@ -352,6 +388,7 @@ export const SessionsList = ({
 		dispatch,
 		getConsultantSessionList,
 		initialId,
+		refreshLoadedSessionsWithRoomState,
 		scrollIntoView,
 		userData
 	]);
@@ -459,6 +496,59 @@ export const SessionsList = ({
 		[dispatch, sessionListTab, sessionTypes, sessions, userData.userId]
 	);
 
+	const touchSessionsByRids = useCallback(
+		(ridsWithTimestamp: Array<{ rid: string; timestamp: number }>) => {
+			if (!ridsWithTimestamp.length) {
+				return;
+			}
+
+			const touchedSessions = ridsWithTimestamp
+				.map(({ rid, timestamp }) => {
+					const existingSession = sessionsRef.current.find(
+						(s) =>
+							s?.chat?.groupId === rid ||
+							s?.session?.groupId === rid ||
+							(s?.session as { matrixRoomId?: string })?.matrixRoomId === rid
+					);
+					if (!existingSession) {
+						return null;
+					}
+
+					const timestampSeconds = Math.floor(timestamp / 1000);
+					if (existingSession.chat) {
+						return {
+							...existingSession,
+							chat: {
+								...existingSession.chat,
+								messageDate: timestampSeconds
+							}
+						};
+					}
+
+					if (existingSession.session) {
+						return {
+							...existingSession,
+							session: {
+								...existingSession.session,
+								messageDate: timestampSeconds
+							}
+						};
+					}
+
+					return null;
+				})
+				.filter(Boolean) as ListItemInterface[];
+
+			if (touchedSessions.length > 0) {
+				dispatch({
+					type: UPDATE_SESSIONS,
+					sessions: touchedSessions
+				});
+			}
+		},
+		[dispatch]
+	);
+
 	const onRoomsChanged = useCallback(
 		(args) => {
 			if (args.length === 0) return;
@@ -482,9 +572,35 @@ export const SessionsList = ({
 
 			if (roomEvents.length === 0) return;
 
+			touchSessionsByRids(
+				roomEvents.map(([, room]) => {
+					const rawTimestamp =
+						room?.lm?.$date ||
+						room?.lm ||
+						room?.lastMessage?.ts?.$date ||
+						room?.lastMessage?.ts ||
+						room?.ts?.$date ||
+						room?.ts ||
+						room?._updatedAt?.$date ||
+						room?._updatedAt ||
+						Date.now();
+					const parsedTimestamp = Number.isNaN(Number(rawTimestamp))
+						? Date.parse(rawTimestamp)
+						: Number(rawTimestamp);
+
+					return {
+						rid: room._id,
+						timestamp:
+							!parsedTimestamp || Number.isNaN(parsedTimestamp)
+								? Date.now()
+								: parsedTimestamp
+					};
+				})
+			);
+
 			handleRIDs(roomEvents.map(([, room]) => room._id));
 		},
-		[handleRIDs]
+		[handleRIDs, touchSessionsByRids]
 	);
 
 	const onSubscriptionsChanged = useCallback(
@@ -512,11 +628,33 @@ export const SessionsList = ({
 
 			if (subscriptionEvents.length === 0) return;
 
+			touchSessionsByRids(
+				subscriptionEvents.map(([, subscription]) => {
+					const rawTimestamp =
+						subscription?.ts?.$date ||
+						subscription?.ts ||
+						subscription?._updatedAt?.$date ||
+						subscription?._updatedAt ||
+						Date.now();
+					const parsedTimestamp = Number.isNaN(Number(rawTimestamp))
+						? Date.parse(rawTimestamp)
+						: Number(rawTimestamp);
+
+					return {
+						rid: subscription.rid,
+						timestamp:
+							!parsedTimestamp || Number.isNaN(parsedTimestamp)
+								? Date.now()
+								: parsedTimestamp
+					};
+				})
+			);
+
 			handleRIDs(
 				subscriptionEvents.map(([, subscription]) => subscription.rid)
 			);
 		},
-		[handleRIDs]
+		[handleRIDs, touchSessionsByRids]
 	);
 
 	const onDebounceSubscriptionsChanged = useUpdatingRef(
@@ -584,6 +722,32 @@ export const SessionsList = ({
 		unsubscribe
 	]);
 
+	useEffect(() => {
+		const onNewMessageEvent = ({
+			roomId,
+			timestamp
+		}: {
+			roomId?: string;
+			timestamp?: number;
+		}) => {
+			if (!roomId) {
+				return;
+			}
+
+			touchSessionsByRids([
+				{
+					rid: roomId,
+					timestamp: timestamp || Date.now()
+				}
+			]);
+		};
+
+		messageEventEmitter.on(onNewMessageEvent);
+		return () => {
+			messageEventEmitter.off(onNewMessageEvent);
+		};
+	}, [touchSessionsByRids]);
+
 	const loadMoreSessions = useCallback(() => {
 		setIsLoading(true);
 		getConsultantSessionList(currentOffset + SESSION_COUNT)
@@ -593,6 +757,9 @@ export const SessionsList = ({
 					ready: true,
 					sessions
 				});
+				return refreshLoadedSessionsWithRoomState(sessions);
+			})
+			.then(() => {
 				setIsLoading(false);
 			})
 			.catch((error) => {
@@ -605,7 +772,12 @@ export const SessionsList = ({
 				setIsLoading(false);
 				setIsReloadButtonVisible(true);
 			});
-	}, [currentOffset, dispatch, getConsultantSessionList]);
+	}, [
+		currentOffset,
+		dispatch,
+		getConsultantSessionList,
+		refreshLoadedSessionsWithRoomState
+	]);
 
 	const handleListScroll = useCallback(() => {
 		const list: any = listRef.current;
@@ -637,29 +809,97 @@ export const SessionsList = ({
 		type === SESSION_LIST_TYPES.MY_SESSION &&
 		!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
 
-	const sortSessions = useCallback(
-		(
-			sessionA: ExtendedSessionInterface,
-			sessionB: ExtendedSessionInterface
-		) => {
-			switch (type) {
-				case SESSION_LIST_TYPES.ENQUIRY:
-					if (sessionA.isGroup || sessionB.isGroup) {
-						// There could be no group chats inside enquiry
-						return 0;
-					}
-					if (sessionA.item.createDate === sessionB.item.createDate) {
-						return 0;
-					}
-					return sessionA.item.createDate < sessionB.item.createDate
-						? -1
-						: 1;
-				case SESSION_LIST_TYPES.MY_SESSION:
-			}
+	const normalizeTimestamp = useCallback((value?: string | number): number => {
+		if (value === null || value === undefined || value === '') {
 			return 0;
-		},
-		[type]
-	);
+		}
+
+		if (typeof value === 'number') {
+			return value > 1_000_000_000_000 ? value : value * 1000;
+		}
+
+		const numericValue = Number(value);
+		if (!Number.isNaN(numericValue)) {
+			return numericValue > 1_000_000_000_000
+				? numericValue
+				: numericValue * 1000;
+		}
+
+		const parsed = Date.parse(value);
+		return Number.isNaN(parsed) ? 0 : parsed;
+	}, []);
+
+	const sortedExtendedSessions = React.useMemo(() => {
+		const extendedSessions = finalSessionsList.map((session) =>
+			buildExtendedSession(session, groupIdFromParam)
+		);
+
+		if (type === SESSION_LIST_TYPES.MY_SESSION) {
+			const matrixClient = matrixLiveEventBridge.getClient();
+			const roomCache = new Map<string, any>();
+			const getRoomById = (roomId: string) => {
+				if (!roomCache.has(roomId)) {
+					roomCache.set(roomId, matrixClient?.getRoom(roomId) || null);
+				}
+				return roomCache.get(roomId);
+			};
+
+			const getSortKey = (session: ExtendedSessionInterface): number => {
+				const item = session?.item;
+				if (!item) {
+					return 0;
+				}
+
+				const matrixRoomId =
+					(item as { matrixRoomId?: string })?.matrixRoomId ||
+					(typeof item.groupId === 'string' && item.groupId.startsWith('!')
+						? item.groupId
+						: null);
+				const matrixRoom = matrixRoomId ? getRoomById(matrixRoomId) : null;
+				const matrixLastActiveTimestamp =
+					matrixRoom?.getLastActiveTimestamp?.() ||
+					matrixRoom
+						?.getLiveTimeline?.()
+						?.getEvents?.()
+						?.slice(-1)?.[0]
+						?.getTs?.() ||
+					0;
+
+				return Math.max(
+					normalizeTimestamp(matrixLastActiveTimestamp),
+					normalizeTimestamp(session.latestMessage),
+					normalizeTimestamp(item.messageDate),
+					normalizeTimestamp(item.messageTime),
+					normalizeTimestamp(item.createDate),
+					normalizeTimestamp(item.createdAt),
+					normalizeTimestamp(item.startDate)
+				);
+			};
+
+			return extendedSessions
+				.map((session) => ({
+					session,
+					sortKey: getSortKey(session)
+				}))
+				.sort((a, b) => b.sortKey - a.sortKey)
+				.map(({ session }) => session);
+		}
+
+		if (type === SESSION_LIST_TYPES.ENQUIRY) {
+			return extendedSessions.sort((sessionA, sessionB) => {
+				if (sessionA.isGroup || sessionB.isGroup) {
+					// There could be no group chats inside enquiry
+					return 0;
+				}
+				if (sessionA.item.createDate === sessionB.item.createDate) {
+					return 0;
+				}
+				return sessionA.item.createDate < sessionB.item.createDate ? -1 : 1;
+			});
+		}
+
+		return extendedSessions;
+	}, [finalSessionsList, groupIdFromParam, normalizeTimestamp, type]);
 
 	const filterSessions = useCallback(
 		(session) => {
@@ -842,12 +1082,7 @@ export const SessionsList = ({
 				type === SESSION_LIST_TYPES.MY_SESSION && <SessionListCreateChat />}
 
 				{(!isLoading || finalSessionsList.length > 0) &&
-					finalSessionsList
-						.map((session) =>
-							buildExtendedSession(session, groupIdFromParam)
-						)
-						.sort(sortSessions)
-						.map((activeSession: ExtendedSessionInterface, index) => (
+					sortedExtendedSessions.map((activeSession: ExtendedSessionInterface, index) => (
 							<ActiveSessionProvider
 								key={activeSession.item.id}
 								activeSession={activeSession}

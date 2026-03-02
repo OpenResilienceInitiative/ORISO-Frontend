@@ -1131,7 +1131,7 @@
 						"missing": "Please enter the code from your app for two-factor authentication."
 					}
 				},
-				"deletedAccount": "Your account was marked for deletion. Your data will be deleted within the next 24 hours.",
+				"deletedAccount": "Your account has been closed by a counselor.",
 				"email": {
 					"otp": {
 						"missing": "Please enter the code from your email for two-factor authentication."
@@ -1229,6 +1229,7 @@
 			}
 		},
 		"language": "Language",
+		"notifications": "Notifications",
 		"overview": "Overview",
 		"profile": "Profile",
 		"tools": "My tools"
@@ -1485,6 +1486,15 @@
 			"newMessage": {
 				"description": "One of your assigned advice seekers has replied to you",
 				"title": "New chat message"
+			},
+			"inquiryAccepted": {
+				"title": "Inquiry accepted",
+				"description": "Your inquiry has been accepted by a counselor."
+			},
+			"feed": {
+				"title": "System notifications",
+				"description": "Here you can see all system notifications.",
+				"empty": "No notifications yet."
 			},
 			"noEmail": {
 				"button": "Add email address",

@@ -333,7 +333,9 @@ class CallManager {
             // roomId,
             // );
 
-            await client.sendStateEvent(roomId, "m.room.power_levels", "", updatedContent);
+            // matrix-js-sdk signature: sendStateEvent(roomId, eventType, content, stateKey?)
+            // We must NOT pass the content as the stateKey (it becomes "[object Object]" in the URL).
+            await client.sendStateEvent(roomId, "m.room.power_levels", updatedContent, "");
             // console.log("✅ Updated power levels for group call room:", roomId);
         } catch (error) {
             // console.error("❌ Error while updating group call room power levels:", error);

@@ -46,6 +46,7 @@ import { useTopic } from '../../globalState';
 import { SelectDropdown, SelectDropdownItem } from '../select/SelectDropdown';
 import { Button, ButtonItem, BUTTON_TYPES } from '../button/Button';
 import { ReactComponent as CloseCircle } from '../../resources/img/icons/close-circle.svg';
+import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 
 export interface SessionHeaderProps {
 	consultantAbsent?: SessionConsultantInterface;
@@ -69,6 +70,11 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		(activeSession.item.topic as TopicSessionInterface).id
 	);
 	const settings = useAppConfig();
+	const {
+		featureSupervisionEnabled = true,
+		featureSupervisionAnonymousChatsEnabled = true,
+		featureSupervisionOneOnOneChatsEnabled = true
+	} = getTenantSettings();
 
 	const contact = getContact(activeSession);
 	const userSessionData = contact?.sessionData;
@@ -78,6 +84,12 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		activeSession.item.postcode?.toString() === '00000' ||
 		(activeSession.item as any).registrationType === 'ANONYMOUS' ||
 		contact?.username?.startsWith('Anonymous-');
+	const isSupervisionEnabledForCurrentChat =
+		featureSupervisionEnabled !== false &&
+		// Group-chat supervision actions are gated elsewhere via !activeSession.isGroup.
+		(isAnonymousChat
+			? featureSupervisionAnonymousChatsEnabled !== false
+			: featureSupervisionOneOnOneChatsEnabled !== false);
 
 	// Check if current user is a supervisor (read-only observer, not the assigned consultant)
 	const isSupervisor = hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) && 
@@ -166,13 +178,22 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 
 	// Load supervisors when component mounts or session changes
 	useEffect(() => {
+		if (!isSupervisionEnabledForCurrentChat) {
+			setSupervisors([]);
+			setIsSupervisorModalOpen(false);
+			return;
+		}
 		if (hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) && activeSession.item.id) {
 			loadSupervisors();
 		}
-	}, [activeSession.item.id, userData]);
+	}, [activeSession.item.id, userData, isSupervisionEnabledForCurrentChat]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	// Load available consultants when modal opens
 	useEffect(() => {
+		if (!isSupervisionEnabledForCurrentChat) {
+			setIsSupervisorModalOpen(false);
+			return;
+		}
 		if (isSupervisorModalOpen) {
 			const agencyId = activeSession.agency?.id || activeSession.item?.agencyId;
 			if (agencyId) {
@@ -181,9 +202,18 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 				// console.warn('Cannot load consultants: No agency ID in session');
 			}
 		}
-	}, [isSupervisorModalOpen, activeSession.agency?.id, activeSession.item?.agencyId]);
+	}, [
+		isSupervisorModalOpen,
+		activeSession.agency?.id,
+		activeSession.item?.agencyId,
+		isSupervisionEnabledForCurrentChat
+	]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	const loadSupervisors = async () => {
+		if (!isSupervisionEnabledForCurrentChat) {
+			setSupervisors([]);
+			return;
+		}
 		if (!activeSession.item.id) return;
 		setIsLoadingSupervisors(true);
 		try {
@@ -538,7 +568,11 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					</button>
 				)}
 				{/* Supervisor Management Button - Only for assigned consultants (not supervisors, not during enquiry) */}
-				{hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) && !activeSession.isGroup && !isSupervisor && !activeSession.isEnquiry && (
+				{isSupervisionEnabledForCurrentChat &&
+					hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
+					!activeSession.isGroup &&
+					!isSupervisor &&
+					!activeSession.isEnquiry && (
 					<button
 						onClick={() => setIsSupervisorModalOpen(true)}
 						style={{
@@ -597,7 +631,9 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			)}
 
 			{/* Supervisor Management Modal - Rendered via Portal */}
-			{isSupervisorModalOpen && createPortal(
+			{isSupervisionEnabledForCurrentChat &&
+				isSupervisorModalOpen &&
+				createPortal(
 				<div
 					style={{
 						position: 'fixed',

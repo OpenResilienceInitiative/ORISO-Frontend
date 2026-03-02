@@ -1139,7 +1139,7 @@
             "missing": "Veuillez saisir le code de votre application pour l'authentification à deux facteurs."
           }
         },
-        "deletedAccount": "Votre compte a été marqué pour suppression. Vos données seront supprimées dans les prochaines 24 heures.",
+        "deletedAccount": "Votre compte a été fermé par un conseiller.",
         "email": {
           "otp": {
             "missing": "Veuillez saisir le code figurant dans votre e-mail pour l'authentification à deux facteurs."
@@ -1237,6 +1237,7 @@
       }
     },
     "language": "Langue",
+    "notifications": "Notifications",
     "overview": "Aperçu",
     "profile": "Profil",
     "tools": "Mes outils"
@@ -1493,6 +1494,15 @@
       "newMessage": {
         "description": "L'un des demandeurs de conseils qui vous a été attribué vous a répondu",
         "title": "Nouveau message de chat"
+      },
+      "inquiryAccepted": {
+        "title": "Demande acceptée",
+        "description": "Votre demande a été acceptée par un conseiller."
+      },
+      "feed": {
+        "title": "Notifications système",
+        "description": "Vous pouvez voir ici toutes les notifications système.",
+        "empty": "Aucune notification pour le moment."
       },
       "noEmail": {
         "button": "Ajouter une adresse e-mail",
