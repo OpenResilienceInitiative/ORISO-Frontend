@@ -17,9 +17,10 @@ export const apiPostRegistration = (
 		method: FETCH_METHODS.POST,
 		bodyData: JSON.stringify(data),
 		skipAuth: true,
-		...(useMultiTenancyWithSingleDomain && {
-			// headersData: { agencyId: data.agencyId }
-		}),
+		...(useMultiTenancyWithSingleDomain &&
+			data.agencyId && {
+				headersData: { agencyId: data.agencyId }
+			}),
 		responseHandling: [FETCH_ERRORS.CATCH_ALL_WITH_RESPONSE]
 	}).then(() =>
 		autoLogin({

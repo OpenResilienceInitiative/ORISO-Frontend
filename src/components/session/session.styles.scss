@@ -306,3 +306,52 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		opacity: 0;
 	}
 }
+
+.app__wrapper--embeddedNotifications {
+	.contentWrapper__detail {
+		overflow: hidden;
+	}
+
+	.session {
+		height: 100%;
+		min-height: 0;
+	}
+
+	.session__content {
+		overscroll-behavior: contain;
+		overflow-y: auto;
+		-webkit-overflow-scrolling: touch;
+	}
+
+	#session-scroll-container {
+		overflow-y: auto;
+		overflow-x: hidden;
+		overscroll-behavior: contain;
+		-webkit-overflow-scrolling: touch;
+	}
+
+	.session__content--withThread {
+		padding-right: $grid-base-three;
+	}
+
+	.session__threadPanel {
+		left: 0;
+		right: 0;
+		width: 100%;
+		border-left: none;
+	}
+
+	.session__submit-interface--withThread {
+		right: 0;
+	}
+
+	/* Header is hidden in embedded mode; ensure composer never becomes a flex filler. */
+	.messageSubmit__wrapper,
+	.session__submit-interface {
+		flex: 0 0 auto !important;
+	}
+
+	.session__threadClose {
+		display: none;
+	}
+}
