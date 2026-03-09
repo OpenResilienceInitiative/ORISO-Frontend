@@ -76,6 +76,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const { addEventNotification } = useContext(NotificationsContext);
 	const { type } = useContext(SessionTypeContext);
 	const location = useLocation();
+	const isEmbeddedNotificationsView =
+		new URLSearchParams(location.search).get('embeddedNotifications') ===
+		'1';
 	const [isSupervisor, setIsSupervisor] = useState(false);
 
 	// Threads feature toggle (tenant-level). Master switch disables for all chat types.
@@ -619,19 +622,24 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	return (
 		<div className="session">
-			<div ref={headerRef}>
-				<SessionHeaderComponent
-					consultantAbsent={
-						activeSession.consultant &&
-						activeSession.consultant.absent
-							? activeSession.consultant
-							: null
-					}
-					hasUserInitiatedStopOrLeaveRequest={
-						props.hasUserInitiatedStopOrLeaveRequest
-					}
-					bannedUsers={props.bannedUsers}
-				/>
+			<div
+				ref={headerRef}
+				style={isEmbeddedNotificationsView ? { display: 'none' } : undefined}
+			>
+				{!isEmbeddedNotificationsView && (
+					<SessionHeaderComponent
+						consultantAbsent={
+							activeSession.consultant &&
+							activeSession.consultant.absent
+								? activeSession.consultant
+								: null
+						}
+						hasUserInitiatedStopOrLeaveRequest={
+							props.hasUserInitiatedStopOrLeaveRequest
+						}
+						bannedUsers={props.bannedUsers}
+					/>
+				)}
 			</div>
 
 			<div

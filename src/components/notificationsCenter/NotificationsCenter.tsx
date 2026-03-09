@@ -154,6 +154,31 @@ export const NotificationsCenter = () => {
 		() => resolveThreadRootId(selectedNotification),
 		[selectedNotification]
 	);
+	const canShowChatPreview = selectedNotificationCategory === 'message';
+	const embeddedChatPath = useMemo(() => {
+		if (!canShowChatPreview) {
+			return null;
+		}
+		const basePath = selectedNotification?.actionPath
+			? selectedNotification.actionPath
+			: selectedSessionId
+				? `${getDefaultSessionsPath()}/session/${selectedSessionId}${
+						selectedThreadRootId
+							? `?threadRootId=${encodeURIComponent(selectedThreadRootId)}`
+							: ''
+				  }`
+				: null;
+		if (!basePath) {
+			return null;
+		}
+		const hasQuery = basePath.includes('?');
+		return `${basePath}${hasQuery ? '&' : '?'}embeddedNotifications=1`;
+	}, [
+		canShowChatPreview,
+		selectedNotification?.actionPath,
+		selectedSessionId,
+		selectedThreadRootId
+	]);
 
 	useEffect(() => {
 		setChatReplyText('');
@@ -293,7 +318,6 @@ export const NotificationsCenter = () => {
 
 	const nextUnreadId = getNextNotificationId(selectedNotificationId, true);
 	const selectedRoomRef = resolveRoomRef(selectedNotification);
-	const canShowChatPreview = selectedNotificationCategory === 'message';
 
 	const handleSendChatReply = async () => {
 		if (
@@ -442,7 +466,13 @@ export const NotificationsCenter = () => {
 						))
 					)}
 				</div>
-				<div className="notificationsCenter__detail">
+				<div
+					className={`notificationsCenter__detail ${
+						canShowChatPreview && embeddedChatPath
+							? 'notificationsCenter__detail--embeddedChat'
+							: ''
+					}`}
+				>
 					{selectedNotification ? (
 						<div className="notificationsCenter__detailCard">
 							<h3 className="notificationsCenter__detailTitle">
@@ -475,7 +505,16 @@ export const NotificationsCenter = () => {
 									)}
 								</button>
 							</div>
-							{canShowChatPreview && (
+							{canShowChatPreview && embeddedChatPath && (
+								<div className="notificationsCenter__embeddedSession">
+									<iframe
+										title="notifications-chat-session"
+										src={embeddedChatPath}
+										className="notificationsCenter__embeddedSessionFrame"
+									/>
+								</div>
+							)}
+							{canShowChatPreview && !embeddedChatPath && (
 								<div className="notificationsCenter__chatPreview">
 								<div className="notificationsCenter__chatPreviewHeader">
 									<div className="notificationsCenter__chatPreviewTitle">

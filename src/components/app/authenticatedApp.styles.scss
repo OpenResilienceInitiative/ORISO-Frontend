@@ -218,3 +218,28 @@ a {
 		}
 	}
 }
+
+.app__wrapper--embeddedNotifications {
+	.navigation__wrapper {
+		display: none !important;
+	}
+
+	.contentWrapper {
+		.header {
+			display: none !important;
+		}
+
+		&__list {
+			display: none !important;
+		}
+
+		&__content {
+			width: 100%;
+		}
+
+		&__detail {
+			width: 100% !important;
+			flex: 1 1 auto;
+		}
+	}
+}

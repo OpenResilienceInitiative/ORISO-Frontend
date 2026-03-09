@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useContext, useMemo, Suspense } from 'react';
-import { Route, Switch, Redirect } from 'react-router-dom';
+import { Route, Switch, Redirect, useLocation } from 'react-router-dom';
 import { RouterConfigUser, RouterConfigConsultant } from './RouterConfig';
 import { AbsenceHandler } from './AbsenceHandler';
 import {
@@ -28,6 +28,7 @@ interface RoutingProps {
 }
 
 export const Routing = (props: RoutingProps) => {
+	const location = useLocation();
 	const settings = useAppConfig();
 	const { userData } = useContext(UserDataContext);
 	const { consultingTypes } = useContext(ConsultingTypesContext);
@@ -49,6 +50,10 @@ export const Routing = (props: RoutingProps) => {
 			...(routerConfig.appointmentRoutes || []),
 			...(routerConfig.toolsRoutes || [])
 		].map((route) => route.path, []);
+
+	const isEmbeddedNotificationsView =
+		new URLSearchParams(location.search).get('embeddedNotifications') ===
+		'1';
 
 	return (
 		<Switch>
@@ -73,7 +78,13 @@ export const Routing = (props: RoutingProps) => {
 				<Walkthrough />
 				<E2EEProvider>
 					<NonPlainRoutesWrapper logoutHandler={() => props.logout()}>
-						<div className="app__wrapper">
+						<div
+							className={`app__wrapper ${
+								isEmbeddedNotificationsView
+									? 'app__wrapper--embeddedNotifications'
+									: ''
+							}`}
+						>
 							<NavigationBar
 								routerConfig={routerConfig}
 								onLogout={() => props.logout()}
