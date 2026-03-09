@@ -1233,6 +1233,7 @@
 			}
 		},
 		"language": "Language",
+		"drafts": "Drafts",
 		"notifications": "Notifications",
 		"overview": "Overview",
 		"profile": "Profile",

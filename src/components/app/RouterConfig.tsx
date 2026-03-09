@@ -38,6 +38,7 @@ import { BookingEvents } from '../../containers/bookings/components/BookingEvent
 import { BookingReschedule } from '../../containers/bookings/components/BookingReschedule/bookingReschedule';
 import { hasVideoCallFeature } from '../../utils/videoCallHelpers';
 import { NotificationsCenter } from '../notificationsCenter/NotificationsCenter';
+import { DraftsCenter } from '../draftsCenter/DraftsCenter';
 
 const SessionView = lazy(() =>
 	import('../session/SessionView').then((m) => ({ default: m.SessionView }))
@@ -126,6 +127,14 @@ export const RouterConfigUser = (
 				}
 			},
 			{
+				to: '/drafts',
+				icon: MessagesIconOutline,
+				iconFilled: MessagesIconFilled,
+				titleKeys: {
+					large: 'navigation.drafts'
+				}
+			},
+			{
 				condition: (userData) => !userData.userName?.startsWith('Anonymous-'),
 				to: '/profile',
 				icon: ProfilIconOutline,
@@ -209,6 +218,11 @@ export const RouterConfigUser = (
 				component: NotificationsCenter
 			},
 			{
+				path: '/drafts',
+				exact: true,
+				component: DraftsCenter
+			},
+			{
 				path: '/profile',
 				exact: false,
 				component: Profile
@@ -268,6 +282,14 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 				iconFilled: NotificationBellIcon,
 				titleKeys: {
 					large: 'navigation.notifications'
+				}
+			},
+			{
+				to: '/drafts',
+				icon: MessagesIconOutline,
+				iconFilled: MessagesIconFilled,
+				titleKeys: {
+					large: 'navigation.drafts'
 				}
 			},
 			{
@@ -386,6 +408,11 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 				path: '/notifications',
 				exact: true,
 				component: NotificationsCenter
+			},
+			{
+				path: '/drafts',
+				exact: true,
+				component: DraftsCenter
 			},
 			{
 				path: '/overview',

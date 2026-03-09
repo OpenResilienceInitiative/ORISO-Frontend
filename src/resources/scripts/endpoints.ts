@@ -51,6 +51,7 @@ export const endpoints = {
 	consultingTypeServiceBase: apiUrl + '/service/consultingtypes',
 	deleteAskerAccount: apiUrl + '/service/users/account',
 	draftMessages: apiUrl + '/service/messages/draft',
+	userDrafts: apiUrl + '/service/users/drafts',
 	email: apiUrl + '/service/users/email',
 	error: apiUrl + '/service/logstash',
 	groupChatBase: apiUrl + '/service/users/chat/',
