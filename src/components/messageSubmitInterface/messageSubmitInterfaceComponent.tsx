@@ -7,7 +7,7 @@ import {
 	useRef,
 	useState
 } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useHistory, useLocation } from 'react-router-dom';
 
 import { SendMessageButton } from './SendMessageButton';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
@@ -173,6 +173,7 @@ export const MessageSubmitInterfaceComponent = ({
 	}, []);
 	const tenant = useTenant();
 	const history = useHistory();
+	const location = useLocation();
 	const { getDevToolbarOption } = useDevToolbar();
 
 	const textareaInputRef = useRef<HTMLDivElement>(null);
@@ -304,8 +305,43 @@ export const MessageSubmitInterfaceComponent = ({
 		setIsTypingActive(activeSession.isGroup);
 	}, [activeSession, activeSession.item.status, userData]);
 
-	const { onChange: onDraftMessageChange, loaded: draftLoaded } =
-		useDraftMessage(!isRequestInProgress, setEditorState);
+	const draftActionPath = useMemo(() => {
+		const params = new URLSearchParams(location.search);
+		params.delete('embeddedNotifications');
+		if (threadRootId) {
+			params.set('threadRootId', threadRootId);
+		} else {
+			params.delete('threadRootId');
+		}
+		const query = params.toString();
+		return `${location.pathname}${query ? `?${query}` : ''}`;
+	}, [location.pathname, location.search, threadRootId]);
+
+	const draftTitle = useMemo(() => {
+		const contact = getContact(activeSession);
+		const topicName =
+			typeof activeSession?.item?.topic === 'object'
+				? activeSession?.item?.topic?.name
+				: activeSession?.item?.topic;
+		return (
+			contact?.displayName ||
+			contact?.username ||
+			topicName ||
+			null
+		);
+	}, [activeSession]);
+
+	const {
+		onChange: onDraftMessageChange,
+		loaded: draftLoaded,
+		clearDraftMessage
+	} = useDraftMessage(!isRequestInProgress, setEditorState, {
+		threadRootId: threadRootId || null,
+		actionPath: draftActionPath,
+		sessionId: activeSession?.item?.id ?? null,
+		roomRef: activeSession?.rid ?? null,
+		title: draftTitle
+	});
 
 
 	useEffect(() => {
@@ -898,6 +934,7 @@ export const MessageSubmitInterfaceComponent = ({
 	const handleMessageSendSuccess = useCallback(() => {
 		onMessageSendSuccess?.();
 		setEditorState(EditorState.createEmpty());
+		clearDraftMessage();
 		setActiveInfo('');
 		// Force reset to default height after clearing - use multiple timeouts to ensure DOM updates
 		setTimeout(() => {
@@ -913,7 +950,7 @@ export const MessageSubmitInterfaceComponent = ({
 			resizeTextarea();
 		}, 200);
 		setTimeout(() => setIsRequestInProgress(false), 1200);
-	}, [onMessageSendSuccess, resizeTextarea]);
+	}, [clearDraftMessage, onMessageSendSuccess, resizeTextarea]);
 
 	const sendMessage = useCallback(
 		async (message, attachment: File, isEncrypted) => {

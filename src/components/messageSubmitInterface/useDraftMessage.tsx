@@ -1,9 +1,10 @@
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import {
-	apiGetDraftMessage,
-	apiPostDraftMessage,
+	apiDeleteUserDraft,
+	apiGetUserDraft,
+	apiUpsertUserDraft,
 	FETCH_ERRORS,
-	IDraftMessage
+	IUserDraftItem
 } from '../../api';
 import { decryptText, encryptText } from '../../utils/encryptionHelpers';
 import { apiPostError, ERROR_LEVEL_WARN } from '../../api/apiPostError';
@@ -16,86 +17,164 @@ import {
 	addEventListener,
 	removeEventListener
 } from '../../utils/eventHandler';
+import {
+	REMOTE_DRAFT_INDEX_SCOPE
+} from '../../services/draftStore';
 
-const SAVE_DRAFT_TIMEOUT = 10000;
+const SAVE_DRAFT_TIMEOUT = 1500;
 
 export const useDraftMessage = (
 	enabled: boolean,
-	loadFunction: (state: EditorState) => void
+	loadFunction: (state: EditorState) => void,
+	options?: {
+		threadRootId?: string | null;
+		actionPath?: string | null;
+		sessionId?: number | null;
+		roomRef?: string | null;
+		title?: string | null;
+	}
 ) => {
 	const { activeSession } = useContext(ActiveSessionContext);
 	const { isE2eeEnabled } = useContext(E2EEContext);
 
 	const draftSaveTimeout = useRef(null);
-	const willUnmount = useRef(false);
 
 	const { keyID, key, encrypted, ready } = useE2EE(activeSession.rid);
 
 	const [loaded, setLoaded] = useState(false);
-	const [messageRes, setMessageRes] = useState<IDraftMessage>(null);
+	const [messageRes, setMessageRes] = useState<IUserDraftItem>(null);
 	const [message, setMessage] = useState(null);
+	const scopeId = activeSession?.rid || activeSession?.item?.id;
+	const remoteScopeKey = `scope:${String(scopeId || 'unknown')}|thread:${
+		options?.threadRootId || 'main'
+	}`;
+	const canUseRemoteApi = !!scopeId;
 
 	const setEditorWithMarkdownString = useCallback(
 		(markdownString: string) => {
 			const rawObject = markdownToDraft(markdownString);
 			const draftContent = convertFromRaw(rawObject);
-			loadFunction(EditorState.createWithContent(draftContent));
+			const editorStateWithText = EditorState.createWithContent(draftContent);
+			loadFunction(EditorState.moveFocusToEnd(editorStateWithText));
 		},
 		[loadFunction]
 	);
 
+	const updateRemoteDraftIndex = useCallback(
+		async (draftText?: string) => {
+			if (!canUseRemoteApi) {
+				return;
+			}
+			const upsertPayload = {
+				actionPath: options?.actionPath || null,
+				title: options?.title || null,
+				sessionId: options?.sessionId ?? activeSession?.item?.id ?? null,
+				roomRef: options?.roomRef ?? activeSession?.rid ?? null,
+				threadRootId: options?.threadRootId || null,
+				updatedAt: Date.now()
+			};
+			let indexMap: Record<string, any> = {};
+			try {
+				const indexRes = await apiGetUserDraft(REMOTE_DRAFT_INDEX_SCOPE);
+				indexMap = indexRes?.text ? JSON.parse(indexRes.text) : {};
+			} catch (e: any) {
+				if (e?.message !== FETCH_ERRORS.EMPTY) {
+					indexMap = {};
+				}
+			}
+
+			if (draftText && draftText.trim().length > 0) {
+				indexMap[remoteScopeKey] = upsertPayload;
+			} else {
+				delete indexMap[remoteScopeKey];
+			}
+
+			await apiUpsertUserDraft(REMOTE_DRAFT_INDEX_SCOPE, {
+				text: JSON.stringify(indexMap)
+			}).catch();
+		},
+		[
+			activeSession?.item?.id,
+			activeSession?.rid,
+			canUseRemoteApi,
+			options?.actionPath,
+			options?.roomRef,
+			options?.sessionId,
+			options?.threadRootId,
+			options?.title,
+			remoteScopeKey
+		]
+	);
+
 	// Load the draft message from the api but do not show it because its encrypted
 	useEffect(() => {
-		// MATRIX MIGRATION: Skip draft message loading for Matrix sessions (no rid) or group chats
-		// Group chats use Matrix and don't support draft messages yet
-		if (!activeSession.rid || activeSession.isGroup) {
+		const abortController = new AbortController();
+		setLoaded(false);
+		setMessageRes(null);
+		if (!canUseRemoteApi) {
 			setLoaded(true);
-			return;
+			return () => {
+				abortController?.abort();
+			};
 		}
 
-		const abortController = new AbortController();
-		apiGetDraftMessage(activeSession.rid, abortController.signal)
-			.then(setMessageRes)
+		apiGetUserDraft(remoteScopeKey, abortController.signal)
+			.then((remoteDraft) => {
+				if (!remoteDraft?.text) {
+					setLoaded(true);
+					return;
+				}
+				setMessageRes(remoteDraft);
+			})
 			.catch((e) => {
 				if (e.message === FETCH_ERRORS.EMPTY) {
 					setLoaded(true);
 					return;
 				}
-				// console.error('Error loading Draft Message: ', e);
+				setLoaded(true);
 			});
 
 		return () => {
 			abortController?.abort();
 		};
-	}, [activeSession.rid, activeSession.isGroup]);
+	}, [
+		canUseRemoteApi,
+		remoteScopeKey,
+		setEditorWithMarkdownString
+	]);
 
 	// If everything is ready for decryption, decrypt the draft message
 	useEffect(() => {
-		if (!ready || !messageRes) {
+		if (!messageRes) {
 			return;
 		}
 
-		if (!messageRes.message) {
+		if (!messageRes.text) {
 			setLoaded(true);
 			return;
 		}
 
-		if (!isE2eeEnabled || messageRes.t !== 'e2e') {
-			setEditorWithMarkdownString(messageRes.message);
-			setMessage(messageRes.message);
+		// Plain drafts must never wait for key readiness, otherwise the input can stay locked.
+		if (!isE2eeEnabled || !encrypted) {
+			setEditorWithMarkdownString(messageRes.text);
+			setMessage(messageRes.text);
 			setLoaded(true);
+			return;
+		}
+
+		if (!ready) {
 			return;
 		}
 
 		decryptText(
-			messageRes.message,
+			messageRes.text,
 			keyID,
 			key,
 			encrypted,
-			messageRes.t === 'e2e',
+			false,
 			'enc.'
 		)
-			.catch(() => messageRes.message)
+			.catch(() => messageRes.text)
 			.then((msg) => {
 				setEditorWithMarkdownString(msg);
 				setMessage(msg);
@@ -113,13 +192,11 @@ export const useDraftMessage = (
 
 	const saveDraftMessage = useCallback(
 		async (draftMessage) => {
-			// MATRIX MIGRATION: Skip draft saving for group chats (Matrix-based)
-			if (!enabled || !loaded || !activeSession.rid || activeSession.isGroup) {
+			if (!enabled || !loaded) {
 				return;
 			}
-			const groupId = activeSession.rid;
 			let message = draftMessage ?? '';
-			let encryptType = '';
+
 			if (isE2eeEnabled && encrypted && draftMessage) {
 				try {
 					message = await encryptText(
@@ -128,7 +205,6 @@ export const useDraftMessage = (
 						key,
 						'enc.'
 					);
-					encryptType = 'e2e';
 				} catch (e: any) {
 					await apiPostError({
 						name: e.name,
@@ -139,16 +215,35 @@ export const useDraftMessage = (
 				}
 			}
 
-			await apiPostDraftMessage(groupId, message, encryptType).catch();
+			if (canUseRemoteApi) {
+				await apiUpsertUserDraft(remoteScopeKey, {
+					text: message,
+					actionPath: options?.actionPath || null,
+					title: options?.title || null,
+					sourceSessionId: options?.sessionId ?? activeSession?.item?.id ?? null,
+					roomRef: options?.roomRef ?? activeSession?.rid ?? null,
+					threadRootId: options?.threadRootId || null
+				}).catch();
+				await updateRemoteDraftIndex(draftMessage);
+			}
 		},
 		[
-			activeSession.rid,
+			activeSession?.item?.id,
+			activeSession?.rid,
+			canUseRemoteApi,
 			loaded,
 			encrypted,
 			isE2eeEnabled,
 			enabled,
 			key,
-			keyID
+			keyID,
+			options?.actionPath,
+			options?.roomRef,
+			options?.sessionId,
+			options?.threadRootId,
+			options?.title,
+			remoteScopeKey,
+			updateRemoteDraftIndex
 		]
 	);
 
@@ -170,12 +265,6 @@ export const useDraftMessage = (
 		},
 		[loaded, saveDraftMessage]
 	);
-
-	useEffect(() => {
-		return () => {
-			willUnmount.current = true;
-		};
-	}, []);
 
 	const onLogout = useCallback(
 		async (args) => {
@@ -199,9 +288,6 @@ export const useDraftMessage = (
 
 	useEffect(() => {
 		return () => {
-			if (!willUnmount.current) {
-				return;
-			}
 			if (draftSaveTimeout.current) {
 				clearTimeout(draftSaveTimeout.current);
 				draftSaveTimeout.current = null;
@@ -210,8 +296,17 @@ export const useDraftMessage = (
 		};
 	}, [message, saveDraftMessage]);
 
+	const clearDraftMessage = useCallback(() => {
+		if (canUseRemoteApi) {
+			apiDeleteUserDraft(remoteScopeKey).catch();
+			updateRemoteDraftIndex('').catch();
+		}
+		setMessage('');
+	}, [canUseRemoteApi, remoteScopeKey, updateRemoteDraftIndex]);
+
 	return {
 		onChange,
-		loaded
+		loaded,
+		clearDraftMessage
 	};
 };
