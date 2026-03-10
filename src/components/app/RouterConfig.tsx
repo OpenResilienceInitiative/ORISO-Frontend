@@ -30,6 +30,7 @@ import { ReactComponent as ToolsIconFilled } from '../../resources/img/icons/too
 import { ReactComponent as CalendarIconOutline } from '../../resources/img/icons/calendar_outline.svg';
 import { ReactComponent as CalendarIconFilled } from '../../resources/img/icons/calendar_filled.svg';
 import { ReactComponent as NotificationBellIcon } from '../../resources/img/icons/notification_bell.svg';
+import { ReactComponent as DraftsNavigationIcon } from '../../resources/img/icons/drafts_navigation.svg';
 import { ToolsList } from '../tools/ToolsList';
 import { OverviewPage } from '../../containers/overview/overview';
 import { Booking } from '../../containers/bookings/components/Booking/booking';
@@ -128,8 +129,8 @@ export const RouterConfigUser = (
 			},
 			{
 				to: '/drafts',
-				icon: MessagesIconOutline,
-				iconFilled: MessagesIconFilled,
+				icon: DraftsNavigationIcon,
+				iconFilled: DraftsNavigationIcon,
 				titleKeys: {
 					large: 'navigation.drafts'
 				}
@@ -286,8 +287,8 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 			},
 			{
 				to: '/drafts',
-				icon: MessagesIconOutline,
-				iconFilled: MessagesIconFilled,
+				icon: DraftsNavigationIcon,
+				iconFilled: DraftsNavigationIcon,
 				titleKeys: {
 					large: 'navigation.drafts'
 				}
