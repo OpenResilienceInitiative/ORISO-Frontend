@@ -20,11 +20,19 @@ const formatRelativeTime = (timestamp?: string | null) => {
 	return `${diffDays}d`;
 };
 
-const withEmbeddedNotificationsParam = (path: string) => {
+const withEmbeddedNotificationsParam = (
+	path: string,
+	draftScopeKey?: string | null
+) => {
 	if (!path) {
 		return null;
 	}
-	return `${path}${path.includes('?') ? '&' : '?'}embeddedNotifications=1`;
+	const params = [`embeddedNotifications=1`];
+	if (draftScopeKey) {
+		// Force iframe navigation when users switch between drafts in the same chat context.
+		params.push(`draftScopeKey=${encodeURIComponent(draftScopeKey)}`);
+	}
+	return `${path}${path.includes('?') ? '&' : '?'}${params.join('&')}`;
 };
 
 export const DraftsCenter = () => {
@@ -74,9 +82,12 @@ export const DraftsCenter = () => {
 	const embeddedChatPath = useMemo(
 		() =>
 			selectedDraft?.actionPath
-				? withEmbeddedNotificationsParam(selectedDraft.actionPath)
+				? withEmbeddedNotificationsParam(
+						selectedDraft.actionPath,
+						selectedDraft.scopeKey
+				  )
 				: null,
-		[selectedDraft?.actionPath]
+		[selectedDraft?.actionPath, selectedDraft?.scopeKey]
 	);
 	const getNextDraftKey = useCallback(
 		(currentKey: string | null): string | null => {
@@ -210,6 +221,7 @@ export const DraftsCenter = () => {
 							{embeddedChatPath && (
 								<div className="draftsCenter__embeddedSession">
 									<iframe
+										key={selectedDraft.scopeKey}
 										title="drafts-chat-session"
 										src={embeddedChatPath}
 										className="draftsCenter__embeddedSessionFrame"

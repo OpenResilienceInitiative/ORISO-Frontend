@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import {
 	apiDeleteUserDraft,
 	apiGetUserDraft,
@@ -44,11 +44,19 @@ export const useDraftMessage = (
 	const [loaded, setLoaded] = useState(false);
 	const [messageRes, setMessageRes] = useState<IUserDraftItem>(null);
 	const [message, setMessage] = useState(null);
-	const scopeId = activeSession?.rid || activeSession?.item?.id;
-	const remoteScopeKey = `scope:${String(scopeId || 'unknown')}|thread:${
-		options?.threadRootId || 'main'
-	}`;
-	const canUseRemoteApi = !!scopeId;
+	const threadKey = options?.threadRootId || 'main';
+	const roomScopeKey = activeSession?.rid
+		? `scope:${String(activeSession.rid)}|thread:${threadKey}`
+		: null;
+	const sessionScopeKey = activeSession?.item?.id
+		? `scope:${String(activeSession.item.id)}|thread:${threadKey}`
+		: null;
+	const scopeKeysToTry = useMemo(
+		() => Array.from(new Set([roomScopeKey, sessionScopeKey].filter(Boolean))),
+		[roomScopeKey, sessionScopeKey]
+	);
+	const remoteScopeKey = roomScopeKey || sessionScopeKey || `scope:unknown|thread:${threadKey}`;
+	const canUseRemoteApi = scopeKeysToTry.length > 0;
 
 	const setEditorWithMarkdownString = useCallback(
 		(markdownString: string) => {
@@ -118,28 +126,34 @@ export const useDraftMessage = (
 			};
 		}
 
-		apiGetUserDraft(remoteScopeKey, abortController.signal)
-			.then((remoteDraft) => {
-				if (!remoteDraft?.text) {
-					setLoaded(true);
-					return;
+		const loadDraft = async () => {
+			for (const scopeKey of scopeKeysToTry) {
+				try {
+					const remoteDraft = await apiGetUserDraft(
+						scopeKey,
+						abortController.signal
+					);
+					if (remoteDraft?.text) {
+						setMessageRes(remoteDraft);
+						return;
+					}
+				} catch (e: any) {
+					if (e?.message !== FETCH_ERRORS.EMPTY) {
+						// Ignore and continue to next fallback scope key.
+					}
 				}
-				setMessageRes(remoteDraft);
-			})
-			.catch((e) => {
-				if (e.message === FETCH_ERRORS.EMPTY) {
-					setLoaded(true);
-					return;
-				}
-				setLoaded(true);
-			});
+			}
+			setLoaded(true);
+		};
+
+		void loadDraft();
 
 		return () => {
 			abortController?.abort();
 		};
 	}, [
 		canUseRemoteApi,
-		remoteScopeKey,
+		scopeKeysToTry,
 		setEditorWithMarkdownString
 	]);
 
@@ -298,11 +312,13 @@ export const useDraftMessage = (
 
 	const clearDraftMessage = useCallback(() => {
 		if (canUseRemoteApi) {
-			apiDeleteUserDraft(remoteScopeKey).catch();
+			scopeKeysToTry.forEach((scopeKey) => {
+				apiDeleteUserDraft(scopeKey).catch();
+			});
 			updateRemoteDraftIndex('').catch();
 		}
 		setMessage('');
-	}, [canUseRemoteApi, remoteScopeKey, updateRemoteDraftIndex]);
+	}, [canUseRemoteApi, scopeKeysToTry, updateRemoteDraftIndex]);
 
 	return {
 		onChange,
