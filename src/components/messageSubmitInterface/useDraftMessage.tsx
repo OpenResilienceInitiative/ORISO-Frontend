@@ -44,6 +44,10 @@ export const useDraftMessage = (
 	const [loaded, setLoaded] = useState(false);
 	const [messageRes, setMessageRes] = useState<IUserDraftItem>(null);
 	const [message, setMessage] = useState(null);
+	const isEmbeddedNotificationsView =
+		new URLSearchParams(window.location.search).get(
+			'embeddedNotifications'
+		) === '1';
 	const scopeId = activeSession?.rid || activeSession?.item?.id;
 	const remoteScopeKey = `scope:${String(scopeId || 'unknown')}|thread:${
 		options?.threadRootId || 'main'
@@ -192,7 +196,8 @@ export const useDraftMessage = (
 
 	const saveDraftMessage = useCallback(
 		async (draftMessage) => {
-			if (!enabled || !loaded) {
+			// Embedded preview iframes must not persist drafts on unmount/switch.
+			if (!enabled || !loaded || isEmbeddedNotificationsView) {
 				return;
 			}
 			let message = draftMessage ?? '';
@@ -235,6 +240,7 @@ export const useDraftMessage = (
 			encrypted,
 			isE2eeEnabled,
 			enabled,
+			isEmbeddedNotificationsView,
 			key,
 			keyID,
 			options?.actionPath,
@@ -297,12 +303,21 @@ export const useDraftMessage = (
 	}, [message, saveDraftMessage]);
 
 	const clearDraftMessage = useCallback(() => {
+		if (isEmbeddedNotificationsView) {
+			setMessage('');
+			return;
+		}
 		if (canUseRemoteApi) {
 			apiDeleteUserDraft(remoteScopeKey).catch();
 			updateRemoteDraftIndex('').catch();
 		}
 		setMessage('');
-	}, [canUseRemoteApi, remoteScopeKey, updateRemoteDraftIndex]);
+	}, [
+		canUseRemoteApi,
+		isEmbeddedNotificationsView,
+		remoteScopeKey,
+		updateRemoteDraftIndex
+	]);
 
 	return {
 		onChange,

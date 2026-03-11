@@ -20,6 +20,13 @@ const formatRelativeTime = (timestamp?: string | null) => {
 	return `${diffDays}d`;
 };
 
+const withEmbeddedNotificationsParam = (path: string) => {
+	if (!path) {
+		return null;
+	}
+	return `${path}${path.includes('?') ? '&' : '?'}embeddedNotifications=1`;
+};
+
 export const DraftsCenter = () => {
 	const { t: translate } = useTranslation();
 	const history = useHistory();
@@ -64,6 +71,29 @@ export const DraftsCenter = () => {
 		() => drafts.find((entry) => entry.scopeKey === selectedDraftKey) || null,
 		[drafts, selectedDraftKey]
 	);
+	const embeddedChatPath = useMemo(
+		() =>
+			selectedDraft?.actionPath
+				? withEmbeddedNotificationsParam(selectedDraft.actionPath)
+				: null,
+		[selectedDraft?.actionPath]
+	);
+	const getNextDraftKey = useCallback(
+		(currentKey: string | null): string | null => {
+			if (!drafts.length) {
+				return null;
+			}
+			const currentIndex = currentKey
+				? drafts.findIndex((entry) => entry.scopeKey === currentKey)
+				: -1;
+			if (currentIndex < 0 || currentIndex === drafts.length - 1) {
+				return drafts[0]?.scopeKey || null;
+			}
+			return drafts[currentIndex + 1]?.scopeKey || null;
+		},
+		[drafts]
+	);
+	const nextDraftKey = getNextDraftKey(selectedDraftKey);
 
 	const handleOpenDraft = useCallback(
 		(entry: IUserDraftItem) => {
@@ -80,6 +110,12 @@ export const DraftsCenter = () => {
 			setRefreshToken((token) => token + 1)
 		);
 	}, []);
+
+	const handleNextDraft = useCallback(() => {
+		if (nextDraftKey) {
+			setSelectedDraftKey(nextDraftKey);
+		}
+	}, [nextDraftKey]);
 
 	return (
 		<div className="draftsCenter">
@@ -112,6 +148,11 @@ export const DraftsCenter = () => {
 								}`}
 								onClick={() => setSelectedDraftKey(entry.scopeKey)}
 							>
+								<div className="draftsCenter__listItemTagRow">
+									<span className="draftsCenter__listItemTag">
+										{translate('drafts.center.messageTag', 'Draft')}
+									</span>
+								</div>
 								<div className="draftsCenter__listItemHeader">
 									<span className="draftsCenter__listItemTitle">
 										{entry.title ||
@@ -131,14 +172,22 @@ export const DraftsCenter = () => {
 						))
 					)}
 				</div>
-				<div className="draftsCenter__detail">
+				<div
+					className={`draftsCenter__detail ${
+						embeddedChatPath ? 'draftsCenter__detail--embeddedChat' : ''
+					}`}
+				>
 					{selectedDraft ? (
 						<div className="draftsCenter__detailCard">
 							<h3 className="draftsCenter__detailTitle">
 								{selectedDraft.title ||
 									translate('drafts.center.untitledChat', 'Chat')}
 							</h3>
-							<p className="draftsCenter__detailText">{selectedDraft.text}</p>
+							{!embeddedChatPath && (
+								<p className="draftsCenter__detailText">
+									{selectedDraft.text}
+								</p>
+							)}
 							<div className="draftsCenter__detailActions">
 								<button
 									type="button"
@@ -149,12 +198,29 @@ export const DraftsCenter = () => {
 								</button>
 								<button
 									type="button"
+									className="draftsCenter__nextButton"
+									onClick={handleNextDraft}
+									disabled={!nextDraftKey}
+								>
+									{translate('drafts.center.next', 'Next draft')}
+								</button>
+								<button
+									type="button"
 									className="draftsCenter__deleteButton"
 									onClick={() => handleDeleteDraft(selectedDraft)}
 								>
 									{translate('drafts.center.delete', 'Delete draft')}
 								</button>
 							</div>
+							{embeddedChatPath && (
+								<div className="draftsCenter__embeddedSession">
+									<iframe
+										title="drafts-chat-session"
+										src={embeddedChatPath}
+										className="draftsCenter__embeddedSessionFrame"
+									/>
+								</div>
+							)}
 						</div>
 					) : (
 						<div className="draftsCenter__empty">

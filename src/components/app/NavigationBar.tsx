@@ -24,7 +24,7 @@ import { ReactComponent as LogoutIconOutline } from '../../resources/img/icons/l
 import { ReactComponent as LogoutIconFilled } from '../../resources/img/icons/logout_filled.svg';
 import clsx from 'clsx';
 import { RocketChatUnreadContext } from '../../globalState/provider/RocketChatUnreadProvider';
-import { apiGetAskerSessionList } from '../../api';
+import { apiGetAskerSessionList, apiGetUserDrafts } from '../../api';
 import { useTranslation } from 'react-i18next';
 import { LocaleSwitch } from '../localeSwitch/LocaleSwitch';
 import { userHasBudibaseTools } from '../../api/apiGetTools';
@@ -32,6 +32,7 @@ import { browserNotificationsSettings } from '../../utils/notificationHelpers';
 import useIsFirstVisit from '../../utils/useIsFirstVisit';
 import { useResponsive } from '../../hooks/useResponsive';
 import { MENUPLACEMENT_RIGHT } from '../select/SelectDropdown';
+import { REMOTE_DRAFT_INDEX_SCOPE } from '../../services/draftStore';
 
 export interface NavigationBarProps {
 	onLogout: any;
@@ -60,6 +61,7 @@ export const NavigationBar = ({
 	);
 	const { tenant } = useContext(TenantContext);
 	const { unreadNotificationCount } = useContext(NotificationsContext);
+	const [draftCount, setDraftCount] = useState(0);
 
 	const ref_menu = useRef<any[]>([]);
 	const ref_local = useRef<any>(null);
@@ -72,6 +74,9 @@ export const NavigationBar = ({
 
 	const location = useLocation();
 	const [animateNavIcon, setAnimateNavIcon] = useState(false);
+	const isEmbeddedNotificationsView =
+		new URLSearchParams(location.search).get('embeddedNotifications') ===
+		'1';
 
 	useEffect(() => {
 		initNavigationHandler();
@@ -97,6 +102,40 @@ export const NavigationBar = ({
 		}
 	}, [tenant, userData, isConsultant]);
 
+	const loadDraftCount = useCallback(async () => {
+		if (isEmbeddedNotificationsView) {
+			setDraftCount(0);
+			return;
+		}
+		const response = await apiGetUserDrafts(0, 200).catch(() => null);
+		const visibleDrafts =
+			response?.items?.filter(
+				(entry) => entry.scopeKey !== REMOTE_DRAFT_INDEX_SCOPE
+			) || [];
+		setDraftCount(visibleDrafts.length);
+	}, [isEmbeddedNotificationsView]);
+
+	useEffect(() => {
+		void loadDraftCount();
+	}, [loadDraftCount, location.pathname]);
+
+	useEffect(() => {
+		if (isEmbeddedNotificationsView) {
+			return;
+		}
+		const onFocus = () => {
+			void loadDraftCount();
+		};
+		window.addEventListener('focus', onFocus);
+		const intervalId = window.setInterval(() => {
+			void loadDraftCount();
+		}, 20000);
+		return () => {
+			window.removeEventListener('focus', onFocus);
+			window.clearInterval(intervalId);
+		};
+	}, [isEmbeddedNotificationsView, loadDraftCount]);
+
 	const animateNavIconTimeoutRef = useRef(null);
 	useEffect(() => {
 		if (animateNavIconTimeoutRef.current) {
@@ -105,7 +144,8 @@ export const NavigationBar = ({
 
 		if (
 			unreadSessions.length + unreadGroup.length > 0 ||
-			unreadNotificationCount > 0
+			unreadNotificationCount > 0 ||
+			draftCount > 0
 		) {
 			setAnimateNavIcon(true);
 		}
@@ -114,14 +154,15 @@ export const NavigationBar = ({
 			setAnimateNavIcon(false);
 			animateNavIconTimeoutRef.current = null;
 		}, 1000);
-	}, [unreadSessions, unreadGroup, unreadNotificationCount]);
+	}, [unreadSessions, unreadGroup, unreadNotificationCount, draftCount]);
 
 	const pathsToShowUnreadMessageNotification = {
 		'/sessions/consultant/sessionView':
 			unreadSessions.length + unreadGroup.length,
 		'/sessions/user/view': unreadSessions.length + unreadGroup.length,
 		'/profile': isFirstVisit && !browserNotificationsSettings().visited ? 1 : 0,
-		'/notifications': unreadNotificationCount
+		'/notifications': unreadNotificationCount,
+		'/drafts': draftCount
 	};
 
 	const pathToClassNameInWalkThrough = React.useCallback((to: string) => {
@@ -276,7 +317,10 @@ export const NavigationBar = ({
 													aria-label={translate(
 														item.titleKeys.large
 													)}
-													className="navigation__icon__outline"
+													className={clsx('navigation__icon__outline', {
+														'navigation__icon--drafts':
+															item.to === '/drafts'
+													})}
 												/>
 											)}
 											{IconFilled && (
@@ -287,7 +331,10 @@ export const NavigationBar = ({
 													aria-label={translate(
 														item.titleKeys.large
 													)}
-													className="navigation__icon__filled"
+													className={clsx('navigation__icon__filled', {
+														'navigation__icon--drafts':
+															item.to === '/drafts'
+													})}
 												/>
 											)}
 										</div>

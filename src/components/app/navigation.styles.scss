@@ -276,6 +276,13 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 		color: #d32f2f;
 	}
 
+	&__icon--drafts {
+		path {
+			fill: none !important;
+			stroke: currentColor;
+		}
+	}
+
 	&__item__count {
 		color: #d32f2f;
 		background-color: #ffffff;
