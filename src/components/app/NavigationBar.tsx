@@ -74,6 +74,9 @@ export const NavigationBar = ({
 
 	const location = useLocation();
 	const [animateNavIcon, setAnimateNavIcon] = useState(false);
+	const isEmbeddedNotificationsView =
+		new URLSearchParams(location.search).get('embeddedNotifications') ===
+		'1';
 
 	useEffect(() => {
 		initNavigationHandler();
@@ -100,19 +103,26 @@ export const NavigationBar = ({
 	}, [tenant, userData, isConsultant]);
 
 	const loadDraftCount = useCallback(async () => {
+		if (isEmbeddedNotificationsView) {
+			setDraftCount(0);
+			return;
+		}
 		const response = await apiGetUserDrafts(0, 200).catch(() => null);
 		const visibleDrafts =
 			response?.items?.filter(
 				(entry) => entry.scopeKey !== REMOTE_DRAFT_INDEX_SCOPE
 			) || [];
 		setDraftCount(visibleDrafts.length);
-	}, []);
+	}, [isEmbeddedNotificationsView]);
 
 	useEffect(() => {
 		void loadDraftCount();
 	}, [loadDraftCount, location.pathname]);
 
 	useEffect(() => {
+		if (isEmbeddedNotificationsView) {
+			return;
+		}
 		const onFocus = () => {
 			void loadDraftCount();
 		};
@@ -124,7 +134,7 @@ export const NavigationBar = ({
 			window.removeEventListener('focus', onFocus);
 			window.clearInterval(intervalId);
 		};
-	}, [loadDraftCount]);
+	}, [isEmbeddedNotificationsView, loadDraftCount]);
 
 	const animateNavIconTimeoutRef = useRef(null);
 	useEffect(() => {

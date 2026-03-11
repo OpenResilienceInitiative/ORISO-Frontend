@@ -183,6 +183,11 @@ export const DraftsCenter = () => {
 								{selectedDraft.title ||
 									translate('drafts.center.untitledChat', 'Chat')}
 							</h3>
+							{!embeddedChatPath && (
+								<p className="draftsCenter__detailText">
+									{selectedDraft.text}
+								</p>
+							)}
 							<div className="draftsCenter__detailActions">
 								<button
 									type="button"
