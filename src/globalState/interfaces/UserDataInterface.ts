@@ -11,6 +11,7 @@ export interface UserDataInterface {
 	displayName?: string;
 	e2eEncryptionEnabled: boolean;
 	email?: string;
+	magicLinkLoginEnabled?: boolean;
 	emailToggles: { name: string; state: boolean }[];
 	firstName?: string;
 	formalLanguage: boolean;

@@ -32,12 +32,14 @@ export const useDraftMessage = (
 		sessionId?: number | null;
 		roomRef?: string | null;
 		title?: string | null;
+		forcedScopeKey?: string | null;
 	}
 ) => {
 	const { activeSession } = useContext(ActiveSessionContext);
 	const { isE2eeEnabled } = useContext(E2EEContext);
 
 	const draftSaveTimeout = useRef(null);
+	const loadVersionRef = useRef(0);
 
 	const { keyID, key, encrypted, ready } = useE2EE(activeSession.rid);
 
@@ -51,11 +53,19 @@ export const useDraftMessage = (
 	const sessionScopeKey = activeSession?.item?.id
 		? `scope:${String(activeSession.item.id)}|thread:${threadKey}`
 		: null;
+	const forcedScopeKey = options?.forcedScopeKey?.trim() || null;
 	const scopeKeysToTry = useMemo(
-		() => Array.from(new Set([roomScopeKey, sessionScopeKey].filter(Boolean))),
-		[roomScopeKey, sessionScopeKey]
+		() =>
+			Array.from(
+				new Set([forcedScopeKey, roomScopeKey, sessionScopeKey].filter(Boolean))
+			),
+		[forcedScopeKey, roomScopeKey, sessionScopeKey]
 	);
-	const remoteScopeKey = roomScopeKey || sessionScopeKey || `scope:unknown|thread:${threadKey}`;
+	const remoteScopeKey =
+		forcedScopeKey ||
+		roomScopeKey ||
+		sessionScopeKey ||
+		`scope:unknown|thread:${threadKey}`;
 	const canUseRemoteApi = scopeKeysToTry.length > 0;
 
 	const setEditorWithMarkdownString = useCallback(
@@ -117,6 +127,7 @@ export const useDraftMessage = (
 	// Load the draft message from the api but do not show it because its encrypted
 	useEffect(() => {
 		const abortController = new AbortController();
+		const currentLoadVersion = ++loadVersionRef.current;
 		setLoaded(false);
 		setMessageRes(null);
 		if (!canUseRemoteApi) {
@@ -133,7 +144,10 @@ export const useDraftMessage = (
 						scopeKey,
 						abortController.signal
 					);
-					if (remoteDraft?.text) {
+					if (
+						currentLoadVersion === loadVersionRef.current &&
+						remoteDraft?.text
+					) {
 						setMessageRes(remoteDraft);
 						return;
 					}
@@ -143,7 +157,9 @@ export const useDraftMessage = (
 					}
 				}
 			}
-			setLoaded(true);
+			if (currentLoadVersion === loadVersionRef.current) {
+				setLoaded(true);
+			}
 		};
 
 		void loadDraft();
@@ -162,17 +178,22 @@ export const useDraftMessage = (
 		if (!messageRes) {
 			return;
 		}
+		const decryptLoadVersion = loadVersionRef.current;
 
 		if (!messageRes.text) {
-			setLoaded(true);
+			if (decryptLoadVersion === loadVersionRef.current) {
+				setLoaded(true);
+			}
 			return;
 		}
 
 		// Plain drafts must never wait for key readiness, otherwise the input can stay locked.
 		if (!isE2eeEnabled || !encrypted) {
-			setEditorWithMarkdownString(messageRes.text);
-			setMessage(messageRes.text);
-			setLoaded(true);
+			if (decryptLoadVersion === loadVersionRef.current) {
+				setEditorWithMarkdownString(messageRes.text);
+				setMessage(messageRes.text);
+				setLoaded(true);
+			}
 			return;
 		}
 
@@ -190,6 +211,9 @@ export const useDraftMessage = (
 		)
 			.catch(() => messageRes.text)
 			.then((msg) => {
+				if (decryptLoadVersion !== loadVersionRef.current) {
+					return;
+				}
 				setEditorWithMarkdownString(msg);
 				setMessage(msg);
 				setLoaded(true);

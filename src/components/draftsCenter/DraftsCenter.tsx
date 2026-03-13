@@ -27,12 +27,28 @@ const withEmbeddedNotificationsParam = (
 	if (!path) {
 		return null;
 	}
-	const params = [`embeddedNotifications=1`];
+	const [basePath, queryString = ''] = path.split('?');
+	const query = new URLSearchParams(queryString);
+	query.set('embeddedNotifications', '1');
 	if (draftScopeKey) {
 		// Force iframe navigation when users switch between drafts in the same chat context.
-		params.push(`draftScopeKey=${encodeURIComponent(draftScopeKey)}`);
+		query.set('draftScopeKey', draftScopeKey);
+	} else {
+		query.delete('draftScopeKey');
 	}
-	return `${path}${path.includes('?') ? '&' : '?'}${params.join('&')}`;
+	const finalQuery = query.toString();
+	return `${basePath}${finalQuery ? `?${finalQuery}` : ''}`;
+};
+
+const withDraftScopeParam = (path: string, draftScopeKey?: string | null) => {
+	if (!path || !draftScopeKey) {
+		return path;
+	}
+	const [basePath, queryString = ''] = path.split('?');
+	const query = new URLSearchParams(queryString);
+	query.set('draftScopeKey', draftScopeKey);
+	const finalQuery = query.toString();
+	return `${basePath}${finalQuery ? `?${finalQuery}` : ''}`;
 };
 
 export const DraftsCenter = () => {
@@ -41,6 +57,15 @@ export const DraftsCenter = () => {
 	const [selectedDraftKey, setSelectedDraftKey] = useState<string | null>(null);
 	const [refreshToken, setRefreshToken] = useState(0);
 	const [drafts, setDrafts] = useState<IUserDraftItem[]>([]);
+
+	useEffect(() => {
+		const intervalId = window.setInterval(() => {
+			setRefreshToken((token) => token + 1);
+		}, 60000);
+		return () => {
+			window.clearInterval(intervalId);
+		};
+	}, []);
 
 	useEffect(() => {
 		let isMounted = true;
@@ -111,7 +136,7 @@ export const DraftsCenter = () => {
 			if (!entry.actionPath) {
 				return;
 			}
-			history.push(entry.actionPath);
+			history.push(withDraftScopeParam(entry.actionPath, entry.scopeKey));
 		},
 		[history]
 	);

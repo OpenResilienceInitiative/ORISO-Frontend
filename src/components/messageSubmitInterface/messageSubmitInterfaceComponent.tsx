@@ -308,6 +308,7 @@ export const MessageSubmitInterfaceComponent = ({
 	const draftActionPath = useMemo(() => {
 		const params = new URLSearchParams(location.search);
 		params.delete('embeddedNotifications');
+		params.delete('draftScopeKey');
 		if (threadRootId) {
 			params.set('threadRootId', threadRootId);
 		} else {
@@ -331,6 +332,12 @@ export const MessageSubmitInterfaceComponent = ({
 		);
 	}, [activeSession]);
 
+	const forcedDraftScopeKey = useMemo(() => {
+		const params = new URLSearchParams(location.search);
+		const allScopeKeys = params.getAll('draftScopeKey');
+		return allScopeKeys.length ? allScopeKeys[allScopeKeys.length - 1] : null;
+	}, [location.search]);
+
 	const {
 		onChange: onDraftMessageChange,
 		loaded: draftLoaded,
@@ -340,7 +347,8 @@ export const MessageSubmitInterfaceComponent = ({
 		actionPath: draftActionPath,
 		sessionId: activeSession?.item?.id ?? null,
 		roomRef: activeSession?.rid ?? null,
-		title: draftTitle
+		title: draftTitle,
+		forcedScopeKey: forcedDraftScopeKey
 	});
 
 

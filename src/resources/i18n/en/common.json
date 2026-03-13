@@ -1120,6 +1120,20 @@
 		"resetPasswort": {
 			"label": "Forgot password?"
 		},
+		"magicLink": {
+			"label": "Login with magic link",
+			"submitLabel": "Send magic link",
+			"emailLabel": "Email",
+			"usernameLabel": "Username",
+			"emailRequired": "Please enter your email first.",
+			"notEnabled": "Magic link login is not enabled for this account.",
+			"usernameRequired": "Please enter your username first.",
+			"sentInfo": "If this account is eligible, a magic-link email has been sent for {{username}}."
+		},
+		"tabs": {
+			"password": "Password",
+			"magicLink": "Magic Link"
+		},
 		"seperator": "or",
 		"user": {
 			"label": "Username/E-mail"
@@ -1436,6 +1450,15 @@
 			},
 			"masterKey": {
 				"saveError": "A problem occurred while changing the password. Please try again."
+			},
+			"magicLinks": {
+				"subtitle": "Enable Magic Links as a passwordless login option. This is a UI activation control for the current rollout.",
+				"title": "Magic Links Login",
+				"emailRequired": "You must set an email in your profile before enabling Magic Links login.",
+				"toggle": {
+					"disabled": "Magic Links login feature disabled",
+					"enabled": "Magic Links login feature enabled"
+				}
 			},
 			"password": {
 				"reset": {
