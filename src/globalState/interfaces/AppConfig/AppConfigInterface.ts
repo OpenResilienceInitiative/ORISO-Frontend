@@ -55,4 +55,5 @@ export interface AppConfigInterface extends AppSettingsInterface {
 interface ReleaseToggles {
 	enableNewNotifications?: boolean;
 	featureVideoGroupChatsEnabled?: boolean;
+	enableMagicLinksLogin?: boolean;
 }

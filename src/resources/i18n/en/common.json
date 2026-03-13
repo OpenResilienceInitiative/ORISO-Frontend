@@ -1437,6 +1437,14 @@
 			"masterKey": {
 				"saveError": "A problem occurred while changing the password. Please try again."
 			},
+			"magicLinks": {
+				"button": {
+					"enable": "Turn on Magic Links login feature",
+					"enabled": "Magic Links login feature enabled"
+				},
+				"subtitle": "Enable Magic Links as a passwordless login option. This is a UI activation control for the current rollout.",
+				"title": "Magic Links Login"
+			},
 			"password": {
 				"reset": {
 					"confirm": {

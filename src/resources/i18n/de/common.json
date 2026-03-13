@@ -1460,6 +1460,14 @@
 			"masterKey": {
 				"saveError": "Beim Passwort Ändern ist ein Problem aufgetaucht. Bitte versuchen Sie es erneut."
 			},
+			"magicLinks": {
+				"button": {
+					"enable": "Magic-Links-Login-Funktion aktivieren",
+					"enabled": "Magic-Links-Login-Funktion aktiviert"
+				},
+				"subtitle": "Aktivieren Sie Magic Links als passwortlose Login-Option. Dies ist eine UI-Aktivierung für den aktuellen Rollout.",
+				"title": "Magic Links Login"
+			},
 			"password": {
 				"reset": {
 					"confirm": {
