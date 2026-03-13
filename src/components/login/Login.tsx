@@ -54,6 +54,7 @@ import { AnonymousChat } from '../anonymousChat/AnonymousChat';
 const regexAccountDeletedError = /account disabled/i;
 
 export const Login = () => {
+	type LoginMethod = 'password' | 'magicLink';
 	const settings = useAppConfig();
 	const { t: translate } = useTranslation();
 
@@ -74,14 +75,20 @@ export const Login = () => {
 
 	const { consultant, loaded: isReady } = useContext(UrlParamsContext);
 	const [labelState, setLabelState] = useState<InputFieldLabelState>(null);
+	const [activeLoginMethod, setActiveLoginMethod] =
+		useState<LoginMethod>('password');
 	const [username, setUsername] = useState<string>('');
 	const [password, setPassword] = useState<string>('');
+	const [magicLinkUsername, setMagicLinkUsername] = useState<string>('');
 	const [isButtonDisabled, setIsButtonDisabled] = useState<boolean>(
 		username.length > 0 && password.length > 0
 	);
 	const [otp, setOtp] = useState<string>('');
 	const [isOtpRequired, setIsOtpRequired] = useState<boolean>(false);
 	const [showLoginError, setShowLoginError] = useState<string>('');
+	const [showMagicLinkError, setShowMagicLinkError] = useState<string>('');
+	const [magicLinkSentToUsername, setMagicLinkSentToUsername] =
+		useState<string>('');
 	const [isRequestInProgress, setIsRequestInProgress] =
 		useState<boolean>(false);
 	const { featureToolsEnabled, featureAnonymousChatEnabled = true } =
@@ -99,6 +106,7 @@ export const Login = () => {
 
 	useEffect(() => {
 		setShowLoginError('');
+		setShowMagicLinkError('');
 		setLabelState(null);
 		if (
 			(!isOtpRequired && username && password) ||
@@ -142,6 +150,16 @@ export const Login = () => {
 		...(labelState && { labelState })
 	};
 
+	const inputItemMagicLinkUsername: InputFieldItem = {
+		name: 'magicLinkUsername',
+		class: 'login',
+		id: 'magicLinkUsername',
+		type: 'text',
+		label: translate('login.magicLink.usernameLabel'),
+		content: magicLinkUsername,
+		icon: <PersonIcon />
+	};
+
 	const inputItemPassword: InputFieldItem = {
 		name: 'password',
 		id: 'passwordInput',
@@ -169,10 +187,18 @@ export const Login = () => {
 
 	const handleUsernameChange = (event) => {
 		setUsername(event.target.value);
+		setShowMagicLinkError('');
+		setMagicLinkSentToUsername('');
 	};
 
 	const handlePasswordChange = (event) => {
 		setPassword(event.target.value);
+	};
+
+	const handleMagicLinkUsernameChange = (event) => {
+		setMagicLinkUsername(event.target.value);
+		setShowMagicLinkError('');
+		setMagicLinkSentToUsername('');
 	};
 
 	const handleOtpChange = (event) => {
@@ -290,8 +316,38 @@ export const Login = () => {
 		tryLogin(otp);
 	};
 
+	const handleMagicLinkLogin = () => {
+		const normalizedUsername = magicLinkUsername?.trim().toLowerCase();
+		if (!normalizedUsername) {
+			setShowMagicLinkError(translate('login.magicLink.usernameRequired'));
+			return;
+		}
+		const localToggleEnabled =
+			localStorage.getItem(`MAGIC_LINKS_LOGIN_ENABLED_${normalizedUsername}`) ===
+			'true';
+		if (!localToggleEnabled) {
+			setShowMagicLinkError(translate('login.magicLink.notEnabled'));
+			return;
+		}
+		setValueInCookie(
+			'KEYCLOAK_LOCALE',
+			locale,
+			endpoints.loginResetPasswordLink.split('/').slice(0, -1).join('/')
+		);
+		setMagicLinkSentToUsername(normalizedUsername);
+		window.open(
+			`${endpoints.loginResetPasswordLink}&login_hint=${encodeURIComponent(normalizedUsername)}`,
+			'_blank',
+			'noreferrer'
+		);
+	};
+
 	const handleKeyUp = (e) => {
 		if (e.key === 'Enter') {
+			if (activeLoginMethod === 'magicLink') {
+				handleMagicLinkLogin();
+				return;
+			}
 			handleLogin();
 		}
 	};
@@ -350,46 +406,99 @@ export const Login = () => {
 						<div className="loginForm__headline">
 							<h2>{translate('login.headline')}</h2>
 						</div>
+						<div className="loginForm__tabs">
+							<button
+								type="button"
+								className={clsx('loginForm__tab', {
+									'loginForm__tab--active':
+										activeLoginMethod === 'password'
+								})}
+								onClick={() => {
+									setActiveLoginMethod('password');
+									setShowMagicLinkError('');
+									setMagicLinkSentToUsername('');
+								}}
+							>
+								{translate('login.tabs.password')}
+							</button>
+							<button
+								type="button"
+								className={clsx('loginForm__tab', {
+									'loginForm__tab--active':
+										activeLoginMethod === 'magicLink'
+								})}
+								onClick={() => {
+									setActiveLoginMethod('magicLink');
+									setShowLoginError('');
+									setMagicLinkSentToUsername('');
+								}}
+							>
+								{translate('login.tabs.magicLink')}
+							</button>
+						</div>
 
 						<div className="loginForm__fields">
-							<InputField
-								item={inputItemUsername}
-								inputHandle={handleUsernameChange}
-								keyUpHandle={handleKeyUp}
-							/>
-							<InputField
-								item={inputItemPassword}
-								inputHandle={handlePasswordChange}
-								keyUpHandle={handleKeyUp}
-							/>
-						<div
-							className={clsx('loginForm__otp', {
-								'loginForm__otp--active': isOtpRequired
-							})}
-						>
-							{twoFactorType === TWO_FACTOR_TYPES.EMAIL && (
+							{activeLoginMethod === 'magicLink' &&
+							magicLinkSentToUsername ? (
 								<Text
-									className="loginForm__emailHint"
-									text={translate(
-										'twoFactorAuth.activate.email.resend.hint'
-									)}
-									type="infoLargeAlternative"
+									className="loginForm__magicLinkInfo"
+									text={translate('login.magicLink.sentInfo', {
+										username: magicLinkSentToUsername
+									})}
+									type="infoSmall"
+								/>
+							) : (
+								<InputField
+									item={
+										activeLoginMethod === 'password'
+											? inputItemUsername
+											: inputItemMagicLinkUsername
+									}
+									inputHandle={
+										activeLoginMethod === 'password'
+											? handleUsernameChange
+											: handleMagicLinkUsernameChange
+									}
+									keyUpHandle={handleKeyUp}
 								/>
 							)}
-							<InputField
-								item={otpInputItem}
-								inputHandle={handleOtpChange}
-								keyUpHandle={handleKeyUp}
-							/>
-							{twoFactorType === TWO_FACTOR_TYPES.EMAIL && (
-								<TwoFactorAuthResendMail
-									resendHandler={(callback) => {
-										tryLogin();
-										callback();
-									}}
-								/>
+							{activeLoginMethod === 'password' && (
+								<>
+									<InputField
+										item={inputItemPassword}
+										inputHandle={handlePasswordChange}
+										keyUpHandle={handleKeyUp}
+									/>
+									<div
+										className={clsx('loginForm__otp', {
+											'loginForm__otp--active': isOtpRequired
+										})}
+									>
+										{twoFactorType === TWO_FACTOR_TYPES.EMAIL && (
+											<Text
+												className="loginForm__emailHint"
+												text={translate(
+													'twoFactorAuth.activate.email.resend.hint'
+												)}
+												type="infoLargeAlternative"
+											/>
+										)}
+										<InputField
+											item={otpInputItem}
+											inputHandle={handleOtpChange}
+											keyUpHandle={handleKeyUp}
+										/>
+										{twoFactorType === TWO_FACTOR_TYPES.EMAIL && (
+											<TwoFactorAuthResendMail
+												resendHandler={(callback) => {
+													tryLogin();
+													callback();
+												}}
+											/>
+										)}
+									</div>
+								</>
 							)}
-						</div>
 					</div>
 
 						{showLoginError && (
@@ -399,22 +508,45 @@ export const Login = () => {
 								className="loginForm__error"
 							/>
 						)}
+						{showMagicLinkError && (
+							<Text
+								text={showMagicLinkError}
+								type="infoSmall"
+								className="loginForm__error"
+							/>
+						)}
 
 						<div className="loginForm__actions">
 							<Button
-								item={loginButton}
-								buttonHandle={handleLogin}
-								disabled={isButtonDisabled || isRequestInProgress}
+								item={{
+									...loginButton,
+									label:
+										activeLoginMethod === 'password'
+											? translate('login.button.label')
+											: translate('login.magicLink.submitLabel')
+								}}
+								buttonHandle={
+									activeLoginMethod === 'password'
+										? handleLogin
+										: handleMagicLinkLogin
+								}
+								disabled={
+									activeLoginMethod === 'password'
+										? isButtonDisabled || isRequestInProgress
+										: !magicLinkUsername?.trim() ||
+										  isRequestInProgress
+								}
 							/>
 
-							{!(twoFactorType === TWO_FACTOR_TYPES.EMAIL) && (
-								<button
-									onClick={onPasswordResetClick}
-									className="button-as-link"
-									type="button"
-								>
-									{translate('login.resetPasswort.label')}
-								</button>
+							{activeLoginMethod === 'password' &&
+								!(twoFactorType === TWO_FACTOR_TYPES.EMAIL) && (
+									<button
+										onClick={onPasswordResetClick}
+										className="button-as-link"
+										type="button"
+									>
+										{translate('login.resetPasswort.label')}
+									</button>
 							)}
 						</div>
 

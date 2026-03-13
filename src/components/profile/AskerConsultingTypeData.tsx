@@ -17,24 +17,39 @@ export const AskerConsultingTypeData = () => {
 	const { sessions, dispatch } = useContext(SessionsDataContext);
 
 	useEffect(() => {
-		apiGetAskerSessionList().then((sessionsData) => {
-			dispatch({
-				type: SET_SESSIONS,
-				ready: true,
-				sessions: sessionsData.sessions
+		apiGetAskerSessionList()
+			.then((sessionsData) => {
+				dispatch({
+					type: SET_SESSIONS,
+					ready: true,
+					sessions: sessionsData?.sessions || []
+				});
+			})
+			.catch(() => {
+				dispatch({
+					type: SET_SESSIONS,
+					ready: true,
+					sessions: []
+				});
 			});
-		});
 	}, [dispatch]);
+
+	const safeSessionItems = Object.values(sessions || {}).filter(
+		(item: ListItemInterface) => !!item
+	);
 
 	return (
 		<>
-			{Object.values(sessions).map((item: ListItemInterface, index) => (
+			{safeSessionItems.map((item: ListItemInterface, index) => (
 				<Box key={index}>
 					<div className="profile__data__itemWrapper" key={index}>
 						<div className="profile__content__title">
 							<Headline
 								className="pr--3"
-								text={item.session.topic.name}
+								text={
+									item?.session?.topic?.name ||
+									translate('profile.noContent')
+								}
 								semanticLevel="5"
 							/>
 						</div>
@@ -43,9 +58,10 @@ export const AskerConsultingTypeData = () => {
 								{translate('profile.data.agency.label')}
 							</p>
 							<p className="profile__data__content">
-								{item.agency.name}
+								{item?.agency?.name || translate('profile.noContent')}
 								<br />
-								{item.agency.postcode} {item.agency.city}
+								{item?.agency?.postcode || ''}{' '}
+								{item?.agency?.city || ''}
 							</p>
 						</div>
 					</div>
