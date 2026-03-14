@@ -1,0 +1,85 @@
+.tiptap-composer {
+	position: relative;
+	width: 100%;
+	height: 100%;
+
+	&__loading {
+		min-height: 88px;
+	}
+
+	&__toolbar {
+		position: absolute !important;
+		top: 8px !important;
+		left: 8px !important; // as requested: strip on top-left
+		right: auto !important;
+		transform: none !important;
+		display: flex;
+		gap: 4px;
+		padding: 4px;
+		background: rgba(255, 255, 255, 0.97);
+		border: 1px solid #f2d3d3;
+		border-radius: 8px;
+		z-index: 4;
+
+		button {
+			width: 26px;
+			height: 26px;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			border: none;
+			background: transparent;
+			border-radius: 6px;
+			color: #777;
+			cursor: pointer;
+
+			&:hover {
+				background: #f4f4f4;
+			}
+
+			&.is-active {
+				background: #f5d6d6;
+				color: #cf3f3f;
+			}
+		}
+	}
+
+	&__content {
+		height: 100%;
+
+		.ProseMirror {
+			min-height: 88px;
+			max-height: 218px;
+			overflow-y: auto;
+			padding: 46px 100px 14px 8px; // reserve vertical space for top toolbar
+			outline: none;
+			word-break: break-word;
+			caret-color: #da5248;
+
+			@media screen and (min-width: 900px) {
+				min-height: 106px;
+			}
+
+			p {
+				margin: 0;
+				line-height: 1.4;
+			}
+
+			p.is-editor-empty:first-child::before {
+				content: attr(data-placeholder);
+				color: #787378;
+				float: left;
+				height: 0;
+				pointer-events: none;
+			}
+
+			mark {
+				background: #ffe69b;
+				padding: 0 2px;
+				border-radius: 3px;
+			}
+		}
+	}
+}
+
+

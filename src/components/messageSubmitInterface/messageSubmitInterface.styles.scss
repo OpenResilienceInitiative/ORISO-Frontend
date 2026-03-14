@@ -121,6 +121,17 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			}
 		}
 
+		&__snippetInfo {
+			max-width: 900px;
+			margin: 0 auto 8px;
+			padding: 6px 10px;
+			border-radius: 8px;
+			background: #fff4d9;
+			color: #755700;
+			font-size: 12px;
+			border: 1px solid #ffe3a0;
+		}
+
 		&__inputWrapper {
 			flex: 1;
 			position: relative;
@@ -375,7 +386,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			right: $grid-base-two;
 			top: 50%;
 			transform: translateY(-50%);
-			z-index: 2;
+			z-index: 6; // keep voice/clip above editor strip
 			align-items: center;
 			gap: 10px;
 			max-width: calc(100% - 16px);

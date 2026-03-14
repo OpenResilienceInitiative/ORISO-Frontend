@@ -41,6 +41,7 @@ import {
 import { TypingIndicator } from '../typingIndicator/typingIndicator';
 import PluginsEditor from '@draft-js-plugins/editor';
 import {
+	ContentState,
 	convertToRaw,
 	DraftHandleValue,
 	EditorState,
@@ -101,6 +102,11 @@ import {
 	OVERLAY_REQUEST
 } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
 import { getIconForAttachmentType } from '../message/messageHelpers';
+import {
+	TipTapComposer,
+	TipTapComposerRef
+} from './TipTapComposer';
+import { HIGHLIGHT_SNIPPET_SELECTED_EVENT } from './highlightSnippetEvents';
 
 //Linkify Plugin
 const omitKey = (key, { [key]: _, ...obj }) => obj;
@@ -202,7 +208,12 @@ export const MessageSubmitInterfaceComponent = ({
 	const [attachmentUpload, setAttachmentUpload] =
 		useState<XMLHttpRequest | null>(null);
 	const [editorState, setEditorState] = useState(EditorState.createEmpty());
-	const [isRichtextActive, setIsRichtextActive] = useState(false);
+	const [composerText, setComposerText] = useState('');
+	const [highlightedSnippet, setHighlightedSnippet] = useState<string | null>(
+		null
+	);
+	const composerRef = useRef<TipTapComposerRef | null>(null);
+	const [isRichtextActive, setIsRichtextActive] = useState(true);
 	const [isInputFocused, setIsInputFocused] = useState(false);
 	const [isConsultantAbsent, setIsConsultantAbsent] = useState(
 		hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
@@ -338,11 +349,25 @@ export const MessageSubmitInterfaceComponent = ({
 		return allScopeKeys.length ? allScopeKeys[allScopeKeys.length - 1] : null;
 	}, [location.search]);
 
+	const loadDraftIntoComposer = useCallback(
+		(loadedState: EditorState) => {
+			setEditorState(loadedState);
+			const contentState = loadedState.getCurrentContent();
+			const rawObject = convertToRaw(escapeMarkdownChars(contentState));
+			const markdownString = draftToMarkdown(rawObject, {
+				escapeMarkdownCharacters: false
+			});
+			setComposerText(markdownString);
+			composerRef.current?.setText(markdownString);
+		},
+		[]
+	);
+
 	const {
 		onChange: onDraftMessageChange,
 		loaded: draftLoaded,
 		clearDraftMessage
-	} = useDraftMessage(!isRequestInProgress, setEditorState, {
+	} = useDraftMessage(!isRequestInProgress, loadDraftIntoComposer, {
 		threadRootId: threadRootId || null,
 		actionPath: draftActionPath,
 		sessionId: activeSession?.item?.id ?? null,
@@ -350,6 +375,44 @@ export const MessageSubmitInterfaceComponent = ({
 		title: draftTitle,
 		forcedScopeKey: forcedDraftScopeKey
 	});
+
+	const handleComposerChange = useCallback(
+		(nextValue: string) => {
+			setComposerText(nextValue);
+			onDraftMessageChange(nextValue);
+			if (isTyping) {
+				isTyping(!nextValue.trim().length);
+			}
+			const draftContentState = ContentState.createFromText(nextValue);
+			setEditorState(EditorState.createWithContent(draftContentState));
+		},
+		[isTyping, onDraftMessageChange]
+	);
+
+	useEffect(() => {
+		const handleSnippet = (event: Event) => {
+			const customEvent = event as CustomEvent<{
+				text?: string;
+				anchorId?: string;
+			}>;
+			const snippet = customEvent?.detail?.text || '';
+			if (!snippet.trim()) {
+				return;
+			}
+			setHighlightedSnippet(snippet);
+			composerRef.current?.insertSnippet({
+				text: snippet,
+				anchorId: customEvent?.detail?.anchorId || null
+			});
+		};
+		window.addEventListener(HIGHLIGHT_SNIPPET_SELECTED_EVENT, handleSnippet);
+		return () => {
+			window.removeEventListener(
+				HIGHLIGHT_SNIPPET_SELECTED_EVENT,
+				handleSnippet
+			);
+		};
+	}, []);
 
 
 	useEffect(() => {
@@ -366,17 +429,8 @@ export const MessageSubmitInterfaceComponent = ({
 	}, [isConsultantAbsent, isSessionArchived, userData]);
 
 	const getTypedMarkdownMessage = useCallback(
-		(currentEditorState?: EditorState) => {
-			const contentState = currentEditorState
-				? currentEditorState.getCurrentContent()
-				: editorState.getCurrentContent();
-			const rawObject = convertToRaw(escapeMarkdownChars(contentState));
-			const markdownString = draftToMarkdown(rawObject, {
-				escapeMarkdownCharacters: false
-			});
-			return markdownString.trim();
-		},
-		[editorState]
+		() => composerText.trim(),
+		[composerText]
 	);
 
 	useEffect(() => {
@@ -614,7 +668,7 @@ export const MessageSubmitInterfaceComponent = ({
 				isTyping(!currentEditorState.getCurrentContent().hasText());
 			}
 			setEditorState(currentEditorState);
-			onDraftMessageChange(getTypedMarkdownMessage(currentEditorState));
+			onDraftMessageChange(getTypedMarkdownMessage());
 			// Auto-scroll to bottom when content changes (new lines, formatting, bullet lists, etc.)
 			// scrollEditorToBottom handles multiple attempts internally to catch DOM updates
 			scrollEditorToBottom();
@@ -678,17 +732,12 @@ export const MessageSubmitInterfaceComponent = ({
 		// If editor is empty, force it back to default height
 		if (!hasText) {
 			let textInputStyles = `height: ${defaultMinHeight}px !important; max-height: ${defaultMinHeight}px !important; min-height: ${defaultMinHeight}px !important; overflow-y: hidden !important;`;
-			const textInputMarginTop = isRichtextActive
-				? `margin-top: ${richtextHeight}px !important;`
-				: '';
+			const textInputMarginTop = '';
 			const textInputMarginBottom = attachmentSelected
 				? `margin-bottom: ${fileHeight}px !important;`
 				: '';
 			textInputStyles += ` ${textInputMarginTop} ${textInputMarginBottom}`;
 			
-			if (isRichtextActive) {
-				textInputStyles += `border-top: none !important; border-top-right-radius: 0 !important; box-shadow: none !important;`;
-			}
 			if (attachmentSelected) {
 				textInputStyles += `border-bottom: none !important; border-bottom-right-radius: 0 !important;`;
 			}
@@ -696,15 +745,11 @@ export const MessageSubmitInterfaceComponent = ({
 			textInput.setAttribute('style', textInputStyles);
 			
 			// Force Draft.js containers to reset height
-			const editorContainer = textInput.querySelector('.DraftEditor-root');
+			const editorContainer = textInput.querySelector('.ProseMirror');
 			if (editorContainer) {
 				editorContainer.setAttribute('style', `height: ${defaultMinHeight}px !important; max-height: ${defaultMinHeight}px !important;`);
 			}
-			const editorContent = textInput.querySelector('.public-DraftEditor-content');
-			if (editorContent) {
-				editorContent.setAttribute('style', `height: ${defaultMinHeight}px !important; max-height: ${defaultMinHeight}px !important;`);
-			}
-			const editorContentDiv = textInput.querySelector('.public-DraftEditor-content > div');
+			const editorContentDiv = textInput.querySelector('.ProseMirror p');
 			if (editorContentDiv) {
 				editorContentDiv.setAttribute('style', `height: auto !important; max-height: none !important;`);
 			}
@@ -713,11 +758,9 @@ export const MessageSubmitInterfaceComponent = ({
 
 		// If editor has text, allow it to grow normally
 		const textHeight = document.querySelector(
-			'.public-DraftEditor-content > div'
+			'.ProseMirror'
 		)?.scrollHeight;
-		let textInputMaxHeight = isRichtextActive
-			? textareaMaxHeight - richtextHeight
-			: textareaMaxHeight;
+		let textInputMaxHeight = textareaMaxHeight;
 		textInputMaxHeight = attachmentSelected
 			? textInputMaxHeight - fileHeight
 			: textInputMaxHeight;
@@ -730,17 +773,11 @@ export const MessageSubmitInterfaceComponent = ({
 			textHeight <= textareaMaxHeight
 				? 'overflow-y: hidden;'
 				: 'overflow-y: scroll;';
-		const textInputMarginTop = isRichtextActive
-			? `margin-top: ${richtextHeight}px;`
-			: '';
+		const textInputMarginTop = '';
 		const textInputMarginBottom = attachmentSelected
 			? `margin-bottom: ${fileHeight}px;`
 			: '';
 		let textInputStyles = `min-height: ${currentInputHeight}px; ${currentOverflow} ${textInputMarginTop} ${textInputMarginBottom}`;
-		textInputStyles = isRichtextActive
-			? textInputStyles +
-				`border-top: none; border-top-right-radius: 0; box-shadow: none;`
-			: textInputStyles;
 		textInputStyles = attachmentSelected
 			? textInputStyles +
 				`border-bottom: none; border-bottom-right-radius: 0;`
@@ -924,7 +961,11 @@ export const MessageSubmitInterfaceComponent = ({
 						onSendButton && onSendButton(response);
 					})
 				)
-				.then(() => setEditorState(EditorState.createEmpty()))
+				.then(() => {
+					setEditorState(EditorState.createEmpty());
+					setComposerText('');
+					composerRef.current?.clear();
+				})
 				.then(() => setIsRequestInProgress(false))
 				.catch((error) => {
 					// console.log(error);
@@ -942,6 +983,8 @@ export const MessageSubmitInterfaceComponent = ({
 	const handleMessageSendSuccess = useCallback(() => {
 		onMessageSendSuccess?.();
 		setEditorState(EditorState.createEmpty());
+		setComposerText('');
+		composerRef.current?.clear();
 		clearDraftMessage();
 		setActiveInfo('');
 		// Force reset to default height after clearing - use multiple timeouts to ensure DOM updates
@@ -1293,6 +1336,8 @@ export const MessageSubmitInterfaceComponent = ({
 		setActiveInfo('');
 		// Clear any existing text in the input when attachment is selected
 		setEditorState(EditorState.createEmpty());
+		setComposerText('');
+		composerRef.current?.clear();
 	}, []);
 
 	const handleLargeAttachments = useCallback(() => {
@@ -1619,6 +1664,13 @@ export const MessageSubmitInterfaceComponent = ({
 				/>
 			)}
 			{activeInfo && <MessageSubmitInfo {...getMessageSubmitInfo()} />}
+			{highlightedSnippet && (
+				<div className="textarea__snippetInfo">
+					{translate('chat.highlightSnippet.ready', {
+						defaultValue: 'Text snippet added to your reply'
+					})}
+				</div>
+			)}
 
 			<form className="textarea">
 				<div className={'textarea__wrapper'}>
@@ -1670,50 +1722,18 @@ export const MessageSubmitInterfaceComponent = ({
 									}
 								}}
 							>
-								<Toolbar>
-									{(externalProps) => (
-										<div className="textarea__toolbar__buttonWrapper">
-											<BoldButton {...externalProps} />
-											<ItalicButton {...externalProps} />
-											<UnorderedListButton
-												{...externalProps}
-											/>
-										</div>
-									)}
-								</Toolbar>
-								<PluginsEditor
-									editorState={editorState}
-									onChange={handleEditorChange}
-									readOnly={!draftLoaded || !!attachmentSelected || !!uploadProgress}
-									handleKeyCommand={enhancedHandleEditorKeyCommand}
-									keyBindingFn={keyBindingFn}
+								<TipTapComposer
+									ref={composerRef}
+									value={composerText}
+									onChange={handleComposerChange}
 									placeholder={attachmentSelected ? '' : placeholder}
-									stripPastedStyles={true}
-									spellCheck={true}
-									handleBeforeInput={() =>
-										handleEditorBeforeInput(editorState)
-									}
-									handlePastedText={(
-										text: string,
-										html?: string
-									): DraftHandleValue => {
-										const newEditorState =
-											handleEditorPastedText(
-												editorState,
-												text,
-												html
-											);
-										if (newEditorState) {
-											setEditorState(newEditorState);
+									showToolbar={isRichtextActive}
+									readOnly={!!attachmentSelected || !!uploadProgress}
+									onSubmitShortcut={() => {
+										if (!uploadProgress && !isRequestInProgress) {
+											handleButtonClick();
 										}
-										return 'handled';
 									}}
-									plugins={[
-										linkifyPlugin,
-										staticToolbarPlugin,
-										emojiPlugin
-									]}
-									tabIndex={0}
 								/>
 							</div>
 							{hasUploadFunctionality &&
