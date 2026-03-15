@@ -13,16 +13,11 @@ import Highlight from '@tiptap/extension-highlight';
 import Placeholder from '@tiptap/extension-placeholder';
 import {
 	FormatBold,
-	FormatItalic,
-	FormatUnderlined,
 	FormatListBulleted,
-	FormatListNumbered,
-	FormatQuote,
-	Code,
-	Link as LinkIcon,
+	FilterList,
 	Undo,
 	Redo,
-	BorderColor
+	ChevronRight
 } from '@mui/icons-material';
 import './TipTapComposer.styles.scss';
 
@@ -37,6 +32,7 @@ export interface TipTapComposerRef {
 	focus: () => void;
 	setText: (value: string) => void;
 	insertSnippet: (payload: HighlightSnippetPayload) => void;
+	runAction: (action: string) => void;
 }
 
 interface TipTapComposerProps {
@@ -163,6 +159,68 @@ export const TipTapComposer = forwardRef<TipTapComposerRef, TipTapComposerProps>
 					.unsetHighlight()
 					.insertContent(anchorMeta)
 					.run();
+			},
+			runAction: (action: string) => {
+				if (!editor) {
+					return;
+				}
+
+				switch (action) {
+					case 'undo':
+						editor.chain().focus().undo().run();
+						return;
+					case 'redo':
+						editor.chain().focus().redo().run();
+						return;
+					case 'bold':
+						editor.chain().focus().toggleBold().run();
+						return;
+					case 'italic':
+						editor.chain().focus().toggleItalic().run();
+						return;
+					case 'underline':
+						editor.chain().focus().toggleUnderline().run();
+						return;
+					case 'highlight':
+						editor.chain().focus().toggleHighlight().run();
+						return;
+					case 'bulletList':
+						editor.chain().focus().toggleBulletList().run();
+						return;
+					case 'orderedList':
+						editor.chain().focus().toggleOrderedList().run();
+						return;
+					case 'strike':
+						editor.chain().focus().toggleStrike().run();
+						return;
+					case 'blockquote':
+						editor.chain().focus().toggleBlockquote().run();
+						return;
+					case 'setLink': {
+						const previousUrl = editor.getAttributes('link').href || '';
+						const url = window.prompt('URL', previousUrl);
+						if (url === null) {
+							return;
+						}
+						if (url === '') {
+							editor.chain().focus().unsetLink().run();
+							return;
+						}
+						editor.chain().focus().setLink({ href: url }).run();
+						return;
+					}
+					case 'unsetLink':
+						editor.chain().focus().unsetLink().run();
+						return;
+					case 'clearFormatting':
+						editor.chain().focus().clearNodes().unsetAllMarks().run();
+						return;
+					case 'focusEnd':
+						editor.commands.focus('end');
+						return;
+					default:
+						return;
+				}
 			}
 		}));
 
@@ -200,22 +258,6 @@ export const TipTapComposer = forwardRef<TipTapComposerRef, TipTapComposerProps>
 						</button>
 						<button
 							type="button"
-							onClick={() => editor.chain().focus().toggleItalic().run()}
-							className={editor.isActive('italic') ? 'is-active' : ''}
-							aria-label="Italic"
-						>
-							<FormatItalic fontSize="small" />
-						</button>
-						<button
-							type="button"
-							onClick={() => editor.chain().focus().toggleUnderline().run()}
-							className={editor.isActive('underline') ? 'is-active' : ''}
-							aria-label="Underline"
-						>
-							<FormatUnderlined fontSize="small" />
-						</button>
-						<button
-							type="button"
 							onClick={() => editor.chain().focus().toggleBulletList().run()}
 							className={editor.isActive('bulletList') ? 'is-active' : ''}
 							aria-label="Bullet List"
@@ -228,51 +270,15 @@ export const TipTapComposer = forwardRef<TipTapComposerRef, TipTapComposerProps>
 							className={editor.isActive('orderedList') ? 'is-active' : ''}
 							aria-label="Ordered List"
 						>
-							<FormatListNumbered fontSize="small" />
+							<FilterList fontSize="small" />
 						</button>
 						<button
 							type="button"
-							onClick={() => editor.chain().focus().toggleBlockquote().run()}
-							className={editor.isActive('blockquote') ? 'is-active' : ''}
-							aria-label="Quote"
-						>
-							<FormatQuote fontSize="small" />
-						</button>
-						<button
-							type="button"
-							onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-							className={editor.isActive('codeBlock') ? 'is-active' : ''}
-							aria-label="Code Block"
-						>
-							<Code fontSize="small" />
-						</button>
-						<button
-							type="button"
-							onClick={() => {
-								const previousUrl =
-									editor.getAttributes('link').href || '';
-								const url = window.prompt('URL', previousUrl);
-								if (url === null) {
-									return;
-								}
-								if (url === '') {
-									editor.chain().focus().unsetLink().run();
-									return;
-								}
-								editor.chain().focus().setLink({ href: url }).run();
-							}}
+							onClick={() => editor.chain().focus().toggleLink({ href: '#' }).run()}
 							className={editor.isActive('link') ? 'is-active' : ''}
-							aria-label="Link"
+							aria-label="Quick Link"
 						>
-							<LinkIcon fontSize="small" />
-						</button>
-						<button
-							type="button"
-							onClick={() => editor.chain().focus().toggleHighlight().run()}
-							className={editor.isActive('highlight') ? 'is-active' : ''}
-							aria-label="Highlight"
-						>
-							<BorderColor fontSize="small" />
+							<ChevronRight fontSize="small" />
 						</button>
 					</div>
 				)}
