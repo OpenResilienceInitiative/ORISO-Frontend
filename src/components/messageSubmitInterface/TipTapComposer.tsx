@@ -6,6 +6,7 @@ import React, {
 	useState
 } from 'react';
 import { EditorContent, useEditor } from '@tiptap/react';
+import { JSONContent } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
@@ -31,6 +32,7 @@ export interface TipTapComposerRef {
 	clear: () => void;
 	focus: () => void;
 	setText: (value: string) => void;
+	insertText: (value: string) => void;
 	insertSnippet: (payload: HighlightSnippetPayload) => void;
 	runAction: (action: string) => void;
 }
@@ -44,6 +46,154 @@ interface TipTapComposerProps {
 	onSubmitShortcut: () => void;
 	onSelectionSnippet?: (payload: HighlightSnippetPayload | null) => void;
 }
+
+const escapeMarkdownText = (value: string): string =>
+	value.replace(/([\\`*_~\[\]()])/g, '\\$1');
+
+const applyTextMarks = (
+	text: string,
+	marks: Array<{ type: string; attrs?: Record<string, any> }> = []
+): string => {
+	if (!text) {
+		return '';
+	}
+
+	let result = text;
+	const linkMark = marks.find((mark) => mark.type === 'link');
+	const codeMark = marks.some((mark) => mark.type === 'code');
+	const boldMark = marks.some((mark) => mark.type === 'bold');
+	const italicMark = marks.some((mark) => mark.type === 'italic');
+	const strikeMark = marks.some((mark) => mark.type === 'strike');
+	const underlineMark = marks.some((mark) => mark.type === 'underline');
+	const highlightMark = marks.some((mark) => mark.type === 'highlight');
+
+	if (codeMark) {
+		result = `\`${result}\``;
+	}
+	if (boldMark) {
+		result = `**${result}**`;
+	}
+	if (italicMark) {
+		result = `*${result}*`;
+	}
+	if (strikeMark) {
+		result = `~~${result}~~`;
+	}
+	if (underlineMark) {
+		result = `<u>${result}</u>`;
+	}
+	if (highlightMark) {
+		result = `<mark>${result}</mark>`;
+	}
+	if (linkMark?.attrs?.href) {
+		result = `[${result}](${linkMark.attrs.href})`;
+	}
+
+	return result;
+};
+
+const serializeInlineNodes = (nodes: JSONContent[] = []): string =>
+	nodes
+		.map((node) => {
+			if (node.type === 'text') {
+				return applyTextMarks(
+					escapeMarkdownText(node.text || ''),
+					(node.marks as Array<{ type: string; attrs?: Record<string, any> }>) || []
+				);
+			}
+			if (node.type === 'hardBreak') {
+				return '\n';
+			}
+			if (node.content?.length) {
+				return serializeInlineNodes(node.content);
+			}
+			return '';
+		})
+		.join('');
+
+const serializeBlocks = (node?: JSONContent): string => {
+	if (!node) {
+		return '';
+	}
+
+	if (node.type === 'doc') {
+		return (node.content || [])
+			.map((child) => serializeBlocks(child).trimEnd())
+			.filter(Boolean)
+			.join('\n\n');
+	}
+
+	if (node.type === 'paragraph') {
+		return serializeInlineNodes(node.content || []);
+	}
+
+	if (node.type === 'heading') {
+		const level = Math.min(Math.max(node.attrs?.level || 1, 1), 6);
+		return `${'#'.repeat(level)} ${serializeInlineNodes(node.content || [])}`;
+	}
+
+	if (node.type === 'blockquote') {
+		const quoted = (node.content || [])
+			.map((child) => serializeBlocks(child))
+			.filter(Boolean)
+			.join('\n')
+			.split('\n')
+			.map((line) => `> ${line}`)
+			.join('\n');
+		return quoted;
+	}
+
+	if (node.type === 'bulletList') {
+		return (node.content || [])
+			.map((item) => {
+				const text = (item.content || [])
+					.map((child) => serializeBlocks(child))
+					.join('\n')
+					.trim();
+				return `- ${text}`;
+			})
+			.join('\n');
+	}
+
+	if (node.type === 'orderedList') {
+		return (node.content || [])
+			.map((item, index) => {
+				const text = (item.content || [])
+					.map((child) => serializeBlocks(child))
+					.join('\n')
+					.trim();
+				return `${index + 1}. ${text}`;
+			})
+			.join('\n');
+	}
+
+	if (node.type === 'listItem') {
+		return (node.content || [])
+			.map((child) => serializeBlocks(child))
+			.join('\n');
+	}
+
+	if (node.type === 'codeBlock') {
+		const text = serializeInlineNodes(node.content || []);
+		return `\`\`\`\n${text}\n\`\`\``;
+	}
+
+	if (node.type === 'text') {
+		return applyTextMarks(
+			escapeMarkdownText(node.text || ''),
+			(node.marks as Array<{ type: string; attrs?: Record<string, any> }>) || []
+		);
+	}
+
+	if (node.content?.length) {
+		return node.content.map((child) => serializeBlocks(child)).join('\n');
+	}
+
+	return '';
+};
+
+const serializeEditorToMarkdown = (doc?: JSONContent): string =>
+	serializeBlocks(doc).trim();
 
 export const TipTapComposer = forwardRef<TipTapComposerRef, TipTapComposerProps>(
 	(
@@ -92,7 +242,7 @@ export const TipTapComposer = forwardRef<TipTapComposerRef, TipTapComposerProps>
 				if (isSyncingFromValue) {
 					return;
 				}
-				onChange(currentEditor.getText());
+				onChange(currentEditor.getHTML());
 			},
 			onSelectionUpdate: ({ editor: currentEditor }) => {
 				if (!onSelectionSnippet) {
@@ -125,7 +275,7 @@ export const TipTapComposer = forwardRef<TipTapComposerRef, TipTapComposerProps>
 			if (!editor) {
 				return;
 			}
-			const current = editor.getText();
+			const current = editor.getHTML();
 			if ((value || '') === current) {
 				return;
 			}
@@ -143,6 +293,12 @@ export const TipTapComposer = forwardRef<TipTapComposerRef, TipTapComposerProps>
 			},
 			setText: (nextValue: string) => {
 				editor?.commands.setContent(nextValue || '');
+			},
+			insertText: (nextValue: string) => {
+				if (!editor || !nextValue) {
+					return;
+				}
+				editor.chain().focus().insertContent(nextValue).run();
 			},
 			insertSnippet: (payload: HighlightSnippetPayload) => {
 				if (!editor || !payload?.text) {
@@ -182,7 +338,22 @@ export const TipTapComposer = forwardRef<TipTapComposerRef, TipTapComposerProps>
 						editor.chain().focus().toggleUnderline().run();
 						return;
 					case 'highlight':
-						editor.chain().focus().toggleHighlight().run();
+						editor.chain().focus().toggleHighlight({ color: '#fff59d' }).run();
+						return;
+					case 'highlightYellow':
+						editor.chain().focus().toggleHighlight({ color: '#fff59d' }).run();
+						return;
+					case 'highlightOrange':
+						editor.chain().focus().toggleHighlight({ color: '#ffcc80' }).run();
+						return;
+					case 'highlightRose':
+						editor.chain().focus().toggleHighlight({ color: '#ffcdd2' }).run();
+						return;
+					case 'highlightMint':
+						editor.chain().focus().toggleHighlight({ color: '#b2f2bb' }).run();
+						return;
+					case 'highlightBlue':
+						editor.chain().focus().toggleHighlight({ color: '#b3e5fc' }).run();
 						return;
 					case 'bulletList':
 						editor.chain().focus().toggleBulletList().run();
@@ -193,9 +364,47 @@ export const TipTapComposer = forwardRef<TipTapComposerRef, TipTapComposerProps>
 					case 'strike':
 						editor.chain().focus().toggleStrike().run();
 						return;
-					case 'blockquote':
-						editor.chain().focus().toggleBlockquote().run();
+					case 'insertEmoji':
+						editor.chain().focus().insertContent('🙂').run();
 						return;
+					case 'insertImageMarker': {
+						const imageUrl = window.prompt('Image URL', '');
+						if (imageUrl === null || !imageUrl.trim()) {
+							return;
+						}
+						editor
+							.chain()
+							.focus()
+							.insertContent(` [image: ${imageUrl.trim()}] `)
+							.run();
+						return;
+					}
+					case 'insertDateTime': {
+						const now = new Date();
+						const stamp = now.toLocaleString();
+						editor.chain().focus().insertContent(` ${stamp} `).run();
+						return;
+					}
+					case 'blockquote': {
+						const { from, to, empty } = editor.state.selection;
+						if (empty) {
+							// No explicit selection: toggle quote on the current block only.
+							if (editor.isActive('blockquote')) {
+								editor.chain().focus().unsetBlockquote().run();
+							} else {
+								editor.chain().focus().setBlockquote().run();
+							}
+							return;
+						}
+						// Explicit selection: quote selected paragraph(s)/lines only.
+						editor
+							.chain()
+							.focus()
+							.setTextSelection({ from, to })
+							.toggleBlockquote()
+							.run();
+						return;
+					}
 					case 'setLink': {
 						const previousUrl = editor.getAttributes('link').href || '';
 						const url = window.prompt('URL', previousUrl);

@@ -186,6 +186,19 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				color: $form-disabled;
 				opacity: 1;
 			}
+
+			&--attachmentMode::after {
+				content: '';
+				position: absolute;
+				left: 0;
+				right: 0;
+				bottom: 0;
+				height: 2px;
+				background: #cc1e1c;
+				border-bottom-right-radius: 30px;
+				pointer-events: none;
+				z-index: 7;
+			}
 		}
 
 		&__figmaToolbar {
@@ -193,22 +206,20 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			top: 9px;
 			left: 12px;
 			z-index: 20;
-			display: inline-flex;
-			align-items: center;
-			gap: 12px;
+			display: block;
 			max-width: calc(100% - 120px);
-			overflow-x: auto;
-			-ms-overflow-style: none;
-			scrollbar-width: none;
+			width: calc(100% - 120px);
+			height: 30px;
+			overflow: hidden;
 
-			&::-webkit-scrollbar {
-				display: none;
+			&--emoji {
+				height: 34px;
 			}
 
 			@media screen and (max-width: 899px) {
-				gap: 8px;
 				left: 10px;
 				max-width: calc(100% - 96px);
+				width: calc(100% - 96px);
 			}
 
 			button {
@@ -234,6 +245,83 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 					border-radius: 8px;
 				}
 			}
+		}
+
+		&__figmaToolbarPanel {
+			position: absolute;
+			inset: 0;
+			display: inline-flex;
+			align-items: center;
+			gap: 12px;
+			overflow-x: auto;
+			-ms-overflow-style: none;
+			scrollbar-width: none;
+			transition: opacity 180ms ease, transform 220ms ease;
+
+			&::-webkit-scrollbar {
+				display: none;
+			}
+
+			@media screen and (max-width: 899px) {
+				gap: 8px;
+			}
+
+			&--active {
+				opacity: 1;
+				pointer-events: auto;
+				transform: translateY(0) scale(1);
+			}
+
+			&--hidden {
+				opacity: 0;
+				pointer-events: none;
+				transform: translateY(-6px) scale(0.98);
+			}
+
+			&--emoji {
+				gap: 8px;
+			}
+
+			&--highlight {
+				gap: 8px;
+			}
+		}
+
+		&__emojiButton {
+			font-size: 18px;
+			line-height: 1;
+			border-radius: 8px;
+			transition: transform 160ms ease, background-color 160ms ease;
+
+			&:hover {
+				transform: translateY(-1px) scale(1.06);
+			}
+		}
+
+		&__emojiCloseButton {
+			width: auto !important;
+			min-width: 58px;
+			padding: 0 8px !important;
+			border-radius: 8px;
+			font-size: 12px;
+			font-weight: 600;
+			color: #cc1e1c !important;
+			background: #ffe7e7 !important;
+		}
+
+		&__highlightColorButton {
+			width: 28px;
+			height: 28px;
+			border-radius: 8px;
+			padding: 4px !important;
+		}
+
+		&__highlightColorSwatch {
+			display: block;
+			width: 100%;
+			height: 100%;
+			border-radius: 5px;
+			border: 1px solid rgba(0, 0, 0, 0.12);
 		}
 
 		&__figmaToolbarIcon {
@@ -595,13 +683,6 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				}
 			}
 
-			&:hover {
-				svg {
-					* {
-						fill: var(--skin-color-primary, $primary);
-					}
-				}
-			}
 		}
 
 		&__attachmentSelect--recording {
@@ -656,6 +737,22 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				padding: 2px 6px;
 				border-radius: 999px;
 				line-height: 1.3;
+			}
+		}
+
+		&__clipButton {
+			width: $attachmentIconSize;
+			height: $attachmentIconSize;
+			cursor: pointer;
+
+			* {
+				fill: $tertiary;
+			}
+
+			&:hover {
+				* {
+					fill: var(--skin-color-primary, $primary);
+				}
 			}
 		}
 
@@ -721,6 +818,86 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			width: calc(100% - #{1px});
 			background-color: white;
 			z-index: 2;
+		}
+
+		&__attachmentMode {
+			position: absolute;
+			inset: 0;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			padding: 16px 72px 52px 16px;
+			background: transparent;
+			z-index: 5;
+		}
+
+		&__attachmentModeCard {
+			width: 100%;
+			max-width: 620px;
+			display: flex;
+			align-items: center;
+			gap: 12px;
+			padding: 12px 14px;
+			border: 1px solid #f3c8c8;
+			border-radius: 14px;
+			background: #fff7f7;
+			box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+		}
+
+		&__attachmentModeIcon {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			width: 32px;
+			height: 32px;
+			border-radius: 8px;
+			background: #fff;
+			border: 1px solid #f1d5d5;
+			flex: 0 0 auto;
+		}
+
+		&__attachmentModeInfo {
+			display: flex;
+			flex-direction: column;
+			min-width: 0;
+			flex: 1 1 auto;
+		}
+
+		&__attachmentModeName {
+			margin: 0;
+			font-size: 14px;
+			font-weight: 600;
+			color: #222;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+
+		&__attachmentModeMeta {
+			font-size: 12px;
+			color: #6b7280;
+		}
+
+		&__attachmentModeRemove {
+			border: none;
+			background: #fff;
+			border-radius: 8px;
+			width: 30px;
+			height: 30px;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			cursor: pointer;
+			flex: 0 0 auto;
+
+			svg {
+				width: 12px;
+				height: 12px;
+			}
+
+			&:hover {
+				background: #ffe9e9;
+			}
 		}
 
 		&__voicePreview {

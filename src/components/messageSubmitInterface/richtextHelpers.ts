@@ -104,25 +104,9 @@ export const urlifyLinksInText = (text) => {
 export const markdownToDraftDefaultOptions = {
 	remarkablePreset: 'commonmark',
 	remarkableOptions: {
-		disable: {
-			block: [
-				'blockquote',
-				'code',
-				'fences',
-				'heading',
-				'hr',
-				'htmlblock',
-				'lheading'
-			],
-			inline: [
-				'autolink',
-				'backticks',
-				'htmltag',
-				'links',
-				'newline',
-				'text'
-			]
-		}
+		html: true,
+		breaks: true,
+		linkify: true
 	}
 };
 
@@ -144,8 +128,60 @@ export const sanitizeHtmlExtendedPasteOptions = {
 };
 
 export const sanitizeHtmlDefaultOptions = {
-	allowedTags: [...sanitizeHtmlPasteOptions.allowedTags, 'a'],
-	allowedAttributes: sanitizeHtml.defaults.allowedAttributes
+	allowedTags: [
+		...sanitizeHtmlPasteOptions.allowedTags,
+		'a',
+		'blockquote',
+		'u',
+		'mark',
+		's',
+		'strike',
+		'img'
+	],
+	allowedAttributes: {
+		...sanitizeHtml.defaults.allowedAttributes,
+		mark: ['style', 'data-color'],
+		span: ['style'],
+		img: ['src', 'alt', 'title', 'width', 'height', 'loading', 'decoding', 'class']
+	},
+	allowedStyles: {
+		mark: {
+			'background-color': [
+				/^#[0-9a-fA-F]{3,8}$/,
+				/^rgb\(/,
+				/^rgba\(/,
+				/^hsl\(/,
+				/^hsla\(/
+			]
+		},
+		span: {
+			color: [/^#[0-9a-fA-F]{3,8}$/, /^rgb\(/]
+		}
+	},
+	transformTags: {
+		mark: (tagName, attribs) => {
+			const dataColor = attribs['data-color'] || '';
+			const extractedFromStyle =
+				attribs.style?.match(
+					/background-color\s*:\s*([^;]+)/i
+				)?.[1] || '';
+			const candidate = (dataColor || extractedFromStyle).trim();
+			const isSafeColor =
+				/^#[0-9a-fA-F]{3,8}$/.test(candidate) ||
+				/^rgba?\(/i.test(candidate) ||
+				/^hsla?\(/i.test(candidate);
+			if (!isSafeColor) {
+				return { tagName, attribs: { ...attribs } };
+			}
+			return {
+				tagName,
+				attribs: {
+					...attribs,
+					style: `background-color:${candidate};`
+				}
+			};
+		}
+	}
 };
 
 export const sanitizeHtmlExtendedOptions = {

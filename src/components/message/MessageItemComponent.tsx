@@ -220,8 +220,26 @@ export const MessageItemComponent = ({
 	);
 
 	useEffect((): void => {
+		const renderImageMarkers = (content: string) =>
+			content.replace(
+				/\[image:\s*(https?:\/\/[^\]\s]+)\s*\]/gi,
+				(_match, imageUrl: string) =>
+					`<img class="messageItem__inlineImage" src="${imageUrl}" alt="Message image" loading="lazy" decoding="async" />`
+			);
+
+		const preparedMessage = renderImageMarkers(parsedMessage.cleanedMessage || '');
+		const hasRichHtml = /<(p|strong|em|u|mark|blockquote|ul|ol|li|a|br|img)\b/i.test(
+			preparedMessage
+		);
+		if (hasRichHtml) {
+			setRenderedMessage(
+				sanitizeHtml(preparedMessage, sanitizeHtmlDefaultOptions)
+			);
+			return;
+		}
+
 		const rawMessageObject = markdownToDraft(
-			parsedMessage.cleanedMessage,
+			preparedMessage,
 			markdownToDraftDefaultOptions
 		);
 		const contentStateMessage: ContentState =
@@ -230,7 +248,7 @@ export const MessageItemComponent = ({
 		setRenderedMessage(
 			contentStateMessage.hasText()
 				? sanitizeHtml(
-						urlifyLinksInText(stateToHTML(contentStateMessage)),
+						renderImageMarkers(urlifyLinksInText(stateToHTML(contentStateMessage))),
 						sanitizeHtmlDefaultOptions
 					)
 				: ''

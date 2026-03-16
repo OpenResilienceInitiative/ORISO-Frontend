@@ -386,6 +386,8 @@ export const MessageSubmitInterfaceComponent = ({
 	const [voiceRecordingDurationSec, setVoiceRecordingDurationSec] = useState(0);
 	const [voiceAttachmentDurationSec, setVoiceAttachmentDurationSec] = useState(0);
 	const [voicePreviewUrl, setVoicePreviewUrl] = useState<string | null>(null);
+	const [isEmojiStripOpen, setIsEmojiStripOpen] = useState(false);
+	const [isHighlightStripOpen, setIsHighlightStripOpen] = useState(false);
 
 	const focusEditorInput = useCallback(() => {
 		const inputElement = textareaInputRef.current;
@@ -508,8 +510,16 @@ export const MessageSubmitInterfaceComponent = ({
 	}, [location.search]);
 
 	const loadDraftIntoComposer = useCallback(
-		(loadedState: EditorState) => {
+		(loadedState: EditorState, rawDraft?: string) => {
 			setEditorState(loadedState);
+			const draftValue = (rawDraft || '').trim();
+			if (draftValue) {
+				// TipTap drafts are saved as HTML now; load raw draft directly to preserve formatting.
+				setComposerText(rawDraft || '');
+				composerRef.current?.setText(rawDraft || '');
+				return;
+			}
+			// Backward fallback for any legacy empty/raw conversion edge-cases.
 			const contentState = loadedState.getCurrentContent();
 			const rawObject = convertToRaw(escapeMarkdownChars(contentState));
 			const markdownString = draftToMarkdown(rawObject, {
@@ -1820,6 +1830,67 @@ export const MessageSubmitInterfaceComponent = ({
 		composerRef.current?.runAction(action);
 	}, []);
 
+	const emojiOptions = useMemo(
+		() => ['😀', '😂', '😍', '🔥', '👍', '🎉', '🙏', '❤️'],
+		[]
+	);
+
+	const openEmojiStrip = useCallback(() => {
+		setIsEmojiStripOpen(true);
+		setIsHighlightStripOpen(false);
+	}, []);
+
+	const closeEmojiStrip = useCallback(() => {
+		setIsEmojiStripOpen(false);
+	}, []);
+
+	const openHighlightStrip = useCallback(() => {
+		setIsHighlightStripOpen(true);
+		setIsEmojiStripOpen(false);
+	}, []);
+
+	const closeHighlightStrip = useCallback(() => {
+		setIsHighlightStripOpen(false);
+	}, []);
+
+	const highlightOptions = useMemo(
+		() => [
+			{ action: 'highlightYellow', color: '#fff59d', label: 'Yellow' },
+			{ action: 'highlightOrange', color: '#ffcc80', label: 'Orange' },
+			{ action: 'highlightRose', color: '#ffcdd2', label: 'Rose' },
+			{ action: 'highlightMint', color: '#b2f2bb', label: 'Mint' },
+			{ action: 'highlightBlue', color: '#b3e5fc', label: 'Blue' }
+		],
+		[]
+	);
+
+	const handleHighlightPick = useCallback((action: string) => {
+		if (!action) {
+			return;
+		}
+		composerRef.current?.runAction(action);
+		setIsHighlightStripOpen(false);
+	}, []);
+
+	const handleEmojiPick = useCallback((emoji: string) => {
+		if (!emoji) {
+			return;
+		}
+		composerRef.current?.insertText(`${emoji} `);
+		setIsEmojiStripOpen(false);
+	}, []);
+
+	const handleToolbarMouseDown = useCallback(
+		(event: React.MouseEvent<HTMLDivElement>) => {
+			const target = event.target as HTMLElement | null;
+			if (target?.closest('button')) {
+				// Keep editor selection from collapsing when clicking toolbar buttons.
+				event.preventDefault();
+			}
+		},
+		[]
+	);
+
 	// MATRIX MIGRATION: Skip E2EE check for Matrix sessions (no rid)
 	if (!e2EEReady && activeSession.rid) {
 		return null;
@@ -1861,7 +1932,7 @@ export const MessageSubmitInterfaceComponent = ({
 				<div className={'textarea__wrapper'}>
 					<div className="textarea__wrapper-send-message">
 						<span className={`textarea__featureWrapper ${isInputFocused ? 'textarea__featureWrapper--focused' : ''}`}>
-							<span className="textarea__brandBadge" style={{ marginLeft: '10px' }}>
+							<span className="textarea__brandBadge" style={{ paddingLeft: '8px' }}>
 								<RichtextToggleIcon width="20" height="20" />
 							</span>
 							<span className="textarea__assigneeChip">
@@ -1877,7 +1948,10 @@ export const MessageSubmitInterfaceComponent = ({
 							ref={inputWrapperRef}
 						>
 							<div
-								className="textarea__input"
+								className={clsx(
+									'textarea__input',
+									attachmentSelected && 'textarea__input--attachmentMode'
+								)}
 								ref={textareaInputRef}
 								onKeyUp={(e) => {
 									resizeTextarea();
@@ -1901,107 +1975,207 @@ export const MessageSubmitInterfaceComponent = ({
 									}
 								}}
 							>
-								<div className="textarea__figmaToolbar">
-									<button type="button" aria-label="Undo" onClick={() => handleToolbarAction('undo')}>
-										<ToolbarUndoIcon />
-									</button>
-									<button type="button" aria-label="Redo" onClick={() => handleToolbarAction('redo')}>
-										<ToolbarRedoIcon />
-									</button>
-									<button
-										type="button"
-										aria-label="Filter"
-										onClick={() => handleToolbarAction('highlight')}
+								{attachmentSelected ? (
+									<div className="textarea__attachmentMode">
+										<div className="textarea__attachmentModeCard">
+											<span className="textarea__attachmentModeIcon">
+												{getAttachmentIcon(attachmentSelected.type)}
+											</span>
+											<div className="textarea__attachmentModeInfo">
+												<p className="textarea__attachmentModeName">
+													{attachmentSelected.name}
+												</p>
+												<span className="textarea__attachmentModeMeta">
+													{Math.max(
+														1,
+														Math.round(attachmentSelected.size / 1024)
+													)}{' '}
+													KB
+												</span>
+											</div>
+											<button
+												type="button"
+												className="textarea__attachmentModeRemove"
+												onClick={handleAttachmentRemoval}
+												aria-label={translate('app.remove')}
+											>
+												<RemoveIcon />
+											</button>
+										</div>
+									</div>
+								) : (
+									<>
+										<div
+											className={`textarea__figmaToolbar ${
+												isEmojiStripOpen || isHighlightStripOpen
+													? 'textarea__figmaToolbar--emoji'
+													: ''
+											}`}
+											onMouseDown={handleToolbarMouseDown}
+										>
+											<div
+												className={`textarea__figmaToolbarPanel textarea__figmaToolbarPanel--default ${
+													isEmojiStripOpen || isHighlightStripOpen
+														? 'textarea__figmaToolbarPanel--hidden'
+														: 'textarea__figmaToolbarPanel--active'
+												}`}
+											>
+										<button type="button" aria-label="Undo" onClick={() => handleToolbarAction('undo')}>
+											<ToolbarUndoIcon />
+										</button>
+										<button type="button" aria-label="Redo" onClick={() => handleToolbarAction('redo')}>
+											<ToolbarRedoIcon />
+										</button>
+										<button
+											type="button"
+											aria-label="Filter"
+											onClick={openHighlightStrip}
+										>
+											<ToolbarFilterIcon />
+										</button>
+										<button type="button" aria-label="Bold" onClick={() => handleToolbarAction('bold')}>
+											<ToolbarBoldIcon />
+										</button>
+										<button
+											type="button"
+											aria-label="Italic"
+											onClick={() => handleToolbarAction('italic')}
+										>
+											<ToolbarItalicIcon />
+										</button>
+										<button
+											type="button"
+											aria-label="List Add"
+											onClick={() => handleToolbarAction('bulletList')}
+										>
+											<ToolbarListPlusIcon />
+										</button>
+										<button
+											type="button"
+											aria-label="List Text"
+											onClick={() => handleToolbarAction('orderedList')}
+										>
+											<ToolbarListTextIcon />
+										</button>
+										<button
+											type="button"
+											aria-label="Pen"
+											onClick={() => handleToolbarAction('underline')}
+										>
+											<ToolbarPenIcon />
+										</button>
+										<button type="button" aria-label="Emoji panel" onClick={openEmojiStrip}>
+											<ToolbarFacePlusIcon />
+										</button>
+										<button
+											type="button"
+											aria-label="Image Add"
+											onClick={() => handleToolbarAction('insertImageMarker')}
+										>
+											<ToolbarImageAddIcon />
+										</button>
+										<button
+											type="button"
+											aria-label="Search Calendar"
+											onClick={() => handleToolbarAction('insertDateTime')}
+										>
+											<ToolbarSearchCalendarIcon />
+										</button>
+										<button
+											type="button"
+											aria-label="Toggle"
+											onClick={() => handleToolbarAction('blockquote')}
+										>
+											<ToolbarToggleIcon />
+										</button>
+										<button
+											type="button"
+											aria-label="Face"
+											onClick={() => handleToolbarAction('clearFormatting')}
+										>
+											<ToolbarFaceIcon />
+										</button>
+										<button
+											type="button"
+											aria-label="Next"
+											onClick={() => handleToolbarAction('focusEnd')}
+										>
+											<ToolbarChevronRightIcon />
+										</button>
+									</div>
+									<div
+										className={`textarea__figmaToolbarPanel textarea__figmaToolbarPanel--highlight ${
+											isHighlightStripOpen
+												? 'textarea__figmaToolbarPanel--active'
+												: 'textarea__figmaToolbarPanel--hidden'
+										}`}
 									>
-										<ToolbarFilterIcon />
-									</button>
-									<button type="button" aria-label="Bold" onClick={() => handleToolbarAction('bold')}>
-										<ToolbarBoldIcon />
-									</button>
-									<button
-										type="button"
-										aria-label="Italic"
-										onClick={() => handleToolbarAction('italic')}
+										{highlightOptions.map((option) => (
+											<button
+												type="button"
+												key={option.action}
+												className="textarea__highlightColorButton"
+												aria-label={`Highlight ${option.label}`}
+												onClick={() => handleHighlightPick(option.action)}
+											>
+												<span
+													className="textarea__highlightColorSwatch"
+													style={{ backgroundColor: option.color }}
+												/>
+											</button>
+										))}
+										<button
+											type="button"
+											className="textarea__emojiCloseButton"
+											aria-label="Close highlight strip"
+											onClick={closeHighlightStrip}
+										>
+											Close
+										</button>
+									</div>
+									<div
+										className={`textarea__figmaToolbarPanel textarea__figmaToolbarPanel--emoji ${
+											isEmojiStripOpen
+												? 'textarea__figmaToolbarPanel--active'
+												: 'textarea__figmaToolbarPanel--hidden'
+										}`}
 									>
-										<ToolbarItalicIcon />
-									</button>
-									<button
-										type="button"
-										aria-label="List Add"
-										onClick={() => handleToolbarAction('bulletList')}
-									>
-										<ToolbarListPlusIcon />
-									</button>
-									<button
-										type="button"
-										aria-label="List Text"
-										onClick={() => handleToolbarAction('orderedList')}
-									>
-										<ToolbarListTextIcon />
-									</button>
-									<button
-										type="button"
-										aria-label="Pen"
-										onClick={() => handleToolbarAction('underline')}
-									>
-										<ToolbarPenIcon />
-									</button>
-									<button
-										type="button"
-										aria-label="Face Plus"
-										onClick={() => handleToolbarAction('strike')}
-									>
-										<ToolbarFacePlusIcon />
-									</button>
-									<button
-										type="button"
-										aria-label="Image Add"
-										onClick={() => handleToolbarAction('setLink')}
-									>
-										<ToolbarImageAddIcon />
-									</button>
-									<button
-										type="button"
-										aria-label="Search Calendar"
-										onClick={() => handleToolbarAction('unsetLink')}
-									>
-										<ToolbarSearchCalendarIcon />
-									</button>
-									<button
-										type="button"
-										aria-label="Toggle"
-										onClick={() => handleToolbarAction('blockquote')}
-									>
-										<ToolbarToggleIcon />
-									</button>
-									<button
-										type="button"
-										aria-label="Face"
-										onClick={() => handleToolbarAction('clearFormatting')}
-									>
-										<ToolbarFaceIcon />
-									</button>
-									<button
-										type="button"
-										aria-label="Next"
-										onClick={() => handleToolbarAction('focusEnd')}
-									>
-										<ToolbarChevronRightIcon />
-									</button>
-								</div>
-								<TipTapComposer
-									ref={composerRef}
-									value={composerText}
-									onChange={handleComposerChange}
-									placeholder={attachmentSelected ? '' : placeholder}
-									showToolbar={false}
-									readOnly={!!attachmentSelected || !!uploadProgress}
-									onSubmitShortcut={() => {
-										if (!uploadProgress && !isRequestInProgress) {
-											handleButtonClick();
-										}
-									}}
-								/>
+										{emojiOptions.map((emoji) => (
+											<button
+												type="button"
+												key={emoji}
+												className="textarea__emojiButton"
+												aria-label={`Insert ${emoji}`}
+												onClick={() => handleEmojiPick(emoji)}
+											>
+												{emoji}
+											</button>
+										))}
+										<button
+											type="button"
+											className="textarea__emojiCloseButton"
+											aria-label="Close emoji strip"
+											onClick={closeEmojiStrip}
+										>
+											Close
+										</button>
+									</div>
+										</div>
+										<TipTapComposer
+											ref={composerRef}
+											value={composerText}
+											onChange={handleComposerChange}
+											placeholder={placeholder}
+											showToolbar={false}
+											readOnly={!!uploadProgress}
+											onSubmitShortcut={() => {
+												if (!uploadProgress && !isRequestInProgress) {
+													handleButtonClick();
+												}
+											}}
+										/>
+									</>
+								)}
 							</div>
 							{hasUploadFunctionality &&
 								(!attachmentSelected ? (
@@ -2066,6 +2240,7 @@ export const MessageSubmitInterfaceComponent = ({
 													<AudioOnIcon />
 												</button>
 												<ClipIcon
+													className="textarea__clipButton"
 													aria-label={translate(
 														'enquiry.write.input.attachement'
 													)}
@@ -2077,6 +2252,7 @@ export const MessageSubmitInterfaceComponent = ({
 											</>
 										) : (
 											<ClipIcon
+												className="textarea__clipButton"
 												aria-label={translate(
 													'enquiry.write.input.attachement'
 												)}
@@ -2087,67 +2263,40 @@ export const MessageSubmitInterfaceComponent = ({
 											/>
 										)}
 									</span>
-								) : (
+								) : isVoiceAttachmentSelected ? (
 									<div className="textarea__attachmentWrapper">
-										{isVoiceAttachmentSelected ? (
-											<div className="textarea__voicePreview">
-												<span className="textarea__voicePreview__meta">
-													<AudioOnIcon />
-													<span>
-														{translate(
-															'voice.recording.preview',
-															'Voice message'
-														)}
-													</span>
-													<span className="textarea__voicePreview__duration">
-														{formatRecordingDuration(
-															voiceAttachmentDurationSec
-														)}
-													</span>
-												</span>
-												{voicePreviewUrl && (
-													<audio
-														className="textarea__voicePreview__audio"
-														controls
-														src={voicePreviewUrl}
-													/>
-												)}
-												<span className="textarea__attachmentSelected__remove">
-													<RemoveIcon
-														onClick={handleAttachmentRemoval}
-														title={translate('app.remove')}
-														aria-label={translate('app.remove')}
-													/>
-												</span>
-											</div>
-										) : (
-											<span className="textarea__attachmentSelected">
-												<span className="textarea__attachmentSelected__progress"></span>
-												<span className="textarea__attachmentSelected__labelWrapper">
-													{getAttachmentIcon(
-														attachmentSelected.type
+										<div className="textarea__voicePreview">
+											<span className="textarea__voicePreview__meta">
+												<AudioOnIcon />
+												<span>
+													{translate(
+														'voice.recording.preview',
+														'Voice message'
 													)}
-													<p className="textarea__attachmentSelected__label">
-														{attachmentSelected.name}
-													</p>
-													<span className="textarea__attachmentSelected__remove">
-														<RemoveIcon
-															onClick={
-																handleAttachmentRemoval
-															}
-															title={translate(
-																'app.remove'
-															)}
-															aria-label={translate(
-																'app.remove'
-															)}
-														/>
-													</span>
+												</span>
+												<span className="textarea__voicePreview__duration">
+													{formatRecordingDuration(
+														voiceAttachmentDurationSec
+													)}
 												</span>
 											</span>
-										)}
+											{voicePreviewUrl && (
+												<audio
+													className="textarea__voicePreview__audio"
+													controls
+													src={voicePreviewUrl}
+												/>
+											)}
+											<span className="textarea__attachmentSelected__remove">
+												<RemoveIcon
+													onClick={handleAttachmentRemoval}
+													title={translate('app.remove')}
+													aria-label={translate('app.remove')}
+												/>
+											</span>
+										</div>
 									</div>
-								))}
+								) : null)}
 						</span>
 						<div className="textarea__buttons">
 							<SendMessageButton

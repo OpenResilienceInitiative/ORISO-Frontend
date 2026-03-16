@@ -25,7 +25,7 @@ const SAVE_DRAFT_TIMEOUT = 1500;
 
 export const useDraftMessage = (
 	enabled: boolean,
-	loadFunction: (state: EditorState) => void,
+	loadFunction: (state: EditorState, rawDraft?: string) => void,
 	options?: {
 		threadRootId?: string | null;
 		actionPath?: string | null;
@@ -68,12 +68,12 @@ export const useDraftMessage = (
 		`scope:unknown|thread:${threadKey}`;
 	const canUseRemoteApi = scopeKeysToTry.length > 0;
 
-	const setEditorWithMarkdownString = useCallback(
-		(markdownString: string) => {
-			const rawObject = markdownToDraft(markdownString);
+	const setEditorWithDraftString = useCallback(
+		(draftString: string) => {
+			const rawObject = markdownToDraft(draftString);
 			const draftContent = convertFromRaw(rawObject);
 			const editorStateWithText = EditorState.createWithContent(draftContent);
-			loadFunction(EditorState.moveFocusToEnd(editorStateWithText));
+			loadFunction(EditorState.moveFocusToEnd(editorStateWithText), draftString);
 		},
 		[loadFunction]
 	);
@@ -170,7 +170,7 @@ export const useDraftMessage = (
 	}, [
 		canUseRemoteApi,
 		scopeKeysToTry,
-		setEditorWithMarkdownString
+		setEditorWithDraftString
 	]);
 
 	// If everything is ready for decryption, decrypt the draft message
@@ -190,7 +190,7 @@ export const useDraftMessage = (
 		// Plain drafts must never wait for key readiness, otherwise the input can stay locked.
 		if (!isE2eeEnabled || !encrypted) {
 			if (decryptLoadVersion === loadVersionRef.current) {
-				setEditorWithMarkdownString(messageRes.text);
+				setEditorWithDraftString(messageRes.text);
 				setMessage(messageRes.text);
 				setLoaded(true);
 			}
@@ -214,7 +214,7 @@ export const useDraftMessage = (
 				if (decryptLoadVersion !== loadVersionRef.current) {
 					return;
 				}
-				setEditorWithMarkdownString(msg);
+				setEditorWithDraftString(msg);
 				setMessage(msg);
 				setLoaded(true);
 			});
@@ -225,7 +225,7 @@ export const useDraftMessage = (
 		key,
 		keyID,
 		ready,
-		setEditorWithMarkdownString
+		setEditorWithDraftString
 	]);
 
 	const saveDraftMessage = useCallback(
