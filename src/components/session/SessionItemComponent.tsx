@@ -80,6 +80,45 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		new URLSearchParams(location.search).get('embeddedNotifications') ===
 		'1';
 	const [isSupervisor, setIsSupervisor] = useState(false);
+	const [showWaitingMiniGame, setShowWaitingMiniGame] = useState(true);
+	const [breathPhase, setBreathPhase] = useState<'inhale' | 'exhale'>('inhale');
+	const [phaseSecondsLeft, setPhaseSecondsLeft] = useState(4);
+	const [breathCycles, setBreathCycles] = useState(0);
+	const [breathIntensity, setBreathIntensity] = useState(0);
+	const [breathProgress, setBreathProgress] = useState(0.2);
+	const [lastInhaleScore, setLastInhaleScore] = useState(0);
+	const [lastExhaleScore, setLastExhaleScore] = useState(0);
+	const [displayBreathLabel, setDisplayBreathLabel] = useState<'inhale' | 'exhale'>('inhale');
+	const [micState, setMicState] = useState<
+		'idle' | 'requesting' | 'active' | 'denied' | 'error'
+	>('idle');
+	const audioContextRef = useRef<AudioContext | null>(null);
+	const analyserRef = useRef<AnalyserNode | null>(null);
+	const mediaStreamRef = useRef<MediaStream | null>(null);
+	const mediaSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
+	const animationFrameRef = useRef<number | null>(null);
+	const lastFrameTsRef = useRef(0);
+	const breathPhaseRef = useRef<'inhale' | 'exhale'>('inhale');
+	const [detectedBreath, setDetectedBreath] = useState<'inhale' | 'exhale' | 'idle'>('idle');
+	const [manualBreathAssist, setManualBreathAssist] = useState<'auto' | 'inhale' | 'exhale'>(
+		'auto'
+	);
+	const [launcherPosition, setLauncherPosition] = useState({ x: 0, y: 0 });
+	const [launcherPositionInitialized, setLauncherPositionInitialized] = useState(false);
+	const sessionRootRef = useRef<HTMLDivElement | null>(null);
+	const launcherDragStateRef = useRef({
+		active: false,
+		offsetX: 0,
+		offsetY: 0,
+		moved: false
+	});
+	const breathLevelRef = useRef(0);
+	const noiseFloorRef = useRef(0.01);
+	const lastEffortRef = useRef(0);
+	const phasePeakEffortRef = useRef(0);
+	const phaseStartedAtRef = useRef<number | null>(null);
+	const manualAssistRef = useRef<'auto' | 'inhale' | 'exhale'>('auto');
+	const manualAssistTimeoutRef = useRef<number | null>(null);
 
 	// Threads feature toggle (tenant-level). Master switch disables for all chat types.
 	// When enabled, per-chat-type switches decide if threads are available in 1-on-1 vs group chats.
@@ -107,6 +146,298 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			: isAnonymousChat
 				? 'anonymous'
 				: 'oneOnOne';
+	const isAnonymousWaitingPhase =
+		isAnonymousChat &&
+		hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
+		!activeSession.consultant?.id;
+
+	const stopBreathingMicSession = useCallback(() => {
+		if (animationFrameRef.current) {
+			window.cancelAnimationFrame(animationFrameRef.current);
+			animationFrameRef.current = null;
+		}
+		if (mediaSourceRef.current) {
+			mediaSourceRef.current.disconnect();
+			mediaSourceRef.current = null;
+		}
+		if (analyserRef.current) {
+			analyserRef.current.disconnect();
+			analyserRef.current = null;
+		}
+		if (audioContextRef.current) {
+			audioContextRef.current.close().catch(() => undefined);
+			audioContextRef.current = null;
+		}
+		if (mediaStreamRef.current) {
+			mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+			mediaStreamRef.current = null;
+		}
+		setBreathIntensity(0);
+		setDetectedBreath('idle');
+		setManualBreathAssist('auto');
+		setDisplayBreathLabel('inhale');
+		manualAssistRef.current = 'auto';
+		if (manualAssistTimeoutRef.current) {
+			window.clearTimeout(manualAssistTimeoutRef.current);
+			manualAssistTimeoutRef.current = null;
+		}
+		breathLevelRef.current = 0;
+		lastEffortRef.current = 0;
+		phasePeakEffortRef.current = 0;
+		phaseStartedAtRef.current = null;
+	}, []);
+
+	const setManualAssist = useCallback((next: 'auto' | 'inhale' | 'exhale') => {
+		manualAssistRef.current = next;
+		setManualBreathAssist(next);
+	}, []);
+
+	const scheduleAssistReset = useCallback(() => {
+		if (manualAssistTimeoutRef.current) {
+			window.clearTimeout(manualAssistTimeoutRef.current);
+		}
+		manualAssistTimeoutRef.current = window.setTimeout(() => {
+			setManualAssist('auto');
+			manualAssistTimeoutRef.current = null;
+		}, 1400);
+	}, [setManualAssist]);
+
+	const startBreathingMicSession = useCallback(async () => {
+		if (
+			typeof window === 'undefined' ||
+			!navigator.mediaDevices?.getUserMedia ||
+			mediaStreamRef.current
+		) {
+			return;
+		}
+
+		try {
+			setMicState('requesting');
+			const stream = await navigator.mediaDevices.getUserMedia({
+				audio: {
+					echoCancellation: true,
+					noiseSuppression: true
+				}
+			});
+			mediaStreamRef.current = stream;
+
+			const context = new AudioContext();
+			const analyser = context.createAnalyser();
+			analyser.fftSize = 512;
+			analyser.smoothingTimeConstant = 0.7;
+			const source = context.createMediaStreamSource(stream);
+			source.connect(analyser);
+
+			audioContextRef.current = context;
+			analyserRef.current = analyser;
+			mediaSourceRef.current = source;
+			setMicState('active');
+
+			const sampleData = new Uint8Array(analyser.frequencyBinCount);
+			const frequencyData = new Uint8Array(analyser.frequencyBinCount);
+			let smoothedRms = 0;
+			let lastDetected: 'inhale' | 'exhale' | 'idle' = 'idle';
+			const getBandEnergy = (
+				data: Uint8Array,
+				startHz: number,
+				endHz: number
+			): number => {
+				if (!audioContextRef.current) {
+					return 0;
+				}
+				const nyquist = audioContextRef.current.sampleRate / 2;
+				const startBin = Math.max(
+					0,
+					Math.floor((startHz / nyquist) * data.length)
+				);
+				const endBin = Math.min(
+					data.length - 1,
+					Math.ceil((endHz / nyquist) * data.length)
+				);
+				if (endBin <= startBin) {
+					return 0;
+				}
+				let sum = 0;
+				for (let i = startBin; i <= endBin; i += 1) {
+					sum += data[i];
+				}
+				return sum / (endBin - startBin + 1);
+			};
+
+			const loop = (timestamp: number) => {
+				if (!analyserRef.current) {
+					return;
+				}
+				analyserRef.current.getByteTimeDomainData(sampleData);
+				let sumSquares = 0;
+				for (let i = 0; i < sampleData.length; i += 1) {
+					const normalized = (sampleData[i] - 128) / 128;
+					sumSquares += normalized * normalized;
+				}
+				const rms = Math.sqrt(sumSquares / sampleData.length);
+				smoothedRms = smoothedRms * 0.82 + rms * 0.18;
+				const normalizedLevel = Math.min(1, Math.max(0, smoothedRms * 10));
+				setBreathIntensity(normalizedLevel);
+				analyserRef.current.getByteFrequencyData(frequencyData);
+
+				const lowEnergy = getBandEnergy(frequencyData, 80, 500);
+				const highEnergy = getBandEnergy(frequencyData, 1200, 4000);
+				const highLowRatio = (highEnergy + 1) / (lowEnergy + 1);
+				const totalEnergy = getBandEnergy(frequencyData, 80, 4000);
+				const centroidLike =
+					(highEnergy * 0.75 + getBandEnergy(frequencyData, 600, 1400) * 0.25) /
+					Math.max(1, totalEnergy);
+
+				let nextDetected: 'inhale' | 'exhale' | 'idle' = 'idle';
+				noiseFloorRef.current =
+					noiseFloorRef.current * 0.985 + Math.min(rms, 0.06) * 0.015;
+				const effort = Math.max(0, rms - noiseFloorRef.current);
+				const effortNorm = Math.min(1, effort * 26);
+				const effortDelta = effort - lastEffortRef.current;
+				lastEffortRef.current = effort;
+
+				// Hysteresis reduces flapping and one-way lock-in.
+				const inhaleHigh = 1.18;
+				const inhaleLow = 1.1;
+				const exhaleLow = 1.0;
+				const exhaleHigh = 1.08;
+
+				if (effortNorm > 0.08) {
+					if (
+						(highLowRatio > inhaleHigh || centroidLike > 0.35) &&
+						effortDelta >= -0.003
+					) {
+						nextDetected = 'inhale';
+					} else if (
+						(highLowRatio < exhaleLow || centroidLike < 0.305) &&
+						effortDelta <= 0.003
+					) {
+						nextDetected = 'exhale';
+					}
+				}
+				if (nextDetected === 'idle' && effortNorm > 0.11) {
+					if (
+						lastDetected === 'inhale' &&
+						highLowRatio > inhaleLow &&
+						centroidLike > 0.315
+					) {
+						nextDetected = 'inhale';
+					} else if (
+						lastDetected === 'exhale' &&
+						highLowRatio < exhaleHigh &&
+						centroidLike < 0.34
+					) {
+						nextDetected = 'exhale';
+					}
+				}
+				if (nextDetected === 'idle' && effortNorm > 0.16) {
+					nextDetected =
+						lastDetected === 'idle' ? breathPhaseRef.current : lastDetected;
+				}
+				if (manualAssistRef.current !== 'auto') {
+					nextDetected = manualAssistRef.current;
+				}
+				lastDetected = nextDetected;
+				setDetectedBreath(nextDetected);
+
+				const lastTs = lastFrameTsRef.current || timestamp;
+				const deltaSec = Math.max(0, (timestamp - lastTs) / 1000);
+				lastFrameTsRef.current = timestamp;
+
+				const effectiveEffortNorm =
+					manualAssistRef.current === 'auto'
+						? effortNorm
+						: Math.max(0.35, effortNorm);
+				phasePeakEffortRef.current = Math.max(
+					phasePeakEffortRef.current,
+					effectiveEffortNorm
+				);
+				if (!phaseStartedAtRef.current) {
+					phaseStartedAtRef.current = timestamp;
+				}
+
+				const baseDrift = 0.055;
+				if (breathPhaseRef.current === 'inhale') {
+					const guidedMultiplier = nextDetected === 'inhale' ? 1 : 0.42;
+					breathLevelRef.current +=
+						deltaSec * (baseDrift + effectiveEffortNorm * 0.9 * guidedMultiplier);
+					if (nextDetected === 'exhale') {
+						breathLevelRef.current -= deltaSec * effectiveEffortNorm * 0.26;
+					}
+				} else {
+					const guidedMultiplier = nextDetected === 'exhale' ? 1 : 0.42;
+					breathLevelRef.current -=
+						deltaSec * (baseDrift + effectiveEffortNorm * 0.9 * guidedMultiplier);
+					if (nextDetected === 'inhale') {
+						breathLevelRef.current += deltaSec * effectiveEffortNorm * 0.26;
+					}
+				}
+				breathLevelRef.current = Math.min(1, Math.max(0, breathLevelRef.current));
+				setBreathProgress(breathLevelRef.current);
+
+				if (breathPhaseRef.current === 'inhale') {
+					const remaining = Math.max(
+						1,
+						Math.min(4, Math.ceil((1 - breathLevelRef.current) * 4))
+					);
+					setPhaseSecondsLeft(remaining);
+					if (breathLevelRef.current >= 0.92 && effortNorm > 0.12) {
+						const phaseDurationSec = phaseStartedAtRef.current
+							? Math.max(0.5, (timestamp - phaseStartedAtRef.current) / 1000)
+							: 4;
+						const qualityFromTarget = Math.max(
+							0,
+							1 - Math.abs(phaseDurationSec - 4) / 4
+						);
+						const inhaleScore = Math.round(
+							Math.min(1, phasePeakEffortRef.current * 0.65 + qualityFromTarget * 0.35) * 100
+						);
+						setLastInhaleScore(inhaleScore);
+						phasePeakEffortRef.current = 0;
+						phaseStartedAtRef.current = timestamp;
+						setBreathPhase('exhale');
+						setPhaseSecondsLeft(6);
+					}
+				} else {
+					const remaining = Math.max(
+						1,
+						Math.min(6, Math.ceil(breathLevelRef.current * 6))
+					);
+					setPhaseSecondsLeft(remaining);
+					if (breathLevelRef.current <= 0.08 && effortNorm > 0.1) {
+						const phaseDurationSec = phaseStartedAtRef.current
+							? Math.max(0.5, (timestamp - phaseStartedAtRef.current) / 1000)
+							: 6;
+						const qualityFromTarget = Math.max(
+							0,
+							1 - Math.abs(phaseDurationSec - 6) / 6
+						);
+						const exhaleScore = Math.round(
+							Math.min(1, phasePeakEffortRef.current * 0.65 + qualityFromTarget * 0.35) * 100
+						);
+						setLastExhaleScore(exhaleScore);
+						phasePeakEffortRef.current = 0;
+						phaseStartedAtRef.current = timestamp;
+						setBreathPhase('inhale');
+						setBreathCycles((cycles) => cycles + 1);
+						setPhaseSecondsLeft(4);
+					}
+				}
+
+				animationFrameRef.current = window.requestAnimationFrame(loop);
+			};
+
+			lastFrameTsRef.current = 0;
+			animationFrameRef.current = window.requestAnimationFrame(loop);
+		} catch (error: any) {
+			if (error?.name === 'NotAllowedError' || error?.name === 'SecurityError') {
+				setMicState('denied');
+			} else {
+				setMicState('error');
+			}
+			stopBreathingMicSession();
+		}
+	}, [stopBreathingMicSession]);
 
 	const isThreadsEnabled =
 		featureThreadsEnabled !== false &&
@@ -220,6 +551,148 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		// console.log('🔥 SessionItemComponent: canWriteMessage =', canWrite, '(type:', type, ', isGroup:', activeSession.isGroup, ', isSupervisor:', isSupervisor, ')');
 		setCanWriteMessage(canWrite);
 	}, [type, userData, activeSession, activeSession.isGroup, isSupervisor]);
+
+	useEffect(() => {
+		breathPhaseRef.current = breathPhase;
+	}, [breathPhase]);
+
+	useEffect(() => {
+		setDisplayBreathLabel(breathPhase);
+	}, [breathPhase]);
+
+	const getBreathRating = useCallback((score: number) => {
+		if (score >= 80) {
+			return 'Excellent';
+		}
+		if (score >= 60) {
+			return 'Good';
+		}
+		if (score >= 40) {
+			return 'Fair';
+		}
+		return 'Needs work';
+	}, []);
+
+	const overallBreathScore = Math.round((lastInhaleScore + lastExhaleScore) / 2);
+
+	useEffect(() => {
+		if (isAnonymousWaitingPhase) {
+			setShowWaitingMiniGame(true);
+			setBreathPhase('inhale');
+			setDisplayBreathLabel('inhale');
+			setPhaseSecondsLeft(4);
+			setBreathCycles(0);
+			setBreathProgress(0.2);
+			setLastInhaleScore(0);
+			setLastExhaleScore(0);
+			breathLevelRef.current = 0.2;
+			phasePeakEffortRef.current = 0;
+			phaseStartedAtRef.current = null;
+			return;
+		}
+		setShowWaitingMiniGame(false);
+		stopBreathingMicSession();
+	}, [isAnonymousWaitingPhase, stopBreathingMicSession]);
+
+	useEffect(() => {
+		if (isAnonymousWaitingPhase && showWaitingMiniGame) {
+			startBreathingMicSession();
+			return;
+		}
+		stopBreathingMicSession();
+	}, [
+		isAnonymousWaitingPhase,
+		showWaitingMiniGame,
+		startBreathingMicSession,
+		stopBreathingMicSession
+	]);
+
+	useEffect(() => () => stopBreathingMicSession(), [stopBreathingMicSession]);
+
+	useEffect(
+		() => () => {
+			if (manualAssistTimeoutRef.current) {
+				window.clearTimeout(manualAssistTimeoutRef.current);
+				manualAssistTimeoutRef.current = null;
+			}
+		},
+		[]
+	);
+
+	useEffect(() => {
+		const container = scrollContainerRef.current || sessionRootRef.current;
+		if (!isAnonymousWaitingPhase || launcherPositionInitialized || !container) {
+			return;
+		}
+		const rootRect = container.getBoundingClientRect();
+		const launcherWidth = 92;
+		const launcherHeight = 56;
+		setLauncherPosition({
+			x: Math.max(8, rootRect.width - launcherWidth - 12),
+			y: Math.max(64, rootRect.height - launcherHeight - 16)
+		});
+		setLauncherPositionInitialized(true);
+	}, [isAnonymousWaitingPhase, launcherPositionInitialized]);
+
+	useEffect(() => {
+		const clampLauncherInBounds = () => {
+			const container = scrollContainerRef.current || sessionRootRef.current;
+			if (!container || !launcherPositionInitialized) {
+				return;
+			}
+			const rootRect = container.getBoundingClientRect();
+			const launcherWidth = 92;
+			const launcherHeight = 56;
+			setLauncherPosition((prev) => ({
+				x: Math.min(
+					Math.max(8, prev.x),
+					Math.max(8, rootRect.width - launcherWidth - 8)
+				),
+				y: Math.min(
+					Math.max(8, prev.y),
+					Math.max(8, rootRect.height - launcherHeight - 8)
+				)
+			}));
+		};
+
+		window.addEventListener('resize', clampLauncherInBounds);
+		return () => window.removeEventListener('resize', clampLauncherInBounds);
+	}, [launcherPositionInitialized]);
+
+	useEffect(() => {
+		const handlePointerMove = (event: PointerEvent) => {
+			const container = scrollContainerRef.current || sessionRootRef.current;
+			if (!launcherDragStateRef.current.active || !container) {
+				return;
+			}
+			const rootRect = container.getBoundingClientRect();
+			const launcherWidth = 92;
+			const launcherHeight = 56;
+			const nextX = event.clientX - rootRect.left - launcherDragStateRef.current.offsetX;
+			const nextY = event.clientY - rootRect.top - launcherDragStateRef.current.offsetY;
+			const clampedX = Math.min(
+				Math.max(8, nextX),
+				Math.max(8, rootRect.width - launcherWidth - 8)
+			);
+			const clampedY = Math.min(
+				Math.max(8, nextY),
+				Math.max(8, rootRect.height - launcherHeight - 8)
+			);
+			setLauncherPosition({ x: clampedX, y: clampedY });
+			launcherDragStateRef.current.moved = true;
+		};
+
+		const handlePointerUp = () => {
+			launcherDragStateRef.current.active = false;
+		};
+
+		window.addEventListener('pointermove', handlePointerMove);
+		window.addEventListener('pointerup', handlePointerUp);
+		return () => {
+			window.removeEventListener('pointermove', handlePointerMove);
+			window.removeEventListener('pointerup', handlePointerUp);
+		};
+	}, []);
 
 	useEffect(() => {
 		if (messages && messages.length > 0 && !initialScrollCompleted) {
@@ -621,7 +1094,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	);
 
 	return (
-		<div className="session">
+		<div className="session" ref={sessionRootRef}>
 			<div
 				ref={headerRef}
 				style={isEmbeddedNotificationsView ? { display: 'none' } : undefined}
@@ -653,6 +1126,175 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				onScroll={(e) => handleScroll(e)}
 				onDragEnter={onDragEnter}
 			>
+				{isAnonymousWaitingPhase && showWaitingMiniGame && (
+					<div
+						className="session__waitingOverlay"
+						role="dialog"
+						aria-modal="true"
+						aria-label={`${translate(
+							'session.waitingMiniGame.inhaleExhale',
+							'Inhale exhale breathing guide'
+						)} ${translate('session.waitingMiniGame.timeLeft', 'Time left')}: ${phaseSecondsLeft}s`}
+						data-mic-state={micState}
+						data-breath-cycles={breathCycles}
+					>
+						<button
+							type="button"
+							className="session__waitingOverlayClose"
+							onClick={() => setShowWaitingMiniGame(false)}
+							aria-label={translate('session.waitingMiniGame.close', 'Close')}
+						>
+							×
+						</button>
+						<div className="session__waitingMiniGameGuide">
+							<button
+								type="button"
+								className={clsx(
+									'session__waitingMiniGameGuideItem',
+									manualBreathAssist === 'inhale' &&
+										'session__waitingMiniGameGuideItem--active'
+								)}
+								onPointerDown={() => setManualAssist('inhale')}
+								onPointerUp={() => setManualAssist('auto')}
+								onPointerLeave={() => setManualAssist('auto')}
+								onClick={() => {
+									setManualAssist('inhale');
+									scheduleAssistReset();
+								}}
+								aria-label={translate('session.waitingMiniGame.inhale', 'Inhale')}
+							>
+								<svg viewBox="0 0 28 28" className="session__waitingMiniGameGuideIcon">
+									<path
+										d="M11 4C9.3 4 8 5.3 8 7v6.2c0 1.4-1.2 2.6-2.6 2.6H4v2h1.4c2.5 0 4.6-2.1 4.6-4.6V7c0-.6.4-1 1-1h6c.6 0 1 .4 1 1v6.2c0 2.5 2.1 4.6 4.6 4.6H24v-2h-1.4c-1.4 0-2.6-1.2-2.6-2.6V7c0-1.7-1.3-3-3-3h-6z"
+										fill="currentColor"
+									/>
+									<path d="M8 22l3-4H5l3 4zM20 22l3-4h-6l3 4z" fill="currentColor" />
+								</svg>
+								<span className="session__waitingMiniGameGuideValue">
+									{lastInhaleScore}%
+								</span>
+								<span className="session__waitingMiniGameGuideTarget">4s</span>
+							</button>
+							<button
+								type="button"
+								className={clsx(
+									'session__waitingMiniGameGuideItem',
+									manualBreathAssist === 'exhale' &&
+										'session__waitingMiniGameGuideItem--active'
+								)}
+								onPointerDown={() => setManualAssist('exhale')}
+								onPointerUp={() => setManualAssist('auto')}
+								onPointerLeave={() => setManualAssist('auto')}
+								onClick={() => {
+									setManualAssist('exhale');
+									scheduleAssistReset();
+								}}
+								aria-label={translate('session.waitingMiniGame.exhale', 'Exhale')}
+							>
+								<svg viewBox="0 0 28 28" className="session__waitingMiniGameGuideIcon">
+									<path
+										d="M4 12c3.1-2.7 6.6-4 10-4s6.9 1.3 10 4c-3.1 2.7-6.6 4-10 4s-6.9-1.3-10-4z"
+										fill="none"
+										stroke="currentColor"
+										strokeWidth="1.8"
+									/>
+									<path
+										d="M7 12c2 1.5 4.2 2.2 7 2.2s5-.7 7-2.2"
+										fill="none"
+										stroke="currentColor"
+										strokeWidth="1.5"
+									/>
+									<path d="M10 23l3-4H7l3 4zM18 23l3-4h-6l3 4z" fill="currentColor" />
+								</svg>
+								<span className="session__waitingMiniGameGuideValue">
+									{lastExhaleScore}%
+								</span>
+								<span className="session__waitingMiniGameGuideTarget">6s</span>
+							</button>
+						</div>
+						<div className="session__waitingMiniGameScoreboard">
+							<div className="session__waitingMiniGameScoreRow">
+								<span>Inhale</span>
+								<span>{lastInhaleScore}%</span>
+								<span>{getBreathRating(lastInhaleScore)}</span>
+							</div>
+							<div className="session__waitingMiniGameScoreRow">
+								<span>Exhale</span>
+								<span>{lastExhaleScore}%</span>
+								<span>{getBreathRating(lastExhaleScore)}</span>
+							</div>
+							<div className="session__waitingMiniGameScoreRow session__waitingMiniGameScoreRow--overall">
+								<span>Overall</span>
+								<span>{overallBreathScore}%</span>
+								<span>{getBreathRating(overallBreathScore)}</span>
+							</div>
+						</div>
+						<div className="session__waitingMiniGameArena session__waitingMiniGameArena--breathing">
+							<div
+								className="session__waitingMiniGameCircleOuter"
+								style={{
+									transform: `scale(${0.72 + breathProgress * 0.34})`,
+									filter: `drop-shadow(0 0 ${12 + Math.round(breathIntensity * 28)}px rgba(204,30,28,${
+										0.18 + breathIntensity * 0.42
+									}))`
+								}}
+							>
+								<div className="session__waitingMiniGameCircleMid">
+									<div className="session__waitingMiniGameCircleInner">
+									{displayBreathLabel === 'inhale'
+											? translate('session.waitingMiniGame.inhale', 'Inhale')
+											: translate('session.waitingMiniGame.exhale', 'Exhale')}
+									</div>
+								</div>
+							</div>
+						</div>
+						<div className="session__waitingMiniGameMicState">
+							{translate('session.waitingMiniGame.mic', 'Mic')}:{' '}
+							{manualBreathAssist !== 'auto'
+								? `${translate('session.waitingMiniGame.assist', 'assist')}: ${manualBreathAssist}`
+								: micState === 'active'
+									? detectedBreath === 'idle'
+										? translate('session.waitingMiniGame.micListening', 'listening')
+										: detectedBreath
+									: micState}
+						</div>
+					</div>
+				)}
+				{isAnonymousWaitingPhase && !showWaitingMiniGame && (
+					<button
+						type="button"
+						className="session__waitingOverlayLauncher"
+						style={{
+							left: `${launcherPosition.x}px`,
+							top: `${launcherPosition.y}px`
+						}}
+						onPointerDown={(event) => {
+							const targetRect = (
+								event.currentTarget as HTMLButtonElement
+							).getBoundingClientRect();
+							launcherDragStateRef.current.active = true;
+							launcherDragStateRef.current.offsetX = event.clientX - targetRect.left;
+							launcherDragStateRef.current.offsetY = event.clientY - targetRect.top;
+							launcherDragStateRef.current.moved = false;
+							(event.currentTarget as HTMLButtonElement).setPointerCapture?.(
+								event.pointerId
+							);
+						}}
+						onClick={() => {
+							if (launcherDragStateRef.current.moved) {
+								launcherDragStateRef.current.moved = false;
+								return;
+							}
+							setShowWaitingMiniGame(true);
+						}}
+						aria-label={translate('session.waitingMiniGame.reopen', 'Open breathing guide')}
+					>
+						<span className="session__waitingOverlayLauncherDot" />
+						<span className="session__waitingOverlayLauncherLabel">
+							{translate('session.waitingMiniGame.reopenShort', 'Breath')}
+						</span>
+					</button>
+				)}
 				{isSupervisor && supervisionReason && (
 					<div className="session__supervisionReason">
 						<div className="session__supervisionReasonTitle">

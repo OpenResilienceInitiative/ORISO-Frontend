@@ -210,6 +210,304 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		margin-left: 16px;
 	}
 
+	&__waitingOverlay {
+		position: absolute;
+		inset: 0;
+		z-index: 2002;
+		background: rgba(163, 5, 5, 0.36);
+		backdrop-filter: blur(1.2px);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 24px;
+	}
+
+	&__waitingOverlayClose {
+		position: absolute;
+		top: 10px;
+		right: 10px;
+		width: 48px;
+		height: 48px;
+		border-radius: 50%;
+		border: 1px solid rgba(255, 130, 130, 0.9);
+		background: rgba(79, 0, 0, 0.6);
+		color: #ffb1b1;
+		font-size: 30px;
+		line-height: 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		cursor: pointer;
+		z-index: 2;
+	}
+
+	&__waitingOverlayLauncher {
+		position: absolute;
+		z-index: 2003;
+		min-width: 92px;
+		height: 56px;
+		border-radius: 28px;
+		border: 1px solid rgba(204, 30, 28, 0.95);
+		background: radial-gradient(circle at 30% 30%, #ff6e6b, #cc1e1c 70%);
+		color: #fff;
+		font-size: 16px;
+		cursor: pointer;
+		box-shadow: 0 10px 26px rgba(204, 30, 28, 0.45);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 6px;
+		padding: 0 12px;
+		transition: transform 0.2s ease;
+		user-select: none;
+		touch-action: none;
+
+		&:hover {
+			transform: translateY(-1px);
+		}
+	}
+
+	&__waitingOverlayLauncherDot {
+		width: 12px;
+		height: 12px;
+		border-radius: 50%;
+		border: 2px solid #fff;
+	}
+
+	&__waitingOverlayLauncherLabel {
+		font-size: 10px;
+		font-weight: 700;
+		letter-spacing: 0.4px;
+		text-transform: uppercase;
+	}
+
+	&__waitingMiniGameGuide {
+		position: absolute;
+		top: 18px;
+		left: 50%;
+		transform: translateX(-50%);
+		display: inline-flex;
+		align-items: center;
+		gap: 22px;
+		background: rgba(17, 17, 18, 0.88);
+		border: 1px solid rgba(255, 255, 255, 0.14);
+		border-radius: 16px;
+		padding: 10px 18px;
+		color: #fff;
+		z-index: 2;
+
+		@media screen and (max-width: 899px) {
+			top: 10px;
+			gap: 12px;
+			padding: 8px 10px;
+		}
+	}
+
+	&__waitingMiniGameGuideItem {
+		display: inline-flex;
+		align-items: center;
+		flex-direction: column;
+		gap: 2px;
+		font-size: 20px;
+		border: none;
+		background: transparent;
+		color: inherit;
+		cursor: pointer;
+		border-radius: 10px;
+		padding: 2px 5px;
+		transition: background-color 120ms ease, transform 120ms ease;
+
+		&:hover {
+			background: rgba(255, 255, 255, 0.1);
+			transform: translateY(-1px);
+		}
+
+		&--active {
+			background: rgba(204, 30, 28, 0.38);
+			box-shadow: 0 0 0 1px rgba(255, 120, 120, 0.45) inset;
+		}
+
+		span:last-child {
+			font-size: 14px;
+			font-weight: 600;
+			color: #ff4a4a;
+		}
+	}
+
+	&__waitingMiniGameGuideValue {
+		font-size: 15px !important;
+		font-weight: 700 !important;
+		color: #ff2f2f !important;
+	}
+
+	&__waitingMiniGameGuideTarget {
+		font-size: 11px !important;
+		font-weight: 600 !important;
+		color: #ff8a8a !important;
+	}
+
+	&__waitingMiniGameGuideIcon {
+		width: 28px;
+		height: 28px;
+		color: #ffb3b3;
+	}
+
+	&__waitingMiniGameScoreboard {
+		position: absolute;
+		left: 14px;
+		top: 84px;
+		z-index: 2;
+		min-width: 214px;
+		background: rgba(20, 12, 12, 0.84);
+		border: 1px solid rgba(255, 100, 100, 0.25);
+		border-radius: 12px;
+		padding: 8px 10px;
+		color: #ffd8d8;
+		font-size: 12px;
+
+		@media screen and (max-width: 899px) {
+			left: 8px;
+			top: 72px;
+			min-width: 178px;
+			font-size: 11px;
+		}
+	}
+
+	&__waitingMiniGameScoreRow {
+		display: grid;
+		grid-template-columns: 1fr auto auto;
+		gap: 8px;
+		align-items: center;
+		padding: 4px 0;
+		border-bottom: 1px solid rgba(255, 120, 120, 0.15);
+
+		span:nth-child(2) {
+			color: #ff3d3d;
+			font-weight: 700;
+		}
+
+		span:nth-child(3) {
+			color: #ffb3b3;
+		}
+
+		&:last-child {
+			border-bottom: none;
+		}
+	}
+
+	&__waitingMiniGameScoreRow--overall {
+		span:first-child {
+			font-weight: 700;
+		}
+	}
+
+	&__waitingMiniGameMicState {
+		position: absolute;
+		bottom: 16px;
+		left: 50%;
+		transform: translateX(-50%);
+		color: #ffe7e7;
+		font-size: 12px;
+		font-weight: 600;
+	}
+
+	&__waitingMiniGameBreathConfig {
+		display: inline-flex;
+		gap: 18px;
+		padding: 6px 10px;
+		border-radius: 12px;
+		background: rgba(204, 30, 28, 0.2);
+		margin-bottom: 10px;
+	}
+
+	&__waitingMiniGameBreathItem {
+		color: #ffffff;
+		font-size: 15px;
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+	}
+
+	&__waitingMiniGameMeta {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		color: #ffd2d2;
+		font-size: 12px;
+		margin-top: 12px;
+		flex-wrap: wrap;
+	}
+
+	&__waitingMiniGameArena {
+		position: relative;
+		height: 100%;
+		width: 100%;
+		border-radius: 12px;
+		border: none;
+		background: radial-gradient(circle at 50% 44%, rgba(204, 30, 28, 0.3), transparent 42%);
+		overflow: hidden;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding-left: 80px;
+
+		@media screen and (max-width: 899px) {
+			padding-left: 0;
+		}
+	}
+
+	&__waitingMiniGameCircleOuter {
+		width: 260px;
+		height: 260px;
+		border-radius: 50%;
+		background: rgba(204, 30, 28, 0.2);
+		border: 1px solid rgba(255, 135, 135, 0.35);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transform: scale(0.78);
+		transition: transform 120ms linear;
+		position: relative;
+		animation: breathing-halo-pulse 2.2s ease-in-out infinite;
+
+		&::after {
+			content: '';
+			position: absolute;
+			inset: -18px;
+			border-radius: 50%;
+			border: 1px solid rgba(255, 120, 120, 0.25);
+			animation: breathing-ring-out 2.2s ease-out infinite;
+		}
+	}
+
+	&__waitingMiniGameCircleMid {
+		width: 172px;
+		height: 172px;
+		border-radius: 50%;
+		background: rgba(204, 30, 28, 0.3);
+		border: 1px solid rgba(255, 153, 153, 0.34);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		animation: breathing-mid-pulse 1.5s ease-in-out infinite;
+	}
+
+	&__waitingMiniGameCircleInner {
+		width: 116px;
+		height: 116px;
+		border-radius: 50%;
+		background: rgba(255, 212, 212, 0.22);
+		color: #ffe9e9;
+		font-size: 32px;
+		font-weight: 600;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		line-height: 1.05;
+		text-align: center;
+		animation: breathing-core-pulse 1.5s ease-in-out infinite;
+	}
+
 	// Shadow removed from submit interface for clean Element-like UI
 
 	&__scrollToBottom {
@@ -268,6 +566,65 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 			font-style: italic;
 			display: none;
 		}
+	}
+}
+
+@keyframes breathing-expand {
+	0% {
+		transform: scale(0.78);
+	}
+	100% {
+		transform: scale(1);
+	}
+}
+
+@keyframes breathing-halo-pulse {
+	0%,
+	100% {
+		box-shadow: 0 0 0 rgba(204, 30, 28, 0.24);
+	}
+	50% {
+		box-shadow: 0 0 18px rgba(204, 30, 28, 0.4);
+	}
+}
+
+@keyframes breathing-ring-out {
+	0% {
+		transform: scale(0.9);
+		opacity: 0.55;
+	}
+	100% {
+		transform: scale(1.18);
+		opacity: 0;
+	}
+}
+
+@keyframes breathing-mid-pulse {
+	0%,
+	100% {
+		transform: scale(0.96);
+	}
+	50% {
+		transform: scale(1.03);
+	}
+}
+
+@keyframes breathing-core-pulse {
+	0%,
+	100% {
+		transform: scale(0.97);
+	}
+	50% {
+		transform: scale(1.05);
+	}
+}
+
+@keyframes breathing-contract {
+	0% {
+		transform: scale(1);
+	}
+	100% {
+		transform: scale(0.78);
 	}
 }
 
