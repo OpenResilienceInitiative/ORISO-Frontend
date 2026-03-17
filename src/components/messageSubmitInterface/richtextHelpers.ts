@@ -104,25 +104,9 @@ export const urlifyLinksInText = (text) => {
 export const markdownToDraftDefaultOptions = {
 	remarkablePreset: 'commonmark',
 	remarkableOptions: {
-		disable: {
-			block: [
-				'blockquote',
-				'code',
-				'fences',
-				'heading',
-				'hr',
-				'htmlblock',
-				'lheading'
-			],
-			inline: [
-				'autolink',
-				'backticks',
-				'htmltag',
-				'links',
-				'newline',
-				'text'
-			]
-		}
+		html: true,
+		breaks: true,
+		linkify: true
 	}
 };
 
@@ -144,9 +128,134 @@ export const sanitizeHtmlExtendedPasteOptions = {
 };
 
 export const sanitizeHtmlDefaultOptions = {
-	allowedTags: [...sanitizeHtmlPasteOptions.allowedTags, 'a'],
-	allowedAttributes: sanitizeHtml.defaults.allowedAttributes
+	parseStyleAttributes: false,
+	allowedTags: [
+		...sanitizeHtmlPasteOptions.allowedTags,
+		'a',
+		'blockquote',
+		'u',
+		'mark',
+		'span',
+		's',
+		'strike',
+		'img'
+	],
+	allowedAttributes: {
+		...sanitizeHtml.defaults.allowedAttributes,
+		mark: ['style', 'data-color'],
+		span: ['style', 'class', 'data-color'],
+		img: ['src', 'alt', 'title', 'width', 'height', 'loading', 'decoding', 'class']
+	},
+	allowedStyles: {
+		mark: {
+			'background-color': [
+				/^#[0-9a-fA-F]{3,8}$/,
+				/^rgb\(/,
+				/^rgba\(/,
+				/^hsl\(/,
+				/^hsla\(/
+			]
+		},
+		span: {
+			color: [/^#[0-9a-fA-F]{3,8}$/, /^rgb\(/],
+			'background-color': [
+				/^#[0-9a-fA-F]{3,8}$/,
+				/^rgb\(/,
+				/^rgba\(/,
+				/^hsl\(/,
+				/^hsla\(/
+			]
+		}
+	},
+	transformTags: {
+		mark: (tagName, attribs) => {
+			const dataColor = attribs['data-color'] || '';
+			const extractedFromStyle =
+				attribs.style?.match(
+					/background-color\s*:\s*([^;]+)/i
+				)?.[1] || '';
+			const candidate = normalizeHighlightColor(dataColor || extractedFromStyle);
+			if (!candidate) {
+				return { tagName, attribs: { ...attribs } };
+			}
+			return {
+				tagName,
+				attribs: {
+					...attribs,
+					'data-color': candidate
+				}
+			};
+		}
+	}
 };
+
+export function normalizeHighlightColor(rawValue?: string | null): string | null {
+	const highlightColorMap: Record<string, string> = {
+		yellow: '#fff59d',
+		orange: '#ffcc80',
+		rose: '#ffcdd2',
+		mint: '#b2f2bb',
+		blue: '#b3e5fc'
+	};
+	const normalizeHex = (input: string): string => {
+		const hex = input.toLowerCase();
+		if (hex.length === 4) {
+			return `#${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}`;
+		}
+		return hex;
+	};
+	const toHex = (num: number): string =>
+		Math.max(0, Math.min(255, num))
+			.toString(16)
+			.padStart(2, '0');
+	const rgbStringToHex = (input: string): string | null => {
+		const rgbMatch = input.match(
+			/^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})(?:\s*,\s*[\d.]+\s*)?\)$/i
+		);
+		if (!rgbMatch) {
+			return null;
+		}
+		return `#${toHex(Number(rgbMatch[1]))}${toHex(Number(rgbMatch[2]))}${toHex(
+			Number(rgbMatch[3])
+		)}`;
+	};
+	if (!rawValue) {
+		return null;
+	}
+
+	const value = rawValue.trim();
+	const lowerValue = value.toLowerCase();
+
+	if (highlightColorMap[lowerValue]) {
+		return highlightColorMap[lowerValue];
+	}
+
+	for (const [name, hex] of Object.entries(highlightColorMap)) {
+		if (lowerValue.includes(name)) {
+			return hex;
+		}
+	}
+
+	const fallbackHexMatch = lowerValue.match(/#[0-9a-f]{3,8}/);
+	if (fallbackHexMatch) {
+		return normalizeHex(fallbackHexMatch[0]);
+	}
+
+	const rgbHex = rgbStringToHex(lowerValue);
+	if (rgbHex) {
+		return rgbHex;
+	}
+
+	if (/^#[0-9a-fA-F]{3,8}$/.test(value)) {
+		return normalizeHex(value);
+	}
+
+	if (/^rgba?\(/i.test(value) || /^hsla?\(/i.test(value)) {
+		return value;
+	}
+
+	return null;
+}
 
 export const sanitizeHtmlExtendedOptions = {
 	allowedTags: [...sanitizeHtmlExtendedPasteOptions.allowedTags],

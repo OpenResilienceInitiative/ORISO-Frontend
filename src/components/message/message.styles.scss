@@ -271,7 +271,49 @@ $message-attachment-color: $secondary !default;
 			}
 		}
 
-		span {
+		blockquote {
+			margin: 8px 0;
+			padding: 4px 0 4px 10px;
+			border-left: 3px solid #cc1e1c; // incoming + default quote color
+			background: rgba(204, 30, 28, 0.06);
+			border-radius: 0 6px 6px 0;
+		}
+
+		.messageItem__inlineImage {
+			display: block;
+			max-width: 100%;
+			height: auto;
+			border-radius: 12px;
+			margin: 10px 0;
+		}
+
+		.messageItem__highlight {
+			padding: 0 2px;
+			border-radius: 3px;
+			background-color: #fff59d;
+		}
+
+		.messageItem__highlight[data-color='#fff59d'] {
+			background-color: #fff59d;
+		}
+
+		.messageItem__highlight[data-color='#ffcc80'] {
+			background-color: #ffcc80;
+		}
+
+		.messageItem__highlight[data-color='#ffcdd2'] {
+			background-color: #ffcdd2;
+		}
+
+		.messageItem__highlight[data-color='#b2f2bb'] {
+			background-color: #b2f2bb;
+		}
+
+		.messageItem__highlight[data-color='#b3e5fc'] {
+			background-color: #b3e5fc;
+		}
+
+		span:not(.messageItem__highlight) {
 			display: flex;
 			flex-direction: column;
 
@@ -301,7 +343,7 @@ $message-attachment-color: $secondary !default;
 			}
 			
 			&__preview {
-				background: #000;
+				background: #fff;
 				padding: 0;
 				margin: 0;
 				width: 100%;
@@ -312,6 +354,7 @@ $message-attachment-color: $secondary !default;
 					height: auto;
 					display: block;
 					margin: 0;
+					border-radius: 0;
 				}
 			}
 			
@@ -385,6 +428,11 @@ $message-attachment-color: $secondary !default;
 			a,
 			a:hover {
 				color: var(--text-color-contrast-switch, $white);
+			}
+
+			blockquote {
+				border-left-color: var(--text-color-contrast-switch, $white);
+				background: rgba(255, 255, 255, 0.12);
 			}
 		}
 	}

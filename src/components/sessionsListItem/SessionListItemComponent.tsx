@@ -209,11 +209,45 @@ export const SessionListItemComponent = ({
 	const displayLastMessage = useMemo(() => {
 		if (!plainTextLastMessage) return plainTextLastMessage;
 		const parsed = parseMessagePrefixes(plainTextLastMessage);
-		if (isAsker && parsed.isSupervisorFeedback) {
-			return '';
+		const normalizeIds = (rawValue?: string | null) => {
+			const compact = (rawValue || '').trim().toLowerCase();
+			if (!compact) {
+				return [];
+			}
+			if (compact.startsWith('@')) {
+				const username = compact.slice(1).split(':')[0];
+				return [compact, username, `@${username}`].filter(Boolean);
+			}
+			return [compact, `@${compact}`];
+		};
+		const matrixUserIdFromStorage =
+			typeof window !== 'undefined'
+				? window.localStorage?.getItem('matrix_user_id')
+				: '';
+		const matrixUserIdFromCookie =
+			typeof document !== 'undefined'
+				? document.cookie
+						.split('; ')
+						.find((entry) => entry.startsWith('rc_uid='))
+						?.split('=')[1] || ''
+				: '';
+		const currentUserIds = new Set<string>([
+			...normalizeIds(matrixUserIdFromStorage),
+			...normalizeIds(matrixUserIdFromCookie),
+			...normalizeIds(userData?.userName)
+		]);
+		if (parsed.visibleToUserIds?.length) {
+			const isVisible = parsed.visibleToUserIds.some((entry) =>
+				normalizeIds(entry).some((normalizedEntry) =>
+					currentUserIds.has(normalizedEntry)
+				)
+			);
+			if (!isVisible) {
+				return '';
+			}
 		}
 		return parsed.cleanedMessage;
-	}, [plainTextLastMessage, isAsker]);
+	}, [plainTextLastMessage, userData?.userName]);
 
 	// Close dropdown when clicking outside
 	useEffect(() => {

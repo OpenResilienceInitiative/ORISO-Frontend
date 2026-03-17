@@ -54,17 +54,21 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			justify-content: center;
 
 			&-send-message {
-				display: flex;
+				display: block;
 				width: 100%;
-				max-width: 900px;
-				flex-direction: row;
+				max-width: 891px;
 				position: relative;
 				margin: 0 auto;
 				background-color: #ffffff !important;
-				padding: 16px 12px !important;
-				border-radius: 28px !important;
-				box-shadow: 0 2px 16px rgb(255, 255, 255, 0.05) !important;
-				border: 1px solid #fcdfdf !important;
+				padding: 0 !important;
+				border-top-left-radius: 32px !important;
+				border-bottom-left-radius: 32px !important;
+				border-bottom-right-radius: 32px !important;
+				box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.1) !important;
+				border: 1px solid #ffd1d1 !important;
+				overflow: visible;
+				min-height: 168px;
+				height: 200px;
 
 				// On mobile, ensure wrapper doesn't extend beyond viewport
 				@media screen and (max-width: 899px) {
@@ -121,27 +125,50 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			}
 		}
 
-		&__inputWrapper {
-			flex: 1;
-			position: relative;
-			display: flex;
-			max-height: 118px;
-			min-height: 88px;
+		&__snippetInfo {
+			max-width: 900px;
+			margin: 0 auto 8px;
+			padding: 6px 10px;
+			border-radius: 8px;
+			background: #fff4d9;
+			color: #755700;
+			font-size: 12px;
+			border: 1px solid #ffe3a0;
+		}
 
-			@include breakpoint($fromLarge) {
-				max-height: 218px;
-				min-height: 106px;
+		&__inputWrapper {
+			position: absolute;
+			left: 62px;
+			right: 15px;
+			top: 15px;
+			min-height: 141px;
+			height: 168px;
+			display: block;
+			max-height: none;
+			min-height: 0;
+
+			&::before {
+				content: '';
+				position: absolute;
+				left: 0;
+				right: 0;
+				top: 0;
+				height: 2px;
+				background: #cc1e1c;
+				z-index: 4;
 			}
 		}
 
 		&__input {
 			line-height: 20px;
 			width: 100%;
-			border: $inputBorder; // Light red when not focused
-			border-radius: 0 $enquiry-input-border-radius
-				$enquiry-input-border-radius 0;
-			background-color: $white;
+			height: 100%;
+			border: 2px solid #cc1e1c;
+			border-top: none;
+			border-left: none; // remove extra vertical red line at right edge
+			border-radius: 0 0 30px 0; // sharper top-right corner
 			box-sizing: border-box;
+			position: relative;
 			
 			
 			// Active/focused state - red border
@@ -149,7 +176,9 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			&:focus-visible,
 			&:focus-within {
 				outline: none !important;
-				border: $inputBorderActive; // Red when focused
+				border: 2px solid #cc1e1c;
+				border-top: none;
+				border-left: none; // keep separator hidden while focused
 			}
 
 			&::placeholder,
@@ -157,24 +186,221 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				color: $form-disabled;
 				opacity: 1;
 			}
+
+			&--attachmentMode::after {
+				content: '';
+				position: absolute;
+				left: 0;
+				right: 0;
+				bottom: 0;
+				height: 2px;
+				background: #cc1e1c;
+				border-bottom-right-radius: 30px;
+				pointer-events: none;
+				z-index: 7;
+			}
+		}
+
+		&__figmaToolbar {
+			position: absolute;
+			top: 9px;
+			left: 12px;
+			z-index: 20;
+			display: block;
+			max-width: calc(100% - 120px);
+			width: calc(100% - 120px);
+			height: 30px;
+			overflow: hidden;
+
+			&--emoji {
+				height: 34px;
+			}
+
+			@media screen and (max-width: 899px) {
+				left: 10px;
+				max-width: calc(100% - 96px);
+				width: calc(100% - 96px);
+			}
+
+			button {
+				border: none;
+				background: transparent;
+				padding: 0;
+				margin: 0;
+				width: 28px;
+				height: 28px;
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				cursor: pointer;
+				color: #646d78;
+				flex: 0 0 auto;
+
+				svg {
+					display: block;
+				}
+
+				&:hover {
+					background: #f2f2f2;
+					border-radius: 8px;
+				}
+			}
+		}
+
+		&__figmaToolbarPanel {
+			position: absolute;
+			inset: 0;
+			display: inline-flex;
+			align-items: center;
+			gap: 12px;
+			overflow-x: auto;
+			-ms-overflow-style: none;
+			scrollbar-width: none;
+			transition: opacity 180ms ease, transform 220ms ease;
+
+			&::-webkit-scrollbar {
+				display: none;
+			}
+
+			@media screen and (max-width: 899px) {
+				gap: 8px;
+			}
+
+			&--active {
+				opacity: 1;
+				pointer-events: auto;
+				transform: translateY(0) scale(1);
+			}
+
+			&--hidden {
+				opacity: 0;
+				pointer-events: none;
+				transform: translateY(-6px) scale(0.98);
+			}
+
+			&--emoji {
+				gap: 8px;
+			}
+
+			&--highlight {
+				gap: 8px;
+			}
+		}
+
+		&__emojiButton {
+			font-size: 18px;
+			line-height: 1;
+			border-radius: 8px;
+			transition: transform 160ms ease, background-color 160ms ease;
+
+			&:hover {
+				transform: translateY(-1px) scale(1.06);
+			}
+		}
+
+		&__emojiCloseButton {
+			width: auto !important;
+			min-width: 58px;
+			padding: 0 8px !important;
+			border-radius: 8px;
+			font-size: 12px;
+			font-weight: 600;
+			color: #cc1e1c !important;
+			background: #ffe7e7 !important;
+		}
+
+		&__highlightColorButton {
+			width: 28px;
+			height: 28px;
+			border-radius: 8px;
+			padding: 4px !important;
+		}
+
+		&__highlightColorSwatch {
+			display: block;
+			width: 100%;
+			height: 100%;
+			border-radius: 5px;
+			border: 1px solid rgba(0, 0, 0, 0.12);
+		}
+
+		&__figmaToolbarIcon {
+			position: relative;
+			display: inline-block;
+			color: #646d78;
+
+			svg {
+				position: absolute;
+			}
+
+			&--filter {
+				width: 16px;
+				height: 16px;
+
+				svg:nth-child(1) {
+					left: 1px;
+					top: 9px;
+					width: 13px;
+					height: 2px;
+				}
+
+				svg:nth-child(2) {
+					left: 0;
+					top: 0;
+					width: 15px;
+					height: 6px;
+				}
+
+				svg:nth-child(3) {
+					left: 3px;
+					top: 13px;
+					width: 9px;
+					height: 2px;
+				}
+			}
+
+			&--search-calendar {
+				width: 20px;
+				height: 20px;
+
+				svg:nth-child(1) {
+					left: 5px;
+					top: 6px;
+					width: 10px;
+					height: 10px;
+					z-index: 2;
+				}
+
+				svg:nth-child(2) {
+					left: 0;
+					top: 0;
+					width: 20px;
+					height: 20px;
+					z-index: 1;
+				}
+			}
 		}
 
 		&__iconWrapper {
-			width: $grid-base-six;
-			height: $grid-base-six;
-			border-radius: $grid-base-three;
+			width: 48px;
+			height: 48px;
+			border-radius: 0 0 0 27px; // top-right pointier, bottom-left less round
 			cursor: pointer;
-			background-color: var(--skin-color-primary, $primary);
-			margin: 4px 0 0 14px;
-			align-self: flex-start;
+			background-color: #cc1e1c;
+			margin-right: 8px;
+			margin-top: 6px;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
 			transition: background-color 0.6s ease, opacity 0.3s ease;
 			overflow: hidden;
+			position: relative;
 			
 			&--empty {
-				opacity: 0.4;
+				opacity: 1;
 			}
 			svg {
-				transform: translate(0);
+				transition: transform 220ms ease-out;
 			}
 			&:hover {
 				background-color: var(
@@ -182,46 +408,27 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 					$hover-primary
 				);
 			}
+			&--active .textarea__icon {
+				transform: translate(-48%, -54%) rotate(-22deg);
+			}
 			&--clicked {
-				svg {
-					animation: sendButton 1s ease forwards;
+				.textarea__icon {
+					animation: sendButtonToNormal 300ms ease-out forwards;
 				}
 			}
 
-			@keyframes sendButtonHover {
+			@keyframes sendButtonToNormal {
 				0% {
-					transform: translate(0);
-				}
-				100% {
-					transform: translate(10px);
-				}
-			}
-
-			@keyframes sendButton {
-				0% {
-					transform: translate(0px);
+					transform: translate(-48%, -54%) rotate(-22deg);
 					opacity: 1;
 				}
-				20% {
-					transform: translate(-7px);
-				}
-				50% {
-					transform: translate(100px);
-					opacity: 1;
-				}
-				51% {
-					opacity: 0;
-				}
-				52% {
-					opacity: 0;
-					transform: translate(-100px);
-				}
-				53% {
+				60% {
+					transform: translate(-50%, -51%) rotate(5deg);
 					opacity: 1;
 				}
 				100% {
+					transform: translate(-50%, -50%) rotate(0deg);
 					opacity: 1;
-					transform: translate(0);
 				}
 			}
 
@@ -229,11 +436,19 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			&--deactivated:hover {
 				cursor: not-allowed;
 				pointer-events: none;
-				background-color: var(--skin-color-primary, $primary);
-				opacity: 0.4;
+				background-color: #efb6b6;
+				opacity: 1;
 
 				svg rect {
 					fill: var(--text-color-contrast-switch, $white);
+				}
+
+				svg {
+					opacity: 0.8;
+				}
+
+				.textarea__icon {
+					transform: translate(-50%, -50%) rotate(0deg);
 				}
 			}
 		}
@@ -241,7 +456,11 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 		&__icon {
 			width: $sendIconSize;
 			height: $sendIconSize;
-			margin: 12px 0 0 14px;
+			margin: 0;
+			position: absolute;
+			top: 45%;
+			left: 57%;
+			transform: translate(-50%, -50%) rotate(0deg);
 
 			rect {
 				fill: var(--text-color-contrast-switch, $white);
@@ -257,29 +476,161 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 		}
 
 		&__featureWrapper {
-			display: flex;
+			display: block;
 			flex-direction: column;
-			border-top: 1px solid #fcdfdf; // Default 1px
-			border-bottom: 1px solid #fcdfdf; // Default 1px
-			border-left: 1px solid #fcdfdf; // Default 1px
+			border-top: 2px solid #cc1e1c;
+			border-bottom: 2px solid #cc1e1c;
+			border-left: 2px solid #cc1e1c;
 			border-right: none;
-			justify-content: flex-end;
+			justify-content: flex-start;
 			align-items: center;
-			width: $sendInputHeight;
-			padding-left: 7px;
-			border-radius: $enquiry-input-border-radius 0 0
-				$enquiry-input-border-radius;
-			background: $white;
-		
-			position: relative;
+			width: 48px;
+			min-width: 48px;
+			min-height: 141px;
+			height: 168px;
+			padding-left: 0;
+			border-radius: 30px 0 0 30px;
+			background: transparent;
+			position: absolute;
+			left: 15px;
+			top: 15px;
+			bottom: 5px;
+			z-index: 3;
+
+			&::after {
+				display: none;
+			}
 		}
 
 		// When input is focused, featureWrapper should also have red border (top, bottom, left only) - 2px
 		&__featureWrapper--focused {
-			border-top: 2px solid #da5248 !important;
-			border-bottom: 2px solid #da5248 !important;
-			border-left: 2px solid #da5248 !important;
+			border-top: 2px solid #cc1e1c !important;
+			border-bottom: 2px solid #cc1e1c !important;
+			border-left: 2px solid #cc1e1c !important;
 			border-right: none !important;
+		}
+
+		&__brandBadge {
+			width: 46px;
+			height: 38px;
+			margin-top: 0px;
+			border-radius: 25px 0px 0px 0px;
+			background: #cc1e1c;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+
+			svg * {
+				fill: #fff;
+			}
+		}
+
+		&__assigneeChip {
+			position: absolute;
+			left: -2px;
+			bottom: -2px;
+			height: 38px;
+			width: 185px;
+			border-left: 2px solid #cc1e1c;
+			border-bottom: 2px solid #cc1e1c;
+			border-bottom-left-radius: 24px;
+			border-top-right-radius: 24px;
+			background: #ffd1d1;
+			color: #cc1e1c;
+			z-index: 15;
+		}
+
+		&__assigneeButton {
+			width: 100%;
+			height: 100%;
+			padding: 0 10px 0 8px;
+			display: inline-flex;
+			align-items: center;
+			gap: 8px;
+			border: 0;
+			background: transparent;
+			color: inherit;
+			cursor: pointer;
+			text-align: left;
+		}
+
+		&__assigneeMenu {
+			position: absolute;
+			left: 8px;
+			bottom: 42px;
+			width: 220px;
+			max-height: 220px;
+			overflow-y: auto;
+			border: 2px solid #cc1e1c;
+			border-radius: 14px;
+			background: #fff !important;
+			opacity: 1;
+			box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+			z-index: 30;
+		}
+
+		&__assigneeMenuItem {
+			display: block;
+			width: 100%;
+			padding: 9px 12px;
+			border: 0;
+			border-bottom: 1px solid #f0d3d3;
+			background: #fff;
+			text-align: left;
+			cursor: pointer;
+			font-size: 14px;
+			color: #4b4b4b;
+
+			&:last-child {
+				border-bottom: 0;
+			}
+
+			&:hover {
+				background: #fff0f0;
+			}
+		}
+
+		&__assigneeMenuItem--selected {
+			background: #ffe2e2;
+			color: #cc1e1c;
+			font-weight: 600;
+		}
+
+		&__assigneeIcon {
+			width: 24px;
+			height: 24px;
+
+			path {
+				fill: #cc1e1c;
+			}
+		}
+
+		&__assigneeName {
+			font-size: 16px;
+			line-height: 16px;
+			font-weight: 400;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			flex: 1;
+		}
+
+		&__assigneeArrow {
+			width: 18px;
+			height: 18px;
+			color: #cc1e1c;
+			transition: transform 180ms ease;
+			transform: rotate(0deg);
+
+			path {
+				stroke: #cc1e1c !important;
+				fill: #cc1e1c !important;
+				stroke-width: 2.2 !important;
+			}
+		}
+
+		&__assigneeArrow--open {
+			transform: rotate(180deg);
 		}
 
 		&__richtextToggle {
@@ -372,13 +723,14 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 		&__attachmentSelect {
 			display: flex;
 			position: absolute;
-			right: $grid-base-two;
-			top: 50%;
-			transform: translateY(-50%);
-			z-index: 2;
+			right: 9px;
+			top: 63px;
+			bottom: auto;
+			z-index: 6; // keep voice/clip above editor strip
 			align-items: center;
-			gap: 10px;
-			max-width: calc(100% - 16px);
+			flex-direction: column;
+			gap: 16px;
+			max-width: none;
 
 			svg {
 				width: $attachmentIconSize;
@@ -392,13 +744,15 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				}
 			}
 
-			&:hover {
-				svg {
-					* {
-						fill: var(--skin-color-primary, $primary);
-					}
-				}
-			}
+		}
+
+		&__attachmentSelect--recording {
+			right: 64px;
+			top: auto;
+			bottom: 10px;
+			flex-direction: row;
+			gap: 10px;
+			max-width: calc(100% - 16px);
 		}
 
 		&__voiceRecordButton {
@@ -444,6 +798,22 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				padding: 2px 6px;
 				border-radius: 999px;
 				line-height: 1.3;
+			}
+		}
+
+		&__clipButton {
+			width: $attachmentIconSize;
+			height: $attachmentIconSize;
+			cursor: pointer;
+
+			* {
+				fill: $tertiary;
+			}
+
+			&:hover {
+				* {
+					fill: var(--skin-color-primary, $primary);
+				}
 			}
 		}
 
@@ -509,6 +879,86 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			width: calc(100% - #{1px});
 			background-color: white;
 			z-index: 2;
+		}
+
+		&__attachmentMode {
+			position: absolute;
+			inset: 0;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			padding: 16px 72px 52px 16px;
+			background: transparent;
+			z-index: 5;
+		}
+
+		&__attachmentModeCard {
+			width: 100%;
+			max-width: 620px;
+			display: flex;
+			align-items: center;
+			gap: 12px;
+			padding: 12px 14px;
+			border: 1px solid #f3c8c8;
+			border-radius: 14px;
+			background: #fff7f7;
+			box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+		}
+
+		&__attachmentModeIcon {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			width: 32px;
+			height: 32px;
+			border-radius: 8px;
+			background: #fff;
+			border: 1px solid #f1d5d5;
+			flex: 0 0 auto;
+		}
+
+		&__attachmentModeInfo {
+			display: flex;
+			flex-direction: column;
+			min-width: 0;
+			flex: 1 1 auto;
+		}
+
+		&__attachmentModeName {
+			margin: 0;
+			font-size: 14px;
+			font-weight: 600;
+			color: #222;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+
+		&__attachmentModeMeta {
+			font-size: 12px;
+			color: #6b7280;
+		}
+
+		&__attachmentModeRemove {
+			border: none;
+			background: #fff;
+			border-radius: 8px;
+			width: 30px;
+			height: 30px;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			cursor: pointer;
+			flex: 0 0 auto;
+
+			svg {
+				width: 12px;
+				height: 12px;
+			}
+
+			&:hover {
+				background: #ffe9e9;
+			}
 		}
 
 		&__voicePreview {
@@ -651,10 +1101,10 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 		}
 
 		&__buttons {
-			display: flex;
-			flex-direction: column;
-			position: relative;
-			top: -6px;
+			position: absolute;
+			top: 11px;
+			right: 9px;
+			z-index: 8;
 		}
 	}
 

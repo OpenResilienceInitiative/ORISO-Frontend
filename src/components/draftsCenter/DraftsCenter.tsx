@@ -20,6 +20,25 @@ const formatRelativeTime = (timestamp?: string | null) => {
 	return `${diffDays}d`;
 };
 
+const getDraftPreviewText = (rawText?: string | null) => {
+	if (!rawText) {
+		return '';
+	}
+	const htmlToText = (input: string) => {
+		if (typeof window === 'undefined') {
+			return input.replace(/<[^>]*>/g, ' ');
+		}
+		const parser = new DOMParser();
+		const doc = parser.parseFromString(input, 'text/html');
+		return doc.body.textContent || '';
+	};
+	const normalized = rawText
+		.replace(/<br\s*\/?>/gi, '\n')
+		.replace(/<\/p>/gi, '\n')
+		.replace(/<\/blockquote>/gi, '\n');
+	return htmlToText(normalized).replace(/\n{3,}/g, '\n\n').trim();
+};
+
 const withEmbeddedNotificationsParam = (
 	path: string,
 	draftScopeKey?: string | null
@@ -198,7 +217,9 @@ export const DraftsCenter = () => {
 										{formatRelativeTime(entry.updatedAt)}
 									</span>
 								</div>
-								<p className="draftsCenter__listItemText">{entry.text}</p>
+								<p className="draftsCenter__listItemText">
+									{getDraftPreviewText(entry.text)}
+								</p>
 								{entry.threadRootId && (
 									<span className="draftsCenter__threadTag">
 										{translate('drafts.center.thread', 'Thread')}

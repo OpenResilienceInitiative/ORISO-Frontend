@@ -19,6 +19,7 @@ import { stateToHTML } from 'draft-js-export-html';
 import { convertFromRaw, ContentState } from 'draft-js';
 import {
 	markdownToDraftDefaultOptions,
+	normalizeHighlightColor,
 	sanitizeHtmlDefaultOptions,
 	urlifyLinksInText
 } from '../messageSubmitInterface/richtextHelpers';
@@ -155,7 +156,48 @@ export const MessageItemComponent = ({
 	const { activeSession, reloadActiveSession } =
 		useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
-	const isAsker = hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
+	const getComparableRecipientIds = useCallback((rawValue?: string | null) => {
+		const baseValue = (rawValue || '').trim().toLowerCase();
+		if (!baseValue) {
+			return new Set<string>();
+		}
+		const identifiers = new Set<string>([baseValue]);
+		if (baseValue.startsWith('@')) {
+			const usernameWithDomain = baseValue.slice(1);
+			const [username] = usernameWithDomain.split(':');
+			if (username) {
+				identifiers.add(username);
+				identifiers.add(`@${username}`);
+			}
+		} else {
+			identifiers.add(`@${baseValue}`);
+		}
+		return identifiers;
+	}, []);
+
+	const currentRecipientIdentifiers = useMemo(() => {
+		const matrixUserIdFromStorage =
+			typeof window !== 'undefined'
+				? window.localStorage?.getItem('matrix_user_id')
+				: '';
+		const matrixUserIdFromCookie =
+			typeof document !== 'undefined'
+				? document.cookie
+						.split('; ')
+						.find((entry) => entry.startsWith('rc_uid='))
+						?.split('=')[1] || ''
+				: '';
+		const merged = new Set<string>();
+		[
+			matrixUserIdFromStorage,
+			matrixUserIdFromCookie,
+			userData?.userName,
+			userData?.displayName
+		].forEach((value) => {
+			getComparableRecipientIds(value).forEach((entry) => merged.add(entry));
+		});
+		return merged;
+	}, [getComparableRecipientIds, userData?.displayName, userData?.userName]);
 
 	const [renderedMessage, setRenderedMessage] = useState<string | null>(null);
 	const [decryptedMessage, setDecryptedMessage] = useState<
@@ -220,8 +262,79 @@ export const MessageItemComponent = ({
 	);
 
 	useEffect((): void => {
+		const renderImageMarkers = (content: string) =>
+			content.replace(
+				/\[image:\s*(https?:\/\/[^\]\s]+)\s*\]/gi,
+				(_match, imageUrl: string) =>
+					`<img class="messageItem__inlineImage" src="${imageUrl}" alt="Message image" loading="lazy" decoding="async" />`
+			);
+		const decodeHtmlEntities = (content: string) => {
+			if (!content || !content.includes('&')) {
+				return content;
+			}
+			const textarea = document.createElement('textarea');
+			textarea.innerHTML = content;
+			return textarea.value;
+		};
+		const normalizeMarkTagsToHighlightTokens = (content: string) =>
+			content.replace(
+				/<mark([^>]*)>([\s\S]*?)<\/mark>/gi,
+				(_match, attrs: string, inner: string) => {
+					const styleMatch = attrs.match(/style\s*=\s*["']([^"']*)["']/i);
+					const dataColorMatch = attrs.match(
+						/data-color\s*=\s*["']([^"']+)["']/i
+					);
+					const styleColorMatch = styleMatch?.[1]?.match(
+						/background-color\s*:\s*([^;]+)/i
+					);
+					const color =
+						normalizeHighlightColor(dataColorMatch?.[1] || '') ||
+						normalizeHighlightColor(styleColorMatch?.[1] || '') ||
+						normalizeHighlightColor(attrs || '');
+					if (!color) {
+						return `<mark>${inner}</mark>`;
+					}
+					return `[[hl:${color}]]${inner}[[/hl]]`;
+				}
+			);
+		const renderHighlightTokens = (content: string) =>
+			content.replace(
+				/\[\[hl:([^\]]+)\]\]([\s\S]*?)\[\[\/hl\]\]|\[hl:([^\]]+)\]([\s\S]*?)\[\/hl\]/gi,
+				(
+					_match,
+					doubleBracketColorRaw: string,
+					doubleBracketInner: string,
+					legacyColorRaw: string,
+					legacyInner: string
+				) => {
+					const colorRaw = doubleBracketColorRaw || legacyColorRaw;
+					const inner = doubleBracketInner ?? legacyInner;
+					const color = normalizeHighlightColor(colorRaw);
+					if (!color) {
+						return `<mark>${inner}</mark>`;
+					}
+					return `<span class="messageItem__highlight" data-color="${color}">${inner}</span>`;
+				}
+			);
+
+		const decodedMessage = decodeHtmlEntities(parsedMessage.cleanedMessage || '');
+		const preparedMessage = renderHighlightTokens(
+			renderImageMarkers(
+				normalizeMarkTagsToHighlightTokens(decodedMessage)
+			)
+		);
+		const hasRichHtml = /<(p|strong|em|u|mark|span|blockquote|ul|ol|li|a|br|img)\b/i.test(
+			preparedMessage
+		);
+		if (hasRichHtml) {
+			setRenderedMessage(
+				sanitizeHtml(preparedMessage, sanitizeHtmlDefaultOptions)
+			);
+			return;
+		}
+
 		const rawMessageObject = markdownToDraft(
-			parsedMessage.cleanedMessage,
+			preparedMessage,
 			markdownToDraftDefaultOptions
 		);
 		const contentStateMessage: ContentState =
@@ -230,7 +343,11 @@ export const MessageItemComponent = ({
 		setRenderedMessage(
 			contentStateMessage.hasText()
 				? sanitizeHtml(
-						urlifyLinksInText(stateToHTML(contentStateMessage)),
+						renderHighlightTokens(
+							renderImageMarkers(
+								urlifyLinksInText(stateToHTML(contentStateMessage))
+							)
+						),
 						sanitizeHtmlDefaultOptions
 					)
 				: ''
@@ -669,9 +786,24 @@ export const MessageItemComponent = ({
 		return null;
 	}
 
-	// Hide supervisor feedback messages from askers
-	if (isAsker && isSupervisorFeedback) {
-		return null;
+	// Frontend-only recipient visibility: targeted messages are visible only to
+	// selected recipients and the sender.
+	if (
+		parsedMessage.visibleToUserIds.length > 0 &&
+		!isMyMessage
+	) {
+		const canCurrentUserSeeMessage = parsedMessage.visibleToUserIds.some((recipient) => {
+			const recipientIds = getComparableRecipientIds(recipient);
+			for (const id of recipientIds) {
+				if (currentRecipientIdentifiers.has(id)) {
+					return true;
+				}
+			}
+			return false;
+		});
+		if (!canCurrentUserSeeMessage) {
+			return null;
+		}
 	}
 
 	if (!forceShow) {
