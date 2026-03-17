@@ -287,7 +287,33 @@ $message-attachment-color: $secondary !default;
 			margin: 10px 0;
 		}
 
-		span {
+		.messageItem__highlight {
+			padding: 0 2px;
+			border-radius: 3px;
+			background-color: #fff59d;
+		}
+
+		.messageItem__highlight[data-color='#fff59d'] {
+			background-color: #fff59d;
+		}
+
+		.messageItem__highlight[data-color='#ffcc80'] {
+			background-color: #ffcc80;
+		}
+
+		.messageItem__highlight[data-color='#ffcdd2'] {
+			background-color: #ffcdd2;
+		}
+
+		.messageItem__highlight[data-color='#b2f2bb'] {
+			background-color: #b2f2bb;
+		}
+
+		.messageItem__highlight[data-color='#b3e5fc'] {
+			background-color: #b3e5fc;
+		}
+
+		span:not(.messageItem__highlight) {
 			display: flex;
 			flex-direction: column;
 

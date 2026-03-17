@@ -61,6 +61,7 @@ import {
 	escapeMarkdownChars,
 	handleEditorBeforeInput,
 	handleEditorPastedText,
+	normalizeHighlightColor,
 	toolbarCustomClasses
 } from './richtextHelpers';
 import { ReactComponent as EmojiIcon } from '../../resources/img/icons/smiley-positive.svg';
@@ -80,6 +81,7 @@ import { Headline } from '../headline/Headline';
 import { useTranslation } from 'react-i18next';
 import {
 	SUPERVISOR_FEEDBACK_PREFIX,
+	buildVisibleToPrefix,
 	buildThreadPrefix
 } from '../message/messageConstants';
 import {
@@ -342,6 +344,7 @@ export const MessageSubmitInterfaceComponent = ({
 
 	const textareaInputRef = useRef<HTMLDivElement>(null);
 	const inputWrapperRef = useRef<HTMLSpanElement>(null);
+	const audienceMenuRef = useRef<HTMLDivElement>(null);
 	const attachmentInputRef = useRef<HTMLInputElement>(null);
 	const mediaRecorderRef = useRef<MediaRecorder | null>(null);
 	const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -388,6 +391,12 @@ export const MessageSubmitInterfaceComponent = ({
 	const [voicePreviewUrl, setVoicePreviewUrl] = useState<string | null>(null);
 	const [isEmojiStripOpen, setIsEmojiStripOpen] = useState(false);
 	const [isHighlightStripOpen, setIsHighlightStripOpen] = useState(false);
+	const [isAudienceMenuOpen, setIsAudienceMenuOpen] = useState(false);
+	const [audienceOptions, setAudienceOptions] = useState<
+		Array<{ value: string; label: string }>
+	>([{ value: '__all__', label: 'ALL' }]);
+	const [selectedAudienceValue, setSelectedAudienceValue] =
+		useState<string>('__all__');
 
 	const focusEditorInput = useCallback(() => {
 		const inputElement = textareaInputRef.current;
@@ -597,9 +606,38 @@ export const MessageSubmitInterfaceComponent = ({
 	}, [isConsultantAbsent, isSessionArchived, userData]);
 
 	const getTypedMarkdownMessage = useCallback(
-		() => composerText.trim(),
+		() => {
+			const liveEditorHtml = composerRef.current?.getHTML();
+			// Use latest editor snapshot first to avoid stale last-action/last-char issues.
+			return (liveEditorHtml ?? composerText).trim();
+		},
 		[composerText]
 	);
+
+	const encodeHighlightColorsForTransport = useCallback((rawMessage: string) => {
+		if (!rawMessage) {
+			return rawMessage;
+		}
+		return rawMessage.replace(
+			/<mark([^>]*)>([\s\S]*?)<\/mark>/gi,
+			(_full, attrs: string, inner: string) => {
+				const styleMatch = attrs.match(/style\s*=\s*["']([^"']*)["']/i);
+				const dataColorMatch = attrs.match(/data-color\s*=\s*["']([^"']+)["']/i);
+				const styleColorMatch = styleMatch?.[1]?.match(
+					/background-color\s*:\s*([^;]+)/i
+				);
+				const color =
+					normalizeHighlightColor(dataColorMatch?.[1] || '') ||
+					normalizeHighlightColor(styleColorMatch?.[1] || '') ||
+					normalizeHighlightColor(attrs || '');
+				if (!color) {
+					return `<mark>${inner}</mark>`;
+				}
+				// Use a backend-safe token format to avoid downstream conversions that drop color.
+				return `[[hl:${color}]]${inner}[[/hl]]`;
+			}
+		);
+	}, []);
 
 	useEffect(() => {
 		if (!activeInfo && isConsultantAbsent) {
@@ -1157,6 +1195,12 @@ export const MessageSubmitInterfaceComponent = ({
 		setEditorState(EditorState.createEmpty());
 		setComposerText('');
 		composerRef.current?.clear();
+		setSelectedAudienceValue(
+			audienceOptions.some((option) => option.value === '__all__')
+				? '__all__'
+				: audienceOptions[0]?.value || '__all__'
+		);
+		setIsAudienceMenuOpen(false);
 		clearDraftMessage();
 		setActiveInfo('');
 		// Force reset to default height after clearing - use multiple timeouts to ensure DOM updates
@@ -1173,7 +1217,7 @@ export const MessageSubmitInterfaceComponent = ({
 			resizeTextarea();
 		}, 200);
 		setTimeout(() => setIsRequestInProgress(false), 1200);
-	}, [clearDraftMessage, onMessageSendSuccess, resizeTextarea]);
+	}, [audienceOptions, clearDraftMessage, onMessageSendSuccess, resizeTextarea]);
 
 	const sendMessage = useCallback(
 		async (message, attachment: File, isEncrypted) => {
@@ -1366,10 +1410,15 @@ export const MessageSubmitInterfaceComponent = ({
 			return null;
 		}
 
-		let message = getTypedMarkdownMessage().trim();
+		let message = encodeHighlightColorsForTransport(
+			getTypedMarkdownMessage()
+		).trim();
 		const prefixParts: string[] = [];
 		if (threadRootId) {
 			prefixParts.push(buildThreadPrefix(threadRootId));
+		}
+		if (selectedAudienceValue !== '__all__') {
+			prefixParts.push(buildVisibleToPrefix([selectedAudienceValue]));
 		}
 		if (isSupervisor) {
 			prefixParts.push(SUPERVISOR_FEEDBACK_PREFIX);
@@ -1404,6 +1453,7 @@ export const MessageSubmitInterfaceComponent = ({
 		await sendMessage(message, attachment, isEncrypted);
 	}, [
 		encrypted,
+		encodeHighlightColorsForTransport,
 		getTypedMarkdownMessage,
 		isE2eeEnabled,
 		key,
@@ -1411,6 +1461,9 @@ export const MessageSubmitInterfaceComponent = ({
 		preselectedFile,
 		sendEnquiry,
 		sendMessage,
+		selectedAudienceValue,
+		isSupervisor,
+		threadRootId,
 		type,
 		userData
 	]);
@@ -1657,20 +1710,196 @@ export const MessageSubmitInterfaceComponent = ({
 					? featureVoiceMessagesSupervisionChatsEnabled !== false
 					: featureVoiceMessagesOneOnOneChatsEnabled !== false);
 
-	const assigneeDisplayName = useMemo(() => {
-		const firstName = (userData?.firstName || '').trim();
-		const lastName = (userData?.lastName || '').trim();
-		if (firstName && lastName) {
-			return `${firstName.charAt(0)}. ${lastName}`;
+	const getMatrixRoomId = useCallback(() => {
+		if (activeSession?.rid?.startsWith('!')) {
+			return activeSession.rid;
 		}
-		if (lastName) {
-			return lastName;
+		return activeSession?.item?.matrixRoomId || null;
+	}, [activeSession?.item?.matrixRoomId, activeSession?.rid]);
+
+	const deriveLabelFromUserId = useCallback((rawUserId: string) => {
+		if (!rawUserId) {
+			return '';
 		}
-		if (firstName) {
-			return firstName;
+		const compact = rawUserId.trim();
+		if (compact.startsWith('@')) {
+			const username = compact.split(':')[0].replace('@', '');
+			return username || compact;
 		}
-		return 'A. Kräger';
-	}, [userData?.firstName, userData?.lastName, userData?.userName]);
+		return compact;
+	}, []);
+
+	const getComparableAudienceIds = useCallback((rawValue?: string | null) => {
+		const compact = (rawValue || '').trim().toLowerCase();
+		if (!compact) {
+			return new Set<string>();
+		}
+		const ids = new Set<string>([compact]);
+		if (compact.startsWith('@')) {
+			const username = compact.slice(1).split(':')[0];
+			if (username) {
+				ids.add(username);
+				ids.add(`@${username}`);
+			}
+		} else {
+			ids.add(`@${compact}`);
+		}
+		return ids;
+	}, []);
+
+	useEffect(() => {
+		const defaultOption = { value: '__all__', label: 'Send to all' };
+		const collected = new Map<string, string>();
+		const selfIdentifiers = new Set<string>();
+		const matrixUserIdFromStorage =
+			typeof window !== 'undefined'
+				? window.localStorage?.getItem('matrix_user_id')
+				: '';
+		const matrixUserIdFromCookie =
+			typeof document !== 'undefined'
+				? document.cookie
+						.split('; ')
+						.find((entry) => entry.startsWith('rc_uid='))
+						?.split('=')[1] || ''
+				: '';
+		[
+			matrixUserIdFromStorage,
+			matrixUserIdFromCookie,
+			userData?.userName,
+			userData?.displayName
+		].forEach((rawValue) => {
+			getComparableAudienceIds(rawValue).forEach((id) =>
+				selfIdentifiers.add(id)
+			);
+		});
+		const roomId = getMatrixRoomId();
+		const matrixClient = (window as any).matrixClientService?.getClient?.();
+		const room = roomId && matrixClient ? matrixClient.getRoom(roomId) : null;
+		const joinedMembers = room?.getJoinedMembers?.() || [];
+
+		joinedMembers.forEach((member: any) => {
+			const memberId = `${member?.userId || ''}`.trim();
+			if (!memberId) {
+				return;
+			}
+			if (memberId.includes('@system') || memberId.includes('@caritas.local')) {
+				return;
+			}
+			const memberComparableIds = getComparableAudienceIds(memberId);
+			const isSelf = Array.from(memberComparableIds).some((id) =>
+				selfIdentifiers.has(id)
+			);
+			if (isSelf) {
+				return;
+			}
+			const memberName = `${member?.name || ''}`.trim();
+			collected.set(memberId, memberName || deriveLabelFromUserId(memberId));
+		});
+
+		if (collected.size === 0) {
+			const askerId = `${activeSession?.item?.askerRcId || ''}`.trim();
+			if (
+				askerId &&
+				!Array.from(getComparableAudienceIds(askerId)).some((id) =>
+					selfIdentifiers.has(id)
+				)
+			) {
+				collected.set(askerId, deriveLabelFromUserId(askerId));
+			}
+			const consultantUsername = `${activeSession?.consultant?.username || ''}`.trim();
+			if (
+				consultantUsername &&
+				!Array.from(getComparableAudienceIds(consultantUsername)).some((id) =>
+					selfIdentifiers.has(id)
+				)
+			) {
+				collected.set(consultantUsername, consultantUsername);
+			}
+		}
+
+		const mapped = Array.from(collected.entries())
+			.map(([value, label]) => ({ value, label }))
+			.sort((a, b) => a.label.localeCompare(b.label));
+		const includeAllOption = mapped.length > 1;
+		const nextOptions = includeAllOption ? [defaultOption, ...mapped] : mapped;
+		setAudienceOptions(nextOptions);
+		setSelectedAudienceValue((currentValue) =>
+			nextOptions.some((option) => option.value === currentValue)
+				? currentValue
+				: includeAllOption
+					? '__all__'
+					: nextOptions[0]?.value || '__all__'
+		);
+	}, [
+		activeSession?.consultant?.username,
+		activeSession?.consultant?.id,
+		activeSession?.item?.askerRcId,
+		activeSession?.item?.id,
+		deriveLabelFromUserId,
+		getComparableAudienceIds,
+		getMatrixRoomId,
+		userData?.displayName,
+		userData?.userName
+	]);
+
+	useEffect(() => {
+		setIsAudienceMenuOpen(false);
+		setSelectedAudienceValue((currentValue) => {
+			const hasSendToAll = audienceOptions.some(
+				(option) => option.value === '__all__'
+			);
+			if (hasSendToAll) {
+				return '__all__';
+			}
+			return audienceOptions[0]?.value || currentValue;
+		});
+	}, [activeSession?.item?.id, threadRootId, audienceOptions]);
+
+	useEffect(() => {
+		if (!isAudienceMenuOpen) {
+			return;
+		}
+		const handleOutsideClick = (event: MouseEvent) => {
+			const target = event.target as Node | null;
+			if (!target) {
+				return;
+			}
+			if (!audienceMenuRef.current?.contains(target)) {
+				setIsAudienceMenuOpen(false);
+			}
+		};
+		document.addEventListener('mousedown', handleOutsideClick);
+		return () => document.removeEventListener('mousedown', handleOutsideClick);
+	}, [isAudienceMenuOpen]);
+
+	const selectedAudienceLabel = useMemo(
+		() =>
+			audienceOptions.find((option) => option.value === selectedAudienceValue)?.label ||
+			'Send to all',
+		[audienceOptions, selectedAudienceValue]
+	);
+	const selectedAudienceChipLabel = useMemo(() => {
+		if (selectedAudienceLabel === 'Send to all') {
+			return selectedAudienceLabel;
+		}
+		let normalizedLabel = selectedAudienceLabel.trim();
+		if (!/\s/.test(normalizedLabel)) {
+			const roleSplitMatch = normalizedLabel.match(
+				/^(.*?)(consultant|user|supervisor|moderator)(\d*)$/i
+			);
+			if (roleSplitMatch?.[1] && roleSplitMatch?.[2]) {
+				normalizedLabel = `${roleSplitMatch[1]} ${roleSplitMatch[2]}${
+					roleSplitMatch[3] || ''
+				}`;
+			}
+		}
+		const parts = normalizedLabel.split(/\s+/).filter(Boolean);
+		if (parts.length < 2) {
+			return selectedAudienceLabel;
+		}
+		const firstInitial = parts[0].charAt(0).toUpperCase();
+		return `${firstInitial}. ${parts.slice(1).join(' ')}`;
+	}, [selectedAudienceLabel]);
 
 	const startVoiceRecording = useCallback(async () => {
 		if (
@@ -1935,13 +2164,51 @@ export const MessageSubmitInterfaceComponent = ({
 							<span className="textarea__brandBadge" style={{ paddingLeft: '8px' }}>
 								<RichtextToggleIcon width="20" height="20" />
 							</span>
-							<span className="textarea__assigneeChip">
-								<PersonCircleIcon className="textarea__assigneeIcon" />
-								<span className="textarea__assigneeName">
-									{assigneeDisplayName}
-								</span>
-								<ArrowDownIcon className="textarea__assigneeArrow" />
-							</span>
+							<div className="textarea__assigneeChip" ref={audienceMenuRef}>
+								<button
+									type="button"
+									className="textarea__assigneeButton"
+									onClick={() =>
+										setIsAudienceMenuOpen((previousState) => !previousState)
+									}
+									aria-haspopup="listbox"
+									aria-expanded={isAudienceMenuOpen}
+								>
+									<PersonCircleIcon className="textarea__assigneeIcon" />
+									<span className="textarea__assigneeName">
+										{selectedAudienceChipLabel}
+									</span>
+									<ArrowDownIcon
+										className={clsx(
+											'textarea__assigneeArrow',
+											isAudienceMenuOpen && 'textarea__assigneeArrow--open'
+										)}
+									/>
+								</button>
+								{isAudienceMenuOpen && (
+									<div className="textarea__assigneeMenu" role="listbox">
+										{audienceOptions.map((option) => (
+											<button
+												type="button"
+												key={option.value}
+												role="option"
+												aria-selected={selectedAudienceValue === option.value}
+												className={clsx(
+													'textarea__assigneeMenuItem',
+													selectedAudienceValue === option.value &&
+														'textarea__assigneeMenuItem--selected'
+												)}
+												onClick={() => {
+													setSelectedAudienceValue(option.value);
+													setIsAudienceMenuOpen(false);
+												}}
+											>
+												{option.label}
+											</button>
+										))}
+									</div>
+								)}
+							</div>
 						</span>
 						<span
 							className="textarea__inputWrapper"

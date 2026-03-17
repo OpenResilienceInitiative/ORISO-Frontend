@@ -161,9 +161,13 @@ export const SessionStream = ({
 					const reversedMessages = [...matrixMessages].reverse();
 					
 					const formattedMessages = reversedMessages.map((msg: any) => {
+						const textMessageContent =
+							msg.content?.msgtype === 'm.text'
+								? msg.content?.formatted_body || msg.content?.body || ''
+								: msg.content?.body || '';
 						const baseMessage: any = {
 							_id: msg.event_id,
-							msg: msg.content?.body || '',
+							msg: textMessageContent,
 							ts: new Date(msg.origin_server_ts || Date.now()),
 							u: {
 								_id: msg.sender,
@@ -431,10 +435,14 @@ export const SessionStream = ({
 					}
 					
 					// Create a message object in the same format as backend messages
+					const textMessageContent =
+						content.msgtype === 'm.text'
+							? content.formatted_body || content.body || ''
+							: content.body || '';
 					const newMessage = {
 						_id: eventId,
 						rid: matrixRoomId,
-						msg: content.body || '',
+						msg: textMessageContent,
 						ts: new Date(timestamp).toISOString(),
 						u: {
 							_id: sender,

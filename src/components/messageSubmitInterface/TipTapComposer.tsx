@@ -32,6 +32,7 @@ export interface TipTapComposerRef {
 	clear: () => void;
 	focus: () => void;
 	setText: (value: string) => void;
+	getHTML: () => string;
 	insertText: (value: string) => void;
 	insertSnippet: (payload: HighlightSnippetPayload) => void;
 	runAction: (action: string) => void;
@@ -294,6 +295,12 @@ export const TipTapComposer = forwardRef<TipTapComposerRef, TipTapComposerProps>
 			setText: (nextValue: string) => {
 				editor?.commands.setContent(nextValue || '');
 			},
+			getHTML: () => {
+				if (!editor) {
+					return '';
+				}
+				return editor.getHTML();
+			},
 			insertText: (nextValue: string) => {
 				if (!editor || !nextValue) {
 					return;
@@ -341,19 +348,19 @@ export const TipTapComposer = forwardRef<TipTapComposerRef, TipTapComposerProps>
 						editor.chain().focus().toggleHighlight({ color: '#fff59d' }).run();
 						return;
 					case 'highlightYellow':
-						editor.chain().focus().toggleHighlight({ color: '#fff59d' }).run();
+						editor.chain().focus().setHighlight({ color: '#fff59d' }).run();
 						return;
 					case 'highlightOrange':
-						editor.chain().focus().toggleHighlight({ color: '#ffcc80' }).run();
+						editor.chain().focus().setHighlight({ color: '#ffcc80' }).run();
 						return;
 					case 'highlightRose':
-						editor.chain().focus().toggleHighlight({ color: '#ffcdd2' }).run();
+						editor.chain().focus().setHighlight({ color: '#ffcdd2' }).run();
 						return;
 					case 'highlightMint':
-						editor.chain().focus().toggleHighlight({ color: '#b2f2bb' }).run();
+						editor.chain().focus().setHighlight({ color: '#b2f2bb' }).run();
 						return;
 					case 'highlightBlue':
-						editor.chain().focus().toggleHighlight({ color: '#b3e5fc' }).run();
+						editor.chain().focus().setHighlight({ color: '#b3e5fc' }).run();
 						return;
 					case 'bulletList':
 						editor.chain().focus().toggleBulletList().run();

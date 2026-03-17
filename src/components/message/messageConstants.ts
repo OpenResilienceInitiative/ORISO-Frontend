@@ -1,10 +1,14 @@
 export const SUPERVISOR_FEEDBACK_PREFIX = '[SUPERVISOR_FEEDBACK]';
 export const SYSTEM_NOTIFICATION_PREFIX = '[SYSTEM_NOTIFICATION]';
+export const VISIBLE_TO_PREFIX = '[VISIBLE_TO:';
 export const THREAD_PREFIX = '[THREAD:';
 export const THREAD_SUFFIX = ']';
 
 export const buildThreadPrefix = (rootId: string) =>
 	`${THREAD_PREFIX}${rootId}${THREAD_SUFFIX}`;
+
+export const buildVisibleToPrefix = (recipientIds: string[]) =>
+	`${VISIBLE_TO_PREFIX}${recipientIds.join(',')}${THREAD_SUFFIX}`;
 
 export const parseMessagePrefixes = (message?: string | null) => {
 	if (!message) {
@@ -14,6 +18,7 @@ export const parseMessagePrefixes = (message?: string | null) => {
 			isSystemNotification: false,
 			systemNotificationTitle: '',
 			systemNotificationDescription: '',
+			visibleToUserIds: [] as string[],
 			isThreadMessage: false,
 			threadRootId: null as string | null
 		};
@@ -24,21 +29,46 @@ export const parseMessagePrefixes = (message?: string | null) => {
 	let isSystemNotification = false;
 	let systemNotificationTitle = '';
 	let systemNotificationDescription = '';
+	let visibleToUserIds: string[] = [];
 	let threadRootId: string | null = null;
 
-	if (cleanedMessage.startsWith(THREAD_PREFIX)) {
-		const endIndex = cleanedMessage.indexOf(THREAD_SUFFIX);
-		if (endIndex > THREAD_PREFIX.length) {
-			threadRootId = cleanedMessage.substring(THREAD_PREFIX.length, endIndex);
-			cleanedMessage = cleanedMessage.substring(endIndex + 1).trimStart();
-		}
-	}
+	let keepParsingPrefixes = true;
+	while (keepParsingPrefixes) {
+		keepParsingPrefixes = false;
 
-	if (cleanedMessage.startsWith(SUPERVISOR_FEEDBACK_PREFIX)) {
-		isSupervisorFeedback = true;
-		cleanedMessage = cleanedMessage
-			.substring(SUPERVISOR_FEEDBACK_PREFIX.length)
-			.trimStart();
+		if (!threadRootId && cleanedMessage.startsWith(THREAD_PREFIX)) {
+			const endIndex = cleanedMessage.indexOf(THREAD_SUFFIX);
+			if (endIndex > THREAD_PREFIX.length) {
+				threadRootId = cleanedMessage.substring(THREAD_PREFIX.length, endIndex);
+				cleanedMessage = cleanedMessage.substring(endIndex + 1).trimStart();
+				keepParsingPrefixes = true;
+				continue;
+			}
+		}
+
+		if (cleanedMessage.startsWith(VISIBLE_TO_PREFIX)) {
+			const endIndex = cleanedMessage.indexOf(THREAD_SUFFIX);
+			if (endIndex > VISIBLE_TO_PREFIX.length) {
+				const recipients = cleanedMessage
+					.substring(VISIBLE_TO_PREFIX.length, endIndex)
+					.split(',')
+					.map((entry) => entry.trim())
+					.filter(Boolean);
+				visibleToUserIds = recipients;
+				cleanedMessage = cleanedMessage.substring(endIndex + 1).trimStart();
+				keepParsingPrefixes = true;
+				continue;
+			}
+		}
+
+		if (!isSupervisorFeedback && cleanedMessage.startsWith(SUPERVISOR_FEEDBACK_PREFIX)) {
+			isSupervisorFeedback = true;
+			cleanedMessage = cleanedMessage
+				.substring(SUPERVISOR_FEEDBACK_PREFIX.length)
+				.trimStart();
+			keepParsingPrefixes = true;
+			continue;
+		}
 	}
 
 	if (cleanedMessage.startsWith(SYSTEM_NOTIFICATION_PREFIX)) {
@@ -71,6 +101,7 @@ export const parseMessagePrefixes = (message?: string | null) => {
 		isSystemNotification,
 		systemNotificationTitle,
 		systemNotificationDescription,
+		visibleToUserIds,
 		isThreadMessage: !!threadRootId,
 		threadRootId
 	};

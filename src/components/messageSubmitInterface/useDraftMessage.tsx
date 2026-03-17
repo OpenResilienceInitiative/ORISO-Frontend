@@ -40,6 +40,7 @@ export const useDraftMessage = (
 
 	const draftSaveTimeout = useRef(null);
 	const loadVersionRef = useRef(0);
+	const latestMessageRef = useRef<string>('');
 
 	const { keyID, key, encrypted, ready } = useE2EE(activeSession.rid);
 
@@ -291,6 +292,7 @@ export const useDraftMessage = (
 				return;
 			}
 
+			latestMessageRef.current = markdownMessage || '';
 			setMessage(markdownMessage);
 
 			if (draftSaveTimeout.current) {
@@ -310,7 +312,7 @@ export const useDraftMessage = (
 				clearTimeout(draftSaveTimeout.current);
 				draftSaveTimeout.current = null;
 			}
-			await saveDraftMessage(message);
+			await saveDraftMessage(latestMessageRef.current || message);
 			return args;
 		},
 		[message, saveDraftMessage]
@@ -330,7 +332,7 @@ export const useDraftMessage = (
 				clearTimeout(draftSaveTimeout.current);
 				draftSaveTimeout.current = null;
 			}
-			saveDraftMessage(message).then();
+			saveDraftMessage(latestMessageRef.current || message).then();
 		};
 	}, [message, saveDraftMessage]);
 
