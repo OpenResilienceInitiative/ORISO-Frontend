@@ -11,6 +11,7 @@ import { useHistory, useLocation } from 'react-router-dom';
 
 import { SendMessageButton } from './SendMessageButton';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
+import { STATUS_ENQUIRY } from '../../globalState/interfaces/SessionsDataInterface';
 import {
 	AUTHORITIES,
 	getContact,
@@ -1784,6 +1785,14 @@ const AudiencePersonIcon = () => (
 
 	useEffect(() => {
 		const defaultOption = { value: '__all__', label: 'Send to all' };
+		const isInquiryNotAccepted =
+			type === SESSION_LIST_TYPES.ENQUIRY ||
+			activeSession?.item?.status === STATUS_ENQUIRY;
+		if (isInquiryNotAccepted) {
+			setAudienceOptions([defaultOption]);
+			setSelectedAudienceValue('__all__');
+			return;
+		}
 		const collected = new Map<string, string>();
 		const selfIdentifiers = new Set<string>();
 		const matrixUserIdFromStorage =
@@ -1866,6 +1875,8 @@ const AudiencePersonIcon = () => (
 					: nextOptions[0]?.value || '__all__'
 		);
 	}, [
+		type,
+		activeSession?.item?.status,
 		activeSession?.consultant?.username,
 		activeSession?.consultant?.id,
 		activeSession?.item?.askerRcId,

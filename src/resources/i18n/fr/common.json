@@ -1928,6 +1928,53 @@
     }
   },
   "session": {
+    "waitingMiniGame": {
+      "inhaleExhale": "Guide respiratoire inspirer expirer",
+      "timeLeft": "Temps restant",
+      "choosePace": "Choisissez votre rythme, puis commencez votre premier essai.",
+      "firstTryInstruction": "Premier essai : suivez inspirer, retenir et expirer.",
+      "practiceSuccessPrompt": "Excellent, vous voulez commencer maintenant ?",
+      "timingInfo": "Réglez votre rythme de respiration avant de commencer.",
+      "achievementUnlocked": "Succès débloqué : Niveau {{level}} {{emoji}} {{title}}.",
+      "levelBadge": "Niveau {{level}} : {{title}}",
+      "completionTitle": "Félicitations, vous y êtes arrivé",
+      "prizeLine1": "Votre prix principal est la vraie sagesse.",
+      "prizeLine2": "Parce que vous avez dépassé votre bruit intérieur, vaincu l'ennui, pris du recul et trouvé un peu de paix intérieure.",
+      "serenityPrayer": "Mon Dieu, donne-moi la sérénité d'accepter les choses que je ne peux pas changer, le courage de changer celles que je peux, et la sagesse d'en connaître la différence.",
+      "changeMind": "Je change d'avis, laissez-moi essayer votre jeu d'attente",
+      "iJustWait": "J'attends simplement",
+      "startGame": "Démarrer le jeu",
+      "startFirstTry": "Commençons le premier essai",
+      "repeatTrainingRound": "Répéter le tour d'entraînement",
+      "startRealGame": "Commençons la vraie partie",
+      "repeatGame": "Répéter le jeu",
+      "receivePrize": "Recevoir votre prix",
+      "playAgain": "Rejouer",
+      "joinRoom": "Rejoindre la salle",
+      "decreaseInhale": "Diminuer les secondes d'inspiration",
+      "increaseInhale": "Augmenter les secondes d'inspiration",
+      "decreaseHold": "Diminuer les secondes de pause",
+      "increaseHold": "Augmenter les secondes de pause",
+      "decreaseExhale": "Diminuer les secondes d'expiration",
+      "increaseExhale": "Augmenter les secondes d'expiration",
+      "phase": {
+        "inhale": "Inspirer",
+        "hold": "Retenir",
+        "exhale": "Expirer"
+      },
+      "presets": {
+        "starter334": "première fois",
+        "standard446": "expérience modérée (recommandé)",
+        "deep556": "long (experts)"
+      },
+      "briefing": {
+        "0": "Désolé, vous devez attendre pour le moment, tous les conseillers sont actuellement occupés.",
+        "1": "Attendre avec tous ces problèmes peut être assez éprouvant. Si vous voulez, nous avons créé un petit pont de salle d'attente.",
+        "2": "D'accord, vous devez faire trois choses dans le jeu.",
+        "3": "1. Inspirez par le nez\n\n2. Retenez votre souffle\n\n3. Expirez par la bouche",
+        "negative": "D'accord, merci de patienter. Dès qu'un conseiller est libre, nous vous faisons entrer."
+      }
+    },
     "acceptance": {
       "button": {
         "label": "Réponses"

@@ -693,6 +693,53 @@
 		}
 	},
 	"session": {
+		"waitingMiniGame": {
+			"inhaleExhale": "Atemspiel Einatmen Ausatmen",
+			"timeLeft": "Verbleibende Zeit",
+			"choosePace": "Wähle dein Tempo und starte dann deinen ersten Versuch.",
+			"firstTryInstruction": "Erster Versuch: Einatmen, Halten und Ausatmen folgen.",
+			"practiceSuccessPrompt": "Sehr gut, möchtest du jetzt starten?",
+			"timingInfo": "Stelle dein Atem-Timing ein, bevor du startest.",
+			"achievementUnlocked": "Erfolg freigeschaltet: Level {{level}} {{emoji}} {{title}}.",
+			"levelBadge": "Level {{level}}: {{title}}",
+			"completionTitle": "Glückwunsch, du hast es geschafft",
+			"prizeLine1": "Dein Hauptpreis ist echte Weisheit.",
+			"prizeLine2": "Denn du hast dein inneres Rauschen überwunden, die Langeweile besiegt, Abstand gewonnen und etwas inneren Frieden gefunden.",
+			"serenityPrayer": "Gott, gib mir die Gelassenheit, Dinge hinzunehmen, die ich nicht ändern kann, den Mut, Dinge zu ändern, die ich ändern kann, und die Weisheit, das eine vom anderen zu unterscheiden.",
+			"changeMind": "Ich ändere meine Meinung, lass mich dein Wartespiel ausprobieren",
+			"iJustWait": "Ich warte einfach",
+			"startGame": "Spiel starten",
+			"startFirstTry": "Lass uns den ersten Versuch starten",
+			"repeatTrainingRound": "Trainingsrunde wiederholen",
+			"startRealGame": "Lass uns das echte Spiel starten",
+			"repeatGame": "Spiel wiederholen",
+			"receivePrize": "Preis erhalten",
+			"playAgain": "Nochmal spielen",
+			"joinRoom": "Zum Raum wechseln",
+			"decreaseInhale": "Sekunden für Einatmen verringern",
+			"increaseInhale": "Sekunden für Einatmen erhöhen",
+			"decreaseHold": "Sekunden für Halten verringern",
+			"increaseHold": "Sekunden für Halten erhöhen",
+			"decreaseExhale": "Sekunden für Ausatmen verringern",
+			"increaseExhale": "Sekunden für Ausatmen erhöhen",
+			"phase": {
+				"inhale": "Einatmen",
+				"hold": "Halten",
+				"exhale": "Ausatmen"
+			},
+			"presets": {
+				"starter334": "erstes Mal",
+				"standard446": "mittlere Erfahrung (empfohlen)",
+				"deep556": "lang (Expertinnen und Experten)"
+			},
+			"briefing": {
+				"0": "Es tut uns leid, du musst gerade warten, im Moment sind alle Beraterinnen und Berater beschäftigt.",
+				"1": "Warten mit all diesen Problemen kann ziemlich belastend sein. Wenn du möchtest, haben wir eine kleine Wartezimmer-Brücke erstellt.",
+				"2": "Okay, du musst im Spiel drei Dinge tun.",
+				"3": "1. Durch die Nase einatmen\n\n2. Den Atem anhalten\n\n3. Durch den Mund ausatmen",
+				"negative": "Okay, bitte halte kurz durch. Sobald eine Beraterin oder ein Berater frei ist, lassen wir dich rein."
+			}
+		},
 		"acceptance": {
 			"overlay": {
 				"headline": "Du hast die Erstanfrage erfolgreich angenommen und findest diese nun unter „Meine Beratungen."

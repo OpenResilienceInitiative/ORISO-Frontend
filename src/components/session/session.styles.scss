@@ -244,13 +244,6 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		padding-right: 40px;
 	}
 
-	&__waitingModuleSubtitle {
-		font-size: 11px;
-		color: #b33a3a;
-		margin-top: 3px;
-		text-align: center;
-	}
-
 	&__waitingModulePresets {
 		display: flex;
 		gap: 8px;
@@ -303,28 +296,21 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		gap: 14px;
+		gap: 10px;
 		padding: 10px 8px 2px;
 		flex-wrap: wrap;
 		overflow: hidden;
 	}
 
-	&__waitingMiniGamePhaseCard {
+	&__waitingMiniGameSingle {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 7px;
-		opacity: 0.74;
-		transition: opacity 120ms ease, transform 120ms ease;
-	}
-
-	&__waitingMiniGamePhaseCard--active {
-		opacity: 1;
-		transform: translateY(-2px);
+		gap: 12px;
 	}
 
 	&__waitingMiniGamePhaseSeconds {
-		font-size: 28px;
+		font-size: 34px;
 		line-height: 1;
 		font-weight: 500;
 		color: #cf2020;
@@ -341,50 +327,76 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	}
 
 	&__waitingMiniGameCircleOuter {
-		width: 132px;
-		height: 132px;
+		width: 194px;
+		height: 194px;
 		border-radius: 50%;
-		background: transparent;
-		border: 2px solid #cc1e1c;
+		background: radial-gradient(circle, rgba(176, 18, 18, 0.16) 0%, rgba(128, 14, 14, 0.1) 100%);
+		border: 1px solid rgba(204, 30, 28, 0.18);
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		transition: transform 90ms linear;
+		transition: filter 140ms ease;
 		position: relative;
 		animation: none;
+
+		&::before {
+			content: '';
+			position: absolute;
+			inset: -2px;
+			border-radius: 50%;
+			background: conic-gradient(
+				#cc1e1c var(--breath-progress, 20%),
+				rgba(204, 30, 28, 0.1) var(--breath-progress, 20%)
+			);
+			mask: radial-gradient(circle, transparent 68%, #000 69%);
+			-webkit-mask: radial-gradient(circle, transparent 68%, #000 69%);
+			transition: background 90ms linear;
+		}
 
 		&::after {
 			content: '';
 			position: absolute;
-			inset: -8px;
+			inset: -10px;
 			border-radius: 50%;
-			border: 1px solid rgba(204, 30, 28, 0.38);
-			animation: breathing-ring-out 2.4s ease-out infinite;
+			border: 1px solid rgba(204, 30, 28, 0.25);
+			animation: breathing-ring-out 2.8s ease-out infinite;
+		}
+	}
+
+	&__waitingMiniGameCircleOuter--holding {
+		&::before {
+			animation: breathing-circle-spin 4s linear infinite;
 		}
 	}
 
 	&__waitingMiniGameCircleMid {
-		width: 76px;
-		height: 76px;
+		width: 148px;
+		height: 148px;
 		border-radius: 50%;
-		background: rgba(255, 255, 255, 0.6);
-		border: 2px solid #cc1e1c;
+		background: rgba(228, 108, 108, 0.28);
+		border: 1px solid rgba(204, 30, 28, 0.28);
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		transform: scale(var(--breath-mid-scale, 0.9));
+		transition: transform 90ms linear;
 		animation: none;
 	}
 
 	&__waitingMiniGameCircleInner {
-		width: 62px;
-		height: 62px;
+		width: 118px;
+		height: 118px;
 		border-radius: 50%;
-		background: rgba(255, 255, 255, 0.95);
+		background: rgba(255, 255, 255, 0.96);
 		color: #111;
 		display: flex;
+		flex-direction: column;
 		align-items: center;
 		justify-content: center;
+		gap: 3px;
 		line-height: 1;
+		transform: scale(var(--breath-inner-scale, 0.94));
+		transition: transform 90ms linear;
 		animation: none;
 	}
 
@@ -397,6 +409,13 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
+	}
+
+	&__waitingMiniGameCenterText {
+		font-size: 15px;
+		color: #1f1f1f;
+		font-weight: 600;
+		letter-spacing: 0.02em;
 	}
 
 	&__waitingPhaseIcon {
@@ -430,12 +449,25 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		text-align: center;
 	}
 
+	&__waitingModuleTypewriter--centerStage {
+		min-height: auto;
+		margin-top: 24px;
+		padding: 0;
+	}
+
 	&__waitingBriefingScreen {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		gap: 0;
 		text-align: center;
+	}
+
+	&__waitingBriefingScreen--negative {
+		align-items: center;
+		text-align: center;
+		max-width: 760px;
+		margin: 0 auto;
 	}
 
 	&__waitingBriefingText {
@@ -456,6 +488,12 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		gap: 8px;
 		flex-wrap: wrap;
 		justify-content: center;
+	}
+
+	&__waitingModuleActions--negative {
+		justify-content: center;
+		max-width: 760px;
+		margin: 10px auto 0;
 	}
 
 	&__waitingModuleTypewriter--hidden {
@@ -523,6 +561,73 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		}
 	}
 
+	&__waitingModuleActionButton--tiny {
+		font-size: 11px;
+		padding: 8px 10px;
+		max-width: 220px;
+		white-space: normal;
+		text-align: center;
+		line-height: 1.15;
+	}
+
+	&__waitingGameStatus {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 10px;
+		width: min(780px, 92%);
+		margin: 0 auto 10px;
+		font-size: 18px;
+		color: #1f1f1f;
+		text-align: center;
+	}
+
+	&__waitingGameStatusIcon {
+		font-size: 22px;
+	}
+
+	&__waitingGameStatusIcon svg {
+		display: block;
+		width: 22px;
+		height: 22px;
+	}
+
+	&__waitingGameLevelBadge {
+		margin: 6px auto 0;
+		border: 1px solid rgba(40, 40, 40, 0.3);
+		border-radius: 8px;
+		padding: 6px 14px;
+		font-size: 18px;
+		color: #222;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		gap: 8px;
+		width: fit-content;
+	}
+
+	&__waitingCenterStageText {
+		font-size: clamp(34px, 4.6vw, 58px);
+		line-height: 1.16;
+		color: #161616;
+		text-align: center;
+		font-weight: 500;
+		max-width: 880px;
+		margin: 0 auto;
+	}
+
+	&__waitingGameLevelBadgeIcon svg {
+		display: block;
+		width: 18px;
+		height: 18px;
+	}
+
+	&__waitingGameLevelBadgeEmoji {
+		display: block;
+		width: 22px;
+		height: 22px;
+	}
+
 	&__waitingPreGameSetup {
 		display: flex;
 		flex-direction: column;
@@ -539,6 +644,12 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		line-height: 1.15;
 		animation: breathing-briefing-fade 420ms ease-in-out;
 		font-weight: 500;
+	}
+
+	&__waitingPreGameTitle--small {
+		font-size: clamp(14px, 2vw, 18px);
+		font-weight: 400;
+		color: #5e4b4b;
 	}
 
 	&__waitingPreGameLevels {
@@ -757,6 +868,14 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 			justify-content: center;
 			padding-right: 0;
 		}
+
+		&__waitingGameStatus {
+			font-size: 14px;
+		}
+
+		&__waitingGameLevelBadge {
+			font-size: 14px;
+		}
 	}
 
 	// Shadow removed from submit interface for clean Element-like UI
@@ -899,6 +1018,15 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	}
 	100% {
 		transform: scale(0.78);
+	}
+}
+
+@keyframes breathing-circle-spin {
+	0% {
+		transform: rotate(0deg) scale(1);
+	}
+	100% {
+		transform: rotate(360deg) scale(1);
 	}
 }
 

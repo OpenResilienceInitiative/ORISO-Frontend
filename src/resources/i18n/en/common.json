@@ -1949,6 +1949,53 @@
 		}
 	},
 	"session": {
+		"waitingMiniGame": {
+			"inhaleExhale": "Inhale exhale breathing guide",
+			"timeLeft": "Time left",
+			"choosePace": "Choose your pace, then begin your first try.",
+			"firstTryInstruction": "First try: follow inhale, hold, and exhale.",
+			"practiceSuccessPrompt": "Great job, want to start now?",
+			"timingInfo": "Set your breathing timing before you start.",
+			"achievementUnlocked": "Achievement unlocked: Level {{level}} {{emoji}} {{title}}.",
+			"levelBadge": "Level {{level}}: {{title}}",
+			"completionTitle": "Congratulation you have made it",
+			"prizeLine1": "Your main prize is true wisdom.",
+			"prizeLine2": "Because you overcame your inner noise, beat the boredom, got some distance, and found a little inner peace.",
+			"serenityPrayer": "God, grant me the serenity to accept the things I cannot change, courage to change the things I can, and wisdom to know the difference.",
+			"changeMind": "I change my mind let me try out your waiting game",
+			"iJustWait": "I just wait",
+			"startGame": "Start the game",
+			"startFirstTry": "Lets start the first try",
+			"repeatTrainingRound": "Repeat training round",
+			"startRealGame": "Lets start the real game",
+			"repeatGame": "Repeat game",
+			"receivePrize": "Receive your price",
+			"playAgain": "Play again",
+			"joinRoom": "Join the room",
+			"decreaseInhale": "Decrease inhale seconds",
+			"increaseInhale": "Increase inhale seconds",
+			"decreaseHold": "Decrease hold seconds",
+			"increaseHold": "Increase hold seconds",
+			"decreaseExhale": "Decrease exhale seconds",
+			"increaseExhale": "Increase exhale seconds",
+			"phase": {
+				"inhale": "Inhale",
+				"hold": "Hold",
+				"exhale": "Exhale"
+			},
+			"presets": {
+				"starter334": "first time",
+				"standard446": "mild experience (recommended)",
+				"deep556": "long (experts)"
+			},
+			"briefing": {
+				"0": "So sorry you must wait at the moment, all counsellors are busy at the moment.",
+				"1": "Waiting with all those problems can be quite daunting. So if you want we created a small waiting room bridge.",
+				"2": "Okay you need to do three things in the game.",
+				"3": "1. Breath in through the nose\n\n2. Hold your breath\n\n3. Breath out through your mouth",
+				"negative": "Okay please hold on once a counsellor is free we let you in."
+			}
+		},
 		"acceptance": {
 			"button": {
 				"label": "Answers"

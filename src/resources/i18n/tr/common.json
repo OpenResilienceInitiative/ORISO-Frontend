@@ -1928,6 +1928,53 @@
     }
   },
   "session": {
+    "waitingMiniGame": {
+      "inhaleExhale": "Nefes rehberi nefes al ver",
+      "timeLeft": "Kalan süre",
+      "choosePace": "Temponu seç, sonra ilk denemeni başlat.",
+      "firstTryInstruction": "İlk deneme: nefes al, tut ve ver adımlarını takip et.",
+      "practiceSuccessPrompt": "Harika, şimdi başlamak ister misin?",
+      "timingInfo": "Başlamadan önce nefes zamanlamanı ayarla.",
+      "achievementUnlocked": "Başarım açıldı: Seviye {{level}} {{emoji}} {{title}}.",
+      "levelBadge": "Seviye {{level}}: {{title}}",
+      "completionTitle": "Tebrikler, başardın",
+      "prizeLine1": "Asıl ödülün gerçek bilgeliktir.",
+      "prizeLine2": "Çünkü içindeki gürültüyü aştın, sıkıntıyı yendin, mesafe kazandın ve biraz iç huzuru buldun.",
+      "serenityPrayer": "Tanrım, değiştiremeyeceğim şeyleri kabullenmek için sükunet, değiştirebileceğim şeyleri değiştirmek için cesaret ve ikisi arasındaki farkı bilmek için bilgelik ver.",
+      "changeMind": "Fikrimi değiştirdim, bekleme oyununu denememe izin ver",
+      "iJustWait": "Sadece beklerim",
+      "startGame": "Oyunu başlat",
+      "startFirstTry": "İlk denemeyi başlatalım",
+      "repeatTrainingRound": "Antrenman turunu tekrarla",
+      "startRealGame": "Gerçek oyunu başlatalım",
+      "repeatGame": "Oyunu tekrarla",
+      "receivePrize": "Ödülünü al",
+      "playAgain": "Tekrar oyna",
+      "joinRoom": "Odaya katıl",
+      "decreaseInhale": "Nefes alma süresini azalt",
+      "increaseInhale": "Nefes alma süresini artır",
+      "decreaseHold": "Tutma süresini azalt",
+      "increaseHold": "Tutma süresini artır",
+      "decreaseExhale": "Nefes verme süresini azalt",
+      "increaseExhale": "Nefes verme süresini artır",
+      "phase": {
+        "inhale": "Nefes al",
+        "hold": "Tut",
+        "exhale": "Nefes ver"
+      },
+      "presets": {
+        "starter334": "ilk kez",
+        "standard446": "orta seviye deneyim (önerilen)",
+        "deep556": "uzun (uzmanlar)"
+      },
+      "briefing": {
+        "0": "Üzgünüz, şu anda beklemeniz gerekiyor, tüm danışmanlar şu an meşgul.",
+        "1": "Bunca sorunla beklemek oldukça zor olabilir. İstersen bunun için küçük bir bekleme odası köprüsü hazırladık.",
+        "2": "Tamam, oyunda üç şey yapman gerekiyor.",
+        "3": "1. Burnundan nefes al\n\n2. Nefesini tut\n\n3. Ağzından nefes ver",
+        "negative": "Tamam, lütfen biraz daha bekle. Bir danışman müsait olur olmaz seni içeri alacağız."
+      }
+    },
     "acceptance": {
       "button": {
         "label": "Cevaplar"
