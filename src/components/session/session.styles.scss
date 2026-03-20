@@ -133,6 +133,10 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		overflow-y: hidden;
 	}
 
+	&__content--gameFocus {
+		padding-bottom: 38px;
+	}
+
 	&__content--withThread {
 		@include breakpoint($fromMedium) {
 			padding-right: 520px;
@@ -195,6 +199,43 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		color: $text-low-emphasis;
 	}
 
+	&__gameChromeFadeTarget,
+	&__gameInputFadeTarget {
+		opacity: 1;
+		transform: translateY(0);
+		transition: opacity 260ms ease, transform 260ms ease;
+	}
+
+	&--gameFocus &__waitingMiniGamePulse {
+		width: 356px;
+		height: 356px;
+	}
+
+	&--gameFocus &__waitingMiniGamePulseCircle--1 {
+		width: 292px;
+		height: 304px;
+	}
+
+	&--gameFocus &__waitingMiniGamePulseCircle--2 {
+		width: 248px;
+		height: 260px;
+	}
+
+	&--gameFocus &__waitingMiniGamePulseCircle--3 {
+		width: 196px;
+		height: 206px;
+	}
+
+	&--gameFocus &__waitingMiniGamePulseCircle--4 {
+		width: 156px;
+		height: 164px;
+	}
+
+	&--gameFocus &__waitingMiniGameCenter {
+		width: 132px;
+		height: 132px;
+	}
+
 	&__supervisionReason {
 		display: flex;
 		max-width: 650px;
@@ -228,6 +269,27 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		color: #6d1111;
 		box-shadow: none;
 		font-family: 'Poppins', 'Helvetica Neue', Arial, sans-serif;
+	}
+
+	&__waitingModule--overlay {
+		position: absolute;
+		top: -92px;
+		left: 0;
+		right: 0;
+		height: calc(100% + 92px);
+		z-index: 2600;
+		margin: 0;
+		border: none;
+		border-radius: 0;
+		background: rgba(246, 246, 246, 0.78);
+		padding: 24px 20px;
+		max-width: none;
+		width: 100%;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		overflow-y: auto;
 	}
 
 	&__waitingModule--briefing {
@@ -326,85 +388,82 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		max-width: 180px;
 	}
 
-	&__waitingMiniGameCircleOuter {
-		width: 194px;
-		height: 194px;
-		border-radius: 50%;
-		background: radial-gradient(circle, rgba(176, 18, 18, 0.16) 0%, rgba(128, 14, 14, 0.1) 100%);
-		border: 1px solid rgba(204, 30, 28, 0.18);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		transition: filter 140ms ease;
+	&__waitingMiniGamePulse {
 		position: relative;
-		animation: none;
-
-		&::before {
-			content: '';
-			position: absolute;
-			inset: -2px;
-			border-radius: 50%;
-			background: conic-gradient(
-				#cc1e1c var(--breath-progress, 20%),
-				rgba(204, 30, 28, 0.1) var(--breath-progress, 20%)
-			);
-			mask: radial-gradient(circle, transparent 68%, #000 69%);
-			-webkit-mask: radial-gradient(circle, transparent 68%, #000 69%);
-			transition: background 90ms linear;
-		}
-
-		&::after {
-			content: '';
-			position: absolute;
-			inset: -10px;
-			border-radius: 50%;
-			border: 1px solid rgba(204, 30, 28, 0.25);
-			animation: breathing-ring-out 2.8s ease-out infinite;
-		}
+		width: 220px;
+		height: 220px;
+		transition: filter 180ms ease;
 	}
 
-	&__waitingMiniGameCircleOuter--holding {
-		&::before {
-			animation: breathing-circle-spin 4s linear infinite;
-		}
-	}
-
-	&__waitingMiniGameCircleMid {
-		width: 148px;
-		height: 148px;
+	&__waitingMiniGamePulseCircle {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%) rotate(0deg) scale(var(--breath-scale, 1));
+		transform-origin: center;
 		border-radius: 50%;
-		background: rgba(228, 108, 108, 0.28);
-		border: 1px solid rgba(204, 30, 28, 0.28);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		transform: scale(var(--breath-mid-scale, 0.9));
-		transition: transform 90ms linear;
-		animation: none;
+		opacity: 0.24;
+		background: conic-gradient(
+			from 18deg,
+			rgba(205, 27, 27, 0.85),
+			rgba(205, 27, 27, 0.18) 38%,
+			rgba(205, 27, 27, 0.42) 72%,
+			rgba(205, 27, 27, 0.85)
+		);
+		box-shadow: 0 0 16px rgba(204, 30, 28, 0.36);
+		animation: breathing-pulse-orbit 7s linear infinite;
 	}
 
-	&__waitingMiniGameCircleInner {
-		width: 118px;
-		height: 118px;
+	&__waitingMiniGamePulseCircle--1 {
+		width: 178px;
+		height: 186px;
+		animation-delay: 0s;
+	}
+
+	&__waitingMiniGamePulseCircle--2 {
+		width: 152px;
+		height: 160px;
+		animation-delay: -1s;
+		animation-duration: 6.6s;
+	}
+
+	&__waitingMiniGamePulseCircle--3 {
+		width: 120px;
+		height: 126px;
+		animation-delay: -1.3s;
+		animation-duration: 7.4s;
+	}
+
+	&__waitingMiniGamePulseCircle--4 {
+		width: 98px;
+		height: 104px;
+		animation-delay: -1.8s;
+		animation-duration: 6.9s;
+	}
+
+	&__waitingMiniGameCenter {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%) scale(var(--breath-center-scale, 1));
+		width: 98px;
+		height: 98px;
 		border-radius: 50%;
 		background: rgba(255, 255, 255, 0.96);
-		color: #111;
+		border: none;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		gap: 3px;
-		line-height: 1;
-		transform: scale(var(--breath-inner-scale, 0.94));
-		transition: transform 90ms linear;
-		animation: none;
+		gap: 4px;
+		z-index: 2;
 	}
 
 	&__waitingMiniGameCircleIcon {
 		font-size: 15px;
-		font-weight: 600;
+		font-weight: 700;
 		letter-spacing: 0.08em;
-		color: #222;
+		color: #cc1e1c;
 		font-family: 'Poppins', 'Helvetica Neue', Arial, sans-serif;
 		display: inline-flex;
 		align-items: center;
@@ -413,8 +472,8 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 
 	&__waitingMiniGameCenterText {
 		font-size: 15px;
-		color: #1f1f1f;
-		font-weight: 600;
+		color: #cc1e1c;
+		font-weight: 700;
 		letter-spacing: 0.02em;
 	}
 
@@ -422,6 +481,20 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		display: block;
 		width: 22px;
 		height: 22px;
+		color: #cc1e1c;
+		fill: currentColor;
+	}
+
+	&__waitingPhaseIcon * {
+		fill: currentColor !important;
+		stroke: currentColor !important;
+	}
+
+	&__waitingMiniGamePracticeHint {
+		margin-top: 6px;
+		font-size: 13px;
+		color: #2f2f2f;
+		text-align: center;
 	}
 
 	&__waitingPhaseIcon--inhale {
@@ -482,6 +555,117 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		font-weight: 500;
 	}
 
+	&__waitingBriefingStepsAnimated {
+		margin-top: 26px;
+		display: flex;
+		align-items: flex-start;
+		justify-content: center;
+		gap: 18px;
+		width: 100%;
+	}
+
+	&__waitingBriefingStep {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 10px;
+		opacity: 0;
+		transform: translateY(14px) scale(0.84);
+		animation: briefing-step-pop 900ms cubic-bezier(0.2, 0.82, 0.22, 1) forwards;
+		animation-delay: var(--step-delay, 0ms);
+	}
+
+	&__waitingBriefingStepCircle {
+		width: 112px;
+		height: 112px;
+		border-radius: 50%;
+		background: radial-gradient(circle at 30% 28%, #e94747 0%, #cf2a2a 70%);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	&__waitingBriefingStepIcon {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	&__waitingBriefingStepIcon .session__waitingPhaseIcon {
+		color: #fff;
+		fill: currentColor;
+		width: 34px;
+		height: 34px;
+	}
+
+	&__waitingBriefingStepIcon .session__waitingPhaseIcon * {
+		paint-order: stroke fill;
+		fill: currentColor !important;
+		stroke: currentColor !important;
+		stroke-width: 1.4px;
+		stroke-linejoin: round;
+		stroke-linecap: round;
+	}
+
+	&__waitingBriefingStepLabel {
+		font-size: 28px;
+		font-weight: 600;
+		line-height: 1;
+		color: #bb1f1f;
+	}
+
+	&__waitingBriefingStepConnector {
+		margin-top: 37px;
+		display: flex;
+		gap: 8px;
+		align-items: center;
+
+		span {
+			width: 8px;
+			height: 8px;
+			border-radius: 50%;
+			background: rgba(201, 30, 30, 0.2);
+			opacity: 0;
+			transform: scale(0.6);
+			animation: briefing-connector-fill 620ms ease forwards;
+		}
+
+		span:nth-child(1) {
+			animation-delay: calc(var(--connector-delay, 0ms) + 0ms);
+		}
+		span:nth-child(2) {
+			animation-delay: calc(var(--connector-delay, 0ms) + 140ms);
+		}
+		span:nth-child(3) {
+			animation-delay: calc(var(--connector-delay, 0ms) + 280ms);
+		}
+		span:nth-child(4) {
+			animation-delay: calc(var(--connector-delay, 0ms) + 420ms);
+		}
+		span:nth-child(5) {
+			animation-delay: calc(var(--connector-delay, 0ms) + 560ms);
+		}
+	}
+
+	&__waitingTypewriterText {
+		display: inline-block;
+		position: relative;
+		white-space: pre-wrap;
+	}
+
+	&__waitingTypewriterText--busy::after {
+		content: '';
+		display: inline-block;
+		width: 0;
+		height: 1.06em;
+		margin-left: 4px;
+		vertical-align: -0.1em;
+		padding-right: clamp(3px, 0.12vw, 6px);
+		border-right: clamp(4px, 0.58vw, 10px) solid rgba(22, 22, 22, 0.86);
+		box-shadow: 0 0 5px rgba(18, 18, 18, 0.24);
+		animation: breathing-typewriter-beam-blink 1s infinite;
+	}
+
 	&__waitingModuleActions {
 		margin-top: 10px;
 		display: flex;
@@ -527,6 +711,9 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 
 	&__waitingCompletionHeart {
 		margin-top: 8px;
+		display: flex;
+		justify-content: center;
+		width: 100%;
 	}
 
 	&__waitingCompletionHeart svg {
@@ -536,7 +723,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	}
 
 	&__waitingModuleActionButton {
-		border-radius: 999px;
+		border-radius: 10px;
 		padding: 8px 14px;
 		font-size: 12px;
 		font-weight: 700;
@@ -546,7 +733,6 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		&--primary {
 			background: #d53030;
 			color: #fff;
-			box-shadow: 0 8px 20px rgba(213, 48, 48, 0.34);
 		}
 
 		&--ghost {
@@ -633,84 +819,191 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		gap: 14px;
+		gap: 18px;
 		min-height: 420px;
 		text-align: center;
 		font-family: 'Poppins', 'Helvetica Neue', Arial, sans-serif;
+		width: min(940px, 96%);
+		margin: 8px auto 0;
+		padding: clamp(20px, 3.2vw, 38px);
+		border-radius: 24px;
 	}
 
 	&__waitingPreGameTitle {
-		font-size: clamp(18px, 2.6vw, 30px);
-		line-height: 1.15;
+		font-size: clamp(24px, 3vw, 36px);
+		line-height: 1.2;
 		animation: breathing-briefing-fade 420ms ease-in-out;
-		font-weight: 500;
+		font-weight: 600;
+		color: #8e1616;
+		max-width: 860px;
 	}
 
 	&__waitingPreGameTitle--small {
-		font-size: clamp(14px, 2vw, 18px);
-		font-weight: 400;
-		color: #5e4b4b;
+		font-size: clamp(15px, 1.95vw, 22px);
+		font-weight: 500;
+		color: #6a3f3f;
 	}
 
 	&__waitingPreGameLevels {
 		display: flex;
-		gap: 14px;
+		gap: 12px;
 		flex-wrap: wrap;
 		justify-content: center;
 		align-items: flex-start;
+		margin-top: 2px;
 	}
 
 	&__waitingPreGameLevelChip {
-		border-radius: 6px;
-		border: 1px solid rgba(60, 60, 60, 0.4);
+		border-radius: 12px;
+		border: 1px solid rgba(166, 52, 52, 0.3);
 		background: #fff;
-		padding: 8px 14px;
+		padding: 10px 16px;
 		font-size: 14px;
+		font-weight: 600;
 		line-height: 1.25;
 		cursor: pointer;
-		min-width: 170px;
+		min-width: 180px;
+		color: #4f3232;
+		transition: all 140ms ease;
 
 		&--active {
-			border-color: rgba(204, 30, 28, 0.4);
+			border-color: rgba(207, 42, 42, 0.7);
+			background: #fff4f4;
+			color: #9c1f1f;
 		}
 	}
 
 	&__waitingPreGameTiming {
 		display: grid;
-		gap: 10px;
-		min-width: min(480px, 92vw);
+		gap: 12px;
+		width: min(720px, 92vw);
 	}
 
 	&__waitingPreGameTimingRow {
 		display: grid;
 		grid-template-columns: 1fr auto;
 		align-items: center;
-		font-size: clamp(30px, 4.2vw, 44px);
+		font-size: clamp(30px, 4vw, 56px);
 		line-height: 1.1;
+		border: 1px solid rgba(207, 42, 42, 0.18);
+		border-radius: 16px;
+		padding: 10px 16px;
+		background: #fff;
+		color: #8f0f0f;
+		font-weight: 500;
+		position: relative;
+		overflow: hidden;
+		isolation: isolate;
+
+		> span {
+			position: relative;
+			z-index: 2;
+		}
+
+		&::before {
+			content: '';
+			position: absolute;
+			left: 0;
+			top: 0;
+			bottom: 0;
+			width: var(--water-fill, 38%);
+			background: linear-gradient(
+				90deg,
+				rgba(240, 114, 114, 0.18) 0%,
+				rgba(207, 42, 42, 0.26) 100%
+			);
+			background-size: 180% 100%;
+			background-position: 0% 50%;
+			animation: timing-water-drift var(--water-drift-duration, 7.6s) linear infinite;
+			transition: width 540ms cubic-bezier(0.2, 0.74, 0.2, 1);
+			z-index: 0;
+			pointer-events: none;
+		}
+
+		&::after {
+			content: '';
+			position: absolute;
+			left: 0;
+			top: 0;
+			bottom: 0;
+			width: var(--water-fill, 38%);
+			background-image: linear-gradient(
+				115deg,
+				rgba(255, 255, 255, 0) 0%,
+				rgba(255, 255, 255, 0.34) 24%,
+				rgba(255, 255, 255, 0.12) 48%,
+				rgba(255, 255, 255, 0.3) 73%,
+				rgba(255, 255, 255, 0) 100%
+			);
+			background-size: 220% 100%;
+			background-position: 100% 50%;
+			opacity: 0.62;
+			animation: timing-water-wave var(--water-sheen-duration, 5.4s) ease-in-out infinite;
+			transition: width 540ms cubic-bezier(0.2, 0.74, 0.2, 1);
+			z-index: 1;
+			pointer-events: none;
+		}
+	}
+
+	&__waitingPreGameTimingRow--inhale::before {
+		background: linear-gradient(
+			90deg,
+			rgba(248, 119, 119, 0.18) 0%,
+			rgba(214, 44, 44, 0.3) 100%
+		);
+	}
+
+	&__waitingPreGameTimingRow--hold::before {
+		background: linear-gradient(
+			90deg,
+			rgba(241, 125, 125, 0.18) 0%,
+			rgba(188, 36, 36, 0.3) 100%
+		);
+	}
+
+	&__waitingPreGameTimingRow--exhale::before {
+		background: linear-gradient(
+			90deg,
+			rgba(244, 134, 134, 0.16) 0%,
+			rgba(170, 28, 28, 0.3) 100%
+		);
 	}
 
 	&__waitingPreGameTimingValue {
 		display: inline-flex;
 		align-items: center;
-		gap: 18px;
-		min-width: 170px;
+		gap: 16px;
+		min-width: 190px;
 		justify-content: center;
+		position: relative;
+		z-index: 2;
+	}
+
+	&__waitingPreGameTimingValue > span {
+		min-width: 72px;
+		font-weight: 600;
+		color: #8f0f0f;
 	}
 
 	&__waitingPreGameTimingArrow {
-		font-size: 22px;
-		color: #d7d7d7;
+		font-size: 16px;
+		color: #be2b2b;
 		line-height: 1;
-		border: none;
-		background: transparent;
+		border: 1px solid rgba(207, 42, 42, 0.35);
+		background: #fff;
 		cursor: pointer;
-		padding: 0 4px;
+		width: 30px;
+		height: 30px;
+		padding: 0;
+		border-radius: 50%;
+		position: relative;
+		z-index: 2;
 	}
 
 	&__waitingPreGameActions {
-		margin-top: 14px;
+		margin-top: 10px;
 		display: flex;
-		gap: 20px;
+		gap: 14px;
 		align-items: center;
 		justify-content: center;
 		width: 100%;
@@ -722,21 +1015,24 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	}
 
 	&__waitingPreGameActionButton {
-		border-radius: 8px;
-		padding: 10px 22px;
-		font-size: 16px;
-		border: 1px solid rgba(70, 70, 70, 0.35);
+		border-radius: 12px;
+		padding: 12px 24px;
+		font-size: 17px;
+		font-weight: 600;
+		border: 1px solid rgba(120, 120, 120, 0.3);
 		font-family: 'Poppins', 'Helvetica Neue', Arial, sans-serif;
 		cursor: pointer;
 
 		&--primary {
-			background: #2e2e2e;
+			background: linear-gradient(180deg, #cf2a2a 0%, #bd1f1f 100%);
+			border-color: rgba(188, 31, 31, 0.9);
 			color: #fff;
 		}
 
 		&--ghost {
 			background: #fff;
-			color: #404040;
+			color: #8d2626;
+			border-color: rgba(207, 42, 42, 0.35);
 		}
 	}
 
@@ -777,23 +1073,42 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 			font-size: 16px;
 		}
 
-		&__waitingMiniGameCircleOuter {
-			width: 86px;
-			height: 86px;
+		&__waitingMiniGamePulse {
+			width: 136px;
+			height: 136px;
 		}
 
-		&__waitingMiniGameCircleMid {
-			width: 56px;
-			height: 56px;
+		&__waitingMiniGamePulseCircle--1 {
+			width: 110px;
+			height: 116px;
 		}
 
-		&__waitingMiniGameCircleInner {
-			width: 48px;
-			height: 48px;
+		&__waitingMiniGamePulseCircle--2 {
+			width: 92px;
+			height: 97px;
+		}
+
+		&__waitingMiniGamePulseCircle--3 {
+			width: 74px;
+			height: 78px;
+		}
+
+		&__waitingMiniGamePulseCircle--4 {
+			width: 60px;
+			height: 64px;
+		}
+
+		&__waitingMiniGameCenter {
+			width: 58px;
+			height: 58px;
 		}
 
 		&__waitingMiniGameCircleIcon {
 			font-size: 12px;
+		}
+
+		&__waitingMiniGameCenterText {
+			font-size: 11px;
 		}
 
 		&__waitingPhaseIcon {
@@ -825,6 +1140,35 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 			max-width: 100%;
 		}
 
+		&__waitingBriefingStepsAnimated {
+			gap: 10px;
+			margin-top: 20px;
+		}
+
+		&__waitingBriefingStepCircle {
+			width: 78px;
+			height: 78px;
+		}
+
+		&__waitingBriefingStepLabel {
+			font-size: 21px;
+		}
+
+		&__waitingBriefingStepIcon .session__waitingPhaseIcon {
+			width: 24px;
+			height: 24px;
+		}
+
+		&__waitingBriefingStepConnector {
+			margin-top: 26px;
+			gap: 5px;
+		}
+
+		&__waitingBriefingStepConnector span {
+			width: 6px;
+			height: 6px;
+		}
+
 		&__waitingCompletionTitle {
 			font-size: clamp(22px, 6.4vw, 34px);
 		}
@@ -834,34 +1178,39 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		}
 
 		&__waitingPreGameTitle {
-			font-size: clamp(18px, 5.4vw, 26px);
+			font-size: clamp(19px, 5.4vw, 28px);
 		}
 
 		&__waitingPreGameLevelChip {
-			font-size: 14px;
-			min-width: 170px;
+			font-size: 13px;
+			min-width: 0;
+			padding: 9px 12px;
 		}
 
 		&__waitingPreGameTiming {
-			min-width: 260px;
+			min-width: 0;
+			width: 100%;
 		}
 
 		&__waitingPreGameTimingRow {
 			font-size: clamp(24px, 7vw, 32px);
+			padding: 8px 10px;
 		}
 
 		&__waitingPreGameTimingValue {
 			min-width: 120px;
-			gap: 8px;
+			gap: 10px;
 		}
 
 		&__waitingPreGameTimingArrow {
-			font-size: 18px;
+			width: 26px;
+			height: 26px;
+			font-size: 14px;
 		}
 
 		&__waitingPreGameActionButton {
-			font-size: 13px;
-			padding: 8px 14px;
+			font-size: 14px;
+			padding: 10px 14px;
 		}
 
 		&__waitingPreGameActions--single {
@@ -969,6 +1318,15 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	}
 }
 
+@keyframes breathing-pulse-orbit {
+	0% {
+		transform: translate(-50%, -50%) rotate(0deg) scale(var(--breath-scale, 1));
+	}
+	100% {
+		transform: translate(-50%, -50%) rotate(360deg) scale(var(--breath-scale, 1));
+	}
+}
+
 @keyframes breathing-mid-pulse {
 	0%,
 	100% {
@@ -986,6 +1344,13 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	}
 	50% {
 		transform: scale(1.05);
+	}
+}
+
+@keyframes breathing-typewriter-beam-blink {
+	75% {
+		border-right-color: transparent;
+		box-shadow: none;
 	}
 }
 
@@ -1009,6 +1374,71 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	100% {
 		opacity: 1;
 		transform: translateY(0);
+	}
+}
+
+@keyframes briefing-step-pop {
+	0% {
+		opacity: 0;
+		transform: translateY(14px) scale(0.84);
+	}
+	58% {
+		opacity: 1;
+		transform: translateY(0) scale(1.06);
+	}
+	100% {
+		opacity: 1;
+		transform: translateY(0) scale(1);
+	}
+}
+
+@keyframes briefing-connector-fill {
+	0% {
+		opacity: 0;
+		transform: scale(0.58);
+		background: rgba(201, 30, 30, 0.1);
+	}
+	100% {
+		opacity: 1;
+		transform: scale(1);
+		background: rgba(201, 30, 30, 0.8);
+	}
+}
+
+@keyframes briefing-steps-fade-cycle {
+	0% {
+		opacity: 0;
+	}
+	12%,
+	86% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0;
+	}
+}
+
+@keyframes timing-water-drift {
+	0% {
+		background-position: 0% 50%;
+	}
+	100% {
+		background-position: 100% 50%;
+	}
+}
+
+@keyframes timing-water-wave {
+	0% {
+		background-position: 100% 50%;
+		opacity: 0.52;
+	}
+	50% {
+		background-position: 32% 50%;
+		opacity: 0.74;
+	}
+	100% {
+		background-position: -24% 50%;
+		opacity: 0.52;
 	}
 }
 
