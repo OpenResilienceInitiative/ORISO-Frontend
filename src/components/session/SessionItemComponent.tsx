@@ -30,27 +30,37 @@ import {
 	useTenant,
 	ActiveSessionContext
 } from '../../globalState';
-import { useLocation } from 'react-router-dom';
+import { STATUS_ENQUIRY } from '../../globalState/interfaces/SessionsDataInterface';
+import { useHistory, useLocation } from 'react-router-dom';
+import * as Tone from 'tone';
 import { RocketChatUsersOfRoomProvider } from '../../globalState/provider/RocketChatUsersOfRoomProvider';
 import './session.styles';
 import { useDebouncedCallback } from 'use-debounce';
 import { ReactComponent as ArrowDoubleDownIcon } from '../../resources/img/icons/arrow-double-down.svg';
 import { ReactComponent as PersonCircleIcon } from '../../resources/img/icons/person-circle.svg';
+import { ReactComponent as NotificationBellIcon } from '../../resources/img/icons/notification_bell.svg';
+import { ReactComponent as WelcomeIllustration } from '../../resources/img/illustrations/welcome.svg';
 import breathLevelEmojiSprite from '../../resources/img/icons/breath-level-emojis.svg';
 import smoothScroll from './smoothScrollHelper';
 import { DragAndDropArea } from '../dragAndDropArea/DragAndDropArea';
 import useMeasure from 'react-use-measure';
 import { AcceptAssign } from './AcceptAssign';
+import { WaitingRoomContent } from '../videoConference/WaitingRoomContent';
 import { useTranslation } from 'react-i18next';
 import useDebounceCallback from '../../hooks/useDebounceCallback';
 import { apiPostError, TError } from '../../api/apiPostError';
 import { useE2EE } from '../../hooks/useE2EE';
 import { MessageSubmitInterfaceSkeleton } from '../messageSubmitInterface/messageSubmitInterfaceSkeleton';
+import { Text } from '../text/Text';
 import { EncryptionBanner } from './EncryptionBanner';
 import { apiGetSessionSupervisors } from '../../api/apiGetSessionSupervisors';
 import { apiPatchNotificationActiveView } from '../../api/apiPatchNotificationActiveView';
 import { parseMessagePrefixes } from '../message/messageConstants';
+import { decodeUsername } from '../../utils/encryptionHelpers';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
+import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
+import LegalLinks from '../legalLinks/LegalLinks';
+import { renderToString } from 'react-dom/server';
 
 const MessageSubmitInterfaceComponent = lazy(() =>
 	import('../messageSubmitInterface/messageSubmitInterfaceComponent').then(
@@ -140,7 +150,7 @@ const BRIEFING_SCREENS: BriefingScreen[] = [
 		title: '',
 		text: 'Okay you need to do three things in the game.',
 		interaction: 'auto',
-		autoAdvanceMs: 6200
+		autoAdvanceMs: 4600
 	}
 ];
 
@@ -151,8 +161,8 @@ const BRIEFING_NEGATIVE_SCREEN = {
 };
 const LEVEL_EMOJI_VIEWBOX_OFFSETS = [0, 240, 459, 678, 878, 1075, 1299, 1520, 1739, 1983];
 const TYPEWRITER_TIMING = {
-	charForwardMs: 52,
-	charForwardSlowMs: 62,
+	charForwardMs: 56,
+	charForwardSlowMs: 68,
 	charBackwardMs: 32,
 	initialDelayMs: 140,
 	initialDelaySlowMs: 180,
@@ -237,6 +247,33 @@ const EXHALE_PHASE_ICON = (
 	</svg>
 );
 
+const SPEAKER_HINT_ICON = (
+	<svg
+		className="session__waitingVolumeHintIcon"
+		viewBox="0 0 24 24"
+		fill="none"
+		xmlns="http://www.w3.org/2000/svg"
+		aria-hidden="true"
+	>
+		<path
+			d="M4 10.5V13.5H7.2L11 17V7L7.2 10.5H4Z"
+			fill="currentColor"
+		/>
+		<path
+			d="M14.2 9.2C14.9 9.9 15.3 10.9 15.3 12C15.3 13.1 14.9 14.1 14.2 14.8"
+			stroke="currentColor"
+			strokeWidth="1.8"
+			strokeLinecap="round"
+		/>
+		<path
+			d="M16.8 6.8C18.1 8.1 18.9 9.95 18.9 12C18.9 14.05 18.1 15.9 16.8 17.2"
+			stroke="currentColor"
+			strokeWidth="1.8"
+			strokeLinecap="round"
+		/>
+	</svg>
+);
+
 const COMPLETION_HEART_ICON = (
 	<svg width="157" height="165" viewBox="0 0 157 165" fill="none" xmlns="http://www.w3.org/2000/svg">
 		<path
@@ -254,22 +291,24 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const { userData } = useContext(UserDataContext);
 	const { addEventNotification } = useContext(NotificationsContext);
 	const { type } = useContext(SessionTypeContext);
+	const legalLinks = useContext(LegalLinksContext);
 	const location = useLocation();
+	const history = useHistory();
 	const isEmbeddedNotificationsView =
 		new URLSearchParams(location.search).get('embeddedNotifications') ===
 		'1';
 	const [isSupervisor, setIsSupervisor] = useState(false);
-	const [showWaitingMiniGame, setShowWaitingMiniGame] = useState(true);
+	const [showWaitingMiniGame, setShowWaitingMiniGame] = useState(false);
 	const [breathPhase, setBreathPhase] = useState<BreathPhase>('inhale');
 	const [phaseTotalMs, setPhaseTotalMs] = useState(0);
 	const [phaseMsLeft, setPhaseMsLeft] = useState(0);
 	const [breathCycles, setBreathCycles] = useState(0);
 	const [breathProgress, setBreathProgress] = useState(0.2);
-	const [selectedPresetId, setSelectedPresetId] = useState<BreathPresetId>('starter334');
+	const [selectedPresetId, setSelectedPresetId] = useState<BreathPresetId>('standard446');
 	const [customTiming, setCustomTiming] = useState<BreathTiming>({
-		inhale: DEFAULT_BREATH_PHASE_SECONDS,
-		hold: DEFAULT_BREATH_PHASE_SECONDS,
-		exhale: DEFAULT_BREATH_PHASE_SECONDS
+		inhale: 4,
+		hold: 4,
+		exhale: 6
 	});
 	const [waitingGameStage, setWaitingGameStage] = useState<WaitingGameStage>('tutorial');
 	const [currentLevel, setCurrentLevel] = useState(1);
@@ -289,6 +328,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const [centerStageTypedText, setCenterStageTypedText] = useState('');
 	const [centerStageTypewriterBusy, setCenterStageTypewriterBusy] = useState(false);
 	const [joinPromptEscalated, setJoinPromptEscalated] = useState(false);
+	const [anonymousInquiryConsentAccepted, setAnonymousInquiryConsentAccepted] = useState(false);
 	const timerRef = useRef<number | null>(null);
 	const phaseTransitionLockRef = useRef(false);
 	const typewriterRef = useRef<number | null>(null);
@@ -296,7 +336,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const gameStatusTypewriterRef = useRef<number | null>(null);
 	const levelBadgeTypewriterRef = useRef<number | null>(null);
 	const centerStageTypewriterRef = useRef<number | null>(null);
-	const cueAudioContextRef = useRef<AudioContext | null>(null);
+	const cueMasterGainRef = useRef<Tone.Gain | null>(null);
+	const cuePianoSynthRef = useRef<Tone.PolySynth | null>(null);
+	const cuePianoReverbRef = useRef<Tone.Reverb | null>(null);
+	const cueAirNoiseRef = useRef<Tone.Noise | null>(null);
+	const cueAirFilterRef = useRef<Tone.Filter | null>(null);
+	const cueAirGainRef = useRef<Tone.Gain | null>(null);
 
 	// Threads feature toggle (tenant-level). Master switch disables for all chat types.
 	// When enabled, per-chat-type switches decide if threads are available in 1-on-1 vs group chats.
@@ -326,8 +371,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				: 'oneOnOne';
 	const isAnonymousBreathingGameAvailable =
 		isAnonymousChat && hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
-	const shouldHideEncryptionBanner = isAnonymousChat && Boolean(activeSession.isEnquiry);
-	const shouldShowEncryptionBanner = !shouldHideEncryptionBanner;
+	const requiresAnonymousInquiryConsent =
+		isAnonymousChat && activeSession.item.status === STATUS_ENQUIRY;
+	const anonymousInquiryConsentStorageKey = useMemo(
+		() => `anonymous-inquiry-consent-${activeSession.item.id}`,
+		[activeSession.item.id]
+	);
 	const isJoinRoomAvailable = Boolean(activeSession.consultant?.id);
 	const selectedPreset = useMemo(
 		() =>
@@ -376,6 +425,93 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			})),
 		[translate]
 	);
+	const robotIncomingUsername = useMemo(() => {
+		const resolvedCandidates = [
+			contact?.displayName,
+			contact?.username,
+			userData?.displayName,
+			userData?.userName,
+			activeSession.user?.username,
+			activeSession.item.askerRcId
+		]
+			.map((value) => decodeUsername((value || '').toString()).trim())
+			.filter((value) => value.length > 0);
+		const resolved =
+			resolvedCandidates.find((value) => !value.toLowerCase().startsWith('anonymous-')) ||
+			resolvedCandidates[0];
+		if (!resolved || resolved.toLowerCase() === 'system') {
+			return translate('session.waitingMiniGame.robotUsernameFallback', 'Ratsuchende_r 9');
+		}
+		return resolved;
+	}, [
+		activeSession.item.askerRcId,
+		activeSession.item.id,
+		activeSession.user?.username,
+		contact?.displayName,
+		contact?.username,
+		userData?.displayName,
+		userData?.userName,
+		translate
+	]);
+	const robotSystemCards = useMemo<
+		Array<{
+			_id: string;
+			title: string;
+			description: string;
+			cta?: string;
+			playLabel?: string;
+		}>
+	>(
+		() => [
+			{
+				_id: 'robot-system-1',
+				title: translate('session.waitingMiniGame.robotCard1Title', 'Bitte haben Sie etwas Geduld'),
+				description: translate(
+					'session.waitingMiniGame.robotCard1Body',
+					'Derzeit sind alle Berater_innen im Gespräch. Wir sind schnellstmöglich für Sie da.'
+				)
+			},
+			{
+				_id: 'robot-system-2',
+				title: `${translate(
+					'session.waitingMiniGame.robotCard2TitlePrefix',
+					'Ihr Benutzername lautet:'
+				)} ${robotIncomingUsername}`,
+				description: translate(
+					'session.waitingMiniGame.robotCard2Body',
+					'Um Ihre Anonymität zu schützen, löschen wir Ihre Nachrichten spätestens 48 Stunden nachdem der Chat beendet wurde.'
+				)
+			},
+			{
+				_id: 'robot-system-3',
+				title: translate(
+					'session.waitingMiniGame.robotCard3Title',
+					'Sie benötigen nicht sofort eine Antwort? Und wollen nicht auf einen freien Chat warten?'
+				),
+				description: translate(
+					'session.waitingMiniGame.robotCard3Body',
+					'Registrieren Sie sich und hinterlassen Sie uns eine Nachricht. Wir melden uns innerhalb von 2 Werktagen bei Ihnen.'
+				),
+				cta: translate(
+					'session.waitingMiniGame.robotCard3Cta',
+					'Gehen Sie zur Registrierung'
+				)
+			},
+			{
+				_id: 'robot-system-4',
+				title: translate(
+					'session.waitingMiniGame.robotCard4Title',
+					'Wollen Sie die Wartezeit sinnvoll nutzen?'
+				),
+				description: translate(
+					'session.waitingMiniGame.robotCard4Body',
+					'Dann spielen Sie in der Zwischenzeit unser kurzes Inhale-Exhale-Spiel.'
+				),
+				playLabel: translate('session.waitingMiniGame.robotCard4Play', 'Spiel starten')
+			}
+		],
+		[robotIncomingUsername, translate]
+	);
 	const currentBriefingScreen = showBriefingNegativeScreen
 		? {
 				...BRIEFING_NEGATIVE_SCREEN,
@@ -403,6 +539,21 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const shouldLockScroll = waitingGameStage === 'practice' || waitingGameStage === 'game';
 	const shouldFadeSessionChrome =
 		showWaitingMiniGame && (waitingGameStage === 'practice' || waitingGameStage === 'game');
+	const shouldBlockAnonymousInquiryChat =
+		requiresAnonymousInquiryConsent && !anonymousInquiryConsentAccepted;
+	const anonymousInquiryConsentLabel = useMemo(
+		() =>
+			translate('videoConference.waitingroom.dataProtection.label.text', {
+				interpolation: { escapeValue: false },
+				legal_links: renderToString(
+					<LegalLinks
+						legalLinks={legalLinks}
+						filter={(legalLink) => legalLink.registration}
+					/>
+				)
+			}),
+		[legalLinks, translate]
+	);
 
 	const getAchievementMessage = useCallback((level: number) => {
 		const levelSafe = Math.max(1, Math.min(BREATH_LEVELS.length, level));
@@ -464,36 +615,136 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		return /[.,]/.test(typedChar) ? TYPEWRITER_TIMING.punctuationPauseMs : 0;
 	}, []);
 
-	const playBreathCue = useCallback((phase: BreathPhase) => {
+	const stopBreathSound = useCallback(() => {
+		cuePianoSynthRef.current?.dispose();
+		cuePianoSynthRef.current = null;
+		cuePianoReverbRef.current?.dispose();
+		cuePianoReverbRef.current = null;
+		cueAirNoiseRef.current?.dispose();
+		cueAirNoiseRef.current = null;
+		cueAirFilterRef.current?.dispose();
+		cueAirFilterRef.current = null;
+		cueAirGainRef.current?.dispose();
+		cueAirGainRef.current = null;
+	}, []);
+
+	const idleBreathSound = useCallback(() => {
+		try {
+			const now = Tone.now();
+			cuePianoSynthRef.current?.releaseAll(now);
+			if (cueAirGainRef.current) {
+				cueAirGainRef.current.gain.cancelAndHoldAtTime(now);
+				cueAirGainRef.current.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+			}
+		} catch {
+			// Ignore idle audio errors.
+		}
+	}, []);
+
+	const playBreathCue = useCallback((phase: BreathPhase, durationMs: number) => {
 		if (typeof window === 'undefined') {
 			return;
 		}
-		try {
-			const context =
-				cueAudioContextRef.current ||
-				new (window.AudioContext ||
-					(window as any).webkitAudioContext)();
-			cueAudioContextRef.current = context;
-			const oscillator = context.createOscillator();
-			const gain = context.createGain();
-			const frequencies: Record<BreathPhase, number> = {
-				inhale: 352,
-				hold: 293,
-				exhale: 220
-			};
-			oscillator.type = 'sine';
-			oscillator.frequency.value = frequencies[phase];
-			gain.gain.value = 0.0001;
-			oscillator.connect(gain);
-			gain.connect(context.destination);
-			const now = context.currentTime;
-			gain.gain.exponentialRampToValueAtTime(0.04, now + 0.015);
-			gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
-			oscillator.start(now);
-			oscillator.stop(now + 0.3);
-		} catch (error) {
-			// Ignore audio failures so the game works muted.
-		}
+		void (async () => {
+			try {
+				await Tone.start();
+				const cueConfig: Record<
+					BreathPhase,
+					{
+						notes: [string, string];
+						velocity: number;
+						airGain: number;
+						airCutoff: number;
+					}
+				> = {
+					// Requested pattern: piano-like paired notes + continuous soft air bed.
+					inhale: {
+						notes: ['F4', 'D4'],
+						velocity: 0.53,
+						airGain: 0.02,
+						airCutoff: 1300
+					},
+					hold: {
+						notes: ['C4', 'D4'],
+						velocity: 0.49,
+						airGain: 0.016,
+						airCutoff: 980
+					},
+					exhale: {
+						notes: ['D4', 'C4'],
+						velocity: 0.56,
+						airGain: 0.024,
+						airCutoff: 760
+					}
+				};
+				const now = Tone.now();
+				const config = cueConfig[phase];
+				const reverb =
+					cuePianoReverbRef.current ||
+					new Tone.Reverb({
+						decay: 2.8,
+						preDelay: 0.02,
+						wet: 0.28
+					}).toDestination();
+				if (!cuePianoReverbRef.current) {
+					await reverb.generate();
+					cuePianoReverbRef.current = reverb;
+				}
+				const master =
+					cueMasterGainRef.current || new Tone.Gain(0.82).connect(reverb);
+				cueMasterGainRef.current = master;
+				const synth =
+					cuePianoSynthRef.current ||
+					new Tone.PolySynth(Tone.Synth, {
+						oscillator: { type: 'triangle8' },
+						envelope: {
+							attack: 0.0015,
+							decay: 0.18,
+							sustain: 0.06,
+							release: 1.05
+						}
+					}).connect(master);
+				cuePianoSynthRef.current = synth;
+
+				const phaseSeconds = Math.max(0.65, durationMs / 1000);
+				const chordLen = Math.max(0.56, phaseSeconds * 0.92);
+
+				synth.set({ volume: phase === 'hold' ? -14 : -11 });
+				// Single phase-start key event (two-note voicing) with long reverb tail.
+				synth.triggerAttackRelease(config.notes, chordLen, now, config.velocity);
+
+				const airGain =
+					cueAirGainRef.current || new Tone.Gain(0.0001).connect(master);
+				cueAirGainRef.current = airGain;
+				const airFilter =
+					cueAirFilterRef.current ||
+					new Tone.Filter({
+						type: 'lowpass',
+						frequency: 1200,
+						rolloff: -24,
+						Q: 0.7
+					}).connect(airGain);
+				cueAirFilterRef.current = airFilter;
+				const airNoise =
+					cueAirNoiseRef.current || new Tone.Noise('pink').connect(airFilter);
+				if (!cueAirNoiseRef.current) {
+					airNoise.start(now);
+					cueAirNoiseRef.current = airNoise;
+				}
+				airGain.gain.cancelAndHoldAtTime(now);
+				airFilter.frequency.cancelAndHoldAtTime(now);
+				airGain.gain.exponentialRampToValueAtTime(
+					Math.max(0.0003, config.airGain),
+					now + 0.16
+				);
+				airFilter.frequency.exponentialRampToValueAtTime(
+					Math.max(300, config.airCutoff),
+					now + 0.24
+				);
+			} catch {
+				// Ignore audio failures so the game works muted.
+			}
+		})();
 	}, []);
 
 	const startPhase = useCallback(
@@ -509,7 +760,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			setPhaseTotalMs(durationMs);
 			setPhaseMsLeft(durationMs);
 			setBreathProgress(phase === 'exhale' ? 1 : 0.2);
-			playBreathCue(phase);
+			playBreathCue(phase, durationMs);
 		},
 		[customTiming, playBreathCue]
 	);
@@ -684,28 +935,61 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	}, [type, userData, activeSession, activeSession.isGroup, isSupervisor]);
 
 	useEffect(() => {
-		if (isAnonymousBreathingGameAvailable) {
-			setShowWaitingMiniGame(true);
-			return;
+		if (!isAnonymousBreathingGameAvailable) {
+			setShowWaitingMiniGame(false);
+			clearBreathTimer();
 		}
-		setShowWaitingMiniGame(false);
-		clearBreathTimer();
-	}, [
-		clearBreathTimer,
-		isAnonymousBreathingGameAvailable,
-		waitingGameStage
-	]);
+	}, [clearBreathTimer, isAnonymousBreathingGameAvailable]);
 
 	useEffect(() => {
-		if (!showWaitingMiniGame || !isBreathTimerRunning) {
+		if (!requiresAnonymousInquiryConsent) {
+			setAnonymousInquiryConsentAccepted(true);
+			return;
+		}
+		try {
+			setAnonymousInquiryConsentAccepted(
+				sessionStorage.getItem(anonymousInquiryConsentStorageKey) === '1'
+			);
+		} catch {
+			setAnonymousInquiryConsentAccepted(false);
+		}
+	}, [anonymousInquiryConsentStorageKey, requiresAnonymousInquiryConsent]);
+
+	useEffect(() => {
+		setShowWaitingMiniGame(false);
+	}, [activeSession.item.id]);
+
+	const handleAnonymousInquiryConsentAccept = useCallback(() => {
+		setAnonymousInquiryConsentAccepted(true);
+		try {
+			sessionStorage.setItem(anonymousInquiryConsentStorageKey, '1');
+		} catch {
+			// Ignore storage errors and still unblock current session view.
+		}
+	}, [anonymousInquiryConsentStorageKey]);
+
+	useEffect(() => {
+		if (!showWaitingMiniGame) {
 			clearBreathTimer();
+			stopBreathSound();
+			return;
+		}
+		if (!isBreathTimerRunning) {
+			clearBreathTimer();
+			idleBreathSound();
 			return;
 		}
 		timerRef.current = window.setInterval(() => {
 			setPhaseMsLeft((prev) => Math.max(0, prev - 16));
 		}, 16);
 		return () => clearBreathTimer();
-	}, [clearBreathTimer, isBreathTimerRunning, showWaitingMiniGame]);
+	}, [
+		clearBreathTimer,
+		idleBreathSound,
+		isBreathTimerRunning,
+		showWaitingMiniGame,
+		stopBreathSound
+	]);
 
 	useEffect(() => {
 		setCustomTiming({
@@ -787,7 +1071,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	useEffect(() => {
 		clearTypewriterTimer();
-		if (waitingGameStage !== 'onboarding') {
+		if (!showWaitingMiniGame || waitingGameStage !== 'onboarding') {
 			setTypewriterBusy(false);
 			return;
 		}
@@ -844,11 +1128,18 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 		typewriterRef.current = window.setTimeout(tick, TYPEWRITER_TIMING.onboardingStartMs);
 		return () => clearTypewriterTimer();
-	}, [clearTypewriterTimer, getPunctuationPauseMs, resetToTutorialState, translate, waitingGameStage]);
+	}, [
+		clearTypewriterTimer,
+		getPunctuationPauseMs,
+		resetToTutorialState,
+		showWaitingMiniGame,
+		translate,
+		waitingGameStage
+	]);
 
 	useEffect(() => {
 		clearBriefingTypewriterTimer();
-		if (waitingGameStage !== 'tutorial') {
+		if (!showWaitingMiniGame || waitingGameStage !== 'tutorial') {
 			setBriefingTypewriterBusy(false);
 			setBriefingTypedText('');
 			return;
@@ -887,11 +1178,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		currentBriefingScreen.text,
 		briefingScreenIndex,
 		getPunctuationPauseMs,
+		showWaitingMiniGame,
 		waitingGameStage
 	]);
 
 	useEffect(() => {
 		if (
+			!showWaitingMiniGame ||
 			waitingGameStage !== 'tutorial' ||
 			showBriefingNegativeScreen ||
 			currentBriefingInteraction !== 'auto' ||
@@ -901,7 +1194,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		}
 		const timeout = window.setTimeout(() => {
 			if (briefingScreenIndex >= localizedBriefingScreens.length - 1) {
-				setWaitingGameStage('setup');
+				setSelectedPresetId('standard446');
+				setCustomTiming({
+					inhale: 4,
+					hold: 4,
+					exhale: 6
+				});
+				startPracticeRound();
 				return;
 			}
 			setBriefingScreenIndex((index) => index + 1);
@@ -914,13 +1213,15 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		briefingScreenIndex,
 		currentBriefingInteraction,
 		localizedBriefingScreens,
+		showWaitingMiniGame,
 		showBriefingNegativeScreen,
+		startPracticeRound,
 		waitingGameStage
 	]);
 
 	useEffect(() => {
 		clearGameStatusTypewriterTimer();
-		if (waitingGameStage !== 'game' || !stageMessage) {
+		if (!showWaitingMiniGame || waitingGameStage !== 'game' || !stageMessage) {
 			setGameStatusTypewriterBusy(false);
 			setGameStatusTypedText('');
 			return;
@@ -946,11 +1247,17 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			TYPEWRITER_TIMING.initialDelayMs
 		);
 		return () => clearGameStatusTypewriterTimer();
-	}, [clearGameStatusTypewriterTimer, getPunctuationPauseMs, stageMessage, waitingGameStage]);
+	}, [
+		clearGameStatusTypewriterTimer,
+		getPunctuationPauseMs,
+		showWaitingMiniGame,
+		stageMessage,
+		waitingGameStage
+	]);
 
 	useEffect(() => {
 		clearLevelBadgeTypewriterTimer();
-		if (waitingGameStage !== 'game') {
+		if (!showWaitingMiniGame || waitingGameStage !== 'game') {
 			setLevelBadgeTypewriterBusy(false);
 			setLevelBadgeTypedText('');
 			return;
@@ -960,28 +1267,16 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			level: currentLevel,
 			title: BREATH_LEVELS[currentLevel - 1]?.title
 		});
-		let index = 0;
-		setLevelBadgeTypewriterBusy(true);
-		setLevelBadgeTypedText('');
-		const tick = () => {
-			index += 1;
-			setLevelBadgeTypedText(fullText.slice(0, index));
-			const typedChar = fullText.charAt(index - 1);
-			if (index >= fullText.length) {
-				setLevelBadgeTypewriterBusy(false);
-				return;
-			}
-			levelBadgeTypewriterRef.current = window.setTimeout(
-				tick,
-				TYPEWRITER_TIMING.charForwardMs + getPunctuationPauseMs(typedChar)
-			);
-		};
-		levelBadgeTypewriterRef.current = window.setTimeout(
-			tick,
-			TYPEWRITER_TIMING.initialDelayMs
-		);
+		setLevelBadgeTypewriterBusy(false);
+		setLevelBadgeTypedText(fullText);
 		return () => clearLevelBadgeTypewriterTimer();
-	}, [clearLevelBadgeTypewriterTimer, currentLevel, getPunctuationPauseMs, translate, waitingGameStage]);
+	}, [
+		clearLevelBadgeTypewriterTimer,
+		currentLevel,
+		showWaitingMiniGame,
+		translate,
+		waitingGameStage
+	]);
 
 	useEffect(() => {
 		clearCenterStageTypewriterTimer();
@@ -1053,9 +1348,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			clearGameStatusTypewriterTimer();
 			clearLevelBadgeTypewriterTimer();
 			clearCenterStageTypewriterTimer();
-			if (cueAudioContextRef.current) {
-				cueAudioContextRef.current.close().catch(() => undefined);
-				cueAudioContextRef.current = null;
+			stopBreathSound();
+			if (cueMasterGainRef.current) {
+				cueMasterGainRef.current.dispose();
+				cueMasterGainRef.current = null;
 			}
 		},
 		[
@@ -1064,7 +1360,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			clearBriefingTypewriterTimer,
 			clearGameStatusTypewriterTimer,
 			clearLevelBadgeTypewriterTimer,
-			clearCenterStageTypewriterTimer
+			clearCenterStageTypewriterTimer,
+			stopBreathSound
 		]
 	);
 
@@ -1496,7 +1793,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					isDragging && 'drag-in-progress',
 					activeThreadRootId && 'session__content--withThread',
 					shouldLockScroll && 'session__content--gameLockScroll',
-					shouldFadeSessionChrome && 'session__content--gameFocus'
+					shouldFadeSessionChrome && 'session__content--gameFocus',
+					shouldBlockAnonymousInquiryChat && 'session__content--consentGate'
 				)}
 				ref={scrollContainerRef}
 				onScroll={(e) => handleScroll(e)}
@@ -1512,15 +1810,40 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						</div>
 					</div>
 				)}
-				{shouldShowEncryptionBanner && (
-					<div className="session__gameChromeFadeTarget">
-						<EncryptionBanner />
+				{shouldBlockAnonymousInquiryChat && (
+					<div className="session__anonymousInquiryConsent waitingRoom">
+						<WaitingRoomContent
+							headlineKey="videoConference.waitingroom.dataProtection.headline"
+							sublineKey="videoConference.waitingroom.dataProtection.subline"
+							textKey="videoConference.waitingroom.dataProtection.description"
+							Illustration={<WelcomeIllustration />}
+						>
+							<Text type="standard" text={anonymousInquiryConsentLabel} />
+							<Button
+								className="waitingRoom__button"
+								buttonHandle={handleAnonymousInquiryConsentAccept}
+								item={{
+									label: translate(
+										'videoConference.waitingroom.dataProtection.button',
+										'Bestätigen'
+									),
+									type: BUTTON_TYPES.PRIMARY
+								}}
+							/>
+						</WaitingRoomContent>
 					</div>
 				)}
-				{isAnonymousBreathingGameAvailable && showWaitingMiniGame && (
-					<div
+				{!shouldBlockAnonymousInquiryChat && (
+				<div className="session__gameChromeFadeTarget">
+					<EncryptionBanner />
+				</div>
+				)}
+				{!shouldBlockAnonymousInquiryChat && isAnonymousBreathingGameAvailable && showWaitingMiniGame && (
+					<div className="session__waitingPopupBackdrop" role="dialog" aria-modal="true">
+						<div
 						className={clsx(
 							'session__waitingModule',
+							'session__waitingModule--popup',
 							(isBriefingOnlyScreen || isPreGameSetupScreen || isTextOnlyStage) &&
 								'session__waitingModule--briefing'
 						)}
@@ -1530,6 +1853,25 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							'Inhale exhale breathing guide'
 						)} ${translate('session.waitingMiniGame.timeLeft', 'Time left')}: ${phaseSecondsLeft}s`}
 					>
+						<button
+							type="button"
+							className="session__waitingPopupClose"
+							aria-label={translate('app.close', 'Close')}
+							onClick={() => setShowWaitingMiniGame(false)}
+						>
+							×
+						</button>
+						{isBreathingArenaVisible && (
+							<div className="session__waitingVolumeHint">
+								{SPEAKER_HINT_ICON}
+								<span>
+									{translate(
+										'session.waitingMiniGame.volumeHint',
+										'For better experience, turn on your volume.'
+									)}
+								</span>
+							</div>
+						)}
 						{waitingGameStage === 'game' && (
 							<div className="session__waitingGameStatus">
 								<span className="session__waitingGameStatusIcon" aria-hidden="true">
@@ -1586,20 +1928,14 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						)}
 						{waitingGameStage === 'game' && (
 							<div className="session__waitingGameLevelBadge">
-								<span
-									className={clsx(
-										'session__waitingTypewriterText',
-										levelBadgeTypewriterBusy &&
-											'session__waitingTypewriterText--busy'
-									)}
-								>
-									{levelBadgeTypedText}
-								</span>
 								<span className="session__waitingGameLevelBadgeIcon" aria-hidden="true">
 									<LevelEmojiIcon
 										level={currentLevel}
 										className="session__waitingGameLevelBadgeEmoji"
 									/>
+								</span>
+								<span className="session__waitingGameLevelBadgeText">
+									{levelBadgeTypedText}
 								</span>
 							</div>
 						)}
@@ -1927,7 +2263,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											className="session__waitingModuleActionButton session__waitingModuleActionButton--primary"
 											onClick={() => {
 												setShowBriefingNegativeScreen(false);
-												setWaitingGameStage('setup');
+												setSelectedPresetId('standard446');
+												setCustomTiming({
+													inhale: 4,
+													hold: 4,
+													exhale: 6
+												});
+												startPracticeRound();
 											}}
 										>
 											{translate('app.next', 'Continue')}
@@ -1996,8 +2338,86 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							)}
 						</div>
 					</div>
+					</div>
 				)}
+				{!shouldBlockAnonymousInquiryChat && (
 				<div className={'message-holder'}>
+					{isAnonymousBreathingGameAvailable &&
+						robotSystemCards.map((card, index) => (
+							<div className="messageItem" key={card._id}>
+									<div className="messageItem__messageWrap">
+										{index === 0 && (
+											<div className="messageItem__systemAvatar" aria-hidden="true">
+												<NotificationBellIcon className="messageItem__systemAvatarIcon" />
+											</div>
+										)}
+										{index !== 0 && (
+											<div
+												className="session__robotIncomingAvatarSpacer"
+												aria-hidden="true"
+											/>
+										)}
+										<div className="messageItem__content">
+											{index === 0 && (
+												<div className="messageItem__header">
+													<div className="messageItem__username messageItem__username--system">
+														{translate('message.systemNotification', 'System Notification')}
+													</div>
+													<span className="messageItem__headerTime">5:00</span>
+												</div>
+											)}
+											<div className="messageItem__message messageItem__message--systemNotification">
+												{index === 0 && (
+													<div className="messageItem__systemNotificationTag">
+														{translate('message.systemNotification', 'System Notification')}
+													</div>
+												)}
+												<div className="messageItem__systemNotificationTitle">
+													{card.title}
+												</div>
+												{card.playLabel ? (
+													<div className="session__robotSystemActionRow">
+														<div className="messageItem__systemNotificationDescription">
+															{card.description}
+														</div>
+														<button
+															type="button"
+															className="session__robotSystemInlinePlayButton"
+															onClick={(event) => {
+																event.preventDefault();
+																event.stopPropagation();
+																setShowBriefingNegativeScreen(false);
+																setBriefingScreenIndex(0);
+																setWaitingGameStage('tutorial');
+																setShowWaitingMiniGame(true);
+															}}
+														>
+															{card.playLabel}
+														</button>
+													</div>
+												) : (
+													<div className="messageItem__systemNotificationDescription">
+														{card.description}
+													</div>
+												)}
+												{card.cta && (
+													<button
+														type="button"
+														className="session__robotSystemRegistrationLink"
+														onClick={(event) => {
+															event.preventDefault();
+															event.stopPropagation();
+															history.push('/registration');
+														}}
+													>
+														{card.cta}
+													</button>
+												)}
+											</div>
+										</div>
+									</div>
+								</div>
+						))}
 					{/* MATRIX MIGRATION: For Matrix sessions (no rid), skip E2EE ready check */}
 					{messages &&
 						(ready || !activeSession.rid) &&
@@ -2067,6 +2487,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						/>
 					</div>
 				</div>
+				)}
 			</div>
 
 			{isThreadsEnabled && activeThreadRootId && (
@@ -2180,11 +2601,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				</div>
 			)}
 
-			{type === SESSION_LIST_TYPES.ENQUIRY && (
+			{type === SESSION_LIST_TYPES.ENQUIRY && !shouldBlockAnonymousInquiryChat && (
 				<AcceptAssign btnLabel={'enquiry.acceptButton.known'} />
 			)}
 
-			{canWriteMessage && (
+			{canWriteMessage && !shouldBlockAnonymousInquiryChat && (
 				<div className="session__gameInputFadeTarget">
 					{isSupervisor && (
 						<div className="session__supervisorInputNote" style={{

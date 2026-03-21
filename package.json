@@ -103,6 +103,7 @@
 		"source-map-loader": "^5.0.0",
 		"stacktrace-js": "^2.0.2",
 		"styled-components": "^6.1.19",
+		"tone": "^15.1.22",
 		"url-loader": "4.1.1",
 		"use-constant": "^1.1.1",
 		"use-debounce": "^9.0.4",
