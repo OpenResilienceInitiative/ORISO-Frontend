@@ -206,6 +206,16 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		transition: opacity 260ms ease, transform 260ms ease;
 	}
 
+	&__gameInputFadeTarget--hidden {
+		opacity: 0;
+		transform: translateY(18px);
+		pointer-events: none;
+	}
+
+	&__gameInputFadeTarget--reveal {
+		animation: session-input-reveal 360ms ease;
+	}
+
 	&--gameFocus &__waitingMiniGamePulse {
 		width: 356px;
 		height: 356px;
@@ -504,11 +514,63 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		flex-shrink: 0;
 	}
 
+	&__robotTypingIndicator {
+		opacity: 0.94;
+	}
+
+	&__robotTypingIndicator .messageItem__messageWrap,
+	&__robotTypingIndicator .messageItem__content {
+		display: flex;
+		align-items: center;
+		justify-content: flex-start;
+	}
+
+	&__robotTypingIndicator .messageItem__messageWrap {
+		width: 100%;
+	}
+
+	&__robotTypingDots {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		width: 76px;
+		height: 40px;
+		padding: 8px;
+		background: #d81d3f;
+		border-radius: 40px;
+		border-top-left-radius: 5px;
+		border: none;
+		box-sizing: border-box;
+		flex: 0 0 auto;
+	}
+
+	&__robotTypingDots span {
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		background: #fff;
+		animation: robot-typing-wave 0.8s linear infinite;
+	}
+
+	&__robotTypingDots span:nth-child(2) {
+		animation-delay: 0.2s;
+	}
+
+	&__robotTypingDots span:nth-child(3) {
+		animation-delay: 0.4s;
+	}
+
 	&__anonymousInquiryConsent {
 		max-width: 980px;
 		width: min(980px, 96%);
 		margin: 0 auto;
 		padding: 0 12px;
+	}
+
+	&__anonymousInquiryConsent.waitingRoom {
+		align-items: center;
+		min-height: 100%;
 	}
 
 	&__content--consentGate {
@@ -1704,6 +1766,30 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	}
 	100% {
 		opacity: 0;
+	}
+}
+
+@keyframes robot-typing-wave {
+	0%,
+	100% {
+		transform: translateY(0);
+	}
+	40% {
+		transform: translateY(-15px);
+	}
+	60% {
+		transform: translateY(0);
+	}
+}
+
+@keyframes session-input-reveal {
+	0% {
+		opacity: 0;
+		transform: translateY(16px);
+	}
+	100% {
+		opacity: 1;
+		transform: translateY(0);
 	}
 }
 

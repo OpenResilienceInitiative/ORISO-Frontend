@@ -150,7 +150,7 @@ const BRIEFING_SCREENS: BriefingScreen[] = [
 		title: '',
 		text: 'Okay you need to do three things in the game.',
 		interaction: 'auto',
-		autoAdvanceMs: 4600
+		autoAdvanceMs: 2200
 	}
 ];
 
@@ -172,6 +172,12 @@ const TYPEWRITER_TIMING = {
 	punctuationPauseMs: 120,
 	prizeToSerenityMs: 1000
 } as const;
+const ROBOT_MESSAGE_REVEAL_GAP_MS = 3500;
+const STANDARD_PRACTICE_TIMING: BreathTiming = {
+	inhale: 4,
+	hold: 4,
+	exhale: 6
+};
 
 const LevelEmojiIcon = ({
 	level,
@@ -329,6 +335,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const [centerStageTypewriterBusy, setCenterStageTypewriterBusy] = useState(false);
 	const [joinPromptEscalated, setJoinPromptEscalated] = useState(false);
 	const [anonymousInquiryConsentAccepted, setAnonymousInquiryConsentAccepted] = useState(false);
+	const [robotSequenceVisibleCount, setRobotSequenceVisibleCount] = useState(0);
 	const timerRef = useRef<number | null>(null);
 	const phaseTransitionLockRef = useRef(false);
 	const typewriterRef = useRef<number | null>(null);
@@ -375,6 +382,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		isAnonymousChat && activeSession.item.status === STATUS_ENQUIRY;
 	const anonymousInquiryConsentStorageKey = useMemo(
 		() => `anonymous-inquiry-consent-${activeSession.item.id}`,
+		[activeSession.item.id]
+	);
+	const robotSequenceStorageKey = useMemo(
+		() => `anonymous-robot-sequence-${activeSession.item.id}`,
 		[activeSession.item.id]
 	);
 	const isJoinRoomAvailable = Boolean(activeSession.consultant?.id);
@@ -541,6 +552,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		showWaitingMiniGame && (waitingGameStage === 'practice' || waitingGameStage === 'game');
 	const shouldBlockAnonymousInquiryChat =
 		requiresAnonymousInquiryConsent && !anonymousInquiryConsentAccepted;
+	const shouldShowRobotMessages =
+		isAnonymousBreathingGameAvailable && !shouldBlockAnonymousInquiryChat;
 	const anonymousInquiryConsentLabel = useMemo(
 		() =>
 			translate('videoConference.waitingroom.dataProtection.label.text', {
@@ -553,6 +566,14 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				)
 			}),
 		[legalLinks, translate]
+	);
+	const areRobotMessagesComplete =
+		!shouldShowRobotMessages || robotSequenceVisibleCount >= robotSystemCards.length;
+	const shouldShowRobotTypingIndicator =
+		shouldShowRobotMessages && !areRobotMessagesComplete;
+	const visibleRobotCards = useMemo(
+		() => robotSystemCards.slice(0, Math.max(0, robotSequenceVisibleCount)),
+		[robotSequenceVisibleCount, robotSystemCards]
 	);
 
 	const getAchievementMessage = useCallback((level: number) => {
@@ -748,21 +769,23 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	}, []);
 
 	const startPhase = useCallback(
-		(phase: BreathPhase) => {
+		(phase: BreathPhase, timingOverride?: BreathTiming) => {
+			const timingSource =
+				timingOverride || (waitingGameStage === 'practice' ? STANDARD_PRACTICE_TIMING : customTiming);
 			phaseTransitionLockRef.current = false;
 			const durationMs =
 				(phase === 'inhale'
-					? customTiming.inhale
+					? timingSource.inhale
 					: phase === 'hold'
-						? customTiming.hold
-						: customTiming.exhale) * 1000;
+						? timingSource.hold
+						: timingSource.exhale) * 1000;
 			setBreathPhase(phase);
 			setPhaseTotalMs(durationMs);
 			setPhaseMsLeft(durationMs);
 			setBreathProgress(phase === 'exhale' ? 1 : 0.2);
 			playBreathCue(phase, durationMs);
 		},
-		[customTiming, playBreathCue]
+		[customTiming, playBreathCue, waitingGameStage]
 	);
 
 	const updateTiming = useCallback((phase: keyof BreathTiming, delta: number) => {
@@ -809,7 +832,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			)
 		);
 		setWaitingGameStage('practice');
-		startPhase('inhale');
+		startPhase('inhale', STANDARD_PRACTICE_TIMING);
 	}, [startPhase, translate]);
 
 	const startAchieverGame = useCallback(() => {
@@ -967,6 +990,55 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			// Ignore storage errors and still unblock current session view.
 		}
 	}, [anonymousInquiryConsentStorageKey]);
+
+	useEffect(() => {
+		if (!shouldShowRobotMessages) {
+			setRobotSequenceVisibleCount(robotSystemCards.length);
+			return;
+		}
+		try {
+			const stored = sessionStorage.getItem(robotSequenceStorageKey);
+			const parsed = stored ? Number(stored) : 1;
+			setRobotSequenceVisibleCount(
+				Number.isFinite(parsed)
+					? Math.max(0, Math.min(robotSystemCards.length, parsed))
+					: 1
+			);
+		} catch {
+			setRobotSequenceVisibleCount(1);
+		}
+	}, [robotSequenceStorageKey, robotSystemCards.length, shouldShowRobotMessages]);
+
+	useEffect(() => {
+		if (!shouldShowRobotMessages) {
+			return;
+		}
+		try {
+			sessionStorage.setItem(
+				robotSequenceStorageKey,
+				String(Math.max(0, Math.min(robotSystemCards.length, robotSequenceVisibleCount)))
+			);
+		} catch {
+			// Ignore storage errors.
+		}
+	}, [
+		robotSequenceStorageKey,
+		robotSequenceVisibleCount,
+		robotSystemCards.length,
+		shouldShowRobotMessages
+	]);
+
+	useEffect(() => {
+		if (!shouldShowRobotMessages || robotSequenceVisibleCount >= robotSystemCards.length) {
+			return;
+		}
+		const timer = window.setTimeout(() => {
+			setRobotSequenceVisibleCount((prev) =>
+				Math.min(robotSystemCards.length, prev + 1)
+			);
+		}, ROBOT_MESSAGE_REVEAL_GAP_MS);
+		return () => window.clearTimeout(timer);
+	}, [robotSequenceVisibleCount, robotSystemCards.length, shouldShowRobotMessages]);
 
 	useEffect(() => {
 		if (!showWaitingMiniGame) {
@@ -1205,8 +1277,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			}
 			setBriefingScreenIndex((index) => index + 1);
 		}, 'autoAdvanceMs' in localizedBriefingScreens[briefingScreenIndex]
-			? localizedBriefingScreens[briefingScreenIndex].autoAdvanceMs + 700
-			: 2400);
+			? localizedBriefingScreens[briefingScreenIndex].autoAdvanceMs + 180
+			: 1600);
 		return () => window.clearTimeout(timeout);
 	}, [
 		briefingTypewriterBusy,
@@ -2282,17 +2354,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									<button
 										type="button"
 										className="session__waitingModuleActionButton session__waitingModuleActionButton--ghost"
-										onClick={() => {
-												setWaitingGameStage('practiceResult');
-											setCurrentLevel(1);
-											setBreathCycles(0);
-													setStageMessage(
-														translate(
-															'session.waitingMiniGame.practiceSuccessPrompt',
-															'Great job, want to start now?'
-														)
-													);
-										}}
+										onClick={startAchieverGame}
 									>
 										{translate('session.waitingMiniGame.repeatGame', 'Repeat game')}
 									</button>
@@ -2342,8 +2404,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				)}
 				{!shouldBlockAnonymousInquiryChat && (
 				<div className={'message-holder'}>
-					{isAnonymousBreathingGameAvailable &&
-						robotSystemCards.map((card, index) => (
+					{shouldShowRobotMessages &&
+						visibleRobotCards.map((card, index) => (
 							<div className="messageItem" key={card._id}>
 									<div className="messageItem__messageWrap">
 										{index === 0 && (
@@ -2418,6 +2480,20 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									</div>
 								</div>
 						))}
+					{shouldShowRobotTypingIndicator && (
+						<div className="messageItem session__robotTypingIndicator">
+							<div className="messageItem__messageWrap">
+								<div className="session__robotIncomingAvatarSpacer" aria-hidden="true" />
+								<div className="messageItem__content">
+									<div className="session__robotTypingDots" aria-hidden="true">
+										<span />
+										<span />
+										<span />
+									</div>
+								</div>
+							</div>
+						</div>
+					)}
 					{/* MATRIX MIGRATION: For Matrix sessions (no rid), skip E2EE ready check */}
 					{messages &&
 						(ready || !activeSession.rid) &&
@@ -2606,7 +2682,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			)}
 
 			{canWriteMessage && !shouldBlockAnonymousInquiryChat && (
-				<div className="session__gameInputFadeTarget">
+				<div
+					className={clsx(
+						'session__gameInputFadeTarget',
+						areRobotMessagesComplete && 'session__gameInputFadeTarget--reveal',
+						!areRobotMessagesComplete && 'session__gameInputFadeTarget--hidden'
+					)}
+				>
 					{isSupervisor && (
 						<div className="session__supervisorInputNote" style={{
 							textAlign: 'center'
@@ -2617,30 +2699,33 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							)}
 						</div>
 					)}
-					<Suspense
-						fallback={
-							<MessageSubmitInterfaceSkeleton
+					{areRobotMessagesComplete && (
+						<Suspense
+							fallback={
+								<MessageSubmitInterfaceSkeleton
+									placeholder={getPlaceholder()}
+									className={clsx('session__submit-interface')}
+								/>
+							}
+						>
+							<MessageSubmitInterfaceComponent
+								isTyping={props.isTyping}
+								className={clsx(
+									'session__submit-interface',
+									!isScrolledToBottom &&
+										'session__submit-interface--scrolled-up',
+									activeThreadRootId && 'session__submit-interface--withThread'
+								)}
 								placeholder={getPlaceholder()}
-								className={clsx('session__submit-interface')}
+								typingUsers={props.typingUsers}
+								preselectedFile={draggedFile}
+								handleMessageSendSuccess={handleMessageSendSuccess}
+								isSupervisor={isSupervisor}
 							/>
-						}
-					>
-						<MessageSubmitInterfaceComponent
-							isTyping={props.isTyping}
-							className={clsx(
-								'session__submit-interface',
-								!isScrolledToBottom &&
-									'session__submit-interface--scrolled-up',
-								activeThreadRootId && 'session__submit-interface--withThread'
-							)}
-							placeholder={getPlaceholder()}
-							typingUsers={props.typingUsers}
-							preselectedFile={draggedFile}
-							handleMessageSendSuccess={handleMessageSendSuccess}
-							isSupervisor={isSupervisor}
-						/>
-					</Suspense>
-					{!tenantData?.settings?.featureAttachmentUploadDisabled && (
+						</Suspense>
+					)}
+					{areRobotMessagesComplete &&
+						!tenantData?.settings?.featureAttachmentUploadDisabled && (
 						<DragAndDropArea
 							onFileDragged={onFileDragged}
 							isDragging={isDragging}
