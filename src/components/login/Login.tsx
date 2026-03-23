@@ -44,12 +44,15 @@ import {
 	setValueInCookie
 } from '../sessionCookie/accessSessionCookie';
 import { apiPatchUserData } from '../../api/apiPatchUserData';
+import { apiRequestMagicLinkLogin } from '../../api/apiRequestMagicLinkLogin';
+import { apiConsumeMagicLinkLogin } from '../../api/apiConsumeMagicLinkLogin';
 import { useSearchParam } from '../../hooks/useSearchParams';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { budibaseLogout } from '../budibase/budibaseLogout';
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
 import { UrlParamsContext } from '../../globalState/provider/UrlParamsProvider';
 import { AnonymousChat } from '../anonymousChat/AnonymousChat';
+import { setTokens } from '../auth/auth';
 
 const regexAccountDeletedError = /account disabled/i;
 
@@ -64,6 +67,7 @@ export const Login = () => {
 	const { userData, reloadUserData } = useContext(UserDataContext);
 	const { Stage } = useContext(GlobalComponentContext);
 	const gcid = useSearchParam<string>('gcid');
+	const magicToken = useSearchParam<string>('magicToken');
 	const isFirstVisit = useIsFirstVisit();
 
 	const loginButton: ButtonItem = {
@@ -90,6 +94,8 @@ export const Login = () => {
 	const [magicLinkSentToUsername, setMagicLinkSentToUsername] =
 		useState<string>('');
 	const [isRequestInProgress, setIsRequestInProgress] =
+		useState<boolean>(false);
+	const [isMagicTokenLoginAttempted, setIsMagicTokenLoginAttempted] =
 		useState<boolean>(false);
 	const { featureToolsEnabled, featureAnonymousChatEnabled = true } =
 		getTenantSettings();
@@ -265,6 +271,46 @@ export const Login = () => {
 		[reloadUserData, locale, initLocale, consultant, gcid]
 	);
 
+	useEffect(() => {
+		if (!magicToken || isMagicTokenLoginAttempted) {
+			return;
+		}
+
+		setIsMagicTokenLoginAttempted(true);
+		setIsRequestInProgress(true);
+		setShowLoginError('');
+		setShowMagicLinkError('');
+
+		const currentUrl = new URL(window.location.href);
+		currentUrl.searchParams.delete('magicToken');
+		window.history.replaceState(
+			{},
+			document.title,
+			currentUrl.pathname + currentUrl.search + currentUrl.hash
+		);
+
+		apiConsumeMagicLinkLogin(magicToken)
+			.then((tokenResponse) => {
+				setTokens(
+					tokenResponse.access_token,
+					tokenResponse.expires_in,
+					tokenResponse.refresh_token,
+					tokenResponse.refresh_expires_in
+				);
+				// Magic-token login is complete once tokens are set.
+				// Continue directly into authenticated app bootstrap.
+				redirectToApp(gcid);
+			})
+			.catch(() => {
+				setShowLoginError(
+					translate('login.warning.failed.unauthorized.text')
+				);
+			})
+			.finally(() => {
+				setIsRequestInProgress(false);
+			});
+	}, [magicToken, isMagicTokenLoginAttempted, postLogin, translate]);
+
 	const tryLogin = (otp?: string) => {
 		setIsRequestInProgress(true);
 		autoLogin({
@@ -316,30 +362,39 @@ export const Login = () => {
 		tryLogin(otp);
 	};
 
-	const handleMagicLinkLogin = () => {
+	const handleMagicLinkLogin = async () => {
 		const normalizedUsername = magicLinkUsername?.trim().toLowerCase();
 		if (!normalizedUsername) {
 			setShowMagicLinkError(translate('login.magicLink.usernameRequired'));
 			return;
 		}
-		const localToggleEnabled =
-			localStorage.getItem(`MAGIC_LINKS_LOGIN_ENABLED_${normalizedUsername}`) ===
-			'true';
-		if (!localToggleEnabled) {
-			setShowMagicLinkError(translate('login.magicLink.notEnabled'));
+		if (isRequestInProgress) {
 			return;
 		}
-		setValueInCookie(
-			'KEYCLOAK_LOCALE',
-			locale,
-			endpoints.loginResetPasswordLink.split('/').slice(0, -1).join('/')
-		);
-		setMagicLinkSentToUsername(normalizedUsername);
-		window.open(
-			`${endpoints.loginResetPasswordLink}&login_hint=${encodeURIComponent(normalizedUsername)}`,
-			'_blank',
-			'noreferrer'
-		);
+		setIsRequestInProgress(true);
+		setShowMagicLinkError('');
+		try {
+			await apiRequestMagicLinkLogin(normalizedUsername);
+			setValueInCookie(
+				'KEYCLOAK_LOCALE',
+				locale,
+				endpoints.loginResetPasswordLink.split('/').slice(0, -1).join('/')
+			);
+			setMagicLinkSentToUsername(normalizedUsername);
+		} catch (error) {
+			if (
+				error instanceof Error &&
+				error.message === FETCH_ERRORS.FORBIDDEN
+			) {
+				setShowMagicLinkError(translate('login.magicLink.notEnabled'));
+			} else {
+				setShowMagicLinkError(
+					translate('login.warning.failed.unauthorized.text')
+				);
+			}
+		} finally {
+			setIsRequestInProgress(false);
+		}
 	};
 
 	const handleKeyUp = (e) => {

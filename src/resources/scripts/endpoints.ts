@@ -62,6 +62,8 @@ export const endpoints = {
 	liveservice: apiUrl + '/service/live',
 	loginResetPasswordLink:
 		'/auth/realms/online-beratung/login-actions/reset-credentials?client_id=account',
+	magicLinkRequest: apiUrl + '/service/users/magic-link/request',
+	magicLinkConsume: apiUrl + '/service/users/magic-link/consume',
 	messageRead: apiUrl + '/api/v1/subscriptions.read',
 	messages: {
 		get: apiUrl + '/service/messages',
