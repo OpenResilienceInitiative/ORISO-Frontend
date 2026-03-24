@@ -8,9 +8,6 @@ import Switch from 'react-switch';
 import { UserDataContext } from '../../globalState';
 import { apiPatchUserData } from '../../api/apiPatchUserData';
 
-const getMagicLinksStorageKey = (identifier?: string) =>
-	`MAGIC_LINKS_LOGIN_ENABLED_${(identifier || 'anonymous').toLowerCase()}`;
-
 export const MagicLinksLoginFeature = () => {
 	const { t: translate } = useTranslation();
 	const settings = useAppConfig();
@@ -44,12 +41,6 @@ export const MagicLinksLoginFeature = () => {
 		setIsEnabled(enabled);
 		try {
 			await apiPatchUserData({ magicLinkLoginEnabled: enabled });
-			if (userData?.userName) {
-				localStorage.setItem(
-					getMagicLinksStorageKey(userData.userName),
-					enabled ? 'true' : 'false'
-				);
-			}
 			await reloadUserData();
 		} catch {
 			setIsEnabled(previous);
