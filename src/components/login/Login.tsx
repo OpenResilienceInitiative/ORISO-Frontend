@@ -461,7 +461,7 @@ export const Login = () => {
 						<div className="loginForm__headline">
 							<h2>{translate('login.headline')}</h2>
 						</div>
-						<div className="loginForm__tabs">
+						{/* <div className="loginForm__tabs">
 							<button
 								type="button"
 								className={clsx('loginForm__tab', {
@@ -490,7 +490,7 @@ export const Login = () => {
 							>
 								{translate('login.tabs.magicLink')}
 							</button>
-						</div>
+						</div> */}
 
 						<div className="loginForm__fields">
 							{activeLoginMethod === 'magicLink' &&
