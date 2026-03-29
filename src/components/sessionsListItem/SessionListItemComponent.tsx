@@ -70,13 +70,17 @@ interface SessionListItemProps {
 	itemRef?: any;
 	handleKeyDownLisItemContent?: Function;
 	index: number;
+	isBeforeActive?: boolean;
+	isAfterActive?: boolean;
 }
 
 export const SessionListItemComponent = ({
 	defaultLanguage,
 	itemRef,
 	handleKeyDownLisItemContent,
-	index
+	index,
+	isBeforeActive = false,
+	isAfterActive = false
 }: SessionListItemProps) => {
 	const [matrixMembers, setMatrixMembers] = useState<RoomMember[]>([]);
 	const { t: translate } = useTranslation(['common']);
@@ -547,7 +551,9 @@ export const SessionListItemComponent = ({
 				className={clsx(
 					'sessionsListItem',
 					'sessionsListItem--groupChat',
-					isChatActive && 'sessionsListItem--active'
+					isChatActive && 'sessionsListItem--active',
+					isBeforeActive && 'sessionsListItem--beforeActive',
+					isAfterActive && 'sessionsListItem--afterActive'
 				)}
 				data-group-id={activeSession.rid ? activeSession.rid : ''}
 				data-cy="session-list-item"
@@ -561,6 +567,7 @@ export const SessionListItemComponent = ({
 					ref={itemRef}
 					tabIndex={index === 0 ? 0 : -1}
 					role="tab"
+					aria-selected={isChatActive}
 				>
 					<div className="sessionsListItem__row">
 						<div className="sessionsListItem__rowLeft">
@@ -844,7 +851,9 @@ export const SessionListItemComponent = ({
 			className={clsx(
 				`sessionsListItem`,
 				isChatActive && `sessionsListItem--active`,
-				isAnonymousChat && `sessionsListItem--anonymous`
+				isAnonymousChat && `sessionsListItem--anonymous`,
+				isBeforeActive && 'sessionsListItem--beforeActive',
+				isAfterActive && 'sessionsListItem--afterActive'
 			)}
 			data-group-id={activeSession.item.groupId}
 			data-cy="session-list-item"
@@ -858,6 +867,7 @@ export const SessionListItemComponent = ({
 				ref={itemRef}
 				tabIndex={index === 0 ? 0 : -1}
 				role="tab"
+				aria-selected={isChatActive}
 			>
 				<div className="sessionsListItem__row">
 					<div className="sessionsListItem__rowLeft">

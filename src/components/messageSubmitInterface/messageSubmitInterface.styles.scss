@@ -12,6 +12,38 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 .session,
 .enquiry__wrapper {
+	.messageSubmit__wrapper--expanded {
+		position: absolute;
+		inset: 0;
+		top: 0;
+		right: 0;
+		bottom: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		z-index: 4000;
+		pointer-events: none;
+	}
+
+	.messageSubmit__wrapper--expanded .textarea {
+		position: absolute;
+		inset: 0;
+		top: 0;
+		right: 0;
+		bottom: 0;
+		left: 0;
+		padding: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: rgba(255, 255, 255, 0.65);
+		pointer-events: none;
+	}
+
+	.messageSubmit__wrapper--expanded .textarea__wrapper-send-message--expanded {
+		pointer-events: auto;
+	}
+
 	.textarea {
 		z-index: 100;
 		background-color: transparent;
@@ -52,6 +84,24 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			grid-template-columns: 100%;
 			align-items: center;
 			justify-content: center;
+			position: relative;
+
+			&--expandedOverlay {
+				position: absolute;
+				inset: 0;
+				top: 0;
+				right: 0;
+				bottom: 0;
+				left: 0;
+				z-index: 139;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				pointer-events: none;
+				width: 100%;
+				height: 100%;
+				min-height: 0;
+			}
 
 			&-send-message {
 				display: block;
@@ -69,6 +119,25 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				overflow: visible;
 				min-height: 168px;
 				height: 200px;
+				transition: all 240ms ease;
+
+				&--expanded {
+					position: fixed !important;
+					left: 50vw !important;
+					top: 50vh !important;
+					right: auto !important;
+					bottom: auto !important;
+					inset: auto !important;
+					margin-top: -850px;
+					width: min(1080px, calc(100vw - 120px));
+					max-width: none;
+					height: min(78vh, 760px);
+					max-height: calc(100vh - 96px);
+					z-index: 4500;
+					box-shadow: 0 20px 70px rgba(0, 0, 0, 0.25) !important;
+					overflow: hidden;
+					pointer-events: auto;
+				}
 
 				// On mobile, ensure wrapper doesn't extend beyond viewport
 				@media screen and (max-width: 899px) {
@@ -138,7 +207,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 		&__inputWrapper {
 			position: absolute;
-			left: 62px;
+			left: 15px;
 			right: 15px;
 			top: 15px;
 			min-height: 141px;
@@ -146,17 +215,25 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			display: block;
 			max-height: none;
 			min-height: 0;
+			transition: all 220ms ease;
 
-			&::before {
-				content: '';
-				position: absolute;
-				left: 0;
-				right: 0;
-				top: 0;
-				height: 2px;
-				background: #cc1e1c;
-				z-index: 4;
-			}
+		}
+
+		&__wrapper-send-message--expanded .textarea__inputWrapper {
+			top: 16px;
+			left: 14px;
+			right: 14px;
+			bottom: 16px;
+			height: auto;
+		}
+
+		&__wrapper-send-message--expanded .textarea__input {
+			height: 100%;
+		}
+
+		&__wrapper-send-message--expanded .textarea__figmaToolbar {
+			max-width: calc(100% - 56px);
+			width: calc(100% - 56px);
 		}
 
 		&__input {
@@ -164,9 +241,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			width: 100%;
 			height: 100%;
 			border: 2px solid #cc1e1c;
-			border-top: none;
-			border-left: none; // remove extra vertical red line at right edge
-			border-radius: 0 0 30px 0; // sharper top-right corner
+			border-radius: 30px 0 30px 30px; // sharper top-right corner
 			box-sizing: border-box;
 			position: relative;
 			
@@ -177,8 +252,6 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			&:focus-within {
 				outline: none !important;
 				border: 2px solid #cc1e1c;
-				border-top: none;
-				border-left: none; // keep separator hidden while focused
 			}
 
 			&::placeholder,
@@ -207,10 +280,10 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			left: 12px;
 			z-index: 20;
 			display: block;
-			max-width: calc(100% - 120px);
-			width: calc(100% - 120px);
+			max-width: calc(100% - 56px);
+			width: calc(100% - 56px);
 			height: 30px;
-			overflow: hidden;
+			overflow: visible;
 
 			&--emoji {
 				height: 34px;
@@ -252,7 +325,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			inset: 0;
 			display: inline-flex;
 			align-items: center;
-			gap: 12px;
+			gap: 10px;
 			overflow-x: auto;
 			-ms-overflow-style: none;
 			scrollbar-width: none;
@@ -285,6 +358,88 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			&--highlight {
 				gap: 8px;
 			}
+
+			&--heading,
+			&--list,
+			&--align,
+			&--code {
+				gap: 8px;
+			}
+
+			&--compact {
+				gap: 10px;
+			}
+
+			&--default button {
+				color: #4b515a;
+				font-weight: 600;
+			}
+
+			&--compact button {
+				color: #646d78;
+			}
+		}
+
+		&__figmaToolbarDivider {
+			width: 1px;
+			height: 24px;
+			background: rgba(75, 81, 90, 0.11);
+			flex: 0 0 auto;
+		}
+
+		&__toolbarCloseButton {
+			width: 24px !important;
+			height: 24px !important;
+			border-radius: 6px;
+			padding: 0 !important;
+		}
+
+		&__toolbarAddButton {
+			width: 65px !important;
+			padding: 4px 8px !important;
+			border-radius: 12px;
+			display: inline-flex !important;
+			align-items: center;
+			justify-content: center;
+			gap: 6px;
+			color: rgba(75, 81, 90, 0.69) !important;
+			font-size: 14px;
+			font-weight: 500;
+			line-height: 24px;
+
+			span {
+				line-height: 1;
+			}
+		}
+
+		&__toolbarExpandButton--active svg {
+			transform: rotate(180deg);
+		}
+
+		&__toolbarButton--selected {
+			color: #cc1e1c !important;
+		}
+
+		&__toolbarButton--linkSelected {
+			color: #2274f0 !important;
+		}
+
+		&__toolbarButton--linkSelected svg path,
+		&__toolbarButton--linkSelected svg rect {
+			fill: #2274f0 !important;
+		}
+
+		&__toolbarButton--linkSelected svg path[stroke] {
+			stroke: #2274f0 !important;
+		}
+
+		&__toolbarButton--selected svg path,
+		&__toolbarButton--selected svg rect {
+			fill: #cc1e1c !important;
+		}
+
+		&__toolbarButton--selected svg path[stroke] {
+			stroke: #cc1e1c !important;
 		}
 
 		&__emojiButton {
@@ -299,14 +454,19 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 		}
 
 		&__emojiCloseButton {
-			width: auto !important;
-			min-width: 58px;
-			padding: 0 8px !important;
+			width: 28px !important;
+			min-width: 28px;
+			padding: 0 !important;
 			border-radius: 8px;
-			font-size: 12px;
-			font-weight: 600;
-			color: #cc1e1c !important;
-			background: #ffe7e7 !important;
+			display: inline-flex !important;
+			align-items: center;
+			justify-content: center;
+			background: transparent !important;
+		}
+
+		&__emojiCloseButton svg {
+			width: 16px;
+			height: 16px;
 		}
 
 		&__highlightColorButton {
@@ -324,60 +484,306 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			border: 1px solid rgba(0, 0, 0, 0.12);
 		}
 
-		&__figmaToolbarIcon {
+		&__toolbarCompositeIcon {
 			position: relative;
-			display: inline-block;
-			color: #646d78;
+			display: inline-flex;
+			width: 16px;
+			height: 16px;
+			color: currentColor;
 
 			svg {
 				position: absolute;
+				display: block;
 			}
 
-			&--filter {
-				width: 16px;
-				height: 16px;
+			&--heading {
+				svg:first-child {
+					left: 0;
+					top: 0;
+					width: 16px;
+					height: 16px;
+				}
 
+				svg:last-child {
+					left: 8px;
+					top: 7px;
+					width: 10px;
+					height: 10px;
+				}
+			}
+
+			&--strike {
 				svg:nth-child(1) {
-					left: 1px;
-					top: 9px;
-					width: 13px;
-					height: 2px;
+					left: 3px;
+					top: 1px;
+					width: 8px;
+					height: 4px;
 				}
 
 				svg:nth-child(2) {
-					left: 0;
-					top: 0;
-					width: 15px;
-					height: 6px;
+					left: 1px;
+					top: 7px;
+					width: 12px;
+					height: 7px;
+				}
+			}
+
+			&--list-dropdown {
+				svg:nth-child(1) {
+					left: 5px;
+					top: 3px;
+				}
+
+				svg:nth-child(2) {
+					left: 5px;
+					top: 7px;
 				}
 
 				svg:nth-child(3) {
-					left: 3px;
-					top: 13px;
-					width: 9px;
-					height: 2px;
+					left: 5px;
+					top: 11px;
+				}
+
+				svg:nth-child(4) {
+					left: 1px;
+					top: 3px;
+				}
+
+				svg:nth-child(5) {
+					left: 1px;
+					top: 7px;
+				}
+
+				svg:nth-child(6) {
+					left: 1px;
+					top: 11px;
+				}
+
+				svg:nth-child(7) {
+					left: 8px;
+					top: 7px;
+					width: 10px;
+					height: 10px;
 				}
 			}
 
-			&--search-calendar {
-				width: 20px;
-				height: 20px;
-
+			&--align {
 				svg:nth-child(1) {
 					left: 5px;
-					top: 6px;
-					width: 10px;
-					height: 10px;
-					z-index: 2;
+					top: 3px;
+				}
+
+				svg:nth-child(2) {
+					left: 1px;
+					top: 1px;
+				}
+
+				svg:nth-child(3) {
+					left: 5px;
+					top: 7px;
+				}
+
+				svg:nth-child(4) {
+					left: 5px;
+					top: 11px;
+				}
+			}
+
+			&--indent {
+				svg:nth-child(1) {
+					left: 1px;
+					top: 1px;
+				}
+
+				svg:nth-child(2) {
+					left: 7px;
+					top: 1px;
+				}
+
+				svg:nth-child(3) {
+					left: 1px;
+					top: 2px;
+					width: 13px;
+					height: 12px;
+				}
+			}
+
+			&--code {
+				svg:nth-child(1) {
+					left: 1px;
+					top: 1px;
+					width: 5px;
+					height: 12px;
 				}
 
 				svg:nth-child(2) {
 					left: 0;
-					top: 0;
-					width: 20px;
-					height: 20px;
-					z-index: 1;
+					top: 5px;
+					width: 4px;
+					height: 7px;
 				}
+
+				svg:nth-child(3) {
+					left: 11px;
+					top: 5px;
+					width: 4px;
+					height: 7px;
+				}
+			}
+
+			&--link {
+				svg:nth-child(1) {
+					left: 6px;
+					top: 1px;
+					width: 10px;
+					height: 10px;
+				}
+
+				svg:nth-child(2) {
+					left: 0;
+					top: 5px;
+					width: 10px;
+					height: 10px;
+				}
+			}
+
+			&--math-plus,
+			&--math-minus {
+				svg:nth-child(1),
+				svg:nth-child(2) {
+					width: 7px;
+					height: 7px;
+					left: 1px;
+					top: 5px;
+				}
+
+				svg:nth-child(3) {
+					width: 4px;
+					height: 6px;
+					left: 11px;
+					top: 0;
+				}
+			}
+		}
+
+		&__toolbarTextIcon {
+			display: inline-flex;
+			align-items: baseline;
+			justify-content: center;
+			min-width: 16px;
+			font-size: 12px;
+			font-weight: 700;
+			line-height: 1;
+			color: currentColor;
+
+			sup,
+			sub {
+				font-size: 8px;
+				line-height: 1;
+			}
+		}
+
+		&__toolbarOptionText {
+			font-size: 12px;
+			font-weight: 600;
+			padding: 0 4px;
+			color: currentColor;
+			white-space: nowrap;
+		}
+
+		&__toolbarAlignOptionIcon {
+			display: inline-block;
+			width: 14px;
+			height: 14px;
+			background-repeat: no-repeat;
+			background-size: 14px 14px;
+			background-position: center;
+			opacity: 0.95;
+
+			&--left {
+				background-image: linear-gradient(currentColor, currentColor),
+					linear-gradient(currentColor, currentColor),
+					linear-gradient(currentColor, currentColor),
+					linear-gradient(currentColor, currentColor);
+				background-size: 10px 2px, 7px 2px, 10px 2px, 8px 2px;
+				background-position: left 0 top 1px, left 0 top 5px, left 0 top 9px,
+					left 0 top 13px;
+			}
+
+			&--center {
+				background-image: linear-gradient(currentColor, currentColor),
+					linear-gradient(currentColor, currentColor),
+					linear-gradient(currentColor, currentColor),
+					linear-gradient(currentColor, currentColor);
+				background-size: 10px 2px, 7px 2px, 10px 2px, 8px 2px;
+				background-position: center top 1px, center top 5px, center top 9px,
+					center top 13px;
+			}
+
+			&--right {
+				background-image: linear-gradient(currentColor, currentColor),
+					linear-gradient(currentColor, currentColor),
+					linear-gradient(currentColor, currentColor),
+					linear-gradient(currentColor, currentColor);
+				background-size: 10px 2px, 7px 2px, 10px 2px, 8px 2px;
+				background-position: right top 1px, right top 5px, right top 9px,
+					right top 13px;
+			}
+		}
+
+		&__toolbarNumberedListIcon {
+			display: inline-block;
+			width: 14px;
+			height: 14px;
+			background-repeat: no-repeat;
+			background-size: 14px 14px;
+			background-position: center;
+			background-image: linear-gradient(currentColor, currentColor),
+				linear-gradient(currentColor, currentColor),
+				linear-gradient(currentColor, currentColor),
+				linear-gradient(currentColor, currentColor);
+			background-size: 2px 2px, 2px 2px, 9px 2px, 9px 2px;
+			background-position: left 0 top 3px, left 0 top 9px, right 0 top 3px,
+				right 0 top 9px;
+		}
+
+		&__toolbarCodeBlockIcon {
+			display: inline-block;
+			width: 14px;
+			height: 14px;
+			border: 1px solid currentColor;
+			border-radius: 3px;
+			position: relative;
+
+			&::before {
+				content: '</>';
+				position: absolute;
+				inset: 0;
+				font-size: 8px;
+				line-height: 12px;
+				text-align: center;
+				font-weight: 700;
+			}
+		}
+
+		&__compactIconStack {
+			position: relative;
+			width: 14px;
+			height: 14px;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+
+			svg:first-child {
+				position: absolute;
+				left: 0;
+				top: 0;
+			}
+
+			svg:last-child {
+				position: absolute;
+				left: 5px;
+				top: 4px;
 			}
 		}
 
@@ -475,78 +881,32 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			}
 		}
 
-		&__featureWrapper {
-			display: block;
-			flex-direction: column;
-			border-top: 2px solid #cc1e1c;
-			border-bottom: 2px solid #cc1e1c;
-			border-left: 2px solid #cc1e1c;
-			border-right: none;
-			justify-content: flex-start;
-			align-items: center;
-			width: 48px;
-			min-width: 48px;
-			min-height: 141px;
-			height: 168px;
-			padding-left: 0;
-			border-radius: 30px 0 0 30px;
-			background: transparent;
+		&__audienceSelector {
 			position: absolute;
-			left: 15px;
-			top: 15px;
-			bottom: 5px;
-			z-index: 3;
-
-			&::after {
-				display: none;
-			}
+			right: 30px;
+			bottom: 30px;
+			top: auto;
+			height: 32px;
+			max-width: 230px;
+			z-index: 60;
+			border: 1px solid rgba(100, 109, 120, 0.1);
+			background: rgba(0, 0, 0, 0.07);
+			border-radius: 12px;
+			padding: 0 6px 0 4px;
 		}
 
-		// When input is focused, featureWrapper should also have red border (top, bottom, left only) - 2px
-		&__featureWrapper--focused {
-			border-top: 2px solid #cc1e1c !important;
-			border-bottom: 2px solid #cc1e1c !important;
-			border-left: 2px solid #cc1e1c !important;
-			border-right: none !important;
+		&__wrapper-send-message--expanded .textarea__audienceSelector {
+			bottom: 30px;
+			right: 62px;
 		}
 
-		&__brandBadge {
-			width: 46px;
-			height: 38px;
-			margin-top: 0px;
-			border-radius: 25px 0px 0px 0px;
-			background: #cc1e1c;
-			display: inline-flex;
-			align-items: center;
-			justify-content: center;
-
-			svg * {
-				fill: #fff;
-			}
-		}
-
-		&__assigneeChip {
-			position: absolute;
-			left: -2px;
-			bottom: -2px;
-			height: 38px;
-			width: 185px;
-			border-left: 2px solid #cc1e1c;
-			border-bottom: 2px solid #cc1e1c;
-			border-bottom-left-radius: 24px;
-			border-top-right-radius: 24px;
-			background: #ffd1d1;
-			color: #cc1e1c;
-			z-index: 15;
-		}
-
-		&__assigneeButton {
+		&__audienceSelectorButton {
 			width: 100%;
 			height: 100%;
-			padding: 0 10px 0 8px;
+			padding: 0 0 0 0;
 			display: inline-flex;
 			align-items: center;
-			gap: 8px;
+			gap: 4px;
 			border: 0;
 			background: transparent;
 			color: inherit;
@@ -554,14 +914,15 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			text-align: left;
 		}
 
-		&__assigneeMenu {
+		&__audienceSelectorMenu {
 			position: absolute;
-			left: 8px;
-			bottom: 42px;
+			right: 0;
+			bottom: 36px;
+			top: auto;
 			width: 220px;
 			max-height: 220px;
 			overflow-y: auto;
-			border: 2px solid #cc1e1c;
+			border: 1px solid rgba(100, 109, 120, 0.18);
 			border-radius: 14px;
 			background: #fff !important;
 			opacity: 1;
@@ -569,67 +930,72 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			z-index: 30;
 		}
 
-		&__assigneeMenuItem {
+		&__audienceSelectorMenuItem {
 			display: block;
 			width: 100%;
 			padding: 9px 12px;
 			border: 0;
-			border-bottom: 1px solid #f0d3d3;
+			border-bottom: 1px solid rgba(100, 109, 120, 0.12);
 			background: #fff;
 			text-align: left;
 			cursor: pointer;
 			font-size: 14px;
-			color: #4b4b4b;
+			color: #4b515a;
 
 			&:last-child {
 				border-bottom: 0;
 			}
 
 			&:hover {
-				background: #fff0f0;
+				background: rgba(0, 0, 0, 0.04);
 			}
 		}
 
-		&__assigneeMenuItem--selected {
-			background: #ffe2e2;
-			color: #cc1e1c;
+		&__audienceSelectorMenuItem--selected {
+			background: rgba(0, 0, 0, 0.07);
+			color: #4b515a;
 			font-weight: 600;
 		}
 
-		&__assigneeIcon {
-			width: 24px;
-			height: 24px;
+		&__audienceSelectorIcon {
+			width: 22px;
+			height: 22px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
 
 			path {
-				fill: #cc1e1c;
+				fill: #4b515a;
 			}
 		}
 
-		&__assigneeName {
-			font-size: 16px;
-			line-height: 16px;
+		&__audienceSelectorName {
+			font-size: 14px;
 			font-weight: 400;
 			white-space: nowrap;
 			overflow: hidden;
 			text-overflow: ellipsis;
 			flex: 1;
+			color: #4b515a;
+			text-align: center;
+			align-items: center;
+			align-content: center;
 		}
 
-		&__assigneeArrow {
-			width: 18px;
-			height: 18px;
-			color: #cc1e1c;
+		&__audienceSelectorArrow {
+			width: 16px;
+			height: 16px;
+			color: #4b515a;
 			transition: transform 180ms ease;
 			transform: rotate(0deg);
 
 			path {
-				stroke: #cc1e1c !important;
-				fill: #cc1e1c !important;
-				stroke-width: 2.2 !important;
+				stroke: #4b515a !important;
+				fill: #4b515a !important;
 			}
 		}
 
-		&__assigneeArrow--open {
+		&__audienceSelectorArrow--open {
 			transform: rotate(180deg);
 		}
 
@@ -723,7 +1089,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 		&__attachmentSelect {
 			display: flex;
 			position: absolute;
-			right: 9px;
+			right: 8px;
 			top: 63px;
 			bottom: auto;
 			z-index: 6; // keep voice/clip above editor strip
@@ -1102,10 +1468,17 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 		&__buttons {
 			position: absolute;
-			top: 11px;
-			right: 9px;
+			top: 10px;
+			right: 8px;
 			z-index: 8;
 		}
+	}
+
+	.messageSubmit__wrapper--expanded .textarea__wrapper {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
 	}
 
 	a {

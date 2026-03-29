@@ -313,17 +313,25 @@ $message-attachment-color: $secondary !default;
 			background-color: #b3e5fc;
 		}
 
+		.messageItem__align {
+			display: block;
+			width: 100%;
+		}
+
+		.messageItem__align--left {
+			text-align: left;
+		}
+
+		.messageItem__align--center {
+			text-align: center;
+		}
+
+		.messageItem__align--right {
+			text-align: right;
+		}
+
 		span:not(.messageItem__highlight) {
-			display: flex;
-			flex-direction: column;
-
-			& > * {
-				margin-top: $grid-base;
-			}
-
-			& > *:first-child {
-				margin-top: 0;
-			}
+			display: inline;
 		}
 
 		&__attachment {

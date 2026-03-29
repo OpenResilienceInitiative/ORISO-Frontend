@@ -6,11 +6,12 @@ import React, {
 	useState
 } from 'react';
 import { EditorContent, useEditor } from '@tiptap/react';
-import { JSONContent } from '@tiptap/core';
+import { JSONContent, Mark } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
 import Highlight from '@tiptap/extension-highlight';
+import TextAlign from '@tiptap/extension-text-align';
 import Placeholder from '@tiptap/extension-placeholder';
 import {
 	FormatBold,
@@ -36,6 +37,7 @@ export interface TipTapComposerRef {
 	insertText: (value: string) => void;
 	insertSnippet: (payload: HighlightSnippetPayload) => void;
 	runAction: (action: string) => void;
+	isActionActive: (action: string) => boolean;
 }
 
 interface TipTapComposerProps {
@@ -196,6 +198,26 @@ const serializeBlocks = (node?: JSONContent): string => {
 const serializeEditorToMarkdown = (doc?: JSONContent): string =>
 	serializeBlocks(doc).trim();
 
+const Superscript = Mark.create({
+	name: 'superscript',
+	parseHTML() {
+		return [{ tag: 'sup' }];
+	},
+	renderHTML({ HTMLAttributes }) {
+		return ['sup', HTMLAttributes, 0];
+	}
+});
+
+const Subscript = Mark.create({
+	name: 'subscript',
+	parseHTML() {
+		return [{ tag: 'sub' }];
+	},
+	renderHTML({ HTMLAttributes }) {
+		return ['sub', HTMLAttributes, 0];
+	}
+});
+
 export const TipTapComposer = forwardRef<TipTapComposerRef, TipTapComposerProps>(
 	(
 		{
@@ -216,6 +238,12 @@ export const TipTapComposer = forwardRef<TipTapComposerRef, TipTapComposerProps>
 				() => [
 					StarterKit,
 					Underline,
+					Superscript,
+					Subscript,
+					TextAlign.configure({
+						types: ['heading', 'paragraph'],
+						defaultAlignment: 'left'
+					}),
 					Highlight.configure({ multicolor: true }),
 					Link.configure({
 						openOnClick: false,
@@ -276,12 +304,20 @@ export const TipTapComposer = forwardRef<TipTapComposerRef, TipTapComposerProps>
 			if (!editor) {
 				return;
 			}
+			const normalizedValue = (value || '')
+				.replace(/text-align\s*:\s*right/gi, 'text-align: left')
+				.replace(/data-text-align\s*=\s*["']right["']/gi, 'data-text-align="left"');
+			// Always keep default writing flow left-to-right for new/empty content.
+			if (!normalizedValue.trim()) {
+				editor.commands.setTextAlign('left');
+			}
 			const current = editor.getHTML();
-			if ((value || '') === current) {
+			if (normalizedValue === current) {
 				return;
 			}
 			setIsSyncingFromValue(true);
-			editor.commands.setContent(value || '');
+			editor.commands.setContent(normalizedValue);
+			editor.commands.setTextAlign('left');
 			setTimeout(() => setIsSyncingFromValue(false), 0);
 		}, [editor, value]);
 
@@ -338,6 +374,27 @@ export const TipTapComposer = forwardRef<TipTapComposerRef, TipTapComposerProps>
 					case 'bold':
 						editor.chain().focus().toggleBold().run();
 						return;
+					case 'paragraph':
+						editor.chain().focus().setParagraph().run();
+						return;
+					case 'heading1':
+						editor.chain().focus().toggleHeading({ level: 1 }).run();
+						return;
+					case 'heading2':
+						editor.chain().focus().toggleHeading({ level: 2 }).run();
+						return;
+					case 'heading3':
+						editor.chain().focus().toggleHeading({ level: 3 }).run();
+						return;
+					case 'alignLeft':
+						editor.chain().focus().setTextAlign('left').run();
+						return;
+					case 'alignCenter':
+						editor.chain().focus().setTextAlign('center').run();
+						return;
+					case 'alignRight':
+						editor.chain().focus().setTextAlign('right').run();
+						return;
 					case 'italic':
 						editor.chain().focus().toggleItalic().run();
 						return;
@@ -371,6 +428,20 @@ export const TipTapComposer = forwardRef<TipTapComposerRef, TipTapComposerProps>
 					case 'strike':
 						editor.chain().focus().toggleStrike().run();
 						return;
+					case 'code':
+						editor.chain().focus().toggleCode().run();
+						return;
+					case 'codeBlock':
+						editor.chain().focus().toggleCodeBlock().run();
+						return;
+					case 'superscript': {
+						editor.chain().focus().toggleMark('superscript').run();
+						return;
+					}
+					case 'subscript': {
+						editor.chain().focus().toggleMark('subscript').run();
+						return;
+					}
 					case 'insertEmoji':
 						editor.chain().focus().insertContent('🙂').run();
 						return;
@@ -436,6 +507,61 @@ export const TipTapComposer = forwardRef<TipTapComposerRef, TipTapComposerProps>
 						return;
 					default:
 						return;
+				}
+			},
+			isActionActive: (action: string) => {
+				if (!editor) {
+					return false;
+				}
+				const activeTextAlign = editor.isActive('heading')
+					? editor.getAttributes('heading')?.textAlign || 'left'
+					: editor.getAttributes('paragraph')?.textAlign || 'left';
+				switch (action) {
+					case 'bold':
+						return editor.isActive('bold');
+					case 'paragraph':
+						return editor.isActive('paragraph');
+					case 'heading1':
+						return editor.isActive('heading', { level: 1 });
+					case 'heading2':
+						return editor.isActive('heading', { level: 2 });
+					case 'heading3':
+						return editor.isActive('heading', { level: 3 });
+					case 'alignLeft':
+						return (
+							activeTextAlign !== 'center' &&
+							activeTextAlign !== 'right'
+						);
+					case 'alignCenter':
+						return activeTextAlign === 'center';
+					case 'alignRight':
+						return activeTextAlign === 'right';
+					case 'italic':
+						return editor.isActive('italic');
+					case 'underline':
+						return editor.isActive('underline');
+					case 'highlight':
+						return editor.isActive('highlight');
+					case 'bulletList':
+						return editor.isActive('bulletList');
+					case 'orderedList':
+						return editor.isActive('orderedList');
+					case 'strike':
+						return editor.isActive('strike');
+					case 'code':
+						return editor.isActive('code');
+					case 'codeBlock':
+						return editor.isActive('codeBlock');
+					case 'superscript':
+						return editor.isActive('superscript');
+					case 'subscript':
+						return editor.isActive('subscript');
+					case 'blockquote':
+						return editor.isActive('blockquote');
+					case 'link':
+						return editor.isActive('link');
+					default:
+						return false;
 				}
 			}
 		}));
