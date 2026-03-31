@@ -4,7 +4,7 @@ $icon-size-small: 16px;
 .sessionsListItem {
 	display: flex;
 	color: $body-font-color;
-	margin-bottom: 3px;
+	margin-bottom: 0;
 	transition: all 0.6s ease;
 	animation: appearSessionListItem 300ms ease forwards;
 	opacity: 0;
@@ -35,21 +35,18 @@ $icon-size-small: 16px;
 		transition: all 0.3s ease;
 
 		.sessionsListItem__content {
-			background-color: #fff5f5 !important; // Light red background for active card
-			border: 2px solid #da5248 !important; // Dark red border for active card
+			background-color: #fff5f5 !important;
+			border: 2px solid #da5248 !important;
+			border-radius: 24px !important;
+			margin-top: 8px !important;
+			margin-bottom: 8px !important;
 			transition: all 0.3s ease;
-
-			&:focus-visible {
-				outline: $focus-outline;
-				border-radius: 4px;
-				transition: all 0.6s ease;
-			}
 
 			&:hover,
 			&:focus,
 			&:active {
-				background-color: #fff5f5 !important; // Keep light red background on hover for active card
-				border: 2px solid #da5248 !important; // Keep dark red border on hover for active card
+				background-color: #fff5f5 !important;
+				border: 2px solid #da5248 !important;
 			}
 		}
 
@@ -81,13 +78,13 @@ $icon-size-small: 16px;
 		padding-top: 12px;
 		margin: 0 $grid-base-two;
 		background-color: $white;
-		border: 1px solid #ffcccc; // Light red border for all cards
-		border-radius: 8px; // Increased border-radius for all cards
+		border: 1px solid #ffcccc;
+		border-radius: 0;
 		transition: all 0.6s ease;
 		position: relative;
 		z-index: 10;
 		overflow: hidden;
-        margin-bottom: 6px;
+		margin-bottom: 0;
 
 		&--anonymous {
 			border: 1px solid #9e9e9e; // Gray border for anonymous chat cards
@@ -96,13 +93,13 @@ $icon-size-small: 16px;
 
 
 		@include breakpoint($fromMedium) {
-			margin: 6px $grid-base-three;
+			margin: 0 $grid-base-three;
 		}
 
 		&:focus-visible {
-			outline: $focus-outline;
-			border-radius: 4px;
-			transition: all 0.6s ease;
+			outline: none;
+			box-shadow: 0 0 0 2px rgba(218, 82, 72, 0.45);
+			transition: box-shadow 0.2s ease;
 		}
 
 		&:hover,
@@ -113,6 +110,40 @@ $icon-size-small: 16px;
 				transition: all 0.3s ease;
 			}
 		}
+	}
+
+	&:not(.sessionsListItem--active) .sessionsListItem__content {
+		border-color: #f1d5d5;
+	}
+
+	&:not(.sessionsListItem--active)
+		+ &:not(.sessionsListItem--active)
+		.sessionsListItem__content {
+		border-top: 0;
+	}
+
+	&:first-child:not(.sessionsListItem--active) .sessionsListItem__content {
+		border-top-left-radius: 14px;
+		border-top-right-radius: 14px;
+	}
+
+	&:last-child:not(.sessionsListItem--active) .sessionsListItem__content {
+		border-bottom-left-radius: 14px;
+		border-bottom-right-radius: 14px;
+	}
+
+	// Keep rounded edges around the selected card gap.
+	&.sessionsListItem--beforeActive .sessionsListItem__content {
+		border-bottom-left-radius: 14px;
+		border-bottom-right-radius: 14px;
+		margin-bottom: 8px;
+	}
+
+	&.sessionsListItem--afterActive .sessionsListItem__content {
+		border-top-left-radius: 14px;
+		border-top-right-radius: 14px;
+		border-top: 1px solid #f1d5d5;
+		margin-top: 8px;
 	}
 
 	&__row {

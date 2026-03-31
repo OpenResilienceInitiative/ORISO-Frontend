@@ -1004,6 +1004,13 @@ export const SessionsList = ({
 		}
 	};
 	const finalSessionsList = (sessions || []).filter(filterSessions);
+	const sortedSessions = finalSessionsList
+		.map((session) => buildExtendedSession(session, groupIdFromParam))
+		.sort(sortSessions);
+	const isSessionListItemActive = (session: ExtendedSessionInterface) =>
+		(session?.rid && session.rid === groupIdFromParam) ||
+		(session?.item?.id !== undefined &&
+			String(session.item.id) === String(sessionIdFromParam || ''));
 
 	return (
 		<div className="sessionsList__innerWrapper">
@@ -1070,12 +1077,7 @@ export const SessionsList = ({
 				type === SESSION_LIST_TYPES.MY_SESSION && <SessionListCreateChat />}
 
 				{(!isLoading || finalSessionsList.length > 0) &&
-					finalSessionsList
-						.map((session) =>
-							buildExtendedSession(session, groupIdFromParam)
-						)
-						.sort(sortSessions)
-						.map((activeSession: ExtendedSessionInterface, index) => (
+					sortedSessions.map((activeSession: ExtendedSessionInterface, index) => (
 							<ActiveSessionProvider
 								key={activeSession.item.id}
 								activeSession={activeSession}
@@ -1087,6 +1089,14 @@ export const SessionsList = ({
 										handleKeyDownLisItemContent(e, index)
 									}
 									index={index}
+									isBeforeActive={
+										!!sortedSessions[index + 1] &&
+										isSessionListItemActive(sortedSessions[index + 1])
+									}
+									isAfterActive={
+										!!sortedSessions[index - 1] &&
+										isSessionListItemActive(sortedSessions[index - 1])
+									}
 								/>
 							</ActiveSessionProvider>
 						))}

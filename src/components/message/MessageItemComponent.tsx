@@ -316,14 +316,27 @@ export const MessageItemComponent = ({
 					return `<span class="messageItem__highlight" data-color="${color}">${inner}</span>`;
 				}
 			);
+		const renderAlignmentTokens = (content: string) =>
+			content.replace(
+				/\[\[align:(left|center|right)\]\]([\s\S]*?)\[\[\/align\]\]/gi,
+				(_match, alignRaw: string, inner: string) => {
+					const align = alignRaw.toLowerCase();
+					if (!['left', 'center', 'right'].includes(align)) {
+						return inner;
+					}
+					return `<div class="messageItem__align messageItem__align--${align}">${inner}</div>`;
+				}
+			);
 
 		const decodedMessage = decodeHtmlEntities(parsedMessage.cleanedMessage || '');
-		const preparedMessage = renderHighlightTokens(
-			renderImageMarkers(
-				normalizeMarkTagsToHighlightTokens(decodedMessage)
+		const preparedMessage = renderAlignmentTokens(
+			renderHighlightTokens(
+				renderImageMarkers(
+					normalizeMarkTagsToHighlightTokens(decodedMessage)
+				)
 			)
 		);
-		const hasRichHtml = /<(p|strong|em|u|mark|span|blockquote|ul|ol|li|a|br|img)\b/i.test(
+		const hasRichHtml = /<(p|h[1-6]|strong|em|u|mark|span|blockquote|ul|ol|li|a|br|img|sup|sub|code|pre)\b/i.test(
 			preparedMessage
 		);
 		if (hasRichHtml) {
