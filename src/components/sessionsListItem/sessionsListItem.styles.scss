@@ -1,5 +1,8 @@
 $icon-size: 24px;
 $icon-size-small: 16px;
+$session-light-border: #f1d5d5;
+$session-active-border: #b9362d;
+$session-focus-ring: rgba(185, 54, 45, 0.35);
 
 .sessionsListItem {
 	display: flex;
@@ -36,8 +39,8 @@ $icon-size-small: 16px;
 
 		.sessionsListItem__content {
 			background-color: #fff5f5 !important;
-			border: 2px solid #da5248 !important;
-			border-radius: 24px !important;
+			border: 2px solid $session-active-border !important;
+			border-radius: 18px !important;
 			margin-top: 8px !important;
 			margin-bottom: 8px !important;
 			transition: all 0.3s ease;
@@ -46,7 +49,7 @@ $icon-size-small: 16px;
 			&:focus,
 			&:active {
 				background-color: #fff5f5 !important;
-				border: 2px solid #da5248 !important;
+				border: 2px solid $session-active-border !important;
 			}
 		}
 
@@ -78,7 +81,7 @@ $icon-size-small: 16px;
 		padding-top: 12px;
 		margin: 0 $grid-base-two;
 		background-color: $white;
-		border: 1px solid #ffcccc;
+		border: 1px solid $session-light-border;
 		border-radius: 0;
 		transition: all 0.6s ease;
 		position: relative;
@@ -96,14 +99,18 @@ $icon-size-small: 16px;
 			margin: 0 $grid-base-three;
 		}
 
+		&:focus {
+			outline: none;
+		}
+
+		// Show a single keyboard-navigation ring for the focused item.
 		&:focus-visible {
 			outline: none;
-			box-shadow: 0 0 0 2px rgba(218, 82, 72, 0.45);
+			box-shadow: 0 0 0 3px $session-focus-ring;
 			transition: box-shadow 0.2s ease;
 		}
 
 		&:hover,
-		&:focus,
 		&:active {
 			@include breakpoint($fromLarge) {
 				background-color: $session-list-item-background-active;
@@ -113,7 +120,7 @@ $icon-size-small: 16px;
 	}
 
 	&:not(.sessionsListItem--active) .sessionsListItem__content {
-		border-color: #f1d5d5;
+		border-color: $session-light-border;
 	}
 
 	&:not(.sessionsListItem--active)
@@ -142,8 +149,12 @@ $icon-size-small: 16px;
 	&.sessionsListItem--afterActive .sessionsListItem__content {
 		border-top-left-radius: 14px;
 		border-top-right-radius: 14px;
-		border-top: 1px solid #f1d5d5;
+		border-top: 1px solid $session-light-border;
 		margin-top: 8px;
+	}
+
+	&.sessionsListItem--active .sessionsListItem__content:focus-visible {
+		box-shadow: 0 0 0 3px $session-focus-ring, 0 0 0 1px $session-active-border;
 	}
 
 	&__row {

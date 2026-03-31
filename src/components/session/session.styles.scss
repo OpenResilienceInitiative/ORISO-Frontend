@@ -18,6 +18,14 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	min-width: 0;
 	background-color: #ffffff;
 	overflow: hidden;
+
+	@include breakpoint($fromLarge) {
+		// Match Figma: red rounded outline around the full chat side panel.
+		margin: 15px 15px 15px 5px;
+		border: 2px solid #D32F2F;
+		border-radius: 32px;
+		box-sizing: border-box;
+	}
 	
 	.messageSubmit__wrapper {
 		position: absolute;
@@ -1918,4 +1926,53 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	.session__threadClose {
 		display: none;
 	}
+}
+
+/* Target the specific scrollable containers (like your list and chat detail) */
+.contentWrapper__list, 
+.contentWrapper__detail,
+.session__wrapper {
+  /* Firefox support */
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 0.3s ease;
+}
+
+/* Show scrollbar on hover for Firefox */
+.contentWrapper__list:hover, 
+.contentWrapper__detail:hover {
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+/* Webkit (Chrome, Safari, Edge) */
+/* 1. The background of the scrollbar */
+.contentWrapper__list::-webkit-scrollbar,
+.contentWrapper__detail::-webkit-scrollbar {
+  width: 5px; /* Very thin */
+}
+
+/* 2. The track (background) - keep it transparent */
+.contentWrapper__list::-webkit-scrollbar-track,
+.contentWrapper__detail::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* 3. The draggable handle (thumb) */
+.contentWrapper__list::-webkit-scrollbar-thumb,
+.contentWrapper__detail::-webkit-scrollbar-thumb {
+  background-color: transparent; /* Invisible by default */
+  border-radius: 10px;
+  border: 1px solid transparent; /* Creates padding effect */
+}
+
+/* 4. Reveal handle on hover of the CONTAINER */
+.contentWrapper__list:hover::-webkit-scrollbar-thumb,
+.contentWrapper__detail:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.15); /* Soft grey when hovering */
+}
+
+/* 5. Make it slightly darker when actually grabbing the scrollbar */
+.contentWrapper__list::-webkit-scrollbar-thumb:hover,
+.contentWrapper__detail::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.3) !important;
 }
