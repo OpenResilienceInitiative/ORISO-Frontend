@@ -287,6 +287,25 @@ $iconSize: 24px;
 		display: flex;
 		align-items: center;
 		gap: 16px;
+
+		.button__item.button__smallIcon {
+			min-width: 32px;
+			width: 32px;
+			height: 32px;
+			padding: 0;
+			border: none;
+			background: transparent;
+			border-radius: 12px;
+		}
+
+		.button__item.button__smallIcon svg {
+			width: 32px;
+			height: 32px;
+		}
+
+		.button__item.button__smallIcon:hover {
+			background: transparent;
+		}
 	}
 
 	&__metaInfo {

@@ -2254,6 +2254,25 @@
 			},
 			"headline": "Meine Beratungen"
 		},
+		"toolbar": {
+			"search": {
+				"label": "Beratungen durchsuchen",
+				"placeholder": "Suche"
+			},
+			"menu": {
+				"ariaLabel": "Listenoptionen"
+			},
+			"calendar": {
+				"title": "Kalender"
+			},
+			"chips": {
+				"neu": "Neu",
+				"oneToOne": "1-1 Beratung",
+				"liveChat": "Live-Chat",
+				"groups": "Gruppen"
+			},
+			"emptyFilterResult": "Keine Beratung entspricht Ihrer Suche oder den Filtern."
+		},
 		"anonymous": {
 			"tag": "Anonymous"
 		}

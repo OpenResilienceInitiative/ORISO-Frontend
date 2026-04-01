@@ -193,7 +193,7 @@ $message-attachment-color: $secondary !default;
 				var(--skin-color-secondary-contrast-safe, $text-divider-color);
 			width: $grid-base-three;
 			vertical-align: middle;
-			margin: 0 $grid-base;
+			margin: 0 0;
 			flex-grow: 1;
 		}
 

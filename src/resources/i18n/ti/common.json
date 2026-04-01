@@ -2172,6 +2172,25 @@
       },
       "headline": "ምኽርታተይ"
     },
+    "toolbar": {
+      "search": {
+        "label": "ምኽርታት ደሊ",
+        "placeholder": "ደሊ"
+      },
+      "menu": {
+        "ariaLabel": "ዝርዝር ኣማራጺታት"
+      },
+      "calendar": {
+        "title": "ካላንዳር"
+      },
+      "chips": {
+        "neu": "ሓድሽ",
+        "oneToOne": "1-1 ምኽሪ",
+        "liveChat": "ቀጥታዊ ዝርርብ",
+        "groups": "ጉጅለታት"
+      },
+      "emptyFilterResult": "ናብ ምድላይ ወይ ፊልተራትካ ዝሰማማዕ ምኽሪ የለን።"
+    },
     "anonymous": {
       "tag": "ስውር"
     }

@@ -19,7 +19,6 @@ import {
 import { isMobile } from 'react-device-detect';
 import { mobileListView } from '../../app/navigationHandler';
 import { BackIcon, GroupChatInfoIcon } from '../../../resources/img/icons';
-import { SessionMenu } from '../../sessionMenu/SessionMenu';
 import { useTranslation } from 'react-i18next';
 import { getGroupChatDate } from '../../session/sessionDateHelpers';
 import { getValueFromCookie } from '../../sessionCookie/accessSessionCookie';
@@ -440,15 +439,7 @@ export const GroupChatHeader = ({
 						</div>
 					)}
 
-				{/* MATRIX MIGRATION: Temporarily hide session menu for group chats */}
-				{false && <SessionMenu
-					hasUserInitiatedStopOrLeaveRequest={
-						hasUserInitiatedStopOrLeaveRequest
-					}
-					isAskerInfoAvailable={isAskerInfoAvailable()}
-					isJoinGroupChatView={isJoinGroupChatView}
-					bannedUsers={bannedUsers}
-				/>}
+				{/* Group header uses only inline call controls; hide flyout 3-dot menu here. */}
 		</div>
 		{/* <div className="sessionInfo__metaInfo">
 			{activeSession.item.active &&

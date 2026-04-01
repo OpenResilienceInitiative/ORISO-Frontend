@@ -544,17 +544,26 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 							!isAskerInfoAvailable()
 					})}
 				>
-					{hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
-					!activeSession.consultant ? (
-						<ConsultantSearchLoader size="40px" />
-					) : (
-						<UserAvatar
-							username={contact?.username || 'User'}
-							displayName={contact?.displayName}
-							userId={contact?.username || 'unknown'}
-							size="40px"
-						/>
-					)}
+					<div className="sessionInfo__memberStack">
+						<div className="sessionInfo__memberStackPlus" aria-hidden="true">
+							<svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+								<path d="M15.167 16.8333H10.167V15.1666H15.167V10.1666H16.8337V15.1666H21.8337V16.8333H16.8337V21.8333H15.167V16.8333Z" fill="#CC1E1C" fillOpacity="0.6"/>
+							</svg>
+						</div>
+						<div className="sessionInfo__memberBubble">
+							{hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
+							!activeSession.consultant ? (
+								<ConsultantSearchLoader size="32px" />
+							) : (
+								<UserAvatar
+									username={contact?.username || 'User'}
+									displayName={contact?.displayName}
+									userId={contact?.username || 'unknown'}
+									size="32px"
+								/>
+							)}
+						</div>
+					</div>
 					{hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) && (
 						<h3>
 							{contact?.displayName ||

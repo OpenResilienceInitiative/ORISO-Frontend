@@ -2172,6 +2172,25 @@
       },
       "headline": "Mes consultations"
     },
+    "toolbar": {
+      "search": {
+        "label": "Rechercher dans les consultations",
+        "placeholder": "Recherche"
+      },
+      "menu": {
+        "ariaLabel": "Options de liste"
+      },
+      "calendar": {
+        "title": "Calendrier"
+      },
+      "chips": {
+        "neu": "Nouveau",
+        "oneToOne": "Conseil 1-1",
+        "liveChat": "Chat en direct",
+        "groups": "Groupes"
+      },
+      "emptyFilterResult": "Aucune consultation ne correspond à votre recherche ou aux filtres."
+    },
     "anonymous": {
       "tag": "Anonyme"
     }

@@ -2172,6 +2172,25 @@
       },
       "headline": "İstişarelerim"
     },
+    "toolbar": {
+      "search": {
+        "label": "İstişareleri ara",
+        "placeholder": "Ara"
+      },
+      "menu": {
+        "ariaLabel": "Liste seçenekleri"
+      },
+      "calendar": {
+        "title": "Takvim"
+      },
+      "chips": {
+        "neu": "Yeni",
+        "oneToOne": "Bire bir danışmanlık",
+        "liveChat": "Canlı sohbet",
+        "groups": "Gruplar"
+      },
+      "emptyFilterResult": "Aramanız veya filtrelerinize uyan istişare yok."
+    },
     "anonymous": {
       "tag": "Anonim"
     }

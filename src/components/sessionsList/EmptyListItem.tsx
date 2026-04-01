@@ -11,12 +11,20 @@ import {
 interface EmptyListItemProps {
 	type: SESSION_LIST_TYPES;
 	sessionListTab: string;
+	headlineOverride?: string;
 }
 
-export const EmptyListItem = ({ type, sessionListTab }: EmptyListItemProps) => {
+export const EmptyListItem = ({
+	type,
+	sessionListTab,
+	headlineOverride
+}: EmptyListItemProps) => {
 	const { t } = useTranslation();
 
 	const emptyTitle = useMemo(() => {
+		if (headlineOverride) {
+			return headlineOverride;
+		}
 		if (sessionListTab === SESSION_LIST_TAB_ARCHIVE) {
 			return t('sessionList.empty.archived');
 		}
@@ -28,7 +36,7 @@ export const EmptyListItem = ({ type, sessionListTab }: EmptyListItemProps) => {
 			default:
 				return t('sessionList.empty.mySessions');
 		}
-	}, [sessionListTab, type, t]);
+	}, [headlineOverride, sessionListTab, type, t]);
 	return (
 		<ListInfo headline={emptyTitle} Illustration={NoMessagesIllustration} />
 	);

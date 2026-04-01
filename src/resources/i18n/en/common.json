@@ -2193,6 +2193,25 @@
 			},
 			"headline": "My consultations"
 		},
+		"toolbar": {
+			"search": {
+				"label": "Search consultations",
+				"placeholder": "Search"
+			},
+			"menu": {
+				"ariaLabel": "List options"
+			},
+			"calendar": {
+				"title": "Calendar"
+			},
+			"chips": {
+				"neu": "New",
+				"oneToOne": "1-1 counseling",
+				"liveChat": "Live chat",
+				"groups": "Groups"
+			},
+			"emptyFilterResult": "No consultations match your search or filters."
+		},
 		"anonymous": {
 			"tag": "Anonymous"
 		}

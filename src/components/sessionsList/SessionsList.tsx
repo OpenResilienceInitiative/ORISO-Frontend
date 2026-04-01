@@ -7,8 +7,9 @@ import {
 	useRef,
 	useState
 } from 'react';
-import { Link, useHistory, useLocation, useParams } from 'react-router-dom';
+import { useHistory, useLocation, useParams } from 'react-router-dom';
 import {
+	getChatItemForSession,
 	getSessionType,
 	SESSION_LIST_TAB,
 	SESSION_LIST_TAB_ARCHIVE,
@@ -31,7 +32,11 @@ import {
 	UserDataContext,
 	ActiveSessionProvider
 } from '../../globalState';
-import { ListItemInterface, STATUS_EMPTY } from '../../globalState/interfaces';
+import {
+	ListItemInterface,
+	STATUS_EMPTY,
+	TopicSessionInterface
+} from '../../globalState/interfaces';
 import { SessionListItemComponent } from '../sessionsListItem/SessionListItemComponent';
 import { SessionsListSkeleton } from '../sessionsListItem/SessionsListItemSkeleton';
 import {
@@ -46,7 +51,6 @@ import './sessionsList.styles';
 import {
 	SCROLL_PAGINATE_THRESHOLD
 } from './sessionsListConfig';
-import { Text } from '../text/Text';
 import clsx from 'clsx';
 import useUpdatingRef from '../../hooks/useUpdatingRef';
 import useDebounceCallback from '../../hooks/useDebounceCallback';
@@ -65,6 +69,86 @@ import { RocketChatUsersOfRoomProvider } from '../../globalState/provider/Rocket
 import { EmptyListItem } from './EmptyListItem';
 import { matrixLiveEventBridge } from '../../services/matrixLiveEventBridge';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
+import {
+	buildArchiveTabPath,
+	buildCreateGroupChatPath,
+	SessionToolbarChipFilter,
+	SessionsListToolbar
+} from './SessionsListToolbar';
+
+function buildSessionSearchHaystack(
+	raw: ListItemInterface,
+	extended: ExtendedSessionInterface
+): string {
+	const parts: string[] = [];
+	const item = extended.item;
+	if (item?.topic) {
+		parts.push(
+			typeof item.topic === 'string'
+				? item.topic
+				: (item.topic as TopicSessionInterface).name || ''
+		);
+	}
+	if (item) {
+		if ('lastMessage' in item && item.lastMessage) {
+			parts.push(String(item.lastMessage));
+		}
+		if ('e2eLastMessage' in item && item.e2eLastMessage?.msg) {
+			parts.push(String(item.e2eLastMessage.msg));
+		}
+		if ('hintMessage' in item && item.hintMessage) {
+			parts.push(String(item.hintMessage));
+		}
+	}
+	if (raw.latestMessage) {
+		parts.push(String(raw.latestMessage));
+	}
+	if (raw.user?.username) {
+		parts.push(raw.user.username);
+	}
+	if (raw.consultant?.displayName) {
+		parts.push(raw.consultant.displayName);
+	}
+	if (raw.consultant?.username) {
+		parts.push(raw.consultant.username);
+	}
+	if (raw.agency?.name) {
+		parts.push(raw.agency.name);
+	}
+	return parts.filter(Boolean).join(' ');
+}
+
+function sessionMatchesToolbar(
+	raw: ListItemInterface,
+	extended: ExtendedSessionInterface,
+	query: string,
+	chip: SessionToolbarChipFilter | null
+): boolean {
+	const chatItem = getChatItemForSession(raw);
+	if (chip === 'neu') {
+		if (!chatItem || chatItem.messagesRead !== false) {
+			return false;
+		}
+	} else if (chip === 'oneToOne') {
+		if (extended.isGroup) {
+			return false;
+		}
+	} else if (chip === 'liveChat') {
+		if (!extended.isGroup || !raw.chat?.repetitive) {
+			return false;
+		}
+	} else if (chip === 'groups') {
+		if (!extended.isGroup) {
+			return false;
+		}
+	}
+
+	const q = query.trim().toLowerCase();
+	if (!q) {
+		return true;
+	}
+	return buildSessionSearchHaystack(raw, extended).toLowerCase().includes(q);
+}
 
 interface SessionsListProps {
 	defaultLanguage: string;
@@ -107,6 +191,9 @@ export const SessionsList = ({
 	const [isReloadButtonVisible, setIsReloadButtonVisible] = useState(false);
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
 	const abortController = useRef<AbortController>(null);
+	const [sessionToolbarSearch, setSessionToolbarSearch] = useState('');
+	const [sessionToolbarChip, setSessionToolbarChip] =
+		useState<SessionToolbarChipFilter | null>(null);
 
 	useGroupWatcher(isLoading);
 
@@ -800,9 +887,18 @@ export const SessionsList = ({
 		loadMoreSessions();
 	}, [loadMoreSessions]);
 
-	const showSessionListTabs =
+	const showConsultantToolbarActions =
 		type === SESSION_LIST_TYPES.MY_SESSION &&
 		!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
+
+	const showMySessionToolbar = type === SESSION_LIST_TYPES.MY_SESSION;
+
+	const handleToolbarChipToggle = useCallback(
+		(chip: SessionToolbarChipFilter) => {
+			setSessionToolbarChip((prev) => (prev === chip ? null : chip));
+		},
+		[]
+	);
 
 	const normalizeTimestamp = useCallback((value?: string | number): number => {
 		if (value === null || value === undefined || value === '') {
@@ -931,35 +1027,7 @@ export const SessionsList = ({
 		[type, userData]
 	);
 
-	const ref_tab_first = useRef<any>(null);
-	const ref_tab_second = useRef<any>(null);
 	const ref_list_array = useRef<any>([]);
-
-	const handleKeyDownTabs = (e) => {
-		switch (e.key) {
-			case 'Enter':
-			case ' ':
-				if (document.activeElement === ref_tab_first.current) {
-					ref_tab_first.current.click();
-				}
-				if (document.activeElement === ref_tab_second.current) {
-					ref_tab_second.current.click();
-				}
-				break;
-			case 'ArrowRight':
-			case 'ArrowLeft':
-				if (document.activeElement === ref_tab_first.current) {
-					ref_tab_second.current.focus();
-					ref_tab_first.current.setAttribute('tabindex', '-1');
-					ref_tab_second.current.setAttribute('tabindex', '0');
-				} else if (document.activeElement === ref_tab_second.current) {
-					ref_tab_first.current.focus();
-					ref_tab_first.current.setAttribute('tabindex', '0');
-					ref_tab_second.current.setAttribute('tabindex', '-1');
-				}
-				break;
-		}
-	};
 
 	const handleKeyDownLisItemContent = (e, index) => {
 		if (sessions.length > 1) {
@@ -1004,9 +1072,26 @@ export const SessionsList = ({
 		}
 	};
 	const finalSessionsList = (sessions || []).filter(filterSessions);
-	const sortedSessions = finalSessionsList
-		.map((session) => buildExtendedSession(session, groupIdFromParam))
+	const sessionToolbarPairs = finalSessionsList.map((raw) => ({
+		raw,
+		extended: buildExtendedSession(raw, groupIdFromParam)
+	}));
+	const sessionToolbarFilteredPairs = sessionToolbarPairs.filter(
+		({ raw, extended }) =>
+			sessionMatchesToolbar(
+				raw,
+				extended,
+				sessionToolbarSearch,
+				sessionToolbarChip
+			)
+	);
+	const sortedSessions = sessionToolbarFilteredPairs
+		.map(({ extended }) => extended)
 		.sort(sortSessions);
+	const toolbarFilteredOutAll =
+		showMySessionToolbar &&
+		finalSessionsList.length > 0 &&
+		sortedSessions.length === 0;
 	const isSessionListItemActive = (session: ExtendedSessionInterface) =>
 		(session?.rid && session.rid === groupIdFromParam) ||
 		(session?.item?.id !== undefined &&
@@ -1014,60 +1099,24 @@ export const SessionsList = ({
 
 	return (
 		<div className="sessionsList__innerWrapper">
-			{showSessionListTabs && (
-				<div className="sessionsList__functionalityWrapper">
-					{showSessionListTabs && (
-						<div className="sessionsList__tabs" role="tablist">
-							<Link
-								className={clsx({
-									'sessionsList__tabs--active':
-										!sessionListTab
-								})}
-								to={`/sessions/consultant/sessionView`}
-								onKeyDown={(e) => handleKeyDownTabs(e)}
-								ref={(el) => {
-									ref_tab_first.current = el;
-								}}
-								tabIndex={0}
-								role="tab"
-							>
-								<Text
-									text={translate(
-										'sessionList.view.asker.tab'
-									)}
-									type="standard"
-								/>
-							</Link>
-							<Link
-								className={clsx({
-									'sessionsList__tabs--active':
-										sessionListTab ===
-										SESSION_LIST_TAB_ARCHIVE
-								})}
-								to={`/sessions/consultant/sessionView?sessionListTab=${SESSION_LIST_TAB_ARCHIVE}`}
-								onKeyDown={(e) => handleKeyDownTabs(e)}
-								ref={(el) => {
-									ref_tab_second.current = el;
-								}}
-								tabIndex={-1}
-								role="tab"
-							>
-								<Text
-									className={clsx('walkthrough_step_4')}
-									text={translate(
-										'sessionList.view.archive.tab'
-									)}
-									type="standard"
-								/>
-							</Link>
-						</div>
+			{showMySessionToolbar && (
+				<SessionsListToolbar
+					translate={translate}
+					searchValue={sessionToolbarSearch}
+					onSearchChange={setSessionToolbarSearch}
+					activeChip={sessionToolbarChip}
+					onChipToggle={handleToolbarChipToggle}
+					showConsultantActions={showConsultantToolbarActions}
+					createGroupChatPath={buildCreateGroupChatPath(
+						sessionListTab || undefined
 					)}
-				</div>
+					archiveTabPath={buildArchiveTabPath()}
+				/>
 			)}
 			<div
 				className={clsx('sessionsList__scrollContainer', {
-					'sessionsList__scrollContainer--hasTabs':
-						showSessionListTabs
+					'sessionsList__scrollContainer--hasToolbar':
+						showMySessionToolbar
 				})}
 				ref={listRef}
 				onScroll={handleListScroll}
@@ -1121,8 +1170,16 @@ export const SessionsList = ({
 			{!isLoading &&
 				!isCreateChatActive &&
 				!isReloadButtonVisible &&
-				finalSessionsList.length === 0 && (
-					<EmptyListItem sessionListTab={sessionListTab} type={type} />
+				sortedSessions.length === 0 && (
+					<EmptyListItem
+						headlineOverride={
+							toolbarFilteredOutAll
+								? translate('sessionList.toolbar.emptyFilterResult')
+								: undefined
+						}
+						sessionListTab={sessionListTab}
+						type={type}
+					/>
 				)}
 		</div>
 	);
