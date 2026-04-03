@@ -5,6 +5,9 @@ import i18n from 'i18next';
 import { ThemeProvider } from '@mui/material';
 import { Preview } from '@storybook/react';
 import * as React from 'react';
+import { useEffect } from 'react';
+import { useGlobals } from '@storybook/preview-api';
+import { I18nextProvider } from 'react-i18next';
 import { themes } from '@storybook/theming';
 import theme from '../src/resources/scripts/theme';
 import { config } from '../src/resources/scripts/config';
@@ -29,139 +32,169 @@ import { RocketChatSubscriptionsContext } from '../src/globalState/provider/Rock
 import { RocketChatUsersOfRoomContext } from '../src/globalState/provider/RocketChatUsersOfRoomProvider';
 import { RocketChatContext } from '../src/globalState/provider/RocketChatProvider';
 
-export const withMuiTheme = (Story) => (
-	<Router>
-		<Suspense fallback={<Loading />}>
-			<AppConfigContext.Provider value={config}>
-				<LocaleContext.Provider
+function MuiStoryShell({ Story }: { Story: React.ComponentType }) {
+	return (
+		<AppConfigContext.Provider value={config}>
+			<LocaleContext.Provider
+				value={{
+					locale: 'de',
+					selectableLocales: ['de', 'en'],
+					setLocale: () => {},
+					initLocale: 'de'
+				}}
+			>
+				<TenantContext.Provider
 					value={{
-						locale: 'de',
-						selectableLocales: ['de', 'en'],
-						setLocale: () => {},
-						initLocale: 'de'
+						tenant: null,
+						setTenant: () => {}
 					}}
 				>
-					<TenantContext.Provider
+					<UserDataContext.Provider
 						value={{
-							tenant: null,
-							setTenant: () => {}
+							userData: null,
+							reloadUserData: async () => null as any,
+							loaded: true
 						}}
 					>
-						<UserDataContext.Provider
+						<UrlParamsContext.Provider
 							value={{
-								userData: null,
-								reloadUserData: async () => null as any,
-								loaded: true
+								agency: null,
+								consultingType: null,
+								consultant: null,
+								topic: null,
+								loaded: true,
+								slugFallback: '',
+								zipcode: ''
 							}}
 						>
-							<UrlParamsContext.Provider
+							<RocketChatContext.Provider
 								value={{
-									agency: null,
-									consultingType: null,
-									consultant: null,
-									topic: null,
-									loaded: true,
-									slugFallback: '',
-									zipcode: ''
+									ready: true,
+									send: () => {},
+									subscribe: () => {},
+									unsubscribe: () => {},
+									listen: () => {},
+									sendMethod: async () => ({}),
+									close: () => {},
+									rcWebsocket: null
 								}}
 							>
-								<RocketChatContext.Provider
+								<RocketChatSubscriptionsContext.Provider
 									value={{
-										ready: true,
-										send: () => {},
-										subscribe: () => {},
-										unsubscribe: () => {},
-										listen: () => {},
-										sendMethod: async () => ({}),
-										close: () => {},
-										rcWebsocket: null
+										subscriptionsReady: true,
+										subscriptions: [],
+										roomsReady: true,
+										rooms: []
 									}}
 								>
-									<RocketChatSubscriptionsContext.Provider
+									<RocketChatUsersOfRoomContext.Provider
 										value={{
-											subscriptionsReady: true,
-											subscriptions: [],
-											roomsReady: true,
-											rooms: []
+											ready: true,
+											users: [],
+											moderators: [],
+											total: 0,
+											reload: async () => []
 										}}
 									>
-										<RocketChatUsersOfRoomContext.Provider
+										<RocketChatPublicSettingsContext.Provider
 											value={{
-												ready: true,
-												users: [],
-												moderators: [],
-												total: 0,
-												reload: async () => []
+												settingsReady: true,
+												getSetting: () => ({
+													value: false
+												})
 											}}
 										>
-											<RocketChatPublicSettingsContext.Provider
+											<E2EEContext.Provider
 												value={{
-													settingsReady: true,
-													getSetting: () => ({ value: false })
+													key: '',
+													reloadPrivateKey: () => {},
+													isE2eeEnabled: false,
+													e2EEReady: true
 												}}
 											>
-												<E2EEContext.Provider
+												<NotificationsContext.Provider
 													value={{
-														key: '',
-														reloadPrivateKey: () => {},
-														isE2eeEnabled: false,
-														e2EEReady: true
+														notifications: [],
+														setNotifications:
+															() => {},
+														hasNotification: () =>
+															false,
+														addNotification:
+															() => {},
+														removeNotification:
+															() => {}
 													}}
 												>
-													<NotificationsContext.Provider
+													<RegistrationContext.Provider
 														value={{
-															notifications: [],
-															setNotifications: () => {},
-															hasNotification: () => false,
-															addNotification: () => {},
-															removeNotification: () => {}
+															setDisabledNextButton:
+																() => null,
+															registrationData: {
+																agency: null,
+																agencyId: null,
+																username: null,
+																password: null,
+																zipcode: null,
+																mainTopic: {
+																	id: 1,
+																	name: 'Topic',
+																	slug: 'topic1',
+																	description:
+																		'',
+																	internalIdentifier:
+																		'topic1',
+																	status: '',
+																	createDate:
+																		'',
+																	updateDate:
+																		''
+																},
+																mainTopicId: 1
+															}
 														}}
 													>
-														<RegistrationContext.Provider
-															value={{
-																setDisabledNextButton: () => null,
-																registrationData: {
-																	agency: null,
-																	agencyId: null,
-																	username: null,
-																	password: null,
-																	zipcode: null,
-																	mainTopic: {
-																		id: 1,
-																		name: 'Topic',
-																		slug: 'topic1',
-																		description: '',
-																		internalIdentifier: 'topic1',
-																		status: '',
-																		createDate: '',
-																		updateDate: ''
-																	},
-																	mainTopicId: 1
-																}
-															}}
+														<ThemeProvider
+															theme={theme}
 														>
-															<ThemeProvider theme={theme}>
-																<LegalLinksProvider legalLinks={[]}>
-																	<Story />
-																</LegalLinksProvider>
-															</ThemeProvider>
-														</RegistrationContext.Provider>
-													</NotificationsContext.Provider>
-												</E2EEContext.Provider>
-											</RocketChatPublicSettingsContext.Provider>
-										</RocketChatUsersOfRoomContext.Provider>
-									</RocketChatSubscriptionsContext.Provider>
-								</RocketChatContext.Provider>
-							</UrlParamsContext.Provider>
-						</UserDataContext.Provider>
-					</TenantContext.Provider>
-				</LocaleContext.Provider>
-			</AppConfigContext.Provider>
-		</Suspense>
-	</Router>
-);
+															<LegalLinksProvider
+																legalLinks={[]}
+															>
+																<Story />
+															</LegalLinksProvider>
+														</ThemeProvider>
+													</RegistrationContext.Provider>
+												</NotificationsContext.Provider>
+											</E2EEContext.Provider>
+										</RocketChatPublicSettingsContext.Provider>
+									</RocketChatUsersOfRoomContext.Provider>
+								</RocketChatSubscriptionsContext.Provider>
+							</RocketChatContext.Provider>
+						</UrlParamsContext.Provider>
+					</UserDataContext.Provider>
+				</TenantContext.Provider>
+			</LocaleContext.Provider>
+		</AppConfigContext.Provider>
+	);
+}
 
-export const decorators = [withMuiTheme];
+export const withMuiTheme = (Story: React.ComponentType) => {
+	const [{ locale }] = useGlobals();
+	useEffect(() => {
+		if (locale && typeof locale === 'string') {
+			void i18n.changeLanguage(locale);
+		}
+	}, [locale]);
+	return (
+		<Router>
+			<Suspense fallback={<Loading />}>
+				<I18nextProvider i18n={i18n}>
+					<MuiStoryShell Story={Story} />
+				</I18nextProvider>
+			</Suspense>
+		</Router>
+	);
+};
+
 init(config.i18n, null);
 
 const preview: Preview = {

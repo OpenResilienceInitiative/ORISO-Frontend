@@ -8,6 +8,13 @@ import {
 	useState
 } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useAppConfig } from '../../hooks/useAppConfig';
+import { hasVideoCallFeature } from '../../utils/videoCallHelpers';
+import {
+	NavLiveChatIcon,
+	NavGlobeIcon,
+	NavLogoutIcon
+} from './navigationSidebarIcons';
 import {
 	UserDataContext,
 	hasUserAuthority,
@@ -49,7 +56,10 @@ export const NavigationBar = ({
 	const { userData } = useContext(UserDataContext);
 	const { consultingTypes } = useContext(ConsultingTypesContext);
 	const { sessions, dispatch } = useContext(SessionsDataContext);
-	const { selectableLocales } = useContext(LocaleContext);
+	const { selectableLocales, locale: activeLocale } =
+		useContext(LocaleContext);
+	const settings = useAppConfig();
+	const { fromL } = useResponsive();
 	const [hasTools, setHasTools] = useState<boolean>(false);
 
 	const isConsultant = hasUserAuthority(
@@ -67,12 +77,24 @@ export const NavigationBar = ({
 	const ref_local = useRef<any>(null);
 	const ref_logout = useRef<any>(null);
 	const ref_select = useRef<any>(null);
+	const ref_live_chat = useRef<any>(null);
 
 	const handleLogout = useCallback(() => {
 		onLogout();
 	}, [onLogout]);
 
 	const location = useLocation();
+
+	const figmaConsultantNav = isConsultant && fromL;
+	const videoConferencePath = settings?.urls?.consultantVideoConference;
+	const showLiveChatNav =
+		figmaConsultantNav &&
+		videoConferencePath &&
+		hasVideoCallFeature(userData, consultingTypes);
+	const isVideoConferenceActive =
+		showLiveChatNav &&
+		(location.pathname === videoConferencePath ||
+			location.pathname.startsWith(`${videoConferencePath}/`));
 	const [animateNavIcon, setAnimateNavIcon] = useState(false);
 
 	useEffect(() => {
@@ -150,7 +172,8 @@ export const NavigationBar = ({
 		'/sessions/consultant/sessionView':
 			unreadSessions.length + unreadGroup.length,
 		'/sessions/user/view': unreadSessions.length + unreadGroup.length,
-		'/profile': isFirstVisit && !browserNotificationsSettings().visited ? 1 : 0,
+		'/profile':
+			isFirstVisit && !browserNotificationsSettings().visited ? 1 : 0,
 		'/notifications': unreadNotificationCount,
 		'/drafts': draftCount
 	};
@@ -250,7 +273,12 @@ export const NavigationBar = ({
 	};
 
 	return (
-		<div className="navigation__wrapper">
+		<div
+			className={clsx(
+				'navigation__wrapper',
+				figmaConsultantNav && 'navigation__wrapper--figma-consultant'
+			)}
+		>
 			<div className="navigation__itemContainer" role="tablist">
 				<NavGroup className="navigation__item__top">
 					{sessions &&
@@ -268,26 +296,86 @@ export const NavigationBar = ({
 							.map((item, index) => {
 								const Icon = item?.icon;
 								const IconFilled = item?.iconFilled;
+								const dualIcon = Boolean(IconFilled);
+								const useFigmaSlot =
+									figmaConsultantNav && item.navSlot;
+								const isActive =
+									location.pathname.indexOf(item.to) !== -1;
 								const unreadCount = Number(
-									pathsToShowUnreadMessageNotification[item.to] || 0
+									pathsToShowUnreadMessageNotification[
+										item.to
+									] || 0
+								);
+								const showUnreadNav =
+									Object.keys(
+										pathsToShowUnreadMessageNotification
+									).includes(item.to) && unreadCount > 0;
+								const label = translate(item.titleKeys.large);
+								const iconBlock = dualIcon ? (
+									<>
+										{Icon && (
+											<Icon
+												title={label}
+												aria-label={label}
+												className={clsx(
+													'navigation__icon__outline',
+													{
+														'navigation__icon--drafts':
+															item.to ===
+																'/drafts' &&
+															!item.navSlot
+													}
+												)}
+											/>
+										)}
+										{IconFilled && (
+											<IconFilled
+												title={label}
+												aria-label={label}
+												className={clsx(
+													'navigation__icon__filled',
+													{
+														'navigation__icon--drafts':
+															item.to ===
+																'/drafts' &&
+															!item.navSlot
+													}
+												)}
+											/>
+										)}
+									</>
+								) : (
+									Icon && (
+										<Icon
+											title={label}
+											aria-label={label}
+											className={clsx(
+												'navigation__icon__single',
+												item.to === '/drafts' &&
+													useFigmaSlot &&
+													'navigation__icon__single--drafts-figma'
+											)}
+										/>
+									)
 								);
 								return (
 									<Link
 										key={index}
-										className={`navigation__item ${pathToClassNameInWalkThrough(
-											item.to
-										)} ${
-											location.pathname.indexOf(
+										className={clsx(
+											'navigation__item',
+											pathToClassNameInWalkThrough(
 												item.to
-											) !== -1 &&
-											'navigation__item--active'
-										} ${
+											),
+											isActive &&
+												'navigation__item--active',
 											animateNavIcon &&
-											Object.keys(
-												pathsToShowUnreadMessageNotification
-											).includes(item.to) &&
-											'navigation__item__count--active'
-										}`}
+												Object.keys(
+													pathsToShowUnreadMessageNotification
+												).includes(item.to) &&
+												'navigation__item__count--active',
+											useFigmaSlot &&
+												`navigation__item--nav-${item.navSlot}`
+										)}
 										to={item.to}
 										onKeyDown={(e) =>
 											handleKeyDownMenu(e, index)
@@ -298,55 +386,47 @@ export const NavigationBar = ({
 										tabIndex={index === 0 ? 0 : -1}
 										role="tab"
 									>
-										<div className="navigation__icon__background">
-											{Icon && (
-												<Icon
-													title={translate(
-														item.titleKeys.large
-													)}
-													aria-label={translate(
-														item.titleKeys.large
-													)}
-													className={clsx('navigation__icon__outline', {
-														'navigation__icon--drafts':
-															item.to === '/drafts'
-													})}
-												/>
+										{useFigmaSlot ? (
+											<div
+												className={clsx(
+													'navigation__icon-slot',
+													`navigation__icon-slot--${item.navSlot}`,
+													isActive &&
+														'navigation__icon-slot--active'
+												)}
+											>
+												<div className="navigation__icon-slot__inner">
+													{iconBlock}
+												</div>
+												{showUnreadNav && (
+													<NavigationUnreadIndicator
+														animate={animateNavIcon}
+														count={unreadCount}
+														variant="figma"
+													/>
+												)}
+											</div>
+										) : (
+											<div className="navigation__icon__background">
+												{iconBlock}
+											</div>
+										)}
+										<span
+											className={clsx(
+												'navigation__title',
+												figmaConsultantNav &&
+													'navigation__title--figma'
 											)}
-											{IconFilled && (
-												<IconFilled
-													title={translate(
-														item.titleKeys.large
-													)}
-													aria-label={translate(
-														item.titleKeys.large
-													)}
-													className={clsx('navigation__icon__filled', {
-														'navigation__icon--drafts':
-															item.to === '/drafts'
-													})}
-												/>
-											)}
-										</div>
-
-										{(({ large }) => {
-											return (
-												<>
-													<span className="navigation__title">
-														{translate(large)}
-													</span>
-												</>
-											);
-										})(item.titleKeys)}
-										{Object.keys(
-											pathsToShowUnreadMessageNotification
-										).includes(item.to) &&
-											unreadCount > 0 && (
-												<NavigationUnreadIndicator
-													animate={animateNavIcon}
-													count={unreadCount}
-												/>
-											)}
+										>
+											{label}
+										</span>
+										{!useFigmaSlot && showUnreadNav && (
+											<NavigationUnreadIndicator
+												animate={animateNavIcon}
+												count={unreadCount}
+												variant="default"
+											/>
+										)}
 									</Link>
 								);
 							})}
@@ -360,9 +440,54 @@ export const NavigationBar = ({
 							)
 					})}
 				>
+					{showLiveChatNav && (
+						<Link
+							className={clsx(
+								'navigation__item',
+								'navigation__item--nav-live',
+								isVideoConferenceActive &&
+									'navigation__item--active'
+							)}
+							to={videoConferencePath}
+							ref={ref_live_chat}
+							tabIndex={-1}
+							role="tab"
+						>
+							<div
+								className={clsx(
+									'navigation__icon-slot',
+									'navigation__icon-slot--live',
+									isVideoConferenceActive &&
+										'navigation__icon-slot--active'
+								)}
+							>
+								<div className="navigation__icon-slot__inner">
+									<NavLiveChatIcon
+										className="navigation__icon__single navigation__icon__single--on-dark"
+										aria-label={translate(
+											'navigation.liveChat'
+										)}
+									/>
+								</div>
+							</div>
+							<span
+								className={clsx(
+									'navigation__title',
+									'navigation__title--figma'
+								)}
+							>
+								{translate('navigation.liveChat')}
+							</span>
+						</Link>
+					)}
 					{selectableLocales.length > 1 && (
 						<div
-							className="navigation__item navigation__item__language"
+							className={clsx(
+								'navigation__item',
+								'navigation__item__language',
+								figmaConsultantNav &&
+									'navigation__item--nav-language'
+							)}
 							role="tab"
 							tabIndex={-1}
 							ref={(el) => {
@@ -371,22 +496,59 @@ export const NavigationBar = ({
 							onKeyDown={(e) => handleKeyDownMenu(e, null)}
 							id="local-switch-wrapper"
 						>
-							<LocaleSwitch
-								showIcon={true}
-								iconOnly={true}
-								updateUserData
-								vertical
-								iconSize={24}
-								label={translate('navigation.language')}
-								menuPlacement={MENUPLACEMENT_RIGHT}
-								selectRef={(el) => (ref_select.current = el)}
-								isInsideMenu={true}
-							/>
+							{figmaConsultantNav ? (
+								<div className="navigation__icon-slot navigation__icon-slot--row navigation__icon-slot--language">
+									<div className="navigation__icon-slot__inner">
+										<LocaleSwitch
+											showIcon={true}
+											iconOnly={true}
+											updateUserData
+											vertical
+											iconSize={24}
+											label={translate(
+												'navigation.language'
+											)}
+											menuPlacement={MENUPLACEMENT_RIGHT}
+											selectRef={(el) =>
+												(ref_select.current = el)
+											}
+											isInsideMenu={true}
+											leadingIconOverride={
+												<NavGlobeIcon className="navigation__globe-svg" />
+											}
+										/>
+									</div>
+								</div>
+							) : (
+								<LocaleSwitch
+									showIcon={true}
+									iconOnly={true}
+									updateUserData
+									vertical
+									iconSize={24}
+									label={translate('navigation.language')}
+									menuPlacement={MENUPLACEMENT_RIGHT}
+									selectRef={(el) =>
+										(ref_select.current = el)
+									}
+									isInsideMenu={true}
+								/>
+							)}
+							{figmaConsultantNav && (
+								<span className="navigation__title navigation__title--figma">
+									{translate([activeLocale, activeLocale], {
+										ns: 'languages'
+									})}
+								</span>
+							)}
 						</div>
 					)}
 					<div
 						onClick={handleLogout}
-						className={'navigation__item'}
+						className={clsx(
+							'navigation__item',
+							figmaConsultantNav && 'navigation__item--nav-logout'
+						)}
 						role="tab"
 						tabIndex={-1}
 						ref={(el) => {
@@ -394,19 +556,37 @@ export const NavigationBar = ({
 						}}
 						onKeyDown={(e) => handleKeyDownMenu(e, null)}
 					>
-						<LogoutIconOutline
-							className="navigation__icon__outline"
-							title={translate('app.logout')}
-							aria-label={translate('app.logout')}
-						/>
-						<LogoutIconFilled
-							className="navigation__icon__filled"
-							title={translate('app.logout')}
-							aria-label={translate('app.logout')}
-						/>
-						<span className="navigation__title">
-							{translate('app.logout')}
-						</span>
+						{figmaConsultantNav ? (
+							<>
+								<div className="navigation__icon-slot navigation__icon-slot--logout">
+									<div className="navigation__icon-slot__inner">
+										<NavLogoutIcon
+											className="navigation__icon__single"
+											aria-label={translate('app.logout')}
+										/>
+									</div>
+								</div>
+								<span className="navigation__title navigation__title--figma">
+									{translate('app.logout')}
+								</span>
+							</>
+						) : (
+							<>
+								<LogoutIconOutline
+									className="navigation__icon__outline"
+									title={translate('app.logout')}
+									aria-label={translate('app.logout')}
+								/>
+								<LogoutIconFilled
+									className="navigation__icon__filled"
+									title={translate('app.logout')}
+									aria-label={translate('app.logout')}
+								/>
+								<span className="navigation__title">
+									{translate('app.logout')}
+								</span>
+							</>
+						)}
 					</div>
 				</NavGroup>
 			</div>
@@ -428,10 +608,12 @@ const NavGroup = ({
 
 const NavigationUnreadIndicator = ({
 	animate,
-	count
+	count,
+	variant = 'default'
 }: {
 	animate: boolean;
 	count: number;
+	variant?: 'default' | 'figma';
 }) => {
 	const [visible, setVisible] = useState(false);
 
@@ -442,16 +624,25 @@ const NavigationUnreadIndicator = ({
 		}, 1000);
 	}, []);
 
+	const display = count > 99 ? '99+' : String(count);
+	const isFigma = variant === 'figma';
+
 	return (
 		<span
-			className={`navigation__item__count ${
-				!visible
-					? 'navigation__item__count--initial'
-					: `${animate && 'navigation__item__count--reanimate'}`
-			} ${count > 9 ? 'navigation__item__count--double' : ''}`}
+			className={clsx(
+				'navigation__item__count',
+				!visible && 'navigation__item__count--initial',
+				visible && animate && 'navigation__item__count--reanimate',
+				count > 9 && 'navigation__item__count--double',
+				isFigma && 'navigation__item__count--figma'
+			)}
 			aria-label={`${count} unread`}
 		>
-			{count > 99 ? '99+' : count}
+			{isFigma ? (
+				<sup className="navigation__item__count__sup">{display}</sup>
+			) : (
+				display
+			)}
 		</span>
 	);
 };

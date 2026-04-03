@@ -274,11 +274,11 @@ $tabBarHeightDesktop: 53px;
 			margin-left: 0;
 		}
 	}
-	
+
 	// Icon-only mode (like Element when sidebar < 220px)
 	&__wrapper--iconOnly {
 		min-width: 80px;
-		
+
 		.sessionsListItem__username,
 		.sessionsListItem__subject,
 		.sessionsListItem__consultingType,
@@ -294,18 +294,18 @@ $tabBarHeightDesktop: 53px;
 		.text {
 			display: none !important;
 		}
-		
+
 		.sessionsList__header {
 			justify-content: center;
 			padding: 8px;
 			min-height: 48px;
 		}
-		
+
 		.sessionsListItem {
 			justify-content: center;
 			align-items: center;
 			margin-bottom: 4px;
-			
+
 			&__content {
 				display: flex;
 				justify-content: center;
@@ -317,22 +317,22 @@ $tabBarHeightDesktop: 53px;
 				min-height: 48px;
 				border-radius: 50%;
 			}
-			
+
 			&__row {
 				justify-content: center;
 				align-items: center;
 				width: auto;
 				margin-bottom: 0 !important;
-				
+
 				&:first-child {
 					display: none; /* Hide top row with postcode/topic/date */
 				}
-				
+
 				&:last-child {
 					display: none; /* Hide last message row */
 				}
 			}
-			
+
 			&__icon {
 				margin-right: 0 !important;
 				margin-bottom: 0 !important;
@@ -346,8 +346,14 @@ $tabBarHeightDesktop: 53px;
 .sessionsListToolbar {
 	$toolbar-search-bg: #eae7e8;
 	$toolbar-text: #444748;
-	$toolbar-chip-border: #e1e6ee;
-	$toolbar-chip-label: #4b515a;
+	// Inactive chip: white surface, #E1E6EE border, #333 text; selected #333 / white text
+	$toolbar-chip-bg: #ffffff;
+	$toolbar-chip-fg: #333333;
+	$toolbar-chip-border-rest: #e1e6ee;
+	$toolbar-chip-hover-bg: #eef1f6;
+	$toolbar-chip-hover-border: #d1d8e6;
+	$toolbar-chip-selected-bg: #333333;
+	$toolbar-chip-selected-fg: #ffffff;
 
 	flex: 0;
 	padding: $grid-base-three $grid-base-three 0;
@@ -461,8 +467,8 @@ $tabBarHeightDesktop: 53px;
 		flex-wrap: nowrap;
 		gap: 8px;
 		width: max-content;
-		min-height: 28px;
-		padding-bottom: 2px;
+		min-height: 40px;
+		padding: 4px 0 6px;
 	}
 
 	&__chip {
@@ -471,30 +477,119 @@ $tabBarHeightDesktop: 53px;
 		align-items: center;
 		justify-content: center;
 		gap: 4px;
-		padding: 6px 10px;
-		min-height: 28px;
+		/* Pill / oval (not circles): avoid equal min-width + min-height + full radius */
+		padding: 8px 14px;
+		min-height: 40px;
 		box-sizing: border-box;
 		border-radius: 9999px;
-		border: 1px solid $toolbar-chip-border;
-		background-color: #fff;
-		color: inherit;
+		border: 1px solid $toolbar-chip-border-rest;
+		background-color: $toolbar-chip-bg;
+		color: $toolbar-chip-fg;
 		text-decoration: none;
 		cursor: pointer;
+		/* <Link> = <a>: undo global a:hover / a:focus (skin primary + 4px radius) */
+		&:link,
+		&:visited:not(&--active) {
+			color: $toolbar-chip-fg;
+		}
+
+		&:focus {
+			border-radius: 9999px;
+		}
 		font-family: $font-family-sans-serif;
+		position: relative;
+		overflow: hidden;
+		isolation: isolate;
+		-webkit-tap-highlight-color: transparent;
+		transition:
+			background-color 160ms cubic-bezier(0.2, 0, 0, 1),
+			border-color 160ms cubic-bezier(0.2, 0, 0, 1),
+			color 140ms cubic-bezier(0.2, 0, 0, 1),
+			transform 120ms cubic-bezier(0.2, 0, 0, 1);
+
+		&::before {
+			content: '';
+			position: absolute;
+			inset: 0;
+			border-radius: inherit;
+			background: currentColor;
+			opacity: 0;
+			transform: scale(0.88);
+			transition:
+				opacity 180ms cubic-bezier(0.2, 0, 0, 1),
+				transform 220ms cubic-bezier(0.2, 0, 0, 1);
+			pointer-events: none;
+			z-index: 0;
+		}
+
+		> * {
+			position: relative;
+			z-index: 1;
+		}
 
 		@media (hover: hover) {
-			&:hover {
-				border-color: darken($toolbar-chip-border, 6%);
+			&:hover:not(&--active) {
+				background-color: $toolbar-chip-hover-bg;
+				border-color: $toolbar-chip-hover-border;
+				color: $toolbar-chip-fg;
+
+				&::before {
+					opacity: 0.06;
+					transform: scale(1);
+				}
+			}
+		}
+
+		&:active {
+			transform: scale(0.985);
+		}
+
+		&:active:not(&--active) {
+			&::before {
+				opacity: 0.12;
+				transform: scale(1);
 			}
 		}
 
 		&--iconOnly {
-			padding: 6px 10px;
+			/* Wider horizontal padding → oval capsule, same height as text chips */
+			min-width: 0;
+			padding: 8px 18px;
 		}
 
+		/* Figma selected chip: dark surface + white label/icons */
 		&--active {
-			background-color: rgba(0, 0, 0, 0.04);
-			border-color: darken($toolbar-chip-border, 12%);
+			background-color: $toolbar-chip-selected-bg;
+			border-color: $toolbar-chip-selected-bg;
+			color: $toolbar-chip-selected-fg;
+
+			&:link,
+			&:visited {
+				color: $toolbar-chip-selected-fg;
+			}
+
+			&::before {
+				opacity: 0;
+				transform: scale(1);
+			}
+		}
+
+		@media (hover: hover) {
+			&--active:hover {
+				background-color: #404040;
+				border-color: #404040;
+				color: $toolbar-chip-selected-fg;
+
+				&::before {
+					opacity: 0.12;
+					background: #fff;
+				}
+			}
+		}
+
+		&:focus-visible {
+			outline: 2px solid #57606a;
+			outline-offset: 2px;
 		}
 	}
 
@@ -524,7 +619,7 @@ $tabBarHeightDesktop: 53px;
 		font-size: 12px;
 		font-weight: $font-weight-bold;
 		line-height: 14px;
-		color: $toolbar-chip-label;
+		color: inherit;
 		white-space: nowrap;
 	}
 }

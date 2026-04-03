@@ -48,9 +48,7 @@ import {
 import { Button } from '../button/Button';
 import { SessionListCreateChat } from './SessionListCreateChat';
 import './sessionsList.styles';
-import {
-	SCROLL_PAGINATE_THRESHOLD
-} from './sessionsListConfig';
+import { SCROLL_PAGINATE_THRESHOLD } from './sessionsListConfig';
 import clsx from 'clsx';
 import useUpdatingRef from '../../hooks/useUpdatingRef';
 import useDebounceCallback from '../../hooks/useDebounceCallback';
@@ -65,7 +63,6 @@ import { useWatcher } from '../../hooks/useWatcher';
 import { useSearchParam } from '../../hooks/useSearchParams';
 import { apiGetChatRoomById } from '../../api/apiGetChatRoomById';
 import { useTranslation } from 'react-i18next';
-import { RocketChatUsersOfRoomProvider } from '../../globalState/provider/RocketChatUsersOfRoomProvider';
 import { EmptyListItem } from './EmptyListItem';
 import { matrixLiveEventBridge } from '../../services/matrixLiveEventBridge';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
@@ -122,7 +119,8 @@ function sessionMatchesToolbar(
 	raw: ListItemInterface,
 	extended: ExtendedSessionInterface,
 	query: string,
-	chip: SessionToolbarChipFilter | null
+	chip: SessionToolbarChipFilter | null,
+	currentUserId?: string
 ): boolean {
 	const chatItem = getChatItemForSession(raw);
 	if (chip === 'neu') {
@@ -139,6 +137,14 @@ function sessionMatchesToolbar(
 		}
 	} else if (chip === 'groups') {
 		if (!extended.isGroup) {
+			return false;
+		}
+	} else if (chip === 'supervision') {
+		if (!raw.consultant?.id) {
+			return false;
+		}
+		if (String(raw.consultant.id) === String(currentUserId || '')) {
+			// Assigned consultant chats are excluded; only supervised chats remain.
 			return false;
 		}
 	}
@@ -272,13 +278,13 @@ export const SessionsList = ({
 						.querySelector('.sessionsListItem')
 						.getAttribute('data-group-id')
 				: null;
-			const lastItemId = wrapper.lastElementChild && wrapper.lastElementChild.querySelector(
-				'.sessionsListItem'
-			)
-				? wrapper.lastElementChild
-						.querySelector('.sessionsListItem')
-						.getAttribute('data-group-id')
-				: null;
+			const lastItemId =
+				wrapper.lastElementChild &&
+				wrapper.lastElementChild.querySelector('.sessionsListItem')
+					? wrapper.lastElementChild
+							.querySelector('.sessionsListItem')
+							.getAttribute('data-group-id')
+					: null;
 			if (
 				initialId.current !== firstItemId &&
 				initialId.current !== lastItemId
@@ -291,7 +297,10 @@ export const SessionsList = ({
 	const refreshLoadedSessionsWithRoomState = useCallback(
 		(loadedSessions: ListItemInterface[]) => {
 			const rids = (loadedSessions || [])
-				.map((session) => session?.chat?.groupId || session?.session?.groupId)
+				.map(
+					(session) =>
+						session?.chat?.groupId || session?.session?.groupId
+				)
 				.filter(Boolean) as string[];
 
 			if (!rids.length) {
@@ -336,24 +345,26 @@ export const SessionsList = ({
 					// Use listPath from context, fallback to hardcoded path for askers
 					const baseListPath = listPath || '/sessions/user/view';
 					// Check if we're on the base list page (exact match or with trailing slash)
-					const isOnBaseListPage = currentPath === baseListPath || 
+					const isOnBaseListPage =
+						currentPath === baseListPath ||
 						currentPath === `${baseListPath}/` ||
 						currentPath === '/sessions/user/view' ||
 						currentPath === '/sessions/user/view/';
-					
+
 					// Use sessionStorage to persist across remounts - but clear it if we're on the base page
 					// This allows re-triggering if user navigates back to list
 					const firstSession = sessions?.[0];
 					const sessionId = firstSession?.session?.id;
 					const autoOpenKey = `autoOpenedSession_${sessionId || ''}`;
-					
+
 					// Clear sessionStorage flag if we're back on the base list page (user navigated back)
 					if (isOnBaseListPage) {
 						sessionStorage.removeItem(autoOpenKey);
 					}
-					
-					const hasAutoOpened = sessionStorage.getItem(autoOpenKey) === 'true';
-					
+
+					const hasAutoOpened =
+						sessionStorage.getItem(autoOpenKey) === 'true';
+
 					// console.log('🔍 Auto-open check:', {
 					// sessionsCount: sessions?.length,
 					// currentPath,
@@ -366,30 +377,38 @@ export const SessionsList = ({
 					// sessionId,
 					// sessionStructure: firstSession ? Object.keys(firstSession) : null
 					// });
-					
-					if (sessions?.length === 1 && !hasAutoOpened && !hasAutoOpenedRef.current && isOnBaseListPage) {
+
+					if (
+						sessions?.length === 1 &&
+						!hasAutoOpened &&
+						!hasAutoOpenedRef.current &&
+						isOnBaseListPage
+					) {
 						const session = sessions[0];
 						const sessionId = session?.session?.id;
 						const groupId = session?.session?.groupId;
-						const isEmptyEnquiry = session?.session?.status === STATUS_EMPTY;
-						
-						// console.log('✅ Auto-opening session:', { 
-						// sessionId, 
-						// groupId, 
+						const isEmptyEnquiry =
+							session?.session?.status === STATUS_EMPTY;
+
+						// console.log('✅ Auto-opening session:', {
+						// sessionId,
+						// groupId,
 						// isEmptyEnquiry,
 						// sessionStatus: session?.session?.status,
 						// fullSession: session
 						// });
-						
+
 						if (sessionId !== undefined) {
 							// Mark as auto-opened IMMEDIATELY in both ref and sessionStorage
 							hasAutoOpenedRef.current = true;
 							sessionStorage.setItem(autoOpenKey, 'true');
-							
+
 							// Check if groupId looks like a Matrix room ID (starts with ! or contains :)
-							const isMatrixRoomId = groupId && 
-								(groupId.startsWith('!') || groupId.includes(':'));
-							
+							const isMatrixRoomId =
+								groupId &&
+								(groupId.startsWith('!') ||
+									groupId.includes(':'));
+
 							if (isEmptyEnquiry) {
 								// Empty enquiry: go to write view
 								const targetPath = `${baseListPath}/write/${sessionId}`;
@@ -590,7 +609,8 @@ export const SessionsList = ({
 						(s) =>
 							s?.chat?.groupId === rid ||
 							s?.session?.groupId === rid ||
-							(s?.session as { matrixRoomId?: string })?.matrixRoomId === rid
+							(s?.session as { matrixRoomId?: string })
+								?.matrixRoomId === rid
 					);
 					if (!existingSession) {
 						return null;
@@ -895,30 +915,65 @@ export const SessionsList = ({
 
 	const handleToolbarChipToggle = useCallback(
 		(chip: SessionToolbarChipFilter) => {
-			setSessionToolbarChip((prev) => (prev === chip ? null : chip));
+			const nextChip = sessionToolbarChip === chip ? null : chip;
+			setSessionToolbarChip(nextChip);
+
+			const baseListPath = listPath || '/sessions/consultant/sessionView';
+
+			/* Route-driven chips (+ / archive) stay “selected” until URL changes.
+			   Leaving create-group-chat when using a filter avoids + staying dark. */
+			if (groupIdFromParam === 'createGroupChat') {
+				const params = new URLSearchParams(location.search);
+				params.delete('sessionListTab');
+				const search = params.toString() ? `?${params.toString()}` : '';
+				history.push({ pathname: baseListPath, search });
+				return;
+			}
+
+			/* Selecting a filter implies main list: drop archive tab so archive chip matches. */
+			if (
+				sessionListTab === SESSION_LIST_TAB_ARCHIVE &&
+				nextChip !== null
+			) {
+				const params = new URLSearchParams(location.search);
+				params.delete('sessionListTab');
+				const search = params.toString() ? `?${params.toString()}` : '';
+				history.replace({ pathname: location.pathname, search });
+			}
+		},
+		[
+			groupIdFromParam,
+			history,
+			listPath,
+			location.pathname,
+			location.search,
+			sessionListTab,
+			sessionToolbarChip
+		]
+	);
+
+	const normalizeTimestamp = useCallback(
+		(value?: string | number): number => {
+			if (value === null || value === undefined || value === '') {
+				return 0;
+			}
+
+			if (typeof value === 'number') {
+				return value > 1_000_000_000_000 ? value : value * 1000;
+			}
+
+			const numericValue = Number(value);
+			if (!Number.isNaN(numericValue)) {
+				return numericValue > 1_000_000_000_000
+					? numericValue
+					: numericValue * 1000;
+			}
+
+			const parsed = Date.parse(value);
+			return Number.isNaN(parsed) ? 0 : parsed;
 		},
 		[]
 	);
-
-	const normalizeTimestamp = useCallback((value?: string | number): number => {
-		if (value === null || value === undefined || value === '') {
-			return 0;
-		}
-
-		if (typeof value === 'number') {
-			return value > 1_000_000_000_000 ? value : value * 1000;
-		}
-
-		const numericValue = Number(value);
-		if (!Number.isNaN(numericValue)) {
-			return numericValue > 1_000_000_000_000
-				? numericValue
-				: numericValue * 1000;
-		}
-
-		const parsed = Date.parse(value);
-		return Number.isNaN(parsed) ? 0 : parsed;
-	}, []);
 
 	const getLastInteractionTimestamp = useCallback(
 		(session: ExtendedSessionInterface): number => {
@@ -929,7 +984,8 @@ export const SessionsList = ({
 
 			const matrixRoomId =
 				(item as { matrixRoomId?: string })?.matrixRoomId ||
-				(typeof item.groupId === 'string' && item.groupId.startsWith('!')
+				(typeof item.groupId === 'string' &&
+				item.groupId.startsWith('!')
 					? item.groupId
 					: null);
 			const matrixRoom = matrixRoomId
@@ -990,14 +1046,17 @@ export const SessionsList = ({
 			// Filter group chats: show if consultant is owner OR participant (subscribed)
 			if (session?.chat) {
 				// For MY_SESSION type, filter group chats by participation
-				if (type === SESSION_LIST_TYPES.MY_SESSION && !hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)) {
+				if (
+					type === SESSION_LIST_TYPES.MY_SESSION &&
+					!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)
+				) {
 					// Check if consultant is the owner
 					const isOwner = session?.consultant?.id === userData.userId;
-					
+
 					// Check if consultant is subscribed (participant in the room)
 					// subscribed=true means the consultant is a member of the room
 					const isParticipant = session?.chat?.subscribed === true;
-					
+
 					// Show if owner OR participant
 					return isOwner || isParticipant;
 				}
@@ -1082,12 +1141,22 @@ export const SessionsList = ({
 				raw,
 				extended,
 				sessionToolbarSearch,
-				sessionToolbarChip
+				sessionToolbarChip,
+				userData?.userId
 			)
 	);
 	const sortedSessions = sessionToolbarFilteredPairs
 		.map(({ extended }) => extended)
 		.sort(sortSessions);
+	const showSupervisionChip = finalSessionsList.some((raw) => {
+		if (!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)) {
+			return false;
+		}
+		if (!raw.consultant?.id) {
+			return false;
+		}
+		return String(raw.consultant.id) !== String(userData?.userId || '');
+	});
 	const toolbarFilteredOutAll =
 		showMySessionToolbar &&
 		finalSessionsList.length > 0 &&
@@ -1104,13 +1173,18 @@ export const SessionsList = ({
 					translate={translate}
 					searchValue={sessionToolbarSearch}
 					onSearchChange={setSessionToolbarSearch}
-					activeChip={sessionToolbarChip}
+					activeChip={isCreateChatActive ? null : sessionToolbarChip}
 					onChipToggle={handleToolbarChipToggle}
 					showConsultantActions={showConsultantToolbarActions}
+					showSupervisionChip={showSupervisionChip}
 					createGroupChatPath={buildCreateGroupChatPath(
 						sessionListTab || undefined
 					)}
 					archiveTabPath={buildArchiveTabPath()}
+					archiveTabActive={
+						sessionListTab === SESSION_LIST_TAB_ARCHIVE
+					}
+					createGroupChatActive={isCreateChatActive}
 				/>
 			)}
 			<div
@@ -1121,34 +1195,44 @@ export const SessionsList = ({
 				ref={listRef}
 				onScroll={handleListScroll}
 			>
-			{!isLoading &&
-				isCreateChatActive &&
-				type === SESSION_LIST_TYPES.MY_SESSION && <SessionListCreateChat />}
+				{!isLoading &&
+					isCreateChatActive &&
+					type === SESSION_LIST_TYPES.MY_SESSION && (
+						<SessionListCreateChat />
+					)}
 
 				{(!isLoading || finalSessionsList.length > 0) &&
-					sortedSessions.map((activeSession: ExtendedSessionInterface, index) => (
+					sortedSessions.map(
+						(activeSession: ExtendedSessionInterface, index) => (
 							<ActiveSessionProvider
 								key={activeSession.item.id}
 								activeSession={activeSession}
 							>
 								<SessionListItemComponent
 									defaultLanguage={defaultLanguage}
-									itemRef={(el) => (ref_list_array.current[index] = el)}
+									itemRef={(el) =>
+										(ref_list_array.current[index] = el)
+									}
 									handleKeyDownLisItemContent={(e) =>
 										handleKeyDownLisItemContent(e, index)
 									}
 									index={index}
 									isBeforeActive={
 										!!sortedSessions[index + 1] &&
-										isSessionListItemActive(sortedSessions[index + 1])
+										isSessionListItemActive(
+											sortedSessions[index + 1]
+										)
 									}
 									isAfterActive={
 										!!sortedSessions[index - 1] &&
-										isSessionListItemActive(sortedSessions[index - 1])
+										isSessionListItemActive(
+											sortedSessions[index - 1]
+										)
 									}
 								/>
 							</ActiveSessionProvider>
-						))}
+						)
+					)}
 
 				{isLoading && <SessionsListSkeleton />}
 
@@ -1156,7 +1240,9 @@ export const SessionsList = ({
 					<div className="sessionsList__reloadWrapper">
 						<Button
 							item={{
-								label: translate('sessionList.reloadButton.label'),
+								label: translate(
+									'sessionList.reloadButton.label'
+								),
 								function: '',
 								type: 'LINK',
 								id: 'reloadButton'
@@ -1174,7 +1260,9 @@ export const SessionsList = ({
 					<EmptyListItem
 						headlineOverride={
 							toolbarFilteredOutAll
-								? translate('sessionList.toolbar.emptyFilterResult')
+								? translate(
+										'sessionList.toolbar.emptyFilterResult'
+									)
 								: undefined
 						}
 						sessionListTab={sessionListTab}

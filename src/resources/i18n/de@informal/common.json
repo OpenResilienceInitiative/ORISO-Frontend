@@ -848,10 +848,11 @@
 				"title": "Kalender"
 			},
 			"chips": {
-				"neu": "Neu",
+				"neu": "Ungelesen",
 				"oneToOne": "1-1 Beratung",
 				"liveChat": "Live-Chat",
-				"groups": "Gruppen"
+				"groups": "Gruppen",
+				"supervision": "Supervision"
 			},
 			"emptyFilterResult": "Keine Beratung entspricht Deiner Suche oder den Filtern."
 		},
@@ -1145,5 +1146,17 @@
 				"confirm": "Möchtest du diesen Supervisor wirklich entfernen?"
 			}
 		}
+	},
+	"navigation": {
+		"consultant": {
+			"enquiries": "Anfragen",
+			"sessions": {
+				"nav": "Chats"
+			}
+		},
+		"activity": "Aktivität",
+		"drafts": "Entwürfe",
+		"liveChat": "Live Chat",
+		"myProfile": "Mein Profil"
 	}
 }

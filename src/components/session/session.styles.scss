@@ -21,12 +21,12 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 
 	@include breakpoint($fromLarge) {
 		// Match Figma: red rounded outline around the full chat side panel.
-		margin: 15px 15px 15px 5px;
-		border: 2px solid #D32F2F;
+		margin: 15px 15px 15px 15px;
+		border: 2px solid #d32f2f;
 		border-radius: 32px;
 		box-sizing: border-box;
 	}
-	
+
 	.messageSubmit__wrapper {
 		position: absolute;
 		bottom: 0;
@@ -56,7 +56,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	& > div:first-child {
 		flex: 0 0 auto; /* Header stays fixed height */
 	}
-	
+
 	& > div:nth-child(2) {
 		flex: 1; /* Content takes remaining space */
 		min-height: 0;
@@ -211,7 +211,9 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	&__gameInputFadeTarget {
 		opacity: 1;
 		transform: translateY(0);
-		transition: opacity 260ms ease, transform 260ms ease;
+		transition:
+			opacity 260ms ease,
+			transform 260ms ease;
 	}
 
 	&__gameInputFadeTarget--hidden {
@@ -717,7 +719,8 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		position: absolute;
 		top: 50%;
 		left: 50%;
-		transform: translate(-50%, -50%) rotate(0deg) scale(var(--breath-scale, 1));
+		transform: translate(-50%, -50%) rotate(0deg)
+			scale(var(--breath-scale, 1));
 		transform-origin: center;
 		border-radius: 50%;
 		opacity: 0.24;
@@ -889,7 +892,8 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		gap: 10px;
 		opacity: 0;
 		transform: translateY(14px) scale(0.84);
-		animation: briefing-step-pop 900ms cubic-bezier(0.2, 0.82, 0.22, 1) forwards;
+		animation: briefing-step-pop 900ms cubic-bezier(0.2, 0.82, 0.22, 1)
+			forwards;
 		animation-delay: var(--step-delay, 0ms);
 	}
 
@@ -1243,7 +1247,8 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 			);
 			background-size: 180% 100%;
 			background-position: 0% 50%;
-			animation: timing-water-drift var(--water-drift-duration, 7.6s) linear infinite;
+			animation: timing-water-drift var(--water-drift-duration, 7.6s)
+				linear infinite;
 			transition: width 540ms cubic-bezier(0.2, 0.74, 0.2, 1);
 			z-index: 0;
 			pointer-events: none;
@@ -1267,7 +1272,8 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 			background-size: 220% 100%;
 			background-position: 100% 50%;
 			opacity: 0.62;
-			animation: timing-water-wave var(--water-sheen-duration, 5.4s) ease-in-out infinite;
+			animation: timing-water-wave var(--water-sheen-duration, 5.4s)
+				ease-in-out infinite;
 			transition: width 540ms cubic-bezier(0.2, 0.74, 0.2, 1);
 			z-index: 1;
 			pointer-events: none;
@@ -1639,7 +1645,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		text-align: center;
 		color: $tertiary;
 		margin: $grid-base-two 0;
-		
+
 		.text {
 			font-style: italic;
 			display: none;
@@ -1679,10 +1685,12 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 
 @keyframes breathing-pulse-orbit {
 	0% {
-		transform: translate(-50%, -50%) rotate(0deg) scale(var(--breath-scale, 1));
+		transform: translate(-50%, -50%) rotate(0deg)
+			scale(var(--breath-scale, 1));
 	}
 	100% {
-		transform: translate(-50%, -50%) rotate(360deg) scale(var(--breath-scale, 1));
+		transform: translate(-50%, -50%) rotate(360deg)
+			scale(var(--breath-scale, 1));
 	}
 }
 
@@ -1929,50 +1937,50 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 }
 
 /* Target the specific scrollable containers (like your list and chat detail) */
-.contentWrapper__list, 
+.contentWrapper__list,
 .contentWrapper__detail,
 .session__wrapper {
-  /* Firefox support */
-  scrollbar-width: thin;
-  scrollbar-color: transparent transparent;
-  transition: scrollbar-color 0.3s ease;
+	/* Firefox support */
+	scrollbar-width: thin;
+	scrollbar-color: transparent transparent;
+	transition: scrollbar-color 0.3s ease;
 }
 
 /* Show scrollbar on hover for Firefox */
-.contentWrapper__list:hover, 
+.contentWrapper__list:hover,
 .contentWrapper__detail:hover {
-  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+	scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
 }
 
 /* Webkit (Chrome, Safari, Edge) */
 /* 1. The background of the scrollbar */
 .contentWrapper__list::-webkit-scrollbar,
 .contentWrapper__detail::-webkit-scrollbar {
-  width: 5px; /* Very thin */
+	width: 5px; /* Very thin */
 }
 
 /* 2. The track (background) - keep it transparent */
 .contentWrapper__list::-webkit-scrollbar-track,
 .contentWrapper__detail::-webkit-scrollbar-track {
-  background: transparent;
+	background: transparent;
 }
 
 /* 3. The draggable handle (thumb) */
 .contentWrapper__list::-webkit-scrollbar-thumb,
 .contentWrapper__detail::-webkit-scrollbar-thumb {
-  background-color: transparent; /* Invisible by default */
-  border-radius: 10px;
-  border: 1px solid transparent; /* Creates padding effect */
+	background-color: transparent; /* Invisible by default */
+	border-radius: 10px;
+	border: 1px solid transparent; /* Creates padding effect */
 }
 
 /* 4. Reveal handle on hover of the CONTAINER */
 .contentWrapper__list:hover::-webkit-scrollbar-thumb,
 .contentWrapper__detail:hover::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.15); /* Soft grey when hovering */
+	background-color: rgba(0, 0, 0, 0.15); /* Soft grey when hovering */
 }
 
 /* 5. Make it slightly darker when actually grabbing the scrollbar */
 .contentWrapper__list::-webkit-scrollbar-thumb:hover,
 .contentWrapper__detail::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(0, 0, 0, 0.3) !important;
+	background-color: rgba(0, 0, 0, 0.3) !important;
 }

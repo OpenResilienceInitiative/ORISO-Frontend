@@ -47,9 +47,7 @@ $link-hover-text-decoration: $link-text-decoration !default;
 		display: flex;
 		flex-direction: column;
 		align-items: stretch;
-	
 	}
-
 
 	.button-as-link {
 		border: none;
@@ -129,7 +127,7 @@ $link-hover-text-decoration: $link-text-decoration !default;
 	&__headline {
 		transform: $login-icon-transform;
 		margin-bottom: 20px;
-		
+
 		h2 {
 			font-size: 32px;
 			font-weight: 700;
@@ -197,7 +195,7 @@ $link-hover-text-decoration: $link-text-decoration !default;
 			display: flex;
 			align-items: center;
 			gap: 8px;
-			
+
 			svg {
 				flex-shrink: 0;
 				width: 20px;
@@ -260,6 +258,10 @@ $link-hover-text-decoration: $link-text-decoration !default;
 	}
 
 	.button__item {
+		align-items: center;
+		text-align: center;
+		display: flex;
+		justify-content: center;
 		box-sizing: border-box;
 		width: 100%;
 		min-width: unset;

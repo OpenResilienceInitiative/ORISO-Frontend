@@ -1262,17 +1262,21 @@
 			"events": "Meine Termine"
 		},
 		"consultant": {
-			"enquiries": "Erstanfragen",
+			"enquiries": "Anfragen",
 			"sessions": {
 				"large": "Meine Beratungen",
+				"nav": "Chats",
 				"small": "Nachrichten"
 			}
 		},
+		"activity": "Aktivität",
 		"language": "Sprache",
 		"drafts": "Entwürfe",
+		"liveChat": "Live Chat",
 		"notifications": "Benachrichtigungen",
 		"overview": "Übersicht",
 		"profile": "Profil",
+		"myProfile": "Mein Profil",
 		"tools": "Meine Tools"
 	},
 	"notifications": {
@@ -2266,10 +2270,11 @@
 				"title": "Kalender"
 			},
 			"chips": {
-				"neu": "Neu",
+				"neu": "Ungelesen",
 				"oneToOne": "1-1 Beratung",
 				"liveChat": "Live-Chat",
-				"groups": "Gruppen"
+				"groups": "Gruppen",
+				"supervision": "Supervision"
 			},
 			"emptyFilterResult": "Keine Beratung entspricht Ihrer Suche oder den Filtern."
 		},

@@ -12,7 +12,7 @@ This Storybook setup is configured for enterprise-grade component documentation 
 ✅ **TypeScript Docgen** - Automatic prop extraction from TypeScript interfaces  
 ✅ **Enhanced Controls** - Interactive controls for all component props  
 ✅ **Theme Support** - Light/dark theme ready  
-✅ **Auto-Generation** - Script to generate stories for new components  
+✅ **Auto-Generation** - Script to generate stories for new components
 
 ## Story Categories
 
@@ -22,6 +22,7 @@ This Storybook setup is configured for enterprise-grade component documentation 
 - **Feedback**: Notice, LoadingSpinner, LoadingIndicator, Spinner, Notifications, Overlay, Error
 - **UI**: DragAndDropArea, FlyoutMenu, GenerateQrCode, LocaleSwitch, ProgressBar
 - **Session**: SessionsList, SessionView
+- **Components/Session/List** (sidebar): `SessionsListToolbar`, `SessionListItem` (visual mocks), `SessionListCreateChat`, `Session list column` (composite), `ResizableHandle`, `ResizableSidebar` (integration notes under Layout)
 - **Message**: TypingIndicator
 - **Profile**: Profile, EditableData
 - **Registration**: AgencyRadioSelect
@@ -36,6 +37,7 @@ node generate-professional-stories.js
 ```
 
 This will:
+
 - Scan all components in `src/components`
 - Generate stories with proper structure
 - Categorize components automatically
@@ -100,6 +102,7 @@ Stories will be available at `http://localhost:6006`
 ## Filtering Stories
 
 Helper/util components are automatically filtered out. The generator excludes:
+
 - Helper functions
 - Utility files
 - Hooks (unless they're UI components)
@@ -109,10 +112,8 @@ Helper/util components are automatically filtered out. The generator excludes:
 ## Autodocs
 
 Autodocs is enabled globally via `tags: ['autodocs']` in preview.tsx. This provides:
+
 - Automatic prop tables from TypeScript types
 - Interactive controls
 - Component descriptions
 - Usage examples
-
-
-

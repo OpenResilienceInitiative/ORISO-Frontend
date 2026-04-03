@@ -10,7 +10,7 @@ import './select2.react.styles';
 import './select2.styles';
 import { useResponsive } from '../../hooks/useResponsive';
 import { useTranslation } from 'react-i18next';
-import { ReactNode, useMemo, useRef, useEffect } from 'react';
+import { ReactNode, useMemo, useRef, useEffect, useCallback } from 'react';
 
 export interface SelectOption {
 	value: string;
@@ -242,12 +242,16 @@ const colourStyles = (
 			...(menuPlacement === MENUPLACEMENT_RIGHT
 				? {
 						left: '0',
-						top: '16px', // Position arrow at top of menu
-						bottom: '5%',
+						/* Match :after — was fixed top:16px so shadow sat at menu top; upward menus left it floating */
+						top: 'var(--arrow-top, 50%)',
+						bottom: 'auto',
+						transform: 'translateY(-50%)',
 						borderTop: '10px solid transparent',
 						borderBottom: '10px solid transparent',
 						borderLeft: 'none',
-						borderRight: '10px solid rgba(0,0,0,0.1)'
+						borderRight: '10px solid rgba(0,0,0,0.1)',
+						height: '12px',
+						width: '12px'
 					}
 				: {
 						bottom:
@@ -357,14 +361,19 @@ export const LanguageSelectDropdown = (props: SelectDropdownItem) => {
 
 	const IconOption = (props) => (
 		<components.Option {...props} className="language-select__option">
-			<span className="language-select__option__icon">{props.data.iconLabel}</span>
+			<span className="language-select__option__icon">
+				{props.data.iconLabel}
+			</span>
 			<p className="language-select__option__label">{props.data.label}</p>
 		</components.Option>
 	);
 
 	const IconDropdown = (props) => (
 		<components.DropdownIndicator {...props}>
-			<span id="selectIcon" className="language-select__input__iconWrapper">
+			<span
+				id="selectIcon"
+				className="language-select__input__iconWrapper"
+			>
 				{props.selectProps.menuIsOpen ? (
 					<ArrowUpIcon
 						title={translate('app.close')}
@@ -384,7 +393,10 @@ export const LanguageSelectDropdown = (props: SelectDropdownItem) => {
 
 	const currentSelectInputLabel = props.selectInputLabel;
 	const CustomValueContainer = ({ children, ...props }) => (
-		<components.ValueContainer {...props} className="language-select__inputWrapper">
+		<components.ValueContainer
+			{...props}
+			className="language-select__inputWrapper"
+		>
 			{React.Children.map(children, (child) => child)}
 			<label className="language-select__inputLabel">
 				{translate(currentSelectInputLabel)}
@@ -407,6 +419,7 @@ export const LanguageSelectDropdown = (props: SelectDropdownItem) => {
 		switch (props.menuPlacement) {
 			case MENUPLACEMENT_BOTTOM_LEFT:
 			case MENUPLACEMENT_RIGHT:
+				/* RIGHT uses fixed coords in useEffect; keep bottom so RS lays out before we flip */
 				return MENUPLACEMENT_BOTTOM;
 			default:
 				return props.menuPlacement;
@@ -416,31 +429,49 @@ export const LanguageSelectDropdown = (props: SelectDropdownItem) => {
 	const wrapperRef = useRef<HTMLDivElement>(null);
 	const selectRef = useRef<any>(null);
 
+	/** Sidebar / nav: menu to the right of control, opening upward (bottom aligned with control). */
+	const positionRightLocaleMenu = useCallback(() => {
+		const menu = document.querySelector(
+			'.language-select__input__menu'
+		) as HTMLElement | null;
+		const wrapper = wrapperRef.current;
+		if (!menu || !wrapper) {
+			return;
+		}
+		const control = wrapper.querySelector(
+			'.language-select__input__control'
+		) as HTMLElement | null;
+		if (!control) {
+			return;
+		}
+		const rect = control.getBoundingClientRect();
+		menu.style.position = 'fixed';
+		menu.style.left = `${rect.right + 16}px`;
+		menu.style.right = 'auto';
+		menu.style.transform = 'none';
+		menu.style.marginTop = '0';
+		menu.style.marginLeft = '0';
+		menu.style.top = 'auto';
+		/* Grow upward: menu bottom lines up with control bottom (viewport-fixed) */
+		menu.style.bottom = `${window.innerHeight - rect.bottom}px`;
+
+		const menuRect = menu.getBoundingClientRect();
+		const buttonCenterY = rect.top + rect.height / 2;
+		const arrowOffset = buttonCenterY - menuRect.top;
+		menu.style.setProperty('--arrow-top', `${arrowOffset}px`);
+	}, []);
+
 	// Position menu to the right when MENUPLACEMENT_RIGHT is used
 	useEffect(() => {
 		if (props.menuPlacement === MENUPLACEMENT_RIGHT && wrapperRef.current) {
-			const positionMenu = () => {
-				const menu = document.querySelector('.language-select__input__menu') as HTMLElement;
-				const wrapper = wrapperRef.current;
-				if (menu && wrapper) {
-					const control = wrapper.querySelector('.language-select__input__control') as HTMLElement;
-					if (control) {
-						const rect = control.getBoundingClientRect();
-						menu.style.position = 'fixed';
-						menu.style.left = `${rect.right + 16}px`;
-						menu.style.top = `${rect.top}px`;
-						menu.style.right = 'auto';
-						menu.style.bottom = 'auto';
-						menu.style.transform = 'none';
-						menu.style.marginTop = '0';
-						menu.style.marginLeft = '0';
-					}
-				}
+			const run = () => {
+				requestAnimationFrame(() => {
+					requestAnimationFrame(positionRightLocaleMenu);
+				});
 			};
 
-			// Use MutationObserver to watch for menu appearance
 			const observer = new MutationObserver(() => {
-				positionMenu();
+				positionRightLocaleMenu();
 			});
 
 			observer.observe(document.body, {
@@ -448,15 +479,17 @@ export const LanguageSelectDropdown = (props: SelectDropdownItem) => {
 				subtree: true
 			});
 
-			// Also try immediately
-			setTimeout(positionMenu, 0);
+			run();
 
 			return () => observer.disconnect();
 		}
-	}, [props.menuPlacement]);
+	}, [props.menuPlacement, positionRightLocaleMenu]);
 
 	return (
-		<div ref={wrapperRef} className={clsx(props.className, 'language-select__wrapper')}>
+		<div
+			ref={wrapperRef}
+			className={clsx(props.className, 'language-select__wrapper')}
+		>
 			<Select
 				id={props.id}
 				className={`language-select__input ${
@@ -476,7 +509,11 @@ export const LanguageSelectDropdown = (props: SelectDropdownItem) => {
 						: components.IndicatorSeparator,
 					MultiValueRemove: CustomMultiValueRemove
 				}}
-				menuPortalTarget={props.menuPlacement === MENUPLACEMENT_RIGHT ? document.body : undefined}
+				menuPortalTarget={
+					props.menuPlacement === MENUPLACEMENT_RIGHT
+						? document.body
+						: undefined
+				}
 				value={props.defaultValue ? props.defaultValue : null}
 				defaultValue={props.defaultValue ? props.defaultValue : null}
 				onChange={props.handleDropdownSelect}
@@ -510,34 +547,9 @@ export const LanguageSelectDropdown = (props: SelectDropdownItem) => {
 				onMenuOpen={() => {
 					if (props.menuPlacement === MENUPLACEMENT_RIGHT) {
 						setTimeout(() => {
-							const menu = document.querySelector('.select__input__menu') as HTMLElement;
-							const wrapper = wrapperRef.current;
-							if (menu && wrapper) {
-								const control = wrapper.querySelector('.select__input__control') as HTMLElement;
-								if (control) {
-									const rect = control.getBoundingClientRect();
-									// Position menu slightly above the button (8px above)
-									const topOffset = -8;
-									const menuTop = rect.top + topOffset;
-									const buttonCenter = rect.top + (rect.height / 2);
-									
-									menu.style.position = 'fixed';
-									menu.style.left = `${rect.right + 16}px`;
-									menu.style.top = `${menuTop}px`;
-									menu.style.right = 'auto';
-									menu.style.bottom = 'auto';
-									menu.style.transform = 'none';
-									menu.style.marginTop = '0';
-									menu.style.marginLeft = '0';
-									
-									// Position arrow to align with button center
-									const arrowOffset = buttonCenter - menuTop;
-									const menuElement = menu as HTMLElement;
-									if (menuElement) {
-										menuElement.style.setProperty('--arrow-top', `${arrowOffset}px`);
-									}
-								}
-							}
+							requestAnimationFrame(() => {
+								requestAnimationFrame(positionRightLocaleMenu);
+							});
 						}, 0);
 					}
 				}}

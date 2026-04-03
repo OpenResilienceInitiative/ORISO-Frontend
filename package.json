@@ -193,7 +193,7 @@
 		"serve": "^14.2.1",
 		"standard-version": "^9.5.0",
 		"storybook": "^7.0.18",
-		"storybook-react-i18next": "^2.0.6",
+		"storybook-i18n": "^2.0.13",
 		"style-loader": "^3.3.4",
 		"stylelint": "^15.11.0",
 		"stylelint-config-standard": "^34.0.0",

@@ -27,6 +27,8 @@ export interface LocaleSwitchProp {
 	color?: string;
 	colorHover?: string;
 	iconOnly?: boolean;
+	/** When set (e.g. Figma nav globe), replaces default language SVGs in the control */
+	leadingIconOverride?: React.ReactNode;
 }
 
 export const LocaleSwitch: React.FC<LocaleSwitchProp> = ({
@@ -41,7 +43,8 @@ export const LocaleSwitch: React.FC<LocaleSwitchProp> = ({
 	isInsideMenu = false,
 	color = 'var(--secondary)',
 	colorHover = 'var(--hover-primary)',
-	iconOnly
+	iconOnly,
+	leadingIconOverride
 }) => {
 	const { t: translate } = useTranslation(['common', 'languages']);
 
@@ -61,7 +64,9 @@ export const LocaleSwitch: React.FC<LocaleSwitchProp> = ({
 				preferredLanguage: locale
 			})
 				.then(userDataContext.reloadUserData)
-				.catch((error) => { /* console.log(error); */ })
+				.catch((error) => {
+					/* console.log(error); */
+				})
 				.finally(() => {
 					setRequestInProgress(false);
 				});
@@ -98,23 +103,40 @@ export const LocaleSwitch: React.FC<LocaleSwitchProp> = ({
 				<>
 					{(showIcon || iconOnly) && (
 						<>
-							{isInsideMenu && (
-								<LanguageIconOutline
-									title={translate('app.selectLanguage')}
-									aria-label={translate('app.selectLanguage')}
-									width={iconSize}
-									height={iconSize}
-									className="navigation__icon__outline"
-								/>
+							{leadingIconOverride ? (
+								<span className="localeSwitch__leadingIconOverride">
+									{leadingIconOverride}
+								</span>
+							) : (
+								<>
+									{isInsideMenu && (
+										<LanguageIconOutline
+											title={translate(
+												'app.selectLanguage'
+											)}
+											aria-label={translate(
+												'app.selectLanguage'
+											)}
+											width={iconSize}
+											height={iconSize}
+											className="navigation__icon__outline"
+										/>
+									)}
+									<LanguageIcon
+										aria-label={translate(
+											'app.selectLanguage'
+										)}
+										width={iconSize}
+										height={iconSize}
+										className="navigation__icon__filled"
+										color="inherit"
+										style={{
+											width: 'auto',
+											height: 'auto'
+										}}
+									/>
+								</>
 							)}
-							<LanguageIcon
-								aria-label={translate('app.selectLanguage')}
-								width={iconSize}
-								height={iconSize}
-								className="navigation__icon__filled"
-								color="inherit"
-								style={{ width: 'auto', height: 'auto' }}
-							/>
 						</>
 					)}{' '}
 					{!iconOnly && (

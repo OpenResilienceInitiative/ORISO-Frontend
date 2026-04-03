@@ -1240,17 +1240,21 @@
 			"events": "My dates"
 		},
 		"consultant": {
-			"enquiries": "Initial inquiries",
+			"enquiries": "Requests",
 			"sessions": {
 				"large": "My consultations",
+				"nav": "Chats",
 				"small": "Messages"
 			}
 		},
+		"activity": "Activity",
 		"language": "Language",
 		"drafts": "Drafts",
+		"liveChat": "Live Chat",
 		"notifications": "Notifications",
 		"overview": "Overview",
 		"profile": "Profile",
+		"myProfile": "My profile",
 		"tools": "My tools"
 	},
 	"notifications": {
@@ -2205,10 +2209,11 @@
 				"title": "Calendar"
 			},
 			"chips": {
-				"neu": "New",
+				"neu": "Unread",
 				"oneToOne": "1-1 counseling",
 				"liveChat": "Live chat",
-				"groups": "Groups"
+				"groups": "Groups",
+				"supervision": "Supervision"
 			},
 			"emptyFilterResult": "No consultations match your search or filters."
 		},

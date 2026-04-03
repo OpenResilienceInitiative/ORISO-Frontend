@@ -11,6 +11,303 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 		position: relative;
 		z-index: 1;
 
+		&--figma-consultant {
+			@include breakpoint($fromLarge) {
+				border-right: 2px solid #fff;
+				/* Symmetric padding: keeps icon column visually centered (badges don’t pull layout) */
+				padding: 16px;
+				display: flex;
+				flex-direction: column;
+				min-height: 0;
+				overflow-x: visible;
+				overflow-y: hidden;
+
+				.navigation__itemContainer {
+					align-items: center;
+					width: 100%;
+					padding: 0;
+					flex: 1 1 auto;
+					min-height: 0;
+					overflow-x: visible;
+					overflow-y: hidden;
+					max-height: none;
+				}
+
+				.navigation__item__top {
+					width: 100%;
+					gap: 8px;
+					align-items: center;
+					flex: 0 1 auto;
+					min-height: 0;
+				}
+
+				.navigation__item__bottom {
+					width: 100%;
+					gap: 8px;
+					align-items: center;
+					margin-top: auto;
+					padding-top: 12px;
+					flex: 0 0 auto;
+				}
+
+				/* Shrink to icon+label; absolute badges don’t widen the flex item */
+				.navigation__item:not(.navigation__item__language) {
+					width: auto;
+					max-width: 100%;
+					align-self: center;
+				}
+
+				.navigation__item__language {
+					width: 100%;
+					max-width: 100%;
+					align-self: stretch;
+				}
+
+				.navigation__item {
+					height: auto;
+					min-height: 0;
+					flex-direction: column;
+					align-items: center;
+					justify-content: flex-start;
+					color: #000;
+					background: transparent !important;
+					border-radius: 0;
+					margin: 0;
+					padding: 0;
+					gap: 4px;
+					overflow: visible;
+
+					&:hover {
+						background: transparent !important;
+						color: #000;
+					}
+				}
+
+				.navigation__title--figma {
+					display: block !important;
+					font-family: 'Roboto', $font-family-sans-serif, sans-serif;
+					font-size: 11px;
+					line-height: 1;
+					color: #000;
+					font-weight: 400;
+					text-align: center;
+					width: max-content;
+					max-width: 100%;
+					margin-left: auto;
+					margin-right: auto;
+					padding: 0;
+				}
+
+				.navigation__item--active .navigation__title--figma {
+					color: #d32f2f;
+					font-weight: 700;
+				}
+
+				/* Fixed square “squircle” — match --live / --language (49px), not full strip width */
+				.navigation__icon-slot {
+					width: 49px;
+					height: 49px;
+					min-width: 49px;
+					min-height: 49px;
+					max-width: 49px;
+					max-height: 49px;
+					flex-shrink: 0;
+					box-sizing: border-box;
+					border-radius: 12px;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					padding: 8px;
+					margin: 0 auto;
+					position: relative;
+					overflow: visible;
+
+					&--row {
+						background: #dedede;
+					}
+
+					&--tile {
+						background: #dedede;
+					}
+
+					&--row.navigation__icon-slot--active {
+						background: rgba(211, 47, 47, 0.24);
+						border: 1px solid #d32f2f;
+					}
+
+					&--tile.navigation__icon-slot--active {
+						background: rgba(211, 47, 47, 0.24);
+						border: 1px solid #d32f2f;
+					}
+
+					&--live {
+						background: #000;
+						width: 49px;
+						max-width: 49px;
+						margin: 0 auto;
+						padding: 8px;
+					}
+
+					&--language {
+						width: 49px;
+						max-width: 49px;
+						margin: 0 auto;
+						background: #dedede;
+						padding: 8px;
+					}
+
+					&--logout {
+						width: fit-content;
+						margin: 0 auto;
+						background: #dedede;
+						padding: 8px 7px;
+						height: auto;
+						min-height: 48px;
+					}
+
+					&__inner {
+						position: relative;
+						z-index: 1;
+						display: flex;
+						align-items: center;
+						justify-content: center;
+						width: 32px;
+						height: 32px;
+					}
+				}
+
+				.navigation__icon-slot--tile .navigation__icon-slot__inner {
+					width: 32px;
+					height: 32px;
+				}
+
+				.navigation__icon__single {
+					width: 32px;
+					height: 32px;
+					flex-shrink: 0;
+					color: #1c1b1f;
+					display: block;
+
+					&--drafts-figma {
+						width: 22px;
+						height: 22px;
+					}
+
+					&--on-dark {
+						color: #fff;
+						width: 29px;
+						height: 25px;
+					}
+				}
+
+				.navigation__globe-svg {
+					width: 24px;
+					height: 24px;
+					color: #1c1b1f;
+				}
+
+				.navigation__item--active.navigation__item--nav-row
+					.navigation__icon__single,
+				.navigation__icon-slot--row.navigation__icon-slot--active
+					.navigation__icon__single {
+					color: #cc1e1c;
+				}
+
+				.navigation__item--active.navigation__item--nav-tile
+					.navigation__icon__single {
+					color: #cc1e1c;
+				}
+
+				.navigation__icon-slot--row .navigation__icon__outline {
+					display: block;
+					color: #1c1b1f;
+					fill: currentColor;
+				}
+
+				.navigation__icon-slot--row .navigation__icon__filled {
+					display: none;
+				}
+
+				.navigation__item--active
+					.navigation__icon-slot--row
+					.navigation__icon__outline {
+					display: none;
+				}
+
+				.navigation__item--active
+					.navigation__icon-slot--row
+					.navigation__icon__filled {
+					display: block;
+					color: #cc1e1c;
+					fill: currentColor;
+				}
+
+				.navigation__item--nav-language .select__wrapper {
+					width: 100%;
+					justify-content: center;
+				}
+
+				.navigation__item--nav-language
+					.localeSwitch__leadingIconOverride {
+					display: flex;
+					align-items: center;
+					justify-content: center;
+				}
+
+				/* Badge: corner dot, half-in/half-out; position:absolute doesn’t affect flex centering */
+				.navigation__icon-slot .navigation__item__count--figma {
+					color: #fff;
+					background-color: #000;
+					outline: none;
+					border: none;
+					box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+					top: 0;
+					right: 0;
+					left: auto;
+					transform: translate(50%, -50%);
+					min-width: 18px;
+					height: 18px;
+					border-radius: 999px;
+					padding: 0;
+					font-size: 0;
+					font-weight: 700;
+					line-height: 1;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					z-index: 2;
+				}
+
+				.navigation__icon-slot
+					.navigation__item__count--figma.navigation__item__count--double {
+					min-width: 22px;
+					height: 18px;
+					padding: 0 4px;
+				}
+
+				.navigation__icon-slot
+					.navigation__item__count--figma.navigation__item__count--initial {
+					transform: translate(50%, -50%) scale(0);
+				}
+
+				.navigation__icon-slot
+					.navigation__item__count--figma.navigation__item__count--reanimate {
+					transform: translate(50%, -50%) scale(1);
+				}
+
+				/* Exponent-style digit (raised) inside the dot */
+				.navigation__item__count__sup {
+					display: block;
+					font-size: 9px;
+					line-height: 1;
+					font-weight: 700;
+					color: inherit;
+					transform: translateY(-1px) scale(0.92);
+					transform-origin: center bottom;
+				}
+			}
+		}
+
 		&--mobileHidden {
 			display: none !important;
 
@@ -37,6 +334,9 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 			max-width: none;
 			padding: $grid-base-two 0;
 			gap: 0;
+			/* Avoid inner scrollbar on desktop; column should fit the shell */
+			overflow-y: hidden;
+			overflow-x: hidden;
 		}
 	}
 
@@ -144,7 +444,7 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 			@include breakpoint($fromLarge) {
 				display: flex !important; /* Force display with important */
 			}
-			
+
 			.select__wrapper {
 				display: flex;
 				align-items: center;
@@ -204,7 +504,7 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 			@include breakpoint($fromLarge) {
 				background: rgba(211, 47, 47, 0.18);
 			}
-			
+
 			color: #d32f2f;
 			.navigation__icon__filled {
 				display: block;
@@ -232,7 +532,7 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 			transform: scale(0);
 			z-index: -1;
 			transition: transform var(--transition-duration) ease;
-			
+
 			@include breakpoint($fromLarge) {
 				display: none;
 			}
@@ -242,7 +542,7 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 			@include breakpoint($fromLarge) {
 				background: rgba(211, 47, 47, 0.24);
 			}
-			
+
 			.navigation__icon__background::after {
 				transform: scale(1);
 			}
@@ -255,7 +555,7 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 			.navigation__icon__filled {
 				display: block;
 				fill: #d32f2f;
-				
+
 				@include breakpoint($fromLarge) {
 					fill: #d32f2f;
 				}

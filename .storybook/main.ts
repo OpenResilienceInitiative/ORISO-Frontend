@@ -1,7 +1,29 @@
 import type { StorybookConfig } from '@storybook/react-webpack5';
 import * as webpackConfigFactory from '../config/webpack.config';
+import { createRequire } from 'node:module';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { Configuration } from 'webpack';
 import webpack from 'webpack';
+
+const projectRoot = path.join(
+	path.dirname(fileURLToPath(import.meta.url)),
+	'..'
+);
+const projectNodeModules = path.join(projectRoot, 'node_modules');
+const requireProject = createRequire(path.join(projectRoot, 'package.json'));
+
+const absolutizeResolveModule = (dir: string) =>
+	dir === 'node_modules'
+		? projectNodeModules
+		: path.isAbsolute(dir)
+			? dir
+			: path.join(projectRoot, dir);
+
+/** Storybook 7 only auto-switches this shim for react-dom@18; React 19 needs the createRoot-based shim. */
+const reactDomShimReact18 = requireProject.resolve(
+	'@storybook/react-dom-shim/dist/react-18'
+);
 
 const config: StorybookConfig = {
 	stories: ['../src/**/*.stories.@(js|jsx|ts|tsx)'],
@@ -10,7 +32,7 @@ const config: StorybookConfig = {
 		'@storybook/addon-links',
 		'@storybook/addon-essentials',
 		'@storybook/addon-interactions',
-		'storybook-react-i18next'
+		'storybook-i18n'
 	],
 	framework: {
 		name: '@storybook/react-webpack5',
@@ -22,13 +44,22 @@ const config: StorybookConfig = {
 			configType.toLowerCase()
 		);
 
+		const resolvePlugins = (webpackConfig.resolve.plugins || []).filter(
+			(p: { constructor?: { name?: string } }) =>
+				p?.constructor?.name !== 'ModuleScopePlugin'
+		);
+
 		return {
 			...config,
 			resolve: {
 				...config.resolve,
 				modules: [
-					...webpackConfig.resolve.modules,
-					...config.resolve.modules
+					...(webpackConfig.resolve.modules || []).map(
+						absolutizeResolveModule
+					),
+					...(config.resolve.modules || []).map(
+						absolutizeResolveModule
+					)
 				],
 				extensions: [
 					...webpackConfig.resolve.extensions,
@@ -36,11 +67,21 @@ const config: StorybookConfig = {
 				],
 				alias: {
 					...webpackConfig.resolve.alias,
-					...config.resolve.alias
+					...config.resolve.alias,
+					'@storybook/react-dom-shim': reactDomShimReact18,
+					'react-dom$': requireProject.resolve('react-dom')
 				},
-				plugins: [...webpackConfig.resolve.plugins]
+				plugins: resolvePlugins
 			},
 			plugins: [
+				new webpack.NormalModuleReplacementPlugin(
+					/^react\/jsx-runtime$/,
+					requireProject.resolve('react/jsx-runtime')
+				),
+				new webpack.NormalModuleReplacementPlugin(
+					/^react\/jsx-dev-runtime$/,
+					requireProject.resolve('react/jsx-dev-runtime')
+				),
 				// Ignore intro.js CSS entirely in Storybook - it's not needed
 				new webpack.IgnorePlugin({
 					resourceRegExp: /intro\.js\/introjs\.css$/
