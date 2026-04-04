@@ -32,9 +32,17 @@ import { ReactComponent as DraftsNavigationIcon } from '../../resources/img/icon
 import {
 	NavInboxIcon,
 	NavChatsIcon,
+	NavChatsIconHover,
+	NavChatsIconFilled,
 	NavActivityIcon,
+	NavActivityIconHover,
+	NavActivityIconFilled,
 	NavDraftsIcon,
-	NavProfileIcon
+	NavDraftsIconHover,
+	NavDraftsIconFilled,
+	NavProfileIcon,
+	NavProfileIconHover,
+	NavProfileIconFilled
 } from './navigationSidebarIcons';
 import { ToolsList } from '../tools/ToolsList';
 import { OverviewPage } from '../../containers/overview/overview';
@@ -264,6 +272,8 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 			{
 				to: '/sessions/consultant/sessionView',
 				icon: NavChatsIcon,
+				iconHover: NavChatsIconHover,
+				iconFilled: NavChatsIconFilled,
 				navSlot: 'row' as const,
 				titleKeys: {
 					large: 'navigation.consultant.sessions.nav',
@@ -273,6 +283,8 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 			{
 				to: '/notifications',
 				icon: NavActivityIcon,
+				iconHover: NavActivityIconHover,
+				iconFilled: NavActivityIconFilled,
 				navSlot: 'tile' as const,
 				titleKeys: {
 					large: 'navigation.activity'
@@ -281,6 +293,8 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 			{
 				to: '/drafts',
 				icon: NavDraftsIcon,
+				iconHover: NavDraftsIconHover,
+				iconFilled: NavDraftsIconFilled,
 				navSlot: 'tile' as const,
 				titleKeys: {
 					large: 'navigation.drafts'
@@ -289,6 +303,8 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 			{
 				to: '/profile',
 				icon: NavProfileIcon,
+				iconHover: NavProfileIconHover,
+				iconFilled: NavProfileIconFilled,
 				navSlot: 'row' as const,
 				titleKeys: {
 					large: 'navigation.myProfile'

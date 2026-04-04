@@ -6,7 +6,12 @@ import { Headline } from '../headline/Headline';
 import './termsandconfitions.styles.scss';
 import { useTranslation } from 'react-i18next';
 import { OVERLAY_TERMS_AND_CONDITION } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
-import { UserDataContext, useTenant } from '../../globalState';
+import {
+	AUTHORITIES,
+	hasUserAuthority,
+	UserDataContext,
+	useTenant
+} from '../../globalState';
 import {
 	TenantDataInterface,
 	UserDataInterface
@@ -33,6 +38,10 @@ export const TermsAndConditions = () => {
 	const { t: translate } = useTranslation();
 	const tenantData = useTenant();
 	const { userData } = useContext(UserDataContext);
+	const isAnonymousAsker =
+		hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
+		!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
+		Boolean(userData?.userName?.startsWith('Anonymous-'));
 	let [viewState, setViewState] = useState({
 		headlineText: '',
 		mainText: '',
@@ -91,6 +100,9 @@ export const TermsAndConditions = () => {
 	];
 
 	useEffect(() => {
+		if (isAnonymousAsker) {
+			return;
+		}
 		// if (
 		// 	hasChanged(
 		// 		tenantData,
@@ -150,9 +162,9 @@ export const TermsAndConditions = () => {
 			});
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [viewState.userConfirmed]);
+	}, [isAnonymousAsker, viewState.userConfirmed]);
 
-	if (!viewState.showOverlay) {
+	if (isAnonymousAsker || !viewState.showOverlay) {
 		return null;
 	}
 
@@ -176,7 +188,9 @@ export const TermsAndConditions = () => {
 			.then(() => {
 				setViewState({ ...viewState, showOverlay: false });
 			})
-			.catch((error) => { /* console.log(error); */ });
+			.catch((error) => {
+				/* console.log(error); */
+			});
 	};
 
 	return (

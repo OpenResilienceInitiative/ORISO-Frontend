@@ -16,6 +16,7 @@ import {
 	AUTHORITIES,
 	hasUserAuthority
 } from '../../globalState';
+import { useResponsive } from '../../hooks/useResponsive';
 import { useTranslation } from 'react-i18next';
 import './notificationsCenter.styles';
 
@@ -91,6 +92,17 @@ const resolveThreadRootId = (item: any): string | null => {
 	return threadRootId ? decodeURIComponent(threadRootId) : null;
 };
 
+const toNonEmbeddedPath = (path?: string | null): string | null => {
+	if (!path) {
+		return null;
+	}
+	const [basePath, queryString = ''] = String(path).split('?');
+	const query = new URLSearchParams(queryString);
+	query.delete('embeddedNotifications');
+	const finalQuery = query.toString();
+	return `${basePath}${finalQuery ? `?${finalQuery}` : ''}`;
+};
+
 type ChatPreviewMessage = {
 	id: string;
 	sender: string;
@@ -103,6 +115,7 @@ type ChatPreviewMessage = {
 export const NotificationsCenter = () => {
 	const { t: translate, i18n } = useTranslation();
 	const history = useHistory();
+	const { untilL } = useResponsive();
 	const { userData } = useContext(UserDataContext);
 	const {
 		notificationFeed,
@@ -135,8 +148,9 @@ export const NotificationsCenter = () => {
 
 	const selectedNotification = useMemo(
 		() =>
-			notificationFeed.find((item) => item.id === selectedNotificationId) ||
-			null,
+			notificationFeed.find(
+				(item) => item.id === selectedNotificationId
+			) || null,
 		[notificationFeed, selectedNotificationId]
 	);
 	const selectedNotificationCategory = useMemo(
@@ -166,7 +180,7 @@ export const NotificationsCenter = () => {
 						selectedThreadRootId
 							? `?threadRootId=${encodeURIComponent(selectedThreadRootId)}`
 							: ''
-				  }`
+					}`
 				: null;
 		if (!basePath) {
 			return null;
@@ -217,7 +231,8 @@ export const NotificationsCenter = () => {
 						const parsed = parseMessagePrefixes(body);
 						const cleaned = parsed.cleanedMessage;
 						const fallbackText =
-							msg?.content?.msgtype && msg.content.msgtype !== 'm.text'
+							msg?.content?.msgtype &&
+							msg.content.msgtype !== 'm.text'
 								? 'Attachment'
 								: '';
 						return {
@@ -285,34 +300,55 @@ export const NotificationsCenter = () => {
 		return null;
 	};
 
-	const openNotification = (id: string) => {
-		setSelectedNotificationId(id);
-		markNotificationAsRead(id);
-	};
-
 	const getDefaultSessionsPath = () =>
 		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
 			? '/sessions/consultant/sessionView'
 			: '/sessions/user/view';
 
+	const openNotification = (item: (typeof notificationFeed)[number]) => {
+		markNotificationAsRead(item.id);
+		if (untilL) {
+			const directPath = toNonEmbeddedPath(item.actionPath);
+			if (directPath) {
+				history.push(directPath);
+				return;
+			}
+			history.push(getDefaultSessionsPath());
+			return;
+		}
+		setSelectedNotificationId(item.id);
+	};
+
 	const handleOpenAction = () => {
 		if (!selectedNotification) return;
-		const nextUnreadId = getNextNotificationId(selectedNotification.id, true);
+		const nextUnreadId = getNextNotificationId(
+			selectedNotification.id,
+			true
+		);
 		markNotificationAsRead(selectedNotification.id);
 		if (nextUnreadId && nextUnreadId !== selectedNotification.id) {
 			setSelectedNotificationId(nextUnreadId);
 		}
-		if (selectedNotification.actionPath) {
-			history.push(selectedNotification.actionPath);
+		const directPath = toNonEmbeddedPath(selectedNotification.actionPath);
+		if (directPath) {
+			history.push(directPath);
 			return;
 		}
 		history.push(getDefaultSessionsPath());
 	};
 
 	const handleNextNotification = () => {
-		const nextUnreadId = getNextNotificationId(selectedNotificationId, true);
+		const nextUnreadId = getNextNotificationId(
+			selectedNotificationId,
+			true
+		);
 		if (nextUnreadId) {
-			openNotification(nextUnreadId);
+			const nextItem = notificationFeed.find(
+				(item) => item.id === nextUnreadId
+			);
+			if (nextItem) {
+				openNotification(nextItem);
+			}
 		}
 	};
 
@@ -402,68 +438,68 @@ export const NotificationsCenter = () => {
 							)}
 						</div>
 					) : (
-						notificationFeed.map((item) => (
+						notificationFeed.map((item) =>
 							(() => {
 								const category = getNotificationCategory(item);
 								const isMessage = category === 'message';
 								return (
-							<button
-								type="button"
-								key={item.id}
-								className={`notificationsCenter__listItem ${
-									selectedNotificationId === item.id
-										? 'notificationsCenter__listItem--active'
-										: ''
-								}`}
-								onClick={() => openNotification(item.id)}
-							>
-								<div className="notificationsCenter__listItemTagRow">
-									<span
-										className={`notificationsCenter__listItemTag ${
-											isMessage
-												? 'notificationsCenter__listItemTag--message'
-												: 'notificationsCenter__listItemTag--system'
+									<button
+										type="button"
+										key={item.id}
+										className={`notificationsCenter__listItem ${
+											selectedNotificationId === item.id
+												? 'notificationsCenter__listItem--active'
+												: ''
 										}`}
+										onClick={() => openNotification(item)}
 									>
-										{isMessage
-											? translate(
-													'notifications.center.messageTag',
-													'Message notification'
-											  )
-											: translate(
-													'notifications.center.systemTag',
-													'System notification'
-											  )}
-									</span>
-								</div>
-								<div className="notificationsCenter__listItemBody">
-									<div className="notificationsCenter__listItemIconCircle">
-										<NotificationBellIcon />
-									</div>
-									<div className="notificationsCenter__listItemContent">
-										<div className="notificationsCenter__listItemHeader">
-											<span className="notificationsCenter__listItemTitle">
-												{item.title}
-											</span>
-											<span className="notificationsCenter__listItemTime">
-												{formatRelativeTime(
-													item.createdAt,
-													i18n.language
-												)}
+										<div className="notificationsCenter__listItemTagRow">
+											<span
+												className={`notificationsCenter__listItemTag ${
+													isMessage
+														? 'notificationsCenter__listItemTag--message'
+														: 'notificationsCenter__listItemTag--system'
+												}`}
+											>
+												{isMessage
+													? translate(
+															'notifications.center.messageTag',
+															'Message notification'
+														)
+													: translate(
+															'notifications.center.systemTag',
+															'System notification'
+														)}
 											</span>
 										</div>
-										<div className="notificationsCenter__listItemText">
-											{item.text}
+										<div className="notificationsCenter__listItemBody">
+											<div className="notificationsCenter__listItemIconCircle">
+												<NotificationBellIcon />
+											</div>
+											<div className="notificationsCenter__listItemContent">
+												<div className="notificationsCenter__listItemHeader">
+													<span className="notificationsCenter__listItemTitle">
+														{item.title}
+													</span>
+													<span className="notificationsCenter__listItemTime">
+														{formatRelativeTime(
+															item.createdAt,
+															i18n.language
+														)}
+													</span>
+												</div>
+												<div className="notificationsCenter__listItemText">
+													{item.text}
+												</div>
+											</div>
 										</div>
-									</div>
-								</div>
-								{!item.readAt && (
-									<span className="notificationsCenter__listItemUnread" />
-								)}
-							</button>
+										{!item.readAt && (
+											<span className="notificationsCenter__listItemUnread" />
+										)}
+									</button>
 								);
 							})()
-						))
+						)
 					)}
 				</div>
 				<div
@@ -516,115 +552,125 @@ export const NotificationsCenter = () => {
 							)}
 							{canShowChatPreview && !embeddedChatPath && (
 								<div className="notificationsCenter__chatPreview">
-								<div className="notificationsCenter__chatPreviewHeader">
-									<div className="notificationsCenter__chatPreviewTitle">
-										{translate(
-											'notifications.center.chatPreview',
-											'Chat preview'
+									<div className="notificationsCenter__chatPreviewHeader">
+										<div className="notificationsCenter__chatPreviewTitle">
+											{translate(
+												'notifications.center.chatPreview',
+												'Chat preview'
+											)}
+										</div>
+										{selectedSessionId && (
+											<div className="notificationsCenter__chatPreviewMeta">
+												{`#${selectedSessionId}`}
+											</div>
 										)}
 									</div>
-									{selectedSessionId && (
-										<div className="notificationsCenter__chatPreviewMeta">
-											{`#${selectedSessionId}`}
-										</div>
-									)}
-								</div>
-								<div className="notificationsCenter__chatPreviewBody">
-									{!selectedSessionId ? (
-										<div className="notificationsCenter__chatPreviewEmpty">
-											{translate(
-												'notifications.center.chatPreviewNoSession',
-												'No chat linked to this notification.'
-											)}
-										</div>
-									) : chatPreviewLoading &&
-									  chatPreviewMessages.length === 0 ? (
-										<div className="notificationsCenter__chatPreviewEmpty">
-											{translate(
-												'notifications.center.chatPreviewLoading',
-												'Loading chat preview...'
-											)}
-										</div>
-									) : chatPreviewMessages.length === 0 ? (
-										<div className="notificationsCenter__chatPreviewEmpty">
-											{translate(
-												'notifications.center.chatPreviewEmpty',
-												'No visible messages yet.'
-											)}
-										</div>
-									) : (
-										chatPreviewMessages.map((entry) => (
-											<div
-												key={entry.id}
-												className="notificationsCenter__chatPreviewMessage"
-											>
-												<div className="notificationsCenter__chatPreviewMessageAvatar">
-													<UserAvatar
-														username={entry.sender}
-														displayName={entry.sender}
-														userId={entry.sender}
-														size="28px"
-													/>
-												</div>
-												<div className="notificationsCenter__chatPreviewMessageContent">
-													<span className="notificationsCenter__chatPreviewSender">
-														{entry.sender}
-													</span>
-													<span className="notificationsCenter__chatPreviewText">
-														{entry.text}
-													</span>
-												</div>
+									<div className="notificationsCenter__chatPreviewBody">
+										{!selectedSessionId ? (
+											<div className="notificationsCenter__chatPreviewEmpty">
+												{translate(
+													'notifications.center.chatPreviewNoSession',
+													'No chat linked to this notification.'
+												)}
 											</div>
-										))
-									)}
-								</div>
-								<div className="notificationsCenter__chatComposer">
-									<input
-										type="text"
-										className="notificationsCenter__chatComposerInput"
-										placeholder={
-											selectedThreadRootId
-												? translate(
-														'notifications.center.replyInThread',
-														'Reply in this thread...'
-												  )
-												: translate(
-														'notifications.center.replyInChat',
-														'Write a message...'
-												  )
-										}
-										value={chatReplyText}
-										onChange={(event) =>
-											setChatReplyText(event.target.value)
-										}
-										onKeyDown={(event) => {
-											if (event.key === 'Enter') {
-												event.preventDefault();
-												void handleSendChatReply();
+										) : chatPreviewLoading &&
+										  chatPreviewMessages.length === 0 ? (
+											<div className="notificationsCenter__chatPreviewEmpty">
+												{translate(
+													'notifications.center.chatPreviewLoading',
+													'Loading chat preview...'
+												)}
+											</div>
+										) : chatPreviewMessages.length === 0 ? (
+											<div className="notificationsCenter__chatPreviewEmpty">
+												{translate(
+													'notifications.center.chatPreviewEmpty',
+													'No visible messages yet.'
+												)}
+											</div>
+										) : (
+											chatPreviewMessages.map((entry) => (
+												<div
+													key={entry.id}
+													className="notificationsCenter__chatPreviewMessage"
+												>
+													<div className="notificationsCenter__chatPreviewMessageAvatar">
+														<UserAvatar
+															username={
+																entry.sender
+															}
+															displayName={
+																entry.sender
+															}
+															userId={
+																entry.sender
+															}
+															size="28px"
+														/>
+													</div>
+													<div className="notificationsCenter__chatPreviewMessageContent">
+														<span className="notificationsCenter__chatPreviewSender">
+															{entry.sender}
+														</span>
+														<span className="notificationsCenter__chatPreviewText">
+															{entry.text}
+														</span>
+													</div>
+												</div>
+											))
+										)}
+									</div>
+									<div className="notificationsCenter__chatComposer">
+										<input
+											type="text"
+											className="notificationsCenter__chatComposerInput"
+											placeholder={
+												selectedThreadRootId
+													? translate(
+															'notifications.center.replyInThread',
+															'Reply in this thread...'
+														)
+													: translate(
+															'notifications.center.replyInChat',
+															'Write a message...'
+														)
 											}
-										}}
-									/>
-									<button
-										type="button"
-										className="notificationsCenter__chatComposerSend"
-										onClick={() => void handleSendChatReply()}
-										disabled={
-											isSendingChatReply ||
-											!chatReplyText.trim()
-										}
-									>
-										{isSendingChatReply
-											? translate(
-													'notifications.center.sending',
-													'Sending...'
-											  )
-											: translate(
-													'notifications.center.send',
-													'Send'
-											  )}
-									</button>
+											value={chatReplyText}
+											onChange={(event) =>
+												setChatReplyText(
+													event.target.value
+												)
+											}
+											onKeyDown={(event) => {
+												if (event.key === 'Enter') {
+													event.preventDefault();
+													void handleSendChatReply();
+												}
+											}}
+										/>
+										<button
+											type="button"
+											className="notificationsCenter__chatComposerSend"
+											onClick={() =>
+												void handleSendChatReply()
+											}
+											disabled={
+												isSendingChatReply ||
+												!chatReplyText.trim()
+											}
+										>
+											{isSendingChatReply
+												? translate(
+														'notifications.center.sending',
+														'Sending...'
+													)
+												: translate(
+														'notifications.center.send',
+														'Send'
+													)}
+										</button>
+									</div>
 								</div>
-							</div>
 							)}
 						</div>
 					) : (

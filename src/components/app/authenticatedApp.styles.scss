@@ -80,8 +80,7 @@ a {
 		/* Wider track + symmetric nav padding so corner badges aren’t clipped */
 		&--figma-consultant {
 			@include breakpoint($fromLarge) {
-				flex: 0 0 120px;
-				min-width: 120px;
+				flex: 0 0 1;
 			}
 		}
 	}
@@ -131,6 +130,10 @@ a {
 			display: flex;
 			flex-direction: row;
 			min-height: 0;
+			@include breakpoint($fromLarge) {
+				gap: 12px;
+				padding-right: 12px;
+			}
 		}
 
 		&__list {

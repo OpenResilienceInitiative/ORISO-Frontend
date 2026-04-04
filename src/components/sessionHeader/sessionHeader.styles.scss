@@ -10,8 +10,11 @@ $iconSize: 24px;
 	min-height: 75px;
 	background-color: #fff;
 	box-sizing: border-box;
-	margin-left: 40px;
-	margin-right: 40px;
+
+	@media (min-width: 768px) {
+		margin-left: 40px;
+		margin-right: 40px;
+	}
 
 	@include breakpoint($fromMedium) {
 		padding: 10px 18px 6px;
@@ -32,7 +35,7 @@ $iconSize: 24px;
 		box-sizing: border-box;
 		margin-left: 0;
 		padding-bottom: 10px;
-		padding-top: 30px;
+		padding-top: 10px;
 		border-bottom: 1px solid #ffd1d1;
 	}
 
@@ -44,7 +47,6 @@ $iconSize: 24px;
 			text-align: center;
 			margin-left: -36px;
 			cursor: auto;
-			
 
 			@include breakpoint($fromLarge) {
 				text-align: left;
@@ -198,7 +200,7 @@ $iconSize: 24px;
 			font-size: 22px;
 			font-weight: 500;
 			line-height: 1;
-			
+
 			// On mobile: allow text to wrap to 2 lines instead of truncating
 			// This prevents it from taking too much horizontal space
 			@media screen and (max-width: 899px) {
@@ -213,7 +215,9 @@ $iconSize: 24px;
 				-webkit-line-clamp: 2; // Limit to 2 lines
 				-webkit-box-orient: vertical;
 				max-height: calc(1.3em * 2); // 2 lines max
-				max-width: calc(100% - 50px); // Leave space for icon (36px) + gap (8px) + padding
+				max-width: calc(
+					100% - 50px
+				); // Leave space for icon (36px) + gap (8px) + padding
 			}
 		}
 	}
@@ -237,7 +241,7 @@ $iconSize: 24px;
 			height: 100%;
 			fill: var(--skin-color-default, $secondary) !important;
 			color: var(--skin-color-default, $secondary) !important;
-			
+
 			path {
 				fill: var(--skin-color-default, $secondary) !important;
 			}
@@ -501,6 +505,10 @@ $iconSize: 24px;
 		align-items: center;
 		margin-right: 4px;
 		min-width: 40px;
+
+		@media screen and (max-width: 899px) {
+			display: none;
+		}
 	}
 
 	&__memberStackPlus {

@@ -961,27 +961,7 @@ export const SessionListItemComponent = ({
 										{topic.name}
 									</div>
 								)}
-								<div className="sessionsListItem__consultingType">
-									{!isAsker && !autoSelectPostcode ? (
-										<div
-											className="sessionsListItem__anonymousTag"
-											style={{
-												display: 'inline-block',
-												padding: '2px 8px',
-												backgroundColor: '#9e9e9e',
-												color: 'white',
-												borderRadius: '12px',
-												fontSize: '12px',
-												fontWeight: '500'
-											}}
-										>
-											{translate(
-												'sessionList.anonymous.tag',
-												'Anonymous'
-											)}
-										</div>
-									) : null}
-								</div>
+								<div className="sessionsListItem__consultingType" />
 							</>
 						) : !isAsker && !autoSelectPostcode && topic?.name ? (
 							<div className="sessionsListItem__topicPostcodeGroup">

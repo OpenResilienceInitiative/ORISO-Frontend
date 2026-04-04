@@ -424,13 +424,17 @@
 	}
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1200px) {
 	.notificationsCenter {
 		padding: 16px;
 
 		&__content {
 			grid-template-columns: 1fr;
 			height: auto;
+		}
+
+		&__detail {
+			display: none;
 		}
 	}
 }
@@ -440,6 +444,7 @@
 		width: 100%;
 		max-width: 1240px;
 		height: min(70vh, 780px);
+		height: min(70dvh, 780px);
 		border: 1px solid #f4d1d7;
 		border-radius: 12px;
 		background: #fff;
@@ -456,7 +461,6 @@
 }
 
 .notificationsCenter {
-
 	&__nextButton:disabled {
 		opacity: 0.45;
 		cursor: not-allowed;
@@ -640,6 +644,23 @@
 		&__content {
 			grid-template-columns: 1fr;
 			height: auto;
+		}
+
+		&__detail {
+			align-items: stretch;
+			justify-content: flex-start;
+		}
+
+		&__detailCard {
+			width: 100%;
+			max-width: none;
+			padding: 14px;
+			align-items: stretch;
+			text-align: left;
+		}
+
+		&__embeddedSession {
+			height: min(62dvh, 560px);
 		}
 	}
 }

@@ -256,15 +256,13 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 
 				/* Badge: corner dot, half-in/half-out; position:absolute doesn’t affect flex centering */
 				.navigation__icon-slot .navigation__item__count--figma {
-					color: #fff;
-					background-color: #000;
+					color: #d32f2f;
+					background-color: #fff;
 					outline: none;
-					border: none;
-					box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
-					top: 0;
-					right: 0;
+					border: 2px solid #d32f2f;
+					box-shadow: none;
 					left: auto;
-					transform: translate(50%, -50%);
+					transform: none;
 					min-width: 18px;
 					height: 18px;
 					border-radius: 999px;
@@ -276,6 +274,8 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 					align-items: center;
 					justify-content: center;
 					z-index: 2;
+					font-family:
+						Inter, 'Roboto', $font-family-sans-serif, sans-serif;
 				}
 
 				.navigation__icon-slot
@@ -287,23 +287,23 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 
 				.navigation__icon-slot
 					.navigation__item__count--figma.navigation__item__count--initial {
-					transform: translate(50%, -50%) scale(0);
+					transform: scale(0);
 				}
 
 				.navigation__icon-slot
 					.navigation__item__count--figma.navigation__item__count--reanimate {
-					transform: translate(50%, -50%) scale(1);
+					transform: scale(1);
 				}
 
 				/* Exponent-style digit (raised) inside the dot */
 				.navigation__item__count__sup {
 					display: block;
-					font-size: 9px;
+					font-size: 10px;
 					line-height: 1;
 					font-weight: 700;
 					color: inherit;
-					transform: translateY(-1px) scale(0.92);
-					transform-origin: center bottom;
+					transform: none;
+					transform-origin: center center;
 				}
 			}
 		}

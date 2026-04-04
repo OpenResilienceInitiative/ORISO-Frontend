@@ -13,7 +13,11 @@ import { hasVideoCallFeature } from '../../utils/videoCallHelpers';
 import {
 	NavLiveChatIcon,
 	NavGlobeIcon,
-	NavLogoutIcon
+	NavGlobeIconHover,
+	NavGlobeIconFilled,
+	NavLogoutIcon,
+	NavLogoutIconHover,
+	NavLogoutIconFilled
 } from './navigationSidebarIcons';
 import {
 	UserDataContext,
@@ -96,6 +100,11 @@ export const NavigationBar = ({
 		(location.pathname === videoConferencePath ||
 			location.pathname.startsWith(`${videoConferencePath}/`));
 	const [animateNavIcon, setAnimateNavIcon] = useState(false);
+	const [hoveredNavItem, setHoveredNavItem] = useState<string | null>(null);
+	const [isLanguageSelected, setIsLanguageSelected] = useState(false);
+	const [isLogoutSelected, setIsLogoutSelected] = useState(false);
+	const isLanguageHovered = hoveredNavItem === '__language__';
+	const isLogoutHovered = hoveredNavItem === '__logout__';
 
 	useEffect(() => {
 		initNavigationHandler();
@@ -295,12 +304,14 @@ export const NavigationBar = ({
 							)
 							.map((item, index) => {
 								const Icon = item?.icon;
+								const IconHover = item?.iconHover;
 								const IconFilled = item?.iconFilled;
 								const dualIcon = Boolean(IconFilled);
 								const useFigmaSlot =
 									figmaConsultantNav && item.navSlot;
 								const isActive =
 									location.pathname.indexOf(item.to) !== -1;
+								const isHovered = hoveredNavItem === item.to;
 								const unreadCount = Number(
 									pathsToShowUnreadMessageNotification[
 										item.to
@@ -311,7 +322,24 @@ export const NavigationBar = ({
 										pathsToShowUnreadMessageNotification
 									).includes(item.to) && unreadCount > 0;
 								const label = translate(item.titleKeys.large);
-								const iconBlock = dualIcon ? (
+								const FigmaStateIcon = isActive
+									? IconFilled || Icon
+									: isHovered
+										? IconHover || Icon
+										: Icon;
+								const iconBlock = useFigmaSlot ? (
+									FigmaStateIcon ? (
+										<FigmaStateIcon
+											title={label}
+											aria-label={label}
+											className={clsx(
+												'navigation__icon__single',
+												item.to === '/drafts' &&
+													'navigation__icon__single--drafts-figma'
+											)}
+										/>
+									) : null
+								) : dualIcon ? (
 									<>
 										{Icon && (
 											<Icon
@@ -377,6 +405,16 @@ export const NavigationBar = ({
 												`navigation__item--nav-${item.navSlot}`
 										)}
 										to={item.to}
+										onMouseEnter={() =>
+											setHoveredNavItem(item.to)
+										}
+										onMouseLeave={() =>
+											setHoveredNavItem(null)
+										}
+										onFocus={() =>
+											setHoveredNavItem(item.to)
+										}
+										onBlur={() => setHoveredNavItem(null)}
 										onKeyDown={(e) =>
 											handleKeyDownMenu(e, index)
 										}
@@ -494,6 +532,18 @@ export const NavigationBar = ({
 								ref_local.current = el;
 							}}
 							onKeyDown={(e) => handleKeyDownMenu(e, null)}
+							onMouseEnter={() =>
+								setHoveredNavItem('__language__')
+							}
+							onMouseLeave={() => setHoveredNavItem(null)}
+							onFocus={() => {
+								setHoveredNavItem('__language__');
+								setIsLanguageSelected(true);
+							}}
+							onBlur={() => {
+								setHoveredNavItem(null);
+								setIsLanguageSelected(false);
+							}}
 							id="local-switch-wrapper"
 						>
 							{figmaConsultantNav ? (
@@ -514,7 +564,13 @@ export const NavigationBar = ({
 											}
 											isInsideMenu={true}
 											leadingIconOverride={
-												<NavGlobeIcon className="navigation__globe-svg" />
+												isLanguageSelected ? (
+													<NavGlobeIconFilled className="navigation__globe-svg" />
+												) : isLanguageHovered ? (
+													<NavGlobeIconHover className="navigation__globe-svg" />
+												) : (
+													<NavGlobeIcon className="navigation__globe-svg" />
+												)
 											}
 										/>
 									</div>
@@ -555,15 +611,43 @@ export const NavigationBar = ({
 							ref_logout.current = el;
 						}}
 						onKeyDown={(e) => handleKeyDownMenu(e, null)}
+						onMouseEnter={() => setHoveredNavItem('__logout__')}
+						onMouseLeave={() => setHoveredNavItem(null)}
+						onFocus={() => {
+							setHoveredNavItem('__logout__');
+							setIsLogoutSelected(true);
+						}}
+						onBlur={() => {
+							setHoveredNavItem(null);
+							setIsLogoutSelected(false);
+						}}
 					>
 						{figmaConsultantNav ? (
 							<>
 								<div className="navigation__icon-slot navigation__icon-slot--logout">
 									<div className="navigation__icon-slot__inner">
-										<NavLogoutIcon
-											className="navigation__icon__single"
-											aria-label={translate('app.logout')}
-										/>
+										{isLogoutSelected ? (
+											<NavLogoutIconFilled
+												className="navigation__icon__single"
+												aria-label={translate(
+													'app.logout'
+												)}
+											/>
+										) : isLogoutHovered ? (
+											<NavLogoutIconHover
+												className="navigation__icon__single"
+												aria-label={translate(
+													'app.logout'
+												)}
+											/>
+										) : (
+											<NavLogoutIcon
+												className="navigation__icon__single"
+												aria-label={translate(
+													'app.logout'
+												)}
+											/>
+										)}
 									</div>
 								</div>
 								<span className="navigation__title navigation__title--figma">

@@ -40,7 +40,8 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 		pointer-events: none;
 	}
 
-	.messageSubmit__wrapper--expanded .textarea__wrapper-send-message--expanded {
+	.messageSubmit__wrapper--expanded
+		.textarea__wrapper-send-message--expanded {
 		pointer-events: auto;
 	}
 
@@ -59,13 +60,12 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 		// On mobile, ensure no extra spacing and proper positioning
 		@media screen and (max-width: 899px) {
 			padding: 20px $grid-base-two;
-			padding-bottom: 20px;
-			position: fixed;
+			padding-bottom: calc(20px + env(safe-area-inset-bottom, 0));
+			position: absolute;
 			bottom: 0;
 			left: 0;
 			right: 0;
 			background-color: #ffffff;
-			padding-bottom: calc(20px + env(safe-area-inset-bottom, 0));
 		}
 
 		.checkbox {
@@ -133,6 +133,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 					max-width: none;
 					height: min(78vh, 760px);
 					max-height: calc(100vh - 96px);
+					max-height: calc(100dvh - 96px);
 					z-index: 4500;
 					box-shadow: 0 20px 70px rgba(0, 0, 0, 0.25) !important;
 					overflow: hidden;
@@ -216,7 +217,6 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			max-height: none;
 			min-height: 0;
 			transition: all 220ms ease;
-
 		}
 
 		&__wrapper-send-message--expanded .textarea__inputWrapper {
@@ -244,8 +244,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			border-radius: 30px 0 30px 30px; // sharper top-right corner
 			box-sizing: border-box;
 			position: relative;
-			
-			
+
 			// Active/focused state - red border
 			&:focus,
 			&:focus-visible,
@@ -329,7 +328,9 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			overflow-x: auto;
 			-ms-overflow-style: none;
 			scrollbar-width: none;
-			transition: opacity 180ms ease, transform 220ms ease;
+			transition:
+				opacity 180ms ease,
+				transform 220ms ease;
 
 			&::-webkit-scrollbar {
 				display: none;
@@ -446,7 +447,9 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			font-size: 18px;
 			line-height: 1;
 			border-radius: 8px;
-			transition: transform 160ms ease, background-color 160ms ease;
+			transition:
+				transform 160ms ease,
+				background-color 160ms ease;
 
 			&:hover {
 				transform: translateY(-1px) scale(1.06);
@@ -701,32 +704,56 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			opacity: 0.95;
 
 			&--left {
-				background-image: linear-gradient(currentColor, currentColor),
+				background-image:
+					linear-gradient(currentColor, currentColor),
 					linear-gradient(currentColor, currentColor),
 					linear-gradient(currentColor, currentColor),
 					linear-gradient(currentColor, currentColor);
-				background-size: 10px 2px, 7px 2px, 10px 2px, 8px 2px;
-				background-position: left 0 top 1px, left 0 top 5px, left 0 top 9px,
+				background-size:
+					10px 2px,
+					7px 2px,
+					10px 2px,
+					8px 2px;
+				background-position:
+					left 0 top 1px,
+					left 0 top 5px,
+					left 0 top 9px,
 					left 0 top 13px;
 			}
 
 			&--center {
-				background-image: linear-gradient(currentColor, currentColor),
+				background-image:
+					linear-gradient(currentColor, currentColor),
 					linear-gradient(currentColor, currentColor),
 					linear-gradient(currentColor, currentColor),
 					linear-gradient(currentColor, currentColor);
-				background-size: 10px 2px, 7px 2px, 10px 2px, 8px 2px;
-				background-position: center top 1px, center top 5px, center top 9px,
+				background-size:
+					10px 2px,
+					7px 2px,
+					10px 2px,
+					8px 2px;
+				background-position:
+					center top 1px,
+					center top 5px,
+					center top 9px,
 					center top 13px;
 			}
 
 			&--right {
-				background-image: linear-gradient(currentColor, currentColor),
+				background-image:
+					linear-gradient(currentColor, currentColor),
 					linear-gradient(currentColor, currentColor),
 					linear-gradient(currentColor, currentColor),
 					linear-gradient(currentColor, currentColor);
-				background-size: 10px 2px, 7px 2px, 10px 2px, 8px 2px;
-				background-position: right top 1px, right top 5px, right top 9px,
+				background-size:
+					10px 2px,
+					7px 2px,
+					10px 2px,
+					8px 2px;
+				background-position:
+					right top 1px,
+					right top 5px,
+					right top 9px,
 					right top 13px;
 			}
 		}
@@ -738,12 +765,20 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			background-repeat: no-repeat;
 			background-size: 14px 14px;
 			background-position: center;
-			background-image: linear-gradient(currentColor, currentColor),
+			background-image:
+				linear-gradient(currentColor, currentColor),
 				linear-gradient(currentColor, currentColor),
 				linear-gradient(currentColor, currentColor),
 				linear-gradient(currentColor, currentColor);
-			background-size: 2px 2px, 2px 2px, 9px 2px, 9px 2px;
-			background-position: left 0 top 3px, left 0 top 9px, right 0 top 3px,
+			background-size:
+				2px 2px,
+				2px 2px,
+				9px 2px,
+				9px 2px;
+			background-position:
+				left 0 top 3px,
+				left 0 top 9px,
+				right 0 top 3px,
 				right 0 top 9px;
 		}
 
@@ -798,10 +833,12 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			display: inline-flex;
 			align-items: center;
 			justify-content: center;
-			transition: background-color 0.6s ease, opacity 0.3s ease;
+			transition:
+				background-color 0.6s ease,
+				opacity 0.3s ease;
 			overflow: hidden;
 			position: relative;
-			
+
 			&--empty {
 				opacity: 1;
 			}
@@ -1042,7 +1079,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			border-radius: 0 24px 0 0;
 			border-top: $inputBorder;
 			border-right: $inputBorder;
-		
+
 			padding: $grid-base;
 			z-index: 10;
 
@@ -1109,7 +1146,6 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 					fill: $tertiary;
 				}
 			}
-
 		}
 
 		&__attachmentSelect--recording {
@@ -1498,7 +1534,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			cursor: pointer;
 			position: relative;
 			z-index: 1;
-			
+
 			// Remove focus outline
 			&:focus,
 			&:focus-visible,
@@ -1506,7 +1542,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				outline: none !important;
 			}
 		}
-		
+
 		// Remove focus outline from editor content
 		.public-DraftEditor-content {
 			&:focus,
@@ -1514,7 +1550,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				outline: none !important;
 			}
 		}
-		
+
 		.public-DraftEditorPlaceholder-root {
 			position: absolute;
 			color: $message-submit-interface-textarea-placeholder-color;
@@ -1525,11 +1561,11 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 		.public-DraftEditorPlaceholder-root {
 			padding: 14px $grid-base-five 14px $grid-base;
 		}
-		
+
 		// Custom cursor styling - red with space from text
 		.public-DraftEditor-content {
 			caret-color: #e53841; // Caritas red
-			
+
 			// Add space from text by adjusting left padding
 		}
 	}

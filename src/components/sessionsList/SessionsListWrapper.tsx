@@ -20,6 +20,9 @@ interface SessionsListWrapperProps {
 export const SessionsListWrapper = ({
 	sessionTypes
 }: SessionsListWrapperProps) => {
+	const ICON_ONLY_THRESHOLD = 420;
+	const SNAP_THRESHOLD = 360;
+	const MIN_WIDTH = 80;
 	const { t: translate } = useTranslation();
 	const { fixed: fixedLanguages } = useContext(LanguagesContext);
 	const { userData } = useContext(UserDataContext);
@@ -29,23 +32,19 @@ export const SessionsListWrapper = ({
 	const [sidebarWidth, setSidebarWidth] = useState<number>(() => {
 		const saved = localStorage.getItem('sessionsList_width');
 		const width = saved ? parseInt(saved, 10) : 380;
-		
+
 		// Snap to proper size if in awkward range (prevent text truncation)
-		const ICON_ONLY_THRESHOLD = 280; // Match ResizableHandle
-		const MIN_WIDTH = 80;
-		const SNAP_THRESHOLD = 220; // Match ResizableHandle
-		
 		if (width > MIN_WIDTH && width < ICON_ONLY_THRESHOLD) {
 			// Snap to appropriate size
 			return width < SNAP_THRESHOLD ? MIN_WIDTH : ICON_ONLY_THRESHOLD;
 		}
-		
+
 		return width;
 	});
-	
-	// Icon-only mode when sidebar is small
-	const isIconOnly = sidebarWidth < 280; // Match threshold
-	
+
+	// Switch a bit earlier so text layout never reaches the broken/truncated range.
+	const isIconOnly = sidebarWidth < ICON_ONLY_THRESHOLD;
+
 	const handleResize = useCallback((width: number) => {
 		setSidebarWidth(width);
 		localStorage.setItem('sessionsList_width', width.toString());
@@ -53,7 +52,7 @@ export const SessionsListWrapper = ({
 
 	if (hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)) {
 		return (
-			<div 
+			<div
 				className={`sessionsList__wrapper ${isIconOnly ? 'sessionsList__wrapper--iconOnly' : ''}`}
 				style={{ width: `${sidebarWidth}px`, position: 'relative' }}
 			>
@@ -78,12 +77,15 @@ export const SessionsListWrapper = ({
 	}
 
 	return (
-		<div 
+		<div
 			className={`sessionsList__wrapper ${isIconOnly ? 'sessionsList__wrapper--iconOnly' : ''}`}
 			style={{ width: `${sidebarWidth}px`, position: 'relative' }}
 		>
 			{type !== SESSION_LIST_TYPES.MY_SESSION && (
-				<div className="sessionsList__header" data-cy="session-list-header">
+				<div
+					className="sessionsList__header"
+					data-cy="session-list-header"
+				>
 					<h2
 						className="sessionsList__headline"
 						data-cy="session-list-headline"

@@ -254,9 +254,13 @@ $iconSize: 20px;
 		border-radius: 32px;
 		border: 1px solid #ffd1d1;
 		background: #fff;
-		display: inline-flex !important;
+		display: none;
 		align-items: center;
 		justify-content: center;
+
+		@include breakpoint($fromLarge) {
+			display: inline-flex;
+		}
 	}
 
 	&__icon--desktop svg {

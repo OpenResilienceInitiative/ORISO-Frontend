@@ -75,6 +75,11 @@ export interface SessionMenuProps {
 	isJoinGroupChatView?: boolean;
 	bannedUsers?: string[];
 	isSupervisor?: boolean;
+	showMobileSupervisionAction?: boolean;
+	onMobileSupervisionAction?: () => void;
+	showMobileDeleteAnonymousAccountAction?: boolean;
+	onMobileDeleteAnonymousAccountAction?: () => void;
+	mobileDeleteAnonymousAccountDisabled?: boolean;
 }
 
 export const SessionMenu = (props: SessionMenuProps) => {
@@ -111,8 +116,8 @@ export const SessionMenu = (props: SessionMenuProps) => {
 			const dropdown = document.querySelector('.sessionMenu__content');
 			if (dropdown && flyoutOpen) {
 				if (
-					!menuIconH.contains(e.target) &&
-					!menuIconV.contains(e.target)
+					!menuIconH?.contains(e.target) &&
+					!menuIconV?.contains(e.target)
 				) {
 					if (flyoutMenu && !flyoutMenu.contains(e.target)) {
 						setFlyoutOpen(!flyoutOpen);
@@ -232,7 +237,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		} else if (buttonFunction === OVERLAY_FUNCTIONS.ARCHIVE) {
 			const sessionId = activeSession.item.id;
 			const sessionGroupId = activeSession.item.groupId;
-			
+
 			apiPutArchive(sessionId)
 				.then(() => {
 					// Remove from current sessions list immediately
@@ -240,7 +245,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 						type: REMOVE_SESSIONS,
 						ids: sessionGroupId ? [sessionGroupId] : [sessionId]
 					});
-					
+
 					mobileListView();
 					history.push(listPath);
 				})
@@ -273,28 +278,32 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 	// MATRIX MIGRATION: Handle sessions with and without groupId
 	const hasGroupId = !!activeSession.item.groupId;
-	const baseUrl = hasGroupId 
+	const baseUrl = hasGroupId
 		? `${listPath}/:groupId/:id/:subRoute?/:extraPath?${getSessionListTab()}`
 		: `${listPath}/session/:id/:subRoute?/:extraPath?${getSessionListTab()}`;
 
-	const groupChatInfoLink = hasGroupId ? generatePath(baseUrl, {
-		...(activeSession.item as TReducedSessionItemInterface),
-		subRoute: 'groupChatInfo'
-	}) : '';
-	const editGroupChatSettingsLink = hasGroupId ? generatePath(baseUrl, {
-		...(activeSession.item as TReducedSessionItemInterface),
-		subRoute: 'editGroupChat'
-	}) : '';
-	// MATRIX MIGRATION: Generate userProfileLink based on whether groupId exists
-	const userProfileLink = hasGroupId 
+	const groupChatInfoLink = hasGroupId
 		? generatePath(baseUrl, {
-			...(activeSession.item as TReducedSessionItemInterface),
-			subRoute: 'userProfile'
-		})
+				...(activeSession.item as TReducedSessionItemInterface),
+				subRoute: 'groupChatInfo'
+			})
+		: '';
+	const editGroupChatSettingsLink = hasGroupId
+		? generatePath(baseUrl, {
+				...(activeSession.item as TReducedSessionItemInterface),
+				subRoute: 'editGroupChat'
+			})
+		: '';
+	// MATRIX MIGRATION: Generate userProfileLink based on whether groupId exists
+	const userProfileLink = hasGroupId
+		? generatePath(baseUrl, {
+				...(activeSession.item as TReducedSessionItemInterface),
+				subRoute: 'userProfile'
+			})
 		: generatePath(baseUrl, {
-			id: activeSession.item.id,
-			subRoute: 'userProfile'
-		});
+				id: activeSession.item.id,
+				subRoute: 'userProfile'
+			});
 
 	if (redirectToSessionsList) {
 		mobileListView();
@@ -381,29 +390,41 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		// console.log("═══════════════════════════════════════════════");
 		// console.log("Video activated?", isVideoActivated);
 		// console.log("Is group chat?", activeSession.isGroup);
-		
+
 		try {
 			// Get Matrix room ID from active session
 			// For 1-on-1 sessions: use activeSession.rid (the actual Matrix room ID)
 			// For group chats: use activeSession.item.matrixRoomId or groupId
-			const roomId = activeSession.rid || activeSession.item.matrixRoomId || activeSession.item.groupId;
-			
+			const roomId =
+				activeSession.rid ||
+				activeSession.item.matrixRoomId ||
+				activeSession.item.groupId;
+
 			// console.log("Room ID:", roomId);
 			// console.log("activeSession.rid:", activeSession.rid);
 			// console.log("activeSession.item.matrixRoomId:", activeSession.item.matrixRoomId);
 			// console.log("activeSession.item.groupId:", activeSession.item.groupId);
-			
+
 			if (!roomId) {
 				// console.error('❌ No Matrix room ID found for session');
-				alert('Cannot start call: No Matrix room found for this session');
+				alert(
+					'Cannot start call: No Matrix room found for this session'
+				);
 				return;
 			}
 
 			// 🍎 SAFARI iOS FIX: Check if we're on HTTPS (required for getUserMedia on Safari)
 			if (window.location.protocol !== 'https:') {
 				// console.error('❌ Not on HTTPS! Safari requires HTTPS for camera/microphone access');
-				const httpsUrl = window.location.href.replace('http://', 'https://');
-				if (window.confirm('Camera/microphone access requires HTTPS. Redirect to secure connection?')) {
+				const httpsUrl = window.location.href.replace(
+					'http://',
+					'https://'
+				);
+				if (
+					window.confirm(
+						'Camera/microphone access requires HTTPS. Redirect to secure connection?'
+					)
+				) {
 					window.location.href = httpsUrl;
 				}
 				return;
@@ -413,15 +434,15 @@ export const SessionMenu = (props: SessionMenuProps) => {
 			// This keeps the "user gesture" alive for mobile browsers (prevents popup blocking)
 			// console.log('🎤 Requesting media permissions (SYNC with user click)...');
 			// console.log('Requesting:', { video: isVideoActivated, audio: true });
-			
+
 			try {
-				const stream = await navigator.mediaDevices.getUserMedia({ 
-					video: isVideoActivated, 
-					audio: true 
+				const stream = await navigator.mediaDevices.getUserMedia({
+					video: isVideoActivated,
+					audio: true
 				});
 				// console.log('✅ Media permissions granted!', stream);
 				// console.log('Stream tracks:', stream.getTracks().map(t => ({ kind: t.kind, enabled: t.enabled })));
-				
+
 				// Store stream globally so FloatingCallWidget/GroupCallWidget can use it
 				(window as any).__preRequestedMediaStream = stream;
 				(window as any).__preRequestedMediaStreamTime = Date.now();
@@ -429,32 +450,36 @@ export const SessionMenu = (props: SessionMenuProps) => {
 				// console.error('❌ Media permission denied:', mediaError);
 				// console.error('Error name:', mediaError.name);
 				// console.error('Error message:', mediaError.message);
-				
+
 				let errorMsg = 'Cannot access camera/microphone. ';
 				if (mediaError.name === 'NotAllowedError') {
-					errorMsg += 'Please grant permissions in your browser settings.';
+					errorMsg +=
+						'Please grant permissions in your browser settings.';
 				} else if (mediaError.name === 'NotFoundError') {
 					errorMsg += 'No camera/microphone found on this device.';
 				} else if (mediaError.name === 'NotSupportedError') {
-					errorMsg += 'Your browser does not support this feature. Please use HTTPS.';
+					errorMsg +=
+						'Your browser does not support this feature. Please use HTTPS.';
 				} else {
 					errorMsg += mediaError.message || 'Unknown error.';
 				}
-				
+
 				alert(errorMsg);
 				return;
 			}
 
 			// console.log('📞 Starting call via CallManager with roomId:', roomId);
-			
+
 			// Use CallManager directly (works for both 1-on-1 and group calls!)
 			const { callManager } = require('../../services/CallManager');
 			callManager.startCall(roomId, isVideoActivated);
-			
+
 			// console.log('✅ Call initiated!');
 		} catch (error) {
 			// console.error('💥 ERROR in handleStartVideoCall:', error);
-			alert(`Call failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+			alert(
+				`Call failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+			);
 		}
 		// console.log("═══════════════════════════════════════════════");
 	};
@@ -464,24 +489,24 @@ export const SessionMenu = (props: SessionMenuProps) => {
 			{hasVideoCallFeatures() &&
 				!props.isSupervisor &&
 				(isAudioCallsEnabled || isVideoCallsEnabled) && (
-				<div
-					className="sessionMenu__videoCallButtons"
-					data-cy="session-header-video-call-buttons"
-				>
-					{isVideoCallsEnabled && (
-						<Button
-							buttonHandle={() => handleStartVideoCall(true)}
-							item={buttonStartVideoCall}
-						/>
-					)}
-					{isAudioCallsEnabled && (
-						<Button
-							buttonHandle={() => handleStartVideoCall(false)}
-							item={buttonStartCall}
-						/>
-					)}
-				</div>
-			)}
+					<div
+						className="sessionMenu__videoCallButtons"
+						data-cy="session-header-video-call-buttons"
+					>
+						{isVideoCallsEnabled && (
+							<Button
+								buttonHandle={() => handleStartVideoCall(true)}
+								item={buttonStartVideoCall}
+							/>
+						)}
+						{isAudioCallsEnabled && (
+							<Button
+								buttonHandle={() => handleStartVideoCall(false)}
+								item={buttonStartCall}
+							/>
+						)}
+					</div>
+				)}
 
 			{!activeSession.isEnquiry &&
 				appointmentFeatureEnabled &&
@@ -547,6 +572,43 @@ export const SessionMenu = (props: SessionMenuProps) => {
 					<Link className="sessionMenu__item" to={userProfileLink}>
 						{translate('chatFlyout.askerProfil')}
 					</Link>
+				)}
+
+				{props.showMobileSupervisionAction && (
+					<div
+						className="sessionMenu__item sessionMenu__item--mobile"
+						onClick={() => {
+							setFlyoutOpen(false);
+							props.onMobileSupervisionAction?.();
+						}}
+					>
+						{translate(
+							'sessionHeader.supervisor.modal.title',
+							'Supervisor verwalten'
+						)}
+					</div>
+				)}
+
+				{props.showMobileDeleteAnonymousAccountAction && (
+					<div
+						className={`sessionMenu__item sessionMenu__item--mobile ${
+							props.mobileDeleteAnonymousAccountDisabled
+								? 'sessionMenu__item--disabled'
+								: ''
+						}`}
+						onClick={() => {
+							if (props.mobileDeleteAnonymousAccountDisabled) {
+								return;
+							}
+							setFlyoutOpen(false);
+							props.onMobileDeleteAnonymousAccountAction?.();
+						}}
+					>
+						{translate(
+							'sessionHeader.anonymous.deleteAccount.label',
+							'Konto löschen'
+						)}
+					</div>
 				)}
 
 				{!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
@@ -628,7 +690,13 @@ export const SessionMenu = (props: SessionMenuProps) => {
 };
 
 const VideoCallHeaderIcon = () => (
-	<svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+	<svg
+		width="32"
+		height="32"
+		viewBox="0 0 32 32"
+		fill="none"
+		aria-hidden="true"
+	>
 		<rect width="32" height="32" rx="12" fill="#D32F2F" fillOpacity="0.6" />
 		<path
 			fillRule="evenodd"
@@ -640,7 +708,13 @@ const VideoCallHeaderIcon = () => (
 );
 
 const AudioCallHeaderIcon = () => (
-	<svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+	<svg
+		width="32"
+		height="32"
+		viewBox="0 0 32 32"
+		fill="none"
+		aria-hidden="true"
+	>
 		<rect width="32" height="32" rx="16" fill="#FFD1D1" fillOpacity="0.6" />
 		<path
 			fillRule="evenodd"

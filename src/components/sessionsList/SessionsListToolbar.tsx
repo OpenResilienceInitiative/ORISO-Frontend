@@ -94,23 +94,6 @@ const IconArchive = () => (
 	</svg>
 );
 
-const IconCalendar = () => (
-	<svg
-		width="16"
-		height="16"
-		viewBox="0 0 16 16"
-		fill="none"
-		xmlns="http://www.w3.org/2000/svg"
-		aria-hidden
-		className="sessionsListToolbar__chipIconSvg"
-	>
-		<path
-			d="M6 11C5.53333 11 5.13889 10.8389 4.81667 10.5167C4.49444 10.1945 4.33333 9.80004 4.33333 9.33337C4.33333 8.86671 4.49444 8.47226 4.81667 8.15004C5.13889 7.82782 5.53333 7.66671 6 7.66671C6.46667 7.66671 6.86111 7.82782 7.18333 8.15004C7.50556 8.47226 7.66667 8.86671 7.66667 9.33337C7.66667 9.80004 7.50556 10.1945 7.18333 10.5167C6.86111 10.8389 6.46667 11 6 11ZM3.33333 14.6667C2.96667 14.6667 2.65278 14.5362 2.39167 14.275C2.13056 14.0139 2 13.7 2 13.3334V4.00004C2 3.63337 2.13056 3.31949 2.39167 3.05837C2.65278 2.79726 2.96667 2.66671 3.33333 2.66671H4V1.33337H5.33333V2.66671H10.6667V1.33337H12V2.66671H12.6667C13.0333 2.66671 13.3472 2.79726 13.6083 3.05837C13.8694 3.31949 14 3.63337 14 4.00004V13.3334C14 13.7 13.8694 14.0139 13.6083 14.275C13.3472 14.5362 13.0333 14.6667 12.6667 14.6667H3.33333ZM3.33333 13.3334H12.6667V6.66671H3.33333V13.3334Z"
-			fill="currentColor"
-		/>
-	</svg>
-);
-
 const IconGroup = () => (
 	<svg
 		width="14"
@@ -235,38 +218,29 @@ export const SessionsListToolbar = ({
 							<IconArchive />
 						</Link>
 					)}
-					<button
-						type="button"
-						className="sessionsListToolbar__chip sessionsListToolbar__chip--iconOnly"
-						title={translate('sessionList.toolbar.calendar.title')}
-						aria-label={translate(
-							'sessionList.toolbar.calendar.title'
-						)}
-						data-cy="sessions-list-chip-calendar"
-					>
-						<IconCalendar />
-					</button>
-					<button
-						type="button"
-						className={clsx(
-							'sessionsListToolbar__chip',
-							'sessionsListToolbar__chip--iconOnly',
-							{
-								'sessionsListToolbar__chip--active':
-									activeChip === 'groups'
-							}
-						)}
-						onClick={() => onChipToggle('groups')}
-						aria-pressed={activeChip === 'groups'}
-						aria-label={translate(
-							'sessionList.toolbar.chips.groups'
-						)}
-						data-cy="sessions-list-chip-groups-icon"
-					>
-						<span className="sessionsListToolbar__groupIconSlot">
-							<IconGroup />
-						</span>
-					</button>
+					{showSupervisionChip && (
+						<button
+							type="button"
+							className={clsx(
+								'sessionsListToolbar__chip',
+								'sessionsListToolbar__chip--iconOnly',
+								{
+									'sessionsListToolbar__chip--active':
+										activeChip === 'supervision'
+								}
+							)}
+							onClick={() => onChipToggle('supervision')}
+							aria-pressed={activeChip === 'supervision'}
+							aria-label={translate(
+								'sessionList.toolbar.chips.supervision'
+							)}
+							data-cy="sessions-list-chip-supervision-icon"
+						>
+							<span className="sessionsListToolbar__groupIconSlot">
+								<IconGroup />
+							</span>
+						</button>
+					)}
 					<button
 						type="button"
 						className={chipClass('neu')}
@@ -311,21 +285,6 @@ export const SessionsListToolbar = ({
 							{translate('sessionList.toolbar.chips.groups')}
 						</span>
 					</button>
-					{showSupervisionChip && (
-						<button
-							type="button"
-							className={chipClass('supervision')}
-							onClick={() => onChipToggle('supervision')}
-							aria-pressed={activeChip === 'supervision'}
-							data-cy="sessions-list-chip-supervision"
-						>
-							<span className="sessionsListToolbar__chipLabel">
-								{translate(
-									'sessionList.toolbar.chips.supervision'
-								)}
-							</span>
-						</button>
-					)}
 				</div>
 			</div>
 		</div>
