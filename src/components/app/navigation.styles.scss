@@ -188,6 +188,11 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 					color: #1c1b1f;
 					display: block;
 
+					&--chat-figma {
+						width: 22px;
+						height: 22px;
+					}
+
 					&--drafts-figma {
 						width: 22px;
 						height: 22px;

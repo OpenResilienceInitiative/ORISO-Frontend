@@ -79,7 +79,10 @@ $session-postcode-border: #ffd1d1;
 
 	&__content {
 		overflow: auto;
-		width: 100%;
+		width: calc(100% - (#{$grid-base-two} * 2));
+		max-width: calc(100% - (#{$grid-base-two} * 2));
+		min-width: 0;
+		box-sizing: border-box;
 		padding-left: 20px;
 		padding-right: 6px;
 		padding-top: 12px;
@@ -99,6 +102,8 @@ $session-postcode-border: #ffd1d1;
 
 		@include breakpoint($fromMedium) {
 			margin: 0 $grid-base-three;
+			width: calc(100% - (#{$grid-base-three} * 2));
+			max-width: calc(100% - (#{$grid-base-three} * 2));
 		}
 
 		&:focus {
@@ -165,6 +170,7 @@ $session-postcode-border: #ffd1d1;
 		display: flex;
 		gap: 12px;
 		color: var(--skin-color-default, $secondary);
+		min-width: 0;
 
 		&:first-child {
 			justify-content: space-between;
@@ -192,6 +198,7 @@ $session-postcode-border: #ffd1d1;
 		align-items: center;
 		gap: 8px;
 		flex: 1;
+		min-width: 0;
 	}
 
 	&__rowRight {
@@ -216,6 +223,7 @@ $session-postcode-border: #ffd1d1;
 		font-size: $font-size-secondary;
 		line-height: 16px;
 		white-space: nowrap;
+		flex-shrink: 0;
 	}
 
 	/* Match session header `sessionMenu__icon--desktop`: red-outline pill */
@@ -408,6 +416,8 @@ $session-postcode-border: #ffd1d1;
 		align-items: stretch;
 		max-width: 100%;
 		min-height: 0;
+		min-width: 0;
+		overflow: hidden;
 	}
 
 	&__postcode {
@@ -424,6 +434,7 @@ $session-postcode-border: #ffd1d1;
 		line-height: 16px;
 		color: var(--skin-color-default, $secondary);
 		white-space: nowrap;
+		flex-shrink: 0;
 	}
 
 	&__postcode--standalone {
@@ -444,6 +455,8 @@ $session-postcode-border: #ffd1d1;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		align-self: center;
+		min-width: 0;
+		max-width: 100%;
 	}
 
 	&__topicPostcodeGroup .sessionsListItem__topic {

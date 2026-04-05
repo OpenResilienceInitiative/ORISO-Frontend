@@ -368,6 +368,8 @@ $tabBarHeightDesktop: 53px;
 		width: 100%;
 		max-width: 720px;
 		margin: 0 auto $grid-base-two;
+		position: relative;
+		z-index: 20;
 	}
 
 	&__searchInner {
@@ -380,6 +382,11 @@ $tabBarHeightDesktop: 53px;
 		padding: 4px 4px 4px 0;
 		position: relative;
 		box-sizing: border-box;
+	}
+
+	&__searchInner--attached {
+		border-bottom-left-radius: 0;
+		border-bottom-right-radius: 0;
 	}
 
 	&__iconButton {
@@ -439,6 +446,23 @@ $tabBarHeightDesktop: 53px;
 		width: 48px;
 		height: 48px;
 		pointer-events: none;
+	}
+
+	&__searchActionButton {
+		position: absolute;
+		right: 4px;
+		top: 50%;
+		transform: translateY(-50%);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 48px;
+		height: 48px;
+		border: none;
+		background: transparent;
+		border-radius: 100px;
+		cursor: pointer;
+		padding: 0;
 	}
 
 	&__iconSvg {
@@ -621,5 +645,214 @@ $tabBarHeightDesktop: 53px;
 		line-height: 14px;
 		color: inherit;
 		white-space: nowrap;
+	}
+
+	&__searchModal {
+		position: absolute;
+		top: calc(100% - 1px);
+		left: 0;
+		right: 0;
+		margin-top: 0;
+		border-radius: 0 0 28px 28px;
+		border: 1px solid #d9d6d7;
+		border-top: none;
+		background: #eae7e8;
+		overflow: hidden;
+		max-height: min(56vh, 520px);
+		overflow-y: auto;
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+	}
+
+	&__searchModalHeader {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		min-height: 56px;
+		padding: 4px 8px;
+		border-bottom: 1px solid #747878;
+	}
+
+	&__searchModalIconButton {
+		width: 40px;
+		height: 40px;
+		border: none;
+		border-radius: 999px;
+		background: transparent;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		cursor: pointer;
+		flex-shrink: 0;
+	}
+
+	&__searchModalQueryWrap {
+		flex: 1;
+		min-width: 0;
+	}
+
+	&__searchModalQuery,
+	&__searchModalQueryInput {
+		font-size: 28px;
+		line-height: 40px;
+		color: #1b1b1c;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		width: 100%;
+		background: transparent;
+		border: none;
+		outline: none;
+		padding: 0;
+	}
+
+	&__searchModalTabs {
+		display: flex;
+		align-items: stretch;
+		overflow-x: auto;
+		border-bottom: 1px solid #ccc;
+		background: #e1dedf;
+	}
+
+	&__searchModalTab {
+		border: none;
+		background: transparent;
+		padding: 10px 12px 6px;
+		font-size: 14px;
+		line-height: 20px;
+		font-weight: 500;
+		color: #444748;
+		white-space: nowrap;
+		cursor: pointer;
+		border-bottom: 3px solid transparent;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 2px;
+	}
+
+	&__searchModalTab--active {
+		color: #a5000a;
+		border-bottom-color: #a5000a;
+	}
+
+	&__searchModalTabIcon {
+		width: 24px;
+		height: 24px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		position: relative;
+	}
+
+	&__searchModalTabLabel {
+		font-size: 14px;
+		line-height: 20px;
+		font-weight: 500;
+	}
+
+	&__searchModalTabIconWithDot {
+		position: relative;
+		display: inline-flex;
+	}
+
+	&__searchModalTabDot {
+		position: absolute;
+		right: -2px;
+		top: -1px;
+		width: 6px;
+		height: 6px;
+		border-radius: 999px;
+		background: #b1005e;
+	}
+
+	&__searchModalBody {
+		display: flex;
+		flex-direction: column;
+	}
+
+	&__personRow {
+		width: 100%;
+		min-height: 72px;
+		border: none;
+		border-bottom: 1px solid #d8d6d6;
+		background: transparent;
+		padding: 8px 16px;
+		display: flex;
+		align-items: center;
+		gap: 14px;
+		text-align: left;
+		cursor: pointer;
+		box-sizing: border-box;
+	}
+
+	&__personAvatar {
+		width: 40px;
+		height: 40px;
+		border-radius: 999px;
+		background: #cc1e1c;
+		color: #ffe2de;
+		font-size: 16px;
+		font-weight: 600;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
+	}
+
+	&__personMeta {
+		flex: 1;
+		min-width: 0;
+	}
+
+	&__personName {
+		font-size: 16px;
+		line-height: 24px;
+		color: #1b1b1c;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	&__personSubtitle {
+		font-size: 14px;
+		line-height: 20px;
+		color: #444748;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	&__personCheckbox {
+		width: 18px;
+		height: 18px;
+		border-radius: 3px;
+		border: 2px solid #444748;
+		flex-shrink: 0;
+	}
+
+	&__personCheckbox--selected {
+		background: #a5000a;
+		border-color: #a5000a;
+		position: relative;
+
+		&::after {
+			content: '';
+			position: absolute;
+			left: 5px;
+			top: 1px;
+			width: 4px;
+			height: 8px;
+			border: solid #fff;
+			border-width: 0 2px 2px 0;
+			transform: rotate(45deg);
+		}
+	}
+
+	&__searchEmpty {
+		padding: 18px 16px;
+		font-size: 14px;
+		line-height: 20px;
+		color: #444748;
 	}
 }

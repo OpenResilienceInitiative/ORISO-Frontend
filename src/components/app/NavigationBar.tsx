@@ -322,6 +322,10 @@ export const NavigationBar = ({
 										pathsToShowUnreadMessageNotification
 									).includes(item.to) && unreadCount > 0;
 								const label = translate(item.titleKeys.large);
+								const isChatNav =
+									item.to ===
+										'/sessions/consultant/sessionView' ||
+									item.to === '/sessions/user/view';
 								const FigmaStateIcon = isActive
 									? IconFilled || Icon
 									: isHovered
@@ -334,6 +338,8 @@ export const NavigationBar = ({
 											aria-label={label}
 											className={clsx(
 												'navigation__icon__single',
+												isChatNav &&
+													'navigation__icon__single--chat-figma',
 												item.to === '/drafts' &&
 													'navigation__icon__single--drafts-figma'
 											)}
@@ -379,6 +385,9 @@ export const NavigationBar = ({
 											aria-label={label}
 											className={clsx(
 												'navigation__icon__single',
+												useFigmaSlot &&
+													isChatNav &&
+													'navigation__icon__single--chat-figma',
 												item.to === '/drafts' &&
 													useFigmaSlot &&
 													'navigation__icon__single--drafts-figma'

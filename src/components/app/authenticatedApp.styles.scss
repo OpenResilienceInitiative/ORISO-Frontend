@@ -130,6 +130,10 @@ a {
 			display: flex;
 			flex-direction: row;
 			min-height: 0;
+			width: 100%;
+			max-width: 100%;
+			min-width: 0;
+			overflow-x: hidden;
 			@include breakpoint($fromLarge) {
 				gap: 12px;
 				padding-right: 12px;
@@ -139,10 +143,14 @@ a {
 		&__list {
 			margin-top: 0;
 			min-height: 0;
-			width: 100vw;
+			width: 100%;
+			max-width: 100%;
+			min-width: 0;
 			transition: all 0.3s ease;
 			display: flex;
 			flex-direction: column;
+			flex: 1 0 100%;
+			overflow-x: hidden;
 
 			@include breakpoint($fromLarge) {
 				width: auto;
@@ -151,11 +159,11 @@ a {
 			}
 
 			&--smallInactive {
-				margin-left: -100vw;
+				margin-left: -100%;
 				transition: all 0.3s ease;
 
 				.sessionsList__header {
-					left: -100vw;
+					left: -100%;
 				}
 
 				@include breakpoint($fromLarge) {
@@ -192,9 +200,11 @@ a {
 
 		&__detail {
 			margin-top: 0;
-			width: 100vw;
+			width: 100%;
+			max-width: 100%;
+			min-width: 0;
 			transition: all 0.3s ease;
-			flex: 1;
+			flex: 1 0 100%;
 			/* Area around the white / red-outlined chat panel */
 			background-color: #f5f5f5;
 
@@ -205,7 +215,7 @@ a {
 			}
 
 			&--smallInactive {
-				margin-right: -100vw;
+				margin-right: -100%;
 				transition: all 0.3s ease;
 
 				.sessionsList__header {
@@ -221,7 +231,7 @@ a {
 
 		&__booking {
 			margin-top: 0;
-			width: 100vw;
+			width: 100%;
 			transition: all 0.3s ease;
 			flex: 1;
 

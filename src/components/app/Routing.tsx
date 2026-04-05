@@ -56,8 +56,7 @@ export const Routing = (props: RoutingProps) => {
 	const isEmbeddedNotificationsView =
 		new URLSearchParams(location.search).get('embeddedNotifications') ===
 		'1';
-	const useEmbeddedNotificationsLayout =
-		isEmbeddedNotificationsView && !untilL;
+	const useEmbeddedNotificationsLayout = isEmbeddedNotificationsView;
 
 	return (
 		<Switch>

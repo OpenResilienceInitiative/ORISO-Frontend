@@ -69,6 +69,7 @@ import { messageEventEmitter } from '../../services/messageEventEmitter';
 import {
 	buildArchiveTabPath,
 	buildCreateGroupChatPath,
+	SessionSearchPersonResult,
 	SessionToolbarChipFilter,
 	SessionsListToolbar
 } from './SessionsListToolbar';
@@ -1148,6 +1149,41 @@ export const SessionsList = ({
 	const sortedSessions = sessionToolbarFilteredPairs
 		.map(({ extended }) => extended)
 		.sort(sortSessions);
+	const toolbarSearchPeopleResults: SessionSearchPersonResult[] =
+		React.useMemo(() => {
+			const seen = new Set<string>();
+			return sessionToolbarPairs
+				.map(({ raw, extended }) => {
+					const id =
+						String(raw.session?.id || raw.chat?.id || '') ||
+						String(raw.chat?.groupId || '') ||
+						String(extended.item?.id || '');
+					if (!id || seen.has(id)) {
+						return null;
+					}
+					seen.add(id);
+					const name =
+						raw.user?.username ||
+						raw.consultant?.displayName ||
+						raw.consultant?.username ||
+						translate('sessionList.user.consultantUnknown');
+					const consultantLabel =
+						raw.consultant?.displayName ||
+						raw.consultant?.username ||
+						translate('sessionList.user.consultantUnknown');
+					const subtitle = `Berater:in ${consultantLabel}${
+						raw.session?.postcode ? ` ${raw.session.postcode}` : ''
+					}`.trim();
+					return {
+						id,
+						name,
+						subtitle
+					};
+				})
+				.filter((entry): entry is SessionSearchPersonResult =>
+					Boolean(entry)
+				);
+		}, [sessionToolbarPairs, translate]);
 	const showSupervisionChip = finalSessionsList.some((raw) => {
 		if (!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)) {
 			return false;
@@ -1173,6 +1209,7 @@ export const SessionsList = ({
 					translate={translate}
 					searchValue={sessionToolbarSearch}
 					onSearchChange={setSessionToolbarSearch}
+					searchPeopleResults={toolbarSearchPeopleResults}
 					activeChip={isCreateChatActive ? null : sessionToolbarChip}
 					onChipToggle={handleToolbarChipToggle}
 					showConsultantActions={showConsultantToolbarActions}

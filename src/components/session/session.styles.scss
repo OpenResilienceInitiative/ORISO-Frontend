@@ -128,16 +128,21 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		bottom: 0;
 		overflow-x: hidden;
 		overflow-y: auto;
-		padding: $grid-base-three $grid-base-two 200px;
+		padding: $grid-base-three $grid-base-two 240px;
 		background-color: $session-content-background-color;
 
 		@include breakpoint($fromMedium) {
-			padding: $grid-base-three $grid-base-three 200px;
+			padding: $grid-base-three $grid-base-three 240px;
+		}
+
+		@media screen and (max-width: 1366px) {
+			// iPad/tablet: keep last message + Reply action above composer.
+			padding-bottom: calc(320px + env(safe-area-inset-bottom, 0));
 		}
 
 		@media screen and (max-width: 899px) {
 			// Leave extra scrollable space so the latest message "Reply" stays above composer.
-			padding-bottom: calc(280px + env(safe-area-inset-bottom, 0));
+			padding-bottom: calc(340px + env(safe-area-inset-bottom, 0));
 		}
 	}
 
@@ -197,7 +202,16 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	&__threadBody {
 		flex: 1;
 		overflow-y: auto;
-		padding: $grid-base-two $grid-base-two 120px;
+		padding: $grid-base-two $grid-base-two 160px;
+
+		@media screen and (max-width: 1366px) {
+			// iPad/tablet thread composer is taller; allow more bottom scroll room.
+			padding-bottom: calc(260px + env(safe-area-inset-bottom, 0));
+		}
+
+		@media screen and (max-width: 899px) {
+			padding-bottom: calc(280px + env(safe-area-inset-bottom, 0));
+		}
 	}
 
 	&__threadInput {
@@ -533,8 +547,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		opacity: 0.94;
 	}
 
-	&__robotTypingIndicator .messageItem__messageWrap,
-	&__robotTypingIndicator .messageItem__content {
+	&__robotTypingIndicator .messageItem__messageWrap {
 		display: flex;
 		align-items: center;
 		justify-content: flex-start;
@@ -542,6 +555,12 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 
 	&__robotTypingIndicator .messageItem__messageWrap {
 		width: 100%;
+	}
+
+	&__robotTypingIndicator .messageItem__content {
+		display: flex;
+		align-items: flex-start;
+		justify-content: flex-start;
 	}
 
 	&__robotTypingDots {

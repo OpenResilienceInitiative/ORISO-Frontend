@@ -12,6 +12,7 @@ import { SessionsList } from './SessionsList';
 import './sessionsList.styles';
 import { LanguagesContext } from '../../globalState/provider/LanguagesProvider';
 import { useTranslation } from 'react-i18next';
+import { useResponsive } from '../../hooks/useResponsive';
 
 interface SessionsListWrapperProps {
 	sessionTypes: SESSION_TYPES;
@@ -24,6 +25,7 @@ export const SessionsListWrapper = ({
 	const SNAP_THRESHOLD = 360;
 	const MIN_WIDTH = 80;
 	const { t: translate } = useTranslation();
+	const { untilL } = useResponsive();
 	const { fixed: fixedLanguages } = useContext(LanguagesContext);
 	const { userData } = useContext(UserDataContext);
 	const { type } = useContext(SessionTypeContext);
@@ -54,7 +56,10 @@ export const SessionsListWrapper = ({
 		return (
 			<div
 				className={`sessionsList__wrapper ${isIconOnly ? 'sessionsList__wrapper--iconOnly' : ''}`}
-				style={{ width: `${sidebarWidth}px`, position: 'relative' }}
+				style={{
+					width: !untilL ? `${sidebarWidth}px` : undefined,
+					position: 'relative'
+				}}
 			>
 				<div
 					className="sessionsList__header"
@@ -79,7 +84,10 @@ export const SessionsListWrapper = ({
 	return (
 		<div
 			className={`sessionsList__wrapper ${isIconOnly ? 'sessionsList__wrapper--iconOnly' : ''}`}
-			style={{ width: `${sidebarWidth}px`, position: 'relative' }}
+			style={{
+				width: !untilL ? `${sidebarWidth}px` : undefined,
+				position: 'relative'
+			}}
 		>
 			{type !== SESSION_LIST_TYPES.MY_SESSION && (
 				<div
