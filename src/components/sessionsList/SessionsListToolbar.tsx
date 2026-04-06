@@ -187,6 +187,7 @@ export const SessionsListToolbar = ({
 	createGroupChatActive
 }: SessionsListToolbarProps) => {
 	const searchId = React.useId();
+	const searchRootRef = React.useRef<HTMLDivElement | null>(null);
 	const [isSearchViewOpen, setIsSearchViewOpen] = React.useState(false);
 	const [searchTab, setSearchTab] = React.useState<
 		'people' | 'type' | 'scheduled' | 'pinned' | 'archived'
@@ -218,10 +219,35 @@ export const SessionsListToolbar = ({
 		});
 	const hasTypedQuery = searchValue.trim().length > 0;
 	const showSearchDropdown = isSearchViewOpen && hasTypedQuery;
+	const reopenSearchIfHasText = React.useCallback(() => {
+		if (hasTypedQuery) {
+			setIsSearchViewOpen(true);
+		}
+	}, [hasTypedQuery]);
+
+	React.useEffect(() => {
+		const handleOutsidePointer = (event: MouseEvent | TouchEvent) => {
+			if (!searchRootRef.current) {
+				return;
+			}
+			const target = event.target as Node | null;
+			if (target && !searchRootRef.current.contains(target)) {
+				setIsSearchViewOpen(false);
+			}
+		};
+
+		document.addEventListener('mousedown', handleOutsidePointer);
+		document.addEventListener('touchstart', handleOutsidePointer);
+
+		return () => {
+			document.removeEventListener('mousedown', handleOutsidePointer);
+			document.removeEventListener('touchstart', handleOutsidePointer);
+		};
+	}, []);
 
 	return (
 		<div className="sessionsListToolbar" data-cy="sessions-list-toolbar">
-			<div className="sessionsListToolbar__search">
+			<div className="sessionsListToolbar__search" ref={searchRootRef}>
 				<div
 					className={clsx('sessionsListToolbar__searchInner', {
 						'sessionsListToolbar__searchInner--attached':
@@ -253,6 +279,7 @@ export const SessionsListToolbar = ({
 							value={searchValue}
 							onChange={(e) => onSearchChange(e.target.value)}
 							onFocus={() => setIsSearchViewOpen(true)}
+							onClick={reopenSearchIfHasText}
 							autoComplete="off"
 							data-cy="sessions-list-search"
 						/>

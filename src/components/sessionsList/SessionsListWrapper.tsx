@@ -25,7 +25,7 @@ export const SessionsListWrapper = ({
 	const SNAP_THRESHOLD = 360;
 	const MIN_WIDTH = 80;
 	const { t: translate } = useTranslation();
-	const { untilL } = useResponsive();
+	const { fromL } = useResponsive();
 	const { fixed: fixedLanguages } = useContext(LanguagesContext);
 	const { userData } = useContext(UserDataContext);
 	const { type } = useContext(SessionTypeContext);
@@ -57,7 +57,7 @@ export const SessionsListWrapper = ({
 			<div
 				className={`sessionsList__wrapper ${isIconOnly ? 'sessionsList__wrapper--iconOnly' : ''}`}
 				style={{
-					width: !untilL ? `${sidebarWidth}px` : undefined,
+					width: fromL ? `${sidebarWidth}px` : undefined,
 					position: 'relative'
 				}}
 			>
@@ -85,7 +85,7 @@ export const SessionsListWrapper = ({
 		<div
 			className={`sessionsList__wrapper ${isIconOnly ? 'sessionsList__wrapper--iconOnly' : ''}`}
 			style={{
-				width: !untilL ? `${sidebarWidth}px` : undefined,
+				width: fromL ? `${sidebarWidth}px` : undefined,
 				position: 'relative'
 			}}
 		>

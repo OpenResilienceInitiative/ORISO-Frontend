@@ -46,7 +46,6 @@ import {
 	SESSION_COUNT
 } from '../../api';
 import { Button } from '../button/Button';
-import { SessionListCreateChat } from './SessionListCreateChat';
 import './sessionsList.styles';
 import { SCROLL_PAGINATE_THRESHOLD } from './sessionsListConfig';
 import clsx from 'clsx';
@@ -1232,12 +1231,6 @@ export const SessionsList = ({
 				ref={listRef}
 				onScroll={handleListScroll}
 			>
-				{!isLoading &&
-					isCreateChatActive &&
-					type === SESSION_LIST_TYPES.MY_SESSION && (
-						<SessionListCreateChat />
-					)}
-
 				{(!isLoading || finalSessionsList.length > 0) &&
 					sortedSessions.map(
 						(activeSession: ExtendedSessionInterface, index) => (

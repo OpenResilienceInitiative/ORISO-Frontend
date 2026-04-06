@@ -199,6 +199,11 @@ $session-postcode-border: #ffd1d1;
 		gap: 8px;
 		flex: 1;
 		min-width: 0;
+
+		@media screen and (max-width: 899px) {
+			// Give the tag cluster full priority on narrow devices.
+			flex: 1 1 1;
+		}
 	}
 
 	&__rowRight {
@@ -209,6 +214,15 @@ $session-postcode-border: #ffd1d1;
 		flex-shrink: 0;
 		position: relative;
 		z-index: 1000;
+
+		@media screen and (max-width: 899px) {
+			// On narrow devices, let the right cluster compress first
+			// so topic tags keep more readable space.
+			padding-right: 4px;
+			gap: 4px;
+			min-width: 0;
+			flex-shrink: 1;
+		}
 	}
 
 	&__consultingType {
@@ -224,6 +238,21 @@ $session-postcode-border: #ffd1d1;
 		line-height: 16px;
 		white-space: nowrap;
 		flex-shrink: 0;
+
+		@media screen and (max-width: 899px) {
+			// Prefer keeping topic text visible by truncating long dates first.
+			max-width: 72px;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			flex-shrink: 1;
+			min-width: 0;
+			text-align: right;
+		}
+
+		@media screen and (max-width: 350px) {
+			// Ultra-narrow devices: topic/postcode readability is more important.
+			display: none;
+		}
 	}
 
 	/* Match session header `sessionMenu__icon--desktop`: red-outline pill */
@@ -412,12 +441,13 @@ $session-postcode-border: #ffd1d1;
 	}
 
 	&__topicPostcodeGroup {
-		display: inline-flex;
+		display: flex;
 		align-items: stretch;
 		max-width: 100%;
 		min-height: 0;
 		min-width: 0;
 		overflow: hidden;
+		flex: 1 1 1;
 	}
 
 	&__postcode {
@@ -448,7 +478,7 @@ $session-postcode-border: #ffd1d1;
 		padding-right: 8px;
 		padding-top: 2px;
 		padding-bottom: 2px;
-		text-align: center;
+		text-align: left;
 		color: #fff;
 		background-color: $session-topic-chip-bg;
 		white-space: nowrap;
@@ -457,6 +487,14 @@ $session-postcode-border: #ffd1d1;
 		align-self: center;
 		min-width: 0;
 		max-width: 100%;
+		flex: 1 1 1;
+
+		@media screen and (max-width: 899px) {
+			// Give tag text slightly more room on compact screens.
+			padding-left: 6px;
+			padding-right: 6px;
+			font-size: 12px;
+		}
 	}
 
 	&__topicPostcodeGroup .sessionsListItem__topic {
