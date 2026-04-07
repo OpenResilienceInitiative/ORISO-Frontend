@@ -745,6 +745,24 @@ export const MessageSubmitInterfaceComponent = ({
 		</svg>
 	);
 
+	const ToolbarScrollRightIcon = () => (
+		<svg
+			width="12"
+			height="12"
+			viewBox="0 0 12 12"
+			fill="none"
+			aria-hidden="true"
+		>
+			<path
+				d="M4.5 2L8.5 6L4.5 10"
+				stroke="currentColor"
+				strokeWidth="1.7"
+				strokeLinecap="round"
+				strokeLinejoin="round"
+			/>
+		</svg>
+	);
+
 	const AudiencePersonIcon = () => (
 		<svg
 			width="20"
@@ -839,6 +857,24 @@ export const MessageSubmitInterfaceComponent = ({
 	const [selectedAudienceValue, setSelectedAudienceValue] =
 		useState<string>('__all__');
 	const [audienceRefreshTick, setAudienceRefreshTick] = useState(0);
+
+	const scrollToolbarPanelByStep = useCallback(() => {
+		if (window.innerWidth > 899) {
+			return;
+		}
+
+		const activePanel = document.querySelector(
+			'.textarea__figmaToolbarPanel--active'
+		) as HTMLElement | null;
+		if (!activePanel) {
+			return;
+		}
+
+		activePanel.scrollBy({
+			left: 140,
+			behavior: 'smooth'
+		});
+	}, []);
 
 	const normalizeInitialAlignment = useCallback((rawValue: string) => {
 		if (!rawValue) {
@@ -3775,6 +3811,17 @@ export const MessageSubmitInterfaceComponent = ({
 								) : null)}
 						</span>
 						<div className="textarea__buttons">
+							<button
+								type="button"
+								className="textarea__toolbarScrollHintButton"
+								onClick={scrollToolbarPanelByStep}
+								aria-label={translate(
+									'message.submit.toolbar.scrollRight',
+									'Scroll toolbar'
+								)}
+							>
+								<ToolbarScrollRightIcon />
+							</button>
 							<SendMessageButton
 								handleSendButton={handleButtonClick}
 								clicked={isRequestInProgress}

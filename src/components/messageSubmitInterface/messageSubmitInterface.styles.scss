@@ -49,7 +49,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 		z-index: 100;
 		background-color: transparent;
 		padding: 20px $grid-base-two;
-		width: 100%;
+		width: 90%;
 		position: absolute;
 		bottom: 0;
 
@@ -129,7 +129,6 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 					bottom: auto !important;
 					inset: auto !important;
 					margin-top: -850px;
-					width: min(1080px, calc(100vw - 120px));
 					max-width: none;
 					height: min(78vh, 760px);
 					max-height: calc(100vh - 96px);
@@ -292,6 +291,38 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				left: 10px;
 				max-width: calc(100% - 96px);
 				width: calc(100% - 96px);
+
+				// Mobile scroll cue: fade edge + subtle hint icon
+				&::after {
+					content: '';
+					position: absolute;
+					top: 0;
+					right: 0;
+					width: 34px;
+					height: 30px;
+					border-radius: 0 8px 8px 0;
+					background: linear-gradient(
+						to right,
+						rgba(255, 255, 255, 0),
+						rgba(255, 255, 255, 0.95)
+					);
+					pointer-events: none;
+					z-index: 3;
+				}
+
+				&::before {
+					content: '⇆';
+					position: absolute;
+					top: 6px;
+					right: 8px;
+					font-size: 11px;
+					line-height: 1;
+					color: rgba(100, 109, 120, 0.75);
+					pointer-events: none;
+					z-index: 4;
+					animation: toolbar-scroll-hint-pulse 1.6s ease-in-out
+						infinite;
+				}
 			}
 
 			button {
@@ -1425,6 +1456,16 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			}
 		}
 
+		@keyframes toolbar-scroll-hint-pulse {
+			0%,
+			100% {
+				opacity: 0.45;
+			}
+			50% {
+				opacity: 0.95;
+			}
+		}
+
 		&__attachmentSelected {
 			position: absolute;
 			background: $dark-grey;
@@ -1507,6 +1548,37 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			top: 10px;
 			right: 8px;
 			z-index: 8;
+			display: flex;
+			align-items: center;
+			gap: 6px;
+		}
+
+		&__toolbarScrollHintButton {
+			display: none;
+			border: none;
+			background: rgba(255, 255, 255, 0.95);
+			color: #646d78;
+			width: 24px;
+			height: 24px;
+			border-radius: 999px;
+			padding: 0;
+			align-items: center;
+			justify-content: center;
+			cursor: pointer;
+			box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+
+			svg {
+				display: block;
+			}
+
+			&:hover {
+				color: #4b515a;
+				background: #ffffff;
+			}
+
+			@media screen and (max-width: 899px) {
+				display: inline-flex;
+			}
 		}
 	}
 

@@ -8,6 +8,7 @@ import { apiPatchUserData } from '../../api/apiPatchUserData';
 import {
 	MENUPLACEMENT,
 	MENUPLACEMENT_BOTTOM,
+	MENUPLACEMENT_RIGHT,
 	SelectDropdownItem
 } from '../select/SelectDropdown';
 import { LanguageSelectDropdown } from '../select/LanguageSelectDropdown';
@@ -152,11 +153,18 @@ export const LocaleSwitch: React.FC<LocaleSwitchProp> = ({
 			)
 		},
 		styleOverrides: {
-			menu: () => ({
+			menu: (base) => ({
+				...base,
 				width: 'auto',
-				...(iconOnly && {
-					left: '-100%'
-				})
+				...(iconOnly &&
+					menuPlacement === MENUPLACEMENT_RIGHT && {
+						left: '-100%'
+					}),
+				...(iconOnly &&
+					menuPlacement !== MENUPLACEMENT_RIGHT && {
+						left: 'auto',
+						right: 0
+					})
 			}),
 			control: () => ({
 				//'padding': '8px 12px',
