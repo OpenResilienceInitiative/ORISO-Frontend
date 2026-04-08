@@ -415,10 +415,13 @@ $tabBarHeightDesktop: 53px;
 		display: flex;
 		align-items: center;
 		padding: 0 12px;
+		gap: 6px;
+		flex-wrap: wrap;
 	}
 
 	&__searchInput {
-		width: 100%;
+		flex: 1 1 120px;
+		min-width: 120px;
 		border: none;
 		background: transparent;
 		font-family: $font-family-sans-serif;
@@ -433,6 +436,55 @@ $tabBarHeightDesktop: 53px;
 			color: $toolbar-text;
 			opacity: 1;
 		}
+
+		// Hide native clear icons from search inputs (blue "x" on mobile/webkit)
+		&::-webkit-search-cancel-button {
+			-webkit-appearance: none;
+			appearance: none;
+			display: none;
+		}
+
+		&::-ms-clear,
+		&::-ms-reveal {
+			display: none;
+			width: 0;
+			height: 0;
+		}
+	}
+
+	&__searchInlinePills {
+		display: inline-flex;
+		flex-wrap: wrap;
+		gap: 6px;
+		max-width: 100%;
+	}
+
+	&__searchInlinePill {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		border: 1px solid #3b4044;
+		background: #3b4044;
+		color: #fff;
+		border-radius: 999px;
+		padding: 4px 8px;
+		max-width: 180px;
+		cursor: pointer;
+	}
+
+	&__searchInlinePillText {
+		font-size: 12px;
+		line-height: 16px;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	&__searchInlinePillRemove {
+		font-size: 14px;
+		line-height: 1;
+		color: #fff;
+		font-weight: 700;
 	}
 
 	&__searchIconWrap {

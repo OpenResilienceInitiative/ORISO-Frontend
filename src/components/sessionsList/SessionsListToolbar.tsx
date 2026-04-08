@@ -15,6 +15,8 @@ interface SessionsListToolbarProps {
 	searchValue: string;
 	onSearchChange: (value: string) => void;
 	searchPeopleResults?: SessionSearchPersonResult[];
+	selectedPersonIds?: string[];
+	onSelectedPersonIdsChange?: (ids: string[]) => void;
 	activeChip: SessionToolbarChipFilter | null;
 	onChipToggle: (chip: SessionToolbarChipFilter) => void;
 	showConsultantActions: boolean;
@@ -177,6 +179,8 @@ export const SessionsListToolbar = ({
 	searchValue,
 	onSearchChange,
 	searchPeopleResults = [],
+	selectedPersonIds = [],
+	onSelectedPersonIdsChange,
 	activeChip,
 	onChipToggle,
 	showConsultantActions,
@@ -188,16 +192,32 @@ export const SessionsListToolbar = ({
 }: SessionsListToolbarProps) => {
 	const searchId = React.useId();
 	const searchRootRef = React.useRef<HTMLDivElement | null>(null);
+	const searchInputRef = React.useRef<HTMLInputElement | null>(null);
 	const [isSearchViewOpen, setIsSearchViewOpen] = React.useState(false);
 	const [searchTab, setSearchTab] = React.useState<
 		'people' | 'type' | 'scheduled' | 'pinned' | 'archived'
 	>('people');
-	const [selectedPersonId, setSelectedPersonId] = React.useState<
-		string | null
-	>(null);
+	const setSelectedPersonIds = React.useCallback(
+		(updater: string[] | ((prev: string[]) => string[])) => {
+			if (!onSelectedPersonIdsChange) {
+				return;
+			}
+			if (typeof updater === 'function') {
+				onSelectedPersonIdsChange(updater(selectedPersonIds));
+				return;
+			}
+			onSelectedPersonIdsChange(updater);
+		},
+		[onSelectedPersonIdsChange, selectedPersonIds]
+	);
 
 	const filteredPeople = React.useMemo(() => {
 		const needle = searchValue.trim().toLowerCase();
+		if (selectedPersonIds.length > 0 && !needle) {
+			return searchPeopleResults.filter((entry) =>
+				selectedPersonIds.includes(entry.id)
+			);
+		}
 		if (!needle) {
 			return searchPeopleResults.slice(0, 8);
 		}
@@ -212,18 +232,32 @@ export const SessionsListToolbar = ({
 		},
 		[translate]
 	);
+	const selectedPeople = React.useMemo(
+		() =>
+			selectedPersonIds
+				.map((id) =>
+					searchPeopleResults.find((entry) => entry.id === id)
+				)
+				.filter(
+					(entry): entry is SessionSearchPersonResult =>
+						entry !== undefined
+				),
+		[selectedPersonIds, searchPeopleResults]
+	);
 
 	const chipClass = (chip: SessionToolbarChipFilter) =>
 		clsx('sessionsListToolbar__chip', {
 			'sessionsListToolbar__chip--active': activeChip === chip
 		});
 	const hasTypedQuery = searchValue.trim().length > 0;
-	const showSearchDropdown = isSearchViewOpen && hasTypedQuery;
-	const reopenSearchIfHasText = React.useCallback(() => {
-		if (hasTypedQuery) {
+	const hasSelectedPeople = selectedPersonIds.length > 0;
+	const showSearchDropdown =
+		isSearchViewOpen && (hasTypedQuery || hasSelectedPeople);
+	const reopenSearchIfActive = React.useCallback(() => {
+		if (hasTypedQuery || hasSelectedPeople) {
 			setIsSearchViewOpen(true);
 		}
-	}, [hasTypedQuery]);
+	}, [hasSelectedPeople, hasTypedQuery]);
 
 	React.useEffect(() => {
 		const handleOutsidePointer = (event: MouseEvent | TouchEvent) => {
@@ -266,6 +300,41 @@ export const SessionsListToolbar = ({
 						<IconBack />
 					</button>
 					<div className="sessionsListToolbar__searchFieldWrap">
+						{selectedPeople.length > 0 && (
+							<div className="sessionsListToolbar__searchInlinePills">
+								{selectedPeople.map((person) => (
+									<button
+										type="button"
+										key={`inline-pill-${person.id}`}
+										className="sessionsListToolbar__searchInlinePill"
+										onClick={() => {
+											setSelectedPersonIds((prev) =>
+												prev.filter(
+													(id) => id !== person.id
+												)
+											);
+											requestAnimationFrame(() =>
+												searchInputRef.current?.focus()
+											);
+										}}
+										aria-label={tr(
+											'sessionList.toolbar.search.removeSelectedPerson',
+											`Remove ${person.name}`
+										)}
+									>
+										<span className="sessionsListToolbar__searchInlinePillText">
+											{person.name}
+										</span>
+										<span
+											className="sessionsListToolbar__searchInlinePillRemove"
+											aria-hidden
+										>
+											×
+										</span>
+									</button>
+								))}
+							</div>
+						)}
 						<label htmlFor={searchId} className="sr-only">
 							{translate('sessionList.toolbar.search.label')}
 						</label>
@@ -279,18 +348,19 @@ export const SessionsListToolbar = ({
 							value={searchValue}
 							onChange={(e) => onSearchChange(e.target.value)}
 							onFocus={() => setIsSearchViewOpen(true)}
-							onClick={reopenSearchIfHasText}
+							onClick={reopenSearchIfActive}
 							autoComplete="off"
 							data-cy="sessions-list-search"
+							ref={searchInputRef}
 						/>
 					</div>
-					{hasTypedQuery ? (
+					{hasTypedQuery || hasSelectedPeople ? (
 						<button
 							type="button"
 							className="sessionsListToolbar__searchActionButton"
 							onClick={() => {
 								onSearchChange('');
-								setSelectedPersonId(null);
+								setSelectedPersonIds([]);
 								setIsSearchViewOpen(false);
 							}}
 							aria-label={tr(
@@ -379,20 +449,35 @@ export const SessionsListToolbar = ({
 								filteredPeople.length > 0 ? (
 									filteredPeople.map((person) => {
 										const isSelected =
-											selectedPersonId === person.id;
+											selectedPersonIds.includes(
+												person.id
+											);
 										return (
 											<button
 												type="button"
 												key={person.id}
 												className="sessionsListToolbar__personRow"
 												onClick={() => {
-													setSelectedPersonId(
+													setSelectedPersonIds(
 														(prev) =>
-															prev === person.id
-																? null
-																: person.id
+															prev.includes(
+																person.id
+															)
+																? prev.filter(
+																		(id) =>
+																			id !==
+																			person.id
+																	)
+																: [
+																		...prev,
+																		person.id
+																	]
 													);
-													onSearchChange(person.name);
+													onSearchChange('');
+													setIsSearchViewOpen(true);
+													requestAnimationFrame(() =>
+														searchInputRef.current?.focus()
+													);
 												}}
 											>
 												<div className="sessionsListToolbar__personAvatar">

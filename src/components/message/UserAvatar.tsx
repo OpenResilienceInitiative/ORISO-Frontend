@@ -18,16 +18,26 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
 	userId,
 	size = '32px'
 }) => {
-	// Force FULL uppercase for the avatar letter (Element style)
-	const name = displayName || username;
-	const uppercaseName = name.toUpperCase();
+	const getDisplayName = (rawDisplayName?: string, rawUsername?: string) => {
+		const source = (rawDisplayName || rawUsername || '').trim();
+		if (!source) {
+			return 'User';
+		}
+		return source;
+	};
 
-	return (
-		<Avatar
-			id={userId}
-			name={uppercaseName}
-			size={size}
-			type="round"
-		/>
-	);
+	const getInitials = (rawDisplayName?: string, rawUsername?: string) => {
+		const source = getDisplayName(rawDisplayName, rawUsername);
+		const cleaned = source.replace(/[_-]+/g, ' ').trim();
+		const parts = cleaned.split(/\s+/).filter(Boolean);
+		if (parts.length >= 2) {
+			return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+		}
+		const compact = cleaned.replace(/\s+/g, '');
+		return compact.slice(0, 2).toUpperCase() || 'U';
+	};
+
+	const initials = getInitials(displayName, username);
+
+	return <Avatar id={userId} name={initials} size={size} type="round" />;
 };

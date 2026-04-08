@@ -129,7 +129,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		overflow-x: hidden;
 		overflow-y: auto;
 		padding: $grid-base-three $grid-base-two 240px;
-		background-color: $session-content-background-color;
+		background-color: #fff;
 
 		@include breakpoint($fromMedium) {
 			padding: $grid-base-three $grid-base-three 240px;

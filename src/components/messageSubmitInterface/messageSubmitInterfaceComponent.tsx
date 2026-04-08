@@ -854,8 +854,9 @@ export const MessageSubmitInterfaceComponent = ({
 	const [audienceOptions, setAudienceOptions] = useState<
 		Array<{ value: string; label: string }>
 	>([{ value: '__all__', label: 'ALL' }]);
-	const [selectedAudienceValue, setSelectedAudienceValue] =
-		useState<string>('__all__');
+	const [selectedAudienceValues, setSelectedAudienceValues] = useState<
+		string[]
+	>(['__all__']);
 	const [audienceRefreshTick, setAudienceRefreshTick] = useState(0);
 
 	const scrollToolbarPanelByStep = useCallback(() => {
@@ -1649,10 +1650,12 @@ export const MessageSubmitInterfaceComponent = ({
 		setEditorState(EditorState.createEmpty());
 		setComposerText('');
 		composerRef.current?.clear();
-		setSelectedAudienceValue(
+		setSelectedAudienceValues(
 			audienceOptions.some((option) => option.value === '__all__')
-				? '__all__'
-				: audienceOptions[0]?.value || '__all__'
+				? ['__all__']
+				: audienceOptions[0]?.value
+					? [audienceOptions[0].value]
+					: ['__all__']
 		);
 		setIsAudienceMenuOpen(false);
 		clearDraftMessage();
@@ -1886,8 +1889,11 @@ export const MessageSubmitInterfaceComponent = ({
 		if (threadRootId) {
 			prefixParts.push(buildThreadPrefix(threadRootId));
 		}
-		if (selectedAudienceValue !== '__all__') {
-			prefixParts.push(buildVisibleToPrefix([selectedAudienceValue]));
+		const explicitAudience = selectedAudienceValues.filter(
+			(value) => value !== '__all__'
+		);
+		if (explicitAudience.length > 0) {
+			prefixParts.push(buildVisibleToPrefix(explicitAudience));
 		}
 		if (isSupervisor) {
 			prefixParts.push(SUPERVISOR_FEEDBACK_PREFIX);
@@ -1932,7 +1938,7 @@ export const MessageSubmitInterfaceComponent = ({
 		preselectedFile,
 		sendEnquiry,
 		sendMessage,
-		selectedAudienceValue,
+		selectedAudienceValues,
 		isSupervisor,
 		threadRootId,
 		type,
@@ -2246,7 +2252,7 @@ export const MessageSubmitInterfaceComponent = ({
 			activeSession?.item?.status === STATUS_ENQUIRY;
 		if (isInquiryNotAccepted) {
 			setAudienceOptions([defaultOption]);
-			setSelectedAudienceValue('__all__');
+			setSelectedAudienceValues(['__all__']);
 			return;
 		}
 		const collected = new Map<string, string>();
@@ -2334,13 +2340,24 @@ export const MessageSubmitInterfaceComponent = ({
 			? [defaultOption, ...mapped]
 			: mapped;
 		setAudienceOptions(nextOptions);
-		setSelectedAudienceValue((currentValue) =>
-			nextOptions.some((option) => option.value === currentValue)
-				? currentValue
-				: includeAllOption
-					? '__all__'
-					: nextOptions[0]?.value || '__all__'
-		);
+		setSelectedAudienceValues((currentValues) => {
+			const hasAllOption = nextOptions.some(
+				(option) => option.value === '__all__'
+			);
+			if (hasAllOption && currentValues.includes('__all__')) {
+				return ['__all__'];
+			}
+			const stillAvailable = currentValues.filter((value) =>
+				nextOptions.some((option) => option.value === value)
+			);
+			if (stillAvailable.length > 0) {
+				return stillAvailable;
+			}
+			if (includeAllOption) {
+				return ['__all__'];
+			}
+			return nextOptions[0]?.value ? [nextOptions[0].value] : ['__all__'];
+		});
 	}, [
 		type,
 		activeSession?.item?.status,
@@ -2359,14 +2376,22 @@ export const MessageSubmitInterfaceComponent = ({
 
 	useEffect(() => {
 		setIsAudienceMenuOpen(false);
-		setSelectedAudienceValue((currentValue) => {
+		setSelectedAudienceValues((currentValues) => {
 			const hasSendToAll = audienceOptions.some(
 				(option) => option.value === '__all__'
 			);
 			if (hasSendToAll) {
-				return '__all__';
+				return ['__all__'];
 			}
-			return audienceOptions[0]?.value || currentValue;
+			const stillAvailable = currentValues.filter((value) =>
+				audienceOptions.some((option) => option.value === value)
+			);
+			if (stillAvailable.length > 0) {
+				return stillAvailable;
+			}
+			return audienceOptions[0]?.value
+				? [audienceOptions[0].value]
+				: ['__all__'];
 		});
 	}, [activeSession?.item?.id, threadRootId, audienceOptions]);
 
@@ -2388,38 +2413,53 @@ export const MessageSubmitInterfaceComponent = ({
 			document.removeEventListener('mousedown', handleOutsideClick);
 	}, [isAudienceMenuOpen]);
 
-	const selectedAudienceLabel = useMemo(
-		() =>
-			audienceOptions.find(
-				(option) => option.value === selectedAudienceValue
-			)?.label || 'Send to all',
-		[audienceOptions, selectedAudienceValue]
-	);
+	const selectedAudienceLabels = useMemo(() => {
+		const isAllSelected =
+			selectedAudienceValues.length === 0 ||
+			selectedAudienceValues.includes('__all__');
+		if (isAllSelected) {
+			return ['Send to all'];
+		}
+		return selectedAudienceValues
+			.map(
+				(value) =>
+					audienceOptions.find((option) => option.value === value)
+						?.label || value
+			)
+			.filter(Boolean);
+	}, [audienceOptions, selectedAudienceValues]);
 	const selectedAudienceChipLabel = useMemo(() => {
-		if (selectedAudienceLabel === 'Send to all') {
-			return selectedAudienceLabel;
+		if (selectedAudienceLabels.length === 1) {
+			return selectedAudienceLabels[0];
 		}
-		let normalizedLabel = selectedAudienceLabel.trim();
-		if (!/\s/.test(normalizedLabel)) {
-			const roleSplitMatch = normalizedLabel.match(
-				/^(.*?)(consultant|user|supervisor|moderator)(\d*)$/i
-			);
-			if (roleSplitMatch?.[1] && roleSplitMatch?.[2]) {
-				normalizedLabel = `${roleSplitMatch[1]} ${roleSplitMatch[2]}${
-					roleSplitMatch[3] || ''
-				}`;
-			}
+		if (selectedAudienceLabels.length === 2) {
+			return `${selectedAudienceLabels[0]}, ${selectedAudienceLabels[1]}`;
 		}
-		const parts = normalizedLabel.split(/\s+/).filter(Boolean);
-		if (parts.length < 2) {
-			return selectedAudienceLabel;
-		}
-		const firstInitial = parts[0].charAt(0).toUpperCase();
-		return `${firstInitial}. ${parts.slice(1).join(' ')}`;
-	}, [selectedAudienceLabel]);
+		return `${selectedAudienceLabels[0]}, ${selectedAudienceLabels[1]} +${
+			selectedAudienceLabels.length - 2
+		}`;
+	}, [selectedAudienceLabels]);
 	const showAudienceSelector = audienceOptions.some(
 		(option) => option.value === '__all__'
 	);
+
+	const toggleAudienceSelection = useCallback((value: string) => {
+		setSelectedAudienceValues((previousValues) => {
+			if (value === '__all__') {
+				return ['__all__'];
+			}
+			const withoutAll = previousValues.filter(
+				(entry) => entry !== '__all__'
+			);
+			if (withoutAll.includes(value)) {
+				const nextValues = withoutAll.filter(
+					(entry) => entry !== value
+				);
+				return nextValues.length > 0 ? nextValues : ['__all__'];
+			}
+			return [...withoutAll, value];
+		});
+	}, []);
 
 	const startVoiceRecording = useCallback(async () => {
 		if (
@@ -2903,34 +2943,34 @@ export const MessageSubmitInterfaceComponent = ({
 									<div
 										className="textarea__audienceSelectorMenu"
 										role="listbox"
+										aria-multiselectable="true"
 									>
-										{audienceOptions.map((option) => (
-											<button
-												type="button"
-												key={option.value}
-												role="option"
-												aria-selected={
-													selectedAudienceValue ===
+										{audienceOptions.map((option) => {
+											const isSelected =
+												selectedAudienceValues.includes(
 													option.value
-												}
-												className={clsx(
-													'textarea__audienceSelectorMenuItem',
-													selectedAudienceValue ===
-														option.value &&
-														'textarea__audienceSelectorMenuItem--selected'
-												)}
-												onClick={() => {
-													setSelectedAudienceValue(
-														option.value
-													);
-													setIsAudienceMenuOpen(
-														false
-													);
-												}}
-											>
-												{option.label}
-											</button>
-										))}
+												);
+											return (
+												<button
+													type="button"
+													key={option.value}
+													role="option"
+													aria-selected={isSelected}
+													className={clsx(
+														'textarea__audienceSelectorMenuItem',
+														isSelected &&
+															'textarea__audienceSelectorMenuItem--selected'
+													)}
+													onClick={() => {
+														toggleAudienceSelection(
+															option.value
+														);
+													}}
+												>
+													{option.label}
+												</button>
+											);
+										})}
 									</div>
 								)}
 							</div>

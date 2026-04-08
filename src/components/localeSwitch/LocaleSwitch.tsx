@@ -205,9 +205,15 @@ export const LocaleSwitch: React.FC<LocaleSwitchProp> = ({
 				overflow: 'visible',
 				display: 'flex'
 			}),
-			option: () => ({
+			menuList: () => ({
+				backgroundColor: '#ffffff'
+			}),
+			option: (base, state) => ({
+				...base,
 				whiteSpace: 'nowrap',
-				fontSize: '14px'
+				fontSize: '14px',
+				color: '#3f373f',
+				backgroundColor: state.isFocused ? '#f5f5f5' : '#ffffff'
 			})
 		}
 	};

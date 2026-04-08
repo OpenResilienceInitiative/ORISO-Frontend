@@ -2,6 +2,7 @@ $icon-size: 24px;
 $icon-size-small: 24px;
 $message-lineheight: 21px;
 $message-attachment-color: $secondary !default;
+$message-avatar-ring: #ebe2e2;
 
 .messageItem {
 	display: flex;
@@ -39,12 +40,12 @@ $message-attachment-color: $secondary !default;
 
 	&--right {
 		align-items: flex-end;
-		
+
 		.messageItem__message {
 			margin: 4px 0;
 			border-radius: 12px 12px 0;
 		}
-		
+
 		.messageItem__divider {
 			align-self: center;
 		}
@@ -64,6 +65,7 @@ $message-attachment-color: $secondary !default;
 		text-align: left;
 		display: flex;
 		align-items: center;
+		padding-left: 20px;
 
 		&--self {
 			color: $message-name-self;
@@ -74,7 +76,7 @@ $message-attachment-color: $secondary !default;
 		}
 
 		&--user {
-			color: $message-name-user;
+			color: #000000;
 		}
 
 		&--consultant {
@@ -110,11 +112,16 @@ $message-attachment-color: $secondary !default;
 		align-items: flex-start;
 		gap: 8px;
 		max-width: min(71%, 600px);
+		position: relative;
 
 		&--right {
 			flex-direction: row-reverse;
-			align-self: flex-end;
+			align-self: center;
 			margin-left: auto;
+			align-items: center;
+			gap: 4px;
+			position: relative;
+			padding-right: 32px;
 		}
 
 		&--furtherSteps {
@@ -129,12 +136,24 @@ $message-attachment-color: $secondary !default;
 			margin: 0 auto;
 		}
 	}
-	
+
 	&__avatar {
+		width: 48px;
+		height: 48px;
+		min-width: 48px;
+		min-height: 48px;
+		border: 10px solid #fff;
+		border-radius: 999px;
+		background: #ffd9d9;
+		overflow: hidden;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		box-sizing: border-box;
 		flex-shrink: 0;
-		
+
 		// Force Compound avatar to render properly
-		span[class*="_avatar_"] {
+		span[class*='_avatar_'] {
 			width: 32px !important;
 			height: 32px !important;
 			min-width: 32px !important;
@@ -146,6 +165,140 @@ $message-attachment-color: $secondary !default;
 			justify-content: center !important;
 			border-radius: 50% !important;
 		}
+	}
+
+	&__sideColumn {
+		display: inline-flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0;
+		flex-shrink: 0;
+		margin-top: 0;
+		position: relative;
+		z-index: 6;
+	}
+
+	&__sideColumn--right {
+		align-items: center;
+		justify-content: center;
+		margin-bottom: 0;
+		position: absolute;
+		right: -27px;
+		bottom: 40px;
+		z-index: 5;
+		margin-right: 23px;
+	}
+
+	&--right {
+		.messageItem__avatar {
+			background: #fff;
+		}
+	}
+
+	&__kebabButton {
+		border: 0;
+		padding: 0;
+		background: transparent;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 24px;
+		height: 24px;
+		cursor: pointer;
+		opacity: 1;
+		z-index: 7;
+
+		svg {
+			width: 16px;
+			height: 16px;
+		}
+
+		path,
+		circle {
+			fill: #17191c;
+		}
+
+		&:hover {
+			opacity: 1;
+		}
+	}
+
+	&__kebabIconDefault {
+		width: 16px !important;
+		height: 16px !important;
+	}
+
+	&__kebabButton--left {
+		left: auto;
+		right: -14px;
+	}
+
+	&__kebabButton--right {
+		right: auto;
+		left: -14px;
+	}
+
+	&__actionMenu {
+		position: absolute;
+		top: 22px;
+		left: 18px;
+		min-width: 200px;
+		max-width: 280px;
+		padding: 8px 0;
+		border: 2px solid #cc1e1c;
+		border-radius: 8px;
+		background: #fff;
+		box-shadow:
+			0 1px 2px rgba(0, 0, 0, 0.3),
+			0 2px 6px rgba(0, 0, 0, 0.15);
+		z-index: 4000;
+	}
+
+	&__actionMenu--right {
+		left: auto;
+		right: 18px;
+	}
+
+	&__actionMenuItem {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		width: 100%;
+		height: 56px;
+		padding: 8px 12px;
+		border: 0;
+		background: #fff;
+		color: #4b515a;
+		cursor: pointer;
+		text-align: left;
+
+		&:hover {
+			background: rgba(75, 0, 0, 0.07);
+		}
+	}
+
+	&__actionMenuItemIcon {
+		width: 24px;
+		height: 24px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+
+		svg {
+			width: 24px;
+			height: 24px;
+		}
+
+		path {
+			fill: #4b515a;
+		}
+	}
+
+	&__actionMenuItemLabel {
+		font-size: 16px;
+		line-height: 24px;
+		letter-spacing: 0.0313em;
+		color: #4b515a;
 	}
 
 	&__systemAvatar {
@@ -169,12 +322,13 @@ $message-attachment-color: $secondary !default;
 			fill: #e53952;
 		}
 	}
-	
+
 	&__content {
 		flex: 1;
 		min-width: 0;
 		display: flex;
 		flex-direction: column;
+		margin-left: -19px;
 	}
 
 	&__divider {
@@ -214,7 +368,7 @@ $message-attachment-color: $secondary !default;
 	&__message {
 		color: var(--skin-color-default, $secondary);
 		line-height: $message-lineheight;
-		background-color: $white;
+		background-color: #fff1f1;
 		border-radius: 0 12px 12px;
 		margin: 4px 0;
 		padding: $grid-base-two;
@@ -224,7 +378,7 @@ $message-attachment-color: $secondary !default;
 		display: inline-block;
 		max-width: 100%;
 		min-width: 180px;
-		
+
 		/* Reduce padding for messages with attachments */
 		&:has(&__attachment) {
 			padding: 8px;
@@ -338,24 +492,24 @@ $message-attachment-color: $secondary !default;
 			display: flex;
 			flex-direction: column;
 			margin-top: 4px;
-			border: 1px solid #E3E8F0;
+			border: 1px solid #e3e8f0;
 			border-radius: 8px;
 			overflow: hidden;
 			max-width: 400px;
 			background: transparent;
 			transition: all 0.2s ease;
-			
+
 			&:hover {
-				border-color: #0086E6;
+				border-color: #0086e6;
 				box-shadow: 0 2px 8px rgba(0, 134, 230, 0.15);
 			}
-			
+
 			&__preview {
 				background: #fff;
 				padding: 0;
 				margin: 0;
 				width: 100%;
-				
+
 				img {
 					width: 100%;
 					max-width: 100%;
@@ -365,29 +519,29 @@ $message-attachment-color: $secondary !default;
 					border-radius: 0;
 				}
 			}
-			
+
 			&__info {
 				display: flex;
 				flex-direction: row;
 				align-items: center;
 				gap: 12px;
 				padding: 12px;
-				background: #F4F6FA;
+				background: #f4f6fa;
 			}
-			
+
 			&__filename {
 				font-size: 14px;
 				font-weight: 500;
-				color: #17191C;
+				color: #17191c;
 				margin: 0 !important;
 			}
-			
+
 			&__meta {
 				font-size: 12px;
-				color: #8D97A5;
+				color: #8d97a5;
 				margin: 0 !important;
 			}
-			
+
 			&__title {
 				flex: 1;
 				min-width: 0;
@@ -402,11 +556,11 @@ $message-attachment-color: $secondary !default;
 				display: flex;
 				align-items: center;
 				justify-content: center;
-				
+
 				svg {
 					width: 24px;
 					height: 24px;
-					color: #737D8C;
+					color: #737d8c;
 				}
 			}
 
@@ -426,8 +580,8 @@ $message-attachment-color: $secondary !default;
 		}
 
 		&--myMessage {
-			color: var(--text-color-contrast-switch, $white);
-			background-color: var(--skin-color-primary, $message-background);
+			color: #1c1b1f;
+			background-color: #ebe2e2;
 
 			.messageItem__message__attachment {
 				background-color: $white;
@@ -435,13 +589,102 @@ $message-attachment-color: $secondary !default;
 
 			a,
 			a:hover {
-				color: var(--text-color-contrast-switch, $white);
+				color: #1c1b1f;
 			}
 
 			blockquote {
-				border-left-color: var(--text-color-contrast-switch, $white);
-				background: rgba(255, 255, 255, 0.12);
+				border-left-color: #7d4c4c;
+				background: rgba(125, 76, 76, 0.08);
 			}
+		}
+	}
+
+	&__visibleOnly {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		flex-wrap: wrap;
+		margin: 2px 0 6px;
+	}
+
+	&__visibleOnlyLabel {
+		font-size: 10px;
+		line-height: 12px;
+		color: #646d78;
+	}
+
+	&__visibleOnlyChip {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		height: 26px;
+		padding: 0 10px;
+		border: 1px solid #e1e6ee;
+		border-radius: 999px;
+		background: #fff;
+		font-size: 12px;
+		font-weight: 700;
+		line-height: 14px;
+		color: #4b515a;
+		white-space: nowrap;
+	}
+
+	&__visibleOnlyChipIcon {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 14px;
+		height: 14px;
+		flex-shrink: 0;
+
+		svg {
+			width: 14px;
+			height: 14px;
+		}
+
+		path {
+			fill: #4b515a;
+		}
+	}
+
+	&__senderInfo {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+		margin-top: 2px;
+		padding-right: 56px;
+	}
+
+	&__senderInfoPrimary {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+	}
+
+	&__senderInfoName {
+		color: $text-low-emphasis;
+		font-size: $font-size-secondary;
+		line-height: 13px;
+		font-weight: 600;
+	}
+
+	&__senderInfoSubtitle {
+		margin-top: 4px;
+		display: inline-flex;
+		align-items: center;
+		gap: 2px;
+		font-size: 12px;
+		line-height: 12px;
+		color: #646d78;
+	}
+
+	&__senderInfoMetaIcon {
+		width: 12px;
+		height: 12px;
+		display: inline-block;
+
+		path {
+			fill: #646d78;
 		}
 	}
 
@@ -500,6 +743,10 @@ $message-attachment-color: $secondary !default;
 		.messageItem__systemNotificationTitle,
 		.messageItem__systemNotificationDescription {
 			color: #fff;
+		}
+
+		.messageItem__visibleOnly {
+			justify-content: flex-end;
 		}
 	}
 
@@ -860,32 +1107,32 @@ $message-attachment-color: $secondary !default;
 	position: relative;
 	z-index: 10;
 	pointer-events: auto;
-	
+
 	// Default color for incoming messages (red)
 	&--incoming {
 		color: #e74c3c; // Red color for incoming messages
-		
+
 		&:hover {
 			color: #c0392b;
 			text-decoration: none;
 		}
-		
+
 		&:focus {
 			outline: 2px solid #e74c3c;
 			outline-offset: 2px;
 			border-radius: 4px;
 		}
 	}
-	
+
 	// Color for outgoing messages (myMessage - white)
 	&--myMessage {
 		color: #ffffff; // White color for outgoing messages
-		
+
 		&:hover {
 			color: #e6e6e6;
 			text-decoration: none;
 		}
-		
+
 		&:focus {
 			outline: 2px solid #ffffff;
 			outline-offset: 2px;

@@ -120,6 +120,7 @@ function sessionMatchesToolbar(
 	extended: ExtendedSessionInterface,
 	query: string,
 	chip: SessionToolbarChipFilter | null,
+	selectedPersonIds: string[],
 	currentUserId?: string
 ): boolean {
 	const chatItem = getChatItemForSession(raw);
@@ -145,6 +146,16 @@ function sessionMatchesToolbar(
 		}
 		if (String(raw.consultant.id) === String(currentUserId || '')) {
 			// Assigned consultant chats are excluded; only supervised chats remain.
+			return false;
+		}
+	}
+
+	const toolbarPersonId =
+		String(raw.session?.id || raw.chat?.id || '') ||
+		String(raw.chat?.groupId || '') ||
+		String(extended.item?.id || '');
+	if (selectedPersonIds.length > 0) {
+		if (!toolbarPersonId || !selectedPersonIds.includes(toolbarPersonId)) {
 			return false;
 		}
 	}
@@ -198,6 +209,8 @@ export const SessionsList = ({
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
 	const abortController = useRef<AbortController>(null);
 	const [sessionToolbarSearch, setSessionToolbarSearch] = useState('');
+	const [sessionToolbarSelectedPeople, setSessionToolbarSelectedPeople] =
+		useState<string[]>([]);
 	const [sessionToolbarChip, setSessionToolbarChip] =
 		useState<SessionToolbarChipFilter | null>(null);
 
@@ -1142,6 +1155,7 @@ export const SessionsList = ({
 				extended,
 				sessionToolbarSearch,
 				sessionToolbarChip,
+				sessionToolbarSelectedPeople,
 				userData?.userId
 			)
 	);
@@ -1209,6 +1223,8 @@ export const SessionsList = ({
 					searchValue={sessionToolbarSearch}
 					onSearchChange={setSessionToolbarSearch}
 					searchPeopleResults={toolbarSearchPeopleResults}
+					selectedPersonIds={sessionToolbarSelectedPeople}
+					onSelectedPersonIdsChange={setSessionToolbarSelectedPeople}
 					activeChip={isCreateChatActive ? null : sessionToolbarChip}
 					onChipToggle={handleToolbarChipToggle}
 					showConsultantActions={showConsultantToolbarActions}

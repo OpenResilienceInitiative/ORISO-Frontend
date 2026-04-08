@@ -23,28 +23,38 @@ export const MessageDisplayName = ({
 }: MessageDisplayNameProps) => {
 	const { t: translate } = useTranslation();
 	const { activeSession } = useContext(ActiveSessionContext);
-
-	const subscriberIsModerator = isUserModerator({
+	// keep reference to session context for future role-based label behavior
+	isUserModerator({
 		chatItem: activeSession.item,
 		rcUserId: userId
 	});
 
+	const getDisplayName = useCallback(
+		(rawDisplayName: string, rawUsername: string) => {
+			const source = (rawDisplayName || rawUsername || '').trim();
+			if (!source) {
+				return '';
+			}
+			const cleaned = source.replace(/[_-]+/g, ' ').trim();
+			const parts = cleaned.split(/\s+/).filter(Boolean);
+			if (parts.length >= 2) {
+				return `${parts[0]} ${parts[1]}`;
+			}
+			return cleaned;
+		},
+		[]
+	);
+
 	const getUsernameWithPrefix = useCallback(() => {
-		if (isMyMessage) {
-			return translate('message.isMyMessage.name');
-		} else if (type === 'system') {
-			return translate('message.systemNotification', 'System Notification');
+		if (type === 'system') {
+			return translate(
+				'message.systemNotification',
+				'System Notification'
+			);
 		} else {
-			// Just show username/displayName without role prefix
-			return displayName || username;
+			return getDisplayName(displayName, username);
 		}
-	}, [
-		displayName,
-		isMyMessage,
-		type,
-		translate,
-		username
-	]);
+	}, [displayName, getDisplayName, type, translate, username]);
 
 	return (
 		<>

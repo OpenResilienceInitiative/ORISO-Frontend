@@ -42,6 +42,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 	.messageSubmit__wrapper--expanded
 		.textarea__wrapper-send-message--expanded {
+		width: 90%;
 		pointer-events: auto;
 	}
 
@@ -49,7 +50,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 		z-index: 100;
 		background-color: transparent;
 		padding: 20px $grid-base-two;
-		width: 90%;
+		width: 100%;
 		position: absolute;
 		bottom: 0;
 
