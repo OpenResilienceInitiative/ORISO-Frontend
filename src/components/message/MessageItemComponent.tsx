@@ -77,6 +77,9 @@ import { ReactComponent as ArrowLeftIcon } from '../../resources/img/icons/arrow
 import { ReactComponent as StackVerticalCircleIcon } from '../../resources/img/icons/stack-vertical-circle.svg';
 import { ReactComponent as PenIcon } from '../../resources/img/icons/pen.svg';
 import { ReactComponent as ArrowForwardIcon } from '../../resources/img/icons/arrow-forward.svg';
+import { formatMessagePersonName } from './messageNameUtils';
+import { RocketChatUsersOfRoomContext } from '../../globalState/provider/RocketChatUsersOfRoomProvider';
+import { ConsultantListContext } from '../../globalState/provider/ConsultantListProvider';
 
 const ActiveKebabIcon = () => (
 	<svg width="28" height="32" viewBox="0 0 28 32" fill="none" aria-hidden>
@@ -138,6 +141,33 @@ const MenuDeleteIcon = () => (
 		<path
 			d="M3 18C2.45 18 1.97917 17.8042 1.5875 17.4125C1.19583 17.0208 1 16.55 1 16V3H0V1H5V0H11V1H16V3H15V16C15 16.55 14.8042 17.0208 14.4125 17.4125C14.0208 17.8042 13.55 18 13 18H3ZM13 3H3V16H13V3ZM5 14H7V5H5V14ZM9 14H11V5H9V14Z"
 			fill="#4B515A"
+		/>
+	</svg>
+);
+
+const VisibilityPeopleIcon = () => (
+	<svg width="22" height="16" viewBox="0 0 22 16" fill="none" aria-hidden>
+		<path
+			d="M0 16V13.2C0 12.6333 0.145833 12.1125 0.4375 11.6375C0.729167 11.1625 1.11667 10.8 1.6 10.55C2.63333 10.0333 3.68333 9.64583 4.75 9.3875C5.81667 9.12917 6.9 9 8 9C9.1 9 10.1833 9.12917 11.25 9.3875C12.3167 9.64583 13.3667 10.0333 14.4 10.55C14.8833 10.8 15.2708 11.1625 15.5625 11.6375C15.8542 12.1125 16 12.6333 16 13.2V16H0ZM18 16V13C18 12.2667 17.7958 11.5625 17.3875 10.8875C16.9792 10.2125 16.4 9.63333 15.65 9.15C16.5 9.25 17.3 9.42083 18.05 9.6625C18.8 9.90417 19.5 10.2 20.15 10.55C20.75 10.8833 21.2083 11.2542 21.525 11.6625C21.8417 12.0708 22 12.5167 22 13V16H18ZM8 8C6.9 8 5.95833 7.60833 5.175 6.825C4.39167 6.04167 4 5.1 4 4C4 2.9 4.39167 1.95833 5.175 1.175C5.95833 0.391667 6.9 0 8 0C9.1 0 10.0417 0.391667 10.825 1.175C11.6083 1.95833 12 2.9 12 4C12 5.1 11.6083 6.04167 10.825 6.825C10.0417 7.60833 9.1 8 8 8ZM18 4C18 5.1 17.6083 6.04167 16.825 6.825C16.0417 7.60833 15.1 8 14 8C13.8167 8 13.5833 7.97917 13.3 7.9375C13.0167 7.89583 12.7833 7.85 12.6 7.8C13.05 7.26667 13.3958 6.675 13.6375 6.025C13.8792 5.375 14 4.7 14 4C14 3.3 13.8792 2.625 13.6375 1.975C13.3958 1.325 13.05 0.733333 12.6 0.2C12.8333 0.116667 13.0667 0.0625 13.3 0.0375C13.5333 0.0125 13.7667 0 14 0C15.1 0 16.0417 0.391667 16.825 1.175C17.6083 1.95833 18 2.9 18 4Z"
+			fill="#4B515A"
+		/>
+	</svg>
+);
+
+const ChevronIcon = ({ expanded }: { expanded: boolean }) => (
+	<svg
+		width="10"
+		height="6"
+		viewBox="0 0 10 6"
+		fill="none"
+		xmlns="http://www.w3.org/2000/svg"
+	>
+		<path
+			d="M0.799805 4.80005L4.7998 0.800049L8.7998 4.80005"
+			stroke="#4C555F"
+			stroke-width="1.6"
+			stroke-linecap="round"
+			stroke-linejoin="round"
 		/>
 	</svg>
 );
@@ -229,6 +259,8 @@ export const MessageItemComponent = ({
 	const { activeSession, reloadActiveSession } =
 		useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
+	const rcUsersContext = useContext(RocketChatUsersOfRoomContext);
+	const consultantContext = useContext(ConsultantListContext);
 	const getComparableRecipientIds = useCallback(
 		(rawValue?: string | null) => {
 			const baseValue = (rawValue || '').trim().toLowerCase();
@@ -289,6 +321,22 @@ export const MessageItemComponent = ({
 		left: number;
 	} | null>(null);
 	const actionMenuRef = React.useRef<HTMLDivElement | null>(null);
+	const [isVisibilityMenuOpen, setIsVisibilityMenuOpen] = useState(false);
+	const [visibilityMenuPosition, setVisibilityMenuPosition] = useState<{
+		top: number;
+		left: number;
+	} | null>(null);
+	const visibilityMenuRef = React.useRef<HTMLDivElement | null>(null);
+	const [expandedVisibilitySections, setExpandedVisibilitySections] =
+		useState<{
+			clients: boolean;
+			counsellors: boolean;
+			moderators: boolean;
+		}>({
+			clients: true,
+			counsellors: true,
+			moderators: true
+		});
 
 	const { isE2eeEnabled } = useContext(E2EEContext);
 
@@ -317,6 +365,25 @@ export const MessageItemComponent = ({
 		return () =>
 			document.removeEventListener('mousedown', handleOutsideClick);
 	}, [isActionMenuOpen]);
+
+	useEffect(() => {
+		if (!isVisibilityMenuOpen) {
+			return;
+		}
+		const handleOutsideClick = (event: MouseEvent) => {
+			const target = event.target as Node | null;
+			if (!target) {
+				return;
+			}
+			if (!visibilityMenuRef.current?.contains(target)) {
+				setIsVisibilityMenuOpen(false);
+				setVisibilityMenuPosition(null);
+			}
+		};
+		document.addEventListener('mousedown', handleOutsideClick);
+		return () =>
+			document.removeEventListener('mousedown', handleOutsideClick);
+	}, [isVisibilityMenuOpen]);
 
 	useEffect((): void => {
 		if (isE2eeEnabled && message) {
@@ -362,6 +429,43 @@ export const MessageItemComponent = ({
 		() => parseMessagePrefixes(decryptedMessage),
 		[decryptedMessage]
 	);
+	const roomUser = useMemo(() => {
+		if (!rcUsersContext?.users?.length) {
+			return null;
+		}
+		return (
+			rcUsersContext.users.find((entry) => entry?._id === userId) ||
+			rcUsersContext.users.find(
+				(entry) => entry?.username === username
+			) ||
+			null
+		);
+	}, [rcUsersContext?.users, userId, username]);
+	const consultantMatch = useMemo(() => {
+		const consultantList = consultantContext?.consultantList || [];
+		if (!consultantList.length) {
+			return null;
+		}
+		const normalize = (value?: string) =>
+			(value || '').trim().toLowerCase().replace(/^@/, '').split(':')[0];
+		const targetUsername = normalize(username);
+		const targetDisplayName = normalize(displayName);
+		return (
+			consultantList.find(
+				(entry) => normalize(entry?.username) === targetUsername
+			) ||
+			consultantList.find(
+				(entry) => normalize(entry?.rawUsername) === targetUsername
+			) ||
+			consultantList.find(
+				(entry) =>
+					normalize(entry?.consultantDisplayName) ===
+					targetDisplayName
+			) ||
+			consultantList.find((entry) => entry?.value === userId) ||
+			null
+		);
+	}, [consultantContext?.consultantList, displayName, userId, username]);
 	const visibleAudienceLabels = useMemo(() => {
 		const normalizeLabel = (rawValue: string) => {
 			const trimmed = (rawValue || '').trim();
@@ -393,6 +497,37 @@ export const MessageItemComponent = ({
 			.map((entry) => normalizeLabel(entry))
 			.filter(Boolean);
 	}, [parsedMessage.visibleToUserIds, translate]);
+	const visibilityGroups = useMemo(() => {
+		const clients: string[] = [];
+		const counsellors: string[] = [];
+		const moderators: string[] = [];
+		const normalize = (value: string) => value.toLowerCase();
+		visibleAudienceLabels.forEach((label) => {
+			const normalized = normalize(label);
+			if (
+				normalized.includes('moderator') ||
+				normalized.includes('supervisor')
+			) {
+				moderators.push(label);
+				return;
+			}
+			if (
+				normalized.includes('counsellor') ||
+				normalized.includes('counselor') ||
+				normalized.includes('consultant') ||
+				normalized.includes('berater')
+			) {
+				counsellors.push(label);
+				return;
+			}
+			clients.push(label);
+		});
+		return {
+			clients,
+			counsellors,
+			moderators
+		};
+	}, [visibleAudienceLabels]);
 
 	useEffect((): void => {
 		const renderImageMarkers = (content: string) =>
@@ -682,6 +817,8 @@ export const MessageItemComponent = ({
 				setActionMenuPosition(null);
 				return;
 			}
+			setIsVisibilityMenuOpen(false);
+			setVisibilityMenuPosition(null);
 			setActionMenuPosition({
 				top: computedTop,
 				left: computedLeft
@@ -689,6 +826,61 @@ export const MessageItemComponent = ({
 			setIsActionMenuOpen(true);
 		},
 		[isActionMenuOpen]
+	);
+
+	const toggleVisibilityMenu = useCallback(
+		(
+			event: React.MouseEvent<HTMLButtonElement>,
+			side: 'left' | 'right'
+		) => {
+			event.preventDefault();
+			event.stopPropagation();
+			const triggerRect = event.currentTarget.getBoundingClientRect();
+			const menuWidth = 336;
+			const menuHeight = 460;
+			const viewportPadding = 12;
+			// Anchor menu so one corner sits behind the +N chip.
+			const preferredLeft =
+				side === 'left'
+					? triggerRect.left - triggerRect.width * 0.35
+					: triggerRect.right - menuWidth + triggerRect.width * 0.35;
+			const computedLeft = Math.max(
+				viewportPadding,
+				Math.min(
+					preferredLeft,
+					window.innerWidth - menuWidth - viewportPadding
+				)
+			);
+			const computedTop = Math.max(
+				viewportPadding,
+				Math.min(
+					triggerRect.bottom - menuHeight + triggerRect.height * 0.45,
+					window.innerHeight - menuHeight - viewportPadding
+				)
+			);
+			if (isVisibilityMenuOpen) {
+				setIsVisibilityMenuOpen(false);
+				setVisibilityMenuPosition(null);
+				return;
+			}
+			setIsActionMenuOpen(false);
+			setActionMenuPosition(null);
+			setVisibilityMenuPosition({
+				top: computedTop,
+				left: computedLeft
+			});
+			setIsVisibilityMenuOpen(true);
+		},
+		[isVisibilityMenuOpen]
+	);
+	const toggleVisibilitySection = useCallback(
+		(section: 'clients' | 'counsellors' | 'moderators') => {
+			setExpandedVisibilitySections((previous) => ({
+				...previous,
+				[section]: !previous[section]
+			}));
+		},
+		[]
 	);
 
 	// WORKAROUND for reassignment last message bug
@@ -713,22 +905,36 @@ export const MessageItemComponent = ({
 		!isDeleteMessage &&
 		!isSystemNotification &&
 		!alias?.messageType;
-	const profileName = displayName || username || '';
-	const profileSubtitle =
-		username && displayName && username !== displayName ? username : '';
-	const formatPersonName = (rawDisplayName: string, rawUsername: string) => {
-		const source = (rawDisplayName || rawUsername || '').trim();
-		if (!source) {
-			return '';
-		}
-		const cleaned = source.replace(/[_-]+/g, ' ').trim();
-		const parts = cleaned.split(/\s+/).filter(Boolean);
-		if (parts.length >= 2) {
-			return `${parts[0]} ${parts[1]}`;
-		}
-		return cleaned;
-	};
-	const formattedName = formatPersonName(displayName, username);
+	const resolvedIncomingDisplayName = !isMyMessage
+		? consultantMatch?.consultantDisplayName ||
+			roomUser?.displayName ||
+			roomUser?.name ||
+			displayName
+		: displayName;
+	const normalizedIncomingName = (resolvedIncomingDisplayName || '').trim();
+	const incomingNameParts = normalizedIncomingName
+		.split(/\s+/)
+		.filter(Boolean);
+	const resolvedIncomingNameParts =
+		incomingNameParts.length >= 2
+			? {
+					firstName:
+						consultantMatch?.firstName || incomingNameParts[0],
+					lastName:
+						consultantMatch?.lastName ||
+						incomingNameParts.slice(1).join(' ')
+				}
+			: {
+					firstName: consultantMatch?.firstName || undefined,
+					lastName: consultantMatch?.lastName || undefined
+				};
+	const formattedName = formatMessagePersonName(
+		resolvedIncomingDisplayName,
+		username,
+		isMyMessage ? userData?.firstName : resolvedIncomingNameParts.firstName,
+		isMyMessage ? userData?.lastName : resolvedIncomingNameParts.lastName
+	);
+	const profileSubtitle = '';
 	const isRejectedCallInGroupChat =
 		alias?.messageType === ALIAS_MESSAGE_TYPES.VIDEOCALL &&
 		videoCallMessage?.eventType === 'IGNORED_CALL' &&
@@ -855,7 +1061,13 @@ export const MessageItemComponent = ({
 									type={getUsernameType()}
 									userId={userId}
 									username={username}
-									displayName={displayName}
+									displayName={resolvedIncomingDisplayName}
+									firstName={
+										resolvedIncomingNameParts.firstName
+									}
+									lastName={
+										resolvedIncomingNameParts.lastName
+									}
 								/>
 								{messageTime ? (
 									<span className="messageItem__headerTime">
@@ -1272,11 +1484,37 @@ export const MessageItemComponent = ({
 							<div className="messageItem__avatar">
 								<UserAvatar
 									username={username}
-									displayName={displayName}
+									displayName={resolvedIncomingDisplayName}
+									firstName={
+										resolvedIncomingNameParts.firstName
+									}
+									lastName={
+										resolvedIncomingNameParts.lastName
+									}
 									userId={userId}
 									size="32px"
 								/>
 							</div>
+							{showVisibleAudience && (
+								<button
+									type="button"
+									className="messageItem__visibilityChip messageItem__visibilityChip--incoming"
+									onClick={(event) =>
+										toggleVisibilityMenu(event, 'left')
+									}
+									aria-label={translate(
+										'message.visibility.open',
+										'Open visibility details'
+									)}
+								>
+									<span className="messageItem__visibilityChipCount">
+										+{visibleAudienceLabels.length}
+									</span>
+									<span className="messageItem__visibilityChipIcon">
+										<VisibilityPeopleIcon />
+									</span>
+								</button>
+							)}
 							<button
 								type="button"
 								className="messageItem__kebabButton messageItem__kebabButton--left"
@@ -1307,6 +1545,26 @@ export const MessageItemComponent = ({
 					isMyMessage &&
 					!isSystemNotification && (
 						<div className="messageItem__sideColumn messageItem__sideColumn--right">
+							{showVisibleAudience && (
+								<button
+									type="button"
+									className="messageItem__visibilityChip messageItem__visibilityChip--outgoing"
+									onClick={(event) =>
+										toggleVisibilityMenu(event, 'right')
+									}
+									aria-label={translate(
+										'message.visibility.open',
+										'Open visibility details'
+									)}
+								>
+									<span className="messageItem__visibilityChipCount">
+										+{visibleAudienceLabels.length}
+									</span>
+									<span className="messageItem__visibilityChipIcon">
+										<VisibilityPeopleIcon />
+									</span>
+								</button>
+							)}
 							<button
 								type="button"
 								className="messageItem__kebabButton messageItem__kebabButton--right"
@@ -1325,6 +1583,8 @@ export const MessageItemComponent = ({
 								<UserAvatar
 									username={username}
 									displayName={displayName}
+									firstName={userData?.firstName}
+									lastName={userData?.lastName}
 									userId={userId}
 									size="32px"
 								/>
@@ -1334,7 +1594,7 @@ export const MessageItemComponent = ({
 
 				<div className="messageItem__content">
 					{messageContent()}
-					{isMyMessage && profileName && !alias?.messageType && (
+					{isMyMessage && formattedName && !alias?.messageType && (
 						<div className="messageItem__senderInfo">
 							<div className="messageItem__senderInfoPrimary">
 								{messageTime ? (
@@ -1438,6 +1698,156 @@ export const MessageItemComponent = ({
 									</span>
 								</button>
 							))}
+						</div>,
+						document.body
+					)
+				: null}
+			{isVisibilityMenuOpen && visibilityMenuPosition
+				? createPortal(
+						<div
+							className="messageItem__visibilityMenu"
+							ref={visibilityMenuRef}
+							role="menu"
+							style={{
+								position: 'fixed',
+								top: `${visibilityMenuPosition.top}px`,
+								left: `${visibilityMenuPosition.left}px`,
+								zIndex: 9000
+							}}
+						>
+							<div className="messageItem__visibilityMenuSubheading">
+								{translate(
+									'message.visibility.people',
+									'People that see this message'
+								)}
+							</div>
+							<div className="messageItem__visibilityMenuHeading">
+								{translate(
+									'message.visibility.title',
+									'Message Visible to...'
+								)}
+							</div>
+							<div className="messageItem__visibilityMenuDivider" />
+							<div className="messageItem__visibilityMenuSections">
+								{(
+									[
+										{
+											key: 'clients',
+											title:
+												visibilityGroups.clients
+													.length > 0
+													? `${visibilityGroups.clients.length} Client${
+															visibilityGroups
+																.clients
+																.length > 1
+																? 's'
+																: ''
+														}`
+													: 'Clients',
+											items: visibilityGroups.clients,
+											icon: <PersonCircleIcon />
+										},
+										{
+											key: 'counsellors',
+											title:
+												visibilityGroups.counsellors
+													.length > 0
+													? `Counsellors`
+													: 'Counsellors',
+											items: visibilityGroups.counsellors,
+											icon: <PersonCircleIcon />
+										},
+										{
+											key: 'moderators',
+											title:
+												visibilityGroups.moderators
+													.length > 0
+													? `${visibilityGroups.moderators.length} Moderators`
+													: 'Moderators',
+											items: visibilityGroups.moderators,
+											icon: <ShieldIcon />
+										}
+									] as const
+								).map((section) => (
+									<div
+										key={section.key}
+										className="messageItem__visibilityMenuSection"
+									>
+										<button
+											type="button"
+											className="messageItem__visibilityMenuSectionHeader"
+											onClick={() =>
+												toggleVisibilitySection(
+													section.key
+												)
+											}
+										>
+											<span className="messageItem__visibilityMenuSectionTitleWrap">
+												<span className="messageItem__visibilityMenuSectionTitleIcon">
+													{section.icon}
+												</span>
+												<span className="messageItem__visibilityMenuSectionTitle">
+													{section.title}
+												</span>
+											</span>
+											<ChevronIcon
+												expanded={
+													expandedVisibilitySections[
+														section.key
+													]
+												}
+											/>
+										</button>
+										<div
+											className={clsx(
+												'messageItem__visibilityMenuSectionBody',
+												expandedVisibilitySections[
+													section.key
+												] &&
+													'messageItem__visibilityMenuSectionBody--expanded'
+											)}
+										>
+											<div className="messageItem__visibilityMenuPills">
+												{section.items.length === 0 ? (
+													<span className="messageItem__visibilityMenuEmpty">
+														-
+													</span>
+												) : (
+													section.items.map(
+														(label, index) => (
+															<span
+																key={`${section.key}-${label}-${index}`}
+																className={clsx(
+																	'messageItem__visibilityMenuPill',
+																	index ===
+																		0 &&
+																		'messageItem__visibilityMenuPill--active'
+																)}
+															>
+																<span
+																	className="messageItem__visibilityMenuPillIcon"
+																	aria-hidden
+																>
+																	{label
+																		.toLowerCase()
+																		.includes(
+																			'moderator'
+																		) ? (
+																		<ShieldIcon />
+																	) : (
+																		<PersonCircleIcon />
+																	)}
+																</span>
+																{label}
+															</span>
+														)
+													)
+												)}
+											</div>
+										</div>
+									</div>
+								))}
+							</div>
 						</div>,
 						document.body
 					)

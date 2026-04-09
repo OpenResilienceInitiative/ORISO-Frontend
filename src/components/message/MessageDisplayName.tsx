@@ -1,8 +1,7 @@
-import { isUserModerator } from '../session/sessionHelpers';
 import * as React from 'react';
-import { useCallback, useContext } from 'react';
-import { ActiveSessionContext } from '../../globalState';
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatMessagePersonName } from './messageNameUtils';
 
 interface MessageDisplayNameProps {
 	isUser: Boolean;
@@ -10,40 +9,19 @@ interface MessageDisplayNameProps {
 	type: 'user' | 'consultant' | 'self' | 'system';
 	userId: string;
 	username: string;
-	displayName: string;
+	displayName?: string;
+	firstName?: string;
+	lastName?: string;
 }
 
 export const MessageDisplayName = ({
-	isUser,
-	isMyMessage,
 	type,
-	userId,
 	username,
-	displayName
+	displayName,
+	firstName,
+	lastName
 }: MessageDisplayNameProps) => {
 	const { t: translate } = useTranslation();
-	const { activeSession } = useContext(ActiveSessionContext);
-	// keep reference to session context for future role-based label behavior
-	isUserModerator({
-		chatItem: activeSession.item,
-		rcUserId: userId
-	});
-
-	const getDisplayName = useCallback(
-		(rawDisplayName: string, rawUsername: string) => {
-			const source = (rawDisplayName || rawUsername || '').trim();
-			if (!source) {
-				return '';
-			}
-			const cleaned = source.replace(/[_-]+/g, ' ').trim();
-			const parts = cleaned.split(/\s+/).filter(Boolean);
-			if (parts.length >= 2) {
-				return `${parts[0]} ${parts[1]}`;
-			}
-			return cleaned;
-		},
-		[]
-	);
 
 	const getUsernameWithPrefix = useCallback(() => {
 		if (type === 'system') {
@@ -52,9 +30,14 @@ export const MessageDisplayName = ({
 				'System Notification'
 			);
 		} else {
-			return getDisplayName(displayName, username);
+			return formatMessagePersonName(
+				displayName,
+				username,
+				firstName,
+				lastName
+			);
 		}
-	}, [displayName, getDisplayName, type, translate, username]);
+	}, [displayName, firstName, lastName, type, translate, username]);
 
 	return (
 		<>

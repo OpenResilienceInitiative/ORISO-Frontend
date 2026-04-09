@@ -69,7 +69,6 @@ import { ReactComponent as EmojiIcon } from '../../resources/img/icons/smiley-po
 import { ReactComponent as AudioOnIcon } from '../../resources/img/icons/audio-on.svg';
 import { ReactComponent as RemoveIcon } from '../../resources/img/icons/x.svg';
 import { ReactComponent as CalendarMonthIcon } from '../../resources/img/icons/calendar-month-navigation.svg';
-import { ReactComponent as ArrowDownIcon } from '../../resources/img/icons/arrow-down.svg';
 import './emojiPicker.styles';
 import './messageSubmitInterface.styles';
 import clsx from 'clsx';
@@ -763,7 +762,40 @@ export const MessageSubmitInterfaceComponent = ({
 		</svg>
 	);
 
-	const AudiencePersonIcon = () => (
+	const AudienceAllMultiIcon = () => (
+		<svg
+			width="19"
+			height="14"
+			viewBox="0 0 19 14"
+			fill="none"
+			xmlns="http://www.w3.org/2000/svg"
+			aria-hidden="true"
+		>
+			<path
+				d="M0 13.3333V11C0 10.5278 0.121528 10.0937 0.364583 9.69792C0.607639 9.30208 0.930556 9 1.33333 8.79167C2.19444 8.36111 3.06944 8.03819 3.95833 7.82292C4.84722 7.60764 5.75 7.5 6.66667 7.5C7.58333 7.5 8.48611 7.60764 9.375 7.82292C10.2639 8.03819 11.1389 8.36111 12 8.79167C12.4028 9 12.7257 9.30208 12.9688 9.69792C13.2118 10.0937 13.3333 10.5278 13.3333 11V13.3333H0ZM15 13.3333V10.8333C15 10.2222 14.8299 9.63542 14.4896 9.07292C14.1493 8.51042 13.6667 8.02778 13.0417 7.625C13.75 7.70833 14.4167 7.85069 15.0417 8.05208C15.6667 8.25347 16.25 8.5 16.7917 8.79167C17.2917 9.06944 17.6736 9.37847 17.9375 9.71875C18.2014 10.059 18.3333 10.4306 18.3333 10.8333V13.3333H15ZM6.66667 6.66667C5.75 6.66667 4.96528 6.34028 4.3125 5.6875C3.65972 5.03472 3.33333 4.25 3.33333 3.33333C3.33333 2.41667 3.65972 1.63194 4.3125 0.979167C4.96528 0.326389 5.75 0 6.66667 0C7.58333 0 8.36806 0.326389 9.02083 0.979167C9.67361 1.63194 10 2.41667 10 3.33333C10 4.25 9.67361 5.03472 9.02083 5.6875C8.36806 6.34028 7.58333 6.66667 6.66667 6.66667ZM15 3.33333C15 4.25 14.6736 5.03472 14.0208 5.6875C13.3681 6.34028 12.5833 6.66667 11.6667 6.66667C11.5139 6.66667 11.3194 6.6493 11.0833 6.61458C10.8472 6.57986 10.6528 6.54167 10.5 6.5C10.875 6.05556 11.1632 5.5625 11.3646 5.02083C11.566 4.47917 11.6667 3.91667 11.6667 3.33333C11.6667 2.75 11.566 2.1875 11.3646 1.64583C11.1632 1.10417 10.875 0.611111 10.5 0.166667C10.6944 0.0972222 10.8889 0.0520833 11.0833 0.03125C11.2778 0.0104167 11.4722 0 11.6667 0C12.5833 0 13.3681 0.326389 14.0208 0.979167C14.6736 1.63194 15 2.41667 15 3.33333Z"
+				fill="currentColor"
+			/>
+		</svg>
+	);
+
+	const AudienceChipChevronIcon = ({ className }: { className?: string }) => (
+		<svg
+			width="11"
+			height="7"
+			viewBox="0 0 11 7"
+			fill="none"
+			xmlns="http://www.w3.org/2000/svg"
+			className={className}
+			aria-hidden="true"
+		>
+			<path
+				d="M5.5 2.56667L1.28333 6.78333L0 5.5L5.5 0L11 5.5L9.71667 6.78333L5.5 2.56667Z"
+				fill="currentColor"
+			/>
+		</svg>
+	);
+
+	const AudienceSingleUserIcon = () => (
 		<svg
 			width="20"
 			height="20"
@@ -773,7 +805,23 @@ export const MessageSubmitInterfaceComponent = ({
 			aria-hidden="true"
 		>
 			<path
-				d="M8.3 17.8C9.05 16.2833 10.05 15.2708 11.3 14.7625C12.55 14.2542 13.6167 14 14.5 14C14.8833 14 15.2583 14.0333 15.625 14.1C15.9917 14.1667 16.35 14.25 16.7 14.35C17.1 13.7167 17.4167 13.0333 17.65 12.3C17.8833 11.5667 18 10.8 18 10C18 7.76667 17.225 5.875 15.675 4.325C14.125 2.775 12.2333 2 10 2C7.76667 2 5.875 2.775 4.325 4.325C2.775 5.875 2 7.76667 2 10C2 10.75 2.09583 11.4667 2.2875 12.15C2.47917 12.8333 2.76667 13.4667 3.15 14.05C3.83333 13.7167 4.54167 13.4583 5.275 13.275C6.00833 13.0917 6.75 13 7.5 13C8.03333 13 8.54583 13.0458 9.0375 13.1375C9.52917 13.2292 10.0167 13.35 10.5 13.5C10.1167 13.7 9.75417 13.9333 9.4125 14.2C9.07083 14.4667 8.75 14.75 8.45 15.05C8.25 15.0167 8.07917 15 7.9375 15H7.5C6.96667 15 6.4375 15.0583 5.9125 15.175C5.3875 15.2917 4.88333 15.4667 4.4 15.7C4.93333 16.2333 5.52917 16.6792 6.1875 17.0375C6.84583 17.3958 7.55 17.65 8.3 17.8ZM6.1 19.2125C4.88333 18.6875 3.825 17.975 2.925 17.075C2.025 16.175 1.3125 15.1167 0.7875 13.9C0.2625 12.6833 0 11.3833 0 10C0 8.61667 0.2625 7.31667 0.7875 6.1C1.3125 4.88333 2.025 3.825 2.925 2.925C3.825 2.025 4.88333 1.3125 6.1 0.7875C7.31667 0.2625 8.61667 0 10 0C11.3833 0 12.6833 0.2625 13.9 0.7875C15.1167 1.3125 16.175 2.025 17.075 2.925C17.975 3.825 18.6875 4.88333 19.2125 6.1C19.7375 7.31667 20 8.61667 20 10C20 11.3833 19.7375 12.6833 19.2125 13.9C18.6875 15.1167 17.975 16.175 17.075 17.075C16.175 17.975 15.1167 18.6875 13.9 19.2125C12.6833 19.7375 11.3833 20 10 20C8.61667 20 7.31667 19.7375 6.1 19.2125ZM5.025 10.475C4.34167 9.79167 4 8.96667 4 8C4 7.03333 4.34167 6.20833 5.025 5.525C5.70833 4.84167 6.53333 4.5 7.5 4.5C8.46667 4.5 9.29167 4.84167 9.975 5.525C10.6583 6.20833 11 7.03333 11 8C11 8.96667 10.6583 9.79167 9.975 10.475C9.29167 11.1583 8.46667 11.5 7.5 11.5C6.53333 11.5 5.70833 11.1583 5.025 10.475ZM8.5625 9.0625C8.85417 8.77083 9 8.41667 9 8C9 7.58333 8.85417 7.22917 8.5625 6.9375C8.27083 6.64583 7.91667 6.5 7.5 6.5C7.08333 6.5 6.72917 6.64583 6.4375 6.9375C6.14583 7.22917 6 7.58333 6 8C6 8.41667 6.14583 8.77083 6.4375 9.0625C6.72917 9.35417 7.08333 9.5 7.5 9.5C7.91667 9.5 8.27083 9.35417 8.5625 9.0625ZM12.725 11.775C12.2417 11.2917 12 10.7 12 10C12 9.3 12.2417 8.70833 12.725 8.225C13.2083 7.74167 13.8 7.5 14.5 7.5C15.2 7.5 15.7917 7.74167 16.275 8.225C16.7583 8.70833 17 9.3 17 10C17 10.7 16.7583 11.2917 16.275 11.775C15.7917 12.2583 15.2 12.5 14.5 12.5C13.8 12.5 13.2083 12.2583 12.725 11.775Z"
+				d="M12.4349 11.6975C12.0321 11.2947 11.8307 10.8017 11.8307 10.2183C11.8307 9.63501 12.0321 9.14195 12.4349 8.73918C12.8377 8.3364 13.3307 8.13501 13.9141 8.13501C14.4974 8.13501 14.9905 8.3364 15.3932 8.73918C15.796 9.14195 15.9974 9.63501 15.9974 10.2183C15.9974 10.8017 15.796 11.2947 15.3932 11.6975C14.9905 12.1003 14.4974 12.3017 13.9141 12.3017C13.3307 12.3017 12.8377 12.1003 12.4349 11.6975ZM9.7474 16.4683V15.3017C9.7474 14.9683 9.8342 14.6593 10.0078 14.3746C10.1814 14.0899 10.428 13.885 10.7474 13.76C11.2474 13.5517 11.7648 13.3954 12.2995 13.2913C12.8342 13.1871 13.3724 13.135 13.9141 13.135C14.4557 13.135 14.9939 13.1871 15.5286 13.2913C16.0634 13.3954 16.5807 13.5517 17.0807 13.76C17.4002 13.885 17.6467 14.0899 17.8203 14.3746C17.9939 14.6593 18.0807 14.9683 18.0807 15.3017V16.4683H9.7474ZM5.72656 8.82251C5.07378 8.16973 4.7474 7.38501 4.7474 6.46834C4.7474 5.55168 5.07378 4.76695 5.72656 4.11418C6.37934 3.4614 7.16406 3.13501 8.08073 3.13501C8.9974 3.13501 9.78212 3.4614 10.4349 4.11418C11.0877 4.76695 11.4141 5.55168 11.4141 6.46834C11.4141 7.38501 11.0877 8.16973 10.4349 8.82251C9.78212 9.47529 8.9974 9.80168 8.08073 9.80168C7.16406 9.80168 6.37934 9.47529 5.72656 8.82251ZM1.41406 16.4683V14.135C1.41406 13.6628 1.53212 13.2288 1.76823 12.8329C2.00434 12.4371 2.33073 12.135 2.7474 11.9267C3.58073 11.51 4.44531 11.1906 5.34115 10.9683C6.23698 10.7461 7.15017 10.635 8.08073 10.635C8.56684 10.635 9.05295 10.6767 9.53906 10.76C10.0252 10.8433 10.5113 10.9406 10.9974 11.0517L9.58073 12.4683C9.33073 12.3989 9.08073 12.3538 8.83073 12.3329C8.58073 12.3121 8.33073 12.3017 8.08073 12.3017C7.27517 12.3017 6.48698 12.3989 5.71615 12.5933C4.94531 12.7878 4.20573 13.0656 3.4974 13.4267C3.35851 13.4961 3.25434 13.5933 3.1849 13.7183C3.11545 13.8433 3.08073 13.9822 3.08073 14.135V14.8017H8.08073V16.4683H1.41406ZM9.25781 7.64543C9.5842 7.31904 9.7474 6.92668 9.7474 6.46834C9.7474 6.01001 9.5842 5.61765 9.25781 5.29126C8.93142 4.96487 8.53906 4.80168 8.08073 4.80168C7.6224 4.80168 7.23003 4.96487 6.90365 5.29126C6.57726 5.61765 6.41406 6.01001 6.41406 6.46834C6.41406 6.92668 6.57726 7.31904 6.90365 7.64543C7.23003 7.97182 7.6224 8.13501 8.08073 8.13501C8.53906 8.13501 8.93142 7.97182 9.25781 7.64543Z"
+				fill="currentColor"
+			/>
+		</svg>
+	);
+
+	const AudienceSingleConsultantIcon = () => (
+		<svg
+			width="20"
+			height="20"
+			viewBox="0 0 20 20"
+			fill="none"
+			xmlns="http://www.w3.org/2000/svg"
+			aria-hidden="true"
+		>
+			<path
+				d="M4.87435 14.2501C5.58268 13.7084 6.37435 13.2813 7.24935 12.9688C8.12435 12.6563 9.04102 12.5001 9.99935 12.5001C10.9577 12.5001 11.8743 12.6563 12.7493 12.9688C13.6243 13.2813 14.416 13.7084 15.1243 14.2501C15.6105 13.6806 15.9889 13.0348 16.2598 12.3126C16.5306 11.5904 16.666 10.8195 16.666 10.0001C16.666 8.15286 16.0167 6.57994 14.7181 5.28133C13.4195 3.98272 11.8466 3.33341 9.99935 3.33341C8.15213 3.33341 6.57921 3.98272 5.2806 5.28133C3.98199 6.57994 3.33268 8.15286 3.33268 10.0001C3.33268 10.8195 3.4681 11.5904 3.73893 12.3126C4.00977 13.0348 4.38824 13.6806 4.87435 14.2501ZM9.99935 10.8334C9.1799 10.8334 8.48893 10.5522 7.92643 9.98967C7.36393 9.42716 7.08268 8.73619 7.08268 7.91675C7.08268 7.0973 7.36393 6.40633 7.92643 5.84383C8.48893 5.28133 9.1799 5.00008 9.99935 5.00008C10.8188 5.00008 11.5098 5.28133 12.0723 5.84383C12.6348 6.40633 12.916 7.0973 12.916 7.91675C12.916 8.73619 12.6348 9.42716 12.0723 9.98967C11.5098 10.5522 10.8188 10.8334 9.99935 10.8334ZM9.99935 18.3334C8.84657 18.3334 7.76324 18.1147 6.74935 17.6772C5.73546 17.2397 4.85352 16.6459 4.10352 15.8959C3.35352 15.1459 2.75977 14.264 2.32227 13.2501C1.88477 12.2362 1.66602 11.1529 1.66602 10.0001C1.66602 8.8473 1.88477 7.76397 2.32227 6.75008C2.75977 5.73619 3.35352 4.85425 4.10352 4.10425C4.85352 3.35425 5.73546 2.7605 6.74935 2.323C7.76324 1.8855 8.84657 1.66675 9.99935 1.66675C11.1521 1.66675 12.2355 1.8855 13.2493 2.323C14.2632 2.7605 15.1452 3.35425 15.8952 4.10425C16.6452 4.85425 17.2389 5.73619 17.6764 6.75008C18.1139 7.76397 18.3327 8.8473 18.3327 10.0001C18.3327 11.1529 18.1139 12.2362 17.6764 13.2501C17.2389 14.264 16.6452 15.1459 15.8952 15.8959C15.1452 16.6459 14.2632 17.2397 13.2493 17.6772C12.2355 18.1147 11.1521 18.3334 9.99935 18.3334Z"
 				fill="currentColor"
 			/>
 		</svg>
@@ -858,6 +906,13 @@ export const MessageSubmitInterfaceComponent = ({
 		string[]
 	>(['__all__']);
 	const [audienceRefreshTick, setAudienceRefreshTick] = useState(0);
+	const audienceSelectionStorageKey = useMemo(() => {
+		const sessionId = activeSession?.item?.id;
+		if (!sessionId) {
+			return '';
+		}
+		return `oriso.audienceSelection.${sessionId}`;
+	}, [activeSession?.item?.id]);
 
 	const scrollToolbarPanelByStep = useCallback(() => {
 		if (window.innerWidth > 899) {
@@ -2282,9 +2337,10 @@ export const MessageSubmitInterfaceComponent = ({
 		const matrixClient = (window as any).matrixClientService?.getClient?.();
 		const room =
 			roomId && matrixClient ? matrixClient.getRoom(roomId) : null;
-		const joinedMembers = room?.getJoinedMembers?.() || [];
+		const roomMembers =
+			room?.getMembers?.() || room?.getJoinedMembers?.() || [];
 
-		joinedMembers.forEach((member: any) => {
+		roomMembers.forEach((member: any) => {
 			const memberId = `${member?.userId || ''}`.trim();
 			if (!memberId) {
 				return;
@@ -2309,33 +2365,55 @@ export const MessageSubmitInterfaceComponent = ({
 			);
 		});
 
-		if (collected.size === 0) {
-			const askerId = `${activeSession?.item?.askerRcId || ''}`.trim();
-			if (
-				askerId &&
-				!Array.from(getComparableAudienceIds(askerId)).some((id) =>
-					selfIdentifiers.has(id)
-				)
-			) {
-				collected.set(askerId, deriveLabelFromUserId(askerId));
+		const addAudienceCandidate = (
+			rawId: string,
+			fallbackLabel?: string
+		) => {
+			const compactId = `${rawId || ''}`.trim();
+			if (!compactId) {
+				return;
 			}
-			const consultantUsername =
-				`${activeSession?.consultant?.username || ''}`.trim();
-			if (
-				consultantUsername &&
-				!Array.from(getComparableAudienceIds(consultantUsername)).some(
-					(id) => selfIdentifiers.has(id)
-				)
-			) {
-				collected.set(consultantUsername, consultantUsername);
+			const comparableIds = getComparableAudienceIds(compactId);
+			const isSelf = Array.from(comparableIds).some((id) =>
+				selfIdentifiers.has(id)
+			);
+			if (isSelf) {
+				return;
 			}
-		}
+			if (Array.from(comparableIds).some((id) => collected.has(id))) {
+				return;
+			}
+			const existingKey = Array.from(collected.keys()).find((key) =>
+				Array.from(comparableIds).some((id) =>
+					getComparableAudienceIds(key).has(id)
+				)
+			);
+			if (existingKey) {
+				return;
+			}
+			collected.set(
+				compactId,
+				`${fallbackLabel || ''}`.trim() ||
+					deriveLabelFromUserId(compactId)
+			);
+		};
+		const askerId = `${activeSession?.item?.askerRcId || ''}`.trim();
+		addAudienceCandidate(askerId);
+		const askerUsername = `${activeSession?.user?.username || ''}`.trim();
+		addAudienceCandidate(askerUsername, askerUsername);
+		const consultantUsername =
+			`${activeSession?.consultant?.username || ''}`.trim();
+		addAudienceCandidate(
+			consultantUsername,
+			`${activeSession?.consultant?.displayName || consultantUsername}`.trim()
+		);
+		const contactUsername = `${contact?.username || ''}`.trim();
+		addAudienceCandidate(contactUsername, contactUsername);
 
 		const mapped = Array.from(collected.entries())
 			.map(([value, label]) => ({ value, label }))
 			.sort((a, b) => a.label.localeCompare(b.label));
-		const includeAllOption =
-			mapped.length > 1 || (activeSession?.isGroup && mapped.length > 0);
+		const includeAllOption = mapped.length > 1;
 		const nextOptions = includeAllOption
 			? [defaultOption, ...mapped]
 			: mapped;
@@ -2364,7 +2442,9 @@ export const MessageSubmitInterfaceComponent = ({
 		activeSession?.consultant?.username,
 		activeSession?.consultant?.id,
 		activeSession?.item?.askerRcId,
+		activeSession?.user?.username,
 		activeSession?.item?.id,
+		contact?.username,
 		deriveLabelFromUserId,
 		getComparableAudienceIds,
 		getMatrixRoomId,
@@ -2394,6 +2474,54 @@ export const MessageSubmitInterfaceComponent = ({
 				: ['__all__'];
 		});
 	}, [activeSession?.item?.id, threadRootId, audienceOptions]);
+
+	useEffect(() => {
+		if (!audienceSelectionStorageKey) {
+			return;
+		}
+		const hasAllOption = audienceOptions.some(
+			(option) => option.value === '__all__'
+		);
+		if (hasAllOption) {
+			// Always default to "All" when available.
+			setSelectedAudienceValues(['__all__']);
+			return;
+		}
+		try {
+			const saved = window.localStorage.getItem(
+				audienceSelectionStorageKey
+			);
+			if (!saved) {
+				return;
+			}
+			const parsed = JSON.parse(saved);
+			if (!Array.isArray(parsed)) {
+				return;
+			}
+			const valid = parsed.filter((value) =>
+				audienceOptions.some((option) => option.value === value)
+			);
+			if (valid.length > 0) {
+				setSelectedAudienceValues(valid);
+			}
+		} catch (_error) {
+			// Ignore broken local storage values.
+		}
+	}, [audienceOptions, audienceSelectionStorageKey]);
+
+	useEffect(() => {
+		if (!audienceSelectionStorageKey) {
+			return;
+		}
+		try {
+			window.localStorage.setItem(
+				audienceSelectionStorageKey,
+				JSON.stringify(selectedAudienceValues)
+			);
+		} catch (_error) {
+			// Ignore quota/storage exceptions.
+		}
+	}, [audienceSelectionStorageKey, selectedAudienceValues]);
 
 	useEffect(() => {
 		if (!isAudienceMenuOpen) {
@@ -2428,19 +2556,82 @@ export const MessageSubmitInterfaceComponent = ({
 			)
 			.filter(Boolean);
 	}, [audienceOptions, selectedAudienceValues]);
+	const isClientUser = useMemo(() => {
+		const hasAskerAuthority = hasUserAuthority(
+			AUTHORITIES.ASKER_DEFAULT,
+			userData
+		);
+		const hasConsultantAuthority = hasUserAuthority(
+			AUTHORITIES.CONSULTANT_DEFAULT,
+			userData
+		);
+		// "Client" here means pure asker only; consultant/supervisor views must keep Send-to available.
+		return hasAskerAuthority && !hasConsultantAuthority;
+	}, [userData]);
+	const audienceTargetCount = useMemo(
+		() =>
+			audienceOptions.filter((option) => option.value !== '__all__')
+				.length,
+		[audienceOptions]
+	);
 	const selectedAudienceChipLabel = useMemo(() => {
+		const isAllSelected =
+			selectedAudienceValues.length === 0 ||
+			selectedAudienceValues.includes('__all__');
+		if (isAllSelected) {
+			return translate('message.audience.all', 'Alle');
+		}
 		if (selectedAudienceLabels.length === 1) {
 			return selectedAudienceLabels[0];
 		}
-		if (selectedAudienceLabels.length === 2) {
-			return `${selectedAudienceLabels[0]}, ${selectedAudienceLabels[1]}`;
+		return translate('message.audience.multiCount', '{{count}} Personen', {
+			count: selectedAudienceLabels.length,
+			defaultValue: `${selectedAudienceLabels.length} Personen`
+		});
+	}, [selectedAudienceLabels, selectedAudienceValues, translate]);
+	const showAudienceSelector = useMemo(() => {
+		if (isClientUser) {
+			return false;
 		}
-		return `${selectedAudienceLabels[0]}, ${selectedAudienceLabels[1]} +${
-			selectedAudienceLabels.length - 2
-		}`;
-	}, [selectedAudienceLabels]);
-	const showAudienceSelector = audienceOptions.some(
-		(option) => option.value === '__all__'
+		if (audienceTargetCount <= 1) {
+			return false;
+		}
+		return audienceOptions.some((option) => option.value === '__all__');
+	}, [audienceOptions, audienceTargetCount, isClientUser]);
+	const selectedAudienceIcon = useMemo(() => {
+		const isAllSelected =
+			selectedAudienceValues.length === 0 ||
+			selectedAudienceValues.includes('__all__');
+		if (isAllSelected || selectedAudienceValues.length > 1) {
+			return <AudienceAllMultiIcon />;
+		}
+		const selectedValue = selectedAudienceValues[0];
+		const normalizedValue = `${selectedValue || ''}`.toLowerCase();
+		const selectedLabel =
+			`${selectedAudienceLabels[0] || ''}`.toLowerCase();
+		const looksLikeConsultant =
+			normalizedValue.includes('consultant') ||
+			selectedLabel.includes('consultant') ||
+			selectedLabel.includes('counsellor') ||
+			selectedLabel.includes('counselor') ||
+			selectedLabel.includes('berater');
+		return looksLikeConsultant ? (
+			<AudienceSingleConsultantIcon />
+		) : (
+			<AudienceSingleUserIcon />
+		);
+	}, [selectedAudienceLabels, selectedAudienceValues]);
+	const isMultiAudienceSelection = useMemo(() => {
+		const explicitAudience = selectedAudienceValues.filter(
+			(value) => value !== '__all__'
+		);
+		return explicitAudience.length > 1;
+	}, [selectedAudienceValues]);
+	const isAllAudienceChip = useMemo(
+		() =>
+			selectedAudienceValues.length === 0 ||
+			selectedAudienceValues.includes('__all__'),
+		[selectedAudienceValues]
 	);
 
 	const toggleAudienceSelection = useCallback((value: string) => {
@@ -2911,12 +3102,17 @@ export const MessageSubmitInterfaceComponent = ({
 					>
 						{showAudienceSelector && (
 							<div
-								className="textarea__audienceSelector"
+								className={clsx(
+									'textarea__audienceSelector',
+									isAllAudienceChip
+										? 'textarea__audienceSelector--all'
+										: 'textarea__audienceSelector--target'
+								)}
 								ref={audienceMenuRef}
 							>
 								<button
 									type="button"
-									className="textarea__audienceSelectorButton"
+									className="textarea__audienceSelectorMain"
 									onClick={() =>
 										setIsAudienceMenuOpen(
 											(previousState) => !previousState
@@ -2926,12 +3122,34 @@ export const MessageSubmitInterfaceComponent = ({
 									aria-expanded={isAudienceMenuOpen}
 								>
 									<span className="textarea__audienceSelectorIcon">
-										<AudiencePersonIcon />
+										{selectedAudienceIcon}
 									</span>
-									<span className="textarea__audienceSelectorName">
+									<span
+										className={clsx(
+											'textarea__audienceSelectorName',
+											isMultiAudienceSelection &&
+												'textarea__audienceSelectorName--multi'
+										)}
+									>
 										{selectedAudienceChipLabel}
 									</span>
-									<ArrowDownIcon
+								</button>
+								<button
+									type="button"
+									className="textarea__audienceSelectorChevron"
+									onClick={() =>
+										setIsAudienceMenuOpen(
+											(previousState) => !previousState
+										)
+									}
+									aria-label={translate(
+										'message.audience.openMenu',
+										'Open send-to menu'
+									)}
+									aria-haspopup="listbox"
+									aria-expanded={isAudienceMenuOpen}
+								>
+									<AudienceChipChevronIcon
 										className={clsx(
 											'textarea__audienceSelectorArrow',
 											isAudienceMenuOpen &&
@@ -2950,6 +3168,27 @@ export const MessageSubmitInterfaceComponent = ({
 												selectedAudienceValues.includes(
 													option.value
 												);
+											const optionComparableIds =
+												getComparableAudienceIds(
+													option.value
+												);
+											const isOwnOption = Array.from(
+												optionComparableIds
+											).some((id) => {
+												const ownIds =
+													getComparableAudienceIds(
+														userData?.userName
+													);
+												const ownDisplayIds =
+													getComparableAudienceIds(
+														userData?.displayName
+													);
+												return (
+													ownIds.has(id) ||
+													ownDisplayIds.has(id)
+												);
+											});
+											const optionDisabled = isOwnOption;
 											return (
 												<button
 													type="button"
@@ -2959,14 +3198,29 @@ export const MessageSubmitInterfaceComponent = ({
 													className={clsx(
 														'textarea__audienceSelectorMenuItem',
 														isSelected &&
-															'textarea__audienceSelectorMenuItem--selected'
+															'textarea__audienceSelectorMenuItem--selected',
+														optionDisabled &&
+															'textarea__audienceSelectorMenuItem--disabled'
 													)}
+													disabled={optionDisabled}
 													onClick={() => {
+														if (optionDisabled) {
+															return;
+														}
 														toggleAudienceSelection(
 															option.value
 														);
 													}}
 												>
+													<span className="textarea__audienceSelectorMenuItemCheckbox">
+														<input
+															type="checkbox"
+															readOnly
+															checked={isSelected}
+															tabIndex={-1}
+															aria-hidden="true"
+														/>
+													</span>
 													{option.label}
 												</button>
 											);

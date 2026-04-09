@@ -27,13 +27,9 @@ export const prepareSelectDropdown = ({
 export const prepareConsultantDataForSelect = (consultants: Consultant[]) => {
 	let availableConsultants = [];
 	consultants.forEach((item) => {
+		const decodedUsername = decodeUsername(item.username);
 		const label =
-			item.firstName +
-			` ` +
-			item.lastName +
-			' (' +
-			decodeUsername(item.username) +
-			')';
+			item.firstName + ` ` + item.lastName + ' (' + decodedUsername + ')';
 
 		const consultant = {
 			value: item.consultantId,
@@ -41,7 +37,11 @@ export const prepareConsultantDataForSelect = (consultants: Consultant[]) => {
 			iconLabel: item.firstName.charAt(0) + item.lastName.charAt(0),
 			consultantDisplayName: item.displayName
 				? item.displayName
-				: decodeUsername(item.username)
+				: decodedUsername,
+			firstName: item.firstName,
+			lastName: item.lastName,
+			rawUsername: item.username,
+			username: decodedUsername
 		};
 		availableConsultants.push(consultant);
 	});

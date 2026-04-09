@@ -171,7 +171,6 @@ $message-avatar-ring: #ebe2e2;
 		display: inline-flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 0;
 		flex-shrink: 0;
 		margin-top: 0;
 		position: relative;
@@ -183,10 +182,9 @@ $message-avatar-ring: #ebe2e2;
 		justify-content: center;
 		margin-bottom: 0;
 		position: absolute;
-		right: -27px;
+		right: -4px;
 		bottom: 40px;
 		z-index: 5;
-		margin-right: 23px;
 	}
 
 	&--right {
@@ -299,6 +297,204 @@ $message-avatar-ring: #ebe2e2;
 		line-height: 24px;
 		letter-spacing: 0.0313em;
 		color: #4b515a;
+	}
+
+	&__visibilityChip {
+		border: 10px solid #fff;
+		border-radius: 40px;
+		background: #e1e6ee;
+		min-width: 48px;
+		height: 72px;
+		display: inline-flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 2px;
+		padding: 0 6px;
+		cursor: pointer;
+		box-sizing: border-box;
+		position: relative;
+		z-index: 9500;
+	}
+
+	&__visibilityChipIcon {
+		display: inline-flex;
+		width: 14px;
+		height: 14px;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
+		margin-top: 6px;
+		margin-left: -2px;
+
+		svg {
+			width: 14px;
+			height: 12px;
+		}
+	}
+
+	&__visibilityChipCount {
+		color: #4b515a;
+		font-size: 16px;
+		font-weight: 500;
+		line-height: 1;
+	}
+
+	&__visibilityChip--incoming {
+		margin-top: -2px;
+	}
+
+	&__visibilityChip--outgoing {
+		margin-bottom: -2px;
+	}
+
+	&__visibilityMenu {
+		min-width: 320px;
+		max-width: 360px;
+		padding: 8px;
+		border: 2px solid #cc1e1c;
+		border-radius: 12px;
+		background: #fff;
+		box-shadow:
+			0 30px 28px rgba(0, 0, 0, 0.1),
+			0 0 30px 28px rgba(0, 0, 0, 0.05);
+	}
+
+	&__visibilityMenuSections {
+		display: flex;
+		flex-direction: column;
+		gap: 9px;
+	}
+
+	&__visibilityMenuSection {
+		border: 1px solid #e1e6ee;
+		border-radius: 12px;
+		padding: 4px;
+		background: #fff;
+	}
+
+	&__visibilityMenuSectionHeader {
+		width: 100%;
+		border: 0;
+		background: transparent;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 6px;
+		cursor: pointer;
+	}
+
+	&__visibilityMenuSectionTitleWrap {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+	}
+
+	&__visibilityMenuSectionTitleIcon {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 16px;
+		height: 16px;
+
+		svg {
+			width: 16px;
+			height: 16px;
+		}
+
+		path {
+			fill: #4c555f;
+		}
+	}
+
+	&__visibilityMenuSectionTitle {
+		font-size: 12px;
+		line-height: 14px;
+		color: #4c555f;
+	}
+
+	&__visibilityMenuSectionBody {
+		max-height: 0;
+		overflow: hidden;
+		transition: max-height 180ms ease;
+	}
+
+	&__visibilityMenuSectionBody--expanded {
+		max-height: 200px;
+	}
+
+	&__visibilityMenuSubheading {
+		font-size: 12px;
+		line-height: 1.4;
+		color: #4b515a;
+		text-align: right;
+		padding: 8px 12px 2px;
+	}
+
+	&__visibilityMenuHeading {
+		font-size: 16px;
+		line-height: 1.4;
+		font-weight: 500;
+		color: rgba(0, 0, 0, 0.9);
+		text-align: right;
+		padding: 0 12px 8px;
+	}
+
+	&__visibilityMenuDivider {
+		height: 1px;
+		background: #bec7d4;
+		margin: 0 8px 10px;
+	}
+
+	&__visibilityMenuPills {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+		padding: 0 6px 6px;
+	}
+
+	&__visibilityMenuPill {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		border-radius: 999px;
+		border: 1px solid #e1e6ee;
+		background: #fff;
+		padding: 6px 10px;
+		font-size: 12px;
+		font-weight: 700;
+		line-height: 14px;
+		color: #4c555f;
+	}
+
+	&__visibilityMenuPill--active {
+		background: #3b4044;
+		color: #fff;
+		border-color: #3b4044;
+	}
+
+	&__visibilityMenuEmpty {
+		font-size: 12px;
+		color: #8d97a5;
+		padding: 2px 4px 6px;
+	}
+
+	&__visibilityMenuPillIcon {
+		display: inline-flex;
+		width: 16px;
+		height: 16px;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
+
+		svg {
+			width: 16px;
+			height: 16px;
+		}
+
+		path {
+			fill: currentColor;
+		}
 	}
 
 	&__systemAvatar {
@@ -652,7 +848,7 @@ $message-avatar-ring: #ebe2e2;
 		flex-direction: column;
 		align-items: flex-end;
 		margin-top: 2px;
-		padding-right: 56px;
+		padding-right: 20px;
 	}
 
 	&__senderInfoPrimary {
@@ -747,6 +943,7 @@ $message-avatar-ring: #ebe2e2;
 
 		.messageItem__visibleOnly {
 			justify-content: flex-end;
+			margin-right: 24px;
 		}
 	}
 
