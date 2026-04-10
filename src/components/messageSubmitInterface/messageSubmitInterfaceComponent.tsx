@@ -7,6 +7,7 @@ import {
 	useRef,
 	useState
 } from 'react';
+import { createPortal } from 'react-dom';
 import { useHistory, useLocation } from 'react-router-dom';
 
 import { SendMessageButton } from './SendMessageButton';
@@ -24,7 +25,9 @@ import {
 } from '../../globalState';
 import { STATUS_ARCHIVED } from '../../globalState/interfaces';
 import {
+	apiGetAgencyConsultantList,
 	apiPutDearchive,
+	apiGetSessionSupervisors,
 	apiSendEnquiry,
 	apiSendMessage,
 	apiUploadAttachment,
@@ -899,6 +902,13 @@ export const MessageSubmitInterfaceComponent = ({
 		useState(true);
 	const [isExpandedComposer, setIsExpandedComposer] = useState(false);
 	const [isAudienceMenuOpen, setIsAudienceMenuOpen] = useState(false);
+	const [audienceOverlayBounds, setAudienceOverlayBounds] = useState<{
+		top: number;
+		left: number;
+		width: number;
+		height: number;
+		borderRadius: string;
+	} | null>(null);
 	const [audienceOptions, setAudienceOptions] = useState<
 		Array<{ value: string; label: string }>
 	>([{ value: '__all__', label: 'ALL' }]);
@@ -906,6 +916,17 @@ export const MessageSubmitInterfaceComponent = ({
 		string[]
 	>(['__all__']);
 	const [audienceRefreshTick, setAudienceRefreshTick] = useState(0);
+	const [sessionSupervisors, setSessionSupervisors] = useState<
+		Array<{ id: string; username: string }>
+	>([]);
+	const [agencyConsultantDirectory, setAgencyConsultantDirectory] = useState<
+		Map<string, { displayName: string; username: string }>
+	>(new Map());
+	const [expandedAudienceSections, setExpandedAudienceSections] = useState({
+		clients: true,
+		counsellors: true,
+		moderators: true
+	});
 	const audienceSelectionStorageKey = useMemo(() => {
 		const sessionId = activeSession?.item?.id;
 		if (!sessionId) {
@@ -2266,20 +2287,67 @@ export const MessageSubmitInterfaceComponent = ({
 		return compact;
 	}, []);
 
+	const formatAudiencePersonLabel = useCallback(
+		(rawLabel?: string, rawUserId?: string) => {
+			const source = (rawLabel || '').trim();
+			const fallback = deriveLabelFromUserId(rawUserId || rawLabel || '');
+			const normalized = source || fallback;
+			if (!normalized) {
+				return '';
+			}
+
+			const sanitized = normalized
+				.replace(/^@/, '')
+				.split(':')[0]
+				.trim()
+				.replace(/\s+/g, ' ');
+			const parts = sanitized.split(' ').filter(Boolean);
+			if (parts.length < 2) {
+				return sanitized;
+			}
+
+			const firstInitial = parts[0].charAt(0).toUpperCase();
+			const lastNameRaw = parts[parts.length - 1];
+			const lastName =
+				lastNameRaw.charAt(0).toUpperCase() + lastNameRaw.slice(1);
+			return `${firstInitial}. ${lastName}`;
+		},
+		[deriveLabelFromUserId]
+	);
+
 	const getComparableAudienceIds = useCallback((rawValue?: string | null) => {
 		const compact = (rawValue || '').trim().toLowerCase();
 		if (!compact) {
 			return new Set<string>();
 		}
-		const ids = new Set<string>([compact]);
-		if (compact.startsWith('@')) {
-			const username = compact.slice(1).split(':')[0];
-			if (username) {
-				ids.add(username);
-				ids.add(`@${username}`);
+		const ids = new Set<string>();
+		const addVariants = (value: string) => {
+			const normalized = (value || '').trim().toLowerCase();
+			if (!normalized) {
+				return;
 			}
-		} else {
-			ids.add(`@${compact}`);
+			ids.add(normalized);
+			ids.add(normalized.replace(/\s+/g, ''));
+			ids.add(normalized.replace(/[^a-z0-9]/gi, ''));
+			normalized
+				.split(/[^a-z0-9]+/gi)
+				.filter(Boolean)
+				.filter((token) => token.length >= 4 && token !== 'enc')
+				.forEach((token) => ids.add(token));
+			const consultantTokenMatches =
+				normalized.match(/consultant\d+/gi) || [];
+			consultantTokenMatches.forEach((token) =>
+				ids.add(token.toLowerCase())
+			);
+		};
+		addVariants(compact);
+		const withoutAt = compact.startsWith('@') ? compact.slice(1) : compact;
+		const localPart = withoutAt.split(':')[0];
+		addVariants(withoutAt);
+		addVariants(localPart);
+		ids.add(`@${withoutAt}`);
+		if (localPart) {
+			ids.add(`@${localPart}`);
 		}
 		return ids;
 	}, []);
@@ -2301,7 +2369,96 @@ export const MessageSubmitInterfaceComponent = ({
 	}, [activeSession?.item?.id, threadRootId]);
 
 	useEffect(() => {
-		const defaultOption = { value: '__all__', label: 'Send to all' };
+		const sessionId = Number(activeSession?.item?.id);
+		if (!sessionId || Number.isNaN(sessionId)) {
+			setSessionSupervisors([]);
+			return;
+		}
+		let cancelled = false;
+		apiGetSessionSupervisors(sessionId)
+			.then((supervisors) => {
+				if (cancelled) {
+					return;
+				}
+				const mapped = (Array.isArray(supervisors) ? supervisors : [])
+					.map((entry) => ({
+						id: `${entry?.supervisorConsultantId || ''}`.trim(),
+						username: `${entry?.supervisorUsername || ''}`.trim()
+					}))
+					.filter((entry) => entry.id || entry.username);
+				setSessionSupervisors(mapped);
+			})
+			.catch(() => {
+				if (cancelled) {
+					return;
+				}
+				setSessionSupervisors([]);
+			});
+		return () => {
+			cancelled = true;
+		};
+	}, [activeSession?.item?.id]);
+
+	useEffect(() => {
+		const agencyId =
+			`${activeSession?.item?.agencyId || activeSession?.agency?.id || ''}`.trim();
+		if (!agencyId) {
+			setAgencyConsultantDirectory(new Map());
+			return;
+		}
+		let cancelled = false;
+		apiGetAgencyConsultantList(agencyId)
+			.then((consultants) => {
+				if (cancelled) {
+					return;
+				}
+				const nextDirectory = new Map<
+					string,
+					{ displayName: string; username: string }
+				>();
+				(Array.isArray(consultants) ? consultants : []).forEach(
+					(consultant) => {
+						const consultantId =
+							`${consultant?.consultantId || ''}`.trim();
+						if (!consultantId) {
+							return;
+						}
+						const displayName =
+							`${consultant?.displayName || ''}`.trim();
+						const fallbackName = `${consultant?.firstName || ''} ${
+							consultant?.lastName || ''
+						}`
+							.trim()
+							.replace(/\s+/g, ' ');
+						const username = `${consultant?.username || ''}`.trim();
+						nextDirectory.set(consultantId, {
+							displayName:
+								displayName ||
+								fallbackName ||
+								username ||
+								consultantId,
+							username
+						});
+					}
+				);
+				setAgencyConsultantDirectory(nextDirectory);
+			})
+			.catch(() => {
+				if (cancelled) {
+					return;
+				}
+				setAgencyConsultantDirectory(new Map());
+			});
+		return () => {
+			cancelled = true;
+		};
+	}, [activeSession?.item?.agencyId, activeSession?.agency?.id]);
+
+	useEffect(() => {
+		const defaultOption = {
+			value: '__all__',
+			label: translate('message.audience.sendToAll', 'Send to all')
+		};
 		const isInquiryNotAccepted =
 			type === SESSION_LIST_TYPES.ENQUIRY ||
 			activeSession?.item?.status === STATUS_ENQUIRY;
@@ -2339,8 +2496,33 @@ export const MessageSubmitInterfaceComponent = ({
 			roomId && matrixClient ? matrixClient.getRoom(roomId) : null;
 		const roomMembers =
 			room?.getMembers?.() || room?.getJoinedMembers?.() || [];
+		const restrictToSupervisionAudience = sessionSupervisors.length > 0;
+		const supervisorLabelByComparableId = new Map<string, string>();
+		sessionSupervisors.forEach((supervisor) => {
+			const mappedConsultant = agencyConsultantDirectory.get(
+				supervisor.id
+			);
+			const preferredLabel = `${
+				mappedConsultant?.displayName ||
+				supervisor.username ||
+				supervisor.id
+			}`.trim();
+			if (!preferredLabel) {
+				return;
+			}
+			[supervisor.id, supervisor.username].forEach((rawValue) => {
+				getComparableAudienceIds(rawValue).forEach((id) => {
+					if (!supervisorLabelByComparableId.has(id)) {
+						supervisorLabelByComparableId.set(id, preferredLabel);
+					}
+				});
+			});
+		});
 
 		roomMembers.forEach((member: any) => {
+			if (restrictToSupervisionAudience) {
+				return;
+			}
 			const memberId = `${member?.userId || ''}`.trim();
 			if (!memberId) {
 				return;
@@ -2359,9 +2541,23 @@ export const MessageSubmitInterfaceComponent = ({
 				return;
 			}
 			const memberName = `${member?.name || ''}`.trim();
+			if (
+				memberName.toLowerCase().startsWith('enc.') &&
+				!Array.from(memberComparableIds).some((id) =>
+					supervisorLabelByComparableId.has(id)
+				)
+			) {
+				return;
+			}
+			const supervisorLabel = Array.from(memberComparableIds)
+				.map((id) => supervisorLabelByComparableId.get(id))
+				.find(Boolean);
 			collected.set(
 				memberId,
-				memberName || deriveLabelFromUserId(memberId)
+				formatAudiencePersonLabel(
+					supervisorLabel || memberName,
+					supervisorLabel || memberId
+				)
 			);
 		});
 
@@ -2393,25 +2589,60 @@ export const MessageSubmitInterfaceComponent = ({
 			}
 			collected.set(
 				compactId,
-				`${fallbackLabel || ''}`.trim() ||
-					deriveLabelFromUserId(compactId)
+				formatAudiencePersonLabel(
+					`${fallbackLabel || ''}`.trim(),
+					compactId
+				)
 			);
 		};
 		const askerId = `${activeSession?.item?.askerRcId || ''}`.trim();
 		addAudienceCandidate(askerId);
 		const askerUsername = `${activeSession?.user?.username || ''}`.trim();
 		addAudienceCandidate(askerUsername, askerUsername);
-		const consultantUsername =
-			`${activeSession?.consultant?.username || ''}`.trim();
-		addAudienceCandidate(
-			consultantUsername,
-			`${activeSession?.consultant?.displayName || consultantUsername}`.trim()
-		);
-		const contactUsername = `${contact?.username || ''}`.trim();
-		addAudienceCandidate(contactUsername, contactUsername);
+		if (!restrictToSupervisionAudience) {
+			const consultantUsername =
+				`${activeSession?.consultant?.username || ''}`.trim();
+			addAudienceCandidate(
+				consultantUsername,
+				`${activeSession?.consultant?.displayName || consultantUsername}`.trim()
+			);
+			const contactUsername = `${contact?.username || ''}`.trim();
+			addAudienceCandidate(contactUsername, contactUsername);
+		}
+		sessionSupervisors.forEach((supervisor) => {
+			const mappedConsultant = agencyConsultantDirectory.get(
+				supervisor.id
+			);
+			const supervisorLabel = `${
+				mappedConsultant?.displayName ||
+				supervisor.username ||
+				supervisor.id
+			}`.trim();
+			if (supervisor.username) {
+				addAudienceCandidate(supervisor.username, supervisorLabel);
+			}
+			if (supervisor.id.startsWith('@')) {
+				addAudienceCandidate(supervisor.id, supervisorLabel);
+			}
+		});
 
 		const mapped = Array.from(collected.entries())
-			.map(([value, label]) => ({ value, label }))
+			.map(([value, label]) => {
+				const supervisorLabel = Array.from(
+					getComparableAudienceIds(value)
+				)
+					.map((id) => supervisorLabelByComparableId.get(id))
+					.find(Boolean);
+				return {
+					value,
+					label: supervisorLabel
+						? formatAudiencePersonLabel(
+								supervisorLabel,
+								supervisorLabel
+							)
+						: label
+				};
+			})
 			.sort((a, b) => a.label.localeCompare(b.label));
 		const includeAllOption = mapped.length > 1;
 		const nextOptions = includeAllOption
@@ -2446,10 +2677,15 @@ export const MessageSubmitInterfaceComponent = ({
 		activeSession?.item?.id,
 		contact?.username,
 		deriveLabelFromUserId,
+		formatAudiencePersonLabel,
 		getComparableAudienceIds,
 		getMatrixRoomId,
 		audienceRefreshTick,
+		sessionSupervisors,
+		agencyConsultantDirectory,
+		currentChatType,
 		activeSession?.isGroup,
+		translate,
 		userData?.displayName,
 		userData?.userName
 	]);
@@ -2525,6 +2761,7 @@ export const MessageSubmitInterfaceComponent = ({
 
 	useEffect(() => {
 		if (!isAudienceMenuOpen) {
+			setAudienceOverlayBounds(null);
 			return;
 		}
 		const handleOutsideClick = (event: MouseEvent) => {
@@ -2540,13 +2777,47 @@ export const MessageSubmitInterfaceComponent = ({
 		return () =>
 			document.removeEventListener('mousedown', handleOutsideClick);
 	}, [isAudienceMenuOpen]);
+	useEffect(() => {
+		if (!isAudienceMenuOpen) {
+			return;
+		}
+		const updateAudienceOverlayBounds = () => {
+			const sessionElement = audienceMenuRef.current?.closest(
+				'.session'
+			) as HTMLElement | null;
+			if (!sessionElement) {
+				setAudienceOverlayBounds(null);
+				return;
+			}
+			const rect = sessionElement.getBoundingClientRect();
+			const computedStyle = window.getComputedStyle(sessionElement);
+			setAudienceOverlayBounds({
+				top: rect.top,
+				left: rect.left,
+				width: rect.width,
+				height: rect.height,
+				borderRadius: computedStyle.borderRadius || '0px'
+			});
+		};
+		updateAudienceOverlayBounds();
+		window.addEventListener('resize', updateAudienceOverlayBounds);
+		window.addEventListener('scroll', updateAudienceOverlayBounds, true);
+		return () => {
+			window.removeEventListener('resize', updateAudienceOverlayBounds);
+			window.removeEventListener(
+				'scroll',
+				updateAudienceOverlayBounds,
+				true
+			);
+		};
+	}, [isAudienceMenuOpen]);
 
 	const selectedAudienceLabels = useMemo(() => {
 		const isAllSelected =
 			selectedAudienceValues.length === 0 ||
 			selectedAudienceValues.includes('__all__');
 		if (isAllSelected) {
-			return ['Send to all'];
+			return [translate('message.audience.sendToAll', 'Send to all')];
 		}
 		return selectedAudienceValues
 			.map(
@@ -2555,7 +2826,7 @@ export const MessageSubmitInterfaceComponent = ({
 						?.label || value
 			)
 			.filter(Boolean);
-	}, [audienceOptions, selectedAudienceValues]);
+	}, [audienceOptions, selectedAudienceValues, translate]);
 	const isClientUser = useMemo(() => {
 		const hasAskerAuthority = hasUserAuthority(
 			AUTHORITIES.ASKER_DEFAULT,
@@ -2633,6 +2904,136 @@ export const MessageSubmitInterfaceComponent = ({
 			selectedAudienceValues.includes('__all__'),
 		[selectedAudienceValues]
 	);
+	const isAllAudienceSelectedInMenu = useMemo(
+		() =>
+			selectedAudienceValues.length === 0 ||
+			selectedAudienceValues.includes('__all__'),
+		[selectedAudienceValues]
+	);
+	const audienceSelfComparableIds = useMemo(() => {
+		const ids = new Set<string>();
+		[userData?.userName, userData?.displayName].forEach((rawValue) => {
+			getComparableAudienceIds(rawValue).forEach((id) => ids.add(id));
+		});
+		return ids;
+	}, [getComparableAudienceIds, userData?.displayName, userData?.userName]);
+	const audienceSelectableOptions = useMemo(
+		() => audienceOptions.filter((option) => option.value !== '__all__'),
+		[audienceOptions]
+	);
+	const audienceSupervisorComparableIds = useMemo(() => {
+		const ids = new Set<string>();
+		const moderatorIds = Array.isArray(activeSession?.item?.moderators)
+			? activeSession.item.moderators
+			: [];
+		[
+			...moderatorIds,
+			...sessionSupervisors.map((entry) => entry.id),
+			...sessionSupervisors.map((entry) => entry.username)
+		].forEach((rawValue) => {
+			getComparableAudienceIds(rawValue).forEach((id) => ids.add(id));
+		});
+		return ids;
+	}, [
+		activeSession?.item?.moderators,
+		getComparableAudienceIds,
+		sessionSupervisors
+	]);
+	const audienceGroupedSections = useMemo(() => {
+		const clientsComparable = new Set<string>();
+		const counsellorsComparable = new Set<string>();
+		[activeSession?.item?.askerRcId, activeSession?.user?.username].forEach(
+			(rawValue) => {
+				getComparableAudienceIds(rawValue).forEach((id) =>
+					clientsComparable.add(id)
+				);
+			}
+		);
+		[
+			activeSession?.consultant?.id,
+			activeSession?.consultant?.username,
+			activeSession?.consultant?.displayName
+		].forEach((rawValue) => {
+			getComparableAudienceIds(rawValue).forEach((id) =>
+				counsellorsComparable.add(id)
+			);
+		});
+
+		const grouped = {
+			clients: [] as Array<{
+				value: string;
+				label: string;
+				disabled: boolean;
+			}>,
+			counsellors: [] as Array<{
+				value: string;
+				label: string;
+				disabled: boolean;
+			}>,
+			moderators: [] as Array<{
+				value: string;
+				label: string;
+				disabled: boolean;
+			}>
+		};
+		audienceSelectableOptions.forEach((option) => {
+			const comparableIds = new Set<string>([
+				...Array.from(getComparableAudienceIds(option.value)),
+				...Array.from(getComparableAudienceIds(option.label)),
+				...Array.from(
+					getComparableAudienceIds(
+						deriveLabelFromUserId(option.value)
+					)
+				)
+			]);
+			const disabled = Array.from(comparableIds).some((id) =>
+				audienceSelfComparableIds.has(id)
+			);
+			const isClient = Array.from(comparableIds).some((id) =>
+				clientsComparable.has(id)
+			);
+			const isModeratorByRole = Array.from(comparableIds).some((id) =>
+				audienceSupervisorComparableIds.has(id)
+			);
+			if (isModeratorByRole) {
+				grouped.moderators.push({ ...option, disabled });
+				return;
+			}
+			if (isClient) {
+				grouped.clients.push({ ...option, disabled });
+				return;
+			}
+			const isCounsellorById = Array.from(comparableIds).some((id) =>
+				counsellorsComparable.has(id)
+			);
+			if (isCounsellorById || !isClient) {
+				grouped.counsellors.push({ ...option, disabled });
+				return;
+			}
+			grouped.moderators.push({ ...option, disabled });
+		});
+		return grouped;
+	}, [
+		activeSession?.consultant?.displayName,
+		activeSession?.consultant?.id,
+		activeSession?.consultant?.username,
+		activeSession?.item?.askerRcId,
+		activeSession?.user?.username,
+		audienceSelectableOptions,
+		audienceSelfComparableIds,
+		audienceSupervisorComparableIds,
+		deriveLabelFromUserId,
+		getComparableAudienceIds
+	]);
+	const sectionDefinitions = useMemo(
+		() =>
+			[
+				{ key: 'clients' as const },
+				{ key: 'counsellors' as const },
+				{ key: 'moderators' as const }
+			] as const,
+		[]
+	);
 
 	const toggleAudienceSelection = useCallback((value: string) => {
 		setSelectedAudienceValues((previousValues) => {
@@ -2651,6 +3052,56 @@ export const MessageSubmitInterfaceComponent = ({
 			return [...withoutAll, value];
 		});
 	}, []);
+	const toggleAudienceSectionExpanded = useCallback(
+		(sectionKey: 'clients' | 'counsellors' | 'moderators') => {
+			setExpandedAudienceSections((previousValue) => ({
+				...previousValue,
+				[sectionKey]: !previousValue[sectionKey]
+			}));
+		},
+		[]
+	);
+	const toggleAudienceSectionSelectAll = useCallback(
+		(sectionKey: 'clients' | 'counsellors' | 'moderators') => {
+			const sectionValues = audienceGroupedSections[sectionKey]
+				.filter((entry) => !entry.disabled)
+				.map((entry) => entry.value);
+			if (sectionValues.length === 0) {
+				return;
+			}
+			setSelectedAudienceValues((previousValues) => {
+				const allVisibleValues = [
+					...audienceGroupedSections.clients,
+					...audienceGroupedSections.counsellors,
+					...audienceGroupedSections.moderators
+				]
+					.filter((entry) => !entry.disabled)
+					.map((entry) => entry.value);
+				const withoutAll = previousValues.includes('__all__')
+					? allVisibleValues
+					: previousValues.filter((value) => value !== '__all__');
+				const hasAllSelected = sectionValues.every((value) =>
+					withoutAll.includes(value)
+				);
+				if (hasAllSelected) {
+					const nextValues = withoutAll.filter(
+						(value) => !sectionValues.includes(value)
+					);
+					return nextValues.length > 0 ? nextValues : ['__all__'];
+				}
+				const nextValues = Array.from(
+					new Set([...withoutAll, ...sectionValues])
+				);
+				const isEverythingSelected =
+					allVisibleValues.length > 0 &&
+					allVisibleValues.every((value) =>
+						nextValues.includes(value)
+					);
+				return isEverythingSelected ? ['__all__'] : nextValues;
+			});
+		},
+		[audienceGroupedSections]
+	);
 
 	const startVoiceRecording = useCallback(async () => {
 		if (
@@ -2944,6 +3395,39 @@ export const MessageSubmitInterfaceComponent = ({
 			pointerEvents: 'none' as const
 		};
 	}, [isExpandedComposer]);
+	// Blur is intentionally disabled for now.
+	// To re-enable: remove the immediate `display: 'none'` return below
+	// and uncomment the blur style block.
+	const audienceMenuOverlayStyle = useMemo<React.CSSProperties>(() => {
+		return {
+			display: 'none'
+		};
+
+		/*
+		const baseStyle: React.CSSProperties = {
+			position: 'fixed',
+			background: 'rgba(255, 255, 255, 0.8)',
+			backdropFilter: 'blur(4px)',
+			WebkitBackdropFilter: 'blur(4px)',
+			zIndex: 999998,
+			pointerEvents: 'none'
+		};
+		if (!audienceOverlayBounds) {
+			return {
+				...baseStyle,
+				inset: 0
+			};
+		}
+		return {
+			...baseStyle,
+			top: `${audienceOverlayBounds.top}px`,
+			left: `${audienceOverlayBounds.left}px`,
+			width: `${audienceOverlayBounds.width}px`,
+			height: `${audienceOverlayBounds.height}px`,
+			borderRadius: audienceOverlayBounds.borderRadius
+		};
+		*/
+	}, []);
 
 	const highlightOptions = useMemo(
 		() => [
@@ -3158,74 +3642,356 @@ export const MessageSubmitInterfaceComponent = ({
 									/>
 								</button>
 								{isAudienceMenuOpen && (
-									<div
-										className="textarea__audienceSelectorMenu"
-										role="listbox"
-										aria-multiselectable="true"
-									>
-										{audienceOptions.map((option) => {
-											const isSelected =
-												selectedAudienceValues.includes(
-													option.value
-												);
-											const optionComparableIds =
-												getComparableAudienceIds(
-													option.value
-												);
-											const isOwnOption = Array.from(
-												optionComparableIds
-											).some((id) => {
-												const ownIds =
-													getComparableAudienceIds(
-														userData?.userName
-													);
-												const ownDisplayIds =
-													getComparableAudienceIds(
-														userData?.displayName
-													);
-												return (
-													ownIds.has(id) ||
-													ownDisplayIds.has(id)
-												);
-											});
-											const optionDisabled = isOwnOption;
-											return (
+									<>
+										{typeof document !== 'undefined' &&
+											createPortal(
+												<div
+													className="textarea__audienceSelectorMenuOverlay"
+													style={
+														audienceMenuOverlayStyle
+													}
+													onClick={() =>
+														setIsAudienceMenuOpen(
+															false
+														)
+													}
+													aria-hidden="true"
+												/>,
+												document.body
+											)}
+										<div
+											className="textarea__audienceSelectorMenu"
+											role="dialog"
+											aria-label={translate(
+												'message.audience.menuAriaLabel',
+												'Send to selector'
+											)}
+										>
+											<button
+												type="button"
+												className="textarea__audienceSelectorMenuClose"
+												onClick={() =>
+													setIsAudienceMenuOpen(false)
+												}
+												aria-label={translate(
+													'message.audience.closeMenu',
+													'Close send-to menu'
+												)}
+											>
+												<svg
+													width="32"
+													height="32"
+													viewBox="0 0 32 32"
+													fill="none"
+													xmlns="http://www.w3.org/2000/svg"
+												>
+													<rect
+														width="32"
+														height="32"
+														rx="16"
+														fill="#CC1E1C"
+													/>
+													<path
+														d="M20.0003 12.0001L12.0003 20.0001M12.0003 12.0001L20.0003 20.0001M29.3337 16.0001C29.3337 23.3639 23.3641 29.3334 16.0003 29.3334C8.63653 29.3334 2.66699 23.3639 2.66699 16.0001C2.66699 8.63628 8.63653 2.66675 16.0003 2.66675C23.3641 2.66675 29.3337 8.63628 29.3337 16.0001Z"
+														fill="none"
+														stroke="white"
+														stroke-width="2"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+													/>
+												</svg>
+											</button>
+											<p className="textarea__audienceSelectorMenuSubheading">
+												{translate(
+													'message.audience.menuSubheading',
+													'Wähle wer diese Nachricht sehen soll'
+												)}
+											</p>
+											<p className="textarea__audienceSelectorMenuHeading">
+												{translate(
+													'message.audience.menuHeading',
+													'Adressaten wählen'
+												)}
+											</p>
+											<div className="textarea__audienceSelectorMenuDivider" />
+											<div className="textarea__audienceSelectorMenuSections">
+												{sectionDefinitions.map(
+													(sectionDefinition) => {
+														const sectionOptions =
+															audienceGroupedSections[
+																sectionDefinition
+																	.key
+															];
+														const selectableOptions =
+															sectionOptions.filter(
+																(option) =>
+																	!option.disabled
+															);
+														const selectedCount =
+															selectableOptions.filter(
+																(option) =>
+																	selectedAudienceValues.includes(
+																		option.value
+																	)
+															).length;
+														const hasAllSelected =
+															isAllAudienceSelectedInMenu ||
+															(selectableOptions.length >
+																0 &&
+																selectedCount ===
+																	selectableOptions.length);
+														const hasPartialSelected =
+															!isAllAudienceSelectedInMenu &&
+															selectedCount > 0 &&
+															selectedCount <
+																selectableOptions.length;
+														const sectionSelectLabel =
+															sectionDefinition.key ===
+															'counsellors'
+																? selectedCount >
+																	0
+																	? translate(
+																			'message.audience.counsellorsSelected',
+																			'{{count}} Counsellors Selected',
+																			{
+																				count: selectedCount
+																			}
+																		)
+																	: translate(
+																			'message.audience.counsellorsSelect',
+																			'Select All Counsellors'
+																		)
+																: selectedCount >
+																	  0
+																	? translate(
+																			'message.audience.moderatorsSelected',
+																			'{{count}} Moderators Selected',
+																			{
+																				count: selectedCount
+																			}
+																		)
+																	: translate(
+																			'message.audience.moderatorsSelect',
+																			'Select All Moderators'
+																		);
+														const clientHeaderLabel =
+															selectedCount > 0
+																? translate(
+																		'message.audience.clientsSelected',
+																		'{{count}} Clients Selected',
+																		{
+																			count: selectedCount
+																		}
+																	)
+																: translate(
+																		'message.audience.clientsSelectAll',
+																		'Select All Clients'
+																	);
+														return (
+															<div
+																key={
+																	sectionDefinition.key
+																}
+																className="textarea__audienceSelectorSection"
+															>
+																<div className="textarea__audienceSelectorSectionHeader">
+																	<button
+																		type="button"
+																		className="textarea__audienceSelectorSectionSelectAll"
+																		onClick={() =>
+																			toggleAudienceSectionSelectAll(
+																				sectionDefinition.key
+																			)
+																		}
+																	>
+																		<span
+																			className={clsx(
+																				'textarea__audienceSelectorSectionRadio',
+																				hasAllSelected &&
+																					'textarea__audienceSelectorSectionRadio--selected',
+																				hasPartialSelected &&
+																					'textarea__audienceSelectorSectionRadio--partial'
+																			)}
+																		/>
+																		{sectionDefinition.key ===
+																		'clients' ? (
+																			<span className="textarea__audienceSelectorSectionTitle">
+																				{selectedCount >
+																				0 ? (
+																					<>
+																						<span className="textarea__audienceSelectorSectionTitleCount">
+																							{
+																								selectedCount
+																							}
+																						</span>{' '}
+																						{clientHeaderLabel.replace(
+																							/^\d+\s*/,
+																							''
+																						)}
+																					</>
+																				) : (
+																					clientHeaderLabel
+																				)}
+																			</span>
+																		) : (
+																			<span className="textarea__audienceSelectorSectionTitle">
+																				{
+																					sectionSelectLabel
+																				}
+																			</span>
+																		)}
+																	</button>
+																	<button
+																		type="button"
+																		className="textarea__audienceSelectorSectionChevron"
+																		onClick={() =>
+																			toggleAudienceSectionExpanded(
+																				sectionDefinition.key
+																			)
+																		}
+																		aria-label={translate(
+																			'message.audience.toggleSection',
+																			'Toggle section'
+																		)}
+																		aria-expanded={
+																			expandedAudienceSections[
+																				sectionDefinition
+																					.key
+																			]
+																		}
+																	>
+																		<AudienceChipChevronIcon
+																			className={clsx(
+																				'textarea__audienceSelectorSectionChevronIcon',
+																				expandedAudienceSections[
+																					sectionDefinition
+																						.key
+																				] &&
+																					'textarea__audienceSelectorSectionChevronIcon--open'
+																			)}
+																		/>
+																	</button>
+																</div>
+																<div
+																	className={clsx(
+																		'textarea__audienceSelectorSectionBody',
+																		expandedAudienceSections[
+																			sectionDefinition
+																				.key
+																		] &&
+																			'textarea__audienceSelectorSectionBody--open'
+																	)}
+																>
+																	{sectionOptions.length ===
+																	0 ? (
+																		<div className="textarea__audienceSelectorSectionEmpty">
+																			{sectionDefinition.key ===
+																			'clients'
+																				? translate(
+																						'message.audience.clientsEmpty',
+																						'No clients are in this room'
+																					)
+																				: sectionDefinition.key ===
+																					  'counsellors'
+																					? translate(
+																							'message.audience.counsellorsEmpty',
+																							'No counsellors are in this room'
+																						)
+																					: translate(
+																							'message.audience.moderatorsEmpty',
+																							'No moderators are in this room'
+																						)}
+																		</div>
+																	) : (
+																		sectionOptions.map(
+																			(
+																				option
+																			) => {
+																				const isSelected =
+																					isAllAudienceSelectedInMenu ||
+																					selectedAudienceValues.includes(
+																						option.value
+																					);
+																				const looksModerationLabel =
+																					sectionDefinition.key ===
+																					'moderators';
+																				return (
+																					<button
+																						type="button"
+																						key={
+																							option.value
+																						}
+																						className={clsx(
+																							'textarea__audienceSelectorPill',
+																							isSelected &&
+																								'textarea__audienceSelectorPill--selected',
+																							option.disabled &&
+																								'textarea__audienceSelectorPill--disabled'
+																						)}
+																						disabled={
+																							option.disabled
+																						}
+																						onClick={() => {
+																							if (
+																								option.disabled
+																							) {
+																								return;
+																							}
+																							toggleAudienceSelection(
+																								option.value
+																							);
+																						}}
+																					>
+																						<span className="textarea__audienceSelectorPillIcon">
+																							{looksModerationLabel ? (
+																								<AudienceSingleConsultantIcon />
+																							) : (
+																								<AudienceSingleUserIcon />
+																							)}
+																						</span>
+																						<span className="textarea__audienceSelectorPillText">
+																							{
+																								option.label
+																							}
+																						</span>
+																					</button>
+																				);
+																			}
+																		)
+																	)}
+																</div>
+															</div>
+														);
+													}
+												)}
+											</div>
+											<div className="textarea__audienceSelectorMenuFooter">
 												<button
 													type="button"
-													key={option.value}
-													role="option"
-													aria-selected={isSelected}
-													className={clsx(
-														'textarea__audienceSelectorMenuItem',
-														isSelected &&
-															'textarea__audienceSelectorMenuItem--selected',
-														optionDisabled &&
-															'textarea__audienceSelectorMenuItem--disabled'
-													)}
-													disabled={optionDisabled}
-													onClick={() => {
-														if (optionDisabled) {
-															return;
-														}
+													className="textarea__audienceSelectorMenuSelectAll"
+													onClick={() =>
 														toggleAudienceSelection(
-															option.value
-														);
-													}}
+															'__all__'
+														)
+													}
 												>
-													<span className="textarea__audienceSelectorMenuItemCheckbox">
-														<input
-															type="checkbox"
-															readOnly
-															checked={isSelected}
-															tabIndex={-1}
-															aria-hidden="true"
-														/>
+													<span
+														className={clsx(
+															'textarea__audienceSelectorSectionRadio',
+															isAllAudienceSelectedInMenu &&
+																'textarea__audienceSelectorSectionRadio--selected'
+														)}
+													/>
+													<span>
+														{translate(
+															'message.audience.selectAllBottom',
+															'Select All'
+														)}
 													</span>
-													{option.label}
 												</button>
-											);
-										})}
-									</div>
+											</div>
+										</div>
+									</>
 								)}
 							</div>
 						)}

@@ -1211,6 +1211,28 @@
 				"headline": "Или запишитесь на прием прямо сейчас"
 			}
 		},
+		"audience": {
+			"all": "Все",
+			"multiCount": "{{count}} человек",
+			"sendToAll": "Отправить всем",
+			"openMenu": "Открыть меню получателей",
+			"menuAriaLabel": "Выбор получателей",
+			"closeMenu": "Закрыть меню получателей",
+			"menuSubheading": "Выберите, кто может видеть это сообщение",
+			"menuHeading": "Выбрать получателей",
+			"clientsSelectSuffix": "Client Select",
+			"clientsSelected": "{{count}} Clients Selected",
+			"clientsSelectAll": "Select All Clients",
+			"counsellorsSelect": "Select All Counsellors",
+			"counsellorsSelected": "{{count}} Counsellors Selected",
+			"moderatorsSelect": "Select All Moderators",
+			"moderatorsSelected": "{{count}} Moderators Selected",
+			"clientsEmpty": "No clients are in this room",
+			"counsellorsEmpty": "No counsellors are in this room",
+			"moderatorsEmpty": "No moderators are in this room",
+			"toggleSection": "Переключить раздел",
+			"selectAllBottom": "Select All"
+		},
 		"showLess": "Показать меньше",
 		"showMore": "Показать больше",
 		"today": "Сегодня",

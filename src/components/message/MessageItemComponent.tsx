@@ -163,7 +163,7 @@ const ChevronIcon = ({ expanded }: { expanded: boolean }) => (
 		xmlns="http://www.w3.org/2000/svg"
 	>
 		<path
-			d="M0.799805 4.80005L4.7998 0.800049L8.7998 4.80005"
+			d="M0.800781 4.80005L4.80078 0.800049L8.80078 4.80005"
 			stroke="#4C555F"
 			stroke-width="1.6"
 			stroke-linecap="round"

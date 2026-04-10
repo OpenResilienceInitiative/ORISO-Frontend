@@ -1211,6 +1211,28 @@
 				"headline": "ወይ ድማ ሕጂ ቆጸራ ውሰድ"
 			}
 		},
+		"audience": {
+			"all": "ኩሉ",
+			"multiCount": "{{count}} ሰባት",
+			"sendToAll": "ናብ ኩሉ ስደድ",
+			"openMenu": "ናይ ተቐባሊ ዝርዝር ክፈት",
+			"menuAriaLabel": "ናይ ተቐባሊ ምርጫ",
+			"closeMenu": "ናይ ተቐባሊ ዝርዝር ዕጸው",
+			"menuSubheading": "እዛ መልእኽቲ መን ክርእያ ከም ዝኽእል ምረጽ",
+			"menuHeading": "ተቐበልቲ ምረጽ",
+			"clientsSelectSuffix": "Client Select",
+			"clientsSelected": "{{count}} Clients Selected",
+			"clientsSelectAll": "Select All Clients",
+			"counsellorsSelect": "Select All Counsellors",
+			"counsellorsSelected": "{{count}} Counsellors Selected",
+			"moderatorsSelect": "Select All Moderators",
+			"moderatorsSelected": "{{count}} Moderators Selected",
+			"clientsEmpty": "No clients are in this room",
+			"counsellorsEmpty": "No counsellors are in this room",
+			"moderatorsEmpty": "No moderators are in this room",
+			"toggleSection": "ክፍሊ ቀያይር",
+			"selectAllBottom": "Select All"
+		},
 		"showLess": "ኣነስ ኣርእይ",
 		"showMore": "ብዝሓት ኣርእይ",
 		"today": "ሎምዓንቲ",

@@ -1232,6 +1232,28 @@
 				"headline": "Oder vereinbare jetzt einen Termin"
 			}
 		},
+		"audience": {
+			"all": "Alle",
+			"multiCount": "{{count}} Personen",
+			"sendToAll": "An alle senden",
+			"openMenu": "Senden-an-Menü öffnen",
+			"menuAriaLabel": "Senden-an-Auswahl",
+			"closeMenu": "Senden-an-Menü schließen",
+			"menuSubheading": "Wähle wer diese Nachricht sehen soll",
+			"menuHeading": "Adressaten wählen",
+			"clientsSelectSuffix": "Client Select",
+			"clientsSelected": "{{count}} Clients Selected",
+			"clientsSelectAll": "Select All Clients",
+			"counsellorsSelect": "Select All Counsellors",
+			"counsellorsSelected": "{{count}} Counsellors Selected",
+			"moderatorsSelect": "Select All Moderators",
+			"moderatorsSelected": "{{count}} Moderators Selected",
+			"clientsEmpty": "No clients are in this room",
+			"counsellorsEmpty": "No counsellors are in this room",
+			"moderatorsEmpty": "No moderators are in this room",
+			"toggleSection": "Bereich umschalten",
+			"selectAllBottom": "Select All"
+		},
 		"showLess": "Weniger anzeigen",
 		"showMore": "Mehr anzeigen",
 		"systemNotification": "Systembenachrichtigung",

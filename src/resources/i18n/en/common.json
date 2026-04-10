@@ -1217,6 +1217,28 @@
 				"headline": "Or make an appointment now"
 			}
 		},
+		"audience": {
+			"all": "All",
+			"multiCount": "{{count}} persons",
+			"sendToAll": "Send to all",
+			"openMenu": "Open send-to menu",
+			"menuAriaLabel": "Send to selector",
+			"closeMenu": "Close send-to menu",
+			"menuSubheading": "Choose who should see this message",
+			"menuHeading": "Select recipients",
+			"clientsSelectSuffix": "Client Select",
+			"clientsSelected": "{{count}} Clients Selected",
+			"clientsSelectAll": "Select All Clients",
+			"counsellorsSelect": "Select All Counsellors",
+			"counsellorsSelected": "{{count}} Counsellors Selected",
+			"moderatorsSelect": "Select All Moderators",
+			"moderatorsSelected": "{{count}} Moderators Selected",
+			"clientsEmpty": "No clients are in this room",
+			"counsellorsEmpty": "No counsellors are in this room",
+			"moderatorsEmpty": "No moderators are in this room",
+			"toggleSection": "Toggle section",
+			"selectAllBottom": "Select All"
+		},
 		"showLess": "Show less",
 		"showMore": "Show more",
 		"systemNotification": "System Notification",

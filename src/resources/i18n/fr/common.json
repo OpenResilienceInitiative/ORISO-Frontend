@@ -1211,6 +1211,28 @@
 				"headline": "Ou prends rendez-vous dès maintenant"
 			}
 		},
+		"audience": {
+			"all": "Tous",
+			"multiCount": "{{count}} personnes",
+			"sendToAll": "Envoyer à tous",
+			"openMenu": "Ouvrir le menu des destinataires",
+			"menuAriaLabel": "Sélecteur des destinataires",
+			"closeMenu": "Fermer le menu des destinataires",
+			"menuSubheading": "Choisissez qui peut voir ce message",
+			"menuHeading": "Choisir les destinataires",
+			"clientsSelectSuffix": "Client Select",
+			"clientsSelected": "{{count}} Clients Selected",
+			"clientsSelectAll": "Select All Clients",
+			"counsellorsSelect": "Select All Counsellors",
+			"counsellorsSelected": "{{count}} Counsellors Selected",
+			"moderatorsSelect": "Select All Moderators",
+			"moderatorsSelected": "{{count}} Moderators Selected",
+			"clientsEmpty": "No clients are in this room",
+			"counsellorsEmpty": "No counsellors are in this room",
+			"moderatorsEmpty": "No moderators are in this room",
+			"toggleSection": "Basculer la section",
+			"selectAllBottom": "Select All"
+		},
 		"showLess": "Afficher moins",
 		"showMore": "Voir plus",
 		"today": "Aujourd'hui",

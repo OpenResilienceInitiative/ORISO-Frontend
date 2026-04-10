@@ -1211,6 +1211,28 @@
 				"headline": "Ya da şimdi randevu alın"
 			}
 		},
+		"audience": {
+			"all": "Tümü",
+			"multiCount": "{{count}} kişi",
+			"sendToAll": "Herkese gönder",
+			"openMenu": "Alıcı menüsünü aç",
+			"menuAriaLabel": "Alıcı seçici",
+			"closeMenu": "Alıcı menüsünü kapat",
+			"menuSubheading": "Bu mesajı kimin göreceğini seçin",
+			"menuHeading": "Alıcıları seçin",
+			"clientsSelectSuffix": "Client Select",
+			"clientsSelected": "{{count}} Clients Selected",
+			"clientsSelectAll": "Select All Clients",
+			"counsellorsSelect": "Select All Counsellors",
+			"counsellorsSelected": "{{count}} Counsellors Selected",
+			"moderatorsSelect": "Select All Moderators",
+			"moderatorsSelected": "{{count}} Moderators Selected",
+			"clientsEmpty": "No clients are in this room",
+			"counsellorsEmpty": "No counsellors are in this room",
+			"moderatorsEmpty": "No moderators are in this room",
+			"toggleSection": "Bölümü aç/kapat",
+			"selectAllBottom": "Select All"
+		},
 		"showLess": "Daha az göster",
 		"showMore": "Daha fazla göster",
 		"today": "Bugün",
