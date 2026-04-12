@@ -154,6 +154,11 @@ export interface MessageSubmitInterfaceComponentProps {
 	isSupervisor?: boolean;
 	threadRootId?: string | null;
 	threadParentPreview?: string | null;
+	mobileUnreadCount?: number;
+	mobileIsScrolledToBottom?: boolean;
+	onMobileNavigateBack?: () => void;
+	onMobileNavigateDown?: () => void;
+	onMobileNavigateBottom?: () => void;
 }
 
 export const MessageSubmitInterfaceComponent = ({
@@ -167,7 +172,12 @@ export const MessageSubmitInterfaceComponent = ({
 	handleMessageSendSuccess: onMessageSendSuccess,
 	isSupervisor,
 	threadRootId,
-	threadParentPreview
+	threadParentPreview,
+	mobileUnreadCount = 0,
+	mobileIsScrolledToBottom = false,
+	onMobileNavigateBack,
+	onMobileNavigateDown,
+	onMobileNavigateBottom
 }: MessageSubmitInterfaceComponentProps) => {
 	const ToolbarUndoIcon = () => (
 		<svg
@@ -765,6 +775,32 @@ export const MessageSubmitInterfaceComponent = ({
 		</svg>
 	);
 
+	const ComposerMobileBackIcon = () => (
+		<svg
+			width="5"
+			height="10"
+			viewBox="0 0 5 10"
+			fill="none"
+			xmlns="http://www.w3.org/2000/svg"
+			aria-hidden="true"
+		>
+			<path d="M5 10L0 5L5 0V10Z" fill="#1D1B20" />
+		</svg>
+	);
+
+	const ComposerMobileDownIcon = () => (
+		<svg
+			width="10"
+			height="5"
+			viewBox="0 0 10 5"
+			fill="none"
+			xmlns="http://www.w3.org/2000/svg"
+			aria-hidden="true"
+		>
+			<path d="M5 5L0 0H10L5 5Z" fill="#1D1B20" />
+		</svg>
+	);
+
 	const AudienceAllMultiIcon = () => (
 		<svg
 			width="19"
@@ -800,32 +836,48 @@ export const MessageSubmitInterfaceComponent = ({
 
 	const AudienceSingleUserIcon = () => (
 		<svg
-			width="20"
-			height="20"
-			viewBox="0 0 20 20"
+			width="14"
+			height="14"
+			viewBox="0 0 14 14"
 			fill="none"
 			xmlns="http://www.w3.org/2000/svg"
 			aria-hidden="true"
 		>
 			<path
-				d="M12.4349 11.6975C12.0321 11.2947 11.8307 10.8017 11.8307 10.2183C11.8307 9.63501 12.0321 9.14195 12.4349 8.73918C12.8377 8.3364 13.3307 8.13501 13.9141 8.13501C14.4974 8.13501 14.9905 8.3364 15.3932 8.73918C15.796 9.14195 15.9974 9.63501 15.9974 10.2183C15.9974 10.8017 15.796 11.2947 15.3932 11.6975C14.9905 12.1003 14.4974 12.3017 13.9141 12.3017C13.3307 12.3017 12.8377 12.1003 12.4349 11.6975ZM9.7474 16.4683V15.3017C9.7474 14.9683 9.8342 14.6593 10.0078 14.3746C10.1814 14.0899 10.428 13.885 10.7474 13.76C11.2474 13.5517 11.7648 13.3954 12.2995 13.2913C12.8342 13.1871 13.3724 13.135 13.9141 13.135C14.4557 13.135 14.9939 13.1871 15.5286 13.2913C16.0634 13.3954 16.5807 13.5517 17.0807 13.76C17.4002 13.885 17.6467 14.0899 17.8203 14.3746C17.9939 14.6593 18.0807 14.9683 18.0807 15.3017V16.4683H9.7474ZM5.72656 8.82251C5.07378 8.16973 4.7474 7.38501 4.7474 6.46834C4.7474 5.55168 5.07378 4.76695 5.72656 4.11418C6.37934 3.4614 7.16406 3.13501 8.08073 3.13501C8.9974 3.13501 9.78212 3.4614 10.4349 4.11418C11.0877 4.76695 11.4141 5.55168 11.4141 6.46834C11.4141 7.38501 11.0877 8.16973 10.4349 8.82251C9.78212 9.47529 8.9974 9.80168 8.08073 9.80168C7.16406 9.80168 6.37934 9.47529 5.72656 8.82251ZM1.41406 16.4683V14.135C1.41406 13.6628 1.53212 13.2288 1.76823 12.8329C2.00434 12.4371 2.33073 12.135 2.7474 11.9267C3.58073 11.51 4.44531 11.1906 5.34115 10.9683C6.23698 10.7461 7.15017 10.635 8.08073 10.635C8.56684 10.635 9.05295 10.6767 9.53906 10.76C10.0252 10.8433 10.5113 10.9406 10.9974 11.0517L9.58073 12.4683C9.33073 12.3989 9.08073 12.3538 8.83073 12.3329C8.58073 12.3121 8.33073 12.3017 8.08073 12.3017C7.27517 12.3017 6.48698 12.3989 5.71615 12.5933C4.94531 12.7878 4.20573 13.0656 3.4974 13.4267C3.35851 13.4961 3.25434 13.5933 3.1849 13.7183C3.11545 13.8433 3.08073 13.9822 3.08073 14.135V14.8017H8.08073V16.4683H1.41406ZM9.25781 7.64543C9.5842 7.31904 9.7474 6.92668 9.7474 6.46834C9.7474 6.01001 9.5842 5.61765 9.25781 5.29126C8.93142 4.96487 8.53906 4.80168 8.08073 4.80168C7.6224 4.80168 7.23003 4.96487 6.90365 5.29126C6.57726 5.61765 6.41406 6.01001 6.41406 6.46834C6.41406 6.92668 6.57726 7.31904 6.90365 7.64543C7.23003 7.97182 7.6224 8.13501 8.08073 8.13501C8.53906 8.13501 8.93142 7.97182 9.25781 7.64543Z"
-				fill="currentColor"
+				d="M2.56667 10.0667C3.13333 9.63333 3.76667 9.29167 4.46667 9.04167C5.16667 8.79167 5.9 8.66667 6.66667 8.66667C7.43333 8.66667 8.16667 8.79167 8.86667 9.04167C9.56667 9.29167 10.2 9.63333 10.7667 10.0667C11.1556 9.61111 11.4583 9.09445 11.675 8.51667C11.8917 7.93889 12 7.32222 12 6.66667C12 5.18889 11.4806 3.93056 10.4417 2.89167C9.40278 1.85278 8.14444 1.33333 6.66667 1.33333C5.18889 1.33333 3.93056 1.85278 2.89167 2.89167C1.85278 3.93056 1.33333 5.18889 1.33333 6.66667C1.33333 7.32222 1.44167 7.93889 1.65833 8.51667C1.875 9.09445 2.17778 9.61111 2.56667 10.0667ZM6.66667 7.33333C6.01111 7.33333 5.45833 7.10833 5.00833 6.65833C4.55833 6.20833 4.33333 5.65556 4.33333 5C4.33333 4.34444 4.55833 3.79167 5.00833 3.34167C5.45833 2.89167 6.01111 2.66667 6.66667 2.66667C7.32222 2.66667 7.875 2.89167 8.325 3.34167C8.775 3.79167 9 4.34444 9 5C9 5.65556 8.775 6.20833 8.325 6.65833C7.875 7.10833 7.32222 7.33333 6.66667 7.33333ZM6.66667 13.3333C5.74444 13.3333 4.87778 13.1583 4.06667 12.8083C3.25556 12.4583 2.55 11.9833 1.95 11.3833C1.35 10.7833 0.875 10.0778 0.525 9.26667C0.175 8.45556 0 7.58889 0 6.66667C0 5.74444 0.175 4.87778 0.525 4.06667C0.875 3.25556 1.35 2.55 1.95 1.95C2.55 1.35 3.25556 0.875 4.06667 0.525C4.87778 0.175 5.74444 0 6.66667 0C7.58889 0 8.45556 0.175 9.26667 0.525C10.0778 0.875 10.7833 1.35 11.3833 1.95C11.9833 2.55 12.4583 3.25556 12.8083 4.06667C13.1583 4.87778 13.3333 5.74444 13.3333 6.66667C13.3333 7.58889 13.1583 8.45556 12.8083 9.26667C12.4583 10.0778 11.9833 10.7833 11.3833 11.3833C10.7833 11.9833 10.0778 12.4583 9.26667 12.8083C8.45556 13.1583 7.58889 13.3333 6.66667 13.3333Z"
+				fill="white"
 			/>
 		</svg>
 	);
 
 	const AudienceSingleConsultantIcon = () => (
 		<svg
-			width="20"
-			height="20"
-			viewBox="0 0 20 20"
+			width="9"
+			height="14"
+			viewBox="0 0 9 14"
 			fill="none"
 			xmlns="http://www.w3.org/2000/svg"
 			aria-hidden="true"
 		>
 			<path
-				d="M4.87435 14.2501C5.58268 13.7084 6.37435 13.2813 7.24935 12.9688C8.12435 12.6563 9.04102 12.5001 9.99935 12.5001C10.9577 12.5001 11.8743 12.6563 12.7493 12.9688C13.6243 13.2813 14.416 13.7084 15.1243 14.2501C15.6105 13.6806 15.9889 13.0348 16.2598 12.3126C16.5306 11.5904 16.666 10.8195 16.666 10.0001C16.666 8.15286 16.0167 6.57994 14.7181 5.28133C13.4195 3.98272 11.8466 3.33341 9.99935 3.33341C8.15213 3.33341 6.57921 3.98272 5.2806 5.28133C3.98199 6.57994 3.33268 8.15286 3.33268 10.0001C3.33268 10.8195 3.4681 11.5904 3.73893 12.3126C4.00977 13.0348 4.38824 13.6806 4.87435 14.2501ZM9.99935 10.8334C9.1799 10.8334 8.48893 10.5522 7.92643 9.98967C7.36393 9.42716 7.08268 8.73619 7.08268 7.91675C7.08268 7.0973 7.36393 6.40633 7.92643 5.84383C8.48893 5.28133 9.1799 5.00008 9.99935 5.00008C10.8188 5.00008 11.5098 5.28133 12.0723 5.84383C12.6348 6.40633 12.916 7.0973 12.916 7.91675C12.916 8.73619 12.6348 9.42716 12.0723 9.98967C11.5098 10.5522 10.8188 10.8334 9.99935 10.8334ZM9.99935 18.3334C8.84657 18.3334 7.76324 18.1147 6.74935 17.6772C5.73546 17.2397 4.85352 16.6459 4.10352 15.8959C3.35352 15.1459 2.75977 14.264 2.32227 13.2501C1.88477 12.2362 1.66602 11.1529 1.66602 10.0001C1.66602 8.8473 1.88477 7.76397 2.32227 6.75008C2.75977 5.73619 3.35352 4.85425 4.10352 4.10425C4.85352 3.35425 5.73546 2.7605 6.74935 2.323C7.76324 1.8855 8.84657 1.66675 9.99935 1.66675C11.1521 1.66675 12.2355 1.8855 13.2493 2.323C14.2632 2.7605 15.1452 3.35425 15.8952 4.10425C16.6452 4.85425 17.2389 5.73619 17.6764 6.75008C18.1139 7.76397 18.3327 8.8473 18.3327 10.0001C18.3327 11.1529 18.1139 12.2362 17.6764 13.2501C17.2389 14.264 16.6452 15.1459 15.8952 15.8959C15.1452 16.6459 14.2632 17.2397 13.2493 17.6772C12.2355 18.1147 11.1521 18.3334 9.99935 18.3334Z"
-				fill="currentColor"
+				d="M4.33333 0C4.88889 0 5.36111 0.194444 5.75 0.583333C6.13889 0.972222 6.33333 1.44444 6.33333 2C6.33333 2.55556 6.13889 3.02778 5.75 3.41667C5.36111 3.80556 4.88889 4 4.33333 4C3.77778 4 3.30556 3.80556 2.91667 3.41667C2.52778 3.02778 2.33333 2.55556 2.33333 2C2.33333 1.44444 2.52778 0.972222 2.91667 0.583333C3.30556 0.194444 3.77778 0 4.33333 0ZM4.33333 4.66667C4.85556 4.66667 5.37222 4.72778 5.88333 4.85C6.39444 4.97222 6.85556 5.14444 7.26667 5.36667C7.68889 5.57778 8.02778 5.82778 8.28333 6.11667C8.53889 6.40556 8.66667 6.72222 8.66667 7.06667V10.9333C8.66667 11.1222 8.62222 11.3083 8.53333 11.4917C8.44444 11.675 8.32222 11.8444 8.16667 12C8.01111 12.1556 7.83056 12.3 7.625 12.4333C7.41944 12.5667 7.18889 12.6889 6.93333 12.8V11.3C6.93333 10.8778 6.64167 10.5333 6.05833 10.2667C5.475 10 4.9 9.86667 4.33333 9.86667C3.77778 9.86667 3.24167 9.98056 2.725 10.2083C2.20833 10.4361 1.88889 10.7333 1.76667 11.1C2.18889 11.2667 2.62222 11.3833 3.06667 11.45C3.51111 11.5167 3.96667 11.5556 4.43333 11.5667H5V13.3C4.92222 13.3222 4.84167 13.3333 4.75833 13.3333H4.5C4.1 13.3333 3.64167 13.2889 3.125 13.2C2.60833 13.1111 2.11667 12.9722 1.65 12.7833C1.18333 12.5944 0.791667 12.3472 0.475 12.0417C0.158333 11.7361 0 11.3667 0 10.9333V7.06667C0 6.72222 0.127778 6.40556 0.383333 6.11667C0.638889 5.82778 0.972222 5.57778 1.38333 5.36667C1.80556 5.14444 2.27222 4.97222 2.78333 4.85C3.29444 4.72778 3.81111 4.66667 4.33333 4.66667ZM4.33333 8.66667C4.7 8.66667 5.01389 8.53611 5.275 8.275C5.53611 8.01389 5.66667 7.7 5.66667 7.33333C5.66667 6.96667 5.53611 6.65278 5.275 6.39167C5.01389 6.13056 4.7 6 4.33333 6C3.96667 6 3.65278 6.13056 3.39167 6.39167C3.13056 6.65278 3 6.96667 3 7.33333C3 7.7 3.13056 8.01389 3.39167 8.275C3.65278 8.53611 3.96667 8.66667 4.33333 8.66667Z"
+				fill="#4C555F"
+			/>
+		</svg>
+	);
+
+	const AudienceModeratorIcon = () => (
+		<svg
+			width="11"
+			height="14"
+			viewBox="0 0 11 14"
+			fill="none"
+			xmlns="http://www.w3.org/2000/svg"
+			aria-hidden="true"
+		>
+			<path
+				d="M3.675 6.65833C3.225 6.20833 3 5.65556 3 5C3 4.34444 3.225 3.79167 3.675 3.34167C4.125 2.89167 4.67778 2.66667 5.33333 2.66667C5.98889 2.66667 6.54167 2.89167 6.99167 3.34167C7.44167 3.79167 7.66667 4.34444 7.66667 5C7.66667 5.65556 7.44167 6.20833 6.99167 6.65833C6.54167 7.10833 5.98889 7.33333 5.33333 7.33333C4.67778 7.33333 4.125 7.10833 3.675 6.65833ZM5.33333 13.3333C3.78889 12.9444 2.51389 12.0583 1.50833 10.675C0.502778 9.29167 0 7.75556 0 6.06667V2L5.33333 0L10.6667 2V6.06667C10.6667 7.75556 10.1639 9.29167 9.15833 10.675C8.15278 12.0583 6.87778 12.9444 5.33333 13.3333ZM5.33333 1.41667L1.33333 2.91667V6.06667C1.33333 6.66667 1.41667 7.25 1.58333 7.81667C1.75 8.38333 1.97778 8.91667 2.26667 9.41667C2.73333 9.18333 3.22222 9 3.73333 8.86667C4.24444 8.73333 4.77778 8.66667 5.33333 8.66667C5.88889 8.66667 6.42222 8.73333 6.93333 8.86667C7.44445 9 7.93333 9.18333 8.4 9.41667C8.68889 8.91667 8.91667 8.38333 9.08333 7.81667C9.25 7.25 9.33333 6.66667 9.33333 6.06667V2.91667L5.33333 1.41667Z"
+				fill="white"
 			/>
 		</svg>
 	);
@@ -900,6 +952,9 @@ export const MessageSubmitInterfaceComponent = ({
 	const [isCodeStripOpen, setIsCodeStripOpen] = useState(false);
 	const [isCompactActionStripOpen, setIsCompactActionStripOpen] =
 		useState(true);
+	const [isMobileViewport, setIsMobileViewport] = useState<boolean>(() =>
+		typeof window !== 'undefined' ? window.innerWidth <= 899 : false
+	);
 	const [isExpandedComposer, setIsExpandedComposer] = useState(false);
 	const [isAudienceMenuOpen, setIsAudienceMenuOpen] = useState(false);
 	const [audienceOverlayBounds, setAudienceOverlayBounds] = useState<{
@@ -2370,6 +2425,19 @@ export const MessageSubmitInterfaceComponent = ({
 
 	useEffect(() => {
 		const sessionId = Number(activeSession?.item?.id);
+		const hasAskerAuthority = hasUserAuthority(
+			AUTHORITIES.ASKER_DEFAULT,
+			userData
+		);
+		const hasConsultantAuthority = hasUserAuthority(
+			AUTHORITIES.CONSULTANT_DEFAULT,
+			userData
+		);
+		const isAskerOnly = hasAskerAuthority && !hasConsultantAuthority;
+		if (isAskerOnly || isAnonymousChat) {
+			setSessionSupervisors([]);
+			return;
+		}
 		if (!sessionId || Number.isNaN(sessionId)) {
 			setSessionSupervisors([]);
 			return;
@@ -2397,11 +2465,24 @@ export const MessageSubmitInterfaceComponent = ({
 		return () => {
 			cancelled = true;
 		};
-	}, [activeSession?.item?.id]);
+	}, [activeSession?.item?.id, isAnonymousChat, userData]);
 
 	useEffect(() => {
 		const agencyId =
 			`${activeSession?.item?.agencyId || activeSession?.agency?.id || ''}`.trim();
+		const hasAskerAuthority = hasUserAuthority(
+			AUTHORITIES.ASKER_DEFAULT,
+			userData
+		);
+		const hasConsultantAuthority = hasUserAuthority(
+			AUTHORITIES.CONSULTANT_DEFAULT,
+			userData
+		);
+		const isAskerOnly = hasAskerAuthority && !hasConsultantAuthority;
+		if (isAskerOnly || isAnonymousChat) {
+			setAgencyConsultantDirectory(new Map());
+			return;
+		}
 		if (!agencyId) {
 			setAgencyConsultantDirectory(new Map());
 			return;
@@ -2452,7 +2533,12 @@ export const MessageSubmitInterfaceComponent = ({
 		return () => {
 			cancelled = true;
 		};
-	}, [activeSession?.item?.agencyId, activeSession?.agency?.id]);
+	}, [
+		activeSession?.item?.agencyId,
+		activeSession?.agency?.id,
+		isAnonymousChat,
+		userData
+	]);
 
 	useEffect(() => {
 		const defaultOption = {
@@ -2819,13 +2905,14 @@ export const MessageSubmitInterfaceComponent = ({
 		if (isAllSelected) {
 			return [translate('message.audience.sendToAll', 'Send to all')];
 		}
-		return selectedAudienceValues
+		const labels = selectedAudienceValues
 			.map(
 				(value) =>
 					audienceOptions.find((option) => option.value === value)
 						?.label || value
 			)
 			.filter(Boolean);
+		return Array.from(new Set(labels));
 	}, [audienceOptions, selectedAudienceValues, translate]);
 	const isClientUser = useMemo(() => {
 		const hasAskerAuthority = hasUserAuthority(
@@ -2880,12 +2967,20 @@ export const MessageSubmitInterfaceComponent = ({
 		const normalizedValue = `${selectedValue || ''}`.toLowerCase();
 		const selectedLabel =
 			`${selectedAudienceLabels[0] || ''}`.toLowerCase();
+		const looksLikeModerator =
+			normalizedValue.includes('moderator') ||
+			normalizedValue.includes('supervisor') ||
+			selectedLabel.includes('moderator') ||
+			selectedLabel.includes('supervisor');
 		const looksLikeConsultant =
 			normalizedValue.includes('consultant') ||
 			selectedLabel.includes('consultant') ||
 			selectedLabel.includes('counsellor') ||
 			selectedLabel.includes('counselor') ||
 			selectedLabel.includes('berater');
+		if (looksLikeModerator) {
+			return <AudienceModeratorIcon />;
+		}
 		return looksLikeConsultant ? (
 			<AudienceSingleConsultantIcon />
 		) : (
@@ -3529,6 +3624,26 @@ export const MessageSubmitInterfaceComponent = ({
 		},
 		[]
 	);
+	useEffect(() => {
+		if (typeof window === 'undefined') {
+			return;
+		}
+		const handleResize = () =>
+			setIsMobileViewport(window.innerWidth <= 899);
+		handleResize();
+		window.addEventListener('resize', handleResize);
+		return () => window.removeEventListener('resize', handleResize);
+	}, []);
+	const unreadMobileBadgeCount = Math.max(0, Number(mobileUnreadCount) || 0);
+	const handleMobileBackNavigation = useCallback(() => {
+		onMobileNavigateBack?.();
+	}, [onMobileNavigateBack]);
+	const handleMobileDownNavigation = useCallback(() => {
+		onMobileNavigateDown?.();
+	}, [onMobileNavigateDown]);
+	const handleMobileBottomNavigation = useCallback(() => {
+		onMobileNavigateBottom?.();
+	}, [onMobileNavigateBottom]);
 
 	// MATRIX MIGRATION: Skip E2EE check for Matrix sessions (no rid)
 	if (!e2EEReady && activeSession.rid) {
@@ -3584,6 +3699,56 @@ export const MessageSubmitInterfaceComponent = ({
 								'textarea__wrapper-send-message--expanded'
 						)}
 					>
+						{isMobileViewport && !threadRootId && (
+							<div className="textarea__mobileNavigator">
+								<button
+									type="button"
+									className="textarea__mobileNavigatorButton textarea__mobileNavigatorButton--left"
+									onClick={handleMobileBackNavigation}
+									aria-label={translate(
+										'message.mobileNav.back',
+										'Navigate up'
+									)}
+								>
+									<ComposerMobileBackIcon />
+								</button>
+								<button
+									type="button"
+									className="textarea__mobileNavigatorCenter"
+									onClick={handleMobileBottomNavigation}
+									aria-label={translate(
+										'message.mobileNav.jumpToLatest',
+										'Jump to latest messages'
+									)}
+								>
+									<span
+										className={clsx(
+											'textarea__mobileNavigatorHandle',
+											mobileIsScrolledToBottom &&
+												'textarea__mobileNavigatorHandle--atBottom'
+										)}
+									/>
+								</button>
+								<button
+									type="button"
+									className="textarea__mobileNavigatorButton textarea__mobileNavigatorButton--right"
+									onClick={handleMobileDownNavigation}
+									aria-label={translate(
+										'message.mobileNav.down',
+										'Scroll to newest messages'
+									)}
+								>
+									<ComposerMobileDownIcon />
+									{unreadMobileBadgeCount > 0 && (
+										<span className="textarea__mobileNavigatorBadge">
+											{unreadMobileBadgeCount > 99
+												? '99+'
+												: unreadMobileBadgeCount}
+										</span>
+									)}
+								</button>
+							</div>
+						)}
 						{showAudienceSelector && (
 							<div
 								className={clsx(
@@ -3746,47 +3911,48 @@ export const MessageSubmitInterfaceComponent = ({
 															selectedCount <
 																selectableOptions.length;
 														const sectionSelectLabel =
-															sectionDefinition.key ===
-															'counsellors'
-																? selectedCount >
-																	0
-																	? translate(
-																			'message.audience.counsellorsSelected',
-																			'{{count}} Counsellors Selected',
-																			{
-																				count: selectedCount
-																			}
-																		)
-																	: translate(
-																			'message.audience.counsellorsSelect',
-																			'Select All Counsellors'
-																		)
-																: selectedCount >
-																	  0
-																	? translate(
-																			'message.audience.moderatorsSelected',
-																			'{{count}} Moderators Selected',
-																			{
-																				count: selectedCount
-																			}
-																		)
-																	: translate(
-																			'message.audience.moderatorsSelect',
-																			'Select All Moderators'
-																		);
-														const clientHeaderLabel =
 															selectedCount > 0
-																? translate(
-																		'message.audience.clientsSelected',
-																		'{{count}} Clients Selected',
-																		{
-																			count: selectedCount
-																		}
-																	)
-																: translate(
-																		'message.audience.clientsSelectAll',
-																		'Select All Clients'
-																	);
+																? sectionDefinition.key ===
+																	'clients'
+																	? translate(
+																			'message.audience.clientsSelected',
+																			'{{count}} Clients Selected',
+																			{
+																				count: selectedCount
+																			}
+																		)
+																	: sectionDefinition.key ===
+																		  'counsellors'
+																		? translate(
+																				'message.audience.counsellorsSelected',
+																				'{{count}} Counsellors Selected',
+																				{
+																					count: selectedCount
+																				}
+																			)
+																		: translate(
+																				'message.audience.moderatorsSelected',
+																				'{{count}} Moderators Selected',
+																				{
+																					count: selectedCount
+																				}
+																			)
+																: sectionDefinition.key ===
+																	  'clients'
+																	? translate(
+																			'message.audience.clientsSelectAll',
+																			'Select All Clients'
+																		)
+																	: sectionDefinition.key ===
+																		  'counsellors'
+																		? translate(
+																				'message.audience.counsellorsSelect',
+																				'Select All Counsellors'
+																			)
+																		: translate(
+																				'message.audience.moderatorsSelect',
+																				'Select All Moderators'
+																			);
 														return (
 															<div
 																key={
@@ -3813,33 +3979,24 @@ export const MessageSubmitInterfaceComponent = ({
 																					'textarea__audienceSelectorSectionRadio--partial'
 																			)}
 																		/>
-																		{sectionDefinition.key ===
-																		'clients' ? (
-																			<span className="textarea__audienceSelectorSectionTitle">
-																				{selectedCount >
-																				0 ? (
-																					<>
-																						<span className="textarea__audienceSelectorSectionTitleCount">
-																							{
-																								selectedCount
-																							}
-																						</span>{' '}
-																						{clientHeaderLabel.replace(
-																							/^\d+\s*/,
-																							''
-																						)}
-																					</>
-																				) : (
-																					clientHeaderLabel
-																				)}
-																			</span>
-																		) : (
-																			<span className="textarea__audienceSelectorSectionTitle">
-																				{
-																					sectionSelectLabel
-																				}
-																			</span>
-																		)}
+																		<span className="textarea__audienceSelectorSectionTitle">
+																			{selectedCount >
+																			0 ? (
+																				<>
+																					<span className="textarea__audienceSelectorSectionTitleCount">
+																						{
+																							selectedCount
+																						}
+																					</span>{' '}
+																					{sectionSelectLabel.replace(
+																						/^\d+\s*/,
+																						''
+																					)}
+																				</>
+																			) : (
+																				sectionSelectLabel
+																			)}
+																		</span>
 																	</button>
 																	<button
 																		type="button"
@@ -3912,9 +4069,6 @@ export const MessageSubmitInterfaceComponent = ({
 																					selectedAudienceValues.includes(
 																						option.value
 																					);
-																				const looksModerationLabel =
-																					sectionDefinition.key ===
-																					'moderators';
 																				return (
 																					<button
 																						type="button"
@@ -3942,8 +4096,19 @@ export const MessageSubmitInterfaceComponent = ({
 																							);
 																						}}
 																					>
-																						<span className="textarea__audienceSelectorPillIcon">
-																							{looksModerationLabel ? (
+																						<span
+																							className={clsx(
+																								'textarea__audienceSelectorPillIcon',
+																								sectionDefinition.key ===
+																									'counsellors' &&
+																									'textarea__audienceSelectorPillIcon--counsellor'
+																							)}
+																						>
+																							{sectionDefinition.key ===
+																							'moderators' ? (
+																								<AudienceModeratorIcon />
+																							) : sectionDefinition.key ===
+																							  'counsellors' ? (
 																								<AudienceSingleConsultantIcon />
 																							) : (
 																								<AudienceSingleUserIcon />

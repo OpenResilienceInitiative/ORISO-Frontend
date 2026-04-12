@@ -70,8 +70,6 @@ import { parseMessagePrefixes } from './messageConstants';
 import { createPortal } from 'react-dom';
 import { ReactComponent as NotificationBellIcon } from '../../resources/img/icons/notification_bell.svg';
 import { ReactComponent as StackVerticalIcon } from '../../resources/img/icons/stack-vertical.svg';
-import { ReactComponent as PersonCircleIcon } from '../../resources/img/icons/person-circle.svg';
-import { ReactComponent as ShieldIcon } from '../../resources/img/icons/shield.svg';
 import { ReactComponent as EyeIcon } from '../../resources/img/icons/eye.svg';
 import { ReactComponent as ArrowLeftIcon } from '../../resources/img/icons/arrow-left.svg';
 import { ReactComponent as StackVerticalCircleIcon } from '../../resources/img/icons/stack-vertical-circle.svg';
@@ -154,20 +152,69 @@ const VisibilityPeopleIcon = () => (
 	</svg>
 );
 
-const ChevronIcon = ({ expanded }: { expanded: boolean }) => (
+const VisibilityClientIcon = () => (
+	<svg
+		width="14"
+		height="14"
+		viewBox="0 0 14 14"
+		fill="none"
+		xmlns="http://www.w3.org/2000/svg"
+		aria-hidden="true"
+	>
+		<path
+			d="M2.56667 10.0667C3.13333 9.63333 3.76667 9.29167 4.46667 9.04167C5.16667 8.79167 5.9 8.66667 6.66667 8.66667C7.43333 8.66667 8.16667 8.79167 8.86667 9.04167C9.56667 9.29167 10.2 9.63333 10.7667 10.0667C11.1556 9.61111 11.4583 9.09445 11.675 8.51667C11.8917 7.93889 12 7.32222 12 6.66667C12 5.18889 11.4806 3.93056 10.4417 2.89167C9.40278 1.85278 8.14444 1.33333 6.66667 1.33333C5.18889 1.33333 3.93056 1.85278 2.89167 2.89167C1.85278 3.93056 1.33333 5.18889 1.33333 6.66667C1.33333 7.32222 1.44167 7.93889 1.65833 8.51667C1.875 9.09445 2.17778 9.61111 2.56667 10.0667ZM6.66667 7.33333C6.01111 7.33333 5.45833 7.10833 5.00833 6.65833C4.55833 6.20833 4.33333 5.65556 4.33333 5C4.33333 4.34444 4.55833 3.79167 5.00833 3.34167C5.45833 2.89167 6.01111 2.66667 6.66667 2.66667C7.32222 2.66667 7.875 2.89167 8.325 3.34167C8.775 3.79167 9 4.34444 9 5C9 5.65556 8.775 6.20833 8.325 6.65833C7.875 7.10833 7.32222 7.33333 6.66667 7.33333ZM6.66667 13.3333C5.74444 13.3333 4.87778 13.1583 4.06667 12.8083C3.25556 12.4583 2.55 11.9833 1.95 11.3833C1.35 10.7833 0.875 10.0778 0.525 9.26667C0.175 8.45556 0 7.58889 0 6.66667C0 5.74444 0.175 4.87778 0.525 4.06667C0.875 3.25556 1.35 2.55 1.95 1.95C2.55 1.35 3.25556 0.875 4.06667 0.525C4.87778 0.175 5.74444 0 6.66667 0C7.58889 0 8.45556 0.175 9.26667 0.525C10.0778 0.875 10.7833 1.35 11.3833 1.95C11.9833 2.55 12.4583 3.25556 12.8083 4.06667C13.1583 4.87778 13.3333 5.74444 13.3333 6.66667C13.3333 7.58889 13.1583 8.45556 12.8083 9.26667C12.4583 10.0778 11.9833 10.7833 11.3833 11.3833C10.7833 11.9833 10.0778 12.4583 9.26667 12.8083C8.45556 13.1583 7.58889 13.3333 6.66667 13.3333Z"
+			fill="white"
+		/>
+	</svg>
+);
+
+const VisibilityCounsellorIcon = () => (
+	<svg
+		width="9"
+		height="14"
+		viewBox="0 0 9 14"
+		fill="none"
+		xmlns="http://www.w3.org/2000/svg"
+		aria-hidden="true"
+	>
+		<path
+			d="M4.33333 0C4.88889 0 5.36111 0.194444 5.75 0.583333C6.13889 0.972222 6.33333 1.44444 6.33333 2C6.33333 2.55556 6.13889 3.02778 5.75 3.41667C5.36111 3.80556 4.88889 4 4.33333 4C3.77778 4 3.30556 3.80556 2.91667 3.41667C2.52778 3.02778 2.33333 2.55556 2.33333 2C2.33333 1.44444 2.52778 0.972222 2.91667 0.583333C3.30556 0.194444 3.77778 0 4.33333 0ZM4.33333 4.66667C4.85556 4.66667 5.37222 4.72778 5.88333 4.85C6.39444 4.97222 6.85556 5.14444 7.26667 5.36667C7.68889 5.57778 8.02778 5.82778 8.28333 6.11667C8.53889 6.40556 8.66667 6.72222 8.66667 7.06667V10.9333C8.66667 11.1222 8.62222 11.3083 8.53333 11.4917C8.44444 11.675 8.32222 11.8444 8.16667 12C8.01111 12.1556 7.83056 12.3 7.625 12.4333C7.41944 12.5667 7.18889 12.6889 6.93333 12.8V11.3C6.93333 10.8778 6.64167 10.5333 6.05833 10.2667C5.475 10 4.9 9.86667 4.33333 9.86667C3.77778 9.86667 3.24167 9.98056 2.725 10.2083C2.20833 10.4361 1.88889 10.7333 1.76667 11.1C2.18889 11.2667 2.62222 11.3833 3.06667 11.45C3.51111 11.5167 3.96667 11.5556 4.43333 11.5667H5V13.3C4.92222 13.3222 4.84167 13.3333 4.75833 13.3333H4.5C4.1 13.3333 3.64167 13.2889 3.125 13.2C2.60833 13.1111 2.11667 12.9722 1.65 12.7833C1.18333 12.5944 0.791667 12.3472 0.475 12.0417C0.158333 11.7361 0 11.3667 0 10.9333V7.06667C0 6.72222 0.127778 6.40556 0.383333 6.11667C0.638889 5.82778 0.972222 5.57778 1.38333 5.36667C1.80556 5.14444 2.27222 4.97222 2.78333 4.85C3.29444 4.72778 3.81111 4.66667 4.33333 4.66667ZM4.33333 8.66667C4.7 8.66667 5.01389 8.53611 5.275 8.275C5.53611 8.01389 5.66667 7.7 5.66667 7.33333C5.66667 6.96667 5.53611 6.65278 5.275 6.39167C5.01389 6.13056 4.7 6 4.33333 6C3.96667 6 3.65278 6.13056 3.39167 6.39167C3.13056 6.65278 3 6.96667 3 7.33333C3 7.7 3.13056 8.01389 3.39167 8.275C3.65278 8.53611 3.96667 8.66667 4.33333 8.66667Z"
+			fill="#4C555F"
+		/>
+	</svg>
+);
+
+const VisibilityModeratorIcon = () => (
+	<svg
+		width="11"
+		height="14"
+		viewBox="0 0 11 14"
+		fill="none"
+		xmlns="http://www.w3.org/2000/svg"
+		aria-hidden="true"
+	>
+		<path
+			d="M3.675 6.65833C3.225 6.20833 3 5.65556 3 5C3 4.34444 3.225 3.79167 3.675 3.34167C4.125 2.89167 4.67778 2.66667 5.33333 2.66667C5.98889 2.66667 6.54167 2.89167 6.99167 3.34167C7.44167 3.79167 7.66667 4.34444 7.66667 5C7.66667 5.65556 7.44167 6.20833 6.99167 6.65833C6.54167 7.10833 5.98889 7.33333 5.33333 7.33333C4.67778 7.33333 4.125 7.10833 3.675 6.65833ZM5.33333 13.3333C3.78889 12.9444 2.51389 12.0583 1.50833 10.675C0.502778 9.29167 0 7.75556 0 6.06667V2L5.33333 0L10.6667 2V6.06667C10.6667 7.75556 10.1639 9.29167 9.15833 10.675C8.15278 12.0583 6.87778 12.9444 5.33333 13.3333ZM5.33333 1.41667L1.33333 2.91667V6.06667C1.33333 6.66667 1.41667 7.25 1.58333 7.81667C1.75 8.38333 1.97778 8.91667 2.26667 9.41667C2.73333 9.18333 3.22222 9 3.73333 8.86667C4.24444 8.73333 4.77778 8.66667 5.33333 8.66667C5.88889 8.66667 6.42222 8.73333 6.93333 8.86667C7.44445 9 7.93333 9.18333 8.4 9.41667C8.68889 8.91667 8.91667 8.38333 9.08333 7.81667C9.25 7.25 9.33333 6.66667 9.33333 6.06667V2.91667L5.33333 1.41667Z"
+			fill="white"
+		/>
+	</svg>
+);
+
+const ChevronIcon = ({ className }: { className?: string }) => (
 	<svg
 		width="10"
 		height="6"
 		viewBox="0 0 10 6"
 		fill="none"
 		xmlns="http://www.w3.org/2000/svg"
+		className={className}
 	>
 		<path
 			d="M0.800781 4.80005L4.80078 0.800049L8.80078 4.80005"
 			stroke="#4C555F"
-			stroke-width="1.6"
-			stroke-linecap="round"
-			stroke-linejoin="round"
+			strokeWidth="1.6"
+			strokeLinecap="round"
+			strokeLinejoin="round"
 		/>
 	</svg>
 );
@@ -466,8 +513,8 @@ export const MessageItemComponent = ({
 			null
 		);
 	}, [consultantContext?.consultantList, displayName, userId, username]);
-	const visibleAudienceLabels = useMemo(() => {
-		const normalizeLabel = (rawValue: string) => {
+	const normalizeAudienceLabel = useCallback(
+		(rawValue: string) => {
 			const trimmed = (rawValue || '').trim();
 			if (!trimmed) {
 				return '';
@@ -492,24 +539,64 @@ export const MessageItemComponent = ({
 				}`;
 			}
 			return normalized || trimmed;
-		};
+		},
+		[translate]
+	);
+	const makeComparableAudienceLabel = useCallback(
+		(value: string) =>
+			`${value || ''}`
+				.toLowerCase()
+				.replace(/\s+/g, '')
+				.replace(/[^a-z0-9]/gi, ''),
+		[]
+	);
+	const senderComparableLabels = useMemo(() => {
+		const values = [displayName, username, userId];
+		return new Set(
+			values
+				.map((value) => normalizeAudienceLabel(`${value || ''}`))
+				.filter(Boolean)
+				.map((value) => makeComparableAudienceLabel(value))
+				.filter(Boolean)
+		);
+	}, [
+		displayName,
+		makeComparableAudienceLabel,
+		normalizeAudienceLabel,
+		userId,
+		username
+	]);
+	const rawVisibleAudienceLabels = useMemo(() => {
 		return parsedMessage.visibleToUserIds
-			.map((entry) => normalizeLabel(entry))
+			.map((entry) => normalizeAudienceLabel(entry))
 			.filter(Boolean);
-	}, [parsedMessage.visibleToUserIds, translate]);
-	const visibilityGroups = useMemo(() => {
-		const clients: string[] = [];
-		const counsellors: string[] = [];
-		const moderators: string[] = [];
-		const normalize = (value: string) => value.toLowerCase();
-		visibleAudienceLabels.forEach((label) => {
-			const normalized = normalize(label);
+	}, [normalizeAudienceLabel, parsedMessage.visibleToUserIds]);
+	const visibleAudienceLabels = useMemo(() => {
+		return rawVisibleAudienceLabels
+			.filter(
+				(label) =>
+					!(
+						isMyMessage &&
+						senderComparableLabels.has(
+							makeComparableAudienceLabel(label)
+						)
+					)
+			)
+			.filter(Boolean);
+	}, [
+		isMyMessage,
+		makeComparableAudienceLabel,
+		rawVisibleAudienceLabels,
+		senderComparableLabels
+	]);
+	const getAudienceRoleFromLabel = useCallback(
+		(rawLabel: string): 'clients' | 'counsellors' | 'moderators' => {
+			const normalized = `${rawLabel || ''}`.toLowerCase();
 			if (
 				normalized.includes('moderator') ||
 				normalized.includes('supervisor')
 			) {
-				moderators.push(label);
-				return;
+				return 'moderators';
 			}
 			if (
 				normalized.includes('counsellor') ||
@@ -517,17 +604,178 @@ export const MessageItemComponent = ({
 				normalized.includes('consultant') ||
 				normalized.includes('berater')
 			) {
-				counsellors.push(label);
+				return 'counsellors';
+			}
+			return 'clients';
+		},
+		[]
+	);
+	const visibilityGroups = useMemo(() => {
+		const selectedComparableLabels = new Set(
+			visibleAudienceLabels.map((entry) =>
+				makeComparableAudienceLabel(entry)
+			)
+		);
+		const includesAllAudience = parsedMessage.visibleToUserIds.some(
+			(entry) => `${entry || ''}`.trim().toLowerCase() === '__all__'
+		);
+		const assumeAllAudienceByDefault =
+			parsedMessage.visibleToUserIds.length === 0 &&
+			!!activeSession?.isGroup;
+		const isAllAudienceSelected =
+			includesAllAudience || assumeAllAudienceByDefault;
+		const allCandidates = new Map<string, string>();
+		const addCandidate = (rawValue?: string | null) => {
+			const label = normalizeAudienceLabel(`${rawValue || ''}`);
+			if (!label) {
 				return;
 			}
-			clients.push(label);
+			const compact = label.trim();
+			const compactLower = compact.toLowerCase();
+			if (
+				compactLower === 'all' ||
+				compactLower.startsWith('enc.') ||
+				compactLower.includes('.onugc')
+			) {
+				return;
+			}
+			const key = makeComparableAudienceLabel(compact);
+			if (!key) {
+				return;
+			}
+			if (senderComparableLabels.has(key)) {
+				return;
+			}
+			const existing = allCandidates.get(key);
+			if (!existing) {
+				allCandidates.set(key, compact);
+				return;
+			}
+			const shouldReplace =
+				(/\s/.test(compact) && !/\s/.test(existing)) ||
+				compact.length > existing.length;
+			if (shouldReplace) {
+				allCandidates.set(key, compact);
+			}
+		};
+
+		visibleAudienceLabels.forEach((label) => addCandidate(label));
+		addCandidate(activeSession?.user?.username);
+		addCandidate(activeSession?.consultant?.displayName);
+		addCandidate(activeSession?.consultant?.username);
+
+		(activeSession?.item?.moderators || []).forEach((moderatorId) => {
+			const roomMatch = (rcUsersContext?.users || []).find(
+				(entry) => entry?._id === moderatorId
+			);
+			addCandidate(
+				roomMatch?.displayName || roomMatch?.username || moderatorId
+			);
 		});
+
+		(consultantContext?.consultantList || []).forEach((entry) => {
+			addCandidate(entry?.consultantDisplayName);
+		});
+
+		type AudienceChipEntry = { label: string; selected: boolean };
+		const clients: AudienceChipEntry[] = [];
+		const counsellors: AudienceChipEntry[] = [];
+		const moderators: AudienceChipEntry[] = [];
+
+		Array.from(allCandidates.values())
+			.sort((a, b) => a.localeCompare(b))
+			.forEach((label) => {
+				const role = getAudienceRoleFromLabel(label);
+				const isSelected =
+					isAllAudienceSelected ||
+					selectedComparableLabels.has(
+						makeComparableAudienceLabel(label)
+					);
+				const chip = { label, selected: isSelected };
+				if (role === 'moderators') {
+					moderators.push(chip);
+					return;
+				}
+				if (role === 'counsellors') {
+					counsellors.push(chip);
+					return;
+				}
+				clients.push(chip);
+			});
+
 		return {
 			clients,
 			counsellors,
 			moderators
 		};
-	}, [visibleAudienceLabels]);
+	}, [
+		activeSession?.consultant?.displayName,
+		activeSession?.consultant?.username,
+		activeSession?.item?.moderators,
+		activeSession?.user?.username,
+		consultantContext?.consultantList,
+		makeComparableAudienceLabel,
+		getAudienceRoleFromLabel,
+		normalizeAudienceLabel,
+		parsedMessage.visibleToUserIds,
+		rcUsersContext?.users,
+		activeSession?.isGroup,
+		senderComparableLabels,
+		visibleAudienceLabels
+	]);
+	const visibleAudienceSummaryLabels = useMemo(() => {
+		const sourceLabels =
+			visibleAudienceLabels.length > 0
+				? visibleAudienceLabels
+				: rawVisibleAudienceLabels;
+		const grouped = {
+			clients: [] as string[],
+			counsellors: [] as string[],
+			moderators: [] as string[]
+		};
+		sourceLabels.forEach((label) => {
+			const role = getAudienceRoleFromLabel(label);
+			grouped[role].push(label);
+		});
+		const summary: string[] = [];
+		(['clients', 'counsellors', 'moderators'] as const).forEach((role) => {
+			const entries = grouped[role];
+			if (entries.length === 0) {
+				return;
+			}
+			if (entries.length === 1) {
+				summary.push(entries[0]);
+				return;
+			}
+			const roleLabel =
+				role === 'clients'
+					? translate('message.audience.clients', 'Clients')
+					: role === 'counsellors'
+						? translate(
+								'message.audience.counsellors',
+								'Counsellors'
+							)
+						: translate(
+								'message.audience.moderators',
+								'Moderators'
+							);
+			summary.push(`${entries.length} ${roleLabel}`);
+		});
+		if (
+			summary.length === 0 &&
+			rawVisibleAudienceLabels.length === 0 &&
+			activeSession?.isGroup
+		) {
+			summary.push(translate('message.audience.all', 'All'));
+		}
+		return summary;
+	}, [
+		activeSession?.isGroup,
+		getAudienceRoleFromLabel,
+		rawVisibleAudienceLabels,
+		translate,
+		visibleAudienceLabels
+	]);
 
 	useEffect((): void => {
 		const renderImageMarkers = (content: string) =>
@@ -901,7 +1149,7 @@ export const MessageItemComponent = ({
 	const isRoomRemovedReadOnly = t === 'room-removed-read-only';
 	const isRoomSetReadOnly = t === 'room-set-read-only';
 	const showVisibleAudience =
-		visibleAudienceLabels.length > 0 &&
+		visibleAudienceSummaryLabels.length > 0 &&
 		!isDeleteMessage &&
 		!isSystemNotification &&
 		!alias?.messageType;
@@ -1099,26 +1347,32 @@ export const MessageItemComponent = ({
 										'visible only to:'
 									)}
 								</span>
-								{visibleAudienceLabels.map((label, index) => (
-									<span
-										key={`visible-to-right-${index}-${label}`}
-										className="messageItem__visibleOnlyChip"
-									>
+								{visibleAudienceSummaryLabels.map(
+									(label, index) => (
 										<span
-											className="messageItem__visibleOnlyChipIcon"
-											aria-hidden
+											key={`visible-to-right-${index}-${label}`}
+											className="messageItem__visibleOnlyChip"
 										>
-											{label
-												.toLowerCase()
-												.includes('moderator') ? (
-												<ShieldIcon />
-											) : (
-												<PersonCircleIcon />
-											)}
+											<span
+												className="messageItem__visibleOnlyChipIcon"
+												aria-hidden
+											>
+												{getAudienceRoleFromLabel(
+													label
+												) === 'moderators' ? (
+													<VisibilityModeratorIcon />
+												) : getAudienceRoleFromLabel(
+														label
+												  ) === 'counsellors' ? (
+													<VisibilityCounsellorIcon />
+												) : (
+													<VisibilityClientIcon />
+												)}
+											</span>
+											{label}
 										</span>
-										{label}
-									</span>
-								))}
+									)
+								)}
 							</div>
 						)}
 						<div
@@ -1376,26 +1630,32 @@ export const MessageItemComponent = ({
 										'visible only to:'
 									)}
 								</span>
-								{visibleAudienceLabels.map((label, index) => (
-									<span
-										key={`visible-to-left-${index}-${label}`}
-										className="messageItem__visibleOnlyChip"
-									>
+								{visibleAudienceSummaryLabels.map(
+									(label, index) => (
 										<span
-											className="messageItem__visibleOnlyChipIcon"
-											aria-hidden
+											key={`visible-to-left-${index}-${label}`}
+											className="messageItem__visibleOnlyChip"
 										>
-											{label
-												.toLowerCase()
-												.includes('moderator') ? (
-												<ShieldIcon />
-											) : (
-												<PersonCircleIcon />
-											)}
+											<span
+												className="messageItem__visibleOnlyChipIcon"
+												aria-hidden
+											>
+												{getAudienceRoleFromLabel(
+													label
+												) === 'moderators' ? (
+													<VisibilityModeratorIcon />
+												) : getAudienceRoleFromLabel(
+														label
+												  ) === 'counsellors' ? (
+													<VisibilityCounsellorIcon />
+												) : (
+													<VisibilityClientIcon />
+												)}
+											</span>
+											{label}
 										</span>
-										{label}
-									</span>
-								))}
+									)
+								)}
 							</div>
 						)}
 					</>
@@ -1498,7 +1758,12 @@ export const MessageItemComponent = ({
 							{showVisibleAudience && (
 								<button
 									type="button"
-									className="messageItem__visibilityChip messageItem__visibilityChip--incoming"
+									className={clsx(
+										'messageItem__visibilityChip',
+										'messageItem__visibilityChip--incoming',
+										isVisibilityMenuOpen &&
+											'messageItem__visibilityChip--active'
+									)}
 									onClick={(event) =>
 										toggleVisibilityMenu(event, 'left')
 									}
@@ -1508,7 +1773,11 @@ export const MessageItemComponent = ({
 									)}
 								>
 									<span className="messageItem__visibilityChipCount">
-										+{visibleAudienceLabels.length}
+										+
+										{(visibleAudienceLabels.length > 0
+											? visibleAudienceLabels.length
+											: rawVisibleAudienceLabels.length) ||
+											0}
 									</span>
 									<span className="messageItem__visibilityChipIcon">
 										<VisibilityPeopleIcon />
@@ -1548,7 +1817,12 @@ export const MessageItemComponent = ({
 							{showVisibleAudience && (
 								<button
 									type="button"
-									className="messageItem__visibilityChip messageItem__visibilityChip--outgoing"
+									className={clsx(
+										'messageItem__visibilityChip',
+										'messageItem__visibilityChip--outgoing',
+										isVisibilityMenuOpen &&
+											'messageItem__visibilityChip--active'
+									)}
 									onClick={(event) =>
 										toggleVisibilityMenu(event, 'right')
 									}
@@ -1558,7 +1832,11 @@ export const MessageItemComponent = ({
 									)}
 								>
 									<span className="messageItem__visibilityChipCount">
-										+{visibleAudienceLabels.length}
+										+
+										{(visibleAudienceLabels.length > 0
+											? visibleAudienceLabels.length
+											: rawVisibleAudienceLabels.length) ||
+											0}
 									</span>
 									<span className="messageItem__visibilityChipIcon">
 										<VisibilityPeopleIcon />
@@ -1733,39 +2011,30 @@ export const MessageItemComponent = ({
 									[
 										{
 											key: 'clients',
-											title:
-												visibilityGroups.clients
-													.length > 0
-													? `${visibilityGroups.clients.length} Client${
-															visibilityGroups
-																.clients
-																.length > 1
-																? 's'
-																: ''
-														}`
-													: 'Clients',
+											title: translate(
+												'message.audience.clients',
+												'Clients'
+											),
 											items: visibilityGroups.clients,
-											icon: <PersonCircleIcon />
+											role: 'clients' as const
 										},
 										{
 											key: 'counsellors',
-											title:
-												visibilityGroups.counsellors
-													.length > 0
-													? `Counsellors`
-													: 'Counsellors',
+											title: translate(
+												'message.audience.counsellors',
+												'Counsellors'
+											),
 											items: visibilityGroups.counsellors,
-											icon: <PersonCircleIcon />
+											role: 'counsellors' as const
 										},
 										{
 											key: 'moderators',
-											title:
-												visibilityGroups.moderators
-													.length > 0
-													? `${visibilityGroups.moderators.length} Moderators`
-													: 'Moderators',
+											title: translate(
+												'message.audience.moderators',
+												'Moderators'
+											),
 											items: visibilityGroups.moderators,
-											icon: <ShieldIcon />
+											role: 'moderators' as const
 										}
 									] as const
 								).map((section) => (
@@ -1782,20 +2051,44 @@ export const MessageItemComponent = ({
 												)
 											}
 										>
-											<span className="messageItem__visibilityMenuSectionTitleWrap">
-												<span className="messageItem__visibilityMenuSectionTitleIcon">
-													{section.icon}
-												</span>
-												<span className="messageItem__visibilityMenuSectionTitle">
-													{section.title}
-												</span>
-											</span>
+											{(() => {
+												const selectedCount =
+													section.items.filter(
+														(item) => item.selected
+													).length;
+												const hasAllSelected =
+													section.items.length > 0 &&
+													selectedCount ===
+														section.items.length;
+												const hasPartialSelected =
+													selectedCount > 0 &&
+													selectedCount <
+														section.items.length;
+												return (
+													<span className="messageItem__visibilityMenuSectionTitleWrap">
+														<span
+															className={clsx(
+																'messageItem__visibilityMenuSectionRadio',
+																hasAllSelected &&
+																	'messageItem__visibilityMenuSectionRadio--selected',
+																hasPartialSelected &&
+																	'messageItem__visibilityMenuSectionRadio--partial'
+															)}
+														/>
+														<span className="messageItem__visibilityMenuSectionTitle">
+															{section.title}
+														</span>
+													</span>
+												);
+											})()}
 											<ChevronIcon
-												expanded={
+												className={clsx(
+													'messageItem__visibilityMenuSectionChevronIcon',
 													expandedVisibilitySections[
 														section.key
-													]
-												}
+													] &&
+														'messageItem__visibilityMenuSectionChevronIcon--open'
+												)}
 											/>
 										</button>
 										<div
@@ -1810,35 +2103,54 @@ export const MessageItemComponent = ({
 											<div className="messageItem__visibilityMenuPills">
 												{section.items.length === 0 ? (
 													<span className="messageItem__visibilityMenuEmpty">
-														-
+														{section.key ===
+														'clients'
+															? translate(
+																	'message.audience.clientsEmpty',
+																	'No clients are in this room'
+																)
+															: section.key ===
+																  'counsellors'
+																? translate(
+																		'message.audience.counsellorsEmpty',
+																		'No counsellors are in this room'
+																	)
+																: translate(
+																		'message.audience.moderatorsEmpty',
+																		'No moderators are in this room'
+																	)}
 													</span>
 												) : (
 													section.items.map(
-														(label, index) => (
+														(item, index) => (
 															<span
-																key={`${section.key}-${label}-${index}`}
+																key={`${section.key}-${item.label}-${index}`}
 																className={clsx(
 																	'messageItem__visibilityMenuPill',
-																	index ===
-																		0 &&
+																	item.selected &&
 																		'messageItem__visibilityMenuPill--active'
 																)}
 															>
 																<span
-																	className="messageItem__visibilityMenuPillIcon"
+																	className={clsx(
+																		'messageItem__visibilityMenuPillIcon',
+																		section.role ===
+																			'counsellors' &&
+																			'messageItem__visibilityMenuPillIcon--counsellor'
+																	)}
 																	aria-hidden
 																>
-																	{label
-																		.toLowerCase()
-																		.includes(
-																			'moderator'
-																		) ? (
-																		<ShieldIcon />
+																	{section.role ===
+																	'moderators' ? (
+																		<VisibilityModeratorIcon />
+																	) : section.role ===
+																	  'counsellors' ? (
+																		<VisibilityCounsellorIcon />
 																	) : (
-																		<PersonCircleIcon />
+																		<VisibilityClientIcon />
 																	)}
 																</span>
-																{label}
+																{item.label}
 															</span>
 														)
 													)

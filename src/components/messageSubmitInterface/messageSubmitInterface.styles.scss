@@ -206,6 +206,134 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			border: 1px solid #ffe3a0;
 		}
 
+		&__mobileNavigator {
+			display: none;
+		}
+
+		@media screen and (max-width: 899px) {
+			&__mobileNavigator {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 6px;
+				height: 48px;
+				padding: 0 0px;
+				border: 2px solid #ffd1d1;
+				border-bottom: 0;
+				border-top-left-radius: 20px;
+				border-top-right-radius: 20px;
+				background: #fff;
+				position: absolute;
+				top: -48px;
+				left: 0px;
+				right: 0px;
+				z-index: 34;
+				width: 100.4%;
+			}
+
+			&__mobileNavigator > button {
+				flex: 1; /* each gets equal width */
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+
+			&__mobileNavigatorButton {
+				border: 0;
+				background: transparent;
+				width: 62px;
+				height: 48px;
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				border-top-left-radius: 0;
+				border-top-right-radius: 0;
+				cursor: pointer;
+				position: relative;
+				flex: 1;
+
+				&:active {
+					background: #ffe2de;
+				}
+			}
+
+			&__mobileNavigatorButton--left {
+				border-top-left-radius: 20px;
+			}
+
+			&__mobileNavigatorButton--right {
+				border-top-right-radius: 20px;
+			}
+
+			&__mobileNavigatorCenter {
+				border: 0;
+				background: transparent;
+				flex: 0;
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				height: 36px;
+				border-radius: 8px;
+				cursor: pointer;
+
+				&:active {
+					background: #ffe2de;
+				}
+			}
+
+			&__mobileNavigatorHandle {
+				width: 66px;
+				height: 5px;
+				border-radius: 2px;
+				background: #d9d9d9;
+				transition:
+					background 160ms ease,
+					height 160ms ease;
+			}
+
+			&__mobileNavigatorHandle--atBottom {
+				background: #cc1e1c;
+				height: 7px;
+				border-radius: 3px;
+			}
+
+			&__mobileNavigatorBadge {
+				position: absolute;
+				right: 8px;
+				top: 8px;
+				width: 20px;
+				height: 20px;
+				padding: 0;
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				border-top-left-radius: 3px;
+				border-bottom-right-radius: 3px;
+				border-top-right-radius: 8px;
+				border-bottom-left-radius: 8px;
+				background: #b1005e;
+				color: #fff;
+				font-size: 11px;
+				font-weight: 600;
+				line-height: 1;
+				letter-spacing: 0;
+				overflow: hidden;
+			}
+
+			&__mobileNavigatorButton--right:active {
+				background: #ffd1d1;
+			}
+
+			&__wrapper-send-message {
+				border-top-left-radius: 0 !important;
+				border-top-right-radius: 0 !important;
+			}
+
+			&__input {
+				border-radius: 0 0 30px 30px;
+			}
+		}
+
 		&__inputWrapper {
 			position: absolute;
 			left: 15px;
@@ -1266,6 +1394,11 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			}
 		}
 
+		&__audienceSelectorPill--selected
+			.textarea__audienceSelectorPillIcon--counsellor {
+			filter: brightness(0) invert(1);
+		}
+
 		&__audienceSelectorPillText {
 			max-width: 100%;
 			overflow: hidden;
@@ -1852,7 +1985,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			}
 
 			@media screen and (max-width: 899px) {
-				display: inline-flex;
+				display: none;
 			}
 		}
 	}

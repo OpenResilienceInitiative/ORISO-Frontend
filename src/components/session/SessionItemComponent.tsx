@@ -66,6 +66,7 @@ import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import LegalLinks from '../legalLinks/LegalLinks';
 import { renderToString } from 'react-dom/server';
+import { mobileListView } from '../app/navigationHandler';
 
 const MessageSubmitInterfaceComponent = lazy(() =>
 	import('../messageSubmitInterface/messageSubmitInterfaceComponent').then(
@@ -1919,6 +1920,24 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			scrollToEnd(0, true);
 		}
 	};
+	const handleMobileNavigateBackClick = () => {
+		mobileListView();
+	};
+	const handleMobileNavigateStepDownClick = () => {
+		const scrollContainer = scrollContainerRef.current;
+		if (!scrollContainer) {
+			return;
+		}
+		smoothScroll({
+			duration: 500,
+			element: scrollContainer,
+			to: Math.min(
+				scrollContainer.scrollHeight,
+				scrollContainer.scrollTop +
+					Math.round(scrollContainer.clientHeight * 0.6)
+			)
+		});
+	};
 
 	const enableInitialScroll = () => {
 		if (!initialScrollCompleted) {
@@ -1992,6 +2011,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	}, [isThreadsEnabled, activeThreadRootId, handleCloseThread]);
 
 	useEffect(() => {
+		if (isAskerUser && !isConsultantUser) {
+			return;
+		}
 		const roomId =
 			(activeSession.rid && activeSession.rid.startsWith('!')
 				? activeSession.rid
@@ -2027,7 +2049,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	}, [
 		activeSession.rid,
 		activeSession.item?.matrixRoomId,
-		activeThreadRootId
+		activeThreadRootId,
+		isAskerUser,
+		isConsultantUser
 	]);
 
 	// Track the decryption success because we have a short timing issue when
@@ -3182,6 +3206,15 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										).cleanedMessage
 									: null
 							}
+							mobileUnreadCount={newMessages}
+							mobileIsScrolledToBottom={isScrolledToBottom}
+							onMobileNavigateBack={handleMobileNavigateBackClick}
+							onMobileNavigateDown={
+								handleMobileNavigateStepDownClick
+							}
+							onMobileNavigateBottom={
+								handleScrollToBottomButtonClick
+							}
 						/>
 					</div>
 				</div>
@@ -3242,6 +3275,17 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									handleMessageSendSuccess
 								}
 								isSupervisor={isSupervisor}
+								mobileUnreadCount={newMessages}
+								mobileIsScrolledToBottom={isScrolledToBottom}
+								onMobileNavigateBack={
+									handleMobileNavigateBackClick
+								}
+								onMobileNavigateDown={
+									handleMobileNavigateStepDownClick
+								}
+								onMobileNavigateBottom={
+									handleScrollToBottomButtonClick
+								}
 							/>
 						</Suspense>
 					)}

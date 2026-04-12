@@ -317,6 +317,11 @@ $message-avatar-ring: #ebe2e2;
 		z-index: 9500;
 	}
 
+	&__visibilityChip--active {
+		background: #cc1e1c;
+		border-color: #cc1e1c;
+	}
+
 	&__visibilityChipIcon {
 		display: inline-flex;
 		width: 14px;
@@ -331,6 +336,10 @@ $message-avatar-ring: #ebe2e2;
 			width: 14px;
 			height: 12px;
 		}
+
+		path {
+			fill: #4b515a;
+		}
 	}
 
 	&__visibilityChipCount {
@@ -338,6 +347,15 @@ $message-avatar-ring: #ebe2e2;
 		font-size: 16px;
 		font-weight: 500;
 		line-height: 1;
+	}
+
+	&__visibilityChip--active .messageItem__visibilityChipCount,
+	&__visibilityChip--active .messageItem__visibilityChipIcon {
+		color: #fff;
+	}
+
+	&__visibilityChip--active .messageItem__visibilityChipIcon path {
+		fill: #fff;
 	}
 
 	&__visibilityChip--incoming {
@@ -349,8 +367,8 @@ $message-avatar-ring: #ebe2e2;
 	}
 
 	&__visibilityMenu {
-		min-width: 320px;
-		max-width: 360px;
+		min-width: 260px;
+		max-width: 260px;
 		padding: 8px;
 		border: 2px solid #cc1e1c;
 		border-radius: 12px;
@@ -380,6 +398,7 @@ $message-avatar-ring: #ebe2e2;
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
+		gap: 8px;
 		padding: 6px;
 		cursor: pointer;
 	}
@@ -411,16 +430,63 @@ $message-avatar-ring: #ebe2e2;
 		font-size: 12px;
 		line-height: 14px;
 		color: #4c555f;
+		font-weight: 400;
+	}
+
+	&__visibilityMenuSectionTitleCount {
+		font-weight: 700;
+	}
+
+	&__visibilityMenuSectionRadio {
+		width: 14px;
+		height: 14px;
+		border-radius: 999px;
+		border: 2px solid #5f6873;
+		background: #fff;
+		flex: 0 0 14px;
+	}
+
+	&__visibilityMenuSectionRadio--selected {
+		border-color: #3f4753;
+		background: radial-gradient(
+			circle at 50% 50%,
+			#3f4753 45%,
+			transparent 47%
+		);
+	}
+
+	&__visibilityMenuSectionRadio--partial {
+		border-color: transparent;
+		background: transparent;
+		background-image: url("data:image/svg+xml,%3Csvg width='14' height='14' viewBox='0 0 14 14' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6.66667 10V3.33333C5.74444 3.33333 4.95833 3.65833 4.30833 4.30833C3.65833 4.95833 3.33333 5.74444 3.33333 6.66667C3.33333 7.58889 3.65833 8.375 4.30833 9.025C4.95833 9.675 5.74444 10 6.66667 10ZM6.66667 13.3333C5.74444 13.3333 4.87778 13.1583 4.06667 12.8083C3.25556 12.4583 2.55 11.9833 1.95 11.3833C1.35 10.7833 0.875 10.0778 0.525 9.26667C0.175 8.45555 0 7.58889 0 6.66667C0 5.74444 0.175 4.87778 0.525 4.06667C0.875 3.25556 1.35 2.55 1.95 1.95C2.55 1.35 3.25556 0.875 4.06667 0.525C4.87778 0.175 5.74444 0 6.66667 0C7.58889 0 8.45555 0.175 9.26667 0.525C10.0778 0.875 10.7833 1.35 11.3833 1.95C11.9833 2.55 12.4583 3.25556 12.8083 4.06667C13.1583 4.87778 13.3333 5.74444 13.3333 6.66667C13.3333 7.58889 13.1583 8.45555 12.8083 9.26667C12.4583 10.0778 11.9833 10.7833 11.3833 11.3833C10.7833 11.9833 10.0778 12.4583 9.26667 12.8083C8.45555 13.1583 7.58889 13.3333 6.66667 13.3333ZM6.66667 12C8.15555 12 9.41667 11.4833 10.45 10.45C11.4833 9.41667 12 8.15555 12 6.66667C12 5.17778 11.4833 3.91667 10.45 2.88333C9.41667 1.85 8.15555 1.33333 6.66667 1.33333C5.17778 1.33333 3.91667 1.85 2.88333 2.88333C1.85 3.91667 1.33333 5.17778 1.33333 6.66667C1.33333 8.15555 1.85 9.41667 2.88333 10.45C3.91667 11.4833 5.17778 12 6.66667 12Z' fill='%234C555F'/%3E%3C/svg%3E");
+		background-repeat: no-repeat;
+		background-size: 14px 14px;
+		background-position: center;
+	}
+
+	&__visibilityMenuSectionChevronIcon {
+		width: 10px;
+		height: 6px;
+		transition: transform 180ms ease;
+		transform: rotate(180deg);
+	}
+
+	&__visibilityMenuSectionChevronIcon--open {
+		transform: rotate(0deg);
 	}
 
 	&__visibilityMenuSectionBody {
 		max-height: 0;
 		overflow: hidden;
-		transition: max-height 180ms ease;
+		opacity: 0;
+		transition:
+			max-height 180ms ease,
+			opacity 180ms ease;
 	}
 
 	&__visibilityMenuSectionBody--expanded {
-		max-height: 200px;
+		max-height: 220px;
+		opacity: 1;
 	}
 
 	&__visibilityMenuSubheading {
@@ -473,10 +539,17 @@ $message-avatar-ring: #ebe2e2;
 		border-color: #3b4044;
 	}
 
+	&__visibilityMenuPill--active
+		.messageItem__visibilityMenuPillIcon--counsellor {
+		filter: brightness(0) invert(1);
+	}
+
 	&__visibilityMenuEmpty {
-		font-size: 12px;
-		color: #8d97a5;
-		padding: 2px 4px 6px;
+		font-size: 10px;
+		line-height: 14px;
+		font-weight: 400;
+		color: #4c555f;
+		padding: 2px 2px 2px 18px;
 	}
 
 	&__visibilityMenuPillIcon {
@@ -490,10 +563,6 @@ $message-avatar-ring: #ebe2e2;
 		svg {
 			width: 16px;
 			height: 16px;
-		}
-
-		path {
-			fill: currentColor;
 		}
 	}
 
@@ -836,10 +905,6 @@ $message-avatar-ring: #ebe2e2;
 		svg {
 			width: 14px;
 			height: 14px;
-		}
-
-		path {
-			fill: #4b515a;
 		}
 	}
 

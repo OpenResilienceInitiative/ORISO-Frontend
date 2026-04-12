@@ -1633,6 +1633,10 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 			animation: disappear-animation 0.3s;
 			animation-fill-mode: forwards;
 		}
+
+		@media screen and (max-width: 899px) {
+			display: none;
+		}
 	}
 
 	&__unreadCount {
