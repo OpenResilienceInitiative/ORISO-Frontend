@@ -313,13 +313,13 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		position: relative;
 		top: auto;
 		margin: 0;
-		width: min(390px, 94vw);
+		width: min(1080px, 94vw);
+		max-height: calc(100vh - 84px);
 		max-height: calc(100dvh - 84px);
 		overflow-y: auto;
-		padding: 32px 16px;
-		background: #ffffff;
-		border-radius: 24px;
-		box-shadow: 0 8px 40px rgba(0, 0, 0, 0.18);
+		padding: 20px 22px;
+		background: rgba(250, 250, 250, 0.98);
+		border-radius: 22px;
 	}
 
 	&__waitingPopupBackdrop {
@@ -338,12 +338,11 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		position: absolute;
 		top: 12px;
 		right: 12px;
-		width: 36px;
-		height: 36px;
-		border: none;
+		width: 30px;
+		height: 30px;
+		border: 1px solid rgba(46, 46, 46, 0.26);
 		border-radius: 50%;
 		background: #fff;
-		box-shadow: 0 1px 4px rgba(0, 0, 0, 0.14);
 		color: #2a2a2a;
 		padding: 0;
 		font-size: 22px;
@@ -353,33 +352,6 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		z-index: 10;
-	}
-
-	&__waitingPhaseDisplay {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 4px;
-		margin-top: 14px;
-	}
-
-	&__waitingPhaseName {
-		font-family: 'Roboto Mono', 'Courier New', monospace;
-		font-size: 28px;
-		font-weight: 700;
-		line-height: 1.1;
-		color: #4c555f;
-		text-align: center;
-	}
-
-	&__waitingPhaseSubLabel {
-		font-family: 'Roboto Mono', 'Courier New', monospace;
-		font-size: 16px;
-		font-weight: 700;
-		line-height: 1.3;
-		color: #4c555f;
-		text-align: center;
 	}
 
 	&__waitingVolumeHint {
@@ -697,6 +669,30 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	&__anonymousInquiryConsent.waitingRoom {
 		align-items: center;
 		min-height: 100%;
+	}
+
+	&__pseudonymGate {
+		display: flex;
+		flex-direction: column;
+		align-items: stretch;
+		gap: 12px;
+		padding: 16px 16px 32px;
+		width: 100%;
+		margin: 0 auto;
+	}
+
+	/* Keep the messages area scrollable while the pseudonym/waiting-queue
+	   phase is active — unlike the one-shot consent gate, this phase shows
+	   a growing stack of Carimat messages that must scroll. */
+	&__content--pseudonymGate {
+		overflow-y: auto;
+		padding: 0 !important;
+	}
+
+	&__pseudonymActionBarSlot {
+		position: relative;
+		width: 100%;
+		border-top: 1px solid rgba(0, 0, 0, 0.06);
 	}
 
 	&__content--consentGate {
@@ -1017,7 +1013,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		width: 112px;
 		height: 112px;
 		border-radius: 50%;
-		background: radial-gradient(circle at 30% 28%, #cc1e1c 0%, #a31816 70%);
+		background: radial-gradient(circle at 30% 28%, #e94747 0%, #cf2a2a 70%);
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -1049,7 +1045,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		font-size: 28px;
 		font-weight: 600;
 		line-height: 1;
-		color: #4c555f;
+		color: #bb1f1f;
 	}
 
 	&__waitingBriefingStepConnector {
@@ -1062,7 +1058,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 			width: 8px;
 			height: 8px;
 			border-radius: 50%;
-			background: rgba(76, 85, 95, 0.25);
+			background: rgba(201, 30, 30, 0.2);
 			opacity: 0;
 			transform: scale(0.6);
 			animation: briefing-connector-fill 620ms ease forwards;
@@ -1105,23 +1101,17 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	}
 
 	&__waitingModuleActions {
-		margin-top: 16px;
+		margin-top: 10px;
 		display: flex;
-		gap: 0;
-		flex-wrap: nowrap;
+		gap: 8px;
+		flex-wrap: wrap;
 		justify-content: center;
-		width: fit-content;
-		margin-left: auto;
-		margin-right: auto;
-		border-radius: 28px;
-		overflow: hidden;
-		border: none;
 	}
 
 	&__waitingModuleActions--negative {
 		justify-content: center;
 		max-width: 760px;
-		margin: 16px auto 0;
+		margin: 10px auto 0;
 	}
 
 	&__waitingModuleTypewriter--hidden {
@@ -1167,24 +1157,22 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	}
 
 	&__waitingModuleActionButton {
-		border-radius: 0;
-		padding: 16px 24px;
-		font-size: 16px;
-		font-weight: 500;
-		font-family: 'Inter', 'Roboto', $font-family-sans-serif, sans-serif;
-		border: none;
+		border-radius: 10px;
+		padding: 8px 14px;
+		font-size: 12px;
+		font-weight: 700;
+		border: 1px solid transparent;
 		cursor: pointer;
-		line-height: 1.5;
-		white-space: nowrap;
 
 		&--primary {
-			background: #cc1e1c;
+			background: #d53030;
 			color: #fff;
 		}
 
 		&--ghost {
-			background: #4c555f;
-			color: #e7effc;
+			background: #fff;
+			color: #b01919;
+			border-color: rgba(204, 30, 28, 0.32);
 		}
 
 		&:disabled {
@@ -1194,11 +1182,12 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	}
 
 	&__waitingModuleActionButton--tiny {
-		font-size: 14px;
-		padding: 16px 20px;
+		font-size: 11px;
+		padding: 8px 10px;
+		max-width: 220px;
 		white-space: normal;
 		text-align: center;
-		line-height: 1.4;
+		line-height: 1.15;
 	}
 
 	&__waitingGameStatus {
@@ -1276,33 +1265,33 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		align-items: center;
 		justify-content: center;
 		gap: 18px;
-		min-height: 0;
+		min-height: 420px;
 		text-align: center;
-		font-family: 'Roboto', $font-family-sans-serif, sans-serif;
-		width: 100%;
-		margin: 0 auto;
-		padding: 8px 0;
+		font-family: 'Poppins', 'Helvetica Neue', Arial, sans-serif;
+		width: min(940px, 96%);
+		margin: 8px auto 0;
+		padding: clamp(20px, 3.2vw, 38px);
+		border-radius: 24px;
 	}
 
 	&__waitingPreGameTitle {
-		font-size: clamp(18px, 2.4vw, 26px);
-		line-height: 1.3;
+		font-size: clamp(24px, 3vw, 36px);
+		line-height: 1.2;
 		animation: breathing-briefing-fade 420ms ease-in-out;
 		font-weight: 600;
-		color: #4c555f;
-		max-width: 340px;
+		color: #8e1616;
+		max-width: 860px;
 	}
 
 	&__waitingPreGameTitle--small {
-		font-size: clamp(13px, 1.6vw, 16px);
-		font-weight: 400;
-		color: #4c555f;
-		opacity: 0.8;
+		font-size: clamp(15px, 1.95vw, 22px);
+		font-weight: 500;
+		color: #6a3f3f;
 	}
 
 	&__waitingPreGameLevels {
 		display: flex;
-		gap: 10px;
+		gap: 12px;
 		flex-wrap: wrap;
 		justify-content: center;
 		align-items: flex-start;
@@ -1311,41 +1300,41 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 
 	&__waitingPreGameLevelChip {
 		border-radius: 12px;
-		border: 1.5px solid rgba(76, 85, 95, 0.25);
+		border: 1px solid rgba(166, 52, 52, 0.3);
 		background: #fff;
 		padding: 10px 16px;
 		font-size: 14px;
 		font-weight: 600;
 		line-height: 1.25;
 		cursor: pointer;
-		min-width: 150px;
-		color: #4c555f;
+		min-width: 180px;
+		color: #4f3232;
 		transition: all 140ms ease;
 
 		&--active {
-			border-color: #cc1e1c;
-			background: rgba(204, 30, 28, 0.06);
-			color: #cc1e1c;
+			border-color: rgba(207, 42, 42, 0.7);
+			background: #fff4f4;
+			color: #9c1f1f;
 		}
 	}
 
 	&__waitingPreGameTiming {
 		display: grid;
-		gap: 10px;
-		width: 100%;
+		gap: 12px;
+		width: min(720px, 92vw);
 	}
 
 	&__waitingPreGameTimingRow {
 		display: grid;
 		grid-template-columns: 1fr auto;
 		align-items: center;
-		font-size: clamp(22px, 3vw, 34px);
+		font-size: clamp(30px, 4vw, 56px);
 		line-height: 1.1;
-		border: 1.5px solid rgba(76, 85, 95, 0.18);
-		border-radius: 14px;
-		padding: 10px 14px;
-		background: #f8f9fa;
-		color: #4c555f;
+		border: 1px solid rgba(207, 42, 42, 0.18);
+		border-radius: 16px;
+		padding: 10px 16px;
+		background: #fff;
+		color: #8f0f0f;
 		font-weight: 500;
 		position: relative;
 		overflow: hidden;
@@ -1365,8 +1354,8 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 			width: var(--water-fill, 38%);
 			background: linear-gradient(
 				90deg,
-				rgba(76, 85, 95, 0.07) 0%,
-				rgba(76, 85, 95, 0.14) 100%
+				rgba(240, 114, 114, 0.18) 0%,
+				rgba(207, 42, 42, 0.26) 100%
 			);
 			background-size: 180% 100%;
 			background-position: 0% 50%;
@@ -1406,48 +1395,48 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	&__waitingPreGameTimingRow--inhale::before {
 		background: linear-gradient(
 			90deg,
-			rgba(76, 85, 95, 0.07) 0%,
-			rgba(76, 85, 95, 0.14) 100%
+			rgba(248, 119, 119, 0.18) 0%,
+			rgba(214, 44, 44, 0.3) 100%
 		);
 	}
 
 	&__waitingPreGameTimingRow--hold::before {
 		background: linear-gradient(
 			90deg,
-			rgba(76, 85, 95, 0.07) 0%,
-			rgba(76, 85, 95, 0.14) 100%
+			rgba(241, 125, 125, 0.18) 0%,
+			rgba(188, 36, 36, 0.3) 100%
 		);
 	}
 
 	&__waitingPreGameTimingRow--exhale::before {
 		background: linear-gradient(
 			90deg,
-			rgba(76, 85, 95, 0.07) 0%,
-			rgba(76, 85, 95, 0.14) 100%
+			rgba(244, 134, 134, 0.16) 0%,
+			rgba(170, 28, 28, 0.3) 100%
 		);
 	}
 
 	&__waitingPreGameTimingValue {
 		display: inline-flex;
 		align-items: center;
-		gap: 14px;
-		min-width: 160px;
+		gap: 16px;
+		min-width: 190px;
 		justify-content: center;
 		position: relative;
 		z-index: 2;
 	}
 
 	&__waitingPreGameTimingValue > span {
-		min-width: 60px;
+		min-width: 72px;
 		font-weight: 600;
-		color: #4c555f;
+		color: #8f0f0f;
 	}
 
 	&__waitingPreGameTimingArrow {
 		font-size: 16px;
-		color: #4c555f;
+		color: #be2b2b;
 		line-height: 1;
-		border: 1.5px solid rgba(76, 85, 95, 0.3);
+		border: 1px solid rgba(207, 42, 42, 0.35);
 		background: #fff;
 		cursor: pointer;
 		width: 30px;
@@ -1459,47 +1448,38 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	}
 
 	&__waitingPreGameActions {
-		margin-top: 16px;
+		margin-top: 10px;
 		display: flex;
-		gap: 0;
+		gap: 14px;
 		align-items: center;
 		justify-content: center;
-		width: fit-content;
-		margin-left: auto;
-		margin-right: auto;
-		border-radius: 28px;
-		overflow: hidden;
-		border: none;
+		width: 100%;
 	}
 
 	&__waitingPreGameActions--single {
-		border-radius: 28px;
-		overflow: hidden;
-
-		.session__waitingPreGameActionButton--primary {
-			border-radius: 0;
-		}
+		justify-content: center;
+		padding-right: 0;
 	}
 
 	&__waitingPreGameActionButton {
-		border-radius: 0;
-		padding: 16px 24px;
-		font-size: 16px;
-		font-weight: 500;
-		border: none;
-		font-family: 'Inter', 'Roboto', $font-family-sans-serif, sans-serif;
+		border-radius: 12px;
+		padding: 12px 24px;
+		font-size: 17px;
+		font-weight: 600;
+		border: 1px solid rgba(120, 120, 120, 0.3);
+		font-family: 'Poppins', 'Helvetica Neue', Arial, sans-serif;
 		cursor: pointer;
-		line-height: 1.5;
-		white-space: nowrap;
 
 		&--primary {
-			background: #cc1e1c;
+			background: linear-gradient(180deg, #cf2a2a 0%, #bd1f1f 100%);
+			border-color: rgba(188, 31, 31, 0.9);
 			color: #fff;
 		}
 
 		&--ghost {
-			background: #4c555f;
-			color: #e7effc;
+			background: #fff;
+			color: #8d2626;
+			border-color: rgba(207, 42, 42, 0.35);
 		}
 	}
 

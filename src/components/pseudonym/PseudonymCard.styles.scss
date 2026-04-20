@@ -1,0 +1,189 @@
+/* Pseudonym card — reads as a proper left-aligned chat message.
+ *
+ * Horizontal layout:
+ *   [avatar column]  [content column: name/subtitle → bubble]
+ *
+ * - Avatar: white 64×64 rounded circle, black robot glyph centered with
+ *   generous padding (no grey square behind it anymore).
+ * - Three-dot menu sits in the avatar column, below the avatar.
+ * - Bubble has a flat top-left corner so it visually attaches to the
+ *   avatar, matching the existing robot onboarding messages.
+ */
+
+.pseudonymCard {
+	width: 100%;
+	max-width: 720px;
+	margin: 0 0 20px;
+	padding: 0;
+}
+
+.pseudonymCard__wrap {
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+	width: 100%;
+}
+
+/* ----- Avatar column ----- */
+.pseudonymCard__avatarCol {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 4px;
+	flex-shrink: 0;
+	width: 64px;
+}
+
+.pseudonymCard__avatarFrame {
+	width: 64px;
+	height: 64px;
+	border-radius: 999px;
+	background: #ffffff;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 14px;
+	box-sizing: border-box;
+	position: relative;
+	z-index: 2;
+}
+
+.pseudonymCard__avatarIcon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: #000000;
+
+	svg {
+		display: block;
+		width: 32px;
+		height: 36px;
+	}
+}
+
+.pseudonymCard__menuIcon {
+	width: 24px;
+	height: 24px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	opacity: 0.7;
+
+	svg {
+		display: block;
+	}
+}
+
+/* ----- Content column ----- */
+.pseudonymCard__contentCol {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 6px;
+	min-width: 0;
+	flex: 1 1 auto;
+	max-width: 560px;
+	padding-top: 6px;
+	/* Pull content left so the bubble slides a little under the avatar,
+	   giving the avatar a "sitting on top-left corner" overlap effect. */
+	margin-left: -32px;
+	position: relative;
+	z-index: 1;
+}
+
+/* Header: Carimat on one line, subtitle stacked below.
+   padding-left keeps the text visually clear of the avatar while the
+   content column itself slides under it. */
+.pseudonymCard__header {
+	display: flex;
+	flex-direction: column;
+	align-items: baseline;
+	flex-wrap: wrap;
+	gap: 2px;
+	padding-left: 30px;
+}
+
+.pseudonymCard__headerName {
+	font-family: 'Inter', sans-serif;
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 16px;
+	color: #1f2937;
+}
+
+.pseudonymCard__headerSubtitle {
+	font-family: 'Inter', sans-serif;
+	font-size: 12px;
+	font-weight: 500;
+	line-height: 14px;
+	color: #646d78;
+}
+
+/* ----- Bubble ----- */
+.pseudonymCard__bubble {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	gap: 6px;
+	width: 100%;
+	min-width: 260px;
+	max-width: 528px;
+	padding: 20px 22px;
+	border-radius: 4px 14px 14px 14px;
+	background: #eeeeee;
+	box-sizing: border-box;
+}
+
+.pseudonymCard__bubbleText {
+	font-family: 'Roboto Mono', 'Courier New', monospace;
+	font-size: 16px;
+	font-weight: 400;
+	line-height: 22px;
+	color: #1c1b1f;
+	margin: 0;
+	white-space: pre-wrap;
+}
+
+.pseudonymCard__displayColumn {
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
+	align-items: center;
+	gap: 12px;
+	width: 100%;
+	padding-top: 4px;
+}
+
+.pseudonymCard__label {
+	font-family: 'Inter', sans-serif;
+	font-size: 13px;
+	font-weight: 600;
+	line-height: 32px;
+	color: #4c555f;
+	text-align: center;
+	padding: 16px 0 0;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.pseudonymCard__name {
+	font-family: 'Inter', sans-serif;
+	font-size: 22px;
+	font-weight: 700;
+	line-height: 28px;
+	color: #1f2937;
+	text-align: center;
+	width: 100%;
+	word-break: break-word;
+}
+
+/* Mobile shrink */
+@media screen and (max-width: 640px) {
+	.pseudonymCard__wrap {
+		gap: 10px;
+	}
+
+	.pseudonymCard__bubble {
+		padding: 18px;
+	}
+}

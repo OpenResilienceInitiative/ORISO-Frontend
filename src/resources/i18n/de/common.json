@@ -1287,7 +1287,7 @@
 			"enquiries": "Anfragen",
 			"sessions": {
 				"large": "Meine Beratungen",
-				"nav": "Chats",
+				"nav": "Gespräch",
 				"small": "Nachrichten"
 			}
 		},
@@ -1295,6 +1295,8 @@
 		"language": "Sprache",
 		"drafts": "Entwürfe",
 		"liveChat": "Live Chat",
+		"liveChatToggleActive": "Live-Chat verfügbar",
+		"liveChatToggleInactive": "Live-Chat nicht verfügbar",
 		"notifications": "Benachrichtigungen",
 		"overview": "Übersicht",
 		"profile": "Profil",
@@ -2296,7 +2298,8 @@
 				"oneToOne": "1-1 Beratung",
 				"liveChat": "Live-Chat",
 				"groups": "Gruppen",
-				"supervision": "Supervision"
+				"supervision": "Supervision",
+				"chats": "Chats"
 			},
 			"emptyFilterResult": "Keine Beratung entspricht Ihrer Suche oder den Filtern."
 		},
@@ -2865,7 +2868,35 @@
 		"agencies": {
 			"noresults": "Für dieses Thema sind keine Beratungsstellen verfügbar."
 		},
-		"start": "Beratung starten"
+		"start": "Beratung starten",
+		"pseudonym": {
+			"carimatSubtitle": "Angezeigten Namen auswählen",
+			"carimatMessage": "Hallo, bevor wir weitermachen, bestätigen Sie bitte Ihren zufällig gewählten Namen für diese Sitzung.",
+			"privacyMessage": "Gute Wahl. Zum Schutz Ihrer Privatsphäre sind alle Nachrichten Ende-zu-Ende verschlüsselt und werden nach 48 Stunden automatisch gelöscht.",
+			"yourPseudonym": "Dein Pseudonym",
+			"nextName": "Nächster Name",
+			"confirm": "Bestätigen",
+			"changeName": "Name ändern",
+			"continueWithSelection": "Weiter mit Auswahl",
+			"actionsLabel": "Pseudonym-Aktionen"
+		},
+		"consent": {
+			"accept": "Ich bin einverstanden",
+			"reject": "Ich stimme nicht zu",
+			"mustAcceptToContinue": "Um fortzufahren müssen Sie unseren Datenschutzbestimmungen zustimmen."
+		},
+		"queue": {
+			"actionsLabel": "Wartebereich-Aktionen",
+			"calmCompanion": "Kurze ruhige Begleitung öffnen",
+			"calmCompanionHint": "Bis der Chat beginnt, eine kurze interaktive ruhige Begleitung. Direkt hier im Chatraum",
+			"positionCount_one": "{{count}} Person vor Ihnen",
+			"positionCount_other": "{{count}} Personen vor Ihnen",
+			"connecting": "Wird verbunden …",
+			"requestLocalCounselor": "Anfrage an lokalen Berater senden",
+			"consultantAccepted": "Sie werden jetzt von ihrer Berater_in im Chat erwartet.",
+			"startChatNow": "Jetzt Chat starten",
+			"dismissAcceptedBanner": "Hinweis ausblenden"
+		}
 	},
 	"sessionHeader": {
 		"anonymous": {

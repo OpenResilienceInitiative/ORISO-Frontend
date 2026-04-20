@@ -42,7 +42,6 @@ import {
 	ATTACHMENT_MAX_SIZE_IN_MB,
 	getAttachmentSizeMBForKB
 } from './attachmentHelpers';
-import { TypingIndicator } from '../typingIndicator/typingIndicator';
 import PluginsEditor from '@draft-js-plugins/editor';
 import {
 	ContentState,
@@ -3645,6 +3644,36 @@ export const MessageSubmitInterfaceComponent = ({
 		onMobileNavigateBottom?.();
 	}, [onMobileNavigateBottom]);
 
+	const handleComposerDragHandlePointerDown = useCallback(
+		(e: React.PointerEvent<HTMLButtonElement>) => {
+			if (e.pointerType === 'mouse' && e.button !== 0) return;
+			const target = e.currentTarget;
+			try {
+				target.setPointerCapture(e.pointerId);
+			} catch {}
+			let fired = false;
+			const timer = window.setTimeout(() => {
+				fired = true;
+				setIsExpandedComposer((prev) => !prev);
+			}, 400);
+			const cleanup = () => {
+				window.clearTimeout(timer);
+				target.removeEventListener('pointerup', onEnd);
+				target.removeEventListener('pointercancel', onEnd);
+				try {
+					target.releasePointerCapture(e.pointerId);
+				} catch {}
+			};
+			const onEnd = () => {
+				if (!fired) cleanup();
+				else cleanup();
+			};
+			target.addEventListener('pointerup', onEnd);
+			target.addEventListener('pointercancel', onEnd);
+		},
+		[setIsExpandedComposer]
+	);
+
 	// MATRIX MIGRATION: Skip E2EE check for Matrix sessions (no rid)
 	if (!e2EEReady && activeSession.rid) {
 		return null;
@@ -3669,12 +3698,6 @@ export const MessageSubmitInterfaceComponent = ({
 			)}
 			style={expandedComposerStyle}
 		>
-			{isTypingActive && (
-				<TypingIndicator
-					disabled={!(typingUsers && typingUsers.length > 0)}
-					typingUsers={typingUsers}
-				/>
-			)}
 			{activeInfo && <MessageSubmitInfo {...getMessageSubmitInfo()} />}
 			{highlightedSnippet && (
 				<div className="textarea__snippetInfo">
@@ -3699,56 +3722,54 @@ export const MessageSubmitInterfaceComponent = ({
 								'textarea__wrapper-send-message--expanded'
 						)}
 					>
-						{isMobileViewport && !threadRootId && (
-							<div className="textarea__mobileNavigator">
-								<button
-									type="button"
-									className="textarea__mobileNavigatorButton textarea__mobileNavigatorButton--left"
-									onClick={handleMobileBackNavigation}
-									aria-label={translate(
-										'message.mobileNav.back',
-										'Navigate up'
-									)}
-								>
-									<ComposerMobileBackIcon />
-								</button>
-								<button
-									type="button"
-									className="textarea__mobileNavigatorCenter"
-									onClick={handleMobileBottomNavigation}
-									aria-label={translate(
-										'message.mobileNav.jumpToLatest',
-										'Jump to latest messages'
-									)}
-								>
-									<span
-										className={clsx(
-											'textarea__mobileNavigatorHandle',
-											mobileIsScrolledToBottom &&
-												'textarea__mobileNavigatorHandle--atBottom'
+						{isMobileViewport &&
+							!threadRootId &&
+							!isExpandedComposer && (
+								<div className="textarea__mobileNavigator">
+									<button
+										type="button"
+										className="textarea__mobileNavigatorButton textarea__mobileNavigatorButton--left"
+										onClick={handleMobileBackNavigation}
+										aria-label={translate(
+											'message.mobileNav.back',
+											'Navigate up'
 										)}
-									/>
-								</button>
-								<button
-									type="button"
-									className="textarea__mobileNavigatorButton textarea__mobileNavigatorButton--right"
-									onClick={handleMobileDownNavigation}
-									aria-label={translate(
-										'message.mobileNav.down',
-										'Scroll to newest messages'
-									)}
-								>
-									<ComposerMobileDownIcon />
-									{unreadMobileBadgeCount > 0 && (
-										<span className="textarea__mobileNavigatorBadge">
-											{unreadMobileBadgeCount > 99
-												? '99+'
-												: unreadMobileBadgeCount}
-										</span>
-									)}
-								</button>
-							</div>
-						)}
+									>
+										<ComposerMobileBackIcon />
+									</button>
+									<button
+										type="button"
+										className="textarea__mobileNavigatorCenter"
+										onPointerDown={
+											handleComposerDragHandlePointerDown
+										}
+										aria-label={translate(
+											'message.mobileNav.dragToExpand',
+											'Drag to resize composer'
+										)}
+									>
+										<span className="textarea__mobileNavigatorHandle" />
+									</button>
+									<button
+										type="button"
+										className="textarea__mobileNavigatorButton textarea__mobileNavigatorButton--right"
+										onClick={handleMobileBottomNavigation}
+										aria-label={translate(
+											'message.mobileNav.scrollToBottom',
+											'Scroll to bottom'
+										)}
+									>
+										<ComposerMobileDownIcon />
+										{unreadMobileBadgeCount > 0 && (
+											<span className="textarea__mobileNavigatorBadge">
+												{unreadMobileBadgeCount > 99
+													? '99+'
+													: unreadMobileBadgeCount}
+											</span>
+										)}
+									</button>
+								</div>
+							)}
 						{showAudienceSelector && (
 							<div
 								className={clsx(

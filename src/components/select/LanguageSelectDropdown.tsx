@@ -58,6 +58,8 @@ export interface SelectDropdownItem {
 	selectRef?: any;
 	isInsideMenu?: boolean;
 	menuShouldBlockScroll?: boolean;
+	onMenuOpen?: () => void;
+	onMenuClose?: () => void;
 }
 
 const colourStyles = (
@@ -552,6 +554,7 @@ export const LanguageSelectDropdown = (props: SelectDropdownItem) => {
 							});
 						}, 0);
 					}
+					props.onMenuOpen?.();
 				}}
 				closeMenuOnSelect={true}
 				onMenuClose={() => {
@@ -562,6 +565,7 @@ export const LanguageSelectDropdown = (props: SelectDropdownItem) => {
 								.focus();
 						}, 10); //we need this timeout because the menu is not closed when switching the focus
 					}
+					props.onMenuClose?.();
 				}}
 			/>
 			{props.hasError && (

@@ -1,0 +1,146 @@
+/* Pseudonym action bar — strict Figma node 1320:38837 match.
+ *   Left: rounded-[20px] dark #646D78 pill with dice icon + "Change name"
+ *   Right: rounded-[100px] red #A5000A pill with "Continue with selection"
+ *   Sits at the bottom of the session, replacing the composer while the
+ *   pseudonym gate is active.
+ */
+
+.pseudonymActionBar {
+	display: flex;
+	align-items: center;
+	justify-content: stretch;
+	gap: 2px;
+	width: 100%;
+	padding: 12px 12px calc(12px + env(safe-area-inset-bottom, 0));
+	background: #ffffff;
+	box-sizing: border-box;
+}
+
+.pseudonymActionBar__btnChange,
+.pseudonymActionBar__btnContinue {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 16px;
+	min-width: 48px;
+	height: 96px;
+	padding: 0 24px;
+	border: none;
+	cursor: pointer;
+	overflow: hidden;
+	font-family: 'Inter', sans-serif;
+	font-weight: 500;
+	transition:
+		background 160ms ease,
+		opacity 160ms ease;
+
+	&:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+	}
+}
+
+.pseudonymActionBar__btnChange {
+	flex: 0 0 auto;
+	border-radius: 20px;
+	background: #646d78;
+	color: #e7effc;
+	padding: 0 28px 0 64px;
+	position: relative;
+
+	&:hover:not(:disabled) {
+		background: #555e68;
+	}
+}
+
+.pseudonymActionBar__btnChangeLabel {
+	font-size: 20px;
+	line-height: 24px;
+	color: #e7effc;
+	white-space: nowrap;
+}
+
+.pseudonymActionBar__btnContinue {
+	flex: 1 1 auto;
+	border-radius: 999px;
+	background: #a5000a;
+	color: #ffffff;
+
+	&:hover:not(:disabled) {
+		background: #8a0008;
+	}
+}
+
+.pseudonymActionBar__btnContinueLabel {
+	font-size: 20px;
+	line-height: 24px;
+	color: #ffffff;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+/* Dice icon — positioned inside the Change name button on its left side */
+.pseudonymActionBar__dice {
+	position: absolute;
+	left: 18px;
+	top: 50%;
+	width: 48px;
+	height: 48px;
+	transform: translateY(-50%);
+	display: block;
+}
+
+/* Desktop: bigger Figma-spec type sizes, wider padding */
+@media screen and (min-width: 900px) {
+	.pseudonymActionBar {
+		padding: 16px 24px;
+		gap: 4px;
+	}
+
+	.pseudonymActionBar__btnChange,
+	.pseudonymActionBar__btnContinue {
+		height: 112px;
+	}
+
+	.pseudonymActionBar__btnChangeLabel,
+	.pseudonymActionBar__btnContinueLabel {
+		font-size: 24px;
+		line-height: 28px;
+	}
+
+	.pseudonymActionBar__btnChange {
+		padding: 0 40px 0 88px;
+	}
+
+	.pseudonymActionBar__dice {
+		left: 27px;
+	}
+}
+
+/* Ultra-wide spec (Figma 390 phone frame looked giant): keep above sane */
+@media screen and (max-width: 420px) {
+	.pseudonymActionBar {
+		padding: 10px 8px calc(10px + env(safe-area-inset-bottom, 0));
+	}
+
+	.pseudonymActionBar__btnChange,
+	.pseudonymActionBar__btnContinue {
+		height: 80px;
+	}
+
+	.pseudonymActionBar__btnChangeLabel,
+	.pseudonymActionBar__btnContinueLabel {
+		font-size: 16px;
+		line-height: 20px;
+	}
+
+	.pseudonymActionBar__btnChange {
+		padding: 0 20px 0 56px;
+	}
+
+	.pseudonymActionBar__dice {
+		left: 12px;
+		width: 40px;
+		height: 40px;
+	}
+}

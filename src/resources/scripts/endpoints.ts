@@ -42,6 +42,8 @@ export const endpoints = {
 	budibaseTools: (userId: string) =>
 		apiUrl + `/service/counselingtoolsservice/tools/${userId}`,
 	chatRoom: apiUrl + '/service/users/chat/room',
+	anonymousEnquiryDetails: (sessionId: number | string) =>
+		apiUrl + `/service/conversations/anonymous/${sessionId}`,
 	consultantEnquiriesBase:
 		apiUrl + '/service/conversations/consultants/enquiries/',
 	consultantSessions:

@@ -58,6 +58,8 @@ export interface SelectDropdownItem {
 	selectRef?: any;
 	isInsideMenu?: boolean;
 	menuShouldBlockScroll?: boolean;
+	onMenuOpen?: () => void;
+	onMenuClose?: () => void;
 }
 
 const colourStyles = (
@@ -88,10 +90,9 @@ const colourStyles = (
 			'borderRadius': undefined,
 			// Use min-height for multi-select to allow expansion, fixed height for single select
 			// Increased min-height for multi-select to make box bigger initially
-			...(state.isMulti 
-				? { 'minHeight': '80px', 'height': 'auto' }
-				: { 'height': '50px' }
-			),
+			...(state.isMulti
+				? { minHeight: '80px', height: 'auto' }
+				: { height: '50px' }),
 			'outline': '0',
 			'padding': state.isFocused ? '0 11px' : '0 12px',
 			'color': '#3F373F',
@@ -120,22 +121,21 @@ const colourStyles = (
 		// Allow valueContainer to expand for multi-select
 		// Increased min-height to make box bigger initially
 		// Added top padding so pills don't touch the label
-		...(state.isMulti 
-			? { 
-				'minHeight': '80px', 
-				'height': 'auto',
-				'paddingTop': '24px',
-				'paddingBottom': '8px',
-				'paddingLeft': '8px',
-				'paddingRight': '8px',
-				'flexWrap': 'wrap',
-				'alignItems': 'flex-start'
-			}
-			: { 
-				'height': '50px',
-				'padding': '15px 0'
-			}
-		),
+		...(state.isMulti
+			? {
+					minHeight: '80px',
+					height: 'auto',
+					paddingTop: '24px',
+					paddingBottom: '8px',
+					paddingLeft: '8px',
+					paddingRight: '8px',
+					flexWrap: 'wrap',
+					alignItems: 'flex-start'
+				}
+			: {
+					height: '50px',
+					padding: '15px 0'
+				}),
 		...(valueContainer?.(styles, state) ?? {})
 	}),
 	singleValue: (styles, state) => ({

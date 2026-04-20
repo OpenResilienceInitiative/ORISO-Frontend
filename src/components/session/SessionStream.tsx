@@ -69,6 +69,9 @@ export const SessionStream = ({
 	checkMutedUserForThisSession,
 	bannedUsers
 }: SessionStreamProps) => {
+	const MATRIX_TYPING_TIMEOUT_MS = 3200;
+	const MATRIX_TYPING_TRIGGER_MS = 1000;
+	const MATRIX_TYPING_STALE_MS = 3600;
 	const { t: translate } = useTranslation();
 	const history = useHistory();
 
@@ -106,6 +109,93 @@ export const SessionStream = ({
 
 	const { subscribeTyping, unsubscribeTyping, handleTyping, typingUsers } =
 		useTyping(activeSession?.rid, userData.userName, displayName);
+	const [matrixTypingUsers, setMatrixTypingUsers] = useState<string[]>([]);
+	const matrixTypingTimeoutRef = useRef<number | null>(null);
+	const matrixTypingLastTriggerRef = useRef(0);
+	const matrixTypingActivityRef = useRef<Map<string, number>>(new Map());
+	const isMatrixSession = useMemo(
+		() =>
+			Boolean(
+				((!activeSession.rid ||
+					(activeSession.rid && activeSession.rid.startsWith('!'))) &&
+					activeSession.item?.id) ||
+					activeSession.item?.matrixRoomId
+			),
+		[
+			activeSession.rid,
+			activeSession.item?.id,
+			activeSession.item?.matrixRoomId
+		]
+	);
+	const matrixRoomId = useMemo(
+		() =>
+			activeSession.rid && activeSession.rid.startsWith('!')
+				? activeSession.rid
+				: activeSession.item?.matrixRoomId || '',
+		[activeSession.rid, activeSession.item?.matrixRoomId]
+	);
+	const clearMatrixTypingTimeout = useCallback(() => {
+		if (matrixTypingTimeoutRef.current) {
+			window.clearTimeout(matrixTypingTimeoutRef.current);
+			matrixTypingTimeoutRef.current = null;
+		}
+	}, []);
+	const sendMatrixTyping = useCallback(
+		(typing: boolean) => {
+			if (!isMatrixSession || !matrixRoomId) {
+				return;
+			}
+			(window as any).matrixClientService
+				?.sendTyping(matrixRoomId, typing)
+				.catch(() => {});
+		},
+		[isMatrixSession, matrixRoomId]
+	);
+	const handleSessionTyping = useCallback(
+		(isCleared) => {
+			if (isMatrixSession && matrixRoomId) {
+				clearMatrixTypingTimeout();
+
+				const cancelTyping = () => {
+					sendMatrixTyping(false);
+					matrixTypingTimeoutRef.current = null;
+					matrixTypingLastTriggerRef.current = 0;
+				};
+
+				const now = Date.now();
+				if (!isCleared) {
+					if (
+						matrixTypingLastTriggerRef.current +
+							MATRIX_TYPING_TRIGGER_MS <
+						now
+					) {
+						sendMatrixTyping(true);
+						matrixTypingLastTriggerRef.current = now;
+					}
+					matrixTypingTimeoutRef.current = window.setTimeout(
+						cancelTyping,
+						MATRIX_TYPING_TIMEOUT_MS
+					);
+				} else {
+					matrixTypingTimeoutRef.current = window.setTimeout(
+						cancelTyping,
+						250
+					);
+				}
+				return;
+			}
+			handleTyping(isCleared);
+		},
+		[
+			clearMatrixTypingTimeout,
+			handleTyping,
+			isMatrixSession,
+			matrixRoomId,
+			sendMatrixTyping,
+			MATRIX_TYPING_TIMEOUT_MS,
+			MATRIX_TYPING_TRIGGER_MS
+		]
+	);
 
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
 
@@ -605,6 +695,105 @@ export const SessionStream = ({
 	]);
 
 	useEffect(() => {
+		if (!isMatrixSession || !matrixRoomId) {
+			setMatrixTypingUsers([]);
+			return;
+		}
+
+		const matrixClient = (window as any).matrixClientService?.getClient?.();
+		if (!matrixClient) {
+			setMatrixTypingUsers([]);
+			return;
+		}
+		matrixTypingActivityRef.current.clear();
+
+		const updateMatrixTypingUsers = () => {
+			const room = matrixClient.getRoom?.(matrixRoomId);
+			if (!room) {
+				setMatrixTypingUsers([]);
+				return;
+			}
+
+			const now = Date.now();
+			const currentUserId = matrixClient.getUserId?.();
+			const roomMembers = room.getMembers?.() || [];
+			const nextTypingUsers = roomMembers
+				.filter((member: any) => member?.userId !== currentUserId)
+				.filter((member: any) => Boolean(member?.typing))
+				.filter((member: any) => {
+					const userId = `${member?.userId || ''}`;
+					if (!userId) {
+						return false;
+					}
+					const lastActivity =
+						matrixTypingActivityRef.current.get(userId);
+					return (
+						Boolean(lastActivity) &&
+						now - (lastActivity as number) < MATRIX_TYPING_STALE_MS
+					);
+				})
+				.map((member: any) => {
+					const matrixUserId = `${member?.userId || ''}`;
+					const matrixUserName = matrixUserId
+						.split(':')[0]
+						.replace(/^@/, '');
+					return (
+						member?.name ||
+						member?.rawDisplayName ||
+						matrixUserName ||
+						matrixUserId
+					);
+				})
+				.map((name: string) => name.trim())
+				.filter(Boolean)
+				.filter(
+					(name: string, index: number, source: string[]) =>
+						source.indexOf(name) === index
+				);
+
+			setMatrixTypingUsers(nextTypingUsers);
+		};
+
+		const handleRoomMemberTyping = (_event: any, member: any) => {
+			if (member?.roomId && member.roomId !== matrixRoomId) {
+				return;
+			}
+			const memberUserId = `${member?.userId || ''}`;
+			if (member?.typing) {
+				matrixTypingActivityRef.current.set(memberUserId, Date.now());
+			} else {
+				matrixTypingActivityRef.current.delete(memberUserId);
+			}
+			updateMatrixTypingUsers();
+		};
+
+		(matrixClient as any).on('RoomMember.typing', handleRoomMemberTyping);
+		updateMatrixTypingUsers();
+		const refreshInterval = window.setInterval(
+			updateMatrixTypingUsers,
+			1000
+		);
+
+		return () => {
+			(matrixClient as any).off(
+				'RoomMember.typing',
+				handleRoomMemberTyping
+			);
+			window.clearInterval(refreshInterval);
+			matrixTypingActivityRef.current.clear();
+			setMatrixTypingUsers([]);
+		};
+	}, [isMatrixSession, matrixRoomId, MATRIX_TYPING_STALE_MS]);
+
+	useEffect(
+		() => () => {
+			clearMatrixTypingTimeout();
+			sendMatrixTyping(false);
+		},
+		[clearMatrixTypingTimeout, sendMatrixTyping]
+	);
+
+	useEffect(() => {
 		if (subscribed.current) {
 			setLoading(false);
 		} else {
@@ -638,9 +827,7 @@ export const SessionStream = ({
 								: handleSubscriptionChanged
 						);
 
-						if (activeSession.isGroup) {
-							subscribeTyping();
-						}
+						subscribeTyping();
 					} else {
 						// console.log('🔷 Matrix session detected - using Matrix real-time events (no RocketChat subscription)');
 					}
@@ -687,9 +874,7 @@ export const SessionStream = ({
 						: handleSubscriptionChanged
 				);
 
-				if (activeSession.isGroup) {
-					unsubscribeTyping();
-				}
+				unsubscribeTyping();
 			}
 		};
 	}, [
@@ -766,8 +951,8 @@ export const SessionStream = ({
 				hasUserInitiatedStopOrLeaveRequest={
 					hasUserInitiatedStopOrLeaveRequest
 				}
-				isTyping={handleTyping}
-				typingUsers={typingUsers}
+				isTyping={handleSessionTyping}
+				typingUsers={isMatrixSession ? matrixTypingUsers : typingUsers}
 				messages={messagesItem?.messages}
 				bannedUsers={bannedUsers}
 				refreshMessages={fetchSessionMessages}

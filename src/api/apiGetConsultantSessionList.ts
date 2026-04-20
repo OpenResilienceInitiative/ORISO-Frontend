@@ -10,13 +10,38 @@ export const INITIAL_OFFSET: number = 0;
 export const SESSION_COUNT: number = 15;
 export const TIMEOUT: number = 10000;
 
+export type ConsultantEnquiryFilter = 'chats' | 'liveChat';
+
 export interface ApiGetConsultantSessionListInterface {
 	type: SESSION_LIST_TYPES;
 	offset?: number;
 	sessionListTab?: string;
 	count?: number;
 	signal?: AbortSignal;
+	/**
+	 * Enquiry-list source:
+	 *   'chats'    → /enquiries/registered (default)
+	 *   'liveChat' → /enquiries/anonymous
+	 * Omitted = 'chats'. Splitting by source keeps pagination sane — merging
+	 * the two feeds caused newer anonymous enquiries to push registered ones
+	 * below the paging window, so users had to scroll past all of them to
+	 * find a chat.
+	 */
+	enquiryFilter?: ConsultantEnquiryFilter;
 }
+
+const fetchListUrl = (
+	url: string,
+	signal?: AbortSignal
+): Promise<ListItemsResponseInterface> =>
+	fetchData({
+		url: url,
+		method: FETCH_METHODS.GET,
+		rcValidation: true,
+		responseHandling: [FETCH_ERRORS.EMPTY],
+		timeout: TIMEOUT,
+		...(signal && { signal: signal })
+	});
 
 export const apiGetConsultantSessionList = async ({
 	type,
@@ -25,30 +50,30 @@ export const apiGetConsultantSessionList = async ({
 	count = SESSION_COUNT,
 	signal
 }: ApiGetConsultantSessionListInterface): Promise<ListItemsResponseInterface> => {
-	let url: string;
 	if (type === SESSION_LIST_TYPES.MY_SESSION) {
-		url = `${
+		const base =
 			sessionListTab === SESSION_LIST_TAB_ARCHIVE
 				? `${endpoints.myMessagesBase}${SESSION_LIST_TAB_ARCHIVE}?`
-				: `${endpoints.consultantSessions}`
-		}`;
-	} else {
-		url = `${endpoints.consultantEnquiriesBase}registered?`;
-	}
-	
-	// Archive endpoint doesn't accept filter parameter - it causes 400 error
-	if (sessionListTab === SESSION_LIST_TAB_ARCHIVE) {
-		url = url + `count=${count}&offset=${offset}`;
-	} else {
-	url = url + `count=${count}&filter=all&offset=${offset}`;
+				: `${endpoints.consultantSessions}`;
+		/* Archive endpoint rejects the `filter` param with 400. */
+		const query =
+			sessionListTab === SESSION_LIST_TAB_ARCHIVE
+				? `count=${count}&offset=${offset}`
+				: `count=${count}&filter=all&offset=${offset}`;
+		return fetchListUrl(base + query, signal);
 	}
 
-	return fetchData({
-		url: url,
-		method: FETCH_METHODS.GET,
-		rcValidation: true,
-		responseHandling: [FETCH_ERRORS.EMPTY],
-		timeout: TIMEOUT,
-		...(signal && { signal: signal })
-	});
+	/*
+	 * Enquiry list — always pull /enquiries/registered. The split between
+	 * "Chats" and "Live Chat" happens client-side based on whether the
+	 * session's asker-username starts with `Anonymous-`, because this
+	 * deployment stores both flows under `registration_type='REGISTERED'`
+	 * (the `/enquiries/anonymous` endpoint filters by the DB registration
+	 * type, which is always empty here, so it can't serve the live-chat
+	 * feed).
+	 */
+	const registeredUrl =
+		`${endpoints.consultantEnquiriesBase}registered?` +
+		`count=${count}&filter=all&offset=${offset}`;
+	return fetchListUrl(registeredUrl, signal);
 };

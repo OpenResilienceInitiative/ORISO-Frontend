@@ -45,6 +45,7 @@ import {
 	FETCH_ERRORS,
 	SESSION_COUNT
 } from '../../api';
+import { useLiveChatAvailable } from '../../utils/liveChatToggle';
 import { Button } from '../button/Button';
 import './sessionsList.styles';
 import { SCROLL_PAGINATE_THRESHOLD } from './sessionsListConfig';
@@ -72,6 +73,7 @@ import {
 	SessionToolbarChipFilter,
 	SessionsListToolbar
 } from './SessionsListToolbar';
+import { EnquiryFilterChips } from './EnquiryFilterChips';
 
 function buildSessionSearchHaystack(
 	raw: ListItemInterface,
@@ -115,6 +117,27 @@ function buildSessionSearchHaystack(
 	return parts.filter(Boolean).join(' ');
 }
 
+/**
+ * Anonymous-chat sessions are identified by the ORISO convention that the
+ * asker's keycloak username is prefixed `Anonymous-` (capital A — the
+ * pseudonym-registration flow writes that). Using just the prefix keeps the
+ * split clean even though all sessions in this deployment share the same
+ * registrationType + `postcode='00000'` on the DB side.
+ */
+function isAnonymousAskerSession(
+	raw: ListItemInterface,
+	_extended: ExtendedSessionInterface
+): boolean {
+	const candidates = [
+		(raw as any)?.user?.username,
+		(raw as any)?.session?.askerUserName,
+		(raw as any)?.consultant?.username
+	];
+	return candidates.some(
+		(u) => typeof u === 'string' && u.startsWith('Anonymous-')
+	);
+}
+
 function sessionMatchesToolbar(
 	raw: ListItemInterface,
 	extended: ExtendedSessionInterface,
@@ -124,16 +147,29 @@ function sessionMatchesToolbar(
 	currentUserId?: string
 ): boolean {
 	const chatItem = getChatItemForSession(raw);
+
+	/*
+	 * Enquiry-feed axis (Anfragen tab):
+	 *   - chip === 'liveChat' → only anonymous asker sessions
+	 *   - chip === 'chats'    → only NON-anonymous sessions
+	 *   - anything else / null → don't filter on this axis
+	 * Runs client-side against the /enquiries/registered feed because this
+	 * install doesn't populate registration_type=ANONYMOUS in the DB.
+	 */
+	const isAnonymous = isAnonymousAskerSession(raw, extended);
+	if (chip === 'liveChat' && !isAnonymous) {
+		return false;
+	}
+	if (chip === 'chats' && isAnonymous) {
+		return false;
+	}
+
 	if (chip === 'neu') {
 		if (!chatItem || chatItem.messagesRead !== false) {
 			return false;
 		}
 	} else if (chip === 'oneToOne') {
 		if (extended.isGroup) {
-			return false;
-		}
-	} else if (chip === 'liveChat') {
-		if (!extended.isGroup || !raw.chat?.repetitive) {
 			return false;
 		}
 	} else if (chip === 'groups') {
@@ -211,13 +247,57 @@ export const SessionsList = ({
 	const [sessionToolbarSearch, setSessionToolbarSearch] = useState('');
 	const [sessionToolbarSelectedPeople, setSessionToolbarSelectedPeople] =
 		useState<string[]>([]);
+	/**
+	 * Initial chip selection:
+	 *   - enquiry list: honour ?chip=liveChat in the URL (sidebar toggle
+	 *     deep-link), otherwise default to 'chats' so the tab opens on the
+	 *     registered enquiries feed
+	 *   - my-session list: no default chip
+	 */
+	const readChipFromUrl = (): SessionToolbarChipFilter | null => {
+		try {
+			const params = new URLSearchParams(window.location.search);
+			const fromUrl = params.get('chip');
+			if (fromUrl === 'liveChat' || fromUrl === 'chats') {
+				return fromUrl;
+			}
+		} catch {
+			/* ignore */
+		}
+		return null;
+	};
+
 	const [sessionToolbarChip, setSessionToolbarChip] =
-		useState<SessionToolbarChipFilter | null>(null);
+		useState<SessionToolbarChipFilter | null>(() => {
+			if (type !== SESSION_LIST_TYPES.ENQUIRY) return null;
+			return readChipFromUrl() ?? 'chats';
+		});
+
+	/**
+	 * Keep the chip in sync with `?chip=…` changes after mount — this fires
+	 * when the sidebar livechat toggle deep-links to the enquiry tab while
+	 * we're already on it.
+	 */
+	useEffect(() => {
+		if (type !== SESSION_LIST_TYPES.ENQUIRY) return;
+		const fromUrl = readChipFromUrl();
+		if (fromUrl && fromUrl !== sessionToolbarChip) {
+			setSessionToolbarChip(fromUrl);
+		}
+		/* eslint-disable-next-line react-hooks/exhaustive-deps */
+	}, [location.search, type]);
 
 	useGroupWatcher(isLoading);
 
 	// If create new group chat
 	const isCreateChatActive = groupIdFromParam === 'createGroupChat';
+
+	/**
+	 * Live-chat toggle state. When it flips, the enquiry list needs to
+	 * refetch so anonymous enquiries appear/disappear without a reload.
+	 * The flag is also read inside apiGetConsultantSessionList itself.
+	 */
+	const [liveChatAvailable] = useLiveChatAvailable();
 
 	const getConsultantSessionList = useCallback(
 		(
@@ -273,7 +353,8 @@ export const SessionsList = ({
 					return { sessions, total };
 				});
 		},
-		[sessionListTab, type]
+		/* eslint-disable-next-line react-hooks/exhaustive-deps */
+		[sessionListTab, type, liveChatAvailable]
 	);
 
 	const scrollIntoView = useCallback(() => {
@@ -925,6 +1006,14 @@ export const SessionsList = ({
 		!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
 
 	const showMySessionToolbar = type === SESSION_LIST_TYPES.MY_SESSION;
+	/**
+	 * Enquiry tab gets its own compact chip row (Chats + Live Chat). It
+	 * shares the same `sessionToolbarChip` state as the Gespräch toolbar so
+	 * the same in-memory filter path handles both.
+	 */
+	const showEnquiryFilterChips =
+		type === SESSION_LIST_TYPES.ENQUIRY &&
+		!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
 
 	const handleToolbarChipToggle = useCallback(
 		(chip: SessionToolbarChipFilter) => {
@@ -1032,17 +1121,30 @@ export const SessionsList = ({
 			sessionB: ExtendedSessionInterface
 		) => {
 			switch (type) {
-				case SESSION_LIST_TYPES.ENQUIRY:
+				case SESSION_LIST_TYPES.ENQUIRY: {
 					if (sessionA.isGroup || sessionB.isGroup) {
-						// There could be no group chats inside enquiry
 						return 0;
 					}
-					if (sessionA.item.createDate === sessionB.item.createDate) {
+					/*
+					 * Compare createDate as timestamps — string-compare used to
+					 * be fine for ISO-8601 but some backend responses omit the
+					 * trailing `Z`, so "2026-04-18T09:00:00" vs
+					 * "2026-04-18T09:00:00.123" sorted inconsistently and the
+					 * list appeared shuffled until a second render fired.
+					 * Missing dates sort to the end (oldest).
+					 */
+					const tsA = new Date(
+						sessionA.item.createDate ?? 0
+					).getTime();
+					const tsB = new Date(
+						sessionB.item.createDate ?? 0
+					).getTime();
+					if (!Number.isFinite(tsA) && !Number.isFinite(tsB))
 						return 0;
-					}
-					return sessionA.item.createDate > sessionB.item.createDate
-						? -1
-						: 1;
+					if (!Number.isFinite(tsA)) return 1;
+					if (!Number.isFinite(tsB)) return -1;
+					return tsB - tsA;
+				}
 				case SESSION_LIST_TYPES.MY_SESSION:
 					return (
 						getLastInteractionTimestamp(sessionB) -
@@ -1217,6 +1319,14 @@ export const SessionsList = ({
 
 	return (
 		<div className="sessionsList__innerWrapper">
+			{showEnquiryFilterChips && (
+				<EnquiryFilterChips
+					translate={translate}
+					activeChip={sessionToolbarChip}
+					onChipToggle={handleToolbarChipToggle}
+					showLiveChatChip={liveChatAvailable}
+				/>
+			)}
 			{showMySessionToolbar && (
 				<SessionsListToolbar
 					translate={translate}
@@ -1229,6 +1339,11 @@ export const SessionsList = ({
 					onChipToggle={handleToolbarChipToggle}
 					showConsultantActions={showConsultantToolbarActions}
 					showSupervisionChip={showSupervisionChip}
+					/* Live-Chat chip shows on Gespräch too once the sidebar
+					   availability toggle is ON — it narrows the
+					   my-sessions list to anonymous-asker chats using the
+					   same username-prefix filter as the Anfragen chip. */
+					showLiveChatChip={liveChatAvailable}
 					createGroupChatPath={buildCreateGroupChatPath(
 						sessionListTab || undefined
 					)}

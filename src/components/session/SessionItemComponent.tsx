@@ -60,13 +60,26 @@ import { apiGetSessionSupervisors } from '../../api/apiGetSessionSupervisors';
 import { apiPatchNotificationActiveView } from '../../api/apiPatchNotificationActiveView';
 import { apiPatchUserData } from '../../api/apiPatchUserData';
 import { apiGetUserData } from '../../api/apiGetUserData';
+import { apiGetAnonymousEnquiryDetails } from '../../api/apiGetAnonymousEnquiryDetails';
 import { parseMessagePrefixes } from '../message/messageConstants';
 import { decodeUsername } from '../../utils/encryptionHelpers';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
+import { PseudonymCard } from '../pseudonym/PseudonymCard';
+import { PseudonymActionBar } from '../pseudonym/PseudonymActionBar';
+import { PrivacyMessageCard } from '../pseudonym/PrivacyMessageCard';
+import { WaitingQueueActionBar } from '../pseudonym/WaitingQueueActionBar';
+import { ConsultantAcceptedActionBar } from '../pseudonym/ConsultantAcceptedActionBar';
+import { AnonymousConsentGate } from '../pseudonym/AnonymousConsentGate';
+import {
+	generatePseudonym,
+	regeneratePseudonym,
+	type Pseudonym
+} from '../../utils/pseudonymGenerator';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import LegalLinks from '../legalLinks/LegalLinks';
 import { renderToString } from 'react-dom/server';
 import { mobileListView } from '../app/navigationHandler';
+import { UserAvatar } from '../message/UserAvatar';
 
 const MessageSubmitInterfaceComponent = lazy(() =>
 	import('../messageSubmitInterface/messageSubmitInterfaceComponent').then(
@@ -398,10 +411,83 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const [centerStageTypewriterBusy, setCenterStageTypewriterBusy] =
 		useState(false);
 	const [joinPromptEscalated, setJoinPromptEscalated] = useState(false);
+	/**
+	 * Initial values for the consent/pseudonym gates are read synchronously
+	 * from sessionStorage on mount. Without this, the first render always
+	 * starts at `false` and the typing animation replays on every reload even
+	 * when the user already confirmed earlier in the session.
+	 */
 	const [
 		anonymousInquiryConsentAccepted,
 		setAnonymousInquiryConsentAccepted
-	] = useState(false);
+	] = useState(() => {
+		try {
+			return (
+				sessionStorage.getItem(
+					`anonymous-inquiry-consent-${activeSession.item.id}`
+				) === '1'
+			);
+		} catch {
+			return false;
+		}
+	});
+	const [pseudonymConfirmed, setPseudonymConfirmed] = useState(() => {
+		try {
+			return (
+				sessionStorage.getItem(
+					`anonymous-pseudonym-${activeSession.item.id}`
+				) === '1'
+			);
+		} catch {
+			return false;
+		}
+	});
+	const [pseudonymSaving, setPseudonymSaving] = useState(false);
+	const [queuePeopleAhead, setQueuePeopleAhead] = useState<number | null>(
+		null
+	);
+	const [consultantAccepted, setConsultantAccepted] = useState(false);
+	/**
+	 * Persist the "Jetzt Chat starten" dismissal in sessionStorage so a
+	 * reload after the asker has already unlocked the composer doesn't
+	 * throw them back to the waiting-queue screen. Keyed per session so
+	 * switching sessions keeps its own state.
+	 */
+	const [waitingGateDismissed, setWaitingGateDismissedState] = useState(
+		() => {
+			try {
+				return (
+					sessionStorage.getItem(
+						`anonymous-waiting-dismissed-${activeSession.item.id}`
+					) === '1'
+				);
+			} catch {
+				return false;
+			}
+		}
+	);
+	const setWaitingGateDismissed = useCallback(
+		(value: boolean) => {
+			setWaitingGateDismissedState(value);
+			try {
+				const key = `anonymous-waiting-dismissed-${activeSession.item.id}`;
+				if (value) {
+					sessionStorage.setItem(key, '1');
+				} else {
+					sessionStorage.removeItem(key);
+				}
+			} catch {
+				/* storage errors are non-fatal — state still lives in memory */
+			}
+		},
+		[activeSession.item.id]
+	);
+	const [currentPseudonym, setCurrentPseudonym] = useState<Pseudonym>(() =>
+		generatePseudonym()
+	);
+	const handleRegeneratePseudonym = useCallback(() => {
+		setCurrentPseudonym((prev) => regeneratePseudonym(prev));
+	}, []);
 	const [robotSequenceVisibleCount, setRobotSequenceVisibleCount] =
 		useState(0);
 	const timerRef = useRef<number | null>(null);
@@ -474,6 +560,25 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		() => `anonymous-robot-sequence-${activeSession.item.id}`,
 		[activeSession.item.id]
 	);
+	const pseudonymStorageKey = useMemo(
+		() => `anonymous-pseudonym-${activeSession.item.id}`,
+		[activeSession.item.id]
+	);
+	const requiresPseudonymConfirmation =
+		isAnonymousAskerExperience && !pseudonymConfirmed;
+	/**
+	 * Once the user picks a pseudonym we stay in the "waiting queue" phase
+	 * for the rest of this session — the pseudonym card stays visible, the
+	 * privacy/encryption message joins it, and the composer is replaced by
+	 * the WaitingQueueActionBar. The phase naturally ends when the session
+	 * is no longer an anonymous-asker experience (component remounts for a
+	 * different session), so it shows for the entire anonymous enquiry no
+	 * matter what session status the backend reports.
+	 */
+	const isInAnonymousWaitingQueuePhase =
+		isAnonymousAskerExperience &&
+		pseudonymConfirmed &&
+		!waitingGateDismissed;
 	const isJoinRoomAvailable = Boolean(activeSession.consultant?.id);
 	const selectedPreset = useMemo(
 		() =>
@@ -657,10 +762,27 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const shouldFadeSessionChrome =
 		showWaitingMiniGame &&
 		(waitingGameStage === 'practice' || waitingGameStage === 'game');
-	const shouldBlockAnonymousInquiryChat =
+	const shouldShowConsentGate =
 		requiresAnonymousInquiryConsent && !anonymousInquiryConsentAccepted;
+	const shouldShowPseudonymGate =
+		!shouldShowConsentGate &&
+		(requiresPseudonymConfirmation || isInAnonymousWaitingQueuePhase);
+	const shouldBlockAnonymousInquiryChat =
+		shouldShowConsentGate || shouldShowPseudonymGate;
+	/**
+	 * The four system-notification "robot" cards
+	 * ("Bitte haben Sie etwas Geduld", "Ihr Benutzername lautet…",
+	 *  "Sie benötigen nicht sofort eine Antwort?", "Wollen Sie die Wartezeit…")
+	 * were the pre-Carimat onboarding for anonymous askers. The new
+	 * pseudonym + privacy + waiting-queue flow replaces them end-to-end, so
+	 * once the asker has confirmed their pseudonym they should never see
+	 * the old cards again — not before they start typing, not after the
+	 * green "Jetzt Chat starten" closes the gate.
+	 */
 	const shouldShowRobotMessages =
-		isAnonymousBreathingGameAvailable && !shouldBlockAnonymousInquiryChat;
+		isAnonymousBreathingGameAvailable &&
+		!shouldBlockAnonymousInquiryChat &&
+		!(isAnonymousAskerExperience && pseudonymConfirmed);
 	const anonymousInquiryConsentLabel = useMemo(
 		() =>
 			translate('videoConference.waitingroom.dataProtection.label.text', {
@@ -679,6 +801,33 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		robotSequenceVisibleCount >= robotSystemCards.length;
 	const shouldShowRobotTypingIndicator =
 		shouldShowRobotMessages && !areRobotMessagesComplete;
+	const otherTypingUsers = useMemo(
+		() =>
+			(props.typingUsers || [])
+				.map((entry) => `${entry || ''}`.trim())
+				.filter(Boolean)
+				.filter(
+					(entry, index, source) => source.indexOf(entry) === index
+				),
+		[props.typingUsers]
+	);
+	const shouldShowInlineTypingIndicator = otherTypingUsers.length > 0;
+	const typingIndicatorLabel = useMemo(() => {
+		if (otherTypingUsers.length === 1) {
+			return `${otherTypingUsers[0]} ${translate(
+				'typingIndicator.singleUser.typing'
+			)}`;
+		}
+		if (otherTypingUsers.length === 2) {
+			return `${otherTypingUsers[0]} & ${otherTypingUsers[1]} ${translate(
+				'typingIndicator.twoUsers.typing'
+			)}`;
+		}
+		return `${otherTypingUsers.length} ${translate(
+			'typingIndicator.multipleUsers.typing'
+		)}`;
+	}, [otherTypingUsers, translate]);
+	const primaryTypingUser = otherTypingUsers[0] || '';
 	const visibleRobotCards = useMemo(
 		() => robotSystemCards.slice(0, Math.max(0, robotSequenceVisibleCount)),
 		[robotSequenceVisibleCount, robotSystemCards]
@@ -1174,6 +1323,128 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				/* keep gate visible on failure */
 			});
 	}, [anonymousInquiryConsentStorageKey, setUserData]);
+
+	/**
+	 * Load the cached pseudonym-confirmed flag when entering the session.
+	 * If the user is not an anonymous asker, treat the gate as already passed
+	 * so the regular waiting room renders for everyone else unchanged.
+	 */
+	useEffect(() => {
+		if (!isAnonymousAskerExperience) {
+			setPseudonymConfirmed(true);
+			return;
+		}
+		try {
+			setPseudonymConfirmed(
+				sessionStorage.getItem(pseudonymStorageKey) === '1'
+			);
+		} catch {
+			setPseudonymConfirmed(false);
+		}
+	}, [isAnonymousAskerExperience, pseudonymStorageKey]);
+
+	/**
+	 * Confirm the chosen pseudonym. Updates ONLY the display name
+	 * via apiPatchUserData — the Matrix username stays "Anonymous-<ts>"
+	 * so the room membership and key chain stay intact.
+	 */
+	const handleConfirmPseudonym = useCallback(() => {
+		if (pseudonymSaving) return;
+		setPseudonymSaving(true);
+		apiPatchUserData({ displayName: currentPseudonym.displayName })
+			.then(() => apiGetUserData().then((fresh) => setUserData(fresh)))
+			.then(() => {
+				setPseudonymConfirmed(true);
+				try {
+					sessionStorage.setItem(pseudonymStorageKey, '1');
+				} catch {
+					/* ignore storage errors */
+				}
+			})
+			.catch(() => {
+				/* keep card visible on failure so user can retry */
+			})
+			.finally(() => setPseudonymSaving(false));
+	}, [currentPseudonym, pseudonymSaving, pseudonymStorageKey, setUserData]);
+
+	/**
+	 * Poll the live anonymous-enquiry details while the asker is in the
+	 * waiting-queue phase. Feeds `queuePeopleAhead` into WaitingQueueActionBar
+	 * so "N Personen vor Ihnen" reflects the actual number of anonymous
+	 * enquiries queued ahead for the same consulting type.
+	 */
+	useEffect(() => {
+		if (!isInAnonymousWaitingQueuePhase || !activeSession.item?.id) {
+			return;
+		}
+
+		let cancelled = false;
+		const sessionId = activeSession.item.id;
+
+		const refresh = () => {
+			apiGetAnonymousEnquiryDetails(sessionId)
+				.then((details) => {
+					if (cancelled) return;
+					if (typeof details?.peopleAhead === 'number') {
+						setQueuePeopleAhead(details.peopleAhead);
+					}
+					/* Anything other than INITIAL/NEW means a consultant has
+					   started handling this enquiry — flip the action bar to
+					   the "Start chat now" prompt. */
+					if (
+						details?.status &&
+						details.status !== 'INITIAL' &&
+						details.status !== 'NEW'
+					) {
+						setConsultantAccepted(true);
+					}
+				})
+				.catch(() => {
+					/* swallow — UI falls back to "Wird verbunden …" */
+				});
+		};
+
+		refresh();
+		/* Poll every 4s so acceptance feels real-time without reload. */
+		const poll = window.setInterval(refresh, 4000);
+
+		return () => {
+			cancelled = true;
+			window.clearInterval(poll);
+		};
+	}, [isInAnonymousWaitingQueuePhase, activeSession.item?.id]);
+
+	/* Once the backend session status moves past enquiry phase we also treat
+	   that as "consultant accepted" — belt-and-braces signal in case the
+	   anonymous-enquiry poll hasn't fired yet. */
+	useEffect(() => {
+		if (
+			isAnonymousAskerExperience &&
+			pseudonymConfirmed &&
+			!isAnonymousEnquiryPhaseSession
+		) {
+			setConsultantAccepted(true);
+		}
+	}, [
+		isAnonymousAskerExperience,
+		pseudonymConfirmed,
+		isAnonymousEnquiryPhaseSession
+	]);
+
+	const handleOpenCalmCompanion = useCallback(() => {
+		setShowBriefingNegativeScreen(false);
+		setBriefingScreenIndex(0);
+		setWaitingGameStage('tutorial');
+		setShowWaitingMiniGame(true);
+	}, []);
+
+	const handleDismissConsultantAccepted = useCallback(() => {
+		setConsultantAccepted(false);
+	}, []);
+
+	const handleStartAcceptedChat = useCallback(() => {
+		setWaitingGateDismissed(true);
+	}, []);
 
 	useEffect(() => {
 		if (!shouldShowRobotMessages) {
@@ -2152,8 +2423,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					activeThreadRootId && 'session__content--withThread',
 					shouldLockScroll && 'session__content--gameLockScroll',
 					shouldFadeSessionChrome && 'session__content--gameFocus',
-					shouldBlockAnonymousInquiryChat &&
-						'session__content--consentGate'
+					shouldShowConsentGate && 'session__content--consentGate',
+					shouldShowPseudonymGate && 'session__content--pseudonymGate'
 				)}
 				ref={scrollContainerRef}
 				onScroll={(e) => handleScroll(e)}
@@ -2188,32 +2459,19 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						</div>
 					</div>
 				)}
-				{shouldBlockAnonymousInquiryChat && (
-					<div className="session__anonymousInquiryConsent waitingRoom">
-						<WaitingRoomContent
-							headlineKey="videoConference.waitingroom.dataProtection.headline"
-							sublineKey="videoConference.waitingroom.dataProtection.subline"
-							textKey="videoConference.waitingroom.dataProtection.description"
-							Illustration={<WelcomeIllustration />}
-						>
-							<Text
-								type="standard"
-								text={anonymousInquiryConsentLabel}
-							/>
-							<Button
-								className="waitingRoom__button"
-								buttonHandle={
-									handleAnonymousInquiryConsentAccept
-								}
-								item={{
-									label: translate(
-										'videoConference.waitingroom.dataProtection.button',
-										'Bestätigen'
-									),
-									type: BUTTON_TYPES.PRIMARY
-								}}
-							/>
-						</WaitingRoomContent>
+				{shouldShowConsentGate && (
+					<AnonymousConsentGate
+						consentLabelHtml={anonymousInquiryConsentLabel}
+						onAccept={handleAnonymousInquiryConsentAccept}
+					/>
+				)}
+				{shouldShowPseudonymGate && (
+					<div className="session__pseudonymGate">
+						<PseudonymCard
+							pseudonym={currentPseudonym}
+							skipTyping={pseudonymConfirmed}
+						/>
+						{pseudonymConfirmed && <PrivacyMessageCard />}
 					</div>
 				)}
 				{!shouldBlockAnonymousInquiryChat && (
@@ -2221,7 +2479,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						<EncryptionBanner />
 					</div>
 				)}
-				{!shouldBlockAnonymousInquiryChat &&
+				{(!shouldBlockAnonymousInquiryChat ||
+					isInAnonymousWaitingQueuePhase) &&
 					isAnonymousBreathingGameAvailable &&
 					showWaitingMiniGame && (
 						<div
@@ -3055,6 +3314,36 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									/>
 								</React.Fragment>
 							))}
+						{shouldShowInlineTypingIndicator && (
+							<div className="messageItem session__inlineTypingIndicator">
+								<div className="messageItem__messageWrap">
+									<div className="messageItem__avatar">
+										<UserAvatar
+											username={primaryTypingUser}
+											displayName={primaryTypingUser}
+											firstName={primaryTypingUser}
+											lastName=""
+											userId={`typing-${primaryTypingUser}`}
+										/>
+									</div>
+									<div className="messageItem__content">
+										<div className="session__inlineTypingLabel">
+											{typingIndicatorLabel}
+										</div>
+										<div
+											className="session__inlineTypingBubble"
+											aria-hidden="true"
+										>
+											<div className="session__inlineTypingDots">
+												<span />
+												<span />
+												<span />
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						)}
 						<div
 							className={`session__scrollToBottom ${
 								isScrolledToBottom
@@ -3223,6 +3512,38 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			{type === SESSION_LIST_TYPES.ENQUIRY &&
 				!shouldBlockAnonymousInquiryChat && (
 					<AcceptAssign btnLabel={'enquiry.acceptButton.known'} />
+				)}
+
+			{shouldShowPseudonymGate && !pseudonymConfirmed && (
+				<div className="session__pseudonymActionBarSlot">
+					<PseudonymActionBar
+						onRegenerate={handleRegeneratePseudonym}
+						onConfirm={handleConfirmPseudonym}
+						disabled={pseudonymSaving}
+					/>
+				</div>
+			)}
+
+			{shouldShowPseudonymGate &&
+				pseudonymConfirmed &&
+				!consultantAccepted && (
+					<div className="session__pseudonymActionBarSlot">
+						<WaitingQueueActionBar
+							queuePosition={queuePeopleAhead}
+							onOpenCalmCompanion={handleOpenCalmCompanion}
+						/>
+					</div>
+				)}
+
+			{shouldShowPseudonymGate &&
+				pseudonymConfirmed &&
+				consultantAccepted && (
+					<div className="session__pseudonymActionBarSlot">
+						<ConsultantAcceptedActionBar
+							onDismiss={handleDismissConsultantAccepted}
+							onStartChat={handleStartAcceptedChat}
+						/>
+					</div>
 				)}
 
 			{canWriteMessage && !shouldBlockAnonymousInquiryChat && (

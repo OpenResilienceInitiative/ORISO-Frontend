@@ -126,25 +126,31 @@ export const RouterConfigUser = (
 		navigation: [
 			{
 				to: '/sessions/user/view',
-				icon: MessagesIconOutline,
-				iconFilled: MessagesIconFilled,
+				icon: NavChatsIcon,
+				iconHover: NavChatsIconHover,
+				iconFilled: NavChatsIconFilled,
+				navSlot: 'row' as const,
 				titleKeys: {
-					large: 'navigation.asker.sessions.large',
-					small: 'navigation.asker.sessions.small'
+					large: 'navigation.consultant.enquiries',
+					small: 'navigation.consultant.enquiries'
 				}
 			},
 			{
 				to: '/notifications',
-				icon: NotificationBellIcon,
-				iconFilled: NotificationBellIcon,
+				icon: NavActivityIcon,
+				iconHover: NavActivityIconHover,
+				iconFilled: NavActivityIconFilled,
+				navSlot: 'tile' as const,
 				titleKeys: {
-					large: 'navigation.notifications'
+					large: 'navigation.activity'
 				}
 			},
 			{
 				to: '/drafts',
-				icon: DraftsNavigationIcon,
-				iconFilled: DraftsNavigationIcon,
+				icon: NavDraftsIcon,
+				iconHover: NavDraftsIconHover,
+				iconFilled: NavDraftsIconFilled,
+				navSlot: 'tile' as const,
 				titleKeys: {
 					large: 'navigation.drafts'
 				}
@@ -153,10 +159,12 @@ export const RouterConfigUser = (
 				condition: (userData) =>
 					!userData.userName?.startsWith('Anonymous-'),
 				to: '/profile',
-				icon: ProfilIconOutline,
-				iconFilled: ProfilIconFilled,
+				icon: NavProfileIcon,
+				iconHover: NavProfileIconHover,
+				iconFilled: NavProfileIconFilled,
+				navSlot: 'row' as const,
 				titleKeys: {
-					large: 'navigation.profile'
+					large: 'navigation.myProfile'
 				}
 			},
 			{
@@ -165,6 +173,7 @@ export const RouterConfigUser = (
 				to: '/booking/events',
 				icon: CalendarIconOutline,
 				iconFilled: CalendarIconFilled,
+				navSlot: 'row' as const,
 				titleKeys: {
 					large: 'navigation.booking.events'
 				}
@@ -174,6 +183,7 @@ export const RouterConfigUser = (
 				to: '/tools',
 				icon: ToolsIconOutline,
 				iconFilled: ToolsIconFilled,
+				navSlot: 'row' as const,
 				titleKeys: {
 					large: 'navigation.tools'
 				}

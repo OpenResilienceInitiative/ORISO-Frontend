@@ -30,6 +30,8 @@ export interface LocaleSwitchProp {
 	iconOnly?: boolean;
 	/** When set (e.g. Figma nav globe), replaces default language SVGs in the control */
 	leadingIconOverride?: React.ReactNode;
+	onMenuOpen?: () => void;
+	onMenuClose?: () => void;
 }
 
 export const LocaleSwitch: React.FC<LocaleSwitchProp> = ({
@@ -45,7 +47,9 @@ export const LocaleSwitch: React.FC<LocaleSwitchProp> = ({
 	color = 'var(--secondary)',
 	colorHover = 'var(--hover-primary)',
 	iconOnly,
-	leadingIconOverride
+	leadingIconOverride,
+	onMenuOpen,
+	onMenuClose
 }) => {
 	const { t: translate } = useTranslation(['common', 'languages']);
 
@@ -215,7 +219,9 @@ export const LocaleSwitch: React.FC<LocaleSwitchProp> = ({
 				color: '#3f373f',
 				backgroundColor: state.isFocused ? '#f5f5f5' : '#ffffff'
 			})
-		}
+		},
+		onMenuOpen,
+		onMenuClose
 	};
 
 	return (

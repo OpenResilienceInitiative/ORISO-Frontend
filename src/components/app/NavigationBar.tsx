@@ -7,11 +7,8 @@ import {
 	useRef,
 	useState
 } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { useAppConfig } from '../../hooks/useAppConfig';
-import { hasVideoCallFeature } from '../../utils/videoCallHelpers';
+import { Link, useLocation, useHistory } from 'react-router-dom';
 import {
-	NavLiveChatIcon,
 	NavGlobeIcon,
 	NavGlobeIconHover,
 	NavGlobeIconFilled,
@@ -44,6 +41,14 @@ import useIsFirstVisit from '../../utils/useIsFirstVisit';
 import { useResponsive } from '../../hooks/useResponsive';
 import { MENUPLACEMENT_RIGHT } from '../select/SelectDropdown';
 import { REMOTE_DRAFT_INDEX_SCOPE } from '../../services/draftStore';
+import {
+	useLiveChatAvailable,
+	setLiveChatAvailable
+} from '../../utils/liveChatToggle';
+import {
+	LiveChatToggleInactiveIcon,
+	LiveChatToggleActiveIcon
+} from './LiveChatToggleIcons';
 
 export interface NavigationBarProps {
 	onLogout: any;
@@ -62,7 +67,6 @@ export const NavigationBar = ({
 	const { sessions, dispatch } = useContext(SessionsDataContext);
 	const { selectableLocales, locale: activeLocale } =
 		useContext(LocaleContext);
-	const settings = useAppConfig();
 	const { fromL } = useResponsive();
 	const [hasTools, setHasTools] = useState<boolean>(false);
 
@@ -70,6 +74,7 @@ export const NavigationBar = ({
 		AUTHORITIES.CONSULTANT_DEFAULT,
 		userData
 	);
+	const [liveChatAvailable] = useLiveChatAvailable();
 	const { sessions: unreadSessions, group: unreadGroup } = useContext(
 		RocketChatUnreadContext
 	);
@@ -88,17 +93,30 @@ export const NavigationBar = ({
 	}, [onLogout]);
 
 	const location = useLocation();
+	const history = useHistory();
 
-	const figmaConsultantNav = isConsultant && fromL;
-	const videoConferencePath = settings?.urls?.consultantVideoConference;
-	const showLiveChatNav =
-		figmaConsultantNav &&
-		videoConferencePath &&
-		hasVideoCallFeature(userData, consultingTypes);
-	const isVideoConferenceActive =
-		showLiveChatNav &&
-		(location.pathname === videoConferencePath ||
-			location.pathname.startsWith(`${videoConferencePath}/`));
+	/**
+	 * Toggle live-chat availability. When turning ON we push the consultant
+	 * to the Anfragen (sessionPreview) tab with `?chip=liveChat` so they
+	 * land on the anonymous enquiry queue with the filter already active.
+	 * `sessionPreview` is the enquiries list; `sessionView` is Gespräch —
+	 * the intent here is enquiries.
+	 */
+	const handleLiveChatToggle = useCallback(() => {
+		const nextActive = !liveChatAvailable;
+		setLiveChatAvailable(nextActive);
+		if (nextActive) {
+			history.push('/sessions/consultant/sessionPreview?chip=liveChat');
+		}
+	}, [liveChatAvailable, history]);
+
+	const figmaConsultantNav = fromL;
+	/**
+	 * Live-chat toggle is a consultant-only availability switch. It no longer
+	 * links to the video-conference page; it simply flips a stored flag that
+	 * controls whether anonymous enquiries appear in the consultant's list.
+	 */
+	const showLiveChatNav = isConsultant && fromL;
 	const [animateNavIcon, setAnimateNavIcon] = useState(false);
 	const [hoveredNavItem, setHoveredNavItem] = useState<string | null>(null);
 	const [isLanguageSelected, setIsLanguageSelected] = useState(false);
@@ -488,33 +506,49 @@ export const NavigationBar = ({
 					})}
 				>
 					{showLiveChatNav && (
-						<Link
+						<button
+							type="button"
 							className={clsx(
 								'navigation__item',
 								'navigation__item--nav-live',
-								isVideoConferenceActive &&
-									'navigation__item--active'
+								'navigation__item--liveChatToggle',
+								liveChatAvailable && 'navigation__item--active'
 							)}
-							to={videoConferencePath}
 							ref={ref_live_chat}
 							tabIndex={-1}
-							role="tab"
+							role="switch"
+							aria-checked={liveChatAvailable}
+							aria-label={translate(
+								liveChatAvailable
+									? 'navigation.liveChatToggleActive'
+									: 'navigation.liveChatToggleInactive'
+							)}
+							onClick={handleLiveChatToggle}
 						>
 							<div
 								className={clsx(
 									'navigation__icon-slot',
 									'navigation__icon-slot--live',
-									isVideoConferenceActive &&
+									liveChatAvailable &&
 										'navigation__icon-slot--active'
 								)}
 							>
 								<div className="navigation__icon-slot__inner">
-									<NavLiveChatIcon
-										className="navigation__icon__single navigation__icon__single--on-dark"
-										aria-label={translate(
-											'navigation.liveChat'
-										)}
-									/>
+									{liveChatAvailable ? (
+										<LiveChatToggleActiveIcon
+											className="navigation__liveChatToggleIcon navigation__liveChatToggleIcon--active"
+											aria-label={translate(
+												'navigation.liveChatToggleActive'
+											)}
+										/>
+									) : (
+										<LiveChatToggleInactiveIcon
+											className="navigation__liveChatToggleIcon"
+											aria-label={translate(
+												'navigation.liveChatToggleInactive'
+											)}
+										/>
+									)}
 								</div>
 							</div>
 							<span
@@ -525,7 +559,7 @@ export const NavigationBar = ({
 							>
 								{translate('navigation.liveChat')}
 							</span>
-						</Link>
+						</button>
 					)}
 					{selectableLocales.length > 1 && (
 						<div
@@ -547,16 +581,20 @@ export const NavigationBar = ({
 							onMouseLeave={() => setHoveredNavItem(null)}
 							onFocus={() => {
 								setHoveredNavItem('__language__');
-								setIsLanguageSelected(true);
 							}}
 							onBlur={() => {
 								setHoveredNavItem(null);
-								setIsLanguageSelected(false);
 							}}
 							id="local-switch-wrapper"
 						>
 							{figmaConsultantNav ? (
-								<div className="navigation__icon-slot navigation__icon-slot--row navigation__icon-slot--language">
+								<div
+									className={clsx(
+										'navigation__icon-slot navigation__icon-slot--row navigation__icon-slot--language',
+										isLanguageSelected &&
+											'navigation__icon-slot--active'
+									)}
+								>
 									<div className="navigation__icon-slot__inner">
 										<LocaleSwitch
 											showIcon={true}
@@ -572,6 +610,12 @@ export const NavigationBar = ({
 												(ref_select.current = el)
 											}
 											isInsideMenu={true}
+											onMenuOpen={() =>
+												setIsLanguageSelected(true)
+											}
+											onMenuClose={() =>
+												setIsLanguageSelected(false)
+											}
 											leadingIconOverride={
 												isLanguageSelected ? (
 													<NavGlobeIconFilled className="navigation__globe-svg" />
@@ -633,7 +677,14 @@ export const NavigationBar = ({
 					>
 						{figmaConsultantNav ? (
 							<>
-								<div className="navigation__icon-slot navigation__icon-slot--logout">
+								<div
+									className={clsx(
+										'navigation__icon-slot',
+										'navigation__icon-slot--logout',
+										isLogoutHovered &&
+											'navigation__icon-slot--active'
+									)}
+								>
 									<div className="navigation__icon-slot__inner">
 										{isLogoutSelected ? (
 											<NavLogoutIconFilled

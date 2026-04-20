@@ -364,6 +364,25 @@ $tabBarHeightDesktop: 53px;
 		padding: 0 $grid-base-three 0;
 	}
 
+	/* Enquiry tab gets a compact chip row (Chats + Live Chat) — no search,
+	   no consultant actions, just the filter. */
+	&--enquiry {
+		padding: $grid-base-two $grid-base-three;
+
+		@include breakpoint($fromLarge) {
+			padding: $grid-base-two $grid-base-three;
+		}
+
+		.sessionsListToolbar__chipRow--enquiry {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			flex-wrap: wrap;
+			margin: 0;
+			padding: 0;
+		}
+	}
+
 	&__search {
 		width: 100%;
 		max-width: 720px;

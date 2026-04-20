@@ -8,7 +8,9 @@ export type SessionToolbarChipFilter =
 	| 'oneToOne'
 	| 'liveChat'
 	| 'groups'
-	| 'supervision';
+	| 'supervision'
+	/** Enquiry-tab filter: registered-style (non-anonymous) enquiries. */
+	| 'chats';
 
 interface SessionsListToolbarProps {
 	translate: (key: string) => string;
@@ -21,6 +23,8 @@ interface SessionsListToolbarProps {
 	onChipToggle: (chip: SessionToolbarChipFilter) => void;
 	showConsultantActions: boolean;
 	showSupervisionChip: boolean;
+	/** Show the "Live-Chat" filter chip (tied to the sidebar availability toggle). */
+	showLiveChatChip?: boolean;
 	createGroupChatPath: string;
 	archiveTabPath: string;
 	/** Consultant list is showing archived sessions (`?sessionListTab=archive`). */
@@ -185,6 +189,7 @@ export const SessionsListToolbar = ({
 	onChipToggle,
 	showConsultantActions,
 	showSupervisionChip,
+	showLiveChatChip = false,
 	createGroupChatPath,
 	archiveTabPath,
 	archiveTabActive,
@@ -625,17 +630,21 @@ export const SessionsListToolbar = ({
 							{translate('sessionList.toolbar.chips.oneToOne')}
 						</span>
 					</button>
-					<button
-						type="button"
-						className={chipClass('liveChat')}
-						onClick={() => onChipToggle('liveChat')}
-						aria-pressed={activeChip === 'liveChat'}
-						data-cy="sessions-list-chip-live-chat"
-					>
-						<span className="sessionsListToolbar__chipLabel">
-							{translate('sessionList.toolbar.chips.liveChat')}
-						</span>
-					</button>
+					{showLiveChatChip && (
+						<button
+							type="button"
+							className={chipClass('liveChat')}
+							onClick={() => onChipToggle('liveChat')}
+							aria-pressed={activeChip === 'liveChat'}
+							data-cy="sessions-list-chip-live-chat"
+						>
+							<span className="sessionsListToolbar__chipLabel">
+								{translate(
+									'sessionList.toolbar.chips.liveChat'
+								)}
+							</span>
+						</button>
+					)}
 					<button
 						type="button"
 						className={chipClass('groups')}
