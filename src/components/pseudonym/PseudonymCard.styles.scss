@@ -38,7 +38,7 @@
 	width: 64px;
 	height: 64px;
 	border-radius: 999px;
-	background: #ffffff;
+	background: transparent;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -100,7 +100,7 @@
 	align-items: baseline;
 	flex-wrap: wrap;
 	gap: 2px;
-	padding-left: 30px;
+	padding-left: 20px;
 }
 
 .pseudonymCard__headerName {

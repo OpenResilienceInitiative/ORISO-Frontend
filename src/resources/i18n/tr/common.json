@@ -2001,6 +2001,40 @@
 				"hold": "Tut",
 				"exhale": "Nefes ver"
 			},
+			"tutorialCard": {
+				"carimatSubtitle": "Bekleme süresini birlikte geçirelim",
+				"cancel": "iptal",
+				"confirm": "Anladım, başlayalım",
+				"restart": "Yeniden başlat",
+				"pressAtRightTime": "Doğru zamanda bas",
+				"inhale": {
+					"bubble": "Kazanmak için 3 şey yapman gerek.",
+					"subtitle": "burnundan",
+					"instruction": "<strong>{{count}} saniye</strong> boyunca yavaşça nefes al, sonra düğmeye bas."
+				},
+				"hold": {
+					"bubble": "3 şey yapman gerek.",
+					"subtitle": "nefesini tut",
+					"instruction": "<strong>{{count}} saniye</strong> nefesini tut, sonra düğmeye bas."
+				},
+				"exhale": {
+					"bubble": "3 şey yapman gerek.",
+					"subtitle": "ağzından",
+					"instruction": "<strong>{{count}} saniye</strong> boyunca yavaşça nefes ver, sonra düğmeye bas."
+				},
+				"belly": {
+					"autoPilot": "Otomatik pilot",
+					"timeIt": "Sen tut zamanı",
+					"inhale": "Harika, <strong>3 saniye</strong> tekrar nefes al, bu sefer karnını genişleterek.",
+					"hold": "Şimdi <strong>3 saniye</strong> nefesini tut.",
+					"exhale": "Şimdi <strong>4 saniye</strong> nefes ver ve tüm vücudunu gevşet."
+				},
+				"selfTimer": {
+					"instruction": "Bu sefer nefes alırken kendi zaman aralıklarını sen belirle.",
+					"repeatGame": "Oyunu tekrarla",
+					"backToWaiting": "Beklemeye dön"
+				}
+			},
 			"presets": {
 				"starter334": "ilk kez",
 				"standard446": "orta seviye deneyim (önerilen)",
@@ -2755,7 +2789,12 @@
 		},
 		"topics": {
 			"headline": "Danışma konularını ve danışma merkezlerini seçin",
-			"noresults": "Uygun danışma konusu yok."
+			"noresults": "Uygun danışma konusu yok.",
+			"names": {
+				"counseling": "Danışmanlık",
+				"addiction-counseling": "Bağımlılık danışmanlığı",
+				"family-counseling": "Aile danışmanlığı"
+			}
 		},
 		"agencies": {
 			"noresults": "Bu konu için uygun bir danışma merkezi yok."

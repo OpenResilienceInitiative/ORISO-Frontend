@@ -1,0 +1,230 @@
+/* Vertical Carimat-style breathing tutorial card.
+ *
+ *   [avatar] Carimat · Lets bridge your waiting time
+ *            ┌──────────────────────────┐
+ *            │ You need to 3 things…    │
+ *            └──────────────────────────┘
+ *
+ *            [         phase icon          ]
+ *            Inhale
+ *            through your nose
+ *
+ *            [ ✕ cancel ]  [ ✓ Got it, lets start ]
+ *
+ * Reuses the pseudonym-card avatar column + header; extends with a
+ * phase-icon block and a right-aligned action row.
+ */
+
+.breathingTutorialCard {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	gap: 24px;
+	width: 100%;
+	max-width: 360px;
+	padding: 8px 16px;
+	box-sizing: border-box;
+	animation: breathingTutorialCardFadeIn 260ms ease-out both;
+}
+
+@keyframes breathingTutorialCardFadeIn {
+	from {
+		opacity: 0;
+		transform: translateY(6px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.breathingTutorialCard__wrap {
+	display: flex;
+	align-items: flex-start;
+	gap: 4px;
+	width: 100%;
+}
+
+.breathingTutorialCard__contentCol {
+	/* Override the pseudonym-card's avatar overlap — the tutorial card
+	   is narrower and the bubble should stay clear of the avatar. */
+	margin-left: -24px;
+}
+
+.breathingTutorialCard__bubble {
+	display: flex;
+	padding: 18px 22px;
+	border-radius: 12px;
+	background: #eeeeee;
+	box-sizing: border-box;
+	width: 100%;
+	max-width: 280px;
+}
+
+.breathingTutorialCard__bubbleText {
+	font-family: 'Roboto Mono', 'Courier New', monospace;
+	font-size: 15px;
+	line-height: 21px;
+	color: #1c1b1f;
+	margin: 0;
+	text-align: left;
+	width: 100%;
+	white-space: pre-wrap;
+}
+
+.breathingTutorialCard__bubbleCaret {
+	display: inline-block;
+	width: 0.5ch;
+	margin-left: 1px;
+	color: #1c1b1f;
+	animation: breathingTutorialCard-caret 900ms steps(1, end) infinite;
+}
+
+.breathingTutorialCard__bubbleCaret::before {
+	content: '|';
+}
+
+@keyframes breathingTutorialCard-caret {
+	0%,
+	49% {
+		opacity: 1;
+	}
+	50%,
+	100% {
+		opacity: 0;
+	}
+}
+
+/* Practice / game stage bubble — base text stays regular-weight; only
+   the inline <strong> wrapping the seconds count renders bold, matching
+   the Figma spec ("Inhale slowly for **3 seconds**, then press the button."). */
+.breathingTutorialCard__bubbleText--practice {
+	strong {
+		font-weight: 700;
+	}
+}
+
+.breathingTutorialCard__phaseBlock {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	padding: 12px 0 4px;
+}
+
+.breathingTutorialCard__phaseIcon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 120px;
+	height: 120px;
+
+	svg {
+		max-width: 100%;
+		max-height: 100%;
+	}
+}
+
+.breathingTutorialCard__phaseLabel {
+	font-family: 'Roboto Mono', 'Courier New', monospace;
+	font-size: 28px;
+	line-height: 32px;
+	font-weight: 700;
+	color: #4c555f;
+	text-align: center;
+}
+
+.breathingTutorialCard__phaseSubtitle {
+	font-family: 'Roboto Mono', 'Courier New', monospace;
+	font-size: 16px;
+	line-height: 22px;
+	font-weight: 700;
+	color: #4c555f;
+	text-align: center;
+}
+
+.breathingTutorialCard__actions {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 8px;
+	width: 100%;
+	padding-top: 4px;
+}
+
+.breathingTutorialCard__btnCancel,
+.breathingTutorialCard__btnConfirm {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	padding: 12px 18px;
+	border: none;
+	cursor: pointer;
+	font-family: 'Inter', sans-serif;
+	font-size: 14px;
+	line-height: 20px;
+	font-weight: 500;
+	letter-spacing: 0.0094em;
+	white-space: nowrap;
+	transition:
+		background 160ms ease,
+		transform 160ms ease;
+
+	svg {
+		width: 18px;
+		height: 18px;
+	}
+
+	&:active:not(:disabled) {
+		transform: scale(0.98);
+	}
+}
+
+.breathingTutorialCard__btnCancel {
+	border-radius: 8px;
+	background: #4c555f;
+	color: #e7effc;
+
+	&:hover:not(:disabled) {
+		background: #3d444d;
+	}
+}
+
+.breathingTutorialCard__btnConfirm {
+	border-radius: 100px;
+	background: #cc1e1c;
+	color: #ffffff;
+
+	&:hover:not(:disabled) {
+		background: #a5000a;
+	}
+}
+
+@media screen and (max-width: 640px) {
+	.breathingTutorialCard {
+		padding: 8px 12px;
+		gap: 18px;
+	}
+
+	.breathingTutorialCard__phaseIcon {
+		width: 100px;
+		height: 100px;
+	}
+
+	.breathingTutorialCard__phaseLabel {
+		font-size: 24px;
+		line-height: 28px;
+	}
+
+	.breathingTutorialCard__phaseSubtitle {
+		font-size: 14px;
+	}
+
+	.breathingTutorialCard__btnCancel,
+	.breathingTutorialCard__btnConfirm {
+		padding: 10px 14px;
+		font-size: 13px;
+	}
+}

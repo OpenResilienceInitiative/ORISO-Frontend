@@ -2001,6 +2001,40 @@
 				"hold": "Retenir",
 				"exhale": "Expirer"
 			},
+			"tutorialCard": {
+				"carimatSubtitle": "Passons le temps d'attente ensemble",
+				"cancel": "annuler",
+				"confirm": "Compris, c'est parti",
+				"restart": "Recommencer",
+				"pressAtRightTime": "Appuyez au bon moment",
+				"inhale": {
+					"bubble": "Vous devez faire 3 choses pour gagner.",
+					"subtitle": "par le nez",
+					"instruction": "Inspirez lentement pendant <strong>{{count}} secondes</strong>, puis appuyez sur le bouton."
+				},
+				"hold": {
+					"bubble": "Vous devez faire 3 choses.",
+					"subtitle": "retenez votre souffle",
+					"instruction": "Retenez votre souffle pendant <strong>{{count}} secondes</strong>, puis appuyez sur le bouton."
+				},
+				"exhale": {
+					"bubble": "Vous devez faire 3 choses.",
+					"subtitle": "par la bouche",
+					"instruction": "Expirez lentement pendant <strong>{{count}} secondes</strong>, puis appuyez sur le bouton."
+				},
+				"belly": {
+					"autoPilot": "Pilote auto",
+					"timeIt": "Mesurer",
+					"inhale": "Super, inspirez encore <strong>3 secondes</strong>, mais cette fois en dilatant le ventre.",
+					"hold": "Retenez maintenant votre souffle <strong>3 secondes</strong>.",
+					"exhale": "Expirez maintenant <strong>4 secondes</strong> et détendez tout le corps."
+				},
+				"selfTimer": {
+					"instruction": "Définissez maintenant vos propres intervalles de temps pendant que vous respirez.",
+					"repeatGame": "Rejouer",
+					"backToWaiting": "Retour à l'attente"
+				}
+			},
 			"presets": {
 				"starter334": "première fois",
 				"standard446": "expérience modérée (recommandé)",
@@ -2755,7 +2789,12 @@
 		},
 		"topics": {
 			"headline": "Choisissez des thèmes de consultation et des centres de consultation",
-			"noresults": "Aucun thème de consultation disponible."
+			"noresults": "Aucun thème de consultation disponible.",
+			"names": {
+				"counseling": "Conseil",
+				"addiction-counseling": "Conseil en addictions",
+				"family-counseling": "Conseil familial"
+			}
 		},
 		"agencies": {
 			"noresults": "Aucun centre de consultation disponible pour ce sujet."

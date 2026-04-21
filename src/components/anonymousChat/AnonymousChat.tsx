@@ -1,11 +1,5 @@
 import * as React from 'react';
-import {
-	useState,
-	useEffect,
-	useContext,
-	FC,
-	useCallback
-} from 'react';
+import { useState, useEffect, useContext, FC, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
 	Typography,
@@ -66,12 +60,16 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 		Map<number, AgencyDataInterface[]>
 	>(new Map());
 	const [loadingTopics, setLoadingTopics] = useState<boolean>(true);
-	const [loadingAgencies, setLoadingAgencies] = useState<Map<number, boolean>>(
-		new Map()
+	const [loadingAgencies, setLoadingAgencies] = useState<
+		Map<number, boolean>
+	>(new Map());
+	const [selectedAgency, setSelectedAgency] =
+		useState<AgencyDataInterface | null>(null);
+	const [selectedTopic, setSelectedTopic] =
+		useState<TopicsDataInterface | null>(null);
+	const [expandedTopics, setExpandedTopics] = useState<Set<number>>(
+		new Set()
 	);
-	const [selectedAgency, setSelectedAgency] = useState<AgencyDataInterface | null>(null);
-	const [selectedTopic, setSelectedTopic] = useState<TopicsDataInterface | null>(null);
-	const [expandedTopics, setExpandedTopics] = useState<Set<number>>(new Set());
 	const [isRegistering, setIsRegistering] = useState<boolean>(false);
 	const [username, setUsername] = useState<string>('');
 	const [password, setPassword] = useState<string>('');
@@ -81,12 +79,15 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 		const timestamp = Date.now();
 		const generatedUsername = `Anonymous-${timestamp}`;
 		setUsername(generatedUsername);
-		
+
 		// Generate 8-character random password
-		const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+		const chars =
+			'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 		let generatedPassword = '';
 		for (let i = 0; i < 8; i++) {
-			generatedPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+			generatedPassword += chars.charAt(
+				Math.floor(Math.random() * chars.length)
+			);
 		}
 		setPassword(generatedPassword);
 	}, []);
@@ -146,7 +147,10 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 						// Remove duplicates by agency ID
 						const uniqueAgencies = Array.from(
 							new Map(
-								internalAgencies.map((agency) => [agency.id, agency])
+								internalAgencies.map((agency) => [
+									agency.id,
+									agency
+								])
 							).values()
 						);
 						setTopicAgencies((prev) => {
@@ -228,17 +232,17 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 			consultingType: selectedAgency.consultingType, // Keep as number, same as normal registration
 			// Use the selected topic - match normal registration structure
 			...(selectedTopic
-				? { 
-					mainTopicId: selectedTopic.id.toString(),
-					// topicId is optional in normal registration, set it to mainTopicId if available
-					topicId: selectedTopic.id.toString()
-				}
+				? {
+						mainTopicId: selectedTopic.id.toString(),
+						// topicId is optional in normal registration, set it to mainTopicId if available
+						topicId: selectedTopic.id.toString()
+					}
 				: selectedAgency.topicIds && selectedAgency.topicIds.length > 0
-				? { 
-					mainTopicId: selectedAgency.topicIds[0].toString(),
-					topicId: selectedAgency.topicIds[0].toString()
-				}
-				: {})
+					? {
+							mainTopicId: selectedAgency.topicIds[0].toString(),
+							topicId: selectedAgency.topicIds[0].toString()
+						}
+					: {})
 		};
 
 		apiPostRegistration(
@@ -263,7 +267,18 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 					timeout: 3000
 				});
 			});
-	}, [username, password, selectedAgency, selectedTopic, locale, settings, tenant, isRegistering, t, addNotification]);
+	}, [
+		username,
+		password,
+		selectedAgency,
+		selectedTopic,
+		locale,
+		settings,
+		tenant,
+		isRegistering,
+		t,
+		addNotification
+	]);
 
 	const canRegister = selectedAgency && selectedTopic && !isRegistering;
 
@@ -288,35 +303,38 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 				{/* Scrollable Content Area */}
 				<Box
 					sx={{
-						flex: 1,
-						overflowY: 'auto',
-						overflowX: 'hidden',
-						minHeight: 0, // Important for flex scrolling
+						'flex': 1,
+						'overflowY': 'auto',
+						'overflowX': 'hidden',
+						'minHeight': 0, // Important for flex scrolling
 						// Custom scrollbar styling
 						'&::-webkit-scrollbar': {
 							width: '2px',
-                            paddingLeft: '10px'
+							paddingLeft: '10px'
 						},
 						'&::-webkit-scrollbar-track': {
 							background: 'transparent'
 						},
 						'&::-webkit-scrollbar-thumb': {
-							background: '#ffffff',
-							borderRadius: '3px',
+							'background': '#ffffff',
+							'borderRadius': '3px',
 							'&:hover': {
 								background: '#b71c1c'
 							}
 						},
 						// Firefox scrollbar
-						scrollbarWidth: 'thin',
-						scrollbarColor: '#ffffff transparent'
+						'scrollbarWidth': 'thin',
+						'scrollbarColor': '#ffffff transparent'
 					}}
 				>
 					<Typography variant="h3" sx={{ mb: '24px' }}>
 						{t('anonymousChat.headline', 'Anonyme Beratung')}
 					</Typography>
 
-					<Typography variant="body1" sx={{ mb: '32px', color: 'text.secondary' }}>
+					<Typography
+						variant="body1"
+						sx={{ mb: '32px', color: 'text.secondary' }}
+					>
 						{t(
 							'anonymousChat.subline',
 							'Wählen Sie eine Beratungsstelle und starten Sie sofort eine anonyme Beratung.'
@@ -338,14 +356,40 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 							}}
 						>
 							{/* Username Section */}
-							<Box sx={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+							<Box
+								sx={{
+									display: 'flex',
+									alignItems: 'center',
+									gap: '12px'
+								}}
+							>
 								<PersonIcon sx={{ color: '#c62828' }} />
 								<Box sx={{ flex: 1 }}>
-									<Typography variant="body2" sx={{ color: 'text.secondary', mb: '4px' }}>
-										{t('registration.account.username.label', 'Benutzername')}
+									<Typography
+										variant="body2"
+										sx={{
+											color: 'text.secondary',
+											mb: '4px'
+										}}
+									>
+										{t(
+											'registration.account.username.label',
+											'Benutzername'
+										)}
 									</Typography>
-									<Typography variant="body1" sx={{ fontWeight: '500' }}>{username}</Typography>
-									<Typography variant="caption" sx={{ color: 'text.secondary', mt: '4px' }}>
+									<Typography
+										variant="body1"
+										sx={{ fontWeight: '500' }}
+									>
+										{username}
+									</Typography>
+									<Typography
+										variant="caption"
+										sx={{
+											color: 'text.secondary',
+											mt: '4px'
+										}}
+									>
 										{t(
 											'anonymousChat.username.info',
 											'Dieser Benutzername wurde automatisch generiert'
@@ -366,8 +410,14 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 
 							{/* Password Section */}
 							<Box>
-								<Typography variant="body2" sx={{ color: 'text.secondary', mb: '8px' }}>
-									{t('registration.account.password.label', 'Passwort')}
+								<Typography
+									variant="body2"
+									sx={{ color: 'text.secondary', mb: '8px' }}
+								>
+									{t(
+										'registration.account.password.label',
+										'Passwort'
+									)}
 								</Typography>
 								<TextField
 									fullWidth
@@ -378,11 +428,20 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 											<InputAdornment position="end">
 												<IconButton
 													onClick={() => {
-														navigator.clipboard.writeText(password);
+														navigator.clipboard.writeText(
+															password
+														);
 														addNotification({
-															notificationType: NOTIFICATION_TYPE_SUCCESS,
-															title: t('anonymousChat.password.copied.title', 'Passwort kopiert'),
-															text: t('anonymousChat.password.copied.text', 'Das Passwort wurde in die Zwischenablage kopiert.'),
+															notificationType:
+																NOTIFICATION_TYPE_SUCCESS,
+															title: t(
+																'anonymousChat.password.copied.title',
+																'Passwort kopiert'
+															),
+															text: t(
+																'anonymousChat.password.copied.text',
+																'Das Passwort wurde in die Zwischenablage kopiert.'
+															),
 															closeable: true,
 															timeout: 3000
 														});
@@ -397,7 +456,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 									}}
 									sx={{
 										'& .MuiOutlinedInput-root': {
-											backgroundColor: 'white',
+											'backgroundColor': 'white',
 											'& fieldset': {
 												borderColor: '#c62828'
 											},
@@ -430,7 +489,10 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 
 					{/* Topics and Agencies Selection */}
 					<Box sx={{ mb: '32px' }}>
-						<Typography variant="h5" sx={{ mb: '16px', fontWeight: '600' }}>
+						<Typography
+							variant="h5"
+							sx={{ mb: '16px', fontWeight: '600' }}
+						>
 							{t(
 								'anonymousChat.topics.headline',
 								'Beratungsthemen und Beratungsstellen wählen'
@@ -438,11 +500,20 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 						</Typography>
 
 						{loadingTopics ? (
-							<Box sx={{ display: 'flex', justifyContent: 'center', py: '40px' }}>
+							<Box
+								sx={{
+									display: 'flex',
+									justifyContent: 'center',
+									py: '40px'
+								}}
+							>
 								<Loading />
 							</Box>
 						) : topics.length === 0 ? (
-							<Typography variant="body2" sx={{ color: 'text.secondary' }}>
+							<Typography
+								variant="body2"
+								sx={{ color: 'text.secondary' }}
+							>
 								{t(
 									'anonymousChat.topics.noresults',
 									'Keine Beratungsthemen verfügbar.'
@@ -451,15 +522,21 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 						) : (
 							<Box>
 								{topics.map((topic) => {
-									const agencies = topicAgencies.get(topic.id) || [];
-									const isLoadingAgencies = loadingAgencies.get(topic.id) || false;
-									const isExpanded = expandedTopics.has(topic.id);
+									const agencies =
+										topicAgencies.get(topic.id) || [];
+									const isLoadingAgencies =
+										loadingAgencies.get(topic.id) || false;
+									const isExpanded = expandedTopics.has(
+										topic.id
+									);
 
 									return (
 										<Accordion
 											key={`topic-${topic.id}`}
 											expanded={isExpanded}
-											onChange={() => handleTopicToggle(topic)}
+											onChange={() =>
+												handleTopicToggle(topic)
+											}
 											sx={{ mb: '8px' }}
 										>
 											<AccordionSummary
@@ -471,8 +548,14 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 													)
 												}
 											>
-												<Typography variant="h6" sx={{ fontWeight: '600' }}>
-													{topic.name}
+												<Typography
+													variant="h6"
+													sx={{ fontWeight: '600' }}
+												>
+													{t(
+														`anonymousChat.topics.names.${topic.slug}`,
+														topic.name
+													)}
 												</Typography>
 											</AccordionSummary>
 											<AccordionDetails>
@@ -480,7 +563,8 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 													<Box
 														sx={{
 															display: 'flex',
-															justifyContent: 'center',
+															justifyContent:
+																'center',
 															py: '20px'
 														}}
 													>
@@ -489,7 +573,9 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 												) : agencies.length === 0 ? (
 													<Typography
 														variant="body2"
-														sx={{ color: 'text.secondary' }}
+														sx={{
+															color: 'text.secondary'
+														}}
 													>
 														{t(
 															'anonymousChat.agencies.noresults',
@@ -497,101 +583,159 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 														)}
 													</Typography>
 												) : (
-													<FormControl sx={{ width: '100%' }}>
+													<FormControl
+														sx={{ width: '100%' }}
+													>
 														<RadioGroup
 															value={
-																selectedTopic?.id === topic.id
-																	? selectedAgency?.id || ''
+																selectedTopic?.id ===
+																topic.id
+																	? selectedAgency?.id ||
+																		''
 																	: ''
 															}
 															onChange={(e) => {
-																const agency = agencies.find(
-																	(a) =>
-																		a.id.toString() ===
-																		e.target.value
-																);
+																const agency =
+																	agencies.find(
+																		(a) =>
+																			a.id.toString() ===
+																			e
+																				.target
+																				.value
+																	);
 																if (agency) {
-																	setSelectedAgency(agency);
-																	setSelectedTopic(topic);
+																	setSelectedAgency(
+																		agency
+																	);
+																	setSelectedTopic(
+																		topic
+																	);
 																}
 															}}
 														>
-															{agencies.map((agency, index) => {
-																const isSelected = selectedAgency?.id === agency.id && selectedTopic?.id === topic.id;
-																return (
-																<Box
-																	key={`agency-${agency.id}`}
-																	sx={{
-																		display: 'flex',
-																		justifyContent:
-																			'space-between',
-																		width: '100%',
-																		mt: index === 0 ? '0' : '16px',
-																		p: '16px',
-																		border: isSelected ? '2px solid' : '1px solid',
-																		borderColor: isSelected
-																			? '#c62828' // Dark red border for selected
-																			: 'divider',
-																		borderRadius: '4px',
-																		backgroundColor: isSelected
-																			? '#ffebee' // Light red background for selected
-																			: 'background.paper'
-																	}}
-																>
-																	<FormControlLabel
-																		value={agency.id}
-																		control={
-																			<Radio
-																				checked={
-																					selectedAgency?.id ===
-																						agency.id &&
-																					selectedTopic?.id ===
-																						topic.id
+															{agencies.map(
+																(
+																	agency,
+																	index
+																) => {
+																	const isSelected =
+																		selectedAgency?.id ===
+																			agency.id &&
+																		selectedTopic?.id ===
+																			topic.id;
+																	return (
+																		<Box
+																			key={`agency-${agency.id}`}
+																			sx={{
+																				display:
+																					'flex',
+																				justifyContent:
+																					'space-between',
+																				width: '100%',
+																				mt:
+																					index ===
+																					0
+																						? '0'
+																						: '16px',
+																				p: '16px',
+																				border: isSelected
+																					? '2px solid'
+																					: '1px solid',
+																				borderColor:
+																					isSelected
+																						? '#c62828' // Dark red border for selected
+																						: 'divider',
+																				borderRadius:
+																					'4px',
+																				backgroundColor:
+																					isSelected
+																						? '#ffebee' // Light red background for selected
+																						: 'background.paper'
+																			}}
+																		>
+																			<FormControlLabel
+																				value={
+																					agency.id
 																				}
-																				checkedIcon={
-																					<TaskAltIcon sx={{ color: '#c62828' }} />
-																				}
-																			/>
-																		}
-																		label={
-																			<Box sx={{ ml: '10px', width: '100%' }}>
-																				<Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-																					<Typography variant="body1">
-																						{agency.name}
-																					</Typography>
-																					<InfoTooltip
-																						translation={{
-																							ns: 'agencies',
-																							prefix: 'agency'
-																						}}
-																						info={agency}
-																						isProfileView={false}
+																				control={
+																					<Radio
+																						checked={
+																							selectedAgency?.id ===
+																								agency.id &&
+																							selectedTopic?.id ===
+																								topic.id
+																						}
+																						checkedIcon={
+																							<TaskAltIcon
+																								sx={{
+																									color: '#c62828'
+																								}}
+																							/>
+																						}
 																					/>
-																				</Box>
-																				<Typography
-																					variant="body2"
-																					sx={{
-																						color: 'info.light',
-																						mt: '8px'
-																					}}
-																				>
-																					{t(
-																						'registration.agency.result.languages',
-																						'Diese Beratungsstelle berät Sie auf:'
-																					)}
-																				</Typography>
-																				<AgencyLanguages
-																					agencyId={agency.id}
-																				/>
-																			</Box>
-																		}
-																		sx={{
-																			alignItems: 'flex-start'
-																		}}
-																	/>
-																</Box>
-																);
-															})}
+																				}
+																				label={
+																					<Box
+																						sx={{
+																							ml: '10px',
+																							width: '100%'
+																						}}
+																					>
+																						<Box
+																							sx={{
+																								display:
+																									'flex',
+																								alignItems:
+																									'center',
+																								gap: '8px'
+																							}}
+																						>
+																							<Typography variant="body1">
+																								{
+																									agency.name
+																								}
+																							</Typography>
+																							<InfoTooltip
+																								translation={{
+																									ns: 'agencies',
+																									prefix: 'agency'
+																								}}
+																								info={
+																									agency
+																								}
+																								isProfileView={
+																									false
+																								}
+																							/>
+																						</Box>
+																						<Typography
+																							variant="body2"
+																							sx={{
+																								color: 'info.light',
+																								mt: '8px'
+																							}}
+																						>
+																							{t(
+																								'registration.agency.result.languages',
+																								'Diese Beratungsstelle berät Sie auf:'
+																							)}
+																						</Typography>
+																						<AgencyLanguages
+																							agencyId={
+																								agency.id
+																							}
+																						/>
+																					</Box>
+																				}
+																				sx={{
+																					alignItems:
+																						'flex-start'
+																				}}
+																			/>
+																		</Box>
+																	);
+																}
+															)}
 														</RadioGroup>
 													</FormControl>
 												)}
@@ -636,7 +780,10 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 						sx={{ flex: 1 }}
 					>
 						{isRegistering
-							? t('registration.registering', 'Registrierung läuft...')
+							? t(
+									'registration.registering',
+									'Registrierung läuft...'
+								)
 							: t('anonymousChat.start', 'Beratung starten')}
 					</Button>
 				</Box>
@@ -644,4 +791,3 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 		</StageLayout>
 	);
 };
-

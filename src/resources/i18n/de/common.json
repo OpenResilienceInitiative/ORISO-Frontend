@@ -2087,6 +2087,47 @@
 				"hold": "Halten",
 				"exhale": "Ausatmen"
 			},
+			"tutorialCard": {
+				"carimatSubtitle": "Lass uns die Wartezeit überbrücken",
+				"cancel": "Abbrechen",
+				"confirm": "Verstanden, los geht's",
+				"restart": "Neu starten",
+				"pressAtRightTime": "Zum richtigen Zeitpunkt drücken",
+				"inhale": {
+					"bubble": "Du musst 3 Dinge tun, um zu gewinnen.",
+					"subtitle": "durch die Nase",
+					"instruction": "Atme <strong>{{count}} Sekunden</strong> lang langsam ein, dann drücke den Knopf."
+				},
+				"hold": {
+					"bubble": "Du musst 3 Dinge tun.",
+					"subtitle": "halte den Atem an",
+					"instruction": "Halte den Atem <strong>{{count}} Sekunden</strong> lang an, dann drücke den Knopf."
+				},
+				"exhale": {
+					"bubble": "Du musst 3 Dinge tun.",
+					"subtitle": "durch den Mund",
+					"instruction": "Atme <strong>{{count}} Sekunden</strong> lang langsam aus, dann drücke den Knopf."
+				},
+				"belly": {
+					"autoPilot": "Auto-Pilot",
+					"timeIt": "Selbst takten",
+					"inhale": "Super, atme wieder <strong>3 Sekunden</strong> ein, diesmal aber indem du deinen Bauch ausdehnst.",
+					"hold": "Halte jetzt <strong>3 Sekunden</strong> den Atem an.",
+					"exhale": "Atme nun <strong>4 Sekunden</strong> aus und entspanne den ganzen Körper."
+				},
+				"selfTimer": {
+					"instruction": "Jetzt kannst du deine eigenen Zeitintervalle zum Atmen festlegen.",
+					"repeatGame": "Spiel wiederholen",
+					"backToWaiting": "Zurück zum Warten"
+				},
+				"completion": {
+					"instruction": "Herzlichen Glückwunsch, du hast es geschafft.",
+					"receiveGift": "Kleines Geschenk erhalten"
+				},
+				"serenity": {
+					"instruction": "Das Geschenk ist ein kleines Mantra, das vielen Menschen durch schwierige Zeiten geholfen hat. Es heißt das Gelassenheitsgebet: \u201CGott, gib mir die Gelassenheit, Dinge hinzunehmen, die ich nicht ändern kann, den Mut, Dinge zu ändern, die ich ändern kann, und die Weisheit, das eine vom anderen zu unterscheiden.\u201D"
+				}
+			},
 			"presets": {
 				"starter334": "erstes Mal",
 				"standard446": "mittlere Erfahrung (empfohlen)",
@@ -2863,7 +2904,12 @@
 		},
 		"topics": {
 			"headline": "Beratungsthemen und Beratungsstellen wählen",
-			"noresults": "Keine Beratungsthemen verfügbar."
+			"noresults": "Keine Beratungsthemen verfügbar.",
+			"names": {
+				"counseling": "Beratung",
+				"addiction-counseling": "Suchtberatung",
+				"family-counseling": "Familienberatung"
+			}
 		},
 		"agencies": {
 			"noresults": "Für dieses Thema sind keine Beratungsstellen verfügbar."

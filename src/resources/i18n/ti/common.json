@@ -2001,6 +2001,40 @@
 				"hold": "Hold",
 				"exhale": "Exhale"
 			},
+			"tutorialCard": {
+				"carimatSubtitle": "ጊዜ ምጽባይካ ንድለዮ",
+				"cancel": "ይቋረጽ",
+				"confirm": "ተረዲአ፣ ንጀምር",
+				"restart": "እንደገና ጀምር",
+				"pressAtRightTime": "ኣብ ቅኑዕ ግዜ ጠውቕ",
+				"inhale": {
+					"bubble": "ንምዕዋት 3 ነገራት ክትገብር ኣለካ።",
+					"subtitle": "ብኣፍንጫኻ",
+					"instruction": "ን<strong>{{count}} ካልኢታት</strong> ቀስ በሉ ኣፍንጫኻ ስተንፍስ፣ ሽዑ ንመጫበጢ ጠውቕ።"
+				},
+				"hold": {
+					"bubble": "3 ነገራት ክትገብር ኣለካ።",
+					"subtitle": "ትንፋስካ ሓዝ",
+					"instruction": "ንፋስካ ን<strong>{{count}} ካልኢታት</strong> ሓዝ፣ ሽዑ ንመጫበጢ ጠውቕ።"
+				},
+				"exhale": {
+					"bubble": "3 ነገራት ክትገብር ኣለካ።",
+					"subtitle": "ብኣፍካ",
+					"instruction": "ንፋስካ ን<strong>{{count}} ካልኢታት</strong> ቀስ በሉ ኣውጽእ፣ ሽዑ ንመጫበጢ ጠውቕ።"
+				},
+				"belly": {
+					"autoPilot": "ኣውቶ ፓይሎት",
+					"timeIt": "ግዜ ሓዞ",
+					"inhale": "ጽቡቕ፣ እንደገና ን<strong>3 ካልኢታት</strong> ተንፍስ፣ ሕጂ ግን ሆድካ እናወሰኻ።",
+					"hold": "ሕጂ ን<strong>3 ካልኢታት</strong> ትንፋስካ ሓዝ።",
+					"exhale": "ሕጂ ን<strong>4 ካልኢታት</strong> ኣውጽእ ከምኡውን ሙሉእ ኣካልካ ኣዝልኣ።"
+				},
+				"selfTimer": {
+					"instruction": "ሕጂ ኣብ እዋን ምትንፋስካ ናይ ባዕልኻ ግዘ ኣቐምጥ።",
+					"repeatGame": "ጸወታ ድገም",
+					"backToWaiting": "ናብ ምጽባይ ተመለስ"
+				}
+			},
 			"presets": {
 				"starter334": "first time",
 				"standard446": "mild experience (recommended)",
@@ -2755,7 +2789,12 @@
 		},
 		"topics": {
 			"headline": "ናይ ምክር ርእሶታትን ማእከላት ምክርን ምረጽ",
-			"noresults": "ናይ ምክር ርእሶታት የለን።"
+			"noresults": "ናይ ምክር ርእሶታት የለን።",
+			"names": {
+				"counseling": "ምኽሪ",
+				"addiction-counseling": "ናይ ወልፊ ምኽሪ",
+				"family-counseling": "ናይ ስድራቤት ምኽሪ"
+			}
 		},
 		"agencies": {
 			"noresults": "እዚ ርእስ ንምክር የለን ማእከል ምክር።"

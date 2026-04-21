@@ -2021,6 +2021,47 @@
 				"hold": "Hold",
 				"exhale": "Exhale"
 			},
+			"tutorialCard": {
+				"carimatSubtitle": "Lets bridge your waiting time",
+				"cancel": "cancel",
+				"confirm": "Got it, lets start",
+				"restart": "Restart",
+				"pressAtRightTime": "Press at the right time",
+				"inhale": {
+					"bubble": "You need to 3 things, to win.",
+					"subtitle": "through your nose",
+					"instruction": "Inhale slowly for <strong>{{count}} seconds</strong>, then press the button."
+				},
+				"hold": {
+					"bubble": "You need to 3 things.",
+					"subtitle": "your breath",
+					"instruction": "Hold your breath now for <strong>{{count}} seconds</strong>, then press the button."
+				},
+				"exhale": {
+					"bubble": "You need to 3 things.",
+					"subtitle": "through your mouth",
+					"instruction": "Exhale slowly for <strong>{{count}} seconds</strong>, then press the button."
+				},
+				"belly": {
+					"autoPilot": "Auto pilot",
+					"timeIt": "Time it",
+					"inhale": "Great lets inhale <strong>3 seconds</strong> again, but this time by expanding your belly.",
+					"hold": "Now hold for <strong>3 seconds</strong> your breath.",
+					"exhale": "Now breath out for <strong>4 seconds</strong> and relax your entire body."
+				},
+				"selfTimer": {
+					"instruction": "Set this time your own time intervals while breathing.",
+					"repeatGame": "Repeat game",
+					"backToWaiting": "Back to waiting"
+				},
+				"completion": {
+					"instruction": "Congratulation you have made it.",
+					"receiveGift": "Receive little gift"
+				},
+				"serenity": {
+					"instruction": "The gift is a little mantra that's helped tons of people get through tough times. It's called the serenity prayer: \u201CGod, grant me the serenity to accept the things I cannot change, the courage to change the things I can, and the wisdom to know the difference.\u201D"
+				}
+			},
 			"presets": {
 				"starter334": "first time",
 				"standard446": "mild experience (recommended)",
@@ -2775,7 +2816,12 @@
 		},
 		"topics": {
 			"headline": "Choose consultation topics and counseling centers",
-			"noresults": "No consultation topics available."
+			"noresults": "No consultation topics available.",
+			"names": {
+				"counseling": "Counseling",
+				"addiction-counseling": "Addiction counseling",
+				"family-counseling": "Family counseling"
+			}
 		},
 		"agencies": {
 			"noresults": "No counseling centers available for this topic."
