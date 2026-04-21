@@ -30,7 +30,10 @@ import {
 	useTenant,
 	ActiveSessionContext
 } from '../../globalState';
-import { STATUS_ENQUIRY } from '../../globalState/interfaces/SessionsDataInterface';
+import {
+	STATUS_EMPTY,
+	STATUS_ENQUIRY
+} from '../../globalState/interfaces/SessionsDataInterface';
 import { useHistory, useLocation } from 'react-router-dom';
 import * as Tone from 'tone';
 import { RocketChatUsersOfRoomProvider } from '../../globalState/provider/RocketChatUsersOfRoomProvider';
@@ -55,12 +58,32 @@ import { Text } from '../text/Text';
 import { EncryptionBanner } from './EncryptionBanner';
 import { apiGetSessionSupervisors } from '../../api/apiGetSessionSupervisors';
 import { apiPatchNotificationActiveView } from '../../api/apiPatchNotificationActiveView';
+import { apiPatchUserData } from '../../api/apiPatchUserData';
+import { apiGetUserData } from '../../api/apiGetUserData';
+import { apiGetAnonymousEnquiryDetails } from '../../api/apiGetAnonymousEnquiryDetails';
 import { parseMessagePrefixes } from '../message/messageConstants';
 import { decodeUsername } from '../../utils/encryptionHelpers';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
+import { PseudonymCard } from '../pseudonym/PseudonymCard';
+import { PseudonymActionBar } from '../pseudonym/PseudonymActionBar';
+import { PrivacyMessageCard } from '../pseudonym/PrivacyMessageCard';
+import { WaitingQueueActionBar } from '../pseudonym/WaitingQueueActionBar';
+import { ConsultantAcceptedActionBar } from '../pseudonym/ConsultantAcceptedActionBar';
+import { AnonymousConsentGate } from '../pseudonym/AnonymousConsentGate';
+import {
+	BreathingTutorialCard,
+	BreathingTutorialPhase
+} from '../pseudonym/BreathingTutorialCard';
+import {
+	generatePseudonym,
+	regeneratePseudonym,
+	type Pseudonym
+} from '../../utils/pseudonymGenerator';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import LegalLinks from '../legalLinks/LegalLinks';
 import { renderToString } from 'react-dom/server';
+import { mobileListView } from '../app/navigationHandler';
+import { UserAvatar } from '../message/UserAvatar';
 
 const MessageSubmitInterfaceComponent = lazy(() =>
 	import('../messageSubmitInterface/messageSubmitInterfaceComponent').then(
@@ -86,6 +109,8 @@ type WaitingGameStage =
 	| 'setup'
 	| 'practice'
 	| 'practiceResult'
+	| 'bellyPractice'
+	| 'selfTimer'
 	| 'game'
 	| 'completion'
 	| 'prize'
@@ -123,15 +148,55 @@ const BREATHING_PRESETS: Array<{
 
 const BREATH_LEVELS = [
 	{ level: 1, title: 'Chaos Tamer', emoji: '😤', success: 'Good start.' },
-	{ level: 2, title: 'Breath Finder', emoji: '😤', success: 'You found a rhythm.' },
-	{ level: 3, title: 'Breath Director', emoji: '😌', success: 'Great control.' },
-	{ level: 4, title: 'Calm Builder', emoji: '😌', success: 'Flow is improving.' },
-	{ level: 5, title: 'Inner Balance', emoji: '🙂', success: 'Breathing stays smooth.' },
+	{
+		level: 2,
+		title: 'Breath Finder',
+		emoji: '😤',
+		success: 'You found a rhythm.'
+	},
+	{
+		level: 3,
+		title: 'Breath Director',
+		emoji: '😌',
+		success: 'Great control.'
+	},
+	{
+		level: 4,
+		title: 'Calm Builder',
+		emoji: '😌',
+		success: 'Flow is improving.'
+	},
+	{
+		level: 5,
+		title: 'Inner Balance',
+		emoji: '🙂',
+		success: 'Breathing stays smooth.'
+	},
 	{ level: 6, title: 'Rhythm Keeper', emoji: '🙂', success: 'Strong focus.' },
-	{ level: 7, title: 'Peace Crafter', emoji: '😇', success: 'You stay centered.' },
-	{ level: 8, title: 'Silent Navigator', emoji: '😇', success: 'Calm under pressure.' },
-	{ level: 9, title: 'Stillness Master', emoji: '🤍', success: 'Almost complete.' },
-	{ level: 10, title: 'True Wisdom', emoji: '🤍', success: 'You mastered this round.' }
+	{
+		level: 7,
+		title: 'Peace Crafter',
+		emoji: '😇',
+		success: 'You stay centered.'
+	},
+	{
+		level: 8,
+		title: 'Silent Navigator',
+		emoji: '😇',
+		success: 'Calm under pressure.'
+	},
+	{
+		level: 9,
+		title: 'Stillness Master',
+		emoji: '🤍',
+		success: 'Almost complete.'
+	},
+	{
+		level: 10,
+		title: 'True Wisdom',
+		emoji: '🤍',
+		success: 'You mastered this round.'
+	}
 ];
 
 const BRIEFING_SCREENS: BriefingScreen[] = [
@@ -159,7 +224,9 @@ const BRIEFING_NEGATIVE_SCREEN = {
 	text: 'Okay please hold on once a counsellor is free we let you in.',
 	interaction: 'negative' as const
 };
-const LEVEL_EMOJI_VIEWBOX_OFFSETS = [0, 240, 459, 678, 878, 1075, 1299, 1520, 1739, 1983];
+const LEVEL_EMOJI_VIEWBOX_OFFSETS = [
+	0, 240, 459, 678, 878, 1075, 1299, 1520, 1739, 1983
+];
 const TYPEWRITER_TIMING = {
 	charForwardMs: 56,
 	charForwardSlowMs: 68,
@@ -186,7 +253,8 @@ const LevelEmojiIcon = ({
 	level: number;
 	className?: string;
 }) => {
-	const yOffset = LEVEL_EMOJI_VIEWBOX_OFFSETS[Math.max(0, Math.min(9, level - 1))];
+	const yOffset =
+		LEVEL_EMOJI_VIEWBOX_OFFSETS[Math.max(0, Math.min(9, level - 1))];
 	return (
 		<svg
 			className={className}
@@ -194,7 +262,13 @@ const LevelEmojiIcon = ({
 			xmlns="http://www.w3.org/2000/svg"
 			aria-hidden="true"
 		>
-			<image href={breathLevelEmojiSprite} x="0" y="0" width="121" height="2348" />
+			<image
+				href={breathLevelEmojiSprite}
+				x="0"
+				y="0"
+				width="121"
+				height="2348"
+			/>
 		</svg>
 	);
 };
@@ -261,10 +335,7 @@ const SPEAKER_HINT_ICON = (
 		xmlns="http://www.w3.org/2000/svg"
 		aria-hidden="true"
 	>
-		<path
-			d="M4 10.5V13.5H7.2L11 17V7L7.2 10.5H4Z"
-			fill="currentColor"
-		/>
+		<path d="M4 10.5V13.5H7.2L11 17V7L7.2 10.5H4Z" fill="currentColor" />
 		<path
 			d="M14.2 9.2C14.9 9.9 15.3 10.9 15.3 12C15.3 13.1 14.9 14.1 14.2 14.8"
 			stroke="currentColor"
@@ -281,9 +352,15 @@ const SPEAKER_HINT_ICON = (
 );
 
 const COMPLETION_HEART_ICON = (
-	<svg width="157" height="165" viewBox="0 0 157 165" fill="none" xmlns="http://www.w3.org/2000/svg">
+	<svg
+		width="226"
+		height="238"
+		viewBox="0 0 226 238"
+		fill="none"
+		xmlns="http://www.w3.org/2000/svg"
+	>
 		<path
-			d="M155.597 34.4881C155.031 34.2884 154.465 34.1553 153.877 34.0776C153.5 34.0111 153.112 34.0111 152.613 33.9667C152.668 33.1458 152.713 32.4136 152.768 31.6925C153.234 26.9111 152.979 22.0853 152.025 17.3814C150.583 8.85037 143.893 2.17182 135.362 0.751818C130.447 -0.235536 125.4 -0.246613 120.474 0.69635C111.843 2.28275 103.634 5.66635 96.3894 10.6253C88.3244 16.1278 81.1908 22.8839 75.2669 30.6385C74.7344 31.4039 73.9689 31.9919 73.0925 32.3247C72.5379 32.5799 72.0054 32.8683 71.495 33.2122L72.4602 34.2883C71.2731 36.141 70.0972 37.9494 68.9545 39.813C67.8229 41.6878 66.8467 43.5737 65.8149 45.4265C65.6817 45.4265 65.6041 45.4265 65.593 45.3821C65.3378 44.9051 65.0716 44.4392 64.8275 43.951C62.4757 39.0364 59.2807 34.5657 55.3979 30.7496C50.3614 25.5246 43.5829 22.3296 36.3611 21.7635C27.6968 20.8428 19.0993 23.949 13.0421 30.206C10.7124 32.6355 8.77103 35.3978 7.28457 38.4153C1.6378 49.5203 -0.458974 62.0893 1.27172 74.4152C1.56015 75.4691 1.32719 76.6006 0.639367 77.4437C-0.425633 78.6308 -0.148276 79.4628 1.38265 79.9731C2.04829 80.1617 2.5253 80.7275 2.62515 81.4042C3.40172 84.0556 4.15608 86.7292 5.13233 89.3142C8.4273 97.812 12.9866 105.766 18.6666 112.9C27.3198 123.905 37.1709 133.9 48.055 142.708C51.1057 145.215 54.3339 147.512 57.5178 149.808C59.0266 150.929 60.7461 151.75 62.5765 152.227C64.063 152.637 65.6272 152.637 67.1139 152.227C67.8017 152.016 68.5006 151.683 68.4785 150.862C68.4563 150.041 67.6686 149.864 67.0696 149.819H67.0585C66.171 149.708 65.3389 149.309 64.6955 148.699L61.5559 146.203C61.2785 145.981 61.0123 145.748 60.7017 145.482L60.6906 145.493C61.8665 145.681 63.0535 145.759 64.2406 145.737C65.472 145.559 66.6701 145.226 67.7906 144.716C71.7399 142.886 75.5452 140.756 79.1617 138.348C79.3724 138.171 79.561 137.971 79.7163 137.76C79.4612 137.572 79.1838 137.405 78.8954 137.283C78.0301 137.061 77.0982 137.206 76.3216 137.66C74.0253 138.903 71.6956 140.112 69.377 141.333C68.9444 141.565 68.4784 141.721 68.0346 141.921C77.9746 132.934 88.7911 124.98 100.328 118.169C100.084 118.69 99.7736 119.189 99.4075 119.633C89.8668 131.947 79.6939 143.762 68.9229 155.011C66.7708 157.252 64.7515 159.637 62.7547 162.022C61.7563 163.209 62.0558 163.919 63.5202 164.385V164.396C63.7532 164.463 63.9972 164.518 64.2413 164.563C66.1162 164.896 68.0577 164.419 69.5663 163.243C73.2273 160.458 76.6552 157.374 79.7949 154.013C94.8713 138.126 108.749 121.143 121.318 103.202C128.175 93.6948 134.331 83.6994 139.745 73.3055C144.959 63.4209 148.809 52.8709 151.194 41.9434C151.338 40.0686 152.514 38.4377 154.245 37.7056C154.866 37.3949 155.443 36.9956 155.953 36.5186C156.929 35.742 156.806 35.0206 155.597 34.4881ZM86.8263 27.3327C93.8263 18.8792 102.635 12.112 112.597 7.5081C116.325 5.77746 120.274 4.57949 124.334 3.93595C126.531 3.56984 128.783 3.56984 130.979 3.93595C135.028 4.69031 138.523 7.26414 140.442 10.9138C141.818 13.3877 142.75 16.0835 143.182 18.8792C141.019 19.8221 138.978 20.8317 136.859 21.6193C119.397 28.1314 102.236 35.3868 85.4291 43.4518H85.4402C84.5416 43.9067 83.5876 44.2506 82.6113 44.4946C82.811 44.2728 83.0329 44.062 83.2548 43.8623C98.3976 31.9144 114.461 21.1755 131.291 11.7447C131.978 11.3564 132.711 11.0347 133.387 10.6243H133.376C133.798 10.358 134.186 10.0474 134.563 9.71458C134.397 9.07115 133.853 8.59412 133.188 8.49426C131.657 8.05052 130.004 8.21692 128.584 8.96019C125.533 10.48 122.504 12.0552 119.431 13.5309C109.968 18.0905 100.461 22.6498 90.6648 26.5438C89.4334 27.0319 88.1687 27.4756 86.9151 27.9305C86.8486 27.9638 86.7376 27.8972 86.5712 27.8528C86.6378 27.6753 86.7265 27.4991 86.8263 27.3327ZM79.7263 36.9953C80.8135 35.2868 81.9783 33.6228 83.1763 31.992V32.0031C83.5424 31.4928 84.0527 31.1045 84.6407 30.8716C89.1892 29.2186 93.7486 27.6322 98.3193 26.0347C98.5522 25.9349 98.8074 25.9016 99.0625 25.9238C91.4411 31.2488 83.8975 36.6738 76.7862 42.6531L76.4866 42.4312C77.5294 40.6341 78.5612 38.7926 79.6927 37.0176L79.7263 36.9953ZM72.7816 50.4742C72.9813 50.4076 73.0812 50.341 73.1699 50.3521C75.8768 50.7404 78.6392 50.3522 81.1463 49.2317C86.0388 47.2348 90.8867 45.1603 95.7457 43.0856C98.3749 41.9541 100.971 40.7227 103.578 39.5689C104.055 39.3359 104.576 39.1806 105.12 39.114L69.7959 60.5583V60.5694C70.4394 57.108 71.4392 53.7246 72.7816 50.4742ZM60.7781 62.3445C60.7115 62.877 60.7115 63.4317 60.7781 63.9642C61.0222 64.8295 61.3106 65.6726 61.6434 66.4936C61.122 66.9151 60.5562 67.2923 59.9683 67.603C49.174 72.4954 38.7126 78.0865 28.1943 83.5337C26.9851 84.166 25.7426 84.7207 24.5112 85.3086L24.3115 85.0757V85.0646C24.6443 84.6097 24.9882 84.1549 25.3654 83.7334C27.9724 81.0376 30.5239 78.2752 33.2418 75.6905C40.9186 68.2022 49.1393 61.2797 57.8144 54.9783L59.4784 53.7913L59.4895 53.8024C60.2994 56.5758 60.7337 59.4492 60.7781 62.3445ZM50.8824 36.4184C50.8047 36.5849 50.7715 36.7069 50.716 36.7291C46.4117 38.3599 42.2514 40.3123 38.2467 42.5755C30.1817 46.9909 22.1831 51.5059 14.151 55.988C13.3411 56.4428 12.5091 56.8644 11.5218 57.3969H11.5329C21.95 47.5233 33.0658 38.4155 44.7921 30.1394C47.0553 31.9921 49.0963 34.0999 50.8824 36.4184ZM14.8601 40.1792C16.6795 36.0524 19.4308 32.4135 22.8919 29.5292C25.6764 27.1995 29.1155 25.7795 32.7319 25.4578C35.6162 25.3135 38.4673 26.0346 40.9302 27.5434C41.0522 27.6321 41.1631 27.7209 41.2519 27.8318C41.2852 27.8651 41.2852 27.9317 41.3517 28.1203C32.4767 32.0917 23.9457 36.8399 14.8488 40.756C14.8599 40.4232 14.8157 40.279 14.8601 40.1792ZM11.1105 50.5296C11.8538 48.1666 12.6303 45.8481 13.3847 43.496H13.3736C13.5955 42.7749 14.1169 42.1981 14.8047 41.9207C23.1693 38.0379 31.534 34.1328 39.8876 30.2168C40.3868 29.9616 40.9304 29.8174 41.4962 29.773C41.2743 30.0171 41.0302 30.2389 40.7751 30.4497C38.5896 31.9807 36.4151 33.5226 34.2187 35.0204C26.2976 40.3233 18.6986 46.0919 11.4654 52.2933C11.2546 52.4708 11.0217 52.604 10.5668 52.9257C10.7776 51.9383 10.8886 51.2174 11.1105 50.5296ZM9.36876 68.446V61.8453C9.36876 61.5568 9.74594 61.1685 10.0455 61.0021C19.708 55.5218 29.3708 50.0414 39.0334 44.5835C39.699 44.1952 40.4201 43.8957 41.1522 43.6849C30.1694 51.3728 19.6415 59.6931 9.61404 68.5903L9.36876 68.446ZM10.3894 73.6156L10.7 73.305V73.2939C20.0076 64.2857 29.8368 55.8214 40.131 47.9557C44.2024 44.9161 48.4181 42.0428 52.7445 39.0142L52.7334 39.0032C55.2295 42.6531 57.1931 46.6357 58.5577 50.8403C49.472 54.4789 40.6524 58.7835 32.1877 63.6978C25.5313 67.2478 18.8199 70.7646 12.1413 74.2924C11.5755 74.592 10.9543 74.8138 10.3663 75.1023C9.88928 74.5143 9.91146 74.0706 10.3774 73.6046L10.3894 73.6156ZM10.7222 78.1307C20.629 73.671 29.9587 68.2128 39.6647 63.3428C39.3873 63.6201 39.1321 63.9307 38.8437 64.1637C34.5283 68.0909 30.1462 71.9405 25.9195 75.9563C23.4566 78.3192 21.1823 80.8819 18.9305 83.4223V83.4112C18.1872 84.2766 17.566 85.2306 17.0667 86.2512C16.4011 87.5603 16.7783 88.4145 18.1429 88.9581V88.9692C19.9067 89.6681 21.8704 89.7014 23.6564 89.0468C25.62 88.3923 27.5282 87.5936 29.3918 86.6839C34.5615 84.0879 39.6647 81.3589 44.8232 78.7518C48.4732 76.8991 52.1672 75.1018 55.8504 73.2936H55.8393C56.2719 73.0606 56.749 72.9275 57.2371 72.9053C50.9692 77.5092 44.6568 82.0688 38.4553 86.7614C32.0543 91.3653 26.0857 96.546 20.6389 102.248C15.9907 94.8153 12.6403 86.6614 10.721 78.1192L10.7222 78.1307ZM23.5465 106.798C24.079 105.922 24.6781 105.089 25.3215 104.291C26.9856 102.471 28.7494 100.73 30.6022 99.0989C36.3597 94.2843 42.1619 89.5028 48.0415 84.8435C52.8008 81.0607 57.7041 77.4661 62.5301 73.7721C63.1735 73.3172 63.8946 72.9955 64.649 72.8069C66.8455 72.2411 69.0089 71.5201 71.1054 70.6658C79.0597 67.1823 86.9361 63.4883 94.9126 60.0158C105.196 55.5783 115.569 51.3072 125.908 46.9584C126.541 46.6699 127.217 46.4813 127.916 46.4148C127.484 46.6477 127.062 46.9029 126.629 47.1248C112.651 54.2912 98.7066 61.5355 85.0944 69.3676C75.1212 75.1141 65.2255 80.9827 55.3199 86.8626C53.0789 88.205 50.9823 89.7801 48.8078 91.2779C48.3751 91.5997 47.9757 91.9658 47.6318 92.3873C46.9551 93.2305 47.1326 94.007 48.1532 94.362C48.8632 94.5506 49.5954 94.6504 50.3276 94.6615C50.7935 94.6837 51.2594 94.6837 51.7254 94.6615C51.6366 94.7503 51.5368 94.839 51.4259 94.9056C44.0041 98.4999 36.638 102.205 28.9387 105.19C27.5964 105.7 26.2319 106.121 24.8673 106.565C24.4347 106.665 23.9903 106.742 23.5465 106.798ZM45.9004 132.058C38.3012 125.213 31.4676 117.581 25.499 109.272C25.7875 109.183 26.0426 109.105 26.2978 109.039C31.2456 107.652 36.0603 105.811 40.6863 103.559C54.0542 97.3792 67.3557 91.056 80.7445 84.9432C90.8067 80.3503 101.002 76.0128 111.141 71.5753C111.729 71.3201 112.328 71.1094 112.916 70.8875L113.049 71.1315L110.886 72.4073C88.4323 85.3427 66.6984 99.5094 45.8102 114.84C44.0352 116.149 42.2602 117.547 40.5405 118.933C40.0413 119.344 39.5865 119.799 39.1871 120.309C38.6435 121.03 38.7322 121.618 39.5532 122.017V122.006C40.3076 122.361 41.1174 122.594 41.9495 122.694C43.3362 122.838 44.734 122.594 45.9877 121.984C48.3506 120.93 50.6691 119.865 52.9766 118.734C71.592 109.659 90.4731 101.183 109.62 93.2959C110.197 93.0296 110.819 92.8743 111.451 92.841C110.819 93.2182 110.197 93.6065 109.565 93.9615C98.2714 100.396 86.9449 106.775 75.6951 113.287C66.8201 118.445 57.9451 123.682 49.4805 129.517C48.2713 130.349 47.0842 131.225 45.8973 132.057L45.9004 132.058ZM84.2859 122.595C77.2523 127.266 70.563 132.447 64.2838 138.104C63.0967 139.214 61.9874 140.412 60.9666 141.688C60.1013 142.509 59.8129 143.762 60.2345 144.872L59.8906 144.938L50.716 136.984C62.9745 132.136 74.4456 126.212 86.3494 121.208L84.2859 122.595ZM117.244 95.1051C114.559 98.9547 111.864 102.793 109.19 106.643V106.631C108.769 107.253 108.17 107.719 107.471 107.974C91.6399 114.164 76.2533 121.342 60.8548 128.52C60.2669 128.797 59.6456 129.063 59.0355 129.34L58.9024 129.052C77.917 116.461 97.8757 105.456 117.92 93.8616C117.599 94.4828 117.454 94.8157 117.244 95.1152L117.244 95.1051ZM140.863 46.4587V46.4476C139.032 53.3258 136.603 60.0376 133.618 66.494C130.634 72.9505 127.284 79.2408 123.567 85.309C123.201 85.9525 122.525 86.3519 121.792 86.3408C120.117 86.5293 118.475 86.8733 116.867 87.3503C108.624 89.9684 100.526 93.0303 92.6156 96.5249C82.5535 100.896 72.547 105.4 62.5173 109.815C62.007 110.07 61.4745 110.248 60.9087 110.326C61.1971 110.082 61.4967 109.815 61.774 109.593C80.3226 96.5248 99.1058 83.8227 118.864 72.6081C122.691 70.4337 126.43 68.1263 130.19 65.852L130.202 65.8631C131.011 65.375 131.766 64.8092 132.454 64.1768C133.319 63.3559 133.141 62.657 132.01 62.1467C130.723 61.5698 129.292 61.4589 127.938 61.8028C126.496 62.1578 125.087 62.6016 123.701 63.1452C100.204 72.5084 76.9854 82.548 54.2086 93.553C53.4431 93.9302 52.6555 94.2298 51.8678 94.5626H51.8789C52.4669 93.9302 53.1214 93.3534 53.8314 92.8541C60.3214 89.0602 66.8221 85.2992 73.3564 81.5717C95.1778 69.1577 117.243 57.1988 139.543 45.6826C139.975 45.4607 140.419 45.2499 141.162 44.8949C141.04 45.5828 140.996 46.0376 140.863 46.4703L140.863 46.4587ZM143.137 35.7201L143.126 35.709C143.081 36.652 142.405 37.4507 141.484 37.6393C126.485 42.7979 111.607 48.2893 97.0322 54.5351C91.0083 57.131 85.0287 59.86 79.0383 62.5447L77.4297 63.2658C77.585 62.6446 77.8513 62.0455 78.1952 61.4908C78.7055 61.0359 79.2823 60.6366 79.8925 60.3149C99.6393 47.7013 119.63 35.5092 140.242 24.3491C141.285 23.7611 142.339 23.2619 143.637 22.5741C143.693 23.3285 143.748 23.7944 143.77 24.2825V24.2715C143.87 28.0989 143.659 31.9372 143.127 35.7314L143.137 35.7201Z"
+			d="M223.957 49.6392C223.143 49.3518 222.328 49.1602 221.482 49.0484C220.939 48.9526 220.381 48.9526 219.662 48.8887C219.742 47.7072 219.806 46.6533 219.885 45.6154C220.556 38.7333 220.189 31.7873 218.816 25.0168C216.741 12.7377 207.111 3.12502 194.832 1.08115C187.758 -0.339994 180.494 -0.355937 173.403 1.00131C160.98 3.28468 149.165 8.15484 138.737 15.2925C127.129 23.2125 116.861 32.9368 108.335 44.0983C107.568 45.2 106.467 46.0463 105.205 46.5253C104.407 46.8927 103.64 47.3078 102.906 47.8028L104.295 49.3516C102.586 52.0183 100.894 54.6212 99.2491 57.3036C97.6204 60.002 96.2153 62.7165 94.7302 65.3833C94.5385 65.3833 94.4268 65.3833 94.4108 65.3194C94.0435 64.6328 93.6603 63.9623 93.309 63.2596C89.9239 56.1858 85.3252 49.7509 79.7366 44.2582C72.4873 36.7377 62.7307 32.139 52.3361 31.3242C39.8652 29.999 27.4904 34.4698 18.7721 43.4758C15.4188 46.9727 12.6245 50.9486 10.485 55.2918C2.35736 71.2757 -0.66062 89.3668 1.83044 107.108C2.24559 108.625 1.91028 110.254 0.920269 111.467C-0.612631 113.176 -0.213419 114.373 1.99011 115.108C2.94819 115.379 3.63477 116.194 3.77849 117.168C4.89624 120.984 5.98202 124.832 7.38718 128.553C12.1298 140.784 18.6922 152.233 26.8676 162.501C39.3226 178.341 53.5017 192.727 69.1676 205.405C73.5586 209.013 78.2051 212.319 82.7878 215.624C84.9595 217.238 87.4345 218.419 90.069 219.106C92.2086 219.696 94.46 219.696 96.5999 219.106C97.5899 218.802 98.5958 218.323 98.564 217.141C98.5321 215.959 97.3983 215.705 96.5361 215.64H96.5202C95.2427 215.48 94.0451 214.906 93.119 214.028L88.6 210.435C88.2008 210.116 87.8176 209.78 87.3705 209.397L87.3546 209.413C89.0471 209.684 90.7556 209.796 92.4642 209.764C94.2366 209.508 95.9611 209.029 97.5739 208.295C103.258 205.661 108.735 202.595 113.941 199.129C114.244 198.874 114.516 198.587 114.739 198.283C114.372 198.012 113.973 197.772 113.558 197.596C112.312 197.277 110.971 197.485 109.853 198.139C106.548 199.928 103.195 201.668 99.8573 203.426C99.2346 203.76 98.5639 203.984 97.9251 204.272C112.232 191.337 127.801 179.888 144.406 170.085C144.055 170.835 143.608 171.553 143.081 172.192C129.349 189.916 114.707 206.922 99.2037 223.113C96.1061 226.339 93.1996 229.771 90.3255 233.204C88.8885 234.913 89.3196 235.935 91.4273 236.605V236.621C91.7627 236.718 92.1139 236.797 92.4652 236.862C95.1639 237.341 97.9583 236.654 100.13 234.962C105.399 230.953 110.333 226.514 114.852 221.676C136.552 198.81 156.527 174.365 174.618 148.542C184.488 134.858 193.348 120.471 201.141 105.511C208.646 91.2834 214.187 76.0984 217.62 60.3699C217.827 57.6715 219.52 55.324 222.011 54.2703C222.905 53.8231 223.736 53.2484 224.47 52.5618C225.875 51.444 225.698 50.4057 223.957 49.6392ZM124.973 39.3401C135.048 27.1727 147.727 17.4323 162.066 10.8058C167.432 8.31477 173.115 6.59048 178.959 5.6642C182.121 5.13725 185.363 5.13725 188.524 5.6642C194.352 6.74999 199.382 10.4546 202.144 15.7077C204.125 19.2685 205.466 23.1487 206.088 27.1727C202.975 28.5298 200.037 29.983 196.987 31.1166C171.853 40.4897 147.153 50.9328 122.962 62.5411H122.978C121.684 63.1958 120.311 63.6908 118.906 64.042C119.193 63.7227 119.513 63.4193 119.832 63.1319C141.628 45.9348 164.749 30.4778 188.973 16.9037C189.962 16.3448 191.017 15.8817 191.99 15.291H191.974C192.581 14.9077 193.14 14.4607 193.682 13.9816C193.443 13.0555 192.66 12.3689 191.703 12.2252C189.5 11.5865 187.12 11.826 185.076 12.8958C180.685 15.0833 176.325 17.3506 171.902 19.4746C158.282 26.0374 144.598 32.5998 130.498 38.2046C128.725 38.9072 126.905 39.5458 125.101 40.2006C125.005 40.2485 124.845 40.1526 124.606 40.0887C124.701 39.8333 124.829 39.5796 124.973 39.3401ZM114.753 53.2479C116.318 50.7888 117.995 48.3938 119.719 46.0465V46.0624C120.246 45.328 120.981 44.7691 121.827 44.4338C128.374 42.0546 134.936 39.7712 141.515 37.4719C141.85 37.3282 142.218 37.2803 142.585 37.3122C131.615 44.9767 120.757 52.7852 110.522 61.3914L110.09 61.0721C111.591 58.4854 113.076 55.8349 114.705 53.28L114.753 53.2479ZM104.758 72.6487C105.045 72.5528 105.189 72.457 105.317 72.4729C109.213 73.0318 113.189 72.4731 116.797 70.8603C123.839 67.9861 130.817 65.0002 137.811 62.014C141.595 60.3853 145.332 58.6129 149.084 56.9522C149.771 56.6169 150.521 56.3933 151.304 56.2975L100.46 87.1632V87.1791C101.386 82.197 102.825 77.3271 104.758 72.6487ZM87.4805 89.7341C87.3846 90.5006 87.3846 91.299 87.4805 92.0654C87.8319 93.3109 88.247 94.5244 88.726 95.7061C87.9755 96.3128 87.1611 96.8557 86.3149 97.3029C70.7782 104.345 55.7207 112.392 40.5813 120.233C38.8408 121.143 37.0524 121.941 35.28 122.787L34.9926 122.452V122.436C35.4716 121.781 35.9666 121.127 36.5095 120.52C40.2619 116.64 43.9343 112.664 47.8463 108.944C58.8959 98.1653 70.7283 88.2015 83.2147 79.1316L85.6098 77.4231L85.6258 77.4391C86.7915 81.431 87.4166 85.5668 87.4805 89.7341ZM73.2372 52.4176C73.1254 52.6572 73.0776 52.8328 72.9977 52.8648C66.8023 55.2121 60.8142 58.0222 55.0501 61.2798C43.4418 67.635 31.9291 74.1337 20.3681 80.5849C19.2024 81.2395 18.0049 81.8464 16.5838 82.6128H16.5998C31.5936 68.4013 47.593 55.2921 64.4712 43.3799C67.7287 46.0466 70.6664 49.0805 73.2372 52.4176ZM21.3888 57.8307C24.0075 51.8908 27.9676 46.6532 32.9493 42.5017C36.9571 39.1484 41.9072 37.1046 47.1124 36.6415C51.2639 36.4338 55.3676 37.4717 58.9126 39.6434C59.0882 39.7711 59.2478 39.8989 59.3756 40.0585C59.4235 40.1064 59.4235 40.2023 59.5193 40.4738C46.7451 46.19 34.4661 53.0243 21.3725 58.6609C21.3885 58.1819 21.3249 57.9743 21.3888 57.8307ZM15.9918 72.7284C17.0617 69.3273 18.1793 65.9901 19.2652 62.6047H19.2492C19.5686 61.5668 20.3191 60.7365 21.309 60.3373C33.3486 54.7486 45.3882 49.1278 57.4119 43.4913C58.1304 43.124 58.9129 42.9165 59.7272 42.8526C59.4079 43.2039 59.0565 43.5232 58.6893 43.8266C55.5437 46.0302 52.4138 48.2495 49.2524 50.4054C37.8513 58.0381 26.9137 66.3411 16.5026 75.267C16.1992 75.5225 15.864 75.7142 15.2092 76.1772C15.5127 74.756 15.6724 73.7184 15.9918 72.7284ZM13.4849 98.5163V89.0156C13.4849 88.6003 14.0277 88.0414 14.4589 87.8019C28.3666 79.9139 42.2746 72.0257 56.1824 64.1699C57.1405 63.6111 58.1784 63.18 59.2321 62.8766C43.4241 73.9421 28.2708 85.9178 13.8379 98.724L13.4849 98.5163ZM14.9539 105.957L15.401 105.51V105.494C28.7978 92.5282 42.9454 80.3451 57.7623 69.0237C63.6224 64.6487 69.6902 60.513 75.9174 56.1538L75.9014 56.138C79.4942 61.3914 82.3205 67.1238 84.2846 73.1756C71.2072 78.4128 58.5127 84.6086 46.3291 91.682C36.7483 96.7916 27.0883 101.854 17.4755 106.931C16.6611 107.362 15.767 107.682 14.9207 108.097C14.2341 107.251 14.266 106.612 14.9366 105.941L14.9539 105.957ZM15.4329 112.456C29.6922 106.037 43.1208 98.1806 57.0911 91.171C56.6918 91.5701 56.3245 92.0172 55.9094 92.3526C49.6981 98.0052 43.3907 103.546 37.307 109.326C33.7621 112.727 30.4886 116.416 27.2475 120.072V120.056C26.1776 121.302 25.2835 122.675 24.5648 124.144C23.6068 126.028 24.1497 127.258 26.1138 128.04V128.056C28.6526 129.062 31.479 129.11 34.0497 128.168C36.876 127.226 39.6225 126.076 42.3049 124.767C49.7458 121.03 57.0911 117.102 64.5159 113.35C69.7695 110.683 75.0865 108.096 80.3879 105.494H80.3719C80.9945 105.158 81.6813 104.967 82.3838 104.935C73.3621 111.561 64.2764 118.124 55.3503 124.878C46.1371 131.505 37.5463 138.962 29.7064 147.169C23.0161 136.471 18.1937 124.734 15.4312 112.439L15.4329 112.456ZM33.8915 153.718C34.6579 152.457 35.5202 151.258 36.4463 150.11C38.8415 147.49 41.3802 144.984 44.0471 142.636C52.3341 135.706 60.6854 128.824 69.1482 122.118C75.9984 116.673 83.056 111.499 90.0022 106.182C90.9283 105.528 91.9662 105.065 93.0521 104.793C96.2136 103.979 99.3275 102.941 102.345 101.711C113.794 96.6974 125.131 91.3804 136.612 86.3823C151.413 79.9952 166.343 73.8477 181.225 67.5882C182.136 67.173 183.109 66.9015 184.115 66.8058C183.493 67.141 182.886 67.5084 182.263 67.8278C162.143 78.1427 142.073 88.5697 122.48 99.8428C108.125 108.114 93.8818 116.561 79.6243 125.024C76.3987 126.956 73.381 129.223 70.2511 131.379C69.6283 131.842 69.0535 132.369 68.5585 132.976C67.5845 134.19 67.84 135.307 69.309 135.818C70.3309 136.09 71.3848 136.233 72.4387 136.249C73.1092 136.281 73.7798 136.281 74.4506 136.249C74.3228 136.377 74.1791 136.505 74.0195 136.601C63.337 141.774 52.7346 147.107 41.6527 151.403C39.7207 152.138 37.7567 152.743 35.7926 153.383C35.1699 153.526 34.5303 153.637 33.8915 153.718ZM66.0664 190.076C55.1285 180.223 45.2927 169.238 36.7018 157.279C37.117 157.151 37.4842 157.038 37.8515 156.944C44.9731 154.947 51.9031 152.297 58.5615 149.056C77.8025 140.161 96.9479 131.06 116.219 122.261C130.702 115.651 145.376 109.407 159.97 103.02C160.816 102.653 161.678 102.35 162.525 102.03L162.716 102.382L159.603 104.218C127.284 122.836 96.0018 143.227 65.9366 165.293C63.3817 167.177 60.8269 169.189 58.3517 171.184C57.6331 171.776 56.9785 172.431 56.4037 173.165C55.6212 174.203 55.7489 175.049 56.9306 175.623V175.607C58.0164 176.118 59.182 176.454 60.3797 176.598C62.3756 176.805 64.3876 176.454 66.1921 175.576C69.5931 174.059 72.9302 172.526 76.2515 170.898C103.045 157.836 130.222 145.636 157.781 134.284C158.611 133.9 159.507 133.677 160.416 133.629C159.507 134.172 158.611 134.731 157.702 135.242C141.446 144.503 125.143 153.685 108.951 163.058C96.177 170.482 83.4029 178.02 71.2194 186.418C69.4789 187.616 67.7703 188.877 66.0619 190.074L66.0664 190.076ZM121.316 176.455C111.193 183.178 101.564 190.636 92.5264 198.778C90.8178 200.376 89.2211 202.1 87.7518 203.937C86.5064 205.118 86.0913 206.922 86.6981 208.519L86.2031 208.614L72.9977 197.166C90.6419 190.188 107.153 181.661 124.286 174.459L121.316 176.455ZM168.754 136.888C164.89 142.429 161.011 147.953 157.162 153.495V153.478C156.556 154.373 155.694 155.044 154.688 155.411C131.901 164.32 109.755 174.652 87.5909 184.983C86.7447 185.382 85.8505 185.765 84.9723 186.164L84.7807 185.749C112.149 167.626 140.877 151.786 169.727 135.098C169.265 135.992 169.057 136.471 168.754 136.902V136.888ZM202.75 66.869V66.853C200.115 76.7531 196.619 86.4137 192.322 95.7067C188.027 105 183.205 114.054 177.855 122.788C177.328 123.714 176.355 124.289 175.3 124.273C172.89 124.544 170.526 125.039 168.212 125.726C156.347 129.494 144.691 133.901 133.306 138.931C118.823 145.223 104.42 151.706 89.9838 158.06C89.2493 158.427 88.4829 158.684 87.6685 158.796C88.0836 158.445 88.5148 158.06 88.9139 157.741C115.612 138.931 142.647 120.649 171.086 104.507C176.594 101.377 181.976 98.0561 187.388 94.7826L187.405 94.7986C188.57 94.096 189.656 93.2817 190.647 92.3714C191.892 91.1899 191.636 90.1839 190.008 89.4494C188.155 88.6191 186.095 88.4594 184.147 88.9544C182.071 89.4654 180.043 90.1042 178.048 90.8866C144.228 104.363 110.808 118.814 78.0247 134.654C76.9229 135.197 75.7893 135.628 74.6555 136.107H74.6715C75.5178 135.197 76.4599 134.367 77.4818 133.648C86.8232 128.187 96.1799 122.774 105.585 117.409C136.993 99.5406 168.753 82.3277 200.85 65.7519C201.472 65.4325 202.111 65.1291 203.18 64.6182C203.005 65.6083 202.942 66.2629 202.75 66.8857V66.869ZM206.023 51.4125L206.007 51.3965C205.943 52.7538 204.97 53.9034 203.644 54.1749C182.055 61.5999 160.641 69.5039 139.663 78.4937C130.992 82.2301 122.385 86.1581 113.763 90.0223L111.448 91.0602C111.671 90.1661 112.055 89.3037 112.55 88.5053C113.284 87.8506 114.114 87.2759 114.993 86.8128C143.415 68.6575 172.189 51.1089 201.856 35.0457C203.358 34.1994 204.875 33.4809 206.743 32.4909C206.823 33.5767 206.903 34.2473 206.934 34.9499V34.934C207.078 40.443 206.775 45.9676 206.009 51.4287L206.023 51.4125Z"
 			fill="black"
 		/>
 	</svg>
@@ -294,7 +371,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const tenantData = useTenant();
 
 	const { activeSession } = useContext(ActiveSessionContext);
-	const { userData } = useContext(UserDataContext);
+	const { userData, setUserData } = useContext(UserDataContext);
 	const { addEventNotification } = useContext(NotificationsContext);
 	const { type } = useContext(SessionTypeContext);
 	const legalLinks = useContext(LegalLinksContext);
@@ -310,32 +387,147 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const [phaseMsLeft, setPhaseMsLeft] = useState(0);
 	const [breathCycles, setBreathCycles] = useState(0);
 	const [breathProgress, setBreathProgress] = useState(0.2);
-	const [selectedPresetId, setSelectedPresetId] = useState<BreathPresetId>('standard446');
+	const [selectedPresetId, setSelectedPresetId] =
+		useState<BreathPresetId>('standard446');
 	const [customTiming, setCustomTiming] = useState<BreathTiming>({
 		inhale: 4,
 		hold: 4,
 		exhale: 6
 	});
-	const [waitingGameStage, setWaitingGameStage] = useState<WaitingGameStage>('tutorial');
+	const [waitingGameStage, setWaitingGameStage] =
+		useState<WaitingGameStage>('tutorial');
 	const [currentLevel, setCurrentLevel] = useState(1);
 	const [briefingScreenIndex, setBriefingScreenIndex] = useState(0);
-	const [showBriefingNegativeScreen, setShowBriefingNegativeScreen] = useState(false);
+	const [showBriefingNegativeScreen, setShowBriefingNegativeScreen] =
+		useState(false);
+	/**
+	 * Index into the three vertical Carimat breathing-tutorial cards
+	 * (0=inhale, 1=hold, 2=exhale). Replaces the old horizontal phase strip
+	 * that used to be shown inline at the end of the briefing text.
+	 */
+	const [tutorialCardIndex, setTutorialCardIndex] = useState<0 | 1 | 2>(0);
+	const tutorialPhases: BreathingTutorialPhase[] = [
+		'inhale',
+		'hold',
+		'exhale'
+	];
+
+	/**
+	 * Belly-breathing practice cards shown right after the first practice
+	 * round completes — three more Carimat messages with "Auto pilot" /
+	 * "Time it" buttons walking the asker through a deeper belly breath.
+	 */
+	const [bellyCardIndex, setBellyCardIndex] = useState<0 | 1 | 2>(0);
+	/**
+	 * Belly-stage interaction mode.
+	 *   'autoPilot' — phases advance automatically when the timer expires.
+	 *   'timeIt'    — the asker clicks the active (red) button to step forward.
+	 * Either button is clickable at any time: clicking the inactive mode
+	 * switches modes without advancing; clicking the active timeIt advances.
+	 */
+	const [bellyMode, setBellyMode] = useState<'autoPilot' | 'timeIt'>(
+		'autoPilot'
+	);
+	const [gameMode, setGameMode] = useState<'autoPilot' | 'timeIt'>(
+		'autoPilot'
+	);
 	const [stageMessage, setStageMessage] = useState(
 		'Let us get you grounded with one easy round.'
 	);
 	const [typedText, setTypedText] = useState('');
 	const [typewriterBusy, setTypewriterBusy] = useState(false);
+	const [bubbleTypedLen, setBubbleTypedLen] = useState(0);
 	const [briefingTypedText, setBriefingTypedText] = useState('');
 	const [briefingTypewriterBusy, setBriefingTypewriterBusy] = useState(false);
 	const [gameStatusTypedText, setGameStatusTypedText] = useState('');
-	const [gameStatusTypewriterBusy, setGameStatusTypewriterBusy] = useState(false);
+	const [gameStatusTypewriterBusy, setGameStatusTypewriterBusy] =
+		useState(false);
 	const [levelBadgeTypedText, setLevelBadgeTypedText] = useState('');
-	const [levelBadgeTypewriterBusy, setLevelBadgeTypewriterBusy] = useState(false);
+	const [levelBadgeTypewriterBusy, setLevelBadgeTypewriterBusy] =
+		useState(false);
 	const [centerStageTypedText, setCenterStageTypedText] = useState('');
-	const [centerStageTypewriterBusy, setCenterStageTypewriterBusy] = useState(false);
+	const [centerStageTypewriterBusy, setCenterStageTypewriterBusy] =
+		useState(false);
 	const [joinPromptEscalated, setJoinPromptEscalated] = useState(false);
-	const [anonymousInquiryConsentAccepted, setAnonymousInquiryConsentAccepted] = useState(false);
-	const [robotSequenceVisibleCount, setRobotSequenceVisibleCount] = useState(0);
+	/**
+	 * Initial values for the consent/pseudonym gates are read synchronously
+	 * from sessionStorage on mount. Without this, the first render always
+	 * starts at `false` and the typing animation replays on every reload even
+	 * when the user already confirmed earlier in the session.
+	 */
+	const [
+		anonymousInquiryConsentAccepted,
+		setAnonymousInquiryConsentAccepted
+	] = useState(() => {
+		try {
+			return (
+				sessionStorage.getItem(
+					`anonymous-inquiry-consent-${activeSession.item.id}`
+				) === '1'
+			);
+		} catch {
+			return false;
+		}
+	});
+	const [pseudonymConfirmed, setPseudonymConfirmed] = useState(() => {
+		try {
+			return (
+				sessionStorage.getItem(
+					`anonymous-pseudonym-${activeSession.item.id}`
+				) === '1'
+			);
+		} catch {
+			return false;
+		}
+	});
+	const [pseudonymSaving, setPseudonymSaving] = useState(false);
+	const [queuePeopleAhead, setQueuePeopleAhead] = useState<number | null>(
+		null
+	);
+	const [consultantAccepted, setConsultantAccepted] = useState(false);
+	/**
+	 * Persist the "Jetzt Chat starten" dismissal in sessionStorage so a
+	 * reload after the asker has already unlocked the composer doesn't
+	 * throw them back to the waiting-queue screen. Keyed per session so
+	 * switching sessions keeps its own state.
+	 */
+	const [waitingGateDismissed, setWaitingGateDismissedState] = useState(
+		() => {
+			try {
+				return (
+					sessionStorage.getItem(
+						`anonymous-waiting-dismissed-${activeSession.item.id}`
+					) === '1'
+				);
+			} catch {
+				return false;
+			}
+		}
+	);
+	const setWaitingGateDismissed = useCallback(
+		(value: boolean) => {
+			setWaitingGateDismissedState(value);
+			try {
+				const key = `anonymous-waiting-dismissed-${activeSession.item.id}`;
+				if (value) {
+					sessionStorage.setItem(key, '1');
+				} else {
+					sessionStorage.removeItem(key);
+				}
+			} catch {
+				/* storage errors are non-fatal — state still lives in memory */
+			}
+		},
+		[activeSession.item.id]
+	);
+	const [currentPseudonym, setCurrentPseudonym] = useState<Pseudonym>(() =>
+		generatePseudonym()
+	);
+	const handleRegeneratePseudonym = useCallback(() => {
+		setCurrentPseudonym((prev) => regeneratePseudonym(prev));
+	}, []);
+	const [robotSequenceVisibleCount, setRobotSequenceVisibleCount] =
+		useState(0);
 	const timerRef = useRef<number | null>(null);
 	const phaseTransitionLockRef = useRef(false);
 	const typewriterRef = useRef<number | null>(null);
@@ -369,17 +561,35 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		(activeSession.item as any).registrationType === 'ANONYMOUS' ||
 		contact?.username?.startsWith('Anonymous-') ||
 		activeSession.user?.username?.startsWith('Anonymous-');
-	const chatType: 'anonymous' | 'oneOnOne' | 'group' | 'supervision' = isSupervisor
-		? 'supervision'
-		: activeSession.isGroup
-			? 'group'
-			: isAnonymousChat
-				? 'anonymous'
-				: 'oneOnOne';
-	const isAnonymousBreathingGameAvailable =
-		isAnonymousChat && hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
+	const chatType: 'anonymous' | 'oneOnOne' | 'group' | 'supervision' =
+		isSupervisor
+			? 'supervision'
+			: activeSession.isGroup
+				? 'group'
+				: isAnonymousChat
+					? 'anonymous'
+					: 'oneOnOne';
+	const isConsultantUser =
+		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) ||
+		(userData?.userRoles || []).includes('CONSULTANT');
+	const isAskerUser =
+		hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) ||
+		(userData?.userRoles || []).includes('USER');
+	const isAnonymousAskerExperience =
+		isAnonymousChat && isAskerUser && !isConsultantUser;
+	const isAnonymousBreathingGameAvailable = isAnonymousAskerExperience;
+	const sessionStatusNum = Number(activeSession.item?.status);
+	const privacyAcceptanceRecorded = Boolean(
+		userData?.dataPrivacyConfirmation &&
+			String(userData.dataPrivacyConfirmation).trim() !== ''
+	);
+	const isAnonymousEnquiryPhaseSession =
+		sessionStatusNum === STATUS_EMPTY ||
+		sessionStatusNum === STATUS_ENQUIRY;
 	const requiresAnonymousInquiryConsent =
-		isAnonymousChat && activeSession.item.status === STATUS_ENQUIRY;
+		isAnonymousAskerExperience &&
+		isAnonymousEnquiryPhaseSession &&
+		!privacyAcceptanceRecorded;
 	const anonymousInquiryConsentStorageKey = useMemo(
 		() => `anonymous-inquiry-consent-${activeSession.item.id}`,
 		[activeSession.item.id]
@@ -388,15 +598,38 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		() => `anonymous-robot-sequence-${activeSession.item.id}`,
 		[activeSession.item.id]
 	);
+	const pseudonymStorageKey = useMemo(
+		() => `anonymous-pseudonym-${activeSession.item.id}`,
+		[activeSession.item.id]
+	);
+	const requiresPseudonymConfirmation =
+		isAnonymousAskerExperience && !pseudonymConfirmed;
+	/**
+	 * Once the user picks a pseudonym we stay in the "waiting queue" phase
+	 * for the rest of this session — the pseudonym card stays visible, the
+	 * privacy/encryption message joins it, and the composer is replaced by
+	 * the WaitingQueueActionBar. The phase naturally ends when the session
+	 * is no longer an anonymous-asker experience (component remounts for a
+	 * different session), so it shows for the entire anonymous enquiry no
+	 * matter what session status the backend reports.
+	 */
+	const isInAnonymousWaitingQueuePhase =
+		isAnonymousAskerExperience &&
+		pseudonymConfirmed &&
+		!waitingGateDismissed;
 	const isJoinRoomAvailable = Boolean(activeSession.consultant?.id);
 	const selectedPreset = useMemo(
 		() =>
-			BREATHING_PRESETS.find((preset) => preset.id === selectedPresetId) ||
-			BREATHING_PRESETS[0],
+			BREATHING_PRESETS.find(
+				(preset) => preset.id === selectedPresetId
+			) || BREATHING_PRESETS[0],
 		[selectedPresetId]
 	);
 	const phaseSecondsLeft = Math.max(0, Math.ceil(phaseMsLeft / 1000));
-	const isBreathTimerRunning = waitingGameStage === 'practice' || waitingGameStage === 'game';
+	const isBreathTimerRunning =
+		waitingGameStage === 'practice' ||
+		waitingGameStage === 'game' ||
+		waitingGameStage === 'bellyPractice';
 	const currentPhaseLabel =
 		breathPhase === 'inhale'
 			? translate('session.waitingMiniGame.phase.inhale', 'Inhale')
@@ -427,12 +660,17 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		}
 	] as const;
 	const circleScale = (0.78 + breathProgress * 0.32).toFixed(3);
-	const circleCenterScale = (1 / Math.max(0.01, Number(circleScale))).toFixed(3);
+	const circleCenterScale = (1 / Math.max(0.01, Number(circleScale))).toFixed(
+		3
+	);
 	const localizedBriefingScreens = useMemo(
 		() =>
 			BRIEFING_SCREENS.map((screen, index) => ({
 				...screen,
-				text: translate(`session.waitingMiniGame.briefing.${index}`, screen.text)
+				text: translate(
+					`session.waitingMiniGame.briefing.${index}`,
+					screen.text
+				)
 			})),
 		[translate]
 	);
@@ -448,10 +686,14 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			.map((value) => decodeUsername((value || '').toString()).trim())
 			.filter((value) => value.length > 0);
 		const resolved =
-			resolvedCandidates.find((value) => !value.toLowerCase().startsWith('anonymous-')) ||
-			resolvedCandidates[0];
+			resolvedCandidates.find(
+				(value) => !value.toLowerCase().startsWith('anonymous-')
+			) || resolvedCandidates[0];
 		if (!resolved || resolved.toLowerCase() === 'system') {
-			return translate('session.waitingMiniGame.robotUsernameFallback', 'Ratsuchende_r 9');
+			return translate(
+				'session.waitingMiniGame.robotUsernameFallback',
+				'Ratsuchende_r 9'
+			);
 		}
 		return resolved;
 	}, [
@@ -476,7 +718,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		() => [
 			{
 				_id: 'robot-system-1',
-				title: translate('session.waitingMiniGame.robotCard1Title', 'Bitte haben Sie etwas Geduld'),
+				title: translate(
+					'session.waitingMiniGame.robotCard1Title',
+					'Bitte haben Sie etwas Geduld'
+				),
 				description: translate(
 					'session.waitingMiniGame.robotCard1Body',
 					'Derzeit sind alle Berater_innen im Gespräch. Wir sind schnellstmöglich für Sie da.'
@@ -518,7 +763,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					'session.waitingMiniGame.robotCard4Body',
 					'Dann spielen Sie in der Zwischenzeit unser kurzes Inhale-Exhale-Spiel.'
 				),
-				playLabel: translate('session.waitingMiniGame.robotCard4Play', 'Spiel starten')
+				playLabel: translate(
+					'session.waitingMiniGame.robotCard4Play',
+					'Spiel starten'
+				)
 			}
 		],
 		[robotIncomingUsername, translate]
@@ -532,28 +780,51 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				)
 			}
 		: localizedBriefingScreens[briefingScreenIndex];
-	const currentBriefingInteraction =
-		showBriefingNegativeScreen ? 'negative' : currentBriefingScreen.interaction;
+	const currentBriefingInteraction = showBriefingNegativeScreen
+		? 'negative'
+		: currentBriefingScreen.interaction;
 	const isBriefingOnlyScreen = waitingGameStage === 'tutorial';
 	const isInitialSetupScreen = waitingGameStage === 'setup';
-	const isPreGameSetupScreen = isInitialSetupScreen || waitingGameStage === 'practiceResult';
+	const isPreGameSetupScreen =
+		isInitialSetupScreen || waitingGameStage === 'practiceResult';
 	const isBreathingArenaVisible =
 		waitingGameStage === 'practice' ||
-		waitingGameStage === 'game';
+		waitingGameStage === 'game' ||
+		waitingGameStage === 'bellyPractice';
 	const isTextOnlyStage =
 		waitingGameStage === 'tutorial' ||
 		waitingGameStage === 'completion' ||
 		waitingGameStage === 'prize' ||
 		waitingGameStage === 'serenity';
 	const isNegativeBriefingScreen =
-		waitingGameStage === 'tutorial' && currentBriefingInteraction === 'negative';
-	const shouldLockScroll = waitingGameStage === 'practice' || waitingGameStage === 'game';
+		waitingGameStage === 'tutorial' &&
+		currentBriefingInteraction === 'negative';
+	const shouldLockScroll =
+		waitingGameStage === 'practice' || waitingGameStage === 'game';
 	const shouldFadeSessionChrome =
-		showWaitingMiniGame && (waitingGameStage === 'practice' || waitingGameStage === 'game');
-	const shouldBlockAnonymousInquiryChat =
+		showWaitingMiniGame &&
+		(waitingGameStage === 'practice' || waitingGameStage === 'game');
+	const shouldShowConsentGate =
 		requiresAnonymousInquiryConsent && !anonymousInquiryConsentAccepted;
+	const shouldShowPseudonymGate =
+		!shouldShowConsentGate &&
+		(requiresPseudonymConfirmation || isInAnonymousWaitingQueuePhase);
+	const shouldBlockAnonymousInquiryChat =
+		shouldShowConsentGate || shouldShowPseudonymGate;
+	/**
+	 * The four system-notification "robot" cards
+	 * ("Bitte haben Sie etwas Geduld", "Ihr Benutzername lautet…",
+	 *  "Sie benötigen nicht sofort eine Antwort?", "Wollen Sie die Wartezeit…")
+	 * were the pre-Carimat onboarding for anonymous askers. The new
+	 * pseudonym + privacy + waiting-queue flow replaces them end-to-end, so
+	 * once the asker has confirmed their pseudonym they should never see
+	 * the old cards again — not before they start typing, not after the
+	 * green "Jetzt Chat starten" closes the gate.
+	 */
 	const shouldShowRobotMessages =
-		isAnonymousBreathingGameAvailable && !shouldBlockAnonymousInquiryChat;
+		isAnonymousBreathingGameAvailable &&
+		!shouldBlockAnonymousInquiryChat &&
+		!(isAnonymousAskerExperience && pseudonymConfirmed);
 	const anonymousInquiryConsentLabel = useMemo(
 		() =>
 			translate('videoConference.waitingroom.dataProtection.label.text', {
@@ -568,24 +839,59 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		[legalLinks, translate]
 	);
 	const areRobotMessagesComplete =
-		!shouldShowRobotMessages || robotSequenceVisibleCount >= robotSystemCards.length;
+		!shouldShowRobotMessages ||
+		robotSequenceVisibleCount >= robotSystemCards.length;
 	const shouldShowRobotTypingIndicator =
 		shouldShowRobotMessages && !areRobotMessagesComplete;
+	const otherTypingUsers = useMemo(
+		() =>
+			(props.typingUsers || [])
+				.map((entry) => `${entry || ''}`.trim())
+				.filter(Boolean)
+				.filter(
+					(entry, index, source) => source.indexOf(entry) === index
+				),
+		[props.typingUsers]
+	);
+	const shouldShowInlineTypingIndicator = otherTypingUsers.length > 0;
+	const typingIndicatorLabel = useMemo(() => {
+		if (otherTypingUsers.length === 1) {
+			return `${otherTypingUsers[0]} ${translate(
+				'typingIndicator.singleUser.typing'
+			)}`;
+		}
+		if (otherTypingUsers.length === 2) {
+			return `${otherTypingUsers[0]} & ${otherTypingUsers[1]} ${translate(
+				'typingIndicator.twoUsers.typing'
+			)}`;
+		}
+		return `${otherTypingUsers.length} ${translate(
+			'typingIndicator.multipleUsers.typing'
+		)}`;
+	}, [otherTypingUsers, translate]);
+	const primaryTypingUser = otherTypingUsers[0] || '';
 	const visibleRobotCards = useMemo(
 		() => robotSystemCards.slice(0, Math.max(0, robotSequenceVisibleCount)),
 		[robotSequenceVisibleCount, robotSystemCards]
 	);
 
-	const getAchievementMessage = useCallback((level: number) => {
-		const levelSafe = Math.max(1, Math.min(BREATH_LEVELS.length, level));
-		const meta = BREATH_LEVELS[levelSafe - 1];
-		return translate('session.waitingMiniGame.achievementUnlocked', {
-			defaultValue: 'Achievement unlocked: Level {{level}} {{emoji}} {{title}}.',
-			level: levelSafe,
-			emoji: meta.emoji,
-			title: meta.title
-		});
-	}, [translate]);
+	const getAchievementMessage = useCallback(
+		(level: number) => {
+			const levelSafe = Math.max(
+				1,
+				Math.min(BREATH_LEVELS.length, level)
+			);
+			const meta = BREATH_LEVELS[levelSafe - 1];
+			return translate('session.waitingMiniGame.achievementUnlocked', {
+				defaultValue:
+					'Achievement unlocked: Level {{level}} {{emoji}} {{title}}.',
+				level: levelSafe,
+				emoji: meta.emoji,
+				title: meta.title
+			});
+		},
+		[translate]
+	);
 
 	const clearBreathTimer = useCallback(() => {
 		if (timerRef.current) {
@@ -633,7 +939,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		if (!typedChar) {
 			return 0;
 		}
-		return /[.,]/.test(typedChar) ? TYPEWRITER_TIMING.punctuationPauseMs : 0;
+		return /[.,]/.test(typedChar)
+			? TYPEWRITER_TIMING.punctuationPauseMs
+			: 0;
 	}, []);
 
 	const stopBreathSound = useCallback(() => {
@@ -655,123 +963,140 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			cuePianoSynthRef.current?.releaseAll(now);
 			if (cueAirGainRef.current) {
 				cueAirGainRef.current.gain.cancelAndHoldAtTime(now);
-				cueAirGainRef.current.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+				cueAirGainRef.current.gain.exponentialRampToValueAtTime(
+					0.0001,
+					now + 0.18
+				);
 			}
 		} catch {
 			// Ignore idle audio errors.
 		}
 	}, []);
 
-	const playBreathCue = useCallback((phase: BreathPhase, durationMs: number) => {
-		if (typeof window === 'undefined') {
-			return;
-		}
-		void (async () => {
-			try {
-				await Tone.start();
-				const cueConfig: Record<
-					BreathPhase,
-					{
-						notes: [string, string];
-						velocity: number;
-						airGain: number;
-						airCutoff: number;
-					}
-				> = {
-					// Requested pattern: piano-like paired notes + continuous soft air bed.
-					inhale: {
-						notes: ['F4', 'D4'],
-						velocity: 0.53,
-						airGain: 0.02,
-						airCutoff: 1300
-					},
-					hold: {
-						notes: ['C4', 'D4'],
-						velocity: 0.49,
-						airGain: 0.016,
-						airCutoff: 980
-					},
-					exhale: {
-						notes: ['D4', 'C4'],
-						velocity: 0.56,
-						airGain: 0.024,
-						airCutoff: 760
-					}
-				};
-				const now = Tone.now();
-				const config = cueConfig[phase];
-				const reverb =
-					cuePianoReverbRef.current ||
-					new Tone.Reverb({
-						decay: 2.8,
-						preDelay: 0.02,
-						wet: 0.28
-					}).toDestination();
-				if (!cuePianoReverbRef.current) {
-					await reverb.generate();
-					cuePianoReverbRef.current = reverb;
-				}
-				const master =
-					cueMasterGainRef.current || new Tone.Gain(0.82).connect(reverb);
-				cueMasterGainRef.current = master;
-				const synth =
-					cuePianoSynthRef.current ||
-					new Tone.PolySynth(Tone.Synth, {
-						oscillator: { type: 'triangle8' },
-						envelope: {
-							attack: 0.0015,
-							decay: 0.18,
-							sustain: 0.06,
-							release: 1.05
-						}
-					}).connect(master);
-				cuePianoSynthRef.current = synth;
-
-				const phaseSeconds = Math.max(0.65, durationMs / 1000);
-				const chordLen = Math.max(0.56, phaseSeconds * 0.92);
-
-				synth.set({ volume: phase === 'hold' ? -14 : -11 });
-				// Single phase-start key event (two-note voicing) with long reverb tail.
-				synth.triggerAttackRelease(config.notes, chordLen, now, config.velocity);
-
-				const airGain =
-					cueAirGainRef.current || new Tone.Gain(0.0001).connect(master);
-				cueAirGainRef.current = airGain;
-				const airFilter =
-					cueAirFilterRef.current ||
-					new Tone.Filter({
-						type: 'lowpass',
-						frequency: 1200,
-						rolloff: -24,
-						Q: 0.7
-					}).connect(airGain);
-				cueAirFilterRef.current = airFilter;
-				const airNoise =
-					cueAirNoiseRef.current || new Tone.Noise('pink').connect(airFilter);
-				if (!cueAirNoiseRef.current) {
-					airNoise.start(now);
-					cueAirNoiseRef.current = airNoise;
-				}
-				airGain.gain.cancelAndHoldAtTime(now);
-				airFilter.frequency.cancelAndHoldAtTime(now);
-				airGain.gain.exponentialRampToValueAtTime(
-					Math.max(0.0003, config.airGain),
-					now + 0.16
-				);
-				airFilter.frequency.exponentialRampToValueAtTime(
-					Math.max(300, config.airCutoff),
-					now + 0.24
-				);
-			} catch {
-				// Ignore audio failures so the game works muted.
+	const playBreathCue = useCallback(
+		(phase: BreathPhase, durationMs: number) => {
+			if (typeof window === 'undefined') {
+				return;
 			}
-		})();
-	}, []);
+			void (async () => {
+				try {
+					await Tone.start();
+					const cueConfig: Record<
+						BreathPhase,
+						{
+							notes: [string, string];
+							velocity: number;
+							airGain: number;
+							airCutoff: number;
+						}
+					> = {
+						// Requested pattern: piano-like paired notes + continuous soft air bed.
+						inhale: {
+							notes: ['F4', 'D4'],
+							velocity: 0.53,
+							airGain: 0.02,
+							airCutoff: 1300
+						},
+						hold: {
+							notes: ['C4', 'D4'],
+							velocity: 0.49,
+							airGain: 0.016,
+							airCutoff: 980
+						},
+						exhale: {
+							notes: ['D4', 'C4'],
+							velocity: 0.56,
+							airGain: 0.024,
+							airCutoff: 760
+						}
+					};
+					const now = Tone.now();
+					const config = cueConfig[phase];
+					const reverb =
+						cuePianoReverbRef.current ||
+						new Tone.Reverb({
+							decay: 2.8,
+							preDelay: 0.02,
+							wet: 0.28
+						}).toDestination();
+					if (!cuePianoReverbRef.current) {
+						await reverb.generate();
+						cuePianoReverbRef.current = reverb;
+					}
+					const master =
+						cueMasterGainRef.current ||
+						new Tone.Gain(0.82).connect(reverb);
+					cueMasterGainRef.current = master;
+					const synth =
+						cuePianoSynthRef.current ||
+						new Tone.PolySynth(Tone.Synth, {
+							oscillator: { type: 'triangle8' },
+							envelope: {
+								attack: 0.0015,
+								decay: 0.18,
+								sustain: 0.06,
+								release: 1.05
+							}
+						}).connect(master);
+					cuePianoSynthRef.current = synth;
+
+					const phaseSeconds = Math.max(0.65, durationMs / 1000);
+					const chordLen = Math.max(0.56, phaseSeconds * 0.92);
+
+					synth.set({ volume: phase === 'hold' ? -14 : -11 });
+					// Single phase-start key event (two-note voicing) with long reverb tail.
+					synth.triggerAttackRelease(
+						config.notes,
+						chordLen,
+						now,
+						config.velocity
+					);
+
+					const airGain =
+						cueAirGainRef.current ||
+						new Tone.Gain(0.0001).connect(master);
+					cueAirGainRef.current = airGain;
+					const airFilter =
+						cueAirFilterRef.current ||
+						new Tone.Filter({
+							type: 'lowpass',
+							frequency: 1200,
+							rolloff: -24,
+							Q: 0.7
+						}).connect(airGain);
+					cueAirFilterRef.current = airFilter;
+					const airNoise =
+						cueAirNoiseRef.current ||
+						new Tone.Noise('pink').connect(airFilter);
+					if (!cueAirNoiseRef.current) {
+						airNoise.start(now);
+						cueAirNoiseRef.current = airNoise;
+					}
+					airGain.gain.cancelAndHoldAtTime(now);
+					airFilter.frequency.cancelAndHoldAtTime(now);
+					airGain.gain.exponentialRampToValueAtTime(
+						Math.max(0.0003, config.airGain),
+						now + 0.16
+					);
+					airFilter.frequency.exponentialRampToValueAtTime(
+						Math.max(300, config.airCutoff),
+						now + 0.24
+					);
+				} catch {
+					// Ignore audio failures so the game works muted.
+				}
+			})();
+		},
+		[]
+	);
 
 	const startPhase = useCallback(
 		(phase: BreathPhase, timingOverride?: BreathTiming) => {
 			const timingSource =
-				timingOverride || (waitingGameStage === 'practice' ? STANDARD_PRACTICE_TIMING : customTiming);
+				timingOverride ||
+				(waitingGameStage === 'practice'
+					? STANDARD_PRACTICE_TIMING
+					: customTiming);
 			phaseTransitionLockRef.current = false;
 			const durationMs =
 				(phase === 'inhale'
@@ -788,12 +1113,15 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		[customTiming, playBreathCue, waitingGameStage]
 	);
 
-	const updateTiming = useCallback((phase: keyof BreathTiming, delta: number) => {
-		setCustomTiming((prev) => ({
-			...prev,
-			[phase]: Math.min(10, Math.max(2, prev[phase] + delta))
-		}));
-	}, []);
+	const updateTiming = useCallback(
+		(phase: keyof BreathTiming, delta: number) => {
+			setCustomTiming((prev) => ({
+				...prev,
+				[phase]: Math.min(10, Math.max(2, prev[phase] + delta))
+			}));
+		},
+		[]
+	);
 
 	const getTimingRowStyle = useCallback((seconds: number) => {
 		const normalized = (Math.min(10, Math.max(2, seconds)) - 2) / 8;
@@ -825,22 +1153,362 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	}, [clearBreathTimer, translate]);
 
 	const startPracticeRound = useCallback(() => {
+		/* Do NOT clearBreathTimer() here. isBreathTimerRunning stays true
+		   across practice → bellyPractice → game (and stays true when we
+		   restart practice from itself), so the setup effect does not
+		   re-run. Clearing the interval then would kill ticks permanently.
+		   startPhase() simply resets phaseMsLeft for the new countdown. */
+		phaseTransitionLockRef.current = false;
 		setStageMessage(
 			translate(
-				'session.waitingMiniGame.firstTryInstruction',
-				'First try: follow inhale, hold, and exhale.'
+				'session.waitingMiniGame.tutorialCard.inhale.instruction',
+				'Inhale slowly for 3 seconds, then press the button.'
 			)
 		);
 		setWaitingGameStage('practice');
 		startPhase('inhale', STANDARD_PRACTICE_TIMING);
 	}, [startPhase, translate]);
 
+	/**
+	 * Restart the active practice round from the inhale phase — bound to
+	 * the grey "redo" pill in the new practice-card bottom strip.
+	 */
+	const handlePracticeRestart = useCallback(() => {
+		startPracticeRound();
+	}, [startPracticeRound]);
+
+	/**
+	 * "Press at the right time" — user-driven phase advance. Directly
+	 * starts the next phase instead of relying on the timer-expiry
+	 * auto-advance effect (which only fires when phaseMsLeft changes and
+	 * can't be retriggered once it's already at 0).
+	 */
+	const handlePracticeAdvance = useCallback(() => {
+		phaseTransitionLockRef.current = false;
+		if (breathPhase === 'inhale') {
+			startPhase('hold');
+			return;
+		}
+		if (breathPhase === 'hold') {
+			startPhase('exhale');
+			return;
+		}
+		/* Exhale → one full cycle complete. Mirror the end-of-round
+		   handling the timer-driven effect used to do. We do NOT
+		   clearBreathTimer() here — `isBreathTimerRunning` stays true
+		   through practice → bellyPractice → game, so the tick interval
+		   keeps running and `startPhase()` simply resets the countdown
+		   for the next phase. Calling clear() here would kill the
+		   interval without re-arming it, freezing the pulse. */
+		setBreathCycles((prev) => {
+			const next = prev + 1;
+			setJoinPromptEscalated((current) => current || next >= 2);
+			return next;
+		});
+		if (waitingGameStage === 'practice') {
+			/*
+			 * Practice round complete — advance into the belly-breathing
+			 * tutorial (three more Carimat cards) instead of the old
+			 * practice-result setup screen. Start the inhale animation
+			 * so the pulse demo plays while the asker reads the first
+			 * belly card.
+			 */
+			setBellyCardIndex(0);
+			setWaitingGameStage('bellyPractice');
+			startPhase('inhale');
+			return;
+		}
+		/* Game stage: one full inhale→hold→exhale cycle = one level.
+		   Advance to next level, or hop to the completion stage on the
+		   last level. */
+		if (currentLevel >= BREATH_LEVELS.length) {
+			setWaitingGameStage('completion');
+			return;
+		}
+		const nextLevel = currentLevel + 1;
+		setCurrentLevel(nextLevel);
+		setStageMessage(BREATH_LEVELS[nextLevel - 1].success);
+		startPhase('inhale');
+	}, [breathPhase, currentLevel, startPhase, translate, waitingGameStage]);
+
+	/**
+	 * Keep the Carimat bubble text in sync with the current breath phase
+	 * while the user is in the practice or game stage. Uses the pasted
+	 * Figma copy keyed per phase.
+	 */
+	useEffect(() => {
+		if (waitingGameStage !== 'practice' && waitingGameStage !== 'game') {
+			return;
+		}
+		const secondsByPhase =
+			waitingGameStage === 'practice'
+				? STANDARD_PRACTICE_TIMING
+				: customTiming;
+		const seconds =
+			breathPhase === 'inhale'
+				? secondsByPhase.inhale
+				: breathPhase === 'hold'
+					? secondsByPhase.hold
+					: secondsByPhase.exhale;
+
+		if (breathPhase === 'inhale') {
+			setStageMessage(
+				translate(
+					'session.waitingMiniGame.tutorialCard.inhale.instruction',
+					'Inhale slowly for <strong>{{count}} seconds</strong>, then press the button.',
+					{
+						count: seconds,
+						interpolation: { escapeValue: false }
+					}
+				)
+			);
+		} else if (breathPhase === 'hold') {
+			setStageMessage(
+				translate(
+					'session.waitingMiniGame.tutorialCard.hold.instruction',
+					'Hold your breath now for <strong>{{count}} seconds</strong>, then press the button.',
+					{
+						count: seconds,
+						interpolation: { escapeValue: false }
+					}
+				)
+			);
+		} else {
+			setStageMessage(
+				translate(
+					'session.waitingMiniGame.tutorialCard.exhale.instruction',
+					'Exhale slowly for <strong>{{count}} seconds</strong>, then press the button.',
+					{
+						count: seconds,
+						interpolation: { escapeValue: false }
+					}
+				)
+			);
+		}
+	}, [breathPhase, waitingGameStage, customTiming, translate]);
+
+	/**
+	 * Belly-breathing stage — pick the bubble text from the current card
+	 * index and let dangerouslySetInnerHTML render the inline <strong> so
+	 * only the seconds count is bold.
+	 */
+	useEffect(() => {
+		if (waitingGameStage !== 'bellyPractice') return;
+		const keys = [
+			'session.waitingMiniGame.tutorialCard.belly.inhale',
+			'session.waitingMiniGame.tutorialCard.belly.hold',
+			'session.waitingMiniGame.tutorialCard.belly.exhale'
+		];
+		const fallbacks = [
+			'Great lets inhale <strong>3 seconds</strong> again, but this time by expanding your belly.',
+			'Now hold for <strong>3 seconds</strong> your breath.',
+			'Now breath out for <strong>4 seconds</strong> and relax your entire body.'
+		];
+		setStageMessage(
+			translate(keys[bellyCardIndex], fallbacks[bellyCardIndex], {
+				interpolation: { escapeValue: false }
+			})
+		);
+	}, [bellyCardIndex, waitingGameStage, translate]);
+
+	/**
+	 * Typewriter reveal for the Carimat bubble. Whenever the stage
+	 * message changes, reset the visible-length counter to 0 and tick
+	 * forward one character at a time until the full message is shown.
+	 * We reveal the plain-text length; inline <strong> tags kick in once
+	 * typing completes and the HTML version swaps in.
+	 */
+	const bubblePlainText = useMemo(
+		() => stageMessage.replace(/<[^>]*>/g, ''),
+		[stageMessage]
+	);
+	useEffect(() => {
+		setBubbleTypedLen(0);
+		if (!bubblePlainText.length) return;
+		const id = window.setInterval(() => {
+			setBubbleTypedLen((len) => {
+				if (len >= bubblePlainText.length) {
+					window.clearInterval(id);
+					return len;
+				}
+				return len + 1;
+			});
+		}, 30);
+		return () => window.clearInterval(id);
+	}, [bubblePlainText]);
+	const isBubbleTyping = bubbleTypedLen < bubblePlainText.length;
+
+	/**
+	 * Self-timer stage — user paces their own intervals after the belly
+	 * cards. We surface the prompt in the Carimat bubble; the pulse
+	 * continues ticking from the last phase so the visual stays alive.
+	 */
+	useEffect(() => {
+		if (waitingGameStage !== 'selfTimer') return;
+		setStageMessage(
+			translate(
+				'session.waitingMiniGame.tutorialCard.selfTimer.instruction',
+				'Set this time your own time intervals while breathing.'
+			)
+		);
+	}, [waitingGameStage, translate]);
+
+	/**
+	 * Completion + serenity — message in the Carimat bubble. Completion
+	 * celebrates finishing the game; serenity surfaces the prayer "gift".
+	 */
+	useEffect(() => {
+		if (waitingGameStage === 'completion') {
+			setStageMessage(
+				translate(
+					'session.waitingMiniGame.tutorialCard.completion.instruction',
+					'Congratulation you have made it.'
+				)
+			);
+		} else if (waitingGameStage === 'serenity') {
+			setStageMessage(
+				translate(
+					'session.waitingMiniGame.tutorialCard.serenity.instruction',
+					"The gift is a little mantra that's helped tons of people get through tough times. It's called the serenity prayer: \u201CGod, grant me the serenity to accept the things I cannot change, the courage to change the things I can, and the wisdom to know the difference.\u201D"
+				)
+			);
+		}
+	}, [waitingGameStage, translate]);
+
+	/**
+	 * Advance through the three belly-breathing cards.
+	 *
+	 * Two drivers feed this: the user's explicit "Time it" click and the
+	 * auto-pilot timer. They diverge only on the final card:
+	 *   - Manual Time-it: finishes the demo and closes the popup.
+	 *   - Auto-pilot: loops back to card 0 so the user can keep watching
+	 *     the full inhale→hold→exhale cycle until they interrupt.
+	 */
+	const advanceBellyCard = useCallback(
+		(source: 'manual' | 'auto' = 'manual') => {
+			if (bellyCardIndex === 0) {
+				setBellyCardIndex(1);
+				startPhase('hold');
+				return;
+			}
+			if (bellyCardIndex === 1) {
+				setBellyCardIndex(2);
+				startPhase('exhale');
+				return;
+			}
+			if (source === 'auto') {
+				/* Auto-pilot loops: card 2 exhale → card 0 inhale, keep cycling. */
+				setBellyCardIndex(0);
+				startPhase('inhale');
+				return;
+			}
+			/* Manual Time-it on the last card — hand off to the self-timed
+			   breathing screen where the user paces their own intervals. */
+			clearBreathTimer();
+			setBellyCardIndex(0);
+			setWaitingGameStage('selfTimer');
+		},
+		[bellyCardIndex, clearBreathTimer, startPhase]
+	);
+
+	/**
+	 * Mode button clicked.
+	 *   - Clicking the inactive mode switches modes (no advance).
+	 *   - Clicking the active "Time it" advances the phase/card.
+	 *   - Clicking the active "Auto pilot" is a no-op (the pilot is
+	 *     already driving the cycle).
+	 */
+	const handleBellyModeButton = useCallback(
+		(mode: 'autoPilot' | 'timeIt') => {
+			if (mode !== bellyMode) {
+				setBellyMode(mode);
+				return;
+			}
+			if (mode === 'timeIt') {
+				advanceBellyCard('manual');
+			}
+		},
+		[advanceBellyCard, bellyMode]
+	);
+
+	/**
+	 * Game-stage mode toggle. Same contract as the belly one:
+	 * inactive click = switch mode (no advance), active "Time it" click =
+	 * advance the current phase, active "Auto pilot" click = no-op.
+	 */
+	const handleGameModeButton = useCallback(
+		(mode: 'autoPilot' | 'timeIt') => {
+			if (mode !== gameMode) {
+				setGameMode(mode);
+				return;
+			}
+			if (mode === 'timeIt') {
+				handlePracticeAdvance();
+			}
+		},
+		[gameMode, handlePracticeAdvance]
+	);
+
+	/**
+	 * Auto-pilot advance for the game stage — when gameMode is autoPilot
+	 * and the current phase's countdown hits 0, step to the next phase
+	 * automatically. Mirrors the belly auto-pilot effect.
+	 */
+	useEffect(() => {
+		if (
+			waitingGameStage !== 'game' ||
+			gameMode !== 'autoPilot' ||
+			phaseMsLeft > 0 ||
+			phaseTotalMs <= 0
+		) {
+			return;
+		}
+		handlePracticeAdvance();
+	}, [
+		gameMode,
+		handlePracticeAdvance,
+		phaseMsLeft,
+		phaseTotalMs,
+		waitingGameStage
+	]);
+
+	/**
+	 * Auto-pilot advance: when in bellyPractice + autoPilot and a phase's
+	 * timer hits 0, step forward to the next card/phase automatically.
+	 * Fires one tick per phase-expiry because phaseMsLeft bounces back up
+	 * when startPhase runs, resetting the effect's listener.
+	 */
+	useEffect(() => {
+		if (
+			waitingGameStage !== 'bellyPractice' ||
+			bellyMode !== 'autoPilot' ||
+			phaseMsLeft > 0 ||
+			phaseTotalMs <= 0
+		) {
+			return;
+		}
+		advanceBellyCard('auto');
+	}, [
+		advanceBellyCard,
+		bellyMode,
+		phaseMsLeft,
+		phaseTotalMs,
+		waitingGameStage
+	]);
+
 	const startAchieverGame = useCallback(() => {
+		/* Don't clearBreathTimer here — when we come from completion /
+		   selfTimer (isBreathTimerRunning was false), the setup effect
+		   re-mounts automatically on the stage change and starts a fresh
+		   interval. When we come from game itself (restart), the existing
+		   interval keeps ticking and startPhase just resets phaseMsLeft. */
+		phaseTransitionLockRef.current = false;
 		setCurrentLevel(1);
 		setBreathCycles(0);
 		setJoinPromptEscalated(false);
 		setStageMessage(BREATH_LEVELS[0].success);
 		setWaitingGameStage('game');
+		setGameMode('autoPilot');
 		startPhase('inhale');
 	}, [startPhase]);
 
@@ -869,12 +1537,20 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const dragCancelRef = useRef<NodeJS.Timeout | null>(null);
 	const [newMessages, setNewMessages] = useState(0);
 	const [canWriteMessage, setCanWriteMessage] = useState(false);
-	const [supervisionReason, setSupervisionReason] = useState<string | null>(null);
-	const [activeThreadRootId, setActiveThreadRootId] = useState<string | null>(null);
-	const [activeThreadRootMessage, setActiveThreadRootMessage] = useState<MessageItem | null>(null);
+	const [supervisionReason, setSupervisionReason] = useState<string | null>(
+		null
+	);
+	const [activeThreadRootId, setActiveThreadRootId] = useState<string | null>(
+		null
+	);
+	const [activeThreadRootMessage, setActiveThreadRootMessage] =
+		useState<MessageItem | null>(null);
 	const knownMessageIdsRef = useRef<Set<string>>(new Set());
 	const threadSummaries = useMemo(() => {
-		const map = new Map<string, { replyCount: number; lastReplyText: string }>();
+		const map = new Map<
+			string,
+			{ replyCount: number; lastReplyText: string }
+		>();
 		if (!messages) {
 			return map;
 		}
@@ -886,7 +1562,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					lastReplyText: ''
 				};
 				existing.replyCount += 1;
-				existing.lastReplyText = 'Last reply at ' + formatToHHMM(message.messageTime);
+				existing.lastReplyText =
+					'Last reply at ' + formatToHHMM(message.messageTime);
 				map.set(parsed.threadRootId, existing);
 			}
 		});
@@ -898,28 +1575,35 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	);
 
 	// MATRIX MIGRATION: Create Matrix-aware isMyMessage function
-	const isMyMessageMatrix = useCallback((messageUserId: string) => {
-		// For Matrix sessions, check if sender matches current user's Matrix user ID
-		// Matrix room IDs start with '!' and Matrix user IDs start with '@'
-		const isMatrixSession = activeSession.rid?.startsWith('!') || messageUserId?.includes('@');
-		
-		if (isMatrixSession && messageUserId?.includes('@')) {
-			// Get current user's Matrix user ID from localStorage or cookie (rc_uid stores Matrix ID for Matrix sessions)
-			const myMatrixUserId = localStorage.getItem('matrix_user_id') || 
-				(typeof document !== 'undefined' && document.cookie
-					.split('; ')
-					.find(row => row.startsWith('rc_uid='))
-					?.split('=')[1]);
-			
-			// Compare full Matrix user IDs (e.g., @username:domain)
-			// This works for both normal and anonymous users
-			if (myMatrixUserId && messageUserId) {
-				return myMatrixUserId === messageUserId;
+	const isMyMessageMatrix = useCallback(
+		(messageUserId: string) => {
+			// For Matrix sessions, check if sender matches current user's Matrix user ID
+			// Matrix room IDs start with '!' and Matrix user IDs start with '@'
+			const isMatrixSession =
+				activeSession.rid?.startsWith('!') ||
+				messageUserId?.includes('@');
+
+			if (isMatrixSession && messageUserId?.includes('@')) {
+				// Get current user's Matrix user ID from localStorage or cookie (rc_uid stores Matrix ID for Matrix sessions)
+				const myMatrixUserId =
+					localStorage.getItem('matrix_user_id') ||
+					(typeof document !== 'undefined' &&
+						document.cookie
+							.split('; ')
+							.find((row) => row.startsWith('rc_uid='))
+							?.split('=')[1]);
+
+				// Compare full Matrix user IDs (e.g., @username:domain)
+				// This works for both normal and anonymous users
+				if (myMatrixUserId && messageUserId) {
+					return myMatrixUserId === messageUserId;
+				}
 			}
-		}
-		// For RocketChat sessions, use the standard check
-		return isMyMessage(messageUserId);
-	}, [activeSession.rid]);
+			// For RocketChat sessions, use the standard check
+			return isMyMessage(messageUserId);
+		},
+		[activeSession.rid]
+	);
 
 	// Check if current user is a supervisor
 	useEffect(() => {
@@ -928,15 +1612,18 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			setSupervisionReason(null);
 			return;
 		}
-		if (hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) && activeSession.item.id) {
+		if (
+			hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
+			activeSession.item.id
+		) {
 			apiGetSessionSupervisors(activeSession.item.id)
 				.then((supervisors) => {
 					const isCurrentUserSupervisor = supervisors.some(
-						s => s.supervisorConsultantId === userData.userId
+						(s) => s.supervisorConsultantId === userData.userId
 					);
 					setIsSupervisor(isCurrentUserSupervisor);
 					const currentSupervisor = supervisors.find(
-						s => s.supervisorConsultantId === userData.userId
+						(s) => s.supervisorConsultantId === userData.userId
 					);
 					setSupervisionReason(currentSupervisor?.notes || null);
 				})
@@ -967,29 +1654,179 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	useEffect(() => {
 		if (!requiresAnonymousInquiryConsent) {
 			setAnonymousInquiryConsentAccepted(true);
+			try {
+				if (privacyAcceptanceRecorded) {
+					sessionStorage.setItem(
+						anonymousInquiryConsentStorageKey,
+						'1'
+					);
+				}
+			} catch {
+				/* ignore */
+			}
 			return;
 		}
 		try {
 			setAnonymousInquiryConsentAccepted(
-				sessionStorage.getItem(anonymousInquiryConsentStorageKey) === '1'
+				sessionStorage.getItem(anonymousInquiryConsentStorageKey) ===
+					'1'
 			);
 		} catch {
 			setAnonymousInquiryConsentAccepted(false);
 		}
-	}, [anonymousInquiryConsentStorageKey, requiresAnonymousInquiryConsent]);
+	}, [
+		anonymousInquiryConsentStorageKey,
+		requiresAnonymousInquiryConsent,
+		privacyAcceptanceRecorded
+	]);
 
 	useEffect(() => {
 		setShowWaitingMiniGame(false);
 	}, [activeSession.item.id]);
 
 	const handleAnonymousInquiryConsentAccept = useCallback(() => {
-		setAnonymousInquiryConsentAccepted(true);
-		try {
-			sessionStorage.setItem(anonymousInquiryConsentStorageKey, '1');
-		} catch {
-			// Ignore storage errors and still unblock current session view.
+		apiPatchUserData({
+			dataPrivacyConfirmation: true,
+			termsAndConditionsConfirmation: true
+		})
+			.then(() => {
+				setAnonymousInquiryConsentAccepted(true);
+				try {
+					sessionStorage.setItem(
+						anonymousInquiryConsentStorageKey,
+						'1'
+					);
+				} catch {
+					// Ignore storage errors and still unblock current session view.
+				}
+				return apiGetUserData().then((fresh) => setUserData(fresh));
+			})
+			.catch(() => {
+				/* keep gate visible on failure */
+			});
+	}, [anonymousInquiryConsentStorageKey, setUserData]);
+
+	/**
+	 * Load the cached pseudonym-confirmed flag when entering the session.
+	 * If the user is not an anonymous asker, treat the gate as already passed
+	 * so the regular waiting room renders for everyone else unchanged.
+	 */
+	useEffect(() => {
+		if (!isAnonymousAskerExperience) {
+			setPseudonymConfirmed(true);
+			return;
 		}
-	}, [anonymousInquiryConsentStorageKey]);
+		try {
+			setPseudonymConfirmed(
+				sessionStorage.getItem(pseudonymStorageKey) === '1'
+			);
+		} catch {
+			setPseudonymConfirmed(false);
+		}
+	}, [isAnonymousAskerExperience, pseudonymStorageKey]);
+
+	/**
+	 * Confirm the chosen pseudonym. Updates ONLY the display name
+	 * via apiPatchUserData — the Matrix username stays "Anonymous-<ts>"
+	 * so the room membership and key chain stay intact.
+	 */
+	const handleConfirmPseudonym = useCallback(() => {
+		if (pseudonymSaving) return;
+		setPseudonymSaving(true);
+		apiPatchUserData({ displayName: currentPseudonym.displayName })
+			.then(() => apiGetUserData().then((fresh) => setUserData(fresh)))
+			.then(() => {
+				setPseudonymConfirmed(true);
+				try {
+					sessionStorage.setItem(pseudonymStorageKey, '1');
+				} catch {
+					/* ignore storage errors */
+				}
+			})
+			.catch(() => {
+				/* keep card visible on failure so user can retry */
+			})
+			.finally(() => setPseudonymSaving(false));
+	}, [currentPseudonym, pseudonymSaving, pseudonymStorageKey, setUserData]);
+
+	/**
+	 * Poll the live anonymous-enquiry details while the asker is in the
+	 * waiting-queue phase. Feeds `queuePeopleAhead` into WaitingQueueActionBar
+	 * so "N Personen vor Ihnen" reflects the actual number of anonymous
+	 * enquiries queued ahead for the same consulting type.
+	 */
+	useEffect(() => {
+		if (!isInAnonymousWaitingQueuePhase || !activeSession.item?.id) {
+			return;
+		}
+
+		let cancelled = false;
+		const sessionId = activeSession.item.id;
+
+		const refresh = () => {
+			apiGetAnonymousEnquiryDetails(sessionId)
+				.then((details) => {
+					if (cancelled) return;
+					if (typeof details?.peopleAhead === 'number') {
+						setQueuePeopleAhead(details.peopleAhead);
+					}
+					/* Anything other than INITIAL/NEW means a consultant has
+					   started handling this enquiry — flip the action bar to
+					   the "Start chat now" prompt. */
+					if (
+						details?.status &&
+						details.status !== 'INITIAL' &&
+						details.status !== 'NEW'
+					) {
+						setConsultantAccepted(true);
+					}
+				})
+				.catch(() => {
+					/* swallow — UI falls back to "Wird verbunden …" */
+				});
+		};
+
+		refresh();
+		/* Poll every 4s so acceptance feels real-time without reload. */
+		const poll = window.setInterval(refresh, 4000);
+
+		return () => {
+			cancelled = true;
+			window.clearInterval(poll);
+		};
+	}, [isInAnonymousWaitingQueuePhase, activeSession.item?.id]);
+
+	/* Once the backend session status moves past enquiry phase we also treat
+	   that as "consultant accepted" — belt-and-braces signal in case the
+	   anonymous-enquiry poll hasn't fired yet. */
+	useEffect(() => {
+		if (
+			isAnonymousAskerExperience &&
+			pseudonymConfirmed &&
+			!isAnonymousEnquiryPhaseSession
+		) {
+			setConsultantAccepted(true);
+		}
+	}, [
+		isAnonymousAskerExperience,
+		pseudonymConfirmed,
+		isAnonymousEnquiryPhaseSession
+	]);
+
+	const handleOpenCalmCompanion = useCallback(() => {
+		setShowBriefingNegativeScreen(false);
+		setBriefingScreenIndex(0);
+		setWaitingGameStage('tutorial');
+		setShowWaitingMiniGame(true);
+	}, []);
+
+	const handleDismissConsultantAccepted = useCallback(() => {
+		setConsultantAccepted(false);
+	}, []);
+
+	const handleStartAcceptedChat = useCallback(() => {
+		setWaitingGateDismissed(true);
+	}, []);
 
 	useEffect(() => {
 		if (!shouldShowRobotMessages) {
@@ -1007,7 +1844,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		} catch {
 			setRobotSequenceVisibleCount(1);
 		}
-	}, [robotSequenceStorageKey, robotSystemCards.length, shouldShowRobotMessages]);
+	}, [
+		robotSequenceStorageKey,
+		robotSystemCards.length,
+		shouldShowRobotMessages
+	]);
 
 	useEffect(() => {
 		if (!shouldShowRobotMessages) {
@@ -1016,7 +1857,15 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		try {
 			sessionStorage.setItem(
 				robotSequenceStorageKey,
-				String(Math.max(0, Math.min(robotSystemCards.length, robotSequenceVisibleCount)))
+				String(
+					Math.max(
+						0,
+						Math.min(
+							robotSystemCards.length,
+							robotSequenceVisibleCount
+						)
+					)
+				)
 			);
 		} catch {
 			// Ignore storage errors.
@@ -1029,7 +1878,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	]);
 
 	useEffect(() => {
-		if (!shouldShowRobotMessages || robotSequenceVisibleCount >= robotSystemCards.length) {
+		if (
+			!shouldShowRobotMessages ||
+			robotSequenceVisibleCount >= robotSystemCards.length
+		) {
 			return;
 		}
 		const timer = window.setTimeout(() => {
@@ -1038,7 +1890,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			);
 		}, ROBOT_MESSAGE_REVEAL_GAP_MS);
 		return () => window.clearTimeout(timer);
-	}, [robotSequenceVisibleCount, robotSystemCards.length, shouldShowRobotMessages]);
+	}, [
+		robotSequenceVisibleCount,
+		robotSystemCards.length,
+		shouldShowRobotMessages
+	]);
 
 	useEffect(() => {
 		if (!showWaitingMiniGame) {
@@ -1089,6 +1945,20 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		if (phaseMsLeft > 0) {
 			return;
 		}
+		/*
+		 * Practice, game, and belly-practice stages are user-driven: once
+		 * the countdown reaches 0 the card sits on the current phase until
+		 * the user clicks the advance button (red "Press at the right time"
+		 * for practice/game, "Auto pilot"/"Time it" for belly). We never
+		 * auto-advance here for those stages.
+		 */
+		if (
+			waitingGameStage === 'practice' ||
+			waitingGameStage === 'game' ||
+			waitingGameStage === 'bellyPractice'
+		) {
+			return;
+		}
 		if (phaseTransitionLockRef.current) {
 			return;
 		}
@@ -1110,7 +1980,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		if (waitingGameStage === 'practice') {
 			clearBreathTimer();
 			setStageMessage(
-				translate('session.waitingMiniGame.practiceSuccessPrompt', 'Great job, want to start now?')
+				translate(
+					'session.waitingMiniGame.practiceSuccessPrompt',
+					'Great job, want to start now?'
+				)
 			);
 			setWaitingGameStage('practiceResult');
 			return;
@@ -1172,12 +2045,19 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				const typedChar = line.charAt(charIndex - 1);
 				if (charIndex >= line.length) {
 					deleting = true;
-					typewriterRef.current = window.setTimeout(tick, TYPEWRITER_TIMING.fullLineGapMs);
+					typewriterRef.current = window.setTimeout(
+						tick,
+						TYPEWRITER_TIMING.fullLineGapMs
+					);
 					return;
 				}
 				typewriterRef.current = window.setTimeout(
 					tick,
-					Math.max(TYPEWRITER_TIMING.charForwardMs + getPunctuationPauseMs(typedChar), 18)
+					Math.max(
+						TYPEWRITER_TIMING.charForwardMs +
+							getPunctuationPauseMs(typedChar),
+						18
+					)
 				);
 				return;
 			}
@@ -1192,13 +2072,22 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					resetToTutorialState();
 					return;
 				}
-				typewriterRef.current = window.setTimeout(tick, TYPEWRITER_TIMING.doneGapMs);
+				typewriterRef.current = window.setTimeout(
+					tick,
+					TYPEWRITER_TIMING.doneGapMs
+				);
 				return;
 			}
-			typewriterRef.current = window.setTimeout(tick, TYPEWRITER_TIMING.charBackwardMs);
+			typewriterRef.current = window.setTimeout(
+				tick,
+				TYPEWRITER_TIMING.charBackwardMs
+			);
 		};
 
-		typewriterRef.current = window.setTimeout(tick, TYPEWRITER_TIMING.onboardingStartMs);
+		typewriterRef.current = window.setTimeout(
+			tick,
+			TYPEWRITER_TIMING.onboardingStartMs
+		);
 		return () => clearTypewriterTimer();
 	}, [
 		clearTypewriterTimer,
@@ -1260,25 +2149,38 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			waitingGameStage !== 'tutorial' ||
 			showBriefingNegativeScreen ||
 			currentBriefingInteraction !== 'auto' ||
-			briefingTypewriterBusy
+			briefingTypewriterBusy ||
+			/* The positive-path third briefing screen is now replaced by the
+			   user-driven vertical BreathingTutorialCard sequence, so the
+			   2.2s auto-advance (which used to jump straight into the
+			   practice round) must NOT fire — the user clicks through the
+			   Inhale → Hold → Exhale cards manually via the green button. */
+			(briefingScreenIndex === 2 && !showBriefingNegativeScreen)
 		) {
 			return;
 		}
-		const timeout = window.setTimeout(() => {
-			if (briefingScreenIndex >= localizedBriefingScreens.length - 1) {
-				setSelectedPresetId('standard446');
-				setCustomTiming({
-					inhale: 4,
-					hold: 4,
-					exhale: 6
-				});
-				startPracticeRound();
-				return;
-			}
-			setBriefingScreenIndex((index) => index + 1);
-		}, 'autoAdvanceMs' in localizedBriefingScreens[briefingScreenIndex]
-			? localizedBriefingScreens[briefingScreenIndex].autoAdvanceMs + 180
-			: 1600);
+		const timeout = window.setTimeout(
+			() => {
+				if (
+					briefingScreenIndex >=
+					localizedBriefingScreens.length - 1
+				) {
+					setSelectedPresetId('standard446');
+					setCustomTiming({
+						inhale: 4,
+						hold: 4,
+						exhale: 6
+					});
+					startPracticeRound();
+					return;
+				}
+				setBriefingScreenIndex((index) => index + 1);
+			},
+			'autoAdvanceMs' in localizedBriefingScreens[briefingScreenIndex]
+				? localizedBriefingScreens[briefingScreenIndex].autoAdvanceMs +
+						180
+				: 1600
+		);
 		return () => window.clearTimeout(timeout);
 	}, [
 		briefingTypewriterBusy,
@@ -1293,7 +2195,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	useEffect(() => {
 		clearGameStatusTypewriterTimer();
-		if (!showWaitingMiniGame || waitingGameStage !== 'game' || !stageMessage) {
+		if (
+			!showWaitingMiniGame ||
+			waitingGameStage !== 'game' ||
+			!stageMessage
+		) {
 			setGameStatusTypewriterBusy(false);
 			setGameStatusTypedText('');
 			return;
@@ -1311,7 +2217,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			}
 			gameStatusTypewriterRef.current = window.setTimeout(
 				tick,
-				TYPEWRITER_TIMING.charForwardMs + getPunctuationPauseMs(typedChar)
+				TYPEWRITER_TIMING.charForwardMs +
+					getPunctuationPauseMs(typedChar)
 			);
 		};
 		gameStatusTypewriterRef.current = window.setTimeout(
@@ -1365,7 +2272,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			'session.waitingMiniGame.completionTitle',
 			'Congratulation you have made it.'
 		);
-		const completionTitleWithPunctuation = /[.!?…]\s*$/.test(completionTitle)
+		const completionTitleWithPunctuation = /[.!?…]\s*$/.test(
+			completionTitle
+		)
 			? completionTitle
 			: `${completionTitle}.`;
 		const fullText =
@@ -1379,10 +2288,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							'session.waitingMiniGame.prizeLine2',
 							'Because you overcame your inner noise, beat the boredom, got some distance, and found a little inner peace.'
 						)}`
-				: translate(
-						'session.waitingMiniGame.serenityPrayer',
-						'God, grant me the serenity to accept the things I cannot change, courage to change the things I can, and wisdom to know the difference.'
-					);
+					: translate(
+							'session.waitingMiniGame.serenityPrayer',
+							'God, grant me the serenity to accept the things I cannot change, courage to change the things I can, and wisdom to know the difference.'
+						);
 		let index = 0;
 		setCenterStageTypewriterBusy(true);
 		setCenterStageTypedText('');
@@ -1393,16 +2302,17 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			if (index >= fullText.length) {
 				setCenterStageTypewriterBusy(false);
 				if (waitingGameStage === 'prize') {
-						window.setTimeout(
-							() => setWaitingGameStage('serenity'),
-							TYPEWRITER_TIMING.prizeToSerenityMs
-						);
+					window.setTimeout(
+						() => setWaitingGameStage('serenity'),
+						TYPEWRITER_TIMING.prizeToSerenityMs
+					);
 				}
 				return;
 			}
 			centerStageTypewriterRef.current = window.setTimeout(
 				tick,
-				TYPEWRITER_TIMING.charForwardMs + getPunctuationPauseMs(typedChar)
+				TYPEWRITER_TIMING.charForwardMs +
+					getPunctuationPauseMs(typedChar)
 			);
 		};
 		centerStageTypewriterRef.current = window.setTimeout(
@@ -1410,7 +2320,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			TYPEWRITER_TIMING.initialDelayMs
 		);
 		return () => clearCenterStageTypewriterTimer();
-	}, [clearCenterStageTypewriterTimer, getPunctuationPauseMs, translate, waitingGameStage]);
+	}, [
+		clearCenterStageTypewriterTimer,
+		getPunctuationPauseMs,
+		translate,
+		waitingGameStage
+	]);
 
 	useEffect(
 		() => () => {
@@ -1444,7 +2359,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	}, [messages, initialScrollCompleted]);
 
 	useEffect(() => {
-		knownMessageIdsRef.current = new Set((messages || []).map((m) => m._id));
+		knownMessageIdsRef.current = new Set(
+			(messages || []).map((m) => m._id)
+		);
 	}, [activeSession.item.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	useEffect(() => {
@@ -1507,7 +2424,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			});
 		});
 
-		messages.forEach((message) => knownMessageIdsRef.current.add(message._id));
+		messages.forEach((message) =>
+			knownMessageIdsRef.current.add(message._id)
+		);
 	}, [
 		messages,
 		isThreadsEnabled,
@@ -1529,7 +2448,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		if (!threadRootId) {
 			return;
 		}
-		const rootMessage = messages.find((message) => message._id === threadRootId);
+		const rootMessage = messages.find(
+			(message) => message._id === threadRootId
+		);
 		if (rootMessage) {
 			setActiveThreadRootId(rootMessage._id);
 			setActiveThreadRootMessage(rootMessage);
@@ -1672,11 +2593,30 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			scrollToEnd(0, true);
 		}
 	};
+	const handleMobileNavigateBackClick = () => {
+		mobileListView();
+	};
+	const handleMobileNavigateStepDownClick = () => {
+		const scrollContainer = scrollContainerRef.current;
+		if (!scrollContainer) {
+			return;
+		}
+		smoothScroll({
+			duration: 500,
+			element: scrollContainer,
+			to: Math.min(
+				scrollContainer.scrollHeight,
+				scrollContainer.scrollTop +
+					Math.round(scrollContainer.clientHeight * 0.6)
+			)
+		});
+	};
 
 	const enableInitialScroll = () => {
 		if (!initialScrollCompleted) {
 			setInitialScrollCompleted(true);
-			scrollToEnd(500, true);
+			// Initial open should snap only the message container, without animated jumps.
+			scrollToEnd(0, false);
 		}
 	};
 
@@ -1716,7 +2656,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	const handleMessageSendSuccess = () => {
 		setDraggedFile(null);
-		
+
 		// MATRIX MIGRATION: Refresh messages after sending for Matrix sessions
 		if (!activeSession.rid && props.refreshMessages) {
 			// console.log('🔄 MATRIX: Refreshing messages after send...');
@@ -1744,11 +2684,15 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	}, [isThreadsEnabled, activeThreadRootId, handleCloseThread]);
 
 	useEffect(() => {
+		if (isAskerUser && !isConsultantUser) {
+			return;
+		}
 		const roomId =
 			(activeSession.rid && activeSession.rid.startsWith('!')
 				? activeSession.rid
-				: activeSession.item?.matrixRoomId || activeSession.rid || null) ||
-			null;
+				: activeSession.item?.matrixRoomId ||
+					activeSession.rid ||
+					null) || null;
 		if (!roomId) {
 			return;
 		}
@@ -1775,7 +2719,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				active: false
 			}).catch(() => undefined);
 		};
-	}, [activeSession.rid, activeSession.item?.matrixRoomId, activeThreadRootId]);
+	}, [
+		activeSession.rid,
+		activeSession.item?.matrixRoomId,
+		activeThreadRootId,
+		isAskerUser,
+		isConsultantUser
+	]);
 
 	// Track the decryption success because we have a short timing issue when
 	// message is send before the room encryption
@@ -1837,10 +2787,19 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	);
 
 	return (
-		<div className={clsx('session', shouldFadeSessionChrome && 'session--gameFocus')}>
+		<div
+			className={clsx(
+				'session',
+				shouldFadeSessionChrome && 'session--gameFocus'
+			)}
+		>
 			<div
 				ref={headerRef}
-				style={isEmbeddedNotificationsView ? { display: 'none' } : undefined}
+				style={
+					isEmbeddedNotificationsView
+						? { display: 'none' }
+						: undefined
+				}
 			>
 				{!isEmbeddedNotificationsView && (
 					<SessionHeaderComponent
@@ -1866,7 +2825,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					activeThreadRootId && 'session__content--withThread',
 					shouldLockScroll && 'session__content--gameLockScroll',
 					shouldFadeSessionChrome && 'session__content--gameFocus',
-					shouldBlockAnonymousInquiryChat && 'session__content--consentGate'
+					shouldShowConsentGate && 'session__content--consentGate',
+					shouldShowPseudonymGate && 'session__content--pseudonymGate'
 				)}
 				ref={scrollContainerRef}
 				onScroll={(e) => handleScroll(e)}
@@ -1875,327 +2835,671 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				{isSupervisor && supervisionReason && (
 					<div className="session__supervisionReason">
 						<div className="session__supervisionReasonTitle">
-							{translate('session.supervisor.reason.title', 'Supervisionsgrund')}
+							{translate(
+								'session.supervisor.reason.title',
+								'Supervisionsgrund'
+							)}
 						</div>
 						<div className="session__supervisionReasonText">
 							{supervisionReason}
 						</div>
 					</div>
 				)}
-				{shouldBlockAnonymousInquiryChat && (
-					<div className="session__anonymousInquiryConsent waitingRoom">
-						<WaitingRoomContent
-							headlineKey="videoConference.waitingroom.dataProtection.headline"
-							sublineKey="videoConference.waitingroom.dataProtection.subline"
-							textKey="videoConference.waitingroom.dataProtection.description"
-							Illustration={<WelcomeIllustration />}
-						>
-							<Text type="standard" text={anonymousInquiryConsentLabel} />
-							<Button
-								className="waitingRoom__button"
-								buttonHandle={handleAnonymousInquiryConsentAccept}
-								item={{
-									label: translate(
-										'videoConference.waitingroom.dataProtection.button',
-										'Bestätigen'
-									),
-									type: BUTTON_TYPES.PRIMARY
-								}}
-							/>
-						</WaitingRoomContent>
+				{isSupervisor && (!messages || messages.length === 0) && (
+					<div className="session__supervisionReason">
+						<div className="session__supervisionReasonTitle">
+							{translate(
+								'session.supervisor.startChat.title',
+								'Chat starten'
+							)}
+						</div>
+						<div className="session__supervisionReasonText">
+							{translate(
+								'session.supervisor.startChat.hint',
+								'Use the message field at the bottom to send the first supervision message.'
+							)}
+						</div>
+					</div>
+				)}
+				{shouldShowConsentGate && (
+					<AnonymousConsentGate
+						consentLabelHtml={anonymousInquiryConsentLabel}
+						onAccept={handleAnonymousInquiryConsentAccept}
+					/>
+				)}
+				{shouldShowPseudonymGate && (
+					<div className="session__pseudonymGate">
+						<PseudonymCard
+							pseudonym={currentPseudonym}
+							skipTyping={pseudonymConfirmed}
+						/>
+						{pseudonymConfirmed && <PrivacyMessageCard />}
 					</div>
 				)}
 				{!shouldBlockAnonymousInquiryChat && (
-				<div className="session__gameChromeFadeTarget">
-					<EncryptionBanner />
-				</div>
+					<div className="session__gameChromeFadeTarget">
+						<EncryptionBanner />
+					</div>
 				)}
-				{!shouldBlockAnonymousInquiryChat && isAnonymousBreathingGameAvailable && showWaitingMiniGame && (
-					<div className="session__waitingPopupBackdrop" role="dialog" aria-modal="true">
+				{(!shouldBlockAnonymousInquiryChat ||
+					isInAnonymousWaitingQueuePhase) &&
+					isAnonymousBreathingGameAvailable &&
+					showWaitingMiniGame && (
 						<div
-						className={clsx(
-							'session__waitingModule',
-							'session__waitingModule--popup',
-							(isBriefingOnlyScreen || isPreGameSetupScreen || isTextOnlyStage) &&
-								'session__waitingModule--briefing'
-						)}
-						role="region"
-						aria-label={`${translate(
-							'session.waitingMiniGame.inhaleExhale',
-							'Inhale exhale breathing guide'
-						)} ${translate('session.waitingMiniGame.timeLeft', 'Time left')}: ${phaseSecondsLeft}s`}
-					>
-						<button
-							type="button"
-							className="session__waitingPopupClose"
-							aria-label={translate('app.close', 'Close')}
-							onClick={() => setShowWaitingMiniGame(false)}
+							className="session__waitingPopupBackdrop"
+							role="dialog"
+							aria-modal="true"
 						>
-							×
-						</button>
-						{isBreathingArenaVisible && (
-							<div className="session__waitingVolumeHint">
-								{SPEAKER_HINT_ICON}
-								<span>
-									{translate(
-										'session.waitingMiniGame.volumeHint',
-										'For better experience, turn on your volume.'
-									)}
-								</span>
-							</div>
-						)}
-						{waitingGameStage === 'game' && (
-							<div className="session__waitingGameStatus">
-								<span className="session__waitingGameStatusIcon" aria-hidden="true">
-									<PersonCircleIcon />
-								</span>
-								<span
-									className={clsx(
-										'session__waitingTypewriterText',
-										gameStatusTypewriterBusy &&
-											'session__waitingTypewriterText--busy'
-									)}
-								>
-									{gameStatusTypewriterBusy ? gameStatusTypedText : stageMessage}
-								</span>
-							</div>
-						)}
-						{isBreathingArenaVisible && (
-							<div className="session__waitingMiniGameArena session__waitingMiniGameArena--breathing">
-								<div className="session__waitingMiniGameSingle">
-									<div className="session__waitingMiniGamePhaseSeconds">
-										{phaseSecondsLeft}s
-									</div>
-									<div
-										className={clsx(
-											'session__waitingMiniGamePulse',
-											breathPhase === 'hold' && 'session__waitingMiniGamePulse--holding'
-										)}
-										style={
-											{
-												filter: `drop-shadow(0 0 ${12 + currentLevel * 1.2}px rgba(204,30,28,0.45))`,
-												'--breath-scale': circleScale,
-												'--breath-center-scale': circleCenterScale
-											} as React.CSSProperties
-										}
+							{waitingGameStage === 'game' && (
+								<div className="session__waitingGameLevelBadgeFloat">
+									<span
+										className="session__waitingGameLevelBadgeFloat__icon"
+										aria-hidden="true"
 									>
-										<span className="session__waitingMiniGamePulseCircle session__waitingMiniGamePulseCircle--1" />
-										<span className="session__waitingMiniGamePulseCircle session__waitingMiniGamePulseCircle--2" />
-										<span className="session__waitingMiniGamePulseCircle session__waitingMiniGamePulseCircle--3" />
-										<span className="session__waitingMiniGamePulseCircle session__waitingMiniGamePulseCircle--4" />
-										<div className="session__waitingMiniGameCenter">
-											<span className="session__waitingMiniGameCircleIcon">
-												{currentPhaseIcon}
-											</span>
-											<div className="session__waitingMiniGameCenterText">
-												{currentPhaseLabel}
+										<LevelEmojiIcon
+											level={currentLevel}
+											className="session__waitingGameLevelBadgeFloat__emoji"
+										/>
+									</span>
+									<span className="session__waitingGameLevelBadgeFloat__text">
+										Level {currentLevel}:{' '}
+										{BREATH_LEVELS[currentLevel - 1]?.title}
+									</span>
+								</div>
+							)}
+							<div
+								className={clsx(
+									'session__waitingModule',
+									'session__waitingModule--popup',
+									(isBriefingOnlyScreen ||
+										isPreGameSetupScreen ||
+										isTextOnlyStage) &&
+										'session__waitingModule--briefing',
+									(waitingGameStage === 'tutorial' ||
+										waitingGameStage === 'practice' ||
+										waitingGameStage === 'game' ||
+										waitingGameStage === 'bellyPractice' ||
+										waitingGameStage === 'selfTimer' ||
+										waitingGameStage === 'completion' ||
+										waitingGameStage === 'serenity') &&
+										'session__waitingModule--tutorialCard'
+								)}
+								role="region"
+								aria-label={`${translate(
+									'session.waitingMiniGame.inhaleExhale',
+									'Inhale exhale breathing guide'
+								)} ${translate('session.waitingMiniGame.timeLeft', 'Time left')}: ${phaseSecondsLeft}s`}
+							>
+								<button
+									type="button"
+									className="session__waitingPopupClose"
+									aria-label={translate('app.close', 'Close')}
+									onClick={() =>
+										setShowWaitingMiniGame(false)
+									}
+								>
+									×
+								</button>
+								{(waitingGameStage === 'practice' ||
+									waitingGameStage === 'game' ||
+									waitingGameStage === 'bellyPractice' ||
+									waitingGameStage === 'selfTimer' ||
+									waitingGameStage === 'completion' ||
+									waitingGameStage === 'serenity') && (
+									<div className="session__waitingMiniGameCarimatHeader">
+										<div className="pseudonymCard__avatarCol">
+											<div className="pseudonymCard__avatarFrame">
+												<div className="pseudonymCard__avatarIcon">
+													<svg
+														width="32"
+														height="36"
+														viewBox="0 0 32 36"
+														fill="none"
+														aria-hidden="true"
+													>
+														<path
+															d="M0 36V26C0 24.9 0.391667 23.9583 1.175 23.175C1.95833 22.3917 2.9 22 4 22H28C29.1 22 30.0417 22.3917 30.825 23.175C31.6083 23.9583 32 24.9 32 26V36H0ZM10 20C7.23333 20 4.875 19.025 2.925 17.075C0.975 15.125 0 12.7667 0 10C0 7.23333 0.975 4.875 2.925 2.925C4.875 0.975 7.23333 0 10 0H22C24.7667 0 27.125 0.975 29.075 2.925C31.025 4.875 32 7.23333 32 10C32 12.7667 31.025 15.125 29.075 17.075C27.125 19.025 24.7667 20 22 20H10ZM4 32H28V26H4V32ZM10 16H22C23.6667 16 25.0833 15.4167 26.25 14.25C27.4167 13.0833 28 11.6667 28 10C28 8.33333 27.4167 6.91667 26.25 5.75C25.0833 4.58333 23.6667 4 22 4H10C8.33333 4 6.91667 4.58333 5.75 5.75C4.58333 6.91667 4 8.33333 4 10C4 11.6667 4.58333 13.0833 5.75 14.25C6.91667 15.4167 8.33333 16 10 16ZM11.425 11.425C11.8083 11.0417 12 10.5667 12 10C12 9.43333 11.8083 8.95833 11.425 8.575C11.0417 8.19167 10.5667 8 10 8C9.43333 8 8.95833 8.19167 8.575 8.575C8.19167 8.95833 8 9.43333 8 10C8 10.5667 8.19167 11.0417 8.575 11.425C8.95833 11.8083 9.43333 12 10 12C10.5667 12 11.0417 11.8083 11.425 11.425ZM23.425 11.425C23.8083 11.0417 24 10.5667 24 10C24 9.43333 23.8083 8.95833 23.425 8.575C23.0417 8.19167 22.5667 8 22 8C21.4333 8 20.9583 8.19167 20.575 8.575C20.1917 8.95833 20 9.43333 20 10C20 10.5667 20.1917 11.0417 20.575 11.425C20.9583 11.8083 21.4333 12 22 12C22.5667 12 23.0417 11.8083 23.425 11.425Z"
+															fill="currentColor"
+														/>
+													</svg>
+												</div>
+											</div>
+											<div className="pseudonymCard__menuIcon">
+												<svg
+													width="24"
+													height="24"
+													viewBox="0 0 32 32"
+													fill="none"
+													aria-hidden="true"
+												>
+													<path
+														d="M16.0007 26.6673C15.2673 26.6673 14.6395 26.4062 14.1173 25.884C13.5951 25.3618 13.334 24.734 13.334 24.0007C13.334 23.2673 13.5951 22.6395 14.1173 22.1173C14.6395 21.5951 15.2673 21.334 16.0007 21.334C16.734 21.334 17.3618 21.5951 17.884 22.1173C18.4062 22.6395 18.6673 23.2673 18.6673 24.0007C18.6673 24.734 18.4062 25.3618 17.884 25.884C17.3618 26.4062 16.734 26.6673 16.0007 26.6673ZM16.0007 18.6673C15.2673 18.6673 14.6395 18.4062 14.1173 17.884C13.5951 17.3618 13.334 16.734 13.334 16.0007C13.334 15.2673 13.5951 14.6395 14.1173 14.1173C14.6395 13.5951 15.2673 13.334 16.0007 13.334C16.734 13.334 17.3618 13.5951 17.884 14.1173C18.4062 14.6395 18.6673 15.2673 18.6673 16.0007C18.6673 16.734 18.4062 17.3618 17.884 17.884C17.3618 18.4062 16.734 18.6673 16.0007 18.6673ZM16.0007 10.6673C15.2673 10.6673 14.6395 10.4062 14.1173 9.88398C13.5951 9.36176 13.334 8.73398 13.334 8.00065C13.334 7.26732 13.5951 6.63954 14.1173 6.11732C14.6395 5.5951 15.2673 5.33398 16.0007 5.33398C16.734 5.33398 17.3618 5.5951 17.884 6.11732C18.4062 6.63954 18.6673 7.26732 18.6673 8.00065C18.6673 8.73398 18.4062 9.36176 17.884 9.88398C17.3618 10.4062 16.734 10.6673 16.0007 10.6673Z"
+														fill="#1D1B20"
+													/>
+												</svg>
+											</div>
+										</div>
+										<div className="pseudonymCard__contentCol breathingTutorialCard__contentCol">
+											<div className="pseudonymCard__header">
+												<span className="pseudonymCard__headerName">
+													Carimat
+												</span>
+												<span className="pseudonymCard__headerSubtitle">
+													{translate(
+														'session.waitingMiniGame.tutorialCard.carimatSubtitle',
+														'Lets bridge your waiting time'
+													)}
+												</span>
+											</div>
+											<div className="breathingTutorialCard__bubble breathingTutorialCard__bubble--practice">
+												{isBubbleTyping ? (
+													<p className="breathingTutorialCard__bubbleText breathingTutorialCard__bubbleText--practice">
+														{bubblePlainText.slice(
+															0,
+															bubbleTypedLen
+														)}
+														<span className="breathingTutorialCard__bubbleCaret" />
+													</p>
+												) : (
+													<p
+														className="breathingTutorialCard__bubbleText breathingTutorialCard__bubbleText--practice"
+														dangerouslySetInnerHTML={{
+															__html: stageMessage
+														}}
+													/>
+												)}
 											</div>
 										</div>
 									</div>
-								</div>
-							</div>
-						)}
-						{waitingGameStage === 'practice' && (
-							<div className="session__waitingMiniGamePracticeHint">{stageMessage}</div>
-						)}
-						{waitingGameStage === 'game' && (
-							<div className="session__waitingGameLevelBadge">
-								<span className="session__waitingGameLevelBadgeIcon" aria-hidden="true">
-									<LevelEmojiIcon
-										level={currentLevel}
-										className="session__waitingGameLevelBadgeEmoji"
-									/>
-								</span>
-								<span className="session__waitingGameLevelBadgeText">
-									{levelBadgeTypedText}
-								</span>
-							</div>
-						)}
-						{isPreGameSetupScreen && (
-							<div className="session__waitingPreGameSetup">
-								{!isInitialSetupScreen && (
-									<div className="session__waitingPreGameTitle">
-										{translate(
-											'session.waitingMiniGame.practiceSuccessPrompt',
-											'Great job, want to start now?'
-										)}
+								)}
+								{waitingGameStage === 'tutorial' &&
+									briefingScreenIndex === 2 &&
+									!showBriefingNegativeScreen && (
+										<BreathingTutorialCard
+											phase={
+												tutorialPhases[
+													tutorialCardIndex
+												]
+											}
+											onCancel={() => {
+												setShowWaitingMiniGame(false);
+												setTutorialCardIndex(0);
+											}}
+											onConfirm={() => {
+												if (tutorialCardIndex < 2) {
+													setTutorialCardIndex(
+														(i) =>
+															Math.min(
+																2,
+																i + 1
+															) as 0 | 1 | 2
+													);
+													return;
+												}
+												/* Finished all three phase
+												   cards — drop straight
+												   into the beginner 3-3-4
+												   starter preset. */
+												setTutorialCardIndex(0);
+												setShowBriefingNegativeScreen(
+													false
+												);
+												setSelectedPresetId(
+													'starter334'
+												);
+												setCustomTiming({
+													inhale: 3,
+													hold: 3,
+													exhale: 4
+												});
+												startPracticeRound();
+											}}
+										/>
+									)}
+								{isBreathingArenaVisible && (
+									<div className="session__waitingVolumeHint">
+										{SPEAKER_HINT_ICON}
+										<span>
+											{translate(
+												'session.waitingMiniGame.volumeHint',
+												'For better experience, turn on your volume.'
+											)}
+										</span>
 									</div>
 								)}
-								<div className="session__waitingPreGameTitle session__waitingPreGameTitle--small">
-									{translate(
-										'session.waitingMiniGame.timingInfo',
-										'Set your breathing timing before you start.'
-									)}
-								</div>
-								<div className="session__waitingPreGameLevels">
-									{BREATHING_PRESETS.map((preset) => (
-										<button
-											key={preset.id}
-											type="button"
-											className={clsx(
-												'session__waitingPreGameLevelChip',
-												selectedPresetId === preset.id &&
-													'session__waitingPreGameLevelChip--active'
+								{isBreathingArenaVisible && (
+									<div className="session__waitingMiniGameArena session__waitingMiniGameArena--breathing">
+										<div className="session__waitingMiniGameSingle">
+											{/* Big "Ns" timer removed from the
+											    portrait card layout — the phase
+											    duration is already surfaced in
+											    the Carimat bubble at the top. */}
+											<div
+												className={clsx(
+													'session__waitingMiniGamePulse',
+													breathPhase === 'hold' &&
+														'session__waitingMiniGamePulse--holding'
+												)}
+												style={
+													{
+														'filter': `drop-shadow(0 0 ${12 + currentLevel * 1.2}px rgba(204,30,28,0.45))`,
+														'--breath-scale':
+															circleScale,
+														'--breath-center-scale':
+															circleCenterScale
+													} as React.CSSProperties
+												}
+											>
+												<span className="session__waitingMiniGamePulseCircle session__waitingMiniGamePulseCircle--1" />
+												<span className="session__waitingMiniGamePulseCircle session__waitingMiniGamePulseCircle--2" />
+												<span className="session__waitingMiniGamePulseCircle session__waitingMiniGamePulseCircle--3" />
+												<span className="session__waitingMiniGamePulseCircle session__waitingMiniGamePulseCircle--4" />
+												<div className="session__waitingMiniGameCenter">
+													<span className="session__waitingMiniGameCircleIcon">
+														{currentPhaseIcon}
+													</span>
+													<div className="session__waitingMiniGameCenterText">
+														{currentPhaseLabel}
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+								)}
+								{waitingGameStage === 'practice' && (
+									<div className="session__waitingMiniGamePracticeHint">
+										{stageMessage}
+									</div>
+								)}
+								{waitingGameStage === 'selfTimer' && (
+									<div className="session__selfTimerSliders">
+										{(
+											[
+												'inhale',
+												'hold',
+												'exhale'
+											] as const
+										).map((phase, rowIdx) => {
+											/* Each row is independent, 1-7s. The center
+											   of the track is always 4s — if value < 4
+											   the red block grows to the left from
+											   center; if value > 4 it grows to the right.
+											   The "4s" reference chip is fixed above the
+											   top (inhale) row only. */
+											const min = 1;
+											const max = 7;
+											const center = 4;
+											const value = Math.min(
+												max,
+												Math.max(
+													min,
+													customTiming[phase]
+												)
+											);
+											const valuePct =
+												((value - min) / (max - min)) *
+												100;
+											const centerPct = 50;
+											const redLeftPct = Math.min(
+												centerPct,
+												valuePct
+											);
+											const redRightPct = Math.max(
+												centerPct,
+												valuePct
+											);
+											const label = translate(
+												`session.waitingMiniGame.phase.${phase}`,
+												phase.charAt(0).toUpperCase() +
+													phase.slice(1)
+											);
+											return (
+												<div
+													className="session__selfTimerRow"
+													key={phase}
+												>
+													<div className="session__selfTimerTrack">
+														{rowIdx === 0 && (
+															<div
+																className="session__selfTimerValueBubble"
+																style={{
+																	left: `${centerPct}%`
+																}}
+															>
+																4s
+															</div>
+														)}
+														<div
+															className="session__selfTimerSegment session__selfTimerSegment--grey session__selfTimerSegment--start"
+															style={{
+																left: '0%',
+																width: `${redLeftPct}%`
+															}}
+														>
+															<span className="session__selfTimerDot session__selfTimerDot--left" />
+														</div>
+														<div
+															className="session__selfTimerSegment session__selfTimerSegment--red"
+															style={{
+																left: `${redLeftPct}%`,
+																width: `${redRightPct - redLeftPct}%`
+															}}
+														/>
+														<div
+															className="session__selfTimerHandle"
+															style={{
+																left: `${valuePct}%`
+															}}
+														/>
+														<div
+															className="session__selfTimerSegment session__selfTimerSegment--grey session__selfTimerSegment--end"
+															style={{
+																left: `${redRightPct}%`,
+																width: `${100 - redRightPct}%`
+															}}
+														>
+															<span className="session__selfTimerDot session__selfTimerDot--right" />
+														</div>
+														<input
+															type="range"
+															min={min}
+															max={max}
+															step={1}
+															value={value}
+															onChange={(e) =>
+																setCustomTiming(
+																	(prev) => ({
+																		...prev,
+																		[phase]:
+																			Number(
+																				e
+																					.target
+																					.value
+																			)
+																	})
+																)
+															}
+															className="session__selfTimerInput"
+															aria-label={`${label} seconds`}
+														/>
+													</div>
+													<span className="session__selfTimerLabel">
+														{label}
+													</span>
+												</div>
+											);
+										})}
+									</div>
+								)}
+								{isPreGameSetupScreen && (
+									<div className="session__waitingPreGameSetup">
+										{!isInitialSetupScreen && (
+											<div className="session__waitingPreGameTitle">
+												{translate(
+													'session.waitingMiniGame.practiceSuccessPrompt',
+													'Great job, want to start now?'
+												)}
+											</div>
+										)}
+										<div className="session__waitingPreGameTitle session__waitingPreGameTitle--small">
+											{translate(
+												'session.waitingMiniGame.timingInfo',
+												'Set your breathing timing before you start.'
 											)}
-											onClick={() => setSelectedPresetId(preset.id)}
+										</div>
+										<div className="session__waitingPreGameLevels">
+											{BREATHING_PRESETS.map((preset) => (
+												<button
+													key={preset.id}
+													type="button"
+													className={clsx(
+														'session__waitingPreGameLevelChip',
+														selectedPresetId ===
+															preset.id &&
+															'session__waitingPreGameLevelChip--active'
+													)}
+													onClick={() =>
+														setSelectedPresetId(
+															preset.id
+														)
+													}
+												>
+													{translate(
+														`session.waitingMiniGame.presets.${preset.id}`,
+														preset.label
+													)}
+												</button>
+											))}
+										</div>
+										<div className="session__waitingPreGameTiming">
+											<div
+												className="session__waitingPreGameTimingRow session__waitingPreGameTimingRow--inhale"
+												style={getTimingRowStyle(
+													customTiming.inhale
+												)}
+											>
+												<span>
+													{translate(
+														'session.waitingMiniGame.phase.inhale',
+														'Inhale'
+													)}
+												</span>
+												<span className="session__waitingPreGameTimingValue">
+													<button
+														type="button"
+														className="session__waitingPreGameTimingArrow"
+														onClick={() =>
+															updateTiming(
+																'inhale',
+																-1
+															)
+														}
+														aria-label={translate(
+															'session.waitingMiniGame.decreaseInhale',
+															'Decrease inhale seconds'
+														)}
+													>
+														◀
+													</button>
+													<span>
+														{customTiming.inhale}s
+													</span>
+													<button
+														type="button"
+														className="session__waitingPreGameTimingArrow"
+														onClick={() =>
+															updateTiming(
+																'inhale',
+																1
+															)
+														}
+														aria-label={translate(
+															'session.waitingMiniGame.increaseInhale',
+															'Increase inhale seconds'
+														)}
+													>
+														▶
+													</button>
+												</span>
+											</div>
+											<div
+												className="session__waitingPreGameTimingRow session__waitingPreGameTimingRow--hold"
+												style={getTimingRowStyle(
+													customTiming.hold
+												)}
+											>
+												<span>
+													{translate(
+														'session.waitingMiniGame.phase.hold',
+														'Hold'
+													)}
+												</span>
+												<span className="session__waitingPreGameTimingValue">
+													<button
+														type="button"
+														className="session__waitingPreGameTimingArrow"
+														onClick={() =>
+															updateTiming(
+																'hold',
+																-1
+															)
+														}
+														aria-label={translate(
+															'session.waitingMiniGame.decreaseHold',
+															'Decrease hold seconds'
+														)}
+													>
+														◀
+													</button>
+													<span>
+														{customTiming.hold}s
+													</span>
+													<button
+														type="button"
+														className="session__waitingPreGameTimingArrow"
+														onClick={() =>
+															updateTiming(
+																'hold',
+																1
+															)
+														}
+														aria-label={translate(
+															'session.waitingMiniGame.increaseHold',
+															'Increase hold seconds'
+														)}
+													>
+														▶
+													</button>
+												</span>
+											</div>
+											<div
+												className="session__waitingPreGameTimingRow session__waitingPreGameTimingRow--exhale"
+												style={getTimingRowStyle(
+													customTiming.exhale
+												)}
+											>
+												<span>
+													{translate(
+														'session.waitingMiniGame.phase.exhale',
+														'Exhale'
+													)}
+												</span>
+												<span className="session__waitingPreGameTimingValue">
+													<button
+														type="button"
+														className="session__waitingPreGameTimingArrow"
+														onClick={() =>
+															updateTiming(
+																'exhale',
+																-1
+															)
+														}
+														aria-label={translate(
+															'session.waitingMiniGame.decreaseExhale',
+															'Decrease exhale seconds'
+														)}
+													>
+														◀
+													</button>
+													<span>
+														{customTiming.exhale}s
+													</span>
+													<button
+														type="button"
+														className="session__waitingPreGameTimingArrow"
+														onClick={() =>
+															updateTiming(
+																'exhale',
+																1
+															)
+														}
+														aria-label={translate(
+															'session.waitingMiniGame.increaseExhale',
+															'Increase exhale seconds'
+														)}
+													>
+														▶
+													</button>
+												</span>
+											</div>
+										</div>
+										<div
+											className={clsx(
+												'session__waitingPreGameActions',
+												isInitialSetupScreen &&
+													'session__waitingPreGameActions--single'
+											)}
 										>
-											{translate(`session.waitingMiniGame.presets.${preset.id}`, preset.label)}
-										</button>
-									))}
-								</div>
-								<div className="session__waitingPreGameTiming">
-									<div
-										className="session__waitingPreGameTimingRow session__waitingPreGameTimingRow--inhale"
-										style={getTimingRowStyle(customTiming.inhale)}
-									>
-										<span>{translate('session.waitingMiniGame.phase.inhale', 'Inhale')}</span>
-										<span className="session__waitingPreGameTimingValue">
-											<button
-												type="button"
-												className="session__waitingPreGameTimingArrow"
-												onClick={() => updateTiming('inhale', -1)}
-												aria-label={translate(
-													'session.waitingMiniGame.decreaseInhale',
-													'Decrease inhale seconds'
-												)}
-											>
-												◀
-											</button>
-											<span>{customTiming.inhale}s</span>
-											<button
-												type="button"
-												className="session__waitingPreGameTimingArrow"
-												onClick={() => updateTiming('inhale', 1)}
-												aria-label={translate(
-													'session.waitingMiniGame.increaseInhale',
-													'Increase inhale seconds'
-												)}
-											>
-												▶
-											</button>
-										</span>
+											{isInitialSetupScreen ? (
+												<button
+													type="button"
+													className="session__waitingPreGameActionButton session__waitingPreGameActionButton--primary"
+													onClick={startPracticeRound}
+												>
+													{translate(
+														'session.waitingMiniGame.startFirstTry',
+														'Lets start the first try'
+													)}
+												</button>
+											) : (
+												<>
+													<button
+														type="button"
+														className="session__waitingPreGameActionButton session__waitingPreGameActionButton--ghost"
+														onClick={
+															startPracticeRound
+														}
+													>
+														{translate(
+															'session.waitingMiniGame.repeatTrainingRound',
+															'Repeat training round'
+														)}
+													</button>
+													<button
+														type="button"
+														className="session__waitingPreGameActionButton session__waitingPreGameActionButton--primary"
+														onClick={
+															startAchieverGame
+														}
+													>
+														{translate(
+															'session.waitingMiniGame.startRealGame',
+															'Lets start the real game'
+														)}
+													</button>
+												</>
+											)}
+										</div>
 									</div>
-									<div
-										className="session__waitingPreGameTimingRow session__waitingPreGameTimingRow--hold"
-										style={getTimingRowStyle(customTiming.hold)}
-									>
-										<span>{translate('session.waitingMiniGame.phase.hold', 'Hold')}</span>
-										<span className="session__waitingPreGameTimingValue">
-											<button
-												type="button"
-												className="session__waitingPreGameTimingArrow"
-												onClick={() => updateTiming('hold', -1)}
-												aria-label={translate(
-													'session.waitingMiniGame.decreaseHold',
-													'Decrease hold seconds'
-												)}
-											>
-												◀
-											</button>
-											<span>{customTiming.hold}s</span>
-											<button
-												type="button"
-												className="session__waitingPreGameTimingArrow"
-												onClick={() => updateTiming('hold', 1)}
-												aria-label={translate(
-													'session.waitingMiniGame.increaseHold',
-													'Increase hold seconds'
-												)}
-											>
-												▶
-											</button>
-										</span>
-									</div>
-									<div
-										className="session__waitingPreGameTimingRow session__waitingPreGameTimingRow--exhale"
-										style={getTimingRowStyle(customTiming.exhale)}
-									>
-										<span>{translate('session.waitingMiniGame.phase.exhale', 'Exhale')}</span>
-										<span className="session__waitingPreGameTimingValue">
-											<button
-												type="button"
-												className="session__waitingPreGameTimingArrow"
-												onClick={() => updateTiming('exhale', -1)}
-												aria-label={translate(
-													'session.waitingMiniGame.decreaseExhale',
-													'Decrease exhale seconds'
-												)}
-											>
-												◀
-											</button>
-											<span>{customTiming.exhale}s</span>
-											<button
-												type="button"
-												className="session__waitingPreGameTimingArrow"
-												onClick={() => updateTiming('exhale', 1)}
-												aria-label={translate(
-													'session.waitingMiniGame.increaseExhale',
-													'Increase exhale seconds'
-												)}
-											>
-												▶
-											</button>
-										</span>
-									</div>
-								</div>
+								)}
 								<div
 									className={clsx(
-										'session__waitingPreGameActions',
-										isInitialSetupScreen &&
-											'session__waitingPreGameActions--single'
+										'session__waitingModuleTypewriter',
+										((waitingGameStage === 'tutorial' &&
+											briefingScreenIndex === 2 &&
+											!showBriefingNegativeScreen) ||
+											waitingGameStage === 'practice' ||
+											waitingGameStage === 'game' ||
+											waitingGameStage ===
+												'bellyPractice' ||
+											waitingGameStage === 'selfTimer' ||
+											waitingGameStage === 'completion' ||
+											waitingGameStage === 'serenity') &&
+											'session__waitingModuleTypewriter--hidden',
+										(waitingGameStage === 'completion' ||
+											waitingGameStage === 'prize' ||
+											waitingGameStage === 'serenity') &&
+											'session__waitingModuleTypewriter--centerStage',
+										(isPreGameSetupScreen ||
+											isBreathingArenaVisible) &&
+											'session__waitingModuleTypewriter--hidden'
 									)}
 								>
-									{isInitialSetupScreen ? (
-										<button
-											type="button"
-											className="session__waitingPreGameActionButton session__waitingPreGameActionButton--primary"
-											onClick={startPracticeRound}
-										>
-											{translate(
-												'session.waitingMiniGame.startFirstTry',
-												'Lets start the first try'
-											)}
-										</button>
-									) : (
-										<>
-											<button
-												type="button"
-												className="session__waitingPreGameActionButton session__waitingPreGameActionButton--ghost"
-												onClick={startPracticeRound}
-											>
-												{translate(
-													'session.waitingMiniGame.repeatTrainingRound',
-													'Repeat training round'
-												)}
-											</button>
-											<button
-												type="button"
-												className="session__waitingPreGameActionButton session__waitingPreGameActionButton--primary"
-												onClick={startAchieverGame}
-											>
-												{translate(
-													'session.waitingMiniGame.startRealGame',
-													'Lets start the real game'
-												)}
-											</button>
-										</>
-									)}
-								</div>
-							</div>
-						)}
-						<div
-							className={clsx(
-								'session__waitingModuleTypewriter',
-								(waitingGameStage === 'completion' ||
-									waitingGameStage === 'prize' ||
-									waitingGameStage === 'serenity') &&
-									'session__waitingModuleTypewriter--centerStage',
-								(isPreGameSetupScreen || isBreathingArenaVisible) &&
-									'session__waitingModuleTypewriter--hidden'
-							)}
-						>
-							{waitingGameStage === 'tutorial'
-								? (
+									{waitingGameStage === 'tutorial' &&
+									!(
+										briefingScreenIndex === 2 &&
+										!showBriefingNegativeScreen
+									) ? (
 										<div
 											className={clsx(
 												'session__waitingBriefingScreen',
@@ -2218,198 +3522,504 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											</div>
 											{briefingScreenIndex === 2 &&
 												!showBriefingNegativeScreen && (
-													<div className="session__waitingBriefingStepsAnimated" aria-hidden="true">
-														{briefingPhaseSteps.map((step, index) => (
-															<React.Fragment key={step.key}>
-																<div
-																	className="session__waitingBriefingStep"
-																	style={
-																		{
-																			'--step-delay': `${180 + index * 1120}ms`
-																		} as React.CSSProperties
+													<div
+														className="session__waitingBriefingStepsAnimated"
+														aria-hidden="true"
+													>
+														{briefingPhaseSteps.map(
+															(step, index) => (
+																<React.Fragment
+																	key={
+																		step.key
 																	}
 																>
-																	<div className="session__waitingBriefingStepCircle">
-																		<span className="session__waitingBriefingStepIcon">
-																			{step.icon}
-																		</span>
-																	</div>
-																	<div className="session__waitingBriefingStepLabel">
-																		{step.label}
-																	</div>
-																</div>
-																{index < briefingPhaseSteps.length - 1 && (
 																	<div
-																		className="session__waitingBriefingStepConnector"
+																		className="session__waitingBriefingStep"
 																		style={
 																			{
-																				'--connector-delay': `${760 + index * 1150}ms`
+																				'--step-delay': `${180 + index * 1120}ms`
 																			} as React.CSSProperties
 																		}
 																	>
-																		<span />
-																		<span />
-																		<span />
-																		<span />
-																		<span />
+																		<div className="session__waitingBriefingStepCircle">
+																			<span className="session__waitingBriefingStepIcon">
+																				{
+																					step.icon
+																				}
+																			</span>
+																		</div>
+																		<div className="session__waitingBriefingStepLabel">
+																			{
+																				step.label
+																			}
+																		</div>
 																	</div>
-																)}
-															</React.Fragment>
-														))}
+																	{index <
+																		briefingPhaseSteps.length -
+																			1 && (
+																		<div
+																			className="session__waitingBriefingStepConnector"
+																			style={
+																				{
+																					'--connector-delay': `${760 + index * 1150}ms`
+																				} as React.CSSProperties
+																			}
+																		>
+																			<span />
+																			<span />
+																			<span />
+																			<span />
+																			<span />
+																		</div>
+																	)}
+																</React.Fragment>
+															)
+														)}
 													</div>
 												)}
 										</div>
-									)
-								: waitingGameStage === 'completion' ||
+									) : waitingGameStage === 'completion' ||
 									  waitingGameStage === 'prize' ||
-									  waitingGameStage === 'serenity'
-									? (
-											<div
+									  waitingGameStage ===
+											'serenity' ? null : typewriterBusy ? (
+										typedText
+									) : isPreGameSetupScreen ? null : (
+										stageMessage
+									)}
+								</div>
+								<div
+									className={clsx(
+										'session__waitingModuleActions',
+										isNegativeBriefingScreen &&
+											'session__waitingModuleActions--negative'
+									)}
+								>
+									{waitingGameStage === 'tutorial' &&
+										!(
+											briefingScreenIndex === 2 &&
+											!showBriefingNegativeScreen
+										) && (
+											<>
+												{briefingTypewriterBusy ? null : currentBriefingInteraction ===
+												  'negative' ? (
+													<button
+														type="button"
+														className="session__waitingModuleActionButton session__waitingModuleActionButton--ghost session__waitingModuleActionButton--tiny"
+														onClick={() => {
+															setShowBriefingNegativeScreen(
+																false
+															);
+															setBriefingScreenIndex(
+																2
+															);
+														}}
+													>
+														{translate(
+															'session.waitingMiniGame.changeMind',
+															'I change my mind let me try out your waiting game'
+														)}
+													</button>
+												) : currentBriefingInteraction ===
+												  'choice' ? (
+													<>
+														<button
+															type="button"
+															className="session__waitingModuleActionButton session__waitingModuleActionButton--ghost"
+															onClick={() =>
+																setShowBriefingNegativeScreen(
+																	true
+																)
+															}
+														>
+															{translate(
+																'session.waitingMiniGame.iJustWait',
+																'I just wait'
+															)}
+														</button>
+														<button
+															type="button"
+															className="session__waitingModuleActionButton session__waitingModuleActionButton--primary"
+															onClick={() =>
+																setBriefingScreenIndex(
+																	(index) =>
+																		Math.min(
+																			localizedBriefingScreens.length -
+																				1,
+																			index +
+																				1
+																		)
+																)
+															}
+														>
+															{translate(
+																'session.waitingMiniGame.startGame',
+																'Start the game'
+															)}
+														</button>
+													</>
+												) : currentBriefingInteraction ===
+												  'start' ? (
+													<button
+														type="button"
+														className="session__waitingModuleActionButton session__waitingModuleActionButton--primary"
+														onClick={() => {
+															setShowBriefingNegativeScreen(
+																false
+															);
+															setSelectedPresetId(
+																'standard446'
+															);
+															setCustomTiming({
+																inhale: 4,
+																hold: 4,
+																exhale: 6
+															});
+															startPracticeRound();
+														}}
+													>
+														{translate(
+															'app.next',
+															'Continue'
+														)}
+													</button>
+												) : null}
+											</>
+										)}
+									{isJoinRoomAvailable &&
+										waitingGameStage !== 'practice' &&
+										waitingGameStage !== 'game' && (
+											<button
+												type="button"
 												className={clsx(
-													'session__waitingCenterStageText',
-													'session__waitingTypewriterText',
-													centerStageTypewriterBusy &&
-														'session__waitingTypewriterText--busy'
+													'session__breathingJoinButton',
+													joinPromptEscalated &&
+														'session__breathingJoinButton--urgent'
 												)}
-											>
-												{centerStageTypedText}
-											</div>
-										)
-									: typewriterBusy
-										? typedText
-										: isPreGameSetupScreen
-											? null
-											: stageMessage}
-						</div>
-						{waitingGameStage === 'completion' && !centerStageTypewriterBusy && (
-							<div className="session__waitingCompletionHeart" aria-hidden="true">
-								{COMPLETION_HEART_ICON}
-							</div>
-						)}
-						<div
-							className={clsx(
-								'session__waitingModuleActions',
-								isNegativeBriefingScreen && 'session__waitingModuleActions--negative'
-							)}
-						>
-							{waitingGameStage === 'tutorial' && (
-								<>
-									{briefingTypewriterBusy ? null : currentBriefingInteraction === 'negative' ? (
-										<button
-											type="button"
-											className="session__waitingModuleActionButton session__waitingModuleActionButton--ghost session__waitingModuleActionButton--tiny"
-											onClick={() => {
-												setShowBriefingNegativeScreen(false);
-												setBriefingScreenIndex(2);
-											}}
-										>
-											{translate(
-												'session.waitingMiniGame.changeMind',
-												'I change my mind let me try out your waiting game'
-											)}
-										</button>
-									) : currentBriefingInteraction === 'choice' ? (
-										<>
-											<button
-												type="button"
-												className="session__waitingModuleActionButton session__waitingModuleActionButton--ghost"
-												onClick={() => setShowBriefingNegativeScreen(true)}
-											>
-												{translate('session.waitingMiniGame.iJustWait', 'I just wait')}
-											</button>
-											<button
-												type="button"
-												className="session__waitingModuleActionButton session__waitingModuleActionButton--primary"
 												onClick={() =>
-													setBriefingScreenIndex((index) =>
-														Math.min(localizedBriefingScreens.length - 1, index + 1)
+													setShowWaitingMiniGame(
+														false
 													)
 												}
 											>
-												{translate('session.waitingMiniGame.startGame', 'Start the game')}
+												{translate(
+													'session.waitingMiniGame.joinRoom',
+													'Join the room'
+												)}
 											</button>
-										</>
-									) : currentBriefingInteraction === 'start' ? (
+										)}
+								</div>
+								{waitingGameStage === 'bellyPractice' && (
+									<div className="session__waitingMiniGamePracticeActions session__waitingMiniGamePracticeActions--belly">
 										<button
 											type="button"
-											className="session__waitingModuleActionButton session__waitingModuleActionButton--primary"
+											className={clsx(
+												'session__waitingMiniGameBellyModeBtn',
+												bellyMode === 'autoPilot'
+													? 'session__waitingMiniGameBellyModeBtn--active'
+													: 'session__waitingMiniGameBellyModeBtn--inactive'
+											)}
+											aria-pressed={
+												bellyMode === 'autoPilot'
+											}
+											onClick={() =>
+												handleBellyModeButton(
+													'autoPilot'
+												)
+											}
+										>
+											<svg
+												width="24"
+												height="24"
+												viewBox="0 0 24 24"
+												fill="none"
+												aria-hidden="true"
+											>
+												<path
+													d="M21.25 15.7V5.9875C21.25 4.19636 19.8036 2.75 18.0125 2.75H5.9875C4.19636 2.75 2.75 4.19636 2.75 5.9875V18.0125C2.75 19.8036 4.19636 21.25 5.9875 21.25H15.7L21.25 15.7ZM5.9875 19.4C5.22227 19.4 4.6 18.7777 4.6 18.0125V5.9875C4.6 5.22227 5.22227 4.6 5.9875 4.6H18.0125C18.7777 4.6 19.4 5.22227 19.4 5.9875V14.775H18.0125C16.2214 14.775 14.775 16.2214 14.775 18.0125V19.4H5.9875ZM9.93136 9.94818C9.6875 9.09045 8.79614 8.58591 7.93841 8.82977C7.08068 9.07364 6.57614 9.965 6.82 10.8311C6.88727 11.0666 7.005 11.2768 7.15636 11.4534L9.965 10.663C10.007 10.4275 9.99864 10.1836 9.93136 9.94818ZM15.7168 8.31682C15.4814 7.45909 14.5816 6.95455 13.7239 7.19841C12.8661 7.44227 12.3616 8.33364 12.6055 9.19977C12.6727 9.43523 12.7905 9.64545 12.9418 9.82205L15.7505 9.03159C15.7925 8.79614 15.7841 8.55227 15.7168 8.31682ZM16.5409 11.2095L7.62727 13.7239C8.82977 15.3132 10.9152 16.0868 12.9418 15.515C14.9684 14.9432 16.3391 13.1857 16.5409 11.2095Z"
+													fill="currentColor"
+												/>
+											</svg>
+											<span className="session__waitingMiniGameBellyModeBtnLabel">
+												{translate(
+													'session.waitingMiniGame.tutorialCard.belly.autoPilot',
+													'Auto pilot'
+												)}
+											</span>
+										</button>
+										<button
+											type="button"
+											className={clsx(
+												'session__waitingMiniGameBellyModeBtn',
+												bellyMode === 'timeIt'
+													? 'session__waitingMiniGameBellyModeBtn--active'
+													: 'session__waitingMiniGameBellyModeBtn--inactive'
+											)}
+											aria-pressed={
+												bellyMode === 'timeIt'
+											}
+											onClick={() =>
+												handleBellyModeButton('timeIt')
+											}
+										>
+											<svg
+												width="24"
+												height="24"
+												viewBox="0 0 24 24"
+												fill="none"
+												aria-hidden="true"
+											>
+												<path
+													d="M11.9996 21.9996C10.7496 21.9996 9.57878 21.7621 8.48711 21.2871C7.39544 20.8121 6.44544 20.1704 5.63711 19.3621C4.82878 18.5538 4.18711 17.6038 3.71211 16.5121C3.23711 15.4204 2.99961 14.2496 2.99961 12.9996C2.99961 11.7496 3.23711 10.5788 3.71211 9.48711C4.18711 8.39544 4.82878 7.44544 5.63711 6.63711C6.44544 5.82878 7.39544 5.18711 8.48711 4.71211C9.57878 4.23711 10.7496 3.99961 11.9996 3.99961C13.2496 3.99961 14.4204 4.23711 15.5121 4.71211C16.6038 5.18711 17.5538 5.82878 18.3621 6.63711C19.1704 7.44544 19.8121 8.39544 20.2871 9.48711C20.7621 10.5788 20.9996 11.7496 20.9996 12.9996C20.9996 14.2496 20.7621 15.4204 20.2871 16.5121C19.8121 17.6038 19.1704 18.5538 18.3621 19.3621C17.5538 20.1704 16.6038 20.8121 15.5121 21.2871C14.4204 21.7621 13.2496 21.9996 11.9996 21.9996ZM14.7996 17.1996L16.1996 15.7996L12.9996 12.5996V7.99961H10.9996V13.3996L14.7996 17.1996ZM5.59961 2.34961L6.99961 3.74961L2.74961 7.99961L1.34961 6.59961L5.59961 2.34961ZM18.3996 2.34961L22.6496 6.59961L21.2496 7.99961L16.9996 3.74961L18.3996 2.34961Z"
+													fill="currentColor"
+												/>
+											</svg>
+											<span className="session__waitingMiniGameBellyModeBtnLabel">
+												{translate(
+													'session.waitingMiniGame.tutorialCard.belly.timeIt',
+													'Time it'
+												)}
+											</span>
+										</button>
+									</div>
+								)}
+								{waitingGameStage === 'game' && (
+									<div className="session__waitingMiniGamePracticeActions session__waitingMiniGamePracticeActions--belly">
+										<button
+											type="button"
+											className={clsx(
+												'session__waitingMiniGameBellyModeBtn',
+												gameMode === 'autoPilot'
+													? 'session__waitingMiniGameBellyModeBtn--active'
+													: 'session__waitingMiniGameBellyModeBtn--inactive'
+											)}
+											aria-pressed={
+												gameMode === 'autoPilot'
+											}
+											onClick={() =>
+												handleGameModeButton(
+													'autoPilot'
+												)
+											}
+										>
+											<svg
+												width="24"
+												height="24"
+												viewBox="0 0 24 24"
+												fill="none"
+												aria-hidden="true"
+											>
+												<path
+													d="M21.25 15.7V5.9875C21.25 4.19636 19.8036 2.75 18.0125 2.75H5.9875C4.19636 2.75 2.75 4.19636 2.75 5.9875V18.0125C2.75 19.8036 4.19636 21.25 5.9875 21.25H15.7L21.25 15.7ZM5.9875 19.4C5.22227 19.4 4.6 18.7777 4.6 18.0125V5.9875C4.6 5.22227 5.22227 4.6 5.9875 4.6H18.0125C18.7777 4.6 19.4 5.22227 19.4 5.9875V14.775H18.0125C16.2214 14.775 14.775 16.2214 14.775 18.0125V19.4H5.9875ZM9.93136 9.94818C9.6875 9.09045 8.79614 8.58591 7.93841 8.82977C7.08068 9.07364 6.57614 9.965 6.82 10.8311C6.88727 11.0666 7.005 11.2768 7.15636 11.4534L9.965 10.663C10.007 10.4275 9.99864 10.1836 9.93136 9.94818ZM15.7168 8.31682C15.4814 7.45909 14.5816 6.95455 13.7239 7.19841C12.8661 7.44227 12.3616 8.33364 12.6055 9.19977C12.6727 9.43523 12.7905 9.64545 12.9418 9.82205L15.7505 9.03159C15.7925 8.79614 15.7841 8.55227 15.7168 8.31682ZM16.5409 11.2095L7.62727 13.7239C8.82977 15.3132 10.9152 16.0868 12.9418 15.515C14.9684 14.9432 16.3391 13.1857 16.5409 11.2095Z"
+													fill="currentColor"
+												/>
+											</svg>
+											<span className="session__waitingMiniGameBellyModeBtnLabel">
+												{translate(
+													'session.waitingMiniGame.tutorialCard.belly.autoPilot',
+													'Auto pilot'
+												)}
+											</span>
+										</button>
+										<button
+											type="button"
+											className={clsx(
+												'session__waitingMiniGameBellyModeBtn',
+												gameMode === 'timeIt'
+													? 'session__waitingMiniGameBellyModeBtn--active'
+													: 'session__waitingMiniGameBellyModeBtn--inactive'
+											)}
+											aria-pressed={gameMode === 'timeIt'}
+											onClick={() =>
+												handleGameModeButton('timeIt')
+											}
+										>
+											<svg
+												width="24"
+												height="24"
+												viewBox="0 0 24 24"
+												fill="none"
+												aria-hidden="true"
+											>
+												<path
+													d="M11.9996 21.9996C10.7496 21.9996 9.57878 21.7621 8.48711 21.2871C7.39544 20.8121 6.44544 20.1704 5.63711 19.3621C4.82878 18.5538 4.18711 17.6038 3.71211 16.5121C3.23711 15.4204 2.99961 14.2496 2.99961 12.9996C2.99961 11.7496 3.23711 10.5788 3.71211 9.48711C4.18711 8.39544 4.82878 7.44544 5.63711 6.63711C6.44544 5.82878 7.39544 5.18711 8.48711 4.71211C9.57878 4.23711 10.7496 3.99961 11.9996 3.99961C13.2496 3.99961 14.4204 4.23711 15.5121 4.71211C16.6038 5.18711 17.5538 5.82878 18.3621 6.63711C19.1704 7.44544 19.8121 8.39544 20.2871 9.48711C20.7621 10.5788 20.9996 11.7496 20.9996 12.9996C20.9996 14.2496 20.7621 15.4204 20.2871 16.5121C19.8121 17.6038 19.1704 18.5538 18.3621 19.3621C17.5538 20.1704 16.6038 20.8121 15.5121 21.2871C14.4204 21.7621 13.2496 21.9996 11.9996 21.9996ZM14.7996 17.1996L16.1996 15.7996L12.9996 12.5996V7.99961H10.9996V13.3996L14.7996 17.1996ZM5.59961 2.34961L6.99961 3.74961L2.74961 7.99961L1.34961 6.59961L5.59961 2.34961ZM18.3996 2.34961L22.6496 6.59961L21.2496 7.99961L16.9996 3.74961L18.3996 2.34961Z"
+													fill="currentColor"
+												/>
+											</svg>
+											<span className="session__waitingMiniGameBellyModeBtnLabel">
+												{translate(
+													'session.waitingMiniGame.tutorialCard.belly.timeIt',
+													'Time it'
+												)}
+											</span>
+										</button>
+									</div>
+								)}
+								{waitingGameStage === 'practice' && (
+									<div className="session__waitingMiniGamePracticeActions">
+										<button
+											type="button"
+											className="session__waitingMiniGamePracticeRestart"
+											onClick={handlePracticeRestart}
+											aria-label={translate(
+												'session.waitingMiniGame.tutorialCard.restart',
+												'Restart'
+											)}
+										>
+											<svg
+												width="24"
+												height="24"
+												viewBox="0 0 24 24"
+												fill="none"
+												aria-hidden="true"
+											>
+												<path
+													d="M9.9 19C8.28333 19 6.89583 18.475 5.7375 17.425C4.57917 16.375 4 15.0667 4 13.5C4 11.9333 4.57917 10.625 5.7375 9.575C6.89583 8.525 8.28333 8 9.9 8H16.2L13.6 5.4L15 4L20 9L15 14L13.6 12.6L16.2 10H9.9C8.85 10 7.9375 10.3333 7.1625 11C6.3875 11.6667 6 12.5 6 13.5C6 14.5 6.3875 15.3333 7.1625 16C7.9375 16.6667 8.85 17 9.9 17H17V19H9.9Z"
+													fill="#E7EFFC"
+												/>
+											</svg>
+										</button>
+										<button
+											type="button"
+											className="session__waitingMiniGamePracticeAdvance"
+											onClick={handlePracticeAdvance}
+										>
+											<svg
+												width="24"
+												height="24"
+												viewBox="0 0 24 24"
+												fill="none"
+												aria-hidden="true"
+											>
+												<path
+													d="M11.9996 21.9996C10.7496 21.9996 9.57878 21.7621 8.48711 21.2871C7.39544 20.8121 6.44544 20.1704 5.63711 19.3621C4.82878 18.5538 4.18711 17.6038 3.71211 16.5121C3.23711 15.4204 2.99961 14.2496 2.99961 12.9996C2.99961 11.7496 3.23711 10.5788 3.71211 9.48711C4.18711 8.39544 4.82878 7.44544 5.63711 6.63711C6.44544 5.82878 7.39544 5.18711 8.48711 4.71211C9.57878 4.23711 10.7496 3.99961 11.9996 3.99961C13.2496 3.99961 14.4204 4.23711 15.5121 4.71211C16.6038 5.18711 17.5538 5.82878 18.3621 6.63711C19.1704 7.44544 19.8121 8.39544 20.2871 9.48711C20.7621 10.5788 20.9996 11.7496 20.9996 12.9996C20.9996 14.2496 20.7621 15.4204 20.2871 16.5121C19.8121 17.6038 19.1704 18.5538 18.3621 19.3621C17.5538 20.1704 16.6038 20.8121 15.5121 21.2871C14.4204 21.7621 13.2496 21.9996 11.9996 21.9996ZM14.7996 17.1996L16.1996 15.7996L12.9996 12.5996V7.99961H10.9996V13.3996L14.7996 17.1996ZM5.59961 2.34961L6.99961 3.74961L2.74961 7.99961L1.34961 6.59961L5.59961 2.34961ZM18.3996 2.34961L22.6496 6.59961L21.2496 7.99961L16.9996 3.74961L18.3996 2.34961Z"
+													fill="white"
+												/>
+											</svg>
+											<span>
+												{translate(
+													'session.waitingMiniGame.tutorialCard.pressAtRightTime',
+													'Press at the right time'
+												)}
+											</span>
+										</button>
+									</div>
+								)}
+								{waitingGameStage === 'completion' && (
+									<div
+										className="session__waitingCompletionHeart"
+										aria-hidden="true"
+									>
+										{COMPLETION_HEART_ICON}
+									</div>
+								)}
+								{waitingGameStage === 'completion' && (
+									<div className="session__waitingMiniGameSelfTimerActions">
+										<button
+											type="button"
+											className="session__waitingMiniGameSelfTimerBtn session__waitingMiniGameSelfTimerBtn--primary"
+											onClick={() =>
+												setWaitingGameStage('selfTimer')
+											}
+										>
+											{translate(
+												'session.waitingMiniGame.tutorialCard.selfTimer.repeatGame',
+												'Repeat game'
+											)}
+										</button>
+										<button
+											type="button"
+											className="session__waitingMiniGameSelfTimerBtn session__waitingMiniGameSelfTimerBtn--secondary"
+											onClick={() =>
+												setWaitingGameStage('serenity')
+											}
+										>
+											{translate(
+												'session.waitingMiniGame.tutorialCard.completion.receiveGift',
+												'Receive little gift'
+											)}
+										</button>
+									</div>
+								)}
+								{waitingGameStage === 'serenity' && (
+									<div className="session__waitingMiniGameSelfTimerActions">
+										<button
+											type="button"
+											className="session__waitingMiniGameSelfTimerBtn session__waitingMiniGameSelfTimerBtn--primary"
+											onClick={() =>
+												setWaitingGameStage('selfTimer')
+											}
+										>
+											{translate(
+												'session.waitingMiniGame.tutorialCard.selfTimer.repeatGame',
+												'Repeat game'
+											)}
+										</button>
+										<button
+											type="button"
+											className="session__waitingMiniGameSelfTimerBtn session__waitingMiniGameSelfTimerBtn--secondary"
 											onClick={() => {
-												setShowBriefingNegativeScreen(false);
-												setSelectedPresetId('standard446');
-												setCustomTiming({
-													inhale: 4,
-													hold: 4,
-													exhale: 6
-												});
-												startPracticeRound();
+												clearBreathTimer();
+												setWaitingGameStage('tutorial');
+												setBriefingScreenIndex(0);
+												setShowBriefingNegativeScreen(
+													false
+												);
+												setShowWaitingMiniGame(false);
 											}}
 										>
-											{translate('app.next', 'Continue')}
+											{translate(
+												'session.waitingMiniGame.tutorialCard.selfTimer.backToWaiting',
+												'Back to waiting'
+											)}
 										</button>
-									) : null}
-								</>
-							)}
-							{waitingGameStage === 'completion' && !centerStageTypewriterBusy && (
-								<>
-									<button
-										type="button"
-										className="session__waitingModuleActionButton session__waitingModuleActionButton--ghost"
-										onClick={startAchieverGame}
-									>
-										{translate('session.waitingMiniGame.repeatGame', 'Repeat game')}
-									</button>
-									<button
-										type="button"
-										className="session__waitingModuleActionButton session__waitingModuleActionButton--primary"
-										onClick={() => setWaitingGameStage('prize')}
-									>
-										{translate('session.waitingMiniGame.receivePrize', 'Receive your price')}
-									</button>
-								</>
-							)}
-							{waitingGameStage === 'serenity' && !centerStageTypewriterBusy && (
-								<button
-									type="button"
-									className="session__waitingModuleActionButton session__waitingModuleActionButton--ghost"
-									onClick={() => {
-										setWaitingGameStage('practiceResult');
-										setCurrentLevel(1);
-										setBreathCycles(0);
-										setStageMessage(
-											translate(
-												'session.waitingMiniGame.practiceSuccessPrompt',
-												'Great job, want to start now?'
-											)
-										);
-									}}
-								>
-									{translate('session.waitingMiniGame.playAgain', 'Play again')}
-								</button>
-							)}
-							{isJoinRoomAvailable && (
-								<button
-									type="button"
-									className={clsx(
-										'session__breathingJoinButton',
-										joinPromptEscalated && 'session__breathingJoinButton--urgent'
-									)}
-									onClick={() => setShowWaitingMiniGame(false)}
-								>
-									{translate('session.waitingMiniGame.joinRoom', 'Join the room')}
-								</button>
-							)}
+									</div>
+								)}
+								{waitingGameStage === 'selfTimer' && (
+									<div className="session__waitingMiniGameSelfTimerActions">
+										<button
+											type="button"
+											className="session__waitingMiniGameSelfTimerBtn session__waitingMiniGameSelfTimerBtn--primary"
+											onClick={startAchieverGame}
+										>
+											{translate(
+												'session.waitingMiniGame.tutorialCard.selfTimer.repeatGame',
+												'Repeat game'
+											)}
+										</button>
+										<button
+											type="button"
+											className="session__waitingMiniGameSelfTimerBtn session__waitingMiniGameSelfTimerBtn--secondary"
+											onClick={() => {
+												clearBreathTimer();
+												setWaitingGameStage('tutorial');
+												setBriefingScreenIndex(0);
+												setShowBriefingNegativeScreen(
+													false
+												);
+												setShowWaitingMiniGame(false);
+											}}
+										>
+											{translate(
+												'session.waitingMiniGame.tutorialCard.selfTimer.backToWaiting',
+												'Back to waiting'
+											)}
+										</button>
+									</div>
+								)}
+							</div>
 						</div>
-					</div>
-					</div>
-				)}
+					)}
 				{!shouldBlockAnonymousInquiryChat && (
-				<div className={'message-holder'}>
-					{shouldShowRobotMessages &&
-						visibleRobotCards.map((card, index) => (
-							<div className="messageItem" key={card._id}>
+					<div className={'message-holder'}>
+						{shouldShowRobotMessages &&
+							visibleRobotCards.map((card, index) => (
+								<div className="messageItem" key={card._id}>
 									<div className="messageItem__messageWrap">
 										{index === 0 && (
-											<div className="messageItem__systemAvatar" aria-hidden="true">
+											<div
+												className="messageItem__systemAvatar"
+												aria-hidden="true"
+											>
 												<NotificationBellIcon className="messageItem__systemAvatarIcon" />
 											</div>
 										)}
@@ -2423,15 +4033,23 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											{index === 0 && (
 												<div className="messageItem__header">
 													<div className="messageItem__username messageItem__username--system">
-														{translate('message.systemNotification', 'System Notification')}
+														{translate(
+															'message.systemNotification',
+															'System Notification'
+														)}
 													</div>
-													<span className="messageItem__headerTime">5:00</span>
+													<span className="messageItem__headerTime">
+														5:00
+													</span>
 												</div>
 											)}
 											<div className="messageItem__message messageItem__message--systemNotification">
 												{index === 0 && (
 													<div className="messageItem__systemNotificationTag">
-														{translate('message.systemNotification', 'System Notification')}
+														{translate(
+															'message.systemNotification',
+															'System Notification'
+														)}
 													</div>
 												)}
 												<div className="messageItem__systemNotificationTitle">
@@ -2445,13 +4063,23 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 														<button
 															type="button"
 															className="session__robotSystemInlinePlayButton"
-															onClick={(event) => {
+															onClick={(
+																event
+															) => {
 																event.preventDefault();
 																event.stopPropagation();
-																setShowBriefingNegativeScreen(false);
-																setBriefingScreenIndex(0);
-																setWaitingGameStage('tutorial');
-																setShowWaitingMiniGame(true);
+																setShowBriefingNegativeScreen(
+																	false
+																);
+																setBriefingScreenIndex(
+																	0
+																);
+																setWaitingGameStage(
+																	'tutorial'
+																);
+																setShowWaitingMiniGame(
+																	true
+																);
 															}}
 														>
 															{card.playLabel}
@@ -2469,7 +4097,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 														onClick={(event) => {
 															event.preventDefault();
 															event.stopPropagation();
-															history.push('/registration');
+															history.push(
+																'/registration'
+															);
 														}}
 													>
 														{card.cta}
@@ -2479,90 +4109,139 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										</div>
 									</div>
 								</div>
-						))}
-					{shouldShowRobotTypingIndicator && (
-						<div className="messageItem session__robotTypingIndicator">
-							<div className="messageItem__messageWrap">
-								<div className="session__robotIncomingAvatarSpacer" aria-hidden="true" />
-								<div className="messageItem__content">
-									<div className="session__robotTypingDots" aria-hidden="true">
-										<span />
-										<span />
-										<span />
+							))}
+						{shouldShowRobotTypingIndicator && (
+							<div className="messageItem session__robotTypingIndicator">
+								<div className="messageItem__messageWrap">
+									<div
+										className="session__robotIncomingAvatarSpacer"
+										aria-hidden="true"
+									/>
+									<div className="messageItem__content">
+										<div
+											className="session__robotTypingDots"
+											aria-hidden="true"
+										>
+											<span />
+											<span />
+											<span />
+										</div>
 									</div>
 								</div>
 							</div>
-						</div>
-					)}
-					{/* MATRIX MIGRATION: For Matrix sessions (no rid), skip E2EE ready check */}
-					{messages &&
-						(ready || !activeSession.rid) &&
-						messages.map((message: MessageItem, index) => (
-							<React.Fragment key={`${message._id}-${index}`}>
-								<MessageItemComponent
-									clientName={
-										getContact(activeSession)?.username ||
-										translate(
-											'sessionList.user.consultantUnknown'
-										)
-									}
-									askerRcId={
-										!activeSession.rid &&
-										message.userId &&
-										!message.userId.includes(
-											activeSession.consultant?.username || ''
-										)
-											? message.userId
-											: activeSession.item.askerRcId
-									}
-									isOnlyEnquiry={isOnlyEnquiry}
-									isMyMessage={isMyMessageMatrix(message.userId)}
-									isUserBanned={props.bannedUsers.includes(
-										message.username
-									)}
-									handleDecryptionErrors={
-										handleDecryptionErrors
-									}
-									handleDecryptionSuccess={
-										handleDecryptionSuccess
-									}
-									e2eeParams={{
-										key,
-										keyID,
-										encrypted,
-										subscriptionKeyLost
-									}}
-									renderMode="main"
-									threadsEnabled={isThreadsEnabled}
-									threadSummary={threadSummaries.get(message._id)}
-									onOpenThread={
-										isThreadsEnabled ? () => handleOpenThread(message) : undefined
-									}
-									{...message}
-								/>
-							</React.Fragment>
-						))}
-					<div
-						className={`session__scrollToBottom ${
-							isScrolledToBottom
-								? 'session__scrollToBottom--disabled'
-								: ''
-						}`}
-					>
-						{newMessages > 0 && (
-							<span className="session__unreadCount">
-								{newMessages > 99
-									? translate('session.unreadCount.maxValue')
-									: newMessages}
-							</span>
 						)}
-						<Button
-							item={scrollBottomButtonItem}
-							isLink={false}
-							buttonHandle={handleScrollToBottomButtonClick}
-						/>
+						{/* MATRIX MIGRATION: For Matrix sessions (no rid), skip E2EE ready check */}
+						{messages &&
+							(ready || !activeSession.rid) &&
+							messages.map((message: MessageItem, index) => (
+								<React.Fragment key={`${message._id}-${index}`}>
+									<MessageItemComponent
+										clientName={
+											getContact(activeSession)
+												?.username ||
+											translate(
+												'sessionList.user.consultantUnknown'
+											)
+										}
+										askerRcId={
+											!activeSession.rid &&
+											message.userId &&
+											!message.userId.includes(
+												activeSession.consultant
+													?.username || ''
+											)
+												? message.userId
+												: activeSession.item.askerRcId
+										}
+										isOnlyEnquiry={isOnlyEnquiry}
+										isMyMessage={isMyMessageMatrix(
+											message.userId
+										)}
+										isUserBanned={props.bannedUsers.includes(
+											message.username
+										)}
+										handleDecryptionErrors={
+											handleDecryptionErrors
+										}
+										handleDecryptionSuccess={
+											handleDecryptionSuccess
+										}
+										e2eeParams={{
+											key,
+											keyID,
+											encrypted,
+											subscriptionKeyLost
+										}}
+										renderMode="main"
+										threadsEnabled={isThreadsEnabled}
+										threadSummary={threadSummaries.get(
+											message._id
+										)}
+										onOpenThread={
+											isThreadsEnabled
+												? () =>
+														handleOpenThread(
+															message
+														)
+												: undefined
+										}
+										{...message}
+									/>
+								</React.Fragment>
+							))}
+						{shouldShowInlineTypingIndicator && (
+							<div className="messageItem session__inlineTypingIndicator">
+								<div className="messageItem__messageWrap">
+									<div className="messageItem__avatar">
+										<UserAvatar
+											username={primaryTypingUser}
+											displayName={primaryTypingUser}
+											firstName={primaryTypingUser}
+											lastName=""
+											userId={`typing-${primaryTypingUser}`}
+										/>
+									</div>
+									<div className="messageItem__content">
+										<div className="session__inlineTypingLabel">
+											{typingIndicatorLabel}
+										</div>
+										<div
+											className="session__inlineTypingBubble"
+											aria-hidden="true"
+										>
+											<div className="session__inlineTypingDots">
+												<span />
+												<span />
+												<span />
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						)}
+						<div
+							className={`session__scrollToBottom ${
+								isScrolledToBottom
+									? 'session__scrollToBottom--disabled'
+									: ''
+							}`}
+						>
+							{newMessages > 0 && (
+								<span className="session__unreadCount">
+									{newMessages > 99
+										? translate(
+												'session.unreadCount.maxValue'
+											)
+										: newMessages}
+								</span>
+							)}
+							<Button
+								item={scrollBottomButtonItem}
+								isLink={false}
+								buttonHandle={handleScrollToBottomButtonClick}
+							/>
+						</div>
 					</div>
-				</div>
 				)}
 			</div>
 
@@ -2585,7 +4264,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							<MessageItemComponent
 								clientName={
 									getContact(activeSession)?.username ||
-									translate('sessionList.user.consultantUnknown')
+									translate(
+										'sessionList.user.consultantUnknown'
+									)
 								}
 								askerRcId={
 									!activeSession.rid &&
@@ -2597,12 +4278,16 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										: activeSession.item.askerRcId
 								}
 								isOnlyEnquiry={isOnlyEnquiry}
-								isMyMessage={isMyMessageMatrix(activeThreadRootMessage.userId)}
+								isMyMessage={isMyMessageMatrix(
+									activeThreadRootMessage.userId
+								)}
 								isUserBanned={props.bannedUsers.includes(
 									activeThreadRootMessage.username
 								)}
 								handleDecryptionErrors={handleDecryptionErrors}
-								handleDecryptionSuccess={handleDecryptionSuccess}
+								handleDecryptionSuccess={
+									handleDecryptionSuccess
+								}
 								e2eeParams={{
 									key,
 									keyID,
@@ -2618,28 +4303,40 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						{messages &&
 							(ready || !activeSession.rid) &&
 							messages.map((message: MessageItem, index) => (
-								<React.Fragment key={`thread-${message._id}-${index}`}>
+								<React.Fragment
+									key={`thread-${message._id}-${index}`}
+								>
 									<MessageItemComponent
 										clientName={
-											getContact(activeSession)?.username ||
-											translate('sessionList.user.consultantUnknown')
+											getContact(activeSession)
+												?.username ||
+											translate(
+												'sessionList.user.consultantUnknown'
+											)
 										}
 										askerRcId={
 											!activeSession.rid &&
 											message.userId &&
 											!message.userId.includes(
-												activeSession.consultant?.username || ''
+												activeSession.consultant
+													?.username || ''
 											)
 												? message.userId
 												: activeSession.item.askerRcId
 										}
 										isOnlyEnquiry={isOnlyEnquiry}
-										isMyMessage={isMyMessageMatrix(message.userId)}
+										isMyMessage={isMyMessageMatrix(
+											message.userId
+										)}
 										isUserBanned={props.bannedUsers.includes(
 											message.username
 										)}
-										handleDecryptionErrors={handleDecryptionErrors}
-										handleDecryptionSuccess={handleDecryptionSuccess}
+										handleDecryptionErrors={
+											handleDecryptionErrors
+										}
+										handleDecryptionSuccess={
+											handleDecryptionSuccess
+										}
 										e2eeParams={{
 											key,
 											keyID,
@@ -2668,31 +4365,79 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							threadRootId={activeThreadRootId}
 							threadParentPreview={
 								activeThreadRootMessage
-									? parseMessagePrefixes(activeThreadRootMessage.message)
-											.cleanedMessage
+									? parseMessagePrefixes(
+											activeThreadRootMessage.message
+										).cleanedMessage
 									: null
+							}
+							mobileUnreadCount={newMessages}
+							mobileIsScrolledToBottom={isScrolledToBottom}
+							onMobileNavigateBack={handleMobileNavigateBackClick}
+							onMobileNavigateDown={
+								handleMobileNavigateStepDownClick
+							}
+							onMobileNavigateBottom={
+								handleScrollToBottomButtonClick
 							}
 						/>
 					</div>
 				</div>
 			)}
 
-			{type === SESSION_LIST_TYPES.ENQUIRY && !shouldBlockAnonymousInquiryChat && (
-				<AcceptAssign btnLabel={'enquiry.acceptButton.known'} />
+			{type === SESSION_LIST_TYPES.ENQUIRY &&
+				!shouldBlockAnonymousInquiryChat && (
+					<AcceptAssign btnLabel={'enquiry.acceptButton.known'} />
+				)}
+
+			{shouldShowPseudonymGate && !pseudonymConfirmed && (
+				<div className="session__pseudonymActionBarSlot">
+					<PseudonymActionBar
+						onRegenerate={handleRegeneratePseudonym}
+						onConfirm={handleConfirmPseudonym}
+						disabled={pseudonymSaving}
+					/>
+				</div>
 			)}
+
+			{shouldShowPseudonymGate &&
+				pseudonymConfirmed &&
+				!consultantAccepted && (
+					<div className="session__pseudonymActionBarSlot">
+						<WaitingQueueActionBar
+							queuePosition={queuePeopleAhead}
+							onOpenCalmCompanion={handleOpenCalmCompanion}
+						/>
+					</div>
+				)}
+
+			{shouldShowPseudonymGate &&
+				pseudonymConfirmed &&
+				consultantAccepted && (
+					<div className="session__pseudonymActionBarSlot">
+						<ConsultantAcceptedActionBar
+							onDismiss={handleDismissConsultantAccepted}
+							onStartChat={handleStartAcceptedChat}
+						/>
+					</div>
+				)}
 
 			{canWriteMessage && !shouldBlockAnonymousInquiryChat && (
 				<div
 					className={clsx(
 						'session__gameInputFadeTarget',
-						areRobotMessagesComplete && 'session__gameInputFadeTarget--reveal',
-						!areRobotMessagesComplete && 'session__gameInputFadeTarget--hidden'
+						areRobotMessagesComplete &&
+							'session__gameInputFadeTarget--reveal',
+						!areRobotMessagesComplete &&
+							'session__gameInputFadeTarget--hidden'
 					)}
 				>
 					{isSupervisor && (
-						<div className="session__supervisorInputNote" style={{
-							textAlign: 'center'
-						}}>
+						<div
+							className="session__supervisorInputNote"
+							style={{
+								textAlign: 'center'
+							}}
+						>
 							{translate(
 								'session.supervisor.input.note',
 								'Messages you send here are visible only to consultants.'
@@ -2704,7 +4449,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							fallback={
 								<MessageSubmitInterfaceSkeleton
 									placeholder={getPlaceholder()}
-									className={clsx('session__submit-interface')}
+									className={clsx(
+										'session__submit-interface'
+									)}
 								/>
 							}
 						>
@@ -2714,26 +4461,43 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									'session__submit-interface',
 									!isScrolledToBottom &&
 										'session__submit-interface--scrolled-up',
-									activeThreadRootId && 'session__submit-interface--withThread'
+									activeThreadRootId &&
+										'session__submit-interface--withThread'
 								)}
 								placeholder={getPlaceholder()}
 								typingUsers={props.typingUsers}
 								preselectedFile={draggedFile}
-								handleMessageSendSuccess={handleMessageSendSuccess}
+								handleMessageSendSuccess={
+									handleMessageSendSuccess
+								}
 								isSupervisor={isSupervisor}
+								mobileUnreadCount={newMessages}
+								mobileIsScrolledToBottom={isScrolledToBottom}
+								onMobileNavigateBack={
+									handleMobileNavigateBackClick
+								}
+								onMobileNavigateDown={
+									handleMobileNavigateStepDownClick
+								}
+								onMobileNavigateBottom={
+									handleScrollToBottomButtonClick
+								}
 							/>
 						</Suspense>
 					)}
 					{areRobotMessagesComplete &&
-						!tenantData?.settings?.featureAttachmentUploadDisabled && (
-						<DragAndDropArea
-							onFileDragged={onFileDragged}
-							isDragging={isDragging}
-							canDrop={isDragOverDropArea}
-							onDragLeave={onDragLeave}
-							styleOverride={{ top: headerBounds.height + 'px' }}
-						/>
-					)}
+						!tenantData?.settings
+							?.featureAttachmentUploadDisabled && (
+							<DragAndDropArea
+								onFileDragged={onFileDragged}
+								isDragging={isDragging}
+								canDrop={isDragOverDropArea}
+								onDragLeave={onDragLeave}
+								styleOverride={{
+									top: headerBounds.height + 'px'
+								}}
+							/>
+						)}
 				</div>
 			)}
 		</div>

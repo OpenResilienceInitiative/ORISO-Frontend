@@ -407,6 +407,21 @@ module.exports = function (webpackEnv) {
 							test: /\.svg$/,
 							use: [
 								{
+									loader: require.resolve('babel-loader'),
+									options: {
+										babelrc: false,
+										configFile: false,
+										presets: [
+											[
+												require.resolve(
+													'@babel/preset-react'
+												),
+												{ runtime: 'automatic' }
+											]
+										]
+									}
+								},
+								{
 									loader: require.resolve('@svgr/webpack'),
 									options: {
 										prettier: false,
@@ -415,7 +430,10 @@ module.exports = function (webpackEnv) {
 											plugins: [{ removeViewBox: false }]
 										},
 										titleProp: true,
-										ref: true
+										ref: true,
+										// SVGR's internal Babel used classic runtime (legacy $$typeof); React 19 rejects that (error #525).
+										jsxRuntime: 'automatic',
+										babel: false
 									}
 								},
 								{

@@ -1,0 +1,228 @@
+/* Anonymous asker first-screen consent gate — strict Figma match.
+ *
+ *   ┌────────────────────────────────────────────────┐
+ *   │  🛡️  Herzlich Willkommen                        │
+ *   │                                                │
+ *   │  Bitte bestätigen sie unsere Datenschutz…      │
+ *   │                                                │
+ *   │  Ich habe die **Datenschutzbestimmung** …       │
+ *   │                                                │
+ *   │                 [✕ Ich stimme…] [✓ Ich bin…]   │
+ *   └────────────────────────────────────────────────┘
+ *
+ * Rejection surfaces an inline warning between the consent paragraph and
+ * the action row; the asker can still click accept after reading it.
+ */
+
+.anonymousConsentGate {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	min-height: 100%;
+	padding: 24px;
+	box-sizing: border-box;
+}
+
+.anonymousConsentGate__card {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	gap: 20px;
+	width: 100%;
+	max-width: 560px;
+	padding: 32px;
+	border-radius: 18px;
+	background: #ffffff;
+	box-shadow:
+		0 4px 8px 3px rgba(0, 0, 0, 0.08),
+		0 1px 3px 0 rgba(0, 0, 0, 0.18);
+	box-sizing: border-box;
+}
+
+.anonymousConsentGate__header {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.anonymousConsentGate__icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 100px;
+	height: 100px;
+	flex-shrink: 0;
+
+	svg {
+		width: 75px;
+		height: 83px;
+	}
+}
+
+.anonymousConsentGate__title {
+	font-family: 'Inter', sans-serif;
+	font-size: 32px;
+	line-height: 1.2em;
+	font-weight: 600;
+	color: #1f2937;
+	margin: 0;
+}
+
+.anonymousConsentGate__body {
+	font-family: 'Inter', sans-serif;
+	font-size: 16px;
+	line-height: 1.4em;
+	color: #1f2937;
+	margin: 0;
+}
+
+.anonymousConsentGate__consent {
+	font-family: 'Inter', sans-serif;
+	font-size: 16px;
+	line-height: 1.4em;
+	font-weight: 700;
+	color: #1f2937;
+	margin: 0;
+
+	a {
+		color: inherit;
+		text-decoration: underline;
+
+		&:hover {
+			color: #a5000a;
+		}
+	}
+}
+
+.anonymousConsentGate__rejectedNotice {
+	font-family: 'Inter', sans-serif;
+	font-size: 14px;
+	line-height: 1.4em;
+	font-weight: 500;
+	color: #a5000a;
+	background: #fde8e8;
+	border: 1px solid #f5bcbb;
+	border-radius: 10px;
+	padding: 10px 14px;
+	margin: 0;
+	animation: anonymousConsentGateShake 360ms ease-out both;
+}
+
+@keyframes anonymousConsentGateShake {
+	0%,
+	100% {
+		transform: translateX(0);
+	}
+	25% {
+		transform: translateX(-4px);
+	}
+	50% {
+		transform: translateX(4px);
+	}
+	75% {
+		transform: translateX(-2px);
+	}
+}
+
+.anonymousConsentGate__actions {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 8px;
+	width: 100%;
+}
+
+.anonymousConsentGate__btnReject,
+.anonymousConsentGate__btnAccept {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	padding: 8px 14px;
+	border: none;
+	cursor: pointer;
+	font-family: 'Inter', sans-serif;
+	font-size: 13px;
+	line-height: 18px;
+	font-weight: 500;
+	letter-spacing: 0.0094em;
+	white-space: nowrap;
+	transition:
+		background 160ms ease,
+		transform 160ms ease;
+
+	svg {
+		width: 16px;
+		height: 16px;
+	}
+
+	&:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+	}
+
+	&:active:not(:disabled) {
+		transform: scale(0.98);
+	}
+}
+
+.anonymousConsentGate__btnReject {
+	border-radius: 8px;
+	background: #4c555f;
+	color: #e7effc;
+
+	&:hover:not(:disabled) {
+		background: #3d444d;
+	}
+}
+
+.anonymousConsentGate__btnAccept {
+	border-radius: 100px;
+	background: #cc1e1c;
+	color: #ffffff;
+
+	&:hover:not(:disabled) {
+		background: #a5000a;
+	}
+}
+
+@media screen and (max-width: 640px) {
+	.anonymousConsentGate {
+		padding: 16px;
+	}
+
+	.anonymousConsentGate__card {
+		padding: 24px;
+		gap: 16px;
+	}
+
+	.anonymousConsentGate__icon {
+		width: 72px;
+		height: 72px;
+
+		svg {
+			width: 54px;
+			height: 60px;
+		}
+	}
+
+	.anonymousConsentGate__title {
+		font-size: 24px;
+	}
+
+	.anonymousConsentGate__body,
+	.anonymousConsentGate__consent {
+		font-size: 14px;
+	}
+
+	.anonymousConsentGate__actions {
+		gap: 6px;
+	}
+
+	.anonymousConsentGate__btnReject,
+	.anonymousConsentGate__btnAccept {
+		padding: 8px 12px;
+		font-size: 12px;
+	}
+}

@@ -18,10 +18,7 @@ import {
 } from '../../session/sessionHelpers';
 import { isMobile } from 'react-device-detect';
 import { mobileListView } from '../../app/navigationHandler';
-import { BackIcon, CameraOnIcon, GroupChatInfoIcon } from '../../../resources/img/icons';
-import { ReactComponent as VideoCallIcon } from '../../../resources/img/illustrations/camera.svg';
-import { ReactComponent as CallOnIcon } from '../../../resources/img/icons/call-on.svg';
-import { SessionMenu } from '../../sessionMenu/SessionMenu';
+import { BackIcon, GroupChatInfoIcon } from '../../../resources/img/icons';
 import { useTranslation } from 'react-i18next';
 import { getGroupChatDate } from '../../session/sessionDateHelpers';
 import { getValueFromCookie } from '../../sessionCookie/accessSessionCookie';
@@ -297,26 +294,16 @@ export const GroupChatHeader = ({
 	const buttonStartCall: ButtonItem = {
 		type: BUTTON_TYPES.SMALL_ICON,
 		title: t('videoCall.button.startCall'),
-		smallIconBackgroundColor: 'grey',
-		icon: (
-			<CallOnIcon
-				title={t('videoCall.button.startCall')}
-				aria-label={t('videoCall.button.startCall')}
-			/>
-		)
+		smallIconBackgroundColor: 'transparent',
+		icon: <AudioCallHeaderIcon />
 	};
 
 	// Video call button
 	const buttonStartVideoCall: ButtonItem = {
 		type: BUTTON_TYPES.SMALL_ICON,
 		title: t('videoCall.button.startVideoCall'),
-		smallIconBackgroundColor: 'grey',
-		icon: (
-			<CameraOnIcon
-				title={t('videoCall.button.startVideoCall')}
-				aria-label={t('videoCall.button.startVideoCall')}
-			/>
-		)
+		smallIconBackgroundColor: 'transparent',
+		icon: <VideoCallHeaderIcon />
 	};
 
 	const {
@@ -348,6 +335,11 @@ export const GroupChatHeader = ({
 		>),
 		subRoute: 'groupChatInfo'
 	});
+	const visibleMembers = matrixMembers.filter((member) => {
+		const userId = member.userId || '';
+		return !userId.includes('@system') && !userId.includes('@caritas.local');
+	});
+	const stackedMembers = visibleMembers.slice(0, 3);
 
 	return (
 		<div className="sessionInfo">
@@ -361,28 +353,31 @@ export const GroupChatHeader = ({
 				</Link>
 				<div className="sessionInfo__username sessionInfo__username--deactivate sessionInfo__username--groupChat">
 					<div className="sessionInfo__titleRow">
-						<div className="sessionInfo__groupIcon">
-						<div className="sessionsListItem__stackedAvatars">
-	{/* Always render 2 avatar placeholders */}
-	{[0, 1].map((_, index) => (
-		<div
-			key={index}
-			className="sessionsListItem__avatarWrapper"
-		>
-			<UserAvatar
-				username={`placeholder-${index}`}
-				displayName="User"
-				userId={`placeholder-${index}`}
-				size="32px"
-			/>
-		</div>
-	))}
-
-	{/* Optional third circle */}
-	<div className="sessionsListItem__avatarWrapper sessionsListItem__avatarWrapper--plus">
-		<div className="sessionsListItem__plusAvatar">+1</div>
-	</div>
-</div>
+						<div className="sessionInfo__memberStack">
+							<div className="sessionInfo__memberStackPlus" aria-hidden="true">
+								<svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+									<path d="M15.167 16.8333H10.167V15.1666H15.167V10.1666H16.8337V15.1666H21.8337V16.8333H16.8337V21.8333H15.167V16.8333Z" fill="#CC1E1C" fillOpacity="0.6"/>
+								</svg>
+							</div>
+							{stackedMembers.map((member, index) => {
+								const userId = member.userId || '';
+								const parsedUsername = userId.split(':')[0]?.replace('@', '') || userId;
+								const displayName = decodeUsername(member.name || parsedUsername);
+								return (
+									<div
+										key={member.userId || `${parsedUsername}-${index}`}
+										className="sessionInfo__memberBubble"
+										style={{ zIndex: 20 - index }}
+									>
+										<UserAvatar
+											username={parsedUsername}
+											displayName={displayName}
+											userId={member.userId || parsedUsername}
+											size="32px"
+										/>
+									</div>
+								);
+							})}
 						</div>
 						<h3>{typeof activeSession.item.topic === 'string' ? activeSession.item.topic : activeSession.item.topic?.name || ''}</h3>
 					</div>
@@ -391,15 +386,9 @@ export const GroupChatHeader = ({
 						<div className="sessionInfo__participants sessionInfo__participants--loading">
 							<div className="sessionInfo__participants__skeleton"></div>
 						</div>
-					) : matrixMembers.length > 0 ? (
+					) : visibleMembers.length > 0 ? (
 						<div className="sessionInfo__participants">
-							{matrixMembers
-								.filter(member => {
-									// Filter out system users and current user if needed
-									const userId = member.userId || '';
-									return !userId.includes('@system') && !userId.includes('@caritas.local');
-								})
-								.map((member, index, filteredMembers) => {
+							{visibleMembers.map((member, index) => {
 									// Extract username from userId (format: @username:domain)
 									// Always use username from userId, ignore member.name to ensure consistency
 									const userId = member.userId || '';
@@ -407,7 +396,7 @@ export const GroupChatHeader = ({
 									return (
 										<span key={member.userId || index} className="sessionInfo__participant">
 											{decodeUsername(username)}
-											{index < filteredMembers.length - 1 && ', '}
+											{index < visibleMembers.length - 1 && ', '}
 										</span>
 									);
 								})}
@@ -450,15 +439,7 @@ export const GroupChatHeader = ({
 						</div>
 					)}
 
-				{/* MATRIX MIGRATION: Temporarily hide session menu for group chats */}
-				{false && <SessionMenu
-					hasUserInitiatedStopOrLeaveRequest={
-						hasUserInitiatedStopOrLeaveRequest
-					}
-					isAskerInfoAvailable={isAskerInfoAvailable()}
-					isJoinGroupChatView={isJoinGroupChatView}
-					bannedUsers={bannedUsers}
-				/>}
+				{/* Group header uses only inline call controls; hide flyout 3-dot menu here. */}
 		</div>
 		{/* <div className="sessionInfo__metaInfo">
 			{activeSession.item.active &&
@@ -587,3 +568,28 @@ export const GroupChatHeader = ({
 		</div>
 	);
 };
+
+const VideoCallHeaderIcon = () => (
+	<svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+		<rect width="32" height="32" rx="12" fill="#D32F2F" fillOpacity="0.6" />
+		<path
+			fillRule="evenodd"
+			clipRule="evenodd"
+			d="M18.3152 11.0601C18.9972 11.0601 19.5502 11.613 19.5502 12.295L19.55 14.7022L22.4928 11.7595C22.7822 11.4702 23.2514 11.4702 23.5407 11.7595C23.6797 11.8985 23.7578 12.087 23.7578 12.2835V19.7166C23.7578 20.1258 23.426 20.4575 23.0168 20.4575C22.8203 20.4575 22.6318 20.3795 22.4928 20.2405L19.55 17.2971L19.5502 19.705C19.5502 20.3871 18.9972 20.94 18.3152 20.94H9.47815C8.79609 20.94 8.24316 20.3871 8.24316 19.705V12.295C8.24316 11.613 8.79609 11.0601 9.47815 11.0601H18.3152Z"
+			fill="white"
+		/>
+	</svg>
+);
+
+const AudioCallHeaderIcon = () => (
+	<svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+		<rect width="32" height="32" rx="16" fill="#FFD1D1" fillOpacity="0.6" />
+		<path
+			fillRule="evenodd"
+			clipRule="evenodd"
+			d="M22.7439 18.2098L19.8713 17.316C19.2285 17.1155 18.4628 17.4268 18.0513 18.0551C17.7168 18.5651 17.1871 18.9385 16.6341 19.0538C16.255 19.1326 15.8991 19.0798 15.6319 18.9054C14.4495 18.1327 13.4566 17.1427 12.6816 15.9644C12.5066 15.6977 12.4533 15.343 12.5327 14.9651C12.648 14.4139 13.0225 13.8858 13.5348 13.552C14.1643 13.1416 14.4761 12.3788 14.2756 11.7377L13.3789 8.87442C13.1807 8.23973 12.5344 7.88558 11.8423 8.03338L9.08566 8.61996C9.02712 8.63214 8.96858 8.64779 8.91062 8.66749L8.79585 8.7098C8.76107 8.7243 8.72514 8.74168 8.68804 8.76197C8.26782 8.9915 7.99771 9.43607 8.00001 9.89455C8.00351 10.4927 8.04002 11.0903 8.10842 11.6723L8.08349 11.8722L8.08407 11.8734L8.14146 11.9308C8.55357 14.9802 9.84671 17.6627 11.887 19.6972C13.9707 21.7745 16.7309 23.074 19.8707 23.4565C20.4706 23.5296 21.0879 23.5684 21.7052 23.5725C21.7075 23.5725 21.7099 23.5725 21.7127 23.5725C22.184 23.5725 22.6482 23.2874 22.8708 22.8595C22.8853 22.8306 22.8987 22.8028 22.9097 22.7761C22.9485 22.6828 22.9787 22.5859 22.9989 22.4909L23.5872 19.7412C23.7345 19.0514 23.3797 18.4075 22.7439 18.2098Z"
+			fill="#CC1E1C"
+			fillOpacity="0.6"
+		/>
+	</svg>
+);

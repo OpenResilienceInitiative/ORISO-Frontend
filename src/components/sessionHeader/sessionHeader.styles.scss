@@ -5,37 +5,38 @@ $iconSize: 24px;
 .sessionInfo {
 	display: flex;
 	flex-direction: column;
-	align-items: center;
-	padding: $grid-base-two $grid-base-two;
-	min-height: 72px;
-	background-color: $session-header-background-color;
+	align-items: stretch;
+	padding: 10px 14px 6px;
+	min-height: 75px;
+	background-color: #fff;
 	box-sizing: border-box;
-	border-bottom: 1px solid rgba(80, 80, 80, 0.1);
-	margin-left: 1px;
-	// Ensure crisp 1px border rendering
-	-webkit-backface-visibility: hidden;
-	backface-visibility: hidden;
-	transform: translateZ(0);
+
+	@media (min-width: 768px) {
+		margin-left: 40px;
+		margin-right: 40px;
+	}
 
 	@include breakpoint($fromMedium) {
-		padding: $grid-base-three;
+		padding: 10px 18px 6px;
 	}
 
 	@include breakpoint($fromLarge) {
-		align-items: flex-start;
-		background-color: $session-header-background-color-large;
+		align-items: stretch;
+		background-color: #fff;
 	}
 
 	&__feedbackHeaderWrapper,
 	&__headerWrapper {
 		display: flex;
 		flex-direction: row;
-		flex: 1 0;
 		justify-content: space-between;
 		width: 100%;
 		align-items: center;
 		box-sizing: border-box;
-		margin-left: 10px;
+		margin-left: 0;
+		padding-bottom: 10px;
+		padding-top: 10px;
+		border-bottom: 1px solid #ffd1d1;
 	}
 
 	&__feedbackHeaderWrapper {
@@ -46,7 +47,6 @@ $iconSize: 24px;
 			text-align: center;
 			margin-left: -36px;
 			cursor: auto;
-			
 
 			@include breakpoint($fromLarge) {
 				text-align: left;
@@ -62,6 +62,14 @@ $iconSize: 24px;
 		cursor: pointer;
 		position: relative;
 		z-index: 10;
+		width: 28px;
+		height: 28px;
+		border-radius: 50%;
+		background: rgba(255, 209, 209, 0.6);
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		margin-right: 8px;
 
 		@include breakpoint($fromLarge) {
 			display: none;
@@ -70,16 +78,16 @@ $iconSize: 24px;
 
 	&__backButton {
 		svg {
-			width: $iconSize;
-			height: $iconSize;
-			fill: var(--skin-color-default, $secondary);
+			width: 18px;
+			height: 18px;
+			fill: #6e4d4d;
 
 			svg path {
 				fill: var(--skin-color-default, $secondary);
 			}
 
 			&:hover {
-				fill: var(--skin-color-default, $primary);
+				fill: #5b3f3f;
 
 				svg path {
 					fill: var(--skin-color-default, $primary);
@@ -92,8 +100,8 @@ $iconSize: 24px;
 	&__feedbackBackButton,
 	&__backButton {
 		@media screen and (max-width: 899px) {
-			width: $backBtnSize;
-			height: $backBtnSize;
+			width: 28px;
+			height: 28px;
 			background-image: url('../../resources/img/illustrations/default-back.svg');
 			background-size: contain;
 			background-repeat: no-repeat;
@@ -136,7 +144,7 @@ $iconSize: 24px;
 			gap: 8px;
 			min-width: 0;
 			overflow: hidden;
-			margin-left: 20px;
+			margin-left: 0;
 		}
 
 		&--deactivate {
@@ -184,16 +192,19 @@ $iconSize: 24px;
 		}
 
 		h3 {
-			color: var(--skin-color-default, $secondary);
+			color: rgba(0, 0, 0, 0.9);
 			white-space: nowrap;
 			overflow: hidden;
 			text-overflow: ellipsis;
 			margin: 0;
-			
+			font-size: 22px;
+			font-weight: 500;
+			line-height: 1;
+
 			// On mobile: allow text to wrap to 2 lines instead of truncating
 			// This prevents it from taking too much horizontal space
 			@media screen and (max-width: 899px) {
-				font-size: 13px;
+				font-size: 18px;
 				line-height: 1.3;
 				flex: 1;
 				min-width: 0;
@@ -204,7 +215,9 @@ $iconSize: 24px;
 				-webkit-line-clamp: 2; // Limit to 2 lines
 				-webkit-box-orient: vertical;
 				max-height: calc(1.3em * 2); // 2 lines max
-				max-width: calc(100% - 50px); // Leave space for icon (36px) + gap (8px) + padding
+				max-width: calc(
+					100% - 50px
+				); // Leave space for icon (36px) + gap (8px) + padding
 			}
 		}
 	}
@@ -228,7 +241,7 @@ $iconSize: 24px;
 			height: 100%;
 			fill: var(--skin-color-default, $secondary) !important;
 			color: var(--skin-color-default, $secondary) !important;
-			
+
 			path {
 				fill: var(--skin-color-default, $secondary) !important;
 			}
@@ -274,29 +287,61 @@ $iconSize: 24px;
 	}
 
 	&__videoCallButtons {
-		margin-right: 20px;
+		margin-right: 4px;
 		display: flex;
-		align-items: center; /* Vertically center video call buttons */
+		align-items: center;
+		gap: 16px;
+
+		.button__item.button__smallIcon {
+			min-width: 32px;
+			width: 32px;
+			height: 32px;
+			padding: 0;
+			border: none;
+			background: transparent;
+			border-radius: 12px;
+		}
+
+		.button__item.button__smallIcon svg {
+			width: 32px;
+			height: 32px;
+		}
+
+		.button__item.button__smallIcon:hover {
+			background: transparent;
+		}
 	}
 
 	&__metaInfo {
 		width: 100%;
-		max-width: $xlarge;
-		padding: 0 $grid-base-two;
-		text-align: center;
+		max-width: none;
+		padding: 0 0 0 38px;
+		text-align: left;
 		white-space: nowrap;
 		text-overflow: ellipsis;
+		display: flex;
+		align-items: center;
+		gap: 8px;
 
 		@include breakpoint($fromLarge) {
-			padding: 0;
+			padding: 0 0 0 37px;
 			text-align: left;
+		}
+
+		@media screen and (max-width: 899px) {
+			padding-left: 0;
 		}
 
 		&__content {
 			font-size: 12px;
-			color: $tertiary;
+			color: #646d78;
 			line-height: 16px;
-			display: inline-block;
+			display: inline-flex;
+			align-items: center;
+			padding: 1px 8px;
+			border-bottom-left-radius: 5px;
+			border-bottom-right-radius: 5px;
+			background: #ffd1d1;
 
 			@include breakpoint($fromSmall) {
 				position: relative;
@@ -316,8 +361,8 @@ $iconSize: 24px;
 			}
 
 			&:after {
-				content: '|';
-				padding: 0 5px;
+				content: '';
+				padding: 0;
 			}
 
 			&:last-child {
@@ -419,6 +464,75 @@ $iconSize: 24px;
 				}
 			}
 		}
+	}
+
+	&__topicDots {
+		display: inline-flex;
+		align-items: center;
+		padding-left: 6px;
+		color: #646d78;
+		font-size: 14px;
+		line-height: 1;
+	}
+
+	&__supervisionButton {
+		border: 1px solid #ffd1d1;
+		background: rgba(255, 209, 209, 0.3);
+		color: #1c1b1f;
+		border-radius: 12px;
+		padding: 4px 12px;
+		font-size: 14px;
+		font-weight: 600;
+		line-height: 16px;
+		cursor: pointer;
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		white-space: nowrap;
+		margin-right: 28px;
+	}
+
+	&__supervisionIcon {
+		width: 20px;
+		height: 20px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	&__memberStack {
+		display: inline-flex;
+		align-items: center;
+		margin-right: 4px;
+		min-width: 40px;
+
+		@media screen and (max-width: 899px) {
+			display: none;
+		}
+	}
+
+	&__memberStackPlus {
+		width: 32px;
+		height: 32px;
+		border-radius: 12px;
+		border: 1px solid #ffd1d1;
+		background: #fff;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		flex: 0 0 auto;
+	}
+
+	&__memberBubble {
+		width: 32px;
+		height: 32px;
+		border-radius: 50%;
+		overflow: hidden;
+		margin-left: -10px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		flex: 0 0 auto;
 	}
 
 	// Video call buttons spacing

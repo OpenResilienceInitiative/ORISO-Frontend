@@ -1,8 +1,7 @@
-import { isUserModerator } from '../session/sessionHelpers';
 import * as React from 'react';
-import { useCallback, useContext } from 'react';
-import { ActiveSessionContext } from '../../globalState';
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatMessagePersonName } from './messageNameUtils';
 
 interface MessageDisplayNameProps {
 	isUser: Boolean;
@@ -10,41 +9,35 @@ interface MessageDisplayNameProps {
 	type: 'user' | 'consultant' | 'self' | 'system';
 	userId: string;
 	username: string;
-	displayName: string;
+	displayName?: string;
+	firstName?: string;
+	lastName?: string;
 }
 
 export const MessageDisplayName = ({
-	isUser,
-	isMyMessage,
 	type,
-	userId,
 	username,
-	displayName
+	displayName,
+	firstName,
+	lastName
 }: MessageDisplayNameProps) => {
 	const { t: translate } = useTranslation();
-	const { activeSession } = useContext(ActiveSessionContext);
-
-	const subscriberIsModerator = isUserModerator({
-		chatItem: activeSession.item,
-		rcUserId: userId
-	});
 
 	const getUsernameWithPrefix = useCallback(() => {
-		if (isMyMessage) {
-			return translate('message.isMyMessage.name');
-		} else if (type === 'system') {
-			return translate('message.systemNotification', 'System Notification');
+		if (type === 'system') {
+			return translate(
+				'message.systemNotification',
+				'System Notification'
+			);
 		} else {
-			// Just show username/displayName without role prefix
-			return displayName || username;
+			return formatMessagePersonName(
+				displayName,
+				username,
+				firstName,
+				lastName
+			);
 		}
-	}, [
-		displayName,
-		isMyMessage,
-		type,
-		translate,
-		username
-	]);
+	}, [displayName, firstName, lastName, type, translate, username]);
 
 	return (
 		<>

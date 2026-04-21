@@ -217,7 +217,7 @@
 	color: #6b7280;
 }
 
-@media (width <= 900px) {
+@media (width <= 1200px) {
 	.draftsCenter {
 		padding: 16px;
 	}
@@ -233,6 +233,10 @@
 	.draftsCenter__content {
 		grid-template-columns: 1fr;
 		height: auto;
+	}
+
+	.draftsCenter__detail {
+		display: none;
 	}
 
 	.draftsCenter__detailTitle {

@@ -46,6 +46,9 @@
 		line-height: $line-height-secondary;
 		color: var(--skin-color-secondary-contrast-safe, $text-low-emphasis);
 		letter-spacing: $text-divider-letter-spacing;
+		padding: 4px;
+		padding-left: 10px;
+		padding-right: 10px;
 	}
 
 	&__label {

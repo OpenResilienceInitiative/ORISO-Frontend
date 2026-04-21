@@ -2,8 +2,13 @@ import * as React from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { apiDeleteUserDraft, apiGetUserDrafts, IUserDraftItem } from '../../api';
+import {
+	apiDeleteUserDraft,
+	apiGetUserDrafts,
+	IUserDraftItem
+} from '../../api';
 import { REMOTE_DRAFT_INDEX_SCOPE } from '../../services/draftStore';
+import { useResponsive } from '../../hooks/useResponsive';
 import './draftsCenter.styles';
 
 const formatRelativeTime = (timestamp?: string | null) => {
@@ -36,7 +41,9 @@ const getDraftPreviewText = (rawText?: string | null) => {
 		.replace(/<br\s*\/?>/gi, '\n')
 		.replace(/<\/p>/gi, '\n')
 		.replace(/<\/blockquote>/gi, '\n');
-	return htmlToText(normalized).replace(/\n{3,}/g, '\n\n').trim();
+	return htmlToText(normalized)
+		.replace(/\n{3,}/g, '\n\n')
+		.trim();
 };
 
 const withEmbeddedNotificationsParam = (
@@ -65,6 +72,7 @@ const withDraftScopeParam = (path: string, draftScopeKey?: string | null) => {
 	}
 	const [basePath, queryString = ''] = path.split('?');
 	const query = new URLSearchParams(queryString);
+	query.delete('embeddedNotifications');
 	query.set('draftScopeKey', draftScopeKey);
 	const finalQuery = query.toString();
 	return `${basePath}${finalQuery ? `?${finalQuery}` : ''}`;
@@ -73,7 +81,10 @@ const withDraftScopeParam = (path: string, draftScopeKey?: string | null) => {
 export const DraftsCenter = () => {
 	const { t: translate } = useTranslation();
 	const history = useHistory();
-	const [selectedDraftKey, setSelectedDraftKey] = useState<string | null>(null);
+	const { untilL } = useResponsive();
+	const [selectedDraftKey, setSelectedDraftKey] = useState<string | null>(
+		null
+	);
 	const [refreshToken, setRefreshToken] = useState(0);
 	const [drafts, setDrafts] = useState<IUserDraftItem[]>([]);
 
@@ -120,7 +131,8 @@ export const DraftsCenter = () => {
 	}, [drafts, selectedDraftKey]);
 
 	const selectedDraft = useMemo(
-		() => drafts.find((entry) => entry.scopeKey === selectedDraftKey) || null,
+		() =>
+			drafts.find((entry) => entry.scopeKey === selectedDraftKey) || null,
 		[drafts, selectedDraftKey]
 	);
 	const embeddedChatPath = useMemo(
@@ -129,7 +141,7 @@ export const DraftsCenter = () => {
 				? withEmbeddedNotificationsParam(
 						selectedDraft.actionPath,
 						selectedDraft.scopeKey
-				  )
+					)
 				: null,
 		[selectedDraft?.actionPath, selectedDraft?.scopeKey]
 	);
@@ -158,6 +170,17 @@ export const DraftsCenter = () => {
 			history.push(withDraftScopeParam(entry.actionPath, entry.scopeKey));
 		},
 		[history]
+	);
+
+	const handleSelectDraft = useCallback(
+		(entry: IUserDraftItem) => {
+			if (untilL) {
+				handleOpenDraft(entry);
+				return;
+			}
+			setSelectedDraftKey(entry.scopeKey);
+		},
+		[handleOpenDraft, untilL]
 	);
 
 	const handleDeleteDraft = useCallback((entry: IUserDraftItem) => {
@@ -201,17 +224,23 @@ export const DraftsCenter = () => {
 										? 'draftsCenter__listItem--active'
 										: ''
 								}`}
-								onClick={() => setSelectedDraftKey(entry.scopeKey)}
+								onClick={() => handleSelectDraft(entry)}
 							>
 								<div className="draftsCenter__listItemTagRow">
 									<span className="draftsCenter__listItemTag">
-										{translate('drafts.center.messageTag', 'Draft')}
+										{translate(
+											'drafts.center.messageTag',
+											'Draft'
+										)}
 									</span>
 								</div>
 								<div className="draftsCenter__listItemHeader">
 									<span className="draftsCenter__listItemTitle">
 										{entry.title ||
-											translate('drafts.center.untitledChat', 'Chat')}
+											translate(
+												'drafts.center.untitledChat',
+												'Chat'
+											)}
 									</span>
 									<span className="draftsCenter__listItemTime">
 										{formatRelativeTime(entry.updatedAt)}
@@ -222,7 +251,10 @@ export const DraftsCenter = () => {
 								</p>
 								{entry.threadRootId && (
 									<span className="draftsCenter__threadTag">
-										{translate('drafts.center.thread', 'Thread')}
+										{translate(
+											'drafts.center.thread',
+											'Thread'
+										)}
 									</span>
 								)}
 							</button>
@@ -231,22 +263,32 @@ export const DraftsCenter = () => {
 				</div>
 				<div
 					className={`draftsCenter__detail ${
-						embeddedChatPath ? 'draftsCenter__detail--embeddedChat' : ''
+						embeddedChatPath
+							? 'draftsCenter__detail--embeddedChat'
+							: ''
 					}`}
 				>
 					{selectedDraft ? (
 						<div className="draftsCenter__detailCard">
 							<h3 className="draftsCenter__detailTitle">
 								{selectedDraft.title ||
-									translate('drafts.center.untitledChat', 'Chat')}
+									translate(
+										'drafts.center.untitledChat',
+										'Chat'
+									)}
 							</h3>
 							<div className="draftsCenter__detailActions">
 								<button
 									type="button"
 									className="draftsCenter__openButton"
-									onClick={() => handleOpenDraft(selectedDraft)}
+									onClick={() =>
+										handleOpenDraft(selectedDraft)
+									}
 								>
-									{translate('drafts.center.open', 'Open draft')}
+									{translate(
+										'drafts.center.open',
+										'Open draft'
+									)}
 								</button>
 								<button
 									type="button"
@@ -254,14 +296,22 @@ export const DraftsCenter = () => {
 									onClick={handleNextDraft}
 									disabled={!nextDraftKey}
 								>
-									{translate('drafts.center.next', 'Next draft')}
+									{translate(
+										'drafts.center.next',
+										'Next draft'
+									)}
 								</button>
 								<button
 									type="button"
 									className="draftsCenter__deleteButton"
-									onClick={() => handleDeleteDraft(selectedDraft)}
+									onClick={() =>
+										handleDeleteDraft(selectedDraft)
+									}
 								>
-									{translate('drafts.center.delete', 'Delete draft')}
+									{translate(
+										'drafts.center.delete',
+										'Delete draft'
+									)}
 								</button>
 							</div>
 							{embeddedChatPath && (
@@ -288,4 +338,3 @@ export const DraftsCenter = () => {
 		</div>
 	);
 };
-

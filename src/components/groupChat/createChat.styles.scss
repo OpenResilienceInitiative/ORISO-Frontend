@@ -123,6 +123,243 @@ $inputSpacing: 32px;
 		}
 	}
 
+	&__participantsPicker {
+		position: relative;
+		width: 399px;
+		margin: 0 0 $inputSpacing 0;
+	}
+
+	&__participantsRow {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+
+	&__participantsPlusButton {
+		padding: 0;
+		margin: 0;
+		border: 0;
+		background: transparent;
+		cursor: pointer;
+		line-height: 0;
+		border-radius: 8px;
+		width: 32px;
+		height: 32px;
+	}
+
+	&__participantsPlusIcon {
+		transition: transform 0.24s ease;
+	}
+
+	&__participantsPlusIcon--open {
+		transform: rotate(90deg);
+	}
+
+	&__participantsPlusBg {
+		fill: #ffffff;
+		stroke: #00000033;
+		transition:
+			fill 0.2s ease,
+			stroke 0.2s ease;
+	}
+
+	&__participantsPlusPath {
+		fill: #49454f;
+		transition: fill 0.2s ease;
+	}
+
+	&__participantsPlusIcon--open .createChat__participantsPlusBg {
+		fill: #646d78;
+		stroke: #646d78;
+	}
+
+	&__participantsPlusIcon--open .createChat__participantsPlusPath {
+		fill: #ffffff;
+	}
+
+	&__participantsTrigger {
+		flex: 0 0 $chat-input-width;
+		width: $chat-input-width;
+		height: 50px;
+		border: 1px solid #8c878c;
+		border-radius: 5px;
+		background: #fff;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 0 12px;
+		cursor: pointer;
+		gap: 8px;
+	}
+
+	&__participantsTrigger--active {
+		border: 2px solid #3f373f;
+		padding: 0 11px;
+	}
+
+	&__participantsTriggerText {
+		font-size: 16px;
+		line-height: 21px;
+		color: #3f373f;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		text-align: left;
+	}
+
+	&__participantsChevron {
+		flex-shrink: 0;
+		transition: transform 0.2s ease;
+	}
+
+	&__participantsChevron--open {
+		transform: rotate(180deg);
+	}
+
+	&__participantsMenu {
+		position: absolute;
+		top: calc(100% + 2px);
+		left: 40px;
+		width: $chat-input-width;
+		background: transparent;
+		border: 0;
+		box-shadow: none;
+		z-index: 40;
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+
+	&__participantsCard {
+		background: #fff;
+		border: 1px solid #cfd4d8;
+		border-radius: 8px;
+		overflow: hidden;
+	}
+
+	&__participantsCard--search {
+		.createChat__participantsSearchWrap {
+			border-bottom: 2px solid #bf4b53;
+		}
+	}
+
+	&__participantsSearchWrap {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		padding: 14px 12px;
+		border: 2px solid transparent;
+	}
+
+	&__participantsSearchWrap--active {
+		border-color: #bf4b53;
+		border-radius: 8px;
+	}
+
+	&__participantsSearch {
+		width: 100%;
+		border: 0;
+		outline: 0;
+		font-size: 16px;
+		line-height: 21px;
+		color: #3f373f;
+		background: transparent;
+	}
+
+	&__participantsLabel {
+		font-size: 16px;
+		line-height: 21px;
+		color: #5f6670;
+		padding: 12px 14px;
+	}
+
+	&__participantsCard--selected {
+		padding: 12px 14px 14px;
+	}
+
+	&__selectedPillsLabel {
+		font-size: 16px;
+		line-height: 21px;
+		color: #5f6670;
+		margin-bottom: 10px;
+	}
+
+	&__selectedPills {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+
+	&__selectedPill {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		border: 0;
+		border-radius: 999px;
+		background: #4c545c;
+		color: #fff;
+		padding: 4px 10px;
+		cursor: pointer;
+	}
+
+	&__selectedPillText {
+		font-size: 14px;
+		line-height: 1;
+	}
+
+	&__selectedPillClose {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 14px;
+		height: 14px;
+		font-size: 13px;
+		line-height: 1;
+		border-radius: 999px;
+		background: rgba(255, 255, 255, 0.2);
+	}
+
+	&__participantsList {
+		max-height: 260px;
+		overflow-y: auto;
+		padding-bottom: 0;
+	}
+
+	&__participantItem {
+		width: 100%;
+		border: 0;
+		border-top: 1px solid #eceeef;
+		background: transparent;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 14px 14px;
+		cursor: pointer;
+		text-align: left;
+
+		&:hover {
+			background: #f8f9fa;
+		}
+	}
+
+	&__participantName {
+		font-size: 16px;
+		line-height: 21px;
+		color: #4d545a;
+		padding-right: 8px;
+	}
+
+	&__participantName--selected {
+		color: #a5000a;
+	}
+
+	&__participantIcon {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
+	}
+
 	&__buttonsWrapper {
 		.button__wrapper:first-child {
 			margin-bottom: $grid-base-two;

@@ -268,8 +268,9 @@ $session-header-background-color: $background-light;
 $session-header-background-color-large: $background-lighter;
 $session-list-item-background-active: $background-lighter;
 $session-list-item-border-radius: 4px;
-$sessions-list-background-color-primary: $background-lighter;
-$sessions-list-background-color-secondary: $background-light;
+/* Session list column + card rest state: match app shell #f5f5f5 */
+$sessions-list-background-color-primary: #f5f5f5;
+$sessions-list-background-color-secondary: #f5f5f5;
 $session-menu-legal-links-color: white;
 $statistics-highlight-color: $primary;
 $tab-border-radius: 25px;

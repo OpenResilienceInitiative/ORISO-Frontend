@@ -1,0 +1,114 @@
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { TypewriterText, TypingReveal } from './BotMessageAnimation';
+import './PseudonymCard.styles.scss';
+import './PrivacyMessageCard.styles.scss';
+
+/** Carimat robot_2 icon — exact path from Figma node 1320:38837. */
+const CarimatRobotIcon: React.FC = () => (
+	<svg
+		width="32"
+		height="36"
+		viewBox="0 0 32 36"
+		fill="none"
+		xmlns="http://www.w3.org/2000/svg"
+		aria-hidden="true"
+	>
+		<path
+			d="M0 36V26C0 24.9 0.391667 23.9583 1.175 23.175C1.95833 22.3917 2.9 22 4 22H28C29.1 22 30.0417 22.3917 30.825 23.175C31.6083 23.9583 32 24.9 32 26V36H0ZM10 20C7.23333 20 4.875 19.025 2.925 17.075C0.975 15.125 0 12.7667 0 10C0 7.23333 0.975 4.875 2.925 2.925C4.875 0.975 7.23333 0 10 0H22C24.7667 0 27.125 0.975 29.075 2.925C31.025 4.875 32 7.23333 32 10C32 12.7667 31.025 15.125 29.075 17.075C27.125 19.025 24.7667 20 22 20H10ZM4 32H28V26H4V32ZM10 16H22C23.6667 16 25.0833 15.4167 26.25 14.25C27.4167 13.0833 28 11.6667 28 10C28 8.33333 27.4167 6.91667 26.25 5.75C25.0833 4.58333 23.6667 4 22 4H10C8.33333 4 6.91667 4.58333 5.75 5.75C4.58333 6.91667 4 8.33333 4 10C4 11.6667 4.58333 13.0833 5.75 14.25C6.91667 15.4167 8.33333 16 10 16ZM11.425 11.425C11.8083 11.0417 12 10.5667 12 10C12 9.43333 11.8083 8.95833 11.425 8.575C11.0417 8.19167 10.5667 8 10 8C9.43333 8 8.95833 8.19167 8.575 8.575C8.19167 8.95833 8 9.43333 8 10C8 10.5667 8.19167 11.0417 8.575 11.425C8.95833 11.8083 9.43333 12 10 12C10.5667 12 11.0417 11.8083 11.425 11.425ZM23.425 11.425C23.8083 11.0417 24 10.5667 24 10C24 9.43333 23.8083 8.95833 23.425 8.575C23.0417 8.19167 22.5667 8 22 8C21.4333 8 20.9583 8.19167 20.575 8.575C20.1917 8.95833 20 9.43333 20 10C20 10.5667 20.1917 11.0417 20.575 11.425C20.9583 11.8083 21.4333 12 22 12C22.5667 12 23.0417 11.8083 23.425 11.425Z"
+			fill="currentColor"
+		/>
+	</svg>
+);
+
+const VerticalMenuIcon: React.FC = () => (
+	<svg
+		width="24"
+		height="24"
+		viewBox="0 0 32 32"
+		fill="none"
+		xmlns="http://www.w3.org/2000/svg"
+		aria-hidden="true"
+	>
+		<path
+			d="M16.0007 26.6673C15.2673 26.6673 14.6395 26.4062 14.1173 25.884C13.5951 25.3618 13.334 24.734 13.334 24.0007C13.334 23.2673 13.5951 22.6395 14.1173 22.1173C14.6395 21.5951 15.2673 21.334 16.0007 21.334C16.734 21.334 17.3618 21.5951 17.884 22.1173C18.4062 22.6395 18.6673 23.2673 18.6673 24.0007C18.6673 24.734 18.4062 25.3618 17.884 25.884C17.3618 26.4062 16.734 26.6673 16.0007 26.6673ZM16.0007 18.6673C15.2673 18.6673 14.6395 18.4062 14.1173 17.884C13.5951 17.3618 13.334 16.734 13.334 16.0007C13.334 15.2673 13.5951 14.6395 14.1173 14.1173C14.6395 13.5951 15.2673 13.334 16.0007 13.334C16.734 13.334 17.3618 13.5951 17.884 14.1173C18.4062 14.6395 18.6673 15.2673 18.6673 16.0007C18.6673 16.734 18.4062 17.3618 17.884 17.884C17.3618 18.4062 16.734 18.6673 16.0007 18.6673ZM16.0007 10.6673C15.2673 10.6673 14.6395 10.4062 14.1173 9.88398C13.5951 9.36176 13.334 8.73398 13.334 8.00065C13.334 7.26732 13.5951 6.63954 14.1173 6.11732C14.6395 5.5951 15.2673 5.33398 16.0007 5.33398C16.734 5.33398 17.3618 5.5951 17.884 6.11732C18.4062 6.63954 18.6673 7.26732 18.6673 8.00065C18.6673 8.73398 18.4062 9.36176 17.884 9.88398C17.3618 10.4062 16.734 10.6673 16.0007 10.6673Z"
+			fill="#1D1B20"
+		/>
+	</svg>
+);
+
+interface PrivacyMessageCardProps {
+	/** Skip the typing-dots phase and reveal immediately (e.g. on re-render). */
+	skipTyping?: boolean;
+	/** Fired after the typewriter finishes writing the text. */
+	onDone?: () => void;
+}
+
+/**
+ * Second Carimat bot message — privacy/encryption notice shown AFTER the
+ * pseudonym is confirmed. Matches Figma "Group10":
+ *
+ *   ┌───┐  Carimat · Select displayed name
+ *   │ 🤖│  ┌──────────────────────────┐
+ *   └───┘  │ Great choice, to protect │
+ *    ⋮     │ your privacy all …       │
+ *          └──────────────────────────┘
+ */
+export const PrivacyMessageCard: React.FC<PrivacyMessageCardProps> = ({
+	skipTyping = false,
+	onDone
+}) => {
+	const { t } = useTranslation();
+
+	const message = t(
+		'anonymousChat.pseudonym.privacyMessage',
+		'Great choice, to protect your privacy all messages are end to end encrypted and will be deleted after 48h automatically.'
+	);
+
+	return (
+		<div className="messageItem pseudonymCard privacyMessageCard">
+			<div className="messageItem__messageWrap pseudonymCard__wrap">
+				<div className="pseudonymCard__avatarCol">
+					<div className="pseudonymCard__avatarFrame">
+						<div className="pseudonymCard__avatarIcon">
+							<CarimatRobotIcon />
+						</div>
+					</div>
+					<div className="pseudonymCard__menuIcon">
+						<VerticalMenuIcon />
+					</div>
+				</div>
+
+				<div className="pseudonymCard__contentCol">
+					<div className="pseudonymCard__header">
+						<span className="pseudonymCard__headerName">
+							Carimat
+						</span>
+						<span className="pseudonymCard__headerSubtitle">
+							{t(
+								'anonymousChat.pseudonym.carimatSubtitle',
+								'Select displayed name'
+							)}
+						</span>
+					</div>
+
+					<TypingReveal typingMs={skipTyping ? 0 : 900}>
+						<div className="pseudonymCard__bubble privacyMessageCard__bubble">
+							<p className="pseudonymCard__bubbleText privacyMessageCard__bubbleText">
+								{skipTyping ? (
+									message
+								) : (
+									<TypewriterText
+										text={message}
+										charMs={14}
+										onDone={onDone}
+									/>
+								)}
+							</p>
+						</div>
+					</TypingReveal>
+				</div>
+			</div>
+		</div>
+	);
+};

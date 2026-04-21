@@ -11,6 +11,367 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 		position: relative;
 		z-index: 1;
 
+		&--figma-consultant {
+			@include breakpoint($fromLarge) {
+				border-right: 2px solid #fff;
+				/* Symmetric padding: keeps icon column visually centered (badges don’t pull layout) */
+				padding: 16px;
+				display: flex;
+				flex-direction: column;
+				min-height: 0;
+				overflow-x: visible;
+				overflow-y: hidden;
+
+				.navigation__itemContainer {
+					align-items: center;
+					width: 100%;
+					padding: 0;
+					flex: 1 1 auto;
+					min-height: 0;
+					overflow-x: visible;
+					overflow-y: hidden;
+					max-height: none;
+				}
+
+				.navigation__item__top {
+					width: 100%;
+					gap: 8px;
+					align-items: center;
+					flex: 0 1 auto;
+					min-height: 0;
+				}
+
+				.navigation__item__bottom {
+					width: 100%;
+					gap: 8px;
+					align-items: center;
+					margin-top: auto;
+					padding-top: 12px;
+					flex: 0 0 auto;
+				}
+
+				/* Full-width click area; badges are absolute so they don’t affect layout */
+				.navigation__item:not(.navigation__item__language) {
+					width: 100%;
+					max-width: 100%;
+					align-self: stretch;
+				}
+
+				.navigation__item__language {
+					width: 100%;
+					max-width: 100%;
+					align-self: stretch;
+				}
+
+				.navigation__item {
+					height: auto;
+					min-height: 0;
+					flex-direction: column;
+					align-items: center;
+					justify-content: flex-start;
+					color: #000;
+					background: transparent !important;
+					border-radius: 0;
+					margin: 0;
+					padding: 0;
+					gap: 4px;
+					overflow: visible;
+					/* Override broad transition — only animate color so layout stays stable on click */
+					transition: color 0.2s ease;
+
+					&:hover {
+						background: transparent !important;
+						color: #000;
+					}
+				}
+
+				/* Route clicks to the stable Link/div wrapper, not the swappable icon SVG.
+				   Prevents mousedown→DOM-swap→mouseup race that causes missed first clicks. */
+				.navigation__icon-slot--row:not(
+					.navigation__icon-slot--language
+				),
+				.navigation__icon-slot--tile,
+				.navigation__icon-slot--live,
+				.navigation__icon-slot--logout {
+					pointer-events: none;
+				}
+
+				.navigation__title--figma {
+					display: block !important;
+					font-family: 'Roboto', $font-family-sans-serif, sans-serif;
+					font-size: 11px;
+					line-height: 1;
+					color: #000;
+					font-weight: 400;
+					text-align: center;
+					width: max-content;
+					max-width: 100%;
+					margin-left: auto;
+					margin-right: auto;
+					padding: 0;
+				}
+
+				.navigation__item--active .navigation__title--figma {
+					color: #d32f2f;
+					font-weight: 700;
+				}
+
+				/* Live-chat toggle is a stateful switch, not a route —
+				   the active slot color conveys the state, so the label
+				   should stay plain black instead of flipping to the
+				   app's red "current route" accent. */
+				.navigation__item--liveChatToggle.navigation__item--active
+					.navigation__title--figma {
+					color: #000;
+					font-weight: 400;
+				}
+
+				/* Fixed square “squircle” — match --live / --language (49px), not full strip width */
+				.navigation__icon-slot {
+					width: 49px !important;
+					height: 49px !important;
+					min-width: 49px !important;
+					min-height: 49px !important;
+					max-width: 49px !important;
+					max-height: 49px !important;
+					flex-shrink: 0;
+					box-sizing: border-box;
+					border-radius: 12px;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					padding: 8px;
+					margin: 0 auto;
+					position: relative;
+					overflow: visible;
+
+					&--row {
+						background: #dedede;
+					}
+
+					&--tile {
+						background: #dedede;
+					}
+
+					&--row.navigation__icon-slot--active {
+						background: rgba(211, 47, 47, 0.24);
+						border: 1px solid #d32f2f;
+					}
+
+					&--tile.navigation__icon-slot--active {
+						background: rgba(211, 47, 47, 0.24);
+						border: 1px solid #d32f2f;
+					}
+
+					/* Live-chat availability toggle — defaults to inactive (grey,
+					   black glyph). When active, the slot turns black and the
+					   glyph swaps for the privacy/eye variant rendered white. */
+					&--live {
+						background: #dedede;
+						width: 49px;
+						max-width: 49px;
+						margin: 0 auto;
+						padding: 8px;
+
+						.navigation__liveChatToggleIcon {
+							width: 22px;
+							height: 26px;
+							color: #1c1b1f;
+							display: block;
+							transition: color 180ms ease;
+						}
+					}
+
+					&--live.navigation__icon-slot--active {
+						background: #000;
+
+						.navigation__liveChatToggleIcon--active {
+							width: 29px;
+							height: 26px;
+							color: #ffffff;
+						}
+					}
+
+					&--language {
+						width: 49px;
+						max-width: 49px;
+						margin: 0 auto;
+						background: #dedede;
+						padding: 8px;
+					}
+
+					&--logout {
+						width: fit-content;
+						margin: 0 auto;
+						background: #dedede;
+						padding: 8px 7px;
+						height: auto;
+						min-height: 48px;
+					}
+
+					&--logout.navigation__icon-slot--active {
+						background: rgba(211, 47, 47, 0.24);
+						border: 1px solid #d32f2f;
+					}
+
+					&--logout.navigation__icon-slot--active
+						.navigation__icon__single {
+						color: #cc1e1c;
+					}
+
+					&__inner {
+						position: relative;
+						z-index: 1;
+						display: flex;
+						align-items: center;
+						justify-content: center;
+						width: 32px;
+						height: 32px;
+					}
+				}
+
+				.navigation__icon-slot--tile .navigation__icon-slot__inner {
+					width: 32px;
+					height: 32px;
+				}
+
+				.navigation__icon__single {
+					width: 32px !important;
+					height: 32px !important;
+					flex-shrink: 0;
+					color: #1c1b1f;
+					display: block;
+
+					&--chat-figma {
+						width: 22px !important;
+						height: 22px !important;
+					}
+
+					&--drafts-figma {
+						width: 22px !important;
+						height: 22px !important;
+					}
+
+					&--on-dark {
+						color: #fff;
+						width: 29px !important;
+						height: 25px !important;
+					}
+				}
+
+				.navigation__globe-svg {
+					width: 24px;
+					height: 24px;
+					color: #1c1b1f;
+				}
+
+				.navigation__icon-slot--row.navigation__icon-slot--active
+					.navigation__globe-svg {
+					color: #cc1e1c;
+				}
+
+				.navigation__item--active.navigation__item--nav-row
+					.navigation__icon__single,
+				.navigation__icon-slot--row.navigation__icon-slot--active
+					.navigation__icon__single {
+					color: #cc1e1c;
+				}
+
+				.navigation__item--active.navigation__item--nav-tile
+					.navigation__icon__single {
+					color: #cc1e1c;
+				}
+
+				.navigation__icon-slot--row .navigation__icon__outline {
+					display: block;
+					color: #1c1b1f;
+					fill: currentColor;
+				}
+
+				.navigation__icon-slot--row .navigation__icon__filled {
+					display: none;
+				}
+
+				.navigation__item--active
+					.navigation__icon-slot--row
+					.navigation__icon__outline {
+					display: none;
+				}
+
+				.navigation__item--active
+					.navigation__icon-slot--row
+					.navigation__icon__filled {
+					display: block;
+					color: #cc1e1c;
+					fill: currentColor;
+				}
+
+				.navigation__item--nav-language .select__wrapper {
+					width: 100%;
+					justify-content: center;
+				}
+
+				.navigation__item--nav-language
+					.localeSwitch__leadingIconOverride {
+					display: flex;
+					align-items: center;
+					justify-content: center;
+				}
+
+				/* Badge: corner dot, half-in/half-out; position:absolute doesn’t affect flex centering */
+				.navigation__icon-slot .navigation__item__count--figma {
+					color: #d32f2f;
+					background-color: #fff;
+					outline: none;
+					border: 2px solid #d32f2f;
+					box-shadow: none;
+					left: auto;
+					transform: none;
+					min-width: 18px;
+					height: 18px;
+					border-radius: 999px;
+					padding: 0;
+					font-size: 0;
+					font-weight: 700;
+					line-height: 1;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					z-index: 2;
+					font-family:
+						Inter, 'Roboto', $font-family-sans-serif, sans-serif;
+				}
+
+				.navigation__icon-slot
+					.navigation__item__count--figma.navigation__item__count--double {
+					min-width: 22px;
+					height: 18px;
+					padding: 0 4px;
+				}
+
+				.navigation__icon-slot
+					.navigation__item__count--figma.navigation__item__count--initial {
+					transform: scale(0);
+				}
+
+				.navigation__icon-slot
+					.navigation__item__count--figma.navigation__item__count--reanimate {
+					transform: scale(1);
+				}
+
+				/* Exponent-style digit (raised) inside the dot */
+				.navigation__item__count__sup {
+					display: block;
+					font-size: 10px;
+					line-height: 1;
+					font-weight: 700;
+					color: inherit;
+					transform: none;
+					transform-origin: center center;
+				}
+			}
+		}
+
 		&--mobileHidden {
 			display: none !important;
 
@@ -37,6 +398,9 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 			max-width: none;
 			padding: $grid-base-two 0;
 			gap: 0;
+			/* Avoid inner scrollbar on desktop; column should fit the shell */
+			overflow-y: hidden;
+			overflow-x: hidden;
 		}
 	}
 
@@ -80,6 +444,27 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 
 		&:focus:not(:focus-visible) {
 			outline: none;
+		}
+
+		/* Live-chat toggle is a <button> — the default shared focus halo
+		   (2px offset:4px black outline) boxes the whole cell after each
+		   click on Chrome/Firefox. Suppress it; the grey↔black slot itself
+		   conveys the state, and keyboard users still get a softer ring
+		   scoped to the slot on :focus-visible. */
+		&--liveChatToggle {
+			background: transparent;
+			border: none;
+			padding: 0;
+			-webkit-tap-highlight-color: transparent;
+
+			&:focus,
+			&:focus-visible {
+				outline: none;
+			}
+
+			&:focus-visible .navigation__icon-slot--live {
+				box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.35);
+			}
 		}
 
 		@include breakpoint($fromLarge) {
@@ -144,7 +529,7 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 			@include breakpoint($fromLarge) {
 				display: flex !important; /* Force display with important */
 			}
-			
+
 			.select__wrapper {
 				display: flex;
 				align-items: center;
@@ -204,7 +589,7 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 			@include breakpoint($fromLarge) {
 				background: rgba(211, 47, 47, 0.18);
 			}
-			
+
 			color: #d32f2f;
 			.navigation__icon__filled {
 				display: block;
@@ -232,7 +617,7 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 			transform: scale(0);
 			z-index: -1;
 			transition: transform var(--transition-duration) ease;
-			
+
 			@include breakpoint($fromLarge) {
 				display: none;
 			}
@@ -242,7 +627,7 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 			@include breakpoint($fromLarge) {
 				background: rgba(211, 47, 47, 0.24);
 			}
-			
+
 			.navigation__icon__background::after {
 				transform: scale(1);
 			}
@@ -255,7 +640,7 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 			.navigation__icon__filled {
 				display: block;
 				fill: #d32f2f;
-				
+
 				@include breakpoint($fromLarge) {
 					fill: #d32f2f;
 				}

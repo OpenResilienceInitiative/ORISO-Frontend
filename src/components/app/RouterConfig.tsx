@@ -19,8 +19,6 @@ import { AUTHORITIES, hasUserAuthority } from '../../globalState';
 import { AppConfigInterface } from '../../globalState/interfaces';
 import { ReactComponent as OverviewIconOutline } from '../../resources/img/icons/overview_outline.svg';
 import { ReactComponent as OverviewIconFilled } from '../../resources/img/icons/overview_filled.svg';
-import { ReactComponent as InboxIconOutline } from '../../resources/img/icons/inbox_outline.svg';
-import { ReactComponent as InboxIconFilled } from '../../resources/img/icons/inbox_filled.svg';
 import { ReactComponent as MessagesIconOutline } from '../../resources/img/icons/messages_outline.svg';
 import { ReactComponent as MessagesIconFilled } from '../../resources/img/icons/messages_filled.svg';
 import { ReactComponent as ProfilIconOutline } from '../../resources/img/icons/profil_outline.svg';
@@ -31,6 +29,21 @@ import { ReactComponent as CalendarIconOutline } from '../../resources/img/icons
 import { ReactComponent as CalendarIconFilled } from '../../resources/img/icons/calendar_filled.svg';
 import { ReactComponent as NotificationBellIcon } from '../../resources/img/icons/notification_bell.svg';
 import { ReactComponent as DraftsNavigationIcon } from '../../resources/img/icons/drafts_navigation.svg';
+import {
+	NavInboxIcon,
+	NavChatsIcon,
+	NavChatsIconHover,
+	NavChatsIconFilled,
+	NavActivityIcon,
+	NavActivityIconHover,
+	NavActivityIconFilled,
+	NavDraftsIcon,
+	NavDraftsIconHover,
+	NavDraftsIconFilled,
+	NavProfileIcon,
+	NavProfileIconHover,
+	NavProfileIconFilled
+} from './navigationSidebarIcons';
 import { ToolsList } from '../tools/ToolsList';
 import { OverviewPage } from '../../containers/overview/overview';
 import { Booking } from '../../containers/bookings/components/Booking/booking';
@@ -99,6 +112,7 @@ const overviewRoute = (settings: AppConfigInterface) => ({
 	to: '/overview',
 	icon: OverviewIconOutline,
 	iconFilled: OverviewIconFilled,
+	navSlot: 'row' as const,
 	titleKeys: {
 		large: 'navigation.overview'
 	}
@@ -112,36 +126,45 @@ export const RouterConfigUser = (
 		navigation: [
 			{
 				to: '/sessions/user/view',
-				icon: MessagesIconOutline,
-				iconFilled: MessagesIconFilled,
+				icon: NavChatsIcon,
+				iconHover: NavChatsIconHover,
+				iconFilled: NavChatsIconFilled,
+				navSlot: 'row' as const,
 				titleKeys: {
-					large: 'navigation.asker.sessions.large',
-					small: 'navigation.asker.sessions.small'
+					large: 'navigation.consultant.enquiries',
+					small: 'navigation.consultant.enquiries'
 				}
 			},
 			{
 				to: '/notifications',
-				icon: NotificationBellIcon,
-				iconFilled: NotificationBellIcon,
+				icon: NavActivityIcon,
+				iconHover: NavActivityIconHover,
+				iconFilled: NavActivityIconFilled,
+				navSlot: 'tile' as const,
 				titleKeys: {
-					large: 'navigation.notifications'
+					large: 'navigation.activity'
 				}
 			},
 			{
 				to: '/drafts',
-				icon: DraftsNavigationIcon,
-				iconFilled: DraftsNavigationIcon,
+				icon: NavDraftsIcon,
+				iconHover: NavDraftsIconHover,
+				iconFilled: NavDraftsIconFilled,
+				navSlot: 'tile' as const,
 				titleKeys: {
 					large: 'navigation.drafts'
 				}
 			},
 			{
-				condition: (userData) => !userData.userName?.startsWith('Anonymous-'),
+				condition: (userData) =>
+					!userData.userName?.startsWith('Anonymous-'),
 				to: '/profile',
-				icon: ProfilIconOutline,
-				iconFilled: ProfilIconFilled,
+				icon: NavProfileIcon,
+				iconHover: NavProfileIconHover,
+				iconFilled: NavProfileIconFilled,
+				navSlot: 'row' as const,
 				titleKeys: {
-					large: 'navigation.profile'
+					large: 'navigation.myProfile'
 				}
 			},
 			{
@@ -150,6 +173,7 @@ export const RouterConfigUser = (
 				to: '/booking/events',
 				icon: CalendarIconOutline,
 				iconFilled: CalendarIconFilled,
+				navSlot: 'row' as const,
 				titleKeys: {
 					large: 'navigation.booking.events'
 				}
@@ -159,6 +183,7 @@ export const RouterConfigUser = (
 				to: '/tools',
 				icon: ToolsIconOutline,
 				iconFilled: ToolsIconFilled,
+				navSlot: 'row' as const,
 				titleKeys: {
 					large: 'navigation.tools'
 				}
@@ -188,24 +213,24 @@ export const RouterConfigUser = (
 				]
 			}
 		],
-	detailRoutes: [
-		{
-			path: '/sessions/user/view/write/:sessionId?',
-			component: WriteEnquiry,
-			type: SESSION_LIST_TYPES.ENQUIRY
-		},
-		// MATRIX MIGRATION: Route for sessions without rcGroupId
-		{
-			path: '/sessions/user/view/session/:sessionId',
-			component: SessionView,
-			type: SESSION_LIST_TYPES.MY_SESSION
-		},
-		// Original RocketChat route
-		{
-			path: '/sessions/user/view/:rcGroupId/:sessionId',
-			component: SessionView,
-			type: SESSION_LIST_TYPES.MY_SESSION
-		},
+		detailRoutes: [
+			{
+				path: '/sessions/user/view/write/:sessionId?',
+				component: WriteEnquiry,
+				type: SESSION_LIST_TYPES.ENQUIRY
+			},
+			// MATRIX MIGRATION: Route for sessions without rcGroupId
+			{
+				path: '/sessions/user/view/session/:sessionId',
+				component: SessionView,
+				type: SESSION_LIST_TYPES.MY_SESSION
+			},
+			// Original RocketChat route
+			{
+				path: '/sessions/user/view/:rcGroupId/:sessionId',
+				component: SessionView,
+				type: SESSION_LIST_TYPES.MY_SESSION
+			},
 			{
 				path: '/sessions/user/view/',
 				component: SessionViewEmpty,
@@ -248,19 +273,51 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 			overviewRoute(settings),
 			{
 				to: '/sessions/consultant/sessionPreview',
-				icon: InboxIconOutline,
-				iconFilled: InboxIconFilled,
+				icon: NavInboxIcon,
+				navSlot: 'row' as const,
 				titleKeys: {
 					large: 'navigation.consultant.enquiries'
 				}
 			},
 			{
 				to: '/sessions/consultant/sessionView',
-				icon: MessagesIconOutline,
-				iconFilled: MessagesIconFilled,
+				icon: NavChatsIcon,
+				iconHover: NavChatsIconHover,
+				iconFilled: NavChatsIconFilled,
+				navSlot: 'row' as const,
 				titleKeys: {
-					large: 'navigation.consultant.sessions.large',
+					large: 'navigation.consultant.sessions.nav',
 					small: 'navigation.consultant.sessions.small'
+				}
+			},
+			{
+				to: '/notifications',
+				icon: NavActivityIcon,
+				iconHover: NavActivityIconHover,
+				iconFilled: NavActivityIconFilled,
+				navSlot: 'tile' as const,
+				titleKeys: {
+					large: 'navigation.activity'
+				}
+			},
+			{
+				to: '/drafts',
+				icon: NavDraftsIcon,
+				iconHover: NavDraftsIconHover,
+				iconFilled: NavDraftsIconFilled,
+				navSlot: 'tile' as const,
+				titleKeys: {
+					large: 'navigation.drafts'
+				}
+			},
+			{
+				to: '/profile',
+				icon: NavProfileIcon,
+				iconHover: NavProfileIconHover,
+				iconFilled: NavProfileIconFilled,
+				navSlot: 'row' as const,
+				titleKeys: {
+					large: 'navigation.myProfile'
 				}
 			},
 			{
@@ -273,32 +330,9 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 				to: '/termine',
 				icon: CalendarIconOutline,
 				iconFilled: CalendarIconFilled,
+				navSlot: 'row' as const,
 				titleKeys: {
 					large: 'navigation.appointments'
-				}
-			},
-			{
-				to: '/notifications',
-				icon: NotificationBellIcon,
-				iconFilled: NotificationBellIcon,
-				titleKeys: {
-					large: 'navigation.notifications'
-				}
-			},
-			{
-				to: '/drafts',
-				icon: DraftsNavigationIcon,
-				iconFilled: DraftsNavigationIcon,
-				titleKeys: {
-					large: 'navigation.drafts'
-				}
-			},
-			{
-				to: '/profile',
-				icon: ProfilIconOutline,
-				iconFilled: ProfilIconFilled,
-				titleKeys: {
-					large: 'navigation.profile'
 				}
 			},
 			{
@@ -306,6 +340,7 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 				to: '/booking/events',
 				icon: CalendarIconOutline,
 				iconFilled: CalendarIconFilled,
+				navSlot: 'row' as const,
 				titleKeys: {
 					large: 'navigation.booking.events'
 				}
@@ -331,29 +366,29 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 				exact: false
 			}
 		],
-	detailRoutes: [
-		// MATRIX MIGRATION: Routes for sessions without rcGroupId (Matrix-only sessions)
-		{
-			path: '/sessions/consultant/sessionPreview/session/:sessionId',
-			component: SessionView,
-			type: SESSION_LIST_TYPES.ENQUIRY
-		},
-		{
-			path: '/sessions/consultant/sessionView/session/:sessionId',
-			component: SessionView,
-			type: SESSION_LIST_TYPES.MY_SESSION
-		},
-		// Original RocketChat routes (with rcGroupId)
-		{
-			path: '/sessions/consultant/sessionPreview/:rcGroupId/:sessionId',
-			component: SessionView,
-			type: SESSION_LIST_TYPES.ENQUIRY
-		},
-		{
-			path: '/sessions/consultant/sessionView/:rcGroupId/:sessionId/',
-			component: SessionView,
-			type: SESSION_LIST_TYPES.MY_SESSION
-		},
+		detailRoutes: [
+			// MATRIX MIGRATION: Routes for sessions without rcGroupId (Matrix-only sessions)
+			{
+				path: '/sessions/consultant/sessionPreview/session/:sessionId',
+				component: SessionView,
+				type: SESSION_LIST_TYPES.ENQUIRY
+			},
+			{
+				path: '/sessions/consultant/sessionView/session/:sessionId',
+				component: SessionView,
+				type: SESSION_LIST_TYPES.MY_SESSION
+			},
+			// Original RocketChat routes (with rcGroupId)
+			{
+				path: '/sessions/consultant/sessionPreview/:rcGroupId/:sessionId',
+				component: SessionView,
+				type: SESSION_LIST_TYPES.ENQUIRY
+			},
+			{
+				path: '/sessions/consultant/sessionView/:rcGroupId/:sessionId/',
+				component: SessionView,
+				type: SESSION_LIST_TYPES.MY_SESSION
+			},
 			{
 				path: '/sessions/consultant/sessionPreview/',
 				component: SessionViewEmpty,
@@ -375,29 +410,29 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 				type: SESSION_LIST_TYPES.MY_SESSION
 			}
 		],
-	userProfileRoutes: [
-		// MATRIX MIGRATION: Routes for sessions without rcGroupId
-		{
-			path: '/sessions/consultant/sessionPreview/session/:sessionId/userProfile',
-			component: AskerInfo,
-			type: SESSION_LIST_TYPES.ENQUIRY
-		},
-		{
-			path: '/sessions/consultant/sessionView/session/:sessionId/userProfile',
-			component: AskerInfo,
-			type: SESSION_LIST_TYPES.MY_SESSION
-		},
-		// Original RocketChat routes
-		{
-			path: '/sessions/consultant/sessionPreview/:rcGroupId/:sessionId/userProfile',
-			component: AskerInfo,
-			type: SESSION_LIST_TYPES.ENQUIRY
-		},
-		{
-			path: '/sessions/consultant/sessionView/:rcGroupId/:sessionId/userProfile',
-			component: AskerInfo,
-			type: SESSION_LIST_TYPES.MY_SESSION
-		},
+		userProfileRoutes: [
+			// MATRIX MIGRATION: Routes for sessions without rcGroupId
+			{
+				path: '/sessions/consultant/sessionPreview/session/:sessionId/userProfile',
+				component: AskerInfo,
+				type: SESSION_LIST_TYPES.ENQUIRY
+			},
+			{
+				path: '/sessions/consultant/sessionView/session/:sessionId/userProfile',
+				component: AskerInfo,
+				type: SESSION_LIST_TYPES.MY_SESSION
+			},
+			// Original RocketChat routes
+			{
+				path: '/sessions/consultant/sessionPreview/:rcGroupId/:sessionId/userProfile',
+				component: AskerInfo,
+				type: SESSION_LIST_TYPES.ENQUIRY
+			},
+			{
+				path: '/sessions/consultant/sessionView/:rcGroupId/:sessionId/userProfile',
+				component: AskerInfo,
+				type: SESSION_LIST_TYPES.MY_SESSION
+			},
 			{
 				path: '/sessions/consultant/sessionView/:rcGroupId/:sessionId/groupChatInfo',
 				component: GroupChatInfo,

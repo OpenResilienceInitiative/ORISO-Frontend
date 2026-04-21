@@ -18,6 +18,7 @@ import { NonPlainRoutesWrapper } from './NonPlainRoutesWrapper';
 import { Walkthrough } from '../walkthrough/Walkthrough';
 import { TwoFactorNag } from '../twoFactorAuth/TwoFactorNag';
 import { useAppConfig } from '../../hooks/useAppConfig';
+import { useResponsive } from '../../hooks/useResponsive';
 import { useAskerHasAssignedConsultant } from '../../containers/bookings/hooks/useAskerHasAssignedConsultant';
 import { TermsAndConditions } from '../termsandconditions/TermsAndConditions';
 import { Loading } from './Loading';
@@ -30,6 +31,7 @@ interface RoutingProps {
 export const Routing = (props: RoutingProps) => {
 	const location = useLocation();
 	const settings = useAppConfig();
+	const { untilL } = useResponsive();
 	const { userData } = useContext(UserDataContext);
 	const { consultingTypes } = useContext(ConsultingTypesContext);
 	const hasAssignedConsultant = useAskerHasAssignedConsultant();
@@ -54,6 +56,7 @@ export const Routing = (props: RoutingProps) => {
 	const isEmbeddedNotificationsView =
 		new URLSearchParams(location.search).get('embeddedNotifications') ===
 		'1';
+	const useEmbeddedNotificationsLayout = isEmbeddedNotificationsView;
 
 	return (
 		<Switch>
@@ -80,7 +83,7 @@ export const Routing = (props: RoutingProps) => {
 					<NonPlainRoutesWrapper logoutHandler={() => props.logout()}>
 						<div
 							className={`app__wrapper ${
-								isEmbeddedNotificationsView
+								useEmbeddedNotificationsLayout
 									? 'app__wrapper--embeddedNotifications'
 									: ''
 							}`}
@@ -342,14 +345,11 @@ export const Routing = (props: RoutingProps) => {
 									</Switch>
 								</div>
 							</section>
-							{(hasUserAuthority(
+							{/* Privacy / data-protection overlay: askers only (incl. anonymous), not consultants */}
+							{hasUserAuthority(
 								AUTHORITIES.ASKER_DEFAULT,
 								userData
-							) ||
-								hasUserAuthority(
-									AUTHORITIES.CONSULTANT_DEFAULT,
-									userData
-								)) && <TermsAndConditions />}
+							) && <TermsAndConditions />}
 							{hasUserAuthority(
 								AUTHORITIES.CONSULTANT_DEFAULT,
 								userData

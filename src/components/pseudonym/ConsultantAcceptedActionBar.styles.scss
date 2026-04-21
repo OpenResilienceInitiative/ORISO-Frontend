@@ -1,0 +1,170 @@
+/* Consultant-accepted action bar — strict Figma "StandardButtonGroup".
+ *
+ *   Sie werden jetzt von ihrer Berater_in im Chat erwartet.  ↵
+ *   [ × ]  [  Start chat now  ]
+ *
+ * Replaces WaitingQueueActionBar once the counselor has accepted the
+ * anonymous enquiry. Animates in so it visually lands as an event.
+ */
+
+@keyframes consultantAcceptedFadeIn {
+	from {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.consultantAcceptedActionBar {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 12px;
+	width: 100%;
+	padding: 16px 24px calc(16px + env(safe-area-inset-bottom, 0));
+	background: #ffffff;
+	box-sizing: border-box;
+	animation: consultantAcceptedFadeIn 280ms ease-out both;
+}
+
+.consultantAcceptedActionBar__hint {
+	display: inline-flex;
+	align-items: center;
+	gap: 12px;
+	padding: 0 12px;
+}
+
+.consultantAcceptedActionBar__hintText {
+	font-family: 'Inter', sans-serif;
+	font-size: 16px;
+	line-height: 24px;
+	font-weight: 500;
+	letter-spacing: 0.0094em;
+	color: #4c555f;
+	margin: 0;
+	text-align: center;
+}
+
+.consultantAcceptedActionBar__hintArrow {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+}
+
+.consultantAcceptedActionBar__row {
+	display: flex;
+	align-items: stretch;
+	gap: 12px;
+	width: 100%;
+	max-width: 900px;
+}
+
+/* ----- Dismiss X pill ----- */
+.consultantAcceptedActionBar__dismissBtn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+	width: 92px;
+	min-height: 96px;
+	padding: 0;
+	border: 2px solid #4c555f;
+	border-radius: 300px;
+	background: #f0edee;
+	cursor: pointer;
+	transition:
+		background 160ms ease,
+		transform 160ms ease;
+
+	svg {
+		width: 36px;
+		height: 36px;
+	}
+
+	&:hover:not(:disabled) {
+		background: #e6e2e3;
+	}
+
+	&:active:not(:disabled) {
+		transform: scale(0.97);
+	}
+
+	&:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+	}
+}
+
+/* ----- Start chat now button ----- */
+.consultantAcceptedActionBar__startBtn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 1 1 auto;
+	min-height: 96px;
+	padding: 20px 40px;
+	border: none;
+	border-radius: 100px;
+	background: #2e7d32;
+	color: #ffffff;
+	cursor: pointer;
+	box-shadow:
+		0 4px 8px 3px rgba(0, 0, 0, 0.15),
+		0 1px 3px 0 rgba(0, 0, 0, 0.3);
+	transition:
+		background 160ms ease,
+		transform 160ms ease;
+
+	&:hover:not(:disabled) {
+		background: #256628;
+	}
+
+	&:active:not(:disabled) {
+		transform: scale(0.99);
+	}
+}
+
+.consultantAcceptedActionBar__startBtnLabel {
+	font-family: 'Inter', sans-serif;
+	font-size: 24px;
+	line-height: 32px;
+	font-weight: 500;
+	color: #ffffff;
+	white-space: nowrap;
+}
+
+@media screen and (max-width: 640px) {
+	.consultantAcceptedActionBar {
+		padding: 12px 14px calc(12px + env(safe-area-inset-bottom, 0));
+	}
+
+	.consultantAcceptedActionBar__hintText {
+		font-size: 14px;
+		line-height: 20px;
+	}
+
+	.consultantAcceptedActionBar__dismissBtn {
+		width: 68px;
+		min-height: 72px;
+
+		svg {
+			width: 28px;
+			height: 28px;
+		}
+	}
+
+	.consultantAcceptedActionBar__startBtn {
+		min-height: 72px;
+		padding: 14px 24px;
+	}
+
+	.consultantAcceptedActionBar__startBtnLabel {
+		font-size: 18px;
+		line-height: 24px;
+	}
+}

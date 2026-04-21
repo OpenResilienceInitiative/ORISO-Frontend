@@ -18,7 +18,15 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	min-width: 0;
 	background-color: #ffffff;
 	overflow: hidden;
-	
+
+	@include breakpoint($fromLarge) {
+		// Match Figma: red rounded outline around the full chat side panel.
+		margin: 15px 15px 15px 15px;
+		border: 2px solid #d32f2f;
+		border-radius: 32px;
+		box-sizing: border-box;
+	}
+
 	.messageSubmit__wrapper {
 		position: absolute;
 		bottom: 0;
@@ -26,13 +34,12 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		right: 0;
 		z-index: 1000;
 
-		// On mobile, use fixed positioning so input stays above keyboard
+		// Keep composer anchored to the session container on mobile Safari.
 		@media screen and (max-width: 899px) {
-			position: fixed;
+			position: absolute;
 			bottom: 0;
 			left: 0;
 			right: 0;
-			// Account for safe area insets on mobile devices
 			padding-bottom: env(safe-area-inset-bottom, 0);
 		}
 	}
@@ -48,7 +55,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	& > div:first-child {
 		flex: 0 0 auto; /* Header stays fixed height */
 	}
-	
+
 	& > div:nth-child(2) {
 		flex: 1; /* Content takes remaining space */
 		min-height: 0;
@@ -77,9 +84,9 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 			right: 0;
 			z-index: 1000;
 
-			// On mobile, use fixed positioning so input stays above keyboard
+			// Keep typing composer anchored to the session container on mobile Safari.
 			@media screen and (max-width: 899px) {
-				position: fixed;
+				position: absolute;
 				bottom: 0;
 				left: 0;
 				right: 0;
@@ -121,11 +128,21 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		bottom: 0;
 		overflow-x: hidden;
 		overflow-y: auto;
-		padding: $grid-base-three $grid-base-two 200px;
-		background-color: $session-content-background-color;
+		padding: $grid-base-three $grid-base-two 240px;
+		background-color: #fff;
 
 		@include breakpoint($fromMedium) {
-			padding: $grid-base-three $grid-base-three 200px;
+			padding: $grid-base-three $grid-base-three 240px;
+		}
+
+		@media screen and (max-width: 1366px) {
+			// iPad/tablet: keep last message + Reply action above composer.
+			padding-bottom: calc(320px + env(safe-area-inset-bottom, 0));
+		}
+
+		@media screen and (max-width: 899px) {
+			// Leave extra scrollable space so the latest message "Reply" stays above composer.
+			padding-bottom: calc(340px + env(safe-area-inset-bottom, 0));
 		}
 	}
 
@@ -185,7 +202,16 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	&__threadBody {
 		flex: 1;
 		overflow-y: auto;
-		padding: $grid-base-two $grid-base-two 120px;
+		padding: $grid-base-two $grid-base-two 160px;
+
+		@media screen and (max-width: 1366px) {
+			// iPad/tablet thread composer is taller; allow more bottom scroll room.
+			padding-bottom: calc(260px + env(safe-area-inset-bottom, 0));
+		}
+
+		@media screen and (max-width: 899px) {
+			padding-bottom: calc(280px + env(safe-area-inset-bottom, 0));
+		}
 	}
 
 	&__threadInput {
@@ -203,7 +229,9 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	&__gameInputFadeTarget {
 		opacity: 1;
 		transform: translateY(0);
-		transition: opacity 260ms ease, transform 260ms ease;
+		transition:
+			opacity 260ms ease,
+			transform 260ms ease;
 	}
 
 	&__gameInputFadeTarget--hidden {
@@ -287,10 +315,253 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		margin: 0;
 		width: min(1080px, 94vw);
 		max-height: calc(100vh - 84px);
+		max-height: calc(100dvh - 84px);
 		overflow-y: auto;
 		padding: 20px 22px;
 		background: rgba(250, 250, 250, 0.98);
 		border-radius: 22px;
+	}
+
+	/* Tutorial card (third briefing screen) uses a compact portrait popup
+	   sized to match Figma (358×524.43 ≈ 0.683 ratio). Everything except
+	   the Carimat card + phase block + action buttons is hidden. The same
+	   layout is reused for the practice/game stages. */
+	&__waitingModule--tutorialCard {
+		width: min(358px, 92vw);
+		max-width: min(358px, 92vw);
+		min-height: min(524px, 82vh);
+		padding: 20px 16px 16px;
+		display: flex;
+		flex-direction: column;
+		justify-content: flex-start;
+		overflow: hidden;
+
+		/* Practice hint text is now surfaced inside the Carimat bubble at
+		   the top of the card, so the old inline hint can collapse. */
+		.session__waitingMiniGamePracticeHint {
+			display: none;
+		}
+
+		/* Hide the "For better experience, turn on your volume." banner
+		   and the large "Ns" phase-seconds timer — neither fits the
+		   compact portrait layout and both are redundant with the
+		   Carimat instruction bubble. */
+		.session__waitingVolumeHint,
+		.session__waitingMiniGamePhaseSeconds {
+			display: none !important;
+		}
+
+		/* Shrink the breathing pulse circles so the animation fits the
+		   narrower popup without overflowing. */
+		.session__waitingMiniGameSingle {
+			--arena-size: min(220px, 60vw);
+			padding: 12px 0;
+		}
+
+		/* Briefing screens 0/1 (the "sorry" + "waiting with problems"
+		   text) now share the portrait popup — shrink the oversized
+		   briefing text so it reflows inside the narrower card. */
+		.session__waitingBriefingText {
+			font-size: 18px;
+			line-height: 1.32;
+			max-width: 100%;
+			padding: 0 4px;
+		}
+
+		/* Uniform medium pulse size across all tutorial-card stages
+		   (practice + game + bellyPractice). The parent `.session` gets
+		   `--gameFocus` on practice/game only, which otherwise inflates the
+		   circles to 292/248/196/156 and leaves belly at 178/152/120/98 —
+		   these overrides collapse both paths to a single medium size. */
+		.session__waitingMiniGamePulse {
+			width: 220px;
+			height: 220px;
+		}
+		.session__waitingMiniGamePulseCircle--1 {
+			width: 218px;
+			height: 226px;
+		}
+		.session__waitingMiniGamePulseCircle--2 {
+			width: 186px;
+			height: 194px;
+		}
+		.session__waitingMiniGamePulseCircle--3 {
+			width: 152px;
+			height: 160px;
+		}
+		.session__waitingMiniGamePulseCircle--4 {
+			width: 122px;
+			height: 130px;
+		}
+		.session__waitingMiniGameCenter {
+			width: 108px;
+			height: 108px;
+		}
+	}
+
+	&__waitingMiniGameCarimatHeader {
+		display: flex;
+		align-items: flex-start;
+		gap: 4px;
+		width: 100%;
+		padding: 0 4px 8px;
+	}
+
+	/* Bottom action strip on the practice/game portrait card: dark-grey
+	   square redo button on the left, big red "Press at the right time"
+	   pill on the right. Matches Figma "ConnectedButtonGroup". */
+	&__waitingMiniGamePracticeActions {
+		display: flex;
+		align-items: center;
+		justify-content: flex-start;
+		gap: 8px;
+		width: 100%;
+		padding: 12px 4px 4px;
+		margin-top: auto;
+	}
+
+	&__waitingMiniGamePracticeRestart {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		flex: 0 0 auto;
+		width: 56px;
+		height: 56px;
+		padding: 0;
+		border: none;
+		border-radius: 10px;
+		background: #4c555f;
+		color: #e7effc;
+		cursor: pointer;
+		transition:
+			background 160ms ease,
+			transform 160ms ease;
+
+		&:hover:not(:disabled) {
+			background: #3d444d;
+		}
+
+		&:active:not(:disabled) {
+			transform: scale(0.97);
+		}
+
+		/* Belly-stage "Auto pilot" variant: widens into a full pill with
+		   an inline label alongside the icon. */
+		&--wide {
+			width: auto;
+			gap: 8px;
+			padding: 14px 18px;
+			flex: 0 0 auto;
+		}
+	}
+
+	&__waitingMiniGamePracticeRestartLabel {
+		font-family: 'Inter', sans-serif;
+		font-size: 16px;
+		line-height: 24px;
+		font-weight: 500;
+		letter-spacing: 0.0094em;
+		color: #e7effc;
+		white-space: nowrap;
+	}
+
+	/* Belly-stage actions row keeps the same shape as practice but each
+	   button has a label so they sit side-by-side at equal heights. */
+	&__waitingMiniGamePracticeActions--belly {
+		justify-content: space-between;
+		gap: 10px;
+	}
+
+	/* Mode-selector pill used on the belly-practice cards. Either button
+	   can be the active one — clicking the inactive button switches modes,
+	   clicking the active "Time it" advances the phase. Active = big red
+	   pill, inactive = grey rectangle. */
+	&__waitingMiniGameBellyModeBtn {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		flex: 1 1 auto;
+		min-height: 56px;
+		padding: 14px 20px;
+		border: none;
+		cursor: pointer;
+		font-family: 'Inter', sans-serif;
+		font-size: 16px;
+		line-height: 24px;
+		font-weight: 500;
+		letter-spacing: 0.0094em;
+		white-space: nowrap;
+		transition:
+			background 180ms ease,
+			color 180ms ease,
+			border-radius 200ms ease,
+			transform 160ms ease,
+			flex-grow 220ms ease;
+
+		&:active:not(:disabled) {
+			transform: scale(0.98);
+		}
+	}
+
+	&__waitingMiniGameBellyModeBtn--active {
+		background: #cc1e1c;
+		color: #ffffff;
+		border-radius: 100px;
+		flex: 1.6 1 auto;
+		box-shadow:
+			0 4px 8px 3px rgba(0, 0, 0, 0.15),
+			0 1px 3px 0 rgba(0, 0, 0, 0.3);
+
+		&:hover:not(:disabled) {
+			background: #a5000a;
+		}
+	}
+
+	&__waitingMiniGameBellyModeBtn--inactive {
+		background: #4c555f;
+		color: #e7effc;
+		border-radius: 10px;
+
+		&:hover:not(:disabled) {
+			background: #3d444d;
+		}
+	}
+
+	&__waitingMiniGameBellyModeBtnLabel {
+		white-space: nowrap;
+	}
+
+	&__waitingMiniGamePracticeAdvance {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		flex: 1 1 auto;
+		min-height: 56px;
+		padding: 14px 20px;
+		border: none;
+		border-radius: 100px;
+		background: #cc1e1c;
+		color: #ffffff;
+		font-family: 'Inter', sans-serif;
+		font-size: 16px;
+		line-height: 24px;
+		font-weight: 500;
+		letter-spacing: 0.0094em;
+		white-space: nowrap;
+		cursor: pointer;
+		transition:
+			background 160ms ease,
+			transform 160ms ease;
+
+		&:hover:not(:disabled) {
+			background: #a5000a;
+		}
+
+		&:active:not(:disabled) {
+			transform: scale(0.99);
+		}
 	}
 
 	&__waitingPopupBackdrop {
@@ -302,7 +573,50 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
+		gap: 16px;
 		padding: 24px;
+	}
+
+	/* Floating level badge — lives in the backdrop above the popup,
+	   slides in from above on mount, and stays pinned there while the
+	   game stage is active. Grey pill, white text, large emoji on left.
+	   Matches the Figma "Content" component at the top of the game. */
+	&__waitingGameLevelBadgeFloat {
+		display: inline-flex;
+		align-items: center;
+		gap: 12px;
+		padding: 14px 28px;
+		border-radius: 100px;
+		background: #5a5a5a;
+		color: #ffffff;
+		font-family: 'Inter', sans-serif;
+		font-size: 18px;
+		line-height: 24px;
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+		animation: level-badge-slide-down 360ms ease-out both;
+
+		&__icon {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			width: 48px;
+			height: 48px;
+			flex-shrink: 0;
+
+			svg {
+				width: 44px;
+				height: 44px;
+			}
+		}
+
+		&__emoji {
+			display: block;
+		}
+
+		&__text {
+			white-space: nowrap;
+			font-weight: 400;
+		}
 	}
 
 	&__waitingPopupClose {
@@ -311,9 +625,9 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		right: 12px;
 		width: 30px;
 		height: 30px;
-		border: 1px solid rgba(46, 46, 46, 0.26);
-		border-radius: 50%;
-		background: #fff;
+		border: none;
+		border-radius: 0;
+		background: transparent;
 		color: #2a2a2a;
 		padding: 0;
 		font-size: 22px;
@@ -518,8 +832,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		opacity: 0.94;
 	}
 
-	&__robotTypingIndicator .messageItem__messageWrap,
-	&__robotTypingIndicator .messageItem__content {
+	&__robotTypingIndicator .messageItem__messageWrap {
 		display: flex;
 		align-items: center;
 		justify-content: flex-start;
@@ -527,6 +840,12 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 
 	&__robotTypingIndicator .messageItem__messageWrap {
 		width: 100%;
+	}
+
+	&__robotTypingIndicator .messageItem__content {
+		display: flex;
+		align-items: flex-start;
+		justify-content: flex-start;
 	}
 
 	&__robotTypingDots {
@@ -561,6 +880,70 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		animation-delay: 0.4s;
 	}
 
+	&__inlineTypingIndicator {
+		opacity: 0.98;
+	}
+
+	&__inlineTypingIndicator .messageItem__messageWrap {
+		display: flex;
+		align-items: flex-start;
+		justify-content: flex-start;
+		width: 100%;
+	}
+
+	&__inlineTypingIndicator .messageItem__content {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 4px;
+	}
+
+	&__inlineTypingLabel {
+		color: #5f6b76;
+		font-size: 11px;
+		line-height: 14px;
+		font-weight: 500;
+		padding-left: 4px;
+	}
+
+	&__inlineTypingBubble {
+		background-color: #e6f8f1;
+		padding: 10px 14px;
+		border-radius: 20px;
+		border-bottom-left-radius: 2px;
+		display: inline-block;
+	}
+
+	&__inlineTypingDots {
+		align-items: center;
+		display: flex;
+		height: 17px;
+	}
+
+	&__inlineTypingDots span {
+		display: inline-block;
+		height: 7px;
+		width: 7px;
+		background-color: #6cad96;
+		border-radius: 50%;
+		margin-right: 4px;
+		animation: mercury-typing-animation 1.8s infinite ease-in-out;
+		vertical-align: middle;
+	}
+
+	&__inlineTypingDots span:nth-child(1) {
+		animation-delay: 200ms;
+	}
+
+	&__inlineTypingDots span:nth-child(2) {
+		animation-delay: 300ms;
+	}
+
+	&__inlineTypingDots span:nth-child(3) {
+		animation-delay: 400ms;
+		margin-right: 0;
+	}
+
 	&__anonymousInquiryConsent {
 		max-width: 980px;
 		width: min(980px, 96%);
@@ -571,6 +954,30 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	&__anonymousInquiryConsent.waitingRoom {
 		align-items: center;
 		min-height: 100%;
+	}
+
+	&__pseudonymGate {
+		display: flex;
+		flex-direction: column;
+		align-items: stretch;
+		gap: 12px;
+		padding: 16px 16px 32px;
+		width: 100%;
+		margin: 0 auto;
+	}
+
+	/* Keep the messages area scrollable while the pseudonym/waiting-queue
+	   phase is active — unlike the one-shot consent gate, this phase shows
+	   a growing stack of Carimat messages that must scroll. */
+	&__content--pseudonymGate {
+		overflow-y: auto;
+		padding: 0 !important;
+	}
+
+	&__pseudonymActionBarSlot {
+		position: relative;
+		width: 100%;
+		border-top: 1px solid rgba(0, 0, 0, 0.06);
 	}
 
 	&__content--consentGate {
@@ -709,7 +1116,8 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		position: absolute;
 		top: 50%;
 		left: 50%;
-		transform: translate(-50%, -50%) rotate(0deg) scale(var(--breath-scale, 1));
+		transform: translate(-50%, -50%) rotate(0deg)
+			scale(var(--breath-scale, 1));
 		transform-origin: center;
 		border-radius: 50%;
 		opacity: 0.24;
@@ -881,7 +1289,8 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		gap: 10px;
 		opacity: 0;
 		transform: translateY(14px) scale(0.84);
-		animation: briefing-step-pop 900ms cubic-bezier(0.2, 0.82, 0.22, 1) forwards;
+		animation: briefing-step-pop 900ms cubic-bezier(0.2, 0.82, 0.22, 1)
+			forwards;
 		animation-delay: var(--step-delay, 0ms);
 	}
 
@@ -1020,16 +1429,19 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	}
 
 	&__waitingCompletionHeart {
-		margin-top: 8px;
+		margin-top: 12px;
+		flex: 1;
 		display: flex;
+		align-items: center;
 		justify-content: center;
 		width: 100%;
 	}
 
 	&__waitingCompletionHeart svg {
 		display: block;
-		width: 118px;
+		width: 220px;
 		height: auto;
+		max-width: 85%;
 	}
 
 	&__waitingModuleActionButton {
@@ -1051,9 +1463,204 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 			border-color: rgba(204, 30, 28, 0.32);
 		}
 
+		&--secondary {
+			background: #646d78;
+			color: #e7effc;
+		}
+
 		&:disabled {
 			opacity: 0.45;
 			cursor: not-allowed;
+		}
+	}
+
+	/* Self-timer screen — three timeline rows (inhale/hold/exhale). Each
+	   row shares the same cycle scale; the red-filled segment marks
+	   *this* phase's window inside the cycle. Red vertical bars cap the
+	   window at start and end, grey pills flank on each side, dots sit
+	   at the outer endpoints, and a dark "Ns" bubble floats above the
+	   center of the red segment. A transparent range input overlays the
+	   full track to capture drag/keyboard input for resizing. */
+	&__selfTimerSliders {
+		display: flex;
+		flex-direction: column;
+		gap: 24px;
+		width: 100%;
+		padding: 32px 12px 12px;
+	}
+
+	&__selfTimerRow {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 8px;
+		width: 100%;
+	}
+
+	&__selfTimerTrack {
+		position: relative;
+		width: 100%;
+		height: 44px;
+	}
+
+	&__selfTimerSegment {
+		position: absolute;
+		top: 50%;
+		transform: translateY(-50%);
+		height: 24px;
+		box-sizing: border-box;
+
+		/* Only the outer ends of the whole track are rounded — each
+		   segment treats its inner (center-facing) edge as square. The
+		   grey pills render at their full percentage positions; .--left
+		   and .--right modifiers on the row select which end rounds. */
+		&--grey {
+			background: #646d78;
+		}
+
+		&--red {
+			background: #a5000a;
+			clip-path: inset(0 6px);
+		}
+	}
+
+	/* --start/--end modifiers pick the outer-facing end for rounding,
+	   and clip-path trims the center-facing side so there's a visible
+	   gap between the grey pill and the red handle. */
+	&__selfTimerSegment--grey#{&}__selfTimerSegment--start {
+		border-radius: 8px 0 0 8px;
+		clip-path: inset(0 6px 0 0 round 8px 0 0 8px);
+	}
+
+	&__selfTimerSegment--grey#{&}__selfTimerSegment--end {
+		border-radius: 0 8px 8px 0;
+		clip-path: inset(0 0 0 6px round 0 8px 8px 0);
+	}
+
+	&__selfTimerDot {
+		position: absolute;
+		top: 50%;
+		transform: translateY(-50%);
+		width: 4px;
+		height: 4px;
+		border-radius: 50%;
+		background: #e7effc;
+
+		&--left {
+			left: 4px;
+		}
+
+		&--right {
+			right: 4px;
+		}
+	}
+
+	&__selfTimerHandle {
+		position: absolute;
+		top: 0;
+		transform: translateX(-50%);
+		width: 4px;
+		height: 44px;
+		border-radius: 4px;
+		background: #a5000a;
+		pointer-events: none;
+	}
+
+	&__selfTimerValueBubble {
+		position: absolute;
+		top: -36px;
+		transform: translateX(-50%);
+		padding: 8px 14px;
+		border-radius: 1000px;
+		background: #303031;
+		color: #f3f0f0;
+		font-family: 'Inter', sans-serif;
+		font-size: 14px;
+		font-weight: 500;
+		line-height: 20px;
+		letter-spacing: 0.0071em;
+		white-space: nowrap;
+		pointer-events: none;
+		z-index: 2;
+	}
+
+	&__selfTimerInput {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		margin: 0;
+		opacity: 0;
+		cursor: ew-resize;
+		appearance: none;
+		-webkit-appearance: none;
+		background: transparent;
+
+		&::-webkit-slider-thumb {
+			appearance: none;
+			-webkit-appearance: none;
+			width: 24px;
+			height: 44px;
+			background: transparent;
+			cursor: ew-resize;
+		}
+
+		&::-moz-range-thumb {
+			width: 24px;
+			height: 44px;
+			background: transparent;
+			border: none;
+			cursor: ew-resize;
+		}
+	}
+
+	&__selfTimerLabel {
+		font-family: 'Inter', sans-serif;
+		font-size: 14px;
+		font-weight: 500;
+		line-height: 20px;
+		letter-spacing: 0.0071em;
+		color: #232526;
+		text-align: center;
+	}
+
+	/* Self-timer action row: red "Repeat game" + grey "Back to waiting",
+	   matching the Figma ConnectedButtonGroup. Lives inside the tutorial-
+	   card popup so the buttons align with the other stage action rows. */
+	&__waitingMiniGameSelfTimerActions {
+		display: flex;
+		align-items: center;
+		justify-content: flex-start;
+		gap: 8px;
+		width: 100%;
+		padding: 12px 4px 4px;
+	}
+
+	&__waitingMiniGameSelfTimerBtn {
+		flex: 1 1 auto;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		padding: 16px 18px;
+		border: none;
+		border-radius: 10px;
+		font-family: 'Inter', sans-serif;
+		font-size: 16px;
+		font-weight: 500;
+		line-height: 24px;
+		letter-spacing: 0.0094em;
+		cursor: pointer;
+
+		&--primary {
+			background: #cc1e1c;
+			color: #fff;
+		}
+
+		&--secondary {
+			flex: 0 0 auto;
+			background: #646d78;
+			color: #e7effc;
 		}
 	}
 
@@ -1235,7 +1842,8 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 			);
 			background-size: 180% 100%;
 			background-position: 0% 50%;
-			animation: timing-water-drift var(--water-drift-duration, 7.6s) linear infinite;
+			animation: timing-water-drift var(--water-drift-duration, 7.6s)
+				linear infinite;
 			transition: width 540ms cubic-bezier(0.2, 0.74, 0.2, 1);
 			z-index: 0;
 			pointer-events: none;
@@ -1259,7 +1867,8 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 			background-size: 220% 100%;
 			background-position: 100% 50%;
 			opacity: 0.62;
-			animation: timing-water-wave var(--water-sheen-duration, 5.4s) ease-in-out infinite;
+			animation: timing-water-wave var(--water-sheen-duration, 5.4s)
+				ease-in-out infinite;
 			transition: width 540ms cubic-bezier(0.2, 0.74, 0.2, 1);
 			z-index: 1;
 			pointer-events: none;
@@ -1595,6 +2204,10 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 			animation: disappear-animation 0.3s;
 			animation-fill-mode: forwards;
 		}
+
+		@media screen and (max-width: 899px) {
+			display: none;
+		}
 	}
 
 	&__unreadCount {
@@ -1631,7 +2244,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		text-align: center;
 		color: $tertiary;
 		margin: $grid-base-two 0;
-		
+
 		.text {
 			font-style: italic;
 			display: none;
@@ -1671,10 +2284,12 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 
 @keyframes breathing-pulse-orbit {
 	0% {
-		transform: translate(-50%, -50%) rotate(0deg) scale(var(--breath-scale, 1));
+		transform: translate(-50%, -50%) rotate(0deg)
+			scale(var(--breath-scale, 1));
 	}
 	100% {
-		transform: translate(-50%, -50%) rotate(360deg) scale(var(--breath-scale, 1));
+		transform: translate(-50%, -50%) rotate(360deg)
+			scale(var(--breath-scale, 1));
 	}
 }
 
@@ -1721,6 +2336,17 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	0% {
 		opacity: 0;
 		transform: translateY(8px);
+	}
+	100% {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes level-badge-slide-down {
+	0% {
+		opacity: 0;
+		transform: translateY(-60px);
 	}
 	100% {
 		opacity: 1;
@@ -1779,6 +2405,23 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	}
 	60% {
 		transform: translateY(0);
+	}
+}
+
+@keyframes mercury-typing-animation {
+	0% {
+		transform: translateY(0px);
+		background-color: #6cad96;
+	}
+
+	28% {
+		transform: translateY(-7px);
+		background-color: #9ecab9;
+	}
+
+	44% {
+		transform: translateY(0px);
+		background-color: #b5d9cb;
 	}
 }
 
@@ -1918,4 +2561,54 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	.session__threadClose {
 		display: none;
 	}
+}
+
+/* Target the specific scrollable containers (like your list and chat detail) */
+.contentWrapper__list,
+.contentWrapper__detail,
+.session__wrapper {
+	/* Firefox support */
+	scrollbar-width: thin;
+	scrollbar-color: transparent transparent;
+	scrollbar-gutter: stable;
+	transition: scrollbar-color 0.3s ease;
+}
+
+/* Show scrollbar on hover for Firefox */
+.contentWrapper__list:hover,
+.contentWrapper__detail:hover {
+	scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+/* Webkit (Chrome, Safari, Edge) */
+/* 1. The background of the scrollbar */
+.contentWrapper__list::-webkit-scrollbar,
+.contentWrapper__detail::-webkit-scrollbar {
+	width: 5px; /* Very thin */
+}
+
+/* 2. The track (background) - keep it transparent */
+.contentWrapper__list::-webkit-scrollbar-track,
+.contentWrapper__detail::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+/* 3. The draggable handle (thumb) */
+.contentWrapper__list::-webkit-scrollbar-thumb,
+.contentWrapper__detail::-webkit-scrollbar-thumb {
+	background-color: transparent; /* Invisible by default */
+	border-radius: 10px;
+	border: 1px solid transparent; /* Creates padding effect */
+}
+
+/* 4. Reveal handle on hover of the CONTAINER */
+.contentWrapper__list:hover::-webkit-scrollbar-thumb,
+.contentWrapper__detail:hover::-webkit-scrollbar-thumb {
+	background-color: rgba(0, 0, 0, 0.15); /* Soft grey when hovering */
+}
+
+/* 5. Make it slightly darker when actually grabbing the scrollbar */
+.contentWrapper__list::-webkit-scrollbar-thumb:hover,
+.contentWrapper__detail::-webkit-scrollbar-thumb:hover {
+	background-color: rgba(0, 0, 0, 0.3) !important;
 }

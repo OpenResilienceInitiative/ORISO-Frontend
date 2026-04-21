@@ -7,7 +7,15 @@ import {
 	useRef,
 	useState
 } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useHistory } from 'react-router-dom';
+import {
+	NavGlobeIcon,
+	NavGlobeIconHover,
+	NavGlobeIconFilled,
+	NavLogoutIcon,
+	NavLogoutIconHover,
+	NavLogoutIconFilled
+} from './navigationSidebarIcons';
 import {
 	UserDataContext,
 	hasUserAuthority,
@@ -33,6 +41,14 @@ import useIsFirstVisit from '../../utils/useIsFirstVisit';
 import { useResponsive } from '../../hooks/useResponsive';
 import { MENUPLACEMENT_RIGHT } from '../select/SelectDropdown';
 import { REMOTE_DRAFT_INDEX_SCOPE } from '../../services/draftStore';
+import {
+	useLiveChatAvailable,
+	setLiveChatAvailable
+} from '../../utils/liveChatToggle';
+import {
+	LiveChatToggleInactiveIcon,
+	LiveChatToggleActiveIcon
+} from './LiveChatToggleIcons';
 
 export interface NavigationBarProps {
 	onLogout: any;
@@ -49,13 +65,16 @@ export const NavigationBar = ({
 	const { userData } = useContext(UserDataContext);
 	const { consultingTypes } = useContext(ConsultingTypesContext);
 	const { sessions, dispatch } = useContext(SessionsDataContext);
-	const { selectableLocales } = useContext(LocaleContext);
+	const { selectableLocales, locale: activeLocale } =
+		useContext(LocaleContext);
+	const { fromL } = useResponsive();
 	const [hasTools, setHasTools] = useState<boolean>(false);
 
 	const isConsultant = hasUserAuthority(
 		AUTHORITIES.CONSULTANT_DEFAULT,
 		userData
 	);
+	const [liveChatAvailable] = useLiveChatAvailable();
 	const { sessions: unreadSessions, group: unreadGroup } = useContext(
 		RocketChatUnreadContext
 	);
@@ -67,13 +86,43 @@ export const NavigationBar = ({
 	const ref_local = useRef<any>(null);
 	const ref_logout = useRef<any>(null);
 	const ref_select = useRef<any>(null);
+	const ref_live_chat = useRef<any>(null);
 
 	const handleLogout = useCallback(() => {
 		onLogout();
 	}, [onLogout]);
 
 	const location = useLocation();
+	const history = useHistory();
+
+	/**
+	 * Toggle live-chat availability. When turning ON we push the consultant
+	 * to the Anfragen (sessionPreview) tab with `?chip=liveChat` so they
+	 * land on the anonymous enquiry queue with the filter already active.
+	 * `sessionPreview` is the enquiries list; `sessionView` is Gespräch —
+	 * the intent here is enquiries.
+	 */
+	const handleLiveChatToggle = useCallback(() => {
+		const nextActive = !liveChatAvailable;
+		setLiveChatAvailable(nextActive);
+		if (nextActive) {
+			history.push('/sessions/consultant/sessionPreview?chip=liveChat');
+		}
+	}, [liveChatAvailable, history]);
+
+	const figmaConsultantNav = fromL;
+	/**
+	 * Live-chat toggle is a consultant-only availability switch. It no longer
+	 * links to the video-conference page; it simply flips a stored flag that
+	 * controls whether anonymous enquiries appear in the consultant's list.
+	 */
+	const showLiveChatNav = isConsultant && fromL;
 	const [animateNavIcon, setAnimateNavIcon] = useState(false);
+	const [hoveredNavItem, setHoveredNavItem] = useState<string | null>(null);
+	const [isLanguageSelected, setIsLanguageSelected] = useState(false);
+	const [isLogoutSelected, setIsLogoutSelected] = useState(false);
+	const isLanguageHovered = hoveredNavItem === '__language__';
+	const isLogoutHovered = hoveredNavItem === '__logout__';
 
 	useEffect(() => {
 		initNavigationHandler();
@@ -150,7 +199,8 @@ export const NavigationBar = ({
 		'/sessions/consultant/sessionView':
 			unreadSessions.length + unreadGroup.length,
 		'/sessions/user/view': unreadSessions.length + unreadGroup.length,
-		'/profile': isFirstVisit && !browserNotificationsSettings().visited ? 1 : 0,
+		'/profile':
+			isFirstVisit && !browserNotificationsSettings().visited ? 1 : 0,
 		'/notifications': unreadNotificationCount,
 		'/drafts': draftCount
 	};
@@ -250,7 +300,12 @@ export const NavigationBar = ({
 	};
 
 	return (
-		<div className="navigation__wrapper">
+		<div
+			className={clsx(
+				'navigation__wrapper',
+				figmaConsultantNav && 'navigation__wrapper--figma-consultant'
+			)}
+		>
 			<div className="navigation__itemContainer" role="tablist">
 				<NavGroup className="navigation__item__top">
 					{sessions &&
@@ -267,28 +322,126 @@ export const NavigationBar = ({
 							)
 							.map((item, index) => {
 								const Icon = item?.icon;
+								const IconHover = item?.iconHover;
 								const IconFilled = item?.iconFilled;
+								const dualIcon = Boolean(IconFilled);
+								const useFigmaSlot =
+									figmaConsultantNav && item.navSlot;
+								const isActive =
+									location.pathname.indexOf(item.to) !== -1;
+								const isHovered = hoveredNavItem === item.to;
 								const unreadCount = Number(
-									pathsToShowUnreadMessageNotification[item.to] || 0
+									pathsToShowUnreadMessageNotification[
+										item.to
+									] || 0
+								);
+								const showUnreadNav =
+									Object.keys(
+										pathsToShowUnreadMessageNotification
+									).includes(item.to) && unreadCount > 0;
+								const label = translate(item.titleKeys.large);
+								const isChatNav =
+									item.to ===
+										'/sessions/consultant/sessionView' ||
+									item.to === '/sessions/user/view';
+								const FigmaStateIcon = isActive
+									? IconFilled || Icon
+									: isHovered
+										? IconHover || Icon
+										: Icon;
+								const iconBlock = useFigmaSlot ? (
+									FigmaStateIcon ? (
+										<FigmaStateIcon
+											title={label}
+											aria-label={label}
+											className={clsx(
+												'navigation__icon__single',
+												isChatNav &&
+													'navigation__icon__single--chat-figma',
+												item.to === '/drafts' &&
+													'navigation__icon__single--drafts-figma'
+											)}
+										/>
+									) : null
+								) : dualIcon ? (
+									<>
+										{Icon && (
+											<Icon
+												title={label}
+												aria-label={label}
+												className={clsx(
+													'navigation__icon__outline',
+													{
+														'navigation__icon--drafts':
+															item.to ===
+																'/drafts' &&
+															!item.navSlot
+													}
+												)}
+											/>
+										)}
+										{IconFilled && (
+											<IconFilled
+												title={label}
+												aria-label={label}
+												className={clsx(
+													'navigation__icon__filled',
+													{
+														'navigation__icon--drafts':
+															item.to ===
+																'/drafts' &&
+															!item.navSlot
+													}
+												)}
+											/>
+										)}
+									</>
+								) : (
+									Icon && (
+										<Icon
+											title={label}
+											aria-label={label}
+											className={clsx(
+												'navigation__icon__single',
+												useFigmaSlot &&
+													isChatNav &&
+													'navigation__icon__single--chat-figma',
+												item.to === '/drafts' &&
+													useFigmaSlot &&
+													'navigation__icon__single--drafts-figma'
+											)}
+										/>
+									)
 								);
 								return (
 									<Link
 										key={index}
-										className={`navigation__item ${pathToClassNameInWalkThrough(
-											item.to
-										)} ${
-											location.pathname.indexOf(
+										className={clsx(
+											'navigation__item',
+											pathToClassNameInWalkThrough(
 												item.to
-											) !== -1 &&
-											'navigation__item--active'
-										} ${
+											),
+											isActive &&
+												'navigation__item--active',
 											animateNavIcon &&
-											Object.keys(
-												pathsToShowUnreadMessageNotification
-											).includes(item.to) &&
-											'navigation__item__count--active'
-										}`}
+												Object.keys(
+													pathsToShowUnreadMessageNotification
+												).includes(item.to) &&
+												'navigation__item__count--active',
+											useFigmaSlot &&
+												`navigation__item--nav-${item.navSlot}`
+										)}
 										to={item.to}
+										onMouseEnter={() =>
+											setHoveredNavItem(item.to)
+										}
+										onMouseLeave={() =>
+											setHoveredNavItem(null)
+										}
+										onFocus={() =>
+											setHoveredNavItem(item.to)
+										}
+										onBlur={() => setHoveredNavItem(null)}
 										onKeyDown={(e) =>
 											handleKeyDownMenu(e, index)
 										}
@@ -298,55 +451,47 @@ export const NavigationBar = ({
 										tabIndex={index === 0 ? 0 : -1}
 										role="tab"
 									>
-										<div className="navigation__icon__background">
-											{Icon && (
-												<Icon
-													title={translate(
-														item.titleKeys.large
-													)}
-													aria-label={translate(
-														item.titleKeys.large
-													)}
-													className={clsx('navigation__icon__outline', {
-														'navigation__icon--drafts':
-															item.to === '/drafts'
-													})}
-												/>
+										{useFigmaSlot ? (
+											<div
+												className={clsx(
+													'navigation__icon-slot',
+													`navigation__icon-slot--${item.navSlot}`,
+													isActive &&
+														'navigation__icon-slot--active'
+												)}
+											>
+												<div className="navigation__icon-slot__inner">
+													{iconBlock}
+												</div>
+												{showUnreadNav && (
+													<NavigationUnreadIndicator
+														animate={animateNavIcon}
+														count={unreadCount}
+														variant="figma"
+													/>
+												)}
+											</div>
+										) : (
+											<div className="navigation__icon__background">
+												{iconBlock}
+											</div>
+										)}
+										<span
+											className={clsx(
+												'navigation__title',
+												figmaConsultantNav &&
+													'navigation__title--figma'
 											)}
-											{IconFilled && (
-												<IconFilled
-													title={translate(
-														item.titleKeys.large
-													)}
-													aria-label={translate(
-														item.titleKeys.large
-													)}
-													className={clsx('navigation__icon__filled', {
-														'navigation__icon--drafts':
-															item.to === '/drafts'
-													})}
-												/>
-											)}
-										</div>
-
-										{(({ large }) => {
-											return (
-												<>
-													<span className="navigation__title">
-														{translate(large)}
-													</span>
-												</>
-											);
-										})(item.titleKeys)}
-										{Object.keys(
-											pathsToShowUnreadMessageNotification
-										).includes(item.to) &&
-											unreadCount > 0 && (
-												<NavigationUnreadIndicator
-													animate={animateNavIcon}
-													count={unreadCount}
-												/>
-											)}
+										>
+											{label}
+										</span>
+										{!useFigmaSlot && showUnreadNav && (
+											<NavigationUnreadIndicator
+												animate={animateNavIcon}
+												count={unreadCount}
+												variant="default"
+											/>
+										)}
 									</Link>
 								);
 							})}
@@ -360,53 +505,232 @@ export const NavigationBar = ({
 							)
 					})}
 				>
+					{showLiveChatNav && (
+						<button
+							type="button"
+							className={clsx(
+								'navigation__item',
+								'navigation__item--nav-live',
+								'navigation__item--liveChatToggle',
+								liveChatAvailable && 'navigation__item--active'
+							)}
+							ref={ref_live_chat}
+							tabIndex={-1}
+							role="switch"
+							aria-checked={liveChatAvailable}
+							aria-label={translate(
+								liveChatAvailable
+									? 'navigation.liveChatToggleActive'
+									: 'navigation.liveChatToggleInactive'
+							)}
+							onClick={handleLiveChatToggle}
+						>
+							<div
+								className={clsx(
+									'navigation__icon-slot',
+									'navigation__icon-slot--live',
+									liveChatAvailable &&
+										'navigation__icon-slot--active'
+								)}
+							>
+								<div className="navigation__icon-slot__inner">
+									{liveChatAvailable ? (
+										<LiveChatToggleActiveIcon
+											className="navigation__liveChatToggleIcon navigation__liveChatToggleIcon--active"
+											aria-label={translate(
+												'navigation.liveChatToggleActive'
+											)}
+										/>
+									) : (
+										<LiveChatToggleInactiveIcon
+											className="navigation__liveChatToggleIcon"
+											aria-label={translate(
+												'navigation.liveChatToggleInactive'
+											)}
+										/>
+									)}
+								</div>
+							</div>
+							<span
+								className={clsx(
+									'navigation__title',
+									'navigation__title--figma'
+								)}
+							>
+								{translate('navigation.liveChat')}
+							</span>
+						</button>
+					)}
 					{selectableLocales.length > 1 && (
 						<div
-							className="navigation__item navigation__item__language"
+							className={clsx(
+								'navigation__item',
+								'navigation__item__language',
+								figmaConsultantNav &&
+									'navigation__item--nav-language'
+							)}
 							role="tab"
 							tabIndex={-1}
 							ref={(el) => {
 								ref_local.current = el;
 							}}
 							onKeyDown={(e) => handleKeyDownMenu(e, null)}
+							onMouseEnter={() =>
+								setHoveredNavItem('__language__')
+							}
+							onMouseLeave={() => setHoveredNavItem(null)}
+							onFocus={() => {
+								setHoveredNavItem('__language__');
+							}}
+							onBlur={() => {
+								setHoveredNavItem(null);
+							}}
 							id="local-switch-wrapper"
 						>
-							<LocaleSwitch
-								showIcon={true}
-								iconOnly={true}
-								updateUserData
-								vertical
-								iconSize={24}
-								label={translate('navigation.language')}
-								menuPlacement={MENUPLACEMENT_RIGHT}
-								selectRef={(el) => (ref_select.current = el)}
-								isInsideMenu={true}
-							/>
+							{figmaConsultantNav ? (
+								<div
+									className={clsx(
+										'navigation__icon-slot navigation__icon-slot--row navigation__icon-slot--language',
+										isLanguageSelected &&
+											'navigation__icon-slot--active'
+									)}
+								>
+									<div className="navigation__icon-slot__inner">
+										<LocaleSwitch
+											showIcon={true}
+											iconOnly={true}
+											updateUserData
+											vertical
+											iconSize={24}
+											label={translate(
+												'navigation.language'
+											)}
+											menuPlacement={MENUPLACEMENT_RIGHT}
+											selectRef={(el) =>
+												(ref_select.current = el)
+											}
+											isInsideMenu={true}
+											onMenuOpen={() =>
+												setIsLanguageSelected(true)
+											}
+											onMenuClose={() =>
+												setIsLanguageSelected(false)
+											}
+											leadingIconOverride={
+												isLanguageSelected ? (
+													<NavGlobeIconFilled className="navigation__globe-svg" />
+												) : isLanguageHovered ? (
+													<NavGlobeIconHover className="navigation__globe-svg" />
+												) : (
+													<NavGlobeIcon className="navigation__globe-svg" />
+												)
+											}
+										/>
+									</div>
+								</div>
+							) : (
+								<LocaleSwitch
+									showIcon={true}
+									iconOnly={true}
+									updateUserData
+									vertical
+									iconSize={24}
+									label={translate('navigation.language')}
+									menuPlacement={MENUPLACEMENT_RIGHT}
+									selectRef={(el) =>
+										(ref_select.current = el)
+									}
+									isInsideMenu={true}
+								/>
+							)}
+							{figmaConsultantNav && (
+								<span className="navigation__title navigation__title--figma">
+									{translate([activeLocale, activeLocale], {
+										ns: 'languages'
+									})}
+								</span>
+							)}
 						</div>
 					)}
 					<div
 						onClick={handleLogout}
-						className={'navigation__item'}
+						className={clsx(
+							'navigation__item',
+							figmaConsultantNav && 'navigation__item--nav-logout'
+						)}
 						role="tab"
 						tabIndex={-1}
 						ref={(el) => {
 							ref_logout.current = el;
 						}}
 						onKeyDown={(e) => handleKeyDownMenu(e, null)}
+						onMouseEnter={() => setHoveredNavItem('__logout__')}
+						onMouseLeave={() => setHoveredNavItem(null)}
+						onFocus={() => {
+							setHoveredNavItem('__logout__');
+							setIsLogoutSelected(true);
+						}}
+						onBlur={() => {
+							setHoveredNavItem(null);
+							setIsLogoutSelected(false);
+						}}
 					>
-						<LogoutIconOutline
-							className="navigation__icon__outline"
-							title={translate('app.logout')}
-							aria-label={translate('app.logout')}
-						/>
-						<LogoutIconFilled
-							className="navigation__icon__filled"
-							title={translate('app.logout')}
-							aria-label={translate('app.logout')}
-						/>
-						<span className="navigation__title">
-							{translate('app.logout')}
-						</span>
+						{figmaConsultantNav ? (
+							<>
+								<div
+									className={clsx(
+										'navigation__icon-slot',
+										'navigation__icon-slot--logout',
+										isLogoutHovered &&
+											'navigation__icon-slot--active'
+									)}
+								>
+									<div className="navigation__icon-slot__inner">
+										{isLogoutSelected ? (
+											<NavLogoutIconFilled
+												className="navigation__icon__single"
+												aria-label={translate(
+													'app.logout'
+												)}
+											/>
+										) : isLogoutHovered ? (
+											<NavLogoutIconHover
+												className="navigation__icon__single"
+												aria-label={translate(
+													'app.logout'
+												)}
+											/>
+										) : (
+											<NavLogoutIcon
+												className="navigation__icon__single"
+												aria-label={translate(
+													'app.logout'
+												)}
+											/>
+										)}
+									</div>
+								</div>
+								<span className="navigation__title navigation__title--figma">
+									{translate('app.logout')}
+								</span>
+							</>
+						) : (
+							<>
+								<LogoutIconOutline
+									className="navigation__icon__outline"
+									title={translate('app.logout')}
+									aria-label={translate('app.logout')}
+								/>
+								<LogoutIconFilled
+									className="navigation__icon__filled"
+									title={translate('app.logout')}
+									aria-label={translate('app.logout')}
+								/>
+								<span className="navigation__title">
+									{translate('app.logout')}
+								</span>
+							</>
+						)}
 					</div>
 				</NavGroup>
 			</div>
@@ -428,10 +752,12 @@ const NavGroup = ({
 
 const NavigationUnreadIndicator = ({
 	animate,
-	count
+	count,
+	variant = 'default'
 }: {
 	animate: boolean;
 	count: number;
+	variant?: 'default' | 'figma';
 }) => {
 	const [visible, setVisible] = useState(false);
 
@@ -442,16 +768,25 @@ const NavigationUnreadIndicator = ({
 		}, 1000);
 	}, []);
 
+	const display = count > 99 ? '99+' : String(count);
+	const isFigma = variant === 'figma';
+
 	return (
 		<span
-			className={`navigation__item__count ${
-				!visible
-					? 'navigation__item__count--initial'
-					: `${animate && 'navigation__item__count--reanimate'}`
-			} ${count > 9 ? 'navigation__item__count--double' : ''}`}
+			className={clsx(
+				'navigation__item__count',
+				!visible && 'navigation__item__count--initial',
+				visible && animate && 'navigation__item__count--reanimate',
+				count > 9 && 'navigation__item__count--double',
+				isFigma && 'navigation__item__count--figma'
+			)}
 			aria-label={`${count} unread`}
 		>
-			{count > 99 ? '99+' : count}
+			{isFigma ? (
+				<sup className="navigation__item__count__sup">{display}</sup>
+			) : (
+				display
+			)}
 		</span>
 	);
 };

@@ -1,5 +1,10 @@
 $icon-size: 24px;
 $icon-size-small: 16px;
+$session-light-border: #f1d5d5;
+$session-active-border: #b9362d;
+$session-focus-ring: rgba(185, 54, 45, 0.35);
+$session-topic-chip-bg: #646d78;
+$session-postcode-border: #ffd1d1;
 
 .sessionsListItem {
 	display: flex;
@@ -35,18 +40,18 @@ $icon-size-small: 16px;
 		transition: all 0.3s ease;
 
 		.sessionsListItem__content {
-			background-color: #fff5f5 !important;
-			border: 2px solid #da5248 !important;
-			border-radius: 24px !important;
-			margin-top: 8px !important;
-			margin-bottom: 8px !important;
+			background-color: $white !important;
+			border: 2px solid $session-active-border !important;
+			border-radius: 18px !important;
+			margin-top: 0 !important;
+			margin-bottom: 0 !important;
 			transition: all 0.3s ease;
 
 			&:hover,
 			&:focus,
 			&:active {
-				background-color: #fff5f5 !important;
-				border: 2px solid #da5248 !important;
+				background-color: $white !important;
+				border: 2px solid $session-active-border !important;
 			}
 		}
 
@@ -61,7 +66,9 @@ $icon-size-small: 16px;
 			img {
 				// Filter to convert black to #da5248 (red)
 				// Using filter to change SVG color from black to red
-				filter: brightness(0) saturate(100%) invert(26%) sepia(92%) saturate(2000%) hue-rotate(340deg) brightness(0.9) contrast(0.95);
+				filter: brightness(0) saturate(100%) invert(26%) sepia(92%)
+					saturate(2000%) hue-rotate(340deg) brightness(0.9)
+					contrast(0.95);
 			}
 		}
 	}
@@ -72,13 +79,16 @@ $icon-size-small: 16px;
 
 	&__content {
 		overflow: auto;
-		width: 100%;
+		width: calc(100% - (#{$grid-base-two} * 2));
+		max-width: calc(100% - (#{$grid-base-two} * 2));
+		min-width: 0;
+		box-sizing: border-box;
 		padding-left: 20px;
 		padding-right: 6px;
 		padding-top: 12px;
 		margin: 0 $grid-base-two;
-		background-color: $white;
-		border: 1px solid #ffcccc;
+		background-color: $sessions-list-background-color-secondary;
+		border: 1px solid $session-light-border;
 		border-radius: 0;
 		transition: all 0.6s ease;
 		position: relative;
@@ -89,21 +99,25 @@ $icon-size-small: 16px;
 		&--anonymous {
 			border: 1px solid #9e9e9e; // Gray border for anonymous chat cards
 		}
-	
-
 
 		@include breakpoint($fromMedium) {
 			margin: 0 $grid-base-three;
+			width: calc(100% - (#{$grid-base-three} * 2));
+			max-width: calc(100% - (#{$grid-base-three} * 2));
 		}
 
+		&:focus {
+			outline: none;
+		}
+
+		// Show a single keyboard-navigation ring for the focused item.
 		&:focus-visible {
 			outline: none;
-			box-shadow: 0 0 0 2px rgba(218, 82, 72, 0.45);
+			box-shadow: 0 0 0 3px $session-focus-ring;
 			transition: box-shadow 0.2s ease;
 		}
 
 		&:hover,
-		&:focus,
 		&:active {
 			@include breakpoint($fromLarge) {
 				background-color: $session-list-item-background-active;
@@ -113,7 +127,7 @@ $icon-size-small: 16px;
 	}
 
 	&:not(.sessionsListItem--active) .sessionsListItem__content {
-		border-color: #f1d5d5;
+		border-color: $session-light-border;
 	}
 
 	&:not(.sessionsListItem--active)
@@ -132,24 +146,31 @@ $icon-size-small: 16px;
 		border-bottom-right-radius: 14px;
 	}
 
-	// Keep rounded edges around the selected card gap.
+	// Rounded seam where the list meets the selected card (no extra vertical gap).
 	&.sessionsListItem--beforeActive .sessionsListItem__content {
 		border-bottom-left-radius: 14px;
 		border-bottom-right-radius: 14px;
-		margin-bottom: 8px;
+		margin-bottom: 0;
 	}
 
 	&.sessionsListItem--afterActive .sessionsListItem__content {
 		border-top-left-radius: 14px;
 		border-top-right-radius: 14px;
-		border-top: 1px solid #f1d5d5;
-		margin-top: 8px;
+		border-top: 1px solid $session-light-border;
+		margin-top: 0;
+	}
+
+	&.sessionsListItem--active .sessionsListItem__content:focus-visible {
+		box-shadow:
+			0 0 0 3px $session-focus-ring,
+			0 0 0 1px $session-active-border;
 	}
 
 	&__row {
 		display: flex;
 		gap: 12px;
 		color: var(--skin-color-default, $secondary);
+		min-width: 0;
 
 		&:first-child {
 			justify-content: space-between;
@@ -177,15 +198,31 @@ $icon-size-small: 16px;
 		align-items: center;
 		gap: 8px;
 		flex: 1;
+		min-width: 0;
+
+		@media screen and (max-width: 899px) {
+			// Give the tag cluster full priority on narrow devices.
+			flex: 1 1 1;
+		}
 	}
 
 	&__rowRight {
+		padding-right: 10px;
 		display: flex;
 		align-items: center;
 		gap: 8px;
 		flex-shrink: 0;
 		position: relative;
 		z-index: 1000;
+
+		@media screen and (max-width: 899px) {
+			// On narrow devices, let the right cluster compress first
+			// so topic tags keep more readable space.
+			padding-right: 4px;
+			gap: 4px;
+			min-width: 0;
+			flex-shrink: 1;
+		}
 	}
 
 	&__consultingType {
@@ -200,27 +237,50 @@ $icon-size-small: 16px;
 		font-size: $font-size-secondary;
 		line-height: 16px;
 		white-space: nowrap;
-		align-self: flex-end;
+		flex-shrink: 0;
+
+		@media screen and (max-width: 899px) {
+			// Prefer keeping topic text visible by truncating long dates first.
+			max-width: 72px;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			flex-shrink: 1;
+			min-width: 0;
+			text-align: right;
+		}
+
+		@media screen and (max-width: 350px) {
+			// Ultra-narrow devices: topic/postcode readability is more important.
+			display: none;
+		}
 	}
 
+	/* Match session header `sessionMenu__icon--desktop`: red-outline pill */
 	&__menuIcon {
-		display: flex;
+		display: inline-flex;
 		align-items: center;
 		justify-content: center;
 		cursor: pointer;
-		width: 24px;
-		height: 24px;
+		width: 48px;
+		height: 32px;
 		flex-shrink: 0;
 		position: relative;
+		box-sizing: border-box;
+		border-radius: 32px;
+		border: 1px solid $session-postcode-border;
+		background-color: $white;
+		color: #1e1e1e;
 
 		svg {
-			width: 16px;
-			height: 16px;
-			fill: var(--skin-color-secondary-contrast-safe, $secondary);
+			width: 24px;
+			height: 24px;
+			fill: currentColor;
 		}
 
-		&:hover {
-			opacity: 0.7;
+		@media (hover: hover) {
+			&:hover {
+				background-color: rgba(255, 209, 209, 0.35);
+			}
 		}
 	}
 
@@ -380,16 +440,74 @@ $icon-size-small: 16px;
 		}
 	}
 
+	&__topicPostcodeGroup {
+		display: flex;
+		align-items: stretch;
+		max-width: 100%;
+		min-height: 0;
+		min-width: 0;
+		overflow: hidden;
+		flex: 1 1 1;
+	}
+
+	&__postcode {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0 10px;
+		box-sizing: border-box;
+		background-color: $white;
+		border: 1px solid $session-postcode-border;
+		border-left: none;
+		border-radius: 0 6px 6px 0;
+		font-size: $font-size-secondary;
+		line-height: 16px;
+		color: var(--skin-color-default, $secondary);
+		white-space: nowrap;
+		flex-shrink: 0;
+	}
+
+	&__postcode--standalone {
+		border-left: 1px solid $session-postcode-border;
+		border-radius: 6px;
+	}
+
 	&__topic {
 		border-radius: 4px;
 		padding-left: 8px;
 		padding-right: 8px;
-		text-align: center;
+		padding-top: 2px;
+		padding-bottom: 2px;
+		text-align: left;
 		color: #fff;
-		background-color: var(--skin-color-primary, #646D78);
+		background-color: $session-topic-chip-bg;
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
+		align-self: center;
+		min-width: 0;
+		max-width: 100%;
+		flex: 1 1 1;
+
+		@media screen and (max-width: 899px) {
+			// Give tag text slightly more room on compact screens.
+			padding-left: 6px;
+			padding-right: 6px;
+			font-size: 12px;
+		}
+	}
+
+	&__topicPostcodeGroup .sessionsListItem__topic {
+		border-radius: 6px 0 0 6px;
+		border-right: none;
+		align-self: stretch;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.sessionsListItem--active .sessionsListItem__postcode {
+		border-color: $session-active-border;
 	}
 
 	&__icon {
@@ -422,7 +540,7 @@ $icon-size-small: 16px;
 		border-radius: 50%;
 		border: 2px solid $white;
 		overflow: hidden;
-		
+
 		&:nth-child(1) {
 			right: 16px; // Reversed order - right to left
 			top: 0;
@@ -578,7 +696,7 @@ $icon-size-small: 16px;
 		cursor: auto !important;
 
 		.sessionsListItem__content {
-			background-color: $white;
+			background-color: $sessions-list-background-color-secondary;
 		}
 	}
 

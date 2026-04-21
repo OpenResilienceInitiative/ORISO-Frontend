@@ -1,5 +1,12 @@
 import * as React from 'react';
-import { useEffect, useContext, useState, useCallback, useMemo } from 'react';
+import {
+	useEffect,
+	useContext,
+	useState,
+	useCallback,
+	useMemo,
+	useRef
+} from 'react';
 import { useHistory } from 'react-router-dom';
 import {
 	desktopView,
@@ -9,7 +16,6 @@ import {
 import {
 	SessionsDataContext,
 	UPDATE_SESSIONS,
-	SessionTypeContext,
 	UserDataContext
 } from '../../globalState';
 import { InputField, InputFieldItem } from '../inputField/InputField';
@@ -24,8 +30,102 @@ import './createChat.styles';
 import { useResponsive } from '../../hooks/useResponsive';
 import { apiGetSessionRoomsByGroupIds } from '../../api/apiGetSessionRooms';
 import { useTranslation } from 'react-i18next';
-import { apiGetAgencyConsultantList, Consultant } from '../../api/apiGetAgencyConsultantList';
+import {
+	apiGetAgencyConsultantList,
+	Consultant
+} from '../../api/apiGetAgencyConsultantList';
 import { apiCreateGroupChat } from '../../api/apiGroupChatSettings';
+
+const IconPlusCircle = ({ open }: { open: boolean }) => (
+	<svg
+		width="32"
+		height="32"
+		viewBox="0 0 32 32"
+		fill="none"
+		aria-hidden
+		className={
+			open
+				? 'createChat__participantsPlusIcon createChat__participantsPlusIcon--open'
+				: 'createChat__participantsPlusIcon'
+		}
+	>
+		<rect
+			className="createChat__participantsPlusBg"
+			x="0.5"
+			y="0.5"
+			width="31"
+			height="31"
+			rx={open ? '8' : '16'}
+		/>
+		<path
+			className="createChat__participantsPlusPath"
+			d="M15.1665 16.8334H10.1665V15.1667H15.1665V10.1667H16.8332V15.1667H21.8332V16.8334H16.8332V21.8334H15.1665V16.8334Z"
+		/>
+	</svg>
+);
+
+const IconChevronDown = ({ open }: { open: boolean }) => (
+	<svg
+		width="16"
+		height="16"
+		viewBox="0 0 16 16"
+		fill="none"
+		aria-hidden
+		className={
+			open
+				? 'createChat__participantsChevron createChat__participantsChevron--open'
+				: 'createChat__participantsChevron'
+		}
+	>
+		<path
+			d="M4 6L8 10L12 6"
+			stroke="#5E6A73"
+			strokeWidth="1.5"
+			strokeLinecap="round"
+		/>
+	</svg>
+);
+
+const IconSearchSmall = () => (
+	<svg
+		width="15"
+		height="15"
+		viewBox="0 0 15 15"
+		fill="none"
+		xmlns="http://www.w3.org/2000/svg"
+	>
+		<path
+			d="M13.8333 15L8.58333 9.75C8.16667 10.0833 7.6875 10.3472 7.14583 10.5417C6.60417 10.7361 6.02778 10.8333 5.41667 10.8333C3.90278 10.8333 2.62153 10.309 1.57292 9.26042C0.524306 8.21181 0 6.93056 0 5.41667C0 3.90278 0.524306 2.62153 1.57292 1.57292C2.62153 0.524306 3.90278 0 5.41667 0C6.93056 0 8.21181 0.524306 9.26042 1.57292C10.309 2.62153 10.8333 3.90278 10.8333 5.41667C10.8333 6.02778 10.7361 6.60417 10.5417 7.14583C10.3472 7.6875 10.0833 8.16667 9.75 8.58333L15 13.8333L13.8333 15ZM5.41667 9.16667C6.45833 9.16667 7.34375 8.80208 8.07292 8.07292C8.80208 7.34375 9.16667 6.45833 9.16667 5.41667C9.16667 4.375 8.80208 3.48958 8.07292 2.76042C7.34375 2.03125 6.45833 1.66667 5.41667 1.66667C4.375 1.66667 3.48958 2.03125 2.76042 2.76042C2.03125 3.48958 1.66667 4.375 1.66667 5.41667C1.66667 6.45833 2.03125 7.34375 2.76042 8.07292C3.48958 8.80208 4.375 9.16667 5.41667 9.16667Z"
+			fill="#49454F"
+		/>
+	</svg>
+);
+
+const IconSelected = () => (
+	<svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden>
+		<circle cx="11" cy="11" r="10.5" fill="#F5E6E7" stroke="#D79A9D" />
+		<path
+			d="M7.5 11.5L9.8 13.8L14.8 8.8"
+			stroke="#A5000A"
+			strokeWidth="1.8"
+			strokeLinecap="round"
+			strokeLinejoin="round"
+		/>
+	</svg>
+);
+
+const IconUnselected = () => (
+	<svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden>
+		<circle cx="11" cy="11" r="10.5" fill="#F8F8F8" stroke="#E2E2E2" />
+		<path
+			d="M7.5 11.5L9.8 13.8L14.8 8.8"
+			stroke="#CBCBCB"
+			strokeWidth="1.6"
+			strokeLinecap="round"
+			strokeLinejoin="round"
+		/>
+	</svg>
+);
 
 export const CreateGroupChatView = () => {
 	const { t: translate } = useTranslation();
@@ -38,15 +138,24 @@ export const CreateGroupChatView = () => {
 	const { dispatch } = useContext(SessionsDataContext);
 	const [selectedChatTopic, setSelectedChatTopic] = useState('');
 	const [selectedAgency, setSelectedAgency] = useState<number | null>(null);
-	const [selectedConsultants, setSelectedConsultants] = useState<string[]>([]);
-	const [availableConsultants, setAvailableConsultants] = useState<Consultant[]>([]);
+	const [selectedConsultants, setSelectedConsultants] = useState<string[]>(
+		[]
+	);
+	const [availableConsultants, setAvailableConsultants] = useState<
+		Consultant[]
+	>([]);
 	const [isCreateButtonDisabled, setIsCreateButtonDisabled] = useState(true);
+	const [participantsMenuOpen, setParticipantsMenuOpen] = useState(false);
+	const [participantSearch, setParticipantSearch] = useState('');
+	const [participantSearchFocused, setParticipantSearchFocused] =
+		useState(false);
 	const [chatTopicLabel, setChatTopicLabel] = useState(
 		'groupChat.create.topicInput.label'
 	);
 	const [overlayItem, setOverlayItem] = useState<OverlayItem>(null);
 	const [overlayActive, setOverlayActive] = useState(false);
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
+	const participantsPickerRef = useRef<HTMLDivElement | null>(null);
 
 	const createChatSuccessOverlayItem = useMemo<OverlayItem>(
 		() => ({
@@ -110,18 +219,27 @@ export const CreateGroupChatView = () => {
 					// ✅ FIX 1: Filter out current user from consultant list
 					// ✅ FIX 2: Remove duplicates using consultantId as unique key
 					const currentUserId = userData?.userId;
-					const uniqueConsultants = consultants.reduce((acc, consultant) => {
-						// Skip if this is the current user
-						if (consultant.consultantId === currentUserId) {
-							return acc;
-						}
-						// Skip if we already have this consultant (remove duplicates)
-						if (acc.some(c => c.consultantId === consultant.consultantId)) {
-							return acc;
-						}
-						return [...acc, consultant];
-					}, [] as Consultant[]);
-					
+					const uniqueConsultants = consultants.reduce(
+						(acc, consultant) => {
+							// Skip if this is the current user
+							if (consultant.consultantId === currentUserId) {
+								return acc;
+							}
+							// Skip if we already have this consultant (remove duplicates)
+							if (
+								acc.some(
+									(c) =>
+										c.consultantId ===
+										consultant.consultantId
+								)
+							) {
+								return acc;
+							}
+							return [...acc, consultant];
+						},
+						[] as Consultant[]
+					);
+
 					setAvailableConsultants(uniqueConsultants);
 				})
 				.catch((error) => {
@@ -134,14 +252,39 @@ export const CreateGroupChatView = () => {
 		}
 	}, [selectedAgency, userData]);
 
+	useEffect(() => {
+		const handleOutsidePointer = (event: MouseEvent | TouchEvent) => {
+			if (!participantsPickerRef.current) {
+				return;
+			}
+			const target = event.target as Node | null;
+			if (target && !participantsPickerRef.current.contains(target)) {
+				setParticipantsMenuOpen(false);
+				setParticipantSearchFocused(false);
+			}
+		};
+
+		document.addEventListener('mousedown', handleOutsidePointer);
+		document.addEventListener('touchstart', handleOutsidePointer);
+
+		return () => {
+			document.removeEventListener('mousedown', handleOutsidePointer);
+			document.removeEventListener('touchstart', handleOutsidePointer);
+		};
+	}, []);
+
 	// Validate form
 	useEffect(() => {
 		const isChatTopicValid =
 			selectedChatTopic &&
 			selectedChatTopic.length >= TOPIC_LENGTHS.MIN &&
 			selectedChatTopic.length < TOPIC_LENGTHS.MAX;
-		
-		if (isChatTopicValid && selectedAgency && selectedConsultants.length > 0) {
+
+		if (
+			isChatTopicValid &&
+			selectedAgency &&
+			selectedConsultants.length > 0
+		) {
 			setIsCreateButtonDisabled(false);
 		} else {
 			setIsCreateButtonDisabled(true);
@@ -177,11 +320,8 @@ export const CreateGroupChatView = () => {
 	const handleAgencySelect = (selectedOption) => {
 		setSelectedAgency(parseInt(selectedOption.value));
 		setSelectedConsultants([]); // Reset consultants when agency changes
-	};
-
-	const handleConsultantsSelect = (selectedOptions) => {
-		const consultantIds = selectedOptions ? selectedOptions.map(opt => opt.value) : [];
-		setSelectedConsultants(consultantIds);
+		setParticipantsMenuOpen(false);
+		setParticipantSearch('');
 	};
 
 	const getOptionOfSelectedAgency = useCallback(() => {
@@ -210,31 +350,89 @@ export const CreateGroupChatView = () => {
 		[agencies, getOptionOfSelectedAgency, translate]
 	);
 
-	const getSelectedConsultantOptions = useCallback(() => {
-		return availableConsultants
-			.filter((consultant) => selectedConsultants.includes(consultant.consultantId))
-			.map((consultant) => ({
-				value: consultant.consultantId,
-				label: `${consultant.firstName} ${consultant.lastName}`
-			}));
-	}, [availableConsultants, selectedConsultants]);
-
-	const consultantsSelectDropdown = useMemo<SelectDropdownItem>(
-		() => ({
-			id: 'consultants',
-			selectedOptions: availableConsultants.map((consultant) => ({
-				value: consultant.consultantId,
-				label: `${consultant.firstName} ${consultant.lastName}`
-			})),
-			defaultValue: getSelectedConsultantOptions(), // ✅ Show selected values inside
-			handleDropdownSelect: handleConsultantsSelect,
-			selectInputLabel: translate('groupChat.create.consultantsSelect.label') || 'Select Consultants',
-			isSearchable: true,
-			menuPlacement: 'bottom',
-			isMulti: true
-		}),
-		[availableConsultants, getSelectedConsultantOptions, translate]
+	const tr = useCallback(
+		(key: string, fallback: string) => {
+			const value = translate(key);
+			return !value || value === key ? fallback : value;
+		},
+		[translate]
 	);
+
+	const consultantOptions = useMemo(
+		() =>
+			availableConsultants.map((consultant) => ({
+				id: consultant.consultantId,
+				label: `${consultant.firstName} ${consultant.lastName}`.trim()
+			})),
+		[availableConsultants]
+	);
+
+	const filteredConsultants = useMemo(() => {
+		const query = participantSearch.trim().toLowerCase();
+		const base = consultantOptions.filter((option) =>
+			query ? option.label.toLowerCase().includes(query) : true
+		);
+		const selectedRank = new Map(
+			selectedConsultants.map((id, index) => [id, index])
+		);
+		return base.sort((a, b) => {
+			const aRank = selectedRank.has(a.id)
+				? (selectedRank.get(a.id) as number)
+				: Number.POSITIVE_INFINITY;
+			const bRank = selectedRank.has(b.id)
+				? (selectedRank.get(b.id) as number)
+				: Number.POSITIVE_INFINITY;
+			if (aRank !== bRank) {
+				return aRank - bRank;
+			}
+			return a.label.localeCompare(b.label);
+		});
+	}, [consultantOptions, participantSearch, selectedConsultants]);
+
+	const selectedSummary = useMemo(() => {
+		if (selectedConsultants.length === 0) {
+			return tr(
+				'groupChat.create.participants.placeholder',
+				'Use list or search directly'
+			);
+		}
+		const labels = selectedConsultants
+			.map(
+				(id) =>
+					consultantOptions.find((option) => option.id === id)?.label
+			)
+			.filter((label): label is string => !!label);
+		if (labels.length <= 1) {
+			return (
+				labels[0] ||
+				tr(
+					'groupChat.create.participants.placeholder',
+					'Use list or search directly'
+				)
+			);
+		}
+		return `${labels[0]} +${labels.length - 1}`;
+	}, [consultantOptions, selectedConsultants, tr]);
+
+	const selectedConsultantEntries = useMemo(
+		() =>
+			selectedConsultants
+				.map((id) =>
+					consultantOptions.find((option) => option.id === id)
+				)
+				.filter(
+					(entry): entry is { id: string; label: string } => !!entry
+				),
+		[consultantOptions, selectedConsultants]
+	);
+
+	const toggleConsultant = useCallback((consultantId: string) => {
+		setSelectedConsultants((prev) =>
+			prev.includes(consultantId)
+				? prev.filter((id) => id !== consultantId)
+				: [consultantId, ...prev]
+		);
+	}, []);
 
 	const buttonSetCreate = useMemo<ButtonItem>(
 		() => ({
@@ -307,7 +505,7 @@ export const CreateGroupChatView = () => {
 			if (buttonFunction === OVERLAY_FUNCTIONS.CLOSE) {
 				if (
 					JSON.stringify(overlayItem) ===
-						JSON.stringify(createChatSuccessOverlayItem)
+					JSON.stringify(createChatSuccessOverlayItem)
 				) {
 					history.push('/sessions/consultant/sessionView');
 				} else {
@@ -316,11 +514,7 @@ export const CreateGroupChatView = () => {
 				}
 			}
 		},
-		[
-			createChatSuccessOverlayItem,
-			history,
-			overlayItem
-		]
+		[createChatSuccessOverlayItem, history, overlayItem]
 	);
 
 	return (
@@ -334,11 +528,13 @@ export const CreateGroupChatView = () => {
 						<BackIcon />
 					</span>
 					<h3 className="createChat__header__title">
-						{translate('groupChat.create.title') || 'Create Group Chat'}
+						{translate('groupChat.create.title') ||
+							'Create Group Chat'}
 					</h3>
 				</div>
 				<p className="createChat__header__subtitle">
-					{translate('groupChat.create.subtitle') || 'Create a new group chat with selected consultants'}
+					{translate('groupChat.create.subtitle') ||
+						'Create a new group chat with selected consultants'}
 				</p>
 			</div>
 
@@ -349,8 +545,158 @@ export const CreateGroupChatView = () => {
 				/>
 
 				<SelectDropdown {...agencySelectDropdown} />
+				<div
+					className="createChat__participantsPicker"
+					ref={participantsPickerRef}
+				>
+					<div className="createChat__participantsRow">
+						<button
+							type="button"
+							className="createChat__participantsPlusButton"
+							onClick={() =>
+								setParticipantsMenuOpen((prev) => !prev)
+							}
+							aria-label={tr(
+								'groupChat.create.participants.toggle',
+								'Toggle participant list'
+							)}
+						>
+							<IconPlusCircle open={participantsMenuOpen} />
+						</button>
+						<button
+							type="button"
+							className={
+								participantSearchFocused
+									? 'createChat__participantsTrigger createChat__participantsTrigger--active'
+									: 'createChat__participantsTrigger'
+							}
+							onClick={() =>
+								setParticipantsMenuOpen((prev) => !prev)
+							}
+							aria-expanded={participantsMenuOpen}
+						>
+							<span className="createChat__participantsTriggerText">
+								{selectedSummary}
+							</span>
+							<IconChevronDown open={participantsMenuOpen} />
+						</button>
+					</div>
+					{participantsMenuOpen && (
+						<div className="createChat__participantsMenu">
+							<div className="createChat__participantsCard createChat__participantsCard--search">
+								<div
+									className={
+										participantSearchFocused
+											? 'createChat__participantsSearchWrap createChat__participantsSearchWrap--active'
+											: 'createChat__participantsSearchWrap'
+									}
+								>
+									<IconSearchSmall />
+									<input
+										type="search"
+										className="createChat__participantsSearch"
+										placeholder={tr(
+											'groupChat.create.participants.searchPlaceholder',
+											'Search Name'
+										)}
+										value={participantSearch}
+										onFocus={() =>
+											setParticipantSearchFocused(true)
+										}
+										onBlur={() =>
+											setParticipantSearchFocused(false)
+										}
+										onChange={(event) =>
+											setParticipantSearch(
+												event.target.value
+											)
+										}
+									/>
+								</div>
+							</div>
 
-				<SelectDropdown {...consultantsSelectDropdown} />
+							{!!selectedConsultantEntries.length && (
+								<div className="createChat__participantsCard createChat__participantsCard--selected">
+									<div className="createChat__selectedPillsLabel">
+										{tr(
+											'groupChat.create.participants.currentLabel',
+											'Current Participant'
+										)}
+									</div>
+									<div className="createChat__selectedPills">
+										{selectedConsultantEntries.map(
+											(entry) => (
+												<button
+													type="button"
+													key={`pill-${entry.id}`}
+													className="createChat__selectedPill"
+													onClick={() =>
+														toggleConsultant(
+															entry.id
+														)
+													}
+												>
+													<span className="createChat__selectedPillText">
+														{entry.label}
+													</span>
+													<span className="createChat__selectedPillClose">
+														&times;
+													</span>
+												</button>
+											)
+										)}
+									</div>
+								</div>
+							)}
+
+							<div className="createChat__participantsCard createChat__participantsCard--list">
+								<div className="createChat__participantsLabel">
+									{tr(
+										'groupChat.create.participants.listLabel',
+										'Participant List'
+									)}
+								</div>
+								<div className="createChat__participantsList">
+									{filteredConsultants.map((consultant) => {
+										const isSelected =
+											selectedConsultants.includes(
+												consultant.id
+											);
+										return (
+											<button
+												type="button"
+												key={consultant.id}
+												className="createChat__participantItem"
+												onClick={() =>
+													toggleConsultant(
+														consultant.id
+													)
+												}
+											>
+												<span
+													className={
+														isSelected
+															? 'createChat__participantName createChat__participantName--selected'
+															: 'createChat__participantName'
+													}
+												>
+													{consultant.label}
+												</span>
+												<span className="createChat__participantIcon">
+													{isSelected ? (
+														<IconSelected />
+													) : (
+														<IconUnselected />
+													)}
+												</span>
+											</button>
+										);
+									})}
+								</div>
+							</div>
+						</div>
+					)}
+				</div>
 
 				<div className="createChat__buttonsWrapper">
 					<Button

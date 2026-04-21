@@ -365,6 +365,28 @@
 				"headline": "Oder vereinbaren Sie jetzt einen Termin"
 			}
 		},
+		"audience": {
+			"all": "Alle",
+			"multiCount": "{{count}} Personen",
+			"sendToAll": "An alle senden",
+			"openMenu": "Senden-an-Menü öffnen",
+			"menuAriaLabel": "Senden-an-Auswahl",
+			"closeMenu": "Senden-an-Menü schließen",
+			"menuSubheading": "Wähle wer diese Nachricht sehen soll",
+			"menuHeading": "Adressaten wählen",
+			"clientsSelectSuffix": "Client Select",
+			"clientsSelected": "{{count}} Clients Selected",
+			"clientsSelectAll": "Select All Clients",
+			"counsellorsSelect": "Select All Counsellors",
+			"counsellorsSelected": "{{count}} Counsellors Selected",
+			"moderatorsSelect": "Select All Moderators",
+			"moderatorsSelected": "{{count}} Moderators Selected",
+			"clientsEmpty": "No clients are in this room",
+			"counsellorsEmpty": "No counsellors are in this room",
+			"moderatorsEmpty": "No moderators are in this room",
+			"toggleSection": "Bereich umschalten",
+			"selectAllBottom": "Select All"
+		},
 		"video": {
 			"description": "Du kannst jetzt an der Videokonferenz teilnehmen"
 		}
@@ -739,6 +761,47 @@
 				"hold": "Halten",
 				"exhale": "Ausatmen"
 			},
+			"tutorialCard": {
+				"carimatSubtitle": "Lass uns die Wartezeit überbrücken",
+				"cancel": "Abbrechen",
+				"confirm": "Verstanden, los geht's",
+				"restart": "Neu starten",
+				"pressAtRightTime": "Zum richtigen Zeitpunkt drücken",
+				"inhale": {
+					"bubble": "Du musst 3 Dinge tun, um zu gewinnen.",
+					"subtitle": "durch die Nase",
+					"instruction": "Atme <strong>{{count}} Sekunden</strong> lang langsam ein, dann drücke den Knopf."
+				},
+				"hold": {
+					"bubble": "Du musst 3 Dinge tun.",
+					"subtitle": "halte den Atem an",
+					"instruction": "Halte den Atem <strong>{{count}} Sekunden</strong> lang an, dann drücke den Knopf."
+				},
+				"exhale": {
+					"bubble": "Du musst 3 Dinge tun.",
+					"subtitle": "durch den Mund",
+					"instruction": "Atme <strong>{{count}} Sekunden</strong> lang langsam aus, dann drücke den Knopf."
+				},
+				"belly": {
+					"autoPilot": "Auto-Pilot",
+					"timeIt": "Selbst takten",
+					"inhale": "Super, atme wieder <strong>3 Sekunden</strong> ein, diesmal aber indem du deinen Bauch ausdehnst.",
+					"hold": "Halte jetzt <strong>3 Sekunden</strong> den Atem an.",
+					"exhale": "Atme nun <strong>4 Sekunden</strong> aus und entspanne den ganzen Körper."
+				},
+				"selfTimer": {
+					"instruction": "Jetzt kannst du deine eigenen Zeitintervalle zum Atmen festlegen.",
+					"repeatGame": "Spiel wiederholen",
+					"backToWaiting": "Zurück zum Warten"
+				},
+				"completion": {
+					"instruction": "Herzlichen Glückwunsch, du hast es geschafft.",
+					"receiveGift": "Kleines Geschenk erhalten"
+				},
+				"serenity": {
+					"instruction": "Das Geschenk ist ein kleines Mantra, das vielen Menschen durch schwierige Zeiten geholfen hat. Es heißt das Gelassenheitsgebet: \u201CGott, gib mir die Gelassenheit, Dinge hinzunehmen, die ich nicht ändern kann, den Mut, Dinge zu ändern, die ich ändern kann, und die Weisheit, das eine vom anderen zu unterscheiden.\u201D"
+				}
+			},
 			"presets": {
 				"starter334": "erstes Mal",
 				"standard446": "mittlere Erfahrung (empfohlen)",
@@ -835,6 +898,27 @@
 	"sessionList": {
 		"empty": {
 			"mySessions": "Du hast zurzeit keine aktiven Beratungen"
+		},
+		"toolbar": {
+			"search": {
+				"label": "Beratungen durchsuchen",
+				"placeholder": "Suche"
+			},
+			"menu": {
+				"ariaLabel": "Listenoptionen"
+			},
+			"calendar": {
+				"title": "Kalender"
+			},
+			"chips": {
+				"neu": "Ungelesen",
+				"oneToOne": "1-1 Beratung",
+				"liveChat": "Live-Chat",
+				"groups": "Gruppen",
+				"supervision": "Supervision",
+				"chats": "Chats"
+			},
+			"emptyFilterResult": "Keine Beratung entspricht Deiner Suche oder den Filtern."
 		},
 		"anonymous": {
 			"tag": "Anonymous"
@@ -1058,12 +1142,45 @@
 		},
 		"topics": {
 			"headline": "Beratungsthemen und Beratungsstellen wählen",
-			"noresults": "Keine Beratungsthemen verfügbar."
+			"noresults": "Keine Beratungsthemen verfügbar.",
+			"names": {
+				"counseling": "Beratung",
+				"addiction-counseling": "Suchtberatung",
+				"family-counseling": "Familienberatung"
+			}
 		},
 		"agencies": {
 			"noresults": "Für dieses Thema sind keine Beratungsstellen verfügbar."
 		},
-		"start": "Beratung starten"
+		"start": "Beratung starten",
+		"pseudonym": {
+			"carimatSubtitle": "Angezeigten Namen auswählen",
+			"carimatMessage": "Hi, bevor es losgeht, bestätige bitte deinen zufällig gewählten Namen für diese Sitzung.",
+			"privacyMessage": "Gute Wahl. Zum Schutz deiner Privatsphäre sind alle Nachrichten Ende-zu-Ende verschlüsselt und werden nach 48 Stunden automatisch gelöscht.",
+			"yourPseudonym": "Dein Pseudonym",
+			"nextName": "Nächster Name",
+			"confirm": "Bestätigen",
+			"changeName": "Name ändern",
+			"continueWithSelection": "Weiter mit Auswahl",
+			"actionsLabel": "Pseudonym-Aktionen"
+		},
+		"consent": {
+			"accept": "Ich bin einverstanden",
+			"reject": "Ich stimme nicht zu",
+			"mustAcceptToContinue": "Um fortzufahren musst du unseren Datenschutzbestimmungen zustimmen."
+		},
+		"queue": {
+			"actionsLabel": "Wartebereich-Aktionen",
+			"calmCompanion": "Kurze ruhige Begleitung öffnen",
+			"calmCompanionHint": "Bis der Chat beginnt, eine kurze interaktive ruhige Begleitung. Direkt hier im Chatraum",
+			"positionCount_one": "{{count}} Person vor dir",
+			"positionCount_other": "{{count}} Personen vor dir",
+			"connecting": "Wird verbunden …",
+			"requestLocalCounselor": "Anfrage an lokalen Berater senden",
+			"consultantAccepted": "Du wirst jetzt von deiner/deinem Berater_in im Chat erwartet.",
+			"startChatNow": "Jetzt Chat starten",
+			"dismissAcceptedBanner": "Hinweis ausblenden"
+		}
 	},
 	"sessionHeader": {
 		"anonymous": {
@@ -1126,5 +1243,19 @@
 				"confirm": "Möchtest du diesen Supervisor wirklich entfernen?"
 			}
 		}
+	},
+	"navigation": {
+		"consultant": {
+			"enquiries": "Anfragen",
+			"sessions": {
+				"nav": "Gespräch"
+			}
+		},
+		"activity": "Aktivität",
+		"drafts": "Entwürfe",
+		"liveChat": "Live Chat",
+		"liveChatToggleActive": "Live-Chat verfügbar",
+		"liveChatToggleInactive": "Live-Chat nicht verfügbar",
+		"myProfile": "Mein Profil"
 	}
 }
