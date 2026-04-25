@@ -1,94 +1,144 @@
 import * as React from 'react';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { SESSIONS_LIST_RESIZE } from './sessionsListResize.constants';
 
 interface ResizableHandleProps {
 	onResize: (width: number) => void;
+	currentWidth: number;
 	minWidth?: number;
 	maxWidth?: number;
 }
 
 export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 	onResize,
+	currentWidth,
 	minWidth = 80,
 	maxWidth = 600
 }) => {
-	const ICON_ONLY_THRESHOLD = 420;
-	const SNAP_THRESHOLD = 360;
+	const { ICON_ONLY_THRESHOLD, SNAP_THRESHOLD } = SESSIONS_LIST_RESIZE;
 	const [isDragging, setIsDragging] = useState(false);
+	const handleRef = useRef<HTMLButtonElement | null>(null);
+	const pointerIdRef = useRef<number | null>(null);
 
-	const handleMouseDown = useCallback((e: React.MouseEvent) => {
-		e.preventDefault();
-		setIsDragging(true);
-	}, []);
-
-	const handleMouseMove = useCallback(
-		(e: MouseEvent) => {
-			if (!isDragging) return;
-
-			let newWidth = Math.min(Math.max(e.clientX, minWidth), maxWidth);
+	const normalizeWidth = useCallback(
+		(width: number) => {
+			let nextWidth = Math.min(Math.max(width, minWidth), maxWidth);
 
 			// Snap out of the "broken/truncated" mid-range earlier.
-			if (newWidth > minWidth && newWidth < ICON_ONLY_THRESHOLD) {
-				// If we're in the awkward range, decide whether to snap to min or normal
-				if (newWidth < SNAP_THRESHOLD) {
-					newWidth = minWidth; // Snap to icon-only mode (smooth)
-				} else {
-					newWidth = ICON_ONLY_THRESHOLD; // Snap to safe minimum width
-				}
+			if (nextWidth > minWidth && nextWidth < ICON_ONLY_THRESHOLD) {
+				nextWidth =
+					nextWidth < SNAP_THRESHOLD ? minWidth : ICON_ONLY_THRESHOLD;
 			}
 
-			onResize(newWidth);
+			return nextWidth;
 		},
-		[isDragging, onResize, minWidth, maxWidth]
+		[ICON_ONLY_THRESHOLD, SNAP_THRESHOLD, maxWidth, minWidth]
 	);
 
-	const handleMouseUp = useCallback(() => {
+	const applyClientXToWidth = useCallback(
+		(clientX: number) => {
+			const wrapperRect =
+				handleRef.current?.parentElement?.getBoundingClientRect();
+			const rawWidth = wrapperRect ? clientX - wrapperRect.left : clientX;
+			onResize(normalizeWidth(rawWidth));
+		},
+		[normalizeWidth, onResize]
+	);
+
+	const handlePointerDown = useCallback(
+		(e: React.PointerEvent<HTMLButtonElement>) => {
+			// Only react to primary button / touch contact
+			if (e.button !== 0) return;
+			e.preventDefault();
+			e.stopPropagation();
+
+			pointerIdRef.current = e.pointerId;
+			setIsDragging(true);
+			e.currentTarget.setPointerCapture(e.pointerId);
+		},
+		[]
+	);
+
+	const handlePointerUp = useCallback(() => {
+		pointerIdRef.current = null;
 		setIsDragging(false);
 	}, []);
 
+	const handlePointerMove = useCallback(
+		(e: PointerEvent) => {
+			if (!isDragging) return;
+			if (
+				pointerIdRef.current !== null &&
+				e.pointerId !== pointerIdRef.current
+			)
+				return;
+			applyClientXToWidth(e.clientX);
+		},
+		[applyClientXToWidth, isDragging]
+	);
+
+	const handleKeyDown = useCallback(
+		(e: React.KeyboardEvent<HTMLButtonElement>) => {
+			const STEP = e.shiftKey ? 40 : 20;
+			let nextWidth: number | null = null;
+
+			switch (e.key) {
+				case 'ArrowLeft':
+					nextWidth = currentWidth - STEP;
+					break;
+				case 'ArrowRight':
+					nextWidth = currentWidth + STEP;
+					break;
+				case 'Home':
+					nextWidth = minWidth;
+					break;
+				case 'End':
+					nextWidth = maxWidth;
+					break;
+				default:
+					return;
+			}
+
+			e.preventDefault();
+			onResize(normalizeWidth(nextWidth));
+		},
+		[currentWidth, maxWidth, minWidth, normalizeWidth, onResize]
+	);
+
 	useEffect(() => {
 		if (isDragging) {
-			document.addEventListener('mousemove', handleMouseMove);
-			document.addEventListener('mouseup', handleMouseUp);
+			document.addEventListener('pointermove', handlePointerMove);
+			document.addEventListener('pointerup', handlePointerUp);
+			document.addEventListener('pointercancel', handlePointerUp);
 			document.body.style.cursor = 'col-resize';
 			document.body.style.userSelect = 'none';
 
 			return () => {
-				document.removeEventListener('mousemove', handleMouseMove);
-				document.removeEventListener('mouseup', handleMouseUp);
+				document.removeEventListener('pointermove', handlePointerMove);
+				document.removeEventListener('pointerup', handlePointerUp);
+				document.removeEventListener('pointercancel', handlePointerUp);
 				document.body.style.cursor = '';
 				document.body.style.userSelect = '';
 			};
 		}
-	}, [isDragging, handleMouseMove, handleMouseUp]);
+	}, [isDragging, handlePointerMove, handlePointerUp]);
 
 	return (
-		<div
+		<button
+			type="button"
+			ref={handleRef}
 			className="sessionsList__resizeHandle"
-			onMouseDown={handleMouseDown}
-			style={{
-				position: 'absolute',
-				right: '-2px',
-				top: 0,
-				bottom: 0,
-				width: '2px', // Wider for easier grabbing
-				cursor: 'col-resize',
-				backgroundColor: isDragging
-					? 'rgba(0, 0, 0, 0)'
-					: 'rgba(0, 0, 0, 0)',
-				transition: isDragging ? 'none' : 'background-color 0.15s ease',
-				zIndex: 10,
-				opacity: isDragging ? 0.8 : 0.8
-			}}
-			onMouseEnter={(e) => {
-				e.currentTarget.style.backgroundColor = 'rgba(80, 80, 80, 0.2)';
-			}}
-			onMouseLeave={(e) => {
-				if (!isDragging) {
-					e.currentTarget.style.backgroundColor =
-						'rgba(80, 80, 80, 0.1)';
-				}
-			}}
-		/>
+			data-dragging={isDragging ? 'true' : 'false'}
+			// Not using role="separator" because it conflicts with native button semantics.
+			aria-label="Resize sessions list"
+			aria-orientation="vertical"
+			aria-valuemin={minWidth}
+			aria-valuemax={maxWidth}
+			aria-valuenow={currentWidth}
+			onPointerDown={handlePointerDown}
+			onKeyDown={handleKeyDown}
+		>
+			<span className="sessionsList__resizeHandlePill" />
+		</button>
 	);
 };

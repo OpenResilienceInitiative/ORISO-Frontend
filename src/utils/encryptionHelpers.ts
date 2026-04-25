@@ -4,6 +4,7 @@ import { apiRocketChatFetchMyKeys } from '../api/apiRocketChatFetchMyKeys';
 import { getValueFromCookie } from '../components/sessionCookie/accessSessionCookie';
 
 const StaticArrayBufferProto = ArrayBuffer.prototype;
+type OwnedUint8Array = Uint8Array<ArrayBuffer>;
 
 // encoding helper
 const ENCRYPTION_VERSION_1 = 'v1-0';
@@ -58,11 +59,32 @@ export function toArrayBuffer(thing: any): ArrayBuffer {
 	}
 }
 
-export function typedArrayToBuffer(array: Uint8Array): ArrayBuffer {
-	return array.buffer.slice(
-		array.byteOffset,
-		array.byteLength + array.byteOffset
-	);
+export function typedArrayToBuffer(
+	array: Uint8Array<ArrayBufferLike>
+): ArrayBuffer {
+	const output = new Uint8Array(array.byteLength);
+	output.set(array, 0);
+	return output.buffer;
+}
+
+export function toOwnedUint8Array(
+	data: ArrayBufferLike | ArrayLike<number>
+): OwnedUint8Array {
+	if (typeof ArrayBuffer !== 'undefined' && data instanceof ArrayBuffer) {
+		return new Uint8Array(data.slice(0));
+	}
+
+	if (
+		typeof SharedArrayBuffer !== 'undefined' &&
+		data instanceof SharedArrayBuffer
+	) {
+		return new Uint8Array(typedArrayToBuffer(new Uint8Array(data)));
+	}
+
+	const arrayLike = data as ArrayLike<number>;
+	const output = new Uint8Array(arrayLike.length);
+	output.set(arrayLike, 0);
+	return output;
 }
 
 export const generateRSAKey = async (): Promise<CryptoKeyPair> => {
@@ -122,12 +144,37 @@ export async function deriveKey(
 	);
 }
 
-export async function encryptAES(vector, key: CryptoKey, data: BufferSource) {
-	return crypto.subtle.encrypt({ name: 'AES-CBC', iv: vector }, key, data);
+function normalizeBufferSource(
+	data: BufferSource | Uint8Array<ArrayBufferLike>
+): BufferSource {
+	// WebCrypto typings require ArrayBuffer-backed views (not SharedArrayBuffer).
+	// Normalizing via copy keeps behavior the same but satisfies TS.
+	if (data instanceof Uint8Array) return typedArrayToBuffer(data);
+	return data;
 }
 
-export async function decryptAES(vector, key: CryptoKey, data: BufferSource) {
-	return crypto.subtle.decrypt({ name: 'AES-CBC', iv: vector }, key, data);
+export async function encryptAES(
+	vector,
+	key: CryptoKey,
+	data: BufferSource | Uint8Array<ArrayBufferLike>
+) {
+	return crypto.subtle.encrypt(
+		{ name: 'AES-CBC', iv: vector },
+		key,
+		normalizeBufferSource(data)
+	);
+}
+
+export async function decryptAES(
+	vector,
+	key: CryptoKey,
+	data: BufferSource | Uint8Array<ArrayBufferLike>
+) {
+	return crypto.subtle.decrypt(
+		{ name: 'AES-CBC', iv: vector },
+		key,
+		normalizeBufferSource(data)
+	);
 }
 
 export function toString(
@@ -172,10 +219,10 @@ export async function importRSAKey(
 }
 
 export function joinVectorAndEcryptedData(
-	vector: Uint8Array,
+	vector: Uint8Array<ArrayBufferLike>,
 	encryptedData: ArrayLike<number> | ArrayBufferLike
 ): Uint8Array {
-	const cipherText = new Uint8Array(encryptedData);
+	const cipherText = toOwnedUint8Array(encryptedData);
 	const output = new Uint8Array(vector.length + cipherText.length);
 	output.set(vector, 0);
 	output.set(cipherText, vector.length);
@@ -183,10 +230,10 @@ export function joinVectorAndEcryptedData(
 }
 
 export function splitVectorAndEcryptedData(
-	cipherText: Uint8Array
-): [Uint8Array, Uint8Array] {
-	const vector = cipherText.slice(0, VECTOR_LENGTH);
-	const encryptedData = cipherText.slice(VECTOR_LENGTH);
+	cipherText: Uint8Array<ArrayBufferLike>
+): [OwnedUint8Array, OwnedUint8Array] {
+	const vector = toOwnedUint8Array(cipherText.slice(0, VECTOR_LENGTH));
+	const encryptedData = toOwnedUint8Array(cipherText.slice(VECTOR_LENGTH));
 
 	return [vector, encryptedData];
 }

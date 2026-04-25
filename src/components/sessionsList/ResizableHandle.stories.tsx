@@ -61,6 +61,7 @@ function ResizeDemo({
 					Drag the right edge →
 				</p>
 				<ResizableHandle
+					currentWidth={width}
 					onResize={setWidth}
 					minWidth={minWidth}
 					maxWidth={maxWidth}
@@ -81,9 +82,19 @@ function ResizeDemo({
 }
 
 export const Default: Story = {
+	args: {
+		currentWidth: 320,
+		minWidth: 80,
+		maxWidth: 600
+	},
 	render: () => <ResizeDemo />
 };
 
 export const NarrowMin: Story = {
+	args: {
+		currentWidth: 320,
+		minWidth: 120,
+		maxWidth: 400
+	},
 	render: () => <ResizeDemo minWidth={120} maxWidth={400} />
 };

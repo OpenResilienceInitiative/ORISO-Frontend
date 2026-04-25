@@ -1,65 +1,50 @@
 # ORISO Frontend
 
-## Overview
-React/Vite-based frontend application for the Online Beratung platform with Matrix integration for real-time communication and video calls.
+Frontend application for the Online-Beratung platform, including registration, messaging, bookings, profile flows, and Matrix-backed real-time communication.
+
+## Current Stack
+
+- React + TypeScript
+- custom webpack build and dev pipeline
+- `react-router-dom` v5 routing
+- SCSS, CSS modules, and MUI theming
+- Storybook and Cypress
+
+For the full architecture and workflow rules, use the docs hub:
+
+- [docs/README.md](./docs/README.md)
 
 ## Quick Start
 
-### Build Docker Image
-```bash
-cd /home/caritas/Desktop/online-beratung/caritas-workspace/ORISO-Frontend
-docker build -t caritas-frontend:latest .
-sudo k3s ctr images import <(docker save caritas-frontend:latest)
-```
+### Local Development
 
-### Run Locally (Development)
 ```bash
-cd /home/caritas/Desktop/online-beratung/caritas-workspace/ORISO-Frontend
 npm install
 npm run dev
 ```
 
-### Environment Configuration
-Copy `.env.example` to `.env` and configure:
+### Common Commands
 
 ```bash
-# API Configuration
-VITE_API_URL=http://91.99.219.182
-
-# Matrix Configuration
-VITE_MATRIX_HOMESERVER_URL=https://matrix.oriso.de
-VITE_MATRIX_DOMAIN=matrix.oriso.de
-
-# Keycloak Configuration
-VITE_KEYCLOAK_URL=http://91.99.219.182:8080
-VITE_KEYCLOAK_REALM=online-beratung
-VITE_KEYCLOAK_CLIENT_ID=app
-
-# Jitsi Configuration
-VITE_JITSI_DOMAIN=meet.oriso.de
-VITE_JITSI_ROOM_PREFIX=caritas_
+npm run dev
+npm run build
+npm run lint
+npm run test
+npm run storybook
 ```
 
-## Kubernetes Deployment
-```bash
-kubectl apply -f /home/caritas/Desktop/online-beratung/kubernetes-complete/03-frontend-admin.yaml
-```
+### Environment Setup
 
-## Important Notes
-- Uses Docker image: `caritas-frontend:latest`
-- Runs on port: `80`
-- Environment variables are baked into the Docker image during build
-- Matrix SDK integration for real-time messaging and WebRTC calls
-- Requires Nginx proxy for HTTPS and routing
+Copy `.env.example` to `.env` and provide the environment values required by your local or deployment target.
 
-## Dependencies
-- Node.js 18+
-- React 18
-- Vite 4
-- Matrix JS SDK
-- Keycloak JS adapter
+## Documentation
 
-## Troubleshooting
-- If build fails, ensure `.env` file exists and is properly formatted
-- For CORS issues, check Nginx configuration
-- For Matrix connection issues, verify Matrix homeserver URL and domain
+Use these docs as the canonical references:
+
+- [Architecture](./docs/architecture/current-architecture.md)
+- [Engineering Rules](./docs/rules/engineering-rules.md)
+- [Implementation Skills](./docs/skills/implementation-skills.md)
+- [Planning Guide](./docs/plan/README.md)
+- [Master Roadmap](./docs/plan/master-roadmap.md)
+
+Legacy root docs may still exist for historical context, but new documentation should live under `docs/`.

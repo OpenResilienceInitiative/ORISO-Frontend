@@ -1,12 +1,5 @@
 import * as React from 'react';
-import {
-	createRef,
-	useCallback,
-	useContext,
-	useEffect,
-	useRef,
-	useState
-} from 'react';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useHistory, useLocation, useParams } from 'react-router-dom';
 import {
 	getChatItemForSession,
@@ -74,6 +67,7 @@ import {
 	SessionsListToolbar
 } from './SessionsListToolbar';
 import { EnquiryFilterChips } from './EnquiryFilterChips';
+import { SessionsListScrollbar } from './SessionsListScrollbar';
 
 function buildSessionSearchHaystack(
 	raw: ListItemInterface,
@@ -223,7 +217,7 @@ export const SessionsList = ({
 	const hasAutoOpenedRef = useRef(false);
 
 	const rcUid = useRef(getValueFromCookie('rc_uid'));
-	const listRef = createRef<HTMLDivElement>();
+	const listRef = useRef<HTMLDivElement | null>(null);
 
 	const { sessions, dispatch } = useContext(SessionsDataContext);
 	const { type, path: listPath } = useContext(SessionTypeContext);
@@ -977,6 +971,7 @@ export const SessionsList = ({
 
 	const handleListScroll = useCallback(() => {
 		const list: any = listRef.current;
+		if (!list) return;
 		const scrollPosition = Math.ceil(list.scrollTop) + list.offsetHeight;
 		if (scrollPosition + SCROLL_PAGINATE_THRESHOLD >= list.scrollHeight) {
 			if (
@@ -1354,64 +1349,73 @@ export const SessionsList = ({
 					createGroupChatActive={isCreateChatActive}
 				/>
 			)}
-			<div
-				className={clsx('sessionsList__scrollContainer', {
-					'sessionsList__scrollContainer--hasToolbar':
-						showMySessionToolbar
-				})}
-				ref={listRef}
-				onScroll={handleListScroll}
-			>
-				{(!isLoading || finalSessionsList.length > 0) &&
-					sortedSessions.map(
-						(activeSession: ExtendedSessionInterface, index) => (
-							<ActiveSessionProvider
-								key={activeSession.item.id}
-								activeSession={activeSession}
-							>
-								<SessionListItemComponent
-									defaultLanguage={defaultLanguage}
-									itemRef={(el) =>
-										(ref_list_array.current[index] = el)
-									}
-									handleKeyDownLisItemContent={(e) =>
-										handleKeyDownLisItemContent(e, index)
-									}
-									index={index}
-									isBeforeActive={
-										!!sortedSessions[index + 1] &&
-										isSessionListItemActive(
-											sortedSessions[index + 1]
-										)
-									}
-									isAfterActive={
-										!!sortedSessions[index - 1] &&
-										isSessionListItemActive(
-											sortedSessions[index - 1]
-										)
-									}
-								/>
-							</ActiveSessionProvider>
-						)
+			<div className="sessionsList__scrollArea">
+				<div
+					className={clsx('sessionsList__scrollContainer', {
+						'sessionsList__scrollContainer--hasToolbar':
+							showMySessionToolbar
+					})}
+					ref={listRef}
+					onScroll={handleListScroll}
+				>
+					{(!isLoading || finalSessionsList.length > 0) &&
+						sortedSessions.map(
+							(
+								activeSession: ExtendedSessionInterface,
+								index
+							) => (
+								<ActiveSessionProvider
+									key={activeSession.item.id}
+									activeSession={activeSession}
+								>
+									<SessionListItemComponent
+										defaultLanguage={defaultLanguage}
+										itemRef={(el) =>
+											(ref_list_array.current[index] = el)
+										}
+										handleKeyDownLisItemContent={(e) =>
+											handleKeyDownLisItemContent(
+												e,
+												index
+											)
+										}
+										index={index}
+										isBeforeActive={
+											!!sortedSessions[index + 1] &&
+											isSessionListItemActive(
+												sortedSessions[index + 1]
+											)
+										}
+										isAfterActive={
+											!!sortedSessions[index - 1] &&
+											isSessionListItemActive(
+												sortedSessions[index - 1]
+											)
+										}
+									/>
+								</ActiveSessionProvider>
+							)
+						)}
+
+					{isLoading && <SessionsListSkeleton />}
+
+					{isReloadButtonVisible && (
+						<div className="sessionsList__reloadWrapper">
+							<Button
+								item={{
+									label: translate(
+										'sessionList.reloadButton.label'
+									),
+									function: '',
+									type: 'LINK',
+									id: 'reloadButton'
+								}}
+								buttonHandle={handleReloadButton}
+							/>
+						</div>
 					)}
-
-				{isLoading && <SessionsListSkeleton />}
-
-				{isReloadButtonVisible && (
-					<div className="sessionsList__reloadWrapper">
-						<Button
-							item={{
-								label: translate(
-									'sessionList.reloadButton.label'
-								),
-								function: '',
-								type: 'LINK',
-								id: 'reloadButton'
-							}}
-							buttonHandle={handleReloadButton}
-						/>
-					</div>
-				)}
+				</div>
+				<SessionsListScrollbar scrollRef={listRef} />
 			</div>
 
 			{!isLoading &&

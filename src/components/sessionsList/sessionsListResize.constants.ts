@@ -1,0 +1,4 @@
+export const SESSIONS_LIST_RESIZE = {
+	ICON_ONLY_THRESHOLD: 420,
+	SNAP_THRESHOLD: 360
+} as const;
