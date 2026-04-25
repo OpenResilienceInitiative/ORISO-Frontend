@@ -357,9 +357,7 @@ export const SessionsList = ({
 		const activeItem = document.querySelector('.sessionsListItem--active');
 		if (activeItem) {
 			activeItem.scrollIntoView(true);
-			const wrapper = document.querySelector(
-				'.sessionsList__itemsWrapper'
-			);
+			const wrapper = listRef.current;
 			if (!wrapper) {
 				return;
 			}
@@ -382,7 +380,7 @@ export const SessionsList = ({
 				wrapper.scrollTop -= 48;
 			}
 		}
-	}, [initialId]);
+	}, [initialId, listRef]);
 
 	const refreshLoadedSessionsWithRoomState = useCallback(
 		(loadedSessions: ListItemInterface[]) => {

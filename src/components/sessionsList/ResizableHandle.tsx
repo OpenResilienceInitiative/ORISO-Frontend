@@ -1,6 +1,8 @@
 import * as React from 'react';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { SESSIONS_LIST_RESIZE } from './sessionsListResize.constants';
+import { ResizeObserver as PolyfillResizeObserver } from '@juggle/resize-observer';
+import { useTranslation } from 'react-i18next';
 
 interface ResizableHandleProps {
 	onResize: (width: number) => void;
@@ -17,6 +19,7 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 	minWidth = 80,
 	maxWidth = 600
 }) => {
+	const { t } = useTranslation();
 	const {
 		ICON_ONLY_THRESHOLD,
 		SNAP_THRESHOLD,
@@ -24,7 +27,7 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 		SCROLL_THUMB_MAX_PX
 	} = SESSIONS_LIST_RESIZE;
 	const [isDragging, setIsDragging] = useState(false);
-	const handleRef = useRef<HTMLButtonElement | null>(null);
+	const handleRef = useRef<HTMLDivElement | null>(null);
 	const pointerIdRef = useRef<number | null>(null);
 	const dragModeRef = useRef<'pending' | 'resize' | 'scroll'>('pending');
 	const dragStartRef = useRef<{
@@ -115,7 +118,7 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 	);
 
 	const handlePointerDown = useCallback(
-		(e: React.PointerEvent<HTMLButtonElement>) => {
+		(e: React.PointerEvent<HTMLDivElement>) => {
 			// Only react to primary button / touch contact
 			if (e.button !== 0) return;
 			e.preventDefault();
@@ -212,7 +215,7 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 	);
 
 	const handleKeyDown = useCallback(
-		(e: React.KeyboardEvent<HTMLButtonElement>) => {
+		(e: React.KeyboardEvent<HTMLDivElement>) => {
 			const resizeStep = e.shiftKey ? 40 : 20;
 			const scrollStep = e.shiftKey ? 240 : 120;
 
@@ -286,7 +289,8 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 		const onScroll = () => scheduleThumbUpdate();
 		el.addEventListener('scroll', onScroll, { passive: true });
 
-		const ro = new ResizeObserver(() => scheduleThumbUpdate());
+		const RO = globalThis.ResizeObserver ?? PolyfillResizeObserver;
+		const ro = new RO(() => scheduleThumbUpdate());
 		ro.observe(el);
 
 		return () => {
@@ -321,14 +325,30 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 		}
 	}, [isDragging, handlePointerMove, handlePointerUp]);
 
+	useEffect(() => {
+		// Safety net: never leak body styles on unmount.
+		return () => {
+			document.body.style.cursor = '';
+			document.body.style.userSelect = '';
+		};
+	}, []);
+
 	return (
-		<button
-			type="button"
+		<div
 			ref={handleRef}
 			className="sessionsList__resizeHandle"
 			data-dragging={isDragging ? 'true' : 'false'}
-			// Not using role="separator" because it conflicts with native button semantics.
-			aria-label="Resize sessions list. Drag vertically to scroll the sessions list."
+			role="separator"
+			// sonar: role="separator" is an interactive widget when focusable + keyboard-handled
+			tabIndex={0}
+			aria-orientation="vertical"
+			aria-valuemin={minWidth}
+			aria-valuemax={maxWidth}
+			aria-valuenow={currentWidth}
+			aria-label={t(
+				'sessionList.resizeHandle.ariaLabel',
+				'Resize sessions list. Drag vertically to scroll the sessions list.'
+			)}
 			onPointerDown={(e) => {
 				// Make arrow-key control work immediately after hover/click.
 				handleRef.current?.focus({ preventScroll: true });
@@ -348,6 +368,6 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 			}}
 		>
 			<span className="sessionsList__resizeHandlePill" />
-		</button>
+		</div>
 	);
 };

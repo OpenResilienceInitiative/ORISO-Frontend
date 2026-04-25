@@ -4,7 +4,7 @@ import { apiRocketChatFetchMyKeys } from '../api/apiRocketChatFetchMyKeys';
 import { getValueFromCookie } from '../components/sessionCookie/accessSessionCookie';
 
 const StaticArrayBufferProto = ArrayBuffer.prototype;
-type OwnedUint8Array = Uint8Array<ArrayBuffer>;
+type OwnedUint8Array = Uint8Array;
 
 // encoding helper
 const ENCRYPTION_VERSION_1 = 'v1-0';
@@ -59,9 +59,7 @@ export function toArrayBuffer(thing: any): ArrayBuffer {
 	}
 }
 
-export function typedArrayToBuffer(
-	array: Uint8Array<ArrayBufferLike>
-): ArrayBuffer {
+export function typedArrayToBuffer(array: Uint8Array): ArrayBuffer {
 	const output = new Uint8Array(array.byteLength);
 	output.set(array, 0);
 	return output.buffer;
@@ -144,9 +142,7 @@ export async function deriveKey(
 	);
 }
 
-function normalizeBufferSource(
-	data: BufferSource | Uint8Array<ArrayBufferLike>
-): BufferSource {
+function normalizeBufferSource(data: BufferSource | Uint8Array): BufferSource {
 	// WebCrypto typings require ArrayBuffer-backed views (not SharedArrayBuffer).
 	// Normalizing via copy keeps behavior the same but satisfies TS.
 	if (data instanceof Uint8Array) return typedArrayToBuffer(data);
@@ -156,7 +152,7 @@ function normalizeBufferSource(
 export async function encryptAES(
 	vector,
 	key: CryptoKey,
-	data: BufferSource | Uint8Array<ArrayBufferLike>
+	data: BufferSource | Uint8Array
 ) {
 	return crypto.subtle.encrypt(
 		{ name: 'AES-CBC', iv: vector },
@@ -168,7 +164,7 @@ export async function encryptAES(
 export async function decryptAES(
 	vector,
 	key: CryptoKey,
-	data: BufferSource | Uint8Array<ArrayBufferLike>
+	data: BufferSource | Uint8Array
 ) {
 	return crypto.subtle.decrypt(
 		{ name: 'AES-CBC', iv: vector },
@@ -219,7 +215,7 @@ export async function importRSAKey(
 }
 
 export function joinVectorAndEcryptedData(
-	vector: Uint8Array<ArrayBufferLike>,
+	vector: Uint8Array,
 	encryptedData: ArrayLike<number> | ArrayBufferLike
 ): Uint8Array {
 	const cipherText = toOwnedUint8Array(encryptedData);
@@ -230,7 +226,7 @@ export function joinVectorAndEcryptedData(
 }
 
 export function splitVectorAndEcryptedData(
-	cipherText: Uint8Array<ArrayBufferLike>
+	cipherText: Uint8Array
 ): [OwnedUint8Array, OwnedUint8Array] {
 	const vector = toOwnedUint8Array(cipherText.slice(0, VECTOR_LENGTH));
 	const encryptedData = toOwnedUint8Array(cipherText.slice(VECTOR_LENGTH));

@@ -6,6 +6,7 @@ import {
 	useRef,
 	useState
 } from 'react';
+import { ResizeObserver as PolyfillResizeObserver } from '@juggle/resize-observer';
 
 type ScrollbarMetrics = {
 	trackHeight: number;
@@ -104,7 +105,8 @@ export function SessionsListScrollbar({
 		};
 		el.addEventListener('scroll', onScroll, { passive: true });
 
-		const ro = new ResizeObserver(() => scheduleUpdate());
+		const RO = globalThis.ResizeObserver ?? PolyfillResizeObserver;
+		const ro = new RO(() => scheduleUpdate());
 		ro.observe(el);
 
 		const EDGE_PX = 22;
@@ -140,6 +142,14 @@ export function SessionsListScrollbar({
 
 	useEffect(() => {
 		return () => {
+			// Ensure we never leak body styles if unmounting mid-drag
+			if (isDraggingRef.current) {
+				isDraggingRef.current = false;
+				dragStartRef.current = null;
+				dragPointerIdRef.current = null;
+				document.body.style.userSelect = '';
+				document.body.style.cursor = '';
+			}
 			if (rafIdRef.current !== null) {
 				globalThis.cancelAnimationFrame(rafIdRef.current);
 			}
@@ -233,6 +243,7 @@ export function SessionsListScrollbar({
 		>
 			<button
 				type="button"
+				tabIndex={-1}
 				className="sessionsList__customScrollbarThumb"
 				onPointerDown={handleThumbPointerDown}
 				onPointerMove={handleThumbPointerMove}

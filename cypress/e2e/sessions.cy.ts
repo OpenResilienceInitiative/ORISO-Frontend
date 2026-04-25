@@ -93,6 +93,50 @@ describe('Sessions', () => {
 			cy.wait('@consultantSessions');
 		});
 
+		it('should scroll sessions list by dragging the pill handle', () => {
+			generateMultipleConsultantSessions(100);
+
+			cy.fastLogin({
+				userId: USER_CONSULTANT
+			});
+
+			cy.get('a[href="/sessions/consultant/sessionView"]').click();
+			cy.wait('@consultantSessions');
+
+			cy.get('.sessionsList__scrollContainer').then(
+				([scrollContainer]) => {
+					const startTop = scrollContainer.scrollTop;
+					const rect = scrollContainer.getBoundingClientRect();
+
+					// Drag mostly vertically so the handle goes into "scroll" mode.
+					cy.get('.sessionsList__resizeHandle').trigger(
+						'pointerdown',
+						{
+							button: 0,
+							pointerId: 1,
+							clientX: rect.right - 4,
+							clientY: rect.top + 80
+						}
+					);
+					cy.get('.sessionsList__resizeHandle').trigger(
+						'pointermove',
+						{
+							pointerId: 1,
+							clientX: rect.right - 4,
+							clientY: rect.top + 240
+						}
+					);
+					cy.get('.sessionsList__resizeHandle').trigger('pointerup', {
+						pointerId: 1
+					});
+
+					cy.get('.sessionsList__scrollContainer').should(($sc) => {
+						expect($sc[0].scrollTop).to.be.greaterThan(startTop);
+					});
+				}
+			);
+		});
+
 		it('should not fetch next batch of sessions if scroll threshold is not reached', () => {
 			generateMultipleConsultantSessions(100);
 
