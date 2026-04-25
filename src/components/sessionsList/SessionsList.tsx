@@ -67,7 +67,6 @@ import {
 	SessionsListToolbar
 } from './SessionsListToolbar';
 import { EnquiryFilterChips } from './EnquiryFilterChips';
-import { SessionsListScrollbar } from './SessionsListScrollbar';
 
 function buildSessionSearchHaystack(
 	raw: ListItemInterface,
@@ -200,11 +199,13 @@ function sessionMatchesToolbar(
 interface SessionsListProps {
 	defaultLanguage: string;
 	sessionTypes: SESSION_TYPES;
+	scrollContainerRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 export const SessionsList = ({
 	defaultLanguage,
-	sessionTypes
+	sessionTypes,
+	scrollContainerRef
 }: SessionsListProps) => {
 	const { t: translate } = useTranslation();
 
@@ -217,7 +218,8 @@ export const SessionsList = ({
 	const hasAutoOpenedRef = useRef(false);
 
 	const rcUid = useRef(getValueFromCookie('rc_uid'));
-	const listRef = useRef<HTMLDivElement | null>(null);
+	const internalListRef = useRef<HTMLDivElement | null>(null);
+	const listRef = scrollContainerRef ?? internalListRef;
 
 	const { sessions, dispatch } = useContext(SessionsDataContext);
 	const { type, path: listPath } = useContext(SessionTypeContext);
@@ -1415,7 +1417,6 @@ export const SessionsList = ({
 						</div>
 					)}
 				</div>
-				<SessionsListScrollbar scrollRef={listRef} />
 			</div>
 
 			{!isLoading &&

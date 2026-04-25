@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useContext, useState, useCallback } from 'react';
+import { useContext, useRef, useState, useCallback } from 'react';
 import { ResizableHandle } from './ResizableHandle';
 import { SESSION_LIST_TYPES, SESSION_TYPES } from '../session/sessionHelpers';
 import {
@@ -29,6 +29,7 @@ export const SessionsListWrapper = ({
 	const { fixed: fixedLanguages } = useContext(LanguagesContext);
 	const { userData } = useContext(UserDataContext);
 	const { type } = useContext(SessionTypeContext);
+	const listScrollRef = useRef<HTMLDivElement | null>(null);
 
 	// Resizable sidebar width
 	const [sidebarWidth, setSidebarWidth] = useState<number>(() => {
@@ -75,10 +76,12 @@ export const SessionsListWrapper = ({
 				<SessionsList
 					defaultLanguage={fixedLanguages[0]}
 					sessionTypes={sessionTypes}
+					scrollContainerRef={listScrollRef}
 				/>
 				<ResizableHandle
 					currentWidth={sidebarWidth}
 					onResize={handleResize}
+					scrollTargetRef={listScrollRef}
 				/>
 			</div>
 		);
@@ -109,10 +112,12 @@ export const SessionsListWrapper = ({
 			<SessionsList
 				defaultLanguage={fixedLanguages[0]}
 				sessionTypes={sessionTypes}
+				scrollContainerRef={listScrollRef}
 			/>
 			<ResizableHandle
 				currentWidth={sidebarWidth}
 				onResize={handleResize}
+				scrollTargetRef={listScrollRef}
 			/>
 		</div>
 	);
