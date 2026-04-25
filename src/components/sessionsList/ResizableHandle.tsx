@@ -46,19 +46,37 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 		const el = scrollTargetRef?.current;
 		if (!el) return;
 
+		// If we're actively resizing horizontally, keep the thumb stable to avoid
+		// jitter caused by layout wrapping during drag.
+		if (isDragging && dragModeRef.current === 'resize') {
+			return;
+		}
+
 		const view = el.clientHeight;
 		const content = el.scrollHeight;
 		const maxScrollTop = Math.max(0, content - view);
 
-		// Track space available for the thumb inside the handle column
-		const trackHeight = Math.max(0, view);
+		// Track should match the scroll container position in the sidebar so the thumb
+		// doesn't jump when header/toolbar height changes.
+		const handleRect = handleRef.current?.getBoundingClientRect();
+		const scrollRect = el.getBoundingClientRect();
+		const trackTopWithinHandle = handleRect
+			? Math.max(0, Math.round(scrollRect.top - handleRect.top))
+			: 0;
+		const trackHeightVisible = Math.round(scrollRect.height || view);
+
+		// When list scrolls, we only want thumb to travel over the scroll container area.
+		const handleHeight = trackHeightVisible;
+		// Add a small padding so the rounded pill isn't clipped at edges.
+		const TRACK_PADDING = 6;
+		const trackHeight = Math.max(0, handleHeight - TRACK_PADDING * 2);
 		// Non-scrollable: keep the pill centered (like the reference).
 		if (maxScrollTop <= 0 || trackHeight <= 0) {
 			const thumbHeightPx = 40;
-			const thumbTopPx = Math.max(
-				0,
-				Math.round((trackHeight - thumbHeightPx) / 2)
-			);
+			const thumbTopPx =
+				trackTopWithinHandle +
+				TRACK_PADDING +
+				Math.max(0, Math.round((trackHeight - thumbHeightPx) / 2));
 			setThumbStyleVars({ thumbTopPx, thumbHeightPx });
 			return;
 		}
@@ -75,14 +93,14 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 		const maxThumbTop = Math.max(0, trackHeight - thumbHeightPx);
 		const scrollProgress = el.scrollTop / maxScrollTop;
 
-		// Requirement: thumb should not travel into the top half.
-		// Map scroll 0..1 → thumbTop center..bottom.
-		const centerTop = Math.round(maxThumbTop / 2);
-		const travel = Math.max(1, maxThumbTop - centerTop);
-		const thumbTopPx = Math.round(centerTop + scrollProgress * travel);
+		// Standard scrollbar mapping: top..bottom.
+		const thumbTopPx =
+			trackTopWithinHandle +
+			TRACK_PADDING +
+			Math.round(scrollProgress * maxThumbTop);
 
 		setThumbStyleVars({ thumbTopPx, thumbHeightPx });
-	}, [SCROLL_THUMB_MAX_PX, SCROLL_THUMB_MIN_PX, scrollTargetRef]);
+	}, [SCROLL_THUMB_MAX_PX, SCROLL_THUMB_MIN_PX, isDragging, scrollTargetRef]);
 
 	const scheduleThumbUpdate = useCallback(() => {
 		if (rafIdRef.current !== null) return;
@@ -164,9 +182,18 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 			const absDy = Math.abs(dy);
 
 			if (dragModeRef.current === 'pending') {
-				const DEADZONE = 6;
+				const DEADZONE = 10;
 				if (absDx < DEADZONE && absDy < DEADZONE) return;
-				dragModeRef.current = absDx >= absDy ? 'resize' : 'scroll';
+				/*
+				 * Strong bias towards resize:
+				 * - scroll mode only when the user is clearly dragging vertically
+				 * - prevents accidental scrollTop jumps during left/right resizing
+				 */
+				const VERTICAL_INTENT_RATIO = 1.8;
+				dragModeRef.current =
+					absDy >= DEADZONE && absDy >= absDx * VERTICAL_INTENT_RATIO
+						? 'scroll'
+						: 'resize';
 				document.body.style.cursor =
 					dragModeRef.current === 'scroll'
 						? 'grabbing'
@@ -174,6 +201,11 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 			}
 
 			if (dragModeRef.current === 'resize') {
+				// Never let resize affect list scroll position.
+				const target = scrollTargetRef?.current;
+				if (target && start.scrollTop !== undefined) {
+					target.scrollTop = start.scrollTop;
+				}
 				applyClientXToWidth(e.clientX);
 				return;
 			}
@@ -186,8 +218,14 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 			const maxScrollTop = Math.max(0, content - view);
 			if (maxScrollTop <= 0) return;
 
-			// Convert pointer delta → scroll delta using the same center..bottom travel range.
-			const trackHeight = Math.max(0, view);
+			// Convert pointer delta → scroll delta using full thumb travel range.
+			const TRACK_PADDING = 6;
+			const scrollRect = target.getBoundingClientRect();
+			const trackHeightVisible = Math.round(scrollRect.height || view);
+			const trackHeight = Math.max(
+				0,
+				trackHeightVisible - TRACK_PADDING * 2
+			);
 			const MIN_THUMB = SCROLL_THUMB_MIN_PX;
 			const MAX_THUMB = SCROLL_THUMB_MAX_PX;
 			const idealThumb = (view / content) * trackHeight;
@@ -196,8 +234,7 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 				Math.min(MAX_THUMB, trackHeight, Math.round(idealThumb))
 			);
 			const maxThumbTop = Math.max(0, trackHeight - thumbHeightPx);
-			const centerTop = Math.round(maxThumbTop / 2);
-			const travel = Math.max(1, maxThumbTop - centerTop);
+			const travel = Math.max(1, maxThumbTop);
 			const scrollPerPx = maxScrollTop / travel;
 
 			target.scrollTop = Math.max(

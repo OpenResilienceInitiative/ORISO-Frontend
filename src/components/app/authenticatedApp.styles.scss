@@ -138,8 +138,9 @@ a {
 			min-width: 0;
 			overflow-x: hidden;
 			@include breakpoint($fromLarge) {
-				gap: 12px;
-				padding-right: 12px;
+				// Figma: list + detail are flush; the pill is the separator.
+				gap: 0;
+				padding-right: 0;
 			}
 		}
 

@@ -161,6 +161,7 @@ $tabBarHeightDesktop: 53px;
 		transform: translateX(-50%);
 		width: 8px; // pill thickness
 		border-radius: 999px;
+
 		// Figma: white dragger
 		background: rgba(255, 255, 255, 0.96);
 		box-shadow:
@@ -195,25 +196,14 @@ $tabBarHeightDesktop: 53px;
 		top: 0;
 		bottom: 0;
 		width: 24px;
-		cursor: col-resize;
+		/* Cursor is controlled dynamically (resize vs scroll drag mode) */
+		cursor: grab;
 		z-index: 30;
 		background: transparent;
 		border: 0;
 		outline: none;
 		touch-action: none;
 		padding: 0;
-	}
-
-	/* Divider line to keep the "on the border" look without overflowing */
-	&__resizeHandle::before {
-		content: '';
-		position: absolute;
-		right: 0;
-		top: 0;
-		bottom: 0;
-		width: 1px;
-		background: rgba(165, 0, 10, 0.22);
-		opacity: 0.7;
 	}
 
 	&__resizeHandlePill {
@@ -234,8 +224,15 @@ $tabBarHeightDesktop: 53px;
 			transform 140ms ease;
 	}
 
-	&__resizeHandle:hover &__resizeHandlePill,
+	&__resizeHandle:hover &__resizeHandlePill {
+		box-shadow:
+			0 0 0 1px rgba(165, 0, 10, 0.22),
+			0 3px 10px rgba(0, 0, 0, 0.14);
+		transform: translateY(var(--sessionsListThumbTop, 0px)) scaleX(1.08);
+	}
+
 	&__resizeHandle[data-dragging='true'] &__resizeHandlePill {
+		background: #ffdad5;
 		box-shadow:
 			0 0 0 1px rgba(165, 0, 10, 0.3),
 			0 3px 10px rgba(0, 0, 0, 0.18);
@@ -244,8 +241,7 @@ $tabBarHeightDesktop: 53px;
 
 	&__resizeHandle:focus-visible &__resizeHandlePill {
 		box-shadow:
-			0 0 0 2px #ffffff,
-			0 0 0 4px rgba(165, 0, 10, 0.65),
+			0 0 0 1px rgba(165, 0, 10, 0.65),
 			0 3px 10px rgba(0, 0, 0, 0.18);
 	}
 
