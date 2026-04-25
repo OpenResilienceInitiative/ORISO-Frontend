@@ -478,6 +478,11 @@
 				},
 				"label": "Hinterlege eine Abwesenheitsnachricht"
 			},
+			"liveChat": {
+				"title": "Meine Live-Chat Verfügbarkeit",
+				"description": "Aktiviere Deine Verfügbarkeit und sieh in den Erstanfragen unter „Live-Chat Anfragen“ die wartenden anonymen Ratsuchenden.",
+				"toggleLabel": "Bin verfügbar"
+			},
 			"masterKey": {
 				"saveError": "Beim Ändern des Passworts ist ein Problem aufgetaucht. Bitte versuche es erneut."
 			},
@@ -896,6 +901,11 @@
 		}
 	},
 	"sessionList": {
+		"item": {
+			"sessionType": {
+				"liveChat": "Live Chat"
+			}
+		},
 		"empty": {
 			"mySessions": "Du hast zurzeit keine aktiven Beratungen"
 		},

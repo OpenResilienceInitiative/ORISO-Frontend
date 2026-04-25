@@ -114,21 +114,30 @@ export const StageLayout = ({
 				<Box
 					className={`stageLayout__header`}
 					sx={{
-						display: {
-							xs: 'none',
-							md: 'flex'
-						}
+						display: showRegistrationLink
+							? 'flex'
+							: { xs: 'none', md: 'flex' },
+						mt: {
+							xs: showRegistrationLink ? '48px' : 0,
+							md: 0
+						},
+						height: { xs: 'auto', md: undefined },
+						minHeight: { xs: '48px', md: undefined },
+						py: { xs: 1, md: 0 }
 					}}
 				>
 					{selectableLocales.length > 1 && (
-						<div>
+						<Box sx={{ display: { xs: 'none', md: 'block' } }}>
 							<LocaleSwitch
 								menuPlacement={MENUPLACEMENT_BOTTOM_LEFT}
 							/>
-						</div>
+						</Box>
 					)}
 					{showLoginLink && (
-						<div className="stageLayout__toLogin">
+						<Box
+							className="stageLayout__toLogin"
+							sx={{ display: { xs: 'none', md: 'block' } }}
+						>
 							<div className="stageLayout__toLogin__button">
 								<a
 									href={`${settings.urls.toLogin}${
@@ -147,7 +156,7 @@ export const StageLayout = ({
 									/>
 								</a>
 							</div>
-						</div>
+						</Box>
 					)}
 
 					{showRegistrationLink && (
@@ -181,7 +190,11 @@ export const StageLayout = ({
 				<Box
 					sx={{
 						mt: {
-							xs: showRegistrationInfoDrawer ? '96px' : '48px',
+							xs: showRegistrationInfoDrawer
+								? '96px'
+								: showRegistrationLink
+									? 0
+									: '48px',
 							md: '0'
 						}
 					}}

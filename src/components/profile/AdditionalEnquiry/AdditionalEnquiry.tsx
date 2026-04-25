@@ -181,7 +181,9 @@ export const AdditionalEnquiry: React.FC = () => {
 	};
 
 	const handleSuccessOverlayAction = (buttonFunction: string) => {
-		reloadUserData().catch((error) => { /* console.log(error); */ });
+		reloadUserData().catch((error) => {
+			/* console.log(error); */
+		});
 
 		if (buttonFunction === OVERLAY_FUNCTIONS.REDIRECT) {
 			mobileListView();
@@ -192,8 +194,13 @@ export const AdditionalEnquiry: React.FC = () => {
 				return;
 			}
 
+			/* Normal session view (same screen consultants see from the
+			   enquiry list) rather than the /write/ formulation helper —
+			   the asker lands in a regular chat surface with the message
+			   composer, matching the behaviour of an enquiry picked from
+			   the list. */
 			history.push({
-				pathname: `/sessions/user/view/write/${sessionId}`
+				pathname: `/sessions/user/view/session/${sessionId}`
 			});
 		} else if (buttonFunction === OVERLAY_FUNCTIONS.CLOSE) {
 			setSuccessOverlayItem({});

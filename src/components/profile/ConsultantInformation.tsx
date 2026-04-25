@@ -53,7 +53,9 @@ export const ConsultantInformation = () => {
 	const handleSaveEditButton = () => {
 		apiPatchUserData({ displayName: editedDisplayName })
 			.then(() => {
-				reloadUserData().catch((error) => { /* console.log(error); */ });
+				reloadUserData().catch((error) => {
+					/* console.log(error); */
+				});
 				setInitialDisplayName(editedDisplayName);
 			})
 			.catch((error) => {
@@ -112,12 +114,14 @@ export const ConsultantInformation = () => {
 						</span>
 					)}
 				</div>
-				{hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) && (
+				{/* TEMPORARILY HIDDEN — personal QR code + contact link in
+				    consultant profile. Restore by uncommenting the block below. */}
+				{/* {hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) && (
 					<PersonalRegistrationLink
 						cid={userData.userId}
 						className="profile__user__personal_link mb--1"
 					/>
-				)}
+				)} */}
 			</div>
 			<div>
 				<Text

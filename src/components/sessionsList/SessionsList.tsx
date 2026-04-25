@@ -272,6 +272,18 @@ export const SessionsList = ({
 			if (type !== SESSION_LIST_TYPES.ENQUIRY) return null;
 			return readChipFromUrl() ?? 'chats';
 		});
+	/*
+	 * Ref-mirror of the toolbar chip so the memoised `getConsultantSessionList`
+	 * can read the current filter without taking a dep (and restarting the
+	 * fetch whenever the user swaps tabs). Used to auto-page past all-anonymous
+	 * first pages when Chats is selected, and vice versa.
+	 */
+	const sessionToolbarChipRef = useRef<SessionToolbarChipFilter | null>(
+		sessionToolbarChip
+	);
+	useEffect(() => {
+		sessionToolbarChipRef.current = sessionToolbarChip;
+	}, [sessionToolbarChip]);
 
 	/**
 	 * Keep the chip in sync with `?chip=…` changes after mount — this fires
@@ -347,7 +359,59 @@ export const SessionsList = ({
 					});
 				})
 				.then(({ sessions, total }) => {
-					setCurrentOffset(offset);
+					/*
+					 * Auto-page past all-anonymous (or all-registered) first
+					 * pages on the Enquiry tab so the selected chip filter
+					 * isn't empty when it has matches further down the feed.
+					 * Scroll-triggered fetches (offset > 0) and explicit
+					 * initialID lookups run above; this branch only fires for
+					 * the implicit "initial fetch" case.
+					 */
+					if (
+						!initialID &&
+						type === SESSION_LIST_TYPES.ENQUIRY &&
+						sessions.length > 0 &&
+						total > offset + sessions.length
+					) {
+						const chip = sessionToolbarChipRef.current;
+						if (chip === 'chats' || chip === 'liveChat') {
+							const anyMatch = sessions.some((raw) => {
+								const isAnon = isAnonymousAskerSession(
+									raw,
+									{} as ExtendedSessionInterface
+								);
+								return chip === 'liveChat' ? isAnon : !isAnon;
+							});
+							/* Cap at 10 pages so a consultant with thousands
+							   of one-sided enquiries can't hang the list. */
+							const pagesFetched =
+								(offset + sessions.length) / SESSION_COUNT;
+							if (!anyMatch && pagesFetched < 10) {
+								return getConsultantSessionList(
+									offset + sessions.length
+								).then(
+									({ sessions: moreSessions, total: t }) => ({
+										sessions: [
+											...sessions,
+											...moreSessions
+										],
+										total: t
+									})
+								);
+							}
+						}
+					}
+					return { sessions, total };
+				})
+				.then(({ sessions, total }) => {
+					const pageSize = count ?? SESSION_COUNT;
+					/* When the Enquiry auto-pager above fetched extra pages,
+					   sessions.length > pageSize — advance currentOffset to
+					   the start of the deepest page so loadMoreSessions
+					   doesn't re-fetch what's already in state. */
+					const lastLoadedOffset =
+						offset + Math.max(0, sessions.length - pageSize);
+					setCurrentOffset(lastLoadedOffset);
 					setTotalItems(total);
 					setIsRequestInProgress(false);
 					return { sessions, total };

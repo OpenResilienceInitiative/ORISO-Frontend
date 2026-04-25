@@ -3,7 +3,6 @@ import type { AnimalType } from '../../utils/pseudonymGenerator';
 
 interface AnimalAvatarProps {
 	animalType: AnimalType;
-	bgColor: string;
 	/** Outer circle size in px (Figma default = 108) */
 	size?: number;
 }
@@ -146,7 +145,6 @@ const ANIMAL_COMPONENTS: Record<AnimalType, React.FC> = {
  */
 export const AnimalAvatar: React.FC<AnimalAvatarProps> = ({
 	animalType,
-	bgColor,
 	size = 108
 }) => {
 	const AnimalInner = ANIMAL_COMPONENTS[animalType] || CatFaceFigma;
@@ -160,7 +158,7 @@ export const AnimalAvatar: React.FC<AnimalAvatarProps> = ({
 				justifyContent: 'center',
 				alignItems: 'center',
 				borderRadius: size / 2,
-				background: bgColor,
+				background: '#FFD9D9',
 				width: size,
 				height: size,
 				boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.10)',

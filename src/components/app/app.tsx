@@ -45,6 +45,12 @@ const Login = lazy(() =>
 const AuthenticatedApp = lazy(() =>
 	import('./AuthenticatedApp').then((m) => ({ default: m.AuthenticatedApp }))
 );
+const InviteLink = lazy(() =>
+	import('../invite/InviteLink').then((m) => ({
+		default: m.InviteLink
+	}))
+);
+
 const Registration = lazy(() =>
 	import('../registration/Registration').then((m) => ({
 		default: m.Registration
@@ -118,7 +124,7 @@ interface RouterWrapperProps {
 
 const RouterWrapper = ({ extraRoutes }: RouterWrapperProps) => {
 	const settings = useAppConfig();
-	
+
 	// Request notification permission for incoming calls
 	useNotificationPermission();
 
@@ -141,66 +147,73 @@ const RouterWrapper = ({ extraRoutes }: RouterWrapperProps) => {
 				<Route>
 					<ContextProvider>
 						<CallProvider>
-						<TenantThemingLoader />
-						{startWebsocket && (
-							<WebsocketHandler
-								disconnect={disconnectWebsocket}
-							/>
-						)}
-						<Suspense fallback={<Loading />}>
-							<Switch>
-								{extraRoutes.map(
-									({ route, component: Component }) => (
-										<Route
-											{...route}
-											key={
-												typeof route.path === 'string'
-													? route.path
-													: route.path.join('-')
-											}
-										>
-											<Component />
-										</Route>
-									)
-								)}
-
-								<Route
-									path={[
-										'/registration',
-										'/:consultingTypeSlug/registration'
-									]}
-								>
-									<UrlParamsProvider>
-										<Registration />
-									</UrlParamsProvider>
-								</Route>
-
-								<Route path="/login" exact>
-									<UrlParamsProvider>
-										<Login />
-									</UrlParamsProvider>
-								</Route>
-								<Route
-									path={settings.urls.videoConference}
-									exact
-								>
-									<VideoConference />
-								</Route>
-								<Route path={settings.urls.videoCall} exact>
-									<VideoCall />
-								</Route>
-								<AuthenticatedApp
-									onAppReady={() => setStartWebsocket(true)}
-									onLogout={() =>
-										setDisconnectWebsocket(true)
-									}
+							<TenantThemingLoader />
+							{startWebsocket && (
+								<WebsocketHandler
+									disconnect={disconnectWebsocket}
 								/>
-							</Switch>
-							<NotificationsContainer />
-							<FloatingCallWidget />
-						<GroupCallWidget />
-							{/* Clean implementation using CallManager */}
-						</Suspense>
+							)}
+							<Suspense fallback={<Loading />}>
+								<Switch>
+									{extraRoutes.map(
+										({ route, component: Component }) => (
+											<Route
+												{...route}
+												key={
+													typeof route.path ===
+													'string'
+														? route.path
+														: route.path.join('-')
+												}
+											>
+												<Component />
+											</Route>
+										)
+									)}
+
+									<Route path="/invite/:token" exact>
+										<InviteLink />
+									</Route>
+
+									<Route
+										path={[
+											'/registration',
+											'/:consultingTypeSlug/registration'
+										]}
+									>
+										<UrlParamsProvider>
+											<Registration />
+										</UrlParamsProvider>
+									</Route>
+
+									<Route path="/login" exact>
+										<UrlParamsProvider>
+											<Login />
+										</UrlParamsProvider>
+									</Route>
+									<Route
+										path={settings.urls.videoConference}
+										exact
+									>
+										<VideoConference />
+									</Route>
+									<Route path={settings.urls.videoCall} exact>
+										<VideoCall />
+									</Route>
+									<AuthenticatedApp
+										onAppReady={() =>
+											setStartWebsocket(true)
+										}
+										onLogout={() =>
+											setDisconnectWebsocket(true)
+										}
+									/>
+								</Switch>
+								<NotificationsContainer />
+								<FloatingCallWidget />
+								<GroupCallWidget />
+								{/* Clean implementation using CallManager */}
+							</Suspense>
 						</CallProvider>
 					</ContextProvider>
 				</Route>

@@ -32,8 +32,12 @@ export const TypingDots: React.FC<{ className?: string }> = ({ className }) => (
 );
 
 /**
- * Reveals `text` character-by-character at `charMs` ms per character.
- * Renders an inline caret while typing.
+ * Reveals `text` character-by-character with a terminal-style jitter:
+ * each character waits 70 + (random 0-100) ms, and the trailing cursor
+ * is a "_" that toggles with the current index (visible on odd, empty
+ * on even) — same idiom as the reference Typewriter.js. `charMs`/
+ * `startDelayMs` are kept in the prop signature for backwards compat
+ * but charMs is superseded by the jittered delay.
  */
 export const TypewriterText: React.FC<{
 	text: string;
@@ -41,9 +45,17 @@ export const TypewriterText: React.FC<{
 	startDelayMs?: number;
 	onDone?: () => void;
 	className?: string;
-}> = ({ text, charMs = 18, startDelayMs = 0, onDone, className }) => {
+}> = ({ text, startDelayMs = 0, onDone, className }) => {
 	const [visibleLen, setVisibleLen] = useState(0);
 	const doneRef = useRef(false);
+	/* Stash onDone in a ref so a fresh function reference from the
+	   consumer does not re-trigger the effect and restart typing from
+	   zero. The effect should only restart when text or startDelayMs
+	   actually change. */
+	const onDoneRef = useRef<(() => void) | undefined>(onDone);
+	useEffect(() => {
+		onDoneRef.current = onDone;
+	}, [onDone]);
 
 	useEffect(() => {
 		setVisibleLen(0);
@@ -60,11 +72,12 @@ export const TypewriterText: React.FC<{
 					const next = prev + 1;
 					if (next >= text.length && !doneRef.current) {
 						doneRef.current = true;
-						if (onDone) window.setTimeout(onDone, 0);
+						const cb = onDoneRef.current;
+						if (cb) window.setTimeout(cb, 0);
 					}
 					return next;
 				});
-				timer = window.setTimeout(tick, charMs);
+				timer = window.setTimeout(tick, 45 + 55 * Math.random());
 			};
 			tick();
 		}, startDelayMs);
@@ -74,26 +87,14 @@ export const TypewriterText: React.FC<{
 			if (timer) window.clearTimeout(timer);
 			window.clearTimeout(start);
 		};
-	}, [text, charMs, startDelayMs, onDone]);
+	}, [text, startDelayMs]);
 
 	const done = visibleLen >= text.length;
+	const cursor = visibleLen & 1 ? '_' : ' ';
 	return (
 		<span className={className}>
 			{text.slice(0, visibleLen)}
-			{!done && (
-				<span
-					aria-hidden="true"
-					style={{
-						display: 'inline-block',
-						width: 2,
-						height: '1em',
-						marginLeft: 1,
-						verticalAlign: '-0.15em',
-						background: 'currentColor',
-						animation: 'botMessageCaretBlink 0.9s steps(1) infinite'
-					}}
-				/>
-			)}
+			{!done && cursor}
 		</span>
 	);
 };

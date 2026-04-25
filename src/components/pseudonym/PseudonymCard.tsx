@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Pseudonym } from '../../utils/pseudonymGenerator';
 import { AnimalAvatar } from './AnimalAvatar';
@@ -74,6 +74,17 @@ export const PseudonymCard: React.FC<PseudonymCardProps> = ({
 		'Hi there before we move on please confirm for this session our randomly chosen username.'
 	);
 
+	/* Reveal the pseudonym display column (label + avatar + name) only
+	   after the typewriter finishes. Fires once either because skipTyping
+	   is true (no typewriter runs) or because TypewriterText.onDone
+	   notified us. The bubble naturally expands because the reveal block
+	   slide-animates its max-height / opacity in CSS. */
+	const [pseudonymRevealed, setPseudonymRevealed] = useState(skipTyping);
+	const handleTypewriterDone = useCallback(() => {
+		setPseudonymRevealed(true);
+		if (onDone) onDone();
+	}, [onDone]);
+
 	return (
 		<div className="messageItem pseudonymCard">
 			<div className="messageItem__messageWrap pseudonymCard__wrap">
@@ -101,7 +112,7 @@ export const PseudonymCard: React.FC<PseudonymCardProps> = ({
 						</span>
 					</div>
 
-					<TypingReveal typingMs={skipTyping ? 0 : 1100}>
+					<TypingReveal typingMs={skipTyping ? 0 : 1400}>
 						<div className="pseudonymCard__bubble">
 							<p className="pseudonymCard__bubbleText">
 								{skipTyping ? (
@@ -109,30 +120,31 @@ export const PseudonymCard: React.FC<PseudonymCardProps> = ({
 								) : (
 									<TypewriterText
 										text={message}
-										charMs={16}
-										onDone={onDone}
+										startDelayMs={550}
+										onDone={handleTypewriterDone}
 									/>
 								)}
 							</p>
 
-							<div className="pseudonymCard__displayColumn">
-								<div className="pseudonymCard__label">
-									{t(
-										'anonymousChat.pseudonym.yourPseudonym',
-										'Dein Pseudonym'
-									)}
-								</div>
+							{pseudonymRevealed && (
+								<div className="pseudonymCard__displayColumn pseudonymCard__displayColumn--revealed">
+									<div className="pseudonymCard__label">
+										{t(
+											'anonymousChat.pseudonym.yourPseudonym',
+											'Dein Pseudonym'
+										)}
+									</div>
 
-								<AnimalAvatar
-									animalType={pseudonym.animalType}
-									bgColor={pseudonym.avatarColor}
-									size={108}
-								/>
+									<AnimalAvatar
+										animalType={pseudonym.animalType}
+										size={108}
+									/>
 
-								<div className="pseudonymCard__name">
-									{pseudonym.displayName}
+									<div className="pseudonymCard__name">
+										{pseudonym.displayName}
+									</div>
 								</div>
-							</div>
+							)}
 						</div>
 					</TypingReveal>
 				</div>

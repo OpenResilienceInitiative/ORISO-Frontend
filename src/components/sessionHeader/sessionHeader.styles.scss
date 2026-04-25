@@ -504,10 +504,34 @@ $iconSize: 24px;
 		display: inline-flex;
 		align-items: center;
 		margin-right: 4px;
+		margin-left: 10px;
 		min-width: 40px;
 
 		@media screen and (max-width: 899px) {
 			display: none;
+		}
+	}
+
+	/* Plus-as-button variant: only the "+" inside the stack is the
+	   supervisor-management trigger for 1-on-1 chats. The avatar next to
+	   it stays decorative. Applied when the same visibility conditions
+	   as the old Supervision On/Off pill are met. */
+	&__memberStackPlus--interactive {
+		cursor: pointer;
+		padding: 0;
+		transition:
+			background-color 140ms ease,
+			box-shadow 140ms ease,
+			border-color 140ms ease;
+
+		&:hover {
+			background-color: rgba(204, 30, 28, 0.08);
+			border-color: #cc1e1c;
+		}
+
+		&:focus-visible {
+			outline: none;
+			box-shadow: 0 0 0 2px #cc1e1c;
 		}
 	}
 

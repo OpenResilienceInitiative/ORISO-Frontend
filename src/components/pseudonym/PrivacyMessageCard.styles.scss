@@ -8,6 +8,10 @@
 
 .privacyMessageCard {
 	margin-top: 4px;
+	/* Reserve vertical room when scrollIntoView(block: 'end') aligns the
+	   bubble to the scroll container's bottom, so it doesn't land hidden
+	   behind the floating waiting-queue action bar. */
+	scroll-margin-bottom: 220px;
 }
 
 .privacyMessageCard__bubble {

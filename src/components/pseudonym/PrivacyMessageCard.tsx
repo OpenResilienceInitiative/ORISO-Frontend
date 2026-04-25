@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TypewriterText, TypingReveal } from './BotMessageAnimation';
 import './PseudonymCard.styles.scss';
@@ -59,6 +59,40 @@ export const PrivacyMessageCard: React.FC<PrivacyMessageCardProps> = ({
 	onDone
 }) => {
 	const { t } = useTranslation();
+	/* Keep the card's trailing edge visible at all times while the
+	   typewriter is running. A ResizeObserver on the root element fires
+	   every time the bubble grows a line (newlines / wraps during typing)
+	   and calls scrollIntoView({ block: 'end' }) so the new content never
+	   hides under the floating waiting-queue action bar. */
+	const rootRef = useRef<HTMLDivElement | null>(null);
+	const scrollIntoViewSafely = () => {
+		const node = rootRef.current;
+		if (!node) return;
+		try {
+			node.scrollIntoView({ behavior: 'smooth', block: 'end' });
+		} catch {
+			node.scrollIntoView();
+		}
+	};
+	useEffect(() => {
+		if (skipTyping) return;
+		const mountId = window.setTimeout(scrollIntoViewSafely, 60);
+		const node = rootRef.current;
+		if (!node || typeof ResizeObserver === 'undefined') {
+			return () => window.clearTimeout(mountId);
+		}
+		const observer = new ResizeObserver(() => scrollIntoViewSafely());
+		observer.observe(node);
+		return () => {
+			window.clearTimeout(mountId);
+			observer.disconnect();
+		};
+	}, [skipTyping]);
+	const handleTypingDone = () => {
+		// One final nudge after the typewriter finishes.
+		window.setTimeout(scrollIntoViewSafely, 60);
+		if (onDone) onDone();
+	};
 
 	const message = t(
 		'anonymousChat.pseudonym.privacyMessage',
@@ -66,7 +100,10 @@ export const PrivacyMessageCard: React.FC<PrivacyMessageCardProps> = ({
 	);
 
 	return (
-		<div className="messageItem pseudonymCard privacyMessageCard">
+		<div
+			ref={rootRef}
+			className="messageItem pseudonymCard privacyMessageCard"
+		>
 			<div className="messageItem__messageWrap pseudonymCard__wrap">
 				<div className="pseudonymCard__avatarCol">
 					<div className="pseudonymCard__avatarFrame">
@@ -92,7 +129,10 @@ export const PrivacyMessageCard: React.FC<PrivacyMessageCardProps> = ({
 						</span>
 					</div>
 
-					<TypingReveal typingMs={skipTyping ? 0 : 900}>
+					{/* Pre-typing pause feels more "human" — the typing dots
+					    linger a little and the first character only appears
+					    after a deliberate beat (see `startDelayMs` below). */}
+					<TypingReveal typingMs={skipTyping ? 0 : 1400}>
 						<div className="pseudonymCard__bubble privacyMessageCard__bubble">
 							<p className="pseudonymCard__bubbleText privacyMessageCard__bubbleText">
 								{skipTyping ? (
@@ -100,8 +140,8 @@ export const PrivacyMessageCard: React.FC<PrivacyMessageCardProps> = ({
 								) : (
 									<TypewriterText
 										text={message}
-										charMs={14}
-										onDone={onDone}
+										startDelayMs={550}
+										onDone={handleTypingDone}
 									/>
 								)}
 							</p>

@@ -1,7 +1,50 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import './PseudonymCard.styles.scss';
 import './BreathingTutorialCard.styles.scss';
+
+/**
+ * Terminal-style typewriter for the Carimat bubble text. Random per-char
+ * delay 70-170ms + "_" cursor that toggles with the length — same feel
+ * used across the waiting-game bubbles so the animation stays consistent.
+ */
+const TerminalTypewriter: React.FC<{ text: string }> = ({ text }) => {
+	const [visibleLen, setVisibleLen] = useState(0);
+
+	useEffect(() => {
+		setVisibleLen(0);
+		if (!text) return;
+		let cancelled = false;
+		let timeoutId: number | null = null;
+		let i = 0;
+		const tick = () => {
+			if (cancelled) return;
+			timeoutId = window.setTimeout(
+				() => {
+					if (cancelled) return;
+					i += 1;
+					setVisibleLen(i);
+					if (i < text.length) tick();
+				},
+				45 + 55 * Math.random()
+			);
+		};
+		tick();
+		return () => {
+			cancelled = true;
+			if (timeoutId != null) window.clearTimeout(timeoutId);
+		};
+	}, [text]);
+
+	const done = visibleLen >= text.length;
+	const cursor = !done && visibleLen & 1 ? '_' : '';
+	return (
+		<>
+			{text.slice(0, visibleLen)}
+			{cursor}
+		</>
+	);
+};
 
 export type BreathingTutorialPhase = 'inhale' | 'hold' | 'exhale';
 
@@ -249,7 +292,10 @@ export const BreathingTutorialCard: React.FC<BreathingTutorialCardProps> = ({
 					</div>
 					<div className="breathingTutorialCard__bubble">
 						<p className="breathingTutorialCard__bubbleText">
-							{bubble}
+							<TerminalTypewriter
+								key={`${phase}-${bubble}`}
+								text={bubble}
+							/>
 						</p>
 					</div>
 				</div>

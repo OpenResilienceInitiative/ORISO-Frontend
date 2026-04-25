@@ -1459,6 +1459,11 @@
 				"label": "ካብ ቤት ጽሕፈት ወጻኢ መልእኽቲ ግደፉ",
 				"title": "ዘይምህላወይ"
 			},
+			"liveChat": {
+				"title": "My Live-Chat availability",
+				"description": "Enable your availability and you will see waiting anonymous advice seekers under “Live-Chat requests” in First enquiries.",
+				"toggleLabel": "I'm available"
+			},
 			"masterKey": {
 				"saveError": "ፓስዎርድ ኣብ ዝቕየርሉ እዋን ጸገም ኣጋጢሙ። በጃኹም ደጊምኩም ፈትኑ።"
 			},
@@ -2255,6 +2260,11 @@
 		},
 		"anonymous": {
 			"tag": "ስውር"
+		},
+		"item": {
+			"sessionType": {
+				"liveChat": "Live Chat"
+			}
 		}
 	},
 	"statusOverlay": {

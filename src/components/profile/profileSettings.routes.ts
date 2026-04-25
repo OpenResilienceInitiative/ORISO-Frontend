@@ -8,7 +8,7 @@ import {
 } from '../../utils/tabsHelper';
 import { PasswordReset } from '../passwordReset/PasswordReset';
 import { TwoFactorAuth } from '../twoFactorAuth/TwoFactorAuth';
-import { MagicLinksLoginFeature } from './MagicLinksLoginFeature';
+// import { MagicLinksLoginFeature } from './MagicLinksLoginFeature';
 import { ConsultantNotifications } from './ConsultantNotifications';
 import { DeleteAccount } from './DeleteAccount';
 import { Locale } from './Locale';
@@ -26,11 +26,11 @@ export const profileRoutesSettings = (
 				column: COLUMN_LEFT,
 				order: 1
 			},
-			{
-				component: MagicLinksLoginFeature,
-				column: COLUMN_LEFT,
-				order: 2
-			},
+			// {
+			// 	component: MagicLinksLoginFeature,
+			// 	column: COLUMN_LEFT,
+			// 	order: 2
+			// },
 			{
 				condition: (userData) => userData.twoFactorAuth?.isEnabled,
 				component: TwoFactorAuth,

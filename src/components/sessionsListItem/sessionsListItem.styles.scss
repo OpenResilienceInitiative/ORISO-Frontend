@@ -71,6 +71,12 @@ $session-postcode-border: #ffd1d1;
 					contrast(0.95);
 			}
 		}
+
+		// Match the Live Chat label (text) to the active-state red so icon
+		// and text stay visually tied together when the card is selected.
+		.sessionsListItem__consultingTypeIcon--liveChatLabel {
+			color: #da5248 !important;
+		}
 	}
 
 	&:hover {
@@ -677,6 +683,39 @@ $session-postcode-border: #ffd1d1;
 			// Additional styling if needed
 			width: 100%;
 			height: 38px;
+		}
+
+		&--liveChat {
+			/* Stay inside the card — the base rule pushes the icon 12px
+			   past its grid cell, which would clip the wider "Live Chat"
+			   label under the __content overflow: hidden. */
+			margin-right: 0;
+			padding-right: 12px;
+			gap: 8px;
+			height: 38px;
+			white-space: nowrap;
+
+			/* Undo the parent .sessionsListItem__consultingTypeIcon svg
+			   rule that forces icon-size-small and a red $secondary fill
+			   on every child svg. */
+			svg {
+				width: 22px !important;
+				height: 19px !important;
+				flex-shrink: 0;
+
+				* {
+					fill: #4b515a !important;
+				}
+			}
+		}
+
+		&--liveChatLabel {
+			font-family: 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+			font-size: 13px;
+			font-weight: 700;
+			color: #4b515a;
+			line-height: 1;
+			letter-spacing: 0.01em;
 		}
 	}
 

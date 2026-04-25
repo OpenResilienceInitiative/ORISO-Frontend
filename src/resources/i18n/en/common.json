@@ -1474,6 +1474,11 @@
 				"label": "Deposit an out of office message",
 				"title": "My absence"
 			},
+			"liveChat": {
+				"title": "My Live-Chat availability",
+				"description": "Enable your availability and you will see waiting anonymous advice seekers under “Live-Chat requests” in First enquiries.",
+				"toggleLabel": "I'm available"
+			},
 			"masterKey": {
 				"saveError": "A problem occurred while changing the password. Please try again."
 			},
@@ -2222,6 +2227,11 @@
 	"sessionList": {
 		"asker": {
 			"welcome": "Welcome back!"
+		},
+		"item": {
+			"sessionType": {
+				"liveChat": "Live Chat"
+			}
 		},
 		"createChat": {
 			"buttonTitle": "Create chat"

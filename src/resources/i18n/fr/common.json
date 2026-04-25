@@ -1459,6 +1459,11 @@
 				"label": "Déposer un message d'absence",
 				"title": "Mon absence"
 			},
+			"liveChat": {
+				"title": "Ma disponibilité Live-Chat",
+				"description": "Activez votre disponibilité pour voir les demandeurs de conseil anonymes en attente sous « Demandes Live-Chat » dans les premières demandes.",
+				"toggleLabel": "Je suis disponible"
+			},
 			"masterKey": {
 				"saveError": "Un problème s'est produit lors du changement de mot de passe. Veuillez réessayer."
 			},
@@ -2255,6 +2260,11 @@
 		},
 		"anonymous": {
 			"tag": "Anonyme"
+		},
+		"item": {
+			"sessionType": {
+				"liveChat": "Live Chat"
+			}
 		}
 	},
 	"statusOverlay": {

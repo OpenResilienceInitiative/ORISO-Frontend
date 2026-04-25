@@ -1322,21 +1322,38 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		() => stageMessage.replace(/<[^>]*>/g, ''),
 		[stageMessage]
 	);
+	/* Terminal-style typewriter: random 70-170ms per character and a "_"
+	   cursor that toggles on odd indices (empty on even), matching the
+	   classic Typewriter.js feel asked for in design. setTimeout chain
+	   instead of a fixed setInterval so each tick gets its own jitter. */
 	useEffect(() => {
 		setBubbleTypedLen(0);
 		if (!bubblePlainText.length) return;
-		const id = window.setInterval(() => {
-			setBubbleTypedLen((len) => {
-				if (len >= bubblePlainText.length) {
-					window.clearInterval(id);
-					return len;
-				}
-				return len + 1;
-			});
-		}, 30);
-		return () => window.clearInterval(id);
+		let cancelled = false;
+		let timeoutId: number | null = null;
+		let index = 0;
+		const scheduleNext = () => {
+			if (cancelled) return;
+			timeoutId = window.setTimeout(
+				() => {
+					if (cancelled) return;
+					index += 1;
+					setBubbleTypedLen(index);
+					if (index < bubblePlainText.length) {
+						scheduleNext();
+					}
+				},
+				45 + 55 * Math.random()
+			);
+		};
+		scheduleNext();
+		return () => {
+			cancelled = true;
+			if (timeoutId != null) window.clearTimeout(timeoutId);
+		};
 	}, [bubblePlainText]);
 	const isBubbleTyping = bubbleTypedLen < bubblePlainText.length;
+	const bubbleCursorChar = bubbleTypedLen & 1 ? '_' : ' ';
 
 	/**
 	 * Self-timer stage — user paces their own intervals after the belly
@@ -2042,7 +2059,6 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			if (!deleting) {
 				charIndex += 1;
 				setTypedText(line.slice(0, charIndex));
-				const typedChar = line.charAt(charIndex - 1);
 				if (charIndex >= line.length) {
 					deleting = true;
 					typewriterRef.current = window.setTimeout(
@@ -2053,11 +2069,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				}
 				typewriterRef.current = window.setTimeout(
 					tick,
-					Math.max(
-						TYPEWRITER_TIMING.charForwardMs +
-							getPunctuationPauseMs(typedChar),
-						18
-					)
+					45 + 55 * Math.random()
 				);
 				return;
 			}
@@ -2080,7 +2092,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			}
 			typewriterRef.current = window.setTimeout(
 				tick,
-				TYPEWRITER_TIMING.charBackwardMs
+				18 + 20 * Math.random()
 			);
 		};
 
@@ -2107,10 +2119,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		}
 		const fullText = currentBriefingScreen.text;
 		let index = 0;
-		const typingDelay =
-			briefingScreenIndex <= 1
-				? TYPEWRITER_TIMING.charForwardSlowMs
-				: TYPEWRITER_TIMING.charForwardMs;
+		/* Terminal-style jitter: 70 + random(0,100) ms per char. Matches
+		   the Typewriter.js feel used across the game bubbles. Initial
+		   delay kept so the screen settles before typing starts. */
 		const initialDelay =
 			briefingScreenIndex <= 1
 				? TYPEWRITER_TIMING.initialDelaySlowMs
@@ -2121,14 +2132,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		const tick = () => {
 			index += 1;
 			setBriefingTypedText(fullText.slice(0, index));
-			const typedChar = fullText.charAt(index - 1);
 			if (index >= fullText.length) {
 				setBriefingTypewriterBusy(false);
 				return;
 			}
 			briefingTypewriterRef.current = window.setTimeout(
 				tick,
-				typingDelay + getPunctuationPauseMs(typedChar)
+				45 + 55 * Math.random()
 			);
 		};
 
@@ -2298,7 +2308,6 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		const tick = () => {
 			index += 1;
 			setCenterStageTypedText(fullText.slice(0, index));
-			const typedChar = fullText.charAt(index - 1);
 			if (index >= fullText.length) {
 				setCenterStageTypewriterBusy(false);
 				if (waitingGameStage === 'prize') {
@@ -2311,8 +2320,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			}
 			centerStageTypewriterRef.current = window.setTimeout(
 				tick,
-				TYPEWRITER_TIMING.charForwardMs +
-					getPunctuationPauseMs(typedChar)
+				45 + 55 * Math.random()
 			);
 		};
 		centerStageTypewriterRef.current = window.setTimeout(
@@ -2998,7 +3006,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 															0,
 															bubbleTypedLen
 														)}
-														<span className="breathingTutorialCard__bubbleCaret" />
+														{bubbleCursorChar}
 													</p>
 												) : (
 													<p
@@ -3511,14 +3519,20 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											<div
 												className={clsx(
 													'session__waitingBriefingText',
-													'session__waitingTypewriterText',
-													briefingTypewriterBusy &&
-														'session__waitingTypewriterText--busy'
+													'session__waitingTypewriterText'
 												)}
 											>
-												{briefingTypewriterBusy
-													? briefingTypedText
-													: currentBriefingScreen.text}
+												{briefingTypewriterBusy ? (
+													<>
+														{briefingTypedText}
+														{briefingTypedText.length &
+														1
+															? '_'
+															: ''}
+													</>
+												) : (
+													currentBriefingScreen.text
+												)}
 											</div>
 											{briefingScreenIndex === 2 &&
 												!showBriefingNegativeScreen && (
@@ -3582,7 +3596,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									  waitingGameStage === 'prize' ||
 									  waitingGameStage ===
 											'serenity' ? null : typewriterBusy ? (
-										typedText
+										<>
+											{typedText}
+											{typedText.length & 1 ? '_' : ''}
+										</>
 									) : isPreGameSetupScreen ? null : (
 										stageMessage
 									)}

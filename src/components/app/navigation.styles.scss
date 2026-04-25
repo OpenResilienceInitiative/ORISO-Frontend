@@ -112,7 +112,7 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 				}
 
 				.navigation__item--active .navigation__title--figma {
-					color: #d32f2f;
+					color: #930008;
 					font-weight: 700;
 				}
 
@@ -154,13 +154,13 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 					}
 
 					&--row.navigation__icon-slot--active {
-						background: rgba(211, 47, 47, 0.24);
-						border: 1px solid #d32f2f;
+						background: #ffdad5;
+						border: 1px solid #930008;
 					}
 
 					&--tile.navigation__icon-slot--active {
-						background: rgba(211, 47, 47, 0.24);
-						border: 1px solid #d32f2f;
+						background: #ffdad5;
+						border: 1px solid #930008;
 					}
 
 					/* Live-chat availability toggle — defaults to inactive (grey,
@@ -210,13 +210,13 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 					}
 
 					&--logout.navigation__icon-slot--active {
-						background: rgba(211, 47, 47, 0.24);
-						border: 1px solid #d32f2f;
+						background: #ffdad5;
+						border: 1px solid #930008;
 					}
 
 					&--logout.navigation__icon-slot--active
 						.navigation__icon__single {
-						color: #cc1e1c;
+						color: #930008;
 					}
 
 					&__inner {
@@ -267,19 +267,19 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 
 				.navigation__icon-slot--row.navigation__icon-slot--active
 					.navigation__globe-svg {
-					color: #cc1e1c;
+					color: #930008;
 				}
 
 				.navigation__item--active.navigation__item--nav-row
 					.navigation__icon__single,
 				.navigation__icon-slot--row.navigation__icon-slot--active
 					.navigation__icon__single {
-					color: #cc1e1c;
+					color: #930008;
 				}
 
 				.navigation__item--active.navigation__item--nav-tile
 					.navigation__icon__single {
-					color: #cc1e1c;
+					color: #930008;
 				}
 
 				.navigation__icon-slot--row .navigation__icon__outline {
@@ -302,7 +302,7 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 					.navigation__icon-slot--row
 					.navigation__icon__filled {
 					display: block;
-					color: #cc1e1c;
+					color: #930008;
 					fill: currentColor;
 				}
 
@@ -320,10 +320,10 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 
 				/* Badge: corner dot, half-in/half-out; position:absolute doesn’t affect flex centering */
 				.navigation__icon-slot .navigation__item__count--figma {
-					color: #d32f2f;
+					color: #930008;
 					background-color: #fff;
 					outline: none;
-					border: 2px solid #d32f2f;
+					border: 2px solid #930008;
 					box-shadow: none;
 					left: auto;
 					transform: none;
@@ -625,7 +625,7 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 
 		&--active {
 			@include breakpoint($fromLarge) {
-				background: rgba(211, 47, 47, 0.24);
+				background: #ffdad5;
 			}
 
 			.navigation__icon__background::after {
@@ -669,9 +669,9 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 	}
 
 	&__item__count {
-		color: #d32f2f;
+		color: #930008;
 		background-color: #ffffff;
-		outline: #d32f2f 2px solid;
+		outline: #930008 2px solid;
 	}
 
 	&__title {

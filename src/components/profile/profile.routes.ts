@@ -7,6 +7,7 @@ import { ConsultantPrivateData } from './ConsultantPrivateData';
 import { AskerAboutMeData } from './AskerAboutMeData';
 import { ConsultantStatistics } from './ConsultantStatistics';
 import { AbsenceFormular } from './AbsenceFormular';
+import { LiveChatAvailability } from './LiveChatAvailability';
 import { EnableWalkthrough } from './EnableWalkthrough';
 import { COLUMN_LEFT, COLUMN_RIGHT, TabsType } from '../../utils/tabsHelper';
 import { isDesktop } from 'react-device-detect';
@@ -181,12 +182,27 @@ const profileRoutes = (
 					url: '/abwesenheit',
 					elements: [
 						{
+							condition: (userData) =>
+								hasUserAuthority(
+									AUTHORITIES.CONSULTANT_DEFAULT,
+									userData
+								),
+							component: LiveChatAvailability,
+							column:
+								tenant === null ||
+								tenant?.settings?.featureStatisticsEnabled
+									? COLUMN_RIGHT
+									: COLUMN_LEFT,
+							order: 1
+						},
+						{
 							component: AbsenceFormular,
 							column:
 								tenant === null ||
 								tenant?.settings?.featureStatisticsEnabled
 									? COLUMN_RIGHT
-									: COLUMN_LEFT
+									: COLUMN_LEFT,
+							order: 2
 						}
 					]
 				}

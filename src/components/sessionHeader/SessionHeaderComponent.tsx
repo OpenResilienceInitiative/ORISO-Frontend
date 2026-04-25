@@ -728,40 +728,77 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 							!isAskerInfoAvailable()
 					})}
 				>
-					<div className="sessionInfo__memberStack">
-						<div
-							className="sessionInfo__memberStackPlus"
-							aria-hidden="true"
-						>
-							<svg
-								width="32"
-								height="32"
-								viewBox="0 0 32 32"
-								fill="none"
-							>
-								<path
-									d="M15.167 16.8333H10.167V15.1666H15.167V10.1666H16.8337V15.1666H21.8337V16.8333H16.8337V21.8333H15.167V16.8333Z"
-									fill="#CC1E1C"
-									fillOpacity="0.6"
-								/>
-							</svg>
-						</div>
-						<div className="sessionInfo__memberBubble">
-							{hasUserAuthority(
-								AUTHORITIES.ASKER_DEFAULT,
+					{(() => {
+						/* Just the "+" on the avatar stack is the supervisor
+						   "add / manage" trigger for 1-on-1 chats (normal +
+						   anonymous). The avatar itself is NOT clickable —
+						   only the plus. Visibility conditions mirror the
+						   old Supervision On/Off pill: feature flag on for
+						   this chat type, caller is a consultant, session is
+						   1-on-1, not enquiry, not viewed by a supervisor.
+						   Mobile keeps the existing session-menu entry;
+						   this wires only the desktop plus. */
+						const canOpenSupervisorModal =
+							isSupervisionEnabledForCurrentChat &&
+							hasUserAuthority(
+								AUTHORITIES.CONSULTANT_DEFAULT,
 								userData
-							) && !activeSession.consultant ? (
-								<ConsultantSearchLoader size="32px" />
-							) : (
-								<UserAvatar
-									username={contact?.username || 'User'}
-									displayName={contact?.displayName}
-									userId={contact?.username || 'unknown'}
-									size="32px"
-								/>
-							)}
-						</div>
-					</div>
+							) &&
+							!activeSession.isGroup &&
+							!isSupervisor &&
+							!activeSession.isEnquiry &&
+							!untilL;
+						return (
+							<div className="sessionInfo__memberStack">
+								{canOpenSupervisorModal && (
+									<button
+										type="button"
+										className="sessionInfo__memberStackPlus sessionInfo__memberStackPlus--interactive"
+										aria-label={translate(
+											'sessionHeader.supervisor.modal.title',
+											'Supervisor hinzufügen'
+										)}
+										onClick={() =>
+											setIsSupervisorModalOpen(true)
+										}
+									>
+										<svg
+											width="32"
+											height="32"
+											viewBox="0 0 32 32"
+											fill="none"
+											aria-hidden="true"
+										>
+											<path
+												d="M15.167 16.8333H10.167V15.1666H15.167V10.1666H16.8337V15.1666H21.8337V16.8333H16.8337V21.8333H15.167V16.8333Z"
+												fill="#CC1E1C"
+												fillOpacity="0.6"
+											/>
+										</svg>
+									</button>
+								)}
+								<div className="sessionInfo__memberBubble">
+									{hasUserAuthority(
+										AUTHORITIES.ASKER_DEFAULT,
+										userData
+									) && !activeSession.consultant ? (
+										<ConsultantSearchLoader size="32px" />
+									) : (
+										<UserAvatar
+											username={
+												contact?.username || 'User'
+											}
+											displayName={contact?.displayName}
+											userId={
+												contact?.username || 'unknown'
+											}
+											size="32px"
+										/>
+									)}
+								</div>
+							</div>
+						);
+					})()}
 					{hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) && (
 						<h3>
 							{contact?.displayName ||
@@ -840,8 +877,12 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 										)}
 						</button>
 					)}
-				{/* Supervisor Management Button - Only for assigned consultants (not supervisors, not during enquiry) */}
-				{isSupervisionEnabledForCurrentChat &&
+				{/* Supervisor Management Button replaced by the "+" overlay on
+				    the avatar stack above. Keeping the render behind a hard
+				    `false` preserves the original markup for reference without
+				    surfacing a duplicate entry point. */}
+				{false &&
+					isSupervisionEnabledForCurrentChat &&
 					hasUserAuthority(
 						AUTHORITIES.CONSULTANT_DEFAULT,
 						userData

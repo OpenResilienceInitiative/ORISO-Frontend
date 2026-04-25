@@ -1499,6 +1499,11 @@
 				"label": "Hinterlegen Sie eine Abwesenheitsnachricht",
 				"title": "Meine Abwesenheit"
 			},
+			"liveChat": {
+				"title": "Meine Live-Chat Verfügbarkeit",
+				"description": "Aktivieren Sie Ihre Verfügbarkeit und sehen Sie in den Erstanfragen unter „Live-Chat Anfragen“ die wartenden anoymen Ratsuchenden.",
+				"toggleLabel": "Bin verfügbar"
+			},
 			"masterKey": {
 				"saveError": "Beim Passwort Ändern ist ein Problem aufgetaucht. Bitte versuchen Sie es erneut."
 			},
@@ -2288,6 +2293,11 @@
 	"sessionList": {
 		"asker": {
 			"welcome": "Willkommen zurück!"
+		},
+		"item": {
+			"sessionType": {
+				"liveChat": "Live Chat"
+			}
 		},
 		"createChat": {
 			"buttonTitle": "Chat anlegen"

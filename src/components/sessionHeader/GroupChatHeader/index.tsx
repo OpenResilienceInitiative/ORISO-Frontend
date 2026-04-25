@@ -52,23 +52,24 @@ export const GroupChatHeader = ({
 	const { t } = useTranslation(['common', 'consultingTypes', 'agencies']);
 	const { activeSession } = useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
-	
+
 	// MATRIX: Get room members from Matrix client
 	const [matrixMembers, setMatrixMembers] = useState<RoomMember[]>([]);
 	const [isLoadingMembers, setIsLoadingMembers] = useState<boolean>(true);
-	const matrixRoomId = activeSession.item.matrixRoomId || activeSession.item.groupId;
-	
+	const matrixRoomId =
+		activeSession.item.matrixRoomId || activeSession.item.groupId;
+
 	useEffect(() => {
 		// console.log('🔍 GroupChatHeader: Fetching Matrix members for room:', matrixRoomId);
 		setIsLoadingMembers(true);
-		
+
 		if (!matrixRoomId) {
 			// console.log('❌ GroupChatHeader: No matrixRoomId found');
 			setMatrixMembers([]);
 			setIsLoadingMembers(false);
 			return;
 		}
-		
+
 		// Try to get Matrix client (from global window or imported service)
 		const getClient = () => {
 			const globalService = (window as any).matrixClientService;
@@ -77,14 +78,14 @@ export const GroupChatHeader = ({
 			}
 			return matrixClientService.getClient();
 		};
-		
+
 		// Wait for Matrix client to be available (retry up to 20 times = 10 seconds)
 		let retryCount = 0;
 		const maxRetries = 20;
-		
+
 		const tryLoadMembers = () => {
 			const client = getClient();
-			
+
 			if (!client) {
 				retryCount++;
 				if (retryCount < maxRetries) {
@@ -98,18 +99,18 @@ export const GroupChatHeader = ({
 					return;
 				}
 			}
-			
+
 			// console.log('✅ GroupChatHeader: Matrix client found, getting room...');
 			const room = client.getRoom(matrixRoomId);
-			
+
 			if (!room) {
 				// console.log('⏳ GroupChatHeader: Room not found yet, waiting for sync...');
 				// console.log('📋 Available rooms:', client.getRooms().map((r: any) => r.roomId));
-				
+
 				// Wait for room to appear (up to 10 seconds)
 				let roomRetryCount = 0;
 				const maxRoomRetries = 20;
-				
+
 				const tryGetRoom = () => {
 					const updatedRoom = client.getRoom(matrixRoomId);
 					if (updatedRoom) {
@@ -125,32 +126,33 @@ export const GroupChatHeader = ({
 						}
 					}
 				};
-				
+
 				setTimeout(tryGetRoom, 500);
 				return;
 			}
-			
+
 			loadMembers(room);
 		};
-		
+
 		const loadMembers = (room: any) => {
 			// Get joined members
 			const allMembers = room.getJoinedMembers();
-			
+
 			// Filter supervisors from member list (supervisors have power level 10)
 			const activeMembers = allMembers.filter((m: any) => {
 				try {
-					const powerLevel = room.getMember(m.userId)?.powerLevel || 0;
+					const powerLevel =
+						room.getMember(m.userId)?.powerLevel || 0;
 					return powerLevel !== 10; // Exclude supervisors (power level 10)
 				} catch (err) {
 					return true; // Include if we can't determine power level
 				}
 			});
-			
+
 			// console.log('✅ GroupChatHeader: Found', allMembers?.length || 0, 'total members,', activeMembers?.length || 0, 'active members:', activeMembers?.map((m: any) => m.userId || m.name));
 			setMatrixMembers(activeMembers || []);
 			setIsLoadingMembers(false);
-			
+
 			// Poll for member changes every 5 seconds
 			const intervalId = setInterval(() => {
 				const client = getClient();
@@ -165,14 +167,14 @@ export const GroupChatHeader = ({
 					}
 				}
 			}, 5000);
-			
+
 			// Store interval ID for cleanup
 			(window as any).__groupChatHeaderInterval = intervalId;
 		};
-		
+
 		// Start trying to load members
 		tryLoadMembers();
-		
+
 		return () => {
 			const intervalId = (window as any).__groupChatHeaderInterval;
 			if (intervalId) {
@@ -190,27 +192,37 @@ export const GroupChatHeader = ({
 		AUTHORITIES.CONSULTANT_DEFAULT,
 		userData
 	);
-	
+
 	// Use CallManager for group calls (same as SessionMenu)
 	const handleStartVideoCall = async (isVideoActivated: boolean = true) => {
 		// console.log("═══════════════════════════════════════════════");
 		// console.log("🎬 GROUP CALL BUTTON CLICKED (GroupChatHeader)!");
 		// console.log("═══════════════════════════════════════════════");
-		
+
 		try {
-			const roomId = activeSession.item.matrixRoomId || activeSession.item.groupId;
-			
+			const roomId =
+				activeSession.item.matrixRoomId || activeSession.item.groupId;
+
 			if (!roomId) {
 				// console.error('❌ No Matrix room ID found for session');
-				alert('Cannot start call: No Matrix room found for this session');
+				alert(
+					'Cannot start call: No Matrix room found for this session'
+				);
 				return;
 			}
 
 			// Check HTTPS
 			if (window.location.protocol !== 'https:') {
 				// console.error('❌ Not on HTTPS! Safari requires HTTPS for camera/microphone access');
-				const httpsUrl = window.location.href.replace('http://', 'https://');
-				if (window.confirm('Camera/microphone access requires HTTPS. Redirect to secure connection?')) {
+				const httpsUrl = window.location.href.replace(
+					'http://',
+					'https://'
+				);
+				if (
+					window.confirm(
+						'Camera/microphone access requires HTTPS. Redirect to secure connection?'
+					)
+				) {
 					window.location.href = httpsUrl;
 				}
 				return;
@@ -218,46 +230,50 @@ export const GroupChatHeader = ({
 
 			// Request media permissions IMMEDIATELY in click handler
 			// console.log('🎤 Requesting media permissions (SYNC with user click)...');
-			
+
 			try {
-				const stream = await navigator.mediaDevices.getUserMedia({ 
-					video: isVideoActivated, 
-					audio: true 
+				const stream = await navigator.mediaDevices.getUserMedia({
+					video: isVideoActivated,
+					audio: true
 				});
 				// console.log('✅ Media permissions granted!', stream);
-				
+
 				// Store stream globally
 				(window as any).__preRequestedMediaStream = stream;
 				(window as any).__preRequestedMediaStreamTime = Date.now();
 			} catch (mediaError: any) {
 				// console.error('❌ Media permission denied:', mediaError);
-				
+
 				let errorMsg = 'Cannot access camera/microphone. ';
 				if (mediaError.name === 'NotAllowedError') {
-					errorMsg += 'Please grant permissions in your browser settings.';
+					errorMsg +=
+						'Please grant permissions in your browser settings.';
 				} else if (mediaError.name === 'NotFoundError') {
 					errorMsg += 'No camera/microphone found on this device.';
 				} else if (mediaError.name === 'NotSupportedError') {
-					errorMsg += 'Your browser does not support this feature. Please use HTTPS.';
+					errorMsg +=
+						'Your browser does not support this feature. Please use HTTPS.';
 				} else {
 					errorMsg += mediaError.message || 'Unknown error.';
 				}
-				
+
 				alert(errorMsg);
 				return;
 			}
 
 			// console.log('📞 Starting call via CallManager with roomId:', roomId);
 			// console.log('🎯 This is a GROUP CHAT - forcing isGroup=true');
-			
+
 			// Use CallManager (works for both 1-on-1 and group calls!)
 			const { callManager } = require('../../../services/CallManager');
 			callManager.startCall(roomId, isVideoActivated, true); // Force isGroup=true for group chats
-			
+
 			// console.log('✅ Call initiated!');
 		} catch (error) {
 			// console.error('💥 ERROR in handleStartVideoCall:', error);
-			alert(`Call failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+			alert(
+				`Call failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+			);
 		}
 		// console.log("═══════════════════════════════════════════════");
 	};
@@ -337,7 +353,9 @@ export const GroupChatHeader = ({
 	});
 	const visibleMembers = matrixMembers.filter((member) => {
 		const userId = member.userId || '';
-		return !userId.includes('@system') && !userId.includes('@caritas.local');
+		return (
+			!userId.includes('@system') && !userId.includes('@caritas.local')
+		);
 	});
 	const stackedMembers = visibleMembers.slice(0, 3);
 
@@ -354,32 +372,42 @@ export const GroupChatHeader = ({
 				<div className="sessionInfo__username sessionInfo__username--deactivate sessionInfo__username--groupChat">
 					<div className="sessionInfo__titleRow">
 						<div className="sessionInfo__memberStack">
-							<div className="sessionInfo__memberStackPlus" aria-hidden="true">
-								<svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-									<path d="M15.167 16.8333H10.167V15.1666H15.167V10.1666H16.8337V15.1666H21.8337V16.8333H16.8337V21.8333H15.167V16.8333Z" fill="#CC1E1C" fillOpacity="0.6"/>
-								</svg>
-							</div>
+							{/* No supervisor "+" on group chats — supervision
+							    is only offered for 1-on-1 chats. */}
 							{stackedMembers.map((member, index) => {
 								const userId = member.userId || '';
-								const parsedUsername = userId.split(':')[0]?.replace('@', '') || userId;
-								const displayName = decodeUsername(member.name || parsedUsername);
+								const parsedUsername =
+									userId.split(':')[0]?.replace('@', '') ||
+									userId;
+								const displayName = decodeUsername(
+									member.name || parsedUsername
+								);
 								return (
 									<div
-										key={member.userId || `${parsedUsername}-${index}`}
+										key={
+											member.userId ||
+											`${parsedUsername}-${index}`
+										}
 										className="sessionInfo__memberBubble"
 										style={{ zIndex: 20 - index }}
 									>
 										<UserAvatar
 											username={parsedUsername}
 											displayName={displayName}
-											userId={member.userId || parsedUsername}
+											userId={
+												member.userId || parsedUsername
+											}
 											size="32px"
 										/>
 									</div>
 								);
 							})}
 						</div>
-						<h3>{typeof activeSession.item.topic === 'string' ? activeSession.item.topic : activeSession.item.topic?.name || ''}</h3>
+						<h3>
+							{typeof activeSession.item.topic === 'string'
+								? activeSession.item.topic
+								: activeSession.item.topic?.name || ''}
+						</h3>
 					</div>
 					{/* Matrix room participants */}
 					{isLoadingMembers ? (
@@ -389,17 +417,23 @@ export const GroupChatHeader = ({
 					) : visibleMembers.length > 0 ? (
 						<div className="sessionInfo__participants">
 							{visibleMembers.map((member, index) => {
-									// Extract username from userId (format: @username:domain)
-									// Always use username from userId, ignore member.name to ensure consistency
-									const userId = member.userId || '';
-									const username = userId.split(':')[0]?.replace('@', '') || userId;
-									return (
-										<span key={member.userId || index} className="sessionInfo__participant">
-											{decodeUsername(username)}
-											{index < visibleMembers.length - 1 && ', '}
-										</span>
-									);
-								})}
+								// Extract username from userId (format: @username:domain)
+								// Always use username from userId, ignore member.name to ensure consistency
+								const userId = member.userId || '';
+								const username =
+									userId.split(':')[0]?.replace('@', '') ||
+									userId;
+								return (
+									<span
+										key={member.userId || index}
+										className="sessionInfo__participant"
+									>
+										{decodeUsername(username)}
+										{index < visibleMembers.length - 1 &&
+											', '}
+									</span>
+								);
+							})}
 						</div>
 					) : null}
 				</div>
@@ -426,13 +460,17 @@ export const GroupChatHeader = ({
 						>
 							{isVideoCallsEnabled && (
 								<Button
-									buttonHandle={() => handleStartVideoCall(true)}
+									buttonHandle={() =>
+										handleStartVideoCall(true)
+									}
 									item={buttonStartVideoCall}
 								/>
 							)}
 							{isAudioCallsEnabled && (
 								<Button
-									buttonHandle={() => handleStartVideoCall(false)}
+									buttonHandle={() =>
+										handleStartVideoCall(false)
+									}
 									item={buttonStartCall}
 								/>
 							)}
@@ -440,8 +478,8 @@ export const GroupChatHeader = ({
 					)}
 
 				{/* Group header uses only inline call controls; hide flyout 3-dot menu here. */}
-		</div>
-		{/* <div className="sessionInfo__metaInfo">
+			</div>
+			{/* <div className="sessionInfo__metaInfo">
 			{activeSession.item.active &&
 				activeSession.item.subscribed &&
 				!isJoinGroupChatView && (
@@ -570,7 +608,13 @@ export const GroupChatHeader = ({
 };
 
 const VideoCallHeaderIcon = () => (
-	<svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+	<svg
+		width="32"
+		height="32"
+		viewBox="0 0 32 32"
+		fill="none"
+		aria-hidden="true"
+	>
 		<rect width="32" height="32" rx="12" fill="#D32F2F" fillOpacity="0.6" />
 		<path
 			fillRule="evenodd"
@@ -582,7 +626,13 @@ const VideoCallHeaderIcon = () => (
 );
 
 const AudioCallHeaderIcon = () => (
-	<svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+	<svg
+		width="32"
+		height="32"
+		viewBox="0 0 32 32"
+		fill="none"
+		aria-hidden="true"
+	>
 		<rect width="32" height="32" rx="16" fill="#FFD1D1" fillOpacity="0.6" />
 		<path
 			fillRule="evenodd"

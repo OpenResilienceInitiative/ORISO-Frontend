@@ -256,13 +256,10 @@ export const SessionsListToolbar = ({
 		});
 	const hasTypedQuery = searchValue.trim().length > 0;
 	const hasSelectedPeople = selectedPersonIds.length > 0;
-	const showSearchDropdown =
-		isSearchViewOpen && (hasTypedQuery || hasSelectedPeople);
+	const showSearchDropdown = isSearchViewOpen;
 	const reopenSearchIfActive = React.useCallback(() => {
-		if (hasTypedQuery || hasSelectedPeople) {
-			setIsSearchViewOpen(true);
-		}
-	}, [hasSelectedPeople, hasTypedQuery]);
+		setIsSearchViewOpen(true);
+	}, []);
 
 	React.useEffect(() => {
 		const handleOutsidePointer = (event: MouseEvent | TouchEvent) => {

@@ -1459,6 +1459,11 @@
 				"label": "Ofis dışı bir mesajı saklayın",
 				"title": "Benim yokluğum"
 			},
+			"liveChat": {
+				"title": "Live-Chat uygunluğum",
+				"description": "Uygunluğunuzu etkinleştirin, İlk başvurular altındaki „Live-Chat istekleri“ bölümünde bekleyen anonim danışanları göreceksiniz.",
+				"toggleLabel": "Uygunum"
+			},
 			"masterKey": {
 				"saveError": "Şifrenizi değiştirirken bir sorun oluştu. Lütfen tekrar deneyin."
 			},
@@ -2255,6 +2260,11 @@
 		},
 		"anonymous": {
 			"tag": "Anonim"
+		},
+		"item": {
+			"sessionType": {
+				"liveChat": "Live Chat"
+			}
 		}
 	},
 	"statusOverlay": {

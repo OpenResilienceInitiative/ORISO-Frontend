@@ -1372,18 +1372,9 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		white-space: pre-wrap;
 	}
 
-	&__waitingTypewriterText--busy::after {
-		content: '';
-		display: inline-block;
-		width: 0;
-		height: 1.06em;
-		margin-left: 4px;
-		vertical-align: -0.1em;
-		padding-right: clamp(3px, 0.12vw, 6px);
-		border-right: clamp(4px, 0.58vw, 10px) solid rgba(22, 22, 22, 0.86);
-		box-shadow: 0 0 5px rgba(18, 18, 18, 0.24);
-		animation: breathing-typewriter-beam-blink 1s infinite;
-	}
+	/* Old CSS beam cursor removed — each typewriter now appends its own
+	   toggling "_" character (terminal style) directly in the rendered
+	   string, matching the reference Typewriter.js behaviour. */
 
 	&__waitingModuleActions {
 		margin-top: 10px;
