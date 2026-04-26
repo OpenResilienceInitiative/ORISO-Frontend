@@ -215,9 +215,6 @@ $tabBarHeightDesktop: 53px;
 		height: var(--sessionsListThumbHeight, 56px);
 		border-radius: 999px;
 		background: #ffffff;
-		box-shadow:
-			0 0 0 1px rgba(165, 0, 10, 0.16),
-			0 2px 8px rgba(0, 0, 0, 0.12);
 		transform: translateY(var(--sessionsListThumbTop, 0px));
 		transition:
 			box-shadow 140ms ease,
@@ -233,16 +230,11 @@ $tabBarHeightDesktop: 53px;
 
 	&__resizeHandle[data-dragging='true'] &__resizeHandlePill {
 		background: #ffdad5;
-		box-shadow:
-			0 0 0 1px rgba(165, 0, 10, 0.3),
-			0 3px 10px rgba(0, 0, 0, 0.18);
 		transform: translateY(var(--sessionsListThumbTop, 0px)) scaleX(1.12);
 	}
 
 	&__resizeHandle:focus-visible &__resizeHandlePill {
-		box-shadow:
-			0 0 0 1px rgba(165, 0, 10, 0.65),
-			0 3px 10px rgba(0, 0, 0, 0.18);
+		box-shadow: 0 0 0 1px #ffdad5;
 	}
 
 	&__functionalityWrapper {
