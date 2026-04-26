@@ -155,6 +155,12 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 		[scrollTargetRef]
 	);
 
+	const toggleCollapsed = useCallback(() => {
+		const next =
+			currentWidth <= minWidth + 1 ? ICON_ONLY_THRESHOLD : minWidth;
+		onResize(normalizeWidth(next));
+	}, [ICON_ONLY_THRESHOLD, currentWidth, minWidth, normalizeWidth, onResize]);
+
 	const handlePointerUp = useCallback(() => {
 		pointerIdRef.current = null;
 		dragModeRef.current = 'pending';
@@ -386,6 +392,21 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 				'sessionList.resizeHandle.ariaLabel',
 				'Resize sessions list. Drag vertically to scroll the sessions list.'
 			)}
+			onDoubleClick={(e) => {
+				e.preventDefault();
+				e.stopPropagation();
+				toggleCollapsed();
+			}}
+			onWheel={(e) => {
+				// UX: a small wheel gesture on the handle should toggle open/close
+				// (requested behavior). Keep it gated so it won't trigger on tiny noise.
+				if (isDragging) return;
+				const delta = Math.abs(e.deltaY) + Math.abs(e.deltaX);
+				if (delta < 4) return;
+				e.preventDefault();
+				e.stopPropagation();
+				toggleCollapsed();
+			}}
 			onPointerDown={(e) => {
 				// Make arrow-key control work immediately after hover/click.
 				handleRef.current?.focus({ preventScroll: true });
