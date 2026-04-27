@@ -1,5 +1,7 @@
 # Matrix Integration Guide
 
+This file is retained as historical migration context. For the current canonical architecture and implementation rules, use [`docs/README.md`](./docs/README.md) and [`docs/architecture/current-architecture.md`](./docs/architecture/current-architecture.md).
+
 ## ✅ What We Have Done
 
 1. **Installed Matrix JS SDK** in frontend project
@@ -18,6 +20,7 @@
 ## 🚀 How to Use
 
 ### 1. Start Frontend (Port 9001)
+
 ```bash
 cd ~/Desktop/online-beratung/caritas-workspace/caritas-rework-onlineBeratung-frontend
 export NVM_DIR="$HOME/.nvm" && source "$NVM_DIR/nvm.sh" && nvm use 20
@@ -25,10 +28,12 @@ npm start
 ```
 
 ### 2. Access Frontend
+
 - **URL**: `http://91.99.219.182:9001`
 - **Chat Backend**: Now uses Matrix instead of Rocket.Chat
 
 ### 3. Test Matrix Chat
+
 - **Matrix Server**: `http://91.99.219.182:8008`
 - **Registration**: Enabled (no email verification required)
 - **Domain**: `caritas.local`

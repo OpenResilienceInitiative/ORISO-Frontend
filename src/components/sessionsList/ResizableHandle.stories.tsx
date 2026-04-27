@@ -27,12 +27,17 @@ type Story = StoryObj<typeof meta>;
 
 function ResizeDemo({
 	minWidth = 80,
-	maxWidth = 600
-}: {
+	maxWidth = 600,
+	currentWidth = 320
+}: Readonly<{
 	minWidth?: number;
 	maxWidth?: number;
-}) {
+	currentWidth?: number;
+}>) {
 	const [width, setWidth] = useState(320);
+	React.useEffect(() => {
+		setWidth(currentWidth);
+	}, [currentWidth]);
 	return (
 		<div
 			style={{
@@ -61,6 +66,7 @@ function ResizeDemo({
 					Drag the right edge →
 				</p>
 				<ResizableHandle
+					currentWidth={width}
 					onResize={setWidth}
 					minWidth={minWidth}
 					maxWidth={maxWidth}
@@ -81,9 +87,19 @@ function ResizeDemo({
 }
 
 export const Default: Story = {
-	render: () => <ResizeDemo />
+	args: {
+		currentWidth: 320,
+		minWidth: 80,
+		maxWidth: 600
+	},
+	render: (args) => <ResizeDemo {...args} />
 };
 
 export const NarrowMin: Story = {
-	render: () => <ResizeDemo minWidth={120} maxWidth={400} />
+	args: {
+		currentWidth: 320,
+		minWidth: 120,
+		maxWidth: 400
+	},
+	render: (args) => <ResizeDemo {...args} />
 };

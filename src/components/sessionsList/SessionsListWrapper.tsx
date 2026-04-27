@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useContext, useState, useCallback } from 'react';
+import { useContext, useRef, useState, useCallback } from 'react';
 import { ResizableHandle } from './ResizableHandle';
 import { SESSION_LIST_TYPES, SESSION_TYPES } from '../session/sessionHelpers';
 import {
@@ -13,6 +13,7 @@ import './sessionsList.styles';
 import { LanguagesContext } from '../../globalState/provider/LanguagesProvider';
 import { useTranslation } from 'react-i18next';
 import { useResponsive } from '../../hooks/useResponsive';
+import { SESSIONS_LIST_RESIZE } from './sessionsListResize.constants';
 
 interface SessionsListWrapperProps {
 	sessionTypes: SESSION_TYPES;
@@ -21,19 +22,19 @@ interface SessionsListWrapperProps {
 export const SessionsListWrapper = ({
 	sessionTypes
 }: SessionsListWrapperProps) => {
-	const ICON_ONLY_THRESHOLD = 420;
-	const SNAP_THRESHOLD = 360;
+	const { ICON_ONLY_THRESHOLD, SNAP_THRESHOLD } = SESSIONS_LIST_RESIZE;
 	const MIN_WIDTH = 80;
 	const { t: translate } = useTranslation();
 	const { fromL } = useResponsive();
 	const { fixed: fixedLanguages } = useContext(LanguagesContext);
 	const { userData } = useContext(UserDataContext);
 	const { type } = useContext(SessionTypeContext);
+	const listScrollRef = useRef<HTMLDivElement | null>(null);
 
 	// Resizable sidebar width
 	const [sidebarWidth, setSidebarWidth] = useState<number>(() => {
 		const saved = localStorage.getItem('sessionsList_width');
-		const width = saved ? parseInt(saved, 10) : 380;
+		const width = saved ? Number.parseInt(saved, 10) : 380;
 
 		// Snap to proper size if in awkward range (prevent text truncation)
 		if (width > MIN_WIDTH && width < ICON_ONLY_THRESHOLD) {
@@ -75,8 +76,13 @@ export const SessionsListWrapper = ({
 				<SessionsList
 					defaultLanguage={fixedLanguages[0]}
 					sessionTypes={sessionTypes}
+					scrollContainerRef={listScrollRef}
 				/>
-				<ResizableHandle onResize={handleResize} />
+				<ResizableHandle
+					currentWidth={sidebarWidth}
+					onResize={handleResize}
+					scrollTargetRef={listScrollRef}
+				/>
 			</div>
 		);
 	}
@@ -106,8 +112,13 @@ export const SessionsListWrapper = ({
 			<SessionsList
 				defaultLanguage={fixedLanguages[0]}
 				sessionTypes={sessionTypes}
+				scrollContainerRef={listScrollRef}
 			/>
-			<ResizableHandle onResize={handleResize} />
+			<ResizableHandle
+				currentWidth={sidebarWidth}
+				onResize={handleResize}
+				scrollTargetRef={listScrollRef}
+			/>
 		</div>
 	);
 };
