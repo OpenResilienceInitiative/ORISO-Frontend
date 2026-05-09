@@ -91,7 +91,7 @@ export const hasVideoCallAbility = (
 	// check if User can be called by any of his registered agencies
 	if (hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)) {
 		const registeredConsultingTypes = Object.values(
-			userData.consultingTypes
+			userData.consultingTypes || {}
 		)
 			.filter((el) => el.isRegistered)
 			.map((el) => el.agency.consultingType);

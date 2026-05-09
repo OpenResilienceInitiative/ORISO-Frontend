@@ -53,6 +53,7 @@ import { GlobalComponentContext } from '../../globalState/provider/GlobalCompone
 import { UrlParamsContext } from '../../globalState/provider/UrlParamsProvider';
 import { AnonymousChat } from '../anonymousChat/AnonymousChat';
 import { setTokens } from '../auth/auth';
+import { isAnonymousSession } from '../../utils/keycloakSession';
 
 const regexAccountDeletedError = /account disabled/i;
 
@@ -238,38 +239,43 @@ export const Login = () => {
 		deleteCookieByName('tenantId');
 	}, []);
 
-	const postLogin = useCallback(
-		() =>
-			reloadUserData().then(async (userData: UserDataInterface) => {
-				// If user has changed language from default but the profile has different language in profile override it
-				let patchedUserData = {};
-				if (
-					userData.preferredLanguage !== locale &&
-					locale !== initLocale
-				) {
-					patchedUserData['preferredLanguage'] = locale;
-				}
+	const postLogin = useCallback(() => {
+		if (isAnonymousSession()) {
+			redirectToApp(gcid);
+			return Promise.resolve();
+		}
 
-				if (
-					hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
-				) {
-					patchedUserData['available'] = false;
-				}
+		return reloadUserData().then(async (userData: UserDataInterface) => {
+			// If user has changed language from default but the profile has different language in profile override it
+			let patchedUserData = {};
+			if (
+				userData.preferredLanguage !== locale &&
+				locale !== initLocale
+			) {
+				patchedUserData['preferredLanguage'] = locale;
+			}
 
-				if (Object.keys(patchedUserData).length > 0) {
-					await apiPatchUserData(patchedUserData).catch((error) => { /* console.log(error); */ });
-					await reloadUserData().catch((error) => { /* console.log(error); */ });
-				}
+			if (hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)) {
+				patchedUserData['available'] = false;
+			}
 
-				if (
-					!consultant ||
-					!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)
-				) {
-					return redirectToApp(gcid);
-				}
-			}),
-		[reloadUserData, locale, initLocale, consultant, gcid]
-	);
+			if (Object.keys(patchedUserData).length > 0) {
+				await apiPatchUserData(patchedUserData).catch((error) => {
+					/* console.log(error); */
+				});
+				await reloadUserData().catch((error) => {
+					/* console.log(error); */
+				});
+			}
+
+			if (
+				!consultant ||
+				!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)
+			) {
+				return redirectToApp(gcid);
+			}
+		});
+	}, [reloadUserData, locale, initLocale, consultant, gcid]);
 
 	useEffect(() => {
 		if (!magicToken || isMagicTokenLoginAttempted) {
@@ -345,9 +351,8 @@ export const Login = () => {
 						setIsOtpRequired(true);
 					}
 				}
-
-				setIsRequestInProgress(false);
-			});
+			})
+			.finally(() => setIsRequestInProgress(false));
 	};
 
 	const handleLogin = () => {
@@ -365,7 +370,9 @@ export const Login = () => {
 	const handleMagicLinkLogin = async () => {
 		const normalizedUsername = magicLinkUsername?.trim().toLowerCase();
 		if (!normalizedUsername) {
-			setShowMagicLinkError(translate('login.magicLink.usernameRequired'));
+			setShowMagicLinkError(
+				translate('login.magicLink.usernameRequired')
+			);
 			return;
 		}
 		if (isRequestInProgress) {
@@ -378,7 +385,10 @@ export const Login = () => {
 			setValueInCookie(
 				'KEYCLOAK_LOCALE',
 				locale,
-				endpoints.loginResetPasswordLink.split('/').slice(0, -1).join('/')
+				endpoints.loginResetPasswordLink
+					.split('/')
+					.slice(0, -1)
+					.join('/')
 			);
 			setMagicLinkSentToUsername(normalizedUsername);
 		} catch (error) {
@@ -497,9 +507,12 @@ export const Login = () => {
 							magicLinkSentToUsername ? (
 								<Text
 									className="loginForm__magicLinkInfo"
-									text={translate('login.magicLink.sentInfo', {
-										username: magicLinkSentToUsername
-									})}
+									text={translate(
+										'login.magicLink.sentInfo',
+										{
+											username: magicLinkSentToUsername
+										}
+									)}
 									type="infoSmall"
 								/>
 							) : (
@@ -526,10 +539,12 @@ export const Login = () => {
 									/>
 									<div
 										className={clsx('loginForm__otp', {
-											'loginForm__otp--active': isOtpRequired
+											'loginForm__otp--active':
+												isOtpRequired
 										})}
 									>
-										{twoFactorType === TWO_FACTOR_TYPES.EMAIL && (
+										{twoFactorType ===
+											TWO_FACTOR_TYPES.EMAIL && (
 											<Text
 												className="loginForm__emailHint"
 												text={translate(
@@ -543,7 +558,8 @@ export const Login = () => {
 											inputHandle={handleOtpChange}
 											keyUpHandle={handleKeyUp}
 										/>
-										{twoFactorType === TWO_FACTOR_TYPES.EMAIL && (
+										{twoFactorType ===
+											TWO_FACTOR_TYPES.EMAIL && (
 											<TwoFactorAuthResendMail
 												resendHandler={(callback) => {
 													tryLogin();
@@ -554,7 +570,7 @@ export const Login = () => {
 									</div>
 								</>
 							)}
-					</div>
+						</div>
 
 						{showLoginError && (
 							<Text
@@ -578,7 +594,9 @@ export const Login = () => {
 									label:
 										activeLoginMethod === 'password'
 											? translate('login.button.label')
-											: translate('login.magicLink.submitLabel')
+											: translate(
+													'login.magicLink.submitLabel'
+												)
 								}}
 								buttonHandle={
 									activeLoginMethod === 'password'
@@ -587,9 +605,10 @@ export const Login = () => {
 								}
 								disabled={
 									activeLoginMethod === 'password'
-										? isButtonDisabled || isRequestInProgress
+										? isButtonDisabled ||
+											isRequestInProgress
 										: !magicLinkUsername?.trim() ||
-										  isRequestInProgress
+											isRequestInProgress
 								}
 							/>
 
@@ -602,31 +621,36 @@ export const Login = () => {
 									>
 										{translate('login.resetPasswort.label')}
 									</button>
-							)}
+								)}
 						</div>
 
 						{isAnonymousChatEnabled && (
-						<div className="loginForm__register">
-							<div className="loginForm__register__separator">
-								<span>{translate('login.seperator')}</span>
+							<div className="loginForm__register">
+								<div className="loginForm__register__separator">
+									<span>{translate('login.seperator')}</span>
+								</div>
+								<div className="loginForm__register__content">
+									<Text
+										text={translate(
+											'login.anonymousChat.infoText',
+											'Schnell und anonym beraten lassen?'
+										)}
+										type={'infoMedium'}
+									/>
+									<button
+										onClick={() =>
+											setShowAnonymousChat(true)
+										}
+										className="button-as-link consulting-topics"
+										type="button"
+									>
+										{translate(
+											'login.anonymousChat.label',
+											'Anonyme Beratung starten'
+										)}
+									</button>
+								</div>
 							</div>
-							<div className="loginForm__register__content">
-								<Text
-									text={translate(
-										'login.anonymousChat.infoText',
-										'Schnell und anonym beraten lassen?'
-									)}
-									type={'infoMedium'}
-								/>
-								<button
-									onClick={() => setShowAnonymousChat(true)}
-									className="button-as-link consulting-topics"
-									type="button"
-								>
-									{translate('login.anonymousChat.label', 'Anonyme Beratung starten')}
-								</button>
-							</div>
-						</div>
 						)}
 
 						{!hasTenant && (
@@ -657,7 +681,7 @@ export const Login = () => {
 							</div>
 						)}
 
-<div className="loginForm__securityBanner">
+						<div className="loginForm__securityBanner">
 							<div className="security-header">
 								<svg
 									width="20"
@@ -683,9 +707,10 @@ export const Login = () => {
 									/>
 								</svg>
 							</div>
-							<span>{translate('login.security.description')}</span>
+							<span>
+								{translate('login.security.description')}
+							</span>
 						</div>
-						
 					</div>
 				</div>
 			</StageLayout>

@@ -9,6 +9,7 @@ import {
 } from '../../api';
 import { REMOTE_DRAFT_INDEX_SCOPE } from '../../services/draftStore';
 import { useResponsive } from '../../hooks/useResponsive';
+import { isAnonymousSession } from '../../utils/keycloakSession';
 import './draftsCenter.styles';
 
 const formatRelativeTime = (timestamp?: string | null) => {
@@ -100,6 +101,13 @@ export const DraftsCenter = () => {
 	useEffect(() => {
 		let isMounted = true;
 		const loadRemoteDrafts = async () => {
+			if (isAnonymousSession()) {
+				if (isMounted) {
+					setDrafts([]);
+				}
+				return;
+			}
+
 			const response = await apiGetUserDrafts(0, 200).catch(() => null);
 			if (!isMounted) {
 				return;

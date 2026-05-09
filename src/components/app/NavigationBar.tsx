@@ -49,6 +49,7 @@ import {
 	LiveChatToggleInactiveIcon,
 	LiveChatToggleActiveIcon
 } from './LiveChatToggleIcons';
+import { isAnonymousSession } from '../../utils/keycloakSession';
 
 export interface NavigationBarProps {
 	onLogout: any;
@@ -149,6 +150,11 @@ export const NavigationBar = ({
 	}, [tenant, userData, isConsultant]);
 
 	const loadDraftCount = useCallback(async () => {
+		if (isAnonymousSession()) {
+			setDraftCount(0);
+			return;
+		}
+
 		const response = await apiGetUserDrafts(0, 200).catch(() => null);
 		const visibleDrafts =
 			response?.items?.filter(

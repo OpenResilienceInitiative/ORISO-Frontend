@@ -1,6 +1,13 @@
 import '../../polyfill';
 import * as React from 'react';
-import { ComponentType, useState, lazy, Suspense, useContext } from 'react';
+import {
+	ComponentType,
+	useState,
+	lazy,
+	Suspense,
+	useContext,
+	useCallback
+} from 'react';
 import {
 	BrowserRouter as Router,
 	Switch,
@@ -134,6 +141,14 @@ const RouterWrapper = ({ extraRoutes }: RouterWrapperProps) => {
 	const [failedPreCondition, setFailedPreCondition] =
 		useState(preConditionsMet());
 
+	const handleAppReady = useCallback((enableLive?: boolean) => {
+		setStartWebsocket(!!enableLive);
+	}, []);
+
+	const handleLogout = useCallback(() => {
+		setDisconnectWebsocket(true);
+	}, []);
+
 	if (failedPreCondition) {
 		return <PreConditions onPreConditionsMet={setFailedPreCondition} />;
 	}
@@ -201,12 +216,8 @@ const RouterWrapper = ({ extraRoutes }: RouterWrapperProps) => {
 										<VideoCall />
 									</Route>
 									<AuthenticatedApp
-										onAppReady={() =>
-											setStartWebsocket(true)
-										}
-										onLogout={() =>
-											setDisconnectWebsocket(true)
-										}
+										onAppReady={handleAppReady}
+										onLogout={handleLogout}
 									/>
 								</Switch>
 								<NotificationsContainer />

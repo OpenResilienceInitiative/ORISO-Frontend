@@ -926,7 +926,8 @@ export const SessionListItemComponent = ({
 		activeSession.item.postcode === 0 ||
 		activeSession.item.postcode?.toString() === '00000' ||
 		(activeSession.item as any).registrationType === 'ANONYMOUS' ||
-		activeSession.user?.username?.startsWith('Anonymous-');
+		activeSession.user?.username?.startsWith('Anonymous-') ||
+		(activeSession.item as any)?.askerUserName?.startsWith('Anonymous-');
 
 	return (
 		<div

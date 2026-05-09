@@ -14,6 +14,7 @@ import {
 import { LanguageSelectDropdown } from '../select/LanguageSelectDropdown';
 import { setValueInCookie } from '../sessionCookie/accessSessionCookie';
 import LanguageIcon from '@mui/icons-material/Language';
+import { isAnonymousSession } from '../../utils/keycloakSession';
 
 export interface LocaleSwitchProp {
 	updateUserData?: boolean;
@@ -59,6 +60,10 @@ export const LocaleSwitch: React.FC<LocaleSwitchProp> = ({
 	const [requestInProgress, setRequestInProgress] = useState(false);
 
 	useEffect(() => {
+		if (isAnonymousSession()) {
+			return;
+		}
+
 		if (
 			updateUserData &&
 			userDataContext?.userData?.preferredLanguage !== locale &&

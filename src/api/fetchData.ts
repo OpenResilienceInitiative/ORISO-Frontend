@@ -7,6 +7,7 @@ import {
 import { logout } from '../components/logout/logout';
 import { appConfig } from '../utils/appConfig';
 import { RequestLog } from '../utils/requestCollector';
+import { shouldRejectSilentlyForAnonymousRestrictedUrl } from '../utils/anonymousSessionFetchGuard';
 
 const nodeEnv: string = process.env.NODE_ENV as string;
 const isLocalDevelopment = nodeEnv === 'development';
@@ -97,24 +98,31 @@ export const fetchData = ({
 
 		const csrfToken = generateCsrfToken();
 
-	// MATRIX MIGRATION: rcToken still required by backend for archive endpoints
-	// but no longer exists after Matrix migration. Send dummy token.
+		// MATRIX MIGRATION: rcToken still required by backend for archive endpoints
+		// but no longer exists after Matrix migration. Send dummy token.
 		const rcHeaders = rcValidation
 			? {
-				rcToken: getValueFromCookie('rc_token') || 'matrix-migration-dummy-token',
-					...(getValueFromCookie('rc_uid') && { RCUserId: getValueFromCookie('rc_uid') })
+					rcToken:
+						getValueFromCookie('rc_token') ||
+						'matrix-migration-dummy-token',
+					...(getValueFromCookie('rc_uid') && {
+						RCUserId: getValueFromCookie('rc_uid')
+					})
 				}
 			: null;
 
-		const localDevelopmentHeader = isLocalDevelopment && process.env.REACT_APP_CSRF_WHITELIST_HEADER_PROPERTY
-			? {
-					[process.env.REACT_APP_CSRF_WHITELIST_HEADER_PROPERTY]: csrfToken
-				}
-			: isLocalDevelopment
-			? {
-					'X-WHITELIST-HEADER': csrfToken
-				}
-			: null;
+		const localDevelopmentHeader =
+			isLocalDevelopment &&
+			process.env.REACT_APP_CSRF_WHITELIST_HEADER_PROPERTY
+				? {
+						[process.env.REACT_APP_CSRF_WHITELIST_HEADER_PROPERTY]:
+							csrfToken
+					}
+				: isLocalDevelopment
+					? {
+							'X-WHITELIST-HEADER': csrfToken
+						}
+					: null;
 
 		let controller;
 		controller = new AbortController();
@@ -135,11 +143,14 @@ export const fetchData = ({
 			...rcHeaders,
 			...localDevelopmentHeader
 		};
-		
+
 		// Remove any undefined values and undefined keys
 		const cleanHeaders = Object.fromEntries(
-			Object.entries(allHeaders).filter(([key, value]) => 
-				key !== undefined && value !== undefined && key !== 'undefined'
+			Object.entries(allHeaders).filter(
+				([key, value]) =>
+					key !== undefined &&
+					value !== undefined &&
+					key !== 'undefined'
 			)
 		);
 
@@ -248,8 +259,30 @@ export const fetchData = ({
 					} else if (response.status === 401) {
 						// console.log(url);
 						logout(true, appConfig.urls.toLogin);
+					} else {
+						if (
+							shouldRejectSilentlyForAnonymousRestrictedUrl(
+								url,
+								response.status
+							)
+						) {
+							reject(new Error(FETCH_ERRORS.FORBIDDEN));
+							return;
+						}
+						const error = getErrorCaseForStatus(response.status);
+						redirectToErrorPage(error);
+						reject(new Error('api call error'));
 					}
 				} else {
+					if (
+						shouldRejectSilentlyForAnonymousRestrictedUrl(
+							url,
+							response.status
+						)
+					) {
+						reject(new Error(FETCH_ERRORS.FORBIDDEN));
+						return;
+					}
 					const error = getErrorCaseForStatus(response.status);
 					redirectToErrorPage(error);
 					reject(new Error('api call error'));

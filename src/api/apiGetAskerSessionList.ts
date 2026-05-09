@@ -1,9 +1,14 @@
 import { endpoints } from '../resources/scripts/endpoints';
 import { fetchData, FETCH_METHODS } from './fetchData';
+import { isAnonymousSession } from '../utils/keycloakSession';
 
 let previousProm = null;
 
 export const apiGetAskerSessionList = async (): Promise<any> => {
+	if (isAnonymousSession()) {
+		return Promise.resolve({ sessions: [] });
+	}
+
 	const url = endpoints.askerSessions;
 
 	// ToDo: We are calling this endpoint on multiple places at the same time which makes the tests flaky

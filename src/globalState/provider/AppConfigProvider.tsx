@@ -33,28 +33,35 @@ export const AppConfigProvider = ({
 	}, [appConfig]);
 
 	useEffect(() => {
+		const baseConfig = _.cloneDeep(config);
+
 		apiFrontendSettings()
-			.then((frontendSettings) => _.merge(config, frontendSettings))
-			.catch(() => config)
-			.then((config) =>
-				config.useApiClusterSettings
-					? apiServerSettings().then((serverSettings) =>
-							Object.keys(serverSettings ?? {}).reduce(
-								(current, key) => {
-									current[key] =
-										key === 'releaseToggles'
-											? transformReleaseToggles(
-													serverSettings[key]
-												)
-											: serverSettings[key]?.value;
-									return current;
-								},
-								config
-							)
-						)
-					: config
+			.then((frontendSettings) =>
+				_.merge(_.cloneDeep(baseConfig), frontendSettings)
 			)
-			.then(setAppConfig);
+			.catch(() => _.cloneDeep(baseConfig))
+			.then((nextConfig) =>
+				nextConfig.useApiClusterSettings
+					? apiServerSettings()
+							.then((serverSettings) =>
+								Object.keys(serverSettings ?? {}).reduce(
+									(current, key) => {
+										current[key] =
+											key === 'releaseToggles'
+												? transformReleaseToggles(
+														serverSettings[key]
+													)
+												: serverSettings[key]?.value;
+										return current;
+									},
+									nextConfig
+								)
+							)
+							.catch(() => nextConfig)
+					: nextConfig
+			)
+			.then(setAppConfig)
+			.catch(() => setAppConfig(_.cloneDeep(baseConfig)));
 	}, [config]);
 
 	if (!appConfig) {

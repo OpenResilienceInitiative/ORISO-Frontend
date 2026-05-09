@@ -5,6 +5,7 @@ import {
 	ReactNode,
 	useEffect,
 	useCallback,
+	useContext,
 	useState
 } from 'react';
 import { v4 as uuid } from 'uuid';
@@ -20,6 +21,8 @@ import {
 	apiMarkEventNotificationRead
 } from '../../api/apiEventNotifications';
 import { getValueFromCookie } from '../../components/sessionCookie/accessSessionCookie';
+import { UserDataContext } from '../context/UserDataContext';
+import { AUTHORITIES, hasUserAuthority } from '../helpers/stateHelpers';
 
 export const NOTIFICATION_DEFAULT_TIMEOUT = 3000;
 
@@ -122,6 +125,9 @@ export function NotificationsProvider(props) {
 	>([]);
 	const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
 
+	const userDataContext = useContext(UserDataContext);
+	const userData = userDataContext?.userData;
+
 	const refreshNotificationFeed = useCallback(async () => {
 		const accessToken = getValueFromCookie('keycloak');
 		if (!accessToken) {
@@ -131,24 +137,50 @@ export function NotificationsProvider(props) {
 			return;
 		}
 
+		// Anonymous invite onboarding and asker users are not allowed to access event notifications.
+		// Also avoid calling the endpoint before `userData` is available.
+		if (!userData) {
+			setNotificationFeed([]);
+			setUnreadNotificationCount(0);
+			return;
+		}
+		if (userData.userName?.startsWith('Anonymous-')) {
+			setNotificationFeed([]);
+			setUnreadNotificationCount(0);
+			return;
+		}
+		if (hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)) {
+			setNotificationFeed([]);
+			setUnreadNotificationCount(0);
+			return;
+		}
+
 		try {
-			const response = await apiGetEventNotifications(0, NOTIFICATION_FEED_MAX_ITEMS);
-			const normalized: NotificationFeedItem[] = (response?.items || []).map(
-				(item) => ({
-					id: String(item.id),
-					type: item.category === 'message' ? NOTIFICATION_TYPE_INFO : NOTIFICATION_TYPE_INFO,
-					title: item.title || 'Notification',
-					text: item.text || '',
-					eventType: item.eventType || 'event',
-					createdAt: item.createdAt || new Date().toISOString(),
-					readAt: item.readAt ?? null,
-					actionPath: item.actionPath,
-					actionLabel: item.actionLabel,
-					sourceSessionId:
-						item.sourceSessionId != null ? String(item.sourceSessionId) : undefined,
-					category: item.category === 'message' ? 'message' : 'system'
-				})
+			const response = await apiGetEventNotifications(
+				0,
+				NOTIFICATION_FEED_MAX_ITEMS
 			);
+			const normalized: NotificationFeedItem[] = (
+				response?.items || []
+			).map((item) => ({
+				id: String(item.id),
+				type:
+					item.category === 'message'
+						? NOTIFICATION_TYPE_INFO
+						: NOTIFICATION_TYPE_INFO,
+				title: item.title || 'Notification',
+				text: item.text || '',
+				eventType: item.eventType || 'event',
+				createdAt: item.createdAt || new Date().toISOString(),
+				readAt: item.readAt ?? null,
+				actionPath: item.actionPath,
+				actionLabel: item.actionLabel,
+				sourceSessionId:
+					item.sourceSessionId != null
+						? String(item.sourceSessionId)
+						: undefined,
+				category: item.category === 'message' ? 'message' : 'system'
+			}));
 			setNotificationFeed(normalized);
 			setUnreadNotificationCount(Number(response?.unreadCount || 0));
 		} catch (error) {
@@ -156,7 +188,7 @@ export function NotificationsProvider(props) {
 			// eslint-disable-next-line no-console
 			console.warn('Failed to refresh notification feed', error);
 		}
-	}, []);
+	}, [userData]);
 
 	const refreshNotificationFeedSafe = useCallback(() => {
 		void refreshNotificationFeed();
@@ -200,29 +232,32 @@ export function NotificationsProvider(props) {
 		[hasNotification, notifications]
 	);
 
-	const addEventNotification = useCallback((event: EventNotificationInput) => {
-		// Fallback for local-only events until every producer is fully backend-backed.
-		const feedItem: NotificationFeedItem = {
-			id: `local-${uuid()}`,
-			type: event.type || NOTIFICATION_TYPE_INFO,
-			title: event.title,
-			text: event.text,
-			eventType: event.eventType,
-			createdAt: new Date().toISOString(),
-			readAt: null,
-			actionPath: event.actionPath,
-			actionLabel: event.actionLabel,
-			sourceSessionId:
-				event.sourceSessionId != null
-					? String(event.sourceSessionId)
-					: undefined,
-			category: event.category === 'message' ? 'message' : 'system'
-		};
-		setNotificationFeed((existing) =>
-			[feedItem, ...existing].slice(0, NOTIFICATION_FEED_MAX_ITEMS)
-		);
-		setUnreadNotificationCount((value) => value + 1);
-	}, []);
+	const addEventNotification = useCallback(
+		(event: EventNotificationInput) => {
+			// Fallback for local-only events until every producer is fully backend-backed.
+			const feedItem: NotificationFeedItem = {
+				id: `local-${uuid()}`,
+				type: event.type || NOTIFICATION_TYPE_INFO,
+				title: event.title,
+				text: event.text,
+				eventType: event.eventType,
+				createdAt: new Date().toISOString(),
+				readAt: null,
+				actionPath: event.actionPath,
+				actionLabel: event.actionLabel,
+				sourceSessionId:
+					event.sourceSessionId != null
+						? String(event.sourceSessionId)
+						: undefined,
+				category: event.category === 'message' ? 'message' : 'system'
+			};
+			setNotificationFeed((existing) =>
+				[feedItem, ...existing].slice(0, NOTIFICATION_FEED_MAX_ITEMS)
+			);
+			setUnreadNotificationCount((value) => value + 1);
+		},
+		[]
+	);
 
 	const removeNotification = useCallback(
 		(id: string | number, type: NotificationTypes) => {
@@ -269,7 +304,9 @@ export function NotificationsProvider(props) {
 		apiMarkAllEventNotificationsRead().catch(() => undefined);
 		const now = new Date().toISOString();
 		setNotificationFeed((existing) =>
-			existing.map((item) => (item.readAt ? item : { ...item, readAt: now }))
+			existing.map((item) =>
+				item.readAt ? item : { ...item, readAt: now }
+			)
 		);
 		setUnreadNotificationCount(0);
 	}, []);

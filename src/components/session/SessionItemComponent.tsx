@@ -61,6 +61,7 @@ import { apiPatchNotificationActiveView } from '../../api/apiPatchNotificationAc
 import { apiPatchUserData } from '../../api/apiPatchUserData';
 import { apiGetUserData } from '../../api/apiGetUserData';
 import { apiGetAnonymousEnquiryDetails } from '../../api/apiGetAnonymousEnquiryDetails';
+import { apiPostAdditionalEnquiry } from '../../api/apiPostAdditionalEnquiry';
 import { parseMessagePrefixes } from '../message/messageConstants';
 import { decodeUsername } from '../../utils/encryptionHelpers';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
@@ -79,6 +80,7 @@ import {
 	regeneratePseudonym,
 	type Pseudonym
 } from '../../utils/pseudonymGenerator';
+import { isAnonymousSession as isAnonymousInviteSession } from '../../utils/keycloakSession';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import LegalLinks from '../legalLinks/LegalLinks';
 import { renderToString } from 'react-dom/server';
@@ -406,6 +408,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	 * that used to be shown inline at the end of the briefing text.
 	 */
 	const [tutorialCardIndex, setTutorialCardIndex] = useState<0 | 1 | 2>(0);
+	const topicIdFromSession = useMemo(() => {
+		const topicValue = activeSession.item?.topic as any;
+		return Number(
+			typeof topicValue === 'string' ? topicValue : topicValue?.id
+		);
+	}, [activeSession.item?.topic]);
 	const tutorialPhases: BreathingTutorialPhase[] = [
 		'inhale',
 		'hold',
@@ -484,6 +492,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const [queuePeopleAhead, setQueuePeopleAhead] = useState<number | null>(
 		null
 	);
+	const [hasLiveCounselorAvailable, setHasLiveCounselorAvailable] = useState<
+		boolean | null
+	>(null);
+	const [requestingLocalCounselor, setRequestingLocalCounselor] =
+		useState(false);
 	const [consultantAccepted, setConsultantAccepted] = useState(false);
 	/**
 	 * Persist the "Jetzt Chat starten" dismissal in sessionStorage so a
@@ -555,12 +568,19 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		featureThreadsSupervisionChatsEnabled = true
 	} = getTenantSettings();
 	const contact = getContact(activeSession);
+	const hasAnonymousUsernameMarker = [
+		contact?.username,
+		activeSession.user?.username,
+		(activeSession.item as any)?.askerUserName
+	].some(
+		(value) => typeof value === 'string' && value.startsWith('Anonymous-')
+	);
 	const isAnonymousChat =
 		activeSession.item.postcode === 0 ||
 		activeSession.item.postcode?.toString() === '00000' ||
 		(activeSession.item as any).registrationType === 'ANONYMOUS' ||
-		contact?.username?.startsWith('Anonymous-') ||
-		activeSession.user?.username?.startsWith('Anonymous-');
+		hasAnonymousUsernameMarker ||
+		isAnonymousInviteSession();
 	const chatType: 'anonymous' | 'oneOnOne' | 'group' | 'supervision' =
 		isSupervisor
 			? 'supervision'
@@ -581,7 +601,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const sessionStatusNum = Number(activeSession.item?.status);
 	const privacyAcceptanceRecorded = Boolean(
 		userData?.dataPrivacyConfirmation &&
-			String(userData.dataPrivacyConfirmation).trim() !== ''
+		String(userData.dataPrivacyConfirmation).trim() !== ''
 	);
 	const isAnonymousEnquiryPhaseSession =
 		sessionStatusNum === STATUS_EMPTY ||
@@ -1699,29 +1719,57 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	useEffect(() => {
 		setShowWaitingMiniGame(false);
+		setRequestingLocalCounselor(false);
 	}, [activeSession.item.id]);
 
+	const syncUserDataAfterPatch = useCallback(
+		(patch: Record<string, unknown>) => {
+			if (isAnonymousAskerExperience) {
+				setUserData(
+					userData
+						? ({
+								...userData,
+								...patch
+							} as any)
+						: (patch as any)
+				);
+				return Promise.resolve();
+			}
+			return apiGetUserData().then((fresh) => setUserData(fresh));
+		},
+		[isAnonymousAskerExperience, setUserData, userData]
+	);
+
 	const handleAnonymousInquiryConsentAccept = useCallback(() => {
+		if (anonymousInquiryConsentAccepted) {
+			return;
+		}
+
+		setAnonymousInquiryConsentAccepted(true);
+		try {
+			sessionStorage.setItem(anonymousInquiryConsentStorageKey, '1');
+		} catch {
+			// Ignore storage errors and still unblock current session view.
+		}
+		void syncUserDataAfterPatch({
+			dataPrivacyConfirmation: 'true',
+			termsAndConditionsConfirmation: 'true'
+		}).catch(() => {
+			/* keep optimistic consent state */
+		});
+
 		apiPatchUserData({
 			dataPrivacyConfirmation: true,
 			termsAndConditionsConfirmation: true
-		})
-			.then(() => {
-				setAnonymousInquiryConsentAccepted(true);
-				try {
-					sessionStorage.setItem(
-						anonymousInquiryConsentStorageKey,
-						'1'
-					);
-				} catch {
-					// Ignore storage errors and still unblock current session view.
-				}
-				return apiGetUserData().then((fresh) => setUserData(fresh));
-			})
-			.catch(() => {
-				/* keep gate visible on failure */
-			});
-	}, [anonymousInquiryConsentStorageKey, setUserData]);
+		}).catch(() => {
+			/* Anonymous sessions can be blocked from /users/data patching.
+				   Keep the gate unblocked once local consent is confirmed. */
+		});
+	}, [
+		anonymousInquiryConsentAccepted,
+		anonymousInquiryConsentStorageKey,
+		syncUserDataAfterPatch
+	]);
 
 	/**
 	 * Load the cached pseudonym-confirmed flag when entering the session.
@@ -1750,21 +1798,31 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const handleConfirmPseudonym = useCallback(() => {
 		if (pseudonymSaving) return;
 		setPseudonymSaving(true);
-		apiPatchUserData({ displayName: currentPseudonym.displayName })
-			.then(() => apiGetUserData().then((fresh) => setUserData(fresh)))
-			.then(() => {
-				setPseudonymConfirmed(true);
-				try {
-					sessionStorage.setItem(pseudonymStorageKey, '1');
-				} catch {
-					/* ignore storage errors */
-				}
-			})
+		const selectedDisplayName = currentPseudonym.displayName;
+
+		setPseudonymConfirmed(true);
+		try {
+			sessionStorage.setItem(pseudonymStorageKey, '1');
+		} catch {
+			/* ignore storage errors */
+		}
+		void syncUserDataAfterPatch({
+			displayName: selectedDisplayName
+		}).catch(() => {
+			/* keep optimistic pseudonym state */
+		});
+
+		apiPatchUserData({ displayName: selectedDisplayName })
 			.catch(() => {
-				/* keep card visible on failure so user can retry */
+				/* Do not block waiting-room entry if profile patch is rejected. */
 			})
 			.finally(() => setPseudonymSaving(false));
-	}, [currentPseudonym, pseudonymSaving, pseudonymStorageKey, setUserData]);
+	}, [
+		currentPseudonym,
+		pseudonymSaving,
+		pseudonymStorageKey,
+		syncUserDataAfterPatch
+	]);
 
 	/**
 	 * Poll the live anonymous-enquiry details while the asker is in the
@@ -1774,6 +1832,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	 */
 	useEffect(() => {
 		if (!isInAnonymousWaitingQueuePhase || !activeSession.item?.id) {
+			setHasLiveCounselorAvailable(null);
 			return;
 		}
 
@@ -1784,6 +1843,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			apiGetAnonymousEnquiryDetails(sessionId)
 				.then((details) => {
 					if (cancelled) return;
+					if (typeof details?.numAvailableConsultants === 'number') {
+						setHasLiveCounselorAvailable(
+							details.numAvailableConsultants > 0
+						);
+					}
 					if (typeof details?.peopleAhead === 'number') {
 						setQueuePeopleAhead(details.peopleAhead);
 					}
@@ -1837,13 +1901,116 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		setShowWaitingMiniGame(true);
 	}, []);
 
+	const handleRequestLocalCounselor = useCallback(() => {
+		if (requestingLocalCounselor) {
+			return;
+		}
+
+		if (hasLiveCounselorAvailable !== false) {
+			addEventNotification({
+				type: NOTIFICATION_TYPE_INFO,
+				eventType: 'anonymous.queue.local-fallback.unavailable',
+				title: translate(
+					'anonymousChat.queue.localFallback.waitingTitle',
+					'Bitte noch kurz warten'
+				),
+				text: translate(
+					'anonymousChat.queue.localFallback.waitingText',
+					'Es sind aktuell Berater_innen verfügbar. Bitte warten Sie auf die Live-Verbindung.'
+				),
+				sourceSessionId: activeSession.item.id,
+				category: 'system'
+			});
+			return;
+		}
+
+		const topicId = topicIdFromSession;
+		const consultingTypeId = Number(activeSession.item?.consultingType);
+		const agencyId = Number(activeSession.item?.agencyId);
+		const postcode = String(
+			activeSession.item?.postcode ?? '00000'
+		).padStart(5, '0');
+
+		if (!topicId || !consultingTypeId || !agencyId) {
+			addEventNotification({
+				type: NOTIFICATION_TYPE_INFO,
+				eventType: 'anonymous.queue.local-fallback.invalid-session',
+				title: translate(
+					'anonymousChat.queue.localFallback.errorTitle',
+					'Anfrage konnte nicht erstellt werden'
+				),
+				text: translate(
+					'anonymousChat.queue.localFallback.errorText',
+					'Bitte versuchen Sie es in wenigen Sekunden erneut.'
+				),
+				sourceSessionId: activeSession.item.id,
+				category: 'system'
+			});
+			return;
+		}
+
+		setRequestingLocalCounselor(true);
+		apiPostAdditionalEnquiry(consultingTypeId, agencyId, postcode, topicId)
+			.then((response) => {
+				setWaitingGateDismissed(true);
+				addEventNotification({
+					type: NOTIFICATION_TYPE_INFO,
+					eventType: 'anonymous.queue.local-fallback.success',
+					title: translate(
+						'anonymousChat.queue.localFallback.successTitle',
+						'Anfrage gesendet'
+					),
+					text: translate(
+						'anonymousChat.queue.localFallback.successText',
+						'Ihre Anfrage wurde an eine lokale Beratung weitergeleitet.'
+					),
+					sourceSessionId: activeSession.item.id,
+					category: 'system'
+				});
+				if (response?.sessionId) {
+					history.push(
+						`/sessions/user/view/session/${response.sessionId}`
+					);
+				}
+			})
+			.catch(() => {
+				addEventNotification({
+					type: NOTIFICATION_TYPE_INFO,
+					eventType: 'anonymous.queue.local-fallback.error',
+					title: translate(
+						'anonymousChat.queue.localFallback.errorTitle',
+						'Anfrage konnte nicht erstellt werden'
+					),
+					text: translate(
+						'anonymousChat.queue.localFallback.errorText',
+						'Bitte versuchen Sie es in wenigen Sekunden erneut.'
+					),
+					sourceSessionId: activeSession.item.id,
+					category: 'system'
+				});
+			})
+			.finally(() => setRequestingLocalCounselor(false));
+	}, [
+		activeSession.item.id,
+		activeSession.item.agencyId,
+		activeSession.item.consultingType,
+		activeSession.item.postcode,
+		addEventNotification,
+		hasLiveCounselorAvailable,
+		history,
+		requestingLocalCounselor,
+		setWaitingGateDismissed,
+		topicIdFromSession,
+		translate
+	]);
+
 	const handleDismissConsultantAccepted = useCallback(() => {
 		setConsultantAccepted(false);
 	}, []);
 
 	const handleStartAcceptedChat = useCallback(() => {
 		setWaitingGateDismissed(true);
-	}, []);
+	}, [setWaitingGateDismissed]);
 
 	useEffect(() => {
 		if (!shouldShowRobotMessages) {
@@ -4423,6 +4590,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						<WaitingQueueActionBar
 							queuePosition={queuePeopleAhead}
 							onOpenCalmCompanion={handleOpenCalmCompanion}
+							onRequestLocalCounselor={
+								handleRequestLocalCounselor
+							}
+							disabled={requestingLocalCounselor}
 						/>
 					</div>
 				)}
