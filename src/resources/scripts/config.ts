@@ -19,6 +19,15 @@ import {
 	OVERLAY_TWO_FACTOR_NAG
 } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
 
+const organizationHomeUrl =
+	process.env.REACT_APP_ORGANIZATION_HOME_URL || 'https://www.caritas.de';
+const legalImprintUrl =
+	process.env.REACT_APP_LEGAL_IMPRINT_URL ||
+	'https://www.caritas-beratungundhilfe.de/impressum';
+const legalPrivacyUrl =
+	process.env.REACT_APP_LEGAL_PRIVACY_URL ||
+	'https://www.caritas-beratungundhilfe.de/datenschutz';
+
 export const uiUrl = window.location.origin;
 
 export const APP_PATH = 'app';
@@ -59,7 +68,7 @@ export const config: AppConfigInterface = {
 		error401: uiUrl + '/error.401.html',
 		error404: uiUrl + '/error.404.html',
 		error500: uiUrl + '/error.500.html',
-		home: 'https://www.caritas.de',
+		home: organizationHomeUrl,
 		landingpage: '/login',
 		releases: uiUrl + '/releases',
 		redirectToApp: uiUrl + '/' + APP_PATH,
@@ -94,11 +103,11 @@ export const config: AppConfigInterface = {
 	},
 	legalLinks: [
 		{
-			url: 'https://www.caritas-beratungundhilfe.de/impressum',
+			url: legalImprintUrl,
 			label: 'login.legal.infoText.impressum'
 		},
 		{
-			url: 'https://www.caritas-beratungundhilfe.de/datenschutz',
+			url: legalPrivacyUrl,
 			label: 'login.legal.infoText.dataprotection',
 			registration: true
 		}

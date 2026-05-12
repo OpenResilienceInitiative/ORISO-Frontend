@@ -8,6 +8,16 @@ import EdgeLogo from '../../resources/img/images/microsoft_edge.png';
 import SafariLogo from '../../resources/img/images/safari.png';
 import { useTranslation } from 'react-i18next';
 
+const browserChromeUrl =
+	process.env.REACT_APP_BROWSER_DOWNLOAD_CHROME_URL ||
+	'https://www.google.com/chrome/';
+const browserEdgeUrl =
+	process.env.REACT_APP_BROWSER_DOWNLOAD_EDGE_URL ||
+	'https://www.microsoft.com/edge';
+const browserSafariUrl =
+	process.env.REACT_APP_BROWSER_DOWNLOAD_SAFARI_URL ||
+	'https://www.apple.com/de/safari/';
+
 interface HelpVideoCallProps {
 	copyLoginLink: Function;
 	consultant: boolean;
@@ -24,7 +34,7 @@ export const BrowserList: React.FC = () => {
 					title={translate('help.googleChrome')}
 				/>
 				<a
-					href="https://www.google.com/chrome/"
+					href={browserChromeUrl}
 					target="_blank"
 					rel="noreferrer"
 					className="button-as-link"
@@ -43,7 +53,7 @@ export const BrowserList: React.FC = () => {
 					title={translate('help.msEdge')}
 				/>
 				<a
-					href="https://www.microsoft.com/edge"
+					href={browserEdgeUrl}
 					target="_blank"
 					rel="noreferrer"
 					className="button-as-link"
@@ -62,7 +72,7 @@ export const BrowserList: React.FC = () => {
 					title={translate('help.safari')}
 				/>
 				<a
-					href="https://www.apple.com/de/safari/"
+					href={browserSafariUrl}
 					target="_blank"
 					rel="noreferrer"
 					className="button-as-link"
@@ -125,7 +135,7 @@ export const HelpVideoCall: React.FC<HelpVideoCallProps> = ({
 					<li>
 						{translate(`${translationPrefix}.steps.1.1`)}
 						<a
-							href="https://www.google.com/chrome/"
+							href={browserChromeUrl}
 							target="_blank"
 							rel="noreferrer"
 							className="button-as-link"
@@ -134,7 +144,7 @@ export const HelpVideoCall: React.FC<HelpVideoCallProps> = ({
 						</a>
 						{translate(`${translationPrefix}.steps.1.2`)}
 						<a
-							href="https://www.microsoft.com/edge"
+							href={browserEdgeUrl}
 							target="_blank"
 							rel="noreferrer"
 							className="button-as-link"
@@ -143,7 +153,7 @@ export const HelpVideoCall: React.FC<HelpVideoCallProps> = ({
 						</a>
 						{translate(`${translationPrefix}.steps.1.2`)}
 						<a
-							href="https://www.apple.com/de/safari/"
+							href={browserSafariUrl}
 							target="_blank"
 							rel="noreferrer"
 							className="button-as-link"

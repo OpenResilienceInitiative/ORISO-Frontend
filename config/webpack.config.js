@@ -176,16 +176,22 @@ module.exports = function (webpackEnv) {
 					loader: require.resolve(preProcessor),
 					options: {
 						additionalData: (content) => {
-							let newContent = `@import "${path.resolve(
-								paths.appSrc,
-								'resources/styles/settings.scss'
-							)}"; `;
+							const settingsMain = path
+								.resolve(
+									paths.appSrc,
+									'resources/styles/settings.scss'
+								)
+								.replace(/\\/g, '/');
+							let newContent = `@import "${settingsMain}"; `;
 							const settingsPathExtensions = path.resolve(
 								paths.appExtensions,
 								'resources/styles/settings.scss'
 							);
 							if (fs.existsSync(settingsPathExtensions)) {
-								newContent += `@import "${settingsPathExtensions}"; `;
+								newContent += `@import "${settingsPathExtensions.replace(
+									/\\/g,
+									'/'
+								)}"; `;
 							}
 							return `${newContent} ${content}`;
 						},
@@ -651,7 +657,24 @@ module.exports = function (webpackEnv) {
 			),
 			new CopyPlugin({
 				patterns: [
-					{ from: getTemplate('pages/under-construction.html') }
+					{
+						from: getTemplate('pages/under-construction.html'),
+						transform(content) {
+							const onlineUrl =
+								env.raw
+									.REACT_APP_ORGANIZATION_ONLINEBERATUNG_URL ||
+								'https://www.caritas.de/onlineberatung';
+							return Buffer.from(
+								content
+									.toString()
+									.split(
+										'__REACT_APP_ORGANIZATION_ONLINEBERATUNG_URL__'
+									)
+									.join(onlineUrl),
+								'utf8'
+							);
+						}
+					}
 				]
 			}),
 			// Inlines the webpack runtime script. This script is too small to warrant

@@ -71,9 +71,12 @@ export const TermsAndConditions = () => {
 
 	const transformText2DataPrivacyLink = (text: string) => {
 		let hereLabel = translate('termsAndConditionOverlay.labels.here');
+		const privacyHref =
+			process.env.REACT_APP_LEGAL_PRIVACY_URL ||
+			'https://www.caritas-beratungundhilfe.de/datenschutz';
 		return text.replace(
 			hereLabel,
-			`<a class='link' target='_blank' href='https://www.caritas-beratungundhilfe.de/datenschutz'>${hereLabel}</a>`
+			`<a class='link' target='_blank' href='${privacyHref}'>${hereLabel}</a>`
 		);
 	};
 

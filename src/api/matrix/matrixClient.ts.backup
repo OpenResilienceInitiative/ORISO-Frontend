@@ -5,7 +5,10 @@
 
 import * as sdk from 'matrix-js-sdk';
 
-const MATRIX_BASE_URL = process.env.REACT_APP_MATRIX_URL || 'http://91.99.219.182:8089';
+const MATRIX_BASE_URL =
+	process.env.REACT_APP_MATRIX_HOMESERVER_URL?.trim() ||
+	process.env.REACT_APP_MATRIX_URL ||
+	'';
 const MATRIX_SERVER_NAME = 'caritas.local';
 
 let matrixClient: any = null;

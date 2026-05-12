@@ -47,24 +47,36 @@ const createServer = async () => {
 		try {
 			console.log('🔑 Proxying LiveKit token request:', req.query);
 			const { roomName, identity } = req.query;
-			
+
 			if (!roomName || !identity) {
-				return res.status(400).json({ error: 'roomName and identity are required' });
+				return res
+					.status(400)
+					.json({ error: 'roomName and identity are required' });
 			}
 
-			const livekitTokenServiceUrl = process.env.LIVEKIT_TOKEN_SERVICE_URL || 'http://livekit-token-service.caritas.svc.cluster.local:3010';
-			const targetUrl = `${livekitTokenServiceUrl}/api/livekit/token?roomName=${encodeURIComponent(roomName)}&identity=${encodeURIComponent(identity)}`;
-			
+			const livekitTokenServiceBase = (
+				process.env.LIVEKIT_TOKEN_SERVICE_URL || ''
+			).replace(/\/+$/, '');
+			if (!livekitTokenServiceBase) {
+				return res.status(503).json({
+					error: 'LIVEKIT_TOKEN_SERVICE_URL is not configured'
+				});
+			}
+			const targetUrl = `${livekitTokenServiceBase}/api/livekit/token?roomName=${encodeURIComponent(roomName)}&identity=${encodeURIComponent(identity)}`;
+
 			console.log('📡 Fetching from:', targetUrl);
-			
+
 			const response = await fetch(targetUrl);
 			const data = await response.json();
-			
+
 			console.log('✅ Token received, forwarding to client');
 			res.json(data);
 		} catch (error) {
 			console.error('❌ LiveKit token proxy error:', error);
-			res.status(500).json({ error: 'Failed to get LiveKit token', details: error.message });
+			res.status(500).json({
+				error: 'Failed to get LiveKit token',
+				details: error.message
+			});
 		}
 	});
 
@@ -82,11 +94,22 @@ const createServer = async () => {
 	// LiveKit token service proxy
 	app.post('/api/livekit/token', async (req, res) => {
 		try {
-			const response = await fetch('http://livekit-token-service.caritas.svc.cluster.local:3010/api/livekit/token', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(req.body)
-			});
+			const livekitTokenServiceBase = (
+				process.env.LIVEKIT_TOKEN_SERVICE_URL || ''
+			).replace(/\/+$/, '');
+			if (!livekitTokenServiceBase) {
+				return res.status(503).json({
+					error: 'LIVEKIT_TOKEN_SERVICE_URL is not configured'
+				});
+			}
+			const response = await fetch(
+				`${livekitTokenServiceBase}/api/livekit/token`,
+				{
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(req.body)
+				}
+			);
 			const data = await response.json();
 			res.json(data);
 		} catch (error) {
