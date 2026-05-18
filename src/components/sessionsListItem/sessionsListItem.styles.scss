@@ -9,7 +9,7 @@ $session-postcode-border: #ffd1d1;
 .sessionsListItem {
 	display: flex;
 	color: $body-font-color;
-	margin-bottom: 0;
+	margin-bottom: 10px;
 	transition: all 0.6s ease;
 	animation: appearSessionListItem 300ms ease forwards;
 	opacity: 0;
