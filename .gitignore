@@ -32,6 +32,12 @@ browserstack.json
 local.log
 log/
 results/
+test-results/
+
+# local reports / caches
+branch-feature-verification-report-*.md
+.eslintcache
+.cache/
 
 npm-debug.log*
 yarn-debug.log*
