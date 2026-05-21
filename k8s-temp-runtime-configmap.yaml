@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-temp-runtime-config
+  namespace: caritas
+data:
+  config.js: |
+    window.__ORISO_RUNTIME_CONFIG__ = {
+      REACT_APP_API_URL: "https://api.oriso.org"
+    };

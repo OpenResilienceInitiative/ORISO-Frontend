@@ -57,6 +57,7 @@ import {
 	SETTING_HIDE_SYSTEM_MESSAGES
 } from '../../api/apiRocketChatSettingsPublic';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
+import { getApiBaseUrl } from '../../resources/scripts/getApiBaseUrl';
 
 interface SessionStreamProps {
 	readonly: boolean;
@@ -211,9 +212,7 @@ export const SessionStream = ({
 			activeSession.rid && activeSession.rid.startsWith('!');
 		if ((!activeSession.rid || isMatrixRoom) && activeSession.item?.id) {
 			const sessionId = activeSession.item.id;
-			const apiUrlBase = (window as any).Cypress
-				? (window as any).Cypress.env('REACT_APP_API_URL')
-				: process.env.REACT_APP_API_URL || '';
+			const apiUrlBase = getApiBaseUrl();
 			const matrixUrl = `${apiUrlBase}/service/matrix/sessions/${sessionId}/messages`;
 
 			// console.log('🚀 MATRIX: Fetching messages from Matrix API:', matrixUrl);

@@ -21,7 +21,16 @@ spec:
         - containerPort: 80
         env:
         - name: REACT_APP_API_URL
-          value: "https://api.oriso.site"
+          value: "https://api.oriso.org"
+        volumeMounts:
+        - name: runtime-config
+          mountPath: /usr/share/nginx/html/config.js
+          subPath: config.js
+          readOnly: true
+      volumes:
+      - name: runtime-config
+        configMap:
+          name: frontend-temp-runtime-config
 ---
 apiVersion: v1
 kind: Service

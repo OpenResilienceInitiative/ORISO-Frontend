@@ -1,14 +1,6 @@
-const apiUrlEnv: string = (window as any).Cypress
-	? (window as any).Cypress.env('REACT_APP_API_URL')
-	: process.env.REACT_APP_API_URL;
+import { getApiBaseUrl } from './getApiBaseUrl';
 
-export let apiUrl = '';
-if (apiUrlEnv) {
-	apiUrl = apiUrlEnv;
-	if (!apiUrl.startsWith('http://') && !apiUrl.startsWith('https://')) {
-		apiUrl = 'https://' + apiUrl;
-	}
-}
+export const apiUrl = getApiBaseUrl();
 
 export const endpoints = {
 	agencyConsultants: apiUrl + '/service/users/consultants',

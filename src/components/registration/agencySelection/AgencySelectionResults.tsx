@@ -144,7 +144,9 @@ export const AgencySelectionResults = ({
 							href={
 								fallbackUrl
 									? `${fallbackUrl}${zipcode}/`
-									: 'https://www.caritas.de'
+									: process.env
+											.REACT_APP_ORGANIZATION_HOME_URL ||
+										'https://www.caritas.de'
 							}
 						>
 							{t('registration.agency.noresult.label')}
