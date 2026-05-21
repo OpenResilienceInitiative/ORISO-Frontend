@@ -21,7 +21,7 @@ spec:
         - containerPort: 80
         env:
         - name: REACT_APP_API_URL
-          value: "https://api.oriso.site"
+          value: "https://api.oriso.org"
 ---
 apiVersion: v1
 kind: Service
