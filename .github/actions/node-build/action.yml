@@ -16,7 +16,7 @@ runs:
 
   - name: Install dependencies
     shell: bash
-    run: npm ci --ignore-scripts
+    run: npm ci --ignore-scripts --legacy-peer-deps
 
   - name: Build app
     shell: bash
