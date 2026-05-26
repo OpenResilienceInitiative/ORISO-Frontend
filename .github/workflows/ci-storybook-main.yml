@@ -4,14 +4,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - '.storybook/**'
-      - '.storybook-backup/**'
-      - '**/*.stories.*'
-      - 'storybook-*'
-      - 'Dockerfile.storybook'
-      - 'package.json'
-      - 'package-lock.json'
 
 env:
   REGISTRY: ghcr.io

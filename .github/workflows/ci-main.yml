@@ -4,12 +4,6 @@ on:
   push:
     branches:
       - main
-    paths-ignore:
-    - '.storybook/**'
-    - '.storybook-backup/**'
-    - '**/*.stories.*'
-    - 'storybook-*'
-    - 'Dockerfile.storybook'
 
 env:
   REGISTRY: ghcr.io

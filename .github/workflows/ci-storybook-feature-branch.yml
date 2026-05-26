@@ -4,14 +4,6 @@ on:
   push:
     branches-ignore:
       - main
-    paths:
-      - '.storybook/**'
-      - '.storybook-backup/**'
-      - '**/*.stories.*'
-      - 'storybook-*'
-      - 'Dockerfile.storybook'
-      - 'package.json'
-      - 'package-lock.json'
 
 jobs:
   build:
