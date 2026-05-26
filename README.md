@@ -48,3 +48,5 @@ Use these docs as the canonical references:
 - [Master Roadmap](./docs/plan/master-roadmap.md)
 
 Legacy root docs may still exist for historical context, but new documentation should live under `docs/`.
+
+CI split test marker 2026-05-26T11:10:52Z
