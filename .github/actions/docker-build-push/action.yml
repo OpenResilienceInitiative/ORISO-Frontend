@@ -10,6 +10,10 @@ inputs:
   github_token:
     required: true
     type: string
+  dockerfile:
+    required: false
+    type: string
+    default: Dockerfile
 
 runs:
   using: 'composite'
@@ -39,6 +43,7 @@ runs:
     uses: docker/build-push-action@v7
     with:
       context: .
+      file: ${{ inputs.dockerfile }}
       push: ${{ inputs.push_to_ghcr }}
       tags: ${{ steps.meta.outputs.tags }}
       labels: ${{ steps.meta.outputs.labels }}
