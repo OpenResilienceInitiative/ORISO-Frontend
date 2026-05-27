@@ -1,0 +1,14 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": ".github/workflows/frontend-deploy.yml",
+			"language": "yaml",
+			"sizeLines": 58,
+			"fileCategory": "infra"
+		}
+	],
+	"batchImportData": {
+		".github/workflows/frontend-deploy.yml": []
+	}
+}

@@ -1,0 +1,298 @@
+{
+	"nodes": [
+		{
+			"id": "config:.env.example",
+			"type": "config",
+			"name": ".env.example",
+			"filePath": ".env.example",
+			"summary": "Configuration file that controls env example behavior for the frontend project.",
+			"tags": ["configuration", "env-example", "config"],
+			"complexity": "simple"
+		},
+		{
+			"id": "document:CHANGELOG.md",
+			"type": "document",
+			"name": "CHANGELOG.md",
+			"filePath": "CHANGELOG.md",
+			"summary": "Documentation covering changelog md concerns in the ORISO frontend.",
+			"tags": ["documentation", "changelog-md", "docs"],
+			"complexity": "complex"
+		},
+		{
+			"id": "service:Dockerfile.storybook",
+			"type": "service",
+			"name": "Dockerfile.storybook",
+			"filePath": "Dockerfile.storybook",
+			"summary": "Infrastructure or service definition used to build, serve, or deploy the frontend application.",
+			"tags": ["infrastructure", "storybook", "deployment"],
+			"complexity": "simple"
+		},
+		{
+			"id": "document:LICENSE.md",
+			"type": "document",
+			"name": "LICENSE.md",
+			"filePath": "LICENSE.md",
+			"summary": "Documentation covering license md concerns in the ORISO frontend.",
+			"tags": ["documentation", "license-md", "docs"],
+			"complexity": "complex"
+		},
+		{
+			"id": "document:MATRIX-INTEGRATION-GUIDE.md",
+			"type": "document",
+			"name": "MATRIX-INTEGRATION-GUIDE.md",
+			"filePath": "MATRIX-INTEGRATION-GUIDE.md",
+			"summary": "Documentation covering matrix integration guide md concerns in the ORISO frontend.",
+			"tags": ["documentation", "matrix", "matrix-integration-guide-md"],
+			"complexity": "simple"
+		},
+		{
+			"id": "document:PROJECT_KNOWLEDGE.md",
+			"type": "document",
+			"name": "PROJECT_KNOWLEDGE.md",
+			"filePath": "PROJECT_KNOWLEDGE.md",
+			"summary": "Documentation covering project knowledge md concerns in the ORISO frontend.",
+			"tags": ["documentation", "project-knowledge-md", "docs"],
+			"complexity": "simple"
+		},
+		{
+			"id": "document:README.md",
+			"type": "document",
+			"name": "README.md",
+			"filePath": "README.md",
+			"summary": "Project overview documentation for the ORISO frontend, including stack, local development commands, and links to architecture and engineering docs.",
+			"tags": ["documentation", "readme-md", "docs"],
+			"complexity": "simple"
+		},
+		{
+			"id": "document:STORYBOOK_KUBERNETES.md",
+			"type": "document",
+			"name": "STORYBOOK_KUBERNETES.md",
+			"filePath": "STORYBOOK_KUBERNETES.md",
+			"summary": "Documentation covering storybook kubernetes md concerns in the ORISO frontend.",
+			"tags": ["documentation", "storybook", "storybook-kubernetes-md"],
+			"complexity": "simple"
+		},
+		{
+			"id": "document:STORYBOOK_SETUP.md",
+			"type": "document",
+			"name": "STORYBOOK_SETUP.md",
+			"filePath": "STORYBOOK_SETUP.md",
+			"summary": "Documentation covering storybook setup md concerns in the ORISO frontend.",
+			"tags": ["documentation", "storybook", "storybook-setup-md"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:create-all-stories.sh",
+			"type": "file",
+			"name": "create-all-stories.sh",
+			"filePath": "create-all-stories.sh",
+			"summary": "Frontend source file for create all stories sh in the ORISO React application.",
+			"tags": ["create-all-stories-sh", "script", "frontend"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:defaults.scss",
+			"type": "file",
+			"name": "defaults.scss",
+			"filePath": "defaults.scss",
+			"summary": "Stylesheet for defaults scss, defining frontend presentation rules and visual tokens.",
+			"tags": ["styling", "defaults-scss", "markup"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:deploy-development.sh",
+			"type": "file",
+			"name": "deploy-development.sh",
+			"filePath": "deploy-development.sh",
+			"summary": "Frontend source file for deploy development sh in the ORISO React application.",
+			"tags": ["deploy-development-sh", "script", "frontend"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:deploy-production.sh",
+			"type": "file",
+			"name": "deploy-production.sh",
+			"filePath": "deploy-production.sh",
+			"summary": "Frontend source file for deploy production sh in the ORISO React application.",
+			"tags": ["deploy-production-sh", "script", "frontend"],
+			"complexity": "simple"
+		},
+		{
+			"id": "config:deployment-v2.yaml",
+			"type": "config",
+			"name": "deployment-v2.yaml",
+			"filePath": "deployment-v2.yaml",
+			"summary": "Configuration file that controls deployment behavior for the frontend project.",
+			"tags": ["configuration", "deployment", "config"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "config:https-redirect-middleware.yaml",
+			"type": "config",
+			"name": "https-redirect-middleware.yaml",
+			"filePath": "https-redirect-middleware.yaml",
+			"summary": "Configuration file that controls deployment behavior for the frontend project.",
+			"tags": ["configuration", "deployment", "config"],
+			"complexity": "simple"
+		},
+		{
+			"id": "config:ingress-v2.yaml",
+			"type": "config",
+			"name": "ingress-v2.yaml",
+			"filePath": "ingress-v2.yaml",
+			"summary": "Configuration file that controls deployment behavior for the frontend project.",
+			"tags": ["configuration", "deployment", "config"],
+			"complexity": "simple"
+		},
+		{
+			"id": "config:ingress.yaml",
+			"type": "config",
+			"name": "ingress.yaml",
+			"filePath": "ingress.yaml",
+			"summary": "Configuration file that controls deployment behavior for the frontend project.",
+			"tags": ["configuration", "deployment", "config"],
+			"complexity": "simple"
+		},
+		{
+			"id": "config:k8s-temp-frontend.yaml",
+			"type": "config",
+			"name": "k8s-temp-frontend.yaml",
+			"filePath": "k8s-temp-frontend.yaml",
+			"summary": "Configuration file that controls deployment behavior for the frontend project.",
+			"tags": ["configuration", "deployment", "config"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "config:package.json",
+			"type": "config",
+			"name": "package.json",
+			"filePath": "package.json",
+			"summary": "Configuration file that controls build config behavior for the frontend project.",
+			"tags": ["configuration", "build-config", "config"],
+			"complexity": "complex"
+		},
+		{
+			"id": "config:serve.json",
+			"type": "config",
+			"name": "serve.json",
+			"filePath": "serve.json",
+			"summary": "Configuration file that controls serve json behavior for the frontend project.",
+			"tags": ["configuration", "serve-json", "config"],
+			"complexity": "simple"
+		}
+	],
+	"edges": [
+		{
+			"source": "config:.env.example",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "document:CHANGELOG.md",
+			"target": "document:README.md",
+			"type": "related",
+			"direction": "forward",
+			"weight": 0.5
+		},
+		{
+			"source": "service:Dockerfile.storybook",
+			"target": "file:src/initApp.tsx",
+			"type": "deploys",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "document:LICENSE.md",
+			"target": "document:README.md",
+			"type": "related",
+			"direction": "forward",
+			"weight": 0.5
+		},
+		{
+			"source": "document:MATRIX-INTEGRATION-GUIDE.md",
+			"target": "document:README.md",
+			"type": "related",
+			"direction": "forward",
+			"weight": 0.5
+		},
+		{
+			"source": "document:PROJECT_KNOWLEDGE.md",
+			"target": "document:README.md",
+			"type": "related",
+			"direction": "forward",
+			"weight": 0.5
+		},
+		{
+			"source": "document:README.md",
+			"target": "file:src/initApp.tsx",
+			"type": "documents",
+			"direction": "forward",
+			"weight": 0.5
+		},
+		{
+			"source": "document:STORYBOOK_KUBERNETES.md",
+			"target": "document:README.md",
+			"type": "related",
+			"direction": "forward",
+			"weight": 0.5
+		},
+		{
+			"source": "document:STORYBOOK_SETUP.md",
+			"target": "document:README.md",
+			"type": "related",
+			"direction": "forward",
+			"weight": 0.5
+		},
+		{
+			"source": "config:deployment-v2.yaml",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:https-redirect-middleware.yaml",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:ingress-v2.yaml",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:ingress.yaml",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:k8s-temp-frontend.yaml",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:package.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:serve.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		}
+	]
+}

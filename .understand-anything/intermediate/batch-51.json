@@ -1,0 +1,235 @@
+{
+	"nodes": [
+		{
+			"id": "file:src/components/mainTopicSelection/MainTopicSelection.styles.scss",
+			"type": "file",
+			"name": "MainTopicSelection.styles.scss",
+			"filePath": "src/components/mainTopicSelection/MainTopicSelection.styles.scss",
+			"summary": "React UI module for component main topic selection, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-main-topic-selection"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/matrixCall/MatrixCallView.styles.scss",
+			"type": "file",
+			"name": "MatrixCallView.styles.scss",
+			"filePath": "src/components/matrixCall/MatrixCallView.styles.scss",
+			"summary": "React UI module for component matrix call, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "matrix", "styling", "component-matrix-call"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/message/ConsultantMatchingAnimation.tsx",
+			"type": "file",
+			"name": "ConsultantMatchingAnimation.tsx",
+			"filePath": "src/components/message/ConsultantMatchingAnimation.tsx",
+			"summary": "React UI module for component message, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-message", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/message/message.styles.scss.backup",
+			"type": "file",
+			"name": "message.styles.scss.backup",
+			"filePath": "src/components/message/message.styles.scss.backup",
+			"summary": "React UI module for component message, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-message"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/message/VideoChatDetails/styles.module.scss",
+			"type": "file",
+			"name": "styles.module.scss",
+			"filePath": "src/components/message/VideoChatDetails/styles.module.scss",
+			"summary": "React UI module for component message, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-message"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/mobile/linkMenu/link_menu.styles.scss",
+			"type": "file",
+			"name": "link_menu.styles.scss",
+			"filePath": "src/components/mobile/linkMenu/link_menu.styles.scss",
+			"summary": "React UI module for component mobile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-mobile"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/modal/modal.styles.scss",
+			"type": "file",
+			"name": "modal.styles.scss",
+			"filePath": "src/components/modal/modal.styles.scss",
+			"summary": "React UI module for component modal, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-modal"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/notice/notice.styles.scss",
+			"type": "file",
+			"name": "notice.styles.scss",
+			"filePath": "src/components/notice/notice.styles.scss",
+			"summary": "React UI module for component notice, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-notice"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/notifications/notification.styles.scss",
+			"type": "file",
+			"name": "notification.styles.scss",
+			"filePath": "src/components/notifications/notification.styles.scss",
+			"summary": "React UI module for component notifications, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-notifications"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/notifications/notifications.styles.scss",
+			"type": "file",
+			"name": "notifications.styles.scss",
+			"filePath": "src/components/notifications/notifications.styles.scss",
+			"summary": "React UI module for component notifications, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-notifications"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/notificationsCenter/notificationsCenter.styles.scss",
+			"type": "file",
+			"name": "notificationsCenter.styles.scss",
+			"filePath": "src/components/notificationsCenter/notificationsCenter.styles.scss",
+			"summary": "React UI module for component notifications center, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-notifications-center"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/overlay/overlay.styles.scss",
+			"type": "file",
+			"name": "overlay.styles.scss",
+			"filePath": "src/components/overlay/overlay.styles.scss",
+			"summary": "React UI module for component overlay, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-overlay"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/Page/page.styles.scss",
+			"type": "file",
+			"name": "page.styles.scss",
+			"filePath": "src/components/Page/page.styles.scss",
+			"summary": "React UI module for component page, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-page"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/passwordReset/passwordReset.styles.scss",
+			"type": "file",
+			"name": "passwordReset.styles.scss",
+			"filePath": "src/components/passwordReset/passwordReset.styles.scss",
+			"summary": "React UI module for component password reset, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-password-reset"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/profile/AdditionalEnquiry/_additionalEnquiry.styles.scss",
+			"type": "file",
+			"name": "_additionalEnquiry.styles.scss",
+			"filePath": "src/components/profile/AdditionalEnquiry/_additionalEnquiry.styles.scss",
+			"summary": "React UI module for component profile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-profile"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/profile/BrowserNotifications/NotificationDenied/styles.module.scss",
+			"type": "file",
+			"name": "styles.module.scss",
+			"filePath": "src/components/profile/BrowserNotifications/NotificationDenied/styles.module.scss",
+			"summary": "React UI module for component profile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-profile"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/profile/BrowserNotifications/styles.module.scss",
+			"type": "file",
+			"name": "styles.module.scss",
+			"filePath": "src/components/profile/BrowserNotifications/styles.module.scss",
+			"summary": "React UI module for component profile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-profile"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/profile/Documentation/styles.module.scss",
+			"type": "file",
+			"name": "styles.module.scss",
+			"filePath": "src/components/profile/Documentation/styles.module.scss",
+			"summary": "React UI module for component profile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-profile"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/profile/EmailNotifications/NoEmailSet/styles.module.scss",
+			"type": "file",
+			"name": "styles.module.scss",
+			"filePath": "src/components/profile/EmailNotifications/NoEmailSet/styles.module.scss",
+			"summary": "React UI module for component profile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-profile"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/progressbar/progressbar.styles.scss",
+			"type": "file",
+			"name": "progressbar.styles.scss",
+			"filePath": "src/components/progressbar/progressbar.styles.scss",
+			"summary": "React UI module for component progressbar, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-progressbar"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/radioButton/radioButton.styles.scss",
+			"type": "file",
+			"name": "radioButton.styles.scss",
+			"filePath": "src/components/radioButton/radioButton.styles.scss",
+			"summary": "React UI module for component radio button, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-radio-button"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/registration/autoLogin.ts.backup",
+			"type": "file",
+			"name": "autoLogin.ts.backup",
+			"filePath": "src/components/registration/autoLogin.ts.backup",
+			"summary": "React UI module for component registration, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "authentication", "component-registration"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/registration/autoLogin.ts.backup-matrix",
+			"type": "file",
+			"name": "autoLogin.ts.backup-matrix",
+			"filePath": "src/components/registration/autoLogin.ts.backup-matrix",
+			"summary": "React UI module for component registration, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"matrix",
+				"authentication",
+				"component-registration"
+			],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/registration/welcomeScreen/welcomeScreen.styles.scss",
+			"type": "file",
+			"name": "welcomeScreen.styles.scss",
+			"filePath": "src/components/registration/welcomeScreen/welcomeScreen.styles.scss",
+			"summary": "React UI module for component registration, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-registration"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/releaseNote/releaseNote.styles.scss",
+			"type": "file",
+			"name": "releaseNote.styles.scss",
+			"filePath": "src/components/releaseNote/releaseNote.styles.scss",
+			"summary": "React UI module for component release note, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-release-note"],
+			"complexity": "moderate"
+		}
+	],
+	"edges": []
+}

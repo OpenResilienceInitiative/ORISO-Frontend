@@ -1,0 +1,32 @@
+{
+	"nodes": [
+		{
+			"id": "file:src/components/videoConference/e2eeBanner.styles.scss",
+			"type": "file",
+			"name": "e2eeBanner.styles.scss",
+			"filePath": "src/components/videoConference/e2eeBanner.styles.scss",
+			"summary": "React UI module for component video conference, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-video-conference"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/videoConference/logo.styles.scss",
+			"type": "file",
+			"name": "logo.styles.scss",
+			"filePath": "src/components/videoConference/logo.styles.scss",
+			"summary": "React UI module for component video conference, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-video-conference"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/videoConference/waitingRoom.styles.scss",
+			"type": "file",
+			"name": "waitingRoom.styles.scss",
+			"filePath": "src/components/videoConference/waitingRoom.styles.scss",
+			"summary": "React UI module for component video conference, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-video-conference"],
+			"complexity": "moderate"
+		}
+	],
+	"edges": []
+}

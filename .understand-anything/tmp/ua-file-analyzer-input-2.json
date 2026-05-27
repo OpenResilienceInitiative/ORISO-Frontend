@@ -1,0 +1,419 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": "src/api/apiGetConsultantAppointments.ts",
+			"language": "typescript",
+			"sizeLines": 16,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPatchUserData.ts",
+			"language": "typescript",
+			"sizeLines": 25,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/E2EEncryptionSupportHelp/E2EEncryptionSupportHelp.tsx",
+			"language": "typescript",
+			"sizeLines": 113,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/Switch/index.tsx",
+			"language": "typescript",
+			"sizeLines": 43,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/agencyRadioSelect/AgencyRadioSelect.tsx",
+			"language": "typescript",
+			"sizeLines": 82,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/agencySelection/AgencySelection.tsx",
+			"language": "typescript",
+			"sizeLines": 410,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/agencySelection/agencySelectionHelpers.ts",
+			"language": "typescript",
+			"sizeLines": 1,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/askerInfo/AskerInfoAssign.tsx",
+			"language": "typescript",
+			"sizeLines": 41,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/box/Box.tsx",
+			"language": "typescript",
+			"sizeLines": 27,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/downloadICSFile/downloadICSFile.tsx",
+			"language": "typescript",
+			"sizeLines": 77,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/editableData/EditableData.tsx",
+			"language": "typescript",
+			"sizeLines": 184,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/generateQrCode/GenerateQrCode.tsx",
+			"language": "typescript",
+			"sizeLines": 98,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/groupChat/GroupChatCopyLinks.tsx",
+			"language": "typescript",
+			"sizeLines": 62,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/header/Header.tsx",
+			"language": "typescript",
+			"sizeLines": 33,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/headline/Headline.stories.ts",
+			"language": "typescript",
+			"sizeLines": 53,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/headline/Headline.tsx",
+			"language": "typescript",
+			"sizeLines": 28,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/help/Help.tsx",
+			"language": "typescript",
+			"sizeLines": 54,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/help/HelpVideoCall.tsx",
+			"language": "typescript",
+			"sizeLines": 181,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/infoTooltip/InfoTooltip.tsx",
+			"language": "typescript",
+			"sizeLines": 119,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/inputField/InputField.stories.ts",
+			"language": "typescript",
+			"sizeLines": 98,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/inputField/InputField.tsx",
+			"language": "typescript",
+			"sizeLines": 134,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/localeSwitch/LocaleSwitch.tsx",
+			"language": "typescript",
+			"sizeLines": 241,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/mainTopicSelection/MainTopicSelection.tsx",
+			"language": "typescript",
+			"sizeLines": 125,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/Appointment.tsx",
+			"language": "typescript",
+			"sizeLines": 164,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/FurtherSteps.tsx",
+			"language": "typescript",
+			"sizeLines": 293,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/MessageMetaData.tsx",
+			"language": "typescript",
+			"sizeLines": 79,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/notice/Notice.stories.ts",
+			"language": "typescript",
+			"sizeLines": 56,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/notice/Notice.tsx",
+			"language": "typescript",
+			"sizeLines": 53,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/notice/types.ts",
+			"language": "typescript",
+			"sizeLines": 17,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/passwordReset/PasswordReset.tsx",
+			"language": "typescript",
+			"sizeLines": 356,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/AdditionalEnquiry/AdditionalAgencySelection.tsx",
+			"language": "typescript",
+			"sizeLines": 181,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/AskerConsultingTypeData.tsx",
+			"language": "typescript",
+			"sizeLines": 72,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/BrowserNotifications/NotificationDenied/index.tsx",
+			"language": "typescript",
+			"sizeLines": 17,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/BrowserNotifications/index.tsx",
+			"language": "typescript",
+			"sizeLines": 100,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/ConsultantAgencies.tsx",
+			"language": "typescript",
+			"sizeLines": 114,
+			"fileCategory": "code"
+		}
+	],
+	"batchImportData": {
+		"src/api/apiGetConsultantAppointments.ts": [
+			"src/api/fetchData.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/resources/scripts/endpoints.ts",
+			"src/utils/consultant.ts"
+		],
+		"src/api/apiPatchUserData.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts",
+			"src/utils/keycloakSession.ts"
+		],
+		"src/components/E2EEncryptionSupportHelp/E2EEncryptionSupportHelp.tsx": [
+			"src/components/button/Button.tsx",
+			"src/components/E2EEncryptionSupportHelp/E2EEncryptionSupportHelp.styles.scss",
+			"src/components/headline/Headline.tsx",
+			"src/components/help/HelpVideoCall.tsx",
+			"src/components/notifications/Notification.tsx",
+			"src/components/text/Text.tsx",
+			"src/resources/img/icons.ts",
+			"src/utils/clipboardHelpers.ts"
+		],
+		"src/components/Switch/index.tsx": [
+			"src/components/Switch/switch.module.scss",
+			"src/components/text/Text.tsx"
+		],
+		"src/components/agencyRadioSelect/AgencyRadioSelect.tsx": [
+			"src/components/agencyRadioSelect/AgencyLanguages.tsx",
+			"src/components/headline/Headline.tsx",
+			"src/components/infoTooltip/InfoTooltip.tsx",
+			"src/components/radioButton/RadioButton.tsx",
+			"src/globalState/interfaces/index.ts"
+		],
+		"src/components/agencySelection/AgencySelection.tsx": [
+			"src/api/index.ts",
+			"src/components/agencyRadioSelect/AgencyRadioSelect.tsx",
+			"src/components/agencySelection/agencySelectionHelpers.ts",
+			"src/components/app/Loading.tsx",
+			"src/components/headline/Headline.tsx",
+			"src/components/inputField/InputField.tsx",
+			"src/components/notice/Notice.tsx",
+			"src/components/registration/registrationHelpers.ts",
+			"src/components/text/Text.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/hooks/useAppConfig.tsx",
+			"src/utils/parsePlaceholderString.ts"
+		],
+		"src/components/agencySelection/agencySelectionHelpers.ts": [],
+		"src/components/askerInfo/AskerInfoAssign.tsx": [
+			"src/components/sessionAssign/RequestSessionAssign.tsx",
+			"src/components/text/Text.tsx",
+			"src/globalState/index.ts"
+		],
+		"src/components/box/Box.tsx": ["src/components/box/box.module.scss"],
+		"src/components/downloadICSFile/downloadICSFile.tsx": [
+			"src/components/text/Text.tsx",
+			"src/utils/dateHelpers.ts"
+		],
+		"src/components/editableData/EditableData.tsx": [
+			"src/components/registration/registrationHelpers.ts",
+			"src/components/text/Text.tsx"
+		],
+		"src/components/generateQrCode/GenerateQrCode.tsx": [
+			"src/components/headline/Headline.tsx",
+			"src/components/overlay/Overlay.tsx",
+			"src/components/text/Text.tsx"
+		],
+		"src/components/groupChat/GroupChatCopyLinks.tsx": [
+			"src/components/generateQrCode/GenerateQrCode.tsx",
+			"src/components/groupChat/groupChatCopyLinks.scss",
+			"src/globalState/index.ts",
+			"src/hooks/useAppConfig.tsx",
+			"src/resources/img/icons.ts",
+			"src/utils/clipboardHelpers.ts"
+		],
+		"src/components/header/Header.tsx": [
+			"src/components/headline/Headline.tsx",
+			"src/components/text/Text.tsx",
+			"src/components/uiVersionToggle/UIVersionToggle.tsx",
+			"src/globalState/index.ts",
+			"src/store/agencyLogoAtom.ts"
+		],
+		"src/components/headline/Headline.stories.ts": [
+			"src/components/headline/Headline.tsx"
+		],
+		"src/components/headline/Headline.tsx": [],
+		"src/components/help/Help.tsx": [
+			"src/components/help/help.styles.scss",
+			"src/components/help/HelpVideoCall.tsx",
+			"src/globalState/index.ts",
+			"src/hooks/useAppConfig.tsx",
+			"src/utils/clipboardHelpers.ts"
+		],
+		"src/components/help/HelpVideoCall.tsx": [
+			"src/components/headline/Headline.tsx",
+			"src/components/text/Text.tsx"
+		],
+		"src/components/infoTooltip/InfoTooltip.tsx": [
+			"src/components/text/Text.tsx"
+		],
+		"src/components/inputField/InputField.stories.ts": [
+			"src/components/inputField/InputField.tsx"
+		],
+		"src/components/inputField/InputField.tsx": [
+			"src/components/text/Text.tsx"
+		],
+		"src/components/localeSwitch/LocaleSwitch.tsx": [
+			"src/api/apiPatchUserData.ts",
+			"src/components/select/LanguageSelectDropdown.tsx",
+			"src/components/select/SelectDropdown.tsx",
+			"src/components/sessionCookie/accessSessionCookie.ts",
+			"src/globalState/index.ts",
+			"src/utils/keycloakSession.ts"
+		],
+		"src/components/mainTopicSelection/MainTopicSelection.tsx": [
+			"src/api/apiGetTopicsData.ts",
+			"src/components/infoTooltip/InfoTooltip.tsx",
+			"src/components/radioButton/RadioButton.tsx",
+			"src/components/registration/registrationHelpers.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/globalState/provider/UrlParamsProvider.tsx"
+		],
+		"src/components/message/Appointment.tsx": [
+			"src/api/apiSendAliasMessage.ts",
+			"src/components/downloadICSFile/downloadICSFile.tsx",
+			"src/components/headline/Headline.tsx",
+			"src/components/text/Text.tsx",
+			"src/utils/dateHelpers.ts"
+		],
+		"src/components/message/FurtherSteps.tsx": [
+			"src/api/index.ts",
+			"src/components/button/Button.tsx",
+			"src/components/headline/Headline.tsx",
+			"src/components/inputField/InputField.tsx",
+			"src/components/overlay/Overlay.tsx",
+			"src/components/registration/registrationHelpers.ts",
+			"src/components/text/Text.tsx",
+			"src/globalState/index.ts"
+		],
+		"src/components/message/MessageMetaData.tsx": [
+			"src/globalState/index.ts",
+			"src/utils/dateHelpers.ts"
+		],
+		"src/components/notice/Notice.stories.ts": [
+			"src/components/notice/Notice.tsx",
+			"src/components/notice/types.ts"
+		],
+		"src/components/notice/Notice.tsx": ["src/components/notice/types.ts"],
+		"src/components/notice/types.ts": [],
+		"src/components/passwordReset/PasswordReset.tsx": [
+			"src/api/apiRocketChatSetUserKeys.ts",
+			"src/api/apiUpdatePasswordAppointments.ts",
+			"src/api/index.ts",
+			"src/components/button/Button.tsx",
+			"src/components/headline/Headline.tsx",
+			"src/components/inputField/InputField.tsx",
+			"src/components/logout/logout.ts",
+			"src/components/overlay/Overlay.tsx",
+			"src/components/sessionCookie/accessSessionCookie.ts",
+			"src/components/text/Text.tsx",
+			"src/globalState/index.ts",
+			"src/hooks/useAppConfig.tsx",
+			"src/utils/encryptionHelpers.ts",
+			"src/utils/tenantSettingsHelper.ts",
+			"src/utils/validateInputValue.ts"
+		],
+		"src/components/profile/AdditionalEnquiry/AdditionalAgencySelection.tsx": [
+			"src/api/index.ts",
+			"src/components/agencyRadioSelect/AgencyRadioSelect.tsx",
+			"src/components/agencySelection/agencySelectionHelpers.ts",
+			"src/components/headline/Headline.tsx",
+			"src/components/inputField/InputField.tsx",
+			"src/components/text/Text.tsx",
+			"src/globalState/interfaces/index.ts"
+		],
+		"src/components/profile/AskerConsultingTypeData.tsx": [
+			"src/api/index.ts",
+			"src/components/box/Box.tsx",
+			"src/components/headline/Headline.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/index.ts"
+		],
+		"src/components/profile/BrowserNotifications/NotificationDenied/index.tsx": [
+			"src/components/profile/BrowserNotifications/NotificationDenied/styles.module.scss",
+			"src/components/text/Text.tsx"
+		],
+		"src/components/profile/BrowserNotifications/index.tsx": [
+			"src/components/headline/Headline.tsx",
+			"src/components/profile/BrowserNotifications/NotificationDenied/index.tsx",
+			"src/components/profile/BrowserNotifications/styles.module.scss",
+			"src/components/Switch/index.tsx",
+			"src/components/text/Text.tsx",
+			"src/utils/notificationHelpers.ts",
+			"src/utils/useIsFirstVisit.tsx"
+		],
+		"src/components/profile/ConsultantAgencies.tsx": [
+			"src/components/generateQrCode/GenerateQrCode.tsx",
+			"src/components/headline/Headline.tsx",
+			"src/globalState/index.ts",
+			"src/hooks/useAppConfig.tsx",
+			"src/utils/clipboardHelpers.ts"
+		]
+	}
+}

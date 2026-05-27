@@ -1,0 +1,59 @@
+{
+	"nodes": [
+		{
+			"id": "file:src/components/profile/_locale.styles.scss",
+			"type": "file",
+			"name": "_locale.styles.scss",
+			"filePath": "src/components/profile/_locale.styles.scss",
+			"summary": "React UI module for component profile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "i18n", "styling", "component-profile"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/profile/_spokenlanguages.styles.scss",
+			"type": "file",
+			"name": "_spokenlanguages.styles.scss",
+			"filePath": "src/components/profile/_spokenlanguages.styles.scss",
+			"summary": "React UI module for component profile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-profile"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/profile/absenceFormular.styles.scss",
+			"type": "file",
+			"name": "absenceFormular.styles.scss",
+			"filePath": "src/components/profile/absenceFormular.styles.scss",
+			"summary": "React UI module for component profile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-profile"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/profile/deleteAccount.styles.scss",
+			"type": "file",
+			"name": "deleteAccount.styles.scss",
+			"filePath": "src/components/profile/deleteAccount.styles.scss",
+			"summary": "React UI module for component profile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-profile"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/profile/profile.styles.scss",
+			"type": "file",
+			"name": "profile.styles.scss",
+			"filePath": "src/components/profile/profile.styles.scss",
+			"summary": "React UI module for component profile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-profile"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/profile/statistics.styles.scss",
+			"type": "file",
+			"name": "statistics.styles.scss",
+			"filePath": "src/components/profile/statistics.styles.scss",
+			"summary": "React UI module for component profile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-profile"],
+			"complexity": "moderate"
+		}
+	],
+	"edges": []
+}

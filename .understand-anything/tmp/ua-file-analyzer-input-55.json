@@ -1,0 +1,175 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": "src/resources/i18n/ru/common.json",
+			"language": "json",
+			"sizeLines": 2876,
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/ru/languages.json",
+			"language": "json",
+			"sizeLines": 186,
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/ti/common.json",
+			"language": "json",
+			"sizeLines": 2876,
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/ti/languages.json",
+			"language": "json",
+			"sizeLines": 186,
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/tr/common.json",
+			"language": "json",
+			"sizeLines": 2876,
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/tr/languages.json",
+			"language": "json",
+			"sizeLines": 186,
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/scripts/endpoints.ts.backup",
+			"language": "backup",
+			"sizeLines": 137,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/services/liveKitService.ts",
+			"language": "typescript",
+			"sizeLines": 299,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/services/matrixGroupCallService.ts",
+			"language": "typescript",
+			"sizeLines": 246,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/services/matrixRegistrationService.ts",
+			"language": "typescript",
+			"sizeLines": 113,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/capitalizeFirstLetter.ts",
+			"language": "typescript",
+			"sizeLines": 3,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/downloadICSFile.ts",
+			"language": "typescript",
+			"sizeLines": 8,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/useIsFirstLogin.tsx",
+			"language": "typescript",
+			"sizeLines": 28,
+			"fileCategory": "code"
+		},
+		{
+			"path": "test-results/.last-run.json",
+			"language": "json",
+			"sizeLines": 3,
+			"fileCategory": "config"
+		},
+		{
+			"path": "tmpcompare.spec.ts",
+			"language": "typescript",
+			"sizeLines": 35,
+			"fileCategory": "code"
+		},
+		{
+			"path": "translation-files-current/de@informal/common.json",
+			"language": "json",
+			"sizeLines": 1071,
+			"fileCategory": "config"
+		},
+		{
+			"path": "translation-files-current/fr/common.json",
+			"language": "json",
+			"sizeLines": 2721,
+			"fileCategory": "config"
+		},
+		{
+			"path": "translation-files-current/fr/languages.json",
+			"language": "json",
+			"sizeLines": 186,
+			"fileCategory": "config"
+		},
+		{
+			"path": "translation-files-current/ru/common.json",
+			"language": "json",
+			"sizeLines": 2721,
+			"fileCategory": "config"
+		},
+		{
+			"path": "translation-files-current/ru/languages.json",
+			"language": "json",
+			"sizeLines": 186,
+			"fileCategory": "config"
+		},
+		{
+			"path": "translation-files-current/ti/common.json",
+			"language": "json",
+			"sizeLines": 2721,
+			"fileCategory": "config"
+		},
+		{
+			"path": "translation-files-current/ti/languages.json",
+			"language": "json",
+			"sizeLines": 186,
+			"fileCategory": "config"
+		},
+		{
+			"path": "translation-files-current/tr/common.json",
+			"language": "json",
+			"sizeLines": 2721,
+			"fileCategory": "config"
+		},
+		{
+			"path": "translation-files-current/tr/languages.json",
+			"language": "json",
+			"sizeLines": 186,
+			"fileCategory": "config"
+		}
+	],
+	"batchImportData": {
+		"src/resources/i18n/ru/common.json": [],
+		"src/resources/i18n/ru/languages.json": [],
+		"src/resources/i18n/ti/common.json": [],
+		"src/resources/i18n/ti/languages.json": [],
+		"src/resources/i18n/tr/common.json": [],
+		"src/resources/i18n/tr/languages.json": [],
+		"src/resources/scripts/endpoints.ts.backup": [],
+		"src/services/liveKitService.ts": [],
+		"src/services/matrixGroupCallService.ts": [],
+		"src/services/matrixRegistrationService.ts": [],
+		"src/utils/capitalizeFirstLetter.ts": [],
+		"src/utils/downloadICSFile.ts": [],
+		"src/utils/useIsFirstLogin.tsx": [],
+		"test-results/.last-run.json": [],
+		"tmpcompare.spec.ts": [],
+		"translation-files-current/de@informal/common.json": [],
+		"translation-files-current/fr/common.json": [],
+		"translation-files-current/fr/languages.json": [],
+		"translation-files-current/ru/common.json": [],
+		"translation-files-current/ru/languages.json": [],
+		"translation-files-current/ti/common.json": [],
+		"translation-files-current/ti/languages.json": [],
+		"translation-files-current/tr/common.json": [],
+		"translation-files-current/tr/languages.json": []
+	}
+}

@@ -1,0 +1,147 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": ".storybook-backup/static/compound-design-tokens.css",
+			"language": "css",
+			"sizeLines": 24,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/compound-web.css",
+			"language": "css",
+			"sizeLines": 2726,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-common-base.css",
+			"language": "css",
+			"sizeLines": 81,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-common-semantic.css",
+			"language": "css",
+			"sizeLines": 87,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-font-fallbacks.css",
+			"language": "css",
+			"sizeLines": 427,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-dark-base-mq.css",
+			"language": "css",
+			"sizeLines": 312,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-dark-base.css",
+			"language": "css",
+			"sizeLines": 312,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-dark-hc-base-mq.css",
+			"language": "css",
+			"sizeLines": 312,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-dark-hc-base.css",
+			"language": "css",
+			"sizeLines": 312,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-dark-hc-semantic-mq.css",
+			"language": "css",
+			"sizeLines": 12,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-dark-hc-semantic.css",
+			"language": "css",
+			"sizeLines": 12,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-dark-semantic-mq.css",
+			"language": "css",
+			"sizeLines": 12,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-dark-semantic.css",
+			"language": "css",
+			"sizeLines": 12,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-light-base-mq.css",
+			"language": "css",
+			"sizeLines": 312,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-light-base.css",
+			"language": "css",
+			"sizeLines": 312,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-light-hc-base-mq.css",
+			"language": "css",
+			"sizeLines": 312,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-light-hc-base.css",
+			"language": "css",
+			"sizeLines": 312,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-light-hc-semantic-mq.css",
+			"language": "css",
+			"sizeLines": 12,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-light-hc-semantic.css",
+			"language": "css",
+			"sizeLines": 12,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-light-semantic-mq.css",
+			"language": "css",
+			"sizeLines": 12,
+			"fileCategory": "markup"
+		}
+	],
+	"batchImportData": {
+		".storybook-backup/static/compound-design-tokens.css": [],
+		".storybook-backup/static/compound-web.css": [],
+		".storybook-backup/static/cpd-common-base.css": [],
+		".storybook-backup/static/cpd-common-semantic.css": [],
+		".storybook-backup/static/cpd-font-fallbacks.css": [],
+		".storybook-backup/static/cpd-theme-dark-base-mq.css": [],
+		".storybook-backup/static/cpd-theme-dark-base.css": [],
+		".storybook-backup/static/cpd-theme-dark-hc-base-mq.css": [],
+		".storybook-backup/static/cpd-theme-dark-hc-base.css": [],
+		".storybook-backup/static/cpd-theme-dark-hc-semantic-mq.css": [],
+		".storybook-backup/static/cpd-theme-dark-hc-semantic.css": [],
+		".storybook-backup/static/cpd-theme-dark-semantic-mq.css": [],
+		".storybook-backup/static/cpd-theme-dark-semantic.css": [],
+		".storybook-backup/static/cpd-theme-light-base-mq.css": [],
+		".storybook-backup/static/cpd-theme-light-base.css": [],
+		".storybook-backup/static/cpd-theme-light-hc-base-mq.css": [],
+		".storybook-backup/static/cpd-theme-light-hc-base.css": [],
+		".storybook-backup/static/cpd-theme-light-hc-semantic-mq.css": [],
+		".storybook-backup/static/cpd-theme-light-hc-semantic.css": [],
+		".storybook-backup/static/cpd-theme-light-semantic-mq.css": []
+	}
+}

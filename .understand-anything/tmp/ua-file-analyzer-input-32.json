@@ -1,0 +1,28 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": "public/element-sso-bridge.html",
+			"language": "html",
+			"sizeLines": 122,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "public/manifest.json",
+			"language": "json",
+			"sizeLines": 25,
+			"fileCategory": "config"
+		},
+		{
+			"path": "public/robots.txt",
+			"language": "txt",
+			"sizeLines": 3,
+			"fileCategory": "docs"
+		}
+	],
+	"batchImportData": {
+		"public/element-sso-bridge.html": [],
+		"public/manifest.json": [],
+		"public/robots.txt": []
+	}
+}

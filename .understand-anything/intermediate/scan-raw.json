@@ -1,0 +1,5940 @@
+{
+	"scriptCompleted": true,
+	"files": [
+		{
+			"path": ".cursor/settings.json",
+			"language": "json",
+			"sizeLines": 7,
+			"fileCategory": "config"
+		},
+		{
+			"path": ".dockerignore",
+			"language": "unknown",
+			"sizeLines": 17,
+			"fileCategory": "infra"
+		},
+		{
+			"path": ".env.example",
+			"language": "config",
+			"sizeLines": 30,
+			"fileCategory": "config"
+		},
+		{
+			"path": ".github/workflows/frontend-deploy.yml",
+			"language": "yaml",
+			"sizeLines": 58,
+			"fileCategory": "infra"
+		},
+		{
+			"path": ".husky/commit-msg",
+			"language": "unknown",
+			"sizeLines": 4,
+			"fileCategory": "code"
+		},
+		{
+			"path": ".husky/pre-commit",
+			"language": "unknown",
+			"sizeLines": 4,
+			"fileCategory": "code"
+		},
+		{
+			"path": ".prettierignore",
+			"language": "unknown",
+			"sizeLines": 9,
+			"fileCategory": "code"
+		},
+		{
+			"path": ".storybook-backup/main.ts",
+			"language": "typescript",
+			"sizeLines": 74,
+			"fileCategory": "code"
+		},
+		{
+			"path": ".storybook-backup/preview-head.html",
+			"language": "html",
+			"sizeLines": 4,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/preview.tsx",
+			"language": "typescript",
+			"sizeLines": 84,
+			"fileCategory": "code"
+		},
+		{
+			"path": ".storybook-backup/static/compound-design-tokens.css",
+			"language": "css",
+			"sizeLines": 24,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/compound-web.css",
+			"language": "css",
+			"sizeLines": 2726,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-common-base.css",
+			"language": "css",
+			"sizeLines": 81,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-common-semantic.css",
+			"language": "css",
+			"sizeLines": 87,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-font-fallbacks.css",
+			"language": "css",
+			"sizeLines": 427,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-dark-base-mq.css",
+			"language": "css",
+			"sizeLines": 312,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-dark-base.css",
+			"language": "css",
+			"sizeLines": 312,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-dark-hc-base-mq.css",
+			"language": "css",
+			"sizeLines": 312,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-dark-hc-base.css",
+			"language": "css",
+			"sizeLines": 312,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-dark-hc-semantic-mq.css",
+			"language": "css",
+			"sizeLines": 12,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-dark-hc-semantic.css",
+			"language": "css",
+			"sizeLines": 12,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-dark-semantic-mq.css",
+			"language": "css",
+			"sizeLines": 12,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-dark-semantic.css",
+			"language": "css",
+			"sizeLines": 12,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-light-base-mq.css",
+			"language": "css",
+			"sizeLines": 312,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-light-base.css",
+			"language": "css",
+			"sizeLines": 312,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-light-hc-base-mq.css",
+			"language": "css",
+			"sizeLines": 312,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-light-hc-base.css",
+			"language": "css",
+			"sizeLines": 312,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-light-hc-semantic-mq.css",
+			"language": "css",
+			"sizeLines": 12,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-light-hc-semantic.css",
+			"language": "css",
+			"sizeLines": 12,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-light-semantic-mq.css",
+			"language": "css",
+			"sizeLines": 12,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-light-semantic.css",
+			"language": "css",
+			"sizeLines": 12,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/main.ts",
+			"language": "typescript",
+			"sizeLines": 136,
+			"fileCategory": "code"
+		},
+		{
+			"path": ".storybook/manager.ts",
+			"language": "typescript",
+			"sizeLines": 13,
+			"fileCategory": "code"
+		},
+		{
+			"path": ".storybook/preview-head.html",
+			"language": "html",
+			"sizeLines": 4,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/preview.tsx",
+			"language": "typescript",
+			"sizeLines": 246,
+			"fileCategory": "code"
+		},
+		{
+			"path": ".storybook/static/compound-design-tokens.css",
+			"language": "css",
+			"sizeLines": 24,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/static/compound-web.css",
+			"language": "css",
+			"sizeLines": 2726,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/static/cpd-common-base.css",
+			"language": "css",
+			"sizeLines": 81,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/static/cpd-common-semantic.css",
+			"language": "css",
+			"sizeLines": 87,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/static/cpd-font-fallbacks.css",
+			"language": "css",
+			"sizeLines": 427,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/static/cpd-theme-dark-base-mq.css",
+			"language": "css",
+			"sizeLines": 312,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/static/cpd-theme-dark-base.css",
+			"language": "css",
+			"sizeLines": 312,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/static/cpd-theme-dark-hc-base-mq.css",
+			"language": "css",
+			"sizeLines": 312,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/static/cpd-theme-dark-hc-base.css",
+			"language": "css",
+			"sizeLines": 312,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/static/cpd-theme-dark-hc-semantic-mq.css",
+			"language": "css",
+			"sizeLines": 12,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/static/cpd-theme-dark-hc-semantic.css",
+			"language": "css",
+			"sizeLines": 12,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/static/cpd-theme-dark-semantic-mq.css",
+			"language": "css",
+			"sizeLines": 12,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/static/cpd-theme-dark-semantic.css",
+			"language": "css",
+			"sizeLines": 12,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/static/cpd-theme-light-base-mq.css",
+			"language": "css",
+			"sizeLines": 312,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/static/cpd-theme-light-base.css",
+			"language": "css",
+			"sizeLines": 312,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/static/cpd-theme-light-hc-base-mq.css",
+			"language": "css",
+			"sizeLines": 312,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/static/cpd-theme-light-hc-base.css",
+			"language": "css",
+			"sizeLines": 312,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/static/cpd-theme-light-hc-semantic-mq.css",
+			"language": "css",
+			"sizeLines": 12,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/static/cpd-theme-light-hc-semantic.css",
+			"language": "css",
+			"sizeLines": 12,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/static/cpd-theme-light-semantic-mq.css",
+			"language": "css",
+			"sizeLines": 12,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/static/cpd-theme-light-semantic.css",
+			"language": "css",
+			"sizeLines": 12,
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".stylelintrc.js",
+			"language": "javascript",
+			"sizeLines": 84,
+			"fileCategory": "code"
+		},
+		{
+			"path": ".tmp-proof/capture_compare.js",
+			"language": "javascript",
+			"sizeLines": 42,
+			"fileCategory": "code"
+		},
+		{
+			"path": ".understand-anything/.understandignore",
+			"language": "unknown",
+			"sizeLines": 50,
+			"fileCategory": "code"
+		},
+		{
+			"path": "CHANGELOG.md",
+			"language": "markdown",
+			"sizeLines": 412,
+			"fileCategory": "docs"
+		},
+		{
+			"path": "cli.js",
+			"language": "javascript",
+			"sizeLines": 31,
+			"fileCategory": "code"
+		},
+		{
+			"path": "config/env.js",
+			"language": "javascript",
+			"sizeLines": 105,
+			"fileCategory": "code"
+		},
+		{
+			"path": "config/getHttpsConfig.js",
+			"language": "javascript",
+			"sizeLines": 70,
+			"fileCategory": "code"
+		},
+		{
+			"path": "config/modules.js",
+			"language": "javascript",
+			"sizeLines": 136,
+			"fileCategory": "code"
+		},
+		{
+			"path": "config/paths.js",
+			"language": "javascript",
+			"sizeLines": 82,
+			"fileCategory": "code"
+		},
+		{
+			"path": "config/webpack.config.js",
+			"language": "javascript",
+			"sizeLines": 897,
+			"fileCategory": "code"
+		},
+		{
+			"path": "config/webpack/persistentCache/createEnvironmentHash.js",
+			"language": "javascript",
+			"sizeLines": 9,
+			"fileCategory": "code"
+		},
+		{
+			"path": "config/webpackDevServer.config.js",
+			"language": "javascript",
+			"sizeLines": 176,
+			"fileCategory": "code"
+		},
+		{
+			"path": "create-all-stories.sh",
+			"language": "shell",
+			"sizeLines": 118,
+			"fileCategory": "script"
+		},
+		{
+			"path": "cypress.config.js",
+			"language": "javascript",
+			"sizeLines": 64,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/appointments.cy.ts",
+			"language": "typescript",
+			"sizeLines": 568,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/error.cy.ts",
+			"language": "typescript",
+			"sizeLines": 16,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/login.cy.ts",
+			"language": "typescript",
+			"sizeLines": 37,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/messages/attachments/base.cy.ts",
+			"language": "typescript",
+			"sizeLines": 33,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/messages/attachments/formal.cy.ts",
+			"language": "typescript",
+			"sizeLines": 45,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/messages/attachments/informal.cy.ts",
+			"language": "typescript",
+			"sizeLines": 49,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/messages/unread-animation.cy.ts",
+			"language": "typescript",
+			"sizeLines": 297,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/profile.cy.ts",
+			"language": "typescript",
+			"sizeLines": 111,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/registration/base.cy.ts",
+			"language": "typescript",
+			"sizeLines": 203,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/registration/consultingType.cy.ts",
+			"language": "typescript",
+			"sizeLines": 934,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/registration/topic.cy.ts",
+			"language": "typescript",
+			"sizeLines": 1360,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/release-notes.cy.ts",
+			"language": "typescript",
+			"sizeLines": 113,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/sessions.cy.ts",
+			"language": "typescript",
+			"sizeLines": 240,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/tokens.cy.ts",
+			"language": "typescript",
+			"sizeLines": 177,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/under-construction.cy.ts",
+			"language": "typescript",
+			"sizeLines": 6,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/video-calls.cy.ts",
+			"language": "typescript",
+			"sizeLines": 617,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/videoconference.cy.ts",
+			"language": "typescript",
+			"sizeLines": 409,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/fixtures/api.v1.login.json",
+			"language": "json",
+			"sizeLines": 63,
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/auth.token.json",
+			"language": "json",
+			"sizeLines": 10,
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/registration/agency.json",
+			"language": "json",
+			"sizeLines": 10,
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/registration/consultingType.json",
+			"language": "json",
+			"sizeLines": 60,
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/registration/topic.json",
+			"language": "json",
+			"sizeLines": 7,
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/releaseNote.md",
+			"language": "markdown",
+			"sizeLines": 5,
+			"fileCategory": "docs"
+		},
+		{
+			"path": "cypress/fixtures/releases.json",
+			"language": "json",
+			"sizeLines": 5,
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/service.agencies.json",
+			"language": "json",
+			"sizeLines": 13,
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/service.agency.consultants.json",
+			"language": "json",
+			"sizeLines": 23,
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/service.consultingtypes.addiction.json",
+			"language": "json",
+			"sizeLines": 60,
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/service.consultingtypes.emigration.json",
+			"language": "json",
+			"sizeLines": 57,
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/service.consultingtypes.pregnancy.json",
+			"language": "json",
+			"sizeLines": 61,
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/service.consultingtypes.u25.json",
+			"language": "json",
+			"sizeLines": 138,
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/service.settings.json",
+			"language": "json",
+			"sizeLines": 59,
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/service.tenant.public.json",
+			"language": "json",
+			"sizeLines": 32,
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/service.topicGroups.json",
+			"language": "json",
+			"sizeLines": 21,
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/service.topics.json",
+			"language": "json",
+			"sizeLines": 38,
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/service.users.data.json",
+			"language": "json",
+			"sizeLines": 92,
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/service.users.sessions.room.json",
+			"language": "json",
+			"sizeLines": 33,
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/service.videocalls.new.json",
+			"language": "json",
+			"sizeLines": 3,
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/support/commands.ts",
+			"language": "typescript",
+			"sizeLines": 6,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/commands/api/agencies.ts",
+			"language": "typescript",
+			"sizeLines": 32,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/commands/api/appointments.ts",
+			"language": "typescript",
+			"sizeLines": 50,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/commands/api/consultTypes.ts",
+			"language": "typescript",
+			"sizeLines": 54,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/commands/api/messages.ts",
+			"language": "typescript",
+			"sizeLines": 30,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/commands/api/rc.ts",
+			"language": "typescript",
+			"sizeLines": 109,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/commands/api/topic.ts",
+			"language": "typescript",
+			"sizeLines": 9,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/commands/api/uploads.ts",
+			"language": "typescript",
+			"sizeLines": 12,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/commands/api/users/chat.ts",
+			"language": "typescript",
+			"sizeLines": 12,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/commands/api/users/consultants.ts",
+			"language": "typescript",
+			"sizeLines": 32,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/commands/api/users/data.ts",
+			"language": "typescript",
+			"sizeLines": 22,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/commands/api/users/sessions.ts",
+			"language": "typescript",
+			"sizeLines": 62,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/commands/api/videocalls.ts",
+			"language": "typescript",
+			"sizeLines": 18,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/commands/helper/appointments.ts",
+			"language": "typescript",
+			"sizeLines": 45,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/commands/helper/askerSessions.ts",
+			"language": "typescript",
+			"sizeLines": 31,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/commands/helper/consultantSessions.ts",
+			"language": "typescript",
+			"sizeLines": 36,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/commands/helper/fastLogin.ts",
+			"language": "typescript",
+			"sizeLines": 66,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/commands/helper/login.ts",
+			"language": "typescript",
+			"sizeLines": 43,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/commands/helper/messages.ts",
+			"language": "typescript",
+			"sizeLines": 45,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/commands/mockApi.ts",
+			"language": "typescript",
+			"sizeLines": 228,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/commands/socket.ts",
+			"language": "typescript",
+			"sizeLines": 84,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/e2e.ts",
+			"language": "typescript",
+			"sizeLines": 30,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/helpers.ts",
+			"language": "typescript",
+			"sizeLines": 29,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/index.d.ts",
+			"language": "typescript",
+			"sizeLines": 49,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/sessions.ts",
+			"language": "typescript",
+			"sizeLines": 220,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/websocket.ts",
+			"language": "typescript",
+			"sizeLines": 325,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/tsconfig.json",
+			"language": "json",
+			"sizeLines": 13,
+			"fileCategory": "config"
+		},
+		{
+			"path": "defaults.scss",
+			"language": "css",
+			"sizeLines": 3,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "deploy-development.sh",
+			"language": "shell",
+			"sizeLines": 27,
+			"fileCategory": "script"
+		},
+		{
+			"path": "deploy-production.sh",
+			"language": "shell",
+			"sizeLines": 18,
+			"fileCategory": "script"
+		},
+		{
+			"path": "deployment-v2.yaml",
+			"language": "yaml",
+			"sizeLines": 52,
+			"fileCategory": "config"
+		},
+		{
+			"path": "Dockerfile",
+			"language": "dockerfile",
+			"sizeLines": 47,
+			"fileCategory": "infra"
+		},
+		{
+			"path": "Dockerfile.storybook",
+			"language": "dockerfile",
+			"sizeLines": 44,
+			"fileCategory": "infra"
+		},
+		{
+			"path": "docs/architecture/current-architecture.md",
+			"language": "markdown",
+			"sizeLines": 202,
+			"fileCategory": "docs"
+		},
+		{
+			"path": "docs/plan/master-roadmap.md",
+			"language": "markdown",
+			"sizeLines": 130,
+			"fileCategory": "docs"
+		},
+		{
+			"path": "docs/plan/README.md",
+			"language": "markdown",
+			"sizeLines": 63,
+			"fileCategory": "docs"
+		},
+		{
+			"path": "docs/plan/template-feature-plan.md",
+			"language": "markdown",
+			"sizeLines": 46,
+			"fileCategory": "docs"
+		},
+		{
+			"path": "docs/README.md",
+			"language": "markdown",
+			"sizeLines": 33,
+			"fileCategory": "docs"
+		},
+		{
+			"path": "docs/rules/engineering-rules.md",
+			"language": "markdown",
+			"sizeLines": 136,
+			"fileCategory": "docs"
+		},
+		{
+			"path": "docs/skills/implementation-skills.md",
+			"language": "markdown",
+			"sizeLines": 116,
+			"fileCategory": "docs"
+		},
+		{
+			"path": "dtsgen.ts",
+			"language": "typescript",
+			"sizeLines": 82,
+			"fileCategory": "code"
+		},
+		{
+			"path": "generate-professional-stories.js",
+			"language": "javascript",
+			"sizeLines": 181,
+			"fileCategory": "code"
+		},
+		{
+			"path": "generate-smart-stories.js",
+			"language": "javascript",
+			"sizeLines": 269,
+			"fileCategory": "code"
+		},
+		{
+			"path": "https-redirect-middleware.yaml",
+			"language": "yaml",
+			"sizeLines": 10,
+			"fileCategory": "config"
+		},
+		{
+			"path": "index.ts",
+			"language": "typescript",
+			"sizeLines": 48,
+			"fileCategory": "code"
+		},
+		{
+			"path": "ingress-v2.yaml",
+			"language": "yaml",
+			"sizeLines": 26,
+			"fileCategory": "config"
+		},
+		{
+			"path": "ingress.yaml",
+			"language": "yaml",
+			"sizeLines": 27,
+			"fileCategory": "config"
+		},
+		{
+			"path": "k8s-temp-frontend.yaml",
+			"language": "yaml",
+			"sizeLines": 64,
+			"fileCategory": "config"
+		},
+		{
+			"path": "LICENSE.md",
+			"language": "markdown",
+			"sizeLines": 661,
+			"fileCategory": "docs"
+		},
+		{
+			"path": "MATRIX-INTEGRATION-GUIDE.md",
+			"language": "markdown",
+			"sizeLines": 63,
+			"fileCategory": "docs"
+		},
+		{
+			"path": "package.json",
+			"language": "json",
+			"sizeLines": 309,
+			"fileCategory": "config"
+		},
+		{
+			"path": "PROJECT_KNOWLEDGE.md",
+			"language": "markdown",
+			"sizeLines": 13,
+			"fileCategory": "docs"
+		},
+		{
+			"path": "proxy/config.js",
+			"language": "javascript",
+			"sizeLines": 21,
+			"fileCategory": "code"
+		},
+		{
+			"path": "proxy/package.json",
+			"language": "json",
+			"sizeLines": 41,
+			"fileCategory": "config"
+		},
+		{
+			"path": "proxy/routes/index.js",
+			"language": "javascript",
+			"sizeLines": 45,
+			"fileCategory": "code"
+		},
+		{
+			"path": "proxy/routes/index.js.backup",
+			"language": "backup",
+			"sizeLines": 45,
+			"fileCategory": "code"
+		},
+		{
+			"path": "proxy/routes/settings.js",
+			"language": "javascript",
+			"sizeLines": 12,
+			"fileCategory": "code"
+		},
+		{
+			"path": "proxy/routes/weblate.js",
+			"language": "javascript",
+			"sizeLines": 207,
+			"fileCategory": "code"
+		},
+		{
+			"path": "proxy/routes/weblate.js.backup.original",
+			"language": "original",
+			"sizeLines": 207,
+			"fileCategory": "code"
+		},
+		{
+			"path": "proxy/server.js",
+			"language": "javascript",
+			"sizeLines": 149,
+			"fileCategory": "code"
+		},
+		{
+			"path": "public/element-sso-bridge.html",
+			"language": "html",
+			"sizeLines": 122,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "public/manifest.json",
+			"language": "json",
+			"sizeLines": 25,
+			"fileCategory": "config"
+		},
+		{
+			"path": "public/releases/README.md",
+			"language": "markdown",
+			"sizeLines": 11,
+			"fileCategory": "docs"
+		},
+		{
+			"path": "public/releases/releases.json",
+			"language": "json",
+			"sizeLines": 1,
+			"fileCategory": "config"
+		},
+		{
+			"path": "public/robots.txt",
+			"language": "txt",
+			"sizeLines": 3,
+			"fileCategory": "docs"
+		},
+		{
+			"path": "README.md",
+			"language": "markdown",
+			"sizeLines": 50,
+			"fileCategory": "docs"
+		},
+		{
+			"path": "scripts/build.js",
+			"language": "javascript",
+			"sizeLines": 221,
+			"fileCategory": "code"
+		},
+		{
+			"path": "scripts/start.js",
+			"language": "javascript",
+			"sizeLines": 155,
+			"fileCategory": "code"
+		},
+		{
+			"path": "scripts/test.js",
+			"language": "javascript",
+			"sizeLines": 51,
+			"fileCategory": "code"
+		},
+		{
+			"path": "serve.json",
+			"language": "json",
+			"sizeLines": 4,
+			"fileCategory": "config"
+		},
+		{
+			"path": "service-v2.yaml",
+			"language": "yaml",
+			"sizeLines": 19,
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/api/apiAddSessionSupervisor.ts",
+			"language": "typescript",
+			"sizeLines": 27,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiAgencyLanguages.ts",
+			"language": "typescript",
+			"sizeLines": 21,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiAgencySelection.ts",
+			"language": "typescript",
+			"sizeLines": 57,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiAppointmentServiceSet.ts",
+			"language": "typescript",
+			"sizeLines": 19,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiConsumeMagicLinkLogin.ts",
+			"language": "typescript",
+			"sizeLines": 21,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiDeleteAskerAccount.ts",
+			"language": "typescript",
+			"sizeLines": 18,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiDeleteEmail.ts",
+			"language": "typescript",
+			"sizeLines": 9,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiDeleteMessage.ts",
+			"language": "typescript",
+			"sizeLines": 11,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiDeleteRemove.ts",
+			"language": "typescript",
+			"sizeLines": 11,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiDeleteSessionAndUser.ts",
+			"language": "typescript",
+			"sizeLines": 15,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiDeleteUserFromRoom.ts",
+			"language": "typescript",
+			"sizeLines": 15,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiDraftMessages.ts",
+			"language": "typescript",
+			"sizeLines": 45,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiEnquiryAcceptance.ts",
+			"language": "typescript",
+			"sizeLines": 13,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiEventNotifications.ts",
+			"language": "typescript",
+			"sizeLines": 52,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiFrontendSettings.ts",
+			"language": "typescript",
+			"sizeLines": 11,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetAgenciesByTenant.ts",
+			"language": "typescript",
+			"sizeLines": 15,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetAgencyConsultantList.ts",
+			"language": "typescript",
+			"sizeLines": 22,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetAgencyId.ts",
+			"language": "typescript",
+			"sizeLines": 31,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetAnonymousEnquiryDetails.ts",
+			"language": "typescript",
+			"sizeLines": 34,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetApiAppointmentServiceEventTypes.ts",
+			"language": "typescript",
+			"sizeLines": 13,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetAppointmentServiceTeam.ts",
+			"language": "typescript",
+			"sizeLines": 13,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetAppointmentsServiceBookingEventsByUserId.ts",
+			"language": "typescript",
+			"sizeLines": 14,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetAskerSessionList.ts",
+			"language": "typescript",
+			"sizeLines": 34,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetAskerSessionList.ts.backup",
+			"language": "backup",
+			"sizeLines": 23,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetCalDavAccount.ts",
+			"language": "typescript",
+			"sizeLines": 11,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetChatRoomById.ts",
+			"language": "typescript",
+			"sizeLines": 18,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetConsultant.ts",
+			"language": "typescript",
+			"sizeLines": 32,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetConsultantAppointments.ts",
+			"language": "typescript",
+			"sizeLines": 16,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetConsultantSessionList.ts",
+			"language": "typescript",
+			"sizeLines": 79,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetConsultantStatistics.ts",
+			"language": "typescript",
+			"sizeLines": 31,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetConsultingType.ts",
+			"language": "typescript",
+			"sizeLines": 33,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetConsultingTypes.ts",
+			"language": "typescript",
+			"sizeLines": 13,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetGroupChatInfo.ts",
+			"language": "typescript",
+			"sizeLines": 27,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetIsUsernameAvailable.ts",
+			"language": "typescript",
+			"sizeLines": 13,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetSessionData.ts",
+			"language": "typescript",
+			"sizeLines": 17,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetSessionRooms.ts",
+			"language": "typescript",
+			"sizeLines": 33,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetSessionSupervisors.ts",
+			"language": "typescript",
+			"sizeLines": 26,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetTenantAgenciesTopics.ts",
+			"language": "typescript",
+			"sizeLines": 17,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetTenantTheming.ts",
+			"language": "typescript",
+			"sizeLines": 34,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetTools.ts",
+			"language": "typescript",
+			"sizeLines": 28,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetTopicGroups.ts",
+			"language": "typescript",
+			"sizeLines": 13,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetTopicId.ts",
+			"language": "typescript",
+			"sizeLines": 10,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetTopicsData.ts",
+			"language": "typescript",
+			"sizeLines": 19,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetUserData.ts",
+			"language": "typescript",
+			"sizeLines": 21,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetUserDataBySessionId.ts",
+			"language": "typescript",
+			"sizeLines": 14,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGroupChatSettings.ts",
+			"language": "typescript",
+			"sizeLines": 51,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiJoinGroupChat.ts",
+			"language": "typescript",
+			"sizeLines": 18,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiLogoutKeycloak.ts",
+			"language": "typescript",
+			"sizeLines": 20,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiLogoutRocketchat.ts",
+			"language": "typescript",
+			"sizeLines": 9,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiMatrixSettingsPublic.ts",
+			"language": "typescript",
+			"sizeLines": 36,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiMatrixUpload.ts",
+			"language": "typescript",
+			"sizeLines": 153,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPatchConsultantData.ts",
+			"language": "typescript",
+			"sizeLines": 16,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPatchMessage.ts",
+			"language": "typescript",
+			"sizeLines": 22,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPatchNotificationActiveView.ts",
+			"language": "typescript",
+			"sizeLines": 25,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPatchUserData.ts",
+			"language": "typescript",
+			"sizeLines": 25,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPostAdditionalEnquiry.ts",
+			"language": "typescript",
+			"sizeLines": 41,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPostBanUser.ts",
+			"language": "typescript",
+			"sizeLines": 13,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPostError.ts",
+			"language": "typescript",
+			"sizeLines": 61,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPostMessageEventNotification.ts",
+			"language": "typescript",
+			"sizeLines": 37,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPostRegistration.ts",
+			"language": "typescript",
+			"sizeLines": 32,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPutArchive.ts",
+			"language": "typescript",
+			"sizeLines": 11,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPutConsultantData.ts",
+			"language": "typescript",
+			"sizeLines": 19,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPutDearchive.ts",
+			"language": "typescript",
+			"sizeLines": 11,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPutEmail.ts",
+			"language": "typescript",
+			"sizeLines": 13,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPutGroupChat.ts",
+			"language": "typescript",
+			"sizeLines": 26,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPutTools.ts",
+			"language": "typescript",
+			"sizeLines": 14,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRejectVideoCall.ts",
+			"language": "typescript",
+			"sizeLines": 21,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRemoveSessionSupervisor.ts",
+			"language": "typescript",
+			"sizeLines": 16,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRequestMagicLinkLogin.ts",
+			"language": "typescript",
+			"sizeLines": 17,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRocketChatFetchMyKeys.ts",
+			"language": "typescript",
+			"sizeLines": 15,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRocketChatGetUsersOfRoomWithoutKey.ts",
+			"language": "typescript",
+			"sizeLines": 13,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRocketChatGroupMembers.ts",
+			"language": "typescript",
+			"sizeLines": 8,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRocketChatResetE2EKey.ts",
+			"language": "typescript",
+			"sizeLines": 9,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRocketChatRoomsGet.ts",
+			"language": "typescript",
+			"sizeLines": 9,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRocketChatRoomsInfo.ts",
+			"language": "typescript",
+			"sizeLines": 9,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRocketChatSetRoomKeyID.ts",
+			"language": "typescript",
+			"sizeLines": 19,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRocketChatSettingsPublic.ts",
+			"language": "typescript",
+			"sizeLines": 63,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRocketChatSetUserKeys.ts",
+			"language": "typescript",
+			"sizeLines": 19,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRocketChatSubscriptionsGet.ts",
+			"language": "typescript",
+			"sizeLines": 9,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRocketChatSubscriptionsGetOne.ts",
+			"language": "typescript",
+			"sizeLines": 11,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRocketChatUpdateGroupKey.ts",
+			"language": "typescript",
+			"sizeLines": 21,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRocketChatUsersGetStatus.ts",
+			"language": "typescript",
+			"sizeLines": 11,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRocketChatUsersInfo.ts",
+			"language": "typescript",
+			"sizeLines": 9,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiSendAliasMessage.ts",
+			"language": "typescript",
+			"sizeLines": 56,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiSendEnquiry.ts",
+			"language": "typescript",
+			"sizeLines": 29,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiSendMessage.ts",
+			"language": "typescript",
+			"sizeLines": 113,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiServerSettings.ts",
+			"language": "typescript",
+			"sizeLines": 11,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiSessionAssign.ts",
+			"language": "typescript",
+			"sizeLines": 15,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiSetAbsence.ts",
+			"language": "typescript",
+			"sizeLines": 19,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiSetSessionRead.ts",
+			"language": "typescript",
+			"sizeLines": 10,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiStartVideoCall.ts",
+			"language": "typescript",
+			"sizeLines": 28,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiTwoFactorAuth.ts",
+			"language": "typescript",
+			"sizeLines": 64,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiUpdatePassword.ts",
+			"language": "typescript",
+			"sizeLines": 20,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiUpdatePasswordAppointments.ts",
+			"language": "typescript",
+			"sizeLines": 16,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiUpdateUserE2EKeys.ts",
+			"language": "typescript",
+			"sizeLines": 18,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiUploadAttachment.ts",
+			"language": "typescript",
+			"sizeLines": 72,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiUserDrafts.ts",
+			"language": "typescript",
+			"sizeLines": 96,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/appointments/deleteAppointment.ts",
+			"language": "typescript",
+			"sizeLines": 15,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/appointments/getAppointment.ts",
+			"language": "typescript",
+			"sizeLines": 17,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/appointments/getAppointments.ts",
+			"language": "typescript",
+			"sizeLines": 15,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/appointments/index.ts",
+			"language": "typescript",
+			"sizeLines": 5,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/appointments/postAppointments.ts",
+			"language": "typescript",
+			"sizeLines": 22,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/appointments/putAppointment.ts",
+			"language": "typescript",
+			"sizeLines": 17,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/fetchData.ts",
+			"language": "typescript",
+			"sizeLines": 306,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/fetchData.ts.backup",
+			"language": "backup",
+			"sizeLines": 271,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/fetchMatrixData.ts",
+			"language": "typescript",
+			"sizeLines": 49,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/fetchRCData.ts",
+			"language": "typescript",
+			"sizeLines": 47,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/index.ts",
+			"language": "typescript",
+			"sizeLines": 51,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/matrix/matrixClient.ts.backup",
+			"language": "backup",
+			"sizeLines": 265,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/videocalls/getJwt.ts",
+			"language": "typescript",
+			"sizeLines": 17,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/videocalls/index.ts",
+			"language": "typescript",
+			"sizeLines": 1,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/agencyRadioSelect/agencyLanguages.styles.scss",
+			"language": "css",
+			"sizeLines": 52,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/agencyRadioSelect/AgencyLanguages.tsx",
+			"language": "typescript",
+			"sizeLines": 85,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/agencyRadioSelect/agencyRadioSelect.styles.scss",
+			"language": "css",
+			"sizeLines": 59,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/agencyRadioSelect/AgencyRadioSelect.tsx",
+			"language": "typescript",
+			"sizeLines": 82,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/agencySelection/agencySelection.styles.scss",
+			"language": "css",
+			"sizeLines": 115,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/agencySelection/AgencySelection.tsx",
+			"language": "typescript",
+			"sizeLines": 410,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/agencySelection/agencySelectionHelpers.ts",
+			"language": "typescript",
+			"sizeLines": 1,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/anonymousChat/AnonymousChat.tsx",
+			"language": "typescript",
+			"sizeLines": 793,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/AbsenceHandler.tsx",
+			"language": "typescript",
+			"sizeLines": 93,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/app.tsx",
+			"language": "typescript",
+			"sizeLines": 243,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/app.tsx.backup",
+			"language": "backup",
+			"sizeLines": 207,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/authenticatedApp.styles.scss",
+			"language": "css",
+			"sizeLines": 272,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/app/AuthenticatedApp.tsx",
+			"language": "typescript",
+			"sizeLines": 287,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/ErrorBoundary.tsx",
+			"language": "typescript",
+			"sizeLines": 97,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/LiveChatToggleIcons.tsx",
+			"language": "typescript",
+			"sizeLines": 42,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/loading.styles.scss",
+			"language": "css",
+			"sizeLines": 14,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/app/Loading.tsx",
+			"language": "typescript",
+			"sizeLines": 24,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/navigation.styles.scss",
+			"language": "css",
+			"sizeLines": 680,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/app/NavigationBar.tsx",
+			"language": "typescript",
+			"sizeLines": 798,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/navigationHandler.ts",
+			"language": "typescript",
+			"sizeLines": 85,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/NavigationSidebar.stories.tsx",
+			"language": "typescript",
+			"sizeLines": 65,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/navigationSidebarIcons.tsx",
+			"language": "typescript",
+			"sizeLines": 388,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/NonPlainRoutesWrapper.tsx",
+			"language": "typescript",
+			"sizeLines": 35,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/NonPlainRoutesWrapper.tsx.backup",
+			"language": "backup",
+			"sizeLines": 34,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/PreConditions.tsx",
+			"language": "typescript",
+			"sizeLines": 96,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/RocketChat.ts",
+			"language": "typescript",
+			"sizeLines": 577,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/RouterConfig.tsx",
+			"language": "typescript",
+			"sizeLines": 477,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/Routing.tsx",
+			"language": "typescript",
+			"sizeLines": 384,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/TenantThemingLoader.tsx",
+			"language": "typescript",
+			"sizeLines": 32,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/WebsocketHandler.tsx",
+			"language": "typescript",
+			"sizeLines": 208,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/appointment/appointment.styles.scss",
+			"language": "css",
+			"sizeLines": 38,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/appointment/Appointment.tsx",
+			"language": "typescript",
+			"sizeLines": 382,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/appointment/appointments.styles.scss",
+			"language": "css",
+			"sizeLines": 61,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/appointment/Appointments.tsx",
+			"language": "typescript",
+			"sizeLines": 374,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/appointment/OnlineMeetingForm.tsx",
+			"language": "typescript",
+			"sizeLines": 142,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/askerInfo/askerInfo.styles.scss",
+			"language": "css",
+			"sizeLines": 216,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/askerInfo/AskerInfo.tsx",
+			"language": "typescript",
+			"sizeLines": 113,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/askerInfo/AskerInfoAssign.tsx",
+			"language": "typescript",
+			"sizeLines": 41,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/askerInfo/AskerInfoContent.tsx",
+			"language": "typescript",
+			"sizeLines": 67,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/askerInfo/AskerInfoData.tsx",
+			"language": "typescript",
+			"sizeLines": 75,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/askerInfo/askerInfoTools.styles.scss",
+			"language": "css",
+			"sizeLines": 11,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/askerInfo/AskerInfoTools.tsx",
+			"language": "typescript",
+			"sizeLines": 57,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/askerInfo/askerInfoToolsOptions.styles.scss",
+			"language": "css",
+			"sizeLines": 39,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/askerInfo/AskerInfoToolsOptions.tsx",
+			"language": "typescript",
+			"sizeLines": 285,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/auth/auth.ts",
+			"language": "typescript",
+			"sizeLines": 119,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/banner/Banner.tsx",
+			"language": "typescript",
+			"sizeLines": 111,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/banUser/banUser.styles.scss",
+			"language": "css",
+			"sizeLines": 13,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/banUser/BanUser.tsx",
+			"language": "typescript",
+			"sizeLines": 85,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/box/box.module.scss",
+			"language": "css",
+			"sizeLines": 36,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/box/Box.tsx",
+			"language": "typescript",
+			"sizeLines": 27,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/budibase/budibaseLogout.ts",
+			"language": "typescript",
+			"sizeLines": 17,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/button/Button.stories.ts",
+			"language": "typescript",
+			"sizeLines": 76,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/button/button.styles.scss",
+			"language": "css",
+			"sizeLines": 330,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/button/Button.tsx",
+			"language": "typescript",
+			"sizeLines": 160,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/call/FloatingCallWidget.OLD.tsx",
+			"language": "typescript",
+			"sizeLines": 489,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/call/FloatingCallWidget.PROFESSIONAL.tsx",
+			"language": "typescript",
+			"sizeLines": 329,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/call/FloatingCallWidget.scss",
+			"language": "css",
+			"sizeLines": 242,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/call/FloatingCallWidget.tsx",
+			"language": "typescript",
+			"sizeLines": 405,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/call/GroupCallWidget.scss",
+			"language": "css",
+			"sizeLines": 407,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/call/GroupCallWidget.tsx",
+			"language": "typescript",
+			"sizeLines": 488,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/card/card.styles.scss",
+			"language": "css",
+			"sizeLines": 26,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/card/index.tsx",
+			"language": "typescript",
+			"sizeLines": 27,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/checkbox/Checkbox.stories.ts",
+			"language": "typescript",
+			"sizeLines": 52,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/checkbox/checkbox.styles.scss",
+			"language": "css",
+			"sizeLines": 66,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/checkbox/Checkbox.tsx",
+			"language": "typescript",
+			"sizeLines": 80,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/CompoundIntegration.stories.mdx",
+			"language": "markdown",
+			"sizeLines": 109,
+			"fileCategory": "docs"
+		},
+		{
+			"path": "src/components/datepicker/datepicker.styles.scss",
+			"language": "css",
+			"sizeLines": 261,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/devToolbar/devToolbar.styles.scss",
+			"language": "css",
+			"sizeLines": 149,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/devToolbar/DevToolbar.tsx",
+			"language": "typescript",
+			"sizeLines": 714,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/downloadICSFile/downloadICSFile.styles.scss",
+			"language": "css",
+			"sizeLines": 32,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/downloadICSFile/downloadICSFile.tsx",
+			"language": "typescript",
+			"sizeLines": 77,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/draftsCenter/draftsCenter.styles.scss",
+			"language": "css",
+			"sizeLines": 255,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/draftsCenter/DraftsCenter.tsx",
+			"language": "typescript",
+			"sizeLines": 348,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/dragAndDropArea/dragAndDropArea.styles.scss",
+			"language": "css",
+			"sizeLines": 70,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/dragAndDropArea/DragAndDropArea.tsx",
+			"language": "typescript",
+			"sizeLines": 61,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/E2EEncryptionSupportBanner/E2EEncryptionSupportBanner.styles.scss",
+			"language": "css",
+			"sizeLines": 34,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/E2EEncryptionSupportBanner/E2EEncryptionSupportBanner.tsx",
+			"language": "typescript",
+			"sizeLines": 82,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/E2EEncryptionSupportHelp/E2EEncryptionSupportHelp.styles.scss",
+			"language": "css",
+			"sizeLines": 149,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/E2EEncryptionSupportHelp/E2EEncryptionSupportHelp.tsx",
+			"language": "typescript",
+			"sizeLines": 113,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/editableData/editableData.styles.scss",
+			"language": "css",
+			"sizeLines": 115,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/editableData/EditableData.tsx",
+			"language": "typescript",
+			"sizeLines": 184,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/enquiry/enquiry.styles.scss",
+			"language": "css",
+			"sizeLines": 206,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/enquiry/enquiryLanguageSelection.styles.scss",
+			"language": "css",
+			"sizeLines": 50,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/enquiry/EnquiryLanguageSelection.tsx",
+			"language": "typescript",
+			"sizeLines": 144,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/enquiry/WriteEnquiry.tsx",
+			"language": "typescript",
+			"sizeLines": 251,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/error/error.styles.scss",
+			"language": "css",
+			"sizeLines": 167,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/error/Error.tsx",
+			"language": "typescript",
+			"sizeLines": 116,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/error/errorHandling.ts",
+			"language": "typescript",
+			"sizeLines": 75,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/flyoutMenu/flyoutMenu.styles.scss",
+			"language": "css",
+			"sizeLines": 92,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/flyoutMenu/FlyoutMenu.tsx",
+			"language": "typescript",
+			"sizeLines": 87,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/form/textarea.styles.scss",
+			"language": "css",
+			"sizeLines": 82,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/form/textarea.tsx",
+			"language": "typescript",
+			"sizeLines": 53,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/generateQrCode/generateQrCode.styles.scss",
+			"language": "css",
+			"sizeLines": 57,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/generateQrCode/GenerateQrCode.tsx",
+			"language": "typescript",
+			"sizeLines": 98,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/groupChat/createChat.styles.scss",
+			"language": "css",
+			"sizeLines": 413,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/groupChat/createChatHelpers.ts",
+			"language": "typescript",
+			"sizeLines": 47,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/groupChat/CreateChatView.tsx",
+			"language": "typescript",
+			"sizeLines": 722,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/groupChat/groupChatCopyLinks.scss",
+			"language": "css",
+			"sizeLines": 10,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/groupChat/GroupChatCopyLinks.tsx",
+			"language": "typescript",
+			"sizeLines": 62,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/groupChat/groupChatHelpers.ts",
+			"language": "typescript",
+			"sizeLines": 7,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/groupChat/groupChatInfo.styles.scss",
+			"language": "css",
+			"sizeLines": 271,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/groupChat/GroupChatInfo.tsx",
+			"language": "typescript",
+			"sizeLines": 513,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/groupChat/joinChat.styles.scss",
+			"language": "css",
+			"sizeLines": 47,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/groupChat/JoinGroupChatView.tsx",
+			"language": "typescript",
+			"sizeLines": 392,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/header/header.styles.scss",
+			"language": "css",
+			"sizeLines": 38,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/header/Header.tsx",
+			"language": "typescript",
+			"sizeLines": 33,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/headline/Headline.stories.ts",
+			"language": "typescript",
+			"sizeLines": 53,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/headline/headline.styles.scss",
+			"language": "css",
+			"sizeLines": 35,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/headline/Headline.tsx",
+			"language": "typescript",
+			"sizeLines": 28,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/help/help.styles.scss",
+			"language": "css",
+			"sizeLines": 87,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/help/Help.tsx",
+			"language": "typescript",
+			"sizeLines": 54,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/help/HelpVideoCall.tsx",
+			"language": "typescript",
+			"sizeLines": 181,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/incomingVideoCall/incomingVideoCall.styles.scss",
+			"language": "css",
+			"sizeLines": 106,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/incomingVideoCall/IncomingVideoCall.tsx",
+			"language": "typescript",
+			"sizeLines": 258,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/infoTooltip/infoTooltip.styles.scss",
+			"language": "css",
+			"sizeLines": 103,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/infoTooltip/InfoTooltip.tsx",
+			"language": "typescript",
+			"sizeLines": 119,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/input/input.tsx",
+			"language": "typescript",
+			"sizeLines": 270,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/inputField/InputField.stories.ts",
+			"language": "typescript",
+			"sizeLines": 98,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/inputField/inputField.styles.scss",
+			"language": "css",
+			"sizeLines": 152,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/inputField/InputField.tsx",
+			"language": "typescript",
+			"sizeLines": 134,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/invite/InviteLink.tsx",
+			"language": "typescript",
+			"sizeLines": 757,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/legalInformationLinks/Imprint.tsx",
+			"language": "typescript",
+			"sizeLines": 18,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/legalInformationLinks/Privacy.tsx",
+			"language": "typescript",
+			"sizeLines": 19,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/legalInformationLinks/TermsAndConditions.tsx",
+			"language": "typescript",
+			"sizeLines": 20,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/legalLinks/LegalLinks.tsx",
+			"language": "typescript",
+			"sizeLines": 65,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/legalPageWrapper/legalPageWrapper.styles.scss",
+			"language": "css",
+			"sizeLines": 55,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/legalPageWrapper/LegalPageWrapper.tsx",
+			"language": "typescript",
+			"sizeLines": 26,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/listInfo/listInfo.styles.scss",
+			"language": "css",
+			"sizeLines": 36,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/listInfo/ListInfo.tsx",
+			"language": "typescript",
+			"sizeLines": 55,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/loadingIndicator/LoadingIndicator.styles.scss",
+			"language": "css",
+			"sizeLines": 35,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/loadingIndicator/LoadingIndicator.tsx",
+			"language": "typescript",
+			"sizeLines": 11,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/loadingSpinner/LoadingSpinner.stories.ts",
+			"language": "typescript",
+			"sizeLines": 22,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/loadingSpinner/LoadingSpinner.styles.scss",
+			"language": "css",
+			"sizeLines": 35,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/loadingSpinner/LoadingSpinner.tsx",
+			"language": "typescript",
+			"sizeLines": 17,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/localeSwitch/localeSwitch.styles.scss",
+			"language": "css",
+			"sizeLines": 34,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/localeSwitch/LocaleSwitch.tsx",
+			"language": "typescript",
+			"sizeLines": 241,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/login/login.styles.scss",
+			"language": "css",
+			"sizeLines": 380,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/login/Login.tsx",
+			"language": "typescript",
+			"sizeLines": 726,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/logout/calcomLogout.ts",
+			"language": "typescript",
+			"sizeLines": 24,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/logout/logout.ts",
+			"language": "typescript",
+			"sizeLines": 63,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/mailTemplate/mail-template.html",
+			"language": "html",
+			"sizeLines": 238,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/mainTopicSelection/MainTopicSelection.styles.scss",
+			"language": "css",
+			"sizeLines": 27,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/mainTopicSelection/MainTopicSelection.tsx",
+			"language": "typescript",
+			"sizeLines": 125,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/matrixCall/MatrixCallView.BROKEN-BACKUP.tsx",
+			"language": "typescript",
+			"sizeLines": 423,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/matrixCall/MatrixCallView.CLEAN.tsx",
+			"language": "typescript",
+			"sizeLines": 279,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/matrixCall/MatrixCallView.styles.scss",
+			"language": "css",
+			"sizeLines": 243,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/matrixCall/MatrixCallView.tsx",
+			"language": "typescript",
+			"sizeLines": 277,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/appointment.styles.scss",
+			"language": "css",
+			"sizeLines": 91,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/message/Appointment.tsx",
+			"language": "typescript",
+			"sizeLines": 164,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/consultantMatchingAnimation.styles.scss",
+			"language": "css",
+			"sizeLines": 29,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/message/ConsultantMatchingAnimation.tsx",
+			"language": "typescript",
+			"sizeLines": 0,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/e2eeActivatedMessage.styles.scss",
+			"language": "css",
+			"sizeLines": 22,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/message/E2EEActivatedMessage.tsx",
+			"language": "typescript",
+			"sizeLines": 18,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/furtherSteps.styles.scss",
+			"language": "css",
+			"sizeLines": 117,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/message/FurtherSteps.tsx",
+			"language": "typescript",
+			"sizeLines": 293,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/MasterKeyLostMessage.tsx",
+			"language": "typescript",
+			"sizeLines": 53,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/message.styles.scss",
+			"language": "css",
+			"sizeLines": 1404,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/message/message.styles.scss.backup",
+			"language": "backup",
+			"sizeLines": 525,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/MessageAttachment.stories.ts",
+			"language": "typescript",
+			"sizeLines": 106,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/MessageAttachment.tsx",
+			"language": "typescript",
+			"sizeLines": 426,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/messageConstants.ts",
+			"language": "typescript",
+			"sizeLines": 109,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/MessageDisplayName.tsx",
+			"language": "typescript",
+			"sizeLines": 51,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/messageHelpers.ts",
+			"language": "typescript",
+			"sizeLines": 23,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/MessageItemComponent.tsx",
+			"language": "typescript",
+			"sizeLines": 2315,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/MessageMetaData.tsx",
+			"language": "typescript",
+			"sizeLines": 79,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/messageNameUtils.ts",
+			"language": "typescript",
+			"sizeLines": 72,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/ReassignMessage.tsx",
+			"language": "typescript",
+			"sizeLines": 272,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/reassignRequestMessage.styles.scss",
+			"language": "css",
+			"sizeLines": 41,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/message/SystemMessage.tsx",
+			"language": "typescript",
+			"sizeLines": 58,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/UserAvatar.stories.tsx",
+			"language": "typescript",
+			"sizeLines": 121,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/UserAvatar.tsx",
+			"language": "typescript",
+			"sizeLines": 50,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/VideoCallMessage.tsx",
+			"language": "typescript",
+			"sizeLines": 36,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/VideoChatDetails/index.tsx",
+			"language": "typescript",
+			"sizeLines": 84,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/VideoChatDetails/styles.module.scss",
+			"language": "css",
+			"sizeLines": 47,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/messageSubmitInterface/attachmentHelpers.ts",
+			"language": "typescript",
+			"sizeLines": 34,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/messageSubmitInterface/emojiPicker.styles.scss",
+			"language": "css",
+			"sizeLines": 269,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/messageSubmitInterface/highlightSnippetEvents.ts",
+			"language": "typescript",
+			"sizeLines": 14,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/messageSubmitInterface/messageSubmitInfo.styles.scss",
+			"language": "css",
+			"sizeLines": 45,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/messageSubmitInterface/MessageSubmitInfo.tsx",
+			"language": "typescript",
+			"sizeLines": 64,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/messageSubmitInterface/messageSubmitInterface.styles.scss",
+			"language": "css",
+			"sizeLines": 2103,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
+			"language": "typescript",
+			"sizeLines": 5122,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/messageSubmitInterface/messageSubmitInterfaceSkeleton.tsx",
+			"language": "typescript",
+			"sizeLines": 99,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/messageSubmitInterface/richtextHelpers.ts",
+			"language": "typescript",
+			"sizeLines": 337,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/messageSubmitInterface/SendMessageButton.tsx",
+			"language": "typescript",
+			"sizeLines": 48,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/messageSubmitInterface/TipTapComposer.styles.scss",
+			"language": "css",
+			"sizeLines": 108,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/messageSubmitInterface/TipTapComposer.tsx",
+			"language": "typescript",
+			"sizeLines": 635,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/messageSubmitInterface/useDraftMessage.tsx",
+			"language": "typescript",
+			"sizeLines": 363,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/mobile/linkMenu/link_menu.styles.scss",
+			"language": "css",
+			"sizeLines": 61,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/mobile/linkMenu/LinkMenu.tsx",
+			"language": "typescript",
+			"sizeLines": 109,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/modal/modal.styles.scss",
+			"language": "css",
+			"sizeLines": 15,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/modal/Modal.tsx",
+			"language": "typescript",
+			"sizeLines": 18,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/notFound/NotFound.tsx",
+			"language": "typescript",
+			"sizeLines": 647,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/notice/Notice.stories.ts",
+			"language": "typescript",
+			"sizeLines": 56,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/notice/notice.styles.scss",
+			"language": "css",
+			"sizeLines": 67,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/notice/Notice.tsx",
+			"language": "typescript",
+			"sizeLines": 53,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/notice/types.ts",
+			"language": "typescript",
+			"sizeLines": 17,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/notifications/notification.styles.scss",
+			"language": "css",
+			"sizeLines": 95,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/notifications/Notification.tsx",
+			"language": "typescript",
+			"sizeLines": 172,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/notifications/notifications.styles.scss",
+			"language": "css",
+			"sizeLines": 21,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/notifications/Notifications.tsx",
+			"language": "typescript",
+			"sizeLines": 40,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/notificationsCenter/notificationsCenter.styles.scss",
+			"language": "css",
+			"sizeLines": 666,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/notificationsCenter/NotificationsCenter.tsx",
+			"language": "typescript",
+			"sizeLines": 688,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/overlay/overlay.styles.scss",
+			"language": "css",
+			"sizeLines": 443,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/overlay/Overlay.tsx",
+			"language": "typescript",
+			"sizeLines": 348,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/Page/index.tsx",
+			"language": "typescript",
+			"sizeLines": 17,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/Page/page.styles.scss",
+			"language": "css",
+			"sizeLines": 14,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/passwordReset/passwordReset.styles.scss",
+			"language": "css",
+			"sizeLines": 120,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/passwordReset/PasswordReset.tsx",
+			"language": "typescript",
+			"sizeLines": 356,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/_locale.styles.scss",
+			"language": "css",
+			"sizeLines": 10,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/profile/_spokenlanguages.styles.scss",
+			"language": "css",
+			"sizeLines": 44,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/profile/absenceFormular.styles.scss",
+			"language": "css",
+			"sizeLines": 45,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/profile/AbsenceFormular.tsx",
+			"language": "typescript",
+			"sizeLines": 128,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/AdditionalEnquiry/_additionalEnquiry.styles.scss",
+			"language": "css",
+			"sizeLines": 85,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/profile/AdditionalEnquiry/AdditionalAgencySelection.tsx",
+			"language": "typescript",
+			"sizeLines": 181,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/AdditionalEnquiry/AdditionalEnquiry.tsx",
+			"language": "typescript",
+			"sizeLines": 249,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/AskerAboutMeData.tsx",
+			"language": "typescript",
+			"sizeLines": 315,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/AskerConsultingTypeData.tsx",
+			"language": "typescript",
+			"sizeLines": 72,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/BrowserNotifications/index.tsx",
+			"language": "typescript",
+			"sizeLines": 100,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/BrowserNotifications/NotificationDenied/index.tsx",
+			"language": "typescript",
+			"sizeLines": 17,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/BrowserNotifications/NotificationDenied/styles.module.scss",
+			"language": "css",
+			"sizeLines": 10,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/profile/BrowserNotifications/styles.module.scss",
+			"language": "css",
+			"sizeLines": 17,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/profile/ConsultantAgencies.tsx",
+			"language": "typescript",
+			"sizeLines": 114,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/ConsultantInformation.tsx",
+			"language": "typescript",
+			"sizeLines": 235,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/ConsultantNotifications.tsx",
+			"language": "typescript",
+			"sizeLines": 76,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/ConsultantPrivateData.tsx",
+			"language": "typescript",
+			"sizeLines": 258,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/ConsultantSpokenLanguages.tsx",
+			"language": "typescript",
+			"sizeLines": 130,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/ConsultantStatistics.tsx",
+			"language": "typescript",
+			"sizeLines": 298,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/deleteAccount.styles.scss",
+			"language": "css",
+			"sizeLines": 56,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/profile/DeleteAccount.tsx",
+			"language": "typescript",
+			"sizeLines": 134,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/Documentation/index.tsx",
+			"language": "typescript",
+			"sizeLines": 35,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/Documentation/styles.module.scss",
+			"language": "css",
+			"sizeLines": 5,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/profile/EmailNotifications/EmailToggle/index.tsx",
+			"language": "typescript",
+			"sizeLines": 63,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/EmailNotifications/index.tsx",
+			"language": "typescript",
+			"sizeLines": 41,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/EmailNotifications/NoEmailSet/index.tsx",
+			"language": "typescript",
+			"sizeLines": 35,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/EmailNotifications/NoEmailSet/styles.module.scss",
+			"language": "css",
+			"sizeLines": 21,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/profile/EmailNotifications/SetEmailModal/index.tsx",
+			"language": "typescript",
+			"sizeLines": 146,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/EnableWalkthrough.tsx",
+			"language": "typescript",
+			"sizeLines": 59,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/LiveChatAvailability.tsx",
+			"language": "typescript",
+			"sizeLines": 65,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/Locale.tsx",
+			"language": "typescript",
+			"sizeLines": 52,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/MagicLinksLoginFeature.tsx",
+			"language": "typescript",
+			"sizeLines": 102,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/OverviewMobile/Bookings/index.tsx",
+			"language": "typescript",
+			"sizeLines": 27,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/OverviewMobile/Sessions/index.tsx",
+			"language": "typescript",
+			"sizeLines": 42,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/profile.routes.ts",
+			"language": "typescript",
+			"sizeLines": 259,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/profile.styles.scss",
+			"language": "css",
+			"sizeLines": 661,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/profile/Profile.tsx",
+			"language": "typescript",
+			"sizeLines": 541,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/profileHelp.routes.ts",
+			"language": "typescript",
+			"sizeLines": 36,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/profileHelpers.ts",
+			"language": "typescript",
+			"sizeLines": 22,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/profileSettings.routes.ts",
+			"language": "typescript",
+			"sizeLines": 78,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/statistics.styles.scss",
+			"language": "css",
+			"sizeLines": 72,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/progressbar/ProgressBar.stories.ts",
+			"language": "typescript",
+			"sizeLines": 55,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/progressbar/progressbar.styles.scss",
+			"language": "css",
+			"sizeLines": 32,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/progressbar/ProgressBar.tsx",
+			"language": "typescript",
+			"sizeLines": 34,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/pseudonym/AnimalAvatar.tsx",
+			"language": "typescript",
+			"sizeLines": 181,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/pseudonym/AnonymousConsentGate.styles.scss",
+			"language": "css",
+			"sizeLines": 228,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/pseudonym/AnonymousConsentGate.tsx",
+			"language": "typescript",
+			"sizeLines": 159,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/pseudonym/BotMessageAnimation.tsx",
+			"language": "typescript",
+			"sizeLines": 187,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/pseudonym/BreathingTutorialCard.styles.scss",
+			"language": "css",
+			"sizeLines": 230,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/pseudonym/BreathingTutorialCard.tsx",
+			"language": "typescript",
+			"sizeLines": 342,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/pseudonym/ConsultantAcceptedActionBar.styles.scss",
+			"language": "css",
+			"sizeLines": 170,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/pseudonym/ConsultantAcceptedActionBar.tsx",
+			"language": "typescript",
+			"sizeLines": 109,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/pseudonym/PrivacyMessageCard.styles.scss",
+			"language": "css",
+			"sizeLines": 43,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/pseudonym/PrivacyMessageCard.tsx",
+			"language": "typescript",
+			"sizeLines": 154,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/pseudonym/PseudonymActionBar.styles.scss",
+			"language": "css",
+			"sizeLines": 146,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/pseudonym/PseudonymActionBar.tsx",
+			"language": "typescript",
+			"sizeLines": 98,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/pseudonym/PseudonymCard.styles.scss",
+			"language": "css",
+			"sizeLines": 240,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/pseudonym/PseudonymCard.tsx",
+			"language": "typescript",
+			"sizeLines": 154,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/pseudonym/WaitingQueueActionBar.styles.scss",
+			"language": "css",
+			"sizeLines": 298,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/pseudonym/WaitingQueueActionBar.tsx",
+			"language": "typescript",
+			"sizeLines": 193,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/radioButton/RadioButton.stories.ts",
+			"language": "typescript",
+			"sizeLines": 54,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/radioButton/radioButton.styles.scss",
+			"language": "css",
+			"sizeLines": 129,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/radioButton/RadioButton.tsx",
+			"language": "typescript",
+			"sizeLines": 52,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/accountData/accountData.stories.ts",
+			"language": "typescript",
+			"sizeLines": 24,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/accountData/AccountData.tsx",
+			"language": "typescript",
+			"sizeLines": 260,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/agencySelection/AgencyLanguages.tsx",
+			"language": "typescript",
+			"sizeLines": 47,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/agencySelection/agencySelection.stories.ts",
+			"language": "typescript",
+			"sizeLines": 26,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/agencySelection/AgencySelection.tsx",
+			"language": "typescript",
+			"sizeLines": 73,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/agencySelection/AgencySelectionResults.tsx",
+			"language": "typescript",
+			"sizeLines": 392,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/autoLogin.ts",
+			"language": "typescript",
+			"sizeLines": 382,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/autoLogin.ts.backup",
+			"language": "backup",
+			"sizeLines": 326,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/autoLogin.ts.backup-matrix",
+			"language": "backup-matrix",
+			"sizeLines": 326,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/infoDrawer/InfoDrawer.tsx",
+			"language": "typescript",
+			"sizeLines": 179,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/metaInfo/MetaInfo.tsx",
+			"language": "typescript",
+			"sizeLines": 144,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/preselectionBox/PreselectedAgency.tsx",
+			"language": "typescript",
+			"sizeLines": 53,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/preselectionBox/PreselectedConsultant.tsx",
+			"language": "typescript",
+			"sizeLines": 29,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/preselectionBox/PreselectedTopic.tsx",
+			"language": "typescript",
+			"sizeLines": 52,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/preselectionBox/PreselectionBox.tsx",
+			"language": "typescript",
+			"sizeLines": 78,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/preselectionDrawer/preselectionDrawer.tsx",
+			"language": "typescript",
+			"sizeLines": 229,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/preselectionError/PreselectionError.tsx",
+			"language": "typescript",
+			"sizeLines": 31,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/Registration.tsx",
+			"language": "typescript",
+			"sizeLines": 439,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/registrationDataValidation.ts",
+			"language": "typescript",
+			"sizeLines": 33,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/registrationHelpers.ts",
+			"language": "typescript",
+			"sizeLines": 34,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/stepBar/StepBar.stories.ts",
+			"language": "typescript",
+			"sizeLines": 25,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/stepBar/StepBar.tsx",
+			"language": "typescript",
+			"sizeLines": 71,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/topicSelection/topicSelection.stories.ts",
+			"language": "typescript",
+			"sizeLines": 26,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/topicSelection/TopicSelection.tsx",
+			"language": "typescript",
+			"sizeLines": 416,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/welcomeScreen/welcomeScreen.stories.ts",
+			"language": "typescript",
+			"sizeLines": 24,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/welcomeScreen/welcomeScreen.styles.scss",
+			"language": "css",
+			"sizeLines": 79,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/registration/welcomeScreen/WelcomeScreen.tsx",
+			"language": "typescript",
+			"sizeLines": 159,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/zipcodeInput/zipcodeInput.stories.ts",
+			"language": "typescript",
+			"sizeLines": 24,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/zipcodeInput/ZipcodeInput.tsx",
+			"language": "typescript",
+			"sizeLines": 72,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/releaseNote/releaseNote.styles.scss",
+			"language": "css",
+			"sizeLines": 130,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/releaseNote/ReleaseNote.tsx",
+			"language": "typescript",
+			"sizeLines": 193,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/scrollableSection/scrollableSection.styles.scss",
+			"language": "css",
+			"sizeLines": 18,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/scrollableSection/ScrollableSection.tsx",
+			"language": "typescript",
+			"sizeLines": 23,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/scrollableSection/ScrollableSectionBody.tsx",
+			"language": "typescript",
+			"sizeLines": 12,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/scrollableSection/ScrollableSectionFooter.tsx",
+			"language": "typescript",
+			"sizeLines": 12,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/scrollableSection/ScrollableSectionHeader.tsx",
+			"language": "typescript",
+			"sizeLines": 12,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/select/LanguageSelectDropdown.tsx",
+			"language": "typescript",
+			"sizeLines": 578,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/select/select.react.styles.scss",
+			"language": "css",
+			"sizeLines": 156,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/select/select.styles.scss",
+			"language": "css",
+			"sizeLines": 157,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/select/select2.react.styles.scss",
+			"language": "css",
+			"sizeLines": 151,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/select/select2.styles.scss",
+			"language": "css",
+			"sizeLines": 158,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/select/SelectDropdown.tsx",
+			"language": "typescript",
+			"sizeLines": 483,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/serviceExplanation/ServiceExplanation.styles.scss",
+			"language": "css",
+			"sizeLines": 28,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/serviceExplanation/ServiceExplanation.tsx",
+			"language": "typescript",
+			"sizeLines": 81,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/AcceptAssign.tsx",
+			"language": "typescript",
+			"sizeLines": 214,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/DeleteSession.tsx",
+			"language": "typescript",
+			"sizeLines": 107,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/EncryptionBanner.stories.tsx",
+			"language": "typescript",
+			"sizeLines": 95,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/encryptionBanner.styles.scss",
+			"language": "css",
+			"sizeLines": 63,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/session/EncryptionBanner.tsx",
+			"language": "typescript",
+			"sizeLines": 26,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/RoomNotFound.tsx",
+			"language": "typescript",
+			"sizeLines": 42,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/session.styles.scss",
+			"language": "css",
+			"sizeLines": 2605,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/session/sessionDateHelpers.ts",
+			"language": "typescript",
+			"sizeLines": 56,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/sessionHelpers.ts",
+			"language": "typescript",
+			"sizeLines": 195,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/SessionItemComponent.tsx",
+			"language": "typescript",
+			"sizeLines": 4698,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/SessionStream.tsx",
+			"language": "typescript",
+			"sizeLines": 968,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/SessionStream.tsx.backup",
+			"language": "backup",
+			"sizeLines": 399,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/SessionView.tsx",
+			"language": "typescript",
+			"sizeLines": 238,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/SessionViewEmpty.tsx",
+			"language": "typescript",
+			"sizeLines": 22,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/smoothScrollHelper.ts",
+			"language": "typescript",
+			"sizeLines": 56,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/SubscriptionKeyLost.tsx",
+			"language": "typescript",
+			"sizeLines": 78,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/subscriptionKeyLostHelper.ts",
+			"language": "typescript",
+			"sizeLines": 15,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionAssign/RequestSessionAssign.tsx",
+			"language": "typescript",
+			"sizeLines": 209,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionAssign/sessionAssignHelper.tsx",
+			"language": "typescript",
+			"sizeLines": 49,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionCookie/accessSessionCookie.ts",
+			"language": "typescript",
+			"sizeLines": 45,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionCookie/accessSessionCookie.ts.backup",
+			"language": "backup",
+			"sizeLines": 45,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionCookie/accessSessionLocalStorage.ts",
+			"language": "typescript",
+			"sizeLines": 43,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionCookie/cache-bust.ts",
+			"language": "typescript",
+			"sizeLines": 1,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionCookie/getBudibaseAccessToken.ts",
+			"language": "typescript",
+			"sizeLines": 87,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionCookie/getKeycloakAccessToken.ts",
+			"language": "typescript",
+			"sizeLines": 74,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionCookie/getKeycloakAccessToken.ts.backup",
+			"language": "backup",
+			"sizeLines": 49,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionCookie/getMatrixAccessToken.ts",
+			"language": "typescript",
+			"sizeLines": 51,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionCookie/getRocketchatAccessToken.ts",
+			"language": "typescript",
+			"sizeLines": 39,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionCookie/refreshKeycloakAccessToken.ts",
+			"language": "typescript",
+			"sizeLines": 35,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionHeader/consultantSearchLoader.styles.scss",
+			"language": "css",
+			"sizeLines": 19,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/sessionHeader/ConsultantSearchLoader.tsx",
+			"language": "typescript",
+			"sizeLines": 124,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionHeader/GroupChatHeader/index.tsx",
+			"language": "typescript",
+			"sizeLines": 645,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionHeader/GroupChatHeader/useJoinVideoCall/index.ts",
+			"language": "typescript",
+			"sizeLines": 67,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionHeader/GroupChatHeader/useStartVideoCall/index.ts",
+			"language": "typescript",
+			"sizeLines": 63,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionHeader/sessionHeader.styles.scss",
+			"language": "css",
+			"sizeLines": 568,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/sessionHeader/SessionHeaderComponent.tsx",
+			"language": "typescript",
+			"sizeLines": 1327,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionMenu/sessionMenu.styles.scss",
+			"language": "css",
+			"sizeLines": 271,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/sessionMenu/SessionMenu.tsx",
+			"language": "typescript",
+			"sizeLines": 822,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionMenu/sessionMenuHelpers.ts",
+			"language": "typescript",
+			"sizeLines": 117,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/EmptyListItem.tsx",
+			"language": "typescript",
+			"sizeLines": 43,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/EnquiryFilterChips.tsx",
+			"language": "typescript",
+			"sizeLines": 66,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/ResizableHandle.stories.tsx",
+			"language": "typescript",
+			"sizeLines": 105,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/ResizableHandle.tsx",
+			"language": "typescript",
+			"sizeLines": 431,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/ResizableSidebar.stories.tsx",
+			"language": "typescript",
+			"sizeLines": 77,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/SessionListColumn.stories.tsx",
+			"language": "typescript",
+			"sizeLines": 228,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/SessionListCreateChat.stories.tsx",
+			"language": "typescript",
+			"sizeLines": 40,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/SessionListCreateChat.tsx",
+			"language": "typescript",
+			"sizeLines": 31,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/sessionsList.styles.scss",
+			"language": "css",
+			"sizeLines": 1045,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/sessionsList/SessionsList.tsx",
+			"language": "typescript",
+			"sizeLines": 1660,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/SessionsList.tsx.backup",
+			"language": "backup",
+			"sizeLines": 934,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/sessionsListConfig.ts",
+			"language": "typescript",
+			"sizeLines": 5,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/sessionsListResize.constants.ts",
+			"language": "typescript",
+			"sizeLines": 8,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/SessionsListScrollbar.tsx",
+			"language": "typescript",
+			"sizeLines": 259,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/SessionsListToolbar.stories.tsx",
+			"language": "typescript",
+			"sizeLines": 144,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/SessionsListToolbar.tsx",
+			"language": "typescript",
+			"sizeLines": 670,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/SessionsListWelcomeIllustration.tsx",
+			"language": "typescript",
+			"sizeLines": 20,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/SessionsListWrapper.tsx",
+			"language": "typescript",
+			"sizeLines": 124,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsListItem/SessionListItem.stories.tsx",
+			"language": "typescript",
+			"sizeLines": 280,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsListItem/SessionListItemAttachment.tsx",
+			"language": "typescript",
+			"sizeLines": 35,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"language": "typescript",
+			"sizeLines": 1413,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsListItem/SessionListItemComponent.tsx.backup",
+			"language": "backup",
+			"sizeLines": 505,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsListItem/SessionListItemLastMessage.tsx",
+			"language": "typescript",
+			"sizeLines": 52,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsListItem/SessionListItemVideoCall.tsx",
+			"language": "typescript",
+			"sizeLines": 36,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsListItem/sessionsListItem.styles.scss",
+			"language": "css",
+			"sizeLines": 791,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/sessionsListItem/sessionsListItemHelpers.ts",
+			"language": "typescript",
+			"sizeLines": 24,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsListItem/SessionsListItemSkeleton.tsx",
+			"language": "typescript",
+			"sizeLines": 22,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/spinner/Spinner.stories.ts",
+			"language": "typescript",
+			"sizeLines": 28,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/spinner/spinner.styles.scss",
+			"language": "css",
+			"sizeLines": 45,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/spinner/Spinner.tsx",
+			"language": "typescript",
+			"sizeLines": 18,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/stage/stage.styles.scss",
+			"language": "css",
+			"sizeLines": 228,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/stage/stage.tsx",
+			"language": "typescript",
+			"sizeLines": 151,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/stageLayout/StageLayout.styles.scss",
+			"language": "css",
+			"sizeLines": 189,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/stageLayout/StageLayout.tsx",
+			"language": "typescript",
+			"sizeLines": 243,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/Switch/index.tsx",
+			"language": "typescript",
+			"sizeLines": 43,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/Switch/switch.module.scss",
+			"language": "css",
+			"sizeLines": 3,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/tag/Tag.stories.ts",
+			"language": "typescript",
+			"sizeLines": 47,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/tag/tag.styles.scss",
+			"language": "css",
+			"sizeLines": 34,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/tag/Tag.tsx",
+			"language": "typescript",
+			"sizeLines": 38,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/tagSelect/tagSelect.styles.scss",
+			"language": "css",
+			"sizeLines": 53,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/tagSelect/TagSelect.tsx",
+			"language": "typescript",
+			"sizeLines": 27,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/termsandconditions/TermsAndConditions.tsx",
+			"language": "typescript",
+			"sizeLines": 255,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/termsandconditions/termsandconfitions.styles.scss",
+			"language": "css",
+			"sizeLines": 73,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/text/Text.stories.ts",
+			"language": "typescript",
+			"sizeLines": 46,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/text/text.styles.scss",
+			"language": "css",
+			"sizeLines": 76,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/text/Text.tsx",
+			"language": "typescript",
+			"sizeLines": 74,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/tools/Tool.tsx",
+			"language": "typescript",
+			"sizeLines": 43,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/tools/tools.styles.scss",
+			"language": "css",
+			"sizeLines": 102,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/tools/ToolsList.tsx",
+			"language": "typescript",
+			"sizeLines": 56,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/tooltip/tooltip.styles.scss",
+			"language": "css",
+			"sizeLines": 193,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/tooltip/Tooltip.tsx",
+			"language": "typescript",
+			"sizeLines": 194,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/twoFactorAuth/twoFactorAuth.styles.scss",
+			"language": "css",
+			"sizeLines": 224,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/twoFactorAuth/TwoFactorAuth.tsx",
+			"language": "typescript",
+			"sizeLines": 936,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/twoFactorAuth/twoFactorAuthResendMail.styles.scss",
+			"language": "css",
+			"sizeLines": 39,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/twoFactorAuth/TwoFactorAuthResendMail.tsx",
+			"language": "typescript",
+			"sizeLines": 44,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/twoFactorAuth/twoFactorNag.styles.scss",
+			"language": "css",
+			"sizeLines": 16,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/twoFactorAuth/TwoFactorNag.tsx",
+			"language": "typescript",
+			"sizeLines": 152,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/typingIndicator/typingIndicator.styles.scss",
+			"language": "css",
+			"sizeLines": 76,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/typingIndicator/typingIndicator.tsx",
+			"language": "typescript",
+			"sizeLines": 43,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/uiVersionToggle/uiVersionToggle.styles.scss",
+			"language": "css",
+			"sizeLines": 10,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/uiVersionToggle/UIVersionToggle.tsx",
+			"language": "typescript",
+			"sizeLines": 107,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/videoCall/statusPage.styles.scss",
+			"language": "css",
+			"sizeLines": 11,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/videoCall/StatusPage.tsx",
+			"language": "typescript",
+			"sizeLines": 36,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/videoCall/VideoCall.tsx",
+			"language": "typescript",
+			"sizeLines": 73,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/videoConference/e2eeBanner.styles.scss",
+			"language": "css",
+			"sizeLines": 85,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/videoConference/E2EEBanner.tsx",
+			"language": "typescript",
+			"sizeLines": 47,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/videoConference/logo.styles.scss",
+			"language": "css",
+			"sizeLines": 16,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/videoConference/Logo.tsx",
+			"language": "typescript",
+			"sizeLines": 15,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/videoConference/VideoConference.tsx",
+			"language": "typescript",
+			"sizeLines": 327,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/videoConference/waitingRoom.styles.scss",
+			"language": "css",
+			"sizeLines": 155,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/videoConference/WaitingRoom.tsx",
+			"language": "typescript",
+			"sizeLines": 176,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/videoConference/WaitingRoomContent.tsx",
+			"language": "typescript",
+			"sizeLines": 79,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/videoConference/waitingRoomHelpers.ts",
+			"language": "typescript",
+			"sizeLines": 32,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/walkthrough/steps.ts",
+			"language": "typescript",
+			"sizeLines": 41,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/walkthrough/walkthrough.styles.scss",
+			"language": "css",
+			"sizeLines": 133,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/walkthrough/Walkthrough.tsx",
+			"language": "typescript",
+			"sizeLines": 75,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/compound.css",
+			"language": "css",
+			"sizeLines": 5,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/containers/bookings/booking.routes.ts",
+			"language": "typescript",
+			"sizeLines": 61,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/AddCalendar/addCalendar.tsx",
+			"language": "typescript",
+			"sizeLines": 45,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/AssignedCalendars/assignedCalendars.tsx",
+			"language": "typescript",
+			"sizeLines": 24,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/AvailabilityContainer/availabilityContainer.tsx",
+			"language": "typescript",
+			"sizeLines": 62,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/booking.styles.scss",
+			"language": "css",
+			"sizeLines": 547,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/containers/bookings/components/Booking/booking.tsx",
+			"language": "typescript",
+			"sizeLines": 75,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/BookingCancellation/bookingCancellation.tsx",
+			"language": "typescript",
+			"sizeLines": 23,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/BookingDescription/bookingDescription.tsx",
+			"language": "typescript",
+			"sizeLines": 61,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/BookingEvents/bookingEvents.tsx",
+			"language": "typescript",
+			"sizeLines": 151,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/BookingEventsBooked/bookingEventsBooked.tsx",
+			"language": "typescript",
+			"sizeLines": 72,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/BookingEventsCanceled/bookingEventsCanceled.tsx",
+			"language": "typescript",
+			"sizeLines": 47,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/BookingEventsExpired/bookingEventsExpired.tsx",
+			"language": "typescript",
+			"sizeLines": 48,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/BookingEventTableColumnAttendee/bookingEventTableColumnAttendee.tsx",
+			"language": "typescript",
+			"sizeLines": 48,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/BookingReschedule/bookingReschedule.tsx",
+			"language": "typescript",
+			"sizeLines": 40,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/BookingsComponent/bookingsComponent.tsx",
+			"language": "typescript",
+			"sizeLines": 61,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/BookingSettings/bookingSettings.tsx",
+			"language": "typescript",
+			"sizeLines": 20,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/Calcom/cal.styles.scss",
+			"language": "css",
+			"sizeLines": 21,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/containers/bookings/components/Calcom/Cal.tsx",
+			"language": "typescript",
+			"sizeLines": 68,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/Calcom/useEmbed.ts",
+			"language": "typescript",
+			"sizeLines": 15,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/Calendar/calendar.tsx",
+			"language": "typescript",
+			"sizeLines": 58,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/CalendarIntegration/calendarIntegration.tsx",
+			"language": "typescript",
+			"sizeLines": 89,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/Event/event.tsx",
+			"language": "typescript",
+			"sizeLines": 244,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/Event/LocationType/index.tsx",
+			"language": "typescript",
+			"sizeLines": 59,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/MyCalendar/myCalendar.tsx",
+			"language": "typescript",
+			"sizeLines": 49,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/NoBookings/noBookingsBooked.tsx",
+			"language": "typescript",
+			"sizeLines": 79,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/hooks/useAskerHasAssignedConsultant.ts",
+			"language": "typescript",
+			"sizeLines": 38,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/hooks/useCalcomLogin.ts",
+			"language": "typescript",
+			"sizeLines": 50,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/overview/components/BookingCard/BookingCard.tsx",
+			"language": "typescript",
+			"sizeLines": 27,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/overview/components/BookingEvent/booking-event.styles.scss",
+			"language": "css",
+			"sizeLines": 44,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/containers/overview/components/BookingEvent/index.tsx",
+			"language": "typescript",
+			"sizeLines": 138,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/overview/components/EmptyState/emptyState.styles.scss",
+			"language": "css",
+			"sizeLines": 56,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/containers/overview/components/EmptyState/index.tsx",
+			"language": "typescript",
+			"sizeLines": 42,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/overview/components/OverviewCard/overviewCard.styles.scss",
+			"language": "css",
+			"sizeLines": 34,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/containers/overview/components/OverviewCard/OverviewCard.tsx",
+			"language": "typescript",
+			"sizeLines": 63,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/overview/components/SessionCard/sessionCard.styles.scss",
+			"language": "css",
+			"sizeLines": 11,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/containers/overview/components/SessionCard/SessionCard.tsx",
+			"language": "typescript",
+			"sizeLines": 64,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/overview/hooks/useConsultantBookings.ts",
+			"language": "typescript",
+			"sizeLines": 28,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/overview/hooks/useConsultantData.ts",
+			"language": "typescript",
+			"sizeLines": 54,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/overview/overview.styles.scss",
+			"language": "css",
+			"sizeLines": 6,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/containers/overview/overview.tsx",
+			"language": "typescript",
+			"sizeLines": 36,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/registration/components/ConsultingTypeSelection/index.tsx",
+			"language": "typescript",
+			"sizeLines": 67,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/registration/components/FallbackInformation/index.tsx",
+			"language": "typescript",
+			"sizeLines": 45,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/registration/components/NoAgencyFound/index.tsx",
+			"language": "typescript",
+			"sizeLines": 40,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/registration/components/PostCodeSelection/index.tsx",
+			"language": "typescript",
+			"sizeLines": 100,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/registration/components/ProposedAgencies/proposedAgencies.styles.scss",
+			"language": "css",
+			"sizeLines": 113,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/containers/registration/components/ProposedAgencies/ProposedAgencies.tsx",
+			"language": "typescript",
+			"sizeLines": 288,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/registration/components/ProposedAgencies/ProposedAgenciesTitle/index.tsx",
+			"language": "typescript",
+			"sizeLines": 55,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/registration/hooks/useAgenciesForRegistration.ts",
+			"language": "typescript",
+			"sizeLines": 171,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/registration/hooks/useConsultantRegistrationData.ts",
+			"language": "typescript",
+			"sizeLines": 137,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/extensions/cypress/cypress.json",
+			"language": "json",
+			"sizeLines": 12,
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/extensions/package.json",
+			"language": "json",
+			"sizeLines": 1,
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/extensions/README.MD",
+			"language": "markdown",
+			"sizeLines": 24,
+			"fileCategory": "docs"
+		},
+		{
+			"path": "src/generated/agencyservice.d.ts",
+			"language": "typescript",
+			"sizeLines": 103,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/generated/liveservice.d.ts",
+			"language": "typescript",
+			"sizeLines": 56,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/generated/mailservice.d.ts",
+			"language": "typescript",
+			"sizeLines": 54,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/generated/messageservice.d.ts",
+			"language": "typescript",
+			"sizeLines": 293,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/generated/uploadservice.d.ts",
+			"language": "typescript",
+			"sizeLines": 69,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/generated/userservice.d.ts",
+			"language": "typescript",
+			"sizeLines": 1179,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/generated/videoservice.d.ts",
+			"language": "typescript",
+			"sizeLines": 61,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/context/LocaleContext.tsx",
+			"language": "typescript",
+			"sizeLines": 11,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/context/UserDataContext.tsx",
+			"language": "typescript",
+			"sizeLines": 10,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/globalState_notes.md",
+			"language": "markdown",
+			"sizeLines": 112,
+			"fileCategory": "docs"
+		},
+		{
+			"path": "src/globalState/helpers/stateHelpers.ts",
+			"language": "typescript",
+			"sizeLines": 138,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/index.ts",
+			"language": "typescript",
+			"sizeLines": 25,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/AppConfig/AppConfigInterface.ts",
+			"language": "typescript",
+			"sizeLines": 59,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/AppConfig/AppConfigJitsiInterface.ts",
+			"language": "typescript",
+			"sizeLines": 5,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/AppConfig/AppConfigNotificationsInterface.ts",
+			"language": "typescript",
+			"sizeLines": 8,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/AppConfig/AppConfigTwoFactorInterface.ts",
+			"language": "typescript",
+			"sizeLines": 5,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/AppConfig/AppConfigUrlsInterface.ts",
+			"language": "typescript",
+			"sizeLines": 17,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/AppConfig/AppSettingsInterface.ts",
+			"language": "typescript",
+			"sizeLines": 28,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/AppConfig/index.ts",
+			"language": "typescript",
+			"sizeLines": 6,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"language": "typescript",
+			"sizeLines": 18,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/AppointmentsDataInterface.ts",
+			"language": "typescript",
+			"sizeLines": 13,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/AuthDataInterface.ts",
+			"language": "typescript",
+			"sizeLines": 6,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/BookingsInterface.ts",
+			"language": "typescript",
+			"sizeLines": 44,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/ConsultingSessionDataInterface.ts",
+			"language": "typescript",
+			"sizeLines": 19,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/ConsultingTypeInterface.ts",
+			"language": "typescript",
+			"sizeLines": 62,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/E2EEDataInterface.ts",
+			"language": "typescript",
+			"sizeLines": 1,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/GroupChatConfig.ts",
+			"language": "typescript",
+			"sizeLines": 6,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/index.ts",
+			"language": "typescript",
+			"sizeLines": 18,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/LegalLinkInterface.ts",
+			"language": "typescript",
+			"sizeLines": 5,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/ServerAppConfigInterface.ts",
+			"language": "typescript",
+			"sizeLines": 13,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/SessionsDataInterface.ts",
+			"language": "typescript",
+			"sizeLines": 138,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/TenantDataInterface.ts",
+			"language": "typescript",
+			"sizeLines": 59,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/ToolsInterface.ts",
+			"language": "typescript",
+			"sizeLines": 15,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/TopicGroups.ts",
+			"language": "typescript",
+			"sizeLines": 5,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/TopicsDataInterface.ts",
+			"language": "typescript",
+			"sizeLines": 17,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/TranslationConfig.ts",
+			"language": "typescript",
+			"sizeLines": 13,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/UserDataInterface.ts",
+			"language": "typescript",
+			"sizeLines": 86,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/VideoCallDataInterface.ts",
+			"language": "typescript",
+			"sizeLines": 4,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/ActiveSessionProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 36,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/AgencySpecificProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 39,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/AppConfigProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 76,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/CallProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 151,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/ConsultantListProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 18,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/ConsultingTypesProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 51,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/E2EEProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 70,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/GlobalComponentContext.tsx",
+			"language": "typescript",
+			"sizeLines": 6,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/InformalProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 44,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/LanguagesProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 46,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/LegalLinksProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 69,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/LocaleProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 128,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/ModalProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 109,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/NotificationsProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 346,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/RegistrationProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 263,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/RocketChatGlobalSettingsProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 59,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/RocketChatProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 417,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/RocketChatProvider.tsx.backup",
+			"language": "backup",
+			"sizeLines": 417,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/RocketChatPublicSettingsProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 133,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/RocketChatSubscriptionsProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 304,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/RocketChatSytemUsersProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 53,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/RocketChatUnreadProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 186,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/RocketChatUsersOfRoomProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 189,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/RocketChatUserStatusProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 133,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/SessionsDataProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 128,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/SessionsDataProvider.tsx.backup",
+			"language": "backup",
+			"sizeLines": 129,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/SessionTypeProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 49,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/TenantProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 28,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/TopicsProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 79,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/UpdateSessionListProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 19,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/UrlParamsProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 76,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/UserDataProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 43,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/WebsocketConnectionDeactivatedProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 20,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/state.tsx",
+			"language": "typescript",
+			"sizeLines": 48,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/debug/useEffectDebugger.tsx",
+			"language": "typescript",
+			"sizeLines": 66,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useAppConfig.tsx",
+			"language": "typescript",
+			"sizeLines": 7,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useBrowserNotification.ts",
+			"language": "typescript",
+			"sizeLines": 44,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useDebounceCallback.tsx",
+			"language": "typescript",
+			"sizeLines": 36,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useE2EE.tsx",
+			"language": "typescript",
+			"sizeLines": 469,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useE2EEViewElements.tsx",
+			"language": "typescript",
+			"sizeLines": 109,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useJoinGroupChat.ts",
+			"language": "typescript",
+			"sizeLines": 47,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useMatrixReady.tsx",
+			"language": "typescript",
+			"sizeLines": 61,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useNotificationPermission.ts",
+			"language": "typescript",
+			"sizeLines": 52,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useResponsive.tsx",
+			"language": "typescript",
+			"sizeLines": 30,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useSearchParams.tsx",
+			"language": "typescript",
+			"sizeLines": 17,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useSession.tsx",
+			"language": "typescript",
+			"sizeLines": 136,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useStateWithLabel.ts",
+			"language": "typescript",
+			"sizeLines": 13,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useTimeoutOverlay.tsx",
+			"language": "typescript",
+			"sizeLines": 70,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useUnload.tsx",
+			"language": "typescript",
+			"sizeLines": 20,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useUpdatingRef.tsx",
+			"language": "typescript",
+			"sizeLines": 13,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useUserMutate.ts",
+			"language": "typescript",
+			"sizeLines": 47,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useWatcher.tsx",
+			"language": "typescript",
+			"sizeLines": 64,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/i18n.ts",
+			"language": "typescript",
+			"sizeLines": 305,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/initApp.tsx",
+			"language": "typescript",
+			"sizeLines": 72,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/initError.tsx",
+			"language": "typescript",
+			"sizeLines": 10,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/pages/app.html",
+			"language": "html",
+			"sizeLines": 61,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/pages/under-construction.html",
+			"language": "html",
+			"sizeLines": 342,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/polyfill.ts",
+			"language": "typescript",
+			"sizeLines": 46,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/react-app-env.d.ts",
+			"language": "typescript",
+			"sizeLines": 76,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/react-dom-shim.ts",
+			"language": "typescript",
+			"sizeLines": 41,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/resources/animations/Matching-Animation.json",
+			"language": "json",
+			"sizeLines": 0,
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/de@informal/common.json",
+			"language": "json",
+			"sizeLines": 1271,
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/de/agency.json",
+			"language": "json",
+			"sizeLines": 3,
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/de/common.json",
+			"language": "json",
+			"sizeLines": 3019,
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/de/consultingTypes.json",
+			"language": "json",
+			"sizeLines": 410,
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/de/languages.json",
+			"language": "json",
+			"sizeLines": 186,
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/en/agency.json",
+			"language": "json",
+			"sizeLines": 3,
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/en/common.json",
+			"language": "json",
+			"sizeLines": 2903,
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/en/consultingTypes.json",
+			"language": "json",
+			"sizeLines": 438,
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/en/languages.json",
+			"language": "json",
+			"sizeLines": 186,
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/fr/common.json",
+			"language": "json",
+			"sizeLines": 2876,
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/fr/languages.json",
+			"language": "json",
+			"sizeLines": 186,
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/ru/common.json",
+			"language": "json",
+			"sizeLines": 2876,
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/ru/languages.json",
+			"language": "json",
+			"sizeLines": 186,
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/ti/common.json",
+			"language": "json",
+			"sizeLines": 2876,
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/ti/languages.json",
+			"language": "json",
+			"sizeLines": 186,
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/tr/common.json",
+			"language": "json",
+			"sizeLines": 2876,
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/tr/languages.json",
+			"language": "json",
+			"sizeLines": 186,
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/img/icons.ts",
+			"language": "typescript",
+			"sizeLines": 62,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/resources/scripts/config.ts",
+			"language": "typescript",
+			"sizeLines": 432,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/resources/scripts/endpoints.ts",
+			"language": "typescript",
+			"sizeLines": 143,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/resources/scripts/endpoints.ts.backup",
+			"language": "backup",
+			"sizeLines": 137,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/resources/scripts/theme.jsx",
+			"language": "javascript",
+			"sizeLines": 197,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/resources/scripts/util/htmlParser.tsx",
+			"language": "typescript",
+			"sizeLines": 16,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/resources/styles/_banner.scss",
+			"language": "css",
+			"sizeLines": 87,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/_border.scss",
+			"language": "css",
+			"sizeLines": 57,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/_colors.scss",
+			"language": "css",
+			"sizeLines": 11,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/_display.scss",
+			"language": "css",
+			"sizeLines": 29,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/_flex.scss",
+			"language": "css",
+			"sizeLines": 117,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/_float.scss",
+			"language": "css",
+			"sizeLines": 20,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/_fonts.scss",
+			"language": "css",
+			"sizeLines": 46,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/_icon.scss",
+			"language": "css",
+			"sizeLines": 28,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/_layout.scss",
+			"language": "css",
+			"sizeLines": 84,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/_margin.scss",
+			"language": "css",
+			"sizeLines": 50,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/_padding.scss",
+			"language": "css",
+			"sizeLines": 43,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/_text.scss",
+			"language": "css",
+			"sizeLines": 37,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/_types.scss",
+			"language": "css",
+			"sizeLines": 67,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/mui-variables-mapping.scss",
+			"language": "css",
+			"sizeLines": 38,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/settings.scss",
+			"language": "css",
+			"sizeLines": 292,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/styles.scss",
+			"language": "css",
+			"sizeLines": 22,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/services/CallManager.ts",
+			"language": "typescript",
+			"sizeLines": 598,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/services/draftStore.ts",
+			"language": "typescript",
+			"sizeLines": 108,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/services/liveKitService.ts",
+			"language": "typescript",
+			"sizeLines": 299,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/services/matrixCallService.ts",
+			"language": "typescript",
+			"sizeLines": 348,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/services/matrixClientService.ts",
+			"language": "typescript",
+			"sizeLines": 150,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/services/matrixGroupCallService.ts",
+			"language": "typescript",
+			"sizeLines": 246,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/services/matrixLiveEventBridge.ts",
+			"language": "typescript",
+			"sizeLines": 344,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/services/matrixRegistrationService.ts",
+			"language": "typescript",
+			"sizeLines": 113,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/services/messageEventEmitter.ts",
+			"language": "typescript",
+			"sizeLines": 50,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/store/agencyLogoAtom.ts",
+			"language": "typescript",
+			"sizeLines": 5,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/types/rc/Room.ts",
+			"language": "typescript",
+			"sizeLines": 30,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/types/rc/Subscriptions.ts",
+			"language": "typescript",
+			"sizeLines": 35,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/types/rc/User.ts",
+			"language": "typescript",
+			"sizeLines": 96,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/anonymousSessionFetchGuard.ts",
+			"language": "typescript",
+			"sizeLines": 50,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/appConfig.ts",
+			"language": "typescript",
+			"sizeLines": 8,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/capitalizeFirstLetter.ts",
+			"language": "typescript",
+			"sizeLines": 3,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/clipboardHelpers.ts",
+			"language": "typescript",
+			"sizeLines": 83,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/consultant.ts",
+			"language": "typescript",
+			"sizeLines": 5,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/dateHelpers.ts",
+			"language": "typescript",
+			"sizeLines": 171,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/decodeHTML.ts",
+			"language": "typescript",
+			"sizeLines": 13,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/downloadICSFile.ts",
+			"language": "typescript",
+			"sizeLines": 8,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/encryptionHelpers.ts",
+			"language": "typescript",
+			"sizeLines": 713,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/eventHandler.ts",
+			"language": "typescript",
+			"sizeLines": 52,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/generateCsrfToken.ts",
+			"language": "typescript",
+			"sizeLines": 25,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/getLocationVariables.ts",
+			"language": "typescript",
+			"sizeLines": 14,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/getUrlParameter.ts",
+			"language": "typescript",
+			"sizeLines": 10,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/isNumber.ts",
+			"language": "typescript",
+			"sizeLines": 3,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/keycloakSession.ts",
+			"language": "typescript",
+			"sizeLines": 51,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/liveChatToggle.ts",
+			"language": "typescript",
+			"sizeLines": 52,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/loadConsultingTypesForAgencies.ts",
+			"language": "typescript",
+			"sizeLines": 28,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/notificationHelpers.ts",
+			"language": "typescript",
+			"sizeLines": 120,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/parseJWT.ts",
+			"language": "typescript",
+			"sizeLines": 18,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/parsePlaceholderString.ts",
+			"language": "typescript",
+			"sizeLines": 20,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/pseudonymGenerator.ts",
+			"language": "typescript",
+			"sizeLines": 172,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/requestCollector.ts",
+			"language": "typescript",
+			"sizeLines": 53,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/tabsHelper.ts",
+			"language": "typescript",
+			"sizeLines": 60,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/tenantSettingsHelper.ts",
+			"language": "typescript",
+			"sizeLines": 12,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/transformBookingData.ts",
+			"language": "typescript",
+			"sizeLines": 49,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/translate.ts",
+			"language": "typescript",
+			"sizeLines": 8,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/useDocumentTitle.tsx",
+			"language": "typescript",
+			"sizeLines": 13,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/useIsFirstLogin.tsx",
+			"language": "typescript",
+			"sizeLines": 28,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/useIsFirstVisit.tsx",
+			"language": "typescript",
+			"sizeLines": 20,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/useTenantTheming.ts",
+			"language": "typescript",
+			"sizeLines": 279,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/useTyping.ts",
+			"language": "typescript",
+			"sizeLines": 199,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/useUrlParamsLoader.tsx",
+			"language": "typescript",
+			"sizeLines": 259,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/validateInputValue.ts",
+			"language": "typescript",
+			"sizeLines": 67,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/videoCallHelpers.ts",
+			"language": "typescript",
+			"sizeLines": 112,
+			"fileCategory": "code"
+		},
+		{
+			"path": "STORYBOOK_KUBERNETES.md",
+			"language": "markdown",
+			"sizeLines": 40,
+			"fileCategory": "docs"
+		},
+		{
+			"path": "STORYBOOK_SETUP.md",
+			"language": "markdown",
+			"sizeLines": 119,
+			"fileCategory": "docs"
+		},
+		{
+			"path": "storybook-deployment.yaml",
+			"language": "yaml",
+			"sizeLines": 52,
+			"fileCategory": "config"
+		},
+		{
+			"path": "storybook-ingress.yaml",
+			"language": "yaml",
+			"sizeLines": 30,
+			"fileCategory": "config"
+		},
+		{
+			"path": "storybook-redirect-middleware.yaml",
+			"language": "yaml",
+			"sizeLines": 10,
+			"fileCategory": "config"
+		},
+		{
+			"path": "storybook-service.yaml",
+			"language": "yaml",
+			"sizeLines": 21,
+			"fileCategory": "config"
+		},
+		{
+			"path": "test-results/.last-run.json",
+			"language": "json",
+			"sizeLines": 3,
+			"fileCategory": "config"
+		},
+		{
+			"path": "tmpcompare.spec.ts",
+			"language": "typescript",
+			"sizeLines": 35,
+			"fileCategory": "code"
+		},
+		{
+			"path": "translation-files-current/de@informal/common.json",
+			"language": "json",
+			"sizeLines": 1071,
+			"fileCategory": "config"
+		},
+		{
+			"path": "translation-files-current/de/agency.json",
+			"language": "json",
+			"sizeLines": 3,
+			"fileCategory": "config"
+		},
+		{
+			"path": "translation-files-current/de/common.json",
+			"language": "json",
+			"sizeLines": 2826,
+			"fileCategory": "config"
+		},
+		{
+			"path": "translation-files-current/de/consultingTypes.json",
+			"language": "json",
+			"sizeLines": 410,
+			"fileCategory": "config"
+		},
+		{
+			"path": "translation-files-current/de/languages.json",
+			"language": "json",
+			"sizeLines": 186,
+			"fileCategory": "config"
+		},
+		{
+			"path": "translation-files-current/en/agency.json",
+			"language": "json",
+			"sizeLines": 3,
+			"fileCategory": "config"
+		},
+		{
+			"path": "translation-files-current/en/common.json",
+			"language": "json",
+			"sizeLines": 2741,
+			"fileCategory": "config"
+		},
+		{
+			"path": "translation-files-current/en/consultingTypes.json",
+			"language": "json",
+			"sizeLines": 438,
+			"fileCategory": "config"
+		},
+		{
+			"path": "translation-files-current/en/languages.json",
+			"language": "json",
+			"sizeLines": 186,
+			"fileCategory": "config"
+		},
+		{
+			"path": "translation-files-current/fr/common.json",
+			"language": "json",
+			"sizeLines": 2721,
+			"fileCategory": "config"
+		},
+		{
+			"path": "translation-files-current/fr/languages.json",
+			"language": "json",
+			"sizeLines": 186,
+			"fileCategory": "config"
+		},
+		{
+			"path": "translation-files-current/ru/common.json",
+			"language": "json",
+			"sizeLines": 2721,
+			"fileCategory": "config"
+		},
+		{
+			"path": "translation-files-current/ru/languages.json",
+			"language": "json",
+			"sizeLines": 186,
+			"fileCategory": "config"
+		},
+		{
+			"path": "translation-files-current/ti/common.json",
+			"language": "json",
+			"sizeLines": 2721,
+			"fileCategory": "config"
+		},
+		{
+			"path": "translation-files-current/ti/languages.json",
+			"language": "json",
+			"sizeLines": 186,
+			"fileCategory": "config"
+		},
+		{
+			"path": "translation-files-current/tr/common.json",
+			"language": "json",
+			"sizeLines": 2721,
+			"fileCategory": "config"
+		},
+		{
+			"path": "translation-files-current/tr/languages.json",
+			"language": "json",
+			"sizeLines": 186,
+			"fileCategory": "config"
+		},
+		{
+			"path": "tsconfig.json",
+			"language": "json",
+			"sizeLines": 31,
+			"fileCategory": "config"
+		},
+		{
+			"path": "update-stories-autodocs.sh",
+			"language": "shell",
+			"sizeLines": 68,
+			"fileCategory": "script"
+		}
+	],
+	"totalFiles": 984,
+	"filteredByIgnore": 0,
+	"estimatedComplexity": "very-large",
+	"stats": {
+		"filesScanned": 984,
+		"byCategory": {
+			"config": 76,
+			"infra": 4,
+			"code": 681,
+			"markup": 199,
+			"docs": 20,
+			"script": 4
+		},
+		"byLanguage": {
+			"json": 65,
+			"unknown": 5,
+			"config": 1,
+			"yaml": 11,
+			"typescript": 637,
+			"html": 6,
+			"css": 193,
+			"javascript": 22,
+			"markdown": 19,
+			"shell": 4,
+			"dockerfile": 2,
+			"backup": 16,
+			"original": 1,
+			"txt": 1,
+			"backup-matrix": 1
+		}
+	}
+}

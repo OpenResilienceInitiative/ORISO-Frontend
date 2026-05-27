@@ -1,0 +1,147 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": ".env.example",
+			"language": "config",
+			"sizeLines": 30,
+			"fileCategory": "config"
+		},
+		{
+			"path": "CHANGELOG.md",
+			"language": "markdown",
+			"sizeLines": 412,
+			"fileCategory": "docs"
+		},
+		{
+			"path": "Dockerfile.storybook",
+			"language": "dockerfile",
+			"sizeLines": 44,
+			"fileCategory": "infra"
+		},
+		{
+			"path": "LICENSE.md",
+			"language": "markdown",
+			"sizeLines": 661,
+			"fileCategory": "docs"
+		},
+		{
+			"path": "MATRIX-INTEGRATION-GUIDE.md",
+			"language": "markdown",
+			"sizeLines": 63,
+			"fileCategory": "docs"
+		},
+		{
+			"path": "PROJECT_KNOWLEDGE.md",
+			"language": "markdown",
+			"sizeLines": 13,
+			"fileCategory": "docs"
+		},
+		{
+			"path": "README.md",
+			"language": "markdown",
+			"sizeLines": 50,
+			"fileCategory": "docs"
+		},
+		{
+			"path": "STORYBOOK_KUBERNETES.md",
+			"language": "markdown",
+			"sizeLines": 40,
+			"fileCategory": "docs"
+		},
+		{
+			"path": "STORYBOOK_SETUP.md",
+			"language": "markdown",
+			"sizeLines": 119,
+			"fileCategory": "docs"
+		},
+		{
+			"path": "create-all-stories.sh",
+			"language": "shell",
+			"sizeLines": 118,
+			"fileCategory": "script"
+		},
+		{
+			"path": "defaults.scss",
+			"language": "css",
+			"sizeLines": 3,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "deploy-development.sh",
+			"language": "shell",
+			"sizeLines": 27,
+			"fileCategory": "script"
+		},
+		{
+			"path": "deploy-production.sh",
+			"language": "shell",
+			"sizeLines": 18,
+			"fileCategory": "script"
+		},
+		{
+			"path": "deployment-v2.yaml",
+			"language": "yaml",
+			"sizeLines": 52,
+			"fileCategory": "config"
+		},
+		{
+			"path": "https-redirect-middleware.yaml",
+			"language": "yaml",
+			"sizeLines": 10,
+			"fileCategory": "config"
+		},
+		{
+			"path": "ingress-v2.yaml",
+			"language": "yaml",
+			"sizeLines": 26,
+			"fileCategory": "config"
+		},
+		{
+			"path": "ingress.yaml",
+			"language": "yaml",
+			"sizeLines": 27,
+			"fileCategory": "config"
+		},
+		{
+			"path": "k8s-temp-frontend.yaml",
+			"language": "yaml",
+			"sizeLines": 64,
+			"fileCategory": "config"
+		},
+		{
+			"path": "package.json",
+			"language": "json",
+			"sizeLines": 309,
+			"fileCategory": "config"
+		},
+		{
+			"path": "serve.json",
+			"language": "json",
+			"sizeLines": 4,
+			"fileCategory": "config"
+		}
+	],
+	"batchImportData": {
+		".env.example": [],
+		"CHANGELOG.md": [],
+		"Dockerfile.storybook": [],
+		"LICENSE.md": [],
+		"MATRIX-INTEGRATION-GUIDE.md": [],
+		"PROJECT_KNOWLEDGE.md": [],
+		"README.md": [],
+		"STORYBOOK_KUBERNETES.md": [],
+		"STORYBOOK_SETUP.md": [],
+		"create-all-stories.sh": [],
+		"defaults.scss": [],
+		"deploy-development.sh": [],
+		"deploy-production.sh": [],
+		"deployment-v2.yaml": [],
+		"https-redirect-middleware.yaml": [],
+		"ingress-v2.yaml": [],
+		"ingress.yaml": [],
+		"k8s-temp-frontend.yaml": [],
+		"package.json": [],
+		"serve.json": []
+	}
+}

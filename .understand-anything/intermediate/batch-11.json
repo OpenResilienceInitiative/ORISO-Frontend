@@ -1,0 +1,1551 @@
+{
+	"nodes": [
+		{
+			"id": "file:src/components/spinner/Spinner.tsx",
+			"type": "file",
+			"name": "Spinner.tsx",
+			"filePath": "src/components/spinner/Spinner.tsx",
+			"summary": "React UI module for component spinner, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-spinner"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/spinner/Spinner.tsx:Spinner",
+			"type": "function",
+			"name": "Spinner",
+			"filePath": "src/components/spinner/Spinner.tsx",
+			"lineRange": [11, 18],
+			"summary": "Function Spinner in src/components/spinner/Spinner.tsx, used by the surrounding component spinner module.",
+			"tags": ["function", "component-spinner", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/stage/stage.tsx",
+			"type": "file",
+			"name": "stage.tsx",
+			"filePath": "src/components/stage/stage.tsx",
+			"summary": "React UI module for component stage, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-stage"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/stage/stage.tsx:Stage",
+			"type": "function",
+			"name": "Stage",
+			"filePath": "src/components/stage/stage.tsx",
+			"lineRange": [33, 45],
+			"summary": "Function Stage in src/components/stage/stage.tsx, used by the surrounding component stage module.",
+			"tags": ["function", "component-stage", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/stageLayout/StageLayout.tsx",
+			"type": "file",
+			"name": "StageLayout.tsx",
+			"filePath": "src/components/stageLayout/StageLayout.tsx",
+			"summary": "React UI module for component stage layout, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-stage-layout"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/stageLayout/StageLayout.tsx:StageLayout",
+			"type": "function",
+			"name": "StageLayout",
+			"filePath": "src/components/stageLayout/StageLayout.tsx",
+			"lineRange": [38, 50],
+			"summary": "Function StageLayout in src/components/stageLayout/StageLayout.tsx, used by the surrounding component stage layout module.",
+			"tags": ["function", "component-stage-layout", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/twoFactorAuth/TwoFactorAuth.tsx",
+			"type": "file",
+			"name": "TwoFactorAuth.tsx",
+			"filePath": "src/components/twoFactorAuth/TwoFactorAuth.tsx",
+			"summary": "React UI module for component two factor auth, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"authentication",
+				"utility",
+				"component-two-factor-auth"
+			],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/twoFactorAuth/TwoFactorAuth.tsx:OTP_LENGTH",
+			"type": "function",
+			"name": "OTP_LENGTH",
+			"filePath": "src/components/twoFactorAuth/TwoFactorAuth.tsx",
+			"lineRange": [48, 60],
+			"summary": "Function OTP_LENGTH in src/components/twoFactorAuth/TwoFactorAuth.tsx, used by the surrounding component two factor auth module.",
+			"tags": ["function", "component-two-factor-auth", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/twoFactorAuth/TwoFactorAuth.tsx:TWO_FACTOR_TYPES",
+			"type": "function",
+			"name": "TWO_FACTOR_TYPES",
+			"filePath": "src/components/twoFactorAuth/TwoFactorAuth.tsx",
+			"lineRange": [50, 62],
+			"summary": "Function TWO_FACTOR_TYPES in src/components/twoFactorAuth/TwoFactorAuth.tsx, used by the surrounding component two factor auth module.",
+			"tags": ["function", "component-two-factor-auth", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/twoFactorAuth/TwoFactorAuth.tsx:TwoFactorAuth",
+			"type": "function",
+			"name": "TwoFactorAuth",
+			"filePath": "src/components/twoFactorAuth/TwoFactorAuth.tsx",
+			"lineRange": [56, 68],
+			"summary": "Function TwoFactorAuth in src/components/twoFactorAuth/TwoFactorAuth.tsx, used by the surrounding component two factor auth module.",
+			"tags": ["function", "component-two-factor-auth", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/twoFactorAuth/TwoFactorAuthResendMail.tsx",
+			"type": "file",
+			"name": "TwoFactorAuthResendMail.tsx",
+			"filePath": "src/components/twoFactorAuth/TwoFactorAuthResendMail.tsx",
+			"summary": "React UI module for component two factor auth, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"authentication",
+				"component-two-factor-auth"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/videoConference/WaitingRoom.tsx",
+			"type": "file",
+			"name": "WaitingRoom.tsx",
+			"filePath": "src/components/videoConference/WaitingRoom.tsx",
+			"summary": "React UI module for component video conference, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-video-conference"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/videoConference/WaitingRoom.tsx:WaitingRoom",
+			"type": "function",
+			"name": "WaitingRoom",
+			"filePath": "src/components/videoConference/WaitingRoom.tsx",
+			"lineRange": [37, 49],
+			"summary": "Function WaitingRoom in src/components/videoConference/WaitingRoom.tsx, used by the surrounding component video conference module.",
+			"tags": ["function", "component-video-conference", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/walkthrough/Walkthrough.tsx",
+			"type": "file",
+			"name": "Walkthrough.tsx",
+			"filePath": "src/components/walkthrough/Walkthrough.tsx",
+			"summary": "React UI module for component walkthrough, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-walkthrough"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/walkthrough/Walkthrough.tsx:Walkthrough",
+			"type": "function",
+			"name": "Walkthrough",
+			"filePath": "src/components/walkthrough/Walkthrough.tsx",
+			"lineRange": [14, 26],
+			"summary": "Function Walkthrough in src/components/walkthrough/Walkthrough.tsx, used by the surrounding component walkthrough module.",
+			"tags": ["function", "component-walkthrough", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/walkthrough/steps.ts",
+			"type": "file",
+			"name": "steps.ts",
+			"filePath": "src/components/walkthrough/steps.ts",
+			"summary": "React UI module for component walkthrough, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-walkthrough", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/containers/bookings/components/Booking/booking.tsx",
+			"type": "file",
+			"name": "booking.tsx",
+			"filePath": "src/containers/bookings/components/Booking/booking.tsx",
+			"summary": "React UI module for containers, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "containers"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/containers/bookings/components/Booking/booking.tsx:getUserEmail",
+			"type": "function",
+			"name": "getUserEmail",
+			"filePath": "src/containers/bookings/components/Booking/booking.tsx",
+			"lineRange": [18, 30],
+			"summary": "Function getUserEmail in src/containers/bookings/components/Booking/booking.tsx, used by the surrounding containers module.",
+			"tags": ["function", "containers", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/containers/bookings/components/Booking/booking.tsx:Booking",
+			"type": "function",
+			"name": "Booking",
+			"filePath": "src/containers/bookings/components/Booking/booking.tsx",
+			"lineRange": [24, 36],
+			"summary": "Function Booking in src/containers/bookings/components/Booking/booking.tsx, used by the surrounding containers module.",
+			"tags": ["function", "containers", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/containers/bookings/components/Calcom/Cal.tsx",
+			"type": "file",
+			"name": "Cal.tsx",
+			"filePath": "src/containers/bookings/components/Calcom/Cal.tsx",
+			"summary": "React UI module for containers, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "containers"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/containers/bookings/components/Calcom/Cal.tsx:Cal",
+			"type": "function",
+			"name": "Cal",
+			"filePath": "src/containers/bookings/components/Calcom/Cal.tsx",
+			"lineRange": [7, 19],
+			"summary": "Function Cal in src/containers/bookings/components/Calcom/Cal.tsx, used by the surrounding containers module.",
+			"tags": ["function", "containers", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/containers/bookings/components/Calcom/useEmbed.ts",
+			"type": "file",
+			"name": "useEmbed.ts",
+			"filePath": "src/containers/bookings/components/Calcom/useEmbed.ts",
+			"summary": "React hook module for useEmbed, encapsulating reusable frontend state or side-effect logic.",
+			"tags": ["hook", "component", "utility", "containers"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/containers/bookings/components/Calcom/useEmbed.ts:useEmbed",
+			"type": "function",
+			"name": "useEmbed",
+			"filePath": "src/containers/bookings/components/Calcom/useEmbed.ts",
+			"lineRange": [5, 15],
+			"summary": "Function useEmbed in src/containers/bookings/components/Calcom/useEmbed.ts, used by the surrounding containers module.",
+			"tags": ["function", "containers", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/containers/bookings/hooks/useCalcomLogin.ts",
+			"type": "file",
+			"name": "useCalcomLogin.ts",
+			"filePath": "src/containers/bookings/hooks/useCalcomLogin.ts",
+			"summary": "React hook module for useCalcomLogin, encapsulating reusable frontend state or side-effect logic.",
+			"tags": ["hook", "authentication", "utility", "containers"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/containers/bookings/hooks/useCalcomLogin.ts:useCalcomLogin",
+			"type": "function",
+			"name": "useCalcomLogin",
+			"filePath": "src/containers/bookings/hooks/useCalcomLogin.ts",
+			"lineRange": [7, 19],
+			"summary": "Function useCalcomLogin in src/containers/bookings/hooks/useCalcomLogin.ts, used by the surrounding containers module.",
+			"tags": ["function", "containers", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/provider/GlobalComponentContext.tsx",
+			"type": "file",
+			"name": "GlobalComponentContext.tsx",
+			"filePath": "src/globalState/provider/GlobalComponentContext.tsx",
+			"summary": "React UI module for global state, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"state-management",
+				"utility",
+				"global-state"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/GlobalComponentContext.tsx:GlobalComponentContext",
+			"type": "function",
+			"name": "GlobalComponentContext",
+			"filePath": "src/globalState/provider/GlobalComponentContext.tsx",
+			"lineRange": [4, 6],
+			"summary": "Function GlobalComponentContext in src/globalState/provider/GlobalComponentContext.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/provider/LegalLinksProvider.tsx",
+			"type": "file",
+			"name": "LegalLinksProvider.tsx",
+			"filePath": "src/globalState/provider/LegalLinksProvider.tsx",
+			"summary": "React UI module for global state, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"state-management",
+				"utility",
+				"global-state"
+			],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/globalState/provider/LegalLinksProvider.tsx:LegalLinksProvider",
+			"type": "function",
+			"name": "LegalLinksProvider",
+			"filePath": "src/globalState/provider/LegalLinksProvider.tsx",
+			"lineRange": [19, 31],
+			"summary": "Function LegalLinksProvider in src/globalState/provider/LegalLinksProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/LegalLinksProvider.tsx:LegalLinksContext",
+			"type": "function",
+			"name": "LegalLinksContext",
+			"filePath": "src/globalState/provider/LegalLinksProvider.tsx",
+			"lineRange": [12, 24],
+			"summary": "Function LegalLinksContext in src/globalState/provider/LegalLinksProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/provider/ModalProvider.tsx",
+			"type": "file",
+			"name": "ModalProvider.tsx",
+			"filePath": "src/globalState/provider/ModalProvider.tsx",
+			"summary": "React UI module for global state, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"state-management",
+				"utility",
+				"global-state"
+			],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/globalState/provider/ModalProvider.tsx:ModalProvider",
+			"type": "function",
+			"name": "ModalProvider",
+			"filePath": "src/globalState/provider/ModalProvider.tsx",
+			"lineRange": [40, 52],
+			"summary": "Function ModalProvider in src/globalState/provider/ModalProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/ModalProvider.tsx:ModalContext",
+			"type": "function",
+			"name": "ModalContext",
+			"filePath": "src/globalState/provider/ModalProvider.tsx",
+			"lineRange": [33, 45],
+			"summary": "Function ModalContext in src/globalState/provider/ModalProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/state.tsx",
+			"type": "file",
+			"name": "state.tsx",
+			"filePath": "src/globalState/state.tsx",
+			"summary": "React UI module for global state, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"state-management",
+				"utility",
+				"global-state"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/state.tsx:ProviderComposer",
+			"type": "function",
+			"name": "ProviderComposer",
+			"filePath": "src/globalState/state.tsx",
+			"lineRange": [16, 28],
+			"summary": "Function ProviderComposer in src/globalState/state.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "internal"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/state.tsx:ContextProvider",
+			"type": "function",
+			"name": "ContextProvider",
+			"filePath": "src/globalState/state.tsx",
+			"lineRange": [26, 38],
+			"summary": "Function ContextProvider in src/globalState/state.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "internal"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/hooks/useAppConfig.tsx",
+			"type": "file",
+			"name": "useAppConfig.tsx",
+			"filePath": "src/hooks/useAppConfig.tsx",
+			"summary": "React hook module for useAppConfig, encapsulating reusable frontend state or side-effect logic.",
+			"tags": ["hook", "component", "utility", "hooks"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/hooks/useAppConfig.tsx:useAppConfig",
+			"type": "function",
+			"name": "useAppConfig",
+			"filePath": "src/hooks/useAppConfig.tsx",
+			"lineRange": [5, 7],
+			"summary": "Function useAppConfig in src/hooks/useAppConfig.tsx, used by the surrounding hooks module.",
+			"tags": ["function", "hooks", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/hooks/useNotificationPermission.ts",
+			"type": "file",
+			"name": "useNotificationPermission.ts",
+			"filePath": "src/hooks/useNotificationPermission.ts",
+			"summary": "React hook module for useNotificationPermission, encapsulating reusable frontend state or side-effect logic.",
+			"tags": ["hook", "utility", "hooks"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/hooks/useNotificationPermission.ts:useNotificationPermission",
+			"type": "function",
+			"name": "useNotificationPermission",
+			"filePath": "src/hooks/useNotificationPermission.ts",
+			"lineRange": [7, 19],
+			"summary": "Function useNotificationPermission in src/hooks/useNotificationPermission.ts, used by the surrounding hooks module.",
+			"tags": ["function", "hooks", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/i18n.ts",
+			"type": "file",
+			"name": "i18n.ts",
+			"filePath": "src/i18n.ts",
+			"summary": "TypeScript module for i18n ts with 2 extracted functions and 0 extracted classes.",
+			"tags": ["i18n", "utility", "i18n-ts"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/i18n.ts:FALLBACK_LNG",
+			"type": "function",
+			"name": "FALLBACK_LNG",
+			"filePath": "src/i18n.ts",
+			"lineRange": [21, 33],
+			"summary": "Function FALLBACK_LNG in src/i18n.ts, used by the surrounding i18n ts module.",
+			"tags": ["function", "i18n-ts", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/i18n.ts:init",
+			"type": "function",
+			"name": "init",
+			"filePath": "src/i18n.ts",
+			"lineRange": [46, 58],
+			"summary": "Function init in src/i18n.ts, used by the surrounding i18n ts module.",
+			"tags": ["function", "i18n-ts", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/initApp.tsx",
+			"type": "file",
+			"name": "initApp.tsx",
+			"filePath": "src/initApp.tsx",
+			"summary": "React UI module for init app tsx, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["entry-point", "component", "init-app-tsx"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/polyfill.ts",
+			"type": "file",
+			"name": "polyfill.ts",
+			"filePath": "src/polyfill.ts",
+			"summary": "Frontend source file for polyfill ts in the ORISO React application.",
+			"tags": ["polyfill-ts", "code", "frontend"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/resources/scripts/theme.jsx",
+			"type": "file",
+			"name": "theme.jsx",
+			"filePath": "src/resources/scripts/theme.jsx",
+			"summary": "Frontend source file for resources in the ORISO React application.",
+			"tags": ["styling", "resources", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/resources/scripts/util/htmlParser.tsx",
+			"type": "file",
+			"name": "htmlParser.tsx",
+			"filePath": "src/resources/scripts/util/htmlParser.tsx",
+			"summary": "React UI module for resources, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "resources", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/utils/decodeHTML.ts",
+			"type": "file",
+			"name": "decodeHTML.ts",
+			"filePath": "src/utils/decodeHTML.ts",
+			"summary": "Frontend source file for utilities in the ORISO React application.",
+			"tags": ["utilities", "code", "frontend"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/utils/getLocationVariables.ts",
+			"type": "file",
+			"name": "getLocationVariables.ts",
+			"filePath": "src/utils/getLocationVariables.ts",
+			"summary": "Frontend source file for utilities in the ORISO React application.",
+			"tags": ["utilities", "code", "frontend"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/utils/useDocumentTitle.tsx",
+			"type": "file",
+			"name": "useDocumentTitle.tsx",
+			"filePath": "src/utils/useDocumentTitle.tsx",
+			"summary": "React hook module for useDocumentTitle, encapsulating reusable frontend state or side-effect logic.",
+			"tags": ["hook", "component", "utility", "utilities"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/useDocumentTitle.tsx:useDocumentTitle",
+			"type": "function",
+			"name": "useDocumentTitle",
+			"filePath": "src/utils/useDocumentTitle.tsx",
+			"lineRange": [3, 13],
+			"summary": "Function useDocumentTitle in src/utils/useDocumentTitle.tsx, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/utils/useIsFirstVisit.tsx",
+			"type": "file",
+			"name": "useIsFirstVisit.tsx",
+			"filePath": "src/utils/useIsFirstVisit.tsx",
+			"summary": "React hook module for useIsFirstVisit, encapsulating reusable frontend state or side-effect logic.",
+			"tags": ["hook", "component", "utility", "utilities"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/useIsFirstVisit.tsx:STORAGE_KEY_VISITED",
+			"type": "function",
+			"name": "STORAGE_KEY_VISITED",
+			"filePath": "src/utils/useIsFirstVisit.tsx",
+			"lineRange": [3, 15],
+			"summary": "Function STORAGE_KEY_VISITED in src/utils/useIsFirstVisit.tsx, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/useIsFirstVisit.tsx:useIsFirstVisit",
+			"type": "function",
+			"name": "useIsFirstVisit",
+			"filePath": "src/utils/useIsFirstVisit.tsx",
+			"lineRange": [5, 17],
+			"summary": "Function useIsFirstVisit in src/utils/useIsFirstVisit.tsx, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/utils/useTenantTheming.ts",
+			"type": "file",
+			"name": "useTenantTheming.ts",
+			"filePath": "src/utils/useTenantTheming.ts",
+			"summary": "React hook module for useTenantTheming, encapsulating reusable frontend state or side-effect logic.",
+			"tags": ["hook", "utilities", "code"],
+			"complexity": "complex"
+		}
+	],
+	"edges": [
+		{
+			"source": "file:src/components/spinner/Spinner.tsx",
+			"target": "function:src/components/spinner/Spinner.tsx:Spinner",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/spinner/Spinner.tsx",
+			"target": "function:src/components/spinner/Spinner.tsx:Spinner",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/spinner/Spinner.tsx",
+			"target": "file:src/components/spinner/spinner.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/spinner/Spinner.tsx",
+			"target": "file:src/polyfill.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/stage/stage.tsx",
+			"target": "function:src/components/stage/stage.tsx:Stage",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/stage/stage.tsx",
+			"target": "function:src/components/stage/stage.tsx:Stage",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/stage/stage.tsx",
+			"target": "file:src/components/banner/Banner.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/stage/stage.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/stage/stage.tsx",
+			"target": "file:src/components/legalLinks/LegalLinks.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/stage/stage.tsx",
+			"target": "file:src/components/spinner/Spinner.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/stage/stage.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/stage/stage.tsx",
+			"target": "file:src/globalState/provider/LegalLinksProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/stageLayout/StageLayout.tsx",
+			"target": "function:src/components/stageLayout/StageLayout.tsx:StageLayout",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/stageLayout/StageLayout.tsx",
+			"target": "function:src/components/stageLayout/StageLayout.tsx:StageLayout",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/stageLayout/StageLayout.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/stageLayout/StageLayout.tsx",
+			"target": "file:src/components/legalLinks/LegalLinks.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/stageLayout/StageLayout.tsx",
+			"target": "file:src/components/localeSwitch/LocaleSwitch.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/stageLayout/StageLayout.tsx",
+			"target": "file:src/components/registration/infoDrawer/InfoDrawer.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/stageLayout/StageLayout.tsx",
+			"target": "file:src/components/select/SelectDropdown.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/stageLayout/StageLayout.tsx",
+			"target": "file:src/components/stageLayout/StageLayout.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/stageLayout/StageLayout.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/stageLayout/StageLayout.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/stageLayout/StageLayout.tsx",
+			"target": "file:src/globalState/provider/LegalLinksProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/stageLayout/StageLayout.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/twoFactorAuth/TwoFactorAuth.tsx",
+			"target": "function:src/components/twoFactorAuth/TwoFactorAuth.tsx:OTP_LENGTH",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/twoFactorAuth/TwoFactorAuth.tsx",
+			"target": "function:src/components/twoFactorAuth/TwoFactorAuth.tsx:OTP_LENGTH",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/twoFactorAuth/TwoFactorAuth.tsx",
+			"target": "function:src/components/twoFactorAuth/TwoFactorAuth.tsx:TWO_FACTOR_TYPES",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/twoFactorAuth/TwoFactorAuth.tsx",
+			"target": "function:src/components/twoFactorAuth/TwoFactorAuth.tsx:TWO_FACTOR_TYPES",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/twoFactorAuth/TwoFactorAuth.tsx",
+			"target": "function:src/components/twoFactorAuth/TwoFactorAuth.tsx:TwoFactorAuth",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/twoFactorAuth/TwoFactorAuth.tsx",
+			"target": "function:src/components/twoFactorAuth/TwoFactorAuth.tsx:TwoFactorAuth",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/twoFactorAuth/TwoFactorAuth.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/twoFactorAuth/TwoFactorAuth.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/twoFactorAuth/TwoFactorAuth.tsx",
+			"target": "file:src/components/devToolbar/DevToolbar.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/twoFactorAuth/TwoFactorAuth.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/twoFactorAuth/TwoFactorAuth.tsx",
+			"target": "file:src/components/inputField/InputField.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/twoFactorAuth/TwoFactorAuth.tsx",
+			"target": "file:src/components/overlay/Overlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/twoFactorAuth/TwoFactorAuth.tsx",
+			"target": "file:src/components/radioButton/RadioButton.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/twoFactorAuth/TwoFactorAuth.tsx",
+			"target": "file:src/components/registration/registrationHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/twoFactorAuth/TwoFactorAuth.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/twoFactorAuth/TwoFactorAuth.tsx",
+			"target": "file:src/components/tooltip/Tooltip.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/twoFactorAuth/TwoFactorAuth.tsx",
+			"target": "file:src/components/twoFactorAuth/TwoFactorAuthResendMail.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/twoFactorAuth/TwoFactorAuth.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/twoFactorAuth/TwoFactorAuth.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/twoFactorAuth/TwoFactorAuth.tsx",
+			"target": "file:src/resources/img/icons.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/twoFactorAuth/TwoFactorAuthResendMail.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/twoFactorAuth/TwoFactorAuthResendMail.tsx",
+			"target": "file:src/resources/img/icons.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/videoConference/WaitingRoom.tsx",
+			"target": "function:src/components/videoConference/WaitingRoom.tsx:WaitingRoom",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/videoConference/WaitingRoom.tsx",
+			"target": "function:src/components/videoConference/WaitingRoom.tsx:WaitingRoom",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/videoConference/WaitingRoom.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/videoConference/WaitingRoom.tsx",
+			"target": "file:src/components/E2EEncryptionSupportHelp/E2EEncryptionSupportHelp.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/videoConference/WaitingRoom.tsx",
+			"target": "file:src/components/legalLinks/LegalLinks.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/videoConference/WaitingRoom.tsx",
+			"target": "file:src/components/stageLayout/StageLayout.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/videoConference/WaitingRoom.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/videoConference/WaitingRoom.tsx",
+			"target": "file:src/components/videoConference/WaitingRoomContent.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/videoConference/WaitingRoom.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/videoConference/WaitingRoom.tsx",
+			"target": "file:src/globalState/provider/GlobalComponentContext.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/videoConference/WaitingRoom.tsx",
+			"target": "file:src/globalState/provider/LegalLinksProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/videoConference/WaitingRoom.tsx",
+			"target": "file:src/utils/videoCallHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/walkthrough/Walkthrough.tsx",
+			"target": "function:src/components/walkthrough/Walkthrough.tsx:Walkthrough",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/walkthrough/Walkthrough.tsx",
+			"target": "function:src/components/walkthrough/Walkthrough.tsx:Walkthrough",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/walkthrough/Walkthrough.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/walkthrough/Walkthrough.tsx",
+			"target": "file:src/components/walkthrough/steps.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/walkthrough/Walkthrough.tsx",
+			"target": "file:src/components/walkthrough/walkthrough.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/walkthrough/Walkthrough.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/walkthrough/Walkthrough.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/Booking/booking.tsx",
+			"target": "function:src/containers/bookings/components/Booking/booking.tsx:getUserEmail",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/containers/bookings/components/Booking/booking.tsx",
+			"target": "function:src/containers/bookings/components/Booking/booking.tsx:getUserEmail",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/containers/bookings/components/Booking/booking.tsx",
+			"target": "function:src/containers/bookings/components/Booking/booking.tsx:Booking",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/containers/bookings/components/Booking/booking.tsx",
+			"target": "function:src/containers/bookings/components/Booking/booking.tsx:Booking",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/containers/bookings/components/Booking/booking.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/Booking/booking.tsx",
+			"target": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/Booking/booking.tsx",
+			"target": "file:src/containers/bookings/components/Calcom/Cal.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/Booking/booking.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/Booking/booking.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/Booking/booking.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/Calcom/Cal.tsx",
+			"target": "function:src/containers/bookings/components/Calcom/Cal.tsx:Cal",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/containers/bookings/components/Calcom/Cal.tsx",
+			"target": "function:src/containers/bookings/components/Calcom/Cal.tsx:Cal",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/containers/bookings/components/Calcom/Cal.tsx",
+			"target": "file:src/containers/bookings/components/Calcom/useEmbed.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/Calcom/useEmbed.ts",
+			"target": "function:src/containers/bookings/components/Calcom/useEmbed.ts:useEmbed",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/containers/bookings/components/Calcom/useEmbed.ts",
+			"target": "function:src/containers/bookings/components/Calcom/useEmbed.ts:useEmbed",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/containers/bookings/hooks/useCalcomLogin.ts",
+			"target": "function:src/containers/bookings/hooks/useCalcomLogin.ts:useCalcomLogin",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/containers/bookings/hooks/useCalcomLogin.ts",
+			"target": "function:src/containers/bookings/hooks/useCalcomLogin.ts:useCalcomLogin",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/containers/bookings/hooks/useCalcomLogin.ts",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/hooks/useCalcomLogin.ts",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/hooks/useCalcomLogin.ts",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/hooks/useCalcomLogin.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/GlobalComponentContext.tsx",
+			"target": "function:src/globalState/provider/GlobalComponentContext.tsx:GlobalComponentContext",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/GlobalComponentContext.tsx",
+			"target": "function:src/globalState/provider/GlobalComponentContext.tsx:GlobalComponentContext",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/GlobalComponentContext.tsx",
+			"target": "file:src/components/stage/stage.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/LegalLinksProvider.tsx",
+			"target": "function:src/globalState/provider/LegalLinksProvider.tsx:LegalLinksProvider",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/LegalLinksProvider.tsx",
+			"target": "function:src/globalState/provider/LegalLinksProvider.tsx:LegalLinksProvider",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/LegalLinksProvider.tsx",
+			"target": "function:src/globalState/provider/LegalLinksProvider.tsx:LegalLinksContext",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/LegalLinksProvider.tsx",
+			"target": "function:src/globalState/provider/LegalLinksProvider.tsx:LegalLinksContext",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/LegalLinksProvider.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/LegalLinksProvider.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/ModalProvider.tsx",
+			"target": "function:src/globalState/provider/ModalProvider.tsx:ModalProvider",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/ModalProvider.tsx",
+			"target": "function:src/globalState/provider/ModalProvider.tsx:ModalProvider",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/ModalProvider.tsx",
+			"target": "function:src/globalState/provider/ModalProvider.tsx:ModalContext",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/ModalProvider.tsx",
+			"target": "function:src/globalState/provider/ModalProvider.tsx:ModalContext",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/ModalProvider.tsx",
+			"target": "file:src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/ModalProvider.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/state.tsx",
+			"target": "function:src/globalState/state.tsx:ProviderComposer",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/state.tsx",
+			"target": "function:src/globalState/state.tsx:ContextProvider",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/hooks/useAppConfig.tsx",
+			"target": "function:src/hooks/useAppConfig.tsx:useAppConfig",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/hooks/useAppConfig.tsx",
+			"target": "function:src/hooks/useAppConfig.tsx:useAppConfig",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/hooks/useAppConfig.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/hooks/useAppConfig.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/hooks/useNotificationPermission.ts",
+			"target": "function:src/hooks/useNotificationPermission.ts:useNotificationPermission",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/hooks/useNotificationPermission.ts",
+			"target": "function:src/hooks/useNotificationPermission.ts:useNotificationPermission",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/i18n.ts",
+			"target": "function:src/i18n.ts:FALLBACK_LNG",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/i18n.ts",
+			"target": "function:src/i18n.ts:FALLBACK_LNG",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/i18n.ts",
+			"target": "function:src/i18n.ts:init",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/i18n.ts",
+			"target": "function:src/i18n.ts:init",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/i18n.ts",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/i18n.ts",
+			"target": "file:src/components/devToolbar/DevToolbar.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/i18n.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/i18n.ts",
+			"target": "config:src/resources/i18n/de@informal/common.json",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/i18n.ts",
+			"target": "config:src/resources/i18n/de/common.json",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/i18n.ts",
+			"target": "config:src/resources/i18n/de/languages.json",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/initApp.tsx",
+			"target": "file:src/components/app/app.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/initApp.tsx",
+			"target": "file:src/components/legalInformationLinks/Imprint.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/initApp.tsx",
+			"target": "file:src/components/legalInformationLinks/Privacy.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/initApp.tsx",
+			"target": "file:src/components/stage/stage.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/initApp.tsx",
+			"target": "file:src/compound.css",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/initApp.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/initApp.tsx",
+			"target": "file:src/globalState/provider/UrlParamsProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/initApp.tsx",
+			"target": "file:src/polyfill.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/initApp.tsx",
+			"target": "file:src/resources/scripts/config.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/initApp.tsx",
+			"target": "file:src/resources/scripts/theme.jsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/initApp.tsx",
+			"target": "file:src/resources/styles/mui-variables-mapping.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/utils/useDocumentTitle.tsx",
+			"target": "function:src/utils/useDocumentTitle.tsx:useDocumentTitle",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/useDocumentTitle.tsx",
+			"target": "function:src/utils/useDocumentTitle.tsx:useDocumentTitle",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/useIsFirstVisit.tsx",
+			"target": "function:src/utils/useIsFirstVisit.tsx:STORAGE_KEY_VISITED",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/useIsFirstVisit.tsx",
+			"target": "function:src/utils/useIsFirstVisit.tsx:STORAGE_KEY_VISITED",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/useIsFirstVisit.tsx",
+			"target": "function:src/utils/useIsFirstVisit.tsx:useIsFirstVisit",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/useIsFirstVisit.tsx",
+			"target": "function:src/utils/useIsFirstVisit.tsx:useIsFirstVisit",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/useTenantTheming.ts",
+			"target": "file:src/api/apiGetTenantTheming.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/utils/useTenantTheming.ts",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/utils/useTenantTheming.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/utils/useTenantTheming.ts",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/utils/useTenantTheming.ts",
+			"target": "file:src/utils/decodeHTML.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/utils/useTenantTheming.ts",
+			"target": "file:src/utils/getLocationVariables.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		}
+	]
+}

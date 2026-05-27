@@ -1,0 +1,35 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": "src/components/select/select.react.styles.scss",
+			"language": "css",
+			"sizeLines": 156,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/select/select.styles.scss",
+			"language": "css",
+			"sizeLines": 157,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/select/select2.react.styles.scss",
+			"language": "css",
+			"sizeLines": 151,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/select/select2.styles.scss",
+			"language": "css",
+			"sizeLines": 158,
+			"fileCategory": "markup"
+		}
+	],
+	"batchImportData": {
+		"src/components/select/select.react.styles.scss": [],
+		"src/components/select/select.styles.scss": [],
+		"src/components/select/select2.react.styles.scss": [],
+		"src/components/select/select2.styles.scss": []
+	}
+}

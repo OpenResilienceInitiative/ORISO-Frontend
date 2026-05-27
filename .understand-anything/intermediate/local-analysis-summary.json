@@ -1,0 +1,505 @@
+{
+	"batches": [
+		{
+			"batchIndex": 1,
+			"files": 35,
+			"nodes": 110,
+			"edges": 243,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 2,
+			"files": 35,
+			"nodes": 66,
+			"edges": 201,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 3,
+			"files": 35,
+			"nodes": 81,
+			"edges": 233,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 4,
+			"files": 33,
+			"nodes": 73,
+			"edges": 200,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 5,
+			"files": 31,
+			"nodes": 57,
+			"edges": 139,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 6,
+			"files": 30,
+			"nodes": 63,
+			"edges": 144,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 7,
+			"files": 30,
+			"nodes": 66,
+			"edges": 152,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 8,
+			"files": 30,
+			"nodes": 62,
+			"edges": 135,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 9,
+			"files": 29,
+			"nodes": 73,
+			"edges": 281,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 10,
+			"files": 29,
+			"nodes": 106,
+			"edges": 219,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 11,
+			"files": 28,
+			"nodes": 55,
+			"edges": 142,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 12,
+			"files": 27,
+			"nodes": 55,
+			"edges": 227,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 13,
+			"files": 27,
+			"nodes": 67,
+			"edges": 148,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 14,
+			"files": 27,
+			"nodes": 55,
+			"edges": 155,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 15,
+			"files": 27,
+			"nodes": 60,
+			"edges": 127,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 16,
+			"files": 27,
+			"nodes": 69,
+			"edges": 177,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 17,
+			"files": 27,
+			"nodes": 68,
+			"edges": 286,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 18,
+			"files": 27,
+			"nodes": 118,
+			"edges": 264,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 19,
+			"files": 22,
+			"nodes": 46,
+			"edges": 105,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 20,
+			"files": 21,
+			"nodes": 136,
+			"edges": 306,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 21,
+			"files": 19,
+			"nodes": 43,
+			"edges": 111,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 22,
+			"files": 18,
+			"nodes": 34,
+			"edges": 44,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 23,
+			"files": 2,
+			"nodes": 2,
+			"edges": 2,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 24,
+			"files": 1,
+			"nodes": 1,
+			"edges": 1,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 25,
+			"files": 20,
+			"nodes": 20,
+			"edges": 16,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 26,
+			"files": 7,
+			"nodes": 7,
+			"edges": 6,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 27,
+			"files": 20,
+			"nodes": 20,
+			"edges": 0,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 28,
+			"files": 20,
+			"nodes": 20,
+			"edges": 0,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 29,
+			"files": 17,
+			"nodes": 17,
+			"edges": 17,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 30,
+			"files": 3,
+			"nodes": 3,
+			"edges": 3,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 31,
+			"files": 3,
+			"nodes": 3,
+			"edges": 3,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 32,
+			"files": 3,
+			"nodes": 3,
+			"edges": 2,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 33,
+			"files": 3,
+			"nodes": 3,
+			"edges": 0,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 34,
+			"files": 3,
+			"nodes": 3,
+			"edges": 0,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 35,
+			"files": 4,
+			"nodes": 4,
+			"edges": 0,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 36,
+			"files": 6,
+			"nodes": 6,
+			"edges": 0,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 37,
+			"files": 4,
+			"nodes": 4,
+			"edges": 0,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 38,
+			"files": 6,
+			"nodes": 6,
+			"edges": 0,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 39,
+			"files": 7,
+			"nodes": 7,
+			"edges": 0,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 40,
+			"files": 4,
+			"nodes": 4,
+			"edges": 0,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 41,
+			"files": 3,
+			"nodes": 3,
+			"edges": 0,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 42,
+			"files": 3,
+			"nodes": 3,
+			"edges": 0,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 43,
+			"files": 4,
+			"nodes": 4,
+			"edges": 4,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 44,
+			"files": 4,
+			"nodes": 4,
+			"edges": 4,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 45,
+			"files": 16,
+			"nodes": 16,
+			"edges": 0,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 46,
+			"files": 4,
+			"nodes": 4,
+			"edges": 4,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 47,
+			"files": 4,
+			"nodes": 4,
+			"edges": 4,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 48,
+			"files": 25,
+			"nodes": 37,
+			"edges": 32,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 49,
+			"files": 25,
+			"nodes": 25,
+			"edges": 3,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 50,
+			"files": 25,
+			"nodes": 25,
+			"edges": 0,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 51,
+			"files": 25,
+			"nodes": 25,
+			"edges": 0,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 52,
+			"files": 25,
+			"nodes": 30,
+			"edges": 8,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 53,
+			"files": 25,
+			"nodes": 26,
+			"edges": 5,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 54,
+			"files": 25,
+			"nodes": 30,
+			"edges": 16,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		},
+		{
+			"batchIndex": 55,
+			"files": 24,
+			"nodes": 35,
+			"edges": 35,
+			"skipped": [],
+			"extractionFallback": true,
+			"fallbackReason": "fast deterministic scan path"
+		}
+	],
+	"totals": {
+		"files": 984,
+		"nodes": 1967,
+		"edges": 4204,
+		"skipped": 0
+	}
+}

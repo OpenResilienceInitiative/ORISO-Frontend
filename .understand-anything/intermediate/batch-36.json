@@ -1,0 +1,59 @@
+{
+	"nodes": [
+		{
+			"id": "file:src/components/message/appointment.styles.scss",
+			"type": "file",
+			"name": "appointment.styles.scss",
+			"filePath": "src/components/message/appointment.styles.scss",
+			"summary": "React UI module for component message, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-message"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/message/consultantMatchingAnimation.styles.scss",
+			"type": "file",
+			"name": "consultantMatchingAnimation.styles.scss",
+			"filePath": "src/components/message/consultantMatchingAnimation.styles.scss",
+			"summary": "React UI module for component message, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-message"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/message/e2eeActivatedMessage.styles.scss",
+			"type": "file",
+			"name": "e2eeActivatedMessage.styles.scss",
+			"filePath": "src/components/message/e2eeActivatedMessage.styles.scss",
+			"summary": "React UI module for component message, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-message"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/message/furtherSteps.styles.scss",
+			"type": "file",
+			"name": "furtherSteps.styles.scss",
+			"filePath": "src/components/message/furtherSteps.styles.scss",
+			"summary": "React UI module for component message, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-message"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/message/message.styles.scss",
+			"type": "file",
+			"name": "message.styles.scss",
+			"filePath": "src/components/message/message.styles.scss",
+			"summary": "React UI module for component message, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-message"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/message/reassignRequestMessage.styles.scss",
+			"type": "file",
+			"name": "reassignRequestMessage.styles.scss",
+			"filePath": "src/components/message/reassignRequestMessage.styles.scss",
+			"summary": "React UI module for component message, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-message"],
+			"complexity": "simple"
+		}
+	],
+	"edges": []
+}

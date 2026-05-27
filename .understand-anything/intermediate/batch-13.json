@@ -1,0 +1,1695 @@
+{
+	"nodes": [
+		{
+			"id": "file:src/api/apiRocketChatUsersGetStatus.ts",
+			"type": "file",
+			"name": "apiRocketChatUsersGetStatus.ts",
+			"filePath": "src/api/apiRocketChatUsersGetStatus.ts",
+			"summary": "API client module for apiRocketChatUsersGetStatus, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiRocketChatUsersGetStatus.ts:apiRocketChatUsersGetStatus",
+			"type": "function",
+			"name": "apiRocketChatUsersGetStatus",
+			"filePath": "src/api/apiRocketChatUsersGetStatus.ts",
+			"lineRange": [5, 11],
+			"summary": "Function apiRocketChatUsersGetStatus in src/api/apiRocketChatUsersGetStatus.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiRocketChatUsersInfo.ts",
+			"type": "file",
+			"name": "apiRocketChatUsersInfo.ts",
+			"filePath": "src/api/apiRocketChatUsersInfo.ts",
+			"summary": "API client module for apiRocketChatUsersInfo, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiRocketChatUsersInfo.ts:apiRocketChatUsersInfo",
+			"type": "function",
+			"name": "apiRocketChatUsersInfo",
+			"filePath": "src/api/apiRocketChatUsersInfo.ts",
+			"lineRange": [5, 9],
+			"summary": "Function apiRocketChatUsersInfo in src/api/apiRocketChatUsersInfo.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiSendEnquiry.ts",
+			"type": "file",
+			"name": "apiSendEnquiry.ts",
+			"filePath": "src/api/apiSendEnquiry.ts",
+			"summary": "API client module for apiSendEnquiry, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiSendEnquiry.ts:apiSendEnquiry",
+			"type": "function",
+			"name": "apiSendEnquiry",
+			"filePath": "src/api/apiSendEnquiry.ts",
+			"lineRange": [4, 16],
+			"summary": "Function apiSendEnquiry in src/api/apiSendEnquiry.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiSendMessage.ts",
+			"type": "file",
+			"name": "apiSendMessage.ts",
+			"filePath": "src/api/apiSendMessage.ts",
+			"summary": "API client module for apiSendMessage, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/api/apiSendMessage.ts:apiSendMessage",
+			"type": "function",
+			"name": "apiSendMessage",
+			"filePath": "src/api/apiSendMessage.ts",
+			"lineRange": [5, 17],
+			"summary": "Function apiSendMessage in src/api/apiSendMessage.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiServerSettings.ts",
+			"type": "file",
+			"name": "apiServerSettings.ts",
+			"filePath": "src/api/apiServerSettings.ts",
+			"summary": "API client module for apiServerSettings, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiServerSettings.ts:apiServerSettings",
+			"type": "function",
+			"name": "apiServerSettings",
+			"filePath": "src/api/apiServerSettings.ts",
+			"lineRange": [5, 11],
+			"summary": "Function apiServerSettings in src/api/apiServerSettings.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiSessionAssign.ts",
+			"type": "file",
+			"name": "apiSessionAssign.ts",
+			"filePath": "src/api/apiSessionAssign.ts",
+			"summary": "API client module for apiSessionAssign, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "session", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiSessionAssign.ts:apiSessionAssign",
+			"type": "function",
+			"name": "apiSessionAssign",
+			"filePath": "src/api/apiSessionAssign.ts",
+			"lineRange": [4, 15],
+			"summary": "Function apiSessionAssign in src/api/apiSessionAssign.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiSetAbsence.ts",
+			"type": "file",
+			"name": "apiSetAbsence.ts",
+			"filePath": "src/api/apiSetAbsence.ts",
+			"summary": "API client module for apiSetAbsence, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiSetAbsence.ts:apiSetAbsence",
+			"type": "function",
+			"name": "apiSetAbsence",
+			"filePath": "src/api/apiSetAbsence.ts",
+			"lineRange": [4, 16],
+			"summary": "Function apiSetAbsence in src/api/apiSetAbsence.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiSetSessionRead.ts",
+			"type": "file",
+			"name": "apiSetSessionRead.ts",
+			"filePath": "src/api/apiSetSessionRead.ts",
+			"summary": "API client module for apiSetSessionRead, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "session", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiSetSessionRead.ts:apiSetSessionRead",
+			"type": "function",
+			"name": "apiSetSessionRead",
+			"filePath": "src/api/apiSetSessionRead.ts",
+			"lineRange": [5, 10],
+			"summary": "Function apiSetSessionRead in src/api/apiSetSessionRead.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiStartVideoCall.ts",
+			"type": "file",
+			"name": "apiStartVideoCall.ts",
+			"filePath": "src/api/apiStartVideoCall.ts",
+			"summary": "API client module for apiStartVideoCall, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiStartVideoCall.ts:apiStartVideoCall",
+			"type": "function",
+			"name": "apiStartVideoCall",
+			"filePath": "src/api/apiStartVideoCall.ts",
+			"lineRange": [9, 21],
+			"summary": "Function apiStartVideoCall in src/api/apiStartVideoCall.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiTwoFactorAuth.ts",
+			"type": "file",
+			"name": "apiTwoFactorAuth.ts",
+			"filePath": "src/api/apiTwoFactorAuth.ts",
+			"summary": "API client module for apiTwoFactorAuth, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "authentication", "utility", "api"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/api/apiTwoFactorAuth.ts:apiPutTwoFactorAuthApp",
+			"type": "function",
+			"name": "apiPutTwoFactorAuthApp",
+			"filePath": "src/api/apiTwoFactorAuth.ts",
+			"lineRange": [4, 16],
+			"summary": "Function apiPutTwoFactorAuthApp in src/api/apiTwoFactorAuth.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiTwoFactorAuth.ts:apiPutTwoFactorAuthEmail",
+			"type": "function",
+			"name": "apiPutTwoFactorAuthEmail",
+			"filePath": "src/api/apiTwoFactorAuth.ts",
+			"lineRange": [18, 30],
+			"summary": "Function apiPutTwoFactorAuthEmail in src/api/apiTwoFactorAuth.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiTwoFactorAuth.ts:apiPatchTwoFactorAuthEncourage",
+			"type": "function",
+			"name": "apiPatchTwoFactorAuthEncourage",
+			"filePath": "src/api/apiTwoFactorAuth.ts",
+			"lineRange": [32, 44],
+			"summary": "Function apiPatchTwoFactorAuthEncourage in src/api/apiTwoFactorAuth.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiTwoFactorAuth.ts:apiPostTwoFactorAuthEmailWithCode",
+			"type": "function",
+			"name": "apiPostTwoFactorAuthEmailWithCode",
+			"filePath": "src/api/apiTwoFactorAuth.ts",
+			"lineRange": [45, 57],
+			"summary": "Function apiPostTwoFactorAuthEmailWithCode in src/api/apiTwoFactorAuth.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiTwoFactorAuth.ts:apiDeleteTwoFactorAuth",
+			"type": "function",
+			"name": "apiDeleteTwoFactorAuth",
+			"filePath": "src/api/apiTwoFactorAuth.ts",
+			"lineRange": [57, 64],
+			"summary": "Function apiDeleteTwoFactorAuth in src/api/apiTwoFactorAuth.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiUpdatePassword.ts",
+			"type": "file",
+			"name": "apiUpdatePassword.ts",
+			"filePath": "src/api/apiUpdatePassword.ts",
+			"summary": "API client module for apiUpdatePassword, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiUpdatePassword.ts:apiUpdatePassword",
+			"type": "function",
+			"name": "apiUpdatePassword",
+			"filePath": "src/api/apiUpdatePassword.ts",
+			"lineRange": [4, 16],
+			"summary": "Function apiUpdatePassword in src/api/apiUpdatePassword.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiUpdatePasswordAppointments.ts",
+			"type": "file",
+			"name": "apiUpdatePasswordAppointments.ts",
+			"filePath": "src/api/apiUpdatePasswordAppointments.ts",
+			"summary": "API client module for apiUpdatePasswordAppointments, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiUpdatePasswordAppointments.ts:apiUpdatePasswordAppointments",
+			"type": "function",
+			"name": "apiUpdatePasswordAppointments",
+			"filePath": "src/api/apiUpdatePasswordAppointments.ts",
+			"lineRange": [4, 16],
+			"summary": "Function apiUpdatePasswordAppointments in src/api/apiUpdatePasswordAppointments.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiUpdateUserE2EKeys.ts",
+			"type": "file",
+			"name": "apiUpdateUserE2EKeys.ts",
+			"filePath": "src/api/apiUpdateUserE2EKeys.ts",
+			"summary": "API client module for apiUpdateUserE2EKeys, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiUpdateUserE2EKeys.ts:apiUpdateUserE2EKeys",
+			"type": "function",
+			"name": "apiUpdateUserE2EKeys",
+			"filePath": "src/api/apiUpdateUserE2EKeys.ts",
+			"lineRange": [4, 16],
+			"summary": "Function apiUpdateUserE2EKeys in src/api/apiUpdateUserE2EKeys.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiUserDrafts.ts",
+			"type": "file",
+			"name": "apiUserDrafts.ts",
+			"filePath": "src/api/apiUserDrafts.ts",
+			"summary": "API client module for apiUserDrafts, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/api/apiUserDrafts.ts:apiGetUserDrafts",
+			"type": "function",
+			"name": "apiGetUserDrafts",
+			"filePath": "src/api/apiUserDrafts.ts",
+			"lineRange": [28, 40],
+			"summary": "Function apiGetUserDrafts in src/api/apiUserDrafts.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiUserDrafts.ts:apiGetUserDraft",
+			"type": "function",
+			"name": "apiGetUserDraft",
+			"filePath": "src/api/apiUserDrafts.ts",
+			"lineRange": [47, 59],
+			"summary": "Function apiGetUserDraft in src/api/apiUserDrafts.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiUserDrafts.ts:apiUpsertUserDraft",
+			"type": "function",
+			"name": "apiUpsertUserDraft",
+			"filePath": "src/api/apiUserDrafts.ts",
+			"lineRange": [70, 82],
+			"summary": "Function apiUpsertUserDraft in src/api/apiUserDrafts.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiUserDrafts.ts:apiDeleteUserDraft",
+			"type": "function",
+			"name": "apiDeleteUserDraft",
+			"filePath": "src/api/apiUserDrafts.ts",
+			"lineRange": [86, 96],
+			"summary": "Function apiDeleteUserDraft in src/api/apiUserDrafts.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/appointments/deleteAppointment.ts",
+			"type": "file",
+			"name": "deleteAppointment.ts",
+			"filePath": "src/api/appointments/deleteAppointment.ts",
+			"summary": "API client module for deleteAppointment, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/appointments/deleteAppointment.ts:deleteAppointment",
+			"type": "function",
+			"name": "deleteAppointment",
+			"filePath": "src/api/appointments/deleteAppointment.ts",
+			"lineRange": [5, 15],
+			"summary": "Function deleteAppointment in src/api/appointments/deleteAppointment.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/appointments/getAppointment.ts",
+			"type": "file",
+			"name": "getAppointment.ts",
+			"filePath": "src/api/appointments/getAppointment.ts",
+			"summary": "API client module for getAppointment, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/appointments/getAppointment.ts:getAppointment",
+			"type": "function",
+			"name": "getAppointment",
+			"filePath": "src/api/appointments/getAppointment.ts",
+			"lineRange": [5, 17],
+			"summary": "Function getAppointment in src/api/appointments/getAppointment.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/appointments/getAppointments.ts",
+			"type": "file",
+			"name": "getAppointments.ts",
+			"filePath": "src/api/appointments/getAppointments.ts",
+			"summary": "API client module for getAppointments, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/appointments/getAppointments.ts:getAppointments",
+			"type": "function",
+			"name": "getAppointments",
+			"filePath": "src/api/appointments/getAppointments.ts",
+			"lineRange": [5, 15],
+			"summary": "Function getAppointments in src/api/appointments/getAppointments.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/appointments/postAppointments.ts",
+			"type": "file",
+			"name": "postAppointments.ts",
+			"filePath": "src/api/appointments/postAppointments.ts",
+			"summary": "API client module for postAppointments, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/appointments/postAppointments.ts:postAppointments",
+			"type": "function",
+			"name": "postAppointments",
+			"filePath": "src/api/appointments/postAppointments.ts",
+			"lineRange": [8, 20],
+			"summary": "Function postAppointments in src/api/appointments/postAppointments.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/appointments/putAppointment.ts",
+			"type": "file",
+			"name": "putAppointment.ts",
+			"filePath": "src/api/appointments/putAppointment.ts",
+			"summary": "API client module for putAppointment, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/appointments/putAppointment.ts:putAppointment",
+			"type": "function",
+			"name": "putAppointment",
+			"filePath": "src/api/appointments/putAppointment.ts",
+			"lineRange": [5, 17],
+			"summary": "Function putAppointment in src/api/appointments/putAppointment.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/fetchData.ts",
+			"type": "file",
+			"name": "fetchData.ts",
+			"filePath": "src/api/fetchData.ts",
+			"summary": "API client module for fetchData, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/api/fetchData.ts:FETCH_METHODS",
+			"type": "function",
+			"name": "FETCH_METHODS",
+			"filePath": "src/api/fetchData.ts",
+			"lineRange": [15, 27],
+			"summary": "Function FETCH_METHODS in src/api/fetchData.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/fetchData.ts:FETCH_ERRORS",
+			"type": "function",
+			"name": "FETCH_ERRORS",
+			"filePath": "src/api/fetchData.ts",
+			"lineRange": [23, 35],
+			"summary": "Function FETCH_ERRORS in src/api/fetchData.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/fetchData.ts:X_REASON",
+			"type": "function",
+			"name": "X_REASON",
+			"filePath": "src/api/fetchData.ts",
+			"lineRange": [42, 54],
+			"summary": "Function X_REASON in src/api/fetchData.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/fetchData.ts:FETCH_SUCCESS",
+			"type": "function",
+			"name": "FETCH_SUCCESS",
+			"filePath": "src/api/fetchData.ts",
+			"lineRange": [49, 61],
+			"summary": "Function FETCH_SUCCESS in src/api/fetchData.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/fetchData.ts:fetchData",
+			"type": "function",
+			"name": "fetchData",
+			"filePath": "src/api/fetchData.ts",
+			"lineRange": [77, 89],
+			"summary": "Function fetchData in src/api/fetchData.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "class:src/api/fetchData.ts:FetchErrorWithOptions",
+			"type": "class",
+			"name": "FetchErrorWithOptions",
+			"filePath": "src/api/fetchData.ts",
+			"lineRange": [53, 93],
+			"summary": "Class FetchErrorWithOptions in src/api/fetchData.ts, grouping related api behavior.",
+			"tags": ["class", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/fetchRCData.ts",
+			"type": "file",
+			"name": "fetchRCData.ts",
+			"filePath": "src/api/fetchRCData.ts",
+			"summary": "API client module for fetchRCData, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/fetchRCData.ts:fetchRCData",
+			"type": "function",
+			"name": "fetchRCData",
+			"filePath": "src/api/fetchRCData.ts",
+			"lineRange": [8, 20],
+			"summary": "Function fetchRCData in src/api/fetchRCData.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/videocalls/getJwt.ts",
+			"type": "file",
+			"name": "getJwt.ts",
+			"filePath": "src/api/videocalls/getJwt.ts",
+			"summary": "API client module for getJwt, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/videocalls/getJwt.ts:getJwt",
+			"type": "function",
+			"name": "getJwt",
+			"filePath": "src/api/videocalls/getJwt.ts",
+			"lineRange": [5, 17],
+			"summary": "Function getJwt in src/api/videocalls/getJwt.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/sessionsList/sessionsListConfig.ts",
+			"type": "file",
+			"name": "sessionsListConfig.ts",
+			"filePath": "src/components/sessionsList/sessionsListConfig.ts",
+			"summary": "React UI module for component sessions list, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"session",
+				"utility",
+				"component-sessions-list"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionsList/sessionsListConfig.ts:MAX_ITEMS_TO_SHOW_WELCOME_ILLUSTRATION",
+			"type": "function",
+			"name": "MAX_ITEMS_TO_SHOW_WELCOME_ILLUSTRATION",
+			"filePath": "src/components/sessionsList/sessionsListConfig.ts",
+			"lineRange": [4, 5],
+			"summary": "Function MAX_ITEMS_TO_SHOW_WELCOME_ILLUSTRATION in src/components/sessionsList/sessionsListConfig.ts, used by the surrounding component sessions list module.",
+			"tags": ["function", "component-sessions-list", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionsList/sessionsListConfig.ts:SCROLL_PAGINATE_THRESHOLD",
+			"type": "function",
+			"name": "SCROLL_PAGINATE_THRESHOLD",
+			"filePath": "src/components/sessionsList/sessionsListConfig.ts",
+			"lineRange": [5, 5],
+			"summary": "Function SCROLL_PAGINATE_THRESHOLD in src/components/sessionsList/sessionsListConfig.ts, used by the surrounding component sessions list module.",
+			"tags": ["function", "component-sessions-list", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/interfaces/index.ts",
+			"type": "file",
+			"name": "index.ts",
+			"filePath": "src/globalState/interfaces/index.ts",
+			"summary": "Global state module for global state, sharing application state across frontend flows.",
+			"tags": ["state-management", "global-state", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/provider/AppConfigProvider.tsx",
+			"type": "file",
+			"name": "AppConfigProvider.tsx",
+			"filePath": "src/globalState/provider/AppConfigProvider.tsx",
+			"summary": "React UI module for global state, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"state-management",
+				"utility",
+				"global-state"
+			],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/globalState/provider/AppConfigProvider.tsx:AppConfigContext",
+			"type": "function",
+			"name": "AppConfigContext",
+			"filePath": "src/globalState/provider/AppConfigProvider.tsx",
+			"lineRange": [8, 20],
+			"summary": "Function AppConfigContext in src/globalState/provider/AppConfigProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/AppConfigProvider.tsx:AppConfigProvider",
+			"type": "function",
+			"name": "AppConfigProvider",
+			"filePath": "src/globalState/provider/AppConfigProvider.tsx",
+			"lineRange": [22, 34],
+			"summary": "Function AppConfigProvider in src/globalState/provider/AppConfigProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/resources/scripts/endpoints.ts",
+			"type": "file",
+			"name": "endpoints.ts",
+			"filePath": "src/resources/scripts/endpoints.ts",
+			"summary": "TypeScript module for resources with 1 extracted functions and 0 extracted classes.",
+			"tags": ["utility", "resources", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/resources/scripts/endpoints.ts:endpoints",
+			"type": "function",
+			"name": "endpoints",
+			"filePath": "src/resources/scripts/endpoints.ts",
+			"lineRange": [13, 25],
+			"summary": "Function endpoints in src/resources/scripts/endpoints.ts, used by the surrounding resources module.",
+			"tags": ["function", "resources", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/utils/loadConsultingTypesForAgencies.ts",
+			"type": "file",
+			"name": "loadConsultingTypesForAgencies.ts",
+			"filePath": "src/utils/loadConsultingTypesForAgencies.ts",
+			"summary": "TypeScript module for utilities with 1 extracted functions and 0 extracted classes.",
+			"tags": ["utility", "utilities", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/loadConsultingTypesForAgencies.ts:loadConsultingTypesForAgencies",
+			"type": "function",
+			"name": "loadConsultingTypesForAgencies",
+			"filePath": "src/utils/loadConsultingTypesForAgencies.ts",
+			"lineRange": [4, 16],
+			"summary": "Function loadConsultingTypesForAgencies in src/utils/loadConsultingTypesForAgencies.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		}
+	],
+	"edges": [
+		{
+			"source": "file:src/api/apiRocketChatUsersGetStatus.ts",
+			"target": "function:src/api/apiRocketChatUsersGetStatus.ts:apiRocketChatUsersGetStatus",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiRocketChatUsersGetStatus.ts",
+			"target": "function:src/api/apiRocketChatUsersGetStatus.ts:apiRocketChatUsersGetStatus",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiRocketChatUsersGetStatus.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRocketChatUsersGetStatus.ts",
+			"target": "file:src/api/fetchRCData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRocketChatUsersGetStatus.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRocketChatUsersInfo.ts",
+			"target": "function:src/api/apiRocketChatUsersInfo.ts:apiRocketChatUsersInfo",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiRocketChatUsersInfo.ts",
+			"target": "function:src/api/apiRocketChatUsersInfo.ts:apiRocketChatUsersInfo",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiRocketChatUsersInfo.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRocketChatUsersInfo.ts",
+			"target": "file:src/api/fetchRCData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRocketChatUsersInfo.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiSendEnquiry.ts",
+			"target": "function:src/api/apiSendEnquiry.ts:apiSendEnquiry",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiSendEnquiry.ts",
+			"target": "function:src/api/apiSendEnquiry.ts:apiSendEnquiry",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiSendEnquiry.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiSendEnquiry.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiSendMessage.ts",
+			"target": "function:src/api/apiSendMessage.ts:apiSendMessage",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiSendMessage.ts",
+			"target": "function:src/api/apiSendMessage.ts:apiSendMessage",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiSendMessage.ts",
+			"target": "file:src/api/apiPostMessageEventNotification.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiSendMessage.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiSendMessage.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiServerSettings.ts",
+			"target": "function:src/api/apiServerSettings.ts:apiServerSettings",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiServerSettings.ts",
+			"target": "function:src/api/apiServerSettings.ts:apiServerSettings",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiServerSettings.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiServerSettings.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiServerSettings.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiSessionAssign.ts",
+			"target": "function:src/api/apiSessionAssign.ts:apiSessionAssign",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiSessionAssign.ts",
+			"target": "function:src/api/apiSessionAssign.ts:apiSessionAssign",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiSessionAssign.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiSessionAssign.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiSetAbsence.ts",
+			"target": "function:src/api/apiSetAbsence.ts:apiSetAbsence",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiSetAbsence.ts",
+			"target": "function:src/api/apiSetAbsence.ts:apiSetAbsence",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiSetAbsence.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiSetAbsence.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiSetSessionRead.ts",
+			"target": "function:src/api/apiSetSessionRead.ts:apiSetSessionRead",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiSetSessionRead.ts",
+			"target": "function:src/api/apiSetSessionRead.ts:apiSetSessionRead",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiSetSessionRead.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiSetSessionRead.ts",
+			"target": "file:src/api/fetchRCData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiSetSessionRead.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiStartVideoCall.ts",
+			"target": "function:src/api/apiStartVideoCall.ts:apiStartVideoCall",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiStartVideoCall.ts",
+			"target": "function:src/api/apiStartVideoCall.ts:apiStartVideoCall",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiStartVideoCall.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiStartVideoCall.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiTwoFactorAuth.ts",
+			"target": "function:src/api/apiTwoFactorAuth.ts:apiPutTwoFactorAuthApp",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiTwoFactorAuth.ts",
+			"target": "function:src/api/apiTwoFactorAuth.ts:apiPutTwoFactorAuthApp",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiTwoFactorAuth.ts",
+			"target": "function:src/api/apiTwoFactorAuth.ts:apiPutTwoFactorAuthEmail",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiTwoFactorAuth.ts",
+			"target": "function:src/api/apiTwoFactorAuth.ts:apiPutTwoFactorAuthEmail",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiTwoFactorAuth.ts",
+			"target": "function:src/api/apiTwoFactorAuth.ts:apiPatchTwoFactorAuthEncourage",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiTwoFactorAuth.ts",
+			"target": "function:src/api/apiTwoFactorAuth.ts:apiPatchTwoFactorAuthEncourage",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiTwoFactorAuth.ts",
+			"target": "function:src/api/apiTwoFactorAuth.ts:apiPostTwoFactorAuthEmailWithCode",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiTwoFactorAuth.ts",
+			"target": "function:src/api/apiTwoFactorAuth.ts:apiPostTwoFactorAuthEmailWithCode",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiTwoFactorAuth.ts",
+			"target": "function:src/api/apiTwoFactorAuth.ts:apiDeleteTwoFactorAuth",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiTwoFactorAuth.ts",
+			"target": "function:src/api/apiTwoFactorAuth.ts:apiDeleteTwoFactorAuth",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiTwoFactorAuth.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiTwoFactorAuth.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiUpdatePassword.ts",
+			"target": "function:src/api/apiUpdatePassword.ts:apiUpdatePassword",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiUpdatePassword.ts",
+			"target": "function:src/api/apiUpdatePassword.ts:apiUpdatePassword",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiUpdatePassword.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiUpdatePassword.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiUpdatePasswordAppointments.ts",
+			"target": "function:src/api/apiUpdatePasswordAppointments.ts:apiUpdatePasswordAppointments",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiUpdatePasswordAppointments.ts",
+			"target": "function:src/api/apiUpdatePasswordAppointments.ts:apiUpdatePasswordAppointments",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiUpdatePasswordAppointments.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiUpdatePasswordAppointments.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiUpdateUserE2EKeys.ts",
+			"target": "function:src/api/apiUpdateUserE2EKeys.ts:apiUpdateUserE2EKeys",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiUpdateUserE2EKeys.ts",
+			"target": "function:src/api/apiUpdateUserE2EKeys.ts:apiUpdateUserE2EKeys",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiUpdateUserE2EKeys.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiUpdateUserE2EKeys.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiUserDrafts.ts",
+			"target": "function:src/api/apiUserDrafts.ts:apiGetUserDrafts",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiUserDrafts.ts",
+			"target": "function:src/api/apiUserDrafts.ts:apiGetUserDrafts",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiUserDrafts.ts",
+			"target": "function:src/api/apiUserDrafts.ts:apiGetUserDraft",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiUserDrafts.ts",
+			"target": "function:src/api/apiUserDrafts.ts:apiGetUserDraft",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiUserDrafts.ts",
+			"target": "function:src/api/apiUserDrafts.ts:apiUpsertUserDraft",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiUserDrafts.ts",
+			"target": "function:src/api/apiUserDrafts.ts:apiUpsertUserDraft",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiUserDrafts.ts",
+			"target": "function:src/api/apiUserDrafts.ts:apiDeleteUserDraft",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiUserDrafts.ts",
+			"target": "function:src/api/apiUserDrafts.ts:apiDeleteUserDraft",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiUserDrafts.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiUserDrafts.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiUserDrafts.ts",
+			"target": "file:src/utils/keycloakSession.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/appointments/deleteAppointment.ts",
+			"target": "function:src/api/appointments/deleteAppointment.ts:deleteAppointment",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/appointments/deleteAppointment.ts",
+			"target": "function:src/api/appointments/deleteAppointment.ts:deleteAppointment",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/appointments/deleteAppointment.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/appointments/deleteAppointment.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/appointments/deleteAppointment.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/appointments/getAppointment.ts",
+			"target": "function:src/api/appointments/getAppointment.ts:getAppointment",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/appointments/getAppointment.ts",
+			"target": "function:src/api/appointments/getAppointment.ts:getAppointment",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/appointments/getAppointment.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/appointments/getAppointment.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/appointments/getAppointment.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/appointments/getAppointments.ts",
+			"target": "function:src/api/appointments/getAppointments.ts:getAppointments",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/appointments/getAppointments.ts",
+			"target": "function:src/api/appointments/getAppointments.ts:getAppointments",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/appointments/getAppointments.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/appointments/getAppointments.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/appointments/getAppointments.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/appointments/postAppointments.ts",
+			"target": "function:src/api/appointments/postAppointments.ts:postAppointments",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/appointments/postAppointments.ts",
+			"target": "function:src/api/appointments/postAppointments.ts:postAppointments",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/appointments/postAppointments.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/appointments/postAppointments.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/appointments/postAppointments.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/appointments/putAppointment.ts",
+			"target": "function:src/api/appointments/putAppointment.ts:putAppointment",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/appointments/putAppointment.ts",
+			"target": "function:src/api/appointments/putAppointment.ts:putAppointment",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/appointments/putAppointment.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/appointments/putAppointment.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/appointments/putAppointment.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/fetchData.ts",
+			"target": "function:src/api/fetchData.ts:FETCH_METHODS",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/fetchData.ts",
+			"target": "function:src/api/fetchData.ts:FETCH_METHODS",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/fetchData.ts",
+			"target": "function:src/api/fetchData.ts:FETCH_ERRORS",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/fetchData.ts",
+			"target": "function:src/api/fetchData.ts:FETCH_ERRORS",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/fetchData.ts",
+			"target": "function:src/api/fetchData.ts:X_REASON",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/fetchData.ts",
+			"target": "function:src/api/fetchData.ts:X_REASON",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/fetchData.ts",
+			"target": "function:src/api/fetchData.ts:FETCH_SUCCESS",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/fetchData.ts",
+			"target": "function:src/api/fetchData.ts:FETCH_SUCCESS",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/fetchData.ts",
+			"target": "function:src/api/fetchData.ts:fetchData",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/fetchData.ts",
+			"target": "function:src/api/fetchData.ts:fetchData",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/fetchData.ts",
+			"target": "class:src/api/fetchData.ts:FetchErrorWithOptions",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/fetchData.ts",
+			"target": "class:src/api/fetchData.ts:FetchErrorWithOptions",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/fetchData.ts",
+			"target": "file:src/components/error/errorHandling.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/fetchData.ts",
+			"target": "file:src/components/logout/logout.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/fetchData.ts",
+			"target": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/fetchData.ts",
+			"target": "file:src/utils/anonymousSessionFetchGuard.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/fetchData.ts",
+			"target": "file:src/utils/appConfig.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/fetchData.ts",
+			"target": "file:src/utils/generateCsrfToken.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/fetchData.ts",
+			"target": "file:src/utils/requestCollector.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/fetchRCData.ts",
+			"target": "function:src/api/fetchRCData.ts:fetchRCData",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/fetchRCData.ts",
+			"target": "function:src/api/fetchRCData.ts:fetchRCData",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/fetchRCData.ts",
+			"target": "file:src/components/error/errorHandling.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/fetchRCData.ts",
+			"target": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/fetchRCData.ts",
+			"target": "file:src/utils/requestCollector.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/videocalls/getJwt.ts",
+			"target": "function:src/api/videocalls/getJwt.ts:getJwt",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/videocalls/getJwt.ts",
+			"target": "function:src/api/videocalls/getJwt.ts:getJwt",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/videocalls/getJwt.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/videocalls/getJwt.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/videocalls/getJwt.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/sessionsListConfig.ts",
+			"target": "function:src/components/sessionsList/sessionsListConfig.ts:MAX_ITEMS_TO_SHOW_WELCOME_ILLUSTRATION",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionsList/sessionsListConfig.ts",
+			"target": "function:src/components/sessionsList/sessionsListConfig.ts:MAX_ITEMS_TO_SHOW_WELCOME_ILLUSTRATION",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionsList/sessionsListConfig.ts",
+			"target": "function:src/components/sessionsList/sessionsListConfig.ts:SCROLL_PAGINATE_THRESHOLD",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionsList/sessionsListConfig.ts",
+			"target": "function:src/components/sessionsList/sessionsListConfig.ts:SCROLL_PAGINATE_THRESHOLD",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/AppConfigProvider.tsx",
+			"target": "function:src/globalState/provider/AppConfigProvider.tsx:AppConfigContext",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/AppConfigProvider.tsx",
+			"target": "function:src/globalState/provider/AppConfigProvider.tsx:AppConfigContext",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/AppConfigProvider.tsx",
+			"target": "function:src/globalState/provider/AppConfigProvider.tsx:AppConfigProvider",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/AppConfigProvider.tsx",
+			"target": "function:src/globalState/provider/AppConfigProvider.tsx:AppConfigProvider",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/AppConfigProvider.tsx",
+			"target": "file:src/api/apiFrontendSettings.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/AppConfigProvider.tsx",
+			"target": "file:src/api/apiServerSettings.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/AppConfigProvider.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/AppConfigProvider.tsx",
+			"target": "file:src/utils/appConfig.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/resources/scripts/endpoints.ts",
+			"target": "function:src/resources/scripts/endpoints.ts:endpoints",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/resources/scripts/endpoints.ts",
+			"target": "function:src/resources/scripts/endpoints.ts:endpoints",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/loadConsultingTypesForAgencies.ts",
+			"target": "function:src/utils/loadConsultingTypesForAgencies.ts:loadConsultingTypesForAgencies",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/loadConsultingTypesForAgencies.ts",
+			"target": "function:src/utils/loadConsultingTypesForAgencies.ts:loadConsultingTypesForAgencies",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/loadConsultingTypesForAgencies.ts",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/utils/loadConsultingTypesForAgencies.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		}
+	]
+}

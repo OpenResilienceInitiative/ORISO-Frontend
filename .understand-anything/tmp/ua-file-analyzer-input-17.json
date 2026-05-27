@@ -1,0 +1,426 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": "src/components/pseudonym/BreathingTutorialCard.tsx",
+			"language": "typescript",
+			"sizeLines": 342,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/pseudonym/ConsultantAcceptedActionBar.tsx",
+			"language": "typescript",
+			"sizeLines": 109,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/pseudonym/PrivacyMessageCard.tsx",
+			"language": "typescript",
+			"sizeLines": 154,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/pseudonym/PseudonymActionBar.tsx",
+			"language": "typescript",
+			"sizeLines": 98,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/pseudonym/PseudonymCard.tsx",
+			"language": "typescript",
+			"sizeLines": 154,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/pseudonym/WaitingQueueActionBar.tsx",
+			"language": "typescript",
+			"sizeLines": 193,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/releaseNote/ReleaseNote.tsx",
+			"language": "typescript",
+			"sizeLines": 193,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/select/SelectDropdown.tsx",
+			"language": "typescript",
+			"sizeLines": 483,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/AcceptAssign.tsx",
+			"language": "typescript",
+			"sizeLines": 214,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/DeleteSession.tsx",
+			"language": "typescript",
+			"sizeLines": 107,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/EncryptionBanner.stories.tsx",
+			"language": "typescript",
+			"sizeLines": 95,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/EncryptionBanner.tsx",
+			"language": "typescript",
+			"sizeLines": 26,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/RoomNotFound.tsx",
+			"language": "typescript",
+			"sizeLines": 42,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/SessionItemComponent.tsx",
+			"language": "typescript",
+			"sizeLines": 4698,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/SessionStream.tsx",
+			"language": "typescript",
+			"sizeLines": 968,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/SessionView.tsx",
+			"language": "typescript",
+			"sizeLines": 238,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/SubscriptionKeyLost.tsx",
+			"language": "typescript",
+			"sizeLines": 78,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/sessionDateHelpers.ts",
+			"language": "typescript",
+			"sizeLines": 56,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/sessionHelpers.ts",
+			"language": "typescript",
+			"sizeLines": 195,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/smoothScrollHelper.ts",
+			"language": "typescript",
+			"sizeLines": 56,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/subscriptionKeyLostHelper.ts",
+			"language": "typescript",
+			"sizeLines": 15,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionAssign/RequestSessionAssign.tsx",
+			"language": "typescript",
+			"sizeLines": 209,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionAssign/sessionAssignHelper.tsx",
+			"language": "typescript",
+			"sizeLines": 49,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionHeader/ConsultantSearchLoader.tsx",
+			"language": "typescript",
+			"sizeLines": 124,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionHeader/GroupChatHeader/index.tsx",
+			"language": "typescript",
+			"sizeLines": 645,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionHeader/SessionHeaderComponent.tsx",
+			"language": "typescript",
+			"sizeLines": 1327,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionMenu/SessionMenu.tsx",
+			"language": "typescript",
+			"sizeLines": 822,
+			"fileCategory": "code"
+		}
+	],
+	"batchImportData": {
+		"src/components/pseudonym/BreathingTutorialCard.tsx": [
+			"src/components/pseudonym/BreathingTutorialCard.styles.scss",
+			"src/components/pseudonym/PseudonymCard.styles.scss"
+		],
+		"src/components/pseudonym/ConsultantAcceptedActionBar.tsx": [
+			"src/components/pseudonym/ConsultantAcceptedActionBar.styles.scss"
+		],
+		"src/components/pseudonym/PrivacyMessageCard.tsx": [
+			"src/components/pseudonym/BotMessageAnimation.tsx",
+			"src/components/pseudonym/PrivacyMessageCard.styles.scss",
+			"src/components/pseudonym/PseudonymCard.styles.scss"
+		],
+		"src/components/pseudonym/PseudonymActionBar.tsx": [
+			"src/components/pseudonym/PseudonymActionBar.styles.scss"
+		],
+		"src/components/pseudonym/PseudonymCard.tsx": [
+			"src/components/pseudonym/AnimalAvatar.tsx",
+			"src/components/pseudonym/BotMessageAnimation.tsx",
+			"src/components/pseudonym/PseudonymCard.styles.scss",
+			"src/utils/pseudonymGenerator.ts"
+		],
+		"src/components/pseudonym/WaitingQueueActionBar.tsx": [
+			"src/components/pseudonym/WaitingQueueActionBar.styles.scss"
+		],
+		"src/components/releaseNote/ReleaseNote.tsx": [
+			"src/components/button/Button.tsx",
+			"src/components/checkbox/Checkbox.tsx",
+			"src/components/devToolbar/DevToolbar.tsx",
+			"src/components/headline/Headline.tsx",
+			"src/components/messageSubmitInterface/richtextHelpers.ts",
+			"src/components/overlay/Overlay.tsx",
+			"src/components/releaseNote/releaseNote.styles.scss",
+			"src/components/text/Text.tsx",
+			"src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"src/hooks/useAppConfig.tsx"
+		],
+		"src/components/select/SelectDropdown.tsx": [
+			"src/components/text/Text.tsx",
+			"src/hooks/useResponsive.tsx",
+			"src/resources/img/icons.ts"
+		],
+		"src/components/session/AcceptAssign.tsx": [
+			"src/api/apiGetSessionRooms.ts",
+			"src/api/index.ts",
+			"src/components/button/Button.tsx",
+			"src/components/overlay/Overlay.tsx",
+			"src/components/session/sessionHelpers.ts",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"src/hooks/useE2EE.tsx",
+			"src/hooks/useE2EEViewElements.tsx",
+			"src/hooks/useSearchParams.tsx",
+			"src/hooks/useTimeoutOverlay.tsx",
+			"src/hooks/useWatcher.tsx"
+		],
+		"src/components/session/DeleteSession.tsx": [
+			"src/api/apiDeleteRemove.ts",
+			"src/components/button/Button.tsx",
+			"src/components/overlay/Overlay.tsx"
+		],
+		"src/components/session/EncryptionBanner.stories.tsx": [
+			"src/components/session/EncryptionBanner.tsx"
+		],
+		"src/components/session/EncryptionBanner.tsx": [
+			"src/components/session/encryptionBanner.styles.scss"
+		],
+		"src/components/session/RoomNotFound.tsx": [
+			"src/components/button/Button.tsx",
+			"src/components/messageSubmitInterface/MessageSubmitInfo.tsx"
+		],
+		"src/components/session/SessionItemComponent.tsx": [
+			"src/api/apiGetAnonymousEnquiryDetails.ts",
+			"src/api/apiGetSessionSupervisors.ts",
+			"src/api/apiGetUserData.ts",
+			"src/api/apiPatchNotificationActiveView.ts",
+			"src/api/apiPatchUserData.ts",
+			"src/api/apiPostAdditionalEnquiry.ts",
+			"src/api/apiPostError.ts",
+			"src/components/app/navigationHandler.ts",
+			"src/components/button/Button.tsx",
+			"src/components/dragAndDropArea/DragAndDropArea.tsx",
+			"src/components/legalLinks/LegalLinks.tsx",
+			"src/components/message/messageConstants.ts",
+			"src/components/message/MessageItemComponent.tsx",
+			"src/components/message/UserAvatar.tsx",
+			"src/components/messageSubmitInterface/messageSubmitInterfaceSkeleton.tsx",
+			"src/components/pseudonym/AnonymousConsentGate.tsx",
+			"src/components/pseudonym/BreathingTutorialCard.tsx",
+			"src/components/pseudonym/ConsultantAcceptedActionBar.tsx",
+			"src/components/pseudonym/PrivacyMessageCard.tsx",
+			"src/components/pseudonym/PseudonymActionBar.tsx",
+			"src/components/pseudonym/PseudonymCard.tsx",
+			"src/components/pseudonym/WaitingQueueActionBar.tsx",
+			"src/components/session/AcceptAssign.tsx",
+			"src/components/session/EncryptionBanner.tsx",
+			"src/components/session/sessionHelpers.ts",
+			"src/components/session/smoothScrollHelper.ts",
+			"src/components/sessionHeader/SessionHeaderComponent.tsx",
+			"src/components/text/Text.tsx",
+			"src/components/videoConference/WaitingRoomContent.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/SessionsDataInterface.ts",
+			"src/globalState/provider/LegalLinksProvider.tsx",
+			"src/globalState/provider/RocketChatUsersOfRoomProvider.tsx",
+			"src/hooks/useDebounceCallback.tsx",
+			"src/hooks/useE2EE.tsx",
+			"src/utils/dateHelpers.ts",
+			"src/utils/encryptionHelpers.ts",
+			"src/utils/keycloakSession.ts",
+			"src/utils/pseudonymGenerator.ts",
+			"src/utils/tenantSettingsHelper.ts"
+		],
+		"src/components/session/SessionStream.tsx": [
+			"src/api/apiRocketChatSettingsPublic.ts",
+			"src/api/index.ts",
+			"src/components/app/Loading.tsx",
+			"src/components/app/RocketChat.ts",
+			"src/components/button/Button.tsx",
+			"src/components/logout/logout.ts",
+			"src/components/overlay/Overlay.tsx",
+			"src/components/session/sessionHelpers.ts",
+			"src/components/session/SessionItemComponent.tsx",
+			"src/components/sessionAssign/sessionAssignHelper.tsx",
+			"src/components/sessionCookie/accessSessionCookie.ts",
+			"src/globalState/index.ts",
+			"src/hooks/useDebounceCallback.tsx",
+			"src/hooks/useE2EE.tsx",
+			"src/hooks/useSearchParams.tsx",
+			"src/hooks/useUpdatingRef.tsx",
+			"src/resources/scripts/endpoints.ts",
+			"src/services/messageEventEmitter.ts",
+			"src/utils/useTyping.ts"
+		],
+		"src/components/session/SessionView.tsx": [
+			"src/api/index.ts",
+			"src/components/app/Loading.tsx",
+			"src/components/app/navigationHandler.ts",
+			"src/components/groupChat/JoinGroupChatView.tsx",
+			"src/components/session/sessionHelpers.ts",
+			"src/components/session/SessionStream.tsx",
+			"src/globalState/index.ts",
+			"src/hooks/useResponsive.tsx",
+			"src/hooks/useSearchParams.tsx",
+			"src/hooks/useSession.tsx",
+			"src/hooks/useUpdatingRef.tsx",
+			"src/store/agencyLogoAtom.ts",
+			"src/utils/encryptionHelpers.ts"
+		],
+		"src/components/session/SubscriptionKeyLost.tsx": [
+			"src/api/apiSendAliasMessage.ts",
+			"src/components/button/Button.tsx",
+			"src/components/messageSubmitInterface/MessageSubmitInfo.tsx",
+			"src/components/overlay/Overlay.tsx",
+			"src/components/session/subscriptionKeyLostHelper.ts",
+			"src/globalState/index.ts"
+		],
+		"src/components/session/sessionDateHelpers.ts": [
+			"src/components/groupChat/createChatHelpers.ts"
+		],
+		"src/components/session/sessionHelpers.ts": [
+			"src/components/message/MessageItemComponent.tsx",
+			"src/components/sessionCookie/accessSessionCookie.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/utils/dateHelpers.ts",
+			"src/utils/encryptionHelpers.ts"
+		],
+		"src/components/session/smoothScrollHelper.ts": [],
+		"src/components/session/subscriptionKeyLostHelper.ts": [
+			"src/components/button/Button.tsx",
+			"src/components/overlay/Overlay.tsx"
+		],
+		"src/components/sessionAssign/RequestSessionAssign.tsx": [
+			"src/api/apiSendAliasMessage.ts",
+			"src/api/index.ts",
+			"src/components/button/Button.tsx",
+			"src/components/overlay/Overlay.tsx",
+			"src/components/select/SelectDropdown.tsx",
+			"src/components/sessionAssign/sessionAssignHelper.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/hooks/useE2EE.tsx"
+		],
+		"src/components/sessionAssign/sessionAssignHelper.tsx": [
+			"src/api/index.ts",
+			"src/components/select/SelectDropdown.tsx",
+			"src/utils/encryptionHelpers.ts"
+		],
+		"src/components/sessionHeader/ConsultantSearchLoader.tsx": [
+			"src/components/sessionHeader/consultantSearchLoader.styles.scss"
+		],
+		"src/components/sessionHeader/GroupChatHeader/index.tsx": [
+			"src/components/app/navigationHandler.ts",
+			"src/components/banUser/BanUser.tsx",
+			"src/components/button/Button.tsx",
+			"src/components/flyoutMenu/FlyoutMenu.tsx",
+			"src/components/message/UserAvatar.tsx",
+			"src/components/session/sessionDateHelpers.ts",
+			"src/components/session/sessionHelpers.ts",
+			"src/components/sessionCookie/accessSessionCookie.ts",
+			"src/components/tag/Tag.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/hooks/useAppConfig.tsx",
+			"src/hooks/useSearchParams.tsx",
+			"src/resources/img/icons.ts",
+			"src/services/CallManager.ts",
+			"src/services/matrixClientService.ts",
+			"src/utils/encryptionHelpers.ts",
+			"src/utils/tenantSettingsHelper.ts"
+		],
+		"src/components/sessionHeader/SessionHeaderComponent.tsx": [
+			"src/api/apiAddSessionSupervisor.ts",
+			"src/api/apiDeleteSessionAndUser.ts",
+			"src/api/apiGetAgencyConsultantList.ts",
+			"src/api/apiGetSessionSupervisors.ts",
+			"src/api/apiRemoveSessionSupervisor.ts",
+			"src/api/apiSendMessage.ts",
+			"src/components/app/navigationHandler.ts",
+			"src/components/button/Button.tsx",
+			"src/components/message/messageConstants.ts",
+			"src/components/message/UserAvatar.tsx",
+			"src/components/profile/profileHelpers.ts",
+			"src/components/select/SelectDropdown.tsx",
+			"src/components/session/sessionHelpers.ts",
+			"src/components/sessionHeader/ConsultantSearchLoader.tsx",
+			"src/components/sessionHeader/GroupChatHeader/index.tsx",
+			"src/components/sessionMenu/SessionMenu.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/hooks/useAppConfig.tsx",
+			"src/hooks/useResponsive.tsx",
+			"src/hooks/useSearchParams.tsx",
+			"src/utils/tenantSettingsHelper.ts",
+			"src/utils/translate.ts"
+		],
+		"src/components/sessionMenu/SessionMenu.tsx": [
+			"src/api/index.ts",
+			"src/components/app/navigationHandler.ts",
+			"src/components/button/Button.tsx",
+			"src/components/groupChat/groupChatHelpers.ts",
+			"src/components/legalLinks/LegalLinks.tsx",
+			"src/components/logout/logout.ts",
+			"src/components/overlay/Overlay.tsx",
+			"src/components/session/DeleteSession.tsx",
+			"src/components/session/sessionHelpers.ts",
+			"src/components/sessionMenu/sessionMenuHelpers.ts",
+			"src/components/text/Text.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/globalState/provider/LegalLinksProvider.tsx",
+			"src/globalState/provider/RocketChatUsersOfRoomProvider.tsx",
+			"src/hooks/useAppConfig.tsx",
+			"src/hooks/useSearchParams.tsx",
+			"src/services/CallManager.ts",
+			"src/utils/tenantSettingsHelper.ts",
+			"src/utils/videoCallHelpers.ts"
+		]
+	}
+}

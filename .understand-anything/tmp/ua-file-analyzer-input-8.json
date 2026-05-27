@@ -1,0 +1,318 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": "src/api/apiGetUserDataBySessionId.ts",
+			"language": "typescript",
+			"sizeLines": 14,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGroupChatSettings.ts",
+			"language": "typescript",
+			"sizeLines": 51,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiJoinGroupChat.ts",
+			"language": "typescript",
+			"sizeLines": 18,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiLogoutRocketchat.ts",
+			"language": "typescript",
+			"sizeLines": 9,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPatchConsultantData.ts",
+			"language": "typescript",
+			"sizeLines": 16,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPatchMessage.ts",
+			"language": "typescript",
+			"sizeLines": 22,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPatchNotificationActiveView.ts",
+			"language": "typescript",
+			"sizeLines": 25,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPostAdditionalEnquiry.ts",
+			"language": "typescript",
+			"sizeLines": 41,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPostBanUser.ts",
+			"language": "typescript",
+			"sizeLines": 13,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPostMessageEventNotification.ts",
+			"language": "typescript",
+			"sizeLines": 37,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPutArchive.ts",
+			"language": "typescript",
+			"sizeLines": 11,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPutConsultantData.ts",
+			"language": "typescript",
+			"sizeLines": 19,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPutDearchive.ts",
+			"language": "typescript",
+			"sizeLines": 11,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPutEmail.ts",
+			"language": "typescript",
+			"sizeLines": 13,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPutGroupChat.ts",
+			"language": "typescript",
+			"sizeLines": 26,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPutTools.ts",
+			"language": "typescript",
+			"sizeLines": 14,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRejectVideoCall.ts",
+			"language": "typescript",
+			"sizeLines": 21,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRemoveSessionSupervisor.ts",
+			"language": "typescript",
+			"sizeLines": 16,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRequestMagicLinkLogin.ts",
+			"language": "typescript",
+			"sizeLines": 17,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRocketChatFetchMyKeys.ts",
+			"language": "typescript",
+			"sizeLines": 15,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRocketChatGetUsersOfRoomWithoutKey.ts",
+			"language": "typescript",
+			"sizeLines": 13,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRocketChatGroupMembers.ts",
+			"language": "typescript",
+			"sizeLines": 8,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRocketChatResetE2EKey.ts",
+			"language": "typescript",
+			"sizeLines": 9,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRocketChatRoomsGet.ts",
+			"language": "typescript",
+			"sizeLines": 9,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRocketChatRoomsInfo.ts",
+			"language": "typescript",
+			"sizeLines": 9,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRocketChatSetRoomKeyID.ts",
+			"language": "typescript",
+			"sizeLines": 19,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRocketChatSetUserKeys.ts",
+			"language": "typescript",
+			"sizeLines": 19,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRocketChatSubscriptionsGet.ts",
+			"language": "typescript",
+			"sizeLines": 9,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRocketChatSubscriptionsGetOne.ts",
+			"language": "typescript",
+			"sizeLines": 11,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRocketChatUpdateGroupKey.ts",
+			"language": "typescript",
+			"sizeLines": 21,
+			"fileCategory": "code"
+		}
+	],
+	"batchImportData": {
+		"src/api/apiGetUserDataBySessionId.ts": [
+			"src/api/fetchData.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiGroupChatSettings.ts": [
+			"src/api/apiPutGroupChat.ts",
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiJoinGroupChat.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiLogoutRocketchat.ts": [
+			"src/api/fetchData.ts",
+			"src/api/fetchRCData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiPatchConsultantData.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiPatchMessage.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiPatchNotificationActiveView.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiPostAdditionalEnquiry.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiPostBanUser.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiPostMessageEventNotification.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiPutArchive.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiPutConsultantData.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiPutDearchive.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiPutEmail.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiPutGroupChat.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiPutTools.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiRejectVideoCall.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiRemoveSessionSupervisor.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiRequestMagicLinkLogin.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiRocketChatFetchMyKeys.ts": [
+			"src/api/fetchRCData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiRocketChatGetUsersOfRoomWithoutKey.ts": [
+			"src/api/fetchRCData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiRocketChatGroupMembers.ts": [
+			"src/api/fetchRCData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiRocketChatResetE2EKey.ts": [
+			"src/api/fetchData.ts",
+			"src/api/fetchRCData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiRocketChatRoomsGet.ts": [
+			"src/api/fetchData.ts",
+			"src/api/fetchRCData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiRocketChatRoomsInfo.ts": [
+			"src/api/fetchData.ts",
+			"src/api/fetchRCData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiRocketChatSetRoomKeyID.ts": [
+			"src/api/fetchData.ts",
+			"src/api/fetchRCData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiRocketChatSetUserKeys.ts": [
+			"src/api/fetchData.ts",
+			"src/api/fetchRCData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiRocketChatSubscriptionsGet.ts": [
+			"src/api/fetchData.ts",
+			"src/api/fetchRCData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiRocketChatSubscriptionsGetOne.ts": [
+			"src/api/fetchData.ts",
+			"src/api/fetchRCData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiRocketChatUpdateGroupKey.ts": [
+			"src/api/fetchData.ts",
+			"src/api/fetchRCData.ts",
+			"src/resources/scripts/endpoints.ts"
+		]
+	}
+}

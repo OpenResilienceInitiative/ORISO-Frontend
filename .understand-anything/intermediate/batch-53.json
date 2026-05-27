@@ -1,0 +1,276 @@
+{
+	"nodes": [
+		{
+			"id": "file:src/components/termsandconditions/termsandconfitions.styles.scss",
+			"type": "file",
+			"name": "termsandconfitions.styles.scss",
+			"filePath": "src/components/termsandconditions/termsandconfitions.styles.scss",
+			"summary": "React UI module for component termsandconditions, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-termsandconditions"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/text/text.styles.scss",
+			"type": "file",
+			"name": "text.styles.scss",
+			"filePath": "src/components/text/text.styles.scss",
+			"summary": "React UI module for component text, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-text"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/tools/tools.styles.scss",
+			"type": "file",
+			"name": "tools.styles.scss",
+			"filePath": "src/components/tools/tools.styles.scss",
+			"summary": "React UI module for component tools, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-tools"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/tooltip/tooltip.styles.scss",
+			"type": "file",
+			"name": "tooltip.styles.scss",
+			"filePath": "src/components/tooltip/tooltip.styles.scss",
+			"summary": "React UI module for component tooltip, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-tooltip"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/typingIndicator/typingIndicator.styles.scss",
+			"type": "file",
+			"name": "typingIndicator.styles.scss",
+			"filePath": "src/components/typingIndicator/typingIndicator.styles.scss",
+			"summary": "React UI module for component typing indicator, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-typing-indicator"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/typingIndicator/typingIndicator.tsx",
+			"type": "file",
+			"name": "typingIndicator.tsx",
+			"filePath": "src/components/typingIndicator/typingIndicator.tsx",
+			"summary": "React UI module for component typing indicator, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-typing-indicator"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/typingIndicator/typingIndicator.tsx:TypingIndicator",
+			"type": "function",
+			"name": "TypingIndicator",
+			"filePath": "src/components/typingIndicator/typingIndicator.tsx",
+			"lineRange": [5, 17],
+			"summary": "Function TypingIndicator in src/components/typingIndicator/typingIndicator.tsx, used by the surrounding component typing indicator module.",
+			"tags": ["function", "component-typing-indicator", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/uiVersionToggle/uiVersionToggle.styles.scss",
+			"type": "file",
+			"name": "uiVersionToggle.styles.scss",
+			"filePath": "src/components/uiVersionToggle/uiVersionToggle.styles.scss",
+			"summary": "React UI module for component ui version toggle, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-ui-version-toggle"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/videoCall/statusPage.styles.scss",
+			"type": "file",
+			"name": "statusPage.styles.scss",
+			"filePath": "src/components/videoCall/statusPage.styles.scss",
+			"summary": "React UI module for component video call, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-video-call"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/walkthrough/walkthrough.styles.scss",
+			"type": "file",
+			"name": "walkthrough.styles.scss",
+			"filePath": "src/components/walkthrough/walkthrough.styles.scss",
+			"summary": "React UI module for component walkthrough, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-walkthrough"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/compound.css",
+			"type": "file",
+			"name": "compound.css",
+			"filePath": "src/compound.css",
+			"summary": "Stylesheet for styles, defining frontend presentation rules and visual tokens.",
+			"tags": ["styling", "styles", "markup"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/containers/bookings/components/booking.styles.scss",
+			"type": "file",
+			"name": "booking.styles.scss",
+			"filePath": "src/containers/bookings/components/booking.styles.scss",
+			"summary": "React UI module for styles, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "styles"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/containers/bookings/components/Calcom/cal.styles.scss",
+			"type": "file",
+			"name": "cal.styles.scss",
+			"filePath": "src/containers/bookings/components/Calcom/cal.styles.scss",
+			"summary": "React UI module for styles, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "styles"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/containers/overview/components/BookingEvent/booking-event.styles.scss",
+			"type": "file",
+			"name": "booking-event.styles.scss",
+			"filePath": "src/containers/overview/components/BookingEvent/booking-event.styles.scss",
+			"summary": "React UI module for styles, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "styles"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/containers/overview/components/EmptyState/emptyState.styles.scss",
+			"type": "file",
+			"name": "emptyState.styles.scss",
+			"filePath": "src/containers/overview/components/EmptyState/emptyState.styles.scss",
+			"summary": "React UI module for styles, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "styles"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/containers/overview/components/OverviewCard/overviewCard.styles.scss",
+			"type": "file",
+			"name": "overviewCard.styles.scss",
+			"filePath": "src/containers/overview/components/OverviewCard/overviewCard.styles.scss",
+			"summary": "React UI module for styles, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "styles"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/containers/overview/components/SessionCard/sessionCard.styles.scss",
+			"type": "file",
+			"name": "sessionCard.styles.scss",
+			"filePath": "src/containers/overview/components/SessionCard/sessionCard.styles.scss",
+			"summary": "React UI module for styles, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "session", "styling", "styles"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/containers/overview/overview.styles.scss",
+			"type": "file",
+			"name": "overview.styles.scss",
+			"filePath": "src/containers/overview/overview.styles.scss",
+			"summary": "Stylesheet for styles, defining frontend presentation rules and visual tokens.",
+			"tags": ["styling", "styles", "markup"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/containers/registration/components/ProposedAgencies/proposedAgencies.styles.scss",
+			"type": "file",
+			"name": "proposedAgencies.styles.scss",
+			"filePath": "src/containers/registration/components/ProposedAgencies/proposedAgencies.styles.scss",
+			"summary": "React UI module for styles, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "styles"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "config:src/extensions/cypress/cypress.json",
+			"type": "config",
+			"name": "cypress.json",
+			"filePath": "src/extensions/cypress/cypress.json",
+			"summary": "Configuration file that controls extensions behavior for the frontend project.",
+			"tags": ["configuration", "extensions", "config"],
+			"complexity": "simple"
+		},
+		{
+			"id": "config:src/extensions/package.json",
+			"type": "config",
+			"name": "package.json",
+			"filePath": "src/extensions/package.json",
+			"summary": "Configuration file that controls extensions behavior for the frontend project.",
+			"tags": ["configuration", "extensions", "config"],
+			"complexity": "simple"
+		},
+		{
+			"id": "document:src/extensions/README.MD",
+			"type": "document",
+			"name": "README.MD",
+			"filePath": "src/extensions/README.MD",
+			"summary": "Documentation covering extensions concerns in the ORISO frontend.",
+			"tags": ["documentation", "extensions", "docs"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/generated/agencyservice.d.ts",
+			"type": "file",
+			"name": "agencyservice.d.ts",
+			"filePath": "src/generated/agencyservice.d.ts",
+			"summary": "Frontend source file for generated in the ORISO React application.",
+			"tags": ["generated", "code", "frontend"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/generated/liveservice.d.ts",
+			"type": "file",
+			"name": "liveservice.d.ts",
+			"filePath": "src/generated/liveservice.d.ts",
+			"summary": "Frontend source file for generated in the ORISO React application.",
+			"tags": ["generated", "code", "frontend"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/generated/mailservice.d.ts",
+			"type": "file",
+			"name": "mailservice.d.ts",
+			"filePath": "src/generated/mailservice.d.ts",
+			"summary": "Frontend source file for generated in the ORISO React application.",
+			"tags": ["generated", "code", "frontend"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/generated/messageservice.d.ts",
+			"type": "file",
+			"name": "messageservice.d.ts",
+			"filePath": "src/generated/messageservice.d.ts",
+			"summary": "Frontend source file for generated in the ORISO React application.",
+			"tags": ["generated", "code", "frontend"],
+			"complexity": "complex"
+		}
+	],
+	"edges": [
+		{
+			"source": "file:src/components/typingIndicator/typingIndicator.tsx",
+			"target": "function:src/components/typingIndicator/typingIndicator.tsx:TypingIndicator",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/typingIndicator/typingIndicator.tsx",
+			"target": "function:src/components/typingIndicator/typingIndicator.tsx:TypingIndicator",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "config:src/extensions/cypress/cypress.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:src/extensions/package.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "document:src/extensions/README.MD",
+			"target": "document:README.md",
+			"type": "related",
+			"direction": "forward",
+			"weight": 0.5
+		}
+	]
+}

@@ -1,0 +1,292 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": "src/components/app/LiveChatToggleIcons.tsx",
+			"language": "typescript",
+			"sizeLines": 42,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/NavigationBar.tsx",
+			"language": "typescript",
+			"sizeLines": 798,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/navigationSidebarIcons.tsx",
+			"language": "typescript",
+			"sizeLines": 388,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/draftsCenter/DraftsCenter.tsx",
+			"language": "typescript",
+			"sizeLines": 348,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/context/UserDataContext.tsx",
+			"language": "typescript",
+			"sizeLines": 10,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/helpers/stateHelpers.ts",
+			"language": "typescript",
+			"sizeLines": 138,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/AppConfig/AppConfigInterface.ts",
+			"language": "typescript",
+			"sizeLines": 59,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/AppConfig/AppConfigJitsiInterface.ts",
+			"language": "typescript",
+			"sizeLines": 5,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/AppConfig/AppConfigNotificationsInterface.ts",
+			"language": "typescript",
+			"sizeLines": 8,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/AppConfig/AppConfigTwoFactorInterface.ts",
+			"language": "typescript",
+			"sizeLines": 5,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/AppConfig/AppConfigUrlsInterface.ts",
+			"language": "typescript",
+			"sizeLines": 17,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/AppConfig/AppSettingsInterface.ts",
+			"language": "typescript",
+			"sizeLines": 28,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/ConsultingTypeInterface.ts",
+			"language": "typescript",
+			"sizeLines": 62,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/GroupChatConfig.ts",
+			"language": "typescript",
+			"sizeLines": 6,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/LegalLinkInterface.ts",
+			"language": "typescript",
+			"sizeLines": 5,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/SessionsDataInterface.ts",
+			"language": "typescript",
+			"sizeLines": 138,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/TranslationConfig.ts",
+			"language": "typescript",
+			"sizeLines": 13,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/UserDataInterface.ts",
+			"language": "typescript",
+			"sizeLines": 86,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/AgencySpecificProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 39,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/ConsultingTypesProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 51,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/NotificationsProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 346,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/SessionTypeProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 49,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/SessionsDataProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 128,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/UserDataProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 43,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useJoinGroupChat.ts",
+			"language": "typescript",
+			"sizeLines": 47,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/services/draftStore.ts",
+			"language": "typescript",
+			"sizeLines": 108,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/anonymousSessionFetchGuard.ts",
+			"language": "typescript",
+			"sizeLines": 50,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/keycloakSession.ts",
+			"language": "typescript",
+			"sizeLines": 51,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/parseJWT.ts",
+			"language": "typescript",
+			"sizeLines": 18,
+			"fileCategory": "code"
+		}
+	],
+	"batchImportData": {
+		"src/components/app/LiveChatToggleIcons.tsx": [],
+		"src/components/app/NavigationBar.tsx": [
+			"src/api/apiGetTools.ts",
+			"src/api/index.ts",
+			"src/components/app/LiveChatToggleIcons.tsx",
+			"src/components/app/navigationHandler.ts",
+			"src/components/app/navigationSidebarIcons.tsx",
+			"src/components/localeSwitch/LocaleSwitch.tsx",
+			"src/components/select/SelectDropdown.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/provider/RocketChatUnreadProvider.tsx",
+			"src/hooks/useResponsive.tsx",
+			"src/services/draftStore.ts",
+			"src/utils/keycloakSession.ts",
+			"src/utils/liveChatToggle.ts",
+			"src/utils/notificationHelpers.ts",
+			"src/utils/useIsFirstVisit.tsx"
+		],
+		"src/components/app/navigationSidebarIcons.tsx": [],
+		"src/components/draftsCenter/DraftsCenter.tsx": [
+			"src/api/index.ts",
+			"src/hooks/useResponsive.tsx",
+			"src/services/draftStore.ts",
+			"src/utils/keycloakSession.ts"
+		],
+		"src/globalState/context/UserDataContext.tsx": [
+			"src/globalState/interfaces/UserDataInterface.ts"
+		],
+		"src/globalState/helpers/stateHelpers.ts": [
+			"src/components/session/sessionHelpers.ts",
+			"src/globalState/interfaces/SessionsDataInterface.ts",
+			"src/globalState/interfaces/UserDataInterface.ts"
+		],
+		"src/globalState/interfaces/AppConfig/AppConfigInterface.ts": [
+			"src/globalState/interfaces/AppConfig/AppConfigJitsiInterface.ts",
+			"src/globalState/interfaces/AppConfig/AppConfigNotificationsInterface.ts",
+			"src/globalState/interfaces/AppConfig/AppConfigTwoFactorInterface.ts",
+			"src/globalState/interfaces/AppConfig/AppConfigUrlsInterface.ts",
+			"src/globalState/interfaces/AppConfig/AppSettingsInterface.ts",
+			"src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"src/globalState/interfaces/GroupChatConfig.ts",
+			"src/globalState/interfaces/LegalLinkInterface.ts",
+			"src/globalState/interfaces/SessionsDataInterface.ts",
+			"src/globalState/interfaces/TranslationConfig.ts"
+		],
+		"src/globalState/interfaces/AppConfig/AppConfigJitsiInterface.ts": [],
+		"src/globalState/interfaces/AppConfig/AppConfigNotificationsInterface.ts": [],
+		"src/globalState/interfaces/AppConfig/AppConfigTwoFactorInterface.ts": [],
+		"src/globalState/interfaces/AppConfig/AppConfigUrlsInterface.ts": [],
+		"src/globalState/interfaces/AppConfig/AppSettingsInterface.ts": [],
+		"src/globalState/interfaces/ConsultingTypeInterface.ts": [],
+		"src/globalState/interfaces/GroupChatConfig.ts": [],
+		"src/globalState/interfaces/LegalLinkInterface.ts": [],
+		"src/globalState/interfaces/SessionsDataInterface.ts": [
+			"src/components/message/MessageItemComponent.tsx",
+			"src/globalState/interfaces/UserDataInterface.ts"
+		],
+		"src/globalState/interfaces/TranslationConfig.ts": [],
+		"src/globalState/interfaces/UserDataInterface.ts": [
+			"src/components/twoFactorAuth/TwoFactorAuth.tsx",
+			"src/globalState/interfaces/ConsultingTypeInterface.ts"
+		],
+		"src/globalState/provider/AgencySpecificProvider.tsx": [
+			"src/globalState/context/UserDataContext.tsx",
+			"src/globalState/interfaces/index.ts",
+			"src/utils/useUrlParamsLoader.tsx"
+		],
+		"src/globalState/provider/ConsultingTypesProvider.tsx": [
+			"src/globalState/interfaces/ConsultingTypeInterface.ts"
+		],
+		"src/globalState/provider/NotificationsProvider.tsx": [
+			"src/api/apiEventNotifications.ts",
+			"src/components/incomingVideoCall/IncomingVideoCall.tsx",
+			"src/components/sessionCookie/accessSessionCookie.ts",
+			"src/globalState/context/UserDataContext.tsx",
+			"src/globalState/helpers/stateHelpers.ts"
+		],
+		"src/globalState/provider/SessionTypeProvider.tsx": [
+			"src/components/session/sessionHelpers.ts",
+			"src/globalState/context/UserDataContext.tsx",
+			"src/globalState/helpers/stateHelpers.ts"
+		],
+		"src/globalState/provider/SessionsDataProvider.tsx": [
+			"src/components/session/sessionHelpers.ts",
+			"src/globalState/interfaces/SessionsDataInterface.ts"
+		],
+		"src/globalState/provider/UserDataProvider.tsx": [
+			"src/api/index.ts",
+			"src/globalState/context/UserDataContext.tsx",
+			"src/globalState/interfaces/UserDataInterface.ts",
+			"src/utils/keycloakSession.ts"
+		],
+		"src/hooks/useJoinGroupChat.ts": [
+			"src/api/apiGetChatRoomById.ts",
+			"src/api/index.ts",
+			"src/globalState/index.ts",
+			"src/utils/keycloakSession.ts"
+		],
+		"src/services/draftStore.ts": [],
+		"src/utils/anonymousSessionFetchGuard.ts": [
+			"src/components/sessionCookie/accessSessionCookie.ts",
+			"src/utils/parseJWT.ts"
+		],
+		"src/utils/keycloakSession.ts": [
+			"src/components/sessionCookie/accessSessionCookie.ts",
+			"src/globalState/helpers/stateHelpers.ts",
+			"src/globalState/interfaces/UserDataInterface.ts",
+			"src/utils/anonymousSessionFetchGuard.ts",
+			"src/utils/parseJWT.ts"
+		],
+		"src/utils/parseJWT.ts": []
+	}
+}

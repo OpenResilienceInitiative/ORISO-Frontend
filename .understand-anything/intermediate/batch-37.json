@@ -1,0 +1,57 @@
+{
+	"nodes": [
+		{
+			"id": "file:src/components/messageSubmitInterface/TipTapComposer.styles.scss",
+			"type": "file",
+			"name": "TipTapComposer.styles.scss",
+			"filePath": "src/components/messageSubmitInterface/TipTapComposer.styles.scss",
+			"summary": "React UI module for component message submit interface, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"styling",
+				"component-message-submit-interface"
+			],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/messageSubmitInterface/emojiPicker.styles.scss",
+			"type": "file",
+			"name": "emojiPicker.styles.scss",
+			"filePath": "src/components/messageSubmitInterface/emojiPicker.styles.scss",
+			"summary": "React UI module for component message submit interface, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"styling",
+				"component-message-submit-interface"
+			],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/messageSubmitInterface/messageSubmitInfo.styles.scss",
+			"type": "file",
+			"name": "messageSubmitInfo.styles.scss",
+			"filePath": "src/components/messageSubmitInterface/messageSubmitInfo.styles.scss",
+			"summary": "React UI module for component message submit interface, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"styling",
+				"component-message-submit-interface"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/messageSubmitInterface/messageSubmitInterface.styles.scss",
+			"type": "file",
+			"name": "messageSubmitInterface.styles.scss",
+			"filePath": "src/components/messageSubmitInterface/messageSubmitInterface.styles.scss",
+			"summary": "React UI module for component message submit interface, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"styling",
+				"component-message-submit-interface"
+			],
+			"complexity": "complex"
+		}
+	],
+	"edges": []
+}

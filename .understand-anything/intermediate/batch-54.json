@@ -1,0 +1,398 @@
+{
+	"nodes": [
+		{
+			"id": "file:src/generated/uploadservice.d.ts",
+			"type": "file",
+			"name": "uploadservice.d.ts",
+			"filePath": "src/generated/uploadservice.d.ts",
+			"summary": "Frontend source file for generated in the ORISO React application.",
+			"tags": ["generated", "code", "frontend"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/generated/userservice.d.ts",
+			"type": "file",
+			"name": "userservice.d.ts",
+			"filePath": "src/generated/userservice.d.ts",
+			"summary": "React hook module for userservice.d, encapsulating reusable frontend state or side-effect logic.",
+			"tags": ["hook", "generated", "code"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/generated/videoservice.d.ts",
+			"type": "file",
+			"name": "videoservice.d.ts",
+			"filePath": "src/generated/videoservice.d.ts",
+			"summary": "Frontend source file for generated in the ORISO React application.",
+			"tags": ["generated", "code", "frontend"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "document:src/globalState/globalState_notes.md",
+			"type": "document",
+			"name": "globalState_notes.md",
+			"filePath": "src/globalState/globalState_notes.md",
+			"summary": "Documentation covering global state concerns in the ORISO frontend.",
+			"tags": ["documentation", "state-management", "global-state"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/globalState/interfaces/AppConfig/index.ts",
+			"type": "file",
+			"name": "index.ts",
+			"filePath": "src/globalState/interfaces/AppConfig/index.ts",
+			"summary": "Global state module for global state, sharing application state across frontend flows.",
+			"tags": ["state-management", "global-state", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/interfaces/AuthDataInterface.ts",
+			"type": "file",
+			"name": "AuthDataInterface.ts",
+			"filePath": "src/globalState/interfaces/AuthDataInterface.ts",
+			"summary": "Global state module for global state, sharing application state across frontend flows.",
+			"tags": ["state-management", "authentication", "global-state"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/interfaces/ConsultingSessionDataInterface.ts",
+			"type": "file",
+			"name": "ConsultingSessionDataInterface.ts",
+			"filePath": "src/globalState/interfaces/ConsultingSessionDataInterface.ts",
+			"summary": "Global state module for global state, sharing application state across frontend flows.",
+			"tags": ["state-management", "session", "global-state"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/interfaces/E2EEDataInterface.ts",
+			"type": "file",
+			"name": "E2EEDataInterface.ts",
+			"filePath": "src/globalState/interfaces/E2EEDataInterface.ts",
+			"summary": "Global state module for global state, sharing application state across frontend flows.",
+			"tags": ["state-management", "global-state", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/interfaces/ServerAppConfigInterface.ts",
+			"type": "file",
+			"name": "ServerAppConfigInterface.ts",
+			"filePath": "src/globalState/interfaces/ServerAppConfigInterface.ts",
+			"summary": "Global state module for global state, sharing application state across frontend flows.",
+			"tags": ["state-management", "global-state", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/interfaces/TopicGroups.ts",
+			"type": "file",
+			"name": "TopicGroups.ts",
+			"filePath": "src/globalState/interfaces/TopicGroups.ts",
+			"summary": "Global state module for global state, sharing application state across frontend flows.",
+			"tags": ["state-management", "global-state", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/interfaces/TopicsDataInterface.ts",
+			"type": "file",
+			"name": "TopicsDataInterface.ts",
+			"filePath": "src/globalState/interfaces/TopicsDataInterface.ts",
+			"summary": "Global state module for global state, sharing application state across frontend flows.",
+			"tags": ["state-management", "global-state", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/provider/RocketChatProvider.tsx.backup",
+			"type": "file",
+			"name": "RocketChatProvider.tsx.backup",
+			"filePath": "src/globalState/provider/RocketChatProvider.tsx.backup",
+			"summary": "Global state module for global state, sharing application state across frontend flows.",
+			"tags": ["state-management", "global-state", "code"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/globalState/provider/SessionsDataProvider.tsx.backup",
+			"type": "file",
+			"name": "SessionsDataProvider.tsx.backup",
+			"filePath": "src/globalState/provider/SessionsDataProvider.tsx.backup",
+			"summary": "Global state module for global state, sharing application state across frontend flows.",
+			"tags": ["state-management", "session", "global-state"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/globalState/provider/WebsocketConnectionDeactivatedProvider.tsx",
+			"type": "file",
+			"name": "WebsocketConnectionDeactivatedProvider.tsx",
+			"filePath": "src/globalState/provider/WebsocketConnectionDeactivatedProvider.tsx",
+			"summary": "React UI module for global state, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"state-management",
+				"utility",
+				"global-state"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/WebsocketConnectionDeactivatedProvider.tsx:WebsocketConnectionDeactivatedProvider",
+			"type": "function",
+			"name": "WebsocketConnectionDeactivatedProvider",
+			"filePath": "src/globalState/provider/WebsocketConnectionDeactivatedProvider.tsx",
+			"lineRange": [6, 18],
+			"summary": "Function WebsocketConnectionDeactivatedProvider in src/globalState/provider/WebsocketConnectionDeactivatedProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/WebsocketConnectionDeactivatedProvider.tsx:WebsocketConnectionDeactivatedContext",
+			"type": "function",
+			"name": "WebsocketConnectionDeactivatedContext",
+			"filePath": "src/globalState/provider/WebsocketConnectionDeactivatedProvider.tsx",
+			"lineRange": [4, 16],
+			"summary": "Function WebsocketConnectionDeactivatedContext in src/globalState/provider/WebsocketConnectionDeactivatedProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/hooks/debug/useEffectDebugger.tsx",
+			"type": "file",
+			"name": "useEffectDebugger.tsx",
+			"filePath": "src/hooks/debug/useEffectDebugger.tsx",
+			"summary": "React hook module for useEffectDebugger, encapsulating reusable frontend state or side-effect logic.",
+			"tags": ["hook", "component", "utility", "hooks"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/hooks/debug/useEffectDebugger.tsx:useEffectDebugger",
+			"type": "function",
+			"name": "useEffectDebugger",
+			"filePath": "src/hooks/debug/useEffectDebugger.tsx",
+			"lineRange": [11, 23],
+			"summary": "Function useEffectDebugger in src/hooks/debug/useEffectDebugger.tsx, used by the surrounding hooks module.",
+			"tags": ["function", "hooks", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/hooks/useMatrixReady.tsx",
+			"type": "file",
+			"name": "useMatrixReady.tsx",
+			"filePath": "src/hooks/useMatrixReady.tsx",
+			"summary": "React hook module for useMatrixReady, encapsulating reusable frontend state or side-effect logic.",
+			"tags": ["hook", "component", "matrix", "utility", "hooks"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/hooks/useMatrixReady.tsx:useMatrixReady",
+			"type": "function",
+			"name": "useMatrixReady",
+			"filePath": "src/hooks/useMatrixReady.tsx",
+			"lineRange": [7, 19],
+			"summary": "Function useMatrixReady in src/hooks/useMatrixReady.tsx, used by the surrounding hooks module.",
+			"tags": ["function", "hooks", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/hooks/useStateWithLabel.ts",
+			"type": "file",
+			"name": "useStateWithLabel.ts",
+			"filePath": "src/hooks/useStateWithLabel.ts",
+			"summary": "React hook module for useStateWithLabel, encapsulating reusable frontend state or side-effect logic.",
+			"tags": ["hook", "utility", "hooks"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/hooks/useStateWithLabel.ts:useStateWithLabel",
+			"type": "function",
+			"name": "useStateWithLabel",
+			"filePath": "src/hooks/useStateWithLabel.ts",
+			"lineRange": [9, 13],
+			"summary": "Function useStateWithLabel in src/hooks/useStateWithLabel.ts, used by the surrounding hooks module.",
+			"tags": ["function", "hooks", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/pages/app.html",
+			"type": "file",
+			"name": "app.html",
+			"filePath": "src/pages/app.html",
+			"summary": "Frontend source file for pages in the ORISO React application.",
+			"tags": ["pages", "markup", "frontend"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/pages/under-construction.html",
+			"type": "file",
+			"name": "under-construction.html",
+			"filePath": "src/pages/under-construction.html",
+			"summary": "Frontend source file for pages in the ORISO React application.",
+			"tags": ["pages", "markup", "frontend"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/react-app-env.d.ts",
+			"type": "file",
+			"name": "react-app-env.d.ts",
+			"filePath": "src/react-app-env.d.ts",
+			"summary": "Frontend source file for react app env d ts in the ORISO React application.",
+			"tags": ["barrel", "react-app-env-d-ts", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/react-dom-shim.ts",
+			"type": "file",
+			"name": "react-dom-shim.ts",
+			"filePath": "src/react-dom-shim.ts",
+			"summary": "Frontend source file for react dom shim ts in the ORISO React application.",
+			"tags": ["react-dom-shim-ts", "code", "frontend"],
+			"complexity": "simple"
+		},
+		{
+			"id": "config:src/resources/animations/Matching-Animation.json",
+			"type": "config",
+			"name": "Matching-Animation.json",
+			"filePath": "src/resources/animations/Matching-Animation.json",
+			"summary": "Configuration file that controls resources behavior for the frontend project.",
+			"tags": ["configuration", "resources", "config"],
+			"complexity": "simple"
+		},
+		{
+			"id": "config:src/resources/i18n/de@informal/common.json",
+			"type": "config",
+			"name": "common.json",
+			"filePath": "src/resources/i18n/de@informal/common.json",
+			"summary": "Configuration file that controls resources behavior for the frontend project.",
+			"tags": ["configuration", "i18n", "resources"],
+			"complexity": "complex"
+		},
+		{
+			"id": "config:src/resources/i18n/fr/common.json",
+			"type": "config",
+			"name": "common.json",
+			"filePath": "src/resources/i18n/fr/common.json",
+			"summary": "Configuration file that controls resources behavior for the frontend project.",
+			"tags": ["configuration", "i18n", "resources"],
+			"complexity": "complex"
+		},
+		{
+			"id": "config:src/resources/i18n/fr/languages.json",
+			"type": "config",
+			"name": "languages.json",
+			"filePath": "src/resources/i18n/fr/languages.json",
+			"summary": "Configuration file that controls resources behavior for the frontend project.",
+			"tags": ["configuration", "i18n", "resources"],
+			"complexity": "moderate"
+		}
+	],
+	"edges": [
+		{
+			"source": "document:src/globalState/globalState_notes.md",
+			"target": "document:README.md",
+			"type": "related",
+			"direction": "forward",
+			"weight": 0.5
+		},
+		{
+			"source": "file:src/globalState/interfaces/ConsultingSessionDataInterface.ts",
+			"target": "file:src/globalState/interfaces/TopicsDataInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/WebsocketConnectionDeactivatedProvider.tsx",
+			"target": "function:src/globalState/provider/WebsocketConnectionDeactivatedProvider.tsx:WebsocketConnectionDeactivatedProvider",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/WebsocketConnectionDeactivatedProvider.tsx",
+			"target": "function:src/globalState/provider/WebsocketConnectionDeactivatedProvider.tsx:WebsocketConnectionDeactivatedProvider",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/WebsocketConnectionDeactivatedProvider.tsx",
+			"target": "function:src/globalState/provider/WebsocketConnectionDeactivatedProvider.tsx:WebsocketConnectionDeactivatedContext",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/WebsocketConnectionDeactivatedProvider.tsx",
+			"target": "function:src/globalState/provider/WebsocketConnectionDeactivatedProvider.tsx:WebsocketConnectionDeactivatedContext",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/hooks/debug/useEffectDebugger.tsx",
+			"target": "function:src/hooks/debug/useEffectDebugger.tsx:useEffectDebugger",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/hooks/debug/useEffectDebugger.tsx",
+			"target": "function:src/hooks/debug/useEffectDebugger.tsx:useEffectDebugger",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/hooks/useMatrixReady.tsx",
+			"target": "function:src/hooks/useMatrixReady.tsx:useMatrixReady",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/hooks/useMatrixReady.tsx",
+			"target": "function:src/hooks/useMatrixReady.tsx:useMatrixReady",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/hooks/useStateWithLabel.ts",
+			"target": "function:src/hooks/useStateWithLabel.ts:useStateWithLabel",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/hooks/useStateWithLabel.ts",
+			"target": "function:src/hooks/useStateWithLabel.ts:useStateWithLabel",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "config:src/resources/animations/Matching-Animation.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:src/resources/i18n/de@informal/common.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:src/resources/i18n/fr/common.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:src/resources/i18n/fr/languages.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		}
+	]
+}

@@ -1,0 +1,47 @@
+{
+	"nodes": [
+		{
+			"id": "file:src/components/twoFactorAuth/twoFactorAuth.styles.scss",
+			"type": "file",
+			"name": "twoFactorAuth.styles.scss",
+			"filePath": "src/components/twoFactorAuth/twoFactorAuth.styles.scss",
+			"summary": "React UI module for component two factor auth, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"authentication",
+				"styling",
+				"component-two-factor-auth"
+			],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/twoFactorAuth/twoFactorAuthResendMail.styles.scss",
+			"type": "file",
+			"name": "twoFactorAuthResendMail.styles.scss",
+			"filePath": "src/components/twoFactorAuth/twoFactorAuthResendMail.styles.scss",
+			"summary": "React UI module for component two factor auth, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"authentication",
+				"styling",
+				"component-two-factor-auth"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/twoFactorAuth/twoFactorNag.styles.scss",
+			"type": "file",
+			"name": "twoFactorNag.styles.scss",
+			"filePath": "src/components/twoFactorAuth/twoFactorNag.styles.scss",
+			"summary": "React UI module for component two factor auth, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"authentication",
+				"styling",
+				"component-two-factor-auth"
+			],
+			"complexity": "simple"
+		}
+	],
+	"edges": []
+}

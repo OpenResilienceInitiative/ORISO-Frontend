@@ -1,0 +1,2686 @@
+{
+	"nodes": [
+		{
+			"id": "file:src/components/pseudonym/BreathingTutorialCard.tsx",
+			"type": "file",
+			"name": "BreathingTutorialCard.tsx",
+			"filePath": "src/components/pseudonym/BreathingTutorialCard.tsx",
+			"summary": "React UI module for component pseudonym, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-pseudonym", "code"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/pseudonym/ConsultantAcceptedActionBar.tsx",
+			"type": "file",
+			"name": "ConsultantAcceptedActionBar.tsx",
+			"filePath": "src/components/pseudonym/ConsultantAcceptedActionBar.tsx",
+			"summary": "React UI module for component pseudonym, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-pseudonym", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/pseudonym/PrivacyMessageCard.tsx",
+			"type": "file",
+			"name": "PrivacyMessageCard.tsx",
+			"filePath": "src/components/pseudonym/PrivacyMessageCard.tsx",
+			"summary": "React UI module for component pseudonym, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-pseudonym", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/pseudonym/PseudonymActionBar.tsx",
+			"type": "file",
+			"name": "PseudonymActionBar.tsx",
+			"filePath": "src/components/pseudonym/PseudonymActionBar.tsx",
+			"summary": "React UI module for component pseudonym, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-pseudonym", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/pseudonym/PseudonymCard.tsx",
+			"type": "file",
+			"name": "PseudonymCard.tsx",
+			"filePath": "src/components/pseudonym/PseudonymCard.tsx",
+			"summary": "React UI module for component pseudonym, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-pseudonym", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/pseudonym/WaitingQueueActionBar.tsx",
+			"type": "file",
+			"name": "WaitingQueueActionBar.tsx",
+			"filePath": "src/components/pseudonym/WaitingQueueActionBar.tsx",
+			"summary": "React UI module for component pseudonym, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-pseudonym", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/releaseNote/ReleaseNote.tsx",
+			"type": "file",
+			"name": "ReleaseNote.tsx",
+			"filePath": "src/components/releaseNote/ReleaseNote.tsx",
+			"summary": "React UI module for component release note, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-release-note", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/select/SelectDropdown.tsx",
+			"type": "file",
+			"name": "SelectDropdown.tsx",
+			"filePath": "src/components/select/SelectDropdown.tsx",
+			"summary": "React UI module for component select, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-select"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/select/SelectDropdown.tsx:MENUPLACEMENT_TOP",
+			"type": "function",
+			"name": "MENUPLACEMENT_TOP",
+			"filePath": "src/components/select/SelectDropdown.tsx",
+			"lineRange": [29, 41],
+			"summary": "Function MENUPLACEMENT_TOP in src/components/select/SelectDropdown.tsx, used by the surrounding component select module.",
+			"tags": ["function", "component-select", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/select/SelectDropdown.tsx:MENUPLACEMENT_BOTTOM",
+			"type": "function",
+			"name": "MENUPLACEMENT_BOTTOM",
+			"filePath": "src/components/select/SelectDropdown.tsx",
+			"lineRange": [30, 42],
+			"summary": "Function MENUPLACEMENT_BOTTOM in src/components/select/SelectDropdown.tsx, used by the surrounding component select module.",
+			"tags": ["function", "component-select", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/select/SelectDropdown.tsx:MENUPLACEMENT_RIGHT",
+			"type": "function",
+			"name": "MENUPLACEMENT_RIGHT",
+			"filePath": "src/components/select/SelectDropdown.tsx",
+			"lineRange": [31, 43],
+			"summary": "Function MENUPLACEMENT_RIGHT in src/components/select/SelectDropdown.tsx, used by the surrounding component select module.",
+			"tags": ["function", "component-select", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/select/SelectDropdown.tsx:MENUPLACEMENT_BOTTOM_LEFT",
+			"type": "function",
+			"name": "MENUPLACEMENT_BOTTOM_LEFT",
+			"filePath": "src/components/select/SelectDropdown.tsx",
+			"lineRange": [32, 44],
+			"summary": "Function MENUPLACEMENT_BOTTOM_LEFT in src/components/select/SelectDropdown.tsx, used by the surrounding component select module.",
+			"tags": ["function", "component-select", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/select/SelectDropdown.tsx:SelectDropdown",
+			"type": "function",
+			"name": "SelectDropdown",
+			"filePath": "src/components/select/SelectDropdown.tsx",
+			"lineRange": [361, 373],
+			"summary": "Function SelectDropdown in src/components/select/SelectDropdown.tsx, used by the surrounding component select module.",
+			"tags": ["function", "component-select", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/session/AcceptAssign.tsx",
+			"type": "file",
+			"name": "AcceptAssign.tsx",
+			"filePath": "src/components/session/AcceptAssign.tsx",
+			"summary": "React UI module for component session, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "session", "utility", "component-session"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/session/AcceptAssign.tsx:AcceptAssign",
+			"type": "function",
+			"name": "AcceptAssign",
+			"filePath": "src/components/session/AcceptAssign.tsx",
+			"lineRange": [35, 47],
+			"summary": "Function AcceptAssign in src/components/session/AcceptAssign.tsx, used by the surrounding component session module.",
+			"tags": ["function", "component-session", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/session/DeleteSession.tsx",
+			"type": "file",
+			"name": "DeleteSession.tsx",
+			"filePath": "src/components/session/DeleteSession.tsx",
+			"summary": "React UI module for component session, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "session", "component-session"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/session/EncryptionBanner.stories.tsx",
+			"type": "file",
+			"name": "EncryptionBanner.stories.tsx",
+			"filePath": "src/components/session/EncryptionBanner.stories.tsx",
+			"summary": "React UI module for component session, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["storybook", "component", "session", "component-session"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/session/EncryptionBanner.tsx",
+			"type": "file",
+			"name": "EncryptionBanner.tsx",
+			"filePath": "src/components/session/EncryptionBanner.tsx",
+			"summary": "React UI module for component session, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "session", "utility", "component-session"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/session/EncryptionBanner.tsx:EncryptionBanner",
+			"type": "function",
+			"name": "EncryptionBanner",
+			"filePath": "src/components/session/EncryptionBanner.tsx",
+			"lineRange": [6, 18],
+			"summary": "Function EncryptionBanner in src/components/session/EncryptionBanner.tsx, used by the surrounding component session module.",
+			"tags": ["function", "component-session", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/session/RoomNotFound.tsx",
+			"type": "file",
+			"name": "RoomNotFound.tsx",
+			"filePath": "src/components/session/RoomNotFound.tsx",
+			"summary": "React UI module for component session, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "session", "utility", "component-session"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/session/RoomNotFound.tsx:RoomNotFound",
+			"type": "function",
+			"name": "RoomNotFound",
+			"filePath": "src/components/session/RoomNotFound.tsx",
+			"lineRange": [7, 19],
+			"summary": "Function RoomNotFound in src/components/session/RoomNotFound.tsx, used by the surrounding component session module.",
+			"tags": ["function", "component-session", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/session/SessionItemComponent.tsx",
+			"type": "file",
+			"name": "SessionItemComponent.tsx",
+			"filePath": "src/components/session/SessionItemComponent.tsx",
+			"summary": "React UI module for component session, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "session", "utility", "component-session"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/session/SessionItemComponent.tsx:SessionItemComponent",
+			"type": "function",
+			"name": "SessionItemComponent",
+			"filePath": "src/components/session/SessionItemComponent.tsx",
+			"lineRange": [371, 383],
+			"summary": "Function SessionItemComponent in src/components/session/SessionItemComponent.tsx, used by the surrounding component session module.",
+			"tags": ["function", "component-session", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/session/SessionStream.tsx",
+			"type": "file",
+			"name": "SessionStream.tsx",
+			"filePath": "src/components/session/SessionStream.tsx",
+			"summary": "React UI module for component session, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "session", "utility", "component-session"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/session/SessionStream.tsx:SessionStream",
+			"type": "function",
+			"name": "SessionStream",
+			"filePath": "src/components/session/SessionStream.tsx",
+			"lineRange": [67, 79],
+			"summary": "Function SessionStream in src/components/session/SessionStream.tsx, used by the surrounding component session module.",
+			"tags": ["function", "component-session", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/session/SessionView.tsx",
+			"type": "file",
+			"name": "SessionView.tsx",
+			"filePath": "src/components/session/SessionView.tsx",
+			"summary": "React UI module for component session, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "session", "utility", "component-session"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/session/SessionView.tsx:SessionView",
+			"type": "function",
+			"name": "SessionView",
+			"filePath": "src/components/session/SessionView.tsx",
+			"lineRange": [29, 41],
+			"summary": "Function SessionView in src/components/session/SessionView.tsx, used by the surrounding component session module.",
+			"tags": ["function", "component-session", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/session/SubscriptionKeyLost.tsx",
+			"type": "file",
+			"name": "SubscriptionKeyLost.tsx",
+			"filePath": "src/components/session/SubscriptionKeyLost.tsx",
+			"summary": "React UI module for component session, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "session", "utility", "component-session"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/session/SubscriptionKeyLost.tsx:SubscriptionKeyLost",
+			"type": "function",
+			"name": "SubscriptionKeyLost",
+			"filePath": "src/components/session/SubscriptionKeyLost.tsx",
+			"lineRange": [14, 26],
+			"summary": "Function SubscriptionKeyLost in src/components/session/SubscriptionKeyLost.tsx, used by the surrounding component session module.",
+			"tags": ["function", "component-session", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/session/sessionDateHelpers.ts",
+			"type": "file",
+			"name": "sessionDateHelpers.ts",
+			"filePath": "src/components/session/sessionDateHelpers.ts",
+			"summary": "React UI module for component session, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "session", "utility", "component-session"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/session/sessionDateHelpers.ts:getChatDate",
+			"type": "function",
+			"name": "getChatDate",
+			"filePath": "src/components/session/sessionDateHelpers.ts",
+			"lineRange": [3, 15],
+			"summary": "Function getChatDate in src/components/session/sessionDateHelpers.ts, used by the surrounding component session module.",
+			"tags": ["function", "component-session", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/session/sessionDateHelpers.ts:getGroupChatDate",
+			"type": "function",
+			"name": "getGroupChatDate",
+			"filePath": "src/components/session/sessionDateHelpers.ts",
+			"lineRange": [13, 25],
+			"summary": "Function getGroupChatDate in src/components/session/sessionDateHelpers.ts, used by the surrounding component session module.",
+			"tags": ["function", "component-session", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/session/sessionHelpers.ts",
+			"type": "file",
+			"name": "sessionHelpers.ts",
+			"filePath": "src/components/session/sessionHelpers.ts",
+			"summary": "React UI module for component session, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "session", "utility", "component-session"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/session/sessionHelpers.ts:CHAT_TYPE_GROUP_CHAT",
+			"type": "function",
+			"name": "CHAT_TYPE_GROUP_CHAT",
+			"filePath": "src/components/session/sessionHelpers.ts",
+			"lineRange": [23, 35],
+			"summary": "Function CHAT_TYPE_GROUP_CHAT in src/components/session/sessionHelpers.ts, used by the surrounding component session module.",
+			"tags": ["function", "component-session", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/session/sessionHelpers.ts:CHAT_TYPE_SINGLE_CHAT",
+			"type": "function",
+			"name": "CHAT_TYPE_SINGLE_CHAT",
+			"filePath": "src/components/session/sessionHelpers.ts",
+			"lineRange": [24, 36],
+			"summary": "Function CHAT_TYPE_SINGLE_CHAT in src/components/session/sessionHelpers.ts, used by the surrounding component session module.",
+			"tags": ["function", "component-session", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/session/sessionHelpers.ts:SESSION_TYPE_ENQUIRY",
+			"type": "function",
+			"name": "SESSION_TYPE_ENQUIRY",
+			"filePath": "src/components/session/sessionHelpers.ts",
+			"lineRange": [30, 42],
+			"summary": "Function SESSION_TYPE_ENQUIRY in src/components/session/sessionHelpers.ts, used by the surrounding component session module.",
+			"tags": ["function", "component-session", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/session/sessionHelpers.ts:SESSION_TYPE_ARCHIVED",
+			"type": "function",
+			"name": "SESSION_TYPE_ARCHIVED",
+			"filePath": "src/components/session/sessionHelpers.ts",
+			"lineRange": [31, 43],
+			"summary": "Function SESSION_TYPE_ARCHIVED in src/components/session/sessionHelpers.ts, used by the surrounding component session module.",
+			"tags": ["function", "component-session", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/session/sessionHelpers.ts:SESSION_TYPE_GROUP",
+			"type": "function",
+			"name": "SESSION_TYPE_GROUP",
+			"filePath": "src/components/session/sessionHelpers.ts",
+			"lineRange": [32, 44],
+			"summary": "Function SESSION_TYPE_GROUP in src/components/session/sessionHelpers.ts, used by the surrounding component session module.",
+			"tags": ["function", "component-session", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/session/sessionHelpers.ts:SESSION_TYPE_SESSION",
+			"type": "function",
+			"name": "SESSION_TYPE_SESSION",
+			"filePath": "src/components/session/sessionHelpers.ts",
+			"lineRange": [33, 45],
+			"summary": "Function SESSION_TYPE_SESSION in src/components/session/sessionHelpers.ts, used by the surrounding component session module.",
+			"tags": ["function", "component-session", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/session/sessionHelpers.ts:SESSION_TYPE_UNKNOWN",
+			"type": "function",
+			"name": "SESSION_TYPE_UNKNOWN",
+			"filePath": "src/components/session/sessionHelpers.ts",
+			"lineRange": [34, 46],
+			"summary": "Function SESSION_TYPE_UNKNOWN in src/components/session/sessionHelpers.ts, used by the surrounding component session module.",
+			"tags": ["function", "component-session", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/session/sessionHelpers.ts:getSessionType",
+			"type": "function",
+			"name": "getSessionType",
+			"filePath": "src/components/session/sessionHelpers.ts",
+			"lineRange": [43, 55],
+			"summary": "Function getSessionType in src/components/session/sessionHelpers.ts, used by the surrounding component session module.",
+			"tags": ["function", "component-session", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/session/sessionHelpers.ts:getChatTypeForListItem",
+			"type": "function",
+			"name": "getChatTypeForListItem",
+			"filePath": "src/components/session/sessionHelpers.ts",
+			"lineRange": [63, 75],
+			"summary": "Function getChatTypeForListItem in src/components/session/sessionHelpers.ts, used by the surrounding component session module.",
+			"tags": ["function", "component-session", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/session/sessionHelpers.ts:isSessionChat",
+			"type": "function",
+			"name": "isSessionChat",
+			"filePath": "src/components/session/sessionHelpers.ts",
+			"lineRange": [68, 80],
+			"summary": "Function isSessionChat in src/components/session/sessionHelpers.ts, used by the surrounding component session module.",
+			"tags": ["function", "component-session", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/session/sessionHelpers.ts:isGroupChat",
+			"type": "function",
+			"name": "isGroupChat",
+			"filePath": "src/components/session/sessionHelpers.ts",
+			"lineRange": [74, 86],
+			"summary": "Function isGroupChat in src/components/session/sessionHelpers.ts, used by the surrounding component session module.",
+			"tags": ["function", "component-session", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/session/sessionHelpers.ts:getChatItemForSession",
+			"type": "function",
+			"name": "getChatItemForSession",
+			"filePath": "src/components/session/sessionHelpers.ts",
+			"lineRange": [80, 92],
+			"summary": "Function getChatItemForSession in src/components/session/sessionHelpers.ts, used by the surrounding component session module.",
+			"tags": ["function", "component-session", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/session/sessionHelpers.ts:SESSION_LIST_TAB_ARCHIVE",
+			"type": "function",
+			"name": "SESSION_LIST_TAB_ARCHIVE",
+			"filePath": "src/components/session/sessionHelpers.ts",
+			"lineRange": [93, 105],
+			"summary": "Function SESSION_LIST_TAB_ARCHIVE in src/components/session/sessionHelpers.ts, used by the surrounding component session module.",
+			"tags": ["function", "component-session", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/session/sessionHelpers.ts:getViewPathForType",
+			"type": "function",
+			"name": "getViewPathForType",
+			"filePath": "src/components/session/sessionHelpers.ts",
+			"lineRange": [97, 109],
+			"summary": "Function getViewPathForType in src/components/session/sessionHelpers.ts, used by the surrounding component session module.",
+			"tags": ["function", "component-session", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/session/sessionHelpers.ts:scrollToEnd",
+			"type": "function",
+			"name": "scrollToEnd",
+			"filePath": "src/components/session/sessionHelpers.ts",
+			"lineRange": [105, 117],
+			"summary": "Function scrollToEnd in src/components/session/sessionHelpers.ts, used by the surrounding component session module.",
+			"tags": ["function", "component-session", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/session/sessionHelpers.ts:prepareMessages",
+			"type": "function",
+			"name": "prepareMessages",
+			"filePath": "src/components/session/sessionHelpers.ts",
+			"lineRange": [147, 159],
+			"summary": "Function prepareMessages in src/components/session/sessionHelpers.ts, used by the surrounding component session module.",
+			"tags": ["function", "component-session", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/session/sessionHelpers.ts:selectDisplayName",
+			"type": "function",
+			"name": "selectDisplayName",
+			"filePath": "src/components/session/sessionHelpers.ts",
+			"lineRange": [180, 192],
+			"summary": "Function selectDisplayName in src/components/session/sessionHelpers.ts, used by the surrounding component session module.",
+			"tags": ["function", "component-session", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/session/sessionHelpers.ts:isMyMessage",
+			"type": "function",
+			"name": "isMyMessage",
+			"filePath": "src/components/session/sessionHelpers.ts",
+			"lineRange": [189, 195],
+			"summary": "Function isMyMessage in src/components/session/sessionHelpers.ts, used by the surrounding component session module.",
+			"tags": ["function", "component-session", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/session/sessionHelpers.ts:isUserModerator",
+			"type": "function",
+			"name": "isUserModerator",
+			"filePath": "src/components/session/sessionHelpers.ts",
+			"lineRange": [192, 195],
+			"summary": "Function isUserModerator in src/components/session/sessionHelpers.ts, used by the surrounding component session module.",
+			"tags": ["function", "component-session", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/session/smoothScrollHelper.ts",
+			"type": "file",
+			"name": "smoothScrollHelper.ts",
+			"filePath": "src/components/session/smoothScrollHelper.ts",
+			"summary": "React UI module for component session, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "session", "utility", "component-session"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/session/smoothScrollHelper.ts:smoothScroll",
+			"type": "function",
+			"name": "smoothScroll",
+			"filePath": "src/components/session/smoothScrollHelper.ts",
+			"lineRange": [30, 42],
+			"summary": "Function smoothScroll in src/components/session/smoothScrollHelper.ts, used by the surrounding component session module.",
+			"tags": ["function", "component-session", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/session/subscriptionKeyLostHelper.ts",
+			"type": "file",
+			"name": "subscriptionKeyLostHelper.ts",
+			"filePath": "src/components/session/subscriptionKeyLostHelper.ts",
+			"summary": "React UI module for component session, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "session", "component-session"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/sessionAssign/RequestSessionAssign.tsx",
+			"type": "file",
+			"name": "RequestSessionAssign.tsx",
+			"filePath": "src/components/sessionAssign/RequestSessionAssign.tsx",
+			"summary": "React UI module for component session assign, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"session",
+				"utility",
+				"component-session-assign"
+			],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/sessionAssign/RequestSessionAssign.tsx:ACCEPTED_GROUP_CLOSE",
+			"type": "function",
+			"name": "ACCEPTED_GROUP_CLOSE",
+			"filePath": "src/components/sessionAssign/RequestSessionAssign.tsx",
+			"lineRange": [34, 46],
+			"summary": "Function ACCEPTED_GROUP_CLOSE in src/components/sessionAssign/RequestSessionAssign.tsx, used by the surrounding component session assign module.",
+			"tags": ["function", "component-session-assign", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionAssign/RequestSessionAssign.tsx:RequestSessionAssign",
+			"type": "function",
+			"name": "RequestSessionAssign",
+			"filePath": "src/components/sessionAssign/RequestSessionAssign.tsx",
+			"lineRange": [36, 48],
+			"summary": "Function RequestSessionAssign in src/components/sessionAssign/RequestSessionAssign.tsx, used by the surrounding component session assign module.",
+			"tags": ["function", "component-session-assign", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/sessionAssign/sessionAssignHelper.tsx",
+			"type": "file",
+			"name": "sessionAssignHelper.tsx",
+			"filePath": "src/components/sessionAssign/sessionAssignHelper.tsx",
+			"summary": "React UI module for component session assign, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"session",
+				"utility",
+				"component-session-assign"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionAssign/sessionAssignHelper.tsx:prepareSelectDropdown",
+			"type": "function",
+			"name": "prepareSelectDropdown",
+			"filePath": "src/components/sessionAssign/sessionAssignHelper.tsx",
+			"lineRange": [5, 17],
+			"summary": "Function prepareSelectDropdown in src/components/sessionAssign/sessionAssignHelper.tsx, used by the surrounding component session assign module.",
+			"tags": ["function", "component-session-assign", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionAssign/sessionAssignHelper.tsx:prepareConsultantDataForSelect",
+			"type": "function",
+			"name": "prepareConsultantDataForSelect",
+			"filePath": "src/components/sessionAssign/sessionAssignHelper.tsx",
+			"lineRange": [27, 39],
+			"summary": "Function prepareConsultantDataForSelect in src/components/sessionAssign/sessionAssignHelper.tsx, used by the surrounding component session assign module.",
+			"tags": ["function", "component-session-assign", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/sessionHeader/ConsultantSearchLoader.tsx",
+			"type": "file",
+			"name": "ConsultantSearchLoader.tsx",
+			"filePath": "src/components/sessionHeader/ConsultantSearchLoader.tsx",
+			"summary": "React UI module for component session header, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "session", "component-session-header"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/sessionHeader/GroupChatHeader/index.tsx",
+			"type": "file",
+			"name": "index.tsx",
+			"filePath": "src/components/sessionHeader/GroupChatHeader/index.tsx",
+			"summary": "React UI module for component session header, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"session",
+				"utility",
+				"component-session-header"
+			],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/sessionHeader/GroupChatHeader/index.tsx:GroupChatHeader",
+			"type": "function",
+			"name": "GroupChatHeader",
+			"filePath": "src/components/sessionHeader/GroupChatHeader/index.tsx",
+			"lineRange": [43, 55],
+			"summary": "Function GroupChatHeader in src/components/sessionHeader/GroupChatHeader/index.tsx, used by the surrounding component session header module.",
+			"tags": ["function", "component-session-header", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/sessionHeader/SessionHeaderComponent.tsx",
+			"type": "file",
+			"name": "SessionHeaderComponent.tsx",
+			"filePath": "src/components/sessionHeader/SessionHeaderComponent.tsx",
+			"summary": "React UI module for component session header, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"session",
+				"utility",
+				"component-session-header"
+			],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/sessionHeader/SessionHeaderComponent.tsx:SessionHeaderComponent",
+			"type": "function",
+			"name": "SessionHeaderComponent",
+			"filePath": "src/components/sessionHeader/SessionHeaderComponent.tsx",
+			"lineRange": [71, 83],
+			"summary": "Function SessionHeaderComponent in src/components/sessionHeader/SessionHeaderComponent.tsx, used by the surrounding component session header module.",
+			"tags": ["function", "component-session-header", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/sessionMenu/SessionMenu.tsx",
+			"type": "file",
+			"name": "SessionMenu.tsx",
+			"filePath": "src/components/sessionMenu/SessionMenu.tsx",
+			"summary": "React UI module for component session menu, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"session",
+				"utility",
+				"component-session-menu"
+			],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/sessionMenu/SessionMenu.tsx:SessionMenu",
+			"type": "function",
+			"name": "SessionMenu",
+			"filePath": "src/components/sessionMenu/SessionMenu.tsx",
+			"lineRange": [85, 97],
+			"summary": "Function SessionMenu in src/components/sessionMenu/SessionMenu.tsx, used by the surrounding component session menu module.",
+			"tags": ["function", "component-session-menu", "exported"],
+			"complexity": "simple"
+		}
+	],
+	"edges": [
+		{
+			"source": "file:src/components/pseudonym/BreathingTutorialCard.tsx",
+			"target": "file:src/components/pseudonym/BreathingTutorialCard.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/pseudonym/BreathingTutorialCard.tsx",
+			"target": "file:src/components/pseudonym/PseudonymCard.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/pseudonym/ConsultantAcceptedActionBar.tsx",
+			"target": "file:src/components/pseudonym/ConsultantAcceptedActionBar.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/pseudonym/PrivacyMessageCard.tsx",
+			"target": "file:src/components/pseudonym/BotMessageAnimation.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/pseudonym/PrivacyMessageCard.tsx",
+			"target": "file:src/components/pseudonym/PrivacyMessageCard.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/pseudonym/PrivacyMessageCard.tsx",
+			"target": "file:src/components/pseudonym/PseudonymCard.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/pseudonym/PseudonymActionBar.tsx",
+			"target": "file:src/components/pseudonym/PseudonymActionBar.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/pseudonym/PseudonymCard.tsx",
+			"target": "file:src/components/pseudonym/AnimalAvatar.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/pseudonym/PseudonymCard.tsx",
+			"target": "file:src/components/pseudonym/BotMessageAnimation.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/pseudonym/PseudonymCard.tsx",
+			"target": "file:src/components/pseudonym/PseudonymCard.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/pseudonym/PseudonymCard.tsx",
+			"target": "file:src/utils/pseudonymGenerator.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/pseudonym/WaitingQueueActionBar.tsx",
+			"target": "file:src/components/pseudonym/WaitingQueueActionBar.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/releaseNote/ReleaseNote.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/releaseNote/ReleaseNote.tsx",
+			"target": "file:src/components/checkbox/Checkbox.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/releaseNote/ReleaseNote.tsx",
+			"target": "file:src/components/devToolbar/DevToolbar.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/releaseNote/ReleaseNote.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/releaseNote/ReleaseNote.tsx",
+			"target": "file:src/components/messageSubmitInterface/richtextHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/releaseNote/ReleaseNote.tsx",
+			"target": "file:src/components/overlay/Overlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/releaseNote/ReleaseNote.tsx",
+			"target": "file:src/components/releaseNote/releaseNote.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/releaseNote/ReleaseNote.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/releaseNote/ReleaseNote.tsx",
+			"target": "file:src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/releaseNote/ReleaseNote.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/select/SelectDropdown.tsx",
+			"target": "function:src/components/select/SelectDropdown.tsx:MENUPLACEMENT_TOP",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/select/SelectDropdown.tsx",
+			"target": "function:src/components/select/SelectDropdown.tsx:MENUPLACEMENT_TOP",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/select/SelectDropdown.tsx",
+			"target": "function:src/components/select/SelectDropdown.tsx:MENUPLACEMENT_BOTTOM",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/select/SelectDropdown.tsx",
+			"target": "function:src/components/select/SelectDropdown.tsx:MENUPLACEMENT_BOTTOM",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/select/SelectDropdown.tsx",
+			"target": "function:src/components/select/SelectDropdown.tsx:MENUPLACEMENT_RIGHT",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/select/SelectDropdown.tsx",
+			"target": "function:src/components/select/SelectDropdown.tsx:MENUPLACEMENT_RIGHT",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/select/SelectDropdown.tsx",
+			"target": "function:src/components/select/SelectDropdown.tsx:MENUPLACEMENT_BOTTOM_LEFT",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/select/SelectDropdown.tsx",
+			"target": "function:src/components/select/SelectDropdown.tsx:MENUPLACEMENT_BOTTOM_LEFT",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/select/SelectDropdown.tsx",
+			"target": "function:src/components/select/SelectDropdown.tsx:SelectDropdown",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/select/SelectDropdown.tsx",
+			"target": "function:src/components/select/SelectDropdown.tsx:SelectDropdown",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/select/SelectDropdown.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/select/SelectDropdown.tsx",
+			"target": "file:src/hooks/useResponsive.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/select/SelectDropdown.tsx",
+			"target": "file:src/resources/img/icons.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/AcceptAssign.tsx",
+			"target": "function:src/components/session/AcceptAssign.tsx:AcceptAssign",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/session/AcceptAssign.tsx",
+			"target": "function:src/components/session/AcceptAssign.tsx:AcceptAssign",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/session/AcceptAssign.tsx",
+			"target": "file:src/api/apiGetSessionRooms.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/AcceptAssign.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/AcceptAssign.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/AcceptAssign.tsx",
+			"target": "file:src/components/overlay/Overlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/AcceptAssign.tsx",
+			"target": "file:src/components/session/sessionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/AcceptAssign.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/AcceptAssign.tsx",
+			"target": "file:src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/AcceptAssign.tsx",
+			"target": "file:src/hooks/useE2EE.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/AcceptAssign.tsx",
+			"target": "file:src/hooks/useE2EEViewElements.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/AcceptAssign.tsx",
+			"target": "file:src/hooks/useSearchParams.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/AcceptAssign.tsx",
+			"target": "file:src/hooks/useTimeoutOverlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/AcceptAssign.tsx",
+			"target": "file:src/hooks/useWatcher.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/DeleteSession.tsx",
+			"target": "file:src/api/apiDeleteRemove.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/DeleteSession.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/DeleteSession.tsx",
+			"target": "file:src/components/overlay/Overlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/EncryptionBanner.stories.tsx",
+			"target": "file:src/components/session/EncryptionBanner.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/EncryptionBanner.tsx",
+			"target": "function:src/components/session/EncryptionBanner.tsx:EncryptionBanner",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/session/EncryptionBanner.tsx",
+			"target": "function:src/components/session/EncryptionBanner.tsx:EncryptionBanner",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/session/EncryptionBanner.tsx",
+			"target": "file:src/components/session/encryptionBanner.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/RoomNotFound.tsx",
+			"target": "function:src/components/session/RoomNotFound.tsx:RoomNotFound",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/session/RoomNotFound.tsx",
+			"target": "function:src/components/session/RoomNotFound.tsx:RoomNotFound",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/session/RoomNotFound.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/RoomNotFound.tsx",
+			"target": "file:src/components/messageSubmitInterface/MessageSubmitInfo.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionItemComponent.tsx",
+			"target": "function:src/components/session/SessionItemComponent.tsx:SessionItemComponent",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/session/SessionItemComponent.tsx",
+			"target": "function:src/components/session/SessionItemComponent.tsx:SessionItemComponent",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/session/SessionItemComponent.tsx",
+			"target": "file:src/api/apiGetAnonymousEnquiryDetails.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionItemComponent.tsx",
+			"target": "file:src/api/apiGetSessionSupervisors.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionItemComponent.tsx",
+			"target": "file:src/api/apiGetUserData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionItemComponent.tsx",
+			"target": "file:src/api/apiPatchNotificationActiveView.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionItemComponent.tsx",
+			"target": "file:src/api/apiPatchUserData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionItemComponent.tsx",
+			"target": "file:src/api/apiPostAdditionalEnquiry.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionItemComponent.tsx",
+			"target": "file:src/api/apiPostError.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionItemComponent.tsx",
+			"target": "file:src/components/app/navigationHandler.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionItemComponent.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionItemComponent.tsx",
+			"target": "file:src/components/dragAndDropArea/DragAndDropArea.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionItemComponent.tsx",
+			"target": "file:src/components/legalLinks/LegalLinks.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionItemComponent.tsx",
+			"target": "file:src/components/message/messageConstants.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionItemComponent.tsx",
+			"target": "file:src/components/message/MessageItemComponent.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionItemComponent.tsx",
+			"target": "file:src/components/message/UserAvatar.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionItemComponent.tsx",
+			"target": "file:src/components/messageSubmitInterface/messageSubmitInterfaceSkeleton.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionItemComponent.tsx",
+			"target": "file:src/components/pseudonym/AnonymousConsentGate.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionItemComponent.tsx",
+			"target": "file:src/components/pseudonym/BreathingTutorialCard.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionItemComponent.tsx",
+			"target": "file:src/components/pseudonym/ConsultantAcceptedActionBar.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionItemComponent.tsx",
+			"target": "file:src/components/pseudonym/PrivacyMessageCard.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionItemComponent.tsx",
+			"target": "file:src/components/pseudonym/PseudonymActionBar.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionItemComponent.tsx",
+			"target": "file:src/components/pseudonym/PseudonymCard.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionItemComponent.tsx",
+			"target": "file:src/components/pseudonym/WaitingQueueActionBar.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionItemComponent.tsx",
+			"target": "file:src/components/session/AcceptAssign.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionItemComponent.tsx",
+			"target": "file:src/components/session/EncryptionBanner.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionItemComponent.tsx",
+			"target": "file:src/components/session/sessionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionItemComponent.tsx",
+			"target": "file:src/components/session/smoothScrollHelper.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionItemComponent.tsx",
+			"target": "file:src/components/sessionHeader/SessionHeaderComponent.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionItemComponent.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionItemComponent.tsx",
+			"target": "file:src/components/videoConference/WaitingRoomContent.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionItemComponent.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionItemComponent.tsx",
+			"target": "file:src/globalState/interfaces/SessionsDataInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionItemComponent.tsx",
+			"target": "file:src/globalState/provider/LegalLinksProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionItemComponent.tsx",
+			"target": "file:src/globalState/provider/RocketChatUsersOfRoomProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionItemComponent.tsx",
+			"target": "file:src/hooks/useDebounceCallback.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionItemComponent.tsx",
+			"target": "file:src/hooks/useE2EE.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionItemComponent.tsx",
+			"target": "file:src/utils/dateHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionItemComponent.tsx",
+			"target": "file:src/utils/encryptionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionItemComponent.tsx",
+			"target": "file:src/utils/keycloakSession.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionItemComponent.tsx",
+			"target": "file:src/utils/pseudonymGenerator.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionItemComponent.tsx",
+			"target": "file:src/utils/tenantSettingsHelper.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionStream.tsx",
+			"target": "function:src/components/session/SessionStream.tsx:SessionStream",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/session/SessionStream.tsx",
+			"target": "function:src/components/session/SessionStream.tsx:SessionStream",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/session/SessionStream.tsx",
+			"target": "file:src/api/apiRocketChatSettingsPublic.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionStream.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionStream.tsx",
+			"target": "file:src/components/app/Loading.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionStream.tsx",
+			"target": "file:src/components/app/RocketChat.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionStream.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionStream.tsx",
+			"target": "file:src/components/logout/logout.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionStream.tsx",
+			"target": "file:src/components/overlay/Overlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionStream.tsx",
+			"target": "file:src/components/session/sessionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionStream.tsx",
+			"target": "file:src/components/session/SessionItemComponent.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionStream.tsx",
+			"target": "file:src/components/sessionAssign/sessionAssignHelper.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionStream.tsx",
+			"target": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionStream.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionStream.tsx",
+			"target": "file:src/hooks/useDebounceCallback.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionStream.tsx",
+			"target": "file:src/hooks/useE2EE.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionStream.tsx",
+			"target": "file:src/hooks/useSearchParams.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionStream.tsx",
+			"target": "file:src/hooks/useUpdatingRef.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionStream.tsx",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionStream.tsx",
+			"target": "file:src/services/messageEventEmitter.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionStream.tsx",
+			"target": "file:src/utils/useTyping.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionView.tsx",
+			"target": "function:src/components/session/SessionView.tsx:SessionView",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/session/SessionView.tsx",
+			"target": "function:src/components/session/SessionView.tsx:SessionView",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/session/SessionView.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionView.tsx",
+			"target": "file:src/components/app/Loading.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionView.tsx",
+			"target": "file:src/components/app/navigationHandler.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionView.tsx",
+			"target": "file:src/components/groupChat/JoinGroupChatView.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionView.tsx",
+			"target": "file:src/components/session/sessionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionView.tsx",
+			"target": "file:src/components/session/SessionStream.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionView.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionView.tsx",
+			"target": "file:src/hooks/useResponsive.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionView.tsx",
+			"target": "file:src/hooks/useSearchParams.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionView.tsx",
+			"target": "file:src/hooks/useSession.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionView.tsx",
+			"target": "file:src/hooks/useUpdatingRef.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionView.tsx",
+			"target": "file:src/store/agencyLogoAtom.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionView.tsx",
+			"target": "file:src/utils/encryptionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SubscriptionKeyLost.tsx",
+			"target": "function:src/components/session/SubscriptionKeyLost.tsx:SubscriptionKeyLost",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/session/SubscriptionKeyLost.tsx",
+			"target": "function:src/components/session/SubscriptionKeyLost.tsx:SubscriptionKeyLost",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/session/SubscriptionKeyLost.tsx",
+			"target": "file:src/api/apiSendAliasMessage.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SubscriptionKeyLost.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SubscriptionKeyLost.tsx",
+			"target": "file:src/components/messageSubmitInterface/MessageSubmitInfo.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SubscriptionKeyLost.tsx",
+			"target": "file:src/components/overlay/Overlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SubscriptionKeyLost.tsx",
+			"target": "file:src/components/session/subscriptionKeyLostHelper.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SubscriptionKeyLost.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/sessionDateHelpers.ts",
+			"target": "function:src/components/session/sessionDateHelpers.ts:getChatDate",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/session/sessionDateHelpers.ts",
+			"target": "function:src/components/session/sessionDateHelpers.ts:getChatDate",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/session/sessionDateHelpers.ts",
+			"target": "function:src/components/session/sessionDateHelpers.ts:getGroupChatDate",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/session/sessionDateHelpers.ts",
+			"target": "function:src/components/session/sessionDateHelpers.ts:getGroupChatDate",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/session/sessionDateHelpers.ts",
+			"target": "file:src/components/groupChat/createChatHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "function:src/components/session/sessionHelpers.ts:CHAT_TYPE_GROUP_CHAT",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "function:src/components/session/sessionHelpers.ts:CHAT_TYPE_GROUP_CHAT",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "function:src/components/session/sessionHelpers.ts:CHAT_TYPE_SINGLE_CHAT",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "function:src/components/session/sessionHelpers.ts:CHAT_TYPE_SINGLE_CHAT",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "function:src/components/session/sessionHelpers.ts:SESSION_TYPE_ENQUIRY",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "function:src/components/session/sessionHelpers.ts:SESSION_TYPE_ENQUIRY",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "function:src/components/session/sessionHelpers.ts:SESSION_TYPE_ARCHIVED",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "function:src/components/session/sessionHelpers.ts:SESSION_TYPE_ARCHIVED",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "function:src/components/session/sessionHelpers.ts:SESSION_TYPE_GROUP",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "function:src/components/session/sessionHelpers.ts:SESSION_TYPE_GROUP",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "function:src/components/session/sessionHelpers.ts:SESSION_TYPE_SESSION",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "function:src/components/session/sessionHelpers.ts:SESSION_TYPE_SESSION",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "function:src/components/session/sessionHelpers.ts:SESSION_TYPE_UNKNOWN",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "function:src/components/session/sessionHelpers.ts:SESSION_TYPE_UNKNOWN",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "function:src/components/session/sessionHelpers.ts:getSessionType",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "function:src/components/session/sessionHelpers.ts:getSessionType",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "function:src/components/session/sessionHelpers.ts:getChatTypeForListItem",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "function:src/components/session/sessionHelpers.ts:getChatTypeForListItem",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "function:src/components/session/sessionHelpers.ts:isSessionChat",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "function:src/components/session/sessionHelpers.ts:isSessionChat",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "function:src/components/session/sessionHelpers.ts:isGroupChat",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "function:src/components/session/sessionHelpers.ts:isGroupChat",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "function:src/components/session/sessionHelpers.ts:getChatItemForSession",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "function:src/components/session/sessionHelpers.ts:getChatItemForSession",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "function:src/components/session/sessionHelpers.ts:SESSION_LIST_TAB_ARCHIVE",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "function:src/components/session/sessionHelpers.ts:SESSION_LIST_TAB_ARCHIVE",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "function:src/components/session/sessionHelpers.ts:getViewPathForType",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "function:src/components/session/sessionHelpers.ts:getViewPathForType",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "function:src/components/session/sessionHelpers.ts:scrollToEnd",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "function:src/components/session/sessionHelpers.ts:scrollToEnd",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "function:src/components/session/sessionHelpers.ts:prepareMessages",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "function:src/components/session/sessionHelpers.ts:prepareMessages",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "function:src/components/session/sessionHelpers.ts:selectDisplayName",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "function:src/components/session/sessionHelpers.ts:selectDisplayName",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "function:src/components/session/sessionHelpers.ts:isMyMessage",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "function:src/components/session/sessionHelpers.ts:isMyMessage",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "function:src/components/session/sessionHelpers.ts:isUserModerator",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "function:src/components/session/sessionHelpers.ts:isUserModerator",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "file:src/components/message/MessageItemComponent.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "file:src/utils/dateHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/sessionHelpers.ts",
+			"target": "file:src/utils/encryptionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/smoothScrollHelper.ts",
+			"target": "function:src/components/session/smoothScrollHelper.ts:smoothScroll",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/session/smoothScrollHelper.ts",
+			"target": "function:src/components/session/smoothScrollHelper.ts:smoothScroll",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/session/subscriptionKeyLostHelper.ts",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/subscriptionKeyLostHelper.ts",
+			"target": "file:src/components/overlay/Overlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionAssign/RequestSessionAssign.tsx",
+			"target": "function:src/components/sessionAssign/RequestSessionAssign.tsx:ACCEPTED_GROUP_CLOSE",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionAssign/RequestSessionAssign.tsx",
+			"target": "function:src/components/sessionAssign/RequestSessionAssign.tsx:ACCEPTED_GROUP_CLOSE",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionAssign/RequestSessionAssign.tsx",
+			"target": "function:src/components/sessionAssign/RequestSessionAssign.tsx:RequestSessionAssign",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionAssign/RequestSessionAssign.tsx",
+			"target": "function:src/components/sessionAssign/RequestSessionAssign.tsx:RequestSessionAssign",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionAssign/RequestSessionAssign.tsx",
+			"target": "file:src/api/apiSendAliasMessage.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionAssign/RequestSessionAssign.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionAssign/RequestSessionAssign.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionAssign/RequestSessionAssign.tsx",
+			"target": "file:src/components/overlay/Overlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionAssign/RequestSessionAssign.tsx",
+			"target": "file:src/components/select/SelectDropdown.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionAssign/RequestSessionAssign.tsx",
+			"target": "file:src/components/sessionAssign/sessionAssignHelper.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionAssign/RequestSessionAssign.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionAssign/RequestSessionAssign.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionAssign/RequestSessionAssign.tsx",
+			"target": "file:src/hooks/useE2EE.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionAssign/sessionAssignHelper.tsx",
+			"target": "function:src/components/sessionAssign/sessionAssignHelper.tsx:prepareSelectDropdown",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionAssign/sessionAssignHelper.tsx",
+			"target": "function:src/components/sessionAssign/sessionAssignHelper.tsx:prepareSelectDropdown",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionAssign/sessionAssignHelper.tsx",
+			"target": "function:src/components/sessionAssign/sessionAssignHelper.tsx:prepareConsultantDataForSelect",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionAssign/sessionAssignHelper.tsx",
+			"target": "function:src/components/sessionAssign/sessionAssignHelper.tsx:prepareConsultantDataForSelect",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionAssign/sessionAssignHelper.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionAssign/sessionAssignHelper.tsx",
+			"target": "file:src/components/select/SelectDropdown.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionAssign/sessionAssignHelper.tsx",
+			"target": "file:src/utils/encryptionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/ConsultantSearchLoader.tsx",
+			"target": "file:src/components/sessionHeader/consultantSearchLoader.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/GroupChatHeader/index.tsx",
+			"target": "function:src/components/sessionHeader/GroupChatHeader/index.tsx:GroupChatHeader",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionHeader/GroupChatHeader/index.tsx",
+			"target": "function:src/components/sessionHeader/GroupChatHeader/index.tsx:GroupChatHeader",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionHeader/GroupChatHeader/index.tsx",
+			"target": "file:src/components/app/navigationHandler.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/GroupChatHeader/index.tsx",
+			"target": "file:src/components/banUser/BanUser.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/GroupChatHeader/index.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/GroupChatHeader/index.tsx",
+			"target": "file:src/components/flyoutMenu/FlyoutMenu.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/GroupChatHeader/index.tsx",
+			"target": "file:src/components/message/UserAvatar.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/GroupChatHeader/index.tsx",
+			"target": "file:src/components/session/sessionDateHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/GroupChatHeader/index.tsx",
+			"target": "file:src/components/session/sessionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/GroupChatHeader/index.tsx",
+			"target": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/GroupChatHeader/index.tsx",
+			"target": "file:src/components/tag/Tag.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/GroupChatHeader/index.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/GroupChatHeader/index.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/GroupChatHeader/index.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/GroupChatHeader/index.tsx",
+			"target": "file:src/hooks/useSearchParams.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/GroupChatHeader/index.tsx",
+			"target": "file:src/resources/img/icons.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/GroupChatHeader/index.tsx",
+			"target": "file:src/services/CallManager.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/GroupChatHeader/index.tsx",
+			"target": "file:src/services/matrixClientService.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/GroupChatHeader/index.tsx",
+			"target": "file:src/utils/encryptionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/GroupChatHeader/index.tsx",
+			"target": "file:src/utils/tenantSettingsHelper.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/SessionHeaderComponent.tsx",
+			"target": "function:src/components/sessionHeader/SessionHeaderComponent.tsx:SessionHeaderComponent",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionHeader/SessionHeaderComponent.tsx",
+			"target": "function:src/components/sessionHeader/SessionHeaderComponent.tsx:SessionHeaderComponent",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionHeader/SessionHeaderComponent.tsx",
+			"target": "file:src/api/apiAddSessionSupervisor.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/SessionHeaderComponent.tsx",
+			"target": "file:src/api/apiDeleteSessionAndUser.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/SessionHeaderComponent.tsx",
+			"target": "file:src/api/apiGetAgencyConsultantList.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/SessionHeaderComponent.tsx",
+			"target": "file:src/api/apiGetSessionSupervisors.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/SessionHeaderComponent.tsx",
+			"target": "file:src/api/apiRemoveSessionSupervisor.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/SessionHeaderComponent.tsx",
+			"target": "file:src/api/apiSendMessage.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/SessionHeaderComponent.tsx",
+			"target": "file:src/components/app/navigationHandler.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/SessionHeaderComponent.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/SessionHeaderComponent.tsx",
+			"target": "file:src/components/message/messageConstants.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/SessionHeaderComponent.tsx",
+			"target": "file:src/components/message/UserAvatar.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/SessionHeaderComponent.tsx",
+			"target": "file:src/components/profile/profileHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/SessionHeaderComponent.tsx",
+			"target": "file:src/components/select/SelectDropdown.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/SessionHeaderComponent.tsx",
+			"target": "file:src/components/session/sessionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/SessionHeaderComponent.tsx",
+			"target": "file:src/components/sessionHeader/ConsultantSearchLoader.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/SessionHeaderComponent.tsx",
+			"target": "file:src/components/sessionHeader/GroupChatHeader/index.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/SessionHeaderComponent.tsx",
+			"target": "file:src/components/sessionMenu/SessionMenu.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/SessionHeaderComponent.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/SessionHeaderComponent.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/SessionHeaderComponent.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/SessionHeaderComponent.tsx",
+			"target": "file:src/hooks/useResponsive.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/SessionHeaderComponent.tsx",
+			"target": "file:src/hooks/useSearchParams.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/SessionHeaderComponent.tsx",
+			"target": "file:src/utils/tenantSettingsHelper.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/SessionHeaderComponent.tsx",
+			"target": "file:src/utils/translate.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionMenu/SessionMenu.tsx",
+			"target": "function:src/components/sessionMenu/SessionMenu.tsx:SessionMenu",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionMenu/SessionMenu.tsx",
+			"target": "function:src/components/sessionMenu/SessionMenu.tsx:SessionMenu",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionMenu/SessionMenu.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionMenu/SessionMenu.tsx",
+			"target": "file:src/components/app/navigationHandler.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionMenu/SessionMenu.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionMenu/SessionMenu.tsx",
+			"target": "file:src/components/groupChat/groupChatHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionMenu/SessionMenu.tsx",
+			"target": "file:src/components/legalLinks/LegalLinks.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionMenu/SessionMenu.tsx",
+			"target": "file:src/components/logout/logout.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionMenu/SessionMenu.tsx",
+			"target": "file:src/components/overlay/Overlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionMenu/SessionMenu.tsx",
+			"target": "file:src/components/session/DeleteSession.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionMenu/SessionMenu.tsx",
+			"target": "file:src/components/session/sessionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionMenu/SessionMenu.tsx",
+			"target": "file:src/components/sessionMenu/sessionMenuHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionMenu/SessionMenu.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionMenu/SessionMenu.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionMenu/SessionMenu.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionMenu/SessionMenu.tsx",
+			"target": "file:src/globalState/provider/LegalLinksProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionMenu/SessionMenu.tsx",
+			"target": "file:src/globalState/provider/RocketChatUsersOfRoomProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionMenu/SessionMenu.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionMenu/SessionMenu.tsx",
+			"target": "file:src/hooks/useSearchParams.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionMenu/SessionMenu.tsx",
+			"target": "file:src/services/CallManager.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionMenu/SessionMenu.tsx",
+			"target": "file:src/utils/tenantSettingsHelper.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionMenu/SessionMenu.tsx",
+			"target": "file:src/utils/videoCallHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		}
+	]
+}

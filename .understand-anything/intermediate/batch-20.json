@@ -1,0 +1,3532 @@
+{
+	"nodes": [
+		{
+			"id": "file:src/components/app/AuthenticatedApp.tsx",
+			"type": "file",
+			"name": "AuthenticatedApp.tsx",
+			"filePath": "src/components/app/AuthenticatedApp.tsx",
+			"summary": "React UI module for component app, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "authentication", "utility", "component-app"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/app/AuthenticatedApp.tsx:AuthenticatedApp",
+			"type": "function",
+			"name": "AuthenticatedApp",
+			"filePath": "src/components/app/AuthenticatedApp.tsx",
+			"lineRange": [43, 55],
+			"summary": "Function AuthenticatedApp in src/components/app/AuthenticatedApp.tsx, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/app/RocketChat.ts",
+			"type": "file",
+			"name": "RocketChat.ts",
+			"filePath": "src/components/app/RocketChat.ts",
+			"summary": "React UI module for component app, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-app"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:MSG_CONNECT",
+			"type": "function",
+			"name": "MSG_CONNECT",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [5, 17],
+			"summary": "Function MSG_CONNECT in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:MSG_METHOD",
+			"type": "function",
+			"name": "MSG_METHOD",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [6, 18],
+			"summary": "Function MSG_METHOD in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:MSG_PONG",
+			"type": "function",
+			"name": "MSG_PONG",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [7, 19],
+			"summary": "Function MSG_PONG in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:MSG_READY",
+			"type": "function",
+			"name": "MSG_READY",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [8, 20],
+			"summary": "Function MSG_READY in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:MSG_SUB",
+			"type": "function",
+			"name": "MSG_SUB",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [9, 21],
+			"summary": "Function MSG_SUB in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:MSG_UNSUB",
+			"type": "function",
+			"name": "MSG_UNSUB",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [10, 22],
+			"summary": "Function MSG_UNSUB in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:STATUS_OFFLINE",
+			"type": "function",
+			"name": "STATUS_OFFLINE",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [23, 35],
+			"summary": "Function STATUS_OFFLINE in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:STATUS_ONLINE",
+			"type": "function",
+			"name": "STATUS_ONLINE",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [24, 36],
+			"summary": "Function STATUS_ONLINE in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:STATUS_AWAY",
+			"type": "function",
+			"name": "STATUS_AWAY",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [25, 37],
+			"summary": "Function STATUS_AWAY in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:STATUS_BUSY",
+			"type": "function",
+			"name": "STATUS_BUSY",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [26, 38],
+			"summary": "Function STATUS_BUSY in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:METHOD_ARCHIVE_ROOM",
+			"type": "function",
+			"name": "METHOD_ARCHIVE_ROOM",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [71, 83],
+			"summary": "Function METHOD_ARCHIVE_ROOM in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:METHOD_CREATE_CHANNEL",
+			"type": "function",
+			"name": "METHOD_CREATE_CHANNEL",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [79, 91],
+			"summary": "Function METHOD_CREATE_CHANNEL in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:METHOD_CREATE_DIRECT_MESSAGE",
+			"type": "function",
+			"name": "METHOD_CREATE_DIRECT_MESSAGE",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [87, 99],
+			"summary": "Function METHOD_CREATE_DIRECT_MESSAGE in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:METHOD_CREATE_PRIVATE_GROUP",
+			"type": "function",
+			"name": "METHOD_CREATE_PRIVATE_GROUP",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [98, 110],
+			"summary": "Function METHOD_CREATE_PRIVATE_GROUP in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:METHOD_DELETE_MESSAGE",
+			"type": "function",
+			"name": "METHOD_DELETE_MESSAGE",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [109, 121],
+			"summary": "Function METHOD_DELETE_MESSAGE in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:METHOD_ERASE_ROOM",
+			"type": "function",
+			"name": "METHOD_ERASE_ROOM",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [117, 129],
+			"summary": "Function METHOD_ERASE_ROOM in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:METHOD_E2EE_FETCH_MY_KEYS",
+			"type": "function",
+			"name": "METHOD_E2EE_FETCH_MY_KEYS",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [125, 137],
+			"summary": "Function METHOD_E2EE_FETCH_MY_KEYS in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:METHOD_E2EE_GET_USERS_OF_ROOM_WITHOUT_KEY",
+			"type": "function",
+			"name": "METHOD_E2EE_GET_USERS_OF_ROOM_WITHOUT_KEY",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [136, 148],
+			"summary": "Function METHOD_E2EE_GET_USERS_OF_ROOM_WITHOUT_KEY in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:METHOD_E2EE_SET_ROOM_KEY",
+			"type": "function",
+			"name": "METHOD_E2EE_SET_ROOM_KEY",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [148, 160],
+			"summary": "Function METHOD_E2EE_SET_ROOM_KEY in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:METHOD_E2EE_SET_USER_PUBLIC_AND_PRIVATE_KEYS",
+			"type": "function",
+			"name": "METHOD_E2EE_SET_USER_PUBLIC_AND_PRIVATE_KEYS",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [156, 168],
+			"summary": "Function METHOD_E2EE_SET_USER_PUBLIC_AND_PRIVATE_KEYS in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:METHOD_E2EE_UPDATE_GROUP_KEY",
+			"type": "function",
+			"name": "METHOD_E2EE_UPDATE_GROUP_KEY",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [168, 180],
+			"summary": "Function METHOD_E2EE_UPDATE_GROUP_KEY in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:METHOD_TOGGLE_FAVORITE",
+			"type": "function",
+			"name": "METHOD_TOGGLE_FAVORITE",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [179, 191],
+			"summary": "Function METHOD_TOGGLE_FAVORITE in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:METHOD_PERMISSIONS_GET",
+			"type": "function",
+			"name": "METHOD_PERMISSIONS_GET",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [187, 199],
+			"summary": "Function METHOD_PERMISSIONS_GET in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:METHOD_PUBLIC_SETTINGS_GET",
+			"type": "function",
+			"name": "METHOD_PUBLIC_SETTINGS_GET",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [195, 207],
+			"summary": "Function METHOD_PUBLIC_SETTINGS_GET in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:METHOD_GET_ROOM_ROLES",
+			"type": "function",
+			"name": "METHOD_GET_ROOM_ROLES",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [206, 218],
+			"summary": "Function METHOD_GET_ROOM_ROLES in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:METHOD_ROOMS_GET",
+			"type": "function",
+			"name": "METHOD_ROOMS_GET",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [214, 226],
+			"summary": "Function METHOD_ROOMS_GET in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:METHOD_SUBSCRIPTIONS_GET",
+			"type": "function",
+			"name": "METHOD_SUBSCRIPTIONS_GET",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [222, 234],
+			"summary": "Function METHOD_SUBSCRIPTIONS_GET in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:METHOD_GET_USER_ROLES",
+			"type": "function",
+			"name": "METHOD_GET_USER_ROLES",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [233, 245],
+			"summary": "Function METHOD_GET_USER_ROLES in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:METHOD_GET_USERS_OF_ROOM",
+			"type": "function",
+			"name": "METHOD_GET_USERS_OF_ROOM",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [244, 256],
+			"summary": "Function METHOD_GET_USERS_OF_ROOM in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:METHOD_HIDE_ROOM",
+			"type": "function",
+			"name": "METHOD_HIDE_ROOM",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [255, 267],
+			"summary": "Function METHOD_HIDE_ROOM in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:METHOD_JOIN_ROOM",
+			"type": "function",
+			"name": "METHOD_JOIN_ROOM",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [263, 275],
+			"summary": "Function METHOD_JOIN_ROOM in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:METHOD_LEAVE_ROOM",
+			"type": "function",
+			"name": "METHOD_LEAVE_ROOM",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [271, 283],
+			"summary": "Function METHOD_LEAVE_ROOM in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:METHOD_LIST_EMOJI_CUSTOM",
+			"type": "function",
+			"name": "METHOD_LIST_EMOJI_CUSTOM",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [279, 291],
+			"summary": "Function METHOD_LIST_EMOJI_CUSTOM in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:METHOD_LOAD_HISTORY",
+			"type": "function",
+			"name": "METHOD_LOAD_HISTORY",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [287, 299],
+			"summary": "Function METHOD_LOAD_HISTORY in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:METHOD_LOGIN",
+			"type": "function",
+			"name": "METHOD_LOGIN",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [295, 307],
+			"summary": "Function METHOD_LOGIN in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:METHOD_STREAM_NOTIFY_ROOM",
+			"type": "function",
+			"name": "METHOD_STREAM_NOTIFY_ROOM",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [303, 315],
+			"summary": "Function METHOD_STREAM_NOTIFY_ROOM in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:METHOD_OPEN_ROOM",
+			"type": "function",
+			"name": "METHOD_OPEN_ROOM",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [314, 326],
+			"summary": "Function METHOD_OPEN_ROOM in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:METHOD_PIN_MESSAGE",
+			"type": "function",
+			"name": "METHOD_PIN_MESSAGE",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [322, 334],
+			"summary": "Function METHOD_PIN_MESSAGE in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:METHOD_REGISTER_USER",
+			"type": "function",
+			"name": "METHOD_REGISTER_USER",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [330, 342],
+			"summary": "Function METHOD_REGISTER_USER in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:METHOD_SAVE_ROOM_SETTINGS",
+			"type": "function",
+			"name": "METHOD_SAVE_ROOM_SETTINGS",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [338, 350],
+			"summary": "Function METHOD_SAVE_ROOM_SETTINGS in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:METHOD_SEND_MESSAGE",
+			"type": "function",
+			"name": "METHOD_SEND_MESSAGE",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [349, 361],
+			"summary": "Function METHOD_SEND_MESSAGE in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:METHOD_SET_REACTION",
+			"type": "function",
+			"name": "METHOD_SET_REACTION",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [357, 369],
+			"summary": "Function METHOD_SET_REACTION in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:METHOD_SPOTLIGHT",
+			"type": "function",
+			"name": "METHOD_SPOTLIGHT",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [365, 377],
+			"summary": "Function METHOD_SPOTLIGHT in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:METHOD_STAR_MESSAGE",
+			"type": "function",
+			"name": "METHOD_STAR_MESSAGE",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [373, 385],
+			"summary": "Function METHOD_STAR_MESSAGE in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:METHOD_UNARCHIVE_ROOM",
+			"type": "function",
+			"name": "METHOD_UNARCHIVE_ROOM",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [381, 393],
+			"summary": "Function METHOD_UNARCHIVE_ROOM in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:METHOD_UNPIN_MESSAGE",
+			"type": "function",
+			"name": "METHOD_UNPIN_MESSAGE",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [389, 401],
+			"summary": "Function METHOD_UNPIN_MESSAGE in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:METHOD_UPDATE_MESSAGE",
+			"type": "function",
+			"name": "METHOD_UPDATE_MESSAGE",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [397, 409],
+			"summary": "Function METHOD_UPDATE_MESSAGE in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:METHOD_USER_PRESENCE_SET_DEFAULT_STATUS",
+			"type": "function",
+			"name": "METHOD_USER_PRESENCE_SET_DEFAULT_STATUS",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [405, 417],
+			"summary": "Function METHOD_USER_PRESENCE_SET_DEFAULT_STATUS in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:METHOD_USER_PRESENCE_AWAY",
+			"type": "function",
+			"name": "METHOD_USER_PRESENCE_AWAY",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [417, 429],
+			"summary": "Function METHOD_USER_PRESENCE_AWAY in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:LISTENER_PING",
+			"type": "function",
+			"name": "LISTENER_PING",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [471, 483],
+			"summary": "Function LISTENER_PING in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:LISTENER_RESULT",
+			"type": "function",
+			"name": "LISTENER_RESULT",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [472, 484],
+			"summary": "Function LISTENER_RESULT in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:LISTENER_READY",
+			"type": "function",
+			"name": "LISTENER_READY",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [473, 485],
+			"summary": "Function LISTENER_READY in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:LISTENER_ADDED",
+			"type": "function",
+			"name": "LISTENER_ADDED",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [474, 486],
+			"summary": "Function LISTENER_ADDED in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:LISTENER_CONNECTED",
+			"type": "function",
+			"name": "LISTENER_CONNECTED",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [475, 487],
+			"summary": "Function LISTENER_CONNECTED in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:LISTENER_CHANGED",
+			"type": "function",
+			"name": "LISTENER_CHANGED",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [476, 488],
+			"summary": "Function LISTENER_CHANGED in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:LISTENER_UPDATED",
+			"type": "function",
+			"name": "LISTENER_UPDATED",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [477, 489],
+			"summary": "Function LISTENER_UPDATED in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:LISTENER_NOSUB",
+			"type": "function",
+			"name": "LISTENER_NOSUB",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [478, 490],
+			"summary": "Function LISTENER_NOSUB in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:SUB_STREAM_NOTIFY_ALL",
+			"type": "function",
+			"name": "SUB_STREAM_NOTIFY_ALL",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [494, 506],
+			"summary": "Function SUB_STREAM_NOTIFY_ALL in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:SUB_STREAM_NOTIFY_LOGGED",
+			"type": "function",
+			"name": "SUB_STREAM_NOTIFY_LOGGED",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [495, 507],
+			"summary": "Function SUB_STREAM_NOTIFY_LOGGED in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:SUB_STREAM_NOTIFY_ROOM_USERS",
+			"type": "function",
+			"name": "SUB_STREAM_NOTIFY_ROOM_USERS",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [496, 508],
+			"summary": "Function SUB_STREAM_NOTIFY_ROOM_USERS in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:SUB_STREAM_NOTIFY_ROOM",
+			"type": "function",
+			"name": "SUB_STREAM_NOTIFY_ROOM",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [497, 509],
+			"summary": "Function SUB_STREAM_NOTIFY_ROOM in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:SUB_STREAM_NOTIFY_USER",
+			"type": "function",
+			"name": "SUB_STREAM_NOTIFY_USER",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [498, 510],
+			"summary": "Function SUB_STREAM_NOTIFY_USER in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:SUB_STREAM_ROOM_MESSAGES",
+			"type": "function",
+			"name": "SUB_STREAM_ROOM_MESSAGES",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [499, 511],
+			"summary": "Function SUB_STREAM_ROOM_MESSAGES in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:EVENT_USERS_NAME_CHANGED",
+			"type": "function",
+			"name": "EVENT_USERS_NAME_CHANGED",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [501, 513],
+			"summary": "Function EVENT_USERS_NAME_CHANGED in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:EVENT_USERS_DELETED",
+			"type": "function",
+			"name": "EVENT_USERS_DELETED",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [502, 514],
+			"summary": "Function EVENT_USERS_DELETED in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:EVENT_USER_STATUS",
+			"type": "function",
+			"name": "EVENT_USER_STATUS",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [503, 515],
+			"summary": "Function EVENT_USER_STATUS in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:EVENT_ROLES_CHANGE",
+			"type": "function",
+			"name": "EVENT_ROLES_CHANGE",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [504, 516],
+			"summary": "Function EVENT_ROLES_CHANGE in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:EVENT_UPDATE_EMOJI_CUSTOM",
+			"type": "function",
+			"name": "EVENT_UPDATE_EMOJI_CUSTOM",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [505, 517],
+			"summary": "Function EVENT_UPDATE_EMOJI_CUSTOM in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:EVENT_DELETE_EMOJI_CUSTOM",
+			"type": "function",
+			"name": "EVENT_DELETE_EMOJI_CUSTOM",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [506, 518],
+			"summary": "Function EVENT_DELETE_EMOJI_CUSTOM in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:EVENT_UPDATE_AVATAR",
+			"type": "function",
+			"name": "EVENT_UPDATE_AVATAR",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [507, 519],
+			"summary": "Function EVENT_UPDATE_AVATAR in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:EVENT_PUBLIC_SETTINGS_CHANGED",
+			"type": "function",
+			"name": "EVENT_PUBLIC_SETTINGS_CHANGED",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [508, 520],
+			"summary": "Function EVENT_PUBLIC_SETTINGS_CHANGED in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:EVENT_PERMISSIONS_CHANGED",
+			"type": "function",
+			"name": "EVENT_PERMISSIONS_CHANGED",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [509, 521],
+			"summary": "Function EVENT_PERMISSIONS_CHANGED in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:EVENT_WEBRTC",
+			"type": "function",
+			"name": "EVENT_WEBRTC",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [510, 522],
+			"summary": "Function EVENT_WEBRTC in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:EVENT_DELETE_MESSAGE",
+			"type": "function",
+			"name": "EVENT_DELETE_MESSAGE",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [511, 523],
+			"summary": "Function EVENT_DELETE_MESSAGE in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:EVENT_TYPING",
+			"type": "function",
+			"name": "EVENT_TYPING",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [512, 524],
+			"summary": "Function EVENT_TYPING in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:EVENT_DELETE_MESSAGE_BULK",
+			"type": "function",
+			"name": "EVENT_DELETE_MESSAGE_BULK",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [513, 525],
+			"summary": "Function EVENT_DELETE_MESSAGE_BULK in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:EVENT_MESSAGE",
+			"type": "function",
+			"name": "EVENT_MESSAGE",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [514, 526],
+			"summary": "Function EVENT_MESSAGE in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:EVENT_OTR",
+			"type": "function",
+			"name": "EVENT_OTR",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [515, 527],
+			"summary": "Function EVENT_OTR in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:EVENT_NOTIFICATION",
+			"type": "function",
+			"name": "EVENT_NOTIFICATION",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [516, 528],
+			"summary": "Function EVENT_NOTIFICATION in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:EVENT_ROOMS_CHANGED",
+			"type": "function",
+			"name": "EVENT_ROOMS_CHANGED",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [517, 529],
+			"summary": "Function EVENT_ROOMS_CHANGED in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RocketChat.ts:EVENT_SUBSCRIPTIONS_CHANGED",
+			"type": "function",
+			"name": "EVENT_SUBSCRIPTIONS_CHANGED",
+			"filePath": "src/components/app/RocketChat.ts",
+			"lineRange": [518, 530],
+			"summary": "Function EVENT_SUBSCRIPTIONS_CHANGED in src/components/app/RocketChat.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/banner/Banner.tsx",
+			"type": "file",
+			"name": "Banner.tsx",
+			"filePath": "src/components/banner/Banner.tsx",
+			"summary": "React UI module for component banner, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-banner"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/banner/Banner.tsx:Banner",
+			"type": "function",
+			"name": "Banner",
+			"filePath": "src/components/banner/Banner.tsx",
+			"lineRange": [12, 24],
+			"summary": "Function Banner in src/components/banner/Banner.tsx, used by the surrounding component banner module.",
+			"tags": ["function", "component-banner", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/sessionsListItem/SessionListItemLastMessage.tsx",
+			"type": "file",
+			"name": "SessionListItemLastMessage.tsx",
+			"filePath": "src/components/sessionsListItem/SessionListItemLastMessage.tsx",
+			"summary": "React UI module for component sessions list item, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "session", "component-sessions-list-item"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/provider/CallProvider.tsx",
+			"type": "file",
+			"name": "CallProvider.tsx",
+			"filePath": "src/globalState/provider/CallProvider.tsx",
+			"summary": "React UI module for global state, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"state-management",
+				"utility",
+				"global-state"
+			],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/globalState/provider/CallProvider.tsx:useCall",
+			"type": "function",
+			"name": "useCall",
+			"filePath": "src/globalState/provider/CallProvider.tsx",
+			"lineRange": [144, 151],
+			"summary": "Function useCall in src/globalState/provider/CallProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/provider/E2EEProvider.tsx",
+			"type": "file",
+			"name": "E2EEProvider.tsx",
+			"filePath": "src/globalState/provider/E2EEProvider.tsx",
+			"summary": "React UI module for global state, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"state-management",
+				"utility",
+				"global-state"
+			],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/globalState/provider/E2EEProvider.tsx:E2EEProvider",
+			"type": "function",
+			"name": "E2EEProvider",
+			"filePath": "src/globalState/provider/E2EEProvider.tsx",
+			"lineRange": [23, 35],
+			"summary": "Function E2EEProvider in src/globalState/provider/E2EEProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/E2EEProvider.tsx:E2EEContext",
+			"type": "function",
+			"name": "E2EEContext",
+			"filePath": "src/globalState/provider/E2EEProvider.tsx",
+			"lineRange": [20, 32],
+			"summary": "Function E2EEContext in src/globalState/provider/E2EEProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/E2EEProvider.tsx:STORAGE_KEY_E2EE_DISABLED",
+			"type": "function",
+			"name": "STORAGE_KEY_E2EE_DISABLED",
+			"filePath": "src/globalState/provider/E2EEProvider.tsx",
+			"lineRange": [21, 33],
+			"summary": "Function STORAGE_KEY_E2EE_DISABLED in src/globalState/provider/E2EEProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/provider/RocketChatGlobalSettingsProvider.tsx",
+			"type": "file",
+			"name": "RocketChatGlobalSettingsProvider.tsx",
+			"filePath": "src/globalState/provider/RocketChatGlobalSettingsProvider.tsx",
+			"summary": "React UI module for global state, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"state-management",
+				"utility",
+				"global-state"
+			],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/globalState/provider/RocketChatGlobalSettingsProvider.tsx:RocketChatGlobalSettingsContext",
+			"type": "function",
+			"name": "RocketChatGlobalSettingsContext",
+			"filePath": "src/globalState/provider/RocketChatGlobalSettingsProvider.tsx",
+			"lineRange": [30, 42],
+			"summary": "Function RocketChatGlobalSettingsContext in src/globalState/provider/RocketChatGlobalSettingsProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/RocketChatGlobalSettingsProvider.tsx:RocketChatGlobalSettingsProvider",
+			"type": "function",
+			"name": "RocketChatGlobalSettingsProvider",
+			"filePath": "src/globalState/provider/RocketChatGlobalSettingsProvider.tsx",
+			"lineRange": [33, 45],
+			"summary": "Function RocketChatGlobalSettingsProvider in src/globalState/provider/RocketChatGlobalSettingsProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/provider/RocketChatProvider.tsx",
+			"type": "file",
+			"name": "RocketChatProvider.tsx",
+			"filePath": "src/globalState/provider/RocketChatProvider.tsx",
+			"summary": "React UI module for global state, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"state-management",
+				"utility",
+				"global-state"
+			],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/globalState/provider/RocketChatProvider.tsx:RocketChatProvider",
+			"type": "function",
+			"name": "RocketChatProvider",
+			"filePath": "src/globalState/provider/RocketChatProvider.tsx",
+			"lineRange": [63, 75],
+			"summary": "Function RocketChatProvider in src/globalState/provider/RocketChatProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/RocketChatProvider.tsx:RocketChatContext",
+			"type": "function",
+			"name": "RocketChatContext",
+			"filePath": "src/globalState/provider/RocketChatProvider.tsx",
+			"lineRange": [61, 73],
+			"summary": "Function RocketChatContext in src/globalState/provider/RocketChatProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/provider/RocketChatPublicSettingsProvider.tsx",
+			"type": "file",
+			"name": "RocketChatPublicSettingsProvider.tsx",
+			"filePath": "src/globalState/provider/RocketChatPublicSettingsProvider.tsx",
+			"summary": "React UI module for global state, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"state-management",
+				"utility",
+				"global-state"
+			],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/globalState/provider/RocketChatPublicSettingsProvider.tsx:RocketChatPublicSettingsContext",
+			"type": "function",
+			"name": "RocketChatPublicSettingsContext",
+			"filePath": "src/globalState/provider/RocketChatPublicSettingsProvider.tsx",
+			"lineRange": [26, 38],
+			"summary": "Function RocketChatPublicSettingsContext in src/globalState/provider/RocketChatPublicSettingsProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/RocketChatPublicSettingsProvider.tsx:RocketChatPublicSettingsProvider",
+			"type": "function",
+			"name": "RocketChatPublicSettingsProvider",
+			"filePath": "src/globalState/provider/RocketChatPublicSettingsProvider.tsx",
+			"lineRange": [33, 45],
+			"summary": "Function RocketChatPublicSettingsProvider in src/globalState/provider/RocketChatPublicSettingsProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/provider/RocketChatSubscriptionsProvider.tsx",
+			"type": "file",
+			"name": "RocketChatSubscriptionsProvider.tsx",
+			"filePath": "src/globalState/provider/RocketChatSubscriptionsProvider.tsx",
+			"summary": "React UI module for global state, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"state-management",
+				"utility",
+				"global-state"
+			],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/globalState/provider/RocketChatSubscriptionsProvider.tsx:RocketChatSubscriptionsContext",
+			"type": "function",
+			"name": "RocketChatSubscriptionsContext",
+			"filePath": "src/globalState/provider/RocketChatSubscriptionsProvider.tsx",
+			"lineRange": [34, 46],
+			"summary": "Function RocketChatSubscriptionsContext in src/globalState/provider/RocketChatSubscriptionsProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/RocketChatSubscriptionsProvider.tsx:RocketChatSubscriptionsProvider",
+			"type": "function",
+			"name": "RocketChatSubscriptionsProvider",
+			"filePath": "src/globalState/provider/RocketChatSubscriptionsProvider.tsx",
+			"lineRange": [41, 53],
+			"summary": "Function RocketChatSubscriptionsProvider in src/globalState/provider/RocketChatSubscriptionsProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/provider/RocketChatSytemUsersProvider.tsx",
+			"type": "file",
+			"name": "RocketChatSytemUsersProvider.tsx",
+			"filePath": "src/globalState/provider/RocketChatSytemUsersProvider.tsx",
+			"summary": "React UI module for global state, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"state-management",
+				"utility",
+				"global-state"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/RocketChatSytemUsersProvider.tsx:RocketChatGetUserRolesContext",
+			"type": "function",
+			"name": "RocketChatGetUserRolesContext",
+			"filePath": "src/globalState/provider/RocketChatSytemUsersProvider.tsx",
+			"lineRange": [20, 32],
+			"summary": "Function RocketChatGetUserRolesContext in src/globalState/provider/RocketChatSytemUsersProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/RocketChatSytemUsersProvider.tsx:RocketChatGetUserRolesProvider",
+			"type": "function",
+			"name": "RocketChatGetUserRolesProvider",
+			"filePath": "src/globalState/provider/RocketChatSytemUsersProvider.tsx",
+			"lineRange": [27, 39],
+			"summary": "Function RocketChatGetUserRolesProvider in src/globalState/provider/RocketChatSytemUsersProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/provider/RocketChatUnreadProvider.tsx",
+			"type": "file",
+			"name": "RocketChatUnreadProvider.tsx",
+			"filePath": "src/globalState/provider/RocketChatUnreadProvider.tsx",
+			"summary": "React UI module for global state, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"state-management",
+				"utility",
+				"global-state"
+			],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/globalState/provider/RocketChatUnreadProvider.tsx:RocketChatUnreadProvider",
+			"type": "function",
+			"name": "RocketChatUnreadProvider",
+			"filePath": "src/globalState/provider/RocketChatUnreadProvider.tsx",
+			"lineRange": [48, 60],
+			"summary": "Function RocketChatUnreadProvider in src/globalState/provider/RocketChatUnreadProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/RocketChatUnreadProvider.tsx:RocketChatUnreadContext",
+			"type": "function",
+			"name": "RocketChatUnreadContext",
+			"filePath": "src/globalState/provider/RocketChatUnreadProvider.tsx",
+			"lineRange": [41, 53],
+			"summary": "Function RocketChatUnreadContext in src/globalState/provider/RocketChatUnreadProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/provider/RocketChatUserStatusProvider.tsx",
+			"type": "file",
+			"name": "RocketChatUserStatusProvider.tsx",
+			"filePath": "src/globalState/provider/RocketChatUserStatusProvider.tsx",
+			"summary": "React UI module for global state, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"state-management",
+				"utility",
+				"global-state"
+			],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/globalState/provider/RocketChatUserStatusProvider.tsx:RocketChatUserStatusProvider",
+			"type": "function",
+			"name": "RocketChatUserStatusProvider",
+			"filePath": "src/globalState/provider/RocketChatUserStatusProvider.tsx",
+			"lineRange": [57, 69],
+			"summary": "Function RocketChatUserStatusProvider in src/globalState/provider/RocketChatUserStatusProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/RocketChatUserStatusProvider.tsx:RocketChatUserStatusContext",
+			"type": "function",
+			"name": "RocketChatUserStatusContext",
+			"filePath": "src/globalState/provider/RocketChatUserStatusProvider.tsx",
+			"lineRange": [50, 62],
+			"summary": "Function RocketChatUserStatusContext in src/globalState/provider/RocketChatUserStatusProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/hooks/useBrowserNotification.ts",
+			"type": "file",
+			"name": "useBrowserNotification.ts",
+			"filePath": "src/hooks/useBrowserNotification.ts",
+			"summary": "React hook module for useBrowserNotification, encapsulating reusable frontend state or side-effect logic.",
+			"tags": ["hook", "utility", "hooks"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/hooks/useBrowserNotification.ts:useBrowserNotification",
+			"type": "function",
+			"name": "useBrowserNotification",
+			"filePath": "src/hooks/useBrowserNotification.ts",
+			"lineRange": [10, 22],
+			"summary": "Function useBrowserNotification in src/hooks/useBrowserNotification.ts, used by the surrounding hooks module.",
+			"tags": ["function", "hooks", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/hooks/useDebounceCallback.tsx",
+			"type": "file",
+			"name": "useDebounceCallback.tsx",
+			"filePath": "src/hooks/useDebounceCallback.tsx",
+			"summary": "React hook module for useDebounceCallback, encapsulating reusable frontend state or side-effect logic.",
+			"tags": ["hook", "component", "hooks"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/initError.tsx",
+			"type": "file",
+			"name": "initError.tsx",
+			"filePath": "src/initError.tsx",
+			"summary": "React UI module for init error tsx, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "init-error-tsx", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/resources/scripts/config.ts",
+			"type": "file",
+			"name": "config.ts",
+			"filePath": "src/resources/scripts/config.ts",
+			"summary": "TypeScript module for resources with 4 extracted functions and 0 extracted classes.",
+			"tags": ["utility", "resources", "code"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/resources/scripts/config.ts:uiUrl",
+			"type": "function",
+			"name": "uiUrl",
+			"filePath": "src/resources/scripts/config.ts",
+			"lineRange": [22, 34],
+			"summary": "Function uiUrl in src/resources/scripts/config.ts, used by the surrounding resources module.",
+			"tags": ["function", "resources", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/resources/scripts/config.ts:APP_PATH",
+			"type": "function",
+			"name": "APP_PATH",
+			"filePath": "src/resources/scripts/config.ts",
+			"lineRange": [24, 36],
+			"summary": "Function APP_PATH in src/resources/scripts/config.ts, used by the surrounding resources module.",
+			"tags": ["function", "resources", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/resources/scripts/config.ts:routePathNames",
+			"type": "function",
+			"name": "routePathNames",
+			"filePath": "src/resources/scripts/config.ts",
+			"lineRange": [26, 38],
+			"summary": "Function routePathNames in src/resources/scripts/config.ts, used by the surrounding resources module.",
+			"tags": ["function", "resources", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/resources/scripts/config.ts:ALIAS_LAST_MESSAGES",
+			"type": "function",
+			"name": "ALIAS_LAST_MESSAGES",
+			"filePath": "src/resources/scripts/config.ts",
+			"lineRange": [423, 432],
+			"summary": "Function ALIAS_LAST_MESSAGES in src/resources/scripts/config.ts, used by the surrounding resources module.",
+			"tags": ["function", "resources", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/types/rc/Room.ts",
+			"type": "file",
+			"name": "Room.ts",
+			"filePath": "src/types/rc/Room.ts",
+			"summary": "Frontend source file for types in the ORISO React application.",
+			"tags": ["types", "code", "frontend"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/types/rc/Subscriptions.ts",
+			"type": "file",
+			"name": "Subscriptions.ts",
+			"filePath": "src/types/rc/Subscriptions.ts",
+			"summary": "Frontend source file for types in the ORISO React application.",
+			"tags": ["types", "code", "frontend"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/types/rc/User.ts",
+			"type": "file",
+			"name": "User.ts",
+			"filePath": "src/types/rc/User.ts",
+			"summary": "Frontend source file for types in the ORISO React application.",
+			"tags": ["types", "code", "frontend"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/utils/notificationHelpers.ts",
+			"type": "file",
+			"name": "notificationHelpers.ts",
+			"filePath": "src/utils/notificationHelpers.ts",
+			"summary": "TypeScript module for utilities with 9 extracted functions and 0 extracted classes.",
+			"tags": ["utility", "utilities", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/utils/notificationHelpers.ts:PERMISSION_GRANTED",
+			"type": "function",
+			"name": "PERMISSION_GRANTED",
+			"filePath": "src/utils/notificationHelpers.ts",
+			"lineRange": [19, 31],
+			"summary": "Function PERMISSION_GRANTED in src/utils/notificationHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/notificationHelpers.ts:PERMISSION_DEFAULT",
+			"type": "function",
+			"name": "PERMISSION_DEFAULT",
+			"filePath": "src/utils/notificationHelpers.ts",
+			"lineRange": [20, 32],
+			"summary": "Function PERMISSION_DEFAULT in src/utils/notificationHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/notificationHelpers.ts:isSupported",
+			"type": "function",
+			"name": "isSupported",
+			"filePath": "src/utils/notificationHelpers.ts",
+			"lineRange": [22, 34],
+			"summary": "Function isSupported in src/utils/notificationHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/notificationHelpers.ts:hasPermissions",
+			"type": "function",
+			"name": "hasPermissions",
+			"filePath": "src/utils/notificationHelpers.ts",
+			"lineRange": [26, 38],
+			"summary": "Function hasPermissions in src/utils/notificationHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/notificationHelpers.ts:requestPermissions",
+			"type": "function",
+			"name": "requestPermissions",
+			"filePath": "src/utils/notificationHelpers.ts",
+			"lineRange": [30, 42],
+			"summary": "Function requestPermissions in src/utils/notificationHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/notificationHelpers.ts:sendNotification",
+			"type": "function",
+			"name": "sendNotification",
+			"filePath": "src/utils/notificationHelpers.ts",
+			"lineRange": [41, 53],
+			"summary": "Function sendNotification in src/utils/notificationHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/notificationHelpers.ts:saveBrowserNotificationsSettings",
+			"type": "function",
+			"name": "saveBrowserNotificationsSettings",
+			"filePath": "src/utils/notificationHelpers.ts",
+			"lineRange": [84, 96],
+			"summary": "Function saveBrowserNotificationsSettings in src/utils/notificationHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/notificationHelpers.ts:browserNotificationsSettings",
+			"type": "function",
+			"name": "browserNotificationsSettings",
+			"filePath": "src/utils/notificationHelpers.ts",
+			"lineRange": [102, 114],
+			"summary": "Function browserNotificationsSettings in src/utils/notificationHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/notificationHelpers.ts:isBrowserNotificationTypeEnabled",
+			"type": "function",
+			"name": "isBrowserNotificationTypeEnabled",
+			"filePath": "src/utils/notificationHelpers.ts",
+			"lineRange": [113, 120],
+			"summary": "Function isBrowserNotificationTypeEnabled in src/utils/notificationHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		}
+	],
+	"edges": [
+		{
+			"source": "file:src/components/app/AuthenticatedApp.tsx",
+			"target": "function:src/components/app/AuthenticatedApp.tsx:AuthenticatedApp",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/AuthenticatedApp.tsx",
+			"target": "function:src/components/app/AuthenticatedApp.tsx:AuthenticatedApp",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/AuthenticatedApp.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/AuthenticatedApp.tsx",
+			"target": "file:src/components/app/Loading.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/AuthenticatedApp.tsx",
+			"target": "file:src/components/app/Routing.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/AuthenticatedApp.tsx",
+			"target": "file:src/components/auth/auth.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/AuthenticatedApp.tsx",
+			"target": "file:src/components/E2EEncryptionSupportBanner/E2EEncryptionSupportBanner.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/AuthenticatedApp.tsx",
+			"target": "file:src/components/logout/logout.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/AuthenticatedApp.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/AuthenticatedApp.tsx",
+			"target": "file:src/globalState/provider/CallProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/AuthenticatedApp.tsx",
+			"target": "file:src/globalState/provider/RocketChatPublicSettingsProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/AuthenticatedApp.tsx",
+			"target": "file:src/globalState/provider/RocketChatSubscriptionsProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/AuthenticatedApp.tsx",
+			"target": "file:src/globalState/provider/RocketChatSytemUsersProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/AuthenticatedApp.tsx",
+			"target": "file:src/globalState/provider/RocketChatUnreadProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/AuthenticatedApp.tsx",
+			"target": "file:src/globalState/provider/RocketChatUserStatusProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/AuthenticatedApp.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/AuthenticatedApp.tsx",
+			"target": "file:src/hooks/useJoinGroupChat.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/AuthenticatedApp.tsx",
+			"target": "file:src/utils/keycloakSession.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/AuthenticatedApp.tsx",
+			"target": "file:src/utils/notificationHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:MSG_CONNECT",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:MSG_CONNECT",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:MSG_METHOD",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:MSG_METHOD",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:MSG_PONG",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:MSG_PONG",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:MSG_READY",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:MSG_READY",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:MSG_SUB",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:MSG_SUB",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:MSG_UNSUB",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:MSG_UNSUB",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:STATUS_OFFLINE",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:STATUS_OFFLINE",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:STATUS_ONLINE",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:STATUS_ONLINE",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:STATUS_AWAY",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:STATUS_AWAY",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:STATUS_BUSY",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:STATUS_BUSY",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_ARCHIVE_ROOM",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_ARCHIVE_ROOM",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_CREATE_CHANNEL",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_CREATE_CHANNEL",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_CREATE_DIRECT_MESSAGE",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_CREATE_DIRECT_MESSAGE",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_CREATE_PRIVATE_GROUP",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_CREATE_PRIVATE_GROUP",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_DELETE_MESSAGE",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_DELETE_MESSAGE",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_ERASE_ROOM",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_ERASE_ROOM",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_E2EE_FETCH_MY_KEYS",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_E2EE_FETCH_MY_KEYS",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_E2EE_GET_USERS_OF_ROOM_WITHOUT_KEY",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_E2EE_GET_USERS_OF_ROOM_WITHOUT_KEY",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_E2EE_SET_ROOM_KEY",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_E2EE_SET_ROOM_KEY",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_E2EE_SET_USER_PUBLIC_AND_PRIVATE_KEYS",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_E2EE_SET_USER_PUBLIC_AND_PRIVATE_KEYS",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_E2EE_UPDATE_GROUP_KEY",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_E2EE_UPDATE_GROUP_KEY",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_TOGGLE_FAVORITE",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_TOGGLE_FAVORITE",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_PERMISSIONS_GET",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_PERMISSIONS_GET",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_PUBLIC_SETTINGS_GET",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_PUBLIC_SETTINGS_GET",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_GET_ROOM_ROLES",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_GET_ROOM_ROLES",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_ROOMS_GET",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_ROOMS_GET",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_SUBSCRIPTIONS_GET",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_SUBSCRIPTIONS_GET",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_GET_USER_ROLES",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_GET_USER_ROLES",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_GET_USERS_OF_ROOM",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_GET_USERS_OF_ROOM",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_HIDE_ROOM",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_HIDE_ROOM",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_JOIN_ROOM",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_JOIN_ROOM",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_LEAVE_ROOM",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_LEAVE_ROOM",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_LIST_EMOJI_CUSTOM",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_LIST_EMOJI_CUSTOM",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_LOAD_HISTORY",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_LOAD_HISTORY",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_LOGIN",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_LOGIN",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_STREAM_NOTIFY_ROOM",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_STREAM_NOTIFY_ROOM",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_OPEN_ROOM",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_OPEN_ROOM",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_PIN_MESSAGE",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_PIN_MESSAGE",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_REGISTER_USER",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_REGISTER_USER",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_SAVE_ROOM_SETTINGS",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_SAVE_ROOM_SETTINGS",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_SEND_MESSAGE",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_SEND_MESSAGE",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_SET_REACTION",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_SET_REACTION",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_SPOTLIGHT",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_SPOTLIGHT",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_STAR_MESSAGE",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_STAR_MESSAGE",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_UNARCHIVE_ROOM",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_UNARCHIVE_ROOM",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_UNPIN_MESSAGE",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_UNPIN_MESSAGE",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_UPDATE_MESSAGE",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_UPDATE_MESSAGE",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_USER_PRESENCE_SET_DEFAULT_STATUS",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_USER_PRESENCE_SET_DEFAULT_STATUS",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_USER_PRESENCE_AWAY",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:METHOD_USER_PRESENCE_AWAY",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:LISTENER_PING",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:LISTENER_PING",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:LISTENER_RESULT",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:LISTENER_RESULT",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:LISTENER_READY",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:LISTENER_READY",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:LISTENER_ADDED",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:LISTENER_ADDED",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:LISTENER_CONNECTED",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:LISTENER_CONNECTED",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:LISTENER_CHANGED",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:LISTENER_CHANGED",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:LISTENER_UPDATED",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:LISTENER_UPDATED",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:LISTENER_NOSUB",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:LISTENER_NOSUB",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:SUB_STREAM_NOTIFY_ALL",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:SUB_STREAM_NOTIFY_ALL",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:SUB_STREAM_NOTIFY_LOGGED",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:SUB_STREAM_NOTIFY_LOGGED",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:SUB_STREAM_NOTIFY_ROOM_USERS",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:SUB_STREAM_NOTIFY_ROOM_USERS",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:SUB_STREAM_NOTIFY_ROOM",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:SUB_STREAM_NOTIFY_ROOM",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:SUB_STREAM_NOTIFY_USER",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:SUB_STREAM_NOTIFY_USER",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:SUB_STREAM_ROOM_MESSAGES",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:SUB_STREAM_ROOM_MESSAGES",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:EVENT_USERS_NAME_CHANGED",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:EVENT_USERS_NAME_CHANGED",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:EVENT_USERS_DELETED",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:EVENT_USERS_DELETED",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:EVENT_USER_STATUS",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:EVENT_USER_STATUS",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:EVENT_ROLES_CHANGE",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:EVENT_ROLES_CHANGE",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:EVENT_UPDATE_EMOJI_CUSTOM",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:EVENT_UPDATE_EMOJI_CUSTOM",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:EVENT_DELETE_EMOJI_CUSTOM",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:EVENT_DELETE_EMOJI_CUSTOM",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:EVENT_UPDATE_AVATAR",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:EVENT_UPDATE_AVATAR",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:EVENT_PUBLIC_SETTINGS_CHANGED",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:EVENT_PUBLIC_SETTINGS_CHANGED",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:EVENT_PERMISSIONS_CHANGED",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:EVENT_PERMISSIONS_CHANGED",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:EVENT_WEBRTC",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:EVENT_WEBRTC",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:EVENT_DELETE_MESSAGE",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:EVENT_DELETE_MESSAGE",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:EVENT_TYPING",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:EVENT_TYPING",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:EVENT_DELETE_MESSAGE_BULK",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:EVENT_DELETE_MESSAGE_BULK",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:EVENT_MESSAGE",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:EVENT_MESSAGE",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:EVENT_OTR",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:EVENT_OTR",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:EVENT_NOTIFICATION",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:EVENT_NOTIFICATION",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:EVENT_ROOMS_CHANGED",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:EVENT_ROOMS_CHANGED",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:EVENT_SUBSCRIPTIONS_CHANGED",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "function:src/components/app/RocketChat.ts:EVENT_SUBSCRIPTIONS_CHANGED",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "file:src/api/apiRocketChatSettingsPublic.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "file:src/types/rc/Room.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/RocketChat.ts",
+			"target": "file:src/types/rc/Subscriptions.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/banner/Banner.tsx",
+			"target": "function:src/components/banner/Banner.tsx:Banner",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/banner/Banner.tsx",
+			"target": "function:src/components/banner/Banner.tsx:Banner",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItemLastMessage.tsx",
+			"target": "file:src/resources/scripts/config.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/CallProvider.tsx",
+			"target": "function:src/globalState/provider/CallProvider.tsx:useCall",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/CallProvider.tsx",
+			"target": "function:src/globalState/provider/CallProvider.tsx:useCall",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/E2EEProvider.tsx",
+			"target": "function:src/globalState/provider/E2EEProvider.tsx:E2EEProvider",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/E2EEProvider.tsx",
+			"target": "function:src/globalState/provider/E2EEProvider.tsx:E2EEProvider",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/E2EEProvider.tsx",
+			"target": "function:src/globalState/provider/E2EEProvider.tsx:E2EEContext",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/E2EEProvider.tsx",
+			"target": "function:src/globalState/provider/E2EEProvider.tsx:E2EEContext",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/E2EEProvider.tsx",
+			"target": "function:src/globalState/provider/E2EEProvider.tsx:STORAGE_KEY_E2EE_DISABLED",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/E2EEProvider.tsx",
+			"target": "function:src/globalState/provider/E2EEProvider.tsx:STORAGE_KEY_E2EE_DISABLED",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/E2EEProvider.tsx",
+			"target": "file:src/api/apiRocketChatSettingsPublic.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/E2EEProvider.tsx",
+			"target": "file:src/globalState/provider/RocketChatPublicSettingsProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/E2EEProvider.tsx",
+			"target": "file:src/utils/encryptionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatGlobalSettingsProvider.tsx",
+			"target": "function:src/globalState/provider/RocketChatGlobalSettingsProvider.tsx:RocketChatGlobalSettingsContext",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatGlobalSettingsProvider.tsx",
+			"target": "function:src/globalState/provider/RocketChatGlobalSettingsProvider.tsx:RocketChatGlobalSettingsContext",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatGlobalSettingsProvider.tsx",
+			"target": "function:src/globalState/provider/RocketChatGlobalSettingsProvider.tsx:RocketChatGlobalSettingsProvider",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatGlobalSettingsProvider.tsx",
+			"target": "function:src/globalState/provider/RocketChatGlobalSettingsProvider.tsx:RocketChatGlobalSettingsProvider",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatGlobalSettingsProvider.tsx",
+			"target": "file:src/api/apiRocketChatSettingsPublic.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatProvider.tsx",
+			"target": "function:src/globalState/provider/RocketChatProvider.tsx:RocketChatProvider",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatProvider.tsx",
+			"target": "function:src/globalState/provider/RocketChatProvider.tsx:RocketChatProvider",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatProvider.tsx",
+			"target": "function:src/globalState/provider/RocketChatProvider.tsx:RocketChatContext",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatProvider.tsx",
+			"target": "function:src/globalState/provider/RocketChatProvider.tsx:RocketChatContext",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatProvider.tsx",
+			"target": "file:src/components/app/RocketChat.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatProvider.tsx",
+			"target": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatProvider.tsx",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatPublicSettingsProvider.tsx",
+			"target": "function:src/globalState/provider/RocketChatPublicSettingsProvider.tsx:RocketChatPublicSettingsContext",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatPublicSettingsProvider.tsx",
+			"target": "function:src/globalState/provider/RocketChatPublicSettingsProvider.tsx:RocketChatPublicSettingsContext",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatPublicSettingsProvider.tsx",
+			"target": "function:src/globalState/provider/RocketChatPublicSettingsProvider.tsx:RocketChatPublicSettingsProvider",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatPublicSettingsProvider.tsx",
+			"target": "function:src/globalState/provider/RocketChatPublicSettingsProvider.tsx:RocketChatPublicSettingsProvider",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatPublicSettingsProvider.tsx",
+			"target": "file:src/api/apiRocketChatSettingsPublic.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatPublicSettingsProvider.tsx",
+			"target": "file:src/components/app/RocketChat.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatPublicSettingsProvider.tsx",
+			"target": "file:src/globalState/provider/RocketChatProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatPublicSettingsProvider.tsx",
+			"target": "file:src/hooks/useUpdatingRef.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatSubscriptionsProvider.tsx",
+			"target": "function:src/globalState/provider/RocketChatSubscriptionsProvider.tsx:RocketChatSubscriptionsContext",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatSubscriptionsProvider.tsx",
+			"target": "function:src/globalState/provider/RocketChatSubscriptionsProvider.tsx:RocketChatSubscriptionsContext",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatSubscriptionsProvider.tsx",
+			"target": "function:src/globalState/provider/RocketChatSubscriptionsProvider.tsx:RocketChatSubscriptionsProvider",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatSubscriptionsProvider.tsx",
+			"target": "function:src/globalState/provider/RocketChatSubscriptionsProvider.tsx:RocketChatSubscriptionsProvider",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatSubscriptionsProvider.tsx",
+			"target": "file:src/api/apiPostError.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatSubscriptionsProvider.tsx",
+			"target": "file:src/components/app/RocketChat.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatSubscriptionsProvider.tsx",
+			"target": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatSubscriptionsProvider.tsx",
+			"target": "file:src/globalState/provider/RocketChatProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatSubscriptionsProvider.tsx",
+			"target": "file:src/hooks/useDebounceCallback.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatSubscriptionsProvider.tsx",
+			"target": "file:src/hooks/useUpdatingRef.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatSubscriptionsProvider.tsx",
+			"target": "file:src/types/rc/Room.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatSubscriptionsProvider.tsx",
+			"target": "file:src/types/rc/Subscriptions.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatSytemUsersProvider.tsx",
+			"target": "function:src/globalState/provider/RocketChatSytemUsersProvider.tsx:RocketChatGetUserRolesContext",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatSytemUsersProvider.tsx",
+			"target": "function:src/globalState/provider/RocketChatSytemUsersProvider.tsx:RocketChatGetUserRolesContext",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatSytemUsersProvider.tsx",
+			"target": "function:src/globalState/provider/RocketChatSytemUsersProvider.tsx:RocketChatGetUserRolesProvider",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatSytemUsersProvider.tsx",
+			"target": "function:src/globalState/provider/RocketChatSytemUsersProvider.tsx:RocketChatGetUserRolesProvider",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatSytemUsersProvider.tsx",
+			"target": "file:src/components/app/RocketChat.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatSytemUsersProvider.tsx",
+			"target": "file:src/globalState/provider/RocketChatProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatUnreadProvider.tsx",
+			"target": "function:src/globalState/provider/RocketChatUnreadProvider.tsx:RocketChatUnreadProvider",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatUnreadProvider.tsx",
+			"target": "function:src/globalState/provider/RocketChatUnreadProvider.tsx:RocketChatUnreadProvider",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatUnreadProvider.tsx",
+			"target": "function:src/globalState/provider/RocketChatUnreadProvider.tsx:RocketChatUnreadContext",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatUnreadProvider.tsx",
+			"target": "function:src/globalState/provider/RocketChatUnreadProvider.tsx:RocketChatUnreadContext",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatUnreadProvider.tsx",
+			"target": "file:src/api/apiGetSessionRooms.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatUnreadProvider.tsx",
+			"target": "file:src/components/session/sessionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatUnreadProvider.tsx",
+			"target": "file:src/globalState/context/UserDataContext.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatUnreadProvider.tsx",
+			"target": "file:src/globalState/provider/RocketChatSubscriptionsProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatUnreadProvider.tsx",
+			"target": "file:src/hooks/useBrowserNotification.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatUserStatusProvider.tsx",
+			"target": "function:src/globalState/provider/RocketChatUserStatusProvider.tsx:RocketChatUserStatusProvider",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatUserStatusProvider.tsx",
+			"target": "function:src/globalState/provider/RocketChatUserStatusProvider.tsx:RocketChatUserStatusProvider",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatUserStatusProvider.tsx",
+			"target": "function:src/globalState/provider/RocketChatUserStatusProvider.tsx:RocketChatUserStatusContext",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatUserStatusProvider.tsx",
+			"target": "function:src/globalState/provider/RocketChatUserStatusProvider.tsx:RocketChatUserStatusContext",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatUserStatusProvider.tsx",
+			"target": "file:src/api/apiRocketChatUsersGetStatus.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatUserStatusProvider.tsx",
+			"target": "file:src/components/app/RocketChat.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatUserStatusProvider.tsx",
+			"target": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatUserStatusProvider.tsx",
+			"target": "file:src/globalState/provider/RocketChatProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatUserStatusProvider.tsx",
+			"target": "file:src/hooks/useDebounceCallback.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatUserStatusProvider.tsx",
+			"target": "file:src/hooks/useUpdatingRef.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/hooks/useBrowserNotification.ts",
+			"target": "function:src/hooks/useBrowserNotification.ts:useBrowserNotification",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/hooks/useBrowserNotification.ts",
+			"target": "function:src/hooks/useBrowserNotification.ts:useBrowserNotification",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/hooks/useBrowserNotification.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/hooks/useBrowserNotification.ts",
+			"target": "file:src/utils/notificationHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/initError.tsx",
+			"target": "file:src/components/error/Error.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/initError.tsx",
+			"target": "file:src/resources/scripts/config.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/resources/scripts/config.ts",
+			"target": "function:src/resources/scripts/config.ts:uiUrl",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/resources/scripts/config.ts",
+			"target": "function:src/resources/scripts/config.ts:uiUrl",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/resources/scripts/config.ts",
+			"target": "function:src/resources/scripts/config.ts:APP_PATH",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/resources/scripts/config.ts",
+			"target": "function:src/resources/scripts/config.ts:APP_PATH",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/resources/scripts/config.ts",
+			"target": "function:src/resources/scripts/config.ts:routePathNames",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/resources/scripts/config.ts",
+			"target": "function:src/resources/scripts/config.ts:routePathNames",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/resources/scripts/config.ts",
+			"target": "function:src/resources/scripts/config.ts:ALIAS_LAST_MESSAGES",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/resources/scripts/config.ts",
+			"target": "function:src/resources/scripts/config.ts:ALIAS_LAST_MESSAGES",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/resources/scripts/config.ts",
+			"target": "file:src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/resources/scripts/config.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/resources/scripts/config.ts",
+			"target": "config:src/resources/i18n/de/agency.json",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/resources/scripts/config.ts",
+			"target": "config:src/resources/i18n/de/consultingTypes.json",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/resources/scripts/config.ts",
+			"target": "config:src/resources/i18n/de/languages.json",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/resources/scripts/config.ts",
+			"target": "config:src/resources/i18n/en/agency.json",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/resources/scripts/config.ts",
+			"target": "config:src/resources/i18n/en/common.json",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/resources/scripts/config.ts",
+			"target": "config:src/resources/i18n/en/consultingTypes.json",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/resources/scripts/config.ts",
+			"target": "config:src/resources/i18n/en/languages.json",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/resources/scripts/config.ts",
+			"target": "config:src/resources/i18n/fr/common.json",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/resources/scripts/config.ts",
+			"target": "config:src/resources/i18n/fr/languages.json",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/resources/scripts/config.ts",
+			"target": "config:src/resources/i18n/ru/common.json",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/resources/scripts/config.ts",
+			"target": "config:src/resources/i18n/ru/languages.json",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/resources/scripts/config.ts",
+			"target": "config:src/resources/i18n/ti/common.json",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/resources/scripts/config.ts",
+			"target": "config:src/resources/i18n/ti/languages.json",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/resources/scripts/config.ts",
+			"target": "config:src/resources/i18n/tr/common.json",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/resources/scripts/config.ts",
+			"target": "config:src/resources/i18n/tr/languages.json",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/types/rc/Room.ts",
+			"target": "file:src/types/rc/User.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/types/rc/Subscriptions.ts",
+			"target": "file:src/types/rc/User.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/utils/notificationHelpers.ts",
+			"target": "function:src/utils/notificationHelpers.ts:PERMISSION_GRANTED",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/notificationHelpers.ts",
+			"target": "function:src/utils/notificationHelpers.ts:PERMISSION_GRANTED",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/notificationHelpers.ts",
+			"target": "function:src/utils/notificationHelpers.ts:PERMISSION_DEFAULT",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/notificationHelpers.ts",
+			"target": "function:src/utils/notificationHelpers.ts:PERMISSION_DEFAULT",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/notificationHelpers.ts",
+			"target": "function:src/utils/notificationHelpers.ts:isSupported",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/notificationHelpers.ts",
+			"target": "function:src/utils/notificationHelpers.ts:isSupported",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/notificationHelpers.ts",
+			"target": "function:src/utils/notificationHelpers.ts:hasPermissions",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/notificationHelpers.ts",
+			"target": "function:src/utils/notificationHelpers.ts:hasPermissions",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/notificationHelpers.ts",
+			"target": "function:src/utils/notificationHelpers.ts:requestPermissions",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/notificationHelpers.ts",
+			"target": "function:src/utils/notificationHelpers.ts:requestPermissions",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/notificationHelpers.ts",
+			"target": "function:src/utils/notificationHelpers.ts:sendNotification",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/notificationHelpers.ts",
+			"target": "function:src/utils/notificationHelpers.ts:sendNotification",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/notificationHelpers.ts",
+			"target": "function:src/utils/notificationHelpers.ts:saveBrowserNotificationsSettings",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/notificationHelpers.ts",
+			"target": "function:src/utils/notificationHelpers.ts:saveBrowserNotificationsSettings",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/notificationHelpers.ts",
+			"target": "function:src/utils/notificationHelpers.ts:browserNotificationsSettings",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/notificationHelpers.ts",
+			"target": "function:src/utils/notificationHelpers.ts:browserNotificationsSettings",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/notificationHelpers.ts",
+			"target": "function:src/utils/notificationHelpers.ts:isBrowserNotificationTypeEnabled",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/notificationHelpers.ts",
+			"target": "function:src/utils/notificationHelpers.ts:isBrowserNotificationTypeEnabled",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		}
+	]
+}

@@ -1,0 +1,28 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": "src/components/app/authenticatedApp.styles.scss",
+			"language": "css",
+			"sizeLines": 272,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/app/loading.styles.scss",
+			"language": "css",
+			"sizeLines": 14,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/app/navigation.styles.scss",
+			"language": "css",
+			"sizeLines": 680,
+			"fileCategory": "markup"
+		}
+	],
+	"batchImportData": {
+		"src/components/app/authenticatedApp.styles.scss": [],
+		"src/components/app/loading.styles.scss": [],
+		"src/components/app/navigation.styles.scss": []
+	}
+}

@@ -1,0 +1,285 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": "src/components/call/FloatingCallWidget.OLD.tsx",
+			"language": "typescript",
+			"sizeLines": 489,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/call/FloatingCallWidget.PROFESSIONAL.tsx",
+			"language": "typescript",
+			"sizeLines": 329,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/call/FloatingCallWidget.tsx",
+			"language": "typescript",
+			"sizeLines": 405,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/call/GroupCallWidget.tsx",
+			"language": "typescript",
+			"sizeLines": 488,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/matrixCall/MatrixCallView.BROKEN-BACKUP.tsx",
+			"language": "typescript",
+			"sizeLines": 423,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/matrixCall/MatrixCallView.CLEAN.tsx",
+			"language": "typescript",
+			"sizeLines": 279,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/matrixCall/MatrixCallView.tsx",
+			"language": "typescript",
+			"sizeLines": 277,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionCookie/getMatrixAccessToken.ts",
+			"language": "typescript",
+			"sizeLines": 51,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/EmptyListItem.tsx",
+			"language": "typescript",
+			"sizeLines": 43,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/EnquiryFilterChips.tsx",
+			"language": "typescript",
+			"sizeLines": 66,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/ResizableHandle.stories.tsx",
+			"language": "typescript",
+			"sizeLines": 105,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/ResizableHandle.tsx",
+			"language": "typescript",
+			"sizeLines": 431,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/SessionListColumn.stories.tsx",
+			"language": "typescript",
+			"sizeLines": 228,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/SessionListCreateChat.stories.tsx",
+			"language": "typescript",
+			"sizeLines": 40,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/SessionListCreateChat.tsx",
+			"language": "typescript",
+			"sizeLines": 31,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/SessionsList.tsx",
+			"language": "typescript",
+			"sizeLines": 1660,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/SessionsListToolbar.stories.tsx",
+			"language": "typescript",
+			"sizeLines": 144,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/SessionsListToolbar.tsx",
+			"language": "typescript",
+			"sizeLines": 670,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/SessionsListWrapper.tsx",
+			"language": "typescript",
+			"sizeLines": 124,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/sessionsListResize.constants.ts",
+			"language": "typescript",
+			"sizeLines": 8,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsListItem/SessionsListItemSkeleton.tsx",
+			"language": "typescript",
+			"sizeLines": 22,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/videoCall/VideoCall.tsx",
+			"language": "typescript",
+			"sizeLines": 73,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/services/CallManager.ts",
+			"language": "typescript",
+			"sizeLines": 598,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/services/matrixCallService.ts",
+			"language": "typescript",
+			"sizeLines": 348,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/services/matrixClientService.ts",
+			"language": "typescript",
+			"sizeLines": 150,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/services/matrixLiveEventBridge.ts",
+			"language": "typescript",
+			"sizeLines": 344,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/services/messageEventEmitter.ts",
+			"language": "typescript",
+			"sizeLines": 50,
+			"fileCategory": "code"
+		}
+	],
+	"batchImportData": {
+		"src/components/call/FloatingCallWidget.OLD.tsx": [
+			"src/components/call/FloatingCallWidget.scss",
+			"src/services/CallManager.ts",
+			"src/services/matrixCallService.ts"
+		],
+		"src/components/call/FloatingCallWidget.PROFESSIONAL.tsx": [
+			"src/components/call/FloatingCallWidget.scss",
+			"src/services/CallManager.ts",
+			"src/services/matrixCallService.ts"
+		],
+		"src/components/call/FloatingCallWidget.tsx": [
+			"src/components/call/FloatingCallWidget.scss",
+			"src/services/CallManager.ts",
+			"src/services/matrixCallService.ts"
+		],
+		"src/components/call/GroupCallWidget.tsx": [
+			"src/components/call/GroupCallWidget.scss",
+			"src/services/CallManager.ts"
+		],
+		"src/components/matrixCall/MatrixCallView.BROKEN-BACKUP.tsx": [
+			"src/components/matrixCall/MatrixCallView.styles.scss",
+			"src/services/matrixCallService.ts"
+		],
+		"src/components/matrixCall/MatrixCallView.CLEAN.tsx": [
+			"src/components/matrixCall/MatrixCallView.styles.scss",
+			"src/services/matrixCallService.ts"
+		],
+		"src/components/matrixCall/MatrixCallView.tsx": [
+			"src/components/matrixCall/MatrixCallView.styles.scss",
+			"src/services/matrixCallService.ts"
+		],
+		"src/components/sessionCookie/getMatrixAccessToken.ts": [],
+		"src/components/sessionsList/EmptyListItem.tsx": [
+			"src/components/listInfo/ListInfo.tsx",
+			"src/components/session/sessionHelpers.ts"
+		],
+		"src/components/sessionsList/EnquiryFilterChips.tsx": [
+			"src/components/sessionsList/SessionsListToolbar.tsx"
+		],
+		"src/components/sessionsList/ResizableHandle.stories.tsx": [
+			"src/components/sessionsList/ResizableHandle.tsx",
+			"src/components/sessionsList/sessionsList.styles.scss"
+		],
+		"src/components/sessionsList/ResizableHandle.tsx": [
+			"src/components/sessionsList/sessionsListResize.constants.ts"
+		],
+		"src/components/sessionsList/SessionListColumn.stories.tsx": [
+			"src/components/sessionsList/SessionListCreateChat.tsx",
+			"src/components/sessionsList/sessionsList.styles.scss",
+			"src/components/sessionsList/SessionsListToolbar.tsx",
+			"src/components/sessionsListItem/sessionsListItem.styles.scss",
+			"src/resources/img/icons.ts"
+		],
+		"src/components/sessionsList/SessionListCreateChat.stories.tsx": [
+			"src/components/sessionsList/SessionListCreateChat.tsx",
+			"src/components/sessionsList/sessionsList.styles.scss",
+			"src/components/sessionsListItem/sessionsListItem.styles.scss"
+		],
+		"src/components/sessionsList/SessionListCreateChat.tsx": [],
+		"src/components/sessionsList/SessionsList.tsx": [
+			"src/api/apiGetChatRoomById.ts",
+			"src/api/apiGetSessionRooms.ts",
+			"src/api/index.ts",
+			"src/components/app/RocketChat.ts",
+			"src/components/button/Button.tsx",
+			"src/components/session/sessionHelpers.ts",
+			"src/components/sessionCookie/accessSessionCookie.ts",
+			"src/components/sessionsList/EmptyListItem.tsx",
+			"src/components/sessionsList/EnquiryFilterChips.tsx",
+			"src/components/sessionsList/sessionsListConfig.ts",
+			"src/components/sessionsList/SessionsListToolbar.tsx",
+			"src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"src/components/sessionsListItem/SessionsListItemSkeleton.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/hooks/useDebounceCallback.tsx",
+			"src/hooks/useSearchParams.tsx",
+			"src/hooks/useUpdatingRef.tsx",
+			"src/hooks/useWatcher.tsx",
+			"src/services/matrixLiveEventBridge.ts",
+			"src/services/messageEventEmitter.ts",
+			"src/utils/keycloakSession.ts",
+			"src/utils/liveChatToggle.ts"
+		],
+		"src/components/sessionsList/SessionsListToolbar.stories.tsx": [
+			"src/components/sessionsList/sessionsList.styles.scss",
+			"src/components/sessionsList/SessionsListToolbar.tsx"
+		],
+		"src/components/sessionsList/SessionsListToolbar.tsx": [
+			"src/components/session/sessionHelpers.ts"
+		],
+		"src/components/sessionsList/SessionsListWrapper.tsx": [
+			"src/components/session/sessionHelpers.ts",
+			"src/components/sessionsList/ResizableHandle.tsx",
+			"src/components/sessionsList/SessionsList.tsx",
+			"src/components/sessionsList/sessionsListResize.constants.ts",
+			"src/globalState/index.ts",
+			"src/globalState/provider/LanguagesProvider.tsx",
+			"src/hooks/useResponsive.tsx"
+		],
+		"src/components/sessionsList/sessionsListResize.constants.ts": [],
+		"src/components/sessionsListItem/SessionsListItemSkeleton.tsx": [],
+		"src/components/videoCall/VideoCall.tsx": [
+			"src/components/matrixCall/MatrixCallView.tsx"
+		],
+		"src/services/CallManager.ts": [],
+		"src/services/matrixCallService.ts": [],
+		"src/services/matrixClientService.ts": [
+			"src/components/sessionCookie/getMatrixAccessToken.ts",
+			"src/services/matrixCallService.ts",
+			"src/services/matrixLiveEventBridge.ts"
+		],
+		"src/services/matrixLiveEventBridge.ts": [
+			"src/services/CallManager.ts"
+		],
+		"src/services/messageEventEmitter.ts": []
+	}
+}

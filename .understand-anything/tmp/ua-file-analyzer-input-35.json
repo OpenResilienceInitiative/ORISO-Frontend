@@ -1,0 +1,35 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": "src/components/groupChat/createChat.styles.scss",
+			"language": "css",
+			"sizeLines": 413,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/groupChat/groupChatCopyLinks.scss",
+			"language": "css",
+			"sizeLines": 10,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/groupChat/groupChatInfo.styles.scss",
+			"language": "css",
+			"sizeLines": 271,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/groupChat/joinChat.styles.scss",
+			"language": "css",
+			"sizeLines": 47,
+			"fileCategory": "markup"
+		}
+	],
+	"batchImportData": {
+		"src/components/groupChat/createChat.styles.scss": [],
+		"src/components/groupChat/groupChatCopyLinks.scss": [],
+		"src/components/groupChat/groupChatInfo.styles.scss": [],
+		"src/components/groupChat/joinChat.styles.scss": []
+	}
+}

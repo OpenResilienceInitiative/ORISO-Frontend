@@ -1,0 +1,111 @@
+{
+	"nodes": [
+		{
+			"id": "config:service-v2.yaml",
+			"type": "config",
+			"name": "service-v2.yaml",
+			"filePath": "service-v2.yaml",
+			"summary": "Configuration file that controls deployment behavior for the frontend project.",
+			"tags": ["configuration", "deployment", "config"],
+			"complexity": "simple"
+		},
+		{
+			"id": "config:storybook-deployment.yaml",
+			"type": "config",
+			"name": "storybook-deployment.yaml",
+			"filePath": "storybook-deployment.yaml",
+			"summary": "Configuration file that controls deployment behavior for the frontend project.",
+			"tags": ["configuration", "storybook", "deployment"],
+			"complexity": "simple"
+		},
+		{
+			"id": "config:storybook-ingress.yaml",
+			"type": "config",
+			"name": "storybook-ingress.yaml",
+			"filePath": "storybook-ingress.yaml",
+			"summary": "Configuration file that controls deployment behavior for the frontend project.",
+			"tags": ["configuration", "storybook", "deployment"],
+			"complexity": "simple"
+		},
+		{
+			"id": "config:storybook-redirect-middleware.yaml",
+			"type": "config",
+			"name": "storybook-redirect-middleware.yaml",
+			"filePath": "storybook-redirect-middleware.yaml",
+			"summary": "Configuration file that controls deployment behavior for the frontend project.",
+			"tags": ["configuration", "storybook", "deployment"],
+			"complexity": "simple"
+		},
+		{
+			"id": "config:storybook-service.yaml",
+			"type": "config",
+			"name": "storybook-service.yaml",
+			"filePath": "storybook-service.yaml",
+			"summary": "Configuration file that controls deployment behavior for the frontend project.",
+			"tags": ["configuration", "storybook", "deployment"],
+			"complexity": "simple"
+		},
+		{
+			"id": "config:tsconfig.json",
+			"type": "config",
+			"name": "tsconfig.json",
+			"filePath": "tsconfig.json",
+			"summary": "Configuration file that controls build config behavior for the frontend project.",
+			"tags": ["configuration", "build-config", "config"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:update-stories-autodocs.sh",
+			"type": "file",
+			"name": "update-stories-autodocs.sh",
+			"filePath": "update-stories-autodocs.sh",
+			"summary": "Frontend source file for update stories autodocs sh in the ORISO React application.",
+			"tags": ["update-stories-autodocs-sh", "script", "frontend"],
+			"complexity": "moderate"
+		}
+	],
+	"edges": [
+		{
+			"source": "config:service-v2.yaml",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:storybook-deployment.yaml",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:storybook-ingress.yaml",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:storybook-redirect-middleware.yaml",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:storybook-service.yaml",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:tsconfig.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		}
+	]
+}

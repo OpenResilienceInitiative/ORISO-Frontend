@@ -1,0 +1,381 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": "src/containers/bookings/components/BookingEvents/bookingEvents.tsx",
+			"language": "typescript",
+			"sizeLines": 151,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/BookingEventsBooked/bookingEventsBooked.tsx",
+			"language": "typescript",
+			"sizeLines": 72,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/BookingEventsCanceled/bookingEventsCanceled.tsx",
+			"language": "typescript",
+			"sizeLines": 47,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/BookingEventsExpired/bookingEventsExpired.tsx",
+			"language": "typescript",
+			"sizeLines": 48,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/BookingSettings/bookingSettings.tsx",
+			"language": "typescript",
+			"sizeLines": 20,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/BookingsComponent/bookingsComponent.tsx",
+			"language": "typescript",
+			"sizeLines": 61,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/Calendar/calendar.tsx",
+			"language": "typescript",
+			"sizeLines": 58,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/CalendarIntegration/calendarIntegration.tsx",
+			"language": "typescript",
+			"sizeLines": 89,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/Event/LocationType/index.tsx",
+			"language": "typescript",
+			"sizeLines": 59,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/Event/event.tsx",
+			"language": "typescript",
+			"sizeLines": 244,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/MyCalendar/myCalendar.tsx",
+			"language": "typescript",
+			"sizeLines": 49,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/NoBookings/noBookingsBooked.tsx",
+			"language": "typescript",
+			"sizeLines": 79,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/overview/components/BookingEvent/index.tsx",
+			"language": "typescript",
+			"sizeLines": 138,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/overview/hooks/useConsultantBookings.ts",
+			"language": "typescript",
+			"sizeLines": 28,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/registration/components/ConsultingTypeSelection/index.tsx",
+			"language": "typescript",
+			"sizeLines": 67,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/registration/components/FallbackInformation/index.tsx",
+			"language": "typescript",
+			"sizeLines": 45,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/registration/components/NoAgencyFound/index.tsx",
+			"language": "typescript",
+			"sizeLines": 40,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/registration/components/PostCodeSelection/index.tsx",
+			"language": "typescript",
+			"sizeLines": 100,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/registration/components/ProposedAgencies/ProposedAgencies.tsx",
+			"language": "typescript",
+			"sizeLines": 288,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/registration/components/ProposedAgencies/ProposedAgenciesTitle/index.tsx",
+			"language": "typescript",
+			"sizeLines": 55,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/index.ts",
+			"language": "typescript",
+			"sizeLines": 25,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/BookingsInterface.ts",
+			"language": "typescript",
+			"sizeLines": 44,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/ToolsInterface.ts",
+			"language": "typescript",
+			"sizeLines": 15,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useUserMutate.ts",
+			"language": "typescript",
+			"sizeLines": 47,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/resources/img/icons.ts",
+			"language": "typescript",
+			"sizeLines": 62,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/store/agencyLogoAtom.ts",
+			"language": "typescript",
+			"sizeLines": 5,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/clipboardHelpers.ts",
+			"language": "typescript",
+			"sizeLines": 83,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/consultant.ts",
+			"language": "typescript",
+			"sizeLines": 5,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/dateHelpers.ts",
+			"language": "typescript",
+			"sizeLines": 171,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/liveChatToggle.ts",
+			"language": "typescript",
+			"sizeLines": 52,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/parsePlaceholderString.ts",
+			"language": "typescript",
+			"sizeLines": 20,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/tabsHelper.ts",
+			"language": "typescript",
+			"sizeLines": 60,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/transformBookingData.ts",
+			"language": "typescript",
+			"sizeLines": 49,
+			"fileCategory": "code"
+		}
+	],
+	"batchImportData": {
+		"src/containers/bookings/components/BookingEvents/bookingEvents.tsx": [
+			"src/components/button/Button.tsx",
+			"src/components/headline/Headline.tsx",
+			"src/components/text/Text.tsx",
+			"src/containers/bookings/booking.routes.ts",
+			"src/globalState/index.ts",
+			"src/utils/tabsHelper.ts"
+		],
+		"src/containers/bookings/components/BookingEventsBooked/bookingEventsBooked.tsx": [
+			"src/api/apiGetConsultantAppointments.ts",
+			"src/api/index.ts",
+			"src/containers/bookings/components/BookingsComponent/bookingsComponent.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/BookingsInterface.ts",
+			"src/utils/consultant.ts",
+			"src/utils/transformBookingData.ts"
+		],
+		"src/containers/bookings/components/BookingEventsCanceled/bookingEventsCanceled.tsx": [
+			"src/api/apiGetConsultantAppointments.ts",
+			"src/containers/bookings/components/BookingsComponent/bookingsComponent.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/BookingsInterface.ts",
+			"src/utils/consultant.ts",
+			"src/utils/transformBookingData.ts"
+		],
+		"src/containers/bookings/components/BookingEventsExpired/bookingEventsExpired.tsx": [
+			"src/api/apiGetConsultantAppointments.ts",
+			"src/containers/bookings/components/BookingsComponent/bookingsComponent.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/BookingsInterface.ts",
+			"src/utils/consultant.ts",
+			"src/utils/transformBookingData.ts"
+		],
+		"src/containers/bookings/components/BookingSettings/bookingSettings.tsx": [
+			"src/containers/bookings/components/AvailabilityContainer/availabilityContainer.tsx",
+			"src/containers/bookings/components/CalendarIntegration/calendarIntegration.tsx",
+			"src/containers/bookings/hooks/useCalcomLogin.ts"
+		],
+		"src/containers/bookings/components/BookingsComponent/bookingsComponent.tsx": [
+			"src/api/index.ts",
+			"src/components/app/Loading.tsx",
+			"src/containers/bookings/components/Event/event.tsx",
+			"src/containers/bookings/components/NoBookings/noBookingsBooked.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/BookingsInterface.ts",
+			"src/utils/consultant.ts"
+		],
+		"src/containers/bookings/components/Calendar/calendar.tsx": [
+			"src/components/button/Button.tsx",
+			"src/hooks/useAppConfig.tsx"
+		],
+		"src/containers/bookings/components/CalendarIntegration/calendarIntegration.tsx": [
+			"src/components/box/Box.tsx",
+			"src/components/headline/Headline.tsx",
+			"src/components/text/Text.tsx",
+			"src/containers/bookings/components/AddCalendar/addCalendar.tsx",
+			"src/containers/bookings/components/AssignedCalendars/assignedCalendars.tsx",
+			"src/hooks/useAppConfig.tsx"
+		],
+		"src/containers/bookings/components/Event/LocationType/index.tsx": [
+			"src/components/text/Text.tsx",
+			"src/components/tooltip/Tooltip.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/BookingsInterface.ts",
+			"src/resources/img/icons.ts"
+		],
+		"src/containers/bookings/components/Event/event.tsx": [
+			"src/components/box/Box.tsx",
+			"src/components/button/Button.tsx",
+			"src/components/downloadICSFile/downloadICSFile.tsx",
+			"src/components/headline/Headline.tsx",
+			"src/components/text/Text.tsx",
+			"src/containers/bookings/components/BookingDescription/bookingDescription.tsx",
+			"src/containers/bookings/components/BookingEventTableColumnAttendee/bookingEventTableColumnAttendee.tsx",
+			"src/containers/bookings/components/Event/LocationType/index.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/BookingsInterface.ts",
+			"src/resources/img/icons.ts",
+			"src/resources/scripts/config.ts",
+			"src/utils/clipboardHelpers.ts",
+			"src/utils/consultant.ts"
+		],
+		"src/containers/bookings/components/MyCalendar/myCalendar.tsx": [
+			"src/components/box/Box.tsx",
+			"src/components/button/Button.tsx",
+			"src/components/headline/Headline.tsx",
+			"src/components/text/Text.tsx",
+			"src/hooks/useAppConfig.tsx"
+		],
+		"src/containers/bookings/components/NoBookings/noBookingsBooked.tsx": [
+			"src/components/box/Box.tsx",
+			"src/components/button/Button.tsx",
+			"src/components/headline/Headline.tsx",
+			"src/components/text/Text.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/index.ts"
+		],
+		"src/containers/overview/components/BookingEvent/index.tsx": [
+			"src/components/button/Button.tsx",
+			"src/containers/overview/components/BookingEvent/booking-event.styles.scss",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/BookingsInterface.ts",
+			"src/hooks/useAppConfig.tsx",
+			"src/resources/scripts/config.ts",
+			"src/utils/dateHelpers.ts"
+		],
+		"src/containers/overview/hooks/useConsultantBookings.ts": [
+			"src/api/apiGetConsultantAppointments.ts",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/BookingsInterface.ts",
+			"src/utils/consultant.ts"
+		],
+		"src/containers/registration/components/ConsultingTypeSelection/index.tsx": [
+			"src/components/select/SelectDropdown.tsx",
+			"src/components/text/Text.tsx",
+			"src/globalState/interfaces/index.ts"
+		],
+		"src/containers/registration/components/FallbackInformation/index.tsx": [
+			"src/components/notice/Notice.tsx",
+			"src/components/text/Text.tsx",
+			"src/globalState/interfaces/index.ts",
+			"src/hooks/useAppConfig.tsx",
+			"src/utils/parsePlaceholderString.ts"
+		],
+		"src/containers/registration/components/NoAgencyFound/index.tsx": [
+			"src/components/text/Text.tsx",
+			"src/containers/registration/components/FallbackInformation/index.tsx",
+			"src/globalState/interfaces/index.ts"
+		],
+		"src/containers/registration/components/PostCodeSelection/index.tsx": [
+			"src/components/agencySelection/agencySelectionHelpers.ts",
+			"src/components/inputField/InputField.tsx",
+			"src/components/text/Text.tsx",
+			"src/resources/img/icons.ts"
+		],
+		"src/containers/registration/components/ProposedAgencies/ProposedAgencies.tsx": [
+			"src/components/agencyRadioSelect/AgencyRadioSelect.tsx",
+			"src/components/agencySelection/agencySelectionHelpers.ts",
+			"src/components/loadingIndicator/LoadingIndicator.tsx",
+			"src/components/registration/registrationHelpers.ts",
+			"src/components/text/Text.tsx",
+			"src/containers/registration/components/ConsultingTypeSelection/index.tsx",
+			"src/containers/registration/components/NoAgencyFound/index.tsx",
+			"src/containers/registration/components/PostCodeSelection/index.tsx",
+			"src/containers/registration/components/ProposedAgencies/proposedAgencies.styles.scss",
+			"src/containers/registration/components/ProposedAgencies/ProposedAgenciesTitle/index.tsx",
+			"src/containers/registration/hooks/useAgenciesForRegistration.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/globalState/provider/UrlParamsProvider.tsx",
+			"src/hooks/useAppConfig.tsx"
+		],
+		"src/containers/registration/components/ProposedAgencies/ProposedAgenciesTitle/index.tsx": [
+			"src/components/headline/Headline.tsx",
+			"src/components/text/Text.tsx"
+		],
+		"src/globalState/index.ts": [],
+		"src/globalState/interfaces/BookingsInterface.ts": [],
+		"src/globalState/interfaces/ToolsInterface.ts": [],
+		"src/hooks/useUserMutate.ts": [
+			"src/api/apiPatchUserData.ts",
+			"src/api/index.ts",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/index.ts"
+		],
+		"src/resources/img/icons.ts": [],
+		"src/store/agencyLogoAtom.ts": [],
+		"src/utils/clipboardHelpers.ts": [],
+		"src/utils/consultant.ts": [],
+		"src/utils/dateHelpers.ts": [],
+		"src/utils/liveChatToggle.ts": [],
+		"src/utils/parsePlaceholderString.ts": [],
+		"src/utils/tabsHelper.ts": [],
+		"src/utils/transformBookingData.ts": [
+			"src/globalState/interfaces/index.ts",
+			"src/utils/dateHelpers.ts"
+		]
+	}
+}

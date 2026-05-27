@@ -1,0 +1,278 @@
+{
+	"nodes": [
+		{
+			"id": "config:cypress/fixtures/api.v1.login.json",
+			"type": "config",
+			"name": "api.v1.login.json",
+			"filePath": "cypress/fixtures/api.v1.login.json",
+			"summary": "Configuration file that controls tests behavior for the frontend project.",
+			"tags": ["configuration", "authentication", "tests"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "config:cypress/fixtures/auth.token.json",
+			"type": "config",
+			"name": "auth.token.json",
+			"filePath": "cypress/fixtures/auth.token.json",
+			"summary": "Configuration file that controls tests behavior for the frontend project.",
+			"tags": ["configuration", "authentication", "tests"],
+			"complexity": "simple"
+		},
+		{
+			"id": "document:cypress/fixtures/releaseNote.md",
+			"type": "document",
+			"name": "releaseNote.md",
+			"filePath": "cypress/fixtures/releaseNote.md",
+			"summary": "Documentation covering tests concerns in the ORISO frontend.",
+			"tags": ["documentation", "tests", "docs"],
+			"complexity": "simple"
+		},
+		{
+			"id": "config:cypress/fixtures/releases.json",
+			"type": "config",
+			"name": "releases.json",
+			"filePath": "cypress/fixtures/releases.json",
+			"summary": "Configuration file that controls tests behavior for the frontend project.",
+			"tags": ["configuration", "tests", "config"],
+			"complexity": "simple"
+		},
+		{
+			"id": "config:cypress/fixtures/service.agencies.json",
+			"type": "config",
+			"name": "service.agencies.json",
+			"filePath": "cypress/fixtures/service.agencies.json",
+			"summary": "Configuration file that controls tests behavior for the frontend project.",
+			"tags": ["configuration", "tests", "config"],
+			"complexity": "simple"
+		},
+		{
+			"id": "config:cypress/fixtures/service.agency.consultants.json",
+			"type": "config",
+			"name": "service.agency.consultants.json",
+			"filePath": "cypress/fixtures/service.agency.consultants.json",
+			"summary": "Configuration file that controls tests behavior for the frontend project.",
+			"tags": ["configuration", "tests", "config"],
+			"complexity": "simple"
+		},
+		{
+			"id": "config:cypress/fixtures/service.consultingtypes.addiction.json",
+			"type": "config",
+			"name": "service.consultingtypes.addiction.json",
+			"filePath": "cypress/fixtures/service.consultingtypes.addiction.json",
+			"summary": "Configuration file that controls tests behavior for the frontend project.",
+			"tags": ["configuration", "tests", "config"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "config:cypress/fixtures/service.consultingtypes.emigration.json",
+			"type": "config",
+			"name": "service.consultingtypes.emigration.json",
+			"filePath": "cypress/fixtures/service.consultingtypes.emigration.json",
+			"summary": "Configuration file that controls tests behavior for the frontend project.",
+			"tags": ["configuration", "tests", "config"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "config:cypress/fixtures/service.consultingtypes.pregnancy.json",
+			"type": "config",
+			"name": "service.consultingtypes.pregnancy.json",
+			"filePath": "cypress/fixtures/service.consultingtypes.pregnancy.json",
+			"summary": "Configuration file that controls tests behavior for the frontend project.",
+			"tags": ["configuration", "tests", "config"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "config:cypress/fixtures/service.consultingtypes.u25.json",
+			"type": "config",
+			"name": "service.consultingtypes.u25.json",
+			"filePath": "cypress/fixtures/service.consultingtypes.u25.json",
+			"summary": "Configuration file that controls tests behavior for the frontend project.",
+			"tags": ["configuration", "tests", "config"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "config:cypress/fixtures/service.settings.json",
+			"type": "config",
+			"name": "service.settings.json",
+			"filePath": "cypress/fixtures/service.settings.json",
+			"summary": "Configuration file that controls tests behavior for the frontend project.",
+			"tags": ["configuration", "tests", "config"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "config:cypress/fixtures/service.tenant.public.json",
+			"type": "config",
+			"name": "service.tenant.public.json",
+			"filePath": "cypress/fixtures/service.tenant.public.json",
+			"summary": "Configuration file that controls tests behavior for the frontend project.",
+			"tags": ["configuration", "tests", "config"],
+			"complexity": "simple"
+		},
+		{
+			"id": "config:cypress/fixtures/service.topicGroups.json",
+			"type": "config",
+			"name": "service.topicGroups.json",
+			"filePath": "cypress/fixtures/service.topicGroups.json",
+			"summary": "Configuration file that controls tests behavior for the frontend project.",
+			"tags": ["configuration", "tests", "config"],
+			"complexity": "simple"
+		},
+		{
+			"id": "config:cypress/fixtures/service.topics.json",
+			"type": "config",
+			"name": "service.topics.json",
+			"filePath": "cypress/fixtures/service.topics.json",
+			"summary": "Configuration file that controls tests behavior for the frontend project.",
+			"tags": ["configuration", "tests", "config"],
+			"complexity": "simple"
+		},
+		{
+			"id": "config:cypress/fixtures/service.users.data.json",
+			"type": "config",
+			"name": "service.users.data.json",
+			"filePath": "cypress/fixtures/service.users.data.json",
+			"summary": "Configuration file that controls tests behavior for the frontend project.",
+			"tags": ["configuration", "tests", "config"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "config:cypress/fixtures/service.users.sessions.room.json",
+			"type": "config",
+			"name": "service.users.sessions.room.json",
+			"filePath": "cypress/fixtures/service.users.sessions.room.json",
+			"summary": "Configuration file that controls tests behavior for the frontend project.",
+			"tags": ["configuration", "session", "tests"],
+			"complexity": "simple"
+		},
+		{
+			"id": "config:cypress/fixtures/service.videocalls.new.json",
+			"type": "config",
+			"name": "service.videocalls.new.json",
+			"filePath": "cypress/fixtures/service.videocalls.new.json",
+			"summary": "Configuration file that controls tests behavior for the frontend project.",
+			"tags": ["configuration", "tests", "config"],
+			"complexity": "simple"
+		}
+	],
+	"edges": [
+		{
+			"source": "config:cypress/fixtures/api.v1.login.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:cypress/fixtures/auth.token.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "document:cypress/fixtures/releaseNote.md",
+			"target": "document:README.md",
+			"type": "related",
+			"direction": "forward",
+			"weight": 0.5
+		},
+		{
+			"source": "config:cypress/fixtures/releases.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:cypress/fixtures/service.agencies.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:cypress/fixtures/service.agency.consultants.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:cypress/fixtures/service.consultingtypes.addiction.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:cypress/fixtures/service.consultingtypes.emigration.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:cypress/fixtures/service.consultingtypes.pregnancy.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:cypress/fixtures/service.consultingtypes.u25.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:cypress/fixtures/service.settings.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:cypress/fixtures/service.tenant.public.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:cypress/fixtures/service.topicGroups.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:cypress/fixtures/service.topics.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:cypress/fixtures/service.users.data.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:cypress/fixtures/service.users.sessions.room.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:cypress/fixtures/service.videocalls.new.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		}
+	]
+}

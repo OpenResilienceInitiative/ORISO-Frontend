@@ -1,0 +1,35 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": "src/components/messageSubmitInterface/TipTapComposer.styles.scss",
+			"language": "css",
+			"sizeLines": 108,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/messageSubmitInterface/emojiPicker.styles.scss",
+			"language": "css",
+			"sizeLines": 269,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/messageSubmitInterface/messageSubmitInfo.styles.scss",
+			"language": "css",
+			"sizeLines": 45,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/messageSubmitInterface/messageSubmitInterface.styles.scss",
+			"language": "css",
+			"sizeLines": 2103,
+			"fileCategory": "markup"
+		}
+	],
+	"batchImportData": {
+		"src/components/messageSubmitInterface/TipTapComposer.styles.scss": [],
+		"src/components/messageSubmitInterface/emojiPicker.styles.scss": [],
+		"src/components/messageSubmitInterface/messageSubmitInfo.styles.scss": [],
+		"src/components/messageSubmitInterface/messageSubmitInterface.styles.scss": []
+	}
+}

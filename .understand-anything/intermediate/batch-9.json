@@ -1,0 +1,2724 @@
+{
+	"nodes": [
+		{
+			"id": "file:.storybook-backup/preview.tsx",
+			"type": "file",
+			"name": "preview.tsx",
+			"filePath": ".storybook-backup/preview.tsx",
+			"summary": "React UI module for storybook, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["storybook", "component", "utility"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:.storybook-backup/preview.tsx:withMuiTheme",
+			"type": "function",
+			"name": "withMuiTheme",
+			"filePath": ".storybook-backup/preview.tsx",
+			"lineRange": [21, 33],
+			"summary": "Function withMuiTheme in .storybook-backup/preview.tsx, used by the surrounding storybook module.",
+			"tags": ["function", "storybook", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:.storybook-backup/preview.tsx:decorators",
+			"type": "function",
+			"name": "decorators",
+			"filePath": ".storybook-backup/preview.tsx",
+			"lineRange": [59, 71],
+			"summary": "Function decorators in .storybook-backup/preview.tsx, used by the surrounding storybook module.",
+			"tags": ["function", "storybook", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiConsumeMagicLinkLogin.ts",
+			"type": "file",
+			"name": "apiConsumeMagicLinkLogin.ts",
+			"filePath": "src/api/apiConsumeMagicLinkLogin.ts",
+			"summary": "API client module for apiConsumeMagicLinkLogin, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "authentication", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiConsumeMagicLinkLogin.ts:apiConsumeMagicLinkLogin",
+			"type": "function",
+			"name": "apiConsumeMagicLinkLogin",
+			"filePath": "src/api/apiConsumeMagicLinkLogin.ts",
+			"lineRange": [11, 21],
+			"summary": "Function apiConsumeMagicLinkLogin in src/api/apiConsumeMagicLinkLogin.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiPostRegistration.ts",
+			"type": "file",
+			"name": "apiPostRegistration.ts",
+			"filePath": "src/api/apiPostRegistration.ts",
+			"summary": "API client module for apiPostRegistration, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiPostRegistration.ts:apiPostRegistration",
+			"type": "function",
+			"name": "apiPostRegistration",
+			"filePath": "src/api/apiPostRegistration.ts",
+			"lineRange": [7, 19],
+			"summary": "Function apiPostRegistration in src/api/apiPostRegistration.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/index.ts",
+			"type": "file",
+			"name": "index.ts",
+			"filePath": "src/api/index.ts",
+			"summary": "API client module for index, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "api", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/anonymousChat/AnonymousChat.tsx",
+			"type": "file",
+			"name": "AnonymousChat.tsx",
+			"filePath": "src/components/anonymousChat/AnonymousChat.tsx",
+			"summary": "React UI module for component anonymous chat, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-anonymous-chat", "code"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/app/PreConditions.tsx",
+			"type": "file",
+			"name": "PreConditions.tsx",
+			"filePath": "src/components/app/PreConditions.tsx",
+			"summary": "React UI module for component app, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-app"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/app/PreConditions.tsx:preConditionsMet",
+			"type": "function",
+			"name": "preConditionsMet",
+			"filePath": "src/components/app/PreConditions.tsx",
+			"lineRange": [23, 35],
+			"summary": "Function preConditionsMet in src/components/app/PreConditions.tsx, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/PreConditions.tsx:PreConditions",
+			"type": "function",
+			"name": "PreConditions",
+			"filePath": "src/components/app/PreConditions.tsx",
+			"lineRange": [38, 50],
+			"summary": "Function PreConditions in src/components/app/PreConditions.tsx, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/app/TenantThemingLoader.tsx",
+			"type": "file",
+			"name": "TenantThemingLoader.tsx",
+			"filePath": "src/components/app/TenantThemingLoader.tsx",
+			"summary": "React UI module for component app, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-app"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/TenantThemingLoader.tsx:TenantThemingLoader",
+			"type": "function",
+			"name": "TenantThemingLoader",
+			"filePath": "src/components/app/TenantThemingLoader.tsx",
+			"lineRange": [7, 19],
+			"summary": "Function TenantThemingLoader in src/components/app/TenantThemingLoader.tsx, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/app/WebsocketHandler.tsx",
+			"type": "file",
+			"name": "WebsocketHandler.tsx",
+			"filePath": "src/components/app/WebsocketHandler.tsx",
+			"summary": "React UI module for component app, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-app"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/app/WebsocketHandler.tsx:WebsocketHandler",
+			"type": "function",
+			"name": "WebsocketHandler",
+			"filePath": "src/components/app/WebsocketHandler.tsx",
+			"lineRange": [30, 42],
+			"summary": "Function WebsocketHandler in src/components/app/WebsocketHandler.tsx, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/WebsocketHandler.tsx:return",
+			"type": "function",
+			"name": "return",
+			"filePath": "src/components/app/WebsocketHandler.tsx",
+			"lineRange": [133, 145],
+			"summary": "Function return in src/components/app/WebsocketHandler.tsx, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "internal"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/app/app.tsx",
+			"type": "file",
+			"name": "app.tsx",
+			"filePath": "src/components/app/app.tsx",
+			"summary": "React UI module for component app, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-app"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/app/app.tsx:App",
+			"type": "function",
+			"name": "App",
+			"filePath": "src/components/app/app.tsx",
+			"lineRange": [86, 98],
+			"summary": "Function App in src/components/app/app.tsx, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/devToolbar/DevToolbar.tsx",
+			"type": "file",
+			"name": "DevToolbar.tsx",
+			"filePath": "src/components/devToolbar/DevToolbar.tsx",
+			"summary": "React UI module for component dev toolbar, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-dev-toolbar"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/devToolbar/DevToolbar.tsx:STORAGE_KEY_LOCALE",
+			"type": "function",
+			"name": "STORAGE_KEY_LOCALE",
+			"filePath": "src/components/devToolbar/DevToolbar.tsx",
+			"lineRange": [24, 36],
+			"summary": "Function STORAGE_KEY_LOCALE in src/components/devToolbar/DevToolbar.tsx, used by the surrounding component dev toolbar module.",
+			"tags": ["function", "component-dev-toolbar", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/devToolbar/DevToolbar.tsx:STORAGE_KEY_API",
+			"type": "function",
+			"name": "STORAGE_KEY_API",
+			"filePath": "src/components/devToolbar/DevToolbar.tsx",
+			"lineRange": [25, 37],
+			"summary": "Function STORAGE_KEY_API in src/components/devToolbar/DevToolbar.tsx, used by the surrounding component dev toolbar module.",
+			"tags": ["function", "component-dev-toolbar", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/devToolbar/DevToolbar.tsx:STORAGE_KEY_DEV_TOOLBAR",
+			"type": "function",
+			"name": "STORAGE_KEY_DEV_TOOLBAR",
+			"filePath": "src/components/devToolbar/DevToolbar.tsx",
+			"lineRange": [26, 38],
+			"summary": "Function STORAGE_KEY_DEV_TOOLBAR in src/components/devToolbar/DevToolbar.tsx, used by the surrounding component dev toolbar module.",
+			"tags": ["function", "component-dev-toolbar", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/devToolbar/DevToolbar.tsx:STORAGE_KEY_POSITION",
+			"type": "function",
+			"name": "STORAGE_KEY_POSITION",
+			"filePath": "src/components/devToolbar/DevToolbar.tsx",
+			"lineRange": [27, 39],
+			"summary": "Function STORAGE_KEY_POSITION in src/components/devToolbar/DevToolbar.tsx, used by the surrounding component dev toolbar module.",
+			"tags": ["function", "component-dev-toolbar", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/devToolbar/DevToolbar.tsx:STORAGE_KEY_HIDDEN",
+			"type": "function",
+			"name": "STORAGE_KEY_HIDDEN",
+			"filePath": "src/components/devToolbar/DevToolbar.tsx",
+			"lineRange": [28, 40],
+			"summary": "Function STORAGE_KEY_HIDDEN in src/components/devToolbar/DevToolbar.tsx, used by the surrounding component dev toolbar module.",
+			"tags": ["function", "component-dev-toolbar", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/devToolbar/DevToolbar.tsx:STORAGE_KEY_2FA",
+			"type": "function",
+			"name": "STORAGE_KEY_2FA",
+			"filePath": "src/components/devToolbar/DevToolbar.tsx",
+			"lineRange": [30, 42],
+			"summary": "Function STORAGE_KEY_2FA in src/components/devToolbar/DevToolbar.tsx, used by the surrounding component dev toolbar module.",
+			"tags": ["function", "component-dev-toolbar", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/devToolbar/DevToolbar.tsx:STORAGE_KEY_DISABLE_2FA_DUTY",
+			"type": "function",
+			"name": "STORAGE_KEY_DISABLE_2FA_DUTY",
+			"filePath": "src/components/devToolbar/DevToolbar.tsx",
+			"lineRange": [31, 43],
+			"summary": "Function STORAGE_KEY_DISABLE_2FA_DUTY in src/components/devToolbar/DevToolbar.tsx, used by the surrounding component dev toolbar module.",
+			"tags": ["function", "component-dev-toolbar", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/devToolbar/DevToolbar.tsx:STORAGE_KEY_RELEASE_NOTES",
+			"type": "function",
+			"name": "STORAGE_KEY_RELEASE_NOTES",
+			"filePath": "src/components/devToolbar/DevToolbar.tsx",
+			"lineRange": [32, 44],
+			"summary": "Function STORAGE_KEY_RELEASE_NOTES in src/components/devToolbar/DevToolbar.tsx, used by the surrounding component dev toolbar module.",
+			"tags": ["function", "component-dev-toolbar", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/devToolbar/DevToolbar.tsx:STORAGE_KEY_ERROR_BOUNDARY",
+			"type": "function",
+			"name": "STORAGE_KEY_ERROR_BOUNDARY",
+			"filePath": "src/components/devToolbar/DevToolbar.tsx",
+			"lineRange": [33, 45],
+			"summary": "Function STORAGE_KEY_ERROR_BOUNDARY in src/components/devToolbar/DevToolbar.tsx, used by the surrounding component dev toolbar module.",
+			"tags": ["function", "component-dev-toolbar", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/devToolbar/DevToolbar.tsx:STORAGE_KEY_E2EE_DISABLED",
+			"type": "function",
+			"name": "STORAGE_KEY_E2EE_DISABLED",
+			"filePath": "src/components/devToolbar/DevToolbar.tsx",
+			"lineRange": [34, 46],
+			"summary": "Function STORAGE_KEY_E2EE_DISABLED in src/components/devToolbar/DevToolbar.tsx, used by the surrounding component dev toolbar module.",
+			"tags": ["function", "component-dev-toolbar", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/devToolbar/DevToolbar.tsx:STORAGE_KEY_TRANSLATION_DISABLE_CACHE",
+			"type": "function",
+			"name": "STORAGE_KEY_TRANSLATION_DISABLE_CACHE",
+			"filePath": "src/components/devToolbar/DevToolbar.tsx",
+			"lineRange": [35, 47],
+			"summary": "Function STORAGE_KEY_TRANSLATION_DISABLE_CACHE in src/components/devToolbar/DevToolbar.tsx, used by the surrounding component dev toolbar module.",
+			"tags": ["function", "component-dev-toolbar", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/devToolbar/DevToolbar.tsx:STORAGE_KEY_ENABLE_TRANSLATION_CHECK",
+			"type": "function",
+			"name": "STORAGE_KEY_ENABLE_TRANSLATION_CHECK",
+			"filePath": "src/components/devToolbar/DevToolbar.tsx",
+			"lineRange": [37, 49],
+			"summary": "Function STORAGE_KEY_ENABLE_TRANSLATION_CHECK in src/components/devToolbar/DevToolbar.tsx, used by the surrounding component dev toolbar module.",
+			"tags": ["function", "component-dev-toolbar", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/devToolbar/DevToolbar.tsx:STORAGE_KEY_ATTACHMENT_ENCRYPTION",
+			"type": "function",
+			"name": "STORAGE_KEY_ATTACHMENT_ENCRYPTION",
+			"filePath": "src/components/devToolbar/DevToolbar.tsx",
+			"lineRange": [38, 50],
+			"summary": "Function STORAGE_KEY_ATTACHMENT_ENCRYPTION in src/components/devToolbar/DevToolbar.tsx, used by the surrounding component dev toolbar module.",
+			"tags": ["function", "component-dev-toolbar", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/devToolbar/DevToolbar.tsx:useDevToolbar",
+			"type": "function",
+			"name": "useDevToolbar",
+			"filePath": "src/components/devToolbar/DevToolbar.tsx",
+			"lineRange": [256, 268],
+			"summary": "Function useDevToolbar in src/components/devToolbar/DevToolbar.tsx, used by the surrounding component dev toolbar module.",
+			"tags": ["function", "component-dev-toolbar", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/devToolbar/DevToolbar.tsx:DevToolbarWrapper",
+			"type": "function",
+			"name": "DevToolbarWrapper",
+			"filePath": "src/components/devToolbar/DevToolbar.tsx",
+			"lineRange": [291, 303],
+			"summary": "Function DevToolbarWrapper in src/components/devToolbar/DevToolbar.tsx, used by the surrounding component dev toolbar module.",
+			"tags": ["function", "component-dev-toolbar", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/devToolbar/DevToolbar.tsx:DevToolbar",
+			"type": "function",
+			"name": "DevToolbar",
+			"filePath": "src/components/devToolbar/DevToolbar.tsx",
+			"lineRange": [331, 343],
+			"summary": "Function DevToolbar in src/components/devToolbar/DevToolbar.tsx, used by the surrounding component dev toolbar module.",
+			"tags": ["function", "component-dev-toolbar", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/error/Error.tsx",
+			"type": "file",
+			"name": "Error.tsx",
+			"filePath": "src/components/error/Error.tsx",
+			"summary": "React UI module for component error, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-error"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/error/Error.tsx:Error",
+			"type": "function",
+			"name": "Error",
+			"filePath": "src/components/error/Error.tsx",
+			"lineRange": [29, 41],
+			"summary": "Function Error in src/components/error/Error.tsx, used by the surrounding component error module.",
+			"tags": ["function", "component-error", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/error/Error.tsx:ErrorContent",
+			"type": "function",
+			"name": "ErrorContent",
+			"filePath": "src/components/error/Error.tsx",
+			"lineRange": [37, 49],
+			"summary": "Function ErrorContent in src/components/error/Error.tsx, used by the surrounding component error module.",
+			"tags": ["function", "component-error", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/invite/InviteLink.tsx",
+			"type": "file",
+			"name": "InviteLink.tsx",
+			"filePath": "src/components/invite/InviteLink.tsx",
+			"summary": "React UI module for component invite, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "invite", "utility", "component-invite"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/invite/InviteLink.tsx:InviteLink",
+			"type": "function",
+			"name": "InviteLink",
+			"filePath": "src/components/invite/InviteLink.tsx",
+			"lineRange": [488, 500],
+			"summary": "Function InviteLink in src/components/invite/InviteLink.tsx, used by the surrounding component invite module.",
+			"tags": ["function", "component-invite", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/legalInformationLinks/Imprint.tsx",
+			"type": "file",
+			"name": "Imprint.tsx",
+			"filePath": "src/components/legalInformationLinks/Imprint.tsx",
+			"summary": "React UI module for component legal information links, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"utility",
+				"component-legal-information-links"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/legalInformationLinks/Imprint.tsx:Imprint",
+			"type": "function",
+			"name": "Imprint",
+			"filePath": "src/components/legalInformationLinks/Imprint.tsx",
+			"lineRange": [7, 18],
+			"summary": "Function Imprint in src/components/legalInformationLinks/Imprint.tsx, used by the surrounding component legal information links module.",
+			"tags": [
+				"function",
+				"component-legal-information-links",
+				"exported"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/legalInformationLinks/Privacy.tsx",
+			"type": "file",
+			"name": "Privacy.tsx",
+			"filePath": "src/components/legalInformationLinks/Privacy.tsx",
+			"summary": "React UI module for component legal information links, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"utility",
+				"component-legal-information-links"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/legalInformationLinks/Privacy.tsx:Privacy",
+			"type": "function",
+			"name": "Privacy",
+			"filePath": "src/components/legalInformationLinks/Privacy.tsx",
+			"lineRange": [7, 19],
+			"summary": "Function Privacy in src/components/legalInformationLinks/Privacy.tsx, used by the surrounding component legal information links module.",
+			"tags": [
+				"function",
+				"component-legal-information-links",
+				"exported"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/legalInformationLinks/TermsAndConditions.tsx",
+			"type": "file",
+			"name": "TermsAndConditions.tsx",
+			"filePath": "src/components/legalInformationLinks/TermsAndConditions.tsx",
+			"summary": "React UI module for component legal information links, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"utility",
+				"component-legal-information-links"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/legalInformationLinks/TermsAndConditions.tsx:TermsAndConditions",
+			"type": "function",
+			"name": "TermsAndConditions",
+			"filePath": "src/components/legalInformationLinks/TermsAndConditions.tsx",
+			"lineRange": [7, 19],
+			"summary": "Function TermsAndConditions in src/components/legalInformationLinks/TermsAndConditions.tsx, used by the surrounding component legal information links module.",
+			"tags": [
+				"function",
+				"component-legal-information-links",
+				"exported"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/legalLinks/LegalLinks.tsx",
+			"type": "file",
+			"name": "LegalLinks.tsx",
+			"filePath": "src/components/legalLinks/LegalLinks.tsx",
+			"summary": "React UI module for component legal links, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-legal-links", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/legalPageWrapper/LegalPageWrapper.tsx",
+			"type": "file",
+			"name": "LegalPageWrapper.tsx",
+			"filePath": "src/components/legalPageWrapper/LegalPageWrapper.tsx",
+			"summary": "React UI module for component legal page wrapper, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-legal-page-wrapper"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/legalPageWrapper/LegalPageWrapper.tsx:LegalPageWrapper",
+			"type": "function",
+			"name": "LegalPageWrapper",
+			"filePath": "src/components/legalPageWrapper/LegalPageWrapper.tsx",
+			"lineRange": [12, 24],
+			"summary": "Function LegalPageWrapper in src/components/legalPageWrapper/LegalPageWrapper.tsx, used by the surrounding component legal page wrapper module.",
+			"tags": ["function", "component-legal-page-wrapper", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/login/Login.tsx",
+			"type": "file",
+			"name": "Login.tsx",
+			"filePath": "src/components/login/Login.tsx",
+			"summary": "React UI module for component login, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"authentication",
+				"utility",
+				"component-login"
+			],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/login/Login.tsx:Login",
+			"type": "function",
+			"name": "Login",
+			"filePath": "src/components/login/Login.tsx",
+			"lineRange": [60, 72],
+			"summary": "Function Login in src/components/login/Login.tsx, used by the surrounding component login module.",
+			"tags": ["function", "component-login", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/modal/Modal.tsx",
+			"type": "file",
+			"name": "Modal.tsx",
+			"filePath": "src/components/modal/Modal.tsx",
+			"summary": "React UI module for component modal, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-modal"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/modal/Modal.tsx:Modal",
+			"type": "function",
+			"name": "Modal",
+			"filePath": "src/components/modal/Modal.tsx",
+			"lineRange": [10, 18],
+			"summary": "Function Modal in src/components/modal/Modal.tsx, used by the surrounding component modal module.",
+			"tags": ["function", "component-modal", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/profile/ConsultantPrivateData.tsx",
+			"type": "file",
+			"name": "ConsultantPrivateData.tsx",
+			"filePath": "src/components/profile/ConsultantPrivateData.tsx",
+			"summary": "React UI module for component profile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-profile"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/profile/ConsultantPrivateData.tsx:ConsultantPrivateData",
+			"type": "function",
+			"name": "ConsultantPrivateData",
+			"filePath": "src/components/profile/ConsultantPrivateData.tsx",
+			"lineRange": [21, 33],
+			"summary": "Function ConsultantPrivateData in src/components/profile/ConsultantPrivateData.tsx, used by the surrounding component profile module.",
+			"tags": ["function", "component-profile", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/profile/Profile.tsx",
+			"type": "file",
+			"name": "Profile.tsx",
+			"filePath": "src/components/profile/Profile.tsx",
+			"summary": "React UI module for component profile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-profile"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/profile/Profile.tsx:Profile",
+			"type": "function",
+			"name": "Profile",
+			"filePath": "src/components/profile/Profile.tsx",
+			"lineRange": [56, 68],
+			"summary": "Function Profile in src/components/profile/Profile.tsx, used by the surrounding component profile module.",
+			"tags": ["function", "component-profile", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/registration/Registration.tsx",
+			"type": "file",
+			"name": "Registration.tsx",
+			"filePath": "src/components/registration/Registration.tsx",
+			"summary": "React UI module for component registration, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-registration"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/registration/Registration.tsx:Registration",
+			"type": "function",
+			"name": "Registration",
+			"filePath": "src/components/registration/Registration.tsx",
+			"lineRange": [64, 76],
+			"summary": "Function Registration in src/components/registration/Registration.tsx, used by the surrounding component registration module.",
+			"tags": ["function", "component-registration", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/registration/autoLogin.ts",
+			"type": "file",
+			"name": "autoLogin.ts",
+			"filePath": "src/components/registration/autoLogin.ts",
+			"summary": "React UI module for component registration, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"authentication",
+				"utility",
+				"component-registration"
+			],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/registration/autoLogin.ts:autoLogin",
+			"type": "function",
+			"name": "autoLogin",
+			"filePath": "src/components/registration/autoLogin.ts",
+			"lineRange": [101, 113],
+			"summary": "Function autoLogin in src/components/registration/autoLogin.ts, used by the surrounding component registration module.",
+			"tags": ["function", "component-registration", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/registration/autoLogin.ts:redirectToApp",
+			"type": "function",
+			"name": "redirectToApp",
+			"filePath": "src/components/registration/autoLogin.ts",
+			"lineRange": [215, 227],
+			"summary": "Function redirectToApp in src/components/registration/autoLogin.ts, used by the surrounding component registration module.",
+			"tags": ["function", "component-registration", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/registration/autoLogin.ts:handleE2EESetup",
+			"type": "function",
+			"name": "handleE2EESetup",
+			"filePath": "src/components/registration/autoLogin.ts",
+			"lineRange": [232, 244],
+			"summary": "Function handleE2EESetup in src/components/registration/autoLogin.ts, used by the surrounding component registration module.",
+			"tags": ["function", "component-registration", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/registration/stepBar/StepBar.stories.ts",
+			"type": "file",
+			"name": "StepBar.stories.ts",
+			"filePath": "src/components/registration/stepBar/StepBar.stories.ts",
+			"summary": "React UI module for component registration, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["storybook", "component", "component-registration"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/registration/stepBar/StepBar.tsx",
+			"type": "file",
+			"name": "StepBar.tsx",
+			"filePath": "src/components/registration/stepBar/StepBar.tsx",
+			"summary": "React UI module for component registration, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-registration", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/sessionCookie/getKeycloakAccessToken.ts",
+			"type": "file",
+			"name": "getKeycloakAccessToken.ts",
+			"filePath": "src/components/sessionCookie/getKeycloakAccessToken.ts",
+			"summary": "React UI module for component session cookie, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"session",
+				"authentication",
+				"utility",
+				"component-session-cookie"
+			],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/sessionCookie/getKeycloakAccessToken.ts:getKeycloakAccessToken",
+			"type": "function",
+			"name": "getKeycloakAccessToken",
+			"filePath": "src/components/sessionCookie/getKeycloakAccessToken.ts",
+			"lineRange": [6, 18],
+			"summary": "Function getKeycloakAccessToken in src/components/sessionCookie/getKeycloakAccessToken.ts, used by the surrounding component session cookie module.",
+			"tags": ["function", "component-session-cookie", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/sessionCookie/getRocketchatAccessToken.ts",
+			"type": "file",
+			"name": "getRocketchatAccessToken.ts",
+			"filePath": "src/components/sessionCookie/getRocketchatAccessToken.ts",
+			"summary": "React UI module for component session cookie, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"session",
+				"utility",
+				"component-session-cookie"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionCookie/getRocketchatAccessToken.ts:getRocketchatAccessToken",
+			"type": "function",
+			"name": "getRocketchatAccessToken",
+			"filePath": "src/components/sessionCookie/getRocketchatAccessToken.ts",
+			"lineRange": [4, 16],
+			"summary": "Function getRocketchatAccessToken in src/components/sessionCookie/getRocketchatAccessToken.ts, used by the surrounding component session cookie module.",
+			"tags": ["function", "component-session-cookie", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/sessionHeader/GroupChatHeader/useJoinVideoCall/index.ts",
+			"type": "file",
+			"name": "index.ts",
+			"filePath": "src/components/sessionHeader/GroupChatHeader/useJoinVideoCall/index.ts",
+			"summary": "React UI module for component session header, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"session",
+				"utility",
+				"component-session-header"
+			],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/sessionHeader/GroupChatHeader/useJoinVideoCall/index.ts:useJoinVideoCall",
+			"type": "function",
+			"name": "useJoinVideoCall",
+			"filePath": "src/components/sessionHeader/GroupChatHeader/useJoinVideoCall/index.ts",
+			"lineRange": [14, 26],
+			"summary": "Function useJoinVideoCall in src/components/sessionHeader/GroupChatHeader/useJoinVideoCall/index.ts, used by the surrounding component session header module.",
+			"tags": ["function", "component-session-header", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/spinner/Spinner.stories.ts",
+			"type": "file",
+			"name": "Spinner.stories.ts",
+			"filePath": "src/components/spinner/Spinner.stories.ts",
+			"summary": "React UI module for component spinner, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["storybook", "component", "component-spinner"],
+			"complexity": "simple"
+		}
+	],
+	"edges": [
+		{
+			"source": "file:.storybook-backup/preview.tsx",
+			"target": "function:.storybook-backup/preview.tsx:withMuiTheme",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:.storybook-backup/preview.tsx",
+			"target": "function:.storybook-backup/preview.tsx:withMuiTheme",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:.storybook-backup/preview.tsx",
+			"target": "function:.storybook-backup/preview.tsx:decorators",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:.storybook-backup/preview.tsx",
+			"target": "function:.storybook-backup/preview.tsx:decorators",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:.storybook-backup/preview.tsx",
+			"target": "file:src/components/app/Loading.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:.storybook-backup/preview.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:.storybook-backup/preview.tsx",
+			"target": "file:src/globalState/provider/LegalLinksProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:.storybook-backup/preview.tsx",
+			"target": "file:src/i18n.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:.storybook-backup/preview.tsx",
+			"target": "file:src/resources/scripts/config.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:.storybook-backup/preview.tsx",
+			"target": "file:src/resources/scripts/theme.jsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:.storybook-backup/preview.tsx",
+			"target": "file:src/resources/styles/mui-variables-mapping.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:.storybook-backup/preview.tsx",
+			"target": "file:src/resources/styles/styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiConsumeMagicLinkLogin.ts",
+			"target": "function:src/api/apiConsumeMagicLinkLogin.ts:apiConsumeMagicLinkLogin",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiConsumeMagicLinkLogin.ts",
+			"target": "function:src/api/apiConsumeMagicLinkLogin.ts:apiConsumeMagicLinkLogin",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiConsumeMagicLinkLogin.ts",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiConsumeMagicLinkLogin.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiPostRegistration.ts",
+			"target": "function:src/api/apiPostRegistration.ts:apiPostRegistration",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiPostRegistration.ts",
+			"target": "function:src/api/apiPostRegistration.ts:apiPostRegistration",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiPostRegistration.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiPostRegistration.ts",
+			"target": "file:src/components/registration/autoLogin.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiPostRegistration.ts",
+			"target": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiPostRegistration.ts",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiPostRegistration.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/anonymousChat/AnonymousChat.tsx",
+			"target": "file:src/api/apiAgencySelection.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/anonymousChat/AnonymousChat.tsx",
+			"target": "file:src/api/apiGetTopicsData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/anonymousChat/AnonymousChat.tsx",
+			"target": "file:src/api/apiPostRegistration.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/anonymousChat/AnonymousChat.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/anonymousChat/AnonymousChat.tsx",
+			"target": "file:src/components/app/Loading.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/anonymousChat/AnonymousChat.tsx",
+			"target": "file:src/components/infoTooltip/InfoTooltip.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/anonymousChat/AnonymousChat.tsx",
+			"target": "file:src/components/registration/agencySelection/AgencyLanguages.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/anonymousChat/AnonymousChat.tsx",
+			"target": "file:src/components/registration/autoLogin.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/anonymousChat/AnonymousChat.tsx",
+			"target": "file:src/components/stageLayout/StageLayout.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/anonymousChat/AnonymousChat.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/anonymousChat/AnonymousChat.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/anonymousChat/AnonymousChat.tsx",
+			"target": "file:src/globalState/provider/GlobalComponentContext.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/anonymousChat/AnonymousChat.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/anonymousChat/AnonymousChat.tsx",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/PreConditions.tsx",
+			"target": "function:src/components/app/PreConditions.tsx:preConditionsMet",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/PreConditions.tsx",
+			"target": "function:src/components/app/PreConditions.tsx:preConditionsMet",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/PreConditions.tsx",
+			"target": "function:src/components/app/PreConditions.tsx:PreConditions",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/PreConditions.tsx",
+			"target": "function:src/components/app/PreConditions.tsx:PreConditions",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/PreConditions.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/PreConditions.tsx",
+			"target": "file:src/components/stageLayout/StageLayout.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/PreConditions.tsx",
+			"target": "file:src/globalState/provider/GlobalComponentContext.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/PreConditions.tsx",
+			"target": "file:src/polyfill.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/TenantThemingLoader.tsx",
+			"target": "function:src/components/app/TenantThemingLoader.tsx:TenantThemingLoader",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/TenantThemingLoader.tsx",
+			"target": "function:src/components/app/TenantThemingLoader.tsx:TenantThemingLoader",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/TenantThemingLoader.tsx",
+			"target": "file:src/components/modal/Modal.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/TenantThemingLoader.tsx",
+			"target": "file:src/components/spinner/Spinner.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/TenantThemingLoader.tsx",
+			"target": "file:src/utils/useTenantTheming.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/WebsocketHandler.tsx",
+			"target": "function:src/components/app/WebsocketHandler.tsx:WebsocketHandler",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/WebsocketHandler.tsx",
+			"target": "function:src/components/app/WebsocketHandler.tsx:WebsocketHandler",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/WebsocketHandler.tsx",
+			"target": "function:src/components/app/WebsocketHandler.tsx:return",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/WebsocketHandler.tsx",
+			"target": "file:src/components/incomingVideoCall/IncomingVideoCall.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/WebsocketHandler.tsx",
+			"target": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/WebsocketHandler.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/WebsocketHandler.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/WebsocketHandler.tsx",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/WebsocketHandler.tsx",
+			"target": "file:src/services/matrixLiveEventBridge.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/WebsocketHandler.tsx",
+			"target": "file:src/services/messageEventEmitter.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/WebsocketHandler.tsx",
+			"target": "file:src/utils/notificationHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/app.tsx",
+			"target": "function:src/components/app/app.tsx:App",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/app.tsx",
+			"target": "function:src/components/app/app.tsx:App",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/app.tsx",
+			"target": "file:src/components/app/ErrorBoundary.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/app.tsx",
+			"target": "file:src/components/app/Loading.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/app.tsx",
+			"target": "file:src/components/app/PreConditions.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/app.tsx",
+			"target": "file:src/components/app/TenantThemingLoader.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/app.tsx",
+			"target": "file:src/components/app/WebsocketHandler.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/app.tsx",
+			"target": "file:src/components/call/FloatingCallWidget.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/app.tsx",
+			"target": "file:src/components/call/GroupCallWidget.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/app.tsx",
+			"target": "file:src/components/devToolbar/DevToolbar.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/app.tsx",
+			"target": "file:src/components/notifications/Notifications.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/app.tsx",
+			"target": "file:src/components/stage/stage.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/app.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/app.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/app.tsx",
+			"target": "file:src/globalState/provider/CallProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/app.tsx",
+			"target": "file:src/globalState/provider/GlobalComponentContext.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/app.tsx",
+			"target": "file:src/globalState/provider/LanguagesProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/app.tsx",
+			"target": "file:src/globalState/provider/LegalLinksProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/app.tsx",
+			"target": "file:src/globalState/provider/UrlParamsProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/app.tsx",
+			"target": "file:src/globalState/state.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/app.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/app.tsx",
+			"target": "file:src/hooks/useNotificationPermission.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/app.tsx",
+			"target": "file:src/polyfill.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/devToolbar/DevToolbar.tsx",
+			"target": "function:src/components/devToolbar/DevToolbar.tsx:STORAGE_KEY_LOCALE",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/devToolbar/DevToolbar.tsx",
+			"target": "function:src/components/devToolbar/DevToolbar.tsx:STORAGE_KEY_LOCALE",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/devToolbar/DevToolbar.tsx",
+			"target": "function:src/components/devToolbar/DevToolbar.tsx:STORAGE_KEY_API",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/devToolbar/DevToolbar.tsx",
+			"target": "function:src/components/devToolbar/DevToolbar.tsx:STORAGE_KEY_API",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/devToolbar/DevToolbar.tsx",
+			"target": "function:src/components/devToolbar/DevToolbar.tsx:STORAGE_KEY_DEV_TOOLBAR",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/devToolbar/DevToolbar.tsx",
+			"target": "function:src/components/devToolbar/DevToolbar.tsx:STORAGE_KEY_DEV_TOOLBAR",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/devToolbar/DevToolbar.tsx",
+			"target": "function:src/components/devToolbar/DevToolbar.tsx:STORAGE_KEY_POSITION",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/devToolbar/DevToolbar.tsx",
+			"target": "function:src/components/devToolbar/DevToolbar.tsx:STORAGE_KEY_POSITION",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/devToolbar/DevToolbar.tsx",
+			"target": "function:src/components/devToolbar/DevToolbar.tsx:STORAGE_KEY_HIDDEN",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/devToolbar/DevToolbar.tsx",
+			"target": "function:src/components/devToolbar/DevToolbar.tsx:STORAGE_KEY_HIDDEN",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/devToolbar/DevToolbar.tsx",
+			"target": "function:src/components/devToolbar/DevToolbar.tsx:STORAGE_KEY_2FA",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/devToolbar/DevToolbar.tsx",
+			"target": "function:src/components/devToolbar/DevToolbar.tsx:STORAGE_KEY_2FA",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/devToolbar/DevToolbar.tsx",
+			"target": "function:src/components/devToolbar/DevToolbar.tsx:STORAGE_KEY_DISABLE_2FA_DUTY",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/devToolbar/DevToolbar.tsx",
+			"target": "function:src/components/devToolbar/DevToolbar.tsx:STORAGE_KEY_DISABLE_2FA_DUTY",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/devToolbar/DevToolbar.tsx",
+			"target": "function:src/components/devToolbar/DevToolbar.tsx:STORAGE_KEY_RELEASE_NOTES",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/devToolbar/DevToolbar.tsx",
+			"target": "function:src/components/devToolbar/DevToolbar.tsx:STORAGE_KEY_RELEASE_NOTES",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/devToolbar/DevToolbar.tsx",
+			"target": "function:src/components/devToolbar/DevToolbar.tsx:STORAGE_KEY_ERROR_BOUNDARY",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/devToolbar/DevToolbar.tsx",
+			"target": "function:src/components/devToolbar/DevToolbar.tsx:STORAGE_KEY_ERROR_BOUNDARY",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/devToolbar/DevToolbar.tsx",
+			"target": "function:src/components/devToolbar/DevToolbar.tsx:STORAGE_KEY_E2EE_DISABLED",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/devToolbar/DevToolbar.tsx",
+			"target": "function:src/components/devToolbar/DevToolbar.tsx:STORAGE_KEY_E2EE_DISABLED",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/devToolbar/DevToolbar.tsx",
+			"target": "function:src/components/devToolbar/DevToolbar.tsx:STORAGE_KEY_TRANSLATION_DISABLE_CACHE",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/devToolbar/DevToolbar.tsx",
+			"target": "function:src/components/devToolbar/DevToolbar.tsx:STORAGE_KEY_TRANSLATION_DISABLE_CACHE",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/devToolbar/DevToolbar.tsx",
+			"target": "function:src/components/devToolbar/DevToolbar.tsx:STORAGE_KEY_ENABLE_TRANSLATION_CHECK",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/devToolbar/DevToolbar.tsx",
+			"target": "function:src/components/devToolbar/DevToolbar.tsx:STORAGE_KEY_ENABLE_TRANSLATION_CHECK",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/devToolbar/DevToolbar.tsx",
+			"target": "function:src/components/devToolbar/DevToolbar.tsx:STORAGE_KEY_ATTACHMENT_ENCRYPTION",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/devToolbar/DevToolbar.tsx",
+			"target": "function:src/components/devToolbar/DevToolbar.tsx:STORAGE_KEY_ATTACHMENT_ENCRYPTION",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/devToolbar/DevToolbar.tsx",
+			"target": "function:src/components/devToolbar/DevToolbar.tsx:useDevToolbar",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/devToolbar/DevToolbar.tsx",
+			"target": "function:src/components/devToolbar/DevToolbar.tsx:useDevToolbar",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/devToolbar/DevToolbar.tsx",
+			"target": "function:src/components/devToolbar/DevToolbar.tsx:DevToolbarWrapper",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/devToolbar/DevToolbar.tsx",
+			"target": "function:src/components/devToolbar/DevToolbar.tsx:DevToolbarWrapper",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/devToolbar/DevToolbar.tsx",
+			"target": "function:src/components/devToolbar/DevToolbar.tsx:DevToolbar",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/devToolbar/DevToolbar.tsx",
+			"target": "function:src/components/devToolbar/DevToolbar.tsx:DevToolbar",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/devToolbar/DevToolbar.tsx",
+			"target": "file:src/components/devToolbar/devToolbar.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/devToolbar/DevToolbar.tsx",
+			"target": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/devToolbar/DevToolbar.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/devToolbar/DevToolbar.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/devToolbar/DevToolbar.tsx",
+			"target": "file:src/i18n.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/devToolbar/DevToolbar.tsx",
+			"target": "file:src/utils/requestCollector.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/error/Error.tsx",
+			"target": "function:src/components/error/Error.tsx:Error",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/error/Error.tsx",
+			"target": "function:src/components/error/Error.tsx:Error",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/error/Error.tsx",
+			"target": "function:src/components/error/Error.tsx:ErrorContent",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/error/Error.tsx",
+			"target": "function:src/components/error/Error.tsx:ErrorContent",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/error/Error.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/error/Error.tsx",
+			"target": "file:src/components/localeSwitch/LocaleSwitch.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/error/Error.tsx",
+			"target": "file:src/components/select/SelectDropdown.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/error/Error.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/error/Error.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/error/Error.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/error/Error.tsx",
+			"target": "file:src/hooks/useResponsive.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/error/Error.tsx",
+			"target": "file:src/polyfill.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/error/Error.tsx",
+			"target": "file:src/utils/useTenantTheming.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/invite/InviteLink.tsx",
+			"target": "function:src/components/invite/InviteLink.tsx:InviteLink",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/invite/InviteLink.tsx",
+			"target": "function:src/components/invite/InviteLink.tsx:InviteLink",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/invite/InviteLink.tsx",
+			"target": "file:src/api/apiPostRegistration.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/invite/InviteLink.tsx",
+			"target": "file:src/api/apiPutGroupChat.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/invite/InviteLink.tsx",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/invite/InviteLink.tsx",
+			"target": "file:src/components/registration/autoLogin.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/invite/InviteLink.tsx",
+			"target": "file:src/components/stage/stage.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/invite/InviteLink.tsx",
+			"target": "file:src/components/stageLayout/StageLayout.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/invite/InviteLink.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/invite/InviteLink.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/invite/InviteLink.tsx",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/legalInformationLinks/Imprint.tsx",
+			"target": "function:src/components/legalInformationLinks/Imprint.tsx:Imprint",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/legalInformationLinks/Imprint.tsx",
+			"target": "function:src/components/legalInformationLinks/Imprint.tsx:Imprint",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/legalInformationLinks/Imprint.tsx",
+			"target": "file:src/components/legalPageWrapper/LegalPageWrapper.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/legalInformationLinks/Imprint.tsx",
+			"target": "file:src/utils/useDocumentTitle.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/legalInformationLinks/Privacy.tsx",
+			"target": "function:src/components/legalInformationLinks/Privacy.tsx:Privacy",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/legalInformationLinks/Privacy.tsx",
+			"target": "function:src/components/legalInformationLinks/Privacy.tsx:Privacy",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/legalInformationLinks/Privacy.tsx",
+			"target": "file:src/components/legalPageWrapper/LegalPageWrapper.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/legalInformationLinks/Privacy.tsx",
+			"target": "file:src/utils/useDocumentTitle.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/legalInformationLinks/TermsAndConditions.tsx",
+			"target": "function:src/components/legalInformationLinks/TermsAndConditions.tsx:TermsAndConditions",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/legalInformationLinks/TermsAndConditions.tsx",
+			"target": "function:src/components/legalInformationLinks/TermsAndConditions.tsx:TermsAndConditions",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/legalInformationLinks/TermsAndConditions.tsx",
+			"target": "file:src/components/legalPageWrapper/LegalPageWrapper.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/legalInformationLinks/TermsAndConditions.tsx",
+			"target": "file:src/utils/useDocumentTitle.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/legalLinks/LegalLinks.tsx",
+			"target": "file:src/globalState/provider/LegalLinksProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/legalPageWrapper/LegalPageWrapper.tsx",
+			"target": "function:src/components/legalPageWrapper/LegalPageWrapper.tsx:LegalPageWrapper",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/legalPageWrapper/LegalPageWrapper.tsx",
+			"target": "function:src/components/legalPageWrapper/LegalPageWrapper.tsx:LegalPageWrapper",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/legalPageWrapper/LegalPageWrapper.tsx",
+			"target": "file:src/components/legalPageWrapper/legalPageWrapper.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/legalPageWrapper/LegalPageWrapper.tsx",
+			"target": "file:src/components/stage/stage.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/legalPageWrapper/LegalPageWrapper.tsx",
+			"target": "file:src/resources/scripts/util/htmlParser.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/login/Login.tsx",
+			"target": "function:src/components/login/Login.tsx:Login",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/login/Login.tsx",
+			"target": "function:src/components/login/Login.tsx:Login",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/login/Login.tsx",
+			"target": "file:src/api/apiConsumeMagicLinkLogin.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/login/Login.tsx",
+			"target": "file:src/api/apiPatchUserData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/login/Login.tsx",
+			"target": "file:src/api/apiRequestMagicLinkLogin.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/login/Login.tsx",
+			"target": "file:src/api/apiRocketChatSettingsPublic.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/login/Login.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/login/Login.tsx",
+			"target": "file:src/components/anonymousChat/AnonymousChat.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/login/Login.tsx",
+			"target": "file:src/components/auth/auth.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/login/Login.tsx",
+			"target": "file:src/components/budibase/budibaseLogout.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/login/Login.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/login/Login.tsx",
+			"target": "file:src/components/inputField/InputField.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/login/Login.tsx",
+			"target": "file:src/components/overlay/Overlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/login/Login.tsx",
+			"target": "file:src/components/registration/autoLogin.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/login/Login.tsx",
+			"target": "file:src/components/registration/registrationHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/login/Login.tsx",
+			"target": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/login/Login.tsx",
+			"target": "file:src/components/stageLayout/StageLayout.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/login/Login.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/login/Login.tsx",
+			"target": "file:src/components/twoFactorAuth/TwoFactorAuth.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/login/Login.tsx",
+			"target": "file:src/components/twoFactorAuth/TwoFactorAuthResendMail.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/login/Login.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/login/Login.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/login/Login.tsx",
+			"target": "file:src/globalState/provider/GlobalComponentContext.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/login/Login.tsx",
+			"target": "file:src/globalState/provider/UrlParamsProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/login/Login.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/login/Login.tsx",
+			"target": "file:src/hooks/useSearchParams.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/login/Login.tsx",
+			"target": "file:src/polyfill.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/login/Login.tsx",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/login/Login.tsx",
+			"target": "file:src/utils/keycloakSession.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/login/Login.tsx",
+			"target": "file:src/utils/tenantSettingsHelper.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/login/Login.tsx",
+			"target": "file:src/utils/useIsFirstVisit.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/modal/Modal.tsx",
+			"target": "function:src/components/modal/Modal.tsx:Modal",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/modal/Modal.tsx",
+			"target": "function:src/components/modal/Modal.tsx:Modal",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/modal/Modal.tsx",
+			"target": "file:src/components/modal/modal.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/ConsultantPrivateData.tsx",
+			"target": "function:src/components/profile/ConsultantPrivateData.tsx:ConsultantPrivateData",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/profile/ConsultantPrivateData.tsx",
+			"target": "function:src/components/profile/ConsultantPrivateData.tsx:ConsultantPrivateData",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/profile/ConsultantPrivateData.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/ConsultantPrivateData.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/ConsultantPrivateData.tsx",
+			"target": "file:src/components/editableData/EditableData.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/ConsultantPrivateData.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/ConsultantPrivateData.tsx",
+			"target": "file:src/components/overlay/Overlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/ConsultantPrivateData.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/ConsultantPrivateData.tsx",
+			"target": "file:src/components/twoFactorAuth/TwoFactorAuth.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/ConsultantPrivateData.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/ConsultantPrivateData.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/Profile.tsx",
+			"target": "function:src/components/profile/Profile.tsx:Profile",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/profile/Profile.tsx",
+			"target": "function:src/components/profile/Profile.tsx:Profile",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/profile/Profile.tsx",
+			"target": "file:src/components/box/Box.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/Profile.tsx",
+			"target": "file:src/components/legalLinks/LegalLinks.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/Profile.tsx",
+			"target": "file:src/components/logout/logout.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/Profile.tsx",
+			"target": "file:src/components/message/UserAvatar.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/Profile.tsx",
+			"target": "file:src/components/mobile/linkMenu/LinkMenu.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/Profile.tsx",
+			"target": "file:src/components/profile/profile.routes.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/Profile.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/Profile.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/Profile.tsx",
+			"target": "file:src/globalState/provider/LegalLinksProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/Profile.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/Profile.tsx",
+			"target": "file:src/hooks/useResponsive.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/Profile.tsx",
+			"target": "file:src/utils/tabsHelper.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/Profile.tsx",
+			"target": "file:src/utils/useIsFirstVisit.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/Registration.tsx",
+			"target": "function:src/components/registration/Registration.tsx:Registration",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/registration/Registration.tsx",
+			"target": "function:src/components/registration/Registration.tsx:Registration",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/registration/Registration.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/Registration.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/Registration.tsx",
+			"target": "file:src/components/overlay/Overlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/Registration.tsx",
+			"target": "file:src/components/registration/autoLogin.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/Registration.tsx",
+			"target": "file:src/components/registration/preselectionBox/PreselectionBox.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/Registration.tsx",
+			"target": "file:src/components/registration/registrationDataValidation.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/Registration.tsx",
+			"target": "file:src/components/registration/stepBar/StepBar.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/Registration.tsx",
+			"target": "file:src/components/registration/welcomeScreen/WelcomeScreen.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/Registration.tsx",
+			"target": "file:src/components/stageLayout/StageLayout.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/Registration.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/Registration.tsx",
+			"target": "file:src/globalState/provider/GlobalComponentContext.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/Registration.tsx",
+			"target": "file:src/globalState/provider/UrlParamsProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/Registration.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/Registration.tsx",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/Registration.tsx",
+			"target": "file:src/utils/useIsFirstVisit.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/autoLogin.ts",
+			"target": "function:src/components/registration/autoLogin.ts:autoLogin",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/registration/autoLogin.ts",
+			"target": "function:src/components/registration/autoLogin.ts:autoLogin",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/registration/autoLogin.ts",
+			"target": "function:src/components/registration/autoLogin.ts:redirectToApp",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/registration/autoLogin.ts",
+			"target": "function:src/components/registration/autoLogin.ts:redirectToApp",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/registration/autoLogin.ts",
+			"target": "function:src/components/registration/autoLogin.ts:handleE2EESetup",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/registration/autoLogin.ts",
+			"target": "function:src/components/registration/autoLogin.ts:handleE2EESetup",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/registration/autoLogin.ts",
+			"target": "file:src/api/apiRocketChatFetchMyKeys.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/autoLogin.ts",
+			"target": "file:src/api/apiRocketChatResetE2EKey.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/autoLogin.ts",
+			"target": "file:src/api/apiRocketChatRoomsGet.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/autoLogin.ts",
+			"target": "file:src/api/apiRocketChatSetUserKeys.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/autoLogin.ts",
+			"target": "file:src/api/apiRocketChatSubscriptionsGet.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/autoLogin.ts",
+			"target": "file:src/api/apiRocketChatUpdateGroupKey.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/autoLogin.ts",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/autoLogin.ts",
+			"target": "file:src/components/auth/auth.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/autoLogin.ts",
+			"target": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/autoLogin.ts",
+			"target": "file:src/components/sessionCookie/accessSessionLocalStorage.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/autoLogin.ts",
+			"target": "file:src/components/sessionCookie/getBudibaseAccessToken.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/autoLogin.ts",
+			"target": "file:src/components/sessionCookie/getKeycloakAccessToken.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/autoLogin.ts",
+			"target": "file:src/components/sessionCookie/getRocketchatAccessToken.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/autoLogin.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/autoLogin.ts",
+			"target": "file:src/utils/appConfig.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/autoLogin.ts",
+			"target": "file:src/utils/encryptionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/autoLogin.ts",
+			"target": "file:src/utils/generateCsrfToken.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/autoLogin.ts",
+			"target": "file:src/utils/parseJWT.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/stepBar/StepBar.stories.ts",
+			"target": "file:src/components/registration/stepBar/StepBar.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionCookie/getKeycloakAccessToken.ts",
+			"target": "function:src/components/sessionCookie/getKeycloakAccessToken.ts:getKeycloakAccessToken",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionCookie/getKeycloakAccessToken.ts",
+			"target": "function:src/components/sessionCookie/getKeycloakAccessToken.ts:getKeycloakAccessToken",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionCookie/getKeycloakAccessToken.ts",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionCookie/getKeycloakAccessToken.ts",
+			"target": "file:src/components/registration/autoLogin.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionCookie/getKeycloakAccessToken.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionCookie/getRocketchatAccessToken.ts",
+			"target": "function:src/components/sessionCookie/getRocketchatAccessToken.ts:getRocketchatAccessToken",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionCookie/getRocketchatAccessToken.ts",
+			"target": "function:src/components/sessionCookie/getRocketchatAccessToken.ts:getRocketchatAccessToken",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionCookie/getRocketchatAccessToken.ts",
+			"target": "file:src/components/registration/autoLogin.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionCookie/getRocketchatAccessToken.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/GroupChatHeader/useJoinVideoCall/index.ts",
+			"target": "function:src/components/sessionHeader/GroupChatHeader/useJoinVideoCall/index.ts:useJoinVideoCall",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionHeader/GroupChatHeader/useJoinVideoCall/index.ts",
+			"target": "function:src/components/sessionHeader/GroupChatHeader/useJoinVideoCall/index.ts:useJoinVideoCall",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionHeader/GroupChatHeader/useJoinVideoCall/index.ts",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/GroupChatHeader/useJoinVideoCall/index.ts",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/GroupChatHeader/useJoinVideoCall/index.ts",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/spinner/Spinner.stories.ts",
+			"target": "file:src/components/spinner/Spinner.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		}
+	]
+}

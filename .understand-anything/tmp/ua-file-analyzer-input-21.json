@@ -1,0 +1,219 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": "src/api/apiAgencyLanguages.ts",
+			"language": "typescript",
+			"sizeLines": 21,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/Page/index.tsx",
+			"language": "typescript",
+			"sizeLines": 17,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/agencyRadioSelect/AgencyLanguages.tsx",
+			"language": "typescript",
+			"sizeLines": 85,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/askerInfo/AskerInfoData.tsx",
+			"language": "typescript",
+			"sizeLines": 75,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/card/index.tsx",
+			"language": "typescript",
+			"sizeLines": 27,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/enquiry/EnquiryLanguageSelection.tsx",
+			"language": "typescript",
+			"sizeLines": 144,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/mobile/linkMenu/LinkMenu.tsx",
+			"language": "typescript",
+			"sizeLines": 109,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/ConsultantSpokenLanguages.tsx",
+			"language": "typescript",
+			"sizeLines": 130,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/OverviewMobile/Sessions/index.tsx",
+			"language": "typescript",
+			"sizeLines": 42,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/profileHelpers.ts",
+			"language": "typescript",
+			"sizeLines": 22,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/agencySelection/AgencyLanguages.tsx",
+			"language": "typescript",
+			"sizeLines": 47,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/overview/components/BookingCard/BookingCard.tsx",
+			"language": "typescript",
+			"sizeLines": 27,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/overview/components/EmptyState/index.tsx",
+			"language": "typescript",
+			"sizeLines": 42,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/overview/components/OverviewCard/OverviewCard.tsx",
+			"language": "typescript",
+			"sizeLines": 63,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/overview/components/SessionCard/SessionCard.tsx",
+			"language": "typescript",
+			"sizeLines": 64,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/overview/hooks/useConsultantData.ts",
+			"language": "typescript",
+			"sizeLines": 54,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/overview/overview.tsx",
+			"language": "typescript",
+			"sizeLines": 36,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/LanguagesProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 46,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/translate.ts",
+			"language": "typescript",
+			"sizeLines": 8,
+			"fileCategory": "code"
+		}
+	],
+	"batchImportData": {
+		"src/api/apiAgencyLanguages.ts": [
+			"src/api/fetchData.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/components/Page/index.tsx": [
+			"src/components/Page/page.styles.scss"
+		],
+		"src/components/agencyRadioSelect/AgencyLanguages.tsx": [
+			"src/api/apiAgencyLanguages.ts",
+			"src/components/profile/profileHelpers.ts",
+			"src/globalState/provider/LanguagesProvider.tsx",
+			"src/hooks/useAppConfig.tsx"
+		],
+		"src/components/askerInfo/AskerInfoData.tsx": [
+			"src/components/profile/profileHelpers.ts",
+			"src/components/text/Text.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/utils/translate.ts"
+		],
+		"src/components/card/index.tsx": [
+			"src/components/card/card.styles.scss"
+		],
+		"src/components/enquiry/EnquiryLanguageSelection.tsx": [
+			"src/api/apiAgencyLanguages.ts",
+			"src/components/headline/Headline.tsx",
+			"src/components/profile/profileHelpers.ts",
+			"src/globalState/index.ts",
+			"src/globalState/provider/LanguagesProvider.tsx",
+			"src/hooks/useAppConfig.tsx"
+		],
+		"src/components/mobile/linkMenu/LinkMenu.tsx": [],
+		"src/components/profile/ConsultantSpokenLanguages.tsx": [
+			"src/api/index.ts",
+			"src/components/button/Button.tsx",
+			"src/components/headline/Headline.tsx",
+			"src/components/profile/profileHelpers.ts",
+			"src/components/select/SelectDropdown.tsx",
+			"src/components/text/Text.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/provider/LanguagesProvider.tsx"
+		],
+		"src/components/profile/OverviewMobile/Sessions/index.tsx": [
+			"src/components/mobile/linkMenu/LinkMenu.tsx",
+			"src/components/session/sessionHelpers.ts",
+			"src/containers/overview/hooks/useConsultantBookings.ts",
+			"src/containers/overview/hooks/useConsultantData.ts"
+		],
+		"src/components/profile/profileHelpers.ts": [],
+		"src/components/registration/agencySelection/AgencyLanguages.tsx": [
+			"src/api/apiAgencyLanguages.ts",
+			"src/globalState/provider/LanguagesProvider.tsx"
+		],
+		"src/containers/overview/components/BookingCard/BookingCard.tsx": [
+			"src/containers/overview/components/BookingEvent/index.tsx",
+			"src/containers/overview/components/EmptyState/index.tsx",
+			"src/containers/overview/components/OverviewCard/OverviewCard.tsx",
+			"src/containers/overview/hooks/useConsultantBookings.ts"
+		],
+		"src/containers/overview/components/EmptyState/index.tsx": [
+			"src/containers/overview/components/EmptyState/emptyState.styles.scss"
+		],
+		"src/containers/overview/components/OverviewCard/OverviewCard.tsx": [
+			"src/components/button/Button.tsx",
+			"src/components/card/index.tsx",
+			"src/components/loadingIndicator/LoadingIndicator.tsx",
+			"src/containers/overview/components/EmptyState/index.tsx",
+			"src/containers/overview/components/OverviewCard/overviewCard.styles.scss"
+		],
+		"src/containers/overview/components/SessionCard/SessionCard.tsx": [
+			"src/components/session/sessionHelpers.ts",
+			"src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"src/containers/overview/components/EmptyState/index.tsx",
+			"src/containers/overview/components/OverviewCard/OverviewCard.tsx",
+			"src/containers/overview/components/SessionCard/sessionCard.styles.scss",
+			"src/containers/overview/hooks/useConsultantData.ts",
+			"src/globalState/index.ts",
+			"src/globalState/provider/LanguagesProvider.tsx",
+			"src/globalState/provider/RocketChatUsersOfRoomProvider.tsx"
+		],
+		"src/containers/overview/hooks/useConsultantData.ts": [
+			"src/api/index.ts",
+			"src/components/session/sessionHelpers.ts",
+			"src/globalState/interfaces/SessionsDataInterface.ts"
+		],
+		"src/containers/overview/overview.tsx": [
+			"src/components/Page/index.tsx",
+			"src/components/session/sessionHelpers.ts",
+			"src/containers/overview/components/BookingCard/BookingCard.tsx",
+			"src/containers/overview/components/EmptyState/index.tsx",
+			"src/containers/overview/components/SessionCard/SessionCard.tsx",
+			"src/containers/overview/overview.styles.scss"
+		],
+		"src/globalState/provider/LanguagesProvider.tsx": [
+			"src/hooks/useAppConfig.tsx"
+		],
+		"src/utils/translate.ts": []
+	}
+}

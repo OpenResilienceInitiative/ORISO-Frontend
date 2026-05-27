@@ -1,0 +1,154 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": ".storybook-backup/main.ts",
+			"language": "typescript",
+			"sizeLines": 74,
+			"fileCategory": "code"
+		},
+		{
+			"path": ".storybook/main.ts",
+			"language": "typescript",
+			"sizeLines": 136,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cli.js",
+			"language": "javascript",
+			"sizeLines": 31,
+			"fileCategory": "code"
+		},
+		{
+			"path": "config/env.js",
+			"language": "javascript",
+			"sizeLines": 105,
+			"fileCategory": "code"
+		},
+		{
+			"path": "config/getHttpsConfig.js",
+			"language": "javascript",
+			"sizeLines": 70,
+			"fileCategory": "code"
+		},
+		{
+			"path": "config/modules.js",
+			"language": "javascript",
+			"sizeLines": 136,
+			"fileCategory": "code"
+		},
+		{
+			"path": "config/paths.js",
+			"language": "javascript",
+			"sizeLines": 82,
+			"fileCategory": "code"
+		},
+		{
+			"path": "config/webpack.config.js",
+			"language": "javascript",
+			"sizeLines": 897,
+			"fileCategory": "code"
+		},
+		{
+			"path": "config/webpack/persistentCache/createEnvironmentHash.js",
+			"language": "javascript",
+			"sizeLines": 9,
+			"fileCategory": "code"
+		},
+		{
+			"path": "config/webpackDevServer.config.js",
+			"language": "javascript",
+			"sizeLines": 176,
+			"fileCategory": "code"
+		},
+		{
+			"path": "proxy/config.js",
+			"language": "javascript",
+			"sizeLines": 21,
+			"fileCategory": "code"
+		},
+		{
+			"path": "proxy/routes/index.js",
+			"language": "javascript",
+			"sizeLines": 45,
+			"fileCategory": "code"
+		},
+		{
+			"path": "proxy/routes/settings.js",
+			"language": "javascript",
+			"sizeLines": 12,
+			"fileCategory": "code"
+		},
+		{
+			"path": "proxy/routes/weblate.js",
+			"language": "javascript",
+			"sizeLines": 207,
+			"fileCategory": "code"
+		},
+		{
+			"path": "proxy/server.js",
+			"language": "javascript",
+			"sizeLines": 149,
+			"fileCategory": "code"
+		},
+		{
+			"path": "scripts/build.js",
+			"language": "javascript",
+			"sizeLines": 221,
+			"fileCategory": "code"
+		},
+		{
+			"path": "scripts/start.js",
+			"language": "javascript",
+			"sizeLines": 155,
+			"fileCategory": "code"
+		},
+		{
+			"path": "scripts/test.js",
+			"language": "javascript",
+			"sizeLines": 51,
+			"fileCategory": "code"
+		}
+	],
+	"batchImportData": {
+		".storybook-backup/main.ts": ["config/webpack.config.js"],
+		".storybook/main.ts": ["config/webpack.config.js"],
+		"cli.js": ["proxy/server.js", "scripts/build.js", "scripts/start.js"],
+		"config/env.js": ["config/paths.js"],
+		"config/getHttpsConfig.js": ["config/paths.js"],
+		"config/modules.js": ["config/paths.js"],
+		"config/paths.js": [],
+		"config/webpack.config.js": [
+			"config/env.js",
+			"config/modules.js",
+			"config/paths.js",
+			"config/webpack/persistentCache/createEnvironmentHash.js"
+		],
+		"config/webpack/persistentCache/createEnvironmentHash.js": [],
+		"config/webpackDevServer.config.js": [
+			"config/getHttpsConfig.js",
+			"config/paths.js"
+		],
+		"proxy/config.js": [],
+		"proxy/routes/index.js": [
+			"proxy/config.js",
+			"proxy/routes/settings.js",
+			"proxy/routes/weblate.js"
+		],
+		"proxy/routes/settings.js": ["proxy/config.js"],
+		"proxy/routes/weblate.js": ["proxy/config.js"],
+		"proxy/server.js": ["proxy/routes/index.js"],
+		"scripts/build.js": [
+			"config/env.js",
+			"config/paths.js",
+			"config/webpack.config.js"
+		],
+		"scripts/start.js": [
+			"config/env.js",
+			"config/paths.js",
+			"config/webpack.config.js",
+			"config/webpackDevServer.config.js"
+		],
+		"scripts/test.js": ["config/env.js"]
+	}
+}

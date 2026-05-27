@@ -1,0 +1,335 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": "src/api/apiGetTopicId.ts",
+			"language": "typescript",
+			"sizeLines": 10,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetTopicsData.ts",
+			"language": "typescript",
+			"sizeLines": 19,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/input/input.tsx",
+			"language": "typescript",
+			"sizeLines": 270,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/accountData/AccountData.tsx",
+			"language": "typescript",
+			"sizeLines": 260,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/accountData/accountData.stories.ts",
+			"language": "typescript",
+			"sizeLines": 24,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/agencySelection/AgencySelection.tsx",
+			"language": "typescript",
+			"sizeLines": 73,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/agencySelection/AgencySelectionResults.tsx",
+			"language": "typescript",
+			"sizeLines": 392,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/agencySelection/agencySelection.stories.ts",
+			"language": "typescript",
+			"sizeLines": 26,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/infoDrawer/InfoDrawer.tsx",
+			"language": "typescript",
+			"sizeLines": 179,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/metaInfo/MetaInfo.tsx",
+			"language": "typescript",
+			"sizeLines": 144,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/preselectionBox/PreselectedAgency.tsx",
+			"language": "typescript",
+			"sizeLines": 53,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/preselectionBox/PreselectedConsultant.tsx",
+			"language": "typescript",
+			"sizeLines": 29,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/preselectionBox/PreselectedTopic.tsx",
+			"language": "typescript",
+			"sizeLines": 52,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/preselectionBox/PreselectionBox.tsx",
+			"language": "typescript",
+			"sizeLines": 78,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/preselectionDrawer/preselectionDrawer.tsx",
+			"language": "typescript",
+			"sizeLines": 229,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/preselectionError/PreselectionError.tsx",
+			"language": "typescript",
+			"sizeLines": 31,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/registrationDataValidation.ts",
+			"language": "typescript",
+			"sizeLines": 33,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/topicSelection/TopicSelection.tsx",
+			"language": "typescript",
+			"sizeLines": 416,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/topicSelection/topicSelection.stories.ts",
+			"language": "typescript",
+			"sizeLines": 26,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/welcomeScreen/WelcomeScreen.tsx",
+			"language": "typescript",
+			"sizeLines": 159,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/welcomeScreen/welcomeScreen.stories.ts",
+			"language": "typescript",
+			"sizeLines": 24,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/zipcodeInput/ZipcodeInput.tsx",
+			"language": "typescript",
+			"sizeLines": 72,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/zipcodeInput/zipcodeInput.stories.ts",
+			"language": "typescript",
+			"sizeLines": 24,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/registration/hooks/useAgenciesForRegistration.ts",
+			"language": "typescript",
+			"sizeLines": 171,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/registration/hooks/useConsultantRegistrationData.ts",
+			"language": "typescript",
+			"sizeLines": 137,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/RegistrationProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 263,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/UrlParamsProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 76,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/getUrlParameter.ts",
+			"language": "typescript",
+			"sizeLines": 10,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/isNumber.ts",
+			"language": "typescript",
+			"sizeLines": 3,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/useUrlParamsLoader.tsx",
+			"language": "typescript",
+			"sizeLines": 259,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/validateInputValue.ts",
+			"language": "typescript",
+			"sizeLines": 67,
+			"fileCategory": "code"
+		}
+	],
+	"batchImportData": {
+		"src/api/apiGetTopicId.ts": [
+			"src/api/apiGetTopicsData.ts",
+			"src/globalState/interfaces/index.ts"
+		],
+		"src/api/apiGetTopicsData.ts": [
+			"src/api/fetchData.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/components/input/input.tsx": [],
+		"src/components/registration/accountData/AccountData.tsx": [
+			"src/api/apiGetIsUsernameAvailable.ts",
+			"src/components/input/input.tsx",
+			"src/components/legalLinks/LegalLinks.tsx",
+			"src/components/registration/registrationDataValidation.ts",
+			"src/globalState/index.ts",
+			"src/globalState/provider/LegalLinksProvider.tsx",
+			"src/utils/validateInputValue.ts"
+		],
+		"src/components/registration/accountData/accountData.stories.ts": [
+			"src/components/registration/accountData/AccountData.tsx"
+		],
+		"src/components/registration/agencySelection/AgencySelection.tsx": [
+			"src/components/app/Loading.tsx",
+			"src/components/registration/agencySelection/AgencySelectionResults.tsx",
+			"src/containers/registration/hooks/useAgenciesForRegistration.ts",
+			"src/globalState/index.ts",
+			"src/globalState/provider/UrlParamsProvider.tsx"
+		],
+		"src/components/registration/agencySelection/AgencySelectionResults.tsx": [
+			"src/components/registration/agencySelection/AgencyLanguages.tsx",
+			"src/components/registration/metaInfo/MetaInfo.tsx",
+			"src/components/registration/registrationDataValidation.ts",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/globalState/provider/UrlParamsProvider.tsx"
+		],
+		"src/components/registration/agencySelection/agencySelection.stories.ts": [
+			"src/components/registration/agencySelection/AgencySelection.tsx"
+		],
+		"src/components/registration/infoDrawer/InfoDrawer.tsx": [
+			"src/components/registration/preselectionError/PreselectionError.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/provider/UrlParamsProvider.tsx"
+		],
+		"src/components/registration/metaInfo/MetaInfo.tsx": [],
+		"src/components/registration/preselectionBox/PreselectedAgency.tsx": [
+			"src/globalState/interfaces/index.ts"
+		],
+		"src/components/registration/preselectionBox/PreselectedConsultant.tsx": [],
+		"src/components/registration/preselectionBox/PreselectedTopic.tsx": [
+			"src/globalState/interfaces/index.ts"
+		],
+		"src/components/registration/preselectionBox/PreselectionBox.tsx": [
+			"src/components/registration/preselectionBox/PreselectedAgency.tsx",
+			"src/components/registration/preselectionBox/PreselectedConsultant.tsx",
+			"src/components/registration/preselectionBox/PreselectedTopic.tsx",
+			"src/components/registration/preselectionDrawer/preselectionDrawer.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/provider/UrlParamsProvider.tsx",
+			"src/hooks/useResponsive.tsx"
+		],
+		"src/components/registration/preselectionDrawer/preselectionDrawer.tsx": [
+			"src/components/registration/preselectionError/PreselectionError.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/provider/UrlParamsProvider.tsx"
+		],
+		"src/components/registration/preselectionError/PreselectionError.tsx": [],
+		"src/components/registration/registrationDataValidation.ts": [
+			"src/components/registration/accountData/AccountData.tsx"
+		],
+		"src/components/registration/topicSelection/TopicSelection.tsx": [
+			"src/api/apiGetTopicGroups.ts",
+			"src/api/apiGetTopicsData.ts",
+			"src/components/app/Loading.tsx",
+			"src/components/registration/metaInfo/MetaInfo.tsx",
+			"src/components/registration/registrationDataValidation.ts",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/globalState/provider/UrlParamsProvider.tsx"
+		],
+		"src/components/registration/topicSelection/topicSelection.stories.ts": [
+			"src/components/registration/topicSelection/TopicSelection.tsx"
+		],
+		"src/components/registration/welcomeScreen/WelcomeScreen.tsx": [
+			"src/components/registration/preselectionBox/PreselectionBox.tsx"
+		],
+		"src/components/registration/welcomeScreen/welcomeScreen.stories.ts": [
+			"src/components/registration/welcomeScreen/WelcomeScreen.tsx"
+		],
+		"src/components/registration/zipcodeInput/ZipcodeInput.tsx": [
+			"src/components/input/input.tsx",
+			"src/components/registration/registrationDataValidation.ts",
+			"src/globalState/index.ts"
+		],
+		"src/components/registration/zipcodeInput/zipcodeInput.stories.ts": [
+			"src/components/registration/zipcodeInput/ZipcodeInput.tsx"
+		],
+		"src/containers/registration/hooks/useAgenciesForRegistration.ts": [
+			"src/api/index.ts",
+			"src/components/agencySelection/agencySelectionHelpers.ts",
+			"src/containers/registration/hooks/useConsultantRegistrationData.ts",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/globalState/provider/UrlParamsProvider.tsx",
+			"src/hooks/useAppConfig.tsx"
+		],
+		"src/containers/registration/hooks/useConsultantRegistrationData.ts": [
+			"src/globalState/interfaces/index.ts",
+			"src/globalState/provider/UrlParamsProvider.tsx",
+			"src/hooks/useAppConfig.tsx"
+		],
+		"src/globalState/provider/RegistrationProvider.tsx": [
+			"src/api/apiGetTopicId.ts",
+			"src/api/index.ts",
+			"src/components/registration/accountData/AccountData.tsx",
+			"src/components/registration/agencySelection/AgencySelection.tsx",
+			"src/components/registration/topicSelection/TopicSelection.tsx",
+			"src/components/registration/zipcodeInput/ZipcodeInput.tsx",
+			"src/globalState/interfaces/index.ts",
+			"src/globalState/provider/UrlParamsProvider.tsx",
+			"src/utils/getUrlParameter.ts"
+		],
+		"src/globalState/provider/UrlParamsProvider.tsx": [
+			"src/globalState/interfaces/index.ts",
+			"src/hooks/useAppConfig.tsx",
+			"src/utils/useUrlParamsLoader.tsx"
+		],
+		"src/utils/getUrlParameter.ts": [],
+		"src/utils/isNumber.ts": [],
+		"src/utils/useUrlParamsLoader.tsx": [
+			"src/api/apiGetConsultant.ts",
+			"src/api/apiGetTopicId.ts",
+			"src/api/apiGetTopicsData.ts",
+			"src/api/index.ts",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/hooks/useAppConfig.tsx",
+			"src/utils/getUrlParameter.ts",
+			"src/utils/isNumber.ts"
+		],
+		"src/utils/validateInputValue.ts": []
+	}
+}

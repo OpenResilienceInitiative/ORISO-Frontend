@@ -1,0 +1,28 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": "docs/plan/README.md",
+			"language": "markdown",
+			"sizeLines": 63,
+			"fileCategory": "docs"
+		},
+		{
+			"path": "docs/plan/master-roadmap.md",
+			"language": "markdown",
+			"sizeLines": 130,
+			"fileCategory": "docs"
+		},
+		{
+			"path": "docs/plan/template-feature-plan.md",
+			"language": "markdown",
+			"sizeLines": 46,
+			"fileCategory": "docs"
+		}
+	],
+	"batchImportData": {
+		"docs/plan/README.md": [],
+		"docs/plan/master-roadmap.md": [],
+		"docs/plan/template-feature-plan.md": []
+	}
+}

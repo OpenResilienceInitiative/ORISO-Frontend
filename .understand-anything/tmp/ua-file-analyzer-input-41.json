@@ -1,0 +1,28 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": "src/components/twoFactorAuth/twoFactorAuth.styles.scss",
+			"language": "css",
+			"sizeLines": 224,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/twoFactorAuth/twoFactorAuthResendMail.styles.scss",
+			"language": "css",
+			"sizeLines": 39,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/twoFactorAuth/twoFactorNag.styles.scss",
+			"language": "css",
+			"sizeLines": 16,
+			"fileCategory": "markup"
+		}
+	],
+	"batchImportData": {
+		"src/components/twoFactorAuth/twoFactorAuth.styles.scss": [],
+		"src/components/twoFactorAuth/twoFactorAuthResendMail.styles.scss": [],
+		"src/components/twoFactorAuth/twoFactorNag.styles.scss": []
+	}
+}
