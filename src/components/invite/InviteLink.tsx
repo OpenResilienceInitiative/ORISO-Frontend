@@ -4,101 +4,93 @@ import { useTranslation } from 'react-i18next';
 import { apiUrl, endpoints } from '../../resources/scripts/endpoints';
 import { apiPostRegistration } from '../../api/apiPostRegistration';
 import { TenantContext } from '../../globalState';
+import { setTokens } from '../auth/auth';
+import { setValueInCookie } from '../sessionCookie/accessSessionCookie';
+import { generateCsrfToken } from '../../utils/generateCsrfToken';
 import { redirectToApp } from '../registration/autoLogin';
 import { StageLayout } from '../stageLayout/StageLayout';
 import { Stage } from '../stage/stage';
 
-/**
- * Landing page for invite links. Reads the token from the URL, redeems it
- * with the userservice to obtain the pre-selected agency/consulting-type,
- * generates throw-away credentials, and runs the standard asker
- * registration (which auto-logs in). On success, redirects into the app.
- */
 export const InviteLink = () => {
 	const { t } = useTranslation();
 	const { token } = useParams<{ token: string }>();
 	const { tenant } = useContext<any>(TenantContext as any);
-	const [status, setStatus] = useState<
-		'loading' | 'registering' | 'error' | 'ok'
-	>('loading');
+	const [status, setStatus] = useState<'loading' | 'registering' | 'error'>(
+		'loading'
+	);
 	const [errorMessage, setErrorMessage] = useState('');
-	// Guard so the async redeem+register flow can only run once per mount.
-	// React StrictMode or an async-populated `tenant` can otherwise cause a
-	// second invocation whose redeem-call fails with 400 "already used".
 	const hasRunRef = useRef(false);
 
 	useEffect(() => {
-		if (!token) {
-			setStatus('error');
-			setErrorMessage('Missing token');
-			return;
-		}
-		if (hasRunRef.current) return;
+		if (!token || hasRunRef.current) return;
 		hasRunRef.current = true;
 
-		const redeemUrl = `${apiUrl}/service/users/invitelinks/${encodeURIComponent(
-			token
-		)}/redeem`;
-
-		// Mirror the existing /anonymous flow: username starts with
-		// `Anonymous-` so the session is routed to the Live-Chat filter
-		// (consultant view classifies it by username prefix / postcode 00000),
-		// and password is 8 chars alphanumeric to match what the anonymous
-		// chat form generates (see AnonymousChat.tsx).
-		const generatePassword = () => {
-			const chars =
-				'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-			let pw = '';
-			for (let i = 0; i < 8; i++) {
-				pw += chars.charAt(Math.floor(Math.random() * chars.length));
-			}
-			return pw;
-		};
-
-		const generateUsername = () => `Anonymous-${Date.now()}`;
+		const redeemUrl = `${apiUrl}/service/users/invitelinks/${encodeURIComponent(token)}/redeem`;
 
 		(async () => {
 			try {
-				const redeemResp = await fetch(redeemUrl, {
+				const res = await fetch(redeemUrl, {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					credentials: 'include'
 				});
-				if (!redeemResp.ok) {
-					const body = await redeemResp.text().catch(() => '');
+
+				if (!res.ok) {
+					const body = await res.text().catch(() => '');
 					throw new Error(
-						body || `Redeem failed (HTTP ${redeemResp.status})`
+						body || `Redeem failed (HTTP ${res.status})`
 					);
 				}
-				const info: {
-					tenantId: number;
-					agencyId: number;
-					consultingTypeId: number | null;
-				} = await redeemResp.json();
 
+				const data = await res.json();
+
+				// New flow: backend already created the session, use credentials directly
+				if (data.accessToken) {
+					setTokens(
+						data.accessToken,
+						data.expiresIn,
+						data.refreshToken,
+						data.refreshExpiresIn
+					);
+					setValueInCookie('rc_uid', data.rcUserId);
+					setValueInCookie('rc_token', data.rcToken);
+					localStorage.setItem('matrix_user_id', data.rcUserId);
+					localStorage.setItem('matrix_access_token', data.rcToken);
+					generateCsrfToken(true);
+					redirectToApp(data.rcGroupId);
+					return;
+				}
+
+				// Legacy flow: backend returned only agencyId/consultingTypeId,
+				// generate credentials and register manually
 				setStatus('registering');
-
-				const username = generateUsername();
-				const password = generatePassword();
+				const chars =
+					'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+				let password = '';
+				for (let i = 0; i < 8; i++) {
+					password += chars.charAt(
+						Math.floor(Math.random() * chars.length)
+					);
+				}
+				const username = `Anonymous-${Date.now()}`;
 
 				await apiPostRegistration(
 					endpoints.registerAsker,
 					{
 						username,
 						password: encodeURIComponent(password),
-						agencyId: String(info.agencyId),
+						agencyId: String(data.agencyId),
 						postcode: '00000',
 						termsAccepted: 'true',
 						preferredLanguage: 'de',
 						consultingType:
-							info.consultingTypeId != null
-								? String(info.consultingTypeId)
+							data.consultingTypeId != null
+								? String(data.consultingTypeId)
 								: '0'
 					} as any,
 					false,
 					tenant as any
 				);
-				setStatus('ok');
 				redirectToApp();
 			} catch (err: any) {
 				setStatus('error');
@@ -107,8 +99,6 @@ export const InviteLink = () => {
 				);
 			}
 		})();
-		// Intentionally only depend on token — tenant is read lazily inside
-		// the effect and we do NOT want a tenant-arrival re-run.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [token]);
 
