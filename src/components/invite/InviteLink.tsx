@@ -1,30 +1,38 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { apiUrl, endpoints } from '../../resources/scripts/endpoints';
+import { endpoints } from '../../resources/scripts/endpoints';
 import { apiPostRegistration } from '../../api/apiPostRegistration';
+import {
+	isRedeemInviteLinkSessionResponse,
+	redeemInviteLink
+} from '../../api/apiRedeemInviteLink';
 import { TenantContext } from '../../globalState';
 import { redirectToApp } from '../registration/autoLogin';
+import {
+	applyRedeemSessionCredentials,
+	redirectToInviteSession
+} from './inviteLinkHelpers';
 import { StageLayout } from '../stageLayout/StageLayout';
 import { Stage } from '../stage/stage';
 
 /**
- * Landing page for invite links. Reads the token from the URL, redeems it
- * with the userservice to obtain the pre-selected agency/consulting-type,
- * generates throw-away credentials, and runs the standard asker
- * registration (which auto-logs in). On success, redirects into the app.
+ * Landing page for invite links.
+ *
+ * New topic-based links (External Inbounds): redeem creates an anonymous
+ * session and returns tokens — user goes straight to the waiting room.
+ *
+ * Legacy agency links: redeem returns agency/consultingType; we register
+ * an anonymous asker then redirect into the app (Rebuild behaviour).
  */
 export const InviteLink = () => {
 	const { t } = useTranslation();
-	const { token } = useParams<{ token: string }>();
+	const { token } = useParams<{ token: string; topicSlug?: string }>();
 	const { tenant } = useContext<any>(TenantContext as any);
-	const [status, setStatus] = useState<
-		'loading' | 'registering' | 'error' | 'ok'
-	>('loading');
+	const [status, setStatus] = useState<'loading' | 'registering' | 'error'>(
+		'loading'
+	);
 	const [errorMessage, setErrorMessage] = useState('');
-	// Guard so the async redeem+register flow can only run once per mount.
-	// React StrictMode or an async-populated `tenant` can otherwise cause a
-	// second invocation whose redeem-call fails with 400 "already used".
 	const hasRunRef = useRef(false);
 
 	useEffect(() => {
@@ -36,15 +44,6 @@ export const InviteLink = () => {
 		if (hasRunRef.current) return;
 		hasRunRef.current = true;
 
-		const redeemUrl = `${apiUrl}/service/users/invitelinks/${encodeURIComponent(
-			token
-		)}/redeem`;
-
-		// Mirror the existing /anonymous flow: username starts with
-		// `Anonymous-` so the session is routed to the Live-Chat filter
-		// (consultant view classifies it by username prefix / postcode 00000),
-		// and password is 8 chars alphanumeric to match what the anonymous
-		// chat form generates (see AnonymousChat.tsx).
 		const generatePassword = () => {
 			const chars =
 				'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -59,22 +58,13 @@ export const InviteLink = () => {
 
 		(async () => {
 			try {
-				const redeemResp = await fetch(redeemUrl, {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					credentials: 'include'
-				});
-				if (!redeemResp.ok) {
-					const body = await redeemResp.text().catch(() => '');
-					throw new Error(
-						body || `Redeem failed (HTTP ${redeemResp.status})`
-					);
+				const data = await redeemInviteLink(token);
+
+				if (isRedeemInviteLinkSessionResponse(data)) {
+					applyRedeemSessionCredentials(data);
+					redirectToInviteSession(data);
+					return;
 				}
-				const info: {
-					tenantId: number;
-					agencyId: number;
-					consultingTypeId: number | null;
-				} = await redeemResp.json();
 
 				setStatus('registering');
 
@@ -86,19 +76,18 @@ export const InviteLink = () => {
 					{
 						username,
 						password: encodeURIComponent(password),
-						agencyId: String(info.agencyId),
+						agencyId: String(data.agencyId),
 						postcode: '00000',
 						termsAccepted: 'true',
 						preferredLanguage: 'de',
 						consultingType:
-							info.consultingTypeId != null
-								? String(info.consultingTypeId)
+							data.consultingTypeId != null
+								? String(data.consultingTypeId)
 								: '0'
 					} as any,
 					false,
 					tenant as any
 				);
-				setStatus('ok');
 				redirectToApp();
 			} catch (err: any) {
 				setStatus('error');
@@ -107,8 +96,6 @@ export const InviteLink = () => {
 				);
 			}
 		})();
-		// Intentionally only depend on token — tenant is read lazily inside
-		// the effect and we do NOT want a tenant-arrival re-run.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [token]);
 
