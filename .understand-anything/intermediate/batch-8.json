@@ -1,0 +1,1541 @@
+{
+	"nodes": [
+		{
+			"id": "file:src/api/apiGetUserDataBySessionId.ts",
+			"type": "file",
+			"name": "apiGetUserDataBySessionId.ts",
+			"filePath": "src/api/apiGetUserDataBySessionId.ts",
+			"summary": "API client module for apiGetUserDataBySessionId, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "session", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiGetUserDataBySessionId.ts:apiGetUserDataBySessionId",
+			"type": "function",
+			"name": "apiGetUserDataBySessionId",
+			"filePath": "src/api/apiGetUserDataBySessionId.ts",
+			"lineRange": [5, 14],
+			"summary": "Function apiGetUserDataBySessionId in src/api/apiGetUserDataBySessionId.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiGroupChatSettings.ts",
+			"type": "file",
+			"name": "apiGroupChatSettings.ts",
+			"filePath": "src/api/apiGroupChatSettings.ts",
+			"summary": "API client module for apiGroupChatSettings, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiGroupChatSettings.ts:apiCreateGroupChat",
+			"type": "function",
+			"name": "apiCreateGroupChat",
+			"filePath": "src/api/apiGroupChatSettings.ts",
+			"lineRange": [20, 32],
+			"summary": "Function apiCreateGroupChat in src/api/apiGroupChatSettings.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiGroupChatSettings.ts:apiUpdateGroupChat",
+			"type": "function",
+			"name": "apiUpdateGroupChat",
+			"filePath": "src/api/apiGroupChatSettings.ts",
+			"lineRange": [38, 50],
+			"summary": "Function apiUpdateGroupChat in src/api/apiGroupChatSettings.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiJoinGroupChat.ts",
+			"type": "file",
+			"name": "apiJoinGroupChat.ts",
+			"filePath": "src/api/apiJoinGroupChat.ts",
+			"summary": "API client module for apiJoinGroupChat, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiJoinGroupChat.ts:apiJoinGroupChat",
+			"type": "function",
+			"name": "apiJoinGroupChat",
+			"filePath": "src/api/apiJoinGroupChat.ts",
+			"lineRange": [9, 18],
+			"summary": "Function apiJoinGroupChat in src/api/apiJoinGroupChat.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiLogoutRocketchat.ts",
+			"type": "file",
+			"name": "apiLogoutRocketchat.ts",
+			"filePath": "src/api/apiLogoutRocketchat.ts",
+			"summary": "API client module for apiLogoutRocketchat, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiLogoutRocketchat.ts:apiRocketchatLogout",
+			"type": "function",
+			"name": "apiRocketchatLogout",
+			"filePath": "src/api/apiLogoutRocketchat.ts",
+			"lineRange": [5, 9],
+			"summary": "Function apiRocketchatLogout in src/api/apiLogoutRocketchat.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiPatchConsultantData.ts",
+			"type": "file",
+			"name": "apiPatchConsultantData.ts",
+			"filePath": "src/api/apiPatchConsultantData.ts",
+			"summary": "API client module for apiPatchConsultantData, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiPatchConsultantData.ts:apiPatchConsultantData",
+			"type": "function",
+			"name": "apiPatchConsultantData",
+			"filePath": "src/api/apiPatchConsultantData.ts",
+			"lineRange": [4, 16],
+			"summary": "Function apiPatchConsultantData in src/api/apiPatchConsultantData.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiPatchMessage.ts",
+			"type": "file",
+			"name": "apiPatchMessage.ts",
+			"filePath": "src/api/apiPatchMessage.ts",
+			"summary": "API client module for apiPatchMessage, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiPatchMessage.ts:apiPatchMessage",
+			"type": "function",
+			"name": "apiPatchMessage",
+			"filePath": "src/api/apiPatchMessage.ts",
+			"lineRange": [4, 16],
+			"summary": "Function apiPatchMessage in src/api/apiPatchMessage.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiPatchNotificationActiveView.ts",
+			"type": "file",
+			"name": "apiPatchNotificationActiveView.ts",
+			"filePath": "src/api/apiPatchNotificationActiveView.ts",
+			"summary": "API client module for apiPatchNotificationActiveView, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiPatchNotificationActiveView.ts:apiPatchNotificationActiveView",
+			"type": "function",
+			"name": "apiPatchNotificationActiveView",
+			"filePath": "src/api/apiPatchNotificationActiveView.ts",
+			"lineRange": [10, 22],
+			"summary": "Function apiPatchNotificationActiveView in src/api/apiPatchNotificationActiveView.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiPostAdditionalEnquiry.ts",
+			"type": "file",
+			"name": "apiPostAdditionalEnquiry.ts",
+			"filePath": "src/api/apiPostAdditionalEnquiry.ts",
+			"summary": "API client module for apiPostAdditionalEnquiry, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiPostAdditionalEnquiry.ts:apiPostAdditionalEnquiry",
+			"type": "function",
+			"name": "apiPostAdditionalEnquiry",
+			"filePath": "src/api/apiPostAdditionalEnquiry.ts",
+			"lineRange": [14, 26],
+			"summary": "Function apiPostAdditionalEnquiry in src/api/apiPostAdditionalEnquiry.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiPostBanUser.ts",
+			"type": "file",
+			"name": "apiPostBanUser.ts",
+			"filePath": "src/api/apiPostBanUser.ts",
+			"summary": "API client module for apiPostBanUser, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiPostBanUser.ts:apiPostBanUser",
+			"type": "function",
+			"name": "apiPostBanUser",
+			"filePath": "src/api/apiPostBanUser.ts",
+			"lineRange": [4, 13],
+			"summary": "Function apiPostBanUser in src/api/apiPostBanUser.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiPostMessageEventNotification.ts",
+			"type": "file",
+			"name": "apiPostMessageEventNotification.ts",
+			"filePath": "src/api/apiPostMessageEventNotification.ts",
+			"summary": "API client module for apiPostMessageEventNotification, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiPostMessageEventNotification.ts:apiPostMessageEventNotification",
+			"type": "function",
+			"name": "apiPostMessageEventNotification",
+			"filePath": "src/api/apiPostMessageEventNotification.ts",
+			"lineRange": [14, 26],
+			"summary": "Function apiPostMessageEventNotification in src/api/apiPostMessageEventNotification.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiPutArchive.ts",
+			"type": "file",
+			"name": "apiPutArchive.ts",
+			"filePath": "src/api/apiPutArchive.ts",
+			"summary": "API client module for apiPutArchive, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiPutArchive.ts:apiPutArchive",
+			"type": "function",
+			"name": "apiPutArchive",
+			"filePath": "src/api/apiPutArchive.ts",
+			"lineRange": [4, 11],
+			"summary": "Function apiPutArchive in src/api/apiPutArchive.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiPutConsultantData.ts",
+			"type": "file",
+			"name": "apiPutConsultantData.ts",
+			"filePath": "src/api/apiPutConsultantData.ts",
+			"summary": "API client module for apiPutConsultantData, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiPutConsultantData.ts:apiPutConsultantData",
+			"type": "function",
+			"name": "apiPutConsultantData",
+			"filePath": "src/api/apiPutConsultantData.ts",
+			"lineRange": [4, 16],
+			"summary": "Function apiPutConsultantData in src/api/apiPutConsultantData.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiPutDearchive.ts",
+			"type": "file",
+			"name": "apiPutDearchive.ts",
+			"filePath": "src/api/apiPutDearchive.ts",
+			"summary": "API client module for apiPutDearchive, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiPutDearchive.ts:apiPutDearchive",
+			"type": "function",
+			"name": "apiPutDearchive",
+			"filePath": "src/api/apiPutDearchive.ts",
+			"lineRange": [4, 11],
+			"summary": "Function apiPutDearchive in src/api/apiPutDearchive.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiPutEmail.ts",
+			"type": "file",
+			"name": "apiPutEmail.ts",
+			"filePath": "src/api/apiPutEmail.ts",
+			"summary": "API client module for apiPutEmail, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiPutEmail.ts:apiPutEmail",
+			"type": "function",
+			"name": "apiPutEmail",
+			"filePath": "src/api/apiPutEmail.ts",
+			"lineRange": [4, 13],
+			"summary": "Function apiPutEmail in src/api/apiPutEmail.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiPutGroupChat.ts",
+			"type": "file",
+			"name": "apiPutGroupChat.ts",
+			"filePath": "src/api/apiPutGroupChat.ts",
+			"summary": "API client module for apiPutGroupChat, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiPutGroupChat.ts:GROUP_CHAT_API",
+			"type": "function",
+			"name": "GROUP_CHAT_API",
+			"filePath": "src/api/apiPutGroupChat.ts",
+			"lineRange": [4, 16],
+			"summary": "Function GROUP_CHAT_API in src/api/apiPutGroupChat.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiPutGroupChat.ts:apiPutGroupChat",
+			"type": "function",
+			"name": "apiPutGroupChat",
+			"filePath": "src/api/apiPutGroupChat.ts",
+			"lineRange": [15, 26],
+			"summary": "Function apiPutGroupChat in src/api/apiPutGroupChat.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiPutTools.ts",
+			"type": "file",
+			"name": "apiPutTools.ts",
+			"filePath": "src/api/apiPutTools.ts",
+			"summary": "API client module for apiPutTools, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiPutTools.ts:apiPutTools",
+			"type": "function",
+			"name": "apiPutTools",
+			"filePath": "src/api/apiPutTools.ts",
+			"lineRange": [4, 14],
+			"summary": "Function apiPutTools in src/api/apiPutTools.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiRejectVideoCall.ts",
+			"type": "file",
+			"name": "apiRejectVideoCall.ts",
+			"filePath": "src/api/apiRejectVideoCall.ts",
+			"summary": "API client module for apiRejectVideoCall, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiRejectVideoCall.ts:apiRejectVideoCall",
+			"type": "function",
+			"name": "apiRejectVideoCall",
+			"filePath": "src/api/apiRejectVideoCall.ts",
+			"lineRange": [4, 16],
+			"summary": "Function apiRejectVideoCall in src/api/apiRejectVideoCall.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiRemoveSessionSupervisor.ts",
+			"type": "file",
+			"name": "apiRemoveSessionSupervisor.ts",
+			"filePath": "src/api/apiRemoveSessionSupervisor.ts",
+			"summary": "API client module for apiRemoveSessionSupervisor, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "session", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiRemoveSessionSupervisor.ts:apiRemoveSessionSupervisor",
+			"type": "function",
+			"name": "apiRemoveSessionSupervisor",
+			"filePath": "src/api/apiRemoveSessionSupervisor.ts",
+			"lineRange": [4, 16],
+			"summary": "Function apiRemoveSessionSupervisor in src/api/apiRemoveSessionSupervisor.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiRequestMagicLinkLogin.ts",
+			"type": "file",
+			"name": "apiRequestMagicLinkLogin.ts",
+			"filePath": "src/api/apiRequestMagicLinkLogin.ts",
+			"summary": "API client module for apiRequestMagicLinkLogin, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "authentication", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiRequestMagicLinkLogin.ts:apiRequestMagicLinkLogin",
+			"type": "function",
+			"name": "apiRequestMagicLinkLogin",
+			"filePath": "src/api/apiRequestMagicLinkLogin.ts",
+			"lineRange": [4, 16],
+			"summary": "Function apiRequestMagicLinkLogin in src/api/apiRequestMagicLinkLogin.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiRocketChatFetchMyKeys.ts",
+			"type": "file",
+			"name": "apiRocketChatFetchMyKeys.ts",
+			"filePath": "src/api/apiRocketChatFetchMyKeys.ts",
+			"summary": "API client module for apiRocketChatFetchMyKeys, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiRocketChatFetchMyKeys.ts:apiRocketChatFetchMyKeys",
+			"type": "function",
+			"name": "apiRocketChatFetchMyKeys",
+			"filePath": "src/api/apiRocketChatFetchMyKeys.ts",
+			"lineRange": [10, 15],
+			"summary": "Function apiRocketChatFetchMyKeys in src/api/apiRocketChatFetchMyKeys.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiRocketChatGetUsersOfRoomWithoutKey.ts",
+			"type": "file",
+			"name": "apiRocketChatGetUsersOfRoomWithoutKey.ts",
+			"filePath": "src/api/apiRocketChatGetUsersOfRoomWithoutKey.ts",
+			"summary": "API client module for apiRocketChatGetUsersOfRoomWithoutKey, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiRocketChatGetUsersOfRoomWithoutKey.ts:apiRocketChatGetUsersOfRoomWithoutKey",
+			"type": "function",
+			"name": "apiRocketChatGetUsersOfRoomWithoutKey",
+			"filePath": "src/api/apiRocketChatGetUsersOfRoomWithoutKey.ts",
+			"lineRange": [7, 13],
+			"summary": "Function apiRocketChatGetUsersOfRoomWithoutKey in src/api/apiRocketChatGetUsersOfRoomWithoutKey.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiRocketChatGroupMembers.ts",
+			"type": "file",
+			"name": "apiRocketChatGroupMembers.ts",
+			"filePath": "src/api/apiRocketChatGroupMembers.ts",
+			"summary": "API client module for apiRocketChatGroupMembers, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiRocketChatGroupMembers.ts:apiRocketChatGroupMembers",
+			"type": "function",
+			"name": "apiRocketChatGroupMembers",
+			"filePath": "src/api/apiRocketChatGroupMembers.ts",
+			"lineRange": [4, 8],
+			"summary": "Function apiRocketChatGroupMembers in src/api/apiRocketChatGroupMembers.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiRocketChatResetE2EKey.ts",
+			"type": "file",
+			"name": "apiRocketChatResetE2EKey.ts",
+			"filePath": "src/api/apiRocketChatResetE2EKey.ts",
+			"summary": "API client module for apiRocketChatResetE2EKey, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiRocketChatResetE2EKey.ts:apiRocketChatResetE2EKey",
+			"type": "function",
+			"name": "apiRocketChatResetE2EKey",
+			"filePath": "src/api/apiRocketChatResetE2EKey.ts",
+			"lineRange": [5, 9],
+			"summary": "Function apiRocketChatResetE2EKey in src/api/apiRocketChatResetE2EKey.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiRocketChatRoomsGet.ts",
+			"type": "file",
+			"name": "apiRocketChatRoomsGet.ts",
+			"filePath": "src/api/apiRocketChatRoomsGet.ts",
+			"summary": "API client module for apiRocketChatRoomsGet, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiRocketChatRoomsGet.ts:apiRocketChatRoomsGet",
+			"type": "function",
+			"name": "apiRocketChatRoomsGet",
+			"filePath": "src/api/apiRocketChatRoomsGet.ts",
+			"lineRange": [5, 9],
+			"summary": "Function apiRocketChatRoomsGet in src/api/apiRocketChatRoomsGet.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiRocketChatRoomsInfo.ts",
+			"type": "file",
+			"name": "apiRocketChatRoomsInfo.ts",
+			"filePath": "src/api/apiRocketChatRoomsInfo.ts",
+			"summary": "API client module for apiRocketChatRoomsInfo, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiRocketChatRoomsInfo.ts:apiRocketChatRoomsInfo",
+			"type": "function",
+			"name": "apiRocketChatRoomsInfo",
+			"filePath": "src/api/apiRocketChatRoomsInfo.ts",
+			"lineRange": [5, 9],
+			"summary": "Function apiRocketChatRoomsInfo in src/api/apiRocketChatRoomsInfo.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiRocketChatSetRoomKeyID.ts",
+			"type": "file",
+			"name": "apiRocketChatSetRoomKeyID.ts",
+			"filePath": "src/api/apiRocketChatSetRoomKeyID.ts",
+			"summary": "API client module for apiRocketChatSetRoomKeyID, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiRocketChatSetRoomKeyID.ts:apiRocketChatSetRoomKeyID",
+			"type": "function",
+			"name": "apiRocketChatSetRoomKeyID",
+			"filePath": "src/api/apiRocketChatSetRoomKeyID.ts",
+			"lineRange": [5, 17],
+			"summary": "Function apiRocketChatSetRoomKeyID in src/api/apiRocketChatSetRoomKeyID.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiRocketChatSetUserKeys.ts",
+			"type": "file",
+			"name": "apiRocketChatSetUserKeys.ts",
+			"filePath": "src/api/apiRocketChatSetUserKeys.ts",
+			"summary": "API client module for apiRocketChatSetUserKeys, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiRocketChatSetUserKeys.ts:apiRocketChatSetUserKeys",
+			"type": "function",
+			"name": "apiRocketChatSetUserKeys",
+			"filePath": "src/api/apiRocketChatSetUserKeys.ts",
+			"lineRange": [5, 17],
+			"summary": "Function apiRocketChatSetUserKeys in src/api/apiRocketChatSetUserKeys.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiRocketChatSubscriptionsGet.ts",
+			"type": "file",
+			"name": "apiRocketChatSubscriptionsGet.ts",
+			"filePath": "src/api/apiRocketChatSubscriptionsGet.ts",
+			"summary": "API client module for apiRocketChatSubscriptionsGet, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiRocketChatSubscriptionsGet.ts:apiRocketChatSubscriptionsGet",
+			"type": "function",
+			"name": "apiRocketChatSubscriptionsGet",
+			"filePath": "src/api/apiRocketChatSubscriptionsGet.ts",
+			"lineRange": [5, 9],
+			"summary": "Function apiRocketChatSubscriptionsGet in src/api/apiRocketChatSubscriptionsGet.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiRocketChatSubscriptionsGetOne.ts",
+			"type": "file",
+			"name": "apiRocketChatSubscriptionsGetOne.ts",
+			"filePath": "src/api/apiRocketChatSubscriptionsGetOne.ts",
+			"summary": "API client module for apiRocketChatSubscriptionsGetOne, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiRocketChatSubscriptionsGetOne.ts:apiRocketChatSubscriptionsGetOne",
+			"type": "function",
+			"name": "apiRocketChatSubscriptionsGetOne",
+			"filePath": "src/api/apiRocketChatSubscriptionsGetOne.ts",
+			"lineRange": [5, 11],
+			"summary": "Function apiRocketChatSubscriptionsGetOne in src/api/apiRocketChatSubscriptionsGetOne.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiRocketChatUpdateGroupKey.ts",
+			"type": "file",
+			"name": "apiRocketChatUpdateGroupKey.ts",
+			"filePath": "src/api/apiRocketChatUpdateGroupKey.ts",
+			"summary": "API client module for apiRocketChatUpdateGroupKey, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiRocketChatUpdateGroupKey.ts:apiRocketChatUpdateGroupKey",
+			"type": "function",
+			"name": "apiRocketChatUpdateGroupKey",
+			"filePath": "src/api/apiRocketChatUpdateGroupKey.ts",
+			"lineRange": [5, 17],
+			"summary": "Function apiRocketChatUpdateGroupKey in src/api/apiRocketChatUpdateGroupKey.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		}
+	],
+	"edges": [
+		{
+			"source": "file:src/api/apiGetUserDataBySessionId.ts",
+			"target": "function:src/api/apiGetUserDataBySessionId.ts:apiGetUserDataBySessionId",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiGetUserDataBySessionId.ts",
+			"target": "function:src/api/apiGetUserDataBySessionId.ts:apiGetUserDataBySessionId",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiGetUserDataBySessionId.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetUserDataBySessionId.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetUserDataBySessionId.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGroupChatSettings.ts",
+			"target": "function:src/api/apiGroupChatSettings.ts:apiCreateGroupChat",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiGroupChatSettings.ts",
+			"target": "function:src/api/apiGroupChatSettings.ts:apiCreateGroupChat",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiGroupChatSettings.ts",
+			"target": "function:src/api/apiGroupChatSettings.ts:apiUpdateGroupChat",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiGroupChatSettings.ts",
+			"target": "function:src/api/apiGroupChatSettings.ts:apiUpdateGroupChat",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiGroupChatSettings.ts",
+			"target": "file:src/api/apiPutGroupChat.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGroupChatSettings.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGroupChatSettings.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiJoinGroupChat.ts",
+			"target": "function:src/api/apiJoinGroupChat.ts:apiJoinGroupChat",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiJoinGroupChat.ts",
+			"target": "function:src/api/apiJoinGroupChat.ts:apiJoinGroupChat",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiJoinGroupChat.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiJoinGroupChat.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiLogoutRocketchat.ts",
+			"target": "function:src/api/apiLogoutRocketchat.ts:apiRocketchatLogout",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiLogoutRocketchat.ts",
+			"target": "function:src/api/apiLogoutRocketchat.ts:apiRocketchatLogout",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiLogoutRocketchat.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiLogoutRocketchat.ts",
+			"target": "file:src/api/fetchRCData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiLogoutRocketchat.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiPatchConsultantData.ts",
+			"target": "function:src/api/apiPatchConsultantData.ts:apiPatchConsultantData",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiPatchConsultantData.ts",
+			"target": "function:src/api/apiPatchConsultantData.ts:apiPatchConsultantData",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiPatchConsultantData.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiPatchConsultantData.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiPatchMessage.ts",
+			"target": "function:src/api/apiPatchMessage.ts:apiPatchMessage",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiPatchMessage.ts",
+			"target": "function:src/api/apiPatchMessage.ts:apiPatchMessage",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiPatchMessage.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiPatchMessage.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiPatchNotificationActiveView.ts",
+			"target": "function:src/api/apiPatchNotificationActiveView.ts:apiPatchNotificationActiveView",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiPatchNotificationActiveView.ts",
+			"target": "function:src/api/apiPatchNotificationActiveView.ts:apiPatchNotificationActiveView",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiPatchNotificationActiveView.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiPatchNotificationActiveView.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiPostAdditionalEnquiry.ts",
+			"target": "function:src/api/apiPostAdditionalEnquiry.ts:apiPostAdditionalEnquiry",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiPostAdditionalEnquiry.ts",
+			"target": "function:src/api/apiPostAdditionalEnquiry.ts:apiPostAdditionalEnquiry",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiPostAdditionalEnquiry.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiPostAdditionalEnquiry.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiPostBanUser.ts",
+			"target": "function:src/api/apiPostBanUser.ts:apiPostBanUser",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiPostBanUser.ts",
+			"target": "function:src/api/apiPostBanUser.ts:apiPostBanUser",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiPostBanUser.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiPostBanUser.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiPostMessageEventNotification.ts",
+			"target": "function:src/api/apiPostMessageEventNotification.ts:apiPostMessageEventNotification",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiPostMessageEventNotification.ts",
+			"target": "function:src/api/apiPostMessageEventNotification.ts:apiPostMessageEventNotification",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiPostMessageEventNotification.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiPostMessageEventNotification.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiPutArchive.ts",
+			"target": "function:src/api/apiPutArchive.ts:apiPutArchive",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiPutArchive.ts",
+			"target": "function:src/api/apiPutArchive.ts:apiPutArchive",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiPutArchive.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiPutArchive.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiPutConsultantData.ts",
+			"target": "function:src/api/apiPutConsultantData.ts:apiPutConsultantData",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiPutConsultantData.ts",
+			"target": "function:src/api/apiPutConsultantData.ts:apiPutConsultantData",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiPutConsultantData.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiPutConsultantData.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiPutDearchive.ts",
+			"target": "function:src/api/apiPutDearchive.ts:apiPutDearchive",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiPutDearchive.ts",
+			"target": "function:src/api/apiPutDearchive.ts:apiPutDearchive",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiPutDearchive.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiPutDearchive.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiPutEmail.ts",
+			"target": "function:src/api/apiPutEmail.ts:apiPutEmail",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiPutEmail.ts",
+			"target": "function:src/api/apiPutEmail.ts:apiPutEmail",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiPutEmail.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiPutEmail.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiPutGroupChat.ts",
+			"target": "function:src/api/apiPutGroupChat.ts:GROUP_CHAT_API",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiPutGroupChat.ts",
+			"target": "function:src/api/apiPutGroupChat.ts:GROUP_CHAT_API",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiPutGroupChat.ts",
+			"target": "function:src/api/apiPutGroupChat.ts:apiPutGroupChat",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiPutGroupChat.ts",
+			"target": "function:src/api/apiPutGroupChat.ts:apiPutGroupChat",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiPutGroupChat.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiPutGroupChat.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiPutTools.ts",
+			"target": "function:src/api/apiPutTools.ts:apiPutTools",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiPutTools.ts",
+			"target": "function:src/api/apiPutTools.ts:apiPutTools",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiPutTools.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiPutTools.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRejectVideoCall.ts",
+			"target": "function:src/api/apiRejectVideoCall.ts:apiRejectVideoCall",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiRejectVideoCall.ts",
+			"target": "function:src/api/apiRejectVideoCall.ts:apiRejectVideoCall",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiRejectVideoCall.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRejectVideoCall.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRemoveSessionSupervisor.ts",
+			"target": "function:src/api/apiRemoveSessionSupervisor.ts:apiRemoveSessionSupervisor",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiRemoveSessionSupervisor.ts",
+			"target": "function:src/api/apiRemoveSessionSupervisor.ts:apiRemoveSessionSupervisor",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiRemoveSessionSupervisor.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRemoveSessionSupervisor.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRequestMagicLinkLogin.ts",
+			"target": "function:src/api/apiRequestMagicLinkLogin.ts:apiRequestMagicLinkLogin",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiRequestMagicLinkLogin.ts",
+			"target": "function:src/api/apiRequestMagicLinkLogin.ts:apiRequestMagicLinkLogin",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiRequestMagicLinkLogin.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRequestMagicLinkLogin.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRocketChatFetchMyKeys.ts",
+			"target": "function:src/api/apiRocketChatFetchMyKeys.ts:apiRocketChatFetchMyKeys",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiRocketChatFetchMyKeys.ts",
+			"target": "function:src/api/apiRocketChatFetchMyKeys.ts:apiRocketChatFetchMyKeys",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiRocketChatFetchMyKeys.ts",
+			"target": "file:src/api/fetchRCData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRocketChatFetchMyKeys.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRocketChatGetUsersOfRoomWithoutKey.ts",
+			"target": "function:src/api/apiRocketChatGetUsersOfRoomWithoutKey.ts:apiRocketChatGetUsersOfRoomWithoutKey",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiRocketChatGetUsersOfRoomWithoutKey.ts",
+			"target": "function:src/api/apiRocketChatGetUsersOfRoomWithoutKey.ts:apiRocketChatGetUsersOfRoomWithoutKey",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiRocketChatGetUsersOfRoomWithoutKey.ts",
+			"target": "file:src/api/fetchRCData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRocketChatGetUsersOfRoomWithoutKey.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRocketChatGroupMembers.ts",
+			"target": "function:src/api/apiRocketChatGroupMembers.ts:apiRocketChatGroupMembers",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiRocketChatGroupMembers.ts",
+			"target": "function:src/api/apiRocketChatGroupMembers.ts:apiRocketChatGroupMembers",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiRocketChatGroupMembers.ts",
+			"target": "file:src/api/fetchRCData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRocketChatGroupMembers.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRocketChatResetE2EKey.ts",
+			"target": "function:src/api/apiRocketChatResetE2EKey.ts:apiRocketChatResetE2EKey",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiRocketChatResetE2EKey.ts",
+			"target": "function:src/api/apiRocketChatResetE2EKey.ts:apiRocketChatResetE2EKey",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiRocketChatResetE2EKey.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRocketChatResetE2EKey.ts",
+			"target": "file:src/api/fetchRCData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRocketChatResetE2EKey.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRocketChatRoomsGet.ts",
+			"target": "function:src/api/apiRocketChatRoomsGet.ts:apiRocketChatRoomsGet",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiRocketChatRoomsGet.ts",
+			"target": "function:src/api/apiRocketChatRoomsGet.ts:apiRocketChatRoomsGet",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiRocketChatRoomsGet.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRocketChatRoomsGet.ts",
+			"target": "file:src/api/fetchRCData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRocketChatRoomsGet.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRocketChatRoomsInfo.ts",
+			"target": "function:src/api/apiRocketChatRoomsInfo.ts:apiRocketChatRoomsInfo",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiRocketChatRoomsInfo.ts",
+			"target": "function:src/api/apiRocketChatRoomsInfo.ts:apiRocketChatRoomsInfo",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiRocketChatRoomsInfo.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRocketChatRoomsInfo.ts",
+			"target": "file:src/api/fetchRCData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRocketChatRoomsInfo.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRocketChatSetRoomKeyID.ts",
+			"target": "function:src/api/apiRocketChatSetRoomKeyID.ts:apiRocketChatSetRoomKeyID",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiRocketChatSetRoomKeyID.ts",
+			"target": "function:src/api/apiRocketChatSetRoomKeyID.ts:apiRocketChatSetRoomKeyID",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiRocketChatSetRoomKeyID.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRocketChatSetRoomKeyID.ts",
+			"target": "file:src/api/fetchRCData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRocketChatSetRoomKeyID.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRocketChatSetUserKeys.ts",
+			"target": "function:src/api/apiRocketChatSetUserKeys.ts:apiRocketChatSetUserKeys",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiRocketChatSetUserKeys.ts",
+			"target": "function:src/api/apiRocketChatSetUserKeys.ts:apiRocketChatSetUserKeys",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiRocketChatSetUserKeys.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRocketChatSetUserKeys.ts",
+			"target": "file:src/api/fetchRCData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRocketChatSetUserKeys.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRocketChatSubscriptionsGet.ts",
+			"target": "function:src/api/apiRocketChatSubscriptionsGet.ts:apiRocketChatSubscriptionsGet",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiRocketChatSubscriptionsGet.ts",
+			"target": "function:src/api/apiRocketChatSubscriptionsGet.ts:apiRocketChatSubscriptionsGet",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiRocketChatSubscriptionsGet.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRocketChatSubscriptionsGet.ts",
+			"target": "file:src/api/fetchRCData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRocketChatSubscriptionsGet.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRocketChatSubscriptionsGetOne.ts",
+			"target": "function:src/api/apiRocketChatSubscriptionsGetOne.ts:apiRocketChatSubscriptionsGetOne",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiRocketChatSubscriptionsGetOne.ts",
+			"target": "function:src/api/apiRocketChatSubscriptionsGetOne.ts:apiRocketChatSubscriptionsGetOne",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiRocketChatSubscriptionsGetOne.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRocketChatSubscriptionsGetOne.ts",
+			"target": "file:src/api/fetchRCData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRocketChatSubscriptionsGetOne.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRocketChatUpdateGroupKey.ts",
+			"target": "function:src/api/apiRocketChatUpdateGroupKey.ts:apiRocketChatUpdateGroupKey",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiRocketChatUpdateGroupKey.ts",
+			"target": "function:src/api/apiRocketChatUpdateGroupKey.ts:apiRocketChatUpdateGroupKey",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiRocketChatUpdateGroupKey.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRocketChatUpdateGroupKey.ts",
+			"target": "file:src/api/fetchRCData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRocketChatUpdateGroupKey.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		}
+	]
+}

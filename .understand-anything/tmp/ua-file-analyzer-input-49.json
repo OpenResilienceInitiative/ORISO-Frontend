@@ -1,0 +1,182 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": "proxy/routes/index.js.backup",
+			"language": "backup",
+			"sizeLines": 45,
+			"fileCategory": "code"
+		},
+		{
+			"path": "proxy/routes/weblate.js.backup.original",
+			"language": "original",
+			"sizeLines": 207,
+			"fileCategory": "code"
+		},
+		{
+			"path": "public/releases/README.md",
+			"language": "markdown",
+			"sizeLines": 11,
+			"fileCategory": "docs"
+		},
+		{
+			"path": "public/releases/releases.json",
+			"language": "json",
+			"sizeLines": 1,
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/api/apiGetAskerSessionList.ts.backup",
+			"language": "backup",
+			"sizeLines": 23,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/fetchData.ts.backup",
+			"language": "backup",
+			"sizeLines": 271,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/matrix/matrixClient.ts.backup",
+			"language": "backup",
+			"sizeLines": 265,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/agencyRadioSelect/agencyLanguages.styles.scss",
+			"language": "css",
+			"sizeLines": 52,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/agencyRadioSelect/agencyRadioSelect.styles.scss",
+			"language": "css",
+			"sizeLines": 59,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/agencySelection/agencySelection.styles.scss",
+			"language": "css",
+			"sizeLines": 115,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/app/app.tsx.backup",
+			"language": "backup",
+			"sizeLines": 207,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/NavigationSidebar.stories.tsx",
+			"language": "typescript",
+			"sizeLines": 65,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/NonPlainRoutesWrapper.tsx.backup",
+			"language": "backup",
+			"sizeLines": 34,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/appointment/appointment.styles.scss",
+			"language": "css",
+			"sizeLines": 38,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/appointment/appointments.styles.scss",
+			"language": "css",
+			"sizeLines": 61,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/banUser/banUser.styles.scss",
+			"language": "css",
+			"sizeLines": 13,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/box/box.module.scss",
+			"language": "css",
+			"sizeLines": 36,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/button/button.styles.scss",
+			"language": "css",
+			"sizeLines": 330,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/call/FloatingCallWidget.scss",
+			"language": "css",
+			"sizeLines": 242,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/call/GroupCallWidget.scss",
+			"language": "css",
+			"sizeLines": 407,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/card/card.styles.scss",
+			"language": "css",
+			"sizeLines": 26,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/checkbox/checkbox.styles.scss",
+			"language": "css",
+			"sizeLines": 66,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/CompoundIntegration.stories.mdx",
+			"language": "markdown",
+			"sizeLines": 109,
+			"fileCategory": "docs"
+		},
+		{
+			"path": "src/components/datepicker/datepicker.styles.scss",
+			"language": "css",
+			"sizeLines": 261,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/devToolbar/devToolbar.styles.scss",
+			"language": "css",
+			"sizeLines": 149,
+			"fileCategory": "markup"
+		}
+	],
+	"batchImportData": {
+		"proxy/routes/index.js.backup": [],
+		"proxy/routes/weblate.js.backup.original": [],
+		"public/releases/README.md": [],
+		"public/releases/releases.json": [],
+		"src/api/apiGetAskerSessionList.ts.backup": [],
+		"src/api/fetchData.ts.backup": [],
+		"src/api/matrix/matrixClient.ts.backup": [],
+		"src/components/agencyRadioSelect/agencyLanguages.styles.scss": [],
+		"src/components/agencyRadioSelect/agencyRadioSelect.styles.scss": [],
+		"src/components/agencySelection/agencySelection.styles.scss": [],
+		"src/components/app/app.tsx.backup": [],
+		"src/components/app/NavigationSidebar.stories.tsx": [],
+		"src/components/app/NonPlainRoutesWrapper.tsx.backup": [],
+		"src/components/appointment/appointment.styles.scss": [],
+		"src/components/appointment/appointments.styles.scss": [],
+		"src/components/banUser/banUser.styles.scss": [],
+		"src/components/box/box.module.scss": [],
+		"src/components/button/button.styles.scss": [],
+		"src/components/call/FloatingCallWidget.scss": [],
+		"src/components/call/GroupCallWidget.scss": [],
+		"src/components/card/card.styles.scss": [],
+		"src/components/checkbox/checkbox.styles.scss": [],
+		"src/components/CompoundIntegration.stories.mdx": [],
+		"src/components/datepicker/datepicker.styles.scss": [],
+		"src/components/devToolbar/devToolbar.styles.scss": []
+	}
+}

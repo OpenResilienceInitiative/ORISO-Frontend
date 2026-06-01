@@ -1,0 +1,182 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": "src/components/mainTopicSelection/MainTopicSelection.styles.scss",
+			"language": "css",
+			"sizeLines": 27,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/matrixCall/MatrixCallView.styles.scss",
+			"language": "css",
+			"sizeLines": 243,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/message/ConsultantMatchingAnimation.tsx",
+			"language": "typescript",
+			"sizeLines": 0,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/message.styles.scss.backup",
+			"language": "backup",
+			"sizeLines": 525,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/VideoChatDetails/styles.module.scss",
+			"language": "css",
+			"sizeLines": 47,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/mobile/linkMenu/link_menu.styles.scss",
+			"language": "css",
+			"sizeLines": 61,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/modal/modal.styles.scss",
+			"language": "css",
+			"sizeLines": 15,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/notice/notice.styles.scss",
+			"language": "css",
+			"sizeLines": 67,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/notifications/notification.styles.scss",
+			"language": "css",
+			"sizeLines": 95,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/notifications/notifications.styles.scss",
+			"language": "css",
+			"sizeLines": 21,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/notificationsCenter/notificationsCenter.styles.scss",
+			"language": "css",
+			"sizeLines": 666,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/overlay/overlay.styles.scss",
+			"language": "css",
+			"sizeLines": 443,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/Page/page.styles.scss",
+			"language": "css",
+			"sizeLines": 14,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/passwordReset/passwordReset.styles.scss",
+			"language": "css",
+			"sizeLines": 120,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/profile/AdditionalEnquiry/_additionalEnquiry.styles.scss",
+			"language": "css",
+			"sizeLines": 85,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/profile/BrowserNotifications/NotificationDenied/styles.module.scss",
+			"language": "css",
+			"sizeLines": 10,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/profile/BrowserNotifications/styles.module.scss",
+			"language": "css",
+			"sizeLines": 17,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/profile/Documentation/styles.module.scss",
+			"language": "css",
+			"sizeLines": 5,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/profile/EmailNotifications/NoEmailSet/styles.module.scss",
+			"language": "css",
+			"sizeLines": 21,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/progressbar/progressbar.styles.scss",
+			"language": "css",
+			"sizeLines": 32,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/radioButton/radioButton.styles.scss",
+			"language": "css",
+			"sizeLines": 129,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/registration/autoLogin.ts.backup",
+			"language": "backup",
+			"sizeLines": 326,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/autoLogin.ts.backup-matrix",
+			"language": "backup-matrix",
+			"sizeLines": 326,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/welcomeScreen/welcomeScreen.styles.scss",
+			"language": "css",
+			"sizeLines": 79,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/releaseNote/releaseNote.styles.scss",
+			"language": "css",
+			"sizeLines": 130,
+			"fileCategory": "markup"
+		}
+	],
+	"batchImportData": {
+		"src/components/mainTopicSelection/MainTopicSelection.styles.scss": [],
+		"src/components/matrixCall/MatrixCallView.styles.scss": [],
+		"src/components/message/ConsultantMatchingAnimation.tsx": [],
+		"src/components/message/message.styles.scss.backup": [],
+		"src/components/message/VideoChatDetails/styles.module.scss": [],
+		"src/components/mobile/linkMenu/link_menu.styles.scss": [],
+		"src/components/modal/modal.styles.scss": [],
+		"src/components/notice/notice.styles.scss": [],
+		"src/components/notifications/notification.styles.scss": [],
+		"src/components/notifications/notifications.styles.scss": [],
+		"src/components/notificationsCenter/notificationsCenter.styles.scss": [],
+		"src/components/overlay/overlay.styles.scss": [],
+		"src/components/Page/page.styles.scss": [],
+		"src/components/passwordReset/passwordReset.styles.scss": [],
+		"src/components/profile/AdditionalEnquiry/_additionalEnquiry.styles.scss": [],
+		"src/components/profile/BrowserNotifications/NotificationDenied/styles.module.scss": [],
+		"src/components/profile/BrowserNotifications/styles.module.scss": [],
+		"src/components/profile/Documentation/styles.module.scss": [],
+		"src/components/profile/EmailNotifications/NoEmailSet/styles.module.scss": [],
+		"src/components/progressbar/progressbar.styles.scss": [],
+		"src/components/radioButton/radioButton.styles.scss": [],
+		"src/components/registration/autoLogin.ts.backup": [],
+		"src/components/registration/autoLogin.ts.backup-matrix": [],
+		"src/components/registration/welcomeScreen/welcomeScreen.styles.scss": [],
+		"src/components/releaseNote/releaseNote.styles.scss": []
+	}
+}

@@ -1,0 +1,28 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": "cypress/fixtures/registration/agency.json",
+			"language": "json",
+			"sizeLines": 10,
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/registration/consultingType.json",
+			"language": "json",
+			"sizeLines": 60,
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/registration/topic.json",
+			"language": "json",
+			"sizeLines": 7,
+			"fileCategory": "config"
+		}
+	],
+	"batchImportData": {
+		"cypress/fixtures/registration/agency.json": [],
+		"cypress/fixtures/registration/consultingType.json": [],
+		"cypress/fixtures/registration/topic.json": []
+	}
+}

@@ -1,0 +1,1528 @@
+{
+	"nodes": [
+		{
+			"id": "file:src/api/apiGetTopicId.ts",
+			"type": "file",
+			"name": "apiGetTopicId.ts",
+			"filePath": "src/api/apiGetTopicId.ts",
+			"summary": "API client module for apiGetTopicId, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiGetTopicId.ts:apiGetTopicById",
+			"type": "function",
+			"name": "apiGetTopicById",
+			"filePath": "src/api/apiGetTopicId.ts",
+			"lineRange": [4, 10],
+			"summary": "Function apiGetTopicById in src/api/apiGetTopicId.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiGetTopicsData.ts",
+			"type": "file",
+			"name": "apiGetTopicsData.ts",
+			"filePath": "src/api/apiGetTopicsData.ts",
+			"summary": "API client module for apiGetTopicsData, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiGetTopicsData.ts:apiGetTopicsData",
+			"type": "function",
+			"name": "apiGetTopicsData",
+			"filePath": "src/api/apiGetTopicsData.ts",
+			"lineRange": [5, 17],
+			"summary": "Function apiGetTopicsData in src/api/apiGetTopicsData.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/input/input.tsx",
+			"type": "file",
+			"name": "input.tsx",
+			"filePath": "src/components/input/input.tsx",
+			"summary": "React UI module for component input, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-input"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/input/input.tsx:Input",
+			"type": "function",
+			"name": "Input",
+			"filePath": "src/components/input/input.tsx",
+			"lineRange": [36, 48],
+			"summary": "Function Input in src/components/input/input.tsx, used by the surrounding component input module.",
+			"tags": ["function", "component-input", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/registration/accountData/AccountData.tsx",
+			"type": "file",
+			"name": "AccountData.tsx",
+			"filePath": "src/components/registration/accountData/AccountData.tsx",
+			"summary": "React UI module for component registration, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-registration"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/registration/accountData/AccountData.tsx:passwordCriteria",
+			"type": "function",
+			"name": "passwordCriteria",
+			"filePath": "src/components/registration/accountData/AccountData.tsx",
+			"lineRange": [34, 46],
+			"summary": "Function passwordCriteria in src/components/registration/accountData/AccountData.tsx, used by the surrounding component registration module.",
+			"tags": ["function", "component-registration", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/registration/accountData/accountData.stories.ts",
+			"type": "file",
+			"name": "accountData.stories.ts",
+			"filePath": "src/components/registration/accountData/accountData.stories.ts",
+			"summary": "React UI module for component registration, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["storybook", "component", "component-registration"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/registration/agencySelection/AgencySelection.tsx",
+			"type": "file",
+			"name": "AgencySelection.tsx",
+			"filePath": "src/components/registration/agencySelection/AgencySelection.tsx",
+			"summary": "React UI module for component registration, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-registration", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/registration/agencySelection/AgencySelectionResults.tsx",
+			"type": "file",
+			"name": "AgencySelectionResults.tsx",
+			"filePath": "src/components/registration/agencySelection/AgencySelectionResults.tsx",
+			"summary": "React UI module for component registration, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-registration"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/registration/agencySelection/AgencySelectionResults.tsx:AgencySelectionResults",
+			"type": "function",
+			"name": "AgencySelectionResults",
+			"filePath": "src/components/registration/agencySelection/AgencySelectionResults.tsx",
+			"lineRange": [41, 53],
+			"summary": "Function AgencySelectionResults in src/components/registration/agencySelection/AgencySelectionResults.tsx, used by the surrounding component registration module.",
+			"tags": ["function", "component-registration", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/registration/agencySelection/agencySelection.stories.ts",
+			"type": "file",
+			"name": "agencySelection.stories.ts",
+			"filePath": "src/components/registration/agencySelection/agencySelection.stories.ts",
+			"summary": "React UI module for component registration, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["storybook", "component", "component-registration"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/registration/infoDrawer/InfoDrawer.tsx",
+			"type": "file",
+			"name": "InfoDrawer.tsx",
+			"filePath": "src/components/registration/infoDrawer/InfoDrawer.tsx",
+			"summary": "React UI module for component registration, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-registration"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/registration/infoDrawer/InfoDrawer.tsx:InfoDrawer",
+			"type": "function",
+			"name": "InfoDrawer",
+			"filePath": "src/components/registration/infoDrawer/InfoDrawer.tsx",
+			"lineRange": [15, 27],
+			"summary": "Function InfoDrawer in src/components/registration/infoDrawer/InfoDrawer.tsx, used by the surrounding component registration module.",
+			"tags": ["function", "component-registration", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/registration/metaInfo/MetaInfo.tsx",
+			"type": "file",
+			"name": "MetaInfo.tsx",
+			"filePath": "src/components/registration/metaInfo/MetaInfo.tsx",
+			"summary": "React UI module for component registration, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-registration", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/registration/preselectionBox/PreselectedAgency.tsx",
+			"type": "file",
+			"name": "PreselectedAgency.tsx",
+			"filePath": "src/components/registration/preselectionBox/PreselectedAgency.tsx",
+			"summary": "React UI module for component registration, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-registration", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/registration/preselectionBox/PreselectedConsultant.tsx",
+			"type": "file",
+			"name": "PreselectedConsultant.tsx",
+			"filePath": "src/components/registration/preselectionBox/PreselectedConsultant.tsx",
+			"summary": "React UI module for component registration, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-registration", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/registration/preselectionBox/PreselectedTopic.tsx",
+			"type": "file",
+			"name": "PreselectedTopic.tsx",
+			"filePath": "src/components/registration/preselectionBox/PreselectedTopic.tsx",
+			"summary": "React UI module for component registration, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-registration", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/registration/preselectionBox/PreselectionBox.tsx",
+			"type": "file",
+			"name": "PreselectionBox.tsx",
+			"filePath": "src/components/registration/preselectionBox/PreselectionBox.tsx",
+			"summary": "React UI module for component registration, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-registration"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/registration/preselectionBox/PreselectionBox.tsx:PreselectionBox",
+			"type": "function",
+			"name": "PreselectionBox",
+			"filePath": "src/components/registration/preselectionBox/PreselectionBox.tsx",
+			"lineRange": [12, 24],
+			"summary": "Function PreselectionBox in src/components/registration/preselectionBox/PreselectionBox.tsx, used by the surrounding component registration module.",
+			"tags": ["function", "component-registration", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/registration/preselectionDrawer/preselectionDrawer.tsx",
+			"type": "file",
+			"name": "preselectionDrawer.tsx",
+			"filePath": "src/components/registration/preselectionDrawer/preselectionDrawer.tsx",
+			"summary": "React UI module for component registration, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-registration"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/registration/preselectionDrawer/preselectionDrawer.tsx:PreselectionDrawer",
+			"type": "function",
+			"name": "PreselectionDrawer",
+			"filePath": "src/components/registration/preselectionDrawer/preselectionDrawer.tsx",
+			"lineRange": [32, 44],
+			"summary": "Function PreselectionDrawer in src/components/registration/preselectionDrawer/preselectionDrawer.tsx, used by the surrounding component registration module.",
+			"tags": ["function", "component-registration", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/registration/preselectionError/PreselectionError.tsx",
+			"type": "file",
+			"name": "PreselectionError.tsx",
+			"filePath": "src/components/registration/preselectionError/PreselectionError.tsx",
+			"summary": "React UI module for component registration, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-registration", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/registration/registrationDataValidation.ts",
+			"type": "file",
+			"name": "registrationDataValidation.ts",
+			"filePath": "src/components/registration/registrationDataValidation.ts",
+			"summary": "React UI module for component registration, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-registration", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/registration/topicSelection/TopicSelection.tsx",
+			"type": "file",
+			"name": "TopicSelection.tsx",
+			"filePath": "src/components/registration/topicSelection/TopicSelection.tsx",
+			"summary": "React UI module for component registration, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-registration", "code"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/registration/topicSelection/topicSelection.stories.ts",
+			"type": "file",
+			"name": "topicSelection.stories.ts",
+			"filePath": "src/components/registration/topicSelection/topicSelection.stories.ts",
+			"summary": "React UI module for component registration, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["storybook", "component", "component-registration"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/registration/welcomeScreen/WelcomeScreen.tsx",
+			"type": "file",
+			"name": "WelcomeScreen.tsx",
+			"filePath": "src/components/registration/welcomeScreen/WelcomeScreen.tsx",
+			"summary": "React UI module for component registration, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-registration"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/registration/welcomeScreen/WelcomeScreen.tsx:WelcomeScreen",
+			"type": "function",
+			"name": "WelcomeScreen",
+			"filePath": "src/components/registration/welcomeScreen/WelcomeScreen.tsx",
+			"lineRange": [17, 29],
+			"summary": "Function WelcomeScreen in src/components/registration/welcomeScreen/WelcomeScreen.tsx, used by the surrounding component registration module.",
+			"tags": ["function", "component-registration", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/registration/welcomeScreen/welcomeScreen.stories.ts",
+			"type": "file",
+			"name": "welcomeScreen.stories.ts",
+			"filePath": "src/components/registration/welcomeScreen/welcomeScreen.stories.ts",
+			"summary": "React UI module for component registration, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["storybook", "component", "component-registration"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/registration/zipcodeInput/ZipcodeInput.tsx",
+			"type": "file",
+			"name": "ZipcodeInput.tsx",
+			"filePath": "src/components/registration/zipcodeInput/ZipcodeInput.tsx",
+			"summary": "React UI module for component registration, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-registration", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/registration/zipcodeInput/zipcodeInput.stories.ts",
+			"type": "file",
+			"name": "zipcodeInput.stories.ts",
+			"filePath": "src/components/registration/zipcodeInput/zipcodeInput.stories.ts",
+			"summary": "React UI module for component registration, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["storybook", "component", "component-registration"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/containers/registration/hooks/useAgenciesForRegistration.ts",
+			"type": "file",
+			"name": "useAgenciesForRegistration.ts",
+			"filePath": "src/containers/registration/hooks/useAgenciesForRegistration.ts",
+			"summary": "React hook module for useAgenciesForRegistration, encapsulating reusable frontend state or side-effect logic.",
+			"tags": ["hook", "utility", "containers"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/containers/registration/hooks/useAgenciesForRegistration.ts:useAgenciesForRegistration",
+			"type": "function",
+			"name": "useAgenciesForRegistration",
+			"filePath": "src/containers/registration/hooks/useAgenciesForRegistration.ts",
+			"lineRange": [20, 32],
+			"summary": "Function useAgenciesForRegistration in src/containers/registration/hooks/useAgenciesForRegistration.ts, used by the surrounding containers module.",
+			"tags": ["function", "containers", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/containers/registration/hooks/useConsultantRegistrationData.ts",
+			"type": "file",
+			"name": "useConsultantRegistrationData.ts",
+			"filePath": "src/containers/registration/hooks/useConsultantRegistrationData.ts",
+			"summary": "React hook module for useConsultantRegistrationData, encapsulating reusable frontend state or side-effect logic.",
+			"tags": ["hook", "utility", "containers"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/containers/registration/hooks/useConsultantRegistrationData.ts:useConsultantRegistrationData",
+			"type": "function",
+			"name": "useConsultantRegistrationData",
+			"filePath": "src/containers/registration/hooks/useConsultantRegistrationData.ts",
+			"lineRange": [16, 28],
+			"summary": "Function useConsultantRegistrationData in src/containers/registration/hooks/useConsultantRegistrationData.ts, used by the surrounding containers module.",
+			"tags": ["function", "containers", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/provider/RegistrationProvider.tsx",
+			"type": "file",
+			"name": "RegistrationProvider.tsx",
+			"filePath": "src/globalState/provider/RegistrationProvider.tsx",
+			"summary": "React UI module for global state, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"state-management",
+				"utility",
+				"global-state"
+			],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/globalState/provider/RegistrationProvider.tsx:RegistrationProvider",
+			"type": "function",
+			"name": "RegistrationProvider",
+			"filePath": "src/globalState/provider/RegistrationProvider.tsx",
+			"lineRange": [64, 76],
+			"summary": "Function RegistrationProvider in src/globalState/provider/RegistrationProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/RegistrationProvider.tsx:RegistrationContext",
+			"type": "function",
+			"name": "RegistrationContext",
+			"filePath": "src/globalState/provider/RegistrationProvider.tsx",
+			"lineRange": [24, 36],
+			"summary": "Function RegistrationContext in src/globalState/provider/RegistrationProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/RegistrationProvider.tsx:registrationSessionStorageKey",
+			"type": "function",
+			"name": "registrationSessionStorageKey",
+			"filePath": "src/globalState/provider/RegistrationProvider.tsx",
+			"lineRange": [62, 74],
+			"summary": "Function registrationSessionStorageKey in src/globalState/provider/RegistrationProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/provider/UrlParamsProvider.tsx",
+			"type": "file",
+			"name": "UrlParamsProvider.tsx",
+			"filePath": "src/globalState/provider/UrlParamsProvider.tsx",
+			"summary": "React UI module for global state, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"state-management",
+				"utility",
+				"global-state"
+			],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/globalState/provider/UrlParamsProvider.tsx:UrlParamsContext",
+			"type": "function",
+			"name": "UrlParamsContext",
+			"filePath": "src/globalState/provider/UrlParamsProvider.tsx",
+			"lineRange": [16, 28],
+			"summary": "Function UrlParamsContext in src/globalState/provider/UrlParamsProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/UrlParamsProvider.tsx:UrlParamsProvider",
+			"type": "function",
+			"name": "UrlParamsProvider",
+			"filePath": "src/globalState/provider/UrlParamsProvider.tsx",
+			"lineRange": [34, 46],
+			"summary": "Function UrlParamsProvider in src/globalState/provider/UrlParamsProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/utils/getUrlParameter.ts",
+			"type": "file",
+			"name": "getUrlParameter.ts",
+			"filePath": "src/utils/getUrlParameter.ts",
+			"summary": "TypeScript module for utilities with 1 extracted functions and 0 extracted classes.",
+			"tags": ["utility", "utilities", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/getUrlParameter.ts:getUrlParameter",
+			"type": "function",
+			"name": "getUrlParameter",
+			"filePath": "src/utils/getUrlParameter.ts",
+			"lineRange": [1, 10],
+			"summary": "Function getUrlParameter in src/utils/getUrlParameter.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/utils/isNumber.ts",
+			"type": "file",
+			"name": "isNumber.ts",
+			"filePath": "src/utils/isNumber.ts",
+			"summary": "TypeScript module for utilities with 1 extracted functions and 0 extracted classes.",
+			"tags": ["utility", "utilities", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/isNumber.ts:isNumber",
+			"type": "function",
+			"name": "isNumber",
+			"filePath": "src/utils/isNumber.ts",
+			"lineRange": [1, 3],
+			"summary": "Function isNumber in src/utils/isNumber.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/utils/useUrlParamsLoader.tsx",
+			"type": "file",
+			"name": "useUrlParamsLoader.tsx",
+			"filePath": "src/utils/useUrlParamsLoader.tsx",
+			"summary": "React hook module for useUrlParamsLoader, encapsulating reusable frontend state or side-effect logic.",
+			"tags": ["hook", "component", "utility", "utilities"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/utils/useUrlParamsLoader.tsx:useUrlParamsLoader",
+			"type": "function",
+			"name": "useUrlParamsLoader",
+			"filePath": "src/utils/useUrlParamsLoader.tsx",
+			"lineRange": [19, 31],
+			"summary": "Function useUrlParamsLoader in src/utils/useUrlParamsLoader.tsx, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/utils/validateInputValue.ts",
+			"type": "file",
+			"name": "validateInputValue.ts",
+			"filePath": "src/utils/validateInputValue.ts",
+			"summary": "TypeScript module for utilities with 7 extracted functions and 0 extracted classes.",
+			"tags": ["utility", "utilities", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/utils/validateInputValue.ts:hasNumber",
+			"type": "function",
+			"name": "hasNumber",
+			"filePath": "src/utils/validateInputValue.ts",
+			"lineRange": [1, 13],
+			"summary": "Function hasNumber in src/utils/validateInputValue.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/validateInputValue.ts:hasMixedLetters",
+			"type": "function",
+			"name": "hasMixedLetters",
+			"filePath": "src/utils/validateInputValue.ts",
+			"lineRange": [5, 17],
+			"summary": "Function hasMixedLetters in src/utils/validateInputValue.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/validateInputValue.ts:hasSpecialChar",
+			"type": "function",
+			"name": "hasSpecialChar",
+			"filePath": "src/utils/validateInputValue.ts",
+			"lineRange": [12, 24],
+			"summary": "Function hasSpecialChar in src/utils/validateInputValue.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/validateInputValue.ts:strengthColor",
+			"type": "function",
+			"name": "strengthColor",
+			"filePath": "src/utils/validateInputValue.ts",
+			"lineRange": [16, 28],
+			"summary": "Function strengthColor in src/utils/validateInputValue.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/validateInputValue.ts:strengthIndicator",
+			"type": "function",
+			"name": "strengthIndicator",
+			"filePath": "src/utils/validateInputValue.ts",
+			"lineRange": [24, 36],
+			"summary": "Function strengthIndicator in src/utils/validateInputValue.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/validateInputValue.ts:validatePasswordCriteria",
+			"type": "function",
+			"name": "validatePasswordCriteria",
+			"filePath": "src/utils/validateInputValue.ts",
+			"lineRange": [45, 57],
+			"summary": "Function validatePasswordCriteria in src/utils/validateInputValue.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/validateInputValue.ts:inputValuesFit",
+			"type": "function",
+			"name": "inputValuesFit",
+			"filePath": "src/utils/validateInputValue.ts",
+			"lineRange": [63, 67],
+			"summary": "Function inputValuesFit in src/utils/validateInputValue.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		}
+	],
+	"edges": [
+		{
+			"source": "file:src/api/apiGetTopicId.ts",
+			"target": "function:src/api/apiGetTopicId.ts:apiGetTopicById",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiGetTopicId.ts",
+			"target": "function:src/api/apiGetTopicId.ts:apiGetTopicById",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiGetTopicId.ts",
+			"target": "file:src/api/apiGetTopicsData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetTopicId.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetTopicsData.ts",
+			"target": "function:src/api/apiGetTopicsData.ts:apiGetTopicsData",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiGetTopicsData.ts",
+			"target": "function:src/api/apiGetTopicsData.ts:apiGetTopicsData",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiGetTopicsData.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetTopicsData.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetTopicsData.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/input/input.tsx",
+			"target": "function:src/components/input/input.tsx:Input",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/input/input.tsx",
+			"target": "function:src/components/input/input.tsx:Input",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/registration/accountData/AccountData.tsx",
+			"target": "function:src/components/registration/accountData/AccountData.tsx:passwordCriteria",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/registration/accountData/AccountData.tsx",
+			"target": "function:src/components/registration/accountData/AccountData.tsx:passwordCriteria",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/registration/accountData/AccountData.tsx",
+			"target": "file:src/api/apiGetIsUsernameAvailable.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/accountData/AccountData.tsx",
+			"target": "file:src/components/input/input.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/accountData/AccountData.tsx",
+			"target": "file:src/components/legalLinks/LegalLinks.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/accountData/AccountData.tsx",
+			"target": "file:src/components/registration/registrationDataValidation.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/accountData/AccountData.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/accountData/AccountData.tsx",
+			"target": "file:src/globalState/provider/LegalLinksProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/accountData/AccountData.tsx",
+			"target": "file:src/utils/validateInputValue.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/accountData/accountData.stories.ts",
+			"target": "file:src/components/registration/accountData/AccountData.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/agencySelection/AgencySelection.tsx",
+			"target": "file:src/components/app/Loading.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/agencySelection/AgencySelection.tsx",
+			"target": "file:src/components/registration/agencySelection/AgencySelectionResults.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/agencySelection/AgencySelection.tsx",
+			"target": "file:src/containers/registration/hooks/useAgenciesForRegistration.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/agencySelection/AgencySelection.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/agencySelection/AgencySelection.tsx",
+			"target": "file:src/globalState/provider/UrlParamsProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/agencySelection/AgencySelectionResults.tsx",
+			"target": "function:src/components/registration/agencySelection/AgencySelectionResults.tsx:AgencySelectionResults",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/registration/agencySelection/AgencySelectionResults.tsx",
+			"target": "function:src/components/registration/agencySelection/AgencySelectionResults.tsx:AgencySelectionResults",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/registration/agencySelection/AgencySelectionResults.tsx",
+			"target": "file:src/components/registration/agencySelection/AgencyLanguages.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/agencySelection/AgencySelectionResults.tsx",
+			"target": "file:src/components/registration/metaInfo/MetaInfo.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/agencySelection/AgencySelectionResults.tsx",
+			"target": "file:src/components/registration/registrationDataValidation.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/agencySelection/AgencySelectionResults.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/agencySelection/AgencySelectionResults.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/agencySelection/AgencySelectionResults.tsx",
+			"target": "file:src/globalState/provider/UrlParamsProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/agencySelection/agencySelection.stories.ts",
+			"target": "file:src/components/registration/agencySelection/AgencySelection.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/infoDrawer/InfoDrawer.tsx",
+			"target": "function:src/components/registration/infoDrawer/InfoDrawer.tsx:InfoDrawer",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/registration/infoDrawer/InfoDrawer.tsx",
+			"target": "function:src/components/registration/infoDrawer/InfoDrawer.tsx:InfoDrawer",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/registration/infoDrawer/InfoDrawer.tsx",
+			"target": "file:src/components/registration/preselectionError/PreselectionError.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/infoDrawer/InfoDrawer.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/infoDrawer/InfoDrawer.tsx",
+			"target": "file:src/globalState/provider/UrlParamsProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/preselectionBox/PreselectedAgency.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/preselectionBox/PreselectedTopic.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/preselectionBox/PreselectionBox.tsx",
+			"target": "function:src/components/registration/preselectionBox/PreselectionBox.tsx:PreselectionBox",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/registration/preselectionBox/PreselectionBox.tsx",
+			"target": "function:src/components/registration/preselectionBox/PreselectionBox.tsx:PreselectionBox",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/registration/preselectionBox/PreselectionBox.tsx",
+			"target": "file:src/components/registration/preselectionBox/PreselectedAgency.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/preselectionBox/PreselectionBox.tsx",
+			"target": "file:src/components/registration/preselectionBox/PreselectedConsultant.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/preselectionBox/PreselectionBox.tsx",
+			"target": "file:src/components/registration/preselectionBox/PreselectedTopic.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/preselectionBox/PreselectionBox.tsx",
+			"target": "file:src/components/registration/preselectionDrawer/preselectionDrawer.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/preselectionBox/PreselectionBox.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/preselectionBox/PreselectionBox.tsx",
+			"target": "file:src/globalState/provider/UrlParamsProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/preselectionBox/PreselectionBox.tsx",
+			"target": "file:src/hooks/useResponsive.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/preselectionDrawer/preselectionDrawer.tsx",
+			"target": "function:src/components/registration/preselectionDrawer/preselectionDrawer.tsx:PreselectionDrawer",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/registration/preselectionDrawer/preselectionDrawer.tsx",
+			"target": "function:src/components/registration/preselectionDrawer/preselectionDrawer.tsx:PreselectionDrawer",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/registration/preselectionDrawer/preselectionDrawer.tsx",
+			"target": "file:src/components/registration/preselectionError/PreselectionError.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/preselectionDrawer/preselectionDrawer.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/preselectionDrawer/preselectionDrawer.tsx",
+			"target": "file:src/globalState/provider/UrlParamsProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/registrationDataValidation.ts",
+			"target": "file:src/components/registration/accountData/AccountData.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/topicSelection/TopicSelection.tsx",
+			"target": "file:src/api/apiGetTopicGroups.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/topicSelection/TopicSelection.tsx",
+			"target": "file:src/api/apiGetTopicsData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/topicSelection/TopicSelection.tsx",
+			"target": "file:src/components/app/Loading.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/topicSelection/TopicSelection.tsx",
+			"target": "file:src/components/registration/metaInfo/MetaInfo.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/topicSelection/TopicSelection.tsx",
+			"target": "file:src/components/registration/registrationDataValidation.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/topicSelection/TopicSelection.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/topicSelection/TopicSelection.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/topicSelection/TopicSelection.tsx",
+			"target": "file:src/globalState/provider/UrlParamsProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/topicSelection/topicSelection.stories.ts",
+			"target": "file:src/components/registration/topicSelection/TopicSelection.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/welcomeScreen/WelcomeScreen.tsx",
+			"target": "function:src/components/registration/welcomeScreen/WelcomeScreen.tsx:WelcomeScreen",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/registration/welcomeScreen/WelcomeScreen.tsx",
+			"target": "function:src/components/registration/welcomeScreen/WelcomeScreen.tsx:WelcomeScreen",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/registration/welcomeScreen/WelcomeScreen.tsx",
+			"target": "file:src/components/registration/preselectionBox/PreselectionBox.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/welcomeScreen/welcomeScreen.stories.ts",
+			"target": "file:src/components/registration/welcomeScreen/WelcomeScreen.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/zipcodeInput/ZipcodeInput.tsx",
+			"target": "file:src/components/input/input.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/zipcodeInput/ZipcodeInput.tsx",
+			"target": "file:src/components/registration/registrationDataValidation.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/zipcodeInput/ZipcodeInput.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/zipcodeInput/zipcodeInput.stories.ts",
+			"target": "file:src/components/registration/zipcodeInput/ZipcodeInput.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/registration/hooks/useAgenciesForRegistration.ts",
+			"target": "function:src/containers/registration/hooks/useAgenciesForRegistration.ts:useAgenciesForRegistration",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/containers/registration/hooks/useAgenciesForRegistration.ts",
+			"target": "function:src/containers/registration/hooks/useAgenciesForRegistration.ts:useAgenciesForRegistration",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/containers/registration/hooks/useAgenciesForRegistration.ts",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/registration/hooks/useAgenciesForRegistration.ts",
+			"target": "file:src/components/agencySelection/agencySelectionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/registration/hooks/useAgenciesForRegistration.ts",
+			"target": "file:src/containers/registration/hooks/useConsultantRegistrationData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/registration/hooks/useAgenciesForRegistration.ts",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/registration/hooks/useAgenciesForRegistration.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/registration/hooks/useAgenciesForRegistration.ts",
+			"target": "file:src/globalState/provider/UrlParamsProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/registration/hooks/useAgenciesForRegistration.ts",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/registration/hooks/useConsultantRegistrationData.ts",
+			"target": "function:src/containers/registration/hooks/useConsultantRegistrationData.ts:useConsultantRegistrationData",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/containers/registration/hooks/useConsultantRegistrationData.ts",
+			"target": "function:src/containers/registration/hooks/useConsultantRegistrationData.ts:useConsultantRegistrationData",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/containers/registration/hooks/useConsultantRegistrationData.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/registration/hooks/useConsultantRegistrationData.ts",
+			"target": "file:src/globalState/provider/UrlParamsProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/registration/hooks/useConsultantRegistrationData.ts",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RegistrationProvider.tsx",
+			"target": "function:src/globalState/provider/RegistrationProvider.tsx:RegistrationProvider",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/RegistrationProvider.tsx",
+			"target": "function:src/globalState/provider/RegistrationProvider.tsx:RegistrationProvider",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/RegistrationProvider.tsx",
+			"target": "function:src/globalState/provider/RegistrationProvider.tsx:RegistrationContext",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/RegistrationProvider.tsx",
+			"target": "function:src/globalState/provider/RegistrationProvider.tsx:RegistrationContext",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/RegistrationProvider.tsx",
+			"target": "function:src/globalState/provider/RegistrationProvider.tsx:registrationSessionStorageKey",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/RegistrationProvider.tsx",
+			"target": "function:src/globalState/provider/RegistrationProvider.tsx:registrationSessionStorageKey",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/RegistrationProvider.tsx",
+			"target": "file:src/api/apiGetTopicId.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RegistrationProvider.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RegistrationProvider.tsx",
+			"target": "file:src/components/registration/accountData/AccountData.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RegistrationProvider.tsx",
+			"target": "file:src/components/registration/agencySelection/AgencySelection.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RegistrationProvider.tsx",
+			"target": "file:src/components/registration/topicSelection/TopicSelection.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RegistrationProvider.tsx",
+			"target": "file:src/components/registration/zipcodeInput/ZipcodeInput.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RegistrationProvider.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RegistrationProvider.tsx",
+			"target": "file:src/globalState/provider/UrlParamsProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RegistrationProvider.tsx",
+			"target": "file:src/utils/getUrlParameter.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/UrlParamsProvider.tsx",
+			"target": "function:src/globalState/provider/UrlParamsProvider.tsx:UrlParamsContext",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/UrlParamsProvider.tsx",
+			"target": "function:src/globalState/provider/UrlParamsProvider.tsx:UrlParamsContext",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/UrlParamsProvider.tsx",
+			"target": "function:src/globalState/provider/UrlParamsProvider.tsx:UrlParamsProvider",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/UrlParamsProvider.tsx",
+			"target": "function:src/globalState/provider/UrlParamsProvider.tsx:UrlParamsProvider",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/UrlParamsProvider.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/UrlParamsProvider.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/UrlParamsProvider.tsx",
+			"target": "file:src/utils/useUrlParamsLoader.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/utils/getUrlParameter.ts",
+			"target": "function:src/utils/getUrlParameter.ts:getUrlParameter",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/getUrlParameter.ts",
+			"target": "function:src/utils/getUrlParameter.ts:getUrlParameter",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/isNumber.ts",
+			"target": "function:src/utils/isNumber.ts:isNumber",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/isNumber.ts",
+			"target": "function:src/utils/isNumber.ts:isNumber",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/useUrlParamsLoader.tsx",
+			"target": "function:src/utils/useUrlParamsLoader.tsx:useUrlParamsLoader",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/useUrlParamsLoader.tsx",
+			"target": "function:src/utils/useUrlParamsLoader.tsx:useUrlParamsLoader",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/useUrlParamsLoader.tsx",
+			"target": "file:src/api/apiGetConsultant.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/utils/useUrlParamsLoader.tsx",
+			"target": "file:src/api/apiGetTopicId.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/utils/useUrlParamsLoader.tsx",
+			"target": "file:src/api/apiGetTopicsData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/utils/useUrlParamsLoader.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/utils/useUrlParamsLoader.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/utils/useUrlParamsLoader.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/utils/useUrlParamsLoader.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/utils/useUrlParamsLoader.tsx",
+			"target": "file:src/utils/getUrlParameter.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/utils/useUrlParamsLoader.tsx",
+			"target": "file:src/utils/isNumber.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/utils/validateInputValue.ts",
+			"target": "function:src/utils/validateInputValue.ts:hasNumber",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/validateInputValue.ts",
+			"target": "function:src/utils/validateInputValue.ts:hasNumber",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/validateInputValue.ts",
+			"target": "function:src/utils/validateInputValue.ts:hasMixedLetters",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/validateInputValue.ts",
+			"target": "function:src/utils/validateInputValue.ts:hasMixedLetters",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/validateInputValue.ts",
+			"target": "function:src/utils/validateInputValue.ts:hasSpecialChar",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/validateInputValue.ts",
+			"target": "function:src/utils/validateInputValue.ts:hasSpecialChar",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/validateInputValue.ts",
+			"target": "function:src/utils/validateInputValue.ts:strengthColor",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/validateInputValue.ts",
+			"target": "function:src/utils/validateInputValue.ts:strengthColor",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/validateInputValue.ts",
+			"target": "function:src/utils/validateInputValue.ts:strengthIndicator",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/validateInputValue.ts",
+			"target": "function:src/utils/validateInputValue.ts:strengthIndicator",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/validateInputValue.ts",
+			"target": "function:src/utils/validateInputValue.ts:validatePasswordCriteria",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/validateInputValue.ts",
+			"target": "function:src/utils/validateInputValue.ts:validatePasswordCriteria",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/validateInputValue.ts",
+			"target": "function:src/utils/validateInputValue.ts:inputValuesFit",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/validateInputValue.ts",
+			"target": "function:src/utils/validateInputValue.ts:inputValuesFit",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		}
+	]
+}

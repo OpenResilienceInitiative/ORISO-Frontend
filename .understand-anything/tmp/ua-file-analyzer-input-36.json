@@ -1,0 +1,49 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": "src/components/message/appointment.styles.scss",
+			"language": "css",
+			"sizeLines": 91,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/message/consultantMatchingAnimation.styles.scss",
+			"language": "css",
+			"sizeLines": 29,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/message/e2eeActivatedMessage.styles.scss",
+			"language": "css",
+			"sizeLines": 22,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/message/furtherSteps.styles.scss",
+			"language": "css",
+			"sizeLines": 117,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/message/message.styles.scss",
+			"language": "css",
+			"sizeLines": 1404,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/message/reassignRequestMessage.styles.scss",
+			"language": "css",
+			"sizeLines": 41,
+			"fileCategory": "markup"
+		}
+	],
+	"batchImportData": {
+		"src/components/message/appointment.styles.scss": [],
+		"src/components/message/consultantMatchingAnimation.styles.scss": [],
+		"src/components/message/e2eeActivatedMessage.styles.scss": [],
+		"src/components/message/furtherSteps.styles.scss": [],
+		"src/components/message/message.styles.scss": [],
+		"src/components/message/reassignRequestMessage.styles.scss": []
+	}
+}

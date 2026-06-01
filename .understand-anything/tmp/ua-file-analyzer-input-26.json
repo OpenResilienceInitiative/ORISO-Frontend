@@ -1,0 +1,56 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": "service-v2.yaml",
+			"language": "yaml",
+			"sizeLines": 19,
+			"fileCategory": "config"
+		},
+		{
+			"path": "storybook-deployment.yaml",
+			"language": "yaml",
+			"sizeLines": 52,
+			"fileCategory": "config"
+		},
+		{
+			"path": "storybook-ingress.yaml",
+			"language": "yaml",
+			"sizeLines": 30,
+			"fileCategory": "config"
+		},
+		{
+			"path": "storybook-redirect-middleware.yaml",
+			"language": "yaml",
+			"sizeLines": 10,
+			"fileCategory": "config"
+		},
+		{
+			"path": "storybook-service.yaml",
+			"language": "yaml",
+			"sizeLines": 21,
+			"fileCategory": "config"
+		},
+		{
+			"path": "tsconfig.json",
+			"language": "json",
+			"sizeLines": 31,
+			"fileCategory": "config"
+		},
+		{
+			"path": "update-stories-autodocs.sh",
+			"language": "shell",
+			"sizeLines": 68,
+			"fileCategory": "script"
+		}
+	],
+	"batchImportData": {
+		"service-v2.yaml": [],
+		"storybook-deployment.yaml": [],
+		"storybook-ingress.yaml": [],
+		"storybook-redirect-middleware.yaml": [],
+		"storybook-service.yaml": [],
+		"tsconfig.json": [],
+		"update-stories-autodocs.sh": []
+	}
+}

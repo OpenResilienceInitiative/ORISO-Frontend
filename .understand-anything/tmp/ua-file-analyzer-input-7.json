@@ -1,0 +1,327 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": "src/api/apiDeleteSessionAndUser.ts",
+			"language": "typescript",
+			"sizeLines": 15,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiDeleteUserFromRoom.ts",
+			"language": "typescript",
+			"sizeLines": 15,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiDraftMessages.ts",
+			"language": "typescript",
+			"sizeLines": 45,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiEnquiryAcceptance.ts",
+			"language": "typescript",
+			"sizeLines": 13,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiEventNotifications.ts",
+			"language": "typescript",
+			"sizeLines": 52,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiFrontendSettings.ts",
+			"language": "typescript",
+			"sizeLines": 11,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetAgenciesByTenant.ts",
+			"language": "typescript",
+			"sizeLines": 15,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetAgencyId.ts",
+			"language": "typescript",
+			"sizeLines": 31,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetAnonymousEnquiryDetails.ts",
+			"language": "typescript",
+			"sizeLines": 34,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetApiAppointmentServiceEventTypes.ts",
+			"language": "typescript",
+			"sizeLines": 13,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetAppointmentServiceTeam.ts",
+			"language": "typescript",
+			"sizeLines": 13,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetAppointmentsServiceBookingEventsByUserId.ts",
+			"language": "typescript",
+			"sizeLines": 14,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetAskerSessionList.ts",
+			"language": "typescript",
+			"sizeLines": 34,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetCalDavAccount.ts",
+			"language": "typescript",
+			"sizeLines": 11,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetChatRoomById.ts",
+			"language": "typescript",
+			"sizeLines": 18,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetConsultant.ts",
+			"language": "typescript",
+			"sizeLines": 32,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetConsultantSessionList.ts",
+			"language": "typescript",
+			"sizeLines": 79,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetConsultantStatistics.ts",
+			"language": "typescript",
+			"sizeLines": 31,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetConsultingType.ts",
+			"language": "typescript",
+			"sizeLines": 33,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetConsultingTypes.ts",
+			"language": "typescript",
+			"sizeLines": 13,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetGroupChatInfo.ts",
+			"language": "typescript",
+			"sizeLines": 27,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetIsUsernameAvailable.ts",
+			"language": "typescript",
+			"sizeLines": 13,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetSessionData.ts",
+			"language": "typescript",
+			"sizeLines": 17,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetSessionRooms.ts",
+			"language": "typescript",
+			"sizeLines": 33,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetSessionSupervisors.ts",
+			"language": "typescript",
+			"sizeLines": 26,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetTenantAgenciesTopics.ts",
+			"language": "typescript",
+			"sizeLines": 17,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetTenantTheming.ts",
+			"language": "typescript",
+			"sizeLines": 34,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetTools.ts",
+			"language": "typescript",
+			"sizeLines": 28,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetTopicGroups.ts",
+			"language": "typescript",
+			"sizeLines": 13,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetUserData.ts",
+			"language": "typescript",
+			"sizeLines": 21,
+			"fileCategory": "code"
+		}
+	],
+	"batchImportData": {
+		"src/api/apiDeleteSessionAndUser.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiDeleteUserFromRoom.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiDraftMessages.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiEnquiryAcceptance.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiEventNotifications.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiFrontendSettings.ts": [
+			"src/api/fetchData.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiGetAgenciesByTenant.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiGetAgencyId.ts": [
+			"src/api/apiGetConsultingType.ts",
+			"src/api/fetchData.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiGetAnonymousEnquiryDetails.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiGetApiAppointmentServiceEventTypes.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiGetAppointmentServiceTeam.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiGetAppointmentsServiceBookingEventsByUserId.ts": [
+			"src/api/fetchData.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiGetAskerSessionList.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts",
+			"src/utils/keycloakSession.ts"
+		],
+		"src/api/apiGetCalDavAccount.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiGetChatRoomById.ts": [
+			"src/api/fetchData.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiGetConsultant.ts": [
+			"src/api/fetchData.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/resources/scripts/endpoints.ts",
+			"src/utils/loadConsultingTypesForAgencies.ts"
+		],
+		"src/api/apiGetConsultantSessionList.ts": [
+			"src/api/fetchData.ts",
+			"src/components/session/sessionHelpers.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiGetConsultantStatistics.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiGetConsultingType.ts": [
+			"src/api/fetchData.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiGetConsultingTypes.ts": [
+			"src/api/fetchData.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiGetGroupChatInfo.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiGetIsUsernameAvailable.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiGetSessionData.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiGetSessionRooms.ts": [
+			"src/api/fetchData.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiGetSessionSupervisors.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiGetTenantAgenciesTopics.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiGetTenantTheming.ts": [
+			"src/api/fetchData.ts",
+			"src/components/sessionCookie/accessSessionCookie.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/resources/scripts/endpoints.ts",
+			"src/utils/parseJWT.ts"
+		],
+		"src/api/apiGetTools.ts": [
+			"src/api/fetchData.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiGetTopicGroups.ts": [
+			"src/api/fetchData.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiGetUserData.ts": [
+			"src/api/fetchData.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/resources/scripts/endpoints.ts",
+			"src/utils/keycloakSession.ts"
+		]
+	}
+}

@@ -1,0 +1,182 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": "src/components/scrollableSection/scrollableSection.styles.scss",
+			"language": "css",
+			"sizeLines": 18,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/serviceExplanation/ServiceExplanation.styles.scss",
+			"language": "css",
+			"sizeLines": 28,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/session/encryptionBanner.styles.scss",
+			"language": "css",
+			"sizeLines": 63,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/session/session.styles.scss",
+			"language": "css",
+			"sizeLines": 2605,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/session/SessionStream.tsx.backup",
+			"language": "backup",
+			"sizeLines": 399,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionCookie/accessSessionCookie.ts.backup",
+			"language": "backup",
+			"sizeLines": 45,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionCookie/cache-bust.ts",
+			"language": "typescript",
+			"sizeLines": 1,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionCookie/getKeycloakAccessToken.ts.backup",
+			"language": "backup",
+			"sizeLines": 49,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionHeader/consultantSearchLoader.styles.scss",
+			"language": "css",
+			"sizeLines": 19,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/sessionHeader/sessionHeader.styles.scss",
+			"language": "css",
+			"sizeLines": 568,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/sessionMenu/sessionMenu.styles.scss",
+			"language": "css",
+			"sizeLines": 271,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/sessionsList/ResizableSidebar.stories.tsx",
+			"language": "typescript",
+			"sizeLines": 77,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/sessionsList.styles.scss",
+			"language": "css",
+			"sizeLines": 1045,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/sessionsList/SessionsList.tsx.backup",
+			"language": "backup",
+			"sizeLines": 934,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/SessionsListScrollbar.tsx",
+			"language": "typescript",
+			"sizeLines": 259,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/SessionsListWelcomeIllustration.tsx",
+			"language": "typescript",
+			"sizeLines": 20,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsListItem/SessionListItemComponent.tsx.backup",
+			"language": "backup",
+			"sizeLines": 505,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsListItem/sessionsListItem.styles.scss",
+			"language": "css",
+			"sizeLines": 791,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/spinner/spinner.styles.scss",
+			"language": "css",
+			"sizeLines": 45,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/stage/stage.styles.scss",
+			"language": "css",
+			"sizeLines": 228,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/stageLayout/StageLayout.styles.scss",
+			"language": "css",
+			"sizeLines": 189,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/Switch/switch.module.scss",
+			"language": "css",
+			"sizeLines": 3,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/tag/tag.styles.scss",
+			"language": "css",
+			"sizeLines": 34,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/tagSelect/tagSelect.styles.scss",
+			"language": "css",
+			"sizeLines": 53,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/tagSelect/TagSelect.tsx",
+			"language": "typescript",
+			"sizeLines": 27,
+			"fileCategory": "code"
+		}
+	],
+	"batchImportData": {
+		"src/components/scrollableSection/scrollableSection.styles.scss": [],
+		"src/components/serviceExplanation/ServiceExplanation.styles.scss": [],
+		"src/components/session/encryptionBanner.styles.scss": [],
+		"src/components/session/session.styles.scss": [],
+		"src/components/session/SessionStream.tsx.backup": [],
+		"src/components/sessionCookie/accessSessionCookie.ts.backup": [],
+		"src/components/sessionCookie/cache-bust.ts": [],
+		"src/components/sessionCookie/getKeycloakAccessToken.ts.backup": [],
+		"src/components/sessionHeader/consultantSearchLoader.styles.scss": [],
+		"src/components/sessionHeader/sessionHeader.styles.scss": [],
+		"src/components/sessionMenu/sessionMenu.styles.scss": [],
+		"src/components/sessionsList/ResizableSidebar.stories.tsx": [],
+		"src/components/sessionsList/sessionsList.styles.scss": [],
+		"src/components/sessionsList/SessionsList.tsx.backup": [],
+		"src/components/sessionsList/SessionsListScrollbar.tsx": [],
+		"src/components/sessionsList/SessionsListWelcomeIllustration.tsx": [],
+		"src/components/sessionsListItem/SessionListItemComponent.tsx.backup": [],
+		"src/components/sessionsListItem/sessionsListItem.styles.scss": [],
+		"src/components/spinner/spinner.styles.scss": [],
+		"src/components/stage/stage.styles.scss": [],
+		"src/components/stageLayout/StageLayout.styles.scss": [],
+		"src/components/Switch/switch.module.scss": [],
+		"src/components/tag/tag.styles.scss": [],
+		"src/components/tagSelect/tagSelect.styles.scss": [],
+		"src/components/tagSelect/TagSelect.tsx": []
+	}
+}

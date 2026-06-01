@@ -1,0 +1,1614 @@
+{
+	"nodes": [
+		{
+			"id": "file:cypress/e2e/sessions.cy.ts",
+			"type": "file",
+			"name": "sessions.cy.ts",
+			"filePath": "cypress/e2e/sessions.cy.ts",
+			"summary": "Frontend source file for tests in the ORISO React application.",
+			"tags": ["test", "session", "tests"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:cypress/support/commands/api/agencies.ts",
+			"type": "file",
+			"name": "agencies.ts",
+			"filePath": "cypress/support/commands/api/agencies.ts",
+			"summary": "Frontend source file for tests in the ORISO React application.",
+			"tags": ["tests", "code", "frontend"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:cypress/support/commands/api/appointments.ts",
+			"type": "file",
+			"name": "appointments.ts",
+			"filePath": "cypress/support/commands/api/appointments.ts",
+			"summary": "Frontend source file for tests in the ORISO React application.",
+			"tags": ["tests", "code", "frontend"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:cypress/support/commands/api/consultTypes.ts",
+			"type": "file",
+			"name": "consultTypes.ts",
+			"filePath": "cypress/support/commands/api/consultTypes.ts",
+			"summary": "Frontend source file for tests in the ORISO React application.",
+			"tags": ["tests", "code", "frontend"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:cypress/support/commands/api/messages.ts",
+			"type": "file",
+			"name": "messages.ts",
+			"filePath": "cypress/support/commands/api/messages.ts",
+			"summary": "Frontend source file for tests in the ORISO React application.",
+			"tags": ["tests", "code", "frontend"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:cypress/support/commands/api/rc.ts",
+			"type": "file",
+			"name": "rc.ts",
+			"filePath": "cypress/support/commands/api/rc.ts",
+			"summary": "Frontend source file for tests in the ORISO React application.",
+			"tags": ["tests", "code", "frontend"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:cypress/support/commands/api/topic.ts",
+			"type": "file",
+			"name": "topic.ts",
+			"filePath": "cypress/support/commands/api/topic.ts",
+			"summary": "Frontend source file for tests in the ORISO React application.",
+			"tags": ["tests", "code", "frontend"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:cypress/support/commands/api/uploads.ts",
+			"type": "file",
+			"name": "uploads.ts",
+			"filePath": "cypress/support/commands/api/uploads.ts",
+			"summary": "Frontend source file for tests in the ORISO React application.",
+			"tags": ["tests", "code", "frontend"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:cypress/support/commands/api/users/chat.ts",
+			"type": "file",
+			"name": "chat.ts",
+			"filePath": "cypress/support/commands/api/users/chat.ts",
+			"summary": "Frontend source file for tests in the ORISO React application.",
+			"tags": ["tests", "code", "frontend"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:cypress/support/commands/api/users/consultants.ts",
+			"type": "file",
+			"name": "consultants.ts",
+			"filePath": "cypress/support/commands/api/users/consultants.ts",
+			"summary": "Frontend source file for tests in the ORISO React application.",
+			"tags": ["tests", "code", "frontend"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:cypress/support/commands/api/users/data.ts",
+			"type": "file",
+			"name": "data.ts",
+			"filePath": "cypress/support/commands/api/users/data.ts",
+			"summary": "Frontend source file for tests in the ORISO React application.",
+			"tags": ["tests", "code", "frontend"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:cypress/support/commands/api/users/sessions.ts",
+			"type": "file",
+			"name": "sessions.ts",
+			"filePath": "cypress/support/commands/api/users/sessions.ts",
+			"summary": "Frontend source file for tests in the ORISO React application.",
+			"tags": ["session", "tests", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:cypress/support/commands/api/videocalls.ts",
+			"type": "file",
+			"name": "videocalls.ts",
+			"filePath": "cypress/support/commands/api/videocalls.ts",
+			"summary": "Frontend source file for tests in the ORISO React application.",
+			"tags": ["tests", "code", "frontend"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:cypress/support/commands/helper/appointments.ts",
+			"type": "file",
+			"name": "appointments.ts",
+			"filePath": "cypress/support/commands/helper/appointments.ts",
+			"summary": "TypeScript module for tests with 4 extracted functions and 0 extracted classes.",
+			"tags": ["utility", "tests", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:cypress/support/commands/helper/appointments.ts:getAppointments",
+			"type": "function",
+			"name": "getAppointments",
+			"filePath": "cypress/support/commands/helper/appointments.ts",
+			"lineRange": [7, 19],
+			"summary": "Function getAppointments in cypress/support/commands/helper/appointments.ts, used by the surrounding tests module.",
+			"tags": ["function", "tests", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:cypress/support/commands/helper/appointments.ts:setAppointments",
+			"type": "function",
+			"name": "setAppointments",
+			"filePath": "cypress/support/commands/helper/appointments.ts",
+			"lineRange": [8, 20],
+			"summary": "Function setAppointments in cypress/support/commands/helper/appointments.ts, used by the surrounding tests module.",
+			"tags": ["function", "tests", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:cypress/support/commands/helper/appointments.ts:removeAppointment",
+			"type": "function",
+			"name": "removeAppointment",
+			"filePath": "cypress/support/commands/helper/appointments.ts",
+			"lineRange": [10, 22],
+			"summary": "Function removeAppointment in cypress/support/commands/helper/appointments.ts, used by the surrounding tests module.",
+			"tags": ["function", "tests", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:cypress/support/commands/helper/appointments.ts:updateAppointment",
+			"type": "function",
+			"name": "updateAppointment",
+			"filePath": "cypress/support/commands/helper/appointments.ts",
+			"lineRange": [14, 26],
+			"summary": "Function updateAppointment in cypress/support/commands/helper/appointments.ts, used by the surrounding tests module.",
+			"tags": ["function", "tests", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:cypress/support/commands/helper/askerSessions.ts",
+			"type": "file",
+			"name": "askerSessions.ts",
+			"filePath": "cypress/support/commands/helper/askerSessions.ts",
+			"summary": "TypeScript module for tests with 3 extracted functions and 0 extracted classes.",
+			"tags": ["session", "utility", "tests"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:cypress/support/commands/helper/askerSessions.ts:getAskerSessions",
+			"type": "function",
+			"name": "getAskerSessions",
+			"filePath": "cypress/support/commands/helper/askerSessions.ts",
+			"lineRange": [6, 18],
+			"summary": "Function getAskerSessions in cypress/support/commands/helper/askerSessions.ts, used by the surrounding tests module.",
+			"tags": ["function", "tests", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:cypress/support/commands/helper/askerSessions.ts:setAskerSessions",
+			"type": "function",
+			"name": "setAskerSessions",
+			"filePath": "cypress/support/commands/helper/askerSessions.ts",
+			"lineRange": [7, 19],
+			"summary": "Function setAskerSessions in cypress/support/commands/helper/askerSessions.ts, used by the surrounding tests module.",
+			"tags": ["function", "tests", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:cypress/support/commands/helper/askerSessions.ts:updateAskerSession",
+			"type": "function",
+			"name": "updateAskerSession",
+			"filePath": "cypress/support/commands/helper/askerSessions.ts",
+			"lineRange": [9, 21],
+			"summary": "Function updateAskerSession in cypress/support/commands/helper/askerSessions.ts, used by the surrounding tests module.",
+			"tags": ["function", "tests", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:cypress/support/commands/helper/consultantSessions.ts",
+			"type": "file",
+			"name": "consultantSessions.ts",
+			"filePath": "cypress/support/commands/helper/consultantSessions.ts",
+			"summary": "TypeScript module for tests with 3 extracted functions and 0 extracted classes.",
+			"tags": ["session", "utility", "tests"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:cypress/support/commands/helper/consultantSessions.ts:getConsultantSessions",
+			"type": "function",
+			"name": "getConsultantSessions",
+			"filePath": "cypress/support/commands/helper/consultantSessions.ts",
+			"lineRange": [6, 18],
+			"summary": "Function getConsultantSessions in cypress/support/commands/helper/consultantSessions.ts, used by the surrounding tests module.",
+			"tags": ["function", "tests", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:cypress/support/commands/helper/consultantSessions.ts:setConsultantSessions",
+			"type": "function",
+			"name": "setConsultantSessions",
+			"filePath": "cypress/support/commands/helper/consultantSessions.ts",
+			"lineRange": [7, 19],
+			"summary": "Function setConsultantSessions in cypress/support/commands/helper/consultantSessions.ts, used by the surrounding tests module.",
+			"tags": ["function", "tests", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:cypress/support/commands/helper/consultantSessions.ts:updateConsultantSession",
+			"type": "function",
+			"name": "updateConsultantSession",
+			"filePath": "cypress/support/commands/helper/consultantSessions.ts",
+			"lineRange": [10, 22],
+			"summary": "Function updateConsultantSession in cypress/support/commands/helper/consultantSessions.ts, used by the surrounding tests module.",
+			"tags": ["function", "tests", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:cypress/support/commands/helper/fastLogin.ts",
+			"type": "file",
+			"name": "fastLogin.ts",
+			"filePath": "cypress/support/commands/helper/fastLogin.ts",
+			"summary": "Frontend source file for tests in the ORISO React application.",
+			"tags": ["authentication", "tests", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:cypress/support/commands/helper/login.ts",
+			"type": "file",
+			"name": "login.ts",
+			"filePath": "cypress/support/commands/helper/login.ts",
+			"summary": "Frontend source file for tests in the ORISO React application.",
+			"tags": ["authentication", "tests", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:cypress/support/commands/helper/messages.ts",
+			"type": "file",
+			"name": "messages.ts",
+			"filePath": "cypress/support/commands/helper/messages.ts",
+			"summary": "TypeScript module for tests with 3 extracted functions and 0 extracted classes.",
+			"tags": ["utility", "tests", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:cypress/support/commands/helper/messages.ts:getMessages",
+			"type": "function",
+			"name": "getMessages",
+			"filePath": "cypress/support/commands/helper/messages.ts",
+			"lineRange": [7, 19],
+			"summary": "Function getMessages in cypress/support/commands/helper/messages.ts, used by the surrounding tests module.",
+			"tags": ["function", "tests", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:cypress/support/commands/helper/messages.ts:setMessages",
+			"type": "function",
+			"name": "setMessages",
+			"filePath": "cypress/support/commands/helper/messages.ts",
+			"lineRange": [8, 20],
+			"summary": "Function setMessages in cypress/support/commands/helper/messages.ts, used by the surrounding tests module.",
+			"tags": ["function", "tests", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:cypress/support/commands/helper/messages.ts:addMessage",
+			"type": "function",
+			"name": "addMessage",
+			"filePath": "cypress/support/commands/helper/messages.ts",
+			"lineRange": [10, 22],
+			"summary": "Function addMessage in cypress/support/commands/helper/messages.ts, used by the surrounding tests module.",
+			"tags": ["function", "tests", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:cypress/support/commands/mockApi.ts",
+			"type": "file",
+			"name": "mockApi.ts",
+			"filePath": "cypress/support/commands/mockApi.ts",
+			"summary": "TypeScript module for tests with 3 extracted functions and 0 extracted classes.",
+			"tags": ["utility", "tests", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:cypress/support/commands/mockApi.ts:USER_ASKER",
+			"type": "function",
+			"name": "USER_ASKER",
+			"filePath": "cypress/support/commands/mockApi.ts",
+			"lineRange": [221, 228],
+			"summary": "Function USER_ASKER in cypress/support/commands/mockApi.ts, used by the surrounding tests module.",
+			"tags": ["function", "tests", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:cypress/support/commands/mockApi.ts:USER_CONSULTANT",
+			"type": "function",
+			"name": "USER_CONSULTANT",
+			"filePath": "cypress/support/commands/mockApi.ts",
+			"lineRange": [222, 228],
+			"summary": "Function USER_CONSULTANT in cypress/support/commands/mockApi.ts, used by the surrounding tests module.",
+			"tags": ["function", "tests", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:cypress/support/commands/mockApi.ts:USER_VIDEO",
+			"type": "function",
+			"name": "USER_VIDEO",
+			"filePath": "cypress/support/commands/mockApi.ts",
+			"lineRange": [223, 228],
+			"summary": "Function USER_VIDEO in cypress/support/commands/mockApi.ts, used by the surrounding tests module.",
+			"tags": ["function", "tests", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:cypress/support/helpers.ts",
+			"type": "file",
+			"name": "helpers.ts",
+			"filePath": "cypress/support/helpers.ts",
+			"summary": "TypeScript module for tests with 2 extracted functions and 0 extracted classes.",
+			"tags": ["utility", "tests", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:cypress/support/helpers.ts:deepMerge",
+			"type": "function",
+			"name": "deepMerge",
+			"filePath": "cypress/support/helpers.ts",
+			"lineRange": [1, 13],
+			"summary": "Function deepMerge in cypress/support/helpers.ts, used by the surrounding tests module.",
+			"tags": ["function", "tests", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:cypress/support/helpers.ts:parseCookieStr",
+			"type": "function",
+			"name": "parseCookieStr",
+			"filePath": "cypress/support/helpers.ts",
+			"lineRange": [20, 29],
+			"summary": "Function parseCookieStr in cypress/support/helpers.ts, used by the surrounding tests module.",
+			"tags": ["function", "tests", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:cypress/support/index.d.ts",
+			"type": "file",
+			"name": "index.d.ts",
+			"filePath": "cypress/support/index.d.ts",
+			"summary": "Frontend source file for tests in the ORISO React application.",
+			"tags": ["tests", "code", "frontend"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:cypress/support/sessions.ts",
+			"type": "file",
+			"name": "sessions.ts",
+			"filePath": "cypress/support/sessions.ts",
+			"summary": "TypeScript module for tests with 8 extracted functions and 0 extracted classes.",
+			"tags": ["session", "utility", "tests"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:cypress/support/sessions.ts:generateConsultantSession",
+			"type": "function",
+			"name": "generateConsultantSession",
+			"filePath": "cypress/support/sessions.ts",
+			"lineRange": [8, 20],
+			"summary": "Function generateConsultantSession in cypress/support/sessions.ts, used by the surrounding tests module.",
+			"tags": ["function", "tests", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:cypress/support/sessions.ts:generateMultipleConsultantSessions",
+			"type": "function",
+			"name": "generateMultipleConsultantSessions",
+			"filePath": "cypress/support/sessions.ts",
+			"lineRange": [80, 92],
+			"summary": "Function generateMultipleConsultantSessions in cypress/support/sessions.ts, used by the surrounding tests module.",
+			"tags": ["function", "tests", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:cypress/support/sessions.ts:generateAskerSession",
+			"type": "function",
+			"name": "generateAskerSession",
+			"filePath": "cypress/support/sessions.ts",
+			"lineRange": [86, 98],
+			"summary": "Function generateAskerSession in cypress/support/sessions.ts, used by the surrounding tests module.",
+			"tags": ["function", "tests", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:cypress/support/sessions.ts:generateMultipleAskerSessions",
+			"type": "function",
+			"name": "generateMultipleAskerSessions",
+			"filePath": "cypress/support/sessions.ts",
+			"lineRange": [143, 155],
+			"summary": "Function generateMultipleAskerSessions in cypress/support/sessions.ts, used by the surrounding tests module.",
+			"tags": ["function", "tests", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:cypress/support/sessions.ts:sessionsReply",
+			"type": "function",
+			"name": "sessionsReply",
+			"filePath": "cypress/support/sessions.ts",
+			"lineRange": [149, 161],
+			"summary": "Function sessionsReply in cypress/support/sessions.ts, used by the surrounding tests module.",
+			"tags": ["function", "tests", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:cypress/support/sessions.ts:generateMessage",
+			"type": "function",
+			"name": "generateMessage",
+			"filePath": "cypress/support/sessions.ts",
+			"lineRange": [170, 182],
+			"summary": "Function generateMessage in cypress/support/sessions.ts, used by the surrounding tests module.",
+			"tags": ["function", "tests", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:cypress/support/sessions.ts:generateMultipleMessages",
+			"type": "function",
+			"name": "generateMultipleMessages",
+			"filePath": "cypress/support/sessions.ts",
+			"lineRange": [198, 210],
+			"summary": "Function generateMultipleMessages in cypress/support/sessions.ts, used by the surrounding tests module.",
+			"tags": ["function", "tests", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:cypress/support/sessions.ts:generateMessagesReply",
+			"type": "function",
+			"name": "generateMessagesReply",
+			"filePath": "cypress/support/sessions.ts",
+			"lineRange": [209, 220],
+			"summary": "Function generateMessagesReply in cypress/support/sessions.ts, used by the surrounding tests module.",
+			"tags": ["function", "tests", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiAddSessionSupervisor.ts",
+			"type": "file",
+			"name": "apiAddSessionSupervisor.ts",
+			"filePath": "src/api/apiAddSessionSupervisor.ts",
+			"summary": "API client module for apiAddSessionSupervisor, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "session", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiAddSessionSupervisor.ts:apiAddSessionSupervisor",
+			"type": "function",
+			"name": "apiAddSessionSupervisor",
+			"filePath": "src/api/apiAddSessionSupervisor.ts",
+			"lineRange": [10, 22],
+			"summary": "Function apiAddSessionSupervisor in src/api/apiAddSessionSupervisor.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiAgencySelection.ts",
+			"type": "file",
+			"name": "apiAgencySelection.ts",
+			"filePath": "src/api/apiAgencySelection.ts",
+			"summary": "API client module for apiAgencySelection, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/api/apiAgencySelection.ts:apiAgencySelection",
+			"type": "function",
+			"name": "apiAgencySelection",
+			"filePath": "src/api/apiAgencySelection.ts",
+			"lineRange": [6, 18],
+			"summary": "Function apiAgencySelection in src/api/apiAgencySelection.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiAppointmentServiceSet.ts",
+			"type": "file",
+			"name": "apiAppointmentServiceSet.ts",
+			"filePath": "src/api/apiAppointmentServiceSet.ts",
+			"summary": "API client module for apiAppointmentServiceSet, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiAppointmentServiceSet.ts:apiAppointmentServiceSet",
+			"type": "function",
+			"name": "apiAppointmentServiceSet",
+			"filePath": "src/api/apiAppointmentServiceSet.ts",
+			"lineRange": [4, 16],
+			"summary": "Function apiAppointmentServiceSet in src/api/apiAppointmentServiceSet.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiDeleteAskerAccount.ts",
+			"type": "file",
+			"name": "apiDeleteAskerAccount.ts",
+			"filePath": "src/api/apiDeleteAskerAccount.ts",
+			"summary": "API client module for apiDeleteAskerAccount, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiDeleteAskerAccount.ts:apiDeleteAskerAccount",
+			"type": "function",
+			"name": "apiDeleteAskerAccount",
+			"filePath": "src/api/apiDeleteAskerAccount.ts",
+			"lineRange": [4, 16],
+			"summary": "Function apiDeleteAskerAccount in src/api/apiDeleteAskerAccount.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiDeleteEmail.ts",
+			"type": "file",
+			"name": "apiDeleteEmail.ts",
+			"filePath": "src/api/apiDeleteEmail.ts",
+			"summary": "API client module for apiDeleteEmail, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiDeleteEmail.ts:apiDeleteEmail",
+			"type": "function",
+			"name": "apiDeleteEmail",
+			"filePath": "src/api/apiDeleteEmail.ts",
+			"lineRange": [4, 9],
+			"summary": "Function apiDeleteEmail in src/api/apiDeleteEmail.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiDeleteMessage.ts",
+			"type": "file",
+			"name": "apiDeleteMessage.ts",
+			"filePath": "src/api/apiDeleteMessage.ts",
+			"summary": "API client module for apiDeleteMessage, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiDeleteMessage.ts:apiDeleteMessage",
+			"type": "function",
+			"name": "apiDeleteMessage",
+			"filePath": "src/api/apiDeleteMessage.ts",
+			"lineRange": [5, 11],
+			"summary": "Function apiDeleteMessage in src/api/apiDeleteMessage.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiDeleteRemove.ts",
+			"type": "file",
+			"name": "apiDeleteRemove.ts",
+			"filePath": "src/api/apiDeleteRemove.ts",
+			"summary": "API client module for apiDeleteRemove, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiDeleteRemove.ts:apiDeleteRemove",
+			"type": "function",
+			"name": "apiDeleteRemove",
+			"filePath": "src/api/apiDeleteRemove.ts",
+			"lineRange": [4, 11],
+			"summary": "Function apiDeleteRemove in src/api/apiDeleteRemove.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		}
+	],
+	"edges": [
+		{
+			"source": "file:cypress/e2e/sessions.cy.ts",
+			"target": "file:cypress/support/commands/mockApi.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/e2e/sessions.cy.ts",
+			"target": "file:cypress/support/sessions.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/e2e/sessions.cy.ts",
+			"target": "file:cypress/support/websocket.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/e2e/sessions.cy.ts",
+			"target": "file:src/components/sessionsList/sessionsListConfig.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/api/agencies.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/api/appointments.ts",
+			"target": "file:cypress/support/commands/helper/appointments.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/api/appointments.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/api/consultTypes.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/api/messages.ts",
+			"target": "file:cypress/support/commands/helper/messages.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/api/messages.ts",
+			"target": "file:cypress/support/sessions.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/api/messages.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/api/rc.ts",
+			"target": "file:cypress/support/commands/helper/askerSessions.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/api/rc.ts",
+			"target": "file:cypress/support/commands/helper/consultantSessions.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/api/rc.ts",
+			"target": "file:cypress/support/helpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/api/rc.ts",
+			"target": "file:src/api/apiRocketChatSettingsPublic.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/api/rc.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/api/rc.ts",
+			"target": "file:src/utils/encryptionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/api/topic.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/api/uploads.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/api/users/chat.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/api/users/consultants.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/api/users/data.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/api/users/sessions.ts",
+			"target": "file:cypress/support/sessions.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/api/users/sessions.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/api/videocalls.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/helper/appointments.ts",
+			"target": "function:cypress/support/commands/helper/appointments.ts:getAppointments",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:cypress/support/commands/helper/appointments.ts",
+			"target": "function:cypress/support/commands/helper/appointments.ts:getAppointments",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:cypress/support/commands/helper/appointments.ts",
+			"target": "function:cypress/support/commands/helper/appointments.ts:setAppointments",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:cypress/support/commands/helper/appointments.ts",
+			"target": "function:cypress/support/commands/helper/appointments.ts:setAppointments",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:cypress/support/commands/helper/appointments.ts",
+			"target": "function:cypress/support/commands/helper/appointments.ts:removeAppointment",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:cypress/support/commands/helper/appointments.ts",
+			"target": "function:cypress/support/commands/helper/appointments.ts:removeAppointment",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:cypress/support/commands/helper/appointments.ts",
+			"target": "function:cypress/support/commands/helper/appointments.ts:updateAppointment",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:cypress/support/commands/helper/appointments.ts",
+			"target": "function:cypress/support/commands/helper/appointments.ts:updateAppointment",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:cypress/support/commands/helper/appointments.ts",
+			"target": "file:cypress/support/helpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/helper/appointments.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/helper/askerSessions.ts",
+			"target": "function:cypress/support/commands/helper/askerSessions.ts:getAskerSessions",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:cypress/support/commands/helper/askerSessions.ts",
+			"target": "function:cypress/support/commands/helper/askerSessions.ts:getAskerSessions",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:cypress/support/commands/helper/askerSessions.ts",
+			"target": "function:cypress/support/commands/helper/askerSessions.ts:setAskerSessions",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:cypress/support/commands/helper/askerSessions.ts",
+			"target": "function:cypress/support/commands/helper/askerSessions.ts:setAskerSessions",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:cypress/support/commands/helper/askerSessions.ts",
+			"target": "function:cypress/support/commands/helper/askerSessions.ts:updateAskerSession",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:cypress/support/commands/helper/askerSessions.ts",
+			"target": "function:cypress/support/commands/helper/askerSessions.ts:updateAskerSession",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:cypress/support/commands/helper/askerSessions.ts",
+			"target": "file:cypress/support/helpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/helper/askerSessions.ts",
+			"target": "file:cypress/support/sessions.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/helper/consultantSessions.ts",
+			"target": "function:cypress/support/commands/helper/consultantSessions.ts:getConsultantSessions",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:cypress/support/commands/helper/consultantSessions.ts",
+			"target": "function:cypress/support/commands/helper/consultantSessions.ts:getConsultantSessions",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:cypress/support/commands/helper/consultantSessions.ts",
+			"target": "function:cypress/support/commands/helper/consultantSessions.ts:setConsultantSessions",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:cypress/support/commands/helper/consultantSessions.ts",
+			"target": "function:cypress/support/commands/helper/consultantSessions.ts:setConsultantSessions",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:cypress/support/commands/helper/consultantSessions.ts",
+			"target": "function:cypress/support/commands/helper/consultantSessions.ts:updateConsultantSession",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:cypress/support/commands/helper/consultantSessions.ts",
+			"target": "function:cypress/support/commands/helper/consultantSessions.ts:updateConsultantSession",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:cypress/support/commands/helper/consultantSessions.ts",
+			"target": "file:cypress/support/helpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/helper/consultantSessions.ts",
+			"target": "file:cypress/support/sessions.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/helper/fastLogin.ts",
+			"target": "file:cypress/support/commands/mockApi.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/helper/login.ts",
+			"target": "file:cypress/support/commands/mockApi.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/helper/login.ts",
+			"target": "file:cypress/support/helpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/helper/messages.ts",
+			"target": "function:cypress/support/commands/helper/messages.ts:getMessages",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:cypress/support/commands/helper/messages.ts",
+			"target": "function:cypress/support/commands/helper/messages.ts:getMessages",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:cypress/support/commands/helper/messages.ts",
+			"target": "function:cypress/support/commands/helper/messages.ts:setMessages",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:cypress/support/commands/helper/messages.ts",
+			"target": "function:cypress/support/commands/helper/messages.ts:setMessages",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:cypress/support/commands/helper/messages.ts",
+			"target": "function:cypress/support/commands/helper/messages.ts:addMessage",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:cypress/support/commands/helper/messages.ts",
+			"target": "function:cypress/support/commands/helper/messages.ts:addMessage",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:cypress/support/commands/helper/messages.ts",
+			"target": "file:cypress/support/commands/helper/askerSessions.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/helper/messages.ts",
+			"target": "file:cypress/support/commands/helper/consultantSessions.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/helper/messages.ts",
+			"target": "file:cypress/support/sessions.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/mockApi.ts",
+			"target": "function:cypress/support/commands/mockApi.ts:USER_ASKER",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:cypress/support/commands/mockApi.ts",
+			"target": "function:cypress/support/commands/mockApi.ts:USER_ASKER",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:cypress/support/commands/mockApi.ts",
+			"target": "function:cypress/support/commands/mockApi.ts:USER_CONSULTANT",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:cypress/support/commands/mockApi.ts",
+			"target": "function:cypress/support/commands/mockApi.ts:USER_CONSULTANT",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:cypress/support/commands/mockApi.ts",
+			"target": "function:cypress/support/commands/mockApi.ts:USER_VIDEO",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:cypress/support/commands/mockApi.ts",
+			"target": "function:cypress/support/commands/mockApi.ts:USER_VIDEO",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:cypress/support/commands/mockApi.ts",
+			"target": "file:cypress/support/commands/api/agencies.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/mockApi.ts",
+			"target": "file:cypress/support/commands/api/appointments.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/mockApi.ts",
+			"target": "file:cypress/support/commands/api/consultTypes.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/mockApi.ts",
+			"target": "file:cypress/support/commands/api/messages.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/mockApi.ts",
+			"target": "file:cypress/support/commands/api/rc.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/mockApi.ts",
+			"target": "file:cypress/support/commands/api/topic.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/mockApi.ts",
+			"target": "file:cypress/support/commands/api/uploads.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/mockApi.ts",
+			"target": "file:cypress/support/commands/api/users/chat.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/mockApi.ts",
+			"target": "file:cypress/support/commands/api/users/consultants.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/mockApi.ts",
+			"target": "file:cypress/support/commands/api/users/data.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/mockApi.ts",
+			"target": "file:cypress/support/commands/api/users/sessions.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/mockApi.ts",
+			"target": "file:cypress/support/commands/api/videocalls.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/mockApi.ts",
+			"target": "file:cypress/support/commands/helper/askerSessions.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/mockApi.ts",
+			"target": "file:cypress/support/commands/helper/consultantSessions.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/mockApi.ts",
+			"target": "file:cypress/support/commands/helper/fastLogin.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/mockApi.ts",
+			"target": "file:cypress/support/commands/helper/login.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/mockApi.ts",
+			"target": "file:cypress/support/commands/helper/messages.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/mockApi.ts",
+			"target": "file:cypress/support/sessions.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/mockApi.ts",
+			"target": "file:src/resources/scripts/config.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/mockApi.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/helpers.ts",
+			"target": "function:cypress/support/helpers.ts:deepMerge",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:cypress/support/helpers.ts",
+			"target": "function:cypress/support/helpers.ts:deepMerge",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:cypress/support/helpers.ts",
+			"target": "function:cypress/support/helpers.ts:parseCookieStr",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:cypress/support/helpers.ts",
+			"target": "function:cypress/support/helpers.ts:parseCookieStr",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:cypress/support/index.d.ts",
+			"target": "file:cypress/support/commands/mockApi.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/index.d.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/sessions.ts",
+			"target": "function:cypress/support/sessions.ts:generateConsultantSession",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:cypress/support/sessions.ts",
+			"target": "function:cypress/support/sessions.ts:generateConsultantSession",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:cypress/support/sessions.ts",
+			"target": "function:cypress/support/sessions.ts:generateMultipleConsultantSessions",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:cypress/support/sessions.ts",
+			"target": "function:cypress/support/sessions.ts:generateMultipleConsultantSessions",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:cypress/support/sessions.ts",
+			"target": "function:cypress/support/sessions.ts:generateAskerSession",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:cypress/support/sessions.ts",
+			"target": "function:cypress/support/sessions.ts:generateAskerSession",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:cypress/support/sessions.ts",
+			"target": "function:cypress/support/sessions.ts:generateMultipleAskerSessions",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:cypress/support/sessions.ts",
+			"target": "function:cypress/support/sessions.ts:generateMultipleAskerSessions",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:cypress/support/sessions.ts",
+			"target": "function:cypress/support/sessions.ts:sessionsReply",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:cypress/support/sessions.ts",
+			"target": "function:cypress/support/sessions.ts:sessionsReply",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:cypress/support/sessions.ts",
+			"target": "function:cypress/support/sessions.ts:generateMessage",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:cypress/support/sessions.ts",
+			"target": "function:cypress/support/sessions.ts:generateMessage",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:cypress/support/sessions.ts",
+			"target": "function:cypress/support/sessions.ts:generateMultipleMessages",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:cypress/support/sessions.ts",
+			"target": "function:cypress/support/sessions.ts:generateMultipleMessages",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:cypress/support/sessions.ts",
+			"target": "function:cypress/support/sessions.ts:generateMessagesReply",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:cypress/support/sessions.ts",
+			"target": "function:cypress/support/sessions.ts:generateMessagesReply",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:cypress/support/sessions.ts",
+			"target": "file:src/components/session/sessionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/sessions.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiAddSessionSupervisor.ts",
+			"target": "function:src/api/apiAddSessionSupervisor.ts:apiAddSessionSupervisor",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiAddSessionSupervisor.ts",
+			"target": "function:src/api/apiAddSessionSupervisor.ts:apiAddSessionSupervisor",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiAddSessionSupervisor.ts",
+			"target": "file:src/api/apiGetSessionSupervisors.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiAddSessionSupervisor.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiAddSessionSupervisor.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiAgencySelection.ts",
+			"target": "function:src/api/apiAgencySelection.ts:apiAgencySelection",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiAgencySelection.ts",
+			"target": "function:src/api/apiAgencySelection.ts:apiAgencySelection",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiAgencySelection.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiAgencySelection.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiAgencySelection.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiAgencySelection.ts",
+			"target": "file:src/utils/loadConsultingTypesForAgencies.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiAppointmentServiceSet.ts",
+			"target": "function:src/api/apiAppointmentServiceSet.ts:apiAppointmentServiceSet",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiAppointmentServiceSet.ts",
+			"target": "function:src/api/apiAppointmentServiceSet.ts:apiAppointmentServiceSet",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiAppointmentServiceSet.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiAppointmentServiceSet.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiDeleteAskerAccount.ts",
+			"target": "function:src/api/apiDeleteAskerAccount.ts:apiDeleteAskerAccount",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiDeleteAskerAccount.ts",
+			"target": "function:src/api/apiDeleteAskerAccount.ts:apiDeleteAskerAccount",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiDeleteAskerAccount.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiDeleteAskerAccount.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiDeleteEmail.ts",
+			"target": "function:src/api/apiDeleteEmail.ts:apiDeleteEmail",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiDeleteEmail.ts",
+			"target": "function:src/api/apiDeleteEmail.ts:apiDeleteEmail",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiDeleteEmail.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiDeleteEmail.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiDeleteMessage.ts",
+			"target": "function:src/api/apiDeleteMessage.ts:apiDeleteMessage",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiDeleteMessage.ts",
+			"target": "function:src/api/apiDeleteMessage.ts:apiDeleteMessage",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiDeleteMessage.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiDeleteMessage.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiDeleteRemove.ts",
+			"target": "function:src/api/apiDeleteRemove.ts:apiDeleteRemove",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiDeleteRemove.ts",
+			"target": "function:src/api/apiDeleteRemove.ts:apiDeleteRemove",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiDeleteRemove.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiDeleteRemove.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		}
+	]
+}

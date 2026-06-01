@@ -1,0 +1,70 @@
+{
+	"nodes": [
+		{
+			"id": "config:translation-files-current/en/agency.json",
+			"type": "config",
+			"name": "agency.json",
+			"filePath": "translation-files-current/en/agency.json",
+			"summary": "Configuration file that controls translation files current behavior for the frontend project.",
+			"tags": ["configuration", "i18n", "translation-files-current"],
+			"complexity": "simple"
+		},
+		{
+			"id": "config:translation-files-current/en/common.json",
+			"type": "config",
+			"name": "common.json",
+			"filePath": "translation-files-current/en/common.json",
+			"summary": "Configuration file that controls translation files current behavior for the frontend project.",
+			"tags": ["configuration", "i18n", "translation-files-current"],
+			"complexity": "complex"
+		},
+		{
+			"id": "config:translation-files-current/en/consultingTypes.json",
+			"type": "config",
+			"name": "consultingTypes.json",
+			"filePath": "translation-files-current/en/consultingTypes.json",
+			"summary": "Configuration file that controls translation files current behavior for the frontend project.",
+			"tags": ["configuration", "i18n", "translation-files-current"],
+			"complexity": "complex"
+		},
+		{
+			"id": "config:translation-files-current/en/languages.json",
+			"type": "config",
+			"name": "languages.json",
+			"filePath": "translation-files-current/en/languages.json",
+			"summary": "Configuration file that controls translation files current behavior for the frontend project.",
+			"tags": ["configuration", "i18n", "translation-files-current"],
+			"complexity": "moderate"
+		}
+	],
+	"edges": [
+		{
+			"source": "config:translation-files-current/en/agency.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:translation-files-current/en/common.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:translation-files-current/en/consultingTypes.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:translation-files-current/en/languages.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		}
+	]
+}

@@ -1,0 +1,2118 @@
+{
+	"nodes": [
+		{
+			"id": "file:src/api/apiGetAgencyConsultantList.ts",
+			"type": "file",
+			"name": "apiGetAgencyConsultantList.ts",
+			"filePath": "src/api/apiGetAgencyConsultantList.ts",
+			"summary": "API client module for apiGetAgencyConsultantList, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiGetAgencyConsultantList.ts:apiGetAgencyConsultantList",
+			"type": "function",
+			"name": "apiGetAgencyConsultantList",
+			"filePath": "src/api/apiGetAgencyConsultantList.ts",
+			"lineRange": [13, 22],
+			"summary": "Function apiGetAgencyConsultantList in src/api/apiGetAgencyConsultantList.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiSendAliasMessage.ts",
+			"type": "file",
+			"name": "apiSendAliasMessage.ts",
+			"filePath": "src/api/apiSendAliasMessage.ts",
+			"summary": "API client module for apiSendAliasMessage, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/api/apiSendAliasMessage.ts:apiSendAliasMessage",
+			"type": "function",
+			"name": "apiSendAliasMessage",
+			"filePath": "src/api/apiSendAliasMessage.ts",
+			"lineRange": [39, 51],
+			"summary": "Function apiSendAliasMessage in src/api/apiSendAliasMessage.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/app/AbsenceHandler.tsx",
+			"type": "file",
+			"name": "AbsenceHandler.tsx",
+			"filePath": "src/components/app/AbsenceHandler.tsx",
+			"summary": "React UI module for component app, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-app"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/app/AbsenceHandler.tsx:AbsenceHandler",
+			"type": "function",
+			"name": "AbsenceHandler",
+			"filePath": "src/components/app/AbsenceHandler.tsx",
+			"lineRange": [11, 23],
+			"summary": "Function AbsenceHandler in src/components/app/AbsenceHandler.tsx, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/app/Loading.tsx",
+			"type": "file",
+			"name": "Loading.tsx",
+			"filePath": "src/components/app/Loading.tsx",
+			"summary": "React UI module for component app, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-app"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/Loading.tsx:Loading",
+			"type": "function",
+			"name": "Loading",
+			"filePath": "src/components/app/Loading.tsx",
+			"lineRange": [7, 19],
+			"summary": "Function Loading in src/components/app/Loading.tsx, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/app/NonPlainRoutesWrapper.tsx",
+			"type": "file",
+			"name": "NonPlainRoutesWrapper.tsx",
+			"filePath": "src/components/app/NonPlainRoutesWrapper.tsx",
+			"summary": "React UI module for component app, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-app", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/app/Routing.tsx",
+			"type": "file",
+			"name": "Routing.tsx",
+			"filePath": "src/components/app/Routing.tsx",
+			"summary": "React UI module for component app, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-app"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/app/Routing.tsx:Routing",
+			"type": "function",
+			"name": "Routing",
+			"filePath": "src/components/app/Routing.tsx",
+			"lineRange": [31, 43],
+			"summary": "Function Routing in src/components/app/Routing.tsx, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/app/navigationHandler.ts",
+			"type": "file",
+			"name": "navigationHandler.ts",
+			"filePath": "src/components/app/navigationHandler.ts",
+			"summary": "React UI module for component app, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-app"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/app/navigationHandler.ts:initNavigationHandler",
+			"type": "function",
+			"name": "initNavigationHandler",
+			"filePath": "src/components/app/navigationHandler.ts",
+			"lineRange": [1, 13],
+			"summary": "Function initNavigationHandler in src/components/app/navigationHandler.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/navigationHandler.ts:desktopView",
+			"type": "function",
+			"name": "desktopView",
+			"filePath": "src/components/app/navigationHandler.ts",
+			"lineRange": [15, 27],
+			"summary": "Function desktopView in src/components/app/navigationHandler.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/navigationHandler.ts:mobileListView",
+			"type": "function",
+			"name": "mobileListView",
+			"filePath": "src/components/app/navigationHandler.ts",
+			"lineRange": [30, 42],
+			"summary": "Function mobileListView in src/components/app/navigationHandler.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/navigationHandler.ts:mobileDetailView",
+			"type": "function",
+			"name": "mobileDetailView",
+			"filePath": "src/components/app/navigationHandler.ts",
+			"lineRange": [53, 65],
+			"summary": "Function mobileDetailView in src/components/app/navigationHandler.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/navigationHandler.ts:mobileUserProfileView",
+			"type": "function",
+			"name": "mobileUserProfileView",
+			"filePath": "src/components/app/navigationHandler.ts",
+			"lineRange": [76, 85],
+			"summary": "Function mobileUserProfileView in src/components/app/navigationHandler.ts, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/askerInfo/AskerInfo.tsx",
+			"type": "file",
+			"name": "AskerInfo.tsx",
+			"filePath": "src/components/askerInfo/AskerInfo.tsx",
+			"summary": "React UI module for component asker info, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-asker-info"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/askerInfo/AskerInfo.tsx:AskerInfo",
+			"type": "function",
+			"name": "AskerInfo",
+			"filePath": "src/components/askerInfo/AskerInfo.tsx",
+			"lineRange": [22, 34],
+			"summary": "Function AskerInfo in src/components/askerInfo/AskerInfo.tsx, used by the surrounding component asker info module.",
+			"tags": ["function", "component-asker-info", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/askerInfo/AskerInfoContent.tsx",
+			"type": "file",
+			"name": "AskerInfoContent.tsx",
+			"filePath": "src/components/askerInfo/AskerInfoContent.tsx",
+			"summary": "React UI module for component asker info, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-asker-info"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/askerInfo/AskerInfoContent.tsx:AskerInfoContent",
+			"type": "function",
+			"name": "AskerInfoContent",
+			"filePath": "src/components/askerInfo/AskerInfoContent.tsx",
+			"lineRange": [19, 31],
+			"summary": "Function AskerInfoContent in src/components/askerInfo/AskerInfoContent.tsx, used by the surrounding component asker info module.",
+			"tags": ["function", "component-asker-info", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/askerInfo/AskerInfoToolsOptions.tsx",
+			"type": "file",
+			"name": "AskerInfoToolsOptions.tsx",
+			"filePath": "src/components/askerInfo/AskerInfoToolsOptions.tsx",
+			"summary": "React UI module for component asker info, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-asker-info"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/askerInfo/AskerInfoToolsOptions.tsx:AskerInfoToolsOptions",
+			"type": "function",
+			"name": "AskerInfoToolsOptions",
+			"filePath": "src/components/askerInfo/AskerInfoToolsOptions.tsx",
+			"lineRange": [23, 35],
+			"summary": "Function AskerInfoToolsOptions in src/components/askerInfo/AskerInfoToolsOptions.tsx, used by the surrounding component asker info module.",
+			"tags": ["function", "component-asker-info", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/banUser/BanUser.tsx",
+			"type": "file",
+			"name": "BanUser.tsx",
+			"filePath": "src/components/banUser/BanUser.tsx",
+			"summary": "React UI module for component ban user, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-ban-user", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/button/Button.stories.ts",
+			"type": "file",
+			"name": "Button.stories.ts",
+			"filePath": "src/components/button/Button.stories.ts",
+			"summary": "React UI module for component button, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["storybook", "component", "component-button"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/button/Button.tsx",
+			"type": "file",
+			"name": "Button.tsx",
+			"filePath": "src/components/button/Button.tsx",
+			"summary": "React UI module for component button, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-button"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/button/Button.tsx:BUTTON_TYPES",
+			"type": "function",
+			"name": "BUTTON_TYPES",
+			"filePath": "src/components/button/Button.tsx",
+			"lineRange": [8, 20],
+			"summary": "Function BUTTON_TYPES in src/components/button/Button.tsx, used by the surrounding component button module.",
+			"tags": ["function", "component-button", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/button/Button.tsx:Button",
+			"type": "function",
+			"name": "Button",
+			"filePath": "src/components/button/Button.tsx",
+			"lineRange": [50, 62],
+			"summary": "Function Button in src/components/button/Button.tsx, used by the surrounding component button module.",
+			"tags": ["function", "component-button", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/checkbox/Checkbox.stories.ts",
+			"type": "file",
+			"name": "Checkbox.stories.ts",
+			"filePath": "src/components/checkbox/Checkbox.stories.ts",
+			"summary": "React UI module for component checkbox, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["storybook", "component", "component-checkbox"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/checkbox/Checkbox.tsx",
+			"type": "file",
+			"name": "Checkbox.tsx",
+			"filePath": "src/components/checkbox/Checkbox.tsx",
+			"summary": "React UI module for component checkbox, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-checkbox"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/checkbox/Checkbox.tsx:Checkbox",
+			"type": "function",
+			"name": "Checkbox",
+			"filePath": "src/components/checkbox/Checkbox.tsx",
+			"lineRange": [23, 35],
+			"summary": "Function Checkbox in src/components/checkbox/Checkbox.tsx, used by the surrounding component checkbox module.",
+			"tags": ["function", "component-checkbox", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/enquiry/WriteEnquiry.tsx",
+			"type": "file",
+			"name": "WriteEnquiry.tsx",
+			"filePath": "src/components/enquiry/WriteEnquiry.tsx",
+			"summary": "React UI module for component enquiry, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-enquiry", "code"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/flyoutMenu/FlyoutMenu.tsx",
+			"type": "file",
+			"name": "FlyoutMenu.tsx",
+			"filePath": "src/components/flyoutMenu/FlyoutMenu.tsx",
+			"summary": "React UI module for component flyout menu, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-flyout-menu", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/groupChat/CreateChatView.tsx",
+			"type": "file",
+			"name": "CreateChatView.tsx",
+			"filePath": "src/components/groupChat/CreateChatView.tsx",
+			"summary": "React UI module for component group chat, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-group-chat"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/groupChat/CreateChatView.tsx:CreateGroupChatView",
+			"type": "function",
+			"name": "CreateGroupChatView",
+			"filePath": "src/components/groupChat/CreateChatView.tsx",
+			"lineRange": [130, 142],
+			"summary": "Function CreateGroupChatView in src/components/groupChat/CreateChatView.tsx, used by the surrounding component group chat module.",
+			"tags": ["function", "component-group-chat", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/groupChat/CreateChatView.tsx:apiCreateGroupChat",
+			"type": "function",
+			"name": "apiCreateGroupChat",
+			"filePath": "src/components/groupChat/CreateChatView.tsx",
+			"lineRange": [461, 473],
+			"summary": "Function apiCreateGroupChat in src/components/groupChat/CreateChatView.tsx, used by the surrounding component group chat module.",
+			"tags": ["function", "component-group-chat", "internal"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/groupChat/GroupChatInfo.tsx",
+			"type": "file",
+			"name": "GroupChatInfo.tsx",
+			"filePath": "src/components/groupChat/GroupChatInfo.tsx",
+			"summary": "React UI module for component group chat, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-group-chat"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/groupChat/GroupChatInfo.tsx:GroupChatInfo",
+			"type": "function",
+			"name": "GroupChatInfo",
+			"filePath": "src/components/groupChat/GroupChatInfo.tsx",
+			"lineRange": [56, 68],
+			"summary": "Function GroupChatInfo in src/components/groupChat/GroupChatInfo.tsx, used by the surrounding component group chat module.",
+			"tags": ["function", "component-group-chat", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/groupChat/JoinGroupChatView.tsx",
+			"type": "file",
+			"name": "JoinGroupChatView.tsx",
+			"filePath": "src/components/groupChat/JoinGroupChatView.tsx",
+			"summary": "React UI module for component group chat, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-group-chat"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/groupChat/JoinGroupChatView.tsx:JoinGroupChatView",
+			"type": "function",
+			"name": "JoinGroupChatView",
+			"filePath": "src/components/groupChat/JoinGroupChatView.tsx",
+			"lineRange": [52, 64],
+			"summary": "Function JoinGroupChatView in src/components/groupChat/JoinGroupChatView.tsx, used by the surrounding component group chat module.",
+			"tags": ["function", "component-group-chat", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/groupChat/createChatHelpers.ts",
+			"type": "file",
+			"name": "createChatHelpers.ts",
+			"filePath": "src/components/groupChat/createChatHelpers.ts",
+			"summary": "React UI module for component group chat, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-group-chat"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/groupChat/createChatHelpers.ts:TOPIC_LENGTHS",
+			"type": "function",
+			"name": "TOPIC_LENGTHS",
+			"filePath": "src/components/groupChat/createChatHelpers.ts",
+			"lineRange": [1, 13],
+			"summary": "Function TOPIC_LENGTHS in src/components/groupChat/createChatHelpers.ts, used by the surrounding component group chat module.",
+			"tags": ["function", "component-group-chat", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/groupChat/createChatHelpers.ts:durationSelectOptionsSet",
+			"type": "function",
+			"name": "durationSelectOptionsSet",
+			"filePath": "src/components/groupChat/createChatHelpers.ts",
+			"lineRange": [6, 18],
+			"summary": "Function durationSelectOptionsSet in src/components/groupChat/createChatHelpers.ts, used by the surrounding component group chat module.",
+			"tags": ["function", "component-group-chat", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/groupChat/createChatHelpers.ts:getValidDateFormatForSelectedDate",
+			"type": "function",
+			"name": "getValidDateFormatForSelectedDate",
+			"filePath": "src/components/groupChat/createChatHelpers.ts",
+			"lineRange": [37, 47],
+			"summary": "Function getValidDateFormatForSelectedDate in src/components/groupChat/createChatHelpers.ts, used by the surrounding component group chat module.",
+			"tags": ["function", "component-group-chat", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/groupChat/createChatHelpers.ts:getValidTimeFormatForSelectedTime",
+			"type": "function",
+			"name": "getValidTimeFormatForSelectedTime",
+			"filePath": "src/components/groupChat/createChatHelpers.ts",
+			"lineRange": [43, 47],
+			"summary": "Function getValidTimeFormatForSelectedTime in src/components/groupChat/createChatHelpers.ts, used by the surrounding component group chat module.",
+			"tags": ["function", "component-group-chat", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/groupChat/groupChatHelpers.ts",
+			"type": "file",
+			"name": "groupChatHelpers.ts",
+			"filePath": "src/components/groupChat/groupChatHelpers.ts",
+			"summary": "React UI module for component group chat, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-group-chat"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/groupChat/groupChatHelpers.ts:isGroupChatOwner",
+			"type": "function",
+			"name": "isGroupChatOwner",
+			"filePath": "src/components/groupChat/groupChatHelpers.ts",
+			"lineRange": [1, 7],
+			"summary": "Function isGroupChatOwner in src/components/groupChat/groupChatHelpers.ts, used by the surrounding component group chat module.",
+			"tags": ["function", "component-group-chat", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/loadingIndicator/LoadingIndicator.tsx",
+			"type": "file",
+			"name": "LoadingIndicator.tsx",
+			"filePath": "src/components/loadingIndicator/LoadingIndicator.tsx",
+			"summary": "React UI module for component loading indicator, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-loading-indicator"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/loadingIndicator/LoadingIndicator.tsx:LoadingIndicator",
+			"type": "function",
+			"name": "LoadingIndicator",
+			"filePath": "src/components/loadingIndicator/LoadingIndicator.tsx",
+			"lineRange": [4, 11],
+			"summary": "Function LoadingIndicator in src/components/loadingIndicator/LoadingIndicator.tsx, used by the surrounding component loading indicator module.",
+			"tags": ["function", "component-loading-indicator", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/message/E2EEActivatedMessage.tsx",
+			"type": "file",
+			"name": "E2EEActivatedMessage.tsx",
+			"filePath": "src/components/message/E2EEActivatedMessage.tsx",
+			"summary": "React UI module for component message, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-message", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/message/MasterKeyLostMessage.tsx",
+			"type": "file",
+			"name": "MasterKeyLostMessage.tsx",
+			"filePath": "src/components/message/MasterKeyLostMessage.tsx",
+			"summary": "React UI module for component message, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-message", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/message/MessageDisplayName.tsx",
+			"type": "file",
+			"name": "MessageDisplayName.tsx",
+			"filePath": "src/components/message/MessageDisplayName.tsx",
+			"summary": "React UI module for component message, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-message"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/message/MessageDisplayName.tsx:MessageDisplayName",
+			"type": "function",
+			"name": "MessageDisplayName",
+			"filePath": "src/components/message/MessageDisplayName.tsx",
+			"lineRange": [17, 29],
+			"summary": "Function MessageDisplayName in src/components/message/MessageDisplayName.tsx, used by the surrounding component message module.",
+			"tags": ["function", "component-message", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/message/MessageItemComponent.tsx",
+			"type": "file",
+			"name": "MessageItemComponent.tsx",
+			"filePath": "src/components/message/MessageItemComponent.tsx",
+			"summary": "React UI module for component message, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-message"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/message/MessageItemComponent.tsx:MessageItemComponent",
+			"type": "function",
+			"name": "MessageItemComponent",
+			"filePath": "src/components/message/MessageItemComponent.tsx",
+			"lineRange": [277, 289],
+			"summary": "Function MessageItemComponent in src/components/message/MessageItemComponent.tsx, used by the surrounding component message module.",
+			"tags": ["function", "component-message", "exported"],
+			"complexity": "simple"
+		}
+	],
+	"edges": [
+		{
+			"source": "file:src/api/apiGetAgencyConsultantList.ts",
+			"target": "function:src/api/apiGetAgencyConsultantList.ts:apiGetAgencyConsultantList",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiGetAgencyConsultantList.ts",
+			"target": "function:src/api/apiGetAgencyConsultantList.ts:apiGetAgencyConsultantList",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiGetAgencyConsultantList.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetAgencyConsultantList.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiSendAliasMessage.ts",
+			"target": "function:src/api/apiSendAliasMessage.ts:apiSendAliasMessage",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiSendAliasMessage.ts",
+			"target": "function:src/api/apiSendAliasMessage.ts:apiSendAliasMessage",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiSendAliasMessage.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiSendAliasMessage.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/AbsenceHandler.tsx",
+			"target": "function:src/components/app/AbsenceHandler.tsx:AbsenceHandler",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/AbsenceHandler.tsx",
+			"target": "function:src/components/app/AbsenceHandler.tsx:AbsenceHandler",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/AbsenceHandler.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/AbsenceHandler.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/AbsenceHandler.tsx",
+			"target": "file:src/components/overlay/Overlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/AbsenceHandler.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/AbsenceHandler.tsx",
+			"target": "file:src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/Loading.tsx",
+			"target": "function:src/components/app/Loading.tsx:Loading",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/Loading.tsx",
+			"target": "function:src/components/app/Loading.tsx:Loading",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/Loading.tsx",
+			"target": "file:src/components/app/loading.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/Loading.tsx",
+			"target": "file:src/components/loadingIndicator/LoadingIndicator.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/NonPlainRoutesWrapper.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/NonPlainRoutesWrapper.tsx",
+			"target": "file:src/utils/encryptionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/Routing.tsx",
+			"target": "function:src/components/app/Routing.tsx:Routing",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/Routing.tsx",
+			"target": "function:src/components/app/Routing.tsx:Routing",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/Routing.tsx",
+			"target": "file:src/components/app/AbsenceHandler.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/Routing.tsx",
+			"target": "file:src/components/app/Loading.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/Routing.tsx",
+			"target": "file:src/components/app/NavigationBar.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/Routing.tsx",
+			"target": "file:src/components/app/NonPlainRoutesWrapper.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/Routing.tsx",
+			"target": "file:src/components/app/RouterConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/Routing.tsx",
+			"target": "file:src/components/header/Header.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/Routing.tsx",
+			"target": "file:src/components/notFound/NotFound.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/Routing.tsx",
+			"target": "file:src/components/releaseNote/ReleaseNote.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/Routing.tsx",
+			"target": "file:src/components/termsandconditions/TermsAndConditions.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/Routing.tsx",
+			"target": "file:src/components/twoFactorAuth/TwoFactorNag.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/Routing.tsx",
+			"target": "file:src/components/walkthrough/Walkthrough.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/Routing.tsx",
+			"target": "file:src/containers/bookings/hooks/useAskerHasAssignedConsultant.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/Routing.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/Routing.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/Routing.tsx",
+			"target": "file:src/hooks/useResponsive.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/navigationHandler.ts",
+			"target": "function:src/components/app/navigationHandler.ts:initNavigationHandler",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/navigationHandler.ts",
+			"target": "function:src/components/app/navigationHandler.ts:initNavigationHandler",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/navigationHandler.ts",
+			"target": "function:src/components/app/navigationHandler.ts:desktopView",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/navigationHandler.ts",
+			"target": "function:src/components/app/navigationHandler.ts:desktopView",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/navigationHandler.ts",
+			"target": "function:src/components/app/navigationHandler.ts:mobileListView",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/navigationHandler.ts",
+			"target": "function:src/components/app/navigationHandler.ts:mobileListView",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/navigationHandler.ts",
+			"target": "function:src/components/app/navigationHandler.ts:mobileDetailView",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/navigationHandler.ts",
+			"target": "function:src/components/app/navigationHandler.ts:mobileDetailView",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/navigationHandler.ts",
+			"target": "function:src/components/app/navigationHandler.ts:mobileUserProfileView",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/navigationHandler.ts",
+			"target": "function:src/components/app/navigationHandler.ts:mobileUserProfileView",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfo.tsx",
+			"target": "function:src/components/askerInfo/AskerInfo.tsx:AskerInfo",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfo.tsx",
+			"target": "function:src/components/askerInfo/AskerInfo.tsx:AskerInfo",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfo.tsx",
+			"target": "file:src/components/app/Loading.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfo.tsx",
+			"target": "file:src/components/app/navigationHandler.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfo.tsx",
+			"target": "file:src/components/askerInfo/AskerInfoContent.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfo.tsx",
+			"target": "file:src/components/session/sessionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfo.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfo.tsx",
+			"target": "file:src/globalState/provider/RocketChatUsersOfRoomProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfo.tsx",
+			"target": "file:src/hooks/useResponsive.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfo.tsx",
+			"target": "file:src/hooks/useSearchParams.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfo.tsx",
+			"target": "file:src/hooks/useSession.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfoContent.tsx",
+			"target": "function:src/components/askerInfo/AskerInfoContent.tsx:AskerInfoContent",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfoContent.tsx",
+			"target": "function:src/components/askerInfo/AskerInfoContent.tsx:AskerInfoContent",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfoContent.tsx",
+			"target": "file:src/components/askerInfo/AskerInfoAssign.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfoContent.tsx",
+			"target": "file:src/components/askerInfo/AskerInfoData.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfoContent.tsx",
+			"target": "file:src/components/askerInfo/AskerInfoTools.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfoContent.tsx",
+			"target": "file:src/components/box/Box.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfoContent.tsx",
+			"target": "file:src/components/session/sessionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfoContent.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfoToolsOptions.tsx",
+			"target": "function:src/components/askerInfo/AskerInfoToolsOptions.tsx:AskerInfoToolsOptions",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfoToolsOptions.tsx",
+			"target": "function:src/components/askerInfo/AskerInfoToolsOptions.tsx:AskerInfoToolsOptions",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfoToolsOptions.tsx",
+			"target": "file:src/api/apiGetTools.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfoToolsOptions.tsx",
+			"target": "file:src/api/apiPutTools.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfoToolsOptions.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfoToolsOptions.tsx",
+			"target": "file:src/components/checkbox/Checkbox.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfoToolsOptions.tsx",
+			"target": "file:src/components/overlay/Overlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfoToolsOptions.tsx",
+			"target": "file:src/components/select/SelectDropdown.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfoToolsOptions.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfoToolsOptions.tsx",
+			"target": "file:src/globalState/interfaces/ToolsInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/banUser/BanUser.tsx",
+			"target": "file:src/api/apiPostBanUser.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/banUser/BanUser.tsx",
+			"target": "file:src/components/banUser/banUser.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/banUser/BanUser.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/banUser/BanUser.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/banUser/BanUser.tsx",
+			"target": "file:src/components/overlay/Overlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/button/Button.stories.ts",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/button/Button.tsx",
+			"target": "function:src/components/button/Button.tsx:BUTTON_TYPES",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/button/Button.tsx",
+			"target": "function:src/components/button/Button.tsx:BUTTON_TYPES",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/button/Button.tsx",
+			"target": "function:src/components/button/Button.tsx:Button",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/button/Button.tsx",
+			"target": "function:src/components/button/Button.tsx:Button",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/button/Button.tsx",
+			"target": "file:src/components/overlay/Overlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/checkbox/Checkbox.stories.ts",
+			"target": "file:src/components/checkbox/Checkbox.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/checkbox/Checkbox.tsx",
+			"target": "function:src/components/checkbox/Checkbox.tsx:Checkbox",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/checkbox/Checkbox.tsx",
+			"target": "function:src/components/checkbox/Checkbox.tsx:Checkbox",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/enquiry/WriteEnquiry.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/enquiry/WriteEnquiry.tsx",
+			"target": "file:src/components/app/Loading.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/enquiry/WriteEnquiry.tsx",
+			"target": "file:src/components/app/navigationHandler.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/enquiry/WriteEnquiry.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/enquiry/WriteEnquiry.tsx",
+			"target": "file:src/components/enquiry/EnquiryLanguageSelection.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/enquiry/WriteEnquiry.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/enquiry/WriteEnquiry.tsx",
+			"target": "file:src/components/messageSubmitInterface/messageSubmitInterfaceSkeleton.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/enquiry/WriteEnquiry.tsx",
+			"target": "file:src/components/overlay/Overlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/enquiry/WriteEnquiry.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/enquiry/WriteEnquiry.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/enquiry/WriteEnquiry.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/enquiry/WriteEnquiry.tsx",
+			"target": "file:src/globalState/provider/LanguagesProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/enquiry/WriteEnquiry.tsx",
+			"target": "file:src/globalState/provider/RocketChatUsersOfRoomProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/enquiry/WriteEnquiry.tsx",
+			"target": "file:src/hooks/useResponsive.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/enquiry/WriteEnquiry.tsx",
+			"target": "file:src/hooks/useSession.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/enquiry/WriteEnquiry.tsx",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/flyoutMenu/FlyoutMenu.tsx",
+			"target": "file:src/components/flyoutMenu/flyoutMenu.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/flyoutMenu/FlyoutMenu.tsx",
+			"target": "file:src/resources/img/icons.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/CreateChatView.tsx",
+			"target": "function:src/components/groupChat/CreateChatView.tsx:CreateGroupChatView",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/groupChat/CreateChatView.tsx",
+			"target": "function:src/components/groupChat/CreateChatView.tsx:CreateGroupChatView",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/groupChat/CreateChatView.tsx",
+			"target": "function:src/components/groupChat/CreateChatView.tsx:apiCreateGroupChat",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/groupChat/CreateChatView.tsx",
+			"target": "file:src/api/apiGetAgencyConsultantList.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/CreateChatView.tsx",
+			"target": "file:src/api/apiGetSessionRooms.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/CreateChatView.tsx",
+			"target": "file:src/api/apiGroupChatSettings.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/CreateChatView.tsx",
+			"target": "file:src/components/app/navigationHandler.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/CreateChatView.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/CreateChatView.tsx",
+			"target": "file:src/components/groupChat/createChatHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/CreateChatView.tsx",
+			"target": "file:src/components/inputField/InputField.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/CreateChatView.tsx",
+			"target": "file:src/components/overlay/Overlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/CreateChatView.tsx",
+			"target": "file:src/components/select/SelectDropdown.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/CreateChatView.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/CreateChatView.tsx",
+			"target": "file:src/hooks/useResponsive.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/GroupChatInfo.tsx",
+			"target": "function:src/components/groupChat/GroupChatInfo.tsx:GroupChatInfo",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/groupChat/GroupChatInfo.tsx",
+			"target": "function:src/components/groupChat/GroupChatInfo.tsx:GroupChatInfo",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/groupChat/GroupChatInfo.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/GroupChatInfo.tsx",
+			"target": "file:src/components/app/navigationHandler.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/GroupChatInfo.tsx",
+			"target": "file:src/components/banUser/BanUser.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/GroupChatInfo.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/GroupChatInfo.tsx",
+			"target": "file:src/components/flyoutMenu/FlyoutMenu.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/GroupChatInfo.tsx",
+			"target": "file:src/components/groupChat/createChatHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/GroupChatInfo.tsx",
+			"target": "file:src/components/groupChat/GroupChatCopyLinks.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/GroupChatInfo.tsx",
+			"target": "file:src/components/groupChat/groupChatHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/GroupChatInfo.tsx",
+			"target": "file:src/components/logout/logout.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/GroupChatInfo.tsx",
+			"target": "file:src/components/overlay/Overlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/GroupChatInfo.tsx",
+			"target": "file:src/components/session/sessionDateHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/GroupChatInfo.tsx",
+			"target": "file:src/components/session/sessionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/GroupChatInfo.tsx",
+			"target": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/GroupChatInfo.tsx",
+			"target": "file:src/components/sessionMenu/sessionMenuHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/GroupChatInfo.tsx",
+			"target": "file:src/components/tag/Tag.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/GroupChatInfo.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/GroupChatInfo.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/GroupChatInfo.tsx",
+			"target": "file:src/globalState/provider/RocketChatUsersOfRoomProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/GroupChatInfo.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/GroupChatInfo.tsx",
+			"target": "file:src/hooks/useResponsive.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/GroupChatInfo.tsx",
+			"target": "file:src/hooks/useSearchParams.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/GroupChatInfo.tsx",
+			"target": "file:src/hooks/useSession.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/GroupChatInfo.tsx",
+			"target": "file:src/utils/dateHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/GroupChatInfo.tsx",
+			"target": "file:src/utils/encryptionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/JoinGroupChatView.tsx",
+			"target": "function:src/components/groupChat/JoinGroupChatView.tsx:JoinGroupChatView",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/groupChat/JoinGroupChatView.tsx",
+			"target": "function:src/components/groupChat/JoinGroupChatView.tsx:JoinGroupChatView",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/groupChat/JoinGroupChatView.tsx",
+			"target": "file:src/api/apiRocketChatSetRoomKeyID.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/JoinGroupChatView.tsx",
+			"target": "file:src/api/apiRocketChatUpdateGroupKey.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/JoinGroupChatView.tsx",
+			"target": "file:src/api/apiSendAliasMessage.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/JoinGroupChatView.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/JoinGroupChatView.tsx",
+			"target": "file:src/components/app/navigationHandler.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/JoinGroupChatView.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/JoinGroupChatView.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/JoinGroupChatView.tsx",
+			"target": "file:src/components/logout/logout.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/JoinGroupChatView.tsx",
+			"target": "file:src/components/overlay/Overlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/JoinGroupChatView.tsx",
+			"target": "file:src/components/session/sessionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/JoinGroupChatView.tsx",
+			"target": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/JoinGroupChatView.tsx",
+			"target": "file:src/components/sessionHeader/SessionHeaderComponent.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/JoinGroupChatView.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/JoinGroupChatView.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/JoinGroupChatView.tsx",
+			"target": "file:src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/JoinGroupChatView.tsx",
+			"target": "file:src/hooks/useE2EE.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/JoinGroupChatView.tsx",
+			"target": "file:src/hooks/useSearchParams.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/JoinGroupChatView.tsx",
+			"target": "file:src/hooks/useTimeoutOverlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/JoinGroupChatView.tsx",
+			"target": "file:src/hooks/useWatcher.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/JoinGroupChatView.tsx",
+			"target": "file:src/i18n.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/JoinGroupChatView.tsx",
+			"target": "file:src/utils/encryptionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/createChatHelpers.ts",
+			"target": "function:src/components/groupChat/createChatHelpers.ts:TOPIC_LENGTHS",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/groupChat/createChatHelpers.ts",
+			"target": "function:src/components/groupChat/createChatHelpers.ts:TOPIC_LENGTHS",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/groupChat/createChatHelpers.ts",
+			"target": "function:src/components/groupChat/createChatHelpers.ts:durationSelectOptionsSet",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/groupChat/createChatHelpers.ts",
+			"target": "function:src/components/groupChat/createChatHelpers.ts:durationSelectOptionsSet",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/groupChat/createChatHelpers.ts",
+			"target": "function:src/components/groupChat/createChatHelpers.ts:getValidDateFormatForSelectedDate",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/groupChat/createChatHelpers.ts",
+			"target": "function:src/components/groupChat/createChatHelpers.ts:getValidDateFormatForSelectedDate",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/groupChat/createChatHelpers.ts",
+			"target": "function:src/components/groupChat/createChatHelpers.ts:getValidTimeFormatForSelectedTime",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/groupChat/createChatHelpers.ts",
+			"target": "function:src/components/groupChat/createChatHelpers.ts:getValidTimeFormatForSelectedTime",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/groupChat/groupChatHelpers.ts",
+			"target": "function:src/components/groupChat/groupChatHelpers.ts:isGroupChatOwner",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/groupChat/groupChatHelpers.ts",
+			"target": "function:src/components/groupChat/groupChatHelpers.ts:isGroupChatOwner",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/loadingIndicator/LoadingIndicator.tsx",
+			"target": "function:src/components/loadingIndicator/LoadingIndicator.tsx:LoadingIndicator",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/loadingIndicator/LoadingIndicator.tsx",
+			"target": "function:src/components/loadingIndicator/LoadingIndicator.tsx:LoadingIndicator",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/loadingIndicator/LoadingIndicator.tsx",
+			"target": "file:src/components/loadingIndicator/LoadingIndicator.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MasterKeyLostMessage.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MasterKeyLostMessage.tsx",
+			"target": "file:src/components/message/SystemMessage.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MasterKeyLostMessage.tsx",
+			"target": "file:src/components/overlay/Overlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MasterKeyLostMessage.tsx",
+			"target": "file:src/components/session/subscriptionKeyLostHelper.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageDisplayName.tsx",
+			"target": "function:src/components/message/MessageDisplayName.tsx:MessageDisplayName",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/message/MessageDisplayName.tsx",
+			"target": "function:src/components/message/MessageDisplayName.tsx:MessageDisplayName",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/message/MessageDisplayName.tsx",
+			"target": "file:src/components/message/messageNameUtils.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageItemComponent.tsx",
+			"target": "function:src/components/message/MessageItemComponent.tsx:MessageItemComponent",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/message/MessageItemComponent.tsx",
+			"target": "function:src/components/message/MessageItemComponent.tsx:MessageItemComponent",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/message/MessageItemComponent.tsx",
+			"target": "file:src/api/apiDeleteMessage.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageItemComponent.tsx",
+			"target": "file:src/api/apiPatchMessage.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageItemComponent.tsx",
+			"target": "file:src/api/apiPostError.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageItemComponent.tsx",
+			"target": "file:src/api/apiRocketChatSettingsPublic.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageItemComponent.tsx",
+			"target": "file:src/api/apiSendAliasMessage.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageItemComponent.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageItemComponent.tsx",
+			"target": "file:src/components/banUser/BanUser.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageItemComponent.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageItemComponent.tsx",
+			"target": "file:src/components/flyoutMenu/FlyoutMenu.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageItemComponent.tsx",
+			"target": "file:src/components/message/Appointment.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageItemComponent.tsx",
+			"target": "file:src/components/message/E2EEActivatedMessage.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageItemComponent.tsx",
+			"target": "file:src/components/message/FurtherSteps.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageItemComponent.tsx",
+			"target": "file:src/components/message/MasterKeyLostMessage.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageItemComponent.tsx",
+			"target": "file:src/components/message/MessageAttachment.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageItemComponent.tsx",
+			"target": "file:src/components/message/messageConstants.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageItemComponent.tsx",
+			"target": "file:src/components/message/MessageDisplayName.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageItemComponent.tsx",
+			"target": "file:src/components/message/messageNameUtils.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageItemComponent.tsx",
+			"target": "file:src/components/message/ReassignMessage.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageItemComponent.tsx",
+			"target": "file:src/components/message/UserAvatar.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageItemComponent.tsx",
+			"target": "file:src/components/message/VideoCallMessage.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageItemComponent.tsx",
+			"target": "file:src/components/message/VideoChatDetails/index.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageItemComponent.tsx",
+			"target": "file:src/components/messageSubmitInterface/richtextHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageItemComponent.tsx",
+			"target": "file:src/components/overlay/Overlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageItemComponent.tsx",
+			"target": "file:src/components/session/sessionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageItemComponent.tsx",
+			"target": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageItemComponent.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageItemComponent.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageItemComponent.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageItemComponent.tsx",
+			"target": "file:src/globalState/provider/ConsultantListProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageItemComponent.tsx",
+			"target": "file:src/globalState/provider/RocketChatUsersOfRoomProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageItemComponent.tsx",
+			"target": "file:src/hooks/useE2EE.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageItemComponent.tsx",
+			"target": "file:src/utils/dateHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageItemComponent.tsx",
+			"target": "file:src/utils/encryptionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		}
+	]
+}

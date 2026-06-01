@@ -1,0 +1,49 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": "src/components/profile/_locale.styles.scss",
+			"language": "css",
+			"sizeLines": 10,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/profile/_spokenlanguages.styles.scss",
+			"language": "css",
+			"sizeLines": 44,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/profile/absenceFormular.styles.scss",
+			"language": "css",
+			"sizeLines": 45,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/profile/deleteAccount.styles.scss",
+			"language": "css",
+			"sizeLines": 56,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/profile/profile.styles.scss",
+			"language": "css",
+			"sizeLines": 661,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/profile/statistics.styles.scss",
+			"language": "css",
+			"sizeLines": 72,
+			"fileCategory": "markup"
+		}
+	],
+	"batchImportData": {
+		"src/components/profile/_locale.styles.scss": [],
+		"src/components/profile/_spokenlanguages.styles.scss": [],
+		"src/components/profile/absenceFormular.styles.scss": [],
+		"src/components/profile/deleteAccount.styles.scss": [],
+		"src/components/profile/profile.styles.scss": [],
+		"src/components/profile/statistics.styles.scss": []
+	}
+}

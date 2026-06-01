@@ -1,0 +1,583 @@
+{
+	"nodes": [
+		{
+			"id": "config:src/resources/i18n/ru/common.json",
+			"type": "config",
+			"name": "common.json",
+			"filePath": "src/resources/i18n/ru/common.json",
+			"summary": "Configuration file that controls resources behavior for the frontend project.",
+			"tags": ["configuration", "i18n", "resources"],
+			"complexity": "complex"
+		},
+		{
+			"id": "config:src/resources/i18n/ru/languages.json",
+			"type": "config",
+			"name": "languages.json",
+			"filePath": "src/resources/i18n/ru/languages.json",
+			"summary": "Configuration file that controls resources behavior for the frontend project.",
+			"tags": ["configuration", "i18n", "resources"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "config:src/resources/i18n/ti/common.json",
+			"type": "config",
+			"name": "common.json",
+			"filePath": "src/resources/i18n/ti/common.json",
+			"summary": "Configuration file that controls resources behavior for the frontend project.",
+			"tags": ["configuration", "i18n", "resources"],
+			"complexity": "complex"
+		},
+		{
+			"id": "config:src/resources/i18n/ti/languages.json",
+			"type": "config",
+			"name": "languages.json",
+			"filePath": "src/resources/i18n/ti/languages.json",
+			"summary": "Configuration file that controls resources behavior for the frontend project.",
+			"tags": ["configuration", "i18n", "resources"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "config:src/resources/i18n/tr/common.json",
+			"type": "config",
+			"name": "common.json",
+			"filePath": "src/resources/i18n/tr/common.json",
+			"summary": "Configuration file that controls resources behavior for the frontend project.",
+			"tags": ["configuration", "i18n", "resources"],
+			"complexity": "complex"
+		},
+		{
+			"id": "config:src/resources/i18n/tr/languages.json",
+			"type": "config",
+			"name": "languages.json",
+			"filePath": "src/resources/i18n/tr/languages.json",
+			"summary": "Configuration file that controls resources behavior for the frontend project.",
+			"tags": ["configuration", "i18n", "resources"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/resources/scripts/endpoints.ts.backup",
+			"type": "file",
+			"name": "endpoints.ts.backup",
+			"filePath": "src/resources/scripts/endpoints.ts.backup",
+			"summary": "Frontend source file for resources in the ORISO React application.",
+			"tags": ["resources", "code", "frontend"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/services/liveKitService.ts",
+			"type": "file",
+			"name": "liveKitService.ts",
+			"filePath": "src/services/liveKitService.ts",
+			"summary": "TypeScript module for services with 2 extracted functions and 1 extracted classes.",
+			"tags": ["livekit", "utility", "services"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/services/liveKitService.ts:liveKitService",
+			"type": "function",
+			"name": "liveKitService",
+			"filePath": "src/services/liveKitService.ts",
+			"lineRange": [299, 299],
+			"summary": "Function liveKitService in src/services/liveKitService.ts, used by the surrounding services module.",
+			"tags": ["function", "services", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/services/liveKitService.ts:return",
+			"type": "function",
+			"name": "return",
+			"filePath": "src/services/liveKitService.ts",
+			"lineRange": [30, 42],
+			"summary": "Function return in src/services/liveKitService.ts, used by the surrounding services module.",
+			"tags": ["function", "services", "internal"],
+			"complexity": "simple"
+		},
+		{
+			"id": "class:src/services/liveKitService.ts:LiveKitService",
+			"type": "class",
+			"name": "LiveKitService",
+			"filePath": "src/services/liveKitService.ts",
+			"lineRange": [15, 55],
+			"summary": "Class LiveKitService in src/services/liveKitService.ts, grouping related services behavior.",
+			"tags": ["class", "services", "internal"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/services/matrixGroupCallService.ts",
+			"type": "file",
+			"name": "matrixGroupCallService.ts",
+			"filePath": "src/services/matrixGroupCallService.ts",
+			"summary": "TypeScript module for services with 1 extracted functions and 1 extracted classes.",
+			"tags": ["matrix", "utility", "services"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/services/matrixGroupCallService.ts:matrixGroupCallService",
+			"type": "function",
+			"name": "matrixGroupCallService",
+			"filePath": "src/services/matrixGroupCallService.ts",
+			"lineRange": [246, 246],
+			"summary": "Function matrixGroupCallService in src/services/matrixGroupCallService.ts, used by the surrounding services module.",
+			"tags": ["function", "services", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "class:src/services/matrixGroupCallService.ts:MatrixGroupCallService",
+			"type": "class",
+			"name": "MatrixGroupCallService",
+			"filePath": "src/services/matrixGroupCallService.ts",
+			"lineRange": [17, 57],
+			"summary": "Class MatrixGroupCallService in src/services/matrixGroupCallService.ts, grouping related services behavior.",
+			"tags": ["class", "services", "internal"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/services/matrixRegistrationService.ts",
+			"type": "file",
+			"name": "matrixRegistrationService.ts",
+			"filePath": "src/services/matrixRegistrationService.ts",
+			"summary": "TypeScript module for services with 2 extracted functions and 0 extracted classes.",
+			"tags": ["matrix", "utility", "services"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/services/matrixRegistrationService.ts:registerMatrixUser",
+			"type": "function",
+			"name": "registerMatrixUser",
+			"filePath": "src/services/matrixRegistrationService.ts",
+			"lineRange": [17, 29],
+			"summary": "Function registerMatrixUser in src/services/matrixRegistrationService.ts, used by the surrounding services module.",
+			"tags": ["function", "services", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/services/matrixRegistrationService.ts:loginMatrixUser",
+			"type": "function",
+			"name": "loginMatrixUser",
+			"filePath": "src/services/matrixRegistrationService.ts",
+			"lineRange": [75, 87],
+			"summary": "Function loginMatrixUser in src/services/matrixRegistrationService.ts, used by the surrounding services module.",
+			"tags": ["function", "services", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/utils/capitalizeFirstLetter.ts",
+			"type": "file",
+			"name": "capitalizeFirstLetter.ts",
+			"filePath": "src/utils/capitalizeFirstLetter.ts",
+			"summary": "TypeScript module for utilities with 1 extracted functions and 0 extracted classes.",
+			"tags": ["utility", "utilities", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/capitalizeFirstLetter.ts:capitalizeFirstLetter",
+			"type": "function",
+			"name": "capitalizeFirstLetter",
+			"filePath": "src/utils/capitalizeFirstLetter.ts",
+			"lineRange": [1, 3],
+			"summary": "Function capitalizeFirstLetter in src/utils/capitalizeFirstLetter.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/utils/downloadICSFile.ts",
+			"type": "file",
+			"name": "downloadICSFile.ts",
+			"filePath": "src/utils/downloadICSFile.ts",
+			"summary": "TypeScript module for utilities with 1 extracted functions and 0 extracted classes.",
+			"tags": ["utility", "utilities", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/downloadICSFile.ts:downloadICSFile",
+			"type": "function",
+			"name": "downloadICSFile",
+			"filePath": "src/utils/downloadICSFile.ts",
+			"lineRange": [1, 8],
+			"summary": "Function downloadICSFile in src/utils/downloadICSFile.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/utils/useIsFirstLogin.tsx",
+			"type": "file",
+			"name": "useIsFirstLogin.tsx",
+			"filePath": "src/utils/useIsFirstLogin.tsx",
+			"summary": "React hook module for useIsFirstLogin, encapsulating reusable frontend state or side-effect logic.",
+			"tags": [
+				"hook",
+				"component",
+				"authentication",
+				"utility",
+				"utilities"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/useIsFirstLogin.tsx:STORAGE_KEY_LOGIN",
+			"type": "function",
+			"name": "STORAGE_KEY_LOGIN",
+			"filePath": "src/utils/useIsFirstLogin.tsx",
+			"lineRange": [3, 15],
+			"summary": "Function STORAGE_KEY_LOGIN in src/utils/useIsFirstLogin.tsx, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/useIsFirstLogin.tsx:useIsFirstLogin",
+			"type": "function",
+			"name": "useIsFirstLogin",
+			"filePath": "src/utils/useIsFirstLogin.tsx",
+			"lineRange": [13, 25],
+			"summary": "Function useIsFirstLogin in src/utils/useIsFirstLogin.tsx, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "config:test-results/.last-run.json",
+			"type": "config",
+			"name": ".last-run.json",
+			"filePath": "test-results/.last-run.json",
+			"summary": "Configuration file that controls test results behavior for the frontend project.",
+			"tags": ["configuration", "test", "test-results"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:tmpcompare.spec.ts",
+			"type": "file",
+			"name": "tmpcompare.spec.ts",
+			"filePath": "tmpcompare.spec.ts",
+			"summary": "Frontend source file for tests in the ORISO React application.",
+			"tags": ["test", "tests", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "config:translation-files-current/de@informal/common.json",
+			"type": "config",
+			"name": "common.json",
+			"filePath": "translation-files-current/de@informal/common.json",
+			"summary": "Configuration file that controls translation files current behavior for the frontend project.",
+			"tags": ["configuration", "i18n", "translation-files-current"],
+			"complexity": "complex"
+		},
+		{
+			"id": "config:translation-files-current/fr/common.json",
+			"type": "config",
+			"name": "common.json",
+			"filePath": "translation-files-current/fr/common.json",
+			"summary": "Configuration file that controls translation files current behavior for the frontend project.",
+			"tags": ["configuration", "i18n", "translation-files-current"],
+			"complexity": "complex"
+		},
+		{
+			"id": "config:translation-files-current/fr/languages.json",
+			"type": "config",
+			"name": "languages.json",
+			"filePath": "translation-files-current/fr/languages.json",
+			"summary": "Configuration file that controls translation files current behavior for the frontend project.",
+			"tags": ["configuration", "i18n", "translation-files-current"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "config:translation-files-current/ru/common.json",
+			"type": "config",
+			"name": "common.json",
+			"filePath": "translation-files-current/ru/common.json",
+			"summary": "Configuration file that controls translation files current behavior for the frontend project.",
+			"tags": ["configuration", "i18n", "translation-files-current"],
+			"complexity": "complex"
+		},
+		{
+			"id": "config:translation-files-current/ru/languages.json",
+			"type": "config",
+			"name": "languages.json",
+			"filePath": "translation-files-current/ru/languages.json",
+			"summary": "Configuration file that controls translation files current behavior for the frontend project.",
+			"tags": ["configuration", "i18n", "translation-files-current"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "config:translation-files-current/ti/common.json",
+			"type": "config",
+			"name": "common.json",
+			"filePath": "translation-files-current/ti/common.json",
+			"summary": "Configuration file that controls translation files current behavior for the frontend project.",
+			"tags": ["configuration", "i18n", "translation-files-current"],
+			"complexity": "complex"
+		},
+		{
+			"id": "config:translation-files-current/ti/languages.json",
+			"type": "config",
+			"name": "languages.json",
+			"filePath": "translation-files-current/ti/languages.json",
+			"summary": "Configuration file that controls translation files current behavior for the frontend project.",
+			"tags": ["configuration", "i18n", "translation-files-current"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "config:translation-files-current/tr/common.json",
+			"type": "config",
+			"name": "common.json",
+			"filePath": "translation-files-current/tr/common.json",
+			"summary": "Configuration file that controls translation files current behavior for the frontend project.",
+			"tags": ["configuration", "i18n", "translation-files-current"],
+			"complexity": "complex"
+		},
+		{
+			"id": "config:translation-files-current/tr/languages.json",
+			"type": "config",
+			"name": "languages.json",
+			"filePath": "translation-files-current/tr/languages.json",
+			"summary": "Configuration file that controls translation files current behavior for the frontend project.",
+			"tags": ["configuration", "i18n", "translation-files-current"],
+			"complexity": "moderate"
+		}
+	],
+	"edges": [
+		{
+			"source": "config:src/resources/i18n/ru/common.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:src/resources/i18n/ru/languages.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:src/resources/i18n/ti/common.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:src/resources/i18n/ti/languages.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:src/resources/i18n/tr/common.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:src/resources/i18n/tr/languages.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "file:src/services/liveKitService.ts",
+			"target": "function:src/services/liveKitService.ts:liveKitService",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/services/liveKitService.ts",
+			"target": "function:src/services/liveKitService.ts:liveKitService",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/services/liveKitService.ts",
+			"target": "function:src/services/liveKitService.ts:return",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/services/liveKitService.ts",
+			"target": "class:src/services/liveKitService.ts:LiveKitService",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/services/matrixGroupCallService.ts",
+			"target": "function:src/services/matrixGroupCallService.ts:matrixGroupCallService",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/services/matrixGroupCallService.ts",
+			"target": "function:src/services/matrixGroupCallService.ts:matrixGroupCallService",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/services/matrixGroupCallService.ts",
+			"target": "class:src/services/matrixGroupCallService.ts:MatrixGroupCallService",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/services/matrixRegistrationService.ts",
+			"target": "function:src/services/matrixRegistrationService.ts:registerMatrixUser",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/services/matrixRegistrationService.ts",
+			"target": "function:src/services/matrixRegistrationService.ts:registerMatrixUser",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/services/matrixRegistrationService.ts",
+			"target": "function:src/services/matrixRegistrationService.ts:loginMatrixUser",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/services/matrixRegistrationService.ts",
+			"target": "function:src/services/matrixRegistrationService.ts:loginMatrixUser",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/capitalizeFirstLetter.ts",
+			"target": "function:src/utils/capitalizeFirstLetter.ts:capitalizeFirstLetter",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/capitalizeFirstLetter.ts",
+			"target": "function:src/utils/capitalizeFirstLetter.ts:capitalizeFirstLetter",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/downloadICSFile.ts",
+			"target": "function:src/utils/downloadICSFile.ts:downloadICSFile",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/downloadICSFile.ts",
+			"target": "function:src/utils/downloadICSFile.ts:downloadICSFile",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/useIsFirstLogin.tsx",
+			"target": "function:src/utils/useIsFirstLogin.tsx:STORAGE_KEY_LOGIN",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/useIsFirstLogin.tsx",
+			"target": "function:src/utils/useIsFirstLogin.tsx:STORAGE_KEY_LOGIN",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/useIsFirstLogin.tsx",
+			"target": "function:src/utils/useIsFirstLogin.tsx:useIsFirstLogin",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/useIsFirstLogin.tsx",
+			"target": "function:src/utils/useIsFirstLogin.tsx:useIsFirstLogin",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "config:test-results/.last-run.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:translation-files-current/de@informal/common.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:translation-files-current/fr/common.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:translation-files-current/fr/languages.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:translation-files-current/ru/common.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:translation-files-current/ru/languages.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:translation-files-current/ti/common.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:translation-files-current/ti/languages.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:translation-files-current/tr/common.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:translation-files-current/tr/languages.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		}
+	]
+}

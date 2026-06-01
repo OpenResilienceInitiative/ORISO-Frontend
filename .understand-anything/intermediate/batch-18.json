@@ -1,0 +1,3043 @@
+{
+	"nodes": [
+		{
+			"id": "file:src/components/sessionMenu/sessionMenuHelpers.ts",
+			"type": "file",
+			"name": "sessionMenuHelpers.ts",
+			"filePath": "src/components/sessionMenu/sessionMenuHelpers.ts",
+			"summary": "React UI module for component session menu, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "session", "component-session-menu"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"type": "file",
+			"name": "SessionListItemComponent.tsx",
+			"filePath": "src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"summary": "React UI module for component sessions list item, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"session",
+				"utility",
+				"component-sessions-list-item"
+			],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/sessionsListItem/SessionListItemComponent.tsx:SessionListItemComponent",
+			"type": "function",
+			"name": "SessionListItemComponent",
+			"filePath": "src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"lineRange": [76, 88],
+			"summary": "Function SessionListItemComponent in src/components/sessionsListItem/SessionListItemComponent.tsx, used by the surrounding component sessions list item module.",
+			"tags": ["function", "component-sessions-list-item", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/sessionsListItem/sessionsListItemHelpers.ts",
+			"type": "file",
+			"name": "sessionsListItemHelpers.ts",
+			"filePath": "src/components/sessionsListItem/sessionsListItemHelpers.ts",
+			"summary": "React UI module for component sessions list item, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"session",
+				"utility",
+				"component-sessions-list-item"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionsListItem/sessionsListItemHelpers.ts:LIST_ICONS",
+			"type": "function",
+			"name": "LIST_ICONS",
+			"filePath": "src/components/sessionsListItem/sessionsListItemHelpers.ts",
+			"lineRange": [6, 18],
+			"summary": "Function LIST_ICONS in src/components/sessionsListItem/sessionsListItemHelpers.ts, used by the surrounding component sessions list item module.",
+			"tags": ["function", "component-sessions-list-item", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionsListItem/sessionsListItemHelpers.ts:getSessionsListItemIcon",
+			"type": "function",
+			"name": "getSessionsListItemIcon",
+			"filePath": "src/components/sessionsListItem/sessionsListItemHelpers.ts",
+			"lineRange": [13, 24],
+			"summary": "Function getSessionsListItemIcon in src/components/sessionsListItem/sessionsListItemHelpers.ts, used by the surrounding component sessions list item module.",
+			"tags": ["function", "component-sessions-list-item", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/tag/Tag.stories.ts",
+			"type": "file",
+			"name": "Tag.stories.ts",
+			"filePath": "src/components/tag/Tag.stories.ts",
+			"summary": "React UI module for component tag, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["storybook", "component", "component-tag"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/tag/Tag.tsx",
+			"type": "file",
+			"name": "Tag.tsx",
+			"filePath": "src/components/tag/Tag.tsx",
+			"summary": "React UI module for component tag, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-tag"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/tag/Tag.tsx:Tag",
+			"type": "function",
+			"name": "Tag",
+			"filePath": "src/components/tag/Tag.tsx",
+			"lineRange": [15, 27],
+			"summary": "Function Tag in src/components/tag/Tag.tsx, used by the surrounding component tag module.",
+			"tags": ["function", "component-tag", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/termsandconditions/TermsAndConditions.tsx",
+			"type": "file",
+			"name": "TermsAndConditions.tsx",
+			"filePath": "src/components/termsandconditions/TermsAndConditions.tsx",
+			"summary": "React UI module for component termsandconditions, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-termsandconditions"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/termsandconditions/TermsAndConditions.tsx:TermsAndConditions",
+			"type": "function",
+			"name": "TermsAndConditions",
+			"filePath": "src/components/termsandconditions/TermsAndConditions.tsx",
+			"lineRange": [37, 49],
+			"summary": "Function TermsAndConditions in src/components/termsandconditions/TermsAndConditions.tsx, used by the surrounding component termsandconditions module.",
+			"tags": ["function", "component-termsandconditions", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/twoFactorAuth/TwoFactorNag.tsx",
+			"type": "file",
+			"name": "TwoFactorNag.tsx",
+			"filePath": "src/components/twoFactorAuth/TwoFactorNag.tsx",
+			"summary": "React UI module for component two factor auth, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"authentication",
+				"component-two-factor-auth"
+			],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/videoConference/WaitingRoomContent.tsx",
+			"type": "file",
+			"name": "WaitingRoomContent.tsx",
+			"filePath": "src/components/videoConference/WaitingRoomContent.tsx",
+			"summary": "React UI module for component video conference, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-video-conference"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/videoConference/WaitingRoomContent.tsx:WaitingRoomContent",
+			"type": "function",
+			"name": "WaitingRoomContent",
+			"filePath": "src/components/videoConference/WaitingRoomContent.tsx",
+			"lineRange": [16, 28],
+			"summary": "Function WaitingRoomContent in src/components/videoConference/WaitingRoomContent.tsx, used by the surrounding component video conference module.",
+			"tags": ["function", "component-video-conference", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/videoConference/waitingRoomHelpers.ts",
+			"type": "file",
+			"name": "waitingRoomHelpers.ts",
+			"filePath": "src/components/videoConference/waitingRoomHelpers.ts",
+			"summary": "React UI module for component video conference, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-video-conference", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/containers/bookings/hooks/useAskerHasAssignedConsultant.ts",
+			"type": "file",
+			"name": "useAskerHasAssignedConsultant.ts",
+			"filePath": "src/containers/bookings/hooks/useAskerHasAssignedConsultant.ts",
+			"summary": "React hook module for useAskerHasAssignedConsultant, encapsulating reusable frontend state or side-effect logic.",
+			"tags": ["hook", "utility", "containers"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/containers/bookings/hooks/useAskerHasAssignedConsultant.ts:useAskerHasAssignedConsultant",
+			"type": "function",
+			"name": "useAskerHasAssignedConsultant",
+			"filePath": "src/containers/bookings/hooks/useAskerHasAssignedConsultant.ts",
+			"lineRange": [10, 22],
+			"summary": "Function useAskerHasAssignedConsultant in src/containers/bookings/hooks/useAskerHasAssignedConsultant.ts, used by the surrounding containers module.",
+			"tags": ["function", "containers", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"type": "file",
+			"name": "OverlaysConfigInterface.ts",
+			"filePath": "src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"summary": "Global state module for global state, sharing application state across frontend flows.",
+			"tags": ["state-management", "utility", "global-state"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts:OVERLAY_REQUEST",
+			"type": "function",
+			"name": "OVERLAY_REQUEST",
+			"filePath": "src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"lineRange": [1, 13],
+			"summary": "Function OVERLAY_REQUEST in src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts:OVERLAY_E2EE",
+			"type": "function",
+			"name": "OVERLAY_E2EE",
+			"filePath": "src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"lineRange": [2, 14],
+			"summary": "Function OVERLAY_E2EE in src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts:OVERLAY_RELEASE_NOTE",
+			"type": "function",
+			"name": "OVERLAY_RELEASE_NOTE",
+			"filePath": "src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"lineRange": [3, 15],
+			"summary": "Function OVERLAY_RELEASE_NOTE in src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts:OVERLAY_TWO_FACTOR_NAG",
+			"type": "function",
+			"name": "OVERLAY_TWO_FACTOR_NAG",
+			"filePath": "src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"lineRange": [4, 16],
+			"summary": "Function OVERLAY_TWO_FACTOR_NAG in src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts:OVERLAY_ABSENCE",
+			"type": "function",
+			"name": "OVERLAY_ABSENCE",
+			"filePath": "src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"lineRange": [5, 17],
+			"summary": "Function OVERLAY_ABSENCE in src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts:OVERLAY_TERMS_AND_CONDITION",
+			"type": "function",
+			"name": "OVERLAY_TERMS_AND_CONDITION",
+			"filePath": "src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"lineRange": [6, 18],
+			"summary": "Function OVERLAY_TERMS_AND_CONDITION in src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/provider/ActiveSessionProvider.tsx",
+			"type": "file",
+			"name": "ActiveSessionProvider.tsx",
+			"filePath": "src/globalState/provider/ActiveSessionProvider.tsx",
+			"summary": "React UI module for global state, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"state-management",
+				"session",
+				"utility",
+				"global-state"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/ActiveSessionProvider.tsx:ActiveSessionContext",
+			"type": "function",
+			"name": "ActiveSessionContext",
+			"filePath": "src/globalState/provider/ActiveSessionProvider.tsx",
+			"lineRange": [12, 24],
+			"summary": "Function ActiveSessionContext in src/globalState/provider/ActiveSessionProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/provider/ConsultantListProvider.tsx",
+			"type": "file",
+			"name": "ConsultantListProvider.tsx",
+			"filePath": "src/globalState/provider/ConsultantListProvider.tsx",
+			"summary": "React UI module for global state, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"state-management",
+				"utility",
+				"global-state"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/ConsultantListProvider.tsx:ConsultantListProvider",
+			"type": "function",
+			"name": "ConsultantListProvider",
+			"filePath": "src/globalState/provider/ConsultantListProvider.tsx",
+			"lineRange": [8, 18],
+			"summary": "Function ConsultantListProvider in src/globalState/provider/ConsultantListProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/ConsultantListProvider.tsx:ConsultantListContext",
+			"type": "function",
+			"name": "ConsultantListContext",
+			"filePath": "src/globalState/provider/ConsultantListProvider.tsx",
+			"lineRange": [6, 18],
+			"summary": "Function ConsultantListContext in src/globalState/provider/ConsultantListProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/provider/RocketChatUsersOfRoomProvider.tsx",
+			"type": "file",
+			"name": "RocketChatUsersOfRoomProvider.tsx",
+			"filePath": "src/globalState/provider/RocketChatUsersOfRoomProvider.tsx",
+			"summary": "React UI module for global state, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"state-management",
+				"utility",
+				"global-state"
+			],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/globalState/provider/RocketChatUsersOfRoomProvider.tsx:RocketChatUsersOfRoomContext",
+			"type": "function",
+			"name": "RocketChatUsersOfRoomContext",
+			"filePath": "src/globalState/provider/RocketChatUsersOfRoomProvider.tsx",
+			"lineRange": [30, 42],
+			"summary": "Function RocketChatUsersOfRoomContext in src/globalState/provider/RocketChatUsersOfRoomProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/RocketChatUsersOfRoomProvider.tsx:RocketChatUsersOfRoomProvider",
+			"type": "function",
+			"name": "RocketChatUsersOfRoomProvider",
+			"filePath": "src/globalState/provider/RocketChatUsersOfRoomProvider.tsx",
+			"lineRange": [38, 50],
+			"summary": "Function RocketChatUsersOfRoomProvider in src/globalState/provider/RocketChatUsersOfRoomProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/provider/UpdateSessionListProvider.tsx",
+			"type": "file",
+			"name": "UpdateSessionListProvider.tsx",
+			"filePath": "src/globalState/provider/UpdateSessionListProvider.tsx",
+			"summary": "React UI module for global state, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"state-management",
+				"session",
+				"utility",
+				"global-state"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/UpdateSessionListProvider.tsx:UpdateSessionListProvider",
+			"type": "function",
+			"name": "UpdateSessionListProvider",
+			"filePath": "src/globalState/provider/UpdateSessionListProvider.tsx",
+			"lineRange": [9, 19],
+			"summary": "Function UpdateSessionListProvider in src/globalState/provider/UpdateSessionListProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/UpdateSessionListProvider.tsx:UpdateSessionListContext",
+			"type": "function",
+			"name": "UpdateSessionListContext",
+			"filePath": "src/globalState/provider/UpdateSessionListProvider.tsx",
+			"lineRange": [7, 19],
+			"summary": "Function UpdateSessionListContext in src/globalState/provider/UpdateSessionListProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/hooks/useE2EE.tsx",
+			"type": "file",
+			"name": "useE2EE.tsx",
+			"filePath": "src/hooks/useE2EE.tsx",
+			"summary": "React hook module for useE2EE, encapsulating reusable frontend state or side-effect logic.",
+			"tags": ["hook", "component", "utility", "hooks"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/hooks/useE2EE.tsx:ENCRYPT_ROOM_STATE_GET_MEMBERS",
+			"type": "function",
+			"name": "ENCRYPT_ROOM_STATE_GET_MEMBERS",
+			"filePath": "src/hooks/useE2EE.tsx",
+			"lineRange": [21, 33],
+			"summary": "Function ENCRYPT_ROOM_STATE_GET_MEMBERS in src/hooks/useE2EE.tsx, used by the surrounding hooks module.",
+			"tags": ["function", "hooks", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/hooks/useE2EE.tsx:ENCRYPT_ROOM_STATE_GET_USERS_WITHOUT_KEY",
+			"type": "function",
+			"name": "ENCRYPT_ROOM_STATE_GET_USERS_WITHOUT_KEY",
+			"filePath": "src/hooks/useE2EE.tsx",
+			"lineRange": [22, 34],
+			"summary": "Function ENCRYPT_ROOM_STATE_GET_USERS_WITHOUT_KEY in src/hooks/useE2EE.tsx, used by the surrounding hooks module.",
+			"tags": ["function", "hooks", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/hooks/useE2EE.tsx:ENCRYPT_ROOM_STATE_ENCRYPTING_USERS",
+			"type": "function",
+			"name": "ENCRYPT_ROOM_STATE_ENCRYPTING_USERS",
+			"filePath": "src/hooks/useE2EE.tsx",
+			"lineRange": [23, 35],
+			"summary": "Function ENCRYPT_ROOM_STATE_ENCRYPTING_USERS in src/hooks/useE2EE.tsx, used by the surrounding hooks module.",
+			"tags": ["function", "hooks", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/hooks/useE2EE.tsx:ENCRYPT_ROOM_STATE_SET_ROOM_KEY",
+			"type": "function",
+			"name": "ENCRYPT_ROOM_STATE_SET_ROOM_KEY",
+			"filePath": "src/hooks/useE2EE.tsx",
+			"lineRange": [24, 36],
+			"summary": "Function ENCRYPT_ROOM_STATE_SET_ROOM_KEY in src/hooks/useE2EE.tsx, used by the surrounding hooks module.",
+			"tags": ["function", "hooks", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/hooks/useE2EE.tsx:ENCRYPT_ROOM_STATE_SEND_ALIAS_MESSAGE",
+			"type": "function",
+			"name": "ENCRYPT_ROOM_STATE_SEND_ALIAS_MESSAGE",
+			"filePath": "src/hooks/useE2EE.tsx",
+			"lineRange": [25, 37],
+			"summary": "Function ENCRYPT_ROOM_STATE_SEND_ALIAS_MESSAGE in src/hooks/useE2EE.tsx, used by the surrounding hooks module.",
+			"tags": ["function", "hooks", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/hooks/useE2EE.tsx:ENCRYPT_ROOM_STATE_DONE",
+			"type": "function",
+			"name": "ENCRYPT_ROOM_STATE_DONE",
+			"filePath": "src/hooks/useE2EE.tsx",
+			"lineRange": [26, 38],
+			"summary": "Function ENCRYPT_ROOM_STATE_DONE in src/hooks/useE2EE.tsx, used by the surrounding hooks module.",
+			"tags": ["function", "hooks", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/hooks/useE2EE.tsx:ENCRYPT_ROOM_STATE_ERROR",
+			"type": "function",
+			"name": "ENCRYPT_ROOM_STATE_ERROR",
+			"filePath": "src/hooks/useE2EE.tsx",
+			"lineRange": [27, 39],
+			"summary": "Function ENCRYPT_ROOM_STATE_ERROR in src/hooks/useE2EE.tsx, used by the surrounding hooks module.",
+			"tags": ["function", "hooks", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/hooks/useE2EE.tsx:useE2EE",
+			"type": "function",
+			"name": "useE2EE",
+			"filePath": "src/hooks/useE2EE.tsx",
+			"lineRange": [66, 78],
+			"summary": "Function useE2EE in src/hooks/useE2EE.tsx, used by the surrounding hooks module.",
+			"tags": ["function", "hooks", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/hooks/useE2EEViewElements.tsx",
+			"type": "file",
+			"name": "useE2EEViewElements.tsx",
+			"filePath": "src/hooks/useE2EEViewElements.tsx",
+			"summary": "React hook module for useE2EEViewElements, encapsulating reusable frontend state or side-effect logic.",
+			"tags": ["hook", "component", "utility", "hooks"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/hooks/useE2EEViewElements.tsx:useE2EEViewElements",
+			"type": "function",
+			"name": "useE2EEViewElements",
+			"filePath": "src/hooks/useE2EEViewElements.tsx",
+			"lineRange": [18, 30],
+			"summary": "Function useE2EEViewElements in src/hooks/useE2EEViewElements.tsx, used by the surrounding hooks module.",
+			"tags": ["function", "hooks", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/hooks/useResponsive.tsx",
+			"type": "file",
+			"name": "useResponsive.tsx",
+			"filePath": "src/hooks/useResponsive.tsx",
+			"summary": "React hook module for useResponsive, encapsulating reusable frontend state or side-effect logic.",
+			"tags": ["hook", "component", "utility", "hooks"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/hooks/useResponsive.tsx:useResponsive",
+			"type": "function",
+			"name": "useResponsive",
+			"filePath": "src/hooks/useResponsive.tsx",
+			"lineRange": [3, 15],
+			"summary": "Function useResponsive in src/hooks/useResponsive.tsx, used by the surrounding hooks module.",
+			"tags": ["function", "hooks", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/hooks/useSearchParams.tsx",
+			"type": "file",
+			"name": "useSearchParams.tsx",
+			"filePath": "src/hooks/useSearchParams.tsx",
+			"summary": "React hook module for useSearchParams, encapsulating reusable frontend state or side-effect logic.",
+			"tags": ["hook", "component", "utility", "hooks"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/hooks/useSearchParams.tsx:useSearchParam",
+			"type": "function",
+			"name": "useSearchParam",
+			"filePath": "src/hooks/useSearchParams.tsx",
+			"lineRange": [4, 16],
+			"summary": "Function useSearchParam in src/hooks/useSearchParams.tsx, used by the surrounding hooks module.",
+			"tags": ["function", "hooks", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/hooks/useSession.tsx",
+			"type": "file",
+			"name": "useSession.tsx",
+			"filePath": "src/hooks/useSession.tsx",
+			"summary": "React hook module for useSession, encapsulating reusable frontend state or side-effect logic.",
+			"tags": ["hook", "component", "session", "utility", "hooks"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/hooks/useSession.tsx:useSession",
+			"type": "function",
+			"name": "useSession",
+			"filePath": "src/hooks/useSession.tsx",
+			"lineRange": [10, 22],
+			"summary": "Function useSession in src/hooks/useSession.tsx, used by the surrounding hooks module.",
+			"tags": ["function", "hooks", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/hooks/useTimeoutOverlay.tsx",
+			"type": "file",
+			"name": "useTimeoutOverlay.tsx",
+			"filePath": "src/hooks/useTimeoutOverlay.tsx",
+			"summary": "React hook module for useTimeoutOverlay, encapsulating reusable frontend state or side-effect logic.",
+			"tags": ["hook", "component", "utility", "hooks"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/hooks/useTimeoutOverlay.tsx:useTimeoutOverlay",
+			"type": "function",
+			"name": "useTimeoutOverlay",
+			"filePath": "src/hooks/useTimeoutOverlay.tsx",
+			"lineRange": [8, 20],
+			"summary": "Function useTimeoutOverlay in src/hooks/useTimeoutOverlay.tsx, used by the surrounding hooks module.",
+			"tags": ["function", "hooks", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/hooks/useUpdatingRef.tsx",
+			"type": "file",
+			"name": "useUpdatingRef.tsx",
+			"filePath": "src/hooks/useUpdatingRef.tsx",
+			"summary": "React hook module for useUpdatingRef, encapsulating reusable frontend state or side-effect logic.",
+			"tags": ["hook", "component", "hooks"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/hooks/useWatcher.tsx",
+			"type": "file",
+			"name": "useWatcher.tsx",
+			"filePath": "src/hooks/useWatcher.tsx",
+			"summary": "React hook module for useWatcher, encapsulating reusable frontend state or side-effect logic.",
+			"tags": ["hook", "component", "utility", "hooks"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/hooks/useWatcher.tsx:useWatcher",
+			"type": "function",
+			"name": "useWatcher",
+			"filePath": "src/hooks/useWatcher.tsx",
+			"lineRange": [5, 17],
+			"summary": "Function useWatcher in src/hooks/useWatcher.tsx, used by the surrounding hooks module.",
+			"tags": ["function", "hooks", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/utils/encryptionHelpers.ts",
+			"type": "file",
+			"name": "encryptionHelpers.ts",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"summary": "TypeScript module for utilities with 47 extracted functions and 4 extracted classes.",
+			"tags": ["utility", "utilities", "code"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:toArrayBuffer",
+			"type": "function",
+			"name": "toArrayBuffer",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [36, 48],
+			"summary": "Function toArrayBuffer in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:typedArrayToBuffer",
+			"type": "function",
+			"name": "typedArrayToBuffer",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [62, 74],
+			"summary": "Function typedArrayToBuffer in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:toOwnedUint8Array",
+			"type": "function",
+			"name": "toOwnedUint8Array",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [68, 80],
+			"summary": "Function toOwnedUint8Array in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:importRawKey",
+			"type": "function",
+			"name": "importRawKey",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [105, 117],
+			"summary": "Function importRawKey in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:importRawEncryptionKey",
+			"type": "function",
+			"name": "importRawEncryptionKey",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [118, 130],
+			"summary": "Function importRawEncryptionKey in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:deriveKey",
+			"type": "function",
+			"name": "deriveKey",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [128, 140],
+			"summary": "Function deriveKey in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:encryptAES",
+			"type": "function",
+			"name": "encryptAES",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [152, 164],
+			"summary": "Function encryptAES in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:decryptAES",
+			"type": "function",
+			"name": "decryptAES",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [164, 176],
+			"summary": "Function decryptAES in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:toString",
+			"type": "function",
+			"name": "toString",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [176, 188],
+			"summary": "Function toString in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:toHexString",
+			"type": "function",
+			"name": "toHexString",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [185, 197],
+			"summary": "Function toHexString in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:fromHexString",
+			"type": "function",
+			"name": "fromHexString",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [192, 204],
+			"summary": "Function fromHexString in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:importRSAKey",
+			"type": "function",
+			"name": "importRSAKey",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [198, 210],
+			"summary": "Function importRSAKey in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:joinVectorAndEcryptedData",
+			"type": "function",
+			"name": "joinVectorAndEcryptedData",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [217, 229],
+			"summary": "Function joinVectorAndEcryptedData in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:splitVectorAndEcryptedData",
+			"type": "function",
+			"name": "splitVectorAndEcryptedData",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [228, 240],
+			"summary": "Function splitVectorAndEcryptedData in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:encryptRSA",
+			"type": "function",
+			"name": "encryptRSA",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [245, 257],
+			"summary": "Function encryptRSA in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:decryptRSA",
+			"type": "function",
+			"name": "decryptRSA",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [249, 261],
+			"summary": "Function decryptRSA in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:importAESKey",
+			"type": "function",
+			"name": "importAESKey",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [253, 265],
+			"summary": "Function importAESKey in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:ENCRYPTION_VERSION_ACTIVE",
+			"type": "function",
+			"name": "ENCRYPTION_VERSION_ACTIVE",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [13, 25],
+			"summary": "Function ENCRYPTION_VERSION_ACTIVE in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:VERSION_SEPERATOR",
+			"type": "function",
+			"name": "VERSION_SEPERATOR",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [14, 26],
+			"summary": "Function VERSION_SEPERATOR in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:VECTOR_LENGTH",
+			"type": "function",
+			"name": "VECTOR_LENGTH",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [15, 27],
+			"summary": "Function VECTOR_LENGTH in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:KEY_ID_LENGTH",
+			"type": "function",
+			"name": "KEY_ID_LENGTH",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [16, 28],
+			"summary": "Function KEY_ID_LENGTH in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:MAX_PREFIX_LENGTH",
+			"type": "function",
+			"name": "MAX_PREFIX_LENGTH",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [17, 29],
+			"summary": "Function MAX_PREFIX_LENGTH in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:SIGNATURE_LENGTH",
+			"type": "function",
+			"name": "SIGNATURE_LENGTH",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [22, 34],
+			"summary": "Function SIGNATURE_LENGTH in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:encodeUsername",
+			"type": "function",
+			"name": "encodeUsername",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [24, 36],
+			"summary": "Function encodeUsername in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:decodeUsername",
+			"type": "function",
+			"name": "decodeUsername",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [28, 40],
+			"summary": "Function decodeUsername in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:generateRSAKey",
+			"type": "function",
+			"name": "generateRSAKey",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [88, 100],
+			"summary": "Function generateRSAKey in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:exportJWKKey",
+			"type": "function",
+			"name": "exportJWKKey",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [101, 113],
+			"summary": "Function exportJWKKey in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:generateAESKey",
+			"type": "function",
+			"name": "generateAESKey",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [238, 250],
+			"summary": "Function generateAESKey in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:encryptBuffer",
+			"type": "function",
+			"name": "encryptBuffer",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [272, 284],
+			"summary": "Function encryptBuffer in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:decryptAttachment",
+			"type": "function",
+			"name": "decryptAttachment",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [288, 300],
+			"summary": "Function decryptAttachment in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:getSignature",
+			"type": "function",
+			"name": "getSignature",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [331, 343],
+			"summary": "Function getSignature in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:encryptAttachment",
+			"type": "function",
+			"name": "encryptAttachment",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [350, 362],
+			"summary": "Function encryptAttachment in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:encryptText",
+			"type": "function",
+			"name": "encryptText",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [396, 408],
+			"summary": "Function encryptText in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:decryptText",
+			"type": "function",
+			"name": "decryptText",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [432, 444],
+			"summary": "Function decryptText in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:getTmpMasterKey",
+			"type": "function",
+			"name": "getTmpMasterKey",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [491, 503],
+			"summary": "Function getTmpMasterKey in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:deriveMasterKeyFromPassword",
+			"type": "function",
+			"name": "deriveMasterKeyFromPassword",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [498, 510],
+			"summary": "Function deriveMasterKeyFromPassword in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:encryptForParticipant",
+			"type": "function",
+			"name": "encryptForParticipant",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [524, 536],
+			"summary": "Function encryptForParticipant in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:createGroupKey",
+			"type": "function",
+			"name": "createGroupKey",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [560, 572],
+			"summary": "Function createGroupKey in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:importGroupKey",
+			"type": "function",
+			"name": "importGroupKey",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [583, 595],
+			"summary": "Function importGroupKey in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:encryptPrivateKey",
+			"type": "function",
+			"name": "encryptPrivateKey",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [618, 630],
+			"summary": "Function encryptPrivateKey in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:decryptPrivateKey",
+			"type": "function",
+			"name": "decryptPrivateKey",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [635, 647],
+			"summary": "Function decryptPrivateKey in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:storeKeys",
+			"type": "function",
+			"name": "storeKeys",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [647, 659],
+			"summary": "Function storeKeys in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:createAndStoreKeys",
+			"type": "function",
+			"name": "createAndStoreKeys",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [652, 664],
+			"summary": "Function createAndStoreKeys in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:writeMasterKeyToLocalStorage",
+			"type": "function",
+			"name": "writeMasterKeyToLocalStorage",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [682, 694],
+			"summary": "Function writeMasterKeyToLocalStorage in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:readMasterKeyFromLocalStorage",
+			"type": "function",
+			"name": "readMasterKeyFromLocalStorage",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [691, 703],
+			"summary": "Function readMasterKeyFromLocalStorage in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:loadKeysFromRocketChat",
+			"type": "function",
+			"name": "loadKeysFromRocketChat",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [698, 710],
+			"summary": "Function loadKeysFromRocketChat in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/encryptionHelpers.ts:normalizeBufferSource",
+			"type": "function",
+			"name": "normalizeBufferSource",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [145, 157],
+			"summary": "Function normalizeBufferSource in src/utils/encryptionHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "internal"],
+			"complexity": "simple"
+		},
+		{
+			"id": "class:src/utils/encryptionHelpers.ts:MissingKeyError",
+			"type": "class",
+			"name": "MissingKeyError",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [267, 307],
+			"summary": "Class MissingKeyError in src/utils/encryptionHelpers.ts, grouping related utilities behavior.",
+			"tags": ["class", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "class:src/utils/encryptionHelpers.ts:WrongKeyError",
+			"type": "class",
+			"name": "WrongKeyError",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [268, 308],
+			"summary": "Class WrongKeyError in src/utils/encryptionHelpers.ts, grouping related utilities behavior.",
+			"tags": ["class", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "class:src/utils/encryptionHelpers.ts:EncryptValidationError",
+			"type": "class",
+			"name": "EncryptValidationError",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [269, 309],
+			"summary": "Class EncryptValidationError in src/utils/encryptionHelpers.ts, grouping related utilities behavior.",
+			"tags": ["class", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "class:src/utils/encryptionHelpers.ts:EncPrefixLengthError",
+			"type": "class",
+			"name": "EncPrefixLengthError",
+			"filePath": "src/utils/encryptionHelpers.ts",
+			"lineRange": [270, 310],
+			"summary": "Class EncPrefixLengthError in src/utils/encryptionHelpers.ts, grouping related utilities behavior.",
+			"tags": ["class", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/utils/pseudonymGenerator.ts",
+			"type": "file",
+			"name": "pseudonymGenerator.ts",
+			"filePath": "src/utils/pseudonymGenerator.ts",
+			"summary": "TypeScript module for utilities with 2 extracted functions and 0 extracted classes.",
+			"tags": ["utility", "utilities", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/utils/pseudonymGenerator.ts:generatePseudonym",
+			"type": "function",
+			"name": "generatePseudonym",
+			"filePath": "src/utils/pseudonymGenerator.ts",
+			"lineRange": [140, 152],
+			"summary": "Function generatePseudonym in src/utils/pseudonymGenerator.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/pseudonymGenerator.ts:regeneratePseudonym",
+			"type": "function",
+			"name": "regeneratePseudonym",
+			"filePath": "src/utils/pseudonymGenerator.ts",
+			"lineRange": [160, 172],
+			"summary": "Function regeneratePseudonym in src/utils/pseudonymGenerator.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/utils/tenantSettingsHelper.ts",
+			"type": "file",
+			"name": "tenantSettingsHelper.ts",
+			"filePath": "src/utils/tenantSettingsHelper.ts",
+			"summary": "TypeScript module for utilities with 2 extracted functions and 0 extracted classes.",
+			"tags": ["utility", "utilities", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/tenantSettingsHelper.ts:setTenantSettings",
+			"type": "function",
+			"name": "setTenantSettings",
+			"filePath": "src/utils/tenantSettingsHelper.ts",
+			"lineRange": [6, 12],
+			"summary": "Function setTenantSettings in src/utils/tenantSettingsHelper.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/tenantSettingsHelper.ts:getTenantSettings",
+			"type": "function",
+			"name": "getTenantSettings",
+			"filePath": "src/utils/tenantSettingsHelper.ts",
+			"lineRange": [10, 12],
+			"summary": "Function getTenantSettings in src/utils/tenantSettingsHelper.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/utils/useTyping.ts",
+			"type": "file",
+			"name": "useTyping.ts",
+			"filePath": "src/utils/useTyping.ts",
+			"summary": "React hook module for useTyping, encapsulating reusable frontend state or side-effect logic.",
+			"tags": ["hook", "utility", "utilities"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/utils/useTyping.ts:reducer",
+			"type": "function",
+			"name": "reducer",
+			"filePath": "src/utils/useTyping.ts",
+			"lineRange": [36, 48],
+			"summary": "Function reducer in src/utils/useTyping.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/useTyping.ts:useTyping",
+			"type": "function",
+			"name": "useTyping",
+			"filePath": "src/utils/useTyping.ts",
+			"lineRange": [59, 71],
+			"summary": "Function useTyping in src/utils/useTyping.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		}
+	],
+	"edges": [
+		{
+			"source": "file:src/components/sessionMenu/sessionMenuHelpers.ts",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionMenu/sessionMenuHelpers.ts",
+			"target": "file:src/components/overlay/Overlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"target": "function:src/components/sessionsListItem/SessionListItemComponent.tsx:SessionListItemComponent",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"target": "function:src/components/sessionsListItem/SessionListItemComponent.tsx:SessionListItemComponent",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"target": "file:src/api/apiSendAliasMessage.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"target": "file:src/components/app/navigationHandler.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"target": "file:src/components/message/messageConstants.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"target": "file:src/components/message/UserAvatar.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"target": "file:src/components/overlay/Overlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"target": "file:src/components/session/DeleteSession.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"target": "file:src/components/session/sessionDateHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"target": "file:src/components/session/sessionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"target": "file:src/components/sessionHeader/ConsultantSearchLoader.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"target": "file:src/components/sessionMenu/sessionMenuHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"target": "file:src/components/sessionsListItem/SessionListItemAttachment.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"target": "file:src/components/sessionsListItem/SessionListItemLastMessage.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"target": "file:src/components/sessionsListItem/SessionListItemVideoCall.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"target": "file:src/components/sessionsListItem/sessionsListItemHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"target": "file:src/components/tag/Tag.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"target": "file:src/globalState/provider/RocketChatUsersOfRoomProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"target": "file:src/hooks/useE2EE.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"target": "file:src/hooks/useSearchParams.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"target": "file:src/resources/img/icons.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"target": "file:src/utils/dateHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"target": "file:src/utils/encryptionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsListItem/sessionsListItemHelpers.ts",
+			"target": "function:src/components/sessionsListItem/sessionsListItemHelpers.ts:LIST_ICONS",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionsListItem/sessionsListItemHelpers.ts",
+			"target": "function:src/components/sessionsListItem/sessionsListItemHelpers.ts:LIST_ICONS",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionsListItem/sessionsListItemHelpers.ts",
+			"target": "function:src/components/sessionsListItem/sessionsListItemHelpers.ts:getSessionsListItemIcon",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionsListItem/sessionsListItemHelpers.ts",
+			"target": "function:src/components/sessionsListItem/sessionsListItemHelpers.ts:getSessionsListItemIcon",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/tag/Tag.stories.ts",
+			"target": "file:src/components/tag/Tag.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/tag/Tag.tsx",
+			"target": "function:src/components/tag/Tag.tsx:Tag",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/tag/Tag.tsx",
+			"target": "function:src/components/tag/Tag.tsx:Tag",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/termsandconditions/TermsAndConditions.tsx",
+			"target": "function:src/components/termsandconditions/TermsAndConditions.tsx:TermsAndConditions",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/termsandconditions/TermsAndConditions.tsx",
+			"target": "function:src/components/termsandconditions/TermsAndConditions.tsx:TermsAndConditions",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/termsandconditions/TermsAndConditions.tsx",
+			"target": "file:src/api/apiPatchUserData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/termsandconditions/TermsAndConditions.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/termsandconditions/TermsAndConditions.tsx",
+			"target": "file:src/components/checkbox/Checkbox.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/termsandconditions/TermsAndConditions.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/termsandconditions/TermsAndConditions.tsx",
+			"target": "file:src/components/logout/logout.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/termsandconditions/TermsAndConditions.tsx",
+			"target": "file:src/components/overlay/Overlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/termsandconditions/TermsAndConditions.tsx",
+			"target": "file:src/components/termsandconditions/termsandconfitions.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/termsandconditions/TermsAndConditions.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/termsandconditions/TermsAndConditions.tsx",
+			"target": "file:src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/termsandconditions/TermsAndConditions.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/twoFactorAuth/TwoFactorNag.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/twoFactorAuth/TwoFactorNag.tsx",
+			"target": "file:src/components/devToolbar/DevToolbar.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/twoFactorAuth/TwoFactorNag.tsx",
+			"target": "file:src/components/overlay/Overlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/twoFactorAuth/TwoFactorNag.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/twoFactorAuth/TwoFactorNag.tsx",
+			"target": "file:src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/twoFactorAuth/TwoFactorNag.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/videoConference/WaitingRoomContent.tsx",
+			"target": "function:src/components/videoConference/WaitingRoomContent.tsx:WaitingRoomContent",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/videoConference/WaitingRoomContent.tsx",
+			"target": "function:src/components/videoConference/WaitingRoomContent.tsx:WaitingRoomContent",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/videoConference/WaitingRoomContent.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/videoConference/WaitingRoomContent.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/videoConference/waitingRoomHelpers.ts",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/videoConference/waitingRoomHelpers.ts",
+			"target": "file:src/components/overlay/Overlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/hooks/useAskerHasAssignedConsultant.ts",
+			"target": "function:src/containers/bookings/hooks/useAskerHasAssignedConsultant.ts:useAskerHasAssignedConsultant",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/containers/bookings/hooks/useAskerHasAssignedConsultant.ts",
+			"target": "function:src/containers/bookings/hooks/useAskerHasAssignedConsultant.ts:useAskerHasAssignedConsultant",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/containers/bookings/hooks/useAskerHasAssignedConsultant.ts",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/hooks/useAskerHasAssignedConsultant.ts",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/hooks/useAskerHasAssignedConsultant.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"target": "function:src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts:OVERLAY_REQUEST",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"target": "function:src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts:OVERLAY_REQUEST",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"target": "function:src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts:OVERLAY_E2EE",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"target": "function:src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts:OVERLAY_E2EE",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"target": "function:src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts:OVERLAY_RELEASE_NOTE",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"target": "function:src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts:OVERLAY_RELEASE_NOTE",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"target": "function:src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts:OVERLAY_TWO_FACTOR_NAG",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"target": "function:src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts:OVERLAY_TWO_FACTOR_NAG",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"target": "function:src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts:OVERLAY_ABSENCE",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"target": "function:src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts:OVERLAY_ABSENCE",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"target": "function:src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts:OVERLAY_TERMS_AND_CONDITION",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"target": "function:src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts:OVERLAY_TERMS_AND_CONDITION",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/ActiveSessionProvider.tsx",
+			"target": "function:src/globalState/provider/ActiveSessionProvider.tsx:ActiveSessionContext",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/ActiveSessionProvider.tsx",
+			"target": "function:src/globalState/provider/ActiveSessionProvider.tsx:ActiveSessionContext",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/ConsultantListProvider.tsx",
+			"target": "function:src/globalState/provider/ConsultantListProvider.tsx:ConsultantListProvider",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/ConsultantListProvider.tsx",
+			"target": "function:src/globalState/provider/ConsultantListProvider.tsx:ConsultantListProvider",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/ConsultantListProvider.tsx",
+			"target": "function:src/globalState/provider/ConsultantListProvider.tsx:ConsultantListContext",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/ConsultantListProvider.tsx",
+			"target": "function:src/globalState/provider/ConsultantListProvider.tsx:ConsultantListContext",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatUsersOfRoomProvider.tsx",
+			"target": "function:src/globalState/provider/RocketChatUsersOfRoomProvider.tsx:RocketChatUsersOfRoomContext",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatUsersOfRoomProvider.tsx",
+			"target": "function:src/globalState/provider/RocketChatUsersOfRoomProvider.tsx:RocketChatUsersOfRoomContext",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatUsersOfRoomProvider.tsx",
+			"target": "function:src/globalState/provider/RocketChatUsersOfRoomProvider.tsx:RocketChatUsersOfRoomProvider",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatUsersOfRoomProvider.tsx",
+			"target": "function:src/globalState/provider/RocketChatUsersOfRoomProvider.tsx:RocketChatUsersOfRoomProvider",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatUsersOfRoomProvider.tsx",
+			"target": "file:src/components/app/RocketChat.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatUsersOfRoomProvider.tsx",
+			"target": "file:src/components/session/sessionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatUsersOfRoomProvider.tsx",
+			"target": "file:src/globalState/provider/ActiveSessionProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatUsersOfRoomProvider.tsx",
+			"target": "file:src/globalState/provider/RocketChatProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatUsersOfRoomProvider.tsx",
+			"target": "file:src/globalState/provider/RocketChatSytemUsersProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/RocketChatUsersOfRoomProvider.tsx",
+			"target": "file:src/hooks/useUpdatingRef.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/UpdateSessionListProvider.tsx",
+			"target": "function:src/globalState/provider/UpdateSessionListProvider.tsx:UpdateSessionListProvider",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/UpdateSessionListProvider.tsx",
+			"target": "function:src/globalState/provider/UpdateSessionListProvider.tsx:UpdateSessionListProvider",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/UpdateSessionListProvider.tsx",
+			"target": "function:src/globalState/provider/UpdateSessionListProvider.tsx:UpdateSessionListContext",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/UpdateSessionListProvider.tsx",
+			"target": "function:src/globalState/provider/UpdateSessionListProvider.tsx:UpdateSessionListContext",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/UpdateSessionListProvider.tsx",
+			"target": "file:src/components/session/sessionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/hooks/useE2EE.tsx",
+			"target": "function:src/hooks/useE2EE.tsx:ENCRYPT_ROOM_STATE_GET_MEMBERS",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/hooks/useE2EE.tsx",
+			"target": "function:src/hooks/useE2EE.tsx:ENCRYPT_ROOM_STATE_GET_MEMBERS",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/hooks/useE2EE.tsx",
+			"target": "function:src/hooks/useE2EE.tsx:ENCRYPT_ROOM_STATE_GET_USERS_WITHOUT_KEY",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/hooks/useE2EE.tsx",
+			"target": "function:src/hooks/useE2EE.tsx:ENCRYPT_ROOM_STATE_GET_USERS_WITHOUT_KEY",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/hooks/useE2EE.tsx",
+			"target": "function:src/hooks/useE2EE.tsx:ENCRYPT_ROOM_STATE_ENCRYPTING_USERS",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/hooks/useE2EE.tsx",
+			"target": "function:src/hooks/useE2EE.tsx:ENCRYPT_ROOM_STATE_ENCRYPTING_USERS",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/hooks/useE2EE.tsx",
+			"target": "function:src/hooks/useE2EE.tsx:ENCRYPT_ROOM_STATE_SET_ROOM_KEY",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/hooks/useE2EE.tsx",
+			"target": "function:src/hooks/useE2EE.tsx:ENCRYPT_ROOM_STATE_SET_ROOM_KEY",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/hooks/useE2EE.tsx",
+			"target": "function:src/hooks/useE2EE.tsx:ENCRYPT_ROOM_STATE_SEND_ALIAS_MESSAGE",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/hooks/useE2EE.tsx",
+			"target": "function:src/hooks/useE2EE.tsx:ENCRYPT_ROOM_STATE_SEND_ALIAS_MESSAGE",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/hooks/useE2EE.tsx",
+			"target": "function:src/hooks/useE2EE.tsx:ENCRYPT_ROOM_STATE_DONE",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/hooks/useE2EE.tsx",
+			"target": "function:src/hooks/useE2EE.tsx:ENCRYPT_ROOM_STATE_DONE",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/hooks/useE2EE.tsx",
+			"target": "function:src/hooks/useE2EE.tsx:ENCRYPT_ROOM_STATE_ERROR",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/hooks/useE2EE.tsx",
+			"target": "function:src/hooks/useE2EE.tsx:ENCRYPT_ROOM_STATE_ERROR",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/hooks/useE2EE.tsx",
+			"target": "function:src/hooks/useE2EE.tsx:useE2EE",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/hooks/useE2EE.tsx",
+			"target": "function:src/hooks/useE2EE.tsx:useE2EE",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/hooks/useE2EE.tsx",
+			"target": "file:src/api/apiRocketChatGetUsersOfRoomWithoutKey.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/hooks/useE2EE.tsx",
+			"target": "file:src/api/apiRocketChatSetRoomKeyID.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/hooks/useE2EE.tsx",
+			"target": "file:src/api/apiRocketChatUpdateGroupKey.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/hooks/useE2EE.tsx",
+			"target": "file:src/api/apiSendAliasMessage.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/hooks/useE2EE.tsx",
+			"target": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/hooks/useE2EE.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/hooks/useE2EE.tsx",
+			"target": "file:src/globalState/provider/RocketChatSubscriptionsProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/hooks/useE2EE.tsx",
+			"target": "file:src/globalState/provider/RocketChatUsersOfRoomProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/hooks/useE2EE.tsx",
+			"target": "file:src/utils/encryptionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/hooks/useE2EEViewElements.tsx",
+			"target": "function:src/hooks/useE2EEViewElements.tsx:useE2EEViewElements",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/hooks/useE2EEViewElements.tsx",
+			"target": "function:src/hooks/useE2EEViewElements.tsx:useE2EEViewElements",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/hooks/useE2EEViewElements.tsx",
+			"target": "file:src/components/overlay/Overlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/hooks/useE2EEViewElements.tsx",
+			"target": "file:src/components/progressbar/ProgressBar.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/hooks/useE2EEViewElements.tsx",
+			"target": "file:src/hooks/useE2EE.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/hooks/useResponsive.tsx",
+			"target": "function:src/hooks/useResponsive.tsx:useResponsive",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/hooks/useResponsive.tsx",
+			"target": "function:src/hooks/useResponsive.tsx:useResponsive",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/hooks/useSearchParams.tsx",
+			"target": "function:src/hooks/useSearchParams.tsx:useSearchParam",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/hooks/useSearchParams.tsx",
+			"target": "function:src/hooks/useSearchParams.tsx:useSearchParam",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/hooks/useSession.tsx",
+			"target": "function:src/hooks/useSession.tsx:useSession",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/hooks/useSession.tsx",
+			"target": "function:src/hooks/useSession.tsx:useSession",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/hooks/useSession.tsx",
+			"target": "file:src/api/apiGetChatRoomById.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/hooks/useSession.tsx",
+			"target": "file:src/api/apiGetSessionRooms.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/hooks/useSession.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/hooks/useSession.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/hooks/useTimeoutOverlay.tsx",
+			"target": "function:src/hooks/useTimeoutOverlay.tsx:useTimeoutOverlay",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/hooks/useTimeoutOverlay.tsx",
+			"target": "function:src/hooks/useTimeoutOverlay.tsx:useTimeoutOverlay",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/hooks/useTimeoutOverlay.tsx",
+			"target": "file:src/components/loadingIndicator/LoadingIndicator.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/hooks/useTimeoutOverlay.tsx",
+			"target": "file:src/components/overlay/Overlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/hooks/useWatcher.tsx",
+			"target": "function:src/hooks/useWatcher.tsx:useWatcher",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/hooks/useWatcher.tsx",
+			"target": "function:src/hooks/useWatcher.tsx:useWatcher",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:toArrayBuffer",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:toArrayBuffer",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:typedArrayToBuffer",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:typedArrayToBuffer",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:toOwnedUint8Array",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:toOwnedUint8Array",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:importRawKey",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:importRawKey",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:importRawEncryptionKey",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:importRawEncryptionKey",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:deriveKey",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:deriveKey",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:encryptAES",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:encryptAES",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:decryptAES",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:decryptAES",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:toString",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:toString",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:toHexString",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:toHexString",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:fromHexString",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:fromHexString",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:importRSAKey",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:importRSAKey",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:joinVectorAndEcryptedData",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:joinVectorAndEcryptedData",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:splitVectorAndEcryptedData",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:splitVectorAndEcryptedData",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:encryptRSA",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:encryptRSA",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:decryptRSA",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:decryptRSA",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:importAESKey",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:importAESKey",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:ENCRYPTION_VERSION_ACTIVE",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:ENCRYPTION_VERSION_ACTIVE",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:VERSION_SEPERATOR",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:VERSION_SEPERATOR",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:VECTOR_LENGTH",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:VECTOR_LENGTH",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:KEY_ID_LENGTH",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:KEY_ID_LENGTH",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:MAX_PREFIX_LENGTH",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:MAX_PREFIX_LENGTH",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:SIGNATURE_LENGTH",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:SIGNATURE_LENGTH",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:encodeUsername",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:encodeUsername",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:decodeUsername",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:decodeUsername",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:generateRSAKey",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:generateRSAKey",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:exportJWKKey",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:exportJWKKey",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:generateAESKey",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:generateAESKey",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:encryptBuffer",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:encryptBuffer",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:decryptAttachment",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:decryptAttachment",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:getSignature",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:getSignature",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:encryptAttachment",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:encryptAttachment",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:encryptText",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:encryptText",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:decryptText",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:decryptText",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:getTmpMasterKey",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:getTmpMasterKey",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:deriveMasterKeyFromPassword",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:deriveMasterKeyFromPassword",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:encryptForParticipant",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:encryptForParticipant",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:createGroupKey",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:createGroupKey",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:importGroupKey",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:importGroupKey",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:encryptPrivateKey",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:encryptPrivateKey",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:decryptPrivateKey",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:decryptPrivateKey",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:storeKeys",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:storeKeys",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:createAndStoreKeys",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:createAndStoreKeys",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:writeMasterKeyToLocalStorage",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:writeMasterKeyToLocalStorage",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:readMasterKeyFromLocalStorage",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:readMasterKeyFromLocalStorage",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:loadKeysFromRocketChat",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:loadKeysFromRocketChat",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "function:src/utils/encryptionHelpers.ts:normalizeBufferSource",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "class:src/utils/encryptionHelpers.ts:MissingKeyError",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "class:src/utils/encryptionHelpers.ts:MissingKeyError",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "class:src/utils/encryptionHelpers.ts:WrongKeyError",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "class:src/utils/encryptionHelpers.ts:WrongKeyError",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "class:src/utils/encryptionHelpers.ts:EncryptValidationError",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "class:src/utils/encryptionHelpers.ts:EncryptValidationError",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "class:src/utils/encryptionHelpers.ts:EncPrefixLengthError",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "class:src/utils/encryptionHelpers.ts:EncPrefixLengthError",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "file:src/api/apiRocketChatFetchMyKeys.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/utils/encryptionHelpers.ts",
+			"target": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/utils/pseudonymGenerator.ts",
+			"target": "function:src/utils/pseudonymGenerator.ts:generatePseudonym",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/pseudonymGenerator.ts",
+			"target": "function:src/utils/pseudonymGenerator.ts:generatePseudonym",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/pseudonymGenerator.ts",
+			"target": "function:src/utils/pseudonymGenerator.ts:regeneratePseudonym",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/pseudonymGenerator.ts",
+			"target": "function:src/utils/pseudonymGenerator.ts:regeneratePseudonym",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/tenantSettingsHelper.ts",
+			"target": "function:src/utils/tenantSettingsHelper.ts:setTenantSettings",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/tenantSettingsHelper.ts",
+			"target": "function:src/utils/tenantSettingsHelper.ts:setTenantSettings",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/tenantSettingsHelper.ts",
+			"target": "function:src/utils/tenantSettingsHelper.ts:getTenantSettings",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/tenantSettingsHelper.ts",
+			"target": "function:src/utils/tenantSettingsHelper.ts:getTenantSettings",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/tenantSettingsHelper.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/utils/useTyping.ts",
+			"target": "function:src/utils/useTyping.ts:reducer",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/useTyping.ts",
+			"target": "function:src/utils/useTyping.ts:reducer",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/useTyping.ts",
+			"target": "function:src/utils/useTyping.ts:useTyping",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/useTyping.ts",
+			"target": "function:src/utils/useTyping.ts:useTyping",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/useTyping.ts",
+			"target": "file:src/components/app/RocketChat.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/utils/useTyping.ts",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/utils/useTyping.ts",
+			"target": "file:src/hooks/useUpdatingRef.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/utils/useTyping.ts",
+			"target": "file:src/utils/encryptionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		}
+	]
+}

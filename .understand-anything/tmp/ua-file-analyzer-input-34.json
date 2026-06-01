@@ -1,0 +1,28 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": "src/components/askerInfo/askerInfo.styles.scss",
+			"language": "css",
+			"sizeLines": 216,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/askerInfo/askerInfoTools.styles.scss",
+			"language": "css",
+			"sizeLines": 11,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/askerInfo/askerInfoToolsOptions.styles.scss",
+			"language": "css",
+			"sizeLines": 39,
+			"fileCategory": "markup"
+		}
+	],
+	"batchImportData": {
+		"src/components/askerInfo/askerInfo.styles.scss": [],
+		"src/components/askerInfo/askerInfoTools.styles.scss": [],
+		"src/components/askerInfo/askerInfoToolsOptions.styles.scss": []
+	}
+}

@@ -1,0 +1,242 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": "src/components/app/AuthenticatedApp.tsx",
+			"language": "typescript",
+			"sizeLines": 287,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/RocketChat.ts",
+			"language": "typescript",
+			"sizeLines": 577,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/banner/Banner.tsx",
+			"language": "typescript",
+			"sizeLines": 111,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsListItem/SessionListItemLastMessage.tsx",
+			"language": "typescript",
+			"sizeLines": 52,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/CallProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 151,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/E2EEProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 70,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/RocketChatGlobalSettingsProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 59,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/RocketChatProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 417,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/RocketChatPublicSettingsProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 133,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/RocketChatSubscriptionsProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 304,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/RocketChatSytemUsersProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 53,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/RocketChatUnreadProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 186,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/RocketChatUserStatusProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 133,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useBrowserNotification.ts",
+			"language": "typescript",
+			"sizeLines": 44,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useDebounceCallback.tsx",
+			"language": "typescript",
+			"sizeLines": 36,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/initError.tsx",
+			"language": "typescript",
+			"sizeLines": 10,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/resources/scripts/config.ts",
+			"language": "typescript",
+			"sizeLines": 432,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/types/rc/Room.ts",
+			"language": "typescript",
+			"sizeLines": 30,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/types/rc/Subscriptions.ts",
+			"language": "typescript",
+			"sizeLines": 35,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/types/rc/User.ts",
+			"language": "typescript",
+			"sizeLines": 96,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/notificationHelpers.ts",
+			"language": "typescript",
+			"sizeLines": 120,
+			"fileCategory": "code"
+		}
+	],
+	"batchImportData": {
+		"src/components/app/AuthenticatedApp.tsx": [
+			"src/api/index.ts",
+			"src/components/app/Loading.tsx",
+			"src/components/app/Routing.tsx",
+			"src/components/auth/auth.ts",
+			"src/components/E2EEncryptionSupportBanner/E2EEncryptionSupportBanner.tsx",
+			"src/components/logout/logout.ts",
+			"src/globalState/index.ts",
+			"src/globalState/provider/CallProvider.tsx",
+			"src/globalState/provider/RocketChatPublicSettingsProvider.tsx",
+			"src/globalState/provider/RocketChatSubscriptionsProvider.tsx",
+			"src/globalState/provider/RocketChatSytemUsersProvider.tsx",
+			"src/globalState/provider/RocketChatUnreadProvider.tsx",
+			"src/globalState/provider/RocketChatUserStatusProvider.tsx",
+			"src/hooks/useAppConfig.tsx",
+			"src/hooks/useJoinGroupChat.ts",
+			"src/utils/keycloakSession.ts",
+			"src/utils/notificationHelpers.ts"
+		],
+		"src/components/app/RocketChat.ts": [
+			"src/api/apiRocketChatSettingsPublic.ts",
+			"src/types/rc/Room.ts",
+			"src/types/rc/Subscriptions.ts"
+		],
+		"src/components/banner/Banner.tsx": [],
+		"src/components/sessionsListItem/SessionListItemLastMessage.tsx": [
+			"src/resources/scripts/config.ts"
+		],
+		"src/globalState/provider/CallProvider.tsx": [],
+		"src/globalState/provider/E2EEProvider.tsx": [
+			"src/api/apiRocketChatSettingsPublic.ts",
+			"src/globalState/provider/RocketChatPublicSettingsProvider.tsx",
+			"src/utils/encryptionHelpers.ts"
+		],
+		"src/globalState/provider/RocketChatGlobalSettingsProvider.tsx": [
+			"src/api/apiRocketChatSettingsPublic.ts"
+		],
+		"src/globalState/provider/RocketChatProvider.tsx": [
+			"src/components/app/RocketChat.ts",
+			"src/components/sessionCookie/accessSessionCookie.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/globalState/provider/RocketChatPublicSettingsProvider.tsx": [
+			"src/api/apiRocketChatSettingsPublic.ts",
+			"src/components/app/RocketChat.ts",
+			"src/globalState/provider/RocketChatProvider.tsx",
+			"src/hooks/useUpdatingRef.tsx"
+		],
+		"src/globalState/provider/RocketChatSubscriptionsProvider.tsx": [
+			"src/api/apiPostError.ts",
+			"src/components/app/RocketChat.ts",
+			"src/components/sessionCookie/accessSessionCookie.ts",
+			"src/globalState/provider/RocketChatProvider.tsx",
+			"src/hooks/useDebounceCallback.tsx",
+			"src/hooks/useUpdatingRef.tsx",
+			"src/types/rc/Room.ts",
+			"src/types/rc/Subscriptions.ts"
+		],
+		"src/globalState/provider/RocketChatSytemUsersProvider.tsx": [
+			"src/components/app/RocketChat.ts",
+			"src/globalState/provider/RocketChatProvider.tsx"
+		],
+		"src/globalState/provider/RocketChatUnreadProvider.tsx": [
+			"src/api/apiGetSessionRooms.ts",
+			"src/components/session/sessionHelpers.ts",
+			"src/globalState/context/UserDataContext.tsx",
+			"src/globalState/provider/RocketChatSubscriptionsProvider.tsx",
+			"src/hooks/useBrowserNotification.ts"
+		],
+		"src/globalState/provider/RocketChatUserStatusProvider.tsx": [
+			"src/api/apiRocketChatUsersGetStatus.ts",
+			"src/components/app/RocketChat.ts",
+			"src/components/sessionCookie/accessSessionCookie.ts",
+			"src/globalState/provider/RocketChatProvider.tsx",
+			"src/hooks/useDebounceCallback.tsx",
+			"src/hooks/useUpdatingRef.tsx"
+		],
+		"src/hooks/useBrowserNotification.ts": [
+			"src/globalState/interfaces/index.ts",
+			"src/utils/notificationHelpers.ts"
+		],
+		"src/hooks/useDebounceCallback.tsx": [],
+		"src/initError.tsx": [
+			"src/components/error/Error.tsx",
+			"src/resources/scripts/config.ts"
+		],
+		"src/resources/scripts/config.ts": [
+			"src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/resources/i18n/de/agency.json",
+			"src/resources/i18n/de/consultingTypes.json",
+			"src/resources/i18n/de/languages.json",
+			"src/resources/i18n/en/agency.json",
+			"src/resources/i18n/en/common.json",
+			"src/resources/i18n/en/consultingTypes.json",
+			"src/resources/i18n/en/languages.json",
+			"src/resources/i18n/fr/common.json",
+			"src/resources/i18n/fr/languages.json",
+			"src/resources/i18n/ru/common.json",
+			"src/resources/i18n/ru/languages.json",
+			"src/resources/i18n/ti/common.json",
+			"src/resources/i18n/ti/languages.json",
+			"src/resources/i18n/tr/common.json",
+			"src/resources/i18n/tr/languages.json"
+		],
+		"src/types/rc/Room.ts": ["src/types/rc/User.ts"],
+		"src/types/rc/Subscriptions.ts": ["src/types/rc/User.ts"],
+		"src/types/rc/User.ts": [],
+		"src/utils/notificationHelpers.ts": []
+	}
+}

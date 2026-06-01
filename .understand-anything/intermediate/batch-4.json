@@ -1,0 +1,2103 @@
+{
+	"nodes": [
+		{
+			"id": "file:src/containers/bookings/components/BookingEvents/bookingEvents.tsx",
+			"type": "file",
+			"name": "bookingEvents.tsx",
+			"filePath": "src/containers/bookings/components/BookingEvents/bookingEvents.tsx",
+			"summary": "React UI module for containers, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "containers"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/containers/bookings/components/BookingEvents/bookingEvents.tsx:BookingEvents",
+			"type": "function",
+			"name": "BookingEvents",
+			"filePath": "src/containers/bookings/components/BookingEvents/bookingEvents.tsx",
+			"lineRange": [28, 40],
+			"summary": "Function BookingEvents in src/containers/bookings/components/BookingEvents/bookingEvents.tsx, used by the surrounding containers module.",
+			"tags": ["function", "containers", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/containers/bookings/components/BookingEventsBooked/bookingEventsBooked.tsx",
+			"type": "file",
+			"name": "bookingEventsBooked.tsx",
+			"filePath": "src/containers/bookings/components/BookingEventsBooked/bookingEventsBooked.tsx",
+			"summary": "React UI module for containers, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "containers", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/containers/bookings/components/BookingEventsCanceled/bookingEventsCanceled.tsx",
+			"type": "file",
+			"name": "bookingEventsCanceled.tsx",
+			"filePath": "src/containers/bookings/components/BookingEventsCanceled/bookingEventsCanceled.tsx",
+			"summary": "React UI module for containers, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "containers", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/containers/bookings/components/BookingEventsExpired/bookingEventsExpired.tsx",
+			"type": "file",
+			"name": "bookingEventsExpired.tsx",
+			"filePath": "src/containers/bookings/components/BookingEventsExpired/bookingEventsExpired.tsx",
+			"summary": "React UI module for containers, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "containers", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/containers/bookings/components/BookingSettings/bookingSettings.tsx",
+			"type": "file",
+			"name": "bookingSettings.tsx",
+			"filePath": "src/containers/bookings/components/BookingSettings/bookingSettings.tsx",
+			"summary": "React UI module for containers, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "containers"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/containers/bookings/components/BookingSettings/bookingSettings.tsx:BookingSettings",
+			"type": "function",
+			"name": "BookingSettings",
+			"filePath": "src/containers/bookings/components/BookingSettings/bookingSettings.tsx",
+			"lineRange": [7, 19],
+			"summary": "Function BookingSettings in src/containers/bookings/components/BookingSettings/bookingSettings.tsx, used by the surrounding containers module.",
+			"tags": ["function", "containers", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/containers/bookings/components/BookingsComponent/bookingsComponent.tsx",
+			"type": "file",
+			"name": "bookingsComponent.tsx",
+			"filePath": "src/containers/bookings/components/BookingsComponent/bookingsComponent.tsx",
+			"summary": "React UI module for containers, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "containers", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/containers/bookings/components/Calendar/calendar.tsx",
+			"type": "file",
+			"name": "calendar.tsx",
+			"filePath": "src/containers/bookings/components/Calendar/calendar.tsx",
+			"summary": "React UI module for containers, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "containers", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/containers/bookings/components/CalendarIntegration/calendarIntegration.tsx",
+			"type": "file",
+			"name": "calendarIntegration.tsx",
+			"filePath": "src/containers/bookings/components/CalendarIntegration/calendarIntegration.tsx",
+			"summary": "React UI module for containers, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "containers"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/containers/bookings/components/CalendarIntegration/calendarIntegration.tsx:CalendarIntegration",
+			"type": "function",
+			"name": "CalendarIntegration",
+			"filePath": "src/containers/bookings/components/CalendarIntegration/calendarIntegration.tsx",
+			"lineRange": [11, 23],
+			"summary": "Function CalendarIntegration in src/containers/bookings/components/CalendarIntegration/calendarIntegration.tsx, used by the surrounding containers module.",
+			"tags": ["function", "containers", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/containers/bookings/components/Event/LocationType/index.tsx",
+			"type": "file",
+			"name": "index.tsx",
+			"filePath": "src/containers/bookings/components/Event/LocationType/index.tsx",
+			"summary": "React UI module for containers, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "containers"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/containers/bookings/components/Event/LocationType/index.tsx:LocationType",
+			"type": "function",
+			"name": "LocationType",
+			"filePath": "src/containers/bookings/components/Event/LocationType/index.tsx",
+			"lineRange": [17, 29],
+			"summary": "Function LocationType in src/containers/bookings/components/Event/LocationType/index.tsx, used by the surrounding containers module.",
+			"tags": ["function", "containers", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/containers/bookings/components/Event/event.tsx",
+			"type": "file",
+			"name": "event.tsx",
+			"filePath": "src/containers/bookings/components/Event/event.tsx",
+			"summary": "React UI module for containers, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "containers", "code"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/containers/bookings/components/MyCalendar/myCalendar.tsx",
+			"type": "file",
+			"name": "myCalendar.tsx",
+			"filePath": "src/containers/bookings/components/MyCalendar/myCalendar.tsx",
+			"summary": "React UI module for containers, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "containers"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/containers/bookings/components/MyCalendar/myCalendar.tsx:MyCalendar",
+			"type": "function",
+			"name": "MyCalendar",
+			"filePath": "src/containers/bookings/components/MyCalendar/myCalendar.tsx",
+			"lineRange": [15, 27],
+			"summary": "Function MyCalendar in src/containers/bookings/components/MyCalendar/myCalendar.tsx, used by the surrounding containers module.",
+			"tags": ["function", "containers", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/containers/bookings/components/NoBookings/noBookingsBooked.tsx",
+			"type": "file",
+			"name": "noBookingsBooked.tsx",
+			"filePath": "src/containers/bookings/components/NoBookings/noBookingsBooked.tsx",
+			"summary": "React UI module for containers, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "containers", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/containers/overview/components/BookingEvent/index.tsx",
+			"type": "file",
+			"name": "index.tsx",
+			"filePath": "src/containers/overview/components/BookingEvent/index.tsx",
+			"summary": "React UI module for containers, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "containers"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/containers/overview/components/BookingEvent/index.tsx:BookingEvent",
+			"type": "function",
+			"name": "BookingEvent",
+			"filePath": "src/containers/overview/components/BookingEvent/index.tsx",
+			"lineRange": [32, 44],
+			"summary": "Function BookingEvent in src/containers/overview/components/BookingEvent/index.tsx, used by the surrounding containers module.",
+			"tags": ["function", "containers", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/containers/overview/hooks/useConsultantBookings.ts",
+			"type": "file",
+			"name": "useConsultantBookings.ts",
+			"filePath": "src/containers/overview/hooks/useConsultantBookings.ts",
+			"summary": "React hook module for useConsultantBookings, encapsulating reusable frontend state or side-effect logic.",
+			"tags": ["hook", "utility", "containers"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/containers/overview/hooks/useConsultantBookings.ts:useConsultantBookings",
+			"type": "function",
+			"name": "useConsultantBookings",
+			"filePath": "src/containers/overview/hooks/useConsultantBookings.ts",
+			"lineRange": [7, 19],
+			"summary": "Function useConsultantBookings in src/containers/overview/hooks/useConsultantBookings.ts, used by the surrounding containers module.",
+			"tags": ["function", "containers", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/containers/registration/components/ConsultingTypeSelection/index.tsx",
+			"type": "file",
+			"name": "index.tsx",
+			"filePath": "src/containers/registration/components/ConsultingTypeSelection/index.tsx",
+			"summary": "React UI module for containers, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "containers"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/containers/registration/components/ConsultingTypeSelection/index.tsx:ConsultingTypeSelection",
+			"type": "function",
+			"name": "ConsultingTypeSelection",
+			"filePath": "src/containers/registration/components/ConsultingTypeSelection/index.tsx",
+			"lineRange": [17, 29],
+			"summary": "Function ConsultingTypeSelection in src/containers/registration/components/ConsultingTypeSelection/index.tsx, used by the surrounding containers module.",
+			"tags": ["function", "containers", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/containers/registration/components/FallbackInformation/index.tsx",
+			"type": "file",
+			"name": "index.tsx",
+			"filePath": "src/containers/registration/components/FallbackInformation/index.tsx",
+			"summary": "React UI module for containers, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "containers"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/containers/registration/components/FallbackInformation/index.tsx:FallbackInformation",
+			"type": "function",
+			"name": "FallbackInformation",
+			"filePath": "src/containers/registration/components/FallbackInformation/index.tsx",
+			"lineRange": [14, 26],
+			"summary": "Function FallbackInformation in src/containers/registration/components/FallbackInformation/index.tsx, used by the surrounding containers module.",
+			"tags": ["function", "containers", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/containers/registration/components/NoAgencyFound/index.tsx",
+			"type": "file",
+			"name": "index.tsx",
+			"filePath": "src/containers/registration/components/NoAgencyFound/index.tsx",
+			"summary": "React UI module for containers, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "containers"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/containers/registration/components/NoAgencyFound/index.tsx:NoAgencyFound",
+			"type": "function",
+			"name": "NoAgencyFound",
+			"filePath": "src/containers/registration/components/NoAgencyFound/index.tsx",
+			"lineRange": [13, 25],
+			"summary": "Function NoAgencyFound in src/containers/registration/components/NoAgencyFound/index.tsx, used by the surrounding containers module.",
+			"tags": ["function", "containers", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/containers/registration/components/PostCodeSelection/index.tsx",
+			"type": "file",
+			"name": "index.tsx",
+			"filePath": "src/containers/registration/components/PostCodeSelection/index.tsx",
+			"summary": "React UI module for containers, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "containers"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/containers/registration/components/PostCodeSelection/index.tsx:PostCodeSelection",
+			"type": "function",
+			"name": "PostCodeSelection",
+			"filePath": "src/containers/registration/components/PostCodeSelection/index.tsx",
+			"lineRange": [18, 30],
+			"summary": "Function PostCodeSelection in src/containers/registration/components/PostCodeSelection/index.tsx, used by the surrounding containers module.",
+			"tags": ["function", "containers", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/containers/registration/components/ProposedAgencies/ProposedAgencies.tsx",
+			"type": "file",
+			"name": "ProposedAgencies.tsx",
+			"filePath": "src/containers/registration/components/ProposedAgencies/ProposedAgencies.tsx",
+			"summary": "React UI module for containers, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "containers"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/containers/registration/components/ProposedAgencies/ProposedAgencies.tsx:ProposedAgencies",
+			"type": "function",
+			"name": "ProposedAgencies",
+			"filePath": "src/containers/registration/components/ProposedAgencies/ProposedAgencies.tsx",
+			"lineRange": [50, 62],
+			"summary": "Function ProposedAgencies in src/containers/registration/components/ProposedAgencies/ProposedAgencies.tsx, used by the surrounding containers module.",
+			"tags": ["function", "containers", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/containers/registration/components/ProposedAgencies/ProposedAgenciesTitle/index.tsx",
+			"type": "file",
+			"name": "index.tsx",
+			"filePath": "src/containers/registration/components/ProposedAgencies/ProposedAgenciesTitle/index.tsx",
+			"summary": "React UI module for containers, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "containers"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/containers/registration/components/ProposedAgencies/ProposedAgenciesTitle/index.tsx:ProposedAgenciesTitle",
+			"type": "function",
+			"name": "ProposedAgenciesTitle",
+			"filePath": "src/containers/registration/components/ProposedAgencies/ProposedAgenciesTitle/index.tsx",
+			"lineRange": [14, 26],
+			"summary": "Function ProposedAgenciesTitle in src/containers/registration/components/ProposedAgencies/ProposedAgenciesTitle/index.tsx, used by the surrounding containers module.",
+			"tags": ["function", "containers", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/index.ts",
+			"type": "file",
+			"name": "index.ts",
+			"filePath": "src/globalState/index.ts",
+			"summary": "Global state module for global state, sharing application state across frontend flows.",
+			"tags": ["state-management", "global-state", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/interfaces/BookingsInterface.ts",
+			"type": "file",
+			"name": "BookingsInterface.ts",
+			"filePath": "src/globalState/interfaces/BookingsInterface.ts",
+			"summary": "Global state module for global state, sharing application state across frontend flows.",
+			"tags": ["state-management", "global-state", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/interfaces/ToolsInterface.ts",
+			"type": "file",
+			"name": "ToolsInterface.ts",
+			"filePath": "src/globalState/interfaces/ToolsInterface.ts",
+			"summary": "Global state module for global state, sharing application state across frontend flows.",
+			"tags": ["state-management", "global-state", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/hooks/useUserMutate.ts",
+			"type": "file",
+			"name": "useUserMutate.ts",
+			"filePath": "src/hooks/useUserMutate.ts",
+			"summary": "React hook module for useUserMutate, encapsulating reusable frontend state or side-effect logic.",
+			"tags": ["hook", "utility", "hooks"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/hooks/useUserMutate.ts:useUserMutate",
+			"type": "function",
+			"name": "useUserMutate",
+			"filePath": "src/hooks/useUserMutate.ts",
+			"lineRange": [12, 24],
+			"summary": "Function useUserMutate in src/hooks/useUserMutate.ts, used by the surrounding hooks module.",
+			"tags": ["function", "hooks", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/resources/img/icons.ts",
+			"type": "file",
+			"name": "icons.ts",
+			"filePath": "src/resources/img/icons.ts",
+			"summary": "Frontend source file for resources in the ORISO React application.",
+			"tags": ["resources", "code", "frontend"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/store/agencyLogoAtom.ts",
+			"type": "file",
+			"name": "agencyLogoAtom.ts",
+			"filePath": "src/store/agencyLogoAtom.ts",
+			"summary": "TypeScript module for store with 1 extracted functions and 0 extracted classes.",
+			"tags": ["utility", "store", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/store/agencyLogoAtom.ts:agencyLogoAtom",
+			"type": "function",
+			"name": "agencyLogoAtom",
+			"filePath": "src/store/agencyLogoAtom.ts",
+			"lineRange": [5, 5],
+			"summary": "Function agencyLogoAtom in src/store/agencyLogoAtom.ts, used by the surrounding store module.",
+			"tags": ["function", "store", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/utils/clipboardHelpers.ts",
+			"type": "file",
+			"name": "clipboardHelpers.ts",
+			"filePath": "src/utils/clipboardHelpers.ts",
+			"summary": "TypeScript module for utilities with 2 extracted functions and 0 extracted classes.",
+			"tags": ["utility", "utilities", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/utils/clipboardHelpers.ts:copyTextToClipboard",
+			"type": "function",
+			"name": "copyTextToClipboard",
+			"filePath": "src/utils/clipboardHelpers.ts",
+			"lineRange": [69, 81],
+			"summary": "Function copyTextToClipboard in src/utils/clipboardHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/clipboardHelpers.ts:listener",
+			"type": "function",
+			"name": "listener",
+			"filePath": "src/utils/clipboardHelpers.ts",
+			"lineRange": [58, 70],
+			"summary": "Function listener in src/utils/clipboardHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "internal"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/utils/consultant.ts",
+			"type": "file",
+			"name": "consultant.ts",
+			"filePath": "src/utils/consultant.ts",
+			"summary": "Frontend source file for utilities in the ORISO React application.",
+			"tags": ["utilities", "code", "frontend"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/utils/dateHelpers.ts",
+			"type": "file",
+			"name": "dateHelpers.ts",
+			"filePath": "src/utils/dateHelpers.ts",
+			"summary": "TypeScript module for utilities with 12 extracted functions and 0 extracted classes.",
+			"tags": ["utility", "utilities", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/utils/dateHelpers.ts:MILLISECONDS_PER_SECOND",
+			"type": "function",
+			"name": "MILLISECONDS_PER_SECOND",
+			"filePath": "src/utils/dateHelpers.ts",
+			"lineRange": [1, 13],
+			"summary": "Function MILLISECONDS_PER_SECOND in src/utils/dateHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/dateHelpers.ts:MILLISECONDS_PER_MINUTE",
+			"type": "function",
+			"name": "MILLISECONDS_PER_MINUTE",
+			"filePath": "src/utils/dateHelpers.ts",
+			"lineRange": [2, 14],
+			"summary": "Function MILLISECONDS_PER_MINUTE in src/utils/dateHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/dateHelpers.ts:MILLISECONDS_PER_HOUR",
+			"type": "function",
+			"name": "MILLISECONDS_PER_HOUR",
+			"filePath": "src/utils/dateHelpers.ts",
+			"lineRange": [3, 15],
+			"summary": "Function MILLISECONDS_PER_HOUR in src/utils/dateHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/dateHelpers.ts:formatToDDMMYYYY",
+			"type": "function",
+			"name": "formatToDDMMYYYY",
+			"filePath": "src/utils/dateHelpers.ts",
+			"lineRange": [5, 17],
+			"summary": "Function formatToDDMMYYYY in src/utils/dateHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/dateHelpers.ts:getPrettyDateFromMessageDate",
+			"type": "function",
+			"name": "getPrettyDateFromMessageDate",
+			"filePath": "src/utils/dateHelpers.ts",
+			"lineRange": [82, 94],
+			"summary": "Function getPrettyDateFromMessageDate in src/utils/dateHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/dateHelpers.ts:formatToHHMM",
+			"type": "function",
+			"name": "formatToHHMM",
+			"filePath": "src/utils/dateHelpers.ts",
+			"lineRange": [90, 102],
+			"summary": "Function formatToHHMM in src/utils/dateHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/dateHelpers.ts:prettyPrintTimeDifference",
+			"type": "function",
+			"name": "prettyPrintTimeDifference",
+			"filePath": "src/utils/dateHelpers.ts",
+			"lineRange": [102, 114],
+			"summary": "Function prettyPrintTimeDifference in src/utils/dateHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/dateHelpers.ts:convertISO8601ToMSSinceEpoch",
+			"type": "function",
+			"name": "convertISO8601ToMSSinceEpoch",
+			"filePath": "src/utils/dateHelpers.ts",
+			"lineRange": [125, 137],
+			"summary": "Function convertISO8601ToMSSinceEpoch in src/utils/dateHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/dateHelpers.ts:dateToLocalISO",
+			"type": "function",
+			"name": "dateToLocalISO",
+			"filePath": "src/utils/dateHelpers.ts",
+			"lineRange": [129, 141],
+			"summary": "Function dateToLocalISO in src/utils/dateHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/dateHelpers.ts:addMissingZero",
+			"type": "function",
+			"name": "addMissingZero",
+			"filePath": "src/utils/dateHelpers.ts",
+			"lineRange": [139, 151],
+			"summary": "Function addMissingZero in src/utils/dateHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/dateHelpers.ts:convertUTCDateToLocalDate",
+			"type": "function",
+			"name": "convertUTCDateToLocalDate",
+			"filePath": "src/utils/dateHelpers.ts",
+			"lineRange": [147, 159],
+			"summary": "Function convertUTCDateToLocalDate in src/utils/dateHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/dateHelpers.ts:getDurationTimeBySeconds",
+			"type": "function",
+			"name": "getDurationTimeBySeconds",
+			"filePath": "src/utils/dateHelpers.ts",
+			"lineRange": [157, 169],
+			"summary": "Function getDurationTimeBySeconds in src/utils/dateHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/utils/liveChatToggle.ts",
+			"type": "file",
+			"name": "liveChatToggle.ts",
+			"filePath": "src/utils/liveChatToggle.ts",
+			"summary": "TypeScript module for utilities with 3 extracted functions and 0 extracted classes.",
+			"tags": ["utility", "utilities", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/liveChatToggle.ts:isLiveChatAvailable",
+			"type": "function",
+			"name": "isLiveChatAvailable",
+			"filePath": "src/utils/liveChatToggle.ts",
+			"lineRange": [15, 27],
+			"summary": "Function isLiveChatAvailable in src/utils/liveChatToggle.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/liveChatToggle.ts:setLiveChatAvailable",
+			"type": "function",
+			"name": "setLiveChatAvailable",
+			"filePath": "src/utils/liveChatToggle.ts",
+			"lineRange": [23, 35],
+			"summary": "Function setLiveChatAvailable in src/utils/liveChatToggle.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/liveChatToggle.ts:useLiveChatAvailable",
+			"type": "function",
+			"name": "useLiveChatAvailable",
+			"filePath": "src/utils/liveChatToggle.ts",
+			"lineRange": [37, 49],
+			"summary": "Function useLiveChatAvailable in src/utils/liveChatToggle.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/utils/parsePlaceholderString.ts",
+			"type": "file",
+			"name": "parsePlaceholderString.ts",
+			"filePath": "src/utils/parsePlaceholderString.ts",
+			"summary": "TypeScript module for utilities with 1 extracted functions and 0 extracted classes.",
+			"tags": ["utility", "utilities", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/parsePlaceholderString.ts:parsePlaceholderString",
+			"type": "function",
+			"name": "parsePlaceholderString",
+			"filePath": "src/utils/parsePlaceholderString.ts",
+			"lineRange": [5, 17],
+			"summary": "Function parsePlaceholderString in src/utils/parsePlaceholderString.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/utils/tabsHelper.ts",
+			"type": "file",
+			"name": "tabsHelper.ts",
+			"filePath": "src/utils/tabsHelper.ts",
+			"summary": "TypeScript module for utilities with 6 extracted functions and 0 extracted classes.",
+			"tags": ["utility", "utilities", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/utils/tabsHelper.ts:COLUMN_LEFT",
+			"type": "function",
+			"name": "COLUMN_LEFT",
+			"filePath": "src/utils/tabsHelper.ts",
+			"lineRange": [18, 30],
+			"summary": "Function COLUMN_LEFT in src/utils/tabsHelper.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/tabsHelper.ts:COLUMN_RIGHT",
+			"type": "function",
+			"name": "COLUMN_RIGHT",
+			"filePath": "src/utils/tabsHelper.ts",
+			"lineRange": [19, 31],
+			"summary": "Function COLUMN_RIGHT in src/utils/tabsHelper.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/tabsHelper.ts:isTabGroup",
+			"type": "function",
+			"name": "isTabGroup",
+			"filePath": "src/utils/tabsHelper.ts",
+			"lineRange": [32, 44],
+			"summary": "Function isTabGroup in src/utils/tabsHelper.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/tabsHelper.ts:solveCondition",
+			"type": "function",
+			"name": "solveCondition",
+			"filePath": "src/utils/tabsHelper.ts",
+			"lineRange": [38, 50],
+			"summary": "Function solveCondition in src/utils/tabsHelper.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/tabsHelper.ts:solveGroupConditions",
+			"type": "function",
+			"name": "solveGroupConditions",
+			"filePath": "src/utils/tabsHelper.ts",
+			"lineRange": [42, 54],
+			"summary": "Function solveGroupConditions in src/utils/tabsHelper.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/tabsHelper.ts:solveTabConditions",
+			"type": "function",
+			"name": "solveTabConditions",
+			"filePath": "src/utils/tabsHelper.ts",
+			"lineRange": [55, 60],
+			"summary": "Function solveTabConditions in src/utils/tabsHelper.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/utils/transformBookingData.ts",
+			"type": "file",
+			"name": "transformBookingData.ts",
+			"filePath": "src/utils/transformBookingData.ts",
+			"summary": "TypeScript module for utilities with 1 extracted functions and 0 extracted classes.",
+			"tags": ["utility", "utilities", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/transformBookingData.ts:transformBookingData",
+			"type": "function",
+			"name": "transformBookingData",
+			"filePath": "src/utils/transformBookingData.ts",
+			"lineRange": [7, 19],
+			"summary": "Function transformBookingData in src/utils/transformBookingData.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		}
+	],
+	"edges": [
+		{
+			"source": "file:src/containers/bookings/components/BookingEvents/bookingEvents.tsx",
+			"target": "function:src/containers/bookings/components/BookingEvents/bookingEvents.tsx:BookingEvents",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingEvents/bookingEvents.tsx",
+			"target": "function:src/containers/bookings/components/BookingEvents/bookingEvents.tsx:BookingEvents",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingEvents/bookingEvents.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingEvents/bookingEvents.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingEvents/bookingEvents.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingEvents/bookingEvents.tsx",
+			"target": "file:src/containers/bookings/booking.routes.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingEvents/bookingEvents.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingEvents/bookingEvents.tsx",
+			"target": "file:src/utils/tabsHelper.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingEventsBooked/bookingEventsBooked.tsx",
+			"target": "file:src/api/apiGetConsultantAppointments.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingEventsBooked/bookingEventsBooked.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingEventsBooked/bookingEventsBooked.tsx",
+			"target": "file:src/containers/bookings/components/BookingsComponent/bookingsComponent.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingEventsBooked/bookingEventsBooked.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingEventsBooked/bookingEventsBooked.tsx",
+			"target": "file:src/globalState/interfaces/BookingsInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingEventsBooked/bookingEventsBooked.tsx",
+			"target": "file:src/utils/consultant.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingEventsBooked/bookingEventsBooked.tsx",
+			"target": "file:src/utils/transformBookingData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingEventsCanceled/bookingEventsCanceled.tsx",
+			"target": "file:src/api/apiGetConsultantAppointments.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingEventsCanceled/bookingEventsCanceled.tsx",
+			"target": "file:src/containers/bookings/components/BookingsComponent/bookingsComponent.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingEventsCanceled/bookingEventsCanceled.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingEventsCanceled/bookingEventsCanceled.tsx",
+			"target": "file:src/globalState/interfaces/BookingsInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingEventsCanceled/bookingEventsCanceled.tsx",
+			"target": "file:src/utils/consultant.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingEventsCanceled/bookingEventsCanceled.tsx",
+			"target": "file:src/utils/transformBookingData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingEventsExpired/bookingEventsExpired.tsx",
+			"target": "file:src/api/apiGetConsultantAppointments.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingEventsExpired/bookingEventsExpired.tsx",
+			"target": "file:src/containers/bookings/components/BookingsComponent/bookingsComponent.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingEventsExpired/bookingEventsExpired.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingEventsExpired/bookingEventsExpired.tsx",
+			"target": "file:src/globalState/interfaces/BookingsInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingEventsExpired/bookingEventsExpired.tsx",
+			"target": "file:src/utils/consultant.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingEventsExpired/bookingEventsExpired.tsx",
+			"target": "file:src/utils/transformBookingData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingSettings/bookingSettings.tsx",
+			"target": "function:src/containers/bookings/components/BookingSettings/bookingSettings.tsx:BookingSettings",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingSettings/bookingSettings.tsx",
+			"target": "function:src/containers/bookings/components/BookingSettings/bookingSettings.tsx:BookingSettings",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingSettings/bookingSettings.tsx",
+			"target": "file:src/containers/bookings/components/AvailabilityContainer/availabilityContainer.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingSettings/bookingSettings.tsx",
+			"target": "file:src/containers/bookings/components/CalendarIntegration/calendarIntegration.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingSettings/bookingSettings.tsx",
+			"target": "file:src/containers/bookings/hooks/useCalcomLogin.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingsComponent/bookingsComponent.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingsComponent/bookingsComponent.tsx",
+			"target": "file:src/components/app/Loading.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingsComponent/bookingsComponent.tsx",
+			"target": "file:src/containers/bookings/components/Event/event.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingsComponent/bookingsComponent.tsx",
+			"target": "file:src/containers/bookings/components/NoBookings/noBookingsBooked.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingsComponent/bookingsComponent.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingsComponent/bookingsComponent.tsx",
+			"target": "file:src/globalState/interfaces/BookingsInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingsComponent/bookingsComponent.tsx",
+			"target": "file:src/utils/consultant.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/Calendar/calendar.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/Calendar/calendar.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/CalendarIntegration/calendarIntegration.tsx",
+			"target": "function:src/containers/bookings/components/CalendarIntegration/calendarIntegration.tsx:CalendarIntegration",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/containers/bookings/components/CalendarIntegration/calendarIntegration.tsx",
+			"target": "function:src/containers/bookings/components/CalendarIntegration/calendarIntegration.tsx:CalendarIntegration",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/containers/bookings/components/CalendarIntegration/calendarIntegration.tsx",
+			"target": "file:src/components/box/Box.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/CalendarIntegration/calendarIntegration.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/CalendarIntegration/calendarIntegration.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/CalendarIntegration/calendarIntegration.tsx",
+			"target": "file:src/containers/bookings/components/AddCalendar/addCalendar.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/CalendarIntegration/calendarIntegration.tsx",
+			"target": "file:src/containers/bookings/components/AssignedCalendars/assignedCalendars.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/CalendarIntegration/calendarIntegration.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/Event/LocationType/index.tsx",
+			"target": "function:src/containers/bookings/components/Event/LocationType/index.tsx:LocationType",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/containers/bookings/components/Event/LocationType/index.tsx",
+			"target": "function:src/containers/bookings/components/Event/LocationType/index.tsx:LocationType",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/containers/bookings/components/Event/LocationType/index.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/Event/LocationType/index.tsx",
+			"target": "file:src/components/tooltip/Tooltip.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/Event/LocationType/index.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/Event/LocationType/index.tsx",
+			"target": "file:src/globalState/interfaces/BookingsInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/Event/LocationType/index.tsx",
+			"target": "file:src/resources/img/icons.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/Event/event.tsx",
+			"target": "file:src/components/box/Box.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/Event/event.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/Event/event.tsx",
+			"target": "file:src/components/downloadICSFile/downloadICSFile.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/Event/event.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/Event/event.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/Event/event.tsx",
+			"target": "file:src/containers/bookings/components/BookingDescription/bookingDescription.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/Event/event.tsx",
+			"target": "file:src/containers/bookings/components/BookingEventTableColumnAttendee/bookingEventTableColumnAttendee.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/Event/event.tsx",
+			"target": "file:src/containers/bookings/components/Event/LocationType/index.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/Event/event.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/Event/event.tsx",
+			"target": "file:src/globalState/interfaces/BookingsInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/Event/event.tsx",
+			"target": "file:src/resources/img/icons.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/Event/event.tsx",
+			"target": "file:src/resources/scripts/config.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/Event/event.tsx",
+			"target": "file:src/utils/clipboardHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/Event/event.tsx",
+			"target": "file:src/utils/consultant.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/MyCalendar/myCalendar.tsx",
+			"target": "function:src/containers/bookings/components/MyCalendar/myCalendar.tsx:MyCalendar",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/containers/bookings/components/MyCalendar/myCalendar.tsx",
+			"target": "function:src/containers/bookings/components/MyCalendar/myCalendar.tsx:MyCalendar",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/containers/bookings/components/MyCalendar/myCalendar.tsx",
+			"target": "file:src/components/box/Box.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/MyCalendar/myCalendar.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/MyCalendar/myCalendar.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/MyCalendar/myCalendar.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/MyCalendar/myCalendar.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/NoBookings/noBookingsBooked.tsx",
+			"target": "file:src/components/box/Box.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/NoBookings/noBookingsBooked.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/NoBookings/noBookingsBooked.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/NoBookings/noBookingsBooked.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/NoBookings/noBookingsBooked.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/NoBookings/noBookingsBooked.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/overview/components/BookingEvent/index.tsx",
+			"target": "function:src/containers/overview/components/BookingEvent/index.tsx:BookingEvent",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/containers/overview/components/BookingEvent/index.tsx",
+			"target": "function:src/containers/overview/components/BookingEvent/index.tsx:BookingEvent",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/containers/overview/components/BookingEvent/index.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/overview/components/BookingEvent/index.tsx",
+			"target": "file:src/containers/overview/components/BookingEvent/booking-event.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/overview/components/BookingEvent/index.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/overview/components/BookingEvent/index.tsx",
+			"target": "file:src/globalState/interfaces/BookingsInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/overview/components/BookingEvent/index.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/overview/components/BookingEvent/index.tsx",
+			"target": "file:src/resources/scripts/config.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/overview/components/BookingEvent/index.tsx",
+			"target": "file:src/utils/dateHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/overview/hooks/useConsultantBookings.ts",
+			"target": "function:src/containers/overview/hooks/useConsultantBookings.ts:useConsultantBookings",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/containers/overview/hooks/useConsultantBookings.ts",
+			"target": "function:src/containers/overview/hooks/useConsultantBookings.ts:useConsultantBookings",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/containers/overview/hooks/useConsultantBookings.ts",
+			"target": "file:src/api/apiGetConsultantAppointments.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/overview/hooks/useConsultantBookings.ts",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/overview/hooks/useConsultantBookings.ts",
+			"target": "file:src/globalState/interfaces/BookingsInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/overview/hooks/useConsultantBookings.ts",
+			"target": "file:src/utils/consultant.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/registration/components/ConsultingTypeSelection/index.tsx",
+			"target": "function:src/containers/registration/components/ConsultingTypeSelection/index.tsx:ConsultingTypeSelection",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/containers/registration/components/ConsultingTypeSelection/index.tsx",
+			"target": "function:src/containers/registration/components/ConsultingTypeSelection/index.tsx:ConsultingTypeSelection",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/containers/registration/components/ConsultingTypeSelection/index.tsx",
+			"target": "file:src/components/select/SelectDropdown.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/registration/components/ConsultingTypeSelection/index.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/registration/components/ConsultingTypeSelection/index.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/registration/components/FallbackInformation/index.tsx",
+			"target": "function:src/containers/registration/components/FallbackInformation/index.tsx:FallbackInformation",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/containers/registration/components/FallbackInformation/index.tsx",
+			"target": "function:src/containers/registration/components/FallbackInformation/index.tsx:FallbackInformation",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/containers/registration/components/FallbackInformation/index.tsx",
+			"target": "file:src/components/notice/Notice.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/registration/components/FallbackInformation/index.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/registration/components/FallbackInformation/index.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/registration/components/FallbackInformation/index.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/registration/components/FallbackInformation/index.tsx",
+			"target": "file:src/utils/parsePlaceholderString.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/registration/components/NoAgencyFound/index.tsx",
+			"target": "function:src/containers/registration/components/NoAgencyFound/index.tsx:NoAgencyFound",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/containers/registration/components/NoAgencyFound/index.tsx",
+			"target": "function:src/containers/registration/components/NoAgencyFound/index.tsx:NoAgencyFound",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/containers/registration/components/NoAgencyFound/index.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/registration/components/NoAgencyFound/index.tsx",
+			"target": "file:src/containers/registration/components/FallbackInformation/index.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/registration/components/NoAgencyFound/index.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/registration/components/PostCodeSelection/index.tsx",
+			"target": "function:src/containers/registration/components/PostCodeSelection/index.tsx:PostCodeSelection",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/containers/registration/components/PostCodeSelection/index.tsx",
+			"target": "function:src/containers/registration/components/PostCodeSelection/index.tsx:PostCodeSelection",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/containers/registration/components/PostCodeSelection/index.tsx",
+			"target": "file:src/components/agencySelection/agencySelectionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/registration/components/PostCodeSelection/index.tsx",
+			"target": "file:src/components/inputField/InputField.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/registration/components/PostCodeSelection/index.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/registration/components/PostCodeSelection/index.tsx",
+			"target": "file:src/resources/img/icons.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/registration/components/ProposedAgencies/ProposedAgencies.tsx",
+			"target": "function:src/containers/registration/components/ProposedAgencies/ProposedAgencies.tsx:ProposedAgencies",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/containers/registration/components/ProposedAgencies/ProposedAgencies.tsx",
+			"target": "function:src/containers/registration/components/ProposedAgencies/ProposedAgencies.tsx:ProposedAgencies",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/containers/registration/components/ProposedAgencies/ProposedAgencies.tsx",
+			"target": "file:src/components/agencyRadioSelect/AgencyRadioSelect.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/registration/components/ProposedAgencies/ProposedAgencies.tsx",
+			"target": "file:src/components/agencySelection/agencySelectionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/registration/components/ProposedAgencies/ProposedAgencies.tsx",
+			"target": "file:src/components/loadingIndicator/LoadingIndicator.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/registration/components/ProposedAgencies/ProposedAgencies.tsx",
+			"target": "file:src/components/registration/registrationHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/registration/components/ProposedAgencies/ProposedAgencies.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/registration/components/ProposedAgencies/ProposedAgencies.tsx",
+			"target": "file:src/containers/registration/components/ConsultingTypeSelection/index.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/registration/components/ProposedAgencies/ProposedAgencies.tsx",
+			"target": "file:src/containers/registration/components/NoAgencyFound/index.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/registration/components/ProposedAgencies/ProposedAgencies.tsx",
+			"target": "file:src/containers/registration/components/PostCodeSelection/index.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/registration/components/ProposedAgencies/ProposedAgencies.tsx",
+			"target": "file:src/containers/registration/components/ProposedAgencies/proposedAgencies.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/registration/components/ProposedAgencies/ProposedAgencies.tsx",
+			"target": "file:src/containers/registration/components/ProposedAgencies/ProposedAgenciesTitle/index.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/registration/components/ProposedAgencies/ProposedAgencies.tsx",
+			"target": "file:src/containers/registration/hooks/useAgenciesForRegistration.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/registration/components/ProposedAgencies/ProposedAgencies.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/registration/components/ProposedAgencies/ProposedAgencies.tsx",
+			"target": "file:src/globalState/provider/UrlParamsProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/registration/components/ProposedAgencies/ProposedAgencies.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/registration/components/ProposedAgencies/ProposedAgenciesTitle/index.tsx",
+			"target": "function:src/containers/registration/components/ProposedAgencies/ProposedAgenciesTitle/index.tsx:ProposedAgenciesTitle",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/containers/registration/components/ProposedAgencies/ProposedAgenciesTitle/index.tsx",
+			"target": "function:src/containers/registration/components/ProposedAgencies/ProposedAgenciesTitle/index.tsx:ProposedAgenciesTitle",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/containers/registration/components/ProposedAgencies/ProposedAgenciesTitle/index.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/registration/components/ProposedAgencies/ProposedAgenciesTitle/index.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/hooks/useUserMutate.ts",
+			"target": "function:src/hooks/useUserMutate.ts:useUserMutate",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/hooks/useUserMutate.ts",
+			"target": "function:src/hooks/useUserMutate.ts:useUserMutate",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/hooks/useUserMutate.ts",
+			"target": "file:src/api/apiPatchUserData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/hooks/useUserMutate.ts",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/hooks/useUserMutate.ts",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/hooks/useUserMutate.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/store/agencyLogoAtom.ts",
+			"target": "function:src/store/agencyLogoAtom.ts:agencyLogoAtom",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/store/agencyLogoAtom.ts",
+			"target": "function:src/store/agencyLogoAtom.ts:agencyLogoAtom",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/clipboardHelpers.ts",
+			"target": "function:src/utils/clipboardHelpers.ts:copyTextToClipboard",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/clipboardHelpers.ts",
+			"target": "function:src/utils/clipboardHelpers.ts:copyTextToClipboard",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/clipboardHelpers.ts",
+			"target": "function:src/utils/clipboardHelpers.ts:listener",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/dateHelpers.ts",
+			"target": "function:src/utils/dateHelpers.ts:MILLISECONDS_PER_SECOND",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/dateHelpers.ts",
+			"target": "function:src/utils/dateHelpers.ts:MILLISECONDS_PER_SECOND",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/dateHelpers.ts",
+			"target": "function:src/utils/dateHelpers.ts:MILLISECONDS_PER_MINUTE",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/dateHelpers.ts",
+			"target": "function:src/utils/dateHelpers.ts:MILLISECONDS_PER_MINUTE",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/dateHelpers.ts",
+			"target": "function:src/utils/dateHelpers.ts:MILLISECONDS_PER_HOUR",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/dateHelpers.ts",
+			"target": "function:src/utils/dateHelpers.ts:MILLISECONDS_PER_HOUR",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/dateHelpers.ts",
+			"target": "function:src/utils/dateHelpers.ts:formatToDDMMYYYY",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/dateHelpers.ts",
+			"target": "function:src/utils/dateHelpers.ts:formatToDDMMYYYY",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/dateHelpers.ts",
+			"target": "function:src/utils/dateHelpers.ts:getPrettyDateFromMessageDate",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/dateHelpers.ts",
+			"target": "function:src/utils/dateHelpers.ts:getPrettyDateFromMessageDate",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/dateHelpers.ts",
+			"target": "function:src/utils/dateHelpers.ts:formatToHHMM",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/dateHelpers.ts",
+			"target": "function:src/utils/dateHelpers.ts:formatToHHMM",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/dateHelpers.ts",
+			"target": "function:src/utils/dateHelpers.ts:prettyPrintTimeDifference",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/dateHelpers.ts",
+			"target": "function:src/utils/dateHelpers.ts:prettyPrintTimeDifference",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/dateHelpers.ts",
+			"target": "function:src/utils/dateHelpers.ts:convertISO8601ToMSSinceEpoch",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/dateHelpers.ts",
+			"target": "function:src/utils/dateHelpers.ts:convertISO8601ToMSSinceEpoch",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/dateHelpers.ts",
+			"target": "function:src/utils/dateHelpers.ts:dateToLocalISO",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/dateHelpers.ts",
+			"target": "function:src/utils/dateHelpers.ts:dateToLocalISO",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/dateHelpers.ts",
+			"target": "function:src/utils/dateHelpers.ts:addMissingZero",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/dateHelpers.ts",
+			"target": "function:src/utils/dateHelpers.ts:addMissingZero",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/dateHelpers.ts",
+			"target": "function:src/utils/dateHelpers.ts:convertUTCDateToLocalDate",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/dateHelpers.ts",
+			"target": "function:src/utils/dateHelpers.ts:convertUTCDateToLocalDate",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/dateHelpers.ts",
+			"target": "function:src/utils/dateHelpers.ts:getDurationTimeBySeconds",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/dateHelpers.ts",
+			"target": "function:src/utils/dateHelpers.ts:getDurationTimeBySeconds",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/liveChatToggle.ts",
+			"target": "function:src/utils/liveChatToggle.ts:isLiveChatAvailable",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/liveChatToggle.ts",
+			"target": "function:src/utils/liveChatToggle.ts:isLiveChatAvailable",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/liveChatToggle.ts",
+			"target": "function:src/utils/liveChatToggle.ts:setLiveChatAvailable",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/liveChatToggle.ts",
+			"target": "function:src/utils/liveChatToggle.ts:setLiveChatAvailable",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/liveChatToggle.ts",
+			"target": "function:src/utils/liveChatToggle.ts:useLiveChatAvailable",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/liveChatToggle.ts",
+			"target": "function:src/utils/liveChatToggle.ts:useLiveChatAvailable",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/parsePlaceholderString.ts",
+			"target": "function:src/utils/parsePlaceholderString.ts:parsePlaceholderString",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/parsePlaceholderString.ts",
+			"target": "function:src/utils/parsePlaceholderString.ts:parsePlaceholderString",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/tabsHelper.ts",
+			"target": "function:src/utils/tabsHelper.ts:COLUMN_LEFT",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/tabsHelper.ts",
+			"target": "function:src/utils/tabsHelper.ts:COLUMN_LEFT",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/tabsHelper.ts",
+			"target": "function:src/utils/tabsHelper.ts:COLUMN_RIGHT",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/tabsHelper.ts",
+			"target": "function:src/utils/tabsHelper.ts:COLUMN_RIGHT",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/tabsHelper.ts",
+			"target": "function:src/utils/tabsHelper.ts:isTabGroup",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/tabsHelper.ts",
+			"target": "function:src/utils/tabsHelper.ts:isTabGroup",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/tabsHelper.ts",
+			"target": "function:src/utils/tabsHelper.ts:solveCondition",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/tabsHelper.ts",
+			"target": "function:src/utils/tabsHelper.ts:solveCondition",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/tabsHelper.ts",
+			"target": "function:src/utils/tabsHelper.ts:solveGroupConditions",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/tabsHelper.ts",
+			"target": "function:src/utils/tabsHelper.ts:solveGroupConditions",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/tabsHelper.ts",
+			"target": "function:src/utils/tabsHelper.ts:solveTabConditions",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/tabsHelper.ts",
+			"target": "function:src/utils/tabsHelper.ts:solveTabConditions",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/transformBookingData.ts",
+			"target": "function:src/utils/transformBookingData.ts:transformBookingData",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/transformBookingData.ts",
+			"target": "function:src/utils/transformBookingData.ts:transformBookingData",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/transformBookingData.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/utils/transformBookingData.ts",
+			"target": "file:src/utils/dateHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		}
+	]
+}

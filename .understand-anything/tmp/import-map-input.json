@@ -1,0 +1,4925 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"files": [
+		{
+			"path": ".cursor/settings.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": ".dockerignore",
+			"language": "unknown",
+			"fileCategory": "infra"
+		},
+		{
+			"path": ".env.example",
+			"language": "config",
+			"fileCategory": "config"
+		},
+		{
+			"path": ".github/workflows/frontend-deploy.yml",
+			"language": "yaml",
+			"fileCategory": "infra"
+		},
+		{
+			"path": ".husky/commit-msg",
+			"language": "unknown",
+			"fileCategory": "code"
+		},
+		{
+			"path": ".husky/pre-commit",
+			"language": "unknown",
+			"fileCategory": "code"
+		},
+		{
+			"path": ".prettierignore",
+			"language": "unknown",
+			"fileCategory": "code"
+		},
+		{
+			"path": ".storybook-backup/main.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": ".storybook-backup/preview-head.html",
+			"language": "html",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/preview.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": ".storybook-backup/static/compound-design-tokens.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/compound-web.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-common-base.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-common-semantic.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-font-fallbacks.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-dark-base-mq.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-dark-base.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-dark-hc-base-mq.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-dark-hc-base.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-dark-hc-semantic-mq.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-dark-hc-semantic.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-dark-semantic-mq.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-dark-semantic.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-light-base-mq.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-light-base.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-light-hc-base-mq.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-light-hc-base.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-light-hc-semantic-mq.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-light-hc-semantic.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-light-semantic-mq.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook-backup/static/cpd-theme-light-semantic.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/main.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": ".storybook/manager.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": ".storybook/preview-head.html",
+			"language": "html",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/preview.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": ".storybook/static/compound-design-tokens.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/static/compound-web.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/static/cpd-common-base.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/static/cpd-common-semantic.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/static/cpd-font-fallbacks.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/static/cpd-theme-dark-base-mq.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/static/cpd-theme-dark-base.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/static/cpd-theme-dark-hc-base-mq.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/static/cpd-theme-dark-hc-base.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/static/cpd-theme-dark-hc-semantic-mq.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/static/cpd-theme-dark-hc-semantic.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/static/cpd-theme-dark-semantic-mq.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/static/cpd-theme-dark-semantic.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/static/cpd-theme-light-base-mq.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/static/cpd-theme-light-base.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/static/cpd-theme-light-hc-base-mq.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/static/cpd-theme-light-hc-base.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/static/cpd-theme-light-hc-semantic-mq.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/static/cpd-theme-light-hc-semantic.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/static/cpd-theme-light-semantic-mq.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".storybook/static/cpd-theme-light-semantic.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": ".stylelintrc.js",
+			"language": "javascript",
+			"fileCategory": "code"
+		},
+		{
+			"path": ".tmp-proof/capture_compare.js",
+			"language": "javascript",
+			"fileCategory": "code"
+		},
+		{
+			"path": ".understand-anything/.understandignore",
+			"language": "unknown",
+			"fileCategory": "code"
+		},
+		{
+			"path": "CHANGELOG.md",
+			"language": "markdown",
+			"fileCategory": "docs"
+		},
+		{
+			"path": "cli.js",
+			"language": "javascript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "config/env.js",
+			"language": "javascript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "config/getHttpsConfig.js",
+			"language": "javascript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "config/modules.js",
+			"language": "javascript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "config/paths.js",
+			"language": "javascript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "config/webpack.config.js",
+			"language": "javascript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "config/webpack/persistentCache/createEnvironmentHash.js",
+			"language": "javascript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "config/webpackDevServer.config.js",
+			"language": "javascript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "create-all-stories.sh",
+			"language": "shell",
+			"fileCategory": "script"
+		},
+		{
+			"path": "cypress.config.js",
+			"language": "javascript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/appointments.cy.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/error.cy.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/login.cy.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/messages/attachments/base.cy.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/messages/attachments/formal.cy.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/messages/attachments/informal.cy.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/messages/unread-animation.cy.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/profile.cy.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/registration/base.cy.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/registration/consultingType.cy.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/registration/topic.cy.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/release-notes.cy.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/sessions.cy.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/tokens.cy.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/under-construction.cy.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/video-calls.cy.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/videoconference.cy.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/fixtures/api.v1.login.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/auth.token.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/registration/agency.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/registration/consultingType.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/registration/topic.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/releaseNote.md",
+			"language": "markdown",
+			"fileCategory": "docs"
+		},
+		{
+			"path": "cypress/fixtures/releases.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/service.agencies.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/service.agency.consultants.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/service.consultingtypes.addiction.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/service.consultingtypes.emigration.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/service.consultingtypes.pregnancy.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/service.consultingtypes.u25.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/service.settings.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/service.tenant.public.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/service.topicGroups.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/service.topics.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/service.users.data.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/service.users.sessions.room.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/service.videocalls.new.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/support/commands.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/commands/api/agencies.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/commands/api/appointments.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/commands/api/consultTypes.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/commands/api/messages.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/commands/api/rc.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/commands/api/topic.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/commands/api/uploads.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/commands/api/users/chat.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/commands/api/users/consultants.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/commands/api/users/data.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/commands/api/users/sessions.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/commands/api/videocalls.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/commands/helper/appointments.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/commands/helper/askerSessions.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/commands/helper/consultantSessions.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/commands/helper/fastLogin.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/commands/helper/login.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/commands/helper/messages.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/commands/mockApi.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/commands/socket.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/e2e.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/helpers.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/index.d.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/sessions.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/websocket.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/tsconfig.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "defaults.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "deploy-development.sh",
+			"language": "shell",
+			"fileCategory": "script"
+		},
+		{
+			"path": "deploy-production.sh",
+			"language": "shell",
+			"fileCategory": "script"
+		},
+		{
+			"path": "deployment-v2.yaml",
+			"language": "yaml",
+			"fileCategory": "config"
+		},
+		{
+			"path": "Dockerfile",
+			"language": "dockerfile",
+			"fileCategory": "infra"
+		},
+		{
+			"path": "Dockerfile.storybook",
+			"language": "dockerfile",
+			"fileCategory": "infra"
+		},
+		{
+			"path": "docs/architecture/current-architecture.md",
+			"language": "markdown",
+			"fileCategory": "docs"
+		},
+		{
+			"path": "docs/plan/master-roadmap.md",
+			"language": "markdown",
+			"fileCategory": "docs"
+		},
+		{
+			"path": "docs/plan/README.md",
+			"language": "markdown",
+			"fileCategory": "docs"
+		},
+		{
+			"path": "docs/plan/template-feature-plan.md",
+			"language": "markdown",
+			"fileCategory": "docs"
+		},
+		{
+			"path": "docs/README.md",
+			"language": "markdown",
+			"fileCategory": "docs"
+		},
+		{
+			"path": "docs/rules/engineering-rules.md",
+			"language": "markdown",
+			"fileCategory": "docs"
+		},
+		{
+			"path": "docs/skills/implementation-skills.md",
+			"language": "markdown",
+			"fileCategory": "docs"
+		},
+		{
+			"path": "dtsgen.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "generate-professional-stories.js",
+			"language": "javascript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "generate-smart-stories.js",
+			"language": "javascript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "https-redirect-middleware.yaml",
+			"language": "yaml",
+			"fileCategory": "config"
+		},
+		{
+			"path": "index.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "ingress-v2.yaml",
+			"language": "yaml",
+			"fileCategory": "config"
+		},
+		{
+			"path": "ingress.yaml",
+			"language": "yaml",
+			"fileCategory": "config"
+		},
+		{
+			"path": "k8s-temp-frontend.yaml",
+			"language": "yaml",
+			"fileCategory": "config"
+		},
+		{
+			"path": "LICENSE.md",
+			"language": "markdown",
+			"fileCategory": "docs"
+		},
+		{
+			"path": "MATRIX-INTEGRATION-GUIDE.md",
+			"language": "markdown",
+			"fileCategory": "docs"
+		},
+		{
+			"path": "package.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "PROJECT_KNOWLEDGE.md",
+			"language": "markdown",
+			"fileCategory": "docs"
+		},
+		{
+			"path": "proxy/config.js",
+			"language": "javascript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "proxy/package.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "proxy/routes/index.js",
+			"language": "javascript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "proxy/routes/index.js.backup",
+			"language": "backup",
+			"fileCategory": "code"
+		},
+		{
+			"path": "proxy/routes/settings.js",
+			"language": "javascript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "proxy/routes/weblate.js",
+			"language": "javascript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "proxy/routes/weblate.js.backup.original",
+			"language": "original",
+			"fileCategory": "code"
+		},
+		{
+			"path": "proxy/server.js",
+			"language": "javascript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "public/element-sso-bridge.html",
+			"language": "html",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "public/manifest.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "public/releases/README.md",
+			"language": "markdown",
+			"fileCategory": "docs"
+		},
+		{
+			"path": "public/releases/releases.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "public/robots.txt",
+			"language": "txt",
+			"fileCategory": "docs"
+		},
+		{
+			"path": "README.md",
+			"language": "markdown",
+			"fileCategory": "docs"
+		},
+		{
+			"path": "scripts/build.js",
+			"language": "javascript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "scripts/start.js",
+			"language": "javascript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "scripts/test.js",
+			"language": "javascript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "serve.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "service-v2.yaml",
+			"language": "yaml",
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/api/apiAddSessionSupervisor.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiAgencyLanguages.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiAgencySelection.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiAppointmentServiceSet.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiConsumeMagicLinkLogin.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiDeleteAskerAccount.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiDeleteEmail.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiDeleteMessage.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiDeleteRemove.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiDeleteSessionAndUser.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiDeleteUserFromRoom.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiDraftMessages.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiEnquiryAcceptance.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiEventNotifications.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiFrontendSettings.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetAgenciesByTenant.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetAgencyConsultantList.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetAgencyId.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetAnonymousEnquiryDetails.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetApiAppointmentServiceEventTypes.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetAppointmentServiceTeam.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetAppointmentsServiceBookingEventsByUserId.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetAskerSessionList.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetAskerSessionList.ts.backup",
+			"language": "backup",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetCalDavAccount.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetChatRoomById.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetConsultant.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetConsultantAppointments.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetConsultantSessionList.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetConsultantStatistics.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetConsultingType.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetConsultingTypes.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetGroupChatInfo.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetIsUsernameAvailable.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetSessionData.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetSessionRooms.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetSessionSupervisors.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetTenantAgenciesTopics.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetTenantTheming.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetTools.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetTopicGroups.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetTopicId.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetTopicsData.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetUserData.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGetUserDataBySessionId.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiGroupChatSettings.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiJoinGroupChat.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiLogoutKeycloak.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiLogoutRocketchat.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiMatrixSettingsPublic.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiMatrixUpload.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPatchConsultantData.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPatchMessage.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPatchNotificationActiveView.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPatchUserData.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPostAdditionalEnquiry.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPostBanUser.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPostError.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPostMessageEventNotification.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPostRegistration.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPutArchive.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPutConsultantData.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPutDearchive.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPutEmail.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPutGroupChat.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPutTools.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRejectVideoCall.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRemoveSessionSupervisor.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRequestMagicLinkLogin.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRocketChatFetchMyKeys.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRocketChatGetUsersOfRoomWithoutKey.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRocketChatGroupMembers.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRocketChatResetE2EKey.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRocketChatRoomsGet.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRocketChatRoomsInfo.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRocketChatSetRoomKeyID.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRocketChatSettingsPublic.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRocketChatSetUserKeys.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRocketChatSubscriptionsGet.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRocketChatSubscriptionsGetOne.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRocketChatUpdateGroupKey.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRocketChatUsersGetStatus.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRocketChatUsersInfo.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiSendAliasMessage.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiSendEnquiry.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiSendMessage.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiServerSettings.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiSessionAssign.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiSetAbsence.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiSetSessionRead.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiStartVideoCall.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiTwoFactorAuth.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiUpdatePassword.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiUpdatePasswordAppointments.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiUpdateUserE2EKeys.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiUploadAttachment.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiUserDrafts.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/appointments/deleteAppointment.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/appointments/getAppointment.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/appointments/getAppointments.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/appointments/index.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/appointments/postAppointments.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/appointments/putAppointment.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/fetchData.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/fetchData.ts.backup",
+			"language": "backup",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/fetchMatrixData.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/fetchRCData.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/index.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/matrix/matrixClient.ts.backup",
+			"language": "backup",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/videocalls/getJwt.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/videocalls/index.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/agencyRadioSelect/agencyLanguages.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/agencyRadioSelect/AgencyLanguages.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/agencyRadioSelect/agencyRadioSelect.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/agencyRadioSelect/AgencyRadioSelect.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/agencySelection/agencySelection.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/agencySelection/AgencySelection.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/agencySelection/agencySelectionHelpers.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/anonymousChat/AnonymousChat.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/AbsenceHandler.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/app.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/app.tsx.backup",
+			"language": "backup",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/authenticatedApp.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/app/AuthenticatedApp.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/ErrorBoundary.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/LiveChatToggleIcons.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/loading.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/app/Loading.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/navigation.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/app/NavigationBar.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/navigationHandler.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/NavigationSidebar.stories.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/navigationSidebarIcons.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/NonPlainRoutesWrapper.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/NonPlainRoutesWrapper.tsx.backup",
+			"language": "backup",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/PreConditions.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/RocketChat.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/RouterConfig.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/Routing.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/TenantThemingLoader.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/WebsocketHandler.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/appointment/appointment.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/appointment/Appointment.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/appointment/appointments.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/appointment/Appointments.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/appointment/OnlineMeetingForm.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/askerInfo/askerInfo.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/askerInfo/AskerInfo.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/askerInfo/AskerInfoAssign.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/askerInfo/AskerInfoContent.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/askerInfo/AskerInfoData.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/askerInfo/askerInfoTools.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/askerInfo/AskerInfoTools.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/askerInfo/askerInfoToolsOptions.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/askerInfo/AskerInfoToolsOptions.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/auth/auth.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/banner/Banner.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/banUser/banUser.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/banUser/BanUser.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/box/box.module.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/box/Box.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/budibase/budibaseLogout.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/button/Button.stories.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/button/button.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/button/Button.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/call/FloatingCallWidget.OLD.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/call/FloatingCallWidget.PROFESSIONAL.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/call/FloatingCallWidget.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/call/FloatingCallWidget.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/call/GroupCallWidget.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/call/GroupCallWidget.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/card/card.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/card/index.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/checkbox/Checkbox.stories.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/checkbox/checkbox.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/checkbox/Checkbox.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/CompoundIntegration.stories.mdx",
+			"language": "markdown",
+			"fileCategory": "docs"
+		},
+		{
+			"path": "src/components/datepicker/datepicker.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/devToolbar/devToolbar.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/devToolbar/DevToolbar.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/downloadICSFile/downloadICSFile.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/downloadICSFile/downloadICSFile.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/draftsCenter/draftsCenter.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/draftsCenter/DraftsCenter.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/dragAndDropArea/dragAndDropArea.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/dragAndDropArea/DragAndDropArea.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/E2EEncryptionSupportBanner/E2EEncryptionSupportBanner.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/E2EEncryptionSupportBanner/E2EEncryptionSupportBanner.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/E2EEncryptionSupportHelp/E2EEncryptionSupportHelp.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/E2EEncryptionSupportHelp/E2EEncryptionSupportHelp.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/editableData/editableData.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/editableData/EditableData.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/enquiry/enquiry.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/enquiry/enquiryLanguageSelection.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/enquiry/EnquiryLanguageSelection.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/enquiry/WriteEnquiry.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/error/error.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/error/Error.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/error/errorHandling.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/flyoutMenu/flyoutMenu.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/flyoutMenu/FlyoutMenu.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/form/textarea.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/form/textarea.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/generateQrCode/generateQrCode.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/generateQrCode/GenerateQrCode.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/groupChat/createChat.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/groupChat/createChatHelpers.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/groupChat/CreateChatView.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/groupChat/groupChatCopyLinks.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/groupChat/GroupChatCopyLinks.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/groupChat/groupChatHelpers.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/groupChat/groupChatInfo.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/groupChat/GroupChatInfo.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/groupChat/joinChat.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/groupChat/JoinGroupChatView.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/header/header.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/header/Header.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/headline/Headline.stories.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/headline/headline.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/headline/Headline.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/help/help.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/help/Help.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/help/HelpVideoCall.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/incomingVideoCall/incomingVideoCall.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/incomingVideoCall/IncomingVideoCall.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/infoTooltip/infoTooltip.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/infoTooltip/InfoTooltip.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/input/input.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/inputField/InputField.stories.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/inputField/inputField.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/inputField/InputField.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/invite/InviteLink.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/legalInformationLinks/Imprint.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/legalInformationLinks/Privacy.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/legalInformationLinks/TermsAndConditions.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/legalLinks/LegalLinks.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/legalPageWrapper/legalPageWrapper.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/legalPageWrapper/LegalPageWrapper.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/listInfo/listInfo.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/listInfo/ListInfo.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/loadingIndicator/LoadingIndicator.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/loadingIndicator/LoadingIndicator.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/loadingSpinner/LoadingSpinner.stories.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/loadingSpinner/LoadingSpinner.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/loadingSpinner/LoadingSpinner.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/localeSwitch/localeSwitch.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/localeSwitch/LocaleSwitch.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/login/login.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/login/Login.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/logout/calcomLogout.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/logout/logout.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/mailTemplate/mail-template.html",
+			"language": "html",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/mainTopicSelection/MainTopicSelection.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/mainTopicSelection/MainTopicSelection.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/matrixCall/MatrixCallView.BROKEN-BACKUP.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/matrixCall/MatrixCallView.CLEAN.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/matrixCall/MatrixCallView.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/matrixCall/MatrixCallView.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/appointment.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/message/Appointment.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/consultantMatchingAnimation.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/message/ConsultantMatchingAnimation.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/e2eeActivatedMessage.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/message/E2EEActivatedMessage.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/furtherSteps.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/message/FurtherSteps.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/MasterKeyLostMessage.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/message.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/message/message.styles.scss.backup",
+			"language": "backup",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/MessageAttachment.stories.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/MessageAttachment.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/messageConstants.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/MessageDisplayName.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/messageHelpers.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/MessageItemComponent.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/MessageMetaData.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/messageNameUtils.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/ReassignMessage.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/reassignRequestMessage.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/message/SystemMessage.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/UserAvatar.stories.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/UserAvatar.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/VideoCallMessage.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/VideoChatDetails/index.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/VideoChatDetails/styles.module.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/messageSubmitInterface/attachmentHelpers.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/messageSubmitInterface/emojiPicker.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/messageSubmitInterface/highlightSnippetEvents.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/messageSubmitInterface/messageSubmitInfo.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/messageSubmitInterface/MessageSubmitInfo.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/messageSubmitInterface/messageSubmitInterface.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/messageSubmitInterface/messageSubmitInterfaceSkeleton.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/messageSubmitInterface/richtextHelpers.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/messageSubmitInterface/SendMessageButton.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/messageSubmitInterface/TipTapComposer.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/messageSubmitInterface/TipTapComposer.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/messageSubmitInterface/useDraftMessage.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/mobile/linkMenu/link_menu.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/mobile/linkMenu/LinkMenu.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/modal/modal.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/modal/Modal.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/notFound/NotFound.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/notice/Notice.stories.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/notice/notice.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/notice/Notice.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/notice/types.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/notifications/notification.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/notifications/Notification.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/notifications/notifications.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/notifications/Notifications.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/notificationsCenter/notificationsCenter.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/notificationsCenter/NotificationsCenter.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/overlay/overlay.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/overlay/Overlay.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/Page/index.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/Page/page.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/passwordReset/passwordReset.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/passwordReset/PasswordReset.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/_locale.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/profile/_spokenlanguages.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/profile/absenceFormular.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/profile/AbsenceFormular.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/AdditionalEnquiry/_additionalEnquiry.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/profile/AdditionalEnquiry/AdditionalAgencySelection.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/AdditionalEnquiry/AdditionalEnquiry.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/AskerAboutMeData.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/AskerConsultingTypeData.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/BrowserNotifications/index.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/BrowserNotifications/NotificationDenied/index.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/BrowserNotifications/NotificationDenied/styles.module.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/profile/BrowserNotifications/styles.module.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/profile/ConsultantAgencies.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/ConsultantInformation.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/ConsultantNotifications.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/ConsultantPrivateData.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/ConsultantSpokenLanguages.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/ConsultantStatistics.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/deleteAccount.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/profile/DeleteAccount.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/Documentation/index.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/Documentation/styles.module.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/profile/EmailNotifications/EmailToggle/index.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/EmailNotifications/index.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/EmailNotifications/NoEmailSet/index.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/EmailNotifications/NoEmailSet/styles.module.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/profile/EmailNotifications/SetEmailModal/index.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/EnableWalkthrough.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/LiveChatAvailability.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/Locale.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/MagicLinksLoginFeature.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/OverviewMobile/Bookings/index.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/OverviewMobile/Sessions/index.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/profile.routes.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/profile.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/profile/Profile.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/profileHelp.routes.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/profileHelpers.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/profileSettings.routes.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/statistics.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/progressbar/ProgressBar.stories.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/progressbar/progressbar.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/progressbar/ProgressBar.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/pseudonym/AnimalAvatar.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/pseudonym/AnonymousConsentGate.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/pseudonym/AnonymousConsentGate.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/pseudonym/BotMessageAnimation.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/pseudonym/BreathingTutorialCard.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/pseudonym/BreathingTutorialCard.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/pseudonym/ConsultantAcceptedActionBar.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/pseudonym/ConsultantAcceptedActionBar.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/pseudonym/PrivacyMessageCard.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/pseudonym/PrivacyMessageCard.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/pseudonym/PseudonymActionBar.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/pseudonym/PseudonymActionBar.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/pseudonym/PseudonymCard.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/pseudonym/PseudonymCard.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/pseudonym/WaitingQueueActionBar.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/pseudonym/WaitingQueueActionBar.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/radioButton/RadioButton.stories.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/radioButton/radioButton.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/radioButton/RadioButton.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/accountData/accountData.stories.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/accountData/AccountData.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/agencySelection/AgencyLanguages.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/agencySelection/agencySelection.stories.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/agencySelection/AgencySelection.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/agencySelection/AgencySelectionResults.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/autoLogin.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/autoLogin.ts.backup",
+			"language": "backup",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/autoLogin.ts.backup-matrix",
+			"language": "backup-matrix",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/infoDrawer/InfoDrawer.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/metaInfo/MetaInfo.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/preselectionBox/PreselectedAgency.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/preselectionBox/PreselectedConsultant.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/preselectionBox/PreselectedTopic.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/preselectionBox/PreselectionBox.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/preselectionDrawer/preselectionDrawer.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/preselectionError/PreselectionError.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/Registration.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/registrationDataValidation.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/registrationHelpers.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/stepBar/StepBar.stories.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/stepBar/StepBar.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/topicSelection/topicSelection.stories.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/topicSelection/TopicSelection.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/welcomeScreen/welcomeScreen.stories.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/welcomeScreen/welcomeScreen.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/registration/welcomeScreen/WelcomeScreen.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/zipcodeInput/zipcodeInput.stories.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/zipcodeInput/ZipcodeInput.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/releaseNote/releaseNote.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/releaseNote/ReleaseNote.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/scrollableSection/scrollableSection.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/scrollableSection/ScrollableSection.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/scrollableSection/ScrollableSectionBody.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/scrollableSection/ScrollableSectionFooter.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/scrollableSection/ScrollableSectionHeader.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/select/LanguageSelectDropdown.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/select/select.react.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/select/select.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/select/select2.react.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/select/select2.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/select/SelectDropdown.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/serviceExplanation/ServiceExplanation.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/serviceExplanation/ServiceExplanation.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/AcceptAssign.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/DeleteSession.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/EncryptionBanner.stories.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/encryptionBanner.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/session/EncryptionBanner.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/RoomNotFound.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/session.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/session/sessionDateHelpers.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/sessionHelpers.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/SessionItemComponent.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/SessionStream.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/SessionStream.tsx.backup",
+			"language": "backup",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/SessionView.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/SessionViewEmpty.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/smoothScrollHelper.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/SubscriptionKeyLost.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/subscriptionKeyLostHelper.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionAssign/RequestSessionAssign.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionAssign/sessionAssignHelper.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionCookie/accessSessionCookie.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionCookie/accessSessionCookie.ts.backup",
+			"language": "backup",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionCookie/accessSessionLocalStorage.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionCookie/cache-bust.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionCookie/getBudibaseAccessToken.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionCookie/getKeycloakAccessToken.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionCookie/getKeycloakAccessToken.ts.backup",
+			"language": "backup",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionCookie/getMatrixAccessToken.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionCookie/getRocketchatAccessToken.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionCookie/refreshKeycloakAccessToken.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionHeader/consultantSearchLoader.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/sessionHeader/ConsultantSearchLoader.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionHeader/GroupChatHeader/index.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionHeader/GroupChatHeader/useJoinVideoCall/index.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionHeader/GroupChatHeader/useStartVideoCall/index.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionHeader/sessionHeader.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/sessionHeader/SessionHeaderComponent.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionMenu/sessionMenu.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/sessionMenu/SessionMenu.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionMenu/sessionMenuHelpers.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/EmptyListItem.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/EnquiryFilterChips.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/ResizableHandle.stories.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/ResizableHandle.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/ResizableSidebar.stories.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/SessionListColumn.stories.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/SessionListCreateChat.stories.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/SessionListCreateChat.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/sessionsList.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/sessionsList/SessionsList.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/SessionsList.tsx.backup",
+			"language": "backup",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/sessionsListConfig.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/sessionsListResize.constants.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/SessionsListScrollbar.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/SessionsListToolbar.stories.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/SessionsListToolbar.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/SessionsListWelcomeIllustration.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/SessionsListWrapper.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsListItem/SessionListItem.stories.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsListItem/SessionListItemAttachment.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsListItem/SessionListItemComponent.tsx.backup",
+			"language": "backup",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsListItem/SessionListItemLastMessage.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsListItem/SessionListItemVideoCall.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsListItem/sessionsListItem.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/sessionsListItem/sessionsListItemHelpers.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsListItem/SessionsListItemSkeleton.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/spinner/Spinner.stories.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/spinner/spinner.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/spinner/Spinner.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/stage/stage.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/stage/stage.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/stageLayout/StageLayout.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/stageLayout/StageLayout.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/Switch/index.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/Switch/switch.module.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/tag/Tag.stories.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/tag/tag.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/tag/Tag.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/tagSelect/tagSelect.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/tagSelect/TagSelect.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/termsandconditions/TermsAndConditions.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/termsandconditions/termsandconfitions.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/text/Text.stories.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/text/text.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/text/Text.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/tools/Tool.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/tools/tools.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/tools/ToolsList.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/tooltip/tooltip.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/tooltip/Tooltip.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/twoFactorAuth/twoFactorAuth.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/twoFactorAuth/TwoFactorAuth.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/twoFactorAuth/twoFactorAuthResendMail.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/twoFactorAuth/TwoFactorAuthResendMail.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/twoFactorAuth/twoFactorNag.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/twoFactorAuth/TwoFactorNag.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/typingIndicator/typingIndicator.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/typingIndicator/typingIndicator.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/uiVersionToggle/uiVersionToggle.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/uiVersionToggle/UIVersionToggle.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/videoCall/statusPage.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/videoCall/StatusPage.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/videoCall/VideoCall.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/videoConference/e2eeBanner.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/videoConference/E2EEBanner.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/videoConference/logo.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/videoConference/Logo.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/videoConference/VideoConference.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/videoConference/waitingRoom.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/videoConference/WaitingRoom.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/videoConference/WaitingRoomContent.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/videoConference/waitingRoomHelpers.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/walkthrough/steps.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/walkthrough/walkthrough.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/walkthrough/Walkthrough.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/compound.css",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/containers/bookings/booking.routes.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/AddCalendar/addCalendar.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/AssignedCalendars/assignedCalendars.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/AvailabilityContainer/availabilityContainer.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/booking.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/containers/bookings/components/Booking/booking.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/BookingCancellation/bookingCancellation.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/BookingDescription/bookingDescription.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/BookingEvents/bookingEvents.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/BookingEventsBooked/bookingEventsBooked.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/BookingEventsCanceled/bookingEventsCanceled.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/BookingEventsExpired/bookingEventsExpired.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/BookingEventTableColumnAttendee/bookingEventTableColumnAttendee.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/BookingReschedule/bookingReschedule.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/BookingsComponent/bookingsComponent.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/BookingSettings/bookingSettings.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/Calcom/cal.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/containers/bookings/components/Calcom/Cal.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/Calcom/useEmbed.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/Calendar/calendar.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/CalendarIntegration/calendarIntegration.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/Event/event.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/Event/LocationType/index.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/MyCalendar/myCalendar.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/NoBookings/noBookingsBooked.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/hooks/useAskerHasAssignedConsultant.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/hooks/useCalcomLogin.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/overview/components/BookingCard/BookingCard.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/overview/components/BookingEvent/booking-event.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/containers/overview/components/BookingEvent/index.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/overview/components/EmptyState/emptyState.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/containers/overview/components/EmptyState/index.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/overview/components/OverviewCard/overviewCard.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/containers/overview/components/OverviewCard/OverviewCard.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/overview/components/SessionCard/sessionCard.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/containers/overview/components/SessionCard/SessionCard.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/overview/hooks/useConsultantBookings.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/overview/hooks/useConsultantData.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/overview/overview.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/containers/overview/overview.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/registration/components/ConsultingTypeSelection/index.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/registration/components/FallbackInformation/index.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/registration/components/NoAgencyFound/index.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/registration/components/PostCodeSelection/index.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/registration/components/ProposedAgencies/proposedAgencies.styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/containers/registration/components/ProposedAgencies/ProposedAgencies.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/registration/components/ProposedAgencies/ProposedAgenciesTitle/index.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/registration/hooks/useAgenciesForRegistration.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/registration/hooks/useConsultantRegistrationData.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/extensions/cypress/cypress.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/extensions/package.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/extensions/README.MD",
+			"language": "markdown",
+			"fileCategory": "docs"
+		},
+		{
+			"path": "src/generated/agencyservice.d.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/generated/liveservice.d.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/generated/mailservice.d.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/generated/messageservice.d.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/generated/uploadservice.d.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/generated/userservice.d.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/generated/videoservice.d.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/context/LocaleContext.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/context/UserDataContext.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/globalState_notes.md",
+			"language": "markdown",
+			"fileCategory": "docs"
+		},
+		{
+			"path": "src/globalState/helpers/stateHelpers.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/index.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/AppConfig/AppConfigInterface.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/AppConfig/AppConfigJitsiInterface.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/AppConfig/AppConfigNotificationsInterface.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/AppConfig/AppConfigTwoFactorInterface.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/AppConfig/AppConfigUrlsInterface.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/AppConfig/AppSettingsInterface.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/AppConfig/index.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/AppointmentsDataInterface.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/AuthDataInterface.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/BookingsInterface.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/ConsultingSessionDataInterface.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/ConsultingTypeInterface.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/E2EEDataInterface.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/GroupChatConfig.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/index.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/LegalLinkInterface.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/ServerAppConfigInterface.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/SessionsDataInterface.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/TenantDataInterface.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/ToolsInterface.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/TopicGroups.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/TopicsDataInterface.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/TranslationConfig.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/UserDataInterface.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/VideoCallDataInterface.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/ActiveSessionProvider.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/AgencySpecificProvider.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/AppConfigProvider.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/CallProvider.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/ConsultantListProvider.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/ConsultingTypesProvider.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/E2EEProvider.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/GlobalComponentContext.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/InformalProvider.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/LanguagesProvider.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/LegalLinksProvider.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/LocaleProvider.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/ModalProvider.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/NotificationsProvider.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/RegistrationProvider.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/RocketChatGlobalSettingsProvider.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/RocketChatProvider.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/RocketChatProvider.tsx.backup",
+			"language": "backup",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/RocketChatPublicSettingsProvider.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/RocketChatSubscriptionsProvider.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/RocketChatSytemUsersProvider.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/RocketChatUnreadProvider.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/RocketChatUsersOfRoomProvider.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/RocketChatUserStatusProvider.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/SessionsDataProvider.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/SessionsDataProvider.tsx.backup",
+			"language": "backup",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/SessionTypeProvider.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/TenantProvider.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/TopicsProvider.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/UpdateSessionListProvider.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/UrlParamsProvider.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/UserDataProvider.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/WebsocketConnectionDeactivatedProvider.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/state.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/debug/useEffectDebugger.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useAppConfig.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useBrowserNotification.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useDebounceCallback.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useE2EE.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useE2EEViewElements.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useJoinGroupChat.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useMatrixReady.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useNotificationPermission.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useResponsive.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useSearchParams.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useSession.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useStateWithLabel.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useTimeoutOverlay.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useUnload.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useUpdatingRef.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useUserMutate.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useWatcher.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/i18n.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/initApp.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/initError.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/pages/app.html",
+			"language": "html",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/pages/under-construction.html",
+			"language": "html",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/polyfill.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/react-app-env.d.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/react-dom-shim.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/resources/animations/Matching-Animation.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/de@informal/common.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/de/agency.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/de/common.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/de/consultingTypes.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/de/languages.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/en/agency.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/en/common.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/en/consultingTypes.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/en/languages.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/fr/common.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/fr/languages.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/ru/common.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/ru/languages.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/ti/common.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/ti/languages.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/tr/common.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/tr/languages.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/img/icons.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/resources/scripts/config.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/resources/scripts/endpoints.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/resources/scripts/endpoints.ts.backup",
+			"language": "backup",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/resources/scripts/theme.jsx",
+			"language": "javascript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/resources/scripts/util/htmlParser.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/resources/styles/_banner.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/_border.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/_colors.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/_display.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/_flex.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/_float.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/_fonts.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/_icon.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/_layout.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/_margin.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/_padding.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/_text.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/_types.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/mui-variables-mapping.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/settings.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/styles.scss",
+			"language": "css",
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/services/CallManager.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/services/draftStore.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/services/liveKitService.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/services/matrixCallService.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/services/matrixClientService.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/services/matrixGroupCallService.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/services/matrixLiveEventBridge.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/services/matrixRegistrationService.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/services/messageEventEmitter.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/store/agencyLogoAtom.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/types/rc/Room.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/types/rc/Subscriptions.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/types/rc/User.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/anonymousSessionFetchGuard.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/appConfig.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/capitalizeFirstLetter.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/clipboardHelpers.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/consultant.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/dateHelpers.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/decodeHTML.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/downloadICSFile.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/encryptionHelpers.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/eventHandler.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/generateCsrfToken.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/getLocationVariables.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/getUrlParameter.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/isNumber.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/keycloakSession.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/liveChatToggle.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/loadConsultingTypesForAgencies.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/notificationHelpers.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/parseJWT.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/parsePlaceholderString.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/pseudonymGenerator.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/requestCollector.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/tabsHelper.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/tenantSettingsHelper.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/transformBookingData.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/translate.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/useDocumentTitle.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/useIsFirstLogin.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/useIsFirstVisit.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/useTenantTheming.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/useTyping.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/useUrlParamsLoader.tsx",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/validateInputValue.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/videoCallHelpers.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "STORYBOOK_KUBERNETES.md",
+			"language": "markdown",
+			"fileCategory": "docs"
+		},
+		{
+			"path": "STORYBOOK_SETUP.md",
+			"language": "markdown",
+			"fileCategory": "docs"
+		},
+		{
+			"path": "storybook-deployment.yaml",
+			"language": "yaml",
+			"fileCategory": "config"
+		},
+		{
+			"path": "storybook-ingress.yaml",
+			"language": "yaml",
+			"fileCategory": "config"
+		},
+		{
+			"path": "storybook-redirect-middleware.yaml",
+			"language": "yaml",
+			"fileCategory": "config"
+		},
+		{
+			"path": "storybook-service.yaml",
+			"language": "yaml",
+			"fileCategory": "config"
+		},
+		{
+			"path": "test-results/.last-run.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "tmpcompare.spec.ts",
+			"language": "typescript",
+			"fileCategory": "code"
+		},
+		{
+			"path": "translation-files-current/de@informal/common.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "translation-files-current/de/agency.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "translation-files-current/de/common.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "translation-files-current/de/consultingTypes.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "translation-files-current/de/languages.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "translation-files-current/en/agency.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "translation-files-current/en/common.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "translation-files-current/en/consultingTypes.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "translation-files-current/en/languages.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "translation-files-current/fr/common.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "translation-files-current/fr/languages.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "translation-files-current/ru/common.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "translation-files-current/ru/languages.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "translation-files-current/ti/common.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "translation-files-current/ti/languages.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "translation-files-current/tr/common.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "translation-files-current/tr/languages.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "tsconfig.json",
+			"language": "json",
+			"fileCategory": "config"
+		},
+		{
+			"path": "update-stories-autodocs.sh",
+			"language": "shell",
+			"fileCategory": "script"
+		}
+	]
+}

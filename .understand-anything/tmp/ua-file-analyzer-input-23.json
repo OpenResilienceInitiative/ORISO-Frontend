@@ -1,0 +1,21 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": ".dockerignore",
+			"language": "unknown",
+			"sizeLines": 17,
+			"fileCategory": "infra"
+		},
+		{
+			"path": "Dockerfile",
+			"language": "dockerfile",
+			"sizeLines": 47,
+			"fileCategory": "infra"
+		}
+	],
+	"batchImportData": {
+		".dockerignore": [],
+		"Dockerfile": []
+	}
+}

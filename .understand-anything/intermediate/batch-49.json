@@ -1,0 +1,257 @@
+{
+	"nodes": [
+		{
+			"id": "file:proxy/routes/index.js.backup",
+			"type": "file",
+			"name": "index.js.backup",
+			"filePath": "proxy/routes/index.js.backup",
+			"summary": "Frontend source file for proxy in the ORISO React application.",
+			"tags": ["proxy", "code", "frontend"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:proxy/routes/weblate.js.backup.original",
+			"type": "file",
+			"name": "weblate.js.backup.original",
+			"filePath": "proxy/routes/weblate.js.backup.original",
+			"summary": "Frontend source file for proxy in the ORISO React application.",
+			"tags": ["proxy", "code", "frontend"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "document:public/releases/README.md",
+			"type": "document",
+			"name": "README.md",
+			"filePath": "public/releases/README.md",
+			"summary": "Documentation covering public concerns in the ORISO frontend.",
+			"tags": ["documentation", "public", "docs"],
+			"complexity": "simple"
+		},
+		{
+			"id": "config:public/releases/releases.json",
+			"type": "config",
+			"name": "releases.json",
+			"filePath": "public/releases/releases.json",
+			"summary": "Configuration file that controls public behavior for the frontend project.",
+			"tags": ["configuration", "public", "config"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiGetAskerSessionList.ts.backup",
+			"type": "file",
+			"name": "apiGetAskerSessionList.ts.backup",
+			"filePath": "src/api/apiGetAskerSessionList.ts.backup",
+			"summary": "API client module for apiGetAskerSessionList.ts, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "session", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/fetchData.ts.backup",
+			"type": "file",
+			"name": "fetchData.ts.backup",
+			"filePath": "src/api/fetchData.ts.backup",
+			"summary": "API client module for fetchData.ts, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "api", "code"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/api/matrix/matrixClient.ts.backup",
+			"type": "file",
+			"name": "matrixClient.ts.backup",
+			"filePath": "src/api/matrix/matrixClient.ts.backup",
+			"summary": "API client module for matrixClient.ts, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "matrix", "api"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/agencyRadioSelect/agencyLanguages.styles.scss",
+			"type": "file",
+			"name": "agencyLanguages.styles.scss",
+			"filePath": "src/components/agencyRadioSelect/agencyLanguages.styles.scss",
+			"summary": "React UI module for component agency radio select, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-agency-radio-select"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/agencyRadioSelect/agencyRadioSelect.styles.scss",
+			"type": "file",
+			"name": "agencyRadioSelect.styles.scss",
+			"filePath": "src/components/agencyRadioSelect/agencyRadioSelect.styles.scss",
+			"summary": "React UI module for component agency radio select, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-agency-radio-select"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/agencySelection/agencySelection.styles.scss",
+			"type": "file",
+			"name": "agencySelection.styles.scss",
+			"filePath": "src/components/agencySelection/agencySelection.styles.scss",
+			"summary": "React UI module for component agency selection, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-agency-selection"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/app/app.tsx.backup",
+			"type": "file",
+			"name": "app.tsx.backup",
+			"filePath": "src/components/app/app.tsx.backup",
+			"summary": "React UI module for component app, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-app", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/app/NavigationSidebar.stories.tsx",
+			"type": "file",
+			"name": "NavigationSidebar.stories.tsx",
+			"filePath": "src/components/app/NavigationSidebar.stories.tsx",
+			"summary": "React UI module for component app, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["storybook", "component", "component-app"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/app/NonPlainRoutesWrapper.tsx.backup",
+			"type": "file",
+			"name": "NonPlainRoutesWrapper.tsx.backup",
+			"filePath": "src/components/app/NonPlainRoutesWrapper.tsx.backup",
+			"summary": "React UI module for component app, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-app", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/appointment/appointment.styles.scss",
+			"type": "file",
+			"name": "appointment.styles.scss",
+			"filePath": "src/components/appointment/appointment.styles.scss",
+			"summary": "React UI module for component appointment, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-appointment"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/appointment/appointments.styles.scss",
+			"type": "file",
+			"name": "appointments.styles.scss",
+			"filePath": "src/components/appointment/appointments.styles.scss",
+			"summary": "React UI module for component appointment, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-appointment"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/banUser/banUser.styles.scss",
+			"type": "file",
+			"name": "banUser.styles.scss",
+			"filePath": "src/components/banUser/banUser.styles.scss",
+			"summary": "React UI module for component ban user, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-ban-user"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/box/box.module.scss",
+			"type": "file",
+			"name": "box.module.scss",
+			"filePath": "src/components/box/box.module.scss",
+			"summary": "React UI module for component box, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-box"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/button/button.styles.scss",
+			"type": "file",
+			"name": "button.styles.scss",
+			"filePath": "src/components/button/button.styles.scss",
+			"summary": "React UI module for component button, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-button"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/call/FloatingCallWidget.scss",
+			"type": "file",
+			"name": "FloatingCallWidget.scss",
+			"filePath": "src/components/call/FloatingCallWidget.scss",
+			"summary": "React UI module for component call, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-call"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/call/GroupCallWidget.scss",
+			"type": "file",
+			"name": "GroupCallWidget.scss",
+			"filePath": "src/components/call/GroupCallWidget.scss",
+			"summary": "React UI module for component call, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-call"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/card/card.styles.scss",
+			"type": "file",
+			"name": "card.styles.scss",
+			"filePath": "src/components/card/card.styles.scss",
+			"summary": "React UI module for component card, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-card"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/checkbox/checkbox.styles.scss",
+			"type": "file",
+			"name": "checkbox.styles.scss",
+			"filePath": "src/components/checkbox/checkbox.styles.scss",
+			"summary": "React UI module for component checkbox, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-checkbox"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "document:src/components/CompoundIntegration.stories.mdx",
+			"type": "document",
+			"name": "CompoundIntegration.stories.mdx",
+			"filePath": "src/components/CompoundIntegration.stories.mdx",
+			"summary": "Documentation covering component compound integration stories mdx concerns in the ORISO frontend.",
+			"tags": [
+				"documentation",
+				"storybook",
+				"component",
+				"component-compound-integration-stories-mdx"
+			],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/datepicker/datepicker.styles.scss",
+			"type": "file",
+			"name": "datepicker.styles.scss",
+			"filePath": "src/components/datepicker/datepicker.styles.scss",
+			"summary": "React UI module for component datepicker, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-datepicker"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/devToolbar/devToolbar.styles.scss",
+			"type": "file",
+			"name": "devToolbar.styles.scss",
+			"filePath": "src/components/devToolbar/devToolbar.styles.scss",
+			"summary": "React UI module for component dev toolbar, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-dev-toolbar"],
+			"complexity": "moderate"
+		}
+	],
+	"edges": [
+		{
+			"source": "document:public/releases/README.md",
+			"target": "document:README.md",
+			"type": "related",
+			"direction": "forward",
+			"weight": 0.5
+		},
+		{
+			"source": "config:public/releases/releases.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "document:src/components/CompoundIntegration.stories.mdx",
+			"target": "document:README.md",
+			"type": "related",
+			"direction": "forward",
+			"weight": 0.5
+		}
+	]
+}

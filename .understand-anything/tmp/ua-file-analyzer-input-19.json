@@ -1,0 +1,237 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": ".storybook/preview.tsx",
+			"language": "typescript",
+			"sizeLines": 246,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/appointments.cy.ts",
+			"language": "typescript",
+			"sizeLines": 568,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/login.cy.ts",
+			"language": "typescript",
+			"sizeLines": 37,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/messages/attachments/base.cy.ts",
+			"language": "typescript",
+			"sizeLines": 33,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/messages/attachments/formal.cy.ts",
+			"language": "typescript",
+			"sizeLines": 45,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/messages/attachments/informal.cy.ts",
+			"language": "typescript",
+			"sizeLines": 49,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/messages/unread-animation.cy.ts",
+			"language": "typescript",
+			"sizeLines": 297,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/profile.cy.ts",
+			"language": "typescript",
+			"sizeLines": 111,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/registration/base.cy.ts",
+			"language": "typescript",
+			"sizeLines": 203,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/registration/consultingType.cy.ts",
+			"language": "typescript",
+			"sizeLines": 934,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/registration/topic.cy.ts",
+			"language": "typescript",
+			"sizeLines": 1360,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/release-notes.cy.ts",
+			"language": "typescript",
+			"sizeLines": 113,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/video-calls.cy.ts",
+			"language": "typescript",
+			"sizeLines": 617,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/e2e/videoconference.cy.ts",
+			"language": "typescript",
+			"sizeLines": 409,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/commands.ts",
+			"language": "typescript",
+			"sizeLines": 6,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/commands/socket.ts",
+			"language": "typescript",
+			"sizeLines": 84,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/e2e.ts",
+			"language": "typescript",
+			"sizeLines": 30,
+			"fileCategory": "code"
+		},
+		{
+			"path": "cypress/support/websocket.ts",
+			"language": "typescript",
+			"sizeLines": 325,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiMatrixSettingsPublic.ts",
+			"language": "typescript",
+			"sizeLines": 36,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRocketChatSettingsPublic.ts",
+			"language": "typescript",
+			"sizeLines": 63,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/fetchMatrixData.ts",
+			"language": "typescript",
+			"sizeLines": 49,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/E2EEncryptionSupportBanner/E2EEncryptionSupportBanner.tsx",
+			"language": "typescript",
+			"sizeLines": 82,
+			"fileCategory": "code"
+		}
+	],
+	"batchImportData": {
+		".storybook/preview.tsx": [
+			"src/components/app/Loading.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/provider/LegalLinksProvider.tsx",
+			"src/globalState/provider/RocketChatProvider.tsx",
+			"src/globalState/provider/RocketChatPublicSettingsProvider.tsx",
+			"src/globalState/provider/RocketChatSubscriptionsProvider.tsx",
+			"src/globalState/provider/RocketChatUsersOfRoomProvider.tsx",
+			"src/globalState/provider/UrlParamsProvider.tsx",
+			"src/i18n.ts",
+			"src/resources/scripts/config.ts",
+			"src/resources/scripts/theme.jsx",
+			"src/resources/styles/mui-variables-mapping.scss",
+			"src/resources/styles/styles.scss"
+		],
+		"cypress/e2e/appointments.cy.ts": [
+			"cypress/support/commands/mockApi.ts",
+			"cypress/support/websocket.ts"
+		],
+		"cypress/e2e/login.cy.ts": [
+			"cypress/support/websocket.ts",
+			"src/resources/scripts/config.ts"
+		],
+		"cypress/e2e/messages/attachments/base.cy.ts": [
+			"cypress/support/websocket.ts",
+			"src/components/app/RocketChat.ts"
+		],
+		"cypress/e2e/messages/attachments/formal.cy.ts": [
+			"cypress/support/websocket.ts"
+		],
+		"cypress/e2e/messages/attachments/informal.cy.ts": [
+			"cypress/support/websocket.ts"
+		],
+		"cypress/e2e/messages/unread-animation.cy.ts": [
+			"cypress/support/websocket.ts",
+			"src/components/app/RocketChat.ts"
+		],
+		"cypress/e2e/profile.cy.ts": [
+			"cypress/support/commands/mockApi.ts",
+			"cypress/support/websocket.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"cypress/e2e/registration/base.cy.ts": [
+			"cypress/support/websocket.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"cypress/e2e/registration/consultingType.cy.ts": [
+			"cypress/support/websocket.ts",
+			"src/resources/scripts/config.ts"
+		],
+		"cypress/e2e/registration/topic.cy.ts": [
+			"cypress/support/websocket.ts",
+			"src/resources/scripts/config.ts"
+		],
+		"cypress/e2e/release-notes.cy.ts": [
+			"cypress/support/commands/mockApi.ts",
+			"cypress/support/websocket.ts"
+		],
+		"cypress/e2e/video-calls.cy.ts": [
+			"cypress/support/commands/mockApi.ts",
+			"cypress/support/sessions.ts",
+			"cypress/support/websocket.ts"
+		],
+		"cypress/e2e/videoconference.cy.ts": [
+			"cypress/support/commands/mockApi.ts",
+			"cypress/support/websocket.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/resources/scripts/config.ts"
+		],
+		"cypress/support/commands.ts": [
+			"cypress/support/commands/mockApi.ts",
+			"cypress/support/commands/socket.ts"
+		],
+		"cypress/support/commands/socket.ts": ["cypress/support/websocket.ts"],
+		"cypress/support/e2e.ts": ["cypress/support/commands.ts"],
+		"cypress/support/websocket.ts": [
+			"cypress/support/commands.ts",
+			"src/api/apiRocketChatSettingsPublic.ts"
+		],
+		"src/api/apiMatrixSettingsPublic.ts": [
+			"src/api/apiRocketChatSettingsPublic.ts",
+			"src/api/fetchMatrixData.ts"
+		],
+		"src/api/apiRocketChatSettingsPublic.ts": [
+			"src/api/apiMatrixSettingsPublic.ts",
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/fetchMatrixData.ts": [
+			"src/components/sessionCookie/accessSessionCookie.ts"
+		],
+		"src/components/E2EEncryptionSupportBanner/E2EEncryptionSupportBanner.tsx": [
+			"src/components/banner/Banner.tsx",
+			"src/components/E2EEncryptionSupportBanner/E2EEncryptionSupportBanner.styles.scss",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/utils/videoCallHelpers.ts"
+		]
+	}
+}

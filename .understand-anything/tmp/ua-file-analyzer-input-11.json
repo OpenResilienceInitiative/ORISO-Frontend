@@ -1,0 +1,310 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": "src/components/spinner/Spinner.tsx",
+			"language": "typescript",
+			"sizeLines": 18,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/stage/stage.tsx",
+			"language": "typescript",
+			"sizeLines": 151,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/stageLayout/StageLayout.tsx",
+			"language": "typescript",
+			"sizeLines": 243,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/twoFactorAuth/TwoFactorAuth.tsx",
+			"language": "typescript",
+			"sizeLines": 936,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/twoFactorAuth/TwoFactorAuthResendMail.tsx",
+			"language": "typescript",
+			"sizeLines": 44,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/videoConference/WaitingRoom.tsx",
+			"language": "typescript",
+			"sizeLines": 176,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/walkthrough/Walkthrough.tsx",
+			"language": "typescript",
+			"sizeLines": 75,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/walkthrough/steps.ts",
+			"language": "typescript",
+			"sizeLines": 41,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/Booking/booking.tsx",
+			"language": "typescript",
+			"sizeLines": 75,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/Calcom/Cal.tsx",
+			"language": "typescript",
+			"sizeLines": 68,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/Calcom/useEmbed.ts",
+			"language": "typescript",
+			"sizeLines": 15,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/hooks/useCalcomLogin.ts",
+			"language": "typescript",
+			"sizeLines": 50,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/GlobalComponentContext.tsx",
+			"language": "typescript",
+			"sizeLines": 6,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/LegalLinksProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 69,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/ModalProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 109,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/state.tsx",
+			"language": "typescript",
+			"sizeLines": 48,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useAppConfig.tsx",
+			"language": "typescript",
+			"sizeLines": 7,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useNotificationPermission.ts",
+			"language": "typescript",
+			"sizeLines": 52,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/i18n.ts",
+			"language": "typescript",
+			"sizeLines": 305,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/initApp.tsx",
+			"language": "typescript",
+			"sizeLines": 72,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/polyfill.ts",
+			"language": "typescript",
+			"sizeLines": 46,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/resources/scripts/theme.jsx",
+			"language": "javascript",
+			"sizeLines": 197,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/resources/scripts/util/htmlParser.tsx",
+			"language": "typescript",
+			"sizeLines": 16,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/decodeHTML.ts",
+			"language": "typescript",
+			"sizeLines": 13,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/getLocationVariables.ts",
+			"language": "typescript",
+			"sizeLines": 14,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/useDocumentTitle.tsx",
+			"language": "typescript",
+			"sizeLines": 13,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/useIsFirstVisit.tsx",
+			"language": "typescript",
+			"sizeLines": 20,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/useTenantTheming.ts",
+			"language": "typescript",
+			"sizeLines": 279,
+			"fileCategory": "code"
+		}
+	],
+	"batchImportData": {
+		"src/components/spinner/Spinner.tsx": [
+			"src/components/spinner/spinner.styles.scss",
+			"src/polyfill.ts"
+		],
+		"src/components/stage/stage.tsx": [
+			"src/components/banner/Banner.tsx",
+			"src/components/headline/Headline.tsx",
+			"src/components/legalLinks/LegalLinks.tsx",
+			"src/components/spinner/Spinner.tsx",
+			"src/components/text/Text.tsx",
+			"src/globalState/provider/LegalLinksProvider.tsx"
+		],
+		"src/components/stageLayout/StageLayout.tsx": [
+			"src/components/button/Button.tsx",
+			"src/components/legalLinks/LegalLinks.tsx",
+			"src/components/localeSwitch/LocaleSwitch.tsx",
+			"src/components/registration/infoDrawer/InfoDrawer.tsx",
+			"src/components/select/SelectDropdown.tsx",
+			"src/components/stageLayout/StageLayout.styles.scss",
+			"src/components/text/Text.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/provider/LegalLinksProvider.tsx",
+			"src/hooks/useAppConfig.tsx"
+		],
+		"src/components/twoFactorAuth/TwoFactorAuth.tsx": [
+			"src/api/index.ts",
+			"src/components/button/Button.tsx",
+			"src/components/devToolbar/DevToolbar.tsx",
+			"src/components/headline/Headline.tsx",
+			"src/components/inputField/InputField.tsx",
+			"src/components/overlay/Overlay.tsx",
+			"src/components/radioButton/RadioButton.tsx",
+			"src/components/registration/registrationHelpers.ts",
+			"src/components/text/Text.tsx",
+			"src/components/tooltip/Tooltip.tsx",
+			"src/components/twoFactorAuth/TwoFactorAuthResendMail.tsx",
+			"src/globalState/index.ts",
+			"src/hooks/useAppConfig.tsx",
+			"src/resources/img/icons.ts"
+		],
+		"src/components/twoFactorAuth/TwoFactorAuthResendMail.tsx": [
+			"src/components/text/Text.tsx",
+			"src/resources/img/icons.ts"
+		],
+		"src/components/videoConference/WaitingRoom.tsx": [
+			"src/components/button/Button.tsx",
+			"src/components/E2EEncryptionSupportHelp/E2EEncryptionSupportHelp.tsx",
+			"src/components/legalLinks/LegalLinks.tsx",
+			"src/components/stageLayout/StageLayout.tsx",
+			"src/components/text/Text.tsx",
+			"src/components/videoConference/WaitingRoomContent.tsx",
+			"src/globalState/interfaces/index.ts",
+			"src/globalState/provider/GlobalComponentContext.tsx",
+			"src/globalState/provider/LegalLinksProvider.tsx",
+			"src/utils/videoCallHelpers.ts"
+		],
+		"src/components/walkthrough/Walkthrough.tsx": [
+			"src/api/index.ts",
+			"src/components/walkthrough/steps.ts",
+			"src/components/walkthrough/walkthrough.styles.scss",
+			"src/globalState/index.ts",
+			"src/hooks/useAppConfig.tsx"
+		],
+		"src/components/walkthrough/steps.ts": [],
+		"src/containers/bookings/components/Booking/booking.tsx": [
+			"src/api/index.ts",
+			"src/components/sessionCookie/accessSessionCookie.ts",
+			"src/containers/bookings/components/Calcom/Cal.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/hooks/useAppConfig.tsx"
+		],
+		"src/containers/bookings/components/Calcom/Cal.tsx": [
+			"src/containers/bookings/components/Calcom/useEmbed.ts"
+		],
+		"src/containers/bookings/components/Calcom/useEmbed.ts": [],
+		"src/containers/bookings/hooks/useCalcomLogin.ts": [
+			"src/api/index.ts",
+			"src/globalState/index.ts",
+			"src/hooks/useAppConfig.tsx",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/globalState/provider/GlobalComponentContext.tsx": [
+			"src/components/stage/stage.tsx"
+		],
+		"src/globalState/provider/LegalLinksProvider.tsx": [
+			"src/globalState/interfaces/index.ts",
+			"src/hooks/useAppConfig.tsx"
+		],
+		"src/globalState/provider/ModalProvider.tsx": [
+			"src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"src/hooks/useAppConfig.tsx"
+		],
+		"src/globalState/state.tsx": [],
+		"src/hooks/useAppConfig.tsx": [
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/index.ts"
+		],
+		"src/hooks/useNotificationPermission.ts": [],
+		"src/i18n.ts": [
+			"src/api/index.ts",
+			"src/components/devToolbar/DevToolbar.tsx",
+			"src/globalState/interfaces/index.ts",
+			"src/resources/i18n/de@informal/common.json",
+			"src/resources/i18n/de/common.json",
+			"src/resources/i18n/de/languages.json"
+		],
+		"src/initApp.tsx": [
+			"src/components/app/app.tsx",
+			"src/components/legalInformationLinks/Imprint.tsx",
+			"src/components/legalInformationLinks/Privacy.tsx",
+			"src/components/stage/stage.tsx",
+			"src/compound.css",
+			"src/globalState/index.ts",
+			"src/globalState/provider/UrlParamsProvider.tsx",
+			"src/polyfill.ts",
+			"src/resources/scripts/config.ts",
+			"src/resources/scripts/theme.jsx",
+			"src/resources/styles/mui-variables-mapping.scss"
+		],
+		"src/polyfill.ts": [],
+		"src/resources/scripts/theme.jsx": [],
+		"src/resources/scripts/util/htmlParser.tsx": [],
+		"src/utils/decodeHTML.ts": [],
+		"src/utils/getLocationVariables.ts": [],
+		"src/utils/useDocumentTitle.tsx": [],
+		"src/utils/useIsFirstVisit.tsx": [],
+		"src/utils/useTenantTheming.ts": [
+			"src/api/apiGetTenantTheming.ts",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/hooks/useAppConfig.tsx",
+			"src/utils/decodeHTML.ts",
+			"src/utils/getLocationVariables.ts"
+		]
+	}
+}

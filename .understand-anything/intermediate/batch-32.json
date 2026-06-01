@@ -1,0 +1,47 @@
+{
+	"nodes": [
+		{
+			"id": "file:public/element-sso-bridge.html",
+			"type": "file",
+			"name": "element-sso-bridge.html",
+			"filePath": "public/element-sso-bridge.html",
+			"summary": "Frontend source file for public in the ORISO React application.",
+			"tags": ["public", "markup", "frontend"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "config:public/manifest.json",
+			"type": "config",
+			"name": "manifest.json",
+			"filePath": "public/manifest.json",
+			"summary": "Configuration file that controls public behavior for the frontend project.",
+			"tags": ["configuration", "public", "config"],
+			"complexity": "simple"
+		},
+		{
+			"id": "document:public/robots.txt",
+			"type": "document",
+			"name": "robots.txt",
+			"filePath": "public/robots.txt",
+			"summary": "Documentation covering public concerns in the ORISO frontend.",
+			"tags": ["documentation", "public", "docs"],
+			"complexity": "simple"
+		}
+	],
+	"edges": [
+		{
+			"source": "config:public/manifest.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "document:public/robots.txt",
+			"target": "document:README.md",
+			"type": "related",
+			"direction": "forward",
+			"weight": 0.5
+		}
+	]
+}

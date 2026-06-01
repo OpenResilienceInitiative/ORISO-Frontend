@@ -1,0 +1,294 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": "src/components/sessionMenu/sessionMenuHelpers.ts",
+			"language": "typescript",
+			"sizeLines": 117,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"language": "typescript",
+			"sizeLines": 1413,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsListItem/sessionsListItemHelpers.ts",
+			"language": "typescript",
+			"sizeLines": 24,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/tag/Tag.stories.ts",
+			"language": "typescript",
+			"sizeLines": 47,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/tag/Tag.tsx",
+			"language": "typescript",
+			"sizeLines": 38,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/termsandconditions/TermsAndConditions.tsx",
+			"language": "typescript",
+			"sizeLines": 255,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/twoFactorAuth/TwoFactorNag.tsx",
+			"language": "typescript",
+			"sizeLines": 152,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/videoConference/WaitingRoomContent.tsx",
+			"language": "typescript",
+			"sizeLines": 79,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/videoConference/waitingRoomHelpers.ts",
+			"language": "typescript",
+			"sizeLines": 32,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/hooks/useAskerHasAssignedConsultant.ts",
+			"language": "typescript",
+			"sizeLines": 38,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"language": "typescript",
+			"sizeLines": 18,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/ActiveSessionProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 36,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/ConsultantListProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 18,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/RocketChatUsersOfRoomProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 189,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/UpdateSessionListProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 19,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useE2EE.tsx",
+			"language": "typescript",
+			"sizeLines": 469,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useE2EEViewElements.tsx",
+			"language": "typescript",
+			"sizeLines": 109,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useResponsive.tsx",
+			"language": "typescript",
+			"sizeLines": 30,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useSearchParams.tsx",
+			"language": "typescript",
+			"sizeLines": 17,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useSession.tsx",
+			"language": "typescript",
+			"sizeLines": 136,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useTimeoutOverlay.tsx",
+			"language": "typescript",
+			"sizeLines": 70,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useUpdatingRef.tsx",
+			"language": "typescript",
+			"sizeLines": 13,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useWatcher.tsx",
+			"language": "typescript",
+			"sizeLines": 64,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/encryptionHelpers.ts",
+			"language": "typescript",
+			"sizeLines": 713,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/pseudonymGenerator.ts",
+			"language": "typescript",
+			"sizeLines": 172,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/tenantSettingsHelper.ts",
+			"language": "typescript",
+			"sizeLines": 12,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/useTyping.ts",
+			"language": "typescript",
+			"sizeLines": 199,
+			"fileCategory": "code"
+		}
+	],
+	"batchImportData": {
+		"src/components/sessionMenu/sessionMenuHelpers.ts": [
+			"src/components/button/Button.tsx",
+			"src/components/overlay/Overlay.tsx"
+		],
+		"src/components/sessionsListItem/SessionListItemComponent.tsx": [
+			"src/api/apiSendAliasMessage.ts",
+			"src/api/index.ts",
+			"src/components/app/navigationHandler.ts",
+			"src/components/message/messageConstants.ts",
+			"src/components/message/UserAvatar.tsx",
+			"src/components/overlay/Overlay.tsx",
+			"src/components/session/DeleteSession.tsx",
+			"src/components/session/sessionDateHelpers.ts",
+			"src/components/session/sessionHelpers.ts",
+			"src/components/sessionHeader/ConsultantSearchLoader.tsx",
+			"src/components/sessionMenu/sessionMenuHelpers.ts",
+			"src/components/sessionsListItem/SessionListItemAttachment.tsx",
+			"src/components/sessionsListItem/SessionListItemLastMessage.tsx",
+			"src/components/sessionsListItem/SessionListItemVideoCall.tsx",
+			"src/components/sessionsListItem/sessionsListItemHelpers.ts",
+			"src/components/tag/Tag.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/globalState/provider/RocketChatUsersOfRoomProvider.tsx",
+			"src/hooks/useAppConfig.tsx",
+			"src/hooks/useE2EE.tsx",
+			"src/hooks/useSearchParams.tsx",
+			"src/resources/img/icons.ts",
+			"src/utils/dateHelpers.ts",
+			"src/utils/encryptionHelpers.ts"
+		],
+		"src/components/sessionsListItem/sessionsListItemHelpers.ts": [],
+		"src/components/tag/Tag.stories.ts": ["src/components/tag/Tag.tsx"],
+		"src/components/tag/Tag.tsx": [],
+		"src/components/termsandconditions/TermsAndConditions.tsx": [
+			"src/api/apiPatchUserData.ts",
+			"src/components/button/Button.tsx",
+			"src/components/checkbox/Checkbox.tsx",
+			"src/components/headline/Headline.tsx",
+			"src/components/logout/logout.ts",
+			"src/components/overlay/Overlay.tsx",
+			"src/components/termsandconditions/termsandconfitions.styles.scss",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"src/globalState/interfaces/index.ts"
+		],
+		"src/components/twoFactorAuth/TwoFactorNag.tsx": [
+			"src/components/button/Button.tsx",
+			"src/components/devToolbar/DevToolbar.tsx",
+			"src/components/overlay/Overlay.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"src/hooks/useAppConfig.tsx"
+		],
+		"src/components/videoConference/WaitingRoomContent.tsx": [
+			"src/components/headline/Headline.tsx",
+			"src/components/text/Text.tsx"
+		],
+		"src/components/videoConference/waitingRoomHelpers.ts": [
+			"src/components/button/Button.tsx",
+			"src/components/overlay/Overlay.tsx"
+		],
+		"src/containers/bookings/hooks/useAskerHasAssignedConsultant.ts": [
+			"src/api/index.ts",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/index.ts"
+		],
+		"src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts": [],
+		"src/globalState/provider/ActiveSessionProvider.tsx": [],
+		"src/globalState/provider/ConsultantListProvider.tsx": [],
+		"src/globalState/provider/RocketChatUsersOfRoomProvider.tsx": [
+			"src/components/app/RocketChat.ts",
+			"src/components/session/sessionHelpers.ts",
+			"src/globalState/provider/ActiveSessionProvider.tsx",
+			"src/globalState/provider/RocketChatProvider.tsx",
+			"src/globalState/provider/RocketChatSytemUsersProvider.tsx",
+			"src/hooks/useUpdatingRef.tsx"
+		],
+		"src/globalState/provider/UpdateSessionListProvider.tsx": [
+			"src/components/session/sessionHelpers.ts"
+		],
+		"src/hooks/useE2EE.tsx": [
+			"src/api/apiRocketChatGetUsersOfRoomWithoutKey.ts",
+			"src/api/apiRocketChatSetRoomKeyID.ts",
+			"src/api/apiRocketChatUpdateGroupKey.ts",
+			"src/api/apiSendAliasMessage.ts",
+			"src/components/sessionCookie/accessSessionCookie.ts",
+			"src/globalState/index.ts",
+			"src/globalState/provider/RocketChatSubscriptionsProvider.tsx",
+			"src/globalState/provider/RocketChatUsersOfRoomProvider.tsx",
+			"src/utils/encryptionHelpers.ts"
+		],
+		"src/hooks/useE2EEViewElements.tsx": [
+			"src/components/overlay/Overlay.tsx",
+			"src/components/progressbar/ProgressBar.tsx",
+			"src/hooks/useE2EE.tsx"
+		],
+		"src/hooks/useResponsive.tsx": [],
+		"src/hooks/useSearchParams.tsx": [],
+		"src/hooks/useSession.tsx": [
+			"src/api/apiGetChatRoomById.ts",
+			"src/api/apiGetSessionRooms.ts",
+			"src/api/index.ts",
+			"src/globalState/index.ts"
+		],
+		"src/hooks/useTimeoutOverlay.tsx": [
+			"src/components/loadingIndicator/LoadingIndicator.tsx",
+			"src/components/overlay/Overlay.tsx"
+		],
+		"src/hooks/useUpdatingRef.tsx": [],
+		"src/hooks/useWatcher.tsx": [],
+		"src/utils/encryptionHelpers.ts": [
+			"src/api/apiRocketChatFetchMyKeys.ts",
+			"src/components/sessionCookie/accessSessionCookie.ts"
+		],
+		"src/utils/pseudonymGenerator.ts": [],
+		"src/utils/tenantSettingsHelper.ts": [
+			"src/globalState/interfaces/index.ts"
+		],
+		"src/utils/useTyping.ts": [
+			"src/components/app/RocketChat.ts",
+			"src/globalState/index.ts",
+			"src/hooks/useUpdatingRef.tsx",
+			"src/utils/encryptionHelpers.ts"
+		]
+	}
+}

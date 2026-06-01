@@ -1,0 +1,56 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": "src/components/pseudonym/AnonymousConsentGate.styles.scss",
+			"language": "css",
+			"sizeLines": 228,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/pseudonym/BreathingTutorialCard.styles.scss",
+			"language": "css",
+			"sizeLines": 230,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/pseudonym/ConsultantAcceptedActionBar.styles.scss",
+			"language": "css",
+			"sizeLines": 170,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/pseudonym/PrivacyMessageCard.styles.scss",
+			"language": "css",
+			"sizeLines": 43,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/pseudonym/PseudonymActionBar.styles.scss",
+			"language": "css",
+			"sizeLines": 146,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/pseudonym/PseudonymCard.styles.scss",
+			"language": "css",
+			"sizeLines": 240,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/pseudonym/WaitingQueueActionBar.styles.scss",
+			"language": "css",
+			"sizeLines": 298,
+			"fileCategory": "markup"
+		}
+	],
+	"batchImportData": {
+		"src/components/pseudonym/AnonymousConsentGate.styles.scss": [],
+		"src/components/pseudonym/BreathingTutorialCard.styles.scss": [],
+		"src/components/pseudonym/ConsultantAcceptedActionBar.styles.scss": [],
+		"src/components/pseudonym/PrivacyMessageCard.styles.scss": [],
+		"src/components/pseudonym/PseudonymActionBar.styles.scss": [],
+		"src/components/pseudonym/PseudonymCard.styles.scss": [],
+		"src/components/pseudonym/WaitingQueueActionBar.styles.scss": []
+	}
+}

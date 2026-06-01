@@ -1,0 +1,182 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": "src/components/downloadICSFile/downloadICSFile.styles.scss",
+			"language": "css",
+			"sizeLines": 32,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/draftsCenter/draftsCenter.styles.scss",
+			"language": "css",
+			"sizeLines": 255,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/dragAndDropArea/dragAndDropArea.styles.scss",
+			"language": "css",
+			"sizeLines": 70,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/E2EEncryptionSupportBanner/E2EEncryptionSupportBanner.styles.scss",
+			"language": "css",
+			"sizeLines": 34,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/E2EEncryptionSupportHelp/E2EEncryptionSupportHelp.styles.scss",
+			"language": "css",
+			"sizeLines": 149,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/editableData/editableData.styles.scss",
+			"language": "css",
+			"sizeLines": 115,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/enquiry/enquiry.styles.scss",
+			"language": "css",
+			"sizeLines": 206,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/enquiry/enquiryLanguageSelection.styles.scss",
+			"language": "css",
+			"sizeLines": 50,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/error/error.styles.scss",
+			"language": "css",
+			"sizeLines": 167,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/flyoutMenu/flyoutMenu.styles.scss",
+			"language": "css",
+			"sizeLines": 92,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/form/textarea.styles.scss",
+			"language": "css",
+			"sizeLines": 82,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/generateQrCode/generateQrCode.styles.scss",
+			"language": "css",
+			"sizeLines": 57,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/header/header.styles.scss",
+			"language": "css",
+			"sizeLines": 38,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/headline/headline.styles.scss",
+			"language": "css",
+			"sizeLines": 35,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/help/help.styles.scss",
+			"language": "css",
+			"sizeLines": 87,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/incomingVideoCall/incomingVideoCall.styles.scss",
+			"language": "css",
+			"sizeLines": 106,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/infoTooltip/infoTooltip.styles.scss",
+			"language": "css",
+			"sizeLines": 103,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/inputField/inputField.styles.scss",
+			"language": "css",
+			"sizeLines": 152,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/legalPageWrapper/legalPageWrapper.styles.scss",
+			"language": "css",
+			"sizeLines": 55,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/listInfo/listInfo.styles.scss",
+			"language": "css",
+			"sizeLines": 36,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/loadingIndicator/LoadingIndicator.styles.scss",
+			"language": "css",
+			"sizeLines": 35,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/loadingSpinner/LoadingSpinner.styles.scss",
+			"language": "css",
+			"sizeLines": 35,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/localeSwitch/localeSwitch.styles.scss",
+			"language": "css",
+			"sizeLines": 34,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/login/login.styles.scss",
+			"language": "css",
+			"sizeLines": 380,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/mailTemplate/mail-template.html",
+			"language": "html",
+			"sizeLines": 238,
+			"fileCategory": "markup"
+		}
+	],
+	"batchImportData": {
+		"src/components/downloadICSFile/downloadICSFile.styles.scss": [],
+		"src/components/draftsCenter/draftsCenter.styles.scss": [],
+		"src/components/dragAndDropArea/dragAndDropArea.styles.scss": [],
+		"src/components/E2EEncryptionSupportBanner/E2EEncryptionSupportBanner.styles.scss": [],
+		"src/components/E2EEncryptionSupportHelp/E2EEncryptionSupportHelp.styles.scss": [],
+		"src/components/editableData/editableData.styles.scss": [],
+		"src/components/enquiry/enquiry.styles.scss": [],
+		"src/components/enquiry/enquiryLanguageSelection.styles.scss": [],
+		"src/components/error/error.styles.scss": [],
+		"src/components/flyoutMenu/flyoutMenu.styles.scss": [],
+		"src/components/form/textarea.styles.scss": [],
+		"src/components/generateQrCode/generateQrCode.styles.scss": [],
+		"src/components/header/header.styles.scss": [],
+		"src/components/headline/headline.styles.scss": [],
+		"src/components/help/help.styles.scss": [],
+		"src/components/incomingVideoCall/incomingVideoCall.styles.scss": [],
+		"src/components/infoTooltip/infoTooltip.styles.scss": [],
+		"src/components/inputField/inputField.styles.scss": [],
+		"src/components/legalPageWrapper/legalPageWrapper.styles.scss": [],
+		"src/components/listInfo/listInfo.styles.scss": [],
+		"src/components/loadingIndicator/LoadingIndicator.styles.scss": [],
+		"src/components/loadingSpinner/LoadingSpinner.styles.scss": [],
+		"src/components/localeSwitch/localeSwitch.styles.scss": [],
+		"src/components/login/login.styles.scss": [],
+		"src/components/mailTemplate/mail-template.html": []
+	}
+}

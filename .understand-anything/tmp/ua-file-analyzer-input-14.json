@@ -1,0 +1,313 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": "src/api/appointments/index.ts",
+			"language": "typescript",
+			"sizeLines": 5,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/videocalls/index.ts",
+			"language": "typescript",
+			"sizeLines": 1,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/RouterConfig.tsx",
+			"language": "typescript",
+			"sizeLines": 477,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/appointment/Appointment.tsx",
+			"language": "typescript",
+			"sizeLines": 382,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/appointment/Appointments.tsx",
+			"language": "typescript",
+			"sizeLines": 374,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/appointment/OnlineMeetingForm.tsx",
+			"language": "typescript",
+			"sizeLines": 142,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/form/textarea.tsx",
+			"language": "typescript",
+			"sizeLines": 53,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/incomingVideoCall/IncomingVideoCall.tsx",
+			"language": "typescript",
+			"sizeLines": 258,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/listInfo/ListInfo.tsx",
+			"language": "typescript",
+			"sizeLines": 55,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/notifications/Notification.tsx",
+			"language": "typescript",
+			"sizeLines": 172,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/notifications/Notifications.tsx",
+			"language": "typescript",
+			"sizeLines": 40,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/scrollableSection/ScrollableSection.tsx",
+			"language": "typescript",
+			"sizeLines": 23,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/scrollableSection/ScrollableSectionBody.tsx",
+			"language": "typescript",
+			"sizeLines": 12,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/scrollableSection/ScrollableSectionFooter.tsx",
+			"language": "typescript",
+			"sizeLines": 12,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/scrollableSection/ScrollableSectionHeader.tsx",
+			"language": "typescript",
+			"sizeLines": 12,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/session/SessionViewEmpty.tsx",
+			"language": "typescript",
+			"sizeLines": 22,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsListItem/SessionListItemVideoCall.tsx",
+			"language": "typescript",
+			"sizeLines": 36,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/videoCall/StatusPage.tsx",
+			"language": "typescript",
+			"sizeLines": 36,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/videoConference/E2EEBanner.tsx",
+			"language": "typescript",
+			"sizeLines": 47,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/videoConference/Logo.tsx",
+			"language": "typescript",
+			"sizeLines": 15,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/videoConference/VideoConference.tsx",
+			"language": "typescript",
+			"sizeLines": 327,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/BookingCancellation/bookingCancellation.tsx",
+			"language": "typescript",
+			"sizeLines": 23,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/BookingReschedule/bookingReschedule.tsx",
+			"language": "typescript",
+			"sizeLines": 40,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/AppointmentsDataInterface.ts",
+			"language": "typescript",
+			"sizeLines": 13,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/VideoCallDataInterface.ts",
+			"language": "typescript",
+			"sizeLines": 4,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useUnload.tsx",
+			"language": "typescript",
+			"sizeLines": 20,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/videoCallHelpers.ts",
+			"language": "typescript",
+			"sizeLines": 112,
+			"fileCategory": "code"
+		}
+	],
+	"batchImportData": {
+		"src/api/appointments/index.ts": [],
+		"src/api/videocalls/index.ts": [],
+		"src/components/app/RouterConfig.tsx": [
+			"src/components/app/navigationSidebarIcons.tsx",
+			"src/components/appointment/Appointments.tsx",
+			"src/components/askerInfo/AskerInfo.tsx",
+			"src/components/draftsCenter/DraftsCenter.tsx",
+			"src/components/groupChat/CreateChatView.tsx",
+			"src/components/groupChat/GroupChatInfo.tsx",
+			"src/components/notificationsCenter/NotificationsCenter.tsx",
+			"src/components/profile/Profile.tsx",
+			"src/components/session/sessionHelpers.ts",
+			"src/components/session/SessionViewEmpty.tsx",
+			"src/components/sessionsList/SessionsListWrapper.tsx",
+			"src/components/tools/ToolsList.tsx",
+			"src/components/videoConference/VideoConference.tsx",
+			"src/containers/bookings/components/Booking/booking.tsx",
+			"src/containers/bookings/components/BookingCancellation/bookingCancellation.tsx",
+			"src/containers/bookings/components/BookingEvents/bookingEvents.tsx",
+			"src/containers/bookings/components/BookingReschedule/bookingReschedule.tsx",
+			"src/containers/overview/overview.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/utils/videoCallHelpers.ts"
+		],
+		"src/components/appointment/Appointment.tsx": [
+			"src/components/appointment/appointment.styles.scss",
+			"src/components/box/Box.tsx",
+			"src/components/button/Button.tsx",
+			"src/components/generateQrCode/GenerateQrCode.tsx",
+			"src/components/overlay/Overlay.tsx",
+			"src/components/sessionMenu/sessionMenuHelpers.ts",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/AppointmentsDataInterface.ts",
+			"src/hooks/useAppConfig.tsx",
+			"src/resources/scripts/config.ts",
+			"src/utils/clipboardHelpers.ts",
+			"src/utils/videoCallHelpers.ts"
+		],
+		"src/components/appointment/Appointments.tsx": [
+			"src/api/appointments/index.ts",
+			"src/components/app/Loading.tsx",
+			"src/components/appointment/Appointment.tsx",
+			"src/components/appointment/appointments.styles.scss",
+			"src/components/appointment/OnlineMeetingForm.tsx",
+			"src/components/button/Button.tsx",
+			"src/components/legalLinks/LegalLinks.tsx",
+			"src/components/listInfo/ListInfo.tsx",
+			"src/components/overlay/Overlay.tsx",
+			"src/components/scrollableSection/ScrollableSection.tsx",
+			"src/components/scrollableSection/ScrollableSectionBody.tsx",
+			"src/components/scrollableSection/ScrollableSectionFooter.tsx",
+			"src/components/scrollableSection/ScrollableSectionHeader.tsx",
+			"src/components/text/Text.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/AppointmentsDataInterface.ts",
+			"src/globalState/provider/LegalLinksProvider.tsx",
+			"src/hooks/useResponsive.tsx",
+			"src/utils/dateHelpers.ts"
+		],
+		"src/components/appointment/OnlineMeetingForm.tsx": [
+			"src/components/form/textarea.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/AppointmentsDataInterface.ts"
+		],
+		"src/components/form/textarea.tsx": [],
+		"src/components/incomingVideoCall/IncomingVideoCall.tsx": [
+			"src/api/index.ts",
+			"src/components/button/Button.tsx",
+			"src/components/sessionHeader/GroupChatHeader/useJoinVideoCall/index.ts",
+			"src/globalState/index.ts",
+			"src/utils/encryptionHelpers.ts",
+			"src/utils/videoCallHelpers.ts"
+		],
+		"src/components/listInfo/ListInfo.tsx": [
+			"src/components/button/Button.tsx",
+			"src/components/headline/Headline.tsx",
+			"src/components/text/Text.tsx"
+		],
+		"src/components/notifications/Notification.tsx": [
+			"src/components/incomingVideoCall/IncomingVideoCall.tsx",
+			"src/globalState/index.ts"
+		],
+		"src/components/notifications/Notifications.tsx": [
+			"src/components/incomingVideoCall/IncomingVideoCall.tsx",
+			"src/components/notifications/Notification.tsx",
+			"src/globalState/index.ts",
+			"src/utils/videoCallHelpers.ts"
+		],
+		"src/components/scrollableSection/ScrollableSection.tsx": [
+			"src/components/scrollableSection/scrollableSection.styles.scss"
+		],
+		"src/components/scrollableSection/ScrollableSectionBody.tsx": [],
+		"src/components/scrollableSection/ScrollableSectionFooter.tsx": [],
+		"src/components/scrollableSection/ScrollableSectionHeader.tsx": [],
+		"src/components/session/SessionViewEmpty.tsx": [
+			"src/components/app/navigationHandler.ts",
+			"src/components/listInfo/ListInfo.tsx"
+		],
+		"src/components/sessionsListItem/SessionListItemVideoCall.tsx": [
+			"src/components/message/MessageItemComponent.tsx",
+			"src/utils/videoCallHelpers.ts"
+		],
+		"src/components/videoCall/StatusPage.tsx": [
+			"src/components/videoCall/statusPage.styles.scss"
+		],
+		"src/components/videoConference/E2EEBanner.tsx": [
+			"src/components/videoConference/e2eeBanner.styles.scss"
+		],
+		"src/components/videoConference/Logo.tsx": [
+			"src/components/videoConference/logo.styles.scss"
+		],
+		"src/components/videoConference/VideoConference.tsx": [
+			"src/api/appointments/index.ts",
+			"src/api/videocalls/index.ts",
+			"src/components/app/Loading.tsx",
+			"src/components/videoCall/StatusPage.tsx",
+			"src/components/videoConference/E2EEBanner.tsx",
+			"src/components/videoConference/Logo.tsx",
+			"src/components/videoConference/WaitingRoom.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/AppointmentsDataInterface.ts",
+			"src/globalState/interfaces/VideoCallDataInterface.ts",
+			"src/hooks/useAppConfig.tsx",
+			"src/hooks/useUnload.tsx",
+			"src/hooks/useWatcher.tsx",
+			"src/resources/scripts/config.ts"
+		],
+		"src/containers/bookings/components/BookingCancellation/bookingCancellation.tsx": [
+			"src/hooks/useAppConfig.tsx"
+		],
+		"src/containers/bookings/components/BookingReschedule/bookingReschedule.tsx": [
+			"src/globalState/index.ts",
+			"src/hooks/useAppConfig.tsx"
+		],
+		"src/globalState/interfaces/AppointmentsDataInterface.ts": [],
+		"src/globalState/interfaces/VideoCallDataInterface.ts": [],
+		"src/hooks/useUnload.tsx": [],
+		"src/utils/videoCallHelpers.ts": [
+			"src/components/sessionCookie/accessSessionCookie.ts",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/utils/appConfig.ts"
+		]
+	}
+}
