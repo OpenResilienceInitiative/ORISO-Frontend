@@ -49,4 +49,34 @@ Use these docs as the canonical references:
 
 Legacy root docs may still exist for historical context, but new documentation should live under `docs/`.
 
-CI split test marker 2026-05-26T11:10:52Z
+## Knowledge Graph
+
+This repo has an Understand-Anything graph at:
+
+```bash
+.understand-anything/knowledge-graph.json
+```
+
+To open the graph dashboard:
+
+```bash
+PROJECT_DIR="$(pwd)"
+cd "$UNDERSTAND_ANYTHING_DASHBOARD"
+GRAPH_DIR="$PROJECT_DIR" pnpm exec vite --host 127.0.0.1
+```
+
+Set `UNDERSTAND_ANYTHING_DASHBOARD` to your local Understand-Anything `packages/dashboard` directory before running the command.
+
+Find the access token in the terminal output after the dashboard starts. Use the full URL from the line that starts with `Dashboard URL`, for example:
+
+```bash
+http://127.0.0.1:5173/?token=<token>
+```
+
+Auto-update is enabled for this repo through `.understand-anything/config.json`. The equivalent Understand-Anything setup command is:
+
+```bash
+/understand . --auto-update
+```
+
+In an environment that supports the Understand-Anything auto-update hook, the graph is updated after commits. If the hook is not available or the graph looks stale after meaningful project changes, rebuild it manually by running the Understand-Anything skill again for this repo, or use `/understand . --full` if your agent environment exposes the slash command.

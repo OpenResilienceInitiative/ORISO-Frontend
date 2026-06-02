@@ -1,0 +1,366 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": "cypress/e2e/tokens.cy.ts",
+			"language": "typescript",
+			"sizeLines": 177,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiLogoutKeycloak.ts",
+			"language": "typescript",
+			"sizeLines": 20,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiMatrixUpload.ts",
+			"language": "typescript",
+			"sizeLines": 153,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPostError.ts",
+			"language": "typescript",
+			"sizeLines": 61,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiUploadAttachment.ts",
+			"language": "typescript",
+			"sizeLines": 72,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/ErrorBoundary.tsx",
+			"language": "typescript",
+			"sizeLines": 97,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/askerInfo/AskerInfoTools.tsx",
+			"language": "typescript",
+			"sizeLines": 57,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/auth/auth.ts",
+			"language": "typescript",
+			"sizeLines": 119,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/budibase/budibaseLogout.ts",
+			"language": "typescript",
+			"sizeLines": 17,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/dragAndDropArea/DragAndDropArea.tsx",
+			"language": "typescript",
+			"sizeLines": 61,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/error/errorHandling.ts",
+			"language": "typescript",
+			"sizeLines": 75,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/loadingSpinner/LoadingSpinner.stories.ts",
+			"language": "typescript",
+			"sizeLines": 22,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/loadingSpinner/LoadingSpinner.tsx",
+			"language": "typescript",
+			"sizeLines": 17,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/logout/calcomLogout.ts",
+			"language": "typescript",
+			"sizeLines": 24,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/logout/logout.ts",
+			"language": "typescript",
+			"sizeLines": 63,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/MessageAttachment.stories.ts",
+			"language": "typescript",
+			"sizeLines": 106,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/MessageAttachment.tsx",
+			"language": "typescript",
+			"sizeLines": 426,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/messageHelpers.ts",
+			"language": "typescript",
+			"sizeLines": 23,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/messageSubmitInterface/attachmentHelpers.ts",
+			"language": "typescript",
+			"sizeLines": 34,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/messageSubmitInterface/useDraftMessage.tsx",
+			"language": "typescript",
+			"sizeLines": 363,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionCookie/accessSessionCookie.ts",
+			"language": "typescript",
+			"sizeLines": 45,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionCookie/accessSessionLocalStorage.ts",
+			"language": "typescript",
+			"sizeLines": 43,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionCookie/getBudibaseAccessToken.ts",
+			"language": "typescript",
+			"sizeLines": 87,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionCookie/refreshKeycloakAccessToken.ts",
+			"language": "typescript",
+			"sizeLines": 35,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsListItem/SessionListItemAttachment.tsx",
+			"language": "typescript",
+			"sizeLines": 35,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/context/LocaleContext.tsx",
+			"language": "typescript",
+			"sizeLines": 11,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/TenantDataInterface.ts",
+			"language": "typescript",
+			"sizeLines": 59,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/InformalProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 44,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/LocaleProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 128,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/TenantProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 28,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/TopicsProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 79,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/appConfig.ts",
+			"language": "typescript",
+			"sizeLines": 8,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/eventHandler.ts",
+			"language": "typescript",
+			"sizeLines": 52,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/generateCsrfToken.ts",
+			"language": "typescript",
+			"sizeLines": 25,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/requestCollector.ts",
+			"language": "typescript",
+			"sizeLines": 53,
+			"fileCategory": "code"
+		}
+	],
+	"batchImportData": {
+		"cypress/e2e/tokens.cy.ts": [
+			"cypress/support/websocket.ts",
+			"src/components/auth/auth.ts",
+			"src/components/sessionCookie/accessSessionLocalStorage.ts"
+		],
+		"src/api/apiLogoutKeycloak.ts": [
+			"src/components/sessionCookie/accessSessionCookie.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiMatrixUpload.ts": [
+			"src/components/sessionCookie/accessSessionCookie.ts",
+			"src/resources/scripts/endpoints.ts",
+			"src/utils/generateCsrfToken.ts"
+		],
+		"src/api/apiPostError.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiUploadAttachment.ts": [
+			"src/api/fetchData.ts",
+			"src/components/sessionCookie/accessSessionCookie.ts",
+			"src/resources/scripts/endpoints.ts",
+			"src/utils/generateCsrfToken.ts"
+		],
+		"src/components/app/ErrorBoundary.tsx": [
+			"src/api/apiPostError.ts",
+			"src/components/app/Loading.tsx",
+			"src/components/devToolbar/DevToolbar.tsx",
+			"src/components/error/errorHandling.ts",
+			"src/components/sessionCookie/accessSessionCookie.ts"
+		],
+		"src/components/askerInfo/AskerInfoTools.tsx": [
+			"src/api/apiGetUserDataBySessionId.ts",
+			"src/components/askerInfo/AskerInfoToolsOptions.tsx",
+			"src/components/sessionCookie/refreshKeycloakAccessToken.ts",
+			"src/components/text/Text.tsx",
+			"src/globalState/index.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/components/auth/auth.ts": [
+			"src/components/logout/logout.ts",
+			"src/components/sessionCookie/accessSessionCookie.ts",
+			"src/components/sessionCookie/accessSessionLocalStorage.ts",
+			"src/components/sessionCookie/refreshKeycloakAccessToken.ts",
+			"src/utils/appConfig.ts"
+		],
+		"src/components/budibase/budibaseLogout.ts": ["src/utils/appConfig.ts"],
+		"src/components/dragAndDropArea/DragAndDropArea.tsx": [
+			"src/components/messageSubmitInterface/attachmentHelpers.ts"
+		],
+		"src/components/error/errorHandling.ts": [
+			"src/api/apiPostError.ts",
+			"src/components/logout/logout.ts",
+			"src/components/sessionCookie/accessSessionCookie.ts",
+			"src/utils/appConfig.ts",
+			"src/utils/requestCollector.ts"
+		],
+		"src/components/loadingSpinner/LoadingSpinner.stories.ts": [
+			"src/components/loadingSpinner/LoadingSpinner.tsx"
+		],
+		"src/components/loadingSpinner/LoadingSpinner.tsx": [],
+		"src/components/logout/calcomLogout.ts": ["src/utils/appConfig.ts"],
+		"src/components/logout/logout.ts": [
+			"src/api/apiLogoutKeycloak.ts",
+			"src/components/budibase/budibaseLogout.ts",
+			"src/components/logout/calcomLogout.ts",
+			"src/components/sessionCookie/accessSessionCookie.ts",
+			"src/components/sessionCookie/accessSessionLocalStorage.ts",
+			"src/utils/appConfig.ts",
+			"src/utils/eventHandler.ts",
+			"src/utils/tenantSettingsHelper.ts"
+		],
+		"src/components/message/MessageAttachment.stories.ts": [
+			"src/components/message/message.styles.scss",
+			"src/components/message/MessageAttachment.tsx"
+		],
+		"src/components/message/MessageAttachment.tsx": [
+			"src/api/apiPostError.ts",
+			"src/api/index.ts",
+			"src/components/devToolbar/DevToolbar.tsx",
+			"src/components/loadingSpinner/LoadingSpinner.tsx",
+			"src/components/message/messageHelpers.ts",
+			"src/components/messageSubmitInterface/attachmentHelpers.ts",
+			"src/components/sessionCookie/accessSessionCookie.ts",
+			"src/globalState/index.ts",
+			"src/hooks/useE2EE.tsx",
+			"src/resources/scripts/endpoints.ts",
+			"src/utils/encryptionHelpers.ts",
+			"src/utils/generateCsrfToken.ts"
+		],
+		"src/components/message/messageHelpers.ts": [
+			"src/components/messageSubmitInterface/attachmentHelpers.ts"
+		],
+		"src/components/messageSubmitInterface/attachmentHelpers.ts": [],
+		"src/components/messageSubmitInterface/useDraftMessage.tsx": [
+			"src/api/apiPostError.ts",
+			"src/api/index.ts",
+			"src/components/logout/logout.ts",
+			"src/globalState/index.ts",
+			"src/hooks/useE2EE.tsx",
+			"src/services/draftStore.ts",
+			"src/utils/encryptionHelpers.ts",
+			"src/utils/eventHandler.ts",
+			"src/utils/keycloakSession.ts"
+		],
+		"src/components/sessionCookie/accessSessionCookie.ts": [],
+		"src/components/sessionCookie/accessSessionLocalStorage.ts": [],
+		"src/components/sessionCookie/getBudibaseAccessToken.ts": [
+			"src/globalState/interfaces/TenantDataInterface.ts",
+			"src/utils/appConfig.ts"
+		],
+		"src/components/sessionCookie/refreshKeycloakAccessToken.ts": [
+			"src/components/registration/autoLogin.ts",
+			"src/components/sessionCookie/accessSessionCookie.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/components/sessionsListItem/SessionListItemAttachment.tsx": [
+			"src/components/message/messageHelpers.ts"
+		],
+		"src/globalState/context/LocaleContext.tsx": [],
+		"src/globalState/interfaces/TenantDataInterface.ts": [],
+		"src/globalState/provider/InformalProvider.tsx": [
+			"src/components/sessionCookie/accessSessionCookie.ts"
+		],
+		"src/globalState/provider/LocaleProvider.tsx": [
+			"src/components/sessionCookie/accessSessionCookie.ts",
+			"src/globalState/context/LocaleContext.tsx",
+			"src/globalState/provider/InformalProvider.tsx",
+			"src/globalState/provider/TenantProvider.tsx",
+			"src/hooks/useAppConfig.tsx",
+			"src/i18n.ts",
+			"src/utils/useTenantTheming.ts"
+		],
+		"src/globalState/provider/TenantProvider.tsx": [
+			"src/globalState/interfaces/index.ts",
+			"src/utils/tenantSettingsHelper.ts"
+		],
+		"src/globalState/provider/TopicsProvider.tsx": [
+			"src/api/apiGetTopicsData.ts",
+			"src/api/apiPostError.ts",
+			"src/globalState/context/LocaleContext.tsx",
+			"src/globalState/interfaces/index.ts"
+		],
+		"src/utils/appConfig.ts": ["src/globalState/interfaces/index.ts"],
+		"src/utils/eventHandler.ts": [],
+		"src/utils/generateCsrfToken.ts": [
+			"src/components/sessionCookie/accessSessionCookie.ts"
+		],
+		"src/utils/requestCollector.ts": ["src/utils/appConfig.ts"]
+	}
+}

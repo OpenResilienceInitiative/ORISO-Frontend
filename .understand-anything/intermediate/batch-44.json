@@ -1,0 +1,70 @@
+{
+	"nodes": [
+		{
+			"id": "config:src/resources/i18n/en/agency.json",
+			"type": "config",
+			"name": "agency.json",
+			"filePath": "src/resources/i18n/en/agency.json",
+			"summary": "Configuration file that controls resources behavior for the frontend project.",
+			"tags": ["configuration", "i18n", "resources"],
+			"complexity": "simple"
+		},
+		{
+			"id": "config:src/resources/i18n/en/common.json",
+			"type": "config",
+			"name": "common.json",
+			"filePath": "src/resources/i18n/en/common.json",
+			"summary": "Configuration file that controls resources behavior for the frontend project.",
+			"tags": ["configuration", "i18n", "resources"],
+			"complexity": "complex"
+		},
+		{
+			"id": "config:src/resources/i18n/en/consultingTypes.json",
+			"type": "config",
+			"name": "consultingTypes.json",
+			"filePath": "src/resources/i18n/en/consultingTypes.json",
+			"summary": "Configuration file that controls resources behavior for the frontend project.",
+			"tags": ["configuration", "i18n", "resources"],
+			"complexity": "complex"
+		},
+		{
+			"id": "config:src/resources/i18n/en/languages.json",
+			"type": "config",
+			"name": "languages.json",
+			"filePath": "src/resources/i18n/en/languages.json",
+			"summary": "Configuration file that controls resources behavior for the frontend project.",
+			"tags": ["configuration", "i18n", "resources"],
+			"complexity": "moderate"
+		}
+	],
+	"edges": [
+		{
+			"source": "config:src/resources/i18n/en/agency.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:src/resources/i18n/en/common.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:src/resources/i18n/en/consultingTypes.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:src/resources/i18n/en/languages.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		}
+	]
+}

@@ -1,0 +1,390 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": "src/api/apiGetAgencyConsultantList.ts",
+			"language": "typescript",
+			"sizeLines": 22,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiSendAliasMessage.ts",
+			"language": "typescript",
+			"sizeLines": 56,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/AbsenceHandler.tsx",
+			"language": "typescript",
+			"sizeLines": 93,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/Loading.tsx",
+			"language": "typescript",
+			"sizeLines": 24,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/NonPlainRoutesWrapper.tsx",
+			"language": "typescript",
+			"sizeLines": 35,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/Routing.tsx",
+			"language": "typescript",
+			"sizeLines": 384,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/navigationHandler.ts",
+			"language": "typescript",
+			"sizeLines": 85,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/askerInfo/AskerInfo.tsx",
+			"language": "typescript",
+			"sizeLines": 113,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/askerInfo/AskerInfoContent.tsx",
+			"language": "typescript",
+			"sizeLines": 67,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/askerInfo/AskerInfoToolsOptions.tsx",
+			"language": "typescript",
+			"sizeLines": 285,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/banUser/BanUser.tsx",
+			"language": "typescript",
+			"sizeLines": 85,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/button/Button.stories.ts",
+			"language": "typescript",
+			"sizeLines": 76,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/button/Button.tsx",
+			"language": "typescript",
+			"sizeLines": 160,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/checkbox/Checkbox.stories.ts",
+			"language": "typescript",
+			"sizeLines": 52,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/checkbox/Checkbox.tsx",
+			"language": "typescript",
+			"sizeLines": 80,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/enquiry/WriteEnquiry.tsx",
+			"language": "typescript",
+			"sizeLines": 251,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/flyoutMenu/FlyoutMenu.tsx",
+			"language": "typescript",
+			"sizeLines": 87,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/groupChat/CreateChatView.tsx",
+			"language": "typescript",
+			"sizeLines": 722,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/groupChat/GroupChatInfo.tsx",
+			"language": "typescript",
+			"sizeLines": 513,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/groupChat/JoinGroupChatView.tsx",
+			"language": "typescript",
+			"sizeLines": 392,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/groupChat/createChatHelpers.ts",
+			"language": "typescript",
+			"sizeLines": 47,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/groupChat/groupChatHelpers.ts",
+			"language": "typescript",
+			"sizeLines": 7,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/loadingIndicator/LoadingIndicator.tsx",
+			"language": "typescript",
+			"sizeLines": 11,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/E2EEActivatedMessage.tsx",
+			"language": "typescript",
+			"sizeLines": 18,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/MasterKeyLostMessage.tsx",
+			"language": "typescript",
+			"sizeLines": 53,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/MessageDisplayName.tsx",
+			"language": "typescript",
+			"sizeLines": 51,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/MessageItemComponent.tsx",
+			"language": "typescript",
+			"sizeLines": 2315,
+			"fileCategory": "code"
+		}
+	],
+	"batchImportData": {
+		"src/api/apiGetAgencyConsultantList.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiSendAliasMessage.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/components/app/AbsenceHandler.tsx": [
+			"src/api/index.ts",
+			"src/components/button/Button.tsx",
+			"src/components/overlay/Overlay.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts"
+		],
+		"src/components/app/Loading.tsx": [
+			"src/components/app/loading.styles.scss",
+			"src/components/loadingIndicator/LoadingIndicator.tsx"
+		],
+		"src/components/app/NonPlainRoutesWrapper.tsx": [
+			"src/globalState/index.ts",
+			"src/utils/encryptionHelpers.ts"
+		],
+		"src/components/app/Routing.tsx": [
+			"src/components/app/AbsenceHandler.tsx",
+			"src/components/app/Loading.tsx",
+			"src/components/app/NavigationBar.tsx",
+			"src/components/app/NonPlainRoutesWrapper.tsx",
+			"src/components/app/RouterConfig.tsx",
+			"src/components/header/Header.tsx",
+			"src/components/notFound/NotFound.tsx",
+			"src/components/releaseNote/ReleaseNote.tsx",
+			"src/components/termsandconditions/TermsAndConditions.tsx",
+			"src/components/twoFactorAuth/TwoFactorNag.tsx",
+			"src/components/walkthrough/Walkthrough.tsx",
+			"src/containers/bookings/hooks/useAskerHasAssignedConsultant.ts",
+			"src/globalState/index.ts",
+			"src/hooks/useAppConfig.tsx",
+			"src/hooks/useResponsive.tsx"
+		],
+		"src/components/app/navigationHandler.ts": [],
+		"src/components/askerInfo/AskerInfo.tsx": [
+			"src/components/app/Loading.tsx",
+			"src/components/app/navigationHandler.ts",
+			"src/components/askerInfo/AskerInfoContent.tsx",
+			"src/components/session/sessionHelpers.ts",
+			"src/globalState/index.ts",
+			"src/globalState/provider/RocketChatUsersOfRoomProvider.tsx",
+			"src/hooks/useResponsive.tsx",
+			"src/hooks/useSearchParams.tsx",
+			"src/hooks/useSession.tsx"
+		],
+		"src/components/askerInfo/AskerInfoContent.tsx": [
+			"src/components/askerInfo/AskerInfoAssign.tsx",
+			"src/components/askerInfo/AskerInfoData.tsx",
+			"src/components/askerInfo/AskerInfoTools.tsx",
+			"src/components/box/Box.tsx",
+			"src/components/session/sessionHelpers.ts",
+			"src/globalState/index.ts"
+		],
+		"src/components/askerInfo/AskerInfoToolsOptions.tsx": [
+			"src/api/apiGetTools.ts",
+			"src/api/apiPutTools.ts",
+			"src/components/button/Button.tsx",
+			"src/components/checkbox/Checkbox.tsx",
+			"src/components/overlay/Overlay.tsx",
+			"src/components/select/SelectDropdown.tsx",
+			"src/components/text/Text.tsx",
+			"src/globalState/interfaces/ToolsInterface.ts"
+		],
+		"src/components/banUser/BanUser.tsx": [
+			"src/api/apiPostBanUser.ts",
+			"src/components/banUser/banUser.styles.scss",
+			"src/components/button/Button.tsx",
+			"src/components/headline/Headline.tsx",
+			"src/components/overlay/Overlay.tsx"
+		],
+		"src/components/button/Button.stories.ts": [
+			"src/components/button/Button.tsx"
+		],
+		"src/components/button/Button.tsx": [
+			"src/components/overlay/Overlay.tsx"
+		],
+		"src/components/checkbox/Checkbox.stories.ts": [
+			"src/components/checkbox/Checkbox.tsx"
+		],
+		"src/components/checkbox/Checkbox.tsx": [],
+		"src/components/enquiry/WriteEnquiry.tsx": [
+			"src/api/index.ts",
+			"src/components/app/Loading.tsx",
+			"src/components/app/navigationHandler.ts",
+			"src/components/button/Button.tsx",
+			"src/components/enquiry/EnquiryLanguageSelection.tsx",
+			"src/components/headline/Headline.tsx",
+			"src/components/messageSubmitInterface/messageSubmitInterfaceSkeleton.tsx",
+			"src/components/overlay/Overlay.tsx",
+			"src/components/text/Text.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/globalState/provider/LanguagesProvider.tsx",
+			"src/globalState/provider/RocketChatUsersOfRoomProvider.tsx",
+			"src/hooks/useResponsive.tsx",
+			"src/hooks/useSession.tsx",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/components/flyoutMenu/FlyoutMenu.tsx": [
+			"src/components/flyoutMenu/flyoutMenu.styles.scss",
+			"src/resources/img/icons.ts"
+		],
+		"src/components/groupChat/CreateChatView.tsx": [
+			"src/api/apiGetAgencyConsultantList.ts",
+			"src/api/apiGetSessionRooms.ts",
+			"src/api/apiGroupChatSettings.ts",
+			"src/components/app/navigationHandler.ts",
+			"src/components/button/Button.tsx",
+			"src/components/groupChat/createChatHelpers.ts",
+			"src/components/inputField/InputField.tsx",
+			"src/components/overlay/Overlay.tsx",
+			"src/components/select/SelectDropdown.tsx",
+			"src/globalState/index.ts",
+			"src/hooks/useResponsive.tsx"
+		],
+		"src/components/groupChat/GroupChatInfo.tsx": [
+			"src/api/index.ts",
+			"src/components/app/navigationHandler.ts",
+			"src/components/banUser/BanUser.tsx",
+			"src/components/button/Button.tsx",
+			"src/components/flyoutMenu/FlyoutMenu.tsx",
+			"src/components/groupChat/createChatHelpers.ts",
+			"src/components/groupChat/GroupChatCopyLinks.tsx",
+			"src/components/groupChat/groupChatHelpers.ts",
+			"src/components/logout/logout.ts",
+			"src/components/overlay/Overlay.tsx",
+			"src/components/session/sessionDateHelpers.ts",
+			"src/components/session/sessionHelpers.ts",
+			"src/components/sessionCookie/accessSessionCookie.ts",
+			"src/components/sessionMenu/sessionMenuHelpers.ts",
+			"src/components/tag/Tag.tsx",
+			"src/components/text/Text.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/provider/RocketChatUsersOfRoomProvider.tsx",
+			"src/hooks/useAppConfig.tsx",
+			"src/hooks/useResponsive.tsx",
+			"src/hooks/useSearchParams.tsx",
+			"src/hooks/useSession.tsx",
+			"src/utils/dateHelpers.ts",
+			"src/utils/encryptionHelpers.ts"
+		],
+		"src/components/groupChat/JoinGroupChatView.tsx": [
+			"src/api/apiRocketChatSetRoomKeyID.ts",
+			"src/api/apiRocketChatUpdateGroupKey.ts",
+			"src/api/apiSendAliasMessage.ts",
+			"src/api/index.ts",
+			"src/components/app/navigationHandler.ts",
+			"src/components/button/Button.tsx",
+			"src/components/headline/Headline.tsx",
+			"src/components/logout/logout.ts",
+			"src/components/overlay/Overlay.tsx",
+			"src/components/session/sessionHelpers.ts",
+			"src/components/sessionCookie/accessSessionCookie.ts",
+			"src/components/sessionHeader/SessionHeaderComponent.tsx",
+			"src/components/text/Text.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"src/hooks/useE2EE.tsx",
+			"src/hooks/useSearchParams.tsx",
+			"src/hooks/useTimeoutOverlay.tsx",
+			"src/hooks/useWatcher.tsx",
+			"src/i18n.ts",
+			"src/utils/encryptionHelpers.ts"
+		],
+		"src/components/groupChat/createChatHelpers.ts": [],
+		"src/components/groupChat/groupChatHelpers.ts": [],
+		"src/components/loadingIndicator/LoadingIndicator.tsx": [
+			"src/components/loadingIndicator/LoadingIndicator.styles.scss"
+		],
+		"src/components/message/E2EEActivatedMessage.tsx": [],
+		"src/components/message/MasterKeyLostMessage.tsx": [
+			"src/components/button/Button.tsx",
+			"src/components/message/SystemMessage.tsx",
+			"src/components/overlay/Overlay.tsx",
+			"src/components/session/subscriptionKeyLostHelper.ts"
+		],
+		"src/components/message/MessageDisplayName.tsx": [
+			"src/components/message/messageNameUtils.ts"
+		],
+		"src/components/message/MessageItemComponent.tsx": [
+			"src/api/apiDeleteMessage.ts",
+			"src/api/apiPatchMessage.ts",
+			"src/api/apiPostError.ts",
+			"src/api/apiRocketChatSettingsPublic.ts",
+			"src/api/apiSendAliasMessage.ts",
+			"src/api/index.ts",
+			"src/components/banUser/BanUser.tsx",
+			"src/components/button/Button.tsx",
+			"src/components/flyoutMenu/FlyoutMenu.tsx",
+			"src/components/message/Appointment.tsx",
+			"src/components/message/E2EEActivatedMessage.tsx",
+			"src/components/message/FurtherSteps.tsx",
+			"src/components/message/MasterKeyLostMessage.tsx",
+			"src/components/message/MessageAttachment.tsx",
+			"src/components/message/messageConstants.ts",
+			"src/components/message/MessageDisplayName.tsx",
+			"src/components/message/messageNameUtils.ts",
+			"src/components/message/ReassignMessage.tsx",
+			"src/components/message/UserAvatar.tsx",
+			"src/components/message/VideoCallMessage.tsx",
+			"src/components/message/VideoChatDetails/index.tsx",
+			"src/components/messageSubmitInterface/richtextHelpers.ts",
+			"src/components/overlay/Overlay.tsx",
+			"src/components/session/sessionHelpers.ts",
+			"src/components/sessionCookie/accessSessionCookie.ts",
+			"src/components/text/Text.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/globalState/provider/ConsultantListProvider.tsx",
+			"src/globalState/provider/RocketChatUsersOfRoomProvider.tsx",
+			"src/hooks/useE2EE.tsx",
+			"src/utils/dateHelpers.ts",
+			"src/utils/encryptionHelpers.ts"
+		]
+	}
+}

@@ -1,0 +1,38 @@
+{
+	"nodes": [
+		{
+			"id": "service:.dockerignore",
+			"type": "service",
+			"name": ".dockerignore",
+			"filePath": ".dockerignore",
+			"summary": "Infrastructure or service definition used to build, serve, or deploy the frontend application.",
+			"tags": ["infrastructure", "dockerignore", "infra"],
+			"complexity": "simple"
+		},
+		{
+			"id": "service:Dockerfile",
+			"type": "service",
+			"name": "Dockerfile",
+			"filePath": "Dockerfile",
+			"summary": "Infrastructure or service definition used to build, serve, or deploy the frontend application.",
+			"tags": ["infrastructure", "deployment", "infra"],
+			"complexity": "simple"
+		}
+	],
+	"edges": [
+		{
+			"source": "service:.dockerignore",
+			"target": "file:src/initApp.tsx",
+			"type": "deploys",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "service:Dockerfile",
+			"target": "file:src/initApp.tsx",
+			"type": "deploys",
+			"direction": "forward",
+			"weight": 0.7
+		}
+	]
+}

@@ -1,0 +1,2607 @@
+{
+	"nodes": [
+		{
+			"id": "file:src/components/app/LiveChatToggleIcons.tsx",
+			"type": "file",
+			"name": "LiveChatToggleIcons.tsx",
+			"filePath": "src/components/app/LiveChatToggleIcons.tsx",
+			"summary": "React UI module for component app, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-app", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/app/NavigationBar.tsx",
+			"type": "file",
+			"name": "NavigationBar.tsx",
+			"filePath": "src/components/app/NavigationBar.tsx",
+			"summary": "React UI module for component app, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-app"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/app/NavigationBar.tsx:NavigationBar",
+			"type": "function",
+			"name": "NavigationBar",
+			"filePath": "src/components/app/NavigationBar.tsx",
+			"lineRange": [60, 72],
+			"summary": "Function NavigationBar in src/components/app/NavigationBar.tsx, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/app/navigationSidebarIcons.tsx",
+			"type": "file",
+			"name": "navigationSidebarIcons.tsx",
+			"filePath": "src/components/app/navigationSidebarIcons.tsx",
+			"summary": "React UI module for component app, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-app"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/app/navigationSidebarIcons.tsx:NavInboxIcon",
+			"type": "function",
+			"name": "NavInboxIcon",
+			"filePath": "src/components/app/navigationSidebarIcons.tsx",
+			"lineRange": [10, 22],
+			"summary": "Function NavInboxIcon in src/components/app/navigationSidebarIcons.tsx, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/navigationSidebarIcons.tsx:NavChatsIcon",
+			"type": "function",
+			"name": "NavChatsIcon",
+			"filePath": "src/components/app/navigationSidebarIcons.tsx",
+			"lineRange": [28, 40],
+			"summary": "Function NavChatsIcon in src/components/app/navigationSidebarIcons.tsx, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/navigationSidebarIcons.tsx:NavChatsIconHover",
+			"type": "function",
+			"name": "NavChatsIconHover",
+			"filePath": "src/components/app/navigationSidebarIcons.tsx",
+			"lineRange": [45, 57],
+			"summary": "Function NavChatsIconHover in src/components/app/navigationSidebarIcons.tsx, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/navigationSidebarIcons.tsx:NavChatsIconFilled",
+			"type": "function",
+			"name": "NavChatsIconFilled",
+			"filePath": "src/components/app/navigationSidebarIcons.tsx",
+			"lineRange": [62, 74],
+			"summary": "Function NavChatsIconFilled in src/components/app/navigationSidebarIcons.tsx, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/navigationSidebarIcons.tsx:NavActivityIcon",
+			"type": "function",
+			"name": "NavActivityIcon",
+			"filePath": "src/components/app/navigationSidebarIcons.tsx",
+			"lineRange": [80, 92],
+			"summary": "Function NavActivityIcon in src/components/app/navigationSidebarIcons.tsx, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/navigationSidebarIcons.tsx:NavActivityIconHover",
+			"type": "function",
+			"name": "NavActivityIconHover",
+			"filePath": "src/components/app/navigationSidebarIcons.tsx",
+			"lineRange": [103, 115],
+			"summary": "Function NavActivityIconHover in src/components/app/navigationSidebarIcons.tsx, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/navigationSidebarIcons.tsx:NavActivityIconFilled",
+			"type": "function",
+			"name": "NavActivityIconFilled",
+			"filePath": "src/components/app/navigationSidebarIcons.tsx",
+			"lineRange": [126, 138],
+			"summary": "Function NavActivityIconFilled in src/components/app/navigationSidebarIcons.tsx, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/navigationSidebarIcons.tsx:NavDraftsIcon",
+			"type": "function",
+			"name": "NavDraftsIcon",
+			"filePath": "src/components/app/navigationSidebarIcons.tsx",
+			"lineRange": [150, 162],
+			"summary": "Function NavDraftsIcon in src/components/app/navigationSidebarIcons.tsx, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/navigationSidebarIcons.tsx:NavDraftsIconHover",
+			"type": "function",
+			"name": "NavDraftsIconHover",
+			"filePath": "src/components/app/navigationSidebarIcons.tsx",
+			"lineRange": [173, 185],
+			"summary": "Function NavDraftsIconHover in src/components/app/navigationSidebarIcons.tsx, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/navigationSidebarIcons.tsx:NavDraftsIconFilled",
+			"type": "function",
+			"name": "NavDraftsIconFilled",
+			"filePath": "src/components/app/navigationSidebarIcons.tsx",
+			"lineRange": [190, 202],
+			"summary": "Function NavDraftsIconFilled in src/components/app/navigationSidebarIcons.tsx, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/navigationSidebarIcons.tsx:NavProfileIcon",
+			"type": "function",
+			"name": "NavProfileIcon",
+			"filePath": "src/components/app/navigationSidebarIcons.tsx",
+			"lineRange": [211, 223],
+			"summary": "Function NavProfileIcon in src/components/app/navigationSidebarIcons.tsx, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/navigationSidebarIcons.tsx:NavProfileIconHover",
+			"type": "function",
+			"name": "NavProfileIconHover",
+			"filePath": "src/components/app/navigationSidebarIcons.tsx",
+			"lineRange": [228, 240],
+			"summary": "Function NavProfileIconHover in src/components/app/navigationSidebarIcons.tsx, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/navigationSidebarIcons.tsx:NavProfileIconFilled",
+			"type": "function",
+			"name": "NavProfileIconFilled",
+			"filePath": "src/components/app/navigationSidebarIcons.tsx",
+			"lineRange": [245, 257],
+			"summary": "Function NavProfileIconFilled in src/components/app/navigationSidebarIcons.tsx, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/navigationSidebarIcons.tsx:NavLiveChatIcon",
+			"type": "function",
+			"name": "NavLiveChatIcon",
+			"filePath": "src/components/app/navigationSidebarIcons.tsx",
+			"lineRange": [263, 275],
+			"summary": "Function NavLiveChatIcon in src/components/app/navigationSidebarIcons.tsx, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/navigationSidebarIcons.tsx:NavGlobeIcon",
+			"type": "function",
+			"name": "NavGlobeIcon",
+			"filePath": "src/components/app/navigationSidebarIcons.tsx",
+			"lineRange": [287, 299],
+			"summary": "Function NavGlobeIcon in src/components/app/navigationSidebarIcons.tsx, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/navigationSidebarIcons.tsx:NavGlobeIconHover",
+			"type": "function",
+			"name": "NavGlobeIconHover",
+			"filePath": "src/components/app/navigationSidebarIcons.tsx",
+			"lineRange": [304, 316],
+			"summary": "Function NavGlobeIconHover in src/components/app/navigationSidebarIcons.tsx, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/navigationSidebarIcons.tsx:NavGlobeIconFilled",
+			"type": "function",
+			"name": "NavGlobeIconFilled",
+			"filePath": "src/components/app/navigationSidebarIcons.tsx",
+			"lineRange": [321, 333],
+			"summary": "Function NavGlobeIconFilled in src/components/app/navigationSidebarIcons.tsx, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/navigationSidebarIcons.tsx:NavLogoutIcon",
+			"type": "function",
+			"name": "NavLogoutIcon",
+			"filePath": "src/components/app/navigationSidebarIcons.tsx",
+			"lineRange": [339, 351],
+			"summary": "Function NavLogoutIcon in src/components/app/navigationSidebarIcons.tsx, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/navigationSidebarIcons.tsx:NavLogoutIconHover",
+			"type": "function",
+			"name": "NavLogoutIconHover",
+			"filePath": "src/components/app/navigationSidebarIcons.tsx",
+			"lineRange": [356, 368],
+			"summary": "Function NavLogoutIconHover in src/components/app/navigationSidebarIcons.tsx, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/navigationSidebarIcons.tsx:NavLogoutIconFilled",
+			"type": "function",
+			"name": "NavLogoutIconFilled",
+			"filePath": "src/components/app/navigationSidebarIcons.tsx",
+			"lineRange": [373, 385],
+			"summary": "Function NavLogoutIconFilled in src/components/app/navigationSidebarIcons.tsx, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/draftsCenter/DraftsCenter.tsx",
+			"type": "file",
+			"name": "DraftsCenter.tsx",
+			"filePath": "src/components/draftsCenter/DraftsCenter.tsx",
+			"summary": "React UI module for component drafts center, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-drafts-center"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/draftsCenter/DraftsCenter.tsx:DraftsCenter",
+			"type": "function",
+			"name": "DraftsCenter",
+			"filePath": "src/components/draftsCenter/DraftsCenter.tsx",
+			"lineRange": [82, 94],
+			"summary": "Function DraftsCenter in src/components/draftsCenter/DraftsCenter.tsx, used by the surrounding component drafts center module.",
+			"tags": ["function", "component-drafts-center", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/context/UserDataContext.tsx",
+			"type": "file",
+			"name": "UserDataContext.tsx",
+			"filePath": "src/globalState/context/UserDataContext.tsx",
+			"summary": "React UI module for global state, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"state-management",
+				"utility",
+				"global-state"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/context/UserDataContext.tsx:UserDataContext",
+			"type": "function",
+			"name": "UserDataContext",
+			"filePath": "src/globalState/context/UserDataContext.tsx",
+			"lineRange": [10, 10],
+			"summary": "Function UserDataContext in src/globalState/context/UserDataContext.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/helpers/stateHelpers.ts",
+			"type": "file",
+			"name": "stateHelpers.ts",
+			"filePath": "src/globalState/helpers/stateHelpers.ts",
+			"summary": "Global state module for global state, sharing application state across frontend flows.",
+			"tags": ["state-management", "utility", "global-state"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/globalState/helpers/stateHelpers.ts:buildExtendedSession",
+			"type": "function",
+			"name": "buildExtendedSession",
+			"filePath": "src/globalState/helpers/stateHelpers.ts",
+			"lineRange": [39, 51],
+			"summary": "Function buildExtendedSession in src/globalState/helpers/stateHelpers.ts, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/helpers/stateHelpers.ts:getExtendedSession",
+			"type": "function",
+			"name": "getExtendedSession",
+			"filePath": "src/globalState/helpers/stateHelpers.ts",
+			"lineRange": [65, 77],
+			"summary": "Function getExtendedSession in src/globalState/helpers/stateHelpers.ts, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/helpers/stateHelpers.ts:getContact",
+			"type": "function",
+			"name": "getContact",
+			"filePath": "src/globalState/helpers/stateHelpers.ts",
+			"lineRange": [89, 101],
+			"summary": "Function getContact in src/globalState/helpers/stateHelpers.ts, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/helpers/stateHelpers.ts:getSessionsDataKeyForSessionType",
+			"type": "function",
+			"name": "getSessionsDataKeyForSessionType",
+			"filePath": "src/globalState/helpers/stateHelpers.ts",
+			"lineRange": [101, 113],
+			"summary": "Function getSessionsDataKeyForSessionType in src/globalState/helpers/stateHelpers.ts, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/helpers/stateHelpers.ts:hasUserAuthority",
+			"type": "function",
+			"name": "hasUserAuthority",
+			"filePath": "src/globalState/helpers/stateHelpers.ts",
+			"lineRange": [126, 138],
+			"summary": "Function hasUserAuthority in src/globalState/helpers/stateHelpers.ts, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/helpers/stateHelpers.ts:AUTHORITIES",
+			"type": "function",
+			"name": "AUTHORITIES",
+			"filePath": "src/globalState/helpers/stateHelpers.ts",
+			"lineRange": [131, 138],
+			"summary": "Function AUTHORITIES in src/globalState/helpers/stateHelpers.ts, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/interfaces/AppConfig/AppConfigInterface.ts",
+			"type": "file",
+			"name": "AppConfigInterface.ts",
+			"filePath": "src/globalState/interfaces/AppConfig/AppConfigInterface.ts",
+			"summary": "Global state module for global state, sharing application state across frontend flows.",
+			"tags": ["state-management", "global-state", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/globalState/interfaces/AppConfig/AppConfigJitsiInterface.ts",
+			"type": "file",
+			"name": "AppConfigJitsiInterface.ts",
+			"filePath": "src/globalState/interfaces/AppConfig/AppConfigJitsiInterface.ts",
+			"summary": "Global state module for global state, sharing application state across frontend flows.",
+			"tags": ["state-management", "global-state", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/interfaces/AppConfig/AppConfigNotificationsInterface.ts",
+			"type": "file",
+			"name": "AppConfigNotificationsInterface.ts",
+			"filePath": "src/globalState/interfaces/AppConfig/AppConfigNotificationsInterface.ts",
+			"summary": "Global state module for global state, sharing application state across frontend flows.",
+			"tags": ["state-management", "global-state", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/interfaces/AppConfig/AppConfigTwoFactorInterface.ts",
+			"type": "file",
+			"name": "AppConfigTwoFactorInterface.ts",
+			"filePath": "src/globalState/interfaces/AppConfig/AppConfigTwoFactorInterface.ts",
+			"summary": "Global state module for global state, sharing application state across frontend flows.",
+			"tags": ["state-management", "global-state", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/interfaces/AppConfig/AppConfigUrlsInterface.ts",
+			"type": "file",
+			"name": "AppConfigUrlsInterface.ts",
+			"filePath": "src/globalState/interfaces/AppConfig/AppConfigUrlsInterface.ts",
+			"summary": "Global state module for global state, sharing application state across frontend flows.",
+			"tags": ["state-management", "global-state", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/interfaces/AppConfig/AppSettingsInterface.ts",
+			"type": "file",
+			"name": "AppSettingsInterface.ts",
+			"filePath": "src/globalState/interfaces/AppConfig/AppSettingsInterface.ts",
+			"summary": "Global state module for global state, sharing application state across frontend flows.",
+			"tags": ["state-management", "global-state", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/interfaces/ConsultingTypeInterface.ts",
+			"type": "file",
+			"name": "ConsultingTypeInterface.ts",
+			"filePath": "src/globalState/interfaces/ConsultingTypeInterface.ts",
+			"summary": "Global state module for global state, sharing application state across frontend flows.",
+			"tags": ["state-management", "global-state", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/globalState/interfaces/GroupChatConfig.ts",
+			"type": "file",
+			"name": "GroupChatConfig.ts",
+			"filePath": "src/globalState/interfaces/GroupChatConfig.ts",
+			"summary": "Global state module for global state, sharing application state across frontend flows.",
+			"tags": ["state-management", "global-state", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/interfaces/LegalLinkInterface.ts",
+			"type": "file",
+			"name": "LegalLinkInterface.ts",
+			"filePath": "src/globalState/interfaces/LegalLinkInterface.ts",
+			"summary": "Global state module for global state, sharing application state across frontend flows.",
+			"tags": ["state-management", "global-state", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/interfaces/SessionsDataInterface.ts",
+			"type": "file",
+			"name": "SessionsDataInterface.ts",
+			"filePath": "src/globalState/interfaces/SessionsDataInterface.ts",
+			"summary": "Global state module for global state, sharing application state across frontend flows.",
+			"tags": ["state-management", "session", "utility", "global-state"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/globalState/interfaces/SessionsDataInterface.ts:SESSION_DATA_KEY_ENQUIRIES",
+			"type": "function",
+			"name": "SESSION_DATA_KEY_ENQUIRIES",
+			"filePath": "src/globalState/interfaces/SessionsDataInterface.ts",
+			"lineRange": [4, 16],
+			"summary": "Function SESSION_DATA_KEY_ENQUIRIES in src/globalState/interfaces/SessionsDataInterface.ts, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/interfaces/SessionsDataInterface.ts:SESSION_DATA_KEY_MY_SESSIONS",
+			"type": "function",
+			"name": "SESSION_DATA_KEY_MY_SESSIONS",
+			"filePath": "src/globalState/interfaces/SessionsDataInterface.ts",
+			"lineRange": [5, 17],
+			"summary": "Function SESSION_DATA_KEY_MY_SESSIONS in src/globalState/interfaces/SessionsDataInterface.ts, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/interfaces/SessionsDataInterface.ts:STATUS_EMPTY",
+			"type": "function",
+			"name": "STATUS_EMPTY",
+			"filePath": "src/globalState/interfaces/SessionsDataInterface.ts",
+			"lineRange": [39, 51],
+			"summary": "Function STATUS_EMPTY in src/globalState/interfaces/SessionsDataInterface.ts, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/interfaces/SessionsDataInterface.ts:STATUS_ENQUIRY",
+			"type": "function",
+			"name": "STATUS_ENQUIRY",
+			"filePath": "src/globalState/interfaces/SessionsDataInterface.ts",
+			"lineRange": [42, 54],
+			"summary": "Function STATUS_ENQUIRY in src/globalState/interfaces/SessionsDataInterface.ts, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/interfaces/SessionsDataInterface.ts:STATUS_ACTIVE",
+			"type": "function",
+			"name": "STATUS_ACTIVE",
+			"filePath": "src/globalState/interfaces/SessionsDataInterface.ts",
+			"lineRange": [45, 57],
+			"summary": "Function STATUS_ACTIVE in src/globalState/interfaces/SessionsDataInterface.ts, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/interfaces/SessionsDataInterface.ts:STATUS_FINISHED",
+			"type": "function",
+			"name": "STATUS_FINISHED",
+			"filePath": "src/globalState/interfaces/SessionsDataInterface.ts",
+			"lineRange": [48, 60],
+			"summary": "Function STATUS_FINISHED in src/globalState/interfaces/SessionsDataInterface.ts, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/interfaces/SessionsDataInterface.ts:STATUS_ARCHIVED",
+			"type": "function",
+			"name": "STATUS_ARCHIVED",
+			"filePath": "src/globalState/interfaces/SessionsDataInterface.ts",
+			"lineRange": [51, 63],
+			"summary": "Function STATUS_ARCHIVED in src/globalState/interfaces/SessionsDataInterface.ts, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/interfaces/SessionsDataInterface.ts:REGISTRATION_TYPE_REGISTERED",
+			"type": "function",
+			"name": "REGISTRATION_TYPE_REGISTERED",
+			"filePath": "src/globalState/interfaces/SessionsDataInterface.ts",
+			"lineRange": [54, 66],
+			"summary": "Function REGISTRATION_TYPE_REGISTERED in src/globalState/interfaces/SessionsDataInterface.ts, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/interfaces/TranslationConfig.ts",
+			"type": "file",
+			"name": "TranslationConfig.ts",
+			"filePath": "src/globalState/interfaces/TranslationConfig.ts",
+			"summary": "Global state module for global state, sharing application state across frontend flows.",
+			"tags": ["state-management", "i18n", "global-state"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/interfaces/UserDataInterface.ts",
+			"type": "file",
+			"name": "UserDataInterface.ts",
+			"filePath": "src/globalState/interfaces/UserDataInterface.ts",
+			"summary": "Global state module for global state, sharing application state across frontend flows.",
+			"tags": ["state-management", "global-state", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/globalState/provider/AgencySpecificProvider.tsx",
+			"type": "file",
+			"name": "AgencySpecificProvider.tsx",
+			"filePath": "src/globalState/provider/AgencySpecificProvider.tsx",
+			"summary": "React UI module for global state, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"state-management",
+				"utility",
+				"global-state"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/AgencySpecificProvider.tsx:AgencySpecificProvider",
+			"type": "function",
+			"name": "AgencySpecificProvider",
+			"filePath": "src/globalState/provider/AgencySpecificProvider.tsx",
+			"lineRange": [19, 31],
+			"summary": "Function AgencySpecificProvider in src/globalState/provider/AgencySpecificProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/AgencySpecificProvider.tsx:AgencySpecificContext",
+			"type": "function",
+			"name": "AgencySpecificContext",
+			"filePath": "src/globalState/provider/AgencySpecificProvider.tsx",
+			"lineRange": [14, 26],
+			"summary": "Function AgencySpecificContext in src/globalState/provider/AgencySpecificProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/provider/ConsultingTypesProvider.tsx",
+			"type": "file",
+			"name": "ConsultingTypesProvider.tsx",
+			"filePath": "src/globalState/provider/ConsultingTypesProvider.tsx",
+			"summary": "React UI module for global state, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"state-management",
+				"utility",
+				"global-state"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/ConsultingTypesProvider.tsx:ConsultingTypesProvider",
+			"type": "function",
+			"name": "ConsultingTypesProvider",
+			"filePath": "src/globalState/provider/ConsultingTypesProvider.tsx",
+			"lineRange": [12, 24],
+			"summary": "Function ConsultingTypesProvider in src/globalState/provider/ConsultingTypesProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/ConsultingTypesProvider.tsx:getConsultingType",
+			"type": "function",
+			"name": "getConsultingType",
+			"filePath": "src/globalState/provider/ConsultingTypesProvider.tsx",
+			"lineRange": [24, 36],
+			"summary": "Function getConsultingType in src/globalState/provider/ConsultingTypesProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/ConsultingTypesProvider.tsx:useConsultingTypes",
+			"type": "function",
+			"name": "useConsultingTypes",
+			"filePath": "src/globalState/provider/ConsultingTypesProvider.tsx",
+			"lineRange": [40, 51],
+			"summary": "Function useConsultingTypes in src/globalState/provider/ConsultingTypesProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/ConsultingTypesProvider.tsx:useConsultingType",
+			"type": "function",
+			"name": "useConsultingType",
+			"filePath": "src/globalState/provider/ConsultingTypesProvider.tsx",
+			"lineRange": [49, 51],
+			"summary": "Function useConsultingType in src/globalState/provider/ConsultingTypesProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/ConsultingTypesProvider.tsx:ConsultingTypesContext",
+			"type": "function",
+			"name": "ConsultingTypesContext",
+			"filePath": "src/globalState/provider/ConsultingTypesProvider.tsx",
+			"lineRange": [5, 17],
+			"summary": "Function ConsultingTypesContext in src/globalState/provider/ConsultingTypesProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/provider/NotificationsProvider.tsx",
+			"type": "file",
+			"name": "NotificationsProvider.tsx",
+			"filePath": "src/globalState/provider/NotificationsProvider.tsx",
+			"summary": "React UI module for global state, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"state-management",
+				"utility",
+				"global-state"
+			],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/globalState/provider/NotificationsProvider.tsx:NotificationsProvider",
+			"type": "function",
+			"name": "NotificationsProvider",
+			"filePath": "src/globalState/provider/NotificationsProvider.tsx",
+			"lineRange": [121, 133],
+			"summary": "Function NotificationsProvider in src/globalState/provider/NotificationsProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/NotificationsProvider.tsx:NOTIFICATION_DEFAULT_TIMEOUT",
+			"type": "function",
+			"name": "NOTIFICATION_DEFAULT_TIMEOUT",
+			"filePath": "src/globalState/provider/NotificationsProvider.tsx",
+			"lineRange": [27, 39],
+			"summary": "Function NOTIFICATION_DEFAULT_TIMEOUT in src/globalState/provider/NotificationsProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/NotificationsProvider.tsx:NOTIFICATION_TYPE_NONE",
+			"type": "function",
+			"name": "NOTIFICATION_TYPE_NONE",
+			"filePath": "src/globalState/provider/NotificationsProvider.tsx",
+			"lineRange": [29, 41],
+			"summary": "Function NOTIFICATION_TYPE_NONE in src/globalState/provider/NotificationsProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/NotificationsProvider.tsx:NOTIFICATION_TYPE_INFO",
+			"type": "function",
+			"name": "NOTIFICATION_TYPE_INFO",
+			"filePath": "src/globalState/provider/NotificationsProvider.tsx",
+			"lineRange": [32, 44],
+			"summary": "Function NOTIFICATION_TYPE_INFO in src/globalState/provider/NotificationsProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/NotificationsProvider.tsx:NOTIFICATION_TYPE_WARNING",
+			"type": "function",
+			"name": "NOTIFICATION_TYPE_WARNING",
+			"filePath": "src/globalState/provider/NotificationsProvider.tsx",
+			"lineRange": [35, 47],
+			"summary": "Function NOTIFICATION_TYPE_WARNING in src/globalState/provider/NotificationsProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/NotificationsProvider.tsx:NOTIFICATION_TYPE_ERROR",
+			"type": "function",
+			"name": "NOTIFICATION_TYPE_ERROR",
+			"filePath": "src/globalState/provider/NotificationsProvider.tsx",
+			"lineRange": [38, 50],
+			"summary": "Function NOTIFICATION_TYPE_ERROR in src/globalState/provider/NotificationsProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/NotificationsProvider.tsx:NOTIFICATION_TYPE_SUCCESS",
+			"type": "function",
+			"name": "NOTIFICATION_TYPE_SUCCESS",
+			"filePath": "src/globalState/provider/NotificationsProvider.tsx",
+			"lineRange": [41, 53],
+			"summary": "Function NOTIFICATION_TYPE_SUCCESS in src/globalState/provider/NotificationsProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/NotificationsProvider.tsx:NotificationsContext",
+			"type": "function",
+			"name": "NotificationsContext",
+			"filePath": "src/globalState/provider/NotificationsProvider.tsx",
+			"lineRange": [118, 130],
+			"summary": "Function NotificationsContext in src/globalState/provider/NotificationsProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/provider/SessionTypeProvider.tsx",
+			"type": "file",
+			"name": "SessionTypeProvider.tsx",
+			"filePath": "src/globalState/provider/SessionTypeProvider.tsx",
+			"summary": "React UI module for global state, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"state-management",
+				"session",
+				"utility",
+				"global-state"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/SessionTypeProvider.tsx:SessionTypeProvider",
+			"type": "function",
+			"name": "SessionTypeProvider",
+			"filePath": "src/globalState/provider/SessionTypeProvider.tsx",
+			"lineRange": [22, 34],
+			"summary": "Function SessionTypeProvider in src/globalState/provider/SessionTypeProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/SessionTypeProvider.tsx:SessionTypeContext",
+			"type": "function",
+			"name": "SessionTypeContext",
+			"filePath": "src/globalState/provider/SessionTypeProvider.tsx",
+			"lineRange": [19, 31],
+			"summary": "Function SessionTypeContext in src/globalState/provider/SessionTypeProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/provider/SessionsDataProvider.tsx",
+			"type": "file",
+			"name": "SessionsDataProvider.tsx",
+			"filePath": "src/globalState/provider/SessionsDataProvider.tsx",
+			"summary": "React UI module for global state, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"state-management",
+				"session",
+				"utility",
+				"global-state"
+			],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/globalState/provider/SessionsDataProvider.tsx:SessionsDataProvider",
+			"type": "function",
+			"name": "SessionsDataProvider",
+			"filePath": "src/globalState/provider/SessionsDataProvider.tsx",
+			"lineRange": [114, 126],
+			"summary": "Function SessionsDataProvider in src/globalState/provider/SessionsDataProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/SessionsDataProvider.tsx:SessionsDataContext",
+			"type": "function",
+			"name": "SessionsDataContext",
+			"filePath": "src/globalState/provider/SessionsDataProvider.tsx",
+			"lineRange": [12, 24],
+			"summary": "Function SessionsDataContext in src/globalState/provider/SessionsDataProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/SessionsDataProvider.tsx:SET_READY",
+			"type": "function",
+			"name": "SET_READY",
+			"filePath": "src/globalState/provider/SessionsDataProvider.tsx",
+			"lineRange": [19, 31],
+			"summary": "Function SET_READY in src/globalState/provider/SessionsDataProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/SessionsDataProvider.tsx:SET_SESSIONS",
+			"type": "function",
+			"name": "SET_SESSIONS",
+			"filePath": "src/globalState/provider/SessionsDataProvider.tsx",
+			"lineRange": [20, 32],
+			"summary": "Function SET_SESSIONS in src/globalState/provider/SessionsDataProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/SessionsDataProvider.tsx:UPDATE_SESSIONS",
+			"type": "function",
+			"name": "UPDATE_SESSIONS",
+			"filePath": "src/globalState/provider/SessionsDataProvider.tsx",
+			"lineRange": [21, 33],
+			"summary": "Function UPDATE_SESSIONS in src/globalState/provider/SessionsDataProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/SessionsDataProvider.tsx:REMOVE_SESSIONS",
+			"type": "function",
+			"name": "REMOVE_SESSIONS",
+			"filePath": "src/globalState/provider/SessionsDataProvider.tsx",
+			"lineRange": [22, 34],
+			"summary": "Function REMOVE_SESSIONS in src/globalState/provider/SessionsDataProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/SessionsDataProvider.tsx:reducer",
+			"type": "function",
+			"name": "reducer",
+			"filePath": "src/globalState/provider/SessionsDataProvider.tsx",
+			"lineRange": [53, 65],
+			"summary": "Function reducer in src/globalState/provider/SessionsDataProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "internal"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/provider/UserDataProvider.tsx",
+			"type": "file",
+			"name": "UserDataProvider.tsx",
+			"filePath": "src/globalState/provider/UserDataProvider.tsx",
+			"summary": "React UI module for global state, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"state-management",
+				"utility",
+				"global-state"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/UserDataProvider.tsx:UserDataProvider",
+			"type": "function",
+			"name": "UserDataProvider",
+			"filePath": "src/globalState/provider/UserDataProvider.tsx",
+			"lineRange": [11, 23],
+			"summary": "Function UserDataProvider in src/globalState/provider/UserDataProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/hooks/useJoinGroupChat.ts",
+			"type": "file",
+			"name": "useJoinGroupChat.ts",
+			"filePath": "src/hooks/useJoinGroupChat.ts",
+			"summary": "React hook module for useJoinGroupChat, encapsulating reusable frontend state or side-effect logic.",
+			"tags": ["hook", "utility", "hooks"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/hooks/useJoinGroupChat.ts:useJoinGroupChat",
+			"type": "function",
+			"name": "useJoinGroupChat",
+			"filePath": "src/hooks/useJoinGroupChat.ts",
+			"lineRange": [7, 19],
+			"summary": "Function useJoinGroupChat in src/hooks/useJoinGroupChat.ts, used by the surrounding hooks module.",
+			"tags": ["function", "hooks", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/services/draftStore.ts",
+			"type": "file",
+			"name": "draftStore.ts",
+			"filePath": "src/services/draftStore.ts",
+			"summary": "TypeScript module for services with 8 extracted functions and 0 extracted classes.",
+			"tags": ["utility", "services", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/services/draftStore.ts:DRAFT_STORAGE_KEY",
+			"type": "function",
+			"name": "DRAFT_STORAGE_KEY",
+			"filePath": "src/services/draftStore.ts",
+			"lineRange": [1, 13],
+			"summary": "Function DRAFT_STORAGE_KEY in src/services/draftStore.ts, used by the surrounding services module.",
+			"tags": ["function", "services", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/services/draftStore.ts:DRAFTS_UPDATED_EVENT",
+			"type": "function",
+			"name": "DRAFTS_UPDATED_EVENT",
+			"filePath": "src/services/draftStore.ts",
+			"lineRange": [2, 14],
+			"summary": "Function DRAFTS_UPDATED_EVENT in src/services/draftStore.ts, used by the surrounding services module.",
+			"tags": ["function", "services", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/services/draftStore.ts:REMOTE_DRAFT_INDEX_SCOPE",
+			"type": "function",
+			"name": "REMOTE_DRAFT_INDEX_SCOPE",
+			"filePath": "src/services/draftStore.ts",
+			"lineRange": [3, 15],
+			"summary": "Function REMOTE_DRAFT_INDEX_SCOPE in src/services/draftStore.ts, used by the surrounding services module.",
+			"tags": ["function", "services", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/services/draftStore.ts:buildDraftKey",
+			"type": "function",
+			"name": "buildDraftKey",
+			"filePath": "src/services/draftStore.ts",
+			"lineRange": [59, 71],
+			"summary": "Function buildDraftKey in src/services/draftStore.ts, used by the surrounding services module.",
+			"tags": ["function", "services", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/services/draftStore.ts:saveDraftEntry",
+			"type": "function",
+			"name": "saveDraftEntry",
+			"filePath": "src/services/draftStore.ts",
+			"lineRange": [71, 83],
+			"summary": "Function saveDraftEntry in src/services/draftStore.ts, used by the surrounding services module.",
+			"tags": ["function", "services", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/services/draftStore.ts:getDraftEntry",
+			"type": "function",
+			"name": "getDraftEntry",
+			"filePath": "src/services/draftStore.ts",
+			"lineRange": [82, 94],
+			"summary": "Function getDraftEntry in src/services/draftStore.ts, used by the surrounding services module.",
+			"tags": ["function", "services", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/services/draftStore.ts:removeDraftEntry",
+			"type": "function",
+			"name": "removeDraftEntry",
+			"filePath": "src/services/draftStore.ts",
+			"lineRange": [87, 99],
+			"summary": "Function removeDraftEntry in src/services/draftStore.ts, used by the surrounding services module.",
+			"tags": ["function", "services", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/services/draftStore.ts:getAllDraftEntries",
+			"type": "function",
+			"name": "getAllDraftEntries",
+			"filePath": "src/services/draftStore.ts",
+			"lineRange": [96, 108],
+			"summary": "Function getAllDraftEntries in src/services/draftStore.ts, used by the surrounding services module.",
+			"tags": ["function", "services", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/utils/anonymousSessionFetchGuard.ts",
+			"type": "file",
+			"name": "anonymousSessionFetchGuard.ts",
+			"filePath": "src/utils/anonymousSessionFetchGuard.ts",
+			"summary": "TypeScript module for utilities with 3 extracted functions and 0 extracted classes.",
+			"tags": ["session", "utility", "utilities"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/anonymousSessionFetchGuard.ts:decodeKeycloakPreferredUsername",
+			"type": "function",
+			"name": "decodeKeycloakPreferredUsername",
+			"filePath": "src/utils/anonymousSessionFetchGuard.ts",
+			"lineRange": [9, 21],
+			"summary": "Function decodeKeycloakPreferredUsername in src/utils/anonymousSessionFetchGuard.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/anonymousSessionFetchGuard.ts:isAnonymousSession",
+			"type": "function",
+			"name": "isAnonymousSession",
+			"filePath": "src/utils/anonymousSessionFetchGuard.ts",
+			"lineRange": [24, 36],
+			"summary": "Function isAnonymousSession in src/utils/anonymousSessionFetchGuard.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/anonymousSessionFetchGuard.ts:shouldRejectSilentlyForAnonymousRestrictedUrl",
+			"type": "function",
+			"name": "shouldRejectSilentlyForAnonymousRestrictedUrl",
+			"filePath": "src/utils/anonymousSessionFetchGuard.ts",
+			"lineRange": [44, 50],
+			"summary": "Function shouldRejectSilentlyForAnonymousRestrictedUrl in src/utils/anonymousSessionFetchGuard.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/utils/keycloakSession.ts",
+			"type": "file",
+			"name": "keycloakSession.ts",
+			"filePath": "src/utils/keycloakSession.ts",
+			"summary": "TypeScript module for utilities with 2 extracted functions and 0 extracted classes.",
+			"tags": ["session", "authentication", "utility", "utilities"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/keycloakSession.ts:isKeycloakConsultantSession",
+			"type": "function",
+			"name": "isKeycloakConsultantSession",
+			"filePath": "src/utils/keycloakSession.ts",
+			"lineRange": [15, 27],
+			"summary": "Function isKeycloakConsultantSession in src/utils/keycloakSession.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/keycloakSession.ts:buildAnonymousUserData",
+			"type": "function",
+			"name": "buildAnonymousUserData",
+			"filePath": "src/utils/keycloakSession.ts",
+			"lineRange": [26, 38],
+			"summary": "Function buildAnonymousUserData in src/utils/keycloakSession.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/utils/parseJWT.ts",
+			"type": "file",
+			"name": "parseJWT.ts",
+			"filePath": "src/utils/parseJWT.ts",
+			"summary": "TypeScript module for utilities with 1 extracted functions and 0 extracted classes.",
+			"tags": ["utility", "utilities", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/parseJWT.ts:parseJwt",
+			"type": "function",
+			"name": "parseJwt",
+			"filePath": "src/utils/parseJWT.ts",
+			"lineRange": [1, 13],
+			"summary": "Function parseJwt in src/utils/parseJWT.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		}
+	],
+	"edges": [
+		{
+			"source": "file:src/components/app/NavigationBar.tsx",
+			"target": "function:src/components/app/NavigationBar.tsx:NavigationBar",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/NavigationBar.tsx",
+			"target": "function:src/components/app/NavigationBar.tsx:NavigationBar",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/NavigationBar.tsx",
+			"target": "file:src/api/apiGetTools.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/NavigationBar.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/NavigationBar.tsx",
+			"target": "file:src/components/app/LiveChatToggleIcons.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/NavigationBar.tsx",
+			"target": "file:src/components/app/navigationHandler.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/NavigationBar.tsx",
+			"target": "file:src/components/app/navigationSidebarIcons.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/NavigationBar.tsx",
+			"target": "file:src/components/localeSwitch/LocaleSwitch.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/NavigationBar.tsx",
+			"target": "file:src/components/select/SelectDropdown.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/NavigationBar.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/NavigationBar.tsx",
+			"target": "file:src/globalState/provider/RocketChatUnreadProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/NavigationBar.tsx",
+			"target": "file:src/hooks/useResponsive.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/NavigationBar.tsx",
+			"target": "file:src/services/draftStore.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/NavigationBar.tsx",
+			"target": "file:src/utils/keycloakSession.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/NavigationBar.tsx",
+			"target": "file:src/utils/liveChatToggle.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/NavigationBar.tsx",
+			"target": "file:src/utils/notificationHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/NavigationBar.tsx",
+			"target": "file:src/utils/useIsFirstVisit.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/navigationSidebarIcons.tsx",
+			"target": "function:src/components/app/navigationSidebarIcons.tsx:NavInboxIcon",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/navigationSidebarIcons.tsx",
+			"target": "function:src/components/app/navigationSidebarIcons.tsx:NavInboxIcon",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/navigationSidebarIcons.tsx",
+			"target": "function:src/components/app/navigationSidebarIcons.tsx:NavChatsIcon",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/navigationSidebarIcons.tsx",
+			"target": "function:src/components/app/navigationSidebarIcons.tsx:NavChatsIcon",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/navigationSidebarIcons.tsx",
+			"target": "function:src/components/app/navigationSidebarIcons.tsx:NavChatsIconHover",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/navigationSidebarIcons.tsx",
+			"target": "function:src/components/app/navigationSidebarIcons.tsx:NavChatsIconHover",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/navigationSidebarIcons.tsx",
+			"target": "function:src/components/app/navigationSidebarIcons.tsx:NavChatsIconFilled",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/navigationSidebarIcons.tsx",
+			"target": "function:src/components/app/navigationSidebarIcons.tsx:NavChatsIconFilled",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/navigationSidebarIcons.tsx",
+			"target": "function:src/components/app/navigationSidebarIcons.tsx:NavActivityIcon",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/navigationSidebarIcons.tsx",
+			"target": "function:src/components/app/navigationSidebarIcons.tsx:NavActivityIcon",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/navigationSidebarIcons.tsx",
+			"target": "function:src/components/app/navigationSidebarIcons.tsx:NavActivityIconHover",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/navigationSidebarIcons.tsx",
+			"target": "function:src/components/app/navigationSidebarIcons.tsx:NavActivityIconHover",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/navigationSidebarIcons.tsx",
+			"target": "function:src/components/app/navigationSidebarIcons.tsx:NavActivityIconFilled",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/navigationSidebarIcons.tsx",
+			"target": "function:src/components/app/navigationSidebarIcons.tsx:NavActivityIconFilled",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/navigationSidebarIcons.tsx",
+			"target": "function:src/components/app/navigationSidebarIcons.tsx:NavDraftsIcon",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/navigationSidebarIcons.tsx",
+			"target": "function:src/components/app/navigationSidebarIcons.tsx:NavDraftsIcon",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/navigationSidebarIcons.tsx",
+			"target": "function:src/components/app/navigationSidebarIcons.tsx:NavDraftsIconHover",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/navigationSidebarIcons.tsx",
+			"target": "function:src/components/app/navigationSidebarIcons.tsx:NavDraftsIconHover",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/navigationSidebarIcons.tsx",
+			"target": "function:src/components/app/navigationSidebarIcons.tsx:NavDraftsIconFilled",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/navigationSidebarIcons.tsx",
+			"target": "function:src/components/app/navigationSidebarIcons.tsx:NavDraftsIconFilled",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/navigationSidebarIcons.tsx",
+			"target": "function:src/components/app/navigationSidebarIcons.tsx:NavProfileIcon",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/navigationSidebarIcons.tsx",
+			"target": "function:src/components/app/navigationSidebarIcons.tsx:NavProfileIcon",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/navigationSidebarIcons.tsx",
+			"target": "function:src/components/app/navigationSidebarIcons.tsx:NavProfileIconHover",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/navigationSidebarIcons.tsx",
+			"target": "function:src/components/app/navigationSidebarIcons.tsx:NavProfileIconHover",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/navigationSidebarIcons.tsx",
+			"target": "function:src/components/app/navigationSidebarIcons.tsx:NavProfileIconFilled",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/navigationSidebarIcons.tsx",
+			"target": "function:src/components/app/navigationSidebarIcons.tsx:NavProfileIconFilled",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/navigationSidebarIcons.tsx",
+			"target": "function:src/components/app/navigationSidebarIcons.tsx:NavLiveChatIcon",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/navigationSidebarIcons.tsx",
+			"target": "function:src/components/app/navigationSidebarIcons.tsx:NavLiveChatIcon",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/navigationSidebarIcons.tsx",
+			"target": "function:src/components/app/navigationSidebarIcons.tsx:NavGlobeIcon",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/navigationSidebarIcons.tsx",
+			"target": "function:src/components/app/navigationSidebarIcons.tsx:NavGlobeIcon",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/navigationSidebarIcons.tsx",
+			"target": "function:src/components/app/navigationSidebarIcons.tsx:NavGlobeIconHover",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/navigationSidebarIcons.tsx",
+			"target": "function:src/components/app/navigationSidebarIcons.tsx:NavGlobeIconHover",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/navigationSidebarIcons.tsx",
+			"target": "function:src/components/app/navigationSidebarIcons.tsx:NavGlobeIconFilled",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/navigationSidebarIcons.tsx",
+			"target": "function:src/components/app/navigationSidebarIcons.tsx:NavGlobeIconFilled",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/navigationSidebarIcons.tsx",
+			"target": "function:src/components/app/navigationSidebarIcons.tsx:NavLogoutIcon",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/navigationSidebarIcons.tsx",
+			"target": "function:src/components/app/navigationSidebarIcons.tsx:NavLogoutIcon",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/navigationSidebarIcons.tsx",
+			"target": "function:src/components/app/navigationSidebarIcons.tsx:NavLogoutIconHover",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/navigationSidebarIcons.tsx",
+			"target": "function:src/components/app/navigationSidebarIcons.tsx:NavLogoutIconHover",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/navigationSidebarIcons.tsx",
+			"target": "function:src/components/app/navigationSidebarIcons.tsx:NavLogoutIconFilled",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/navigationSidebarIcons.tsx",
+			"target": "function:src/components/app/navigationSidebarIcons.tsx:NavLogoutIconFilled",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/draftsCenter/DraftsCenter.tsx",
+			"target": "function:src/components/draftsCenter/DraftsCenter.tsx:DraftsCenter",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/draftsCenter/DraftsCenter.tsx",
+			"target": "function:src/components/draftsCenter/DraftsCenter.tsx:DraftsCenter",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/draftsCenter/DraftsCenter.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/draftsCenter/DraftsCenter.tsx",
+			"target": "file:src/hooks/useResponsive.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/draftsCenter/DraftsCenter.tsx",
+			"target": "file:src/services/draftStore.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/draftsCenter/DraftsCenter.tsx",
+			"target": "file:src/utils/keycloakSession.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/context/UserDataContext.tsx",
+			"target": "function:src/globalState/context/UserDataContext.tsx:UserDataContext",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/context/UserDataContext.tsx",
+			"target": "function:src/globalState/context/UserDataContext.tsx:UserDataContext",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/context/UserDataContext.tsx",
+			"target": "file:src/globalState/interfaces/UserDataInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/helpers/stateHelpers.ts",
+			"target": "function:src/globalState/helpers/stateHelpers.ts:buildExtendedSession",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/helpers/stateHelpers.ts",
+			"target": "function:src/globalState/helpers/stateHelpers.ts:buildExtendedSession",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/helpers/stateHelpers.ts",
+			"target": "function:src/globalState/helpers/stateHelpers.ts:getExtendedSession",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/helpers/stateHelpers.ts",
+			"target": "function:src/globalState/helpers/stateHelpers.ts:getExtendedSession",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/helpers/stateHelpers.ts",
+			"target": "function:src/globalState/helpers/stateHelpers.ts:getContact",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/helpers/stateHelpers.ts",
+			"target": "function:src/globalState/helpers/stateHelpers.ts:getContact",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/helpers/stateHelpers.ts",
+			"target": "function:src/globalState/helpers/stateHelpers.ts:getSessionsDataKeyForSessionType",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/helpers/stateHelpers.ts",
+			"target": "function:src/globalState/helpers/stateHelpers.ts:getSessionsDataKeyForSessionType",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/helpers/stateHelpers.ts",
+			"target": "function:src/globalState/helpers/stateHelpers.ts:hasUserAuthority",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/helpers/stateHelpers.ts",
+			"target": "function:src/globalState/helpers/stateHelpers.ts:hasUserAuthority",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/helpers/stateHelpers.ts",
+			"target": "function:src/globalState/helpers/stateHelpers.ts:AUTHORITIES",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/helpers/stateHelpers.ts",
+			"target": "function:src/globalState/helpers/stateHelpers.ts:AUTHORITIES",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/helpers/stateHelpers.ts",
+			"target": "file:src/components/session/sessionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/helpers/stateHelpers.ts",
+			"target": "file:src/globalState/interfaces/SessionsDataInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/helpers/stateHelpers.ts",
+			"target": "file:src/globalState/interfaces/UserDataInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/interfaces/AppConfig/AppConfigInterface.ts",
+			"target": "file:src/globalState/interfaces/AppConfig/AppConfigJitsiInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/interfaces/AppConfig/AppConfigInterface.ts",
+			"target": "file:src/globalState/interfaces/AppConfig/AppConfigNotificationsInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/interfaces/AppConfig/AppConfigInterface.ts",
+			"target": "file:src/globalState/interfaces/AppConfig/AppConfigTwoFactorInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/interfaces/AppConfig/AppConfigInterface.ts",
+			"target": "file:src/globalState/interfaces/AppConfig/AppConfigUrlsInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/interfaces/AppConfig/AppConfigInterface.ts",
+			"target": "file:src/globalState/interfaces/AppConfig/AppSettingsInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/interfaces/AppConfig/AppConfigInterface.ts",
+			"target": "file:src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/interfaces/AppConfig/AppConfigInterface.ts",
+			"target": "file:src/globalState/interfaces/GroupChatConfig.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/interfaces/AppConfig/AppConfigInterface.ts",
+			"target": "file:src/globalState/interfaces/LegalLinkInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/interfaces/AppConfig/AppConfigInterface.ts",
+			"target": "file:src/globalState/interfaces/SessionsDataInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/interfaces/AppConfig/AppConfigInterface.ts",
+			"target": "file:src/globalState/interfaces/TranslationConfig.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/interfaces/SessionsDataInterface.ts",
+			"target": "function:src/globalState/interfaces/SessionsDataInterface.ts:SESSION_DATA_KEY_ENQUIRIES",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/interfaces/SessionsDataInterface.ts",
+			"target": "function:src/globalState/interfaces/SessionsDataInterface.ts:SESSION_DATA_KEY_ENQUIRIES",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/interfaces/SessionsDataInterface.ts",
+			"target": "function:src/globalState/interfaces/SessionsDataInterface.ts:SESSION_DATA_KEY_MY_SESSIONS",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/interfaces/SessionsDataInterface.ts",
+			"target": "function:src/globalState/interfaces/SessionsDataInterface.ts:SESSION_DATA_KEY_MY_SESSIONS",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/interfaces/SessionsDataInterface.ts",
+			"target": "function:src/globalState/interfaces/SessionsDataInterface.ts:STATUS_EMPTY",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/interfaces/SessionsDataInterface.ts",
+			"target": "function:src/globalState/interfaces/SessionsDataInterface.ts:STATUS_EMPTY",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/interfaces/SessionsDataInterface.ts",
+			"target": "function:src/globalState/interfaces/SessionsDataInterface.ts:STATUS_ENQUIRY",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/interfaces/SessionsDataInterface.ts",
+			"target": "function:src/globalState/interfaces/SessionsDataInterface.ts:STATUS_ENQUIRY",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/interfaces/SessionsDataInterface.ts",
+			"target": "function:src/globalState/interfaces/SessionsDataInterface.ts:STATUS_ACTIVE",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/interfaces/SessionsDataInterface.ts",
+			"target": "function:src/globalState/interfaces/SessionsDataInterface.ts:STATUS_ACTIVE",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/interfaces/SessionsDataInterface.ts",
+			"target": "function:src/globalState/interfaces/SessionsDataInterface.ts:STATUS_FINISHED",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/interfaces/SessionsDataInterface.ts",
+			"target": "function:src/globalState/interfaces/SessionsDataInterface.ts:STATUS_FINISHED",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/interfaces/SessionsDataInterface.ts",
+			"target": "function:src/globalState/interfaces/SessionsDataInterface.ts:STATUS_ARCHIVED",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/interfaces/SessionsDataInterface.ts",
+			"target": "function:src/globalState/interfaces/SessionsDataInterface.ts:STATUS_ARCHIVED",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/interfaces/SessionsDataInterface.ts",
+			"target": "function:src/globalState/interfaces/SessionsDataInterface.ts:REGISTRATION_TYPE_REGISTERED",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/interfaces/SessionsDataInterface.ts",
+			"target": "function:src/globalState/interfaces/SessionsDataInterface.ts:REGISTRATION_TYPE_REGISTERED",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/interfaces/SessionsDataInterface.ts",
+			"target": "file:src/components/message/MessageItemComponent.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/interfaces/SessionsDataInterface.ts",
+			"target": "file:src/globalState/interfaces/UserDataInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/interfaces/UserDataInterface.ts",
+			"target": "file:src/components/twoFactorAuth/TwoFactorAuth.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/interfaces/UserDataInterface.ts",
+			"target": "file:src/globalState/interfaces/ConsultingTypeInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/AgencySpecificProvider.tsx",
+			"target": "function:src/globalState/provider/AgencySpecificProvider.tsx:AgencySpecificProvider",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/AgencySpecificProvider.tsx",
+			"target": "function:src/globalState/provider/AgencySpecificProvider.tsx:AgencySpecificProvider",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/AgencySpecificProvider.tsx",
+			"target": "function:src/globalState/provider/AgencySpecificProvider.tsx:AgencySpecificContext",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/AgencySpecificProvider.tsx",
+			"target": "function:src/globalState/provider/AgencySpecificProvider.tsx:AgencySpecificContext",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/AgencySpecificProvider.tsx",
+			"target": "file:src/globalState/context/UserDataContext.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/AgencySpecificProvider.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/AgencySpecificProvider.tsx",
+			"target": "file:src/utils/useUrlParamsLoader.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/ConsultingTypesProvider.tsx",
+			"target": "function:src/globalState/provider/ConsultingTypesProvider.tsx:ConsultingTypesProvider",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/ConsultingTypesProvider.tsx",
+			"target": "function:src/globalState/provider/ConsultingTypesProvider.tsx:ConsultingTypesProvider",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/ConsultingTypesProvider.tsx",
+			"target": "function:src/globalState/provider/ConsultingTypesProvider.tsx:getConsultingType",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/ConsultingTypesProvider.tsx",
+			"target": "function:src/globalState/provider/ConsultingTypesProvider.tsx:getConsultingType",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/ConsultingTypesProvider.tsx",
+			"target": "function:src/globalState/provider/ConsultingTypesProvider.tsx:useConsultingTypes",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/ConsultingTypesProvider.tsx",
+			"target": "function:src/globalState/provider/ConsultingTypesProvider.tsx:useConsultingTypes",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/ConsultingTypesProvider.tsx",
+			"target": "function:src/globalState/provider/ConsultingTypesProvider.tsx:useConsultingType",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/ConsultingTypesProvider.tsx",
+			"target": "function:src/globalState/provider/ConsultingTypesProvider.tsx:useConsultingType",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/ConsultingTypesProvider.tsx",
+			"target": "function:src/globalState/provider/ConsultingTypesProvider.tsx:ConsultingTypesContext",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/ConsultingTypesProvider.tsx",
+			"target": "function:src/globalState/provider/ConsultingTypesProvider.tsx:ConsultingTypesContext",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/ConsultingTypesProvider.tsx",
+			"target": "file:src/globalState/interfaces/ConsultingTypeInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/NotificationsProvider.tsx",
+			"target": "function:src/globalState/provider/NotificationsProvider.tsx:NotificationsProvider",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/NotificationsProvider.tsx",
+			"target": "function:src/globalState/provider/NotificationsProvider.tsx:NotificationsProvider",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/NotificationsProvider.tsx",
+			"target": "function:src/globalState/provider/NotificationsProvider.tsx:NOTIFICATION_DEFAULT_TIMEOUT",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/NotificationsProvider.tsx",
+			"target": "function:src/globalState/provider/NotificationsProvider.tsx:NOTIFICATION_DEFAULT_TIMEOUT",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/NotificationsProvider.tsx",
+			"target": "function:src/globalState/provider/NotificationsProvider.tsx:NOTIFICATION_TYPE_NONE",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/NotificationsProvider.tsx",
+			"target": "function:src/globalState/provider/NotificationsProvider.tsx:NOTIFICATION_TYPE_NONE",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/NotificationsProvider.tsx",
+			"target": "function:src/globalState/provider/NotificationsProvider.tsx:NOTIFICATION_TYPE_INFO",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/NotificationsProvider.tsx",
+			"target": "function:src/globalState/provider/NotificationsProvider.tsx:NOTIFICATION_TYPE_INFO",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/NotificationsProvider.tsx",
+			"target": "function:src/globalState/provider/NotificationsProvider.tsx:NOTIFICATION_TYPE_WARNING",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/NotificationsProvider.tsx",
+			"target": "function:src/globalState/provider/NotificationsProvider.tsx:NOTIFICATION_TYPE_WARNING",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/NotificationsProvider.tsx",
+			"target": "function:src/globalState/provider/NotificationsProvider.tsx:NOTIFICATION_TYPE_ERROR",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/NotificationsProvider.tsx",
+			"target": "function:src/globalState/provider/NotificationsProvider.tsx:NOTIFICATION_TYPE_ERROR",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/NotificationsProvider.tsx",
+			"target": "function:src/globalState/provider/NotificationsProvider.tsx:NOTIFICATION_TYPE_SUCCESS",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/NotificationsProvider.tsx",
+			"target": "function:src/globalState/provider/NotificationsProvider.tsx:NOTIFICATION_TYPE_SUCCESS",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/NotificationsProvider.tsx",
+			"target": "function:src/globalState/provider/NotificationsProvider.tsx:NotificationsContext",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/NotificationsProvider.tsx",
+			"target": "function:src/globalState/provider/NotificationsProvider.tsx:NotificationsContext",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/NotificationsProvider.tsx",
+			"target": "file:src/api/apiEventNotifications.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/NotificationsProvider.tsx",
+			"target": "file:src/components/incomingVideoCall/IncomingVideoCall.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/NotificationsProvider.tsx",
+			"target": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/NotificationsProvider.tsx",
+			"target": "file:src/globalState/context/UserDataContext.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/NotificationsProvider.tsx",
+			"target": "file:src/globalState/helpers/stateHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/SessionTypeProvider.tsx",
+			"target": "function:src/globalState/provider/SessionTypeProvider.tsx:SessionTypeProvider",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/SessionTypeProvider.tsx",
+			"target": "function:src/globalState/provider/SessionTypeProvider.tsx:SessionTypeProvider",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/SessionTypeProvider.tsx",
+			"target": "function:src/globalState/provider/SessionTypeProvider.tsx:SessionTypeContext",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/SessionTypeProvider.tsx",
+			"target": "function:src/globalState/provider/SessionTypeProvider.tsx:SessionTypeContext",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/SessionTypeProvider.tsx",
+			"target": "file:src/components/session/sessionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/SessionTypeProvider.tsx",
+			"target": "file:src/globalState/context/UserDataContext.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/SessionTypeProvider.tsx",
+			"target": "file:src/globalState/helpers/stateHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/SessionsDataProvider.tsx",
+			"target": "function:src/globalState/provider/SessionsDataProvider.tsx:SessionsDataProvider",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/SessionsDataProvider.tsx",
+			"target": "function:src/globalState/provider/SessionsDataProvider.tsx:SessionsDataProvider",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/SessionsDataProvider.tsx",
+			"target": "function:src/globalState/provider/SessionsDataProvider.tsx:SessionsDataContext",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/SessionsDataProvider.tsx",
+			"target": "function:src/globalState/provider/SessionsDataProvider.tsx:SessionsDataContext",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/SessionsDataProvider.tsx",
+			"target": "function:src/globalState/provider/SessionsDataProvider.tsx:SET_READY",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/SessionsDataProvider.tsx",
+			"target": "function:src/globalState/provider/SessionsDataProvider.tsx:SET_READY",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/SessionsDataProvider.tsx",
+			"target": "function:src/globalState/provider/SessionsDataProvider.tsx:SET_SESSIONS",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/SessionsDataProvider.tsx",
+			"target": "function:src/globalState/provider/SessionsDataProvider.tsx:SET_SESSIONS",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/SessionsDataProvider.tsx",
+			"target": "function:src/globalState/provider/SessionsDataProvider.tsx:UPDATE_SESSIONS",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/SessionsDataProvider.tsx",
+			"target": "function:src/globalState/provider/SessionsDataProvider.tsx:UPDATE_SESSIONS",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/SessionsDataProvider.tsx",
+			"target": "function:src/globalState/provider/SessionsDataProvider.tsx:REMOVE_SESSIONS",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/SessionsDataProvider.tsx",
+			"target": "function:src/globalState/provider/SessionsDataProvider.tsx:REMOVE_SESSIONS",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/SessionsDataProvider.tsx",
+			"target": "function:src/globalState/provider/SessionsDataProvider.tsx:reducer",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/SessionsDataProvider.tsx",
+			"target": "file:src/components/session/sessionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/SessionsDataProvider.tsx",
+			"target": "file:src/globalState/interfaces/SessionsDataInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/UserDataProvider.tsx",
+			"target": "function:src/globalState/provider/UserDataProvider.tsx:UserDataProvider",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/UserDataProvider.tsx",
+			"target": "function:src/globalState/provider/UserDataProvider.tsx:UserDataProvider",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/UserDataProvider.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/UserDataProvider.tsx",
+			"target": "file:src/globalState/context/UserDataContext.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/UserDataProvider.tsx",
+			"target": "file:src/globalState/interfaces/UserDataInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/UserDataProvider.tsx",
+			"target": "file:src/utils/keycloakSession.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/hooks/useJoinGroupChat.ts",
+			"target": "function:src/hooks/useJoinGroupChat.ts:useJoinGroupChat",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/hooks/useJoinGroupChat.ts",
+			"target": "function:src/hooks/useJoinGroupChat.ts:useJoinGroupChat",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/hooks/useJoinGroupChat.ts",
+			"target": "file:src/api/apiGetChatRoomById.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/hooks/useJoinGroupChat.ts",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/hooks/useJoinGroupChat.ts",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/hooks/useJoinGroupChat.ts",
+			"target": "file:src/utils/keycloakSession.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/services/draftStore.ts",
+			"target": "function:src/services/draftStore.ts:DRAFT_STORAGE_KEY",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/services/draftStore.ts",
+			"target": "function:src/services/draftStore.ts:DRAFT_STORAGE_KEY",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/services/draftStore.ts",
+			"target": "function:src/services/draftStore.ts:DRAFTS_UPDATED_EVENT",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/services/draftStore.ts",
+			"target": "function:src/services/draftStore.ts:DRAFTS_UPDATED_EVENT",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/services/draftStore.ts",
+			"target": "function:src/services/draftStore.ts:REMOTE_DRAFT_INDEX_SCOPE",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/services/draftStore.ts",
+			"target": "function:src/services/draftStore.ts:REMOTE_DRAFT_INDEX_SCOPE",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/services/draftStore.ts",
+			"target": "function:src/services/draftStore.ts:buildDraftKey",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/services/draftStore.ts",
+			"target": "function:src/services/draftStore.ts:buildDraftKey",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/services/draftStore.ts",
+			"target": "function:src/services/draftStore.ts:saveDraftEntry",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/services/draftStore.ts",
+			"target": "function:src/services/draftStore.ts:saveDraftEntry",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/services/draftStore.ts",
+			"target": "function:src/services/draftStore.ts:getDraftEntry",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/services/draftStore.ts",
+			"target": "function:src/services/draftStore.ts:getDraftEntry",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/services/draftStore.ts",
+			"target": "function:src/services/draftStore.ts:removeDraftEntry",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/services/draftStore.ts",
+			"target": "function:src/services/draftStore.ts:removeDraftEntry",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/services/draftStore.ts",
+			"target": "function:src/services/draftStore.ts:getAllDraftEntries",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/services/draftStore.ts",
+			"target": "function:src/services/draftStore.ts:getAllDraftEntries",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/anonymousSessionFetchGuard.ts",
+			"target": "function:src/utils/anonymousSessionFetchGuard.ts:decodeKeycloakPreferredUsername",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/anonymousSessionFetchGuard.ts",
+			"target": "function:src/utils/anonymousSessionFetchGuard.ts:decodeKeycloakPreferredUsername",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/anonymousSessionFetchGuard.ts",
+			"target": "function:src/utils/anonymousSessionFetchGuard.ts:isAnonymousSession",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/anonymousSessionFetchGuard.ts",
+			"target": "function:src/utils/anonymousSessionFetchGuard.ts:isAnonymousSession",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/anonymousSessionFetchGuard.ts",
+			"target": "function:src/utils/anonymousSessionFetchGuard.ts:shouldRejectSilentlyForAnonymousRestrictedUrl",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/anonymousSessionFetchGuard.ts",
+			"target": "function:src/utils/anonymousSessionFetchGuard.ts:shouldRejectSilentlyForAnonymousRestrictedUrl",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/anonymousSessionFetchGuard.ts",
+			"target": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/utils/anonymousSessionFetchGuard.ts",
+			"target": "file:src/utils/parseJWT.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/utils/keycloakSession.ts",
+			"target": "function:src/utils/keycloakSession.ts:isKeycloakConsultantSession",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/keycloakSession.ts",
+			"target": "function:src/utils/keycloakSession.ts:isKeycloakConsultantSession",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/keycloakSession.ts",
+			"target": "function:src/utils/keycloakSession.ts:buildAnonymousUserData",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/keycloakSession.ts",
+			"target": "function:src/utils/keycloakSession.ts:buildAnonymousUserData",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/keycloakSession.ts",
+			"target": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/utils/keycloakSession.ts",
+			"target": "file:src/globalState/helpers/stateHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/utils/keycloakSession.ts",
+			"target": "file:src/globalState/interfaces/UserDataInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/utils/keycloakSession.ts",
+			"target": "file:src/utils/anonymousSessionFetchGuard.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/utils/keycloakSession.ts",
+			"target": "file:src/utils/parseJWT.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/utils/parseJWT.ts",
+			"target": "function:src/utils/parseJWT.ts:parseJwt",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/parseJWT.ts",
+			"target": "function:src/utils/parseJWT.ts:parseJwt",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		}
+	]
+}

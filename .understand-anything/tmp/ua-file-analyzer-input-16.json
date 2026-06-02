@@ -1,0 +1,310 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": "src/components/message/ReassignMessage.tsx",
+			"language": "typescript",
+			"sizeLines": 272,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/SystemMessage.tsx",
+			"language": "typescript",
+			"sizeLines": 58,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/UserAvatar.stories.tsx",
+			"language": "typescript",
+			"sizeLines": 121,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/UserAvatar.tsx",
+			"language": "typescript",
+			"sizeLines": 50,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/VideoCallMessage.tsx",
+			"language": "typescript",
+			"sizeLines": 36,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/VideoChatDetails/index.tsx",
+			"language": "typescript",
+			"sizeLines": 84,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/messageConstants.ts",
+			"language": "typescript",
+			"sizeLines": 109,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/message/messageNameUtils.ts",
+			"language": "typescript",
+			"sizeLines": 72,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/messageSubmitInterface/MessageSubmitInfo.tsx",
+			"language": "typescript",
+			"sizeLines": 64,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/messageSubmitInterface/SendMessageButton.tsx",
+			"language": "typescript",
+			"sizeLines": 48,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/messageSubmitInterface/TipTapComposer.tsx",
+			"language": "typescript",
+			"sizeLines": 635,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/messageSubmitInterface/highlightSnippetEvents.ts",
+			"language": "typescript",
+			"sizeLines": 14,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
+			"language": "typescript",
+			"sizeLines": 5122,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/messageSubmitInterface/messageSubmitInterfaceSkeleton.tsx",
+			"language": "typescript",
+			"sizeLines": 99,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/messageSubmitInterface/richtextHelpers.ts",
+			"language": "typescript",
+			"sizeLines": 337,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/notFound/NotFound.tsx",
+			"language": "typescript",
+			"sizeLines": 647,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/notificationsCenter/NotificationsCenter.tsx",
+			"language": "typescript",
+			"sizeLines": 688,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/overlay/Overlay.tsx",
+			"language": "typescript",
+			"sizeLines": 348,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/AbsenceFormular.tsx",
+			"language": "typescript",
+			"sizeLines": 128,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/AdditionalEnquiry/AdditionalEnquiry.tsx",
+			"language": "typescript",
+			"sizeLines": 249,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/AskerAboutMeData.tsx",
+			"language": "typescript",
+			"sizeLines": 315,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/DeleteAccount.tsx",
+			"language": "typescript",
+			"sizeLines": 134,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/progressbar/ProgressBar.stories.ts",
+			"language": "typescript",
+			"sizeLines": 55,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/progressbar/ProgressBar.tsx",
+			"language": "typescript",
+			"sizeLines": 34,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/pseudonym/AnimalAvatar.tsx",
+			"language": "typescript",
+			"sizeLines": 181,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/pseudonym/AnonymousConsentGate.tsx",
+			"language": "typescript",
+			"sizeLines": 159,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/pseudonym/BotMessageAnimation.tsx",
+			"language": "typescript",
+			"sizeLines": 187,
+			"fileCategory": "code"
+		}
+	],
+	"batchImportData": {
+		"src/components/message/ReassignMessage.tsx": [
+			"src/components/button/Button.tsx",
+			"src/globalState/index.ts"
+		],
+		"src/components/message/SystemMessage.tsx": [],
+		"src/components/message/UserAvatar.stories.tsx": [
+			"src/components/message/UserAvatar.tsx"
+		],
+		"src/components/message/UserAvatar.tsx": [
+			"src/components/message/messageNameUtils.ts"
+		],
+		"src/components/message/VideoCallMessage.tsx": [
+			"src/components/message/MessageItemComponent.tsx",
+			"src/components/message/SystemMessage.tsx",
+			"src/utils/videoCallHelpers.ts"
+		],
+		"src/components/message/VideoChatDetails/index.tsx": [
+			"src/components/button/Button.tsx",
+			"src/components/message/VideoChatDetails/styles.module.scss",
+			"src/components/sessionHeader/GroupChatHeader/useJoinVideoCall/index.ts",
+			"src/components/text/Text.tsx",
+			"src/utils/dateHelpers.ts",
+			"src/utils/encryptionHelpers.ts"
+		],
+		"src/components/message/messageConstants.ts": [],
+		"src/components/message/messageNameUtils.ts": [],
+		"src/components/messageSubmitInterface/MessageSubmitInfo.tsx": [],
+		"src/components/messageSubmitInterface/SendMessageButton.tsx": [],
+		"src/components/messageSubmitInterface/TipTapComposer.tsx": [
+			"src/components/messageSubmitInterface/TipTapComposer.styles.scss"
+		],
+		"src/components/messageSubmitInterface/highlightSnippetEvents.ts": [
+			"src/components/messageSubmitInterface/TipTapComposer.tsx"
+		],
+		"src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx": [
+			"src/api/apiPostError.ts",
+			"src/api/index.ts",
+			"src/components/app/navigationHandler.ts",
+			"src/components/button/Button.tsx",
+			"src/components/devToolbar/DevToolbar.tsx",
+			"src/components/headline/Headline.tsx",
+			"src/components/message/messageConstants.ts",
+			"src/components/message/messageHelpers.ts",
+			"src/components/messageSubmitInterface/attachmentHelpers.ts",
+			"src/components/messageSubmitInterface/highlightSnippetEvents.ts",
+			"src/components/messageSubmitInterface/MessageSubmitInfo.tsx",
+			"src/components/messageSubmitInterface/richtextHelpers.ts",
+			"src/components/messageSubmitInterface/SendMessageButton.tsx",
+			"src/components/messageSubmitInterface/TipTapComposer.tsx",
+			"src/components/messageSubmitInterface/useDraftMessage.tsx",
+			"src/components/overlay/Overlay.tsx",
+			"src/components/session/RoomNotFound.tsx",
+			"src/components/session/sessionHelpers.ts",
+			"src/components/session/SubscriptionKeyLost.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/globalState/interfaces/SessionsDataInterface.ts",
+			"src/hooks/useE2EE.tsx",
+			"src/hooks/useE2EEViewElements.tsx",
+			"src/hooks/useTimeoutOverlay.tsx",
+			"src/utils/encryptionHelpers.ts"
+		],
+		"src/components/messageSubmitInterface/messageSubmitInterfaceSkeleton.tsx": [
+			"src/components/app/Loading.tsx",
+			"src/components/messageSubmitInterface/SendMessageButton.tsx"
+		],
+		"src/components/messageSubmitInterface/richtextHelpers.ts": [],
+		"src/components/notFound/NotFound.tsx": [
+			"src/components/button/Button.tsx",
+			"src/hooks/useAppConfig.tsx"
+		],
+		"src/components/notificationsCenter/NotificationsCenter.tsx": [
+			"src/api/apiPostMessageEventNotification.ts",
+			"src/api/fetchData.ts",
+			"src/components/message/messageConstants.ts",
+			"src/components/message/UserAvatar.tsx",
+			"src/globalState/index.ts",
+			"src/hooks/useResponsive.tsx",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/components/overlay/Overlay.tsx": [
+			"src/components/button/Button.tsx",
+			"src/components/headline/Headline.tsx",
+			"src/components/loadingIndicator/LoadingIndicator.tsx",
+			"src/components/text/Text.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts"
+		],
+		"src/components/profile/AbsenceFormular.tsx": [
+			"src/api/index.ts",
+			"src/components/button/Button.tsx",
+			"src/components/form/textarea.tsx",
+			"src/components/headline/Headline.tsx",
+			"src/components/overlay/Overlay.tsx",
+			"src/components/text/Text.tsx",
+			"src/globalState/index.ts"
+		],
+		"src/components/profile/AdditionalEnquiry/AdditionalEnquiry.tsx": [
+			"src/api/index.ts",
+			"src/components/app/navigationHandler.ts",
+			"src/components/button/Button.tsx",
+			"src/components/headline/Headline.tsx",
+			"src/components/logout/logout.ts",
+			"src/components/overlay/Overlay.tsx",
+			"src/components/profile/AdditionalEnquiry/AdditionalAgencySelection.tsx",
+			"src/components/select/SelectDropdown.tsx",
+			"src/globalState/index.ts"
+		],
+		"src/components/profile/AskerAboutMeData.tsx": [
+			"src/api/apiDeleteEmail.ts",
+			"src/api/index.ts",
+			"src/components/button/Button.tsx",
+			"src/components/editableData/EditableData.tsx",
+			"src/components/headline/Headline.tsx",
+			"src/components/overlay/Overlay.tsx",
+			"src/components/text/Text.tsx",
+			"src/components/twoFactorAuth/TwoFactorAuth.tsx",
+			"src/globalState/index.ts"
+		],
+		"src/components/profile/DeleteAccount.tsx": [
+			"src/api/index.ts",
+			"src/components/button/Button.tsx",
+			"src/components/inputField/InputField.tsx",
+			"src/components/overlay/Overlay.tsx",
+			"src/components/sessionCookie/accessSessionCookie.ts",
+			"src/hooks/useAppConfig.tsx"
+		],
+		"src/components/progressbar/ProgressBar.stories.ts": [
+			"src/components/progressbar/ProgressBar.tsx"
+		],
+		"src/components/progressbar/ProgressBar.tsx": [
+			"src/components/progressbar/progressbar.styles.scss"
+		],
+		"src/components/pseudonym/AnimalAvatar.tsx": [
+			"src/utils/pseudonymGenerator.ts"
+		],
+		"src/components/pseudonym/AnonymousConsentGate.tsx": [
+			"src/components/pseudonym/AnonymousConsentGate.styles.scss"
+		],
+		"src/components/pseudonym/BotMessageAnimation.tsx": []
+	}
+}

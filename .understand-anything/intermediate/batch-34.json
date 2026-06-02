@@ -1,0 +1,32 @@
+{
+	"nodes": [
+		{
+			"id": "file:src/components/askerInfo/askerInfo.styles.scss",
+			"type": "file",
+			"name": "askerInfo.styles.scss",
+			"filePath": "src/components/askerInfo/askerInfo.styles.scss",
+			"summary": "React UI module for component asker info, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-asker-info"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/askerInfo/askerInfoTools.styles.scss",
+			"type": "file",
+			"name": "askerInfoTools.styles.scss",
+			"filePath": "src/components/askerInfo/askerInfoTools.styles.scss",
+			"summary": "React UI module for component asker info, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-asker-info"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/askerInfo/askerInfoToolsOptions.styles.scss",
+			"type": "file",
+			"name": "askerInfoToolsOptions.styles.scss",
+			"filePath": "src/components/askerInfo/askerInfoToolsOptions.styles.scss",
+			"summary": "React UI module for component asker info, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-asker-info"],
+			"complexity": "simple"
+		}
+	],
+	"edges": []
+}

@@ -1,0 +1,431 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": ".storybook-backup/preview.tsx",
+			"language": "typescript",
+			"sizeLines": 84,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiConsumeMagicLinkLogin.ts",
+			"language": "typescript",
+			"sizeLines": 21,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiPostRegistration.ts",
+			"language": "typescript",
+			"sizeLines": 32,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/index.ts",
+			"language": "typescript",
+			"sizeLines": 51,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/anonymousChat/AnonymousChat.tsx",
+			"language": "typescript",
+			"sizeLines": 793,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/PreConditions.tsx",
+			"language": "typescript",
+			"sizeLines": 96,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/TenantThemingLoader.tsx",
+			"language": "typescript",
+			"sizeLines": 32,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/WebsocketHandler.tsx",
+			"language": "typescript",
+			"sizeLines": 208,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/app/app.tsx",
+			"language": "typescript",
+			"sizeLines": 243,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/devToolbar/DevToolbar.tsx",
+			"language": "typescript",
+			"sizeLines": 714,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/error/Error.tsx",
+			"language": "typescript",
+			"sizeLines": 116,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/invite/InviteLink.tsx",
+			"language": "typescript",
+			"sizeLines": 757,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/legalInformationLinks/Imprint.tsx",
+			"language": "typescript",
+			"sizeLines": 18,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/legalInformationLinks/Privacy.tsx",
+			"language": "typescript",
+			"sizeLines": 19,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/legalInformationLinks/TermsAndConditions.tsx",
+			"language": "typescript",
+			"sizeLines": 20,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/legalLinks/LegalLinks.tsx",
+			"language": "typescript",
+			"sizeLines": 65,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/legalPageWrapper/LegalPageWrapper.tsx",
+			"language": "typescript",
+			"sizeLines": 26,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/login/Login.tsx",
+			"language": "typescript",
+			"sizeLines": 726,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/modal/Modal.tsx",
+			"language": "typescript",
+			"sizeLines": 18,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/ConsultantPrivateData.tsx",
+			"language": "typescript",
+			"sizeLines": 258,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/Profile.tsx",
+			"language": "typescript",
+			"sizeLines": 541,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/Registration.tsx",
+			"language": "typescript",
+			"sizeLines": 439,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/autoLogin.ts",
+			"language": "typescript",
+			"sizeLines": 382,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/stepBar/StepBar.stories.ts",
+			"language": "typescript",
+			"sizeLines": 25,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/stepBar/StepBar.tsx",
+			"language": "typescript",
+			"sizeLines": 71,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionCookie/getKeycloakAccessToken.ts",
+			"language": "typescript",
+			"sizeLines": 74,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionCookie/getRocketchatAccessToken.ts",
+			"language": "typescript",
+			"sizeLines": 39,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionHeader/GroupChatHeader/useJoinVideoCall/index.ts",
+			"language": "typescript",
+			"sizeLines": 67,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/spinner/Spinner.stories.ts",
+			"language": "typescript",
+			"sizeLines": 28,
+			"fileCategory": "code"
+		}
+	],
+	"batchImportData": {
+		".storybook-backup/preview.tsx": [
+			"src/components/app/Loading.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/provider/LegalLinksProvider.tsx",
+			"src/i18n.ts",
+			"src/resources/scripts/config.ts",
+			"src/resources/scripts/theme.jsx",
+			"src/resources/styles/mui-variables-mapping.scss",
+			"src/resources/styles/styles.scss"
+		],
+		"src/api/apiConsumeMagicLinkLogin.ts": [
+			"src/api/index.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiPostRegistration.ts": [
+			"src/api/fetchData.ts",
+			"src/components/registration/autoLogin.ts",
+			"src/components/sessionCookie/accessSessionCookie.ts",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/index.ts"
+		],
+		"src/api/index.ts": [],
+		"src/components/anonymousChat/AnonymousChat.tsx": [
+			"src/api/apiAgencySelection.ts",
+			"src/api/apiGetTopicsData.ts",
+			"src/api/apiPostRegistration.ts",
+			"src/api/index.ts",
+			"src/components/app/Loading.tsx",
+			"src/components/infoTooltip/InfoTooltip.tsx",
+			"src/components/registration/agencySelection/AgencyLanguages.tsx",
+			"src/components/registration/autoLogin.ts",
+			"src/components/stageLayout/StageLayout.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/globalState/provider/GlobalComponentContext.tsx",
+			"src/hooks/useAppConfig.tsx",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/components/app/PreConditions.tsx": [
+			"src/components/button/Button.tsx",
+			"src/components/stageLayout/StageLayout.tsx",
+			"src/globalState/provider/GlobalComponentContext.tsx",
+			"src/polyfill.ts"
+		],
+		"src/components/app/TenantThemingLoader.tsx": [
+			"src/components/modal/Modal.tsx",
+			"src/components/spinner/Spinner.tsx",
+			"src/utils/useTenantTheming.ts"
+		],
+		"src/components/app/WebsocketHandler.tsx": [
+			"src/components/incomingVideoCall/IncomingVideoCall.tsx",
+			"src/components/sessionCookie/accessSessionCookie.ts",
+			"src/globalState/index.ts",
+			"src/hooks/useAppConfig.tsx",
+			"src/resources/scripts/endpoints.ts",
+			"src/services/matrixLiveEventBridge.ts",
+			"src/services/messageEventEmitter.ts",
+			"src/utils/notificationHelpers.ts"
+		],
+		"src/components/app/app.tsx": [
+			"src/components/app/ErrorBoundary.tsx",
+			"src/components/app/Loading.tsx",
+			"src/components/app/PreConditions.tsx",
+			"src/components/app/TenantThemingLoader.tsx",
+			"src/components/app/WebsocketHandler.tsx",
+			"src/components/call/FloatingCallWidget.tsx",
+			"src/components/call/GroupCallWidget.tsx",
+			"src/components/devToolbar/DevToolbar.tsx",
+			"src/components/notifications/Notifications.tsx",
+			"src/components/stage/stage.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/globalState/provider/CallProvider.tsx",
+			"src/globalState/provider/GlobalComponentContext.tsx",
+			"src/globalState/provider/LanguagesProvider.tsx",
+			"src/globalState/provider/LegalLinksProvider.tsx",
+			"src/globalState/provider/UrlParamsProvider.tsx",
+			"src/globalState/state.tsx",
+			"src/hooks/useAppConfig.tsx",
+			"src/hooks/useNotificationPermission.ts",
+			"src/polyfill.ts"
+		],
+		"src/components/devToolbar/DevToolbar.tsx": [
+			"src/components/devToolbar/devToolbar.styles.scss",
+			"src/components/sessionCookie/accessSessionCookie.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/hooks/useAppConfig.tsx",
+			"src/i18n.ts",
+			"src/utils/requestCollector.ts"
+		],
+		"src/components/error/Error.tsx": [
+			"src/components/button/Button.tsx",
+			"src/components/localeSwitch/LocaleSwitch.tsx",
+			"src/components/select/SelectDropdown.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/hooks/useAppConfig.tsx",
+			"src/hooks/useResponsive.tsx",
+			"src/polyfill.ts",
+			"src/utils/useTenantTheming.ts"
+		],
+		"src/components/invite/InviteLink.tsx": [
+			"src/api/apiPostRegistration.ts",
+			"src/api/apiPutGroupChat.ts",
+			"src/api/fetchData.ts",
+			"src/components/registration/autoLogin.ts",
+			"src/components/stage/stage.tsx",
+			"src/components/stageLayout/StageLayout.tsx",
+			"src/globalState/index.ts",
+			"src/hooks/useAppConfig.tsx",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/components/legalInformationLinks/Imprint.tsx": [
+			"src/components/legalPageWrapper/LegalPageWrapper.tsx",
+			"src/utils/useDocumentTitle.tsx"
+		],
+		"src/components/legalInformationLinks/Privacy.tsx": [
+			"src/components/legalPageWrapper/LegalPageWrapper.tsx",
+			"src/utils/useDocumentTitle.tsx"
+		],
+		"src/components/legalInformationLinks/TermsAndConditions.tsx": [
+			"src/components/legalPageWrapper/LegalPageWrapper.tsx",
+			"src/utils/useDocumentTitle.tsx"
+		],
+		"src/components/legalLinks/LegalLinks.tsx": [
+			"src/globalState/provider/LegalLinksProvider.tsx"
+		],
+		"src/components/legalPageWrapper/LegalPageWrapper.tsx": [
+			"src/components/legalPageWrapper/legalPageWrapper.styles.scss",
+			"src/components/stage/stage.tsx",
+			"src/resources/scripts/util/htmlParser.tsx"
+		],
+		"src/components/login/Login.tsx": [
+			"src/api/apiConsumeMagicLinkLogin.ts",
+			"src/api/apiPatchUserData.ts",
+			"src/api/apiRequestMagicLinkLogin.ts",
+			"src/api/apiRocketChatSettingsPublic.ts",
+			"src/api/index.ts",
+			"src/components/anonymousChat/AnonymousChat.tsx",
+			"src/components/auth/auth.ts",
+			"src/components/budibase/budibaseLogout.ts",
+			"src/components/button/Button.tsx",
+			"src/components/inputField/InputField.tsx",
+			"src/components/overlay/Overlay.tsx",
+			"src/components/registration/autoLogin.ts",
+			"src/components/registration/registrationHelpers.ts",
+			"src/components/sessionCookie/accessSessionCookie.ts",
+			"src/components/stageLayout/StageLayout.tsx",
+			"src/components/text/Text.tsx",
+			"src/components/twoFactorAuth/TwoFactorAuth.tsx",
+			"src/components/twoFactorAuth/TwoFactorAuthResendMail.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/globalState/provider/GlobalComponentContext.tsx",
+			"src/globalState/provider/UrlParamsProvider.tsx",
+			"src/hooks/useAppConfig.tsx",
+			"src/hooks/useSearchParams.tsx",
+			"src/polyfill.ts",
+			"src/resources/scripts/endpoints.ts",
+			"src/utils/keycloakSession.ts",
+			"src/utils/tenantSettingsHelper.ts",
+			"src/utils/useIsFirstVisit.tsx"
+		],
+		"src/components/modal/Modal.tsx": [
+			"src/components/modal/modal.styles.scss"
+		],
+		"src/components/profile/ConsultantPrivateData.tsx": [
+			"src/api/index.ts",
+			"src/components/button/Button.tsx",
+			"src/components/editableData/EditableData.tsx",
+			"src/components/headline/Headline.tsx",
+			"src/components/overlay/Overlay.tsx",
+			"src/components/text/Text.tsx",
+			"src/components/twoFactorAuth/TwoFactorAuth.tsx",
+			"src/globalState/index.ts",
+			"src/hooks/useAppConfig.tsx"
+		],
+		"src/components/profile/Profile.tsx": [
+			"src/components/box/Box.tsx",
+			"src/components/legalLinks/LegalLinks.tsx",
+			"src/components/logout/logout.ts",
+			"src/components/message/UserAvatar.tsx",
+			"src/components/mobile/linkMenu/LinkMenu.tsx",
+			"src/components/profile/profile.routes.ts",
+			"src/components/text/Text.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/provider/LegalLinksProvider.tsx",
+			"src/hooks/useAppConfig.tsx",
+			"src/hooks/useResponsive.tsx",
+			"src/utils/tabsHelper.ts",
+			"src/utils/useIsFirstVisit.tsx"
+		],
+		"src/components/registration/Registration.tsx": [
+			"src/api/index.ts",
+			"src/components/button/Button.tsx",
+			"src/components/overlay/Overlay.tsx",
+			"src/components/registration/autoLogin.ts",
+			"src/components/registration/preselectionBox/PreselectionBox.tsx",
+			"src/components/registration/registrationDataValidation.ts",
+			"src/components/registration/stepBar/StepBar.tsx",
+			"src/components/registration/welcomeScreen/WelcomeScreen.tsx",
+			"src/components/stageLayout/StageLayout.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/provider/GlobalComponentContext.tsx",
+			"src/globalState/provider/UrlParamsProvider.tsx",
+			"src/hooks/useAppConfig.tsx",
+			"src/resources/scripts/endpoints.ts",
+			"src/utils/useIsFirstVisit.tsx"
+		],
+		"src/components/registration/autoLogin.ts": [
+			"src/api/apiRocketChatFetchMyKeys.ts",
+			"src/api/apiRocketChatResetE2EKey.ts",
+			"src/api/apiRocketChatRoomsGet.ts",
+			"src/api/apiRocketChatSetUserKeys.ts",
+			"src/api/apiRocketChatSubscriptionsGet.ts",
+			"src/api/apiRocketChatUpdateGroupKey.ts",
+			"src/api/index.ts",
+			"src/components/auth/auth.ts",
+			"src/components/sessionCookie/accessSessionCookie.ts",
+			"src/components/sessionCookie/accessSessionLocalStorage.ts",
+			"src/components/sessionCookie/getBudibaseAccessToken.ts",
+			"src/components/sessionCookie/getKeycloakAccessToken.ts",
+			"src/components/sessionCookie/getRocketchatAccessToken.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/utils/appConfig.ts",
+			"src/utils/encryptionHelpers.ts",
+			"src/utils/generateCsrfToken.ts",
+			"src/utils/parseJWT.ts"
+		],
+		"src/components/registration/stepBar/StepBar.stories.ts": [
+			"src/components/registration/stepBar/StepBar.tsx"
+		],
+		"src/components/registration/stepBar/StepBar.tsx": [],
+		"src/components/sessionCookie/getKeycloakAccessToken.ts": [
+			"src/api/index.ts",
+			"src/components/registration/autoLogin.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/components/sessionCookie/getRocketchatAccessToken.ts": [
+			"src/components/registration/autoLogin.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/components/sessionHeader/GroupChatHeader/useJoinVideoCall/index.ts": [
+			"src/api/index.ts",
+			"src/globalState/index.ts",
+			"src/hooks/useAppConfig.tsx"
+		],
+		"src/components/spinner/Spinner.stories.ts": [
+			"src/components/spinner/Spinner.tsx"
+		]
+	}
+}

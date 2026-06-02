@@ -1,0 +1,2046 @@
+{
+	"nodes": [
+		{
+			"id": "file:src/api/apiGetConsultantAppointments.ts",
+			"type": "file",
+			"name": "apiGetConsultantAppointments.ts",
+			"filePath": "src/api/apiGetConsultantAppointments.ts",
+			"summary": "API client module for apiGetConsultantAppointments, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiGetConsultantAppointments.ts:apiGetConsultantAppointments",
+			"type": "function",
+			"name": "apiGetConsultantAppointments",
+			"filePath": "src/api/apiGetConsultantAppointments.ts",
+			"lineRange": [6, 16],
+			"summary": "Function apiGetConsultantAppointments in src/api/apiGetConsultantAppointments.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiPatchUserData.ts",
+			"type": "file",
+			"name": "apiPatchUserData.ts",
+			"filePath": "src/api/apiPatchUserData.ts",
+			"summary": "API client module for apiPatchUserData, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiPatchUserData.ts:apiPatchUserData",
+			"type": "function",
+			"name": "apiPatchUserData",
+			"filePath": "src/api/apiPatchUserData.ts",
+			"lineRange": [5, 17],
+			"summary": "Function apiPatchUserData in src/api/apiPatchUserData.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/E2EEncryptionSupportHelp/E2EEncryptionSupportHelp.tsx",
+			"type": "file",
+			"name": "E2EEncryptionSupportHelp.tsx",
+			"filePath": "src/components/E2EEncryptionSupportHelp/E2EEncryptionSupportHelp.tsx",
+			"summary": "React UI module for component e2 eencryption support help, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"utility",
+				"component-e2-eencryption-support-help"
+			],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/E2EEncryptionSupportHelp/E2EEncryptionSupportHelp.tsx:E2EEncryptionSupportHelp",
+			"type": "function",
+			"name": "E2EEncryptionSupportHelp",
+			"filePath": "src/components/E2EEncryptionSupportHelp/E2EEncryptionSupportHelp.tsx",
+			"lineRange": [16, 28],
+			"summary": "Function E2EEncryptionSupportHelp in src/components/E2EEncryptionSupportHelp/E2EEncryptionSupportHelp.tsx, used by the surrounding component e2 eencryption support help module.",
+			"tags": [
+				"function",
+				"component-e2-eencryption-support-help",
+				"exported"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/Switch/index.tsx",
+			"type": "file",
+			"name": "index.tsx",
+			"filePath": "src/components/Switch/index.tsx",
+			"summary": "React UI module for component switch, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-switch"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/Switch/index.tsx:Switch",
+			"type": "function",
+			"name": "Switch",
+			"filePath": "src/components/Switch/index.tsx",
+			"lineRange": [13, 25],
+			"summary": "Function Switch in src/components/Switch/index.tsx, used by the surrounding component switch module.",
+			"tags": ["function", "component-switch", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/agencyRadioSelect/AgencyRadioSelect.tsx",
+			"type": "file",
+			"name": "AgencyRadioSelect.tsx",
+			"filePath": "src/components/agencyRadioSelect/AgencyRadioSelect.tsx",
+			"summary": "React UI module for component agency radio select, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-agency-radio-select"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/agencyRadioSelect/AgencyRadioSelect.tsx:AgencyRadioSelect",
+			"type": "function",
+			"name": "AgencyRadioSelect",
+			"filePath": "src/components/agencyRadioSelect/AgencyRadioSelect.tsx",
+			"lineRange": [20, 32],
+			"summary": "Function AgencyRadioSelect in src/components/agencyRadioSelect/AgencyRadioSelect.tsx, used by the surrounding component agency radio select module.",
+			"tags": ["function", "component-agency-radio-select", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/agencySelection/AgencySelection.tsx",
+			"type": "file",
+			"name": "AgencySelection.tsx",
+			"filePath": "src/components/agencySelection/AgencySelection.tsx",
+			"summary": "React UI module for component agency selection, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-agency-selection"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/agencySelection/AgencySelection.tsx:AgencySelection",
+			"type": "function",
+			"name": "AgencySelection",
+			"filePath": "src/components/agencySelection/AgencySelection.tsx",
+			"lineRange": [43, 55],
+			"summary": "Function AgencySelection in src/components/agencySelection/AgencySelection.tsx, used by the surrounding component agency selection module.",
+			"tags": ["function", "component-agency-selection", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/agencySelection/agencySelectionHelpers.ts",
+			"type": "file",
+			"name": "agencySelectionHelpers.ts",
+			"filePath": "src/components/agencySelection/agencySelectionHelpers.ts",
+			"summary": "React UI module for component agency selection, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-agency-selection"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/agencySelection/agencySelectionHelpers.ts:VALID_POSTCODE_LENGTH",
+			"type": "function",
+			"name": "VALID_POSTCODE_LENGTH",
+			"filePath": "src/components/agencySelection/agencySelectionHelpers.ts",
+			"lineRange": [1, 1],
+			"summary": "Function VALID_POSTCODE_LENGTH in src/components/agencySelection/agencySelectionHelpers.ts, used by the surrounding component agency selection module.",
+			"tags": ["function", "component-agency-selection", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/askerInfo/AskerInfoAssign.tsx",
+			"type": "file",
+			"name": "AskerInfoAssign.tsx",
+			"filePath": "src/components/askerInfo/AskerInfoAssign.tsx",
+			"summary": "React UI module for component asker info, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-asker-info"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/askerInfo/AskerInfoAssign.tsx:AskerInfoAssign",
+			"type": "function",
+			"name": "AskerInfoAssign",
+			"filePath": "src/components/askerInfo/AskerInfoAssign.tsx",
+			"lineRange": [13, 25],
+			"summary": "Function AskerInfoAssign in src/components/askerInfo/AskerInfoAssign.tsx, used by the surrounding component asker info module.",
+			"tags": ["function", "component-asker-info", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/box/Box.tsx",
+			"type": "file",
+			"name": "Box.tsx",
+			"filePath": "src/components/box/Box.tsx",
+			"summary": "React UI module for component box, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-box"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/box/Box.tsx:Box",
+			"type": "function",
+			"name": "Box",
+			"filePath": "src/components/box/Box.tsx",
+			"lineRange": [18, 27],
+			"summary": "Function Box in src/components/box/Box.tsx, used by the surrounding component box module.",
+			"tags": ["function", "component-box", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/downloadICSFile/downloadICSFile.tsx",
+			"type": "file",
+			"name": "downloadICSFile.tsx",
+			"filePath": "src/components/downloadICSFile/downloadICSFile.tsx",
+			"summary": "React UI module for component download icsfile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-download-icsfile"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/downloadICSFile/downloadICSFile.tsx:DownloadICSFile",
+			"type": "function",
+			"name": "DownloadICSFile",
+			"filePath": "src/components/downloadICSFile/downloadICSFile.tsx",
+			"lineRange": [62, 74],
+			"summary": "Function DownloadICSFile in src/components/downloadICSFile/downloadICSFile.tsx, used by the surrounding component download icsfile module.",
+			"tags": ["function", "component-download-icsfile", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/editableData/EditableData.tsx",
+			"type": "file",
+			"name": "EditableData.tsx",
+			"filePath": "src/components/editableData/EditableData.tsx",
+			"summary": "React UI module for component editable data, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-editable-data"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/editableData/EditableData.tsx:EditableData",
+			"type": "function",
+			"name": "EditableData",
+			"filePath": "src/components/editableData/EditableData.tsx",
+			"lineRange": [27, 39],
+			"summary": "Function EditableData in src/components/editableData/EditableData.tsx, used by the surrounding component editable data module.",
+			"tags": ["function", "component-editable-data", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/generateQrCode/GenerateQrCode.tsx",
+			"type": "file",
+			"name": "GenerateQrCode.tsx",
+			"filePath": "src/components/generateQrCode/GenerateQrCode.tsx",
+			"summary": "React UI module for component generate qr code, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-generate-qr-code", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/groupChat/GroupChatCopyLinks.tsx",
+			"type": "file",
+			"name": "GroupChatCopyLinks.tsx",
+			"filePath": "src/components/groupChat/GroupChatCopyLinks.tsx",
+			"summary": "React UI module for component group chat, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-group-chat"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/groupChat/GroupChatCopyLinks.tsx:GroupChatCopyLinks",
+			"type": "function",
+			"name": "GroupChatCopyLinks",
+			"filePath": "src/components/groupChat/GroupChatCopyLinks.tsx",
+			"lineRange": [19, 31],
+			"summary": "Function GroupChatCopyLinks in src/components/groupChat/GroupChatCopyLinks.tsx, used by the surrounding component group chat module.",
+			"tags": ["function", "component-group-chat", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/header/Header.tsx",
+			"type": "file",
+			"name": "Header.tsx",
+			"filePath": "src/components/header/Header.tsx",
+			"summary": "React UI module for component header, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-header"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/header/Header.tsx:Header",
+			"type": "function",
+			"name": "Header",
+			"filePath": "src/components/header/Header.tsx",
+			"lineRange": [12, 24],
+			"summary": "Function Header in src/components/header/Header.tsx, used by the surrounding component header module.",
+			"tags": ["function", "component-header", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/headline/Headline.stories.ts",
+			"type": "file",
+			"name": "Headline.stories.ts",
+			"filePath": "src/components/headline/Headline.stories.ts",
+			"summary": "React UI module for component headline, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["storybook", "component", "component-headline"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/headline/Headline.tsx",
+			"type": "file",
+			"name": "Headline.tsx",
+			"filePath": "src/components/headline/Headline.tsx",
+			"summary": "React UI module for component headline, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-headline"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/headline/Headline.tsx:Headline",
+			"type": "function",
+			"name": "Headline",
+			"filePath": "src/components/headline/Headline.tsx",
+			"lineRange": [12, 24],
+			"summary": "Function Headline in src/components/headline/Headline.tsx, used by the surrounding component headline module.",
+			"tags": ["function", "component-headline", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/help/Help.tsx",
+			"type": "file",
+			"name": "Help.tsx",
+			"filePath": "src/components/help/Help.tsx",
+			"summary": "React UI module for component help, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-help", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/help/HelpVideoCall.tsx",
+			"type": "file",
+			"name": "HelpVideoCall.tsx",
+			"filePath": "src/components/help/HelpVideoCall.tsx",
+			"summary": "React UI module for component help, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-help", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/infoTooltip/InfoTooltip.tsx",
+			"type": "file",
+			"name": "InfoTooltip.tsx",
+			"filePath": "src/components/infoTooltip/InfoTooltip.tsx",
+			"summary": "React UI module for component info tooltip, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-info-tooltip"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/infoTooltip/InfoTooltip.tsx:InfoTooltip",
+			"type": "function",
+			"name": "InfoTooltip",
+			"filePath": "src/components/infoTooltip/InfoTooltip.tsx",
+			"lineRange": [24, 36],
+			"summary": "Function InfoTooltip in src/components/infoTooltip/InfoTooltip.tsx, used by the surrounding component info tooltip module.",
+			"tags": ["function", "component-info-tooltip", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/inputField/InputField.stories.ts",
+			"type": "file",
+			"name": "InputField.stories.ts",
+			"filePath": "src/components/inputField/InputField.stories.ts",
+			"summary": "React UI module for component input field, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["storybook", "component", "component-input-field"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/inputField/InputField.tsx",
+			"type": "file",
+			"name": "InputField.tsx",
+			"filePath": "src/components/inputField/InputField.tsx",
+			"summary": "React UI module for component input field, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-input-field"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/inputField/InputField.tsx:InputField",
+			"type": "function",
+			"name": "InputField",
+			"filePath": "src/components/inputField/InputField.tsx",
+			"lineRange": [47, 59],
+			"summary": "Function InputField in src/components/inputField/InputField.tsx, used by the surrounding component input field module.",
+			"tags": ["function", "component-input-field", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/localeSwitch/LocaleSwitch.tsx",
+			"type": "file",
+			"name": "LocaleSwitch.tsx",
+			"filePath": "src/components/localeSwitch/LocaleSwitch.tsx",
+			"summary": "React UI module for component locale switch, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "i18n", "component-locale-switch"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/mainTopicSelection/MainTopicSelection.tsx",
+			"type": "file",
+			"name": "MainTopicSelection.tsx",
+			"filePath": "src/components/mainTopicSelection/MainTopicSelection.tsx",
+			"summary": "React UI module for component main topic selection, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-main-topic-selection"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/mainTopicSelection/MainTopicSelection.tsx:MainTopicSelection",
+			"type": "function",
+			"name": "MainTopicSelection",
+			"filePath": "src/components/mainTopicSelection/MainTopicSelection.tsx",
+			"lineRange": [22, 34],
+			"summary": "Function MainTopicSelection in src/components/mainTopicSelection/MainTopicSelection.tsx, used by the surrounding component main topic selection module.",
+			"tags": ["function", "component-main-topic-selection", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/message/Appointment.tsx",
+			"type": "file",
+			"name": "Appointment.tsx",
+			"filePath": "src/components/message/Appointment.tsx",
+			"summary": "React UI module for component message, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-message"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/message/Appointment.tsx:Appointment",
+			"type": "function",
+			"name": "Appointment",
+			"filePath": "src/components/message/Appointment.tsx",
+			"lineRange": [26, 38],
+			"summary": "Function Appointment in src/components/message/Appointment.tsx, used by the surrounding component message module.",
+			"tags": ["function", "component-message", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/message/FurtherSteps.tsx",
+			"type": "file",
+			"name": "FurtherSteps.tsx",
+			"filePath": "src/components/message/FurtherSteps.tsx",
+			"summary": "React UI module for component message, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-message"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/message/FurtherSteps.tsx:FurtherSteps",
+			"type": "function",
+			"name": "FurtherSteps",
+			"filePath": "src/components/message/FurtherSteps.tsx",
+			"lineRange": [29, 41],
+			"summary": "Function FurtherSteps in src/components/message/FurtherSteps.tsx, used by the surrounding component message module.",
+			"tags": ["function", "component-message", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/message/MessageMetaData.tsx",
+			"type": "file",
+			"name": "MessageMetaData.tsx",
+			"filePath": "src/components/message/MessageMetaData.tsx",
+			"summary": "React UI module for component message, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-message"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/message/MessageMetaData.tsx:MessageMetaData",
+			"type": "function",
+			"name": "MessageMetaData",
+			"filePath": "src/components/message/MessageMetaData.tsx",
+			"lineRange": [22, 34],
+			"summary": "Function MessageMetaData in src/components/message/MessageMetaData.tsx, used by the surrounding component message module.",
+			"tags": ["function", "component-message", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/notice/Notice.stories.ts",
+			"type": "file",
+			"name": "Notice.stories.ts",
+			"filePath": "src/components/notice/Notice.stories.ts",
+			"summary": "React UI module for component notice, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["storybook", "component", "component-notice"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/notice/Notice.tsx",
+			"type": "file",
+			"name": "Notice.tsx",
+			"filePath": "src/components/notice/Notice.tsx",
+			"summary": "React UI module for component notice, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-notice"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/notice/Notice.tsx:Notice",
+			"type": "function",
+			"name": "Notice",
+			"filePath": "src/components/notice/Notice.tsx",
+			"lineRange": [24, 36],
+			"summary": "Function Notice in src/components/notice/Notice.tsx, used by the surrounding component notice module.",
+			"tags": ["function", "component-notice", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/notice/types.ts",
+			"type": "file",
+			"name": "types.ts",
+			"filePath": "src/components/notice/types.ts",
+			"summary": "React UI module for component notice, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-notice"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/notice/types.ts:NOTICE_TYPE_ERROR",
+			"type": "function",
+			"name": "NOTICE_TYPE_ERROR",
+			"filePath": "src/components/notice/types.ts",
+			"lineRange": [1, 13],
+			"summary": "Function NOTICE_TYPE_ERROR in src/components/notice/types.ts, used by the surrounding component notice module.",
+			"tags": ["function", "component-notice", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/notice/types.ts:NOTICE_TYPE_WARNING",
+			"type": "function",
+			"name": "NOTICE_TYPE_WARNING",
+			"filePath": "src/components/notice/types.ts",
+			"lineRange": [4, 16],
+			"summary": "Function NOTICE_TYPE_WARNING in src/components/notice/types.ts, used by the surrounding component notice module.",
+			"tags": ["function", "component-notice", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/notice/types.ts:NOTICE_TYPE_INFO",
+			"type": "function",
+			"name": "NOTICE_TYPE_INFO",
+			"filePath": "src/components/notice/types.ts",
+			"lineRange": [7, 17],
+			"summary": "Function NOTICE_TYPE_INFO in src/components/notice/types.ts, used by the surrounding component notice module.",
+			"tags": ["function", "component-notice", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/notice/types.ts:NOTICE_TYPE_SUCCESS",
+			"type": "function",
+			"name": "NOTICE_TYPE_SUCCESS",
+			"filePath": "src/components/notice/types.ts",
+			"lineRange": [10, 17],
+			"summary": "Function NOTICE_TYPE_SUCCESS in src/components/notice/types.ts, used by the surrounding component notice module.",
+			"tags": ["function", "component-notice", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/passwordReset/PasswordReset.tsx",
+			"type": "file",
+			"name": "PasswordReset.tsx",
+			"filePath": "src/components/passwordReset/PasswordReset.tsx",
+			"summary": "React UI module for component password reset, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-password-reset"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/passwordReset/PasswordReset.tsx:PasswordReset",
+			"type": "function",
+			"name": "PasswordReset",
+			"filePath": "src/components/passwordReset/PasswordReset.tsx",
+			"lineRange": [32, 44],
+			"summary": "Function PasswordReset in src/components/passwordReset/PasswordReset.tsx, used by the surrounding component password reset module.",
+			"tags": ["function", "component-password-reset", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/profile/AdditionalEnquiry/AdditionalAgencySelection.tsx",
+			"type": "file",
+			"name": "AdditionalAgencySelection.tsx",
+			"filePath": "src/components/profile/AdditionalEnquiry/AdditionalAgencySelection.tsx",
+			"summary": "React UI module for component profile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-profile"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/profile/AdditionalEnquiry/AdditionalAgencySelection.tsx:AdditionalAgencySelection",
+			"type": "function",
+			"name": "AdditionalAgencySelection",
+			"filePath": "src/components/profile/AdditionalEnquiry/AdditionalAgencySelection.tsx",
+			"lineRange": [20, 32],
+			"summary": "Function AdditionalAgencySelection in src/components/profile/AdditionalEnquiry/AdditionalAgencySelection.tsx, used by the surrounding component profile module.",
+			"tags": ["function", "component-profile", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/profile/AskerConsultingTypeData.tsx",
+			"type": "file",
+			"name": "AskerConsultingTypeData.tsx",
+			"filePath": "src/components/profile/AskerConsultingTypeData.tsx",
+			"summary": "React UI module for component profile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-profile"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/profile/AskerConsultingTypeData.tsx:AskerConsultingTypeData",
+			"type": "function",
+			"name": "AskerConsultingTypeData",
+			"filePath": "src/components/profile/AskerConsultingTypeData.tsx",
+			"lineRange": [10, 22],
+			"summary": "Function AskerConsultingTypeData in src/components/profile/AskerConsultingTypeData.tsx, used by the surrounding component profile module.",
+			"tags": ["function", "component-profile", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/profile/BrowserNotifications/NotificationDenied/index.tsx",
+			"type": "file",
+			"name": "index.tsx",
+			"filePath": "src/components/profile/BrowserNotifications/NotificationDenied/index.tsx",
+			"summary": "React UI module for component profile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-profile"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/profile/BrowserNotifications/NotificationDenied/index.tsx:NotificationDenied",
+			"type": "function",
+			"name": "NotificationDenied",
+			"filePath": "src/components/profile/BrowserNotifications/NotificationDenied/index.tsx",
+			"lineRange": [6, 17],
+			"summary": "Function NotificationDenied in src/components/profile/BrowserNotifications/NotificationDenied/index.tsx, used by the surrounding component profile module.",
+			"tags": ["function", "component-profile", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/profile/BrowserNotifications/index.tsx",
+			"type": "file",
+			"name": "index.tsx",
+			"filePath": "src/components/profile/BrowserNotifications/index.tsx",
+			"summary": "React UI module for component profile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-profile"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/profile/BrowserNotifications/index.tsx:BrowserNotification",
+			"type": "function",
+			"name": "BrowserNotification",
+			"filePath": "src/components/profile/BrowserNotifications/index.tsx",
+			"lineRange": [14, 26],
+			"summary": "Function BrowserNotification in src/components/profile/BrowserNotifications/index.tsx, used by the surrounding component profile module.",
+			"tags": ["function", "component-profile", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/profile/ConsultantAgencies.tsx",
+			"type": "file",
+			"name": "ConsultantAgencies.tsx",
+			"filePath": "src/components/profile/ConsultantAgencies.tsx",
+			"summary": "React UI module for component profile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-profile"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/profile/ConsultantAgencies.tsx:ConsultantAgencies",
+			"type": "function",
+			"name": "ConsultantAgencies",
+			"filePath": "src/components/profile/ConsultantAgencies.tsx",
+			"lineRange": [15, 27],
+			"summary": "Function ConsultantAgencies in src/components/profile/ConsultantAgencies.tsx, used by the surrounding component profile module.",
+			"tags": ["function", "component-profile", "exported"],
+			"complexity": "simple"
+		}
+	],
+	"edges": [
+		{
+			"source": "file:src/api/apiGetConsultantAppointments.ts",
+			"target": "function:src/api/apiGetConsultantAppointments.ts:apiGetConsultantAppointments",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiGetConsultantAppointments.ts",
+			"target": "function:src/api/apiGetConsultantAppointments.ts:apiGetConsultantAppointments",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiGetConsultantAppointments.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetConsultantAppointments.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetConsultantAppointments.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetConsultantAppointments.ts",
+			"target": "file:src/utils/consultant.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiPatchUserData.ts",
+			"target": "function:src/api/apiPatchUserData.ts:apiPatchUserData",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiPatchUserData.ts",
+			"target": "function:src/api/apiPatchUserData.ts:apiPatchUserData",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiPatchUserData.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiPatchUserData.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiPatchUserData.ts",
+			"target": "file:src/utils/keycloakSession.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/E2EEncryptionSupportHelp/E2EEncryptionSupportHelp.tsx",
+			"target": "function:src/components/E2EEncryptionSupportHelp/E2EEncryptionSupportHelp.tsx:E2EEncryptionSupportHelp",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/E2EEncryptionSupportHelp/E2EEncryptionSupportHelp.tsx",
+			"target": "function:src/components/E2EEncryptionSupportHelp/E2EEncryptionSupportHelp.tsx:E2EEncryptionSupportHelp",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/E2EEncryptionSupportHelp/E2EEncryptionSupportHelp.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/E2EEncryptionSupportHelp/E2EEncryptionSupportHelp.tsx",
+			"target": "file:src/components/E2EEncryptionSupportHelp/E2EEncryptionSupportHelp.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/E2EEncryptionSupportHelp/E2EEncryptionSupportHelp.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/E2EEncryptionSupportHelp/E2EEncryptionSupportHelp.tsx",
+			"target": "file:src/components/help/HelpVideoCall.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/E2EEncryptionSupportHelp/E2EEncryptionSupportHelp.tsx",
+			"target": "file:src/components/notifications/Notification.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/E2EEncryptionSupportHelp/E2EEncryptionSupportHelp.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/E2EEncryptionSupportHelp/E2EEncryptionSupportHelp.tsx",
+			"target": "file:src/resources/img/icons.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/E2EEncryptionSupportHelp/E2EEncryptionSupportHelp.tsx",
+			"target": "file:src/utils/clipboardHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/Switch/index.tsx",
+			"target": "function:src/components/Switch/index.tsx:Switch",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/Switch/index.tsx",
+			"target": "function:src/components/Switch/index.tsx:Switch",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/Switch/index.tsx",
+			"target": "file:src/components/Switch/switch.module.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/Switch/index.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/agencyRadioSelect/AgencyRadioSelect.tsx",
+			"target": "function:src/components/agencyRadioSelect/AgencyRadioSelect.tsx:AgencyRadioSelect",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/agencyRadioSelect/AgencyRadioSelect.tsx",
+			"target": "function:src/components/agencyRadioSelect/AgencyRadioSelect.tsx:AgencyRadioSelect",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/agencyRadioSelect/AgencyRadioSelect.tsx",
+			"target": "file:src/components/agencyRadioSelect/AgencyLanguages.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/agencyRadioSelect/AgencyRadioSelect.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/agencyRadioSelect/AgencyRadioSelect.tsx",
+			"target": "file:src/components/infoTooltip/InfoTooltip.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/agencyRadioSelect/AgencyRadioSelect.tsx",
+			"target": "file:src/components/radioButton/RadioButton.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/agencyRadioSelect/AgencyRadioSelect.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/agencySelection/AgencySelection.tsx",
+			"target": "function:src/components/agencySelection/AgencySelection.tsx:AgencySelection",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/agencySelection/AgencySelection.tsx",
+			"target": "function:src/components/agencySelection/AgencySelection.tsx:AgencySelection",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/agencySelection/AgencySelection.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/agencySelection/AgencySelection.tsx",
+			"target": "file:src/components/agencyRadioSelect/AgencyRadioSelect.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/agencySelection/AgencySelection.tsx",
+			"target": "file:src/components/agencySelection/agencySelectionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/agencySelection/AgencySelection.tsx",
+			"target": "file:src/components/app/Loading.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/agencySelection/AgencySelection.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/agencySelection/AgencySelection.tsx",
+			"target": "file:src/components/inputField/InputField.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/agencySelection/AgencySelection.tsx",
+			"target": "file:src/components/notice/Notice.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/agencySelection/AgencySelection.tsx",
+			"target": "file:src/components/registration/registrationHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/agencySelection/AgencySelection.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/agencySelection/AgencySelection.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/agencySelection/AgencySelection.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/agencySelection/AgencySelection.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/agencySelection/AgencySelection.tsx",
+			"target": "file:src/utils/parsePlaceholderString.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/agencySelection/agencySelectionHelpers.ts",
+			"target": "function:src/components/agencySelection/agencySelectionHelpers.ts:VALID_POSTCODE_LENGTH",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/agencySelection/agencySelectionHelpers.ts",
+			"target": "function:src/components/agencySelection/agencySelectionHelpers.ts:VALID_POSTCODE_LENGTH",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfoAssign.tsx",
+			"target": "function:src/components/askerInfo/AskerInfoAssign.tsx:AskerInfoAssign",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfoAssign.tsx",
+			"target": "function:src/components/askerInfo/AskerInfoAssign.tsx:AskerInfoAssign",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfoAssign.tsx",
+			"target": "file:src/components/sessionAssign/RequestSessionAssign.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfoAssign.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfoAssign.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/box/Box.tsx",
+			"target": "function:src/components/box/Box.tsx:Box",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/box/Box.tsx",
+			"target": "function:src/components/box/Box.tsx:Box",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/box/Box.tsx",
+			"target": "file:src/components/box/box.module.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/downloadICSFile/downloadICSFile.tsx",
+			"target": "function:src/components/downloadICSFile/downloadICSFile.tsx:DownloadICSFile",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/downloadICSFile/downloadICSFile.tsx",
+			"target": "function:src/components/downloadICSFile/downloadICSFile.tsx:DownloadICSFile",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/downloadICSFile/downloadICSFile.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/downloadICSFile/downloadICSFile.tsx",
+			"target": "file:src/utils/dateHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/editableData/EditableData.tsx",
+			"target": "function:src/components/editableData/EditableData.tsx:EditableData",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/editableData/EditableData.tsx",
+			"target": "function:src/components/editableData/EditableData.tsx:EditableData",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/editableData/EditableData.tsx",
+			"target": "file:src/components/registration/registrationHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/editableData/EditableData.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/generateQrCode/GenerateQrCode.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/generateQrCode/GenerateQrCode.tsx",
+			"target": "file:src/components/overlay/Overlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/generateQrCode/GenerateQrCode.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/GroupChatCopyLinks.tsx",
+			"target": "function:src/components/groupChat/GroupChatCopyLinks.tsx:GroupChatCopyLinks",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/groupChat/GroupChatCopyLinks.tsx",
+			"target": "function:src/components/groupChat/GroupChatCopyLinks.tsx:GroupChatCopyLinks",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/groupChat/GroupChatCopyLinks.tsx",
+			"target": "file:src/components/generateQrCode/GenerateQrCode.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/GroupChatCopyLinks.tsx",
+			"target": "file:src/components/groupChat/groupChatCopyLinks.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/GroupChatCopyLinks.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/GroupChatCopyLinks.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/GroupChatCopyLinks.tsx",
+			"target": "file:src/resources/img/icons.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/groupChat/GroupChatCopyLinks.tsx",
+			"target": "file:src/utils/clipboardHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/header/Header.tsx",
+			"target": "function:src/components/header/Header.tsx:Header",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/header/Header.tsx",
+			"target": "function:src/components/header/Header.tsx:Header",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/header/Header.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/header/Header.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/header/Header.tsx",
+			"target": "file:src/components/uiVersionToggle/UIVersionToggle.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/header/Header.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/header/Header.tsx",
+			"target": "file:src/store/agencyLogoAtom.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/headline/Headline.stories.ts",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/headline/Headline.tsx",
+			"target": "function:src/components/headline/Headline.tsx:Headline",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/headline/Headline.tsx",
+			"target": "function:src/components/headline/Headline.tsx:Headline",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/help/Help.tsx",
+			"target": "file:src/components/help/help.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/help/Help.tsx",
+			"target": "file:src/components/help/HelpVideoCall.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/help/Help.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/help/Help.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/help/Help.tsx",
+			"target": "file:src/utils/clipboardHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/help/HelpVideoCall.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/help/HelpVideoCall.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/infoTooltip/InfoTooltip.tsx",
+			"target": "function:src/components/infoTooltip/InfoTooltip.tsx:InfoTooltip",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/infoTooltip/InfoTooltip.tsx",
+			"target": "function:src/components/infoTooltip/InfoTooltip.tsx:InfoTooltip",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/infoTooltip/InfoTooltip.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/inputField/InputField.stories.ts",
+			"target": "file:src/components/inputField/InputField.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/inputField/InputField.tsx",
+			"target": "function:src/components/inputField/InputField.tsx:InputField",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/inputField/InputField.tsx",
+			"target": "function:src/components/inputField/InputField.tsx:InputField",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/inputField/InputField.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/localeSwitch/LocaleSwitch.tsx",
+			"target": "file:src/api/apiPatchUserData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/localeSwitch/LocaleSwitch.tsx",
+			"target": "file:src/components/select/LanguageSelectDropdown.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/localeSwitch/LocaleSwitch.tsx",
+			"target": "file:src/components/select/SelectDropdown.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/localeSwitch/LocaleSwitch.tsx",
+			"target": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/localeSwitch/LocaleSwitch.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/localeSwitch/LocaleSwitch.tsx",
+			"target": "file:src/utils/keycloakSession.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/mainTopicSelection/MainTopicSelection.tsx",
+			"target": "function:src/components/mainTopicSelection/MainTopicSelection.tsx:MainTopicSelection",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/mainTopicSelection/MainTopicSelection.tsx",
+			"target": "function:src/components/mainTopicSelection/MainTopicSelection.tsx:MainTopicSelection",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/mainTopicSelection/MainTopicSelection.tsx",
+			"target": "file:src/api/apiGetTopicsData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/mainTopicSelection/MainTopicSelection.tsx",
+			"target": "file:src/components/infoTooltip/InfoTooltip.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/mainTopicSelection/MainTopicSelection.tsx",
+			"target": "file:src/components/radioButton/RadioButton.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/mainTopicSelection/MainTopicSelection.tsx",
+			"target": "file:src/components/registration/registrationHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/mainTopicSelection/MainTopicSelection.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/mainTopicSelection/MainTopicSelection.tsx",
+			"target": "file:src/globalState/provider/UrlParamsProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/Appointment.tsx",
+			"target": "function:src/components/message/Appointment.tsx:Appointment",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/message/Appointment.tsx",
+			"target": "function:src/components/message/Appointment.tsx:Appointment",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/message/Appointment.tsx",
+			"target": "file:src/api/apiSendAliasMessage.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/Appointment.tsx",
+			"target": "file:src/components/downloadICSFile/downloadICSFile.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/Appointment.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/Appointment.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/Appointment.tsx",
+			"target": "file:src/utils/dateHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/FurtherSteps.tsx",
+			"target": "function:src/components/message/FurtherSteps.tsx:FurtherSteps",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/message/FurtherSteps.tsx",
+			"target": "function:src/components/message/FurtherSteps.tsx:FurtherSteps",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/message/FurtherSteps.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/FurtherSteps.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/FurtherSteps.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/FurtherSteps.tsx",
+			"target": "file:src/components/inputField/InputField.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/FurtherSteps.tsx",
+			"target": "file:src/components/overlay/Overlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/FurtherSteps.tsx",
+			"target": "file:src/components/registration/registrationHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/FurtherSteps.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/FurtherSteps.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageMetaData.tsx",
+			"target": "function:src/components/message/MessageMetaData.tsx:MessageMetaData",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/message/MessageMetaData.tsx",
+			"target": "function:src/components/message/MessageMetaData.tsx:MessageMetaData",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/message/MessageMetaData.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageMetaData.tsx",
+			"target": "file:src/utils/dateHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/notice/Notice.stories.ts",
+			"target": "file:src/components/notice/Notice.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/notice/Notice.stories.ts",
+			"target": "file:src/components/notice/types.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/notice/Notice.tsx",
+			"target": "function:src/components/notice/Notice.tsx:Notice",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/notice/Notice.tsx",
+			"target": "function:src/components/notice/Notice.tsx:Notice",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/notice/Notice.tsx",
+			"target": "file:src/components/notice/types.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/notice/types.ts",
+			"target": "function:src/components/notice/types.ts:NOTICE_TYPE_ERROR",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/notice/types.ts",
+			"target": "function:src/components/notice/types.ts:NOTICE_TYPE_ERROR",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/notice/types.ts",
+			"target": "function:src/components/notice/types.ts:NOTICE_TYPE_WARNING",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/notice/types.ts",
+			"target": "function:src/components/notice/types.ts:NOTICE_TYPE_WARNING",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/notice/types.ts",
+			"target": "function:src/components/notice/types.ts:NOTICE_TYPE_INFO",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/notice/types.ts",
+			"target": "function:src/components/notice/types.ts:NOTICE_TYPE_INFO",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/notice/types.ts",
+			"target": "function:src/components/notice/types.ts:NOTICE_TYPE_SUCCESS",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/notice/types.ts",
+			"target": "function:src/components/notice/types.ts:NOTICE_TYPE_SUCCESS",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/passwordReset/PasswordReset.tsx",
+			"target": "function:src/components/passwordReset/PasswordReset.tsx:PasswordReset",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/passwordReset/PasswordReset.tsx",
+			"target": "function:src/components/passwordReset/PasswordReset.tsx:PasswordReset",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/passwordReset/PasswordReset.tsx",
+			"target": "file:src/api/apiRocketChatSetUserKeys.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/passwordReset/PasswordReset.tsx",
+			"target": "file:src/api/apiUpdatePasswordAppointments.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/passwordReset/PasswordReset.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/passwordReset/PasswordReset.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/passwordReset/PasswordReset.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/passwordReset/PasswordReset.tsx",
+			"target": "file:src/components/inputField/InputField.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/passwordReset/PasswordReset.tsx",
+			"target": "file:src/components/logout/logout.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/passwordReset/PasswordReset.tsx",
+			"target": "file:src/components/overlay/Overlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/passwordReset/PasswordReset.tsx",
+			"target": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/passwordReset/PasswordReset.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/passwordReset/PasswordReset.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/passwordReset/PasswordReset.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/passwordReset/PasswordReset.tsx",
+			"target": "file:src/utils/encryptionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/passwordReset/PasswordReset.tsx",
+			"target": "file:src/utils/tenantSettingsHelper.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/passwordReset/PasswordReset.tsx",
+			"target": "file:src/utils/validateInputValue.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/AdditionalEnquiry/AdditionalAgencySelection.tsx",
+			"target": "function:src/components/profile/AdditionalEnquiry/AdditionalAgencySelection.tsx:AdditionalAgencySelection",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/profile/AdditionalEnquiry/AdditionalAgencySelection.tsx",
+			"target": "function:src/components/profile/AdditionalEnquiry/AdditionalAgencySelection.tsx:AdditionalAgencySelection",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/profile/AdditionalEnquiry/AdditionalAgencySelection.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/AdditionalEnquiry/AdditionalAgencySelection.tsx",
+			"target": "file:src/components/agencyRadioSelect/AgencyRadioSelect.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/AdditionalEnquiry/AdditionalAgencySelection.tsx",
+			"target": "file:src/components/agencySelection/agencySelectionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/AdditionalEnquiry/AdditionalAgencySelection.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/AdditionalEnquiry/AdditionalAgencySelection.tsx",
+			"target": "file:src/components/inputField/InputField.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/AdditionalEnquiry/AdditionalAgencySelection.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/AdditionalEnquiry/AdditionalAgencySelection.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/AskerConsultingTypeData.tsx",
+			"target": "function:src/components/profile/AskerConsultingTypeData.tsx:AskerConsultingTypeData",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/profile/AskerConsultingTypeData.tsx",
+			"target": "function:src/components/profile/AskerConsultingTypeData.tsx:AskerConsultingTypeData",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/profile/AskerConsultingTypeData.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/AskerConsultingTypeData.tsx",
+			"target": "file:src/components/box/Box.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/AskerConsultingTypeData.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/AskerConsultingTypeData.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/AskerConsultingTypeData.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/BrowserNotifications/NotificationDenied/index.tsx",
+			"target": "function:src/components/profile/BrowserNotifications/NotificationDenied/index.tsx:NotificationDenied",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/profile/BrowserNotifications/NotificationDenied/index.tsx",
+			"target": "function:src/components/profile/BrowserNotifications/NotificationDenied/index.tsx:NotificationDenied",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/profile/BrowserNotifications/NotificationDenied/index.tsx",
+			"target": "file:src/components/profile/BrowserNotifications/NotificationDenied/styles.module.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/BrowserNotifications/NotificationDenied/index.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/BrowserNotifications/index.tsx",
+			"target": "function:src/components/profile/BrowserNotifications/index.tsx:BrowserNotification",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/profile/BrowserNotifications/index.tsx",
+			"target": "function:src/components/profile/BrowserNotifications/index.tsx:BrowserNotification",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/profile/BrowserNotifications/index.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/BrowserNotifications/index.tsx",
+			"target": "file:src/components/profile/BrowserNotifications/NotificationDenied/index.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/BrowserNotifications/index.tsx",
+			"target": "file:src/components/profile/BrowserNotifications/styles.module.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/BrowserNotifications/index.tsx",
+			"target": "file:src/components/Switch/index.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/BrowserNotifications/index.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/BrowserNotifications/index.tsx",
+			"target": "file:src/utils/notificationHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/BrowserNotifications/index.tsx",
+			"target": "file:src/utils/useIsFirstVisit.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/ConsultantAgencies.tsx",
+			"target": "function:src/components/profile/ConsultantAgencies.tsx:ConsultantAgencies",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/profile/ConsultantAgencies.tsx",
+			"target": "function:src/components/profile/ConsultantAgencies.tsx:ConsultantAgencies",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/profile/ConsultantAgencies.tsx",
+			"target": "file:src/components/generateQrCode/GenerateQrCode.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/ConsultantAgencies.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/ConsultantAgencies.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/ConsultantAgencies.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/ConsultantAgencies.tsx",
+			"target": "file:src/utils/clipboardHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		}
+	]
+}

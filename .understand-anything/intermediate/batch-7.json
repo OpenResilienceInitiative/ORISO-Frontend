@@ -1,0 +1,1700 @@
+{
+	"nodes": [
+		{
+			"id": "file:src/api/apiDeleteSessionAndUser.ts",
+			"type": "file",
+			"name": "apiDeleteSessionAndUser.ts",
+			"filePath": "src/api/apiDeleteSessionAndUser.ts",
+			"summary": "API client module for apiDeleteSessionAndUser, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "session", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiDeleteSessionAndUser.ts:apiDeleteSessionAndUser",
+			"type": "function",
+			"name": "apiDeleteSessionAndUser",
+			"filePath": "src/api/apiDeleteSessionAndUser.ts",
+			"lineRange": [4, 15],
+			"summary": "Function apiDeleteSessionAndUser in src/api/apiDeleteSessionAndUser.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiDeleteUserFromRoom.ts",
+			"type": "file",
+			"name": "apiDeleteUserFromRoom.ts",
+			"filePath": "src/api/apiDeleteUserFromRoom.ts",
+			"summary": "API client module for apiDeleteUserFromRoom, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiDeleteUserFromRoom.ts:apiDeleteUserFromRoom",
+			"type": "function",
+			"name": "apiDeleteUserFromRoom",
+			"filePath": "src/api/apiDeleteUserFromRoom.ts",
+			"lineRange": [4, 15],
+			"summary": "Function apiDeleteUserFromRoom in src/api/apiDeleteUserFromRoom.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiDraftMessages.ts",
+			"type": "file",
+			"name": "apiDraftMessages.ts",
+			"filePath": "src/api/apiDraftMessages.ts",
+			"summary": "API client module for apiDraftMessages, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiDraftMessages.ts:apiPostDraftMessage",
+			"type": "function",
+			"name": "apiPostDraftMessage",
+			"filePath": "src/api/apiDraftMessages.ts",
+			"lineRange": [9, 21],
+			"summary": "Function apiPostDraftMessage in src/api/apiDraftMessages.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiDraftMessages.ts:apiGetDraftMessage",
+			"type": "function",
+			"name": "apiGetDraftMessage",
+			"filePath": "src/api/apiDraftMessages.ts",
+			"lineRange": [33, 45],
+			"summary": "Function apiGetDraftMessage in src/api/apiDraftMessages.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiEnquiryAcceptance.ts",
+			"type": "file",
+			"name": "apiEnquiryAcceptance.ts",
+			"filePath": "src/api/apiEnquiryAcceptance.ts",
+			"summary": "API client module for apiEnquiryAcceptance, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiEnquiryAcceptance.ts:apiEnquiryAcceptance",
+			"type": "function",
+			"name": "apiEnquiryAcceptance",
+			"filePath": "src/api/apiEnquiryAcceptance.ts",
+			"lineRange": [4, 13],
+			"summary": "Function apiEnquiryAcceptance in src/api/apiEnquiryAcceptance.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiEventNotifications.ts",
+			"type": "file",
+			"name": "apiEventNotifications.ts",
+			"filePath": "src/api/apiEventNotifications.ts",
+			"summary": "API client module for apiEventNotifications, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiEventNotifications.ts:apiGetEventNotifications",
+			"type": "function",
+			"name": "apiGetEventNotifications",
+			"filePath": "src/api/apiEventNotifications.ts",
+			"lineRange": [24, 36],
+			"summary": "Function apiGetEventNotifications in src/api/apiEventNotifications.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiEventNotifications.ts:apiMarkEventNotificationRead",
+			"type": "function",
+			"name": "apiMarkEventNotificationRead",
+			"filePath": "src/api/apiEventNotifications.ts",
+			"lineRange": [33, 45],
+			"summary": "Function apiMarkEventNotificationRead in src/api/apiEventNotifications.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiEventNotifications.ts:apiMarkAllEventNotificationsRead",
+			"type": "function",
+			"name": "apiMarkAllEventNotificationsRead",
+			"filePath": "src/api/apiEventNotifications.ts",
+			"lineRange": [41, 52],
+			"summary": "Function apiMarkAllEventNotificationsRead in src/api/apiEventNotifications.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiEventNotifications.ts:apiClearEventNotifications",
+			"type": "function",
+			"name": "apiClearEventNotifications",
+			"filePath": "src/api/apiEventNotifications.ts",
+			"lineRange": [47, 52],
+			"summary": "Function apiClearEventNotifications in src/api/apiEventNotifications.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiFrontendSettings.ts",
+			"type": "file",
+			"name": "apiFrontendSettings.ts",
+			"filePath": "src/api/apiFrontendSettings.ts",
+			"summary": "API client module for apiFrontendSettings, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiFrontendSettings.ts:apiFrontendSettings",
+			"type": "function",
+			"name": "apiFrontendSettings",
+			"filePath": "src/api/apiFrontendSettings.ts",
+			"lineRange": [5, 11],
+			"summary": "Function apiFrontendSettings in src/api/apiFrontendSettings.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiGetAgenciesByTenant.ts",
+			"type": "file",
+			"name": "apiGetAgenciesByTenant.ts",
+			"filePath": "src/api/apiGetAgenciesByTenant.ts",
+			"summary": "API client module for apiGetAgenciesByTenant, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiGetAgenciesByTenant.ts:apiGetAgenciesByTenant",
+			"type": "function",
+			"name": "apiGetAgenciesByTenant",
+			"filePath": "src/api/apiGetAgenciesByTenant.ts",
+			"lineRange": [4, 15],
+			"summary": "Function apiGetAgenciesByTenant in src/api/apiGetAgenciesByTenant.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiGetAgencyId.ts",
+			"type": "file",
+			"name": "apiGetAgencyId.ts",
+			"filePath": "src/api/apiGetAgencyId.ts",
+			"summary": "API client module for apiGetAgencyId, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiGetAgencyId.ts:apiGetAgencyById",
+			"type": "function",
+			"name": "apiGetAgencyById",
+			"filePath": "src/api/apiGetAgencyId.ts",
+			"lineRange": [6, 18],
+			"summary": "Function apiGetAgencyById in src/api/apiGetAgencyId.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiGetAnonymousEnquiryDetails.ts",
+			"type": "file",
+			"name": "apiGetAnonymousEnquiryDetails.ts",
+			"filePath": "src/api/apiGetAnonymousEnquiryDetails.ts",
+			"summary": "API client module for apiGetAnonymousEnquiryDetails, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiGetAnonymousEnquiryDetails.ts:apiGetAnonymousEnquiryDetails",
+			"type": "function",
+			"name": "apiGetAnonymousEnquiryDetails",
+			"filePath": "src/api/apiGetAnonymousEnquiryDetails.ts",
+			"lineRange": [21, 33],
+			"summary": "Function apiGetAnonymousEnquiryDetails in src/api/apiGetAnonymousEnquiryDetails.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiGetApiAppointmentServiceEventTypes.ts",
+			"type": "file",
+			"name": "apiGetApiAppointmentServiceEventTypes.ts",
+			"filePath": "src/api/apiGetApiAppointmentServiceEventTypes.ts",
+			"summary": "API client module for apiGetApiAppointmentServiceEventTypes, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiGetApiAppointmentServiceEventTypes.ts:getCounselorAppointmentLink",
+			"type": "function",
+			"name": "getCounselorAppointmentLink",
+			"filePath": "src/api/apiGetApiAppointmentServiceEventTypes.ts",
+			"lineRange": [4, 13],
+			"summary": "Function getCounselorAppointmentLink in src/api/apiGetApiAppointmentServiceEventTypes.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiGetAppointmentServiceTeam.ts",
+			"type": "file",
+			"name": "apiGetAppointmentServiceTeam.ts",
+			"filePath": "src/api/apiGetAppointmentServiceTeam.ts",
+			"summary": "API client module for apiGetAppointmentServiceTeam, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiGetAppointmentServiceTeam.ts:getTeamAppointmentLink",
+			"type": "function",
+			"name": "getTeamAppointmentLink",
+			"filePath": "src/api/apiGetAppointmentServiceTeam.ts",
+			"lineRange": [4, 13],
+			"summary": "Function getTeamAppointmentLink in src/api/apiGetAppointmentServiceTeam.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiGetAppointmentsServiceBookingEventsByUserId.ts",
+			"type": "file",
+			"name": "apiGetAppointmentsServiceBookingEventsByUserId.ts",
+			"filePath": "src/api/apiGetAppointmentsServiceBookingEventsByUserId.ts",
+			"summary": "API client module for apiGetAppointmentsServiceBookingEventsByUserId, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiGetAppointmentsServiceBookingEventsByUserId.ts:apiAppointmentsServiceBookingEventsByAskerId",
+			"type": "function",
+			"name": "apiAppointmentsServiceBookingEventsByAskerId",
+			"filePath": "src/api/apiGetAppointmentsServiceBookingEventsByUserId.ts",
+			"lineRange": [5, 14],
+			"summary": "Function apiAppointmentsServiceBookingEventsByAskerId in src/api/apiGetAppointmentsServiceBookingEventsByUserId.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiGetAskerSessionList.ts",
+			"type": "file",
+			"name": "apiGetAskerSessionList.ts",
+			"filePath": "src/api/apiGetAskerSessionList.ts",
+			"summary": "API client module for apiGetAskerSessionList, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "session", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiGetAskerSessionList.ts:apiGetAskerSessionList",
+			"type": "function",
+			"name": "apiGetAskerSessionList",
+			"filePath": "src/api/apiGetAskerSessionList.ts",
+			"lineRange": [7, 19],
+			"summary": "Function apiGetAskerSessionList in src/api/apiGetAskerSessionList.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiGetCalDavAccount.ts",
+			"type": "file",
+			"name": "apiGetCalDavAccount.ts",
+			"filePath": "src/api/apiGetCalDavAccount.ts",
+			"summary": "API client module for apiGetCalDavAccount, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiGetCalDavAccount.ts:apiHasCalDavAccount",
+			"type": "function",
+			"name": "apiHasCalDavAccount",
+			"filePath": "src/api/apiGetCalDavAccount.ts",
+			"lineRange": [4, 11],
+			"summary": "Function apiHasCalDavAccount in src/api/apiGetCalDavAccount.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiGetChatRoomById.ts",
+			"type": "file",
+			"name": "apiGetChatRoomById.ts",
+			"filePath": "src/api/apiGetChatRoomById.ts",
+			"summary": "API client module for apiGetChatRoomById, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiGetChatRoomById.ts:apiGetChatRoomById",
+			"type": "function",
+			"name": "apiGetChatRoomById",
+			"filePath": "src/api/apiGetChatRoomById.ts",
+			"lineRange": [5, 17],
+			"summary": "Function apiGetChatRoomById in src/api/apiGetChatRoomById.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiGetConsultant.ts",
+			"type": "file",
+			"name": "apiGetConsultant.ts",
+			"filePath": "src/api/apiGetConsultant.ts",
+			"summary": "API client module for apiGetConsultant, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiGetConsultant.ts:apiGetConsultant",
+			"type": "function",
+			"name": "apiGetConsultant",
+			"filePath": "src/api/apiGetConsultant.ts",
+			"lineRange": [6, 18],
+			"summary": "Function apiGetConsultant in src/api/apiGetConsultant.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiGetConsultantSessionList.ts",
+			"type": "file",
+			"name": "apiGetConsultantSessionList.ts",
+			"filePath": "src/api/apiGetConsultantSessionList.ts",
+			"summary": "API client module for apiGetConsultantSessionList, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "session", "utility", "api"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/api/apiGetConsultantSessionList.ts:apiGetConsultantSessionList",
+			"type": "function",
+			"name": "apiGetConsultantSessionList",
+			"filePath": "src/api/apiGetConsultantSessionList.ts",
+			"lineRange": [46, 58],
+			"summary": "Function apiGetConsultantSessionList in src/api/apiGetConsultantSessionList.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiGetConsultantStatistics.ts",
+			"type": "file",
+			"name": "apiGetConsultantStatistics.ts",
+			"filePath": "src/api/apiGetConsultantStatistics.ts",
+			"summary": "API client module for apiGetConsultantStatistics, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiGetConsultantStatistics.ts:apiGetConsultantStatistics",
+			"type": "function",
+			"name": "apiGetConsultantStatistics",
+			"filePath": "src/api/apiGetConsultantStatistics.ts",
+			"lineRange": [19, 31],
+			"summary": "Function apiGetConsultantStatistics in src/api/apiGetConsultantStatistics.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiGetConsultingType.ts",
+			"type": "file",
+			"name": "apiGetConsultingType.ts",
+			"filePath": "src/api/apiGetConsultingType.ts",
+			"summary": "API client module for apiGetConsultingType, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiGetConsultingType.ts:apiGetConsultingType",
+			"type": "function",
+			"name": "apiGetConsultingType",
+			"filePath": "src/api/apiGetConsultingType.ts",
+			"lineRange": [5, 17],
+			"summary": "Function apiGetConsultingType in src/api/apiGetConsultingType.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiGetConsultingTypes.ts",
+			"type": "file",
+			"name": "apiGetConsultingTypes.ts",
+			"filePath": "src/api/apiGetConsultingTypes.ts",
+			"summary": "API client module for apiGetConsultingTypes, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiGetConsultingTypes.ts:apiGetConsultingTypes",
+			"type": "function",
+			"name": "apiGetConsultingTypes",
+			"filePath": "src/api/apiGetConsultingTypes.ts",
+			"lineRange": [5, 13],
+			"summary": "Function apiGetConsultingTypes in src/api/apiGetConsultingTypes.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiGetGroupChatInfo.ts",
+			"type": "file",
+			"name": "apiGetGroupChatInfo.ts",
+			"filePath": "src/api/apiGetGroupChatInfo.ts",
+			"summary": "API client module for apiGetGroupChatInfo, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiGetGroupChatInfo.ts:apiGetGroupChatInfo",
+			"type": "function",
+			"name": "apiGetGroupChatInfo",
+			"filePath": "src/api/apiGetGroupChatInfo.ts",
+			"lineRange": [16, 27],
+			"summary": "Function apiGetGroupChatInfo in src/api/apiGetGroupChatInfo.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiGetIsUsernameAvailable.ts",
+			"type": "file",
+			"name": "apiGetIsUsernameAvailable.ts",
+			"filePath": "src/api/apiGetIsUsernameAvailable.ts",
+			"summary": "API client module for apiGetIsUsernameAvailable, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiGetIsUsernameAvailable.ts:apiGetIsUsernameAvailable",
+			"type": "function",
+			"name": "apiGetIsUsernameAvailable",
+			"filePath": "src/api/apiGetIsUsernameAvailable.ts",
+			"lineRange": [4, 13],
+			"summary": "Function apiGetIsUsernameAvailable in src/api/apiGetIsUsernameAvailable.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiGetSessionData.ts",
+			"type": "file",
+			"name": "apiGetSessionData.ts",
+			"filePath": "src/api/apiGetSessionData.ts",
+			"summary": "API client module for apiGetSessionData, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "session", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiGetSessionData.ts:apiGetSessionData",
+			"type": "function",
+			"name": "apiGetSessionData",
+			"filePath": "src/api/apiGetSessionData.ts",
+			"lineRange": [4, 16],
+			"summary": "Function apiGetSessionData in src/api/apiGetSessionData.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiGetSessionRooms.ts",
+			"type": "file",
+			"name": "apiGetSessionRooms.ts",
+			"filePath": "src/api/apiGetSessionRooms.ts",
+			"summary": "API client module for apiGetSessionRooms, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "session", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiGetSessionRooms.ts:apiGetSessionRoomsByGroupIds",
+			"type": "function",
+			"name": "apiGetSessionRoomsByGroupIds",
+			"filePath": "src/api/apiGetSessionRooms.ts",
+			"lineRange": [5, 17],
+			"summary": "Function apiGetSessionRoomsByGroupIds in src/api/apiGetSessionRooms.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiGetSessionRooms.ts:apiGetSessionRoomBySessionId",
+			"type": "function",
+			"name": "apiGetSessionRoomBySessionId",
+			"filePath": "src/api/apiGetSessionRooms.ts",
+			"lineRange": [20, 32],
+			"summary": "Function apiGetSessionRoomBySessionId in src/api/apiGetSessionRooms.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiGetSessionSupervisors.ts",
+			"type": "file",
+			"name": "apiGetSessionSupervisors.ts",
+			"filePath": "src/api/apiGetSessionSupervisors.ts",
+			"summary": "API client module for apiGetSessionSupervisors, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "session", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiGetSessionSupervisors.ts:apiGetSessionSupervisors",
+			"type": "function",
+			"name": "apiGetSessionSupervisors",
+			"filePath": "src/api/apiGetSessionSupervisors.ts",
+			"lineRange": [15, 26],
+			"summary": "Function apiGetSessionSupervisors in src/api/apiGetSessionSupervisors.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiGetTenantAgenciesTopics.ts",
+			"type": "file",
+			"name": "apiGetTenantAgenciesTopics.ts",
+			"filePath": "src/api/apiGetTenantAgenciesTopics.ts",
+			"summary": "API client module for apiGetTenantAgenciesTopics, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiGetTenantAgenciesTopics.ts:apiGetTenantAgenciesTopics",
+			"type": "function",
+			"name": "apiGetTenantAgenciesTopics",
+			"filePath": "src/api/apiGetTenantAgenciesTopics.ts",
+			"lineRange": [9, 17],
+			"summary": "Function apiGetTenantAgenciesTopics in src/api/apiGetTenantAgenciesTopics.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiGetTenantTheming.ts",
+			"type": "file",
+			"name": "apiGetTenantTheming.ts",
+			"filePath": "src/api/apiGetTenantTheming.ts",
+			"summary": "API client module for apiGetTenantTheming, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiGetTenantTheming.ts:apiGetTenantTheming",
+			"type": "function",
+			"name": "apiGetTenantTheming",
+			"filePath": "src/api/apiGetTenantTheming.ts",
+			"lineRange": [7, 19],
+			"summary": "Function apiGetTenantTheming in src/api/apiGetTenantTheming.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiGetTools.ts",
+			"type": "file",
+			"name": "apiGetTools.ts",
+			"filePath": "src/api/apiGetTools.ts",
+			"summary": "API client module for apiGetTools, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiGetTools.ts:apiGetTools",
+			"type": "function",
+			"name": "apiGetTools",
+			"filePath": "src/api/apiGetTools.ts",
+			"lineRange": [5, 17],
+			"summary": "Function apiGetTools in src/api/apiGetTools.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiGetTools.ts:userHasBudibaseTools",
+			"type": "function",
+			"name": "userHasBudibaseTools",
+			"filePath": "src/api/apiGetTools.ts",
+			"lineRange": [16, 28],
+			"summary": "Function userHasBudibaseTools in src/api/apiGetTools.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiGetTopicGroups.ts",
+			"type": "file",
+			"name": "apiGetTopicGroups.ts",
+			"filePath": "src/api/apiGetTopicGroups.ts",
+			"summary": "API client module for apiGetTopicGroups, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiGetTopicGroups.ts:apiGetTopicGroups",
+			"type": "function",
+			"name": "apiGetTopicGroups",
+			"filePath": "src/api/apiGetTopicGroups.ts",
+			"lineRange": [5, 13],
+			"summary": "Function apiGetTopicGroups in src/api/apiGetTopicGroups.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiGetUserData.ts",
+			"type": "file",
+			"name": "apiGetUserData.ts",
+			"filePath": "src/api/apiGetUserData.ts",
+			"summary": "API client module for apiGetUserData, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiGetUserData.ts:apiGetUserData",
+			"type": "function",
+			"name": "apiGetUserData",
+			"filePath": "src/api/apiGetUserData.ts",
+			"lineRange": [6, 18],
+			"summary": "Function apiGetUserData in src/api/apiGetUserData.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		}
+	],
+	"edges": [
+		{
+			"source": "file:src/api/apiDeleteSessionAndUser.ts",
+			"target": "function:src/api/apiDeleteSessionAndUser.ts:apiDeleteSessionAndUser",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiDeleteSessionAndUser.ts",
+			"target": "function:src/api/apiDeleteSessionAndUser.ts:apiDeleteSessionAndUser",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiDeleteSessionAndUser.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiDeleteSessionAndUser.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiDeleteUserFromRoom.ts",
+			"target": "function:src/api/apiDeleteUserFromRoom.ts:apiDeleteUserFromRoom",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiDeleteUserFromRoom.ts",
+			"target": "function:src/api/apiDeleteUserFromRoom.ts:apiDeleteUserFromRoom",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiDeleteUserFromRoom.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiDeleteUserFromRoom.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiDraftMessages.ts",
+			"target": "function:src/api/apiDraftMessages.ts:apiPostDraftMessage",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiDraftMessages.ts",
+			"target": "function:src/api/apiDraftMessages.ts:apiPostDraftMessage",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiDraftMessages.ts",
+			"target": "function:src/api/apiDraftMessages.ts:apiGetDraftMessage",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiDraftMessages.ts",
+			"target": "function:src/api/apiDraftMessages.ts:apiGetDraftMessage",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiDraftMessages.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiDraftMessages.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiEnquiryAcceptance.ts",
+			"target": "function:src/api/apiEnquiryAcceptance.ts:apiEnquiryAcceptance",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiEnquiryAcceptance.ts",
+			"target": "function:src/api/apiEnquiryAcceptance.ts:apiEnquiryAcceptance",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiEnquiryAcceptance.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiEnquiryAcceptance.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiEventNotifications.ts",
+			"target": "function:src/api/apiEventNotifications.ts:apiGetEventNotifications",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiEventNotifications.ts",
+			"target": "function:src/api/apiEventNotifications.ts:apiGetEventNotifications",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiEventNotifications.ts",
+			"target": "function:src/api/apiEventNotifications.ts:apiMarkEventNotificationRead",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiEventNotifications.ts",
+			"target": "function:src/api/apiEventNotifications.ts:apiMarkEventNotificationRead",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiEventNotifications.ts",
+			"target": "function:src/api/apiEventNotifications.ts:apiMarkAllEventNotificationsRead",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiEventNotifications.ts",
+			"target": "function:src/api/apiEventNotifications.ts:apiMarkAllEventNotificationsRead",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiEventNotifications.ts",
+			"target": "function:src/api/apiEventNotifications.ts:apiClearEventNotifications",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiEventNotifications.ts",
+			"target": "function:src/api/apiEventNotifications.ts:apiClearEventNotifications",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiEventNotifications.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiEventNotifications.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiFrontendSettings.ts",
+			"target": "function:src/api/apiFrontendSettings.ts:apiFrontendSettings",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiFrontendSettings.ts",
+			"target": "function:src/api/apiFrontendSettings.ts:apiFrontendSettings",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiFrontendSettings.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiFrontendSettings.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiFrontendSettings.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetAgenciesByTenant.ts",
+			"target": "function:src/api/apiGetAgenciesByTenant.ts:apiGetAgenciesByTenant",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiGetAgenciesByTenant.ts",
+			"target": "function:src/api/apiGetAgenciesByTenant.ts:apiGetAgenciesByTenant",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiGetAgenciesByTenant.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetAgenciesByTenant.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetAgencyId.ts",
+			"target": "function:src/api/apiGetAgencyId.ts:apiGetAgencyById",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiGetAgencyId.ts",
+			"target": "function:src/api/apiGetAgencyId.ts:apiGetAgencyById",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiGetAgencyId.ts",
+			"target": "file:src/api/apiGetConsultingType.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetAgencyId.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetAgencyId.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetAgencyId.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetAnonymousEnquiryDetails.ts",
+			"target": "function:src/api/apiGetAnonymousEnquiryDetails.ts:apiGetAnonymousEnquiryDetails",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiGetAnonymousEnquiryDetails.ts",
+			"target": "function:src/api/apiGetAnonymousEnquiryDetails.ts:apiGetAnonymousEnquiryDetails",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiGetAnonymousEnquiryDetails.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetAnonymousEnquiryDetails.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetApiAppointmentServiceEventTypes.ts",
+			"target": "function:src/api/apiGetApiAppointmentServiceEventTypes.ts:getCounselorAppointmentLink",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiGetApiAppointmentServiceEventTypes.ts",
+			"target": "function:src/api/apiGetApiAppointmentServiceEventTypes.ts:getCounselorAppointmentLink",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiGetApiAppointmentServiceEventTypes.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetApiAppointmentServiceEventTypes.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetAppointmentServiceTeam.ts",
+			"target": "function:src/api/apiGetAppointmentServiceTeam.ts:getTeamAppointmentLink",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiGetAppointmentServiceTeam.ts",
+			"target": "function:src/api/apiGetAppointmentServiceTeam.ts:getTeamAppointmentLink",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiGetAppointmentServiceTeam.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetAppointmentServiceTeam.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetAppointmentsServiceBookingEventsByUserId.ts",
+			"target": "function:src/api/apiGetAppointmentsServiceBookingEventsByUserId.ts:apiAppointmentsServiceBookingEventsByAskerId",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiGetAppointmentsServiceBookingEventsByUserId.ts",
+			"target": "function:src/api/apiGetAppointmentsServiceBookingEventsByUserId.ts:apiAppointmentsServiceBookingEventsByAskerId",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiGetAppointmentsServiceBookingEventsByUserId.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetAppointmentsServiceBookingEventsByUserId.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetAppointmentsServiceBookingEventsByUserId.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetAskerSessionList.ts",
+			"target": "function:src/api/apiGetAskerSessionList.ts:apiGetAskerSessionList",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiGetAskerSessionList.ts",
+			"target": "function:src/api/apiGetAskerSessionList.ts:apiGetAskerSessionList",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiGetAskerSessionList.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetAskerSessionList.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetAskerSessionList.ts",
+			"target": "file:src/utils/keycloakSession.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetCalDavAccount.ts",
+			"target": "function:src/api/apiGetCalDavAccount.ts:apiHasCalDavAccount",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiGetCalDavAccount.ts",
+			"target": "function:src/api/apiGetCalDavAccount.ts:apiHasCalDavAccount",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiGetCalDavAccount.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetCalDavAccount.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetChatRoomById.ts",
+			"target": "function:src/api/apiGetChatRoomById.ts:apiGetChatRoomById",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiGetChatRoomById.ts",
+			"target": "function:src/api/apiGetChatRoomById.ts:apiGetChatRoomById",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiGetChatRoomById.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetChatRoomById.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetChatRoomById.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetConsultant.ts",
+			"target": "function:src/api/apiGetConsultant.ts:apiGetConsultant",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiGetConsultant.ts",
+			"target": "function:src/api/apiGetConsultant.ts:apiGetConsultant",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiGetConsultant.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetConsultant.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetConsultant.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetConsultant.ts",
+			"target": "file:src/utils/loadConsultingTypesForAgencies.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetConsultantSessionList.ts",
+			"target": "function:src/api/apiGetConsultantSessionList.ts:apiGetConsultantSessionList",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiGetConsultantSessionList.ts",
+			"target": "function:src/api/apiGetConsultantSessionList.ts:apiGetConsultantSessionList",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiGetConsultantSessionList.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetConsultantSessionList.ts",
+			"target": "file:src/components/session/sessionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetConsultantSessionList.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetConsultantSessionList.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetConsultantStatistics.ts",
+			"target": "function:src/api/apiGetConsultantStatistics.ts:apiGetConsultantStatistics",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiGetConsultantStatistics.ts",
+			"target": "function:src/api/apiGetConsultantStatistics.ts:apiGetConsultantStatistics",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiGetConsultantStatistics.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetConsultantStatistics.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetConsultingType.ts",
+			"target": "function:src/api/apiGetConsultingType.ts:apiGetConsultingType",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiGetConsultingType.ts",
+			"target": "function:src/api/apiGetConsultingType.ts:apiGetConsultingType",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiGetConsultingType.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetConsultingType.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetConsultingType.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetConsultingTypes.ts",
+			"target": "function:src/api/apiGetConsultingTypes.ts:apiGetConsultingTypes",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiGetConsultingTypes.ts",
+			"target": "function:src/api/apiGetConsultingTypes.ts:apiGetConsultingTypes",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiGetConsultingTypes.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetConsultingTypes.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetConsultingTypes.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetGroupChatInfo.ts",
+			"target": "function:src/api/apiGetGroupChatInfo.ts:apiGetGroupChatInfo",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiGetGroupChatInfo.ts",
+			"target": "function:src/api/apiGetGroupChatInfo.ts:apiGetGroupChatInfo",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiGetGroupChatInfo.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetGroupChatInfo.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetIsUsernameAvailable.ts",
+			"target": "function:src/api/apiGetIsUsernameAvailable.ts:apiGetIsUsernameAvailable",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiGetIsUsernameAvailable.ts",
+			"target": "function:src/api/apiGetIsUsernameAvailable.ts:apiGetIsUsernameAvailable",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiGetIsUsernameAvailable.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetIsUsernameAvailable.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetSessionData.ts",
+			"target": "function:src/api/apiGetSessionData.ts:apiGetSessionData",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiGetSessionData.ts",
+			"target": "function:src/api/apiGetSessionData.ts:apiGetSessionData",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiGetSessionData.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetSessionData.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetSessionRooms.ts",
+			"target": "function:src/api/apiGetSessionRooms.ts:apiGetSessionRoomsByGroupIds",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiGetSessionRooms.ts",
+			"target": "function:src/api/apiGetSessionRooms.ts:apiGetSessionRoomsByGroupIds",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiGetSessionRooms.ts",
+			"target": "function:src/api/apiGetSessionRooms.ts:apiGetSessionRoomBySessionId",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiGetSessionRooms.ts",
+			"target": "function:src/api/apiGetSessionRooms.ts:apiGetSessionRoomBySessionId",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiGetSessionRooms.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetSessionRooms.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetSessionRooms.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetSessionSupervisors.ts",
+			"target": "function:src/api/apiGetSessionSupervisors.ts:apiGetSessionSupervisors",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiGetSessionSupervisors.ts",
+			"target": "function:src/api/apiGetSessionSupervisors.ts:apiGetSessionSupervisors",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiGetSessionSupervisors.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetSessionSupervisors.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetTenantAgenciesTopics.ts",
+			"target": "function:src/api/apiGetTenantAgenciesTopics.ts:apiGetTenantAgenciesTopics",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiGetTenantAgenciesTopics.ts",
+			"target": "function:src/api/apiGetTenantAgenciesTopics.ts:apiGetTenantAgenciesTopics",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiGetTenantAgenciesTopics.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetTenantAgenciesTopics.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetTenantTheming.ts",
+			"target": "function:src/api/apiGetTenantTheming.ts:apiGetTenantTheming",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiGetTenantTheming.ts",
+			"target": "function:src/api/apiGetTenantTheming.ts:apiGetTenantTheming",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiGetTenantTheming.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetTenantTheming.ts",
+			"target": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetTenantTheming.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetTenantTheming.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetTenantTheming.ts",
+			"target": "file:src/utils/parseJWT.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetTools.ts",
+			"target": "function:src/api/apiGetTools.ts:apiGetTools",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiGetTools.ts",
+			"target": "function:src/api/apiGetTools.ts:apiGetTools",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiGetTools.ts",
+			"target": "function:src/api/apiGetTools.ts:userHasBudibaseTools",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiGetTools.ts",
+			"target": "function:src/api/apiGetTools.ts:userHasBudibaseTools",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiGetTools.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetTools.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetTools.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetTopicGroups.ts",
+			"target": "function:src/api/apiGetTopicGroups.ts:apiGetTopicGroups",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiGetTopicGroups.ts",
+			"target": "function:src/api/apiGetTopicGroups.ts:apiGetTopicGroups",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiGetTopicGroups.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetTopicGroups.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetTopicGroups.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetUserData.ts",
+			"target": "function:src/api/apiGetUserData.ts:apiGetUserData",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiGetUserData.ts",
+			"target": "function:src/api/apiGetUserData.ts:apiGetUserData",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiGetUserData.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetUserData.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetUserData.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiGetUserData.ts",
+			"target": "file:src/utils/keycloakSession.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		}
+	]
+}

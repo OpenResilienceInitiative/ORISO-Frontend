@@ -1,0 +1,2428 @@
+{
+	"nodes": [
+		{
+			"id": "file:src/components/profile/ConsultantInformation.tsx",
+			"type": "file",
+			"name": "ConsultantInformation.tsx",
+			"filePath": "src/components/profile/ConsultantInformation.tsx",
+			"summary": "React UI module for component profile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-profile"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/profile/ConsultantInformation.tsx:ConsultantInformation",
+			"type": "function",
+			"name": "ConsultantInformation",
+			"filePath": "src/components/profile/ConsultantInformation.tsx",
+			"lineRange": [25, 37],
+			"summary": "Function ConsultantInformation in src/components/profile/ConsultantInformation.tsx, used by the surrounding component profile module.",
+			"tags": ["function", "component-profile", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/profile/ConsultantNotifications.tsx",
+			"type": "file",
+			"name": "ConsultantNotifications.tsx",
+			"filePath": "src/components/profile/ConsultantNotifications.tsx",
+			"summary": "React UI module for component profile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-profile"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/profile/ConsultantNotifications.tsx:ConsultantNotifications",
+			"type": "function",
+			"name": "ConsultantNotifications",
+			"filePath": "src/components/profile/ConsultantNotifications.tsx",
+			"lineRange": [11, 23],
+			"summary": "Function ConsultantNotifications in src/components/profile/ConsultantNotifications.tsx, used by the surrounding component profile module.",
+			"tags": ["function", "component-profile", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/profile/ConsultantStatistics.tsx",
+			"type": "file",
+			"name": "ConsultantStatistics.tsx",
+			"filePath": "src/components/profile/ConsultantStatistics.tsx",
+			"summary": "React UI module for component profile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-profile"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/profile/ConsultantStatistics.tsx:ConsultantStatistics",
+			"type": "function",
+			"name": "ConsultantStatistics",
+			"filePath": "src/components/profile/ConsultantStatistics.tsx",
+			"lineRange": [62, 74],
+			"summary": "Function ConsultantStatistics in src/components/profile/ConsultantStatistics.tsx, used by the surrounding component profile module.",
+			"tags": ["function", "component-profile", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/profile/Documentation/index.tsx",
+			"type": "file",
+			"name": "index.tsx",
+			"filePath": "src/components/profile/Documentation/index.tsx",
+			"summary": "React UI module for component profile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-profile"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/profile/Documentation/index.tsx:Documentation",
+			"type": "function",
+			"name": "Documentation",
+			"filePath": "src/components/profile/Documentation/index.tsx",
+			"lineRange": [9, 21],
+			"summary": "Function Documentation in src/components/profile/Documentation/index.tsx, used by the surrounding component profile module.",
+			"tags": ["function", "component-profile", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/profile/EmailNotifications/EmailToggle/index.tsx",
+			"type": "file",
+			"name": "index.tsx",
+			"filePath": "src/components/profile/EmailNotifications/EmailToggle/index.tsx",
+			"summary": "React UI module for component profile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-profile"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/profile/EmailNotifications/EmailToggle/index.tsx:EmailToggle",
+			"type": "function",
+			"name": "EmailToggle",
+			"filePath": "src/components/profile/EmailNotifications/EmailToggle/index.tsx",
+			"lineRange": [16, 28],
+			"summary": "Function EmailToggle in src/components/profile/EmailNotifications/EmailToggle/index.tsx, used by the surrounding component profile module.",
+			"tags": ["function", "component-profile", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/profile/EmailNotifications/NoEmailSet/index.tsx",
+			"type": "file",
+			"name": "index.tsx",
+			"filePath": "src/components/profile/EmailNotifications/NoEmailSet/index.tsx",
+			"summary": "React UI module for component profile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-profile"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/profile/EmailNotifications/NoEmailSet/index.tsx:NoEmailSet",
+			"type": "function",
+			"name": "NoEmailSet",
+			"filePath": "src/components/profile/EmailNotifications/NoEmailSet/index.tsx",
+			"lineRange": [9, 21],
+			"summary": "Function NoEmailSet in src/components/profile/EmailNotifications/NoEmailSet/index.tsx, used by the surrounding component profile module.",
+			"tags": ["function", "component-profile", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/profile/EmailNotifications/SetEmailModal/index.tsx",
+			"type": "file",
+			"name": "index.tsx",
+			"filePath": "src/components/profile/EmailNotifications/SetEmailModal/index.tsx",
+			"summary": "React UI module for component profile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-profile"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/profile/EmailNotifications/SetEmailModal/index.tsx:SetEmailModal",
+			"type": "function",
+			"name": "SetEmailModal",
+			"filePath": "src/components/profile/EmailNotifications/SetEmailModal/index.tsx",
+			"lineRange": [21, 33],
+			"summary": "Function SetEmailModal in src/components/profile/EmailNotifications/SetEmailModal/index.tsx, used by the surrounding component profile module.",
+			"tags": ["function", "component-profile", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/profile/EmailNotifications/index.tsx",
+			"type": "file",
+			"name": "index.tsx",
+			"filePath": "src/components/profile/EmailNotifications/index.tsx",
+			"summary": "React UI module for component profile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-profile"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/profile/EmailNotifications/index.tsx:EmailNotification",
+			"type": "function",
+			"name": "EmailNotification",
+			"filePath": "src/components/profile/EmailNotifications/index.tsx",
+			"lineRange": [9, 21],
+			"summary": "Function EmailNotification in src/components/profile/EmailNotifications/index.tsx, used by the surrounding component profile module.",
+			"tags": ["function", "component-profile", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/profile/EnableWalkthrough.tsx",
+			"type": "file",
+			"name": "EnableWalkthrough.tsx",
+			"filePath": "src/components/profile/EnableWalkthrough.tsx",
+			"summary": "React UI module for component profile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-profile"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/profile/EnableWalkthrough.tsx:EnableWalkthrough",
+			"type": "function",
+			"name": "EnableWalkthrough",
+			"filePath": "src/components/profile/EnableWalkthrough.tsx",
+			"lineRange": [11, 23],
+			"summary": "Function EnableWalkthrough in src/components/profile/EnableWalkthrough.tsx, used by the surrounding component profile module.",
+			"tags": ["function", "component-profile", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/profile/LiveChatAvailability.tsx",
+			"type": "file",
+			"name": "LiveChatAvailability.tsx",
+			"filePath": "src/components/profile/LiveChatAvailability.tsx",
+			"summary": "React UI module for component profile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-profile"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/profile/LiveChatAvailability.tsx:LiveChatAvailability",
+			"type": "function",
+			"name": "LiveChatAvailability",
+			"filePath": "src/components/profile/LiveChatAvailability.tsx",
+			"lineRange": [10, 22],
+			"summary": "Function LiveChatAvailability in src/components/profile/LiveChatAvailability.tsx, used by the surrounding component profile module.",
+			"tags": ["function", "component-profile", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/profile/Locale.tsx",
+			"type": "file",
+			"name": "Locale.tsx",
+			"filePath": "src/components/profile/Locale.tsx",
+			"summary": "React UI module for component profile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "i18n", "utility", "component-profile"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/profile/Locale.tsx:Locale",
+			"type": "function",
+			"name": "Locale",
+			"filePath": "src/components/profile/Locale.tsx",
+			"lineRange": [11, 23],
+			"summary": "Function Locale in src/components/profile/Locale.tsx, used by the surrounding component profile module.",
+			"tags": ["function", "component-profile", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/profile/MagicLinksLoginFeature.tsx",
+			"type": "file",
+			"name": "MagicLinksLoginFeature.tsx",
+			"filePath": "src/components/profile/MagicLinksLoginFeature.tsx",
+			"summary": "React UI module for component profile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"authentication",
+				"utility",
+				"component-profile"
+			],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/profile/MagicLinksLoginFeature.tsx:MagicLinksLoginFeature",
+			"type": "function",
+			"name": "MagicLinksLoginFeature",
+			"filePath": "src/components/profile/MagicLinksLoginFeature.tsx",
+			"lineRange": [11, 23],
+			"summary": "Function MagicLinksLoginFeature in src/components/profile/MagicLinksLoginFeature.tsx, used by the surrounding component profile module.",
+			"tags": ["function", "component-profile", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/profile/OverviewMobile/Bookings/index.tsx",
+			"type": "file",
+			"name": "index.tsx",
+			"filePath": "src/components/profile/OverviewMobile/Bookings/index.tsx",
+			"summary": "React UI module for component profile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-profile"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/profile/OverviewMobile/Bookings/index.tsx:OverviewBookings",
+			"type": "function",
+			"name": "OverviewBookings",
+			"filePath": "src/components/profile/OverviewMobile/Bookings/index.tsx",
+			"lineRange": [9, 21],
+			"summary": "Function OverviewBookings in src/components/profile/OverviewMobile/Bookings/index.tsx, used by the surrounding component profile module.",
+			"tags": ["function", "component-profile", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/profile/profile.routes.ts",
+			"type": "file",
+			"name": "profile.routes.ts",
+			"filePath": "src/components/profile/profile.routes.ts",
+			"summary": "React UI module for component profile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-profile", "code"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/profile/profileHelp.routes.ts",
+			"type": "file",
+			"name": "profileHelp.routes.ts",
+			"filePath": "src/components/profile/profileHelp.routes.ts",
+			"summary": "React UI module for component profile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-profile"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/profile/profileHelp.routes.ts:profileRoutesHelp",
+			"type": "function",
+			"name": "profileRoutesHelp",
+			"filePath": "src/components/profile/profileHelp.routes.ts",
+			"lineRange": [10, 22],
+			"summary": "Function profileRoutesHelp in src/components/profile/profileHelp.routes.ts, used by the surrounding component profile module.",
+			"tags": ["function", "component-profile", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/profile/profileSettings.routes.ts",
+			"type": "file",
+			"name": "profileSettings.routes.ts",
+			"filePath": "src/components/profile/profileSettings.routes.ts",
+			"summary": "React UI module for component profile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-profile"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/profile/profileSettings.routes.ts:profileRoutesSettings",
+			"type": "function",
+			"name": "profileRoutesSettings",
+			"filePath": "src/components/profile/profileSettings.routes.ts",
+			"lineRange": [16, 28],
+			"summary": "Function profileRoutesSettings in src/components/profile/profileSettings.routes.ts, used by the surrounding component profile module.",
+			"tags": ["function", "component-profile", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/radioButton/RadioButton.stories.ts",
+			"type": "file",
+			"name": "RadioButton.stories.ts",
+			"filePath": "src/components/radioButton/RadioButton.stories.ts",
+			"summary": "React UI module for component radio button, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["storybook", "component", "component-radio-button"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/radioButton/RadioButton.tsx",
+			"type": "file",
+			"name": "RadioButton.tsx",
+			"filePath": "src/components/radioButton/RadioButton.tsx",
+			"summary": "React UI module for component radio button, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-radio-button"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/radioButton/RadioButton.tsx:RadioButton",
+			"type": "function",
+			"name": "RadioButton",
+			"filePath": "src/components/radioButton/RadioButton.tsx",
+			"lineRange": [17, 29],
+			"summary": "Function RadioButton in src/components/radioButton/RadioButton.tsx, used by the surrounding component radio button module.",
+			"tags": ["function", "component-radio-button", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/registration/registrationHelpers.ts",
+			"type": "file",
+			"name": "registrationHelpers.ts",
+			"filePath": "src/components/registration/registrationHelpers.ts",
+			"summary": "React UI module for component registration, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-registration"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/registration/registrationHelpers.ts:VALIDITY_INITIAL",
+			"type": "function",
+			"name": "VALIDITY_INITIAL",
+			"filePath": "src/components/registration/registrationHelpers.ts",
+			"lineRange": [1, 13],
+			"summary": "Function VALIDITY_INITIAL in src/components/registration/registrationHelpers.ts, used by the surrounding component registration module.",
+			"tags": ["function", "component-registration", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/registration/registrationHelpers.ts:VALIDITY_VALID",
+			"type": "function",
+			"name": "VALIDITY_VALID",
+			"filePath": "src/components/registration/registrationHelpers.ts",
+			"lineRange": [2, 14],
+			"summary": "Function VALIDITY_VALID in src/components/registration/registrationHelpers.ts, used by the surrounding component registration module.",
+			"tags": ["function", "component-registration", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/registration/registrationHelpers.ts:VALIDITY_INVALID",
+			"type": "function",
+			"name": "VALIDITY_INVALID",
+			"filePath": "src/components/registration/registrationHelpers.ts",
+			"lineRange": [3, 15],
+			"summary": "Function VALIDITY_INVALID in src/components/registration/registrationHelpers.ts, used by the surrounding component registration module.",
+			"tags": ["function", "component-registration", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/registration/registrationHelpers.ts:MIN_USERNAME_LENGTH",
+			"type": "function",
+			"name": "MIN_USERNAME_LENGTH",
+			"filePath": "src/components/registration/registrationHelpers.ts",
+			"lineRange": [10, 22],
+			"summary": "Function MIN_USERNAME_LENGTH in src/components/registration/registrationHelpers.ts, used by the surrounding component registration module.",
+			"tags": ["function", "component-registration", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/registration/registrationHelpers.ts:isStringValidEmail",
+			"type": "function",
+			"name": "isStringValidEmail",
+			"filePath": "src/components/registration/registrationHelpers.ts",
+			"lineRange": [12, 24],
+			"summary": "Function isStringValidEmail in src/components/registration/registrationHelpers.ts, used by the surrounding component registration module.",
+			"tags": ["function", "component-registration", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/registration/registrationHelpers.ts:getOptionOfSelectedValue",
+			"type": "function",
+			"name": "getOptionOfSelectedValue",
+			"filePath": "src/components/registration/registrationHelpers.ts",
+			"lineRange": [17, 29],
+			"summary": "Function getOptionOfSelectedValue in src/components/registration/registrationHelpers.ts, used by the surrounding component registration module.",
+			"tags": ["function", "component-registration", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/registration/registrationHelpers.ts:getValidationClassNames",
+			"type": "function",
+			"name": "getValidationClassNames",
+			"filePath": "src/components/registration/registrationHelpers.ts",
+			"lineRange": [21, 33],
+			"summary": "Function getValidationClassNames in src/components/registration/registrationHelpers.ts, used by the surrounding component registration module.",
+			"tags": ["function", "component-registration", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/select/LanguageSelectDropdown.tsx",
+			"type": "file",
+			"name": "LanguageSelectDropdown.tsx",
+			"filePath": "src/components/select/LanguageSelectDropdown.tsx",
+			"summary": "React UI module for component select, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-select"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/select/LanguageSelectDropdown.tsx:MENUPLACEMENT_TOP",
+			"type": "function",
+			"name": "MENUPLACEMENT_TOP",
+			"filePath": "src/components/select/LanguageSelectDropdown.tsx",
+			"lineRange": [29, 41],
+			"summary": "Function MENUPLACEMENT_TOP in src/components/select/LanguageSelectDropdown.tsx, used by the surrounding component select module.",
+			"tags": ["function", "component-select", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/select/LanguageSelectDropdown.tsx:MENUPLACEMENT_BOTTOM",
+			"type": "function",
+			"name": "MENUPLACEMENT_BOTTOM",
+			"filePath": "src/components/select/LanguageSelectDropdown.tsx",
+			"lineRange": [30, 42],
+			"summary": "Function MENUPLACEMENT_BOTTOM in src/components/select/LanguageSelectDropdown.tsx, used by the surrounding component select module.",
+			"tags": ["function", "component-select", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/select/LanguageSelectDropdown.tsx:MENUPLACEMENT_RIGHT",
+			"type": "function",
+			"name": "MENUPLACEMENT_RIGHT",
+			"filePath": "src/components/select/LanguageSelectDropdown.tsx",
+			"lineRange": [31, 43],
+			"summary": "Function MENUPLACEMENT_RIGHT in src/components/select/LanguageSelectDropdown.tsx, used by the surrounding component select module.",
+			"tags": ["function", "component-select", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/select/LanguageSelectDropdown.tsx:MENUPLACEMENT_BOTTOM_LEFT",
+			"type": "function",
+			"name": "MENUPLACEMENT_BOTTOM_LEFT",
+			"filePath": "src/components/select/LanguageSelectDropdown.tsx",
+			"lineRange": [32, 44],
+			"summary": "Function MENUPLACEMENT_BOTTOM_LEFT in src/components/select/LanguageSelectDropdown.tsx, used by the surrounding component select module.",
+			"tags": ["function", "component-select", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/select/LanguageSelectDropdown.tsx:LanguageSelectDropdown",
+			"type": "function",
+			"name": "LanguageSelectDropdown",
+			"filePath": "src/components/select/LanguageSelectDropdown.tsx",
+			"lineRange": [360, 372],
+			"summary": "Function LanguageSelectDropdown in src/components/select/LanguageSelectDropdown.tsx, used by the surrounding component select module.",
+			"tags": ["function", "component-select", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/serviceExplanation/ServiceExplanation.tsx",
+			"type": "file",
+			"name": "ServiceExplanation.tsx",
+			"filePath": "src/components/serviceExplanation/ServiceExplanation.tsx",
+			"summary": "React UI module for component service explanation, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-service-explanation"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/serviceExplanation/ServiceExplanation.tsx:ServiceExplanation",
+			"type": "function",
+			"name": "ServiceExplanation",
+			"filePath": "src/components/serviceExplanation/ServiceExplanation.tsx",
+			"lineRange": [19, 31],
+			"summary": "Function ServiceExplanation in src/components/serviceExplanation/ServiceExplanation.tsx, used by the surrounding component service explanation module.",
+			"tags": ["function", "component-service-explanation", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/sessionHeader/GroupChatHeader/useStartVideoCall/index.ts",
+			"type": "file",
+			"name": "index.ts",
+			"filePath": "src/components/sessionHeader/GroupChatHeader/useStartVideoCall/index.ts",
+			"summary": "React UI module for component session header, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"session",
+				"utility",
+				"component-session-header"
+			],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/sessionHeader/GroupChatHeader/useStartVideoCall/index.ts:useStartVideoCall",
+			"type": "function",
+			"name": "useStartVideoCall",
+			"filePath": "src/components/sessionHeader/GroupChatHeader/useStartVideoCall/index.ts",
+			"lineRange": [4, 16],
+			"summary": "Function useStartVideoCall in src/components/sessionHeader/GroupChatHeader/useStartVideoCall/index.ts, used by the surrounding component session header module.",
+			"tags": ["function", "component-session-header", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/sessionsListItem/SessionListItem.stories.tsx",
+			"type": "file",
+			"name": "SessionListItem.stories.tsx",
+			"filePath": "src/components/sessionsListItem/SessionListItem.stories.tsx",
+			"summary": "React UI module for component sessions list item, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"storybook",
+				"component",
+				"session",
+				"utility",
+				"component-sessions-list-item"
+			],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/sessionsListItem/SessionListItem.stories.tsx:MockAvatar",
+			"type": "function",
+			"name": "MockAvatar",
+			"filePath": "src/components/sessionsListItem/SessionListItem.stories.tsx",
+			"lineRange": [15, 27],
+			"summary": "Function MockAvatar in src/components/sessionsListItem/SessionListItem.stories.tsx, used by the surrounding component sessions list item module.",
+			"tags": ["function", "component-sessions-list-item", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionsListItem/SessionListItem.stories.tsx:ConsultantCardMock",
+			"type": "function",
+			"name": "ConsultantCardMock",
+			"filePath": "src/components/sessionsListItem/SessionListItem.stories.tsx",
+			"lineRange": [39, 51],
+			"summary": "Function ConsultantCardMock in src/components/sessionsListItem/SessionListItem.stories.tsx, used by the surrounding component sessions list item module.",
+			"tags": ["function", "component-sessions-list-item", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionsListItem/SessionListItem.stories.tsx:GroupCardMock",
+			"type": "function",
+			"name": "GroupCardMock",
+			"filePath": "src/components/sessionsListItem/SessionListItem.stories.tsx",
+			"lineRange": [109, 121],
+			"summary": "Function GroupCardMock in src/components/sessionsListItem/SessionListItem.stories.tsx, used by the surrounding component sessions list item module.",
+			"tags": ["function", "component-sessions-list-item", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionsListItem/SessionListItem.stories.tsx:PostcodeOnlyCardMock",
+			"type": "function",
+			"name": "PostcodeOnlyCardMock",
+			"filePath": "src/components/sessionsListItem/SessionListItem.stories.tsx",
+			"lineRange": [173, 185],
+			"summary": "Function PostcodeOnlyCardMock in src/components/sessionsListItem/SessionListItem.stories.tsx, used by the surrounding component sessions list item module.",
+			"tags": ["function", "component-sessions-list-item", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/text/Text.stories.ts",
+			"type": "file",
+			"name": "Text.stories.ts",
+			"filePath": "src/components/text/Text.stories.ts",
+			"summary": "React UI module for component text, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["storybook", "component", "component-text"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/text/Text.tsx",
+			"type": "file",
+			"name": "Text.tsx",
+			"filePath": "src/components/text/Text.tsx",
+			"summary": "React UI module for component text, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-text"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/text/Text.tsx:Text",
+			"type": "function",
+			"name": "Text",
+			"filePath": "src/components/text/Text.tsx",
+			"lineRange": [26, 38],
+			"summary": "Function Text in src/components/text/Text.tsx, used by the surrounding component text module.",
+			"tags": ["function", "component-text", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/tools/Tool.tsx",
+			"type": "file",
+			"name": "Tool.tsx",
+			"filePath": "src/components/tools/Tool.tsx",
+			"summary": "React UI module for component tools, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-tools"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/tools/Tool.tsx:Tool",
+			"type": "function",
+			"name": "Tool",
+			"filePath": "src/components/tools/Tool.tsx",
+			"lineRange": [11, 23],
+			"summary": "Function Tool in src/components/tools/Tool.tsx, used by the surrounding component tools module.",
+			"tags": ["function", "component-tools", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/tools/ToolsList.tsx",
+			"type": "file",
+			"name": "ToolsList.tsx",
+			"filePath": "src/components/tools/ToolsList.tsx",
+			"summary": "React UI module for component tools, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-tools"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/tools/ToolsList.tsx:ToolsList",
+			"type": "function",
+			"name": "ToolsList",
+			"filePath": "src/components/tools/ToolsList.tsx",
+			"lineRange": [12, 24],
+			"summary": "Function ToolsList in src/components/tools/ToolsList.tsx, used by the surrounding component tools module.",
+			"tags": ["function", "component-tools", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/tooltip/Tooltip.tsx",
+			"type": "file",
+			"name": "Tooltip.tsx",
+			"filePath": "src/components/tooltip/Tooltip.tsx",
+			"summary": "React UI module for component tooltip, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-tooltip"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/tooltip/Tooltip.tsx:DIRECTION_TOP",
+			"type": "function",
+			"name": "DIRECTION_TOP",
+			"filePath": "src/components/tooltip/Tooltip.tsx",
+			"lineRange": [6, 18],
+			"summary": "Function DIRECTION_TOP in src/components/tooltip/Tooltip.tsx, used by the surrounding component tooltip module.",
+			"tags": ["function", "component-tooltip", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/tooltip/Tooltip.tsx:DIRECTION_BOTTOM",
+			"type": "function",
+			"name": "DIRECTION_BOTTOM",
+			"filePath": "src/components/tooltip/Tooltip.tsx",
+			"lineRange": [7, 19],
+			"summary": "Function DIRECTION_BOTTOM in src/components/tooltip/Tooltip.tsx, used by the surrounding component tooltip module.",
+			"tags": ["function", "component-tooltip", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/tooltip/Tooltip.tsx:DIRECTION_LEFT",
+			"type": "function",
+			"name": "DIRECTION_LEFT",
+			"filePath": "src/components/tooltip/Tooltip.tsx",
+			"lineRange": [8, 20],
+			"summary": "Function DIRECTION_LEFT in src/components/tooltip/Tooltip.tsx, used by the surrounding component tooltip module.",
+			"tags": ["function", "component-tooltip", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/tooltip/Tooltip.tsx:DIRECTION_RIGHT",
+			"type": "function",
+			"name": "DIRECTION_RIGHT",
+			"filePath": "src/components/tooltip/Tooltip.tsx",
+			"lineRange": [9, 21],
+			"summary": "Function DIRECTION_RIGHT in src/components/tooltip/Tooltip.tsx, used by the surrounding component tooltip module.",
+			"tags": ["function", "component-tooltip", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/tooltip/Tooltip.tsx:Tooltip",
+			"type": "function",
+			"name": "Tooltip",
+			"filePath": "src/components/tooltip/Tooltip.tsx",
+			"lineRange": [35, 47],
+			"summary": "Function Tooltip in src/components/tooltip/Tooltip.tsx, used by the surrounding component tooltip module.",
+			"tags": ["function", "component-tooltip", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/uiVersionToggle/UIVersionToggle.tsx",
+			"type": "file",
+			"name": "UIVersionToggle.tsx",
+			"filePath": "src/components/uiVersionToggle/UIVersionToggle.tsx",
+			"summary": "React UI module for component ui version toggle, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-ui-version-toggle"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/uiVersionToggle/UIVersionToggle.tsx:UIVersionToggle",
+			"type": "function",
+			"name": "UIVersionToggle",
+			"filePath": "src/components/uiVersionToggle/UIVersionToggle.tsx",
+			"lineRange": [10, 22],
+			"summary": "Function UIVersionToggle in src/components/uiVersionToggle/UIVersionToggle.tsx, used by the surrounding component ui version toggle module.",
+			"tags": ["function", "component-ui-version-toggle", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/containers/bookings/booking.routes.ts",
+			"type": "file",
+			"name": "booking.routes.ts",
+			"filePath": "src/containers/bookings/booking.routes.ts",
+			"summary": "Frontend source file for containers in the ORISO React application.",
+			"tags": ["containers", "code", "frontend"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/containers/bookings/components/AddCalendar/addCalendar.tsx",
+			"type": "file",
+			"name": "addCalendar.tsx",
+			"filePath": "src/containers/bookings/components/AddCalendar/addCalendar.tsx",
+			"summary": "React UI module for containers, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "containers", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/containers/bookings/components/AssignedCalendars/assignedCalendars.tsx",
+			"type": "file",
+			"name": "assignedCalendars.tsx",
+			"filePath": "src/containers/bookings/components/AssignedCalendars/assignedCalendars.tsx",
+			"summary": "React UI module for containers, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "containers"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/containers/bookings/components/AssignedCalendars/assignedCalendars.tsx:AssignedCalendars",
+			"type": "function",
+			"name": "AssignedCalendars",
+			"filePath": "src/containers/bookings/components/AssignedCalendars/assignedCalendars.tsx",
+			"lineRange": [5, 17],
+			"summary": "Function AssignedCalendars in src/containers/bookings/components/AssignedCalendars/assignedCalendars.tsx, used by the surrounding containers module.",
+			"tags": ["function", "containers", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/containers/bookings/components/AvailabilityContainer/availabilityContainer.tsx",
+			"type": "file",
+			"name": "availabilityContainer.tsx",
+			"filePath": "src/containers/bookings/components/AvailabilityContainer/availabilityContainer.tsx",
+			"summary": "React UI module for containers, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "containers"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/containers/bookings/components/AvailabilityContainer/availabilityContainer.tsx:AvailabilityContainer",
+			"type": "function",
+			"name": "AvailabilityContainer",
+			"filePath": "src/containers/bookings/components/AvailabilityContainer/availabilityContainer.tsx",
+			"lineRange": [11, 23],
+			"summary": "Function AvailabilityContainer in src/containers/bookings/components/AvailabilityContainer/availabilityContainer.tsx, used by the surrounding containers module.",
+			"tags": ["function", "containers", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/containers/bookings/components/BookingDescription/bookingDescription.tsx",
+			"type": "file",
+			"name": "bookingDescription.tsx",
+			"filePath": "src/containers/bookings/components/BookingDescription/bookingDescription.tsx",
+			"summary": "React UI module for containers, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "containers"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/containers/bookings/components/BookingDescription/bookingDescription.tsx:BookingDescription",
+			"type": "function",
+			"name": "BookingDescription",
+			"filePath": "src/containers/bookings/components/BookingDescription/bookingDescription.tsx",
+			"lineRange": [8, 20],
+			"summary": "Function BookingDescription in src/containers/bookings/components/BookingDescription/bookingDescription.tsx, used by the surrounding containers module.",
+			"tags": ["function", "containers", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/containers/bookings/components/BookingEventTableColumnAttendee/bookingEventTableColumnAttendee.tsx",
+			"type": "file",
+			"name": "bookingEventTableColumnAttendee.tsx",
+			"filePath": "src/containers/bookings/components/BookingEventTableColumnAttendee/bookingEventTableColumnAttendee.tsx",
+			"summary": "React UI module for containers, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "containers", "code"],
+			"complexity": "simple"
+		}
+	],
+	"edges": [
+		{
+			"source": "file:src/components/profile/ConsultantInformation.tsx",
+			"target": "function:src/components/profile/ConsultantInformation.tsx:ConsultantInformation",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/profile/ConsultantInformation.tsx",
+			"target": "function:src/components/profile/ConsultantInformation.tsx:ConsultantInformation",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/profile/ConsultantInformation.tsx",
+			"target": "file:src/api/apiPatchUserData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/ConsultantInformation.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/ConsultantInformation.tsx",
+			"target": "file:src/components/editableData/EditableData.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/ConsultantInformation.tsx",
+			"target": "file:src/components/generateQrCode/GenerateQrCode.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/ConsultantInformation.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/ConsultantInformation.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/ConsultantInformation.tsx",
+			"target": "file:src/components/tooltip/Tooltip.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/ConsultantInformation.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/ConsultantInformation.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/ConsultantInformation.tsx",
+			"target": "file:src/resources/img/icons.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/ConsultantInformation.tsx",
+			"target": "file:src/utils/clipboardHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/ConsultantNotifications.tsx",
+			"target": "function:src/components/profile/ConsultantNotifications.tsx:ConsultantNotifications",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/profile/ConsultantNotifications.tsx",
+			"target": "function:src/components/profile/ConsultantNotifications.tsx:ConsultantNotifications",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/profile/ConsultantNotifications.tsx",
+			"target": "file:src/api/apiPatchUserData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/ConsultantNotifications.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/ConsultantNotifications.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/ConsultantNotifications.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/ConsultantNotifications.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/ConsultantStatistics.tsx",
+			"target": "function:src/components/profile/ConsultantStatistics.tsx:ConsultantStatistics",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/profile/ConsultantStatistics.tsx",
+			"target": "function:src/components/profile/ConsultantStatistics.tsx:ConsultantStatistics",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/profile/ConsultantStatistics.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/ConsultantStatistics.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/ConsultantStatistics.tsx",
+			"target": "file:src/components/select/SelectDropdown.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/ConsultantStatistics.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/ConsultantStatistics.tsx",
+			"target": "file:src/utils/dateHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/ConsultantStatistics.tsx",
+			"target": "file:src/utils/tenantSettingsHelper.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/Documentation/index.tsx",
+			"target": "function:src/components/profile/Documentation/index.tsx:Documentation",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/profile/Documentation/index.tsx",
+			"target": "function:src/components/profile/Documentation/index.tsx:Documentation",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/profile/Documentation/index.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/Documentation/index.tsx",
+			"target": "file:src/components/profile/Documentation/styles.module.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/Documentation/index.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/EmailNotifications/EmailToggle/index.tsx",
+			"target": "function:src/components/profile/EmailNotifications/EmailToggle/index.tsx:EmailToggle",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/profile/EmailNotifications/EmailToggle/index.tsx",
+			"target": "function:src/components/profile/EmailNotifications/EmailToggle/index.tsx:EmailToggle",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/profile/EmailNotifications/EmailToggle/index.tsx",
+			"target": "file:src/components/Switch/index.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/EmailNotifications/EmailToggle/index.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/EmailNotifications/EmailToggle/index.tsx",
+			"target": "file:src/hooks/useUserMutate.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/EmailNotifications/NoEmailSet/index.tsx",
+			"target": "function:src/components/profile/EmailNotifications/NoEmailSet/index.tsx:NoEmailSet",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/profile/EmailNotifications/NoEmailSet/index.tsx",
+			"target": "function:src/components/profile/EmailNotifications/NoEmailSet/index.tsx:NoEmailSet",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/profile/EmailNotifications/NoEmailSet/index.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/EmailNotifications/NoEmailSet/index.tsx",
+			"target": "file:src/components/profile/EmailNotifications/NoEmailSet/styles.module.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/EmailNotifications/NoEmailSet/index.tsx",
+			"target": "file:src/components/profile/EmailNotifications/SetEmailModal/index.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/EmailNotifications/NoEmailSet/index.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/EmailNotifications/SetEmailModal/index.tsx",
+			"target": "function:src/components/profile/EmailNotifications/SetEmailModal/index.tsx:SetEmailModal",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/profile/EmailNotifications/SetEmailModal/index.tsx",
+			"target": "function:src/components/profile/EmailNotifications/SetEmailModal/index.tsx:SetEmailModal",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/profile/EmailNotifications/SetEmailModal/index.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/EmailNotifications/SetEmailModal/index.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/EmailNotifications/SetEmailModal/index.tsx",
+			"target": "file:src/components/inputField/InputField.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/EmailNotifications/SetEmailModal/index.tsx",
+			"target": "file:src/components/overlay/Overlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/EmailNotifications/SetEmailModal/index.tsx",
+			"target": "file:src/components/registration/registrationHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/EmailNotifications/SetEmailModal/index.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/EmailNotifications/SetEmailModal/index.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/EmailNotifications/SetEmailModal/index.tsx",
+			"target": "file:src/hooks/useUserMutate.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/EmailNotifications/SetEmailModal/index.tsx",
+			"target": "file:src/resources/img/icons.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/EmailNotifications/index.tsx",
+			"target": "function:src/components/profile/EmailNotifications/index.tsx:EmailNotification",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/profile/EmailNotifications/index.tsx",
+			"target": "function:src/components/profile/EmailNotifications/index.tsx:EmailNotification",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/profile/EmailNotifications/index.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/EmailNotifications/index.tsx",
+			"target": "file:src/components/profile/EmailNotifications/EmailToggle/index.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/EmailNotifications/index.tsx",
+			"target": "file:src/components/profile/EmailNotifications/NoEmailSet/index.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/EmailNotifications/index.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/EmailNotifications/index.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/EnableWalkthrough.tsx",
+			"target": "function:src/components/profile/EnableWalkthrough.tsx:EnableWalkthrough",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/profile/EnableWalkthrough.tsx",
+			"target": "function:src/components/profile/EnableWalkthrough.tsx:EnableWalkthrough",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/profile/EnableWalkthrough.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/EnableWalkthrough.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/EnableWalkthrough.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/EnableWalkthrough.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/LiveChatAvailability.tsx",
+			"target": "function:src/components/profile/LiveChatAvailability.tsx:LiveChatAvailability",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/profile/LiveChatAvailability.tsx",
+			"target": "function:src/components/profile/LiveChatAvailability.tsx:LiveChatAvailability",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/profile/LiveChatAvailability.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/LiveChatAvailability.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/LiveChatAvailability.tsx",
+			"target": "file:src/utils/liveChatToggle.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/Locale.tsx",
+			"target": "function:src/components/profile/Locale.tsx:Locale",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/profile/Locale.tsx",
+			"target": "function:src/components/profile/Locale.tsx:Locale",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/profile/Locale.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/Locale.tsx",
+			"target": "file:src/components/select/SelectDropdown.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/Locale.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/Locale.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/MagicLinksLoginFeature.tsx",
+			"target": "function:src/components/profile/MagicLinksLoginFeature.tsx:MagicLinksLoginFeature",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/profile/MagicLinksLoginFeature.tsx",
+			"target": "function:src/components/profile/MagicLinksLoginFeature.tsx:MagicLinksLoginFeature",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/profile/MagicLinksLoginFeature.tsx",
+			"target": "file:src/api/apiPatchUserData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/MagicLinksLoginFeature.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/MagicLinksLoginFeature.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/MagicLinksLoginFeature.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/MagicLinksLoginFeature.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/OverviewMobile/Bookings/index.tsx",
+			"target": "function:src/components/profile/OverviewMobile/Bookings/index.tsx:OverviewBookings",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/profile/OverviewMobile/Bookings/index.tsx",
+			"target": "function:src/components/profile/OverviewMobile/Bookings/index.tsx:OverviewBookings",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/profile/OverviewMobile/Bookings/index.tsx",
+			"target": "file:src/containers/overview/components/BookingEvent/index.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/OverviewMobile/Bookings/index.tsx",
+			"target": "file:src/containers/overview/components/EmptyState/index.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/OverviewMobile/Bookings/index.tsx",
+			"target": "file:src/containers/overview/hooks/useConsultantBookings.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/profile.routes.ts",
+			"target": "file:src/components/profile/AbsenceFormular.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/profile.routes.ts",
+			"target": "file:src/components/profile/AdditionalEnquiry/AdditionalEnquiry.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/profile.routes.ts",
+			"target": "file:src/components/profile/AskerAboutMeData.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/profile.routes.ts",
+			"target": "file:src/components/profile/AskerConsultingTypeData.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/profile.routes.ts",
+			"target": "file:src/components/profile/BrowserNotifications/index.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/profile.routes.ts",
+			"target": "file:src/components/profile/ConsultantAgencies.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/profile.routes.ts",
+			"target": "file:src/components/profile/ConsultantInformation.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/profile.routes.ts",
+			"target": "file:src/components/profile/ConsultantPrivateData.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/profile.routes.ts",
+			"target": "file:src/components/profile/ConsultantSpokenLanguages.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/profile.routes.ts",
+			"target": "file:src/components/profile/ConsultantStatistics.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/profile.routes.ts",
+			"target": "file:src/components/profile/EmailNotifications/index.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/profile.routes.ts",
+			"target": "file:src/components/profile/EnableWalkthrough.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/profile.routes.ts",
+			"target": "file:src/components/profile/LiveChatAvailability.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/profile.routes.ts",
+			"target": "file:src/components/profile/OverviewMobile/Bookings/index.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/profile.routes.ts",
+			"target": "file:src/components/profile/OverviewMobile/Sessions/index.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/profile.routes.ts",
+			"target": "file:src/components/profile/profileHelp.routes.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/profile.routes.ts",
+			"target": "file:src/components/profile/profileSettings.routes.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/profile.routes.ts",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/profile.routes.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/profile.routes.ts",
+			"target": "file:src/utils/notificationHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/profile.routes.ts",
+			"target": "file:src/utils/tabsHelper.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/profileHelp.routes.ts",
+			"target": "function:src/components/profile/profileHelp.routes.ts:profileRoutesHelp",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/profile/profileHelp.routes.ts",
+			"target": "function:src/components/profile/profileHelp.routes.ts:profileRoutesHelp",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/profile/profileHelp.routes.ts",
+			"target": "file:src/components/help/Help.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/profileHelp.routes.ts",
+			"target": "file:src/components/profile/Documentation/index.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/profileHelp.routes.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/profileHelp.routes.ts",
+			"target": "file:src/utils/tabsHelper.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/profileSettings.routes.ts",
+			"target": "function:src/components/profile/profileSettings.routes.ts:profileRoutesSettings",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/profile/profileSettings.routes.ts",
+			"target": "function:src/components/profile/profileSettings.routes.ts:profileRoutesSettings",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/profile/profileSettings.routes.ts",
+			"target": "file:src/components/passwordReset/PasswordReset.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/profileSettings.routes.ts",
+			"target": "file:src/components/profile/ConsultantNotifications.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/profileSettings.routes.ts",
+			"target": "file:src/components/profile/DeleteAccount.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/profileSettings.routes.ts",
+			"target": "file:src/components/profile/Locale.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/profileSettings.routes.ts",
+			"target": "file:src/components/twoFactorAuth/TwoFactorAuth.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/profileSettings.routes.ts",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/profileSettings.routes.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/profileSettings.routes.ts",
+			"target": "file:src/utils/tabsHelper.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/radioButton/RadioButton.stories.ts",
+			"target": "file:src/components/radioButton/RadioButton.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/radioButton/RadioButton.tsx",
+			"target": "function:src/components/radioButton/RadioButton.tsx:RadioButton",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/radioButton/RadioButton.tsx",
+			"target": "function:src/components/radioButton/RadioButton.tsx:RadioButton",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/registration/registrationHelpers.ts",
+			"target": "function:src/components/registration/registrationHelpers.ts:VALIDITY_INITIAL",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/registration/registrationHelpers.ts",
+			"target": "function:src/components/registration/registrationHelpers.ts:VALIDITY_INITIAL",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/registration/registrationHelpers.ts",
+			"target": "function:src/components/registration/registrationHelpers.ts:VALIDITY_VALID",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/registration/registrationHelpers.ts",
+			"target": "function:src/components/registration/registrationHelpers.ts:VALIDITY_VALID",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/registration/registrationHelpers.ts",
+			"target": "function:src/components/registration/registrationHelpers.ts:VALIDITY_INVALID",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/registration/registrationHelpers.ts",
+			"target": "function:src/components/registration/registrationHelpers.ts:VALIDITY_INVALID",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/registration/registrationHelpers.ts",
+			"target": "function:src/components/registration/registrationHelpers.ts:MIN_USERNAME_LENGTH",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/registration/registrationHelpers.ts",
+			"target": "function:src/components/registration/registrationHelpers.ts:MIN_USERNAME_LENGTH",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/registration/registrationHelpers.ts",
+			"target": "function:src/components/registration/registrationHelpers.ts:isStringValidEmail",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/registration/registrationHelpers.ts",
+			"target": "function:src/components/registration/registrationHelpers.ts:isStringValidEmail",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/registration/registrationHelpers.ts",
+			"target": "function:src/components/registration/registrationHelpers.ts:getOptionOfSelectedValue",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/registration/registrationHelpers.ts",
+			"target": "function:src/components/registration/registrationHelpers.ts:getOptionOfSelectedValue",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/registration/registrationHelpers.ts",
+			"target": "function:src/components/registration/registrationHelpers.ts:getValidationClassNames",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/registration/registrationHelpers.ts",
+			"target": "function:src/components/registration/registrationHelpers.ts:getValidationClassNames",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/select/LanguageSelectDropdown.tsx",
+			"target": "function:src/components/select/LanguageSelectDropdown.tsx:MENUPLACEMENT_TOP",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/select/LanguageSelectDropdown.tsx",
+			"target": "function:src/components/select/LanguageSelectDropdown.tsx:MENUPLACEMENT_TOP",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/select/LanguageSelectDropdown.tsx",
+			"target": "function:src/components/select/LanguageSelectDropdown.tsx:MENUPLACEMENT_BOTTOM",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/select/LanguageSelectDropdown.tsx",
+			"target": "function:src/components/select/LanguageSelectDropdown.tsx:MENUPLACEMENT_BOTTOM",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/select/LanguageSelectDropdown.tsx",
+			"target": "function:src/components/select/LanguageSelectDropdown.tsx:MENUPLACEMENT_RIGHT",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/select/LanguageSelectDropdown.tsx",
+			"target": "function:src/components/select/LanguageSelectDropdown.tsx:MENUPLACEMENT_RIGHT",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/select/LanguageSelectDropdown.tsx",
+			"target": "function:src/components/select/LanguageSelectDropdown.tsx:MENUPLACEMENT_BOTTOM_LEFT",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/select/LanguageSelectDropdown.tsx",
+			"target": "function:src/components/select/LanguageSelectDropdown.tsx:MENUPLACEMENT_BOTTOM_LEFT",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/select/LanguageSelectDropdown.tsx",
+			"target": "function:src/components/select/LanguageSelectDropdown.tsx:LanguageSelectDropdown",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/select/LanguageSelectDropdown.tsx",
+			"target": "function:src/components/select/LanguageSelectDropdown.tsx:LanguageSelectDropdown",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/select/LanguageSelectDropdown.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/select/LanguageSelectDropdown.tsx",
+			"target": "file:src/hooks/useResponsive.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/select/LanguageSelectDropdown.tsx",
+			"target": "file:src/resources/img/icons.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/serviceExplanation/ServiceExplanation.tsx",
+			"target": "function:src/components/serviceExplanation/ServiceExplanation.tsx:ServiceExplanation",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/serviceExplanation/ServiceExplanation.tsx",
+			"target": "function:src/components/serviceExplanation/ServiceExplanation.tsx:ServiceExplanation",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/serviceExplanation/ServiceExplanation.tsx",
+			"target": "file:src/components/serviceExplanation/ServiceExplanation.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/serviceExplanation/ServiceExplanation.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/serviceExplanation/ServiceExplanation.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/serviceExplanation/ServiceExplanation.tsx",
+			"target": "file:src/resources/img/icons.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionHeader/GroupChatHeader/useStartVideoCall/index.ts",
+			"target": "function:src/components/sessionHeader/GroupChatHeader/useStartVideoCall/index.ts:useStartVideoCall",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionHeader/GroupChatHeader/useStartVideoCall/index.ts",
+			"target": "function:src/components/sessionHeader/GroupChatHeader/useStartVideoCall/index.ts:useStartVideoCall",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionHeader/GroupChatHeader/useStartVideoCall/index.ts",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItem.stories.tsx",
+			"target": "function:src/components/sessionsListItem/SessionListItem.stories.tsx:MockAvatar",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItem.stories.tsx",
+			"target": "function:src/components/sessionsListItem/SessionListItem.stories.tsx:MockAvatar",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItem.stories.tsx",
+			"target": "function:src/components/sessionsListItem/SessionListItem.stories.tsx:ConsultantCardMock",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItem.stories.tsx",
+			"target": "function:src/components/sessionsListItem/SessionListItem.stories.tsx:ConsultantCardMock",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItem.stories.tsx",
+			"target": "function:src/components/sessionsListItem/SessionListItem.stories.tsx:GroupCardMock",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItem.stories.tsx",
+			"target": "function:src/components/sessionsListItem/SessionListItem.stories.tsx:GroupCardMock",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItem.stories.tsx",
+			"target": "function:src/components/sessionsListItem/SessionListItem.stories.tsx:PostcodeOnlyCardMock",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItem.stories.tsx",
+			"target": "function:src/components/sessionsListItem/SessionListItem.stories.tsx:PostcodeOnlyCardMock",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItem.stories.tsx",
+			"target": "file:src/components/sessionsListItem/sessionsListItem.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItem.stories.tsx",
+			"target": "file:src/resources/img/icons.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/text/Text.stories.ts",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/text/Text.tsx",
+			"target": "function:src/components/text/Text.tsx:Text",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/text/Text.tsx",
+			"target": "function:src/components/text/Text.tsx:Text",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/tools/Tool.tsx",
+			"target": "function:src/components/tools/Tool.tsx:Tool",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/tools/Tool.tsx",
+			"target": "function:src/components/tools/Tool.tsx:Tool",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/tools/Tool.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/tools/Tool.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/tools/Tool.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/tools/Tool.tsx",
+			"target": "file:src/globalState/interfaces/ToolsInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/tools/ToolsList.tsx",
+			"target": "function:src/components/tools/ToolsList.tsx:ToolsList",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/tools/ToolsList.tsx",
+			"target": "function:src/components/tools/ToolsList.tsx:ToolsList",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/tools/ToolsList.tsx",
+			"target": "file:src/api/apiGetTools.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/tools/ToolsList.tsx",
+			"target": "file:src/components/box/Box.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/tools/ToolsList.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/tools/ToolsList.tsx",
+			"target": "file:src/components/tools/Tool.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/tools/ToolsList.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/tools/ToolsList.tsx",
+			"target": "file:src/globalState/interfaces/ToolsInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/tooltip/Tooltip.tsx",
+			"target": "function:src/components/tooltip/Tooltip.tsx:DIRECTION_TOP",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/tooltip/Tooltip.tsx",
+			"target": "function:src/components/tooltip/Tooltip.tsx:DIRECTION_TOP",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/tooltip/Tooltip.tsx",
+			"target": "function:src/components/tooltip/Tooltip.tsx:DIRECTION_BOTTOM",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/tooltip/Tooltip.tsx",
+			"target": "function:src/components/tooltip/Tooltip.tsx:DIRECTION_BOTTOM",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/tooltip/Tooltip.tsx",
+			"target": "function:src/components/tooltip/Tooltip.tsx:DIRECTION_LEFT",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/tooltip/Tooltip.tsx",
+			"target": "function:src/components/tooltip/Tooltip.tsx:DIRECTION_LEFT",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/tooltip/Tooltip.tsx",
+			"target": "function:src/components/tooltip/Tooltip.tsx:DIRECTION_RIGHT",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/tooltip/Tooltip.tsx",
+			"target": "function:src/components/tooltip/Tooltip.tsx:DIRECTION_RIGHT",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/tooltip/Tooltip.tsx",
+			"target": "function:src/components/tooltip/Tooltip.tsx:Tooltip",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/tooltip/Tooltip.tsx",
+			"target": "function:src/components/tooltip/Tooltip.tsx:Tooltip",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/uiVersionToggle/UIVersionToggle.tsx",
+			"target": "function:src/components/uiVersionToggle/UIVersionToggle.tsx:UIVersionToggle",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/uiVersionToggle/UIVersionToggle.tsx",
+			"target": "function:src/components/uiVersionToggle/UIVersionToggle.tsx:UIVersionToggle",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/uiVersionToggle/UIVersionToggle.tsx",
+			"target": "file:src/components/uiVersionToggle/uiVersionToggle.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/booking.routes.ts",
+			"target": "file:src/containers/bookings/components/BookingEventsBooked/bookingEventsBooked.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/booking.routes.ts",
+			"target": "file:src/containers/bookings/components/BookingEventsCanceled/bookingEventsCanceled.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/booking.routes.ts",
+			"target": "file:src/containers/bookings/components/BookingEventsExpired/bookingEventsExpired.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/booking.routes.ts",
+			"target": "file:src/containers/bookings/components/BookingSettings/bookingSettings.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/booking.routes.ts",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/booking.routes.ts",
+			"target": "file:src/utils/tabsHelper.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/AddCalendar/addCalendar.tsx",
+			"target": "file:src/containers/bookings/components/Calendar/calendar.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/AddCalendar/addCalendar.tsx",
+			"target": "file:src/resources/img/icons.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/AssignedCalendars/assignedCalendars.tsx",
+			"target": "function:src/containers/bookings/components/AssignedCalendars/assignedCalendars.tsx:AssignedCalendars",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/containers/bookings/components/AssignedCalendars/assignedCalendars.tsx",
+			"target": "function:src/containers/bookings/components/AssignedCalendars/assignedCalendars.tsx:AssignedCalendars",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/containers/bookings/components/AssignedCalendars/assignedCalendars.tsx",
+			"target": "file:src/containers/bookings/components/booking.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/AssignedCalendars/assignedCalendars.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/AvailabilityContainer/availabilityContainer.tsx",
+			"target": "function:src/containers/bookings/components/AvailabilityContainer/availabilityContainer.tsx:AvailabilityContainer",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/containers/bookings/components/AvailabilityContainer/availabilityContainer.tsx",
+			"target": "function:src/containers/bookings/components/AvailabilityContainer/availabilityContainer.tsx:AvailabilityContainer",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/containers/bookings/components/AvailabilityContainer/availabilityContainer.tsx",
+			"target": "file:src/api/apiGetCalDavAccount.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/AvailabilityContainer/availabilityContainer.tsx",
+			"target": "file:src/components/box/Box.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/AvailabilityContainer/availabilityContainer.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/AvailabilityContainer/availabilityContainer.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/AvailabilityContainer/availabilityContainer.tsx",
+			"target": "file:src/containers/bookings/components/MyCalendar/myCalendar.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/AvailabilityContainer/availabilityContainer.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingDescription/bookingDescription.tsx",
+			"target": "function:src/containers/bookings/components/BookingDescription/bookingDescription.tsx:BookingDescription",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingDescription/bookingDescription.tsx",
+			"target": "function:src/containers/bookings/components/BookingDescription/bookingDescription.tsx:BookingDescription",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingDescription/bookingDescription.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingEventTableColumnAttendee/bookingEventTableColumnAttendee.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingEventTableColumnAttendee/bookingEventTableColumnAttendee.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingEventTableColumnAttendee/bookingEventTableColumnAttendee.tsx",
+			"target": "file:src/globalState/interfaces/BookingsInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		}
+	]
+}

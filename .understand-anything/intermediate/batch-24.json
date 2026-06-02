@@ -1,0 +1,22 @@
+{
+	"nodes": [
+		{
+			"id": "pipeline:.github/workflows/frontend-deploy.yml",
+			"type": "pipeline",
+			"name": "frontend-deploy.yml",
+			"filePath": ".github/workflows/frontend-deploy.yml",
+			"summary": "CI/CD pipeline configuration for frontend build, test, or deployment workflow.",
+			"tags": ["infrastructure", "ci-cd", "deployment"],
+			"complexity": "moderate"
+		}
+	],
+	"edges": [
+		{
+			"source": "pipeline:.github/workflows/frontend-deploy.yml",
+			"target": "file:src/initApp.tsx",
+			"type": "triggers",
+			"direction": "forward",
+			"weight": 0.6
+		}
+	]
+}

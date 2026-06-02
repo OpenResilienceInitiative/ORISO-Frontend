@@ -1,0 +1,636 @@
+{
+	"nodes": [
+		{
+			"id": "file:.storybook-backup/main.ts",
+			"type": "file",
+			"name": "main.ts",
+			"filePath": ".storybook-backup/main.ts",
+			"summary": "Frontend source file for storybook in the ORISO React application.",
+			"tags": ["storybook", "code", "frontend"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:.storybook/main.ts",
+			"type": "file",
+			"name": "main.ts",
+			"filePath": ".storybook/main.ts",
+			"summary": "Frontend source file for storybook in the ORISO React application.",
+			"tags": ["storybook", "code", "frontend"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:cli.js",
+			"type": "file",
+			"name": "cli.js",
+			"filePath": "cli.js",
+			"summary": "TypeScript module for cli js with 1 extracted functions and 0 extracted classes.",
+			"tags": ["utility", "cli-js", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:cli.js:throwUsageError",
+			"type": "function",
+			"name": "throwUsageError",
+			"filePath": "cli.js",
+			"lineRange": [7, 19],
+			"summary": "Function throwUsageError in cli.js, used by the surrounding cli js module.",
+			"tags": ["function", "cli-js", "internal"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:config/env.js",
+			"type": "file",
+			"name": "env.js",
+			"filePath": "config/env.js",
+			"summary": "TypeScript module for build config with 1 extracted functions and 0 extracted classes.",
+			"tags": ["utility", "build-config", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:config/env.js:getClientEnvironment",
+			"type": "function",
+			"name": "getClientEnvironment",
+			"filePath": "config/env.js",
+			"lineRange": [63, 75],
+			"summary": "Function getClientEnvironment in config/env.js, used by the surrounding build config module.",
+			"tags": ["function", "build-config", "internal"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:config/getHttpsConfig.js",
+			"type": "file",
+			"name": "getHttpsConfig.js",
+			"filePath": "config/getHttpsConfig.js",
+			"summary": "TypeScript module for build config with 3 extracted functions and 0 extracted classes.",
+			"tags": ["utility", "build-config", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:config/getHttpsConfig.js:validateKeyAndCerts",
+			"type": "function",
+			"name": "validateKeyAndCerts",
+			"filePath": "config/getHttpsConfig.js",
+			"lineRange": [11, 23],
+			"summary": "Function validateKeyAndCerts in config/getHttpsConfig.js, used by the surrounding build config module.",
+			"tags": ["function", "build-config", "internal"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:config/getHttpsConfig.js:readEnvFile",
+			"type": "function",
+			"name": "readEnvFile",
+			"filePath": "config/getHttpsConfig.js",
+			"lineRange": [37, 49],
+			"summary": "Function readEnvFile in config/getHttpsConfig.js, used by the surrounding build config module.",
+			"tags": ["function", "build-config", "internal"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:config/getHttpsConfig.js:getHttpsConfig",
+			"type": "function",
+			"name": "getHttpsConfig",
+			"filePath": "config/getHttpsConfig.js",
+			"lineRange": [52, 64],
+			"summary": "Function getHttpsConfig in config/getHttpsConfig.js, used by the surrounding build config module.",
+			"tags": ["function", "build-config", "internal"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:config/modules.js",
+			"type": "file",
+			"name": "modules.js",
+			"filePath": "config/modules.js",
+			"summary": "TypeScript module for build config with 4 extracted functions and 0 extracted classes.",
+			"tags": ["utility", "build-config", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:config/modules.js:getAdditionalModulePaths",
+			"type": "function",
+			"name": "getAdditionalModulePaths",
+			"filePath": "config/modules.js",
+			"lineRange": [14, 26],
+			"summary": "Function getAdditionalModulePaths in config/modules.js, used by the surrounding build config module.",
+			"tags": ["function", "build-config", "internal"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:config/modules.js:getWebpackAliases",
+			"type": "function",
+			"name": "getWebpackAliases",
+			"filePath": "config/modules.js",
+			"lineRange": [57, 69],
+			"summary": "Function getWebpackAliases in config/modules.js, used by the surrounding build config module.",
+			"tags": ["function", "build-config", "internal"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:config/modules.js:getJestAliases",
+			"type": "function",
+			"name": "getJestAliases",
+			"filePath": "config/modules.js",
+			"lineRange": [78, 90],
+			"summary": "Function getJestAliases in config/modules.js, used by the surrounding build config module.",
+			"tags": ["function", "build-config", "internal"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:config/modules.js:getModules",
+			"type": "function",
+			"name": "getModules",
+			"filePath": "config/modules.js",
+			"lineRange": [94, 106],
+			"summary": "Function getModules in config/modules.js, used by the surrounding build config module.",
+			"tags": ["function", "build-config", "internal"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:config/paths.js",
+			"type": "file",
+			"name": "paths.js",
+			"filePath": "config/paths.js",
+			"summary": "Frontend source file for build config in the ORISO React application.",
+			"tags": ["build-config", "code", "frontend"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:config/webpack.config.js",
+			"type": "file",
+			"name": "webpack.config.js",
+			"filePath": "config/webpack.config.js",
+			"summary": "TypeScript module for build config with 0 extracted functions and 1 extracted classes.",
+			"tags": ["build-config", "code", "frontend"],
+			"complexity": "complex"
+		},
+		{
+			"id": "class:config/webpack.config.js:options",
+			"type": "class",
+			"name": "options",
+			"filePath": "config/webpack.config.js",
+			"lineRange": [785, 825],
+			"summary": "Class options in config/webpack.config.js, grouping related build config behavior.",
+			"tags": ["class", "build-config", "internal"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:config/webpack/persistentCache/createEnvironmentHash.js",
+			"type": "file",
+			"name": "createEnvironmentHash.js",
+			"filePath": "config/webpack/persistentCache/createEnvironmentHash.js",
+			"summary": "Frontend source file for build config in the ORISO React application.",
+			"tags": ["build-config", "code", "frontend"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:config/webpackDevServer.config.js",
+			"type": "file",
+			"name": "webpackDevServer.config.js",
+			"filePath": "config/webpackDevServer.config.js",
+			"summary": "TypeScript module for build config with 3 extracted functions and 0 extracted classes.",
+			"tags": ["utility", "build-config", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:config/webpackDevServer.config.js:disableHostCheck",
+			"type": "function",
+			"name": "disableHostCheck",
+			"filePath": "config/webpackDevServer.config.js",
+			"lineRange": [16, 28],
+			"summary": "Function disableHostCheck in config/webpackDevServer.config.js, used by the surrounding build config module.",
+			"tags": ["function", "build-config", "internal"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:config/webpackDevServer.config.js:getDevServerConfig",
+			"type": "function",
+			"name": "getDevServerConfig",
+			"filePath": "config/webpackDevServer.config.js",
+			"lineRange": [20, 32],
+			"summary": "Function getDevServerConfig in config/webpackDevServer.config.js, used by the surrounding build config module.",
+			"tags": ["function", "build-config", "internal"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:config/webpackDevServer.config.js:registerUserMiddlewares",
+			"type": "function",
+			"name": "registerUserMiddlewares",
+			"filePath": "config/webpackDevServer.config.js",
+			"lineRange": [112, 124],
+			"summary": "Function registerUserMiddlewares in config/webpackDevServer.config.js, used by the surrounding build config module.",
+			"tags": ["function", "build-config", "internal"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:proxy/config.js",
+			"type": "file",
+			"name": "config.js",
+			"filePath": "proxy/config.js",
+			"summary": "Frontend source file for proxy in the ORISO React application.",
+			"tags": ["proxy", "code", "frontend"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:proxy/routes/index.js",
+			"type": "file",
+			"name": "index.js",
+			"filePath": "proxy/routes/index.js",
+			"summary": "Frontend source file for proxy in the ORISO React application.",
+			"tags": ["proxy", "code", "frontend"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:proxy/routes/settings.js",
+			"type": "file",
+			"name": "settings.js",
+			"filePath": "proxy/routes/settings.js",
+			"summary": "Frontend source file for proxy in the ORISO React application.",
+			"tags": ["proxy", "code", "frontend"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:proxy/routes/weblate.js",
+			"type": "file",
+			"name": "weblate.js",
+			"filePath": "proxy/routes/weblate.js",
+			"summary": "Frontend source file for proxy in the ORISO React application.",
+			"tags": ["proxy", "code", "frontend"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:proxy/server.js",
+			"type": "file",
+			"name": "server.js",
+			"filePath": "proxy/server.js",
+			"summary": "Frontend source file for proxy in the ORISO React application.",
+			"tags": ["proxy", "code", "frontend"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:scripts/build.js",
+			"type": "file",
+			"name": "build.js",
+			"filePath": "scripts/build.js",
+			"summary": "TypeScript module for build config with 2 extracted functions and 0 extracted classes.",
+			"tags": ["utility", "build-config", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:scripts/build.js:build",
+			"type": "function",
+			"name": "build",
+			"filePath": "scripts/build.js",
+			"lineRange": [136, 148],
+			"summary": "Function build in scripts/build.js, used by the surrounding build config module.",
+			"tags": ["function", "build-config", "internal"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:scripts/start.js",
+			"type": "file",
+			"name": "start.js",
+			"filePath": "scripts/start.js",
+			"summary": "Frontend source file for build config in the ORISO React application.",
+			"tags": ["build-config", "code", "frontend"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:scripts/test.js",
+			"type": "file",
+			"name": "test.js",
+			"filePath": "scripts/test.js",
+			"summary": "TypeScript module for build config with 2 extracted functions and 0 extracted classes.",
+			"tags": ["test", "utility", "build-config"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:scripts/test.js:isInGitRepository",
+			"type": "function",
+			"name": "isInGitRepository",
+			"filePath": "scripts/test.js",
+			"lineRange": [22, 34],
+			"summary": "Function isInGitRepository in scripts/test.js, used by the surrounding build config module.",
+			"tags": ["function", "build-config", "internal"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:scripts/test.js:isInMercurialRepository",
+			"type": "function",
+			"name": "isInMercurialRepository",
+			"filePath": "scripts/test.js",
+			"lineRange": [31, 43],
+			"summary": "Function isInMercurialRepository in scripts/test.js, used by the surrounding build config module.",
+			"tags": ["function", "build-config", "internal"],
+			"complexity": "simple"
+		}
+	],
+	"edges": [
+		{
+			"source": "file:.storybook-backup/main.ts",
+			"target": "file:config/webpack.config.js",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:.storybook/main.ts",
+			"target": "file:config/webpack.config.js",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cli.js",
+			"target": "function:cli.js:throwUsageError",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:cli.js",
+			"target": "file:proxy/server.js",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cli.js",
+			"target": "file:scripts/build.js",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cli.js",
+			"target": "file:scripts/start.js",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:config/env.js",
+			"target": "function:config/env.js:getClientEnvironment",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:config/env.js",
+			"target": "file:config/paths.js",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:config/getHttpsConfig.js",
+			"target": "function:config/getHttpsConfig.js:validateKeyAndCerts",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:config/getHttpsConfig.js",
+			"target": "function:config/getHttpsConfig.js:readEnvFile",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:config/getHttpsConfig.js",
+			"target": "function:config/getHttpsConfig.js:getHttpsConfig",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:config/getHttpsConfig.js",
+			"target": "file:config/paths.js",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:config/modules.js",
+			"target": "function:config/modules.js:getAdditionalModulePaths",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:config/modules.js",
+			"target": "function:config/modules.js:getWebpackAliases",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:config/modules.js",
+			"target": "function:config/modules.js:getJestAliases",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:config/modules.js",
+			"target": "function:config/modules.js:getModules",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:config/modules.js",
+			"target": "file:config/paths.js",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:config/webpack.config.js",
+			"target": "class:config/webpack.config.js:options",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:config/webpack.config.js",
+			"target": "file:config/env.js",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:config/webpack.config.js",
+			"target": "file:config/modules.js",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:config/webpack.config.js",
+			"target": "file:config/paths.js",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:config/webpack.config.js",
+			"target": "file:config/webpack/persistentCache/createEnvironmentHash.js",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:config/webpackDevServer.config.js",
+			"target": "function:config/webpackDevServer.config.js:disableHostCheck",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:config/webpackDevServer.config.js",
+			"target": "function:config/webpackDevServer.config.js:getDevServerConfig",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:config/webpackDevServer.config.js",
+			"target": "function:config/webpackDevServer.config.js:registerUserMiddlewares",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:config/webpackDevServer.config.js",
+			"target": "file:config/getHttpsConfig.js",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:config/webpackDevServer.config.js",
+			"target": "file:config/paths.js",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:proxy/routes/index.js",
+			"target": "file:proxy/config.js",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:proxy/routes/index.js",
+			"target": "file:proxy/routes/settings.js",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:proxy/routes/index.js",
+			"target": "file:proxy/routes/weblate.js",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:proxy/routes/settings.js",
+			"target": "file:proxy/config.js",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:proxy/routes/weblate.js",
+			"target": "file:proxy/config.js",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:proxy/server.js",
+			"target": "file:proxy/routes/index.js",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:scripts/build.js",
+			"target": "function:scripts/build.js:build",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:scripts/build.js",
+			"target": "file:config/env.js",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:scripts/build.js",
+			"target": "file:config/paths.js",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:scripts/build.js",
+			"target": "file:config/webpack.config.js",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:scripts/start.js",
+			"target": "file:config/env.js",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:scripts/start.js",
+			"target": "file:config/paths.js",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:scripts/start.js",
+			"target": "file:config/webpack.config.js",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:scripts/start.js",
+			"target": "file:config/webpackDevServer.config.js",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:scripts/test.js",
+			"target": "function:scripts/test.js:isInGitRepository",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:scripts/test.js",
+			"target": "function:scripts/test.js:isInMercurialRepository",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:scripts/test.js",
+			"target": "file:config/env.js",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		}
+	]
+}

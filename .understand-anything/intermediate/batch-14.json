@@ -1,0 +1,1619 @@
+{
+	"nodes": [
+		{
+			"id": "file:src/api/appointments/index.ts",
+			"type": "file",
+			"name": "index.ts",
+			"filePath": "src/api/appointments/index.ts",
+			"summary": "API client module for index, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "api", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/videocalls/index.ts",
+			"type": "file",
+			"name": "index.ts",
+			"filePath": "src/api/videocalls/index.ts",
+			"summary": "API client module for index, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "api", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/app/RouterConfig.tsx",
+			"type": "file",
+			"name": "RouterConfig.tsx",
+			"filePath": "src/components/app/RouterConfig.tsx",
+			"summary": "React UI module for component app, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-app"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/app/RouterConfig.tsx:RouterConfigUser",
+			"type": "function",
+			"name": "RouterConfigUser",
+			"filePath": "src/components/app/RouterConfig.tsx",
+			"lineRange": [121, 133],
+			"summary": "Function RouterConfigUser in src/components/app/RouterConfig.tsx, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/app/RouterConfig.tsx:RouterConfigConsultant",
+			"type": "function",
+			"name": "RouterConfigConsultant",
+			"filePath": "src/components/app/RouterConfig.tsx",
+			"lineRange": [262, 274],
+			"summary": "Function RouterConfigConsultant in src/components/app/RouterConfig.tsx, used by the surrounding component app module.",
+			"tags": ["function", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/appointment/Appointment.tsx",
+			"type": "file",
+			"name": "Appointment.tsx",
+			"filePath": "src/components/appointment/Appointment.tsx",
+			"summary": "React UI module for component appointment, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-appointment"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/appointment/Appointment.tsx:Appointment",
+			"type": "function",
+			"name": "Appointment",
+			"filePath": "src/components/appointment/Appointment.tsx",
+			"lineRange": [33, 45],
+			"summary": "Function Appointment in src/components/appointment/Appointment.tsx, used by the surrounding component appointment module.",
+			"tags": ["function", "component-appointment", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/appointment/Appointments.tsx",
+			"type": "file",
+			"name": "Appointments.tsx",
+			"filePath": "src/components/appointment/Appointments.tsx",
+			"summary": "React UI module for component appointment, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-appointment"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/appointment/Appointments.tsx:Appointments",
+			"type": "function",
+			"name": "Appointments",
+			"filePath": "src/components/appointment/Appointments.tsx",
+			"lineRange": [33, 45],
+			"summary": "Function Appointments in src/components/appointment/Appointments.tsx, used by the surrounding component appointment module.",
+			"tags": ["function", "component-appointment", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/appointment/OnlineMeetingForm.tsx",
+			"type": "file",
+			"name": "OnlineMeetingForm.tsx",
+			"filePath": "src/components/appointment/OnlineMeetingForm.tsx",
+			"summary": "React UI module for component appointment, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-appointment"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/appointment/OnlineMeetingForm.tsx:DEFAULT_MEETING_TIME",
+			"type": "function",
+			"name": "DEFAULT_MEETING_TIME",
+			"filePath": "src/components/appointment/OnlineMeetingForm.tsx",
+			"lineRange": [18, 30],
+			"summary": "Function DEFAULT_MEETING_TIME in src/components/appointment/OnlineMeetingForm.tsx, used by the surrounding component appointment module.",
+			"tags": ["function", "component-appointment", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/appointment/OnlineMeetingForm.tsx:OnlineMeetingForm",
+			"type": "function",
+			"name": "OnlineMeetingForm",
+			"filePath": "src/components/appointment/OnlineMeetingForm.tsx",
+			"lineRange": [20, 32],
+			"summary": "Function OnlineMeetingForm in src/components/appointment/OnlineMeetingForm.tsx, used by the surrounding component appointment module.",
+			"tags": ["function", "component-appointment", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/form/textarea.tsx",
+			"type": "file",
+			"name": "textarea.tsx",
+			"filePath": "src/components/form/textarea.tsx",
+			"summary": "React UI module for component form, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-form"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/form/textarea.tsx:Textarea",
+			"type": "function",
+			"name": "Textarea",
+			"filePath": "src/components/form/textarea.tsx",
+			"lineRange": [11, 23],
+			"summary": "Function Textarea in src/components/form/textarea.tsx, used by the surrounding component form module.",
+			"tags": ["function", "component-form", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/incomingVideoCall/IncomingVideoCall.tsx",
+			"type": "file",
+			"name": "IncomingVideoCall.tsx",
+			"filePath": "src/components/incomingVideoCall/IncomingVideoCall.tsx",
+			"summary": "React UI module for component incoming video call, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-incoming-video-call"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/incomingVideoCall/IncomingVideoCall.tsx:NOTIFICATION_TYPE_CALL",
+			"type": "function",
+			"name": "NOTIFICATION_TYPE_CALL",
+			"filePath": "src/components/incomingVideoCall/IncomingVideoCall.tsx",
+			"lineRange": [25, 37],
+			"summary": "Function NOTIFICATION_TYPE_CALL in src/components/incomingVideoCall/IncomingVideoCall.tsx, used by the surrounding component incoming video call module.",
+			"tags": ["function", "component-incoming-video-call", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/incomingVideoCall/IncomingVideoCall.tsx:isNotificationTypeCall",
+			"type": "function",
+			"name": "isNotificationTypeCall",
+			"filePath": "src/components/incomingVideoCall/IncomingVideoCall.tsx",
+			"lineRange": [33, 45],
+			"summary": "Function isNotificationTypeCall in src/components/incomingVideoCall/IncomingVideoCall.tsx, used by the surrounding component incoming video call module.",
+			"tags": ["function", "component-incoming-video-call", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/incomingVideoCall/IncomingVideoCall.tsx:IncomingVideoCall",
+			"type": "function",
+			"name": "IncomingVideoCall",
+			"filePath": "src/components/incomingVideoCall/IncomingVideoCall.tsx",
+			"lineRange": [50, 62],
+			"summary": "Function IncomingVideoCall in src/components/incomingVideoCall/IncomingVideoCall.tsx, used by the surrounding component incoming video call module.",
+			"tags": ["function", "component-incoming-video-call", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/listInfo/ListInfo.tsx",
+			"type": "file",
+			"name": "ListInfo.tsx",
+			"filePath": "src/components/listInfo/ListInfo.tsx",
+			"summary": "React UI module for component list info, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-list-info", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/notifications/Notification.tsx",
+			"type": "file",
+			"name": "Notification.tsx",
+			"filePath": "src/components/notifications/Notification.tsx",
+			"summary": "React UI module for component notifications, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-notifications"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/notifications/Notification.tsx:Notification",
+			"type": "function",
+			"name": "Notification",
+			"filePath": "src/components/notifications/Notification.tsx",
+			"lineRange": [31, 43],
+			"summary": "Function Notification in src/components/notifications/Notification.tsx, used by the surrounding component notifications module.",
+			"tags": ["function", "component-notifications", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/notifications/Notifications.tsx",
+			"type": "file",
+			"name": "Notifications.tsx",
+			"filePath": "src/components/notifications/Notifications.tsx",
+			"summary": "React UI module for component notifications, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-notifications"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/notifications/Notifications.tsx:Notifications",
+			"type": "function",
+			"name": "Notifications",
+			"filePath": "src/components/notifications/Notifications.tsx",
+			"lineRange": [13, 25],
+			"summary": "Function Notifications in src/components/notifications/Notifications.tsx, used by the surrounding component notifications module.",
+			"tags": ["function", "component-notifications", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/scrollableSection/ScrollableSection.tsx",
+			"type": "file",
+			"name": "ScrollableSection.tsx",
+			"filePath": "src/components/scrollableSection/ScrollableSection.tsx",
+			"summary": "React UI module for component scrollable section, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-scrollable-section"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/scrollableSection/ScrollableSection.tsx:ScrollableSection",
+			"type": "function",
+			"name": "ScrollableSection",
+			"filePath": "src/components/scrollableSection/ScrollableSection.tsx",
+			"lineRange": [9, 21],
+			"summary": "Function ScrollableSection in src/components/scrollableSection/ScrollableSection.tsx, used by the surrounding component scrollable section module.",
+			"tags": ["function", "component-scrollable-section", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/scrollableSection/ScrollableSectionBody.tsx",
+			"type": "file",
+			"name": "ScrollableSectionBody.tsx",
+			"filePath": "src/components/scrollableSection/ScrollableSectionBody.tsx",
+			"summary": "React UI module for component scrollable section, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-scrollable-section"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/scrollableSection/ScrollableSectionBody.tsx:ScrollableSectionBody",
+			"type": "function",
+			"name": "ScrollableSectionBody",
+			"filePath": "src/components/scrollableSection/ScrollableSectionBody.tsx",
+			"lineRange": [8, 12],
+			"summary": "Function ScrollableSectionBody in src/components/scrollableSection/ScrollableSectionBody.tsx, used by the surrounding component scrollable section module.",
+			"tags": ["function", "component-scrollable-section", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/scrollableSection/ScrollableSectionFooter.tsx",
+			"type": "file",
+			"name": "ScrollableSectionFooter.tsx",
+			"filePath": "src/components/scrollableSection/ScrollableSectionFooter.tsx",
+			"summary": "React UI module for component scrollable section, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-scrollable-section"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/scrollableSection/ScrollableSectionFooter.tsx:ScrollableSectionFooter",
+			"type": "function",
+			"name": "ScrollableSectionFooter",
+			"filePath": "src/components/scrollableSection/ScrollableSectionFooter.tsx",
+			"lineRange": [8, 12],
+			"summary": "Function ScrollableSectionFooter in src/components/scrollableSection/ScrollableSectionFooter.tsx, used by the surrounding component scrollable section module.",
+			"tags": ["function", "component-scrollable-section", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/scrollableSection/ScrollableSectionHeader.tsx",
+			"type": "file",
+			"name": "ScrollableSectionHeader.tsx",
+			"filePath": "src/components/scrollableSection/ScrollableSectionHeader.tsx",
+			"summary": "React UI module for component scrollable section, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-scrollable-section"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/scrollableSection/ScrollableSectionHeader.tsx:ScrollableSectionHeader",
+			"type": "function",
+			"name": "ScrollableSectionHeader",
+			"filePath": "src/components/scrollableSection/ScrollableSectionHeader.tsx",
+			"lineRange": [8, 12],
+			"summary": "Function ScrollableSectionHeader in src/components/scrollableSection/ScrollableSectionHeader.tsx, used by the surrounding component scrollable section module.",
+			"tags": ["function", "component-scrollable-section", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/session/SessionViewEmpty.tsx",
+			"type": "file",
+			"name": "SessionViewEmpty.tsx",
+			"filePath": "src/components/session/SessionViewEmpty.tsx",
+			"summary": "React UI module for component session, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "session", "utility", "component-session"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/session/SessionViewEmpty.tsx:SessionViewEmpty",
+			"type": "function",
+			"name": "SessionViewEmpty",
+			"filePath": "src/components/session/SessionViewEmpty.tsx",
+			"lineRange": [9, 21],
+			"summary": "Function SessionViewEmpty in src/components/session/SessionViewEmpty.tsx, used by the surrounding component session module.",
+			"tags": ["function", "component-session", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/sessionsListItem/SessionListItemVideoCall.tsx",
+			"type": "file",
+			"name": "SessionListItemVideoCall.tsx",
+			"filePath": "src/components/sessionsListItem/SessionListItemVideoCall.tsx",
+			"summary": "React UI module for component sessions list item, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"session",
+				"utility",
+				"component-sessions-list-item"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionsListItem/SessionListItemVideoCall.tsx:SessionListItemVideoCall",
+			"type": "function",
+			"name": "SessionListItemVideoCall",
+			"filePath": "src/components/sessionsListItem/SessionListItemVideoCall.tsx",
+			"lineRange": [13, 25],
+			"summary": "Function SessionListItemVideoCall in src/components/sessionsListItem/SessionListItemVideoCall.tsx, used by the surrounding component sessions list item module.",
+			"tags": ["function", "component-sessions-list-item", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/videoCall/StatusPage.tsx",
+			"type": "file",
+			"name": "StatusPage.tsx",
+			"filePath": "src/components/videoCall/StatusPage.tsx",
+			"summary": "React UI module for component video call, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-video-call", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/videoConference/E2EEBanner.tsx",
+			"type": "file",
+			"name": "E2EEBanner.tsx",
+			"filePath": "src/components/videoConference/E2EEBanner.tsx",
+			"summary": "React UI module for component video conference, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-video-conference", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/videoConference/Logo.tsx",
+			"type": "file",
+			"name": "Logo.tsx",
+			"filePath": "src/components/videoConference/Logo.tsx",
+			"summary": "React UI module for component video conference, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-video-conference", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/videoConference/VideoConference.tsx",
+			"type": "file",
+			"name": "VideoConference.tsx",
+			"filePath": "src/components/videoConference/VideoConference.tsx",
+			"summary": "React UI module for component video conference, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-video-conference", "code"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/containers/bookings/components/BookingCancellation/bookingCancellation.tsx",
+			"type": "file",
+			"name": "bookingCancellation.tsx",
+			"filePath": "src/containers/bookings/components/BookingCancellation/bookingCancellation.tsx",
+			"summary": "React UI module for containers, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "containers"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/containers/bookings/components/BookingCancellation/bookingCancellation.tsx:BookingCancellation",
+			"type": "function",
+			"name": "BookingCancellation",
+			"filePath": "src/containers/bookings/components/BookingCancellation/bookingCancellation.tsx",
+			"lineRange": [5, 17],
+			"summary": "Function BookingCancellation in src/containers/bookings/components/BookingCancellation/bookingCancellation.tsx, used by the surrounding containers module.",
+			"tags": ["function", "containers", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/containers/bookings/components/BookingReschedule/bookingReschedule.tsx",
+			"type": "file",
+			"name": "bookingReschedule.tsx",
+			"filePath": "src/containers/bookings/components/BookingReschedule/bookingReschedule.tsx",
+			"summary": "React UI module for containers, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "containers"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/containers/bookings/components/BookingReschedule/bookingReschedule.tsx:BookingReschedule",
+			"type": "function",
+			"name": "BookingReschedule",
+			"filePath": "src/containers/bookings/components/BookingReschedule/bookingReschedule.tsx",
+			"lineRange": [11, 23],
+			"summary": "Function BookingReschedule in src/containers/bookings/components/BookingReschedule/bookingReschedule.tsx, used by the surrounding containers module.",
+			"tags": ["function", "containers", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/interfaces/AppointmentsDataInterface.ts",
+			"type": "file",
+			"name": "AppointmentsDataInterface.ts",
+			"filePath": "src/globalState/interfaces/AppointmentsDataInterface.ts",
+			"summary": "Global state module for global state, sharing application state across frontend flows.",
+			"tags": ["state-management", "utility", "global-state"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/interfaces/AppointmentsDataInterface.ts:STATUS_CREATED",
+			"type": "function",
+			"name": "STATUS_CREATED",
+			"filePath": "src/globalState/interfaces/AppointmentsDataInterface.ts",
+			"lineRange": [1, 13],
+			"summary": "Function STATUS_CREATED in src/globalState/interfaces/AppointmentsDataInterface.ts, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/interfaces/AppointmentsDataInterface.ts:STATUS_PAUSED",
+			"type": "function",
+			"name": "STATUS_PAUSED",
+			"filePath": "src/globalState/interfaces/AppointmentsDataInterface.ts",
+			"lineRange": [2, 13],
+			"summary": "Function STATUS_PAUSED in src/globalState/interfaces/AppointmentsDataInterface.ts, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/interfaces/AppointmentsDataInterface.ts:STATUS_STARTED",
+			"type": "function",
+			"name": "STATUS_STARTED",
+			"filePath": "src/globalState/interfaces/AppointmentsDataInterface.ts",
+			"lineRange": [3, 13],
+			"summary": "Function STATUS_STARTED in src/globalState/interfaces/AppointmentsDataInterface.ts, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/interfaces/VideoCallDataInterface.ts",
+			"type": "file",
+			"name": "VideoCallDataInterface.ts",
+			"filePath": "src/globalState/interfaces/VideoCallDataInterface.ts",
+			"summary": "Global state module for global state, sharing application state across frontend flows.",
+			"tags": ["state-management", "global-state", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/hooks/useUnload.tsx",
+			"type": "file",
+			"name": "useUnload.tsx",
+			"filePath": "src/hooks/useUnload.tsx",
+			"summary": "React hook module for useUnload, encapsulating reusable frontend state or side-effect logic.",
+			"tags": ["hook", "component", "utility", "hooks"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/hooks/useUnload.tsx:useUnload",
+			"type": "function",
+			"name": "useUnload",
+			"filePath": "src/hooks/useUnload.tsx",
+			"lineRange": [3, 15],
+			"summary": "Function useUnload in src/hooks/useUnload.tsx, used by the surrounding hooks module.",
+			"tags": ["function", "hooks", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/utils/videoCallHelpers.ts",
+			"type": "file",
+			"name": "videoCallHelpers.ts",
+			"filePath": "src/utils/videoCallHelpers.ts",
+			"summary": "TypeScript module for utilities with 4 extracted functions and 0 extracted classes.",
+			"tags": ["utility", "utilities", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/utils/videoCallHelpers.ts:currentUserWasVideoCallInitiator",
+			"type": "function",
+			"name": "currentUserWasVideoCallInitiator",
+			"filePath": "src/utils/videoCallHelpers.ts",
+			"lineRange": [9, 21],
+			"summary": "Function currentUserWasVideoCallInitiator in src/utils/videoCallHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/videoCallHelpers.ts:supportsE2EEncryptionVideoCall",
+			"type": "function",
+			"name": "supportsE2EEncryptionVideoCall",
+			"filePath": "src/utils/videoCallHelpers.ts",
+			"lineRange": [35, 47],
+			"summary": "Function supportsE2EEncryptionVideoCall in src/utils/videoCallHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/videoCallHelpers.ts:hasVideoCallFeature",
+			"type": "function",
+			"name": "hasVideoCallFeature",
+			"filePath": "src/utils/videoCallHelpers.ts",
+			"lineRange": [75, 87],
+			"summary": "Function hasVideoCallFeature in src/utils/videoCallHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/videoCallHelpers.ts:hasVideoCallAbility",
+			"type": "function",
+			"name": "hasVideoCallAbility",
+			"filePath": "src/utils/videoCallHelpers.ts",
+			"lineRange": [87, 99],
+			"summary": "Function hasVideoCallAbility in src/utils/videoCallHelpers.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		}
+	],
+	"edges": [
+		{
+			"source": "file:src/components/app/RouterConfig.tsx",
+			"target": "function:src/components/app/RouterConfig.tsx:RouterConfigUser",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RouterConfig.tsx",
+			"target": "function:src/components/app/RouterConfig.tsx:RouterConfigUser",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RouterConfig.tsx",
+			"target": "function:src/components/app/RouterConfig.tsx:RouterConfigConsultant",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/RouterConfig.tsx",
+			"target": "function:src/components/app/RouterConfig.tsx:RouterConfigConsultant",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/RouterConfig.tsx",
+			"target": "file:src/components/app/navigationSidebarIcons.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/RouterConfig.tsx",
+			"target": "file:src/components/appointment/Appointments.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/RouterConfig.tsx",
+			"target": "file:src/components/askerInfo/AskerInfo.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/RouterConfig.tsx",
+			"target": "file:src/components/draftsCenter/DraftsCenter.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/RouterConfig.tsx",
+			"target": "file:src/components/groupChat/CreateChatView.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/RouterConfig.tsx",
+			"target": "file:src/components/groupChat/GroupChatInfo.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/RouterConfig.tsx",
+			"target": "file:src/components/notificationsCenter/NotificationsCenter.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/RouterConfig.tsx",
+			"target": "file:src/components/profile/Profile.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/RouterConfig.tsx",
+			"target": "file:src/components/session/sessionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/RouterConfig.tsx",
+			"target": "file:src/components/session/SessionViewEmpty.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/RouterConfig.tsx",
+			"target": "file:src/components/sessionsList/SessionsListWrapper.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/RouterConfig.tsx",
+			"target": "file:src/components/tools/ToolsList.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/RouterConfig.tsx",
+			"target": "file:src/components/videoConference/VideoConference.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/RouterConfig.tsx",
+			"target": "file:src/containers/bookings/components/Booking/booking.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/RouterConfig.tsx",
+			"target": "file:src/containers/bookings/components/BookingCancellation/bookingCancellation.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/RouterConfig.tsx",
+			"target": "file:src/containers/bookings/components/BookingEvents/bookingEvents.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/RouterConfig.tsx",
+			"target": "file:src/containers/bookings/components/BookingReschedule/bookingReschedule.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/RouterConfig.tsx",
+			"target": "file:src/containers/overview/overview.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/RouterConfig.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/RouterConfig.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/RouterConfig.tsx",
+			"target": "file:src/utils/videoCallHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/appointment/Appointment.tsx",
+			"target": "function:src/components/appointment/Appointment.tsx:Appointment",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/appointment/Appointment.tsx",
+			"target": "function:src/components/appointment/Appointment.tsx:Appointment",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/appointment/Appointment.tsx",
+			"target": "file:src/components/appointment/appointment.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/appointment/Appointment.tsx",
+			"target": "file:src/components/box/Box.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/appointment/Appointment.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/appointment/Appointment.tsx",
+			"target": "file:src/components/generateQrCode/GenerateQrCode.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/appointment/Appointment.tsx",
+			"target": "file:src/components/overlay/Overlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/appointment/Appointment.tsx",
+			"target": "file:src/components/sessionMenu/sessionMenuHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/appointment/Appointment.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/appointment/Appointment.tsx",
+			"target": "file:src/globalState/interfaces/AppointmentsDataInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/appointment/Appointment.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/appointment/Appointment.tsx",
+			"target": "file:src/resources/scripts/config.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/appointment/Appointment.tsx",
+			"target": "file:src/utils/clipboardHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/appointment/Appointment.tsx",
+			"target": "file:src/utils/videoCallHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/appointment/Appointments.tsx",
+			"target": "function:src/components/appointment/Appointments.tsx:Appointments",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/appointment/Appointments.tsx",
+			"target": "function:src/components/appointment/Appointments.tsx:Appointments",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/appointment/Appointments.tsx",
+			"target": "file:src/api/appointments/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/appointment/Appointments.tsx",
+			"target": "file:src/components/app/Loading.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/appointment/Appointments.tsx",
+			"target": "file:src/components/appointment/Appointment.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/appointment/Appointments.tsx",
+			"target": "file:src/components/appointment/appointments.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/appointment/Appointments.tsx",
+			"target": "file:src/components/appointment/OnlineMeetingForm.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/appointment/Appointments.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/appointment/Appointments.tsx",
+			"target": "file:src/components/legalLinks/LegalLinks.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/appointment/Appointments.tsx",
+			"target": "file:src/components/listInfo/ListInfo.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/appointment/Appointments.tsx",
+			"target": "file:src/components/overlay/Overlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/appointment/Appointments.tsx",
+			"target": "file:src/components/scrollableSection/ScrollableSection.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/appointment/Appointments.tsx",
+			"target": "file:src/components/scrollableSection/ScrollableSectionBody.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/appointment/Appointments.tsx",
+			"target": "file:src/components/scrollableSection/ScrollableSectionFooter.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/appointment/Appointments.tsx",
+			"target": "file:src/components/scrollableSection/ScrollableSectionHeader.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/appointment/Appointments.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/appointment/Appointments.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/appointment/Appointments.tsx",
+			"target": "file:src/globalState/interfaces/AppointmentsDataInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/appointment/Appointments.tsx",
+			"target": "file:src/globalState/provider/LegalLinksProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/appointment/Appointments.tsx",
+			"target": "file:src/hooks/useResponsive.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/appointment/Appointments.tsx",
+			"target": "file:src/utils/dateHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/appointment/OnlineMeetingForm.tsx",
+			"target": "function:src/components/appointment/OnlineMeetingForm.tsx:DEFAULT_MEETING_TIME",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/appointment/OnlineMeetingForm.tsx",
+			"target": "function:src/components/appointment/OnlineMeetingForm.tsx:DEFAULT_MEETING_TIME",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/appointment/OnlineMeetingForm.tsx",
+			"target": "function:src/components/appointment/OnlineMeetingForm.tsx:OnlineMeetingForm",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/appointment/OnlineMeetingForm.tsx",
+			"target": "function:src/components/appointment/OnlineMeetingForm.tsx:OnlineMeetingForm",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/appointment/OnlineMeetingForm.tsx",
+			"target": "file:src/components/form/textarea.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/appointment/OnlineMeetingForm.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/appointment/OnlineMeetingForm.tsx",
+			"target": "file:src/globalState/interfaces/AppointmentsDataInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/form/textarea.tsx",
+			"target": "function:src/components/form/textarea.tsx:Textarea",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/form/textarea.tsx",
+			"target": "function:src/components/form/textarea.tsx:Textarea",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/incomingVideoCall/IncomingVideoCall.tsx",
+			"target": "function:src/components/incomingVideoCall/IncomingVideoCall.tsx:NOTIFICATION_TYPE_CALL",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/incomingVideoCall/IncomingVideoCall.tsx",
+			"target": "function:src/components/incomingVideoCall/IncomingVideoCall.tsx:NOTIFICATION_TYPE_CALL",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/incomingVideoCall/IncomingVideoCall.tsx",
+			"target": "function:src/components/incomingVideoCall/IncomingVideoCall.tsx:isNotificationTypeCall",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/incomingVideoCall/IncomingVideoCall.tsx",
+			"target": "function:src/components/incomingVideoCall/IncomingVideoCall.tsx:isNotificationTypeCall",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/incomingVideoCall/IncomingVideoCall.tsx",
+			"target": "function:src/components/incomingVideoCall/IncomingVideoCall.tsx:IncomingVideoCall",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/incomingVideoCall/IncomingVideoCall.tsx",
+			"target": "function:src/components/incomingVideoCall/IncomingVideoCall.tsx:IncomingVideoCall",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/incomingVideoCall/IncomingVideoCall.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/incomingVideoCall/IncomingVideoCall.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/incomingVideoCall/IncomingVideoCall.tsx",
+			"target": "file:src/components/sessionHeader/GroupChatHeader/useJoinVideoCall/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/incomingVideoCall/IncomingVideoCall.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/incomingVideoCall/IncomingVideoCall.tsx",
+			"target": "file:src/utils/encryptionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/incomingVideoCall/IncomingVideoCall.tsx",
+			"target": "file:src/utils/videoCallHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/listInfo/ListInfo.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/listInfo/ListInfo.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/listInfo/ListInfo.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/notifications/Notification.tsx",
+			"target": "function:src/components/notifications/Notification.tsx:Notification",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/notifications/Notification.tsx",
+			"target": "function:src/components/notifications/Notification.tsx:Notification",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/notifications/Notification.tsx",
+			"target": "file:src/components/incomingVideoCall/IncomingVideoCall.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/notifications/Notification.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/notifications/Notifications.tsx",
+			"target": "function:src/components/notifications/Notifications.tsx:Notifications",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/notifications/Notifications.tsx",
+			"target": "function:src/components/notifications/Notifications.tsx:Notifications",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/notifications/Notifications.tsx",
+			"target": "file:src/components/incomingVideoCall/IncomingVideoCall.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/notifications/Notifications.tsx",
+			"target": "file:src/components/notifications/Notification.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/notifications/Notifications.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/notifications/Notifications.tsx",
+			"target": "file:src/utils/videoCallHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/scrollableSection/ScrollableSection.tsx",
+			"target": "function:src/components/scrollableSection/ScrollableSection.tsx:ScrollableSection",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/scrollableSection/ScrollableSection.tsx",
+			"target": "function:src/components/scrollableSection/ScrollableSection.tsx:ScrollableSection",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/scrollableSection/ScrollableSection.tsx",
+			"target": "file:src/components/scrollableSection/scrollableSection.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/scrollableSection/ScrollableSectionBody.tsx",
+			"target": "function:src/components/scrollableSection/ScrollableSectionBody.tsx:ScrollableSectionBody",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/scrollableSection/ScrollableSectionBody.tsx",
+			"target": "function:src/components/scrollableSection/ScrollableSectionBody.tsx:ScrollableSectionBody",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/scrollableSection/ScrollableSectionFooter.tsx",
+			"target": "function:src/components/scrollableSection/ScrollableSectionFooter.tsx:ScrollableSectionFooter",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/scrollableSection/ScrollableSectionFooter.tsx",
+			"target": "function:src/components/scrollableSection/ScrollableSectionFooter.tsx:ScrollableSectionFooter",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/scrollableSection/ScrollableSectionHeader.tsx",
+			"target": "function:src/components/scrollableSection/ScrollableSectionHeader.tsx:ScrollableSectionHeader",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/scrollableSection/ScrollableSectionHeader.tsx",
+			"target": "function:src/components/scrollableSection/ScrollableSectionHeader.tsx:ScrollableSectionHeader",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/session/SessionViewEmpty.tsx",
+			"target": "function:src/components/session/SessionViewEmpty.tsx:SessionViewEmpty",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/session/SessionViewEmpty.tsx",
+			"target": "function:src/components/session/SessionViewEmpty.tsx:SessionViewEmpty",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/session/SessionViewEmpty.tsx",
+			"target": "file:src/components/app/navigationHandler.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/session/SessionViewEmpty.tsx",
+			"target": "file:src/components/listInfo/ListInfo.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItemVideoCall.tsx",
+			"target": "function:src/components/sessionsListItem/SessionListItemVideoCall.tsx:SessionListItemVideoCall",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItemVideoCall.tsx",
+			"target": "function:src/components/sessionsListItem/SessionListItemVideoCall.tsx:SessionListItemVideoCall",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItemVideoCall.tsx",
+			"target": "file:src/components/message/MessageItemComponent.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItemVideoCall.tsx",
+			"target": "file:src/utils/videoCallHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/videoCall/StatusPage.tsx",
+			"target": "file:src/components/videoCall/statusPage.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/videoConference/E2EEBanner.tsx",
+			"target": "file:src/components/videoConference/e2eeBanner.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/videoConference/Logo.tsx",
+			"target": "file:src/components/videoConference/logo.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/videoConference/VideoConference.tsx",
+			"target": "file:src/api/appointments/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/videoConference/VideoConference.tsx",
+			"target": "file:src/api/videocalls/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/videoConference/VideoConference.tsx",
+			"target": "file:src/components/app/Loading.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/videoConference/VideoConference.tsx",
+			"target": "file:src/components/videoCall/StatusPage.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/videoConference/VideoConference.tsx",
+			"target": "file:src/components/videoConference/E2EEBanner.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/videoConference/VideoConference.tsx",
+			"target": "file:src/components/videoConference/Logo.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/videoConference/VideoConference.tsx",
+			"target": "file:src/components/videoConference/WaitingRoom.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/videoConference/VideoConference.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/videoConference/VideoConference.tsx",
+			"target": "file:src/globalState/interfaces/AppointmentsDataInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/videoConference/VideoConference.tsx",
+			"target": "file:src/globalState/interfaces/VideoCallDataInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/videoConference/VideoConference.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/videoConference/VideoConference.tsx",
+			"target": "file:src/hooks/useUnload.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/videoConference/VideoConference.tsx",
+			"target": "file:src/hooks/useWatcher.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/videoConference/VideoConference.tsx",
+			"target": "file:src/resources/scripts/config.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingCancellation/bookingCancellation.tsx",
+			"target": "function:src/containers/bookings/components/BookingCancellation/bookingCancellation.tsx:BookingCancellation",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingCancellation/bookingCancellation.tsx",
+			"target": "function:src/containers/bookings/components/BookingCancellation/bookingCancellation.tsx:BookingCancellation",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingCancellation/bookingCancellation.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingReschedule/bookingReschedule.tsx",
+			"target": "function:src/containers/bookings/components/BookingReschedule/bookingReschedule.tsx:BookingReschedule",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingReschedule/bookingReschedule.tsx",
+			"target": "function:src/containers/bookings/components/BookingReschedule/bookingReschedule.tsx:BookingReschedule",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingReschedule/bookingReschedule.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/bookings/components/BookingReschedule/bookingReschedule.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/interfaces/AppointmentsDataInterface.ts",
+			"target": "function:src/globalState/interfaces/AppointmentsDataInterface.ts:STATUS_CREATED",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/interfaces/AppointmentsDataInterface.ts",
+			"target": "function:src/globalState/interfaces/AppointmentsDataInterface.ts:STATUS_CREATED",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/interfaces/AppointmentsDataInterface.ts",
+			"target": "function:src/globalState/interfaces/AppointmentsDataInterface.ts:STATUS_PAUSED",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/interfaces/AppointmentsDataInterface.ts",
+			"target": "function:src/globalState/interfaces/AppointmentsDataInterface.ts:STATUS_PAUSED",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/interfaces/AppointmentsDataInterface.ts",
+			"target": "function:src/globalState/interfaces/AppointmentsDataInterface.ts:STATUS_STARTED",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/interfaces/AppointmentsDataInterface.ts",
+			"target": "function:src/globalState/interfaces/AppointmentsDataInterface.ts:STATUS_STARTED",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/hooks/useUnload.tsx",
+			"target": "function:src/hooks/useUnload.tsx:useUnload",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/hooks/useUnload.tsx",
+			"target": "function:src/hooks/useUnload.tsx:useUnload",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/videoCallHelpers.ts",
+			"target": "function:src/utils/videoCallHelpers.ts:currentUserWasVideoCallInitiator",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/videoCallHelpers.ts",
+			"target": "function:src/utils/videoCallHelpers.ts:currentUserWasVideoCallInitiator",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/videoCallHelpers.ts",
+			"target": "function:src/utils/videoCallHelpers.ts:supportsE2EEncryptionVideoCall",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/videoCallHelpers.ts",
+			"target": "function:src/utils/videoCallHelpers.ts:supportsE2EEncryptionVideoCall",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/videoCallHelpers.ts",
+			"target": "function:src/utils/videoCallHelpers.ts:hasVideoCallFeature",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/videoCallHelpers.ts",
+			"target": "function:src/utils/videoCallHelpers.ts:hasVideoCallFeature",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/videoCallHelpers.ts",
+			"target": "function:src/utils/videoCallHelpers.ts:hasVideoCallAbility",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/videoCallHelpers.ts",
+			"target": "function:src/utils/videoCallHelpers.ts:hasVideoCallAbility",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/videoCallHelpers.ts",
+			"target": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/utils/videoCallHelpers.ts",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/utils/videoCallHelpers.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/utils/videoCallHelpers.ts",
+			"target": "file:src/utils/appConfig.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		}
+	]
+}

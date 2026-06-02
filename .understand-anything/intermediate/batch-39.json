@@ -1,0 +1,68 @@
+{
+	"nodes": [
+		{
+			"id": "file:src/components/pseudonym/AnonymousConsentGate.styles.scss",
+			"type": "file",
+			"name": "AnonymousConsentGate.styles.scss",
+			"filePath": "src/components/pseudonym/AnonymousConsentGate.styles.scss",
+			"summary": "React UI module for component pseudonym, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-pseudonym"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/pseudonym/BreathingTutorialCard.styles.scss",
+			"type": "file",
+			"name": "BreathingTutorialCard.styles.scss",
+			"filePath": "src/components/pseudonym/BreathingTutorialCard.styles.scss",
+			"summary": "React UI module for component pseudonym, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-pseudonym"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/pseudonym/ConsultantAcceptedActionBar.styles.scss",
+			"type": "file",
+			"name": "ConsultantAcceptedActionBar.styles.scss",
+			"filePath": "src/components/pseudonym/ConsultantAcceptedActionBar.styles.scss",
+			"summary": "React UI module for component pseudonym, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-pseudonym"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/pseudonym/PrivacyMessageCard.styles.scss",
+			"type": "file",
+			"name": "PrivacyMessageCard.styles.scss",
+			"filePath": "src/components/pseudonym/PrivacyMessageCard.styles.scss",
+			"summary": "React UI module for component pseudonym, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-pseudonym"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/pseudonym/PseudonymActionBar.styles.scss",
+			"type": "file",
+			"name": "PseudonymActionBar.styles.scss",
+			"filePath": "src/components/pseudonym/PseudonymActionBar.styles.scss",
+			"summary": "React UI module for component pseudonym, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-pseudonym"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/pseudonym/PseudonymCard.styles.scss",
+			"type": "file",
+			"name": "PseudonymCard.styles.scss",
+			"filePath": "src/components/pseudonym/PseudonymCard.styles.scss",
+			"summary": "React UI module for component pseudonym, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-pseudonym"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/pseudonym/WaitingQueueActionBar.styles.scss",
+			"type": "file",
+			"name": "WaitingQueueActionBar.styles.scss",
+			"filePath": "src/components/pseudonym/WaitingQueueActionBar.styles.scss",
+			"summary": "React UI module for component pseudonym, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-pseudonym"],
+			"complexity": "complex"
+		}
+	],
+	"edges": []
+}

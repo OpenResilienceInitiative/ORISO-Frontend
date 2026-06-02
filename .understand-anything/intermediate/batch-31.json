@@ -1,0 +1,54 @@
+{
+	"nodes": [
+		{
+			"id": "document:docs/plan/README.md",
+			"type": "document",
+			"name": "README.md",
+			"filePath": "docs/plan/README.md",
+			"summary": "Documentation covering docs concerns in the ORISO frontend.",
+			"tags": ["documentation", "docs", "frontend"],
+			"complexity": "simple"
+		},
+		{
+			"id": "document:docs/plan/master-roadmap.md",
+			"type": "document",
+			"name": "master-roadmap.md",
+			"filePath": "docs/plan/master-roadmap.md",
+			"summary": "Documentation covering docs concerns in the ORISO frontend.",
+			"tags": ["documentation", "docs", "frontend"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "document:docs/plan/template-feature-plan.md",
+			"type": "document",
+			"name": "template-feature-plan.md",
+			"filePath": "docs/plan/template-feature-plan.md",
+			"summary": "Documentation covering docs concerns in the ORISO frontend.",
+			"tags": ["documentation", "docs", "frontend"],
+			"complexity": "simple"
+		}
+	],
+	"edges": [
+		{
+			"source": "document:docs/plan/README.md",
+			"target": "document:README.md",
+			"type": "related",
+			"direction": "forward",
+			"weight": 0.5
+		},
+		{
+			"source": "document:docs/plan/master-roadmap.md",
+			"target": "document:README.md",
+			"type": "related",
+			"direction": "forward",
+			"weight": 0.5
+		},
+		{
+			"source": "document:docs/plan/template-feature-plan.md",
+			"target": "document:README.md",
+			"type": "related",
+			"direction": "forward",
+			"weight": 0.5
+		}
+	]
+}

@@ -1,0 +1,382 @@
+{
+	"nodes": [
+		{
+			"id": "file:src/components/scrollableSection/scrollableSection.styles.scss",
+			"type": "file",
+			"name": "scrollableSection.styles.scss",
+			"filePath": "src/components/scrollableSection/scrollableSection.styles.scss",
+			"summary": "React UI module for component scrollable section, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-scrollable-section"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/serviceExplanation/ServiceExplanation.styles.scss",
+			"type": "file",
+			"name": "ServiceExplanation.styles.scss",
+			"filePath": "src/components/serviceExplanation/ServiceExplanation.styles.scss",
+			"summary": "React UI module for component service explanation, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-service-explanation"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/session/encryptionBanner.styles.scss",
+			"type": "file",
+			"name": "encryptionBanner.styles.scss",
+			"filePath": "src/components/session/encryptionBanner.styles.scss",
+			"summary": "React UI module for component session, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "session", "styling", "component-session"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/session/session.styles.scss",
+			"type": "file",
+			"name": "session.styles.scss",
+			"filePath": "src/components/session/session.styles.scss",
+			"summary": "React UI module for component session, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "session", "styling", "component-session"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/session/SessionStream.tsx.backup",
+			"type": "file",
+			"name": "SessionStream.tsx.backup",
+			"filePath": "src/components/session/SessionStream.tsx.backup",
+			"summary": "React UI module for component session, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "session", "component-session"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/sessionCookie/accessSessionCookie.ts.backup",
+			"type": "file",
+			"name": "accessSessionCookie.ts.backup",
+			"filePath": "src/components/sessionCookie/accessSessionCookie.ts.backup",
+			"summary": "React UI module for component session cookie, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "session", "component-session-cookie"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/sessionCookie/cache-bust.ts",
+			"type": "file",
+			"name": "cache-bust.ts",
+			"filePath": "src/components/sessionCookie/cache-bust.ts",
+			"summary": "React UI module for component session cookie, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "session", "component-session-cookie"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/sessionCookie/getKeycloakAccessToken.ts.backup",
+			"type": "file",
+			"name": "getKeycloakAccessToken.ts.backup",
+			"filePath": "src/components/sessionCookie/getKeycloakAccessToken.ts.backup",
+			"summary": "React UI module for component session cookie, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"session",
+				"authentication",
+				"component-session-cookie"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/sessionHeader/consultantSearchLoader.styles.scss",
+			"type": "file",
+			"name": "consultantSearchLoader.styles.scss",
+			"filePath": "src/components/sessionHeader/consultantSearchLoader.styles.scss",
+			"summary": "React UI module for component session header, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"session",
+				"styling",
+				"component-session-header"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/sessionHeader/sessionHeader.styles.scss",
+			"type": "file",
+			"name": "sessionHeader.styles.scss",
+			"filePath": "src/components/sessionHeader/sessionHeader.styles.scss",
+			"summary": "React UI module for component session header, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"session",
+				"styling",
+				"component-session-header"
+			],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/sessionMenu/sessionMenu.styles.scss",
+			"type": "file",
+			"name": "sessionMenu.styles.scss",
+			"filePath": "src/components/sessionMenu/sessionMenu.styles.scss",
+			"summary": "React UI module for component session menu, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"session",
+				"styling",
+				"component-session-menu"
+			],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/sessionsList/ResizableSidebar.stories.tsx",
+			"type": "file",
+			"name": "ResizableSidebar.stories.tsx",
+			"filePath": "src/components/sessionsList/ResizableSidebar.stories.tsx",
+			"summary": "React UI module for component sessions list, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"storybook",
+				"component",
+				"session",
+				"component-sessions-list"
+			],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/sessionsList/sessionsList.styles.scss",
+			"type": "file",
+			"name": "sessionsList.styles.scss",
+			"filePath": "src/components/sessionsList/sessionsList.styles.scss",
+			"summary": "React UI module for component sessions list, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"session",
+				"styling",
+				"component-sessions-list"
+			],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/sessionsList/SessionsList.tsx.backup",
+			"type": "file",
+			"name": "SessionsList.tsx.backup",
+			"filePath": "src/components/sessionsList/SessionsList.tsx.backup",
+			"summary": "React UI module for component sessions list, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "session", "component-sessions-list"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/sessionsList/SessionsListScrollbar.tsx",
+			"type": "file",
+			"name": "SessionsListScrollbar.tsx",
+			"filePath": "src/components/sessionsList/SessionsListScrollbar.tsx",
+			"summary": "React UI module for component sessions list, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"session",
+				"utility",
+				"component-sessions-list"
+			],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/sessionsList/SessionsListScrollbar.tsx:SessionsListScrollbar",
+			"type": "function",
+			"name": "SessionsListScrollbar",
+			"filePath": "src/components/sessionsList/SessionsListScrollbar.tsx",
+			"lineRange": [55, 67],
+			"summary": "Function SessionsListScrollbar in src/components/sessionsList/SessionsListScrollbar.tsx, used by the surrounding component sessions list module.",
+			"tags": ["function", "component-sessions-list", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionsList/SessionsListScrollbar.tsx:clamp",
+			"type": "function",
+			"name": "clamp",
+			"filePath": "src/components/sessionsList/SessionsListScrollbar.tsx",
+			"lineRange": [21, 33],
+			"summary": "Function clamp in src/components/sessionsList/SessionsListScrollbar.tsx, used by the surrounding component sessions list module.",
+			"tags": ["function", "component-sessions-list", "internal"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionsList/SessionsListScrollbar.tsx:computeMetrics",
+			"type": "function",
+			"name": "computeMetrics",
+			"filePath": "src/components/sessionsList/SessionsListScrollbar.tsx",
+			"lineRange": [25, 37],
+			"summary": "Function computeMetrics in src/components/sessionsList/SessionsListScrollbar.tsx, used by the surrounding component sessions list module.",
+			"tags": ["function", "component-sessions-list", "internal"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/sessionsList/SessionsListWelcomeIllustration.tsx",
+			"type": "file",
+			"name": "SessionsListWelcomeIllustration.tsx",
+			"filePath": "src/components/sessionsList/SessionsListWelcomeIllustration.tsx",
+			"summary": "React UI module for component sessions list, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"session",
+				"utility",
+				"component-sessions-list"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionsList/SessionsListWelcomeIllustration.tsx:WelcomeIllustration",
+			"type": "function",
+			"name": "WelcomeIllustration",
+			"filePath": "src/components/sessionsList/SessionsListWelcomeIllustration.tsx",
+			"lineRange": [5, 17],
+			"summary": "Function WelcomeIllustration in src/components/sessionsList/SessionsListWelcomeIllustration.tsx, used by the surrounding component sessions list module.",
+			"tags": ["function", "component-sessions-list", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/sessionsListItem/SessionListItemComponent.tsx.backup",
+			"type": "file",
+			"name": "SessionListItemComponent.tsx.backup",
+			"filePath": "src/components/sessionsListItem/SessionListItemComponent.tsx.backup",
+			"summary": "React UI module for component sessions list item, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "session", "component-sessions-list-item"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/sessionsListItem/sessionsListItem.styles.scss",
+			"type": "file",
+			"name": "sessionsListItem.styles.scss",
+			"filePath": "src/components/sessionsListItem/sessionsListItem.styles.scss",
+			"summary": "React UI module for component sessions list item, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"session",
+				"styling",
+				"component-sessions-list-item"
+			],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/spinner/spinner.styles.scss",
+			"type": "file",
+			"name": "spinner.styles.scss",
+			"filePath": "src/components/spinner/spinner.styles.scss",
+			"summary": "React UI module for component spinner, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-spinner"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/stage/stage.styles.scss",
+			"type": "file",
+			"name": "stage.styles.scss",
+			"filePath": "src/components/stage/stage.styles.scss",
+			"summary": "React UI module for component stage, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-stage"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/stageLayout/StageLayout.styles.scss",
+			"type": "file",
+			"name": "StageLayout.styles.scss",
+			"filePath": "src/components/stageLayout/StageLayout.styles.scss",
+			"summary": "React UI module for component stage layout, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-stage-layout"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/Switch/switch.module.scss",
+			"type": "file",
+			"name": "switch.module.scss",
+			"filePath": "src/components/Switch/switch.module.scss",
+			"summary": "React UI module for component switch, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-switch"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/tag/tag.styles.scss",
+			"type": "file",
+			"name": "tag.styles.scss",
+			"filePath": "src/components/tag/tag.styles.scss",
+			"summary": "React UI module for component tag, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-tag"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/tagSelect/tagSelect.styles.scss",
+			"type": "file",
+			"name": "tagSelect.styles.scss",
+			"filePath": "src/components/tagSelect/tagSelect.styles.scss",
+			"summary": "React UI module for component tag select, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-tag-select"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/tagSelect/TagSelect.tsx",
+			"type": "file",
+			"name": "TagSelect.tsx",
+			"filePath": "src/components/tagSelect/TagSelect.tsx",
+			"summary": "React UI module for component tag select, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-tag-select"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/tagSelect/TagSelect.tsx:TagSelect",
+			"type": "function",
+			"name": "TagSelect",
+			"filePath": "src/components/tagSelect/TagSelect.tsx",
+			"lineRange": [11, 23],
+			"summary": "Function TagSelect in src/components/tagSelect/TagSelect.tsx, used by the surrounding component tag select module.",
+			"tags": ["function", "component-tag-select", "exported"],
+			"complexity": "simple"
+		}
+	],
+	"edges": [
+		{
+			"source": "file:src/components/sessionsList/SessionsListScrollbar.tsx",
+			"target": "function:src/components/sessionsList/SessionsListScrollbar.tsx:SessionsListScrollbar",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsListScrollbar.tsx",
+			"target": "function:src/components/sessionsList/SessionsListScrollbar.tsx:SessionsListScrollbar",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsListScrollbar.tsx",
+			"target": "function:src/components/sessionsList/SessionsListScrollbar.tsx:clamp",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsListScrollbar.tsx",
+			"target": "function:src/components/sessionsList/SessionsListScrollbar.tsx:computeMetrics",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsListWelcomeIllustration.tsx",
+			"target": "function:src/components/sessionsList/SessionsListWelcomeIllustration.tsx:WelcomeIllustration",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsListWelcomeIllustration.tsx",
+			"target": "function:src/components/sessionsList/SessionsListWelcomeIllustration.tsx:WelcomeIllustration",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/tagSelect/TagSelect.tsx",
+			"target": "function:src/components/tagSelect/TagSelect.tsx:TagSelect",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/tagSelect/TagSelect.tsx",
+			"target": "function:src/components/tagSelect/TagSelect.tsx:TagSelect",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		}
+	]
+}

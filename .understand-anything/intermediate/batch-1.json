@@ -1,0 +1,2879 @@
+{
+	"nodes": [
+		{
+			"id": "file:cypress/e2e/tokens.cy.ts",
+			"type": "file",
+			"name": "tokens.cy.ts",
+			"filePath": "cypress/e2e/tokens.cy.ts",
+			"summary": "Frontend source file for tests in the ORISO React application.",
+			"tags": ["test", "tests", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/api/apiLogoutKeycloak.ts",
+			"type": "file",
+			"name": "apiLogoutKeycloak.ts",
+			"filePath": "src/api/apiLogoutKeycloak.ts",
+			"summary": "API client module for apiLogoutKeycloak, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "authentication", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiLogoutKeycloak.ts:apiKeycloakLogout",
+			"type": "function",
+			"name": "apiKeycloakLogout",
+			"filePath": "src/api/apiLogoutKeycloak.ts",
+			"lineRange": [4, 16],
+			"summary": "Function apiKeycloakLogout in src/api/apiLogoutKeycloak.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiMatrixUpload.ts",
+			"type": "file",
+			"name": "apiMatrixUpload.ts",
+			"filePath": "src/api/apiMatrixUpload.ts",
+			"summary": "API client module for apiMatrixUpload, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "matrix", "utility", "api"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/api/apiMatrixUpload.ts:apiMatrixUploadFile",
+			"type": "function",
+			"name": "apiMatrixUploadFile",
+			"filePath": "src/api/apiMatrixUpload.ts",
+			"lineRange": [12, 24],
+			"summary": "Function apiMatrixUploadFile in src/api/apiMatrixUpload.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiMatrixUpload.ts:apiMatrixSendFileMessage",
+			"type": "function",
+			"name": "apiMatrixSendFileMessage",
+			"filePath": "src/api/apiMatrixUpload.ts",
+			"lineRange": [92, 104],
+			"summary": "Function apiMatrixSendFileMessage in src/api/apiMatrixUpload.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiPostError.ts",
+			"type": "file",
+			"name": "apiPostError.ts",
+			"filePath": "src/api/apiPostError.ts",
+			"summary": "API client module for apiPostError, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/api/apiPostError.ts:ERROR_LEVEL_FATAL",
+			"type": "function",
+			"name": "ERROR_LEVEL_FATAL",
+			"filePath": "src/api/apiPostError.ts",
+			"lineRange": [9, 21],
+			"summary": "Function ERROR_LEVEL_FATAL in src/api/apiPostError.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiPostError.ts:ERROR_LEVEL_ERROR",
+			"type": "function",
+			"name": "ERROR_LEVEL_ERROR",
+			"filePath": "src/api/apiPostError.ts",
+			"lineRange": [10, 22],
+			"summary": "Function ERROR_LEVEL_ERROR in src/api/apiPostError.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiPostError.ts:ERROR_LEVEL_WARN",
+			"type": "function",
+			"name": "ERROR_LEVEL_WARN",
+			"filePath": "src/api/apiPostError.ts",
+			"lineRange": [11, 23],
+			"summary": "Function ERROR_LEVEL_WARN in src/api/apiPostError.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiPostError.ts:ERROR_LEVEL_INFO",
+			"type": "function",
+			"name": "ERROR_LEVEL_INFO",
+			"filePath": "src/api/apiPostError.ts",
+			"lineRange": [12, 24],
+			"summary": "Function ERROR_LEVEL_INFO in src/api/apiPostError.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiPostError.ts:ERROR_LEVEL_DEBUG",
+			"type": "function",
+			"name": "ERROR_LEVEL_DEBUG",
+			"filePath": "src/api/apiPostError.ts",
+			"lineRange": [13, 25],
+			"summary": "Function ERROR_LEVEL_DEBUG in src/api/apiPostError.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiPostError.ts:ERROR_LEVEL_TRACE",
+			"type": "function",
+			"name": "ERROR_LEVEL_TRACE",
+			"filePath": "src/api/apiPostError.ts",
+			"lineRange": [14, 26],
+			"summary": "Function ERROR_LEVEL_TRACE in src/api/apiPostError.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiPostError.ts:apiPostError",
+			"type": "function",
+			"name": "apiPostError",
+			"filePath": "src/api/apiPostError.ts",
+			"lineRange": [44, 56],
+			"summary": "Function apiPostError in src/api/apiPostError.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiUploadAttachment.ts",
+			"type": "file",
+			"name": "apiUploadAttachment.ts",
+			"filePath": "src/api/apiUploadAttachment.ts",
+			"summary": "API client module for apiUploadAttachment, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/api/apiUploadAttachment.ts:apiUploadAttachment",
+			"type": "function",
+			"name": "apiUploadAttachment",
+			"filePath": "src/api/apiUploadAttachment.ts",
+			"lineRange": [11, 23],
+			"summary": "Function apiUploadAttachment in src/api/apiUploadAttachment.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/app/ErrorBoundary.tsx",
+			"type": "file",
+			"name": "ErrorBoundary.tsx",
+			"filePath": "src/components/app/ErrorBoundary.tsx",
+			"summary": "React UI module for component app, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-app", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "class:src/components/app/ErrorBoundary.tsx:ErrorBoundary",
+			"type": "class",
+			"name": "ErrorBoundary",
+			"filePath": "src/components/app/ErrorBoundary.tsx",
+			"lineRange": [23, 63],
+			"summary": "Class ErrorBoundary in src/components/app/ErrorBoundary.tsx, grouping related component app behavior.",
+			"tags": ["class", "component-app", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/askerInfo/AskerInfoTools.tsx",
+			"type": "file",
+			"name": "AskerInfoTools.tsx",
+			"filePath": "src/components/askerInfo/AskerInfoTools.tsx",
+			"summary": "React UI module for component asker info, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-asker-info"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/askerInfo/AskerInfoTools.tsx:AskerInfoTools",
+			"type": "function",
+			"name": "AskerInfoTools",
+			"filePath": "src/components/askerInfo/AskerInfoTools.tsx",
+			"lineRange": [13, 25],
+			"summary": "Function AskerInfoTools in src/components/askerInfo/AskerInfoTools.tsx, used by the surrounding component asker info module.",
+			"tags": ["function", "component-asker-info", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/auth/auth.ts",
+			"type": "file",
+			"name": "auth.ts",
+			"filePath": "src/components/auth/auth.ts",
+			"summary": "React UI module for component auth, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"authentication",
+				"utility",
+				"component-auth"
+			],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/auth/auth.ts:RENEW_BEFORE_EXPIRY_IN_MS",
+			"type": "function",
+			"name": "RENEW_BEFORE_EXPIRY_IN_MS",
+			"filePath": "src/components/auth/auth.ts",
+			"lineRange": [10, 22],
+			"summary": "Function RENEW_BEFORE_EXPIRY_IN_MS in src/components/auth/auth.ts, used by the surrounding component auth module.",
+			"tags": ["function", "component-auth", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/auth/auth.ts:setTokens",
+			"type": "function",
+			"name": "setTokens",
+			"filePath": "src/components/auth/auth.ts",
+			"lineRange": [12, 24],
+			"summary": "Function setTokens in src/components/auth/auth.ts, used by the surrounding component auth module.",
+			"tags": ["function", "component-auth", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/auth/auth.ts:handleTokenRefresh",
+			"type": "function",
+			"name": "handleTokenRefresh",
+			"filePath": "src/components/auth/auth.ts",
+			"lineRange": [87, 99],
+			"summary": "Function handleTokenRefresh in src/components/auth/auth.ts, used by the surrounding component auth module.",
+			"tags": ["function", "component-auth", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/budibase/budibaseLogout.ts",
+			"type": "file",
+			"name": "budibaseLogout.ts",
+			"filePath": "src/components/budibase/budibaseLogout.ts",
+			"summary": "React UI module for component budibase, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-budibase"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/budibase/budibaseLogout.ts:budibaseLogout",
+			"type": "function",
+			"name": "budibaseLogout",
+			"filePath": "src/components/budibase/budibaseLogout.ts",
+			"lineRange": [3, 15],
+			"summary": "Function budibaseLogout in src/components/budibase/budibaseLogout.ts, used by the surrounding component budibase module.",
+			"tags": ["function", "component-budibase", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/dragAndDropArea/DragAndDropArea.tsx",
+			"type": "file",
+			"name": "DragAndDropArea.tsx",
+			"filePath": "src/components/dragAndDropArea/DragAndDropArea.tsx",
+			"summary": "React UI module for component drag and drop area, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-drag-and-drop-area"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/dragAndDropArea/DragAndDropArea.tsx:DragAndDropArea",
+			"type": "function",
+			"name": "DragAndDropArea",
+			"filePath": "src/components/dragAndDropArea/DragAndDropArea.tsx",
+			"lineRange": [17, 29],
+			"summary": "Function DragAndDropArea in src/components/dragAndDropArea/DragAndDropArea.tsx, used by the surrounding component drag and drop area module.",
+			"tags": ["function", "component-drag-and-drop-area", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/error/errorHandling.ts",
+			"type": "file",
+			"name": "errorHandling.ts",
+			"filePath": "src/components/error/errorHandling.ts",
+			"summary": "React UI module for component error, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-error"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/error/errorHandling.ts:ERROR_TYPES",
+			"type": "function",
+			"name": "ERROR_TYPES",
+			"filePath": "src/components/error/errorHandling.ts",
+			"lineRange": [8, 20],
+			"summary": "Function ERROR_TYPES in src/components/error/errorHandling.ts, used by the surrounding component error module.",
+			"tags": ["function", "component-error", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/error/errorHandling.ts:getErrorCaseForStatus",
+			"type": "function",
+			"name": "getErrorCaseForStatus",
+			"filePath": "src/components/error/errorHandling.ts",
+			"lineRange": [14, 26],
+			"summary": "Function getErrorCaseForStatus in src/components/error/errorHandling.ts, used by the surrounding component error module.",
+			"tags": ["function", "component-error", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/error/errorHandling.ts:redirectToErrorPage",
+			"type": "function",
+			"name": "redirectToErrorPage",
+			"filePath": "src/components/error/errorHandling.ts",
+			"lineRange": [24, 36],
+			"summary": "Function redirectToErrorPage in src/components/error/errorHandling.ts, used by the surrounding component error module.",
+			"tags": ["function", "component-error", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/loadingSpinner/LoadingSpinner.stories.ts",
+			"type": "file",
+			"name": "LoadingSpinner.stories.ts",
+			"filePath": "src/components/loadingSpinner/LoadingSpinner.stories.ts",
+			"summary": "React UI module for component loading spinner, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["storybook", "component", "component-loading-spinner"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/loadingSpinner/LoadingSpinner.tsx",
+			"type": "file",
+			"name": "LoadingSpinner.tsx",
+			"filePath": "src/components/loadingSpinner/LoadingSpinner.tsx",
+			"summary": "React UI module for component loading spinner, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-loading-spinner", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/logout/calcomLogout.ts",
+			"type": "file",
+			"name": "calcomLogout.ts",
+			"filePath": "src/components/logout/calcomLogout.ts",
+			"summary": "React UI module for component logout, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-logout"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/logout/calcomLogout.ts:calcomLogout",
+			"type": "function",
+			"name": "calcomLogout",
+			"filePath": "src/components/logout/calcomLogout.ts",
+			"lineRange": [3, 15],
+			"summary": "Function calcomLogout in src/components/logout/calcomLogout.ts, used by the surrounding component logout module.",
+			"tags": ["function", "component-logout", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/logout/logout.ts",
+			"type": "file",
+			"name": "logout.ts",
+			"filePath": "src/components/logout/logout.ts",
+			"summary": "React UI module for component logout, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-logout"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/logout/logout.ts:EVENT_PRE_LOGOUT",
+			"type": "function",
+			"name": "EVENT_PRE_LOGOUT",
+			"filePath": "src/components/logout/logout.ts",
+			"lineRange": [14, 26],
+			"summary": "Function EVENT_PRE_LOGOUT in src/components/logout/logout.ts, used by the surrounding component logout module.",
+			"tags": ["function", "component-logout", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/logout/logout.ts:logout",
+			"type": "function",
+			"name": "logout",
+			"filePath": "src/components/logout/logout.ts",
+			"lineRange": [17, 29],
+			"summary": "Function logout in src/components/logout/logout.ts, used by the surrounding component logout module.",
+			"tags": ["function", "component-logout", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/message/MessageAttachment.stories.ts",
+			"type": "file",
+			"name": "MessageAttachment.stories.ts",
+			"filePath": "src/components/message/MessageAttachment.stories.ts",
+			"summary": "React UI module for component message, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["storybook", "component", "component-message"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/message/MessageAttachment.tsx",
+			"type": "file",
+			"name": "MessageAttachment.tsx",
+			"filePath": "src/components/message/MessageAttachment.tsx",
+			"summary": "React UI module for component message, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-message"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/message/MessageAttachment.tsx:MessageAttachment",
+			"type": "function",
+			"name": "MessageAttachment",
+			"filePath": "src/components/message/MessageAttachment.tsx",
+			"lineRange": [49, 61],
+			"summary": "Function MessageAttachment in src/components/message/MessageAttachment.tsx, used by the surrounding component message module.",
+			"tags": ["function", "component-message", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/message/messageHelpers.ts",
+			"type": "file",
+			"name": "messageHelpers.ts",
+			"filePath": "src/components/message/messageHelpers.ts",
+			"summary": "React UI module for component message, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-message"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/message/messageHelpers.ts:getIconForAttachmentType",
+			"type": "function",
+			"name": "getIconForAttachmentType",
+			"filePath": "src/components/message/messageHelpers.ts",
+			"lineRange": [13, 23],
+			"summary": "Function getIconForAttachmentType in src/components/message/messageHelpers.ts, used by the surrounding component message module.",
+			"tags": ["function", "component-message", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/messageSubmitInterface/attachmentHelpers.ts",
+			"type": "file",
+			"name": "attachmentHelpers.ts",
+			"filePath": "src/components/messageSubmitInterface/attachmentHelpers.ts",
+			"summary": "React UI module for component message submit interface, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"utility",
+				"component-message-submit-interface"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/messageSubmitInterface/attachmentHelpers.ts:ATTACHMENT_TYPE_FOR_KEY",
+			"type": "function",
+			"name": "ATTACHMENT_TYPE_FOR_KEY",
+			"filePath": "src/components/messageSubmitInterface/attachmentHelpers.ts",
+			"lineRange": [1, 13],
+			"summary": "Function ATTACHMENT_TYPE_FOR_KEY in src/components/messageSubmitInterface/attachmentHelpers.ts, used by the surrounding component message submit interface module.",
+			"tags": [
+				"function",
+				"component-message-submit-interface",
+				"exported"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/messageSubmitInterface/attachmentHelpers.ts:ATTACHMENT_TRANSLATE_FOR_TYPE",
+			"type": "function",
+			"name": "ATTACHMENT_TRANSLATE_FOR_TYPE",
+			"filePath": "src/components/messageSubmitInterface/attachmentHelpers.ts",
+			"lineRange": [9, 21],
+			"summary": "Function ATTACHMENT_TRANSLATE_FOR_TYPE in src/components/messageSubmitInterface/attachmentHelpers.ts, used by the surrounding component message submit interface module.",
+			"tags": [
+				"function",
+				"component-message-submit-interface",
+				"exported"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/messageSubmitInterface/attachmentHelpers.ts:isPNGAttachment",
+			"type": "function",
+			"name": "isPNGAttachment",
+			"filePath": "src/components/messageSubmitInterface/attachmentHelpers.ts",
+			"lineRange": [19, 31],
+			"summary": "Function isPNGAttachment in src/components/messageSubmitInterface/attachmentHelpers.ts, used by the surrounding component message submit interface module.",
+			"tags": [
+				"function",
+				"component-message-submit-interface",
+				"exported"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/messageSubmitInterface/attachmentHelpers.ts:isJPEGAttachment",
+			"type": "function",
+			"name": "isJPEGAttachment",
+			"filePath": "src/components/messageSubmitInterface/attachmentHelpers.ts",
+			"lineRange": [21, 33],
+			"summary": "Function isJPEGAttachment in src/components/messageSubmitInterface/attachmentHelpers.ts, used by the surrounding component message submit interface module.",
+			"tags": [
+				"function",
+				"component-message-submit-interface",
+				"exported"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/messageSubmitInterface/attachmentHelpers.ts:isPDFAttachment",
+			"type": "function",
+			"name": "isPDFAttachment",
+			"filePath": "src/components/messageSubmitInterface/attachmentHelpers.ts",
+			"lineRange": [23, 34],
+			"summary": "Function isPDFAttachment in src/components/messageSubmitInterface/attachmentHelpers.ts, used by the surrounding component message submit interface module.",
+			"tags": [
+				"function",
+				"component-message-submit-interface",
+				"exported"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/messageSubmitInterface/attachmentHelpers.ts:isDOCXAttachment",
+			"type": "function",
+			"name": "isDOCXAttachment",
+			"filePath": "src/components/messageSubmitInterface/attachmentHelpers.ts",
+			"lineRange": [25, 34],
+			"summary": "Function isDOCXAttachment in src/components/messageSubmitInterface/attachmentHelpers.ts, used by the surrounding component message submit interface module.",
+			"tags": [
+				"function",
+				"component-message-submit-interface",
+				"exported"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/messageSubmitInterface/attachmentHelpers.ts:isXLSXAttachment",
+			"type": "function",
+			"name": "isXLSXAttachment",
+			"filePath": "src/components/messageSubmitInterface/attachmentHelpers.ts",
+			"lineRange": [27, 34],
+			"summary": "Function isXLSXAttachment in src/components/messageSubmitInterface/attachmentHelpers.ts, used by the surrounding component message submit interface module.",
+			"tags": [
+				"function",
+				"component-message-submit-interface",
+				"exported"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/messageSubmitInterface/attachmentHelpers.ts:ATTACHMENT_MAX_SIZE_IN_MB",
+			"type": "function",
+			"name": "ATTACHMENT_MAX_SIZE_IN_MB",
+			"filePath": "src/components/messageSubmitInterface/attachmentHelpers.ts",
+			"lineRange": [30, 34],
+			"summary": "Function ATTACHMENT_MAX_SIZE_IN_MB in src/components/messageSubmitInterface/attachmentHelpers.ts, used by the surrounding component message submit interface module.",
+			"tags": [
+				"function",
+				"component-message-submit-interface",
+				"exported"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/messageSubmitInterface/attachmentHelpers.ts:getAttachmentSizeMBForKB",
+			"type": "function",
+			"name": "getAttachmentSizeMBForKB",
+			"filePath": "src/components/messageSubmitInterface/attachmentHelpers.ts",
+			"lineRange": [32, 34],
+			"summary": "Function getAttachmentSizeMBForKB in src/components/messageSubmitInterface/attachmentHelpers.ts, used by the surrounding component message submit interface module.",
+			"tags": [
+				"function",
+				"component-message-submit-interface",
+				"exported"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/messageSubmitInterface/useDraftMessage.tsx",
+			"type": "file",
+			"name": "useDraftMessage.tsx",
+			"filePath": "src/components/messageSubmitInterface/useDraftMessage.tsx",
+			"summary": "React hook module for useDraftMessage, encapsulating reusable frontend state or side-effect logic.",
+			"tags": [
+				"hook",
+				"component",
+				"utility",
+				"component-message-submit-interface"
+			],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/messageSubmitInterface/useDraftMessage.tsx:useDraftMessage",
+			"type": "function",
+			"name": "useDraftMessage",
+			"filePath": "src/components/messageSubmitInterface/useDraftMessage.tsx",
+			"lineRange": [32, 44],
+			"summary": "Function useDraftMessage in src/components/messageSubmitInterface/useDraftMessage.tsx, used by the surrounding component message submit interface module.",
+			"tags": [
+				"function",
+				"component-message-submit-interface",
+				"exported"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"type": "file",
+			"name": "accessSessionCookie.ts",
+			"filePath": "src/components/sessionCookie/accessSessionCookie.ts",
+			"summary": "React UI module for component session cookie, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"session",
+				"utility",
+				"component-session-cookie"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionCookie/accessSessionCookie.ts:setValueInCookie",
+			"type": "function",
+			"name": "setValueInCookie",
+			"filePath": "src/components/sessionCookie/accessSessionCookie.ts",
+			"lineRange": [1, 13],
+			"summary": "Function setValueInCookie in src/components/sessionCookie/accessSessionCookie.ts, used by the surrounding component session cookie module.",
+			"tags": ["function", "component-session-cookie", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionCookie/accessSessionCookie.ts:deleteCookieByName",
+			"type": "function",
+			"name": "deleteCookieByName",
+			"filePath": "src/components/sessionCookie/accessSessionCookie.ts",
+			"lineRange": [9, 21],
+			"summary": "Function deleteCookieByName in src/components/sessionCookie/accessSessionCookie.ts, used by the surrounding component session cookie module.",
+			"tags": ["function", "component-session-cookie", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionCookie/accessSessionCookie.ts:getValueFromCookie",
+			"type": "function",
+			"name": "getValueFromCookie",
+			"filePath": "src/components/sessionCookie/accessSessionCookie.ts",
+			"lineRange": [13, 25],
+			"summary": "Function getValueFromCookie in src/components/sessionCookie/accessSessionCookie.ts, used by the surrounding component session cookie module.",
+			"tags": ["function", "component-session-cookie", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionCookie/accessSessionCookie.ts:removeAllCookies",
+			"type": "function",
+			"name": "removeAllCookies",
+			"filePath": "src/components/sessionCookie/accessSessionCookie.ts",
+			"lineRange": [31, 43],
+			"summary": "Function removeAllCookies in src/components/sessionCookie/accessSessionCookie.ts, used by the surrounding component session cookie module.",
+			"tags": ["function", "component-session-cookie", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/sessionCookie/accessSessionLocalStorage.ts",
+			"type": "file",
+			"name": "accessSessionLocalStorage.ts",
+			"filePath": "src/components/sessionCookie/accessSessionLocalStorage.ts",
+			"summary": "React UI module for component session cookie, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"session",
+				"utility",
+				"component-session-cookie"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionCookie/accessSessionLocalStorage.ts:getLocalStorageItem",
+			"type": "function",
+			"name": "getLocalStorageItem",
+			"filePath": "src/components/sessionCookie/accessSessionLocalStorage.ts",
+			"lineRange": [5, 17],
+			"summary": "Function getLocalStorageItem in src/components/sessionCookie/accessSessionLocalStorage.ts, used by the surrounding component session cookie module.",
+			"tags": ["function", "component-session-cookie", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionCookie/accessSessionLocalStorage.ts:removeLocalStorageItem",
+			"type": "function",
+			"name": "removeLocalStorageItem",
+			"filePath": "src/components/sessionCookie/accessSessionLocalStorage.ts",
+			"lineRange": [9, 21],
+			"summary": "Function removeLocalStorageItem in src/components/sessionCookie/accessSessionLocalStorage.ts, used by the surrounding component session cookie module.",
+			"tags": ["function", "component-session-cookie", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionCookie/accessSessionLocalStorage.ts:setTokenExpiryInLocalStorage",
+			"type": "function",
+			"name": "setTokenExpiryInLocalStorage",
+			"filePath": "src/components/sessionCookie/accessSessionLocalStorage.ts",
+			"lineRange": [13, 25],
+			"summary": "Function setTokenExpiryInLocalStorage in src/components/sessionCookie/accessSessionLocalStorage.ts, used by the surrounding component session cookie module.",
+			"tags": ["function", "component-session-cookie", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionCookie/accessSessionLocalStorage.ts:getTokenExpiryFromLocalStorage",
+			"type": "function",
+			"name": "getTokenExpiryFromLocalStorage",
+			"filePath": "src/components/sessionCookie/accessSessionLocalStorage.ts",
+			"lineRange": [21, 33],
+			"summary": "Function getTokenExpiryFromLocalStorage in src/components/sessionCookie/accessSessionLocalStorage.ts, used by the surrounding component session cookie module.",
+			"tags": ["function", "component-session-cookie", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionCookie/accessSessionLocalStorage.ts:removeTokenExpiryFromLocalStorage",
+			"type": "function",
+			"name": "removeTokenExpiryFromLocalStorage",
+			"filePath": "src/components/sessionCookie/accessSessionLocalStorage.ts",
+			"lineRange": [32, 43],
+			"summary": "Function removeTokenExpiryFromLocalStorage in src/components/sessionCookie/accessSessionLocalStorage.ts, used by the surrounding component session cookie module.",
+			"tags": ["function", "component-session-cookie", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionCookie/accessSessionLocalStorage.ts:removeRocketChatMasterKeyFromLocalStorage",
+			"type": "function",
+			"name": "removeRocketChatMasterKeyFromLocalStorage",
+			"filePath": "src/components/sessionCookie/accessSessionLocalStorage.ts",
+			"lineRange": [37, 43],
+			"summary": "Function removeRocketChatMasterKeyFromLocalStorage in src/components/sessionCookie/accessSessionLocalStorage.ts, used by the surrounding component session cookie module.",
+			"tags": ["function", "component-session-cookie", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/sessionCookie/getBudibaseAccessToken.ts",
+			"type": "file",
+			"name": "getBudibaseAccessToken.ts",
+			"filePath": "src/components/sessionCookie/getBudibaseAccessToken.ts",
+			"summary": "React UI module for component session cookie, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"session",
+				"utility",
+				"component-session-cookie"
+			],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/sessionCookie/getBudibaseAccessToken.ts:getBudibaseAccessToken",
+			"type": "function",
+			"name": "getBudibaseAccessToken",
+			"filePath": "src/components/sessionCookie/getBudibaseAccessToken.ts",
+			"lineRange": [5, 17],
+			"summary": "Function getBudibaseAccessToken in src/components/sessionCookie/getBudibaseAccessToken.ts, used by the surrounding component session cookie module.",
+			"tags": ["function", "component-session-cookie", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionCookie/getBudibaseAccessToken.ts:waitForLogin",
+			"type": "function",
+			"name": "waitForLogin",
+			"filePath": "src/components/sessionCookie/getBudibaseAccessToken.ts",
+			"lineRange": [25, 37],
+			"summary": "Function waitForLogin in src/components/sessionCookie/getBudibaseAccessToken.ts, used by the surrounding component session cookie module.",
+			"tags": ["function", "component-session-cookie", "internal"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/sessionCookie/refreshKeycloakAccessToken.ts",
+			"type": "file",
+			"name": "refreshKeycloakAccessToken.ts",
+			"filePath": "src/components/sessionCookie/refreshKeycloakAccessToken.ts",
+			"summary": "React UI module for component session cookie, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"session",
+				"authentication",
+				"utility",
+				"component-session-cookie"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionCookie/refreshKeycloakAccessToken.ts:refreshKeycloakAccessToken",
+			"type": "function",
+			"name": "refreshKeycloakAccessToken",
+			"filePath": "src/components/sessionCookie/refreshKeycloakAccessToken.ts",
+			"lineRange": [5, 17],
+			"summary": "Function refreshKeycloakAccessToken in src/components/sessionCookie/refreshKeycloakAccessToken.ts, used by the surrounding component session cookie module.",
+			"tags": ["function", "component-session-cookie", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/sessionsListItem/SessionListItemAttachment.tsx",
+			"type": "file",
+			"name": "SessionListItemAttachment.tsx",
+			"filePath": "src/components/sessionsListItem/SessionListItemAttachment.tsx",
+			"summary": "React UI module for component sessions list item, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"session",
+				"utility",
+				"component-sessions-list-item"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionsListItem/SessionListItemAttachment.tsx:SessionListItemAttachment",
+			"type": "function",
+			"name": "SessionListItemAttachment",
+			"filePath": "src/components/sessionsListItem/SessionListItemAttachment.tsx",
+			"lineRange": [10, 22],
+			"summary": "Function SessionListItemAttachment in src/components/sessionsListItem/SessionListItemAttachment.tsx, used by the surrounding component sessions list item module.",
+			"tags": ["function", "component-sessions-list-item", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/context/LocaleContext.tsx",
+			"type": "file",
+			"name": "LocaleContext.tsx",
+			"filePath": "src/globalState/context/LocaleContext.tsx",
+			"summary": "React UI module for global state, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"state-management",
+				"i18n",
+				"utility",
+				"global-state"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/context/LocaleContext.tsx:LocaleContext",
+			"type": "function",
+			"name": "LocaleContext",
+			"filePath": "src/globalState/context/LocaleContext.tsx",
+			"lineRange": [11, 11],
+			"summary": "Function LocaleContext in src/globalState/context/LocaleContext.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/interfaces/TenantDataInterface.ts",
+			"type": "file",
+			"name": "TenantDataInterface.ts",
+			"filePath": "src/globalState/interfaces/TenantDataInterface.ts",
+			"summary": "Global state module for global state, sharing application state across frontend flows.",
+			"tags": ["state-management", "global-state", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/globalState/provider/InformalProvider.tsx",
+			"type": "file",
+			"name": "InformalProvider.tsx",
+			"filePath": "src/globalState/provider/InformalProvider.tsx",
+			"summary": "React UI module for global state, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"state-management",
+				"utility",
+				"global-state"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/InformalProvider.tsx:InformalProvider",
+			"type": "function",
+			"name": "InformalProvider",
+			"filePath": "src/globalState/provider/InformalProvider.tsx",
+			"lineRange": [23, 35],
+			"summary": "Function InformalProvider in src/globalState/provider/InformalProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/InformalProvider.tsx:COOKIE_KEY",
+			"type": "function",
+			"name": "COOKIE_KEY",
+			"filePath": "src/globalState/provider/InformalProvider.tsx",
+			"lineRange": [14, 26],
+			"summary": "Function COOKIE_KEY in src/globalState/provider/InformalProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/InformalProvider.tsx:InformalContext",
+			"type": "function",
+			"name": "InformalContext",
+			"filePath": "src/globalState/provider/InformalProvider.tsx",
+			"lineRange": [21, 33],
+			"summary": "Function InformalContext in src/globalState/provider/InformalProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/provider/LocaleProvider.tsx",
+			"type": "file",
+			"name": "LocaleProvider.tsx",
+			"filePath": "src/globalState/provider/LocaleProvider.tsx",
+			"summary": "React UI module for global state, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"state-management",
+				"i18n",
+				"utility",
+				"global-state"
+			],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/globalState/provider/LocaleProvider.tsx:LocaleProvider",
+			"type": "function",
+			"name": "LocaleProvider",
+			"filePath": "src/globalState/provider/LocaleProvider.tsx",
+			"lineRange": [13, 25],
+			"summary": "Function LocaleProvider in src/globalState/provider/LocaleProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/LocaleProvider.tsx:STORAGE_KEY_LOCALE",
+			"type": "function",
+			"name": "STORAGE_KEY_LOCALE",
+			"filePath": "src/globalState/provider/LocaleProvider.tsx",
+			"lineRange": [11, 23],
+			"summary": "Function STORAGE_KEY_LOCALE in src/globalState/provider/LocaleProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/LocaleProvider.tsx:useLocaleData",
+			"type": "function",
+			"name": "useLocaleData",
+			"filePath": "src/globalState/provider/LocaleProvider.tsx",
+			"lineRange": [126, 128],
+			"summary": "Function useLocaleData in src/globalState/provider/LocaleProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/provider/TenantProvider.tsx",
+			"type": "file",
+			"name": "TenantProvider.tsx",
+			"filePath": "src/globalState/provider/TenantProvider.tsx",
+			"summary": "React UI module for global state, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"state-management",
+				"utility",
+				"global-state"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/TenantProvider.tsx:TenantProvider",
+			"type": "function",
+			"name": "TenantProvider",
+			"filePath": "src/globalState/provider/TenantProvider.tsx",
+			"lineRange": [11, 23],
+			"summary": "Function TenantProvider in src/globalState/provider/TenantProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/TenantProvider.tsx:useTenant",
+			"type": "function",
+			"name": "useTenant",
+			"filePath": "src/globalState/provider/TenantProvider.tsx",
+			"lineRange": [26, 28],
+			"summary": "Function useTenant in src/globalState/provider/TenantProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/TenantProvider.tsx:TenantContext",
+			"type": "function",
+			"name": "TenantContext",
+			"filePath": "src/globalState/provider/TenantProvider.tsx",
+			"lineRange": [6, 18],
+			"summary": "Function TenantContext in src/globalState/provider/TenantProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/provider/TopicsProvider.tsx",
+			"type": "file",
+			"name": "TopicsProvider.tsx",
+			"filePath": "src/globalState/provider/TopicsProvider.tsx",
+			"summary": "React UI module for global state, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"state-management",
+				"utility",
+				"global-state"
+			],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/globalState/provider/TopicsProvider.tsx:TopicsProvider",
+			"type": "function",
+			"name": "TopicsProvider",
+			"filePath": "src/globalState/provider/TopicsProvider.tsx",
+			"lineRange": [19, 31],
+			"summary": "Function TopicsProvider in src/globalState/provider/TopicsProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/TopicsProvider.tsx:getTopics",
+			"type": "function",
+			"name": "getTopics",
+			"filePath": "src/globalState/provider/TopicsProvider.tsx",
+			"lineRange": [42, 54],
+			"summary": "Function getTopics in src/globalState/provider/TopicsProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/TopicsProvider.tsx:useTopics",
+			"type": "function",
+			"name": "useTopics",
+			"filePath": "src/globalState/provider/TopicsProvider.tsx",
+			"lineRange": [55, 67],
+			"summary": "Function useTopics in src/globalState/provider/TopicsProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/TopicsProvider.tsx:useTopic",
+			"type": "function",
+			"name": "useTopic",
+			"filePath": "src/globalState/provider/TopicsProvider.tsx",
+			"lineRange": [64, 76],
+			"summary": "Function useTopic in src/globalState/provider/TopicsProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/TopicsProvider.tsx:TopicsContext",
+			"type": "function",
+			"name": "TopicsContext",
+			"filePath": "src/globalState/provider/TopicsProvider.tsx",
+			"lineRange": [14, 26],
+			"summary": "Function TopicsContext in src/globalState/provider/TopicsProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/utils/appConfig.ts",
+			"type": "file",
+			"name": "appConfig.ts",
+			"filePath": "src/utils/appConfig.ts",
+			"summary": "TypeScript module for utilities with 1 extracted functions and 0 extracted classes.",
+			"tags": ["utility", "utilities", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/appConfig.ts:setAppConfig",
+			"type": "function",
+			"name": "setAppConfig",
+			"filePath": "src/utils/appConfig.ts",
+			"lineRange": [6, 8],
+			"summary": "Function setAppConfig in src/utils/appConfig.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/utils/eventHandler.ts",
+			"type": "file",
+			"name": "eventHandler.ts",
+			"filePath": "src/utils/eventHandler.ts",
+			"summary": "TypeScript module for utilities with 4 extracted functions and 0 extracted classes.",
+			"tags": ["utility", "utilities", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/eventHandler.ts:addEventListener",
+			"type": "function",
+			"name": "addEventListener",
+			"filePath": "src/utils/eventHandler.ts",
+			"lineRange": [9, 21],
+			"summary": "Function addEventListener in src/utils/eventHandler.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/eventHandler.ts:removeEventListener",
+			"type": "function",
+			"name": "removeEventListener",
+			"filePath": "src/utils/eventHandler.ts",
+			"lineRange": [23, 35],
+			"summary": "Function removeEventListener in src/utils/eventHandler.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/eventHandler.ts:getEventListeners",
+			"type": "function",
+			"name": "getEventListeners",
+			"filePath": "src/utils/eventHandler.ts",
+			"lineRange": [33, 45],
+			"summary": "Function getEventListeners in src/utils/eventHandler.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/eventHandler.ts:callEventListeners",
+			"type": "function",
+			"name": "callEventListeners",
+			"filePath": "src/utils/eventHandler.ts",
+			"lineRange": [37, 49],
+			"summary": "Function callEventListeners in src/utils/eventHandler.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/utils/generateCsrfToken.ts",
+			"type": "file",
+			"name": "generateCsrfToken.ts",
+			"filePath": "src/utils/generateCsrfToken.ts",
+			"summary": "TypeScript module for utilities with 1 extracted functions and 0 extracted classes.",
+			"tags": ["utility", "utilities", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/generateCsrfToken.ts:generateCsrfToken",
+			"type": "function",
+			"name": "generateCsrfToken",
+			"filePath": "src/utils/generateCsrfToken.ts",
+			"lineRange": [6, 18],
+			"summary": "Function generateCsrfToken in src/utils/generateCsrfToken.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/utils/requestCollector.ts",
+			"type": "file",
+			"name": "requestCollector.ts",
+			"filePath": "src/utils/requestCollector.ts",
+			"summary": "TypeScript module for utilities with 3 extracted functions and 1 extracted classes.",
+			"tags": ["utility", "utilities", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/requestCollector.ts:REQUEST_LOGS_LIMIT",
+			"type": "function",
+			"name": "REQUEST_LOGS_LIMIT",
+			"filePath": "src/utils/requestCollector.ts",
+			"lineRange": [5, 17],
+			"summary": "Function REQUEST_LOGS_LIMIT in src/utils/requestCollector.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/requestCollector.ts:REQUEST_COLLECTOR_EVENT",
+			"type": "function",
+			"name": "REQUEST_COLLECTOR_EVENT",
+			"filePath": "src/utils/requestCollector.ts",
+			"lineRange": [6, 18],
+			"summary": "Function REQUEST_COLLECTOR_EVENT in src/utils/requestCollector.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/requestCollector.ts:requestCollector",
+			"type": "function",
+			"name": "requestCollector",
+			"filePath": "src/utils/requestCollector.ts",
+			"lineRange": [34, 46],
+			"summary": "Function requestCollector in src/utils/requestCollector.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "class:src/utils/requestCollector.ts:RequestLog",
+			"type": "class",
+			"name": "RequestLog",
+			"filePath": "src/utils/requestCollector.ts",
+			"lineRange": [8, 48],
+			"summary": "Class RequestLog in src/utils/requestCollector.ts, grouping related utilities behavior.",
+			"tags": ["class", "utilities", "exported"],
+			"complexity": "simple"
+		}
+	],
+	"edges": [
+		{
+			"source": "file:cypress/e2e/tokens.cy.ts",
+			"target": "file:cypress/support/websocket.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/e2e/tokens.cy.ts",
+			"target": "file:src/components/auth/auth.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/e2e/tokens.cy.ts",
+			"target": "file:src/components/sessionCookie/accessSessionLocalStorage.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiLogoutKeycloak.ts",
+			"target": "function:src/api/apiLogoutKeycloak.ts:apiKeycloakLogout",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiLogoutKeycloak.ts",
+			"target": "function:src/api/apiLogoutKeycloak.ts:apiKeycloakLogout",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiLogoutKeycloak.ts",
+			"target": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiLogoutKeycloak.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiMatrixUpload.ts",
+			"target": "function:src/api/apiMatrixUpload.ts:apiMatrixUploadFile",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiMatrixUpload.ts",
+			"target": "function:src/api/apiMatrixUpload.ts:apiMatrixUploadFile",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiMatrixUpload.ts",
+			"target": "function:src/api/apiMatrixUpload.ts:apiMatrixSendFileMessage",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiMatrixUpload.ts",
+			"target": "function:src/api/apiMatrixUpload.ts:apiMatrixSendFileMessage",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiMatrixUpload.ts",
+			"target": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiMatrixUpload.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiMatrixUpload.ts",
+			"target": "file:src/utils/generateCsrfToken.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiPostError.ts",
+			"target": "function:src/api/apiPostError.ts:ERROR_LEVEL_FATAL",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiPostError.ts",
+			"target": "function:src/api/apiPostError.ts:ERROR_LEVEL_FATAL",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiPostError.ts",
+			"target": "function:src/api/apiPostError.ts:ERROR_LEVEL_ERROR",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiPostError.ts",
+			"target": "function:src/api/apiPostError.ts:ERROR_LEVEL_ERROR",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiPostError.ts",
+			"target": "function:src/api/apiPostError.ts:ERROR_LEVEL_WARN",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiPostError.ts",
+			"target": "function:src/api/apiPostError.ts:ERROR_LEVEL_WARN",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiPostError.ts",
+			"target": "function:src/api/apiPostError.ts:ERROR_LEVEL_INFO",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiPostError.ts",
+			"target": "function:src/api/apiPostError.ts:ERROR_LEVEL_INFO",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiPostError.ts",
+			"target": "function:src/api/apiPostError.ts:ERROR_LEVEL_DEBUG",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiPostError.ts",
+			"target": "function:src/api/apiPostError.ts:ERROR_LEVEL_DEBUG",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiPostError.ts",
+			"target": "function:src/api/apiPostError.ts:ERROR_LEVEL_TRACE",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiPostError.ts",
+			"target": "function:src/api/apiPostError.ts:ERROR_LEVEL_TRACE",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiPostError.ts",
+			"target": "function:src/api/apiPostError.ts:apiPostError",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiPostError.ts",
+			"target": "function:src/api/apiPostError.ts:apiPostError",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiPostError.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiPostError.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiUploadAttachment.ts",
+			"target": "function:src/api/apiUploadAttachment.ts:apiUploadAttachment",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiUploadAttachment.ts",
+			"target": "function:src/api/apiUploadAttachment.ts:apiUploadAttachment",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiUploadAttachment.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiUploadAttachment.ts",
+			"target": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiUploadAttachment.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiUploadAttachment.ts",
+			"target": "file:src/utils/generateCsrfToken.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/ErrorBoundary.tsx",
+			"target": "class:src/components/app/ErrorBoundary.tsx:ErrorBoundary",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/app/ErrorBoundary.tsx",
+			"target": "class:src/components/app/ErrorBoundary.tsx:ErrorBoundary",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/app/ErrorBoundary.tsx",
+			"target": "file:src/api/apiPostError.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/ErrorBoundary.tsx",
+			"target": "file:src/components/app/Loading.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/ErrorBoundary.tsx",
+			"target": "file:src/components/devToolbar/DevToolbar.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/ErrorBoundary.tsx",
+			"target": "file:src/components/error/errorHandling.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/app/ErrorBoundary.tsx",
+			"target": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfoTools.tsx",
+			"target": "function:src/components/askerInfo/AskerInfoTools.tsx:AskerInfoTools",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfoTools.tsx",
+			"target": "function:src/components/askerInfo/AskerInfoTools.tsx:AskerInfoTools",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfoTools.tsx",
+			"target": "file:src/api/apiGetUserDataBySessionId.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfoTools.tsx",
+			"target": "file:src/components/askerInfo/AskerInfoToolsOptions.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfoTools.tsx",
+			"target": "file:src/components/sessionCookie/refreshKeycloakAccessToken.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfoTools.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfoTools.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfoTools.tsx",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/auth/auth.ts",
+			"target": "function:src/components/auth/auth.ts:RENEW_BEFORE_EXPIRY_IN_MS",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/auth/auth.ts",
+			"target": "function:src/components/auth/auth.ts:RENEW_BEFORE_EXPIRY_IN_MS",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/auth/auth.ts",
+			"target": "function:src/components/auth/auth.ts:setTokens",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/auth/auth.ts",
+			"target": "function:src/components/auth/auth.ts:setTokens",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/auth/auth.ts",
+			"target": "function:src/components/auth/auth.ts:handleTokenRefresh",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/auth/auth.ts",
+			"target": "function:src/components/auth/auth.ts:handleTokenRefresh",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/auth/auth.ts",
+			"target": "file:src/components/logout/logout.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/auth/auth.ts",
+			"target": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/auth/auth.ts",
+			"target": "file:src/components/sessionCookie/accessSessionLocalStorage.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/auth/auth.ts",
+			"target": "file:src/components/sessionCookie/refreshKeycloakAccessToken.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/auth/auth.ts",
+			"target": "file:src/utils/appConfig.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/budibase/budibaseLogout.ts",
+			"target": "function:src/components/budibase/budibaseLogout.ts:budibaseLogout",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/budibase/budibaseLogout.ts",
+			"target": "function:src/components/budibase/budibaseLogout.ts:budibaseLogout",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/budibase/budibaseLogout.ts",
+			"target": "file:src/utils/appConfig.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/dragAndDropArea/DragAndDropArea.tsx",
+			"target": "function:src/components/dragAndDropArea/DragAndDropArea.tsx:DragAndDropArea",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/dragAndDropArea/DragAndDropArea.tsx",
+			"target": "function:src/components/dragAndDropArea/DragAndDropArea.tsx:DragAndDropArea",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/dragAndDropArea/DragAndDropArea.tsx",
+			"target": "file:src/components/messageSubmitInterface/attachmentHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/error/errorHandling.ts",
+			"target": "function:src/components/error/errorHandling.ts:ERROR_TYPES",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/error/errorHandling.ts",
+			"target": "function:src/components/error/errorHandling.ts:ERROR_TYPES",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/error/errorHandling.ts",
+			"target": "function:src/components/error/errorHandling.ts:getErrorCaseForStatus",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/error/errorHandling.ts",
+			"target": "function:src/components/error/errorHandling.ts:getErrorCaseForStatus",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/error/errorHandling.ts",
+			"target": "function:src/components/error/errorHandling.ts:redirectToErrorPage",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/error/errorHandling.ts",
+			"target": "function:src/components/error/errorHandling.ts:redirectToErrorPage",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/error/errorHandling.ts",
+			"target": "file:src/api/apiPostError.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/error/errorHandling.ts",
+			"target": "file:src/components/logout/logout.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/error/errorHandling.ts",
+			"target": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/error/errorHandling.ts",
+			"target": "file:src/utils/appConfig.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/error/errorHandling.ts",
+			"target": "file:src/utils/requestCollector.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/loadingSpinner/LoadingSpinner.stories.ts",
+			"target": "file:src/components/loadingSpinner/LoadingSpinner.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/logout/calcomLogout.ts",
+			"target": "function:src/components/logout/calcomLogout.ts:calcomLogout",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/logout/calcomLogout.ts",
+			"target": "function:src/components/logout/calcomLogout.ts:calcomLogout",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/logout/calcomLogout.ts",
+			"target": "file:src/utils/appConfig.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/logout/logout.ts",
+			"target": "function:src/components/logout/logout.ts:EVENT_PRE_LOGOUT",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/logout/logout.ts",
+			"target": "function:src/components/logout/logout.ts:EVENT_PRE_LOGOUT",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/logout/logout.ts",
+			"target": "function:src/components/logout/logout.ts:logout",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/logout/logout.ts",
+			"target": "function:src/components/logout/logout.ts:logout",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/logout/logout.ts",
+			"target": "file:src/api/apiLogoutKeycloak.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/logout/logout.ts",
+			"target": "file:src/components/budibase/budibaseLogout.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/logout/logout.ts",
+			"target": "file:src/components/logout/calcomLogout.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/logout/logout.ts",
+			"target": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/logout/logout.ts",
+			"target": "file:src/components/sessionCookie/accessSessionLocalStorage.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/logout/logout.ts",
+			"target": "file:src/utils/appConfig.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/logout/logout.ts",
+			"target": "file:src/utils/eventHandler.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/logout/logout.ts",
+			"target": "file:src/utils/tenantSettingsHelper.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageAttachment.stories.ts",
+			"target": "file:src/components/message/message.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageAttachment.stories.ts",
+			"target": "file:src/components/message/MessageAttachment.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageAttachment.tsx",
+			"target": "function:src/components/message/MessageAttachment.tsx:MessageAttachment",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/message/MessageAttachment.tsx",
+			"target": "function:src/components/message/MessageAttachment.tsx:MessageAttachment",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/message/MessageAttachment.tsx",
+			"target": "file:src/api/apiPostError.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageAttachment.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageAttachment.tsx",
+			"target": "file:src/components/devToolbar/DevToolbar.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageAttachment.tsx",
+			"target": "file:src/components/loadingSpinner/LoadingSpinner.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageAttachment.tsx",
+			"target": "file:src/components/message/messageHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageAttachment.tsx",
+			"target": "file:src/components/messageSubmitInterface/attachmentHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageAttachment.tsx",
+			"target": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageAttachment.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageAttachment.tsx",
+			"target": "file:src/hooks/useE2EE.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageAttachment.tsx",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageAttachment.tsx",
+			"target": "file:src/utils/encryptionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/MessageAttachment.tsx",
+			"target": "file:src/utils/generateCsrfToken.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/messageHelpers.ts",
+			"target": "function:src/components/message/messageHelpers.ts:getIconForAttachmentType",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/message/messageHelpers.ts",
+			"target": "function:src/components/message/messageHelpers.ts:getIconForAttachmentType",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/message/messageHelpers.ts",
+			"target": "file:src/components/messageSubmitInterface/attachmentHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/attachmentHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/attachmentHelpers.ts:ATTACHMENT_TYPE_FOR_KEY",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/attachmentHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/attachmentHelpers.ts:ATTACHMENT_TYPE_FOR_KEY",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/attachmentHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/attachmentHelpers.ts:ATTACHMENT_TRANSLATE_FOR_TYPE",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/attachmentHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/attachmentHelpers.ts:ATTACHMENT_TRANSLATE_FOR_TYPE",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/attachmentHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/attachmentHelpers.ts:isPNGAttachment",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/attachmentHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/attachmentHelpers.ts:isPNGAttachment",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/attachmentHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/attachmentHelpers.ts:isJPEGAttachment",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/attachmentHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/attachmentHelpers.ts:isJPEGAttachment",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/attachmentHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/attachmentHelpers.ts:isPDFAttachment",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/attachmentHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/attachmentHelpers.ts:isPDFAttachment",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/attachmentHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/attachmentHelpers.ts:isDOCXAttachment",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/attachmentHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/attachmentHelpers.ts:isDOCXAttachment",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/attachmentHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/attachmentHelpers.ts:isXLSXAttachment",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/attachmentHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/attachmentHelpers.ts:isXLSXAttachment",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/attachmentHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/attachmentHelpers.ts:ATTACHMENT_MAX_SIZE_IN_MB",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/attachmentHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/attachmentHelpers.ts:ATTACHMENT_MAX_SIZE_IN_MB",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/attachmentHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/attachmentHelpers.ts:getAttachmentSizeMBForKB",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/attachmentHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/attachmentHelpers.ts:getAttachmentSizeMBForKB",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/useDraftMessage.tsx",
+			"target": "function:src/components/messageSubmitInterface/useDraftMessage.tsx:useDraftMessage",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/useDraftMessage.tsx",
+			"target": "function:src/components/messageSubmitInterface/useDraftMessage.tsx:useDraftMessage",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/useDraftMessage.tsx",
+			"target": "file:src/api/apiPostError.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/useDraftMessage.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/useDraftMessage.tsx",
+			"target": "file:src/components/logout/logout.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/useDraftMessage.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/useDraftMessage.tsx",
+			"target": "file:src/hooks/useE2EE.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/useDraftMessage.tsx",
+			"target": "file:src/services/draftStore.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/useDraftMessage.tsx",
+			"target": "file:src/utils/encryptionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/useDraftMessage.tsx",
+			"target": "file:src/utils/eventHandler.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/useDraftMessage.tsx",
+			"target": "file:src/utils/keycloakSession.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"target": "function:src/components/sessionCookie/accessSessionCookie.ts:setValueInCookie",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"target": "function:src/components/sessionCookie/accessSessionCookie.ts:setValueInCookie",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"target": "function:src/components/sessionCookie/accessSessionCookie.ts:deleteCookieByName",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"target": "function:src/components/sessionCookie/accessSessionCookie.ts:deleteCookieByName",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"target": "function:src/components/sessionCookie/accessSessionCookie.ts:getValueFromCookie",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"target": "function:src/components/sessionCookie/accessSessionCookie.ts:getValueFromCookie",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"target": "function:src/components/sessionCookie/accessSessionCookie.ts:removeAllCookies",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"target": "function:src/components/sessionCookie/accessSessionCookie.ts:removeAllCookies",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionCookie/accessSessionLocalStorage.ts",
+			"target": "function:src/components/sessionCookie/accessSessionLocalStorage.ts:getLocalStorageItem",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionCookie/accessSessionLocalStorage.ts",
+			"target": "function:src/components/sessionCookie/accessSessionLocalStorage.ts:getLocalStorageItem",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionCookie/accessSessionLocalStorage.ts",
+			"target": "function:src/components/sessionCookie/accessSessionLocalStorage.ts:removeLocalStorageItem",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionCookie/accessSessionLocalStorage.ts",
+			"target": "function:src/components/sessionCookie/accessSessionLocalStorage.ts:removeLocalStorageItem",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionCookie/accessSessionLocalStorage.ts",
+			"target": "function:src/components/sessionCookie/accessSessionLocalStorage.ts:setTokenExpiryInLocalStorage",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionCookie/accessSessionLocalStorage.ts",
+			"target": "function:src/components/sessionCookie/accessSessionLocalStorage.ts:setTokenExpiryInLocalStorage",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionCookie/accessSessionLocalStorage.ts",
+			"target": "function:src/components/sessionCookie/accessSessionLocalStorage.ts:getTokenExpiryFromLocalStorage",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionCookie/accessSessionLocalStorage.ts",
+			"target": "function:src/components/sessionCookie/accessSessionLocalStorage.ts:getTokenExpiryFromLocalStorage",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionCookie/accessSessionLocalStorage.ts",
+			"target": "function:src/components/sessionCookie/accessSessionLocalStorage.ts:removeTokenExpiryFromLocalStorage",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionCookie/accessSessionLocalStorage.ts",
+			"target": "function:src/components/sessionCookie/accessSessionLocalStorage.ts:removeTokenExpiryFromLocalStorage",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionCookie/accessSessionLocalStorage.ts",
+			"target": "function:src/components/sessionCookie/accessSessionLocalStorage.ts:removeRocketChatMasterKeyFromLocalStorage",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionCookie/accessSessionLocalStorage.ts",
+			"target": "function:src/components/sessionCookie/accessSessionLocalStorage.ts:removeRocketChatMasterKeyFromLocalStorage",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionCookie/getBudibaseAccessToken.ts",
+			"target": "function:src/components/sessionCookie/getBudibaseAccessToken.ts:getBudibaseAccessToken",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionCookie/getBudibaseAccessToken.ts",
+			"target": "function:src/components/sessionCookie/getBudibaseAccessToken.ts:getBudibaseAccessToken",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionCookie/getBudibaseAccessToken.ts",
+			"target": "function:src/components/sessionCookie/getBudibaseAccessToken.ts:waitForLogin",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionCookie/getBudibaseAccessToken.ts",
+			"target": "file:src/globalState/interfaces/TenantDataInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionCookie/getBudibaseAccessToken.ts",
+			"target": "file:src/utils/appConfig.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionCookie/refreshKeycloakAccessToken.ts",
+			"target": "function:src/components/sessionCookie/refreshKeycloakAccessToken.ts:refreshKeycloakAccessToken",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionCookie/refreshKeycloakAccessToken.ts",
+			"target": "function:src/components/sessionCookie/refreshKeycloakAccessToken.ts:refreshKeycloakAccessToken",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionCookie/refreshKeycloakAccessToken.ts",
+			"target": "file:src/components/registration/autoLogin.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionCookie/refreshKeycloakAccessToken.ts",
+			"target": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionCookie/refreshKeycloakAccessToken.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItemAttachment.tsx",
+			"target": "function:src/components/sessionsListItem/SessionListItemAttachment.tsx:SessionListItemAttachment",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItemAttachment.tsx",
+			"target": "function:src/components/sessionsListItem/SessionListItemAttachment.tsx:SessionListItemAttachment",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionListItemAttachment.tsx",
+			"target": "file:src/components/message/messageHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/context/LocaleContext.tsx",
+			"target": "function:src/globalState/context/LocaleContext.tsx:LocaleContext",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/context/LocaleContext.tsx",
+			"target": "function:src/globalState/context/LocaleContext.tsx:LocaleContext",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/InformalProvider.tsx",
+			"target": "function:src/globalState/provider/InformalProvider.tsx:InformalProvider",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/InformalProvider.tsx",
+			"target": "function:src/globalState/provider/InformalProvider.tsx:InformalProvider",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/InformalProvider.tsx",
+			"target": "function:src/globalState/provider/InformalProvider.tsx:COOKIE_KEY",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/InformalProvider.tsx",
+			"target": "function:src/globalState/provider/InformalProvider.tsx:COOKIE_KEY",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/InformalProvider.tsx",
+			"target": "function:src/globalState/provider/InformalProvider.tsx:InformalContext",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/InformalProvider.tsx",
+			"target": "function:src/globalState/provider/InformalProvider.tsx:InformalContext",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/InformalProvider.tsx",
+			"target": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/LocaleProvider.tsx",
+			"target": "function:src/globalState/provider/LocaleProvider.tsx:LocaleProvider",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/LocaleProvider.tsx",
+			"target": "function:src/globalState/provider/LocaleProvider.tsx:LocaleProvider",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/LocaleProvider.tsx",
+			"target": "function:src/globalState/provider/LocaleProvider.tsx:STORAGE_KEY_LOCALE",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/LocaleProvider.tsx",
+			"target": "function:src/globalState/provider/LocaleProvider.tsx:STORAGE_KEY_LOCALE",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/LocaleProvider.tsx",
+			"target": "function:src/globalState/provider/LocaleProvider.tsx:useLocaleData",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/LocaleProvider.tsx",
+			"target": "function:src/globalState/provider/LocaleProvider.tsx:useLocaleData",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/LocaleProvider.tsx",
+			"target": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/LocaleProvider.tsx",
+			"target": "file:src/globalState/context/LocaleContext.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/LocaleProvider.tsx",
+			"target": "file:src/globalState/provider/InformalProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/LocaleProvider.tsx",
+			"target": "file:src/globalState/provider/TenantProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/LocaleProvider.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/LocaleProvider.tsx",
+			"target": "file:src/i18n.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/LocaleProvider.tsx",
+			"target": "file:src/utils/useTenantTheming.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/TenantProvider.tsx",
+			"target": "function:src/globalState/provider/TenantProvider.tsx:TenantProvider",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/TenantProvider.tsx",
+			"target": "function:src/globalState/provider/TenantProvider.tsx:TenantProvider",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/TenantProvider.tsx",
+			"target": "function:src/globalState/provider/TenantProvider.tsx:useTenant",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/TenantProvider.tsx",
+			"target": "function:src/globalState/provider/TenantProvider.tsx:useTenant",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/TenantProvider.tsx",
+			"target": "function:src/globalState/provider/TenantProvider.tsx:TenantContext",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/TenantProvider.tsx",
+			"target": "function:src/globalState/provider/TenantProvider.tsx:TenantContext",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/TenantProvider.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/TenantProvider.tsx",
+			"target": "file:src/utils/tenantSettingsHelper.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/TopicsProvider.tsx",
+			"target": "function:src/globalState/provider/TopicsProvider.tsx:TopicsProvider",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/TopicsProvider.tsx",
+			"target": "function:src/globalState/provider/TopicsProvider.tsx:TopicsProvider",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/TopicsProvider.tsx",
+			"target": "function:src/globalState/provider/TopicsProvider.tsx:getTopics",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/TopicsProvider.tsx",
+			"target": "function:src/globalState/provider/TopicsProvider.tsx:getTopics",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/TopicsProvider.tsx",
+			"target": "function:src/globalState/provider/TopicsProvider.tsx:useTopics",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/TopicsProvider.tsx",
+			"target": "function:src/globalState/provider/TopicsProvider.tsx:useTopics",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/TopicsProvider.tsx",
+			"target": "function:src/globalState/provider/TopicsProvider.tsx:useTopic",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/TopicsProvider.tsx",
+			"target": "function:src/globalState/provider/TopicsProvider.tsx:useTopic",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/TopicsProvider.tsx",
+			"target": "function:src/globalState/provider/TopicsProvider.tsx:TopicsContext",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/TopicsProvider.tsx",
+			"target": "function:src/globalState/provider/TopicsProvider.tsx:TopicsContext",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/TopicsProvider.tsx",
+			"target": "file:src/api/apiGetTopicsData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/TopicsProvider.tsx",
+			"target": "file:src/api/apiPostError.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/TopicsProvider.tsx",
+			"target": "file:src/globalState/context/LocaleContext.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/TopicsProvider.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/utils/appConfig.ts",
+			"target": "function:src/utils/appConfig.ts:setAppConfig",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/appConfig.ts",
+			"target": "function:src/utils/appConfig.ts:setAppConfig",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/appConfig.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/utils/eventHandler.ts",
+			"target": "function:src/utils/eventHandler.ts:addEventListener",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/eventHandler.ts",
+			"target": "function:src/utils/eventHandler.ts:addEventListener",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/eventHandler.ts",
+			"target": "function:src/utils/eventHandler.ts:removeEventListener",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/eventHandler.ts",
+			"target": "function:src/utils/eventHandler.ts:removeEventListener",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/eventHandler.ts",
+			"target": "function:src/utils/eventHandler.ts:getEventListeners",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/eventHandler.ts",
+			"target": "function:src/utils/eventHandler.ts:getEventListeners",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/eventHandler.ts",
+			"target": "function:src/utils/eventHandler.ts:callEventListeners",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/eventHandler.ts",
+			"target": "function:src/utils/eventHandler.ts:callEventListeners",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/generateCsrfToken.ts",
+			"target": "function:src/utils/generateCsrfToken.ts:generateCsrfToken",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/generateCsrfToken.ts",
+			"target": "function:src/utils/generateCsrfToken.ts:generateCsrfToken",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/generateCsrfToken.ts",
+			"target": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/utils/requestCollector.ts",
+			"target": "function:src/utils/requestCollector.ts:REQUEST_LOGS_LIMIT",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/requestCollector.ts",
+			"target": "function:src/utils/requestCollector.ts:REQUEST_LOGS_LIMIT",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/requestCollector.ts",
+			"target": "function:src/utils/requestCollector.ts:REQUEST_COLLECTOR_EVENT",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/requestCollector.ts",
+			"target": "function:src/utils/requestCollector.ts:REQUEST_COLLECTOR_EVENT",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/requestCollector.ts",
+			"target": "function:src/utils/requestCollector.ts:requestCollector",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/requestCollector.ts",
+			"target": "function:src/utils/requestCollector.ts:requestCollector",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/requestCollector.ts",
+			"target": "class:src/utils/requestCollector.ts:RequestLog",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/requestCollector.ts",
+			"target": "class:src/utils/requestCollector.ts:RequestLog",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/utils/requestCollector.ts",
+			"target": "file:src/utils/appConfig.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		}
+	]
+}

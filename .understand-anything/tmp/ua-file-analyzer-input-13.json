@@ -1,0 +1,288 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": "src/api/apiRocketChatUsersGetStatus.ts",
+			"language": "typescript",
+			"sizeLines": 11,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiRocketChatUsersInfo.ts",
+			"language": "typescript",
+			"sizeLines": 9,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiSendEnquiry.ts",
+			"language": "typescript",
+			"sizeLines": 29,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiSendMessage.ts",
+			"language": "typescript",
+			"sizeLines": 113,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiServerSettings.ts",
+			"language": "typescript",
+			"sizeLines": 11,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiSessionAssign.ts",
+			"language": "typescript",
+			"sizeLines": 15,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiSetAbsence.ts",
+			"language": "typescript",
+			"sizeLines": 19,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiSetSessionRead.ts",
+			"language": "typescript",
+			"sizeLines": 10,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiStartVideoCall.ts",
+			"language": "typescript",
+			"sizeLines": 28,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiTwoFactorAuth.ts",
+			"language": "typescript",
+			"sizeLines": 64,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiUpdatePassword.ts",
+			"language": "typescript",
+			"sizeLines": 20,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiUpdatePasswordAppointments.ts",
+			"language": "typescript",
+			"sizeLines": 16,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiUpdateUserE2EKeys.ts",
+			"language": "typescript",
+			"sizeLines": 18,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/apiUserDrafts.ts",
+			"language": "typescript",
+			"sizeLines": 96,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/appointments/deleteAppointment.ts",
+			"language": "typescript",
+			"sizeLines": 15,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/appointments/getAppointment.ts",
+			"language": "typescript",
+			"sizeLines": 17,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/appointments/getAppointments.ts",
+			"language": "typescript",
+			"sizeLines": 15,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/appointments/postAppointments.ts",
+			"language": "typescript",
+			"sizeLines": 22,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/appointments/putAppointment.ts",
+			"language": "typescript",
+			"sizeLines": 17,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/fetchData.ts",
+			"language": "typescript",
+			"sizeLines": 306,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/fetchRCData.ts",
+			"language": "typescript",
+			"sizeLines": 47,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/api/videocalls/getJwt.ts",
+			"language": "typescript",
+			"sizeLines": 17,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsList/sessionsListConfig.ts",
+			"language": "typescript",
+			"sizeLines": 5,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/index.ts",
+			"language": "typescript",
+			"sizeLines": 18,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/AppConfigProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 76,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/resources/scripts/endpoints.ts",
+			"language": "typescript",
+			"sizeLines": 143,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/utils/loadConsultingTypesForAgencies.ts",
+			"language": "typescript",
+			"sizeLines": 28,
+			"fileCategory": "code"
+		}
+	],
+	"batchImportData": {
+		"src/api/apiRocketChatUsersGetStatus.ts": [
+			"src/api/fetchData.ts",
+			"src/api/fetchRCData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiRocketChatUsersInfo.ts": [
+			"src/api/fetchData.ts",
+			"src/api/fetchRCData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiSendEnquiry.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiSendMessage.ts": [
+			"src/api/apiPostMessageEventNotification.ts",
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiServerSettings.ts": [
+			"src/api/fetchData.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiSessionAssign.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiSetAbsence.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiSetSessionRead.ts": [
+			"src/api/fetchData.ts",
+			"src/api/fetchRCData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiStartVideoCall.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiTwoFactorAuth.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiUpdatePassword.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiUpdatePasswordAppointments.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiUpdateUserE2EKeys.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiUserDrafts.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts",
+			"src/utils/keycloakSession.ts"
+		],
+		"src/api/appointments/deleteAppointment.ts": [
+			"src/api/fetchData.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/appointments/getAppointment.ts": [
+			"src/api/fetchData.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/appointments/getAppointments.ts": [
+			"src/api/fetchData.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/appointments/postAppointments.ts": [
+			"src/api/fetchData.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/appointments/putAppointment.ts": [
+			"src/api/fetchData.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/fetchData.ts": [
+			"src/components/error/errorHandling.ts",
+			"src/components/logout/logout.ts",
+			"src/components/sessionCookie/accessSessionCookie.ts",
+			"src/utils/anonymousSessionFetchGuard.ts",
+			"src/utils/appConfig.ts",
+			"src/utils/generateCsrfToken.ts",
+			"src/utils/requestCollector.ts"
+		],
+		"src/api/fetchRCData.ts": [
+			"src/components/error/errorHandling.ts",
+			"src/components/sessionCookie/accessSessionCookie.ts",
+			"src/utils/requestCollector.ts"
+		],
+		"src/api/videocalls/getJwt.ts": [
+			"src/api/fetchData.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/components/sessionsList/sessionsListConfig.ts": [],
+		"src/globalState/interfaces/index.ts": [],
+		"src/globalState/provider/AppConfigProvider.tsx": [
+			"src/api/apiFrontendSettings.ts",
+			"src/api/apiServerSettings.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/utils/appConfig.ts"
+		],
+		"src/resources/scripts/endpoints.ts": [],
+		"src/utils/loadConsultingTypesForAgencies.ts": [
+			"src/api/index.ts",
+			"src/globalState/interfaces/index.ts"
+		]
+	}
+}

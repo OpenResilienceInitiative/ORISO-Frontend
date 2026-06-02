@@ -1,0 +1,41 @@
+{
+	"nodes": [
+		{
+			"id": "file:src/components/groupChat/createChat.styles.scss",
+			"type": "file",
+			"name": "createChat.styles.scss",
+			"filePath": "src/components/groupChat/createChat.styles.scss",
+			"summary": "React UI module for component group chat, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-group-chat"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/groupChat/groupChatCopyLinks.scss",
+			"type": "file",
+			"name": "groupChatCopyLinks.scss",
+			"filePath": "src/components/groupChat/groupChatCopyLinks.scss",
+			"summary": "React UI module for component group chat, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-group-chat"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/groupChat/groupChatInfo.styles.scss",
+			"type": "file",
+			"name": "groupChatInfo.styles.scss",
+			"filePath": "src/components/groupChat/groupChatInfo.styles.scss",
+			"summary": "React UI module for component group chat, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-group-chat"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/groupChat/joinChat.styles.scss",
+			"type": "file",
+			"name": "joinChat.styles.scss",
+			"filePath": "src/components/groupChat/joinChat.styles.scss",
+			"summary": "React UI module for component group chat, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-group-chat"],
+			"complexity": "simple"
+		}
+	],
+	"edges": []
+}

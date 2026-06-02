@@ -1,0 +1,182 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": "src/components/termsandconditions/termsandconfitions.styles.scss",
+			"language": "css",
+			"sizeLines": 73,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/text/text.styles.scss",
+			"language": "css",
+			"sizeLines": 76,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/tools/tools.styles.scss",
+			"language": "css",
+			"sizeLines": 102,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/tooltip/tooltip.styles.scss",
+			"language": "css",
+			"sizeLines": 193,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/typingIndicator/typingIndicator.styles.scss",
+			"language": "css",
+			"sizeLines": 76,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/typingIndicator/typingIndicator.tsx",
+			"language": "typescript",
+			"sizeLines": 43,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/uiVersionToggle/uiVersionToggle.styles.scss",
+			"language": "css",
+			"sizeLines": 10,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/videoCall/statusPage.styles.scss",
+			"language": "css",
+			"sizeLines": 11,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/walkthrough/walkthrough.styles.scss",
+			"language": "css",
+			"sizeLines": 133,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/compound.css",
+			"language": "css",
+			"sizeLines": 5,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/containers/bookings/components/booking.styles.scss",
+			"language": "css",
+			"sizeLines": 547,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/containers/bookings/components/Calcom/cal.styles.scss",
+			"language": "css",
+			"sizeLines": 21,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/containers/overview/components/BookingEvent/booking-event.styles.scss",
+			"language": "css",
+			"sizeLines": 44,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/containers/overview/components/EmptyState/emptyState.styles.scss",
+			"language": "css",
+			"sizeLines": 56,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/containers/overview/components/OverviewCard/overviewCard.styles.scss",
+			"language": "css",
+			"sizeLines": 34,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/containers/overview/components/SessionCard/sessionCard.styles.scss",
+			"language": "css",
+			"sizeLines": 11,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/containers/overview/overview.styles.scss",
+			"language": "css",
+			"sizeLines": 6,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/containers/registration/components/ProposedAgencies/proposedAgencies.styles.scss",
+			"language": "css",
+			"sizeLines": 113,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/extensions/cypress/cypress.json",
+			"language": "json",
+			"sizeLines": 12,
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/extensions/package.json",
+			"language": "json",
+			"sizeLines": 1,
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/extensions/README.MD",
+			"language": "markdown",
+			"sizeLines": 24,
+			"fileCategory": "docs"
+		},
+		{
+			"path": "src/generated/agencyservice.d.ts",
+			"language": "typescript",
+			"sizeLines": 103,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/generated/liveservice.d.ts",
+			"language": "typescript",
+			"sizeLines": 56,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/generated/mailservice.d.ts",
+			"language": "typescript",
+			"sizeLines": 54,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/generated/messageservice.d.ts",
+			"language": "typescript",
+			"sizeLines": 293,
+			"fileCategory": "code"
+		}
+	],
+	"batchImportData": {
+		"src/components/termsandconditions/termsandconfitions.styles.scss": [],
+		"src/components/text/text.styles.scss": [],
+		"src/components/tools/tools.styles.scss": [],
+		"src/components/tooltip/tooltip.styles.scss": [],
+		"src/components/typingIndicator/typingIndicator.styles.scss": [],
+		"src/components/typingIndicator/typingIndicator.tsx": [],
+		"src/components/uiVersionToggle/uiVersionToggle.styles.scss": [],
+		"src/components/videoCall/statusPage.styles.scss": [],
+		"src/components/walkthrough/walkthrough.styles.scss": [],
+		"src/compound.css": [],
+		"src/containers/bookings/components/booking.styles.scss": [],
+		"src/containers/bookings/components/Calcom/cal.styles.scss": [],
+		"src/containers/overview/components/BookingEvent/booking-event.styles.scss": [],
+		"src/containers/overview/components/EmptyState/emptyState.styles.scss": [],
+		"src/containers/overview/components/OverviewCard/overviewCard.styles.scss": [],
+		"src/containers/overview/components/SessionCard/sessionCard.styles.scss": [],
+		"src/containers/overview/overview.styles.scss": [],
+		"src/containers/registration/components/ProposedAgencies/proposedAgencies.styles.scss": [],
+		"src/extensions/cypress/cypress.json": [],
+		"src/extensions/package.json": [],
+		"src/extensions/README.MD": [],
+		"src/generated/agencyservice.d.ts": [],
+		"src/generated/liveservice.d.ts": [],
+		"src/generated/mailservice.d.ts": [],
+		"src/generated/messageservice.d.ts": []
+	}
+}

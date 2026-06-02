@@ -1,0 +1,28 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": "src/components/videoConference/e2eeBanner.styles.scss",
+			"language": "css",
+			"sizeLines": 85,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/videoConference/logo.styles.scss",
+			"language": "css",
+			"sizeLines": 16,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/components/videoConference/waitingRoom.styles.scss",
+			"language": "css",
+			"sizeLines": 155,
+			"fileCategory": "markup"
+		}
+	],
+	"batchImportData": {
+		"src/components/videoConference/e2eeBanner.styles.scss": [],
+		"src/components/videoConference/logo.styles.scss": [],
+		"src/components/videoConference/waitingRoom.styles.scss": []
+	}
+}

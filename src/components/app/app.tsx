@@ -171,7 +171,10 @@ const RouterWrapper = ({ extraRoutes }: RouterWrapperProps) => {
 										)
 									)}
 
-									<Route path="/invite/:token" exact>
+									<Route
+										path="/invite/:token/:topicSlug?"
+										exact
+									>
 										<InviteLink />
 									</Route>
 

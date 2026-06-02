@@ -1,0 +1,1187 @@
+{
+	"nodes": [
+		{
+			"id": "file:.storybook/preview.tsx",
+			"type": "file",
+			"name": "preview.tsx",
+			"filePath": ".storybook/preview.tsx",
+			"summary": "React UI module for storybook, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["storybook", "component", "utility"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:.storybook/preview.tsx:withMuiTheme",
+			"type": "function",
+			"name": "withMuiTheme",
+			"filePath": ".storybook/preview.tsx",
+			"lineRange": [180, 192],
+			"summary": "Function withMuiTheme in .storybook/preview.tsx, used by the surrounding storybook module.",
+			"tags": ["function", "storybook", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:.storybook/preview.tsx:MuiStoryShell",
+			"type": "function",
+			"name": "MuiStoryShell",
+			"filePath": ".storybook/preview.tsx",
+			"lineRange": [35, 47],
+			"summary": "Function MuiStoryShell in .storybook/preview.tsx, used by the surrounding storybook module.",
+			"tags": ["function", "storybook", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:cypress/e2e/appointments.cy.ts",
+			"type": "file",
+			"name": "appointments.cy.ts",
+			"filePath": "cypress/e2e/appointments.cy.ts",
+			"summary": "Frontend source file for tests in the ORISO React application.",
+			"tags": ["test", "tests", "code"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:cypress/e2e/login.cy.ts",
+			"type": "file",
+			"name": "login.cy.ts",
+			"filePath": "cypress/e2e/login.cy.ts",
+			"summary": "Frontend source file for tests in the ORISO React application.",
+			"tags": ["test", "authentication", "tests"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:cypress/e2e/messages/attachments/base.cy.ts",
+			"type": "file",
+			"name": "base.cy.ts",
+			"filePath": "cypress/e2e/messages/attachments/base.cy.ts",
+			"summary": "Frontend source file for tests in the ORISO React application.",
+			"tags": ["test", "tests", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:cypress/e2e/messages/attachments/formal.cy.ts",
+			"type": "file",
+			"name": "formal.cy.ts",
+			"filePath": "cypress/e2e/messages/attachments/formal.cy.ts",
+			"summary": "Frontend source file for tests in the ORISO React application.",
+			"tags": ["test", "tests", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:cypress/e2e/messages/attachments/informal.cy.ts",
+			"type": "file",
+			"name": "informal.cy.ts",
+			"filePath": "cypress/e2e/messages/attachments/informal.cy.ts",
+			"summary": "Frontend source file for tests in the ORISO React application.",
+			"tags": ["test", "tests", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:cypress/e2e/messages/unread-animation.cy.ts",
+			"type": "file",
+			"name": "unread-animation.cy.ts",
+			"filePath": "cypress/e2e/messages/unread-animation.cy.ts",
+			"summary": "Frontend source file for tests in the ORISO React application.",
+			"tags": ["test", "tests", "code"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:cypress/e2e/profile.cy.ts",
+			"type": "file",
+			"name": "profile.cy.ts",
+			"filePath": "cypress/e2e/profile.cy.ts",
+			"summary": "Frontend source file for tests in the ORISO React application.",
+			"tags": ["test", "tests", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:cypress/e2e/registration/base.cy.ts",
+			"type": "file",
+			"name": "base.cy.ts",
+			"filePath": "cypress/e2e/registration/base.cy.ts",
+			"summary": "Frontend source file for tests in the ORISO React application.",
+			"tags": ["test", "tests", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:cypress/e2e/registration/consultingType.cy.ts",
+			"type": "file",
+			"name": "consultingType.cy.ts",
+			"filePath": "cypress/e2e/registration/consultingType.cy.ts",
+			"summary": "Frontend source file for tests in the ORISO React application.",
+			"tags": ["test", "tests", "code"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:cypress/e2e/registration/topic.cy.ts",
+			"type": "file",
+			"name": "topic.cy.ts",
+			"filePath": "cypress/e2e/registration/topic.cy.ts",
+			"summary": "Frontend source file for tests in the ORISO React application.",
+			"tags": ["test", "tests", "code"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:cypress/e2e/release-notes.cy.ts",
+			"type": "file",
+			"name": "release-notes.cy.ts",
+			"filePath": "cypress/e2e/release-notes.cy.ts",
+			"summary": "Frontend source file for tests in the ORISO React application.",
+			"tags": ["test", "tests", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:cypress/e2e/video-calls.cy.ts",
+			"type": "file",
+			"name": "video-calls.cy.ts",
+			"filePath": "cypress/e2e/video-calls.cy.ts",
+			"summary": "Frontend source file for tests in the ORISO React application.",
+			"tags": ["test", "tests", "code"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:cypress/e2e/videoconference.cy.ts",
+			"type": "file",
+			"name": "videoconference.cy.ts",
+			"filePath": "cypress/e2e/videoconference.cy.ts",
+			"summary": "TypeScript module for tests with 0 extracted functions and 1 extracted classes.",
+			"tags": ["test", "tests", "code"],
+			"complexity": "complex"
+		},
+		{
+			"id": "class:cypress/e2e/videoconference.cy.ts:FakeJitsiMeetExternalAPI",
+			"type": "class",
+			"name": "FakeJitsiMeetExternalAPI",
+			"filePath": "cypress/e2e/videoconference.cy.ts",
+			"lineRange": [11, 51],
+			"summary": "Class FakeJitsiMeetExternalAPI in cypress/e2e/videoconference.cy.ts, grouping related tests behavior.",
+			"tags": ["class", "tests", "internal"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:cypress/support/commands.ts",
+			"type": "file",
+			"name": "commands.ts",
+			"filePath": "cypress/support/commands.ts",
+			"summary": "TypeScript module for tests with 1 extracted functions and 0 extracted classes.",
+			"tags": ["utility", "tests", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:cypress/support/commands.ts:getSessions",
+			"type": "function",
+			"name": "getSessions",
+			"filePath": "cypress/support/commands.ts",
+			"lineRange": [6, 6],
+			"summary": "Function getSessions in cypress/support/commands.ts, used by the surrounding tests module.",
+			"tags": ["function", "tests", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:cypress/support/commands/socket.ts",
+			"type": "file",
+			"name": "socket.ts",
+			"filePath": "cypress/support/commands/socket.ts",
+			"summary": "Frontend source file for tests in the ORISO React application.",
+			"tags": ["tests", "code", "frontend"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:cypress/support/e2e.ts",
+			"type": "file",
+			"name": "e2e.ts",
+			"filePath": "cypress/support/e2e.ts",
+			"summary": "Frontend source file for tests in the ORISO React application.",
+			"tags": ["tests", "code", "frontend"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:cypress/support/websocket.ts",
+			"type": "file",
+			"name": "websocket.ts",
+			"filePath": "cypress/support/websocket.ts",
+			"summary": "TypeScript module for tests with 3 extracted functions and 0 extracted classes.",
+			"tags": ["utility", "tests", "code"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:cypress/support/websocket.ts:closeWebSocketServer",
+			"type": "function",
+			"name": "closeWebSocketServer",
+			"filePath": "cypress/support/websocket.ts",
+			"lineRange": [23, 35],
+			"summary": "Function closeWebSocketServer in cypress/support/websocket.ts, used by the surrounding tests module.",
+			"tags": ["function", "tests", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:cypress/support/websocket.ts:startWebSocketServer",
+			"type": "function",
+			"name": "startWebSocketServer",
+			"filePath": "cypress/support/websocket.ts",
+			"lineRange": [36, 48],
+			"summary": "Function startWebSocketServer in cypress/support/websocket.ts, used by the surrounding tests module.",
+			"tags": ["function", "tests", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:cypress/support/websocket.ts:mockWebSocket",
+			"type": "function",
+			"name": "mockWebSocket",
+			"filePath": "cypress/support/websocket.ts",
+			"lineRange": [271, 283],
+			"summary": "Function mockWebSocket in cypress/support/websocket.ts, used by the surrounding tests module.",
+			"tags": ["function", "tests", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiMatrixSettingsPublic.ts",
+			"type": "file",
+			"name": "apiMatrixSettingsPublic.ts",
+			"filePath": "src/api/apiMatrixSettingsPublic.ts",
+			"summary": "API client module for apiMatrixSettingsPublic, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "matrix", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiMatrixSettingsPublic.ts:SETTING_E2E_ENABLE",
+			"type": "function",
+			"name": "SETTING_E2E_ENABLE",
+			"filePath": "src/api/apiMatrixSettingsPublic.ts",
+			"lineRange": [5, 17],
+			"summary": "Function SETTING_E2E_ENABLE in src/api/apiMatrixSettingsPublic.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiMatrixSettingsPublic.ts:SETTING_MESSAGE_MAXALLOWEDSIZE",
+			"type": "function",
+			"name": "SETTING_MESSAGE_MAXALLOWEDSIZE",
+			"filePath": "src/api/apiMatrixSettingsPublic.ts",
+			"lineRange": [6, 18],
+			"summary": "Function SETTING_MESSAGE_MAXALLOWEDSIZE in src/api/apiMatrixSettingsPublic.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiMatrixSettingsPublic.ts:SETTING_FILEUPLOAD_MAXFILESIZE",
+			"type": "function",
+			"name": "SETTING_FILEUPLOAD_MAXFILESIZE",
+			"filePath": "src/api/apiMatrixSettingsPublic.ts",
+			"lineRange": [7, 19],
+			"summary": "Function SETTING_FILEUPLOAD_MAXFILESIZE in src/api/apiMatrixSettingsPublic.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiMatrixSettingsPublic.ts:SETTING_MESSAGE_ALLOWDELETING",
+			"type": "function",
+			"name": "SETTING_MESSAGE_ALLOWDELETING",
+			"filePath": "src/api/apiMatrixSettingsPublic.ts",
+			"lineRange": [8, 20],
+			"summary": "Function SETTING_MESSAGE_ALLOWDELETING in src/api/apiMatrixSettingsPublic.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiMatrixSettingsPublic.ts:SETTING_HIDE_SYSTEM_MESSAGES",
+			"type": "function",
+			"name": "SETTING_HIDE_SYSTEM_MESSAGES",
+			"filePath": "src/api/apiMatrixSettingsPublic.ts",
+			"lineRange": [9, 21],
+			"summary": "Function SETTING_HIDE_SYSTEM_MESSAGES in src/api/apiMatrixSettingsPublic.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiMatrixSettingsPublic.ts:SETTING_MESSAGE_SHOWDELETEDSTATUS",
+			"type": "function",
+			"name": "SETTING_MESSAGE_SHOWDELETEDSTATUS",
+			"filePath": "src/api/apiMatrixSettingsPublic.ts",
+			"lineRange": [10, 22],
+			"summary": "Function SETTING_MESSAGE_SHOWDELETEDSTATUS in src/api/apiMatrixSettingsPublic.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiMatrixSettingsPublic.ts:apiMatrixSettingsPublic",
+			"type": "function",
+			"name": "apiMatrixSettingsPublic",
+			"filePath": "src/api/apiMatrixSettingsPublic.ts",
+			"lineRange": [12, 24],
+			"summary": "Function apiMatrixSettingsPublic in src/api/apiMatrixSettingsPublic.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiMatrixSettingsPublic.ts:apiRocketChatSettingsPublic",
+			"type": "function",
+			"name": "apiRocketChatSettingsPublic",
+			"filePath": "src/api/apiMatrixSettingsPublic.ts",
+			"lineRange": [36, 36],
+			"summary": "Function apiRocketChatSettingsPublic in src/api/apiMatrixSettingsPublic.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/apiRocketChatSettingsPublic.ts",
+			"type": "file",
+			"name": "apiRocketChatSettingsPublic.ts",
+			"filePath": "src/api/apiRocketChatSettingsPublic.ts",
+			"summary": "API client module for apiRocketChatSettingsPublic, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/api/apiRocketChatSettingsPublic.ts:SETTING_E2E_ENABLE",
+			"type": "function",
+			"name": "SETTING_E2E_ENABLE",
+			"filePath": "src/api/apiRocketChatSettingsPublic.ts",
+			"lineRange": [5, 17],
+			"summary": "Function SETTING_E2E_ENABLE in src/api/apiRocketChatSettingsPublic.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiRocketChatSettingsPublic.ts:SETTING_MESSAGE_MAXALLOWEDSIZE",
+			"type": "function",
+			"name": "SETTING_MESSAGE_MAXALLOWEDSIZE",
+			"filePath": "src/api/apiRocketChatSettingsPublic.ts",
+			"lineRange": [6, 18],
+			"summary": "Function SETTING_MESSAGE_MAXALLOWEDSIZE in src/api/apiRocketChatSettingsPublic.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiRocketChatSettingsPublic.ts:SETTING_FILEUPLOAD_MAXFILESIZE",
+			"type": "function",
+			"name": "SETTING_FILEUPLOAD_MAXFILESIZE",
+			"filePath": "src/api/apiRocketChatSettingsPublic.ts",
+			"lineRange": [7, 19],
+			"summary": "Function SETTING_FILEUPLOAD_MAXFILESIZE in src/api/apiRocketChatSettingsPublic.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiRocketChatSettingsPublic.ts:SETTING_MESSAGE_ALLOWDELETING",
+			"type": "function",
+			"name": "SETTING_MESSAGE_ALLOWDELETING",
+			"filePath": "src/api/apiRocketChatSettingsPublic.ts",
+			"lineRange": [8, 20],
+			"summary": "Function SETTING_MESSAGE_ALLOWDELETING in src/api/apiRocketChatSettingsPublic.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiRocketChatSettingsPublic.ts:SETTING_HIDE_SYSTEM_MESSAGES",
+			"type": "function",
+			"name": "SETTING_HIDE_SYSTEM_MESSAGES",
+			"filePath": "src/api/apiRocketChatSettingsPublic.ts",
+			"lineRange": [9, 21],
+			"summary": "Function SETTING_HIDE_SYSTEM_MESSAGES in src/api/apiRocketChatSettingsPublic.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiRocketChatSettingsPublic.ts:SETTING_MESSAGE_SHOWDELETEDSTATUS",
+			"type": "function",
+			"name": "SETTING_MESSAGE_SHOWDELETEDSTATUS",
+			"filePath": "src/api/apiRocketChatSettingsPublic.ts",
+			"lineRange": [10, 22],
+			"summary": "Function SETTING_MESSAGE_SHOWDELETEDSTATUS in src/api/apiRocketChatSettingsPublic.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiRocketChatSettingsPublic.ts:apiRocketChatSettingsPublic",
+			"type": "function",
+			"name": "apiRocketChatSettingsPublic",
+			"filePath": "src/api/apiRocketChatSettingsPublic.ts",
+			"lineRange": [55, 63],
+			"summary": "Function apiRocketChatSettingsPublic in src/api/apiRocketChatSettingsPublic.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/api/fetchMatrixData.ts",
+			"type": "file",
+			"name": "fetchMatrixData.ts",
+			"filePath": "src/api/fetchMatrixData.ts",
+			"summary": "API client module for fetchMatrixData, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "matrix", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/fetchMatrixData.ts:fetchMatrixData",
+			"type": "function",
+			"name": "fetchMatrixData",
+			"filePath": "src/api/fetchMatrixData.ts",
+			"lineRange": [3, 15],
+			"summary": "Function fetchMatrixData in src/api/fetchMatrixData.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/E2EEncryptionSupportBanner/E2EEncryptionSupportBanner.tsx",
+			"type": "file",
+			"name": "E2EEncryptionSupportBanner.tsx",
+			"filePath": "src/components/E2EEncryptionSupportBanner/E2EEncryptionSupportBanner.tsx",
+			"summary": "React UI module for component e2 eencryption support banner, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"utility",
+				"component-e2-eencryption-support-banner"
+			],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/E2EEncryptionSupportBanner/E2EEncryptionSupportBanner.tsx:E2EEncryptionSupportBanner",
+			"type": "function",
+			"name": "E2EEncryptionSupportBanner",
+			"filePath": "src/components/E2EEncryptionSupportBanner/E2EEncryptionSupportBanner.tsx",
+			"lineRange": [20, 32],
+			"summary": "Function E2EEncryptionSupportBanner in src/components/E2EEncryptionSupportBanner/E2EEncryptionSupportBanner.tsx, used by the surrounding component e2 eencryption support banner module.",
+			"tags": [
+				"function",
+				"component-e2-eencryption-support-banner",
+				"exported"
+			],
+			"complexity": "simple"
+		}
+	],
+	"edges": [
+		{
+			"source": "file:.storybook/preview.tsx",
+			"target": "function:.storybook/preview.tsx:withMuiTheme",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:.storybook/preview.tsx",
+			"target": "function:.storybook/preview.tsx:withMuiTheme",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:.storybook/preview.tsx",
+			"target": "function:.storybook/preview.tsx:MuiStoryShell",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:.storybook/preview.tsx",
+			"target": "function:.storybook/preview.tsx:MuiStoryShell",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:.storybook/preview.tsx",
+			"target": "file:src/components/app/Loading.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:.storybook/preview.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:.storybook/preview.tsx",
+			"target": "file:src/globalState/provider/LegalLinksProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:.storybook/preview.tsx",
+			"target": "file:src/globalState/provider/RocketChatProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:.storybook/preview.tsx",
+			"target": "file:src/globalState/provider/RocketChatPublicSettingsProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:.storybook/preview.tsx",
+			"target": "file:src/globalState/provider/RocketChatSubscriptionsProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:.storybook/preview.tsx",
+			"target": "file:src/globalState/provider/RocketChatUsersOfRoomProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:.storybook/preview.tsx",
+			"target": "file:src/globalState/provider/UrlParamsProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:.storybook/preview.tsx",
+			"target": "file:src/i18n.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:.storybook/preview.tsx",
+			"target": "file:src/resources/scripts/config.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:.storybook/preview.tsx",
+			"target": "file:src/resources/scripts/theme.jsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:.storybook/preview.tsx",
+			"target": "file:src/resources/styles/mui-variables-mapping.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:.storybook/preview.tsx",
+			"target": "file:src/resources/styles/styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/e2e/appointments.cy.ts",
+			"target": "file:cypress/support/commands/mockApi.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/e2e/appointments.cy.ts",
+			"target": "file:cypress/support/websocket.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/e2e/login.cy.ts",
+			"target": "file:cypress/support/websocket.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/e2e/login.cy.ts",
+			"target": "file:src/resources/scripts/config.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/e2e/messages/attachments/base.cy.ts",
+			"target": "file:cypress/support/websocket.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/e2e/messages/attachments/base.cy.ts",
+			"target": "file:src/components/app/RocketChat.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/e2e/messages/attachments/formal.cy.ts",
+			"target": "file:cypress/support/websocket.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/e2e/messages/attachments/informal.cy.ts",
+			"target": "file:cypress/support/websocket.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/e2e/messages/unread-animation.cy.ts",
+			"target": "file:cypress/support/websocket.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/e2e/messages/unread-animation.cy.ts",
+			"target": "file:src/components/app/RocketChat.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/e2e/profile.cy.ts",
+			"target": "file:cypress/support/commands/mockApi.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/e2e/profile.cy.ts",
+			"target": "file:cypress/support/websocket.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/e2e/profile.cy.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/e2e/registration/base.cy.ts",
+			"target": "file:cypress/support/websocket.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/e2e/registration/base.cy.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/e2e/registration/consultingType.cy.ts",
+			"target": "file:cypress/support/websocket.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/e2e/registration/consultingType.cy.ts",
+			"target": "file:src/resources/scripts/config.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/e2e/registration/topic.cy.ts",
+			"target": "file:cypress/support/websocket.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/e2e/registration/topic.cy.ts",
+			"target": "file:src/resources/scripts/config.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/e2e/release-notes.cy.ts",
+			"target": "file:cypress/support/commands/mockApi.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/e2e/release-notes.cy.ts",
+			"target": "file:cypress/support/websocket.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/e2e/video-calls.cy.ts",
+			"target": "file:cypress/support/commands/mockApi.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/e2e/video-calls.cy.ts",
+			"target": "file:cypress/support/sessions.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/e2e/video-calls.cy.ts",
+			"target": "file:cypress/support/websocket.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/e2e/videoconference.cy.ts",
+			"target": "class:cypress/e2e/videoconference.cy.ts:FakeJitsiMeetExternalAPI",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:cypress/e2e/videoconference.cy.ts",
+			"target": "file:cypress/support/commands/mockApi.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/e2e/videoconference.cy.ts",
+			"target": "file:cypress/support/websocket.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/e2e/videoconference.cy.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/e2e/videoconference.cy.ts",
+			"target": "file:src/resources/scripts/config.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands.ts",
+			"target": "function:cypress/support/commands.ts:getSessions",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:cypress/support/commands.ts",
+			"target": "function:cypress/support/commands.ts:getSessions",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:cypress/support/commands.ts",
+			"target": "file:cypress/support/commands/mockApi.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands.ts",
+			"target": "file:cypress/support/commands/socket.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/commands/socket.ts",
+			"target": "file:cypress/support/websocket.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/e2e.ts",
+			"target": "file:cypress/support/commands.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/websocket.ts",
+			"target": "function:cypress/support/websocket.ts:closeWebSocketServer",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:cypress/support/websocket.ts",
+			"target": "function:cypress/support/websocket.ts:closeWebSocketServer",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:cypress/support/websocket.ts",
+			"target": "function:cypress/support/websocket.ts:startWebSocketServer",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:cypress/support/websocket.ts",
+			"target": "function:cypress/support/websocket.ts:startWebSocketServer",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:cypress/support/websocket.ts",
+			"target": "function:cypress/support/websocket.ts:mockWebSocket",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:cypress/support/websocket.ts",
+			"target": "function:cypress/support/websocket.ts:mockWebSocket",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:cypress/support/websocket.ts",
+			"target": "file:cypress/support/commands.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:cypress/support/websocket.ts",
+			"target": "file:src/api/apiRocketChatSettingsPublic.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiMatrixSettingsPublic.ts",
+			"target": "function:src/api/apiMatrixSettingsPublic.ts:SETTING_E2E_ENABLE",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiMatrixSettingsPublic.ts",
+			"target": "function:src/api/apiMatrixSettingsPublic.ts:SETTING_E2E_ENABLE",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiMatrixSettingsPublic.ts",
+			"target": "function:src/api/apiMatrixSettingsPublic.ts:SETTING_MESSAGE_MAXALLOWEDSIZE",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiMatrixSettingsPublic.ts",
+			"target": "function:src/api/apiMatrixSettingsPublic.ts:SETTING_MESSAGE_MAXALLOWEDSIZE",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiMatrixSettingsPublic.ts",
+			"target": "function:src/api/apiMatrixSettingsPublic.ts:SETTING_FILEUPLOAD_MAXFILESIZE",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiMatrixSettingsPublic.ts",
+			"target": "function:src/api/apiMatrixSettingsPublic.ts:SETTING_FILEUPLOAD_MAXFILESIZE",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiMatrixSettingsPublic.ts",
+			"target": "function:src/api/apiMatrixSettingsPublic.ts:SETTING_MESSAGE_ALLOWDELETING",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiMatrixSettingsPublic.ts",
+			"target": "function:src/api/apiMatrixSettingsPublic.ts:SETTING_MESSAGE_ALLOWDELETING",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiMatrixSettingsPublic.ts",
+			"target": "function:src/api/apiMatrixSettingsPublic.ts:SETTING_HIDE_SYSTEM_MESSAGES",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiMatrixSettingsPublic.ts",
+			"target": "function:src/api/apiMatrixSettingsPublic.ts:SETTING_HIDE_SYSTEM_MESSAGES",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiMatrixSettingsPublic.ts",
+			"target": "function:src/api/apiMatrixSettingsPublic.ts:SETTING_MESSAGE_SHOWDELETEDSTATUS",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiMatrixSettingsPublic.ts",
+			"target": "function:src/api/apiMatrixSettingsPublic.ts:SETTING_MESSAGE_SHOWDELETEDSTATUS",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiMatrixSettingsPublic.ts",
+			"target": "function:src/api/apiMatrixSettingsPublic.ts:apiMatrixSettingsPublic",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiMatrixSettingsPublic.ts",
+			"target": "function:src/api/apiMatrixSettingsPublic.ts:apiMatrixSettingsPublic",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiMatrixSettingsPublic.ts",
+			"target": "function:src/api/apiMatrixSettingsPublic.ts:apiRocketChatSettingsPublic",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiMatrixSettingsPublic.ts",
+			"target": "function:src/api/apiMatrixSettingsPublic.ts:apiRocketChatSettingsPublic",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiMatrixSettingsPublic.ts",
+			"target": "file:src/api/apiRocketChatSettingsPublic.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiMatrixSettingsPublic.ts",
+			"target": "file:src/api/fetchMatrixData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRocketChatSettingsPublic.ts",
+			"target": "function:src/api/apiRocketChatSettingsPublic.ts:SETTING_E2E_ENABLE",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiRocketChatSettingsPublic.ts",
+			"target": "function:src/api/apiRocketChatSettingsPublic.ts:SETTING_E2E_ENABLE",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiRocketChatSettingsPublic.ts",
+			"target": "function:src/api/apiRocketChatSettingsPublic.ts:SETTING_MESSAGE_MAXALLOWEDSIZE",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiRocketChatSettingsPublic.ts",
+			"target": "function:src/api/apiRocketChatSettingsPublic.ts:SETTING_MESSAGE_MAXALLOWEDSIZE",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiRocketChatSettingsPublic.ts",
+			"target": "function:src/api/apiRocketChatSettingsPublic.ts:SETTING_FILEUPLOAD_MAXFILESIZE",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiRocketChatSettingsPublic.ts",
+			"target": "function:src/api/apiRocketChatSettingsPublic.ts:SETTING_FILEUPLOAD_MAXFILESIZE",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiRocketChatSettingsPublic.ts",
+			"target": "function:src/api/apiRocketChatSettingsPublic.ts:SETTING_MESSAGE_ALLOWDELETING",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiRocketChatSettingsPublic.ts",
+			"target": "function:src/api/apiRocketChatSettingsPublic.ts:SETTING_MESSAGE_ALLOWDELETING",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiRocketChatSettingsPublic.ts",
+			"target": "function:src/api/apiRocketChatSettingsPublic.ts:SETTING_HIDE_SYSTEM_MESSAGES",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiRocketChatSettingsPublic.ts",
+			"target": "function:src/api/apiRocketChatSettingsPublic.ts:SETTING_HIDE_SYSTEM_MESSAGES",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiRocketChatSettingsPublic.ts",
+			"target": "function:src/api/apiRocketChatSettingsPublic.ts:SETTING_MESSAGE_SHOWDELETEDSTATUS",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiRocketChatSettingsPublic.ts",
+			"target": "function:src/api/apiRocketChatSettingsPublic.ts:SETTING_MESSAGE_SHOWDELETEDSTATUS",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiRocketChatSettingsPublic.ts",
+			"target": "function:src/api/apiRocketChatSettingsPublic.ts:apiRocketChatSettingsPublic",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiRocketChatSettingsPublic.ts",
+			"target": "function:src/api/apiRocketChatSettingsPublic.ts:apiRocketChatSettingsPublic",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiRocketChatSettingsPublic.ts",
+			"target": "file:src/api/apiMatrixSettingsPublic.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRocketChatSettingsPublic.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiRocketChatSettingsPublic.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/fetchMatrixData.ts",
+			"target": "function:src/api/fetchMatrixData.ts:fetchMatrixData",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/fetchMatrixData.ts",
+			"target": "function:src/api/fetchMatrixData.ts:fetchMatrixData",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/fetchMatrixData.ts",
+			"target": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/E2EEncryptionSupportBanner/E2EEncryptionSupportBanner.tsx",
+			"target": "function:src/components/E2EEncryptionSupportBanner/E2EEncryptionSupportBanner.tsx:E2EEncryptionSupportBanner",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/E2EEncryptionSupportBanner/E2EEncryptionSupportBanner.tsx",
+			"target": "function:src/components/E2EEncryptionSupportBanner/E2EEncryptionSupportBanner.tsx:E2EEncryptionSupportBanner",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/E2EEncryptionSupportBanner/E2EEncryptionSupportBanner.tsx",
+			"target": "file:src/components/banner/Banner.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/E2EEncryptionSupportBanner/E2EEncryptionSupportBanner.tsx",
+			"target": "file:src/components/E2EEncryptionSupportBanner/E2EEncryptionSupportBanner.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/E2EEncryptionSupportBanner/E2EEncryptionSupportBanner.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/E2EEncryptionSupportBanner/E2EEncryptionSupportBanner.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/E2EEncryptionSupportBanner/E2EEncryptionSupportBanner.tsx",
+			"target": "file:src/utils/videoCallHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		}
+	]
+}

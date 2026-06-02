@@ -1,0 +1,422 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": "src/components/profile/ConsultantInformation.tsx",
+			"language": "typescript",
+			"sizeLines": 235,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/ConsultantNotifications.tsx",
+			"language": "typescript",
+			"sizeLines": 76,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/ConsultantStatistics.tsx",
+			"language": "typescript",
+			"sizeLines": 298,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/Documentation/index.tsx",
+			"language": "typescript",
+			"sizeLines": 35,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/EmailNotifications/EmailToggle/index.tsx",
+			"language": "typescript",
+			"sizeLines": 63,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/EmailNotifications/NoEmailSet/index.tsx",
+			"language": "typescript",
+			"sizeLines": 35,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/EmailNotifications/SetEmailModal/index.tsx",
+			"language": "typescript",
+			"sizeLines": 146,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/EmailNotifications/index.tsx",
+			"language": "typescript",
+			"sizeLines": 41,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/EnableWalkthrough.tsx",
+			"language": "typescript",
+			"sizeLines": 59,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/LiveChatAvailability.tsx",
+			"language": "typescript",
+			"sizeLines": 65,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/Locale.tsx",
+			"language": "typescript",
+			"sizeLines": 52,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/MagicLinksLoginFeature.tsx",
+			"language": "typescript",
+			"sizeLines": 102,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/OverviewMobile/Bookings/index.tsx",
+			"language": "typescript",
+			"sizeLines": 27,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/profile.routes.ts",
+			"language": "typescript",
+			"sizeLines": 259,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/profileHelp.routes.ts",
+			"language": "typescript",
+			"sizeLines": 36,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/profile/profileSettings.routes.ts",
+			"language": "typescript",
+			"sizeLines": 78,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/radioButton/RadioButton.stories.ts",
+			"language": "typescript",
+			"sizeLines": 54,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/radioButton/RadioButton.tsx",
+			"language": "typescript",
+			"sizeLines": 52,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/registration/registrationHelpers.ts",
+			"language": "typescript",
+			"sizeLines": 34,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/select/LanguageSelectDropdown.tsx",
+			"language": "typescript",
+			"sizeLines": 578,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/serviceExplanation/ServiceExplanation.tsx",
+			"language": "typescript",
+			"sizeLines": 81,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionHeader/GroupChatHeader/useStartVideoCall/index.ts",
+			"language": "typescript",
+			"sizeLines": 63,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/sessionsListItem/SessionListItem.stories.tsx",
+			"language": "typescript",
+			"sizeLines": 280,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/text/Text.stories.ts",
+			"language": "typescript",
+			"sizeLines": 46,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/text/Text.tsx",
+			"language": "typescript",
+			"sizeLines": 74,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/tools/Tool.tsx",
+			"language": "typescript",
+			"sizeLines": 43,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/tools/ToolsList.tsx",
+			"language": "typescript",
+			"sizeLines": 56,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/tooltip/Tooltip.tsx",
+			"language": "typescript",
+			"sizeLines": 194,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/components/uiVersionToggle/UIVersionToggle.tsx",
+			"language": "typescript",
+			"sizeLines": 107,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/booking.routes.ts",
+			"language": "typescript",
+			"sizeLines": 61,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/AddCalendar/addCalendar.tsx",
+			"language": "typescript",
+			"sizeLines": 45,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/AssignedCalendars/assignedCalendars.tsx",
+			"language": "typescript",
+			"sizeLines": 24,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/AvailabilityContainer/availabilityContainer.tsx",
+			"language": "typescript",
+			"sizeLines": 62,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/BookingDescription/bookingDescription.tsx",
+			"language": "typescript",
+			"sizeLines": 61,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/containers/bookings/components/BookingEventTableColumnAttendee/bookingEventTableColumnAttendee.tsx",
+			"language": "typescript",
+			"sizeLines": 48,
+			"fileCategory": "code"
+		}
+	],
+	"batchImportData": {
+		"src/components/profile/ConsultantInformation.tsx": [
+			"src/api/apiPatchUserData.ts",
+			"src/components/button/Button.tsx",
+			"src/components/editableData/EditableData.tsx",
+			"src/components/generateQrCode/GenerateQrCode.tsx",
+			"src/components/headline/Headline.tsx",
+			"src/components/text/Text.tsx",
+			"src/components/tooltip/Tooltip.tsx",
+			"src/globalState/index.ts",
+			"src/hooks/useAppConfig.tsx",
+			"src/resources/img/icons.ts",
+			"src/utils/clipboardHelpers.ts"
+		],
+		"src/components/profile/ConsultantNotifications.tsx": [
+			"src/api/apiPatchUserData.ts",
+			"src/components/headline/Headline.tsx",
+			"src/components/text/Text.tsx",
+			"src/globalState/index.ts",
+			"src/hooks/useAppConfig.tsx"
+		],
+		"src/components/profile/ConsultantStatistics.tsx": [
+			"src/api/index.ts",
+			"src/components/headline/Headline.tsx",
+			"src/components/select/SelectDropdown.tsx",
+			"src/components/text/Text.tsx",
+			"src/utils/dateHelpers.ts",
+			"src/utils/tenantSettingsHelper.ts"
+		],
+		"src/components/profile/Documentation/index.tsx": [
+			"src/components/headline/Headline.tsx",
+			"src/components/profile/Documentation/styles.module.scss",
+			"src/components/text/Text.tsx"
+		],
+		"src/components/profile/EmailNotifications/EmailToggle/index.tsx": [
+			"src/components/Switch/index.tsx",
+			"src/globalState/index.ts",
+			"src/hooks/useUserMutate.ts"
+		],
+		"src/components/profile/EmailNotifications/NoEmailSet/index.tsx": [
+			"src/components/button/Button.tsx",
+			"src/components/profile/EmailNotifications/NoEmailSet/styles.module.scss",
+			"src/components/profile/EmailNotifications/SetEmailModal/index.tsx",
+			"src/components/text/Text.tsx"
+		],
+		"src/components/profile/EmailNotifications/SetEmailModal/index.tsx": [
+			"src/api/index.ts",
+			"src/components/button/Button.tsx",
+			"src/components/inputField/InputField.tsx",
+			"src/components/overlay/Overlay.tsx",
+			"src/components/registration/registrationHelpers.ts",
+			"src/components/text/Text.tsx",
+			"src/globalState/index.ts",
+			"src/hooks/useUserMutate.ts",
+			"src/resources/img/icons.ts"
+		],
+		"src/components/profile/EmailNotifications/index.tsx": [
+			"src/components/headline/Headline.tsx",
+			"src/components/profile/EmailNotifications/EmailToggle/index.tsx",
+			"src/components/profile/EmailNotifications/NoEmailSet/index.tsx",
+			"src/components/text/Text.tsx",
+			"src/globalState/index.ts"
+		],
+		"src/components/profile/EnableWalkthrough.tsx": [
+			"src/api/index.ts",
+			"src/components/headline/Headline.tsx",
+			"src/components/text/Text.tsx",
+			"src/globalState/index.ts"
+		],
+		"src/components/profile/LiveChatAvailability.tsx": [
+			"src/components/headline/Headline.tsx",
+			"src/components/text/Text.tsx",
+			"src/utils/liveChatToggle.ts"
+		],
+		"src/components/profile/Locale.tsx": [
+			"src/components/headline/Headline.tsx",
+			"src/components/select/SelectDropdown.tsx",
+			"src/components/text/Text.tsx",
+			"src/globalState/index.ts"
+		],
+		"src/components/profile/MagicLinksLoginFeature.tsx": [
+			"src/api/apiPatchUserData.ts",
+			"src/components/headline/Headline.tsx",
+			"src/components/text/Text.tsx",
+			"src/globalState/index.ts",
+			"src/hooks/useAppConfig.tsx"
+		],
+		"src/components/profile/OverviewMobile/Bookings/index.tsx": [
+			"src/containers/overview/components/BookingEvent/index.tsx",
+			"src/containers/overview/components/EmptyState/index.tsx",
+			"src/containers/overview/hooks/useConsultantBookings.ts"
+		],
+		"src/components/profile/profile.routes.ts": [
+			"src/components/profile/AbsenceFormular.tsx",
+			"src/components/profile/AdditionalEnquiry/AdditionalEnquiry.tsx",
+			"src/components/profile/AskerAboutMeData.tsx",
+			"src/components/profile/AskerConsultingTypeData.tsx",
+			"src/components/profile/BrowserNotifications/index.tsx",
+			"src/components/profile/ConsultantAgencies.tsx",
+			"src/components/profile/ConsultantInformation.tsx",
+			"src/components/profile/ConsultantPrivateData.tsx",
+			"src/components/profile/ConsultantSpokenLanguages.tsx",
+			"src/components/profile/ConsultantStatistics.tsx",
+			"src/components/profile/EmailNotifications/index.tsx",
+			"src/components/profile/EnableWalkthrough.tsx",
+			"src/components/profile/LiveChatAvailability.tsx",
+			"src/components/profile/OverviewMobile/Bookings/index.tsx",
+			"src/components/profile/OverviewMobile/Sessions/index.tsx",
+			"src/components/profile/profileHelp.routes.ts",
+			"src/components/profile/profileSettings.routes.ts",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/utils/notificationHelpers.ts",
+			"src/utils/tabsHelper.ts"
+		],
+		"src/components/profile/profileHelp.routes.ts": [
+			"src/components/help/Help.tsx",
+			"src/components/profile/Documentation/index.tsx",
+			"src/globalState/interfaces/index.ts",
+			"src/utils/tabsHelper.ts"
+		],
+		"src/components/profile/profileSettings.routes.ts": [
+			"src/components/passwordReset/PasswordReset.tsx",
+			"src/components/profile/ConsultantNotifications.tsx",
+			"src/components/profile/DeleteAccount.tsx",
+			"src/components/profile/Locale.tsx",
+			"src/components/twoFactorAuth/TwoFactorAuth.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/index.ts",
+			"src/utils/tabsHelper.ts"
+		],
+		"src/components/radioButton/RadioButton.stories.ts": [
+			"src/components/radioButton/RadioButton.tsx"
+		],
+		"src/components/radioButton/RadioButton.tsx": [],
+		"src/components/registration/registrationHelpers.ts": [],
+		"src/components/select/LanguageSelectDropdown.tsx": [
+			"src/components/text/Text.tsx",
+			"src/hooks/useResponsive.tsx",
+			"src/resources/img/icons.ts"
+		],
+		"src/components/serviceExplanation/ServiceExplanation.tsx": [
+			"src/components/serviceExplanation/ServiceExplanation.styles.scss",
+			"src/components/text/Text.tsx",
+			"src/globalState/interfaces/index.ts",
+			"src/resources/img/icons.ts"
+		],
+		"src/components/sessionHeader/GroupChatHeader/useStartVideoCall/index.ts": [
+			"src/globalState/index.ts"
+		],
+		"src/components/sessionsListItem/SessionListItem.stories.tsx": [
+			"src/components/sessionsListItem/sessionsListItem.styles.scss",
+			"src/resources/img/icons.ts"
+		],
+		"src/components/text/Text.stories.ts": ["src/components/text/Text.tsx"],
+		"src/components/text/Text.tsx": [],
+		"src/components/tools/Tool.tsx": [
+			"src/components/button/Button.tsx",
+			"src/components/headline/Headline.tsx",
+			"src/components/text/Text.tsx",
+			"src/globalState/interfaces/ToolsInterface.ts"
+		],
+		"src/components/tools/ToolsList.tsx": [
+			"src/api/apiGetTools.ts",
+			"src/components/box/Box.tsx",
+			"src/components/headline/Headline.tsx",
+			"src/components/tools/Tool.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/ToolsInterface.ts"
+		],
+		"src/components/tooltip/Tooltip.tsx": [],
+		"src/components/uiVersionToggle/UIVersionToggle.tsx": [
+			"src/components/uiVersionToggle/uiVersionToggle.styles.scss"
+		],
+		"src/containers/bookings/booking.routes.ts": [
+			"src/containers/bookings/components/BookingEventsBooked/bookingEventsBooked.tsx",
+			"src/containers/bookings/components/BookingEventsCanceled/bookingEventsCanceled.tsx",
+			"src/containers/bookings/components/BookingEventsExpired/bookingEventsExpired.tsx",
+			"src/containers/bookings/components/BookingSettings/bookingSettings.tsx",
+			"src/globalState/index.ts",
+			"src/utils/tabsHelper.ts"
+		],
+		"src/containers/bookings/components/AddCalendar/addCalendar.tsx": [
+			"src/containers/bookings/components/Calendar/calendar.tsx",
+			"src/resources/img/icons.ts"
+		],
+		"src/containers/bookings/components/AssignedCalendars/assignedCalendars.tsx": [
+			"src/containers/bookings/components/booking.styles.scss",
+			"src/hooks/useAppConfig.tsx"
+		],
+		"src/containers/bookings/components/AvailabilityContainer/availabilityContainer.tsx": [
+			"src/api/apiGetCalDavAccount.ts",
+			"src/components/box/Box.tsx",
+			"src/components/headline/Headline.tsx",
+			"src/components/text/Text.tsx",
+			"src/containers/bookings/components/MyCalendar/myCalendar.tsx",
+			"src/hooks/useAppConfig.tsx"
+		],
+		"src/containers/bookings/components/BookingDescription/bookingDescription.tsx": [
+			"src/components/text/Text.tsx"
+		],
+		"src/containers/bookings/components/BookingEventTableColumnAttendee/bookingEventTableColumnAttendee.tsx": [
+			"src/components/text/Text.tsx",
+			"src/globalState/index.ts",
+			"src/globalState/interfaces/BookingsInterface.ts"
+		]
+	}
+}

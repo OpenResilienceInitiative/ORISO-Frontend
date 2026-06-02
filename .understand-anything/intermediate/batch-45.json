@@ -1,0 +1,149 @@
+{
+	"nodes": [
+		{
+			"id": "file:src/resources/styles/_banner.scss",
+			"type": "file",
+			"name": "_banner.scss",
+			"filePath": "src/resources/styles/_banner.scss",
+			"summary": "Stylesheet for resources, defining frontend presentation rules and visual tokens.",
+			"tags": ["styling", "resources", "markup"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/resources/styles/_border.scss",
+			"type": "file",
+			"name": "_border.scss",
+			"filePath": "src/resources/styles/_border.scss",
+			"summary": "Stylesheet for resources, defining frontend presentation rules and visual tokens.",
+			"tags": ["styling", "resources", "markup"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/resources/styles/_colors.scss",
+			"type": "file",
+			"name": "_colors.scss",
+			"filePath": "src/resources/styles/_colors.scss",
+			"summary": "Stylesheet for resources, defining frontend presentation rules and visual tokens.",
+			"tags": ["styling", "resources", "markup"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/resources/styles/_display.scss",
+			"type": "file",
+			"name": "_display.scss",
+			"filePath": "src/resources/styles/_display.scss",
+			"summary": "Stylesheet for resources, defining frontend presentation rules and visual tokens.",
+			"tags": ["styling", "resources", "markup"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/resources/styles/_flex.scss",
+			"type": "file",
+			"name": "_flex.scss",
+			"filePath": "src/resources/styles/_flex.scss",
+			"summary": "Stylesheet for resources, defining frontend presentation rules and visual tokens.",
+			"tags": ["styling", "resources", "markup"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/resources/styles/_float.scss",
+			"type": "file",
+			"name": "_float.scss",
+			"filePath": "src/resources/styles/_float.scss",
+			"summary": "Stylesheet for resources, defining frontend presentation rules and visual tokens.",
+			"tags": ["styling", "resources", "markup"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/resources/styles/_fonts.scss",
+			"type": "file",
+			"name": "_fonts.scss",
+			"filePath": "src/resources/styles/_fonts.scss",
+			"summary": "Stylesheet for resources, defining frontend presentation rules and visual tokens.",
+			"tags": ["styling", "resources", "markup"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/resources/styles/_icon.scss",
+			"type": "file",
+			"name": "_icon.scss",
+			"filePath": "src/resources/styles/_icon.scss",
+			"summary": "Stylesheet for resources, defining frontend presentation rules and visual tokens.",
+			"tags": ["styling", "resources", "markup"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/resources/styles/_layout.scss",
+			"type": "file",
+			"name": "_layout.scss",
+			"filePath": "src/resources/styles/_layout.scss",
+			"summary": "Stylesheet for resources, defining frontend presentation rules and visual tokens.",
+			"tags": ["styling", "resources", "markup"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/resources/styles/_margin.scss",
+			"type": "file",
+			"name": "_margin.scss",
+			"filePath": "src/resources/styles/_margin.scss",
+			"summary": "Stylesheet for resources, defining frontend presentation rules and visual tokens.",
+			"tags": ["styling", "resources", "markup"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/resources/styles/_padding.scss",
+			"type": "file",
+			"name": "_padding.scss",
+			"filePath": "src/resources/styles/_padding.scss",
+			"summary": "Stylesheet for resources, defining frontend presentation rules and visual tokens.",
+			"tags": ["styling", "resources", "markup"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/resources/styles/_text.scss",
+			"type": "file",
+			"name": "_text.scss",
+			"filePath": "src/resources/styles/_text.scss",
+			"summary": "Stylesheet for resources, defining frontend presentation rules and visual tokens.",
+			"tags": ["styling", "resources", "markup"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/resources/styles/_types.scss",
+			"type": "file",
+			"name": "_types.scss",
+			"filePath": "src/resources/styles/_types.scss",
+			"summary": "Stylesheet for resources, defining frontend presentation rules and visual tokens.",
+			"tags": ["styling", "resources", "markup"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/resources/styles/mui-variables-mapping.scss",
+			"type": "file",
+			"name": "mui-variables-mapping.scss",
+			"filePath": "src/resources/styles/mui-variables-mapping.scss",
+			"summary": "Stylesheet for resources, defining frontend presentation rules and visual tokens.",
+			"tags": ["styling", "resources", "markup"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/resources/styles/settings.scss",
+			"type": "file",
+			"name": "settings.scss",
+			"filePath": "src/resources/styles/settings.scss",
+			"summary": "Stylesheet for resources, defining frontend presentation rules and visual tokens.",
+			"tags": ["styling", "resources", "markup"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/resources/styles/styles.scss",
+			"type": "file",
+			"name": "styles.scss",
+			"filePath": "src/resources/styles/styles.scss",
+			"summary": "Stylesheet for resources, defining frontend presentation rules and visual tokens.",
+			"tags": ["styling", "resources", "markup"],
+			"complexity": "simple"
+		}
+	],
+	"edges": []
+}

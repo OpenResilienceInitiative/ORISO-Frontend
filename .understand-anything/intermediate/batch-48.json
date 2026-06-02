@@ -1,0 +1,595 @@
+{
+	"nodes": [
+		{
+			"id": "config:.cursor/settings.json",
+			"type": "config",
+			"name": "settings.json",
+			"filePath": ".cursor/settings.json",
+			"summary": "Configuration file that controls cursor behavior for the frontend project.",
+			"tags": ["configuration", "cursor", "config"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:.husky/commit-msg",
+			"type": "file",
+			"name": "commit-msg",
+			"filePath": ".husky/commit-msg",
+			"summary": "Frontend source file for husky in the ORISO React application.",
+			"tags": ["husky", "code", "frontend"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:.husky/pre-commit",
+			"type": "file",
+			"name": "pre-commit",
+			"filePath": ".husky/pre-commit",
+			"summary": "Frontend source file for husky in the ORISO React application.",
+			"tags": ["husky", "code", "frontend"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:.prettierignore",
+			"type": "file",
+			"name": ".prettierignore",
+			"filePath": ".prettierignore",
+			"summary": "Frontend source file for prettierignore in the ORISO React application.",
+			"tags": ["prettierignore", "code", "frontend"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:.storybook-backup/preview-head.html",
+			"type": "file",
+			"name": "preview-head.html",
+			"filePath": ".storybook-backup/preview-head.html",
+			"summary": "Frontend source file for storybook in the ORISO React application.",
+			"tags": ["storybook", "markup", "frontend"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:.storybook-backup/static/cpd-theme-light-semantic.css",
+			"type": "file",
+			"name": "cpd-theme-light-semantic.css",
+			"filePath": ".storybook-backup/static/cpd-theme-light-semantic.css",
+			"summary": "Stylesheet for storybook, defining frontend presentation rules and visual tokens.",
+			"tags": ["storybook", "styling", "markup"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:.storybook/manager.ts",
+			"type": "file",
+			"name": "manager.ts",
+			"filePath": ".storybook/manager.ts",
+			"summary": "Frontend source file for storybook in the ORISO React application.",
+			"tags": ["storybook", "code", "frontend"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:.storybook/preview-head.html",
+			"type": "file",
+			"name": "preview-head.html",
+			"filePath": ".storybook/preview-head.html",
+			"summary": "Frontend source file for storybook in the ORISO React application.",
+			"tags": ["storybook", "markup", "frontend"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:.storybook/static/cpd-theme-light-semantic.css",
+			"type": "file",
+			"name": "cpd-theme-light-semantic.css",
+			"filePath": ".storybook/static/cpd-theme-light-semantic.css",
+			"summary": "Stylesheet for storybook, defining frontend presentation rules and visual tokens.",
+			"tags": ["storybook", "styling", "markup"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:.stylelintrc.js",
+			"type": "file",
+			"name": ".stylelintrc.js",
+			"filePath": ".stylelintrc.js",
+			"summary": "Frontend source file for stylelintrc js in the ORISO React application.",
+			"tags": ["stylelintrc-js", "code", "frontend"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:.tmp-proof/capture_compare.js",
+			"type": "file",
+			"name": "capture_compare.js",
+			"filePath": ".tmp-proof/capture_compare.js",
+			"summary": "Frontend source file for tmp proof in the ORISO React application.",
+			"tags": ["tmp-proof", "code", "frontend"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:.understand-anything/.understandignore",
+			"type": "file",
+			"name": ".understandignore",
+			"filePath": ".understand-anything/.understandignore",
+			"summary": "Frontend source file for understand anything in the ORISO React application.",
+			"tags": ["understand-anything", "code", "frontend"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:cypress.config.js",
+			"type": "file",
+			"name": "cypress.config.js",
+			"filePath": "cypress.config.js",
+			"summary": "Frontend source file for cypress config js in the ORISO React application.",
+			"tags": ["cypress-config-js", "code", "frontend"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:cypress/e2e/error.cy.ts",
+			"type": "file",
+			"name": "error.cy.ts",
+			"filePath": "cypress/e2e/error.cy.ts",
+			"summary": "Frontend source file for tests in the ORISO React application.",
+			"tags": ["test", "tests", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:cypress/e2e/under-construction.cy.ts",
+			"type": "file",
+			"name": "under-construction.cy.ts",
+			"filePath": "cypress/e2e/under-construction.cy.ts",
+			"summary": "Frontend source file for tests in the ORISO React application.",
+			"tags": ["test", "tests", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "config:cypress/tsconfig.json",
+			"type": "config",
+			"name": "tsconfig.json",
+			"filePath": "cypress/tsconfig.json",
+			"summary": "Configuration file that controls tests behavior for the frontend project.",
+			"tags": ["configuration", "tests", "config"],
+			"complexity": "simple"
+		},
+		{
+			"id": "document:docs/architecture/current-architecture.md",
+			"type": "document",
+			"name": "current-architecture.md",
+			"filePath": "docs/architecture/current-architecture.md",
+			"summary": "Documentation covering docs concerns in the ORISO frontend.",
+			"tags": ["documentation", "docs", "frontend"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "document:docs/README.md",
+			"type": "document",
+			"name": "README.md",
+			"filePath": "docs/README.md",
+			"summary": "Documentation covering docs concerns in the ORISO frontend.",
+			"tags": ["documentation", "docs", "frontend"],
+			"complexity": "simple"
+		},
+		{
+			"id": "document:docs/rules/engineering-rules.md",
+			"type": "document",
+			"name": "engineering-rules.md",
+			"filePath": "docs/rules/engineering-rules.md",
+			"summary": "Documentation covering docs concerns in the ORISO frontend.",
+			"tags": ["documentation", "docs", "frontend"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "document:docs/skills/implementation-skills.md",
+			"type": "document",
+			"name": "implementation-skills.md",
+			"filePath": "docs/skills/implementation-skills.md",
+			"summary": "Documentation covering docs concerns in the ORISO frontend.",
+			"tags": ["documentation", "docs", "frontend"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:dtsgen.ts",
+			"type": "file",
+			"name": "dtsgen.ts",
+			"filePath": "dtsgen.ts",
+			"summary": "Frontend source file for dtsgen ts in the ORISO React application.",
+			"tags": ["dtsgen-ts", "code", "frontend"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:generate-professional-stories.js",
+			"type": "file",
+			"name": "generate-professional-stories.js",
+			"filePath": "generate-professional-stories.js",
+			"summary": "TypeScript module for generate professional stories js with 5 extracted functions and 0 extracted classes.",
+			"tags": ["utility", "generate-professional-stories-js", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:generate-professional-stories.js:getComponentExport",
+			"type": "function",
+			"name": "getComponentExport",
+			"filePath": "generate-professional-stories.js",
+			"lineRange": [49, 61],
+			"summary": "Function getComponentExport in generate-professional-stories.js, used by the surrounding generate professional stories js module.",
+			"tags": [
+				"function",
+				"generate-professional-stories-js",
+				"exported"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:generate-professional-stories.js:getCategory",
+			"type": "function",
+			"name": "getCategory",
+			"filePath": "generate-professional-stories.js",
+			"lineRange": [76, 88],
+			"summary": "Function getCategory in generate-professional-stories.js, used by the surrounding generate professional stories js module.",
+			"tags": [
+				"function",
+				"generate-professional-stories-js",
+				"exported"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:generate-professional-stories.js:hasProps",
+			"type": "function",
+			"name": "hasProps",
+			"filePath": "generate-professional-stories.js",
+			"lineRange": [83, 95],
+			"summary": "Function hasProps in generate-professional-stories.js, used by the surrounding generate professional stories js module.",
+			"tags": [
+				"function",
+				"generate-professional-stories-js",
+				"exported"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:generate-professional-stories.js:generateStory",
+			"type": "function",
+			"name": "generateStory",
+			"filePath": "generate-professional-stories.js",
+			"lineRange": [92, 104],
+			"summary": "Function generateStory in generate-professional-stories.js, used by the surrounding generate professional stories js module.",
+			"tags": [
+				"function",
+				"generate-professional-stories-js",
+				"exported"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:generate-professional-stories.js:main",
+			"type": "function",
+			"name": "main",
+			"filePath": "generate-professional-stories.js",
+			"lineRange": [136, 148],
+			"summary": "Function main in generate-professional-stories.js, used by the surrounding generate professional stories js module.",
+			"tags": [
+				"function",
+				"generate-professional-stories-js",
+				"exported"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:generate-smart-stories.js",
+			"type": "file",
+			"name": "generate-smart-stories.js",
+			"filePath": "generate-smart-stories.js",
+			"summary": "TypeScript module for generate smart stories js with 7 extracted functions and 0 extracted classes.",
+			"tags": ["utility", "generate-smart-stories-js", "code"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:generate-smart-stories.js:componentMatch",
+			"type": "function",
+			"name": "componentMatch",
+			"filePath": "generate-smart-stories.js",
+			"lineRange": [54, 66],
+			"summary": "Function componentMatch in generate-smart-stories.js, used by the surrounding generate smart stories js module.",
+			"tags": ["function", "generate-smart-stories-js", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:generate-smart-stories.js:isReactComponent",
+			"type": "function",
+			"name": "isReactComponent",
+			"filePath": "generate-smart-stories.js",
+			"lineRange": [31, 43],
+			"summary": "Function isReactComponent in generate-smart-stories.js, used by the surrounding generate smart stories js module.",
+			"tags": ["function", "generate-smart-stories-js", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:generate-smart-stories.js:getComponentExport",
+			"type": "function",
+			"name": "getComponentExport",
+			"filePath": "generate-smart-stories.js",
+			"lineRange": [50, 62],
+			"summary": "Function getComponentExport in generate-smart-stories.js, used by the surrounding generate smart stories js module.",
+			"tags": ["function", "generate-smart-stories-js", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:generate-smart-stories.js:getCategory",
+			"type": "function",
+			"name": "getCategory",
+			"filePath": "generate-smart-stories.js",
+			"lineRange": [76, 88],
+			"summary": "Function getCategory in generate-smart-stories.js, used by the surrounding generate smart stories js module.",
+			"tags": ["function", "generate-smart-stories-js", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:generate-smart-stories.js:getDefaultArgs",
+			"type": "function",
+			"name": "getDefaultArgs",
+			"filePath": "generate-smart-stories.js",
+			"lineRange": [103, 115],
+			"summary": "Function getDefaultArgs in generate-smart-stories.js, used by the surrounding generate smart stories js module.",
+			"tags": ["function", "generate-smart-stories-js", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:generate-smart-stories.js:generateStory",
+			"type": "function",
+			"name": "generateStory",
+			"filePath": "generate-smart-stories.js",
+			"lineRange": [178, 190],
+			"summary": "Function generateStory in generate-smart-stories.js, used by the surrounding generate smart stories js module.",
+			"tags": ["function", "generate-smart-stories-js", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:generate-smart-stories.js:main",
+			"type": "function",
+			"name": "main",
+			"filePath": "generate-smart-stories.js",
+			"lineRange": [218, 230],
+			"summary": "Function main in generate-smart-stories.js, used by the surrounding generate smart stories js module.",
+			"tags": ["function", "generate-smart-stories-js", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:index.ts",
+			"type": "file",
+			"name": "index.ts",
+			"filePath": "index.ts",
+			"summary": "Frontend source file for index ts in the ORISO React application.",
+			"tags": ["entry-point", "index-ts", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "config:proxy/package.json",
+			"type": "config",
+			"name": "package.json",
+			"filePath": "proxy/package.json",
+			"summary": "Configuration file that controls proxy behavior for the frontend project.",
+			"tags": ["configuration", "proxy", "config"],
+			"complexity": "simple"
+		}
+	],
+	"edges": [
+		{
+			"source": "config:.cursor/settings.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "file:cypress.config.js",
+			"target": "config:src/extensions/cypress/cypress.json",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "config:cypress/tsconfig.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "document:docs/architecture/current-architecture.md",
+			"target": "document:README.md",
+			"type": "related",
+			"direction": "forward",
+			"weight": 0.5
+		},
+		{
+			"source": "document:docs/README.md",
+			"target": "document:README.md",
+			"type": "related",
+			"direction": "forward",
+			"weight": 0.5
+		},
+		{
+			"source": "document:docs/rules/engineering-rules.md",
+			"target": "document:README.md",
+			"type": "related",
+			"direction": "forward",
+			"weight": 0.5
+		},
+		{
+			"source": "document:docs/skills/implementation-skills.md",
+			"target": "document:README.md",
+			"type": "related",
+			"direction": "forward",
+			"weight": 0.5
+		},
+		{
+			"source": "file:generate-professional-stories.js",
+			"target": "function:generate-professional-stories.js:getComponentExport",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:generate-professional-stories.js",
+			"target": "function:generate-professional-stories.js:getComponentExport",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:generate-professional-stories.js",
+			"target": "function:generate-professional-stories.js:getCategory",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:generate-professional-stories.js",
+			"target": "function:generate-professional-stories.js:getCategory",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:generate-professional-stories.js",
+			"target": "function:generate-professional-stories.js:hasProps",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:generate-professional-stories.js",
+			"target": "function:generate-professional-stories.js:hasProps",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:generate-professional-stories.js",
+			"target": "function:generate-professional-stories.js:generateStory",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:generate-professional-stories.js",
+			"target": "function:generate-professional-stories.js:generateStory",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:generate-professional-stories.js",
+			"target": "function:generate-professional-stories.js:main",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:generate-professional-stories.js",
+			"target": "function:generate-professional-stories.js:main",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:generate-smart-stories.js",
+			"target": "function:generate-smart-stories.js:componentMatch",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:generate-smart-stories.js",
+			"target": "function:generate-smart-stories.js:componentMatch",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:generate-smart-stories.js",
+			"target": "function:generate-smart-stories.js:isReactComponent",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:generate-smart-stories.js",
+			"target": "function:generate-smart-stories.js:isReactComponent",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:generate-smart-stories.js",
+			"target": "function:generate-smart-stories.js:getComponentExport",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:generate-smart-stories.js",
+			"target": "function:generate-smart-stories.js:getComponentExport",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:generate-smart-stories.js",
+			"target": "function:generate-smart-stories.js:getCategory",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:generate-smart-stories.js",
+			"target": "function:generate-smart-stories.js:getCategory",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:generate-smart-stories.js",
+			"target": "function:generate-smart-stories.js:getDefaultArgs",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:generate-smart-stories.js",
+			"target": "function:generate-smart-stories.js:getDefaultArgs",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:generate-smart-stories.js",
+			"target": "function:generate-smart-stories.js:generateStory",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:generate-smart-stories.js",
+			"target": "function:generate-smart-stories.js:generateStory",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:generate-smart-stories.js",
+			"target": "function:generate-smart-stories.js:main",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:generate-smart-stories.js",
+			"target": "function:generate-smart-stories.js:main",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "config:proxy/package.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		}
+	]
+}

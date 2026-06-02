@@ -1,0 +1,32 @@
+{
+	"nodes": [
+		{
+			"id": "file:src/components/app/authenticatedApp.styles.scss",
+			"type": "file",
+			"name": "authenticatedApp.styles.scss",
+			"filePath": "src/components/app/authenticatedApp.styles.scss",
+			"summary": "React UI module for component app, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "authentication", "styling", "component-app"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/app/loading.styles.scss",
+			"type": "file",
+			"name": "loading.styles.scss",
+			"filePath": "src/components/app/loading.styles.scss",
+			"summary": "React UI module for component app, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-app"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/app/navigation.styles.scss",
+			"type": "file",
+			"name": "navigation.styles.scss",
+			"filePath": "src/components/app/navigation.styles.scss",
+			"summary": "React UI module for component app, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-app"],
+			"complexity": "complex"
+		}
+	],
+	"edges": []
+}

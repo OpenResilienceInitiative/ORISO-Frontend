@@ -1,0 +1,54 @@
+{
+	"nodes": [
+		{
+			"id": "config:cypress/fixtures/registration/agency.json",
+			"type": "config",
+			"name": "agency.json",
+			"filePath": "cypress/fixtures/registration/agency.json",
+			"summary": "Configuration file that controls tests behavior for the frontend project.",
+			"tags": ["configuration", "tests", "config"],
+			"complexity": "simple"
+		},
+		{
+			"id": "config:cypress/fixtures/registration/consultingType.json",
+			"type": "config",
+			"name": "consultingType.json",
+			"filePath": "cypress/fixtures/registration/consultingType.json",
+			"summary": "Configuration file that controls tests behavior for the frontend project.",
+			"tags": ["configuration", "tests", "config"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "config:cypress/fixtures/registration/topic.json",
+			"type": "config",
+			"name": "topic.json",
+			"filePath": "cypress/fixtures/registration/topic.json",
+			"summary": "Configuration file that controls tests behavior for the frontend project.",
+			"tags": ["configuration", "tests", "config"],
+			"complexity": "simple"
+		}
+	],
+	"edges": [
+		{
+			"source": "config:cypress/fixtures/registration/agency.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:cypress/fixtures/registration/consultingType.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		},
+		{
+			"source": "config:cypress/fixtures/registration/topic.json",
+			"target": "file:src/initApp.tsx",
+			"type": "configures",
+			"direction": "forward",
+			"weight": 0.6
+		}
+	]
+}

@@ -1,0 +1,41 @@
+{
+	"nodes": [
+		{
+			"id": "file:src/components/select/select.react.styles.scss",
+			"type": "file",
+			"name": "select.react.styles.scss",
+			"filePath": "src/components/select/select.react.styles.scss",
+			"summary": "React UI module for component select, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-select"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/select/select.styles.scss",
+			"type": "file",
+			"name": "select.styles.scss",
+			"filePath": "src/components/select/select.styles.scss",
+			"summary": "React UI module for component select, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-select"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/select/select2.react.styles.scss",
+			"type": "file",
+			"name": "select2.react.styles.scss",
+			"filePath": "src/components/select/select2.react.styles.scss",
+			"summary": "React UI module for component select, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-select"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/select/select2.styles.scss",
+			"type": "file",
+			"name": "select2.styles.scss",
+			"filePath": "src/components/select/select2.styles.scss",
+			"summary": "React UI module for component select, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-select"],
+			"complexity": "moderate"
+		}
+	],
+	"edges": []
+}

@@ -1,0 +1,1532 @@
+{
+	"nodes": [
+		{
+			"id": "file:src/components/call/FloatingCallWidget.OLD.tsx",
+			"type": "file",
+			"name": "FloatingCallWidget.OLD.tsx",
+			"filePath": "src/components/call/FloatingCallWidget.OLD.tsx",
+			"summary": "React UI module for component call, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-call", "code"],
+			"complexity": "complex"
+		},
+		{
+			"id": "class:src/components/call/FloatingCallWidget.OLD.tsx:based",
+			"type": "class",
+			"name": "based",
+			"filePath": "src/components/call/FloatingCallWidget.OLD.tsx",
+			"lineRange": [352, 392],
+			"summary": "Class based in src/components/call/FloatingCallWidget.OLD.tsx, grouping related component call behavior.",
+			"tags": ["class", "component-call", "internal"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/call/FloatingCallWidget.PROFESSIONAL.tsx",
+			"type": "file",
+			"name": "FloatingCallWidget.PROFESSIONAL.tsx",
+			"filePath": "src/components/call/FloatingCallWidget.PROFESSIONAL.tsx",
+			"summary": "React UI module for component call, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-call", "code"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/call/FloatingCallWidget.tsx",
+			"type": "file",
+			"name": "FloatingCallWidget.tsx",
+			"filePath": "src/components/call/FloatingCallWidget.tsx",
+			"summary": "React UI module for component call, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-call", "code"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/call/GroupCallWidget.tsx",
+			"type": "file",
+			"name": "GroupCallWidget.tsx",
+			"filePath": "src/components/call/GroupCallWidget.tsx",
+			"summary": "React UI module for component call, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-call", "code"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/matrixCall/MatrixCallView.BROKEN-BACKUP.tsx",
+			"type": "file",
+			"name": "MatrixCallView.BROKEN-BACKUP.tsx",
+			"filePath": "src/components/matrixCall/MatrixCallView.BROKEN-BACKUP.tsx",
+			"summary": "React UI module for component matrix call, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "matrix", "component-matrix-call"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/matrixCall/MatrixCallView.CLEAN.tsx",
+			"type": "file",
+			"name": "MatrixCallView.CLEAN.tsx",
+			"filePath": "src/components/matrixCall/MatrixCallView.CLEAN.tsx",
+			"summary": "React UI module for component matrix call, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "matrix", "component-matrix-call"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/matrixCall/MatrixCallView.tsx",
+			"type": "file",
+			"name": "MatrixCallView.tsx",
+			"filePath": "src/components/matrixCall/MatrixCallView.tsx",
+			"summary": "React UI module for component matrix call, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "matrix", "component-matrix-call"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/sessionCookie/getMatrixAccessToken.ts",
+			"type": "file",
+			"name": "getMatrixAccessToken.ts",
+			"filePath": "src/components/sessionCookie/getMatrixAccessToken.ts",
+			"summary": "React UI module for component session cookie, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"matrix",
+				"session",
+				"utility",
+				"component-session-cookie"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionCookie/getMatrixAccessToken.ts:getMatrixAccessToken",
+			"type": "function",
+			"name": "getMatrixAccessToken",
+			"filePath": "src/components/sessionCookie/getMatrixAccessToken.ts",
+			"lineRange": [10, 22],
+			"summary": "Function getMatrixAccessToken in src/components/sessionCookie/getMatrixAccessToken.ts, used by the surrounding component session cookie module.",
+			"tags": ["function", "component-session-cookie", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionCookie/getMatrixAccessToken.ts:createMatrixClient",
+			"type": "function",
+			"name": "createMatrixClient",
+			"filePath": "src/components/sessionCookie/getMatrixAccessToken.ts",
+			"lineRange": [44, 51],
+			"summary": "Function createMatrixClient in src/components/sessionCookie/getMatrixAccessToken.ts, used by the surrounding component session cookie module.",
+			"tags": ["function", "component-session-cookie", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/sessionsList/EmptyListItem.tsx",
+			"type": "file",
+			"name": "EmptyListItem.tsx",
+			"filePath": "src/components/sessionsList/EmptyListItem.tsx",
+			"summary": "React UI module for component sessions list, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"session",
+				"utility",
+				"component-sessions-list"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionsList/EmptyListItem.tsx:EmptyListItem",
+			"type": "function",
+			"name": "EmptyListItem",
+			"filePath": "src/components/sessionsList/EmptyListItem.tsx",
+			"lineRange": [17, 29],
+			"summary": "Function EmptyListItem in src/components/sessionsList/EmptyListItem.tsx, used by the surrounding component sessions list module.",
+			"tags": ["function", "component-sessions-list", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/sessionsList/EnquiryFilterChips.tsx",
+			"type": "file",
+			"name": "EnquiryFilterChips.tsx",
+			"filePath": "src/components/sessionsList/EnquiryFilterChips.tsx",
+			"summary": "React UI module for component sessions list, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "session", "component-sessions-list"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/sessionsList/ResizableHandle.stories.tsx",
+			"type": "file",
+			"name": "ResizableHandle.stories.tsx",
+			"filePath": "src/components/sessionsList/ResizableHandle.stories.tsx",
+			"summary": "React UI module for component sessions list, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"storybook",
+				"component",
+				"session",
+				"utility",
+				"component-sessions-list"
+			],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/sessionsList/ResizableHandle.stories.tsx:ResizeDemo",
+			"type": "function",
+			"name": "ResizeDemo",
+			"filePath": "src/components/sessionsList/ResizableHandle.stories.tsx",
+			"lineRange": [28, 40],
+			"summary": "Function ResizeDemo in src/components/sessionsList/ResizableHandle.stories.tsx, used by the surrounding component sessions list module.",
+			"tags": ["function", "component-sessions-list", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/sessionsList/ResizableHandle.tsx",
+			"type": "file",
+			"name": "ResizableHandle.tsx",
+			"filePath": "src/components/sessionsList/ResizableHandle.tsx",
+			"summary": "React UI module for component sessions list, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "session", "component-sessions-list"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/sessionsList/SessionListColumn.stories.tsx",
+			"type": "file",
+			"name": "SessionListColumn.stories.tsx",
+			"filePath": "src/components/sessionsList/SessionListColumn.stories.tsx",
+			"summary": "React UI module for component sessions list, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"storybook",
+				"component",
+				"session",
+				"utility",
+				"component-sessions-list"
+			],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/sessionsList/SessionListColumn.stories.tsx:MockAvatar",
+			"type": "function",
+			"name": "MockAvatar",
+			"filePath": "src/components/sessionsList/SessionListColumn.stories.tsx",
+			"lineRange": [25, 37],
+			"summary": "Function MockAvatar in src/components/sessionsList/SessionListColumn.stories.tsx, used by the surrounding component sessions list module.",
+			"tags": ["function", "component-sessions-list", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionsList/SessionListColumn.stories.tsx:DemoCard",
+			"type": "function",
+			"name": "DemoCard",
+			"filePath": "src/components/sessionsList/SessionListColumn.stories.tsx",
+			"lineRange": [48, 60],
+			"summary": "Function DemoCard in src/components/sessionsList/SessionListColumn.stories.tsx, used by the surrounding component sessions list module.",
+			"tags": ["function", "component-sessions-list", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionsList/SessionListColumn.stories.tsx:FullColumnPlayground",
+			"type": "function",
+			"name": "FullColumnPlayground",
+			"filePath": "src/components/sessionsList/SessionListColumn.stories.tsx",
+			"lineRange": [128, 140],
+			"summary": "Function FullColumnPlayground in src/components/sessionsList/SessionListColumn.stories.tsx, used by the surrounding component sessions list module.",
+			"tags": ["function", "component-sessions-list", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionsList/SessionListColumn.stories.tsx:ToolbarCreateChatColumn",
+			"type": "function",
+			"name": "ToolbarCreateChatColumn",
+			"filePath": "src/components/sessionsList/SessionListColumn.stories.tsx",
+			"lineRange": [195, 207],
+			"summary": "Function ToolbarCreateChatColumn in src/components/sessionsList/SessionListColumn.stories.tsx, used by the surrounding component sessions list module.",
+			"tags": ["function", "component-sessions-list", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/sessionsList/SessionListCreateChat.stories.tsx",
+			"type": "file",
+			"name": "SessionListCreateChat.stories.tsx",
+			"filePath": "src/components/sessionsList/SessionListCreateChat.stories.tsx",
+			"summary": "React UI module for component sessions list, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"storybook",
+				"component",
+				"session",
+				"component-sessions-list"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/sessionsList/SessionListCreateChat.tsx",
+			"type": "file",
+			"name": "SessionListCreateChat.tsx",
+			"filePath": "src/components/sessionsList/SessionListCreateChat.tsx",
+			"summary": "React UI module for component sessions list, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"session",
+				"utility",
+				"component-sessions-list"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionsList/SessionListCreateChat.tsx:SessionListCreateChat",
+			"type": "function",
+			"name": "SessionListCreateChat",
+			"filePath": "src/components/sessionsList/SessionListCreateChat.tsx",
+			"lineRange": [6, 18],
+			"summary": "Function SessionListCreateChat in src/components/sessionsList/SessionListCreateChat.tsx, used by the surrounding component sessions list module.",
+			"tags": ["function", "component-sessions-list", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/sessionsList/SessionsList.tsx",
+			"type": "file",
+			"name": "SessionsList.tsx",
+			"filePath": "src/components/sessionsList/SessionsList.tsx",
+			"summary": "React UI module for component sessions list, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"session",
+				"utility",
+				"component-sessions-list"
+			],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/sessionsList/SessionsList.tsx:SessionsList",
+			"type": "function",
+			"name": "SessionsList",
+			"filePath": "src/components/sessionsList/SessionsList.tsx",
+			"lineRange": [206, 218],
+			"summary": "Function SessionsList in src/components/sessionsList/SessionsList.tsx, used by the surrounding component sessions list module.",
+			"tags": ["function", "component-sessions-list", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionsList/SessionsList.tsx:buildSessionSearchHaystack",
+			"type": "function",
+			"name": "buildSessionSearchHaystack",
+			"filePath": "src/components/sessionsList/SessionsList.tsx",
+			"lineRange": [72, 84],
+			"summary": "Function buildSessionSearchHaystack in src/components/sessionsList/SessionsList.tsx, used by the surrounding component sessions list module.",
+			"tags": ["function", "component-sessions-list", "internal"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionsList/SessionsList.tsx:isAnonymousAskerSession",
+			"type": "function",
+			"name": "isAnonymousAskerSession",
+			"filePath": "src/components/sessionsList/SessionsList.tsx",
+			"lineRange": [121, 133],
+			"summary": "Function isAnonymousAskerSession in src/components/sessionsList/SessionsList.tsx, used by the surrounding component sessions list module.",
+			"tags": ["function", "component-sessions-list", "internal"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionsList/SessionsList.tsx:sessionMatchesToolbar",
+			"type": "function",
+			"name": "sessionMatchesToolbar",
+			"filePath": "src/components/sessionsList/SessionsList.tsx",
+			"lineRange": [135, 147],
+			"summary": "Function sessionMatchesToolbar in src/components/sessionsList/SessionsList.tsx, used by the surrounding component sessions list module.",
+			"tags": ["function", "component-sessions-list", "internal"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/sessionsList/SessionsListToolbar.stories.tsx",
+			"type": "file",
+			"name": "SessionsListToolbar.stories.tsx",
+			"filePath": "src/components/sessionsList/SessionsListToolbar.stories.tsx",
+			"summary": "React UI module for component sessions list, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"storybook",
+				"component",
+				"session",
+				"utility",
+				"component-sessions-list"
+			],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/sessionsList/SessionsListToolbar.stories.tsx:SessionsListToolbarPlayground",
+			"type": "function",
+			"name": "SessionsListToolbarPlayground",
+			"filePath": "src/components/sessionsList/SessionsListToolbar.stories.tsx",
+			"lineRange": [26, 38],
+			"summary": "Function SessionsListToolbarPlayground in src/components/sessionsList/SessionsListToolbar.stories.tsx, used by the surrounding component sessions list module.",
+			"tags": ["function", "component-sessions-list", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionsList/SessionsListToolbar.stories.tsx:ToolbarWithSearchPreset",
+			"type": "function",
+			"name": "ToolbarWithSearchPreset",
+			"filePath": "src/components/sessionsList/SessionsListToolbar.stories.tsx",
+			"lineRange": [81, 93],
+			"summary": "Function ToolbarWithSearchPreset in src/components/sessionsList/SessionsListToolbar.stories.tsx, used by the surrounding component sessions list module.",
+			"tags": ["function", "component-sessions-list", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/sessionsList/SessionsListToolbar.tsx",
+			"type": "file",
+			"name": "SessionsListToolbar.tsx",
+			"filePath": "src/components/sessionsList/SessionsListToolbar.tsx",
+			"summary": "React UI module for component sessions list, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"session",
+				"utility",
+				"component-sessions-list"
+			],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/sessionsList/SessionsListToolbar.tsx:SessionsListToolbar",
+			"type": "function",
+			"name": "SessionsListToolbar",
+			"filePath": "src/components/sessionsList/SessionsListToolbar.tsx",
+			"lineRange": [181, 193],
+			"summary": "Function SessionsListToolbar in src/components/sessionsList/SessionsListToolbar.tsx, used by the surrounding component sessions list module.",
+			"tags": ["function", "component-sessions-list", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionsList/SessionsListToolbar.tsx:buildArchiveTabPath",
+			"type": "function",
+			"name": "buildArchiveTabPath",
+			"filePath": "src/components/sessionsList/SessionsListToolbar.tsx",
+			"lineRange": [662, 670],
+			"summary": "Function buildArchiveTabPath in src/components/sessionsList/SessionsListToolbar.tsx, used by the surrounding component sessions list module.",
+			"tags": ["function", "component-sessions-list", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionsList/SessionsListToolbar.tsx:buildCreateGroupChatPath",
+			"type": "function",
+			"name": "buildCreateGroupChatPath",
+			"filePath": "src/components/sessionsList/SessionsListToolbar.tsx",
+			"lineRange": [665, 670],
+			"summary": "Function buildCreateGroupChatPath in src/components/sessionsList/SessionsListToolbar.tsx, used by the surrounding component sessions list module.",
+			"tags": ["function", "component-sessions-list", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/sessionsList/SessionsListWrapper.tsx",
+			"type": "file",
+			"name": "SessionsListWrapper.tsx",
+			"filePath": "src/components/sessionsList/SessionsListWrapper.tsx",
+			"summary": "React UI module for component sessions list, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"session",
+				"utility",
+				"component-sessions-list"
+			],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/sessionsList/SessionsListWrapper.tsx:SessionsListWrapper",
+			"type": "function",
+			"name": "SessionsListWrapper",
+			"filePath": "src/components/sessionsList/SessionsListWrapper.tsx",
+			"lineRange": [22, 34],
+			"summary": "Function SessionsListWrapper in src/components/sessionsList/SessionsListWrapper.tsx, used by the surrounding component sessions list module.",
+			"tags": ["function", "component-sessions-list", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/sessionsList/sessionsListResize.constants.ts",
+			"type": "file",
+			"name": "sessionsListResize.constants.ts",
+			"filePath": "src/components/sessionsList/sessionsListResize.constants.ts",
+			"summary": "React UI module for component sessions list, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"session",
+				"utility",
+				"component-sessions-list"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionsList/sessionsListResize.constants.ts:SESSIONS_LIST_RESIZE",
+			"type": "function",
+			"name": "SESSIONS_LIST_RESIZE",
+			"filePath": "src/components/sessionsList/sessionsListResize.constants.ts",
+			"lineRange": [1, 8],
+			"summary": "Function SESSIONS_LIST_RESIZE in src/components/sessionsList/sessionsListResize.constants.ts, used by the surrounding component sessions list module.",
+			"tags": ["function", "component-sessions-list", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/sessionsListItem/SessionsListItemSkeleton.tsx",
+			"type": "file",
+			"name": "SessionsListItemSkeleton.tsx",
+			"filePath": "src/components/sessionsListItem/SessionsListItemSkeleton.tsx",
+			"summary": "React UI module for component sessions list item, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"session",
+				"utility",
+				"component-sessions-list-item"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/sessionsListItem/SessionsListItemSkeleton.tsx:SessionsListSkeleton",
+			"type": "function",
+			"name": "SessionsListSkeleton",
+			"filePath": "src/components/sessionsListItem/SessionsListItemSkeleton.tsx",
+			"lineRange": [4, 16],
+			"summary": "Function SessionsListSkeleton in src/components/sessionsListItem/SessionsListItemSkeleton.tsx, used by the surrounding component sessions list item module.",
+			"tags": ["function", "component-sessions-list-item", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/videoCall/VideoCall.tsx",
+			"type": "file",
+			"name": "VideoCall.tsx",
+			"filePath": "src/components/videoCall/VideoCall.tsx",
+			"summary": "React UI module for component video call, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-video-call", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/services/CallManager.ts",
+			"type": "file",
+			"name": "CallManager.ts",
+			"filePath": "src/services/CallManager.ts",
+			"summary": "TypeScript module for services with 2 extracted functions and 1 extracted classes.",
+			"tags": ["utility", "services", "code"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/services/CallManager.ts:callManager",
+			"type": "function",
+			"name": "callManager",
+			"filePath": "src/services/CallManager.ts",
+			"lineRange": [597, 598],
+			"summary": "Function callManager in src/services/CallManager.ts, used by the surrounding services module.",
+			"tags": ["function", "services", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/services/CallManager.ts:return",
+			"type": "function",
+			"name": "return",
+			"filePath": "src/services/CallManager.ts",
+			"lineRange": [68, 80],
+			"summary": "Function return in src/services/CallManager.ts, used by the surrounding services module.",
+			"tags": ["function", "services", "internal"],
+			"complexity": "simple"
+		},
+		{
+			"id": "class:src/services/CallManager.ts:CallManager",
+			"type": "class",
+			"name": "CallManager",
+			"filePath": "src/services/CallManager.ts",
+			"lineRange": [43, 83],
+			"summary": "Class CallManager in src/services/CallManager.ts, grouping related services behavior.",
+			"tags": ["class", "services", "internal"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/services/matrixCallService.ts",
+			"type": "file",
+			"name": "matrixCallService.ts",
+			"filePath": "src/services/matrixCallService.ts",
+			"summary": "TypeScript module for services with 1 extracted functions and 1 extracted classes.",
+			"tags": ["matrix", "utility", "services"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/services/matrixCallService.ts:matrixCallService",
+			"type": "function",
+			"name": "matrixCallService",
+			"filePath": "src/services/matrixCallService.ts",
+			"lineRange": [347, 348],
+			"summary": "Function matrixCallService in src/services/matrixCallService.ts, used by the surrounding services module.",
+			"tags": ["function", "services", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "class:src/services/matrixCallService.ts:MatrixCallService",
+			"type": "class",
+			"name": "MatrixCallService",
+			"filePath": "src/services/matrixCallService.ts",
+			"lineRange": [23, 63],
+			"summary": "Class MatrixCallService in src/services/matrixCallService.ts, grouping related services behavior.",
+			"tags": ["class", "services", "internal"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/services/matrixClientService.ts",
+			"type": "file",
+			"name": "matrixClientService.ts",
+			"filePath": "src/services/matrixClientService.ts",
+			"summary": "TypeScript module for services with 1 extracted functions and 1 extracted classes.",
+			"tags": ["matrix", "utility", "services"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/services/matrixClientService.ts:matrixClientService",
+			"type": "function",
+			"name": "matrixClientService",
+			"filePath": "src/services/matrixClientService.ts",
+			"lineRange": [150, 150],
+			"summary": "Function matrixClientService in src/services/matrixClientService.ts, used by the surrounding services module.",
+			"tags": ["function", "services", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "class:src/services/matrixClientService.ts:MatrixClientService",
+			"type": "class",
+			"name": "MatrixClientService",
+			"filePath": "src/services/matrixClientService.ts",
+			"lineRange": [6, 46],
+			"summary": "Class MatrixClientService in src/services/matrixClientService.ts, grouping related services behavior.",
+			"tags": ["class", "services", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/services/matrixLiveEventBridge.ts",
+			"type": "file",
+			"name": "matrixLiveEventBridge.ts",
+			"filePath": "src/services/matrixLiveEventBridge.ts",
+			"summary": "TypeScript module for services with 1 extracted functions and 1 extracted classes.",
+			"tags": ["matrix", "utility", "services"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/services/matrixLiveEventBridge.ts:matrixLiveEventBridge",
+			"type": "function",
+			"name": "matrixLiveEventBridge",
+			"filePath": "src/services/matrixLiveEventBridge.ts",
+			"lineRange": [343, 344],
+			"summary": "Function matrixLiveEventBridge in src/services/matrixLiveEventBridge.ts, used by the surrounding services module.",
+			"tags": ["function", "services", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "class:src/services/matrixLiveEventBridge.ts:MatrixLiveEventBridge",
+			"type": "class",
+			"name": "MatrixLiveEventBridge",
+			"filePath": "src/services/matrixLiveEventBridge.ts",
+			"lineRange": [9, 49],
+			"summary": "Class MatrixLiveEventBridge in src/services/matrixLiveEventBridge.ts, grouping related services behavior.",
+			"tags": ["class", "services", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/services/messageEventEmitter.ts",
+			"type": "file",
+			"name": "messageEventEmitter.ts",
+			"filePath": "src/services/messageEventEmitter.ts",
+			"summary": "TypeScript module for services with 1 extracted functions and 1 extracted classes.",
+			"tags": ["utility", "services", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/services/messageEventEmitter.ts:messageEventEmitter",
+			"type": "function",
+			"name": "messageEventEmitter",
+			"filePath": "src/services/messageEventEmitter.ts",
+			"lineRange": [49, 50],
+			"summary": "Function messageEventEmitter in src/services/messageEventEmitter.ts, used by the surrounding services module.",
+			"tags": ["function", "services", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "class:src/services/messageEventEmitter.ts:MessageEventEmitter",
+			"type": "class",
+			"name": "MessageEventEmitter",
+			"filePath": "src/services/messageEventEmitter.ts",
+			"lineRange": [14, 50],
+			"summary": "Class MessageEventEmitter in src/services/messageEventEmitter.ts, grouping related services behavior.",
+			"tags": ["class", "services", "internal"],
+			"complexity": "simple"
+		}
+	],
+	"edges": [
+		{
+			"source": "file:src/components/call/FloatingCallWidget.OLD.tsx",
+			"target": "class:src/components/call/FloatingCallWidget.OLD.tsx:based",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/call/FloatingCallWidget.OLD.tsx",
+			"target": "file:src/components/call/FloatingCallWidget.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/call/FloatingCallWidget.OLD.tsx",
+			"target": "file:src/services/CallManager.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/call/FloatingCallWidget.OLD.tsx",
+			"target": "file:src/services/matrixCallService.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/call/FloatingCallWidget.PROFESSIONAL.tsx",
+			"target": "file:src/components/call/FloatingCallWidget.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/call/FloatingCallWidget.PROFESSIONAL.tsx",
+			"target": "file:src/services/CallManager.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/call/FloatingCallWidget.PROFESSIONAL.tsx",
+			"target": "file:src/services/matrixCallService.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/call/FloatingCallWidget.tsx",
+			"target": "file:src/components/call/FloatingCallWidget.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/call/FloatingCallWidget.tsx",
+			"target": "file:src/services/CallManager.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/call/FloatingCallWidget.tsx",
+			"target": "file:src/services/matrixCallService.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/call/GroupCallWidget.tsx",
+			"target": "file:src/components/call/GroupCallWidget.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/call/GroupCallWidget.tsx",
+			"target": "file:src/services/CallManager.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/matrixCall/MatrixCallView.BROKEN-BACKUP.tsx",
+			"target": "file:src/components/matrixCall/MatrixCallView.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/matrixCall/MatrixCallView.BROKEN-BACKUP.tsx",
+			"target": "file:src/services/matrixCallService.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/matrixCall/MatrixCallView.CLEAN.tsx",
+			"target": "file:src/components/matrixCall/MatrixCallView.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/matrixCall/MatrixCallView.CLEAN.tsx",
+			"target": "file:src/services/matrixCallService.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/matrixCall/MatrixCallView.tsx",
+			"target": "file:src/components/matrixCall/MatrixCallView.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/matrixCall/MatrixCallView.tsx",
+			"target": "file:src/services/matrixCallService.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionCookie/getMatrixAccessToken.ts",
+			"target": "function:src/components/sessionCookie/getMatrixAccessToken.ts:getMatrixAccessToken",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionCookie/getMatrixAccessToken.ts",
+			"target": "function:src/components/sessionCookie/getMatrixAccessToken.ts:getMatrixAccessToken",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionCookie/getMatrixAccessToken.ts",
+			"target": "function:src/components/sessionCookie/getMatrixAccessToken.ts:createMatrixClient",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionCookie/getMatrixAccessToken.ts",
+			"target": "function:src/components/sessionCookie/getMatrixAccessToken.ts:createMatrixClient",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionsList/EmptyListItem.tsx",
+			"target": "function:src/components/sessionsList/EmptyListItem.tsx:EmptyListItem",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionsList/EmptyListItem.tsx",
+			"target": "function:src/components/sessionsList/EmptyListItem.tsx:EmptyListItem",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionsList/EmptyListItem.tsx",
+			"target": "file:src/components/listInfo/ListInfo.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/EmptyListItem.tsx",
+			"target": "file:src/components/session/sessionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/EnquiryFilterChips.tsx",
+			"target": "file:src/components/sessionsList/SessionsListToolbar.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/ResizableHandle.stories.tsx",
+			"target": "function:src/components/sessionsList/ResizableHandle.stories.tsx:ResizeDemo",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionsList/ResizableHandle.stories.tsx",
+			"target": "function:src/components/sessionsList/ResizableHandle.stories.tsx:ResizeDemo",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionsList/ResizableHandle.stories.tsx",
+			"target": "file:src/components/sessionsList/ResizableHandle.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/ResizableHandle.stories.tsx",
+			"target": "file:src/components/sessionsList/sessionsList.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/ResizableHandle.tsx",
+			"target": "file:src/components/sessionsList/sessionsListResize.constants.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionListColumn.stories.tsx",
+			"target": "function:src/components/sessionsList/SessionListColumn.stories.tsx:MockAvatar",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionListColumn.stories.tsx",
+			"target": "function:src/components/sessionsList/SessionListColumn.stories.tsx:MockAvatar",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionListColumn.stories.tsx",
+			"target": "function:src/components/sessionsList/SessionListColumn.stories.tsx:DemoCard",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionListColumn.stories.tsx",
+			"target": "function:src/components/sessionsList/SessionListColumn.stories.tsx:DemoCard",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionListColumn.stories.tsx",
+			"target": "function:src/components/sessionsList/SessionListColumn.stories.tsx:FullColumnPlayground",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionListColumn.stories.tsx",
+			"target": "function:src/components/sessionsList/SessionListColumn.stories.tsx:FullColumnPlayground",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionListColumn.stories.tsx",
+			"target": "function:src/components/sessionsList/SessionListColumn.stories.tsx:ToolbarCreateChatColumn",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionListColumn.stories.tsx",
+			"target": "function:src/components/sessionsList/SessionListColumn.stories.tsx:ToolbarCreateChatColumn",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionListColumn.stories.tsx",
+			"target": "file:src/components/sessionsList/SessionListCreateChat.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionListColumn.stories.tsx",
+			"target": "file:src/components/sessionsList/sessionsList.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionListColumn.stories.tsx",
+			"target": "file:src/components/sessionsList/SessionsListToolbar.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionListColumn.stories.tsx",
+			"target": "file:src/components/sessionsListItem/sessionsListItem.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionListColumn.stories.tsx",
+			"target": "file:src/resources/img/icons.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionListCreateChat.stories.tsx",
+			"target": "file:src/components/sessionsList/SessionListCreateChat.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionListCreateChat.stories.tsx",
+			"target": "file:src/components/sessionsList/sessionsList.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionListCreateChat.stories.tsx",
+			"target": "file:src/components/sessionsListItem/sessionsListItem.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionListCreateChat.tsx",
+			"target": "function:src/components/sessionsList/SessionListCreateChat.tsx:SessionListCreateChat",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionListCreateChat.tsx",
+			"target": "function:src/components/sessionsList/SessionListCreateChat.tsx:SessionListCreateChat",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsList.tsx",
+			"target": "function:src/components/sessionsList/SessionsList.tsx:SessionsList",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsList.tsx",
+			"target": "function:src/components/sessionsList/SessionsList.tsx:SessionsList",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsList.tsx",
+			"target": "function:src/components/sessionsList/SessionsList.tsx:buildSessionSearchHaystack",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsList.tsx",
+			"target": "function:src/components/sessionsList/SessionsList.tsx:isAnonymousAskerSession",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsList.tsx",
+			"target": "function:src/components/sessionsList/SessionsList.tsx:sessionMatchesToolbar",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsList.tsx",
+			"target": "file:src/api/apiGetChatRoomById.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsList.tsx",
+			"target": "file:src/api/apiGetSessionRooms.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsList.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsList.tsx",
+			"target": "file:src/components/app/RocketChat.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsList.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsList.tsx",
+			"target": "file:src/components/session/sessionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsList.tsx",
+			"target": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsList.tsx",
+			"target": "file:src/components/sessionsList/EmptyListItem.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsList.tsx",
+			"target": "file:src/components/sessionsList/EnquiryFilterChips.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsList.tsx",
+			"target": "file:src/components/sessionsList/sessionsListConfig.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsList.tsx",
+			"target": "file:src/components/sessionsList/SessionsListToolbar.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsList.tsx",
+			"target": "file:src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsList.tsx",
+			"target": "file:src/components/sessionsListItem/SessionsListItemSkeleton.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsList.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsList.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsList.tsx",
+			"target": "file:src/hooks/useDebounceCallback.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsList.tsx",
+			"target": "file:src/hooks/useSearchParams.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsList.tsx",
+			"target": "file:src/hooks/useUpdatingRef.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsList.tsx",
+			"target": "file:src/hooks/useWatcher.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsList.tsx",
+			"target": "file:src/services/matrixLiveEventBridge.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsList.tsx",
+			"target": "file:src/services/messageEventEmitter.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsList.tsx",
+			"target": "file:src/utils/keycloakSession.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsList.tsx",
+			"target": "file:src/utils/liveChatToggle.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsListToolbar.stories.tsx",
+			"target": "function:src/components/sessionsList/SessionsListToolbar.stories.tsx:SessionsListToolbarPlayground",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsListToolbar.stories.tsx",
+			"target": "function:src/components/sessionsList/SessionsListToolbar.stories.tsx:SessionsListToolbarPlayground",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsListToolbar.stories.tsx",
+			"target": "function:src/components/sessionsList/SessionsListToolbar.stories.tsx:ToolbarWithSearchPreset",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsListToolbar.stories.tsx",
+			"target": "function:src/components/sessionsList/SessionsListToolbar.stories.tsx:ToolbarWithSearchPreset",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsListToolbar.stories.tsx",
+			"target": "file:src/components/sessionsList/sessionsList.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsListToolbar.stories.tsx",
+			"target": "file:src/components/sessionsList/SessionsListToolbar.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsListToolbar.tsx",
+			"target": "function:src/components/sessionsList/SessionsListToolbar.tsx:SessionsListToolbar",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsListToolbar.tsx",
+			"target": "function:src/components/sessionsList/SessionsListToolbar.tsx:SessionsListToolbar",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsListToolbar.tsx",
+			"target": "function:src/components/sessionsList/SessionsListToolbar.tsx:buildArchiveTabPath",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsListToolbar.tsx",
+			"target": "function:src/components/sessionsList/SessionsListToolbar.tsx:buildArchiveTabPath",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsListToolbar.tsx",
+			"target": "function:src/components/sessionsList/SessionsListToolbar.tsx:buildCreateGroupChatPath",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsListToolbar.tsx",
+			"target": "function:src/components/sessionsList/SessionsListToolbar.tsx:buildCreateGroupChatPath",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsListToolbar.tsx",
+			"target": "file:src/components/session/sessionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsListWrapper.tsx",
+			"target": "function:src/components/sessionsList/SessionsListWrapper.tsx:SessionsListWrapper",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsListWrapper.tsx",
+			"target": "function:src/components/sessionsList/SessionsListWrapper.tsx:SessionsListWrapper",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsListWrapper.tsx",
+			"target": "file:src/components/session/sessionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsListWrapper.tsx",
+			"target": "file:src/components/sessionsList/ResizableHandle.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsListWrapper.tsx",
+			"target": "file:src/components/sessionsList/SessionsList.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsListWrapper.tsx",
+			"target": "file:src/components/sessionsList/sessionsListResize.constants.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsListWrapper.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsListWrapper.tsx",
+			"target": "file:src/globalState/provider/LanguagesProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/SessionsListWrapper.tsx",
+			"target": "file:src/hooks/useResponsive.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/sessionsList/sessionsListResize.constants.ts",
+			"target": "function:src/components/sessionsList/sessionsListResize.constants.ts:SESSIONS_LIST_RESIZE",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionsList/sessionsListResize.constants.ts",
+			"target": "function:src/components/sessionsList/sessionsListResize.constants.ts:SESSIONS_LIST_RESIZE",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionsListItemSkeleton.tsx",
+			"target": "function:src/components/sessionsListItem/SessionsListItemSkeleton.tsx:SessionsListSkeleton",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/sessionsListItem/SessionsListItemSkeleton.tsx",
+			"target": "function:src/components/sessionsListItem/SessionsListItemSkeleton.tsx:SessionsListSkeleton",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/videoCall/VideoCall.tsx",
+			"target": "file:src/components/matrixCall/MatrixCallView.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/services/CallManager.ts",
+			"target": "function:src/services/CallManager.ts:callManager",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/services/CallManager.ts",
+			"target": "function:src/services/CallManager.ts:callManager",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/services/CallManager.ts",
+			"target": "function:src/services/CallManager.ts:return",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/services/CallManager.ts",
+			"target": "class:src/services/CallManager.ts:CallManager",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/services/matrixCallService.ts",
+			"target": "function:src/services/matrixCallService.ts:matrixCallService",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/services/matrixCallService.ts",
+			"target": "function:src/services/matrixCallService.ts:matrixCallService",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/services/matrixCallService.ts",
+			"target": "class:src/services/matrixCallService.ts:MatrixCallService",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/services/matrixClientService.ts",
+			"target": "function:src/services/matrixClientService.ts:matrixClientService",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/services/matrixClientService.ts",
+			"target": "function:src/services/matrixClientService.ts:matrixClientService",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/services/matrixClientService.ts",
+			"target": "class:src/services/matrixClientService.ts:MatrixClientService",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/services/matrixClientService.ts",
+			"target": "class:src/services/matrixClientService.ts:MatrixClientService",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/services/matrixClientService.ts",
+			"target": "file:src/components/sessionCookie/getMatrixAccessToken.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/services/matrixClientService.ts",
+			"target": "file:src/services/matrixCallService.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/services/matrixClientService.ts",
+			"target": "file:src/services/matrixLiveEventBridge.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/services/matrixLiveEventBridge.ts",
+			"target": "function:src/services/matrixLiveEventBridge.ts:matrixLiveEventBridge",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/services/matrixLiveEventBridge.ts",
+			"target": "function:src/services/matrixLiveEventBridge.ts:matrixLiveEventBridge",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/services/matrixLiveEventBridge.ts",
+			"target": "class:src/services/matrixLiveEventBridge.ts:MatrixLiveEventBridge",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/services/matrixLiveEventBridge.ts",
+			"target": "class:src/services/matrixLiveEventBridge.ts:MatrixLiveEventBridge",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/services/matrixLiveEventBridge.ts",
+			"target": "file:src/services/CallManager.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/services/messageEventEmitter.ts",
+			"target": "function:src/services/messageEventEmitter.ts:messageEventEmitter",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/services/messageEventEmitter.ts",
+			"target": "function:src/services/messageEventEmitter.ts:messageEventEmitter",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/services/messageEventEmitter.ts",
+			"target": "class:src/services/messageEventEmitter.ts:MessageEventEmitter",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		}
+	]
+}

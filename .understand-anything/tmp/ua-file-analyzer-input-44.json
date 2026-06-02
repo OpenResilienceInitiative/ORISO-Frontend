@@ -1,0 +1,35 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": "src/resources/i18n/en/agency.json",
+			"language": "json",
+			"sizeLines": 3,
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/en/common.json",
+			"language": "json",
+			"sizeLines": 2903,
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/en/consultingTypes.json",
+			"language": "json",
+			"sizeLines": 438,
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/en/languages.json",
+			"language": "json",
+			"sizeLines": 186,
+			"fileCategory": "config"
+		}
+	],
+	"batchImportData": {
+		"src/resources/i18n/en/agency.json": [],
+		"src/resources/i18n/en/common.json": [],
+		"src/resources/i18n/en/consultingTypes.json": [],
+		"src/resources/i18n/en/languages.json": []
+	}
+}

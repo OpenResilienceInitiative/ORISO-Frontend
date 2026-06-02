@@ -1,0 +1,184 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": "src/generated/uploadservice.d.ts",
+			"language": "typescript",
+			"sizeLines": 69,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/generated/userservice.d.ts",
+			"language": "typescript",
+			"sizeLines": 1179,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/generated/videoservice.d.ts",
+			"language": "typescript",
+			"sizeLines": 61,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/globalState_notes.md",
+			"language": "markdown",
+			"sizeLines": 112,
+			"fileCategory": "docs"
+		},
+		{
+			"path": "src/globalState/interfaces/AppConfig/index.ts",
+			"language": "typescript",
+			"sizeLines": 6,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/AuthDataInterface.ts",
+			"language": "typescript",
+			"sizeLines": 6,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/ConsultingSessionDataInterface.ts",
+			"language": "typescript",
+			"sizeLines": 19,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/E2EEDataInterface.ts",
+			"language": "typescript",
+			"sizeLines": 1,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/ServerAppConfigInterface.ts",
+			"language": "typescript",
+			"sizeLines": 13,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/TopicGroups.ts",
+			"language": "typescript",
+			"sizeLines": 5,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/interfaces/TopicsDataInterface.ts",
+			"language": "typescript",
+			"sizeLines": 17,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/RocketChatProvider.tsx.backup",
+			"language": "backup",
+			"sizeLines": 417,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/SessionsDataProvider.tsx.backup",
+			"language": "backup",
+			"sizeLines": 129,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/globalState/provider/WebsocketConnectionDeactivatedProvider.tsx",
+			"language": "typescript",
+			"sizeLines": 20,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/debug/useEffectDebugger.tsx",
+			"language": "typescript",
+			"sizeLines": 66,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useMatrixReady.tsx",
+			"language": "typescript",
+			"sizeLines": 61,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/hooks/useStateWithLabel.ts",
+			"language": "typescript",
+			"sizeLines": 13,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/pages/app.html",
+			"language": "html",
+			"sizeLines": 61,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/pages/under-construction.html",
+			"language": "html",
+			"sizeLines": 342,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/react-app-env.d.ts",
+			"language": "typescript",
+			"sizeLines": 76,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/react-dom-shim.ts",
+			"language": "typescript",
+			"sizeLines": 41,
+			"fileCategory": "code"
+		},
+		{
+			"path": "src/resources/animations/Matching-Animation.json",
+			"language": "json",
+			"sizeLines": 0,
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/de@informal/common.json",
+			"language": "json",
+			"sizeLines": 1271,
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/fr/common.json",
+			"language": "json",
+			"sizeLines": 2876,
+			"fileCategory": "config"
+		},
+		{
+			"path": "src/resources/i18n/fr/languages.json",
+			"language": "json",
+			"sizeLines": 186,
+			"fileCategory": "config"
+		}
+	],
+	"batchImportData": {
+		"src/generated/uploadservice.d.ts": [],
+		"src/generated/userservice.d.ts": [],
+		"src/generated/videoservice.d.ts": [],
+		"src/globalState/globalState_notes.md": [],
+		"src/globalState/interfaces/AppConfig/index.ts": [],
+		"src/globalState/interfaces/AuthDataInterface.ts": [],
+		"src/globalState/interfaces/ConsultingSessionDataInterface.ts": [
+			"src/globalState/interfaces/TopicsDataInterface.ts"
+		],
+		"src/globalState/interfaces/E2EEDataInterface.ts": [],
+		"src/globalState/interfaces/ServerAppConfigInterface.ts": [],
+		"src/globalState/interfaces/TopicGroups.ts": [],
+		"src/globalState/interfaces/TopicsDataInterface.ts": [],
+		"src/globalState/provider/RocketChatProvider.tsx.backup": [],
+		"src/globalState/provider/SessionsDataProvider.tsx.backup": [],
+		"src/globalState/provider/WebsocketConnectionDeactivatedProvider.tsx": [],
+		"src/hooks/debug/useEffectDebugger.tsx": [],
+		"src/hooks/useMatrixReady.tsx": [],
+		"src/hooks/useStateWithLabel.ts": [],
+		"src/pages/app.html": [],
+		"src/pages/under-construction.html": [],
+		"src/react-app-env.d.ts": [],
+		"src/react-dom-shim.ts": [],
+		"src/resources/animations/Matching-Animation.json": [],
+		"src/resources/i18n/de@informal/common.json": [],
+		"src/resources/i18n/fr/common.json": [],
+		"src/resources/i18n/fr/languages.json": []
+	}
+}

@@ -1,0 +1,119 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": "src/resources/styles/_banner.scss",
+			"language": "css",
+			"sizeLines": 87,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/_border.scss",
+			"language": "css",
+			"sizeLines": 57,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/_colors.scss",
+			"language": "css",
+			"sizeLines": 11,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/_display.scss",
+			"language": "css",
+			"sizeLines": 29,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/_flex.scss",
+			"language": "css",
+			"sizeLines": 117,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/_float.scss",
+			"language": "css",
+			"sizeLines": 20,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/_fonts.scss",
+			"language": "css",
+			"sizeLines": 46,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/_icon.scss",
+			"language": "css",
+			"sizeLines": 28,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/_layout.scss",
+			"language": "css",
+			"sizeLines": 84,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/_margin.scss",
+			"language": "css",
+			"sizeLines": 50,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/_padding.scss",
+			"language": "css",
+			"sizeLines": 43,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/_text.scss",
+			"language": "css",
+			"sizeLines": 37,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/_types.scss",
+			"language": "css",
+			"sizeLines": 67,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/mui-variables-mapping.scss",
+			"language": "css",
+			"sizeLines": 38,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/settings.scss",
+			"language": "css",
+			"sizeLines": 292,
+			"fileCategory": "markup"
+		},
+		{
+			"path": "src/resources/styles/styles.scss",
+			"language": "css",
+			"sizeLines": 22,
+			"fileCategory": "markup"
+		}
+	],
+	"batchImportData": {
+		"src/resources/styles/_banner.scss": [],
+		"src/resources/styles/_border.scss": [],
+		"src/resources/styles/_colors.scss": [],
+		"src/resources/styles/_display.scss": [],
+		"src/resources/styles/_flex.scss": [],
+		"src/resources/styles/_float.scss": [],
+		"src/resources/styles/_fonts.scss": [],
+		"src/resources/styles/_icon.scss": [],
+		"src/resources/styles/_layout.scss": [],
+		"src/resources/styles/_margin.scss": [],
+		"src/resources/styles/_padding.scss": [],
+		"src/resources/styles/_text.scss": [],
+		"src/resources/styles/_types.scss": [],
+		"src/resources/styles/mui-variables-mapping.scss": [],
+		"src/resources/styles/settings.scss": [],
+		"src/resources/styles/styles.scss": []
+	}
+}

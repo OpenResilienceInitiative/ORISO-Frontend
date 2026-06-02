@@ -1,0 +1,126 @@
+{
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
+	"batchFiles": [
+		{
+			"path": "cypress/fixtures/api.v1.login.json",
+			"language": "json",
+			"sizeLines": 63,
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/auth.token.json",
+			"language": "json",
+			"sizeLines": 10,
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/releaseNote.md",
+			"language": "markdown",
+			"sizeLines": 5,
+			"fileCategory": "docs"
+		},
+		{
+			"path": "cypress/fixtures/releases.json",
+			"language": "json",
+			"sizeLines": 5,
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/service.agencies.json",
+			"language": "json",
+			"sizeLines": 13,
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/service.agency.consultants.json",
+			"language": "json",
+			"sizeLines": 23,
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/service.consultingtypes.addiction.json",
+			"language": "json",
+			"sizeLines": 60,
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/service.consultingtypes.emigration.json",
+			"language": "json",
+			"sizeLines": 57,
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/service.consultingtypes.pregnancy.json",
+			"language": "json",
+			"sizeLines": 61,
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/service.consultingtypes.u25.json",
+			"language": "json",
+			"sizeLines": 138,
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/service.settings.json",
+			"language": "json",
+			"sizeLines": 59,
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/service.tenant.public.json",
+			"language": "json",
+			"sizeLines": 32,
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/service.topicGroups.json",
+			"language": "json",
+			"sizeLines": 21,
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/service.topics.json",
+			"language": "json",
+			"sizeLines": 38,
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/service.users.data.json",
+			"language": "json",
+			"sizeLines": 92,
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/service.users.sessions.room.json",
+			"language": "json",
+			"sizeLines": 33,
+			"fileCategory": "config"
+		},
+		{
+			"path": "cypress/fixtures/service.videocalls.new.json",
+			"language": "json",
+			"sizeLines": 3,
+			"fileCategory": "config"
+		}
+	],
+	"batchImportData": {
+		"cypress/fixtures/api.v1.login.json": [],
+		"cypress/fixtures/auth.token.json": [],
+		"cypress/fixtures/releaseNote.md": [],
+		"cypress/fixtures/releases.json": [],
+		"cypress/fixtures/service.agencies.json": [],
+		"cypress/fixtures/service.agency.consultants.json": [],
+		"cypress/fixtures/service.consultingtypes.addiction.json": [],
+		"cypress/fixtures/service.consultingtypes.emigration.json": [],
+		"cypress/fixtures/service.consultingtypes.pregnancy.json": [],
+		"cypress/fixtures/service.consultingtypes.u25.json": [],
+		"cypress/fixtures/service.settings.json": [],
+		"cypress/fixtures/service.tenant.public.json": [],
+		"cypress/fixtures/service.topicGroups.json": [],
+		"cypress/fixtures/service.topics.json": [],
+		"cypress/fixtures/service.users.data.json": [],
+		"cypress/fixtures/service.users.sessions.room.json": [],
+		"cypress/fixtures/service.videocalls.new.json": []
+	}
+}

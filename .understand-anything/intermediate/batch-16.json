@@ -1,0 +1,2016 @@
+{
+	"nodes": [
+		{
+			"id": "file:src/components/message/ReassignMessage.tsx",
+			"type": "file",
+			"name": "ReassignMessage.tsx",
+			"filePath": "src/components/message/ReassignMessage.tsx",
+			"summary": "React UI module for component message, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-message", "code"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/message/SystemMessage.tsx",
+			"type": "file",
+			"name": "SystemMessage.tsx",
+			"filePath": "src/components/message/SystemMessage.tsx",
+			"summary": "React UI module for component message, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-message"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/message/SystemMessage.tsx:ICON_CALL_OFF",
+			"type": "function",
+			"name": "ICON_CALL_OFF",
+			"filePath": "src/components/message/SystemMessage.tsx",
+			"lineRange": [6, 18],
+			"summary": "Function ICON_CALL_OFF in src/components/message/SystemMessage.tsx, used by the surrounding component message module.",
+			"tags": ["function", "component-message", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/message/SystemMessage.tsx:ICON_INFO",
+			"type": "function",
+			"name": "ICON_INFO",
+			"filePath": "src/components/message/SystemMessage.tsx",
+			"lineRange": [7, 19],
+			"summary": "Function ICON_INFO in src/components/message/SystemMessage.tsx, used by the surrounding component message module.",
+			"tags": ["function", "component-message", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/message/UserAvatar.stories.tsx",
+			"type": "file",
+			"name": "UserAvatar.stories.tsx",
+			"filePath": "src/components/message/UserAvatar.stories.tsx",
+			"summary": "React UI module for component message, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["storybook", "component", "component-message"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/message/UserAvatar.tsx",
+			"type": "file",
+			"name": "UserAvatar.tsx",
+			"filePath": "src/components/message/UserAvatar.tsx",
+			"summary": "React UI module for component message, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-message", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/message/VideoCallMessage.tsx",
+			"type": "file",
+			"name": "VideoCallMessage.tsx",
+			"filePath": "src/components/message/VideoCallMessage.tsx",
+			"summary": "React UI module for component message, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-message"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/message/VideoCallMessage.tsx:VideoCallMessage",
+			"type": "function",
+			"name": "VideoCallMessage",
+			"filePath": "src/components/message/VideoCallMessage.tsx",
+			"lineRange": [12, 24],
+			"summary": "Function VideoCallMessage in src/components/message/VideoCallMessage.tsx, used by the surrounding component message module.",
+			"tags": ["function", "component-message", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/message/VideoChatDetails/index.tsx",
+			"type": "file",
+			"name": "index.tsx",
+			"filePath": "src/components/message/VideoChatDetails/index.tsx",
+			"summary": "React UI module for component message, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-message"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/message/VideoChatDetails/index.tsx:VideoChatDetails",
+			"type": "function",
+			"name": "VideoChatDetails",
+			"filePath": "src/components/message/VideoChatDetails/index.tsx",
+			"lineRange": [27, 39],
+			"summary": "Function VideoChatDetails in src/components/message/VideoChatDetails/index.tsx, used by the surrounding component message module.",
+			"tags": ["function", "component-message", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/message/messageConstants.ts",
+			"type": "file",
+			"name": "messageConstants.ts",
+			"filePath": "src/components/message/messageConstants.ts",
+			"summary": "React UI module for component message, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-message"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/message/messageConstants.ts:SUPERVISOR_FEEDBACK_PREFIX",
+			"type": "function",
+			"name": "SUPERVISOR_FEEDBACK_PREFIX",
+			"filePath": "src/components/message/messageConstants.ts",
+			"lineRange": [1, 13],
+			"summary": "Function SUPERVISOR_FEEDBACK_PREFIX in src/components/message/messageConstants.ts, used by the surrounding component message module.",
+			"tags": ["function", "component-message", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/message/messageConstants.ts:SYSTEM_NOTIFICATION_PREFIX",
+			"type": "function",
+			"name": "SYSTEM_NOTIFICATION_PREFIX",
+			"filePath": "src/components/message/messageConstants.ts",
+			"lineRange": [2, 14],
+			"summary": "Function SYSTEM_NOTIFICATION_PREFIX in src/components/message/messageConstants.ts, used by the surrounding component message module.",
+			"tags": ["function", "component-message", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/message/messageConstants.ts:VISIBLE_TO_PREFIX",
+			"type": "function",
+			"name": "VISIBLE_TO_PREFIX",
+			"filePath": "src/components/message/messageConstants.ts",
+			"lineRange": [3, 15],
+			"summary": "Function VISIBLE_TO_PREFIX in src/components/message/messageConstants.ts, used by the surrounding component message module.",
+			"tags": ["function", "component-message", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/message/messageConstants.ts:THREAD_PREFIX",
+			"type": "function",
+			"name": "THREAD_PREFIX",
+			"filePath": "src/components/message/messageConstants.ts",
+			"lineRange": [4, 16],
+			"summary": "Function THREAD_PREFIX in src/components/message/messageConstants.ts, used by the surrounding component message module.",
+			"tags": ["function", "component-message", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/message/messageConstants.ts:THREAD_SUFFIX",
+			"type": "function",
+			"name": "THREAD_SUFFIX",
+			"filePath": "src/components/message/messageConstants.ts",
+			"lineRange": [5, 17],
+			"summary": "Function THREAD_SUFFIX in src/components/message/messageConstants.ts, used by the surrounding component message module.",
+			"tags": ["function", "component-message", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/message/messageConstants.ts:buildThreadPrefix",
+			"type": "function",
+			"name": "buildThreadPrefix",
+			"filePath": "src/components/message/messageConstants.ts",
+			"lineRange": [7, 19],
+			"summary": "Function buildThreadPrefix in src/components/message/messageConstants.ts, used by the surrounding component message module.",
+			"tags": ["function", "component-message", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/message/messageConstants.ts:buildVisibleToPrefix",
+			"type": "function",
+			"name": "buildVisibleToPrefix",
+			"filePath": "src/components/message/messageConstants.ts",
+			"lineRange": [10, 22],
+			"summary": "Function buildVisibleToPrefix in src/components/message/messageConstants.ts, used by the surrounding component message module.",
+			"tags": ["function", "component-message", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/message/messageConstants.ts:parseMessagePrefixes",
+			"type": "function",
+			"name": "parseMessagePrefixes",
+			"filePath": "src/components/message/messageConstants.ts",
+			"lineRange": [13, 25],
+			"summary": "Function parseMessagePrefixes in src/components/message/messageConstants.ts, used by the surrounding component message module.",
+			"tags": ["function", "component-message", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/message/messageNameUtils.ts",
+			"type": "file",
+			"name": "messageNameUtils.ts",
+			"filePath": "src/components/message/messageNameUtils.ts",
+			"summary": "React UI module for component message, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-message"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/message/messageNameUtils.ts:formatMessagePersonName",
+			"type": "function",
+			"name": "formatMessagePersonName",
+			"filePath": "src/components/message/messageNameUtils.ts",
+			"lineRange": [39, 51],
+			"summary": "Function formatMessagePersonName in src/components/message/messageNameUtils.ts, used by the surrounding component message module.",
+			"tags": ["function", "component-message", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/message/messageNameUtils.ts:getMessagePersonInitials",
+			"type": "function",
+			"name": "getMessagePersonInitials",
+			"filePath": "src/components/message/messageNameUtils.ts",
+			"lineRange": [46, 58],
+			"summary": "Function getMessagePersonInitials in src/components/message/messageNameUtils.ts, used by the surrounding component message module.",
+			"tags": ["function", "component-message", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/messageSubmitInterface/MessageSubmitInfo.tsx",
+			"type": "file",
+			"name": "MessageSubmitInfo.tsx",
+			"filePath": "src/components/messageSubmitInterface/MessageSubmitInfo.tsx",
+			"summary": "React UI module for component message submit interface, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"utility",
+				"component-message-submit-interface"
+			],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/messageSubmitInterface/MessageSubmitInfo.tsx:MessageSubmitInfo",
+			"type": "function",
+			"name": "MessageSubmitInfo",
+			"filePath": "src/components/messageSubmitInterface/MessageSubmitInfo.tsx",
+			"lineRange": [13, 25],
+			"summary": "Function MessageSubmitInfo in src/components/messageSubmitInterface/MessageSubmitInfo.tsx, used by the surrounding component message submit interface module.",
+			"tags": [
+				"function",
+				"component-message-submit-interface",
+				"exported"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/messageSubmitInterface/SendMessageButton.tsx",
+			"type": "file",
+			"name": "SendMessageButton.tsx",
+			"filePath": "src/components/messageSubmitInterface/SendMessageButton.tsx",
+			"summary": "React UI module for component message submit interface, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"utility",
+				"component-message-submit-interface"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/messageSubmitInterface/SendMessageButton.tsx:SendMessageButton",
+			"type": "function",
+			"name": "SendMessageButton",
+			"filePath": "src/components/messageSubmitInterface/SendMessageButton.tsx",
+			"lineRange": [12, 24],
+			"summary": "Function SendMessageButton in src/components/messageSubmitInterface/SendMessageButton.tsx, used by the surrounding component message submit interface module.",
+			"tags": [
+				"function",
+				"component-message-submit-interface",
+				"exported"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/messageSubmitInterface/TipTapComposer.tsx",
+			"type": "file",
+			"name": "TipTapComposer.tsx",
+			"filePath": "src/components/messageSubmitInterface/TipTapComposer.tsx",
+			"summary": "React UI module for component message submit interface, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"utility",
+				"component-message-submit-interface"
+			],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/messageSubmitInterface/TipTapComposer.tsx:TipTapComposer",
+			"type": "function",
+			"name": "TipTapComposer",
+			"filePath": "src/components/messageSubmitInterface/TipTapComposer.tsx",
+			"lineRange": [221, 233],
+			"summary": "Function TipTapComposer in src/components/messageSubmitInterface/TipTapComposer.tsx, used by the surrounding component message submit interface module.",
+			"tags": [
+				"function",
+				"component-message-submit-interface",
+				"exported"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/messageSubmitInterface/highlightSnippetEvents.ts",
+			"type": "file",
+			"name": "highlightSnippetEvents.ts",
+			"filePath": "src/components/messageSubmitInterface/highlightSnippetEvents.ts",
+			"summary": "React UI module for component message submit interface, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"utility",
+				"component-message-submit-interface"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/messageSubmitInterface/highlightSnippetEvents.ts:HIGHLIGHT_SNIPPET_SELECTED_EVENT",
+			"type": "function",
+			"name": "HIGHLIGHT_SNIPPET_SELECTED_EVENT",
+			"filePath": "src/components/messageSubmitInterface/highlightSnippetEvents.ts",
+			"lineRange": [3, 14],
+			"summary": "Function HIGHLIGHT_SNIPPET_SELECTED_EVENT in src/components/messageSubmitInterface/highlightSnippetEvents.ts, used by the surrounding component message submit interface module.",
+			"tags": [
+				"function",
+				"component-message-submit-interface",
+				"exported"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/messageSubmitInterface/highlightSnippetEvents.ts:dispatchHighlightSnippetSelected",
+			"type": "function",
+			"name": "dispatchHighlightSnippetSelected",
+			"filePath": "src/components/messageSubmitInterface/highlightSnippetEvents.ts",
+			"lineRange": [6, 14],
+			"summary": "Function dispatchHighlightSnippetSelected in src/components/messageSubmitInterface/highlightSnippetEvents.ts, used by the surrounding component message submit interface module.",
+			"tags": [
+				"function",
+				"component-message-submit-interface",
+				"exported"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
+			"type": "file",
+			"name": "messageSubmitInterfaceComponent.tsx",
+			"filePath": "src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
+			"summary": "React UI module for component message submit interface, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"utility",
+				"component-message-submit-interface"
+			],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx:MessageSubmitInterfaceComponent",
+			"type": "function",
+			"name": "MessageSubmitInterfaceComponent",
+			"filePath": "src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
+			"lineRange": [163, 175],
+			"summary": "Function MessageSubmitInterfaceComponent in src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx, used by the surrounding component message submit interface module.",
+			"tags": [
+				"function",
+				"component-message-submit-interface",
+				"exported"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "class:src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx:const",
+			"type": "class",
+			"name": "const",
+			"filePath": "src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
+			"lineRange": [1706, 1746],
+			"summary": "Class const in src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx, grouping related component message submit interface behavior.",
+			"tags": ["class", "component-message-submit-interface", "internal"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/messageSubmitInterface/messageSubmitInterfaceSkeleton.tsx",
+			"type": "file",
+			"name": "messageSubmitInterfaceSkeleton.tsx",
+			"filePath": "src/components/messageSubmitInterface/messageSubmitInterfaceSkeleton.tsx",
+			"summary": "React UI module for component message submit interface, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"utility",
+				"component-message-submit-interface"
+			],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/messageSubmitInterface/messageSubmitInterfaceSkeleton.tsx:MessageSubmitInterfaceSkeleton",
+			"type": "function",
+			"name": "MessageSubmitInterfaceSkeleton",
+			"filePath": "src/components/messageSubmitInterface/messageSubmitInterfaceSkeleton.tsx",
+			"lineRange": [15, 27],
+			"summary": "Function MessageSubmitInterfaceSkeleton in src/components/messageSubmitInterface/messageSubmitInterfaceSkeleton.tsx, used by the surrounding component message submit interface module.",
+			"tags": [
+				"function",
+				"component-message-submit-interface",
+				"exported"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/messageSubmitInterface/richtextHelpers.ts",
+			"type": "file",
+			"name": "richtextHelpers.ts",
+			"filePath": "src/components/messageSubmitInterface/richtextHelpers.ts",
+			"summary": "React UI module for component message submit interface, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"utility",
+				"component-message-submit-interface"
+			],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/messageSubmitInterface/richtextHelpers.ts:normalizeHighlightColor",
+			"type": "function",
+			"name": "normalizeHighlightColor",
+			"filePath": "src/components/messageSubmitInterface/richtextHelpers.ts",
+			"lineRange": [234, 246],
+			"summary": "Function normalizeHighlightColor in src/components/messageSubmitInterface/richtextHelpers.ts, used by the surrounding component message submit interface module.",
+			"tags": [
+				"function",
+				"component-message-submit-interface",
+				"exported"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/messageSubmitInterface/richtextHelpers.ts:emojiPickerCustomClasses",
+			"type": "function",
+			"name": "emojiPickerCustomClasses",
+			"filePath": "src/components/messageSubmitInterface/richtextHelpers.ts",
+			"lineRange": [12, 24],
+			"summary": "Function emojiPickerCustomClasses in src/components/messageSubmitInterface/richtextHelpers.ts, used by the surrounding component message submit interface module.",
+			"tags": [
+				"function",
+				"component-message-submit-interface",
+				"exported"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/messageSubmitInterface/richtextHelpers.ts:toolbarCustomClasses",
+			"type": "function",
+			"name": "toolbarCustomClasses",
+			"filePath": "src/components/messageSubmitInterface/richtextHelpers.ts",
+			"lineRange": [44, 56],
+			"summary": "Function toolbarCustomClasses in src/components/messageSubmitInterface/richtextHelpers.ts, used by the surrounding component message submit interface module.",
+			"tags": [
+				"function",
+				"component-message-submit-interface",
+				"exported"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/messageSubmitInterface/richtextHelpers.ts:INPUT_MAX_LENGTH",
+			"type": "function",
+			"name": "INPUT_MAX_LENGTH",
+			"filePath": "src/components/messageSubmitInterface/richtextHelpers.ts",
+			"lineRange": [54, 66],
+			"summary": "Function INPUT_MAX_LENGTH in src/components/messageSubmitInterface/richtextHelpers.ts, used by the surrounding component message submit interface module.",
+			"tags": [
+				"function",
+				"component-message-submit-interface",
+				"exported"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/messageSubmitInterface/richtextHelpers.ts:handleEditorBeforeInput",
+			"type": "function",
+			"name": "handleEditorBeforeInput",
+			"filePath": "src/components/messageSubmitInterface/richtextHelpers.ts",
+			"lineRange": [56, 68],
+			"summary": "Function handleEditorBeforeInput in src/components/messageSubmitInterface/richtextHelpers.ts, used by the surrounding component message submit interface module.",
+			"tags": [
+				"function",
+				"component-message-submit-interface",
+				"exported"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/messageSubmitInterface/richtextHelpers.ts:handleEditorPastedText",
+			"type": "function",
+			"name": "handleEditorPastedText",
+			"filePath": "src/components/messageSubmitInterface/richtextHelpers.ts",
+			"lineRange": [67, 79],
+			"summary": "Function handleEditorPastedText in src/components/messageSubmitInterface/richtextHelpers.ts, used by the surrounding component message submit interface module.",
+			"tags": [
+				"function",
+				"component-message-submit-interface",
+				"exported"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/messageSubmitInterface/richtextHelpers.ts:urlifyLinksInText",
+			"type": "function",
+			"name": "urlifyLinksInText",
+			"filePath": "src/components/messageSubmitInterface/richtextHelpers.ts",
+			"lineRange": [94, 106],
+			"summary": "Function urlifyLinksInText in src/components/messageSubmitInterface/richtextHelpers.ts, used by the surrounding component message submit interface module.",
+			"tags": [
+				"function",
+				"component-message-submit-interface",
+				"exported"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/messageSubmitInterface/richtextHelpers.ts:markdownToDraftDefaultOptions",
+			"type": "function",
+			"name": "markdownToDraftDefaultOptions",
+			"filePath": "src/components/messageSubmitInterface/richtextHelpers.ts",
+			"lineRange": [104, 116],
+			"summary": "Function markdownToDraftDefaultOptions in src/components/messageSubmitInterface/richtextHelpers.ts, used by the surrounding component message submit interface module.",
+			"tags": [
+				"function",
+				"component-message-submit-interface",
+				"exported"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/messageSubmitInterface/richtextHelpers.ts:sanitizeHtmlPasteOptions",
+			"type": "function",
+			"name": "sanitizeHtmlPasteOptions",
+			"filePath": "src/components/messageSubmitInterface/richtextHelpers.ts",
+			"lineRange": [113, 125],
+			"summary": "Function sanitizeHtmlPasteOptions in src/components/messageSubmitInterface/richtextHelpers.ts, used by the surrounding component message submit interface module.",
+			"tags": [
+				"function",
+				"component-message-submit-interface",
+				"exported"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/messageSubmitInterface/richtextHelpers.ts:sanitizeHtmlExtendedPasteOptions",
+			"type": "function",
+			"name": "sanitizeHtmlExtendedPasteOptions",
+			"filePath": "src/components/messageSubmitInterface/richtextHelpers.ts",
+			"lineRange": [117, 129],
+			"summary": "Function sanitizeHtmlExtendedPasteOptions in src/components/messageSubmitInterface/richtextHelpers.ts, used by the surrounding component message submit interface module.",
+			"tags": [
+				"function",
+				"component-message-submit-interface",
+				"exported"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/messageSubmitInterface/richtextHelpers.ts:sanitizeHtmlDefaultOptions",
+			"type": "function",
+			"name": "sanitizeHtmlDefaultOptions",
+			"filePath": "src/components/messageSubmitInterface/richtextHelpers.ts",
+			"lineRange": [130, 142],
+			"summary": "Function sanitizeHtmlDefaultOptions in src/components/messageSubmitInterface/richtextHelpers.ts, used by the surrounding component message submit interface module.",
+			"tags": [
+				"function",
+				"component-message-submit-interface",
+				"exported"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/messageSubmitInterface/richtextHelpers.ts:sanitizeHtmlExtendedOptions",
+			"type": "function",
+			"name": "sanitizeHtmlExtendedOptions",
+			"filePath": "src/components/messageSubmitInterface/richtextHelpers.ts",
+			"lineRange": [302, 314],
+			"summary": "Function sanitizeHtmlExtendedOptions in src/components/messageSubmitInterface/richtextHelpers.ts, used by the surrounding component message submit interface module.",
+			"tags": [
+				"function",
+				"component-message-submit-interface",
+				"exported"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/messageSubmitInterface/richtextHelpers.ts:escapeMarkdownChars",
+			"type": "function",
+			"name": "escapeMarkdownChars",
+			"filePath": "src/components/messageSubmitInterface/richtextHelpers.ts",
+			"lineRange": [314, 326],
+			"summary": "Function escapeMarkdownChars in src/components/messageSubmitInterface/richtextHelpers.ts, used by the surrounding component message submit interface module.",
+			"tags": [
+				"function",
+				"component-message-submit-interface",
+				"exported"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/notFound/NotFound.tsx",
+			"type": "file",
+			"name": "NotFound.tsx",
+			"filePath": "src/components/notFound/NotFound.tsx",
+			"summary": "React UI module for component not found, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-not-found", "code"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/notificationsCenter/NotificationsCenter.tsx",
+			"type": "file",
+			"name": "NotificationsCenter.tsx",
+			"filePath": "src/components/notificationsCenter/NotificationsCenter.tsx",
+			"summary": "React UI module for component notifications center, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-notifications-center"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/notificationsCenter/NotificationsCenter.tsx:NotificationsCenter",
+			"type": "function",
+			"name": "NotificationsCenter",
+			"filePath": "src/components/notificationsCenter/NotificationsCenter.tsx",
+			"lineRange": [115, 127],
+			"summary": "Function NotificationsCenter in src/components/notificationsCenter/NotificationsCenter.tsx, used by the surrounding component notifications center module.",
+			"tags": ["function", "component-notifications-center", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/overlay/Overlay.tsx",
+			"type": "file",
+			"name": "Overlay.tsx",
+			"filePath": "src/components/overlay/Overlay.tsx",
+			"summary": "React UI module for component overlay, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-overlay"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/overlay/Overlay.tsx:OVERLAY_FUNCTIONS",
+			"type": "function",
+			"name": "OVERLAY_FUNCTIONS",
+			"filePath": "src/components/overlay/Overlay.tsx",
+			"lineRange": [18, 30],
+			"summary": "Function OVERLAY_FUNCTIONS in src/components/overlay/Overlay.tsx, used by the surrounding component overlay module.",
+			"tags": ["function", "component-overlay", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/overlay/Overlay.tsx:OVERLAY_RESET_TIME",
+			"type": "function",
+			"name": "OVERLAY_RESET_TIME",
+			"filePath": "src/components/overlay/Overlay.tsx",
+			"lineRange": [40, 52],
+			"summary": "Function OVERLAY_RESET_TIME in src/components/overlay/Overlay.tsx, used by the surrounding component overlay module.",
+			"tags": ["function", "component-overlay", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/profile/AbsenceFormular.tsx",
+			"type": "file",
+			"name": "AbsenceFormular.tsx",
+			"filePath": "src/components/profile/AbsenceFormular.tsx",
+			"summary": "React UI module for component profile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-profile"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/profile/AbsenceFormular.tsx:AbsenceFormular",
+			"type": "function",
+			"name": "AbsenceFormular",
+			"filePath": "src/components/profile/AbsenceFormular.tsx",
+			"lineRange": [16, 28],
+			"summary": "Function AbsenceFormular in src/components/profile/AbsenceFormular.tsx, used by the surrounding component profile module.",
+			"tags": ["function", "component-profile", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/profile/AdditionalEnquiry/AdditionalEnquiry.tsx",
+			"type": "file",
+			"name": "AdditionalEnquiry.tsx",
+			"filePath": "src/components/profile/AdditionalEnquiry/AdditionalEnquiry.tsx",
+			"summary": "React UI module for component profile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-profile", "code"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/profile/AskerAboutMeData.tsx",
+			"type": "file",
+			"name": "AskerAboutMeData.tsx",
+			"filePath": "src/components/profile/AskerAboutMeData.tsx",
+			"summary": "React UI module for component profile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-profile"],
+			"complexity": "complex"
+		},
+		{
+			"id": "function:src/components/profile/AskerAboutMeData.tsx:AskerAboutMeData",
+			"type": "function",
+			"name": "AskerAboutMeData",
+			"filePath": "src/components/profile/AskerAboutMeData.tsx",
+			"lineRange": [21, 33],
+			"summary": "Function AskerAboutMeData in src/components/profile/AskerAboutMeData.tsx, used by the surrounding component profile module.",
+			"tags": ["function", "component-profile", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/profile/DeleteAccount.tsx",
+			"type": "file",
+			"name": "DeleteAccount.tsx",
+			"filePath": "src/components/profile/DeleteAccount.tsx",
+			"summary": "React UI module for component profile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-profile"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/profile/DeleteAccount.tsx:DeleteAccount",
+			"type": "function",
+			"name": "DeleteAccount",
+			"filePath": "src/components/profile/DeleteAccount.tsx",
+			"lineRange": [13, 25],
+			"summary": "Function DeleteAccount in src/components/profile/DeleteAccount.tsx, used by the surrounding component profile module.",
+			"tags": ["function", "component-profile", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/progressbar/ProgressBar.stories.ts",
+			"type": "file",
+			"name": "ProgressBar.stories.ts",
+			"filePath": "src/components/progressbar/ProgressBar.stories.ts",
+			"summary": "React UI module for component progressbar, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["storybook", "component", "component-progressbar"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/progressbar/ProgressBar.tsx",
+			"type": "file",
+			"name": "ProgressBar.tsx",
+			"filePath": "src/components/progressbar/ProgressBar.tsx",
+			"summary": "React UI module for component progressbar, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-progressbar"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/progressbar/ProgressBar.tsx:ProgressBar",
+			"type": "function",
+			"name": "ProgressBar",
+			"filePath": "src/components/progressbar/ProgressBar.tsx",
+			"lineRange": [4, 16],
+			"summary": "Function ProgressBar in src/components/progressbar/ProgressBar.tsx, used by the surrounding component progressbar module.",
+			"tags": ["function", "component-progressbar", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/pseudonym/AnimalAvatar.tsx",
+			"type": "file",
+			"name": "AnimalAvatar.tsx",
+			"filePath": "src/components/pseudonym/AnimalAvatar.tsx",
+			"summary": "React UI module for component pseudonym, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-pseudonym", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/pseudonym/AnonymousConsentGate.tsx",
+			"type": "file",
+			"name": "AnonymousConsentGate.tsx",
+			"filePath": "src/components/pseudonym/AnonymousConsentGate.tsx",
+			"summary": "React UI module for component pseudonym, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-pseudonym", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/pseudonym/BotMessageAnimation.tsx",
+			"type": "file",
+			"name": "BotMessageAnimation.tsx",
+			"filePath": "src/components/pseudonym/BotMessageAnimation.tsx",
+			"summary": "React UI module for component pseudonym, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-pseudonym", "code"],
+			"complexity": "moderate"
+		}
+	],
+	"edges": [
+		{
+			"source": "file:src/components/message/ReassignMessage.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/ReassignMessage.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/SystemMessage.tsx",
+			"target": "function:src/components/message/SystemMessage.tsx:ICON_CALL_OFF",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/message/SystemMessage.tsx",
+			"target": "function:src/components/message/SystemMessage.tsx:ICON_CALL_OFF",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/message/SystemMessage.tsx",
+			"target": "function:src/components/message/SystemMessage.tsx:ICON_INFO",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/message/SystemMessage.tsx",
+			"target": "function:src/components/message/SystemMessage.tsx:ICON_INFO",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/message/UserAvatar.stories.tsx",
+			"target": "file:src/components/message/UserAvatar.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/UserAvatar.tsx",
+			"target": "file:src/components/message/messageNameUtils.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/VideoCallMessage.tsx",
+			"target": "function:src/components/message/VideoCallMessage.tsx:VideoCallMessage",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/message/VideoCallMessage.tsx",
+			"target": "function:src/components/message/VideoCallMessage.tsx:VideoCallMessage",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/message/VideoCallMessage.tsx",
+			"target": "file:src/components/message/MessageItemComponent.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/VideoCallMessage.tsx",
+			"target": "file:src/components/message/SystemMessage.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/VideoCallMessage.tsx",
+			"target": "file:src/utils/videoCallHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/VideoChatDetails/index.tsx",
+			"target": "function:src/components/message/VideoChatDetails/index.tsx:VideoChatDetails",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/message/VideoChatDetails/index.tsx",
+			"target": "function:src/components/message/VideoChatDetails/index.tsx:VideoChatDetails",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/message/VideoChatDetails/index.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/VideoChatDetails/index.tsx",
+			"target": "file:src/components/message/VideoChatDetails/styles.module.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/VideoChatDetails/index.tsx",
+			"target": "file:src/components/sessionHeader/GroupChatHeader/useJoinVideoCall/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/VideoChatDetails/index.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/VideoChatDetails/index.tsx",
+			"target": "file:src/utils/dateHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/VideoChatDetails/index.tsx",
+			"target": "file:src/utils/encryptionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/message/messageConstants.ts",
+			"target": "function:src/components/message/messageConstants.ts:SUPERVISOR_FEEDBACK_PREFIX",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/message/messageConstants.ts",
+			"target": "function:src/components/message/messageConstants.ts:SUPERVISOR_FEEDBACK_PREFIX",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/message/messageConstants.ts",
+			"target": "function:src/components/message/messageConstants.ts:SYSTEM_NOTIFICATION_PREFIX",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/message/messageConstants.ts",
+			"target": "function:src/components/message/messageConstants.ts:SYSTEM_NOTIFICATION_PREFIX",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/message/messageConstants.ts",
+			"target": "function:src/components/message/messageConstants.ts:VISIBLE_TO_PREFIX",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/message/messageConstants.ts",
+			"target": "function:src/components/message/messageConstants.ts:VISIBLE_TO_PREFIX",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/message/messageConstants.ts",
+			"target": "function:src/components/message/messageConstants.ts:THREAD_PREFIX",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/message/messageConstants.ts",
+			"target": "function:src/components/message/messageConstants.ts:THREAD_PREFIX",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/message/messageConstants.ts",
+			"target": "function:src/components/message/messageConstants.ts:THREAD_SUFFIX",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/message/messageConstants.ts",
+			"target": "function:src/components/message/messageConstants.ts:THREAD_SUFFIX",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/message/messageConstants.ts",
+			"target": "function:src/components/message/messageConstants.ts:buildThreadPrefix",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/message/messageConstants.ts",
+			"target": "function:src/components/message/messageConstants.ts:buildThreadPrefix",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/message/messageConstants.ts",
+			"target": "function:src/components/message/messageConstants.ts:buildVisibleToPrefix",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/message/messageConstants.ts",
+			"target": "function:src/components/message/messageConstants.ts:buildVisibleToPrefix",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/message/messageConstants.ts",
+			"target": "function:src/components/message/messageConstants.ts:parseMessagePrefixes",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/message/messageConstants.ts",
+			"target": "function:src/components/message/messageConstants.ts:parseMessagePrefixes",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/message/messageNameUtils.ts",
+			"target": "function:src/components/message/messageNameUtils.ts:formatMessagePersonName",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/message/messageNameUtils.ts",
+			"target": "function:src/components/message/messageNameUtils.ts:formatMessagePersonName",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/message/messageNameUtils.ts",
+			"target": "function:src/components/message/messageNameUtils.ts:getMessagePersonInitials",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/message/messageNameUtils.ts",
+			"target": "function:src/components/message/messageNameUtils.ts:getMessagePersonInitials",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/MessageSubmitInfo.tsx",
+			"target": "function:src/components/messageSubmitInterface/MessageSubmitInfo.tsx:MessageSubmitInfo",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/MessageSubmitInfo.tsx",
+			"target": "function:src/components/messageSubmitInterface/MessageSubmitInfo.tsx:MessageSubmitInfo",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/SendMessageButton.tsx",
+			"target": "function:src/components/messageSubmitInterface/SendMessageButton.tsx:SendMessageButton",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/SendMessageButton.tsx",
+			"target": "function:src/components/messageSubmitInterface/SendMessageButton.tsx:SendMessageButton",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/TipTapComposer.tsx",
+			"target": "function:src/components/messageSubmitInterface/TipTapComposer.tsx:TipTapComposer",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/TipTapComposer.tsx",
+			"target": "function:src/components/messageSubmitInterface/TipTapComposer.tsx:TipTapComposer",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/TipTapComposer.tsx",
+			"target": "file:src/components/messageSubmitInterface/TipTapComposer.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/highlightSnippetEvents.ts",
+			"target": "function:src/components/messageSubmitInterface/highlightSnippetEvents.ts:HIGHLIGHT_SNIPPET_SELECTED_EVENT",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/highlightSnippetEvents.ts",
+			"target": "function:src/components/messageSubmitInterface/highlightSnippetEvents.ts:HIGHLIGHT_SNIPPET_SELECTED_EVENT",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/highlightSnippetEvents.ts",
+			"target": "function:src/components/messageSubmitInterface/highlightSnippetEvents.ts:dispatchHighlightSnippetSelected",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/highlightSnippetEvents.ts",
+			"target": "function:src/components/messageSubmitInterface/highlightSnippetEvents.ts:dispatchHighlightSnippetSelected",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/highlightSnippetEvents.ts",
+			"target": "file:src/components/messageSubmitInterface/TipTapComposer.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
+			"target": "function:src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx:MessageSubmitInterfaceComponent",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
+			"target": "function:src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx:MessageSubmitInterfaceComponent",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
+			"target": "class:src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx:const",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
+			"target": "file:src/api/apiPostError.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
+			"target": "file:src/components/app/navigationHandler.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
+			"target": "file:src/components/devToolbar/DevToolbar.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
+			"target": "file:src/components/message/messageConstants.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
+			"target": "file:src/components/message/messageHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
+			"target": "file:src/components/messageSubmitInterface/attachmentHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
+			"target": "file:src/components/messageSubmitInterface/highlightSnippetEvents.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
+			"target": "file:src/components/messageSubmitInterface/MessageSubmitInfo.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
+			"target": "file:src/components/messageSubmitInterface/richtextHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
+			"target": "file:src/components/messageSubmitInterface/SendMessageButton.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
+			"target": "file:src/components/messageSubmitInterface/TipTapComposer.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
+			"target": "file:src/components/messageSubmitInterface/useDraftMessage.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
+			"target": "file:src/components/overlay/Overlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
+			"target": "file:src/components/session/RoomNotFound.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
+			"target": "file:src/components/session/sessionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
+			"target": "file:src/components/session/SubscriptionKeyLost.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
+			"target": "file:src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
+			"target": "file:src/globalState/interfaces/SessionsDataInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
+			"target": "file:src/hooks/useE2EE.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
+			"target": "file:src/hooks/useE2EEViewElements.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
+			"target": "file:src/hooks/useTimeoutOverlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
+			"target": "file:src/utils/encryptionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/messageSubmitInterfaceSkeleton.tsx",
+			"target": "function:src/components/messageSubmitInterface/messageSubmitInterfaceSkeleton.tsx:MessageSubmitInterfaceSkeleton",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/messageSubmitInterfaceSkeleton.tsx",
+			"target": "function:src/components/messageSubmitInterface/messageSubmitInterfaceSkeleton.tsx:MessageSubmitInterfaceSkeleton",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/messageSubmitInterfaceSkeleton.tsx",
+			"target": "file:src/components/app/Loading.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/messageSubmitInterfaceSkeleton.tsx",
+			"target": "file:src/components/messageSubmitInterface/SendMessageButton.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/richtextHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/richtextHelpers.ts:normalizeHighlightColor",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/richtextHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/richtextHelpers.ts:normalizeHighlightColor",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/richtextHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/richtextHelpers.ts:emojiPickerCustomClasses",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/richtextHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/richtextHelpers.ts:emojiPickerCustomClasses",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/richtextHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/richtextHelpers.ts:toolbarCustomClasses",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/richtextHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/richtextHelpers.ts:toolbarCustomClasses",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/richtextHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/richtextHelpers.ts:INPUT_MAX_LENGTH",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/richtextHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/richtextHelpers.ts:INPUT_MAX_LENGTH",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/richtextHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/richtextHelpers.ts:handleEditorBeforeInput",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/richtextHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/richtextHelpers.ts:handleEditorBeforeInput",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/richtextHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/richtextHelpers.ts:handleEditorPastedText",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/richtextHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/richtextHelpers.ts:handleEditorPastedText",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/richtextHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/richtextHelpers.ts:urlifyLinksInText",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/richtextHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/richtextHelpers.ts:urlifyLinksInText",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/richtextHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/richtextHelpers.ts:markdownToDraftDefaultOptions",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/richtextHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/richtextHelpers.ts:markdownToDraftDefaultOptions",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/richtextHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/richtextHelpers.ts:sanitizeHtmlPasteOptions",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/richtextHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/richtextHelpers.ts:sanitizeHtmlPasteOptions",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/richtextHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/richtextHelpers.ts:sanitizeHtmlExtendedPasteOptions",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/richtextHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/richtextHelpers.ts:sanitizeHtmlExtendedPasteOptions",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/richtextHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/richtextHelpers.ts:sanitizeHtmlDefaultOptions",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/richtextHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/richtextHelpers.ts:sanitizeHtmlDefaultOptions",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/richtextHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/richtextHelpers.ts:sanitizeHtmlExtendedOptions",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/richtextHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/richtextHelpers.ts:sanitizeHtmlExtendedOptions",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/richtextHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/richtextHelpers.ts:escapeMarkdownChars",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/messageSubmitInterface/richtextHelpers.ts",
+			"target": "function:src/components/messageSubmitInterface/richtextHelpers.ts:escapeMarkdownChars",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/notFound/NotFound.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/notFound/NotFound.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/notificationsCenter/NotificationsCenter.tsx",
+			"target": "function:src/components/notificationsCenter/NotificationsCenter.tsx:NotificationsCenter",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/notificationsCenter/NotificationsCenter.tsx",
+			"target": "function:src/components/notificationsCenter/NotificationsCenter.tsx:NotificationsCenter",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/notificationsCenter/NotificationsCenter.tsx",
+			"target": "file:src/api/apiPostMessageEventNotification.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/notificationsCenter/NotificationsCenter.tsx",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/notificationsCenter/NotificationsCenter.tsx",
+			"target": "file:src/components/message/messageConstants.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/notificationsCenter/NotificationsCenter.tsx",
+			"target": "file:src/components/message/UserAvatar.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/notificationsCenter/NotificationsCenter.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/notificationsCenter/NotificationsCenter.tsx",
+			"target": "file:src/hooks/useResponsive.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/notificationsCenter/NotificationsCenter.tsx",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/overlay/Overlay.tsx",
+			"target": "function:src/components/overlay/Overlay.tsx:OVERLAY_FUNCTIONS",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/overlay/Overlay.tsx",
+			"target": "function:src/components/overlay/Overlay.tsx:OVERLAY_FUNCTIONS",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/overlay/Overlay.tsx",
+			"target": "function:src/components/overlay/Overlay.tsx:OVERLAY_RESET_TIME",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/overlay/Overlay.tsx",
+			"target": "function:src/components/overlay/Overlay.tsx:OVERLAY_RESET_TIME",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/overlay/Overlay.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/overlay/Overlay.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/overlay/Overlay.tsx",
+			"target": "file:src/components/loadingIndicator/LoadingIndicator.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/overlay/Overlay.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/overlay/Overlay.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/overlay/Overlay.tsx",
+			"target": "file:src/globalState/interfaces/AppConfig/OverlaysConfigInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/AbsenceFormular.tsx",
+			"target": "function:src/components/profile/AbsenceFormular.tsx:AbsenceFormular",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/profile/AbsenceFormular.tsx",
+			"target": "function:src/components/profile/AbsenceFormular.tsx:AbsenceFormular",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/profile/AbsenceFormular.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/AbsenceFormular.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/AbsenceFormular.tsx",
+			"target": "file:src/components/form/textarea.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/AbsenceFormular.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/AbsenceFormular.tsx",
+			"target": "file:src/components/overlay/Overlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/AbsenceFormular.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/AbsenceFormular.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/AdditionalEnquiry/AdditionalEnquiry.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/AdditionalEnquiry/AdditionalEnquiry.tsx",
+			"target": "file:src/components/app/navigationHandler.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/AdditionalEnquiry/AdditionalEnquiry.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/AdditionalEnquiry/AdditionalEnquiry.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/AdditionalEnquiry/AdditionalEnquiry.tsx",
+			"target": "file:src/components/logout/logout.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/AdditionalEnquiry/AdditionalEnquiry.tsx",
+			"target": "file:src/components/overlay/Overlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/AdditionalEnquiry/AdditionalEnquiry.tsx",
+			"target": "file:src/components/profile/AdditionalEnquiry/AdditionalAgencySelection.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/AdditionalEnquiry/AdditionalEnquiry.tsx",
+			"target": "file:src/components/select/SelectDropdown.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/AdditionalEnquiry/AdditionalEnquiry.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/AskerAboutMeData.tsx",
+			"target": "function:src/components/profile/AskerAboutMeData.tsx:AskerAboutMeData",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/profile/AskerAboutMeData.tsx",
+			"target": "function:src/components/profile/AskerAboutMeData.tsx:AskerAboutMeData",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/profile/AskerAboutMeData.tsx",
+			"target": "file:src/api/apiDeleteEmail.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/AskerAboutMeData.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/AskerAboutMeData.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/AskerAboutMeData.tsx",
+			"target": "file:src/components/editableData/EditableData.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/AskerAboutMeData.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/AskerAboutMeData.tsx",
+			"target": "file:src/components/overlay/Overlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/AskerAboutMeData.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/AskerAboutMeData.tsx",
+			"target": "file:src/components/twoFactorAuth/TwoFactorAuth.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/AskerAboutMeData.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/DeleteAccount.tsx",
+			"target": "function:src/components/profile/DeleteAccount.tsx:DeleteAccount",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/profile/DeleteAccount.tsx",
+			"target": "function:src/components/profile/DeleteAccount.tsx:DeleteAccount",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/profile/DeleteAccount.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/DeleteAccount.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/DeleteAccount.tsx",
+			"target": "file:src/components/inputField/InputField.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/DeleteAccount.tsx",
+			"target": "file:src/components/overlay/Overlay.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/DeleteAccount.tsx",
+			"target": "file:src/components/sessionCookie/accessSessionCookie.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/DeleteAccount.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/progressbar/ProgressBar.stories.ts",
+			"target": "file:src/components/progressbar/ProgressBar.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/progressbar/ProgressBar.tsx",
+			"target": "function:src/components/progressbar/ProgressBar.tsx:ProgressBar",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/progressbar/ProgressBar.tsx",
+			"target": "function:src/components/progressbar/ProgressBar.tsx:ProgressBar",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/progressbar/ProgressBar.tsx",
+			"target": "file:src/components/progressbar/progressbar.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/pseudonym/AnimalAvatar.tsx",
+			"target": "file:src/utils/pseudonymGenerator.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/pseudonym/AnonymousConsentGate.tsx",
+			"target": "file:src/components/pseudonym/AnonymousConsentGate.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		}
+	]
+}

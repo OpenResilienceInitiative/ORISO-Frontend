@@ -1,0 +1,1199 @@
+{
+	"nodes": [
+		{
+			"id": "file:src/api/apiAgencyLanguages.ts",
+			"type": "file",
+			"name": "apiAgencyLanguages.ts",
+			"filePath": "src/api/apiAgencyLanguages.ts",
+			"summary": "API client module for apiAgencyLanguages, connecting frontend flows to backend Online-Beratung services.",
+			"tags": ["api-client", "utility", "api"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/api/apiAgencyLanguages.ts:apiAgencyLanguages",
+			"type": "function",
+			"name": "apiAgencyLanguages",
+			"filePath": "src/api/apiAgencyLanguages.ts",
+			"lineRange": [6, 18],
+			"summary": "Function apiAgencyLanguages in src/api/apiAgencyLanguages.ts, used by the surrounding api module.",
+			"tags": ["function", "api", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/Page/index.tsx",
+			"type": "file",
+			"name": "index.tsx",
+			"filePath": "src/components/Page/index.tsx",
+			"summary": "React UI module for component page, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-page"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/Page/index.tsx:Page",
+			"type": "function",
+			"name": "Page",
+			"filePath": "src/components/Page/index.tsx",
+			"lineRange": [9, 17],
+			"summary": "Function Page in src/components/Page/index.tsx, used by the surrounding component page module.",
+			"tags": ["function", "component-page", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/Page/index.tsx:PageTitle",
+			"type": "function",
+			"name": "PageTitle",
+			"filePath": "src/components/Page/index.tsx",
+			"lineRange": [13, 17],
+			"summary": "Function PageTitle in src/components/Page/index.tsx, used by the surrounding component page module.",
+			"tags": ["function", "component-page", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/agencyRadioSelect/AgencyLanguages.tsx",
+			"type": "file",
+			"name": "AgencyLanguages.tsx",
+			"filePath": "src/components/agencyRadioSelect/AgencyLanguages.tsx",
+			"summary": "React UI module for component agency radio select, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-agency-radio-select"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/agencyRadioSelect/AgencyLanguages.tsx:AgencyLanguages",
+			"type": "function",
+			"name": "AgencyLanguages",
+			"filePath": "src/components/agencyRadioSelect/AgencyLanguages.tsx",
+			"lineRange": [13, 25],
+			"summary": "Function AgencyLanguages in src/components/agencyRadioSelect/AgencyLanguages.tsx, used by the surrounding component agency radio select module.",
+			"tags": ["function", "component-agency-radio-select", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/askerInfo/AskerInfoData.tsx",
+			"type": "file",
+			"name": "AskerInfoData.tsx",
+			"filePath": "src/components/askerInfo/AskerInfoData.tsx",
+			"summary": "React UI module for component asker info, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-asker-info"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/askerInfo/AskerInfoData.tsx:AskerInfoData",
+			"type": "function",
+			"name": "AskerInfoData",
+			"filePath": "src/components/askerInfo/AskerInfoData.tsx",
+			"lineRange": [13, 25],
+			"summary": "Function AskerInfoData in src/components/askerInfo/AskerInfoData.tsx, used by the surrounding component asker info module.",
+			"tags": ["function", "component-asker-info", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/card/index.tsx",
+			"type": "file",
+			"name": "index.tsx",
+			"filePath": "src/components/card/index.tsx",
+			"summary": "React UI module for component card, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-card"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/card/index.tsx:Card",
+			"type": "function",
+			"name": "Card",
+			"filePath": "src/components/card/index.tsx",
+			"lineRange": [9, 21],
+			"summary": "Function Card in src/components/card/index.tsx, used by the surrounding component card module.",
+			"tags": ["function", "component-card", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/enquiry/EnquiryLanguageSelection.tsx",
+			"type": "file",
+			"name": "EnquiryLanguageSelection.tsx",
+			"filePath": "src/components/enquiry/EnquiryLanguageSelection.tsx",
+			"summary": "React UI module for component enquiry, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-enquiry", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/mobile/linkMenu/LinkMenu.tsx",
+			"type": "file",
+			"name": "LinkMenu.tsx",
+			"filePath": "src/components/mobile/linkMenu/LinkMenu.tsx",
+			"summary": "React UI module for component mobile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-mobile"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/components/mobile/linkMenu/LinkMenu.tsx:isLinkMenuGroup",
+			"type": "function",
+			"name": "isLinkMenuGroup",
+			"filePath": "src/components/mobile/linkMenu/LinkMenu.tsx",
+			"lineRange": [30, 42],
+			"summary": "Function isLinkMenuGroup in src/components/mobile/linkMenu/LinkMenu.tsx, used by the surrounding component mobile module.",
+			"tags": ["function", "component-mobile", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/mobile/linkMenu/LinkMenu.tsx:isLinkMenuComponent",
+			"type": "function",
+			"name": "isLinkMenuComponent",
+			"filePath": "src/components/mobile/linkMenu/LinkMenu.tsx",
+			"lineRange": [36, 48],
+			"summary": "Function isLinkMenuComponent in src/components/mobile/linkMenu/LinkMenu.tsx, used by the surrounding component mobile module.",
+			"tags": ["function", "component-mobile", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/mobile/linkMenu/LinkMenu.tsx:isLinkMenuItem",
+			"type": "function",
+			"name": "isLinkMenuItem",
+			"filePath": "src/components/mobile/linkMenu/LinkMenu.tsx",
+			"lineRange": [42, 54],
+			"summary": "Function isLinkMenuItem in src/components/mobile/linkMenu/LinkMenu.tsx, used by the surrounding component mobile module.",
+			"tags": ["function", "component-mobile", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/mobile/linkMenu/LinkMenu.tsx:LinkMenu",
+			"type": "function",
+			"name": "LinkMenu",
+			"filePath": "src/components/mobile/linkMenu/LinkMenu.tsx",
+			"lineRange": [48, 60],
+			"summary": "Function LinkMenu in src/components/mobile/linkMenu/LinkMenu.tsx, used by the surrounding component mobile module.",
+			"tags": ["function", "component-mobile", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/profile/ConsultantSpokenLanguages.tsx",
+			"type": "file",
+			"name": "ConsultantSpokenLanguages.tsx",
+			"filePath": "src/components/profile/ConsultantSpokenLanguages.tsx",
+			"summary": "React UI module for component profile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-profile", "code"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/profile/OverviewMobile/Sessions/index.tsx",
+			"type": "file",
+			"name": "index.tsx",
+			"filePath": "src/components/profile/OverviewMobile/Sessions/index.tsx",
+			"summary": "React UI module for component profile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "session", "utility", "component-profile"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/profile/OverviewMobile/Sessions/index.tsx:OverviewSessions",
+			"type": "function",
+			"name": "OverviewSessions",
+			"filePath": "src/components/profile/OverviewMobile/Sessions/index.tsx",
+			"lineRange": [8, 20],
+			"summary": "Function OverviewSessions in src/components/profile/OverviewMobile/Sessions/index.tsx, used by the surrounding component profile module.",
+			"tags": ["function", "component-profile", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/profile/profileHelpers.ts",
+			"type": "file",
+			"name": "profileHelpers.ts",
+			"filePath": "src/components/profile/profileHelpers.ts",
+			"summary": "React UI module for component profile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-profile"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/profile/profileHelpers.ts:convertUserDataObjectToArray",
+			"type": "function",
+			"name": "convertUserDataObjectToArray",
+			"filePath": "src/components/profile/profileHelpers.ts",
+			"lineRange": [1, 13],
+			"summary": "Function convertUserDataObjectToArray in src/components/profile/profileHelpers.ts, used by the surrounding component profile module.",
+			"tags": ["function", "component-profile", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/profile/profileHelpers.ts:getUserDataTranslateBase",
+			"type": "function",
+			"name": "getUserDataTranslateBase",
+			"filePath": "src/components/profile/profileHelpers.ts",
+			"lineRange": [16, 22],
+			"summary": "Function getUserDataTranslateBase in src/components/profile/profileHelpers.ts, used by the surrounding component profile module.",
+			"tags": ["function", "component-profile", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/profile/profileHelpers.ts:isUniqueLanguage",
+			"type": "function",
+			"name": "isUniqueLanguage",
+			"filePath": "src/components/profile/profileHelpers.ts",
+			"lineRange": [20, 22],
+			"summary": "Function isUniqueLanguage in src/components/profile/profileHelpers.ts, used by the surrounding component profile module.",
+			"tags": ["function", "component-profile", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/registration/agencySelection/AgencyLanguages.tsx",
+			"type": "file",
+			"name": "AgencyLanguages.tsx",
+			"filePath": "src/components/registration/agencySelection/AgencyLanguages.tsx",
+			"summary": "React UI module for component registration, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "component-registration"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/components/registration/agencySelection/AgencyLanguages.tsx:AgencyLanguages",
+			"type": "function",
+			"name": "AgencyLanguages",
+			"filePath": "src/components/registration/agencySelection/AgencyLanguages.tsx",
+			"lineRange": [12, 24],
+			"summary": "Function AgencyLanguages in src/components/registration/agencySelection/AgencyLanguages.tsx, used by the surrounding component registration module.",
+			"tags": ["function", "component-registration", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/containers/overview/components/BookingCard/BookingCard.tsx",
+			"type": "file",
+			"name": "BookingCard.tsx",
+			"filePath": "src/containers/overview/components/BookingCard/BookingCard.tsx",
+			"summary": "React UI module for containers, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "containers"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/containers/overview/components/BookingCard/BookingCard.tsx:BookingCard",
+			"type": "function",
+			"name": "BookingCard",
+			"filePath": "src/containers/overview/components/BookingCard/BookingCard.tsx",
+			"lineRange": [7, 19],
+			"summary": "Function BookingCard in src/containers/overview/components/BookingCard/BookingCard.tsx, used by the surrounding containers module.",
+			"tags": ["function", "containers", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/containers/overview/components/EmptyState/index.tsx",
+			"type": "file",
+			"name": "index.tsx",
+			"filePath": "src/containers/overview/components/EmptyState/index.tsx",
+			"summary": "React UI module for containers, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "containers"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/containers/overview/components/EmptyState/index.tsx:EmptyState",
+			"type": "function",
+			"name": "EmptyState",
+			"filePath": "src/containers/overview/components/EmptyState/index.tsx",
+			"lineRange": [14, 26],
+			"summary": "Function EmptyState in src/containers/overview/components/EmptyState/index.tsx, used by the surrounding containers module.",
+			"tags": ["function", "containers", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/containers/overview/components/OverviewCard/OverviewCard.tsx",
+			"type": "file",
+			"name": "OverviewCard.tsx",
+			"filePath": "src/containers/overview/components/OverviewCard/OverviewCard.tsx",
+			"summary": "React UI module for containers, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "containers"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/containers/overview/components/OverviewCard/OverviewCard.tsx:OverviewCard",
+			"type": "function",
+			"name": "OverviewCard",
+			"filePath": "src/containers/overview/components/OverviewCard/OverviewCard.tsx",
+			"lineRange": [22, 34],
+			"summary": "Function OverviewCard in src/containers/overview/components/OverviewCard/OverviewCard.tsx, used by the surrounding containers module.",
+			"tags": ["function", "containers", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/containers/overview/components/SessionCard/SessionCard.tsx",
+			"type": "file",
+			"name": "SessionCard.tsx",
+			"filePath": "src/containers/overview/components/SessionCard/SessionCard.tsx",
+			"summary": "React UI module for containers, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "session", "utility", "containers"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "function:src/containers/overview/components/SessionCard/SessionCard.tsx:SessionCard",
+			"type": "function",
+			"name": "SessionCard",
+			"filePath": "src/containers/overview/components/SessionCard/SessionCard.tsx",
+			"lineRange": [23, 35],
+			"summary": "Function SessionCard in src/containers/overview/components/SessionCard/SessionCard.tsx, used by the surrounding containers module.",
+			"tags": ["function", "containers", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/containers/overview/hooks/useConsultantData.ts",
+			"type": "file",
+			"name": "useConsultantData.ts",
+			"filePath": "src/containers/overview/hooks/useConsultantData.ts",
+			"summary": "React hook module for useConsultantData, encapsulating reusable frontend state or side-effect logic.",
+			"tags": ["hook", "utility", "containers"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/containers/overview/hooks/useConsultantData.ts:useConsultantData",
+			"type": "function",
+			"name": "useConsultantData",
+			"filePath": "src/containers/overview/hooks/useConsultantData.ts",
+			"lineRange": [10, 22],
+			"summary": "Function useConsultantData in src/containers/overview/hooks/useConsultantData.ts, used by the surrounding containers module.",
+			"tags": ["function", "containers", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/containers/overview/overview.tsx",
+			"type": "file",
+			"name": "overview.tsx",
+			"filePath": "src/containers/overview/overview.tsx",
+			"summary": "React UI module for containers, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "utility", "containers"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/containers/overview/overview.tsx:OverviewPage",
+			"type": "function",
+			"name": "OverviewPage",
+			"filePath": "src/containers/overview/overview.tsx",
+			"lineRange": [10, 22],
+			"summary": "Function OverviewPage in src/containers/overview/overview.tsx, used by the surrounding containers module.",
+			"tags": ["function", "containers", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/globalState/provider/LanguagesProvider.tsx",
+			"type": "file",
+			"name": "LanguagesProvider.tsx",
+			"filePath": "src/globalState/provider/LanguagesProvider.tsx",
+			"summary": "React UI module for global state, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"state-management",
+				"utility",
+				"global-state"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/LanguagesProvider.tsx:LanguagesProvider",
+			"type": "function",
+			"name": "LanguagesProvider",
+			"filePath": "src/globalState/provider/LanguagesProvider.tsx",
+			"lineRange": [17, 29],
+			"summary": "Function LanguagesProvider in src/globalState/provider/LanguagesProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/globalState/provider/LanguagesProvider.tsx:LanguagesContext",
+			"type": "function",
+			"name": "LanguagesContext",
+			"filePath": "src/globalState/provider/LanguagesProvider.tsx",
+			"lineRange": [6, 18],
+			"summary": "Function LanguagesContext in src/globalState/provider/LanguagesProvider.tsx, used by the surrounding global state module.",
+			"tags": ["function", "global-state", "exported"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/utils/translate.ts",
+			"type": "file",
+			"name": "translate.ts",
+			"filePath": "src/utils/translate.ts",
+			"summary": "TypeScript module for utilities with 1 extracted functions and 0 extracted classes.",
+			"tags": ["utility", "utilities", "code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "function:src/utils/translate.ts:handleNumericTranslation",
+			"type": "function",
+			"name": "handleNumericTranslation",
+			"filePath": "src/utils/translate.ts",
+			"lineRange": [1, 8],
+			"summary": "Function handleNumericTranslation in src/utils/translate.ts, used by the surrounding utilities module.",
+			"tags": ["function", "utilities", "exported"],
+			"complexity": "simple"
+		}
+	],
+	"edges": [
+		{
+			"source": "file:src/api/apiAgencyLanguages.ts",
+			"target": "function:src/api/apiAgencyLanguages.ts:apiAgencyLanguages",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/api/apiAgencyLanguages.ts",
+			"target": "function:src/api/apiAgencyLanguages.ts:apiAgencyLanguages",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/api/apiAgencyLanguages.ts",
+			"target": "file:src/api/fetchData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiAgencyLanguages.ts",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/api/apiAgencyLanguages.ts",
+			"target": "file:src/resources/scripts/endpoints.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/Page/index.tsx",
+			"target": "function:src/components/Page/index.tsx:Page",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/Page/index.tsx",
+			"target": "function:src/components/Page/index.tsx:Page",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/Page/index.tsx",
+			"target": "function:src/components/Page/index.tsx:PageTitle",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/Page/index.tsx",
+			"target": "function:src/components/Page/index.tsx:PageTitle",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/Page/index.tsx",
+			"target": "file:src/components/Page/page.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/agencyRadioSelect/AgencyLanguages.tsx",
+			"target": "function:src/components/agencyRadioSelect/AgencyLanguages.tsx:AgencyLanguages",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/agencyRadioSelect/AgencyLanguages.tsx",
+			"target": "function:src/components/agencyRadioSelect/AgencyLanguages.tsx:AgencyLanguages",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/agencyRadioSelect/AgencyLanguages.tsx",
+			"target": "file:src/api/apiAgencyLanguages.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/agencyRadioSelect/AgencyLanguages.tsx",
+			"target": "file:src/components/profile/profileHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/agencyRadioSelect/AgencyLanguages.tsx",
+			"target": "file:src/globalState/provider/LanguagesProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/agencyRadioSelect/AgencyLanguages.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfoData.tsx",
+			"target": "function:src/components/askerInfo/AskerInfoData.tsx:AskerInfoData",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfoData.tsx",
+			"target": "function:src/components/askerInfo/AskerInfoData.tsx:AskerInfoData",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfoData.tsx",
+			"target": "file:src/components/profile/profileHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfoData.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfoData.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfoData.tsx",
+			"target": "file:src/globalState/interfaces/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/askerInfo/AskerInfoData.tsx",
+			"target": "file:src/utils/translate.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/card/index.tsx",
+			"target": "function:src/components/card/index.tsx:Card",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/card/index.tsx",
+			"target": "function:src/components/card/index.tsx:Card",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/card/index.tsx",
+			"target": "file:src/components/card/card.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/enquiry/EnquiryLanguageSelection.tsx",
+			"target": "file:src/api/apiAgencyLanguages.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/enquiry/EnquiryLanguageSelection.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/enquiry/EnquiryLanguageSelection.tsx",
+			"target": "file:src/components/profile/profileHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/enquiry/EnquiryLanguageSelection.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/enquiry/EnquiryLanguageSelection.tsx",
+			"target": "file:src/globalState/provider/LanguagesProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/enquiry/EnquiryLanguageSelection.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/mobile/linkMenu/LinkMenu.tsx",
+			"target": "function:src/components/mobile/linkMenu/LinkMenu.tsx:isLinkMenuGroup",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/mobile/linkMenu/LinkMenu.tsx",
+			"target": "function:src/components/mobile/linkMenu/LinkMenu.tsx:isLinkMenuGroup",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/mobile/linkMenu/LinkMenu.tsx",
+			"target": "function:src/components/mobile/linkMenu/LinkMenu.tsx:isLinkMenuComponent",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/mobile/linkMenu/LinkMenu.tsx",
+			"target": "function:src/components/mobile/linkMenu/LinkMenu.tsx:isLinkMenuComponent",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/mobile/linkMenu/LinkMenu.tsx",
+			"target": "function:src/components/mobile/linkMenu/LinkMenu.tsx:isLinkMenuItem",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/mobile/linkMenu/LinkMenu.tsx",
+			"target": "function:src/components/mobile/linkMenu/LinkMenu.tsx:isLinkMenuItem",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/mobile/linkMenu/LinkMenu.tsx",
+			"target": "function:src/components/mobile/linkMenu/LinkMenu.tsx:LinkMenu",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/mobile/linkMenu/LinkMenu.tsx",
+			"target": "function:src/components/mobile/linkMenu/LinkMenu.tsx:LinkMenu",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/profile/ConsultantSpokenLanguages.tsx",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/ConsultantSpokenLanguages.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/ConsultantSpokenLanguages.tsx",
+			"target": "file:src/components/headline/Headline.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/ConsultantSpokenLanguages.tsx",
+			"target": "file:src/components/profile/profileHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/ConsultantSpokenLanguages.tsx",
+			"target": "file:src/components/select/SelectDropdown.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/ConsultantSpokenLanguages.tsx",
+			"target": "file:src/components/text/Text.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/ConsultantSpokenLanguages.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/ConsultantSpokenLanguages.tsx",
+			"target": "file:src/globalState/provider/LanguagesProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/OverviewMobile/Sessions/index.tsx",
+			"target": "function:src/components/profile/OverviewMobile/Sessions/index.tsx:OverviewSessions",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/profile/OverviewMobile/Sessions/index.tsx",
+			"target": "function:src/components/profile/OverviewMobile/Sessions/index.tsx:OverviewSessions",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/profile/OverviewMobile/Sessions/index.tsx",
+			"target": "file:src/components/mobile/linkMenu/LinkMenu.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/OverviewMobile/Sessions/index.tsx",
+			"target": "file:src/components/session/sessionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/OverviewMobile/Sessions/index.tsx",
+			"target": "file:src/containers/overview/hooks/useConsultantBookings.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/OverviewMobile/Sessions/index.tsx",
+			"target": "file:src/containers/overview/hooks/useConsultantData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/profile/profileHelpers.ts",
+			"target": "function:src/components/profile/profileHelpers.ts:convertUserDataObjectToArray",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/profile/profileHelpers.ts",
+			"target": "function:src/components/profile/profileHelpers.ts:convertUserDataObjectToArray",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/profile/profileHelpers.ts",
+			"target": "function:src/components/profile/profileHelpers.ts:getUserDataTranslateBase",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/profile/profileHelpers.ts",
+			"target": "function:src/components/profile/profileHelpers.ts:getUserDataTranslateBase",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/profile/profileHelpers.ts",
+			"target": "function:src/components/profile/profileHelpers.ts:isUniqueLanguage",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/profile/profileHelpers.ts",
+			"target": "function:src/components/profile/profileHelpers.ts:isUniqueLanguage",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/registration/agencySelection/AgencyLanguages.tsx",
+			"target": "function:src/components/registration/agencySelection/AgencyLanguages.tsx:AgencyLanguages",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/components/registration/agencySelection/AgencyLanguages.tsx",
+			"target": "function:src/components/registration/agencySelection/AgencyLanguages.tsx:AgencyLanguages",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/components/registration/agencySelection/AgencyLanguages.tsx",
+			"target": "file:src/api/apiAgencyLanguages.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/components/registration/agencySelection/AgencyLanguages.tsx",
+			"target": "file:src/globalState/provider/LanguagesProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/overview/components/BookingCard/BookingCard.tsx",
+			"target": "function:src/containers/overview/components/BookingCard/BookingCard.tsx:BookingCard",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/containers/overview/components/BookingCard/BookingCard.tsx",
+			"target": "function:src/containers/overview/components/BookingCard/BookingCard.tsx:BookingCard",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/containers/overview/components/BookingCard/BookingCard.tsx",
+			"target": "file:src/containers/overview/components/BookingEvent/index.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/overview/components/BookingCard/BookingCard.tsx",
+			"target": "file:src/containers/overview/components/EmptyState/index.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/overview/components/BookingCard/BookingCard.tsx",
+			"target": "file:src/containers/overview/components/OverviewCard/OverviewCard.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/overview/components/BookingCard/BookingCard.tsx",
+			"target": "file:src/containers/overview/hooks/useConsultantBookings.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/overview/components/EmptyState/index.tsx",
+			"target": "function:src/containers/overview/components/EmptyState/index.tsx:EmptyState",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/containers/overview/components/EmptyState/index.tsx",
+			"target": "function:src/containers/overview/components/EmptyState/index.tsx:EmptyState",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/containers/overview/components/EmptyState/index.tsx",
+			"target": "file:src/containers/overview/components/EmptyState/emptyState.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/overview/components/OverviewCard/OverviewCard.tsx",
+			"target": "function:src/containers/overview/components/OverviewCard/OverviewCard.tsx:OverviewCard",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/containers/overview/components/OverviewCard/OverviewCard.tsx",
+			"target": "function:src/containers/overview/components/OverviewCard/OverviewCard.tsx:OverviewCard",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/containers/overview/components/OverviewCard/OverviewCard.tsx",
+			"target": "file:src/components/button/Button.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/overview/components/OverviewCard/OverviewCard.tsx",
+			"target": "file:src/components/card/index.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/overview/components/OverviewCard/OverviewCard.tsx",
+			"target": "file:src/components/loadingIndicator/LoadingIndicator.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/overview/components/OverviewCard/OverviewCard.tsx",
+			"target": "file:src/containers/overview/components/EmptyState/index.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/overview/components/OverviewCard/OverviewCard.tsx",
+			"target": "file:src/containers/overview/components/OverviewCard/overviewCard.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/overview/components/SessionCard/SessionCard.tsx",
+			"target": "function:src/containers/overview/components/SessionCard/SessionCard.tsx:SessionCard",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/containers/overview/components/SessionCard/SessionCard.tsx",
+			"target": "function:src/containers/overview/components/SessionCard/SessionCard.tsx:SessionCard",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/containers/overview/components/SessionCard/SessionCard.tsx",
+			"target": "file:src/components/session/sessionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/overview/components/SessionCard/SessionCard.tsx",
+			"target": "file:src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/overview/components/SessionCard/SessionCard.tsx",
+			"target": "file:src/containers/overview/components/EmptyState/index.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/overview/components/SessionCard/SessionCard.tsx",
+			"target": "file:src/containers/overview/components/OverviewCard/OverviewCard.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/overview/components/SessionCard/SessionCard.tsx",
+			"target": "file:src/containers/overview/components/SessionCard/sessionCard.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/overview/components/SessionCard/SessionCard.tsx",
+			"target": "file:src/containers/overview/hooks/useConsultantData.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/overview/components/SessionCard/SessionCard.tsx",
+			"target": "file:src/globalState/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/overview/components/SessionCard/SessionCard.tsx",
+			"target": "file:src/globalState/provider/LanguagesProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/overview/components/SessionCard/SessionCard.tsx",
+			"target": "file:src/globalState/provider/RocketChatUsersOfRoomProvider.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/overview/hooks/useConsultantData.ts",
+			"target": "function:src/containers/overview/hooks/useConsultantData.ts:useConsultantData",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/containers/overview/hooks/useConsultantData.ts",
+			"target": "function:src/containers/overview/hooks/useConsultantData.ts:useConsultantData",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/containers/overview/hooks/useConsultantData.ts",
+			"target": "file:src/api/index.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/overview/hooks/useConsultantData.ts",
+			"target": "file:src/components/session/sessionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/overview/hooks/useConsultantData.ts",
+			"target": "file:src/globalState/interfaces/SessionsDataInterface.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/overview/overview.tsx",
+			"target": "function:src/containers/overview/overview.tsx:OverviewPage",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/containers/overview/overview.tsx",
+			"target": "function:src/containers/overview/overview.tsx:OverviewPage",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/containers/overview/overview.tsx",
+			"target": "file:src/components/Page/index.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/overview/overview.tsx",
+			"target": "file:src/components/session/sessionHelpers.ts",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/overview/overview.tsx",
+			"target": "file:src/containers/overview/components/BookingCard/BookingCard.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/overview/overview.tsx",
+			"target": "file:src/containers/overview/components/EmptyState/index.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/overview/overview.tsx",
+			"target": "file:src/containers/overview/components/SessionCard/SessionCard.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/containers/overview/overview.tsx",
+			"target": "file:src/containers/overview/overview.styles.scss",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/globalState/provider/LanguagesProvider.tsx",
+			"target": "function:src/globalState/provider/LanguagesProvider.tsx:LanguagesProvider",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/LanguagesProvider.tsx",
+			"target": "function:src/globalState/provider/LanguagesProvider.tsx:LanguagesProvider",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/LanguagesProvider.tsx",
+			"target": "function:src/globalState/provider/LanguagesProvider.tsx:LanguagesContext",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/globalState/provider/LanguagesProvider.tsx",
+			"target": "function:src/globalState/provider/LanguagesProvider.tsx:LanguagesContext",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		},
+		{
+			"source": "file:src/globalState/provider/LanguagesProvider.tsx",
+			"target": "file:src/hooks/useAppConfig.tsx",
+			"type": "imports",
+			"direction": "forward",
+			"weight": 0.7
+		},
+		{
+			"source": "file:src/utils/translate.ts",
+			"target": "function:src/utils/translate.ts:handleNumericTranslation",
+			"type": "contains",
+			"direction": "forward",
+			"weight": 1
+		},
+		{
+			"source": "file:src/utils/translate.ts",
+			"target": "function:src/utils/translate.ts:handleNumericTranslation",
+			"type": "exports",
+			"direction": "forward",
+			"weight": 0.8
+		}
+	]
+}

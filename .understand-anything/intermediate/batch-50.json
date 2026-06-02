@@ -1,0 +1,243 @@
+{
+	"nodes": [
+		{
+			"id": "file:src/components/downloadICSFile/downloadICSFile.styles.scss",
+			"type": "file",
+			"name": "downloadICSFile.styles.scss",
+			"filePath": "src/components/downloadICSFile/downloadICSFile.styles.scss",
+			"summary": "React UI module for component download icsfile, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-download-icsfile"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/draftsCenter/draftsCenter.styles.scss",
+			"type": "file",
+			"name": "draftsCenter.styles.scss",
+			"filePath": "src/components/draftsCenter/draftsCenter.styles.scss",
+			"summary": "React UI module for component drafts center, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-drafts-center"],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/dragAndDropArea/dragAndDropArea.styles.scss",
+			"type": "file",
+			"name": "dragAndDropArea.styles.scss",
+			"filePath": "src/components/dragAndDropArea/dragAndDropArea.styles.scss",
+			"summary": "React UI module for component drag and drop area, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-drag-and-drop-area"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/E2EEncryptionSupportBanner/E2EEncryptionSupportBanner.styles.scss",
+			"type": "file",
+			"name": "E2EEncryptionSupportBanner.styles.scss",
+			"filePath": "src/components/E2EEncryptionSupportBanner/E2EEncryptionSupportBanner.styles.scss",
+			"summary": "React UI module for component e2 eencryption support banner, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"styling",
+				"component-e2-eencryption-support-banner"
+			],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/E2EEncryptionSupportHelp/E2EEncryptionSupportHelp.styles.scss",
+			"type": "file",
+			"name": "E2EEncryptionSupportHelp.styles.scss",
+			"filePath": "src/components/E2EEncryptionSupportHelp/E2EEncryptionSupportHelp.styles.scss",
+			"summary": "React UI module for component e2 eencryption support help, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"styling",
+				"component-e2-eencryption-support-help"
+			],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/editableData/editableData.styles.scss",
+			"type": "file",
+			"name": "editableData.styles.scss",
+			"filePath": "src/components/editableData/editableData.styles.scss",
+			"summary": "React UI module for component editable data, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-editable-data"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/enquiry/enquiry.styles.scss",
+			"type": "file",
+			"name": "enquiry.styles.scss",
+			"filePath": "src/components/enquiry/enquiry.styles.scss",
+			"summary": "React UI module for component enquiry, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-enquiry"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/enquiry/enquiryLanguageSelection.styles.scss",
+			"type": "file",
+			"name": "enquiryLanguageSelection.styles.scss",
+			"filePath": "src/components/enquiry/enquiryLanguageSelection.styles.scss",
+			"summary": "React UI module for component enquiry, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-enquiry"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/error/error.styles.scss",
+			"type": "file",
+			"name": "error.styles.scss",
+			"filePath": "src/components/error/error.styles.scss",
+			"summary": "React UI module for component error, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-error"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/flyoutMenu/flyoutMenu.styles.scss",
+			"type": "file",
+			"name": "flyoutMenu.styles.scss",
+			"filePath": "src/components/flyoutMenu/flyoutMenu.styles.scss",
+			"summary": "React UI module for component flyout menu, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-flyout-menu"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/form/textarea.styles.scss",
+			"type": "file",
+			"name": "textarea.styles.scss",
+			"filePath": "src/components/form/textarea.styles.scss",
+			"summary": "React UI module for component form, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-form"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/generateQrCode/generateQrCode.styles.scss",
+			"type": "file",
+			"name": "generateQrCode.styles.scss",
+			"filePath": "src/components/generateQrCode/generateQrCode.styles.scss",
+			"summary": "React UI module for component generate qr code, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-generate-qr-code"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/header/header.styles.scss",
+			"type": "file",
+			"name": "header.styles.scss",
+			"filePath": "src/components/header/header.styles.scss",
+			"summary": "React UI module for component header, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-header"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/headline/headline.styles.scss",
+			"type": "file",
+			"name": "headline.styles.scss",
+			"filePath": "src/components/headline/headline.styles.scss",
+			"summary": "React UI module for component headline, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-headline"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/help/help.styles.scss",
+			"type": "file",
+			"name": "help.styles.scss",
+			"filePath": "src/components/help/help.styles.scss",
+			"summary": "React UI module for component help, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-help"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/incomingVideoCall/incomingVideoCall.styles.scss",
+			"type": "file",
+			"name": "incomingVideoCall.styles.scss",
+			"filePath": "src/components/incomingVideoCall/incomingVideoCall.styles.scss",
+			"summary": "React UI module for component incoming video call, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-incoming-video-call"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/infoTooltip/infoTooltip.styles.scss",
+			"type": "file",
+			"name": "infoTooltip.styles.scss",
+			"filePath": "src/components/infoTooltip/infoTooltip.styles.scss",
+			"summary": "React UI module for component info tooltip, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-info-tooltip"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/inputField/inputField.styles.scss",
+			"type": "file",
+			"name": "inputField.styles.scss",
+			"filePath": "src/components/inputField/inputField.styles.scss",
+			"summary": "React UI module for component input field, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-input-field"],
+			"complexity": "moderate"
+		},
+		{
+			"id": "file:src/components/legalPageWrapper/legalPageWrapper.styles.scss",
+			"type": "file",
+			"name": "legalPageWrapper.styles.scss",
+			"filePath": "src/components/legalPageWrapper/legalPageWrapper.styles.scss",
+			"summary": "React UI module for component legal page wrapper, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-legal-page-wrapper"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/listInfo/listInfo.styles.scss",
+			"type": "file",
+			"name": "listInfo.styles.scss",
+			"filePath": "src/components/listInfo/listInfo.styles.scss",
+			"summary": "React UI module for component list info, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-list-info"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/loadingIndicator/LoadingIndicator.styles.scss",
+			"type": "file",
+			"name": "LoadingIndicator.styles.scss",
+			"filePath": "src/components/loadingIndicator/LoadingIndicator.styles.scss",
+			"summary": "React UI module for component loading indicator, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-loading-indicator"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/loadingSpinner/LoadingSpinner.styles.scss",
+			"type": "file",
+			"name": "LoadingSpinner.styles.scss",
+			"filePath": "src/components/loadingSpinner/LoadingSpinner.styles.scss",
+			"summary": "React UI module for component loading spinner, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "styling", "component-loading-spinner"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/localeSwitch/localeSwitch.styles.scss",
+			"type": "file",
+			"name": "localeSwitch.styles.scss",
+			"filePath": "src/components/localeSwitch/localeSwitch.styles.scss",
+			"summary": "React UI module for component locale switch, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "i18n", "styling", "component-locale-switch"],
+			"complexity": "simple"
+		},
+		{
+			"id": "file:src/components/login/login.styles.scss",
+			"type": "file",
+			"name": "login.styles.scss",
+			"filePath": "src/components/login/login.styles.scss",
+			"summary": "React UI module for component login, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": [
+				"component",
+				"authentication",
+				"styling",
+				"component-login"
+			],
+			"complexity": "complex"
+		},
+		{
+			"id": "file:src/components/mailTemplate/mail-template.html",
+			"type": "file",
+			"name": "mail-template.html",
+			"filePath": "src/components/mailTemplate/mail-template.html",
+			"summary": "React UI module for component mail template, contributing component behavior and presentation to the ORISO frontend.",
+			"tags": ["component", "component-mail-template", "markup"],
+			"complexity": "complex"
+		}
+	],
+	"edges": []
+}
