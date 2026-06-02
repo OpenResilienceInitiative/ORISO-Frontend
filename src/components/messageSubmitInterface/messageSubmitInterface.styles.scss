@@ -461,6 +461,10 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				font-weight: 600;
 			}
 
+			&--hidden {
+				display: none;
+			}
+
 			@media screen and (max-width: 899px) {
 				right: 58px;
 				bottom: 7px;

@@ -148,8 +148,7 @@ const getPlainTextFromComposerValue = (rawMessage?: string | null): string => {
 		container.innerHTML = normalizedValue;
 		return (container.textContent || '')
 			.replace(/\u00a0/g, ' ')
-			.replace(/\u200b/g, '')
-			.trim();
+			.replace(/\u200b/g, '');
 	}
 
 	return normalizedValue
@@ -157,8 +156,7 @@ const getPlainTextFromComposerValue = (rawMessage?: string | null): string => {
 		.replace(/&nbsp;/gi, ' ')
 		.replace(/&#160;/gi, ' ')
 		.replace(/\u00a0/g, ' ')
-		.replace(/\u200b/g, '')
-		.trim();
+		.replace(/\u200b/g, '');
 };
 
 const INFO_TYPES = {
@@ -1269,7 +1267,7 @@ export const MessageSubmitInterfaceComponent = ({
 	}, [composerText]);
 
 	const hasMessageContent = useCallback((rawMessage?: string | null) => {
-		return getPlainTextFromComposerValue(rawMessage).length > 0;
+		return getPlainTextFromComposerValue(rawMessage).trim().length > 0;
 	}, []);
 
 	const encodeHighlightColorsForTransport = useCallback(
@@ -3396,6 +3394,17 @@ export const MessageSubmitInterfaceComponent = ({
 	const isMessageLengthWarning =
 		typedMessageLength >= MESSAGE_LENGTH_WARNING_THRESHOLD;
 	const isMessageOverLimit = typedMessageLength > INPUT_MAX_LENGTH;
+	const characterCounterAnnouncement = isMessageOverLimit
+		? translate(
+				'message.submit.characterCounter.overLimit',
+				'Message is over the character limit.'
+			)
+		: isMessageLengthWarning
+			? translate(
+					'message.submit.characterCounter.warning',
+					'Message is approaching the character limit.'
+				)
+			: '';
 	const canSendMessage =
 		(!!attachmentSelected || hasMessageContent(typedMessage)) &&
 		!isMessageOverLimit;
@@ -4993,6 +5002,7 @@ export const MessageSubmitInterfaceComponent = ({
 											placeholder={placeholder}
 											showToolbar={false}
 											readOnly={!!uploadProgress}
+											maxLength={INPUT_MAX_LENGTH}
 											onSubmitShortcut={() => {
 												if (
 													!uploadProgress &&
@@ -5008,9 +5018,10 @@ export const MessageSubmitInterfaceComponent = ({
 												isMessageLengthWarning &&
 													'textarea__characterCounter--warning',
 												isMessageOverLimit &&
-													'textarea__characterCounter--error'
+													'textarea__characterCounter--error',
+												isVoiceRecording &&
+													'textarea__characterCounter--hidden'
 											)}
-											aria-live="polite"
 											aria-label={translate(
 												'message.submit.characterCounter.ariaLabel',
 												'{{current}} of {{maximum}} characters',
@@ -5023,6 +5034,13 @@ export const MessageSubmitInterfaceComponent = ({
 											{typedMessageLength}/
 											{INPUT_MAX_LENGTH}
 										</div>
+										<span
+											className="sr-only"
+											role="status"
+											aria-live="polite"
+										>
+											{characterCounterAnnouncement}
+										</span>
 									</>
 								)}
 							</div>

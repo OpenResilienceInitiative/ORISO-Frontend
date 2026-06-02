@@ -45,6 +45,7 @@ interface TipTapComposerProps {
 	placeholder: string;
 	showToolbar: boolean;
 	readOnly: boolean;
+	maxLength?: number;
 	onChange: (value: string) => void;
 	onSubmitShortcut: () => void;
 	onSelectionSnippet?: (payload: HighlightSnippetPayload | null) => void;
@@ -101,7 +102,10 @@ const serializeInlineNodes = (nodes: JSONContent[] = []): string =>
 			if (node.type === 'text') {
 				return applyTextMarks(
 					escapeMarkdownText(node.text || ''),
-					(node.marks as Array<{ type: string; attrs?: Record<string, any> }>) || []
+					(node.marks as Array<{
+						type: string;
+						attrs?: Record<string, any>;
+					}>) || []
 				);
 			}
 			if (node.type === 'hardBreak') {
@@ -184,7 +188,10 @@ const serializeBlocks = (node?: JSONContent): string => {
 	if (node.type === 'text') {
 		return applyTextMarks(
 			escapeMarkdownText(node.text || ''),
-			(node.marks as Array<{ type: string; attrs?: Record<string, any> }>) || []
+			(node.marks as Array<{
+				type: string;
+				attrs?: Record<string, any>;
+			}>) || []
 		);
 	}
 
@@ -197,6 +204,47 @@ const serializeBlocks = (node?: JSONContent): string => {
 
 const serializeEditorToMarkdown = (doc?: JSONContent): string =>
 	serializeBlocks(doc).trim();
+
+const getEditorPlainTextLength = (editorLike: any): number =>
+	(editorLike?.state?.doc?.textContent || '').length;
+
+const getSelectionTextLength = (
+	editorLike: any,
+	from: number,
+	to: number
+): number => (editorLike?.state?.doc?.textBetween(from, to, '') || '').length;
+
+const getAvailableInputLength = (
+	editorLike: any,
+	from: number,
+	to: number,
+	maxLength?: number
+): number | null => {
+	if (!maxLength) {
+		return null;
+	}
+
+	const currentLength = getEditorPlainTextLength(editorLike);
+	const selectedLength = getSelectionTextLength(editorLike, from, to);
+	return maxLength - (currentLength - selectedLength);
+};
+
+const enforceEditorMaxLength = (
+	editorLike: any,
+	maxLength?: number
+): boolean => {
+	if (!maxLength) {
+		return false;
+	}
+
+	const plainText = editorLike?.state?.doc?.textContent || '';
+	if (plainText.length <= maxLength) {
+		return false;
+	}
+
+	editorLike.commands.setContent(plainText.slice(0, maxLength));
+	return true;
+};
 
 const Superscript = Mark.create({
 	name: 'superscript',
@@ -218,13 +266,17 @@ const Subscript = Mark.create({
 	}
 });
 
-export const TipTapComposer = forwardRef<TipTapComposerRef, TipTapComposerProps>(
+export const TipTapComposer = forwardRef<
+	TipTapComposerRef,
+	TipTapComposerProps
+>(
 	(
 		{
 			value,
 			placeholder,
 			showToolbar,
 			readOnly,
+			maxLength,
 			onChange,
 			onSubmitShortcut,
 			onSelectionSnippet
@@ -258,8 +310,69 @@ export const TipTapComposer = forwardRef<TipTapComposerRef, TipTapComposerProps>
 			content: value || '',
 			editable: !readOnly,
 			editorProps: {
+				handleTextInput: (view, from, to, text) => {
+					const availableLength = getAvailableInputLength(
+						view,
+						from,
+						to,
+						maxLength
+					);
+					if (
+						availableLength === null ||
+						text.length <= availableLength
+					) {
+						return false;
+					}
+					if (availableLength <= 0) {
+						return true;
+					}
+					view.dispatch(
+						view.state.tr.insertText(
+							text.slice(0, availableLength),
+							from,
+							to
+						)
+					);
+					return true;
+				},
+				handlePaste: (view, event) => {
+					const pastedText =
+						event.clipboardData?.getData('text/plain') || '';
+					if (!pastedText) {
+						return false;
+					}
+
+					const { from, to } = view.state.selection;
+					const availableLength = getAvailableInputLength(
+						view,
+						from,
+						to,
+						maxLength
+					);
+					if (
+						availableLength === null ||
+						pastedText.length <= availableLength
+					) {
+						return false;
+					}
+
+					event.preventDefault();
+					if (availableLength > 0) {
+						view.dispatch(
+							view.state.tr.insertText(
+								pastedText.slice(0, availableLength),
+								from,
+								to
+							)
+						);
+					}
+					return true;
+				},
 				handleKeyDown: (_, event) => {
-					if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+					if (
+						event.key === 'Enter' &&
+						(event.ctrlKey || event.metaKey)
+					) {
 						event.preventDefault();
 						onSubmitShortcut();
 						return true;
@@ -269,6 +382,10 @@ export const TipTapComposer = forwardRef<TipTapComposerRef, TipTapComposerProps>
 			},
 			onUpdate: ({ editor: currentEditor }) => {
 				if (isSyncingFromValue) {
+					return;
+				}
+				if (enforceEditorMaxLength(currentEditor, maxLength)) {
+					onChange(currentEditor.getHTML());
 					return;
 				}
 				onChange(currentEditor.getHTML());
@@ -306,7 +423,10 @@ export const TipTapComposer = forwardRef<TipTapComposerRef, TipTapComposerProps>
 			}
 			const normalizedValue = (value || '')
 				.replace(/text-align\s*:\s*right/gi, 'text-align: left')
-				.replace(/data-text-align\s*=\s*["']right["']/gi, 'data-text-align="left"');
+				.replace(
+					/data-text-align\s*=\s*["']right["']/gi,
+					'data-text-align="left"'
+				);
 			// Always keep default writing flow left-to-right for new/empty content.
 			if (!normalizedValue.trim()) {
 				editor.commands.setTextAlign('left');
@@ -318,8 +438,11 @@ export const TipTapComposer = forwardRef<TipTapComposerRef, TipTapComposerProps>
 			setIsSyncingFromValue(true);
 			editor.commands.setContent(normalizedValue);
 			editor.commands.setTextAlign('left');
+			if (enforceEditorMaxLength(editor, maxLength)) {
+				onChange(editor.getHTML());
+			}
 			setTimeout(() => setIsSyncingFromValue(false), 0);
-		}, [editor, value]);
+		}, [editor, maxLength, onChange, value]);
 
 		useImperativeHandle(ref, () => ({
 			clear: () => {
@@ -378,13 +501,25 @@ export const TipTapComposer = forwardRef<TipTapComposerRef, TipTapComposerProps>
 						editor.chain().focus().setParagraph().run();
 						return;
 					case 'heading1':
-						editor.chain().focus().toggleHeading({ level: 1 }).run();
+						editor
+							.chain()
+							.focus()
+							.toggleHeading({ level: 1 })
+							.run();
 						return;
 					case 'heading2':
-						editor.chain().focus().toggleHeading({ level: 2 }).run();
+						editor
+							.chain()
+							.focus()
+							.toggleHeading({ level: 2 })
+							.run();
 						return;
 					case 'heading3':
-						editor.chain().focus().toggleHeading({ level: 3 }).run();
+						editor
+							.chain()
+							.focus()
+							.toggleHeading({ level: 3 })
+							.run();
 						return;
 					case 'alignLeft':
 						editor.chain().focus().setTextAlign('left').run();
@@ -402,22 +537,46 @@ export const TipTapComposer = forwardRef<TipTapComposerRef, TipTapComposerProps>
 						editor.chain().focus().toggleUnderline().run();
 						return;
 					case 'highlight':
-						editor.chain().focus().toggleHighlight({ color: '#fff59d' }).run();
+						editor
+							.chain()
+							.focus()
+							.toggleHighlight({ color: '#fff59d' })
+							.run();
 						return;
 					case 'highlightYellow':
-						editor.chain().focus().setHighlight({ color: '#fff59d' }).run();
+						editor
+							.chain()
+							.focus()
+							.setHighlight({ color: '#fff59d' })
+							.run();
 						return;
 					case 'highlightOrange':
-						editor.chain().focus().setHighlight({ color: '#ffcc80' }).run();
+						editor
+							.chain()
+							.focus()
+							.setHighlight({ color: '#ffcc80' })
+							.run();
 						return;
 					case 'highlightRose':
-						editor.chain().focus().setHighlight({ color: '#ffcdd2' }).run();
+						editor
+							.chain()
+							.focus()
+							.setHighlight({ color: '#ffcdd2' })
+							.run();
 						return;
 					case 'highlightMint':
-						editor.chain().focus().setHighlight({ color: '#b2f2bb' }).run();
+						editor
+							.chain()
+							.focus()
+							.setHighlight({ color: '#b2f2bb' })
+							.run();
 						return;
 					case 'highlightBlue':
-						editor.chain().focus().setHighlight({ color: '#b3e5fc' }).run();
+						editor
+							.chain()
+							.focus()
+							.setHighlight({ color: '#b3e5fc' })
+							.run();
 						return;
 					case 'bulletList':
 						editor.chain().focus().toggleBulletList().run();
@@ -460,7 +619,11 @@ export const TipTapComposer = forwardRef<TipTapComposerRef, TipTapComposerProps>
 					case 'insertDateTime': {
 						const now = new Date();
 						const stamp = now.toLocaleString();
-						editor.chain().focus().insertContent(` ${stamp} `).run();
+						editor
+							.chain()
+							.focus()
+							.insertContent(` ${stamp} `)
+							.run();
 						return;
 					}
 					case 'blockquote': {
@@ -484,7 +647,8 @@ export const TipTapComposer = forwardRef<TipTapComposerRef, TipTapComposerProps>
 						return;
 					}
 					case 'setLink': {
-						const previousUrl = editor.getAttributes('link').href || '';
+						const previousUrl =
+							editor.getAttributes('link').href || '';
 						const url = window.prompt('URL', previousUrl);
 						if (url === null) {
 							return;
@@ -500,7 +664,12 @@ export const TipTapComposer = forwardRef<TipTapComposerRef, TipTapComposerProps>
 						editor.chain().focus().unsetLink().run();
 						return;
 					case 'clearFormatting':
-						editor.chain().focus().clearNodes().unsetAllMarks().run();
+						editor
+							.chain()
+							.focus()
+							.clearNodes()
+							.unsetAllMarks()
+							.run();
 						return;
 					case 'focusEnd':
 						editor.commands.focus('end');
@@ -592,44 +761,67 @@ export const TipTapComposer = forwardRef<TipTapComposerRef, TipTapComposerProps>
 						</button>
 						<button
 							type="button"
-							onClick={() => editor.chain().focus().toggleBold().run()}
-							className={editor.isActive('bold') ? 'is-active' : ''}
+							onClick={() =>
+								editor.chain().focus().toggleBold().run()
+							}
+							className={
+								editor.isActive('bold') ? 'is-active' : ''
+							}
 							aria-label="Bold"
 						>
 							<FormatBold fontSize="small" />
 						</button>
 						<button
 							type="button"
-							onClick={() => editor.chain().focus().toggleBulletList().run()}
-							className={editor.isActive('bulletList') ? 'is-active' : ''}
+							onClick={() =>
+								editor.chain().focus().toggleBulletList().run()
+							}
+							className={
+								editor.isActive('bulletList') ? 'is-active' : ''
+							}
 							aria-label="Bullet List"
 						>
 							<FormatListBulleted fontSize="small" />
 						</button>
 						<button
 							type="button"
-							onClick={() => editor.chain().focus().toggleOrderedList().run()}
-							className={editor.isActive('orderedList') ? 'is-active' : ''}
+							onClick={() =>
+								editor.chain().focus().toggleOrderedList().run()
+							}
+							className={
+								editor.isActive('orderedList')
+									? 'is-active'
+									: ''
+							}
 							aria-label="Ordered List"
 						>
 							<FilterList fontSize="small" />
 						</button>
 						<button
 							type="button"
-							onClick={() => editor.chain().focus().toggleLink({ href: '#' }).run()}
-							className={editor.isActive('link') ? 'is-active' : ''}
+							onClick={() =>
+								editor
+									.chain()
+									.focus()
+									.toggleLink({ href: '#' })
+									.run()
+							}
+							className={
+								editor.isActive('link') ? 'is-active' : ''
+							}
 							aria-label="Quick Link"
 						>
 							<ChevronRight fontSize="small" />
 						</button>
 					</div>
 				)}
-				<EditorContent editor={editor} className="tiptap-composer__content" />
+				<EditorContent
+					editor={editor}
+					className="tiptap-composer__content"
+				/>
 			</div>
 		);
 	}
 );
 
 TipTapComposer.displayName = 'TipTapComposer';
-
-
