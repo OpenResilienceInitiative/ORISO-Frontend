@@ -171,8 +171,12 @@ const RouterWrapper = ({ extraRoutes }: RouterWrapperProps) => {
 										)
 									)}
 
+									{/* Two explicit routes — RR5 optional :param? is unreliable with exact */}
+									<Route path="/invite/:token" exact>
+										<InviteLink />
+									</Route>
 									<Route
-										path="/invite/:token/:topicSlug?"
+										path="/invite/:token/:topicSlug"
 										exact
 									>
 										<InviteLink />

@@ -1,14 +1,13 @@
 import { setTokens } from '../auth/auth';
 import { setValueInCookie } from '../sessionCookie/accessSessionCookie';
 import { generateCsrfToken } from '../../utils/generateCsrfToken';
-import { APP_PATH } from '../../resources/scripts/config';
 import { RedeemInviteLinkSessionResponse } from '../../api/apiRedeemInviteLink';
 
 export const buildInviteSessionAppUrl = (
 	sessionId: number | string,
 	rcGroupId?: string | null
 ): string => {
-	const basePath = `/${APP_PATH}/sessions/user/view`;
+	const basePath = '/sessions/user/view';
 	const groupId = rcGroupId?.trim();
 	const isMatrixRoomId =
 		Boolean(groupId) && (groupId.startsWith('!') || groupId.includes(':'));
