@@ -31,5 +31,5 @@ jobs:
       uses: ./.github/actions/docker-build-push
       with:
         push_to_ghcr: true
-        image_name: oriso-frontend
+        image_name: caritas-frontend
         github_token: ${{ secrets.GITHUB_TOKEN }}
