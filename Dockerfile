@@ -38,11 +38,13 @@ USER node
 WORKDIR /app
 EXPOSE $PORT
 COPY --from=proxyBuild /app ./
-COPY build /app/build
+COPY --chown=node:node build /app/build
+COPY --chown=node:node scripts/docker-entrypoint.sh /app/docker-entrypoint.sh
 
 ENV NODE_ENV=production
 ENV PORT=$PORT
 
 RUN npm ci --ignore-scripts
 
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["npm", "run", "start"]

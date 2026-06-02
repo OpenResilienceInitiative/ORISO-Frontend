@@ -1,0 +1,34 @@
+name: CI - Main
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  REGISTRY: ghcr.io
+  ORG: openresilienceinitiative
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v6
+
+    - name: Build frontend application
+      uses: ./.github/actions/node-build
+      with:
+        node_version: '18'
+
+    - name: Create and Publish Docker image
+      uses: ./.github/actions/docker-build-push
+      with:
+        push_to_ghcr: true
+        image_name: caritas-frontend
+        github_token: ${{ secrets.GITHUB_TOKEN }}

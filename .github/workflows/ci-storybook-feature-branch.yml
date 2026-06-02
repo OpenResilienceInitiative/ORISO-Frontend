@@ -1,0 +1,19 @@
+name: CI - Storybook Feature Branch
+
+on:
+  push:
+    branches-ignore:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Build frontend application
+        uses: ./.github/actions/node-build
+        with:
+          node_version: '18'

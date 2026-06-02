@@ -1,0 +1,29 @@
+name: CI - Storybook Pull Request
+
+on:
+  pull_request:
+
+env:
+  REGISTRY: ghcr.io
+  ORG: openresilienceinitiative
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Build frontend application
+        uses: ./.github/actions/node-build
+        with:
+          node_version: '18'
+
+      - name: Create Storybook Docker image
+        uses: ./.github/actions/docker-build-push
+        with:
+          push_to_ghcr: false
+          image_name: caritas-storybook
+          dockerfile: Dockerfile.storybook
+          github_token: ${{ secrets.GITHUB_TOKEN }}
