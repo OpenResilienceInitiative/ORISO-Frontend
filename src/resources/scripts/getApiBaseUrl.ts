@@ -15,11 +15,14 @@ export const getApiBaseUrl = (): string => {
 		return normalizeApiUrl(cypressApiUrl);
 	}
 
-	const runtimeApiUrl = (window as any)?.__ORISO_RUNTIME_CONFIG__
-		?.REACT_APP_API_URL;
+	const runtimeConfig = (window as any)?.__ORISO_RUNTIME_CONFIG__;
+	const runtimeApiUrl =
+		runtimeConfig?.REACT_APP_API_URL || runtimeConfig?.VITE_API_URL;
 	if (runtimeApiUrl) {
 		return normalizeApiUrl(runtimeApiUrl);
 	}
 
-	return normalizeApiUrl(process.env.REACT_APP_API_URL);
+	return normalizeApiUrl(
+		process.env.REACT_APP_API_URL || process.env.VITE_API_URL
+	);
 };

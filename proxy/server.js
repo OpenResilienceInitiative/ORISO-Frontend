@@ -82,6 +82,18 @@ const createServer = async () => {
 
 	const serveStatic = await import('serve-static');
 	app.get(
+		'/config.js',
+		serveStatic.default(buildPath, {
+			maxAge: 0,
+			setHeaders: (res) => {
+				res.setHeader(
+					'Cache-Control',
+					'no-store, no-cache, must-revalidate'
+				);
+			}
+		})
+	);
+	app.get(
 		/\.(?:css|js|jpe?g|png|gif|ico|cur|heic|webp|tiff?|mp[34eg]|a(?:ac|vi)|o(?:gg|gv)|flv|wmv)$/,
 		serveStatic.default(buildPath, { maxAge: '1d' })
 	);
