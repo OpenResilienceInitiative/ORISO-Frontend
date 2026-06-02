@@ -35,8 +35,8 @@ runs:
       images: ${{ env.REGISTRY }}/${{ env.ORG }}/${{ inputs.image_name }}
       tags: |
         type=sha
-        type=ref,event=branch
         type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+        type=raw,value=dev,enable=${{ github.ref == 'refs/heads/dev' }}
 
   - name: Build and Push Docker image
     id: build
