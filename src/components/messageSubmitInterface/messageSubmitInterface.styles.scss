@@ -436,6 +436,37 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			}
 		}
 
+		&__characterCounter {
+			position: absolute;
+			right: 76px;
+			bottom: 8px;
+			z-index: 9;
+			padding: 2px 7px;
+			border-radius: 10px;
+			background: rgba(255, 255, 255, 0.92);
+			color: #646d78;
+			font-size: 11px;
+			font-weight: 500;
+			line-height: 16px;
+			pointer-events: none;
+
+			&--warning {
+				background: #fff6d6;
+				color: #936300;
+			}
+
+			&--error {
+				background: #ffe7e7;
+				color: #b00020;
+				font-weight: 600;
+			}
+
+			@media screen and (max-width: 899px) {
+				right: 58px;
+				bottom: 7px;
+			}
+		}
+
 		&__figmaToolbar {
 			position: absolute;
 			top: 9px;

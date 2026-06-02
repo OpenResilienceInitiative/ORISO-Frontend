@@ -64,6 +64,7 @@ import {
 	escapeMarkdownChars,
 	handleEditorBeforeInput,
 	handleEditorPastedText,
+	INPUT_MAX_LENGTH,
 	normalizeHighlightColor,
 	toolbarCustomClasses
 } from './richtextHelpers';
@@ -130,6 +131,35 @@ const staticToolbarPlugin = createToolbarPlugin({
 });
 const { Toolbar } = staticToolbarPlugin;
 const VOICE_RECORDING_MAX_DURATION_SEC = 180;
+const MESSAGE_LENGTH_WARNING_THRESHOLD = Math.floor(INPUT_MAX_LENGTH * 0.9);
+
+const getPlainTextFromComposerValue = (rawMessage?: string | null): string => {
+	const value = rawMessage || '';
+	if (!value.trim()) {
+		return '';
+	}
+
+	const normalizedValue = value
+		.replace(/<br\s*\/?>/gi, '\n')
+		.replace(/<\/(p|div|li|h[1-6]|blockquote|pre)>/gi, '\n');
+
+	if (typeof document !== 'undefined') {
+		const container = document.createElement('div');
+		container.innerHTML = normalizedValue;
+		return (container.textContent || '')
+			.replace(/\u00a0/g, ' ')
+			.replace(/\u200b/g, '')
+			.trim();
+	}
+
+	return normalizedValue
+		.replace(/<[^>]+>/g, ' ')
+		.replace(/&nbsp;/gi, ' ')
+		.replace(/&#160;/gi, ' ')
+		.replace(/\u00a0/g, ' ')
+		.replace(/\u200b/g, '')
+		.trim();
+};
 
 const INFO_TYPES = {
 	ABSENT: 'ABSENT',
@@ -1239,19 +1269,7 @@ export const MessageSubmitInterfaceComponent = ({
 	}, [composerText]);
 
 	const hasMessageContent = useCallback((rawMessage?: string | null) => {
-		const value = (rawMessage || '').trim();
-		if (!value) {
-			return false;
-		}
-		// TipTap returns structural HTML (for example "<p></p>") even when empty.
-		const plainText = value
-			.replace(/<[^>]+>/g, ' ')
-			.replace(/&nbsp;/gi, ' ')
-			.replace(/&#160;/gi, ' ')
-			.replace(/\u00a0/g, ' ')
-			.replace(/\u200b/g, '')
-			.trim();
-		return plainText.length > 0;
+		return getPlainTextFromComposerValue(rawMessage).length > 0;
 	}, []);
 
 	const encodeHighlightColorsForTransport = useCallback(
@@ -2006,14 +2024,22 @@ export const MessageSubmitInterfaceComponent = ({
 			return;
 		}
 
-		if (hasMessageContent(getTypedMarkdownMessage()) || attachment) {
+		const currentTypedMessage = getTypedMarkdownMessage();
+		if (
+			getPlainTextFromComposerValue(currentTypedMessage).length >
+			INPUT_MAX_LENGTH
+		) {
+			return null;
+		}
+
+		if (hasMessageContent(currentTypedMessage) || attachment) {
 			setIsRequestInProgress(true);
 		} else {
 			return null;
 		}
 
 		let message = encodeAlignmentForTransport(
-			encodeHighlightColorsForTransport(getTypedMarkdownMessage())
+			encodeHighlightColorsForTransport(currentTypedMessage)
 		).trim();
 		const prefixParts: string[] = [];
 		if (threadRootId) {
@@ -2083,6 +2109,12 @@ export const MessageSubmitInterfaceComponent = ({
 			stopVoiceRecording({ sendAfterStop: true });
 			return null;
 		}
+		if (
+			getPlainTextFromComposerValue(getTypedMarkdownMessage()).length >
+			INPUT_MAX_LENGTH
+		) {
+			return null;
+		}
 
 		if (isSessionArchived) {
 			apiPutDearchive(activeSession.item.id)
@@ -2114,6 +2146,7 @@ export const MessageSubmitInterfaceComponent = ({
 	}, [
 		activeSession.item.groupId,
 		activeSession.item.id,
+		getTypedMarkdownMessage,
 		history,
 		isRequestInProgress,
 		isVoiceRecording,
@@ -3358,8 +3391,14 @@ export const MessageSubmitInterfaceComponent = ({
 		return `${String(minutes)}:${String(seconds).padStart(2, '0')}`;
 	}, []);
 	const typedMessage = getTypedMarkdownMessage();
+	const typedMessageLength =
+		getPlainTextFromComposerValue(typedMessage).length;
+	const isMessageLengthWarning =
+		typedMessageLength >= MESSAGE_LENGTH_WARNING_THRESHOLD;
+	const isMessageOverLimit = typedMessageLength > INPUT_MAX_LENGTH;
 	const canSendMessage =
-		!!attachmentSelected || hasMessageContent(typedMessage);
+		(!!attachmentSelected || hasMessageContent(typedMessage)) &&
+		!isMessageOverLimit;
 
 	const handleToolbarAction = useCallback((action: string) => {
 		composerRef.current?.runAction(action);
@@ -4963,6 +5002,27 @@ export const MessageSubmitInterfaceComponent = ({
 												}
 											}}
 										/>
+										<div
+											className={clsx(
+												'textarea__characterCounter',
+												isMessageLengthWarning &&
+													'textarea__characterCounter--warning',
+												isMessageOverLimit &&
+													'textarea__characterCounter--error'
+											)}
+											aria-live="polite"
+											aria-label={translate(
+												'message.submit.characterCounter.ariaLabel',
+												'{{current}} of {{maximum}} characters',
+												{
+													current: typedMessageLength,
+													maximum: INPUT_MAX_LENGTH
+												}
+											)}
+										>
+											{typedMessageLength}/
+											{INPUT_MAX_LENGTH}
+										</div>
 									</>
 								)}
 							</div>
