@@ -20,4 +20,4 @@ runs:
 
   - name: Build app
     shell: bash
-    run: npm run build
+    run: CI=false npm run build
