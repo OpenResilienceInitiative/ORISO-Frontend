@@ -15,12 +15,12 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 			@include breakpoint($fromLarge) {
 				border-right: 2px solid #fff;
 				/* Symmetric padding: keeps icon column visually centered (badges don’t pull layout) */
-				padding: 16px;
+				padding: 0px;
 				display: flex;
 				flex-direction: column;
 				min-height: 0;
 				overflow-x: visible;
-				overflow-y: hidden;
+				overflow-y: auto;
 
 				.navigation__itemContainer {
 					align-items: center;
@@ -29,8 +29,9 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 					flex: 1 1 auto;
 					min-height: 0;
 					overflow-x: visible;
-					overflow-y: hidden;
+					overflow-y: auto;
 					max-height: none;
+					padding: 16px;
 				}
 
 				.navigation__item__top {
@@ -38,7 +39,7 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 					gap: 8px;
 					align-items: center;
 					flex: 0 1 auto;
-					min-height: 0;
+					min-height: auto;
 				}
 
 				.navigation__item__bottom {
@@ -387,8 +388,8 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 		justify-content: space-around;
 		width: 100%;
 		max-width: calc(#{$grid-base} * 62);
-		padding: $grid-base-two;
 		overflow-y: auto;
+		padding: 16px;
 
 		@include breakpoint($fromLarge) {
 			justify-content: space-between;
@@ -396,10 +397,10 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 			align-items: center; /* Center buttons horizontally */
 			height: 100%;
 			max-width: none;
-			padding: $grid-base-two 0;
 			gap: 0;
+			padding: 16px;
 			/* Avoid inner scrollbar on desktop; column should fit the shell */
-			overflow-y: hidden;
+			overflow-y: auto;
 			overflow-x: hidden;
 		}
 	}
