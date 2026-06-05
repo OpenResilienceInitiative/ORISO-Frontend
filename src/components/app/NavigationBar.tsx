@@ -783,7 +783,7 @@ const NavigationUnreadIndicator = ({
 			aria-label={`${count} unread`}
 		>
 			{isFigma ? (
-				<sup className="navigation__item__count__sup">{display}</sup>
+				<span className="navigation__item__count__sup">{display}</span>
 			) : (
 				display
 			)}
