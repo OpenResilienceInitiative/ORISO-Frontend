@@ -6776,25 +6776,5 @@
 			"txt": 1,
 			"backup-matrix": 1
 		}
-	},
-	"projectName": "Online-Beratung",
-	"projectDescription": "Frontend application for the Online-Beratung platform with registration, messaging, bookings, profile flows, and Matrix-backed real-time communication.",
-	"languages": [
-		"typescript",
-		"css",
-		"json",
-		"javascript",
-		"yaml",
-		"markdown",
-		"backup",
-		"html",
-		"unknown",
-		"shell",
-		"dockerfile",
-		"config",
-		"original",
-		"txt",
-		"backup-matrix"
-	],
-	"frameworks": ["React", "React Router", "MUI", "Webpack"]
+	}
 }
