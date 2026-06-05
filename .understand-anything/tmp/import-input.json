@@ -1,5 +1,5 @@
 {
-	"scriptCompleted": true,
+	"projectRoot": "/Users/nikunjchampakbhairohit/Developer/freelance/Germany/Oriso-frank-client/ORISO/ORISO-Frontend",
 	"files": [
 		{
 			"path": ".cursor/settings.json",
@@ -6745,56 +6745,5 @@
 			"sizeLines": 68,
 			"fileCategory": "script"
 		}
-	],
-	"totalFiles": 1124,
-	"filteredByIgnore": 0,
-	"estimatedComplexity": "very-large",
-	"stats": {
-		"filesScanned": 1124,
-		"byCategory": {
-			"config": 205,
-			"infra": 10,
-			"code": 685,
-			"markup": 199,
-			"docs": 20,
-			"script": 5
-		},
-		"byLanguage": {
-			"json": 191,
-			"unknown": 5,
-			"config": 1,
-			"yaml": 20,
-			"typescript": 638,
-			"html": 6,
-			"css": 193,
-			"javascript": 25,
-			"markdown": 19,
-			"shell": 5,
-			"dockerfile": 2,
-			"backup": 16,
-			"original": 1,
-			"txt": 1,
-			"backup-matrix": 1
-		}
-	},
-	"projectName": "Online-Beratung",
-	"projectDescription": "Frontend application for the Online-Beratung platform with registration, messaging, bookings, profile flows, and Matrix-backed real-time communication.",
-	"languages": [
-		"typescript",
-		"css",
-		"json",
-		"javascript",
-		"yaml",
-		"markdown",
-		"backup",
-		"html",
-		"unknown",
-		"shell",
-		"dockerfile",
-		"config",
-		"original",
-		"txt",
-		"backup-matrix"
-	],
-	"frameworks": ["React", "React Router", "MUI", "Webpack"]
+	]
 }

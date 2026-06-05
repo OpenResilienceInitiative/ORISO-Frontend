@@ -1,14 +1,22 @@
 {
 	"scriptCompleted": true,
 	"stats": {
-		"filesScanned": 984,
-		"filesWithImports": 504,
-		"totalEdges": 2177
+		"filesScanned": 1124,
+		"filesWithImports": 505,
+		"totalEdges": 2158
 	},
 	"importMap": {
 		".cursor/settings.json": [],
 		".dockerignore": [],
 		".env.example": [],
+		".github/actions/docker-build-push/action.yml": [],
+		".github/actions/node-build/action.yml": [],
+		".github/workflows/ci-feature-branch.yml": [],
+		".github/workflows/ci-main.yml": [],
+		".github/workflows/ci-pull-request.yml": [],
+		".github/workflows/ci-storybook-feature-branch.yml": [],
+		".github/workflows/ci-storybook-main.yml": [],
+		".github/workflows/ci-storybook-pull-request.yml": [],
 		".github/workflows/frontend-deploy.yml": [],
 		".husky/commit-msg": [],
 		".husky/pre-commit": [],
@@ -88,6 +96,134 @@
 		".stylelintrc.js": [],
 		".tmp-proof/capture_compare.js": [],
 		".understand-anything/.understandignore": [],
+		".understand-anything/config.json": [],
+		".understand-anything/fingerprints.json": [],
+		".understand-anything/intermediate/assembled-graph.json": [],
+		".understand-anything/intermediate/batch-1.json": [],
+		".understand-anything/intermediate/batch-10.json": [],
+		".understand-anything/intermediate/batch-11.json": [],
+		".understand-anything/intermediate/batch-12.json": [],
+		".understand-anything/intermediate/batch-13.json": [],
+		".understand-anything/intermediate/batch-14.json": [],
+		".understand-anything/intermediate/batch-15.json": [],
+		".understand-anything/intermediate/batch-16.json": [],
+		".understand-anything/intermediate/batch-17.json": [],
+		".understand-anything/intermediate/batch-18.json": [],
+		".understand-anything/intermediate/batch-19.json": [],
+		".understand-anything/intermediate/batch-2.json": [],
+		".understand-anything/intermediate/batch-20.json": [],
+		".understand-anything/intermediate/batch-21.json": [],
+		".understand-anything/intermediate/batch-22.json": [],
+		".understand-anything/intermediate/batch-23.json": [],
+		".understand-anything/intermediate/batch-24.json": [],
+		".understand-anything/intermediate/batch-25.json": [],
+		".understand-anything/intermediate/batch-26.json": [],
+		".understand-anything/intermediate/batch-27.json": [],
+		".understand-anything/intermediate/batch-28.json": [],
+		".understand-anything/intermediate/batch-29.json": [],
+		".understand-anything/intermediate/batch-3.json": [],
+		".understand-anything/intermediate/batch-30.json": [],
+		".understand-anything/intermediate/batch-31.json": [],
+		".understand-anything/intermediate/batch-32.json": [],
+		".understand-anything/intermediate/batch-33.json": [],
+		".understand-anything/intermediate/batch-34.json": [],
+		".understand-anything/intermediate/batch-35.json": [],
+		".understand-anything/intermediate/batch-36.json": [],
+		".understand-anything/intermediate/batch-37.json": [],
+		".understand-anything/intermediate/batch-38.json": [],
+		".understand-anything/intermediate/batch-39.json": [],
+		".understand-anything/intermediate/batch-4.json": [],
+		".understand-anything/intermediate/batch-40.json": [],
+		".understand-anything/intermediate/batch-41.json": [],
+		".understand-anything/intermediate/batch-42.json": [],
+		".understand-anything/intermediate/batch-43.json": [],
+		".understand-anything/intermediate/batch-44.json": [],
+		".understand-anything/intermediate/batch-45.json": [],
+		".understand-anything/intermediate/batch-46.json": [],
+		".understand-anything/intermediate/batch-47.json": [],
+		".understand-anything/intermediate/batch-48.json": [],
+		".understand-anything/intermediate/batch-49.json": [],
+		".understand-anything/intermediate/batch-5.json": [],
+		".understand-anything/intermediate/batch-50.json": [],
+		".understand-anything/intermediate/batch-51.json": [],
+		".understand-anything/intermediate/batch-52.json": [],
+		".understand-anything/intermediate/batch-53.json": [],
+		".understand-anything/intermediate/batch-54.json": [],
+		".understand-anything/intermediate/batch-55.json": [],
+		".understand-anything/intermediate/batch-6.json": [],
+		".understand-anything/intermediate/batch-7.json": [],
+		".understand-anything/intermediate/batch-8.json": [],
+		".understand-anything/intermediate/batch-9.json": [],
+		".understand-anything/intermediate/batches.json": [],
+		".understand-anything/intermediate/fingerprint-input.json": [],
+		".understand-anything/intermediate/import-map.json": [],
+		".understand-anything/intermediate/local-analysis-summary.json": [],
+		".understand-anything/intermediate/review.json": [],
+		".understand-anything/intermediate/scan-raw.json": [],
+		".understand-anything/intermediate/scan-result.json": [],
+		".understand-anything/knowledge-graph.json": [],
+		".understand-anything/meta.json": [],
+		".understand-anything/tmp/import-map-input.json": [],
+		".understand-anything/tmp/ua-assemble-final.mjs": [],
+		".understand-anything/tmp/ua-file-analyzer-input-1.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-10.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-11.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-12.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-13.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-14.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-15.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-16.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-17.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-18.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-19.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-2.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-20.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-21.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-22.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-23.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-24.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-25.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-26.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-27.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-28.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-29.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-3.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-30.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-31.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-32.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-33.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-34.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-35.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-36.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-37.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-38.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-39.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-4.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-40.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-41.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-42.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-43.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-44.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-45.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-46.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-47.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-48.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-49.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-5.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-50.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-51.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-52.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-53.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-54.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-55.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-6.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-7.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-8.json": [],
+		".understand-anything/tmp/ua-file-analyzer-input-9.json": [],
+		".understand-anything/tmp/ua-file-extract-results-1.json": [],
+		".understand-anything/tmp/ua-file-extract-results-2.json": [],
+		".understand-anything/tmp/ua-file-extract-results-3.json": [],
+		".understand-anything/tmp/ua-local-batch-analyzer.mjs": [],
 		"CHANGELOG.md": [],
 		"cli.js": ["proxy/server.js", "scripts/build.js", "scripts/start.js"],
 		"config/env.js": ["config/paths.js"],
@@ -326,6 +462,7 @@
 		"ingress-v2.yaml": [],
 		"ingress.yaml": [],
 		"k8s-temp-frontend.yaml": [],
+		"k8s-temp-runtime-configmap.yaml": [],
 		"LICENSE.md": [],
 		"MATRIX-INTEGRATION-GUIDE.md": [],
 		"package.json": [],
@@ -342,6 +479,7 @@
 		"proxy/routes/weblate.js": ["proxy/config.js"],
 		"proxy/routes/weblate.js.backup.original": [],
 		"proxy/server.js": ["proxy/routes/index.js"],
+		"public/config.js": [],
 		"public/element-sso-bridge.html": [],
 		"public/manifest.json": [],
 		"public/releases/README.md": [],
@@ -353,6 +491,7 @@
 			"config/paths.js",
 			"config/webpack.config.js"
 		],
+		"scripts/docker-entrypoint.sh": [],
 		"scripts/start.js": [
 			"config/env.js",
 			"config/paths.js",
@@ -460,8 +599,7 @@
 		],
 		"src/api/apiGetAskerSessionList.ts": [
 			"src/api/fetchData.ts",
-			"src/resources/scripts/endpoints.ts",
-			"src/utils/keycloakSession.ts"
+			"src/resources/scripts/endpoints.ts"
 		],
 		"src/api/apiGetAskerSessionList.ts.backup": [],
 		"src/api/apiGetCalDavAccount.ts": [
@@ -559,8 +697,7 @@
 		"src/api/apiGetUserData.ts": [
 			"src/api/fetchData.ts",
 			"src/globalState/interfaces/index.ts",
-			"src/resources/scripts/endpoints.ts",
-			"src/utils/keycloakSession.ts"
+			"src/resources/scripts/endpoints.ts"
 		],
 		"src/api/apiGetUserDataBySessionId.ts": [
 			"src/api/fetchData.ts",
@@ -608,8 +745,7 @@
 		],
 		"src/api/apiPatchUserData.ts": [
 			"src/api/fetchData.ts",
-			"src/resources/scripts/endpoints.ts",
-			"src/utils/keycloakSession.ts"
+			"src/resources/scripts/endpoints.ts"
 		],
 		"src/api/apiPostAdditionalEnquiry.ts": [
 			"src/api/fetchData.ts",
@@ -655,6 +791,10 @@
 			"src/resources/scripts/endpoints.ts"
 		],
 		"src/api/apiPutTools.ts": [
+			"src/api/fetchData.ts",
+			"src/resources/scripts/endpoints.ts"
+		],
+		"src/api/apiRedeemInviteLink.ts": [
 			"src/api/fetchData.ts",
 			"src/resources/scripts/endpoints.ts"
 		],
@@ -796,8 +936,7 @@
 		],
 		"src/api/apiUserDrafts.ts": [
 			"src/api/fetchData.ts",
-			"src/resources/scripts/endpoints.ts",
-			"src/utils/keycloakSession.ts"
+			"src/resources/scripts/endpoints.ts"
 		],
 		"src/api/appointments/deleteAppointment.ts": [
 			"src/api/fetchData.ts",
@@ -829,7 +968,6 @@
 			"src/components/error/errorHandling.ts",
 			"src/components/logout/logout.ts",
 			"src/components/sessionCookie/accessSessionCookie.ts",
-			"src/utils/anonymousSessionFetchGuard.ts",
 			"src/utils/appConfig.ts",
 			"src/utils/generateCsrfToken.ts",
 			"src/utils/requestCollector.ts"
@@ -947,7 +1085,6 @@
 			"src/globalState/provider/RocketChatUserStatusProvider.tsx",
 			"src/hooks/useAppConfig.tsx",
 			"src/hooks/useJoinGroupChat.ts",
-			"src/utils/keycloakSession.ts",
 			"src/utils/notificationHelpers.ts"
 		],
 		"src/components/app/ErrorBoundary.tsx": [
@@ -976,7 +1113,6 @@
 			"src/globalState/provider/RocketChatUnreadProvider.tsx",
 			"src/hooks/useResponsive.tsx",
 			"src/services/draftStore.ts",
-			"src/utils/keycloakSession.ts",
 			"src/utils/liveChatToggle.ts",
 			"src/utils/notificationHelpers.ts",
 			"src/utils/useIsFirstVisit.tsx"
@@ -1225,8 +1361,7 @@
 		"src/components/draftsCenter/DraftsCenter.tsx": [
 			"src/api/index.ts",
 			"src/hooks/useResponsive.tsx",
-			"src/services/draftStore.ts",
-			"src/utils/keycloakSession.ts"
+			"src/services/draftStore.ts"
 		],
 		"src/components/dragAndDropArea/dragAndDropArea.styles.scss": [],
 		"src/components/dragAndDropArea/DragAndDropArea.tsx": [
@@ -1440,14 +1575,19 @@
 		],
 		"src/components/invite/InviteLink.tsx": [
 			"src/api/apiPostRegistration.ts",
-			"src/api/apiPutGroupChat.ts",
-			"src/api/fetchData.ts",
+			"src/api/apiRedeemInviteLink.ts",
+			"src/components/invite/inviteLinkHelpers.ts",
 			"src/components/registration/autoLogin.ts",
 			"src/components/stage/stage.tsx",
 			"src/components/stageLayout/StageLayout.tsx",
 			"src/globalState/index.ts",
-			"src/hooks/useAppConfig.tsx",
 			"src/resources/scripts/endpoints.ts"
+		],
+		"src/components/invite/inviteLinkHelpers.ts": [
+			"src/api/apiRedeemInviteLink.ts",
+			"src/components/auth/auth.ts",
+			"src/components/sessionCookie/accessSessionCookie.ts",
+			"src/utils/generateCsrfToken.ts"
 		],
 		"src/components/legalInformationLinks/Imprint.tsx": [
 			"src/components/legalPageWrapper/LegalPageWrapper.tsx",
@@ -1491,8 +1631,7 @@
 			"src/components/select/LanguageSelectDropdown.tsx",
 			"src/components/select/SelectDropdown.tsx",
 			"src/components/sessionCookie/accessSessionCookie.ts",
-			"src/globalState/index.ts",
-			"src/utils/keycloakSession.ts"
+			"src/globalState/index.ts"
 		],
 		"src/components/login/login.styles.scss": [],
 		"src/components/login/Login.tsx": [
@@ -1522,7 +1661,6 @@
 			"src/hooks/useSearchParams.tsx",
 			"src/polyfill.ts",
 			"src/resources/scripts/endpoints.ts",
-			"src/utils/keycloakSession.ts",
 			"src/utils/tenantSettingsHelper.ts",
 			"src/utils/useIsFirstVisit.tsx"
 		],
@@ -1737,8 +1875,7 @@
 			"src/hooks/useE2EE.tsx",
 			"src/services/draftStore.ts",
 			"src/utils/encryptionHelpers.ts",
-			"src/utils/eventHandler.ts",
-			"src/utils/keycloakSession.ts"
+			"src/utils/eventHandler.ts"
 		],
 		"src/components/mobile/linkMenu/link_menu.styles.scss": [],
 		"src/components/mobile/linkMenu/LinkMenu.tsx": [],
@@ -2344,7 +2481,6 @@
 			"src/api/apiGetUserData.ts",
 			"src/api/apiPatchNotificationActiveView.ts",
 			"src/api/apiPatchUserData.ts",
-			"src/api/apiPostAdditionalEnquiry.ts",
 			"src/api/apiPostError.ts",
 			"src/components/app/navigationHandler.ts",
 			"src/components/button/Button.tsx",
@@ -2376,7 +2512,6 @@
 			"src/hooks/useE2EE.tsx",
 			"src/utils/dateHelpers.ts",
 			"src/utils/encryptionHelpers.ts",
-			"src/utils/keycloakSession.ts",
 			"src/utils/pseudonymGenerator.ts",
 			"src/utils/tenantSettingsHelper.ts"
 		],
@@ -2398,6 +2533,7 @@
 			"src/hooks/useSearchParams.tsx",
 			"src/hooks/useUpdatingRef.tsx",
 			"src/resources/scripts/endpoints.ts",
+			"src/resources/scripts/getApiBaseUrl.ts",
 			"src/services/messageEventEmitter.ts",
 			"src/utils/useTyping.ts"
 		],
@@ -2610,7 +2746,6 @@
 			"src/hooks/useWatcher.tsx",
 			"src/services/matrixLiveEventBridge.ts",
 			"src/services/messageEventEmitter.ts",
-			"src/utils/keycloakSession.ts",
 			"src/utils/liveChatToggle.ts"
 		],
 		"src/components/sessionsList/SessionsList.tsx.backup": [],
@@ -3247,9 +3382,7 @@
 		"src/globalState/provider/NotificationsProvider.tsx": [
 			"src/api/apiEventNotifications.ts",
 			"src/components/incomingVideoCall/IncomingVideoCall.tsx",
-			"src/components/sessionCookie/accessSessionCookie.ts",
-			"src/globalState/context/UserDataContext.tsx",
-			"src/globalState/helpers/stateHelpers.ts"
+			"src/components/sessionCookie/accessSessionCookie.ts"
 		],
 		"src/globalState/provider/RegistrationProvider.tsx": [
 			"src/api/apiGetTopicId.ts",
@@ -3345,8 +3478,7 @@
 		"src/globalState/provider/UserDataProvider.tsx": [
 			"src/api/index.ts",
 			"src/globalState/context/UserDataContext.tsx",
-			"src/globalState/interfaces/UserDataInterface.ts",
-			"src/utils/keycloakSession.ts"
+			"src/globalState/interfaces/UserDataInterface.ts"
 		],
 		"src/globalState/provider/WebsocketConnectionDeactivatedProvider.tsx": [],
 		"src/globalState/state.tsx": [],
@@ -3377,10 +3509,8 @@
 			"src/hooks/useE2EE.tsx"
 		],
 		"src/hooks/useJoinGroupChat.ts": [
-			"src/api/apiGetChatRoomById.ts",
 			"src/api/index.ts",
-			"src/globalState/index.ts",
-			"src/utils/keycloakSession.ts"
+			"src/globalState/index.ts"
 		],
 		"src/hooks/useMatrixReady.tsx": [],
 		"src/hooks/useNotificationPermission.ts": [],
@@ -3474,8 +3604,11 @@
 			"src/resources/i18n/tr/common.json",
 			"src/resources/i18n/tr/languages.json"
 		],
-		"src/resources/scripts/endpoints.ts": [],
+		"src/resources/scripts/endpoints.ts": [
+			"src/resources/scripts/getApiBaseUrl.ts"
+		],
 		"src/resources/scripts/endpoints.ts.backup": [],
+		"src/resources/scripts/getApiBaseUrl.ts": [],
 		"src/resources/scripts/theme.jsx": [],
 		"src/resources/scripts/util/htmlParser.tsx": [],
 		"src/resources/styles/_banner.scss": [],
@@ -3513,10 +3646,6 @@
 		"src/types/rc/Room.ts": ["src/types/rc/User.ts"],
 		"src/types/rc/Subscriptions.ts": ["src/types/rc/User.ts"],
 		"src/types/rc/User.ts": [],
-		"src/utils/anonymousSessionFetchGuard.ts": [
-			"src/components/sessionCookie/accessSessionCookie.ts",
-			"src/utils/parseJWT.ts"
-		],
 		"src/utils/appConfig.ts": ["src/globalState/interfaces/index.ts"],
 		"src/utils/capitalizeFirstLetter.ts": [],
 		"src/utils/clipboardHelpers.ts": [],
@@ -3535,13 +3664,6 @@
 		"src/utils/getLocationVariables.ts": [],
 		"src/utils/getUrlParameter.ts": [],
 		"src/utils/isNumber.ts": [],
-		"src/utils/keycloakSession.ts": [
-			"src/components/sessionCookie/accessSessionCookie.ts",
-			"src/globalState/helpers/stateHelpers.ts",
-			"src/globalState/interfaces/UserDataInterface.ts",
-			"src/utils/anonymousSessionFetchGuard.ts",
-			"src/utils/parseJWT.ts"
-		],
 		"src/utils/liveChatToggle.ts": [],
 		"src/utils/loadConsultingTypesForAgencies.ts": [
 			"src/api/index.ts",
