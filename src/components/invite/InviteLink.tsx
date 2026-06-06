@@ -83,7 +83,10 @@ export const InviteLink = () => {
 						consultingType:
 							data.consultingTypeId != null
 								? String(data.consultingTypeId)
-								: '0'
+								: '0',
+						...(data.topicId != null
+							? { mainTopicId: String(data.topicId) }
+							: {})
 					} as any,
 					false,
 					tenant as any

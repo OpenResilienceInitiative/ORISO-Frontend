@@ -111,19 +111,23 @@ function buildSessionSearchHaystack(
 }
 
 /**
- * Live-chat / anonymous asker sessions:
- * - legacy invite registration uses `Anonymous-{timestamp}`
- * - server-side anonymous enquiry uses configured prefix (e.g. `anon_`)
- * - synthetic postcode `00000` is also used for anonymous-style registrations
+ * Live-chat / anonymous asker sessions on the registered-enquiry feed.
  */
 function isAnonymousAskerSession(
 	raw: ListItemInterface,
-	_extended: ExtendedSessionInterface
+	extended: ExtendedSessionInterface
 ): boolean {
+	const registrationType =
+		(raw as any)?.session?.registrationType ??
+		(extended as any)?.item?.registrationType;
+	if (registrationType === 'ANONYMOUS') {
+		return true;
+	}
+
 	const candidates = [
 		(raw as any)?.user?.username,
 		(raw as any)?.session?.askerUserName,
-		(raw as any)?.consultant?.username
+		(extended as any)?.item?.askerUserName
 	];
 	if (
 		candidates.some(
@@ -135,8 +139,12 @@ function isAnonymousAskerSession(
 		return true;
 	}
 
-	const postcode = (raw as any)?.session?.postcode;
-	return postcode === '00000';
+	const postcode =
+		(raw as any)?.session?.postcode ?? (extended as any)?.item?.postcode;
+	if (postcode == null || postcode === '') {
+		return false;
+	}
+	return String(postcode) === '00000';
 }
 
 function sessionMatchesToolbar(
@@ -285,6 +293,7 @@ export const SessionsList = ({
 	const sessionToolbarChipRef = useRef<SessionToolbarChipFilter | null>(
 		sessionToolbarChip
 	);
+	const skipChipRefetchRef = useRef(true);
 	useEffect(() => {
 		sessionToolbarChipRef.current = sessionToolbarChip;
 	}, [sessionToolbarChip]);
@@ -315,6 +324,80 @@ export const SessionsList = ({
 	 */
 	const [liveChatAvailable] = useLiveChatAvailable();
 
+	const fetchEnquirySessionsWithAutoPage = useCallback(
+		(
+			offset: number,
+			initialID?: string,
+			count?: number,
+			signal?: AbortSignal
+		): Promise<{ sessions: ListItemInterface[]; total: number }> => {
+			const pageSize = count ?? SESSION_COUNT;
+
+			const fetchPage = (
+				pageOffset: number
+			): Promise<{ sessions: ListItemInterface[]; total: number }> =>
+				apiGetConsultantSessionList({
+					type,
+					offset: pageOffset,
+					sessionListTab,
+					count: pageSize,
+					signal
+				}).then(({ sessions, total }) => {
+					if (initialID) {
+						if (
+							getExtendedSession(initialID, sessions) ||
+							total <= pageOffset + pageSize
+						) {
+							return { sessions, total };
+						}
+
+						return fetchPage(pageOffset + pageSize).then(
+							({ sessions: moreSessions, total: nextTotal }) => ({
+								sessions: [...sessions, ...moreSessions],
+								total: nextTotal
+							})
+						);
+					}
+
+					if (
+						type !== SESSION_LIST_TYPES.ENQUIRY ||
+						sessions.length === 0 ||
+						total <= pageOffset + sessions.length
+					) {
+						return { sessions, total };
+					}
+
+					const chip = sessionToolbarChipRef.current;
+					if (chip !== 'chats' && chip !== 'liveChat') {
+						return { sessions, total };
+					}
+
+					const anyMatch = sessions.some((raw) => {
+						const isAnon = isAnonymousAskerSession(
+							raw,
+							{} as ExtendedSessionInterface
+						);
+						return chip === 'liveChat' ? isAnon : !isAnon;
+					});
+					const pagesFetched =
+						(pageOffset + sessions.length) / SESSION_COUNT;
+					if (anyMatch || pagesFetched >= 10) {
+						return { sessions, total };
+					}
+
+					return fetchPage(pageOffset + sessions.length).then(
+						({ sessions: moreSessions, total: nextTotal }) => ({
+							sessions: [...sessions, ...moreSessions],
+							total: nextTotal
+						})
+					);
+				});
+
+			return fetchPage(offset);
+		},
+		[sessionListTab, type]
+	);
+
 	const getConsultantSessionList = useCallback(
 		(
 			offset: number,
@@ -329,101 +412,73 @@ export const SessionsList = ({
 
 			abortController.current = new AbortController();
 
-			return apiGetConsultantSessionList({
-				type,
+			return fetchEnquirySessionsWithAutoPage(
 				offset,
-				sessionListTab: sessionListTab,
-				count: count ?? SESSION_COUNT,
-				signal: abortController.current.signal
-			})
-				.then(({ sessions, total }) => {
-					if (!initialID) {
-						return { sessions, total };
-					}
-
-					// Check if selected room already loaded
-					if (
-						getExtendedSession(initialID, sessions) ||
-						total <= offset + SESSION_COUNT
-					) {
-						return {
-							sessions,
-							total
-						};
-					}
-
-					return getConsultantSessionList(
-						offset + SESSION_COUNT,
-						initialID
-					).then(({ sessions: moreSessions, total }) => {
-						return {
-							sessions: [...sessions, ...moreSessions],
-							total
-						};
-					});
-				})
-				.then(({ sessions, total }) => {
-					/*
-					 * Auto-page past all-anonymous (or all-registered) first
-					 * pages on the Enquiry tab so the selected chip filter
-					 * isn't empty when it has matches further down the feed.
-					 * Scroll-triggered fetches (offset > 0) and explicit
-					 * initialID lookups run above; this branch only fires for
-					 * the implicit "initial fetch" case.
-					 */
-					if (
-						!initialID &&
-						type === SESSION_LIST_TYPES.ENQUIRY &&
-						sessions.length > 0 &&
-						total > offset + sessions.length
-					) {
-						const chip = sessionToolbarChipRef.current;
-						if (chip === 'chats' || chip === 'liveChat') {
-							const anyMatch = sessions.some((raw) => {
-								const isAnon = isAnonymousAskerSession(
-									raw,
-									{} as ExtendedSessionInterface
-								);
-								return chip === 'liveChat' ? isAnon : !isAnon;
-							});
-							/* Cap at 10 pages so a consultant with thousands
-							   of one-sided enquiries can't hang the list. */
-							const pagesFetched =
-								(offset + sessions.length) / SESSION_COUNT;
-							if (!anyMatch && pagesFetched < 10) {
-								return getConsultantSessionList(
-									offset + sessions.length
-								).then(
-									({ sessions: moreSessions, total: t }) => ({
-										sessions: [
-											...sessions,
-											...moreSessions
-										],
-										total: t
-									})
-								);
-							}
-						}
-					}
-					return { sessions, total };
-				})
-				.then(({ sessions, total }) => {
-					const pageSize = count ?? SESSION_COUNT;
-					/* When the Enquiry auto-pager above fetched extra pages,
-					   sessions.length > pageSize — advance currentOffset to
-					   the start of the deepest page so loadMoreSessions
-					   doesn't re-fetch what's already in state. */
-					const lastLoadedOffset =
-						offset + Math.max(0, sessions.length - pageSize);
-					setCurrentOffset(lastLoadedOffset);
-					setTotalItems(total);
-					setIsRequestInProgress(false);
-					return { sessions, total };
-				});
+				initialID,
+				count,
+				abortController.current.signal
+			).then(({ sessions, total }) => {
+				const pageSize = count ?? SESSION_COUNT;
+				const lastLoadedOffset =
+					offset + Math.max(0, sessions.length - pageSize);
+				setCurrentOffset(lastLoadedOffset);
+				setTotalItems(total);
+				setIsRequestInProgress(false);
+				return { sessions, total };
+			});
 		},
-		/* eslint-disable-next-line react-hooks/exhaustive-deps */
-		[sessionListTab, type, liveChatAvailable]
+		[fetchEnquirySessionsWithAutoPage]
 	);
+
+	const refetchEnquiryList = useCallback(() => {
+		if (type !== SESSION_LIST_TYPES.ENQUIRY) {
+			return Promise.resolve();
+		}
+
+		return fetchEnquirySessionsWithAutoPage(0)
+			.then(({ sessions, total }) => {
+				dispatch({
+					type: SET_SESSIONS,
+					ready: true,
+					sessions
+				});
+				setTotalItems(total);
+				setCurrentOffset(0);
+			})
+			.catch(() => {});
+	}, [dispatch, fetchEnquirySessionsWithAutoPage, type]);
+
+	/*
+	 * Re-run the enquiry fetch when switching Chats ↔ Live Chat so auto-paging
+	 * scans for the right session type instead of only re-filtering stale pages.
+	 */
+	useEffect(() => {
+		if (type !== SESSION_LIST_TYPES.ENQUIRY) {
+			return;
+		}
+		if (
+			sessionToolbarChip !== 'liveChat' &&
+			sessionToolbarChip !== 'chats'
+		) {
+			return;
+		}
+		if (skipChipRefetchRef.current) {
+			skipChipRefetchRef.current = false;
+			return;
+		}
+
+		setIsLoading(true);
+		getConsultantSessionList(0)
+			.then(({ sessions }) => {
+				dispatch({
+					type: SET_SESSIONS,
+					ready: true,
+					sessions
+				});
+			})
+			.catch(() => {})
+			.finally(() => setIsLoading(false));
+	}, [dispatch, getConsultantSessionList, sessionToolbarChip, type]);
 
 	const scrollIntoView = useCallback(() => {
 		const activeItem = document.querySelector('.sessionsListItem--active');
@@ -996,16 +1051,7 @@ export const SessionsList = ({
 		}) => {
 			if (refreshEnquiryList) {
 				if (type === SESSION_LIST_TYPES.ENQUIRY) {
-					getConsultantSessionList(0)
-						.then(({ sessions, total }) => {
-							dispatch({
-								type: UPDATE_SESSIONS,
-								ready: true,
-								sessions
-							});
-							setTotalItems(total);
-						})
-						.catch(() => {});
+					refetchEnquiryList();
 				}
 				return;
 			}
@@ -1026,12 +1072,11 @@ export const SessionsList = ({
 		return () => {
 			messageEventEmitter.off(onNewMessageEvent);
 		};
-	}, [dispatch, getConsultantSessionList, touchSessionsByRids, type]);
+	}, [refetchEnquiryList, touchSessionsByRids, type]);
 
 	/*
-	 * Legacy invite-link enquiries (registration_type=REGISTERED) do not emit
-	 * newAnonymousEnquiry over STOMP — only email. Poll while Live Chat is
-	 * selected so new requests appear without a manual reload.
+	 * Legacy invite-link enquiries do not emit newAnonymousEnquiry over STOMP.
+	 * Poll while Live Chat is selected (without aborting the main list fetch).
 	 */
 	useEffect(() => {
 		if (type !== SESSION_LIST_TYPES.ENQUIRY) {
@@ -1041,23 +1086,11 @@ export const SessionsList = ({
 			return;
 		}
 
-		const pollMs = 15000;
-		const pollEnquiries = () => {
-			getConsultantSessionList(0)
-				.then(({ sessions, total }) => {
-					dispatch({
-						type: UPDATE_SESSIONS,
-						ready: true,
-						sessions
-					});
-					setTotalItems(total);
-				})
-				.catch(() => {});
-		};
-
-		const intervalId = window.setInterval(pollEnquiries, pollMs);
+		const intervalId = window.setInterval(() => {
+			refetchEnquiryList();
+		}, 15000);
 		return () => window.clearInterval(intervalId);
-	}, [dispatch, getConsultantSessionList, sessionToolbarChip, type]);
+	}, [refetchEnquiryList, sessionToolbarChip, type]);
 
 	const loadMoreSessions = useCallback(() => {
 		setIsLoading(true);
@@ -1309,7 +1342,7 @@ export const SessionsList = ({
 					return true;
 				// only show sessions without an assigned consultant in sessionPreview
 				case SESSION_LIST_TYPES.ENQUIRY:
-					return !session?.consultant; // Only show unassigned enquiries
+					return !session?.consultant?.id;
 				default:
 					return true;
 			}
