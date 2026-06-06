@@ -111,11 +111,10 @@ function buildSessionSearchHaystack(
 }
 
 /**
- * Anonymous-chat sessions are identified by the ORISO convention that the
- * asker's keycloak username is prefixed `Anonymous-` (capital A — the
- * pseudonym-registration flow writes that). Using just the prefix keeps the
- * split clean even though all sessions in this deployment share the same
- * registrationType + `postcode='00000'` on the DB side.
+ * Live-chat / anonymous asker sessions:
+ * - legacy invite registration uses `Anonymous-{timestamp}`
+ * - server-side anonymous enquiry uses configured prefix (e.g. `anon_`)
+ * - synthetic postcode `00000` is also used for anonymous-style registrations
  */
 function isAnonymousAskerSession(
 	raw: ListItemInterface,
@@ -126,9 +125,18 @@ function isAnonymousAskerSession(
 		(raw as any)?.session?.askerUserName,
 		(raw as any)?.consultant?.username
 	];
-	return candidates.some(
-		(u) => typeof u === 'string' && u.startsWith('Anonymous-')
-	);
+	if (
+		candidates.some(
+			(u) =>
+				typeof u === 'string' &&
+				(u.startsWith('Anonymous-') || u.startsWith('anon_'))
+		)
+	) {
+		return true;
+	}
+
+	const postcode = (raw as any)?.session?.postcode;
+	return postcode === '00000';
 }
 
 function sessionMatchesToolbar(
@@ -979,11 +987,29 @@ export const SessionsList = ({
 	useEffect(() => {
 		const onNewMessageEvent = ({
 			roomId,
-			timestamp
+			timestamp,
+			refreshEnquiryList
 		}: {
 			roomId?: string;
 			timestamp?: number;
+			refreshEnquiryList?: boolean;
 		}) => {
+			if (refreshEnquiryList) {
+				if (type === SESSION_LIST_TYPES.ENQUIRY) {
+					getConsultantSessionList(0)
+						.then(({ sessions, total }) => {
+							dispatch({
+								type: UPDATE_SESSIONS,
+								ready: true,
+								sessions
+							});
+							setTotalItems(total);
+						})
+						.catch(() => {});
+				}
+				return;
+			}
+
 			if (!roomId) {
 				return;
 			}
@@ -1000,7 +1026,38 @@ export const SessionsList = ({
 		return () => {
 			messageEventEmitter.off(onNewMessageEvent);
 		};
-	}, [touchSessionsByRids]);
+	}, [dispatch, getConsultantSessionList, touchSessionsByRids, type]);
+
+	/*
+	 * Legacy invite-link enquiries (registration_type=REGISTERED) do not emit
+	 * newAnonymousEnquiry over STOMP — only email. Poll while Live Chat is
+	 * selected so new requests appear without a manual reload.
+	 */
+	useEffect(() => {
+		if (type !== SESSION_LIST_TYPES.ENQUIRY) {
+			return;
+		}
+		if (sessionToolbarChip !== 'liveChat') {
+			return;
+		}
+
+		const pollMs = 15000;
+		const pollEnquiries = () => {
+			getConsultantSessionList(0)
+				.then(({ sessions, total }) => {
+					dispatch({
+						type: UPDATE_SESSIONS,
+						ready: true,
+						sessions
+					});
+					setTotalItems(total);
+				})
+				.catch(() => {});
+		};
+
+		const intervalId = window.setInterval(pollEnquiries, pollMs);
+		return () => window.clearInterval(intervalId);
+	}, [dispatch, getConsultantSessionList, sessionToolbarChip, type]);
 
 	const loadMoreSessions = useCallback(() => {
 		setIsLoading(true);
