@@ -6,7 +6,6 @@ import {
 } from '../../api/apiPostError';
 import { redirectToErrorPage } from '../error/errorHandling';
 import { Loading } from './Loading';
-import { removeAllCookies } from '../sessionCookie/accessSessionCookie';
 import { STORAGE_KEY_ERROR_BOUNDARY } from '../devToolbar/DevToolbar';
 
 type ErrorBoundaryProps = {
@@ -75,7 +74,6 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 		}
 
 		apiPostError(errorBoundaryError, info).finally(() => {
-			removeAllCookies();
 			redirectToErrorPage(500);
 		});
 	}

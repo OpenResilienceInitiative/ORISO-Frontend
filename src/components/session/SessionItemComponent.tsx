@@ -54,6 +54,7 @@ import useDebounceCallback from '../../hooks/useDebounceCallback';
 import { apiPostError, TError } from '../../api/apiPostError';
 import { useE2EE } from '../../hooks/useE2EE';
 import { MessageSubmitInterfaceSkeleton } from '../messageSubmitInterface/messageSubmitInterfaceSkeleton';
+import { MessageSubmitErrorBoundary } from '../messageSubmitInterface/MessageSubmitErrorBoundary';
 import { Text } from '../text/Text';
 import { EncryptionBanner } from './EncryptionBanner';
 import { apiGetSessionSupervisors } from '../../api/apiGetSessionSupervisors';
@@ -1554,6 +1555,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const dragCancelRef = useRef<NodeJS.Timeout | null>(null);
 	const [newMessages, setNewMessages] = useState(0);
 	const [canWriteMessage, setCanWriteMessage] = useState(false);
+	const [composerRemountKey, setComposerRemountKey] = useState(0);
 	const [supervisionReason, setSupervisionReason] = useState<string | null>(
 		null
 	);
@@ -4491,34 +4493,43 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 								/>
 							}
 						>
-							<MessageSubmitInterfaceComponent
-								isTyping={props.isTyping}
-								className={clsx(
-									'session__submit-interface',
-									!isScrolledToBottom &&
-										'session__submit-interface--scrolled-up',
-									activeThreadRootId &&
-										'session__submit-interface--withThread'
-								)}
-								placeholder={getPlaceholder()}
-								typingUsers={props.typingUsers}
-								preselectedFile={draggedFile}
-								handleMessageSendSuccess={
-									handleMessageSendSuccess
+							<MessageSubmitErrorBoundary
+								onRetry={() =>
+									setComposerRemountKey((key) => key + 1)
 								}
-								isSupervisor={isSupervisor}
-								mobileUnreadCount={newMessages}
-								mobileIsScrolledToBottom={isScrolledToBottom}
-								onMobileNavigateBack={
-									handleMobileNavigateBackClick
-								}
-								onMobileNavigateDown={
-									handleMobileNavigateStepDownClick
-								}
-								onMobileNavigateBottom={
-									handleScrollToBottomButtonClick
-								}
-							/>
+							>
+								<MessageSubmitInterfaceComponent
+									key={composerRemountKey}
+									isTyping={props.isTyping}
+									className={clsx(
+										'session__submit-interface',
+										!isScrolledToBottom &&
+											'session__submit-interface--scrolled-up',
+										activeThreadRootId &&
+											'session__submit-interface--withThread'
+									)}
+									placeholder={getPlaceholder()}
+									typingUsers={props.typingUsers}
+									preselectedFile={draggedFile}
+									handleMessageSendSuccess={
+										handleMessageSendSuccess
+									}
+									isSupervisor={isSupervisor}
+									mobileUnreadCount={newMessages}
+									mobileIsScrolledToBottom={
+										isScrolledToBottom
+									}
+									onMobileNavigateBack={
+										handleMobileNavigateBackClick
+									}
+									onMobileNavigateDown={
+										handleMobileNavigateStepDownClick
+									}
+									onMobileNavigateBottom={
+										handleScrollToBottomButtonClick
+									}
+								/>
+							</MessageSubmitErrorBoundary>
 						</Suspense>
 					)}
 					{areRobotMessagesComplete &&
