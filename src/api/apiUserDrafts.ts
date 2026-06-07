@@ -1,5 +1,10 @@
 import { endpoints } from '../resources/scripts/endpoints';
-import { fetchData, FETCH_ERRORS, FETCH_METHODS, FETCH_SUCCESS } from './fetchData';
+import {
+	fetchData,
+	FETCH_ERRORS,
+	FETCH_METHODS,
+	FETCH_SUCCESS
+} from './fetchData';
 
 export interface IUserDraftItem {
 	id?: number;
@@ -47,19 +52,28 @@ export const apiGetUserDraft = async (
 export const apiUpsertUserDraft = async (
 	scopeKey: string,
 	payload: Omit<IUserDraftItem, 'id' | 'scopeKey' | 'updatedAt'>
-): Promise<void> =>
-	fetchData({
-		url: `${endpoints.userDrafts}?scopeKey=${encodeURIComponent(scopeKey)}`,
-		method: FETCH_METHODS.PATCH,
-		bodyData: JSON.stringify(payload),
-		responseHandling: [FETCH_ERRORS.CATCH_ALL]
-	});
+): Promise<void> => {
+	try {
+		await fetchData({
+			url: `${endpoints.userDrafts}?scopeKey=${encodeURIComponent(scopeKey)}`,
+			method: FETCH_METHODS.PATCH,
+			bodyData: JSON.stringify(payload),
+			responseHandling: [FETCH_ERRORS.CATCH_ALL]
+		});
+	} catch {
+		// Drafts are non-critical: a failed/conflicting autosave must never bubble up
+		// and break the chat. The next keystroke re-saves.
+	}
+};
 
-export const apiDeleteUserDraft = async (scopeKey: string): Promise<void> =>
-	fetchData({
-		url: `${endpoints.userDrafts}?scopeKey=${encodeURIComponent(scopeKey)}`,
-		method: FETCH_METHODS.DELETE,
-		responseHandling: [FETCH_ERRORS.CATCH_ALL]
-	});
-
-
+export const apiDeleteUserDraft = async (scopeKey: string): Promise<void> => {
+	try {
+		await fetchData({
+			url: `${endpoints.userDrafts}?scopeKey=${encodeURIComponent(scopeKey)}`,
+			method: FETCH_METHODS.DELETE,
+			responseHandling: [FETCH_ERRORS.CATCH_ALL]
+		});
+	} catch {
+		// Non-critical cleanup; ignore failures.
+	}
+};
