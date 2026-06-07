@@ -2520,16 +2520,20 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			// if first unread message -> prepend element
 			if (newMessages === 0 && !isScrolledToBottom) {
 				const scrollContainer = scrollContainerRef.current;
-				const firstUnreadItem = Array.from(
-					scrollContainer.querySelectorAll('.messageItem')
-				).pop();
-				const lastReadDivider = document.createElement('div');
-				lastReadDivider.innerHTML = translate(
-					'session.divider.lastRead'
-				);
-				lastReadDivider.className =
-					'messageItem__divider messageItem__divider--lastRead';
-				firstUnreadItem.prepend(lastReadDivider);
+				if (scrollContainer) {
+					const firstUnreadItem = Array.from(
+						scrollContainer.querySelectorAll('.messageItem')
+					).pop() as HTMLElement | undefined;
+					if (firstUnreadItem) {
+						const lastReadDivider = document.createElement('div');
+						lastReadDivider.innerHTML = translate(
+							'session.divider.lastRead'
+						);
+						lastReadDivider.className =
+							'messageItem__divider messageItem__divider--lastRead';
+						firstUnreadItem.prepend(lastReadDivider);
+					}
+				}
 			}
 
 			if (isScrolledToBottom && initialScrollCompleted) {
