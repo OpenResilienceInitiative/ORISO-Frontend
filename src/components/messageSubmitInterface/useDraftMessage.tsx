@@ -17,8 +17,7 @@ import { decryptText, encryptText } from '../../utils/encryptionHelpers';
 import { apiPostError, ERROR_LEVEL_WARN } from '../../api/apiPostError';
 import { useE2EE } from '../../hooks/useE2EE';
 import { E2EEContext, ActiveSessionContext } from '../../globalState';
-import { convertFromRaw, EditorState } from 'draft-js';
-import { markdownToDraft } from 'markdown-draft-js';
+import { EditorState } from 'draft-js';
 import { EVENT_PRE_LOGOUT } from '../logout/logout';
 import {
 	addEventListener,
@@ -80,14 +79,12 @@ export const useDraftMessage = (
 
 	const setEditorWithDraftString = useCallback(
 		(draftString: string) => {
-			const rawObject = markdownToDraft(draftString);
-			const draftContent = convertFromRaw(rawObject);
-			const editorStateWithText =
-				EditorState.createWithContent(draftContent);
-			loadFunction(
-				EditorState.moveFocusToEnd(editorStateWithText),
-				draftString
-			);
+			try {
+				// TipTapComposer reads rawDraft directly (HTML/plain text).
+				loadFunction(EditorState.createEmpty(), draftString || '');
+			} catch {
+				loadFunction(EditorState.createEmpty(), '');
+			}
 		},
 		[loadFunction]
 	);

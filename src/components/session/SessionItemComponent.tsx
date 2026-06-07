@@ -1656,10 +1656,19 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	}, [activeSession.item.id, userData, isSupervisionEnabledForCurrentChat]);
 
 	useEffect(() => {
-		const canWrite = type !== SESSION_LIST_TYPES.ENQUIRY;
-		// console.log('🔥 SessionItemComponent: canWriteMessage =', canWrite, '(type:', type, ', isGroup:', activeSession.isGroup, ', isSupervisor:', isSupervisor, ')');
+		const canWrite =
+			type !== SESSION_LIST_TYPES.ENQUIRY ||
+			(isAnonymousAskerExperience && waitingGateDismissed);
 		setCanWriteMessage(canWrite);
-	}, [type, userData, activeSession, activeSession.isGroup, isSupervisor]);
+	}, [
+		type,
+		isAnonymousAskerExperience,
+		waitingGateDismissed,
+		userData,
+		activeSession,
+		activeSession.isGroup,
+		isSupervisor
+	]);
 
 	useEffect(() => {
 		if (!isAnonymousBreathingGameAvailable) {
@@ -4411,7 +4420,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			)}
 
 			{type === SESSION_LIST_TYPES.ENQUIRY &&
-				!shouldBlockAnonymousInquiryChat && (
+				!shouldBlockAnonymousInquiryChat &&
+				!isAnonymousAskerExperience && (
 					<AcceptAssign btnLabel={'enquiry.acceptButton.known'} />
 				)}
 
