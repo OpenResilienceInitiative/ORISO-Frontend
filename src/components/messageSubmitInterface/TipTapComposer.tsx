@@ -101,7 +101,10 @@ const serializeInlineNodes = (nodes: JSONContent[] = []): string =>
 			if (node.type === 'text') {
 				return applyTextMarks(
 					escapeMarkdownText(node.text || ''),
-					(node.marks as Array<{ type: string; attrs?: Record<string, any> }>) || []
+					(node.marks as Array<{
+						type: string;
+						attrs?: Record<string, any>;
+					}>) || []
 				);
 			}
 			if (node.type === 'hardBreak') {
@@ -184,7 +187,10 @@ const serializeBlocks = (node?: JSONContent): string => {
 	if (node.type === 'text') {
 		return applyTextMarks(
 			escapeMarkdownText(node.text || ''),
-			(node.marks as Array<{ type: string; attrs?: Record<string, any> }>) || []
+			(node.marks as Array<{
+				type: string;
+				attrs?: Record<string, any>;
+			}>) || []
 		);
 	}
 
@@ -218,7 +224,10 @@ const Subscript = Mark.create({
 	}
 });
 
-export const TipTapComposer = forwardRef<TipTapComposerRef, TipTapComposerProps>(
+export const TipTapComposer = forwardRef<
+	TipTapComposerRef,
+	TipTapComposerProps
+>(
 	(
 		{
 			value,
@@ -236,7 +245,10 @@ export const TipTapComposer = forwardRef<TipTapComposerRef, TipTapComposerProps>
 		const editor = useEditor({
 			extensions: useMemo(
 				() => [
-					StarterKit,
+					// StarterKit v3 bundles Link + Underline; disable them here so the
+					// explicitly-configured standalone extensions below are the only ones
+					// (avoids "Duplicate extension names found: ['link', 'underline']").
+					StarterKit.configure({ link: false, underline: false }),
 					Underline,
 					Superscript,
 					Subscript,
@@ -259,7 +271,10 @@ export const TipTapComposer = forwardRef<TipTapComposerRef, TipTapComposerProps>
 			editable: !readOnly,
 			editorProps: {
 				handleKeyDown: (_, event) => {
-					if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+					if (
+						event.key === 'Enter' &&
+						(event.ctrlKey || event.metaKey)
+					) {
 						event.preventDefault();
 						onSubmitShortcut();
 						return true;
@@ -306,7 +321,10 @@ export const TipTapComposer = forwardRef<TipTapComposerRef, TipTapComposerProps>
 			}
 			const normalizedValue = (value || '')
 				.replace(/text-align\s*:\s*right/gi, 'text-align: left')
-				.replace(/data-text-align\s*=\s*["']right["']/gi, 'data-text-align="left"');
+				.replace(
+					/data-text-align\s*=\s*["']right["']/gi,
+					'data-text-align="left"'
+				);
 			// Always keep default writing flow left-to-right for new/empty content.
 			if (!normalizedValue.trim()) {
 				editor.commands.setTextAlign('left');
@@ -378,13 +396,25 @@ export const TipTapComposer = forwardRef<TipTapComposerRef, TipTapComposerProps>
 						editor.chain().focus().setParagraph().run();
 						return;
 					case 'heading1':
-						editor.chain().focus().toggleHeading({ level: 1 }).run();
+						editor
+							.chain()
+							.focus()
+							.toggleHeading({ level: 1 })
+							.run();
 						return;
 					case 'heading2':
-						editor.chain().focus().toggleHeading({ level: 2 }).run();
+						editor
+							.chain()
+							.focus()
+							.toggleHeading({ level: 2 })
+							.run();
 						return;
 					case 'heading3':
-						editor.chain().focus().toggleHeading({ level: 3 }).run();
+						editor
+							.chain()
+							.focus()
+							.toggleHeading({ level: 3 })
+							.run();
 						return;
 					case 'alignLeft':
 						editor.chain().focus().setTextAlign('left').run();
@@ -402,22 +432,46 @@ export const TipTapComposer = forwardRef<TipTapComposerRef, TipTapComposerProps>
 						editor.chain().focus().toggleUnderline().run();
 						return;
 					case 'highlight':
-						editor.chain().focus().toggleHighlight({ color: '#fff59d' }).run();
+						editor
+							.chain()
+							.focus()
+							.toggleHighlight({ color: '#fff59d' })
+							.run();
 						return;
 					case 'highlightYellow':
-						editor.chain().focus().setHighlight({ color: '#fff59d' }).run();
+						editor
+							.chain()
+							.focus()
+							.setHighlight({ color: '#fff59d' })
+							.run();
 						return;
 					case 'highlightOrange':
-						editor.chain().focus().setHighlight({ color: '#ffcc80' }).run();
+						editor
+							.chain()
+							.focus()
+							.setHighlight({ color: '#ffcc80' })
+							.run();
 						return;
 					case 'highlightRose':
-						editor.chain().focus().setHighlight({ color: '#ffcdd2' }).run();
+						editor
+							.chain()
+							.focus()
+							.setHighlight({ color: '#ffcdd2' })
+							.run();
 						return;
 					case 'highlightMint':
-						editor.chain().focus().setHighlight({ color: '#b2f2bb' }).run();
+						editor
+							.chain()
+							.focus()
+							.setHighlight({ color: '#b2f2bb' })
+							.run();
 						return;
 					case 'highlightBlue':
-						editor.chain().focus().setHighlight({ color: '#b3e5fc' }).run();
+						editor
+							.chain()
+							.focus()
+							.setHighlight({ color: '#b3e5fc' })
+							.run();
 						return;
 					case 'bulletList':
 						editor.chain().focus().toggleBulletList().run();
@@ -460,7 +514,11 @@ export const TipTapComposer = forwardRef<TipTapComposerRef, TipTapComposerProps>
 					case 'insertDateTime': {
 						const now = new Date();
 						const stamp = now.toLocaleString();
-						editor.chain().focus().insertContent(` ${stamp} `).run();
+						editor
+							.chain()
+							.focus()
+							.insertContent(` ${stamp} `)
+							.run();
 						return;
 					}
 					case 'blockquote': {
@@ -484,7 +542,8 @@ export const TipTapComposer = forwardRef<TipTapComposerRef, TipTapComposerProps>
 						return;
 					}
 					case 'setLink': {
-						const previousUrl = editor.getAttributes('link').href || '';
+						const previousUrl =
+							editor.getAttributes('link').href || '';
 						const url = window.prompt('URL', previousUrl);
 						if (url === null) {
 							return;
@@ -500,7 +559,12 @@ export const TipTapComposer = forwardRef<TipTapComposerRef, TipTapComposerProps>
 						editor.chain().focus().unsetLink().run();
 						return;
 					case 'clearFormatting':
-						editor.chain().focus().clearNodes().unsetAllMarks().run();
+						editor
+							.chain()
+							.focus()
+							.clearNodes()
+							.unsetAllMarks()
+							.run();
 						return;
 					case 'focusEnd':
 						editor.commands.focus('end');
@@ -592,44 +656,67 @@ export const TipTapComposer = forwardRef<TipTapComposerRef, TipTapComposerProps>
 						</button>
 						<button
 							type="button"
-							onClick={() => editor.chain().focus().toggleBold().run()}
-							className={editor.isActive('bold') ? 'is-active' : ''}
+							onClick={() =>
+								editor.chain().focus().toggleBold().run()
+							}
+							className={
+								editor.isActive('bold') ? 'is-active' : ''
+							}
 							aria-label="Bold"
 						>
 							<FormatBold fontSize="small" />
 						</button>
 						<button
 							type="button"
-							onClick={() => editor.chain().focus().toggleBulletList().run()}
-							className={editor.isActive('bulletList') ? 'is-active' : ''}
+							onClick={() =>
+								editor.chain().focus().toggleBulletList().run()
+							}
+							className={
+								editor.isActive('bulletList') ? 'is-active' : ''
+							}
 							aria-label="Bullet List"
 						>
 							<FormatListBulleted fontSize="small" />
 						</button>
 						<button
 							type="button"
-							onClick={() => editor.chain().focus().toggleOrderedList().run()}
-							className={editor.isActive('orderedList') ? 'is-active' : ''}
+							onClick={() =>
+								editor.chain().focus().toggleOrderedList().run()
+							}
+							className={
+								editor.isActive('orderedList')
+									? 'is-active'
+									: ''
+							}
 							aria-label="Ordered List"
 						>
 							<FilterList fontSize="small" />
 						</button>
 						<button
 							type="button"
-							onClick={() => editor.chain().focus().toggleLink({ href: '#' }).run()}
-							className={editor.isActive('link') ? 'is-active' : ''}
+							onClick={() =>
+								editor
+									.chain()
+									.focus()
+									.toggleLink({ href: '#' })
+									.run()
+							}
+							className={
+								editor.isActive('link') ? 'is-active' : ''
+							}
 							aria-label="Quick Link"
 						>
 							<ChevronRight fontSize="small" />
 						</button>
 					</div>
 				)}
-				<EditorContent editor={editor} className="tiptap-composer__content" />
+				<EditorContent
+					editor={editor}
+					className="tiptap-composer__content"
+				/>
 			</div>
 		);
 	}
 );
 
 TipTapComposer.displayName = 'TipTapComposer';
-
-
