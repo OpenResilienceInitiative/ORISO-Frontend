@@ -1841,6 +1841,27 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		isAnonymousEnquiryPhaseSession
 	]);
 
+	const preloadMessageComposer = useCallback(() => {
+		void import(
+			'../messageSubmitInterface/messageSubmitInterfaceComponent'
+		);
+	}, []);
+
+	useEffect(() => {
+		if (
+			shouldShowPseudonymGate &&
+			pseudonymConfirmed &&
+			consultantAccepted
+		) {
+			preloadMessageComposer();
+		}
+	}, [
+		consultantAccepted,
+		preloadMessageComposer,
+		pseudonymConfirmed,
+		shouldShowPseudonymGate
+	]);
+
 	const handleOpenCalmCompanion = useCallback(() => {
 		setShowBriefingNegativeScreen(false);
 		setBriefingScreenIndex(0);
@@ -1853,7 +1874,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	}, []);
 
 	const handleStartAcceptedChat = useCallback(() => {
-		setWaitingGateDismissed(true);
+		void import('../messageSubmitInterface/messageSubmitInterfaceComponent')
+			.then(() => setWaitingGateDismissed(true))
+			.catch(() => setWaitingGateDismissed(true));
 	}, []);
 
 	useEffect(() => {
@@ -2685,12 +2708,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const handleMessageSendSuccess = () => {
 		setDraggedFile(null);
 
-		// MATRIX MIGRATION: Refresh messages after sending for Matrix sessions
-		if (!activeSession.rid && props.refreshMessages) {
-			// console.log('🔄 MATRIX: Refreshing messages after send...');
+		if (props.refreshMessages) {
 			setTimeout(() => {
 				props.refreshMessages();
-			}, 500); // Small delay to ensure message is processed
+			}, 500);
 		}
 	};
 
@@ -4500,6 +4521,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							>
 								<MessageSubmitInterfaceComponent
 									key={composerRemountKey}
+									isAnonymousLiveChat={
+										isAnonymousAskerExperience &&
+										waitingGateDismissed
+									}
 									isTyping={props.isTyping}
 									className={clsx(
 										'session__submit-interface',
