@@ -1,20 +1,31 @@
 import { endpoints } from '../resources/scripts/endpoints';
 import { getValueFromCookie } from '../components/sessionCookie/accessSessionCookie';
 
-export const apiKeycloakLogout = async (): Promise<any> => {
-	const url = endpoints.keycloakLogout;
+export const apiKeycloakLogout = async (): Promise<Response | null> => {
 	const refreshToken = getValueFromCookie('refreshToken');
-	const data = `client_id=app&grant_type=refresh_token&refresh_token=${refreshToken}`;
+	if (!refreshToken) {
+		return null;
+	}
+
+	const accessToken = getValueFromCookie('keycloak');
+	const body = new URLSearchParams({
+		client_id: 'app',
+		refresh_token: refreshToken
+	});
+	const headers: Record<string, string> = {
+		'Content-Type': 'application/x-www-form-urlencoded'
+	};
+
+	if (accessToken) {
+		headers.Authorization = `Bearer ${accessToken}`;
+	}
 
 	return fetch(
-		new Request(url, {
+		new Request(endpoints.keycloakLogout, {
 			method: 'POST',
-			headers: {
-				'Content-Type': 'application/x-www-form-urlencoded',
-				'cache-control': 'no-cache'
-			},
+			headers,
 			credentials: 'include',
-			body: data
+			body: body.toString()
 		})
 	);
 };
