@@ -25,6 +25,8 @@ export class MessageSubmitErrorBoundary extends Component<
 		hasError: false
 	};
 
+	private autoRetryAttempted = false;
+
 	static getDerivedStateFromError(): MessageSubmitErrorBoundaryState {
 		return { hasError: true };
 	}
@@ -39,6 +41,14 @@ export class MessageSubmitErrorBoundary extends Component<
 			},
 			info
 		);
+
+		// Lazy-loaded composer can fail on the first mount while the chunk
+		// initialises; one silent remount usually succeeds.
+		if (!this.autoRetryAttempted) {
+			this.autoRetryAttempted = true;
+			this.setState({ hasError: false });
+			this.props.onRetry?.();
+		}
 	}
 
 	private handleRetry = () => {

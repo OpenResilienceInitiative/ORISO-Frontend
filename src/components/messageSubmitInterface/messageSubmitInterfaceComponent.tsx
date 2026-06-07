@@ -58,16 +58,13 @@ import {
 	ItalicButton,
 	UnorderedListButton
 } from '@draft-js-plugins/buttons';
-import createEmojiPlugin from '@draft-js-plugins/emoji';
 import {
-	emojiPickerCustomClasses,
 	escapeMarkdownChars,
 	handleEditorBeforeInput,
 	handleEditorPastedText,
 	normalizeHighlightColor,
 	toolbarCustomClasses
 } from './richtextHelpers';
-import { ReactComponent as EmojiIcon } from '../../resources/img/icons/smiley-positive.svg';
 import { ReactComponent as AudioOnIcon } from '../../resources/img/icons/audio-on.svg';
 import { ReactComponent as RemoveIcon } from '../../resources/img/icons/x.svg';
 import { ReactComponent as CalendarMonthIcon } from '../../resources/img/icons/calendar-month-navigation.svg';
@@ -150,6 +147,8 @@ export interface MessageSubmitInterfaceComponentProps {
 	language?: string;
 	preselectedFile?: File;
 	handleMessageSendSuccess?: Function;
+	/** Anonymous enquiry after "Jetzt Chat starten" — use live chat send, not enquiry API. */
+	isAnonymousLiveChat?: boolean;
 	isSupervisor?: boolean;
 	threadRootId?: string | null;
 	threadParentPreview?: string | null;
@@ -169,6 +168,7 @@ export const MessageSubmitInterfaceComponent = ({
 	language,
 	preselectedFile,
 	handleMessageSendSuccess: onMessageSendSuccess,
+	isAnonymousLiveChat = false,
 	isSupervisor,
 	threadRootId,
 	threadParentPreview,
@@ -1051,24 +1051,6 @@ export const MessageSubmitInterfaceComponent = ({
 			(editorElement as any).focus({ preventScroll: true });
 		}
 	}, []);
-
-	//Emoji Picker Plugin
-	const emojiPlugin = useMemo(
-		() =>
-			createEmojiPlugin({
-				theme: emojiPickerCustomClasses,
-				useNativeArt: true,
-				disableInlineEmojis: true,
-				selectButtonContent: (
-					<EmojiIcon
-						aria-label={translate('enquiry.write.input.emojies')}
-						title={translate('enquiry.write.input.emojies')}
-					/>
-				)
-			}),
-		[translate]
-	);
-	const { EmojiSelect } = emojiPlugin;
 
 	// This loads the keys for current activeSession.rid which is already set:
 	// to groupChat.groupId on group chats
@@ -2071,7 +2053,8 @@ export const MessageSubmitInterfaceComponent = ({
 
 		if (
 			type === SESSION_LIST_TYPES.ENQUIRY &&
-			hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)
+			hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
+			!isAnonymousLiveChat
 		) {
 			await sendEnquiry(message, isEncrypted);
 			return;
@@ -2087,6 +2070,7 @@ export const MessageSubmitInterfaceComponent = ({
 		isE2eeEnabled,
 		key,
 		keyID,
+		isAnonymousLiveChat,
 		preselectedFile,
 		sendEnquiry,
 		sendMessage,
