@@ -207,10 +207,12 @@ export const SessionStream = ({
 
 		abortController.current = new AbortController();
 
-		// MATRIX MIGRATION: Use Matrix API if no rcGroupId OR if rcGroupId is a Matrix room ID (starts with '!')
-		const isMatrixRoom =
-			activeSession.rid && activeSession.rid.startsWith('!');
-		if ((!activeSession.rid || isMatrixRoom) && activeSession.item?.id) {
+		// MATRIX MIGRATION: Use Matrix API whenever this session is Matrix-backed.
+		// Some sessions still carry a legacy rid while exposing matrixRoomId.
+		const isMatrixBackedSession =
+			Boolean(activeSession.item?.matrixRoomId) ||
+			(activeSession.rid && activeSession.rid.startsWith('!'));
+		if (isMatrixBackedSession && activeSession.item?.id) {
 			const sessionId = activeSession.item.id;
 			const apiUrlBase = getApiBaseUrl();
 			const matrixUrl = `${apiUrlBase}/service/matrix/sessions/${sessionId}/messages`;
@@ -513,12 +515,12 @@ export const SessionStream = ({
 
 	// MATRIX MIGRATION: Real-time message sync for Matrix sessions
 	useEffect(() => {
-		// Only for Matrix sessions (no Rocket.Chat rid OR rid is a Matrix room ID)
-		// For group chats, rid contains the Matrix room ID (starts with '!')
-		const isMatrixSession =
-			(!activeSession.rid ||
-				(activeSession.rid && activeSession.rid.startsWith('!'))) &&
-			activeSession.item?.id;
+		// Only for Matrix sessions.
+		const isMatrixSession = Boolean(
+			activeSession.item?.id &&
+				(activeSession.item?.matrixRoomId ||
+					(activeSession.rid && activeSession.rid.startsWith('!')))
+		);
 		const matrixRoomId =
 			activeSession.rid && activeSession.rid.startsWith('!')
 				? activeSession.rid
@@ -806,7 +808,7 @@ export const SessionStream = ({
 					setSessionRead();
 
 					// MATRIX MIGRATION: Skip RocketChat subscriptions for Matrix sessions
-					if (activeSession.rid) {
+					if (!isMatrixSession && activeSession.rid) {
 						subscribe(
 							{
 								name: SUB_STREAM_ROOM_MESSAGES,
