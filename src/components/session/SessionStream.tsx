@@ -786,6 +786,49 @@ export const SessionStream = ({
 		};
 	}, [isMatrixSession, matrixRoomId, MATRIX_TYPING_STALE_MS]);
 
+	useEffect(() => {
+		const handleLiveMessageEvent = ({
+			roomId,
+			sessionId
+		}: {
+			roomId?: string;
+			sessionId?: number;
+		}) => {
+			const activeMatrixRoomId =
+				activeSession.rid && activeSession.rid.startsWith('!')
+					? activeSession.rid
+					: activeSession.item?.matrixRoomId || '';
+			const activeRid = activeSession.rid || '';
+			const activeSessionId = activeSession.item?.id;
+
+			const belongsToActiveSession =
+				(roomId &&
+					(roomId === activeMatrixRoomId || roomId === activeRid)) ||
+				(sessionId &&
+					activeSessionId &&
+					Number(sessionId) === Number(activeSessionId)) ||
+				(!roomId && !sessionId);
+
+			if (!belongsToActiveSession) {
+				return;
+			}
+
+			fetchSessionMessages().catch(() => {
+				// keep UI stable when a live refresh races with route/session changes
+			});
+		};
+
+		messageEventEmitter.on(handleLiveMessageEvent);
+		return () => {
+			messageEventEmitter.off(handleLiveMessageEvent);
+		};
+	}, [
+		activeSession.rid,
+		activeSession.item?.id,
+		activeSession.item?.matrixRoomId,
+		fetchSessionMessages
+	]);
+
 	useEffect(
 		() => () => {
 			clearMatrixTypingTimeout();
