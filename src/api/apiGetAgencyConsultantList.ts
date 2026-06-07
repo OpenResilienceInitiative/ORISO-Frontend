@@ -1,5 +1,5 @@
 import { endpoints } from '../resources/scripts/endpoints';
-import { fetchData, FETCH_METHODS } from './fetchData';
+import { fetchData, FETCH_ERRORS, FETCH_METHODS } from './fetchData';
 
 export interface Consultant {
 	consultantId: string;
@@ -15,8 +15,13 @@ export const apiGetAgencyConsultantList = async (
 ): Promise<Consultant[]> => {
 	const url = endpoints.agencyConsultants + '?agencyId=' + agencyId;
 
-	return fetchData({
-		url: url,
-		method: FETCH_METHODS.GET
-	});
+	try {
+		return await fetchData({
+			url: url,
+			method: FETCH_METHODS.GET,
+			responseHandling: [FETCH_ERRORS.CATCH_ALL]
+		});
+	} catch {
+		return [];
+	}
 };
