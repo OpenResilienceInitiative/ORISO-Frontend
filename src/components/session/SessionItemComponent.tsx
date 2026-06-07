@@ -2573,27 +2573,32 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	/* eslint-enable */
 
 	const handleScrollToBottomButtonClick = () => {
-		if (newMessages > 0) {
-			const scrollContainer = scrollContainerRef.current;
+		const scrollContainer = scrollContainerRef.current;
+		if (newMessages > 0 && scrollContainer) {
 			const sessionHeader =
-				scrollContainer.parentElement.getElementsByClassName(
+				scrollContainer.parentElement?.getElementsByClassName(
 					'sessionInfo'
-				)[0] as HTMLElement;
+				)[0] as HTMLElement | undefined;
 			const messageItems = scrollContainer.querySelectorAll(
 				'.messageItem:not(.messageItem--right)'
 			);
 			const firstUnreadItem = messageItems[
 				messageItems.length - newMessages
-			] as HTMLElement;
-			const firstUnreadItemOffet =
-				firstUnreadItem.offsetTop - sessionHeader.offsetHeight;
+			] as HTMLElement | undefined;
 
-			if (scrollContainer.scrollTop < firstUnreadItemOffet) {
-				smoothScroll({
-					duration: 1000,
-					element: scrollContainer,
-					to: firstUnreadItemOffet
-				});
+			if (firstUnreadItem && sessionHeader) {
+				const firstUnreadItemOffet =
+					firstUnreadItem.offsetTop - sessionHeader.offsetHeight;
+
+				if (scrollContainer.scrollTop < firstUnreadItemOffet) {
+					smoothScroll({
+						duration: 1000,
+						element: scrollContainer,
+						to: firstUnreadItemOffet
+					});
+				} else {
+					scrollToEnd(0, true);
+				}
 			} else {
 				scrollToEnd(0, true);
 			}
