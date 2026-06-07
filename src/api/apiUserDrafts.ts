@@ -27,27 +27,40 @@ export interface IUserDraftFeedResponse {
 export const apiGetUserDrafts = async (
 	page = 0,
 	perPage = 200
-): Promise<IUserDraftFeedResponse> =>
-	fetchData({
-		url: `${endpoints.userDrafts}?page=${page}&perPage=${perPage}`,
-		method: FETCH_METHODS.GET,
-		responseHandling: [FETCH_ERRORS.CATCH_ALL]
-	});
+): Promise<IUserDraftFeedResponse> => {
+	try {
+		return await fetchData({
+			url: `${endpoints.userDrafts}?page=${page}&perPage=${perPage}`,
+			method: FETCH_METHODS.GET,
+			responseHandling: [FETCH_ERRORS.CATCH_ALL]
+		});
+	} catch {
+		return { items: [], page, perPage };
+	}
+};
 
 export const apiGetUserDraft = async (
 	scopeKey: string,
 	signal?: AbortSignal
-): Promise<IUserDraftItem> =>
-	fetchData({
-		url: `${endpoints.userDrafts}/single?scopeKey=${encodeURIComponent(scopeKey)}`,
-		method: FETCH_METHODS.GET,
-		responseHandling: [
-			FETCH_ERRORS.EMPTY,
-			FETCH_ERRORS.CATCH_ALL,
-			FETCH_SUCCESS.CONTENT
-		],
-		...(signal && { signal })
-	});
+): Promise<IUserDraftItem | null> => {
+	try {
+		return await fetchData({
+			url: `${endpoints.userDrafts}/single?scopeKey=${encodeURIComponent(scopeKey)}`,
+			method: FETCH_METHODS.GET,
+			responseHandling: [
+				FETCH_ERRORS.EMPTY,
+				FETCH_ERRORS.CATCH_ALL,
+				FETCH_SUCCESS.CONTENT
+			],
+			...(signal && { signal })
+		});
+	} catch (e: any) {
+		if (e?.message === FETCH_ERRORS.EMPTY) {
+			throw e;
+		}
+		return null;
+	}
+};
 
 export const apiUpsertUserDraft = async (
 	scopeKey: string,
