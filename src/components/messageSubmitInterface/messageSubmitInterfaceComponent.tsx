@@ -1122,14 +1122,21 @@ export const MessageSubmitInterfaceComponent = ({
 		return `${location.pathname}${query ? `?${query}` : ''}`;
 	}, [location.pathname, location.search, threadRootId]);
 
+	const contact = getContact(activeSession);
+	const isAnonymousChat =
+		activeSession.item.postcode === 0 ||
+		activeSession.item.postcode?.toString() === '00000' ||
+		(activeSession.item as any).registrationType === 'ANONYMOUS' ||
+		contact?.username?.startsWith('Anonymous-') ||
+		activeSession.user?.username?.startsWith('Anonymous-');
+
 	const draftTitle = useMemo(() => {
-		const contact = getContact(activeSession);
 		const topicName =
 			typeof activeSession?.item?.topic === 'object'
 				? activeSession?.item?.topic?.name
 				: activeSession?.item?.topic;
 		return contact?.displayName || contact?.username || topicName || null;
-	}, [activeSession]);
+	}, [activeSession, contact]);
 
 	const forcedDraftScopeKey = useMemo(() => {
 		const params = new URLSearchParams(location.search);
@@ -1141,42 +1148,57 @@ export const MessageSubmitInterfaceComponent = ({
 
 	const loadDraftIntoComposer = useCallback(
 		(loadedState: EditorState, rawDraft?: string) => {
-			setEditorState(loadedState);
-			const draftValue = (rawDraft || '').trim();
-			if (draftValue) {
-				// TipTap drafts are saved as HTML now; load raw draft directly to preserve formatting.
-				const normalizedDraft = normalizeInitialAlignment(
-					rawDraft || ''
+			try {
+				setEditorState(loadedState);
+				const draftValue = (rawDraft || '').trim();
+				if (draftValue) {
+					// TipTap drafts are saved as HTML now; load raw draft directly to preserve formatting.
+					const normalizedDraft = normalizeInitialAlignment(
+						rawDraft || ''
+					);
+					setComposerText(normalizedDraft || '');
+					composerRef.current?.setText(normalizedDraft || '');
+					return;
+				}
+				// Backward fallback for any legacy empty/raw conversion edge-cases.
+				const contentState = loadedState.getCurrentContent();
+				const rawObject = convertToRaw(
+					escapeMarkdownChars(contentState)
 				);
-				setComposerText(normalizedDraft || '');
-				composerRef.current?.setText(normalizedDraft || '');
-				return;
+				const markdownString = draftToMarkdown(rawObject, {
+					escapeMarkdownCharacters: false
+				});
+				const normalizedDraft =
+					normalizeInitialAlignment(markdownString);
+				setComposerText(normalizedDraft);
+				composerRef.current?.setText(normalizedDraft);
+			} catch {
+				setComposerText('');
+				composerRef.current?.clear();
 			}
-			// Backward fallback for any legacy empty/raw conversion edge-cases.
-			const contentState = loadedState.getCurrentContent();
-			const rawObject = convertToRaw(escapeMarkdownChars(contentState));
-			const markdownString = draftToMarkdown(rawObject, {
-				escapeMarkdownCharacters: false
-			});
-			const normalizedDraft = normalizeInitialAlignment(markdownString);
-			setComposerText(normalizedDraft);
-			composerRef.current?.setText(normalizedDraft);
 		},
 		[normalizeInitialAlignment]
 	);
+
+	const isAnonymousEnquiryComposer =
+		type === SESSION_LIST_TYPES.ENQUIRY && isAnonymousChat;
 
 	const {
 		onChange: onDraftMessageChange,
 		loaded: draftLoaded,
 		clearDraftMessage
-	} = useDraftMessage(!isRequestInProgress, loadDraftIntoComposer, {
-		threadRootId: threadRootId || null,
-		actionPath: draftActionPath,
-		sessionId: activeSession?.item?.id ?? null,
-		roomRef: activeSession?.rid ?? null,
-		title: draftTitle,
-		forcedScopeKey: forcedDraftScopeKey
-	});
+	} = useDraftMessage(
+		!isRequestInProgress && !isAnonymousEnquiryComposer,
+		loadDraftIntoComposer,
+		{
+			threadRootId: threadRootId || null,
+			actionPath: draftActionPath,
+			sessionId: activeSession?.item?.id ?? null,
+			roomRef: activeSession?.rid ?? null,
+			title: draftTitle,
+			forcedScopeKey: forcedDraftScopeKey
+		}
+	);
 
 	const handleComposerChange = useCallback(
 		(nextValue: string) => {
@@ -2290,13 +2312,6 @@ export const MessageSubmitInterfaceComponent = ({
 			(type === SESSION_LIST_TYPES.ENQUIRY &&
 				!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData))) &&
 		!tenant?.settings?.featureAttachmentUploadDisabled;
-	const contact = getContact(activeSession);
-	const isAnonymousChat =
-		activeSession.item.postcode === 0 ||
-		activeSession.item.postcode?.toString() === '00000' ||
-		(activeSession.item as any).registrationType === 'ANONYMOUS' ||
-		contact?.username?.startsWith('Anonymous-') ||
-		activeSession.user?.username?.startsWith('Anonymous-');
 	const currentChatType: 'anonymous' | 'oneOnOne' | 'group' | 'supervision' =
 		isSupervisor
 			? 'supervision'
@@ -3674,17 +3689,22 @@ export const MessageSubmitInterfaceComponent = ({
 		[setIsExpandedComposer]
 	);
 
-	// MATRIX MIGRATION: Skip E2EE check for Matrix sessions (no rid)
-	if (!e2EEReady && activeSession.rid) {
+	const matrixRoomId = activeSession?.rid?.startsWith('!')
+		? activeSession.rid
+		: activeSession?.item?.matrixRoomId?.startsWith('!')
+			? activeSession.item.matrixRoomId
+			: null;
+
+	// MATRIX MIGRATION: legacy RocketChat E2EE gates do not apply to Matrix rooms.
+	if (!e2EEReady && activeSession.rid && !matrixRoomId) {
 		return null;
 	}
 
-	if (subscriptionKeyLost && activeSession.rid) {
+	if (subscriptionKeyLost && activeSession.rid && !matrixRoomId) {
 		return <SubscriptionKeyLost />;
 	}
 
-	// Ignore the missing room if session has no roomId
-	if (roomNotFound && activeSession.rid) {
+	if (roomNotFound && activeSession.rid && !matrixRoomId) {
 		return <RoomNotFound />;
 	}
 

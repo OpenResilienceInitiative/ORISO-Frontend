@@ -334,8 +334,16 @@ export const TipTapComposer = forwardRef<
 				return;
 			}
 			setIsSyncingFromValue(true);
-			editor.commands.setContent(normalizedValue);
-			editor.commands.setTextAlign('left');
+			try {
+				editor.commands.setContent(normalizedValue);
+				editor.commands.setTextAlign('left');
+			} catch {
+				try {
+					editor.commands.clearContent();
+				} catch {
+					// Ignore — a corrupt stored draft must never break the composer.
+				}
+			}
 			setTimeout(() => setIsSyncingFromValue(false), 0);
 		}, [editor, value]);
 

@@ -151,7 +151,7 @@ export const useDraftMessage = (
 		const currentLoadVersion = ++loadVersionRef.current;
 		setLoaded(false);
 		setMessageRes(null);
-		if (!canUseRemoteApi) {
+		if (!enabled || !canUseRemoteApi) {
 			setLoaded(true);
 			return () => {
 				abortController?.abort();
@@ -188,7 +188,7 @@ export const useDraftMessage = (
 		return () => {
 			abortController?.abort();
 		};
-	}, [canUseRemoteApi, scopeKeysToTry, setEditorWithDraftString]);
+	}, [enabled, canUseRemoteApi, scopeKeysToTry, setEditorWithDraftString]);
 
 	// If everything is ready for decryption, decrypt the draft message
 	useEffect(() => {

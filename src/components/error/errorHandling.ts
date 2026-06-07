@@ -76,5 +76,16 @@ export const redirectToErrorPage = (error: number) => {
 		null,
 		correlationId
 	);
-	void logout(true, redirect);
+
+	// Only auth failures should tear down the session. Server/UI errors should
+	// not trigger Keycloak logout (which was surfacing as a 400 in Network tab
+	// and cancelling in-flight requests such as draft loads).
+	if (error === ERROR_TYPES.UNAUTHORIZED) {
+		void logout(true, redirect);
+		return;
+	}
+
+	if (redirect) {
+		window.location.href = redirect;
+	}
 };
