@@ -1818,12 +1818,15 @@ export const MessageSubmitInterfaceComponent = ({
 	const sendMessage = useCallback(
 		async (message, attachment: File, isEncrypted) => {
 			const sendToRoomWithId = activeSession.rid || activeSession.item.id;
-			// MATRIX MIGRATION: Determine if this is a Matrix session
-			// Matrix sessions have either no rid, or rid is a Matrix room ID (starts with '!')
+			// MATRIX MIGRATION: Determine if this is a Matrix-backed session.
+			// Some sessions still have a legacy rid while exposing matrixRoomId.
 			const isMatrixSession =
-				(!activeSession.rid ||
-					(activeSession.rid && activeSession.rid.startsWith('!'))) &&
-				activeSession.item?.id;
+				Boolean(activeSession.item?.matrixRoomId) ||
+				Boolean(
+					activeSession.rid &&
+						activeSession.rid.startsWith('!') &&
+						activeSession.item?.id
+				);
 			const matrixSessionId = isMatrixSession
 				? activeSession.item.id
 				: undefined;
