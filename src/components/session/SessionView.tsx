@@ -54,7 +54,10 @@ export const SessionView = () => {
 		ready: activeSessionReady,
 		reload: reloadActiveSession,
 		read: readActiveSession
-	} = useSession(groupIdFromParam, sessionIdFromParam ? parseInt(sessionIdFromParam) : undefined);
+	} = useSession(
+		groupIdFromParam,
+		sessionIdFromParam ? parseInt(sessionIdFromParam) : undefined
+	);
 
 	// console.log('🔥 SessionView STATE:', {
 	// loading,
@@ -126,7 +129,7 @@ export const SessionView = () => {
 			return;
 		} else if (activeSessionReady) {
 			// console.log('🔥 Active session ready - setting loading false');
-			
+
 			// MATRIX MIGRATION: Skip RocketChat-specific redirect
 			// if (
 			// 	activeSession.rid !== currentGroupId.current &&
@@ -171,11 +174,13 @@ export const SessionView = () => {
 		if (!agencyId) return;
 
 		(async () => {
-			// TODO: move this to global jotai atom family
-			const agency = await apiGetAgencyById(agencyId);
-
-			if (agency?.agencyLogo && !isCanceled) {
-				setAgencyLogo(agency.agencyLogo);
+			try {
+				const agency = await apiGetAgencyById(agencyId);
+				if (agency?.agencyLogo && !isCanceled) {
+					setAgencyLogo(agency.agencyLogo);
+				}
+			} catch {
+				// Logo fetch is cosmetic; never break the session view.
 			}
 		})();
 
