@@ -13,8 +13,10 @@ import { ConsultantSearchLoader } from '../sessionHeader/ConsultantSearchLoader'
 import { MenuVerticalIcon, ShowPasswordIcon } from '../../resources/img/icons';
 import { ReactComponent as ArchiveIcon } from '../../resources/img/icons/inbox.svg';
 import { ReactComponent as TrashIcon } from '../../resources/img/icons/trash.svg';
-import { ReactComponent as BellOffIcon } from '../../resources/img/icons/audio-off.svg';
+import { ReactComponent as BellOffIcon } from '../../resources/img/icons/bell-off.svg';
+import { ReactComponent as PrivacyPolicyIcon } from '../../resources/img/icons/privacy-policy.svg';
 import { ReactComponent as HelpIcon } from '../../resources/img/icons/i.svg';
+import { ReactComponent as ImprintIcon } from '../../resources/img/icons/imprint.svg';
 import { ReactComponent as PlusIcon } from '../../resources/img/icons/plus.svg';
 import { ReactComponent as PackageIcon } from '../../resources/img/icons/documents.svg';
 import oneOnOneImage from '../../resources/img/illustrations/one-on-one.svg';
@@ -1043,80 +1045,9 @@ export const SessionListItemComponent = ({
 												</h1>
 											</div>
 											<div className="sessionsListItem__dropdownDivider" />
-											<div className="sessionsListItem__dropdownContent">
-												{!hasUserAuthority(
-													AUTHORITIES.ASKER_DEFAULT,
-													userData
-												) &&
-													type !==
-														SESSION_LIST_TYPES.ENQUIRY &&
-													activeSession.isSession && (
-														<>
-															{sessionListTab !==
-															SESSION_LIST_TAB_ARCHIVE ? (
-																<button
-																	onClick={
-																		handleArchiveSession
-																	}
-																	className="sessionsListItem__dropdownOption"
-																	type="button"
-																>
-																	<ArchiveIcon className="sessionsListItem__dropdownOptionIcon" />
-																	<div className="sessionsListItem__dropdownOptionCenter">
-																		<div className="sessionsListItem__dropdownOptionTitleRow">
-																			<span className="sessionsListItem__dropdownOptionTitle">
-																				{translate(
-																					'chatFlyout.archive'
-																				)}
-																			</span>
-																			<kbd className="sessionsListItem__dropdownOptionShortcut">
-																				⇧A
-																			</kbd>
-																		</div>
-																		<p className="sessionsListItem__dropdownOptionDescription">
-																			{translate(
-																				'chatFlyout.archiveDescription'
-																			)}
-																		</p>
-																	</div>
-																</button>
-															) : (
-																<button
-																	onClick={
-																		handleDearchiveSession
-																	}
-																	className="sessionsListItem__dropdownOption"
-																	type="button"
-																>
-																	<ArchiveIcon className="sessionsListItem__dropdownOptionIcon" />
-																	<div className="sessionsListItem__dropdownOptionCenter">
-																		<div className="sessionsListItem__dropdownOptionTitleRow">
-																			<span className="sessionsListItem__dropdownOptionTitle">
-																				{translate(
-																					'chatFlyout.dearchive'
-																				)}
-																			</span>
-																			<kbd className="sessionsListItem__dropdownOptionShortcut">
-																				⇧A
-																			</kbd>
-																		</div>
-																		<p className="sessionsListItem__dropdownOptionDescription">
-																			{translate(
-																				'chatFlyout.dearchiveDescription'
-																			)}
-																		</p>
-																	</div>
-																</button>
-															)}
-														</>
-													)}
-												{hasUserAuthority(
-													AUTHORITIES.CONSULTANT_DEFAULT,
-													userData
-												) &&
-													type !==
-														SESSION_LIST_TYPES.ENQUIRY &&
-													activeSession.isSession && (
+											{activeSession.isEnquiry ? (
+												<>
+													<div className="sessionsListItem__dropdownContent">
 														<button
 															className="sessionsListItem__dropdownOption sessionsListItem__dropdownOption--disabled"
 															type="button"
@@ -1141,107 +1072,273 @@ export const SessionListItemComponent = ({
 																</p>
 															</div>
 														</button>
-													)}
-												<button
-													className="sessionsListItem__dropdownOption sessionsListItem__dropdownOption--disabled"
-													type="button"
-													disabled
-												>
-													<BellOffIcon className="sessionsListItem__dropdownOptionIcon sessionsListItem__dropdownOptionIcon--disabled" />
-													<div className="sessionsListItem__dropdownOptionCenter">
-														<div className="sessionsListItem__dropdownOptionTitleRow">
-															<span className="sessionsListItem__dropdownOptionTitle sessionsListItem__dropdownOptionTitle--disabled">
-																{translate(
-																	'chatFlyout.mute'
-																)}
-															</span>
-															<kbd className="sessionsListItem__dropdownOptionShortcut">
-																⇧Ö
-															</kbd>
-														</div>
-														<p className="sessionsListItem__dropdownOptionDescription sessionsListItem__dropdownOptionDescription--disabled">
-															{translate(
-																'chatFlyout.muteDescription'
-															)}
-														</p>
+														<button
+															className="sessionsListItem__dropdownOption sessionsListItem__dropdownOption--disabled"
+															type="button"
+															disabled
+														>
+															<BellOffIcon className="sessionsListItem__dropdownOptionIcon sessionsListItem__dropdownOptionIcon--disabled" />
+															<div className="sessionsListItem__dropdownOptionCenter">
+																<div className="sessionsListItem__dropdownOptionTitleRow">
+																	<span className="sessionsListItem__dropdownOptionTitle sessionsListItem__dropdownOptionTitle--disabled">
+																		{translate(
+																			'chatFlyout.activateNotification'
+																		)}
+																	</span>
+																	<kbd className="sessionsListItem__dropdownOptionShortcut">
+																		⇧R
+																	</kbd>
+																</div>
+															</div>
+														</button>
+														<button
+															className="sessionsListItem__dropdownOption sessionsListItem__dropdownOption--disabled"
+															type="button"
+															disabled
+														>
+															<PrivacyPolicyIcon className="sessionsListItem__dropdownOptionIcon sessionsListItem__dropdownOptionIcon--disabled" />
+															<div className="sessionsListItem__dropdownOptionCenter">
+																<div className="sessionsListItem__dropdownOptionTitleRow">
+																	<span className="sessionsListItem__dropdownOptionTitle sessionsListItem__dropdownOptionTitle--disabled">
+																		{translate(
+																			'chatFlyout.privacyPolicy'
+																		)}
+																	</span>
+																	<kbd className="sessionsListItem__dropdownOptionShortcut">
+																		⇧Ä
+																	</kbd>
+																</div>
+																<p className="sessionsListItem__dropdownOptionDescription sessionsListItem__dropdownOptionDescription--disabled">
+																	{translate(
+																		'chatFlyout.privacyPolicyDescription'
+																	)}
+																</p>
+															</div>
+														</button>
+														<button
+															className="sessionsListItem__dropdownOption sessionsListItem__dropdownOption--disabled"
+															type="button"
+															disabled
+														>
+															<ImprintIcon className="sessionsListItem__dropdownOptionIcon sessionsListItem__dropdownOptionIcon--disabled" />
+															<div className="sessionsListItem__dropdownOptionCenter">
+																<div className="sessionsListItem__dropdownOptionTitleRow">
+																	<span className="sessionsListItem__dropdownOptionTitle sessionsListItem__dropdownOptionTitle--disabled">
+																		{translate(
+																			'chatFlyout.imprint'
+																		)}
+																	</span>
+																	<kbd className="sessionsListItem__dropdownOptionShortcut">
+																		⇧I
+																	</kbd>
+																</div>
+															</div>
+														</button>
 													</div>
-												</button>
-												<button
-													className="sessionsListItem__dropdownOption sessionsListItem__dropdownOption--disabled"
-													type="button"
-													disabled
-												>
-													<HelpIcon className="sessionsListItem__dropdownOptionIcon sessionsListItem__dropdownOptionIcon--disabled" />
-													<div className="sessionsListItem__dropdownOptionCenter">
-														<div className="sessionsListItem__dropdownOptionTitleRow">
-															<span className="sessionsListItem__dropdownOptionTitle sessionsListItem__dropdownOptionTitle--disabled">
-																{translate(
-																	'chatFlyout.help'
-																)}
-															</span>
-															<kbd className="sessionsListItem__dropdownOptionShortcut">
-																⇧Ä
-															</kbd>
-														</div>
-														<p className="sessionsListItem__dropdownOptionDescription sessionsListItem__dropdownOptionDescription--disabled">
-															{translate(
-																'chatFlyout.helpDescription'
+												</>
+											) : (
+												<>
+													<div className="sessionsListItem__dropdownContent">
+														{!hasUserAuthority(
+															AUTHORITIES.ASKER_DEFAULT,
+															userData
+														) &&
+															type !==
+																SESSION_LIST_TYPES.ENQUIRY &&
+															activeSession.isSession && (
+																<>
+																	{sessionListTab !==
+																	SESSION_LIST_TAB_ARCHIVE ? (
+																		<button
+																			onClick={
+																				handleArchiveSession
+																			}
+																			className="sessionsListItem__dropdownOption"
+																			type="button"
+																		>
+																			<ArchiveIcon className="sessionsListItem__dropdownOptionIcon" />
+																			<div className="sessionsListItem__dropdownOptionCenter">
+																				<div className="sessionsListItem__dropdownOptionTitleRow">
+																					<span className="sessionsListItem__dropdownOptionTitle">
+																						{translate(
+																							'chatFlyout.archive'
+																						)}
+																					</span>
+																					<kbd className="sessionsListItem__dropdownOptionShortcut">
+																						⇧A
+																					</kbd>
+																				</div>
+																				<p className="sessionsListItem__dropdownOptionDescription">
+																					{translate(
+																						'chatFlyout.archiveDescription'
+																					)}
+																				</p>
+																			</div>
+																		</button>
+																	) : (
+																		<button
+																			onClick={
+																				handleDearchiveSession
+																			}
+																			className="sessionsListItem__dropdownOption"
+																			type="button"
+																		>
+																			<ArchiveIcon className="sessionsListItem__dropdownOptionIcon" />
+																			<div className="sessionsListItem__dropdownOptionCenter">
+																				<div className="sessionsListItem__dropdownOptionTitleRow">
+																					<span className="sessionsListItem__dropdownOptionTitle">
+																						{translate(
+																							'chatFlyout.dearchive'
+																						)}
+																					</span>
+																					<kbd className="sessionsListItem__dropdownOptionShortcut">
+																						⇧A
+																					</kbd>
+																				</div>
+																				<p className="sessionsListItem__dropdownOptionDescription">
+																					{translate(
+																						'chatFlyout.dearchiveDescription'
+																					)}
+																				</p>
+																			</div>
+																		</button>
+																	)}
+																</>
 															)}
-														</p>
-													</div>
-												</button>
-											</div>
-											<div className="sessionsListItem__dropdownDivider" />
-											<div className="sessionsListItem__dropdownContent">
-												<button
-													className="sessionsListItem__dropdownOption sessionsListItem__dropdownOption--disabled"
-													type="button"
-													disabled
-												>
-													<PlusIcon className="sessionsListItem__dropdownOptionIcon sessionsListItem__dropdownOptionIcon--disabled" />
-													<div className="sessionsListItem__dropdownOptionCenter">
-														<div className="sessionsListItem__dropdownOptionTitleRow">
-															<span className="sessionsListItem__dropdownOptionTitle sessionsListItem__dropdownOptionTitle--disabled">
-																{translate(
-																	'chatFlyout.invite'
-																)}
-															</span>
-															<kbd className="sessionsListItem__dropdownOptionShortcut">
-																⇧I
-															</kbd>
-														</div>
-														<p className="sessionsListItem__dropdownOptionDescription sessionsListItem__dropdownOptionDescription--disabled">
-															{translate(
-																'chatFlyout.inviteDescription'
+														{hasUserAuthority(
+															AUTHORITIES.CONSULTANT_DEFAULT,
+															userData
+														) &&
+															type !==
+																SESSION_LIST_TYPES.ENQUIRY &&
+															activeSession.isSession && (
+																<button
+																	className="sessionsListItem__dropdownOption sessionsListItem__dropdownOption--disabled"
+																	type="button"
+																	disabled
+																>
+																	<TrashIcon className="sessionsListItem__dropdownOptionIcon sessionsListItem__dropdownOptionIcon--disabled" />
+																	<div className="sessionsListItem__dropdownOptionCenter">
+																		<div className="sessionsListItem__dropdownOptionTitleRow">
+																			<span className="sessionsListItem__dropdownOptionTitle sessionsListItem__dropdownOptionTitle--disabled">
+																				{translate(
+																					'chatFlyout.remove'
+																				)}
+																			</span>
+																			<kbd className="sessionsListItem__dropdownOptionShortcut">
+																				⇧D
+																			</kbd>
+																		</div>
+																		<p className="sessionsListItem__dropdownOptionDescription sessionsListItem__dropdownOptionDescription--disabled">
+																			{translate(
+																				'chatFlyout.removeDescription'
+																			)}
+																		</p>
+																	</div>
+																</button>
 															)}
-														</p>
+														<button
+															className="sessionsListItem__dropdownOption sessionsListItem__dropdownOption--disabled"
+															type="button"
+															disabled
+														>
+															<BellOffIcon className="sessionsListItem__dropdownOptionIcon sessionsListItem__dropdownOptionIcon--disabled" />
+															<div className="sessionsListItem__dropdownOptionCenter">
+																<div className="sessionsListItem__dropdownOptionTitleRow">
+																	<span className="sessionsListItem__dropdownOptionTitle sessionsListItem__dropdownOptionTitle--disabled">
+																		{translate(
+																			'chatFlyout.mute'
+																		)}
+																	</span>
+																	<kbd className="sessionsListItem__dropdownOptionShortcut">
+																		⇧Ö
+																	</kbd>
+																</div>
+																<p className="sessionsListItem__dropdownOptionDescription sessionsListItem__dropdownOptionDescription--disabled">
+																	{translate(
+																		'chatFlyout.muteDescription'
+																	)}
+																</p>
+															</div>
+														</button>
+														<button
+															className="sessionsListItem__dropdownOption sessionsListItem__dropdownOption--disabled"
+															type="button"
+															disabled
+														>
+															<HelpIcon className="sessionsListItem__dropdownOptionIcon sessionsListItem__dropdownOptionIcon--disabled" />
+															<div className="sessionsListItem__dropdownOptionCenter">
+																<div className="sessionsListItem__dropdownOptionTitleRow">
+																	<span className="sessionsListItem__dropdownOptionTitle sessionsListItem__dropdownOptionTitle--disabled">
+																		{translate(
+																			'chatFlyout.help'
+																		)}
+																	</span>
+																	<kbd className="sessionsListItem__dropdownOptionShortcut">
+																		⇧Ä
+																	</kbd>
+																</div>
+																<p className="sessionsListItem__dropdownOptionDescription sessionsListItem__dropdownOptionDescription--disabled">
+																	{translate(
+																		'chatFlyout.helpDescription'
+																	)}
+																</p>
+															</div>
+														</button>
 													</div>
-												</button>
-												<button
-													className="sessionsListItem__dropdownOption sessionsListItem__dropdownOption--disabled"
-													type="button"
-													disabled
-												>
-													<PackageIcon className="sessionsListItem__dropdownOptionIcon sessionsListItem__dropdownOptionIcon--disabled" />
-													<div className="sessionsListItem__dropdownOptionCenter">
-														<div className="sessionsListItem__dropdownOptionTitleRow">
-															<span className="sessionsListItem__dropdownOptionTitle sessionsListItem__dropdownOptionTitle--disabled">
-																{translate(
-																	'chatFlyout.summarize'
-																)}
-															</span>
-															<kbd className="sessionsListItem__dropdownOptionShortcut">
-																⇧Ü
-															</kbd>
-														</div>
-														<p className="sessionsListItem__dropdownOptionDescription sessionsListItem__dropdownOptionDescription--disabled">
-															{translate(
-																'chatFlyout.summarizeDescription'
-															)}
-														</p>
+													<div className="sessionsListItem__dropdownDivider" />
+													<div className="sessionsListItem__dropdownContent">
+														<button
+															className="sessionsListItem__dropdownOption sessionsListItem__dropdownOption--disabled"
+															type="button"
+															disabled
+														>
+															<PlusIcon className="sessionsListItem__dropdownOptionIcon sessionsListItem__dropdownOptionIcon--disabled" />
+															<div className="sessionsListItem__dropdownOptionCenter">
+																<div className="sessionsListItem__dropdownOptionTitleRow">
+																	<span className="sessionsListItem__dropdownOptionTitle sessionsListItem__dropdownOptionTitle--disabled">
+																		{translate(
+																			'chatFlyout.invite'
+																		)}
+																	</span>
+																	<kbd className="sessionsListItem__dropdownOptionShortcut">
+																		⇧I
+																	</kbd>
+																</div>
+																<p className="sessionsListItem__dropdownOptionDescription sessionsListItem__dropdownOptionDescription--disabled">
+																	{translate(
+																		'chatFlyout.inviteDescription'
+																	)}
+																</p>
+															</div>
+														</button>
+														<button
+															className="sessionsListItem__dropdownOption sessionsListItem__dropdownOption--disabled"
+															type="button"
+															disabled
+														>
+															<PackageIcon className="sessionsListItem__dropdownOptionIcon sessionsListItem__dropdownOptionIcon--disabled" />
+															<div className="sessionsListItem__dropdownOptionCenter">
+																<div className="sessionsListItem__dropdownOptionTitleRow">
+																	<span className="sessionsListItem__dropdownOptionTitle sessionsListItem__dropdownOptionTitle--disabled">
+																		{translate(
+																			'chatFlyout.summarize'
+																		)}
+																	</span>
+																	<kbd className="sessionsListItem__dropdownOptionShortcut">
+																		⇧Ü
+																	</kbd>
+																</div>
+																<p className="sessionsListItem__dropdownOptionDescription sessionsListItem__dropdownOptionDescription--disabled">
+																	{translate(
+																		'chatFlyout.summarizeDescription'
+																	)}
+																</p>
+															</div>
+														</button>
 													</div>
-												</button>
-											</div>
+												</>
+											)}
 										</div>,
 										document.body
 									)}
