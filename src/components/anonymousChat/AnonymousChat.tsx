@@ -23,6 +23,7 @@ import NorthEastIcon from '@mui/icons-material/NorthEast';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CloseIcon from '@mui/icons-material/Close';
 import { apiAgencySelection } from '../../api/apiAgencySelection';
+import { apiGetConsultantAvailability } from '../../api/apiGetConsultantAvailability';
 import { apiGetTopicsData } from '../../api/apiGetTopicsData';
 import {
 	AgencyDataInterface,
@@ -133,6 +134,55 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 			});
 	}, []);
 
+	const openNoAvailabilityModal = useCallback(
+		(topic: TopicsDataInterface) => {
+			setNoAvailabilityModalTopic(topic);
+			setNoAvailabilityModalOpen(true);
+			setShowOpeningHoursHint(false);
+		},
+		[]
+	);
+
+	/**
+	 * Real-time, topic-based availability check. Resolves to whether a
+	 * consultant is currently available for the topic and opens the alert when
+	 * not. Mirrors the backend routing logic, so the alert matches what would
+	 * actually happen if the enquiry were created. A failed request resolves to
+	 * `true` (unknown) so transient errors never block the user.
+	 *
+	 * `force` opens the modal even if it was already shown for this topic
+	 * (used on "Beratung starten"); otherwise it auto-shows once per topic.
+	 */
+	const checkConsultantAvailability = useCallback(
+		(
+			topic: TopicsDataInterface,
+			consultingTypeId?: number,
+			{ force = false }: { force?: boolean } = {}
+		): Promise<boolean> =>
+			apiGetConsultantAvailability(topic.id, consultingTypeId)
+				.then((res) => {
+					if (res && res.available === false) {
+						if (force) {
+							openNoAvailabilityModal(topic);
+						} else {
+							setShownNoAvailabilityTopics((prev) => {
+								if (prev.has(topic.id)) {
+									return prev;
+								}
+								const next = new Set(prev);
+								next.add(topic.id);
+								openNoAvailabilityModal(topic);
+								return next;
+							});
+						}
+						return false;
+					}
+					return true;
+				})
+				.catch(() => true),
+		[openNoAvailabilityModal]
+	);
+
 	// Load agencies for a specific topic
 	const loadAgenciesForTopic = useCallback(
 		(topic: TopicsDataInterface) => {
@@ -179,6 +229,12 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 							setSelectedAgency(uniqueAgencies[0]);
 							setSelectedTopic(topic);
 						}
+						// Agencies exist, but a counsellor may still be offline:
+						// real-time topic-based availability check.
+						checkConsultantAvailability(
+							topic,
+							uniqueAgencies[0]?.consultingType
+						);
 					} else {
 						setTopicAgencies((prev) => {
 							const newMap = new Map(prev);
@@ -226,7 +282,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 				abortController.abort();
 			};
 		},
-		[topicAgencies, selectedAgency]
+		[topicAgencies, selectedAgency, checkConsultantAvailability]
 	);
 
 	// Handle topic expansion
@@ -250,60 +306,84 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 
 		setIsRegistering(true);
 
-		// Always use "00000" for anonymous chat postcode
-		const validPostcode = '00000';
+		const proceedRegistration = () => {
+			// Always use "00000" for anonymous chat postcode
+			const validPostcode = '00000';
 
-		// Build registration data exactly like normal registration
-		const registrationData = {
-			username: username,
-			password: encodeURIComponent(password),
-			agencyId: selectedAgency.id.toString(),
-			postcode: validPostcode,
-			termsAccepted: 'true',
-			preferredLanguage: locale || 'de',
-			consultingType: selectedAgency.consultingType, // Keep as number, same as normal registration
-			// Use the selected topic - match normal registration structure
-			...(selectedTopic
-				? {
-						mainTopicId: selectedTopic.id.toString(),
-						// topicId is optional in normal registration, set it to mainTopicId if available
-						topicId: selectedTopic.id.toString()
-					}
-				: selectedAgency.topicIds && selectedAgency.topicIds.length > 0
+			// Build registration data exactly like normal registration
+			const registrationData = {
+				username: username,
+				password: encodeURIComponent(password),
+				agencyId: selectedAgency.id.toString(),
+				postcode: validPostcode,
+				termsAccepted: 'true',
+				preferredLanguage: locale || 'de',
+				consultingType: selectedAgency.consultingType, // Keep as number, same as normal registration
+				// Use the selected topic - match normal registration structure
+				...(selectedTopic
 					? {
-							mainTopicId: selectedAgency.topicIds[0].toString(),
-							topicId: selectedAgency.topicIds[0].toString()
+							mainTopicId: selectedTopic.id.toString(),
+							// topicId is optional in normal registration, set it to mainTopicId if available
+							topicId: selectedTopic.id.toString()
 						}
-					: {})
+					: selectedAgency.topicIds &&
+						  selectedAgency.topicIds.length > 0
+						? {
+								mainTopicId:
+									selectedAgency.topicIds[0].toString(),
+								topicId: selectedAgency.topicIds[0].toString()
+							}
+						: {})
+			};
+
+			apiPostRegistration(
+				endpoints.registerAsker,
+				registrationData,
+				settings.multitenancyWithSingleDomainEnabled,
+				tenant
+			)
+				.then(() => {
+					// Registration successful, auto-login completed by apiPostRegistration
+					// Redirect to app (same as normal registration)
+					redirectToApp();
+				})
+				.catch((error) => {
+					// console.error('Anonymous chat registration failed:', error);
+					setIsRegistering(false);
+					addNotification({
+						notificationType: NOTIFICATION_TYPE_ERROR,
+						title: t('registration.errors.ups.title'),
+						text: t('registration.errors.ups.text'),
+						closeable: true,
+						timeout: 3000
+					});
+				});
 		};
 
-		apiPostRegistration(
-			endpoints.registerAsker,
-			registrationData,
-			settings.multitenancyWithSingleDomainEnabled,
-			tenant
-		)
-			.then(() => {
-				// Registration successful, auto-login completed by apiPostRegistration
-				// Redirect to app (same as normal registration)
-				redirectToApp();
-			})
-			.catch((error) => {
-				// console.error('Anonymous chat registration failed:', error);
-				setIsRegistering(false);
-				addNotification({
-					notificationType: NOTIFICATION_TYPE_ERROR,
-					title: t('registration.errors.ups.title'),
-					text: t('registration.errors.ups.text'),
-					closeable: true,
-					timeout: 3000
-				});
+		// Re-verify availability at the moment of starting — presence can change
+		// between selecting the topic and clicking start. Block and show the
+		// alert when no counsellor is available.
+		if (selectedTopic) {
+			checkConsultantAvailability(
+				selectedTopic,
+				selectedAgency.consultingType,
+				{ force: true }
+			).then((available) => {
+				if (!available) {
+					setIsRegistering(false);
+					return;
+				}
+				proceedRegistration();
 			});
+		} else {
+			proceedRegistration();
+		}
 	}, [
 		username,
 		password,
 		selectedAgency,
 		selectedTopic,
+		checkConsultantAvailability,
 		locale,
 		settings,
 		tenant,
