@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useState, useEffect, useContext, FC, useCallback } from 'react';
+import { useHistory } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
 	Typography,
@@ -11,10 +12,16 @@ import {
 	Radio,
 	IconButton,
 	InputAdornment,
-	TextField
+	TextField,
+	Dialog
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import AccessTimeOutlinedIcon from '@mui/icons-material/AccessTimeOutlined';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import NorthEastIcon from '@mui/icons-material/NorthEast';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import CloseIcon from '@mui/icons-material/Close';
 import { apiAgencySelection } from '../../api/apiAgencySelection';
 import { apiGetTopicsData } from '../../api/apiGetTopicsData';
 import {
@@ -32,7 +39,6 @@ import {
 	NOTIFICATION_TYPE_ERROR,
 	NOTIFICATION_TYPE_SUCCESS
 } from '../../globalState';
-import { FETCH_ERRORS } from '../../api';
 import { StageLayout } from '../stageLayout/StageLayout';
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
 import { Loading } from '../app/Loading';
@@ -49,6 +55,7 @@ interface AnonymousChatProps {
 
 export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 	const { t } = useTranslation();
+	const history = useHistory();
 	const settings = useAppConfig();
 	const { tenant } = useContext(TenantContext);
 	const { Stage } = useContext(GlobalComponentContext);
@@ -73,6 +80,15 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 	const [isRegistering, setIsRegistering] = useState<boolean>(false);
 	const [username, setUsername] = useState<string>('');
 	const [password, setPassword] = useState<string>('');
+	const [noAvailabilityModalTopic, setNoAvailabilityModalTopic] =
+		useState<TopicsDataInterface | null>(null);
+	const [noAvailabilityModalOpen, setNoAvailabilityModalOpen] =
+		useState<boolean>(false);
+	const [showOpeningHoursHint, setShowOpeningHoursHint] =
+		useState<boolean>(false);
+	const [shownNoAvailabilityTopics, setShownNoAvailabilityTopics] = useState<
+		Set<number>
+	>(new Set());
 
 	// Generate username and 8-character random password on mount
 	useEffect(() => {
@@ -169,6 +185,20 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 							newMap.set(topic.id, []);
 							return newMap;
 						});
+						setSelectedTopic(topic);
+						setSelectedAgency(null);
+						setShownNoAvailabilityTopics((prev) => {
+							if (prev.has(topic.id)) {
+								return prev;
+							}
+
+							const next = new Set(prev);
+							next.add(topic.id);
+							setNoAvailabilityModalTopic(topic);
+							setNoAvailabilityModalOpen(true);
+							setShowOpeningHoursHint(false);
+							return next;
+						});
 					}
 				})
 				.catch((err) => {
@@ -181,6 +211,8 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 						newMap.set(topic.id, []);
 						return newMap;
 					});
+					setSelectedTopic(topic);
+					setSelectedAgency(null);
 				})
 				.finally(() => {
 					setLoadingAgencies((prev) => {
@@ -788,6 +820,198 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 					</Button>
 				</Box>
 			</Box>
+
+			<Dialog
+				open={noAvailabilityModalOpen}
+				onClose={() => setNoAvailabilityModalOpen(false)}
+				maxWidth="sm"
+				fullWidth
+			>
+				<Box
+					sx={{
+						p: { xs: '20px', md: '24px' },
+						borderRadius: '16px'
+					}}
+				>
+					<Box
+						sx={{
+							display: 'flex',
+							alignItems: 'center',
+							gap: '12px',
+							mb: '16px'
+						}}
+					>
+						<Box
+							component="img"
+							src="https://www.figma.com/api/mcp/asset/53e84cfc-9e3d-4075-bc3b-cfcf0903e811"
+							alt=""
+							sx={{ width: 72, height: 72 }}
+						/>
+						<Typography
+							variant="h4"
+							sx={{ fontWeight: 700, lineHeight: 1.2 }}
+						>
+							{t(
+								'anonymousChat.noAvailability.title',
+								'Live-Chat ist zurzeit leider geschlossen'
+							)}
+						</Typography>
+					</Box>
+
+					<Typography variant="body1" sx={{ mb: '16px' }}>
+						{t(
+							'anonymousChat.noAvailability.subtitle',
+							'Wenn Sie ohne Registrierung beraten werden möchten, kommen Sie bitte zu den Öffnungszeiten wieder.'
+						)}
+					</Typography>
+
+					<Box
+						onClick={() => setShowOpeningHoursHint((prev) => !prev)}
+						sx={{
+							border: '1px solid #DAE3F0',
+							borderRadius: '12px',
+							px: '12px',
+							py: '10px',
+							display: 'flex',
+							alignItems: 'center',
+							justifyContent: 'space-between',
+							cursor: 'pointer',
+							mb: showOpeningHoursHint ? '8px' : '16px'
+						}}
+					>
+						<Box sx={{ display: 'flex', alignItems: 'center' }}>
+							<AccessTimeOutlinedIcon
+								sx={{ fontSize: 18, color: '#4C555F', mr: 1 }}
+							/>
+							<Typography
+								variant="body2"
+								sx={{ color: '#4C555F' }}
+							>
+								{t(
+									'anonymousChat.noAvailability.openingHours',
+									'Reguläre Öffnungszeiten anzeigen'
+								)}
+							</Typography>
+						</Box>
+						<KeyboardArrowDownIcon sx={{ color: '#4C555F' }} />
+					</Box>
+
+					{showOpeningHoursHint && (
+						<Typography
+							variant="body2"
+							sx={{ color: 'text.secondary', mb: '16px' }}
+						>
+							{t(
+								'anonymousChat.noAvailability.openingHoursHint',
+								'Die Öffnungszeiten finden Sie auf der Seite Ihrer ausgewählten Beratungsstelle.'
+							)}
+						</Typography>
+					)}
+
+					<Typography variant="body1" sx={{ mb: '8px' }}>
+						{t(
+							'anonymousChat.noAvailability.mailHint',
+							'Oder starten Sie jederzeit die anonyme Mail-Beratung: Mit Ihrer Postleitzahl finden Sie eine Beratungsstelle in Ihrer Nähe und schreiben Ihre Anfrage. Für die Antwort brauchen Sie nur eine E-Mail-Adresse - keinen echten Namen.'
+						)}
+					</Typography>
+
+					<Typography
+						variant="body2"
+						sx={{ fontWeight: 700, mb: '16px' }}
+					>
+						{t(
+							'anonymousChat.noAvailability.tip',
+							'Tipp: Nutzen Sie eine E-Mail-Adresse, auf die nur Sie Zugriff haben.'
+						)}
+					</Typography>
+
+					<Button
+						fullWidth
+						variant="contained"
+						onClick={() => history.push('/registration')}
+						sx={{
+							mb: '8px',
+							borderRadius: '999px',
+							py: '14px',
+							backgroundColor: '#A5000A'
+						}}
+						startIcon={<NorthEastIcon />}
+					>
+						{t(
+							'anonymousChat.noAvailability.startMailCounseling',
+							'anonyme Mail-Beratung starten'
+						)}
+					</Button>
+
+					<Typography
+						variant="body2"
+						sx={{
+							textAlign: 'center',
+							color: '#4C555F',
+							fontWeight: 600,
+							mb: '16px'
+						}}
+					>
+						{t(
+							'anonymousChat.noAvailability.responseTime',
+							'Antwort innerhalb von 2 Werktagen'
+						)}
+					</Typography>
+
+					<Box sx={{ display: 'flex', gap: '10px' }}>
+						<Button
+							fullWidth
+							variant="outlined"
+							onClick={() => {
+								setNoAvailabilityModalOpen(false);
+								onBack();
+							}}
+							startIcon={<ArrowBackIcon />}
+							sx={{
+								borderRadius: '24px',
+								borderColor: 'transparent',
+								backgroundColor: '#F0EDEE',
+								color: '#4C555F'
+							}}
+						>
+							{t(
+								'anonymousChat.noAvailability.back',
+								'Zurück zur vorherigen Seite'
+							)}
+						</Button>
+						<Button
+							fullWidth
+							variant="outlined"
+							onClick={() => setNoAvailabilityModalOpen(false)}
+							startIcon={<CloseIcon />}
+							sx={{
+								borderRadius: '8px',
+								borderColor: '#FFE2DE',
+								backgroundColor: '#FFE2DE',
+								color: '#A5000A'
+							}}
+						>
+							{t(
+								'anonymousChat.noAvailability.later',
+								'Später wiederkommen'
+							)}
+						</Button>
+					</Box>
+
+					{noAvailabilityModalTopic?.name && (
+						<Typography
+							variant="caption"
+							sx={{ mt: '12px', display: 'block', opacity: 0.7 }}
+						>
+							{t(
+								'anonymousChat.noAvailability.topicLabel',
+								'Angefragtes Thema: {{topic}}',
+								{ topic: noAvailabilityModalTopic.name }
+							)}
+						</Typography>
+					)}
+				</Box>
+			</Dialog>
 		</StageLayout>
 	);
 };
