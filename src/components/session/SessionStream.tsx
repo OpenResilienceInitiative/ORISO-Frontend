@@ -738,6 +738,26 @@ export const SessionStream = ({
 		fetchSessionMessages
 	]);
 
+	// Hard fallback: keep Matrix sessions in sync even if a live event is missed.
+	useEffect(() => {
+		if (!isMatrixSession || !activeSession.item?.id) {
+			return;
+		}
+
+		const intervalId = window.setInterval(() => {
+			if (typeof document !== 'undefined' && document.hidden) {
+				return;
+			}
+			fetchSessionMessages().catch(() => {
+				// keep UI stable on intermittent network/session race conditions
+			});
+		}, 1500);
+
+		return () => {
+			window.clearInterval(intervalId);
+		};
+	}, [isMatrixSession, activeSession.item?.id, fetchSessionMessages]);
+
 	useEffect(
 		() => () => {
 			clearMatrixTypingTimeout();
