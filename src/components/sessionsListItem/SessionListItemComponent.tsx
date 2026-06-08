@@ -66,6 +66,8 @@ import DeleteSession from '../session/DeleteSession';
 import { Overlay, OVERLAY_FUNCTIONS } from '../overlay/Overlay';
 import { archiveSessionSuccessOverlayItem } from '../sessionMenu/sessionMenuHelpers';
 import { mobileListView } from '../app/navigationHandler';
+import LegalLinks from '../legalLinks/LegalLinks';
+import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 interface SessionListItemProps {
 	defaultLanguage: string;
 	itemRef?: any;
@@ -104,6 +106,7 @@ export const SessionListItemComponent = ({
 	const { dispatch: sessionsDispatch } = useContext(SessionsDataContext);
 	// MATRIX MIGRATION: RocketChat users context may be null for Matrix rooms
 	const rcUsersContext = useContext(RocketChatUsersOfRoomContext);
+	const legalLinks = useContext(LegalLinksContext);
 
 	// Dropdown menu state
 	const [flyoutOpen, setFlyoutOpen] = useState(false);
@@ -1045,7 +1048,7 @@ export const SessionListItemComponent = ({
 												</h1>
 											</div>
 											<div className="sessionsListItem__dropdownDivider" />
-											{activeSession.isEnquiry ? (
+											{isAsker ? (
 												<>
 													<div className="sessionsListItem__dropdownContent">
 														<button
@@ -1091,49 +1094,83 @@ export const SessionListItemComponent = ({
 																</div>
 															</div>
 														</button>
-														<button
-															className="sessionsListItem__dropdownOption sessionsListItem__dropdownOption--disabled"
-															type="button"
-															disabled
+														<LegalLinks
+															legalLinks={
+																legalLinks
+															}
+															params={{
+																aid: activeSession
+																	?.agency?.id
+															}}
+															filter={(link) =>
+																link.label ===
+																'login.legal.infoText.dataprotection'
+															}
 														>
-															<PrivacyPolicyIcon className="sessionsListItem__dropdownOptionIcon sessionsListItem__dropdownOptionIcon--disabled" />
-															<div className="sessionsListItem__dropdownOptionCenter">
-																<div className="sessionsListItem__dropdownOptionTitleRow">
-																	<span className="sessionsListItem__dropdownOptionTitle sessionsListItem__dropdownOptionTitle--disabled">
-																		{translate(
-																			'chatFlyout.privacyPolicy'
-																		)}
-																	</span>
-																	<kbd className="sessionsListItem__dropdownOptionShortcut">
-																		⇧Ä
-																	</kbd>
-																</div>
-																<p className="sessionsListItem__dropdownOptionDescription sessionsListItem__dropdownOptionDescription--disabled">
-																	{translate(
-																		'chatFlyout.privacyPolicyDescription'
-																	)}
-																</p>
-															</div>
-														</button>
-														<button
-															className="sessionsListItem__dropdownOption sessionsListItem__dropdownOption--disabled"
-															type="button"
-															disabled
+															{(_, url) => (
+																<a
+																	href={url}
+																	target="_blank"
+																	rel="noreferrer"
+																	className="sessionsListItem__dropdownOption"
+																>
+																	<PrivacyPolicyIcon className="sessionsListItem__dropdownOptionIcon" />
+																	<div className="sessionsListItem__dropdownOptionCenter">
+																		<div className="sessionsListItem__dropdownOptionTitleRow">
+																			<span className="sessionsListItem__dropdownOptionTitle">
+																				{translate(
+																					'chatFlyout.privacyPolicy'
+																				)}
+																			</span>
+																			<kbd className="sessionsListItem__dropdownOptionShortcut">
+																				⇧Ä
+																			</kbd>
+																		</div>
+																		<p className="sessionsListItem__dropdownOptionDescription">
+																			{translate(
+																				'chatFlyout.privacyPolicyDescription'
+																			)}
+																		</p>
+																	</div>
+																</a>
+															)}
+														</LegalLinks>
+														<LegalLinks
+															legalLinks={
+																legalLinks
+															}
+															params={{
+																aid: activeSession
+																	?.agency?.id
+															}}
+															filter={(link) =>
+																link.label ===
+																'login.legal.infoText.impressum'
+															}
 														>
-															<ImprintIcon className="sessionsListItem__dropdownOptionIcon sessionsListItem__dropdownOptionIcon--disabled" />
-															<div className="sessionsListItem__dropdownOptionCenter">
-																<div className="sessionsListItem__dropdownOptionTitleRow">
-																	<span className="sessionsListItem__dropdownOptionTitle sessionsListItem__dropdownOptionTitle--disabled">
-																		{translate(
-																			'chatFlyout.imprint'
-																		)}
-																	</span>
-																	<kbd className="sessionsListItem__dropdownOptionShortcut">
-																		⇧I
-																	</kbd>
-																</div>
-															</div>
-														</button>
+															{(_, url) => (
+																<a
+																	href={url}
+																	target="_blank"
+																	rel="noreferrer"
+																	className="sessionsListItem__dropdownOption"
+																>
+																	<ImprintIcon className="sessionsListItem__dropdownOptionIcon" />
+																	<div className="sessionsListItem__dropdownOptionCenter">
+																		<div className="sessionsListItem__dropdownOptionTitleRow">
+																			<span className="sessionsListItem__dropdownOptionTitle">
+																				{translate(
+																					'chatFlyout.imprint'
+																				)}
+																			</span>
+																			<kbd className="sessionsListItem__dropdownOptionShortcut">
+																				⇧I
+																			</kbd>
+																		</div>
+																	</div>
+																</a>
+															)}
+														</LegalLinks>
 													</div>
 												</>
 											) : (
