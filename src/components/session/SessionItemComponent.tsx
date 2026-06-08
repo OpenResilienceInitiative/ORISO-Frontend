@@ -1596,32 +1596,60 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	// MATRIX MIGRATION: Create Matrix-aware isMyMessage function
 	const isMyMessageMatrix = useCallback(
 		(messageUserId: string) => {
-			// For Matrix sessions, check if sender matches current user's Matrix user ID
-			// Matrix room IDs start with '!' and Matrix user IDs start with '@'
-			const isMatrixSession =
-				activeSession.rid?.startsWith('!') ||
-				messageUserId?.includes('@');
+			const normalizeMatrixId = (value?: string | null) => {
+				const raw = `${value || ''}`.trim().toLowerCase();
+				if (!raw) {
+					return { full: '', atUser: '', user: '' };
+				}
+				const withAt = raw.startsWith('@') ? raw : `@${raw}`;
+				const withoutAt = withAt.substring(1);
+				const usernameOnly = withoutAt.split(':')[0];
+				return {
+					full: withAt,
+					atUser: `@${usernameOnly}`,
+					user: usernameOnly
+				};
+			};
 
-			if (isMatrixSession && messageUserId?.includes('@')) {
-				// Get current user's Matrix user ID from localStorage or cookie (rc_uid stores Matrix ID for Matrix sessions)
+			const isMatrixSession = Boolean(
+				activeSession.rid?.startsWith('!') ||
+					activeSession.item?.matrixRoomId ||
+					messageUserId?.includes('@')
+			);
+
+			if (isMatrixSession) {
+				const matrixClientUserId = (window as any).matrixClientService
+					?.getClient?.()
+					?.getUserId?.();
 				const myMatrixUserId =
+					matrixClientUserId ||
 					localStorage.getItem('matrix_user_id') ||
 					(typeof document !== 'undefined' &&
 						document.cookie
 							.split('; ')
 							.find((row) => row.startsWith('rc_uid='))
-							?.split('=')[1]);
+							?.split('=')[1]) ||
+					userData?.userName;
 
-				// Compare full Matrix user IDs (e.g., @username:domain)
-				// This works for both normal and anonymous users
-				if (myMatrixUserId && messageUserId) {
-					return myMatrixUserId === messageUserId;
-				}
+				const mine = normalizeMatrixId(myMatrixUserId);
+				const sender = normalizeMatrixId(messageUserId);
+
+				return Boolean(
+					mine.full &&
+						(sender.full === mine.full ||
+							sender.full === mine.atUser ||
+							sender.atUser === mine.atUser ||
+							sender.user === mine.user)
+				);
 			}
 			// For RocketChat sessions, use the standard check
 			return isMyMessage(messageUserId);
 		},
-		[activeSession.rid]
+		[
+			activeSession.rid,
+			activeSession.item?.matrixRoomId,
+			userData?.userName
+		]
 	);
 
 	// Check if current user is a supervisor
