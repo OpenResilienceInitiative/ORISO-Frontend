@@ -526,170 +526,76 @@ export const SessionStream = ({
 				? activeSession.rid
 				: activeSession.item?.matrixRoomId;
 
-		if (isMatrixSession && matrixRoomId) {
-			const sessionId = activeSession.item.id;
-			// console.log('🔷 Setting up Matrix real-time listener for room:', matrixRoomId);
-
-			// Get Matrix client for frontend real-time events (like Element!)
-			const matrixClientService = (window as any).matrixClientService;
-			if (!matrixClientService) {
-				// console.warn('⚠️ Matrix client not initialized - messages will not appear in real-time');
-			} else {
-				const matrixClient = matrixClientService.getClient();
-				if (matrixClient) {
-					// Handler for Room.timeline events - INSTANT local echo like Element!
-					const handleMatrixTimeline = (
-						event: any,
-						room: any,
-						toStartOfTimeline: boolean
-					) => {
-						if (toStartOfTimeline || room.roomId !== matrixRoomId) {
-							return;
-						}
-
-						const eventType = event.getType();
-						if (
-							eventType !== 'm.room.message' &&
-							eventType !== 'm.room.encrypted'
-						) {
-							return;
-						}
-
-						// console.log('📬 Matrix message received - adding to UI instantly!', event);
-
-						// Get the message content from the event
-						const content = event.getContent();
-						const sender = event.getSender();
-						const timestamp = event.getTs();
-						const eventId = event.getId();
-						const senderUsername =
-							sender?.split(':')[0]?.substring(1) || 'unknown';
-						const senderDisplayName =
-							room?.getMember?.(sender)?.name ||
-							room?.getMember?.(sender)?.rawDisplayName ||
-							senderUsername;
-
-						// Handle file attachments (m.file, m.image, m.video, m.audio)
-						let attachments = undefined;
-						let fileObj = undefined;
-						if (
-							content.msgtype &&
-							content.msgtype !== 'm.text' &&
-							content.url
-						) {
-							// Convert mxc:// URL to download path
-							let downloadPath = content.url;
-							if (downloadPath.startsWith('mxc://')) {
-								const mxcParts = downloadPath
-									.substring(6)
-									.split('/');
-								const serverName = mxcParts[0];
-								const mediaId = mxcParts[1];
-								downloadPath = `/_matrix/media/r0/download/${serverName}/${mediaId}`;
-							}
-
-							fileObj = {
-								name: content.body || 'file',
-								type:
-									content.info?.mimetype ||
-									'application/octet-stream'
-							};
-
-							attachments = [
-								{
-									type:
-										content.msgtype === 'm.image'
-											? 'image'
-											: 'file',
-									title: content.body || 'file',
-									title_link: downloadPath,
-									title_link_download: true,
-									image_url:
-										content.msgtype === 'm.image'
-											? downloadPath
-											: undefined,
-									image_type:
-										content.info?.mimetype ||
-										'application/octet-stream',
-									image_size: content.info?.size || 0
-								}
-							];
-						}
-
-						// Create a message object in the same format as backend messages
-						const textMessageContent =
-							content.msgtype === 'm.text'
-								? content.formatted_body || content.body || ''
-								: content.body || '';
-						const newMessage = {
-							_id: eventId,
-							rid: matrixRoomId,
-							msg: textMessageContent,
-							ts: new Date(timestamp).toISOString(),
-							u: {
-								_id: sender,
-								username: senderUsername, // Extract username from @user:domain
-								name: senderDisplayName
-							},
-							_updatedAt: new Date(timestamp).toISOString(),
-							t:
-								content.msgtype === 'm.text'
-									? undefined
-									: content.msgtype,
-							file: fileObj,
-							attachments: attachments
-						};
-
-						// console.log('📬 New message object:', newMessage);
-
-						// Add the new message to the existing messages
-						setMessagesItem((prevMessages) => {
-							if (!prevMessages || !prevMessages.messages) {
-								return {
-									messages: prepareMessages([newMessage])
-								};
-							}
-
-							// Check if message already exists (avoid duplicates)
-							const messageExists = prevMessages.messages.some(
-								(msg) => msg._id === eventId
-							);
-
-							if (messageExists) {
-								// console.log('📬 Message already exists, skipping');
-								return prevMessages;
-							}
-
-							// Add new message to the end
-							const updatedMessages = [...prevMessages.messages];
-							const preparedNewMessages = prepareMessages([
-								newMessage
-							]);
-							updatedMessages.push(...preparedNewMessages);
-
-							// console.log('📬 Updated messages count:', updatedMessages.length);
-							return { messages: updatedMessages };
-						});
-					};
-
-					// Subscribe to Matrix Room.timeline events for instant updates!
-					// console.log('📡 Subscribing to Matrix Room.timeline for instant message updates');
-					(matrixClient as any).on(
-						'Room.timeline',
-						handleMatrixTimeline
-					);
-
-					// Cleanup Matrix listener
-					return () => {
-						// console.log('🧹 Cleaning up Matrix listener');
-						(matrixClient as any).off(
-							'Room.timeline',
-							handleMatrixTimeline
-						);
-					};
-				}
-			}
+		if (!isMatrixSession || !matrixRoomId) {
+			return;
 		}
+
+		let retryTimer: number | null = null;
+		let detachTimelineListener: (() => void) | null = null;
+		let lastRefreshAt = 0;
+
+		const attachTimelineListener = () => {
+			const matrixClientService = (window as any).matrixClientService;
+			const matrixClient = matrixClientService?.getClient?.();
+			if (!matrixClient) {
+				return false;
+			}
+
+			const handleMatrixTimeline = (
+				event: any,
+				room: any,
+				toStartOfTimeline: boolean
+			) => {
+				if (toStartOfTimeline || room?.roomId !== matrixRoomId) {
+					return;
+				}
+
+				const eventType = event?.getType?.();
+				if (
+					eventType !== 'm.room.message' &&
+					eventType !== 'm.room.encrypted'
+				) {
+					return;
+				}
+
+				// Coalesce bursts (decrypt + relation updates) into one fetch.
+				const now = Date.now();
+				if (now - lastRefreshAt < 120) {
+					return;
+				}
+				lastRefreshAt = now;
+
+				fetchSessionMessages().catch(() => {
+					// keep UI stable if a timeline event races with navigation
+				});
+			};
+
+			(matrixClient as any).on('Room.timeline', handleMatrixTimeline);
+			detachTimelineListener = () => {
+				(matrixClient as any).off(
+					'Room.timeline',
+					handleMatrixTimeline
+				);
+			};
+			return true;
+		};
+
+		// Try immediately, then retry until Matrix client is ready.
+		if (!attachTimelineListener()) {
+			retryTimer = window.setInterval(() => {
+				if (attachTimelineListener() && retryTimer) {
+					window.clearInterval(retryTimer);
+					retryTimer = null;
+				}
+			}, 500);
+		}
+
+		return () => {
+			if (retryTimer) {
+				window.clearInterval(retryTimer);
+			}
+			detachTimelineListener?.();
+		};
 	}, [
 		activeSession.rid,
 		activeSession.item?.matrixRoomId,
