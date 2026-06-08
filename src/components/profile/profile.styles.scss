@@ -464,7 +464,6 @@ $profile-footer-justify-content: center !default;
 
 				&:last-child {
 					border: none;
-					padding-bottom: 0;
 				}
 
 				& .button-as-link,
@@ -593,7 +592,7 @@ $profile-footer-justify-content: center !default;
 			padding: 0;
 			margin-bottom: 0;
 			box-shadow: none;
-			
+
 			.profile__content__title {
 				background: #fff;
 				border: 1px solid #e5e7eb;
