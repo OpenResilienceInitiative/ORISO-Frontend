@@ -548,7 +548,10 @@ export const SessionStream = ({
 						}
 
 						const eventType = event.getType();
-						if (eventType !== 'm.room.message') {
+						if (
+							eventType !== 'm.room.message' &&
+							eventType !== 'm.room.encrypted'
+						) {
 							return;
 						}
 
