@@ -45,6 +45,7 @@ import {
 	useLiveChatAvailable,
 	setLiveChatAvailable
 } from '../../utils/liveChatToggle';
+import { apiSetLiveChatAvailability } from '../../api/apiSetLiveChatAvailability';
 import {
 	LiveChatToggleInactiveIcon,
 	LiveChatToggleActiveIcon
@@ -75,6 +76,18 @@ export const NavigationBar = ({
 		userData
 	);
 	const [liveChatAvailable] = useLiveChatAvailable();
+
+	/*
+	 * Resync persisted Live Chat availability to the backend after login/reload.
+	 * The flag lives in localStorage, so on a fresh session (or after a backend
+	 * restart) the server doesn't yet know this consultant is available. Re-assert
+	 * it so the anonymous availability count is correct without a manual re-toggle.
+	 */
+	useEffect(() => {
+		if (isConsultant && liveChatAvailable) {
+			void apiSetLiveChatAvailability(true);
+		}
+	}, [isConsultant, liveChatAvailable]);
 	const { sessions: unreadSessions, group: unreadGroup } = useContext(
 		RocketChatUnreadContext
 	);
