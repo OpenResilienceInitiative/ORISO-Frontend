@@ -40,6 +40,8 @@ export const endpoints = {
 		apiUrl + '/service/conversations/anonymous/availability',
 	consultantEnquiriesBase:
 		apiUrl + '/service/conversations/consultants/enquiries/',
+	consultantLiveChatAvailability:
+		apiUrl + '/service/conversations/consultants/availability',
 	consultantSessions:
 		apiUrl + '/service/users/sessions/consultants?status=2&',
 	consultantStatistics: apiUrl + '/service/statistics/consultant',
