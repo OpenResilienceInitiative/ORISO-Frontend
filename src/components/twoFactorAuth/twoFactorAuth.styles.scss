@@ -52,7 +52,7 @@ $two-factor-auth-overlay-buttons-margin-right: auto !default;
 
 		.inputField {
 			&__infoText {
-				color: $form-error;
+				color: var(--m3-error, $form-error);
 				text-align: left;
 			}
 
@@ -89,16 +89,16 @@ $two-factor-auth-overlay-buttons-margin-right: auto !default;
 			justify-items: start;
 			cursor: pointer;
 			margin-top: $grid-base-two;
-			color: var(--skin-color-primary-contrast-safe, $primary);
+			color: var(--m3-primary, $primary);
 			text-decoration: $link-text-decoration;
 
 			.text {
-				color: var(--skin-color-primary-contrast-safe, $primary);
+				color: var(--m3-primary, $primary);
 				margin: auto 0 auto $grid-base;
 
 				&:hover {
 					color: var(
-						--skin-color-primary-contrast-safe,
+						--m3-primary,
 						$hover-primary
 					);
 				}
@@ -111,7 +111,7 @@ $two-factor-auth-overlay-buttons-margin-right: auto !default;
 			text-transform: uppercase;
 			display: flex;
 			color: var(
-				--skin-color-secondary-contrast-safe,
+				--m3-secondary,
 				$text-high-emphasis
 			);
 
@@ -211,7 +211,7 @@ $two-factor-auth-overlay-buttons-margin-right: auto !default;
 	}
 
 	.button__link {
-		color: $tertiary;
+		color: var(--m3-on-surface-variant, $tertiary);
 
 		svg {
 			margin: 0;

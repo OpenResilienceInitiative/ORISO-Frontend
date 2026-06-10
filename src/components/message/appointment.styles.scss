@@ -71,7 +71,7 @@
 			height: 18px;
 
 			path {
-				fill: var(--skin-color-primary, $primary);
+				fill: var(--m3-primary, $primary);
 			}
 		}
 	}
@@ -86,6 +86,6 @@
 	}
 
 	&--primary {
-		color: var(--skin-color-primary, $primary);
+		color: var(--m3-primary, $primary);
 	}
 }
