@@ -31,25 +31,25 @@ $buttonMaxWidth: 400px;
 	}
 
 	&__primary {
-		color: var(--text-color-contrast-switch, $white);
-		background: var(--skin-color-primary, $primary);
+		color: var(--m3-on-primary, $white);
+		background: var(--m3-primary, $primary);
 		border: none;
 
 		&:hover {
-			background-color: var(--skin-color-primary-hover, $hover-primary);
+			background-color: var(--m3-primary-hover, $hover-primary);
 			transition: all 0.3s ease;
 		}
 	}
 
 	&__secondary {
-		color: var(--skin-color-default, $primary);
+		color: var(--m3-primary, $primary);
 		background-color: transparent;
-		border: 2px solid var(--skin-color-default, $primary);
+		border: 2px solid var(--m3-primary, $primary);
 
 		&:hover {
 			color: $white;
-			border-color: var(--skin-color-primary-hover, $hover-primary);
-			background-color: var(--skin-color-primary-hover, $hover-primary);
+			border-color: var(--m3-primary-hover, $hover-primary);
+			background-color: var(--m3-primary-hover, $hover-primary);
 			transition: all 0.3s ease;
 		}
 	}
@@ -67,19 +67,19 @@ $buttonMaxWidth: 400px;
 		font-size: $font-size-tertiary;
 
 		&:hover {
-			background-color: var(--skin-color-primary-hover, $hover-primary);
-			color: var(--text-color-contrast-switch, $white);
-			border-color: var(--skin-color-primary-hover, $hover-primary);
+			background-color: var(--m3-primary-hover, $hover-primary);
+			color: var(--m3-on-primary, $white);
+			border-color: var(--m3-primary-hover, $hover-primary);
 		}
 	}
 
 	&__autoClose {
-		color: var(--text-color-contrast-switch, $white);
-		border: 2px solid var(--skin-color-primary, $primary);
+		color: var(--m3-on-primary, $white);
+		border: 2px solid var(--m3-primary, $primary);
 		background: linear-gradient(
 			to right,
-			var(--skin-color-primary-hover, $button-auto-close-color) 50%,
-			var(--skin-color-primary, $primary) 50%
+			var(--m3-primary-hover, $button-auto-close-color) 50%,
+			var(--m3-primary, $primary) 50%
 		);
 		background-size: 200% 100%;
 
@@ -95,11 +95,11 @@ $buttonMaxWidth: 400px;
 		}
 
 		&:hover {
-			border: 2px solid var(--skin-color-primary-hover, $hover-primary);
+			border: 2px solid var(--m3-primary-hover, $hover-primary);
 			background: linear-gradient(
 				to right,
-				var(--skin-color-primary-hover, $button-auto-close-color) 50%,
-				var(--skin-color-primary-hover, $hover-primary) 50%
+				var(--m3-primary-hover, $button-auto-close-color) 50%,
+				var(--m3-primary-hover, $hover-primary) 50%
 			);
 			background-size: 200% 100%;
 
@@ -117,7 +117,7 @@ $buttonMaxWidth: 400px;
 	}
 
 	&__link {
-		color: var(--skin-color-primary-contrast-safe, $primary);
+		color: var(--m3-primary, $primary);
 		background: none;
 		height: 21px;
 
@@ -126,10 +126,10 @@ $buttonMaxWidth: 400px;
 		}
 
 		&:not([disabled]):hover {
-			color: var(--skin-color-primary-contrast-safe, $hover-primary);
+			color: var(--m3-primary, $hover-primary);
 
 			svg * {
-				fill: var(--skin-color-primary-contrast-safe, $hover-primary);
+				fill: var(--m3-primary, $hover-primary);
 			}
 		}
 
@@ -168,7 +168,7 @@ $buttonMaxWidth: 400px;
 
 			svg {
 				fill: var(
-					--text-color-secondary-contrast-switch,
+					--m3-on-secondary,
 					$button-small-icon-background-color-default
 				);
 			}
@@ -233,33 +233,33 @@ $buttonMaxWidth: 400px;
 		}
 
 		&--yellow {
-			color: var(--skin-color-secondary-contrast-safe, $secondary);
+			color: var(--m3-secondary, $secondary);
 			background-color: $yellow-3;
 			border: none;
 
 			svg {
-				fill: var(--skin-color-secondary-contrast-safe, $secondary);
+				fill: var(--m3-secondary, $secondary);
 			}
 
 			&:hover {
 				background-color: $yellow-4;
 
 				svg {
-					fill: var(--skin-color-secondary-contrast-safe, $secondary);
+					fill: var(--m3-secondary, $secondary);
 				}
 			}
 		}
 
 		&--alternate {
 			background-color: var(
-				--skin-color-secondary,
+				--m3-secondary,
 				$button-small-icon-alternate-background-color
 			);
 			border: none;
 
 			&:hover {
 				background-color: var(
-					--skin-color-secondary,
+					--m3-secondary,
 					darken($button-small-icon-alternate-background-color, 7%)
 				);
 

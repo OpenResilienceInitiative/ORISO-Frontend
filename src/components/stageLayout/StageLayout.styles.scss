@@ -118,12 +118,12 @@
 				border: 2px solid $secondary;
 				&:hover {
 					background-color: var(
-						--skin-color-primary-hover,
+						--m3-primary-hover,
 						$hover-primary
 					);
-					color: var(--text-color-contrast-switch, $white);
+					color: var(--m3-on-primary, $white);
 					border-color: var(
-						--skin-color-primary-hover,
+						--m3-primary-hover,
 						$hover-primary
 					);
 				}
@@ -165,7 +165,7 @@
 			}
 
 			&:hover {
-				color: var(--skin-color-primary-hover, $hover-primary);
+				color: var(--m3-primary-hover, $hover-primary);
 			}
 		}
 
@@ -177,7 +177,7 @@
 	&__legalLinksItem {
 		color: $tertiary;
 		&:hover {
-			color: var(--skin-color-primary-hover, $hover-primary);
+			color: var(--m3-primary-hover, $hover-primary);
 		}
 	}
 

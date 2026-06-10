@@ -175,7 +175,7 @@ $session-postcode-border: #ffd1d1;
 	&__row {
 		display: flex;
 		gap: 12px;
-		color: var(--skin-color-default, $secondary);
+		color: var(--m3-primary, $secondary);
 		min-width: 0;
 
 		&:first-child {
@@ -468,7 +468,7 @@ $session-postcode-border: #ffd1d1;
 		border-radius: 0 6px 6px 0;
 		font-size: $font-size-secondary;
 		line-height: 16px;
-		color: var(--skin-color-default, $secondary);
+		color: var(--m3-primary, $secondary);
 		white-space: nowrap;
 		flex-shrink: 0;
 	}
@@ -566,7 +566,7 @@ $session-postcode-border: #ffd1d1;
 		}
 
 		&--plus {
-			background-color: var(--skin-color-primary, #cc1e1c);
+			background-color: var(--m3-primary, #cc1e1c);
 			display: flex;
 			align-items: center;
 			justify-content: center;
@@ -614,7 +614,7 @@ $session-postcode-border: #ffd1d1;
 		background-color: $upload-progress;
 		display: inline-block;
 		word-break: keep-all;
-		color: var(--skin-color-secondary, $secondary);
+		color: var(--m3-secondary, $secondary);
 		align-self: flex-end;
 		margin: 5px 0 auto;
 	}
@@ -645,7 +645,7 @@ $session-postcode-border: #ffd1d1;
 				height: $icon-size-small;
 
 				* {
-					fill: var(--skin-color-secondary-contrast-safe, $secondary);
+					fill: var(--m3-secondary, $secondary);
 				}
 			}
 		}
@@ -657,7 +657,7 @@ $session-postcode-border: #ffd1d1;
 		height: $icon-size-small;
 
 		* {
-			fill: var(--skin-color-secondary-contrast-safe, $secondary);
+			fill: var(--m3-secondary, $secondary);
 		}
 	}
 
@@ -674,7 +674,7 @@ $session-postcode-border: #ffd1d1;
 			height: $icon-size-small;
 
 			* {
-				fill: var(--skin-color-secondary-contrast-safe, $secondary);
+				fill: var(--m3-secondary, $secondary);
 			}
 		}
 

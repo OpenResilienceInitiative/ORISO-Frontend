@@ -33,7 +33,7 @@ $message-avatar-ring: #ebe2e2;
 		text-decoration: underline;
 
 		&:hover {
-			color: var(--skin-color-primary-contrast-safe, $primary);
+			color: var(--m3-primary, $primary);
 			transition: unset;
 		}
 	}
@@ -609,7 +609,7 @@ $message-avatar-ring: #ebe2e2;
 			content: '';
 			display: inline-block;
 			border-top: 1px solid
-				var(--skin-color-secondary-contrast-safe, $text-divider-color);
+				var(--m3-secondary, $text-divider-color);
 			width: $grid-base-three;
 			vertical-align: middle;
 			margin: 0 0;
@@ -617,11 +617,11 @@ $message-avatar-ring: #ebe2e2;
 		}
 
 		&--lastRead {
-			color: var(--skin-color-primary-contrast-safe, $primary);
+			color: var(--m3-primary, $primary);
 
 			&::before,
 			&::after {
-				border-top: 1px solid var(--skin-color-primary, $primary);
+				border-top: 1px solid var(--m3-primary, $primary);
 			}
 		}
 
@@ -631,7 +631,7 @@ $message-avatar-ring: #ebe2e2;
 	}
 
 	&__message {
-		color: var(--skin-color-default, $secondary);
+		color: var(--m3-primary, $secondary);
 		line-height: $message-lineheight;
 		background-color: #fff1f1;
 		border-radius: 0 12px 12px;
@@ -1056,7 +1056,7 @@ $message-avatar-ring: #ebe2e2;
 	}
 
 	&__threadButton:hover .messageItem__threadButtonMain {
-		color: var(--skin-color-primary, $primary);
+		color: var(--m3-primary, $primary);
 	}
 
 	&__threadButton:hover .messageItem__threadButtonHover {
@@ -1143,10 +1143,10 @@ $message-avatar-ring: #ebe2e2;
 		cursor: pointer;
 
 		svg {
-			fill: var(--skin-color-secondary, $secondary);
+			fill: var(--m3-secondary, $secondary);
 
 			path {
-				fill: var(--skin-color-secondary, $secondary);
+				fill: var(--m3-secondary, $secondary);
 			}
 
 			&.copy {
@@ -1156,7 +1156,7 @@ $message-avatar-ring: #ebe2e2;
 			}
 
 			&:hover path {
-				fill: var(--skin-color-primary, $primary);
+				fill: var(--m3-primary, $primary);
 			}
 
 			&.success {
@@ -1294,7 +1294,7 @@ $message-avatar-ring: #ebe2e2;
 		padding-bottom: 2px;
 
 		* {
-			fill: var(--skin-color-secondary-contrast-safe, $form-primary);
+			fill: var(--m3-secondary, $form-primary);
 		}
 	}
 

@@ -87,17 +87,17 @@ $profile-footer-justify-content: center !default;
 			svg {
 				width: $iconSize;
 				height: $iconSize;
-				fill: var(--skin-color-secondary-contrast-safe, $secondary);
+				fill: var(--m3-secondary, $secondary);
 
 				svg path {
-					fill: var(--skin-color-secondary-contrast-safe, $secondary);
+					fill: var(--m3-secondary, $secondary);
 				}
 
 				&:hover {
-					fill: var(--skin-color-primary, $primary);
+					fill: var(--m3-primary, $primary);
 
 					svg path {
-						fill: var(--skin-color-primary, $primary);
+						fill: var(--m3-primary, $primary);
 					}
 				}
 			}

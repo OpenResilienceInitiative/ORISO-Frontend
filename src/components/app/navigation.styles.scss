@@ -540,7 +540,7 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 		}
 
 		&__count {
-			color: var(--skin-color-primary-contrast-safe, $primary);
+			color: var(--m3-primary, $primary);
 			background-color: $white;
 			transition: opacity 0.6s ease;
 			border-radius: 999px;

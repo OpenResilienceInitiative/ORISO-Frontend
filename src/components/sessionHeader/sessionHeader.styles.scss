@@ -83,14 +83,14 @@ $iconSize: 24px;
 			fill: #6e4d4d;
 
 			svg path {
-				fill: var(--skin-color-default, $secondary);
+				fill: var(--m3-primary, $secondary);
 			}
 
 			&:hover {
 				fill: #5b3f3f;
 
 				svg path {
-					fill: var(--skin-color-default, $primary);
+					fill: var(--m3-primary, $primary);
 				}
 			}
 		}
@@ -239,11 +239,11 @@ $iconSize: 24px;
 		svg {
 			width: 100%;
 			height: 100%;
-			fill: var(--skin-color-default, $secondary) !important;
-			color: var(--skin-color-default, $secondary) !important;
+			fill: var(--m3-primary, $secondary) !important;
+			color: var(--m3-primary, $secondary) !important;
 
 			path {
-				fill: var(--skin-color-default, $secondary) !important;
+				fill: var(--m3-primary, $secondary) !important;
 			}
 		}
 	}
@@ -349,7 +349,7 @@ $iconSize: 24px;
 
 			&--red {
 				color: var(
-					--skin-color-primary-contrast-safe,
+					--m3-primary,
 					$primary
 				) !important;
 				text-transform: uppercase;
@@ -409,7 +409,7 @@ $iconSize: 24px;
 				padding: 14px $grid-base-two;
 				font-size: $font-size-primary;
 				line-height: $line-height-primary;
-				color: var(--skin-color-secondary, $secondary);
+				color: var(--m3-secondary, $secondary);
 				text-overflow: ellipsis;
 				overflow: hidden;
 				display: flex;

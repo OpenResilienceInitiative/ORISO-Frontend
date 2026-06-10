@@ -9,7 +9,7 @@ $iconSize: 20px;
 		position: relative; /* Enable relative positioning for menu content */
 
 		a {
-			color: var(--skin-color-default, $secondary);
+			color: var(--m3-primary, $secondary);
 		}
 
 		.button__wrapper {
@@ -77,7 +77,7 @@ $iconSize: 20px;
 			height: $iconSize;
 
 			&:hover {
-				fill: var(--skin-color-default, $primary);
+				fill: var(--m3-primary, $primary);
 				svg path {
 					fill: $font-size-secondary;
 				}
@@ -171,7 +171,7 @@ $iconSize: 20px;
 
 		&:hover {
 			background-color: $hover-primary;
-			color: var(--skin-color-default, $text-invert);
+			color: var(--m3-primary, $text-invert);
 		}
 
 		&--mobile {
@@ -210,14 +210,14 @@ $iconSize: 20px;
 
 		:hover {
 			cursor: pointer;
-			color: var(--skin-color-primary-contrast-safe, $hover-primary);
+			color: var(--m3-primary, $hover-primary);
 
 			p {
-				color: var(--skin-color-primary-contrast-safe, $hover-primary);
+				color: var(--m3-primary, $hover-primary);
 			}
 
 			svg * {
-				fill: var(--skin-color-primary-contrast-safe, $hover-primary);
+				fill: var(--m3-primary, $hover-primary);
 			}
 		}
 	}

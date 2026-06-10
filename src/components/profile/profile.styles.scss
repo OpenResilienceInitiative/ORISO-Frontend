@@ -33,12 +33,12 @@ $profile-footer-justify-content: center !default;
 			border-radius: 0;
 
 			&.active {
-				color: var(--skin-color-primary-contrast-safe, $primary);
-				border-color: var(--skin-color-primary-contrast-safe, $primary);
+				color: var(--m3-primary, $primary);
+				border-color: var(--m3-primary, $primary);
 			}
 
 			&:hover {
-				color: var(--skin-color-primary-contrast-safe, $hover-primary);
+				color: var(--m3-primary, $hover-primary);
 			}
 		}
 
@@ -369,7 +369,7 @@ $profile-footer-justify-content: center !default;
 		}
 
 		.title {
-			color: var(--skin-color-primary-contrast-safe, $primary);
+			color: var(--m3-primary, $primary);
 			margin-bottom: $grid-base-two;
 		}
 	}

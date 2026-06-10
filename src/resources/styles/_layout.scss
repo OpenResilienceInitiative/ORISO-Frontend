@@ -25,15 +25,9 @@ html {
 	box-sizing: inherit;
 }
 
-//only for tenant theming
-:root {
-	--skin-color-primary-foreground-dark: #{$body-font-color};
-	--skin-color-primary-foreground-light: #{$white};
-}
-
 body {
 	font-family: $body-font-family;
-	background-color: var(--skin-color-body-background, $body-bg);
+	background-color: var(--m3-background, $body-bg);
 	font-size: $body-font-size;
 	line-height: $body-line-height;
 	color: $body-font-color;
@@ -55,7 +49,7 @@ hr {
 	cursor: pointer;
 
 	&:hover {
-		color: var(--skin-color-primary-contrast-safe, $hover-primary);
+		color: var(--m3-primary, $hover-primary);
 	}
 }
 

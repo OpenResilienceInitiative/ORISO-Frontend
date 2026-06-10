@@ -2210,7 +2210,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		right: -9px;
 		width: $unreadButtonSize;
 		height: $unreadButtonSize;
-		background-color: var(--skin-color-primary, $primary);
+		background-color: var(--m3-primary, $primary);
 		font-weight: $font-weight-medium;
 		font-size: 10px;
 		color: $white;

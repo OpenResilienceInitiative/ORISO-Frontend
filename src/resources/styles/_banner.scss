@@ -62,7 +62,7 @@
 
 				path {
 					transition: fill 500ms ease;
-					fill: var(--skin-color-secondary-contrast-safe, $secondary);
+					fill: var(--m3-secondary, $secondary);
 				}
 			}
 			&:hover {

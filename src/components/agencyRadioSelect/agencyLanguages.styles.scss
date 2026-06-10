@@ -33,7 +33,7 @@ $input-size: 24px;
 	}
 
 	&__more {
-		color: var(--skin-color-primary-contrast-safe, $primary);
+		color: var(--m3-primary, $primary);
 		text-decoration: underline;
 		cursor: pointer;
 		background: none;
