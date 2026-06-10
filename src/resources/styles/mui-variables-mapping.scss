@@ -8,17 +8,19 @@
 	--font-weight-medium: #{$font-weight-medium};
 	--font-weight-bold: #{$font-weight-bold};
 	--white: #{$white};
-	--primary: #{$primary};
-	--background-light: #{$background-light};
-	--background-lighter: #{$background-lighter};
 	--button-border-radius: #{$button-border-radius};
-	--hover-primary: #{$hover-primary};
-	--secondary: #{$secondary};
-	--primary-3: #{$hover-primary};
-	--tertiary: #{$tertiary};
 	--black: #{$black};
-	--form-error: #{$form-error};
-	--form-success: #{$form-success};
+
+	/* M3 role tokens (THB-07): static no-seed fallbacks from the legacy
+	   palette; the runtime engine overrides them at :root (THB-05). */
+	--m3-primary: #{$primary};
+	--m3-primary-hover: #{$hover-primary};
+	--m3-on-surface: #{$secondary};
+	--m3-on-surface-variant: #{$tertiary};
+	--m3-surface-container-low: #{$background-light};
+	--m3-surface-container-lowest: #{$background-lighter};
+	--m3-error: #{$form-error};
+	--m3-success: #{$form-success};
 	--font-size-h1: #{$font-size-h1};
 	--font-size-h2: #{$font-size-h2};
 	--font-size-h3: #{$font-size-h3};
