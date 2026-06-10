@@ -85,6 +85,17 @@ import LegalLinks from '../legalLinks/LegalLinks';
 import { renderToString } from 'react-dom/server';
 import { mobileListView } from '../app/navigationHandler';
 import { UserAvatar } from '../message/UserAvatar';
+import {
+	Dialog,
+	Box as MuiBox,
+	Typography as MuiTypography,
+	Button as MuiButton
+} from '@mui/material';
+import AccessTimeOutlinedIcon from '@mui/icons-material/AccessTimeOutlined';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import NorthEastIcon from '@mui/icons-material/NorthEast';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import CloseIcon from '@mui/icons-material/Close';
 
 const MessageSubmitInterfaceComponent = lazy(() =>
 	import('../messageSubmitInterface/messageSubmitInterfaceComponent').then(
@@ -487,6 +498,24 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	);
 	const [consultantAccepted, setConsultantAccepted] = useState(false);
 	/**
+	 * Live count of consultants currently available for this anonymous
+	 * enquiry, fed by the `apiGetAnonymousEnquiryDetails` poll. `null` while
+	 * unknown. When this drops to 0 the "Live-Chat ist zurzeit leider
+	 * geschlossen" modal is shown; it auto-closes once a consultant becomes
+	 * available again.
+	 */
+	const [numAvailableConsultants, setNumAvailableConsultants] = useState<
+		number | null
+	>(null);
+	/**
+	 * Set when the asker manually dismisses the no-availability modal while
+	 * the count is still 0, so the poll doesn't immediately reopen it. Reset
+	 * automatically as soon as a consultant becomes available again.
+	 */
+	const [liveChatClosedDismissed, setLiveChatClosedDismissed] =
+		useState(false);
+	const [liveChatClosedHintOpen, setLiveChatClosedHintOpen] = useState(false);
+	/**
 	 * Persist the "Jetzt Chat starten" dismissal in sessionStorage so a
 	 * reload after the asker has already unlocked the composer doesn't
 	 * throw them back to the waiting-queue screen. Keyed per session so
@@ -618,6 +647,18 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		isAnonymousAskerExperience &&
 		pseudonymConfirmed &&
 		!waitingGateDismissed;
+	/**
+	 * Show the "Live-Chat ist zurzeit leider geschlossen" modal while the
+	 * anonymous asker is waiting and no consultant is currently available.
+	 * Auto-opens when the live count is 0, auto-closes when it rises above 0,
+	 * and stays closed if the asker dismissed it manually (until availability
+	 * recovers, which resets the dismissal above).
+	 */
+	const liveChatClosedModalOpen =
+		isInAnonymousWaitingQueuePhase &&
+		!consultantAccepted &&
+		numAvailableConsultants === 0 &&
+		!liveChatClosedDismissed;
 	const isJoinRoomAvailable = Boolean(activeSession.consultant?.id);
 	const selectedPreset = useMemo(
 		() =>
@@ -1826,6 +1867,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					if (typeof details?.peopleAhead === 'number') {
 						setQueuePeopleAhead(details.peopleAhead);
 					}
+					setNumAvailableConsultants(
+						typeof details?.numAvailableConsultants === 'number'
+							? details.numAvailableConsultants
+							: null
+					);
 					/* Anything other than INITIAL/NEW means a consultant has
 					   started handling this enquiry — flip the action bar to
 					   the "Start chat now" prompt. */
@@ -1851,6 +1897,20 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			window.clearInterval(poll);
 		};
 	}, [isInAnonymousWaitingQueuePhase, activeSession.item?.id]);
+
+	/**
+	 * As soon as at least one consultant is available again, clear any manual
+	 * dismissal so the no-availability modal can auto-reopen if the count
+	 * later drops back to 0.
+	 */
+	useEffect(() => {
+		if (
+			typeof numAvailableConsultants === 'number' &&
+			numAvailableConsultants > 0
+		) {
+			setLiveChatClosedDismissed(false);
+		}
+	}, [numAvailableConsultants]);
 
 	/* Once the backend session status moves past enquiry phase we also treat
 	   that as "consultant accepted" — belt-and-braces signal in case the
@@ -4600,6 +4660,188 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						)}
 				</div>
 			)}
+
+			<Dialog
+				open={liveChatClosedModalOpen}
+				onClose={() => setLiveChatClosedDismissed(true)}
+				maxWidth="sm"
+				fullWidth
+			>
+				<MuiBox
+					sx={{
+						p: { xs: '20px', md: '24px' },
+						borderRadius: '16px'
+					}}
+				>
+					<MuiBox
+						sx={{
+							display: 'flex',
+							alignItems: 'center',
+							gap: '12px',
+							mb: '16px'
+						}}
+					>
+						<MuiBox
+							component="img"
+							src="https://www.figma.com/api/mcp/asset/53e84cfc-9e3d-4075-bc3b-cfcf0903e811"
+							alt=""
+							sx={{ width: 72, height: 72 }}
+						/>
+						<MuiTypography
+							variant="h4"
+							sx={{ fontWeight: 700, lineHeight: 1.2 }}
+						>
+							{translate(
+								'anonymousChat.noAvailability.title',
+								'Live-Chat ist zurzeit leider geschlossen'
+							)}
+						</MuiTypography>
+					</MuiBox>
+
+					<MuiTypography variant="body1" sx={{ mb: '16px' }}>
+						{translate(
+							'anonymousChat.noAvailability.subtitle',
+							'Wenn Sie ohne Registrierung beraten werden möchten, kommen Sie bitte zu den Öffnungszeiten wieder.'
+						)}
+					</MuiTypography>
+
+					<MuiBox
+						onClick={() =>
+							setLiveChatClosedHintOpen((prev) => !prev)
+						}
+						sx={{
+							border: '1px solid #DAE3F0',
+							borderRadius: '12px',
+							px: '12px',
+							py: '10px',
+							display: 'flex',
+							alignItems: 'center',
+							justifyContent: 'space-between',
+							cursor: 'pointer',
+							mb: liveChatClosedHintOpen ? '8px' : '16px'
+						}}
+					>
+						<MuiBox sx={{ display: 'flex', alignItems: 'center' }}>
+							<AccessTimeOutlinedIcon
+								sx={{
+									fontSize: 18,
+									color: '#4C555F',
+									mr: 1
+								}}
+							/>
+							<MuiTypography
+								variant="body2"
+								sx={{ color: '#4C555F' }}
+							>
+								{translate(
+									'anonymousChat.noAvailability.openingHours',
+									'Reguläre Öffnungszeiten anzeigen'
+								)}
+							</MuiTypography>
+						</MuiBox>
+						<KeyboardArrowDownIcon sx={{ color: '#4C555F' }} />
+					</MuiBox>
+
+					{liveChatClosedHintOpen && (
+						<MuiTypography
+							variant="body2"
+							sx={{ color: 'text.secondary', mb: '16px' }}
+						>
+							{translate(
+								'anonymousChat.noAvailability.openingHoursHint',
+								'Die Öffnungszeiten finden Sie auf der Seite Ihrer ausgewählten Beratungsstelle.'
+							)}
+						</MuiTypography>
+					)}
+
+					<MuiTypography variant="body1" sx={{ mb: '8px' }}>
+						{translate(
+							'anonymousChat.noAvailability.mailHint',
+							'Oder starten Sie jederzeit die anonyme Mail-Beratung: Mit Ihrer Postleitzahl finden Sie eine Beratungsstelle in Ihrer Nähe und schreiben Ihre Anfrage. Für die Antwort brauchen Sie nur eine E-Mail-Adresse - keinen echten Namen.'
+						)}
+					</MuiTypography>
+
+					<MuiTypography
+						variant="body2"
+						sx={{ fontWeight: 700, mb: '16px' }}
+					>
+						{translate(
+							'anonymousChat.noAvailability.tip',
+							'Tipp: Nutzen Sie eine E-Mail-Adresse, auf die nur Sie Zugriff haben.'
+						)}
+					</MuiTypography>
+
+					<MuiButton
+						fullWidth
+						variant="contained"
+						onClick={() => history.push('/registration')}
+						sx={{
+							mb: '8px',
+							borderRadius: '999px',
+							py: '14px',
+							backgroundColor: '#A5000A'
+						}}
+						startIcon={<NorthEastIcon />}
+					>
+						{translate(
+							'anonymousChat.noAvailability.startMailCounseling',
+							'anonyme Mail-Beratung starten'
+						)}
+					</MuiButton>
+
+					<MuiTypography
+						variant="body2"
+						sx={{
+							textAlign: 'center',
+							color: '#4C555F',
+							fontWeight: 600,
+							mb: '16px'
+						}}
+					>
+						{translate(
+							'anonymousChat.noAvailability.responseTime',
+							'Antwort innerhalb von 2 Werktagen'
+						)}
+					</MuiTypography>
+
+					<MuiBox sx={{ display: 'flex', gap: '10px' }}>
+						<MuiButton
+							fullWidth
+							variant="outlined"
+							onClick={() => history.goBack()}
+							startIcon={<ArrowBackIcon />}
+							sx={{
+								borderRadius: '24px',
+								borderColor: 'transparent',
+								backgroundColor: '#F0EDEE',
+								color: '#4C555F'
+							}}
+						>
+							{translate(
+								'anonymousChat.noAvailability.back',
+								'Zurück zur vorherigen Seite'
+							)}
+						</MuiButton>
+						<MuiButton
+							fullWidth
+							variant="outlined"
+							onClick={() => setLiveChatClosedDismissed(true)}
+							startIcon={<CloseIcon />}
+							sx={{
+								borderRadius: '8px',
+								borderColor: '#FFE2DE',
+								backgroundColor: '#FFE2DE',
+								color: '#A5000A'
+							}}
+						>
+							{translate(
+								'anonymousChat.noAvailability.later',
+								'Später wiederkommen'
+							)}
+						</MuiButton>
+					</MuiBox>
+				</MuiBox>
+			</Dialog>
 		</div>
 	);
 };
