@@ -24,6 +24,7 @@ import {
 	CONTAINER_CHROMA_FACTOR,
 	CONTAINER_TONE_SHIFT,
 	CONTRAST_AA,
+	HOVER_TONE_SHIFT,
 	DARK_BRAND_TONES,
 	DARK_NEUTRAL_TONES,
 	DEFAULT_SIGNAL,
@@ -33,6 +34,7 @@ import {
 	NEUTRAL_VARIANT,
 	SECONDARY_TONES,
 	SLATE,
+	SUCCESS_ANCHOR,
 	TERTIARY_TONES,
 	TOO_PALE_CHROMA
 } from './orisoTuning';
@@ -84,6 +86,7 @@ interface BrandFamily {
 	onContainer: string;
 	inverse: string;
 	tint: string;
+	hover: string;
 }
 
 /**
@@ -119,7 +122,8 @@ const lightBrandFamily = (seedHex: string): BrandFamily => {
 		container: hex(boosted.tone(containerTone)),
 		onContainer: hex(palette.tone(onContainerTone)),
 		inverse: hex(palette.tone(80)),
-		tint: hex(boosted.tone(40))
+		tint: hex(boosted.tone(40)),
+		hover: hex(palette.tone(clampTone(Math.round(hct.tone) + HOVER_TONE_SHIFT)))
 	};
 };
 
@@ -132,7 +136,8 @@ const darkBrandFamily = (seedHex: string): BrandFamily => {
 		container: hex(palette.tone(DARK_BRAND_TONES.container)),
 		onContainer: hex(palette.tone(DARK_BRAND_TONES.onContainer)),
 		inverse: hex(palette.tone(40)),
-		tint: hex(palette.tone(80))
+		tint: hex(palette.tone(80)),
+		hover: hex(palette.tone(clampTone(DARK_BRAND_TONES.role - HOVER_TONE_SHIFT)))
 	};
 };
 
@@ -282,8 +287,17 @@ export const computeOrisoPalette = (
 		'--m3-on-primary': brand.onRole,
 		'--m3-primary-container': brand.container,
 		'--m3-on-primary-container': brand.onContainer,
+		'--m3-primary-hover': brand.hover,
 		'--m3-inverse-primary': brand.inverse,
 		'--m3-surface-tint': brand.tint,
+		'--m3-success':
+			scheme === 'light'
+				? SUCCESS_ANCHOR
+				: hex(
+						TonalPalette.fromInt(argbFromHex(SUCCESS_ANCHOR)).tone(
+							DARK_BRAND_TONES.role
+						)
+					),
 
 		'--m3-secondary': secondary.role,
 		'--m3-on-secondary': secondary.onRole,
