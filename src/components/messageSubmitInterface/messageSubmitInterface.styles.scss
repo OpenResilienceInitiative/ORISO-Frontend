@@ -1531,7 +1531,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				align-self: flex-end;
 
 				* {
-					fill: $tertiary;
+					fill: var(--m3-on-surface-variant, $tertiary);
 				}
 
 				&:hover {
@@ -1590,7 +1590,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				border: none;
 
 				svg * {
-					color: $tertiary;
+					color: var(--m3-on-surface-variant, $tertiary);
 				}
 
 				&--active {
@@ -1621,7 +1621,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				margin-bottom: 0;
 
 				* {
-					fill: $tertiary;
+					fill: var(--m3-on-surface-variant, $tertiary);
 				}
 			}
 		}
@@ -1650,7 +1650,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				height: $attachmentIconSize;
 
 				* {
-					fill: $tertiary;
+					fill: var(--m3-on-surface-variant, $tertiary);
 				}
 			}
 
@@ -1687,7 +1687,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			cursor: pointer;
 
 			* {
-				fill: $tertiary;
+				fill: var(--m3-on-surface-variant, $tertiary);
 			}
 
 			&:hover {
@@ -1868,7 +1868,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 					height: 16px;
 
 					* {
-						fill: $tertiary;
+						fill: var(--m3-on-surface-variant, $tertiary);
 					}
 				}
 			}
@@ -1978,11 +1978,11 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			transition: background-color 0.6s ease;
 			overflow: hidden;
 			&:hover {
-				background-color: $background-light;
+				background-color: var(--m3-surface-container-low, $background-light);
 			}
 
 			svg {
-				fill: $primary;
+				fill: var(--m3-primary, $primary);
 				position: relative;
 				left: 50%;
 				top: 50%;

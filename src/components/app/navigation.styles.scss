@@ -554,7 +554,7 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 			top: 2px;
 			right: 2px;
 			text-align: center;
-			outline: $primary 2px solid;
+			outline: var(--m3-primary, $primary) 2px solid;
 
 			@include breakpoint($fromLarge) {
 				top: 4px;

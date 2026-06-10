@@ -180,7 +180,7 @@ $session-postcode-border: #ffd1d1;
 
 		&:first-child {
 			justify-content: space-between;
-			color: $tertiary;
+			color: var(--m3-on-surface-variant, $tertiary);
 			font-size: $font-size-secondary;
 			line-height: 16px;
 		}
@@ -239,7 +239,7 @@ $session-postcode-border: #ffd1d1;
 	}
 
 	&__date {
-		color: $tertiary;
+		color: var(--m3-on-surface-variant, $tertiary);
 		font-size: $font-size-secondary;
 		line-height: 16px;
 		white-space: nowrap;

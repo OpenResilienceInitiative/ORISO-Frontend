@@ -11,8 +11,8 @@
 		color: var(--m3-primary, $secondary);
 
 		&--empty {
-			color: $tertiary;
-			-webkit-text-fill-color: $tertiary !important;
+			color: var(--m3-on-surface-variant, $tertiary);
+			-webkit-text-fill-color: var(--m3-on-surface-variant, $tertiary) !important;
 		}
 
 		&:disabled {

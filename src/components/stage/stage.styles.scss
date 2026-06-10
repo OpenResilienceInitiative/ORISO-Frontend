@@ -21,7 +21,7 @@ $gridSpacing: $grid-base-four;
 	}
 
 	&__legalLinksItem {
-		color: $tertiary;
+		color: var(--m3-on-surface-variant, $tertiary);
 		text-transform: none;
 		font-weight: normal;
 
@@ -188,7 +188,7 @@ $gridSpacing: $grid-base-four;
 			cursor: pointer;
 			padding: 0;
 			white-space: nowrap;
-			color: $tertiary;
+			color: var(--m3-on-surface-variant, $tertiary);
 			pointer-events: auto;
 			position: relative;
 			z-index: 51;

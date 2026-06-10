@@ -43,7 +43,7 @@ $iconSize: 20px;
 			}
 
 			p {
-				color: $primary;
+				color: var(--m3-primary, $primary);
 				text-align: center;
 
 				@include breakpoint($fromLarge) {
@@ -57,7 +57,7 @@ $iconSize: 20px;
 				}
 
 				path {
-					fill: $primary;
+					fill: var(--m3-primary, $primary);
 				}
 			}
 		}

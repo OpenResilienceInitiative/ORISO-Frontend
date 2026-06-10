@@ -52,7 +52,7 @@ $two-factor-auth-overlay-buttons-margin-right: auto !default;
 
 		.inputField {
 			&__infoText {
-				color: $form-error;
+				color: var(--m3-error, $form-error);
 				text-align: left;
 			}
 
@@ -211,7 +211,7 @@ $two-factor-auth-overlay-buttons-margin-right: auto !default;
 	}
 
 	.button__link {
-		color: $tertiary;
+		color: var(--m3-on-surface-variant, $tertiary);
 
 		svg {
 			margin: 0;

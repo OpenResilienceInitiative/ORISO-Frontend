@@ -9,7 +9,7 @@ $select-menu-before-display: block !default;
 
 		.warning {
 			margin-top: 10px;
-			color: $form-error;
+			color: var(--m3-error, $form-error);
 		}
 	}
 

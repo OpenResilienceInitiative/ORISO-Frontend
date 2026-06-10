@@ -96,7 +96,7 @@ $message-avatar-ring: #ebe2e2;
 
 	&__headerTime {
 		font-size: $font-size-secondary;
-		color: $tertiary;
+		color: var(--m3-on-surface-variant, $tertiary);
 		white-space: nowrap;
 	}
 
@@ -840,7 +840,7 @@ $message-avatar-ring: #ebe2e2;
 			&__meta {
 				font-size: $font-size-secondary;
 				line-height: $line-height-secondary;
-				color: $tertiary;
+				color: var(--m3-on-surface-variant, $tertiary);
 			}
 		}
 
@@ -1163,7 +1163,7 @@ $message-avatar-ring: #ebe2e2;
 				position: absolute;
 				bottom: 0;
 				left: 50%;
-				fill: $form-success;
+				fill: var(--m3-success, $form-success);
 				width: 18px;
 				transform: translate(-50%, 0) scale(0);
 				opacity: 0;
@@ -1174,7 +1174,7 @@ $message-avatar-ring: #ebe2e2;
 
 				path,
 				&:hover path {
-					fill: $form-success;
+					fill: var(--m3-success, $form-success);
 				}
 			}
 		}
@@ -1195,7 +1195,7 @@ $message-avatar-ring: #ebe2e2;
 	&__time {
 		font-size: $font-size-secondary;
 		line-height: $font-size-tertiary;
-		color: $tertiary;
+		color: var(--m3-on-surface-variant, $tertiary);
 	}
 
 	&__icon {
@@ -1214,7 +1214,7 @@ $message-avatar-ring: #ebe2e2;
 		}
 
 		svg * {
-			fill: $form-success;
+			fill: var(--m3-success, $form-success);
 		}
 
 		&--grey {
@@ -1268,12 +1268,12 @@ $message-avatar-ring: #ebe2e2;
 
 		&__item {
 			&--delete {
-				color: $form-error;
+				color: var(--m3-error, $form-error);
 				text-decoration: none;
 				display: flex;
 
 				svg g {
-					fill: $form-error;
+					fill: var(--m3-error, $form-error);
 				}
 			}
 		}

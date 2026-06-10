@@ -59,9 +59,9 @@ $buttonMaxWidth: 400px;
 		height: $grid-base-four;
 		width: auto;
 		min-width: 0;
-		color: $tertiary;
+		color: var(--m3-on-surface-variant, $tertiary);
 		background-color: transparent;
-		border: 2px solid $tertiary;
+		border: 2px solid var(--m3-on-surface-variant, $tertiary);
 		padding: 0 $grid-base-two;
 		text-transform: none;
 		font-size: $font-size-tertiary;
@@ -207,7 +207,7 @@ $buttonMaxWidth: 400px;
 		}
 
 		&--green {
-			background-color: $form-success;
+			background-color: var(--m3-success, $form-success);
 			border: none;
 
 			&:hover {
@@ -220,7 +220,7 @@ $buttonMaxWidth: 400px;
 		}
 
 		&--red {
-			background-color: $form-error;
+			background-color: var(--m3-error, $form-error);
 			border: none;
 
 			&:hover {
@@ -272,16 +272,16 @@ $buttonMaxWidth: 400px;
 		&--secondary {
 			border-width: 2px;
 			background-color: $white;
-			color: $secondary;
-			border-color: $secondary;
+			color: var(--m3-on-surface, $secondary);
+			border-color: var(--m3-on-surface, $secondary);
 
 			svg {
-				fill: $secondary;
+				fill: var(--m3-on-surface, $secondary);
 			}
 
 			&:hover {
-				background-color: $hover-primary;
-				border-color: $hover-primary;
+				background-color: var(--m3-primary-hover, $hover-primary);
+				border-color: var(--m3-primary-hover, $hover-primary);
 				color: $white;
 
 				svg {
@@ -296,8 +296,8 @@ $buttonMaxWidth: 400px;
 			border-color: transparent;
 
 			&:hover {
-				background-color: $hover-primary;
-				border-color: $hover-primary;
+				background-color: var(--m3-primary-hover, $hover-primary);
+				border-color: var(--m3-primary-hover, $hover-primary);
 			}
 		}
 	}

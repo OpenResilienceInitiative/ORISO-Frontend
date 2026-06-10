@@ -59,7 +59,7 @@ $arrow-icon-size: 14px;
 			position: absolute;
 			top: 15px;
 			left: 20px;
-			color: $tertiary;
+			color: var(--m3-on-surface-variant, $tertiary);
 			z-index: 2;
 			pointer-events: none;
 			transition:
@@ -111,7 +111,7 @@ $arrow-icon-size: 14px;
 		}
 
 		&__header {
-			background-color: $background-light;
+			background-color: var(--m3-surface-container-low, $background-light);
 			border: none;
 		}
 

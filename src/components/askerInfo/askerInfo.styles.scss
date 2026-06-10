@@ -16,7 +16,7 @@ $profile-footer-justify-content: center !default;
 		flex-direction: column;
 		justify-content: stretch;
 		align-items: stretch;
-		background-color: $background-light;
+		background-color: var(--m3-surface-container-low, $background-light);
 		height: 100%;
 		width: 100vw;
 
@@ -33,7 +33,7 @@ $profile-footer-justify-content: center !default;
 		align-items: center;
 		position: relative;
 		padding: $grid-base-three $grid-base-two;
-		background-color: $background-lighter;
+		background-color: var(--m3-surface-container-lowest, $background-lighter);
 
 		@include breakpoint($fromMedium) {
 			padding: $grid-base-three;
@@ -41,7 +41,7 @@ $profile-footer-justify-content: center !default;
 
 		@include breakpoint($fromLarge) {
 			align-items: flex-start;
-			background-color: $background-light;
+			background-color: var(--m3-surface-container-low, $background-light);
 		}
 
 		&__wrapper {
@@ -63,7 +63,7 @@ $profile-footer-justify-content: center !default;
 		&__username {
 			font-size: $font-size-secondary;
 			line-height: $line-height-secondary;
-			color: $tertiary;
+			color: var(--m3-on-surface-variant, $tertiary);
 			margin: 0;
 
 			&--withBackButton {
@@ -110,7 +110,7 @@ $profile-footer-justify-content: center !default;
 		flex-direction: column;
 		overflow-x: hidden;
 		overflow-y: auto;
-		background-color: $background-light;
+		background-color: var(--m3-surface-container-low, $background-light);
 		margin-top: 0;
 	}
 
@@ -199,7 +199,7 @@ $profile-footer-justify-content: center !default;
 		}
 
 		&__label {
-			color: $tertiary;
+			color: var(--m3-on-surface-variant, $tertiary);
 			font-size: $font-size-secondary;
 			line-height: $line-height-secondary;
 			margin: 0 0 6px;
@@ -209,7 +209,7 @@ $profile-footer-justify-content: center !default;
 			margin: 0 0 6px;
 
 			&--empty {
-				color: $tertiary;
+				color: var(--m3-on-surface-variant, $tertiary);
 			}
 		}
 	}

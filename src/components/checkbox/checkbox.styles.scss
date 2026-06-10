@@ -8,7 +8,7 @@ $checkbox-size: 24px;
 
 		.warning {
 			margin-top: 10px;
-			color: $form-error;
+			color: var(--m3-error, $form-error);
 		}
 	}
 
@@ -51,7 +51,7 @@ $checkbox-size: 24px;
 		}
 
 		&--error {
-			border: 2px solid $form-error;
+			border: 2px solid var(--m3-error, $form-error);
 		}
 	}
 

@@ -21,7 +21,7 @@ $emoji-popover-height: 433px;
 			align-self: flex-end;
 
 			* {
-				fill: $tertiary;
+				fill: var(--m3-on-surface-variant, $tertiary);
 			}
 
 			&:hover {
@@ -173,7 +173,7 @@ $emoji-popover-height: 433px;
 		width: 100%;
 		height: 100%;
 		font-size: 1.2em;
-		color: $tertiary;
+		color: var(--m3-on-surface-variant, $tertiary);
 		background: none;
 		border: none;
 		outline: none;

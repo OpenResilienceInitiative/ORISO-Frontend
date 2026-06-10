@@ -67,7 +67,7 @@
 
 	&__copyLink {
 		display: block;
-		color: $primary;
+		color: var(--m3-primary, $primary);
 		width: max-content;
 
 		&:focus {

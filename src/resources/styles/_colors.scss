@@ -3,9 +3,9 @@
 }
 
 .secondary {
-	color: $secondary;
+	color: var(--m3-on-surface, $secondary);
 }
 
 .tertiary {
-	color: $tertiary;
+	color: var(--m3-on-surface-variant, $tertiary);
 }
