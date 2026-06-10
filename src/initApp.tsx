@@ -8,9 +8,10 @@ import { config, routePathNames } from './resources/scripts/config';
 import { ThemeProvider } from '@mui/material';
 import { UrlParamsProvider } from './globalState/provider/UrlParamsProvider';
 import { RegistrationProvider } from './globalState';
-import { lazy } from 'react';
+import { lazy, useEffect, useState } from 'react';
 import './resources/styles/mui-variables-mapping.scss';
-import theme from './resources/scripts/theme';
+import { createAppTheme } from './resources/scripts/theme';
+import { THEME_APPLIED_EVENT } from './utils/theme/applyTenantTheme';
 import { Redirect } from 'react-router-dom';
 import { Privacy } from './components/legalInformationLinks/Privacy';
 import { Imprint } from './components/legalInformationLinks/Imprint';
@@ -29,12 +30,26 @@ const NewRegistration = () => (
 	</UrlParamsProvider>
 );
 
+// Recreates the MUI theme when the runtime tenant palette lands at
+// :root (THB-05) — theme.jsx reads computed --m3-* values at creation.
+const AppThemeProvider = ({ children }: { children: React.ReactNode }) => {
+	const [theme, setTheme] = useState(() => createAppTheme());
+
+	useEffect(() => {
+		const refresh = () => setTheme(createAppTheme());
+		window.addEventListener(THEME_APPLIED_EVENT, refresh);
+		return () => window.removeEventListener(THEME_APPLIED_EVENT, refresh);
+	}, []);
+
+	return <ThemeProvider theme={theme}>{children}</ThemeProvider>;
+};
+
 // React 19 uses createRoot API
 const container = document.getElementById('appRoot');
 if (container) {
 	const root = createRoot(container);
 	root.render(
-		<ThemeProvider theme={theme}>
+		<AppThemeProvider>
 			<App
 				config={config}
 				extraRoutes={[
@@ -67,6 +82,6 @@ if (container) {
 				]}
 				stageComponent={Stage}
 			/>
-		</ThemeProvider>
+		</AppThemeProvider>
 	);
 }
