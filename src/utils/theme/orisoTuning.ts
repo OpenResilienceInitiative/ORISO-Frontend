@@ -33,6 +33,18 @@ export const SECONDARY_TONES = { role: 41, container: 46, onContainer: 94 };
 export const TERTIARY_TONES = { role: 40, container: 67, onContainer: 24 };
 
 /**
+ * Accent seeds are tamed: chroma capped so a neon accent cannot break
+ * the calm look (slate sits at 11.5; 24 still reads clearly coloured).
+ */
+export const ACCENT_MAX_CHROMA = 24;
+
+/**
+ * Seeds with less chroma than this cannot carry a brand palette —
+ * the admin gets a "too pale" warning (saving stays allowed, UAT-F).
+ */
+export const TOO_PALE_CHROMA = 12;
+
+/**
  * Oriso default signal palette (no admin signal seed): the benchmark
  * error family. The container chroma in the benchmark does not follow
  * the generic container recipe, so the defaults are anchored as data.

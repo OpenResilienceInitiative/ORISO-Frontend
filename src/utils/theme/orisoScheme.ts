@@ -10,6 +10,7 @@
  * Pure module: same input → same output. No DOM, no network.
  */
 import {
+	Blend,
 	Contrast,
 	DynamicColor,
 	Hct,
@@ -19,6 +20,7 @@ import {
 } from '@material/material-color-utilities';
 
 import {
+	ACCENT_MAX_CHROMA,
 	CONTAINER_CHROMA_FACTOR,
 	CONTAINER_TONE_SHIFT,
 	CONTRAST_AA,
@@ -31,7 +33,8 @@ import {
 	NEUTRAL_VARIANT,
 	SECONDARY_TONES,
 	SLATE,
-	TERTIARY_TONES
+	TERTIARY_TONES,
+	TOO_PALE_CHROMA
 } from './orisoTuning';
 
 export type OrisoSchemeName = 'light' | 'dark' | 'inverted';
@@ -165,9 +168,32 @@ const accentFamilyFromPalette = (
 	};
 };
 
+/**
+ * Error family: a custom signal seed goes through the same
+ * brand-fidelity recipe as the primary; without one, the benchmark-
+ * anchored Oriso defaults apply.
+ */
 const signalFamily = (
-	scheme: OrisoSchemeName
-): { error: string; onError: string; errorContainer: string; onErrorContainer: string } => {
+	scheme: OrisoSchemeName,
+	signalSeed?: string
+): {
+	error: string;
+	onError: string;
+	errorContainer: string;
+	onErrorContainer: string;
+} => {
+	if (signalSeed) {
+		const family =
+			scheme === 'light'
+				? lightBrandFamily(signalSeed)
+				: darkBrandFamily(signalSeed);
+		return {
+			error: family.role,
+			onError: family.onRole,
+			errorContainer: family.container,
+			onErrorContainer: family.onContainer
+		};
+	}
 	if (scheme === 'light') {
 		return DEFAULT_SIGNAL.light;
 	}
@@ -183,6 +209,25 @@ const signalFamily = (
 };
 
 /**
+ * Accent palette: hue pulled toward the primary (Blend.harmonize),
+ * chroma capped to keep the calm look.
+ */
+const harmonizedAccentPalette = (
+	accentSeed: string,
+	primarySeed: string
+): TonalPalette => {
+	const harmonized = Blend.harmonize(
+		argbFromHex(accentSeed),
+		argbFromHex(primarySeed)
+	);
+	const hct = Hct.fromInt(harmonized);
+	return TonalPalette.fromHueAndChroma(
+		hct.hue,
+		Math.min(hct.chroma, ACCENT_MAX_CHROMA)
+	);
+};
+
+/**
  * Computes the full Oriso role palette for the given seeds and scheme.
  *
  * Throws on syntactically invalid seeds — callers (admin preview,
@@ -193,6 +238,14 @@ export const computeOrisoPalette = (
 	scheme: OrisoSchemeName
 ): OrisoPaletteResult => {
 	const primarySeed = normalizeHex(seeds.primary, 'primary');
+	const accentSeed =
+		seeds.accent === undefined
+			? undefined
+			: normalizeHex(seeds.accent, 'accent');
+	const signalSeed =
+		seeds.signal === undefined
+			? undefined
+			: normalizeHex(seeds.signal, 'signal');
 
 	const neutral = TonalPalette.fromHueAndChroma(NEUTRAL.hue, NEUTRAL.chroma);
 	const variant = TonalPalette.fromHueAndChroma(
@@ -206,9 +259,16 @@ export const computeOrisoPalette = (
 			? lightBrandFamily(primarySeed)
 			: darkBrandFamily(primarySeed);
 
-	const secondary = accentFamilyFromPalette(slate, SECONDARY_TONES, scheme);
+	const secondaryPalette = accentSeed
+		? harmonizedAccentPalette(accentSeed, primarySeed)
+		: slate;
+	const secondary = accentFamilyFromPalette(
+		secondaryPalette,
+		SECONDARY_TONES,
+		scheme
+	);
 	const tertiary = accentFamilyFromPalette(slate, TERTIARY_TONES, scheme);
-	const signal = signalFamily(scheme);
+	const signal = signalFamily(scheme, signalSeed);
 
 	const neutralTones =
 		scheme === 'light'
@@ -277,5 +337,8 @@ export const computeOrisoPalette = (
 		'--m3-scrim': '#000000'
 	};
 
-	return { tokens, tooPale: false };
+	const tooPale =
+		Hct.fromInt(argbFromHex(primarySeed)).chroma < TOO_PALE_CHROMA;
+
+	return { tokens, tooPale };
 };
