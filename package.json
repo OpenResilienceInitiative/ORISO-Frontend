@@ -24,6 +24,7 @@
 		"@juggle/resize-observer": "^3.4.0",
 		"@livekit/components-react": "^2.9.16",
 		"@livekit/components-styles": "^1.2.0",
+		"@material/material-color-utilities": "0.4.0",
 		"@mui/icons-material": "^5.11.16",
 		"@mui/material": "^5.13.7",
 		"@onlineberatung/onlineberatung-frontend-extensions": "file:src/extensions",
