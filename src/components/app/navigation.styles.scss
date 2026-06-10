@@ -554,7 +554,6 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 			top: 2px;
 			right: 2px;
 			text-align: center;
-			outline: $primary 2px solid;
 
 			@include breakpoint($fromLarge) {
 				top: 4px;
@@ -672,7 +671,6 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 	&__item__count {
 		color: #930008;
 		background-color: #ffffff;
-		outline: #930008 2px solid;
 	}
 
 	&__title {
