@@ -522,163 +522,186 @@ export const SessionMenu = (props: SessionMenuProps) => {
 						/>
 					</div>
 				)}
-
-			<span
-				id="iconH"
-				onClick={() => setFlyoutOpen(!flyoutOpen)}
-				className="sessionMenu__icon sessionMenu__icon--desktop"
-			>
-				<MenuVerticalIcon
-					title={translate('app.menu')}
-					aria-label={translate('app.menu')}
-				/>
-			</span>
-			<span
-				id="iconV"
-				onClick={() => setFlyoutOpen(!flyoutOpen)}
-				className="sessionMenu__icon sessionMenu__icon--mobile"
-			>
-				<MenuVerticalIcon
-					title={translate('app.menu')}
-					aria-label={translate('app.menu')}
-				/>
-			</span>
-
-			<div
-				id="flyout"
-				className={`sessionMenu__content ${
-					flyoutOpen && 'sessionMenu__content--open'
-				}`}
-			>
-				{/* REMOVED: Mobile dropdown video call items - now using desktop buttons on mobile too */}
-				{false && hasVideoCallFeatures() && (
-					<>
-						<div
-							className="sessionMenu__item sessionMenu__item--mobile"
-							onClick={() => handleStartVideoCall(true)}
-						>
-							{translate('videoCall.button.startVideoCall')}
-						</div>
-						<div
-							className="sessionMenu__item sessionMenu__item--mobile"
-							onClick={() => handleStartVideoCall()}
-						>
-							{translate('videoCall.button.startCall')}
-						</div>
-					</>
-				)}
-
-				{props.isAskerInfoAvailable && (
-					<Link className="sessionMenu__item" to={userProfileLink}>
-						{translate('chatFlyout.askerProfil')}
-					</Link>
-				)}
-
-				{props.showMobileSupervisionAction && (
-					<div
-						className="sessionMenu__item sessionMenu__item--mobile"
-						onClick={() => {
-							setFlyoutOpen(false);
-							props.onMobileSupervisionAction?.();
-						}}
+			{!activeSession.isEnquiry && (
+				<>
+					<span
+						id="iconH"
+						onClick={() => setFlyoutOpen(!flyoutOpen)}
+						className="sessionMenu__icon sessionMenu__icon--desktop"
 					>
-						{translate(
-							'sessionHeader.supervisor.modal.title',
-							'Supervisor verwalten'
-						)}
-					</div>
-				)}
+						<MenuVerticalIcon
+							title={translate('app.menu')}
+							aria-label={translate('app.menu')}
+						/>
+					</span>
+					<span
+						id="iconV"
+						onClick={() => setFlyoutOpen(!flyoutOpen)}
+						className="sessionMenu__icon sessionMenu__icon--mobile"
+					>
+						<MenuVerticalIcon
+							title={translate('app.menu')}
+							aria-label={translate('app.menu')}
+						/>
+					</span>
 
-				{props.showMobileDeleteAnonymousAccountAction && (
 					<div
-						className={`sessionMenu__item sessionMenu__item--mobile ${
-							props.mobileDeleteAnonymousAccountDisabled
-								? 'sessionMenu__item--disabled'
-								: ''
+						id="flyout"
+						className={`sessionMenu__content ${
+							flyoutOpen && 'sessionMenu__content--open'
 						}`}
-						onClick={() => {
-							if (props.mobileDeleteAnonymousAccountDisabled) {
-								return;
-							}
-							setFlyoutOpen(false);
-							props.onMobileDeleteAnonymousAccountAction?.();
-						}}
 					>
-						{translate(
-							'sessionHeader.anonymous.deleteAccount.label',
-							'Konto löschen'
+						{/* REMOVED: Mobile dropdown video call items - now using desktop buttons on mobile too */}
+						{false && hasVideoCallFeatures() && (
+							<>
+								<div
+									className="sessionMenu__item sessionMenu__item--mobile"
+									onClick={() => handleStartVideoCall(true)}
+								>
+									{translate(
+										'videoCall.button.startVideoCall'
+									)}
+								</div>
+								<div
+									className="sessionMenu__item sessionMenu__item--mobile"
+									onClick={() => handleStartVideoCall()}
+								>
+									{translate('videoCall.button.startCall')}
+								</div>
+							</>
 						)}
+
+						{props.isAskerInfoAvailable && (
+							<Link
+								className="sessionMenu__item"
+								to={userProfileLink}
+							>
+								{translate('chatFlyout.askerProfil')}
+							</Link>
+						)}
+
+						{props.showMobileSupervisionAction && (
+							<div
+								className="sessionMenu__item sessionMenu__item--mobile"
+								onClick={() => {
+									setFlyoutOpen(false);
+									props.onMobileSupervisionAction?.();
+								}}
+							>
+								{translate(
+									'sessionHeader.supervisor.modal.title',
+									'Supervisor verwalten'
+								)}
+							</div>
+						)}
+
+						{props.showMobileDeleteAnonymousAccountAction && (
+							<div
+								className={`sessionMenu__item sessionMenu__item--mobile ${
+									props.mobileDeleteAnonymousAccountDisabled
+										? 'sessionMenu__item--disabled'
+										: ''
+								}`}
+								onClick={() => {
+									if (
+										props.mobileDeleteAnonymousAccountDisabled
+									) {
+										return;
+									}
+									setFlyoutOpen(false);
+									props.onMobileDeleteAnonymousAccountAction?.();
+								}}
+							>
+								{translate(
+									'sessionHeader.anonymous.deleteAccount.label',
+									'Konto löschen'
+								)}
+							</div>
+						)}
+
+						{!hasUserAuthority(
+							AUTHORITIES.ASKER_DEFAULT,
+							userData
+						) &&
+							type !== SESSION_LIST_TYPES.ENQUIRY &&
+							activeSession.isSession &&
+							!props.isSupervisor && (
+								<>
+									{sessionListTab !==
+									SESSION_LIST_TAB_ARCHIVE ? (
+										<div
+											onClick={handleArchiveSession}
+											className="sessionMenu__item"
+										>
+											{translate('chatFlyout.archive')}
+										</div>
+									) : (
+										<div
+											onClick={handleDearchiveSession}
+											className="sessionMenu__item"
+										>
+											{translate('chatFlyout.dearchive')}
+										</div>
+									)}
+								</>
+							)}
+
+						{hasUserAuthority(
+							AUTHORITIES.CONSULTANT_DEFAULT,
+							userData
+						) &&
+							type !== SESSION_LIST_TYPES.ENQUIRY &&
+							activeSession.isSession &&
+							!props.isSupervisor && (
+								<DeleteSession
+									chatId={activeSession.item.id}
+									onSuccess={onSuccessDeleteSession}
+								>
+									{(onClick) => (
+										<div
+											onClick={onClick}
+											className="sessionMenu__item"
+										>
+											{translate('chatFlyout.remove')}
+										</div>
+									)}
+								</DeleteSession>
+							)}
+
+						{activeSession.isGroup && (
+							<SessionMenuFlyoutGroup
+								editGroupChatSettingsLink={
+									editGroupChatSettingsLink
+								}
+								groupChatInfoLink={groupChatInfoLink}
+								handleLeaveGroupChat={handleLeaveGroupChat}
+								handleStopGroupChat={handleStopGroupChat}
+								bannedUsers={props.bannedUsers}
+							/>
+						)}
+
+						<div className="legalInformationLinks--menu">
+							<LegalLinks
+								legalLinks={legalLinks}
+								params={{ aid: activeSession?.agency?.id }}
+							>
+								{(label, url) => (
+									<a
+										href={url}
+										target="_blank"
+										rel="noreferrer"
+									>
+										<Text
+											type="infoLargeAlternative"
+											text={label}
+										/>
+									</a>
+								)}
+							</LegalLinks>
+						</div>
 					</div>
-				)}
-
-				{!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
-					type !== SESSION_LIST_TYPES.ENQUIRY &&
-					activeSession.isSession &&
-					!props.isSupervisor && (
-						<>
-							{sessionListTab !== SESSION_LIST_TAB_ARCHIVE ? (
-								<div
-									onClick={handleArchiveSession}
-									className="sessionMenu__item"
-								>
-									{translate('chatFlyout.archive')}
-								</div>
-							) : (
-								<div
-									onClick={handleDearchiveSession}
-									className="sessionMenu__item"
-								>
-									{translate('chatFlyout.dearchive')}
-								</div>
-							)}
-						</>
-					)}
-
-				{hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
-					type !== SESSION_LIST_TYPES.ENQUIRY &&
-					activeSession.isSession &&
-					!props.isSupervisor && (
-						<DeleteSession
-							chatId={activeSession.item.id}
-							onSuccess={onSuccessDeleteSession}
-						>
-							{(onClick) => (
-								<div
-									onClick={onClick}
-									className="sessionMenu__item"
-								>
-									{translate('chatFlyout.remove')}
-								</div>
-							)}
-						</DeleteSession>
-					)}
-
-				{activeSession.isGroup && (
-					<SessionMenuFlyoutGroup
-						editGroupChatSettingsLink={editGroupChatSettingsLink}
-						groupChatInfoLink={groupChatInfoLink}
-						handleLeaveGroupChat={handleLeaveGroupChat}
-						handleStopGroupChat={handleStopGroupChat}
-						bannedUsers={props.bannedUsers}
-					/>
-				)}
-
-				<div className="legalInformationLinks--menu">
-					<LegalLinks
-						legalLinks={legalLinks}
-						params={{ aid: activeSession?.agency?.id }}
-					>
-						{(label, url) => (
-							<a href={url} target="_blank" rel="noreferrer">
-								<Text
-									type="infoLargeAlternative"
-									text={label}
-								/>
-							</a>
-						)}
-					</LegalLinks>
-				</div>
-			</div>
+				</>
+			)}
 			{overlayActive && (
 				<Overlay
 					item={overlayItem}
