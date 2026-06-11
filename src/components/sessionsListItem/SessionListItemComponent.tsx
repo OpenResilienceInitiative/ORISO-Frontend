@@ -854,6 +854,7 @@ export const SessionListItemComponent = ({
 											displayName="User"
 											userId={`placeholder-${index}`}
 											size="32px"
+											ring={false}
 										/>
 									</div>
 								))}

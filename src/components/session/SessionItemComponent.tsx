@@ -4346,6 +4346,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											firstName={primaryTypingUser}
 											lastName=""
 											userId={`typing-${primaryTypingUser}`}
+											ring={false}
 										/>
 									</div>
 									<div className="messageItem__content">

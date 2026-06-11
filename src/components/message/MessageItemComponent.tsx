@@ -1753,6 +1753,7 @@ export const MessageItemComponent = ({
 									}
 									userId={userId}
 									size="32px"
+									ring={false}
 								/>
 							</div>
 							{showVisibleAudience && (
@@ -1865,6 +1866,7 @@ export const MessageItemComponent = ({
 									lastName={userData?.lastName}
 									userId={userId}
 									size="32px"
+									ring={false}
 								/>
 							</div>
 						</div>
