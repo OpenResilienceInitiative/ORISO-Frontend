@@ -365,6 +365,14 @@ module.exports = function (webpackEnv) {
 		module: {
 			strictExportPresence: true,
 			rules: [
+				// @material/material-color-utilities ships ESM with
+				// extensionless internal imports; the "fully specified"
+				// resolution for type:module packages rejects them.
+				{
+					test: /\.js$/,
+					include: /node_modules[\\/]@material[\\/]material-color-utilities/,
+					resolve: { fullySpecified: false }
+				},
 				// Handle node_modules packages that contain sourcemaps
 				shouldUseSourceMap && {
 					enforce: 'pre',
