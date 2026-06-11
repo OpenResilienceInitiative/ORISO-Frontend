@@ -6,6 +6,10 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { callManager, CallData } from '../../services/CallManager';
+import {
+	getElementCallBaseUrl,
+	getMatrixHomeserverUrl
+} from '../../resources/scripts/runtimeConfig';
 import './GroupCallWidget.scss';
 
 export const GroupCallWidget: React.FC = () => {
@@ -144,9 +148,7 @@ export const GroupCallWidget: React.FC = () => {
 			const roomId =
 				(callData as any).elementCallRoomId || callData.roomId;
 			const homeserverUrl =
-				client.getHomeserverUrl() ||
-				process.env.REACT_APP_MATRIX_HOMESERVER_URL?.trim() ||
-				'';
+				client.getHomeserverUrl() || getMatrixHomeserverUrl();
 			if (!homeserverUrl) {
 				throw new Error(
 					'Matrix homeserver URL is missing. Set REACT_APP_MATRIX_HOMESERVER_URL or ensure the client reports a homeserver URL.'
@@ -171,9 +173,7 @@ export const GroupCallWidget: React.FC = () => {
 			// We mirror Element Call's own `getRelativeRoomUrl` format:
 			//   /room/#?roomId=...&perParticipantE2EE=...
 			// We also pass Matrix credentials via URL so our auto-auth script can log in.
-			const elementCallOrigin = (
-				process.env.REACT_APP_ELEMENT_CALL_BASE_URL || ''
-			).replace(/\/+$/, '');
+			const elementCallOrigin = getElementCallBaseUrl();
 			if (!elementCallOrigin) {
 				throw new Error('REACT_APP_ELEMENT_CALL_BASE_URL is not set');
 			}

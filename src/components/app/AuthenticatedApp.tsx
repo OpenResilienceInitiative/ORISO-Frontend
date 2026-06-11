@@ -28,6 +28,7 @@ import { useCall } from '../../globalState/provider/CallProvider';
 import { RocketChatUserStatusProvider } from '../../globalState/provider/RocketChatUserStatusProvider';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { E2EEncryptionSupportBanner } from '../E2EEncryptionSupportBanner/E2EEncryptionSupportBanner';
+import { getMatrixHomeserverUrl } from '../../resources/scripts/runtimeConfig';
 
 interface AuthenticatedAppProps {
 	onAppReady: Function;
@@ -119,7 +120,7 @@ export const AuthenticatedApp = ({
 										new MatrixClientService();
 
 									const homeserverUrl =
-										process.env.REACT_APP_MATRIX_HOMESERVER_URL?.trim();
+										getMatrixHomeserverUrl();
 									if (!homeserverUrl) {
 										// console.warn('⚠️ REACT_APP_MATRIX_HOMESERVER_URL is not set; skipping Matrix client init');
 									} else {
