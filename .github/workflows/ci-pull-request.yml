@@ -20,6 +20,10 @@ jobs:
       with:
         node_version: '18'
 
+    - name: Run unit tests
+      shell: bash
+      run: npm run test:unit
+
     - name: Create Docker image
       uses: ./.github/actions/docker-build-push
       with:
