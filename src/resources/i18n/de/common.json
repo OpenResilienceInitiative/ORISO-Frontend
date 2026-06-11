@@ -2076,8 +2076,8 @@
 			"decreaseExhale": "Sekunden für Ausatmen verringern",
 			"increaseExhale": "Sekunden für Ausatmen erhöhen",
 			"robotUsernameFallback": "Ratsuchende_r 9",
-			"robotCard1Title": "Bitte haben Sie etwas Geduld",
-			"robotCard1Body": "Derzeit sind alle Berater_innen im Gespräch. Wir sind schnellstmöglich für Sie da.",
+			"robotCard1Title": "Einen Moment Geduld",
+			"robotCard1Body": "Alle unsere Berater*innen sind gerade im Live-Gespräch. Bitte warten Sie noch einen kurzen Moment hier im Chatraum. Sie sehen unten, wie viele Personen noch vor Ihnen an der Reihe sind.",
 			"robotCard2TitlePrefix": "Ihr Benutzername lautet:",
 			"robotCard2Body": "Um Ihre Anonymität zu schützen, löschen wir Ihre Nachrichten spätestens 48 Stunden nachdem der Chat beendet wurde.",
 			"robotCard3Title": "Sie benötigen nicht sofort eine Antwort? Und wollen nicht auf einen freien Chat warten?",
@@ -2927,6 +2927,7 @@
 		"start": "Beratung starten",
 		"pseudonym": {
 			"carimatSubtitle": "Angezeigten Namen auswählen",
+			"carimatPrivacySubtitle": "Ihre Privatsphäre",
 			"carimatMessage": "Hallo, bevor wir weitermachen, bestätigen Sie bitte Ihren zufällig gewählten Namen für diese Sitzung.",
 			"privacyMessage": "Gute Wahl. Zum Schutz Ihrer Privatsphäre sind alle Nachrichten Ende-zu-Ende verschlüsselt und werden nach 48 Stunden automatisch gelöscht.",
 			"yourPseudonym": "Dein Pseudonym",
