@@ -87,6 +87,8 @@ interface BrandFamily {
 	inverse: string;
 	tint: string;
 	hover: string;
+	fixed: string;
+	onFixed: string;
 }
 
 /**
@@ -123,7 +125,10 @@ const lightBrandFamily = (seedHex: string): BrandFamily => {
 		onContainer: hex(palette.tone(onContainerTone)),
 		inverse: hex(palette.tone(80)),
 		tint: hex(boosted.tone(40)),
-		hover: hex(palette.tone(clampTone(Math.round(hct.tone) + HOVER_TONE_SHIFT)))
+		hover: hex(palette.tone(clampTone(Math.round(hct.tone) + HOVER_TONE_SHIFT))),
+		// Fixed roles keep the same tones in every scheme (M3 spec).
+		fixed: hex(palette.tone(90)),
+		onFixed: hex(palette.tone(10))
 	};
 };
 
@@ -137,7 +142,9 @@ const darkBrandFamily = (seedHex: string): BrandFamily => {
 		onContainer: hex(palette.tone(DARK_BRAND_TONES.onContainer)),
 		inverse: hex(palette.tone(40)),
 		tint: hex(palette.tone(80)),
-		hover: hex(palette.tone(clampTone(DARK_BRAND_TONES.role - HOVER_TONE_SHIFT)))
+		hover: hex(palette.tone(clampTone(DARK_BRAND_TONES.role - HOVER_TONE_SHIFT))),
+		fixed: hex(palette.tone(90)),
+		onFixed: hex(palette.tone(10))
 	};
 };
 
@@ -288,6 +295,8 @@ export const computeOrisoPalette = (
 		'--m3-primary-container': brand.container,
 		'--m3-on-primary-container': brand.onContainer,
 		'--m3-primary-hover': brand.hover,
+		'--m3-primary-fixed': brand.fixed,
+		'--m3-on-primary-fixed': brand.onFixed,
 		'--m3-inverse-primary': brand.inverse,
 		'--m3-surface-tint': brand.tint,
 		'--m3-success':
