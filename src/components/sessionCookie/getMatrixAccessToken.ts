@@ -1,4 +1,5 @@
 import { createClient, MatrixClient } from 'matrix-js-sdk';
+import { getMatrixHomeserverUrl } from '../../resources/scripts/runtimeConfig';
 
 export interface MatrixLoginData {
 	accessToken: string;
@@ -12,8 +13,7 @@ export const getMatrixAccessToken = (
 	password: string
 ): Promise<MatrixLoginData> =>
 	new Promise((resolve, reject) => {
-		const homeserverUrl =
-			process.env.REACT_APP_MATRIX_HOMESERVER_URL?.trim();
+		const homeserverUrl = getMatrixHomeserverUrl();
 		if (!homeserverUrl) {
 			reject(
 				new Error('REACT_APP_MATRIX_HOMESERVER_URL is not configured')
