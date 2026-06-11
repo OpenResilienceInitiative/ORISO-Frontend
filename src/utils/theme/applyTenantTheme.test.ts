@@ -152,3 +152,48 @@ describe('scheme-keyed variable map (Test #22, UAT-I)', () => {
 		});
 	});
 });
+
+describe('URL preview mode (Theme Builder iframe, security-constrained)', () => {
+	it('parses strictly validated hex seeds from the query string', async () => {
+		const { readPreviewSeeds } = await import('./applyTenantTheme');
+		expect(
+			readPreviewSeeds(
+				'?themePreviewPrimary=a5000a&themePreviewAccent=646d78&themePreviewSignal=b1005e'
+			)
+		).toEqual({
+			primary: '#a5000a',
+			accent: '#646d78',
+			signal: '#b1005e'
+		});
+	});
+
+	it('returns null without a primary preview seed', async () => {
+		const { readPreviewSeeds } = await import('./applyTenantTheme');
+		expect(readPreviewSeeds('')).toBeNull();
+		expect(readPreviewSeeds('?themePreviewAccent=646d78')).toBeNull();
+	});
+
+	it('rejects anything that is not a bare 6-digit hex (no injection surface)', async () => {
+		const { readPreviewSeeds } = await import('./applyTenantTheme');
+		expect(readPreviewSeeds('?themePreviewPrimary=red')).toBeNull();
+		expect(readPreviewSeeds('?themePreviewPrimary=%23a5000a')).toBeNull();
+		expect(
+			readPreviewSeeds('?themePreviewPrimary=a5000a&themePreviewAccent=javascript:alert(1)')
+		).toEqual({ primary: '#a5000a', accent: undefined, signal: undefined });
+	});
+
+	it('applies preview seeds to the root (preview wins over tenant)', async () => {
+		const { applyPreviewFromLocation } = await import('./applyTenantTheme');
+		const root = document.createElement('div');
+		const applied = applyPreviewFromLocation('?themePreviewPrimary=a5000a', root);
+		expect(applied).toBe(true);
+		expect(root.style.getPropertyValue('--m3-primary')).toBe('#a5000a');
+	});
+
+	it('applies nothing for a normal URL', async () => {
+		const { applyPreviewFromLocation } = await import('./applyTenantTheme');
+		const root = document.createElement('div');
+		expect(applyPreviewFromLocation('?foo=bar', root)).toBe(false);
+		expect(root.style.length).toBe(0);
+	});
+});
