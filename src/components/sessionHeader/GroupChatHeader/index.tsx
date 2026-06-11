@@ -238,9 +238,16 @@ export const GroupChatHeader = ({
 				});
 				// console.log('✅ Media permissions granted!', stream);
 
-				// Store stream globally
-				(window as any).__preRequestedMediaStream = stream;
-				(window as any).__preRequestedMediaStreamTime = Date.now();
+				// Group calls render Element Call in an iframe which acquires its
+				// own media (on its own origin). Release this warm-up stream so
+				// the camera/mic don't stay on in the parent page.
+				try {
+					stream
+						.getTracks()
+						.forEach((track: MediaStreamTrack) => track.stop());
+				} catch {
+					// ignore
+				}
 			} catch (mediaError: any) {
 				// console.error('❌ Media permission denied:', mediaError);
 

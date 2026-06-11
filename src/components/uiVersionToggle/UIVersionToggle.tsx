@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { Switch, FormControlLabel, Box, Chip } from '@mui/material';
 import { useTranslation } from 'react-i18next';
+import { getMatrixHomeserverUrl } from '../../resources/scripts/runtimeConfig';
 import './uiVersionToggle.styles.scss';
 
 const UI_VERSION_COOKIE = 'ui-version';
@@ -53,8 +54,7 @@ export const UIVersionToggle = () => {
 				'matrix_access_token'
 			);
 			const matrixDeviceId = localStorage.getItem('matrix_device_id');
-			const homeserverUrl =
-				process.env.REACT_APP_MATRIX_HOMESERVER_URL?.trim();
+			const homeserverUrl = getMatrixHomeserverUrl();
 			if (!homeserverUrl) {
 				alert(
 					'REACT_APP_MATRIX_HOMESERVER_URL is not set; cannot sync Matrix cookies for the new UI.'
