@@ -89,6 +89,7 @@ interface BrandFamily {
 	hover: string;
 	fixed: string;
 	onFixed: string;
+	onFixedVariant: string;
 }
 
 /**
@@ -128,7 +129,8 @@ const lightBrandFamily = (seedHex: string): BrandFamily => {
 		hover: hex(palette.tone(clampTone(Math.round(hct.tone) + HOVER_TONE_SHIFT))),
 		// Fixed roles keep the same tones in every scheme (M3 spec).
 		fixed: hex(palette.tone(90)),
-		onFixed: hex(palette.tone(10))
+		onFixed: hex(palette.tone(10)),
+		onFixedVariant: hex(palette.tone(30))
 	};
 };
 
@@ -144,7 +146,8 @@ const darkBrandFamily = (seedHex: string): BrandFamily => {
 		tint: hex(palette.tone(80)),
 		hover: hex(palette.tone(clampTone(DARK_BRAND_TONES.role - HOVER_TONE_SHIFT))),
 		fixed: hex(palette.tone(90)),
-		onFixed: hex(palette.tone(10))
+		onFixed: hex(palette.tone(10)),
+		onFixedVariant: hex(palette.tone(30))
 	};
 };
 
@@ -297,6 +300,7 @@ export const computeOrisoPalette = (
 		'--m3-primary-hover': brand.hover,
 		'--m3-primary-fixed': brand.fixed,
 		'--m3-on-primary-fixed': brand.onFixed,
+		'--m3-on-primary-fixed-variant': brand.onFixedVariant,
 		'--m3-inverse-primary': brand.inverse,
 		'--m3-surface-tint': brand.tint,
 		'--m3-success':
