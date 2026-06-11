@@ -16,6 +16,12 @@ import { Redirect } from 'react-router-dom';
 import { Privacy } from './components/legalInformationLinks/Privacy';
 import { Imprint } from './components/legalInformationLinks/Imprint';
 
+const ThemeDemo = lazy(() =>
+	import('./components/themeDemo/ThemeDemo').then((m) => ({
+		default: m.ThemeDemo
+	}))
+);
+
 const Registration = lazy(() =>
 	import('./components/registration/Registration').then((m) => ({
 		default: m.Registration
@@ -53,6 +59,12 @@ if (container) {
 			<App
 				config={config}
 				extraRoutes={[
+					{
+						// Auth-free theme demo for the admin's iframe preview
+						// (Frontend#144): real markup, mock content, no API.
+						route: { path: '/theme-demo' },
+						component: ThemeDemo
+					},
 					{
 						route: {
 							path: [
