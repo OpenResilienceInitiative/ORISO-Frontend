@@ -83,6 +83,7 @@ const TOLERANCE_TOKENS: Record<string, string> = {
 	'--m3-inverse-primary': 'Inverse Primary',
 	'--m3-primary-fixed': 'Primary Fixed',
 	'--m3-on-primary-fixed': 'On Primary Fixed',
+	'--m3-on-primary-fixed-variant': 'On Primary Fixed Variant',
 	'--m3-surface-tint': 'Surface Tint',
 	'--m3-shadow': 'Shadow',
 	'--m3-scrim': 'Scrim'
