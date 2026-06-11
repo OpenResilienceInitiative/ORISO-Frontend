@@ -92,3 +92,64 @@ export const applyTenantPalette = (
 		return false;
 	}
 };
+
+const PREVIEW_PARAMS = {
+	primary: 'themePreviewPrimary',
+	accent: 'themePreviewAccent',
+	signal: 'themePreviewSignal'
+} as const;
+
+/** Bare 6-digit hex only — anything else is ignored (no injection surface). */
+const BARE_HEX = /^[0-9a-fA-F]{6}$/;
+
+/**
+ * Theme Builder preview mode (decided 2026-06-11): the admin embeds the
+ * real app in a sandboxed iframe and passes draft seeds via query
+ * params. Strictly validated colour values, applied client-side as CSS
+ * custom properties only — no persistence, no behavioural change.
+ */
+export const readPreviewSeeds = (search: string): OrisoSeeds | null => {
+	const params = new URLSearchParams(search);
+	const read = (name: string): string | undefined => {
+		const value = params.get(name);
+		return value && BARE_HEX.test(value)
+			? `#${value.toLowerCase()}`
+			: undefined;
+	};
+	const primary = read(PREVIEW_PARAMS.primary);
+	if (!primary) {
+		return null;
+	}
+	return {
+		primary,
+		accent: read(PREVIEW_PARAMS.accent),
+		signal: read(PREVIEW_PARAMS.signal)
+	};
+};
+
+/**
+ * Applies the preview seeds from the given query string. Returns true
+ * when a preview palette landed — callers skip the tenant palette then
+ * (the preview wins).
+ */
+export const applyPreviewFromLocation = (
+	search: string,
+	root: HTMLElement = document.documentElement
+): boolean => {
+	const seeds = readPreviewSeeds(search);
+	if (!seeds) {
+		return false;
+	}
+	try {
+		const { tokens } = computeOrisoPalette(seeds, 'light');
+		Object.entries(tokens).forEach(([name, value]) => {
+			root.style.setProperty(name, value);
+		});
+		window.dispatchEvent(new CustomEvent(THEME_APPLIED_EVENT));
+		return true;
+	} catch (error) {
+		// eslint-disable-next-line no-console
+		console.warn('Theme preview: invalid seeds ignored.', error);
+		return false;
+	}
+};

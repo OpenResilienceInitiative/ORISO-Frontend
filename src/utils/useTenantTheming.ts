@@ -5,7 +5,10 @@ import { TenantDataInterface } from '../globalState/interfaces';
 import getLocationVariables from './getLocationVariables';
 import decodeHTML from './decodeHTML';
 import { useAppConfig } from '../hooks/useAppConfig';
-import { applyTenantPalette } from './theme/applyTenantTheme';
+import {
+	applyPreviewFromLocation,
+	applyTenantPalette
+} from './theme/applyTenantTheme';
 
 const getOrCreateHeadNode = (
 	tagName: string,
@@ -39,7 +42,11 @@ const applyTheming = (tenant: TenantDataInterface) => {
 		// Seeds → OrisoScheme engine → --m3-* variables on the document
 		// root. Without a stored seed (or with an invalid one) nothing is
 		// injected and the compiled legacy palette keeps applying (UAT-E).
-		applyTenantPalette(tenant.theming);
+		// In Theme Builder preview mode (sandboxed admin iframe) the URL
+		// seeds win over the stored tenant palette.
+		if (!applyPreviewFromLocation(window.location.search)) {
+			applyTenantPalette(tenant.theming);
+		}
 
 		getOrCreateHeadNode('meta', { name: 'theme-color' }).setAttribute(
 			'content',
