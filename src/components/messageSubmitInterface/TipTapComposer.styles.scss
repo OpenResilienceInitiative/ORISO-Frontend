@@ -52,10 +52,10 @@
 
 		.ProseMirror {
 			position: absolute;
-			top: 56px; // below toolbar strip
-			right: 70px; // keep clear of send/side controls
+			top: 66px; // below toolbar strip
+			right: 64px; // keep clear of send/side controls
 			bottom: 18px; // keep clear of lower visuals
-			left: 24px;
+			left: 16px;
 			direction: ltr;
 			text-align: left;
 			min-height: 0;
@@ -68,10 +68,10 @@
 			box-sizing: border-box;
 
 			@media screen and (min-width: 900px) {
-				top: 56px;
-				right: 70px;
+				top: 66px;
+				right: 64px;
 				bottom: 18px;
-				left: 24px;
+				left: 16px;
 			}
 
 			p {
@@ -104,5 +104,3 @@
 		}
 	}
 }
-
-
