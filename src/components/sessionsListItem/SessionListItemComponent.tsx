@@ -575,6 +575,9 @@ export const SessionListItemComponent = ({
 					'sessionsListItem',
 					'sessionsListItem--groupChat',
 					isChatActive && 'sessionsListItem--active',
+					!isChatActive &&
+						activeSession.item.messagesRead &&
+						'sessionsListItem--read',
 					isBeforeActive && 'sessionsListItem--beforeActive',
 					isAfterActive && 'sessionsListItem--afterActive'
 				)}
@@ -936,6 +939,9 @@ export const SessionListItemComponent = ({
 				`sessionsListItem`,
 				isChatActive && `sessionsListItem--active`,
 				isAnonymousChat && `sessionsListItem--anonymous`,
+				!isChatActive &&
+					activeSession.item.messagesRead &&
+					'sessionsListItem--read',
 				isBeforeActive && 'sessionsListItem--beforeActive',
 				isAfterActive && 'sessionsListItem--afterActive'
 			)}
