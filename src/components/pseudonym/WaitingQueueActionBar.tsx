@@ -49,8 +49,8 @@ const BackHookArrowIcon: React.FC = () => (
 	</svg>
 );
 
-/** White checkmark on the queue button. */
-const QueueCheckIcon: React.FC = () => (
+/** Hourglass icon on the queue button. */
+const QueueHourglassIcon: React.FC = () => (
 	<svg
 		width="32"
 		height="32"
@@ -60,7 +60,7 @@ const QueueCheckIcon: React.FC = () => (
 		aria-hidden="true"
 	>
 		<path
-			d="M15.916 30.0007L6.41602 20.5007L8.79102 18.1257L15.916 25.2507L31.2077 9.95898L33.5827 12.334L15.916 30.0007Z"
+			d="M12 5H28V11.5C28 13.15 27.35 14.7333 26.05 16.25L22.85 20L26.05 23.75C27.35 25.2667 28 26.85 28 28.5V35H12V28.5C12 26.85 12.65 25.2667 13.95 23.75L17.15 20L13.95 16.25C12.65 14.7333 12 13.15 12 11.5V5ZM15 8V11.5C15 12.4167 15.3917 13.35 16.175 14.3L20 18.775L23.825 14.3C24.6083 13.35 25 12.4167 25 11.5V8H15ZM20 21.225L16.175 25.7C15.3917 26.65 15 27.5833 15 28.5V32H25V28.5C25 27.5833 24.6083 26.65 23.825 25.7L20 21.225ZM16.5 29.5H23.5V31H16.5V29.5ZM16.5 9H23.5V10.5H16.5V9Z"
 			fill="white"
 		/>
 	</svg>
@@ -163,7 +163,7 @@ export const WaitingQueueActionBar: React.FC<WaitingQueueActionBarProps> = ({
 						aria-hidden="true"
 					>
 						<span className="waitingQueueActionBar__queueIcon">
-							<QueueCheckIcon />
+							<QueueHourglassIcon />
 						</span>
 						<span className="waitingQueueActionBar__queueLabel">
 							{queueLabel}
