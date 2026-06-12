@@ -1,36 +1,21 @@
 # ORISO Ecosystem Notes: ORISO-Frontend
 
-This graph was generated for `ORISO-Frontend` only. It does not analyze sibling repositories.
+This graph represents only the ORISO frontend repository. It does not analyze parent directories, sibling repositories, backend services, or infrastructure repositories outside this checkout.
 
-## Local Role Evidence
+## Local Role
 
-- Purpose: Frontend application for the Online-Beratung platform, including registration, messaging, bookings, profile flows, and Matrix-backed real-time communication.
-- Languages: config, css, dockerfile, html, javascript, json, markdown, shell, typescript, yaml
-- Frameworks/tools: Docker, Kubernetes, React
-- API/service-related files: 12
-- Auth-related files: 12
-- Database-related files: 1
-- Deployment-related files: 11
+ORISO-Frontend is the browser application for the Online-Beratung platform. It owns user-facing flows for registration, authentication, bookings, profile management, messaging, real-time communication, theming, localization, and frontend delivery.
 
-## Integration Clues
+## Local Integration Evidence
 
-- `cypress/fixtures/api.v1.login.json` (config, json)
-- `cypress/fixtures/service.agencies.json` (config, json)
-- `cypress/fixtures/service.agency.consultants.json` (config, json)
-- `cypress/fixtures/service.consultingtypes.addiction.json` (config, json)
-- `cypress/fixtures/service.consultingtypes.emigration.json` (config, json)
-- `cypress/fixtures/service.consultingtypes.pregnancy.json` (config, json)
-- `cypress/fixtures/service.consultingtypes.u25.json` (config, json)
-- `cypress/fixtures/service.settings.json` (config, json)
-- `cypress/fixtures/service.tenant.public.json` (config, json)
-- `cypress/fixtures/service.topicGroups.json` (config, json)
-- `cypress/fixtures/service.topics.json` (config, json)
-- `cypress/fixtures/service.users.data.json` (config, json)
-- `.storybook-backup/static/compound-design-tokens.css` (markup, css)
-- `.storybook/static/compound-design-tokens.css` (markup, css)
-- `cypress/e2e/tokens.cy.ts` (code, typescript)
-- `cypress/fixtures/auth.token.json` (config, json)
-- `src/api/apiLogoutKeycloak.ts` (code, typescript)
-- `src/api/apiTwoFactorAuth.ts` (code, typescript)
-- `src/api/videocalls/getJwt.ts` (code, typescript)
-- `src/components/app/authenticatedApp.styles.scss` (markup, css)
+- Backend service access is represented by `src/api/`, generated service typings under `src/generated/`, and endpoint constants under `src/resources/scripts/endpoints.ts`.
+- Authentication and session behavior is represented by Keycloak logout, two-factor auth, invite links, anonymous session guards, auto-login, and session cookie utilities.
+- Real-time communication is represented by Matrix, message, attachment, chat-room, LiveKit, and video-call modules.
+- Deployment evidence is local to Docker, Kubernetes YAML, GitHub Actions, nginx/runtime config, and Storybook delivery files.
+- Test and fixture evidence lives in Cypress support commands, e2e tests, and service fixture JSON files.
+
+## Boundaries
+
+- Database relationships are inferred only from local frontend schema, fixture, and generated service files. This repository does not contain the authoritative backend database model.
+- API compatibility must be verified against backend contracts outside this graph when changing generated service typings or endpoint usage.
+- Deployment behavior must be reviewed with the target ORISO environment because this graph only sees local YAML, Docker, and workflow files.

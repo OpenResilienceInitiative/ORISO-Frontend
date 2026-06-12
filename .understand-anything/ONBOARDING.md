@@ -1,21 +1,34 @@
 # Onboarding Guide: ORISO-Frontend
 
-1. Read `README.md` in the repository root if present.
-2. Open `.understand-anything/README.md` and launch the dashboard using the command shown there.
-3. Start with these tour files:
+1. Read `README.md` for the repository purpose, stack, and local commands.
+2. Read `docs/README.md` and `docs/architecture/current-architecture.md` for the maintained project documentation.
+3. Open `.understand-anything/README.md` and launch the dashboard with the command listed there.
+4. Start the guided tour in the dashboard. The refreshed tour covers:
 
-- `README.md` - README.md is a docs file under repository root; starts with "# ORISO Frontend".
-- `package.json` - package.json is a config file under repository root; starts with ""name": "@onlineberatung/onlineberatung-frontend",".
-- `.cursor/settings.json` - .cursor/settings.json is a config file under .cursor in this repository.
-- `.env.example` - .env.example is a config file under repository root; starts with "VITE_PORT=9002".
-- `.github/actions/docker-build-push/action.yml` - .github/actions/docker-build-push/action.yml is a config file under .github; starts with "name: Reusable Docker Build and Publish steps".
-- `.github/actions/node-build/action.yml` - .github/actions/node-build/action.yml is a config file under .github; starts with "name: Reusable Node Build steps".
-- `cypress/fixtures/api.v1.login.json` - cypress/fixtures/api.v1.login.json is a config file under cypress; starts with ""status": "success",".
-- `cypress/fixtures/auth.token.json` - cypress/fixtures/auth.token.json is a config file under cypress; starts with ""expires_in": 600,".
-- `.github/workflows/ci-feature-branch.yml` - .github/workflows/ci-feature-branch.yml is a pipeline file under .github; starts with "name: CI - Feature Branch".
-- `.github/workflows/ci-main.yml` - .github/workflows/ci-main.yml is a pipeline file under .github; starts with "name: CI - Main".
-- `.github/workflows/ci-pull-request.yml` - .github/workflows/ci-pull-request.yml is a pipeline file under .github; starts with "name: CI - Pull Request".
-- `.github/workflows/ci-storybook-feature-branch.yml` - .github/workflows/ci-storybook-feature-branch.yml is a pipeline file under .github; starts with "name: CI - Storybook Feature Branch".
+- Project Overview
+- Application Bootstrap
+- Backend API Boundary
+- Authentication And Invites
+- Messaging And Realtime
+- State Hooks And Configuration
+- Features And Screens
+- Quality And Delivery
 
-4. Review architecture layers in `.understand-anything/ARCHITECTURE.md`.
-5. For changes, inspect files connected by `imports`, `configures`, `routes`, `deploys`, and `tested_by` edges in the graph.
+## High-Value Entry Points
+
+- `index.ts`
+- `src/initApp.tsx`
+- `src/App.tsx`
+- `src/api/index.ts`
+- `src/api/fetchData.ts`
+- `src/globalState/index.ts`
+- `src/hooks/useAppConfig.tsx`
+- `config/webpack.config.js`
+- `proxy/server.js`
+
+## Review Tips
+
+- Use `imports` edges to follow TypeScript module dependencies.
+- Use `configures` edges to inspect package, webpack, Cypress, Storybook, and runtime configuration relationships.
+- Use `deploys` and `triggers` edges for Docker, Kubernetes, and CI/CD delivery context.
+- For auth-sensitive changes, inspect the Auth Registration Session layer before reviewing UI behavior.

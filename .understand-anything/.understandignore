@@ -6,6 +6,15 @@
 # Built-in defaults (always excluded unless negated):
 #   node_modules/, .git/, dist/, build/, obj/, *.lock, *.min.js, etc.
 #
+# --- Understand-Anything generated outputs ---
+
+.understand-anything/knowledge-graph.json
+.understand-anything/fingerprints.json
+.understand-anything/meta.json
+.understand-anything/intermediate/
+.understand-anything/tmp/
+.understand-anything/diff-overlay.json
+
 # --- From .gitignore (uncomment to exclude) ---
 
 # /node_modules

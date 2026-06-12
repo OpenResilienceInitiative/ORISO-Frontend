@@ -3,119 +3,40 @@
 ## Detected Manifests
 
 - `package.json`
+- `src/extensions/package.json`
+- `proxy/package.json`
 
-## Detected Dependencies
+## Main Runtime Dependencies
 
--   - npm: `@babel/core`
--   - npm: `@babel/eslint-parser`
--   - npm: `@calcom/embed-snippet`
--   - npm: `@commitlint/cli`
--   - npm: `@commitlint/config-conventional`
--   - npm: `@cypress/react`
--   - npm: `@cypress/webpack-dev-server`
--   - npm: `@cypress/webpack-preprocessor`
--   - npm: `@draft-js-plugins/buttons`
--   - npm: `@draft-js-plugins/editor`
--   - npm: `@draft-js-plugins/emoji`
--   - npm: `@draft-js-plugins/linkify`
--   - npm: `@draft-js-plugins/static-toolbar`
--   - npm: `@dtsgenerator/replace-namespace`
--   - npm: `@emotion/react`
--   - npm: `@emotion/styled`
--   - npm: `@jitsi/react-sdk`
--   - npm: `@juggle/resize-observer`
--   - npm: `@livekit/components-react`
--   - npm: `@livekit/components-styles`
--   - npm: `@mui/icons-material`
--   - npm: `@mui/material`
--   - npm: `@onlineberatung/onlineberatung-frontend-extensions`
--   - npm: `@playwright/test`
--   - npm: `@pmmmwh/react-refresh-webpack-plugin`
--   - npm: `@stomp/stompjs`
--   - npm: `@storybook/addon-essentials`
--   - npm: `@storybook/addon-interactions`
--   - npm: `@storybook/addon-links`
--   - npm: `@storybook/blocks`
--   - npm: `@storybook/preset-scss`
--   - npm: `@storybook/react`
--   - npm: `@storybook/react-webpack5`
--   - npm: `@storybook/testing-library`
--   - npm: `@svgr/webpack`
--   - npm: `@takuma-ru/auto-story-generator`
--   - npm: `@tiptap/extension-color`
--   - npm: `@tiptap/extension-highlight`
--   - npm: `@tiptap/extension-link`
--   - npm: `@tiptap/extension-placeholder`
--   - npm: `@tiptap/extension-text-align`
--   - npm: `@tiptap/extension-underline`
--   - npm: `@tiptap/react`
--   - npm: `@tiptap/starter-kit`
--   - npm: `@types/bytebuffer`
--   - npm: `@types/draft-js`
--   - npm: `@types/flat`
--   - npm: `@types/node`
--   - npm: `@types/prettier`
--   - npm: `@types/react`
--   - npm: `@types/react-dom`
--   - npm: `@types/react-router-dom`
--   - npm: `@types/sanitize-html`
--   - npm: `@types/uuid`
--   - npm: `@typescript-eslint/eslint-plugin`
--   - npm: `@typescript-eslint/parser`
--   - npm: `@vector-im/compound-design-tokens`
--   - npm: `@vector-im/compound-web`
--   - npm: `babel-loader`
--   - npm: `babel-plugin-named-asset-import`
--   - npm: `babel-preset-react-app`
--   - npm: `bfj`
--   - npm: `breakpoint-sass`
--   - npm: `browserslist`
--   - npm: `bytebuffer`
--   - npm: `caniuse-lite`
--   - npm: `case-sensitive-paths-webpack-plugin`
--   - npm: `classnames`
--   - npm: `clsx`
--   - npm: `concurrently`
--   - npm: `copy-webpack-plugin`
--   - npm: `core-js`
--   - npm: `cross-env`
--   - npm: `crypto-js`
--   - npm: `css-loader`
--   - npm: `css-minimizer-webpack-plugin`
--   - npm: `cypress`
--   - npm: `cypress-file-upload`
--   - npm: `cz-conventional-changelog`
--   - npm: `dayjs`
+- React and React DOM
+- React Router v5
+- MUI and Emotion
+- Matrix JS SDK
+- LiveKit client and React components
+- STOMP/SockJS communication clients
+- i18next localization stack
+- Tiptap and Draft.js editor tooling
+- Cypress fixtures and support code for integration coverage
 
-## Operational Dependency Files
+## Build And Tooling Dependencies
 
-- `.cursor/settings.json` (config)
-- `.env.example` (config)
-- `.github/actions/docker-build-push/action.yml` (config)
-- `.github/actions/node-build/action.yml` (config)
-- `cypress/fixtures/api.v1.login.json` (config)
-- `cypress/fixtures/auth.token.json` (config)
-- `cypress/fixtures/registration/agency.json` (config)
-- `cypress/fixtures/registration/consultingType.json` (config)
-- `cypress/fixtures/registration/topic.json` (config)
-- `cypress/fixtures/releases.json` (config)
-- `cypress/fixtures/service.agencies.json` (config)
-- `cypress/fixtures/service.agency.consultants.json` (config)
-- `cypress/fixtures/service.consultingtypes.addiction.json` (config)
-- `cypress/fixtures/service.consultingtypes.emigration.json` (config)
-- `cypress/fixtures/service.consultingtypes.pregnancy.json` (config)
-- `cypress/fixtures/service.consultingtypes.u25.json` (config)
-- `cypress/fixtures/service.settings.json` (config)
-- `cypress/fixtures/service.tenant.public.json` (config)
-- `cypress/fixtures/service.topicGroups.json` (config)
-- `cypress/fixtures/service.topics.json` (config)
-- `cypress/fixtures/service.users.data.json` (config)
-- `cypress/fixtures/service.users.sessions.room.json` (config)
-- `cypress/fixtures/service.videocalls.new.json` (config)
-- `cypress/tsconfig.json` (config)
-- `deployment-v2.yaml` (config)
-- `https-redirect-middleware.yaml` (config)
-- `ingress-v2.yaml` (config)
-- `ingress.yaml` (config)
-- `package.json` (config)
-- `proxy/package-lock.json` (config)
+- Webpack custom build pipeline
+- Babel and TypeScript
+- ESLint, Stylelint, and Prettier
+- Storybook
+- Cypress component and e2e test tooling
+- Playwright package presence for browser testing support
+- Docker, Kubernetes YAML, and GitHub Actions workflow files
+
+## Graph Dependency Signals
+
+- Internal import edges: 2179
+- Configuration edges: 80
+- Deployment edges: 3
+- CI/CD trigger edges: 7
+
+## Audit Notes
+
+- The graph does not perform vulnerability scanning. Run the repository's package audit tooling separately when dependency security is in scope.
+- Generated graph outputs, fingerprints, and scratch files are excluded from graph dependency analysis.
+- Backend API compatibility cannot be proven from this frontend repository alone.
