@@ -268,9 +268,11 @@ $session-header-background-color: $background-light;
 $session-header-background-color-large: $background-lighter;
 $session-list-item-background-active: $background-lighter;
 $session-list-item-border-radius: 4px;
-/* Session list column + card rest state: match app shell #f5f5f5 */
-$sessions-list-background-color-primary: #f5f5f5;
-$sessions-list-background-color-secondary: #f5f5f5;
+/* Session list sidebar background: white per Figma design */
+$sessions-list-background-color-primary: #ffffff;
+$sessions-list-background-color-secondary: #ffffff;
+/* Session card default (unread) background: light salmon per Figma */
+$session-list-item-background-default: #fef0f0;
 $session-menu-legal-links-color: white;
 $statistics-highlight-color: $primary;
 $tab-border-radius: 25px;
