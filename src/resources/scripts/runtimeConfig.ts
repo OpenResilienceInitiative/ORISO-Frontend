@@ -21,6 +21,32 @@ const getRuntimeConfig = (): RuntimeConfig => {
 	return ((window as any).__ORISO_RUNTIME_CONFIG__ as RuntimeConfig) || {};
 };
 
+/**
+ * When the container runtime config is incomplete (e.g. production config.js
+ * only has REACT_APP_API_URL), derive sibling service URLs from the app host.
+ * `app.oriso.org` -> `api.oriso.org`, `matrix.oriso.org`, `call.oriso.org`, etc.
+ */
+const inferFromAppHostname = (): RuntimeConfig => {
+	if (typeof window === 'undefined') {
+		return {};
+	}
+	const host = window.location.hostname;
+	const match = host.match(/^(?:app|www)\.(.+)$/);
+	if (!match) {
+		return {};
+	}
+	const base = match[1];
+	return {
+		REACT_APP_API_URL: `https://api.${base}`,
+		REACT_APP_MATRIX_HOMESERVER_URL: `https://matrix.${base}`,
+		REACT_APP_MATRIX_URL: `https://matrix.${base}`,
+		REACT_APP_ELEMENT_CALL_BASE_URL: `https://call.${base}`,
+		REACT_APP_ELEMENT_CALL_URL: `https://call.${base}`,
+		REACT_APP_LIVEKIT_WS_URL: `wss://livekit.${base}`,
+		REACT_APP_LIVEKIT_URL: `wss://livekit.${base}`
+	};
+};
+
 const firstNonEmpty = (
 	source: RuntimeConfig,
 	keys: string[]
@@ -43,7 +69,11 @@ const pickValue = (...keys: string[]): string | undefined => {
 	if (runtimeValue) {
 		return runtimeValue;
 	}
-	return firstNonEmpty(process.env as RuntimeConfig, keys);
+	const buildValue = firstNonEmpty(process.env as RuntimeConfig, keys);
+	if (buildValue) {
+		return buildValue;
+	}
+	return firstNonEmpty(inferFromAppHostname(), keys);
 };
 
 const stripTrailingSlashes = (value: string): string =>
