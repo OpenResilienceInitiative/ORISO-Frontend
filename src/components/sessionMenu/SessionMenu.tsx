@@ -443,9 +443,21 @@ export const SessionMenu = (props: SessionMenuProps) => {
 				// console.log('✅ Media permissions granted!', stream);
 				// console.log('Stream tracks:', stream.getTracks().map(t => ({ kind: t.kind, enabled: t.enabled })));
 
-				// Store stream globally so FloatingCallWidget/GroupCallWidget can use it
-				(window as any).__preRequestedMediaStream = stream;
-				(window as any).__preRequestedMediaStreamTime = Date.now();
+				if (activeSession.isGroup) {
+					// Group calls use Element Call in an iframe (separate origin).
+					// Release this warm-up stream so the device is not left open.
+					try {
+						stream
+							.getTracks()
+							.forEach((track: MediaStreamTrack) => track.stop());
+					} catch {
+						// ignore
+					}
+				} else {
+					// 1:1 calls: FloatingCallWidget releases this before placeCall().
+					(window as any).__preRequestedMediaStream = stream;
+					(window as any).__preRequestedMediaStreamTime = Date.now();
+				}
 			} catch (mediaError: any) {
 				// console.error('❌ Media permission denied:', mediaError);
 				// console.error('Error name:', mediaError.name);
