@@ -76,11 +76,8 @@ export class MatrixLiveEventBridge {
 	}
 
 	private isVideoCallInvite(content: Record<string, any>): boolean {
-		if (content.is_video === true) {
-			return true;
-		}
-		if (content.is_video === false) {
-			return false;
+		if (typeof content.is_video === 'boolean') {
+			return content.is_video;
 		}
 
 		const sdp = content.offer?.sdp;
