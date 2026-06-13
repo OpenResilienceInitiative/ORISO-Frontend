@@ -77,6 +77,7 @@ export const FloatingCallWidget: React.FC = () => {
 		if (otherUser) {
 			const username = otherUser.name || otherUser.userId;
 			const initial = username.replace('@', '').charAt(0).toUpperCase();
+			// console.log('👤 Other user:', username, '→ Initial:', initial);
 			setOtherUserInitial(initial);
 		} else {
 			// Fallback: use callerUserId if incoming
@@ -102,6 +103,7 @@ export const FloatingCallWidget: React.FC = () => {
 
 		// 🚫 SKIP if this is a group call - GroupCallWidget will handle it with LiveKit
 		if (callData.isGroup) {
+			// console.log('🚫 FloatingCallWidget: Skipping group call (handled by GroupCallWidget)');
 			return;
 		}
 
@@ -136,6 +138,7 @@ export const FloatingCallWidget: React.FC = () => {
 				callManager.setMatrixCall(matrixCall);
 			})
 			.catch((err) => {
+				// console.error("Failed to start call:", err);
 				alert(`Failed to start call: ${(err as Error).message}`);
 				callManager.endCall();
 			});
@@ -242,6 +245,7 @@ export const FloatingCallWidget: React.FC = () => {
 			// 🔥 Force UI re-render to hide Answer/Decline buttons and show call controls
 			setTimeout(() => forceUpdate((prev) => prev + 1), 100);
 		} catch (err) {
+			// console.error("Failed to answer:", err);
 			alert(`Failed to answer: ${(err as Error).message}`);
 			callManager.endCall();
 		}
