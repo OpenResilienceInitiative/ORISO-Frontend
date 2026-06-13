@@ -20,6 +20,7 @@ import {
 } from '../../globalState';
 import { SessionItemInterface } from '../../globalState/interfaces';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
+import { callManager } from '../../services/CallManager';
 import {
 	SESSION_LIST_TAB,
 	SESSION_LIST_TAB_ARCHIVE,
@@ -183,9 +184,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 					setFlyoutOpen(false);
 				}, 1000);
 			})
-			.catch((error) => {
-				// console.error(error);
-			});
+			.catch((error) => {});
 	};
 
 	const handleOverlayAction = (buttonFunction: string) => {
@@ -249,9 +248,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 					mobileListView();
 					history.push(listPath);
 				})
-				.catch((error) => {
-					// console.error(error);
-				})
+				.catch((error) => {})
 				.finally(() => {
 					setOverlayActive(false);
 					setOverlayItem(null);
@@ -380,42 +377,25 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 	const hasVideoCallFeatures = () =>
 		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
-		(activeSession.isSession || activeSession.isGroup) && // 🎯 Enable for both 1-on-1 AND group chats
+		(activeSession.isSession || activeSession.isGroup) &&
 		type !== SESSION_LIST_TYPES.ENQUIRY &&
 		consultingType.isVideoCallAllowed;
 
-	const handleStartVideoCall = async (isVideoActivated: boolean = false) => {
-		// console.log("═══════════════════════════════════════════════");
-		// console.log("🎬 CALL BUTTON CLICKED!");
-		// console.log("═══════════════════════════════════════════════");
-		// console.log("Video activated?", isVideoActivated);
-		// console.log("Is group chat?", activeSession.isGroup);
-
+	const handleStartVideoCall = async (isVideoActivated = false) => {
 		try {
-			// Get Matrix room ID from active session
-			// For 1-on-1 sessions: use activeSession.rid (the actual Matrix room ID)
-			// For group chats: use activeSession.item.matrixRoomId or groupId
 			const roomId =
 				activeSession.rid ||
 				activeSession.item.matrixRoomId ||
 				activeSession.item.groupId;
 
-			// console.log("Room ID:", roomId);
-			// console.log("activeSession.rid:", activeSession.rid);
-			// console.log("activeSession.item.matrixRoomId:", activeSession.item.matrixRoomId);
-			// console.log("activeSession.item.groupId:", activeSession.item.groupId);
-
 			if (!roomId) {
-				// console.error('❌ No Matrix room ID found for session');
 				alert(
 					'Cannot start call: No Matrix room found for this session'
 				);
 				return;
 			}
 
-			// 🍎 SAFARI iOS FIX: Check if we're on HTTPS (required for getUserMedia on Safari)
 			if (window.location.protocol !== 'https:') {
-				// console.error('❌ Not on HTTPS! Safari requires HTTPS for camera/microphone access');
 				const httpsUrl = window.location.href.replace(
 					'http://',
 					'https://'
@@ -430,18 +410,12 @@ export const SessionMenu = (props: SessionMenuProps) => {
 				return;
 			}
 
-			// 🔥 CRITICAL FOR MOBILE: Request media permissions IMMEDIATELY in click handler
-			// This keeps the "user gesture" alive for mobile browsers (prevents popup blocking)
-			// console.log('🎤 Requesting media permissions (SYNC with user click)...');
-			// console.log('Requesting:', { video: isVideoActivated, audio: true });
-
+			// Request media in the click handler to preserve the user gesture on mobile.
 			try {
 				const stream = await navigator.mediaDevices.getUserMedia({
 					video: isVideoActivated,
 					audio: true
 				});
-				// console.log('✅ Media permissions granted!', stream);
-				// console.log('Stream tracks:', stream.getTracks().map(t => ({ kind: t.kind, enabled: t.enabled })));
 
 				if (activeSession.isGroup) {
 					// Group calls use Element Call in an iframe (separate origin).
@@ -459,10 +433,6 @@ export const SessionMenu = (props: SessionMenuProps) => {
 					(window as any).__preRequestedMediaStreamTime = Date.now();
 				}
 			} catch (mediaError: any) {
-				// console.error('❌ Media permission denied:', mediaError);
-				// console.error('Error name:', mediaError.name);
-				// console.error('Error message:', mediaError.message);
-
 				let errorMsg = 'Cannot access camera/microphone. ';
 				if (mediaError.name === 'NotAllowedError') {
 					errorMsg +=
@@ -480,20 +450,12 @@ export const SessionMenu = (props: SessionMenuProps) => {
 				return;
 			}
 
-			// console.log('📞 Starting call via CallManager with roomId:', roomId);
-
-			// Use CallManager directly (works for both 1-on-1 and group calls!)
-			const { callManager } = require('../../services/CallManager');
-			callManager.startCall(roomId, isVideoActivated);
-
-			// console.log('✅ Call initiated!');
+			callManager.startCall(roomId, isVideoActivated, false);
 		} catch (error) {
-			// console.error('💥 ERROR in handleStartVideoCall:', error);
 			alert(
 				`Call failed: ${error instanceof Error ? error.message : 'Unknown error'}`
 			);
 		}
-		// console.log("═══════════════════════════════════════════════");
 	};
 
 	return (
