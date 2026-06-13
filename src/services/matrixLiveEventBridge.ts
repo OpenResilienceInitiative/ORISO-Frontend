@@ -120,6 +120,26 @@ export class MatrixLiveEventBridge {
 	}
 
 	/**
+	 * Determine whether a call invite is for video or audio-only.
+	 */
+	private isVideoCallInvite(content: Record<string, any>): boolean {
+		if (content.is_video === true) {
+			return true;
+		}
+		if (content.is_video === false) {
+			return false;
+		}
+
+		const sdp = content.offer?.sdp;
+		if (typeof sdp === 'string' && sdp.length > 0) {
+			// Voice-only Matrix WebRTC offers omit video or set m=video port 0.
+			return /\nm=video [1-9]/.test(sdp);
+		}
+
+		return false;
+	}
+
+	/**
 	 * Handle m.call.invite events (incoming calls).
 	 */
 	private handleCallInvite(event: MatrixEvent, room: Room): void {
@@ -170,7 +190,7 @@ export class MatrixLiveEventBridge {
 
 		// Check if this is a LiveKit group call (custom field)
 		const isGroupCall = content.is_group_call === true;
-		const isVideo = content.is_video !== false; // Default to video
+		const isVideo = this.isVideoCallInvite(content);
 
 		if (isGroupCall) {
 			// console.log("✅ LIVEKIT GROUP CALL DETECTED!");
@@ -212,7 +232,7 @@ export class MatrixLiveEventBridge {
 
 		callManager.receiveCall(
 			room.roomId,
-			true, // Assume video for now (can be enhanced)
+			this.isVideoCallInvite(content),
 			callId,
 			sender,
 			false,

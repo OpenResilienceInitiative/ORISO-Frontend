@@ -194,9 +194,12 @@ export const GroupCallWidget: React.FC = () => {
 
 			const params = new URLSearchParams();
 			params.set('roomId', roomId);
-			// Hint Element Call that this is a normal "start call" use-case so
-			// it enables camera & microphone by default.
-			params.set('intent', 'start_call');
+			// Match call type: video uses start_call, audio-only uses start_call_dm_voice
+			// so Element Call leaves the camera off by default.
+			params.set(
+				'intent',
+				callData.isVideo ? 'start_call' : 'start_call_dm_voice'
+			);
 			params.set('homeserver', homeserverUrl);
 			params.set('accessToken', accessToken);
 			params.set('userId', userId);

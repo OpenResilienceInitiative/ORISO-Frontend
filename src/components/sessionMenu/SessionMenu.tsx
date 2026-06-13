@@ -484,7 +484,9 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 			// Use CallManager directly (works for both 1-on-1 and group calls!)
 			const { callManager } = require('../../services/CallManager');
-			callManager.startCall(roomId, isVideoActivated);
+			// SessionMenu is only used for 1-on-1 sessions; do not auto-upgrade to
+			// Element Call when the Matrix room has extra members (e.g. supervisors).
+			callManager.startCall(roomId, isVideoActivated, false);
 
 			// console.log('✅ Call initiated!');
 		} catch (error) {
