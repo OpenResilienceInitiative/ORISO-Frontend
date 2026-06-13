@@ -60,9 +60,11 @@ export const GroupChatHeader = ({
 		activeSession.item.matrixRoomId || activeSession.item.groupId;
 
 	useEffect(() => {
+		// console.log('🔍 GroupChatHeader: Fetching Matrix members for room:', matrixRoomId);
 		setIsLoadingMembers(true);
 
 		if (!matrixRoomId) {
+			// console.log('❌ GroupChatHeader: No matrixRoomId found');
 			setMatrixMembers([]);
 			setIsLoadingMembers(false);
 			return;
@@ -87,18 +89,24 @@ export const GroupChatHeader = ({
 			if (!client) {
 				retryCount++;
 				if (retryCount < maxRetries) {
+					// console.log(`⏳ GroupChatHeader: Matrix client not ready yet, retrying... (${retryCount}/${maxRetries})`);
 					setTimeout(tryLoadMembers, 500);
 					return;
 				} else {
+					// console.log('❌ GroupChatHeader: Matrix client not available after retries');
 					setMatrixMembers([]);
 					setIsLoadingMembers(false);
 					return;
 				}
 			}
 
+			// console.log('✅ GroupChatHeader: Matrix client found, getting room...');
 			const room = client.getRoom(matrixRoomId);
 
 			if (!room) {
+				// console.log('⏳ GroupChatHeader: Room not found yet, waiting for sync...');
+				// console.log('📋 Available rooms:', client.getRooms().map((r: any) => r.roomId));
+
 				// Wait for room to appear (up to 10 seconds)
 				let roomRetryCount = 0;
 				const maxRoomRetries = 20;
@@ -112,6 +120,7 @@ export const GroupChatHeader = ({
 						if (roomRetryCount < maxRoomRetries) {
 							setTimeout(tryGetRoom, 500);
 						} else {
+							// console.log('❌ GroupChatHeader: Room not found after waiting:', matrixRoomId);
 							setMatrixMembers([]);
 							setIsLoadingMembers(false);
 						}
@@ -140,6 +149,7 @@ export const GroupChatHeader = ({
 				}
 			});
 
+			// console.log('✅ GroupChatHeader: Found', allMembers?.length || 0, 'total members,', activeMembers?.length || 0, 'active members:', activeMembers?.map((m: any) => m.userId || m.name));
 			setMatrixMembers(activeMembers || []);
 			setIsLoadingMembers(false);
 
@@ -151,6 +161,7 @@ export const GroupChatHeader = ({
 					if (updatedRoom) {
 						const updatedMembers = updatedRoom.getJoinedMembers();
 						if (updatedMembers?.length !== matrixMembers.length) {
+							// console.log('🔄 GroupChatHeader: Members updated:', updatedMembers?.length);
 							setMatrixMembers(updatedMembers || []);
 						}
 					}
@@ -184,11 +195,16 @@ export const GroupChatHeader = ({
 
 	// Use CallManager for group calls (same as SessionMenu)
 	const handleStartVideoCall = async (isVideoActivated: boolean = true) => {
+		// console.log("═══════════════════════════════════════════════");
+		// console.log("🎬 GROUP CALL BUTTON CLICKED (GroupChatHeader)!");
+		// console.log("═══════════════════════════════════════════════");
+
 		try {
 			const roomId =
 				activeSession.item.matrixRoomId || activeSession.item.groupId;
 
 			if (!roomId) {
+				// console.error('❌ No Matrix room ID found for session');
 				alert(
 					'Cannot start call: No Matrix room found for this session'
 				);
@@ -197,6 +213,7 @@ export const GroupChatHeader = ({
 
 			// Check HTTPS
 			if (window.location.protocol !== 'https:') {
+				// console.error('❌ Not on HTTPS! Safari requires HTTPS for camera/microphone access');
 				const httpsUrl = window.location.href.replace(
 					'http://',
 					'https://'
@@ -212,12 +229,14 @@ export const GroupChatHeader = ({
 			}
 
 			// Request media permissions IMMEDIATELY in click handler
+			// console.log('🎤 Requesting media permissions (SYNC with user click)...');
 
 			try {
 				const stream = await navigator.mediaDevices.getUserMedia({
 					video: isVideoActivated,
 					audio: true
 				});
+				// console.log('✅ Media permissions granted!', stream);
 
 				// Group calls render Element Call in an iframe which acquires its
 				// own media (on its own origin). Release this warm-up stream so
@@ -230,6 +249,8 @@ export const GroupChatHeader = ({
 					// ignore
 				}
 			} catch (mediaError: any) {
+				// console.error('❌ Media permission denied:', mediaError);
+
 				let errorMsg = 'Cannot access camera/microphone. ';
 				if (mediaError.name === 'NotAllowedError') {
 					errorMsg +=
@@ -247,14 +268,21 @@ export const GroupChatHeader = ({
 				return;
 			}
 
+			// console.log('📞 Starting call via CallManager with roomId:', roomId);
+			// console.log('🎯 This is a GROUP CHAT - forcing isGroup=true');
+
 			// Use CallManager (works for both 1-on-1 and group calls!)
 			const { callManager } = require('../../../services/CallManager');
 			callManager.startCall(roomId, isVideoActivated, true); // Force isGroup=true for group chats
+
+			// console.log('✅ Call initiated!');
 		} catch (error) {
+			// console.error('💥 ERROR in handleStartVideoCall:', error);
 			alert(
 				`Call failed: ${error instanceof Error ? error.message : 'Unknown error'}`
 			);
 		}
+		// console.log("═══════════════════════════════════════════════");
 	};
 
 	const sessionTabPath = `${
