@@ -36,7 +36,6 @@ export const GroupCallWidget: React.FC = () => {
 	// Subscribe to CallManager
 	useEffect(() => {
 		const unsubscribe = callManager.subscribe((newCallData) => {
-			// console.log('📡 GroupCallWidget: CallManager update:', newCallData);
 			setCallData(newCallData);
 			setCallState(newCallData?.state || null);
 			if (newCallData) {
@@ -118,7 +117,6 @@ export const GroupCallWidget: React.FC = () => {
 			const data = event.data;
 			if (!data || typeof data !== 'object') return;
 			if (data.type !== 'oriso-call-ended') return;
-			// console.log('📴 Element Call ended (message from iframe)');
 			setElementCallUrl('');
 			setCallData(null);
 			setCallState(null);
@@ -136,7 +134,6 @@ export const GroupCallWidget: React.FC = () => {
 		if (elementCallUrl) return; // Already joined
 		if (callState !== 'connecting' && callState !== 'in_call') return;
 
-		// console.log('✅ Incoming group call moving to state', callState, '- setting up Element Call for receiver...');
 		setupElementCall();
 	}, [callState, callData, elementCallUrl]);
 
@@ -145,7 +142,6 @@ export const GroupCallWidget: React.FC = () => {
 		if (!callData || !callData.isGroup || callData.isIncoming) return;
 		if (elementCallUrl) return; // Already set up
 
-		// console.log('📞 Starting outgoing call, setting up Element Call...');
 		setupElementCall();
 	}, [callData]);
 
@@ -214,15 +210,11 @@ export const GroupCallWidget: React.FC = () => {
 
 			const url = `${elementCallBaseUrl}/#?${params.toString()}`;
 
-			// console.log('🔗 Element Call URL:', url);
-			// console.log('🔑 Passing Matrix credentials for auto-authentication');
 			setElementCallUrl(url);
 
 			// Send credentials via postMessage immediately when iframe loads
 			const sendCredentials = () => {
 				if (iframeRef.current?.contentWindow) {
-					// console.log('📤 Sending Matrix credentials to Element Call via postMessage');
-
 					// Send credentials in multiple formats Element Call might accept
 					iframeRef.current.contentWindow.postMessage(
 						{
@@ -254,7 +246,6 @@ export const GroupCallWidget: React.FC = () => {
 				iframeRef.current.onload = sendCredentials;
 			}
 		} catch (err) {
-			// console.error('❌ Failed to setup Element Call:', err);
 			alert(`Failed to start call: ${(err as Error).message}`);
 			callManager.endCall();
 		}
@@ -269,8 +260,6 @@ export const GroupCallWidget: React.FC = () => {
 		source: Window
 	) => {
 		try {
-			// console.log(`📞 Element Call widget action: ${action}`, data);
-
 			// Element Call requests Matrix operations via widget API
 			// We proxy these to our authenticated Matrix client
 			let response: any = { success: false };
@@ -288,7 +277,6 @@ export const GroupCallWidget: React.FC = () => {
 					break;
 
 				default:
-					// console.log(`ℹ️  Unhandled widget action: ${action}`);
 					response = { success: true };
 			}
 
@@ -302,34 +290,26 @@ export const GroupCallWidget: React.FC = () => {
 				},
 				'*'
 			);
-		} catch (err) {
-			// console.error('❌ Error handling widget action:', err);
-		}
+		} catch (err) {}
 	};
 
 	const handleAnswer = () => {
 		if (!callData || !callData.isIncoming) return;
-		// console.log('✅ User clicked Answer');
-		// Tell Matrix/CallManager that we are accepting the call
 		callManager.answerCall();
 
 		// Proactively start/join the Element Call room so the user lands
 		// directly in the call UI without any extra "Join" step.
 		if (!elementCallUrl) {
-			// console.log('📞 Answer clicked, setting up Element Call immediately for receiver...');
 			setupElementCall();
 		}
 	};
 
 	const handleDecline = () => {
-		// console.log('❌ User declined call');
 		setIsDismissed(true);
 		callManager.endCall();
 	};
 
 	const handleEndCall = () => {
-		// console.log('📴 Ending call');
-
 		// Cleanup widget message handler
 		if (
 			iframeRef.current &&

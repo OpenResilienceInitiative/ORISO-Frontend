@@ -50,11 +50,7 @@ class CallManager {
 	private currentCall: CallData | null = null;
 	private listeners: Set<CallStateChangeListener> = new Set();
 
-	private constructor() {
-		// console.log("═══════════════════════════════════════════════");
-		// console.log("📞 CallManager initialized (singleton)");
-		// console.log("═══════════════════════════════════════════════");
-	}
+	private constructor() {}
 
 	public static getInstance(): CallManager {
 		if (!CallManager.instance) {
@@ -68,12 +64,10 @@ class CallManager {
 	 */
 	public subscribe(listener: CallStateChangeListener): () => void {
 		this.listeners.add(listener);
-		// console.log(`📡 CallManager: Added listener (total: ${this.listeners.size})`);
 
 		// Return unsubscribe function
 		return () => {
 			this.listeners.delete(listener);
-			// console.log(`📡 CallManager: Removed listener (total: ${this.listeners.size})`);
 		};
 	}
 
@@ -81,14 +75,11 @@ class CallManager {
 	 * Notify all listeners of state change
 	 */
 	private notifyListeners(): void {
-		// console.log(`🔔 CallManager: Notifying ${this.listeners.size} listener(s)`);
-		// console.log(`   Current call state:`, this.currentCall);
-
 		this.listeners.forEach((listener) => {
 			try {
 				listener(this.currentCall);
-			} catch (error) {
-				// console.error('❌ Error in call state listener:', error);
+			} catch {
+				// Ignore listener errors so one subscriber cannot break call state.
 			}
 		});
 	}
@@ -104,20 +95,10 @@ class CallManager {
 		isVideo: boolean,
 		forceIsGroup?: boolean
 	): void {
-		// console.log("═══════════════════════════════════════════════");
-		// console.log("🚀 CallManager.startCall()");
-		// console.log("═══════════════════════════════════════════════");
-		// console.log("   Room ID:", roomId);
-		// console.log("   Is Video:", isVideo);
-		// console.log("   Force Group:", forceIsGroup);
-
 		if (this.currentCall) {
-			// console.warn("⚠️  Already have an active call, cleaning up first...");
 			this.endCall();
 		}
 
-		// Detect if this is a group call.
-		// forceIsGroup: true = group, false = 1-on-1, undefined = auto-detect from room size.
 		let isGroup = false;
 
 		if (forceIsGroup === true) {
@@ -125,53 +106,24 @@ class CallManager {
 		} else if (forceIsGroup === false) {
 			isGroup = false;
 		} else {
-			// Auto-detect based on room member count
 			try {
 				const matrixClientService = (window as any).matrixClientService;
 				const client = matrixClientService?.getClient();
-				// console.log(`   Matrix client available: ${!!client}`);
+				const room = client?.getRoom(roomId);
 
-				if (client) {
-					const room = client.getRoom(roomId);
-					// console.log(`   Room found: ${!!room}`);
+				if (room) {
+					const activeMemberCount = room
+						.getJoinedMembers()
+						.filter((member) => {
+							const powerLevel =
+								room.getMember(member.userId)?.powerLevel || 0;
+							return powerLevel !== 10;
+						}).length;
 
-					if (room) {
-						const allMembers = room.getJoinedMembers();
-						const memberCount = allMembers.length;
-
-						// Filter supervisors from member count (supervisors have power level 10)
-						// Get supervisors from API to filter them out
-						let activeMemberCount = memberCount;
-						try {
-							// Get session ID from room name or other source if available
-							// For now, we'll filter by power level
-							const activeMembers = allMembers.filter(
-								(m: any) => {
-									const powerLevel =
-										room.getMember(m.userId)?.powerLevel ||
-										0;
-									return powerLevel !== 10; // Exclude supervisors (power level 10)
-								}
-							);
-							activeMemberCount = activeMembers.length;
-						} catch (err) {
-							// console.warn('Could not filter supervisors from member count:', err);
-						}
-
-						// 1-on-1 = 2 members (consultant + asker), group = more than 2
-						isGroup = activeMemberCount > 2;
-
-						// console.log(`   ✅ Room member count: ${memberCount} (active: ${activeMemberCount})`);
-						// console.log(`   ✅ Joined members:`, allMembers.map(m => m.userId));
-						// console.log(`   ✅ Is group call (auto-detected): ${isGroup}`);
-					} else {
-						// console.warn(`   ⚠️  Room not found in Matrix client! RoomId: ${roomId}`);
-					}
-				} else {
-					// console.warn(`   ⚠️  Matrix client not available!`);
+					isGroup = activeMemberCount > 2;
 				}
-			} catch (err) {
-				// console.error('❌ Error detecting group call:', err);
+			} catch {
+				// Fall back to 1-on-1 when member detection fails.
 			}
 		}
 
@@ -201,20 +153,11 @@ class CallManager {
 				isGroup,
 				state: 'connecting',
 				elementCallRoomId: elementCallRoomId || roomId,
-				signalRoomId: isGroup ? roomId : roomId
+				signalRoomId: roomId
 			};
 
-			// console.log("✅ Outgoing call created:", this.currentCall);
-			// console.log("═══════════════════════════════════════════════");
-
 			if (isGroup) {
-				// Make sure the Element Call room allows membership events from
-				// regular users (matches Element Call's own room creation).
-				this.ensureGroupCallPermissions(this.currentCall.roomId).catch(
-					(err) => {
-						// console.error("❌ Failed to ensure group call room permissions:", err);
-					}
-				);
+				void this.ensureGroupCallPermissions(this.currentCall.roomId);
 
 				// Send Matrix call invite event to the original session room so
 				// the other participant sees the incoming call notification.
@@ -228,7 +171,6 @@ class CallManager {
 
 			this.notifyListeners();
 		})().catch((err: any) => {
-			// console.error("❌ Error while starting call:", err);
 			alert(`Failed to start call: ${(err as Error).message}`);
 			this.endCall();
 		});
@@ -250,8 +192,6 @@ class CallManager {
 		}
 
 		const name = `Group call for ${sourceRoomId}`;
-
-		// console.log("🔧 Creating dedicated Element Call room for group call, source room:", sourceRoomId);
 
 		const result = await client.createRoom({
 			// Not publicly listed, but we want easy joins via ID
@@ -286,13 +226,6 @@ class CallManager {
 			}
 		} as any);
 
-		// console.log(
-		// "✅ Created Element Call room",
-		// result.room_id,
-		// "for session room",
-		// sourceRoomId,
-		// );
-
 		return result.room_id;
 	}
 	/**
@@ -312,13 +245,11 @@ class CallManager {
 			const client = matrixClientService?.getClient();
 
 			if (!client) {
-				// console.warn("⚠️  Matrix client not available, cannot adjust power levels for group call");
 				return;
 			}
 
 			const room = client.getRoom(roomId);
 			if (!room) {
-				// console.warn("⚠️  Room not found when trying to adjust power levels for group call:", roomId);
 				return;
 			}
 
@@ -337,7 +268,6 @@ class CallManager {
 
 			// If it's already open enough, nothing to do.
 			if (currentLevelForCallMember === 0) {
-				// console.log("✅ Group call permissions already allow org.matrix.msc3401.call.member at level 0");
 				return;
 			}
 
@@ -351,11 +281,6 @@ class CallManager {
 				}
 			};
 
-			// console.log(
-			// "🔧 Updating m.room.power_levels to allow org.matrix.msc3401.call.member at level 0 for room:",
-			// roomId,
-			// );
-
 			// matrix-js-sdk signature: sendStateEvent(roomId, eventType, content, stateKey?)
 			// We must NOT pass the content as the stateKey (it becomes "[object Object]" in the URL).
 			await client.sendStateEvent(
@@ -364,9 +289,8 @@ class CallManager {
 				updatedContent,
 				''
 			);
-			// console.log("✅ Updated power levels for group call room:", roomId);
-		} catch (error) {
-			// console.error("❌ Error while updating group call room power levels:", error);
+		} catch {
+			// Permission updates are best-effort.
 		}
 	}
 
@@ -389,37 +313,27 @@ class CallManager {
 			const client = matrixClientService?.getClient();
 
 			if (!client) {
-				// console.error('❌ Matrix client not available to send call invite');
 				return;
 			}
 
-			// console.log('📤 Sending m.call.invite to Matrix room:', signallingRoomId);
-
-			// Send m.call.invite event
-			client
+			void client
 				.sendEvent(signallingRoomId, 'm.call.invite', {
 					call_id: callId,
 					version: '1',
-					lifetime: 60000, // 60 seconds
+					lifetime: 60000,
 					offer: {
 						type: 'offer',
-						sdp: '' // Empty for LiveKit calls (not using Matrix WebRTC)
+						sdp: ''
 					},
-					invitee: undefined, // Group call - no specific invitee
+					invitee: undefined,
 					party_id: client.getDeviceId() || 'unknown',
-					is_group_call: true, // Custom field to indicate group call
+					is_group_call: true,
 					is_video: isVideo,
-					// Custom: tell receivers which Matrix room Element Call should use.
 					call_room_id: elementCallRoomId
 				})
-				.then(() => {
-					// console.log('✅ m.call.invite sent successfully');
-				})
-				.catch((err: Error) => {
-					// console.error('❌ Failed to send m.call.invite:', err);
-				});
-		} catch (error) {
-			// console.error('❌ Error sending group call invite:', error);
+				.catch(() => undefined);
+		} catch {
+			// Invite delivery is best-effort.
 		}
 	}
 
@@ -441,19 +355,7 @@ class CallManager {
 		isGroup: boolean,
 		signallingRoomId?: string
 	): void {
-		// console.log("═══════════════════════════════════════════════");
-		// console.log("📞 CallManager.receiveCall()");
-		// console.log("═══════════════════════════════════════════════");
-		// console.log("   Call ID:", callId);
-		// console.log("   Call Room ID:", callRoomId);
-		if (signallingRoomId && signallingRoomId !== callRoomId) {
-			// console.log("   Signalling Room ID:", signallingRoomId);
-		}
-		// console.log("   Is Video:", isVideo);
-		// console.log("   Caller:", callerUserId);
-
 		if (this.currentCall) {
-			// console.warn("⚠️  Already have an active call, ignoring incoming call");
 			return;
 		}
 
@@ -469,9 +371,6 @@ class CallManager {
 			signalRoomId: signallingRoomId || callRoomId
 		};
 
-		// console.log("✅ Incoming call created:", this.currentCall);
-		// console.log("═══════════════════════════════════════════════");
-
 		this.notifyListeners();
 	}
 
@@ -479,24 +378,15 @@ class CallManager {
 	 * Answer the current incoming call
 	 */
 	public answerCall(): void {
-		// console.log("═══════════════════════════════════════════════");
-		// console.log("✅ CallManager.answerCall()");
-		// console.log("═══════════════════════════════════════════════");
-
 		if (!this.currentCall) {
-			// console.error("❌ No call to answer!");
 			return;
 		}
 
 		if (!this.currentCall.isIncoming) {
-			// console.error("❌ Cannot answer outgoing call!");
 			return;
 		}
 
 		this.currentCall.state = 'connecting';
-
-		// console.log("✅ Call state changed to connecting");
-		// console.log("═══════════════════════════════════════════════");
 
 		this.notifyListeners();
 	}
@@ -505,28 +395,19 @@ class CallManager {
 	 * Reject the current incoming call
 	 */
 	public rejectCall(): void {
-		// console.log("═══════════════════════════════════════════════");
-		// console.log("❌ CallManager.rejectCall()");
-		// console.log("═══════════════════════════════════════════════");
-
 		if (!this.currentCall) {
-			// console.error("❌ No call to reject!");
 			return;
 		}
 
 		if (this.currentCall.matrixCall) {
-			// console.log("📞 Rejecting Matrix call object...");
 			try {
 				(this.currentCall.matrixCall as any).reject();
-			} catch (err) {
-				// console.error("❌ Error rejecting Matrix call:", err);
+			} catch {
+				// Ignore reject errors during cleanup.
 			}
 		}
 
 		this.currentCall = null;
-
-		// console.log("✅ Call rejected and cleared");
-		// console.log("═══════════════════════════════════════════════");
 
 		this.notifyListeners();
 	}
@@ -535,42 +416,29 @@ class CallManager {
 	 * End the current call
 	 */
 	public endCall(): void {
-		// console.log("═══════════════════════════════════════════════");
-		// console.log("📴 CallManager.endCall()");
-		// console.log("═══════════════════════════════════════════════");
-
 		if (!this.currentCall) {
-			// console.log("ℹ️  No active call to end");
 			return;
 		}
 
 		// Hangup Matrix call (this will send m.call.hangup event to other side)
 		if (this.currentCall.matrixCall) {
-			// console.log("📞 Hanging up Matrix call object...");
 			try {
 				(this.currentCall.matrixCall as any).hangup();
-				// console.log("✅ Matrix call hangup sent (other side will receive it)");
-			} catch (err) {
-				// console.error("❌ Error hanging up Matrix call:", err);
+			} catch {
+				// Ignore hangup errors during cleanup.
 			}
 		}
 
 		// Stop local media streams
 		const stream = (window as any).__activeMediaStream;
 		if (stream) {
-			// console.log("🧹 Stopping local media stream...");
 			stream.getTracks().forEach((track: any) => {
 				track.stop();
-				// console.log(`   Stopped ${track.kind} track`);
 			});
 			delete (window as any).__activeMediaStream;
-			// console.log("✅ Local media stream stopped");
 		}
 
 		this.currentCall = null;
-
-		// console.log("✅ Call ended and cleared");
-		// console.log("═══════════════════════════════════════════════");
 
 		this.notifyListeners();
 	}
@@ -579,28 +447,16 @@ class CallManager {
 	 * Attach Matrix call object to current call
 	 */
 	public setMatrixCall(matrixCall: MatrixCall): void {
-		// console.log("═══════════════════════════════════════════════");
-		// console.log("🔗 CallManager.setMatrixCall()");
-		// console.log("═══════════════════════════════════════════════");
-
 		if (!this.currentCall) {
-			// console.error("❌ No current call to attach Matrix call to!");
 			return;
 		}
 
 		this.currentCall.matrixCall = matrixCall;
 		this.currentCall.state = 'connected';
 
-		// console.log("✅ Matrix call object attached");
-		// console.log("✅ Call state changed to connected");
-		// console.log("═══════════════════════════════════════════════");
-
 		// Set up state change listener on Matrix call
 		(matrixCall as any).on('state', (newState: string) => {
-			// console.log(`📞 Matrix call state changed: ${newState}`);
-
 			if (newState === 'ended') {
-				// console.log("📴 Matrix call ended, cleaning up...");
 				this.endCall();
 			}
 		});
