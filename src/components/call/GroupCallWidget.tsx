@@ -67,14 +67,14 @@ export const GroupCallWidget: React.FC = () => {
 		return () => window.removeEventListener('resize', updateViewport);
 	}, []);
 
-	useEffect(() => {
+	const centerWidget = () => {
 		if (!callData || !callData.isGroup) return;
 
 		const padding = 16;
-		const maxWidth = 520;
-		const maxHeight = 320;
-		const width = Math.min(maxWidth, window.innerWidth - padding);
-		const height = Math.min(maxHeight, window.innerHeight - padding);
+		const maxWidth = elementCallUrl ? 520 : 420;
+		const maxHeight = elementCallUrl ? 320 : 280;
+		const width = Math.min(maxWidth, window.innerWidth - padding * 2);
+		const height = Math.min(maxHeight, window.innerHeight - padding * 2);
 
 		if (window.innerWidth <= 640) {
 			setPosition({ x: 0, y: 0 });
@@ -82,9 +82,20 @@ export const GroupCallWidget: React.FC = () => {
 		}
 
 		setPosition({
-			x: Math.max(padding, window.innerWidth - width - padding),
-			y: Math.max(padding, window.innerHeight - height - padding)
+			x: Math.max(padding, (window.innerWidth - width) / 2),
+			y: Math.max(padding, (window.innerHeight - height) / 2)
 		});
+	};
+
+	useEffect(() => {
+		centerWidget();
+	}, [callData, elementCallUrl]);
+
+	useEffect(() => {
+		if (!callData || !callData.isGroup) return;
+
+		window.addEventListener('resize', centerWidget);
+		return () => window.removeEventListener('resize', centerWidget);
 	}, [callData, elementCallUrl]);
 
 	useEffect(() => {
