@@ -122,9 +122,7 @@ class CallManager {
 
 					isGroup = activeMemberCount > 2;
 				}
-			} catch {
-				// Fall back to 1-on-1 when member detection fails.
-			}
+			} catch {}
 		}
 
 		const callId = `call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
