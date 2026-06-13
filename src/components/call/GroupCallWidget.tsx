@@ -4,7 +4,7 @@
  * https://github.com/element-hq/element-call
  */
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import { callManager, CallData } from '../../services/CallManager';
 import {
 	getElementCallBaseUrl,
@@ -67,8 +67,10 @@ export const GroupCallWidget: React.FC = () => {
 		return () => window.removeEventListener('resize', updateViewport);
 	}, []);
 
-	const centerWidget = () => {
-		if (!callData || !callData.isGroup) return;
+	const isGroupCall = Boolean(callData?.isGroup);
+
+	const centerWidget = useCallback(() => {
+		if (!isGroupCall) return;
 
 		const padding = 16;
 		const maxWidth = elementCallUrl ? 520 : 420;
@@ -85,18 +87,18 @@ export const GroupCallWidget: React.FC = () => {
 			x: Math.max(padding, (window.innerWidth - width) / 2),
 			y: Math.max(padding, (window.innerHeight - height) / 2)
 		});
-	};
+	}, [isGroupCall, elementCallUrl]);
 
 	useEffect(() => {
 		centerWidget();
-	}, [callData, elementCallUrl]);
+	}, [centerWidget]);
 
 	useEffect(() => {
-		if (!callData || !callData.isGroup) return;
+		if (!isGroupCall) return;
 
 		window.addEventListener('resize', centerWidget);
 		return () => window.removeEventListener('resize', centerWidget);
-	}, [callData, elementCallUrl]);
+	}, [isGroupCall, centerWidget]);
 
 	useEffect(() => {
 		const handleFullscreenChange = () => {
