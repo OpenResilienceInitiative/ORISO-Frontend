@@ -36,7 +36,7 @@
 
 .waitingQueueActionBar__primaryRow {
 	display: flex;
-	align-items: stretch;
+	align-items: center;
 	justify-content: center;
 	gap: 12px;
 	width: 100%;
@@ -85,13 +85,15 @@
 }
 
 .waitingQueueActionBar__smileyIcon {
-	display: inline-flex;
+	display: flex;
 	align-items: center;
 	justify-content: center;
 	width: 48px;
 	height: 48px;
+	flex-shrink: 0;
 
 	svg {
+		display: block;
 		width: 48px;
 		height: 48px;
 	}
@@ -108,6 +110,13 @@
 	flex: 0 0 24px;
 	width: 24px;
 	height: 24px;
+}
+
+.waitingQueueActionBar__hintArrowIcon {
+	display: block;
+	width: 24px;
+	height: 24px;
+	flex-shrink: 0;
 }
 
 .waitingQueueActionBar__hintText {
@@ -171,6 +180,7 @@
 	height: 32px;
 
 	svg {
+		display: block;
 		width: 32px;
 		height: 32px;
 	}
@@ -235,9 +245,10 @@
 }
 
 .waitingQueueActionBar__insteadArrow {
-	width: 24px !important;
-	height: 24px !important;
-	color: #4c555f;
+	display: block;
+	width: 24px;
+	height: 24px;
+	flex-shrink: 0;
 }
 
 .waitingQueueActionBar__localBtn {
@@ -374,7 +385,7 @@
 		width: 100%;
 		border: none;
 		background: #fff7f7;
-		padding: 0 10px;
+		padding: 0 0px;
 		box-sizing: border-box;
 	}
 

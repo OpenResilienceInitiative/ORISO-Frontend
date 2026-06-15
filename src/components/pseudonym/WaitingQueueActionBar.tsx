@@ -1,10 +1,13 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import clsx from 'clsx';
 import { ReactComponent as SentimentCalmIcon } from '../../resources/img/icons/sentiment-calm.svg';
 import { ReactComponent as HourglassTopQueueIcon } from '../../resources/img/icons/hourglass-top-queue.svg';
 import { ReactComponent as LocalCounselorHouseIcon } from '../../resources/img/icons/local-counselor-house.svg';
+import { ReactComponent as CornerLeftDownIcon } from '../../resources/img/icons/corner-left-down.svg';
+import { ReactComponent as CornerRightUpIcon } from '../../resources/img/icons/corner-right-up.svg';
+import { ReactComponent as CornerUpLeftIcon } from '../../resources/img/icons/corner-up-left.svg';
+import { ReactComponent as ArrowRightM3Icon } from '../../resources/img/icons/arrow-right-m3.svg';
 import './WaitingQueueActionBar.styles.scss';
 
 interface WaitingQueueActionBarProps {
@@ -17,86 +20,24 @@ interface WaitingQueueActionBarProps {
 	disabled?: boolean;
 }
 
-/** Corner-up-left arrow — points from the hint text toward the calm-companion pill. */
-const CornerUpLeftIcon: React.FC = () => (
-	<svg
-		width="24"
-		height="24"
-		viewBox="0 0 24 24"
-		fill="none"
-		xmlns="http://www.w3.org/2000/svg"
-		aria-hidden="true"
-	>
-		<path
-			d="M9 14L4 9L9 4"
-			stroke="#4C555F"
-			strokeWidth="2"
-			strokeLinecap="round"
-			strokeLinejoin="round"
-		/>
-		<path
-			d="M4 9H14C16.2091 9 18 10.7909 18 13V20"
-			stroke="#4C555F"
-			strokeWidth="2"
-			strokeLinecap="round"
-			strokeLinejoin="round"
-		/>
-	</svg>
-);
-
-/** Corner-left-down arrow — mobile top hint, points toward the smiley row below. */
-const CornerLeftDownIcon: React.FC = () => (
-	<svg
-		width="24"
-		height="24"
-		viewBox="0 0 24 24"
-		fill="none"
-		xmlns="http://www.w3.org/2000/svg"
-		aria-hidden="true"
-	>
-		<path
-			d="M14 9L9 14L14 19"
-			stroke="#4C555F"
-			strokeWidth="2"
-			strokeLinecap="round"
-			strokeLinejoin="round"
-		/>
-		<path
-			d="M9 14H4C2.89543 14 2 13.1046 2 12V4"
-			stroke="#4C555F"
-			strokeWidth="2"
-			strokeLinecap="round"
-			strokeLinejoin="round"
-		/>
-	</svg>
-);
-
-/** Corner-right-up arrow — mobile “instead of waiting” hint below the local button. */
-const CornerRightUpIcon: React.FC = () => (
-	<svg
-		width="24"
-		height="24"
-		viewBox="0 0 24 24"
-		fill="none"
-		xmlns="http://www.w3.org/2000/svg"
-		aria-hidden="true"
-	>
-		<path
-			d="M10 15L15 10L20 15"
-			stroke="#4C555F"
-			strokeWidth="2"
-			strokeLinecap="round"
-			strokeLinejoin="round"
-		/>
-		<path
-			d="M15 10V20C15 21.1046 14.1046 22 13 22H4"
-			stroke="#4C555F"
-			strokeWidth="2"
-			strokeLinecap="round"
-			strokeLinejoin="round"
-		/>
-	</svg>
-);
+/** M3 corner hint arrows — single-stroke SVGs matching Figma Corner* icons. */
+const HintArrowIcon: React.FC<{
+	variant: 'upLeft' | 'downLeft' | 'upRight';
+}> = ({ variant }) => {
+	if (variant === 'upLeft') {
+		return (
+			<CornerUpLeftIcon className="waitingQueueActionBar__hintArrowIcon" />
+		);
+	}
+	if (variant === 'downLeft') {
+		return (
+			<CornerLeftDownIcon className="waitingQueueActionBar__hintArrowIcon" />
+		);
+	}
+	return (
+		<CornerRightUpIcon className="waitingQueueActionBar__hintArrowIcon" />
+	);
+};
 
 interface QueueStatusProps {
 	hasQueuePosition: boolean;
@@ -198,7 +139,7 @@ export const WaitingQueueActionBar: React.FC<WaitingQueueActionBarProps> = ({
 					className="waitingQueueActionBar__hintArrow"
 					aria-hidden="true"
 				>
-					<CornerLeftDownIcon />
+					<HintArrowIcon variant="downLeft" />
 				</span>
 				<div className="waitingQueueActionBar__mobileHintText">
 					<p className="waitingQueueActionBar__hintText">
@@ -239,7 +180,7 @@ export const WaitingQueueActionBar: React.FC<WaitingQueueActionBarProps> = ({
 								className="waitingQueueActionBar__hintArrow"
 								aria-hidden="true"
 							>
-								<CornerUpLeftIcon />
+								<HintArrowIcon variant="upLeft" />
 							</span>
 							<p className="waitingQueueActionBar__hintText">
 								{calmCompanionHintDesktop}
@@ -261,7 +202,7 @@ export const WaitingQueueActionBar: React.FC<WaitingQueueActionBarProps> = ({
 									'Statt zu warten'
 								)}
 							</span>
-							<ArrowForwardIcon
+							<ArrowRightM3Icon
 								className="waitingQueueActionBar__insteadArrow"
 								aria-hidden="true"
 							/>
@@ -295,7 +236,7 @@ export const WaitingQueueActionBar: React.FC<WaitingQueueActionBarProps> = ({
 								className="waitingQueueActionBar__hintArrow"
 								aria-hidden="true"
 							>
-								<CornerRightUpIcon />
+								<HintArrowIcon variant="upRight" />
 							</span>
 						</div>
 					</div>
