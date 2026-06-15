@@ -98,6 +98,16 @@
 			object-fit: cover;
 		}
 
+		// Off-screen but playing — used for audio-only WebRTC playback
+		.call-media-hidden {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			opacity: 0;
+			pointer-events: none;
+			overflow: hidden;
+		}
+
 		.local-video {
 			position: absolute;
 			bottom: 16px;

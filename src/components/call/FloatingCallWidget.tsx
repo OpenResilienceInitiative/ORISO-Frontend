@@ -148,6 +148,10 @@ export const FloatingCallWidget: React.FC = () => {
 				remoteVideoElement: remoteVideoRef.current || undefined
 			})
 			.then((matrixCall) => {
+				matrixCallService.attachMediaElements(
+					localVideoRef.current,
+					remoteVideoRef.current
+				);
 				callManager.setMatrixCall(matrixCall);
 			})
 			.catch((err) => {
@@ -156,6 +160,16 @@ export const FloatingCallWidget: React.FC = () => {
 				callManager.endCall();
 			});
 	}, [callData]);
+
+	// Re-bind media elements whenever the call connects or feeds update.
+	// Audio-only calls keep `<video>` elements hidden but they must exist for playback.
+	useEffect(() => {
+		if (!callData?.matrixCall) return;
+		matrixCallService.attachMediaElements(
+			localVideoRef.current,
+			remoteVideoRef.current
+		);
+	}, [callData?.matrixCall, callData?.state]);
 
 	// Call duration timer
 	useEffect(() => {
@@ -252,6 +266,10 @@ export const FloatingCallWidget: React.FC = () => {
 				callData.isVideo,
 				localVideoRef.current || undefined,
 				remoteVideoRef.current || undefined
+			);
+			matrixCallService.attachMediaElements(
+				localVideoRef.current,
+				remoteVideoRef.current
 			);
 			callManager.setMatrixCall(incomingCall as any);
 
@@ -367,36 +385,43 @@ export const FloatingCallWidget: React.FC = () => {
 
 				{/* Video area */}
 				<div className="call-video-area">
-					{/* Video elements */}
-					{callData.isVideo && (
-						<>
-							<video
-								ref={remoteVideoRef}
-								autoPlay
-								playsInline
-								className="remote-video"
-								style={{
-									display:
-										callData.state === 'ringing'
-											? 'none'
-											: 'block'
-								}}
-							/>
-							<video
-								ref={localVideoRef}
-								autoPlay
-								playsInline
-								muted
-								className="local-video"
-								style={{
-									display:
-										callData.state === 'ringing'
-											? 'none'
-											: 'block'
-								}}
-							/>
-						</>
-					)}
+					{/*
+					 * WebRTC media sinks — always mounted so audio-only calls can
+					 * attach/play remote audio (hidden visually for voice calls).
+					 */}
+					<video
+						ref={remoteVideoRef}
+						autoPlay
+						playsInline
+						className={`remote-video ${!callData.isVideo ? 'call-media-hidden' : ''}`}
+						style={
+							callData.isVideo
+								? {
+										display:
+											callData.state === 'ringing'
+												? 'none'
+												: 'block'
+									}
+								: undefined
+						}
+					/>
+					<video
+						ref={localVideoRef}
+						autoPlay
+						playsInline
+						muted
+						className={`local-video ${!callData.isVideo ? 'call-media-hidden' : ''}`}
+						style={
+							callData.isVideo
+								? {
+										display:
+											callData.state === 'ringing'
+												? 'none'
+												: 'block'
+									}
+								: undefined
+						}
+					/>
 
 					{/* Large avatar - always show for voice or when ringing */}
 					{(!callData.isVideo || callData.state === 'ringing') && (
