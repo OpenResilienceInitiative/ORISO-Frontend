@@ -514,7 +514,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 			0 1px 3px 0 rgba(0, 0, 0, 0.3);
 
 		&:hover:not(:disabled) {
-			background: var(--m3-primary, #a5000a);
+			background: var(--m3-primary-hover, #a5000a);
 		}
 	}
 
@@ -524,7 +524,11 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		border-radius: 10px;
 
 		&:hover:not(:disabled) {
-			background: var(--m3-secondary, #3d444d);
+			background: color-mix(
+				in srgb,
+				var(--m3-secondary, #4c555f) 85%,
+				black
+			);
 		}
 	}
 
@@ -556,7 +560,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 			transform 160ms ease;
 
 		&:hover:not(:disabled) {
-			background: var(--m3-primary, #a5000a);
+			background: var(--m3-primary-hover, #a5000a);
 		}
 
 		&:active:not(:disabled) {

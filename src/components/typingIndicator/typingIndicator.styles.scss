@@ -67,10 +67,18 @@
 	}
 	28% {
 		transform: translateY(-7px);
-		background-color: #9ecab9;
+		background-color: color-mix(
+			in srgb,
+			var(--m3-success, #6cad96) 65%,
+			white
+		);
 	}
 	44% {
 		transform: translateY(0px);
-		background-color: #b5d9cb;
+		background-color: color-mix(
+			in srgb,
+			var(--m3-success, #6cad96) 80%,
+			white
+		);
 	}
 }

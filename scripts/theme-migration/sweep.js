@@ -63,8 +63,26 @@ const untouchedHex = new Set(
 	(mapping.untouchedHex || []).map((h) => normalizeHexKey(h))
 );
 
-const hexConversions = mapping.hexConversions || {};
-const hexPropertyOverrides = mapping.hexPropertyOverrides || {};
+const hexConversions = Object.fromEntries(
+	Object.entries(mapping.hexConversions || {}).map(([hex, role]) => [
+		normalizeHexKey(hex),
+		role
+	])
+);
+
+const hexPropertyOverrides = Object.fromEntries(
+	Object.entries(mapping.hexPropertyOverrides || {}).map(
+		([hex, overrides]) => [
+			normalizeHexKey(hex),
+			Object.fromEntries(
+				Object.entries(overrides).map(([prop, role]) => [
+					prop.toLowerCase(),
+					role
+				])
+			)
+		]
+	)
+);
 const hexLiteralPattern = /#([0-9a-fA-F]{3,8})\b/g;
 
 /** Longest first so prefixed names never shadow each other. */

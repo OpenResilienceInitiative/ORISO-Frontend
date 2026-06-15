@@ -368,7 +368,8 @@
 		font-size: 13px;
 		color: var(--m3-on-surface-variant, #374151);
 		line-height: 1.35;
-		word-break: break-word;
+		overflow-wrap: break-word;
+		word-break: normal;
 	}
 
 	&__chatPreviewEmpty {
@@ -581,7 +582,8 @@
 		font-size: 13px;
 		color: var(--m3-on-surface-variant, #374151);
 		line-height: 1.35;
-		word-break: break-word;
+		overflow-wrap: break-word;
+		word-break: normal;
 	}
 
 	&__chatPreviewEmpty {

@@ -37,8 +37,9 @@ describe('completeness grep (Test #25)', () => {
 		const rawHex = sweep
 			.scan()
 			.filter((v: { kind: string }) => v.kind === 'raw-hex');
-		// Enforce once the mechanical sweep lands; until then surfaces the backlog count.
-		expect(rawHex.length).toBeLessThan(400);
+		// Pinned baseline — increase only when intentionally adding untouched hex.
+		const RAW_HEX_BASELINE = 146;
+		expect(rawHex.length).toBeLessThanOrEqual(RAW_HEX_BASELINE);
 	});
 
 	it('the pinned function-wrapped exceptions still exist (else unpin them)', () => {

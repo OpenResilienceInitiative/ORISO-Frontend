@@ -84,6 +84,7 @@
 			--m3-surface-container-high,
 			#e8e8e8
 		); // Light gray background
+
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -144,6 +145,7 @@
 			--m3-surface-container-high,
 			#e8e8e8
 		); // Match video area
+
 		min-height: 100px;
 	}
 
@@ -201,8 +203,16 @@
 			height: 56px;
 
 			&:hover {
-				background: var(--m3-success, #059669);
-				border-color: var(--m3-success, #059669);
+				background: color-mix(
+					in srgb,
+					var(--m3-success, #10b981) 85%,
+					black
+				);
+				border-color: color-mix(
+					in srgb,
+					var(--m3-success, #10b981) 85%,
+					black
+				);
 			}
 		}
 
@@ -215,8 +225,16 @@
 			height: 56px;
 
 			&:hover {
-				background: var(--m3-error, #dc2626);
-				border-color: var(--m3-error, #dc2626);
+				background: color-mix(
+					in srgb,
+					var(--m3-error, #ef4444) 85%,
+					black
+				);
+				border-color: color-mix(
+					in srgb,
+					var(--m3-error, #ef4444) 85%,
+					black
+				);
 			}
 		}
 
@@ -229,8 +247,16 @@
 			height: 56px;
 
 			&:hover {
-				background: var(--m3-error, #e6342b);
-				border-color: var(--m3-error, #e6342b);
+				background: color-mix(
+					in srgb,
+					var(--m3-error, #ff3b30) 85%,
+					black
+				);
+				border-color: color-mix(
+					in srgb,
+					var(--m3-error, #ff3b30) 85%,
+					black
+				);
 			}
 		}
 	}
