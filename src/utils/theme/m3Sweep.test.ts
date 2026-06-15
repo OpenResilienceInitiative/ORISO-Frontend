@@ -90,9 +90,12 @@ describe('fallback check (Test #26)', () => {
 			...Object.values(sweep.mapping.cssVarRenames),
 			...Object.values(sweep.mapping.sassVarConversions),
 			...Object.values(sweep.mapping.hexConversions || {}),
-			...Object.values(sweep.mapping.hexPropertyOverrides || {}).flatMap(
-				(overrides: Record<string, string>) => Object.values(overrides)
-			)
+			...Object.values(
+				(sweep.mapping.hexPropertyOverrides || {}) as Record<
+					string,
+					Record<string, string>
+				>
+			).flatMap((overrides) => Object.values(overrides))
 		] as string[];
 		const unknown = mappedRoles.filter(
 			(role) => !engineTokens.includes(role)
