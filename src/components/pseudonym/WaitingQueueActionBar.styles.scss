@@ -1,21 +1,29 @@
-/* Waiting-queue action bar — Figma “Waiting Room Component with padding” (desktop)
- * and “Mobile Wrapping” (mobile). */
+/* Waiting-queue action bar — Figma “Mobile Wrapping” (7323:26814) and
+ * “Waiting Room Component with padding” (7062:28313). */
 
 .waitingQueueActionBar {
 	display: flex;
 	flex-direction: column;
 	align-items: stretch;
 	width: 100%;
-	padding: 12px 12px calc(12px + env(safe-area-inset-bottom, 0));
+	padding: 0;
 	background: #ffffff;
 	box-sizing: border-box;
 }
 
+/* ----- MOBILE: top hint ----- */
 .waitingQueueActionBar__mobileTopHint {
 	display: flex;
 	align-items: flex-start;
-	gap: 12px;
+	gap: 0;
 	padding: 12px;
+}
+
+.waitingQueueActionBar__mobileHintText {
+	display: flex;
+	flex-direction: column;
+	padding: 0 12px;
+	min-width: 0;
 }
 
 .waitingQueueActionBar__content {
@@ -32,13 +40,14 @@
 	justify-content: center;
 	gap: 12px;
 	width: 100%;
-	min-width: 0;
+	padding: 0 12px;
+	box-sizing: border-box;
 }
 
 .waitingQueueActionBar__left {
 	display: flex;
 	align-items: stretch;
-	gap: 12px;
+	gap: 0;
 	flex: 0 0 auto;
 }
 
@@ -83,8 +92,8 @@
 	height: 48px;
 
 	svg {
-		width: 40px;
-		height: 40px;
+		width: 48px;
+		height: 48px;
 	}
 }
 
@@ -109,7 +118,6 @@
 	letter-spacing: 0.25px;
 	color: #4c555f;
 	margin: 0;
-	overflow-wrap: break-word;
 }
 
 .waitingQueueActionBar__right {
@@ -124,7 +132,6 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	min-width: 0;
 	border-radius: 100px;
 	color: #650033;
 	box-shadow:
@@ -134,8 +141,9 @@
 }
 
 .waitingQueueActionBar__queueBtn--mobile {
-	flex: 1 1 180px;
-	min-width: 180px;
+	flex: 1 1 0;
+	min-width: 0;
+	max-width: 284px;
 	border: 2px solid #ffffff;
 	background: #ffb1c8;
 }
@@ -148,7 +156,6 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	flex-wrap: wrap;
 	gap: 12px;
 	width: 100%;
 	padding: 32px 16px;
@@ -174,15 +181,13 @@
 	flex-wrap: wrap;
 	align-items: baseline;
 	justify-content: center;
-	gap: 0.35ch;
+	gap: 0.25ch;
 	font-family: 'Inter', sans-serif;
 	font-size: 24px;
 	line-height: 32px;
 	font-weight: 400;
 	color: #650033;
 	text-align: center;
-	overflow-wrap: break-word;
-	word-break: normal;
 }
 
 .waitingQueueActionBar__queueCount {
@@ -201,7 +206,7 @@
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	gap: 6px;
+	gap: 0;
 	padding: 10px;
 }
 
@@ -232,6 +237,7 @@
 .waitingQueueActionBar__insteadArrow {
 	width: 24px !important;
 	height: 24px !important;
+	color: #4c555f;
 }
 
 .waitingQueueActionBar__localBtn {
@@ -239,7 +245,8 @@
 	align-items: center;
 	justify-content: center;
 	gap: 8px;
-	width: 100%;
+	width: auto;
+	max-width: 100%;
 	min-height: 56px;
 	padding: 16px 24px;
 	border: none;
@@ -274,6 +281,7 @@
 	justify-content: center;
 	width: 24px;
 	height: 24px;
+	flex-shrink: 0;
 
 	svg {
 		width: 24px;
@@ -288,14 +296,13 @@
 	font-weight: 500;
 	letter-spacing: 0.15px;
 	color: #ffffff;
-	text-align: center;
-	overflow-wrap: break-word;
-	word-break: normal;
+	white-space: nowrap;
 }
 
+/* ----- DESKTOP (Figma 7062:28313) ----- */
 @media screen and (min-width: 641px) {
 	.waitingQueueActionBar {
-		padding: 12px 20px calc(12px + env(safe-area-inset-bottom, 0));
+		padding: 12px 0;
 	}
 
 	.waitingQueueActionBar__mobileTopHint {
@@ -304,14 +311,22 @@
 
 	.waitingQueueActionBar__content {
 		flex-direction: row;
-		flex-wrap: wrap;
-		align-items: flex-start;
+		flex-wrap: nowrap;
+		align-items: center;
 		justify-content: center;
-		gap: 12px;
+		gap: 0;
+		padding: 0 12px;
+		max-width: 100%;
 	}
 
 	.waitingQueueActionBar__primaryRow {
-		flex: 0 0 auto;
+		flex: 0 0 227px;
+		width: 227px;
+		padding: 0;
+	}
+
+	.waitingQueueActionBar__left {
+		width: 227px;
 	}
 
 	.waitingQueueActionBar__smiley {
@@ -319,6 +334,11 @@
 		width: 113px;
 		height: 204px;
 		border-radius: 999px;
+	}
+
+	.waitingQueueActionBar__smileyIcon svg {
+		width: 48px;
+		height: 48px;
 	}
 
 	.waitingQueueActionBar__desktopHint {
@@ -329,12 +349,14 @@
 		gap: 12px;
 		width: 114px;
 		height: 204px;
-		padding: 0 12px;
+		padding: 0 8px 0 12px;
 		box-sizing: border-box;
 	}
 
 	.waitingQueueActionBar__hintText {
+		width: 102px;
 		font-weight: 400;
+		overflow-wrap: break-word;
 	}
 
 	.waitingQueueActionBar__queueBtn--mobile {
@@ -342,8 +364,8 @@
 	}
 
 	.waitingQueueActionBar__right {
-		flex: 1 1 280px;
-		min-width: 280px;
+		flex: 1 1 400px;
+		min-width: 0;
 		max-width: 715px;
 	}
 
@@ -380,7 +402,7 @@
 		.waitingQueueActionBar__queueLabel {
 		font-size: 32px;
 		line-height: 40px;
-		white-space: normal;
+		white-space: nowrap;
 	}
 
 	.waitingQueueActionBar__queueCount {
@@ -397,7 +419,6 @@
 
 	.waitingQueueActionBar__localSection {
 		flex-direction: row;
-		flex-wrap: wrap;
 		align-items: center;
 		justify-content: flex-end;
 		gap: 12px;
@@ -406,7 +427,18 @@
 
 	.waitingQueueActionBar__insteadHint--desktop {
 		display: flex;
-		justify-content: flex-end;
+		align-items: center;
+		height: 56px;
+		padding: 12px 24px;
+	}
+
+	.waitingQueueActionBar__insteadHint--desktop
+		.waitingQueueActionBar__insteadText {
+		font-size: 16px;
+		line-height: 24px;
+		font-weight: 500;
+		letter-spacing: 0.15px;
+		text-align: right;
 	}
 
 	.waitingQueueActionBar__insteadHint--mobile {
@@ -414,15 +446,9 @@
 	}
 
 	.waitingQueueActionBar__localBtn {
-		width: auto;
-		flex: 0 1 auto;
 		border-radius: 16px;
 		box-shadow:
 			0 4px 8px 3px rgba(0, 0, 0, 0.15),
 			0 1px 3px 0 rgba(0, 0, 0, 0.3);
-	}
-
-	.waitingQueueActionBar__localLabel {
-		white-space: nowrap;
 	}
 }
