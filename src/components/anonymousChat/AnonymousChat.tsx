@@ -24,6 +24,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CloseIcon from '@mui/icons-material/Close';
 import { apiAgencySelection } from '../../api/apiAgencySelection';
 import { apiGetConsultantAvailability } from '../../api/apiGetConsultantAvailability';
+import liveChatClosedIllustration from '../../resources/img/illustrations/live-chat-closed.svg';
 import { apiGetTopicsData } from '../../api/apiGetTopicsData';
 import {
 	AgencyDataInterface,
@@ -932,9 +933,14 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 					>
 						<Box
 							component="img"
-							src="https://www.figma.com/api/mcp/asset/53e84cfc-9e3d-4075-bc3b-cfcf0903e811"
+							src={liveChatClosedIllustration}
 							alt=""
-							sx={{ width: 72, height: 72 }}
+							sx={{
+								width: 72,
+								height: 72,
+								flexShrink: 0,
+								display: 'block'
+							}}
 						/>
 						<Typography
 							variant="h4"
