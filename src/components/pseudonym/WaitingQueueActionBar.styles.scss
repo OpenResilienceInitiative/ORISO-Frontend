@@ -1,25 +1,40 @@
-/* Waiting-queue action bar — strict Figma "Frame951" match.
- *
- * Shown after the user has confirmed their pseudonym. Replaces the composer
- * while the anonymous chat is waiting for a counselor.
- *
- * Layout:
- *   [smiley pill] [arrow + hint text] | [queue status btn / local counselor btn]
- */
+/* Waiting-queue action bar — Figma “Waiting Room Component with padding” (desktop)
+ * and “Mobile Wrapping” (mobile). */
 
 .waitingQueueActionBar {
 	display: flex;
-	align-items: flex-start;
-	justify-content: center;
-	gap: 20px;
-	flex-wrap: wrap;
+	flex-direction: column;
+	align-items: stretch;
 	width: 100%;
-	padding: 16px 20px calc(16px + env(safe-area-inset-bottom, 0));
+	padding: 12px 12px calc(12px + env(safe-area-inset-bottom, 0));
 	background: #ffffff;
 	box-sizing: border-box;
 }
 
-/* ----- LEFT cluster: smiley pill + hint ----- */
+.waitingQueueActionBar__mobileTopHint {
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+	padding: 12px;
+}
+
+.waitingQueueActionBar__content {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	width: 100%;
+	min-width: 0;
+}
+
+.waitingQueueActionBar__primaryRow {
+	display: flex;
+	align-items: stretch;
+	justify-content: center;
+	gap: 12px;
+	width: 100%;
+	min-width: 0;
+}
+
 .waitingQueueActionBar__left {
 	display: flex;
 	align-items: stretch;
@@ -31,11 +46,12 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	width: 113px;
-	height: 204px;
+	flex: 0 0 68px;
+	width: 68px;
+	height: 97px;
 	padding: 0;
-	border-radius: 999px;
-	border: 2px solid #cc1e1c;
+	border-radius: 28px;
+	border: 2px solid #4c555f;
 	background: #f0edee;
 	box-shadow:
 		0 4px 8px 3px rgba(0, 0, 0, 0.15),
@@ -46,7 +62,7 @@
 		background 160ms ease;
 
 	&:hover:not(:disabled) {
-		background: #f6e6e6;
+		background: #e8e4e5;
 	}
 
 	&:active:not(:disabled) {
@@ -72,89 +88,150 @@
 	}
 }
 
-.waitingQueueActionBar__hint {
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	align-items: flex-start;
-	gap: 14px;
-	width: 178px;
-	height: 204px;
-	padding: 0 12px;
-	box-sizing: border-box;
+.waitingQueueActionBar__desktopHint {
+	display: none;
 }
 
 .waitingQueueActionBar__hintArrow {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
+	flex: 0 0 24px;
 	width: 24px;
 	height: 24px;
 }
 
 .waitingQueueActionBar__hintText {
 	font-family: 'Inter', sans-serif;
-	font-size: 16px;
-	line-height: 24px;
+	font-size: 14px;
+	line-height: 20px;
 	font-weight: 500;
-	letter-spacing: 0.0094em;
+	letter-spacing: 0.25px;
 	color: #4c555f;
 	margin: 0;
+	overflow-wrap: anywhere;
+	word-break: break-word;
 }
 
-/* ----- RIGHT cluster: queue status + local counselor button ----- */
 .waitingQueueActionBar__right {
 	display: flex;
 	flex-direction: column;
 	align-items: stretch;
-	gap: 16px;
-	flex: 1 1 520px;
-	min-width: 280px;
-	max-width: 611px;
+	width: 100%;
+	min-width: 0;
 }
 
-/* Big red "23 Personen vor Ihnen" status block.
-   Not a button — it's a live status indicator the user cannot dismiss. */
 .waitingQueueActionBar__queueBtn {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	width: 100%;
-	border: none;
+	min-width: 0;
 	border-radius: 100px;
-	background: #a5000a;
-	color: #ffffff;
+	color: #650033;
 	box-shadow:
 		0 4px 8px 3px rgba(0, 0, 0, 0.15),
 		0 1px 3px 0 rgba(0, 0, 0, 0.3);
 	overflow: hidden;
 }
 
+.waitingQueueActionBar__queueBtn--mobile {
+	flex: 1 1 auto;
+	border: 2px solid #ffffff;
+	background: #ffb1c8;
+}
+
+.waitingQueueActionBar__queueBtn--desktop {
+	display: none;
+}
+
 .waitingQueueActionBar__queueBtnInner {
-	display: inline-flex;
+	display: flex;
 	align-items: center;
 	justify-content: center;
-	gap: 16px;
+	flex-wrap: wrap;
+	gap: 12px;
 	width: 100%;
-	padding: 24px 40px;
-	background: rgba(255, 255, 255, 0.1);
+	padding: 32px 16px;
+	box-sizing: border-box;
 }
 
 .waitingQueueActionBar__queueIcon {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
+	flex: 0 0 32px;
 	width: 32px;
 	height: 32px;
+
+	svg {
+		width: 32px;
+		height: 32px;
+	}
 }
 
 .waitingQueueActionBar__queueLabel {
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: center;
+	gap: 0.35ch;
 	font-family: 'Inter', sans-serif;
 	font-size: 24px;
 	line-height: 32px;
+	font-weight: 400;
+	color: #650033;
+	text-align: center;
+	overflow-wrap: anywhere;
+	word-break: break-word;
+}
+
+.waitingQueueActionBar__queueCount {
+	font-weight: 700;
+}
+
+.waitingQueueActionBar__queueLabelDesktop {
+	display: none;
+}
+
+.waitingQueueActionBar__queueLabelMobile {
+	display: inline;
+}
+
+.waitingQueueActionBar__localSection {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 6px;
+	padding: 10px;
+}
+
+.waitingQueueActionBar__insteadHint {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	color: #4c555f;
+}
+
+.waitingQueueActionBar__insteadHint--desktop {
+	display: none;
+}
+
+.waitingQueueActionBar__insteadHint--mobile {
+	justify-content: center;
+	padding: 6px 12px;
+}
+
+.waitingQueueActionBar__insteadText {
+	font-family: 'Inter', sans-serif;
+	font-size: 14px;
+	line-height: 20px;
 	font-weight: 500;
-	color: #ffffff;
-	white-space: nowrap;
+	letter-spacing: 0.25px;
+}
+
+.waitingQueueActionBar__insteadArrow {
+	width: 24px !important;
+	height: 24px !important;
 }
 
 .waitingQueueActionBar__localBtn {
@@ -166,13 +243,13 @@
 	min-height: 56px;
 	padding: 16px 24px;
 	border: none;
-	border-radius: 16px;
+	border-radius: 32px;
 	background: #4c555f;
 	color: #ffffff;
 	cursor: pointer;
 	box-shadow:
-		0 4px 8px 3px rgba(0, 0, 0, 0.15),
-		0 1px 3px 0 rgba(0, 0, 0, 0.3);
+		0 4px 4px rgba(0, 0, 0, 0.15),
+		0 1px 1.5px rgba(0, 0, 0, 0.3);
 	transition:
 		background 160ms ease,
 		transform 160ms ease;
@@ -197,6 +274,11 @@
 	justify-content: center;
 	width: 24px;
 	height: 24px;
+
+	svg {
+		width: 24px;
+		height: 24px;
+	}
 }
 
 .waitingQueueActionBar__localLabel {
@@ -204,95 +286,139 @@
 	font-size: 16px;
 	line-height: 24px;
 	font-weight: 500;
-	letter-spacing: 0.0094em;
+	letter-spacing: 0.15px;
 	color: #ffffff;
-	white-space: nowrap;
+	text-align: center;
+	overflow-wrap: anywhere;
+	word-break: break-word;
 }
 
-/* ----- Responsive scale-down ----- */
-@media screen and (max-width: 960px) {
+@media screen and (min-width: 641px) {
 	.waitingQueueActionBar {
-		gap: 14px;
-		padding: 14px 16px calc(14px + env(safe-area-inset-bottom, 0));
+		padding: 12px 20px calc(12px + env(safe-area-inset-bottom, 0));
+	}
+
+	.waitingQueueActionBar__mobileTopHint {
+		display: none;
+	}
+
+	.waitingQueueActionBar__content {
+		flex-direction: row;
+		align-items: flex-start;
+		justify-content: center;
+		gap: 0;
+	}
+
+	.waitingQueueActionBar__primaryRow {
+		flex: 0 0 auto;
 	}
 
 	.waitingQueueActionBar__smiley {
-		width: 96px;
-		height: 168px;
+		flex: 0 0 113px;
+		width: 113px;
+		height: 204px;
+		border-radius: 999px;
 	}
 
-	.waitingQueueActionBar__hint {
-		width: 160px;
-		height: 168px;
-	}
-
-	.waitingQueueActionBar__queueBtnInner {
-		padding: 18px 24px;
-	}
-
-	.waitingQueueActionBar__queueLabel {
-		font-size: 20px;
-		line-height: 28px;
-	}
-}
-
-@media screen and (max-width: 640px) {
-	.waitingQueueActionBar {
+	.waitingQueueActionBar__desktopHint {
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: flex-start;
 		gap: 12px;
-		padding: 12px 12px calc(12px + env(safe-area-inset-bottom, 0));
-	}
-
-	.waitingQueueActionBar__left {
-		gap: 8px;
-	}
-
-	.waitingQueueActionBar__smiley {
-		width: 72px;
-		height: 128px;
-	}
-
-	.waitingQueueActionBar__smileyIcon svg {
-		width: 32px;
-		height: 32px;
-	}
-
-	.waitingQueueActionBar__hint {
-		width: 150px;
-		height: 128px;
-		gap: 8px;
+		width: 114px;
+		height: 204px;
+		padding: 0 12px;
+		box-sizing: border-box;
 	}
 
 	.waitingQueueActionBar__hintText {
-		font-size: 13px;
-		line-height: 18px;
+		font-weight: 400;
+	}
+
+	.waitingQueueActionBar__queueBtn--mobile {
+		display: none;
 	}
 
 	.waitingQueueActionBar__right {
-		gap: 10px;
-		flex-basis: 100%;
+		flex: 1 1 520px;
+		max-width: 715px;
 	}
 
-	.waitingQueueActionBar__queueBtnInner {
-		padding: 14px 18px;
-		gap: 10px;
+	.waitingQueueActionBar__queueBtn--desktop {
+		display: flex;
+		width: 100%;
+		border: none;
+		background: #fff7f7;
+		padding: 0 10px;
+		box-sizing: border-box;
 	}
 
-	.waitingQueueActionBar__queueIcon svg {
-		width: 24px;
-		height: 24px;
+	.waitingQueueActionBar__queueBtn--desktop
+		.waitingQueueActionBar__queueBtnInner {
+		gap: 16px;
+		padding: 48px 64px;
+		background: #ffb1c8;
+		border-radius: 100px;
 	}
 
-	.waitingQueueActionBar__queueLabel {
-		font-size: 16px;
-		line-height: 22px;
+	.waitingQueueActionBar__queueBtn--desktop
+		.waitingQueueActionBar__queueIcon {
+		flex: 0 0 40px;
+		width: 40px;
+		height: 40px;
+
+		svg {
+			width: 40px;
+			height: 40px;
+		}
+	}
+
+	.waitingQueueActionBar__queueBtn--desktop
+		.waitingQueueActionBar__queueLabel {
+		font-size: 32px;
+		line-height: 40px;
+	}
+
+	.waitingQueueActionBar__queueCount {
+		display: none;
+	}
+
+	.waitingQueueActionBar__queueLabelDesktop {
+		display: inline;
+	}
+
+	.waitingQueueActionBar__queueLabelMobile {
+		display: none;
+	}
+
+	.waitingQueueActionBar__localSection {
+		flex-direction: row;
+		align-items: center;
+		justify-content: flex-end;
+		gap: 12px;
+		padding: 10px;
+	}
+
+	.waitingQueueActionBar__insteadHint--desktop {
+		display: flex;
+		justify-content: flex-end;
+	}
+
+	.waitingQueueActionBar__insteadHint--mobile {
+		display: none;
 	}
 
 	.waitingQueueActionBar__localBtn {
-		padding: 12px 18px;
-		border-radius: 14px;
+		width: auto;
+		flex: 0 1 auto;
+		border-radius: 16px;
+		box-shadow:
+			0 4px 8px 3px rgba(0, 0, 0, 0.15),
+			0 1px 3px 0 rgba(0, 0, 0, 0.3);
 	}
 
 	.waitingQueueActionBar__localLabel {
-		font-size: 14px;
+		white-space: nowrap;
 	}
 }

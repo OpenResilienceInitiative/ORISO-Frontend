@@ -2836,7 +2836,21 @@
 		"agencies": {
 			"noresults": "No counseling centers available for this topic."
 		},
-		"start": "Start consultation"
+		"start": "Start consultation",
+		"queue": {
+			"actionsLabel": "Waiting room actions",
+			"calmCompanion": "Open a short calm companion",
+			"calmCompanionHint": "Until the chat begins, a short interactive calm companion. Right here in the chat room",
+			"positionCount_one": "{{count}} person ahead of you",
+			"positionCount_other": "{{count}} people ahead of you",
+			"positionCountSuffix": "still ahead of you",
+			"connecting": "Connecting …",
+			"insteadOfWaiting": "Instead of waiting",
+			"requestLocalCounselor": "Send on-site consultation request",
+			"consultantAccepted": "Your counselor is now expecting you in the chat.",
+			"startChatNow": "Start chat now",
+			"dismissAcceptedBanner": "Dismiss notice"
+		}
 	},
 	"sessionHeader": {
 		"anonymous": {
