@@ -109,8 +109,7 @@
 	letter-spacing: 0.25px;
 	color: #4c555f;
 	margin: 0;
-	overflow-wrap: anywhere;
-	word-break: break-word;
+	overflow-wrap: break-word;
 }
 
 .waitingQueueActionBar__right {
@@ -135,7 +134,8 @@
 }
 
 .waitingQueueActionBar__queueBtn--mobile {
-	flex: 1 1 auto;
+	flex: 1 1 180px;
+	min-width: 180px;
 	border: 2px solid #ffffff;
 	background: #ffb1c8;
 }
@@ -181,8 +181,8 @@
 	font-weight: 400;
 	color: #650033;
 	text-align: center;
-	overflow-wrap: anywhere;
-	word-break: break-word;
+	overflow-wrap: break-word;
+	word-break: normal;
 }
 
 .waitingQueueActionBar__queueCount {
@@ -289,8 +289,8 @@
 	letter-spacing: 0.15px;
 	color: #ffffff;
 	text-align: center;
-	overflow-wrap: anywhere;
-	word-break: break-word;
+	overflow-wrap: break-word;
+	word-break: normal;
 }
 
 @media screen and (min-width: 641px) {
@@ -304,9 +304,10 @@
 
 	.waitingQueueActionBar__content {
 		flex-direction: row;
+		flex-wrap: wrap;
 		align-items: flex-start;
 		justify-content: center;
-		gap: 0;
+		gap: 12px;
 	}
 
 	.waitingQueueActionBar__primaryRow {
@@ -341,7 +342,8 @@
 	}
 
 	.waitingQueueActionBar__right {
-		flex: 1 1 520px;
+		flex: 1 1 280px;
+		min-width: 280px;
 		max-width: 715px;
 	}
 
@@ -378,6 +380,7 @@
 		.waitingQueueActionBar__queueLabel {
 		font-size: 32px;
 		line-height: 40px;
+		white-space: normal;
 	}
 
 	.waitingQueueActionBar__queueCount {
@@ -394,6 +397,7 @@
 
 	.waitingQueueActionBar__localSection {
 		flex-direction: row;
+		flex-wrap: wrap;
 		align-items: center;
 		justify-content: flex-end;
 		gap: 12px;

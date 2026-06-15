@@ -94,6 +94,7 @@ import {
 import AccessTimeOutlinedIcon from '@mui/icons-material/AccessTimeOutlined';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import { LIVE_CHAT_OPENING_HOURS } from '../anonymousChat/liveChatOpeningHours';
+import liveChatClosedIllustration from '../../resources/img/illustrations/live-chat-closed.svg';
 import NorthEastIcon from '@mui/icons-material/NorthEast';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CloseIcon from '@mui/icons-material/Close';
@@ -4693,9 +4694,14 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					>
 						<MuiBox
 							component="img"
-							src="https://www.figma.com/api/mcp/asset/53e84cfc-9e3d-4075-bc3b-cfcf0903e811"
+							src={liveChatClosedIllustration}
 							alt=""
-							sx={{ width: 72, height: 72 }}
+							sx={{
+								width: 72,
+								height: 72,
+								flexShrink: 0,
+								display: 'block'
+							}}
 						/>
 						<MuiTypography
 							variant="h4"
