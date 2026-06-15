@@ -484,7 +484,13 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 			// Use CallManager directly (works for both 1-on-1 and group calls!)
 			const { callManager } = require('../../services/CallManager');
-			callManager.startCall(roomId, isVideoActivated);
+			// Force 1:1 Matrix WebRTC for non-group sessions so audio calls are not
+			// misrouted to Element Call (which always enables video).
+			callManager.startCall(
+				roomId,
+				isVideoActivated,
+				activeSession.isGroup ? true : false
+			);
 
 			// console.log('✅ Call initiated!');
 		} catch (error) {
