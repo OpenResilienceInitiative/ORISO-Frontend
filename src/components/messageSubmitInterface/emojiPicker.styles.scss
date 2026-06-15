@@ -75,7 +75,7 @@ $emoji-popover-height: 433px;
 		line-height: 2.5em;
 		font-weight: normal;
 		font-size: 1em;
-		color: #9e9e9e;
+		color: var(--m3-on-surface-variant, #9e9e9e);
 	}
 	.emoji__selectPopover__groups {
 		margin: 0 0 0.3em;
@@ -95,7 +95,7 @@ $emoji-popover-height: 433px;
 		padding-left: 0.5em;
 		font-weight: normal;
 		font-size: 1em;
-		color: #9e9e9e;
+		color: var(--m3-on-surface-variant, #9e9e9e);
 	}
 	.emoji__selectPopover__groupList {
 		margin: 0;
@@ -125,7 +125,7 @@ $emoji-popover-height: 433px;
 		display: -webkit-box;
 		display: flex;
 		list-style: none;
-		border: 1px solid #e0e0e0;
+		border: 1px solid var(--m3-outline-variant, #e0e0e0);
 		border-radius: 0.5em;
 		background: #fff;
 		box-shadow: 0 0 0.3em rgba(0, 0, 0, 0.1);
@@ -135,7 +135,7 @@ $emoji-popover-height: 433px;
 		height: 2.5em;
 	}
 	.emoji__selectPopover__toneSelectItem:first-child {
-		border-right: 1px solid #e0e0e0;
+		border-right: 1px solid var(--m3-outline-variant, #e0e0e0);
 	}
 	.emoji__selectPopover__entry,
 	.emoji__selectPopover__entry--focused {
@@ -187,7 +187,7 @@ $emoji-popover-height: 433px;
 		top: 0.3em;
 		bottom: 0.3em;
 		width: 0.25em;
-		background-color: #e0e0e0;
+		background-color: var(--m3-outline-variant, #e0e0e0);
 		border-radius: 0.125em;
 		opacity: 0.1;
 		transition: opacity 0.4s;
@@ -245,7 +245,7 @@ $emoji-popover-height: 433px;
 		display: inline-block;
 	}
 	.emoji__suggestions {
-		border: 1px solid #eee;
+		border: 1px solid var(--m3-outline-variant, #eeeeee);
 		margin-top: 1.75em;
 		position: absolute;
 		min-width: 220px;

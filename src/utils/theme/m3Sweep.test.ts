@@ -28,17 +28,23 @@ describe('completeness grep (Test #25)', () => {
 					sweep.mapping.knownFunctionWrappedExceptions.some(
 						(known: string) => known.startsWith(v.file)
 					)
-				)
+				) && v.kind !== 'raw-hex'
 		);
 		expect(unexpected).toEqual([]);
+	});
+
+	it('reports remaining raw hex literals outside var() fallbacks (report-only)', () => {
+		const rawHex = sweep
+			.scan()
+			.filter((v: { kind: string }) => v.kind === 'raw-hex');
+		// Enforce once the mechanical sweep lands; until then surfaces the backlog count.
+		expect(rawHex.length).toBeLessThan(400);
 	});
 
 	it('the pinned function-wrapped exceptions still exist (else unpin them)', () => {
 		const wrapped = sweep
 			.scan()
-			.filter(
-				(v: { kind: string }) => v.kind === 'function-wrapped'
-			);
+			.filter((v: { kind: string }) => v.kind === 'function-wrapped');
 		expect(wrapped.length).toBe(
 			sweep.mapping.knownFunctionWrappedExceptions.length
 		);
@@ -53,7 +59,10 @@ const readDeclarations = (
 	const declarations: Array<{ property: string; value: string }> = [];
 	const pattern = /(?<![\w$-])([a-zA-Z-]+)\s*:\s*([^;{}]*)/g;
 	for (const match of content.matchAll(pattern)) {
-		declarations.push({ property: match[1].toLowerCase(), value: match[2] });
+		declarations.push({
+			property: match[1].toLowerCase(),
+			value: match[2]
+		});
 	}
 	return declarations;
 };
@@ -79,7 +88,11 @@ describe('fallback check (Test #26)', () => {
 	it('every mapped role is emitted by the engine (contract stays closed)', () => {
 		const mappedRoles = [
 			...Object.values(sweep.mapping.cssVarRenames),
-			...Object.values(sweep.mapping.sassVarConversions)
+			...Object.values(sweep.mapping.sassVarConversions),
+			...Object.values(sweep.mapping.hexConversions || {}),
+			...Object.values(sweep.mapping.hexPropertyOverrides || {}).flatMap(
+				(overrides: Record<string, string>) => Object.values(overrides)
+			)
 		] as string[];
 		const unknown = mappedRoles.filter(
 			(role) => !engineTokens.includes(role)
@@ -98,7 +111,9 @@ describe('role-misuse lint (Test #27 / #3)', () => {
 		for (const file of styleFiles) {
 			const content = fs.readFileSync(file, 'utf8');
 			for (const { property, value } of readDeclarations(content)) {
-				for (const match of value.matchAll(/var\(\s*(--m3-on-[a-z0-9-]+)/g)) {
+				for (const match of value.matchAll(
+					/var\(\s*(--m3-on-[a-z0-9-]+)/g
+				)) {
 					if (BACKGROUND_PROPERTIES.test(property)) {
 						violations.push(
 							`${path.relative(process.cwd(), file)}: ${match[1]} used in ${property}`

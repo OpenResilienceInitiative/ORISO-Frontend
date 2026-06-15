@@ -1,407 +1,407 @@
 .group-call-widget {
-    position: fixed;
-    z-index: 10000;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    cursor: move;
-    user-select: none;
-    touch-action: none; /* Enable touch dragging on mobile */
-    border-radius: 16px;
-    overflow: hidden;
+	position: fixed;
+	z-index: 10000;
+	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+	cursor: move;
+	user-select: none;
+	touch-action: none; /* Enable touch dragging on mobile */
+	border-radius: 16px;
+	overflow: hidden;
 
-    &.dragging {
-        cursor: grabbing;
-        opacity: 0.9;
-    }
+	&.dragging {
+		cursor: grabbing;
+		opacity: 0.9;
+	}
 
-    &.group-call-widget--mobile {
-        left: 0 !important;
-        top: 0 !important;
-        border-radius: 0;
-    }
+	&.group-call-widget--mobile {
+		left: 0 !important;
+		top: 0 !important;
+		border-radius: 0;
+	}
 
-    &.group-call-widget--mobile-compact {
-        left: auto !important;
-        top: auto !important;
-        right: 12px;
-        bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
-        border-radius: 14px;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-        overflow: hidden;
-    }
+	&.group-call-widget--mobile-compact {
+		left: auto !important;
+		top: auto !important;
+		right: 12px;
+		bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+		border-radius: 14px;
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+		overflow: hidden;
+	}
 
-    &.group-call-widget--fullscreen {
-        left: 0 !important;
-        top: 0 !important;
-        border-radius: 0;
-    }
+	&.group-call-widget--fullscreen {
+		left: 0 !important;
+		top: 0 !important;
+		border-radius: 0;
+	}
 }
 
 .incoming-call-popup,
 .connecting-popup {
-    background: #0b0b0b;
-    border-radius: 16px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    overflow: hidden;
-    width: min(420px, calc(100vw - 24px));
-    position: relative;
+	background: #0b0b0b;
+	border-radius: 16px;
+	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+	overflow: hidden;
+	width: min(420px, calc(100vw - 24px));
+	position: relative;
 }
 
 .livekit-room-container,
 .element-call-container {
-    background: #000;
-    border-radius: 16px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    overflow: hidden;
-    width: min(520px, calc(100vw - 24px));
-    height: min(320px, calc(100vh - 24px));
-    display: flex;
-    flex-direction: column;
-    position: relative;
+	background: #000;
+	border-radius: 16px;
+	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+	overflow: hidden;
+	width: min(520px, calc(100vw - 24px));
+	height: min(320px, calc(100vh - 24px));
+	display: flex;
+	flex-direction: column;
+	position: relative;
 }
 
 .element-call-iframe {
-    flex: 1;
-    width: 100%;
-    border: none;
-    background: #000;
-    border-radius: 16px;
+	flex: 1;
+	width: 100%;
+	border: none;
+	background: #000;
+	border-radius: 16px;
 }
 
 .element-call-close {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    border: none;
-    background: rgba(0, 0, 0, 0.6);
-    color: #fff;
-    font-size: 20px;
-    cursor: pointer;
-    z-index: 5;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+	position: absolute;
+	top: 10px;
+	right: 10px;
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	border: none;
+	background: rgba(0, 0, 0, 0.6);
+	color: #fff;
+	font-size: 20px;
+	cursor: pointer;
+	z-index: 5;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 
-    &:hover {
-        background: rgba(0, 0, 0, 0.8);
-    }
+	&:hover {
+		background: rgba(0, 0, 0, 0.8);
+	}
 }
 
 .element-call-fullscreen {
-    position: absolute;
-    top: 10px;
-    right: 50px;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    border: none;
-    background: rgba(0, 0, 0, 0.6);
-    color: #fff;
-    font-size: 16px;
-    cursor: pointer;
-    z-index: 5;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+	position: absolute;
+	top: 10px;
+	right: 50px;
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	border: none;
+	background: rgba(0, 0, 0, 0.6);
+	color: #fff;
+	font-size: 16px;
+	cursor: pointer;
+	z-index: 5;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 
-    &:hover {
-        background: rgba(0, 0, 0, 0.8);
-    }
+	&:hover {
+		background: rgba(0, 0, 0, 0.8);
+	}
 }
 
 .element-call-drag-handle {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 28px;
-    cursor: move;
-    z-index: 4;
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 28px;
+	cursor: move;
+	z-index: 4;
 }
 
 .btn-end-call {
-    background: #fff;
-    color: #e53935;
-    border: 2px solid #e53935;
-    padding: 8px 20px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 600;
-    transition: all 0.2s;
+	background: #fff;
+	color: var(--m3-error, #e53935);
+	border: 2px solid var(--m3-error, #e53935);
+	padding: 8px 20px;
+	border-radius: 6px;
+	cursor: pointer;
+	font-size: 14px;
+	font-weight: 600;
+	transition: all 0.2s;
 
-    &:hover {
-        background: #e53935;
-        color: #fff;
-        transform: scale(1.05);
-    }
+	&:hover {
+		background: var(--m3-error, #e53935);
+		color: #fff;
+		transform: scale(1.05);
+	}
 }
 
 .incoming-call-content,
 .connecting-content {
-    padding: 40px 20px;
-    text-align: center;
-    background: #0b0b0b;
+	padding: 40px 20px;
+	text-align: center;
+	background: #0b0b0b;
 
-    .call-avatar-large {
-        width: 80px;
-        height: 80px;
-        border-radius: 50%;
-        background: #111;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 36px;
-        font-weight: 600;
-        margin: 0 auto 20px;
-        color: white;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-    }
+	.call-avatar-large {
+		width: 80px;
+		height: 80px;
+		border-radius: 50%;
+		background: #111;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 36px;
+		font-weight: 600;
+		margin: 0 auto 20px;
+		color: white;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+	}
 
-    h2 {
-        margin: 0 0 8px;
-        font-size: 20px;
-        font-weight: 600;
-        color: #f5f5f5;
-    }
+	h2 {
+		margin: 0 0 8px;
+		font-size: 20px;
+		font-weight: 600;
+		color: var(--m3-on-surface-variant, #f5f5f5);
+	}
 
-    p {
-        margin: 0 0 24px;
-        color: #bdbdbd;
-        font-size: 14px;
-    }
+	p {
+		margin: 0 0 24px;
+		color: var(--m3-on-surface-variant, #bdbdbd);
+		font-size: 14px;
+	}
 }
 
 .incoming-call-actions {
-    display: flex;
-    gap: 12px;
-    justify-content: center;
+	display: flex;
+	gap: 12px;
+	justify-content: center;
 
-    button {
-        padding: 12px 32px;
-        border: none;
-        border-radius: 8px;
-        font-size: 15px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    }
+	button {
+		padding: 12px 32px;
+		border: none;
+		border-radius: 8px;
+		font-size: 15px;
+		font-weight: 600;
+		cursor: pointer;
+		transition: all 0.2s;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+	}
 
-    .btn-answer {
-        background: #4caf50;
-        color: white;
+	.btn-answer {
+		background: var(--m3-success, #4caf50);
+		color: white;
 
-        &:hover {
-            background: #45a049;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
-        }
-    }
+		&:hover {
+			background: var(--m3-success, #45a049);
+			transform: translateY(-2px);
+			box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+		}
+	}
 
-    .btn-decline {
-        background: #f44336;
-        color: white;
+	.btn-decline {
+		background: var(--m3-error, #f44336);
+		color: white;
 
-        &:hover {
-            background: #da190b;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
-        }
-    }
+		&:hover {
+			background: var(--m3-error, #da190b);
+			transform: translateY(-2px);
+			box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
+		}
+	}
 }
 
 @media (max-width: 640px) {
-    .group-call-widget {
-        border-radius: 12px;
-    }
+	.group-call-widget {
+		border-radius: 12px;
+	}
 
-    .livekit-room-container,
-    .element-call-container {
-        width: 100vw;
-        height: 100vh;
-        border-radius: 0;
-    }
+	.livekit-room-container,
+	.element-call-container {
+		width: 100vw;
+		height: 100vh;
+		border-radius: 0;
+	}
 
-    .element-call-iframe {
-        border-radius: 0;
-    }
+	.element-call-iframe {
+		border-radius: 0;
+	}
 
-    .group-call-widget.group-call-widget--mobile-compact {
-        border-radius: 14px;
-    }
+	.group-call-widget.group-call-widget--mobile-compact {
+		border-radius: 14px;
+	}
 
-    .group-call-widget.group-call-widget--mobile-compact {
-        .livekit-room-container,
-        .element-call-container {
-            width: min(220px, 44vw);
-            height: min(170px, 32vh);
-            border-radius: 14px;
-        }
+	.group-call-widget.group-call-widget--mobile-compact {
+		.livekit-room-container,
+		.element-call-container {
+			width: min(220px, 44vw);
+			height: min(170px, 32vh);
+			border-radius: 14px;
+		}
 
-        .element-call-iframe {
-            border-radius: 14px;
-        }
+		.element-call-iframe {
+			border-radius: 14px;
+		}
 
-        .element-call-close,
-        .element-call-fullscreen {
-            width: 28px;
-            height: 28px;
-            font-size: 14px;
-        }
+		.element-call-close,
+		.element-call-fullscreen {
+			width: 28px;
+			height: 28px;
+			font-size: 14px;
+		}
 
-        .element-call-close {
-            top: 6px;
-            right: 6px;
-        }
+		.element-call-close {
+			top: 6px;
+			right: 6px;
+		}
 
-        .element-call-fullscreen {
-            top: 6px;
-            right: 40px;
-        }
-    }
+		.element-call-fullscreen {
+			top: 6px;
+			right: 40px;
+		}
+	}
 }
 
 .group-call-widget--fullscreen {
-    .livekit-room-container,
-    .element-call-container {
-        width: 100vw;
-        height: 100vh;
-        border-radius: 0;
-    }
+	.livekit-room-container,
+	.element-call-container {
+		width: 100vw;
+		height: 100vh;
+		border-radius: 0;
+	}
 
-    .element-call-iframe {
-        border-radius: 0;
-    }
+	.element-call-iframe {
+		border-radius: 0;
+	}
 }
 
 /* LiveKit components styling overrides */
 .livekit-room-container {
-    .lk-video-conference {
-        height: 600px;
-        background: #fff;
-        display: flex;
-        flex-direction: column;
-        position: relative;
-        
-        /* Hide chat button */
-        .lk-button[data-lk-source="chat"],
-        .lk-chat-toggle,
-        button[aria-label*="chat" i],
-        button[aria-label*="Chat" i] {
-            display: none !important;
-        }
-        
-        /* Hide leave button (we have our own End Call button) */
-        .lk-disconnect-button,
-        .lk-button[data-lk-source="disconnect"],
-        button[aria-label*="leave" i],
-        button[aria-label*="Leave" i] {
-            display: none !important;
-        }
-        
-        /* Force fixed aspect ratio for video tiles */
-        .lk-participant-tile,
-        .lk-grid-layout > div {
-            aspect-ratio: 16 / 9 !important;
-            max-width: 100%;
-            height: auto !important;
-        }
-        
-        /* Ensure video elements maintain aspect ratio */
-        video {
-            object-fit: cover;
-            width: 100%;
-            height: 100%;
-            aspect-ratio: 16 / 9;
-        }
-        
-        /* Make video grid scrollable */
-        .lk-grid-layout {
-            gap: 8px;
-            padding: 8px 8px 80px 8px; /* Extra bottom padding for floating controls */
-            background: #fafafa;
-            flex: 1;
-            overflow-y: auto;
-            overflow-x: hidden;
-        }
-        
-        /* Float control bar at bottom center - ALWAYS VISIBLE */
-        .lk-control-bar {
-            position: fixed !important;
-            bottom: 8px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: auto !important;
-            max-width: 90%;
-            background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(10px);
-            border: 1px solid #e0e0e0;
-            border-radius: 12px;
-            padding: 12px 20px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-            z-index: 1000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 12px;
-            
-            button {
-                background: #fff;
-                border: 2px solid #ddd;
-                color: #333;
-                border-radius: 8px;
-                transition: all 0.2s;
-                padding: 10px 16px;
-                min-width: 44px;
-                
-                &:hover {
-                    border-color: #e8454e;
-                    color: #e8454e;
-                    transform: scale(1.05);
-                }
-                
-                &[data-lk-enabled="false"] {
-                    background: #f44336;
-                    border-color: #f44336;
-                    color: #fff;
-                }
-            }
-        }
-        
-        /* Participant name labels */
-        .lk-participant-name {
-            background: rgba(0, 0, 0, 0.7);
-            color: #fff;
-            padding: 4px 12px;
-            border-radius: 4px;
-            font-size: 13px;
-            font-weight: 500;
-        }
-    }
+	.lk-video-conference {
+		height: 600px;
+		background: #fff;
+		display: flex;
+		flex-direction: column;
+		position: relative;
+
+		/* Hide chat button */
+		.lk-button[data-lk-source='chat'],
+		.lk-chat-toggle,
+		button[aria-label*='chat' i],
+		button[aria-label*='Chat' i] {
+			display: none !important;
+		}
+
+		/* Hide leave button (we have our own End Call button) */
+		.lk-disconnect-button,
+		.lk-button[data-lk-source='disconnect'],
+		button[aria-label*='leave' i],
+		button[aria-label*='Leave' i] {
+			display: none !important;
+		}
+
+		/* Force fixed aspect ratio for video tiles */
+		.lk-participant-tile,
+		.lk-grid-layout > div {
+			aspect-ratio: 16 / 9 !important;
+			max-width: 100%;
+			height: auto !important;
+		}
+
+		/* Ensure video elements maintain aspect ratio */
+		video {
+			object-fit: cover;
+			width: 100%;
+			height: 100%;
+			aspect-ratio: 16 / 9;
+		}
+
+		/* Make video grid scrollable */
+		.lk-grid-layout {
+			gap: 8px;
+			padding: 8px 8px 80px 8px; /* Extra bottom padding for floating controls */
+			background: var(--m3-surface-container-low, #fafafa);
+			flex: 1;
+			overflow-y: auto;
+			overflow-x: hidden;
+		}
+
+		/* Float control bar at bottom center - ALWAYS VISIBLE */
+		.lk-control-bar {
+			position: fixed !important;
+			bottom: 8px;
+			left: 50%;
+			transform: translateX(-50%);
+			width: auto !important;
+			max-width: 90%;
+			background: rgba(255, 255, 255, 0.98);
+			backdrop-filter: blur(10px);
+			border: 1px solid var(--m3-outline-variant, #e0e0e0);
+			border-radius: 12px;
+			padding: 12px 20px;
+			box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+			z-index: 1000;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			gap: 12px;
+
+			button {
+				background: #fff;
+				border: 2px solid #ddd;
+				color: #333;
+				border-radius: 8px;
+				transition: all 0.2s;
+				padding: 10px 16px;
+				min-width: 44px;
+
+				&:hover {
+					border-color: var(--m3-error, #e8454e);
+					color: var(--m3-error, #e8454e);
+					transform: scale(1.05);
+				}
+
+				&[data-lk-enabled='false'] {
+					background: var(--m3-error, #f44336);
+					border-color: var(--m3-error, #f44336);
+					color: #fff;
+				}
+			}
+		}
+
+		/* Participant name labels */
+		.lk-participant-name {
+			background: rgba(0, 0, 0, 0.7);
+			color: #fff;
+			padding: 4px 12px;
+			border-radius: 4px;
+			font-size: 13px;
+			font-weight: 500;
+		}
+	}
 }
 
 /* Responsive adjustments */
 @media (max-width: 1024px) {
-    .livekit-room-container,
-    .element-call-container {
-        width: 95vw;
-        height: 600px;
-    }
+	.livekit-room-container,
+	.element-call-container {
+		width: 95vw;
+		height: 600px;
+	}
 }
 
 @media (max-width: 768px) {
-    .livekit-room-container,
-    .element-call-container {
-        width: 100vw;
-        height: 100vh;
-        border-radius: 0;
-    }
-    
-    .incoming-call-popup,
-    .connecting-popup {
-        width: 90vw;
-    }
+	.livekit-room-container,
+	.element-call-container {
+		width: 100vw;
+		height: 100vh;
+		border-radius: 0;
+	}
+
+	.incoming-call-popup,
+	.connecting-popup {
+		width: 90vw;
+	}
 }

@@ -18,7 +18,10 @@ $inputSpacing: 32px;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		background-color: var(--m3-surface-container-lowest, $background-lighter);
+		background-color: var(
+			--m3-surface-container-lowest,
+			$background-lighter
+		);
 		padding: $grid-base-three $grid-base-two;
 
 		@include breakpoint($fromMedium) {
@@ -26,7 +29,10 @@ $inputSpacing: 32px;
 		}
 
 		@include breakpoint($fromLarge) {
-			background-color: var(--m3-surface-container-low, $background-light);
+			background-color: var(
+				--m3-surface-container-low,
+				$background-light
+			);
 			align-items: flex-start;
 		}
 
@@ -169,8 +175,8 @@ $inputSpacing: 32px;
 	}
 
 	&__participantsPlusIcon--open .createChat__participantsPlusBg {
-		fill: #646d78;
-		stroke: #646d78;
+		fill: var(--m3-secondary, #646d78);
+		stroke: var(--m3-secondary, #646d78);
 	}
 
 	&__participantsPlusIcon--open .createChat__participantsPlusPath {
@@ -181,7 +187,7 @@ $inputSpacing: 32px;
 		flex: 0 0 $chat-input-width;
 		width: $chat-input-width;
 		height: 50px;
-		border: 1px solid #8c878c;
+		border: 1px solid var(--m3-on-surface-variant, #8c878c);
 		border-radius: 5px;
 		background: #fff;
 		display: flex;
@@ -193,14 +199,14 @@ $inputSpacing: 32px;
 	}
 
 	&__participantsTrigger--active {
-		border: 2px solid #3f373f;
+		border: 2px solid var(--m3-on-surface, #3f373f);
 		padding: 0 11px;
 	}
 
 	&__participantsTriggerText {
 		font-size: 16px;
 		line-height: 21px;
-		color: #3f373f;
+		color: var(--m3-on-surface, #3f373f);
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
@@ -239,7 +245,7 @@ $inputSpacing: 32px;
 
 	&__participantsCard--search {
 		.createChat__participantsSearchWrap {
-			border-bottom: 2px solid #bf4b53;
+			border-bottom: 2px solid var(--m3-error, #bf4b53);
 		}
 	}
 
@@ -252,7 +258,7 @@ $inputSpacing: 32px;
 	}
 
 	&__participantsSearchWrap--active {
-		border-color: #bf4b53;
+		border-color: var(--m3-error, #bf4b53);
 		border-radius: 8px;
 	}
 
@@ -262,14 +268,14 @@ $inputSpacing: 32px;
 		outline: 0;
 		font-size: 16px;
 		line-height: 21px;
-		color: #3f373f;
+		color: var(--m3-on-surface, #3f373f);
 		background: transparent;
 	}
 
 	&__participantsLabel {
 		font-size: 16px;
 		line-height: 21px;
-		color: #5f6670;
+		color: var(--m3-on-surface-variant, #5f6670);
 		padding: 12px 14px;
 	}
 
@@ -280,7 +286,7 @@ $inputSpacing: 32px;
 	&__selectedPillsLabel {
 		font-size: 16px;
 		line-height: 21px;
-		color: #5f6670;
+		color: var(--m3-on-surface-variant, #5f6670);
 		margin-bottom: 10px;
 	}
 
@@ -350,7 +356,7 @@ $inputSpacing: 32px;
 	}
 
 	&__participantName--selected {
-		color: #a5000a;
+		color: var(--m3-primary, #a5000a);
 	}
 
 	&__participantIcon {

@@ -229,12 +229,12 @@ $tabBarHeightDesktop: 53px;
 	}
 
 	&__resizeHandle[data-dragging='true'] &__resizeHandlePill {
-		background: #ffdad5;
+		background: var(--m3-primary-container, #ffdad5);
 		transform: translateY(var(--sessionsListThumbTop, 0px)) scaleX(1.12);
 	}
 
 	&__resizeHandle:focus-visible &__resizeHandlePill {
-		box-shadow: 0 0 0 1px #ffdad5;
+		box-shadow: 0 0 0 1px var(--m3-primary-container, #ffdad5);
 	}
 
 	&__functionalityWrapper {
@@ -598,8 +598,8 @@ $tabBarHeightDesktop: 53px;
 		display: inline-flex;
 		align-items: center;
 		gap: 6px;
-		border: 1px solid #3b4044;
-		background: #3b4044;
+		border: 1px solid var(--m3-on-surface, #3b4044);
+		background: var(--m3-secondary, #3b4044);
 		color: #fff;
 		border-radius: 999px;
 		padding: 4px 8px;
@@ -907,7 +907,7 @@ $tabBarHeightDesktop: 53px;
 		font-size: 14px;
 		line-height: 20px;
 		font-weight: 500;
-		color: #444748;
+		color: var(--m3-on-surface-variant, #444748);
 		white-space: nowrap;
 		cursor: pointer;
 		border-bottom: 3px solid transparent;
@@ -919,8 +919,8 @@ $tabBarHeightDesktop: 53px;
 	}
 
 	&__searchModalTab--active {
-		color: #a5000a;
-		border-bottom-color: #a5000a;
+		color: var(--m3-primary, #a5000a);
+		border-bottom-color: var(--m3-primary, #a5000a);
 	}
 
 	&__searchModalTabIcon {
@@ -977,8 +977,8 @@ $tabBarHeightDesktop: 53px;
 		width: 40px;
 		height: 40px;
 		border-radius: 999px;
-		background: #cc1e1c;
-		color: #ffe2de;
+		background: var(--m3-primary, #cc1e1c);
+		color: var(--m3-primary-container, #ffe2de);
 		font-size: 16px;
 		font-weight: 600;
 		display: inline-flex;
@@ -1004,7 +1004,7 @@ $tabBarHeightDesktop: 53px;
 	&__personSubtitle {
 		font-size: 14px;
 		line-height: 20px;
-		color: #444748;
+		color: var(--m3-on-surface-variant, #444748);
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
@@ -1014,13 +1014,13 @@ $tabBarHeightDesktop: 53px;
 		width: 18px;
 		height: 18px;
 		border-radius: 3px;
-		border: 2px solid #444748;
+		border: 2px solid var(--m3-on-surface-variant, #444748);
 		flex-shrink: 0;
 	}
 
 	&__personCheckbox--selected {
-		background: #a5000a;
-		border-color: #a5000a;
+		background: var(--m3-primary, #a5000a);
+		border-color: var(--m3-primary, #a5000a);
 		position: relative;
 
 		&::after {
@@ -1040,6 +1040,6 @@ $tabBarHeightDesktop: 53px;
 		padding: 18px 16px;
 		font-size: 14px;
 		line-height: 20px;
-		color: #444748;
+		color: var(--m3-on-surface-variant, #444748);
 	}
 }

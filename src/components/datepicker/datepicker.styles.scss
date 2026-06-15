@@ -39,7 +39,7 @@ $arrow-icon-size: 14px;
 	.react-datepicker {
 		width: 100%;
 		font-size: $font-size-tertiary;
-		border: 1px solid #c4bfc4;
+		border: 1px solid var(--m3-outline-variant, #c4bfc4);
 
 		@include rounded-drop-shadow;
 
@@ -95,13 +95,13 @@ $arrow-icon-size: 14px;
 				-webkit-appearance: none;
 				appearance: none;
 				-moz-appearance: textfield;
-				border: 1px solid #8c878c;
+				border: 1px solid var(--m3-on-surface-variant, #8c878c);
 				border-radius: $input-field-border-radius;
 				width: 100%;
 				height: 50px;
 				outline: 0;
 				padding: 15px 50px 0 19px;
-				color: #3f373f;
+				color: var(--m3-on-surface, #3f373f);
 				box-shadow: inset 0 2px 0 0 rgba(0, 0, 0, 0.1);
 
 				@media (min-width: $fromLarge) {
@@ -111,7 +111,10 @@ $arrow-icon-size: 14px;
 		}
 
 		&__header {
-			background-color: var(--m3-surface-container-low, $background-light);
+			background-color: var(
+				--m3-surface-container-low,
+				$background-light
+			);
 			border: none;
 		}
 
@@ -155,10 +158,7 @@ $arrow-icon-size: 14px;
 			color: var(--m3-primary, $primary);
 
 			&:hover {
-				color: var(
-					--m3-primary,
-					$primary
-				) !important;
+				color: var(--m3-primary, $primary) !important;
 			}
 		}
 
@@ -196,10 +196,7 @@ $arrow-icon-size: 14px;
 
 			&:hover {
 				color: $white !important;
-				background-color: var(
-					--m3-primary-hover,
-					$hover-primary
-				);
+				background-color: var(--m3-primary-hover, $hover-primary);
 				border-radius: 4px;
 			}
 		}

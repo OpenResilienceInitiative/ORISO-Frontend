@@ -144,7 +144,7 @@ $message-avatar-ring: #ebe2e2;
 		min-height: 48px;
 		border: 10px solid #fff;
 		border-radius: 999px;
-		background: #ffd9d9;
+		background: var(--m3-primary-container, #ffd9d9);
 		overflow: hidden;
 		display: inline-flex;
 		align-items: center;
@@ -213,7 +213,7 @@ $message-avatar-ring: #ebe2e2;
 
 		path,
 		circle {
-			fill: #17191c;
+			fill: var(--m3-on-surface, #17191c);
 		}
 
 		&:hover {
@@ -243,7 +243,7 @@ $message-avatar-ring: #ebe2e2;
 		min-width: 200px;
 		max-width: 280px;
 		padding: 8px 0;
-		border: 2px solid #cc1e1c;
+		border: 2px solid var(--m3-primary, #cc1e1c);
 		border-radius: 8px;
 		background: #fff;
 		box-shadow:
@@ -266,7 +266,7 @@ $message-avatar-ring: #ebe2e2;
 		padding: 8px 12px;
 		border: 0;
 		background: #fff;
-		color: #4b515a;
+		color: var(--m3-on-surface-variant, #4b515a);
 		cursor: pointer;
 		text-align: left;
 
@@ -288,7 +288,7 @@ $message-avatar-ring: #ebe2e2;
 		}
 
 		path {
-			fill: #4b515a;
+			fill: var(--m3-on-surface-variant, #4b515a);
 		}
 	}
 
@@ -296,13 +296,13 @@ $message-avatar-ring: #ebe2e2;
 		font-size: 16px;
 		line-height: 24px;
 		letter-spacing: 0.0313em;
-		color: #4b515a;
+		color: var(--m3-on-surface-variant, #4b515a);
 	}
 
 	&__visibilityChip {
 		border: 10px solid #fff;
 		border-radius: 40px;
-		background: #e1e6ee;
+		background: var(--m3-surface-container, #e1e6ee);
 		min-width: 48px;
 		height: 72px;
 		display: inline-flex;
@@ -318,8 +318,8 @@ $message-avatar-ring: #ebe2e2;
 	}
 
 	&__visibilityChip--active {
-		background: #cc1e1c;
-		border-color: #cc1e1c;
+		background: var(--m3-primary, #cc1e1c);
+		border-color: var(--m3-primary, #cc1e1c);
 	}
 
 	&__visibilityChipIcon {
@@ -338,12 +338,12 @@ $message-avatar-ring: #ebe2e2;
 		}
 
 		path {
-			fill: #4b515a;
+			fill: var(--m3-on-surface-variant, #4b515a);
 		}
 	}
 
 	&__visibilityChipCount {
-		color: #4b515a;
+		color: var(--m3-on-surface-variant, #4b515a);
 		font-size: 16px;
 		font-weight: 500;
 		line-height: 1;
@@ -370,7 +370,7 @@ $message-avatar-ring: #ebe2e2;
 		min-width: 260px;
 		max-width: 260px;
 		padding: 8px;
-		border: 2px solid #cc1e1c;
+		border: 2px solid var(--m3-primary, #cc1e1c);
 		border-radius: 12px;
 		background: #fff;
 		box-shadow:
@@ -385,7 +385,7 @@ $message-avatar-ring: #ebe2e2;
 	}
 
 	&__visibilityMenuSection {
-		border: 1px solid #e1e6ee;
+		border: 1px solid var(--m3-outline-variant, #e1e6ee);
 		border-radius: 12px;
 		padding: 4px;
 		background: #fff;
@@ -422,14 +422,14 @@ $message-avatar-ring: #ebe2e2;
 		}
 
 		path {
-			fill: #4c555f;
+			fill: var(--m3-on-surface-variant, #4c555f);
 		}
 	}
 
 	&__visibilityMenuSectionTitle {
 		font-size: 12px;
 		line-height: 14px;
-		color: #4c555f;
+		color: var(--m3-on-surface-variant, #4c555f);
 		font-weight: 400;
 	}
 
@@ -441,13 +441,13 @@ $message-avatar-ring: #ebe2e2;
 		width: 14px;
 		height: 14px;
 		border-radius: 999px;
-		border: 2px solid #5f6873;
+		border: 2px solid var(--m3-on-surface-variant, #5f6873);
 		background: #fff;
 		flex: 0 0 14px;
 	}
 
 	&__visibilityMenuSectionRadio--selected {
-		border-color: #3f4753;
+		border-color: var(--m3-on-surface, #3f4753);
 		background: radial-gradient(
 			circle at 50% 50%,
 			#3f4753 45%,
@@ -492,7 +492,7 @@ $message-avatar-ring: #ebe2e2;
 	&__visibilityMenuSubheading {
 		font-size: 12px;
 		line-height: 1.4;
-		color: #4b515a;
+		color: var(--m3-on-surface-variant, #4b515a);
 		text-align: right;
 		padding: 8px 12px 2px;
 	}
@@ -508,7 +508,7 @@ $message-avatar-ring: #ebe2e2;
 
 	&__visibilityMenuDivider {
 		height: 1px;
-		background: #bec7d4;
+		background: var(--m3-outline-variant, #bec7d4);
 		margin: 0 8px 10px;
 	}
 
@@ -524,19 +524,19 @@ $message-avatar-ring: #ebe2e2;
 		align-items: center;
 		gap: 4px;
 		border-radius: 999px;
-		border: 1px solid #e1e6ee;
+		border: 1px solid var(--m3-outline-variant, #e1e6ee);
 		background: #fff;
 		padding: 6px 10px;
 		font-size: 12px;
 		font-weight: 700;
 		line-height: 14px;
-		color: #4c555f;
+		color: var(--m3-on-surface-variant, #4c555f);
 	}
 
 	&__visibilityMenuPill--active {
-		background: #3b4044;
+		background: var(--m3-secondary, #3b4044);
 		color: #fff;
-		border-color: #3b4044;
+		border-color: var(--m3-on-surface, #3b4044);
 	}
 
 	&__visibilityMenuPill--active
@@ -548,7 +548,7 @@ $message-avatar-ring: #ebe2e2;
 		font-size: 10px;
 		line-height: 14px;
 		font-weight: 400;
-		color: #4c555f;
+		color: var(--m3-on-surface-variant, #4c555f);
 		padding: 2px 2px 2px 18px;
 	}
 
@@ -572,7 +572,7 @@ $message-avatar-ring: #ebe2e2;
 		min-width: 32px;
 		min-height: 32px;
 		border-radius: 50%;
-		background: #ffe6ea;
+		background: var(--m3-error-container, #ffe6ea);
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -584,7 +584,7 @@ $message-avatar-ring: #ebe2e2;
 		height: 15px;
 
 		* {
-			fill: #e53952;
+			fill: var(--m3-error, #e53952);
 		}
 	}
 
@@ -608,8 +608,7 @@ $message-avatar-ring: #ebe2e2;
 		&::after {
 			content: '';
 			display: inline-block;
-			border-top: 1px solid
-				var(--m3-secondary, $text-divider-color);
+			border-top: 1px solid var(--m3-secondary, $text-divider-color);
 			width: $grid-base-three;
 			vertical-align: middle;
 			margin: 0 0;
@@ -633,7 +632,7 @@ $message-avatar-ring: #ebe2e2;
 	&__message {
 		color: var(--m3-primary, $secondary);
 		line-height: $message-lineheight;
-		background-color: #fff1f1;
+		background-color: var(--m3-error-container, #fff1f1);
 		border-radius: 0 12px 12px;
 		margin: 4px 0;
 		padding: $grid-base-two;
@@ -655,8 +654,8 @@ $message-avatar-ring: #ebe2e2;
 		}
 
 		&--systemNotification {
-			background: #fff6f7;
-			border: 1px solid #ffd9df;
+			background: var(--m3-error-container, #fff6f7);
+			border: 1px solid var(--m3-error-container, #ffd9df);
 			border-radius: 12px;
 		}
 
@@ -693,7 +692,7 @@ $message-avatar-ring: #ebe2e2;
 		blockquote {
 			margin: 8px 0;
 			padding: 4px 0 4px 10px;
-			border-left: 3px solid #cc1e1c; // incoming + default quote color
+			border-left: 3px solid var(--m3-primary, #cc1e1c); // incoming + default quote color
 			background: rgba(204, 30, 28, 0.06);
 			border-radius: 0 6px 6px 0;
 		}
@@ -757,7 +756,7 @@ $message-avatar-ring: #ebe2e2;
 			display: flex;
 			flex-direction: column;
 			margin-top: 4px;
-			border: 1px solid #e3e8f0;
+			border: 1px solid var(--m3-outline-variant, #e3e8f0);
 			border-radius: 8px;
 			overflow: hidden;
 			max-width: 400px;
@@ -765,7 +764,7 @@ $message-avatar-ring: #ebe2e2;
 			transition: all 0.2s ease;
 
 			&:hover {
-				border-color: #0086e6;
+				border-color: var(--m3-tertiary, #0086e6);
 				box-shadow: 0 2px 8px rgba(0, 134, 230, 0.15);
 			}
 
@@ -797,13 +796,13 @@ $message-avatar-ring: #ebe2e2;
 			&__filename {
 				font-size: 14px;
 				font-weight: 500;
-				color: #17191c;
+				color: var(--m3-on-surface, #17191c);
 				margin: 0 !important;
 			}
 
 			&__meta {
 				font-size: 12px;
-				color: #8d97a5;
+				color: var(--m3-on-surface-variant, #8d97a5);
 				margin: 0 !important;
 			}
 
@@ -825,7 +824,7 @@ $message-avatar-ring: #ebe2e2;
 				svg {
 					width: 24px;
 					height: 24px;
-					color: #737d8c;
+					color: var(--m3-on-surface-variant, #737d8c);
 				}
 			}
 
@@ -845,8 +844,8 @@ $message-avatar-ring: #ebe2e2;
 		}
 
 		&--myMessage {
-			color: #1c1b1f;
-			background-color: #ebe2e2;
+			color: var(--m3-on-surface, #1c1b1f);
+			background-color: var(--m3-surface-container, #ebe2e2);
 
 			.messageItem__message__attachment {
 				background-color: $white;
@@ -854,11 +853,11 @@ $message-avatar-ring: #ebe2e2;
 
 			a,
 			a:hover {
-				color: #1c1b1f;
+				color: var(--m3-on-surface, #1c1b1f);
 			}
 
 			blockquote {
-				border-left-color: #7d4c4c;
+				border-left-color: var(--m3-error, #7d4c4c);
 				background: rgba(125, 76, 76, 0.08);
 			}
 		}
@@ -875,7 +874,7 @@ $message-avatar-ring: #ebe2e2;
 	&__visibleOnlyLabel {
 		font-size: 10px;
 		line-height: 12px;
-		color: #646d78;
+		color: var(--m3-secondary, #646d78);
 	}
 
 	&__visibleOnlyChip {
@@ -884,13 +883,13 @@ $message-avatar-ring: #ebe2e2;
 		gap: 4px;
 		height: 26px;
 		padding: 0 10px;
-		border: 1px solid #e1e6ee;
+		border: 1px solid var(--m3-outline-variant, #e1e6ee);
 		border-radius: 999px;
 		background: #fff;
 		font-size: 12px;
 		font-weight: 700;
 		line-height: 14px;
-		color: #4b515a;
+		color: var(--m3-on-surface-variant, #4b515a);
 		white-space: nowrap;
 	}
 
@@ -936,7 +935,7 @@ $message-avatar-ring: #ebe2e2;
 		gap: 2px;
 		font-size: 12px;
 		line-height: 12px;
-		color: #646d78;
+		color: var(--m3-secondary, #646d78);
 	}
 
 	&__senderInfoMetaIcon {
@@ -945,7 +944,7 @@ $message-avatar-ring: #ebe2e2;
 		display: inline-block;
 
 		path {
-			fill: #646d78;
+			fill: var(--m3-secondary, #646d78);
 		}
 	}
 
@@ -955,7 +954,7 @@ $message-avatar-ring: #ebe2e2;
 		padding: 2px 8px;
 		border-radius: 12px;
 		background: rgba(30, 136, 229, 0.12);
-		color: #1e88e5;
+		color: var(--m3-tertiary, #1e88e5);
 		font-size: 12px;
 		font-weight: 600;
 		margin-bottom: 6px;
@@ -967,7 +966,7 @@ $message-avatar-ring: #ebe2e2;
 		align-items: center;
 		padding: 2px 8px;
 		border-radius: 12px;
-		background: #3b4044;
+		background: var(--m3-secondary, #3b4044);
 		color: #fff;
 		font-size: 11px;
 		font-weight: 700;
@@ -977,7 +976,7 @@ $message-avatar-ring: #ebe2e2;
 	&__systemNotificationTitle {
 		font-size: 24px;
 		font-weight: 700;
-		color: #1f1f1f;
+		color: var(--m3-on-surface, #1f1f1f);
 		line-height: 1.25;
 		margin-bottom: 8px;
 	}
@@ -985,7 +984,7 @@ $message-avatar-ring: #ebe2e2;
 	&__systemNotificationDescription {
 		font-size: 14px;
 		line-height: 1.4;
-		color: #5a5a5a;
+		color: var(--m3-on-surface-variant, #5a5a5a);
 	}
 
 	&--feedback {
@@ -1003,7 +1002,7 @@ $message-avatar-ring: #ebe2e2;
 
 		.messageItem__systemNotificationTitle,
 		.messageItem__systemNotificationDescription {
-			color: #3b4044;
+			color: var(--m3-on-surface, #3b4044);
 		}
 
 		.messageItem__visibleOnly {
@@ -1030,8 +1029,8 @@ $message-avatar-ring: #ebe2e2;
 		min-width: 180px;
 
 		&:hover {
-			border-color: #e6e6e6;
-			background: #fafafa;
+			border-color: var(--m3-outline-variant, #e6e6e6);
+			background: var(--m3-surface-container-low, #fafafa);
 		}
 	}
 
@@ -1075,7 +1074,7 @@ $message-avatar-ring: #ebe2e2;
 		max-width: 360px;
 		padding: 8px 10px;
 		border-radius: 999px;
-		background: #32b86c;
+		background: var(--m3-success, #32b86c);
 		color: #fff;
 
 		audio {
@@ -1372,15 +1371,15 @@ $message-avatar-ring: #ebe2e2;
 
 	// Default color for incoming messages (red)
 	&--incoming {
-		color: #e74c3c; // Red color for incoming messages
+		color: var(--m3-error, #e74c3c); // Red color for incoming messages
 
 		&:hover {
-			color: #c0392b;
+			color: var(--m3-error, #c0392b);
 			text-decoration: none;
 		}
 
 		&:focus {
-			outline: 2px solid #e74c3c;
+			outline: 2px solid var(--m3-error, #e74c3c);
 			outline-offset: 2px;
 			border-radius: 4px;
 		}
@@ -1391,7 +1390,7 @@ $message-avatar-ring: #ebe2e2;
 		color: #ffffff; // White color for outgoing messages
 
 		&:hover {
-			color: #e6e6e6;
+			color: var(--m3-outline-variant, #e6e6e6);
 			text-decoration: none;
 		}
 

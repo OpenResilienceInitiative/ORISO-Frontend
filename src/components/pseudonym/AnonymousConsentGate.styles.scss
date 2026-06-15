@@ -65,7 +65,7 @@
 	font-size: 32px;
 	line-height: 1.2em;
 	font-weight: 600;
-	color: #1f2937;
+	color: var(--m3-on-surface, #1f2937);
 	margin: 0;
 }
 
@@ -73,7 +73,7 @@
 	font-family: 'Inter', sans-serif;
 	font-size: 16px;
 	line-height: 1.4em;
-	color: #1f2937;
+	color: var(--m3-on-surface, #1f2937);
 	margin: 0;
 }
 
@@ -82,7 +82,7 @@
 	font-size: 16px;
 	line-height: 1.4em;
 	font-weight: 700;
-	color: #1f2937;
+	color: var(--m3-on-surface, #1f2937);
 	margin: 0;
 
 	a {
@@ -90,7 +90,7 @@
 		text-decoration: underline;
 
 		&:hover {
-			color: #a5000a;
+			color: var(--m3-primary, #a5000a);
 		}
 	}
 }
@@ -100,7 +100,7 @@
 	font-size: 14px;
 	line-height: 1.4em;
 	font-weight: 500;
-	color: #a5000a;
+	color: var(--m3-primary, #a5000a);
 	background: #fde8e8;
 	border: 1px solid #f5bcbb;
 	border-radius: 10px;
@@ -169,21 +169,21 @@
 
 .anonymousConsentGate__btnReject {
 	border-radius: 8px;
-	background: #4c555f;
-	color: #e7effc;
+	background: var(--m3-secondary, #4c555f);
+	color: var(--m3-tertiary-container, #e7effc);
 
 	&:hover:not(:disabled) {
-		background: #3d444d;
+		background: var(--m3-secondary, #3d444d);
 	}
 }
 
 .anonymousConsentGate__btnAccept {
 	border-radius: 100px;
-	background: #cc1e1c;
+	background: var(--m3-primary, #cc1e1c);
 	color: #ffffff;
 
 	&:hover:not(:disabled) {
-		background: #a5000a;
+		background: var(--m3-primary, #a5000a);
 	}
 }
 

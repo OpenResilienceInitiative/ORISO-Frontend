@@ -18,11 +18,11 @@
 
 	&--vertical {
 		flex-direction: column;
-		color: #d32f2f;
+		color: var(--m3-error, #d32f2f);
 
 		svg,
 		span {
-			color: #d32f2f;
+			color: var(--m3-error, #d32f2f);
 			margin: 0;
 			font-weight: $font-weight-medium;
 		}

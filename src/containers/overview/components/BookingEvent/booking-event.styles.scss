@@ -26,7 +26,7 @@
 	}
 
 	&__icon path {
-		fill: #1c1b1f;
+		fill: var(--m3-on-surface, #1c1b1f);
 	}
 
 	&__fullDate {

@@ -43,7 +43,7 @@
 	line-height: 24px;
 	font-weight: 500;
 	letter-spacing: 0.0094em;
-	color: #4c555f;
+	color: var(--m3-on-surface-variant, #4c555f);
 	margin: 0;
 	text-align: center;
 }
@@ -73,7 +73,7 @@
 	width: 92px;
 	min-height: 96px;
 	padding: 0;
-	border: 2px solid #4c555f;
+	border: 2px solid var(--m3-on-surface-variant, #4c555f);
 	border-radius: 300px;
 	background: #f0edee;
 	cursor: pointer;

@@ -36,7 +36,7 @@ $iconSize: 24px;
 		margin-left: 0;
 		padding-bottom: 10px;
 		padding-top: 10px;
-		border-bottom: 1px solid #ffd1d1;
+		border-bottom: 1px solid var(--m3-error-container, #ffd1d1);
 	}
 
 	&__feedbackHeaderWrapper {
@@ -334,24 +334,21 @@ $iconSize: 24px;
 
 		&__content {
 			font-size: 12px;
-			color: #646d78;
+			color: var(--m3-secondary, #646d78);
 			line-height: 16px;
 			display: inline-flex;
 			align-items: center;
 			padding: 1px 8px;
 			border-bottom-left-radius: 5px;
 			border-bottom-right-radius: 5px;
-			background: #ffd1d1;
+			background: var(--m3-error-container, #ffd1d1);
 
 			@include breakpoint($fromSmall) {
 				position: relative;
 			}
 
 			&--red {
-				color: var(
-					--m3-primary,
-					$primary
-				) !important;
+				color: var(--m3-primary, $primary) !important;
 				text-transform: uppercase;
 			}
 
@@ -443,7 +440,7 @@ $iconSize: 24px;
 			}
 
 			&:after {
-				border-top: 10px solid #c4bfc4;
+				border-top: 10px solid var(--m3-outline-variant, #c4bfc4);
 				margin-top: 3px;
 				z-index: 1;
 			}
@@ -470,15 +467,15 @@ $iconSize: 24px;
 		display: inline-flex;
 		align-items: center;
 		padding-left: 6px;
-		color: #646d78;
+		color: var(--m3-secondary, #646d78);
 		font-size: 14px;
 		line-height: 1;
 	}
 
 	&__supervisionButton {
-		border: 1px solid #ffd1d1;
+		border: 1px solid var(--m3-error-container, #ffd1d1);
 		background: rgba(255, 209, 209, 0.3);
-		color: #1c1b1f;
+		color: var(--m3-on-surface, #1c1b1f);
 		border-radius: 12px;
 		padding: 4px 12px;
 		font-size: 14px;
@@ -526,12 +523,12 @@ $iconSize: 24px;
 
 		&:hover {
 			background-color: rgba(204, 30, 28, 0.08);
-			border-color: #cc1e1c;
+			border-color: var(--m3-primary, #cc1e1c);
 		}
 
 		&:focus-visible {
 			outline: none;
-			box-shadow: 0 0 0 2px #cc1e1c;
+			box-shadow: 0 0 0 2px var(--m3-primary, #cc1e1c);
 		}
 	}
 
@@ -539,7 +536,7 @@ $iconSize: 24px;
 		width: 32px;
 		height: 32px;
 		border-radius: 12px;
-		border: 1px solid #ffd1d1;
+		border: 1px solid var(--m3-error-container, #ffd1d1);
 		background: #fff;
 		display: inline-flex;
 		align-items: center;

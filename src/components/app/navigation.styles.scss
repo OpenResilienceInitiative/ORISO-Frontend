@@ -5,8 +5,8 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 
 .navigation {
 	&__wrapper {
-		background-color: #f5f5f5;
-		border-right: 2px solid #d32f2f;
+		background-color: var(--m3-surface-container-low, #f5f5f5);
+		border-right: 2px solid var(--m3-error, #d32f2f);
 		box-sizing: border-box;
 		position: relative;
 		z-index: 1;
@@ -113,7 +113,7 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 				}
 
 				.navigation__item--active .navigation__title--figma {
-					color: #930008;
+					color: var(--m3-primary-hover, #930008);
 					font-weight: 700;
 				}
 
@@ -147,28 +147,28 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 					overflow: visible;
 
 					&--row {
-						background: #dedede;
+						background: var(--m3-outline-variant, #dedede);
 					}
 
 					&--tile {
-						background: #dedede;
+						background: var(--m3-outline-variant, #dedede);
 					}
 
 					&--row.navigation__icon-slot--active {
-						background: #ffdad5;
-						border: 1px solid #930008;
+						background: var(--m3-primary-container, #ffdad5);
+						border: 1px solid var(--m3-primary-hover, #930008);
 					}
 
 					&--tile.navigation__icon-slot--active {
-						background: #ffdad5;
-						border: 1px solid #930008;
+						background: var(--m3-primary-container, #ffdad5);
+						border: 1px solid var(--m3-primary-hover, #930008);
 					}
 
 					/* Live-chat availability toggle — defaults to inactive (grey,
 					   black glyph). When active, the slot turns black and the
 					   glyph swaps for the privacy/eye variant rendered white. */
 					&--live {
-						background: #dedede;
+						background: var(--m3-outline-variant, #dedede);
 						width: 49px;
 						max-width: 49px;
 						margin: 0 auto;
@@ -177,7 +177,7 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 						.navigation__liveChatToggleIcon {
 							width: 22px;
 							height: 26px;
-							color: #1c1b1f;
+							color: var(--m3-on-surface, #1c1b1f);
 							display: block;
 							transition: color 180ms ease;
 						}
@@ -197,27 +197,27 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 						width: 49px;
 						max-width: 49px;
 						margin: 0 auto;
-						background: #dedede;
+						background: var(--m3-outline-variant, #dedede);
 						padding: 8px;
 					}
 
 					&--logout {
 						width: fit-content;
 						margin: 0 auto;
-						background: #dedede;
+						background: var(--m3-outline-variant, #dedede);
 						padding: 8px 7px;
 						height: auto;
 						min-height: 48px;
 					}
 
 					&--logout.navigation__icon-slot--active {
-						background: #ffdad5;
-						border: 1px solid #930008;
+						background: var(--m3-primary-container, #ffdad5);
+						border: 1px solid var(--m3-primary-hover, #930008);
 					}
 
 					&--logout.navigation__icon-slot--active
 						.navigation__icon__single {
-						color: #930008;
+						color: var(--m3-primary-hover, #930008);
 					}
 
 					&__inner {
@@ -240,7 +240,7 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 					width: 32px !important;
 					height: 32px !important;
 					flex-shrink: 0;
-					color: #1c1b1f;
+					color: var(--m3-on-surface, #1c1b1f);
 					display: block;
 
 					&--chat-figma {
@@ -263,29 +263,29 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 				.navigation__globe-svg {
 					width: 24px;
 					height: 24px;
-					color: #1c1b1f;
+					color: var(--m3-on-surface, #1c1b1f);
 				}
 
 				.navigation__icon-slot--row.navigation__icon-slot--active
 					.navigation__globe-svg {
-					color: #930008;
+					color: var(--m3-primary-hover, #930008);
 				}
 
 				.navigation__item--active.navigation__item--nav-row
 					.navigation__icon__single,
 				.navigation__icon-slot--row.navigation__icon-slot--active
 					.navigation__icon__single {
-					color: #930008;
+					color: var(--m3-primary-hover, #930008);
 				}
 
 				.navigation__item--active.navigation__item--nav-tile
 					.navigation__icon__single {
-					color: #930008;
+					color: var(--m3-primary-hover, #930008);
 				}
 
 				.navigation__icon-slot--row .navigation__icon__outline {
 					display: block;
-					color: #1c1b1f;
+					color: var(--m3-on-surface, #1c1b1f);
 					fill: currentColor;
 				}
 
@@ -303,7 +303,7 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 					.navigation__icon-slot--row
 					.navigation__icon__filled {
 					display: block;
-					color: #930008;
+					color: var(--m3-primary-hover, #930008);
 					fill: currentColor;
 				}
 
@@ -321,10 +321,10 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 
 				/* Badge: corner dot, half-in/half-out; position:absolute doesn’t affect flex centering */
 				.navigation__icon-slot .navigation__item__count--figma {
-					color: #930008;
+					color: var(--m3-primary-hover, #930008);
 					background-color: #fff;
 					outline: none;
-					border: 2px solid #930008;
+					border: 2px solid var(--m3-primary-hover, #930008);
 					box-shadow: none;
 					left: auto;
 					transform: none;
@@ -425,7 +425,7 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 		height: $grid-base-five;
 		width: $grid-base-five;
 		margin: 0;
-		color: #d32f2f;
+		color: var(--m3-error, #d32f2f);
 		text-align: center;
 		text-decoration: none;
 		cursor: pointer;
@@ -480,7 +480,7 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 
 		&:hover {
 			background: rgba(211, 47, 47, 0.12);
-			color: #d32f2f;
+			color: var(--m3-error, #d32f2f);
 
 			@include breakpoint($fromLarge) {
 				background: rgba(211, 47, 47, 0.18);
@@ -580,8 +580,8 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 			display: none;
 		}
 		.navigation__icon__outline {
-			fill: #d32f2f;
-			color: #d32f2f;
+			fill: var(--m3-error, #d32f2f);
+			color: var(--m3-error, #d32f2f);
 			display: block;
 			margin: auto;
 		}
@@ -591,7 +591,7 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 				background: rgba(211, 47, 47, 0.18);
 			}
 
-			color: #d32f2f;
+			color: var(--m3-error, #d32f2f);
 			.navigation__icon__filled {
 				display: block;
 				margin: auto;
@@ -626,7 +626,7 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 
 		&--active {
 			@include breakpoint($fromLarge) {
-				background: #ffdad5;
+				background: var(--m3-primary-container, #ffdad5);
 			}
 
 			.navigation__icon__background::after {
@@ -640,10 +640,10 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 
 			.navigation__icon__filled {
 				display: block;
-				fill: #d32f2f;
+				fill: var(--m3-error, #d32f2f);
 
 				@include breakpoint($fromLarge) {
-					fill: #d32f2f;
+					fill: var(--m3-error, #d32f2f);
 				}
 			}
 			.navigation__icon__outline {
@@ -658,8 +658,8 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 		margin: auto;
 		text-align: center;
 		transition: color var(--transition-duration) ease;
-		fill: #d32f2f;
-		color: #d32f2f;
+		fill: var(--m3-error, #d32f2f);
+		color: var(--m3-error, #d32f2f);
 	}
 
 	&__icon--drafts {
@@ -670,9 +670,9 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 	}
 
 	&__item__count {
-		color: #930008;
+		color: var(--m3-primary-hover, #930008);
 		background-color: #ffffff;
-		outline: #930008 2px solid;
+		outline: var(--m3-primary-hover, #930008) 2px solid;
 	}
 
 	&__title {

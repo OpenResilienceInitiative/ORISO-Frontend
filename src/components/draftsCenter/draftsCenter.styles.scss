@@ -21,7 +21,7 @@
 
 .draftsCenter__subtitle {
 	margin: 0;
-	color: #6b7280;
+	color: var(--m3-on-surface-variant, #6b7280);
 	font-size: 16px;
 	line-height: 1.2;
 }
@@ -37,13 +37,13 @@
 .draftsCenter__list,
 .draftsCenter__detail {
 	background: #fff;
-	border: 1px solid #e5e7eb;
+	border: 1px solid var(--m3-outline-variant, #e5e7eb);
 	border-radius: 12px;
 	overflow: auto;
 }
 
 .draftsCenter__detail {
-	background: #fff2f4;
+	background: var(--m3-error-container, #fff2f4);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -60,7 +60,7 @@
 	gap: 6px;
 	padding: 14px 16px;
 	border: none;
-	border-bottom: 1px solid #f2f2f2;
+	border-bottom: 1px solid var(--m3-outline-variant, #f2f2f2);
 	background: #fff;
 	text-align: left;
 	cursor: pointer;
@@ -68,7 +68,7 @@
 }
 
 .draftsCenter__listItem--active {
-	background: #fff6f7;
+	background: var(--m3-error-container, #fff6f7);
 }
 
 .draftsCenter__listItemTagRow {
@@ -85,7 +85,7 @@
 	font-weight: 700;
 	text-transform: uppercase;
 	letter-spacing: 0.2px;
-	background: #e63946;
+	background: var(--m3-error, #e63946);
 	color: #fff;
 }
 
@@ -101,14 +101,14 @@
 }
 
 .draftsCenter__listItemTime {
-	color: #6b7280;
+	color: var(--m3-on-surface-variant, #6b7280);
 	font-size: 12px;
 	white-space: nowrap;
 }
 
 .draftsCenter__listItemText {
 	margin: 8px 0 0;
-	color: #4b5563;
+	color: var(--m3-on-surface-variant, #4b5563);
 	font-size: 14px;
 	line-height: 1.4;
 	white-space: pre-line;
@@ -124,8 +124,8 @@
 	font-size: 11px;
 	padding: 3px 10px;
 	border-radius: 999px;
-	background: #fdeef2;
-	color: #be123c;
+	background: var(--m3-error-container, #fdeef2);
+	color: var(--m3-error, #be123c);
 }
 
 .draftsCenter__detailCard {
@@ -173,14 +173,14 @@
 
 .draftsCenter__openButton {
 	border: none;
-	background: #e63946;
+	background: var(--m3-error, #e63946);
 	color: #fff;
 }
 
 .draftsCenter__nextButton {
-	border: 1px solid #e5a5ae;
+	border: 1px solid var(--m3-error-container, #e5a5ae);
 	background: #fff;
-	color: #b42334;
+	color: var(--m3-error, #b42334);
 }
 
 .draftsCenter__nextButton:disabled {
@@ -189,16 +189,16 @@
 }
 
 .draftsCenter__deleteButton {
-	border: 1px solid #e5a5ae;
+	border: 1px solid var(--m3-error-container, #e5a5ae);
 	background: #fff;
-	color: #b42334;
+	color: var(--m3-error, #b42334);
 }
 
 .draftsCenter__embeddedSession {
 	width: 100%;
 	max-width: 1240px;
 	height: min(70vh, 780px);
-	border: 1px solid #f4d1d7;
+	border: 1px solid var(--m3-primary-container, #f4d1d7);
 	border-radius: 12px;
 	background: #fff;
 	overflow: hidden;
@@ -214,7 +214,7 @@
 
 .draftsCenter__empty {
 	padding: 24px;
-	color: #6b7280;
+	color: var(--m3-on-surface-variant, #6b7280);
 }
 
 @media (width <= 1200px) {

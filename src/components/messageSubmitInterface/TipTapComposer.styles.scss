@@ -31,16 +31,16 @@
 			border: none;
 			background: transparent;
 			border-radius: 6px;
-			color: #646d78;
+			color: var(--m3-secondary, #646d78);
 			cursor: pointer;
 
 			&:hover {
-				background: #f2f2f2;
+				background: var(--m3-surface-container-low, #f2f2f2);
 			}
 
 			&.is-active {
 				background: #f7d5d5;
-				color: #cc1e1c;
+				color: var(--m3-primary, #cc1e1c);
 			}
 		}
 	}
@@ -64,7 +64,7 @@
 			padding: 0;
 			outline: none;
 			word-break: break-word;
-			caret-color: #cc1e1c;
+			caret-color: var(--m3-primary, #cc1e1c);
 			box-sizing: border-box;
 
 			@media screen and (min-width: 900px) {
@@ -81,7 +81,7 @@
 
 			p.is-editor-empty:first-child::before {
 				content: attr(data-placeholder);
-				color: #787378;
+				color: var(--m3-on-surface-variant, #787378);
 				float: left;
 				height: 0;
 				pointer-events: none;
@@ -96,7 +96,7 @@
 			blockquote {
 				margin: 8px 0;
 				padding: 4px 0 4px 10px;
-				border-left: 3px solid #cc1e1c;
+				border-left: 3px solid var(--m3-primary, #cc1e1c);
 				color: #4a5561;
 				background: rgba(204, 30, 28, 0.04);
 				border-radius: 0 6px 6px 0;
@@ -104,5 +104,3 @@
 		}
 	}
 }
-
-

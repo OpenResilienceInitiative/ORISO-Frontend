@@ -35,7 +35,7 @@
 		display: inline-block;
 		height: 7px;
 		width: 7px;
-		background-color: #6cad96;
+		background-color: var(--m3-success, #6cad96);
 		border-radius: 50%;
 		margin-right: 4px;
 		animation: mercuryTypingAnimation 1.8s infinite ease-in-out;
@@ -63,7 +63,7 @@
 @keyframes mercuryTypingAnimation {
 	0% {
 		transform: translateY(0px);
-		background-color: #6cad96;
+		background-color: var(--m3-success, #6cad96);
 	}
 	28% {
 		transform: translateY(-7px);

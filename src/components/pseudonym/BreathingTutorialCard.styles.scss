@@ -55,7 +55,7 @@
 	display: flex;
 	padding: 18px 22px;
 	border-radius: 12px;
-	background: #eeeeee;
+	background: var(--m3-surface-container, #eeeeee);
 	box-sizing: border-box;
 	width: 100%;
 	max-width: 280px;
@@ -65,7 +65,7 @@
 	font-family: 'Roboto Mono', 'Courier New', monospace;
 	font-size: 15px;
 	line-height: 21px;
-	color: #1c1b1f;
+	color: var(--m3-on-surface, #1c1b1f);
 	margin: 0;
 	text-align: left;
 	width: 100%;
@@ -76,7 +76,7 @@
 	display: inline-block;
 	width: 0.5ch;
 	margin-left: 1px;
-	color: #1c1b1f;
+	color: var(--m3-on-surface, #1c1b1f);
 	animation: breathingTutorialCard-caret 900ms steps(1, end) infinite;
 }
 
@@ -131,7 +131,7 @@
 	font-size: 28px;
 	line-height: 32px;
 	font-weight: 700;
-	color: #4c555f;
+	color: var(--m3-on-surface-variant, #4c555f);
 	text-align: center;
 }
 
@@ -140,7 +140,7 @@
 	font-size: 16px;
 	line-height: 22px;
 	font-weight: 700;
-	color: #4c555f;
+	color: var(--m3-on-surface-variant, #4c555f);
 	text-align: center;
 }
 
@@ -184,21 +184,21 @@
 
 .breathingTutorialCard__btnCancel {
 	border-radius: 8px;
-	background: #4c555f;
-	color: #e7effc;
+	background: var(--m3-secondary, #4c555f);
+	color: var(--m3-tertiary-container, #e7effc);
 
 	&:hover:not(:disabled) {
-		background: #3d444d;
+		background: var(--m3-secondary, #3d444d);
 	}
 }
 
 .breathingTutorialCard__btnConfirm {
 	border-radius: 100px;
-	background: #cc1e1c;
+	background: var(--m3-primary, #cc1e1c);
 	color: #ffffff;
 
 	&:hover:not(:disabled) {
-		background: #a5000a;
+		background: var(--m3-primary, #a5000a);
 	}
 }
 
