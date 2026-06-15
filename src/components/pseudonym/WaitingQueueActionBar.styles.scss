@@ -171,8 +171,8 @@
 	height: 32px;
 
 	svg {
-		width: 32px;
-		height: 32px;
+		width: 22px;
+		height: 22px;
 	}
 }
 
@@ -183,7 +183,7 @@
 	justify-content: center;
 	gap: 0.25ch;
 	font-family: 'Inter', sans-serif;
-	font-size: 24px;
+	font-size: 17px;
 	line-height: 32px;
 	font-weight: 400;
 	color: #650033;
@@ -291,7 +291,7 @@
 
 .waitingQueueActionBar__localLabel {
 	font-family: 'Inter', sans-serif;
-	font-size: 16px;
+	font-size: 13px;
 	line-height: 24px;
 	font-weight: 500;
 	letter-spacing: 0.15px;
@@ -374,7 +374,7 @@
 		width: 100%;
 		border: none;
 		background: #fff7f7;
-		padding: 0 10px;
+		padding: 0 0px;
 		box-sizing: border-box;
 	}
 
@@ -420,7 +420,7 @@
 	.waitingQueueActionBar__localSection {
 		flex-direction: row;
 		align-items: center;
-		justify-content: flex-end;
+		justify-content: center;
 		gap: 12px;
 		padding: 10px;
 	}
