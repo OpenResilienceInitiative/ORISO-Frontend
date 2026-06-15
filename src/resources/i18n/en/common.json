@@ -2870,6 +2870,26 @@
 					"title": "Deletion Error",
 					"text": "The account could not be deleted. Please try again."
 				}
+			},
+			"endChat": {
+				"label": "End chat",
+				"ending": "Ending…",
+				"confirm": {
+					"headline": "Do you really want to end the chat?",
+					"copy": "The conversation will be closed. You will not be able to continue this anonymous chat.",
+					"buttonConfirm": "End chat",
+					"buttonCancel": "Cancel"
+				},
+				"success": {
+					"headline": "Chat ended",
+					"copy": "Thank you for using our live chat. You can close this page now.",
+					"buttonClose": "Close"
+				},
+				"error": {
+					"headline": "Could not end chat",
+					"copy": "The chat could not be ended. Please try again.",
+					"buttonClose": "Close"
+				}
 			}
 		},
 		"supervisor": {
