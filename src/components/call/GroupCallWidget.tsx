@@ -73,8 +73,8 @@ export const GroupCallWidget: React.FC = () => {
 		const padding = 16;
 		const maxWidth = 520;
 		const maxHeight = 320;
-		const width = Math.min(maxWidth, window.innerWidth - padding);
-		const height = Math.min(maxHeight, window.innerHeight - padding);
+		const width = Math.min(maxWidth, window.innerWidth - padding * 2);
+		const height = Math.min(maxHeight, window.innerHeight - padding * 2);
 
 		if (window.innerWidth <= 640) {
 			setPosition({ x: 0, y: 0 });
@@ -82,10 +82,10 @@ export const GroupCallWidget: React.FC = () => {
 		}
 
 		setPosition({
-			x: Math.max(padding, window.innerWidth - width - padding),
-			y: Math.max(padding, window.innerHeight - height - padding)
+			x: Math.max(padding, (window.innerWidth - width) / 2),
+			y: Math.max(padding, (window.innerHeight - height) / 2)
 		});
-	}, [callData, elementCallUrl]);
+	}, [callData?.callId, callData?.isGroup, elementCallUrl]);
 
 	useEffect(() => {
 		const handleFullscreenChange = () => {
@@ -452,109 +452,114 @@ export const GroupCallWidget: React.FC = () => {
 	if (isDismissed || !callData || !callData.isGroup) return null;
 
 	return (
-		<div
-			className={`group-call-widget ${isDragging ? 'dragging' : ''} ${isMobileView ? 'group-call-widget--mobile' : ''} ${isMobileCompact ? 'group-call-widget--mobile-compact' : ''} ${isFullscreen ? 'group-call-widget--fullscreen' : ''}`}
-			style={{ left: `${position.x}px`, top: `${position.y}px` }}
-			onMouseDown={handleMouseDown}
-			onTouchStart={handleTouchStart}
-		>
-			{/* Incoming call - show answer/decline buttons */}
-			{callData.isIncoming && callData.state === 'ringing' ? (
-				<div className="incoming-call-popup">
-					<button
-						className="element-call-close"
-						onClick={handleDecline}
-						aria-label="Close call"
-					>
-						×
-					</button>
-					<div className="incoming-call-content">
-						<div className="call-avatar-large">G</div>
-						<h2>Incoming Call</h2>
-						<p>Someone is calling...</p>
-						<div className="incoming-call-actions">
-							<button
-								className="btn-answer"
-								onClick={handleAnswer}
-							>
-								Answer
-							</button>
-							<button
-								className="btn-decline"
-								onClick={handleDecline}
-							>
-								Decline
-							</button>
+		<>
+			{!isFullscreen && !isMobileView && (
+				<div className="call-modal-backdrop" aria-hidden="true" />
+			)}
+			<div
+				className={`group-call-widget ${isDragging ? 'dragging' : ''} ${isMobileView ? 'group-call-widget--mobile' : ''} ${isMobileCompact ? 'group-call-widget--mobile-compact' : ''} ${isFullscreen ? 'group-call-widget--fullscreen' : ''}`}
+				style={{ left: `${position.x}px`, top: `${position.y}px` }}
+				onMouseDown={handleMouseDown}
+				onTouchStart={handleTouchStart}
+			>
+				{/* Incoming call - show answer/decline buttons */}
+				{callData.isIncoming && callData.state === 'ringing' ? (
+					<div className="incoming-call-popup">
+						<button
+							className="element-call-close"
+							onClick={handleDecline}
+							aria-label="Close call"
+						>
+							×
+						</button>
+						<div className="incoming-call-content">
+							<div className="call-avatar-large">G</div>
+							<h2>Incoming Call</h2>
+							<p>Someone is calling...</p>
+							<div className="incoming-call-actions">
+								<button
+									className="btn-answer"
+									onClick={handleAnswer}
+								>
+									Answer
+								</button>
+								<button
+									className="btn-decline"
+									onClick={handleDecline}
+								>
+									Decline
+								</button>
+							</div>
 						</div>
 					</div>
-				</div>
-			) : elementCallUrl ? (
-				/* Active call - show Element Call iframe */
-				<div className="element-call-container" ref={containerRef}>
-					<div className="element-call-drag-handle" />
-					<button
-						className="element-call-close"
-						onClick={handleEndCall}
-						aria-label="Close call"
-					>
-						×
-					</button>
-					<button
-						className="element-call-fullscreen"
-						onClick={handleToggleFullscreen}
-						aria-label={
-							isMobileView
+				) : elementCallUrl ? (
+					/* Active call - show Element Call iframe */
+					<div className="element-call-container" ref={containerRef}>
+						<div className="element-call-drag-handle" />
+						<button
+							className="element-call-close"
+							onClick={handleEndCall}
+							aria-label="Close call"
+						>
+							×
+						</button>
+						<button
+							className="element-call-fullscreen"
+							onClick={handleToggleFullscreen}
+							aria-label={
+								isMobileView
+									? isMobileCompact
+										? 'Open full view'
+										: 'Switch to small view'
+									: isFullscreen
+										? 'Exit full screen'
+										: 'Enter full screen'
+							}
+							title={
+								isMobileView
+									? isMobileCompact
+										? 'Full view'
+										: 'Small view'
+									: isFullscreen
+										? 'Exit full screen'
+										: 'Full screen'
+							}
+						>
+							{isMobileView
 								? isMobileCompact
-									? 'Open full view'
-									: 'Switch to small view'
+									? '⤢'
+									: '⤡'
 								: isFullscreen
-									? 'Exit full screen'
-									: 'Enter full screen'
-						}
-						title={
-							isMobileView
-								? isMobileCompact
-									? 'Full view'
-									: 'Small view'
-								: isFullscreen
-									? 'Exit full screen'
-									: 'Full screen'
-						}
-					>
-						{isMobileView
-							? isMobileCompact
-								? '⤢'
-								: '⤡'
-							: isFullscreen
-								? '⤡'
-								: '⤢'}
-					</button>
-					<iframe
-						ref={iframeRef}
-						src={elementCallUrl}
-						className="element-call-iframe"
-						allow="camera; microphone; display-capture; autoplay; fullscreen"
-						allowFullScreen
-						title="Group video call"
-					/>
-				</div>
-			) : (
-				/* Connecting state */
-				<div className="connecting-popup">
-					<button
-						className="element-call-close"
-						onClick={handleEndCall}
-						aria-label="Close call"
-					>
-						×
-					</button>
-					<div className="connecting-content">
-						<div className="call-avatar-large">G</div>
-						<h2>Connecting...</h2>
-						<p>Setting up call</p>
+									? '⤡'
+									: '⤢'}
+						</button>
+						<iframe
+							ref={iframeRef}
+							src={elementCallUrl}
+							className="element-call-iframe"
+							allow="camera; microphone; display-capture; autoplay; fullscreen"
+							allowFullScreen
+							title="Group video call"
+						/>
 					</div>
-				</div>
-			)}
-		</div>
+				) : (
+					/* Connecting state */
+					<div className="connecting-popup">
+						<button
+							className="element-call-close"
+							onClick={handleEndCall}
+							aria-label="Close call"
+						>
+							×
+						</button>
+						<div className="connecting-content">
+							<div className="call-avatar-large">G</div>
+							<h2>Connecting...</h2>
+							<p>Setting up call</p>
+						</div>
+					</div>
+				)}
+			</div>
+		</>
 	);
 };
