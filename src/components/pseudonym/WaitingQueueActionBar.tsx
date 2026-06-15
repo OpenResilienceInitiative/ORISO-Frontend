@@ -160,9 +160,9 @@ export const WaitingQueueActionBar: React.FC<WaitingQueueActionBarProps> = ({
 	const { t } = useTranslation();
 
 	const hasQueuePosition = Boolean(queuePosition && queuePosition > 0);
-	const calmCompanionHint = t(
-		'anonymousChat.queue.calmCompanionHint',
-		'Bis der Chat beginnt, eine kurze interaktive ruhige Begleitung. Direkt hier im Chatraum'
+	const calmCompanionHintDesktop = t(
+		'anonymousChat.queue.calmCompanionHintDesktop',
+		'Bis der Chat beginnt, eine kurze ruhige Begleitung. Direkt hier im Chatraum'
 	);
 
 	const queueStatusLabel = hasQueuePosition
@@ -200,9 +200,20 @@ export const WaitingQueueActionBar: React.FC<WaitingQueueActionBarProps> = ({
 				>
 					<CornerLeftDownIcon />
 				</span>
-				<p className="waitingQueueActionBar__hintText">
-					{calmCompanionHint}
-				</p>
+				<div className="waitingQueueActionBar__mobileHintText">
+					<p className="waitingQueueActionBar__hintText">
+						{t(
+							'anonymousChat.queue.calmCompanionHintMobileLine1',
+							'Bis der Chat beginnt, eine kurze'
+						)}
+					</p>
+					<p className="waitingQueueActionBar__hintText">
+						{t(
+							'anonymousChat.queue.calmCompanionHintMobileLine2',
+							'interaktive ruhige Begleitung.'
+						)}
+					</p>
+				</div>
 			</div>
 
 			<div className="waitingQueueActionBar__content">
@@ -231,7 +242,7 @@ export const WaitingQueueActionBar: React.FC<WaitingQueueActionBarProps> = ({
 								<CornerUpLeftIcon />
 							</span>
 							<p className="waitingQueueActionBar__hintText">
-								{calmCompanionHint}
+								{calmCompanionHintDesktop}
 							</p>
 						</div>
 					</div>
