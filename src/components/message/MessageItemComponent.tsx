@@ -898,11 +898,17 @@ export const MessageItemComponent = ({
 	const isUserLeftChatEvent =
 		parsedMessage.systemNotificationType ===
 		SYSTEM_NOTIFICATION_USER_LEFT_CHAT;
-	const userLeftChatDisplayName =
-		parsedMessage.systemNotificationUsername ||
-		displayName ||
-		username ||
-		'';
+	const userLeftChatDisplayName = (() => {
+		const fromPayload = parsedMessage.systemNotificationUsername?.trim();
+		if (
+			fromPayload &&
+			!fromPayload.startsWith('enc.') &&
+			!fromPayload.startsWith('@')
+		) {
+			return fromPayload;
+		}
+		return '';
+	})();
 	const systemNotificationTitle =
 		parsedMessage.systemNotificationTitle ||
 		translate('message.systemNotificationTitle', 'System notification');

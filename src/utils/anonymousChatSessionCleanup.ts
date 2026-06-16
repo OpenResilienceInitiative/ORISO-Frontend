@@ -14,8 +14,6 @@ import {
 	STATUS_ENQUIRY,
 	STATUS_FINISHED
 } from '../globalState/interfaces/SessionsDataInterface';
-import { sendUserLeftChatMatrixMessage } from './sendUserLeftChatMatrixMessage';
-
 let pendingSessionId: number | null = null;
 let pendingMatrixRoomId: string | null = null;
 let pendingUsername: string | null = null;
@@ -85,14 +83,11 @@ export const finishPendingAnonymousChatSession = async (): Promise<void> => {
 	}
 
 	const sessionId = pendingSessionId;
-	const matrixRoomId = pendingMatrixRoomId;
-	const username = pendingUsername;
 	pendingSessionId = null;
 	pendingMatrixRoomId = null;
 	pendingUsername = null;
 
 	try {
-		await sendUserLeftChatMatrixMessage(matrixRoomId, username);
 		await apiFinishAnonymousConversation(sessionId);
 	} catch (error: unknown) {
 		const message =
