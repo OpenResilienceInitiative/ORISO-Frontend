@@ -66,7 +66,10 @@ import { getValueFromCookie } from '../sessionCookie/accessSessionCookie';
 import { VideoChatDetails, VideoChatDetailsAlias } from './VideoChatDetails';
 import { UserAvatar } from './UserAvatar';
 import clsx from 'clsx';
-import { parseMessagePrefixes } from './messageConstants';
+import {
+	parseMessagePrefixes,
+	SYSTEM_NOTIFICATION_USER_LEFT_CHAT
+} from './messageConstants';
 import { createPortal } from 'react-dom';
 import { ReactComponent as NotificationBellIcon } from '../../resources/img/icons/notification_bell.svg';
 import { ReactComponent as StackVerticalIcon } from '../../resources/img/icons/stack-vertical.svg';
@@ -892,6 +895,14 @@ export const MessageItemComponent = ({
 
 	const isSupervisorFeedback = parsedMessage.isSupervisorFeedback;
 	const isSystemNotification = parsedMessage.isSystemNotification;
+	const isUserLeftChatEvent =
+		parsedMessage.systemNotificationType ===
+		SYSTEM_NOTIFICATION_USER_LEFT_CHAT;
+	const userLeftChatDisplayName =
+		parsedMessage.systemNotificationUsername ||
+		displayName ||
+		username ||
+		'';
 	const systemNotificationTitle =
 		parsedMessage.systemNotificationTitle ||
 		translate('message.systemNotificationTitle', 'System notification');
@@ -1713,6 +1724,21 @@ export const MessageItemComponent = ({
 				return null;
 			}
 		}
+	}
+
+	if (isUserLeftChatEvent) {
+		return (
+			<div className="messageItem messageItem--chatEvent">
+				{getMessageDate()}
+				<div className="messageItem__chatEvent">
+					{translate('message.userLeftChat', {
+						name:
+							userLeftChatDisplayName ||
+							translate('message.anonymousUser', 'User')
+					})}
+				</div>
+			</div>
+		);
 	}
 
 	return (

@@ -190,6 +190,7 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 		if (newStompAnonymousConversationFinished) {
 			setNewStompAnonymousConversationFinished(false);
 			messageEventEmitter.emit({ refreshEnquiryList: true });
+			messageEventEmitter.emit({});
 			addNotification({
 				notificationType: NOTIFICATION_TYPE_SUCCESS,
 				title: translate(

@@ -1243,6 +1243,8 @@
 		"showMore": "Show more",
 		"systemNotification": "System Notification",
 		"systemNotificationTitle": "System notification",
+		"userLeftChat": "{{name}} left the chat",
+		"anonymousUser": "User",
 		"supervisionEnabledTitle": "Supervision Enabled!",
 		"supervisionEnabledDescription": "{{name}} was added as a consultant supervisor to this chat.",
 		"today": "Today",
