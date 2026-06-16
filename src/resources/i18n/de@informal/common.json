@@ -1212,6 +1212,26 @@
 					"title": "Fehler beim Löschen",
 					"text": "Das Konto konnte nicht gelöscht werden. Bitte versuche es erneut."
 				}
+			},
+			"endChat": {
+				"label": "Chat beenden",
+				"ending": "Wird beendet …",
+				"confirm": {
+					"headline": "Möchtest du den Chat wirklich beenden?",
+					"copy": "Das Gespräch wird geschlossen. Du kannst diesen anonymen Chat nicht fortsetzen.",
+					"buttonConfirm": "Chat beenden",
+					"buttonCancel": "Abbrechen"
+				},
+				"success": {
+					"headline": "Chat beendet",
+					"copy": "Danke, dass du unseren Live-Chat genutzt hast. Du kannst diese Seite jetzt schließen.",
+					"buttonClose": "Schließen"
+				},
+				"error": {
+					"headline": "Chat konnte nicht beendet werden",
+					"copy": "Der Chat konnte nicht beendet werden. Bitte versuche es erneut.",
+					"buttonClose": "Schließen"
+				}
 			}
 		},
 		"supervisor": {

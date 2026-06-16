@@ -80,6 +80,9 @@ export interface SessionMenuProps {
 	showMobileDeleteAnonymousAccountAction?: boolean;
 	onMobileDeleteAnonymousAccountAction?: () => void;
 	mobileDeleteAnonymousAccountDisabled?: boolean;
+	showMobileEndAnonymousChatAction?: boolean;
+	onMobileEndAnonymousChatAction?: () => void;
+	mobileEndAnonymousChatDisabled?: boolean;
 }
 
 export const SessionMenu = (props: SessionMenuProps) => {
@@ -603,6 +606,29 @@ export const SessionMenu = (props: SessionMenuProps) => {
 						{translate(
 							'sessionHeader.supervisor.modal.title',
 							'Supervisor verwalten'
+						)}
+					</div>
+				)}
+
+				{props.showMobileEndAnonymousChatAction && (
+					<div
+						className={`sessionMenu__item sessionMenu__item--mobile ${
+							props.mobileEndAnonymousChatDisabled
+								? 'sessionMenu__item--disabled'
+								: ''
+						}`}
+						onClick={() => {
+							if (props.mobileEndAnonymousChatDisabled) {
+								return;
+							}
+							setFlyoutOpen(false);
+							props.onMobileEndAnonymousChatAction?.();
+						}}
+						data-cy="session-menu-end-anonymous-chat"
+					>
+						{translate(
+							'sessionHeader.anonymous.endChat.label',
+							'End chat'
 						)}
 					</div>
 				)}

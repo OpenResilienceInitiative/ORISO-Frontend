@@ -36,6 +36,8 @@ export const endpoints = {
 	chatRoom: apiUrl + '/service/users/chat/room',
 	anonymousEnquiryDetails: (sessionId: number | string) =>
 		apiUrl + `/service/conversations/anonymous/${sessionId}`,
+	finishAnonymousConversation: (sessionId: number | string) =>
+		apiUrl + `/service/conversations/anonymous/${sessionId}/finish`,
 	anonymousConsultantAvailability:
 		apiUrl + '/service/conversations/anonymous/availability',
 	consultantEnquiriesBase:
