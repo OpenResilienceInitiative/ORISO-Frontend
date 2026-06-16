@@ -14,8 +14,11 @@ import {
 	STATUS_ENQUIRY,
 	STATUS_FINISHED
 } from '../globalState/interfaces/SessionsDataInterface';
+import { sendUserLeftChatMatrixMessage } from './sendUserLeftChatMatrixMessage';
 
 let pendingSessionId: number | null = null;
+let pendingMatrixRoomId: string | null = null;
+let pendingUsername: string | null = null;
 let preLogoutListenerRegistered = false;
 
 const isOpenAnonymousSessionStatus = (status: unknown): boolean => {
@@ -32,16 +35,22 @@ const isOpenAnonymousSessionStatus = (status: unknown): boolean => {
 
 export const registerAnonymousChatSessionForCleanup = (
 	sessionId: number | null | undefined,
-	sessionStatus?: unknown
+	sessionStatus?: unknown,
+	matrixRoomId?: string | null,
+	username?: string | null
 ): void => {
 	if (
 		sessionId == null ||
 		(sessionStatus != null && !isOpenAnonymousSessionStatus(sessionStatus))
 	) {
 		pendingSessionId = null;
+		pendingMatrixRoomId = null;
+		pendingUsername = null;
 		return;
 	}
 	pendingSessionId = sessionId;
+	pendingMatrixRoomId = matrixRoomId ?? null;
+	pendingUsername = username ?? null;
 };
 
 export const finishAnonymousChatSessionKeepalive = (
@@ -76,9 +85,14 @@ export const finishPendingAnonymousChatSession = async (): Promise<void> => {
 	}
 
 	const sessionId = pendingSessionId;
+	const matrixRoomId = pendingMatrixRoomId;
+	const username = pendingUsername;
 	pendingSessionId = null;
+	pendingMatrixRoomId = null;
+	pendingUsername = null;
 
 	try {
+		await sendUserLeftChatMatrixMessage(matrixRoomId, username);
 		await apiFinishAnonymousConversation(sessionId);
 	} catch (error: unknown) {
 		const message =

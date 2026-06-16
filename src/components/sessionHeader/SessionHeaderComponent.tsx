@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useHistory } from 'react-router-dom';
 import clsx from 'clsx';
@@ -31,7 +31,9 @@ import {
 	SessionTypeContext,
 	useConsultingType,
 	UserDataContext,
-	ActiveSessionContext
+	ActiveSessionContext,
+	SessionsDataContext,
+	REMOVE_SESSIONS
 } from '../../globalState';
 import {
 	SessionConsultantInterface,
@@ -73,6 +75,7 @@ import { ReactComponent as CloseCircle } from '../../resources/img/icons/close-c
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../message/messageConstants';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
+import { sendUserLeftChatMatrixMessage } from '../../utils/sendUserLeftChatMatrixMessage';
 
 export interface SessionHeaderProps {
 	consultantAbsent?: SessionConsultantInterface;
@@ -89,6 +92,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	]);
 	const { activeSession } = useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
+	const sessionsDataContext = useContext(SessionsDataContext);
 	const { addNotification, addEventNotification } =
 		useContext(NotificationsContext);
 	const history = useHistory();
@@ -106,6 +110,30 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 
 	const contact = getContact(activeSession);
 	const userSessionData = contact?.sessionData;
+
+	const removeSessionFromSidebar = useCallback(
+		(sessionId: number) => {
+			sessionsDataContext?.dispatch({
+				type: REMOVE_SESSIONS,
+				ids: [sessionId]
+			});
+			messageEventEmitter.emit({
+				refreshEnquiryList: true,
+				refreshSessionList: true,
+				sessionId
+			});
+			messageEventEmitter.emit({ sessionId });
+		},
+		[sessionsDataContext]
+	);
+
+	const getActiveMatrixRoomId = useCallback((): string | null => {
+		const rid = activeSession.rid || '';
+		if (rid.startsWith('!') || rid.includes(':')) {
+			return rid;
+		}
+		return activeSession.item?.matrixRoomId || null;
+	}, [activeSession.item?.matrixRoomId, activeSession.rid]);
 
 	// Check if this is an anonymous chat
 	const isAnonymousChat =
@@ -686,8 +714,16 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		}
 
 		setIsFinishingChat(true);
-		void apiFinishAnonymousConversation(activeSession.item.id)
-			.then(() => {
+		void (async () => {
+			const sessionId = activeSession.item.id;
+			try {
+				if (isAnonymousAsker) {
+					await sendUserLeftChatMatrixMessage(
+						getActiveMatrixRoomId(),
+						userData?.userName || contact?.username
+					);
+				}
+				await apiFinishAnonymousConversation(sessionId);
 				setIsChatFinished(true);
 				setEndChatOverlayItem(
 					showConsultantEndAnonymousChatButton
@@ -695,14 +731,13 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 						: finishAnonymousChatSuccessOverlayItem
 				);
 				if (isConsultantUser) {
-					messageEventEmitter.emit({
-						refreshEnquiryList: true,
-						sessionId: activeSession.item.id
-					});
+					removeSessionFromSidebar(sessionId);
 				}
-			})
-			.catch((error) => {
-				if (error?.message === FETCH_ERRORS.CONFLICT) {
+			} catch (error: unknown) {
+				if (
+					error instanceof Error &&
+					error.message === FETCH_ERRORS.CONFLICT
+				) {
 					setIsChatFinished(true);
 					setEndChatOverlayItem(
 						showConsultantEndAnonymousChatButton
@@ -710,18 +745,15 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 							: finishAnonymousChatSuccessOverlayItem
 					);
 					if (isConsultantUser) {
-						messageEventEmitter.emit({
-							refreshEnquiryList: true,
-							sessionId: activeSession.item.id
-						});
+						removeSessionFromSidebar(sessionId);
 					}
 					return;
 				}
 				setEndChatOverlayItem(finishAnonymousChatErrorOverlayItem);
-			})
-			.finally(() => {
+			} finally {
 				setIsFinishingChat(false);
-			});
+			}
+		})();
 	};
 
 	const handleDeleteAnonymousAccount = async () => {
@@ -745,10 +777,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			const deletedSessionId = activeSession.item.id;
 			await apiDeleteSessionAndUser(deletedSessionId);
 			setIsAccountDeleted(true);
-			messageEventEmitter.emit({
-				refreshEnquiryList: true,
-				sessionId: deletedSessionId
-			});
+			removeSessionFromSidebar(deletedSessionId);
 			addNotification({
 				notificationType: NOTIFICATION_TYPE_SUCCESS,
 				title: translate(
