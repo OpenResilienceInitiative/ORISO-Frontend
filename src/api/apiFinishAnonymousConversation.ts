@@ -3,7 +3,7 @@ import { fetchData, FETCH_ERRORS, FETCH_METHODS } from './fetchData';
 
 /**
  * Marks an anonymous live-chat session as finished (status DONE).
- * Callable by the session's anonymous asker or their consultant.
+ * Callable by the session's anonymous asker (USER or ANONYMOUS role) or their consultant.
  */
 export const apiFinishAnonymousConversation = (
 	sessionId: number | string

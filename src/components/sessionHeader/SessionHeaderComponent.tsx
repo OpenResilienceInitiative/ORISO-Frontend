@@ -46,7 +46,9 @@ import { SessionMenu } from '../sessionMenu/SessionMenu';
 import {
 	finishAnonymousChatErrorOverlayItem,
 	finishAnonymousChatSecurityOverlayItem,
-	finishAnonymousChatSuccessOverlayItem
+	finishAnonymousChatSuccessOverlayItem,
+	finishAnonymousChatConsultantSecurityOverlayItem,
+	finishAnonymousChatConsultantSuccessOverlayItem
 } from '../sessionMenu/sessionMenuHelpers';
 import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
 import { logout } from '../logout/logout';
@@ -631,12 +633,23 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		isAnonymousChat && isAskerUser && !isConsultantUser;
 	const showEndAnonymousChatButton =
 		isAnonymousAsker && activeSession.isSession && !isChatFinished;
+	const showConsultantEndAnonymousChatButton =
+		isConsultantUser &&
+		isAnonymousChat &&
+		!isSupervisor &&
+		!activeSession.isEnquiry &&
+		activeSession.isSession &&
+		!isChatFinished;
 
 	const handleRequestEndAnonymousChat = () => {
 		if (isFinishingChat || isChatFinished) {
 			return;
 		}
-		setEndChatOverlayItem(finishAnonymousChatSecurityOverlayItem);
+		setEndChatOverlayItem(
+			showConsultantEndAnonymousChatButton
+				? finishAnonymousChatConsultantSecurityOverlayItem
+				: finishAnonymousChatSecurityOverlayItem
+		);
 		setIsEndChatOverlayActive(true);
 	};
 
@@ -650,7 +663,11 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		if (buttonFunction === OVERLAY_FUNCTIONS.REDIRECT) {
 			setIsEndChatOverlayActive(false);
 			setEndChatOverlayItem(null);
-			window.location.href = appConfig.urls.toEntry;
+			if (isConsultantUser && isAnonymousChat) {
+				history.push('/sessions/consultant/sessionView');
+			} else {
+				window.location.href = appConfig.urls.toEntry;
+			}
 			return;
 		}
 
@@ -671,13 +688,19 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		void apiFinishAnonymousConversation(activeSession.item.id)
 			.then(() => {
 				setIsChatFinished(true);
-				setEndChatOverlayItem(finishAnonymousChatSuccessOverlayItem);
+				setEndChatOverlayItem(
+					showConsultantEndAnonymousChatButton
+						? finishAnonymousChatConsultantSuccessOverlayItem
+						: finishAnonymousChatSuccessOverlayItem
+				);
 			})
 			.catch((error) => {
 				if (error?.message === FETCH_ERRORS.CONFLICT) {
 					setIsChatFinished(true);
 					setEndChatOverlayItem(
-						finishAnonymousChatSuccessOverlayItem
+						showConsultantEndAnonymousChatButton
+							? finishAnonymousChatConsultantSuccessOverlayItem
+							: finishAnonymousChatSuccessOverlayItem
 					);
 					return;
 				}
@@ -935,6 +958,26 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 								)}
 					</button>
 				)}
+				{/* End Chat for consultants in anonymous live chat */}
+				{showConsultantEndAnonymousChatButton && !untilL && (
+					<button
+						type="button"
+						onClick={handleRequestEndAnonymousChat}
+						disabled={isFinishingChat}
+						className="sessionInfo__endChatButton"
+						data-cy="session-header-end-anonymous-chat-consultant"
+					>
+						{isFinishingChat
+							? translate(
+									'sessionHeader.anonymous.endChat.ending',
+									'Ending…'
+								)
+							: translate(
+									'sessionHeader.anonymous.endChat.consultant.label',
+									'End chat'
+								)}
+					</button>
+				)}
 				{/* Delete Account Button for Consultants viewing Anonymous Chats (not supervisors, not during enquiry) */}
 				{hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
 					isAnonymousChat &&
@@ -1068,7 +1111,8 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 						isAccountDeleted || isDeletingAccount
 					}
 					showMobileEndAnonymousChatAction={
-						showEndAnonymousChatButton
+						showEndAnonymousChatButton ||
+						showConsultantEndAnonymousChatButton
 					}
 					onMobileEndAnonymousChatAction={
 						handleRequestEndAnonymousChat

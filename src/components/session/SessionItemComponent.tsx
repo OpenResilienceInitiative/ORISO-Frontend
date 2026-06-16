@@ -62,6 +62,11 @@ import { apiPatchNotificationActiveView } from '../../api/apiPatchNotificationAc
 import { apiPatchUserData } from '../../api/apiPatchUserData';
 import { apiGetUserData } from '../../api/apiGetUserData';
 import { apiGetAnonymousEnquiryDetails } from '../../api/apiGetAnonymousEnquiryDetails';
+import {
+	bindAnonymousChatUnloadCleanup,
+	ensureAnonymousChatPreLogoutCleanup,
+	registerAnonymousChatSessionForCleanup
+} from '../../utils/anonymousChatSessionCleanup';
 import { parseMessagePrefixes } from '../message/messageConstants';
 import { decodeUsername } from '../../utils/encryptionHelpers';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
@@ -1899,6 +1904,30 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			window.clearInterval(poll);
 		};
 	}, [isInAnonymousWaitingQueuePhase, activeSession.item?.id]);
+
+	/**
+	 * When an anonymous asker leaves (logout, navigate away, tab close), finish the
+	 * session immediately so the waiting queue count drops for everyone else.
+	 */
+	useEffect(() => {
+		ensureAnonymousChatPreLogoutCleanup();
+
+		if (!isAnonymousAskerExperience || !activeSession.item?.id) {
+			registerAnonymousChatSessionForCleanup(null);
+			return;
+		}
+
+		registerAnonymousChatSessionForCleanup(
+			activeSession.item.id,
+			activeSession.item.status
+		);
+
+		return bindAnonymousChatUnloadCleanup(activeSession.item.id);
+	}, [
+		isAnonymousAskerExperience,
+		activeSession.item?.id,
+		activeSession.item?.status
+	]);
 
 	/**
 	 * As soon as at least one consultant is available again, clear any manual
