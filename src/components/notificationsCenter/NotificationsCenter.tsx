@@ -381,7 +381,7 @@ export const NotificationsCenter = () => {
 			if (selectedRoomRef) {
 				void apiPostMessageEventNotification({
 					roomId: selectedRoomRef,
-					messagePreview: cleanMessage,
+					messagePreview: cleanMessage?.substring(0, 100),
 					matrixRoom: selectedRoomRef.startsWith('!'),
 					threadRootId: selectedThreadRootId || null,
 					supervisorMessage: false,
