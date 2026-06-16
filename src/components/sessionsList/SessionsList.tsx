@@ -1043,12 +1043,21 @@ export const SessionsList = ({
 		const onNewMessageEvent = ({
 			roomId,
 			timestamp,
-			refreshEnquiryList
+			refreshEnquiryList,
+			sessionId
 		}: {
 			roomId?: string;
 			timestamp?: number;
 			refreshEnquiryList?: boolean;
+			sessionId?: number;
 		}) => {
+			if (sessionId && type === SESSION_LIST_TYPES.ENQUIRY) {
+				dispatch({
+					type: REMOVE_SESSIONS,
+					ids: [sessionId]
+				});
+			}
+
 			if (refreshEnquiryList) {
 				if (type === SESSION_LIST_TYPES.ENQUIRY) {
 					refetchEnquiryList();
