@@ -75,8 +75,6 @@ import { ReactComponent as CloseCircle } from '../../resources/img/icons/close-c
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../message/messageConstants';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
-import { sendUserLeftChatMatrixMessage } from '../../utils/sendUserLeftChatMatrixMessage';
-
 export interface SessionHeaderProps {
 	consultantAbsent?: SessionConsultantInterface;
 	hasUserInitiatedStopOrLeaveRequest?: React.MutableRefObject<boolean>;
@@ -126,14 +124,6 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		},
 		[sessionsDataContext]
 	);
-
-	const getActiveMatrixRoomId = useCallback((): string | null => {
-		const rid = activeSession.rid || '';
-		if (rid.startsWith('!') || rid.includes(':')) {
-			return rid;
-		}
-		return activeSession.item?.matrixRoomId || null;
-	}, [activeSession.item?.matrixRoomId, activeSession.rid]);
 
 	// Check if this is an anonymous chat
 	const isAnonymousChat =
@@ -717,12 +707,6 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		void (async () => {
 			const sessionId = activeSession.item.id;
 			try {
-				if (isAnonymousAsker) {
-					await sendUserLeftChatMatrixMessage(
-						getActiveMatrixRoomId(),
-						userData?.userName || contact?.username
-					);
-				}
 				await apiFinishAnonymousConversation(sessionId);
 				setIsChatFinished(true);
 				setEndChatOverlayItem(
