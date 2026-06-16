@@ -1557,6 +1557,10 @@
 				"title": "Inquiry accepted",
 				"description": "Your inquiry has been accepted by a counsellor."
 			},
+			"conversationFinished": {
+				"title": "Chat ended",
+				"description": "The advice seeker has ended the anonymous chat."
+			},
 			"mainEmail": {
 				"title": "Allow email notifications"
 			},
@@ -2874,6 +2878,19 @@
 			"endChat": {
 				"label": "End chat",
 				"ending": "Ending…",
+				"consultant": {
+					"label": "End chat",
+					"confirm": {
+						"headline": "End this anonymous chat?",
+						"copy": "The conversation will be closed for you and the advice seeker.",
+						"buttonConfirm": "End chat"
+					},
+					"success": {
+						"headline": "Chat ended",
+						"copy": "The anonymous chat has been closed.",
+						"buttonClose": "Back to sessions"
+					}
+				},
 				"confirm": {
 					"headline": "Do you really want to end the chat?",
 					"copy": "The conversation will be closed. You will not be able to continue this anonymous chat.",

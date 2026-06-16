@@ -1582,6 +1582,10 @@
 				"title": "Anfrage angenommen",
 				"description": "Ihre Anfrage wurde von einer Beratungsfachkraft angenommen."
 			},
+			"conversationFinished": {
+				"title": "Chat beendet",
+				"description": "Die ratssuchende Person hat den anonymen Chat beendet."
+			},
 			"mainEmail": {
 				"title": "E-Mail-Benachrichtigungen zulassen"
 			},
@@ -2978,6 +2982,19 @@
 			"endChat": {
 				"label": "Chat beenden",
 				"ending": "Wird beendet …",
+				"consultant": {
+					"label": "Chat beenden",
+					"confirm": {
+						"headline": "Diesen anonymen Chat beenden?",
+						"copy": "Das Gespräch wird für Sie und die ratssuchende Person geschlossen.",
+						"buttonConfirm": "Chat beenden"
+					},
+					"success": {
+						"headline": "Chat beendet",
+						"copy": "Der anonyme Chat wurde geschlossen.",
+						"buttonClose": "Zurück zu den Chats"
+					}
+				},
 				"confirm": {
 					"headline": "Möchten Sie den Chat wirklich beenden?",
 					"copy": "Das Gespräch wird geschlossen. Sie können diesen anonymen Chat nicht fortsetzen.",

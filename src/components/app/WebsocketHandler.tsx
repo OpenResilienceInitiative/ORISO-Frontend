@@ -35,6 +35,10 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 		useState<boolean>(false);
 	const [newStompAnonymousEnquiry, setNewStompAnonymousEnquiry] =
 		useState<boolean>(false);
+	const [
+		newStompAnonymousConversationFinished,
+		setNewStompAnonymousConversationFinished
+	] = useState<boolean>(false);
 	const [newStompVideoCallRequest, setNewStompVideoCallRequest] =
 		useState<VideoCallRequestProps>();
 	const { addNotification } = useContext(NotificationsContext);
@@ -183,6 +187,22 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 	}, [newStompAnonymousEnquiry]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	useEffect(() => {
+		if (newStompAnonymousConversationFinished) {
+			setNewStompAnonymousConversationFinished(false);
+			messageEventEmitter.emit({ refreshEnquiryList: true });
+			addNotification({
+				notificationType: NOTIFICATION_TYPE_SUCCESS,
+				title: translate(
+					'profile.notifications.conversationFinished.title'
+				),
+				text: translate(
+					'profile.notifications.conversationFinished.description'
+				)
+			});
+		}
+	}, [newStompAnonymousConversationFinished]); // eslint-disable-line react-hooks/exhaustive-deps
+
+	useEffect(() => {
 		if (newStompVideoCallRequest) {
 			addNotification({
 				id: newStompVideoCallRequest.rcGroupId,
@@ -221,6 +241,11 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 							'profile.notifications.inquiryAccepted.description'
 						)
 					});
+				} else if (
+					stompEventType === 'anonymousConversationFinished' ||
+					stompEventType === 'ANONYMOUSCONVERSATIONFINISHED'
+				) {
+					setNewStompAnonymousConversationFinished(true);
 				} else if (stompEventType === 'videoCallRequest') {
 					const stompEventContent: VideoCallRequestProps =
 						stompMessageBody['eventContent'];
