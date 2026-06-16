@@ -1919,14 +1919,22 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 		registerAnonymousChatSessionForCleanup(
 			activeSession.item.id,
-			activeSession.item.status
+			activeSession.item.status,
+			activeSession.rid?.startsWith('!') ||
+				activeSession.rid?.includes(':')
+				? activeSession.rid
+				: activeSession.item?.matrixRoomId,
+			userData?.userName
 		);
 
 		return bindAnonymousChatUnloadCleanup(activeSession.item.id);
 	}, [
 		isAnonymousAskerExperience,
 		activeSession.item?.id,
-		activeSession.item?.status
+		activeSession.item?.status,
+		activeSession.item?.matrixRoomId,
+		activeSession.rid,
+		userData?.userName
 	]);
 
 	/**

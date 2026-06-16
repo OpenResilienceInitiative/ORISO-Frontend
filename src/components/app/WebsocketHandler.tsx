@@ -189,7 +189,10 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 	useEffect(() => {
 		if (newStompAnonymousConversationFinished) {
 			setNewStompAnonymousConversationFinished(false);
-			messageEventEmitter.emit({ refreshEnquiryList: true });
+			messageEventEmitter.emit({
+				refreshEnquiryList: true,
+				refreshSessionList: true
+			});
 			messageEventEmitter.emit({});
 			addNotification({
 				notificationType: NOTIFICATION_TYPE_SUCCESS,
