@@ -72,6 +72,7 @@ import { Button, ButtonItem, BUTTON_TYPES } from '../button/Button';
 import { ReactComponent as CloseCircle } from '../../resources/img/icons/close-circle.svg';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../message/messageConstants';
+import { messageEventEmitter } from '../../services/messageEventEmitter';
 
 export interface SessionHeaderProps {
 	consultantAbsent?: SessionConsultantInterface;
@@ -693,6 +694,12 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 						? finishAnonymousChatConsultantSuccessOverlayItem
 						: finishAnonymousChatSuccessOverlayItem
 				);
+				if (isConsultantUser) {
+					messageEventEmitter.emit({
+						refreshEnquiryList: true,
+						sessionId: activeSession.item.id
+					});
+				}
 			})
 			.catch((error) => {
 				if (error?.message === FETCH_ERRORS.CONFLICT) {
@@ -702,6 +709,12 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 							? finishAnonymousChatConsultantSuccessOverlayItem
 							: finishAnonymousChatSuccessOverlayItem
 					);
+					if (isConsultantUser) {
+						messageEventEmitter.emit({
+							refreshEnquiryList: true,
+							sessionId: activeSession.item.id
+						});
+					}
 					return;
 				}
 				setEndChatOverlayItem(finishAnonymousChatErrorOverlayItem);
@@ -729,8 +742,13 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 
 		setIsDeletingAccount(true);
 		try {
-			await apiDeleteSessionAndUser(activeSession.item.id);
+			const deletedSessionId = activeSession.item.id;
+			await apiDeleteSessionAndUser(deletedSessionId);
 			setIsAccountDeleted(true);
+			messageEventEmitter.emit({
+				refreshEnquiryList: true,
+				sessionId: deletedSessionId
+			});
 			addNotification({
 				notificationType: NOTIFICATION_TYPE_SUCCESS,
 				title: translate(
