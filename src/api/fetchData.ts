@@ -131,11 +131,9 @@ export const fetchData = ({
 						}
 					: null;
 
-		let controller;
-		controller = new AbortController();
-		if (timeout) {
-			setTimeout(() => controller.abort(), timeout);
-		}
+		const controller = new AbortController();
+		const timeoutMs = timeout ?? 30_000;
+		setTimeout(() => controller.abort(), timeoutMs);
 		if (signal) {
 			signal.addEventListener('abort', () => controller.abort());
 		}
