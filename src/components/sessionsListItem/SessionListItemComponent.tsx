@@ -38,7 +38,10 @@ import {
 	SessionsDataContext,
 	REMOVE_SESSIONS
 } from '../../globalState';
-import { TopicSessionInterface } from '../../globalState/interfaces';
+import {
+	TopicSessionInterface,
+	STATUS_ENQUIRY
+} from '../../globalState/interfaces';
 import { getGroupChatDate } from '../session/sessionDateHelpers';
 import { markdownToDraft } from 'markdown-draft-js';
 import { convertFromRaw } from 'draft-js';
@@ -933,7 +936,8 @@ export const SessionListItemComponent = ({
 		activeSession.item.postcode === 0 ||
 		activeSession.item.postcode?.toString() === '00000' ||
 		(activeSession.item as any).registrationType === 'ANONYMOUS' ||
-		activeSession.user?.username?.startsWith('Anonymous-');
+		activeSession.user?.username?.startsWith('Anonymous-') ||
+		activeSession.item.status === STATUS_ENQUIRY;
 
 	return (
 		<div
@@ -1470,21 +1474,15 @@ export const SessionListItemComponent = ({
 						/>
 					)}
 					{(() => {
-						/* Anonymous askers (Live-Chat queue users —
-						   username prefixed "Anonymous-") render with the
-						   dedicated Live Chat headset-wave icon + label
-						   instead of the 1-1 Beratung combined mark. The
-						   --liveChat modifier sits on the OUTER container
-						   so its CSS can override the base -12px right
-						   margin that would clip the text. */
-						const askerName =
-							(activeSession as any)?.user?.username ||
-							(activeSession as any)?.item?.askerUserName ||
-							'';
-						const isAnonymousAsker =
-							typeof askerName === 'string' &&
-							askerName.startsWith('Anonymous-');
-						if (isAnonymousAsker) {
+						/* Sessions with status ENQUIRY (Live-Chat queue)
+						   render with the dedicated Live Chat headset-wave
+						   icon + label instead of the 1-1 Beratung combined
+						   mark. The --liveChat modifier sits on the OUTER
+						   container so its CSS can override the base -12px
+						   right margin that would clip the text. */
+						const isLiveChatSession =
+							activeSession.item.status === STATUS_ENQUIRY;
+						if (isLiveChatSession) {
 							return (
 								<div
 									className={clsx(
