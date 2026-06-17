@@ -88,11 +88,8 @@ const colourStyles = (
 				? '2px solid #3F373F'
 				: '1px solid #8C878C',
 			'borderRadius': undefined,
-			// Use min-height for multi-select to allow expansion, fixed height for single select
-			// Increased min-height for multi-select to make box bigger initially
-			...(state.isMulti
-				? { minHeight: '80px', height: 'auto' }
-				: { height: '50px' }),
+			// Use height auto for multi-select and single select, both support expansion
+			'height': 'auto',
 			'outline': '0',
 			'padding': state.isFocused ? '0 11px' : '0 12px',
 			'color': '#3F373F',
@@ -123,12 +120,12 @@ const colourStyles = (
 		// Added top padding so pills don't touch the label
 		...(state.isMulti
 			? {
-					minHeight: '80px',
-					height: 'auto',
-					paddingTop: '24px',
-					paddingBottom: '8px',
-					paddingLeft: '8px',
-					paddingRight: '8px',
+					// minHeight: '80px',
+					// height: 'auto',
+					// paddingTop: '24px',
+					// paddingBottom: '8px',
+					// paddingLeft: '8px',
+					// paddingRight: '8px',
 					flexWrap: 'wrap',
 					alignItems: 'flex-start'
 				}
@@ -370,7 +367,10 @@ export const SelectDropdown = (props: SelectDropdownItem) => {
 	);
 
 	const IconDropdown = (props) => (
-		<components.DropdownIndicator {...props}>
+		<components.DropdownIndicator
+			{...props}
+			className="select__input__option"
+		>
 			<span id="selectIcon" className="select__input__iconWrapper">
 				{props.selectProps.menuIsOpen ? (
 					<ArrowUpIcon
