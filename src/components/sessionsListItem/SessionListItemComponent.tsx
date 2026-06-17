@@ -580,6 +580,7 @@ export const SessionListItemComponent = ({
 					'sessionsListItem',
 					'sessionsListItem--groupChat',
 					isChatActive && 'sessionsListItem--active',
+					flyoutOpen && 'sessionsListItem--menuOpen',
 					isBeforeActive && 'sessionsListItem--beforeActive',
 					isAfterActive && 'sessionsListItem--afterActive'
 				)}
@@ -859,6 +860,7 @@ export const SessionListItemComponent = ({
 											displayName="User"
 											userId={`placeholder-${index}`}
 											size="32px"
+											ring={false}
 										/>
 									</div>
 								))}
@@ -939,6 +941,7 @@ export const SessionListItemComponent = ({
 			className={clsx(
 				`sessionsListItem`,
 				isChatActive && `sessionsListItem--active`,
+				flyoutOpen && 'sessionsListItem--menuOpen',
 				isAnonymousChat && `sessionsListItem--anonymous`,
 				isBeforeActive && 'sessionsListItem--beforeActive',
 				isAfterActive && 'sessionsListItem--afterActive'

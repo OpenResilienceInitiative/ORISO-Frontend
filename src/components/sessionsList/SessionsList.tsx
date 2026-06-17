@@ -448,6 +448,24 @@ export const SessionsList = ({
 			.catch(() => {});
 	}, [dispatch, fetchEnquirySessionsWithAutoPage, type]);
 
+	const refetchSessionList = useCallback(() => {
+		if (type !== SESSION_LIST_TYPES.MY_SESSION) {
+			return Promise.resolve();
+		}
+
+		return getConsultantSessionList(0)
+			.then(({ sessions, total }) => {
+				dispatch({
+					type: SET_SESSIONS,
+					ready: true,
+					sessions
+				});
+				setTotalItems(total);
+				setCurrentOffset(0);
+			})
+			.catch(() => {});
+	}, [dispatch, getConsultantSessionList, type]);
+
 	/*
 	 * Re-run the enquiry fetch when switching Chats ↔ Live Chat so auto-paging
 	 * scans for the right session type instead of only re-filtering stale pages.
@@ -1043,16 +1061,32 @@ export const SessionsList = ({
 		const onNewMessageEvent = ({
 			roomId,
 			timestamp,
-			refreshEnquiryList
+			refreshEnquiryList,
+			refreshSessionList,
+			sessionId
 		}: {
 			roomId?: string;
 			timestamp?: number;
 			refreshEnquiryList?: boolean;
+			refreshSessionList?: boolean;
+			sessionId?: number;
 		}) => {
-			if (refreshEnquiryList) {
-				if (type === SESSION_LIST_TYPES.ENQUIRY) {
-					refetchEnquiryList();
-				}
+			if (sessionId) {
+				dispatch({
+					type: REMOVE_SESSIONS,
+					ids: [sessionId]
+				});
+			}
+
+			if (refreshEnquiryList && type === SESSION_LIST_TYPES.ENQUIRY) {
+				void refetchEnquiryList();
+			}
+
+			if (refreshSessionList && type === SESSION_LIST_TYPES.MY_SESSION) {
+				void refetchSessionList();
+			}
+
+			if (refreshEnquiryList || refreshSessionList) {
 				return;
 			}
 
@@ -1072,7 +1106,7 @@ export const SessionsList = ({
 		return () => {
 			messageEventEmitter.off(onNewMessageEvent);
 		};
-	}, [refetchEnquiryList, touchSessionsByRids, type]);
+	}, [refetchEnquiryList, refetchSessionList, touchSessionsByRids, type]);
 
 	/*
 	 * Legacy invite-link enquiries do not emit newAnonymousEnquiry over STOMP.

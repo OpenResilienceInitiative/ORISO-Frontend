@@ -14,6 +14,10 @@ import {
 } from '../../utils/dateHelpers';
 import { getValueFromCookie } from '../sessionCookie/accessSessionCookie';
 import { decodeUsername } from '../../utils/encryptionHelpers';
+import {
+	parseMessagePrefixes,
+	SYSTEM_NOTIFICATION_USER_LEFT_CHAT
+} from '../message/messageConstants';
 
 export enum SESSION_LIST_TYPES {
 	ENQUIRY = 'ENQUIRY',
@@ -146,35 +150,50 @@ const findLastVideoCallIndex = (messagesData) =>
 
 export const prepareMessages = (messagesData): MessageItem[] => {
 	let lastDate = '';
+	let userLeftChatShown = false;
 	const lastVideoCallIndex = findLastVideoCallIndex(messagesData);
 
-	return [...messagesData].map((message, i) => {
-		const date = new Date(message.ts).getTime();
-		const dateFormated = formatToDDMMYYYY(date);
-		let lastDateStr = { str: '', date: null };
+	return [...messagesData]
+		.map((message, i) => {
+			const date = new Date(message.ts).getTime();
+			const dateFormated = formatToDDMMYYYY(date);
+			let lastDateStr = { str: '', date: null };
 
-		if (lastDate !== dateFormated) {
-			lastDate = dateFormated;
-			lastDateStr = getPrettyDateFromMessageDate(date / 1000);
-		}
+			if (lastDate !== dateFormated) {
+				lastDate = dateFormated;
+				lastDateStr = getPrettyDateFromMessageDate(date / 1000);
+			}
 
-		return {
-			_id: message._id,
-			message: message.msg,
-			messageDate: lastDateStr,
-			messageTime: date.toString(),
-			username: message.u.username,
-			displayName: selectDisplayName(message.u),
-			userId: message.u._id,
-			isNotRead: message.unread,
-			alias: message.alias,
-			attachments: message.attachments,
-			file: message.file,
-			t: message.t,
-			rid: message.rid,
-			isVideoActive: i === lastVideoCallIndex
-		};
-	});
+			return {
+				_id: message._id,
+				message: message.msg,
+				messageDate: lastDateStr,
+				messageTime: date.toString(),
+				username: message.u.username,
+				displayName: selectDisplayName(message.u),
+				userId: message.u._id,
+				isNotRead: message.unread,
+				alias: message.alias,
+				attachments: message.attachments,
+				file: message.file,
+				t: message.t,
+				rid: message.rid,
+				isVideoActive: i === lastVideoCallIndex
+			};
+		})
+		.filter((item) => {
+			const parsed = parseMessagePrefixes(item.message);
+			if (
+				parsed.systemNotificationType ===
+				SYSTEM_NOTIFICATION_USER_LEFT_CHAT
+			) {
+				if (userLeftChatShown) {
+					return false;
+				}
+				userLeftChatShown = true;
+			}
+			return true;
+		});
 };
 
 export const selectDisplayName = (userObject) => {

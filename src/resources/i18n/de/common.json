@@ -1261,6 +1261,8 @@
 		"showMore": "Mehr anzeigen",
 		"systemNotification": "Systembenachrichtigung",
 		"systemNotificationTitle": "Systembenachrichtigung",
+		"userLeftChat": "{{name}} hat den Chat verlassen",
+		"anonymousUser": "Benutzer",
 		"supervisionEnabledTitle": "Supervision aktiviert!",
 		"supervisionEnabledDescription": "{{name}} wurde als Supervisor-Berater:in zu diesem Chat hinzugefügt.",
 		"today": "Heute",
@@ -1584,6 +1586,10 @@
 			"inquiryAccepted": {
 				"title": "Anfrage angenommen",
 				"description": "Ihre Anfrage wurde von einer Beratungsfachkraft angenommen."
+			},
+			"conversationFinished": {
+				"title": "Chat beendet",
+				"description": "Die ratssuchende Person hat den anonymen Chat beendet."
 			},
 			"mainEmail": {
 				"title": "E-Mail-Benachrichtigungen zulassen"
@@ -2948,10 +2954,15 @@
 			"actionsLabel": "Wartebereich-Aktionen",
 			"calmCompanion": "Kurze ruhige Begleitung öffnen",
 			"calmCompanionHint": "Bis der Chat beginnt, eine kurze interaktive ruhige Begleitung. Direkt hier im Chatraum",
+			"calmCompanionHintMobileLine1": "Bis der Chat beginnt, eine kurze",
+			"calmCompanionHintMobileLine2": "interaktive ruhige Begleitung.",
+			"calmCompanionHintDesktop": "Bis der Chat beginnt, eine kurze ruhige Begleitung. Direkt hier im Chatraum",
 			"positionCount_one": "{{count}} Person vor Ihnen",
 			"positionCount_other": "{{count}} Personen vor Ihnen",
+			"positionCountSuffix": "Noch vor Ihnen",
 			"connecting": "Wird verbunden …",
-			"requestLocalCounselor": "Anfrage an lokalen Berater senden",
+			"insteadOfWaiting": "Statt zu warten",
+			"requestLocalCounselor": "Vor Ort Beratungsanfrage absenden",
 			"consultantAccepted": "Sie werden jetzt von ihrer Berater_in im Chat erwartet.",
 			"startChatNow": "Jetzt Chat starten",
 			"dismissAcceptedBanner": "Hinweis ausblenden"
@@ -2971,6 +2982,39 @@
 				"error": {
 					"title": "Fehler beim Löschen",
 					"text": "Das Konto konnte nicht gelöscht werden. Bitte versuchen Sie es erneut."
+				}
+			},
+			"endChat": {
+				"label": "Chat beenden",
+				"ending": "Wird beendet …",
+				"consultant": {
+					"label": "Chat beenden",
+					"confirm": {
+						"headline": "Diesen anonymen Chat beenden?",
+						"copy": "Das Gespräch wird für Sie und die ratssuchende Person geschlossen.",
+						"buttonConfirm": "Chat beenden"
+					},
+					"success": {
+						"headline": "Chat beendet",
+						"copy": "Der anonyme Chat wurde geschlossen.",
+						"buttonClose": "Zurück zu den Chats"
+					}
+				},
+				"confirm": {
+					"headline": "Möchten Sie den Chat wirklich beenden?",
+					"copy": "Das Gespräch wird geschlossen. Sie können diesen anonymen Chat nicht fortsetzen.",
+					"buttonConfirm": "Chat beenden",
+					"buttonCancel": "Abbrechen"
+				},
+				"success": {
+					"headline": "Chat beendet",
+					"copy": "Vielen Dank, dass Sie unseren Live-Chat genutzt haben. Sie können diese Seite jetzt schließen.",
+					"buttonClose": "Schließen"
+				},
+				"error": {
+					"headline": "Chat konnte nicht beendet werden",
+					"copy": "Der Chat konnte nicht beendet werden. Bitte versuchen Sie es erneut.",
+					"buttonClose": "Schließen"
 				}
 			}
 		},

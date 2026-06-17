@@ -1,4 +1,5 @@
 import { apiKeycloakLogout } from '../../api/apiLogoutKeycloak';
+import { apiSetLiveChatAvailability } from '../../api/apiSetLiveChatAvailability';
 // // import { apiRocketchatLogout } from '../../api/apiLogoutRocketchat';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { budibaseLogout } from '../budibase/budibaseLogout';
@@ -29,6 +30,10 @@ export const logout = async (
 	isRequestInProgress = true;
 	const { featureAppointmentsEnabled, featureToolsEnabled } =
 		getTenantSettings();
+
+	/* Drop live-chat availability while the access token is still valid, so the
+	 * anonymous availability count decreases immediately on logout. */
+	await apiSetLiveChatAvailability(false);
 
 	Promise.all([
 		// Skip RocketChat logout due to configuration issues

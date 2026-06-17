@@ -1,11 +1,13 @@
 import * as React from 'react';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useHistory } from 'react-router-dom';
 import clsx from 'clsx';
 import { handleNumericTranslation } from '../../utils/translate';
 import { mobileListView } from '../app/navigationHandler';
 import { apiDeleteSessionAndUser } from '../../api/apiDeleteSessionAndUser';
+import { apiFinishAnonymousConversation } from '../../api/apiFinishAnonymousConversation';
+import { FETCH_ERRORS } from '../../api/fetchData';
 import {
 	apiGetSessionSupervisors,
 	SessionSupervisor
@@ -29,7 +31,9 @@ import {
 	SessionTypeContext,
 	useConsultingType,
 	UserDataContext,
-	ActiveSessionContext
+	ActiveSessionContext,
+	SessionsDataContext,
+	REMOVE_SESSIONS
 } from '../../globalState';
 import {
 	SessionConsultantInterface,
@@ -41,6 +45,16 @@ import {
 	SESSION_LIST_TYPES
 } from '../session/sessionHelpers';
 import { SessionMenu } from '../sessionMenu/SessionMenu';
+import {
+	finishAnonymousChatErrorOverlayItem,
+	finishAnonymousChatSecurityOverlayItem,
+	finishAnonymousChatSuccessOverlayItem,
+	finishAnonymousChatConsultantSecurityOverlayItem,
+	finishAnonymousChatConsultantSuccessOverlayItem
+} from '../sessionMenu/sessionMenuHelpers';
+import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
+import { logout } from '../logout/logout';
+import { appConfig } from '../../utils/appConfig';
 import {
 	convertUserDataObjectToArray,
 	getUserDataTranslateBase
@@ -60,7 +74,7 @@ import { Button, ButtonItem, BUTTON_TYPES } from '../button/Button';
 import { ReactComponent as CloseCircle } from '../../resources/img/icons/close-circle.svg';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../message/messageConstants';
-
+import { messageEventEmitter } from '../../services/messageEventEmitter';
 export interface SessionHeaderProps {
 	consultantAbsent?: SessionConsultantInterface;
 	hasUserInitiatedStopOrLeaveRequest?: React.MutableRefObject<boolean>;
@@ -76,6 +90,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	]);
 	const { activeSession } = useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
+	const sessionsDataContext = useContext(SessionsDataContext);
 	const { addNotification, addEventNotification } =
 		useContext(NotificationsContext);
 	const history = useHistory();
@@ -93,6 +108,22 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 
 	const contact = getContact(activeSession);
 	const userSessionData = contact?.sessionData;
+
+	const removeSessionFromSidebar = useCallback(
+		(sessionId: number) => {
+			sessionsDataContext?.dispatch({
+				type: REMOVE_SESSIONS,
+				ids: [sessionId]
+			});
+			messageEventEmitter.emit({
+				refreshEnquiryList: true,
+				refreshSessionList: true,
+				sessionId
+			});
+			messageEventEmitter.emit({ sessionId });
+		},
+		[sessionsDataContext]
+	);
 
 	// Check if this is an anonymous chat
 	const isAnonymousChat =
@@ -115,6 +146,13 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	// State for delete account button
 	const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 	const [isAccountDeleted, setIsAccountDeleted] = useState(false);
+
+	// State for anonymous asker end-chat flow
+	const [isEndChatOverlayActive, setIsEndChatOverlayActive] = useState(false);
+	const [endChatOverlayItem, setEndChatOverlayItem] =
+		useState<OverlayItem | null>(null);
+	const [isFinishingChat, setIsFinishingChat] = useState(false);
+	const [isChatFinished, setIsChatFinished] = useState(false);
 
 	// State for supervisor management
 	const [supervisors, setSupervisors] = useState<SessionSupervisor[]>([]);
@@ -602,6 +640,106 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		mobileListView();
 	};
 
+	const isConsultantUser =
+		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) ||
+		(userData?.userRoles || []).includes('CONSULTANT');
+	const isAskerUser =
+		hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) ||
+		hasUserAuthority(AUTHORITIES.ANONYMOUS_DEFAULT, userData) ||
+		(userData?.userRoles || []).includes('USER') ||
+		(userData?.userRoles || []).includes('ANONYMOUS');
+	const isAnonymousAsker =
+		isAnonymousChat && isAskerUser && !isConsultantUser;
+	const showEndAnonymousChatButton =
+		isAnonymousAsker && activeSession.isSession && !isChatFinished;
+	const showConsultantEndAnonymousChatButton =
+		isConsultantUser &&
+		isAnonymousChat &&
+		!isSupervisor &&
+		!activeSession.isEnquiry &&
+		activeSession.isSession &&
+		!isChatFinished;
+
+	const handleRequestEndAnonymousChat = () => {
+		if (isFinishingChat || isChatFinished) {
+			return;
+		}
+		setEndChatOverlayItem(
+			showConsultantEndAnonymousChatButton
+				? finishAnonymousChatConsultantSecurityOverlayItem
+				: finishAnonymousChatSecurityOverlayItem
+		);
+		setIsEndChatOverlayActive(true);
+	};
+
+	const handleEndChatOverlayAction = (buttonFunction: string) => {
+		if (buttonFunction === OVERLAY_FUNCTIONS.CLOSE) {
+			setIsEndChatOverlayActive(false);
+			setEndChatOverlayItem(null);
+			return;
+		}
+
+		if (buttonFunction === OVERLAY_FUNCTIONS.REDIRECT) {
+			setIsEndChatOverlayActive(false);
+			setEndChatOverlayItem(null);
+			if (isConsultantUser && isAnonymousChat) {
+				history.push('/sessions/consultant/sessionView');
+			} else {
+				window.location.href = appConfig.urls.toEntry;
+			}
+			return;
+		}
+
+		if (buttonFunction === OVERLAY_FUNCTIONS.LOGOUT) {
+			void logout();
+			return;
+		}
+
+		if (buttonFunction !== OVERLAY_FUNCTIONS.FINISH_ANONYMOUS_CHAT) {
+			return;
+		}
+
+		if (isFinishingChat || !activeSession.item?.id) {
+			return;
+		}
+
+		setIsFinishingChat(true);
+		void (async () => {
+			const sessionId = activeSession.item.id;
+			try {
+				await apiFinishAnonymousConversation(sessionId);
+				setIsChatFinished(true);
+				setEndChatOverlayItem(
+					showConsultantEndAnonymousChatButton
+						? finishAnonymousChatConsultantSuccessOverlayItem
+						: finishAnonymousChatSuccessOverlayItem
+				);
+				if (isConsultantUser) {
+					removeSessionFromSidebar(sessionId);
+				}
+			} catch (error: unknown) {
+				if (
+					error instanceof Error &&
+					error.message === FETCH_ERRORS.CONFLICT
+				) {
+					setIsChatFinished(true);
+					setEndChatOverlayItem(
+						showConsultantEndAnonymousChatButton
+							? finishAnonymousChatConsultantSuccessOverlayItem
+							: finishAnonymousChatSuccessOverlayItem
+					);
+					if (isConsultantUser) {
+						removeSessionFromSidebar(sessionId);
+					}
+					return;
+				}
+				setEndChatOverlayItem(finishAnonymousChatErrorOverlayItem);
+			} finally {
+				setIsFinishingChat(false);
+			}
+		})();
+	};
+
 	const handleDeleteAnonymousAccount = async () => {
 		if (isAccountDeleted || isDeletingAccount) {
 			return;
@@ -620,8 +758,10 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 
 		setIsDeletingAccount(true);
 		try {
-			await apiDeleteSessionAndUser(activeSession.item.id);
+			const deletedSessionId = activeSession.item.id;
+			await apiDeleteSessionAndUser(deletedSessionId);
 			setIsAccountDeleted(true);
+			removeSessionFromSidebar(deletedSessionId);
 			addNotification({
 				notificationType: NOTIFICATION_TYPE_SUCCESS,
 				title: translate(
@@ -829,6 +969,46 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 						)
 					) : null}
 				</div>
+				{/* End Chat for anonymous askers (waiting room or active chat) */}
+				{showEndAnonymousChatButton && (
+					<button
+						type="button"
+						onClick={handleRequestEndAnonymousChat}
+						disabled={isFinishingChat}
+						className="sessionInfo__endChatButton"
+						data-cy="session-header-end-anonymous-chat"
+					>
+						{isFinishingChat
+							? translate(
+									'sessionHeader.anonymous.endChat.ending',
+									'Ending…'
+								)
+							: translate(
+									'sessionHeader.anonymous.endChat.label',
+									'End chat'
+								)}
+					</button>
+				)}
+				{/* End Chat for consultants in anonymous live chat */}
+				{showConsultantEndAnonymousChatButton && !untilL && (
+					<button
+						type="button"
+						onClick={handleRequestEndAnonymousChat}
+						disabled={isFinishingChat}
+						className="sessionInfo__endChatButton"
+						data-cy="session-header-end-anonymous-chat-consultant"
+					>
+						{isFinishingChat
+							? translate(
+									'sessionHeader.anonymous.endChat.ending',
+									'Ending…'
+								)
+							: translate(
+									'sessionHeader.anonymous.endChat.consultant.label',
+									'End chat'
+								)}
+					</button>
+				)}
 				{/* Delete Account Button for Consultants viewing Anonymous Chats (not supervisors, not during enquiry) */}
 				{hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
 					isAnonymousChat &&
@@ -960,6 +1140,16 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					}
 					mobileDeleteAnonymousAccountDisabled={
 						isAccountDeleted || isDeletingAccount
+					}
+					showMobileEndAnonymousChatAction={
+						showEndAnonymousChatButton ||
+						showConsultantEndAnonymousChatButton
+					}
+					onMobileEndAnonymousChatAction={
+						handleRequestEndAnonymousChat
+					}
+					mobileEndAnonymousChatDisabled={
+						isFinishingChat || isChatFinished
 					}
 				/>
 			</div>
@@ -1322,6 +1512,20 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					</div>,
 					document.body
 				)}
+
+			{isEndChatOverlayActive && endChatOverlayItem && (
+				<Overlay
+					item={endChatOverlayItem}
+					handleOverlay={handleEndChatOverlayAction}
+					handleOverlayClose={() => {
+						if (!isFinishingChat) {
+							setIsEndChatOverlayActive(false);
+							setEndChatOverlayItem(null);
+						}
+					}}
+					loading={isFinishingChat}
+				/>
+			)}
 		</div>
 	);
 };

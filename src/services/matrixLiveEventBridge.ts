@@ -1,5 +1,6 @@
 import { MatrixClient, Room, MatrixEvent } from 'matrix-js-sdk';
 import { callManager } from './CallManager';
+import { isVideoCallFromMatrixInviteContent } from '../utils/videoCallHelpers';
 
 /**
  * Bridge between Matrix events and the existing LiveService WebSocket system.
@@ -170,7 +171,9 @@ export class MatrixLiveEventBridge {
 
 		// Check if this is a LiveKit group call (custom field)
 		const isGroupCall = content.is_group_call === true;
-		const isVideo = content.is_video !== false; // Default to video
+		const isVideo = isGroupCall
+			? content.is_video !== false
+			: isVideoCallFromMatrixInviteContent(content);
 
 		if (isGroupCall) {
 			// console.log("✅ LIVEKIT GROUP CALL DETECTED!");
@@ -212,7 +215,7 @@ export class MatrixLiveEventBridge {
 
 		callManager.receiveCall(
 			room.roomId,
-			true, // Assume video for now (can be enhanced)
+			isVideo,
 			callId,
 			sender,
 			false,

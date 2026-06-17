@@ -80,6 +80,9 @@ export interface SessionMenuProps {
 	showMobileDeleteAnonymousAccountAction?: boolean;
 	onMobileDeleteAnonymousAccountAction?: () => void;
 	mobileDeleteAnonymousAccountDisabled?: boolean;
+	showMobileEndAnonymousChatAction?: boolean;
+	onMobileEndAnonymousChatAction?: () => void;
+	mobileEndAnonymousChatDisabled?: boolean;
 }
 
 export const SessionMenu = (props: SessionMenuProps) => {
@@ -443,9 +446,21 @@ export const SessionMenu = (props: SessionMenuProps) => {
 				// console.log('✅ Media permissions granted!', stream);
 				// console.log('Stream tracks:', stream.getTracks().map(t => ({ kind: t.kind, enabled: t.enabled })));
 
-				// Store stream globally so FloatingCallWidget/GroupCallWidget can use it
-				(window as any).__preRequestedMediaStream = stream;
-				(window as any).__preRequestedMediaStreamTime = Date.now();
+				if (activeSession.isGroup) {
+					// Group calls use Element Call in an iframe (separate origin).
+					// Release this warm-up stream so the device is not left open.
+					try {
+						stream
+							.getTracks()
+							.forEach((track: MediaStreamTrack) => track.stop());
+					} catch {
+						// ignore
+					}
+				} else {
+					// 1:1 calls: FloatingCallWidget releases this before placeCall().
+					(window as any).__preRequestedMediaStream = stream;
+					(window as any).__preRequestedMediaStreamTime = Date.now();
+				}
 			} catch (mediaError: any) {
 				// console.error('❌ Media permission denied:', mediaError);
 				// console.error('Error name:', mediaError.name);
@@ -472,7 +487,13 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 			// Use CallManager directly (works for both 1-on-1 and group calls!)
 			const { callManager } = require('../../services/CallManager');
-			callManager.startCall(roomId, isVideoActivated);
+			// Force 1:1 Matrix WebRTC for non-group sessions so audio calls are not
+			// misrouted to Element Call (which always enables video).
+			callManager.startCall(
+				roomId,
+				isVideoActivated,
+				activeSession.isGroup ? true : false
+			);
 
 			// console.log('✅ Call initiated!');
 		} catch (error) {
@@ -545,6 +566,30 @@ export const SessionMenu = (props: SessionMenuProps) => {
 						/>
 					</span>
 
+				{props.showMobileEndAnonymousChatAction && (
+					<div
+						className={`sessionMenu__item sessionMenu__item--mobile ${
+							props.mobileEndAnonymousChatDisabled
+								? 'sessionMenu__item--disabled'
+								: ''
+						}`}
+						onClick={() => {
+							if (props.mobileEndAnonymousChatDisabled) {
+								return;
+							}
+							setFlyoutOpen(false);
+							props.onMobileEndAnonymousChatAction?.();
+						}}
+						data-cy="session-menu-end-anonymous-chat"
+					>
+						{translate(
+							'sessionHeader.anonymous.endChat.label',
+							'End chat'
+						)}
+					</div>
+				)}
+
+				{props.showMobileDeleteAnonymousAccountAction && (
 					<div
 						id="flyout"
 						className={`sessionMenu__content ${
