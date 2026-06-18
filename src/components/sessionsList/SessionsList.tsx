@@ -1188,7 +1188,9 @@ export const SessionsList = ({
 		type === SESSION_LIST_TYPES.MY_SESSION &&
 		!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
 
-	const showMySessionToolbar = type === SESSION_LIST_TYPES.MY_SESSION;
+	const showMySessionToolbar =
+		type === SESSION_LIST_TYPES.MY_SESSION ||
+		type === SESSION_LIST_TYPES.ENQUIRY;
 	/**
 	 * Enquiry tab gets its own compact chip row (Chats + Live Chat). It
 	 * shares the same `sessionToolbarChip` state as the Gespräch toolbar so
@@ -1502,14 +1504,14 @@ export const SessionsList = ({
 
 	return (
 		<div className="sessionsList__innerWrapper">
-			{showEnquiryFilterChips && (
+			{/* {showEnquiryFilterChips && (
 				<EnquiryFilterChips
 					translate={translate}
 					activeChip={sessionToolbarChip}
 					onChipToggle={handleToolbarChipToggle}
 					showLiveChatChip={liveChatAvailable}
 				/>
-			)}
+			)} */}
 			{showMySessionToolbar && (
 				<SessionsListToolbar
 					translate={translate}
