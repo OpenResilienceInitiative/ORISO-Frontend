@@ -65,18 +65,13 @@ export const UIVersionToggle = () => {
 			}
 
 			if (matrixUserId && matrixAccessToken) {
-				const matrixCookieDomain = getCookieDomain();
 				const isSecure = getUseHttps();
-
-				const domainStr = matrixCookieDomain
-					? `; domain=${matrixCookieDomain}`
-					: '';
 				const secureStr = isSecure ? '; secure' : '';
 
-				document.cookie = `matrix_sso_user_id=${encodeURIComponent(matrixUserId)}; path=/; SameSite=Lax${domainStr}${secureStr}`;
-				document.cookie = `matrix_sso_access_token=${encodeURIComponent(matrixAccessToken)}; path=/; SameSite=Lax${domainStr}${secureStr}`;
-				document.cookie = `matrix_sso_device_id=${encodeURIComponent(matrixDeviceId || '')}; path=/; SameSite=Lax${domainStr}${secureStr}`;
-				document.cookie = `matrix_sso_hs_url=${encodeURIComponent(homeserverUrl)}; path=/; SameSite=Lax${domainStr}${secureStr}`;
+				document.cookie = `matrix_sso_user_id=${encodeURIComponent(matrixUserId)}; path=/; SameSite=Lax${secureStr}`;
+				document.cookie = `matrix_sso_access_token=${encodeURIComponent(matrixAccessToken)}; path=/; SameSite=Lax${secureStr}`;
+				document.cookie = `matrix_sso_device_id=${encodeURIComponent(matrixDeviceId || '')}; path=/; SameSite=Lax${secureStr}`;
+				document.cookie = `matrix_sso_hs_url=${encodeURIComponent(homeserverUrl)}; path=/; SameSite=Lax${secureStr}`;
 			}
 
 			const elementUrl = getElementUrl();
