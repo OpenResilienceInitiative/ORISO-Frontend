@@ -10,6 +10,7 @@ import {
 	RemoteTrackPublication,
 	LocalParticipant
 } from 'livekit-client';
+import { getLiveKitWsUrl } from '../resources/scripts/runtimeConfig';
 
 export interface LiveKitParticipant {
 	userId: string;
@@ -88,7 +89,7 @@ class LiveKitService {
 			const token = await this.getAccessToken(roomName, userName);
 
 			// Connect to LiveKit server (configure via REACT_APP_LIVEKIT_WS_URL)
-			const wsUrl = process.env.REACT_APP_LIVEKIT_WS_URL?.trim();
+			const wsUrl = getLiveKitWsUrl();
 			if (!wsUrl) {
 				throw new Error('REACT_APP_LIVEKIT_WS_URL is not set');
 			}

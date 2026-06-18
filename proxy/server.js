@@ -9,7 +9,7 @@ dotenvExpand(dotenv.config());
 app.disable('x-powered-by');
 
 process.on('unhandledRejection', (err) => {
-	throw err;
+	console.error('Unhandled promise rejection in proxy server:', err);
 });
 
 const port = parseInt(process.env.PORT, 10) || 3000;

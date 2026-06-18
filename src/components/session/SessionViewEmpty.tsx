@@ -3,8 +3,6 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { mobileListView } from '../app/navigationHandler';
 import './session.styles';
-import { ReactComponent as SelectMessageIllustration } from '../../resources/img/illustrations/select-message.svg';
-import { ListInfo } from '../listInfo/ListInfo';
 
 export const SessionViewEmpty = () => {
 	const { t: translate } = useTranslation();
@@ -13,10 +11,12 @@ export const SessionViewEmpty = () => {
 	}, []);
 	return (
 		<div className="session session--empty">
-			<ListInfo
-				headline={translate('session.empty')}
-				Illustration={SelectMessageIllustration}
-			></ListInfo>
+			<div className="session__emptyState" aria-live="polite">
+				<div className="session__emptyStateMark" aria-hidden="true" />
+				<p className="session__emptyStateText">
+					{translate('session.empty')}
+				</p>
+			</div>
 		</div>
 	);
 };

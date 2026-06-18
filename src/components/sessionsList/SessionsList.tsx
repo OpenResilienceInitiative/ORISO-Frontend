@@ -39,6 +39,10 @@ import {
 	SESSION_COUNT
 } from '../../api';
 import { useLiveChatAvailable } from '../../utils/liveChatToggle';
+import {
+	isMatrixRoom,
+	isMatrixRoomIdHeuristic
+} from '../../utils/matrixRoomUtils';
 import { Button } from '../button/Button';
 import './sessionsList.styles';
 import { SCROLL_PAGINATE_THRESHOLD } from './sessionsListConfig';
@@ -111,24 +115,40 @@ function buildSessionSearchHaystack(
 }
 
 /**
- * Anonymous-chat sessions are identified by the ORISO convention that the
- * asker's keycloak username is prefixed `Anonymous-` (capital A — the
- * pseudonym-registration flow writes that). Using just the prefix keeps the
- * split clean even though all sessions in this deployment share the same
- * registrationType + `postcode='00000'` on the DB side.
+ * Live-chat / anonymous asker sessions on the registered-enquiry feed.
  */
 function isAnonymousAskerSession(
 	raw: ListItemInterface,
-	_extended: ExtendedSessionInterface
+	extended: ExtendedSessionInterface
 ): boolean {
+	const registrationType =
+		(raw as any)?.session?.registrationType ??
+		(extended as any)?.item?.registrationType;
+	if (registrationType === 'ANONYMOUS') {
+		return true;
+	}
+
 	const candidates = [
 		(raw as any)?.user?.username,
 		(raw as any)?.session?.askerUserName,
-		(raw as any)?.consultant?.username
+		(extended as any)?.item?.askerUserName
 	];
-	return candidates.some(
-		(u) => typeof u === 'string' && u.startsWith('Anonymous-')
-	);
+	if (
+		candidates.some(
+			(u) =>
+				typeof u === 'string' &&
+				(u.startsWith('Anonymous-') || u.startsWith('anon_'))
+		)
+	) {
+		return true;
+	}
+
+	const postcode =
+		(raw as any)?.session?.postcode ?? (extended as any)?.item?.postcode;
+	if (postcode == null || postcode === '') {
+		return false;
+	}
+	return String(postcode) === '00000';
 }
 
 function sessionMatchesToolbar(
@@ -277,6 +297,7 @@ export const SessionsList = ({
 	const sessionToolbarChipRef = useRef<SessionToolbarChipFilter | null>(
 		sessionToolbarChip
 	);
+	const skipChipRefetchRef = useRef(true);
 	useEffect(() => {
 		sessionToolbarChipRef.current = sessionToolbarChip;
 	}, [sessionToolbarChip]);
@@ -307,6 +328,80 @@ export const SessionsList = ({
 	 */
 	const [liveChatAvailable] = useLiveChatAvailable();
 
+	const fetchEnquirySessionsWithAutoPage = useCallback(
+		(
+			offset: number,
+			initialID?: string,
+			count?: number,
+			signal?: AbortSignal
+		): Promise<{ sessions: ListItemInterface[]; total: number }> => {
+			const pageSize = count ?? SESSION_COUNT;
+
+			const fetchPage = (
+				pageOffset: number
+			): Promise<{ sessions: ListItemInterface[]; total: number }> =>
+				apiGetConsultantSessionList({
+					type,
+					offset: pageOffset,
+					sessionListTab,
+					count: pageSize,
+					signal
+				}).then(({ sessions, total }) => {
+					if (initialID) {
+						if (
+							getExtendedSession(initialID, sessions) ||
+							total <= pageOffset + pageSize
+						) {
+							return { sessions, total };
+						}
+
+						return fetchPage(pageOffset + pageSize).then(
+							({ sessions: moreSessions, total: nextTotal }) => ({
+								sessions: [...sessions, ...moreSessions],
+								total: nextTotal
+							})
+						);
+					}
+
+					if (
+						type !== SESSION_LIST_TYPES.ENQUIRY ||
+						sessions.length === 0 ||
+						total <= pageOffset + sessions.length
+					) {
+						return { sessions, total };
+					}
+
+					const chip = sessionToolbarChipRef.current;
+					if (chip !== 'chats' && chip !== 'liveChat') {
+						return { sessions, total };
+					}
+
+					const anyMatch = sessions.some((raw) => {
+						const isAnon = isAnonymousAskerSession(
+							raw,
+							{} as ExtendedSessionInterface
+						);
+						return chip === 'liveChat' ? isAnon : !isAnon;
+					});
+					const pagesFetched =
+						(pageOffset + sessions.length) / SESSION_COUNT;
+					if (anyMatch || pagesFetched >= 10) {
+						return { sessions, total };
+					}
+
+					return fetchPage(pageOffset + sessions.length).then(
+						({ sessions: moreSessions, total: nextTotal }) => ({
+							sessions: [...sessions, ...moreSessions],
+							total: nextTotal
+						})
+					);
+				});
+
+			return fetchPage(offset);
+		},
+		[sessionListTab, type]
+	);
+
 	const getConsultantSessionList = useCallback(
 		(
 			offset: number,
@@ -321,101 +416,91 @@ export const SessionsList = ({
 
 			abortController.current = new AbortController();
 
-			return apiGetConsultantSessionList({
-				type,
+			return fetchEnquirySessionsWithAutoPage(
 				offset,
-				sessionListTab: sessionListTab,
-				count: count ?? SESSION_COUNT,
-				signal: abortController.current.signal
-			})
-				.then(({ sessions, total }) => {
-					if (!initialID) {
-						return { sessions, total };
-					}
-
-					// Check if selected room already loaded
-					if (
-						getExtendedSession(initialID, sessions) ||
-						total <= offset + SESSION_COUNT
-					) {
-						return {
-							sessions,
-							total
-						};
-					}
-
-					return getConsultantSessionList(
-						offset + SESSION_COUNT,
-						initialID
-					).then(({ sessions: moreSessions, total }) => {
-						return {
-							sessions: [...sessions, ...moreSessions],
-							total
-						};
-					});
-				})
-				.then(({ sessions, total }) => {
-					/*
-					 * Auto-page past all-anonymous (or all-registered) first
-					 * pages on the Enquiry tab so the selected chip filter
-					 * isn't empty when it has matches further down the feed.
-					 * Scroll-triggered fetches (offset > 0) and explicit
-					 * initialID lookups run above; this branch only fires for
-					 * the implicit "initial fetch" case.
-					 */
-					if (
-						!initialID &&
-						type === SESSION_LIST_TYPES.ENQUIRY &&
-						sessions.length > 0 &&
-						total > offset + sessions.length
-					) {
-						const chip = sessionToolbarChipRef.current;
-						if (chip === 'chats' || chip === 'liveChat') {
-							const anyMatch = sessions.some((raw) => {
-								const isAnon = isAnonymousAskerSession(
-									raw,
-									{} as ExtendedSessionInterface
-								);
-								return chip === 'liveChat' ? isAnon : !isAnon;
-							});
-							/* Cap at 10 pages so a consultant with thousands
-							   of one-sided enquiries can't hang the list. */
-							const pagesFetched =
-								(offset + sessions.length) / SESSION_COUNT;
-							if (!anyMatch && pagesFetched < 10) {
-								return getConsultantSessionList(
-									offset + sessions.length
-								).then(
-									({ sessions: moreSessions, total: t }) => ({
-										sessions: [
-											...sessions,
-											...moreSessions
-										],
-										total: t
-									})
-								);
-							}
-						}
-					}
-					return { sessions, total };
-				})
-				.then(({ sessions, total }) => {
-					const pageSize = count ?? SESSION_COUNT;
-					/* When the Enquiry auto-pager above fetched extra pages,
-					   sessions.length > pageSize — advance currentOffset to
-					   the start of the deepest page so loadMoreSessions
-					   doesn't re-fetch what's already in state. */
-					const lastLoadedOffset =
-						offset + Math.max(0, sessions.length - pageSize);
-					setCurrentOffset(lastLoadedOffset);
-					setTotalItems(total);
-					setIsRequestInProgress(false);
-					return { sessions, total };
-				});
+				initialID,
+				count,
+				abortController.current.signal
+			).then(({ sessions, total }) => {
+				const pageSize = count ?? SESSION_COUNT;
+				const lastLoadedOffset =
+					offset + Math.max(0, sessions.length - pageSize);
+				setCurrentOffset(lastLoadedOffset);
+				setTotalItems(total);
+				setIsRequestInProgress(false);
+				return { sessions, total };
+			});
 		},
-		/* eslint-disable-next-line react-hooks/exhaustive-deps */
-		[sessionListTab, type, liveChatAvailable]
+		[fetchEnquirySessionsWithAutoPage]
 	);
+
+	const refetchEnquiryList = useCallback(() => {
+		if (type !== SESSION_LIST_TYPES.ENQUIRY) {
+			return Promise.resolve();
+		}
+
+		return fetchEnquirySessionsWithAutoPage(0)
+			.then(({ sessions, total }) => {
+				dispatch({
+					type: SET_SESSIONS,
+					ready: true,
+					sessions
+				});
+				setTotalItems(total);
+				setCurrentOffset(0);
+			})
+			.catch(() => {});
+	}, [dispatch, fetchEnquirySessionsWithAutoPage, type]);
+
+	const refetchSessionList = useCallback(() => {
+		if (type !== SESSION_LIST_TYPES.MY_SESSION) {
+			return Promise.resolve();
+		}
+
+		return getConsultantSessionList(0)
+			.then(({ sessions, total }) => {
+				dispatch({
+					type: SET_SESSIONS,
+					ready: true,
+					sessions
+				});
+				setTotalItems(total);
+				setCurrentOffset(0);
+			})
+			.catch(() => {});
+	}, [dispatch, getConsultantSessionList, type]);
+
+	/*
+	 * Re-run the enquiry fetch when switching Chats ↔ Live Chat so auto-paging
+	 * scans for the right session type instead of only re-filtering stale pages.
+	 */
+	useEffect(() => {
+		if (type !== SESSION_LIST_TYPES.ENQUIRY) {
+			return;
+		}
+		if (
+			sessionToolbarChip !== 'liveChat' &&
+			sessionToolbarChip !== 'chats'
+		) {
+			return;
+		}
+		if (skipChipRefetchRef.current) {
+			skipChipRefetchRef.current = false;
+			return;
+		}
+
+		setIsLoading(true);
+		getConsultantSessionList(0)
+			.then(({ sessions }) => {
+				dispatch({
+					type: SET_SESSIONS,
+					ready: true,
+					sessions
+				});
+			})
+			.catch(() => {})
+			.finally(() => setIsLoading(false));
+	}, [dispatch, getConsultantSessionList, sessionToolbarChip, type]);
 
 	const scrollIntoView = useCallback(() => {
 		const activeItem = document.querySelector('.sessionsListItem--active');
@@ -557,9 +642,7 @@ export const SessionsList = ({
 
 							// Check if groupId looks like a Matrix room ID (starts with ! or contains :)
 							const isMatrixRoomId =
-								groupId &&
-								(groupId.startsWith('!') ||
-									groupId.includes(':'));
+								isMatrixRoomIdHeuristic(groupId);
 
 							if (isEmptyEnquiry) {
 								// Empty enquiry: go to write view
@@ -979,11 +1062,36 @@ export const SessionsList = ({
 	useEffect(() => {
 		const onNewMessageEvent = ({
 			roomId,
-			timestamp
+			timestamp,
+			refreshEnquiryList,
+			refreshSessionList,
+			sessionId
 		}: {
 			roomId?: string;
 			timestamp?: number;
+			refreshEnquiryList?: boolean;
+			refreshSessionList?: boolean;
+			sessionId?: number;
 		}) => {
+			if (sessionId) {
+				dispatch({
+					type: REMOVE_SESSIONS,
+					ids: [sessionId]
+				});
+			}
+
+			if (refreshEnquiryList && type === SESSION_LIST_TYPES.ENQUIRY) {
+				void refetchEnquiryList();
+			}
+
+			if (refreshSessionList && type === SESSION_LIST_TYPES.MY_SESSION) {
+				void refetchSessionList();
+			}
+
+			if (refreshEnquiryList || refreshSessionList) {
+				return;
+			}
+
 			if (!roomId) {
 				return;
 			}
@@ -1000,7 +1108,25 @@ export const SessionsList = ({
 		return () => {
 			messageEventEmitter.off(onNewMessageEvent);
 		};
-	}, [touchSessionsByRids]);
+	}, [refetchEnquiryList, refetchSessionList, touchSessionsByRids, type]);
+
+	/*
+	 * Legacy invite-link enquiries do not emit newAnonymousEnquiry over STOMP.
+	 * Poll while Live Chat is selected (without aborting the main list fetch).
+	 */
+	useEffect(() => {
+		if (type !== SESSION_LIST_TYPES.ENQUIRY) {
+			return;
+		}
+		if (sessionToolbarChip !== 'liveChat') {
+			return;
+		}
+
+		const intervalId = window.setInterval(() => {
+			refetchEnquiryList();
+		}, 15000);
+		return () => window.clearInterval(intervalId);
+	}, [refetchEnquiryList, sessionToolbarChip, type]);
 
 	const loadMoreSessions = useCallback(() => {
 		setIsLoading(true);
@@ -1064,7 +1190,9 @@ export const SessionsList = ({
 		type === SESSION_LIST_TYPES.MY_SESSION &&
 		!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
 
-	const showMySessionToolbar = type === SESSION_LIST_TYPES.MY_SESSION;
+	const showMySessionToolbar =
+		type === SESSION_LIST_TYPES.MY_SESSION ||
+		type === SESSION_LIST_TYPES.ENQUIRY;
 	/**
 	 * Enquiry tab gets its own compact chip row (Chats + Live Chat). It
 	 * shares the same `sessionToolbarChip` state as the Gespräch toolbar so
@@ -1145,8 +1273,7 @@ export const SessionsList = ({
 
 			const matrixRoomId =
 				(item as { matrixRoomId?: string })?.matrixRoomId ||
-				(typeof item.groupId === 'string' &&
-				item.groupId.startsWith('!')
+				(typeof item.groupId === 'string' && isMatrixRoom(item.groupId)
 					? item.groupId
 					: null);
 			const matrixRoom = matrixRoomId
@@ -1252,7 +1379,7 @@ export const SessionsList = ({
 					return true;
 				// only show sessions without an assigned consultant in sessionPreview
 				case SESSION_LIST_TYPES.ENQUIRY:
-					return !session?.consultant; // Only show unassigned enquiries
+					return !session?.consultant?.id;
 				default:
 					return true;
 			}
@@ -1378,14 +1505,14 @@ export const SessionsList = ({
 
 	return (
 		<div className="sessionsList__innerWrapper">
-			{showEnquiryFilterChips && (
+			{/* {showEnquiryFilterChips && (
 				<EnquiryFilterChips
 					translate={translate}
 					activeChip={sessionToolbarChip}
 					onChipToggle={handleToolbarChipToggle}
 					showLiveChatChip={liveChatAvailable}
 				/>
-			)}
+			)} */}
 			{showMySessionToolbar && (
 				<SessionsListToolbar
 					translate={translate}

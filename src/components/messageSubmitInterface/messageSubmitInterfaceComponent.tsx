@@ -58,16 +58,13 @@ import {
 	ItalicButton,
 	UnorderedListButton
 } from '@draft-js-plugins/buttons';
-import createEmojiPlugin from '@draft-js-plugins/emoji';
 import {
-	emojiPickerCustomClasses,
 	escapeMarkdownChars,
 	handleEditorBeforeInput,
 	handleEditorPastedText,
 	normalizeHighlightColor,
 	toolbarCustomClasses
 } from './richtextHelpers';
-import { ReactComponent as EmojiIcon } from '../../resources/img/icons/smiley-positive.svg';
 import { ReactComponent as AudioOnIcon } from '../../resources/img/icons/audio-on.svg';
 import { ReactComponent as RemoveIcon } from '../../resources/img/icons/x.svg';
 import { ReactComponent as CalendarMonthIcon } from '../../resources/img/icons/calendar-month-navigation.svg';
@@ -88,6 +85,7 @@ import {
 	encryptText,
 	getSignature
 } from '../../utils/encryptionHelpers';
+import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import { useE2EE } from '../../hooks/useE2EE';
 import { apiPostError, ERROR_LEVEL_WARN } from '../../api/apiPostError';
 import { useE2EEViewElements } from '../../hooks/useE2EEViewElements';
@@ -150,6 +148,8 @@ export interface MessageSubmitInterfaceComponentProps {
 	language?: string;
 	preselectedFile?: File;
 	handleMessageSendSuccess?: Function;
+	/** Anonymous enquiry after "Jetzt Chat starten" — use live chat send, not enquiry API. */
+	isAnonymousLiveChat?: boolean;
 	isSupervisor?: boolean;
 	threadRootId?: string | null;
 	threadParentPreview?: string | null;
@@ -169,6 +169,7 @@ export const MessageSubmitInterfaceComponent = ({
 	language,
 	preselectedFile,
 	handleMessageSendSuccess: onMessageSendSuccess,
+	isAnonymousLiveChat = false,
 	isSupervisor,
 	threadRootId,
 	threadParentPreview,
@@ -1052,24 +1053,6 @@ export const MessageSubmitInterfaceComponent = ({
 		}
 	}, []);
 
-	//Emoji Picker Plugin
-	const emojiPlugin = useMemo(
-		() =>
-			createEmojiPlugin({
-				theme: emojiPickerCustomClasses,
-				useNativeArt: true,
-				disableInlineEmojis: true,
-				selectButtonContent: (
-					<EmojiIcon
-						aria-label={translate('enquiry.write.input.emojies')}
-						title={translate('enquiry.write.input.emojies')}
-					/>
-				)
-			}),
-		[translate]
-	);
-	const { EmojiSelect } = emojiPlugin;
-
 	// This loads the keys for current activeSession.rid which is already set:
 	// to groupChat.groupId on group chats
 	// to session.groupId on session chats
@@ -1122,14 +1105,21 @@ export const MessageSubmitInterfaceComponent = ({
 		return `${location.pathname}${query ? `?${query}` : ''}`;
 	}, [location.pathname, location.search, threadRootId]);
 
+	const contact = getContact(activeSession);
+	const isAnonymousChat =
+		activeSession.item.postcode === 0 ||
+		activeSession.item.postcode?.toString() === '00000' ||
+		(activeSession.item as any).registrationType === 'ANONYMOUS' ||
+		contact?.username?.startsWith('Anonymous-') ||
+		activeSession.user?.username?.startsWith('Anonymous-');
+
 	const draftTitle = useMemo(() => {
-		const contact = getContact(activeSession);
 		const topicName =
 			typeof activeSession?.item?.topic === 'object'
 				? activeSession?.item?.topic?.name
 				: activeSession?.item?.topic;
 		return contact?.displayName || contact?.username || topicName || null;
-	}, [activeSession]);
+	}, [activeSession, contact]);
 
 	const forcedDraftScopeKey = useMemo(() => {
 		const params = new URLSearchParams(location.search);
@@ -1141,42 +1131,57 @@ export const MessageSubmitInterfaceComponent = ({
 
 	const loadDraftIntoComposer = useCallback(
 		(loadedState: EditorState, rawDraft?: string) => {
-			setEditorState(loadedState);
-			const draftValue = (rawDraft || '').trim();
-			if (draftValue) {
-				// TipTap drafts are saved as HTML now; load raw draft directly to preserve formatting.
-				const normalizedDraft = normalizeInitialAlignment(
-					rawDraft || ''
+			try {
+				setEditorState(loadedState);
+				const draftValue = (rawDraft || '').trim();
+				if (draftValue) {
+					// TipTap drafts are saved as HTML now; load raw draft directly to preserve formatting.
+					const normalizedDraft = normalizeInitialAlignment(
+						rawDraft || ''
+					);
+					setComposerText(normalizedDraft || '');
+					composerRef.current?.setText(normalizedDraft || '');
+					return;
+				}
+				// Backward fallback for any legacy empty/raw conversion edge-cases.
+				const contentState = loadedState.getCurrentContent();
+				const rawObject = convertToRaw(
+					escapeMarkdownChars(contentState)
 				);
-				setComposerText(normalizedDraft || '');
-				composerRef.current?.setText(normalizedDraft || '');
-				return;
+				const markdownString = draftToMarkdown(rawObject, {
+					escapeMarkdownCharacters: false
+				});
+				const normalizedDraft =
+					normalizeInitialAlignment(markdownString);
+				setComposerText(normalizedDraft);
+				composerRef.current?.setText(normalizedDraft);
+			} catch {
+				setComposerText('');
+				composerRef.current?.clear();
 			}
-			// Backward fallback for any legacy empty/raw conversion edge-cases.
-			const contentState = loadedState.getCurrentContent();
-			const rawObject = convertToRaw(escapeMarkdownChars(contentState));
-			const markdownString = draftToMarkdown(rawObject, {
-				escapeMarkdownCharacters: false
-			});
-			const normalizedDraft = normalizeInitialAlignment(markdownString);
-			setComposerText(normalizedDraft);
-			composerRef.current?.setText(normalizedDraft);
 		},
 		[normalizeInitialAlignment]
 	);
+
+	const isAnonymousEnquiryComposer =
+		type === SESSION_LIST_TYPES.ENQUIRY && isAnonymousChat;
 
 	const {
 		onChange: onDraftMessageChange,
 		loaded: draftLoaded,
 		clearDraftMessage
-	} = useDraftMessage(!isRequestInProgress, loadDraftIntoComposer, {
-		threadRootId: threadRootId || null,
-		actionPath: draftActionPath,
-		sessionId: activeSession?.item?.id ?? null,
-		roomRef: activeSession?.rid ?? null,
-		title: draftTitle,
-		forcedScopeKey: forcedDraftScopeKey
-	});
+	} = useDraftMessage(
+		!isRequestInProgress && !isAnonymousEnquiryComposer,
+		loadDraftIntoComposer,
+		{
+			threadRootId: threadRootId || null,
+			actionPath: draftActionPath,
+			sessionId: activeSession?.item?.id ?? null,
+			roomRef: activeSession?.rid ?? null,
+			title: draftTitle,
+			forcedScopeKey: forcedDraftScopeKey
+		}
+	);
 
 	const handleComposerChange = useCallback(
 		(nextValue: string) => {
@@ -1814,12 +1819,15 @@ export const MessageSubmitInterfaceComponent = ({
 	const sendMessage = useCallback(
 		async (message, attachment: File, isEncrypted) => {
 			const sendToRoomWithId = activeSession.rid || activeSession.item.id;
-			// MATRIX MIGRATION: Determine if this is a Matrix session
-			// Matrix sessions have either no rid, or rid is a Matrix room ID (starts with '!')
+			// MATRIX MIGRATION: Determine if this is a Matrix-backed session.
+			// Some sessions still have a legacy rid while exposing matrixRoomId.
 			const isMatrixSession =
-				(!activeSession.rid ||
-					(activeSession.rid && activeSession.rid.startsWith('!'))) &&
-				activeSession.item?.id;
+				Boolean(activeSession.item?.matrixRoomId) ||
+				Boolean(
+					activeSession.rid &&
+						isMatrixRoom(activeSession.rid) &&
+						activeSession.item?.id
+				);
 			const matrixSessionId = isMatrixSession
 				? activeSession.item.id
 				: undefined;
@@ -1940,10 +1948,9 @@ export const MessageSubmitInterfaceComponent = ({
 
 			if (shouldSendTextMessage) {
 				// MATRIX MIGRATION: For group chats, Matrix room ID is in activeSession.rid
-				const matrixRoomId =
-					activeSession.rid && activeSession.rid.startsWith('!')
-						? activeSession.rid
-						: activeSession.item?.matrixRoomId;
+				const matrixRoomId = isMatrixRoom(activeSession.rid)
+					? activeSession.rid
+					: activeSession.item?.matrixRoomId;
 
 				await apiSendMessage(
 					message,
@@ -2049,7 +2056,8 @@ export const MessageSubmitInterfaceComponent = ({
 
 		if (
 			type === SESSION_LIST_TYPES.ENQUIRY &&
-			hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)
+			hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
+			!isAnonymousLiveChat
 		) {
 			await sendEnquiry(message, isEncrypted);
 			return;
@@ -2065,6 +2073,7 @@ export const MessageSubmitInterfaceComponent = ({
 		isE2eeEnabled,
 		key,
 		keyID,
+		isAnonymousLiveChat,
 		preselectedFile,
 		sendEnquiry,
 		sendMessage,
@@ -2290,13 +2299,6 @@ export const MessageSubmitInterfaceComponent = ({
 			(type === SESSION_LIST_TYPES.ENQUIRY &&
 				!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData))) &&
 		!tenant?.settings?.featureAttachmentUploadDisabled;
-	const contact = getContact(activeSession);
-	const isAnonymousChat =
-		activeSession.item.postcode === 0 ||
-		activeSession.item.postcode?.toString() === '00000' ||
-		(activeSession.item as any).registrationType === 'ANONYMOUS' ||
-		contact?.username?.startsWith('Anonymous-') ||
-		activeSession.user?.username?.startsWith('Anonymous-');
 	const currentChatType: 'anonymous' | 'oneOnOne' | 'group' | 'supervision' =
 		isSupervisor
 			? 'supervision'
@@ -2323,7 +2325,7 @@ export const MessageSubmitInterfaceComponent = ({
 					: featureVoiceMessagesOneOnOneChatsEnabled !== false);
 
 	const getMatrixRoomId = useCallback(() => {
-		if (activeSession?.rid?.startsWith('!')) {
+		if (isMatrixRoom(activeSession?.rid)) {
 			return activeSession.rid;
 		}
 		return activeSession?.item?.matrixRoomId || null;
@@ -3674,17 +3676,22 @@ export const MessageSubmitInterfaceComponent = ({
 		[setIsExpandedComposer]
 	);
 
-	// MATRIX MIGRATION: Skip E2EE check for Matrix sessions (no rid)
-	if (!e2EEReady && activeSession.rid) {
+	const matrixRoomId = isMatrixRoom(activeSession?.rid)
+		? activeSession.rid
+		: isMatrixRoom(activeSession?.item?.matrixRoomId)
+			? activeSession.item.matrixRoomId
+			: null;
+
+	// MATRIX MIGRATION: legacy RocketChat E2EE gates do not apply to Matrix rooms.
+	if (!e2EEReady && activeSession.rid && !matrixRoomId) {
 		return null;
 	}
 
-	if (subscriptionKeyLost && activeSession.rid) {
+	if (subscriptionKeyLost && activeSession.rid && !matrixRoomId) {
 		return <SubscriptionKeyLost />;
 	}
 
-	// Ignore the missing room if session has no roomId
-	if (roomNotFound && activeSession.rid) {
+	if (roomNotFound && activeSession.rid && !matrixRoomId) {
 		return <RoomNotFound />;
 	}
 

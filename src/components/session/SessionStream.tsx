@@ -40,6 +40,7 @@ import { BUTTON_TYPES } from '../button/Button';
 import { logout } from '../logout/logout';
 import { ReactComponent as CheckIcon } from '../../resources/img/illustrations/check.svg';
 import useTyping from '../../utils/useTyping';
+import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import './session.styles';
 import { useE2EE } from '../../hooks/useE2EE';
 import {
@@ -117,8 +118,7 @@ export const SessionStream = ({
 	const isMatrixSession = useMemo(
 		() =>
 			Boolean(
-				((!activeSession.rid ||
-					(activeSession.rid && activeSession.rid.startsWith('!'))) &&
+				((!activeSession.rid || isMatrixRoom(activeSession.rid)) &&
 					activeSession.item?.id) ||
 					activeSession.item?.matrixRoomId
 			),
@@ -130,7 +130,7 @@ export const SessionStream = ({
 	);
 	const matrixRoomId = useMemo(
 		() =>
-			activeSession.rid && activeSession.rid.startsWith('!')
+			isMatrixRoom(activeSession.rid)
 				? activeSession.rid
 				: activeSession.item?.matrixRoomId || '',
 		[activeSession.rid, activeSession.item?.matrixRoomId]
@@ -207,10 +207,12 @@ export const SessionStream = ({
 
 		abortController.current = new AbortController();
 
-		// MATRIX MIGRATION: Use Matrix API if no rcGroupId OR if rcGroupId is a Matrix room ID (starts with '!')
-		const isMatrixRoom =
-			activeSession.rid && activeSession.rid.startsWith('!');
-		if ((!activeSession.rid || isMatrixRoom) && activeSession.item?.id) {
+		// MATRIX MIGRATION: Use Matrix API whenever this session is Matrix-backed.
+		// Some sessions still carry a legacy rid while exposing matrixRoomId.
+		const isMatrixBackedSession =
+			Boolean(activeSession.item?.matrixRoomId) ||
+			isMatrixRoom(activeSession.rid);
+		if (isMatrixBackedSession && activeSession.item?.id) {
 			const sessionId = activeSession.item.id;
 			const apiUrlBase = getApiBaseUrl();
 			const matrixUrl = `${apiUrlBase}/service/matrix/sessions/${sessionId}/messages`;
@@ -513,178 +515,86 @@ export const SessionStream = ({
 
 	// MATRIX MIGRATION: Real-time message sync for Matrix sessions
 	useEffect(() => {
-		// Only for Matrix sessions (no Rocket.Chat rid OR rid is a Matrix room ID)
-		// For group chats, rid contains the Matrix room ID (starts with '!')
-		const isMatrixSession =
-			(!activeSession.rid ||
-				(activeSession.rid && activeSession.rid.startsWith('!'))) &&
-			activeSession.item?.id;
-		const matrixRoomId =
-			activeSession.rid && activeSession.rid.startsWith('!')
-				? activeSession.rid
-				: activeSession.item?.matrixRoomId;
+		// Only for Matrix sessions.
+		const isMatrixSession = Boolean(
+			activeSession.item?.id &&
+				(activeSession.item?.matrixRoomId ||
+					isMatrixRoom(activeSession.rid))
+		);
+		const matrixRoomId = isMatrixRoom(activeSession.rid)
+			? activeSession.rid
+			: activeSession.item?.matrixRoomId;
 
-		if (isMatrixSession && matrixRoomId) {
-			const sessionId = activeSession.item.id;
-			// console.log('🔷 Setting up Matrix real-time listener for room:', matrixRoomId);
-
-			// Get Matrix client for frontend real-time events (like Element!)
-			const matrixClientService = (window as any).matrixClientService;
-			if (!matrixClientService) {
-				// console.warn('⚠️ Matrix client not initialized - messages will not appear in real-time');
-			} else {
-				const matrixClient = matrixClientService.getClient();
-				if (matrixClient) {
-					// Handler for Room.timeline events - INSTANT local echo like Element!
-					const handleMatrixTimeline = (
-						event: any,
-						room: any,
-						toStartOfTimeline: boolean
-					) => {
-						if (toStartOfTimeline || room.roomId !== matrixRoomId) {
-							return;
-						}
-
-						const eventType = event.getType();
-						if (eventType !== 'm.room.message') {
-							return;
-						}
-
-						// console.log('📬 Matrix message received - adding to UI instantly!', event);
-
-						// Get the message content from the event
-						const content = event.getContent();
-						const sender = event.getSender();
-						const timestamp = event.getTs();
-						const eventId = event.getId();
-						const senderUsername =
-							sender?.split(':')[0]?.substring(1) || 'unknown';
-						const senderDisplayName =
-							room?.getMember?.(sender)?.name ||
-							room?.getMember?.(sender)?.rawDisplayName ||
-							senderUsername;
-
-						// Handle file attachments (m.file, m.image, m.video, m.audio)
-						let attachments = undefined;
-						let fileObj = undefined;
-						if (
-							content.msgtype &&
-							content.msgtype !== 'm.text' &&
-							content.url
-						) {
-							// Convert mxc:// URL to download path
-							let downloadPath = content.url;
-							if (downloadPath.startsWith('mxc://')) {
-								const mxcParts = downloadPath
-									.substring(6)
-									.split('/');
-								const serverName = mxcParts[0];
-								const mediaId = mxcParts[1];
-								downloadPath = `/_matrix/media/r0/download/${serverName}/${mediaId}`;
-							}
-
-							fileObj = {
-								name: content.body || 'file',
-								type:
-									content.info?.mimetype ||
-									'application/octet-stream'
-							};
-
-							attachments = [
-								{
-									type:
-										content.msgtype === 'm.image'
-											? 'image'
-											: 'file',
-									title: content.body || 'file',
-									title_link: downloadPath,
-									title_link_download: true,
-									image_url:
-										content.msgtype === 'm.image'
-											? downloadPath
-											: undefined,
-									image_type:
-										content.info?.mimetype ||
-										'application/octet-stream',
-									image_size: content.info?.size || 0
-								}
-							];
-						}
-
-						// Create a message object in the same format as backend messages
-						const textMessageContent =
-							content.msgtype === 'm.text'
-								? content.formatted_body || content.body || ''
-								: content.body || '';
-						const newMessage = {
-							_id: eventId,
-							rid: matrixRoomId,
-							msg: textMessageContent,
-							ts: new Date(timestamp).toISOString(),
-							u: {
-								_id: sender,
-								username: senderUsername, // Extract username from @user:domain
-								name: senderDisplayName
-							},
-							_updatedAt: new Date(timestamp).toISOString(),
-							t:
-								content.msgtype === 'm.text'
-									? undefined
-									: content.msgtype,
-							file: fileObj,
-							attachments: attachments
-						};
-
-						// console.log('📬 New message object:', newMessage);
-
-						// Add the new message to the existing messages
-						setMessagesItem((prevMessages) => {
-							if (!prevMessages || !prevMessages.messages) {
-								return {
-									messages: prepareMessages([newMessage])
-								};
-							}
-
-							// Check if message already exists (avoid duplicates)
-							const messageExists = prevMessages.messages.some(
-								(msg) => msg._id === eventId
-							);
-
-							if (messageExists) {
-								// console.log('📬 Message already exists, skipping');
-								return prevMessages;
-							}
-
-							// Add new message to the end
-							const updatedMessages = [...prevMessages.messages];
-							const preparedNewMessages = prepareMessages([
-								newMessage
-							]);
-							updatedMessages.push(...preparedNewMessages);
-
-							// console.log('📬 Updated messages count:', updatedMessages.length);
-							return { messages: updatedMessages };
-						});
-					};
-
-					// Subscribe to Matrix Room.timeline events for instant updates!
-					// console.log('📡 Subscribing to Matrix Room.timeline for instant message updates');
-					(matrixClient as any).on(
-						'Room.timeline',
-						handleMatrixTimeline
-					);
-
-					// Cleanup Matrix listener
-					return () => {
-						// console.log('🧹 Cleaning up Matrix listener');
-						(matrixClient as any).off(
-							'Room.timeline',
-							handleMatrixTimeline
-						);
-					};
-				}
-			}
+		if (!isMatrixSession || !matrixRoomId) {
+			return;
 		}
+
+		let retryTimer: number | null = null;
+		let detachTimelineListener: (() => void) | null = null;
+		let lastRefreshAt = 0;
+
+		const attachTimelineListener = () => {
+			const matrixClientService = (window as any).matrixClientService;
+			const matrixClient = matrixClientService?.getClient?.();
+			if (!matrixClient) {
+				return false;
+			}
+
+			const handleMatrixTimeline = (
+				event: any,
+				room: any,
+				toStartOfTimeline: boolean
+			) => {
+				if (toStartOfTimeline || room?.roomId !== matrixRoomId) {
+					return;
+				}
+
+				const eventType = event?.getType?.();
+				if (
+					eventType !== 'm.room.message' &&
+					eventType !== 'm.room.encrypted'
+				) {
+					return;
+				}
+
+				// Coalesce bursts (decrypt + relation updates) into one fetch.
+				const now = Date.now();
+				if (now - lastRefreshAt < 120) {
+					return;
+				}
+				lastRefreshAt = now;
+
+				fetchSessionMessages().catch(() => {
+					// keep UI stable if a timeline event races with navigation
+				});
+			};
+
+			(matrixClient as any).on('Room.timeline', handleMatrixTimeline);
+			detachTimelineListener = () => {
+				(matrixClient as any).off(
+					'Room.timeline',
+					handleMatrixTimeline
+				);
+			};
+			return true;
+		};
+
+		// Try immediately, then retry until Matrix client is ready.
+		if (!attachTimelineListener()) {
+			retryTimer = window.setInterval(() => {
+				if (attachTimelineListener() && retryTimer) {
+					window.clearInterval(retryTimer);
+					retryTimer = null;
+				}
+			}, 500);
+		}
+
+		return () => {
+			if (retryTimer) {
+				window.clearInterval(retryTimer);
+			}
+			detachTimelineListener?.();
+		};
 	}, [
 		activeSession.rid,
 		activeSession.item?.matrixRoomId,
@@ -784,6 +694,68 @@ export const SessionStream = ({
 		};
 	}, [isMatrixSession, matrixRoomId, MATRIX_TYPING_STALE_MS]);
 
+	useEffect(() => {
+		const handleLiveMessageEvent = ({
+			roomId,
+			sessionId
+		}: {
+			roomId?: string;
+			sessionId?: number;
+		}) => {
+			const activeMatrixRoomId = isMatrixRoom(activeSession.rid)
+				? activeSession.rid
+				: activeSession.item?.matrixRoomId || '';
+			const activeRid = activeSession.rid || '';
+			const activeSessionId = activeSession.item?.id;
+
+			const belongsToActiveSession =
+				(roomId &&
+					(roomId === activeMatrixRoomId || roomId === activeRid)) ||
+				(sessionId &&
+					activeSessionId &&
+					Number(sessionId) === Number(activeSessionId)) ||
+				(!roomId && !sessionId);
+
+			if (!belongsToActiveSession) {
+				return;
+			}
+
+			fetchSessionMessages().catch(() => {
+				// keep UI stable when a live refresh races with route/session changes
+			});
+		};
+
+		messageEventEmitter.on(handleLiveMessageEvent);
+		return () => {
+			messageEventEmitter.off(handleLiveMessageEvent);
+		};
+	}, [
+		activeSession.rid,
+		activeSession.item?.id,
+		activeSession.item?.matrixRoomId,
+		fetchSessionMessages
+	]);
+
+	// Hard fallback: keep Matrix sessions in sync even if a live event is missed.
+	useEffect(() => {
+		if (!isMatrixSession || !activeSession.item?.id) {
+			return;
+		}
+
+		const intervalId = window.setInterval(() => {
+			if (typeof document !== 'undefined' && document.hidden) {
+				return;
+			}
+			fetchSessionMessages().catch(() => {
+				// keep UI stable on intermittent network/session race conditions
+			});
+		}, 1500);
+
+		return () => {
+			window.clearInterval(intervalId);
+		};
+	}, [isMatrixSession, activeSession.item?.id, fetchSessionMessages]);
+
 	useEffect(
 		() => () => {
 			clearMatrixTypingTimeout();
@@ -806,7 +778,7 @@ export const SessionStream = ({
 					setSessionRead();
 
 					// MATRIX MIGRATION: Skip RocketChat subscriptions for Matrix sessions
-					if (activeSession.rid) {
+					if (!isMatrixSession && activeSession.rid) {
 						subscribe(
 							{
 								name: SUB_STREAM_ROOM_MESSAGES,

@@ -1,5 +1,5 @@
 import { endpoints } from '../resources/scripts/endpoints';
-import { fetchData, FETCH_METHODS } from './fetchData';
+import { fetchData, FETCH_ERRORS, FETCH_METHODS } from './fetchData';
 
 interface ActiveViewInput {
 	roomId?: string | null;
@@ -20,6 +20,5 @@ export const apiPatchNotificationActiveView = async ({
 			threadRootId: threadRootId || null,
 			active
 		}),
-		responseHandling: []
+		responseHandling: [FETCH_ERRORS.CATCH_ALL]
 	});
-

@@ -136,6 +136,12 @@ export const RouterConfigUser = (
 				}
 			},
 			{
+				condition: (userData) => {
+					return !hasUserAuthority(
+						AUTHORITIES.ASKER_DEFAULT,
+						userData
+					);
+				},
 				to: '/notifications',
 				icon: NavActivityIcon,
 				iconHover: NavActivityIconHover,
@@ -146,6 +152,12 @@ export const RouterConfigUser = (
 				}
 			},
 			{
+				condition: (userData) => {
+					return !hasUserAuthority(
+						AUTHORITIES.ASKER_DEFAULT,
+						userData
+					);
+				},
 				to: '/drafts',
 				icon: NavDraftsIcon,
 				iconHover: NavDraftsIconHover,

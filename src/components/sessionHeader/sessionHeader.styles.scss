@@ -39,6 +39,27 @@ $iconSize: 24px;
 		border-bottom: 1px solid #ffd1d1;
 	}
 
+	&__endChatButton {
+		padding: 8px 16px;
+		margin-right: 12px;
+		margin-left: 12px;
+		border-radius: 20px;
+		border: none;
+		background-color: #c62828;
+		color: #fff;
+		font-size: 14px;
+		font-weight: 500;
+		cursor: pointer;
+		transition: all 0.3s ease;
+		white-space: nowrap;
+		flex-shrink: 0;
+
+		&:disabled {
+			opacity: 0.6;
+			cursor: not-allowed;
+		}
+	}
+
 	&__feedbackHeaderWrapper {
 		justify-content: flex-start;
 

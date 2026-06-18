@@ -19,6 +19,7 @@ export interface RedeemInviteLinkLegacyResponse {
 	tenantId: number;
 	agencyId: number;
 	consultingTypeId: number | null;
+	topicId?: number | null;
 }
 
 export type RedeemInviteLinkResponse =

@@ -1,3 +1,5 @@
+# Apply with environment-specific values, e.g.:
+#   ORISO_APP_V2_HOST=appv2.example.org ORISO_APP_V2_TLS_SECRET=appv2-example-org-tls envsubst < ingress-v2.yaml | kubectl apply -f -
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -10,10 +12,10 @@ spec:
   ingressClassName: traefik
   tls:
   - hosts:
-    - appv2.oriso.site
-    secretName: appv2-oriso-site-tls
+    - ${ORISO_APP_V2_HOST}
+    secretName: ${ORISO_APP_V2_TLS_SECRET}
   rules:
-  - host: appv2.oriso.site
+  - host: ${ORISO_APP_V2_HOST}
     http:
       paths:
       - path: /
@@ -23,4 +25,3 @@ spec:
             name: frontend-v2
             port:
               number: 9002
-

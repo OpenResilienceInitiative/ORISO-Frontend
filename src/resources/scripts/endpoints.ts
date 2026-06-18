@@ -1,4 +1,5 @@
 import { getApiBaseUrl } from './getApiBaseUrl';
+import { getKeycloakAuthPath } from './runtimeConfig';
 
 export const apiUrl = getApiBaseUrl();
 
@@ -36,8 +37,14 @@ export const endpoints = {
 	chatRoom: apiUrl + '/service/users/chat/room',
 	anonymousEnquiryDetails: (sessionId: number | string) =>
 		apiUrl + `/service/conversations/anonymous/${sessionId}`,
+	finishAnonymousConversation: (sessionId: number | string) =>
+		apiUrl + `/service/conversations/anonymous/${sessionId}/finish`,
+	anonymousConsultantAvailability:
+		apiUrl + '/service/conversations/anonymous/availability',
 	consultantEnquiriesBase:
 		apiUrl + '/service/conversations/consultants/enquiries/',
+	consultantLiveChatAvailability:
+		apiUrl + '/service/conversations/consultants/availability',
 	consultantSessions:
 		apiUrl + '/service/users/sessions/consultants?status=2&',
 	consultantStatistics: apiUrl + '/service/statistics/consultant',
@@ -50,12 +57,13 @@ export const endpoints = {
 	error: apiUrl + '/service/logstash',
 	groupChatBase: apiUrl + '/service/users/chat/',
 	keycloakAccessToken:
-		apiUrl + '/auth/realms/online-beratung/protocol/openid-connect/token',
+		apiUrl + getKeycloakAuthPath('/protocol/openid-connect/token'),
 	keycloakLogout:
-		apiUrl + '/auth/realms/online-beratung/protocol/openid-connect/logout',
+		apiUrl + getKeycloakAuthPath('/protocol/openid-connect/logout'),
 	liveservice: apiUrl + '/service/live',
-	loginResetPasswordLink:
-		'/auth/realms/online-beratung/login-actions/reset-credentials?client_id=account',
+	loginResetPasswordLink: getKeycloakAuthPath(
+		'/login-actions/reset-credentials?client_id=account'
+	),
 	magicLinkRequest: apiUrl + '/service/users/magic-link/request',
 	magicLinkConsume: apiUrl + '/service/users/magic-link/consume',
 	messageRead: apiUrl + '/api/v1/subscriptions.read',

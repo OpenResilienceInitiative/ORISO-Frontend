@@ -285,6 +285,9 @@
 		"leaveGroupChat": "Leave chat",
 		"mute": "Mute",
 		"muteDescription": "Disable notifications for this chat.",
+		"activateNotification": "Activate notifications",
+		"privacyPolicy": "Privacy policy",
+		"privacyPolicyDescription": "Read how this counseling center processes your data.",
 		"help": "Request Help",
 		"helpDescription": "Escalate the case internally or externally without neglecting data protection.",
 		"invite": "Invite More People",
@@ -1243,6 +1246,8 @@
 		"showMore": "Show more",
 		"systemNotification": "System Notification",
 		"systemNotificationTitle": "System notification",
+		"userLeftChat": "{{name}} left the chat",
+		"anonymousUser": "User",
 		"supervisionEnabledTitle": "Supervision Enabled!",
 		"supervisionEnabledDescription": "{{name}} was added as a consultant supervisor to this chat.",
 		"today": "Today",
@@ -1556,6 +1561,10 @@
 			"inquiryAccepted": {
 				"title": "Inquiry accepted",
 				"description": "Your inquiry has been accepted by a counsellor."
+			},
+			"conversationFinished": {
+				"title": "Chat ended",
+				"description": "The advice seeker has ended the anonymous chat."
 			},
 			"mainEmail": {
 				"title": "Allow email notifications"
@@ -2836,7 +2845,24 @@
 		"agencies": {
 			"noresults": "No counseling centers available for this topic."
 		},
-		"start": "Start consultation"
+		"start": "Start consultation",
+		"queue": {
+			"actionsLabel": "Waiting room actions",
+			"calmCompanion": "Open a short calm companion",
+			"calmCompanionHint": "Until the chat begins, a short interactive calm companion. Right here in the chat room",
+			"calmCompanionHintMobileLine1": "Until the chat begins, a short",
+			"calmCompanionHintMobileLine2": "interactive calm companion.",
+			"calmCompanionHintDesktop": "Until the chat begins, a short calm companion. Right here in the chat room",
+			"positionCount_one": "{{count}} person ahead of you",
+			"positionCount_other": "{{count}} people ahead of you",
+			"positionCountSuffix": "still ahead of you",
+			"connecting": "Connecting …",
+			"insteadOfWaiting": "Instead of waiting",
+			"requestLocalCounselor": "Send on-site consultation request",
+			"consultantAccepted": "Your counselor is now expecting you in the chat.",
+			"startChatNow": "Start chat now",
+			"dismissAcceptedBanner": "Dismiss notice"
+		}
 	},
 	"sessionHeader": {
 		"anonymous": {
@@ -2852,6 +2878,39 @@
 				"error": {
 					"title": "Deletion Error",
 					"text": "The account could not be deleted. Please try again."
+				}
+			},
+			"endChat": {
+				"label": "End chat",
+				"ending": "Ending…",
+				"consultant": {
+					"label": "End chat",
+					"confirm": {
+						"headline": "End this anonymous chat?",
+						"copy": "The conversation will be closed for you and the advice seeker.",
+						"buttonConfirm": "End chat"
+					},
+					"success": {
+						"headline": "Chat ended",
+						"copy": "The anonymous chat has been closed.",
+						"buttonClose": "Back to sessions"
+					}
+				},
+				"confirm": {
+					"headline": "Do you really want to end the chat?",
+					"copy": "The conversation will be closed. You will not be able to continue this anonymous chat.",
+					"buttonConfirm": "End chat",
+					"buttonCancel": "Cancel"
+				},
+				"success": {
+					"headline": "Chat ended",
+					"copy": "Thank you for using our live chat. You can close this page now.",
+					"buttonClose": "Close"
+				},
+				"error": {
+					"headline": "Could not end chat",
+					"copy": "The chat could not be ended. Please try again.",
+					"buttonClose": "Close"
 				}
 			}
 		},
