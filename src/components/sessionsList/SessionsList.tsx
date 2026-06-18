@@ -39,6 +39,10 @@ import {
 	SESSION_COUNT
 } from '../../api';
 import { useLiveChatAvailable } from '../../utils/liveChatToggle';
+import {
+	isMatrixRoom,
+	isMatrixRoomIdHeuristic
+} from '../../utils/matrixRoomUtils';
 import { Button } from '../button/Button';
 import './sessionsList.styles';
 import { SCROLL_PAGINATE_THRESHOLD } from './sessionsListConfig';
@@ -638,9 +642,7 @@ export const SessionsList = ({
 
 							// Check if groupId looks like a Matrix room ID (starts with ! or contains :)
 							const isMatrixRoomId =
-								groupId &&
-								(groupId.startsWith('!') ||
-									groupId.includes(':'));
+								isMatrixRoomIdHeuristic(groupId);
 
 							if (isEmptyEnquiry) {
 								// Empty enquiry: go to write view
@@ -1271,8 +1273,7 @@ export const SessionsList = ({
 
 			const matrixRoomId =
 				(item as { matrixRoomId?: string })?.matrixRoomId ||
-				(typeof item.groupId === 'string' &&
-				item.groupId.startsWith('!')
+				(typeof item.groupId === 'string' && isMatrixRoom(item.groupId)
 					? item.groupId
 					: null);
 			const matrixRoom = matrixRoomId

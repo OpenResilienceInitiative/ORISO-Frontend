@@ -8,6 +8,7 @@ import {
 	getPrettyDateFromMessageDate,
 	MILLISECONDS_PER_SECOND
 } from '../../utils/dateHelpers';
+import { isMatrixRoomIdHeuristic } from '../../utils/matrixRoomUtils';
 import { UserAvatar } from '../message/UserAvatar';
 import { ConsultantSearchLoader } from '../sessionHeader/ConsultantSearchLoader';
 import { MenuVerticalIcon, ShowPasswordIcon } from '../../resources/img/icons';
@@ -363,10 +364,9 @@ export const SessionListItemComponent = ({
 		// For sessions without groupId (Matrix migration), navigate by session ID
 		if (activeSession.item.id !== undefined) {
 			// Check if groupId looks like a Matrix room ID (starts with ! or contains :)
-			const isMatrixRoomId =
-				activeSession.item.groupId &&
-				(activeSession.item.groupId.startsWith('!') ||
-					activeSession.item.groupId.includes(':'));
+			const isMatrixRoomId = isMatrixRoomIdHeuristic(
+				activeSession.item.groupId
+			);
 
 			if (activeSession.item.groupId && !isMatrixRoomId) {
 				// Original RocketChat behavior: navigate with groupId
