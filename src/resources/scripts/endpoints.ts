@@ -1,4 +1,5 @@
 import { getApiBaseUrl } from './getApiBaseUrl';
+import { getKeycloakAuthPath } from './runtimeConfig';
 
 export const apiUrl = getApiBaseUrl();
 
@@ -56,12 +57,13 @@ export const endpoints = {
 	error: apiUrl + '/service/logstash',
 	groupChatBase: apiUrl + '/service/users/chat/',
 	keycloakAccessToken:
-		apiUrl + '/auth/realms/online-beratung/protocol/openid-connect/token',
+		apiUrl + getKeycloakAuthPath('/protocol/openid-connect/token'),
 	keycloakLogout:
-		apiUrl + '/auth/realms/online-beratung/protocol/openid-connect/logout',
+		apiUrl + getKeycloakAuthPath('/protocol/openid-connect/logout'),
 	liveservice: apiUrl + '/service/live',
-	loginResetPasswordLink:
-		'/auth/realms/online-beratung/login-actions/reset-credentials?client_id=account',
+	loginResetPasswordLink: getKeycloakAuthPath(
+		'/login-actions/reset-credentials?client_id=account'
+	),
 	magicLinkRequest: apiUrl + '/service/users/magic-link/request',
 	magicLinkConsume: apiUrl + '/service/users/magic-link/consume',
 	messageRead: apiUrl + '/api/v1/subscriptions.read',

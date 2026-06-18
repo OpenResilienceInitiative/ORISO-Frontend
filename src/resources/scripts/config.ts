@@ -19,14 +19,15 @@ import {
 	OVERLAY_TWO_FACTOR_NAG
 } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
 
-const organizationHomeUrl =
-	process.env.REACT_APP_ORGANIZATION_HOME_URL || 'https://www.caritas.de';
-const legalImprintUrl =
-	process.env.REACT_APP_LEGAL_IMPRINT_URL ||
-	'https://www.caritas-beratungundhilfe.de/impressum';
-const legalPrivacyUrl =
-	process.env.REACT_APP_LEGAL_PRIVACY_URL ||
-	'https://www.caritas-beratungundhilfe.de/datenschutz';
+import {
+	getLegalImprintUrl,
+	getLegalPrivacyUrl,
+	getOrganizationHomeUrl
+} from './runtimeConfig';
+
+const organizationHomeUrl = getOrganizationHomeUrl();
+const legalImprintUrl = getLegalImprintUrl(organizationHomeUrl);
+const legalPrivacyUrl = getLegalPrivacyUrl(organizationHomeUrl);
 
 export const uiUrl = window.location.origin;
 
