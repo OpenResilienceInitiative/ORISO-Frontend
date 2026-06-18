@@ -39,10 +39,7 @@ import {
 	SESSION_COUNT
 } from '../../api';
 import { useLiveChatAvailable } from '../../utils/liveChatToggle';
-import {
-	isMatrixRoom,
-	isMatrixRoomIdHeuristic
-} from '../../utils/matrixRoomUtils';
+import { isMatrixRoomId } from '../../utils/isMatrixSession';
 import { Button } from '../button/Button';
 import './sessionsList.styles';
 import { SCROLL_PAGINATE_THRESHOLD } from './sessionsListConfig';
@@ -642,7 +639,9 @@ export const SessionsList = ({
 
 							// Check if groupId looks like a Matrix room ID (starts with ! or contains :)
 							const isMatrixRoomId =
-								isMatrixRoomIdHeuristic(groupId);
+								groupId &&
+								(isMatrixRoomId(groupId) ||
+									groupId.includes(':'));
 
 							if (isEmptyEnquiry) {
 								// Empty enquiry: go to write view
@@ -1190,9 +1189,7 @@ export const SessionsList = ({
 		type === SESSION_LIST_TYPES.MY_SESSION &&
 		!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
 
-	const showMySessionToolbar =
-		type === SESSION_LIST_TYPES.MY_SESSION ||
-		type === SESSION_LIST_TYPES.ENQUIRY;
+	const showMySessionToolbar = type === SESSION_LIST_TYPES.MY_SESSION;
 	/**
 	 * Enquiry tab gets its own compact chip row (Chats + Live Chat). It
 	 * shares the same `sessionToolbarChip` state as the Gespräch toolbar so
@@ -1273,7 +1270,8 @@ export const SessionsList = ({
 
 			const matrixRoomId =
 				(item as { matrixRoomId?: string })?.matrixRoomId ||
-				(typeof item.groupId === 'string' && isMatrixRoom(item.groupId)
+				(typeof item.groupId === 'string' &&
+				item.isMatrixRoomId(groupId)
 					? item.groupId
 					: null);
 			const matrixRoom = matrixRoomId
@@ -1505,14 +1503,14 @@ export const SessionsList = ({
 
 	return (
 		<div className="sessionsList__innerWrapper">
-			{/* {showEnquiryFilterChips && (
+			{showEnquiryFilterChips && (
 				<EnquiryFilterChips
 					translate={translate}
 					activeChip={sessionToolbarChip}
 					onChipToggle={handleToolbarChipToggle}
 					showLiveChatChip={liveChatAvailable}
 				/>
-			)} */}
+			)}
 			{showMySessionToolbar && (
 				<SessionsListToolbar
 					translate={translate}

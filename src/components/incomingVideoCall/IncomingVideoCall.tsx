@@ -9,12 +9,12 @@ import { ReactComponent as CameraOnIcon } from '../../resources/img/icons/camera
 import { NotificationType, NotificationsContext } from '../../globalState';
 import { supportsE2EEncryptionVideoCall } from '../../utils/videoCallHelpers';
 import { decodeUsername } from '../../utils/encryptionHelpers';
+import { isMatrixRoomId } from '../../utils/isMatrixSession';
 import { apiRejectVideoCall } from '../../api';
 import './incomingVideoCall.styles';
 import { ReactComponent as CloseIcon } from '../../resources/img/icons/x.svg';
 import { useTranslation } from 'react-i18next';
 import { useJoinVideoCall } from '../sessionHeader/GroupChatHeader/useJoinVideoCall';
-import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 
 export interface VideoCallRequestProps {
 	rcGroupId: string;
@@ -99,7 +99,7 @@ export const IncomingVideoCall = (props: IncomingVideoCallProps) => {
 	const handleAnswerVideoCall = React.useCallback(
 		(isVideoActivated: boolean = false) => {
 			// Check if this is a Matrix call (roomId starts with !)
-			const isMatrixCall = isMatrixRoom(props.videoCall.rcGroupId);
+			const isMatrixCall = isMatrixRoomId(props.videoCall.rcGroupId);
 
 			if (isMatrixCall) {
 				// For Matrix calls, open in new tab
@@ -126,7 +126,7 @@ export const IncomingVideoCall = (props: IncomingVideoCallProps) => {
 
 	const handleRejectVideoCall = React.useCallback(() => {
 		// Check if this is a Matrix call (roomId starts with !)
-		const isMatrixCall = isMatrixRoom(props.videoCall.rcGroupId);
+		const isMatrixCall = isMatrixRoomId(props.videoCall.rcGroupId);
 
 		if (isMatrixCall) {
 			// console.log('📞 Rejecting Matrix call in room:', props.videoCall.rcGroupId);

@@ -40,7 +40,7 @@ import { BUTTON_TYPES } from '../button/Button';
 import { logout } from '../logout/logout';
 import { ReactComponent as CheckIcon } from '../../resources/img/illustrations/check.svg';
 import useTyping from '../../utils/useTyping';
-import { isMatrixRoom } from '../../utils/matrixRoomUtils';
+import { isMatrixRoomId } from '../../utils/isMatrixSession';
 import './session.styles';
 import { useE2EE } from '../../hooks/useE2EE';
 import {
@@ -118,7 +118,7 @@ export const SessionStream = ({
 	const isMatrixSession = useMemo(
 		() =>
 			Boolean(
-				((!activeSession.rid || isMatrixRoom(activeSession.rid)) &&
+				((!activeSession.rid || isMatrixRoomId(activeSession.rid)) &&
 					activeSession.item?.id) ||
 					activeSession.item?.matrixRoomId
 			),
@@ -130,7 +130,7 @@ export const SessionStream = ({
 	);
 	const matrixRoomId = useMemo(
 		() =>
-			isMatrixRoom(activeSession.rid)
+			isMatrixRoomId(activeSession.rid)
 				? activeSession.rid
 				: activeSession.item?.matrixRoomId || '',
 		[activeSession.rid, activeSession.item?.matrixRoomId]
@@ -211,7 +211,7 @@ export const SessionStream = ({
 		// Some sessions still carry a legacy rid while exposing matrixRoomId.
 		const isMatrixBackedSession =
 			Boolean(activeSession.item?.matrixRoomId) ||
-			isMatrixRoom(activeSession.rid);
+			isMatrixRoomId(activeSession.rid);
 		if (isMatrixBackedSession && activeSession.item?.id) {
 			const sessionId = activeSession.item.id;
 			const apiUrlBase = getApiBaseUrl();
@@ -519,9 +519,9 @@ export const SessionStream = ({
 		const isMatrixSession = Boolean(
 			activeSession.item?.id &&
 				(activeSession.item?.matrixRoomId ||
-					isMatrixRoom(activeSession.rid))
+					isMatrixRoomId(activeSession.rid))
 		);
-		const matrixRoomId = isMatrixRoom(activeSession.rid)
+		const matrixRoomId = isMatrixRoomId(activeSession.rid)
 			? activeSession.rid
 			: activeSession.item?.matrixRoomId;
 
@@ -702,7 +702,7 @@ export const SessionStream = ({
 			roomId?: string;
 			sessionId?: number;
 		}) => {
-			const activeMatrixRoomId = isMatrixRoom(activeSession.rid)
+			const activeMatrixRoomId = isMatrixRoomId(activeSession.rid)
 				? activeSession.rid
 				: activeSession.item?.matrixRoomId || '';
 			const activeRid = activeSession.rid || '';

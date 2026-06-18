@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { Link, useHistory } from 'react-router-dom';
 import clsx from 'clsx';
 import { handleNumericTranslation } from '../../utils/translate';
+import { isMatrixRoomId } from '../../utils/isMatrixSession';
 import { mobileListView } from '../app/navigationHandler';
 import { apiDeleteSessionAndUser } from '../../api/apiDeleteSessionAndUser';
 import { apiFinishAnonymousConversation } from '../../api/apiFinishAnonymousConversation';
@@ -55,7 +56,6 @@ import {
 import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
 import { logout } from '../logout/logout';
 import { appConfig } from '../../utils/appConfig';
-import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import {
 	convertUserDataObjectToArray,
 	getUserDataTranslateBase
@@ -411,7 +411,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	};
 
 	const postSupervisorAddedSystemMessage = async (supervisorName: string) => {
-		const matrixRoomId = isMatrixRoom(activeSession.rid)
+		const matrixRoomId = isMatrixRoomId(activeSession.rid)
 			? activeSession.rid
 			: activeSession.item?.matrixRoomId;
 		if (!matrixRoomId || !activeSession.item.id) {

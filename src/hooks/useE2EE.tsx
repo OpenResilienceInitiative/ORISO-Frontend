@@ -9,6 +9,7 @@ import {
 	getTmpMasterKey,
 	importGroupKey
 } from '../utils/encryptionHelpers';
+import { isMatrixRoomId } from '../utils/isMatrixSession';
 import { RocketChatSubscriptionsContext } from '../globalState/provider/RocketChatSubscriptionsProvider';
 import { getValueFromCookie } from '../components/sessionCookie/accessSessionCookie';
 import { apiRocketChatSetRoomKeyID } from '../api/apiRocketChatSetRoomKeyID';
@@ -17,7 +18,6 @@ import {
 	apiSendAliasMessage
 } from '../api/apiSendAliasMessage';
 import { RocketChatUsersOfRoomContext } from '../globalState/provider/RocketChatUsersOfRoomProvider';
-import { isMatrixRoom } from '../utils/matrixRoomUtils';
 
 export const ENCRYPT_ROOM_STATE_GET_MEMBERS = 'get_members';
 export const ENCRYPT_ROOM_STATE_GET_USERS_WITHOUT_KEY = 'get_users_without_key';
@@ -362,7 +362,7 @@ export const useE2EE = (
 		};
 
 		// MATRIX MIGRATION: Matrix rooms don't use RocketChat E2EE, skip the check
-		if (isMatrixRoom(rid)) {
+		if (isMatrixRoomId(rid)) {
 			setReady(true);
 			return cleanup;
 		}

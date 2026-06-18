@@ -13,10 +13,7 @@ import { ResizeObserver } from '@juggle/resize-observer';
 import clsx from 'clsx';
 import { scrollToEnd, isMyMessage, SESSION_LIST_TYPES } from './sessionHelpers';
 import { formatToHHMM } from '../../utils/dateHelpers';
-import {
-	isMatrixRoom,
-	isMatrixRoomIdHeuristic
-} from '../../utils/matrixRoomUtils';
+import { isMatrixRoomId } from '../../utils/isMatrixSession';
 import {
 	MessageItem,
 	MessageItemComponent
@@ -1664,7 +1661,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			};
 
 			const isMatrixSession = Boolean(
-				isMatrixRoom(activeSession.rid) ||
+				isMatrixRoomId(activeSession.rid) ||
 					activeSession.item?.matrixRoomId ||
 					messageUserId?.includes('@')
 			);
@@ -1924,7 +1921,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		registerAnonymousChatSessionForCleanup(
 			activeSession.item.id,
 			activeSession.item.status,
-			isMatrixRoomIdHeuristic(activeSession.rid)
+			isMatrixRoomId(activeSession.rid) ||
+				activeSession.rid?.includes(':')
 				? activeSession.rid
 				: activeSession.item?.matrixRoomId,
 			userData?.userName
@@ -2867,7 +2865,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			return;
 		}
 		const roomId =
-			(isMatrixRoom(activeSession.rid)
+			(isMatrixRoomId(activeSession.rid)
 				? activeSession.rid
 				: activeSession.item?.matrixRoomId ||
 					activeSession.rid ||
