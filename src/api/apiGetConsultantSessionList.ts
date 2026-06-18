@@ -10,24 +10,12 @@ export const INITIAL_OFFSET: number = 0;
 export const SESSION_COUNT: number = 15;
 export const TIMEOUT: number = 10000;
 
-export type ConsultantEnquiryFilter = 'chats' | 'liveChat';
-
 export interface ApiGetConsultantSessionListInterface {
 	type: SESSION_LIST_TYPES;
 	offset?: number;
 	sessionListTab?: string;
 	count?: number;
 	signal?: AbortSignal;
-	/**
-	 * Enquiry-list source:
-	 *   'chats'    → /enquiries/registered (default)
-	 *   'liveChat' → /enquiries/anonymous
-	 * Omitted = 'chats'. Splitting by source keeps pagination sane — merging
-	 * the two feeds caused newer anonymous enquiries to push registered ones
-	 * below the paging window, so users had to scroll past all of them to
-	 * find a chat.
-	 */
-	enquiryFilter?: ConsultantEnquiryFilter;
 }
 
 const fetchListUrl = (
@@ -66,11 +54,10 @@ export const apiGetConsultantSessionList = async ({
 	/*
 	 * Enquiry list — always pull /enquiries/registered. The split between
 	 * "Chats" and "Live Chat" happens client-side based on whether the
-	 * session's asker-username starts with `Anonymous-`, because this
-	 * deployment stores both flows under `registration_type='REGISTERED'`
-	 * (the `/enquiries/anonymous` endpoint filters by the DB registration
-	 * type, which is always empty here, so it can't serve the live-chat
-	 * feed).
+	 * session's asker-username starts with `Anonymous-` / `anon_` or uses
+	 * postcode `00000`, because invite-link and legacy anonymous flows store
+	 * sessions under registration_type=REGISTERED. The /enquiries/anonymous
+	 * endpoint only lists registration_type=ANONYMOUS rows.
 	 */
 	const registeredUrl =
 		`${endpoints.consultantEnquiriesBase}registered?` +

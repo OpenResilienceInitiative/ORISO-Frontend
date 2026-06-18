@@ -1,7 +1,7 @@
 {
 	"version": "1.0.0",
-	"gitCommitHash": "801df66ea7eb8ebc7e24363d8883d5e43afd4488",
-	"generatedAt": "2026-05-27T17:01:58.197Z",
+	"gitCommitHash": "36fb0462dbb0106d764c836cf2e9f517f3c84789",
+	"generatedAt": "2026-06-12T02:09:41.802Z",
 	"files": {
 		".cursor/settings.json": {
 			"filePath": ".cursor/settings.json",
@@ -25,12 +25,92 @@
 		},
 		".env.example": {
 			"filePath": ".env.example",
-			"contentHash": "26a3afb2d2eda699fe774baf79460d55e2ab0ad80a1e7bdc6a1568ed619d3cbd",
+			"contentHash": "31b08551936ee81a056210c1aba2f71876740bfda1efff0b0fb6164b1340a469",
 			"functions": [],
 			"classes": [],
 			"imports": [],
 			"exports": [],
-			"totalLines": 31,
+			"totalLines": 55,
+			"hasStructuralAnalysis": true
+		},
+		".github/actions/docker-build-push/action.yml": {
+			"filePath": ".github/actions/docker-build-push/action.yml",
+			"contentHash": "72d8033b749694997dc7095cfc701bf714c02d9f1936ebcad435a3b3bb6be6f9",
+			"functions": [],
+			"classes": [],
+			"imports": [],
+			"exports": [],
+			"totalLines": 52,
+			"hasStructuralAnalysis": true
+		},
+		".github/actions/node-build/action.yml": {
+			"filePath": ".github/actions/node-build/action.yml",
+			"contentHash": "3d49a85008d378d6a9d1aef1b973a3dbdc0faca57b88ae2a9f48a56dc7c60744",
+			"functions": [],
+			"classes": [],
+			"imports": [],
+			"exports": [],
+			"totalLines": 24,
+			"hasStructuralAnalysis": true
+		},
+		".github/workflows/ci-feature-branch.yml": {
+			"filePath": ".github/workflows/ci-feature-branch.yml",
+			"contentHash": "b2626943032ad3e12d60bc425773d130c090dd9206484915a932554fa038b4f2",
+			"functions": [],
+			"classes": [],
+			"imports": [],
+			"exports": [],
+			"totalLines": 21,
+			"hasStructuralAnalysis": true
+		},
+		".github/workflows/ci-main.yml": {
+			"filePath": ".github/workflows/ci-main.yml",
+			"contentHash": "cd00a87f00a4b2c2967f27253ddc90a4dff6858d040aa24c66e0f80db6984d2d",
+			"functions": [],
+			"classes": [],
+			"imports": [],
+			"exports": [],
+			"totalLines": 36,
+			"hasStructuralAnalysis": true
+		},
+		".github/workflows/ci-pull-request.yml": {
+			"filePath": ".github/workflows/ci-pull-request.yml",
+			"contentHash": "924b5dad8ca86a0aaf7f429295d2a9d6cd42c3c9da0cb8e7a75affe4e4ec98aa",
+			"functions": [],
+			"classes": [],
+			"imports": [],
+			"exports": [],
+			"totalLines": 29,
+			"hasStructuralAnalysis": true
+		},
+		".github/workflows/ci-storybook-feature-branch.yml": {
+			"filePath": ".github/workflows/ci-storybook-feature-branch.yml",
+			"contentHash": "0a801df0da30350c30ea18edaf51d86a3a241bdda0d3553eba1d35a5643439e8",
+			"functions": [],
+			"classes": [],
+			"imports": [],
+			"exports": [],
+			"totalLines": 21,
+			"hasStructuralAnalysis": true
+		},
+		".github/workflows/ci-storybook-main.yml": {
+			"filePath": ".github/workflows/ci-storybook-main.yml",
+			"contentHash": "6ea0d6edec08e4936ad75971fde3c1efcbf9f2c755cb5f14c64077e2c7b8093c",
+			"functions": [],
+			"classes": [],
+			"imports": [],
+			"exports": [],
+			"totalLines": 37,
+			"hasStructuralAnalysis": true
+		},
+		".github/workflows/ci-storybook-pull-request.yml": {
+			"filePath": ".github/workflows/ci-storybook-pull-request.yml",
+			"contentHash": "5f54092ad204840237c6a9b7bafc5699db269c6a1de0da90a04258fb92035384",
+			"functions": [],
+			"classes": [],
+			"imports": [],
+			"exports": [],
+			"totalLines": 30,
 			"hasStructuralAnalysis": true
 		},
 		".github/workflows/frontend-deploy.yml": {
@@ -461,12 +541,12 @@
 		},
 		".storybook/preview-head.html": {
 			"filePath": ".storybook/preview-head.html",
-			"contentHash": "0fd1960d6192388c3286c5cd655b753fc611551f9e5ec30e8ac922d084c120ed",
+			"contentHash": "56dbc7227e7309bf67b2b0458a1bfa36ed2d6c719926608a8a80995801b24b8b",
 			"functions": [],
 			"classes": [],
 			"imports": [],
 			"exports": [],
-			"totalLines": 5,
+			"totalLines": 7,
 			"hasStructuralAnalysis": false
 		},
 		".storybook/preview.tsx": {
@@ -826,13 +906,93 @@
 		},
 		".understand-anything/.understandignore": {
 			"filePath": ".understand-anything/.understandignore",
-			"contentHash": "9e2330ff6846ce3d91350d825808afb6c00122c76ec5e795f94bd4aa59aa0cb8",
+			"contentHash": "e734f5828d954843eab73330a44e5f128d6ca0d2016a110805f1c854df46ac6f",
 			"functions": [],
 			"classes": [],
 			"imports": [],
 			"exports": [],
-			"totalLines": 51,
+			"totalLines": 60,
 			"hasStructuralAnalysis": false
+		},
+		".understand-anything/ARCHITECTURE.md": {
+			"filePath": ".understand-anything/ARCHITECTURE.md",
+			"contentHash": "03f474f891fecd8222eb164a8c761a5d91f39e3295a51f9ade96911c8a3e4b30",
+			"functions": [],
+			"classes": [],
+			"imports": [],
+			"exports": [],
+			"totalLines": 206,
+			"hasStructuralAnalysis": true
+		},
+		".understand-anything/config.json": {
+			"filePath": ".understand-anything/config.json",
+			"contentHash": "3e56f7d39fe721a90b489fe028b4927fc355b211945d8893272b06d0269ef6e7",
+			"functions": [],
+			"classes": [],
+			"imports": [],
+			"exports": [],
+			"totalLines": 4,
+			"hasStructuralAnalysis": true
+		},
+		".understand-anything/DEPENDENCY-AUDIT.md": {
+			"filePath": ".understand-anything/DEPENDENCY-AUDIT.md",
+			"contentHash": "58fda914955ec84b065b87c196e8719002a615cbfa2d6e44ecf4d15e26fbeef5",
+			"functions": [],
+			"classes": [],
+			"imports": [],
+			"exports": [],
+			"totalLines": 122,
+			"hasStructuralAnalysis": true
+		},
+		".understand-anything/FINDINGS.md": {
+			"filePath": ".understand-anything/FINDINGS.md",
+			"contentHash": "0ea00b3db31bb4ab1e4febf68bf2eb7cfb0b0eda5193954ab8516616e6c960da",
+			"functions": [],
+			"classes": [],
+			"imports": [],
+			"exports": [],
+			"totalLines": 27,
+			"hasStructuralAnalysis": true
+		},
+		".understand-anything/ONBOARDING.md": {
+			"filePath": ".understand-anything/ONBOARDING.md",
+			"contentHash": "2c094c1daba1ce758405af90e16c81db287e5bad5d1b165343c2f37d26401c14",
+			"functions": [],
+			"classes": [],
+			"imports": [],
+			"exports": [],
+			"totalLines": 22,
+			"hasStructuralAnalysis": true
+		},
+		".understand-anything/ORISO-ECOSYSTEM.md": {
+			"filePath": ".understand-anything/ORISO-ECOSYSTEM.md",
+			"contentHash": "72276058fffa6fecdf2bb0eb0a2403075df101def6fa877aab7938c14a017906",
+			"functions": [],
+			"classes": [],
+			"imports": [],
+			"exports": [],
+			"totalLines": 37,
+			"hasStructuralAnalysis": true
+		},
+		".understand-anything/README.md": {
+			"filePath": ".understand-anything/README.md",
+			"contentHash": "c90e294915246f234fc8931570b962c468b631c49445465f10f9613546a5c537",
+			"functions": [],
+			"classes": [],
+			"imports": [],
+			"exports": [],
+			"totalLines": 49,
+			"hasStructuralAnalysis": true
+		},
+		".understand-anything/visuals/README.md": {
+			"filePath": ".understand-anything/visuals/README.md",
+			"contentHash": "a3942e07cf3dbc1e7b342d0b3a16475d03017c9f652d7f7d3ce8e853ab96b888",
+			"functions": [],
+			"classes": [],
+			"imports": [],
+			"exports": [],
+			"totalLines": 6,
+			"hasStructuralAnalysis": true
 		},
 		"CHANGELOG.md": {
 			"filePath": "CHANGELOG.md",
@@ -967,7 +1127,7 @@
 		},
 		"config/webpack.config.js": {
 			"filePath": "config/webpack.config.js",
-			"contentHash": "15a4a36c4cf8b77737714e85dd1d890c1e6bf93b69dac908403106788481f445",
+			"contentHash": "79476015edb6570598fa8fcb6e238eefe44a5104cb538507201208a32d1f88f3",
 			"functions": [
 				{
 					"name": "getTemplate",
@@ -979,7 +1139,7 @@
 			"classes": [],
 			"imports": [],
 			"exports": [],
-			"totalLines": 898,
+			"totalLines": 921,
 			"hasStructuralAnalysis": true
 		},
 		"config/webpack/persistentCache/createEnvironmentHash.js": {
@@ -2732,12 +2892,12 @@
 		},
 		"Dockerfile": {
 			"filePath": "Dockerfile",
-			"contentHash": "d6111601ddd2ea7f9489a05d15ee61cbdfdeaf7c3b09c52ea2733d35bf730e89",
+			"contentHash": "2cb2176dad507c3b67c5bb2fbe9ac87c31a505cbd1305deb4f1696060d169e95",
 			"functions": [],
 			"classes": [],
 			"imports": [],
 			"exports": [],
-			"totalLines": 48,
+			"totalLines": 51,
 			"hasStructuralAnalysis": true
 		},
 		"Dockerfile.storybook": {
@@ -2977,12 +3137,22 @@
 		},
 		"k8s-temp-frontend.yaml": {
 			"filePath": "k8s-temp-frontend.yaml",
-			"contentHash": "ab8ecc574841abb67fbf7394a164b71d8aa69934948aa28e83ae52a06274665a",
+			"contentHash": "e3109d9ded00d54aec049684798f0faeea8a6fe9823a765cd0093f10d3d4a583",
 			"functions": [],
 			"classes": [],
 			"imports": [],
 			"exports": [],
-			"totalLines": 65,
+			"totalLines": 74,
+			"hasStructuralAnalysis": true
+		},
+		"k8s-temp-runtime-configmap.yaml": {
+			"filePath": "k8s-temp-runtime-configmap.yaml",
+			"contentHash": "27b52f485ec3826bc190458be090471bc33dea8d8533ddc51ae35bfc0a233b0e",
+			"functions": [],
+			"classes": [],
+			"imports": [],
+			"exports": [],
+			"totalLines": 11,
 			"hasStructuralAnalysis": true
 		},
 		"LICENSE.md": {
@@ -3097,7 +3267,7 @@
 		},
 		"proxy/server.js": {
 			"filePath": "proxy/server.js",
-			"contentHash": "c5840af3733078479d1dd0ba1b2b785aa37382ed816856c1ba588c419909bca5",
+			"contentHash": "f756d78c0fbc28268ec61c3f56770b02db6fd026ba681c4f783526a864a644c7",
 			"functions": [
 				{
 					"name": "resolveApp",
@@ -3109,13 +3279,23 @@
 					"name": "createServer",
 					"params": [],
 					"exported": false,
-					"lineCount": 115
+					"lineCount": 150
 				}
 			],
 			"classes": [],
 			"imports": [],
 			"exports": [],
-			"totalLines": 150,
+			"totalLines": 185,
+			"hasStructuralAnalysis": true
+		},
+		"public/config.js": {
+			"filePath": "public/config.js",
+			"contentHash": "a612f4c0d203910444b6278a339cace2bbdd292c81aaef78c49512b2477132f4",
+			"functions": [],
+			"classes": [],
+			"imports": [],
+			"exports": [],
+			"totalLines": 2,
 			"hasStructuralAnalysis": true
 		},
 		"public/element-sso-bridge.html": {
@@ -3170,12 +3350,12 @@
 		},
 		"README.md": {
 			"filePath": "README.md",
-			"contentHash": "0befc82426d159da5706367fcd34d3a5930b310a9cf7a1fda32aa24875f1b3ba",
+			"contentHash": "92dc350f859fe79a1b1ecb5ab588c48ac91b0b193266b2bf8fa8a99647cfad18",
 			"functions": [],
 			"classes": [],
 			"imports": [],
 			"exports": [],
-			"totalLines": 51,
+			"totalLines": 83,
 			"hasStructuralAnalysis": true
 		},
 		"scripts/build.js": {
@@ -3199,6 +3379,16 @@
 			"imports": [],
 			"exports": [],
 			"totalLines": 222,
+			"hasStructuralAnalysis": true
+		},
+		"scripts/docker-entrypoint.sh": {
+			"filePath": "scripts/docker-entrypoint.sh",
+			"contentHash": "5b46560a631b34ad93f9ec27de4f33e230c56468287358d2bf6965e35c565a6a",
+			"functions": [],
+			"classes": [],
+			"imports": [],
+			"exports": [],
+			"totalLines": 65,
 			"hasStructuralAnalysis": true
 		},
 		"scripts/start.js": {
@@ -3765,14 +3955,14 @@
 		},
 		"src/api/apiGetAgencyConsultantList.ts": {
 			"filePath": "src/api/apiGetAgencyConsultantList.ts",
-			"contentHash": "2398cc34950a0763cb40f384e26a8c6becd2b19a58cdd3cc63fbb59e23f2107d",
+			"contentHash": "c9d5ac3ca23ec61353e65d29cfe8ced924603dee1e4c349b30251faf49382622",
 			"functions": [
 				{
 					"name": "apiGetAgencyConsultantList",
 					"params": ["agencyId"],
 					"returnType": "Promise<Consultant[]>",
 					"exported": true,
-					"lineCount": 10
+					"lineCount": 15
 				}
 			],
 			"classes": [],
@@ -3783,23 +3973,23 @@
 				},
 				{
 					"source": "./fetchData",
-					"specifiers": ["fetchData", "FETCH_METHODS"]
+					"specifiers": ["fetchData", "FETCH_ERRORS", "FETCH_METHODS"]
 				}
 			],
 			"exports": ["apiGetAgencyConsultantList"],
-			"totalLines": 23,
+			"totalLines": 28,
 			"hasStructuralAnalysis": true
 		},
 		"src/api/apiGetAgencyId.ts": {
 			"filePath": "src/api/apiGetAgencyId.ts",
-			"contentHash": "396d6ee50031673561141c498a29f727a073e9457db7a7a7c9a2d19bb88021e8",
+			"contentHash": "49facecbeb5d5332221329954165f9d5af2ce589733a21688a01f2feeb2f64b7",
 			"functions": [
 				{
 					"name": "apiGetAgencyById",
 					"params": ["agencyId", "fetchConsultingTypeDetails"],
 					"returnType": "Promise<AgencyDataInterface>",
 					"exported": true,
-					"lineCount": 26
+					"lineCount": 33
 				}
 			],
 			"classes": [],
@@ -3822,7 +4012,7 @@
 				}
 			],
 			"exports": ["apiGetAgencyById"],
-			"totalLines": 32,
+			"totalLines": 39,
 			"hasStructuralAnalysis": true
 		},
 		"src/api/apiGetAnonymousEnquiryDetails.ts": {
@@ -3939,14 +4129,14 @@
 		},
 		"src/api/apiGetAskerSessionList.ts": {
 			"filePath": "src/api/apiGetAskerSessionList.ts",
-			"contentHash": "cd903666fee4a600d8d2e26604e379c69001ec936529bfe0d30d67eda9b5d419",
+			"contentHash": "7b6518d44cba87b70373f16b377c66fe880ffb6ec6b7c67df1a14fe1fdac62a0",
 			"functions": [
 				{
 					"name": "apiGetAskerSessionList",
 					"params": [],
 					"returnType": "Promise<any>",
 					"exported": true,
-					"lineCount": 28
+					"lineCount": 23
 				}
 			],
 			"classes": [],
@@ -3957,15 +4147,11 @@
 				},
 				{
 					"source": "./fetchData",
-					"specifiers": ["fetchData", "FETCH_METHODS"]
-				},
-				{
-					"source": "../utils/keycloakSession",
-					"specifiers": ["isAnonymousSession"]
+					"specifiers": ["fetchData", "FETCH_ERRORS", "FETCH_METHODS"]
 				}
 			],
 			"exports": ["apiGetAskerSessionList"],
-			"totalLines": 35,
+			"totalLines": 29,
 			"hasStructuralAnalysis": true
 		},
 		"src/api/apiGetAskerSessionList.ts.backup": {
@@ -4007,7 +4193,7 @@
 		},
 		"src/api/apiGetChatRoomById.ts": {
 			"filePath": "src/api/apiGetChatRoomById.ts",
-			"contentHash": "c24733f5916d39fb6ed40ea18d28ed709b54526368ea39a03634428a90ece418",
+			"contentHash": "833313584a9646821be0e2c48c0c6a888882e86eebf344fcd03431cf5b35f078",
 			"functions": [
 				{
 					"name": "apiGetChatRoomById",
@@ -4110,9 +4296,36 @@
 			"totalLines": 17,
 			"hasStructuralAnalysis": true
 		},
+		"src/api/apiGetConsultantAvailability.ts": {
+			"filePath": "src/api/apiGetConsultantAvailability.ts",
+			"contentHash": "fc0cb6d9f30b9aa719e06e7cb0c944c934e43f842b1102333056315c277abeed",
+			"functions": [
+				{
+					"name": "apiGetConsultantAvailability",
+					"params": ["topicId", "consultingTypeId", "signal"],
+					"returnType": "Promise<ConsultantAvailability>",
+					"exported": true,
+					"lineCount": 18
+				}
+			],
+			"classes": [],
+			"imports": [
+				{
+					"source": "../resources/scripts/endpoints",
+					"specifiers": ["endpoints"]
+				},
+				{
+					"source": "./fetchData",
+					"specifiers": ["fetchData", "FETCH_METHODS", "FETCH_ERRORS"]
+				}
+			],
+			"exports": ["apiGetConsultantAvailability"],
+			"totalLines": 37,
+			"hasStructuralAnalysis": true
+		},
 		"src/api/apiGetConsultantSessionList.ts": {
 			"filePath": "src/api/apiGetConsultantSessionList.ts",
-			"contentHash": "a173ff7e9ff293e90817572b54f90a7cd4968f1bcc851f1229a4f3b13bd84e00",
+			"contentHash": "1a53f03d9fcfef8f15f1389a83ddbeb44178874fd81a4f626951c7092f59397a",
 			"functions": [
 				{
 					"name": "fetchListUrl",
@@ -4128,7 +4341,7 @@
 					],
 					"returnType": "Promise<ListItemsResponseInterface>",
 					"exported": true,
-					"lineCount": 34
+					"lineCount": 33
 				}
 			],
 			"classes": [],
@@ -4159,7 +4372,7 @@
 				"TIMEOUT",
 				"apiGetConsultantSessionList"
 			],
-			"totalLines": 80,
+			"totalLines": 67,
 			"hasStructuralAnalysis": true
 		},
 		"src/api/apiGetConsultantStatistics.ts": {
@@ -4191,14 +4404,14 @@
 		},
 		"src/api/apiGetConsultingType.ts": {
 			"filePath": "src/api/apiGetConsultingType.ts",
-			"contentHash": "652dff5168ffa6a30a6f2d74e64e630f9a5e1ce91965440470c8e558280f0a89",
+			"contentHash": "e9bf8269f9d73b9b0225dcf191ff00a4e203d854850402c99805e5c4df702910",
 			"functions": [
 				{
 					"name": "apiGetConsultingType",
 					"params": ["params"],
 					"returnType": "Promise<ConsultingTypeInterface>",
 					"exported": true,
-					"lineCount": 29
+					"lineCount": 23
 				}
 			],
 			"classes": [],
@@ -4217,7 +4430,7 @@
 				}
 			],
 			"exports": ["apiGetConsultingType"],
-			"totalLines": 34,
+			"totalLines": 28,
 			"hasStructuralAnalysis": true
 		},
 		"src/api/apiGetConsultingTypes.ts": {
@@ -4339,7 +4552,7 @@
 		},
 		"src/api/apiGetSessionRooms.ts": {
 			"filePath": "src/api/apiGetSessionRooms.ts",
-			"contentHash": "71bb783e2a76e82e914365c49c47f5b32e2a4f298a87848ab3b58f951ae48550",
+			"contentHash": "2227810c088bb34188be4fdcb8c59b268db4610eb3c1f11d2e42bad6d876408e",
 			"functions": [
 				{
 					"name": "apiGetSessionRoomsByGroupIds",
@@ -4353,7 +4566,7 @@
 					"params": ["sessionId", "signal"],
 					"returnType": "Promise<{ sessions: ListItemInterface[] }>",
 					"exported": true,
-					"lineCount": 14
+					"lineCount": 18
 				}
 			],
 			"classes": [],
@@ -4375,7 +4588,7 @@
 				"apiGetSessionRoomsByGroupIds",
 				"apiGetSessionRoomBySessionId"
 			],
-			"totalLines": 34,
+			"totalLines": 38,
 			"hasStructuralAnalysis": true
 		},
 		"src/api/apiGetSessionSupervisors.ts": {
@@ -4600,14 +4813,14 @@
 		},
 		"src/api/apiGetUserData.ts": {
 			"filePath": "src/api/apiGetUserData.ts",
-			"contentHash": "78eff4070c6f4b0951a349d31790306491c52cf027940ec473dfee4b28497ac6",
+			"contentHash": "bca169fe1b9ef5de16603c60f143d8f74781135579ff5d0de8ee32adf53211af",
 			"functions": [
 				{
 					"name": "apiGetUserData",
 					"params": ["responseHandling"],
 					"returnType": "Promise<UserDataInterface>",
 					"exported": true,
-					"lineCount": 16
+					"lineCount": 12
 				}
 			],
 			"classes": [],
@@ -4622,15 +4835,11 @@
 				},
 				{
 					"source": "./fetchData",
-					"specifiers": ["fetchData", "FETCH_ERRORS", "FETCH_METHODS"]
-				},
-				{
-					"source": "../utils/keycloakSession",
-					"specifiers": ["isAnonymousSession"]
+					"specifiers": ["fetchData", "FETCH_METHODS"]
 				}
 			],
 			"exports": ["apiGetUserData"],
-			"totalLines": 22,
+			"totalLines": 17,
 			"hasStructuralAnalysis": true
 		},
 		"src/api/apiGetUserDataBySessionId.ts": {
@@ -4740,14 +4949,14 @@
 		},
 		"src/api/apiLogoutKeycloak.ts": {
 			"filePath": "src/api/apiLogoutKeycloak.ts",
-			"contentHash": "3bf837e11161ae4d4ec07ccb238e663973da1e13d896083c00b4e3c1b1c70e12",
+			"contentHash": "3036a887890c76ab4e38fe6b79fcb5d407bbcc88aeb45496e51573c86c899be8",
 			"functions": [
 				{
 					"name": "apiKeycloakLogout",
 					"params": [],
-					"returnType": "Promise<any>",
+					"returnType": "Promise<Response | null>",
 					"exported": true,
-					"lineCount": 17
+					"lineCount": 28
 				}
 			],
 			"classes": [],
@@ -4762,7 +4971,7 @@
 				}
 			],
 			"exports": ["apiKeycloakLogout"],
-			"totalLines": 21,
+			"totalLines": 32,
 			"hasStructuralAnalysis": true
 		},
 		"src/api/apiLogoutRocketchat.ts": {
@@ -4940,7 +5149,7 @@
 		},
 		"src/api/apiPatchNotificationActiveView.ts": {
 			"filePath": "src/api/apiPatchNotificationActiveView.ts",
-			"contentHash": "1868da52465440bb648e028ecc37ad5bea9936dbe186e6d98db3f84efcc80f98",
+			"contentHash": "c2a186a868091c30a1ea503c4eb1ccb9396e784969d355ef203412e47b02d87f",
 			"functions": [
 				{
 					"name": "apiPatchNotificationActiveView",
@@ -4958,23 +5167,23 @@
 				},
 				{
 					"source": "./fetchData",
-					"specifiers": ["fetchData", "FETCH_METHODS"]
+					"specifiers": ["fetchData", "FETCH_ERRORS", "FETCH_METHODS"]
 				}
 			],
 			"exports": ["apiPatchNotificationActiveView"],
-			"totalLines": 26,
+			"totalLines": 25,
 			"hasStructuralAnalysis": true
 		},
 		"src/api/apiPatchUserData.ts": {
 			"filePath": "src/api/apiPatchUserData.ts",
-			"contentHash": "b1a0b59cc8cc114a5429b784a80147bdf4721d5d769c47e232b87cc6a53893b2",
+			"contentHash": "57255a56670386de2f9344f362fa85324029ac2f3bf21811ecb37815b092a10a",
 			"functions": [
 				{
 					"name": "apiPatchUserData",
 					"params": ["data"],
 					"returnType": "Promise<any>",
 					"exported": true,
-					"lineCount": 21
+					"lineCount": 15
 				}
 			],
 			"classes": [],
@@ -4986,14 +5195,10 @@
 				{
 					"source": "./fetchData",
 					"specifiers": ["fetchData", "FETCH_ERRORS", "FETCH_METHODS"]
-				},
-				{
-					"source": "../utils/keycloakSession",
-					"specifiers": ["isAnonymousSession"]
 				}
 			],
 			"exports": ["apiPatchUserData"],
-			"totalLines": 26,
+			"totalLines": 19,
 			"hasStructuralAnalysis": true
 		},
 		"src/api/apiPostAdditionalEnquiry.ts": {
@@ -5340,6 +5545,42 @@
 			],
 			"exports": ["apiPutTools"],
 			"totalLines": 15,
+			"hasStructuralAnalysis": true
+		},
+		"src/api/apiRedeemInviteLink.ts": {
+			"filePath": "src/api/apiRedeemInviteLink.ts",
+			"contentHash": "49a44f4de9f2c373fa6f3942de765426bb799c0a5accf7ba9a99d3639fa4e059",
+			"functions": [
+				{
+					"name": "isRedeemInviteLinkSessionResponse",
+					"params": ["data"],
+					"exported": true,
+					"lineCount": 5
+				},
+				{
+					"name": "redeemInviteLink",
+					"params": ["token"],
+					"returnType": "Promise<RedeemInviteLinkResponse>",
+					"exported": true,
+					"lineCount": 17
+				}
+			],
+			"classes": [],
+			"imports": [
+				{
+					"source": "../resources/scripts/endpoints",
+					"specifiers": ["apiUrl"]
+				},
+				{
+					"source": "./fetchData",
+					"specifiers": ["FETCH_METHODS"]
+				}
+			],
+			"exports": [
+				"isRedeemInviteLinkSessionResponse",
+				"redeemInviteLink"
+			],
+			"totalLines": 52,
 			"hasStructuralAnalysis": true
 		},
 		"src/api/apiRejectVideoCall.ts": {
@@ -6045,6 +6286,33 @@
 			"totalLines": 20,
 			"hasStructuralAnalysis": true
 		},
+		"src/api/apiSetLiveChatAvailability.ts": {
+			"filePath": "src/api/apiSetLiveChatAvailability.ts",
+			"contentHash": "9db296512b9923a1d0abbb5ec475abb205a758ffb6a947c0a3910e50585fd243",
+			"functions": [
+				{
+					"name": "apiSetLiveChatAvailability",
+					"params": ["available"],
+					"returnType": "Promise<void>",
+					"exported": true,
+					"lineCount": 9
+				}
+			],
+			"classes": [],
+			"imports": [
+				{
+					"source": "../resources/scripts/endpoints",
+					"specifiers": ["endpoints"]
+				},
+				{
+					"source": "./fetchData",
+					"specifiers": ["fetchData", "FETCH_METHODS", "FETCH_ERRORS"]
+				}
+			],
+			"exports": ["apiSetLiveChatAvailability"],
+			"totalLines": 20,
+			"hasStructuralAnalysis": true
+		},
 		"src/api/apiSetSessionRead.ts": {
 			"filePath": "src/api/apiSetSessionRead.ts",
 			"contentHash": "6f4facceab9735c86ad6b90e5fab8e5e1bd599add4ae045002627ddc9c1e3429",
@@ -6294,19 +6562,19 @@
 		},
 		"src/api/apiUserDrafts.ts": {
 			"filePath": "src/api/apiUserDrafts.ts",
-			"contentHash": "41440a9df417857f9d6314c462d9f031fdbceccd7cde5ade046c5ced27f7974b",
+			"contentHash": "fbfcb5361dc0c2d24a084ed261d94da75a8c1dd7537d8f20b748cbb5f69a6046",
 			"functions": [
 				{
 					"name": "apiGetUserDrafts",
 					"params": ["page", "perPage"],
 					"returnType": "Promise<IUserDraftFeedResponse>",
 					"exported": true,
-					"lineCount": 18
+					"lineCount": 14
 				},
 				{
 					"name": "apiGetUserDraft",
 					"params": ["scopeKey", "signal"],
-					"returnType": "Promise<IUserDraftItem>",
+					"returnType": "Promise<IUserDraftItem | null>",
 					"exported": true,
 					"lineCount": 22
 				},
@@ -6315,7 +6583,7 @@
 					"params": ["scopeKey", "payload"],
 					"returnType": "Promise<void>",
 					"exported": true,
-					"lineCount": 15
+					"lineCount": 16
 				},
 				{
 					"name": "apiDeleteUserDraft",
@@ -6339,10 +6607,6 @@
 						"FETCH_METHODS",
 						"FETCH_SUCCESS"
 					]
-				},
-				{
-					"source": "../utils/keycloakSession",
-					"specifiers": ["isAnonymousSession"]
 				}
 			],
 			"exports": [
@@ -6351,7 +6615,7 @@
 				"apiUpsertUserDraft",
 				"apiDeleteUserDraft"
 			],
-			"totalLines": 97,
+			"totalLines": 93,
 			"hasStructuralAnalysis": true
 		},
 		"src/api/appointments/deleteAppointment.ts": {
@@ -6524,8 +6788,14 @@
 		},
 		"src/api/fetchData.ts": {
 			"filePath": "src/api/fetchData.ts",
-			"contentHash": "cc286e466d00ce4e627d7129715674a49786f633e538c47674fad8a6f367cbdc",
+			"contentHash": "c77a36ea464da678483e52e4b53b8dfa0f9af20de08a45549f945bf52c3f1bf5",
 			"functions": [
+				{
+					"name": "invalidateStaleAuthSession",
+					"params": [],
+					"exported": false,
+					"lineCount": 4
+				},
 				{
 					"name": "fetchData",
 					"params": [
@@ -6533,7 +6803,7 @@
 					],
 					"returnType": "Promise<any>",
 					"exported": true,
-					"lineCount": 230
+					"lineCount": 220
 				}
 			],
 			"classes": [
@@ -6562,8 +6832,20 @@
 					]
 				},
 				{
+					"source": "../components/auth/auth",
+					"specifiers": ["isPublicAuthRoute"]
+				},
+				{
 					"source": "../components/logout/logout",
 					"specifiers": ["logout"]
+				},
+				{
+					"source": "../components/sessionCookie/accessSessionCookie",
+					"specifiers": ["removeAllCookies"]
+				},
+				{
+					"source": "../components/sessionCookie/accessSessionLocalStorage",
+					"specifiers": ["removeTokenExpiryFromLocalStorage"]
 				},
 				{
 					"source": "../utils/appConfig",
@@ -6572,12 +6854,6 @@
 				{
 					"source": "../utils/requestCollector",
 					"specifiers": ["RequestLog"]
-				},
-				{
-					"source": "../utils/anonymousSessionFetchGuard",
-					"specifiers": [
-						"shouldRejectSilentlyForAnonymousRestrictedUrl"
-					]
 				}
 			],
 			"exports": [
@@ -6588,7 +6864,7 @@
 				"FetchErrorWithOptions",
 				"fetchData"
 			],
-			"totalLines": 307,
+			"totalLines": 304,
 			"hasStructuralAnalysis": true
 		},
 		"src/api/fetchData.ts.backup": {
@@ -6670,12 +6946,12 @@
 		},
 		"src/api/matrix/matrixClient.ts.backup": {
 			"filePath": "src/api/matrix/matrixClient.ts.backup",
-			"contentHash": "411ae2cffd16fd6801228408a4737888d25897ddc9d5f60dad5e4a92279de6e0",
+			"contentHash": "cfeefa09c0ac9fa4b81a4e1b22c20b5684d370f470dd4331f28533abf627d40a",
 			"functions": [],
 			"classes": [],
 			"imports": [],
 			"exports": [],
-			"totalLines": 266,
+			"totalLines": 269,
 			"hasStructuralAnalysis": false
 		},
 		"src/api/videocalls/getJwt.ts": {
@@ -6965,13 +7241,13 @@
 		},
 		"src/components/anonymousChat/AnonymousChat.tsx": {
 			"filePath": "src/components/anonymousChat/AnonymousChat.tsx",
-			"contentHash": "aa9db666cbc3d1e22167fdcbf9c156612986786b749ad672d10910bef735739b",
+			"contentHash": "63c85010f306c4197e795725936425f08559a86959c4d8d08b5140946b1dd44f",
 			"functions": [
 				{
 					"name": "AnonymousChat",
 					"params": ["{ onBack }"],
 					"exported": true,
-					"lineCount": 744
+					"lineCount": 1098
 				}
 			],
 			"classes": [],
@@ -6991,6 +7267,10 @@
 					]
 				},
 				{
+					"source": "react-router-dom",
+					"specifiers": ["useHistory"]
+				},
+				{
 					"source": "react-i18next",
 					"specifiers": ["useTranslation"]
 				},
@@ -7006,7 +7286,8 @@
 						"Radio",
 						"IconButton",
 						"InputAdornment",
-						"TextField"
+						"TextField",
+						"Dialog"
 					]
 				},
 				{
@@ -7018,8 +7299,32 @@
 					"specifiers": ["ContentCopyIcon"]
 				},
 				{
+					"source": "@mui/icons-material/AccessTimeOutlined",
+					"specifiers": ["AccessTimeOutlinedIcon"]
+				},
+				{
+					"source": "@mui/icons-material/KeyboardArrowDown",
+					"specifiers": ["KeyboardArrowDownIcon"]
+				},
+				{
+					"source": "@mui/icons-material/NorthEast",
+					"specifiers": ["NorthEastIcon"]
+				},
+				{
+					"source": "@mui/icons-material/ArrowBack",
+					"specifiers": ["ArrowBackIcon"]
+				},
+				{
+					"source": "@mui/icons-material/Close",
+					"specifiers": ["CloseIcon"]
+				},
+				{
 					"source": "../../api/apiAgencySelection",
 					"specifiers": ["apiAgencySelection"]
+				},
+				{
+					"source": "../../api/apiGetConsultantAvailability",
+					"specifiers": ["apiGetConsultantAvailability"]
 				},
 				{
 					"source": "../../api/apiGetTopicsData",
@@ -7054,10 +7359,6 @@
 						"NOTIFICATION_TYPE_ERROR",
 						"NOTIFICATION_TYPE_SUCCESS"
 					]
-				},
-				{
-					"source": "../../api",
-					"specifiers": ["FETCH_ERRORS"]
 				},
 				{
 					"source": "../stageLayout/StageLayout",
@@ -7098,10 +7399,24 @@
 						"AccordionSummary",
 						"AccordionDetails"
 					]
+				},
+				{
+					"source": "./liveChatOpeningHours",
+					"specifiers": ["LIVE_CHAT_OPENING_HOURS"]
 				}
 			],
 			"exports": ["AnonymousChat"],
-			"totalLines": 794,
+			"totalLines": 1156,
+			"hasStructuralAnalysis": true
+		},
+		"src/components/anonymousChat/liveChatOpeningHours.ts": {
+			"filePath": "src/components/anonymousChat/liveChatOpeningHours.ts",
+			"contentHash": "d06151f7b6a495c0e955706c20a6f486b7303e201bc451456bdc157e19ec17cb",
+			"functions": [],
+			"classes": [],
+			"imports": [],
+			"exports": ["LIVE_CHAT_OPENING_HOURS"],
+			"totalLines": 18,
 			"hasStructuralAnalysis": true
 		},
 		"src/components/app/AbsenceHandler.tsx": {
@@ -7164,7 +7479,7 @@
 		},
 		"src/components/app/app.tsx": {
 			"filePath": "src/components/app/app.tsx",
-			"contentHash": "bd22fdfa744a24b80793223c903b65efb31da2fe4ed86bd08b56152cfcd9bd8e",
+			"contentHash": "50b49a74e3b93225caeeb25055d384890e32bdfc9bf326b169fe1b1a8b81f290",
 			"functions": [
 				{
 					"name": "App",
@@ -7178,7 +7493,7 @@
 					"name": "RouterWrapper",
 					"params": ["{ extraRoutes }"],
 					"exported": false,
-					"lineCount": 103
+					"lineCount": 106
 				},
 				{
 					"name": "NotificationsContainer",
@@ -7204,8 +7519,7 @@
 						"useState",
 						"lazy",
 						"Suspense",
-						"useContext",
-						"useCallback"
+						"useContext"
 					]
 				},
 				{
@@ -7310,7 +7624,7 @@
 				}
 			],
 			"exports": ["App"],
-			"totalLines": 244,
+			"totalLines": 240,
 			"hasStructuralAnalysis": true
 		},
 		"src/components/app/app.tsx.backup": {
@@ -7335,13 +7649,13 @@
 		},
 		"src/components/app/AuthenticatedApp.tsx": {
 			"filePath": "src/components/app/AuthenticatedApp.tsx",
-			"contentHash": "678fe48613efd0bf3a01d34e59118d2bc68c2eda427937dcfe98f06e6f3b1c1f",
+			"contentHash": "3e706620f279e83004feca6b149c99fa969b7558e3a2831d751bc0c3a01b86ba",
 			"functions": [
 				{
 					"name": "AuthenticatedApp",
 					"params": ["{\n\tonLogout,\n\tonAppReady\n}"],
 					"exported": true,
-					"lineCount": 245
+					"lineCount": 172
 				}
 			],
 			"classes": [],
@@ -7355,16 +7669,11 @@
 					"specifiers": ["Redirect"]
 				},
 				{
-					"source": "react-router-dom",
-					"specifiers": ["useHistory"]
-				},
-				{
 					"source": "react",
 					"specifiers": [
 						"useCallback",
 						"useContext",
 						"useEffect",
-						"useRef",
 						"useState"
 					]
 				},
@@ -7450,21 +7759,17 @@
 					"specifiers": ["E2EEncryptionSupportBanner"]
 				},
 				{
-					"source": "../../utils/keycloakSession",
-					"specifiers": [
-						"isAnonymousSession",
-						"isKeycloakConsultantSession",
-						"buildAnonymousUserData"
-					]
+					"source": "../../resources/scripts/runtimeConfig",
+					"specifiers": ["getMatrixHomeserverUrl"]
 				}
 			],
 			"exports": ["AuthenticatedApp"],
-			"totalLines": 288,
+			"totalLines": 210,
 			"hasStructuralAnalysis": true
 		},
 		"src/components/app/ErrorBoundary.tsx": {
 			"filePath": "src/components/app/ErrorBoundary.tsx",
-			"contentHash": "0ec1bd50b6632991c1cbd0cae05eb799d7b0b589381d75cb1307273e53abc86c",
+			"contentHash": "7ea551349eaf585e36e8920a5140e86446e162572a7d20be4f6b2deb067b540b",
 			"functions": [],
 			"classes": [
 				{
@@ -7477,7 +7782,7 @@
 					],
 					"properties": ["state", "prevError"],
 					"exported": false,
-					"lineCount": 73
+					"lineCount": 72
 				}
 			],
 			"imports": [
@@ -7502,16 +7807,12 @@
 					"specifiers": ["Loading"]
 				},
 				{
-					"source": "../sessionCookie/accessSessionCookie",
-					"specifiers": ["removeAllCookies"]
-				},
-				{
 					"source": "../devToolbar/DevToolbar",
 					"specifiers": ["STORAGE_KEY_ERROR_BOUNDARY"]
 				}
 			],
 			"exports": [],
-			"totalLines": 98,
+			"totalLines": 96,
 			"hasStructuralAnalysis": true
 		},
 		"src/components/app/LiveChatToggleIcons.tsx": {
@@ -7595,23 +7896,23 @@
 		},
 		"src/components/app/navigation.styles.scss": {
 			"filePath": "src/components/app/navigation.styles.scss",
-			"contentHash": "0e36c5c103159a15dd475c6a1cf6b180d0a24a9373b0efb9e079e3c24b44e427",
+			"contentHash": "b0344a89bee320fe98ecdea3adaa4fc7ec47467b767772f62f501da79f7c7f69",
 			"functions": [],
 			"classes": [],
 			"imports": [],
 			"exports": [],
-			"totalLines": 681,
+			"totalLines": 682,
 			"hasStructuralAnalysis": false
 		},
 		"src/components/app/NavigationBar.tsx": {
 			"filePath": "src/components/app/NavigationBar.tsx",
-			"contentHash": "ddc67a3fae7b06299e0c0f6f57f11aed33ab7cf90d74511cc08659641f8986d2",
+			"contentHash": "381295a9b07b2372b9e0cc5f933009b2b049f091824b5abb73c720b341fdc7fc",
 			"functions": [
 				{
 					"name": "NavigationBar",
 					"params": ["{\n\tonLogout,\n\trouterConfig\n}"],
 					"exported": true,
-					"lineCount": 686
+					"lineCount": 693
 				},
 				{
 					"name": "NavGroup",
@@ -7738,19 +8039,19 @@
 					]
 				},
 				{
+					"source": "../../api/apiSetLiveChatAvailability",
+					"specifiers": ["apiSetLiveChatAvailability"]
+				},
+				{
 					"source": "./LiveChatToggleIcons",
 					"specifiers": [
 						"LiveChatToggleInactiveIcon",
 						"LiveChatToggleActiveIcon"
 					]
-				},
-				{
-					"source": "../../utils/keycloakSession",
-					"specifiers": ["isAnonymousSession"]
 				}
 			],
 			"exports": ["NavigationBar"],
-			"totalLines": 799,
+			"totalLines": 806,
 			"hasStructuralAnalysis": true
 		},
 		"src/components/app/navigationHandler.ts": {
@@ -8518,13 +8819,13 @@
 		},
 		"src/components/app/TenantThemingLoader.tsx": {
 			"filePath": "src/components/app/TenantThemingLoader.tsx",
-			"contentHash": "834afe038fc7ea2543648f8ec7b591f4a5fef40d4641b0879c0a2ac367fcf78e",
+			"contentHash": "cfc99466d4ead3886d9419a6c69f7614b5939a17980ee0cfa6d80692eb2e1632",
 			"functions": [
 				{
 					"name": "TenantThemingLoader",
 					"params": [],
 					"exported": true,
-					"lineCount": 26
+					"lineCount": 11
 				}
 			],
 			"classes": [],
@@ -8532,10 +8833,6 @@
 				{
 					"source": "react",
 					"specifiers": ["* as React"]
-				},
-				{
-					"source": "react",
-					"specifiers": ["useEffect", "useState"]
 				},
 				{
 					"source": "../../utils/useTenantTheming",
@@ -8551,18 +8848,18 @@
 				}
 			],
 			"exports": ["TenantThemingLoader"],
-			"totalLines": 33,
+			"totalLines": 17,
 			"hasStructuralAnalysis": true
 		},
 		"src/components/app/WebsocketHandler.tsx": {
 			"filePath": "src/components/app/WebsocketHandler.tsx",
-			"contentHash": "253be9fa476468db67626a67b1539006f9ff57841e698e5ad2bfd0037301af2e",
+			"contentHash": "1dcff50b2e5e9807c970de0ca87a7dc802daa7659298025863defbbc4c74aab7",
 			"functions": [
 				{
 					"name": "WebsocketHandler",
 					"params": ["{ disconnect }"],
 					"exported": true,
-					"lineCount": 180
+					"lineCount": 206
 				}
 			],
 			"classes": [],
@@ -8635,7 +8932,7 @@
 				}
 			],
 			"exports": ["WebsocketHandler"],
-			"totalLines": 209,
+			"totalLines": 236,
 			"hasStructuralAnalysis": true
 		},
 		"src/components/appointment/appointment.styles.scss": {
@@ -9389,8 +9686,22 @@
 		},
 		"src/components/auth/auth.ts": {
 			"filePath": "src/components/auth/auth.ts",
-			"contentHash": "5999c004241a5b9a5a297271c5ae38646ef177d6596b109376b144c25c372dc8",
+			"contentHash": "8b843f7e2f415f126eac353a2b7223f779d2eca0225f231ace583140126bc25c",
 			"functions": [
+				{
+					"name": "isPublicAuthRoute",
+					"params": [],
+					"returnType": "boolean",
+					"exported": true,
+					"lineCount": 8
+				},
+				{
+					"name": "hasActiveAuthSession",
+					"params": [],
+					"returnType": "boolean",
+					"exported": true,
+					"lineCount": 8
+				},
 				{
 					"name": "setTokens",
 					"params": [
@@ -9453,10 +9764,12 @@
 			],
 			"exports": [
 				"RENEW_BEFORE_EXPIRY_IN_MS",
+				"isPublicAuthRoute",
+				"hasActiveAuthSession",
 				"setTokens",
 				"handleTokenRefresh"
 			],
-			"totalLines": 120,
+			"totalLines": 138,
 			"hasStructuralAnalysis": true
 		},
 		"src/components/banner/Banner.tsx": {
@@ -9788,13 +10101,13 @@
 		},
 		"src/components/call/FloatingCallWidget.tsx": {
 			"filePath": "src/components/call/FloatingCallWidget.tsx",
-			"contentHash": "93ab27ac6bebf236674862e4b2160f28223c92f850a7bdb08afb51dc48e69961",
+			"contentHash": "856db20de06171dcec0463e4159a895971dcf2ac035213c137adbdc810b8ddfe",
 			"functions": [
 				{
 					"name": "FloatingCallWidget",
 					"params": [],
 					"exported": true,
-					"lineCount": 394
+					"lineCount": 501
 				}
 			],
 			"classes": [],
@@ -9817,7 +10130,7 @@
 				}
 			],
 			"exports": ["FloatingCallWidget"],
-			"totalLines": 406,
+			"totalLines": 512,
 			"hasStructuralAnalysis": true
 		},
 		"src/components/call/GroupCallWidget.scss": {
@@ -9832,13 +10145,13 @@
 		},
 		"src/components/call/GroupCallWidget.tsx": {
 			"filePath": "src/components/call/GroupCallWidget.tsx",
-			"contentHash": "af014ee63ba075a6cc1f8a2b0b1bd611aea61125e1608542e839393821921f00",
+			"contentHash": "2113e20621be2210d15dbe2bc8902b877adf2b2629246adcc3137c9339cf83e1",
 			"functions": [
 				{
 					"name": "GroupCallWidget",
 					"params": [],
 					"exported": true,
-					"lineCount": 477
+					"lineCount": 546
 				}
 			],
 			"classes": [],
@@ -9852,12 +10165,19 @@
 					"specifiers": ["callManager", "CallData"]
 				},
 				{
+					"source": "../../resources/scripts/runtimeConfig",
+					"specifiers": [
+						"getElementCallBaseUrl",
+						"getMatrixHomeserverUrl"
+					]
+				},
+				{
 					"source": "./GroupCallWidget.scss",
 					"specifiers": []
 				}
 			],
 			"exports": ["GroupCallWidget"],
-			"totalLines": 489,
+			"totalLines": 561,
 			"hasStructuralAnalysis": true
 		},
 		"src/components/card/card.styles.scss": {
@@ -10194,7 +10514,7 @@
 		},
 		"src/components/draftsCenter/DraftsCenter.tsx": {
 			"filePath": "src/components/draftsCenter/DraftsCenter.tsx",
-			"contentHash": "da0177505cc30c64769602042dd1eb7b52dc9d31a8f1cc0b7c2cfc8eaa36026a",
+			"contentHash": "7bd9ab8ed0036856140ecbda487a9898878c388c905f1960c9ec5f7773457c31",
 			"functions": [
 				{
 					"name": "formatRelativeTime",
@@ -10224,7 +10544,7 @@
 					"name": "DraftsCenter",
 					"params": [],
 					"exported": true,
-					"lineCount": 267
+					"lineCount": 260
 				}
 			],
 			"classes": [],
@@ -10267,16 +10587,12 @@
 					"specifiers": ["useResponsive"]
 				},
 				{
-					"source": "../../utils/keycloakSession",
-					"specifiers": ["isAnonymousSession"]
-				},
-				{
 					"source": "./draftsCenter.styles",
 					"specifiers": []
 				}
 			],
 			"exports": ["DraftsCenter"],
-			"totalLines": 349,
+			"totalLines": 341,
 			"hasStructuralAnalysis": true
 		},
 		"src/components/dragAndDropArea/dragAndDropArea.styles.scss": {
@@ -10887,7 +11203,7 @@
 		},
 		"src/components/error/errorHandling.ts": {
 			"filePath": "src/components/error/errorHandling.ts",
-			"contentHash": "fd9c071a7f2ad911fcbe801490b3542d4ff2f8b89bfd55b75015632130e61642",
+			"contentHash": "5dda8a6bdb50761545c2365b283dbd9e6c48022a490a0350912c0937191d3c6d",
 			"functions": [
 				{
 					"name": "getErrorCaseForStatus",
@@ -10899,7 +11215,7 @@
 					"name": "redirectToErrorPage",
 					"params": ["error"],
 					"exported": true,
-					"lineCount": 52
+					"lineCount": 67
 				}
 			],
 			"classes": [],
@@ -10907,6 +11223,10 @@
 				{
 					"source": "uuid",
 					"specifiers": ["uuidv4"]
+				},
+				{
+					"source": "../auth/auth",
+					"specifiers": ["isPublicAuthRoute"]
 				},
 				{
 					"source": "../logout/logout",
@@ -10934,7 +11254,7 @@
 				"getErrorCaseForStatus",
 				"redirectToErrorPage"
 			],
-			"totalLines": 76,
+			"totalLines": 92,
 			"hasStructuralAnalysis": true
 		},
 		"src/components/flyoutMenu/flyoutMenu.styles.scss": {
@@ -11929,7 +12249,7 @@
 		},
 		"src/components/help/HelpVideoCall.tsx": {
 			"filePath": "src/components/help/HelpVideoCall.tsx",
-			"contentHash": "b15d91f358faff4d329e0003b48078e1197dd281d9616e82d70db003030c93bb",
+			"contentHash": "e441a37907c72af62a91cb04b704c78f6872c1c5c1690acc746c41ea3f7d117a",
 			"functions": [
 				{
 					"name": "BrowserList",
@@ -11984,7 +12304,7 @@
 				}
 			],
 			"exports": ["BrowserList", "HelpVideoCall"],
-			"totalLines": 182,
+			"totalLines": 192,
 			"hasStructuralAnalysis": true
 		},
 		"src/components/incomingVideoCall/incomingVideoCall.styles.scss": {
@@ -12285,67 +12605,13 @@
 		},
 		"src/components/invite/InviteLink.tsx": {
 			"filePath": "src/components/invite/InviteLink.tsx",
-			"contentHash": "70a397f56e4e59214df876e1f441156050da7b0d80c572fdd716cdfc047276cb",
+			"contentHash": "2e8fad2089cdeab10cfc455599df5f27fa86f9e5cf3bac7e49fd82c56e8d594f",
 			"functions": [
-				{
-					"name": "isResponseLike",
-					"params": ["value"],
-					"exported": false,
-					"lineCount": 4
-				},
-				{
-					"name": "parseChatIdFromMatrixText",
-					"params": ["value"],
-					"returnType": "number | null",
-					"exported": false,
-					"lineCount": 7
-				},
-				{
-					"name": "collectStringsDeep",
-					"params": ["value", "depth"],
-					"returnType": "string[]",
-					"exported": false,
-					"lineCount": 12
-				},
-				{
-					"name": "resolveInviteTargetsFromMatrixClient",
-					"params": [],
-					"returnType": "InviteRedirectTargets",
-					"exported": false,
-					"lineCount": 62
-				},
-				{
-					"name": "resolveInviteTargetsFromMatrixSync",
-					"params": [],
-					"returnType": "Promise<InviteRedirectTargets>",
-					"exported": false,
-					"lineCount": 194
-				},
-				{
-					"name": "normalizeInviteRedeemPayload",
-					"params": ["payload"],
-					"returnType": "InviteRedeemPayload",
-					"exported": false,
-					"lineCount": 58
-				},
-				{
-					"name": "classifyRedeemError",
-					"params": ["error", "t"],
-					"exported": false,
-					"lineCount": 70
-				},
-				{
-					"name": "assignToGroupChat",
-					"params": ["groupId", "chatId"],
-					"returnType": "Promise<{ groupId?: string; chatId?: number | null }>",
-					"exported": false,
-					"lineCount": 27
-				},
 				{
 					"name": "InviteLink",
 					"params": [],
 					"exported": true,
-					"lineCount": 270
+					"lineCount": 107
 				}
 			],
 			"classes": [],
@@ -12370,15 +12636,18 @@
 				},
 				{
 					"source": "../../resources/scripts/endpoints",
-					"specifiers": ["apiUrl", "endpoints"]
+					"specifiers": ["endpoints"]
 				},
 				{
 					"source": "../../api/apiPostRegistration",
 					"specifiers": ["apiPostRegistration"]
 				},
 				{
-					"source": "../../api/apiPutGroupChat",
-					"specifiers": ["apiPutGroupChat", "GROUP_CHAT_API"]
+					"source": "../../api/apiRedeemInviteLink",
+					"specifiers": [
+						"isRedeemInviteLinkSessionResponse",
+						"redeemInviteLink"
+					]
 				},
 				{
 					"source": "../../globalState",
@@ -12389,29 +12658,76 @@
 					"specifiers": ["redirectToApp"]
 				},
 				{
+					"source": "./inviteLinkHelpers",
+					"specifiers": [
+						"applyRedeemSessionCredentials",
+						"redirectToInviteSession"
+					]
+				},
+				{
 					"source": "../stageLayout/StageLayout",
 					"specifiers": ["StageLayout"]
 				},
 				{
 					"source": "../stage/stage",
 					"specifiers": ["Stage"]
-				},
-				{
-					"source": "../../api/fetchData",
-					"specifiers": [
-						"fetchData",
-						"FETCH_ERRORS",
-						"FETCH_METHODS",
-						"FETCH_SUCCESS"
-					]
-				},
-				{
-					"source": "../../hooks/useAppConfig",
-					"specifiers": ["useAppConfig"]
 				}
 			],
 			"exports": ["InviteLink"],
-			"totalLines": 758,
+			"totalLines": 135,
+			"hasStructuralAnalysis": true
+		},
+		"src/components/invite/inviteLinkHelpers.ts": {
+			"filePath": "src/components/invite/inviteLinkHelpers.ts",
+			"contentHash": "ac6f69d12fa43e99e17354ea3f393f5320bc001e3715e848dca876651e6cb608",
+			"functions": [
+				{
+					"name": "buildInviteSessionAppUrl",
+					"params": ["sessionId", "rcGroupId"],
+					"returnType": "string",
+					"exported": true,
+					"lineCount": 15
+				},
+				{
+					"name": "applyRedeemSessionCredentials",
+					"params": ["data"],
+					"returnType": "void",
+					"exported": true,
+					"lineCount": 15
+				},
+				{
+					"name": "redirectToInviteSession",
+					"params": ["data"],
+					"returnType": "void",
+					"exported": true,
+					"lineCount": 8
+				}
+			],
+			"classes": [],
+			"imports": [
+				{
+					"source": "../auth/auth",
+					"specifiers": ["setTokens"]
+				},
+				{
+					"source": "../sessionCookie/accessSessionCookie",
+					"specifiers": ["setValueInCookie"]
+				},
+				{
+					"source": "../../utils/generateCsrfToken",
+					"specifiers": ["generateCsrfToken"]
+				},
+				{
+					"source": "../../api/apiRedeemInviteLink",
+					"specifiers": ["RedeemInviteLinkSessionResponse"]
+				}
+			],
+			"exports": [
+				"buildInviteSessionAppUrl",
+				"applyRedeemSessionCredentials",
+				"redirectToInviteSession"
+			],
+			"totalLines": 47,
 			"hasStructuralAnalysis": true
 		},
 		"src/components/legalInformationLinks/Imprint.tsx": {
@@ -12769,7 +13085,7 @@
 		},
 		"src/components/localeSwitch/LocaleSwitch.tsx": {
 			"filePath": "src/components/localeSwitch/LocaleSwitch.tsx",
-			"contentHash": "ed7d72ca669472d8ac60f77faa617e5e8c7360c2dd1182c18acc6b92aae59cd0",
+			"contentHash": "ad6ab12294299aac78f58d3e2b8d4826f40b80900dbe17005940dfa34bcae7fe",
 			"functions": [
 				{
 					"name": "LocaleSwitch",
@@ -12777,7 +13093,7 @@
 						"{\n\tupdateUserData,\n\tclassName,\n\tshowIcon = true,\n\tvertical,\n\ticonSize = 20,\n\tmenuPlacement = MENUPLACEMENT_BOTTOM,\n\tlabel,\n\tselectRef,\n\tisInsideMenu = false,\n\tcolor = 'var(--secondary)',\n\tcolorHover = 'var(--hover-primary)',\n\ticonOnly,\n\tleadingIconOverride,\n\tonMenuOpen,\n\tonMenuClose\n}"
 					],
 					"exported": true,
-					"lineCount": 204
+					"lineCount": 200
 				}
 			],
 			"classes": [],
@@ -12830,14 +13146,10 @@
 				{
 					"source": "@mui/icons-material/Language",
 					"specifiers": ["LanguageIcon"]
-				},
-				{
-					"source": "../../utils/keycloakSession",
-					"specifiers": ["isAnonymousSession"]
 				}
 			],
 			"exports": ["LocaleSwitch"],
-			"totalLines": 242,
+			"totalLines": 237,
 			"hasStructuralAnalysis": true
 		},
 		"src/components/login/login.styles.scss": {
@@ -12852,13 +13164,13 @@
 		},
 		"src/components/login/Login.tsx": {
 			"filePath": "src/components/login/Login.tsx",
-			"contentHash": "e5781c28b97150ab603f96628dc1d253976c5f01784a5b2d0be0461ef1e1cedf",
+			"contentHash": "aaddf4102bb78220734671af90acf0d59ed5735d2045b305c6b8caac7e25238f",
 			"functions": [
 				{
 					"name": "Login",
 					"params": [],
 					"exported": true,
-					"lineCount": 667
+					"lineCount": 643
 				}
 			],
 			"classes": [],
@@ -13035,14 +13347,10 @@
 				{
 					"source": "../auth/auth",
 					"specifiers": ["setTokens"]
-				},
-				{
-					"source": "../../utils/keycloakSession",
-					"specifiers": ["isAnonymousSession"]
 				}
 			],
 			"exports": ["Login"],
-			"totalLines": 727,
+			"totalLines": 702,
 			"hasStructuralAnalysis": true
 		},
 		"src/components/logout/calcomLogout.ts": {
@@ -13069,13 +13377,13 @@
 		},
 		"src/components/logout/logout.ts": {
 			"filePath": "src/components/logout/logout.ts",
-			"contentHash": "2c5d35ab4238371f27ca99a957b067de332f91b95ad26e3b706f8991632e80ab",
+			"contentHash": "09d50e617f6f6da8574a91781cd22a40d53f535212663689e1e18ad92f9088ec",
 			"functions": [
 				{
 					"name": "logout",
 					"params": ["withRedirect", "redirectUrl"],
 					"exported": true,
-					"lineCount": 26
+					"lineCount": 30
 				},
 				{
 					"name": "invalidateCookies",
@@ -13095,6 +13403,10 @@
 				{
 					"source": "../../api/apiLogoutKeycloak",
 					"specifiers": ["apiKeycloakLogout"]
+				},
+				{
+					"source": "../../api/apiSetLiveChatAvailability",
+					"specifiers": ["apiSetLiveChatAvailability"]
 				},
 				{
 					"source": "../../utils/tenantSettingsHelper",
@@ -13129,7 +13441,7 @@
 				}
 			],
 			"exports": ["EVENT_PRE_LOGOUT", "logout"],
-			"totalLines": 64,
+			"totalLines": 69,
 			"hasStructuralAnalysis": true
 		},
 		"src/components/mailTemplate/mail-template.html": {
@@ -13219,15 +13531,15 @@
 		},
 		"src/components/matrixCall/MatrixCallView.BROKEN-BACKUP.tsx": {
 			"filePath": "src/components/matrixCall/MatrixCallView.BROKEN-BACKUP.tsx",
-			"contentHash": "428a5c033547beea579c8e8adfaf89b3fadb836ce309c21a407e255a3875ae3d",
+			"contentHash": "e5debad554ff76edb9f695932ff13b56ddf2d845970f5d1bc42c566a9aa0aee9",
 			"functions": [
 				{
 					"name": "MatrixCallView",
 					"params": [
-						"{\n    roomId,\n    isVideoCall,\n    incomingCall,\n    onCallEnd\n}"
+						"{\n\troomId,\n\tisVideoCall,\n\tincomingCall,\n\tonCallEnd\n}"
 					],
 					"exported": true,
-					"lineCount": 405
+					"lineCount": 467
 				}
 			],
 			"classes": [],
@@ -13260,7 +13572,7 @@
 				}
 			],
 			"exports": ["MatrixCallView"],
-			"totalLines": 424,
+			"totalLines": 486,
 			"hasStructuralAnalysis": true
 		},
 		"src/components/matrixCall/MatrixCallView.CLEAN.tsx": {
@@ -13924,7 +14236,7 @@
 		},
 		"src/components/message/MessageItemComponent.tsx": {
 			"filePath": "src/components/message/MessageItemComponent.tsx",
-			"contentHash": "21756e7f7c9cede87fc4cc463f2c20a1486580d4e7db6f1f88c4c7214446aed1",
+			"contentHash": "5ae67918966dadb4ad49f5c4774724a13f264063da2856a7d9b9043c2c47cc99",
 			"functions": [
 				{
 					"name": "ActiveKebabIcon",
@@ -13998,7 +14310,7 @@
 						"{\n\t_id,\n\talias,\n\tuserId,\n\tmessage,\n\tmessageDate,\n\tmessageTime,\n\tisMyMessage,\n\tdisplayName,\n\tusername,\n\taskerRcId,\n\tattachments,\n\tfile,\n\tisNotRead,\n\tisUserBanned,\n\tt,\n\trid,\n\thandleDecryptionErrors,\n\thandleDecryptionSuccess,\n\te2eeParams,\n\tisVideoActive,\n\trenderMode = 'main',\n\tthreadsEnabled = true,\n\tthreadRootId,\n\tforceShow = false,\n\tthreadSummary,\n\tonOpenThread\n}"
 					],
 					"exported": true,
-					"lineCount": 1893
+					"lineCount": 1895
 				},
 				{
 					"name": "MessageFlyoutMenu",
@@ -14273,7 +14585,7 @@
 				}
 			],
 			"exports": ["MessageItemComponent"],
-			"totalLines": 2316,
+			"totalLines": 2318,
 			"hasStructuralAnalysis": true
 		},
 		"src/components/message/MessageMetaData.tsx": {
@@ -14510,15 +14822,15 @@
 		},
 		"src/components/message/UserAvatar.tsx": {
 			"filePath": "src/components/message/UserAvatar.tsx",
-			"contentHash": "53a12174fbba6930c05ea87278dd74abcfde84ffcc3f87889b19e6cdb054d43d",
+			"contentHash": "8d5b90047733d202fda67808c234a406f3b0723081b47d1035ee56ddfe257952",
 			"functions": [
 				{
 					"name": "UserAvatar",
 					"params": [
-						"{\n\tusername,\n\tdisplayName,\n\tfirstName,\n\tlastName,\n\tuserId,\n\tsize = '32px'\n}"
+						"{\n\tusername,\n\tdisplayName,\n\tfirstName,\n\tlastName,\n\tuserId,\n\tsize = '32px',\n\tring = true\n}"
 					],
 					"exported": true,
-					"lineCount": 30
+					"lineCount": 61
 				}
 			],
 			"classes": [],
@@ -14540,7 +14852,7 @@
 				}
 			],
 			"exports": ["UserAvatar"],
-			"totalLines": 51,
+			"totalLines": 88,
 			"hasStructuralAnalysis": true
 		},
 		"src/components/message/VideoCallMessage.tsx": {
@@ -14745,6 +15057,49 @@
 			"totalLines": 15,
 			"hasStructuralAnalysis": true
 		},
+		"src/components/messageSubmitInterface/MessageSubmitErrorBoundary.tsx": {
+			"filePath": "src/components/messageSubmitInterface/MessageSubmitErrorBoundary.tsx",
+			"contentHash": "4919e1e4a50cac62e5763bb42bf2a0d3a820e958c8830bb659f3680dcd4f7e3f",
+			"functions": [],
+			"classes": [
+				{
+					"name": "MessageSubmitErrorBoundary",
+					"methods": [
+						"getDerivedStateFromError",
+						"componentDidCatch",
+						"render"
+					],
+					"properties": [
+						"state",
+						"autoRetryAttempted",
+						"handleRetry"
+					],
+					"exported": true,
+					"lineCount": 61
+				}
+			],
+			"imports": [
+				{
+					"source": "react",
+					"specifiers": ["* as React"]
+				},
+				{
+					"source": "react",
+					"specifiers": ["Component", "ReactNode"]
+				},
+				{
+					"source": "../../api/apiPostError",
+					"specifiers": ["apiPostError", "ERROR_LEVEL_ERROR"]
+				},
+				{
+					"source": "../button/Button",
+					"specifiers": ["Button", "BUTTON_TYPES"]
+				}
+			],
+			"exports": ["MessageSubmitErrorBoundary"],
+			"totalLines": 81,
+			"hasStructuralAnalysis": true
+		},
 		"src/components/messageSubmitInterface/messageSubmitInfo.styles.scss": {
 			"filePath": "src/components/messageSubmitInterface/messageSubmitInfo.styles.scss",
 			"contentHash": "35807018c0184d090fb32eb03cfd05bc221bebbe70aeea81313724e1cb69361d",
@@ -14805,7 +15160,7 @@
 		},
 		"src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx": {
 			"filePath": "src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
-			"contentHash": "6d336feaa187b847166b65f494cd613e731a9178e8f8ea4ad4fa417a7b012fa5",
+			"contentHash": "66851d78e6e4653ac3162309caa6409f3d8b7438a59ee1721680aa7786ac68c2",
 			"functions": [
 				{
 					"name": "omitKey",
@@ -14816,10 +15171,10 @@
 				{
 					"name": "MessageSubmitInterfaceComponent",
 					"params": [
-						"{\n\tclassName,\n\tonSendButton,\n\tisTyping,\n\tplaceholder,\n\ttypingUsers,\n\tlanguage,\n\tpreselectedFile,\n\thandleMessageSendSuccess: onMessageSendSuccess,\n\tisSupervisor,\n\tthreadRootId,\n\tthreadParentPreview,\n\tmobileUnreadCount = 0,\n\tmobileIsScrolledToBottom = false,\n\tonMobileNavigateBack,\n\tonMobileNavigateDown,\n\tonMobileNavigateBottom\n}"
+						"{\n\tclassName,\n\tonSendButton,\n\tisTyping,\n\tplaceholder,\n\ttypingUsers,\n\tlanguage,\n\tpreselectedFile,\n\thandleMessageSendSuccess: onMessageSendSuccess,\n\tisAnonymousLiveChat = false,\n\tisSupervisor,\n\tthreadRootId,\n\tthreadParentPreview,\n\tmobileUnreadCount = 0,\n\tmobileIsScrolledToBottom = false,\n\tonMobileNavigateBack,\n\tonMobileNavigateDown,\n\tonMobileNavigateBottom\n}"
 					],
 					"exported": true,
-					"lineCount": 4960
+					"lineCount": 4968
 				}
 			],
 			"classes": [],
@@ -14938,23 +15293,14 @@
 					]
 				},
 				{
-					"source": "@draft-js-plugins/emoji",
-					"specifiers": ["createEmojiPlugin"]
-				},
-				{
 					"source": "./richtextHelpers",
 					"specifiers": [
-						"emojiPickerCustomClasses",
 						"escapeMarkdownChars",
 						"handleEditorBeforeInput",
 						"handleEditorPastedText",
 						"normalizeHighlightColor",
 						"toolbarCustomClasses"
 					]
-				},
-				{
-					"source": "../../resources/img/icons/smiley-positive.svg",
-					"specifiers": ["EmojiIcon"]
 				},
 				{
 					"source": "../../resources/img/icons/audio-on.svg",
@@ -15069,7 +15415,7 @@
 				}
 			],
 			"exports": ["MessageSubmitInterfaceComponent"],
-			"totalLines": 5123,
+			"totalLines": 5130,
 			"hasStructuralAnalysis": true
 		},
 		"src/components/messageSubmitInterface/messageSubmitInterfaceSkeleton.tsx": {
@@ -15239,7 +15585,7 @@
 		},
 		"src/components/messageSubmitInterface/TipTapComposer.tsx": {
 			"filePath": "src/components/messageSubmitInterface/TipTapComposer.tsx",
-			"contentHash": "da56f333840620d1f86a7f07e5127c4cf417aeec60bbced047dcf70efd8524f0",
+			"contentHash": "39863437f88957a5f98107e8ed78033bae2313e35d35d804cef7becbf7c3260c",
 			"functions": [
 				{
 					"name": "escapeMarkdownText",
@@ -15260,14 +15606,14 @@
 					"params": ["nodes"],
 					"returnType": "string",
 					"exported": false,
-					"lineCount": 18
+					"lineCount": 21
 				},
 				{
 					"name": "serializeBlocks",
 					"params": ["node"],
 					"returnType": "string",
 					"exported": false,
-					"lineCount": 80
+					"lineCount": 83
 				},
 				{
 					"name": "serializeEditorToMarkdown",
@@ -15339,18 +15685,18 @@
 				}
 			],
 			"exports": ["TipTapComposer"],
-			"totalLines": 636,
+			"totalLines": 731,
 			"hasStructuralAnalysis": true
 		},
 		"src/components/messageSubmitInterface/useDraftMessage.tsx": {
 			"filePath": "src/components/messageSubmitInterface/useDraftMessage.tsx",
-			"contentHash": "b419d9322c8c1753f7f07f727b3a944690df8e770c48f758b936c416d340ba90",
+			"contentHash": "35f06ddad8b1dc0d165fc91b01a97fd23da21a3c8a843c2805e2263b7a13df7f",
 			"functions": [
 				{
 					"name": "useDraftMessage",
 					"params": ["enabled", "loadFunction", "options"],
 					"exported": true,
-					"lineCount": 332
+					"lineCount": 341
 				}
 			],
 			"classes": [],
@@ -15394,11 +15740,7 @@
 				},
 				{
 					"source": "draft-js",
-					"specifiers": ["convertFromRaw", "EditorState"]
-				},
-				{
-					"source": "markdown-draft-js",
-					"specifiers": ["markdownToDraft"]
+					"specifiers": ["EditorState"]
 				},
 				{
 					"source": "../logout/logout",
@@ -15411,14 +15753,10 @@
 				{
 					"source": "../../services/draftStore",
 					"specifiers": ["REMOTE_DRAFT_INDEX_SCOPE"]
-				},
-				{
-					"source": "../../utils/keycloakSession",
-					"specifiers": ["isAnonymousSession"]
 				}
 			],
 			"exports": ["useDraftMessage"],
-			"totalLines": 364,
+			"totalLines": 371,
 			"hasStructuralAnalysis": true
 		},
 		"src/components/mobile/linkMenu/link_menu.styles.scss": {
@@ -15530,13 +15868,13 @@
 		},
 		"src/components/modal/Modal.tsx": {
 			"filePath": "src/components/modal/Modal.tsx",
-			"contentHash": "f43b22abab14f5e683503462cfc469508a075231ff8dfd88b505e326e34c8219",
+			"contentHash": "58aa6fc1299437965857fd1f630ae8d805e216a9205322934479572e4a220379",
 			"functions": [
 				{
 					"name": "Modal",
 					"params": ["{ className, children }"],
 					"exported": true,
-					"lineCount": 9
+					"lineCount": 3
 				}
 			],
 			"classes": [],
@@ -15555,7 +15893,7 @@
 				}
 			],
 			"exports": ["Modal"],
-			"totalLines": 19,
+			"totalLines": 13,
 			"hasStructuralAnalysis": true
 		},
 		"src/components/notFound/NotFound.tsx": {
@@ -18775,7 +19113,7 @@
 		},
 		"src/components/pseudonym/PseudonymCard.styles.scss": {
 			"filePath": "src/components/pseudonym/PseudonymCard.styles.scss",
-			"contentHash": "c1239f55acd9e9c152be23d70d67d0f95ed3f14a24dd953bc1a4f1b8f3b28764",
+			"contentHash": "48e9a12ebc4e33866634af85909e40e45e13984efcb3ef562e10f7a75e571c82",
 			"functions": [],
 			"classes": [],
 			"imports": [],
@@ -19205,7 +19543,7 @@
 		},
 		"src/components/registration/agencySelection/AgencySelectionResults.tsx": {
 			"filePath": "src/components/registration/agencySelection/AgencySelectionResults.tsx",
-			"contentHash": "19aaac2be39e253a8496ca91bffe78b7af05d6c0e4e5926ddf5089717aabbdcd",
+			"contentHash": "004e56d2ed35d4f4b157ac075a8a5647f07fe4ec19517bd71ac8a99223e2c1df",
 			"functions": [
 				{
 					"name": "AgencySelectionResults",
@@ -19213,7 +19551,7 @@
 						"{\n\tonChange,\n\tzipcode,\n\tresults,\n\tnextStepUrl,\n\tfallbackUrl,\n\tonNextClick\n}"
 					],
 					"exported": true,
-					"lineCount": 352
+					"lineCount": 354
 				}
 			],
 			"classes": [],
@@ -19291,12 +19629,12 @@
 				}
 			],
 			"exports": ["AgencySelectionResults"],
-			"totalLines": 393,
+			"totalLines": 395,
 			"hasStructuralAnalysis": true
 		},
 		"src/components/registration/autoLogin.ts": {
 			"filePath": "src/components/registration/autoLogin.ts",
-			"contentHash": "7d9219cd58a8998f13b101a7735d65efd5d6e2503fe1ae8277c281c79c00be6f",
+			"contentHash": "2dae79a6fcefd3b8dafc0293695204e921945fff56a36800699ccfb0c2dda174",
 			"functions": [
 				{
 					"name": "loginKeycloak",
@@ -19315,13 +19653,13 @@
 					"params": ["{\n\tpassword,\n\t...autoLoginProps\n}"],
 					"returnType": "Promise<any>",
 					"exported": true,
-					"lineCount": 113
+					"lineCount": 105
 				},
 				{
 					"name": "redirectToApp",
-					"params": ["gcid", "chatId"],
+					"params": ["gcid"],
 					"exported": true,
-					"lineCount": 16
+					"lineCount": 4
 				},
 				{
 					"name": "handleE2EESetup",
@@ -19437,7 +19775,7 @@
 				}
 			],
 			"exports": ["autoLogin", "redirectToApp", "handleE2EESetup"],
-			"totalLines": 383,
+			"totalLines": 363,
 			"hasStructuralAnalysis": true
 		},
 		"src/components/registration/autoLogin.ts.backup": {
@@ -21302,7 +21640,7 @@
 		},
 		"src/components/session/SessionItemComponent.tsx": {
 			"filePath": "src/components/session/SessionItemComponent.tsx",
-			"contentHash": "36fd59243ae75aea6f428db54983f45d680c3cc157d6505865ea57cd47739441",
+			"contentHash": "92b82c9f75ecb3ad67ded8373faeef2e81d5807bcff591c1f182f82b649ebefb",
 			"functions": [
 				{
 					"name": "LevelEmojiIcon",
@@ -21314,7 +21652,7 @@
 					"name": "SessionItemComponent",
 					"params": ["props"],
 					"exported": true,
-					"lineCount": 4328
+					"lineCount": 4519
 				}
 			],
 			"classes": [],
@@ -21467,6 +21805,10 @@
 					"specifiers": ["MessageSubmitInterfaceSkeleton"]
 				},
 				{
+					"source": "../messageSubmitInterface/MessageSubmitErrorBoundary",
+					"specifiers": ["MessageSubmitErrorBoundary"]
+				},
+				{
 					"source": "../text/Text",
 					"specifiers": ["Text"]
 				},
@@ -21493,10 +21835,6 @@
 				{
 					"source": "../../api/apiGetAnonymousEnquiryDetails",
 					"specifiers": ["apiGetAnonymousEnquiryDetails"]
-				},
-				{
-					"source": "../../api/apiPostAdditionalEnquiry",
-					"specifiers": ["apiPostAdditionalEnquiry"]
 				},
 				{
 					"source": "../message/messageConstants",
@@ -21550,10 +21888,6 @@
 					]
 				},
 				{
-					"source": "../../utils/keycloakSession",
-					"specifiers": ["isAnonymousInviteSession"]
-				},
-				{
 					"source": "../../globalState/provider/LegalLinksProvider",
 					"specifiers": ["LegalLinksContext"]
 				},
@@ -21572,15 +21906,48 @@
 				{
 					"source": "../message/UserAvatar",
 					"specifiers": ["UserAvatar"]
+				},
+				{
+					"source": "@mui/material",
+					"specifiers": [
+						"Dialog",
+						"MuiBox",
+						"MuiTypography",
+						"MuiButton"
+					]
+				},
+				{
+					"source": "@mui/icons-material/AccessTimeOutlined",
+					"specifiers": ["AccessTimeOutlinedIcon"]
+				},
+				{
+					"source": "@mui/icons-material/KeyboardArrowDown",
+					"specifiers": ["KeyboardArrowDownIcon"]
+				},
+				{
+					"source": "../anonymousChat/liveChatOpeningHours",
+					"specifiers": ["LIVE_CHAT_OPENING_HOURS"]
+				},
+				{
+					"source": "@mui/icons-material/NorthEast",
+					"specifiers": ["NorthEastIcon"]
+				},
+				{
+					"source": "@mui/icons-material/ArrowBack",
+					"specifiers": ["ArrowBackIcon"]
+				},
+				{
+					"source": "@mui/icons-material/Close",
+					"specifiers": ["CloseIcon"]
 				}
 			],
 			"exports": ["SessionItemComponent"],
-			"totalLines": 4699,
+			"totalLines": 4901,
 			"hasStructuralAnalysis": true
 		},
 		"src/components/session/SessionStream.tsx": {
 			"filePath": "src/components/session/SessionStream.tsx",
-			"contentHash": "aa4766cc4e610f64b34847c22a8f6e4a42d65fec59d055da2a405976decd3468",
+			"contentHash": "de9b4d648d1043512286dabefec2a21d7c158344f2229fde34a75c7258e92e55",
 			"functions": [
 				{
 					"name": "SessionStream",
@@ -21588,7 +21955,7 @@
 						"{\n\treadonly,\n\tcheckMutedUserForThisSession,\n\tbannedUsers\n}"
 					],
 					"exported": true,
-					"lineCount": 902
+					"lineCount": 874
 				}
 			],
 			"classes": [],
@@ -21730,10 +22097,14 @@
 				{
 					"source": "../../services/messageEventEmitter",
 					"specifiers": ["messageEventEmitter"]
+				},
+				{
+					"source": "../../resources/scripts/getApiBaseUrl",
+					"specifiers": ["getApiBaseUrl"]
 				}
 			],
 			"exports": ["SessionStream"],
-			"totalLines": 969,
+			"totalLines": 942,
 			"hasStructuralAnalysis": true
 		},
 		"src/components/session/SessionStream.tsx.backup": {
@@ -21748,13 +22119,13 @@
 		},
 		"src/components/session/SessionView.tsx": {
 			"filePath": "src/components/session/SessionView.tsx",
-			"contentHash": "ff24b26fd246c3dcf1bdfeaa262813edef96444346f44085026e04f348b15d52",
+			"contentHash": "120c49b4c113a8996732d74311d89dc6cad75f0029e93b739f8df13e951101a8",
 			"functions": [
 				{
 					"name": "SessionView",
 					"params": [],
 					"exported": true,
-					"lineCount": 210
+					"lineCount": 215
 				}
 			],
 			"classes": [],
@@ -21847,7 +22218,7 @@
 				}
 			],
 			"exports": ["SessionView"],
-			"totalLines": 239,
+			"totalLines": 244,
 			"hasStructuralAnalysis": true
 		},
 		"src/components/session/SessionViewEmpty.tsx": {
@@ -22319,21 +22690,21 @@
 		},
 		"src/components/sessionCookie/getMatrixAccessToken.ts": {
 			"filePath": "src/components/sessionCookie/getMatrixAccessToken.ts",
-			"contentHash": "49e6ce3a4d19e33c0cfa5452da03e07ce6c1ccd38939c67a02f24a92c33232e6",
+			"contentHash": "8052eb5e8d40ee1aa623508d12925bb69567e16cfde4aca35789ca2460c3524f",
 			"functions": [
 				{
 					"name": "getMatrixAccessToken",
 					"params": ["username", "password"],
 					"returnType": "Promise<MatrixLoginData>",
 					"exported": true,
-					"lineCount": 32
+					"lineCount": 38
 				},
 				{
 					"name": "createMatrixClient",
 					"params": ["loginData"],
 					"returnType": "MatrixClient",
 					"exported": true,
-					"lineCount": 8
+					"lineCount": 10
 				}
 			],
 			"classes": [],
@@ -22341,10 +22712,14 @@
 				{
 					"source": "matrix-js-sdk",
 					"specifiers": ["createClient", "MatrixClient"]
+				},
+				{
+					"source": "../../resources/scripts/runtimeConfig",
+					"specifiers": ["getMatrixHomeserverUrl"]
 				}
 			],
 			"exports": ["getMatrixAccessToken", "createMatrixClient"],
-			"totalLines": 52,
+			"totalLines": 61,
 			"hasStructuralAnalysis": true
 		},
 		"src/components/sessionCookie/getRocketchatAccessToken.ts": {
@@ -22447,7 +22822,7 @@
 		},
 		"src/components/sessionHeader/GroupChatHeader/index.tsx": {
 			"filePath": "src/components/sessionHeader/GroupChatHeader/index.tsx",
-			"contentHash": "fa96659faa6a0e96cba5946b3cd88bac09ad87dab07eb81e00c11652544a27ca",
+			"contentHash": "9c4fc8956f5157b86e9b95517a1d12a3177b7395aad10f12634fd7ebb7c052a9",
 			"functions": [
 				{
 					"name": "GroupChatHeader",
@@ -22455,7 +22830,7 @@
 						"{\n\thasUserInitiatedStopOrLeaveRequest,\n\tisJoinGroupChatView,\n\tbannedUsers\n}"
 					],
 					"exported": true,
-					"lineCount": 566
+					"lineCount": 573
 				},
 				{
 					"name": "VideoCallHeaderIcon",
@@ -22580,7 +22955,7 @@
 				}
 			],
 			"exports": ["GroupChatHeader"],
-			"totalLines": 646,
+			"totalLines": 653,
 			"hasStructuralAnalysis": true
 		},
 		"src/components/sessionHeader/GroupChatHeader/useJoinVideoCall/index.ts": {
@@ -22627,13 +23002,13 @@
 		},
 		"src/components/sessionHeader/GroupChatHeader/useStartVideoCall/index.ts": {
 			"filePath": "src/components/sessionHeader/GroupChatHeader/useStartVideoCall/index.ts",
-			"contentHash": "fd87d02050afd47a78f3e6afc3c134850209afc51c8394a805f05d0b22a35d60",
+			"contentHash": "b2b7ad2bd9e4487bc4c665af21e23e3135861858c3c5de9fd2e83cb7f8b55ed1",
 			"functions": [
 				{
 					"name": "useStartVideoCall",
 					"params": [],
 					"exported": true,
-					"lineCount": 60
+					"lineCount": 84
 				}
 			],
 			"classes": [],
@@ -22645,10 +23020,17 @@
 				{
 					"source": "../../../../globalState",
 					"specifiers": ["ActiveSessionContext"]
+				},
+				{
+					"source": "../../../../resources/scripts/runtimeConfig",
+					"specifiers": [
+						"getElementCallBaseUrl",
+						"getMatrixHomeserverUrl"
+					]
 				}
 			],
 			"exports": ["useStartVideoCall"],
-			"totalLines": 64,
+			"totalLines": 92,
 			"hasStructuralAnalysis": true
 		},
 		"src/components/sessionHeader/sessionHeader.styles.scss": {
@@ -23435,7 +23817,7 @@
 		},
 		"src/components/sessionsList/SessionsList.tsx": {
 			"filePath": "src/components/sessionsList/SessionsList.tsx",
-			"contentHash": "a6e6019c83938462f6014089d19c1da506e9d1b6a0447b8581e69afff3dcae22",
+			"contentHash": "141d49290e5df082f00506d35e690da86a213ac360c54aeaefcdb9150cb1601b",
 			"functions": [
 				{
 					"name": "buildSessionSearchHaystack",
@@ -23446,10 +23828,10 @@
 				},
 				{
 					"name": "isAnonymousAskerSession",
-					"params": ["raw", "_extended"],
+					"params": ["raw", "extended"],
 					"returnType": "boolean",
 					"exported": false,
-					"lineCount": 13
+					"lineCount": 33
 				},
 				{
 					"name": "sessionMatchesToolbar",
@@ -23471,7 +23853,7 @@
 						"{\n\tdefaultLanguage,\n\tsessionTypes,\n\tscrollContainerRef\n}"
 					],
 					"exported": true,
-					"lineCount": 1352
+					"lineCount": 1372
 				},
 				{
 					"name": "useGroupWatcher",
@@ -23560,10 +23942,6 @@
 					"specifiers": ["useLiveChatAvailable"]
 				},
 				{
-					"source": "../../utils/keycloakSession",
-					"specifiers": ["isAnonymousSession"]
-				},
-				{
 					"source": "../button/Button",
 					"specifiers": ["Button"]
 				},
@@ -23647,7 +24025,7 @@
 				}
 			],
 			"exports": ["SessionsList"],
-			"totalLines": 1661,
+			"totalLines": 1696,
 			"hasStructuralAnalysis": true
 		},
 		"src/components/sessionsList/SessionsList.tsx.backup": {
@@ -24120,7 +24498,7 @@
 		},
 		"src/components/sessionsListItem/SessionListItemComponent.tsx": {
 			"filePath": "src/components/sessionsListItem/SessionListItemComponent.tsx",
-			"contentHash": "2180916bac95103cbf99a17e184ce5c565334cd365dd5a9ed3dfaf815f15a7b2",
+			"contentHash": "63d90cc42ef2081c9203fc26cba937123e3a7fb5104f8124f7ec56a7123e8a6b",
 			"functions": [
 				{
 					"name": "SessionListItemComponent",
@@ -24923,7 +25301,7 @@
 		},
 		"src/components/termsandconditions/TermsAndConditions.tsx": {
 			"filePath": "src/components/termsandconditions/TermsAndConditions.tsx",
-			"contentHash": "2a49b5b92f8842f12f38d3292f3c3c6ea4f86dda948440943efa6b3596754986",
+			"contentHash": "d23545d791c1f2bdf8d5d299ddec479f2d359a40b1e500ce37946ccde317096a",
 			"functions": [
 				{
 					"name": "hasChanged",
@@ -24935,7 +25313,7 @@
 					"name": "TermsAndConditions",
 					"params": [],
 					"exported": true,
-					"lineCount": 219
+					"lineCount": 222
 				}
 			],
 			"classes": [],
@@ -25000,7 +25378,7 @@
 				}
 			],
 			"exports": ["TermsAndConditions"],
-			"totalLines": 256,
+			"totalLines": 259,
 			"hasStructuralAnalysis": true
 		},
 		"src/components/termsandconditions/termsandconfitions.styles.scss": {
@@ -25601,13 +25979,13 @@
 		},
 		"src/components/uiVersionToggle/UIVersionToggle.tsx": {
 			"filePath": "src/components/uiVersionToggle/UIVersionToggle.tsx",
-			"contentHash": "9cc3d8c7b720d4382a00fa89bacfb374990d22e4db02f14303f5dfb584c9e258",
+			"contentHash": "ad682658ea71901c67c0f2882b1df30cb0a693916c85ec027cf673cd52406e1d",
 			"functions": [
 				{
 					"name": "UIVersionToggle",
 					"params": [],
 					"exported": true,
-					"lineCount": 97
+					"lineCount": 115
 				}
 			],
 			"classes": [],
@@ -25629,12 +26007,16 @@
 					"specifiers": ["useTranslation"]
 				},
 				{
+					"source": "../../resources/scripts/runtimeConfig",
+					"specifiers": ["getMatrixHomeserverUrl"]
+				},
+				{
 					"source": "./uiVersionToggle.styles.scss",
 					"specifiers": []
 				}
 			],
 			"exports": ["UIVersionToggle"],
-			"totalLines": 108,
+			"totalLines": 126,
 			"hasStructuralAnalysis": true
 		},
 		"src/components/videoCall/statusPage.styles.scss": {
@@ -28996,7 +29378,7 @@
 		},
 		"src/globalState/provider/AppConfigProvider.tsx": {
 			"filePath": "src/globalState/provider/AppConfigProvider.tsx",
-			"contentHash": "13fae144b0f2656895c7d7b274ea95d8a0cccc6be009f961dc260deb1c63d606",
+			"contentHash": "5f207c47dc1c01237a8c5fffeb8182e796e55b594f5e32d6cdea72c446ab8d6b",
 			"functions": [
 				{
 					"name": "transformReleaseToggles",
@@ -29009,7 +29391,7 @@
 					"name": "AppConfigProvider",
 					"params": ["{\n\tchildren,\n\tconfig\n}"],
 					"exported": true,
-					"lineCount": 55
+					"lineCount": 48
 				}
 			],
 			"classes": [],
@@ -29046,7 +29428,7 @@
 				}
 			],
 			"exports": ["AppConfigContext", "AppConfigProvider"],
-			"totalLines": 77,
+			"totalLines": 70,
 			"hasStructuralAnalysis": true
 		},
 		"src/globalState/provider/CallProvider.tsx": {
@@ -29469,13 +29851,13 @@
 		},
 		"src/globalState/provider/NotificationsProvider.tsx": {
 			"filePath": "src/globalState/provider/NotificationsProvider.tsx",
-			"contentHash": "f826ca5e2a0f5fd5affb5cecb3a38a64f43ebff4b6c8fde1ebba62b98e5b2b3a",
+			"contentHash": "dde971feefdf7835f080e2b6d062b62e5a53a3d84bb1dfdd54d20c0cc175a9fe",
 			"functions": [
 				{
 					"name": "NotificationsProvider",
 					"params": ["props"],
 					"exported": true,
-					"lineCount": 226
+					"lineCount": 192
 				}
 			],
 			"classes": [],
@@ -29492,7 +29874,6 @@
 						"ReactNode",
 						"useEffect",
 						"useCallback",
-						"useContext",
 						"useState"
 					]
 				},
@@ -29520,14 +29901,6 @@
 				{
 					"source": "../../components/sessionCookie/accessSessionCookie",
 					"specifiers": ["getValueFromCookie"]
-				},
-				{
-					"source": "../context/UserDataContext",
-					"specifiers": ["UserDataContext"]
-				},
-				{
-					"source": "../helpers/stateHelpers",
-					"specifiers": ["AUTHORITIES", "hasUserAuthority"]
 				}
 			],
 			"exports": [
@@ -29540,7 +29913,7 @@
 				"NotificationsContext",
 				"NotificationsProvider"
 			],
-			"totalLines": 347,
+			"totalLines": 310,
 			"hasStructuralAnalysis": true
 		},
 		"src/globalState/provider/RegistrationProvider.tsx": {
@@ -30423,13 +30796,13 @@
 		},
 		"src/globalState/provider/UserDataProvider.tsx": {
 			"filePath": "src/globalState/provider/UserDataProvider.tsx",
-			"contentHash": "93909054c443e8bdc035263e2be4ffd946d75440931e8cc85d87a9d82ab62506",
+			"contentHash": "02a39bc9da1ed0cab406c35e9dea55ac5138d761a4182c3c92f0b01a0bea733f",
 			"functions": [
 				{
 					"name": "UserDataProvider",
 					"params": ["props"],
 					"exported": true,
-					"lineCount": 33
+					"lineCount": 22
 				}
 			],
 			"classes": [],
@@ -30453,17 +30826,10 @@
 				{
 					"source": "../context/UserDataContext",
 					"specifiers": ["UserDataContext"]
-				},
-				{
-					"source": "../../utils/keycloakSession",
-					"specifiers": [
-						"buildAnonymousUserData",
-						"isAnonymousSession"
-					]
 				}
 			],
 			"exports": ["UserDataProvider"],
-			"totalLines": 44,
+			"totalLines": 29,
 			"hasStructuralAnalysis": true
 		},
 		"src/globalState/provider/WebsocketConnectionDeactivatedProvider.tsx": {
@@ -30806,13 +31172,13 @@
 		},
 		"src/hooks/useJoinGroupChat.ts": {
 			"filePath": "src/hooks/useJoinGroupChat.ts",
-			"contentHash": "7a5e96eca53e84d703055960e2dca2b152a09713e944ae5ba6c7a84fcf6007dd",
+			"contentHash": "cf63b9719366e753b581378dfbf15bc63dcda877754ca6560343554708e9e6c5",
 			"functions": [
 				{
 					"name": "useJoinGroupChat",
 					"params": [],
 					"exported": true,
-					"lineCount": 41
+					"lineCount": 16
 				}
 			],
 			"classes": [],
@@ -30826,20 +31192,12 @@
 					"specifiers": ["apiPutGroupChat", "GROUP_CHAT_API"]
 				},
 				{
-					"source": "../api/apiGetChatRoomById",
-					"specifiers": ["apiGetChatRoomById"]
-				},
-				{
 					"source": "../globalState",
 					"specifiers": ["useTenant"]
-				},
-				{
-					"source": "../utils/keycloakSession",
-					"specifiers": ["isAnonymousSession"]
 				}
 			],
 			"exports": ["useJoinGroupChat"],
-			"totalLines": 48,
+			"totalLines": 21,
 			"hasStructuralAnalysis": true
 		},
 		"src/hooks/useMatrixReady.tsx": {
@@ -31366,17 +31724,17 @@
 		},
 		"src/pages/app.html": {
 			"filePath": "src/pages/app.html",
-			"contentHash": "31166dfe08aec3e71a89b93ce9c5a05e35a98309bbe3feb91d483ea50eea849c",
+			"contentHash": "565df2fe8778cef1381ea9778290b333130d4e10c96a6c367e42273d338aeb6b",
 			"functions": [],
 			"classes": [],
 			"imports": [],
 			"exports": [],
-			"totalLines": 62,
+			"totalLines": 63,
 			"hasStructuralAnalysis": false
 		},
 		"src/pages/under-construction.html": {
 			"filePath": "src/pages/under-construction.html",
-			"contentHash": "3375a8ccee84ababd6b338c6e4f25eb593d0cd65ec904c96bf896678eb3b14fe",
+			"contentHash": "12461bf542a3e55ecd8ad519054440a80d30a31128be1e92d2b9588bc215add8",
 			"functions": [],
 			"classes": [],
 			"imports": [],
@@ -31433,12 +31791,12 @@
 		},
 		"src/react-app-env.d.ts": {
 			"filePath": "src/react-app-env.d.ts",
-			"contentHash": "ba888870dce1808ed9dcdf317d1585b7b61bc58471760c909c323da559eddebc",
+			"contentHash": "f5248c71392aeaffeb4fd020aae52d1eeb7ac0e41f1989d1a724f48b4f2af99d",
 			"functions": [],
 			"classes": [],
 			"imports": [],
 			"exports": [],
-			"totalLines": 77,
+			"totalLines": 79,
 			"hasStructuralAnalysis": true
 		},
 		"src/react-dom-shim.ts": {
@@ -31718,7 +32076,7 @@
 		},
 		"src/resources/scripts/config.ts": {
 			"filePath": "src/resources/scripts/config.ts",
-			"contentHash": "97535e352815408ffaf96789231a82b6a61929164e9549922405332483b6bb9e",
+			"contentHash": "e217ec80f72e2f68dee18547cbc42371cc3c044c77a86320383812fb5b42d1ac",
 			"functions": [],
 			"classes": [],
 			"imports": [
@@ -31801,17 +32159,22 @@
 				"config",
 				"ALIAS_LAST_MESSAGES"
 			],
-			"totalLines": 433,
+			"totalLines": 442,
 			"hasStructuralAnalysis": true
 		},
 		"src/resources/scripts/endpoints.ts": {
 			"filePath": "src/resources/scripts/endpoints.ts",
-			"contentHash": "1aeb7542e6694c2106d668fe57b14f2505c814d05ebad266741c594c9a1add8e",
+			"contentHash": "188784148e6b51c3e21fa24a0da58b297802c287289a4370b888936f1225cde8",
 			"functions": [],
 			"classes": [],
-			"imports": [],
+			"imports": [
+				{
+					"source": "./getApiBaseUrl",
+					"specifiers": ["getApiBaseUrl"]
+				}
+			],
 			"exports": ["apiUrl", "endpoints"],
-			"totalLines": 144,
+			"totalLines": 140,
 			"hasStructuralAnalysis": true
 		},
 		"src/resources/scripts/endpoints.ts.backup": {
@@ -31823,6 +32186,109 @@
 			"exports": [],
 			"totalLines": 138,
 			"hasStructuralAnalysis": false
+		},
+		"src/resources/scripts/getApiBaseUrl.ts": {
+			"filePath": "src/resources/scripts/getApiBaseUrl.ts",
+			"contentHash": "7066b277f35e8ad20520bce72d336bb8216baf9ef50097397fd37f882f06f42a",
+			"functions": [
+				{
+					"name": "normalizeApiUrl",
+					"params": ["value"],
+					"returnType": "string",
+					"exported": false,
+					"lineCount": 10
+				},
+				{
+					"name": "getApiBaseUrl",
+					"params": [],
+					"returnType": "string",
+					"exported": true,
+					"lineCount": 17
+				}
+			],
+			"classes": [],
+			"imports": [],
+			"exports": ["getApiBaseUrl"],
+			"totalLines": 29,
+			"hasStructuralAnalysis": true
+		},
+		"src/resources/scripts/runtimeConfig.ts": {
+			"filePath": "src/resources/scripts/runtimeConfig.ts",
+			"contentHash": "ca5c5b9e2e722ca0fc06ef347b636cec2f3596f72cf1035a758b9896e74b909a",
+			"functions": [
+				{
+					"name": "getRuntimeConfig",
+					"params": [],
+					"returnType": "RuntimeConfig",
+					"exported": false,
+					"lineCount": 6
+				},
+				{
+					"name": "firstNonEmpty",
+					"params": ["source", "keys"],
+					"returnType": "string | undefined",
+					"exported": false,
+					"lineCount": 12
+				},
+				{
+					"name": "pickValue",
+					"params": ["...keys"],
+					"returnType": "string | undefined",
+					"exported": false,
+					"lineCount": 7
+				},
+				{
+					"name": "stripTrailingSlashes",
+					"params": ["value"],
+					"returnType": "string",
+					"exported": false,
+					"lineCount": 2
+				},
+				{
+					"name": "ensureHttps",
+					"params": ["value"],
+					"returnType": "string",
+					"exported": false,
+					"lineCount": 10
+				},
+				{
+					"name": "ensureWebsocket",
+					"params": ["value"],
+					"returnType": "string",
+					"exported": false,
+					"lineCount": 16
+				},
+				{
+					"name": "getMatrixHomeserverUrl",
+					"params": [],
+					"returnType": "string",
+					"exported": true,
+					"lineCount": 8
+				},
+				{
+					"name": "getElementCallBaseUrl",
+					"params": [],
+					"returnType": "string",
+					"exported": true,
+					"lineCount": 9
+				},
+				{
+					"name": "getLiveKitWsUrl",
+					"params": [],
+					"returnType": "string",
+					"exported": true,
+					"lineCount": 4
+				}
+			],
+			"classes": [],
+			"imports": [],
+			"exports": [
+				"getMatrixHomeserverUrl",
+				"getElementCallBaseUrl",
+				"getLiveKitWsUrl"
+			],
+			"totalLines": 119,
+			"hasStructuralAnalysis": true
 		},
 		"src/resources/scripts/theme.jsx": {
 			"filePath": "src/resources/scripts/theme.jsx",
@@ -32145,7 +32611,7 @@
 		},
 		"src/services/liveKitService.ts": {
 			"filePath": "src/services/liveKitService.ts",
-			"contentHash": "2599d38babd072e5f669dfaed1c1998cc5a6c25afcb7f6e0a5c5fed1b125fea2",
+			"contentHash": "00e4a34b8d932fc6fed94b16c8266bc0129d2e8868b6eafa1b1c5ddf34af1aed",
 			"functions": [],
 			"classes": [
 				{
@@ -32172,7 +32638,7 @@
 						"updateTimeout"
 					],
 					"exported": false,
-					"lineCount": 282
+					"lineCount": 325
 				}
 			],
 			"imports": [
@@ -32186,10 +32652,14 @@
 						"RemoteTrackPublication",
 						"LocalParticipant"
 					]
+				},
+				{
+					"source": "../resources/scripts/runtimeConfig",
+					"specifiers": ["getLiveKitWsUrl"]
 				}
 			],
 			"exports": ["liveKitService"],
-			"totalLines": 300,
+			"totalLines": 351,
 			"hasStructuralAnalysis": true
 		},
 		"src/services/matrixCallService.ts": {
@@ -32338,7 +32808,7 @@
 		},
 		"src/services/matrixLiveEventBridge.ts": {
 			"filePath": "src/services/matrixLiveEventBridge.ts",
-			"contentHash": "e12e9d7c6adc958cc91f08dc78974eba43d87f1847a9c1ecd9daee1c662047dc",
+			"contentHash": "acd6d3fabe4be89d3ac629c344442875beaa1161bb825b6dc5c66b4d9bcae684",
 			"functions": [],
 			"classes": [
 				{
@@ -32364,7 +32834,7 @@
 						"processedCallInvites"
 					],
 					"exported": true,
-					"lineCount": 332
+					"lineCount": 339
 				}
 			],
 			"imports": [
@@ -32378,26 +32848,26 @@
 				}
 			],
 			"exports": ["MatrixLiveEventBridge", "matrixLiveEventBridge"],
-			"totalLines": 345,
+			"totalLines": 351,
 			"hasStructuralAnalysis": true
 		},
 		"src/services/matrixRegistrationService.ts": {
 			"filePath": "src/services/matrixRegistrationService.ts",
-			"contentHash": "8178b320f001024d73642fb945b3f4375d8aa40de6ec5b986af3703d561c4d08",
+			"contentHash": "8a10cd5f04de5ac2aa83ccd2071d33a1b22e42b86dce89b2500ef952142df3d5",
 			"functions": [
 				{
 					"name": "registerMatrixUser",
 					"params": ["registrationData"],
 					"returnType": "Promise<MatrixRegistrationResult>",
 					"exported": true,
-					"lineCount": 57
+					"lineCount": 66
 				},
 				{
 					"name": "loginMatrixUser",
 					"params": ["username", "password"],
 					"returnType": "Promise<MatrixRegistrationResult>",
 					"exported": true,
-					"lineCount": 39
+					"lineCount": 43
 				}
 			],
 			"classes": [],
@@ -32405,15 +32875,19 @@
 				{
 					"source": "matrix-js-sdk",
 					"specifiers": ["createClient"]
+				},
+				{
+					"source": "../resources/scripts/runtimeConfig",
+					"specifiers": ["getMatrixHomeserverUrl"]
 				}
 			],
 			"exports": ["registerMatrixUser", "loginMatrixUser"],
-			"totalLines": 114,
+			"totalLines": 128,
 			"hasStructuralAnalysis": true
 		},
 		"src/services/messageEventEmitter.ts": {
 			"filePath": "src/services/messageEventEmitter.ts",
-			"contentHash": "0eb270414aaab36df5412a84f3ebbe71943d266a7b57d8a41a5d330d1d36d3cf",
+			"contentHash": "be2ed205181a85c118014ae28442f32fbf72e4967f51a1e1041c34893049b6f4",
 			"functions": [],
 			"classes": [
 				{
@@ -32482,55 +32956,6 @@
 			"imports": [],
 			"exports": [],
 			"totalLines": 97,
-			"hasStructuralAnalysis": true
-		},
-		"src/utils/anonymousSessionFetchGuard.ts": {
-			"filePath": "src/utils/anonymousSessionFetchGuard.ts",
-			"contentHash": "e9ff8475fd39244468050c8bb43852b880f9aa7db75644d5702bf4b6f0539449",
-			"functions": [
-				{
-					"name": "decodeKeycloakPreferredUsername",
-					"params": ["raw"],
-					"returnType": "string",
-					"exported": true,
-					"lineCount": 10
-				},
-				{
-					"name": "isAnonymousSession",
-					"params": [],
-					"returnType": "boolean",
-					"exported": true,
-					"lineCount": 15
-				},
-				{
-					"name": "shouldRejectSilentlyForAnonymousRestrictedUrl",
-					"params": ["url", "status"],
-					"returnType": "boolean",
-					"exported": true,
-					"lineCount": 7
-				}
-			],
-			"classes": [],
-			"imports": [
-				{
-					"source": "hi-base32",
-					"specifiers": ["decode"]
-				},
-				{
-					"source": "../components/sessionCookie/accessSessionCookie",
-					"specifiers": ["getValueFromCookie"]
-				},
-				{
-					"source": "./parseJWT",
-					"specifiers": ["parseJwt"]
-				}
-			],
-			"exports": [
-				"decodeKeycloakPreferredUsername",
-				"isAnonymousSession",
-				"shouldRejectSilentlyForAnonymousRestrictedUrl"
-			],
-			"totalLines": 51,
 			"hasStructuralAnalysis": true
 		},
 		"src/utils/appConfig.ts": {
@@ -33255,65 +33680,9 @@
 			"totalLines": 4,
 			"hasStructuralAnalysis": true
 		},
-		"src/utils/keycloakSession.ts": {
-			"filePath": "src/utils/keycloakSession.ts",
-			"contentHash": "4c144074c12629f353e0d69c0fd59b8e23db818d0c102bcb9fd3285c9899a793",
-			"functions": [
-				{
-					"name": "getKeycloakPayload",
-					"params": [],
-					"exported": false,
-					"lineCount": 5
-				},
-				{
-					"name": "isKeycloakConsultantSession",
-					"params": [],
-					"returnType": "boolean",
-					"exported": true,
-					"lineCount": 5
-				},
-				{
-					"name": "buildAnonymousUserData",
-					"params": [],
-					"returnType": "UserDataInterface",
-					"exported": true,
-					"lineCount": 26
-				}
-			],
-			"classes": [],
-			"imports": [
-				{
-					"source": "../globalState/interfaces/UserDataInterface",
-					"specifiers": ["UserDataInterface"]
-				},
-				{
-					"source": "../globalState/helpers/stateHelpers",
-					"specifiers": ["AUTHORITIES"]
-				},
-				{
-					"source": "./anonymousSessionFetchGuard",
-					"specifiers": ["decodeKeycloakPreferredUsername"]
-				},
-				{
-					"source": "../components/sessionCookie/accessSessionCookie",
-					"specifiers": ["getValueFromCookie"]
-				},
-				{
-					"source": "./parseJWT",
-					"specifiers": ["parseJwt"]
-				}
-			],
-			"exports": [
-				"isAnonymousSession",
-				"isKeycloakConsultantSession",
-				"buildAnonymousUserData"
-			],
-			"totalLines": 52,
-			"hasStructuralAnalysis": true
-		},
 		"src/utils/liveChatToggle.ts": {
 			"filePath": "src/utils/liveChatToggle.ts",
-			"contentHash": "2cdfa1383039d4b05c5bf050254b6bda30cb59512c06d479b0bd6f42547740af",
+			"contentHash": "6cc47ec631d8ccfffef8bd08db6a011eab654cdaa24718a5338a522a55eef505",
 			"functions": [
 				{
 					"name": "isLiveChatAvailable",
@@ -33327,7 +33696,7 @@
 					"params": ["active"],
 					"returnType": "void",
 					"exported": true,
-					"lineCount": 12
+					"lineCount": 15
 				},
 				{
 					"name": "useLiveChatAvailable",
@@ -33342,6 +33711,10 @@
 				{
 					"source": "react",
 					"specifiers": ["useEffect", "useState"]
+				},
+				{
+					"source": "../api/apiSetLiveChatAvailability",
+					"specifiers": ["apiSetLiveChatAvailability"]
 				}
 			],
 			"exports": [
@@ -33349,7 +33722,7 @@
 				"setLiveChatAvailable",
 				"useLiveChatAvailable"
 			],
-			"totalLines": 53,
+			"totalLines": 57,
 			"hasStructuralAnalysis": true
 		},
 		"src/utils/loadConsultingTypesForAgencies.ts": {
@@ -34007,7 +34380,7 @@
 		},
 		"src/utils/videoCallHelpers.ts": {
 			"filePath": "src/utils/videoCallHelpers.ts",
-			"contentHash": "ca4e382502901121465b2b7f28bb5db731ad3f3a619a649d21fe5e7bd958a242",
+			"contentHash": "4be5ad0f4da34e2557b34150d84b62b011f3e488178fccd36ebf5b47f83efafe",
 			"functions": [
 				{
 					"name": "currentUserWasVideoCallInitiator",
@@ -34079,7 +34452,7 @@
 		},
 		"STORYBOOK_KUBERNETES.md": {
 			"filePath": "STORYBOOK_KUBERNETES.md",
-			"contentHash": "97db6549772eda736e300e13f5d33c1328b3d9863a74fa129d0e672981cc1bb5",
+			"contentHash": "1a65ffafb5cf749b5e083a7d1ce837396933faeeccc14f1bc7972713f54ae96f",
 			"functions": [],
 			"classes": [],
 			"imports": [],
@@ -34149,7 +34522,7 @@
 		},
 		"tmpcompare.spec.ts": {
 			"filePath": "tmpcompare.spec.ts",
-			"contentHash": "1e2eb444329c23932188565c690cdf88edcae7cce0bac4ce72745c2297bda0f6",
+			"contentHash": "b08d4b85f70230a1d64ab4d5affdeec81594f262b1339d5362d97c62ddb816b6",
 			"functions": [],
 			"classes": [],
 			"imports": [
@@ -34159,7 +34532,7 @@
 				}
 			],
 			"exports": [],
-			"totalLines": 36,
+			"totalLines": 51,
 			"hasStructuralAnalysis": true
 		},
 		"translation-files-current/de@informal/common.json": {
@@ -34334,7 +34707,7 @@
 		},
 		"tsconfig.json": {
 			"filePath": "tsconfig.json",
-			"contentHash": "84f38b5021d98ccdf20ee9a039a76d48ea10adce0e9d89665388214199587017",
+			"contentHash": "b9258a1747a2b833b37c8def5502acaf5f5159fdd000150b57aa1c7960bd4938",
 			"functions": [],
 			"classes": [],
 			"imports": [],

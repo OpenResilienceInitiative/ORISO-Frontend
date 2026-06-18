@@ -9,23 +9,30 @@ export const apiGetAgencyById = async (
 ): Promise<AgencyDataInterface> => {
 	const url = endpoints.agencyServiceBase + '/' + agencyId;
 
-	return fetchData({
-		url: url,
-		method: FETCH_METHODS.GET,
-		skipAuth: true,
-		responseHandling: [FETCH_ERRORS.EMPTY, FETCH_ERRORS.NO_MATCH]
-	})
-		.then((response) => response[0])
-		.then(async (agency) => {
-			if (!fetchConsultingTypeDetails || !agency) {
-				return agency;
-			}
-
-			return {
-				...agency,
-				consultingTypeRel: await apiGetConsultingType({
-					consultingTypeId: agency?.consultingType
-				})
-			};
+	try {
+		const response = await fetchData({
+			url: url,
+			method: FETCH_METHODS.GET,
+			skipAuth: true,
+			responseHandling: [
+				FETCH_ERRORS.EMPTY,
+				FETCH_ERRORS.NO_MATCH,
+				FETCH_ERRORS.CATCH_ALL
+			]
 		});
+		const agency = response?.[0];
+		if (!fetchConsultingTypeDetails || !agency) {
+			return agency ?? null;
+		}
+
+		return {
+			...agency,
+			consultingTypeRel: await apiGetConsultingType({
+				consultingTypeId: agency?.consultingType
+			})
+		};
+	} catch {
+		// Agency logo/metadata is non-critical — must not redirect anonymous chats to error.500.
+		return null;
+	}
 };

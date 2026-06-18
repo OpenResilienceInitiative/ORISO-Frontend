@@ -1183,10 +1183,15 @@
 			"actionsLabel": "Wartebereich-Aktionen",
 			"calmCompanion": "Kurze ruhige Begleitung öffnen",
 			"calmCompanionHint": "Bis der Chat beginnt, eine kurze interaktive ruhige Begleitung. Direkt hier im Chatraum",
+			"calmCompanionHintMobileLine1": "Bis der Chat beginnt, eine kurze",
+			"calmCompanionHintMobileLine2": "interaktive ruhige Begleitung.",
+			"calmCompanionHintDesktop": "Bis der Chat beginnt, eine kurze ruhige Begleitung. Direkt hier im Chatraum",
 			"positionCount_one": "{{count}} Person vor dir",
 			"positionCount_other": "{{count}} Personen vor dir",
+			"positionCountSuffix": "Noch vor dir",
 			"connecting": "Wird verbunden …",
-			"requestLocalCounselor": "Anfrage an lokalen Berater senden",
+			"insteadOfWaiting": "Statt zu warten",
+			"requestLocalCounselor": "Vor Ort Beratungsanfrage absenden",
 			"consultantAccepted": "Du wirst jetzt von deiner/deinem Berater_in im Chat erwartet.",
 			"startChatNow": "Jetzt Chat starten",
 			"dismissAcceptedBanner": "Hinweis ausblenden"
@@ -1206,6 +1211,26 @@
 				"error": {
 					"title": "Fehler beim Löschen",
 					"text": "Das Konto konnte nicht gelöscht werden. Bitte versuche es erneut."
+				}
+			},
+			"endChat": {
+				"label": "Chat beenden",
+				"ending": "Wird beendet …",
+				"confirm": {
+					"headline": "Möchtest du den Chat wirklich beenden?",
+					"copy": "Das Gespräch wird geschlossen. Du kannst diesen anonymen Chat nicht fortsetzen.",
+					"buttonConfirm": "Chat beenden",
+					"buttonCancel": "Abbrechen"
+				},
+				"success": {
+					"headline": "Chat beendet",
+					"copy": "Danke, dass du unseren Live-Chat genutzt hast. Du kannst diese Seite jetzt schließen.",
+					"buttonClose": "Schließen"
+				},
+				"error": {
+					"headline": "Chat konnte nicht beendet werden",
+					"copy": "Der Chat konnte nicht beendet werden. Bitte versuche es erneut.",
+					"buttonClose": "Schließen"
 				}
 			}
 		},

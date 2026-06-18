@@ -12,6 +12,12 @@ interface UserAvatarProps {
 	lastName?: string;
 	userId: string;
 	size?: string;
+	/**
+	 * Wraps the avatar in a white circle (per design, all user icons must have
+	 * a white circle around them). Defaults to `true`. Pass `false` where the
+	 * surrounding container already provides the white ring (e.g. chat messages).
+	 */
+	ring?: boolean;
 }
 
 /**
@@ -24,7 +30,8 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
 	firstName,
 	lastName,
 	userId,
-	size = '32px'
+	size = '32px',
+	ring = true
 }) => {
 	const resolvedName = formatMessagePersonName(
 		displayName,
@@ -39,12 +46,42 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
 		lastName
 	);
 
-	return (
+	// Keep the overall footprint equal to `size` so existing fixed-size
+	// containers don't shift; the white ring is created by shrinking the inner
+	// avatar and padding the difference with a white circular background.
+	const totalSize = parseInt(size, 10) || 32;
+	const ringWidth = Math.max(3, Math.round(totalSize * 0.125));
+	const innerSize = ring ? `${totalSize - ringWidth * 2}px` : size;
+
+	const avatar = (
 		<Avatar
 			id={userId}
 			name={resolvedName || initials}
-			size={size}
+			size={innerSize}
 			type="round"
 		/>
+	);
+
+	if (!ring) {
+		return avatar;
+	}
+
+	return (
+		<span
+			style={{
+				display: 'inline-flex',
+				alignItems: 'center',
+				justifyContent: 'center',
+				width: totalSize,
+				height: totalSize,
+				borderRadius: '50%',
+				background: '#fff',
+				boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.10)',
+				boxSizing: 'border-box',
+				flexShrink: 0
+			}}
+		>
+			{avatar}
+		</span>
 	);
 };

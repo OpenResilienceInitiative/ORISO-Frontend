@@ -14,6 +14,10 @@ import clsx from 'clsx';
 import { scrollToEnd, isMyMessage, SESSION_LIST_TYPES } from './sessionHelpers';
 import { formatToHHMM } from '../../utils/dateHelpers';
 import {
+	isMatrixRoom,
+	isMatrixRoomIdHeuristic
+} from '../../utils/matrixRoomUtils';
+import {
 	MessageItem,
 	MessageItemComponent
 } from '../message/MessageItemComponent';
@@ -54,6 +58,7 @@ import useDebounceCallback from '../../hooks/useDebounceCallback';
 import { apiPostError, TError } from '../../api/apiPostError';
 import { useE2EE } from '../../hooks/useE2EE';
 import { MessageSubmitInterfaceSkeleton } from '../messageSubmitInterface/messageSubmitInterfaceSkeleton';
+import { MessageSubmitErrorBoundary } from '../messageSubmitInterface/MessageSubmitErrorBoundary';
 import { Text } from '../text/Text';
 import { EncryptionBanner } from './EncryptionBanner';
 import { apiGetSessionSupervisors } from '../../api/apiGetSessionSupervisors';
@@ -61,6 +66,11 @@ import { apiPatchNotificationActiveView } from '../../api/apiPatchNotificationAc
 import { apiPatchUserData } from '../../api/apiPatchUserData';
 import { apiGetUserData } from '../../api/apiGetUserData';
 import { apiGetAnonymousEnquiryDetails } from '../../api/apiGetAnonymousEnquiryDetails';
+import {
+	bindAnonymousChatUnloadCleanup,
+	ensureAnonymousChatPreLogoutCleanup,
+	registerAnonymousChatSessionForCleanup
+} from '../../utils/anonymousChatSessionCleanup';
 import { parseMessagePrefixes } from '../message/messageConstants';
 import { decodeUsername } from '../../utils/encryptionHelpers';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
@@ -84,6 +94,19 @@ import LegalLinks from '../legalLinks/LegalLinks';
 import { renderToString } from 'react-dom/server';
 import { mobileListView } from '../app/navigationHandler';
 import { UserAvatar } from '../message/UserAvatar';
+import {
+	Dialog,
+	Box as MuiBox,
+	Typography as MuiTypography,
+	Button as MuiButton
+} from '@mui/material';
+import AccessTimeOutlinedIcon from '@mui/icons-material/AccessTimeOutlined';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import { LIVE_CHAT_OPENING_HOURS } from '../anonymousChat/liveChatOpeningHours';
+import liveChatClosedIllustration from '../../resources/img/illustrations/live-chat-closed.svg';
+import NorthEastIcon from '@mui/icons-material/NorthEast';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import CloseIcon from '@mui/icons-material/Close';
 
 const MessageSubmitInterfaceComponent = lazy(() =>
 	import('../messageSubmitInterface/messageSubmitInterfaceComponent').then(
@@ -486,6 +509,24 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	);
 	const [consultantAccepted, setConsultantAccepted] = useState(false);
 	/**
+	 * Live count of consultants currently available for this anonymous
+	 * enquiry, fed by the `apiGetAnonymousEnquiryDetails` poll. `null` while
+	 * unknown. When this drops to 0 the "Live-Chat ist zurzeit leider
+	 * geschlossen" modal is shown; it auto-closes once a consultant becomes
+	 * available again.
+	 */
+	const [numAvailableConsultants, setNumAvailableConsultants] = useState<
+		number | null
+	>(null);
+	/**
+	 * Set when the asker manually dismisses the no-availability modal while
+	 * the count is still 0, so the poll doesn't immediately reopen it. Reset
+	 * automatically as soon as a consultant becomes available again.
+	 */
+	const [liveChatClosedDismissed, setLiveChatClosedDismissed] =
+		useState(false);
+	const [liveChatClosedHintOpen, setLiveChatClosedHintOpen] = useState(false);
+	/**
 	 * Persist the "Jetzt Chat starten" dismissal in sessionStorage so a
 	 * reload after the asker has already unlocked the composer doesn't
 	 * throw them back to the waiting-queue screen. Keyed per session so
@@ -617,6 +658,18 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		isAnonymousAskerExperience &&
 		pseudonymConfirmed &&
 		!waitingGateDismissed;
+	/**
+	 * Show the "Live-Chat ist zurzeit leider geschlossen" modal while the
+	 * anonymous asker is waiting and no consultant is currently available.
+	 * Auto-opens when the live count is 0, auto-closes when it rises above 0,
+	 * and stays closed if the asker dismissed it manually (until availability
+	 * recovers, which resets the dismissal above).
+	 */
+	const liveChatClosedModalOpen =
+		isInAnonymousWaitingQueuePhase &&
+		!consultantAccepted &&
+		numAvailableConsultants === 0 &&
+		!liveChatClosedDismissed;
 	const isJoinRoomAvailable = Boolean(activeSession.consultant?.id);
 	const selectedPreset = useMemo(
 		() =>
@@ -1554,6 +1607,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const dragCancelRef = useRef<NodeJS.Timeout | null>(null);
 	const [newMessages, setNewMessages] = useState(0);
 	const [canWriteMessage, setCanWriteMessage] = useState(false);
+	const [composerRemountKey, setComposerRemountKey] = useState(0);
 	const [supervisionReason, setSupervisionReason] = useState<string | null>(
 		null
 	);
@@ -1594,32 +1648,60 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	// MATRIX MIGRATION: Create Matrix-aware isMyMessage function
 	const isMyMessageMatrix = useCallback(
 		(messageUserId: string) => {
-			// For Matrix sessions, check if sender matches current user's Matrix user ID
-			// Matrix room IDs start with '!' and Matrix user IDs start with '@'
-			const isMatrixSession =
-				activeSession.rid?.startsWith('!') ||
-				messageUserId?.includes('@');
+			const normalizeMatrixId = (value?: string | null) => {
+				const raw = `${value || ''}`.trim().toLowerCase();
+				if (!raw) {
+					return { full: '', atUser: '', user: '' };
+				}
+				const withAt = raw.startsWith('@') ? raw : `@${raw}`;
+				const withoutAt = withAt.substring(1);
+				const usernameOnly = withoutAt.split(':')[0];
+				return {
+					full: withAt,
+					atUser: `@${usernameOnly}`,
+					user: usernameOnly
+				};
+			};
 
-			if (isMatrixSession && messageUserId?.includes('@')) {
-				// Get current user's Matrix user ID from localStorage or cookie (rc_uid stores Matrix ID for Matrix sessions)
+			const isMatrixSession = Boolean(
+				isMatrixRoom(activeSession.rid) ||
+					activeSession.item?.matrixRoomId ||
+					messageUserId?.includes('@')
+			);
+
+			if (isMatrixSession) {
+				const matrixClientUserId = (window as any).matrixClientService
+					?.getClient?.()
+					?.getUserId?.();
 				const myMatrixUserId =
+					matrixClientUserId ||
 					localStorage.getItem('matrix_user_id') ||
 					(typeof document !== 'undefined' &&
 						document.cookie
 							.split('; ')
 							.find((row) => row.startsWith('rc_uid='))
-							?.split('=')[1]);
+							?.split('=')[1]) ||
+					userData?.userName;
 
-				// Compare full Matrix user IDs (e.g., @username:domain)
-				// This works for both normal and anonymous users
-				if (myMatrixUserId && messageUserId) {
-					return myMatrixUserId === messageUserId;
-				}
+				const mine = normalizeMatrixId(myMatrixUserId);
+				const sender = normalizeMatrixId(messageUserId);
+
+				return Boolean(
+					mine.full &&
+						(sender.full === mine.full ||
+							sender.full === mine.atUser ||
+							sender.atUser === mine.atUser ||
+							sender.user === mine.user)
+				);
 			}
 			// For RocketChat sessions, use the standard check
 			return isMyMessage(messageUserId);
 		},
-		[activeSession.rid]
+		[
+			activeSession.rid,
+			activeSession.item?.matrixRoomId,
+			userData?.userName
+		]
 	);
 
 	// Check if current user is a supervisor
@@ -1656,10 +1738,19 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	}, [activeSession.item.id, userData, isSupervisionEnabledForCurrentChat]);
 
 	useEffect(() => {
-		const canWrite = type !== SESSION_LIST_TYPES.ENQUIRY;
-		// console.log('🔥 SessionItemComponent: canWriteMessage =', canWrite, '(type:', type, ', isGroup:', activeSession.isGroup, ', isSupervisor:', isSupervisor, ')');
+		const canWrite =
+			type !== SESSION_LIST_TYPES.ENQUIRY ||
+			(isAnonymousAskerExperience && waitingGateDismissed);
 		setCanWriteMessage(canWrite);
-	}, [type, userData, activeSession, activeSession.isGroup, isSupervisor]);
+	}, [
+		type,
+		isAnonymousAskerExperience,
+		waitingGateDismissed,
+		userData,
+		activeSession,
+		activeSession.isGroup,
+		isSupervisor
+	]);
 
 	useEffect(() => {
 		if (!isAnonymousBreathingGameAvailable) {
@@ -1787,6 +1878,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					if (typeof details?.peopleAhead === 'number') {
 						setQueuePeopleAhead(details.peopleAhead);
 					}
+					setNumAvailableConsultants(
+						typeof details?.numAvailableConsultants === 'number'
+							? details.numAvailableConsultants
+							: null
+					);
 					/* Anything other than INITIAL/NEW means a consultant has
 					   started handling this enquiry — flip the action bar to
 					   the "Start chat now" prompt. */
@@ -1813,6 +1909,51 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		};
 	}, [isInAnonymousWaitingQueuePhase, activeSession.item?.id]);
 
+	/**
+	 * When an anonymous asker leaves (logout, navigate away, tab close), finish the
+	 * session immediately so the waiting queue count drops for everyone else.
+	 */
+	useEffect(() => {
+		ensureAnonymousChatPreLogoutCleanup();
+
+		if (!isAnonymousAskerExperience || !activeSession.item?.id) {
+			registerAnonymousChatSessionForCleanup(null);
+			return;
+		}
+
+		registerAnonymousChatSessionForCleanup(
+			activeSession.item.id,
+			activeSession.item.status,
+			isMatrixRoomIdHeuristic(activeSession.rid)
+				? activeSession.rid
+				: activeSession.item?.matrixRoomId,
+			userData?.userName
+		);
+
+		return bindAnonymousChatUnloadCleanup(activeSession.item.id);
+	}, [
+		isAnonymousAskerExperience,
+		activeSession.item?.id,
+		activeSession.item?.status,
+		activeSession.item?.matrixRoomId,
+		activeSession.rid,
+		userData?.userName
+	]);
+
+	/**
+	 * As soon as at least one consultant is available again, clear any manual
+	 * dismissal so the no-availability modal can auto-reopen if the count
+	 * later drops back to 0.
+	 */
+	useEffect(() => {
+		if (
+			typeof numAvailableConsultants === 'number' &&
+			numAvailableConsultants > 0
+		) {
+			setLiveChatClosedDismissed(false);
+		}
+	}, [numAvailableConsultants]);
+
 	/* Once the backend session status moves past enquiry phase we also treat
 	   that as "consultant accepted" — belt-and-braces signal in case the
 	   anonymous-enquiry poll hasn't fired yet. */
@@ -1830,6 +1971,27 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		isAnonymousEnquiryPhaseSession
 	]);
 
+	const preloadMessageComposer = useCallback(() => {
+		void import(
+			'../messageSubmitInterface/messageSubmitInterfaceComponent'
+		);
+	}, []);
+
+	useEffect(() => {
+		if (
+			shouldShowPseudonymGate &&
+			pseudonymConfirmed &&
+			consultantAccepted
+		) {
+			preloadMessageComposer();
+		}
+	}, [
+		consultantAccepted,
+		preloadMessageComposer,
+		pseudonymConfirmed,
+		shouldShowPseudonymGate
+	]);
+
 	const handleOpenCalmCompanion = useCallback(() => {
 		setShowBriefingNegativeScreen(false);
 		setBriefingScreenIndex(0);
@@ -1842,7 +2004,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	}, []);
 
 	const handleStartAcceptedChat = useCallback(() => {
-		setWaitingGateDismissed(true);
+		void import('../messageSubmitInterface/messageSubmitInterfaceComponent')
+			.then(() => setWaitingGateDismissed(true))
+			.catch(() => setWaitingGateDismissed(true));
 	}, []);
 
 	useEffect(() => {
@@ -2520,16 +2684,20 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			// if first unread message -> prepend element
 			if (newMessages === 0 && !isScrolledToBottom) {
 				const scrollContainer = scrollContainerRef.current;
-				const firstUnreadItem = Array.from(
-					scrollContainer.querySelectorAll('.messageItem')
-				).pop();
-				const lastReadDivider = document.createElement('div');
-				lastReadDivider.innerHTML = translate(
-					'session.divider.lastRead'
-				);
-				lastReadDivider.className =
-					'messageItem__divider messageItem__divider--lastRead';
-				firstUnreadItem.prepend(lastReadDivider);
+				if (scrollContainer) {
+					const firstUnreadItem = Array.from(
+						scrollContainer.querySelectorAll('.messageItem')
+					).pop() as HTMLElement | undefined;
+					if (firstUnreadItem) {
+						const lastReadDivider = document.createElement('div');
+						lastReadDivider.innerHTML = translate(
+							'session.divider.lastRead'
+						);
+						lastReadDivider.className =
+							'messageItem__divider messageItem__divider--lastRead';
+						firstUnreadItem.prepend(lastReadDivider);
+					}
+				}
 			}
 
 			if (isScrolledToBottom && initialScrollCompleted) {
@@ -2573,27 +2741,32 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	/* eslint-enable */
 
 	const handleScrollToBottomButtonClick = () => {
-		if (newMessages > 0) {
-			const scrollContainer = scrollContainerRef.current;
+		const scrollContainer = scrollContainerRef.current;
+		if (newMessages > 0 && scrollContainer) {
 			const sessionHeader =
-				scrollContainer.parentElement.getElementsByClassName(
+				scrollContainer.parentElement?.getElementsByClassName(
 					'sessionInfo'
-				)[0] as HTMLElement;
+				)[0] as HTMLElement | undefined;
 			const messageItems = scrollContainer.querySelectorAll(
 				'.messageItem:not(.messageItem--right)'
 			);
 			const firstUnreadItem = messageItems[
 				messageItems.length - newMessages
-			] as HTMLElement;
-			const firstUnreadItemOffet =
-				firstUnreadItem.offsetTop - sessionHeader.offsetHeight;
+			] as HTMLElement | undefined;
 
-			if (scrollContainer.scrollTop < firstUnreadItemOffet) {
-				smoothScroll({
-					duration: 1000,
-					element: scrollContainer,
-					to: firstUnreadItemOffet
-				});
+			if (firstUnreadItem && sessionHeader) {
+				const firstUnreadItemOffet =
+					firstUnreadItem.offsetTop - sessionHeader.offsetHeight;
+
+				if (scrollContainer.scrollTop < firstUnreadItemOffet) {
+					smoothScroll({
+						duration: 1000,
+						element: scrollContainer,
+						to: firstUnreadItemOffet
+					});
+				} else {
+					scrollToEnd(0, true);
+				}
 			} else {
 				scrollToEnd(0, true);
 			}
@@ -2665,12 +2838,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const handleMessageSendSuccess = () => {
 		setDraggedFile(null);
 
-		// MATRIX MIGRATION: Refresh messages after sending for Matrix sessions
-		if (!activeSession.rid && props.refreshMessages) {
-			// console.log('🔄 MATRIX: Refreshing messages after send...');
+		if (props.refreshMessages) {
 			setTimeout(() => {
 				props.refreshMessages();
-			}, 500); // Small delay to ensure message is processed
+			}, 500);
 		}
 	};
 
@@ -2696,7 +2867,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			return;
 		}
 		const roomId =
-			(activeSession.rid && activeSession.rid.startsWith('!')
+			(isMatrixRoom(activeSession.rid)
 				? activeSession.rid
 				: activeSession.item?.matrixRoomId ||
 					activeSession.rid ||
@@ -4216,6 +4387,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											firstName={primaryTypingUser}
 											lastName=""
 											userId={`typing-${primaryTypingUser}`}
+											ring={false}
 										/>
 									</div>
 									<div className="messageItem__content">
@@ -4402,7 +4574,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			)}
 
 			{type === SESSION_LIST_TYPES.ENQUIRY &&
-				!shouldBlockAnonymousInquiryChat && (
+				!shouldBlockAnonymousInquiryChat &&
+				!isAnonymousAskerExperience && (
 					<AcceptAssign btnLabel={'enquiry.acceptButton.known'} />
 				)}
 
@@ -4472,34 +4645,47 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 								/>
 							}
 						>
-							<MessageSubmitInterfaceComponent
-								isTyping={props.isTyping}
-								className={clsx(
-									'session__submit-interface',
-									!isScrolledToBottom &&
-										'session__submit-interface--scrolled-up',
-									activeThreadRootId &&
-										'session__submit-interface--withThread'
-								)}
-								placeholder={getPlaceholder()}
-								typingUsers={props.typingUsers}
-								preselectedFile={draggedFile}
-								handleMessageSendSuccess={
-									handleMessageSendSuccess
+							<MessageSubmitErrorBoundary
+								onRetry={() =>
+									setComposerRemountKey((key) => key + 1)
 								}
-								isSupervisor={isSupervisor}
-								mobileUnreadCount={newMessages}
-								mobileIsScrolledToBottom={isScrolledToBottom}
-								onMobileNavigateBack={
-									handleMobileNavigateBackClick
-								}
-								onMobileNavigateDown={
-									handleMobileNavigateStepDownClick
-								}
-								onMobileNavigateBottom={
-									handleScrollToBottomButtonClick
-								}
-							/>
+							>
+								<MessageSubmitInterfaceComponent
+									key={composerRemountKey}
+									isAnonymousLiveChat={
+										isAnonymousAskerExperience &&
+										waitingGateDismissed
+									}
+									isTyping={props.isTyping}
+									className={clsx(
+										'session__submit-interface',
+										!isScrolledToBottom &&
+											'session__submit-interface--scrolled-up',
+										activeThreadRootId &&
+											'session__submit-interface--withThread'
+									)}
+									placeholder={getPlaceholder()}
+									typingUsers={props.typingUsers}
+									preselectedFile={draggedFile}
+									handleMessageSendSuccess={
+										handleMessageSendSuccess
+									}
+									isSupervisor={isSupervisor}
+									mobileUnreadCount={newMessages}
+									mobileIsScrolledToBottom={
+										isScrolledToBottom
+									}
+									onMobileNavigateBack={
+										handleMobileNavigateBackClick
+									}
+									onMobileNavigateDown={
+										handleMobileNavigateStepDownClick
+									}
+									onMobileNavigateBottom={
+										handleScrollToBottomButtonClick
+									}
+								/>
+							</MessageSubmitErrorBoundary>
 						</Suspense>
 					)}
 					{areRobotMessagesComplete &&
@@ -4517,6 +4703,244 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						)}
 				</div>
 			)}
+
+			<Dialog
+				open={liveChatClosedModalOpen}
+				onClose={() => setLiveChatClosedDismissed(true)}
+				fullWidth
+				maxWidth={false}
+				PaperProps={{
+					sx: {
+						width: '100%',
+						maxWidth: '600px',
+						m: { xs: '16px', sm: '32px' },
+						borderRadius: '24px'
+					}
+				}}
+			>
+				<MuiBox
+					sx={{
+						p: { xs: '20px', md: '24px' },
+						borderRadius: '24px'
+					}}
+				>
+					<MuiBox
+						sx={{
+							display: 'flex',
+							alignItems: 'center',
+							gap: '12px',
+							mb: '16px'
+						}}
+					>
+						<MuiBox
+							component="img"
+							src={liveChatClosedIllustration}
+							alt=""
+							sx={{
+								width: 72,
+								height: 72,
+								flexShrink: 0,
+								display: 'block'
+							}}
+						/>
+						<MuiTypography
+							variant="h4"
+							sx={{ fontWeight: 700, lineHeight: 1.2 }}
+						>
+							{translate(
+								'anonymousChat.noAvailability.title',
+								'Live-Chat ist zurzeit leider geschlossen'
+							)}
+						</MuiTypography>
+					</MuiBox>
+
+					<MuiTypography variant="body1" sx={{ mb: '16px' }}>
+						{translate(
+							'anonymousChat.noAvailability.subtitle',
+							'Wenn Sie ohne Registrierung beraten werden möchten, kommen Sie bitte zu den Öffnungszeiten wieder.'
+						)}
+					</MuiTypography>
+
+					<MuiBox
+						sx={{
+							border: '1px solid #DAE3F0',
+							borderRadius: '12px',
+							p: '8px',
+							mb: '16px'
+						}}
+					>
+						<MuiBox
+							onClick={() =>
+								setLiveChatClosedHintOpen((prev) => !prev)
+							}
+							sx={{
+								display: 'flex',
+								alignItems: 'center',
+								justifyContent: 'space-between',
+								p: '6px',
+								cursor: 'pointer'
+							}}
+						>
+							<MuiBox
+								sx={{
+									display: 'flex',
+									alignItems: 'center',
+									gap: '4px'
+								}}
+							>
+								<AccessTimeOutlinedIcon
+									sx={{ fontSize: 16, color: '#4C555F' }}
+								/>
+								<MuiTypography
+									sx={{
+										color: '#4C555F',
+										fontSize: '12px',
+										lineHeight: '14px'
+									}}
+								>
+									{translate(
+										'anonymousChat.noAvailability.openingHours',
+										'Reguläre Öffnungszeiten anzeigen'
+									)}
+								</MuiTypography>
+							</MuiBox>
+							<KeyboardArrowDownIcon
+								sx={{
+									color: '#4C555F',
+									fontSize: 16,
+									transform: liveChatClosedHintOpen
+										? 'rotate(180deg)'
+										: 'none',
+									transition: 'transform 0.2s'
+								}}
+							/>
+						</MuiBox>
+
+						{liveChatClosedHintOpen &&
+							LIVE_CHAT_OPENING_HOURS.map((entry, index) => (
+								<MuiBox
+									key={`live-chat-opening-hours-${index}`}
+									sx={{
+										display: 'flex',
+										alignItems: 'center',
+										justifyContent: 'space-between',
+										px: '16px',
+										py: '8px'
+									}}
+								>
+									<MuiTypography
+										sx={{
+											color: '#4C555F',
+											fontSize: '12px',
+											lineHeight: '14px'
+										}}
+									>
+										{translate(
+											`anonymousChat.noAvailability.weekdays.${entry.dayKey}`,
+											entry.day
+										)}
+									</MuiTypography>
+									<MuiTypography
+										sx={{
+											color: '#4C555F',
+											fontSize: '12px',
+											lineHeight: '14px'
+										}}
+									>
+										{entry.time}
+									</MuiTypography>
+								</MuiBox>
+							))}
+					</MuiBox>
+
+					<MuiTypography variant="body1" sx={{ mb: '8px' }}>
+						{translate(
+							'anonymousChat.noAvailability.mailHint',
+							'Oder starten Sie jederzeit die anonyme Mail-Beratung: Mit Ihrer Postleitzahl finden Sie eine Beratungsstelle in Ihrer Nähe und schreiben Ihre Anfrage. Für die Antwort brauchen Sie nur eine E-Mail-Adresse - keinen echten Namen.'
+						)}
+					</MuiTypography>
+
+					<MuiTypography
+						variant="body2"
+						sx={{ fontWeight: 700, mb: '16px' }}
+					>
+						{translate(
+							'anonymousChat.noAvailability.tip',
+							'Tipp: Nutzen Sie eine E-Mail-Adresse, auf die nur Sie Zugriff haben.'
+						)}
+					</MuiTypography>
+
+					<MuiButton
+						fullWidth
+						variant="contained"
+						onClick={() => history.push('/registration')}
+						sx={{
+							mb: '8px',
+							borderRadius: '999px',
+							py: '14px',
+							backgroundColor: '#A5000A'
+						}}
+						startIcon={<NorthEastIcon />}
+					>
+						{translate(
+							'anonymousChat.noAvailability.startMailCounseling',
+							'anonyme Mail-Beratung starten'
+						)}
+					</MuiButton>
+
+					<MuiTypography
+						variant="body2"
+						sx={{
+							textAlign: 'center',
+							color: '#4C555F',
+							fontWeight: 600,
+							mb: '16px'
+						}}
+					>
+						{translate(
+							'anonymousChat.noAvailability.responseTime',
+							'Antwort innerhalb von 2 Werktagen'
+						)}
+					</MuiTypography>
+
+					<MuiBox sx={{ display: 'flex', gap: '10px' }}>
+						<MuiButton
+							fullWidth
+							variant="outlined"
+							onClick={() => history.goBack()}
+							startIcon={<ArrowBackIcon />}
+							sx={{
+								borderRadius: '24px',
+								borderColor: 'transparent',
+								backgroundColor: '#F0EDEE',
+								color: '#4C555F'
+							}}
+						>
+							{translate(
+								'anonymousChat.noAvailability.back',
+								'Zurück zur vorherigen Seite'
+							)}
+						</MuiButton>
+						<MuiButton
+							fullWidth
+							variant="outlined"
+							onClick={() => setLiveChatClosedDismissed(true)}
+							startIcon={<CloseIcon />}
+							sx={{
+								borderRadius: '8px',
+								borderColor: '#FFE2DE',
+								backgroundColor: '#FFE2DE',
+								color: '#A5000A'
+							}}
+						>
+							{translate(
+								'anonymousChat.noAvailability.later',
+								'Später wiederkommen'
+							)}
+						</MuiButton>
+					</MuiBox>
+				</MuiBox>
+			</Dialog>
 		</div>
 	);
 };

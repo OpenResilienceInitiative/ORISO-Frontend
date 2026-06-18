@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+import { isPublicAuthRoute } from '../auth/auth';
 import { logout } from '../logout/logout';
 import { appConfig } from '../../utils/appConfig';
 import { apiPostError, ERROR_LEVEL_ERROR } from '../../api/apiPostError';
@@ -22,6 +23,10 @@ export const getErrorCaseForStatus = (status: number) => {
 };
 
 export const redirectToErrorPage = (error: number) => {
+	if (error === ERROR_TYPES.UNAUTHORIZED && isPublicAuthRoute()) {
+		return;
+	}
+
 	const correlationId = uuidv4();
 	let redirect;
 	switch (error) {
@@ -71,5 +76,16 @@ export const redirectToErrorPage = (error: number) => {
 		null,
 		correlationId
 	);
-	void logout(true, redirect);
+
+	// Only auth failures should tear down the session. Server/UI errors should
+	// not trigger Keycloak logout (which was surfacing as a 400 in Network tab
+	// and cancelling in-flight requests such as draft loads).
+	if (error === ERROR_TYPES.UNAUTHORIZED) {
+		void logout(true, redirect);
+		return;
+	}
+
+	if (redirect) {
+		window.location.href = redirect;
+	}
 };

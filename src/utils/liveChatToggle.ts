@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { apiSetLiveChatAvailability } from '../api/apiSetLiveChatAvailability';
 
 /**
  * LocalStorage-backed toggle for whether the consultant is "live-chat
@@ -30,6 +31,9 @@ export const setLiveChatAvailable = (active: boolean): void => {
 	} catch {
 		/* storage errors are non-fatal — the toggle just won't persist */
 	}
+	/* Tell the backend immediately so the anonymous availability count reflects
+	 * this consultant going available/unavailable without waiting for a poll. */
+	void apiSetLiveChatAvailability(active);
 	window.dispatchEvent(new CustomEvent(CHANGE_EVENT, { detail: { active } }));
 };
 

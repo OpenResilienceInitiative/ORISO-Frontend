@@ -14,7 +14,7 @@ $tabBarHeightDesktop: 53px;
 		justify-content: stretch;
 		align-items: stretch;
 		flex: 1;
-		background-color: $sessions-list-background-color-secondary;
+		background-color: #eae7e8;
 		position: relative;
 		min-height: 0;
 		display: flex;
@@ -31,7 +31,7 @@ $tabBarHeightDesktop: 53px;
 		display: flex;
 		flex-direction: row;
 		padding: $grid-base-three $grid-base-two;
-		background-color: $sessions-list-background-color-secondary;
+		background-color: #eae7e8;
 		z-index: 15;
 
 		@include breakpoint($fromMedium) {
@@ -85,7 +85,7 @@ $tabBarHeightDesktop: 53px;
 		flex-direction: column;
 		justify-content: stretch;
 		align-items: stretch;
-		padding-top: 15px;
+		padding-top: 24px;
 		min-height: 0;
 	}
 
@@ -99,7 +99,7 @@ $tabBarHeightDesktop: 53px;
 
 	&__selectWrapper {
 		width: 100%;
-		background-color: $sessions-list-background-color-secondary;
+		background-color: #eae7e8;
 		z-index: 5;
 
 		@include breakpoint($fromLarge) {
@@ -112,10 +112,10 @@ $tabBarHeightDesktop: 53px;
 	}
 
 	&__scrollContainer {
-		padding-top: $grid-base-three;
+		padding-top: 16px;
 		overflow: auto;
 		flex: 1;
-		padding-right: 12px;
+		padding-right: 0;
 		scrollbar-width: none; // Firefox: hide native scrollbar
 
 		@include breakpoint($fromLarge) {
@@ -192,7 +192,7 @@ $tabBarHeightDesktop: 53px;
 
 	&__resizeHandle {
 		position: absolute;
-		right: 0; /* keep hit-area inside sidebar so it can't be covered */
+		right: 0;
 		top: 0;
 		bottom: 0;
 		width: 24px;
@@ -208,8 +208,7 @@ $tabBarHeightDesktop: 53px;
 
 	&__resizeHandlePill {
 		position: absolute;
-		/* Must stay inside hit-area because `contentWrapper__list` has overflow-x: hidden */
-		right: 9px;
+		right: -3px;
 		top: 0;
 		width: 6px;
 		height: var(--sessionsListThumbHeight, 56px);
@@ -249,12 +248,12 @@ $tabBarHeightDesktop: 53px;
 		display: flex;
 		width: 100%;
 		padding: $grid-base-three;
-		background-color: $sessions-list-background-color-secondary;
+		background-color: #eae7e8;
 		z-index: 5;
 
 		@include breakpoint($fromLarge) {
 			padding: 0 $grid-base-three $grid-base-three;
-			background-color: $sessions-list-background-color-secondary;
+			background-color: #eae7e8;
 		}
 
 		a {
@@ -460,7 +459,7 @@ $tabBarHeightDesktop: 53px;
 
 // Figma-aligned search + horizontal filter chips (consultant / asker MY_SESSION)
 .sessionsListToolbar {
-	$toolbar-search-bg: #eae7e8;
+	$toolbar-search-bg: #f6f3f3;
 	$toolbar-text: #444748;
 	// Inactive chip: white surface, #E1E6EE border, #333 text; selected #333 / white text
 	$toolbar-chip-bg: #ffffff;
@@ -473,7 +472,7 @@ $tabBarHeightDesktop: 53px;
 
 	flex: 0;
 	padding: $grid-base-three $grid-base-three 0;
-	background-color: $sessions-list-background-color-secondary;
+	background-color: #eae7e8;
 	z-index: 5;
 
 	@include breakpoint($fromLarge) {
