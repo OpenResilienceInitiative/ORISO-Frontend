@@ -14,6 +14,10 @@ import clsx from 'clsx';
 import { scrollToEnd, isMyMessage, SESSION_LIST_TYPES } from './sessionHelpers';
 import { formatToHHMM } from '../../utils/dateHelpers';
 import {
+	isMatrixRoom,
+	isMatrixRoomIdHeuristic
+} from '../../utils/matrixRoomUtils';
+import {
 	MessageItem,
 	MessageItemComponent
 } from '../message/MessageItemComponent';
@@ -1660,7 +1664,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			};
 
 			const isMatrixSession = Boolean(
-				activeSession.rid?.startsWith('!') ||
+				isMatrixRoom(activeSession.rid) ||
 					activeSession.item?.matrixRoomId ||
 					messageUserId?.includes('@')
 			);
@@ -1920,8 +1924,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		registerAnonymousChatSessionForCleanup(
 			activeSession.item.id,
 			activeSession.item.status,
-			activeSession.rid?.startsWith('!') ||
-				activeSession.rid?.includes(':')
+			isMatrixRoomIdHeuristic(activeSession.rid)
 				? activeSession.rid
 				: activeSession.item?.matrixRoomId,
 			userData?.userName
@@ -2864,7 +2867,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			return;
 		}
 		const roomId =
-			(activeSession.rid && activeSession.rid.startsWith('!')
+			(isMatrixRoom(activeSession.rid)
 				? activeSession.rid
 				: activeSession.item?.matrixRoomId ||
 					activeSession.rid ||

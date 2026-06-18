@@ -55,6 +55,7 @@ import {
 import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
 import { logout } from '../logout/logout';
 import { appConfig } from '../../utils/appConfig';
+import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import {
 	convertUserDataObjectToArray,
 	getUserDataTranslateBase
@@ -410,10 +411,9 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	};
 
 	const postSupervisorAddedSystemMessage = async (supervisorName: string) => {
-		const matrixRoomId =
-			activeSession.rid && activeSession.rid.startsWith('!')
-				? activeSession.rid
-				: activeSession.item?.matrixRoomId;
+		const matrixRoomId = isMatrixRoom(activeSession.rid)
+			? activeSession.rid
+			: activeSession.item?.matrixRoomId;
 		if (!matrixRoomId || !activeSession.item.id) {
 			return;
 		}
