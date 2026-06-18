@@ -17,40 +17,58 @@ const pick = (...keys) => {
 	return undefined;
 };
 
-const apiUrl = pick('REACT_APP_API_URL', 'VITE_API_URL');
-const matrixHomeserverUrl = pick(
+const config = {};
+
+const assignIfPresent = (configKey, ...envKeys) => {
+	const value = pick(...envKeys);
+	if (value !== undefined) {
+		config[configKey] = value;
+	}
+};
+
+assignIfPresent('REACT_APP_API_URL', 'REACT_APP_API_URL', 'VITE_API_URL');
+assignIfPresent('VITE_API_URL', 'VITE_API_URL', 'REACT_APP_API_URL');
+assignIfPresent(
+	'REACT_APP_MATRIX_HOMESERVER_URL',
 	'REACT_APP_MATRIX_HOMESERVER_URL',
 	'VITE_MATRIX_HOMESERVER_URL',
 	'REACT_APP_MATRIX_URL'
 );
-const elementCallUrl = pick(
+assignIfPresent(
+	'VITE_MATRIX_HOMESERVER_URL',
+	'VITE_MATRIX_HOMESERVER_URL',
+	'REACT_APP_MATRIX_HOMESERVER_URL',
+	'REACT_APP_MATRIX_URL'
+);
+assignIfPresent('REACT_APP_MATRIX_URL', 'REACT_APP_MATRIX_URL', 'REACT_APP_MATRIX_HOMESERVER_URL');
+assignIfPresent(
+	'REACT_APP_ELEMENT_CALL_BASE_URL',
 	'REACT_APP_ELEMENT_CALL_BASE_URL',
 	'REACT_APP_ELEMENT_CALL_URL'
 );
-const livekitUrl = pick('REACT_APP_LIVEKIT_WS_URL', 'REACT_APP_LIVEKIT_URL');
-
-const config = {};
-
-if (apiUrl) {
-	config.REACT_APP_API_URL = apiUrl;
-	config.VITE_API_URL = apiUrl;
-}
-
-if (matrixHomeserverUrl) {
-	config.REACT_APP_MATRIX_HOMESERVER_URL = matrixHomeserverUrl;
-	config.VITE_MATRIX_HOMESERVER_URL = matrixHomeserverUrl;
-	config.REACT_APP_MATRIX_URL = matrixHomeserverUrl;
-}
-
-if (elementCallUrl) {
-	config.REACT_APP_ELEMENT_CALL_BASE_URL = elementCallUrl;
-	config.REACT_APP_ELEMENT_CALL_URL = elementCallUrl;
-}
-
-if (livekitUrl) {
-	config.REACT_APP_LIVEKIT_WS_URL = livekitUrl;
-	config.REACT_APP_LIVEKIT_URL = livekitUrl;
-}
+assignIfPresent(
+	'REACT_APP_ELEMENT_CALL_URL',
+	'REACT_APP_ELEMENT_CALL_URL',
+	'REACT_APP_ELEMENT_CALL_BASE_URL'
+);
+assignIfPresent('REACT_APP_LIVEKIT_WS_URL', 'REACT_APP_LIVEKIT_WS_URL', 'REACT_APP_LIVEKIT_URL');
+assignIfPresent('REACT_APP_LIVEKIT_URL', 'REACT_APP_LIVEKIT_URL', 'REACT_APP_LIVEKIT_WS_URL');
+assignIfPresent('REACT_APP_KEYCLOAK_REALM', 'REACT_APP_KEYCLOAK_REALM', 'VITE_KEYCLOAK_REALM');
+assignIfPresent('REACT_APP_COOKIE_DOMAIN', 'REACT_APP_COOKIE_DOMAIN', 'VITE_COOKIE_DOMAIN');
+assignIfPresent(
+	'REACT_APP_HOSTNAMES_WITHOUT_COOKIE_DOMAIN',
+	'REACT_APP_HOSTNAMES_WITHOUT_COOKIE_DOMAIN'
+);
+assignIfPresent('REACT_APP_ELEMENT_URL', 'REACT_APP_ELEMENT_URL', 'REACT_APP_ELEMENT_BASE_URL');
+assignIfPresent('REACT_APP_ELEMENT_BASE_URL', 'REACT_APP_ELEMENT_BASE_URL', 'REACT_APP_ELEMENT_URL');
+assignIfPresent('REACT_APP_ORGANIZATION_HOME_URL', 'REACT_APP_ORGANIZATION_HOME_URL');
+assignIfPresent(
+	'REACT_APP_ORGANIZATION_ONLINEBERATUNG_URL',
+	'REACT_APP_ORGANIZATION_ONLINEBERATUNG_URL'
+);
+assignIfPresent('REACT_APP_LEGAL_IMPRINT_URL', 'REACT_APP_LEGAL_IMPRINT_URL');
+assignIfPresent('REACT_APP_LEGAL_PRIVACY_URL', 'REACT_APP_LEGAL_PRIVACY_URL');
+assignIfPresent('REACT_APP_USE_HTTPS', 'REACT_APP_USE_HTTPS', 'VITE_USE_HTTPS');
 
 const target = process.env.RUNTIME_CONFIG_FILE;
 fs.mkdirSync(path.dirname(target), { recursive: true });
