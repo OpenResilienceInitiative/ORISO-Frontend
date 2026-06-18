@@ -67,6 +67,7 @@ export const endpoints = {
 	magicLinkRequest: apiUrl + '/service/users/magic-link/request',
 	magicLinkConsume: apiUrl + '/service/users/magic-link/consume',
 	messageRead: apiUrl + '/api/v1/subscriptions.read',
+	matrixMeToken: apiUrl + '/service/matrix/me/token',
 	messages: {
 		get: apiUrl + '/service/messages',
 		delete: apiUrl + '/service/messages/:messageId'
