@@ -638,7 +638,7 @@ export const SessionsList = ({
 							sessionStorage.setItem(autoOpenKey, 'true');
 
 							// Check if groupId looks like a Matrix room ID (starts with ! or contains :)
-							const isMatrixRoomId =
+							const isMatrixGroupId =
 								groupId &&
 								(isMatrixRoomId(groupId) ||
 									groupId.includes(':'));
@@ -648,7 +648,7 @@ export const SessionsList = ({
 								const targetPath = `${baseListPath}/write/${sessionId}`;
 								// console.log('🚀 Navigating to write view:', targetPath);
 								history.push(targetPath);
-							} else if (groupId && !isMatrixRoomId) {
+							} else if (groupId && !isMatrixGroupId) {
 								// Original RocketChat behavior: navigate with groupId
 								const targetPath = `${baseListPath}/${groupId}/${sessionId}`;
 								// console.log('🚀 Navigating with groupId:', targetPath);
@@ -1271,7 +1271,7 @@ export const SessionsList = ({
 			const matrixRoomId =
 				(item as { matrixRoomId?: string })?.matrixRoomId ||
 				(typeof item.groupId === 'string' &&
-				item.isMatrixRoomId(groupId)
+				isMatrixRoomId(item.groupId)
 					? item.groupId
 					: null);
 			const matrixRoom = matrixRoomId

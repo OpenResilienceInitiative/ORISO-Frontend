@@ -364,12 +364,12 @@ export const SessionListItemComponent = ({
 		// For sessions without groupId (Matrix migration), navigate by session ID
 		if (activeSession.item.id !== undefined) {
 			// Check if groupId looks like a Matrix room ID (starts with ! or contains :)
-			const isMatrixRoomId =
+			const isMatrixGroupId =
 				activeSession.item.groupId &&
 				(isMatrixRoomId(activeSession.item.groupId) ||
 					activeSession.item.groupId.includes(':'));
 
-			if (activeSession.item.groupId && !isMatrixRoomId) {
+			if (activeSession.item.groupId && !isMatrixGroupId) {
 				// Original RocketChat behavior: navigate with groupId
 				const targetPath = `${listPath}/${activeSession.item.groupId}/${activeSession.item.id}${getSessionListTab()}`;
 				// console.log('🚀 Navigating with RocketChat groupId:', targetPath);
