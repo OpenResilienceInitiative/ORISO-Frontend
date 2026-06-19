@@ -1,5 +1,7 @@
 import { createClient, MatrixClient } from 'matrix-js-sdk';
 import { getMatrixHomeserverUrl } from '../../resources/scripts/runtimeConfig';
+import { endpoints } from '../../resources/scripts/endpoints';
+import { fetchData, FETCH_METHODS } from '../../api/fetchData';
 
 export interface MatrixLoginData {
 	accessToken: string;
@@ -9,8 +11,8 @@ export interface MatrixLoginData {
 }
 
 export const getMatrixAccessToken = (
-	username: string,
-	password: string
+	_username?: string,
+	_password?: string
 ): Promise<MatrixLoginData> =>
 	new Promise((resolve, reject) => {
 		const homeserverUrl = getMatrixHomeserverUrl();
@@ -21,28 +23,20 @@ export const getMatrixAccessToken = (
 			return;
 		}
 
-		// Create Matrix client
-		const client = createClient({
-			baseUrl: homeserverUrl
-		});
-
-		// Login with username and password
-		client
-			.login('m.login.password', {
-				user: username,
-				password: password
-			})
+		fetchData({
+			url: endpoints.matrixMeToken,
+			method: FETCH_METHODS.GET,
+			rcValidation: false
+		})
 			.then((response) => {
-				// console.log("Matrix login successful:", response);
 				resolve({
-					accessToken: response.access_token,
-					userId: response.user_id,
-					deviceId: response.device_id,
+					accessToken: response.accessToken,
+					userId: response.userId,
+					deviceId: response.deviceId || '',
 					homeserverUrl: homeserverUrl
 				});
 			})
-			.catch((error) => {
-				// console.error("Matrix login failed:", error);
+			.catch(() => {
 				reject(new Error('matrixLogin'));
 			});
 	});
