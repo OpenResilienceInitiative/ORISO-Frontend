@@ -28,6 +28,7 @@ import { useCall } from '../../globalState/provider/CallProvider';
 import { RocketChatUserStatusProvider } from '../../globalState/provider/RocketChatUserStatusProvider';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { E2EEncryptionSupportBanner } from '../E2EEncryptionSupportBanner/E2EEncryptionSupportBanner';
+import { getMatrixHomeserverUrl } from '../../resources/scripts/runtimeConfig';
 
 interface AuthenticatedAppProps {
 	onAppReady: Function;
@@ -89,63 +90,67 @@ export const AuthenticatedApp = ({
 							return userProfileData;
 						})
 						.then(async (userProfileData) => {
-							try {
-								const { getMatrixAccessToken } = await import(
-									'../sessionCookie/getMatrixAccessToken'
-								);
-								const matrixLoginData =
-									await getMatrixAccessToken();
+							// 🔷 CRITICAL: Initialize Matrix client for all authenticated users
+							const matrixUserId =
+								localStorage.getItem('matrix_user_id');
+							const matrixAccessToken = localStorage.getItem(
+								'matrix_access_token'
+							);
+							const matrixDeviceId =
+								localStorage.getItem('matrix_device_id');
 
-								localStorage.setItem(
-									'matrix_user_id',
-									matrixLoginData.userId
-								);
-								localStorage.setItem(
-									'matrix_access_token',
-									matrixLoginData.accessToken
-								);
-								localStorage.setItem(
-									'matrix_device_id',
-									matrixLoginData.deviceId || ''
-								);
+							if (matrixUserId && matrixAccessToken) {
+								// console.log('🔷 Initializing Matrix client for user:', matrixUserId);
 
 								// CRITICAL: Set rc_uid and rc_token cookies for backend compatibility
 								// Backend still expects these headers even though we're using Matrix
 								const { setValueInCookie } = await import(
 									'../sessionCookie/accessSessionCookie'
 								);
-								setValueInCookie(
-									'rc_uid',
-									matrixLoginData.userId
-								);
-								setValueInCookie(
-									'rc_token',
-									matrixLoginData.accessToken
-								);
+								setValueInCookie('rc_uid', matrixUserId);
+								setValueInCookie('rc_token', matrixAccessToken);
 								// console.log('🔷 Matrix credentials saved to cookies (rc_uid, rc_token) for backend compatibility');
 
-								const { MatrixClientService } = await import(
-									'../../services/matrixClientService'
-								);
-								const matrixClientService =
-									new MatrixClientService();
+								try {
+									const { MatrixClientService } =
+										await import(
+											'../../services/matrixClientService'
+										);
+									const matrixClientService =
+										new MatrixClientService();
 
-								matrixClientService.initializeClient(
-									matrixLoginData
-								);
+									const homeserverUrl =
+										getMatrixHomeserverUrl();
+									if (!homeserverUrl) {
+										// console.warn('⚠️ REACT_APP_MATRIX_HOMESERVER_URL is not set; skipping Matrix client init');
+									} else {
+										matrixClientService.initializeClient({
+											userId: matrixUserId,
+											accessToken: matrixAccessToken,
+											deviceId:
+												matrixDeviceId || undefined,
+											homeserverUrl: homeserverUrl
+										});
 
-								(window as any).matrixClientService =
-									matrixClientService;
-								(window as any).callContext = callContext;
+										(window as any).matrixClientService =
+											matrixClientService;
+										(window as any).callContext =
+											callContext;
 
-								const { matrixLiveEventBridge } = await import(
-									'../../services/matrixLiveEventBridge'
-								);
-								matrixLiveEventBridge.initialize(
-									matrixClientService.getClient()!
-								);
-							} catch (error) {
-								// Don't fail app startup if Matrix token minting fails
+										const { matrixLiveEventBridge } =
+											await import(
+												'../../services/matrixLiveEventBridge'
+											);
+										matrixLiveEventBridge.initialize(
+											matrixClientService.getClient()!
+										);
+									}
+								} catch (error) {
+									// console.warn('⚠️ Matrix client initialization failed:', error);
+									// Don't fail app startup if Matrix fails
+								}
+							} else {
+								// console.warn('⚠️ No Matrix credentials found in localStorage');
 							}
 
 							setAppReady(true);
