@@ -29,6 +29,10 @@ import { RocketChatUserStatusProvider } from '../../globalState/provider/RocketC
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { E2EEncryptionSupportBanner } from '../E2EEncryptionSupportBanner/E2EEncryptionSupportBanner';
 import { getMatrixHomeserverUrl } from '../../resources/scripts/runtimeConfig';
+import {
+	getMatrixAccessToken,
+	persistMatrixLoginData
+} from '../sessionCookie/getMatrixAccessToken';
 
 interface AuthenticatedAppProps {
 	onAppReady: Function;
@@ -91,26 +95,10 @@ export const AuthenticatedApp = ({
 						})
 						.then(async (userProfileData) => {
 							// 🔷 CRITICAL: Initialize Matrix client for all authenticated users
-							const matrixUserId =
-								localStorage.getItem('matrix_user_id');
-							const matrixAccessToken = localStorage.getItem(
-								'matrix_access_token'
-							);
-							const matrixDeviceId =
-								localStorage.getItem('matrix_device_id');
-
-							if (matrixUserId && matrixAccessToken) {
-								// console.log('🔷 Initializing Matrix client for user:', matrixUserId);
-
-								// CRITICAL: Set rc_uid and rc_token cookies for backend compatibility
-								// Backend still expects these headers even though we're using Matrix
-								const { setValueInCookie } = await import(
-									'../sessionCookie/accessSessionCookie'
-								);
-								setValueInCookie('rc_uid', matrixUserId);
-								setValueInCookie('rc_token', matrixAccessToken);
-								// console.log('🔷 Matrix credentials saved to cookies (rc_uid, rc_token) for backend compatibility');
-
+							try {
+								const matrixLoginData =
+									await getMatrixAccessToken();
+								persistMatrixLoginData(matrixLoginData);
 								try {
 									const { MatrixClientService } =
 										await import(
@@ -125,10 +113,12 @@ export const AuthenticatedApp = ({
 										// console.warn('⚠️ REACT_APP_MATRIX_HOMESERVER_URL is not set; skipping Matrix client init');
 									} else {
 										matrixClientService.initializeClient({
-											userId: matrixUserId,
-											accessToken: matrixAccessToken,
+											userId: matrixLoginData.userId,
+											accessToken:
+												matrixLoginData.accessToken,
 											deviceId:
-												matrixDeviceId || undefined,
+												matrixLoginData.deviceId ||
+												undefined,
 											homeserverUrl: homeserverUrl
 										});
 
@@ -149,7 +139,7 @@ export const AuthenticatedApp = ({
 									// console.warn('⚠️ Matrix client initialization failed:', error);
 									// Don't fail app startup if Matrix fails
 								}
-							} else {
+							} catch {
 								// console.warn('⚠️ No Matrix credentials found in localStorage');
 							}
 
