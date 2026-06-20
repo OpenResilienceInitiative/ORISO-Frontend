@@ -66,6 +66,7 @@ export class MatrixLiveEventBridge {
 						break;
 
 					case 'm.call.invite':
+					case 'org.oriso.call.invite':
 						this.handleCallInvite(event, room);
 						break;
 
@@ -169,13 +170,14 @@ export class MatrixLiveEventBridge {
 			return;
 		}
 
-		// Check if this is a LiveKit group call (custom field)
+		// Check if this is an Element Call / LiveKit call (custom field)
 		const isGroupCall = content.is_group_call === true;
-		const isVideo = isGroupCall
+		const isElementCall = content.is_element_call === true || isGroupCall;
+		const isVideo = isElementCall
 			? content.is_video !== false
 			: isVideoCallFromMatrixInviteContent(content);
 
-		if (isGroupCall) {
+		if (isElementCall) {
 			// console.log("✅ LIVEKIT GROUP CALL DETECTED!");
 			// console.log("📞 From:", sender);
 			// console.log("📞 To me:", myUserId);
@@ -195,8 +197,9 @@ export class MatrixLiveEventBridge {
 				isVideo,
 				callId,
 				sender,
-				true,
-				room.roomId
+				isGroupCall,
+				room.roomId,
+				true
 			);
 			return;
 		}
