@@ -59,7 +59,7 @@ const loginKeycloak = async (
 	otp?: string
 ) => {
 	// console.log("🔐 DEBUG: loginKeycloak called with:", { username, password: password ? "***" : "undefined", otp });
-	
+
 	const keycloakRes = await getKeycloakAccessToken(
 		username,
 		encodeURIComponent(password),
@@ -103,7 +103,7 @@ export const autoLogin = async ({
 	...autoLoginProps
 }: AutoLoginProps): Promise<any> => {
 	// console.log("🔐 DEBUG: autoLogin called with:", { username: autoLoginProps.username, password: password ? "***" : "undefined" });
-	
+
 	const tenantSettings = (autoLoginProps?.tenantData?.settings ||
 		{}) as TenantDataSettingsInterface;
 
@@ -151,42 +151,39 @@ export const autoLogin = async ({
 
 	// Skip RocketChat integration for now due to configuration issues
 	// console.warn('Skipping RocketChat integration due to configuration issues');
-	
+
 	// MATRIX MIGRATION: Initialize Matrix client for calls and real-time sync
 	// console.log('🔷🔷🔷 MATRIX LOGIN ATTEMPT STARTING 🔷🔷🔷');
 	// console.log('🔷 Username for Matrix:', autoLoginProps.username);
 	// console.log('🔷 Password available:', !!password);
-	
+
 	try {
-		const { getMatrixAccessToken } = await import('../sessionCookie/getMatrixAccessToken');
-		const { MatrixClientService } = await import('../../services/matrixClientService');
-		
+		const { getMatrixAccessToken, persistMatrixLoginData } = await import(
+			'../sessionCookie/getMatrixAccessToken'
+		);
+		const { MatrixClientService } = await import(
+			'../../services/matrixClientService'
+		);
+
 		// console.log('🔷 Calling getMatrixAccessToken...');
-		const matrixLoginData = await getMatrixAccessToken(autoLoginProps.username, password);
-		
+		const matrixLoginData = await getMatrixAccessToken(
+			autoLoginProps.username,
+			password
+		);
+
 		// console.log('🔷 Matrix login successful! Data:', matrixLoginData);
 		// console.log('🔷 Matrix User ID:', matrixLoginData.userId);
 		// console.log('🔷 Matrix Access Token:', matrixLoginData.accessToken ? 'exists' : 'missing');
-		
-		// Store credentials in localStorage for later use
-		localStorage.setItem('matrix_user_id', matrixLoginData.userId);
-		localStorage.setItem('matrix_access_token', matrixLoginData.accessToken);
-		localStorage.setItem('matrix_device_id', matrixLoginData.deviceId);
-		// console.log('🔷 Matrix credentials saved to localStorage');
-		
-		// CRITICAL: Set rc_uid and rc_token cookies for backend compatibility
-		// Backend still expects these headers even though we're using Matrix
-		setValueInCookie('rc_uid', matrixLoginData.userId);
-		setValueInCookie('rc_token', matrixLoginData.accessToken);
-		// console.log('🔷 Matrix credentials saved to cookies (rc_uid, rc_token) for backend compatibility');
-		
+
+		persistMatrixLoginData(matrixLoginData);
+
 		const matrixClientService = new MatrixClientService();
 		// console.log('🔷 Initializing Matrix client...');
 		matrixClientService.initializeClient(matrixLoginData);
-		
+
 		// Store Matrix client globally for call functionality
 		(window as any).matrixClientService = matrixClientService;
-		
+
 		// console.log('✅✅✅ Matrix client initialized successfully! ✅✅✅');
 		// console.log('✅ Matrix client available at: window.matrixClientService');
 	} catch (error) {
@@ -196,7 +193,7 @@ export const autoLogin = async ({
 		// console.error('❌ Error stack:', (error as Error).stack);
 		// Continue without Matrix client - chat will still work via REST API
 	}
-	
+
 	// console.log('🔷🔷🔷 MATRIX LOGIN ATTEMPT COMPLETE 🔷🔷🔷');
 
 	if (tenantSettings?.featureToolsEnabled) {

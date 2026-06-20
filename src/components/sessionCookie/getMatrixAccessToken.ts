@@ -1,51 +1,58 @@
 import { createClient, MatrixClient } from 'matrix-js-sdk';
+import { apiUrl } from '../../resources/scripts/endpoints';
 import { getMatrixHomeserverUrl } from '../../resources/scripts/runtimeConfig';
+import { fetchData, FETCH_ERRORS, FETCH_METHODS } from '../../api/fetchData';
+import { setValueInCookie } from './accessSessionCookie';
 
 export interface MatrixLoginData {
 	accessToken: string;
 	userId: string;
 	deviceId: string;
 	homeserverUrl: string;
+	expiresInMs?: number;
 }
 
 export const getMatrixAccessToken = (
-	username: string,
-	password: string
-): Promise<MatrixLoginData> =>
-	new Promise((resolve, reject) => {
+	_username?: string,
+	_password?: string
+): Promise<MatrixLoginData> => {
+	const tokenUrl = `${apiUrl}/service/matrix/me/token`;
+	return fetchData({
+		url: tokenUrl,
+		method: FETCH_METHODS.GET,
+		responseHandling: [FETCH_ERRORS.CATCH_ALL]
+	}).then((response) => {
 		const homeserverUrl = getMatrixHomeserverUrl();
 		if (!homeserverUrl) {
-			reject(
-				new Error('REACT_APP_MATRIX_HOMESERVER_URL is not configured')
+			throw new Error(
+				'REACT_APP_MATRIX_HOMESERVER_URL is not configured'
 			);
-			return;
 		}
 
-		// Create Matrix client
-		const client = createClient({
-			baseUrl: homeserverUrl
-		});
-
-		// Login with username and password
-		client
-			.login('m.login.password', {
-				user: username,
-				password: password
-			})
-			.then((response) => {
-				// console.log("Matrix login successful:", response);
-				resolve({
-					accessToken: response.access_token,
-					userId: response.user_id,
-					deviceId: response.device_id,
-					homeserverUrl: homeserverUrl
-				});
-			})
-			.catch((error) => {
-				// console.error("Matrix login failed:", error);
-				reject(new Error('matrixLogin'));
-			});
+		return {
+			accessToken: response.accessToken,
+			userId: response.userId,
+			deviceId: response.deviceId || '',
+			homeserverUrl,
+			expiresInMs: response.expiresInMs
+		};
 	});
+};
+
+export const persistMatrixLoginData = (loginData: MatrixLoginData): void => {
+	localStorage.setItem('matrix_user_id', loginData.userId);
+	localStorage.setItem('matrix_access_token', loginData.accessToken);
+	localStorage.setItem('matrix_device_id', loginData.deviceId || '');
+	if (loginData.expiresInMs) {
+		localStorage.setItem(
+			'matrix_token_expires_at',
+			String(Date.now() + loginData.expiresInMs)
+		);
+	}
+
+	setValueInCookie('rc_uid', loginData.userId);
+	setValueInCookie('rc_token', loginData.accessToken);
+};
 
 // Helper function to create Matrix client with stored credentials
 export const createMatrixClient = (
