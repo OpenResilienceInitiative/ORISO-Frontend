@@ -116,9 +116,7 @@ export const AuthenticatedApp = ({
 											userId: matrixLoginData.userId,
 											accessToken:
 												matrixLoginData.accessToken,
-											deviceId:
-												matrixLoginData.deviceId ||
-												undefined,
+											deviceId: matrixLoginData.deviceId,
 											homeserverUrl: homeserverUrl
 										});
 
