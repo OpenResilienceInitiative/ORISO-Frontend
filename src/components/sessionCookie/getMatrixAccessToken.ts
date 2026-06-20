@@ -104,6 +104,7 @@ export const createMatrixClient = (
 		baseUrl: loginData.homeserverUrl,
 		accessToken: loginData.accessToken,
 		userId: loginData.userId,
-		deviceId: loginData.deviceId
+		deviceId: loginData.deviceId,
+		fallbackICEServerAllowed: true
 	});
 };
