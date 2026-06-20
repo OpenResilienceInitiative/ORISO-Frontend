@@ -183,9 +183,9 @@ export const GroupCallWidget: React.FC = () => {
 
 			const params = new URLSearchParams();
 			params.set('roomId', roomId);
-			// Hint Element Call that this is a normal "start call" use-case so
-			// it enables camera & microphone by default.
+			// Hint Element Call that this is a normal "start call" use-case.
 			params.set('intent', 'start_call');
+			params.set('callIntent', callData.isVideo ? 'video' : 'audio');
 			params.set('homeserver', homeserverUrl);
 			params.set('accessToken', accessToken);
 			params.set('userId', userId);
