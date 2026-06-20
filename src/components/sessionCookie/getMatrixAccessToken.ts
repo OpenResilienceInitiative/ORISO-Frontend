@@ -12,6 +12,41 @@ export interface MatrixLoginData {
 	expiresInMs?: number;
 }
 
+const MATRIX_DEVICE_ID_STORAGE_KEY = 'matrix_device_id';
+const MATRIX_DEVICE_ID_PREFIX = 'ORISO_WEB_';
+
+const createBrowserDeviceId = (): string => {
+	const randomValue =
+		typeof crypto !== 'undefined' && crypto.randomUUID
+			? crypto.randomUUID().replace(/-/g, '')
+			: `${Date.now().toString(36)}${Math.random()
+					.toString(36)
+					.slice(2)}`;
+
+	return `${MATRIX_DEVICE_ID_PREFIX}${randomValue
+		.toUpperCase()
+		.slice(0, 24)}`;
+};
+
+const getOrCreateMatrixDeviceId = (
+	userId: string,
+	responseDeviceId?: string
+): string => {
+	if (responseDeviceId) {
+		return responseDeviceId;
+	}
+
+	const userStorageKey = `${MATRIX_DEVICE_ID_STORAGE_KEY}:${userId}`;
+	const storedDeviceId = localStorage.getItem(userStorageKey);
+	if (storedDeviceId) {
+		return storedDeviceId;
+	}
+
+	const deviceId = createBrowserDeviceId();
+	localStorage.setItem(userStorageKey, deviceId);
+	return deviceId;
+};
+
 export const getMatrixAccessToken = (
 	_username?: string,
 	_password?: string
@@ -32,7 +67,10 @@ export const getMatrixAccessToken = (
 		return {
 			accessToken: response.accessToken,
 			userId: response.userId,
-			deviceId: response.deviceId || '',
+			deviceId: getOrCreateMatrixDeviceId(
+				response.userId,
+				response.deviceId
+			),
 			homeserverUrl,
 			expiresInMs: response.expiresInMs
 		};
@@ -42,7 +80,11 @@ export const getMatrixAccessToken = (
 export const persistMatrixLoginData = (loginData: MatrixLoginData): void => {
 	localStorage.setItem('matrix_user_id', loginData.userId);
 	localStorage.setItem('matrix_access_token', loginData.accessToken);
-	localStorage.setItem('matrix_device_id', loginData.deviceId || '');
+	localStorage.setItem(MATRIX_DEVICE_ID_STORAGE_KEY, loginData.deviceId);
+	localStorage.setItem(
+		`${MATRIX_DEVICE_ID_STORAGE_KEY}:${loginData.userId}`,
+		loginData.deviceId
+	);
 	if (loginData.expiresInMs) {
 		localStorage.setItem(
 			'matrix_token_expires_at',
