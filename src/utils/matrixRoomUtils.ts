@@ -11,3 +11,23 @@ export const isMatrixRoom = (roomId?: string | null): boolean =>
  */
 export const isMatrixRoomIdHeuristic = (roomId?: string | null): boolean =>
 	Boolean(roomId && (isMatrixRoom(roomId) || roomId.includes(':')));
+
+/** Prefer matrixRoomId for routing when the session has a Matrix-backed room. */
+export const resolveSessionRoomRouteId = (session?: {
+	groupId?: string | null;
+	matrixRoomId?: string | null;
+}): string | undefined => {
+	if (!session) {
+		return undefined;
+	}
+
+	if (session.matrixRoomId && isMatrixRoomIdHeuristic(session.matrixRoomId)) {
+		return session.matrixRoomId;
+	}
+
+	if (session.groupId && isMatrixRoomIdHeuristic(session.groupId)) {
+		return session.groupId;
+	}
+
+	return session.groupId || session.matrixRoomId || undefined;
+};
