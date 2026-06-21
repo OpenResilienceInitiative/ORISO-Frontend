@@ -68,7 +68,7 @@ export const GroupCallWidget: React.FC = () => {
 	}, []);
 
 	useEffect(() => {
-		if (!callData || !callData.isGroup) return;
+		if (!callData || !callData.usesElementCall) return;
 
 		const padding = 16;
 		const maxWidth = 520;
@@ -85,7 +85,7 @@ export const GroupCallWidget: React.FC = () => {
 			x: Math.max(padding, (window.innerWidth - width) / 2),
 			y: Math.max(padding, (window.innerHeight - height) / 2)
 		});
-	}, [callData?.callId, callData?.isGroup, elementCallUrl]);
+	}, [callData?.callId, callData?.usesElementCall, elementCallUrl]);
 
 	useEffect(() => {
 		const handleFullscreenChange = () => {
@@ -119,7 +119,8 @@ export const GroupCallWidget: React.FC = () => {
 	// Handle incoming call answer: once the call is moving past "ringing",
 	// automatically join the Element Call room for the receiver.
 	useEffect(() => {
-		if (!callData || !callData.isGroup || !callData.isIncoming) return;
+		if (!callData || !callData.usesElementCall || !callData.isIncoming)
+			return;
 		if (elementCallUrl) return; // Already joined
 		if (callState !== 'connecting' && callState !== 'in_call') return;
 
@@ -129,7 +130,8 @@ export const GroupCallWidget: React.FC = () => {
 
 	// Handle outgoing call
 	useEffect(() => {
-		if (!callData || !callData.isGroup || callData.isIncoming) return;
+		if (!callData || !callData.usesElementCall || callData.isIncoming)
+			return;
 		if (elementCallUrl) return; // Already set up
 
 		// console.log('📞 Starting outgoing call, setting up Element Call...');
@@ -181,9 +183,9 @@ export const GroupCallWidget: React.FC = () => {
 
 			const params = new URLSearchParams();
 			params.set('roomId', roomId);
-			// Hint Element Call that this is a normal "start call" use-case so
-			// it enables camera & microphone by default.
+			// Hint Element Call that this is a normal "start call" use-case.
 			params.set('intent', 'start_call');
+			params.set('callIntent', callData.isVideo ? 'video' : 'audio');
 			params.set('homeserver', homeserverUrl);
 			params.set('accessToken', accessToken);
 			params.set('userId', userId);
@@ -449,7 +451,7 @@ export const GroupCallWidget: React.FC = () => {
 	}, [isDragging]);
 
 	// Only render for group calls
-	if (isDismissed || !callData || !callData.isGroup) return null;
+	if (isDismissed || !callData || !callData.usesElementCall) return null;
 
 	return (
 		<>

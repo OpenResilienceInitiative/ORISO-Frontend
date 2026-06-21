@@ -115,7 +115,7 @@ export const FloatingCallWidget: React.FC = () => {
 			return;
 
 		// 🚫 SKIP if this is a group call - GroupCallWidget will handle it with LiveKit
-		if (callData.isGroup) {
+		if (callData.usesElementCall || callData.isGroup) {
 			// console.log('🚫 FloatingCallWidget: Skipping group call (handled by GroupCallWidget)');
 			return;
 		}
@@ -325,7 +325,7 @@ export const FloatingCallWidget: React.FC = () => {
 
 	// Only render for 1-on-1 calls (not group calls)
 	// Group calls are handled by GroupCallWidget
-	if (!callData || callData.isGroup) return null;
+	if (!callData || callData.usesElementCall || callData.isGroup) return null;
 
 	const widgetClass = `floating-call-widget ${isFullscreen ? 'fullscreen' : isMinimized ? 'minimized' : 'normal'}`;
 
