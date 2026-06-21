@@ -9,6 +9,7 @@ import {
 	MILLISECONDS_PER_SECOND
 } from '../../utils/dateHelpers';
 import { isMatrixRoomIdHeuristic } from '../../utils/matrixRoomUtils';
+import { resolveAnonymousChatDisplayName } from '../../utils/anonymousChatDisplayName';
 import { UserAvatar } from '../message/UserAvatar';
 import { ConsultantSearchLoader } from '../sessionHeader/ConsultantSearchLoader';
 import { MenuVerticalIcon, ShowPasswordIcon } from '../../resources/img/icons';
@@ -928,7 +929,9 @@ export const SessionListItemComponent = ({
 			sessionTopic = translate('sessionList.user.consultantUnknown');
 		}
 	} else {
-		sessionTopic = activeSession.user.username;
+		sessionTopic =
+			resolveAnonymousChatDisplayName(activeSession.user) ||
+			activeSession.user.username;
 	}
 
 	// Check if this is an anonymous chat (postcode 00000 or registrationType ANONYMOUS)

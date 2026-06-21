@@ -1847,6 +1847,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				setPseudonymConfirmed(true);
 				try {
 					sessionStorage.setItem(pseudonymStorageKey, '1');
+					sessionStorage.setItem(
+						`anonymous-pseudonym-name-${activeSession.item.id}`,
+						currentPseudonym.displayName
+					);
 				} catch {
 					/* ignore storage errors */
 				}
