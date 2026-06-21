@@ -75,6 +75,7 @@ export class MatrixLiveEventBridge {
 						break;
 
 					case 'm.call.hangup':
+					case 'org.oriso.call.hangup':
 						this.handleCallHangup(event, room);
 						break;
 
@@ -277,7 +278,7 @@ export class MatrixLiveEventBridge {
 
 		// Use CallManager directly (clean architecture!)
 		// console.log("🔔 CALLING CallManager.endCall()");
-		callManager.endCall();
+		callManager.endCall(false);
 	}
 
 	/**

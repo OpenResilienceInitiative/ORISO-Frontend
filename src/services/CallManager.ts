@@ -534,7 +534,7 @@ class CallManager {
 	/**
 	 * End the current call
 	 */
-	public endCall(): void {
+	public endCall(notifyRemote: boolean = true): void {
 		// console.log("═══════════════════════════════════════════════");
 		// console.log("📴 CallManager.endCall()");
 		// console.log("═══════════════════════════════════════════════");
@@ -542,6 +542,10 @@ class CallManager {
 		if (!this.currentCall) {
 			// console.log("ℹ️  No active call to end");
 			return;
+		}
+
+		if (notifyRemote && this.currentCall.usesElementCall) {
+			this.sendElementCallHangup(this.currentCall);
 		}
 
 		// Hangup Matrix call (this will send m.call.hangup event to other side)
@@ -573,6 +577,32 @@ class CallManager {
 		// console.log("═══════════════════════════════════════════════");
 
 		this.notifyListeners();
+	}
+
+	private sendElementCallHangup(callData: CallData): void {
+		try {
+			const matrixClientService = (window as any).matrixClientService;
+			const client = matrixClientService?.getClient();
+			if (!client) return;
+
+			client
+				.sendEvent(
+					callData.signalRoomId || callData.roomId,
+					'org.oriso.call.hangup',
+					{
+						call_id: callData.callId,
+						version: '1',
+						reason: 'user_hangup',
+						call_room_id:
+							callData.elementCallRoomId || callData.roomId
+					}
+				)
+				.catch((err: Error) => {
+					// console.error('❌ Failed to send Element Call hangup:', err);
+				});
+		} catch (error) {
+			// console.error('❌ Error sending Element Call hangup:', error);
+		}
 	}
 
 	/**
