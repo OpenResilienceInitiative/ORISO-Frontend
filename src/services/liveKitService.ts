@@ -11,6 +11,8 @@ import {
 	LocalParticipant
 } from 'livekit-client';
 import { getLiveKitWsUrl } from '../resources/scripts/runtimeConfig';
+import { getValueFromCookie } from '../components/sessionCookie/accessSessionCookie';
+import { generateCsrfToken } from '../utils/generateCsrfToken';
 
 export interface LiveKitParticipant {
 	userId: string;
@@ -124,16 +126,25 @@ class LiveKitService {
 		try {
 			// console.log('🔑 Requesting LiveKit token for:', { roomName, userName });
 
-			const url = `/api/livekit/token?roomName=${encodeURIComponent(roomName)}&identity=${encodeURIComponent(userName)}&_t=${Date.now()}`;
+			const accessToken = getValueFromCookie('keycloak');
+			if (!accessToken) {
+				throw new Error('Not authenticated');
+			}
+
+			const csrfToken = generateCsrfToken();
+			const url = `/api/livekit/token?roomName=${encodeURIComponent(roomName)}&_t=${Date.now()}`;
 			// console.log('📡 Fetching from URL:', url);
 
 			const response = await fetch(url, {
 				method: 'GET',
 				headers: {
 					'Content-Type': 'application/json',
+					'Authorization': `Bearer ${accessToken}`,
+					'X-CSRF-Token': csrfToken,
 					'Cache-Control': 'no-cache, no-store, must-revalidate',
 					'Pragma': 'no-cache'
 				},
+				credentials: 'include',
 				cache: 'no-store'
 			});
 
