@@ -737,6 +737,8 @@ export const SessionStream = ({
 	]);
 
 	// Hard fallback: keep Matrix sessions in sync even if a live event is missed.
+	// 60s is safe because Room.timeline and messageEventEmitter cover real-time updates.
+	const MESSAGE_FALLBACK_INTERVAL_MS = 60_000;
 	useEffect(() => {
 		if (!isMatrixSession || !activeSession.item?.id) {
 			return;
@@ -746,10 +748,17 @@ export const SessionStream = ({
 			if (typeof document !== 'undefined' && document.hidden) {
 				return;
 			}
+			// Skip when Matrix is actively syncing — real-time events are flowing.
+			const matrixSyncState = (window as any).matrixClientService
+				?.getClient?.()
+				?.getSyncState();
+			if (matrixSyncState === 'SYNCING') {
+				return;
+			}
 			fetchSessionMessages().catch(() => {
 				// keep UI stable on intermittent network/session race conditions
 			});
-		}, 1500);
+		}, MESSAGE_FALLBACK_INTERVAL_MS);
 
 		return () => {
 			window.clearInterval(intervalId);
