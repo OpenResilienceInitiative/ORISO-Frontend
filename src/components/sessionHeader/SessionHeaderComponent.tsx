@@ -80,6 +80,7 @@ import { ReactComponent as CloseCircle } from '../../resources/img/icons/close-c
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../message/messageConstants';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
+import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 export interface SessionHeaderProps {
 	consultantAbsent?: SessionConsultantInterface;
 	hasUserInitiatedStopOrLeaveRequest?: React.MutableRefObject<boolean>;
@@ -98,6 +99,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	const sessionsDataContext = useContext(SessionsDataContext);
 	const { addNotification, addEventNotification } =
 		useContext(NotificationsContext);
+	const { matrixClientService } = useMatrixClient();
 	const history = useHistory();
 	const consultingType = useConsultingType(activeSession.item.consultingType);
 	const topic = useTopic(
@@ -433,7 +435,6 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			)
 		});
 		try {
-			const matrixClientService = (window as any).matrixClientService;
 			const client = matrixClientService?.getClient?.();
 			if (client) {
 				await (client as any).sendMessage(matrixRoomId, {

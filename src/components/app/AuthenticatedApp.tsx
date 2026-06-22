@@ -33,6 +33,7 @@ import {
 	getMatrixAccessToken,
 	persistMatrixLoginData
 } from '../sessionCookie/getMatrixAccessToken';
+import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 
 interface AuthenticatedAppProps {
 	onAppReady: Function;
@@ -51,6 +52,7 @@ export const AuthenticatedApp = ({
 	const { joinGroupChat } = useJoinGroupChat();
 	const { setNotifications } = useContext(NotificationsContext);
 	const callContext = useCall();
+	const { setMatrixClientService } = useMatrixClient();
 
 	const [appReady, setAppReady] = useState<boolean>(false);
 	const [loading, setLoading] = useState<boolean>(true);
@@ -120,8 +122,9 @@ export const AuthenticatedApp = ({
 											homeserverUrl: homeserverUrl
 										});
 
-										(window as any).matrixClientService =
-											matrixClientService;
+										setMatrixClientService(
+											matrixClientService
+										);
 										(window as any).callContext =
 											callContext;
 

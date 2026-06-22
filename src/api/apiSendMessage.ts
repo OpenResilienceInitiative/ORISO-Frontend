@@ -1,6 +1,7 @@
 import { endpoints, apiUrl } from '../resources/scripts/endpoints';
 import { fetchData, FETCH_ERRORS, FETCH_METHODS } from './fetchData';
 import { apiPostMessageEventNotification } from './apiPostMessageEventNotification';
+import { getMatrixClientService } from '../services/matrixClientRegistry';
 
 const sendMatrixMessageViaRest = (
 	sessionId: number,
@@ -48,7 +49,7 @@ export const apiSendMessage = (
 		// console.log('🚀 MATRIX: Sending message via Matrix SDK for INSTANT sync');
 
 		// Get Matrix client
-		const matrixClientService = (window as any).matrixClientService;
+		const matrixClientService = getMatrixClientService();
 
 		if (matrixClientService) {
 			const client = matrixClientService.getClient();

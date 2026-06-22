@@ -15,6 +15,7 @@ import { ReactComponent as CloseIcon } from '../../resources/img/icons/x.svg';
 import { useTranslation } from 'react-i18next';
 import { useJoinVideoCall } from '../sessionHeader/GroupChatHeader/useJoinVideoCall';
 import { isMatrixRoom } from '../../utils/matrixRoomUtils';
+import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 
 export interface VideoCallRequestProps {
 	rcGroupId: string;
@@ -54,6 +55,7 @@ export const IncomingVideoCall = (props: IncomingVideoCallProps) => {
 
 	const { removeNotification } = useContext(NotificationsContext);
 	const { joinVideoCall } = useJoinVideoCall();
+	const { matrixClientService } = useMatrixClient();
 	const decodedUsername = decodeUsername(props.videoCall.initiatorUsername);
 
 	const buttonAnswerCall: ButtonItem = {
@@ -132,7 +134,6 @@ export const IncomingVideoCall = (props: IncomingVideoCallProps) => {
 			// console.log('📞 Rejecting Matrix call in room:', props.videoCall.rcGroupId);
 
 			// Get Matrix client and find the active call
-			const matrixClientService = (window as any).matrixClientService;
 			if (matrixClientService) {
 				const client = matrixClientService.getClient();
 				const calls = client?.callEventHandler?.calls;
@@ -174,7 +175,8 @@ export const IncomingVideoCall = (props: IncomingVideoCallProps) => {
 		decodedUsername,
 		props.videoCall.initiatorRcUserId,
 		props.videoCall.rcGroupId,
-		removeIncomingVideoCallNotification
+		removeIncomingVideoCallNotification,
+		matrixClientService
 	]);
 
 	return (

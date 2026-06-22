@@ -6,7 +6,6 @@ import {
 	getCookieDomain,
 	getElementUrl,
 	getHostnamesWithoutCookieDomain,
-	getMatrixHomeserverUrl,
 	getUseHttps
 } from '../../resources/scripts/runtimeConfig';
 import './uiVersionToggle.styles.scss';
@@ -31,7 +30,7 @@ export const UIVersionToggle = () => {
 	const { t } = useTranslation();
 	const [useNewUI, setUseNewUI] = useState(isElementUiOrigin);
 
-	const toggleUI = () => {
+	const toggleUI = async () => {
 		const newVersion = useNewUI ? 'classic' : 'new';
 
 		localStorage.setItem(UI_VERSION_STORAGE, newVersion);
@@ -51,34 +50,6 @@ export const UIVersionToggle = () => {
 		document.cookie = `${UI_VERSION_COOKIE}=${newVersion}; path=/; expires=${expiryDate.toUTCString()}; SameSite=Lax${uiVersionCookieDomain}${secure}`;
 
 		if (newVersion === 'new') {
-			const matrixUserId = localStorage.getItem('matrix_user_id');
-			const matrixAccessToken = localStorage.getItem(
-				'matrix_access_token'
-			);
-			const matrixDeviceId = localStorage.getItem('matrix_device_id');
-			const homeserverUrl = getMatrixHomeserverUrl();
-			if (!homeserverUrl) {
-				alert(
-					'REACT_APP_MATRIX_HOMESERVER_URL is not set; cannot sync Matrix cookies for the new UI.'
-				);
-				return;
-			}
-
-			if (matrixUserId && matrixAccessToken) {
-				const matrixCookieDomain = getCookieDomain();
-				const isSecure = getUseHttps();
-
-				const domainStr = matrixCookieDomain
-					? `; domain=${matrixCookieDomain}`
-					: '';
-				const secureStr = isSecure ? '; secure' : '';
-
-				document.cookie = `matrix_sso_user_id=${encodeURIComponent(matrixUserId)}; path=/; SameSite=Lax${domainStr}${secureStr}`;
-				document.cookie = `matrix_sso_access_token=${encodeURIComponent(matrixAccessToken)}; path=/; SameSite=Lax${domainStr}${secureStr}`;
-				document.cookie = `matrix_sso_device_id=${encodeURIComponent(matrixDeviceId || '')}; path=/; SameSite=Lax${domainStr}${secureStr}`;
-				document.cookie = `matrix_sso_hs_url=${encodeURIComponent(homeserverUrl)}; path=/; SameSite=Lax${domainStr}${secureStr}`;
-			}
-
 			const elementUrl = getElementUrl();
 			if (!elementUrl) {
 				alert(
@@ -87,7 +58,27 @@ export const UIVersionToggle = () => {
 				return;
 			}
 
+			try {
+				const { getMatrixAccessToken } = await import(
+					'../sessionCookie/getMatrixAccessToken'
+				);
+				const matrixLoginData = await getMatrixAccessToken();
+				const homeserverUrl = matrixLoginData.homeserverUrl;
+				const isSecure = getUseHttps();
+				const secureStr = isSecure ? '; secure' : '';
+				document.cookie = `matrix_sso_user_id=${encodeURIComponent(matrixLoginData.userId)}; path=/; SameSite=Lax${secureStr}`;
+				document.cookie = `matrix_sso_access_token=${encodeURIComponent(matrixLoginData.accessToken)}; path=/; SameSite=Lax${secureStr}`;
+				document.cookie = `matrix_sso_device_id=${encodeURIComponent(matrixLoginData.deviceId)}; path=/; SameSite=Lax${secureStr}`;
+				document.cookie = `matrix_sso_hs_url=${encodeURIComponent(homeserverUrl)}; path=/; SameSite=Lax${secureStr}`;
+			} catch (error) {
+				console.error(
+					'Failed to fetch Matrix credentials for UI toggle:',
+					error
+				);
+			}
+
 			window.location.href = elementUrl;
+			return;
 		} else {
 			window.location.reload();
 		}

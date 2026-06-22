@@ -7,6 +7,7 @@
  */
 
 import { MatrixCall } from 'matrix-js-sdk/lib/webrtc/call';
+import { getMatrixClientService } from './matrixClientRegistry';
 
 export type CallState =
 	| 'idle'
@@ -129,7 +130,7 @@ class CallManager {
 		} else {
 			// Auto-detect based on room member count
 			try {
-				const matrixClientService = (window as any).matrixClientService;
+				const matrixClientService = getMatrixClientService();
 				const client = matrixClientService?.getClient();
 				// console.log(`   Matrix client available: ${!!client}`);
 
@@ -240,7 +241,7 @@ class CallManager {
 	 * use-case (notably the power levels for `org.matrix.msc3401.call.member`).
 	 */
 	private async createElementCallRoom(sourceRoomId: string): Promise<string> {
-		const matrixClientService = (window as any).matrixClientService;
+		const matrixClientService = getMatrixClientService();
 		const client = matrixClientService?.getClient();
 
 		if (!client) {
@@ -308,7 +309,7 @@ class CallManager {
 	 */
 	private async ensureGroupCallPermissions(roomId: string): Promise<void> {
 		try {
-			const matrixClientService = (window as any).matrixClientService;
+			const matrixClientService = getMatrixClientService();
 			const client = matrixClientService?.getClient();
 
 			if (!client) {
@@ -358,9 +359,10 @@ class CallManager {
 
 			// matrix-js-sdk signature: sendStateEvent(roomId, eventType, content, stateKey?)
 			// We must NOT pass the content as the stateKey (it becomes "[object Object]" in the URL).
+			// Custom ORISO event type — not in matrix-js-sdk typings
 			await client.sendStateEvent(
 				roomId,
-				'm.room.power_levels',
+				'm.room.power_levels' as any,
 				updatedContent,
 				''
 			);
@@ -386,7 +388,7 @@ class CallManager {
 		isGroupCall: boolean = false
 	): void {
 		try {
-			const matrixClientService = (window as any).matrixClientService;
+			const matrixClientService = getMatrixClientService();
 			const client = matrixClientService?.getClient();
 
 			if (!client) {
@@ -397,8 +399,9 @@ class CallManager {
 			// console.log('📤 Sending m.call.invite to Matrix room:', signallingRoomId);
 
 			// Send m.call.invite event
+			// Custom ORISO event type — not in matrix-js-sdk typings
 			client
-				.sendEvent(signallingRoomId, 'org.oriso.call.invite', {
+				.sendEvent(signallingRoomId, 'org.oriso.call.invite' as any, {
 					call_id: callId,
 					version: '1',
 					lifetime: 60000, // 60 seconds
@@ -581,14 +584,15 @@ class CallManager {
 
 	private sendElementCallHangup(callData: CallData): void {
 		try {
-			const matrixClientService = (window as any).matrixClientService;
+			const matrixClientService = getMatrixClientService();
 			const client = matrixClientService?.getClient();
 			if (!client) return;
 
+			// Custom ORISO event type — not in matrix-js-sdk typings
 			client
 				.sendEvent(
 					callData.signalRoomId || callData.roomId,
-					'org.oriso.call.hangup',
+					'org.oriso.call.hangup' as any,
 					{
 						call_id: callData.callId,
 						version: '1',

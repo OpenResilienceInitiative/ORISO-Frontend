@@ -29,7 +29,7 @@ import { Tag } from '../../tag/Tag';
 import { BUTTON_TYPES, Button, ButtonItem } from '../../button/Button';
 import { useAppConfig } from '../../../hooks/useAppConfig';
 import { SessionItemInterface } from '../../../globalState/interfaces';
-import { matrixClientService } from '../../../services/matrixClientService';
+import { useMatrixClient } from '../../../globalState/context/MatrixClientContext';
 import { RoomMember } from 'matrix-js-sdk';
 import { UserAvatar } from '../../message/UserAvatar';
 import { getTenantSettings } from '../../../utils/tenantSettingsHelper';
@@ -52,6 +52,7 @@ export const GroupChatHeader = ({
 	const { t } = useTranslation(['common', 'consultingTypes', 'agencies']);
 	const { activeSession } = useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
+	const { matrixClientService } = useMatrixClient();
 
 	// MATRIX: Get room members from Matrix client
 	const [matrixMembers, setMatrixMembers] = useState<RoomMember[]>([]);
@@ -70,21 +71,12 @@ export const GroupChatHeader = ({
 			return;
 		}
 
-		// Try to get Matrix client (from global window or imported service)
-		const getClient = () => {
-			const globalService = (window as any).matrixClientService;
-			if (globalService && globalService.getClient()) {
-				return globalService.getClient();
-			}
-			return matrixClientService.getClient();
-		};
-
 		// Wait for Matrix client to be available (retry up to 20 times = 10 seconds)
 		let retryCount = 0;
 		const maxRetries = 20;
 
 		const tryLoadMembers = () => {
-			const client = getClient();
+			const client = matrixClientService?.getClient();
 
 			if (!client) {
 				retryCount++;
@@ -155,7 +147,7 @@ export const GroupChatHeader = ({
 
 			// Poll for member changes every 5 seconds
 			const intervalId = setInterval(() => {
-				const client = getClient();
+				const client = matrixClientService?.getClient();
 				if (client) {
 					const updatedRoom = client.getRoom(matrixRoomId);
 					if (updatedRoom) {
@@ -182,7 +174,7 @@ export const GroupChatHeader = ({
 				delete (window as any).__groupChatHeaderInterval;
 			}
 		};
-	}, [matrixRoomId, matrixMembers.length]);
+	}, [matrixRoomId, matrixMembers.length, matrixClientService]);
 	const { type, path: listPath } = useContext(SessionTypeContext);
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
 	const sessionView = getViewPathForType(type);

@@ -11,6 +11,13 @@ import {
 import { appConfig } from '../../utils/appConfig';
 import { calcomLogout } from './calcomLogout';
 import { callEventListeners } from '../../utils/eventHandler';
+import { getMatrixClientService } from '../../services/matrixClientRegistry';
+
+const LEGACY_MATRIX_LOCAL_STORAGE_KEYS = [
+	'matrix_user_id',
+	'matrix_access_token',
+	'matrix_token_expires_at'
+] as const;
 
 export const EVENT_PRE_LOGOUT = 'pre_logout';
 
@@ -50,6 +57,12 @@ const invalidateCookies = (
 	withRedirect: boolean = true,
 	redirectUrl?: string
 ) => {
+	void getMatrixClientService()
+		?.logout()
+		.catch(() => {});
+	LEGACY_MATRIX_LOCAL_STORAGE_KEYS.forEach((key) => {
+		localStorage.removeItem(key);
+	});
 	removeAllCookies();
 	removeTokenExpiryFromLocalStorage();
 	removeRocketChatMasterKeyFromLocalStorage();

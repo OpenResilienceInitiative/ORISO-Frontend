@@ -59,6 +59,7 @@ import {
 } from '../../api/apiRocketChatSettingsPublic';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
 import { getApiBaseUrl } from '../../resources/scripts/getApiBaseUrl';
+import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 
 interface SessionStreamProps {
 	readonly: boolean;
@@ -79,6 +80,7 @@ export const SessionStream = ({
 
 	const { type, path: listPath } = useContext(SessionTypeContext);
 	const { userData } = useContext(UserDataContext);
+	const { matrixClientService } = useMatrixClient();
 	const { subscribe, unsubscribe } = useContext(RocketChatContext);
 	const { getSetting } = useContext(RocketChatGlobalSettingsContext);
 	const { rcGroupId } = useParams<{ rcGroupId: string }>();
@@ -146,11 +148,11 @@ export const SessionStream = ({
 			if (!isMatrixSession || !matrixRoomId) {
 				return;
 			}
-			(window as any).matrixClientService
+			matrixClientService
 				?.sendTyping(matrixRoomId, typing)
 				.catch(() => {});
 		},
-		[isMatrixSession, matrixRoomId]
+		[isMatrixSession, matrixRoomId, matrixClientService]
 	);
 	const handleSessionTyping = useCallback(
 		(isCleared) => {
@@ -258,9 +260,7 @@ export const SessionStream = ({
 						// MATRIX MIGRATION: Reverse message order - Matrix returns newest first, we want oldest first
 						const reversedMessages = [...matrixMessages].reverse();
 
-						const matrixClient = (
-							window as any
-						).matrixClientService?.getClient?.();
+						const matrixClient = matrixClientService?.getClient?.();
 						const matrixRoom = matrixClient?.getRoom?.(
 							activeSession.rid ||
 								activeSession.item?.matrixRoomId
@@ -395,7 +395,12 @@ export const SessionStream = ({
 					: null
 			);
 		});
-	}, [activeSession.rid, activeSession.item, getSetting]);
+	}, [
+		activeSession.rid,
+		activeSession.item,
+		getSetting,
+		matrixClientService
+	]);
 
 	const setSessionRead = useCallback(() => {
 		if (readonly) {
@@ -534,7 +539,6 @@ export const SessionStream = ({
 		let lastRefreshAt = 0;
 
 		const attachTimelineListener = () => {
-			const matrixClientService = (window as any).matrixClientService;
 			const matrixClient = matrixClientService?.getClient?.();
 			if (!matrixClient) {
 				return false;
@@ -600,7 +604,8 @@ export const SessionStream = ({
 		activeSession.item?.matrixRoomId,
 		activeSession.item?.id,
 		fetchSessionMessages,
-		apiUrl
+		apiUrl,
+		matrixClientService
 	]);
 
 	useEffect(() => {
@@ -609,7 +614,7 @@ export const SessionStream = ({
 			return;
 		}
 
-		const matrixClient = (window as any).matrixClientService?.getClient?.();
+		const matrixClient = matrixClientService?.getClient?.();
 		if (!matrixClient) {
 			setMatrixTypingUsers([]);
 			return;
@@ -692,7 +697,12 @@ export const SessionStream = ({
 			matrixTypingActivityRef.current.clear();
 			setMatrixTypingUsers([]);
 		};
-	}, [isMatrixSession, matrixRoomId, MATRIX_TYPING_STALE_MS]);
+	}, [
+		isMatrixSession,
+		matrixRoomId,
+		MATRIX_TYPING_STALE_MS,
+		matrixClientService
+	]);
 
 	useEffect(() => {
 		const handleLiveMessageEvent = ({
@@ -749,7 +759,7 @@ export const SessionStream = ({
 				return;
 			}
 			// Skip when Matrix is actively syncing — real-time events are flowing.
-			const matrixSyncState = (window as any).matrixClientService
+			const matrixSyncState = matrixClientService
 				?.getClient?.()
 				?.getSyncState();
 			if (matrixSyncState === 'SYNCING') {
@@ -763,7 +773,12 @@ export const SessionStream = ({
 		return () => {
 			window.clearInterval(intervalId);
 		};
-	}, [isMatrixSession, activeSession.item?.id, fetchSessionMessages]);
+	}, [
+		isMatrixSession,
+		activeSession.item?.id,
+		fetchSessionMessages,
+		matrixClientService
+	]);
 
 	useEffect(
 		() => () => {

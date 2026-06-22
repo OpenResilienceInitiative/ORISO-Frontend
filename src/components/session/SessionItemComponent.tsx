@@ -34,6 +34,7 @@ import {
 	useTenant,
 	ActiveSessionContext
 } from '../../globalState';
+import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import {
 	STATUS_EMPTY,
 	STATUS_ENQUIRY
@@ -398,6 +399,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const { addEventNotification } = useContext(NotificationsContext);
 	const { type } = useContext(SessionTypeContext);
 	const legalLinks = useContext(LegalLinksContext);
+	const { matrixClientService } = useMatrixClient();
 	const location = useLocation();
 	const history = useHistory();
 	const isEmbeddedNotificationsView =
@@ -1670,12 +1672,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			);
 
 			if (isMatrixSession) {
-				const matrixClientUserId = (window as any).matrixClientService
+				const matrixClientUserId = matrixClientService
 					?.getClient?.()
 					?.getUserId?.();
 				const myMatrixUserId =
 					matrixClientUserId ||
-					localStorage.getItem('matrix_user_id') ||
 					(typeof document !== 'undefined' &&
 						document.cookie
 							.split('; ')
@@ -1700,7 +1701,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		[
 			activeSession.rid,
 			activeSession.item?.matrixRoomId,
-			userData?.userName
+			userData?.userName,
+			matrixClientService
 		]
 	);
 
