@@ -9,11 +9,12 @@ export const apiGetTopicsData = async (): Promise<TopicsDataInterface[]> => {
 		url: url,
 		rcValidation: false,
 		responseHandling: [FETCH_ERRORS.EMPTY],
-		method: FETCH_METHODS.GET
+		method: FETCH_METHODS.GET,
+		skipAuth: true
 	}).catch((error) => {
 		if (error.message === FETCH_ERRORS.EMPTY) {
 			return [];
 		}
-		Promise.reject(error);
+		return Promise.reject(error);
 	});
 };
