@@ -90,6 +90,8 @@ export const persistMatrixLoginData = (loginData: MatrixLoginData): void => {
 			'matrix_token_expires_at',
 			String(Date.now() + loginData.expiresInMs)
 		);
+	} else {
+		localStorage.removeItem('matrix_token_expires_at');
 	}
 
 	setValueInCookie('rc_uid', loginData.userId);
