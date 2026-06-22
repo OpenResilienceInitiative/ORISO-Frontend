@@ -40,6 +40,10 @@ class MatrixCallService {
 		client: MatrixClient,
 		handlers: MatrixCallEventHandlers = {}
 	): void {
+		if (this.client && this.client !== client) {
+			this.client.removeAllListeners('Call.incoming' as any);
+		}
+
 		this.client = client;
 		this.eventHandlers = handlers;
 

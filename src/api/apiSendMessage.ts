@@ -50,18 +50,15 @@ export const apiSendMessage = (
 		// Get Matrix client
 		const matrixClientService = (window as any).matrixClientService;
 
-		if (matrixClientService) {
+		if (matrixClientService?.sendMessage) {
 			const client = matrixClientService.getClient();
 
 			if (client) {
 				// console.log('✅ Sending via Matrix SDK to room:', matrixRoomId);
 
-				// Send via Matrix SDK (this gives INSTANT local echo!)
-				return (client as any)
-					.sendMessage(matrixRoomId, {
-						msgtype: 'm.text',
-						body: messageData
-					})
+				// Send via Matrix SDK through MatrixClientService so token refresh/retry is applied.
+				return matrixClientService
+					.sendMessage(matrixRoomId, messageData)
 					.then((response: any) => {
 						// console.log('✅ Matrix SDK send complete - Room.timeline will fire INSTANTLY!');
 

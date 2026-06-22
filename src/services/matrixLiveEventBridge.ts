@@ -18,9 +18,13 @@ export class MatrixLiveEventBridge {
 	 * This sets up event listeners for real-time Matrix events.
 	 */
 	public initialize(client: MatrixClient): void {
-		if (this.initialized) {
-			// console.warn("⚠️ MatrixLiveEventBridge already initialized");
+		if (this.initialized && this.client === client) {
 			return;
+		}
+
+		if (this.client && this.client !== client) {
+			this.client.removeAllListeners('Room.timeline' as any);
+			this.client.removeAllListeners('sync' as any);
 		}
 
 		this.client = client;

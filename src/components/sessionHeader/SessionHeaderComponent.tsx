@@ -434,12 +434,11 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		});
 		try {
 			const matrixClientService = (window as any).matrixClientService;
-			const client = matrixClientService?.getClient?.();
-			if (client) {
-				await (client as any).sendMessage(matrixRoomId, {
-					msgtype: 'm.text',
-					body: `${SYSTEM_NOTIFICATION_PREFIX}${payload}`
-				});
+			if (matrixClientService?.sendMessage) {
+				await matrixClientService.sendMessage(
+					matrixRoomId,
+					`${SYSTEM_NOTIFICATION_PREFIX}${payload}`
+				);
 				return;
 			}
 			await apiSendMessage(
