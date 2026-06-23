@@ -37,3 +37,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 /.idea/
+
+# dev scratch / proof files
+tmp*/
+.tmp-proof/
