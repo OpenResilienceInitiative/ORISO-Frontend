@@ -2050,7 +2050,14 @@ export const MessageSubmitInterfaceComponent = ({
 					level: ERROR_LEVEL_WARN
 				}).then();
 
-				isEncrypted = false;
+				window.alert(
+					translate(
+						'e2ee.message.encryption.error',
+						'Encryption failed, message not sent'
+					)
+				);
+				setIsRequestInProgress(false);
+				return;
 			}
 		}
 
