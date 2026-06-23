@@ -2393,7 +2393,8 @@
 				"archive": "Archiviert",
 				"oneToOne": "1-1 Beratung",
 				"liveChat": "Live-Chat",
-				"groups": "Gruppen",
+				"internalGroup": "Interner Gruppenchat",
+				"groups": "Gesprächskreis",
 				"supervision": "Supervision",
 				"chats": "Nähe"
 			},

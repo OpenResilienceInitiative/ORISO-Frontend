@@ -271,6 +271,19 @@ const formatDraftTime = (timestamp?: string | null) => {
 	return `${Math.floor(diffHours / 24)}d`;
 };
 
+const isConversationCircleSession = (
+	extended: ExtendedSessionInterface
+): boolean =>
+	Boolean(
+		extended.isGroup &&
+			(extended.item as { repetitive?: boolean } | undefined)?.repetitive
+	);
+
+const isInternalGroupChatSession = (
+	extended: ExtendedSessionInterface
+): boolean =>
+	Boolean(extended.isGroup && !isConversationCircleSession(extended));
+
 function sessionMatchesToolbar(
 	raw: ListItemInterface,
 	extended: ExtendedSessionInterface,
@@ -306,8 +319,12 @@ function sessionMatchesToolbar(
 		if (!drafts.some((draft) => draftMatchesSession(draft, raw, extended))) {
 			return false;
 		}
+	} else if (chip === 'internalGroup') {
+		if (!isInternalGroupChatSession(extended)) {
+			return false;
+		}
 	} else if (chip === 'groups') {
-		if (!extended.isGroup) {
+		if (!isConversationCircleSession(extended)) {
 			return false;
 		}
 	} else if (chip === 'supervision') {

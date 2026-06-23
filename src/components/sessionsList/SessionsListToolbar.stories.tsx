@@ -65,7 +65,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'Consultant **MY_SESSION** list toolbar: kebab + search field and horizontal filter chips (create, archive, calendar, groups icon, text filters, supervision). Styling lives in `sessionsList.styles.scss` (`.sessionsListToolbar`). Uses React Router `Link` for create/archive; chips are stateful toggle buttons.'
+					'Consultant **MY_SESSION** list toolbar: kebab + search field and horizontal filter chips (create, archive, unread, drafts, internal group chat, supervision, conversation circle). Styling lives in `sessionsList.styles.scss` (`.sessionsListToolbar`). Uses React Router `Link` for create/archive; chips are stateful toggle buttons.'
 			}
 		}
 	}
@@ -118,6 +118,14 @@ export const OneToOneFilterActive: Story = {
 
 export const GroupsFilterActive: Story = {
 	render: () => <SessionsListToolbarPlayground initialChip="groups" />
+};
+
+export const InternalGroupFilterActive: Story = {
+	render: () => <SessionsListToolbarPlayground initialChip="internalGroup" />
+};
+
+export const SupervisionFilterActive: Story = {
+	render: () => <SessionsListToolbarPlayground initialChip="supervision" />
 };
 
 export const ArchiveRouteActive: Story = {

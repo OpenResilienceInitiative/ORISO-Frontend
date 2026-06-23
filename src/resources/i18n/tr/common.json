@@ -2292,7 +2292,8 @@
 				"archive": "Arşivlendi",
 				"oneToOne": "Bire bir danışmanlık",
 				"liveChat": "Canlı sohbet",
-				"groups": "Gruplar",
+				"internalGroup": "Dahili grup sohbeti",
+				"groups": "Sohbet çevresi",
 				"supervision": "Süpervizyon",
 				"chats": "Yakın"
 			},

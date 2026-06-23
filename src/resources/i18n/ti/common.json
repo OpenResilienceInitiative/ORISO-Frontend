@@ -2292,7 +2292,8 @@
 				"archive": "Archive",
 				"oneToOne": "1-1 ምኽሪ",
 				"liveChat": "ቀጥታዊ ዝርርብ",
-				"groups": "ጉጅለታት",
+				"internalGroup": "ውሽጣዊ ናይ ጉጅለ ዝርርብ",
+				"groups": "ናይ ዝርርብ ክበብ",
 				"supervision": "Supervision",
 				"chats": "ቀረባ"
 			},

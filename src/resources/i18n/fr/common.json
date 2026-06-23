@@ -2292,7 +2292,8 @@
 				"archive": "Archivé",
 				"oneToOne": "Conseil 1-1",
 				"liveChat": "Chat en direct",
-				"groups": "Groupes",
+				"internalGroup": "Discussion de groupe interne",
+				"groups": "Cercle de discussion",
 				"supervision": "Supervision",
 				"chats": "Proximité"
 			},

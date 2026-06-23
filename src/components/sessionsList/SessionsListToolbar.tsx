@@ -7,6 +7,7 @@ import {
 	CreateChatFilterIcon,
 	DraftFilterIcon,
 	GroupFilterIcon,
+	InternalGroupFilterIcon,
 	LiveChatFilterIcon,
 	NearbyFilterIcon,
 	SessionToolbarFilterIconProps,
@@ -19,6 +20,7 @@ export type SessionToolbarChipFilter =
 	| 'drafts'
 	| 'nearby'
 	| 'liveChat'
+	| 'internalGroup'
 	| 'groups'
 	| 'supervision';
 
@@ -35,6 +37,11 @@ export const normalizeSessionToolbarChip = (
 			return 'nearby';
 		case 'drafts':
 		case 'liveChat':
+		case 'internal':
+		case 'internalGroup':
+			return 'internalGroup';
+		case 'circles':
+			return 'groups';
 		case 'groups':
 		case 'supervision':
 			return chip;
@@ -198,6 +205,13 @@ const FILTER_CHIPS: FilterChipConfig[] = [
 		dataCy: 'sessions-list-chip-live-chat'
 	},
 	{
+		id: 'internalGroup',
+		labelKey: 'sessionList.toolbar.chips.internalGroup',
+		fallback: 'Internal group chat',
+		Icon: InternalGroupFilterIcon,
+		dataCy: 'sessions-list-chip-internal-group'
+	},
+	{
 		id: 'supervision',
 		labelKey: 'sessionList.toolbar.chips.supervision',
 		fallback: 'Supervision',
@@ -207,7 +221,7 @@ const FILTER_CHIPS: FilterChipConfig[] = [
 	{
 		id: 'groups',
 		labelKey: 'sessionList.toolbar.chips.groups',
-		fallback: 'Groups',
+		fallback: 'Conversation circle',
 		Icon: GroupFilterIcon,
 		dataCy: 'sessions-list-chip-groups'
 	}
@@ -256,9 +270,12 @@ const FilterChip = ({
 				className="sessionsListToolbar__chipIconSvg"
 				hasIndicator={chip.id === 'unread' && Boolean(count && count > 0)}
 			/>
-			{active && (
-				<span className="sessionsListToolbar__chipLabel">{label}</span>
-			)}
+			<span
+				className="sessionsListToolbar__chipLabel"
+				aria-hidden={!active}
+			>
+				{label}
+			</span>
 			<CountBadge count={count} />
 		</button>
 	);
@@ -376,6 +393,26 @@ export const SessionsListToolbar = ({
 				return true;
 			}),
 		[showLiveChatChip, showSupervisionChip]
+	);
+	const archiveInsertIndex = Math.max(
+		visibleFilterChips.findIndex((chip) => chip.id === 'internalGroup'),
+		0
+	);
+	const filterChipsBeforeArchive = showConsultantActions
+		? visibleFilterChips.slice(0, archiveInsertIndex)
+		: visibleFilterChips;
+	const filterChipsAfterArchive = showConsultantActions
+		? visibleFilterChips.slice(archiveInsertIndex)
+		: [];
+	const renderFilterChip = (chip: FilterChipConfig) => (
+		<FilterChip
+			key={chip.id}
+			chip={chip}
+			active={activeChip === chip.id}
+			count={chipCounts[chip.id]}
+			label={tr(chip.labelKey, chip.fallback)}
+			onClick={() => onChipToggle(chip.id)}
+		/>
 	);
 
 	return (
@@ -657,26 +694,18 @@ export const SessionsListToolbar = ({
 							data-cy="sessions-list-chip-create"
 						>
 							<CreateChatFilterIcon className="sessionsListToolbar__chipIconSvg" />
-							{createGroupChatActive && (
-								<span className="sessionsListToolbar__chipLabel">
-									{tr(
-										'sessionList.toolbar.chips.create',
-										'Create'
-									)}
-								</span>
-							)}
+							<span
+								className="sessionsListToolbar__chipLabel"
+								aria-hidden={!createGroupChatActive}
+							>
+								{tr(
+									'sessionList.toolbar.chips.create',
+									'Create'
+								)}
+							</span>
 						</Link>
 					)}
-					{visibleFilterChips.map((chip) => (
-						<FilterChip
-							key={chip.id}
-							chip={chip}
-							active={activeChip === chip.id}
-							count={chipCounts[chip.id]}
-							label={tr(chip.labelKey, chip.fallback)}
-							onClick={() => onChipToggle(chip.id)}
-						/>
-					))}
+					{filterChipsBeforeArchive.map(renderFilterChip)}
 					{showConsultantActions && (
 						<Link
 							className={clsx(
@@ -697,16 +726,18 @@ export const SessionsListToolbar = ({
 							data-cy="sessions-list-chip-archive"
 						>
 							<ArchiveFilterIcon className="sessionsListToolbar__chipIconSvg" />
-							{archiveTabActive && (
-								<span className="sessionsListToolbar__chipLabel">
-									{tr(
-										'sessionList.toolbar.chips.archive',
-										'Archived'
-									)}
-								</span>
-							)}
+							<span
+								className="sessionsListToolbar__chipLabel"
+								aria-hidden={!archiveTabActive}
+							>
+								{tr(
+									'sessionList.toolbar.chips.archive',
+									'Archived'
+								)}
+							</span>
 						</Link>
 					)}
+					{filterChipsAfterArchive.map(renderFilterChip)}
 				</div>
 			</div>
 		</div>

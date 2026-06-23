@@ -2330,7 +2330,8 @@
 				"archive": "Archived",
 				"oneToOne": "1-1 counseling",
 				"liveChat": "Live chat",
-				"groups": "Groups",
+				"internalGroup": "Internal group chat",
+				"groups": "Conversation circle",
 				"supervision": "Supervision",
 				"chats": "Nearby"
 			},
