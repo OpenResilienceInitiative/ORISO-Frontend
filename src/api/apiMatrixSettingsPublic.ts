@@ -5,7 +5,7 @@ import type {
 	IBooleanSetting,
 	TSetting,
 	TRocketChatSettingsPublicResponse
-} from './apiRocketChatSettingsPublic';
+} from './apiRocketChatSettingsShared';
 import {
 	SETTING_E2E_ENABLE,
 	SETTING_FILEUPLOAD_MAXFILESIZE,
@@ -13,7 +13,7 @@ import {
 	SETTING_MESSAGE_ALLOWDELETING,
 	SETTING_MESSAGE_MAXALLOWEDSIZE,
 	SETTING_MESSAGE_SHOWDELETEDSTATUS
-} from './apiRocketChatSettingsPublic';
+} from './apiRocketChatSettingsShared';
 
 const DEFAULT_SETTINGS: TSetting[] = [
 	{
