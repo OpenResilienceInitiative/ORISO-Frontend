@@ -1,6 +1,5 @@
-import { endpoints } from '../resources/scripts/endpoints';
 import { apiServerSettings } from './apiServerSettings';
-import { fetchData, FETCH_ERRORS, FETCH_METHODS } from './fetchData';
+import type { ServerAppConfigInterface } from '../globalState/interfaces';
 import type {
 	IBooleanSetting,
 	TSetting,
@@ -70,9 +69,9 @@ const findE2eSetting = (settings: TSetting[] = []): IBooleanSetting | null =>
 		| IBooleanSetting
 		| undefined) ?? null;
 
-const readServerE2eSetting = async (): Promise<boolean | null> => {
-	const serverSettings = await apiServerSettings();
-
+const readE2eFromServerSettings = (
+	serverSettings: ServerAppConfigInterface
+): boolean | null => {
 	for (const key of SERVER_E2E_SETTING_KEYS) {
 		const value = serverSettings?.[key]?.value;
 		if (typeof value === 'boolean') {
@@ -83,34 +82,28 @@ const readServerE2eSetting = async (): Promise<boolean | null> => {
 	return null;
 };
 
-const fetchRocketChatPublicSettings = async (
+const mapServerSettingsToPublicSettings = (
+	serverSettings: ServerAppConfigInterface,
 	settingsEntries?: string[] | null
-): Promise<TSetting[] | null> => {
-	const query = settingsEntries?.length
-		? `?query=${encodeURIComponent(
-				JSON.stringify({ _id: { $in: settingsEntries } })
-			)}`
-		: '';
+): TSetting[] => {
+	const settings: TSetting[] = [];
+	const e2eValue = readE2eFromServerSettings(serverSettings);
 
-	try {
-		const response = await fetchData({
-			url: `${endpoints.rc.settings.public}${query}`,
-			method: FETCH_METHODS.GET,
-			skipAuth: true,
-			responseHandling: [FETCH_ERRORS.CATCH_ALL]
+	if (typeof e2eValue === 'boolean') {
+		settings.push({
+			_id: SETTING_E2E_ENABLE,
+			enterprise: false,
+			value: e2eValue
 		});
-
-		if (response?.success && Array.isArray(response.settings)) {
-			return response.settings;
-		}
-	} catch {
-		// Fall through to service settings / defaults below.
 	}
 
-	return null;
+	return filterSettings(settings, settingsEntries);
 };
 
-const resolveE2eEnabled = async (settings: TSetting[]): Promise<boolean> => {
+const resolveE2eEnabled = (
+	settings: TSetting[],
+	serverSettings: ServerAppConfigInterface | null
+): boolean => {
 	const e2eSetting = findE2eSetting(settings);
 	if (typeof e2eSetting?.value === 'boolean') {
 		if (!e2eSetting.value) {
@@ -121,22 +114,19 @@ const resolveE2eEnabled = async (settings: TSetting[]): Promise<boolean> => {
 		return e2eSetting.value;
 	}
 
-	const serverSetting = await readServerE2eSetting().catch(() => null);
-	if (typeof serverSetting === 'boolean') {
-		if (!serverSetting) {
-			throw new Error(
-				`${SETTING_E2E_ENABLE} is disabled in backend settings`
-			);
+	if (serverSettings) {
+		const serverE2e = readE2eFromServerSettings(serverSettings);
+		if (typeof serverE2e === 'boolean') {
+			if (!serverE2e) {
+				throw new Error(
+					`${SETTING_E2E_ENABLE} is disabled in backend settings`
+				);
+			}
+			return serverE2e;
 		}
-		return serverSetting;
 	}
 
-	if (process.env.NODE_ENV === 'production') {
-		console.error(
-			`${SETTING_E2E_ENABLE} is missing from backend settings; keeping custom E2EE enabled`
-		);
-	}
-
+	// Matrix deployments may not expose RC-style public settings; secure default.
 	return true;
 };
 
@@ -168,10 +158,22 @@ export const getFallbackPublicSettings = (
 export const apiMatrixSettingsPublic = async (
 	settingsEntries: string[] | null = null
 ): Promise<TRocketChatSettingsPublicResponse> => {
-	const remoteSettings = await fetchRocketChatPublicSettings(settingsEntries);
-	const e2eEnabled = await resolveE2eEnabled(remoteSettings ?? []);
+	let serverSettings: ServerAppConfigInterface | null = null;
+	let serviceSettings: TSetting[] | null = null;
+
+	try {
+		serverSettings = await apiServerSettings();
+		serviceSettings = mapServerSettingsToPublicSettings(
+			serverSettings,
+			settingsEntries
+		);
+	} catch {
+		// Fall through to defaults below.
+	}
+
+	const e2eEnabled = resolveE2eEnabled(serviceSettings ?? [], serverSettings);
 	const settings = filterSettings(
-		mergeSettings(remoteSettings, e2eEnabled),
+		mergeSettings(serviceSettings, e2eEnabled),
 		settingsEntries
 	);
 
