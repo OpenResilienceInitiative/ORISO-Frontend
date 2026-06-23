@@ -85,6 +85,7 @@ import {
 	encryptText,
 	getSignature
 } from '../../utils/encryptionHelpers';
+import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import { useE2EE } from '../../hooks/useE2EE';
 import { apiPostError, ERROR_LEVEL_WARN } from '../../api/apiPostError';
 import { useE2EEViewElements } from '../../hooks/useE2EEViewElements';
@@ -1824,7 +1825,7 @@ export const MessageSubmitInterfaceComponent = ({
 				Boolean(activeSession.item?.matrixRoomId) ||
 				Boolean(
 					activeSession.rid &&
-						activeSession.rid.startsWith('!') &&
+						isMatrixRoom(activeSession.rid) &&
 						activeSession.item?.id
 				);
 			const matrixSessionId = isMatrixSession
@@ -1947,10 +1948,9 @@ export const MessageSubmitInterfaceComponent = ({
 
 			if (shouldSendTextMessage) {
 				// MATRIX MIGRATION: For group chats, Matrix room ID is in activeSession.rid
-				const matrixRoomId =
-					activeSession.rid && activeSession.rid.startsWith('!')
-						? activeSession.rid
-						: activeSession.item?.matrixRoomId;
+				const matrixRoomId = isMatrixRoom(activeSession.rid)
+					? activeSession.rid
+					: activeSession.item?.matrixRoomId;
 
 				await apiSendMessage(
 					message,
@@ -2050,7 +2050,14 @@ export const MessageSubmitInterfaceComponent = ({
 					level: ERROR_LEVEL_WARN
 				}).then();
 
-				isEncrypted = false;
+				window.alert(
+					translate(
+						'e2ee.message.encryption.error',
+						'Encryption failed, message not sent'
+					)
+				);
+				setIsRequestInProgress(false);
+				return;
 			}
 		}
 
@@ -2325,7 +2332,7 @@ export const MessageSubmitInterfaceComponent = ({
 					: featureVoiceMessagesOneOnOneChatsEnabled !== false);
 
 	const getMatrixRoomId = useCallback(() => {
-		if (activeSession?.rid?.startsWith('!')) {
+		if (isMatrixRoom(activeSession?.rid)) {
 			return activeSession.rid;
 		}
 		return activeSession?.item?.matrixRoomId || null;
@@ -3676,9 +3683,9 @@ export const MessageSubmitInterfaceComponent = ({
 		[setIsExpandedComposer]
 	);
 
-	const matrixRoomId = activeSession?.rid?.startsWith('!')
+	const matrixRoomId = isMatrixRoom(activeSession?.rid)
 		? activeSession.rid
-		: activeSession?.item?.matrixRoomId?.startsWith('!')
+		: isMatrixRoom(activeSession?.item?.matrixRoomId)
 			? activeSession.item.matrixRoomId
 			: null;
 

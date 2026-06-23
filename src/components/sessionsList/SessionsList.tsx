@@ -39,6 +39,10 @@ import {
 	SESSION_COUNT
 } from '../../api';
 import { useLiveChatAvailable } from '../../utils/liveChatToggle';
+import {
+	isMatrixRoom,
+	isMatrixRoomIdHeuristic
+} from '../../utils/matrixRoomUtils';
 import { Button } from '../button/Button';
 import './sessionsList.styles';
 import { SCROLL_PAGINATE_THRESHOLD } from './sessionsListConfig';
@@ -448,6 +452,24 @@ export const SessionsList = ({
 			.catch(() => {});
 	}, [dispatch, fetchEnquirySessionsWithAutoPage, type]);
 
+	const refetchSessionList = useCallback(() => {
+		if (type !== SESSION_LIST_TYPES.MY_SESSION) {
+			return Promise.resolve();
+		}
+
+		return getConsultantSessionList(0)
+			.then(({ sessions, total }) => {
+				dispatch({
+					type: SET_SESSIONS,
+					ready: true,
+					sessions
+				});
+				setTotalItems(total);
+				setCurrentOffset(0);
+			})
+			.catch(() => {});
+	}, [dispatch, getConsultantSessionList, type]);
+
 	/*
 	 * Re-run the enquiry fetch when switching Chats ↔ Live Chat so auto-paging
 	 * scans for the right session type instead of only re-filtering stale pages.
@@ -620,9 +642,7 @@ export const SessionsList = ({
 
 							// Check if groupId looks like a Matrix room ID (starts with ! or contains :)
 							const isMatrixRoomId =
-								groupId &&
-								(groupId.startsWith('!') ||
-									groupId.includes(':'));
+								isMatrixRoomIdHeuristic(groupId);
 
 							if (isEmptyEnquiry) {
 								// Empty enquiry: go to write view
@@ -1043,16 +1063,32 @@ export const SessionsList = ({
 		const onNewMessageEvent = ({
 			roomId,
 			timestamp,
-			refreshEnquiryList
+			refreshEnquiryList,
+			refreshSessionList,
+			sessionId
 		}: {
 			roomId?: string;
 			timestamp?: number;
 			refreshEnquiryList?: boolean;
+			refreshSessionList?: boolean;
+			sessionId?: number;
 		}) => {
-			if (refreshEnquiryList) {
-				if (type === SESSION_LIST_TYPES.ENQUIRY) {
-					refetchEnquiryList();
-				}
+			if (sessionId) {
+				dispatch({
+					type: REMOVE_SESSIONS,
+					ids: [sessionId]
+				});
+			}
+
+			if (refreshEnquiryList && type === SESSION_LIST_TYPES.ENQUIRY) {
+				void refetchEnquiryList();
+			}
+
+			if (refreshSessionList && type === SESSION_LIST_TYPES.MY_SESSION) {
+				void refetchSessionList();
+			}
+
+			if (refreshEnquiryList || refreshSessionList) {
 				return;
 			}
 
@@ -1072,7 +1108,7 @@ export const SessionsList = ({
 		return () => {
 			messageEventEmitter.off(onNewMessageEvent);
 		};
-	}, [refetchEnquiryList, touchSessionsByRids, type]);
+	}, [refetchEnquiryList, refetchSessionList, touchSessionsByRids, type]);
 
 	/*
 	 * Legacy invite-link enquiries do not emit newAnonymousEnquiry over STOMP.
@@ -1154,7 +1190,9 @@ export const SessionsList = ({
 		type === SESSION_LIST_TYPES.MY_SESSION &&
 		!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
 
-	const showMySessionToolbar = type === SESSION_LIST_TYPES.MY_SESSION;
+	const showMySessionToolbar =
+		type === SESSION_LIST_TYPES.MY_SESSION ||
+		type === SESSION_LIST_TYPES.ENQUIRY;
 	/**
 	 * Enquiry tab gets its own compact chip row (Chats + Live Chat). It
 	 * shares the same `sessionToolbarChip` state as the Gespräch toolbar so
@@ -1235,8 +1273,7 @@ export const SessionsList = ({
 
 			const matrixRoomId =
 				(item as { matrixRoomId?: string })?.matrixRoomId ||
-				(typeof item.groupId === 'string' &&
-				item.groupId.startsWith('!')
+				(typeof item.groupId === 'string' && isMatrixRoom(item.groupId)
 					? item.groupId
 					: null);
 			const matrixRoom = matrixRoomId
@@ -1468,14 +1505,14 @@ export const SessionsList = ({
 
 	return (
 		<div className="sessionsList__innerWrapper">
-			{showEnquiryFilterChips && (
+			{/* {showEnquiryFilterChips && (
 				<EnquiryFilterChips
 					translate={translate}
 					activeChip={sessionToolbarChip}
 					onChipToggle={handleToolbarChipToggle}
 					showLiveChatChip={liveChatAvailable}
 				/>
-			)}
+			)} */}
 			{showMySessionToolbar && (
 				<SessionsListToolbar
 					translate={translate}

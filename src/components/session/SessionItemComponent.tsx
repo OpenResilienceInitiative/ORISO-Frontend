@@ -14,6 +14,10 @@ import clsx from 'clsx';
 import { scrollToEnd, isMyMessage, SESSION_LIST_TYPES } from './sessionHelpers';
 import { formatToHHMM } from '../../utils/dateHelpers';
 import {
+	isMatrixRoom,
+	isMatrixRoomIdHeuristic
+} from '../../utils/matrixRoomUtils';
+import {
 	MessageItem,
 	MessageItemComponent
 } from '../message/MessageItemComponent';
@@ -62,6 +66,11 @@ import { apiPatchNotificationActiveView } from '../../api/apiPatchNotificationAc
 import { apiPatchUserData } from '../../api/apiPatchUserData';
 import { apiGetUserData } from '../../api/apiGetUserData';
 import { apiGetAnonymousEnquiryDetails } from '../../api/apiGetAnonymousEnquiryDetails';
+import {
+	bindAnonymousChatUnloadCleanup,
+	ensureAnonymousChatPreLogoutCleanup,
+	registerAnonymousChatSessionForCleanup
+} from '../../utils/anonymousChatSessionCleanup';
 import { parseMessagePrefixes } from '../message/messageConstants';
 import { decodeUsername } from '../../utils/encryptionHelpers';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
@@ -93,6 +102,8 @@ import {
 } from '@mui/material';
 import AccessTimeOutlinedIcon from '@mui/icons-material/AccessTimeOutlined';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import { LIVE_CHAT_OPENING_HOURS } from '../anonymousChat/liveChatOpeningHours';
+import liveChatClosedIllustration from '../../resources/img/illustrations/live-chat-closed.svg';
 import NorthEastIcon from '@mui/icons-material/NorthEast';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CloseIcon from '@mui/icons-material/Close';
@@ -1653,7 +1664,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			};
 
 			const isMatrixSession = Boolean(
-				activeSession.rid?.startsWith('!') ||
+				isMatrixRoom(activeSession.rid) ||
 					activeSession.item?.matrixRoomId ||
 					messageUserId?.includes('@')
 			);
@@ -1836,6 +1847,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				setPseudonymConfirmed(true);
 				try {
 					sessionStorage.setItem(pseudonymStorageKey, '1');
+					sessionStorage.setItem(
+						`anonymous-pseudonym-name-${activeSession.item.id}`,
+						currentPseudonym.displayName
+					);
 				} catch {
 					/* ignore storage errors */
 				}
@@ -1897,6 +1912,37 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			window.clearInterval(poll);
 		};
 	}, [isInAnonymousWaitingQueuePhase, activeSession.item?.id]);
+
+	/**
+	 * When an anonymous asker leaves (logout, navigate away, tab close), finish the
+	 * session immediately so the waiting queue count drops for everyone else.
+	 */
+	useEffect(() => {
+		ensureAnonymousChatPreLogoutCleanup();
+
+		if (!isAnonymousAskerExperience || !activeSession.item?.id) {
+			registerAnonymousChatSessionForCleanup(null);
+			return;
+		}
+
+		registerAnonymousChatSessionForCleanup(
+			activeSession.item.id,
+			activeSession.item.status,
+			isMatrixRoomIdHeuristic(activeSession.rid)
+				? activeSession.rid
+				: activeSession.item?.matrixRoomId,
+			userData?.userName
+		);
+
+		return bindAnonymousChatUnloadCleanup(activeSession.item.id);
+	}, [
+		isAnonymousAskerExperience,
+		activeSession.item?.id,
+		activeSession.item?.status,
+		activeSession.item?.matrixRoomId,
+		activeSession.rid,
+		userData?.userName
+	]);
 
 	/**
 	 * As soon as at least one consultant is available again, clear any manual
@@ -2825,7 +2871,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			return;
 		}
 		const roomId =
-			(activeSession.rid && activeSession.rid.startsWith('!')
+			(isMatrixRoom(activeSession.rid)
 				? activeSession.rid
 				: activeSession.item?.matrixRoomId ||
 					activeSession.rid ||
@@ -4345,6 +4391,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											firstName={primaryTypingUser}
 											lastName=""
 											userId={`typing-${primaryTypingUser}`}
+											ring={false}
 										/>
 									</div>
 									<div className="messageItem__content">
@@ -4664,13 +4711,21 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			<Dialog
 				open={liveChatClosedModalOpen}
 				onClose={() => setLiveChatClosedDismissed(true)}
-				maxWidth="sm"
 				fullWidth
+				maxWidth={false}
+				PaperProps={{
+					sx: {
+						width: '100%',
+						maxWidth: '600px',
+						m: { xs: '16px', sm: '32px' },
+						borderRadius: '24px'
+					}
+				}}
 			>
 				<MuiBox
 					sx={{
 						p: { xs: '20px', md: '24px' },
-						borderRadius: '16px'
+						borderRadius: '24px'
 					}}
 				>
 					<MuiBox
@@ -4683,9 +4738,14 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					>
 						<MuiBox
 							component="img"
-							src="https://www.figma.com/api/mcp/asset/53e84cfc-9e3d-4075-bc3b-cfcf0903e811"
+							src={liveChatClosedIllustration}
 							alt=""
-							sx={{ width: 72, height: 72 }}
+							sx={{
+								width: 72,
+								height: 72,
+								flexShrink: 0,
+								display: 'block'
+							}}
 						/>
 						<MuiTypography
 							variant="h4"
@@ -4706,53 +4766,96 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					</MuiTypography>
 
 					<MuiBox
-						onClick={() =>
-							setLiveChatClosedHintOpen((prev) => !prev)
-						}
 						sx={{
 							border: '1px solid #DAE3F0',
 							borderRadius: '12px',
-							px: '12px',
-							py: '10px',
-							display: 'flex',
-							alignItems: 'center',
-							justifyContent: 'space-between',
-							cursor: 'pointer',
-							mb: liveChatClosedHintOpen ? '8px' : '16px'
+							p: '8px',
+							mb: '16px'
 						}}
 					>
-						<MuiBox sx={{ display: 'flex', alignItems: 'center' }}>
-							<AccessTimeOutlinedIcon
+						<MuiBox
+							onClick={() =>
+								setLiveChatClosedHintOpen((prev) => !prev)
+							}
+							sx={{
+								display: 'flex',
+								alignItems: 'center',
+								justifyContent: 'space-between',
+								p: '6px',
+								cursor: 'pointer'
+							}}
+						>
+							<MuiBox
 								sx={{
-									fontSize: 18,
+									display: 'flex',
+									alignItems: 'center',
+									gap: '4px'
+								}}
+							>
+								<AccessTimeOutlinedIcon
+									sx={{ fontSize: 16, color: '#4C555F' }}
+								/>
+								<MuiTypography
+									sx={{
+										color: '#4C555F',
+										fontSize: '12px',
+										lineHeight: '14px'
+									}}
+								>
+									{translate(
+										'anonymousChat.noAvailability.openingHours',
+										'Reguläre Öffnungszeiten anzeigen'
+									)}
+								</MuiTypography>
+							</MuiBox>
+							<KeyboardArrowDownIcon
+								sx={{
 									color: '#4C555F',
-									mr: 1
+									fontSize: 16,
+									transform: liveChatClosedHintOpen
+										? 'rotate(180deg)'
+										: 'none',
+									transition: 'transform 0.2s'
 								}}
 							/>
-							<MuiTypography
-								variant="body2"
-								sx={{ color: '#4C555F' }}
-							>
-								{translate(
-									'anonymousChat.noAvailability.openingHours',
-									'Reguläre Öffnungszeiten anzeigen'
-								)}
-							</MuiTypography>
 						</MuiBox>
-						<KeyboardArrowDownIcon sx={{ color: '#4C555F' }} />
-					</MuiBox>
 
-					{liveChatClosedHintOpen && (
-						<MuiTypography
-							variant="body2"
-							sx={{ color: 'text.secondary', mb: '16px' }}
-						>
-							{translate(
-								'anonymousChat.noAvailability.openingHoursHint',
-								'Die Öffnungszeiten finden Sie auf der Seite Ihrer ausgewählten Beratungsstelle.'
-							)}
-						</MuiTypography>
-					)}
+						{liveChatClosedHintOpen &&
+							LIVE_CHAT_OPENING_HOURS.map((entry, index) => (
+								<MuiBox
+									key={`live-chat-opening-hours-${index}`}
+									sx={{
+										display: 'flex',
+										alignItems: 'center',
+										justifyContent: 'space-between',
+										px: '16px',
+										py: '8px'
+									}}
+								>
+									<MuiTypography
+										sx={{
+											color: '#4C555F',
+											fontSize: '12px',
+											lineHeight: '14px'
+										}}
+									>
+										{translate(
+											`anonymousChat.noAvailability.weekdays.${entry.dayKey}`,
+											entry.day
+										)}
+									</MuiTypography>
+									<MuiTypography
+										sx={{
+											color: '#4C555F',
+											fontSize: '12px',
+											lineHeight: '14px'
+										}}
+									>
+										{entry.time}
+									</MuiTypography>
+								</MuiBox>
+							))}
+					</MuiBox>
 
 					<MuiTypography variant="body1" sx={{ mb: '8px' }}>
 						{translate(

@@ -8,13 +8,16 @@ import { getValueFromCookie } from '../sessionCookie/accessSessionCookie';
 
 export const ERROR_TYPES = {
 	UNAUTHORIZED: 401,
+	FORBIDDEN: 403,
 	NOT_FOUND: 404,
 	SERVER: 500
 };
 
 export const getErrorCaseForStatus = (status: number) => {
-	if (status === 401 || status === 403) {
+	if (status === 401) {
 		return ERROR_TYPES.UNAUTHORIZED;
+	} else if (status === 403) {
+		return ERROR_TYPES.FORBIDDEN;
 	} else if (status === 400 || status === 409 || status === 500) {
 		return ERROR_TYPES.SERVER;
 	} else {
@@ -80,6 +83,11 @@ export const redirectToErrorPage = (error: number) => {
 	// Only auth failures should tear down the session. Server/UI errors should
 	// not trigger Keycloak logout (which was surfacing as a 400 in Network tab
 	// and cancelling in-flight requests such as draft loads).
+	// Matrix/backend 403 is a permission failure, not an auth session expiry.
+	if (error === ERROR_TYPES.FORBIDDEN) {
+		return;
+	}
+
 	if (error === ERROR_TYPES.UNAUTHORIZED) {
 		void logout(true, redirect);
 		return;

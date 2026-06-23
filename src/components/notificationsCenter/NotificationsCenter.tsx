@@ -3,6 +3,7 @@ import { useContext, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { ReactComponent as NotificationBellIcon } from '../../resources/img/icons/notification_bell.svg';
 import { apiUrl } from '../../resources/scripts/endpoints';
+import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import { FETCH_METHODS, fetchData } from '../../api/fetchData';
 import {
 	buildThreadPrefix,
@@ -382,7 +383,7 @@ export const NotificationsCenter = () => {
 				void apiPostMessageEventNotification({
 					roomId: selectedRoomRef,
 					messagePreview: cleanMessage,
-					matrixRoom: selectedRoomRef.startsWith('!'),
+					matrixRoom: isMatrixRoom(selectedRoomRef),
 					threadRootId: selectedThreadRootId || null,
 					supervisorMessage: false,
 					senderDisplayName:

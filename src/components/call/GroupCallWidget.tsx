@@ -6,6 +6,10 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { callManager, CallData } from '../../services/CallManager';
+import {
+	getElementCallBaseUrl,
+	getMatrixHomeserverUrl
+} from '../../resources/scripts/runtimeConfig';
 import './GroupCallWidget.scss';
 
 export const GroupCallWidget: React.FC = () => {
@@ -64,13 +68,13 @@ export const GroupCallWidget: React.FC = () => {
 	}, []);
 
 	useEffect(() => {
-		if (!callData || !callData.isGroup) return;
+		if (!callData || !callData.usesElementCall) return;
 
 		const padding = 16;
 		const maxWidth = 520;
 		const maxHeight = 320;
-		const width = Math.min(maxWidth, window.innerWidth - padding);
-		const height = Math.min(maxHeight, window.innerHeight - padding);
+		const width = Math.min(maxWidth, window.innerWidth - padding * 2);
+		const height = Math.min(maxHeight, window.innerHeight - padding * 2);
 
 		if (window.innerWidth <= 640) {
 			setPosition({ x: 0, y: 0 });
@@ -78,10 +82,10 @@ export const GroupCallWidget: React.FC = () => {
 		}
 
 		setPosition({
-			x: Math.max(padding, window.innerWidth - width - padding),
-			y: Math.max(padding, window.innerHeight - height - padding)
+			x: Math.max(padding, (window.innerWidth - width) / 2),
+			y: Math.max(padding, (window.innerHeight - height) / 2)
 		});
-	}, [callData, elementCallUrl]);
+	}, [callData?.callId, callData?.usesElementCall, elementCallUrl]);
 
 	useEffect(() => {
 		const handleFullscreenChange = () => {
@@ -115,7 +119,8 @@ export const GroupCallWidget: React.FC = () => {
 	// Handle incoming call answer: once the call is moving past "ringing",
 	// automatically join the Element Call room for the receiver.
 	useEffect(() => {
-		if (!callData || !callData.isGroup || !callData.isIncoming) return;
+		if (!callData || !callData.usesElementCall || !callData.isIncoming)
+			return;
 		if (elementCallUrl) return; // Already joined
 		if (callState !== 'connecting' && callState !== 'in_call') return;
 
@@ -125,7 +130,8 @@ export const GroupCallWidget: React.FC = () => {
 
 	// Handle outgoing call
 	useEffect(() => {
-		if (!callData || !callData.isGroup || callData.isIncoming) return;
+		if (!callData || !callData.usesElementCall || callData.isIncoming)
+			return;
 		if (elementCallUrl) return; // Already set up
 
 		// console.log('📞 Starting outgoing call, setting up Element Call...');
@@ -144,9 +150,7 @@ export const GroupCallWidget: React.FC = () => {
 			const roomId =
 				(callData as any).elementCallRoomId || callData.roomId;
 			const homeserverUrl =
-				client.getHomeserverUrl() ||
-				process.env.REACT_APP_MATRIX_HOMESERVER_URL?.trim() ||
-				'';
+				client.getHomeserverUrl() || getMatrixHomeserverUrl();
 			if (!homeserverUrl) {
 				throw new Error(
 					'Matrix homeserver URL is missing. Set REACT_APP_MATRIX_HOMESERVER_URL or ensure the client reports a homeserver URL.'
@@ -171,9 +175,7 @@ export const GroupCallWidget: React.FC = () => {
 			// We mirror Element Call's own `getRelativeRoomUrl` format:
 			//   /room/#?roomId=...&perParticipantE2EE=...
 			// We also pass Matrix credentials via URL so our auto-auth script can log in.
-			const elementCallOrigin = (
-				process.env.REACT_APP_ELEMENT_CALL_BASE_URL || ''
-			).replace(/\/+$/, '');
+			const elementCallOrigin = getElementCallBaseUrl();
 			if (!elementCallOrigin) {
 				throw new Error('REACT_APP_ELEMENT_CALL_BASE_URL is not set');
 			}
@@ -181,9 +183,9 @@ export const GroupCallWidget: React.FC = () => {
 
 			const params = new URLSearchParams();
 			params.set('roomId', roomId);
-			// Hint Element Call that this is a normal "start call" use-case so
-			// it enables camera & microphone by default.
+			// Hint Element Call that this is a normal "start call" use-case.
 			params.set('intent', 'start_call');
+			params.set('callIntent', callData.isVideo ? 'video' : 'audio');
 			params.set('homeserver', homeserverUrl);
 			params.set('accessToken', accessToken);
 			params.set('userId', userId);
@@ -449,112 +451,117 @@ export const GroupCallWidget: React.FC = () => {
 	}, [isDragging]);
 
 	// Only render for group calls
-	if (isDismissed || !callData || !callData.isGroup) return null;
+	if (isDismissed || !callData || !callData.usesElementCall) return null;
 
 	return (
-		<div
-			className={`group-call-widget ${isDragging ? 'dragging' : ''} ${isMobileView ? 'group-call-widget--mobile' : ''} ${isMobileCompact ? 'group-call-widget--mobile-compact' : ''} ${isFullscreen ? 'group-call-widget--fullscreen' : ''}`}
-			style={{ left: `${position.x}px`, top: `${position.y}px` }}
-			onMouseDown={handleMouseDown}
-			onTouchStart={handleTouchStart}
-		>
-			{/* Incoming call - show answer/decline buttons */}
-			{callData.isIncoming && callData.state === 'ringing' ? (
-				<div className="incoming-call-popup">
-					<button
-						className="element-call-close"
-						onClick={handleDecline}
-						aria-label="Close call"
-					>
-						×
-					</button>
-					<div className="incoming-call-content">
-						<div className="call-avatar-large">G</div>
-						<h2>Incoming Call</h2>
-						<p>Someone is calling...</p>
-						<div className="incoming-call-actions">
-							<button
-								className="btn-answer"
-								onClick={handleAnswer}
-							>
-								Answer
-							</button>
-							<button
-								className="btn-decline"
-								onClick={handleDecline}
-							>
-								Decline
-							</button>
+		<>
+			{!isFullscreen && !isMobileView && (
+				<div className="call-modal-backdrop" aria-hidden="true" />
+			)}
+			<div
+				className={`group-call-widget ${isDragging ? 'dragging' : ''} ${isMobileView ? 'group-call-widget--mobile' : ''} ${isMobileCompact ? 'group-call-widget--mobile-compact' : ''} ${isFullscreen ? 'group-call-widget--fullscreen' : ''}`}
+				style={{ left: `${position.x}px`, top: `${position.y}px` }}
+				onMouseDown={handleMouseDown}
+				onTouchStart={handleTouchStart}
+			>
+				{/* Incoming call - show answer/decline buttons */}
+				{callData.isIncoming && callData.state === 'ringing' ? (
+					<div className="incoming-call-popup">
+						<button
+							className="element-call-close"
+							onClick={handleDecline}
+							aria-label="Close call"
+						>
+							×
+						</button>
+						<div className="incoming-call-content">
+							<div className="call-avatar-large">G</div>
+							<h2>Incoming Call</h2>
+							<p>Someone is calling...</p>
+							<div className="incoming-call-actions">
+								<button
+									className="btn-answer"
+									onClick={handleAnswer}
+								>
+									Answer
+								</button>
+								<button
+									className="btn-decline"
+									onClick={handleDecline}
+								>
+									Decline
+								</button>
+							</div>
 						</div>
 					</div>
-				</div>
-			) : elementCallUrl ? (
-				/* Active call - show Element Call iframe */
-				<div className="element-call-container" ref={containerRef}>
-					<div className="element-call-drag-handle" />
-					<button
-						className="element-call-close"
-						onClick={handleEndCall}
-						aria-label="Close call"
-					>
-						×
-					</button>
-					<button
-						className="element-call-fullscreen"
-						onClick={handleToggleFullscreen}
-						aria-label={
-							isMobileView
+				) : elementCallUrl ? (
+					/* Active call - show Element Call iframe */
+					<div className="element-call-container" ref={containerRef}>
+						<div className="element-call-drag-handle" />
+						<button
+							className="element-call-close"
+							onClick={handleEndCall}
+							aria-label="Close call"
+						>
+							×
+						</button>
+						<button
+							className="element-call-fullscreen"
+							onClick={handleToggleFullscreen}
+							aria-label={
+								isMobileView
+									? isMobileCompact
+										? 'Open full view'
+										: 'Switch to small view'
+									: isFullscreen
+										? 'Exit full screen'
+										: 'Enter full screen'
+							}
+							title={
+								isMobileView
+									? isMobileCompact
+										? 'Full view'
+										: 'Small view'
+									: isFullscreen
+										? 'Exit full screen'
+										: 'Full screen'
+							}
+						>
+							{isMobileView
 								? isMobileCompact
-									? 'Open full view'
-									: 'Switch to small view'
+									? '⤢'
+									: '⤡'
 								: isFullscreen
-									? 'Exit full screen'
-									: 'Enter full screen'
-						}
-						title={
-							isMobileView
-								? isMobileCompact
-									? 'Full view'
-									: 'Small view'
-								: isFullscreen
-									? 'Exit full screen'
-									: 'Full screen'
-						}
-					>
-						{isMobileView
-							? isMobileCompact
-								? '⤢'
-								: '⤡'
-							: isFullscreen
-								? '⤡'
-								: '⤢'}
-					</button>
-					<iframe
-						ref={iframeRef}
-						src={elementCallUrl}
-						className="element-call-iframe"
-						allow="camera; microphone; display-capture; autoplay; fullscreen"
-						allowFullScreen
-						title="Group video call"
-					/>
-				</div>
-			) : (
-				/* Connecting state */
-				<div className="connecting-popup">
-					<button
-						className="element-call-close"
-						onClick={handleEndCall}
-						aria-label="Close call"
-					>
-						×
-					</button>
-					<div className="connecting-content">
-						<div className="call-avatar-large">G</div>
-						<h2>Connecting...</h2>
-						<p>Setting up call</p>
+									? '⤡'
+									: '⤢'}
+						</button>
+						<iframe
+							ref={iframeRef}
+							src={elementCallUrl}
+							className="element-call-iframe"
+							allow="camera; microphone; display-capture; autoplay; fullscreen"
+							allowFullScreen
+							title="Group video call"
+						/>
 					</div>
-				</div>
-			)}
-		</div>
+				) : (
+					/* Connecting state */
+					<div className="connecting-popup">
+						<button
+							className="element-call-close"
+							onClick={handleEndCall}
+							aria-label="Close call"
+						>
+							×
+						</button>
+						<div className="connecting-content">
+							<div className="call-avatar-large">G</div>
+							<h2>Connecting...</h2>
+							<p>Setting up call</p>
+						</div>
+					</div>
+				)}
+			</div>
+		</>
 	);
 };
