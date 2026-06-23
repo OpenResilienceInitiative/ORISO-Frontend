@@ -49,7 +49,27 @@
 		margin-top: $grid-base-six;
 	}
 
-	ol {
+	&__callStack {
+		display: flex;
+		flex-wrap: wrap;
+		gap: $grid-base;
+		margin-top: $grid-base-two;
+
+		span {
+			display: inline-flex;
+			align-items: center;
+			min-height: $grid-base-four;
+			padding: 0 $grid-base-two;
+			border: 1px solid var(--m3-primary-fixed-dim, #ffb4aa);
+			border-radius: $grid-base-two;
+			background-color: var(--m3-primary-fixed, #ffdad5);
+			color: var(--m3-on-primary-fixed-variant, #930008);
+			font-weight: $font-weight-medium;
+		}
+	}
+
+	ol,
+	ul {
 		margin-left: 0;
 		padding: 0;
 

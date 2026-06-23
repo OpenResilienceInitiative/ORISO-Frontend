@@ -32,11 +32,14 @@ html {
 }
 
 body {
-	font-family: $body-font-family;
-	background-color: var(--skin-color-body-background, $body-bg);
+	font-family: var(--m3-body-font-family, #{$body-font-family});
+	background-color: var(
+		--skin-color-body-background,
+		var(--m3-surface, #{$body-bg})
+	);
 	font-size: $body-font-size;
 	line-height: $body-line-height;
-	color: $body-font-color;
+	color: var(--m3-on-surface, #{$body-font-color});
 
 	min-width: $body-min-width;
 

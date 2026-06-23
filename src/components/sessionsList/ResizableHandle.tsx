@@ -40,6 +40,7 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 		thumbTopPx: number;
 		thumbHeightPx: number;
 	}>({ thumbTopPx: 0, thumbHeightPx: 56 });
+	const [isScrollable, setIsScrollable] = useState(false);
 	const rafIdRef = useRef<number | null>(null);
 
 	const updateThumbFromScrollTarget = useCallback(() => {
@@ -72,14 +73,12 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 		const trackHeight = Math.max(0, handleHeight - TRACK_PADDING * 2);
 		// Non-scrollable: keep the pill centered (like the reference).
 		if (maxScrollTop <= 0 || trackHeight <= 0) {
-			const thumbHeightPx = 40;
-			const thumbTopPx =
-				trackTopWithinHandle +
-				TRACK_PADDING +
-				Math.max(0, Math.round((trackHeight - thumbHeightPx) / 2));
-			setThumbStyleVars({ thumbTopPx, thumbHeightPx });
+			setIsScrollable(false);
+			setThumbStyleVars({ thumbTopPx: 0, thumbHeightPx: 56 });
 			return;
 		}
+
+		setIsScrollable(true);
 
 		// Figma-like small pill: clamp thumb size so it stays compact.
 		const MIN_THUMB = SCROLL_THUMB_MIN_PX;
@@ -381,6 +380,7 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 			ref={handleRef}
 			className="sessionsList__resizeHandle"
 			data-dragging={isDragging ? 'true' : 'false'}
+			data-scrollable={isScrollable ? 'true' : 'false'}
 			role="separator"
 			// sonar: role="separator" is an interactive widget when focusable + keyboard-handled
 			tabIndex={0}
@@ -419,12 +419,12 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 			onMouseEnter={() => {
 				handleRef.current?.focus({ preventScroll: true });
 			}}
-			onKeyDown={handleKeyDown}
-			style={{
-				['--sessionsListThumbTop' as any]: `${thumbStyleVars.thumbTopPx}px`,
-				['--sessionsListThumbHeight' as any]: `${thumbStyleVars.thumbHeightPx}px`
-			}}
-		>
+				onKeyDown={handleKeyDown}
+				style={{
+					['--sessions-list-thumb-top' as any]: `${thumbStyleVars.thumbTopPx}px`,
+					['--sessions-list-thumb-height' as any]: `${thumbStyleVars.thumbHeightPx}px`
+				}}
+			>
 			<span className="sessionsList__resizeHandlePill" />
 		</div>
 	);

@@ -856,6 +856,36 @@
 					}
 				}
 			},
+			"elementCall": {
+				"stackLabel": "Element Call avec WebRTC et LiveKit",
+				"stepsHeadline": "Fonctionnement de l'appel vidéo",
+				"troubleshootingHeadline": "Si quelque chose ne fonctionne pas",
+				"asker": {
+					"headline": "Appel vidéo",
+					"intro": "Les appels vidéo passent maintenant directement par Element Call. Element Call utilise WebRTC et LiveKit, il n'est donc pas nécessaire de changer de navigateur ni d'installer un logiciel supplémentaire.",
+					"steps": {
+						"open": "Ouvrez la consultation en ligne comme d'habitude.",
+						"permissions": "Autorisez la caméra et le microphone lorsque votre navigateur vous le demande.",
+						"call": "Acceptez l'appel vidéo lorsque votre conseiller ou conseillère le lance.",
+						"copyLink": "Si vous souhaitez ouvrir le lien de connexion sur un autre appareil, copiez-le ici :"
+					}
+				},
+				"consultant": {
+					"headline": "Appel vidéo",
+					"intro": "Les appels vidéo passent maintenant directement par Element Call. Element Call utilise WebRTC et LiveKit, il n'est donc pas nécessaire de changer de navigateur ni d'installer un logiciel supplémentaire.",
+					"steps": {
+						"open": "Ouvrez la consultation dans ORISO comme d'habitude.",
+						"permissions": "Autorisez la caméra et le microphone lorsque votre navigateur vous le demande.",
+						"call": "Lancez l'appel vidéo dans le chat. Element Call ouvre automatiquement l'appel.",
+						"copyLink": "Si vous souhaitez ouvrir le lien de connexion sur un autre appareil, copiez-le ici :"
+					}
+				},
+				"troubleshooting": {
+					"permissions": "Vérifiez que la caméra et le microphone sont autorisés dans le navigateur.",
+					"device": "Vérifiez que le bon microphone, la bonne caméra et le bon haut-parleur sont sélectionnés.",
+					"connection": "Actualisez la page ou passez à une connexion Wi-Fi stable si l'image ou le son se coupe."
+				}
+			},
 			"loginLink": {
 				"notification": {
 					"text": "Lien copié dans le presse-papiers !",
@@ -1262,7 +1292,7 @@
 				"small": "Nouvelles"
 			}
 		},
-		"activity": "Activité",
+		"activity": "Chronologie",
 		"language": "Langue",
 		"drafts": "Brouillons",
 		"liveChat": "Chat en direct",
@@ -2130,6 +2160,7 @@
 			"restrictions": ".jpg, .png, .pdf, .docx, .xlsx jusqu'à un maximum de {{attachment_filesize}} MB"
 		},
 		"empty": "Veuillez sélectionner un message",
+		"emptyAllCaughtUp": "Respirez un instant.\nTout est fait.",
 		"groupChat": {
 			"consultant": {
 				"prefix": "Présentateur ou présentatrice - "

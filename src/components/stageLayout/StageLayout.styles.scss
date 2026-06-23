@@ -1,4 +1,34 @@
 .stageLayout {
+	&--registration {
+		font-family: 'Inter Variable', Arial, sans-serif;
+
+		.stageLayout__header {
+			position: sticky;
+			top: 0;
+			z-index: 70;
+			background-color: var(--skin-color-body-background, $body-bg);
+		}
+
+		.MuiTypography-root,
+		.MuiButton-root,
+		.MuiLink-root,
+		.MuiInputBase-root,
+		.MuiInputBase-input,
+		.MuiInputLabel-root,
+		.MuiFormLabel-root,
+		.MuiFormControlLabel-label,
+		.button__item,
+		.button-as-link,
+		.text,
+		a,
+		button,
+		input,
+		select,
+		textarea {
+			font-family: inherit;
+		}
+	}
+
 	overflow-x: hidden;
 	display: flex;
 	flex-direction: column;
@@ -19,7 +49,7 @@
 
 	&__footer {
 		// Add more bottom padding on mobile to prevent overlapping with fixed registration buttons (96px height)
-		@media screen and (max-width: 899px) {
+		@media screen and (width <= 899px) {
 			padding-bottom: 120px; // Account for 96px button bar + extra spacing
 			margin-top: -60px;
 			display: none;
@@ -28,7 +58,7 @@
 
 	&__footer {
 		// Add more bottom padding on mobile to prevent overlapping with fixed registration buttons (96px height)
-		@media screen and (max-width: 899px) {
+		@media screen and (width <= 899px) {
 			padding-bottom: 120px; // Account for 96px button bar + extra spacing
 			margin-top: -60px;
 			display: none;
@@ -186,4 +216,3 @@
 		margin: 0 $grid-base;
 	}
 }
-

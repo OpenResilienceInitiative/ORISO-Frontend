@@ -21,6 +21,18 @@ const getRuntimeConfig = (): RuntimeConfig => {
 	return ((window as any).__ORISO_RUNTIME_CONFIG__ as RuntimeConfig) || {};
 };
 
+const getCypressConfig = (): RuntimeConfig => {
+	if (typeof window === 'undefined') {
+		return {};
+	}
+
+	const cypressEnv = (window as any).Cypress?.env;
+
+	return typeof cypressEnv === 'function'
+		? (cypressEnv() as RuntimeConfig) || {}
+		: {};
+};
+
 /**
  * When the container runtime config is incomplete (e.g. production config.js
  * only has REACT_APP_API_URL), derive sibling service URLs from the app host.
@@ -69,7 +81,13 @@ const pickValue = (...keys: string[]): string | undefined => {
 	if (runtimeValue) {
 		return runtimeValue;
 	}
-	const buildValue = firstNonEmpty(process.env as RuntimeConfig, keys);
+	const cypressValue = firstNonEmpty(getCypressConfig(), keys);
+	if (cypressValue) {
+		return cypressValue;
+	}
+	const processEnv =
+		typeof process !== 'undefined' ? (process.env as RuntimeConfig) : {};
+	const buildValue = firstNonEmpty(processEnv, keys);
 	if (buildValue) {
 		return buildValue;
 	}

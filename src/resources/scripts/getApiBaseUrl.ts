@@ -22,7 +22,9 @@ export const getApiBaseUrl = (): string => {
 		return normalizeApiUrl(runtimeApiUrl);
 	}
 
+	const processEnv = typeof process !== 'undefined' ? process.env : undefined;
+
 	return normalizeApiUrl(
-		process.env.REACT_APP_API_URL || process.env.VITE_API_URL
+		processEnv?.REACT_APP_API_URL || processEnv?.VITE_API_URL
 	);
 };

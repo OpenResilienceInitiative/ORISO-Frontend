@@ -229,7 +229,7 @@ $session-postcode-border: #646d78;
 		flex: 1;
 		min-width: 0;
 
-		@media screen and (max-width: 899px) {
+		@media screen and (width <= 899px) {
 			// Give the tag cluster full priority on narrow devices.
 			flex: 1 1 1;
 		}
@@ -244,7 +244,7 @@ $session-postcode-border: #646d78;
 		position: relative;
 		z-index: 1000;
 
-		@media screen and (max-width: 899px) {
+		@media screen and (width <= 899px) {
 			// On narrow devices, let the right cluster compress first
 			// so topic tags keep more readable space.
 			padding-right: 4px;
@@ -268,7 +268,7 @@ $session-postcode-border: #646d78;
 		white-space: nowrap;
 		flex-shrink: 0;
 
-		@media screen and (max-width: 899px) {
+		@media screen and (width <= 899px) {
 			// Prefer keeping topic text visible by truncating long dates first.
 			max-width: 72px;
 			overflow: hidden;
@@ -278,7 +278,7 @@ $session-postcode-border: #646d78;
 			text-align: right;
 		}
 
-		@media screen and (max-width: 350px) {
+		@media screen and (width <= 350px) {
 			// Ultra-narrow devices: topic/postcode readability is more important.
 			display: none;
 		}
@@ -332,7 +332,7 @@ $session-postcode-border: #646d78;
 		flex-direction: column;
 		padding: 10px;
 
-		@media screen and (max-width: 599px) {
+		@media screen and (width <= 599px) {
 			right: auto !important;
 			left: 20px !important;
 		}
@@ -520,7 +520,7 @@ $session-postcode-border: #646d78;
 		line-height: 16px;
 		font-weight: 500;
 
-		@media screen and (max-width: 899px) {
+		@media screen and (width <= 899px) {
 			// Give tag text slightly more room on compact screens.
 			padding-left: 6px;
 			padding-right: 6px;
@@ -747,9 +747,9 @@ $session-postcode-border: #646d78;
 			}
 		}
 
-		&--liveChatLabel {
-			font-family: 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-			font-size: 13px;
+			&--liveChatLabel {
+				font-family: $font-family-sans-serif;
+				font-size: 13px;
 			font-weight: 700;
 			color: #4b515a;
 			line-height: 1;

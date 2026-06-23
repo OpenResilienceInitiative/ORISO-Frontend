@@ -71,6 +71,7 @@ import {
 	SessionsListToolbar
 } from './SessionsListToolbar';
 import { EnquiryFilterChips } from './EnquiryFilterChips';
+import { useSessionListViewState } from './SessionListViewStateContext';
 
 function buildSessionSearchHaystack(
 	raw: ListItemInterface,
@@ -243,6 +244,7 @@ export const SessionsList = ({
 
 	const { sessions, dispatch } = useContext(SessionsDataContext);
 	const { type, path: listPath } = useContext(SessionTypeContext);
+	const { setSessionListViewState } = useSessionListViewState();
 
 	const {
 		subscribe,
@@ -1450,6 +1452,12 @@ export const SessionsList = ({
 	const sortedSessions = sessionToolbarFilteredPairs
 		.map(({ extended }) => extended)
 		.sort(sortSessions);
+	useEffect(() => {
+		setSessionListViewState(type, {
+			ready: !isLoading,
+			visibleSessionCount: sortedSessions.length
+		});
+	}, [isLoading, setSessionListViewState, sortedSessions.length, type]);
 	const toolbarSearchPeopleResults: SessionSearchPersonResult[] =
 		React.useMemo(() => {
 			const seen = new Set<string>();

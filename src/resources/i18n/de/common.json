@@ -862,6 +862,36 @@
 					}
 				}
 			},
+			"elementCall": {
+				"stackLabel": "Element Call mit WebRTC und LiveKit",
+				"stepsHeadline": "So funktioniert der Video-Call",
+				"troubleshootingHeadline": "Falls etwas nicht klappt",
+				"asker": {
+					"headline": "Video-Call",
+					"intro": "Video-Calls laufen jetzt direkt über Element Call. Element Call nutzt WebRTC und LiveKit, deshalb ist kein Browserwechsel und keine zusätzliche Installation nötig.",
+					"steps": {
+						"open": "Öffnen Sie die Online-Beratung wie gewohnt.",
+						"permissions": "Erlauben Sie Kamera und Mikrofon, wenn Ihr Browser danach fragt.",
+						"call": "Nehmen Sie den Video-Call an, sobald Ihre Beraterin oder Ihr Berater ihn startet.",
+						"copyLink": "Wenn Sie den Login-Link auf einem anderen Gerät öffnen möchten, kopieren Sie ihn hier:"
+					}
+				},
+				"consultant": {
+					"headline": "Video-Call",
+					"intro": "Video-Calls laufen jetzt direkt über Element Call. Element Call nutzt WebRTC und LiveKit, deshalb ist kein Browserwechsel und keine zusätzliche Installation nötig.",
+					"steps": {
+						"open": "Öffnen Sie die Beratung wie gewohnt in ORISO.",
+						"permissions": "Erlauben Sie Kamera und Mikrofon, wenn Ihr Browser danach fragt.",
+						"call": "Starten Sie den Video-Call im Chat. Element Call öffnet den Call automatisch.",
+						"copyLink": "Wenn Sie den Login-Link auf einem anderen Gerät öffnen möchten, kopieren Sie ihn hier:"
+					}
+				},
+				"troubleshooting": {
+					"permissions": "Prüfen Sie, ob Kamera und Mikrofon im Browser erlaubt sind.",
+					"device": "Prüfen Sie, ob das richtige Mikrofon, die richtige Kamera und der richtige Lautsprecher ausgewählt sind.",
+					"connection": "Aktualisieren Sie die Seite oder wechseln Sie in ein stabiles WLAN, falls Bild oder Ton abbrechen."
+				}
+			},
 			"loginLink": {
 				"notification": {
 					"text": "Link in Zwischenablage kopiert!",
@@ -1296,7 +1326,7 @@
 				"small": "Nachrichten"
 			}
 		},
-		"activity": "Aktivität",
+		"activity": "Zeitstrahl",
 		"language": "Sprache",
 		"drafts": "Entwürfe",
 		"liveChat": "Live Chat",
@@ -2229,6 +2259,7 @@
 			"restrictions": ".jpg, .png, .pdf, .docx, .xlsx bis maximal {{attachment_filesize}} MB"
 		},
 		"empty": "Bitte wählen Sie eine Nachricht aus",
+		"emptyAllCaughtUp": "Kurz durchatmen.\nAlles erledigt.",
 		"groupChat": {
 			"consultant": {
 				"prefix": "Moderatorin oder Moderator - "

@@ -2,7 +2,9 @@ import { createTheme } from '@mui/material/styles';
 
 const getCssVarValue = (name, fallback = '#000000') => {
 	// If you need a scss variable add a css variable for it in mui-variables-mapping.scss
-	const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+	const value = getComputedStyle(document.documentElement)
+		.getPropertyValue(name)
+		.trim();
 	// Return fallback if value is empty (e.g., in Storybook where CSS vars might not be loaded)
 	return value || fallback;
 };
@@ -38,7 +40,10 @@ const theme = createTheme({
 	},
 
 	typography: {
-		fontFamily: ['Arial', 'sans-serif'].join(','),
+		fontFamily: getCssVarValue(
+			'--font-family-sans-serif',
+			'"Inter Variable", Arial, sans-serif'
+		),
 		h1: {
 			color: getCssVarValue('--black', '#000000'),
 			letterSpacing: 'normal',
@@ -126,11 +131,11 @@ const theme = createTheme({
 		MuiButton: {
 			styleOverrides: {
 				root: {
-					fontFamily: getCssVarValue('--font-family-sans-serif'),
-					fontSize: getCssVarValue('--font-size-primary'),
-					fontWeight: getCssVarValue('--font-weight-bold'),
-					lineHeight: '20px',
-					borderRadius: getCssVarValue('--button-border-radius'),
+					'fontFamily': getCssVarValue('--font-family-sans-serif'),
+					'fontSize': getCssVarValue('--font-size-primary'),
+					'fontWeight': getCssVarValue('--font-weight-bold'),
+					'lineHeight': '20px',
+					'borderRadius': getCssVarValue('--button-border-radius'),
 					'&.Mui-disabled': {
 						backgroundColor: 'rgba(0, 0, 0, 0.12)',
 						color: 'rgba(0, 0, 0, 0.26)',
@@ -150,7 +155,10 @@ const theme = createTheme({
 					'&:hover': {
 						boxShadow: 'none',
 						color: getCssVarValue('--white'),
-						backgroundColor: getCssVarValue('--hover-primary', '#b91c1c')
+						backgroundColor: getCssVarValue(
+							'--hover-primary',
+							'#b91c1c'
+						)
 					},
 					'&.Mui-disabled': {
 						backgroundColor: 'rgba(0, 0, 0, 0.12)',
@@ -165,8 +173,14 @@ const theme = createTheme({
 					'borderRadius': getCssVarValue('--button-border-radius'),
 					'textTransform': 'none',
 					'&:hover': {
-						backgroundColor: getCssVarValue('--hover-primary', '#b91c1c'),
-						borderColor: getCssVarValue('--hover-primary', '#b91c1c'),
+						backgroundColor: getCssVarValue(
+							'--hover-primary',
+							'#b91c1c'
+						),
+						borderColor: getCssVarValue(
+							'--hover-primary',
+							'#b91c1c'
+						),
 						color: getCssVarValue('--white')
 					}
 				}

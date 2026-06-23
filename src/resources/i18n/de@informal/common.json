@@ -329,6 +329,36 @@
 					}
 				}
 			},
+			"elementCall": {
+				"stackLabel": "Element Call mit WebRTC und LiveKit",
+				"stepsHeadline": "So funktioniert der Video-Call",
+				"troubleshootingHeadline": "Falls etwas nicht klappt",
+				"asker": {
+					"headline": "Video-Call",
+					"intro": "Video-Calls laufen jetzt direkt über Element Call. Element Call nutzt WebRTC und LiveKit, deshalb brauchst Du keinen Browserwechsel und keine zusätzliche Installation.",
+					"steps": {
+						"open": "Öffne die Online-Beratung wie gewohnt.",
+						"permissions": "Erlaube Kamera und Mikrofon, wenn Dein Browser danach fragt.",
+						"call": "Nimm den Video-Call an, sobald Deine Beraterin oder Dein Berater ihn startet.",
+						"copyLink": "Wenn Du den Login-Link auf einem anderen Gerät öffnen möchtest, kopiere ihn hier:"
+					}
+				},
+				"consultant": {
+					"headline": "Video-Call",
+					"intro": "Video-Calls laufen jetzt direkt über Element Call. Element Call nutzt WebRTC und LiveKit, deshalb brauchst Du keinen Browserwechsel und keine zusätzliche Installation.",
+					"steps": {
+						"open": "Öffne die Beratung wie gewohnt in ORISO.",
+						"permissions": "Erlaube Kamera und Mikrofon, wenn Dein Browser danach fragt.",
+						"call": "Starte den Video-Call im Chat. Element Call öffnet den Call automatisch.",
+						"copyLink": "Wenn Du den Login-Link auf einem anderen Gerät öffnen möchtest, kopiere ihn hier:"
+					}
+				},
+				"troubleshooting": {
+					"permissions": "Prüfe, ob Kamera und Mikrofon im Browser erlaubt sind.",
+					"device": "Prüfe, ob das richtige Mikrofon, die richtige Kamera und der richtige Lautsprecher ausgewählt sind.",
+					"connection": "Aktualisiere die Seite oder wechsle in ein stabiles WLAN, falls Bild oder Ton abbrechen."
+				}
+			},
 			"waitingRoom": {
 				"headline": "Es liegt nicht an Dir, sondern an Deinem Browser.",
 				"infoBox": {
@@ -855,6 +885,7 @@
 			}
 		},
 		"empty": "Bitte wähle eine Nachricht aus.",
+		"emptyAllCaughtUp": "Kurz durchatmen.\nAlles erledigt.",
 		"reassign": {
 			"system": {
 				"message": {
@@ -1287,7 +1318,7 @@
 				"nav": "Gespräch"
 			}
 		},
-		"activity": "Aktivität",
+		"activity": "Zeitstrahl",
 		"drafts": "Entwürfe",
 		"liveChat": "Live Chat",
 		"liveChatToggleActive": "Live-Chat verfügbar",

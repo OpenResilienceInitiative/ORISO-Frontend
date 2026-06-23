@@ -93,7 +93,7 @@ export const HelpVideoCall: React.FC<HelpVideoCallProps> = ({
 	consultant
 }) => {
 	const { t: translate } = useTranslation();
-	const translationPrefix = `help.videoCall.${
+	const elementCallPrefix = `help.videoCall.elementCall.${
 		consultant ? 'consultant' : 'asker'
 	}`;
 
@@ -116,75 +116,66 @@ export const HelpVideoCall: React.FC<HelpVideoCallProps> = ({
 		<>
 			<div className="help__top">
 				<Headline
-					text={translate(`${translationPrefix}.headline`)}
+					text={translate(`${elementCallPrefix}.headline`)}
 					semanticLevel="5"
 				/>
 				<Text
-					text={translate(`${translationPrefix}.intro`)}
+					text={translate(`${elementCallPrefix}.intro`)}
 					type="standard"
 					className="tertiary"
 				/>
+				<div
+					className="help__callStack"
+					aria-label={translate(
+						'help.videoCall.elementCall.stackLabel'
+					)}
+				>
+					<span>Element Call</span>
+					<span>WebRTC</span>
+					<span>LiveKit</span>
+				</div>
 			</div>
-			<BrowserList></BrowserList>
 			<div className="help__mid">
 				<Headline
-					text={translate(`${translationPrefix}.steps.headline.1`)}
+					text={translate('help.videoCall.elementCall.stepsHeadline')}
 					semanticLevel="5"
 				/>
 				<ol className="tertiary">
+					<li>{translate(`${elementCallPrefix}.steps.open`)}</li>
 					<li>
-						{translate(`${translationPrefix}.steps.1.1`)}
-						<a
-							href={browserChromeUrl}
-							target="_blank"
-							rel="noreferrer"
-							className="button-as-link"
-						>
-							{translate('help.googleChrome')}
-						</a>
-						{translate(`${translationPrefix}.steps.1.2`)}
-						<a
-							href={browserEdgeUrl}
-							target="_blank"
-							rel="noreferrer"
-							className="button-as-link"
-						>
-							{translate('help.msEdge')}
-						</a>
-						{translate(`${translationPrefix}.steps.1.2`)}
-						<a
-							href={browserSafariUrl}
-							target="_blank"
-							rel="noreferrer"
-							className="button-as-link"
-						>
-							{translate('help.safari')}
-						</a>
-						{translate(`${translationPrefix}.steps.1.3`)}.
+						{translate(`${elementCallPrefix}.steps.permissions`)}
 					</li>
-					<li>{translate(`${translationPrefix}.steps.2`)}</li>
-					<li>{translate(`${translationPrefix}.steps.3`)}</li>
+					<li>{translate(`${elementCallPrefix}.steps.call`)}</li>
 					<li>
-						{translate(`${translationPrefix}.steps.4.1`)}
+						{translate(`${elementCallPrefix}.steps.copyLink`)}
 						{copyLink}
 					</li>
-					<li>{translate(`${translationPrefix}.steps.5`)}</li>
-					<li>{translate(`${translationPrefix}.steps.6`)}</li>
 				</ol>
 			</div>
 			<div className="help__bottom">
 				<Headline
-					text={translate(`${translationPrefix}.steps.headline.2`)}
+					text={translate(
+						'help.videoCall.elementCall.troubleshootingHeadline'
+					)}
 					semanticLevel="5"
 				/>
-				<ol className="tertiary">
+				<ul className="tertiary">
 					<li>
-						{translate(`${translationPrefix}.steps.4.2`)}
-						{copyLink}
+						{translate(
+							'help.videoCall.elementCall.troubleshooting.permissions'
+						)}
 					</li>
-					<li>{translate(`${translationPrefix}.steps.5`)}</li>
-					<li>{translate(`${translationPrefix}.steps.6`)}</li>
-				</ol>
+					<li>
+						{translate(
+							'help.videoCall.elementCall.troubleshooting.device'
+						)}
+					</li>
+					<li>
+						{translate(
+							'help.videoCall.elementCall.troubleshooting.connection'
+						)}
+					</li>
+				</ul>
 			</div>
 		</>
 	);

@@ -11,11 +11,10 @@ import { Link, useLocation, useHistory } from 'react-router-dom';
 import {
 	NavGlobeIcon,
 	NavGlobeIconHover,
-	NavGlobeIconFilled,
-	NavLogoutIcon,
-	NavLogoutIconHover,
-	NavLogoutIconFilled
+	NavGlobeIconFilled
 } from './navigationSidebarIcons';
+import { ReactComponent as NavDoorOpenIcon } from '../../resources/img/icons/navigation/door_open_400.svg';
+import { ReactComponent as NavDoorOpenIconFilled } from '../../resources/img/icons/navigation/door_open_filled.svg';
 import {
 	UserDataContext,
 	hasUserAuthority,
@@ -57,6 +56,19 @@ export interface NavigationBarProps {
 }
 
 const REGEX_DASH = /\//g;
+const stripLocalePrefix = (label: string) =>
+	label.replace(/^\([^)]+\)\s*/, '');
+const getFigmaRailLabel = (to: string, label: string) => {
+	const figmaLabels: Record<string, string> = {
+		'/sessions/consultant/sessionPreview': 'Anfra-\ngen',
+		'/sessions/consultant/sessionView': 'Gesprä-\nche',
+		'/notifications': 'Zeit-\nstrahl',
+		'/profile': 'Mein\nProfil'
+	};
+
+	return figmaLabels[to] || label;
+};
+
 export const NavigationBar = ({
 	onLogout,
 	routerConfig
@@ -123,7 +135,7 @@ export const NavigationBar = ({
 		}
 	}, [liveChatAvailable, history]);
 
-	const figmaConsultantNav = fromL;
+	const figmaConsultantNav = true;
 	/**
 	 * Live-chat toggle is a consultant-only availability switch. It no longer
 	 * links to the video-conference page; it simply flips a stored flag that
@@ -353,6 +365,9 @@ export const NavigationBar = ({
 										pathsToShowUnreadMessageNotification
 									).includes(item.to) && unreadCount > 0;
 								const label = translate(item.titleKeys.large);
+								const visibleLabel = useFigmaSlot
+									? getFigmaRailLabel(item.to, label)
+									: label;
 								const isChatNav =
 									item.to ===
 										'/sessions/consultant/sessionView' ||
@@ -372,7 +387,9 @@ export const NavigationBar = ({
 												isChatNav &&
 													'navigation__icon__single--chat-figma',
 												item.to === '/drafts' &&
-													'navigation__icon__single--drafts-figma'
+													'navigation__icon__single--drafts-figma',
+												item.to === '/profile' &&
+													'navigation__icon__single--profile-figma'
 											)}
 										/>
 									) : null
@@ -421,7 +438,10 @@ export const NavigationBar = ({
 													'navigation__icon__single--chat-figma',
 												item.to === '/drafts' &&
 													useFigmaSlot &&
-													'navigation__icon__single--drafts-figma'
+													'navigation__icon__single--drafts-figma',
+												item.to === '/profile' &&
+													useFigmaSlot &&
+													'navigation__icon__single--profile-figma'
 											)}
 										/>
 									)
@@ -445,6 +465,7 @@ export const NavigationBar = ({
 												`navigation__item--nav-${item.navSlot}`
 										)}
 										to={item.to}
+										aria-label={label}
 										onMouseEnter={() =>
 											setHoveredNavItem(item.to)
 										}
@@ -496,7 +517,7 @@ export const NavigationBar = ({
 													'navigation__title--figma'
 											)}
 										>
-											{label}
+											{visibleLabel}
 										</span>
 										{!useFigmaSlot && showUnreadNav && (
 											<NavigationUnreadIndicator
@@ -619,6 +640,8 @@ export const NavigationBar = ({
 												'navigation.language'
 											)}
 											menuPlacement={MENUPLACEMENT_RIGHT}
+											color="currentColor"
+											colorHover="currentColor"
 											selectRef={(el) =>
 												(ref_select.current = el)
 											}
@@ -658,9 +681,11 @@ export const NavigationBar = ({
 							)}
 							{figmaConsultantNav && (
 								<span className="navigation__title navigation__title--figma">
-									{translate([activeLocale, activeLocale], {
-										ns: 'languages'
-									})}
+									{stripLocalePrefix(
+										translate([activeLocale, activeLocale], {
+											ns: 'languages'
+										})
+									)}
 								</span>
 							)}
 						</div>
@@ -700,21 +725,21 @@ export const NavigationBar = ({
 								>
 									<div className="navigation__icon-slot__inner">
 										{isLogoutSelected ? (
-											<NavLogoutIconFilled
+											<NavDoorOpenIconFilled
 												className="navigation__icon__single"
 												aria-label={translate(
 													'app.logout'
 												)}
 											/>
 										) : isLogoutHovered ? (
-											<NavLogoutIconHover
+											<NavDoorOpenIcon
 												className="navigation__icon__single"
 												aria-label={translate(
 													'app.logout'
 												)}
 											/>
 										) : (
-											<NavLogoutIcon
+											<NavDoorOpenIcon
 												className="navigation__icon__single"
 												aria-label={translate(
 													'app.logout'

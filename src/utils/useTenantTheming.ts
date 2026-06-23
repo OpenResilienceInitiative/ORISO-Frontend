@@ -180,10 +180,97 @@ const getOrCreateHeadNode = (
 	return node;
 };
 
+const DEFAULT_PRIMARY_COLOR = '#cc1e1c';
+
+const normalizeHex = (value?: string) => {
+	if (!value) {
+		return undefined;
+	}
+
+	const trimmed = value.trim();
+	const withHash = trimmed.startsWith('#') ? trimmed : `#${trimmed}`;
+
+	if (/^#[0-9a-f]{3}$/i.test(withHash)) {
+		return `#${withHash[1]}${withHash[1]}${withHash[2]}${withHash[2]}${withHash[3]}${withHash[3]}`.toLowerCase();
+	}
+
+	return /^#[0-9a-f]{6}$/i.test(withHash)
+		? withHash.toLowerCase()
+		: undefined;
+};
+
+const hexToRgb = (hex: string) => ({
+	r: parseInt(hex.slice(1, 3), 16),
+	g: parseInt(hex.slice(3, 5), 16),
+	b: parseInt(hex.slice(5, 7), 16)
+});
+
+const mixHex = (startHex: string, endHex: string, amount: number) => {
+	const start = hexToRgb(startHex);
+	const end = hexToRgb(endHex);
+
+	return `#${[start.r, start.g, start.b]
+		.map((channel, index) => {
+			const target = [end.r, end.g, end.b][index];
+
+			return Math.round(channel + (target - channel) * amount)
+				.toString(16)
+				.padStart(2, '0');
+		})
+		.join('')}`;
+};
+
+const readableOnColor = (hex: string) => {
+	const { r, g, b } = hexToRgb(hex);
+	const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+
+	return luminance > 0.62 ? '#141c25' : '#ffffff';
+};
+
+const applyM3ColorBridge = (primaryColor?: string, secondaryColor?: string) => {
+	const primary = normalizeHex(primaryColor) || DEFAULT_PRIMARY_COLOR;
+	const secondary = normalizeHex(secondaryColor) || '#4c555f';
+	const primaryFixedDim = mixHex(primary, '#ffffff', 0.66);
+	const secondaryContainer = mixHex(secondary, '#ffffff', 0.16);
+	const onPrimary = readableOnColor(primary);
+	const onSecondary = readableOnColor(secondary);
+	const root = document.documentElement;
+	const tokens: Record<string, string> = {
+		'--skin-color-primary': primary,
+		'--skin-color-primary-hover': mixHex(primary, '#000000', 0.12),
+		'--skin-color-primary-contrast-safe': primary,
+		'--skin-color-secondary': secondary,
+		'--skin-color-secondary-contrast-safe': secondary,
+		'--skin-color-default': secondary,
+		'--m3-primary': primary,
+		'--m3-on-primary': onPrimary,
+		'--m3-primary-container': primary,
+		'--m3-on-primary-container': onPrimary,
+		'--m3-primary-fixed': mixHex(primary, '#ffffff', 0.84),
+		'--m3-primary-fixed-dim': primaryFixedDim,
+		'--m3-on-primary-fixed-variant': mixHex(primary, '#000000', 0.12),
+		'--m3-secondary': secondary,
+		'--m3-on-secondary': onSecondary,
+		'--m3-secondary-container': secondaryContainer,
+		'--m3-on-secondary-container': readableOnColor(secondaryContainer),
+		'--oriso-app-action': primary,
+		'--oriso-lottie-accent-color': primaryFixedDim,
+		'--oriso-lottie-secondary-color': secondaryContainer
+	};
+
+	Object.entries(tokens).forEach(([name, value]) => {
+		root.style.setProperty(name, value);
+	});
+};
+
 const applyTheming = (tenant: TenantDataInterface) => {
 	if (tenant.theming) {
 		// Currently not compatible with latest customer theming
 		// injectCss(tenant.theming);
+		applyM3ColorBridge(
+			tenant.theming.primaryColor,
+			tenant.theming.secondaryColor
+		);
 
 		getOrCreateHeadNode('meta', { name: 'theme-color' }).setAttribute(
 			'content',

@@ -4,9 +4,10 @@ $iconWrapperSize: 48px;
 $iconSize: 24px;
 $selectWrapperHeight: 98px;
 $headerHeight: 80px;
-$mobileNavigationHeight: 72px;
+$mobileNavigationHeight: 76px;
 $tabBarHeightMobile: 77px;
 $tabBarHeightDesktop: 53px;
+$sessionShellSurface: var(--m3-surface-container-high, #eae7e8);
 
 .sessionsList,
 .session {
@@ -14,7 +15,7 @@ $tabBarHeightDesktop: 53px;
 		justify-content: stretch;
 		align-items: stretch;
 		flex: 1;
-		background-color: #eae7e8;
+		background-color: $sessionShellSurface;
 		position: relative;
 		min-height: 0;
 		display: flex;
@@ -31,7 +32,7 @@ $tabBarHeightDesktop: 53px;
 		display: flex;
 		flex-direction: row;
 		padding: $grid-base-three $grid-base-two;
-		background-color: #eae7e8;
+		background-color: $sessionShellSurface;
 		z-index: 15;
 
 		@include breakpoint($fromMedium) {
@@ -99,7 +100,7 @@ $tabBarHeightDesktop: 53px;
 
 	&__selectWrapper {
 		width: 100%;
-		background-color: #eae7e8;
+		background-color: $sessionShellSurface;
 		z-index: 5;
 
 		@include breakpoint($fromLarge) {
@@ -190,16 +191,17 @@ $tabBarHeightDesktop: 53px;
 		}
 	}
 
-	&__resizeHandle {
-		position: absolute;
-		right: 0;
-		top: 0;
-		bottom: 0;
-		width: 24px;
-		/* Cursor is controlled dynamically (resize vs scroll drag mode) */
-		cursor: grab;
-		z-index: 30;
-		background: transparent;
+		&__resizeHandle {
+			position: absolute;
+			right: 0;
+			top: 0;
+			bottom: 0;
+			width: 24px;
+
+			/* Cursor is controlled dynamically (resize vs scroll drag mode) */
+			cursor: grab;
+			z-index: 30;
+			background: transparent;
 		border: 0;
 		outline: none;
 		touch-action: none;
@@ -209,27 +211,38 @@ $tabBarHeightDesktop: 53px;
 	&__resizeHandlePill {
 		position: absolute;
 		right: -3px;
-		top: 0;
+		top: 50%;
 		width: 6px;
-		height: var(--sessionsListThumbHeight, 56px);
+		height: var(--sessions-list-thumb-height, 56px);
 		border-radius: 999px;
 		background: #ffffff;
-		transform: translateY(var(--sessionsListThumbTop, 0px));
-		transition:
-			box-shadow 140ms ease,
-			transform 140ms ease;
+		transform: translateY(-50%);
+		transition: box-shadow 140ms ease;
+	}
+
+	&__resizeHandle[data-scrollable='true'] &__resizeHandlePill {
+		top: 0;
+		transform: translateY(var(--sessions-list-thumb-top, 0px));
 	}
 
 	&__resizeHandle:hover &__resizeHandlePill {
 		box-shadow:
 			0 0 0 1px rgba(165, 0, 10, 0.22),
 			0 3px 10px rgba(0, 0, 0, 0.14);
-		transform: translateY(var(--sessionsListThumbTop, 0px)) scaleX(1.08);
+		transform: translateY(-50%) scaleX(1.08);
+	}
+
+	&__resizeHandle[data-scrollable='true']:hover &__resizeHandlePill {
+		transform: translateY(var(--sessions-list-thumb-top, 0px)) scaleX(1.08);
 	}
 
 	&__resizeHandle[data-dragging='true'] &__resizeHandlePill {
 		background: #ffdad5;
-		transform: translateY(var(--sessionsListThumbTop, 0px)) scaleX(1.12);
+		transform: translateY(-50%) scaleX(1.12);
+	}
+
+	&__resizeHandle[data-scrollable='true'][data-dragging='true'] &__resizeHandlePill {
+		transform: translateY(var(--sessions-list-thumb-top, 0px)) scaleX(1.12);
 	}
 
 	&__resizeHandle:focus-visible &__resizeHandlePill {
@@ -248,12 +261,12 @@ $tabBarHeightDesktop: 53px;
 		display: flex;
 		width: 100%;
 		padding: $grid-base-three;
-		background-color: #eae7e8;
+		background-color: $sessionShellSurface;
 		z-index: 5;
 
 		@include breakpoint($fromLarge) {
 			padding: 0 $grid-base-three $grid-base-three;
-			background-color: #eae7e8;
+			background-color: $sessionShellSurface;
 		}
 
 		a {
@@ -458,11 +471,12 @@ $tabBarHeightDesktop: 53px;
 }
 
 // Figma-aligned search + horizontal filter chips (consultant / asker MY_SESSION)
-.sessionsListToolbar {
-	$toolbar-search-bg: #f6f3f3;
-	$toolbar-text: #444748;
-	// Inactive chip: white surface, #E1E6EE border, #333 text; selected #333 / white text
-	$toolbar-chip-bg: #ffffff;
+	.sessionsListToolbar {
+		$toolbar-search-bg: #f6f3f3;
+		$toolbar-text: #444748;
+
+		// Inactive chip: white surface, #E1E6EE border, #333 text; selected #333 / white text
+		$toolbar-chip-bg: #ffffff;
 	$toolbar-chip-fg: #333333;
 	$toolbar-chip-border-rest: #e1e6ee;
 	$toolbar-chip-hover-bg: #eef1f6;
@@ -472,7 +486,7 @@ $tabBarHeightDesktop: 53px;
 
 	flex: 0;
 	padding: $grid-base-three $grid-base-three 0;
-	background-color: #eae7e8;
+	background-color: $sessionShellSurface;
 	z-index: 5;
 
 	@include breakpoint($fromLarge) {
@@ -681,41 +695,44 @@ $tabBarHeightDesktop: 53px;
 		padding: 4px 0 6px;
 	}
 
-	&__chip {
-		flex: 0 0 auto;
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		gap: 4px;
-		/* Pill / oval (not circles): avoid equal min-width + min-height + full radius */
-		padding: 8px 14px;
-		min-height: 40px;
-		box-sizing: border-box;
-		border-radius: 9999px;
-		border: 1px solid $toolbar-chip-border-rest;
-		background-color: $toolbar-chip-bg;
-		color: $toolbar-chip-fg;
-		text-decoration: none;
-		cursor: pointer;
-		/* <Link> = <a>: undo global a:hover / a:focus (skin primary + 4px radius) */
-		&:link,
-		&:visited:not(&--active) {
-			color: $toolbar-chip-fg;
-		}
+		&__chip {
+			flex: 0 0 auto;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			gap: 4px;
 
-		&:focus {
+			/* Pill / oval (not circles): avoid equal min-width + min-height + full radius */
+			padding: 8px 14px;
+			min-height: 40px;
+			box-sizing: border-box;
 			border-radius: 9999px;
-		}
-		font-family: $font-family-sans-serif;
-		position: relative;
-		overflow: hidden;
-		isolation: isolate;
-		-webkit-tap-highlight-color: transparent;
-		transition:
-			background-color 160ms cubic-bezier(0.2, 0, 0, 1),
-			border-color 160ms cubic-bezier(0.2, 0, 0, 1),
-			color 140ms cubic-bezier(0.2, 0, 0, 1),
-			transform 120ms cubic-bezier(0.2, 0, 0, 1);
+			border: 1px solid $toolbar-chip-border-rest;
+			background-color: $toolbar-chip-bg;
+			color: $toolbar-chip-fg;
+			text-decoration: none;
+			cursor: pointer;
+
+			/* <Link> = <a>: undo global a:hover / a:focus (skin primary + 4px radius) */
+			&:link,
+			&:visited:not(&--active) {
+				color: $toolbar-chip-fg;
+			}
+
+			&:focus {
+				border-radius: 9999px;
+			}
+
+			font-family: $font-family-sans-serif;
+			position: relative;
+			overflow: hidden;
+			isolation: isolate;
+			-webkit-tap-highlight-color: transparent;
+			transition:
+				background-color 160ms cubic-bezier(0.2, 0, 0, 1),
+				border-color 160ms cubic-bezier(0.2, 0, 0, 1),
+				color 140ms cubic-bezier(0.2, 0, 0, 1),
+				transform 120ms cubic-bezier(0.2, 0, 0, 1);
 
 		&::before {
 			content: '';
@@ -842,7 +859,7 @@ $tabBarHeightDesktop: 53px;
 		border-radius: 0 0 28px 28px;
 		border: 1px solid #d9d6d7;
 		border-top: none;
-		background: #eae7e8;
+		background: $sessionShellSurface;
 		overflow: hidden;
 		max-height: min(56vh, 520px);
 		overflow-y: auto;
