@@ -916,8 +916,8 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 		width: 32px !important;
 		height: 32px !important;
 		display: block;
-		color: currentColor;
-		fill: currentColor;
+		color: currentcolor;
+		fill: currentcolor;
 		flex-shrink: 0;
 	}
 
@@ -950,7 +950,7 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 	.navigation__icon__single > g rect,
 	.navigation__globe-svg > path,
 	.navigation__liveChatToggleIcon > path {
-		fill: currentColor !important;
+		fill: currentcolor !important;
 	}
 
 	.navigation__icon__single line {

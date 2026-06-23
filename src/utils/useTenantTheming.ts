@@ -230,14 +230,18 @@ const readableOnColor = (hex: string) => {
 const applyM3ColorBridge = (primaryColor?: string, secondaryColor?: string) => {
 	const primary = normalizeHex(primaryColor) || DEFAULT_PRIMARY_COLOR;
 	const secondary = normalizeHex(secondaryColor) || '#4c555f';
+	const primaryHover = mixHex(primary, '#000000', 0.12);
 	const primaryFixedDim = mixHex(primary, '#ffffff', 0.66);
 	const secondaryContainer = mixHex(secondary, '#ffffff', 0.16);
 	const onPrimary = readableOnColor(primary);
 	const onSecondary = readableOnColor(secondary);
 	const root = document.documentElement;
-	const tokens: Record<string, string> = {
-		'--skin-color-primary': primary,
-		'--skin-color-primary-hover': mixHex(primary, '#000000', 0.12),
+		const tokens: Record<string, string> = {
+			'--primary': primary,
+			'--primary-3': primaryHover,
+			'--hover-primary': primaryHover,
+			'--skin-color-primary': primary,
+			'--skin-color-primary-hover': primaryHover,
 		'--skin-color-primary-contrast-safe': primary,
 		'--skin-color-secondary': secondary,
 		'--skin-color-secondary-contrast-safe': secondary,

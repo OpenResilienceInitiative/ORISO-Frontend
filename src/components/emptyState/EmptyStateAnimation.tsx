@@ -49,6 +49,11 @@ export const EmptyStateAnimation = ({
 		lottieRef.current?.setSpeed(speed);
 	}, [speed]);
 
+	useEffect(() => {
+		setPlaybackState('playing');
+		lottieRef.current?.setSpeed(speed);
+	}, [animationData, speed, variant]);
+
 	return (
 		<div
 			aria-hidden="true"

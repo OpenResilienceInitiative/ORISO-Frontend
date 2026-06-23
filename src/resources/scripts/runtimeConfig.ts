@@ -78,21 +78,21 @@ const firstNonEmpty = (
  */
 const pickValue = (...keys: string[]): string | undefined => {
 	const runtimeValue = firstNonEmpty(getRuntimeConfig(), keys);
-	if (runtimeValue) {
-		return runtimeValue;
-	}
-	const cypressValue = firstNonEmpty(getCypressConfig(), keys);
-	if (cypressValue) {
-		return cypressValue;
-	}
-	const processEnv =
-		typeof process !== 'undefined' ? (process.env as RuntimeConfig) : {};
-	const buildValue = firstNonEmpty(processEnv, keys);
-	if (buildValue) {
-		return buildValue;
-	}
-	return firstNonEmpty(inferFromAppHostname(), keys);
-};
+		if (runtimeValue) {
+			return runtimeValue;
+		}
+		const processEnv =
+			typeof process !== 'undefined' ? (process.env as RuntimeConfig) : {};
+		const buildValue = firstNonEmpty(processEnv, keys);
+		if (buildValue) {
+			return buildValue;
+		}
+		const cypressValue = firstNonEmpty(getCypressConfig(), keys);
+		if (cypressValue) {
+			return cypressValue;
+		}
+		return firstNonEmpty(inferFromAppHostname(), keys);
+	};
 
 const stripTrailingSlashes = (value: string): string =>
 	value.replace(/\/+$/, '');

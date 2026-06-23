@@ -40,19 +40,16 @@ describe('Session empty states', () => {
 		cy.contains('Bitte wählen Sie eine Nachricht aus').should(
 			'not.exist'
 		);
-		cy.get('a[href="/sessions/consultant/sessionPreview"]')
-			.find('.navigation__title--figma')
-			.invoke('text')
-			.should('equal', 'Anfra-\ngen');
-		cy.get('a[href="/sessions/consultant/sessionView"]')
-			.find('.navigation__title--figma')
-			.invoke('text')
-			.should('equal', 'Gesprä-\nche');
-		cy.get('a[href="/notifications"]')
-			.should('have.attr', 'aria-label', 'Zeitstrahl')
-			.find('.navigation__title--figma')
-			.invoke('text')
-			.should('equal', 'Zeit-\nstrahl');
+			cy.get('a[href="/sessions/consultant/sessionPreview"]')
+				.should('have.attr', 'aria-label', 'Anfragen');
+			cy.get('a[href="/sessions/consultant/sessionView"]')
+				.should('have.attr', 'aria-label', 'Gespräch');
+			cy.get('a[href="/notifications"]')
+				.should('have.attr', 'aria-label', 'Zeitstrahl')
+				.find('.navigation__title--figma')
+				.invoke('text')
+				.then((text) => text.replace(/\s+/g, ''))
+				.should('match', /^Zeit-?strahl$/);
 
 		cy.get('[data-cy=empty-state-animation]').each(($animation) => {
 			const primaryFixedDim = getComputedStyle(

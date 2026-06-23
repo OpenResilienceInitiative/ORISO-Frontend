@@ -22,15 +22,19 @@ const lottieColorToHex = (value: number[]) =>
 			Math.round(channel * 255)
 				.toString(16)
 				.padStart(2, '0')
-		)
-		.join('')}`;
+			)
+			.join('')}`;
+
+const isNormalizedLottieColor = (value: unknown): value is number[] =>
+	Array.isArray(value) &&
+	value.length === 4 &&
+	value.every(
+		(channel) =>
+			typeof channel === 'number' && channel >= 0 && channel <= 1
+	);
 
 const getSourceColorRole = (value: unknown) => {
-	if (!Array.isArray(value) || value.length < 3) {
-		return null;
-	}
-
-	if (!value.slice(0, 3).every((channel) => typeof channel === 'number')) {
+	if (!isNormalizedLottieColor(value)) {
 		return null;
 	}
 

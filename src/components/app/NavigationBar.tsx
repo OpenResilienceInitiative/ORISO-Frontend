@@ -55,15 +55,29 @@ export interface NavigationBarProps {
 const REGEX_DASH = /\//g;
 const stripLocalePrefix = (label: string) =>
 	label.replace(/^\([^)]+\)\s*/, '');
+const hyphenateRailLabel = (label: string, breakAfter: number) => {
+	if (/\s/.test(label)) {
+		return label.replace(/\s+/, '\n');
+	}
+	if (label.length <= breakAfter + 3) {
+		return label;
+	}
+	return `${label.slice(0, breakAfter)}-\n${label.slice(breakAfter)}`;
+};
 const getFigmaRailLabel = (to: string, label: string) => {
-	const figmaLabels: Record<string, string> = {
-		'/sessions/consultant/sessionPreview': 'Anfra-\ngen',
-		'/sessions/consultant/sessionView': 'Gesprä-\nche',
-		'/notifications': 'Zeit-\nstrahl',
-		'/profile': 'Mein\nProfil'
+	const compactLabel = stripLocalePrefix(label.trim());
+	const railBreaks: Record<string, number> = {
+		'/sessions/consultant/sessionPreview': 5,
+		'/sessions/consultant/sessionView': 6,
+		'/notifications': 4
 	};
 
-	return figmaLabels[to] || label;
+	if (to === '/profile') {
+		return compactLabel.replace(/\s+/, '\n');
+	}
+
+	const breakAfter = railBreaks[to];
+	return breakAfter ? hyphenateRailLabel(compactLabel, breakAfter) : compactLabel;
 };
 
 export const NavigationBar = ({
