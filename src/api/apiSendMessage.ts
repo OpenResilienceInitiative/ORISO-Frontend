@@ -21,7 +21,7 @@ const sendMatrixMessageViaRest = (
 	}).then((fallbackResponse) => {
 		apiPostMessageEventNotification({
 			roomId: matrixRoomId,
-			messagePreview: messageData,
+			messagePreview: toPreview(messageData),
 			matrixRoom: true,
 			threadRootId: threadRootId || null,
 			supervisorMessage: !!supervisorMessage,
@@ -31,6 +31,8 @@ const sendMatrixMessageViaRest = (
 		return fallbackResponse;
 	});
 };
+
+export const toPreview = (text: string): string => text.slice(0, 100);
 
 export const apiSendMessage = (
 	messageData: string,
@@ -63,7 +65,7 @@ export const apiSendMessage = (
 
 					apiPostMessageEventNotification({
 						roomId: matrixRoomId,
-						messagePreview: messageData,
+						messagePreview: toPreview(messageData),
 						matrixRoom: true,
 						threadRootId: threadRootId || null,
 						supervisorMessage: !!supervisorMessage,
