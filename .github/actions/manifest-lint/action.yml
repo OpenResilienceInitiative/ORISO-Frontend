@@ -1,0 +1,24 @@
+name: Reusable Kubernetes manifest lint steps
+
+runs:
+  using: composite
+  steps:
+    - name: Validate manifest policy
+      shell: bash
+      run: node scripts/validate-manifests.mjs
+
+    - name: Run manifest policy tests
+      shell: bash
+      run: node --test scripts/validate-manifests.test.mjs
+
+    - name: Validate manifest schema (kubeconform)
+      shell: bash
+      run: |
+        set -euo pipefail
+        export FRONTEND_IMAGE="ghcr.io/openresilienceinitiative/oriso-frontend:abcdef1234567890"
+        export ORISO_APP_HOST="app.example.org"
+        export ORISO_APP_TLS_SECRET="app-example-org-tls"
+        export LIVEKIT_TOKEN_SERVICE_URL="http://livekit-token-service.caritas.svc.cluster.local:3010"
+        export KEYCLOAK_REALM_URL="http://oriso-platform-keycloak.caritas.svc.cluster.local:8080/realms/online-beratung"
+        export USER_SERVICE_URL="http://oriso-platform-userservice.caritas.svc.cluster.local:8082"
+        envsubst < manifests/deployment.yaml | docker run --rm -i ghcr.io/yannh/kubeconform:v0.6.7 -strict -ignore-missing-schemas -summary -

@@ -20,6 +20,9 @@ jobs:
       with:
         node_version: '18'
 
+    - name: Lint Kubernetes manifests
+      uses: ./.github/actions/manifest-lint
+
     - name: Create Docker image
       uses: ./.github/actions/docker-build-push
       with:

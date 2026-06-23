@@ -18,3 +18,6 @@ jobs:
       uses: ./.github/actions/node-build
       with:
         node_version: '18'
+
+    - name: Lint Kubernetes manifests
+      uses: ./.github/actions/manifest-lint
