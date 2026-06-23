@@ -60,7 +60,12 @@ const defaultReturns = {
 	'frontend.settings': config,
 	'agencyConsultants': [],
 	'agencyConsultantsLanguages': ['de'],
-	'messages': []
+	'messages': [],
+	'userDrafts': {
+		items: [],
+		page: 0,
+		perPage: 200
+	}
 };
 
 const setWillReturn = (name: string, data: any, mergeData: boolean = false) => {
@@ -163,6 +168,10 @@ Cypress.Commands.add('mockApi', () => {
 	cy.intercept('GET', `${endpoints.consultantEnquiriesBase}*`, {}).as(
 		'consultantEnquiriesBase'
 	);
+
+	cy.intercept('GET', `${endpoints.userDrafts}*`, (req) => {
+		req.reply(getWillReturn('userDrafts'));
+	}).as('userDrafts');
 
 	cy.intercept('POST', endpoints.keycloakLogout, {}).as('authLogout');
 

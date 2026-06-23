@@ -470,18 +470,79 @@ $sessionShellSurface: var(--m3-surface-container-high, #eae7e8);
 	}
 }
 
+.sessionsListDraftItem {
+	width: calc(100% - 24px);
+	min-height: 76px;
+	margin: 0 12px 8px;
+	padding: 12px 14px;
+	box-sizing: border-box;
+	border: 1px solid var(--m3-outline-variant, #e1e6ee);
+	border-radius: 16px;
+	background: var(--m3-surface-container-lowest, #ffffff);
+	color: var(--m3-on-surface-variant, #4c555f);
+	font-family: $font-family-sans-serif;
+	text-align: left;
+	display: grid;
+	grid-template-columns: 1fr auto;
+	gap: 4px 12px;
+	cursor: pointer;
+
+	&:disabled {
+		cursor: default;
+		opacity: 0.72;
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-outline, #57606a);
+		outline-offset: 2px;
+	}
+
+	&__tag {
+		grid-column: 1 / -1;
+		font-size: 12px;
+		line-height: 16px;
+		font-weight: $font-weight-medium;
+		color: var(--m3-primary, #a5000a);
+	}
+
+	&__title {
+		min-width: 0;
+		font-size: 16px;
+		line-height: 24px;
+		font-weight: $font-weight-medium;
+		color: var(--m3-on-surface, #1b1b1c);
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	&__meta {
+		font-size: 12px;
+		line-height: 24px;
+		color: var(--m3-on-surface-variant, #4c555f);
+		white-space: nowrap;
+	}
+
+	&__hint {
+		grid-column: 1 / -1;
+		font-size: 12px;
+		line-height: 16px;
+		color: var(--m3-on-surface-variant, #4c555f);
+	}
+}
+
 // Figma-aligned search + horizontal filter chips (consultant / asker MY_SESSION)
 	.sessionsListToolbar {
 		$toolbar-search-bg: #f6f3f3;
 		$toolbar-text: #444748;
 
-		// Inactive chip: white surface, #E1E6EE border, #333 text; selected #333 / white text
+		// Figma filter pill contract: inactive icon-only pills, expanded active pill.
 		$toolbar-chip-bg: #ffffff;
-	$toolbar-chip-fg: #333333;
+	$toolbar-chip-fg: #4c555f;
 	$toolbar-chip-border-rest: #e1e6ee;
 	$toolbar-chip-hover-bg: #eef1f6;
 	$toolbar-chip-hover-border: #d1d8e6;
-	$toolbar-chip-selected-bg: #333333;
+	$toolbar-chip-selected-bg: #3b4044;
 	$toolbar-chip-selected-fg: #ffffff;
 
 	flex: 0;
@@ -691,7 +752,7 @@ $sessionShellSurface: var(--m3-surface-container-high, #eae7e8);
 		flex-wrap: nowrap;
 		gap: 8px;
 		width: max-content;
-		min-height: 40px;
+		min-height: 48px;
 		padding: 4px 0 6px;
 	}
 
@@ -700,11 +761,12 @@ $sessionShellSurface: var(--m3-surface-container-high, #eae7e8);
 			display: inline-flex;
 			align-items: center;
 			justify-content: center;
-			gap: 4px;
+			gap: 8px;
 
 			/* Pill / oval (not circles): avoid equal min-width + min-height + full radius */
-			padding: 8px 14px;
-			min-height: 40px;
+			padding: 0 16px;
+			min-height: 48px;
+			min-width: 48px;
 			box-sizing: border-box;
 			border-radius: 9999px;
 			border: 1px solid $toolbar-chip-border-rest;
@@ -724,6 +786,10 @@ $sessionShellSurface: var(--m3-surface-container-high, #eae7e8);
 			}
 
 			font-family: $font-family-sans-serif;
+			font-size: 12px;
+			font-weight: $font-weight-medium;
+			line-height: 16px;
+			letter-spacing: 0.5px;
 			position: relative;
 			overflow: hidden;
 			isolation: isolate;
@@ -779,9 +845,8 @@ $sessionShellSurface: var(--m3-surface-container-high, #eae7e8);
 		}
 
 		&--iconOnly {
-			/* Wider horizontal padding → oval capsule, same height as text chips */
-			min-width: 0;
-			padding: 8px 18px;
+			width: 48px;
+			padding: 0;
 		}
 
 		/* Figma selected chip: dark surface + white label/icons */
@@ -803,8 +868,8 @@ $sessionShellSurface: var(--m3-surface-container-high, #eae7e8);
 
 		@media (hover: hover) {
 			&--active:hover {
-				background-color: #404040;
-				border-color: #404040;
+				background-color: #303539;
+				border-color: #303539;
 				color: $toolbar-chip-selected-fg;
 
 				&::before {
@@ -822,8 +887,8 @@ $sessionShellSurface: var(--m3-surface-container-high, #eae7e8);
 
 	&__chipIconSvg {
 		display: block;
-		width: 16px;
-		height: 16px;
+		width: 24px;
+		height: 24px;
 		flex-shrink: 0;
 	}
 
@@ -844,10 +909,33 @@ $sessionShellSurface: var(--m3-surface-container-high, #eae7e8);
 
 	&__chipLabel {
 		font-size: 12px;
-		font-weight: $font-weight-bold;
-		line-height: 14px;
+		font-weight: $font-weight-medium;
+		line-height: 16px;
+		letter-spacing: 0.5px;
 		color: inherit;
 		white-space: nowrap;
+	}
+
+	&__chipBadge {
+		min-width: 16px;
+		height: 16px;
+		padding: 0 4px;
+		border-radius: 999px;
+		background: var(--oriso-unread-indicator-color, #b1005e);
+		color: #ffffff;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 10px;
+		font-weight: $font-weight-bold;
+		line-height: 16px;
+		letter-spacing: 0;
+	}
+
+	&__chip--iconOnly &__chipBadge {
+		position: absolute;
+		right: 3px;
+		top: 3px;
 	}
 
 	&__searchModal {

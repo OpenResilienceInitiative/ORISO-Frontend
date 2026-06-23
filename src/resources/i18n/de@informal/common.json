@@ -953,13 +953,19 @@
 			},
 			"chips": {
 				"neu": "Ungelesen",
+				"unread": "Ungelesen",
+				"drafts": "Entwürfe",
+				"nearby": "Nähe",
+				"create": "Erstellen",
+				"archive": "Archiviert",
 				"oneToOne": "1-1 Beratung",
 				"liveChat": "Live-Chat",
 				"groups": "Gruppen",
 				"supervision": "Supervision",
-				"chats": "Chats"
+				"chats": "Nähe"
 			},
-			"emptyFilterResult": "Keine Beratung entspricht Deiner Suche oder den Filtern."
+			"emptyFilterResult": "Keine Beratung entspricht Deiner Suche oder den Filtern.",
+			"draftMetadataOnly": "Ungesendete Nachricht gespeichert."
 		},
 		"anonymous": {
 			"tag": "Anonymous"

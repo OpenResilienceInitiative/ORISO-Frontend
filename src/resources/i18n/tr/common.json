@@ -2285,12 +2285,19 @@
 			},
 			"chips": {
 				"neu": "Okunmamış",
+				"unread": "Okunmamış",
+				"drafts": "Taslaklar",
+				"nearby": "Yakın",
+				"create": "Oluştur",
+				"archive": "Arşivlendi",
 				"oneToOne": "Bire bir danışmanlık",
 				"liveChat": "Canlı sohbet",
 				"groups": "Gruplar",
-				"supervision": "Süpervizyon"
+				"supervision": "Süpervizyon",
+				"chats": "Yakın"
 			},
-			"emptyFilterResult": "Aramanız veya filtrelerinize uyan istişare yok."
+			"emptyFilterResult": "Aramanız veya filtrelerinize uyan istişare yok.",
+			"draftMetadataOnly": "Gönderilmemiş mesaj kaydedildi."
 		},
 		"anonymous": {
 			"tag": "Anonim"

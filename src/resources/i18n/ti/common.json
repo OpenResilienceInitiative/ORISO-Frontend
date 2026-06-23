@@ -2285,12 +2285,19 @@
 			},
 			"chips": {
 				"neu": "Unread",
+				"unread": "Unread",
+				"drafts": "Drafts",
+				"nearby": "ቀረባ",
+				"create": "ፍጠር",
+				"archive": "Archive",
 				"oneToOne": "1-1 ምኽሪ",
 				"liveChat": "ቀጥታዊ ዝርርብ",
 				"groups": "ጉጅለታት",
-				"supervision": "Supervision"
+				"supervision": "Supervision",
+				"chats": "ቀረባ"
 			},
-			"emptyFilterResult": "ናብ ምድላይ ወይ ፊልተራትካ ዝሰማማዕ ምኽሪ የለን።"
+			"emptyFilterResult": "ናብ ምድላይ ወይ ፊልተራትካ ዝሰማማዕ ምኽሪ የለን።",
+			"draftMetadataOnly": "Unsent message saved."
 		},
 		"anonymous": {
 			"tag": "ስውር"

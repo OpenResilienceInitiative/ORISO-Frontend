@@ -25,8 +25,6 @@ import { ReactComponent as CalendarIconOutline } from '../../resources/img/icons
 import { ReactComponent as CalendarIconFilled } from '../../resources/img/icons/calendar_filled.svg';
 import { ReactComponent as NavCounsellorRequestIcon } from '../../resources/img/icons/navigation/counsellor_request_400.svg';
 import { ReactComponent as NavCounsellorRequestIconFilled } from '../../resources/img/icons/navigation/counsellor_request_filled.svg';
-import { ReactComponent as NavDraftsAssetIcon } from '../../resources/img/icons/navigation/drafts_400.svg';
-import { ReactComponent as NavDraftsAssetIconFilled } from '../../resources/img/icons/navigation/drafts_filled.svg';
 import {
 	NavChatsIcon,
 	NavChatsIconHover,
@@ -143,22 +141,6 @@ export const RouterConfigUser = (
 				navSlot: 'tile' as const,
 				titleKeys: {
 					large: 'navigation.activity'
-				}
-			},
-			{
-				condition: (userData) => {
-					return !hasUserAuthority(
-						AUTHORITIES.ASKER_DEFAULT,
-						userData
-					);
-				},
-				to: '/drafts',
-				icon: NavDraftsAssetIcon,
-				iconHover: NavDraftsAssetIcon,
-				iconFilled: NavDraftsAssetIconFilled,
-				navSlot: 'tile' as const,
-				titleKeys: {
-					large: 'navigation.drafts'
 				}
 			},
 			{
@@ -306,16 +288,6 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 				navSlot: 'tile' as const,
 				titleKeys: {
 					large: 'navigation.activity'
-				}
-			},
-			{
-				to: '/drafts',
-				icon: NavDraftsAssetIcon,
-				iconHover: NavDraftsAssetIcon,
-				iconFilled: NavDraftsAssetIconFilled,
-				navSlot: 'tile' as const,
-				titleKeys: {
-					large: 'navigation.drafts'
 				}
 			},
 			{

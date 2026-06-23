@@ -2323,12 +2323,19 @@
 			},
 			"chips": {
 				"neu": "Unread",
+				"unread": "Unread",
+				"drafts": "Drafts",
+				"nearby": "Nearby",
+				"create": "Create",
+				"archive": "Archived",
 				"oneToOne": "1-1 counseling",
 				"liveChat": "Live chat",
 				"groups": "Groups",
-				"supervision": "Supervision"
+				"supervision": "Supervision",
+				"chats": "Nearby"
 			},
-			"emptyFilterResult": "No consultations match your search or filters."
+			"emptyFilterResult": "No consultations match your search or filters.",
+			"draftMetadataOnly": "Unsent message saved."
 		},
 		"anonymous": {
 			"tag": "Anonymous"

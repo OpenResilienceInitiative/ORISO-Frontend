@@ -2285,12 +2285,19 @@
 			},
 			"chips": {
 				"neu": "Non lu",
+				"unread": "Non lu",
+				"drafts": "Brouillons",
+				"nearby": "Proximité",
+				"create": "Créer",
+				"archive": "Archivé",
 				"oneToOne": "Conseil 1-1",
 				"liveChat": "Chat en direct",
 				"groups": "Groupes",
-				"supervision": "Supervision"
+				"supervision": "Supervision",
+				"chats": "Proximité"
 			},
-			"emptyFilterResult": "Aucune consultation ne correspond à votre recherche ou aux filtres."
+			"emptyFilterResult": "Aucune consultation ne correspond à votre recherche ou aux filtres.",
+			"draftMetadataOnly": "Message non envoyé enregistré."
 		},
 		"anonymous": {
 			"tag": "Anonyme"

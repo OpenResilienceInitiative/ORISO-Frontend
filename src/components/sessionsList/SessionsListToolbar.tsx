@@ -2,15 +2,46 @@ import * as React from 'react';
 import { Link } from 'react-router-dom';
 import clsx from 'clsx';
 import { SESSION_LIST_TAB_ARCHIVE } from '../session/sessionHelpers';
+import {
+	ArchiveFilterIcon,
+	CreateChatFilterIcon,
+	DraftFilterIcon,
+	GroupFilterIcon,
+	LiveChatFilterIcon,
+	NearbyFilterIcon,
+	SessionToolbarFilterIconProps,
+	SupervisionFilterIcon,
+	UnreadFilterIcon
+} from './SessionToolbarFilterIcons';
 
 export type SessionToolbarChipFilter =
-	| 'neu'
-	| 'oneToOne'
+	| 'unread'
+	| 'drafts'
+	| 'nearby'
 	| 'liveChat'
 	| 'groups'
-	| 'supervision'
-	/** Enquiry-tab filter: registered-style (non-anonymous) enquiries. */
-	| 'chats';
+	| 'supervision';
+
+export const normalizeSessionToolbarChip = (
+	chip?: string | null
+): SessionToolbarChipFilter | null => {
+	switch (chip) {
+		case 'neu':
+		case 'unread':
+			return 'unread';
+		case 'oneToOne':
+		case 'chats':
+		case 'nearby':
+			return 'nearby';
+		case 'drafts':
+		case 'liveChat':
+		case 'groups':
+		case 'supervision':
+			return chip;
+		default:
+			return null;
+	}
+};
 
 interface SessionsListToolbarProps {
 	translate: (key: string) => string;
@@ -25,12 +56,14 @@ interface SessionsListToolbarProps {
 	showSupervisionChip: boolean;
 	/** Show the "Live-Chat" filter chip (tied to the sidebar availability toggle). */
 	showLiveChatChip?: boolean;
+	/** Show create/archive route chips. This is intentionally limited to Gespräch. */
 	createGroupChatPath: string;
 	archiveTabPath: string;
 	/** Consultant list is showing archived sessions (`?sessionListTab=archive`). */
 	archiveTabActive: boolean;
 	/** Create-group-chat route is open. */
 	createGroupChatActive: boolean;
+	chipCounts?: Partial<Record<SessionToolbarChipFilter, number>>;
 }
 
 export interface SessionSearchPersonResult {
@@ -82,57 +115,6 @@ const IconClose = () => (
 	</svg>
 );
 
-const IconPlus = () => (
-	<svg
-		width="16"
-		height="16"
-		viewBox="0 0 16 16"
-		fill="none"
-		xmlns="http://www.w3.org/2000/svg"
-		aria-hidden
-		className="sessionsListToolbar__chipIconSvg"
-	>
-		<path
-			d="M7.33301 8.66671H3.33301V7.33337H7.33301V3.33337H8.66634V7.33337H12.6663V8.66671H8.66634V12.6667H7.33301V8.66671Z"
-			fill="currentColor"
-		/>
-	</svg>
-);
-
-const IconArchive = () => (
-	<svg
-		width="16"
-		height="16"
-		viewBox="0 0 16 16"
-		fill="none"
-		xmlns="http://www.w3.org/2000/svg"
-		aria-hidden
-		className="sessionsListToolbar__chipIconSvg"
-	>
-		<path
-			d="M8 12L10.6667 9.33333L9.73333 8.4L8.66667 9.46667V6.66667H7.33333V9.46667L6.26667 8.4L5.33333 9.33333L8 12ZM3.33333 5.33333V12.6667H12.6667V5.33333H3.33333ZM3.33333 14C2.96667 14 2.65 13.8722 2.38333 13.6167C2.12778 13.35 2 13.0333 2 12.6667V4.35C2 4.19444 2.02222 4.04444 2.06667 3.9C2.12222 3.75556 2.2 3.62222 2.3 3.5L3.13333 2.48333C3.25556 2.32778 3.40556 2.21111 3.58333 2.13333C3.77222 2.04444 3.96667 2 4.16667 2H11.8333C12.0333 2 12.2222 2.04444 12.4 2.13333C12.5889 2.21111 12.7444 2.32778 12.8667 2.48333L13.7 3.5C13.8 3.62222 13.8722 3.75556 13.9167 3.9C13.9722 4.04444 14 4.19444 14 4.35V12.6667C14 13.0333 13.8667 13.35 13.6 13.6167C13.3444 13.8722 13.0333 14 12.6667 14H3.33333ZM3.6 4H12.4L11.8333 3.33333H4.16667L3.6 4Z"
-			fill="currentColor"
-		/>
-	</svg>
-);
-
-const IconGroup = () => (
-	<svg
-		width="14"
-		height="14"
-		viewBox="0 0 14 14"
-		fill="none"
-		xmlns="http://www.w3.org/2000/svg"
-		aria-hidden
-		className="sessionsListToolbar__groupIconSvg"
-	>
-		<path
-			d="M5.53333 11.8667C6.03333 10.8556 6.7 10.1806 7.53333 9.84167C8.36667 9.50278 9.07778 9.33333 9.66667 9.33333C9.92222 9.33333 10.1722 9.35556 10.4167 9.4C10.6611 9.44444 10.9 9.5 11.1333 9.56667C11.4 9.14444 11.6111 8.68889 11.7667 8.2C11.9222 7.71111 12 7.2 12 6.66667C12 5.17778 11.4833 3.91667 10.45 2.88333C9.41667 1.85 8.15555 1.33333 6.66667 1.33333C5.17778 1.33333 3.91667 1.85 2.88333 2.88333C1.85 3.91667 1.33333 5.17778 1.33333 6.66667C1.33333 7.16667 1.39722 7.64444 1.525 8.1C1.65278 8.55556 1.84444 8.97778 2.1 9.36667C2.55556 9.14444 3.02778 8.97222 3.51667 8.85C4.00556 8.72778 4.5 8.66667 5 8.66667C5.35556 8.66667 5.69722 8.69722 6.025 8.75833C6.35278 8.81944 6.67778 8.9 7 9C6.74444 9.13333 6.50278 9.28889 6.275 9.46667C6.04722 9.64444 5.83333 9.83333 5.63333 10.0333C5.5 10.0111 5.38611 10 5.29167 10H5C4.64444 10 4.29167 10.0389 3.94167 10.1167C3.59167 10.1944 3.25556 10.3111 2.93333 10.4667C3.28889 10.8222 3.68611 11.1194 4.125 11.3583C4.56389 11.5972 5.03333 11.7667 5.53333 11.8667ZM4.06667 12.8083C3.25556 12.4583 2.55 11.9833 1.95 11.3833C1.35 10.7833 0.875 10.0778 0.525 9.26667C0.175 8.45555 0 7.58889 0 6.66667C0 5.74444 0.175 4.87778 0.525 4.06667C0.875 3.25556 1.35 2.55 1.95 1.95C2.55 1.35 3.25556 0.875 4.06667 0.525C4.87778 0.175 5.74444 0 6.66667 0C7.58889 0 8.45555 0.175 9.26667 0.525C10.0778 0.875 10.7833 1.35 11.3833 1.95C11.9833 2.55 12.4583 3.25556 12.8083 4.06667C13.1583 4.87778 13.3333 5.74444 13.3333 6.66667C13.3333 7.58889 13.1583 8.45555 12.8083 9.26667C12.4583 10.0778 11.9833 10.7833 11.3833 11.3833C10.7833 11.9833 10.0778 12.4583 9.26667 12.8083C8.45555 13.1583 7.58889 13.3333 6.66667 13.3333C5.74444 13.3333 4.87778 13.1583 4.06667 12.8083ZM3.35 6.98333C2.89444 6.52778 2.66667 5.97778 2.66667 5.33333C2.66667 4.68889 2.89444 4.13889 3.35 3.68333C3.80556 3.22778 4.35556 3 5 3C5.64444 3 6.19444 3.22778 6.65 3.68333C7.10556 4.13889 7.33333 4.68889 7.33333 5.33333C7.33333 5.97778 7.10556 6.52778 6.65 6.98333C6.19444 7.43889 5.64444 7.66667 5 7.66667C4.35556 7.66667 3.80556 7.43889 3.35 6.98333ZM5.70833 6.04167C5.90278 5.84722 6 5.61111 6 5.33333C6 5.05556 5.90278 4.81944 5.70833 4.625C5.51389 4.43056 5.27778 4.33333 5 4.33333C4.72222 4.33333 4.48611 4.43056 4.29167 4.625C4.09722 4.81944 4 5.05556 4 5.33333C4 5.61111 4.09722 5.84722 4.29167 6.04167C4.48611 6.23611 4.72222 6.33333 5 6.33333C5.27778 6.33333 5.51389 6.23611 5.70833 6.04167ZM8.48333 7.85C8.16111 7.52778 8 7.13333 8 6.66667C8 6.2 8.16111 5.80556 8.48333 5.48333C8.80556 5.16111 9.2 5 9.66667 5C10.1333 5 10.5278 5.16111 10.85 5.48333C11.1722 5.80556 11.3333 6.2 11.3333 6.66667C11.3333 7.13333 11.1722 7.52778 10.85 7.85C10.5278 8.17222 10.1333 8.33333 9.66667 8.33333C9.2 8.33333 8.80556 8.17222 8.48333 7.85Z"
-			fill="currentColor"
-		/>
-	</svg>
-);
-
 const IconPeople = ({ active }: { active: boolean }) => (
 	<svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
 		<path
@@ -178,6 +160,110 @@ const IconArchivedTab = ({ active }: { active: boolean }) => (
 	</svg>
 );
 
+type FilterChipConfig = {
+	id: SessionToolbarChipFilter;
+	labelKey: string;
+	fallback: string;
+	Icon: React.ComponentType<SessionToolbarFilterIconProps>;
+	dataCy: string;
+};
+
+const FILTER_CHIPS: FilterChipConfig[] = [
+	{
+		id: 'unread',
+		labelKey: 'sessionList.toolbar.chips.unread',
+		fallback: 'Unread',
+		Icon: UnreadFilterIcon,
+		dataCy: 'sessions-list-chip-unread'
+	},
+	{
+		id: 'drafts',
+		labelKey: 'sessionList.toolbar.chips.drafts',
+		fallback: 'Drafts',
+		Icon: DraftFilterIcon,
+		dataCy: 'sessions-list-chip-drafts'
+	},
+	{
+		id: 'nearby',
+		labelKey: 'sessionList.toolbar.chips.nearby',
+		fallback: 'Nearby',
+		Icon: NearbyFilterIcon,
+		dataCy: 'sessions-list-chip-nearby'
+	},
+	{
+		id: 'liveChat',
+		labelKey: 'sessionList.toolbar.chips.liveChat',
+		fallback: 'Live Chat',
+		Icon: LiveChatFilterIcon,
+		dataCy: 'sessions-list-chip-live-chat'
+	},
+	{
+		id: 'supervision',
+		labelKey: 'sessionList.toolbar.chips.supervision',
+		fallback: 'Supervision',
+		Icon: SupervisionFilterIcon,
+		dataCy: 'sessions-list-chip-supervision'
+	},
+	{
+		id: 'groups',
+		labelKey: 'sessionList.toolbar.chips.groups',
+		fallback: 'Groups',
+		Icon: GroupFilterIcon,
+		dataCy: 'sessions-list-chip-groups'
+	}
+];
+
+const CountBadge = ({ count }: { count?: number }) => {
+	if (!count || count <= 0) {
+		return null;
+	}
+
+	return (
+		<span className="sessionsListToolbar__chipBadge">
+			{count > 99 ? '99+' : count}
+		</span>
+	);
+};
+
+const FilterChip = ({
+	chip,
+	active,
+	count,
+	label,
+	onClick
+}: {
+	chip: FilterChipConfig;
+	active: boolean;
+	count?: number;
+	label: string;
+	onClick: () => void;
+}) => {
+	const Icon = chip.Icon;
+
+	return (
+		<button
+			type="button"
+			className={clsx('sessionsListToolbar__chip', {
+				'sessionsListToolbar__chip--active': active,
+				'sessionsListToolbar__chip--iconOnly': !active
+			})}
+			onClick={onClick}
+			aria-pressed={active}
+			aria-label={label}
+			data-cy={chip.dataCy}
+		>
+			<Icon
+				className="sessionsListToolbar__chipIconSvg"
+				hasIndicator={chip.id === 'unread' && Boolean(count && count > 0)}
+			/>
+			{active && (
+				<span className="sessionsListToolbar__chipLabel">{label}</span>
+			)}
+			<CountBadge count={count} />
+		</button>
+	);
+};
+
 export const SessionsListToolbar = ({
 	translate,
 	searchValue,
@@ -193,7 +279,8 @@ export const SessionsListToolbar = ({
 	createGroupChatPath,
 	archiveTabPath,
 	archiveTabActive,
-	createGroupChatActive
+	createGroupChatActive,
+	chipCounts = {}
 }: SessionsListToolbarProps) => {
 	const searchId = React.useId();
 	const searchRootRef = React.useRef<HTMLDivElement | null>(null);
@@ -229,7 +316,7 @@ export const SessionsListToolbar = ({
 		return searchPeopleResults.filter((entry) =>
 			`${entry.name} ${entry.subtitle}`.toLowerCase().includes(needle)
 		);
-	}, [searchPeopleResults, searchValue]);
+	}, [searchPeopleResults, searchValue, selectedPersonIds]);
 	const tr = React.useCallback(
 		(key: string, fallback: string) => {
 			const translated = translate(key);
@@ -250,10 +337,6 @@ export const SessionsListToolbar = ({
 		[selectedPersonIds, searchPeopleResults]
 	);
 
-	const chipClass = (chip: SessionToolbarChipFilter) =>
-		clsx('sessionsListToolbar__chip', {
-			'sessionsListToolbar__chip--active': activeChip === chip
-		});
 	const hasTypedQuery = searchValue.trim().length > 0;
 	const hasSelectedPeople = selectedPersonIds.length > 0;
 	const showSearchDropdown = isSearchViewOpen;
@@ -280,6 +363,20 @@ export const SessionsListToolbar = ({
 			document.removeEventListener('touchstart', handleOutsidePointer);
 		};
 	}, []);
+
+	const visibleFilterChips = React.useMemo(
+		() =>
+			FILTER_CHIPS.filter((chip) => {
+				if (chip.id === 'liveChat') {
+					return showLiveChatChip;
+				}
+				if (chip.id === 'supervision') {
+					return showSupervisionChip;
+				}
+				return true;
+			}),
+		[showLiveChatChip, showSupervisionChip]
+	);
 
 	return (
 		<div className="sessionsListToolbar" data-cy="sessions-list-toolbar">
@@ -543,8 +640,9 @@ export const SessionsListToolbar = ({
 						<Link
 							className={clsx(
 								'sessionsListToolbar__chip',
-								'sessionsListToolbar__chip--iconOnly',
 								{
+									'sessionsListToolbar__chip--iconOnly':
+										!createGroupChatActive,
 									'sessionsListToolbar__chip--active':
 										createGroupChatActive
 								}
@@ -558,16 +656,35 @@ export const SessionsListToolbar = ({
 							}
 							data-cy="sessions-list-chip-create"
 						>
-							<IconPlus />
+							<CreateChatFilterIcon className="sessionsListToolbar__chipIconSvg" />
+							{createGroupChatActive && (
+								<span className="sessionsListToolbar__chipLabel">
+									{tr(
+										'sessionList.toolbar.chips.create',
+										'Create'
+									)}
+								</span>
+							)}
 						</Link>
 					)}
+					{visibleFilterChips.map((chip) => (
+						<FilterChip
+							key={chip.id}
+							chip={chip}
+							active={activeChip === chip.id}
+							count={chipCounts[chip.id]}
+							label={tr(chip.labelKey, chip.fallback)}
+							onClick={() => onChipToggle(chip.id)}
+						/>
+					))}
 					{showConsultantActions && (
 						<Link
 							className={clsx(
 								'sessionsListToolbar__chip',
-								'sessionsListToolbar__chip--iconOnly',
 								'walkthrough_step_4',
 								{
+									'sessionsListToolbar__chip--iconOnly':
+										!archiveTabActive,
 									'sessionsListToolbar__chip--active':
 										archiveTabActive
 								}
@@ -579,80 +696,17 @@ export const SessionsListToolbar = ({
 							aria-current={archiveTabActive ? 'page' : undefined}
 							data-cy="sessions-list-chip-archive"
 						>
-							<IconArchive />
+							<ArchiveFilterIcon className="sessionsListToolbar__chipIconSvg" />
+							{archiveTabActive && (
+								<span className="sessionsListToolbar__chipLabel">
+									{tr(
+										'sessionList.toolbar.chips.archive',
+										'Archived'
+									)}
+								</span>
+							)}
 						</Link>
 					)}
-					{showSupervisionChip && (
-						<button
-							type="button"
-							className={clsx(
-								'sessionsListToolbar__chip',
-								'sessionsListToolbar__chip--iconOnly',
-								{
-									'sessionsListToolbar__chip--active':
-										activeChip === 'supervision'
-								}
-							)}
-							onClick={() => onChipToggle('supervision')}
-							aria-pressed={activeChip === 'supervision'}
-							aria-label={translate(
-								'sessionList.toolbar.chips.supervision'
-							)}
-							data-cy="sessions-list-chip-supervision-icon"
-						>
-							<span className="sessionsListToolbar__groupIconSlot">
-								<IconGroup />
-							</span>
-						</button>
-					)}
-					<button
-						type="button"
-						className={chipClass('neu')}
-						onClick={() => onChipToggle('neu')}
-						aria-pressed={activeChip === 'neu'}
-						data-cy="sessions-list-chip-neu"
-					>
-						<span className="sessionsListToolbar__chipLabel">
-							{translate('sessionList.toolbar.chips.neu')}
-						</span>
-					</button>
-					<button
-						type="button"
-						className={chipClass('oneToOne')}
-						onClick={() => onChipToggle('oneToOne')}
-						aria-pressed={activeChip === 'oneToOne'}
-						data-cy="sessions-list-chip-one-to-one"
-					>
-						<span className="sessionsListToolbar__chipLabel">
-							{translate('sessionList.toolbar.chips.oneToOne')}
-						</span>
-					</button>
-					{showLiveChatChip && (
-						<button
-							type="button"
-							className={chipClass('liveChat')}
-							onClick={() => onChipToggle('liveChat')}
-							aria-pressed={activeChip === 'liveChat'}
-							data-cy="sessions-list-chip-live-chat"
-						>
-							<span className="sessionsListToolbar__chipLabel">
-								{translate(
-									'sessionList.toolbar.chips.liveChat'
-								)}
-							</span>
-						</button>
-					)}
-					<button
-						type="button"
-						className={chipClass('groups')}
-						onClick={() => onChipToggle('groups')}
-						aria-pressed={activeChip === 'groups'}
-						data-cy="sessions-list-chip-groups-text"
-					>
-						<span className="sessionsListToolbar__chipLabel">
-							{translate('sessionList.toolbar.chips.groups')}
-						</span>
-					</button>
 				</div>
 			</div>
 		</div>

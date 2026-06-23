@@ -109,11 +109,11 @@ export const WithSearchText: Story = {
 };
 
 export const UnreadFilterActive: Story = {
-	render: () => <SessionsListToolbarPlayground initialChip="neu" />
+	render: () => <SessionsListToolbarPlayground initialChip="unread" />
 };
 
 export const OneToOneFilterActive: Story = {
-	render: () => <SessionsListToolbarPlayground initialChip="oneToOne" />
+	render: () => <SessionsListToolbarPlayground initialChip="nearby" />
 };
 
 export const GroupsFilterActive: Story = {
