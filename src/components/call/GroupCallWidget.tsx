@@ -6,6 +6,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { callManager, CallData } from '../../services/CallManager';
+import { matrixClientService } from '../../services/matrixClientService';
 import {
 	getElementCallBaseUrl,
 	getMatrixHomeserverUrl
@@ -142,8 +143,7 @@ export const GroupCallWidget: React.FC = () => {
 		if (!callData) return;
 
 		try {
-			const matrixClientService = (window as any).matrixClientService;
-			const client = matrixClientService?.getClient();
+			const client = matrixClientService.getClient();
 			if (!client) throw new Error('Matrix client not initialized');
 
 			// For group calls we use the dedicated Element Call room if present.

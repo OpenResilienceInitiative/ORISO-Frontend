@@ -1,6 +1,7 @@
 import { endpoints, apiUrl } from '../resources/scripts/endpoints';
 import { fetchData, FETCH_ERRORS, FETCH_METHODS } from './fetchData';
 import { apiPostMessageEventNotification } from './apiPostMessageEventNotification';
+import { matrixClientService } from '../services/matrixClientService';
 
 const sendMatrixMessageViaRest = (
 	sessionId: number,
@@ -48,46 +49,40 @@ export const apiSendMessage = (
 		// console.log('🚀 MATRIX: Sending message via Matrix SDK for INSTANT sync');
 
 		// Get Matrix client
-		const matrixClientService = (window as any).matrixClientService;
+		if (matrixClientService.getClient()) {
+			// console.log('✅ Sending via Matrix SDK to room:', matrixRoomId);
 
-		if (matrixClientService?.sendMessage) {
-			const client = matrixClientService.getClient();
+			// Send via Matrix SDK through MatrixClientService so token refresh/retry is applied.
+			return matrixClientService
+				.sendMessage(matrixRoomId, messageData)
+				.then((response: any) => {
+					// console.log('✅ Matrix SDK send complete - Room.timeline will fire INSTANTLY!');
 
-			if (client) {
-				// console.log('✅ Sending via Matrix SDK to room:', matrixRoomId);
+					// The Room.timeline event fires IMMEDIATELY with the sent message!
+					// This is how Element achieves instant sync!
 
-				// Send via Matrix SDK through MatrixClientService so token refresh/retry is applied.
-				return matrixClientService
-					.sendMessage(matrixRoomId, messageData)
-					.then((response: any) => {
-						// console.log('✅ Matrix SDK send complete - Room.timeline will fire INSTANTLY!');
-
-						// The Room.timeline event fires IMMEDIATELY with the sent message!
-						// This is how Element achieves instant sync!
-
-						apiPostMessageEventNotification({
-							roomId: matrixRoomId,
-							messagePreview: messageData,
-							matrixRoom: true,
-							threadRootId: threadRootId || null,
-							supervisorMessage: !!supervisorMessage,
-							senderDisplayName: senderDisplayName || null,
-							threadParentPreview: threadParentPreview || null
-						}).catch(() => undefined);
-						return { success: true, event_id: response.event_id };
-					})
-					.catch(() => {
-						return sendMatrixMessageViaRest(
-							sessionId,
-							messageData,
-							matrixRoomId,
-							threadRootId,
-							supervisorMessage,
-							senderDisplayName,
-							threadParentPreview
-						);
-					});
-			}
+					apiPostMessageEventNotification({
+						roomId: matrixRoomId,
+						messagePreview: messageData,
+						matrixRoom: true,
+						threadRootId: threadRootId || null,
+						supervisorMessage: !!supervisorMessage,
+						senderDisplayName: senderDisplayName || null,
+						threadParentPreview: threadParentPreview || null
+					}).catch(() => undefined);
+					return { success: true, event_id: response.event_id };
+				})
+				.catch(() => {
+					return sendMatrixMessageViaRest(
+						sessionId,
+						messageData,
+						matrixRoomId,
+						threadRootId,
+						supervisorMessage,
+						senderDisplayName,
+						threadParentPreview
+					);
+				});
 		}
 
 		// Fallback: Use REST API if Matrix client not available

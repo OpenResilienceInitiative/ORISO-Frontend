@@ -7,6 +7,7 @@
  */
 
 import { MatrixCall } from 'matrix-js-sdk/lib/webrtc/call';
+import { matrixClientService } from './matrixClientService';
 
 export type CallState =
 	| 'idle'
@@ -129,8 +130,7 @@ class CallManager {
 		} else {
 			// Auto-detect based on room member count
 			try {
-				const matrixClientService = (window as any).matrixClientService;
-				const client = matrixClientService?.getClient();
+				const client = matrixClientService.getClient();
 				// console.log(`   Matrix client available: ${!!client}`);
 
 				if (client) {
@@ -240,8 +240,7 @@ class CallManager {
 	 * use-case (notably the power levels for `org.matrix.msc3401.call.member`).
 	 */
 	private async createElementCallRoom(sourceRoomId: string): Promise<string> {
-		const matrixClientService = (window as any).matrixClientService;
-		const client = matrixClientService?.getClient();
+		const client = matrixClientService.getClient();
 
 		if (!client) {
 			throw new Error(
@@ -308,8 +307,7 @@ class CallManager {
 	 */
 	private async ensureGroupCallPermissions(roomId: string): Promise<void> {
 		try {
-			const matrixClientService = (window as any).matrixClientService;
-			const client = matrixClientService?.getClient();
+			const client = matrixClientService.getClient();
 
 			if (!client) {
 				// console.warn("⚠️  Matrix client not available, cannot adjust power levels for group call");
@@ -360,7 +358,7 @@ class CallManager {
 			// We must NOT pass the content as the stateKey (it becomes "[object Object]" in the URL).
 			await client.sendStateEvent(
 				roomId,
-				'm.room.power_levels',
+				'm.room.power_levels' as any,
 				updatedContent,
 				''
 			);
@@ -386,8 +384,7 @@ class CallManager {
 		isGroupCall: boolean = false
 	): void {
 		try {
-			const matrixClientService = (window as any).matrixClientService;
-			const client = matrixClientService?.getClient();
+			const client = matrixClientService.getClient();
 
 			if (!client) {
 				// console.error('❌ Matrix client not available to send call invite');
@@ -398,7 +395,7 @@ class CallManager {
 
 			// Send m.call.invite event
 			client
-				.sendEvent(signallingRoomId, 'org.oriso.call.invite', {
+				.sendEvent(signallingRoomId, 'org.oriso.call.invite' as any, {
 					call_id: callId,
 					version: '1',
 					lifetime: 60000, // 60 seconds
@@ -581,14 +578,13 @@ class CallManager {
 
 	private sendElementCallHangup(callData: CallData): void {
 		try {
-			const matrixClientService = (window as any).matrixClientService;
-			const client = matrixClientService?.getClient();
+			const client = matrixClientService.getClient();
 			if (!client) return;
 
 			client
 				.sendEvent(
 					callData.signalRoomId || callData.roomId,
-					'org.oriso.call.hangup',
+					'org.oriso.call.hangup' as any,
 					{
 						call_id: callData.callId,
 						version: '1',
