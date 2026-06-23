@@ -32,6 +32,8 @@ import {
 	getMatrixAccessToken,
 	persistMatrixLoginData
 } from '../sessionCookie/getMatrixAccessToken';
+import { matrixClientService } from '../../services/matrixClientService';
+import { MatrixClientProvider } from '../../contexts/MatrixClientContext';
 
 interface AuthenticatedAppProps {
 	onAppReady: Function;
@@ -99,19 +101,9 @@ export const AuthenticatedApp = ({
 									await getMatrixAccessToken();
 								persistMatrixLoginData(matrixLoginData);
 								try {
-									const { MatrixClientService } =
-										await import(
-											'../../services/matrixClientService'
-										);
-									const matrixClientService =
-										new MatrixClientService();
-
 									matrixClientService.initializeClient(
 										matrixLoginData
 									);
-
-									(window as any).matrixClientService =
-										matrixClientService;
 									(window as any).callContext = callContext;
 								} catch (error) {
 									// console.warn('⚠️ Matrix client initialization failed:', error);
@@ -152,7 +144,7 @@ export const AuthenticatedApp = ({
 
 	if (appReady) {
 		return (
-			<>
+			<MatrixClientProvider>
 				<RocketChatProvider>
 					<RocketChatGetUserRolesProvider>
 						<RocketChatPublicSettingsProvider>
@@ -167,7 +159,7 @@ export const AuthenticatedApp = ({
 						</RocketChatPublicSettingsProvider>
 					</RocketChatGetUserRolesProvider>
 				</RocketChatProvider>
-			</>
+			</MatrixClientProvider>
 		);
 	} else if (loading) {
 		return <Loading />;

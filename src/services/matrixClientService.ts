@@ -259,13 +259,10 @@ export class MatrixClientService {
 
 	// Logout
 	public async logout(): Promise<void> {
-		this.clearRefreshTimer();
 		const client = this.client;
-		this.client = null;
-		this.loginData = null;
-		this.syncState = null;
-		this.initializedServicesClient = null;
-		this.notifySyncStateListeners();
+		this.stopAndCleanup();
+		matrixLiveEventBridge.destroy();
+		matrixCallService.destroy();
 
 		if (!client) {
 			return;
@@ -273,8 +270,8 @@ export class MatrixClientService {
 
 		try {
 			await client.logout();
-		} finally {
-			client.stopClient();
+		} catch {
+			// Local session is already torn down; ignore remote logout failures.
 		}
 	}
 
@@ -317,11 +314,29 @@ export class MatrixClientService {
 	}
 
 	private stopCurrentClient(): void {
+		this.stopAndCleanup();
+	}
+
+	/** Stops sync, removes listeners, and tears down bridge/call services (no Matrix logout API). */
+	public stopAndCleanup(): void {
 		this.clearRefreshTimer();
+
 		if (this.client) {
 			this.client.stopClient();
-			this.client.removeAllListeners('sync' as any);
+			this.client.removeAllListeners();
 		}
+
+		this.client = null;
+		this.loginData = null;
+		this.syncState = null;
+		this.initializedServicesClient = null;
+		matrixLiveEventBridge.detach();
+		matrixCallService.detach();
+		this.notifySyncStateListeners();
+	}
+
+	public hasActiveClient(): boolean {
+		return this.client !== null;
 	}
 
 	private getStoredTokenExpiresAt(): number | null {

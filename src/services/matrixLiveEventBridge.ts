@@ -1,6 +1,19 @@
 import { MatrixClient, Room, MatrixEvent } from 'matrix-js-sdk';
-import { callManager } from './CallManager';
-import { isVideoCallFromMatrixInviteContent } from '../utils/videoCallHelpers';
+
+type CallManagerModule = typeof import('./CallManager');
+
+const getCallManager = (): CallManagerModule['callManager'] => {
+	// Lazy load to avoid circular import with matrixClientService at module init.
+	// eslint-disable-next-line @typescript-eslint/no-require-imports
+	return require('./CallManager').callManager;
+};
+
+const isVideoCallInvite = (content: Record<string, unknown>): boolean => {
+	// eslint-disable-next-line @typescript-eslint/no-require-imports
+	const { isVideoCallFromMatrixInviteContent } =
+		require('../utils/videoCallHelpers') as typeof import('../utils/videoCallHelpers');
+	return isVideoCallFromMatrixInviteContent(content);
+};
 
 /**
  * Bridge between Matrix events and the existing LiveService WebSocket system.
@@ -18,7 +31,12 @@ export class MatrixLiveEventBridge {
 	 * This sets up event listeners for real-time Matrix events.
 	 */
 	public initialize(client: MatrixClient): void {
-		if (this.initialized && this.client === client) {
+		this.reinitialize(client);
+	}
+
+	/** Detach from the previous client and bind listeners to the active client. */
+	public reinitialize(client: MatrixClient): void {
+		if (this.client === client && this.initialized) {
 			return;
 		}
 
@@ -28,6 +46,7 @@ export class MatrixLiveEventBridge {
 		}
 
 		this.client = client;
+		this.processedCallInvites.clear();
 		this.setupEventListeners();
 		this.initialized = true;
 
@@ -180,7 +199,7 @@ export class MatrixLiveEventBridge {
 		const isElementCall = content.is_element_call === true || isGroupCall;
 		const isVideo = isElementCall
 			? content.is_video !== false
-			: isVideoCallFromMatrixInviteContent(content);
+			: isVideoCallInvite(content);
 
 		if (isElementCall) {
 			// console.log("✅ LIVEKIT GROUP CALL DETECTED!");
@@ -197,7 +216,7 @@ export class MatrixLiveEventBridge {
 			// console.log("🔔 CALLING CallManager.receiveCall()");
 			// console.log("═══════════════════════════════════════════════");
 
-			callManager.receiveCall(
+			getCallManager().receiveCall(
 				callRoomId,
 				isVideo,
 				callId,
@@ -221,7 +240,7 @@ export class MatrixLiveEventBridge {
 		// console.log("🔔 CALLING CallManager.receiveCall()");
 		// console.log("═══════════════════════════════════════════════");
 
-		callManager.receiveCall(
+		getCallManager().receiveCall(
 			room.roomId,
 			isVideo,
 			callId,
@@ -282,7 +301,7 @@ export class MatrixLiveEventBridge {
 
 		// Use CallManager directly (clean architecture!)
 		// console.log("🔔 CALLING CallManager.endCall()");
-		callManager.endCall(false);
+		getCallManager().endCall(false);
 	}
 
 	/**
@@ -342,16 +361,24 @@ export class MatrixLiveEventBridge {
 	}
 
 	/**
-	 * Clean up and remove all listeners.
+	 * Remove listeners and detach from the current client without dropping subscribers.
 	 */
-	public destroy(): void {
+	public detach(): void {
 		if (this.client) {
 			this.client.removeAllListeners('Room.timeline' as any);
 			this.client.removeAllListeners('sync' as any);
 		}
-		this.eventCallbacks.clear();
+		this.processedCallInvites.clear();
 		this.initialized = false;
 		this.client = null;
+	}
+
+	/**
+	 * Clean up and remove all listeners.
+	 */
+	public destroy(): void {
+		this.detach();
+		this.eventCallbacks.clear();
 
 		// console.log("🧹 MatrixLiveEventBridge destroyed");
 	}

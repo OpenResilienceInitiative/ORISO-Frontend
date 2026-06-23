@@ -14,6 +14,7 @@ import {
 } from '../../api/apiGetSessionSupervisors';
 import { apiAddSessionSupervisor } from '../../api/apiAddSessionSupervisor';
 import { apiRemoveSessionSupervisor } from '../../api/apiRemoveSessionSupervisor';
+import { matrixClientService } from '../../services/matrixClientService';
 import {
 	apiGetAgencyConsultantList,
 	Consultant
@@ -433,8 +434,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			)
 		});
 		try {
-			const matrixClientService = (window as any).matrixClientService;
-			if (matrixClientService?.sendMessage) {
+			if (matrixClientService.sendMessage) {
 				await matrixClientService.sendMessage(
 					matrixRoomId,
 					`${SYSTEM_NOTIFICATION_PREFIX}${payload}`

@@ -494,12 +494,19 @@ class MatrixCallService {
 		this.activeMediaOptions = null;
 	}
 
+	public detach(): void {
+		if (this.client) {
+			this.client.removeAllListeners('Call.incoming' as any);
+		}
+		this.hangupCall();
+		this.client = null;
+	}
+
 	/**
 	 * Destroy service and cleanup
 	 */
 	public destroy(): void {
-		this.hangupCall();
-		this.client = null;
+		this.detach();
 		this.eventHandlers = {};
 		// console.log('✅ Matrix Call Service destroyed');
 	}
