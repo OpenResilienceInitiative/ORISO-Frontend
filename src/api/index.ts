@@ -1,6 +1,7 @@
 export * from './apiAgencySelection';
 export * from './apiDeleteAskerAccount';
 export * from './apiDeleteSessionAndUser';
+export * from './apiFinishAnonymousConversation';
 export * from './apiDraftMessages';
 export * from './apiUserDrafts';
 export * from './apiGetSessionSupervisors';

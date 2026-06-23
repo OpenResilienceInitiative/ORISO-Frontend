@@ -27,6 +27,7 @@ import { AgencyLanguages } from './AgencyLanguages';
 import { MetaInfo } from '../metaInfo/MetaInfo';
 import { REGISTRATION_DATA_VALIDATION } from '../registrationDataValidation';
 import { UrlParamsContext } from '../../../globalState/provider/UrlParamsProvider';
+import { getOrganizationHomeUrl } from '../../../resources/scripts/runtimeConfig';
 
 interface AgencySelectionResultsProps {
 	onChange: Dispatch<SetStateAction<Partial<RegistrationData>>>;
@@ -144,9 +145,7 @@ export const AgencySelectionResults = ({
 							href={
 								fallbackUrl
 									? `${fallbackUrl}${zipcode}/`
-									: process.env
-											.REACT_APP_ORGANIZATION_HOME_URL ||
-										'https://www.caritas.de'
+									: getOrganizationHomeUrl()
 							}
 						>
 							{t('registration.agency.noresult.label')}

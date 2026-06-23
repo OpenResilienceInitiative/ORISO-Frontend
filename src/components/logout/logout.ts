@@ -11,6 +11,7 @@ import {
 import { appConfig } from '../../utils/appConfig';
 import { calcomLogout } from './calcomLogout';
 import { callEventListeners } from '../../utils/eventHandler';
+import { matrixClientService } from '../../services/matrixClientService';
 
 export const EVENT_PRE_LOGOUT = 'pre_logout';
 
@@ -30,6 +31,8 @@ export const logout = async (
 	isRequestInProgress = true;
 	const { featureAppointmentsEnabled, featureToolsEnabled } =
 		getTenantSettings();
+
+	void matrixClientService.logout();
 
 	/* Drop live-chat availability while the access token is still valid, so the
 	 * anonymous availability count decreases immediately on logout. */

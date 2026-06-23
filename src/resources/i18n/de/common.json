@@ -297,6 +297,9 @@
 		"leaveGroupChat": "Chat verlassen",
 		"mute": "Stummschalten",
 		"muteDescription": "Deaktiviere Benachrichtigungen für diesen Chat.",
+		"activateNotification": "Benachrichtigungen aktivieren",
+		"privacyPolicy": "Datenschutzerklärung",
+		"privacyPolicyDescription": "Lese wie diese Beratungsstelle deine Daten verarbeitet.",
 		"help": "Hilfe Anfragen",
 		"helpDescription": "Eskaliere den Fall intern oder extern ohne den Datenschutz zu vernachlässigen.",
 		"invite": "Weitere Personen einladen",
@@ -1258,6 +1261,8 @@
 		"showMore": "Mehr anzeigen",
 		"systemNotification": "Systembenachrichtigung",
 		"systemNotificationTitle": "Systembenachrichtigung",
+		"userLeftChat": "{{name}} hat den Chat verlassen",
+		"anonymousUser": "Benutzer",
 		"supervisionEnabledTitle": "Supervision aktiviert!",
 		"supervisionEnabledDescription": "{{name}} wurde als Supervisor-Berater:in zu diesem Chat hinzugefügt.",
 		"today": "Heute",
@@ -1581,6 +1586,10 @@
 			"inquiryAccepted": {
 				"title": "Anfrage angenommen",
 				"description": "Ihre Anfrage wurde von einer Beratungsfachkraft angenommen."
+			},
+			"conversationFinished": {
+				"title": "Chat beendet",
+				"description": "Die ratssuchende Person hat den anonymen Chat beendet."
 			},
 			"mainEmail": {
 				"title": "E-Mail-Benachrichtigungen zulassen"
@@ -2076,8 +2085,8 @@
 			"decreaseExhale": "Sekunden für Ausatmen verringern",
 			"increaseExhale": "Sekunden für Ausatmen erhöhen",
 			"robotUsernameFallback": "Ratsuchende_r 9",
-			"robotCard1Title": "Bitte haben Sie etwas Geduld",
-			"robotCard1Body": "Derzeit sind alle Berater_innen im Gespräch. Wir sind schnellstmöglich für Sie da.",
+			"robotCard1Title": "Einen Moment Geduld",
+			"robotCard1Body": "Alle unsere Berater*innen sind gerade im Live-Gespräch. Bitte warten Sie noch einen kurzen Moment hier im Chatraum. Sie sehen unten, wie viele Personen noch vor Ihnen an der Reihe sind.",
 			"robotCard2TitlePrefix": "Ihr Benutzername lautet:",
 			"robotCard2Body": "Um Ihre Anonymität zu schützen, löschen wir Ihre Nachrichten spätestens 48 Stunden nachdem der Chat beendet wurde.",
 			"robotCard3Title": "Sie benötigen nicht sofort eine Antwort? Und wollen nicht auf einen freien Chat warten?",
@@ -2927,6 +2936,7 @@
 		"start": "Beratung starten",
 		"pseudonym": {
 			"carimatSubtitle": "Angezeigten Namen auswählen",
+			"carimatPrivacySubtitle": "Ihre Privatsphäre",
 			"carimatMessage": "Hallo, bevor wir weitermachen, bestätigen Sie bitte Ihren zufällig gewählten Namen für diese Sitzung.",
 			"privacyMessage": "Gute Wahl. Zum Schutz Ihrer Privatsphäre sind alle Nachrichten Ende-zu-Ende verschlüsselt und werden nach 48 Stunden automatisch gelöscht.",
 			"yourPseudonym": "Dein Pseudonym",
@@ -2973,6 +2983,39 @@
 				"error": {
 					"title": "Fehler beim Löschen",
 					"text": "Das Konto konnte nicht gelöscht werden. Bitte versuchen Sie es erneut."
+				}
+			},
+			"endChat": {
+				"label": "Chat beenden",
+				"ending": "Wird beendet …",
+				"consultant": {
+					"label": "Chat beenden",
+					"confirm": {
+						"headline": "Diesen anonymen Chat beenden?",
+						"copy": "Das Gespräch wird für Sie und die ratssuchende Person geschlossen.",
+						"buttonConfirm": "Chat beenden"
+					},
+					"success": {
+						"headline": "Chat beendet",
+						"copy": "Der anonyme Chat wurde geschlossen.",
+						"buttonClose": "Zurück zu den Chats"
+					}
+				},
+				"confirm": {
+					"headline": "Möchten Sie den Chat wirklich beenden?",
+					"copy": "Das Gespräch wird geschlossen. Sie können diesen anonymen Chat nicht fortsetzen.",
+					"buttonConfirm": "Chat beenden",
+					"buttonCancel": "Abbrechen"
+				},
+				"success": {
+					"headline": "Chat beendet",
+					"copy": "Vielen Dank, dass Sie unseren Live-Chat genutzt haben. Sie können diese Seite jetzt schließen.",
+					"buttonClose": "Schließen"
+				},
+				"error": {
+					"headline": "Chat konnte nicht beendet werden",
+					"copy": "Der Chat konnte nicht beendet werden. Bitte versuchen Sie es erneut.",
+					"buttonClose": "Schließen"
 				}
 			}
 		},

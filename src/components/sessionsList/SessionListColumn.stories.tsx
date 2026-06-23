@@ -157,7 +157,7 @@ function FullColumnPlayground() {
 				active
 				topic="Familienberatung"
 				postcode="12345"
-				user="shaziauser1"
+				user="testuser@example.invalid"
 				subject="So geht es weiter"
 			/>
 			<DemoCard

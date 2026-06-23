@@ -10,6 +10,7 @@ import {
 	CallState,
 	CallType
 } from 'matrix-js-sdk/lib/webrtc/call';
+import { CallFeedEvent } from 'matrix-js-sdk/lib/webrtc/callFeed';
 
 export interface MatrixCallOptions {
 	roomId: string;
@@ -30,6 +31,7 @@ class MatrixCallService {
 	private activeCall: MatrixCall | null = null;
 	private activeMediaOptions: MatrixCallOptions | null = null;
 	private eventHandlers: MatrixCallEventHandlers = {};
+	private detachFeedListeners: Array<() => void> = [];
 
 	/**
 	 * Initialize call service with Matrix client
@@ -38,6 +40,10 @@ class MatrixCallService {
 		client: MatrixClient,
 		handlers: MatrixCallEventHandlers = {}
 	): void {
+		if (this.client && this.client !== client) {
+			this.client.removeAllListeners('Call.incoming' as any);
+		}
+
 		this.client = client;
 		this.eventHandlers = handlers;
 
@@ -296,8 +302,16 @@ class MatrixCallService {
 		// Feeds changed (local/remote streams)
 		call.on(CallEvent.FeedsChanged as any, () => {
 			// console.log('📞 Feeds changed');
+			this.bindFeedStreamListeners(call, options);
 			this.handleFeedsChanged(call, options);
 		});
+
+		call.on(CallEvent.PeerConnectionCreated as any, () => {
+			this.bindPeerConnectionListeners(call, options);
+		});
+
+		this.bindFeedStreamListeners(call, options);
+		this.bindPeerConnectionListeners(call, options);
 
 		// Call error
 		call.on(CallEvent.Error as any, (error: Error) => {
@@ -342,7 +356,7 @@ class MatrixCallService {
 			};
 
 			// Local preview (optional for audio-only)
-			const localFeed = call.localUsermediaFeed;
+			const localFeed = this.getUsermediaFeed(call, true);
 			if (localFeed?.stream) {
 				attachStream(
 					options.localVideoElement,
@@ -352,7 +366,7 @@ class MatrixCallService {
 			}
 
 			// Remote playback — critical for hearing the other person on audio calls
-			const remoteFeed = call.remoteUsermediaFeed;
+			const remoteFeed = this.getUsermediaFeed(call, false);
 			if (remoteFeed?.stream) {
 				attachStream(
 					options.remoteVideoElement,
@@ -365,10 +379,103 @@ class MatrixCallService {
 		}
 	}
 
+	private getUsermediaFeed(call: MatrixCall, isLocal: boolean): any {
+		const feeds =
+			typeof (call as any).getFeeds === 'function'
+				? (call as any).getFeeds()
+				: [
+						(call as any).localUsermediaFeed,
+						(call as any).remoteUsermediaFeed
+					].filter(Boolean);
+
+		return feeds.find((feed: any) => {
+			const feedIsLocal =
+				typeof feed.isLocal === 'function'
+					? feed.isLocal()
+					: feed === (call as any).localUsermediaFeed;
+			const hasTracks = feed.stream?.getTracks?.().length > 0;
+			const isUsermedia =
+				!feed.purpose ||
+				String(feed.purpose).toLowerCase().includes('usermedia');
+
+			return feedIsLocal === isLocal && hasTracks && isUsermedia;
+		});
+	}
+
+	private bindFeedStreamListeners(
+		call: MatrixCall,
+		options: MatrixCallOptions
+	): void {
+		this.detachFeedListeners.forEach((detach) => detach());
+		this.detachFeedListeners = [];
+
+		const feeds =
+			typeof (call as any).getFeeds === 'function'
+				? (call as any).getFeeds()
+				: [
+						(call as any).localUsermediaFeed,
+						(call as any).remoteUsermediaFeed
+					].filter(Boolean);
+
+		feeds.forEach((feed: any) => {
+			const onNewStream = () => this.handleFeedsChanged(call, options);
+			const onConnectedChanged = () =>
+				this.handleFeedsChanged(call, options);
+
+			feed.on?.(CallFeedEvent.NewStream as any, onNewStream);
+			feed.on?.(
+				CallFeedEvent.ConnectedChanged as any,
+				onConnectedChanged
+			);
+
+			this.detachFeedListeners.push(() => {
+				feed.off?.(CallFeedEvent.NewStream as any, onNewStream);
+				feed.off?.(
+					CallFeedEvent.ConnectedChanged as any,
+					onConnectedChanged
+				);
+			});
+		});
+	}
+
+	private bindPeerConnectionListeners(
+		call: MatrixCall,
+		options: MatrixCallOptions
+	): void {
+		const peerConnection = (call as any).peerConn as
+			| RTCPeerConnection
+			| undefined;
+		if (!peerConnection) {
+			return;
+		}
+
+		const attachRemoteStream = (stream: MediaStream) => {
+			if (!options.remoteVideoElement || !stream) {
+				return;
+			}
+			if (options.remoteVideoElement.srcObject !== stream) {
+				options.remoteVideoElement.srcObject = stream;
+			}
+			options.remoteVideoElement.play().catch(() => {
+				// Autoplay may require a prior user gesture; ignore.
+			});
+		};
+
+		peerConnection.ontrack = (event) => {
+			const stream = event.streams?.[0];
+			if (stream) {
+				attachRemoteStream(stream);
+			}
+		};
+	}
+
 	/**
 	 * Cleanup call resources
 	 */
 	private cleanup(): void {
+		this.detachFeedListeners.forEach((detach) => detach());
+		this.detachFeedListeners = [];
+
 		if (this.activeCall) {
 			// Stop all media tracks
 			try {
@@ -387,12 +494,19 @@ class MatrixCallService {
 		this.activeMediaOptions = null;
 	}
 
+	public detach(): void {
+		if (this.client) {
+			this.client.removeAllListeners('Call.incoming' as any);
+		}
+		this.hangupCall();
+		this.client = null;
+	}
+
 	/**
 	 * Destroy service and cleanup
 	 */
 	public destroy(): void {
-		this.hangupCall();
-		this.client = null;
+		this.detach();
 		this.eventHandlers = {};
 		// console.log('✅ Matrix Call Service destroyed');
 	}

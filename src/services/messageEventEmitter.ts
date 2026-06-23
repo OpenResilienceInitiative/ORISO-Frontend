@@ -8,6 +8,7 @@ type MessageEventData = {
 	sessionId?: number;
 	timestamp?: number;
 	refreshEnquiryList?: boolean;
+	refreshSessionList?: boolean;
 };
 
 type MessageEventCallback = (data: MessageEventData) => void;

@@ -1,17 +1,20 @@
 import * as React from 'react';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useHistory } from 'react-router-dom';
 import clsx from 'clsx';
 import { handleNumericTranslation } from '../../utils/translate';
 import { mobileListView } from '../app/navigationHandler';
 import { apiDeleteSessionAndUser } from '../../api/apiDeleteSessionAndUser';
+import { apiFinishAnonymousConversation } from '../../api/apiFinishAnonymousConversation';
+import { FETCH_ERRORS } from '../../api/fetchData';
 import {
 	apiGetSessionSupervisors,
 	SessionSupervisor
 } from '../../api/apiGetSessionSupervisors';
 import { apiAddSessionSupervisor } from '../../api/apiAddSessionSupervisor';
 import { apiRemoveSessionSupervisor } from '../../api/apiRemoveSessionSupervisor';
+import { matrixClientService } from '../../services/matrixClientService';
 import {
 	apiGetAgencyConsultantList,
 	Consultant
@@ -29,7 +32,9 @@ import {
 	SessionTypeContext,
 	useConsultingType,
 	UserDataContext,
-	ActiveSessionContext
+	ActiveSessionContext,
+	SessionsDataContext,
+	REMOVE_SESSIONS
 } from '../../globalState';
 import {
 	SessionConsultantInterface,
@@ -42,9 +47,24 @@ import {
 } from '../session/sessionHelpers';
 import { SessionMenu } from '../sessionMenu/SessionMenu';
 import {
+	finishAnonymousChatErrorOverlayItem,
+	finishAnonymousChatSecurityOverlayItem,
+	finishAnonymousChatSuccessOverlayItem,
+	finishAnonymousChatConsultantSecurityOverlayItem,
+	finishAnonymousChatConsultantSuccessOverlayItem
+} from '../sessionMenu/sessionMenuHelpers';
+import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
+import { logout } from '../logout/logout';
+import { appConfig } from '../../utils/appConfig';
+import { isMatrixRoom } from '../../utils/matrixRoomUtils';
+import {
 	convertUserDataObjectToArray,
 	getUserDataTranslateBase
 } from '../profile/profileHelpers';
+import {
+	isAnonymousMatrixUsername,
+	resolveAnonymousChatDisplayName
+} from '../../utils/anonymousChatDisplayName';
 import { ReactComponent as BackIcon } from '../../resources/img/icons/arrow-left.svg';
 import { UserAvatar } from '../message/UserAvatar';
 import { ConsultantSearchLoader } from './ConsultantSearchLoader';
@@ -60,7 +80,7 @@ import { Button, ButtonItem, BUTTON_TYPES } from '../button/Button';
 import { ReactComponent as CloseCircle } from '../../resources/img/icons/close-circle.svg';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../message/messageConstants';
-
+import { messageEventEmitter } from '../../services/messageEventEmitter';
 export interface SessionHeaderProps {
 	consultantAbsent?: SessionConsultantInterface;
 	hasUserInitiatedStopOrLeaveRequest?: React.MutableRefObject<boolean>;
@@ -76,6 +96,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	]);
 	const { activeSession } = useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
+	const sessionsDataContext = useContext(SessionsDataContext);
 	const { addNotification, addEventNotification } =
 		useContext(NotificationsContext);
 	const history = useHistory();
@@ -93,6 +114,22 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 
 	const contact = getContact(activeSession);
 	const userSessionData = contact?.sessionData;
+
+	const removeSessionFromSidebar = useCallback(
+		(sessionId: number) => {
+			sessionsDataContext?.dispatch({
+				type: REMOVE_SESSIONS,
+				ids: [sessionId]
+			});
+			messageEventEmitter.emit({
+				refreshEnquiryList: true,
+				refreshSessionList: true,
+				sessionId
+			});
+			messageEventEmitter.emit({ sessionId });
+		},
+		[sessionsDataContext]
+	);
 
 	// Check if this is an anonymous chat
 	const isAnonymousChat =
@@ -115,6 +152,13 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	// State for delete account button
 	const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 	const [isAccountDeleted, setIsAccountDeleted] = useState(false);
+
+	// State for anonymous asker end-chat flow
+	const [isEndChatOverlayActive, setIsEndChatOverlayActive] = useState(false);
+	const [endChatOverlayItem, setEndChatOverlayItem] =
+		useState<OverlayItem | null>(null);
+	const [isFinishingChat, setIsFinishingChat] = useState(false);
+	const [isChatFinished, setIsChatFinished] = useState(false);
 
 	// State for supervisor management
 	const [supervisors, setSupervisors] = useState<SessionSupervisor[]>([]);
@@ -372,10 +416,9 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	};
 
 	const postSupervisorAddedSystemMessage = async (supervisorName: string) => {
-		const matrixRoomId =
-			activeSession.rid && activeSession.rid.startsWith('!')
-				? activeSession.rid
-				: activeSession.item?.matrixRoomId;
+		const matrixRoomId = isMatrixRoom(activeSession.rid)
+			? activeSession.rid
+			: activeSession.item?.matrixRoomId;
 		if (!matrixRoomId || !activeSession.item.id) {
 			return;
 		}
@@ -391,13 +434,11 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			)
 		});
 		try {
-			const matrixClientService = (window as any).matrixClientService;
-			const client = matrixClientService?.getClient?.();
-			if (client) {
-				await (client as any).sendMessage(matrixRoomId, {
-					msgtype: 'm.text',
-					body: `${SYSTEM_NOTIFICATION_PREFIX}${payload}`
-				});
+			if (matrixClientService.sendMessage) {
+				await matrixClientService.sendMessage(
+					matrixRoomId,
+					`${SYSTEM_NOTIFICATION_PREFIX}${payload}`
+				);
 				return;
 			}
 			await apiSendMessage(
@@ -602,6 +643,169 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		mobileListView();
 	};
 
+	const isConsultantUser =
+		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) ||
+		(userData?.userRoles || []).includes('CONSULTANT');
+	const isAskerUser =
+		hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) ||
+		hasUserAuthority(AUTHORITIES.ANONYMOUS_DEFAULT, userData) ||
+		(userData?.userRoles || []).includes('USER') ||
+		(userData?.userRoles || []).includes('ANONYMOUS');
+	const isAnonymousAsker =
+		isAnonymousChat && isAskerUser && !isConsultantUser;
+	const showEndAnonymousChatButton =
+		isAnonymousAsker && activeSession.isSession && !isChatFinished;
+	const showConsultantEndAnonymousChatButton =
+		isConsultantUser &&
+		isAnonymousChat &&
+		!isSupervisor &&
+		!activeSession.isEnquiry &&
+		activeSession.isSession &&
+		!isChatFinished;
+
+	const headerContactName = (() => {
+		if (isAnonymousAsker) {
+			let storedPseudonym: string | null = null;
+			try {
+				storedPseudonym =
+					sessionStorage.getItem(
+						`anonymous-pseudonym-name-${activeSession.item.id}`
+					) || null;
+			} catch {
+				storedPseudonym = null;
+			}
+			const ownPseudonym = resolveAnonymousChatDisplayName(
+				{
+					username: userData?.userName,
+					displayName: userData?.displayName || storedPseudonym
+				},
+				userData?.displayName || storedPseudonym || undefined
+			);
+			if (ownPseudonym) {
+				return ownPseudonym;
+			}
+			const consultantName = resolveAnonymousChatDisplayName(
+				activeSession.consultant
+			);
+			if (consultantName) {
+				return consultantName;
+			}
+			return null;
+		}
+
+		if (isConsultantUser && isAnonymousChat) {
+			return (
+				resolveAnonymousChatDisplayName(activeSession.user) ||
+				resolveAnonymousChatDisplayName(contact)
+			);
+		}
+
+		if (hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)) {
+			return (
+				contact?.displayName ||
+				(!isAnonymousMatrixUsername(contact?.username)
+					? contact?.username
+					: null)
+			);
+		}
+
+		return (
+			resolveAnonymousChatDisplayName(contact) ||
+			(!isAnonymousMatrixUsername(contact?.username)
+				? contact?.username
+				: null)
+		);
+	})();
+
+	const headerFallbackLabel = translate('sessionList.user.consultantUnknown');
+	const headerTitle = headerContactName || headerFallbackLabel;
+	const headerAvatarDisplayName =
+		headerContactName ||
+		contact?.displayName ||
+		(!isAnonymousMatrixUsername(contact?.username)
+			? contact?.username
+			: undefined);
+
+	const handleRequestEndAnonymousChat = () => {
+		if (isFinishingChat || isChatFinished) {
+			return;
+		}
+		setEndChatOverlayItem(
+			showConsultantEndAnonymousChatButton
+				? finishAnonymousChatConsultantSecurityOverlayItem
+				: finishAnonymousChatSecurityOverlayItem
+		);
+		setIsEndChatOverlayActive(true);
+	};
+
+	const handleEndChatOverlayAction = (buttonFunction: string) => {
+		if (buttonFunction === OVERLAY_FUNCTIONS.CLOSE) {
+			setIsEndChatOverlayActive(false);
+			setEndChatOverlayItem(null);
+			return;
+		}
+
+		if (buttonFunction === OVERLAY_FUNCTIONS.REDIRECT) {
+			setIsEndChatOverlayActive(false);
+			setEndChatOverlayItem(null);
+			if (isConsultantUser && isAnonymousChat) {
+				history.push('/sessions/consultant/sessionView');
+			} else {
+				window.location.href = appConfig.urls.toEntry;
+			}
+			return;
+		}
+
+		if (buttonFunction === OVERLAY_FUNCTIONS.LOGOUT) {
+			void logout();
+			return;
+		}
+
+		if (buttonFunction !== OVERLAY_FUNCTIONS.FINISH_ANONYMOUS_CHAT) {
+			return;
+		}
+
+		if (isFinishingChat || !activeSession.item?.id) {
+			return;
+		}
+
+		setIsFinishingChat(true);
+		void (async () => {
+			const sessionId = activeSession.item.id;
+			try {
+				await apiFinishAnonymousConversation(sessionId);
+				setIsChatFinished(true);
+				setEndChatOverlayItem(
+					showConsultantEndAnonymousChatButton
+						? finishAnonymousChatConsultantSuccessOverlayItem
+						: finishAnonymousChatSuccessOverlayItem
+				);
+				if (isConsultantUser) {
+					removeSessionFromSidebar(sessionId);
+				}
+			} catch (error: unknown) {
+				if (
+					error instanceof Error &&
+					error.message === FETCH_ERRORS.CONFLICT
+				) {
+					setIsChatFinished(true);
+					setEndChatOverlayItem(
+						showConsultantEndAnonymousChatButton
+							? finishAnonymousChatConsultantSuccessOverlayItem
+							: finishAnonymousChatSuccessOverlayItem
+					);
+					if (isConsultantUser) {
+						removeSessionFromSidebar(sessionId);
+					}
+					return;
+				}
+				setEndChatOverlayItem(finishAnonymousChatErrorOverlayItem);
+			} finally {
+				setIsFinishingChat(false);
+			}
+		})();
+	};
+
 	const handleDeleteAnonymousAccount = async () => {
 		if (isAccountDeleted || isDeletingAccount) {
 			return;
@@ -620,8 +824,10 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 
 		setIsDeletingAccount(true);
 		try {
-			await apiDeleteSessionAndUser(activeSession.item.id);
+			const deletedSessionId = activeSession.item.id;
+			await apiDeleteSessionAndUser(deletedSessionId);
 			setIsAccountDeleted(true);
+			removeSessionFromSidebar(deletedSessionId);
 			addNotification({
 				notificationType: NOTIFICATION_TYPE_SUCCESS,
 				title: translate(
@@ -788,7 +994,9 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 											username={
 												contact?.username || 'User'
 											}
-											displayName={contact?.displayName}
+											displayName={
+												headerAvatarDisplayName
+											}
 											userId={
 												contact?.username || 'unknown'
 											}
@@ -800,11 +1008,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 						);
 					})()}
 					{hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) && (
-						<h3>
-							{contact?.displayName ||
-								contact?.username ||
-								translate('sessionList.user.consultantUnknown')}
-						</h3>
+						<h3 title={headerTitle}>{headerTitle}</h3>
 					)}
 					{hasUserAuthority(
 						AUTHORITIES.CONSULTANT_DEFAULT,
@@ -812,23 +1016,53 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					) ? (
 						isAskerInfoAvailable() ? (
 							<Link to={userProfileLink}>
-								<h3>
-									{contact?.username ||
-										translate(
-											'sessionList.user.consultantUnknown'
-										)}
-								</h3>
+								<h3 title={headerTitle}>{headerTitle}</h3>
 							</Link>
 						) : (
-							<h3>
-								{contact?.username ||
-									translate(
-										'sessionList.user.consultantUnknown'
-									)}
-							</h3>
+							<h3 title={headerTitle}>{headerTitle}</h3>
 						)
 					) : null}
 				</div>
+				{/* End Chat for anonymous askers — desktop only; mobile uses SessionMenu */}
+				{showEndAnonymousChatButton && !untilL && (
+					<button
+						type="button"
+						onClick={handleRequestEndAnonymousChat}
+						disabled={isFinishingChat}
+						className="sessionInfo__endChatButton"
+						data-cy="session-header-end-anonymous-chat"
+					>
+						{isFinishingChat
+							? translate(
+									'sessionHeader.anonymous.endChat.ending',
+									'Ending…'
+								)
+							: translate(
+									'sessionHeader.anonymous.endChat.label',
+									'End chat'
+								)}
+					</button>
+				)}
+				{/* End Chat for consultants in anonymous live chat */}
+				{showConsultantEndAnonymousChatButton && !untilL && (
+					<button
+						type="button"
+						onClick={handleRequestEndAnonymousChat}
+						disabled={isFinishingChat}
+						className="sessionInfo__endChatButton"
+						data-cy="session-header-end-anonymous-chat-consultant"
+					>
+						{isFinishingChat
+							? translate(
+									'sessionHeader.anonymous.endChat.ending',
+									'Ending…'
+								)
+							: translate(
+									'sessionHeader.anonymous.endChat.consultant.label',
+									'End chat'
+								)}
+					</button>
+				)}
 				{/* Delete Account Button for Consultants viewing Anonymous Chats (not supervisors, not during enquiry) */}
 				{hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
 					isAnonymousChat &&
@@ -960,6 +1194,16 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					}
 					mobileDeleteAnonymousAccountDisabled={
 						isAccountDeleted || isDeletingAccount
+					}
+					showMobileEndAnonymousChatAction={
+						showEndAnonymousChatButton ||
+						showConsultantEndAnonymousChatButton
+					}
+					onMobileEndAnonymousChatAction={
+						handleRequestEndAnonymousChat
+					}
+					mobileEndAnonymousChatDisabled={
+						isFinishingChat || isChatFinished
 					}
 				/>
 			</div>
@@ -1322,6 +1566,20 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					</div>,
 					document.body
 				)}
+
+			{isEndChatOverlayActive && endChatOverlayItem && (
+				<Overlay
+					item={endChatOverlayItem}
+					handleOverlay={handleEndChatOverlayAction}
+					handleOverlayClose={() => {
+						if (!isFinishingChat) {
+							setIsEndChatOverlayActive(false);
+							setEndChatOverlayItem(null);
+						}
+					}}
+					loading={isFinishingChat}
+				/>
+			)}
 		</div>
 	);
 };

@@ -62,17 +62,6 @@ export const SessionsListWrapper = ({
 					position: 'relative'
 				}}
 			>
-				<div
-					className="sessionsList__header"
-					data-cy="session-list-header"
-				>
-					<h2
-						className="sessionsList__headline"
-						data-cy="session-list-headline"
-					>
-						{translate('sessionList.user.headline')}
-					</h2>
-				</div>
 				<SessionsList
 					defaultLanguage={fixedLanguages[0]}
 					sessionTypes={sessionTypes}
@@ -95,20 +84,6 @@ export const SessionsListWrapper = ({
 				position: 'relative'
 			}}
 		>
-			{type !== SESSION_LIST_TYPES.MY_SESSION && (
-				<div
-					className="sessionsList__header"
-					data-cy="session-list-header"
-				>
-					<h2
-						className="sessionsList__headline"
-						data-cy="session-list-headline"
-					>
-						{translate('sessionList.preview.headline')}
-					</h2>
-					<div className="sessionMenuPlaceholder"></div>
-				</div>
-			)}
 			<SessionsList
 				defaultLanguage={fixedLanguages[0]}
 				sessionTypes={sessionTypes}

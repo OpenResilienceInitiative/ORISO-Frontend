@@ -6,6 +6,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { callManager, CallData } from '../../services/CallManager';
 import { matrixCallService } from '../../services/matrixCallService';
+import { matrixClientService } from '../../services/matrixClientService';
 import './FloatingCallWidget.scss';
 
 export const FloatingCallWidget: React.FC = () => {
@@ -71,8 +72,7 @@ export const FloatingCallWidget: React.FC = () => {
 		// 🚫 SKIP if this is a group call - GroupCallWidget will handle it
 		if (callData.isGroup) return;
 
-		const matrixClientService = (window as any).matrixClientService;
-		if (!matrixClientService) return;
+		if (!matrixClientService.hasActiveClient()) return;
 
 		const client = matrixClientService.getClient();
 		if (!client) return;
@@ -115,7 +115,7 @@ export const FloatingCallWidget: React.FC = () => {
 			return;
 
 		// 🚫 SKIP if this is a group call - GroupCallWidget will handle it with LiveKit
-		if (callData.isGroup) {
+		if (callData.usesElementCall || callData.isGroup) {
 			// console.log('🚫 FloatingCallWidget: Skipping group call (handled by GroupCallWidget)');
 			return;
 		}
@@ -232,8 +232,7 @@ export const FloatingCallWidget: React.FC = () => {
 	const handleAnswer = async () => {
 		if (!callData || !callData.isIncoming) return;
 		try {
-			const matrixClientService = (window as any).matrixClientService;
-			const client = matrixClientService?.getClient();
+			const client = matrixClientService.getClient();
 			if (!client) throw new Error('Matrix client not available');
 
 			const calls = client.callEventHandler?.calls;
@@ -325,7 +324,7 @@ export const FloatingCallWidget: React.FC = () => {
 
 	// Only render for 1-on-1 calls (not group calls)
 	// Group calls are handled by GroupCallWidget
-	if (!callData || callData.isGroup) return null;
+	if (!callData || callData.usesElementCall || callData.isGroup) return null;
 
 	const widgetClass = `floating-call-widget ${isFullscreen ? 'fullscreen' : isMinimized ? 'minimized' : 'normal'}`;
 

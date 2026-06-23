@@ -146,3 +146,60 @@ export const getLiveKitWsUrl = (): string =>
 	ensureWebsocket(
 		pickValue('REACT_APP_LIVEKIT_WS_URL', 'REACT_APP_LIVEKIT_URL')
 	);
+
+export const getKeycloakRealm = (): string => {
+	const realm = pickValue('REACT_APP_KEYCLOAK_REALM', 'VITE_KEYCLOAK_REALM');
+	if (!realm) {
+		throw new Error('[config] REACT_APP_KEYCLOAK_REALM is not set.');
+	}
+	return realm;
+};
+
+export const getKeycloakAuthPath = (path: string): string => {
+	const realm = getKeycloakRealm();
+	return `/auth/realms/${realm}${path}`;
+};
+
+export const getCookieDomain = (): string | undefined =>
+	pickValue('REACT_APP_COOKIE_DOMAIN', 'VITE_COOKIE_DOMAIN');
+
+export const getHostnamesWithoutCookieDomain = (): string[] => {
+	const raw = pickValue('REACT_APP_HOSTNAMES_WITHOUT_COOKIE_DOMAIN');
+	if (!raw) {
+		return [];
+	}
+
+	return raw
+		.split(',')
+		.map((entry) => entry.trim())
+		.filter(Boolean);
+};
+
+export const getElementUrl = (): string =>
+	stripTrailingSlashes(
+		ensureHttps(
+			pickValue('REACT_APP_ELEMENT_URL', 'REACT_APP_ELEMENT_BASE_URL')
+		)
+	);
+
+export const getOrganizationHomeUrl = (): string =>
+	pickValue('REACT_APP_ORGANIZATION_HOME_URL') ||
+	(typeof window !== 'undefined' ? window.location.origin : '');
+
+export const getOrganizationOnlineBeratungUrl = (): string =>
+	pickValue('REACT_APP_ORGANIZATION_ONLINEBERATUNG_URL') ||
+	getOrganizationHomeUrl();
+
+export const getLegalImprintUrl = (
+	baseUrl = getOrganizationHomeUrl()
+): string => pickValue('REACT_APP_LEGAL_IMPRINT_URL') || `${baseUrl}/impressum`;
+
+export const getLegalPrivacyUrl = (
+	baseUrl = getOrganizationHomeUrl()
+): string =>
+	pickValue('REACT_APP_LEGAL_PRIVACY_URL') || `${baseUrl}/datenschutz`;
+
+export const getUseHttps = (): boolean => {
+	const value = pickValue('REACT_APP_USE_HTTPS', 'VITE_USE_HTTPS');
+	return value !== 'false';
+};

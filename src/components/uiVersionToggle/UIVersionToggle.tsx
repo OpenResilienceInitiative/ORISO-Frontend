@@ -1,53 +1,55 @@
 import * as React from 'react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Switch, FormControlLabel, Box, Chip } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-import { getMatrixHomeserverUrl } from '../../resources/scripts/runtimeConfig';
+import {
+	getCookieDomain,
+	getElementUrl,
+	getHostnamesWithoutCookieDomain,
+	getMatrixHomeserverUrl,
+	getUseHttps
+} from '../../resources/scripts/runtimeConfig';
 import './uiVersionToggle.styles.scss';
 
 const UI_VERSION_COOKIE = 'ui-version';
 const UI_VERSION_STORAGE = 'ui-version';
 
+const isElementUiOrigin = (): boolean => {
+	const elementUrl = getElementUrl();
+	if (!elementUrl) {
+		return false;
+	}
+
+	try {
+		return window.location.origin === new URL(elementUrl).origin;
+	} catch {
+		return false;
+	}
+};
+
 export const UIVersionToggle = () => {
 	const { t } = useTranslation();
-	const [useNewUI, setUseNewUI] = useState(() => {
-		// Determine current UI based on port
-		// Port 8087 = Element (New UI), Port 9001 = Classic UI
-		const currentPort = window.location.port;
-
-		// If on Element (8087), toggle should be ON
-		// If on Classic (9001), toggle should be OFF
-		return currentPort === '8087';
-	});
+	const [useNewUI, setUseNewUI] = useState(isElementUiOrigin);
 
 	const toggleUI = () => {
 		const newVersion = useNewUI ? 'classic' : 'new';
 
-		// Save preference
 		localStorage.setItem(UI_VERSION_STORAGE, newVersion);
 
-		// Set cookie with cross-subdomain support
-		const plainHosts = (
-			process.env.REACT_APP_HOSTNAMES_WITHOUT_COOKIE_DOMAIN ||
-			'91.99.219.182,localhost'
-		)
-			.split(',')
-			.map((h) => h.trim())
-			.filter(Boolean);
+		const plainHosts = getHostnamesWithoutCookieDomain();
 		const useSharedCookieDomain =
 			plainHosts.length === 0 ||
 			!plainHosts.includes(window.location.hostname);
-		const cookieDomainFromEnv = process.env.REACT_APP_COOKIE_DOMAIN?.trim();
+		const cookieDomain = getCookieDomain();
 		const uiVersionCookieDomain =
-			useSharedCookieDomain && cookieDomainFromEnv
-				? `; domain=${cookieDomainFromEnv}`
+			useSharedCookieDomain && cookieDomain
+				? `; domain=${cookieDomain}`
 				: '';
 		const secure = window.location.protocol === 'https:' ? '; secure' : '';
 		const expiryDate = new Date();
 		expiryDate.setDate(expiryDate.getDate() + 30);
 		document.cookie = `${UI_VERSION_COOKIE}=${newVersion}; path=/; expires=${expiryDate.toUTCString()}; SameSite=Lax${uiVersionCookieDomain}${secure}`;
 
-		// Redirect to Element UI or reload
 		if (newVersion === 'new') {
 			const matrixUserId = localStorage.getItem('matrix_user_id');
 			const matrixAccessToken = localStorage.getItem(
@@ -63,8 +65,8 @@ export const UIVersionToggle = () => {
 			}
 
 			if (matrixUserId && matrixAccessToken) {
-				const matrixCookieDomain = process.env.REACT_APP_COOKIE_DOMAIN;
-				const isSecure = process.env.REACT_APP_USE_HTTPS === 'true';
+				const matrixCookieDomain = getCookieDomain();
+				const isSecure = getUseHttps();
 
 				const domainStr = matrixCookieDomain
 					? `; domain=${matrixCookieDomain}`
@@ -77,7 +79,7 @@ export const UIVersionToggle = () => {
 				document.cookie = `matrix_sso_hs_url=${encodeURIComponent(homeserverUrl)}; path=/; SameSite=Lax${domainStr}${secureStr}`;
 			}
 
-			const elementUrl = process.env.REACT_APP_ELEMENT_URL?.trim();
+			const elementUrl = getElementUrl();
 			if (!elementUrl) {
 				alert(
 					'REACT_APP_ELEMENT_URL is not set; cannot open the Element UI.'
@@ -87,7 +89,6 @@ export const UIVersionToggle = () => {
 
 			window.location.href = elementUrl;
 		} else {
-			// Reload to Classic UI
 			window.location.reload();
 		}
 	};

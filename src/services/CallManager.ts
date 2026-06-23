@@ -7,6 +7,7 @@
  */
 
 import { MatrixCall } from 'matrix-js-sdk/lib/webrtc/call';
+import { matrixClientService } from './matrixClientService';
 
 export type CallState =
 	| 'idle'
@@ -26,6 +27,7 @@ export interface CallData {
 	isVideo: boolean;
 	isIncoming: boolean;
 	isGroup?: boolean; // Flag to determine if this is a group call
+	usesElementCall?: boolean; // Use Element Call / MatrixRTC / LiveKit media path
 	callerUserId?: string;
 	matrixCall?: MatrixCall;
 	state: CallState;
@@ -128,8 +130,7 @@ class CallManager {
 		} else {
 			// Auto-detect based on room member count
 			try {
-				const matrixClientService = (window as any).matrixClientService;
-				const client = matrixClientService?.getClient();
+				const client = matrixClientService.getClient();
 				// console.log(`   Matrix client available: ${!!client}`);
 
 				if (client) {
@@ -188,9 +189,7 @@ class CallManager {
 			// than re-using the session room. This matches the "direct" usage of
 			// call.oriso.site where each call lives in its own Matrix room with
 			// appropriate power levels.
-			if (isGroup) {
-				elementCallRoomId = await this.createElementCallRoom(roomId);
-			}
+			elementCallRoomId = await this.createElementCallRoom(roomId);
 
 			this.currentCall = {
 				callId,
@@ -200,6 +199,7 @@ class CallManager {
 				isVideo,
 				isIncoming: false,
 				isGroup,
+				usesElementCall: true,
 				state: 'connecting',
 				elementCallRoomId: elementCallRoomId || roomId,
 				signalRoomId: isGroup ? roomId : roomId
@@ -208,24 +208,23 @@ class CallManager {
 			// console.log("✅ Outgoing call created:", this.currentCall);
 			// console.log("═══════════════════════════════════════════════");
 
-			if (isGroup) {
-				// Make sure the Element Call room allows membership events from
-				// regular users (matches Element Call's own room creation).
-				this.ensureGroupCallPermissions(this.currentCall.roomId).catch(
-					(err) => {
-						// console.error("❌ Failed to ensure group call room permissions:", err);
-					}
-				);
+			// Make sure the Element Call room allows membership events from
+			// regular users (matches Element Call's own room creation).
+			this.ensureGroupCallPermissions(this.currentCall.roomId).catch(
+				(err) => {
+					// console.error("❌ Failed to ensure group call room permissions:", err);
+				}
+			);
 
-				// Send Matrix call invite event to the original session room so
-				// the other participant sees the incoming call notification.
-				this.sendGroupCallInvite(
-					roomId,
-					callId,
-					isVideo,
-					this.currentCall.roomId
-				);
-			}
+			// Send Matrix call invite event to the original session room so
+			// the other participant sees the incoming call notification.
+			this.sendGroupCallInvite(
+				roomId,
+				callId,
+				isVideo,
+				this.currentCall.roomId,
+				isGroup
+			);
 
 			this.notifyListeners();
 		})().catch((err: any) => {
@@ -241,8 +240,7 @@ class CallManager {
 	 * use-case (notably the power levels for `org.matrix.msc3401.call.member`).
 	 */
 	private async createElementCallRoom(sourceRoomId: string): Promise<string> {
-		const matrixClientService = (window as any).matrixClientService;
-		const client = matrixClientService?.getClient();
+		const client = matrixClientService.getClient();
 
 		if (!client) {
 			throw new Error(
@@ -309,8 +307,7 @@ class CallManager {
 	 */
 	private async ensureGroupCallPermissions(roomId: string): Promise<void> {
 		try {
-			const matrixClientService = (window as any).matrixClientService;
-			const client = matrixClientService?.getClient();
+			const client = matrixClientService.getClient();
 
 			if (!client) {
 				// console.warn("⚠️  Matrix client not available, cannot adjust power levels for group call");
@@ -361,7 +358,7 @@ class CallManager {
 			// We must NOT pass the content as the stateKey (it becomes "[object Object]" in the URL).
 			await client.sendStateEvent(
 				roomId,
-				'm.room.power_levels',
+				'm.room.power_levels' as any,
 				updatedContent,
 				''
 			);
@@ -383,11 +380,11 @@ class CallManager {
 		signallingRoomId: string,
 		callId: string,
 		isVideo: boolean,
-		elementCallRoomId?: string
+		elementCallRoomId?: string,
+		isGroupCall: boolean = false
 	): void {
 		try {
-			const matrixClientService = (window as any).matrixClientService;
-			const client = matrixClientService?.getClient();
+			const client = matrixClientService.getClient();
 
 			if (!client) {
 				// console.error('❌ Matrix client not available to send call invite');
@@ -398,17 +395,14 @@ class CallManager {
 
 			// Send m.call.invite event
 			client
-				.sendEvent(signallingRoomId, 'm.call.invite', {
+				.sendEvent(signallingRoomId, 'org.oriso.call.invite' as any, {
 					call_id: callId,
 					version: '1',
 					lifetime: 60000, // 60 seconds
-					offer: {
-						type: 'offer',
-						sdp: '' // Empty for LiveKit calls (not using Matrix WebRTC)
-					},
 					invitee: undefined, // Group call - no specific invitee
 					party_id: client.getDeviceId() || 'unknown',
-					is_group_call: true, // Custom field to indicate group call
+					is_group_call: isGroupCall, // Custom field to indicate group session
+					is_element_call: true, // Custom field to use Element Call/LiveKit media
 					is_video: isVideo,
 					// Custom: tell receivers which Matrix room Element Call should use.
 					call_room_id: elementCallRoomId
@@ -440,7 +434,8 @@ class CallManager {
 		callId: string,
 		callerUserId: string,
 		isGroup: boolean,
-		signallingRoomId?: string
+		signallingRoomId?: string,
+		usesElementCall: boolean = false
 	): void {
 		// console.log("═══════════════════════════════════════════════");
 		// console.log("📞 CallManager.receiveCall()");
@@ -464,6 +459,7 @@ class CallManager {
 			isVideo,
 			isIncoming: true,
 			isGroup, // Set isGroup for incoming calls
+			usesElementCall,
 			callerUserId,
 			state: 'ringing',
 			elementCallRoomId: callRoomId,
@@ -535,7 +531,7 @@ class CallManager {
 	/**
 	 * End the current call
 	 */
-	public endCall(): void {
+	public endCall(notifyRemote: boolean = true): void {
 		// console.log("═══════════════════════════════════════════════");
 		// console.log("📴 CallManager.endCall()");
 		// console.log("═══════════════════════════════════════════════");
@@ -543,6 +539,10 @@ class CallManager {
 		if (!this.currentCall) {
 			// console.log("ℹ️  No active call to end");
 			return;
+		}
+
+		if (notifyRemote && this.currentCall.usesElementCall) {
+			this.sendElementCallHangup(this.currentCall);
 		}
 
 		// Hangup Matrix call (this will send m.call.hangup event to other side)
@@ -574,6 +574,31 @@ class CallManager {
 		// console.log("═══════════════════════════════════════════════");
 
 		this.notifyListeners();
+	}
+
+	private sendElementCallHangup(callData: CallData): void {
+		try {
+			const client = matrixClientService.getClient();
+			if (!client) return;
+
+			client
+				.sendEvent(
+					callData.signalRoomId || callData.roomId,
+					'org.oriso.call.hangup' as any,
+					{
+						call_id: callData.callId,
+						version: '1',
+						reason: 'user_hangup',
+						call_room_id:
+							callData.elementCallRoomId || callData.roomId
+					}
+				)
+				.catch((err: Error) => {
+					// console.error('❌ Failed to send Element Call hangup:', err);
+				});
+		} catch (error) {
+			// console.error('❌ Error sending Element Call hangup:', error);
+		}
 	}
 
 	/**

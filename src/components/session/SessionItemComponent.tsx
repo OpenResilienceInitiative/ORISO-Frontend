@@ -14,6 +14,10 @@ import clsx from 'clsx';
 import { scrollToEnd, isMyMessage, SESSION_LIST_TYPES } from './sessionHelpers';
 import { formatToHHMM } from '../../utils/dateHelpers';
 import {
+	isMatrixRoom,
+	isMatrixRoomIdHeuristic
+} from '../../utils/matrixRoomUtils';
+import {
 	MessageItem,
 	MessageItemComponent
 } from '../message/MessageItemComponent';
@@ -62,6 +66,12 @@ import { apiPatchNotificationActiveView } from '../../api/apiPatchNotificationAc
 import { apiPatchUserData } from '../../api/apiPatchUserData';
 import { apiGetUserData } from '../../api/apiGetUserData';
 import { apiGetAnonymousEnquiryDetails } from '../../api/apiGetAnonymousEnquiryDetails';
+import { matrixClientService } from '../../services/matrixClientService';
+import {
+	bindAnonymousChatUnloadCleanup,
+	ensureAnonymousChatPreLogoutCleanup,
+	registerAnonymousChatSessionForCleanup
+} from '../../utils/anonymousChatSessionCleanup';
 import { parseMessagePrefixes } from '../message/messageConstants';
 import { decodeUsername } from '../../utils/encryptionHelpers';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
@@ -1655,14 +1665,14 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			};
 
 			const isMatrixSession = Boolean(
-				activeSession.rid?.startsWith('!') ||
+				isMatrixRoom(activeSession.rid) ||
 					activeSession.item?.matrixRoomId ||
 					messageUserId?.includes('@')
 			);
 
 			if (isMatrixSession) {
-				const matrixClientUserId = (window as any).matrixClientService
-					?.getClient?.()
+				const matrixClientUserId = matrixClientService
+					.getClient()
 					?.getUserId?.();
 				const myMatrixUserId =
 					matrixClientUserId ||
@@ -1838,6 +1848,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				setPseudonymConfirmed(true);
 				try {
 					sessionStorage.setItem(pseudonymStorageKey, '1');
+					sessionStorage.setItem(
+						`anonymous-pseudonym-name-${activeSession.item.id}`,
+						currentPseudonym.displayName
+					);
 				} catch {
 					/* ignore storage errors */
 				}
@@ -1899,6 +1913,37 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			window.clearInterval(poll);
 		};
 	}, [isInAnonymousWaitingQueuePhase, activeSession.item?.id]);
+
+	/**
+	 * When an anonymous asker leaves (logout, navigate away, tab close), finish the
+	 * session immediately so the waiting queue count drops for everyone else.
+	 */
+	useEffect(() => {
+		ensureAnonymousChatPreLogoutCleanup();
+
+		if (!isAnonymousAskerExperience || !activeSession.item?.id) {
+			registerAnonymousChatSessionForCleanup(null);
+			return;
+		}
+
+		registerAnonymousChatSessionForCleanup(
+			activeSession.item.id,
+			activeSession.item.status,
+			isMatrixRoomIdHeuristic(activeSession.rid)
+				? activeSession.rid
+				: activeSession.item?.matrixRoomId,
+			userData?.userName
+		);
+
+		return bindAnonymousChatUnloadCleanup(activeSession.item.id);
+	}, [
+		isAnonymousAskerExperience,
+		activeSession.item?.id,
+		activeSession.item?.status,
+		activeSession.item?.matrixRoomId,
+		activeSession.rid,
+		userData?.userName
+	]);
 
 	/**
 	 * As soon as at least one consultant is available again, clear any manual
@@ -2827,7 +2872,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			return;
 		}
 		const roomId =
-			(activeSession.rid && activeSession.rid.startsWith('!')
+			(isMatrixRoom(activeSession.rid)
 				? activeSession.rid
 				: activeSession.item?.matrixRoomId ||
 					activeSession.rid ||

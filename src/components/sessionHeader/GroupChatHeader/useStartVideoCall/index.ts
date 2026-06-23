@@ -4,6 +4,7 @@ import {
 	getElementCallBaseUrl,
 	getMatrixHomeserverUrl
 } from '../../../../resources/scripts/runtimeConfig';
+import { matrixClientService } from '../../../../services/matrixClientService';
 
 export const useStartVideoCall = () => {
 	const { activeSession } = useContext(ActiveSessionContext);
@@ -33,8 +34,7 @@ export const useStartVideoCall = () => {
 			// console.log('📞 Opening Element Call for group video call...');
 
 			// Get Matrix homeserver from current client
-			const matrixClientService = (window as any).matrixClientService;
-			const client = matrixClientService?.getClient();
+			const client = matrixClientService.getClient();
 			const homeserverUrl =
 				client?.getHomeserverUrl() || getMatrixHomeserverUrl();
 
