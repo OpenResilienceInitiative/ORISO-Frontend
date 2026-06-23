@@ -117,6 +117,7 @@ export const PseudonymCard: React.FC<PseudonymCardProps> = ({
 
 									<AnimalAvatar
 										animalType={pseudonym.animalType}
+										avatarColor={pseudonym.avatarColor}
 										size={108}
 									/>
 
