@@ -1872,9 +1872,14 @@ export const MessageSubmitInterfaceComponent = ({
 					}
 				} else {
 					// Legacy RocketChat upload path
-					const isAttachmentEncryptionEnabledDevTools = parseInt(
-						getDevToolbarOption(STORAGE_KEY_ATTACHMENT_ENCRYPTION)
-					);
+					const isAttachmentEncryptionEnabledDevTools =
+						process.env.NODE_ENV !== 'production'
+							? parseInt(
+									getDevToolbarOption(
+										STORAGE_KEY_ATTACHMENT_ENCRYPTION
+									)
+								)
+							: 1;
 					let attachmentFile = attachment;
 					let signature = null;
 					let encryptEnabled =
