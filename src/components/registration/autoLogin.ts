@@ -180,8 +180,6 @@ export const autoLogin = async ({
 		const matrixClientService = new MatrixClientService();
 		// console.log('🔷 Initializing Matrix client...');
 		matrixClientService.initializeClient(matrixLoginData);
-
-		// console.log('✅✅✅ Matrix client initialized successfully! ✅✅✅');
 	} catch (error) {
 		// console.error('❌❌❌ Matrix client initialization FAILED! ❌❌❌');
 		// console.error('❌ Error:', error);

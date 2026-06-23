@@ -35,7 +35,7 @@ export const useStartVideoCall = () => {
 			// console.log('📞 Opening Element Call for group video call...');
 
 			// Get Matrix homeserver from current client
-			const client = matrixClientService?.getClient();
+			const client = matrixClientService?.getClient?.();
 			const homeserverUrl =
 				client?.getHomeserverUrl() || getMatrixHomeserverUrl();
 

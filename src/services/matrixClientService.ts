@@ -1,10 +1,14 @@
 import { MatrixClient, Room, MatrixEvent } from 'matrix-js-sdk';
 import {
 	MatrixLoginData,
-	createMatrixClient
+	createMatrixClient,
+	getMatrixAccessToken,
+	persistMatrixLoginData
 } from '../components/sessionCookie/getMatrixAccessToken';
 import { matrixCallService } from './matrixCallService';
 import { matrixLiveEventBridge } from './matrixLiveEventBridge';
+
+const TOKEN_REFRESH_BUFFER_MS = 2 * 60 * 1000;
 
 export const isMatrixForbiddenError = (error: unknown): boolean => {
 	const matrixError = error as { errcode?: string; httpStatus?: number };
@@ -14,51 +18,84 @@ export const isMatrixForbiddenError = (error: unknown): boolean => {
 	);
 };
 
+export const isMatrixExpiredTokenError = (error: unknown): boolean => {
+	const syncError = error as { error?: unknown };
+	const candidate =
+		syncError?.error && typeof syncError.error === 'object'
+			? syncError.error
+			: error;
+	const matrixError = candidate as {
+		data?: { errcode?: string; error?: string };
+		errcode?: string;
+		error?: unknown;
+		httpStatus?: number;
+		message?: string;
+		statusCode?: number;
+	};
+	const rawMessage =
+		matrixError?.data?.error ||
+		matrixError?.error ||
+		matrixError?.message ||
+		'';
+	const message = typeof rawMessage === 'string' ? rawMessage : '';
+	const httpStatus = matrixError?.httpStatus || matrixError?.statusCode;
+
+	return (
+		message.includes('Access token has expired') ||
+		(httpStatus === 401 &&
+			(message.toLowerCase().includes('expired') ||
+				matrixError?.errcode === 'M_UNKNOWN' ||
+				matrixError?.data?.errcode === 'M_UNKNOWN'))
+	);
+};
+
 export class MatrixClientService {
 	private client: MatrixClient | null = null;
 	private loginData: MatrixLoginData | null = null;
-
-	constructor() {
-		// Initialize service
-	}
+	private refreshTimer: number | null = null;
+	private refreshingToken: Promise<void> | null = null;
+	private syncState: string | null = null;
+	private initializedServicesClient: MatrixClient | null = null;
+	private syncStateListeners = new Set<(state: string | null) => void>();
 
 	// Initialize client with login data
 	public initializeClient(loginData: MatrixLoginData): void {
+		this.stopCurrentClient();
 		this.loginData = loginData;
 		this.client = createMatrixClient(loginData);
+		this.syncState = null;
+		this.initializedServicesClient = null;
+		this.notifySyncStateListeners();
+		this.scheduleTokenRefresh(loginData);
 
 		// CRITICAL: Start client with sync configuration (EXACTLY like Element does!)
 		// NOTE: TURN/STUN servers are fetched automatically from Matrix homeserver
 		// console.log('🔧 Matrix client will fetch TURN/STUN servers from homeserver');
 
-		this.client.startClient({
+		const client = this.client;
+
+		(client as any).on(
+			'sync',
+			(state: string, _prevState: string | null, syncError?: unknown) => {
+				this.syncState = state;
+				this.notifySyncStateListeners();
+
+				if (state === 'PREPARED') {
+					// console.log('✅ Matrix client SYNCED and READY for real-time events!');
+					this.initializeDependentServices(client);
+				}
+
+				if (state === 'ERROR' && isMatrixExpiredTokenError(syncError)) {
+					void this.refreshMatrixToken();
+				}
+			}
+		);
+
+		client.startClient({
 			initialSyncLimit: 20, // Load last 20 messages per room initially
 			pollTimeout: 30000, // 30-second long-polling timeout
 			lazyLoadMembers: true // Don't load all room members immediately
 		});
-
-		// Wait for initial sync to complete before initializing other services
-		(this.client as any).once('sync', (state: string) => {
-			// console.log('🔷 Matrix sync state:', state);
-
-			if (state === 'PREPARED') {
-				// console.log('✅ Matrix client SYNCED and READY for real-time events!');
-
-				// Initialize call service with this client
-				matrixCallService.initialize(this.client!);
-
-				// Initialize live event bridge for real-time notifications
-				matrixLiveEventBridge.initialize(this.client!);
-			}
-		});
-
-		// Log sync state changes
-		(this.client as any).on(
-			'sync',
-			(state: string, prevState: string | null) => {
-				// console.log(`🔄 Matrix sync: ${prevState} → ${state}`);
-			}
-		);
 
 		// console.log("✅ Matrix client starting with real-time sync...");
 	}
@@ -68,8 +105,51 @@ export class MatrixClientService {
 		return this.client;
 	}
 
+	public isReady(): boolean {
+		return this.syncState === 'PREPARED';
+	}
+
+	public onSyncStateChange(
+		callback: (state: string | null) => void
+	): () => void {
+		this.syncStateListeners.add(callback);
+		callback(this.syncState);
+
+		return () => {
+			this.syncStateListeners.delete(callback);
+		};
+	}
+
+	public async refreshMatrixToken(): Promise<void> {
+		if (this.refreshingToken) {
+			return this.refreshingToken;
+		}
+
+		this.refreshingToken = getMatrixAccessToken()
+			.then((loginData) => {
+				persistMatrixLoginData(loginData);
+				this.initializeClient(loginData);
+			})
+			.finally(() => {
+				this.refreshingToken = null;
+			});
+
+		return this.refreshingToken;
+	}
+
+	public async ensureFreshToken(): Promise<void> {
+		const expiresAt = this.getStoredTokenExpiresAt();
+		if (!expiresAt || Date.now() + TOKEN_REFRESH_BUFFER_MS < expiresAt) {
+			return;
+		}
+
+		await this.refreshMatrixToken();
+	}
+
 	// Send message to a room
-	public async sendMessage(roomId: string, message: string): Promise<void> {
+	public async sendMessage(roomId: string, message: string): Promise<any> {
+		await this.ensureFreshToken();
+
 		if (!this.client) {
 			throw new Error('Matrix client not initialized');
 		}
@@ -79,11 +159,26 @@ export class MatrixClientService {
 			body: message
 		} as any;
 
-		await this.client.sendMessage(roomId, content);
+		try {
+			return await this.client.sendMessage(roomId, content);
+		} catch (error) {
+			if (!isMatrixExpiredTokenError(error)) {
+				throw error;
+			}
+
+			await this.refreshMatrixToken();
+			if (!this.client) {
+				throw new Error('Matrix client not initialized');
+			}
+
+			return this.client.sendMessage(roomId, content);
+		}
 	}
 
 	// Create a direct message room with another user
 	public async createDirectMessageRoom(userId: string): Promise<string> {
+		await this.ensureFreshToken();
+
 		if (!this.client) {
 			throw new Error('Matrix client not initialized');
 		}
@@ -133,6 +228,8 @@ export class MatrixClientService {
 
 	// Send typing indicator (best-effort; room permission failures are non-fatal)
 	public async sendTyping(roomId: string, typing: boolean): Promise<void> {
+		await this.ensureFreshToken();
+
 		if (!this.client) {
 			return;
 		}
@@ -162,15 +259,96 @@ export class MatrixClientService {
 
 	// Logout
 	public async logout(): Promise<void> {
-		if (!this.client) {
+		const client = this.client;
+		this.stopAndCleanup();
+		matrixLiveEventBridge.destroy();
+		matrixCallService.destroy();
+
+		if (!client) {
 			return;
 		}
 
-		await this.client.logout();
+		try {
+			await client.logout();
+		} catch {
+			// Local session is already torn down; ignore remote logout failures.
+		}
+	}
+
+	private initializeDependentServices(client: MatrixClient): void {
+		if (this.initializedServicesClient === client) {
+			return;
+		}
+
+		matrixCallService.initialize(client);
+		matrixLiveEventBridge.initialize(client);
+		this.initializedServicesClient = client;
+	}
+
+	private scheduleTokenRefresh(loginData: MatrixLoginData): void {
+		this.clearRefreshTimer();
+
+		const expiresAt = loginData.expiresInMs
+			? Date.now() + loginData.expiresInMs
+			: this.getStoredTokenExpiresAt();
+
+		if (!expiresAt) {
+			return;
+		}
+
+		const refreshInMs = Math.max(
+			expiresAt - Date.now() - TOKEN_REFRESH_BUFFER_MS,
+			0
+		);
+
+		this.refreshTimer = window.setTimeout(() => {
+			void this.refreshMatrixToken();
+		}, refreshInMs);
+	}
+
+	private clearRefreshTimer(): void {
+		if (this.refreshTimer !== null) {
+			window.clearTimeout(this.refreshTimer);
+			this.refreshTimer = null;
+		}
+	}
+
+	private stopCurrentClient(): void {
+		this.stopAndCleanup();
+	}
+
+	/** Stops sync, removes listeners, and tears down bridge/call services (no Matrix logout API). */
+	public stopAndCleanup(): void {
+		this.clearRefreshTimer();
+
+		if (this.client) {
+			this.client.stopClient();
+			this.client.removeAllListeners();
+		}
+
 		this.client = null;
 		this.loginData = null;
+		this.syncState = null;
+		this.initializedServicesClient = null;
+		matrixLiveEventBridge.detach();
+		matrixCallService.detach();
+		this.notifySyncStateListeners();
+	}
+
+	public hasActiveClient(): boolean {
+		return this.client !== null;
+	}
+
+	private getStoredTokenExpiresAt(): number | null {
+		const rawExpiresAt = localStorage.getItem('matrix_token_expires_at');
+		const expiresAt = rawExpiresAt ? Number(rawExpiresAt) : NaN;
+
+		return Number.isFinite(expiresAt) ? expiresAt : null;
+	}
+
+	private notifySyncStateListeners(): void {
+		this.syncStateListeners.forEach((listener) => {
+			listener(this.syncState);
+		});
 	}
 }
-
-// Singleton instance
-export const matrixClientService = new MatrixClientService();

@@ -76,7 +76,7 @@ export const GroupChatHeader = ({
 		const maxRetries = 20;
 
 		const tryLoadMembers = () => {
-			const client = matrixClientService?.getClient();
+			const client = matrixClientService?.getClient?.();
 
 			if (!client) {
 				retryCount++;
@@ -147,7 +147,7 @@ export const GroupChatHeader = ({
 
 			// Poll for member changes every 5 seconds
 			const intervalId = setInterval(() => {
-				const client = matrixClientService?.getClient();
+				const client = matrixClientService?.getClient?.();
 				if (client) {
 					const updatedRoom = client.getRoom(matrixRoomId);
 					if (updatedRoom) {

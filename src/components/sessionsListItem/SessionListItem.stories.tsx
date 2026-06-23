@@ -84,7 +84,7 @@ function ConsultantCardMock({
 				<div className="sessionsListItem__row">
 					<MockAvatar letter="S" bg="#e8b4f0" />
 					<div className="sessionsListItem__username">
-						shaziauser1
+						testuser@example.invalid
 					</div>
 				</div>
 				<div className="sessionsListItem__row">

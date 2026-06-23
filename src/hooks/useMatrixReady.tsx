@@ -15,7 +15,7 @@ export const useMatrixReady = (): boolean => {
 			return;
 		}
 
-		const client = matrixClientService.getClient();
+		const client = matrixClientService?.getClient?.();
 		if (!client) {
 			setIsReady(false);
 			return;
