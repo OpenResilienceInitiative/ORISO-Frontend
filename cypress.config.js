@@ -128,7 +128,12 @@ const options = {
 							]
 						},
 						{
-							test: /\.(bmp|gif|jpe?g|png|webp|svg|woff2?|eot|ttf|otf)$/,
+							test: /\.svg$/,
+							issuer: { not: /\.[jt]sx?$/ },
+							type: 'asset/resource'
+						},
+						{
+							test: /\.(bmp|gif|jpe?g|png|webp|woff2?|eot|ttf|otf)$/,
 							type: 'asset/resource'
 						}
 					]
