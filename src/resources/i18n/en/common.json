@@ -1315,6 +1315,89 @@
 		"tools": "My tools"
 	},
 	"notifications": {
+		"families": {
+			"requests": "Requests",
+			"messages": "Messages",
+			"drafts": "Drafts",
+			"handover": "Handover",
+			"calls": "Calls",
+			"system": "System",
+			"appointments": "Appointments"
+		},
+		"events": {
+			"fallback": {
+				"title": "Activity",
+				"text": ""
+			},
+			"inquiryAccepted": {
+				"title": "Request accepted",
+				"text": "The request was accepted. You can start the conversation."
+			},
+			"messageNew": {
+				"title": "New message",
+				"text": "You received a new message."
+			},
+			"threadReplyNew": {
+				"title": "New thread reply",
+				"text": "There is a new reply in a thread."
+			},
+			"supervisorAdded": {
+				"title": "Supervisor added",
+				"text": "A supervisor was added to this case."
+			},
+			"supervisorRemoved": {
+				"title": "Supervisor removed",
+				"text": "A supervisor was removed from this case."
+			},
+			"supervisorAssigned": {
+				"title": "Supervisor assigned",
+				"text": "A supervisor was assigned to this case."
+			},
+			"counselorRenamed": {
+				"title": "Counsellor renamed",
+				"text": "The counsellor's display name has changed."
+			},
+			"requestNew": {
+				"title": "New client request",
+				"text": "A new client request is waiting."
+			},
+			"draftCreated": {
+				"title": "Draft saved",
+				"text": "You have an unsent draft. Resume where you left off."
+			},
+			"handoverRequested": {
+				"title": "Handover requested",
+				"text": "A case handover was requested. Both parties must confirm."
+			},
+			"handoverPartial": {
+				"title": "Handover partially confirmed",
+				"text": "One party has confirmed the handover."
+			},
+			"handoverAllConfirmed": {
+				"title": "Handover confirmed",
+				"text": "Both parties confirmed. The handover took effect."
+			},
+			"handoverAutoConfirmed": {
+				"title": "Handover auto-confirmed",
+				"text": "The handover was auto-confirmed by policy."
+			},
+			"handoverDenied": {
+				"title": "Handover denied",
+				"text": "The handover was denied and cancelled."
+			},
+			"callStarted": {
+				"title": "Call ongoing",
+				"text": "A call is ongoing. Join to participate."
+			},
+			"callEnded": {
+				"title": "Call ended",
+				"text": "The call has ended."
+			},
+			"callMissed": {
+				"title": "Missed call",
+				"text": "You missed a call."
+			}
+		},
 		"error": "failed",
 		"info": "info",
 		"initialRequest": {

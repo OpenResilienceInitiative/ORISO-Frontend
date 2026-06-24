@@ -5,6 +5,9 @@
 // BREAKPOINTS
 @import '~breakpoint-sass/stylesheets/breakpoint';
 
+// WP-06 Activity Timeline — shared list-item selection tokens + mixins (Slice 0b)
+@import './listItemSelection';
+
 // FONTS
 $font-family-sans-serif: 'Inter Variable', arial, sans-serif;
 $font-family-divider: 'Inter Variable', arial, sans-serif;
