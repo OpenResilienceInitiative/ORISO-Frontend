@@ -142,9 +142,13 @@ describe('Session toolbar filters', () => {
 				expect(chipStyle.transitionProperty).to.include(
 					'background-color'
 				);
-				expect(parseFloat(chipStyle.transitionDuration)).to.be.greaterThan(
-					0.15
+				expect(chipStyle.transitionProperty).to.include('max-width');
+				const longestDuration = Math.max(
+					...chipStyle.transitionDuration
+						.split(',')
+						.map((duration) => parseFloat(duration))
 				);
+				expect(longestDuration).to.be.greaterThan(0.3);
 			}
 		);
 		cy.get(
