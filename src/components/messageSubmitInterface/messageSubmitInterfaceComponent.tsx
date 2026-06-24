@@ -30,6 +30,7 @@ import {
 	apiPutDearchive,
 	apiGetSessionSupervisors,
 	apiSendEnquiry,
+	apiSendMatrixAttachmentMessage,
 	apiSendMessage,
 	apiUploadAttachment
 } from '../../api';
@@ -1854,12 +1855,21 @@ export const MessageSubmitInterfaceComponent = ({
 							abort: () => abortController.abort()
 						});
 
-						await matrixClientService.sendFileMessage(
+						await apiSendMatrixAttachmentMessage(
 							matrixRoomId,
 							attachment,
 							{
 								abortController,
-								uploadProgress: setUploadProgress
+								uploadProgress: setUploadProgress,
+								threadRootId: threadRootId || null,
+								supervisorMessage: !!isSupervisor,
+								senderDisplayName:
+									userData?.displayName ||
+									userData?.userName ||
+									`${userData?.firstName || ''} ${userData?.lastName || ''}`.trim() ||
+									'User',
+								threadParentPreview:
+									threadParentPreview || null
 							}
 						);
 
@@ -2012,10 +2022,17 @@ export const MessageSubmitInterfaceComponent = ({
 			hasMessageContent,
 			handleAttachmentUploadError,
 			handleMessageSendSuccess,
+			isSupervisor,
 			key,
 			keyID,
 			onSendButton,
-			setE2EEState
+			setE2EEState,
+			threadParentPreview,
+			threadRootId,
+			userData?.displayName,
+			userData?.firstName,
+			userData?.lastName,
+			userData?.userName
 		]
 	);
 

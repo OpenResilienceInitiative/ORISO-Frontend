@@ -1,4 +1,6 @@
 import { apiSendMessage } from '../../src/api/apiSendMessage';
+import { apiSendMatrixAttachmentMessage } from '../../src/api/apiSendMatrixAttachmentMessage';
+import { buildMessageEventNotificationBody } from '../../src/api/apiPostMessageEventNotification';
 import { matrixClientService } from '../../src/services/matrixClientService';
 
 describe('Matrix send message privacy', () => {
@@ -340,5 +342,66 @@ describe('Matrix send message privacy', () => {
 		cy.readFile(
 			'src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx'
 		).should('not.contain', 'apiMatrixUploadFile');
+	});
+
+	it('posts Matrix attachment notifications without plaintext previews', () => {
+		const file = new File(['sensitive attachment body'], 'case-note.txt', {
+			type: 'text/plain'
+		});
+		const sendFileMessage = cy
+			.stub(matrixClientService, 'sendFileMessage')
+			.resolves({ event_id: '$encrypted-file' });
+		const postMessageEventNotification = cy.stub().resolves({});
+
+		cy.then(() =>
+			apiSendMatrixAttachmentMessage(
+				'!secure-room:oriso.org',
+				file,
+				{
+					threadRootId: '$thread-root',
+					threadParentPreview: 'sensitive parent preview',
+					supervisorMessage: true,
+					senderDisplayName: 'Counsellor'
+				},
+				postMessageEventNotification
+			)
+		).then((response) => {
+			expect(response).to.deep.equal({ event_id: '$encrypted-file' });
+			expect(sendFileMessage).to.have.been.calledOnceWith(
+				'!secure-room:oriso.org',
+				file,
+				Cypress.sinon.match.object
+			);
+			expect(postMessageEventNotification).to.have.been.calledOnceWith({
+				roomId: '!secure-room:oriso.org',
+				matrixRoom: true,
+				threadRootId: '$thread-root',
+				supervisorMessage: true,
+				senderDisplayName: 'Counsellor',
+				threadParentPreview: 'sensitive parent preview'
+			});
+			const notificationInput =
+				postMessageEventNotification.firstCall.args[0];
+			expect(notificationInput).not.to.have.property('messagePreview');
+			const notificationBody =
+				buildMessageEventNotificationBody(notificationInput);
+			expect(notificationBody).to.deep.equal({
+				roomId: '!secure-room:oriso.org',
+				messagePreview: '',
+				matrixRoom: true,
+				threadRootId: '$thread-root',
+				supervisorMessage: true,
+				senderDisplayName: 'Counsellor',
+				threadParentPreview: null
+			});
+			const serializedPayload = JSON.stringify(notificationBody);
+			expect(serializedPayload).not.to.contain('case-note.txt');
+			expect(serializedPayload).not.to.contain(
+				'sensitive attachment body'
+			);
+			expect(serializedPayload).not.to.contain(
+				'sensitive parent preview'
+			);
+		});
 	});
 });

@@ -15,7 +15,7 @@ import {
 
 const TOKEN_REFRESH_BUFFER_MS = 2 * 60 * 1000;
 
-interface MatrixFileMessageOptions {
+export interface MatrixFileMessageOptions {
 	abortController?: AbortController;
 	uploadProgress?: (percentUpload: number) => void;
 }
