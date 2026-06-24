@@ -187,6 +187,7 @@ export class MatrixClientService {
 		if (!this.client) {
 			throw new Error('Matrix client not initialized');
 		}
+		this.assertEncryptedRoom(roomId);
 
 		const content = {
 			msgtype: 'm.text',
@@ -204,6 +205,7 @@ export class MatrixClientService {
 			if (!this.client) {
 				throw new Error('Matrix client not initialized');
 			}
+			this.assertEncryptedRoom(roomId);
 
 			return this.client.sendMessage(roomId, content);
 		}
@@ -219,6 +221,7 @@ export class MatrixClientService {
 		if (!this.client) {
 			throw new Error('Matrix client not initialized');
 		}
+		this.assertEncryptedRoom(roomId);
 
 		try {
 			const content = await this.uploadFileMessageContent(
@@ -235,6 +238,7 @@ export class MatrixClientService {
 			if (!this.client) {
 				throw new Error('Matrix client not initialized');
 			}
+			this.assertEncryptedRoom(roomId);
 
 			const content = await this.uploadFileMessageContent(file, options);
 			return this.client.sendMessage(roomId, content as any);
@@ -403,6 +407,28 @@ export class MatrixClientService {
 
 	public hasActiveClient(): boolean {
 		return this.client !== null;
+	}
+
+	private assertEncryptedRoom(roomId: string): void {
+		if (!this.client) {
+			throw new Error('Matrix client not initialized');
+		}
+
+		const clientWithEncryptionState = this.client as MatrixClient & {
+			getRoom?: (roomId: string) => Room | null;
+			isRoomEncrypted?: (roomId: string) => boolean;
+		};
+		const room = clientWithEncryptionState.getRoom?.(roomId);
+		const isEncrypted =
+			clientWithEncryptionState.isRoomEncrypted?.(roomId) ??
+			room?.hasEncryptionStateEvent?.() ??
+			false;
+
+		if (!isEncrypted) {
+			throw new Error(
+				'Cannot send Matrix message before the target room is confirmed as an encrypted Matrix room'
+			);
+		}
 	}
 
 	private async uploadFileMessageContent(

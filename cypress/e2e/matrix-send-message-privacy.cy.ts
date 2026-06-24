@@ -71,6 +71,81 @@ describe('Matrix send message privacy', () => {
 		});
 	});
 
+	it('refuses to send Matrix text messages to rooms without encryption state', () => {
+		const service = matrixClientService as any;
+		const sendMessage = cy.stub().resolves({ event_id: '$plaintext' });
+
+		cy.stub(service, 'ensureFreshToken').resolves();
+		service.client = {
+			isRoomEncrypted: cy
+				.stub()
+				.withArgs('!plain-room:oriso.org')
+				.returns(false),
+			sendMessage
+		};
+
+		cy.then(() =>
+			matrixClientService.sendMessage(
+				'!plain-room:oriso.org',
+				'sensitive Matrix message body'
+			).then(
+				() => {
+					throw new Error(
+						'Expected unencrypted Matrix room send to fail'
+					);
+				},
+				(error) => {
+					expect(error.message).to.contain(
+						'encrypted Matrix room'
+					);
+					expect(sendMessage.callCount).to.equal(0);
+					service.client = null;
+				}
+			)
+		);
+	});
+
+	it('refuses to upload Matrix attachments before room encryption is verified', () => {
+		const service = matrixClientService as any;
+		const uploadContent = cy
+			.stub()
+			.resolves({ content_uri: 'mxc://oriso.org/plain-file' });
+		const sendMessage = cy.stub().resolves({ event_id: '$plain-file' });
+		const file = new File(['sensitive attachment'], 'case-note.txt', {
+			type: 'text/plain'
+		});
+
+		cy.stub(service, 'ensureFreshToken').resolves();
+		service.client = {
+			isRoomEncrypted: cy
+				.stub()
+				.withArgs('!plain-room:oriso.org')
+				.returns(false),
+			uploadContent,
+			sendMessage
+		};
+
+		cy.then(() =>
+			matrixClientService
+				.sendFileMessage('!plain-room:oriso.org', file)
+				.then(
+					() => {
+						throw new Error(
+							'Expected unencrypted Matrix attachment send to fail'
+						);
+					},
+					(error) => {
+						expect(error.message).to.contain(
+							'encrypted Matrix room'
+						);
+						expect(uploadContent.callCount).to.equal(0);
+						expect(sendMessage.callCount).to.equal(0);
+						service.client = null;
+					}
+				)
+		);
+	});
+
 	it('uploads Matrix attachments as encrypted media through the SDK', () => {
 		const service = matrixClientService as any;
 		let uploadedPayload: XMLHttpRequestBodyInit | undefined;
@@ -92,7 +167,14 @@ describe('Matrix send message privacy', () => {
 		});
 
 		cy.stub(service, 'ensureFreshToken').resolves();
-		service.client = { uploadContent, sendMessage };
+		service.client = {
+			isRoomEncrypted: cy
+				.stub()
+				.withArgs('!secure-room:oriso.org')
+				.returns(true),
+			uploadContent,
+			sendMessage
+		};
 
 		cy.then(() =>
 			matrixClientService.sendFileMessage('!secure-room:oriso.org', file, {
@@ -161,7 +243,14 @@ describe('Matrix send message privacy', () => {
 		});
 
 		cy.stub(service, 'ensureFreshToken').resolves();
-		service.client = { uploadContent, sendMessage };
+		service.client = {
+			isRoomEncrypted: cy
+				.stub()
+				.withArgs('!secure-room:oriso.org')
+				.returns(true),
+			uploadContent,
+			sendMessage
+		};
 
 		cy.then(() =>
 			matrixClientService.sendFileMessage('!secure-room:oriso.org', file)
