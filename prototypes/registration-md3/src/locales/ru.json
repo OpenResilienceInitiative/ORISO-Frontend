@@ -1,0 +1,56 @@
+{
+  "app": {
+    "brandTitle": "Консультация и помощь",
+    "brandSubtitle": "Онлайн. Анонимно. Безопасно.",
+    "login": "Войти",
+    "imprint": "Выходные данные",
+    "privacy": "Политика конфиденциальности",
+    "partners": "Услуга Каритас и её партнёров"
+  },
+  "reg": {
+    "title": "Регистрация",
+    "step": "Шаг {{current}} из {{total}}",
+    "question": "По какой теме вы ищете консультацию?",
+    "subtitle": "Выберите тему из наших консультационных услуг.",
+    "back": "Назад",
+    "next": "Далее",
+    "selectedLabel": "Выбрано",
+    "noneSelected": "Пожалуйста, выберите тему, чтобы продолжить.",
+    "language": "Язык",
+    "postcode": {
+      "title": "Чтобы мы могли проконсультировать вас наилучшим образом, нам нужен ваш почтовый индекс",
+      "whyIntro": "Почему? Потому что тогда наши специалисты:",
+      "why1": "знают возможности помощи рядом с вашим местом жительства",
+      "why2": "знают законы вашей федеральной земли",
+      "placeholder": "Ваш почтовый индекс"
+    }
+  },
+  "category": {
+    "familie": "Семья, дети и молодёжь",
+    "alter": "Старость, уход и прощание",
+    "migration": "Миграция и интеграция",
+    "gesundheit": "Здоровье, инвалидность и зависимость",
+    "soziales": "Социальные трудности, кризисы и финансы"
+  },
+  "topic": {
+    "eltern-und-familie": { "title": "Родители и семья" },
+    "kinder-und-jugendliche": { "title": "Дети и подростки" },
+    "kinder-und-jugend-reha": { "title": "Реабилитация детей и молодёжи" },
+    "kuren-fuer-muetter-und-vaeter": { "title": "Оздоровление для матерей и отцов" },
+    "jungen-und-maennerberatung": { "title": "Консультирование для мужчин и юношей" },
+    "schwangerschaft": { "title": "Беременность" },
+    "u25-suizidpraevention": { "title": "Профилактика суицида (до 25)" },
+    "leben-im-alter": { "title": "Жизнь в пожилом возрасте" },
+    "rechtliche-betreuung-und-vorsorge": { "title": "Правовая опека и обеспечение" },
+    "hospiz-und-palliativberatung": { "title": "Хоспис и паллиативная помощь" },
+    "trauerberatung": { "title": "Консультирование при утрате" },
+    "migration": { "title": "Миграция" },
+    "aus-rueck-und-weiterwanderung": { "title": "Эмиграция, возвращение и дальнейшая миграция" },
+    "behinderung-und-psychische-beeintraechtigung": { "title": "Инвалидность и психическое здоровье" },
+    "sucht": { "title": "Зависимость" },
+    "hiv-und-aids": { "title": "ВИЧ и СПИД" },
+    "allgemeine-sozialberatung": { "title": "Общее социальное консультирование" },
+    "schulden": { "title": "Долги" },
+    "straffaelligkeit": { "title": "Правонарушения и уголовное правосудие" }
+  }
+}

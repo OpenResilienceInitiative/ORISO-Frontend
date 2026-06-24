@@ -1,0 +1,157 @@
+{
+  "app": {
+    "brandTitle": "Beratung & Hilfe",
+    "brandSubtitle": "Online. Anonym. Sicher.",
+    "login": "Einloggen",
+    "imprint": "Impressum",
+    "privacy": "Datenschutzerklärung",
+    "partners": "Ein Angebot der Caritas und ihrer Partner"
+  },
+  "reg": {
+    "title": "Registrierung",
+    "step": "Schritt {{current}} von {{total}}",
+    "question": "Zu welchem Thema suchen Sie Beratung?",
+    "subtitle": "Wählen Sie ein Thema aus unserem Beratungsangebot aus.",
+    "back": "Zurück",
+    "next": "Weiter",
+    "selectedLabel": "Ausgewählt",
+    "noneSelected": "Bitte wählen Sie ein Thema, um fortzufahren.",
+    "language": "Sprache",
+    "removeSelection": "Auswahl entfernen",
+    "stepNames": { "fokus": "Fokus wählen", "plz": "Postleitzahl", "beratungsstelle": "Beratungsstelle", "registrieren": "Registrieren", "anfrage": "Anfrage stellen" },
+    "postcode": {
+      "title": "Damit wir Sie bestmöglich beraten können, brauchen wir Ihre Postleitzahl",
+      "whyIntro": "Warum? Weil unsere Fachkräfte dann:",
+      "why1": "die Hilfsangebote rund um Ihren Wohnort kennen",
+      "why2": "die Gesetze Ihres Bundeslandes kennen",
+      "placeholder": "Ihre Postleitzahl"
+    },
+    "center": {
+      "title": "Beratungsstelle wählen",
+      "intro": "Beratungsstellen für Postleitzahl {{postcode}}:",
+      "advisesIn": "Diese Beratungsstelle berät Sie auf: Deutsch (DE)",
+      "info": "Mehr Informationen"
+    },
+    "register": {
+      "title": "Anmeldedaten erfassen",
+      "subtitle": "Um Ihre Anonymität zu schützen, raten wir Ihnen, nicht Ihren tatsächlichen Namen oder Initialen zu verwenden.",
+      "username": "Benutzername",
+      "usernameHint": "5 oder mehr Zeichen",
+      "password": "Passwort",
+      "confirm": "Passwort wiederholen",
+      "mismatch": "Passwörter stimmen nicht überein",
+      "rule": {
+        "length": "mindestens 9 Zeichen",
+        "number": "mindestens eine Zahl",
+        "case": "Groß-/Kleinschreibung",
+        "special": "mindestens ein Sonderzeichen"
+      },
+      "privacyBefore": "Ich habe die ",
+      "privacyLink": "Datenschutzerklärung",
+      "privacyAfter": " zur Kenntnis genommen. Für Authentifizierung und Navigation verwendet diese Webseite Cookies.",
+      "showPassword": "Passwort anzeigen",
+      "hidePassword": "Passwort verbergen",
+      "submit": "Registrieren"
+    },
+    "message": {
+      "title": "Anfrage stellen",
+      "subtitle": "Beschreiben Sie kurz Ihr Anliegen. Sie können später jederzeit weiterschreiben.",
+      "placeholder": "Ihre Nachricht …"
+    },
+    "send": "Anfrage senden",
+    "sent": "Anfrage gesendet"
+  },
+  "lang": {
+    "de": "Deutsch",
+    "en": "English",
+    "tr": "Türkçe",
+    "ar": "العربية",
+    "uk": "Українська",
+    "ru": "Русский"
+  },
+  "category": {
+    "familie": "Familie, Kinder & Jugend",
+    "alter": "Alter, Pflege & Abschied",
+    "migration": "Migration & Integration",
+    "gesundheit": "Gesundheit, Behinderung & Sucht",
+    "soziales": "Soziale Notlagen, Krisen & Finanzen"
+  },
+  "topic": {
+    "eltern-und-familie": {
+      "title": "Eltern und Familie",
+      "desc": "Ob Erziehungsfragen, Konflikte oder familiäre Krisen – hier finden Sie verständnisvolle Begleitung."
+    },
+    "kinder-und-jugendliche": {
+      "title": "Kinder und Jugendliche",
+      "desc": "Wenn der Alltag zu viel wird – für junge Menschen gibt es hier Hilfe und ein offenes Ohr."
+    },
+    "kinder-und-jugend-reha": {
+      "title": "Kinder- und Jugend-Reha",
+      "desc": "Für Kinder und Jugendliche, die nach Krankheit oder Belastung neue Kraft schöpfen möchten."
+    },
+    "kuren-fuer-muetter-und-vaeter": {
+      "title": "Kuren für Mütter und Väter",
+      "desc": "Erschöpfte Eltern verdienen Erholung – Kurmaßnahmen helfen, wieder zu sich zu finden."
+    },
+    "jungen-und-maennerberatung": {
+      "title": "Jungen- und Männerberatung",
+      "desc": "Ein sicherer Raum für Männer und Jungen, um offen über Sorgen und Belastungen zu sprechen."
+    },
+    "schwangerschaft": {
+      "title": "Schwangerschaft",
+      "desc": "Ob Fragen, Unsicherheit oder schwierige Umstände – wir sind in jeder Situation für Sie da."
+    },
+    "u25-suizidpraevention": {
+      "title": "U25 Suizidprävention",
+      "desc": "Wenn das Leben zu schwer wird – junge Menschen finden hier sofort Halt und Unterstützung."
+    },
+    "leben-im-alter": {
+      "title": "Leben im Alter",
+      "desc": "Mit dem Älterwerden kommen neue Fragen – wir helfen, den Alltag gut und würdevoll zu gestalten."
+    },
+    "rechtliche-betreuung-und-vorsorge": {
+      "title": "Rechtliche Betreuung und Vorsorge",
+      "desc": "Damit wichtige Entscheidungen geregelt sind – Unterstützung bei Vollmachten und Betreuung."
+    },
+    "hospiz-und-palliativberatung": {
+      "title": "Hospiz- und Palliativberatung",
+      "desc": "Begleitung am Ende des Lebens – für Betroffene und Angehörige in einer schweren Zeit."
+    },
+    "trauerberatung": {
+      "title": "Trauerberatung",
+      "desc": "Trauer braucht Zeit und Raum – wir begleiten Sie einfühlsam durch den Schmerz des Verlusts."
+    },
+    "migration": {
+      "title": "Migration",
+      "desc": "Ankommen in einem neuen Land ist nicht leicht – wir unterstützen auf dem Weg ins neue Leben."
+    },
+    "aus-rueck-und-weiterwanderung": {
+      "title": "Aus-/Rück- und Weiterwanderung",
+      "desc": "Ob Rückkehr oder Weiterwandern – Beratung zu Ihrem Aufenthalts- und Lebensmittelpunkt."
+    },
+    "behinderung-und-psychische-beeintraechtigung": {
+      "title": "Behinderung und psychische Beeinträchtigung",
+      "desc": "Leben mit Behinderung oder psychischen Belastungen – wir helfen, Alltag und Angebote zu finden."
+    },
+    "sucht": {
+      "title": "Sucht",
+      "desc": "Sucht betrifft die ganze Familie – vertrauliche Beratung für Betroffene und Angehörige."
+    },
+    "hiv-und-aids": {
+      "title": "HIV und Aids",
+      "desc": "Diskret, ohne Urteile, mit Einfühlungsvermögen – wir stehen Ihnen bei HIV und Aids zur Seite."
+    },
+    "allgemeine-sozialberatung": {
+      "title": "Allgemeine Sozialberatung",
+      "desc": "Bei Fragen zu Leistungen, Behörden oder schwierigen Lebenslagen – wir sind für Sie da."
+    },
+    "schulden": {
+      "title": "Schulden",
+      "desc": "Schulden können erdrückend sein – gemeinsam finden wir einen Weg aus der finanziellen Not."
+    },
+    "straffaelligkeit": {
+      "title": "Straffälligkeit",
+      "desc": "Neu anfangen nach einem Fehler – Begleitung für Betroffene und Angehörige ohne Vorwürfe."
+    }
+  }
+}

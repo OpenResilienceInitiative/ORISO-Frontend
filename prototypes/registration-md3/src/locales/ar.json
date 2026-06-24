@@ -1,0 +1,56 @@
+{
+  "app": {
+    "brandTitle": "الاستشارة والمساعدة",
+    "brandSubtitle": "عبر الإنترنت. مجهول الهوية. آمن.",
+    "login": "تسجيل الدخول",
+    "imprint": "بيانات الناشر",
+    "privacy": "سياسة الخصوصية",
+    "partners": "خدمة من كاريتاس وشركائها"
+  },
+  "reg": {
+    "title": "التسجيل",
+    "step": "الخطوة {{current}} من {{total}}",
+    "question": "ما الموضوع الذي تبحث عن استشارة بشأنه؟",
+    "subtitle": "اختر موضوعًا من خدمات الاستشارة لدينا.",
+    "back": "رجوع",
+    "next": "متابعة",
+    "selectedLabel": "المحدد",
+    "noneSelected": "يرجى اختيار موضوع للمتابعة.",
+    "language": "اللغة",
+    "postcode": {
+      "title": "حتى نتمكن من تقديم أفضل استشارة لك، نحتاج إلى رمزك البريدي",
+      "whyIntro": "لماذا؟ لأن المختصين لدينا حينها:",
+      "why1": "يعرفون عروض المساعدة المتوفرة حول مكان سكنك",
+      "why2": "يعرفون قوانين ولايتك",
+      "placeholder": "رمزك البريدي"
+    }
+  },
+  "category": {
+    "familie": "الأسرة والأطفال والشباب",
+    "alter": "الشيخوخة والرعاية والوداع",
+    "migration": "الهجرة والاندماج",
+    "gesundheit": "الصحة والإعاقة والإدمان",
+    "soziales": "الضوائق الاجتماعية والأزمات والشؤون المالية"
+  },
+  "topic": {
+    "eltern-und-familie": { "title": "الوالدان والأسرة" },
+    "kinder-und-jugendliche": { "title": "الأطفال والمراهقون" },
+    "kinder-und-jugend-reha": { "title": "إعادة تأهيل الأطفال والشباب" },
+    "kuren-fuer-muetter-und-vaeter": { "title": "علاج استشفائي للأمهات والآباء" },
+    "jungen-und-maennerberatung": { "title": "استشارة للرجال والفتيان" },
+    "schwangerschaft": { "title": "الحمل" },
+    "u25-suizidpraevention": { "title": "الوقاية من الانتحار لمن هم دون 25" },
+    "leben-im-alter": { "title": "الحياة في الشيخوخة" },
+    "rechtliche-betreuung-und-vorsorge": { "title": "الوصاية القانونية والرعاية المسبقة" },
+    "hospiz-und-palliativberatung": { "title": "استشارة الرعاية التلطيفية والمأوى" },
+    "trauerberatung": { "title": "استشارة الحزن والفقدان" },
+    "migration": { "title": "الهجرة" },
+    "aus-rueck-und-weiterwanderung": { "title": "الهجرة والعودة والهجرة اللاحقة" },
+    "behinderung-und-psychische-beeintraechtigung": { "title": "الإعاقة والصحة النفسية" },
+    "sucht": { "title": "الإدمان" },
+    "hiv-und-aids": { "title": "فيروس نقص المناعة والإيدز" },
+    "allgemeine-sozialberatung": { "title": "الاستشارة الاجتماعية العامة" },
+    "schulden": { "title": "الديون" },
+    "straffaelligkeit": { "title": "الجريمة والعدالة الجنائية" }
+  }
+}
