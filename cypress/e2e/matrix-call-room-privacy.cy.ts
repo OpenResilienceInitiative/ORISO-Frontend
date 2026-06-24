@@ -95,4 +95,37 @@ describe('Matrix call room privacy', () => {
 			expect(sendEvent.callCount).to.equal(0);
 		});
 	});
+
+	it('does not update Element Call power levels in unencrypted call rooms', () => {
+		const sendStateEvent = cy.stub().resolves({});
+
+		cy.stub(matrixClientService, 'getClient').returns({
+			getRoom: cy.stub().withArgs('!plain-call-room:oriso.org').returns({
+				currentState: {
+					getStateEvents: cy.stub().returns({
+						getContent: cy.stub().returns({
+							events: {
+								'org.matrix.msc3401.call.member': 50
+							},
+							state_default: 50,
+							events_default: 0
+						})
+					})
+				}
+			}),
+			isRoomEncrypted: cy
+				.stub()
+				.withArgs('!plain-call-room:oriso.org')
+				.returns(false),
+			sendStateEvent
+		} as never);
+
+		cy.then(() =>
+			(callManager as any).ensureGroupCallPermissions(
+				'!plain-call-room:oriso.org'
+			)
+		).then(() => {
+			expect(sendStateEvent.callCount).to.equal(0);
+		});
+	});
 });

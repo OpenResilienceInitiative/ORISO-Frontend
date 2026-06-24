@@ -323,6 +323,7 @@ class CallManager {
 				// console.warn("⚠️  Matrix client not available, cannot adjust power levels for group call");
 				return;
 			}
+			assertMatrixRoomEncrypted(client, roomId);
 
 			const room = client.getRoom(roomId);
 			if (!room) {
