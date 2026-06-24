@@ -51,7 +51,6 @@ import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { budibaseLogout } from '../budibase/budibaseLogout';
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
 import { UrlParamsContext } from '../../globalState/provider/UrlParamsProvider';
-import { AnonymousChat } from '../anonymousChat/AnonymousChat';
 import { setTokens } from '../auth/auth';
 
 const regexAccountDeletedError = /account disabled/i;
@@ -79,8 +78,7 @@ export const Login = () => {
 
 	const { consultant, loaded: isReady } = useContext(UrlParamsContext);
 	const [labelState, setLabelState] = useState<InputFieldLabelState>(null);
-	const [activeLoginMethod, setActiveLoginMethod] =
-		useState<LoginMethod>('password');
+	const [activeLoginMethod] = useState<LoginMethod>('password');
 	const [username, setUsername] = useState<string>('');
 	const [password, setPassword] = useState<string>('');
 	const [magicLinkUsername, setMagicLinkUsername] = useState<string>('');
@@ -97,9 +95,7 @@ export const Login = () => {
 		useState<boolean>(false);
 	const [isMagicTokenLoginAttempted, setIsMagicTokenLoginAttempted] =
 		useState<boolean>(false);
-	const { featureToolsEnabled, featureAnonymousChatEnabled = true } =
-		getTenantSettings();
-	const isAnonymousChatEnabled = featureAnonymousChatEnabled !== false;
+	const { featureToolsEnabled } = getTenantSettings();
 
 	useEffect(() => {
 		// If we're authenticated and have a gcid, redirect to app
@@ -137,13 +133,6 @@ export const Login = () => {
 
 	const [pwResetOverlayActive, setPwResetOverlayActive] = useState(false);
 	const [twoFactorType, setTwoFactorType] = useState(TWO_FACTOR_TYPES.NONE);
-	const [showAnonymousChat, setShowAnonymousChat] = useState(false);
-
-	useEffect(() => {
-		if (!isAnonymousChatEnabled && showAnonymousChat) {
-			setShowAnonymousChat(false);
-		}
-	}, [isAnonymousChatEnabled, showAnonymousChat]);
 
 	const inputItemUsername: InputFieldItem = {
 		name: 'username',
@@ -300,11 +289,11 @@ export const Login = () => {
 					tokenResponse.expires_in,
 					tokenResponse.refresh_token,
 					tokenResponse.refresh_expires_in
-				);
-				// Magic-token login is complete once tokens are set.
-				// Continue directly into authenticated app bootstrap.
-				redirectToApp(gcid);
-			})
+					);
+					// Magic-token login is complete once tokens are set.
+					// Continue directly into authenticated app bootstrap.
+					return postLogin();
+				})
 			.catch(() => {
 				setShowLoginError(
 					translate('login.warning.failed.unauthorized.text')
@@ -313,7 +302,7 @@ export const Login = () => {
 			.finally(() => {
 				setIsRequestInProgress(false);
 			});
-	}, [magicToken, isMagicTokenLoginAttempted, postLogin, translate]);
+	}, [magicToken, isMagicTokenLoginAttempted, postLogin, translate, gcid]);
 
 	const tryLogin = (otp?: string) => {
 		setIsRequestInProgress(true);
@@ -453,10 +442,6 @@ export const Login = () => {
 		);
 		window.open(endpoints.loginResetPasswordLink, '_self', 'noreferrer');
 	};
-
-	if (showAnonymousChat && isAnonymousChatEnabled) {
-		return <AnonymousChat onBack={() => setShowAnonymousChat(false)} />;
-	}
 
 	return (
 		<>
@@ -622,35 +607,6 @@ export const Login = () => {
 									</button>
 								)}
 						</div>
-
-						{isAnonymousChatEnabled && (
-							<div className="loginForm__register">
-								<div className="loginForm__register__separator">
-									<span>{translate('login.seperator')}</span>
-								</div>
-								<div className="loginForm__register__content">
-									<Text
-										text={translate(
-											'login.anonymousChat.infoText',
-											'Schnell und anonym beraten lassen?'
-										)}
-										type={'infoMedium'}
-									/>
-									<button
-										onClick={() =>
-											setShowAnonymousChat(true)
-										}
-										className="button-as-link consulting-topics"
-										type="button"
-									>
-										{translate(
-											'login.anonymousChat.label',
-											'Anonyme Beratung starten'
-										)}
-									</button>
-								</div>
-							</div>
-						)}
 
 						{!hasTenant && (
 							<div className="loginForm__register">

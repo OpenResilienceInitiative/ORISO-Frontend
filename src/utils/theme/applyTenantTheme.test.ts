@@ -85,6 +85,9 @@ describe('palette injection at :root (Test #18, UAT-D)', () => {
 		expect(root.style.getPropertyValue('--m3-error')).toBe(
 			tokens['--m3-error']
 		);
+		expect(root.style.getPropertyValue('--oriso-lottie-accent-color')).toBe(
+			tokens['--m3-primary-fixed-dim']
+		);
 	});
 
 	it('announces the applied palette for the MUI theme refresh', () => {
@@ -108,10 +111,7 @@ describe('fallbacks (Tests #20/#21, UAT-E)', () => {
 	it('falls back and logs on an invalid stored value, never crashes', () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 		const root = freshRoot();
-		const applied = applyTenantPalette(
-			{ primaryColor: 'not-a-hex' },
-			root
-		);
+		const applied = applyTenantPalette({ primaryColor: 'not-a-hex' }, root);
 		expect(applied).toBe(false);
 		expect(root.style.length).toBe(0);
 		expect(warn).toHaveBeenCalled();
@@ -178,14 +178,19 @@ describe('URL preview mode (Theme Builder iframe, security-constrained)', () => 
 		expect(readPreviewSeeds('?themePreviewPrimary=red')).toBeNull();
 		expect(readPreviewSeeds('?themePreviewPrimary=%23a5000a')).toBeNull();
 		expect(
-			readPreviewSeeds('?themePreviewPrimary=a5000a&themePreviewAccent=javascript:alert(1)')
+			readPreviewSeeds(
+				'?themePreviewPrimary=a5000a&themePreviewAccent=javascript:alert(1)'
+			)
 		).toEqual({ primary: '#a5000a', accent: undefined, signal: undefined });
 	});
 
 	it('applies preview seeds to the root (preview wins over tenant)', async () => {
 		const { applyPreviewFromLocation } = await import('./applyTenantTheme');
 		const root = document.createElement('div');
-		const applied = applyPreviewFromLocation('?themePreviewPrimary=a5000a', root);
+		const applied = applyPreviewFromLocation(
+			'?themePreviewPrimary=a5000a',
+			root
+		);
 		expect(applied).toBe(true);
 		expect(root.style.getPropertyValue('--m3-primary')).toBe('#a5000a');
 	});

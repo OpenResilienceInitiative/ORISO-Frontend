@@ -1,7 +1,11 @@
 // Shared helpers for the OrisoScheme golden tests. Test-only module.
 import * as fs from 'fs';
 import * as path from 'path';
-import { Hct, argbFromHex, labFromArgb } from '@material/material-color-utilities';
+import {
+	Hct,
+	argbFromHex,
+	labFromArgb
+} from '@material/material-color-utilities';
 
 /**
  * Reads the benchmark Figma MD3 export and returns the light "Schemes"
@@ -40,7 +44,10 @@ export const deltaE2000 = (hexA: string, hexB: string): number => {
 	const cBar = (c1 + c2) / 2;
 	const g =
 		0.5 *
-		(1 - Math.sqrt(Math.pow(cBar, 7) / (Math.pow(cBar, 7) + Math.pow(25, 7))));
+		(1 -
+			Math.sqrt(
+				Math.pow(cBar, 7) / (Math.pow(cBar, 7) + Math.pow(25, 7))
+			));
 	const a1p = (1 + g) * a1;
 	const a2p = (1 + g) * a2;
 	const c1p = Math.sqrt(a1p * a1p + b1 * b1);
@@ -78,9 +85,13 @@ export const deltaE2000 = (hexA: string, hexB: string): number => {
 		0.32 * Math.cos(deg2rad(3 * hBarP + 6)) -
 		0.2 * Math.cos(deg2rad(4 * hBarP - 63));
 	const dTheta = 30 * Math.exp(-Math.pow((hBarP - 275) / 25, 2));
-	const rc = 2 * Math.sqrt(Math.pow(cBarP, 7) / (Math.pow(cBarP, 7) + Math.pow(25, 7)));
+	const rc =
+		2 *
+		Math.sqrt(Math.pow(cBarP, 7) / (Math.pow(cBarP, 7) + Math.pow(25, 7)));
 	const sl =
-		1 + (0.015 * Math.pow(lBarP - 50, 2)) / Math.sqrt(20 + Math.pow(lBarP - 50, 2));
+		1 +
+		(0.015 * Math.pow(lBarP - 50, 2)) /
+			Math.sqrt(20 + Math.pow(lBarP - 50, 2));
 	const sc = 1 + 0.045 * cBarP;
 	const sh = 1 + 0.015 * cBarP * t;
 	const rt = -Math.sin(deg2rad(2 * dTheta)) * rc;
@@ -96,7 +107,8 @@ export const deltaE2000 = (hexA: string, hexB: string): number => {
 /** Absolute HCT tone difference between two hex colours. */
 export const toneDiff = (hexA: string, hexB: string): number =>
 	Math.abs(
-		Hct.fromInt(argbFromHex(hexA)).tone - Hct.fromInt(argbFromHex(hexB)).tone
+		Hct.fromInt(argbFromHex(hexA)).tone -
+			Hct.fromInt(argbFromHex(hexB)).tone
 	);
 
 /**
@@ -118,7 +130,9 @@ export const collectConsumedM3Tokens = (roots: string[]): string[] => {
 			}
 			if (!exts.has(path.extname(entry.name))) continue;
 			const content = fs.readFileSync(full, 'utf8');
-			for (const match of content.matchAll(/var\(\s*(--m3-[a-z0-9-]+)/g)) {
+			for (const match of content.matchAll(
+				/var\(\s*(--m3-[a-z0-9-]+)/g
+			)) {
 				found.add(match[1]);
 			}
 		}

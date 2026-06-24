@@ -33,7 +33,10 @@ $profile-footer-justify-content: center !default;
 		align-items: center;
 		position: relative;
 		padding: $grid-base-three $grid-base-two;
-		background-color: var(--m3-surface-container-lowest, $background-lighter);
+		background-color: var(
+			--m3-surface-container-lowest,
+			$background-lighter
+		);
 
 		@include breakpoint($fromMedium) {
 			padding: $grid-base-three;
@@ -41,7 +44,10 @@ $profile-footer-justify-content: center !default;
 
 		@include breakpoint($fromLarge) {
 			align-items: flex-start;
-			background-color: var(--m3-surface-container-low, $background-light);
+			background-color: var(
+				--m3-surface-container-low,
+				$background-light
+			);
 		}
 
 		&__wrapper {

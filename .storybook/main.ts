@@ -98,7 +98,8 @@ const config: StorybookConfig = {
 					// already accommodates this, Storybook's does not).
 					{
 						test: /\.js$/,
-						include: /node_modules[\\/]@material[\\/]material-color-utilities/,
+						include:
+							/node_modules[\\/]@material[\\/]material-color-utilities/,
 						resolve: { fullySpecified: false }
 					},
 					// Exclude svg from storybook file-loader

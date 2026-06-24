@@ -370,7 +370,8 @@ module.exports = function (webpackEnv) {
 				// resolution for type:module packages rejects them.
 				{
 					test: /\.js$/,
-					include: /node_modules[\\/]@material[\\/]material-color-utilities/,
+					include:
+						/node_modules[\\/]@material[\\/]material-color-utilities/,
 					resolve: { fullySpecified: false }
 				},
 				// Handle node_modules packages that contain sourcemaps

@@ -608,8 +608,7 @@ $message-avatar-ring: #ebe2e2;
 		&::after {
 			content: '';
 			display: inline-block;
-			border-top: 1px solid
-				var(--m3-secondary, $text-divider-color);
+			border-top: 1px solid var(--m3-secondary, $text-divider-color);
 			width: $grid-base-three;
 			vertical-align: middle;
 			margin: 0 0;

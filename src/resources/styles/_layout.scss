@@ -26,11 +26,11 @@ html {
 }
 
 body {
-	font-family: $body-font-family;
-	background-color: var(--m3-background, $body-bg);
+	font-family: var(--oriso-body-font-family, #{$body-font-family});
+	background-color: var(--m3-background, var(--m3-surface, #{$body-bg}));
 	font-size: $body-font-size;
 	line-height: $body-line-height;
-	color: $body-font-color;
+	color: var(--m3-on-surface, #{$body-font-color});
 
 	min-width: $body-min-width;
 

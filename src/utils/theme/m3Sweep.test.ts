@@ -36,9 +36,7 @@ describe('completeness grep (Test #25)', () => {
 	it('the pinned function-wrapped exceptions still exist (else unpin them)', () => {
 		const wrapped = sweep
 			.scan()
-			.filter(
-				(v: { kind: string }) => v.kind === 'function-wrapped'
-			);
+			.filter((v: { kind: string }) => v.kind === 'function-wrapped');
 		expect(wrapped.length).toBe(
 			sweep.mapping.knownFunctionWrappedExceptions.length
 		);
@@ -53,7 +51,10 @@ const readDeclarations = (
 	const declarations: Array<{ property: string; value: string }> = [];
 	const pattern = /(?<![\w$-])([a-zA-Z-]+)\s*:\s*([^;{}]*)/g;
 	for (const match of content.matchAll(pattern)) {
-		declarations.push({ property: match[1].toLowerCase(), value: match[2] });
+		declarations.push({
+			property: match[1].toLowerCase(),
+			value: match[2]
+		});
 	}
 	return declarations;
 };
@@ -98,7 +99,9 @@ describe('role-misuse lint (Test #27 / #3)', () => {
 		for (const file of styleFiles) {
 			const content = fs.readFileSync(file, 'utf8');
 			for (const { property, value } of readDeclarations(content)) {
-				for (const match of value.matchAll(/var\(\s*(--m3-on-[a-z0-9-]+)/g)) {
+				for (const match of value.matchAll(
+					/var\(\s*(--m3-on-[a-z0-9-]+)/g
+				)) {
 					if (BACKGROUND_PROPERTIES.test(property)) {
 						violations.push(
 							`${path.relative(process.cwd(), file)}: ${match[1]} used in ${property}`

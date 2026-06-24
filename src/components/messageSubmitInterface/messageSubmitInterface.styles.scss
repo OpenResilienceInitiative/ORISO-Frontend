@@ -1991,7 +1991,10 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			transition: background-color 0.6s ease;
 			overflow: hidden;
 			&:hover {
-				background-color: var(--m3-surface-container-low, $background-light);
+				background-color: var(
+					--m3-surface-container-low,
+					$background-light
+				);
 			}
 
 			svg {

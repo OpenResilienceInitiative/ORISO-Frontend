@@ -82,6 +82,7 @@ const TOLERANCE_TOKENS: Record<string, string> = {
 	'--m3-inverse-on-surface': 'Inverse On Surface',
 	'--m3-inverse-primary': 'Inverse Primary',
 	'--m3-primary-fixed': 'Primary Fixed',
+	'--m3-primary-fixed-dim': 'Primary Fixed Dim',
 	'--m3-on-primary-fixed': 'On Primary Fixed',
 	'--m3-on-primary-fixed-variant': 'On Primary Fixed Variant',
 	'--m3-surface-tint': 'Surface Tint',
@@ -132,6 +133,19 @@ describe('OrisoScheme golden lock (seed #A5000A, light)', () => {
 		for (const [token, value] of Object.entries(tokens)) {
 			expect(value, token).toMatch(/^#[0-9a-f]{6}$/);
 		}
+	});
+
+	it('maps ORISO semantic aliases onto the generated M3 palette', () => {
+		expect(tokens['--oriso-lottie-accent-color']).toBe(
+			tokens['--m3-primary-fixed-dim']
+		);
+		expect(tokens['--oriso-lottie-secondary-color']).toBe(
+			tokens['--m3-secondary-container']
+		);
+		expect(tokens['--oriso-primary-fixed']).toBe(
+			tokens['--m3-primary-fixed']
+		);
+		expect(tokens['--oriso-app-action']).toBe(tokens['--m3-primary']);
 	});
 });
 

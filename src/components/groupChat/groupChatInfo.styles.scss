@@ -29,7 +29,10 @@ $inputMaxWidth: 500px;
 		align-items: center;
 		padding: $grid-base-three $grid-base-two;
 		position: relative;
-		background-color: var(--m3-surface-container-lowest, $background-lighter);
+		background-color: var(
+			--m3-surface-container-lowest,
+			$background-lighter
+		);
 
 		@include breakpoint($fromMedium) {
 			padding: $grid-base-three;
@@ -37,7 +40,10 @@ $inputMaxWidth: 500px;
 
 		@include breakpoint($fromLarge) {
 			align-items: flex-start;
-			background-color: var(--m3-surface-container-low, $background-light);
+			background-color: var(
+				--m3-surface-container-low,
+				$background-light
+			);
 		}
 
 		&__backButton {

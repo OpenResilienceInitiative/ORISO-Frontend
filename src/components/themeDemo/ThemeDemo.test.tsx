@@ -13,7 +13,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ThemeDemo } from './ThemeDemo';
 
 vi.mock('react-i18next', () => ({
-	useTranslation: () => ({ t: (key: string, fallback?: string) => fallback ?? key })
+	useTranslation: () => ({
+		t: (key: string, fallback?: string) => fallback ?? key
+	})
 }));
 
 describe('ThemeDemo', () => {
@@ -36,8 +38,12 @@ describe('ThemeDemo', () => {
 		expect(
 			container.querySelector('.sessionsListItem--active')
 		).not.toBeNull();
-		expect(screen.getAllByText('Familienberatung').length).toBeGreaterThanOrEqual(2);
-		expect(screen.getAllByText('ruhiges Yak Kim').length).toBeGreaterThanOrEqual(1);
+		expect(
+			screen.getAllByText('Familienberatung').length
+		).toBeGreaterThanOrEqual(2);
+		expect(
+			screen.getAllByText('ruhiges Yak Kim').length
+		).toBeGreaterThanOrEqual(1);
 	});
 
 	it('renders the real chat markup: incoming and own message bubbles', () => {

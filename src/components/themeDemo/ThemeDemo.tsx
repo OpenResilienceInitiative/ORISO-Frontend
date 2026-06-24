@@ -118,9 +118,7 @@ const DemoSessionCard = ({ session }: { session: DemoSession }) => (
 );
 
 const DemoMessageItem = ({ message }: { message: DemoMessage }) => (
-	<div
-		className={`messageItem${message.own ? ' messageItem--right' : ''}`}
-	>
+	<div className={`messageItem${message.own ? ' messageItem--right' : ''}`}>
 		<div className="messageItem__username">
 			{message.avatar && (
 				<span className="themeDemo__avatar" aria-hidden>

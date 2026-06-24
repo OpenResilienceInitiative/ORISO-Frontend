@@ -1,38 +1,7 @@
-import { endpoints, apiUrl } from '../resources/scripts/endpoints';
-import { fetchData, FETCH_ERRORS, FETCH_METHODS } from './fetchData';
+import { endpoints } from '../resources/scripts/endpoints';
+import { fetchData, FETCH_METHODS } from './fetchData';
 import { apiPostMessageEventNotification } from './apiPostMessageEventNotification';
 import { matrixClientService } from '../services/matrixClientService';
-
-const sendMatrixMessageViaRest = (
-	sessionId: number,
-	messageData: string,
-	matrixRoomId: string,
-	threadRootId?: string | null,
-	supervisorMessage?: boolean,
-	senderDisplayName?: string | null,
-	threadParentPreview?: string | null
-): Promise<any> => {
-	const matrixUrl = `${apiUrl}/service/matrix/sessions/${sessionId}/messages`;
-	return fetchData({
-		url: matrixUrl,
-		method: FETCH_METHODS.POST,
-		bodyData: JSON.stringify({ message: messageData }),
-		responseHandling: [FETCH_ERRORS.FORBIDDEN]
-	}).then((fallbackResponse) => {
-		apiPostMessageEventNotification({
-			roomId: matrixRoomId,
-			messagePreview: toPreview(messageData),
-			matrixRoom: true,
-			threadRootId: threadRootId || null,
-			supervisorMessage: !!supervisorMessage,
-			senderDisplayName: senderDisplayName || null,
-			threadParentPreview: threadParentPreview || null
-		}).catch(() => undefined);
-		return fallbackResponse;
-	});
-};
-
-export const toPreview = (text: string): string => text.slice(0, 100);
 
 export const apiSendMessage = (
 	messageData: string,
@@ -48,56 +17,24 @@ export const apiSendMessage = (
 ): Promise<any> => {
 	// MATRIX MIGRATION: Use Matrix SDK directly for INSTANT local echo (like Element!)
 	if (sessionId && matrixRoomId) {
-		// console.log('🚀 MATRIX: Sending message via Matrix SDK for INSTANT sync');
-
-		// Get Matrix client
-		if (matrixClientService.getClient()) {
-			// console.log('✅ Sending via Matrix SDK to room:', matrixRoomId);
-
-			// Send via Matrix SDK through MatrixClientService so token refresh/retry is applied.
-			return matrixClientService
-				.sendMessage(matrixRoomId, messageData)
-				.then((response: any) => {
-					// console.log('✅ Matrix SDK send complete - Room.timeline will fire INSTANTLY!');
-
-					// The Room.timeline event fires IMMEDIATELY with the sent message!
-					// This is how Element achieves instant sync!
-
-					apiPostMessageEventNotification({
-						roomId: matrixRoomId,
-						messagePreview: toPreview(messageData),
-						matrixRoom: true,
-						threadRootId: threadRootId || null,
-						supervisorMessage: !!supervisorMessage,
-						senderDisplayName: senderDisplayName || null,
-						threadParentPreview: threadParentPreview || null
-					}).catch(() => undefined);
-					return { success: true, event_id: response.event_id };
-				})
-				.catch(() => {
-					return sendMatrixMessageViaRest(
-						sessionId,
-						messageData,
-						matrixRoomId,
-						threadRootId,
-						supervisorMessage,
-						senderDisplayName,
-						threadParentPreview
-					);
-				});
+		if (!matrixClientService.getClient()) {
+			return Promise.reject(new Error('Matrix client not initialized'));
 		}
 
-		// Fallback: Use REST API if Matrix client not available
-		// console.log('⚠️ Matrix client not available, using REST API fallback');
-		return sendMatrixMessageViaRest(
-			sessionId,
-			messageData,
-			matrixRoomId,
-			threadRootId,
-			supervisorMessage,
-			senderDisplayName,
-			threadParentPreview
-		);
+		// Matrix message bodies must stay on the Matrix SDK path so room
+		// encryption/local echo are owned by Matrix, not the ORISO REST proxy.
+		return matrixClientService
+			.sendMessage(matrixRoomId, messageData)
+			.then((response: any) => {
+				apiPostMessageEventNotification({
+					roomId: matrixRoomId,
+					matrixRoom: true,
+					threadRootId: threadRootId || null,
+					supervisorMessage: !!supervisorMessage,
+					senderDisplayName: senderDisplayName || null
+				}).catch(() => undefined);
+				return { success: true, event_id: response.event_id };
+			});
 	}
 
 	// Legacy RocketChat path

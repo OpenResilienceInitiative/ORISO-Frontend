@@ -7,8 +7,46 @@ import {
 } from '../components/sessionCookie/getMatrixAccessToken';
 import { matrixCallService } from './matrixCallService';
 import { matrixLiveEventBridge } from './matrixLiveEventBridge';
+import { encryptMatrixAttachment } from '../utils/matrixEncryptedAttachment';
+import {
+	assertMatrixRoomEncrypted,
+	buildMatrixRoomEncryptionInitialState
+} from '../utils/matrixRoomEncryption';
 
 const TOKEN_REFRESH_BUFFER_MS = 2 * 60 * 1000;
+
+export interface MatrixFileMessageOptions {
+	abortController?: AbortController;
+	uploadProgress?: (percentUpload: number) => void;
+}
+
+const getMatrixFileMessageType = (file: File): string => {
+	const mimeType = file.type || '';
+	if (mimeType.startsWith('image/')) {
+		return 'm.image';
+	}
+	if (mimeType.startsWith('audio/')) {
+		return 'm.audio';
+	}
+	if (mimeType.startsWith('video/')) {
+		return 'm.video';
+	}
+	return 'm.file';
+};
+
+const buildMatrixFileMessageContent = (
+	file: File,
+	encryptedFile: Awaited<ReturnType<typeof encryptMatrixAttachment>>['file']
+): Record<string, unknown> => ({
+	body: file.name,
+	filename: file.name,
+	msgtype: getMatrixFileMessageType(file),
+	file: encryptedFile,
+	info: {
+		mimetype: file.type || 'application/octet-stream',
+		size: file.size
+	}
+});
 
 export const isMatrixForbiddenError = (error: unknown): boolean => {
 	const matrixError = error as { errcode?: string; httpStatus?: number };
@@ -153,6 +191,7 @@ export class MatrixClientService {
 		if (!this.client) {
 			throw new Error('Matrix client not initialized');
 		}
+		this.assertEncryptedRoom(roomId);
 
 		const content = {
 			msgtype: 'm.text',
@@ -170,8 +209,43 @@ export class MatrixClientService {
 			if (!this.client) {
 				throw new Error('Matrix client not initialized');
 			}
+			this.assertEncryptedRoom(roomId);
 
 			return this.client.sendMessage(roomId, content);
+		}
+	}
+
+	public async sendFileMessage(
+		roomId: string,
+		file: File,
+		options: MatrixFileMessageOptions = {}
+	): Promise<any> {
+		await this.ensureFreshToken();
+
+		if (!this.client) {
+			throw new Error('Matrix client not initialized');
+		}
+		this.assertEncryptedRoom(roomId);
+
+		try {
+			const content = await this.uploadFileMessageContent(
+				file,
+				options
+			);
+			return await this.client.sendMessage(roomId, content as any);
+		} catch (error) {
+			if (!isMatrixExpiredTokenError(error)) {
+				throw error;
+			}
+
+			await this.refreshMatrixToken();
+			if (!this.client) {
+				throw new Error('Matrix client not initialized');
+			}
+			this.assertEncryptedRoom(roomId);
+
+			const content = await this.uploadFileMessageContent(file, options);
+			return this.client.sendMessage(roomId, content as any);
 		}
 	}
 
@@ -186,7 +260,8 @@ export class MatrixClientService {
 		const response = await this.client.createRoom({
 			preset: 'private_chat' as any,
 			invite: [userId],
-			is_direct: true
+			is_direct: true,
+			initial_state: [buildMatrixRoomEncryptionInitialState()]
 		});
 
 		return response.room_id;
@@ -233,6 +308,8 @@ export class MatrixClientService {
 		if (!this.client) {
 			return;
 		}
+		this.assertEncryptedRoom(roomId);
+
 		try {
 			await this.client.sendTyping(roomId, typing, 30000);
 		} catch (error) {
@@ -337,6 +414,47 @@ export class MatrixClientService {
 
 	public hasActiveClient(): boolean {
 		return this.client !== null;
+	}
+
+	private assertEncryptedRoom(roomId: string): void {
+		assertMatrixRoomEncrypted(this.client, roomId);
+	}
+
+	private async uploadFileMessageContent(
+		file: File,
+		options: MatrixFileMessageOptions
+	): Promise<Record<string, unknown>> {
+		if (!this.client) {
+			throw new Error('Matrix client not initialized');
+		}
+
+		const encryptedAttachment = await encryptMatrixAttachment(file);
+		const uploadResponse = await this.client.uploadContent(
+			encryptedAttachment.encryptedBlob,
+			{
+				includeFilename: false,
+				type: 'application/octet-stream',
+				abortController: options.abortController,
+				progressHandler: ({ loaded, total }) => {
+					if (!options.uploadProgress || !total) {
+						return;
+					}
+					options.uploadProgress(
+						Math.min(Math.ceil((100 * loaded) / total), 100)
+					);
+				}
+			}
+		);
+
+		options.uploadProgress?.(100);
+
+		return buildMatrixFileMessageContent(
+			file,
+			{
+				...encryptedAttachment.file,
+				url: uploadResponse.content_uri
+			}
+		);
 	}
 
 	private getStoredTokenExpiresAt(): number | null {

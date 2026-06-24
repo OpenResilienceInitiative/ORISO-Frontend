@@ -11,11 +11,10 @@ import { Link, useLocation, useHistory } from 'react-router-dom';
 import {
 	NavGlobeIcon,
 	NavGlobeIconHover,
-	NavGlobeIconFilled,
-	NavLogoutIcon,
-	NavLogoutIconHover,
-	NavLogoutIconFilled
+	NavGlobeIconFilled
 } from './navigationSidebarIcons';
+import { ReactComponent as NavDoorOpenIcon } from '../../resources/img/icons/navigation/door_open_400.svg';
+import { ReactComponent as NavDoorOpenIconFilled } from '../../resources/img/icons/navigation/door_open_filled.svg';
 import {
 	UserDataContext,
 	hasUserAuthority,
@@ -24,15 +23,13 @@ import {
 	SessionsDataContext,
 	SET_SESSIONS,
 	TenantContext,
-	LocaleContext,
-	NotificationsContext
+	LocaleContext
 } from '../../globalState';
 import { initNavigationHandler } from './navigationHandler';
 import { ReactComponent as LogoutIconOutline } from '../../resources/img/icons/logout_outline.svg';
 import { ReactComponent as LogoutIconFilled } from '../../resources/img/icons/logout_filled.svg';
 import clsx from 'clsx';
-import { RocketChatUnreadContext } from '../../globalState/provider/RocketChatUnreadProvider';
-import { apiGetAskerSessionList, apiGetUserDrafts } from '../../api';
+import { apiGetAskerSessionList } from '../../api';
 import { useTranslation } from 'react-i18next';
 import { LocaleSwitch } from '../localeSwitch/LocaleSwitch';
 import { userHasBudibaseTools } from '../../api/apiGetTools';
@@ -40,7 +37,6 @@ import { browserNotificationsSettings } from '../../utils/notificationHelpers';
 import useIsFirstVisit from '../../utils/useIsFirstVisit';
 import { useResponsive } from '../../hooks/useResponsive';
 import { MENUPLACEMENT_RIGHT } from '../select/SelectDropdown';
-import { REMOTE_DRAFT_INDEX_SCOPE } from '../../services/draftStore';
 import {
 	useLiveChatAvailable,
 	setLiveChatAvailable
@@ -57,6 +53,33 @@ export interface NavigationBarProps {
 }
 
 const REGEX_DASH = /\//g;
+const stripLocalePrefix = (label: string) =>
+	label.replace(/^\([^)]+\)\s*/, '');
+const hyphenateRailLabel = (label: string, breakAfter: number) => {
+	if (/\s/.test(label)) {
+		return label.replace(/\s+/, '\n');
+	}
+	if (label.length <= breakAfter + 3) {
+		return label;
+	}
+	return `${label.slice(0, breakAfter)}-\n${label.slice(breakAfter)}`;
+};
+const getFigmaRailLabel = (to: string, label: string) => {
+	const compactLabel = stripLocalePrefix(label.trim());
+	const railBreaks: Record<string, number> = {
+		'/sessions/consultant/sessionPreview': 5,
+		'/sessions/consultant/sessionView': 6,
+		'/notifications': 4
+	};
+
+	if (to === '/profile') {
+		return compactLabel.replace(/\s+/, '\n');
+	}
+
+	const breakAfter = railBreaks[to];
+	return breakAfter ? hyphenateRailLabel(compactLabel, breakAfter) : compactLabel;
+};
+
 export const NavigationBar = ({
 	onLogout,
 	routerConfig
@@ -88,12 +111,7 @@ export const NavigationBar = ({
 			void apiSetLiveChatAvailability(true);
 		}
 	}, [isConsultant, liveChatAvailable]);
-	const { sessions: unreadSessions, group: unreadGroup } = useContext(
-		RocketChatUnreadContext
-	);
 	const { tenant } = useContext(TenantContext);
-	const { unreadNotificationCount } = useContext(NotificationsContext);
-	const [draftCount, setDraftCount] = useState(0);
 
 	const ref_menu = useRef<any[]>([]);
 	const ref_local = useRef<any>(null);
@@ -123,7 +141,7 @@ export const NavigationBar = ({
 		}
 	}, [liveChatAvailable, history]);
 
-	const figmaConsultantNav = fromL;
+	const figmaConsultantNav = true;
 	/**
 	 * Live-chat toggle is a consultant-only availability switch. It no longer
 	 * links to the video-conference page; it simply flips a stored flag that
@@ -161,44 +179,13 @@ export const NavigationBar = ({
 		}
 	}, [tenant, userData, isConsultant]);
 
-	const loadDraftCount = useCallback(async () => {
-		const response = await apiGetUserDrafts(0, 200).catch(() => null);
-		const visibleDrafts =
-			response?.items?.filter(
-				(entry) => entry.scopeKey !== REMOTE_DRAFT_INDEX_SCOPE
-			) || [];
-		setDraftCount(visibleDrafts.length);
-	}, []);
-
-	useEffect(() => {
-		void loadDraftCount();
-	}, [loadDraftCount, location.pathname]);
-
-	useEffect(() => {
-		const onFocus = () => {
-			void loadDraftCount();
-		};
-		window.addEventListener('focus', onFocus);
-		const intervalId = window.setInterval(() => {
-			void loadDraftCount();
-		}, 20000);
-		return () => {
-			window.removeEventListener('focus', onFocus);
-			window.clearInterval(intervalId);
-		};
-	}, [loadDraftCount]);
-
 	const animateNavIconTimeoutRef = useRef(null);
 	useEffect(() => {
 		if (animateNavIconTimeoutRef.current) {
 			return;
 		}
 
-		if (
-			unreadSessions.length + unreadGroup.length > 0 ||
-			unreadNotificationCount > 0 ||
-			draftCount > 0
-		) {
+		if (isFirstVisit && !browserNotificationsSettings().visited) {
 			setAnimateNavIcon(true);
 		}
 
@@ -206,16 +193,11 @@ export const NavigationBar = ({
 			setAnimateNavIcon(false);
 			animateNavIconTimeoutRef.current = null;
 		}, 1000);
-	}, [unreadSessions, unreadGroup, unreadNotificationCount, draftCount]);
+	}, [isFirstVisit]);
 
 	const pathsToShowUnreadMessageNotification = {
-		'/sessions/consultant/sessionView':
-			unreadSessions.length + unreadGroup.length,
-		'/sessions/user/view': unreadSessions.length + unreadGroup.length,
 		'/profile':
-			isFirstVisit && !browserNotificationsSettings().visited ? 1 : 0,
-		'/notifications': unreadNotificationCount,
-		'/drafts': draftCount
+			isFirstVisit && !browserNotificationsSettings().visited ? 1 : 0
 	};
 
 	const pathToClassNameInWalkThrough = React.useCallback((to: string) => {
@@ -353,6 +335,9 @@ export const NavigationBar = ({
 										pathsToShowUnreadMessageNotification
 									).includes(item.to) && unreadCount > 0;
 								const label = translate(item.titleKeys.large);
+								const visibleLabel = useFigmaSlot
+									? getFigmaRailLabel(item.to, label)
+									: label;
 								const isChatNav =
 									item.to ===
 										'/sessions/consultant/sessionView' ||
@@ -371,43 +356,27 @@ export const NavigationBar = ({
 												'navigation__icon__single',
 												isChatNav &&
 													'navigation__icon__single--chat-figma',
-												item.to === '/drafts' &&
-													'navigation__icon__single--drafts-figma'
+												item.to === '/profile' &&
+													'navigation__icon__single--profile-figma'
 											)}
 										/>
 									) : null
 								) : dualIcon ? (
 									<>
 										{Icon && (
-											<Icon
-												title={label}
-												aria-label={label}
-												className={clsx(
-													'navigation__icon__outline',
-													{
-														'navigation__icon--drafts':
-															item.to ===
-																'/drafts' &&
-															!item.navSlot
-													}
-												)}
-											/>
-										)}
-										{IconFilled && (
-											<IconFilled
-												title={label}
-												aria-label={label}
-												className={clsx(
-													'navigation__icon__filled',
-													{
-														'navigation__icon--drafts':
-															item.to ===
-																'/drafts' &&
-															!item.navSlot
-													}
-												)}
-											/>
-										)}
+												<Icon
+													title={label}
+													aria-label={label}
+													className="navigation__icon__outline"
+												/>
+											)}
+											{IconFilled && (
+												<IconFilled
+													title={label}
+													aria-label={label}
+													className="navigation__icon__filled"
+												/>
+											)}
 									</>
 								) : (
 									Icon && (
@@ -419,9 +388,9 @@ export const NavigationBar = ({
 												useFigmaSlot &&
 													isChatNav &&
 													'navigation__icon__single--chat-figma',
-												item.to === '/drafts' &&
+												item.to === '/profile' &&
 													useFigmaSlot &&
-													'navigation__icon__single--drafts-figma'
+													'navigation__icon__single--profile-figma'
 											)}
 										/>
 									)
@@ -445,6 +414,7 @@ export const NavigationBar = ({
 												`navigation__item--nav-${item.navSlot}`
 										)}
 										to={item.to}
+										aria-label={label}
 										onMouseEnter={() =>
 											setHoveredNavItem(item.to)
 										}
@@ -496,7 +466,7 @@ export const NavigationBar = ({
 													'navigation__title--figma'
 											)}
 										>
-											{label}
+											{visibleLabel}
 										</span>
 										{!useFigmaSlot && showUnreadNav && (
 											<NavigationUnreadIndicator
@@ -619,6 +589,8 @@ export const NavigationBar = ({
 												'navigation.language'
 											)}
 											menuPlacement={MENUPLACEMENT_RIGHT}
+											color="currentColor"
+											colorHover="currentColor"
 											selectRef={(el) =>
 												(ref_select.current = el)
 											}
@@ -658,9 +630,11 @@ export const NavigationBar = ({
 							)}
 							{figmaConsultantNav && (
 								<span className="navigation__title navigation__title--figma">
-									{translate([activeLocale, activeLocale], {
-										ns: 'languages'
-									})}
+									{stripLocalePrefix(
+										translate([activeLocale, activeLocale], {
+											ns: 'languages'
+										})
+									)}
 								</span>
 							)}
 						</div>
@@ -700,21 +674,21 @@ export const NavigationBar = ({
 								>
 									<div className="navigation__icon-slot__inner">
 										{isLogoutSelected ? (
-											<NavLogoutIconFilled
+											<NavDoorOpenIconFilled
 												className="navigation__icon__single"
 												aria-label={translate(
 													'app.logout'
 												)}
 											/>
 										) : isLogoutHovered ? (
-											<NavLogoutIconHover
+											<NavDoorOpenIcon
 												className="navigation__icon__single"
 												aria-label={translate(
 													'app.logout'
 												)}
 											/>
 										) : (
-											<NavLogoutIcon
+											<NavDoorOpenIcon
 												className="navigation__icon__single"
 												aria-label={translate(
 													'app.logout'

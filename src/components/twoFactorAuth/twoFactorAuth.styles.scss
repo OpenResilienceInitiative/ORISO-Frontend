@@ -97,10 +97,7 @@ $two-factor-auth-overlay-buttons-margin-right: auto !default;
 				margin: auto 0 auto $grid-base;
 
 				&:hover {
-					color: var(
-						--m3-primary,
-						$hover-primary
-					);
+					color: var(--m3-primary, $hover-primary);
 				}
 			}
 		}
@@ -110,10 +107,7 @@ $two-factor-auth-overlay-buttons-margin-right: auto !default;
 		.text__divider {
 			text-transform: uppercase;
 			display: flex;
-			color: var(
-				--m3-secondary,
-				$text-high-emphasis
-			);
+			color: var(--m3-secondary, $text-high-emphasis);
 
 			&::before,
 			&::after {

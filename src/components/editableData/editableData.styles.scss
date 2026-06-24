@@ -12,7 +12,10 @@
 
 		&--empty {
 			color: var(--m3-on-surface-variant, $tertiary);
-			-webkit-text-fill-color: var(--m3-on-surface-variant, $tertiary) !important;
+			-webkit-text-fill-color: var(
+				--m3-on-surface-variant,
+				$tertiary
+			) !important;
 		}
 
 		&:disabled {

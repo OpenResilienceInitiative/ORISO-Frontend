@@ -88,6 +88,7 @@ interface BrandFamily {
 	tint: string;
 	hover: string;
 	fixed: string;
+	fixedDim: string;
 	onFixed: string;
 	onFixedVariant: string;
 }
@@ -126,9 +127,12 @@ const lightBrandFamily = (seedHex: string): BrandFamily => {
 		onContainer: hex(palette.tone(onContainerTone)),
 		inverse: hex(palette.tone(80)),
 		tint: hex(boosted.tone(40)),
-		hover: hex(palette.tone(clampTone(Math.round(hct.tone) + HOVER_TONE_SHIFT))),
+		hover: hex(
+			palette.tone(clampTone(Math.round(hct.tone) + HOVER_TONE_SHIFT))
+		),
 		// Fixed roles keep the same tones in every scheme (M3 spec).
 		fixed: hex(palette.tone(90)),
+		fixedDim: hex(palette.tone(80)),
 		onFixed: hex(palette.tone(10)),
 		onFixedVariant: hex(palette.tone(30))
 	};
@@ -144,8 +148,11 @@ const darkBrandFamily = (seedHex: string): BrandFamily => {
 		onContainer: hex(palette.tone(DARK_BRAND_TONES.onContainer)),
 		inverse: hex(palette.tone(40)),
 		tint: hex(palette.tone(80)),
-		hover: hex(palette.tone(clampTone(DARK_BRAND_TONES.role - HOVER_TONE_SHIFT))),
+		hover: hex(
+			palette.tone(clampTone(DARK_BRAND_TONES.role - HOVER_TONE_SHIFT))
+		),
 		fixed: hex(palette.tone(90)),
+		fixedDim: hex(palette.tone(80)),
 		onFixed: hex(palette.tone(10)),
 		onFixedVariant: hex(palette.tone(30))
 	};
@@ -299,6 +306,7 @@ export const computeOrisoPalette = (
 		'--m3-on-primary-container': brand.onContainer,
 		'--m3-primary-hover': brand.hover,
 		'--m3-primary-fixed': brand.fixed,
+		'--m3-primary-fixed-dim': brand.fixedDim,
 		'--m3-on-primary-fixed': brand.onFixed,
 		'--m3-on-primary-fixed-variant': brand.onFixedVariant,
 		'--m3-inverse-primary': brand.inverse,
@@ -361,7 +369,25 @@ export const computeOrisoPalette = (
 		'--m3-outline-variant': hex(variant.tone(neutralTones.outlineVariant)),
 
 		'--m3-shadow': '#000000',
-		'--m3-scrim': '#000000'
+		'--m3-scrim': '#000000',
+
+		'--oriso-primary-fixed': brand.fixed,
+		'--oriso-primary-fixed-dim': brand.fixedDim,
+		'--oriso-on-primary-fixed': brand.onFixed,
+		'--oriso-on-primary-fixed-variant': brand.onFixedVariant,
+		'--oriso-app-action': brand.role,
+		'--oriso-lottie-accent-color': brand.fixedDim,
+		'--oriso-lottie-secondary-color': secondary.container,
+
+		'--primary': brand.role,
+		'--primary-3': brand.hover,
+		'--hover-primary': brand.hover,
+		'--skin-color-primary': brand.role,
+		'--skin-color-primary-hover': brand.hover,
+		'--skin-color-primary-contrast-safe': brand.role,
+		'--skin-color-secondary': secondary.role,
+		'--skin-color-secondary-contrast-safe': secondary.role,
+		'--skin-color-default': secondary.role
 	};
 
 	const tooPale =

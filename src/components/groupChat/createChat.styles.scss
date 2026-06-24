@@ -18,7 +18,10 @@ $inputSpacing: 32px;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		background-color: var(--m3-surface-container-lowest, $background-lighter);
+		background-color: var(
+			--m3-surface-container-lowest,
+			$background-lighter
+		);
 		padding: $grid-base-three $grid-base-two;
 
 		@include breakpoint($fromMedium) {
@@ -26,7 +29,10 @@ $inputSpacing: 32px;
 		}
 
 		@include breakpoint($fromLarge) {
-			background-color: var(--m3-surface-container-low, $background-light);
+			background-color: var(
+				--m3-surface-container-low,
+				$background-light
+			);
 			align-items: flex-start;
 		}
 

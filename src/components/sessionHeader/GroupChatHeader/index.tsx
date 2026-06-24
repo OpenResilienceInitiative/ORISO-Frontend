@@ -33,6 +33,7 @@ import { matrixClientService } from '../../../services/matrixClientService';
 import { RoomMember } from 'matrix-js-sdk';
 import { UserAvatar } from '../../message/UserAvatar';
 import { getTenantSettings } from '../../../utils/tenantSettingsHelper';
+import { ChatroomMainInteractionIcon } from '../ChatroomMainInteractionIcon';
 
 interface GroupChatHeaderProps {
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
@@ -373,8 +374,10 @@ export const GroupChatHeader = ({
 				<div className="sessionInfo__username sessionInfo__username--deactivate sessionInfo__username--groupChat">
 					<div className="sessionInfo__titleRow">
 						<div className="sessionInfo__memberStack">
-							{/* No supervisor "+" on group chats — supervision
-							    is only offered for 1-on-1 chats. */}
+							<ChatroomMainInteractionIcon
+								type="internal"
+								showAddIcon={isActive && !isJoinGroupChatView}
+							/>
 							{stackedMembers.map((member, index) => {
 								const userId = member.userId || '';
 								const parsedUsername =

@@ -30,10 +30,9 @@ import {
 	apiPutDearchive,
 	apiGetSessionSupervisors,
 	apiSendEnquiry,
+	apiSendMatrixAttachmentMessage,
 	apiSendMessage,
-	apiUploadAttachment,
-	apiMatrixUploadFile,
-	apiMatrixSendFileMessage
+	apiUploadAttachment
 } from '../../api';
 import {
 	MessageSubmitInfo,
@@ -109,6 +108,8 @@ import { HIGHLIGHT_SNIPPET_SELECTED_EVENT } from './highlightSnippetEvents';
 
 //Linkify Plugin
 const omitKey = (key, { [key]: _, ...obj }) => obj;
+
+type AttachmentUploadControl = Pick<XMLHttpRequest, 'abort'>;
 const linkifyPlugin = createLinkifyPlugin({
 	component: (props) => {
 		return (
@@ -919,10 +920,10 @@ export const MessageSubmitInterfaceComponent = ({
 	const [attachmentSelected, setAttachmentSelected] = useState<File | null>(
 		null
 	);
-	const [uploadProgress, setUploadProgress] = useState(null);
+	const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
 	const [attachmentUpload, setAttachmentUpload] =
-		useState<XMLHttpRequest | null>(null);
+		useState<AttachmentUploadControl | null>(null);
 	const [editorState, setEditorState] = useState(EditorState.createEmpty());
 	const [composerText, setComposerText] = useState('');
 	const [highlightedSnippet, setHighlightedSnippet] = useState<string | null>(
@@ -1832,35 +1833,57 @@ export const MessageSubmitInterfaceComponent = ({
 			const matrixSessionId = isMatrixSession
 				? activeSession.item.id
 				: undefined;
+			const matrixRoomId = isMatrixSession
+				? isMatrixRoom(activeSession.rid)
+					? activeSession.rid
+					: activeSession.item?.matrixRoomId
+				: undefined;
 			const getSendMailNotificationStatus = () => !activeSession.isGroup;
 
 			if (attachment) {
 				let res: any;
 
-				// MATRIX MIGRATION: Use direct Matrix upload for Matrix sessions
+				// MATRIX MIGRATION: Keep Matrix attachments on the SDK media path.
 				if (matrixSessionId) {
-					// console.log('📤 Using Matrix direct upload for session:', matrixSessionId);
-
 					try {
-						// Upload file to Matrix via UserService
-						// UserService handles: upload + send message automatically
-						const uploadResult = await apiMatrixUploadFile(
+						if (!matrixRoomId) {
+							throw new Error('Matrix room ID is missing');
+						}
+
+						const abortController = new AbortController();
+						setAttachmentUpload({
+							abort: () => abortController.abort()
+						});
+
+						await apiSendMatrixAttachmentMessage(
+							matrixRoomId,
 							attachment,
-							matrixSessionId,
-							setUploadProgress,
-							setAttachmentUpload
+							{
+								abortController,
+								uploadProgress: setUploadProgress,
+								threadRootId: threadRootId || null,
+								supervisorMessage: !!isSupervisor,
+								senderDisplayName:
+									userData?.displayName ||
+									userData?.userName ||
+									`${userData?.firstName || ''} ${userData?.lastName || ''}`.trim() ||
+									'User',
+								threadParentPreview:
+									threadParentPreview || null
+							}
 						);
 
-						// console.log('✅ Matrix upload and message sent successfully!', uploadResult);
 						res = { success: true };
 					} catch (error: any) {
-						// console.error('❌ Matrix upload failed:', error);
-						const xhr = error as XMLHttpRequest;
-						if (xhr.status === 413) {
+						const status =
+							error?.status ||
+							error?.httpStatus ||
+							error?.statusCode;
+						if (status === 413) {
 							handleAttachmentUploadError(
 								INFO_TYPES.ATTACHMENT_SIZE_ERROR
 							);
-						} else if (xhr.status === 415) {
+						} else if (status === 415) {
 							handleAttachmentUploadError(
 								INFO_TYPES.ATTACHMENT_FORMAT_ERROR
 							);
@@ -1954,10 +1977,6 @@ export const MessageSubmitInterfaceComponent = ({
 
 			if (shouldSendTextMessage) {
 				// MATRIX MIGRATION: For group chats, Matrix room ID is in activeSession.rid
-				const matrixRoomId = isMatrixRoom(activeSession.rid)
-					? activeSession.rid
-					: activeSession.item?.matrixRoomId;
-
 				await apiSendMessage(
 					message,
 					sendToRoomWithId,
@@ -1994,6 +2013,7 @@ export const MessageSubmitInterfaceComponent = ({
 		[
 			activeSession.isGroup,
 			activeSession.item.id,
+			activeSession.item?.matrixRoomId,
 			activeSession.rid,
 			cleanupAttachment,
 			encryptRoom,
@@ -2002,10 +2022,17 @@ export const MessageSubmitInterfaceComponent = ({
 			hasMessageContent,
 			handleAttachmentUploadError,
 			handleMessageSendSuccess,
+			isSupervisor,
 			key,
 			keyID,
 			onSendButton,
-			setE2EEState
+			setE2EEState,
+			threadParentPreview,
+			threadRootId,
+			userData?.displayName,
+			userData?.firstName,
+			userData?.lastName,
+			userData?.userName
 		]
 	);
 

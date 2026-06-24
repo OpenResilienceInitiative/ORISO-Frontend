@@ -44,9 +44,11 @@ const createAppTheme = () =>
 				main: getCssVarValue('--m3-success', '#10b981')
 			}
 		},
-
 		typography: {
-			fontFamily: ['Arial', 'sans-serif'].join(','),
+			fontFamily: getCssVarValue(
+				'--font-family-sans-serif',
+				'"Inter Variable", Arial, sans-serif'
+			),
 			h1: {
 				color: getCssVarValue('--black', '#000000'),
 				letterSpacing: 'normal',

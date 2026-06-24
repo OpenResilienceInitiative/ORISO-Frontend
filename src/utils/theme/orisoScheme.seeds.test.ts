@@ -155,10 +155,7 @@ describe('invalid seeds throw (consumers catch and fall back)', () => {
 
 	it('rejects an invalid accent', () => {
 		expect(() =>
-			computeOrisoPalette(
-				{ primary: PRIMARY, accent: '#12345' },
-				'light'
-			)
+			computeOrisoPalette({ primary: PRIMARY, accent: '#12345' }, 'light')
 		).toThrow(/not a valid hex/);
 	});
 });

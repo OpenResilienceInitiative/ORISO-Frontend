@@ -25,7 +25,10 @@
 			background-color: $dark-grey;
 
 			@include breakpoint($fromLarge) {
-				background-color: var(--m3-surface-container-low, $background-light);
+				background-color: var(
+					--m3-surface-container-low,
+					$background-light
+				);
 			}
 
 			& > div {

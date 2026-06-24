@@ -89,8 +89,14 @@ if (container) {
 					// 	route: { path: routePathNames.termsAndConditions },
 					// 	component: TermsAndConditions
 					// },
-					{ route: { path: routePathNames.imprint }, component: Imprint },
-					{ route: { path: routePathNames.privacy }, component: Privacy }
+					{
+						route: { path: routePathNames.imprint },
+						component: Imprint
+					},
+					{
+						route: { path: routePathNames.privacy },
+						component: Privacy
+					}
 				]}
 				stageComponent={Stage}
 			/>
