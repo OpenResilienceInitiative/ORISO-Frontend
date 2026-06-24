@@ -1,5 +1,6 @@
 export const SUPERVISOR_FEEDBACK_PREFIX = '[SUPERVISOR_FEEDBACK]';
 export const SYSTEM_NOTIFICATION_PREFIX = '[SYSTEM_NOTIFICATION]';
+export const SYSTEM_NOTIFICATION_USER_LEFT_CHAT = 'USER_LEFT_CHAT';
 export const VISIBLE_TO_PREFIX = '[VISIBLE_TO:';
 export const THREAD_PREFIX = '[THREAD:';
 export const THREAD_SUFFIX = ']';
@@ -18,6 +19,8 @@ export const parseMessagePrefixes = (message?: string | null) => {
 			isSystemNotification: false,
 			systemNotificationTitle: '',
 			systemNotificationDescription: '',
+			systemNotificationType: null as string | null,
+			systemNotificationUsername: '',
 			visibleToUserIds: [] as string[],
 			isThreadMessage: false,
 			threadRootId: null as string | null
@@ -29,6 +32,8 @@ export const parseMessagePrefixes = (message?: string | null) => {
 	let isSystemNotification = false;
 	let systemNotificationTitle = '';
 	let systemNotificationDescription = '';
+	let systemNotificationType: string | null = null;
+	let systemNotificationUsername = '';
 	let visibleToUserIds: string[] = [];
 	let threadRootId: string | null = null;
 
@@ -39,8 +44,13 @@ export const parseMessagePrefixes = (message?: string | null) => {
 		if (!threadRootId && cleanedMessage.startsWith(THREAD_PREFIX)) {
 			const endIndex = cleanedMessage.indexOf(THREAD_SUFFIX);
 			if (endIndex > THREAD_PREFIX.length) {
-				threadRootId = cleanedMessage.substring(THREAD_PREFIX.length, endIndex);
-				cleanedMessage = cleanedMessage.substring(endIndex + 1).trimStart();
+				threadRootId = cleanedMessage.substring(
+					THREAD_PREFIX.length,
+					endIndex
+				);
+				cleanedMessage = cleanedMessage
+					.substring(endIndex + 1)
+					.trimStart();
 				keepParsingPrefixes = true;
 				continue;
 			}
@@ -55,13 +65,18 @@ export const parseMessagePrefixes = (message?: string | null) => {
 					.map((entry) => entry.trim())
 					.filter(Boolean);
 				visibleToUserIds = recipients;
-				cleanedMessage = cleanedMessage.substring(endIndex + 1).trimStart();
+				cleanedMessage = cleanedMessage
+					.substring(endIndex + 1)
+					.trimStart();
 				keepParsingPrefixes = true;
 				continue;
 			}
 		}
 
-		if (!isSupervisorFeedback && cleanedMessage.startsWith(SUPERVISOR_FEEDBACK_PREFIX)) {
+		if (
+			!isSupervisorFeedback &&
+			cleanedMessage.startsWith(SUPERVISOR_FEEDBACK_PREFIX)
+		) {
 			isSupervisorFeedback = true;
 			cleanedMessage = cleanedMessage
 				.substring(SUPERVISOR_FEEDBACK_PREFIX.length)
@@ -80,7 +95,11 @@ export const parseMessagePrefixes = (message?: string | null) => {
 			const parsed = JSON.parse(payload) as {
 				title?: string;
 				description?: string;
+				type?: string;
+				username?: string;
 			};
+			systemNotificationType = parsed?.type?.trim() || null;
+			systemNotificationUsername = parsed?.username?.trim() || '';
 			systemNotificationTitle = parsed?.title?.trim() || '';
 			systemNotificationDescription = parsed?.description?.trim() || '';
 		} catch (_error) {
@@ -101,9 +120,10 @@ export const parseMessagePrefixes = (message?: string | null) => {
 		isSystemNotification,
 		systemNotificationTitle,
 		systemNotificationDescription,
+		systemNotificationType,
+		systemNotificationUsername,
 		visibleToUserIds,
 		isThreadMessage: !!threadRootId,
 		threadRootId
 	};
 };
-

@@ -11,6 +11,7 @@ import { createPortal } from 'react-dom';
 import { useHistory, useLocation } from 'react-router-dom';
 
 import { SendMessageButton } from './SendMessageButton';
+import { matrixClientService } from '../../services/matrixClientService';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { STATUS_ENQUIRY } from '../../globalState/interfaces/SessionsDataInterface';
 import {
@@ -85,6 +86,7 @@ import {
 	encryptText,
 	getSignature
 } from '../../utils/encryptionHelpers';
+import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import { useE2EE } from '../../hooks/useE2EE';
 import { apiPostError, ERROR_LEVEL_WARN } from '../../api/apiPostError';
 import { useE2EEViewElements } from '../../hooks/useE2EEViewElements';
@@ -1824,7 +1826,7 @@ export const MessageSubmitInterfaceComponent = ({
 				Boolean(activeSession.item?.matrixRoomId) ||
 				Boolean(
 					activeSession.rid &&
-						activeSession.rid.startsWith('!') &&
+						isMatrixRoom(activeSession.rid) &&
 						activeSession.item?.id
 				);
 			const matrixSessionId = isMatrixSession
@@ -1871,9 +1873,14 @@ export const MessageSubmitInterfaceComponent = ({
 					}
 				} else {
 					// Legacy RocketChat upload path
-					const isAttachmentEncryptionEnabledDevTools = parseInt(
-						getDevToolbarOption(STORAGE_KEY_ATTACHMENT_ENCRYPTION)
-					);
+					const isAttachmentEncryptionEnabledDevTools =
+						process.env.NODE_ENV !== 'production'
+							? parseInt(
+									getDevToolbarOption(
+										STORAGE_KEY_ATTACHMENT_ENCRYPTION
+									)
+								)
+							: 1;
 					let attachmentFile = attachment;
 					let signature = null;
 					let encryptEnabled =
@@ -1947,10 +1954,9 @@ export const MessageSubmitInterfaceComponent = ({
 
 			if (shouldSendTextMessage) {
 				// MATRIX MIGRATION: For group chats, Matrix room ID is in activeSession.rid
-				const matrixRoomId =
-					activeSession.rid && activeSession.rid.startsWith('!')
-						? activeSession.rid
-						: activeSession.item?.matrixRoomId;
+				const matrixRoomId = isMatrixRoom(activeSession.rid)
+					? activeSession.rid
+					: activeSession.item?.matrixRoomId;
 
 				await apiSendMessage(
 					message,
@@ -2050,7 +2056,14 @@ export const MessageSubmitInterfaceComponent = ({
 					level: ERROR_LEVEL_WARN
 				}).then();
 
-				isEncrypted = false;
+				window.alert(
+					translate(
+						'e2ee.message.encryption.error',
+						'Encryption failed, message not sent'
+					)
+				);
+				setIsRequestInProgress(false);
+				return;
 			}
 		}
 
@@ -2325,7 +2338,7 @@ export const MessageSubmitInterfaceComponent = ({
 					: featureVoiceMessagesOneOnOneChatsEnabled !== false);
 
 	const getMatrixRoomId = useCallback(() => {
-		if (activeSession?.rid?.startsWith('!')) {
+		if (isMatrixRoom(activeSession?.rid)) {
 			return activeSession.rid;
 		}
 		return activeSession?.item?.matrixRoomId || null;
@@ -2578,7 +2591,7 @@ export const MessageSubmitInterfaceComponent = ({
 			);
 		});
 		const roomId = getMatrixRoomId();
-		const matrixClient = (window as any).matrixClientService?.getClient?.();
+		const matrixClient = matrixClientService.getClient();
 		const room =
 			roomId && matrixClient ? matrixClient.getRoom(roomId) : null;
 		const roomMembers =
@@ -3676,9 +3689,9 @@ export const MessageSubmitInterfaceComponent = ({
 		[setIsExpandedComposer]
 	);
 
-	const matrixRoomId = activeSession?.rid?.startsWith('!')
+	const matrixRoomId = isMatrixRoom(activeSession?.rid)
 		? activeSession.rid
-		: activeSession?.item?.matrixRoomId?.startsWith('!')
+		: isMatrixRoom(activeSession?.item?.matrixRoomId)
 			? activeSession.item.matrixRoomId
 			: null;
 

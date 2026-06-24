@@ -457,29 +457,6 @@ $profile-footer-justify-content: center !default;
 				justify-content: space-between;
 				position: relative;
 			}
-
-			&--agencies {
-				border-bottom: 1px solid $line-grey;
-				padding-bottom: $grid-base-two;
-
-				&:last-child {
-					border: none;
-					padding-bottom: 0;
-				}
-
-				& .button-as-link,
-				.generateQrCode > button {
-					&:focus {
-						outline: $focus-outline;
-						outline-offset: 1px;
-						border-radius: 4px;
-					}
-
-					&:focus:not(:focus-visible) {
-						outline: none;
-					}
-				}
-			}
 		}
 
 		&__divider {
@@ -593,7 +570,7 @@ $profile-footer-justify-content: center !default;
 			padding: 0;
 			margin-bottom: 0;
 			box-shadow: none;
-			
+
 			.profile__content__title {
 				background: #fff;
 				border: 1px solid #e5e7eb;

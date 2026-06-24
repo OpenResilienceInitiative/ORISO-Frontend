@@ -51,14 +51,14 @@ const ANIMALS_DE = [
 	'Koala',
 	'Panda',
 	'Otter',
-	'Waschbär',
+	'Bär',
 	'Eichhörnchen',
 	'Schildkröte',
 	'Schmetterling',
 	'Kolibri',
-	'Faultier',
+	'Frosch',
 	'Seepferdchen',
-	'Flamingo',
+	'Schwan',
 	'Chamäleon',
 	'Glühwürmchen'
 ];
@@ -96,7 +96,17 @@ export type AnimalType =
 	| 'penguin'
 	| 'koala'
 	| 'panda'
-	| 'otter';
+	| 'otter'
+	| 'bear'
+	| 'squirrel'
+	| 'turtle'
+	| 'butterfly'
+	| 'hummingbird'
+	| 'frog'
+	| 'seahorse'
+	| 'swan'
+	| 'chameleon'
+	| 'firefly';
 
 const ANIMAL_TO_TYPE: Record<string, AnimalType> = {
 	Kaninchen: 'rabbit',
@@ -108,7 +118,17 @@ const ANIMAL_TO_TYPE: Record<string, AnimalType> = {
 	Pinguin: 'penguin',
 	Koala: 'koala',
 	Panda: 'panda',
-	Otter: 'otter'
+	Otter: 'otter',
+	Bär: 'bear',
+	Eichhörnchen: 'squirrel',
+	Schildkröte: 'turtle',
+	Schmetterling: 'butterfly',
+	Kolibri: 'hummingbird',
+	Frosch: 'frog',
+	Seepferdchen: 'seahorse',
+	Schwan: 'swan',
+	Chamäleon: 'chameleon',
+	Glühwürmchen: 'firefly'
 };
 
 const ANIMAL_COLORS: Record<AnimalType, string> = {
@@ -121,7 +141,17 @@ const ANIMAL_COLORS: Record<AnimalType, string> = {
 	penguin: '#D4D4D4',
 	koala: '#C9C9C9',
 	panda: '#E0E0E0',
-	otter: '#C4E0BA'
+	otter: '#C4E0BA',
+	bear: '#D4B896',
+	squirrel: '#E8C9A0',
+	turtle: '#B5D9B5',
+	butterfly: '#FFB3E6',
+	hummingbird: '#B3E6FF',
+	frog: '#B5E6B5',
+	seahorse: '#B3D9FF',
+	swan: '#F0F0F0',
+	chameleon: '#C8E6B3',
+	firefly: '#FFFAB3'
 };
 
 export interface Pseudonym {

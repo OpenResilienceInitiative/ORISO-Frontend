@@ -671,7 +671,8 @@ module.exports = function (webpackEnv) {
 							const onlineUrl =
 								env.raw
 									.REACT_APP_ORGANIZATION_ONLINEBERATUNG_URL ||
-								'https://www.caritas.de/onlineberatung';
+								env.raw.REACT_APP_ORGANIZATION_HOME_URL ||
+								'/';
 							return Buffer.from(
 								content
 									.toString()

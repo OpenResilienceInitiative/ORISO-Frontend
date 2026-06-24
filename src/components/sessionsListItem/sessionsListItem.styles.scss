@@ -1,16 +1,28 @@
 $icon-size: 24px;
 $icon-size-small: 16px;
-$session-light-border: #f1d5d5;
-$session-active-border: #b9362d;
-$session-focus-ring: rgba(185, 54, 45, 0.35);
+$session-card-bg: #eae7e8;
+$session-card-hover-bg: #eadcdc;
+
+// WP-06 Slice 0b: source the active-state colours from the shared list-item
+// selection tokens (settings.scss → _listItemSelection.scss). Values are
+// unchanged — this only makes them the single canonical source.
+$session-card-selected-bg: $list-item-selected-bg;
+$session-light-border: rgba(255, 255, 255, 0.58);
+$session-selected-border: $list-item-accent-ring;
+$session-active-border: $list-item-action-color;
+$session-focus-ring: $list-item-focus-ring;
 $session-topic-chip-bg: #646d78;
-$session-postcode-border: #ffd1d1;
+$session-topic-chip-color: #ffffff;
+$session-postcode-border: #646d78;
 
 .sessionsListItem {
 	display: flex;
 	color: $body-font-color;
-	margin-bottom: 0;
-	transition: all 0.6s ease;
+	margin-bottom: 10px;
+	transition:
+		background-color 160ms ease,
+		border-color 160ms ease,
+		box-shadow 160ms ease;
 	animation: appearSessionListItem 300ms ease forwards;
 	opacity: 0;
 
@@ -37,27 +49,33 @@ $session-postcode-border: #ffd1d1;
 	}
 
 	&--active {
-		transition: all 0.3s ease;
+		transition:
+			background-color 160ms ease,
+			border-color 160ms ease,
+			box-shadow 160ms ease;
 
 		.sessionsListItem__content {
-			background-color: $white !important;
-			border: 2px solid $session-active-border !important;
-			border-radius: 18px !important;
-			margin-top: 0 !important;
-			margin-bottom: 0 !important;
-			transition: all 0.3s ease;
+			background-color: $session-card-selected-bg !important;
+			border: 1px solid $session-selected-border !important;
+			border-radius: 24px !important;
+			box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
+			transition:
+				background-color 160ms ease,
+				border-color 160ms ease,
+				box-shadow 160ms ease;
 
 			&:hover,
 			&:focus,
 			&:active {
-				background-color: $white !important;
-				border: 2px solid $session-active-border !important;
+				background-color: $session-card-selected-bg !important;
+				border-color: $session-selected-border !important;
 			}
 		}
 
 		// Make tags red when card is active
 		.sessionsListItem__topic {
-			background-color: #da5248 !important;
+			background-color: $session-active-border !important;
+			color: #ffffff !important;
 		}
 
 		// Make consulting type icons red when card is active
@@ -83,33 +101,45 @@ $session-postcode-border: #ffd1d1;
 		cursor: pointer;
 	}
 
+	&--menuOpen {
+		.sessionsListItem__content {
+			background-color: #fff6f5 !important;
+			border: 2px solid $session-active-border !important;
+		}
+
+		.sessionsListItem__menuIcon {
+			border-color: $session-active-border;
+			color: $session-active-border;
+		}
+	}
+
 	&__content {
-		overflow: auto;
-		width: calc(100% - (#{$grid-base-two} * 2));
-		max-width: calc(100% - (#{$grid-base-two} * 2));
+		width: calc(100% - 48px);
+		max-width: calc(100% - 48px);
 		min-width: 0;
 		box-sizing: border-box;
-		padding-left: 20px;
-		padding-right: 6px;
-		padding-top: 12px;
-		margin: 0 $grid-base-two;
-		background-color: $sessions-list-background-color-secondary;
+		min-height: 112px;
+		padding: 0;
+		margin: 0 24px;
+		background-color: $session-card-bg;
 		border: 1px solid $session-light-border;
-		border-radius: 0;
-		transition: all 0.6s ease;
+		border-radius: 24px;
+		transition:
+			background-color 160ms ease,
+			border-color 160ms ease,
+			box-shadow 160ms ease;
 		position: relative;
 		z-index: 10;
 		overflow: hidden;
-		margin-bottom: 0;
 
 		&--anonymous {
 			border: 1px solid #9e9e9e; // Gray border for anonymous chat cards
 		}
 
 		@include breakpoint($fromMedium) {
-			margin: 0 $grid-base-three;
-			width: calc(100% - (#{$grid-base-three} * 2));
-			max-width: calc(100% - (#{$grid-base-three} * 2));
+			margin: 0 24px;
+			width: calc(100% - 48px);
+			max-width: calc(100% - 48px);
 		}
 
 		&:focus {
@@ -117,17 +147,17 @@ $session-postcode-border: #ffd1d1;
 		}
 
 		// Show a single keyboard-navigation ring for the focused item.
+		// WP-06 Slice 0b: shared focus treatment (identical output).
 		&:focus-visible {
-			outline: none;
-			box-shadow: 0 0 0 3px $session-focus-ring;
+			@include list-item-focus-treatment;
 			transition: box-shadow 0.2s ease;
 		}
 
 		&:hover,
 		&:active {
 			@include breakpoint($fromLarge) {
-				background-color: $session-list-item-background-active;
-				transition: all 0.3s ease;
+				background-color: $session-card-hover-bg;
+				border-color: #e6caca;
 			}
 		}
 	}
@@ -136,62 +166,59 @@ $session-postcode-border: #ffd1d1;
 		border-color: $session-light-border;
 	}
 
-	&:not(.sessionsListItem--active)
-		+ &:not(.sessionsListItem--active)
-		.sessionsListItem__content {
-		border-top: 0;
-	}
-
 	&:first-child:not(.sessionsListItem--active) .sessionsListItem__content {
-		border-top-left-radius: 14px;
-		border-top-right-radius: 14px;
+		border-top-left-radius: 24px;
+		border-top-right-radius: 24px;
 	}
 
 	&:last-child:not(.sessionsListItem--active) .sessionsListItem__content {
-		border-bottom-left-radius: 14px;
-		border-bottom-right-radius: 14px;
+		border-bottom-left-radius: 24px;
+		border-bottom-right-radius: 24px;
 	}
 
-	// Rounded seam where the list meets the selected card (no extra vertical gap).
 	&.sessionsListItem--beforeActive .sessionsListItem__content {
-		border-bottom-left-radius: 14px;
-		border-bottom-right-radius: 14px;
-		margin-bottom: 0;
+		border-bottom-left-radius: 24px;
+		border-bottom-right-radius: 24px;
 	}
 
 	&.sessionsListItem--afterActive .sessionsListItem__content {
-		border-top-left-radius: 14px;
-		border-top-right-radius: 14px;
+		border-top-left-radius: 24px;
+		border-top-right-radius: 24px;
 		border-top: 1px solid $session-light-border;
-		margin-top: 0;
 	}
 
 	&.sessionsListItem--active .sessionsListItem__content:focus-visible {
-		box-shadow:
-			0 0 0 3px $session-focus-ring,
-			0 0 0 1px $session-active-border;
+		border: 2px solid $session-active-border !important;
+		box-shadow: 0 0 0 3px $session-focus-ring;
 	}
 
 	&__row {
 		display: flex;
-		gap: 12px;
+		gap: 10px;
 		color: var(--m3-primary, $secondary);
 		min-width: 0;
 
 		&:first-child {
 			justify-content: space-between;
+			padding: 12px 16px;
 			color: var(--m3-on-surface-variant, $tertiary);
-			font-size: $font-size-secondary;
+			font-size: 12px;
 			line-height: 16px;
+		}
+
+		&:nth-child(2) {
+			align-items: center;
+			padding: 0 16px;
 		}
 
 		&:last-child {
 			justify-content: space-between;
-			min-height: 19px;
+			align-items: flex-end;
+			min-height: 36px;
 		}
 
 		&:not(:last-child) {
-			margin-bottom: $grid-base;
+			margin-bottom: 0;
 		}
 
 		a[role='button'] {
@@ -240,7 +267,7 @@ $session-postcode-border: #ffd1d1;
 
 	&__date {
 		color: var(--m3-on-surface-variant, $tertiary);
-		font-size: $font-size-secondary;
+		font-size: 12px;
 		line-height: 16px;
 		white-space: nowrap;
 		flex-shrink: 0;
@@ -261,7 +288,6 @@ $session-postcode-border: #ffd1d1;
 		}
 	}
 
-	/* Match session header `sessionMenu__icon--desktop`: red-outline pill */
 	&__menuIcon {
 		display: inline-flex;
 		align-items: center;
@@ -273,9 +299,10 @@ $session-postcode-border: #ffd1d1;
 		position: relative;
 		box-sizing: border-box;
 		border-radius: 32px;
-		border: 1px solid $session-postcode-border;
-		background-color: $white;
+		border: 1px solid #ffffff;
+		background-color: #ffffff;
 		color: #1e1e1e;
+		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 
 		svg {
 			width: 24px;
@@ -460,32 +487,31 @@ $session-postcode-border: #ffd1d1;
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		padding: 0 10px;
+		padding: 2px 12px 2px 4px;
 		box-sizing: border-box;
-		background-color: $white;
+		background-color: #ffffff;
 		border: 1px solid $session-postcode-border;
 		border-left: none;
-		border-radius: 0 6px 6px 0;
-		font-size: $font-size-secondary;
-		line-height: 16px;
-		color: var(--m3-primary, $secondary);
+		border-radius: 0 12px 12px 0;
+		font-size: 14px;
+		line-height: 8px;
+		letter-spacing: 0.28px;
+		color: $session-postcode-border;
 		white-space: nowrap;
 		flex-shrink: 0;
 	}
 
 	&__postcode--standalone {
 		border-left: 1px solid $session-postcode-border;
-		border-radius: 6px;
+		border-radius: 12px;
+		padding: 2px 12px;
 	}
 
 	&__topic {
-		border-radius: 4px;
-		padding-left: 8px;
-		padding-right: 8px;
-		padding-top: 2px;
-		padding-bottom: 2px;
+		border-radius: 12px;
+		padding: 2px 12px;
 		text-align: left;
-		color: #fff;
+		color: $session-topic-chip-color;
 		background-color: $session-topic-chip-bg;
 		white-space: nowrap;
 		overflow: hidden;
@@ -494,6 +520,9 @@ $session-postcode-border: #ffd1d1;
 		min-width: 0;
 		max-width: 100%;
 		flex: 1 1 1;
+		font-size: 14px;
+		line-height: 16px;
+		font-weight: 500;
 
 		@media screen and (max-width: 899px) {
 			// Give tag text slightly more room on compact screens.
@@ -504,7 +533,7 @@ $session-postcode-border: #ffd1d1;
 	}
 
 	&__topicPostcodeGroup .sessionsListItem__topic {
-		border-radius: 6px 0 0 6px;
+		border-radius: 12px 0 0 12px;
 		border-right: none;
 		align-self: stretch;
 		display: inline-flex;
@@ -512,19 +541,20 @@ $session-postcode-border: #ffd1d1;
 		justify-content: center;
 	}
 
-	.sessionsListItem--active .sessionsListItem__postcode {
+	&--active .sessionsListItem__postcode,
+	&--menuOpen .sessionsListItem__postcode {
 		border-color: $session-active-border;
+		color: $session-active-border;
 	}
 
 	&__icon {
-		width: 48px; // Increased to accommodate stacked avatars
+		width: 32px;
 		height: 32px;
-		min-width: 48px; // Increased to accommodate stacked avatars
-		margin-right: $grid-base;
+		min-width: 32px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		margin-right: -12px;
+		margin-right: 0;
 
 		svg {
 			width: $icon-size;
@@ -594,11 +624,15 @@ $session-postcode-border: #ffd1d1;
 
 	&__username {
 		font-weight: $font-weight-medium;
-		padding-top: 3px;
+		padding: 8px 22px;
 		margin-right: auto;
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
+		color: #4f5864;
+		font-size: 16px;
+		line-height: 24px;
+		letter-spacing: 0.5px;
 
 		&--readLabel {
 			font-weight: $font-weight-regular;
@@ -620,12 +654,15 @@ $session-postcode-border: #ffd1d1;
 	}
 
 	&__subject {
-		font-size: $font-size-tertiary;
+		padding: 8px 16px;
+		font-size: 14px;
 		line-height: 20px;
+		letter-spacing: 0.25px;
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		align-content: center;
+		color: #1e1e1e;
 
 		&--aliasMessage {
 			font-style: italic !important;
@@ -662,12 +699,17 @@ $session-postcode-border: #ffd1d1;
 	}
 
 	&__consultingTypeIcon {
+		padding: 8px 16px 8px 8px;
 		margin-left: auto;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		flex-shrink: 0;
-		margin-right: -12px;
+		margin-right: 0;
+		color: #4f5864;
+		font-size: 16px;
+		line-height: 16px;
+		font-weight: 600;
 
 		svg {
 			width: $icon-size-small;
