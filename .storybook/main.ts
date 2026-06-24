@@ -92,6 +92,15 @@ const config: StorybookConfig = {
 			module: {
 				...config.module,
 				rules: [
+					// @material/material-color-utilities ships ESM with
+					// extensionless internal imports; without this the
+					// "fully specified" rule rejects them (the app build
+					// already accommodates this, Storybook's does not).
+					{
+						test: /\.js$/,
+						include: /node_modules[\\/]@material[\\/]material-color-utilities/,
+						resolve: { fullySpecified: false }
+					},
 					// Exclude svg from storybook file-loader
 					...config.module.rules.map((r: any) => {
 						if (r.test && /svg/.test(r.test)) {
