@@ -78,6 +78,74 @@
 		}
 	}
 
+	// WP-06 Slice 1: timeline filter bar (family chips + search). Sticky so it
+	// stays pinned while the activity list scrolls.
+	&__filters {
+		position: sticky;
+		top: 0;
+		z-index: 1;
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		padding: 12px 12px 8px;
+		background: #fff;
+		border-bottom: 1px solid #f2f2f2;
+	}
+
+	&__chips {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+	}
+
+	&__chip {
+		appearance: none;
+		border: 1px solid #e5e7eb;
+		background: #fff;
+		color: #4b515a;
+		border-radius: 999px;
+		padding: 4px 12px;
+		font-size: 12px;
+		font-weight: 600;
+		cursor: pointer;
+		transition:
+			background-color 160ms ease,
+			border-color 160ms ease,
+			color 160ms ease;
+	}
+
+	&__chip:hover {
+		background: #fafafa;
+	}
+
+	// Active chip reuses the shared selection tokens (settings.scss →
+	// _listItemSelection.scss) so the timeline matches the conversation lists.
+	&__chip--active {
+		background: $list-item-selected-bg;
+		border-color: $list-item-accent-ring;
+		color: $list-item-action-color;
+	}
+
+	&__chip:focus-visible {
+		@include list-item-focus-treatment;
+	}
+
+	&__search {
+		appearance: none;
+		width: 100%;
+		box-sizing: border-box;
+		border: 1px solid #e5e7eb;
+		border-radius: 999px;
+		padding: 8px 14px;
+		font-size: 13px;
+		color: #1e1e1e;
+		background: #fff;
+	}
+
+	&__search:focus-visible {
+		@include list-item-focus-treatment;
+	}
+
 	&__listItem {
 		width: 100%;
 		display: flex;
