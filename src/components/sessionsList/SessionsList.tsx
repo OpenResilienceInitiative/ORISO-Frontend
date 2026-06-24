@@ -1741,15 +1741,9 @@ export const SessionsList = ({
 					Boolean(entry)
 				);
 		}, [sessionToolbarPairs, translate]);
-	const showSupervisionChip = finalSessionsList.some((raw) => {
-		if (!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)) {
-			return false;
-		}
-		if (!raw.consultant?.id) {
-			return false;
-		}
-		return String(raw.consultant.id) !== String(userData?.userId || '');
-	});
+	const showSupervisionChip =
+		showConsultantToolbarActions &&
+		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
 	const toolbarFilteredOutAll =
 		showMySessionToolbar &&
 		finalSessionsList.length > 0 &&

@@ -129,6 +129,7 @@ describe('Session toolbar filters', () => {
 		cy.get('[data-cy=sessions-list-chips]').should('be.visible');
 		cy.get('[data-cy=sessions-list-chip-internal-group]').should('exist');
 		cy.get('[data-cy=sessions-list-chip-internal-group]').scrollIntoView();
+		cy.get('[data-cy=sessions-list-chip-supervision]').should('exist');
 		cy.get('[data-cy=sessions-list-chip-groups]').should('exist');
 		cy.get('[data-cy=sessions-list-chip-groups]').scrollIntoView();
 		cy.get('[data-cy=sessions-list-chips]').should(($chipsScroll) => {
@@ -148,7 +149,7 @@ describe('Session toolbar filters', () => {
 						.split(',')
 						.map((duration) => parseFloat(duration))
 				);
-				expect(longestDuration).to.be.greaterThan(0.3);
+				expect(longestDuration).to.be.greaterThan(0.38);
 			}
 		);
 		cy.get(

@@ -803,15 +803,16 @@ $sessionShellSurface: var(--m3-surface-container-high, #eae7e8);
 			overflow: hidden;
 			isolation: isolate;
 			max-width: 260px;
+			will-change: max-width, padding, background-color, color, transform;
 			-webkit-tap-highlight-color: transparent;
 			transition:
-				background-color 320ms cubic-bezier(0.16, 1, 0.3, 1),
-				border-color 320ms cubic-bezier(0.16, 1, 0.3, 1),
-				box-shadow 320ms cubic-bezier(0.16, 1, 0.3, 1),
-				color 220ms cubic-bezier(0.16, 1, 0.3, 1),
-				padding 320ms cubic-bezier(0.16, 1, 0.3, 1),
-				max-width 320ms cubic-bezier(0.16, 1, 0.3, 1),
-				transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
+				background-color 420ms cubic-bezier(0.16, 1, 0.3, 1),
+				border-color 420ms cubic-bezier(0.16, 1, 0.3, 1),
+				box-shadow 420ms cubic-bezier(0.16, 1, 0.3, 1),
+				color 260ms cubic-bezier(0.16, 1, 0.3, 1),
+				padding 420ms cubic-bezier(0.16, 1, 0.3, 1),
+				max-width 420ms cubic-bezier(0.16, 1, 0.3, 1),
+				transform 260ms cubic-bezier(0.16, 1, 0.3, 1);
 
 		&::before {
 			content: '';
@@ -944,10 +945,10 @@ $sessionShellSurface: var(--m3-surface-container-high, #eae7e8);
 		transform: translateX(-4px);
 		will-change: max-width, margin-left, opacity, transform;
 		transition:
-			max-width 340ms cubic-bezier(0.16, 1, 0.3, 1),
-			margin-left 340ms cubic-bezier(0.16, 1, 0.3, 1),
-			opacity 220ms cubic-bezier(0.16, 1, 0.3, 1),
-			transform 340ms cubic-bezier(0.16, 1, 0.3, 1);
+			max-width 420ms cubic-bezier(0.16, 1, 0.3, 1),
+			margin-left 420ms cubic-bezier(0.16, 1, 0.3, 1),
+			opacity 260ms cubic-bezier(0.16, 1, 0.3, 1),
+			transform 420ms cubic-bezier(0.16, 1, 0.3, 1);
 	}
 
 	&__chip--active &__chipLabel {
