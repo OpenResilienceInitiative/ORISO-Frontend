@@ -33,7 +33,7 @@ describe('Session toolbar filters', () => {
 				topic: 'Interner Gruppenchat',
 				hintMessage: 'internal group metadata only',
 				lastMessage: 'matrix clear body must stay hidden',
-				messagesRead: true,
+				messagesRead: false,
 				repetitive: false,
 				active: true,
 				subscribed: true,
@@ -59,7 +59,7 @@ describe('Session toolbar filters', () => {
 				topic: 'Gesprächskreis',
 				hintMessage: 'circle metadata only',
 				lastMessage: 'encrypted group body must not be required',
-				messagesRead: true,
+				messagesRead: false,
 				repetitive: true,
 				active: true,
 				subscribed: true,
@@ -181,13 +181,17 @@ describe('Session toolbar filters', () => {
 
 		cy.get('[data-cy=sessions-list-chip-unread]')
 			.should(($chip) => {
-				expect($chip.text()).to.match(/[1-9]/);
+				expect($chip.text()).to.contain('3');
 			})
 			.click();
 		cy.location('search').should('contain', 'chip=unread');
+		cy.get('.sessionsListItem').should('have.length', 3);
 		cy.get('.sessionsListItem')
-			.its('length')
-			.should('be.greaterThan', 0);
+			.should('contain.text', 'Interner Gruppenchat')
+			.and('contain.text', 'Gesprächskreis')
+			.and('contain.text', 'Nachricht verschlüsselt')
+			.and('not.contain.text', 'matrix clear body must stay hidden')
+			.and('not.contain.text', 'encrypted group body must stay hidden');
 
 		cy.get('[data-cy=sessions-list-chip-drafts]')
 			.should('contain.text', '2')
