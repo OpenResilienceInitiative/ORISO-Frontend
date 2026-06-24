@@ -9,7 +9,7 @@ dotenvExpand(dotenv.config());
 app.disable('x-powered-by');
 
 process.on('unhandledRejection', (err) => {
-	throw err;
+	console.error('Unhandled promise rejection in proxy server:', err);
 });
 
 const port = parseInt(process.env.PORT, 10) || 3000;
@@ -41,44 +41,10 @@ const createServer = async () => {
 	}
 
 	app.use((await import('compression')).default());
+	app.use(express.json());
 
-	// LiveKit Token Service Proxy
-	app.get('/api/livekit/token', async (req, res) => {
-		try {
-			console.log('🔑 Proxying LiveKit token request:', req.query);
-			const { roomName, identity } = req.query;
-
-			if (!roomName || !identity) {
-				return res
-					.status(400)
-					.json({ error: 'roomName and identity are required' });
-			}
-
-			const livekitTokenServiceBase = (
-				process.env.LIVEKIT_TOKEN_SERVICE_URL || ''
-			).replace(/\/+$/, '');
-			if (!livekitTokenServiceBase) {
-				return res.status(503).json({
-					error: 'LIVEKIT_TOKEN_SERVICE_URL is not configured'
-				});
-			}
-			const targetUrl = `${livekitTokenServiceBase}/api/livekit/token?roomName=${encodeURIComponent(roomName)}&identity=${encodeURIComponent(identity)}`;
-
-			console.log('📡 Fetching from:', targetUrl);
-
-			const response = await fetch(targetUrl);
-			const data = await response.json();
-
-			console.log('✅ Token received, forwarding to client');
-			res.json(data);
-		} catch (error) {
-			console.error('❌ LiveKit token proxy error:', error);
-			res.status(500).json({
-				error: 'Failed to get LiveKit token',
-				details: error.message
-			});
-		}
-	});
+	const { registerLivekitTokenRoutes } = require('./lib/livekitTokenRoutes');
+	registerLivekitTokenRoutes(app);
 
 	const serveStatic = await import('serve-static');
 	app.get(
@@ -102,33 +68,6 @@ const createServer = async () => {
 		serveStatic.default(buildPath, { maxAge: '1d' })
 	);
 	app.use(serveStatic.default(buildPath, { index: 'beratung-hilfe.html' }));
-
-	// LiveKit token service proxy
-	app.post('/api/livekit/token', async (req, res) => {
-		try {
-			const livekitTokenServiceBase = (
-				process.env.LIVEKIT_TOKEN_SERVICE_URL || ''
-			).replace(/\/+$/, '');
-			if (!livekitTokenServiceBase) {
-				return res.status(503).json({
-					error: 'LIVEKIT_TOKEN_SERVICE_URL is not configured'
-				});
-			}
-			const response = await fetch(
-				`${livekitTokenServiceBase}/api/livekit/token`,
-				{
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify(req.body)
-				}
-			);
-			const data = await response.json();
-			res.json(data);
-		} catch (error) {
-			console.error('LiveKit token proxy error:', error);
-			res.status(500).json({ error: 'Failed to generate token' });
-		}
-	});
 
 	const middlewareConfigs = require('./routes')(storagePath);
 	middlewareConfigs.forEach(

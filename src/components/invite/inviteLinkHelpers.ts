@@ -2,6 +2,7 @@ import { setTokens } from '../auth/auth';
 import { setValueInCookie } from '../sessionCookie/accessSessionCookie';
 import { generateCsrfToken } from '../../utils/generateCsrfToken';
 import { RedeemInviteLinkSessionResponse } from '../../api/apiRedeemInviteLink';
+import { isMatrixRoomIdHeuristic } from '../../utils/matrixRoomUtils';
 
 export const buildInviteSessionAppUrl = (
 	sessionId: number | string,
@@ -9,8 +10,7 @@ export const buildInviteSessionAppUrl = (
 ): string => {
 	const basePath = '/sessions/user/view';
 	const groupId = rcGroupId?.trim();
-	const isMatrixRoomId =
-		Boolean(groupId) && (groupId.startsWith('!') || groupId.includes(':'));
+	const isMatrixRoomId = isMatrixRoomIdHeuristic(groupId);
 
 	if (groupId && !isMatrixRoomId) {
 		return `${window.location.origin}${basePath}/${encodeURIComponent(groupId)}/${sessionId}`;

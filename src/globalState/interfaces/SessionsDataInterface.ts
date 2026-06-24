@@ -119,6 +119,7 @@ export interface GroupChatItemInterface {
 
 export interface SessionUserInterface {
 	username: string;
+	displayName?: string;
 	sessionData: SessionUserDataInterface;
 }
 

@@ -116,15 +116,27 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				margin: 0 auto;
 				background-color: #ffffff !important;
 				padding: 0 !important;
-				border-top-left-radius: 32px !important;
-				border-bottom-left-radius: 32px !important;
-				border-bottom-right-radius: 32px !important;
-				box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.1) !important;
-				border: 1px solid #ffd1d1 !important;
+				border-radius: 14px 14px 24px 24px !important;
+				box-shadow: none !important;
+				border: 1px solid #ffb8b2 !important;
 				overflow: visible;
-				min-height: 168px;
-				height: 200px;
+				min-height: 186px;
+				height: 210px;
 				transition: all 240ms ease;
+
+				&::before {
+					content: '';
+					position: absolute;
+					top: 9px;
+					left: 50%;
+					width: 56px;
+					height: 4px;
+					border-radius: 999px;
+					background: #f0aaa5;
+					transform: translateX(-50%);
+					pointer-events: none;
+					z-index: 2;
+				}
 
 				&--expanded {
 					position: fixed !important;
@@ -352,11 +364,11 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 		&__inputWrapper {
 			position: absolute;
-			left: 15px;
-			right: 15px;
-			top: 15px;
-			min-height: 141px;
-			height: 168px;
+			left: 22px;
+			right: 22px;
+			top: 23px;
+			min-height: 140px;
+			height: 164px;
 			display: block;
 			max-height: none;
 			min-height: 0;
@@ -392,8 +404,8 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			line-height: 20px;
 			width: 100%;
 			height: 100%;
-			border-radius: 30px 0 30px 30px;
-			border: 2px solid #cc1e1c;
+			border-radius: 6px 0 18px 18px;
+			border: 1px solid #ffb8b2;
 			box-sizing: border-box;
 			position: relative;
 
@@ -413,7 +425,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			&:focus-visible,
 			&:focus-within {
 				outline: none !important;
-				border: 2px solid #cc1e1c;
+				border: 1px solid #ff9f98;
 			}
 
 			&::placeholder,
@@ -438,12 +450,12 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 		&__figmaToolbar {
 			position: absolute;
-			top: 9px;
-			left: 12px;
+			top: 13px;
+			left: 24px;
 			z-index: 20;
 			display: block;
-			max-width: calc(100% - 60px);
-			width: calc(100% - 60px);
+			max-width: calc(100% - 88px);
+			width: calc(100% - 88px);
 			height: 30px;
 			overflow: visible;
 
@@ -1020,11 +1032,10 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 		&__iconWrapper {
 			width: 48px;
 			height: 48px;
-			border-radius: 0 0 0 27px; // top-right pointier, bottom-left less round
+			border-radius: 0 6px 0 24px;
 			cursor: pointer;
-			background-color: #cc1e1c;
-			margin-right: 8px;
-			margin-top: 6px;
+			background-color: #f8ceca;
+			margin: 0;
 			display: inline-flex;
 			align-items: center;
 			justify-content: center;
@@ -1041,11 +1052,13 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				transition: transform 220ms ease-out;
 			}
 			&:hover {
-				background-color: var(
-					--m3-primary-hover,
-					$hover-primary
-				);
+				background-color: var(--m3-primary-hover, #f3bdb8);
 			}
+
+			&--active:not(.textarea__iconWrapper--empty) {
+				background-color: #cc1e1c;
+			}
+
 			&--active .textarea__icon {
 				transform: translate(-48%, -54%) rotate(-22deg);
 			}
@@ -1074,7 +1087,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			&--deactivated:hover {
 				cursor: not-allowed;
 				pointer-events: none;
-				background-color: #efb6b6;
+				background-color: #f8ceca;
 				opacity: 1;
 
 				svg rect {
@@ -1992,12 +2005,12 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 		&__buttons {
 			position: absolute;
-			top: 11px;
-			right: 8px;
+			top: 23px;
+			right: 22px;
 			z-index: 8;
 			display: flex;
 			align-items: center;
-			gap: 6px;
+			gap: 0;
 
 			@media screen and (max-width: 899px) {
 				right: -6px;

@@ -9,11 +9,11 @@ $message-avatar-ring: #ebe2e2;
 	flex-direction: column;
 	margin-bottom: $grid-base-two;
 	opacity: 0;
-	animation: appearMessageItem 500ms ease forwards;
+	animation: appearMessageItem 150ms ease forwards;
 
 	@for $i from 1 through 50 {
 		&:nth-last-child(#{$i}) {
-			animation-delay: $i * 50ms;
+			animation-delay: $i * 15ms;
 		}
 	}
 
@@ -1277,6 +1277,24 @@ $message-avatar-ring: #ebe2e2;
 				}
 			}
 		}
+	}
+}
+
+.messageItem--chatEvent {
+	justify-content: center;
+	margin: 12px 0;
+	flex-direction: unset !important;
+
+	.messageItem__chatEvent {
+		display: inline-block;
+		max-width: 85%;
+		padding: 6px 14px;
+		border-radius: 999px;
+		background: rgba(0, 0, 0, 0.06);
+		color: $text-low-emphasis;
+		font-size: $font-size-tertiary;
+		line-height: 1.4;
+		text-align: center;
 	}
 }
 

@@ -1,8 +1,15 @@
 import * as React from 'react';
 import { useContext, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import { ReactComponent as NotificationBellIcon } from '../../resources/img/icons/notification_bell.svg';
 import { apiUrl } from '../../resources/scripts/endpoints';
+import {
+	getEventDescriptor,
+	getEventIcon,
+	renderEventStrings,
+	familyLabelKey,
+	isKnownEventType
+} from './eventDescriptors';
+import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import { FETCH_METHODS, fetchData } from '../../api/fetchData';
 import {
 	buildThreadPrefix,
@@ -43,6 +50,29 @@ const getNotificationCategory = (item: any): 'system' | 'message' => {
 	if (item?.category === 'message') return 'message';
 	if (item?.actionPath?.includes('threadRootId=')) return 'message';
 	return 'system';
+};
+
+// WP-06 Activity Timeline (Slice 0a): category is registry-driven for known
+// event types; unknown / local-only types keep the legacy heuristic so nothing
+// regresses while the backend is incremental.
+const resolveItemCategory = (item: any): 'system' | 'message' =>
+	isKnownEventType(item?.eventType)
+		? getEventDescriptor(item.eventType).category
+		: getNotificationCategory(item);
+
+// WP-06: render an item's visible strings from its event descriptor's i18n
+// templates (ADR-AT-01 — the server record is text-free), falling back to the
+// server-provided title/text until the strict text-free migration (Slice 2).
+const describeItem = (
+	item: any,
+	translate: (key: string, options?: Record<string, unknown>) => string
+) => {
+	const descriptor = getEventDescriptor(item?.eventType);
+	const { title, text } = renderEventStrings(descriptor, translate, {
+		fallbackTitle: item?.title,
+		fallbackText: item?.text
+	});
+	return { descriptor, title, text };
 };
 
 const getChatKey = (item: any): string => {
@@ -156,9 +186,16 @@ export const NotificationsCenter = () => {
 	const selectedNotificationCategory = useMemo(
 		() =>
 			selectedNotification
-				? getNotificationCategory(selectedNotification)
+				? resolveItemCategory(selectedNotification)
 				: 'system',
 		[selectedNotification]
+	);
+	const selectedDisplay = useMemo(
+		() =>
+			selectedNotification
+				? describeItem(selectedNotification, translate)
+				: null,
+		[selectedNotification, translate]
 	);
 	const selectedSessionId = useMemo(
 		() => resolveSessionId(selectedNotification),
@@ -382,7 +419,7 @@ export const NotificationsCenter = () => {
 				void apiPostMessageEventNotification({
 					roomId: selectedRoomRef,
 					messagePreview: cleanMessage,
-					matrixRoom: selectedRoomRef.startsWith('!'),
+					matrixRoom: isMatrixRoom(selectedRoomRef),
 					threadRootId: selectedThreadRootId || null,
 					supervisorMessage: false,
 					senderDisplayName:
@@ -440,8 +477,11 @@ export const NotificationsCenter = () => {
 					) : (
 						notificationFeed.map((item) =>
 							(() => {
-								const category = getNotificationCategory(item);
+								const category = resolveItemCategory(item);
 								const isMessage = category === 'message';
+								const { descriptor, title, text } =
+									describeItem(item, translate);
+								const Icon = getEventIcon(descriptor.icon);
 								return (
 									<button
 										type="button"
@@ -461,25 +501,17 @@ export const NotificationsCenter = () => {
 														: 'notificationsCenter__listItemTag--system'
 												}`}
 											>
-												{isMessage
-													? translate(
-															'notifications.center.messageTag',
-															'Message notification'
-														)
-													: translate(
-															'notifications.center.systemTag',
-															'System notification'
-														)}
+												{translate(familyLabelKey(descriptor.family))}
 											</span>
 										</div>
 										<div className="notificationsCenter__listItemBody">
 											<div className="notificationsCenter__listItemIconCircle">
-												<NotificationBellIcon />
+												<Icon />
 											</div>
 											<div className="notificationsCenter__listItemContent">
 												<div className="notificationsCenter__listItemHeader">
 													<span className="notificationsCenter__listItemTitle">
-														{item.title}
+														{title}
 													</span>
 													<span className="notificationsCenter__listItemTime">
 														{formatRelativeTime(
@@ -489,7 +521,7 @@ export const NotificationsCenter = () => {
 													</span>
 												</div>
 												<div className="notificationsCenter__listItemText">
-													{item.text}
+													{text}
 												</div>
 											</div>
 										</div>
@@ -512,10 +544,10 @@ export const NotificationsCenter = () => {
 					{selectedNotification ? (
 						<div className="notificationsCenter__detailCard">
 							<h3 className="notificationsCenter__detailTitle">
-								{selectedNotification.title}
+								{selectedDisplay?.title}
 							</h3>
 							<p className="notificationsCenter__detailText">
-								{selectedNotification.text}
+								{selectedDisplay?.text}
 							</p>
 							<div className="notificationsCenter__detailActions">
 								<button

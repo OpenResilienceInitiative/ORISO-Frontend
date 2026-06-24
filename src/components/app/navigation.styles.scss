@@ -14,6 +14,7 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 		&--figma-consultant {
 			@include breakpoint($fromLarge) {
 				border-right: 2px solid #fff;
+				background-color: #eae7e8;
 				/* Symmetric padding: keeps icon column visually centered (badges don’t pull layout) */
 				padding: 0px;
 				display: flex;
@@ -31,12 +32,12 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 					overflow-x: visible;
 					overflow-y: auto;
 					max-height: none;
-					padding: 16px;
+					padding: 14px 6px;
 				}
 
 				.navigation__item__top {
 					width: 100%;
-					gap: 8px;
+					gap: 9px;
 					align-items: center;
 					flex: 0 1 auto;
 					min-height: auto;
@@ -44,10 +45,10 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 
 				.navigation__item__bottom {
 					width: 100%;
-					gap: 8px;
+					gap: 9px;
 					align-items: center;
 					margin-top: auto;
-					padding-top: 12px;
+					padding-top: 10px;
 					flex: 0 0 auto;
 				}
 
@@ -75,7 +76,7 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 					border-radius: 0;
 					margin: 0;
 					padding: 0;
-					gap: 4px;
+					gap: 3px;
 					overflow: visible;
 					/* Override broad transition — only animate color so layout stays stable on click */
 					transition: color 0.2s ease;
@@ -100,20 +101,23 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 				.navigation__title--figma {
 					display: block !important;
 					font-family: 'Roboto', $font-family-sans-serif, sans-serif;
-					font-size: 11px;
-					line-height: 1;
+					font-size: 8px;
+					line-height: 10px;
 					color: #000;
 					font-weight: 400;
 					text-align: center;
-					width: max-content;
-					max-width: 100%;
+					width: 48px;
+					max-width: 48px;
 					margin-left: auto;
 					margin-right: auto;
 					padding: 0;
+					overflow: hidden;
+					text-overflow: ellipsis;
+					white-space: nowrap;
 				}
 
 				.navigation__item--active .navigation__title--figma {
-					color: #930008;
+					color: #cc1e1c;
 					font-weight: 700;
 				}
 
@@ -127,56 +131,56 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 					font-weight: 400;
 				}
 
-				/* Fixed square “squircle” — match --live / --language (49px), not full strip width */
+				/* Fixed compact square “squircle” matching the Figma chat rail. */
 				.navigation__icon-slot {
-					width: 49px !important;
-					height: 49px !important;
-					min-width: 49px !important;
-					min-height: 49px !important;
-					max-width: 49px !important;
-					max-height: 49px !important;
+					width: 32px !important;
+					height: 32px !important;
+					min-width: 32px !important;
+					min-height: 32px !important;
+					max-width: 32px !important;
+					max-height: 32px !important;
 					flex-shrink: 0;
 					box-sizing: border-box;
-					border-radius: 12px;
+					border-radius: 5px;
 					display: flex;
 					align-items: center;
 					justify-content: center;
-					padding: 8px;
+					padding: 5px;
 					margin: 0 auto;
 					position: relative;
 					overflow: visible;
 
 					&--row {
-						background: #dedede;
+						background: #f6f3f3;
 					}
 
 					&--tile {
-						background: #dedede;
+						background: #f6f3f3;
 					}
 
 					&--row.navigation__icon-slot--active {
 						background: #ffdad5;
-						border: 1px solid #930008;
+						border: 1px solid #cc1e1c;
 					}
 
 					&--tile.navigation__icon-slot--active {
 						background: #ffdad5;
-						border: 1px solid #930008;
+						border: 1px solid #cc1e1c;
 					}
 
 					/* Live-chat availability toggle — defaults to inactive (grey,
 					   black glyph). When active, the slot turns black and the
 					   glyph swaps for the privacy/eye variant rendered white. */
 					&--live {
-						background: #dedede;
-						width: 49px;
-						max-width: 49px;
+						background: #f6f3f3;
+						width: 32px;
+						max-width: 32px;
 						margin: 0 auto;
-						padding: 8px;
+						padding: 5px;
 
 						.navigation__liveChatToggleIcon {
-							width: 22px;
-							height: 26px;
+							width: 18px;
+							height: 20px;
 							color: #1c1b1f;
 							display: block;
 							transition: color 180ms ease;
@@ -184,40 +188,40 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 					}
 
 					&--live.navigation__icon-slot--active {
-						background: #000;
+						background: #4f130f;
 
 						.navigation__liveChatToggleIcon--active {
-							width: 29px;
-							height: 26px;
+							width: 22px;
+							height: 20px;
 							color: #ffffff;
 						}
 					}
 
 					&--language {
-						width: 49px;
-						max-width: 49px;
+						width: 32px;
+						max-width: 32px;
 						margin: 0 auto;
-						background: #dedede;
-						padding: 8px;
+						background: #f6f3f3;
+						padding: 5px;
 					}
 
 					&--logout {
-						width: fit-content;
+						width: 32px;
 						margin: 0 auto;
-						background: #dedede;
-						padding: 8px 7px;
-						height: auto;
-						min-height: 48px;
+						background: #f6f3f3;
+						padding: 5px;
+						height: 32px;
+						min-height: 32px;
 					}
 
 					&--logout.navigation__icon-slot--active {
 						background: #ffdad5;
-						border: 1px solid #930008;
+						border: 1px solid #cc1e1c;
 					}
 
 					&--logout.navigation__icon-slot--active
 						.navigation__icon__single {
-						color: #930008;
+						color: #cc1e1c;
 					}
 
 					&__inner {
@@ -226,61 +230,61 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 						display: flex;
 						align-items: center;
 						justify-content: center;
-						width: 32px;
-						height: 32px;
+						width: 22px;
+						height: 22px;
 					}
 				}
 
 				.navigation__icon-slot--tile .navigation__icon-slot__inner {
-					width: 32px;
-					height: 32px;
+					width: 22px;
+					height: 22px;
 				}
 
 				.navigation__icon__single {
-					width: 32px !important;
-					height: 32px !important;
+					width: 22px !important;
+					height: 22px !important;
 					flex-shrink: 0;
 					color: #1c1b1f;
 					display: block;
 
 					&--chat-figma {
-						width: 22px !important;
-						height: 22px !important;
+						width: 20px !important;
+						height: 20px !important;
 					}
 
 					&--drafts-figma {
-						width: 22px !important;
-						height: 22px !important;
+						width: 20px !important;
+						height: 20px !important;
 					}
 
 					&--on-dark {
 						color: #fff;
-						width: 29px !important;
-						height: 25px !important;
+						width: 22px !important;
+						height: 20px !important;
 					}
 				}
 
 				.navigation__globe-svg {
-					width: 24px;
-					height: 24px;
+					width: 20px;
+					height: 20px;
 					color: #1c1b1f;
 				}
 
 				.navigation__icon-slot--row.navigation__icon-slot--active
 					.navigation__globe-svg {
-					color: #930008;
+					color: #cc1e1c;
 				}
 
 				.navigation__item--active.navigation__item--nav-row
 					.navigation__icon__single,
 				.navigation__icon-slot--row.navigation__icon-slot--active
 					.navigation__icon__single {
-					color: #930008;
+					color: #cc1e1c;
 				}
 
 				.navigation__item--active.navigation__item--nav-tile
 					.navigation__icon__single {
-					color: #930008;
+					color: #cc1e1c;
 				}
 
 				.navigation__icon-slot--row .navigation__icon__outline {
@@ -321,12 +325,14 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 
 				/* Badge: corner dot, half-in/half-out; position:absolute doesn’t affect flex centering */
 				.navigation__icon-slot .navigation__item__count--figma {
-					color: #930008;
+					color: #cc1e1c;
 					background-color: #fff;
 					outline: none;
-					border: 2px solid #930008;
+					border: 2px solid #cc1e1c;
 					box-shadow: none;
 					left: auto;
+					top: -5px;
+					right: -5px;
 					transform: none;
 					min-width: 18px;
 					height: 18px;

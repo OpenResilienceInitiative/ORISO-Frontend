@@ -43,7 +43,32 @@
         <p id="status">Preparing auto-login...</p>
     </div>
 
+    <script src="/config.js"></script>
     <script>
+        function getRuntimeConfig() {
+            return window.__ORISO_RUNTIME_CONFIG__ || {};
+        }
+
+        function getElementBaseUrl() {
+            const runtime = getRuntimeConfig();
+            const configured =
+                runtime.REACT_APP_ELEMENT_URL ||
+                runtime.REACT_APP_ELEMENT_BASE_URL;
+
+            if (configured) {
+                return String(configured).replace(/\/+$/, '');
+            }
+
+            return window.location.origin;
+        }
+
+        function buildElementUrl(hashPath) {
+            const baseUrl = getElementBaseUrl();
+            const elementUrl = new URL(baseUrl);
+            elementUrl.hash = hashPath;
+            return elementUrl.toString();
+        }
+
         function getCookie(name) {
             const value = `; ${document.cookie}`;
             const parts = value.split(`; ${name}=`);
@@ -56,7 +81,6 @@
             console.log('🔷 SSO Bridge:', message);
         }
 
-        // Read Matrix credentials from cookies
         const matrixUserId = getCookie('matrix_sso_user_id');
         const matrixAccessToken = getCookie('matrix_sso_access_token');
         const matrixDeviceId = getCookie('matrix_sso_device_id');
@@ -70,15 +94,13 @@
         if (!matrixUserId || !matrixAccessToken || !homeserverUrl) {
             setStatus('Error: Missing credentials. Redirecting to login...');
             console.error('❌ Missing Matrix credentials in cookies');
-            
-            // Redirect to Element login page
+
             setTimeout(() => {
-                window.location.href = 'http://' + window.location.hostname + ':8087/#/login';
+                window.location.href = buildElementUrl('#/login');
             }, 2000);
         } else {
             setStatus('Credentials found. Setting up Element session...');
-            
-            // Prepare Element session data
+
             const elementSession = {
                 accessToken: matrixAccessToken,
                 userId: matrixUserId,
@@ -86,37 +108,27 @@
                 homeserverUrl: homeserverUrl
             };
 
-            // Generate homeserver key for localStorage
-            const hsName = homeserverUrl.replace(/^https?:\/\//, '').replace(/[:/]/g, '_');
-
-            // Build Element login URL with credentials
-            // Element can auto-login via URL parameters
-            const elementUrl = new URL('http://' + window.location.hostname + ':8087');
-            
-            // Method 1: Use URL parameters (some Element versions support this)
-            elementUrl.hash = `#/login?` + 
+            const elementUrl = buildElementUrl(
+                '#/login?' +
                 `homeserver=${encodeURIComponent(homeserverUrl)}` +
                 `&accessToken=${encodeURIComponent(matrixAccessToken)}` +
                 `&userId=${encodeURIComponent(matrixUserId)}` +
-                (matrixDeviceId ? `&deviceId=${encodeURIComponent(matrixDeviceId)}` : '');
+                (matrixDeviceId ? `&deviceId=${encodeURIComponent(matrixDeviceId)}` : '')
+            );
 
             setStatus('Redirecting to Element...');
-            console.log('✅ Redirecting to:', elementUrl.toString());
+            console.log('✅ Redirecting to:', elementUrl);
 
-            // Store credentials in sessionStorage as backup
-            // (Element on 8087 won't be able to read this, but documenting the attempt)
             try {
                 sessionStorage.setItem('element_sso_session', JSON.stringify(elementSession));
             } catch (e) {
                 console.warn('Could not set sessionStorage:', e);
             }
 
-            // Redirect after a short delay
             setTimeout(() => {
-                window.location.href = elementUrl.toString();
+                window.location.href = elementUrl;
             }, 1000);
         }
     </script>
 </body>
 </html>
-

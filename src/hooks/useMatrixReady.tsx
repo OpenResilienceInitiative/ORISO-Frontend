@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { matrixClientService } from '../services/matrixClientService';
 
 /**
  * Hook to check if Matrix client is initialized and ready for calls
@@ -9,53 +10,38 @@ export const useMatrixReady = (): boolean => {
 
 	useEffect(() => {
 		const checkMatrixReady = () => {
-			const matrixClientService = (window as any).matrixClientService;
-			
-			if (!matrixClientService) {
+			const client = matrixClientService.getClient();
+
+			if (!client) {
 				setIsReady(false);
 				return;
 			}
 
-			// Check if client exists and is ready
-			const client = matrixClientService.getClient();
 			const ready = matrixClientService.isReady();
-			
 			setIsReady(ready);
-			
-			// If client exists but not ready, subscribe to sync state changes
-			if (client && !ready) {
-				const unsubscribe = matrixClientService.onSyncStateChange((state: string | null) => {
-					const newReady = matrixClientService.isReady();
-					setIsReady(newReady);
-					
-					if (newReady) {
-						// Once ready, we can unsubscribe (optional - keeping it subscribed is fine too)
-						// console.log('✅ Matrix client is now ready!');
+
+			if (!ready) {
+				return matrixClientService.onSyncStateChange(
+					(state: string | null) => {
+						setIsReady(matrixClientService.isReady());
 					}
-				});
-				
-				return unsubscribe;
+				);
 			}
 		};
 
-		// Initial check
-		checkMatrixReady();
+		const unsubscribe = checkMatrixReady();
 
-		// Poll periodically in case matrixClientService is set later
 		const interval = setInterval(() => {
-			checkMatrixReady();
+			setIsReady(matrixClientService.isReady());
 		}, 500);
 
 		return () => {
+			if (typeof unsubscribe === 'function') {
+				unsubscribe();
+			}
 			clearInterval(interval);
 		};
 	}, []);
 
 	return isReady;
 };
-
-
-
-
-
-
