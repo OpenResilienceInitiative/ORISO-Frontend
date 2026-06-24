@@ -131,7 +131,7 @@
 	font-size: 28px;
 	line-height: 32px;
 	font-weight: 700;
-	color: #4c555f;
+	color: var(--m3-secondary, #4c555f);
 	text-align: center;
 }
 
@@ -140,7 +140,7 @@
 	font-size: 16px;
 	line-height: 22px;
 	font-weight: 700;
-	color: #4c555f;
+	color: var(--m3-secondary, #4c555f);
 	text-align: center;
 }
 
@@ -184,8 +184,8 @@
 
 .breathingTutorialCard__btnCancel {
 	border-radius: 8px;
-	background: #4c555f;
-	color: #e7effc;
+	background: var(--m3-secondary, #4c555f);
+	color: var(--m3-tertiary-container, #e7effc);
 
 	&:hover:not(:disabled) {
 		background: #3d444d;
@@ -194,7 +194,7 @@
 
 .breathingTutorialCard__btnConfirm {
 	border-radius: 100px;
-	background: #cc1e1c;
+	background: var(--m3-primary, #cc1e1c);
 	color: #ffffff;
 
 	&:hover:not(:disabled) {

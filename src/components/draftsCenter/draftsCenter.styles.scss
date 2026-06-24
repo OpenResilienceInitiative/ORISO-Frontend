@@ -43,7 +43,7 @@
 }
 
 .draftsCenter__detail {
-	background: #fff2f4;
+	background: var(--m3-error-container, #fff2f4);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -68,7 +68,7 @@
 }
 
 .draftsCenter__listItem--active {
-	background: #fff6f7;
+	background: var(--m3-error-container, #fff6f7);
 }
 
 .draftsCenter__listItemTagRow {
@@ -124,7 +124,7 @@
 	font-size: 11px;
 	padding: 3px 10px;
 	border-radius: 999px;
-	background: #fdeef2;
+	background: var(--m3-error-container, #fdeef2);
 	color: #be123c;
 }
 
@@ -178,7 +178,7 @@
 }
 
 .draftsCenter__nextButton {
-	border: 1px solid #e5a5ae;
+	border: 1px solid var(--m3-error-container, #e5a5ae);
 	background: #fff;
 	color: #b42334;
 }
@@ -189,7 +189,7 @@
 }
 
 .draftsCenter__deleteButton {
-	border: 1px solid #e5a5ae;
+	border: 1px solid var(--m3-error-container, #e5a5ae);
 	background: #fff;
 	color: #b42334;
 }

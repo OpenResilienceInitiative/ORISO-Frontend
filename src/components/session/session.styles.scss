@@ -443,8 +443,8 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		padding: 0;
 		border: none;
 		border-radius: 10px;
-		background: #4c555f;
-		color: #e7effc;
+		background: var(--m3-secondary, #4c555f);
+		color: var(--m3-tertiary-container, #e7effc);
 		cursor: pointer;
 		transition:
 			background 160ms ease,
@@ -474,7 +474,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		line-height: 24px;
 		font-weight: 500;
 		letter-spacing: 0.0094em;
-		color: #e7effc;
+		color: var(--m3-tertiary-container, #e7effc);
 		white-space: nowrap;
 	}
 
@@ -518,7 +518,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	}
 
 	&__waitingMiniGameBellyModeBtn--active {
-		background: #cc1e1c;
+		background: var(--m3-primary, #cc1e1c);
 		color: #ffffff;
 		border-radius: 100px;
 		flex: 1.6 1 auto;
@@ -532,8 +532,8 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	}
 
 	&__waitingMiniGameBellyModeBtn--inactive {
-		background: #4c555f;
-		color: #e7effc;
+		background: var(--m3-secondary, #4c555f);
+		color: var(--m3-tertiary-container, #e7effc);
 		border-radius: 10px;
 
 		&:hover:not(:disabled) {
@@ -555,7 +555,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		padding: 14px 20px;
 		border: none;
 		border-radius: 100px;
-		background: #cc1e1c;
+		background: var(--m3-primary, #cc1e1c);
 		color: #ffffff;
 		font-family: var(--oriso-body-font-family, #{$font-family-sans-serif});
 		font-size: 16px;
@@ -1194,7 +1194,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		font-size: 15px;
 		font-weight: 700;
 		letter-spacing: 0.08em;
-		color: #cc1e1c;
+		color: var(--m3-primary, #cc1e1c);
 		font-family: var(--oriso-body-font-family, #{$font-family-sans-serif});
 		display: inline-flex;
 		align-items: center;
@@ -1203,7 +1203,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 
 	&__waitingMiniGameCenterText {
 		font-size: 15px;
-		color: #cc1e1c;
+		color: var(--m3-primary, #cc1e1c);
 		font-weight: 700;
 		letter-spacing: 0.02em;
 	}
@@ -1212,7 +1212,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		display: block;
 		width: 22px;
 		height: 22px;
-		color: #cc1e1c;
+		color: var(--m3-primary, #cc1e1c);
 		fill: currentColor;
 	}
 
@@ -1468,8 +1468,8 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		}
 
 		&--secondary {
-			background: #646d78;
-			color: #e7effc;
+			background: var(--m3-secondary-container, #646d78);
+			color: var(--m3-tertiary-container, #e7effc);
 		}
 
 		&:disabled {
@@ -1519,7 +1519,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		   grey pills render at their full percentage positions; .--left
 		   and .--right modifiers on the row select which end rounds. */
 		&--grey {
-			background: #646d78;
+			background: var(--m3-secondary-container, #646d78);
 		}
 
 		&--red {
@@ -1548,7 +1548,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		width: 4px;
 		height: 4px;
 		border-radius: 50%;
-		background: #e7effc;
+		background: var(--m3-tertiary-container, #e7effc);
 
 		&--left {
 			left: 4px;
@@ -1657,14 +1657,14 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		cursor: pointer;
 
 		&--primary {
-			background: #cc1e1c;
+			background: var(--m3-primary, #cc1e1c);
 			color: #fff;
 		}
 
 		&--secondary {
 			flex: 0 0 auto;
-			background: #646d78;
-			color: #e7effc;
+			background: var(--m3-secondary-container, #646d78);
+			color: var(--m3-tertiary-container, #e7effc);
 		}
 	}
 
