@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       pr_number:
-        description: "Optional PR number to trigger CodeRabbit for"
+        description: "Optional PR number to trigger CodeRabbit for; requires CODERABBIT_TRIGGER_TOKEN"
         required: false
   schedule:
     - cron: "17 * * * *"
@@ -28,13 +28,19 @@ jobs:
     steps:
       - name: Trigger CodeRabbit reviews
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.CODERABBIT_TRIGGER_TOKEN }}
           GH_REPO: ${{ github.repository }}
           EVENT_PR_NUMBER: ${{ github.event.pull_request.number }}
           EVENT_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           INPUT_PR_NUMBER: ${{ inputs.pr_number }}
         run: |
           set -euo pipefail
+
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "::notice::CODERABBIT_TRIGGER_TOKEN is not configured; skipping manual CodeRabbit trigger."
+            echo "::notice::CodeRabbit auto-review still runs from .coderabbit.yaml, and the local Codex automation can trigger CodeRabbit as the authenticated GitHub user."
+            exit 0
+          fi
 
           trigger_one() {
             local pr_number="$1"
