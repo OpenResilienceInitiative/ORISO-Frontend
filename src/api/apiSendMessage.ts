@@ -9,8 +9,7 @@ const sendMatrixMessageViaRest = (
 	matrixRoomId: string,
 	threadRootId?: string | null,
 	supervisorMessage?: boolean,
-	senderDisplayName?: string | null,
-	threadParentPreview?: string | null
+	senderDisplayName?: string | null
 ): Promise<any> => {
 	const matrixUrl = `${apiUrl}/service/matrix/sessions/${sessionId}/messages`;
 	return fetchData({
@@ -18,21 +17,17 @@ const sendMatrixMessageViaRest = (
 		method: FETCH_METHODS.POST,
 		bodyData: JSON.stringify({ message: messageData }),
 		responseHandling: [FETCH_ERRORS.FORBIDDEN]
-	}).then((fallbackResponse) => {
-		apiPostMessageEventNotification({
-			roomId: matrixRoomId,
-			messagePreview: toPreview(messageData),
-			matrixRoom: true,
-			threadRootId: threadRootId || null,
-			supervisorMessage: !!supervisorMessage,
-			senderDisplayName: senderDisplayName || null,
-			threadParentPreview: threadParentPreview || null
-		}).catch(() => undefined);
-		return fallbackResponse;
-	});
-};
-
-export const toPreview = (text: string): string => text.slice(0, 100);
+		}).then((fallbackResponse) => {
+			apiPostMessageEventNotification({
+				roomId: matrixRoomId,
+				matrixRoom: true,
+				threadRootId: threadRootId || null,
+				supervisorMessage: !!supervisorMessage,
+				senderDisplayName: senderDisplayName || null
+			}).catch(() => undefined);
+			return fallbackResponse;
+		});
+	};
 
 export const apiSendMessage = (
 	messageData: string,
@@ -63,15 +58,13 @@ export const apiSendMessage = (
 					// The Room.timeline event fires IMMEDIATELY with the sent message!
 					// This is how Element achieves instant sync!
 
-					apiPostMessageEventNotification({
-						roomId: matrixRoomId,
-						messagePreview: toPreview(messageData),
-						matrixRoom: true,
-						threadRootId: threadRootId || null,
-						supervisorMessage: !!supervisorMessage,
-						senderDisplayName: senderDisplayName || null,
-						threadParentPreview: threadParentPreview || null
-					}).catch(() => undefined);
+						apiPostMessageEventNotification({
+							roomId: matrixRoomId,
+							matrixRoom: true,
+							threadRootId: threadRootId || null,
+							supervisorMessage: !!supervisorMessage,
+							senderDisplayName: senderDisplayName || null
+						}).catch(() => undefined);
 					return { success: true, event_id: response.event_id };
 				})
 				.catch(() => {
@@ -79,12 +72,11 @@ export const apiSendMessage = (
 						sessionId,
 						messageData,
 						matrixRoomId,
-						threadRootId,
-						supervisorMessage,
-						senderDisplayName,
-						threadParentPreview
-					);
-				});
+							threadRootId,
+							supervisorMessage,
+							senderDisplayName
+						);
+					});
 		}
 
 		// Fallback: Use REST API if Matrix client not available
@@ -95,8 +87,7 @@ export const apiSendMessage = (
 			matrixRoomId,
 			threadRootId,
 			supervisorMessage,
-			senderDisplayName,
-			threadParentPreview
+			senderDisplayName
 		);
 	}
 
