@@ -81,54 +81,60 @@ const options = {
 				)
 			}
 		},
-			module: {
-				rules: [
-					{
-						oneOf: [
-							{
-								test: /\.tsx?$/,
-								loader: 'ts-loader',
-								options: { transpileOnly: true }
-							},
-							{
-								test: /\.module\.s[ac]ss$/,
-								use: styleLoaders(true)
-							},
-							{
-								test: /\.(css|scss|sass)$/,
-								exclude: /\.module\.s[ac]ss$/,
-								use: styleLoaders(false)
-							},
-							{
-								test: /\.svg$/,
-								issuer: /\.[jt]sx?$/,
-								use: [
-									{
-										loader: require.resolve('@svgr/webpack'),
-										options: {
-											exportType: 'named',
-											titleProp: true,
-											ref: true,
-											svgo: false,
-											jsxRuntime: 'automatic'
-										}
-									},
-									{
-										loader: require.resolve('file-loader'),
-										options: {
-											name: 'static/media/[name].[hash].[ext]'
-										}
+		module: {
+			rules: [
+				{
+					test: /\.js$/,
+					include:
+						/node_modules[\\/]@material[\\/]material-color-utilities/,
+					resolve: { fullySpecified: false }
+				},
+				{
+					oneOf: [
+						{
+							test: /\.tsx?$/,
+							loader: 'ts-loader',
+							options: { transpileOnly: true }
+						},
+						{
+							test: /\.module\.s[ac]ss$/,
+							use: styleLoaders(true)
+						},
+						{
+							test: /\.(css|scss|sass)$/,
+							exclude: /\.module\.s[ac]ss$/,
+							use: styleLoaders(false)
+						},
+						{
+							test: /\.svg$/,
+							issuer: /\.[jt]sx?$/,
+							use: [
+								{
+									loader: require.resolve('@svgr/webpack'),
+									options: {
+										exportType: 'named',
+										titleProp: true,
+										ref: true,
+										svgo: false,
+										jsxRuntime: 'automatic'
 									}
-								]
-							},
-							{
-								test: /\.(bmp|gif|jpe?g|png|webp|svg|woff2?|eot|ttf|otf)$/,
-								type: 'asset/resource'
-							}
-						]
-					}
-				]
-			}
+								},
+								{
+									loader: require.resolve('file-loader'),
+									options: {
+										name: 'static/media/[name].[hash].[ext]'
+									}
+								}
+							]
+						},
+						{
+							test: /\.(bmp|gif|jpe?g|png|webp|svg|woff2?|eot|ttf|otf)$/,
+							type: 'asset/resource'
+						}
+					]
+				}
+			]
+		}
 	}
 };
 

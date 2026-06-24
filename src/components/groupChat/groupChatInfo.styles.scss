@@ -9,7 +9,7 @@ $inputMaxWidth: 500px;
 		justify-content: stretch;
 		align-items: stretch;
 		height: 100%;
-		background-color: $background-light;
+		background-color: var(--m3-surface-container-low, $background-light);
 		width: 100vw;
 
 		@include breakpoint($fromLarge) {
@@ -29,7 +29,10 @@ $inputMaxWidth: 500px;
 		align-items: center;
 		padding: $grid-base-three $grid-base-two;
 		position: relative;
-		background-color: $background-lighter;
+		background-color: var(
+			--m3-surface-container-lowest,
+			$background-lighter
+		);
 
 		@include breakpoint($fromMedium) {
 			padding: $grid-base-three;
@@ -37,7 +40,10 @@ $inputMaxWidth: 500px;
 
 		@include breakpoint($fromLarge) {
 			align-items: flex-start;
-			background-color: $background-light;
+			background-color: var(
+				--m3-surface-container-low,
+				$background-light
+			);
 		}
 
 		&__backButton {
@@ -54,17 +60,17 @@ $inputMaxWidth: 500px;
 			svg {
 				width: $iconSize;
 				height: $iconSize;
-				fill: var(--skin-color-secondary-contrast-safe, $secondary);
+				fill: var(--m3-secondary, $secondary);
 
 				svg path {
-					fill: var(--skin-color-secondary-contrast-safe, $secondary);
+					fill: var(--m3-secondary, $secondary);
 				}
 
 				&:hover {
-					fill: var(--skin-color-primary, $primary);
+					fill: var(--m3-primary, $primary);
 
 					svg path {
-						fill: var(--skin-color-primary, $primary);
+						fill: var(--m3-primary, $primary);
 					}
 				}
 			}
@@ -89,7 +95,7 @@ $inputMaxWidth: 500px;
 		&__username {
 			font-size: $font-size-secondary;
 			line-height: $line-height-secondary;
-			color: $tertiary;
+			color: var(--m3-on-surface-variant, $tertiary);
 			margin: 0;
 
 			@include breakpoint($fromLarge) {
@@ -104,7 +110,7 @@ $inputMaxWidth: 500px;
 		flex-direction: column;
 		overflow-x: hidden;
 		overflow-y: auto;
-		background-color: $background-light;
+		background-color: var(--m3-surface-container-low, $background-light);
 		margin-top: 0;
 
 		&__stopButton {
@@ -242,7 +248,7 @@ $inputMaxWidth: 500px;
 		}
 
 		&__label {
-			color: $tertiary;
+			color: var(--m3-on-surface-variant, $tertiary);
 			font-size: $font-size-secondary;
 			line-height: $line-height-secondary;
 			margin: 0 0 6px;
@@ -252,7 +258,7 @@ $inputMaxWidth: 500px;
 			margin: 0 0 6px;
 
 			&--empty {
-				color: $tertiary;
+				color: var(--m3-on-surface-variant, $tertiary);
 			}
 
 			&--subscriber {

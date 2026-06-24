@@ -195,13 +195,13 @@ $session-postcode-border: #646d78;
 	&__row {
 		display: flex;
 		gap: 10px;
-		color: var(--skin-color-default, $secondary);
+		color: var(--m3-primary, $secondary);
 		min-width: 0;
 
 		&:first-child {
 			justify-content: space-between;
 			padding: 12px 16px;
-			color: $tertiary;
+			color: var(--m3-on-surface-variant, $tertiary);
 			font-size: 12px;
 			line-height: 16px;
 		}
@@ -266,7 +266,7 @@ $session-postcode-border: #646d78;
 	}
 
 	&__date {
-		color: $tertiary;
+		color: var(--m3-on-surface-variant, $tertiary);
 		font-size: 12px;
 		line-height: 16px;
 		white-space: nowrap;
@@ -596,7 +596,7 @@ $session-postcode-border: #646d78;
 		}
 
 		&--plus {
-			background-color: var(--skin-color-primary, #cc1e1c);
+			background-color: var(--m3-primary, #cc1e1c);
 			display: flex;
 			align-items: center;
 			justify-content: center;
@@ -648,7 +648,7 @@ $session-postcode-border: #646d78;
 		background-color: $upload-progress;
 		display: inline-block;
 		word-break: keep-all;
-		color: var(--skin-color-secondary, $secondary);
+		color: var(--m3-secondary, $secondary);
 		align-self: flex-end;
 		margin: 5px 0 auto;
 	}
@@ -682,7 +682,7 @@ $session-postcode-border: #646d78;
 				height: $icon-size-small;
 
 				* {
-					fill: var(--skin-color-secondary-contrast-safe, $secondary);
+					fill: var(--m3-secondary, $secondary);
 				}
 			}
 		}
@@ -694,7 +694,7 @@ $session-postcode-border: #646d78;
 		height: $icon-size-small;
 
 		* {
-			fill: var(--skin-color-secondary-contrast-safe, $secondary);
+			fill: var(--m3-secondary, $secondary);
 		}
 	}
 
@@ -716,7 +716,7 @@ $session-postcode-border: #646d78;
 			height: $icon-size-small;
 
 			* {
-				fill: var(--skin-color-secondary-contrast-safe, $secondary);
+				fill: var(--m3-secondary, $secondary);
 			}
 		}
 
@@ -751,9 +751,9 @@ $session-postcode-border: #646d78;
 			}
 		}
 
-			&--liveChatLabel {
-				font-family: $font-family-sans-serif;
-				font-size: 13px;
+		&--liveChatLabel {
+			font-family: $font-family-sans-serif;
+			font-size: 13px;
 			font-weight: 700;
 			color: #4b515a;
 			line-height: 1;

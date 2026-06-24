@@ -80,8 +80,8 @@ $yellow-5: #ff9f00;
 $yellow-6: #de8a00;
 
 $message-name-self: $text-low-emphasis;
-$message-name-system: var(--skin-color-default, $primary);
-$message-name-consultant: var(--skin-color-default, $primary);
+$message-name-system: var(--m3-primary, $primary);
+$message-name-consultant: var(--m3-primary, $primary);
 $message-name-user: #167a6f;
 $message-system: #8c878c;
 

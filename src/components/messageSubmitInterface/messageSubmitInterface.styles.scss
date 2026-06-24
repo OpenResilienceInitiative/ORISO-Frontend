@@ -1052,7 +1052,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				transition: transform 220ms ease-out;
 			}
 			&:hover {
-				background-color: #f3bdb8;
+				background-color: var(--m3-primary-hover, #f3bdb8);
 			}
 
 			&--active:not(.textarea__iconWrapper--empty) {
@@ -1091,7 +1091,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				opacity: 1;
 
 				svg rect {
-					fill: var(--text-color-contrast-switch, $white);
+					fill: var(--m3-on-primary, $white);
 				}
 
 				svg {
@@ -1114,7 +1114,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			transform: translate(-50%, -50%) rotate(0deg);
 
 			rect {
-				fill: var(--text-color-contrast-switch, $white);
+				fill: var(--m3-on-primary, $white);
 			}
 
 			&--active {
@@ -1544,19 +1544,19 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				align-self: flex-end;
 
 				* {
-					fill: $tertiary;
+					fill: var(--m3-on-surface-variant, $tertiary);
 				}
 
 				&:hover {
 					* {
-						fill: var(--skin-color-primary, $primary);
+						fill: var(--m3-primary, $primary);
 					}
 				}
 			}
 
 			&--active {
 				svg * {
-					fill: var(--skin-color-primary, $primary);
+					fill: var(--m3-primary, $primary);
 				}
 			}
 		}
@@ -1603,12 +1603,12 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				border: none;
 
 				svg * {
-					color: $tertiary;
+					color: var(--m3-on-surface-variant, $tertiary);
 				}
 
 				&--active {
 					svg * {
-						color: var(--skin-color-primary, $primary);
+						color: var(--m3-primary, $primary);
 					}
 				}
 			}
@@ -1634,7 +1634,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				margin-bottom: 0;
 
 				* {
-					fill: $tertiary;
+					fill: var(--m3-on-surface-variant, $tertiary);
 				}
 			}
 		}
@@ -1663,14 +1663,14 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				height: $attachmentIconSize;
 
 				* {
-					fill: $tertiary;
+					fill: var(--m3-on-surface-variant, $tertiary);
 				}
 			}
 
 			&:hover {
 				svg {
 					* {
-						fill: var(--skin-color-primary, $primary);
+						fill: var(--m3-primary, $primary);
 					}
 				}
 			}
@@ -1700,12 +1700,12 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			cursor: pointer;
 
 			* {
-				fill: $tertiary;
+				fill: var(--m3-on-surface-variant, $tertiary);
 			}
 
 			&:hover {
 				* {
-					fill: var(--skin-color-primary, $primary);
+					fill: var(--m3-primary, $primary);
 				}
 			}
 		}
@@ -1881,7 +1881,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 					height: 16px;
 
 					* {
-						fill: $tertiary;
+						fill: var(--m3-on-surface-variant, $tertiary);
 					}
 				}
 			}
@@ -1939,7 +1939,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				height: $attachmentIconSize;
 
 				* {
-					fill: var(--skin-color-secondary-contrast-safe, $secondary);
+					fill: var(--m3-secondary, $secondary);
 				}
 			}
 
@@ -1984,18 +1984,21 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			height: $grid-base-six;
 			border-radius: $grid-base-three;
 			cursor: pointer;
-			border: 1px solid var(--skin-color-primary, $primary);
+			border: 1px solid var(--m3-primary, $primary);
 			margin: 0 0 4px 14px;
 			align-self: flex-end;
 			background-color: $white;
 			transition: background-color 0.6s ease;
 			overflow: hidden;
 			&:hover {
-				background-color: $background-light;
+				background-color: var(
+					--m3-surface-container-low,
+					$background-light
+				);
 			}
 
 			svg {
-				fill: $primary;
+				fill: var(--m3-primary, $primary);
 				position: relative;
 				left: 50%;
 				top: 50%;

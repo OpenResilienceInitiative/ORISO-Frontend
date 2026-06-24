@@ -8,7 +8,7 @@ $headerHeight: 80px;
 	}
 
 	&--primary {
-		color: $primary;
+		color: var(--m3-primary, $primary);
 	}
 
 	&--font-weight-bold {
@@ -67,12 +67,12 @@ $headerHeight: 80px;
 			border-bottom: 4px solid transparent;
 
 			&.active {
-				color: var(--skin-color-primary-contrast-safe, $primary);
-				border-color: var(--skin-color-primary-contrast-safe, $primary);
+				color: var(--m3-primary, $primary);
+				border-color: var(--m3-primary, $primary);
 			}
 
 			&:hover {
-				color: var(--skin-color-primary-contrast-safe, $hover-primary);
+				color: var(--m3-primary, $hover-primary);
 			}
 		}
 
@@ -99,7 +99,7 @@ $headerHeight: 80px;
 		text-align: center;
 
 		p {
-			color: $primary;
+			color: var(--m3-primary, $primary);
 			text-align: center;
 			word-break: normal;
 		}
@@ -109,7 +109,7 @@ $headerHeight: 80px;
 		}
 
 		path {
-			fill: $primary;
+			fill: var(--m3-primary, $primary);
 		}
 
 		@include breakpoint($fromLarge) {
@@ -324,7 +324,7 @@ $headerHeight: 80px;
 			width: 18px;
 			height: 18px;
 			path {
-				fill: $primary;
+				fill: var(--m3-primary, $primary);
 			}
 		}
 	}
@@ -499,9 +499,9 @@ $headerHeight: 80px;
 	border-left: 0;
 	border-right: 0;
 	border-bottom: 5px solid;
-	border-color: var(--skin-color-primary-contrast-safe, $primary);
+	border-color: var(--m3-primary, $primary);
 	background: no-repeat;
-	color: var(--skin-color-primary-contrast-safe, $primary);
+	color: var(--m3-primary, $primary);
 }
 
 .navigation-button {

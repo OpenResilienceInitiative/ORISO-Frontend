@@ -12,12 +12,12 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 		z-index: 1;
 
 		&--figma-consultant {
-				@include breakpoint($fromLarge) {
-					border-right: 2px solid #fff;
-					background-color: #eae7e8;
+			@include breakpoint($fromLarge) {
+				border-right: 2px solid #fff;
+				background-color: #eae7e8;
 
-					/* Symmetric padding: keeps icon column visually centered (badges don’t pull layout) */
-					padding: 0px;
+				/* Symmetric padding: keeps icon column visually centered (badges don’t pull layout) */
+				padding: 0px;
 				display: flex;
 				flex-direction: column;
 				min-height: 0;
@@ -76,12 +76,12 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 					background: transparent !important;
 					border-radius: 0;
 					margin: 0;
-						padding: 0;
-						gap: 3px;
-						overflow: visible;
+					padding: 0;
+					gap: 3px;
+					overflow: visible;
 
-						/* Override broad transition — only animate color so layout stays stable on click */
-						transition: color 0.2s ease;
+					/* Override broad transition — only animate color so layout stays stable on click */
+					transition: color 0.2s ease;
 
 					&:hover {
 						background: transparent !important;
@@ -100,9 +100,9 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 					pointer-events: none;
 				}
 
-					.navigation__title--figma {
-						display: block !important;
-						font-family: $font-family-sans-serif;
+				.navigation__title--figma {
+					display: block !important;
+					font-family: $font-family-sans-serif;
 					font-size: 8px;
 					line-height: 10px;
 					color: #000;
@@ -349,11 +349,11 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 					font-weight: 700;
 					line-height: 1;
 					display: flex;
-						align-items: center;
-						justify-content: center;
-						z-index: 2;
-						font-family: $font-family-sans-serif;
-					}
+					align-items: center;
+					justify-content: center;
+					z-index: 2;
+					font-family: $font-family-sans-serif;
+				}
 
 				.navigation__icon-slot
 					.navigation__item__count--figma.navigation__item__count--double {
@@ -408,12 +408,12 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 			flex-direction: column;
 			align-items: center; /* Center buttons horizontally */
 			height: 100%;
-				max-width: none;
-				gap: 0;
-				padding: 16px;
+			max-width: none;
+			gap: 0;
+			padding: 16px;
 
-				/* Avoid inner scrollbar on desktop; column should fit the shell */
-				overflow-y: auto;
+			/* Avoid inner scrollbar on desktop; column should fit the shell */
+			overflow-y: auto;
 			overflow-x: hidden;
 		}
 	}
@@ -553,7 +553,7 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 		}
 
 		&__count {
-			color: var(--skin-color-primary-contrast-safe, $primary);
+			color: var(--m3-primary, $primary);
 			background-color: $white;
 			transition: opacity 0.6s ease;
 			border-radius: 999px;
@@ -567,7 +567,7 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 			top: 2px;
 			right: 2px;
 			text-align: center;
-			outline: $primary 2px solid;
+			outline: var(--m3-primary, $primary) 2px solid;
 
 			@include breakpoint($fromLarge) {
 				top: 4px;
@@ -699,14 +699,17 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 	--oriso-nav-surface-hover: var(--m3-surface-container, #f0edee);
 	--oriso-nav-active-background: var(--oriso-primary-fixed, #ffdad5);
 	--oriso-nav-active-border: var(--oriso-on-primary-fixed-variant, #930008);
-	--oriso-nav-active-foreground: var(--oriso-on-primary-fixed-variant, #930008);
+	--oriso-nav-active-foreground: var(
+		--oriso-on-primary-fixed-variant,
+		#930008
+	);
 	--oriso-nav-foreground: var(--m3-secondary, #4c555f);
 	--oriso-nav-on-dark: var(--m3-surface, #fcf9f9);
 	--oriso-nav-live-background: var(--oriso-on-primary-fixed, #410001);
 
 	width: 100%;
 	height: 76px;
-	border-top: 1px solid var(--m3-surface, #fcf9f9);
+	border-top: 1px solid var(--m3-outline-variant, #c4c7c8);
 	border-right: 0;
 	background-color: var(--oriso-nav-background);
 
@@ -954,7 +957,7 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 	}
 
 	.navigation__icon__single line {
-		stroke: var(--m3-surface, #fcf9f9);
+		stroke: var(--oriso-nav-on-dark);
 	}
 
 	.navigation__item__count--figma {
