@@ -231,17 +231,19 @@ const applyM3ColorBridge = (primaryColor?: string, secondaryColor?: string) => {
 	const primary = normalizeHex(primaryColor) || DEFAULT_PRIMARY_COLOR;
 	const secondary = normalizeHex(secondaryColor) || '#4c555f';
 	const primaryHover = mixHex(primary, '#000000', 0.12);
+	const primaryFixed = mixHex(primary, '#ffffff', 0.84);
 	const primaryFixedDim = mixHex(primary, '#ffffff', 0.66);
+	const onPrimaryFixed = mixHex(primary, '#000000', 0.6);
 	const secondaryContainer = mixHex(secondary, '#ffffff', 0.16);
 	const onPrimary = readableOnColor(primary);
 	const onSecondary = readableOnColor(secondary);
 	const root = document.documentElement;
-		const tokens: Record<string, string> = {
-			'--primary': primary,
-			'--primary-3': primaryHover,
-			'--hover-primary': primaryHover,
-			'--skin-color-primary': primary,
-			'--skin-color-primary-hover': primaryHover,
+	const tokens: Record<string, string> = {
+		'--primary': primary,
+		'--primary-3': primaryHover,
+		'--hover-primary': primaryHover,
+		'--skin-color-primary': primary,
+		'--skin-color-primary-hover': primaryHover,
 		'--skin-color-primary-contrast-safe': primary,
 		'--skin-color-secondary': secondary,
 		'--skin-color-secondary-contrast-safe': secondary,
@@ -250,9 +252,14 @@ const applyM3ColorBridge = (primaryColor?: string, secondaryColor?: string) => {
 		'--m3-on-primary': onPrimary,
 		'--m3-primary-container': primary,
 		'--m3-on-primary-container': onPrimary,
-		'--m3-primary-fixed': mixHex(primary, '#ffffff', 0.84),
+		'--m3-primary-fixed': primaryFixed,
 		'--m3-primary-fixed-dim': primaryFixedDim,
+		'--m3-on-primary-fixed': onPrimaryFixed,
 		'--m3-on-primary-fixed-variant': mixHex(primary, '#000000', 0.12),
+		'--oriso-primary-fixed': primaryFixed,
+		'--oriso-primary-fixed-dim': primaryFixedDim,
+		'--oriso-on-primary-fixed': onPrimaryFixed,
+		'--oriso-on-primary-fixed-variant': primaryHover,
 		'--m3-secondary': secondary,
 		'--m3-on-secondary': onSecondary,
 		'--m3-secondary-container': secondaryContainer,

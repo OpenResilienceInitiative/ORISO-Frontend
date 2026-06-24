@@ -13,7 +13,7 @@
 	color: var(--m3-on-surface-variant, #444748);
 	text-align: center;
 	box-sizing: border-box;
-	font-family: var(--m3-body-font-family, #{$font-family-sans-serif});
+	font-family: var(--oriso-body-font-family, #{$font-family-sans-serif});
 
 	@media screen and (width <= 899px) {
 		--empty-state-animation-size: 176px;
@@ -22,7 +22,7 @@
 	&__animation {
 		width: var(--empty-state-animation-size);
 		height: var(--empty-state-animation-size);
-		border: 1px solid var(--m3-primary-fixed-dim, #ffb4aa);
+		border: 1px solid var(--oriso-primary-fixed-dim, #ffb4aa);
 		border-radius: 50%;
 		background-color: var(--m3-surface-container-lowest, #ffffff);
 		overflow: hidden;

@@ -4,6 +4,7 @@
 	--font-family-sans-serif: #{$font-family-sans-serif};
 	--font-family-divider: #{$font-family-divider};
 	--m3-body-font-family: #{$font-family-sans-serif};
+	--oriso-body-font-family: #{$font-family-sans-serif};
 	--font-weight-light: #{$font-weight-light};
 	--font-weight-regular: #{$font-weight-regular};
 	--font-weight-medium: #{$font-weight-medium};
@@ -16,7 +17,12 @@
 	--m3-on-primary-container: #{$white};
 	--m3-primary-fixed: #ffdad5;
 	--m3-primary-fixed-dim: #ffb4aa;
+	--m3-on-primary-fixed: #410001;
 	--m3-on-primary-fixed-variant: #930008;
+	--oriso-primary-fixed: #ffdad5;
+	--oriso-primary-fixed-dim: #ffb4aa;
+	--oriso-on-primary-fixed: #410001;
+	--oriso-on-primary-fixed-variant: #930008;
 	--m3-secondary: #4c555f;
 	--m3-on-secondary: #{$white};
 	--m3-secondary-container: #646d78;
@@ -33,7 +39,7 @@
 	--m3-outline: #747878;
 	--m3-outline-variant: #c4c7c8;
 	--oriso-app-action: #{$primary};
-	--oriso-lottie-accent-color: var(--m3-primary-fixed-dim, #ffb4aa);
+	--oriso-lottie-accent-color: var(--oriso-primary-fixed-dim, #ffb4aa);
 	--oriso-lottie-secondary-color: var(--m3-secondary-container, #646d78);
 	--background-light: #{$background-light};
 	--background-lighter: #{$background-lighter};
