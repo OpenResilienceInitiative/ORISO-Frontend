@@ -8,6 +8,8 @@ import {
 	familyLabelKey,
 	isKnownEventType
 } from './eventDescriptors';
+import { useActiveListItem } from '../../hooks/useActiveListItem';
+import { pickActiveItemKey } from '../../utils/listItemSelection';
 import {
 	NotificationsContext,
 	UserDataContext,
@@ -103,6 +105,11 @@ const toNonEmbeddedPath = (path?: string | null): string | null => {
 export const NotificationsCenter = () => {
 	const { t: translate, i18n } = useTranslation();
 	const history = useHistory();
+	// WP-06 Slice 0b: the route-derived global selection is the single source of
+	// truth for the active list item. The timeline keeps its own in-page
+	// (master-detail) selection, but defers to the active conversation when one
+	// is open, so it can never disagree with the conversation/request lists.
+	const { selection: activeSelection } = useActiveListItem();
 	const { untilL } = useResponsive();
 	const { userData } = useContext(UserDataContext);
 	const {
@@ -127,12 +134,30 @@ export const NotificationsCenter = () => {
 		}
 	}, [notificationFeed, selectedNotificationId]);
 
+	// WP-06 Slice 0b: resolve a SINGLE active card id through the shared
+	// selection primitive. When a conversation is route-active its card wins;
+	// otherwise the in-page master-detail selection (`selectedNotificationId`)
+	// is used. Exactly one card is active by construction. On the standalone
+	// `/notifications` route the route selection is empty, so this is identical
+	// to the previous behaviour (no visual change).
+	const activeNotificationId = useMemo(
+		() =>
+			pickActiveItemKey(
+				notificationFeed,
+				activeSelection,
+				(item) => ({ sessionId: resolveSessionId(item) }),
+				(item) => item.id,
+				selectedNotificationId
+			),
+		[notificationFeed, activeSelection, selectedNotificationId]
+	);
+
 	const selectedNotification = useMemo(
 		() =>
 			notificationFeed.find(
-				(item) => item.id === selectedNotificationId
+				(item) => item.id === activeNotificationId
 			) || null,
-		[notificationFeed, selectedNotificationId]
+		[notificationFeed, activeNotificationId]
 	);
 	const selectedNotificationCategory = useMemo(
 		() =>
@@ -317,7 +342,7 @@ export const NotificationsCenter = () => {
 										type="button"
 										key={item.id}
 										className={`notificationsCenter__listItem ${
-											selectedNotificationId === item.id
+											activeNotificationId === item.id
 												? 'notificationsCenter__listItem--active'
 												: ''
 										}`}
