@@ -14,41 +14,9 @@ import {
 	SupervisionFilterIcon,
 	UnreadFilterIcon
 } from './SessionToolbarFilterIcons';
+import type { SessionToolbarChipFilter } from './sessionToolbarFilters';
 
-export type SessionToolbarChipFilter =
-	| 'unread'
-	| 'drafts'
-	| 'nearby'
-	| 'liveChat'
-	| 'internalGroup'
-	| 'groups'
-	| 'supervision';
-
-export const normalizeSessionToolbarChip = (
-	chip?: string | null
-): SessionToolbarChipFilter | null => {
-	switch (chip) {
-		case 'neu':
-		case 'unread':
-			return 'unread';
-		case 'oneToOne':
-		case 'chats':
-		case 'nearby':
-			return 'nearby';
-		case 'drafts':
-		case 'liveChat':
-		case 'internal':
-		case 'internalGroup':
-			return 'internalGroup';
-		case 'circles':
-			return 'groups';
-		case 'groups':
-		case 'supervision':
-			return chip;
-		default:
-			return null;
-	}
-};
+export type { SessionToolbarChipFilter } from './sessionToolbarFilters';
 
 interface SessionsListToolbarProps {
 	translate: (key: string) => string;

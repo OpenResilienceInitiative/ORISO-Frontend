@@ -66,11 +66,15 @@ import { messageEventEmitter } from '../../services/messageEventEmitter';
 import {
 	buildArchiveTabPath,
 	buildCreateGroupChatPath,
-	normalizeSessionToolbarChip,
 	SessionSearchPersonResult,
-	SessionToolbarChipFilter,
 	SessionsListToolbar
 } from './SessionsListToolbar';
+import {
+	isConversationCircleSession,
+	isInternalGroupChatSession,
+	normalizeSessionToolbarChip,
+	SessionToolbarChipFilter
+} from './sessionToolbarFilters';
 import { useSessionListViewState } from './SessionListViewStateContext';
 import { apiGetUserDrafts, IUserDraftItem } from '../../api/apiUserDrafts';
 import {
@@ -270,19 +274,6 @@ const formatDraftTime = (timestamp?: string | null) => {
 	if (diffHours < 24) return `${diffHours}h`;
 	return `${Math.floor(diffHours / 24)}d`;
 };
-
-const isConversationCircleSession = (
-	extended: ExtendedSessionInterface
-): boolean =>
-	Boolean(
-		extended.isGroup &&
-			(extended.item as { repetitive?: boolean } | undefined)?.repetitive
-	);
-
-const isInternalGroupChatSession = (
-	extended: ExtendedSessionInterface
-): boolean =>
-	Boolean(extended.isGroup && !isConversationCircleSession(extended));
 
 function sessionMatchesToolbar(
 	raw: ListItemInterface,

@@ -2,10 +2,8 @@ import * as React from 'react';
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { useTranslation } from 'react-i18next';
-import {
-	SessionsListToolbar,
-	type SessionToolbarChipFilter
-} from './SessionsListToolbar';
+import { SessionsListToolbar } from './SessionsListToolbar';
+import type { SessionToolbarChipFilter } from './sessionToolbarFilters';
 import './sessionsList.styles.scss';
 
 const shell: React.CSSProperties = {

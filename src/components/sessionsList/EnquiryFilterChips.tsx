@@ -1,6 +1,6 @@
 import * as React from 'react';
 import clsx from 'clsx';
-import type { SessionToolbarChipFilter } from './SessionsListToolbar';
+import type { SessionToolbarChipFilter } from './sessionToolbarFilters';
 
 interface EnquiryFilterChipsProps {
 	translate: (key: string, defaultValue?: any) => any;
