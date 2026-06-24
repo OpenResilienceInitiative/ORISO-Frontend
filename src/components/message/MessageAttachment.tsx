@@ -3,13 +3,10 @@ import {
 	ATTACHMENT_TRANSLATE_FOR_TYPE,
 	getAttachmentSizeMBForKB
 } from '../messageSubmitInterface/attachmentHelpers';
-import { ReactComponent as DownloadIcon } from '../../resources/img/icons/download.svg';
 import { useTranslation } from 'react-i18next';
 import { apiUrl } from '../../resources/scripts/endpoints';
 import { useCallback, useRef } from 'react';
 import { FETCH_METHODS, fetchData } from '../../api';
-import { getValueFromCookie } from '../sessionCookie/accessSessionCookie';
-import { generateCsrfToken } from '../../utils/generateCsrfToken';
 import {
 	decryptAttachment,
 	ENCRYPTION_VERSION_ACTIVE,
@@ -18,6 +15,7 @@ import {
 	VECTOR_LENGTH,
 	VERSION_SEPERATOR
 } from '../../utils/encryptionHelpers';
+import { decryptMatrixAttachment } from '../../utils/matrixEncryptedAttachment';
 import { useE2EE } from '../../hooks/useE2EE';
 import {
 	STORAGE_KEY_ATTACHMENT_ENCRYPTION,
@@ -29,7 +27,6 @@ import {
 } from '../../globalState';
 import { LoadingSpinner } from '../loadingSpinner/LoadingSpinner';
 import { apiPostError, ERROR_LEVEL_WARN } from '../../api/apiPostError';
-import clsx from 'clsx';
 import { getIconForAttachmentType } from './messageHelpers';
 
 interface MessageAttachmentProps {
@@ -51,10 +48,15 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 	const { key, keyID, encrypted } = useE2EE(props.rid);
 	const { getDevToolbarOption } = useDevToolbar();
 	const { addNotification } = React.useContext(NotificationsContext);
+	const matrixEncryptedFile = (props.attachment as any)
+		.matrix_encrypted_file;
+	const isMatrixEncryptedAttachment = Boolean(matrixEncryptedFile);
+	const isEncryptedAttachment =
+		props.t === 'e2e' || isMatrixEncryptedAttachment;
 
 	const [encryptedFile, setEncryptedFile] = React.useState(null);
 	const [attachmentStatus, setAttachmentStatus] = React.useState(
-		props.t === 'e2e' ? ENCRYPTED : NOT_ENCRYPTED
+		isEncryptedAttachment ? ENCRYPTED : NOT_ENCRYPTED
 	);
 	const audioRef = useRef<HTMLAudioElement | null>(null);
 	const [isAudioPlaying, setIsAudioPlaying] = React.useState(false);
@@ -90,15 +92,49 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 			});
 
 			const shouldDecrypt =
-				encrypted &&
-				props.t === 'e2e' &&
-				isAttachmentEncryptionEnabledDevTools;
+				isMatrixEncryptedAttachment ||
+				(encrypted &&
+					props.t === 'e2e' &&
+					isAttachmentEncryptionEnabledDevTools);
 			const skipDecryption = !shouldDecrypt;
 			let blobUrl;
 
 			if (skipDecryption) {
 				// not encrypted
 				const blob = await data.blob();
+				blobUrl = window.URL.createObjectURL(blob);
+			} else if (isMatrixEncryptedAttachment) {
+				const decryptedBuffer = await decryptMatrixAttachment(
+					await data.arrayBuffer(),
+					matrixEncryptedFile
+				).catch((error) => {
+					setAttachmentStatus(DECRYPTION_ERROR);
+
+					addNotification({
+						notificationType: NOTIFICATION_TYPE_ERROR,
+						title: translate('e2ee.attachment.error.title'),
+						text: translate('e2ee.attachment.error.text'),
+						closeable: true,
+						timeout: 60000
+					});
+
+					apiPostError({
+						name: error.name,
+						message: error.message,
+						stack: error.stack,
+						level: ERROR_LEVEL_WARN
+					}).then();
+
+					return null;
+				});
+
+				if (!decryptedBuffer) {
+					return;
+				}
+
+				const blob = new Blob([decryptedBuffer], {
+					type: props.file.type
+				});
 				blobUrl = window.URL.createObjectURL(blob);
 			} else {
 				// encrypted
@@ -145,8 +181,10 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 		[
 			attachmentStatus,
 			encrypted,
+			isMatrixEncryptedAttachment,
 			key,
 			keyID,
+			matrixEncryptedFile,
 			props.attachment.title,
 			props.t,
 			props.file.type,
@@ -319,7 +357,7 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 
 	return (
 		<>
-			{props.t !== 'e2e' ? (
+			{!isEncryptedAttachment ? (
 				isAudio ? (
 					renderVoiceAttachment(downloadUrl)
 				) : (
@@ -418,26 +456,35 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 									)}{' '}
 									{props.attachment.image_size
 										? `| ${
-												(
-													getAttachmentSizeMBForKB(
-														Math.floor(
-															(props.attachment
-																.image_size -
-																KEY_ID_LENGTH -
-																MAX_PREFIX_LENGTH -
-																VERSION_SEPERATOR.length -
-																ENCRYPTION_VERSION_ACTIVE.length -
-																100) /
-																2 -
-																VECTOR_LENGTH *
-																	2
-														) * 1000
-													) / 1000
-												).toFixed(2) +
-												translate(
-													'attachments.type.label.mb'
-												)
-											}`
+												isMatrixEncryptedAttachment
+													? (
+															getAttachmentSizeMBForKB(
+																props
+																	.attachment
+																	.image_size *
+																	1000
+															) / 1000
+														).toFixed(2)
+													: (
+															getAttachmentSizeMBForKB(
+																Math.floor(
+																	(props
+																		.attachment
+																		.image_size -
+																		KEY_ID_LENGTH -
+																		MAX_PREFIX_LENGTH -
+																		VERSION_SEPERATOR.length -
+																		ENCRYPTION_VERSION_ACTIVE.length -
+																		100) /
+																		2 -
+																		VECTOR_LENGTH *
+																			2
+																) * 1000
+															) / 1000
+														).toFixed(2)
+											}${translate(
+												'attachments.type.label.mb'
+											)}`
 										: null}
 								</p>
 							</span>

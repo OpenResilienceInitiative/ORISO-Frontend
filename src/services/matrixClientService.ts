@@ -7,6 +7,7 @@ import {
 } from '../components/sessionCookie/getMatrixAccessToken';
 import { matrixCallService } from './matrixCallService';
 import { matrixLiveEventBridge } from './matrixLiveEventBridge';
+import { encryptMatrixAttachment } from '../utils/matrixEncryptedAttachment';
 
 const TOKEN_REFRESH_BUFFER_MS = 2 * 60 * 1000;
 
@@ -31,12 +32,12 @@ const getMatrixFileMessageType = (file: File): string => {
 
 const buildMatrixFileMessageContent = (
 	file: File,
-	contentUri: string
+	encryptedFile: Awaited<ReturnType<typeof encryptMatrixAttachment>>['file']
 ): Record<string, unknown> => ({
 	body: file.name,
 	filename: file.name,
 	msgtype: getMatrixFileMessageType(file),
-	url: contentUri,
+	file: encryptedFile,
 	info: {
 		mimetype: file.type || 'application/octet-stream',
 		size: file.size
@@ -412,25 +413,32 @@ export class MatrixClientService {
 			throw new Error('Matrix client not initialized');
 		}
 
-		const uploadResponse = await this.client.uploadContent(file, {
-			name: file.name,
-			type: file.type || 'application/octet-stream',
-			abortController: options.abortController,
-			progressHandler: ({ loaded, total }) => {
-				if (!options.uploadProgress || !total) {
-					return;
+		const encryptedAttachment = await encryptMatrixAttachment(file);
+		const uploadResponse = await this.client.uploadContent(
+			encryptedAttachment.encryptedBlob,
+			{
+				includeFilename: false,
+				type: 'application/octet-stream',
+				abortController: options.abortController,
+				progressHandler: ({ loaded, total }) => {
+					if (!options.uploadProgress || !total) {
+						return;
+					}
+					options.uploadProgress(
+						Math.min(Math.ceil((100 * loaded) / total), 100)
+					);
 				}
-				options.uploadProgress(
-					Math.min(Math.ceil((100 * loaded) / total), 100)
-				);
 			}
-		});
+		);
 
 		options.uploadProgress?.(100);
 
 		return buildMatrixFileMessageContent(
 			file,
-			uploadResponse.content_uri
+			{
+				...encryptedAttachment.file,
+				url: uploadResponse.content_uri
+			}
 		);
 	}
 

@@ -56,79 +56,13 @@ import {
 } from '../../api/apiRocketChatSettingsPublic';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
 import { matrixClientService } from '../../services/matrixClientService';
+import { formatMatrixTimelineEvent } from '../../utils/matrixTimelineEventFormatter';
 
 interface SessionStreamProps {
 	readonly: boolean;
 	checkMutedUserForThisSession: () => void;
 	bannedUsers: string[];
 }
-
-const getMatrixMediaDownloadPath = (contentUrl: string): string => {
-	if (!contentUrl.startsWith('mxc://')) {
-		return contentUrl;
-	}
-
-	const [serverName, mediaId] = contentUrl.substring(6).split('/');
-	return `/_matrix/media/r0/download/${serverName}/${mediaId}`;
-};
-
-const formatMatrixTimelineEvent = (
-	event: any,
-	matrixRoom: any,
-	encryptedFallbackText: string
-) => {
-	const eventType = event?.getType?.();
-	if (eventType !== 'm.room.message' && eventType !== 'm.room.encrypted') {
-		return null;
-	}
-
-	const content = event?.getClearContent?.() || event?.getContent?.() || {};
-	const senderId = event?.getSender?.() || '';
-	const senderUsername =
-		senderId?.split(':')[0]?.substring(1) || 'unknown';
-	const senderMember = matrixRoom?.getMember?.(senderId);
-	const senderDisplayName =
-		senderMember?.name || senderMember?.rawDisplayName || senderUsername;
-	const isUndecryptedEvent =
-		eventType === 'm.room.encrypted' && !content?.msgtype;
-	const textMessageContent =
-		content?.msgtype === 'm.text'
-			? content?.formatted_body || content?.body || ''
-			: isUndecryptedEvent
-				? encryptedFallbackText
-				: content?.body || '';
-	const baseMessage: any = {
-		_id: event?.getId?.() || `${senderId}-${event?.getTs?.() || Date.now()}`,
-		msg: textMessageContent,
-		ts: new Date(event?.getTs?.() || Date.now()),
-		u: {
-			_id: senderId,
-			username: senderUsername,
-			name: senderDisplayName
-		}
-	};
-
-	if (content?.url && content?.msgtype !== 'm.text') {
-		const downloadPath = getMatrixMediaDownloadPath(content.url);
-		baseMessage.file = {
-			name: content.body,
-			type: content.info?.mimetype || 'application/octet-stream'
-		};
-		baseMessage.attachments = [
-			{
-				title: content.body,
-				title_link: downloadPath,
-				image_url:
-					content.msgtype === 'm.image' ? downloadPath : undefined,
-				type: content.msgtype === 'm.image' ? 'image' : 'file',
-				image_type: content.info?.mimetype,
-				image_size: content.info?.size
-			}
-		];
-	}
-
-	return baseMessage;
-};
 
 export const SessionStream = ({
 	readonly,

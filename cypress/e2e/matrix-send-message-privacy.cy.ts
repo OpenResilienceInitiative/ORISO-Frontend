@@ -71,11 +71,15 @@ describe('Matrix send message privacy', () => {
 		});
 	});
 
-	it('uploads Matrix attachments through the SDK and sends a Matrix media event', () => {
+	it('uploads Matrix attachments as encrypted media through the SDK', () => {
 		const service = matrixClientService as any;
+		let uploadedPayload: XMLHttpRequestBodyInit | undefined;
+		let uploadOptions: any;
 		const uploadContent = cy
 			.stub()
-			.callsFake((_file: File, options: any) => {
+			.callsFake(async (payload: XMLHttpRequestBodyInit, options: any) => {
+				uploadedPayload = payload;
+				uploadOptions = options;
 				options.progressHandler({ loaded: 5, total: 10 });
 				return Promise.resolve({ content_uri: 'mxc://oriso.org/file' });
 			});
@@ -96,21 +100,82 @@ describe('Matrix send message privacy', () => {
 					progressUpdates.push(percentUpload)
 			})
 		).then(() => {
-			expect(uploadContent).to.have.been.calledOnce;
+			expect(uploadContent).to.have.callCount(1);
+			expect(uploadedPayload).not.to.equal(file);
+			expect(uploadOptions.includeFilename).to.equal(false);
+			expect(uploadOptions.type).to.equal('application/octet-stream');
 			expect(sendMessage).to.have.been.calledOnceWith(
 				'!secure-room:oriso.org',
-				Cypress.sinon.match({
-					body: 'case-note.txt',
-					filename: 'case-note.txt',
-					msgtype: 'm.file',
-					url: 'mxc://oriso.org/file',
-					info: {
+				Cypress.sinon.match((content) => {
+					expect(content).to.deep.include({
+						body: 'case-note.txt',
+						filename: 'case-note.txt',
+						msgtype: 'm.file'
+					});
+					expect(content).not.to.have.property('url');
+					expect(content.file).to.deep.include({
+						url: 'mxc://oriso.org/file',
+						v: 'v2'
+					});
+					expect(content.file.key).to.deep.include({
+						alg: 'A256CTR',
+						ext: true,
+						kty: 'oct'
+					});
+					expect(content.file.hashes.sha256).to.be.a('string');
+					expect(content.file.iv).to.be.a('string');
+					expect(content.info).to.deep.equal({
 						mimetype: 'text/plain',
 						size: file.size
-					}
+					});
+					return true;
 				})
 			);
+			cy.wrap(uploadedPayload)
+				.should('be.instanceOf', Blob)
+				.then(async (payload) => {
+					const encryptedBody = await (payload as Blob).text();
+					expect(encryptedBody).not.to.equal('sensitive attachment');
+				});
 			expect(progressUpdates).to.deep.equal([50, 100]);
+			service.client = null;
+		});
+	});
+
+	it('can decrypt Matrix encrypted media payloads created by the upload helper', () => {
+		const service = matrixClientService as any;
+		let uploadedPayload: XMLHttpRequestBodyInit | undefined;
+		let sentContent: any;
+		const file = new File(['recoverable attachment'], 'case-note.txt', {
+			type: 'text/plain'
+		});
+		const uploadContent = cy
+			.stub()
+			.callsFake(async (payload: XMLHttpRequestBodyInit) => {
+				uploadedPayload = payload;
+				return Promise.resolve({ content_uri: 'mxc://oriso.org/file' });
+			});
+		const sendMessage = cy.stub().callsFake((_roomId, content) => {
+			sentContent = content;
+			return Promise.resolve({ event_id: '$file-message' });
+		});
+
+		cy.stub(service, 'ensureFreshToken').resolves();
+		service.client = { uploadContent, sendMessage };
+
+		cy.then(() =>
+			matrixClientService.sendFileMessage('!secure-room:oriso.org', file)
+		).then(async () => {
+			const { decryptMatrixAttachment } = await import(
+				'../../src/utils/matrixEncryptedAttachment'
+			);
+			const decrypted = await decryptMatrixAttachment(
+				await (uploadedPayload as Blob).arrayBuffer(),
+				sentContent.file
+			);
+			expect(await new Blob([decrypted]).text()).to.equal(
+				'recoverable attachment'
+			);
 			service.client = null;
 		});
 	});

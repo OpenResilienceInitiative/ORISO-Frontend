@@ -4,6 +4,7 @@ import {
 	startWebSocketServer
 } from '../support/websocket';
 import { USER_CONSULTANT } from '../support/commands/mockApi';
+import { formatMatrixTimelineEvent } from '../../src/utils/matrixTimelineEventFormatter';
 
 describe('Matrix session stream privacy', () => {
 	before(() => {
@@ -87,5 +88,61 @@ describe('Matrix session stream privacy', () => {
 			'not.contain',
 			'/service/matrix/sessions'
 		);
+	});
+
+	it('maps Matrix encrypted media events to decryptable attachment metadata', () => {
+		const encryptedFile = {
+			url: 'mxc://oriso.org/file',
+			key: {
+				alg: 'A256CTR',
+				ext: true,
+				k: 'secret',
+				key_ops: ['encrypt', 'decrypt'],
+				kty: 'oct'
+			},
+			iv: 'iv',
+			hashes: { sha256: 'hash' },
+			v: 'v2'
+		};
+		const event = {
+			getType: () => 'm.room.message',
+			getClearContent: () => ({
+				msgtype: 'm.file',
+				body: 'case-note.txt',
+				file: encryptedFile,
+				info: {
+					mimetype: 'text/plain',
+					size: 22
+				}
+			}),
+			getSender: () => '@asker:oriso.org',
+			getId: () => '$encrypted-file',
+			getTs: () => 1782302400000
+		};
+
+		const message = formatMatrixTimelineEvent(
+			event,
+			{ getMember: () => ({ name: 'Asker' }) },
+			'encrypted'
+		);
+
+		expect(message).to.deep.include({
+			_id: '$encrypted-file',
+			msg: 'case-note.txt',
+			t: 'matrix-e2e-file'
+		});
+		expect(message.file).to.deep.equal({
+			name: 'case-note.txt',
+			type: 'text/plain'
+		});
+		expect(message.attachments[0]).to.deep.include({
+			title: 'case-note.txt',
+			title_link: '/_matrix/media/r0/download/oriso.org/file',
+			type: 'file',
+			image_type: 'text/plain',
+			image_size: 22,
+			matrix_encrypted_file: encryptedFile
+		});
+		expect(message.attachments[0]).not.to.have.property('image_url');
 	});
 });
