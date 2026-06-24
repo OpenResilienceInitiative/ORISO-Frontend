@@ -91,10 +91,6 @@ export class MatrixLiveEventBridge {
 						this.handleCallInvite(event, room);
 						break;
 
-					case 'm.call.answer':
-						this.handleCallAnswer(event, room);
-						break;
-
 					case 'm.call.hangup':
 					case 'org.oriso.call.hangup':
 						this.handleCallHangup(event, room);
@@ -244,23 +240,6 @@ export class MatrixLiveEventBridge {
 			false,
 			room.roomId
 		);
-	}
-
-	/**
-	 * Handle m.call.answer events.
-	 */
-	private handleCallAnswer(event: MatrixEvent, room: Room): void {
-		const sender = event.getSender();
-		const content = event.getContent();
-		const callId = content.call_id;
-
-		// console.log("📞 Call answered by", sender, "in room", room.roomId);
-
-		this.triggerEvent('callAnswered', {
-			roomId: room.roomId,
-			sender: sender,
-			callId: callId
-		});
 	}
 
 	/**

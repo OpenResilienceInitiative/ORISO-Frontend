@@ -53,4 +53,46 @@ describe('Matrix live event bridge privacy', () => {
 
 		bridge.destroy();
 	});
+
+	it('does not forward Matrix call answer payloads into legacy callbacks', () => {
+		const listeners: Record<string, Listener[]> = {};
+		const fakeClient = {
+			getUserId: () => '@consultant:oriso.org',
+			on: (eventType: string, callback: Listener) => {
+				listeners[eventType] = listeners[eventType] || [];
+				listeners[eventType].push(callback);
+			},
+			removeAllListeners: (eventType: string) => {
+				delete listeners[eventType];
+			}
+		};
+		const bridge = new MatrixLiveEventBridge();
+		const receivedEvents: Array<Record<string, unknown>> = [];
+
+		bridge.on('callAnswered', (event: Record<string, unknown>) => {
+			receivedEvents.push(event);
+		});
+		bridge.initialize(fakeClient as unknown as MatrixBridgeClient);
+
+		listeners['Room.timeline'][0](
+			{
+				getType: () => 'm.call.answer',
+				getSender: () => '@asker:oriso.org',
+				getContent: () => ({
+					call_id: 'call-123',
+					answer: {
+						sdp: 'sensitive native Matrix call SDP'
+					}
+				}),
+				getId: () => '$answer-event-id',
+				getTs: () => 1782302401000
+			},
+			{ roomId: '!room:oriso.org' },
+			false
+		);
+
+		expect(receivedEvents).to.deep.equal([]);
+
+		bridge.destroy();
+	});
 });
