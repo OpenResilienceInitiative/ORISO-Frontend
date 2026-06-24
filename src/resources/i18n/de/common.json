@@ -1309,6 +1309,89 @@
 		"tools": "Meine Tools"
 	},
 	"notifications": {
+		"families": {
+			"requests": "Anfragen",
+			"messages": "Nachrichten",
+			"drafts": "Entwürfe",
+			"handover": "Übergabe",
+			"calls": "Anrufe",
+			"system": "System",
+			"appointments": "Termine"
+		},
+		"events": {
+			"fallback": {
+				"title": "Aktivität",
+				"text": ""
+			},
+			"inquiryAccepted": {
+				"title": "Anfrage angenommen",
+				"text": "Die Anfrage wurde angenommen. Sie können das Gespräch beginnen."
+			},
+			"messageNew": {
+				"title": "Neue Nachricht",
+				"text": "Sie haben eine neue Nachricht erhalten."
+			},
+			"threadReplyNew": {
+				"title": "Neue Thread-Antwort",
+				"text": "Es gibt eine neue Antwort in einem Thread."
+			},
+			"supervisorAdded": {
+				"title": "Supervisor hinzugefügt",
+				"text": "Diesem Fall wurde ein Supervisor hinzugefügt."
+			},
+			"supervisorRemoved": {
+				"title": "Supervisor entfernt",
+				"text": "Aus diesem Fall wurde ein Supervisor entfernt."
+			},
+			"supervisorAssigned": {
+				"title": "Supervisor zugewiesen",
+				"text": "Diesem Fall wurde ein Supervisor zugewiesen."
+			},
+			"counselorRenamed": {
+				"title": "Berater:in umbenannt",
+				"text": "Der Anzeigename der Beratung hat sich geändert."
+			},
+			"requestNew": {
+				"title": "Neue Klient:innen-Anfrage",
+				"text": "Eine neue Anfrage wartet auf Bearbeitung."
+			},
+			"draftCreated": {
+				"title": "Entwurf gespeichert",
+				"text": "Sie haben einen ungesendeten Entwurf. Dort fortfahren, wo Sie aufgehört haben."
+			},
+			"handoverRequested": {
+				"title": "Übergabe angefragt",
+				"text": "Eine Fallübergabe wurde angefragt. Beide Seiten müssen bestätigen."
+			},
+			"handoverPartial": {
+				"title": "Übergabe teilweise bestätigt",
+				"text": "Eine Seite hat die Übergabe bestätigt."
+			},
+			"handoverAllConfirmed": {
+				"title": "Übergabe bestätigt",
+				"text": "Beide Seiten haben bestätigt. Die Übergabe ist wirksam."
+			},
+			"handoverAutoConfirmed": {
+				"title": "Übergabe automatisch bestätigt",
+				"text": "Die Übergabe wurde per Richtlinie automatisch bestätigt."
+			},
+			"handoverDenied": {
+				"title": "Übergabe abgelehnt",
+				"text": "Die Übergabe wurde abgelehnt und abgebrochen."
+			},
+			"callStarted": {
+				"title": "Anruf läuft",
+				"text": "Ein Anruf läuft gerade. Treten Sie bei, um teilzunehmen."
+			},
+			"callEnded": {
+				"title": "Anruf beendet",
+				"text": "Der Anruf wurde beendet."
+			},
+			"callMissed": {
+				"title": "Verpasster Anruf",
+				"text": "Sie haben einen Anruf verpasst."
+			}
+		},
 		"error": "Fehlgeschlagen",
 		"info": "Information",
 		"initialRequest": {
