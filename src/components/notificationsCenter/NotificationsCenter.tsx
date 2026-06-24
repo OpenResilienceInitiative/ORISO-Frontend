@@ -1,16 +1,7 @@
 import * as React from 'react';
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { ReactComponent as NotificationBellIcon } from '../../resources/img/icons/notification_bell.svg';
-import { apiUrl } from '../../resources/scripts/endpoints';
-import { isMatrixRoom } from '../../utils/matrixRoomUtils';
-import { FETCH_METHODS, fetchData } from '../../api/fetchData';
-import {
-	buildThreadPrefix,
-	parseMessagePrefixes
-} from '../message/messageConstants';
-import { UserAvatar } from '../message/UserAvatar';
-import { apiPostMessageEventNotification } from '../../api/apiPostMessageEventNotification';
 import {
 	NotificationsContext,
 	UserDataContext,
@@ -46,16 +37,6 @@ const getNotificationCategory = (item: any): 'system' | 'message' => {
 	return 'system';
 };
 
-const getChatKey = (item: any): string => {
-	if (item?.sourceSessionId) {
-		return `session-${String(item.sourceSessionId)}`;
-	}
-	if (item?.actionPath) {
-		return `path-${String(item.actionPath).split('?')[0]}`;
-	}
-	return `misc-${item?.id || 'unknown'}`;
-};
-
 const resolveSessionId = (item: any): string | null => {
 	if (item?.sourceSessionId) {
 		return String(item.sourceSessionId);
@@ -66,20 +47,6 @@ const resolveSessionId = (item: any): string | null => {
 	}
 	const match = String(path).match(/\/(\d+)(?:\?|$)/);
 	return match?.[1] || null;
-};
-
-const resolveRoomRef = (item: any): string | null => {
-	const path = item?.actionPath;
-	if (!path) {
-		return null;
-	}
-	const pathWithoutQuery = String(path).split('?')[0];
-	const parts = pathWithoutQuery.split('/').filter(Boolean);
-	if (parts.length < 2) {
-		return null;
-	}
-	const maybeRoomRef = parts[parts.length - 2];
-	return maybeRoomRef || null;
 };
 
 const resolveThreadRootId = (item: any): string | null => {
@@ -104,15 +71,6 @@ const toNonEmbeddedPath = (path?: string | null): string | null => {
 	return `${basePath}${finalQuery ? `?${finalQuery}` : ''}`;
 };
 
-type ChatPreviewMessage = {
-	id: string;
-	sender: string;
-	text: string;
-	timestamp?: number;
-	threadRootId?: string | null;
-	isThreadMessage?: boolean;
-};
-
 export const NotificationsCenter = () => {
 	const { t: translate, i18n } = useTranslation();
 	const history = useHistory();
@@ -126,13 +84,6 @@ export const NotificationsCenter = () => {
 	const [selectedNotificationId, setSelectedNotificationId] = useState<
 		string | null
 	>(notificationFeed[0]?.id || null);
-	const [chatPreviewMessages, setChatPreviewMessages] = useState<
-		ChatPreviewMessage[]
-	>([]);
-	const [chatPreviewLoading, setChatPreviewLoading] = useState(false);
-	const [chatReplyText, setChatReplyText] = useState('');
-	const [isSendingChatReply, setIsSendingChatReply] = useState(false);
-	const [chatPreviewRefreshToken, setChatPreviewRefreshToken] = useState(0);
 
 	useEffect(() => {
 		if (!selectedNotificationId && notificationFeed.length > 0) {
@@ -170,6 +121,13 @@ export const NotificationsCenter = () => {
 		[selectedNotification]
 	);
 	const canShowChatPreview = selectedNotificationCategory === 'message';
+	const getDefaultSessionsPath = useCallback(
+		() =>
+			hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+				? '/sessions/consultant/sessionView'
+				: '/sessions/user/view',
+		[userData]
+	);
 	const embeddedChatPath = useMemo(() => {
 		if (!canShowChatPreview) {
 			return null;
@@ -190,87 +148,8 @@ export const NotificationsCenter = () => {
 		return `${basePath}${hasQuery ? '&' : '?'}embeddedNotifications=1`;
 	}, [
 		canShowChatPreview,
+		getDefaultSessionsPath,
 		selectedNotification?.actionPath,
-		selectedSessionId,
-		selectedThreadRootId
-	]);
-
-	useEffect(() => {
-		setChatReplyText('');
-	}, [selectedNotificationId]);
-
-	useEffect(() => {
-		const fetchChatPreview = async () => {
-			if (selectedNotificationCategory !== 'message') {
-				setChatPreviewMessages([]);
-				setChatPreviewLoading(false);
-				return;
-			}
-			if (!selectedSessionId) {
-				setChatPreviewMessages([]);
-				setChatPreviewLoading(false);
-				return;
-			}
-			const hasExistingPreview = chatPreviewMessages.length > 0;
-			if (!hasExistingPreview) {
-				setChatPreviewLoading(true);
-			}
-			try {
-				const payload = (await fetchData({
-					url: `${apiUrl}/service/matrix/sessions/${selectedSessionId}/messages`,
-					method: FETCH_METHODS.GET,
-					responseHandling: []
-				})) as {
-					messages?: Array<any>;
-				};
-				const rawMessages = payload?.messages || [];
-				const previewItems = rawMessages
-					.slice(0, 16)
-					.reverse()
-					.map((msg) => {
-						const body = msg?.content?.body || '';
-						const parsed = parseMessagePrefixes(body);
-						const cleaned = parsed.cleanedMessage;
-						const fallbackText =
-							msg?.content?.msgtype &&
-							msg.content.msgtype !== 'm.text'
-								? 'Attachment'
-								: '';
-						return {
-							id: String(msg?.event_id || Math.random()),
-							sender:
-								String(msg?.sender || '')
-									.split(':')[0]
-									.replace('@', '') || 'unknown',
-							text: cleaned || fallbackText,
-							timestamp: Number(msg?.origin_server_ts || 0),
-							threadRootId: parsed.threadRootId || null,
-							isThreadMessage: parsed.isThreadMessage
-						};
-					})
-					.filter((entry) => {
-						if (!entry.text) {
-							return false;
-						}
-						// For thread notifications show only that thread; for regular message notifications show main chat flow.
-						if (selectedThreadRootId) {
-							return entry.threadRootId === selectedThreadRootId;
-						}
-						return !entry.isThreadMessage;
-					});
-
-				setChatPreviewMessages(previewItems);
-			} catch (_error) {
-				setChatPreviewMessages([]);
-			} finally {
-				setChatPreviewLoading(false);
-			}
-		};
-
-		void fetchChatPreview();
-	}, [
-		chatPreviewRefreshToken,
-		selectedNotificationCategory,
 		selectedSessionId,
 		selectedThreadRootId
 	]);
@@ -300,11 +179,6 @@ export const NotificationsCenter = () => {
 		}
 		return null;
 	};
-
-	const getDefaultSessionsPath = () =>
-		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
-			? '/sessions/consultant/sessionView'
-			: '/sessions/user/view';
 
 	const openNotification = (item: (typeof notificationFeed)[number]) => {
 		markNotificationAsRead(item.id);
@@ -354,50 +228,6 @@ export const NotificationsCenter = () => {
 	};
 
 	const nextUnreadId = getNextNotificationId(selectedNotificationId, true);
-	const selectedRoomRef = resolveRoomRef(selectedNotification);
-
-	const handleSendChatReply = async () => {
-		if (
-			!canShowChatPreview ||
-			!selectedSessionId ||
-			!chatReplyText.trim() ||
-			isSendingChatReply
-		) {
-			return;
-		}
-		setIsSendingChatReply(true);
-		try {
-			const cleanMessage = chatReplyText.trim();
-			const outboundMessage = selectedThreadRootId
-				? `${buildThreadPrefix(selectedThreadRootId)} ${cleanMessage}`
-				: cleanMessage;
-
-			await fetchData({
-				url: `${apiUrl}/service/matrix/sessions/${selectedSessionId}/messages`,
-				method: FETCH_METHODS.POST,
-				bodyData: JSON.stringify({ message: outboundMessage }),
-				responseHandling: []
-			});
-
-			if (selectedRoomRef) {
-				void apiPostMessageEventNotification({
-					roomId: selectedRoomRef,
-					messagePreview: cleanMessage,
-					matrixRoom: isMatrixRoom(selectedRoomRef),
-					threadRootId: selectedThreadRootId || null,
-					supervisorMessage: false,
-					senderDisplayName:
-						userData?.displayName || userData?.userName || null,
-					threadParentPreview: null
-				}).catch(() => undefined);
-			}
-
-			setChatReplyText('');
-			setChatPreviewRefreshToken((prev) => prev + 1);
-		} finally {
-			setIsSendingChatReply(false);
-		}
-	};
 
 	return (
 		<div className="notificationsCenter">
@@ -549,128 +379,6 @@ export const NotificationsCenter = () => {
 										src={embeddedChatPath}
 										className="notificationsCenter__embeddedSessionFrame"
 									/>
-								</div>
-							)}
-							{canShowChatPreview && !embeddedChatPath && (
-								<div className="notificationsCenter__chatPreview">
-									<div className="notificationsCenter__chatPreviewHeader">
-										<div className="notificationsCenter__chatPreviewTitle">
-											{translate(
-												'notifications.center.chatPreview',
-												'Chat preview'
-											)}
-										</div>
-										{selectedSessionId && (
-											<div className="notificationsCenter__chatPreviewMeta">
-												{`#${selectedSessionId}`}
-											</div>
-										)}
-									</div>
-									<div className="notificationsCenter__chatPreviewBody">
-										{!selectedSessionId ? (
-											<div className="notificationsCenter__chatPreviewEmpty">
-												{translate(
-													'notifications.center.chatPreviewNoSession',
-													'No chat linked to this notification.'
-												)}
-											</div>
-										) : chatPreviewLoading &&
-										  chatPreviewMessages.length === 0 ? (
-											<div className="notificationsCenter__chatPreviewEmpty">
-												{translate(
-													'notifications.center.chatPreviewLoading',
-													'Loading chat preview...'
-												)}
-											</div>
-										) : chatPreviewMessages.length === 0 ? (
-											<div className="notificationsCenter__chatPreviewEmpty">
-												{translate(
-													'notifications.center.chatPreviewEmpty',
-													'No visible messages yet.'
-												)}
-											</div>
-										) : (
-											chatPreviewMessages.map((entry) => (
-												<div
-													key={entry.id}
-													className="notificationsCenter__chatPreviewMessage"
-												>
-													<div className="notificationsCenter__chatPreviewMessageAvatar">
-														<UserAvatar
-															username={
-																entry.sender
-															}
-															displayName={
-																entry.sender
-															}
-															userId={
-																entry.sender
-															}
-															size="28px"
-														/>
-													</div>
-													<div className="notificationsCenter__chatPreviewMessageContent">
-														<span className="notificationsCenter__chatPreviewSender">
-															{entry.sender}
-														</span>
-														<span className="notificationsCenter__chatPreviewText">
-															{entry.text}
-														</span>
-													</div>
-												</div>
-											))
-										)}
-									</div>
-									<div className="notificationsCenter__chatComposer">
-										<input
-											type="text"
-											className="notificationsCenter__chatComposerInput"
-											placeholder={
-												selectedThreadRootId
-													? translate(
-															'notifications.center.replyInThread',
-															'Reply in this thread...'
-														)
-													: translate(
-															'notifications.center.replyInChat',
-															'Write a message...'
-														)
-											}
-											value={chatReplyText}
-											onChange={(event) =>
-												setChatReplyText(
-													event.target.value
-												)
-											}
-											onKeyDown={(event) => {
-												if (event.key === 'Enter') {
-													event.preventDefault();
-													void handleSendChatReply();
-												}
-											}}
-										/>
-										<button
-											type="button"
-											className="notificationsCenter__chatComposerSend"
-											onClick={() =>
-												void handleSendChatReply()
-											}
-											disabled={
-												isSendingChatReply ||
-												!chatReplyText.trim()
-											}
-										>
-											{isSendingChatReply
-												? translate(
-														'notifications.center.sending',
-														'Sending...'
-													)
-												: translate(
-														'notifications.center.send',
-														'Send'
-													)}
-										</button>
-									</div>
 								</div>
 							)}
 						</div>
