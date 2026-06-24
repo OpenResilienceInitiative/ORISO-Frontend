@@ -86,28 +86,16 @@ function buildSessionSearchHaystack(
 	raw: ListItemInterface,
 	extended: ExtendedSessionInterface
 ): string {
+	// Keep list search metadata-only; Matrix/E2EE message bodies must not affect results.
 	const parts: string[] = [];
 	const item = extended.item;
+
 	if (item?.topic) {
 		parts.push(
 			typeof item.topic === 'string'
 				? item.topic
 				: (item.topic as TopicSessionInterface).name || ''
 		);
-	}
-	if (item) {
-		if ('lastMessage' in item && item.lastMessage) {
-			parts.push(String(item.lastMessage));
-		}
-		if ('e2eLastMessage' in item && item.e2eLastMessage?.msg) {
-			parts.push(String(item.e2eLastMessage.msg));
-		}
-		if ('hintMessage' in item && item.hintMessage) {
-			parts.push(String(item.hintMessage));
-		}
-	}
-	if (raw.latestMessage) {
-		parts.push(String(raw.latestMessage));
 	}
 	if (raw.user?.username) {
 		parts.push(raw.user.username);

@@ -113,6 +113,21 @@ describe('Session toolbar filters', () => {
 		cy.wait('@consultantSessions');
 		cy.wait('@userDrafts');
 
+		cy.get('[data-cy=sessions-list-search]').clear();
+		cy.get('[data-cy=sessions-list-search]').type('Interner Gruppenchat');
+		cy.get('.sessionsListItem')
+			.should('have.length', 1)
+			.and('contain.text', 'Interner Gruppenchat');
+
+		cy.get('[data-cy=sessions-list-search]').clear();
+		cy.get('[data-cy=sessions-list-search]').type(
+			'encrypted body must stay hidden'
+		);
+		cy.get('.sessionsListItem').should('not.exist');
+		cy.get('[data-cy=sessions-list-search]').clear();
+		cy.get('body').click(0, 0);
+		cy.get('[data-cy=sessions-list-chips]').should('be.visible');
+
 		cy.get('[data-cy=sessions-list-chips] [data-cy]').then(($chips) => {
 			const chipOrder = [...$chips].map((chip) =>
 				chip.getAttribute('data-cy')
