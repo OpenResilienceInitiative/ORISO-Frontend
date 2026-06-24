@@ -1,0 +1,88 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+
+language: en-US
+
+tone_instructions: "Be a strict, practical ORISO reviewer. Keep comments concise, concrete, and focused on correctness, mergeability, privacy, accessibility, tests, and maintainability. Review German UI copy too."
+
+reviews:
+  profile: assertive
+  request_changes_workflow: true
+  high_level_summary: true
+  review_status: true
+  review_details: true
+  poem: false
+
+  auto_review:
+    enabled: true
+    auto_incremental_review: true
+    drafts: true
+    base_branches:
+      - "dev"
+      - "main"
+      - "release/.*"
+      - "hotfix/.*"
+
+  path_filters:
+    - "!node_modules/**"
+    - "!build/**"
+    - "!storybook-static/**"
+    - "!coverage/**"
+    - "src/**"
+    - "cypress/**"
+    - "config/**"
+    - "scripts/**"
+    - ".github/**"
+    - "*.md"
+
+  path_instructions:
+    - path: "src/**/*.{ts,tsx,js,jsx}"
+      instructions: |
+        Check behavior against the surrounding ORISO flow, not only types.
+        Flag duplicated route/state logic, missing error/loading handling,
+        privacy regressions around Matrix/chat/drafts, and changes that should
+        be expressed through shared hooks or utilities instead of local flags.
+    - path: "src/**/*.scss"
+      instructions: |
+        Prefer existing design tokens, mixins, and shared component states.
+        Flag hardcoded one-off styling when the same control/state already
+        exists elsewhere. Active/focus/list-item behavior should stay shared.
+    - path: "cypress/**/*"
+      instructions: |
+        Tests should prove the user-visible behavior and relevant edge cases.
+        Flag brittle selectors, over-mocking that hides the bug, and missing
+        assertions for route/state transitions.
+
+  pre_merge_checks:
+    title:
+      mode: warning
+      requirements: "Use a concise conventional title that names the affected ORISO area."
+    description:
+      mode: warning
+    custom_checks:
+      - name: "Validation evidence"
+        mode: error
+        instructions: |
+          Pass for docs/config-only PRs. For behavior-affecting product code,
+          pass only if the PR includes relevant automated tests or clearly lists
+          the exact validation command and result. Fail if product behavior
+          changed with no test/validation evidence and no explicit rationale.
+      - name: "Shared UI architecture"
+        mode: warning
+        instructions: |
+          Pass when UI changes reuse existing components, tokens, hooks, or
+          shared utilities. Warn when a PR creates a second local implementation
+          of an existing ORISO interaction pattern, especially search fields,
+          list active states, focus treatment, and responsive layout primitives.
+
+knowledge_base:
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - "AGENTS.md"
+      - "CONTEXT.md"
+      - ".understand-anything/README.md"
+      - ".understand-anything/ARCHITECTURE.md"
+      - ".understand-anything/ORISO-ECOSYSTEM.md"
+
+chat:
+  auto_reply: true
