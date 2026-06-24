@@ -360,60 +360,67 @@ export const NotificationsCenter = () => {
 			</div>
 			<div className="notificationsCenter__content">
 				<div className="notificationsCenter__list">
-					<div className="notificationsCenter__filters">
-						<div
-							className="notificationsCenter__chips"
-							role="tablist"
-							aria-label={translate(
-								'notifications.center.title',
-								'Notifications'
-							)}
-						>
-							<button
-								type="button"
-								role="tab"
-								aria-selected={activeFamily === 'all'}
-								className={`notificationsCenter__chip ${
-									activeFamily === 'all'
-										? 'notificationsCenter__chip--active'
-										: ''
-								}`}
-								onClick={() => setActiveFamily('all')}
+					{notificationFeed.length > 0 && (
+						<div className="notificationsCenter__filters">
+							<div
+								className="notificationsCenter__chips"
+								role="tablist"
+								aria-label={translate(
+									'notifications.center.title',
+									'Notifications'
+								)}
 							>
-								{translate('notifications.families.all', 'All')}
-							</button>
-							{familiesInFeed.map((family) => (
 								<button
-									key={family}
 									type="button"
 									role="tab"
-									aria-selected={activeFamily === family}
+									aria-selected={activeFamily === 'all'}
 									className={`notificationsCenter__chip ${
-										activeFamily === family
+										activeFamily === 'all'
 											? 'notificationsCenter__chip--active'
 											: ''
 									}`}
-									onClick={() => setActiveFamily(family)}
+									onClick={() => setActiveFamily('all')}
 								>
-									{translate(familyLabelKey(family))}
+									{translate(
+										'notifications.families.all',
+										'All'
+									)}
 								</button>
-							))}
+								{familiesInFeed.map((family) => (
+									<button
+										key={family}
+										type="button"
+										role="tab"
+										aria-selected={activeFamily === family}
+										className={`notificationsCenter__chip ${
+											activeFamily === family
+												? 'notificationsCenter__chip--active'
+												: ''
+										}`}
+										onClick={() => setActiveFamily(family)}
+									>
+										{translate(familyLabelKey(family))}
+									</button>
+								))}
+							</div>
+							<input
+								type="search"
+								className="notificationsCenter__search"
+								placeholder={translate(
+									'notifications.center.searchPlaceholder',
+									'Search activity…'
+								)}
+								value={searchQuery}
+								onChange={(event) =>
+									setSearchQuery(event.target.value)
+								}
+								aria-label={translate(
+									'notifications.center.searchPlaceholder',
+									'Search activity…'
+								)}
+							/>
 						</div>
-						<input
-							type="search"
-							className="notificationsCenter__search"
-							placeholder={translate(
-								'notifications.center.searchPlaceholder',
-								'Search activity…'
-							)}
-							value={searchQuery}
-							onChange={(event) => setSearchQuery(event.target.value)}
-							aria-label={translate(
-								'notifications.center.searchPlaceholder',
-								'Search activity…'
-							)}
-						/>
-					</div>
+					)}
 					{notificationFeed.length === 0 ? (
 						<div className="notificationsCenter__empty">
 							{translate(
@@ -455,7 +462,11 @@ export const NotificationsCenter = () => {
 														: 'notificationsCenter__listItemTag--system'
 												}`}
 											>
-												{translate(familyLabelKey(descriptor.family))}
+												{translate(
+													familyLabelKey(
+														descriptor.family
+													)
+												)}
 											</span>
 										</div>
 										<div className="notificationsCenter__listItemBody">
