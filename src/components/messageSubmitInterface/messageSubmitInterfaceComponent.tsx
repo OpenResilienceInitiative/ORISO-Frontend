@@ -32,8 +32,7 @@ import {
 	apiSendEnquiry,
 	apiSendMessage,
 	apiUploadAttachment,
-	apiMatrixUploadFile,
-	apiMatrixSendFileMessage
+	apiMatrixUploadFile
 } from '../../api';
 import {
 	MessageSubmitInfo,

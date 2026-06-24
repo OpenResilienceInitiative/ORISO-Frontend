@@ -24,11 +24,8 @@ import {
 import {
 	apiGetAgencyConsultantList,
 	apiGetSessionData,
-	fetchData,
-	FETCH_METHODS,
 	FETCH_ERRORS
 } from '../../api';
-import { apiUrl } from '../../resources/scripts/endpoints';
 import {
 	prepareMessages,
 	SESSION_LIST_TAB,
@@ -59,13 +56,79 @@ import {
 } from '../../api/apiRocketChatSettingsPublic';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
 import { matrixClientService } from '../../services/matrixClientService';
-import { getApiBaseUrl } from '../../resources/scripts/getApiBaseUrl';
 
 interface SessionStreamProps {
 	readonly: boolean;
 	checkMutedUserForThisSession: () => void;
 	bannedUsers: string[];
 }
+
+const getMatrixMediaDownloadPath = (contentUrl: string): string => {
+	if (!contentUrl.startsWith('mxc://')) {
+		return contentUrl;
+	}
+
+	const [serverName, mediaId] = contentUrl.substring(6).split('/');
+	return `/_matrix/media/r0/download/${serverName}/${mediaId}`;
+};
+
+const formatMatrixTimelineEvent = (
+	event: any,
+	matrixRoom: any,
+	encryptedFallbackText: string
+) => {
+	const eventType = event?.getType?.();
+	if (eventType !== 'm.room.message' && eventType !== 'm.room.encrypted') {
+		return null;
+	}
+
+	const content = event?.getClearContent?.() || event?.getContent?.() || {};
+	const senderId = event?.getSender?.() || '';
+	const senderUsername =
+		senderId?.split(':')[0]?.substring(1) || 'unknown';
+	const senderMember = matrixRoom?.getMember?.(senderId);
+	const senderDisplayName =
+		senderMember?.name || senderMember?.rawDisplayName || senderUsername;
+	const isUndecryptedEvent =
+		eventType === 'm.room.encrypted' && !content?.msgtype;
+	const textMessageContent =
+		content?.msgtype === 'm.text'
+			? content?.formatted_body || content?.body || ''
+			: isUndecryptedEvent
+				? encryptedFallbackText
+				: content?.body || '';
+	const baseMessage: any = {
+		_id: event?.getId?.() || `${senderId}-${event?.getTs?.() || Date.now()}`,
+		msg: textMessageContent,
+		ts: new Date(event?.getTs?.() || Date.now()),
+		u: {
+			_id: senderId,
+			username: senderUsername,
+			name: senderDisplayName
+		}
+	};
+
+	if (content?.url && content?.msgtype !== 'm.text') {
+		const downloadPath = getMatrixMediaDownloadPath(content.url);
+		baseMessage.file = {
+			name: content.body,
+			type: content.info?.mimetype || 'application/octet-stream'
+		};
+		baseMessage.attachments = [
+			{
+				title: content.body,
+				title_link: downloadPath,
+				image_url:
+					content.msgtype === 'm.image' ? downloadPath : undefined,
+				type: content.msgtype === 'm.image' ? 'image' : 'file',
+				image_type: content.info?.mimetype,
+				image_size: content.info?.size
+			}
+		];
+	}
+
+	return baseMessage;
+};
 
 export const SessionStream = ({
 	readonly,
@@ -208,168 +271,39 @@ export const SessionStream = ({
 
 		abortController.current = new AbortController();
 
-		// MATRIX MIGRATION: Use Matrix API whenever this session is Matrix-backed.
-		// Some sessions still carry a legacy rid while exposing matrixRoomId.
+		// Matrix-backed sessions must hydrate from the local Matrix SDK timeline.
+		// Pulling message history through ORISO REST would move decrypted/plaintext
+		// bodies outside the room encryption boundary.
 		const isMatrixBackedSession =
 			Boolean(activeSession.item?.matrixRoomId) ||
 			isMatrixRoom(activeSession.rid);
-		if (isMatrixBackedSession && activeSession.item?.id) {
-			const sessionId = activeSession.item.id;
-			const apiUrlBase = getApiBaseUrl();
-			const matrixUrl = `${apiUrlBase}/service/matrix/sessions/${sessionId}/messages`;
+		if (isMatrixBackedSession) {
+			const resolvedMatrixRoomId = isMatrixRoom(activeSession.rid)
+				? activeSession.rid
+				: activeSession.item?.matrixRoomId;
+			const matrixClient = matrixClientService.getClient();
+			const matrixRoom = resolvedMatrixRoomId
+				? matrixClient?.getRoom?.(resolvedMatrixRoomId)
+				: null;
+			const matrixEvents = resolvedMatrixRoomId
+				? matrixClientService.getRoomMessages(resolvedMatrixRoomId, 100)
+				: [];
+			const encryptedFallbackText = translate(
+				'e2ee.message.encryption.text'
+			);
+			const formattedMessages = matrixEvents
+				.map((event: any) =>
+					formatMatrixTimelineEvent(
+						event,
+						matrixRoom,
+						encryptedFallbackText
+					)
+				)
+				.filter(Boolean);
 
-			// console.log('🚀 MATRIX: Fetching messages from Matrix API:', matrixUrl);
-
-			// Use raw fetch to see actual response
-			const accessToken = getValueFromCookie('keycloak');
-			const csrfToken = document.cookie
-				.split('; ')
-				.find((row) => row.startsWith('CSRF-TOKEN='))
-				?.split('=')[1];
-
-			// console.log('🔑 MATRIX: Auth token exists?', !!accessToken);
-			// console.log('🔑 MATRIX: CSRF token exists?', !!csrfToken);
-
-			return fetch(matrixUrl, {
-				method: 'GET',
-				headers: {
-					'Content-Type': 'application/json',
-					'Authorization': `Bearer ${accessToken}`,
-					'X-CSRF-TOKEN': csrfToken || '',
-					'X-WHITELIST-HEADER': csrfToken || ''
-				},
-				credentials: 'include'
-			})
-				.then(async (response) => {
-					// console.log('🚀 MATRIX: Response status:', response.status);
-
-					const responseText = await response.text();
-					// console.log('🚀 MATRIX: Response body:', responseText);
-
-					if (response.status === 200) {
-						const responseData = responseText
-							? JSON.parse(responseText)
-							: {};
-						// console.log('🚀 MATRIX: Parsed response:', responseData);
-
-						// Convert Matrix messages to frontend format
-						const matrixMessages = responseData?.messages || [];
-						// console.log('🚀 MATRIX: Matrix messages array:', matrixMessages);
-
-						// MATRIX MIGRATION: Reverse message order - Matrix returns newest first, we want oldest first
-						const reversedMessages = [...matrixMessages].reverse();
-
-						const matrixClient = matrixClientService.getClient();
-						const matrixRoom = matrixClient?.getRoom?.(
-							activeSession.rid ||
-								activeSession.item?.matrixRoomId
-						);
-						const formattedMessages = reversedMessages.map(
-							(msg: any) => {
-								const senderId = msg.sender || '';
-								const senderUsername =
-									senderId?.split(':')[0]?.substring(1) ||
-									'unknown';
-								const senderMember =
-									matrixRoom?.getMember?.(senderId);
-								const senderDisplayName =
-									msg.senderDisplayName ||
-									msg.sender_display_name ||
-									msg.displayName ||
-									msg.senderName ||
-									msg.sender_name ||
-									senderMember?.name ||
-									senderMember?.rawDisplayName ||
-									senderUsername;
-								const textMessageContent =
-									msg.content?.msgtype === 'm.text'
-										? msg.content?.formatted_body ||
-											msg.content?.body ||
-											''
-										: msg.content?.body || '';
-								const baseMessage: any = {
-									_id: msg.event_id,
-									msg: textMessageContent,
-									ts: new Date(
-										msg.origin_server_ts || Date.now()
-									),
-									u: {
-										_id: senderId,
-										username: senderUsername,
-										name: senderDisplayName
-									}
-								};
-
-								// Handle file/image messages
-								if (
-									msg.content?.url &&
-									msg.content?.msgtype !== 'm.text'
-								) {
-									// Convert mxc:// URL to download path directly through Nginx to Matrix
-									// mxc://server/mediaId -> /_matrix/media/r0/download/server/mediaId
-									let downloadPath = msg.content.url;
-									if (downloadPath.startsWith('mxc://')) {
-										const mxcParts = downloadPath
-											.substring(6)
-											.split('/'); // Remove 'mxc://' and split
-										const serverName = mxcParts[0];
-										const mediaId = mxcParts[1];
-										// Direct to Matrix via Nginx (no auth needed for media downloads)
-										downloadPath = `/_matrix/media/r0/download/${serverName}/${mediaId}`;
-									}
-
-									baseMessage.file = {
-										name: msg.content.body,
-										type:
-											msg.content.info?.mimetype ||
-											'application/octet-stream'
-									};
-									baseMessage.attachments = [
-										{
-											title: msg.content.body,
-											title_link: downloadPath,
-											image_url:
-												msg.content.msgtype ===
-												'm.image'
-													? downloadPath
-													: undefined,
-											type:
-												msg.content.msgtype ===
-												'm.image'
-													? 'image'
-													: 'file',
-											image_type:
-												msg.content.info?.mimetype,
-											image_size: msg.content.info?.size
-										}
-									];
-									// console.log('🖼️ MATRIX: File/image message detected:', msg.content.body, 'Path:', downloadPath);
-								}
-
-								return baseMessage;
-							}
-						);
-
-						// console.log('🚀 MATRIX: Formatted messages:', formattedMessages);
-
-						// Apply prepareMessages to format messages correctly for the UI
-						const preparedMessages =
-							prepareMessages(formattedMessages);
-						// console.log('🚀 MATRIX: Prepared messages:', preparedMessages);
-
-						setMessagesItem({ messages: preparedMessages });
-						setLoading(false);
-					} else {
-						// console.error('🚀 MATRIX: Non-200 response:', response.status, responseText);
-						setLoading(false);
-						setMessagesItem(null);
-					}
-				})
-				.catch((error) => {
-					// console.error('🚀 MATRIX: Failed to fetch messages:', error);
-					setLoading(false);
-					setMessagesItem(null);
-				});
+			setMessagesItem({ messages: prepareMessages(formattedMessages) });
+			setLoading(false);
+			return Promise.resolve();
 		}
 
 		// Legacy RocketChat path
@@ -394,7 +328,7 @@ export const SessionStream = ({
 					: null
 			);
 		});
-	}, [activeSession.rid, activeSession.item, getSetting]);
+	}, [activeSession.rid, activeSession.item, getSetting, translate]);
 
 	const setSessionRead = useCallback(() => {
 		if (readonly) {
@@ -597,8 +531,7 @@ export const SessionStream = ({
 		activeSession.rid,
 		activeSession.item?.matrixRoomId,
 		activeSession.item?.id,
-		fetchSessionMessages,
-		apiUrl
+		fetchSessionMessages
 	]);
 
 	useEffect(() => {
