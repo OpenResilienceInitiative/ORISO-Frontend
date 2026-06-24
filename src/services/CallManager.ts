@@ -7,7 +7,10 @@
  */
 
 import { MatrixCall } from 'matrix-js-sdk/lib/webrtc/call';
-import { matrixClientService } from './matrixClientService';
+import {
+	buildMatrixRoomEncryptionInitialState,
+	matrixClientService
+} from './matrixClientService';
 
 export type CallState =
 	| 'idle'
@@ -258,6 +261,7 @@ class CallManager {
 			// Same as Element Call: a room suitable for group chats
 			preset: 'public_chat',
 			name,
+			initial_state: [buildMatrixRoomEncryptionInitialState()],
 			power_level_content_override: {
 				invite: 100,
 				kick: 100,
