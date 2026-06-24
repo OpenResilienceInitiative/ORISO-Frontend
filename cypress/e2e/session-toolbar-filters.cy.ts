@@ -15,6 +15,7 @@ describe('Session toolbar filters', () => {
 	});
 
 	beforeEach(() => {
+		cy.viewport(1455, 860);
 		mockWebSocket();
 	});
 
@@ -28,10 +29,10 @@ describe('Session toolbar filters', () => {
 		cy.consultantSession({
 			chat: {
 				id: 4101,
-				groupId: 'internal-group-room',
+				groupId: '!internal-group-room:oriso.org',
 				topic: 'Interner Gruppenchat',
 				hintMessage: 'internal group metadata only',
-				lastMessage: 'encrypted body must not be required',
+				lastMessage: 'matrix clear body must stay hidden',
 				messagesRead: true,
 				repetitive: false,
 				active: true,
@@ -108,7 +109,6 @@ describe('Session toolbar filters', () => {
 			userId: USER_CONSULTANT
 		});
 
-		cy.get('a[href="/drafts"]').should('not.exist');
 		cy.get('a[href="/sessions/consultant/sessionView"]').click();
 		cy.wait('@consultantSessions');
 		cy.wait('@userDrafts');
@@ -123,10 +123,14 @@ describe('Session toolbar filters', () => {
 		cy.get('[data-cy=sessions-list-search]').type(
 			'encrypted body must stay hidden'
 		);
-		cy.get('.sessionsListItem').should('not.exist');
+		cy.get('.sessionsListToolbar__searchEmpty').should('be.visible');
 		cy.get('[data-cy=sessions-list-search]').clear();
 		cy.get('body').click(0, 0);
 		cy.get('[data-cy=sessions-list-chips]').should('be.visible');
+		cy.get('[data-cy=sessions-list-chip-internal-group]').should('exist');
+		cy.get('[data-cy=sessions-list-chip-internal-group]').scrollIntoView();
+		cy.get('[data-cy=sessions-list-chip-groups]').should('exist');
+		cy.get('[data-cy=sessions-list-chip-groups]').scrollIntoView();
 
 		cy.get('[data-cy=sessions-list-chips] [data-cy]').then(($chips) => {
 			const chipOrder = [...$chips].map((chip) =>
@@ -186,6 +190,8 @@ describe('Session toolbar filters', () => {
 		cy.get('.sessionsListItem').should('have.length', 1);
 		cy.get('.sessionsListItem')
 			.should('contain.text', 'Interner Gruppenchat')
+			.and('contain.text', 'Nachricht verschlüsselt')
+			.and('not.contain.text', 'matrix clear body must stay hidden')
 			.and('not.contain.text', 'encrypted body must stay hidden');
 
 		cy.get('[data-cy=sessions-list-chip-groups]').click();

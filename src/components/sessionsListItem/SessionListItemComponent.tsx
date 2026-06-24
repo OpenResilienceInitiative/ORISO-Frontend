@@ -142,6 +142,9 @@ export const SessionListItemComponent = ({
 		activeSession.item.lastMessageType ===
 			ALIAS_MESSAGE_TYPES.MASTER_KEY_LOST
 	);
+	const isMatrixBackedSession =
+		isMatrixRoomIdHeuristic(activeSession.item.groupId) ||
+		isMatrixRoomIdHeuristic(activeSession.item.matrixRoomId);
 	const [plainTextLastMessage, setPlainTextLastMessage] = useState(null);
 
 	// Member count for group chats (used for "+N" avatar). For non-group chats this stays 0.
@@ -157,6 +160,11 @@ export const SessionListItemComponent = ({
 	}, []);
 
 	useEffect(() => {
+		if (isMatrixBackedSession) {
+			setPlainTextLastMessage(translate('e2ee.message.encryption.text'));
+			return;
+		}
+
 		if (!ready) {
 			return;
 		}
@@ -206,8 +214,10 @@ export const SessionListItemComponent = ({
 		keyID,
 		encrypted,
 		activeSession.item.groupId,
+		activeSession.item.matrixRoomId,
 		activeSession.item.e2eLastMessage,
 		activeSession.item.lastMessage,
+		isMatrixBackedSession,
 		translate,
 		ready
 	]);
