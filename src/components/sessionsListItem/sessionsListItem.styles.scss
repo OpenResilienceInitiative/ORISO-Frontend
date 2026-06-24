@@ -2,11 +2,15 @@ $icon-size: 24px;
 $icon-size-small: 16px;
 $session-card-bg: #eae7e8;
 $session-card-hover-bg: #eadcdc;
-$session-card-selected-bg: #fffafa;
+
+// WP-06 Slice 0b: source the active-state colours from the shared list-item
+// selection tokens (settings.scss → _listItemSelection.scss). Values are
+// unchanged — this only makes them the single canonical source.
+$session-card-selected-bg: $list-item-selected-bg;
 $session-light-border: rgba(255, 255, 255, 0.58);
-$session-selected-border: #ff9d96;
-$session-active-border: #d93025;
-$session-focus-ring: rgba(185, 54, 45, 0.35);
+$session-selected-border: $list-item-accent-ring;
+$session-active-border: $list-item-action-color;
+$session-focus-ring: $list-item-focus-ring;
 $session-topic-chip-bg: #646d78;
 $session-topic-chip-color: #ffffff;
 $session-postcode-border: #646d78;
@@ -143,9 +147,9 @@ $session-postcode-border: #646d78;
 		}
 
 		// Show a single keyboard-navigation ring for the focused item.
+		// WP-06 Slice 0b: shared focus treatment (identical output).
 		&:focus-visible {
-			outline: none;
-			box-shadow: 0 0 0 3px $session-focus-ring;
+			@include list-item-focus-treatment;
 			transition: box-shadow 0.2s ease;
 		}
 

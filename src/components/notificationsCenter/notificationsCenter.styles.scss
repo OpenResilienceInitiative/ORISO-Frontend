@@ -122,8 +122,16 @@
 		background: #fafafa;
 	}
 
+	// WP-06 Slice 0b: keyboard focus is independent of selection (a11y).
+	&__listItem:focus-visible {
+		@include list-item-focus-treatment;
+	}
+
+	// WP-06 Slice 0b: normalise the active row to the shared selection
+	// treatment (lightened background + 2px accent ring) so the timeline
+	// matches the conversation/request lists instead of a one-off colour.
 	&__listItem--active {
-		background: #fff6f7;
+		@include list-item-active-treatment;
 	}
 
 	&__listItemHeader {
