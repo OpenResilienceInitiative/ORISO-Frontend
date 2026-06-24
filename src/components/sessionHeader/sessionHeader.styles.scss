@@ -36,7 +36,7 @@ $iconSize: 24px;
 		margin-left: 0;
 		padding-bottom: 10px;
 		padding-top: 10px;
-		border-bottom: 1px solid var(--m3-error-container, #ffd1d1);
+		border-bottom: 1px solid #ffd1d1;
 	}
 
 	&__endChatButton {
@@ -369,7 +369,7 @@ $iconSize: 24px;
 			padding: 1px 8px;
 			border-bottom-left-radius: 5px;
 			border-bottom-right-radius: 5px;
-			background: var(--m3-error-container, #ffd1d1);
+			background: #ffd1d1;
 
 			@include breakpoint($fromSmall) {
 				position: relative;
@@ -501,7 +501,7 @@ $iconSize: 24px;
 	}
 
 	&__supervisionButton {
-		border: 1px solid var(--m3-error-container, #ffd1d1);
+		border: 1px solid #ffd1d1;
 		background: rgba(255, 209, 209, 0.3);
 		color: #1c1b1f;
 		border-radius: 12px;

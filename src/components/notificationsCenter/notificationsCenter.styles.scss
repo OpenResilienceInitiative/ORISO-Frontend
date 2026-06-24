@@ -60,7 +60,7 @@
 	}
 
 	&__detail {
-		background: var(--m3-error-container, #fff2f4);
+		background: #fff2f4;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -151,7 +151,7 @@
 		width: 38px;
 		height: 38px;
 		border-radius: 50%;
-		background: var(--m3-error-container, #ffecef);
+		background: #ffecef;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -248,7 +248,7 @@
 	&__nextButton {
 		width: fit-content;
 		padding: 10px 16px;
-		border: 1px solid var(--m3-error-container, #e5a5ae);
+		border: 1px solid #e5a5ae;
 		border-radius: 999px;
 		background: #fff;
 		color: #b42334;
@@ -267,7 +267,7 @@
 		padding: 14px;
 		border: 1px solid #f4d1d7;
 		border-radius: 10px;
-		background: var(--m3-error-container, #fff8f9);
+		background: #fff8f9;
 	}
 
 	&__chatSummaryTitle {
@@ -295,7 +295,7 @@
 	}
 
 	&__chatSummaryItem:hover {
-		background: var(--m3-error-container, #fff3f5);
+		background: #fff3f5;
 	}
 
 	&__chatSummaryItemLabel {
@@ -314,7 +314,7 @@
 		padding: 14px;
 		border: 1px solid #f4d1d7;
 		border-radius: 10px;
-		background: var(--m3-error-container, #fff8f9);
+		background: #fff8f9;
 	}
 
 	&__chatPreviewHeader {
@@ -398,7 +398,7 @@
 
 	&__chatComposerInput {
 		flex: 1;
-		border: 1px solid var(--m3-error-container, #ebc8ce);
+		border: 1px solid #ebc8ce;
 		border-radius: 999px;
 		padding: 10px 14px;
 		font-size: 14px;
@@ -480,7 +480,7 @@
 		padding: 14px;
 		border: 1px solid #f4d1d7;
 		border-radius: 10px;
-		background: var(--m3-error-container, #fff8f9);
+		background: #fff8f9;
 	}
 
 	&__chatSummaryTitle {
@@ -508,7 +508,7 @@
 	}
 
 	&__chatSummaryItem:hover {
-		background: var(--m3-error-container, #fff3f5);
+		background: #fff3f5;
 	}
 
 	&__chatSummaryItemLabel {
@@ -527,7 +527,7 @@
 		padding: 14px;
 		border: 1px solid #f4d1d7;
 		border-radius: 10px;
-		background: var(--m3-error-container, #fff8f9);
+		background: #fff8f9;
 	}
 
 	&__chatPreviewHeader {
@@ -611,7 +611,7 @@
 
 	&__chatComposerInput {
 		flex: 1;
-		border: 1px solid var(--m3-error-container, #ebc8ce);
+		border: 1px solid #ebc8ce;
 		border-radius: 999px;
 		padding: 10px 14px;
 		font-size: 14px;

@@ -225,4 +225,17 @@ describe('hex layer zero-drift (#143)', () => {
 		);
 		expect(unknown).toEqual([]);
 	});
+
+	it('hex targets must be statically defined at :root (not runtime-only tokens)', () => {
+		const staticRoles = new Set<string>();
+		for (const m of repoFile(
+			'src/resources/styles/mui-variables-mapping.scss'
+		).matchAll(/(--m3-[a-z0-9-]+):/g)) {
+			staticRoles.add(m[1]);
+		}
+		const runtimeOnly = Object.entries(hexConversions)
+			.filter(([, role]) => !staticRoles.has(role))
+			.map(([hex, role]) => `${hex} → ${role}`);
+		expect(runtimeOnly).toEqual([]);
+	});
 });

@@ -44,7 +44,7 @@
 	flex: 0 0 auto;
 	border-radius: 20px;
 	background: var(--m3-secondary-container, #646d78);
-	color: var(--m3-tertiary-container, #e7effc);
+	color: #e7effc;
 	padding: 0 28px 0 64px;
 	position: relative;
 
@@ -56,7 +56,7 @@
 .pseudonymActionBar__btnChangeLabel {
 	font-size: 20px;
 	line-height: 24px;
-	color: var(--m3-tertiary-container, #e7effc);
+	color: #e7effc;
 	white-space: nowrap;
 }
 

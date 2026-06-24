@@ -240,7 +240,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				gap: 6px;
 				height: 48px;
 				padding: 0 0px;
-				border: 2px solid var(--m3-error-container, #ffd1d1);
+				border: 2px solid #ffd1d1;
 				border-bottom: 0;
 				border-top-left-radius: 20px;
 				border-top-right-radius: 20px;
@@ -347,7 +347,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			}
 
 			&__mobileNavigatorButton--right:active {
-				background: var(--m3-error-container, #ffd1d1);
+				background: #ffd1d1;
 			}
 
 			&__wrapper-send-message:not(
@@ -629,16 +629,16 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 		}
 
 		&__toolbarButton--linkSelected {
-			color: var(--m3-tertiary, #2274f0) !important;
+			color: #2274f0 !important;
 		}
 
 		&__toolbarButton--linkSelected svg path,
 		&__toolbarButton--linkSelected svg rect {
-			fill: var(--m3-tertiary, #2274f0) !important;
+			fill: #2274f0 !important;
 		}
 
 		&__toolbarButton--linkSelected svg path[stroke] {
-			stroke: var(--m3-tertiary, #2274f0) !important;
+			stroke: #2274f0 !important;
 		}
 
 		&__toolbarButton--selected svg path,

@@ -444,7 +444,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		border: none;
 		border-radius: 10px;
 		background: var(--m3-secondary, #4c555f);
-		color: var(--m3-tertiary-container, #e7effc);
+		color: #e7effc;
 		cursor: pointer;
 		transition:
 			background 160ms ease,
@@ -474,7 +474,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		line-height: 24px;
 		font-weight: 500;
 		letter-spacing: 0.0094em;
-		color: var(--m3-tertiary-container, #e7effc);
+		color: #e7effc;
 		white-space: nowrap;
 	}
 
@@ -533,7 +533,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 
 	&__waitingMiniGameBellyModeBtn--inactive {
 		background: var(--m3-secondary, #4c555f);
-		color: var(--m3-tertiary-container, #e7effc);
+		color: #e7effc;
 		border-radius: 10px;
 
 		&:hover:not(:disabled) {
@@ -1469,7 +1469,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 
 		&--secondary {
 			background: var(--m3-secondary-container, #646d78);
-			color: var(--m3-tertiary-container, #e7effc);
+			color: #e7effc;
 		}
 
 		&:disabled {
@@ -1548,7 +1548,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		width: 4px;
 		height: 4px;
 		border-radius: 50%;
-		background: var(--m3-tertiary-container, #e7effc);
+		background: #e7effc;
 
 		&--left {
 			left: 4px;
@@ -1664,7 +1664,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		&--secondary {
 			flex: 0 0 auto;
 			background: var(--m3-secondary-container, #646d78);
-			color: var(--m3-tertiary-container, #e7effc);
+			color: #e7effc;
 		}
 	}
 

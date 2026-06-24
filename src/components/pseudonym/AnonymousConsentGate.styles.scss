@@ -170,7 +170,7 @@
 .anonymousConsentGate__btnReject {
 	border-radius: 8px;
 	background: var(--m3-secondary, #4c555f);
-	color: var(--m3-tertiary-container, #e7effc);
+	color: #e7effc;
 
 	&:hover:not(:disabled) {
 		background: #3d444d;

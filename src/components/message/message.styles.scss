@@ -572,7 +572,7 @@ $message-avatar-ring: #ebe2e2;
 		min-width: 32px;
 		min-height: 32px;
 		border-radius: 50%;
-		background: var(--m3-error-container, #ffe6ea);
+		background: #ffe6ea;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -632,7 +632,7 @@ $message-avatar-ring: #ebe2e2;
 	&__message {
 		color: var(--m3-primary, $secondary);
 		line-height: $message-lineheight;
-		background-color: var(--m3-error-container, #fff1f1);
+		background-color: #fff1f1;
 		border-radius: 0 12px 12px;
 		margin: 4px 0;
 		padding: $grid-base-two;
@@ -654,8 +654,8 @@ $message-avatar-ring: #ebe2e2;
 		}
 
 		&--systemNotification {
-			background: var(--m3-error-container, #fff6f7);
-			border: 1px solid var(--m3-error-container, #ffd9df);
+			background: #fff6f7;
+			border: 1px solid #ffd9df;
 			border-radius: 12px;
 		}
 
@@ -764,7 +764,7 @@ $message-avatar-ring: #ebe2e2;
 			transition: all 0.2s ease;
 
 			&:hover {
-				border-color: var(--m3-tertiary, #0086e6);
+				border-color: #0086e6;
 				box-shadow: 0 2px 8px rgba(0, 134, 230, 0.15);
 			}
 
@@ -954,7 +954,7 @@ $message-avatar-ring: #ebe2e2;
 		padding: 2px 8px;
 		border-radius: 12px;
 		background: rgba(30, 136, 229, 0.12);
-		color: var(--m3-tertiary, #1e88e5);
+		color: #1e88e5;
 		font-size: 12px;
 		font-weight: 600;
 		margin-bottom: 6px;
