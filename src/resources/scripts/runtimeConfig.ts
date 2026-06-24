@@ -78,21 +78,21 @@ const firstNonEmpty = (
  */
 const pickValue = (...keys: string[]): string | undefined => {
 	const runtimeValue = firstNonEmpty(getRuntimeConfig(), keys);
-		if (runtimeValue) {
-			return runtimeValue;
-		}
-		const processEnv =
-			typeof process !== 'undefined' ? (process.env as RuntimeConfig) : {};
-		const buildValue = firstNonEmpty(processEnv, keys);
-		if (buildValue) {
-			return buildValue;
-		}
-		const cypressValue = firstNonEmpty(getCypressConfig(), keys);
-		if (cypressValue) {
-			return cypressValue;
-		}
-		return firstNonEmpty(inferFromAppHostname(), keys);
-	};
+	if (runtimeValue) {
+		return runtimeValue;
+	}
+	const processEnv =
+		typeof process !== 'undefined' ? (process.env as RuntimeConfig) : {};
+	const buildValue = firstNonEmpty(processEnv, keys);
+	if (buildValue) {
+		return buildValue;
+	}
+	const cypressValue = firstNonEmpty(getCypressConfig(), keys);
+	if (cypressValue) {
+		return cypressValue;
+	}
+	return firstNonEmpty(inferFromAppHostname(), keys);
+};
 
 const stripTrailingSlashes = (value: string): string =>
 	value.replace(/\/+$/, '');
@@ -143,6 +143,12 @@ export const getMatrixHomeserverUrl = (): string =>
 			'REACT_APP_MATRIX_URL'
 		)
 	);
+
+/**
+ * ORISO API base URL (https).
+ */
+export const getRuntimeApiBaseUrl = (): string =>
+	ensureHttps(pickValue('REACT_APP_API_URL', 'VITE_API_URL'));
 
 /**
  * Element Call deployment origin (https), with any trailing slashes removed.

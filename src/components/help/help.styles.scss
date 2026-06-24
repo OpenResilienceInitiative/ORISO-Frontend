@@ -54,11 +54,14 @@
 		flex-wrap: wrap;
 		gap: $grid-base;
 		margin-top: $grid-base-two;
+		padding: 0;
+		list-style: none;
 
-		span {
+		li {
 			display: inline-flex;
 			align-items: center;
 			min-height: $grid-base-four;
+			margin-left: 0;
 			padding: 0 $grid-base-two;
 			border: 1px solid var(--oriso-primary-fixed-dim, #ffb4aa);
 			border-radius: $grid-base-two;
@@ -69,7 +72,7 @@
 	}
 
 	ol,
-	ul {
+	ul:not(.help__callStack) {
 		margin-left: 0;
 		padding: 0;
 

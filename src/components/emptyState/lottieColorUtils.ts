@@ -2,6 +2,7 @@ type LottieValue = Record<string, any> | any[];
 
 const SOURCE_ACCENT_COLORS = new Set(['#33cccc', '#34cccc']);
 const SOURCE_SECONDARY_COLORS = new Set(['#000000']);
+const COLOR_PROPERTY_KEYS = new Set(['c', 'v']);
 
 const normalizeHex = (value: string) => value.trim().toLowerCase();
 
@@ -22,15 +23,14 @@ const lottieColorToHex = (value: number[]) =>
 			Math.round(channel * 255)
 				.toString(16)
 				.padStart(2, '0')
-			)
-			.join('')}`;
+		)
+		.join('')}`;
 
 const isNormalizedLottieColor = (value: unknown): value is number[] =>
 	Array.isArray(value) &&
 	value.length === 4 &&
 	value.every(
-		(channel) =>
-			typeof channel === 'number' && channel >= 0 && channel <= 1
+		(channel) => typeof channel === 'number' && channel >= 0 && channel <= 1
 	);
 
 const getSourceColorRole = (value: unknown) => {
@@ -51,29 +51,58 @@ const getSourceColorRole = (value: unknown) => {
 	return null;
 };
 
-const replaceSourceColors = (
+const replaceColorTuple = (
 	value: unknown,
 	replacementColors: Record<'accent' | 'secondary', number[]>
-): unknown => {
+) => {
 	const colorRole = getSourceColorRole(value);
 
-	if (colorRole) {
-		return [
-			...replacementColors[colorRole],
-			...(value as number[]).slice(3)
-		];
+	return colorRole
+		? [...replacementColors[colorRole], ...(value as number[]).slice(3)]
+		: null;
+};
+
+const replaceColorProperty = (
+	propertyKey: string | undefined,
+	value: Record<string, unknown>,
+	replacementColors: Record<'accent' | 'secondary', number[]>
+) => {
+	if (!propertyKey || !COLOR_PROPERTY_KEYS.has(propertyKey)) {
+		return null;
 	}
 
+	const replacement = replaceColorTuple(value.k, replacementColors);
+
+	return replacement ? { ...value, k: replacement } : null;
+};
+
+const replaceSourceColors = (
+	value: unknown,
+	replacementColors: Record<'accent' | 'secondary', number[]>,
+	propertyKey?: string
+): unknown => {
 	if (Array.isArray(value)) {
-		return value.map((item) => replaceSourceColors(item, replacementColors));
+		return value.map((item) =>
+			replaceSourceColors(item, replacementColors)
+		);
 	}
 
 	if (value && typeof value === 'object') {
+		const colorProperty = replaceColorProperty(
+			propertyKey,
+			value as Record<string, unknown>,
+			replacementColors
+		);
+
+		if (colorProperty) {
+			return colorProperty;
+		}
+
 		const result: Record<string, unknown> = {};
 
 		Object.entries(value as Record<string, unknown>).forEach(
 			([key, item]) => {
-				result[key] = replaceSourceColors(item, replacementColors);
+				result[key] = replaceSourceColors(item, replacementColors, key);
 			}
 		);
 

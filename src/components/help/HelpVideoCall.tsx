@@ -124,17 +124,16 @@ export const HelpVideoCall: React.FC<HelpVideoCallProps> = ({
 					type="standard"
 					className="tertiary"
 				/>
-					<div
-						className="help__callStack"
-						role="group"
-						aria-label={translate(
-							'help.videoCall.elementCall.stackLabel'
-						)}
+				<ul
+					className="help__callStack"
+					aria-label={translate(
+						'help.videoCall.elementCall.stackLabel'
+					)}
 				>
-					<span>Element Call</span>
-					<span>WebRTC</span>
-					<span>LiveKit</span>
-				</div>
+					<li>Element Call</li>
+					<li>WebRTC</li>
+					<li>LiveKit</li>
+				</ul>
 			</div>
 			<div className="help__mid">
 				<Headline

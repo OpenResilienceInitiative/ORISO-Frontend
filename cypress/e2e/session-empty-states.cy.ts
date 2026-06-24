@@ -37,19 +37,23 @@ describe('Session empty states', () => {
 			.should('be.visible')
 			.and('contain.text', 'Kurz durchatmen.')
 			.and('contain.text', 'Alles erledigt.');
-		cy.contains('Bitte wählen Sie eine Nachricht aus').should(
-			'not.exist'
+		cy.contains('Bitte wählen Sie eine Nachricht aus').should('not.exist');
+		cy.get('a[href="/sessions/consultant/sessionPreview"]').should(
+			'have.attr',
+			'aria-label',
+			'Anfragen'
 		);
-			cy.get('a[href="/sessions/consultant/sessionPreview"]')
-				.should('have.attr', 'aria-label', 'Anfragen');
-			cy.get('a[href="/sessions/consultant/sessionView"]')
-				.should('have.attr', 'aria-label', 'Gespräch');
-			cy.get('a[href="/notifications"]')
-				.should('have.attr', 'aria-label', 'Zeitstrahl')
-				.find('.navigation__title--figma')
-				.invoke('text')
-				.then((text) => text.replace(/\s+/g, ''))
-				.should('match', /^Zeit-?strahl$/);
+		cy.get('a[href="/sessions/consultant/sessionView"]').should(
+			'have.attr',
+			'aria-label',
+			'Gespräch'
+		);
+		cy.get('a[href="/notifications"]')
+			.should('have.attr', 'aria-label', 'Zeitstrahl')
+			.find('.navigation__title--figma')
+			.invoke('text')
+			.then((text) => text.replace(/\s+/g, ''))
+			.should('match', /^Zeit-?strahl$/);
 
 		cy.get('[data-cy=empty-state-animation]').each(($animation) => {
 			const primaryFixedDim = getComputedStyle(
@@ -173,9 +177,9 @@ describe('Session empty states', () => {
 				expect(Math.abs(afterRect.top - beforeRect.top)).to.be.lessThan(
 					1
 				);
-				expect(Math.abs(afterRect.height - beforeRect.height)).to.be.lessThan(
-					1
-				);
+				expect(
+					Math.abs(afterRect.height - beforeRect.height)
+				).to.be.lessThan(1);
 			});
 		});
 
@@ -198,17 +202,14 @@ describe('Session empty states', () => {
 					.find('.emptyState__headline')[0]
 					.getBoundingClientRect();
 				const groupTop = Math.min(animation.top, headline.top);
-				const groupBottom = Math.max(
-					animation.bottom,
-					headline.bottom
-				);
+				const groupBottom = Math.max(animation.bottom, headline.bottom);
 				const groupCenter = groupTop + (groupBottom - groupTop) / 2;
 
 				expect(Math.round(animation.width)).to.equal(176);
 				expect(Math.round(animation.height)).to.equal(176);
-				expect(Math.abs(groupCenter - viewportHeight / 2)).to.be.lessThan(
-					8
-				);
+				expect(
+					Math.abs(groupCenter - viewportHeight / 2)
+				).to.be.lessThan(8);
 			}
 		);
 		cy.window().then((win) => {
