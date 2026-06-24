@@ -114,3 +114,44 @@ export const isListItemActive = (
 	}
 	return false;
 };
+
+/**
+ * Pick the single active key for a list whose items have their own key space
+ * (e.g. the Activity Timeline, keyed by notification id) but should still defer
+ * to the global route-derived conversation selection.
+ *
+ * Returns exactly one key (or null) by construction, so a list using it cannot
+ * light up two items at once (CONTEXT.md "Active item" exactly-one invariant):
+ *   1. if the route has an active conversation, the FIRST item whose identity
+ *      matches it wins — the timeline follows the globally-active conversation;
+ *   2. otherwise the list's own `fallbackKey` (its in-page selection) is used.
+ *
+ * Pure (no React) so it is unit-testable; the timeline calls it with the route
+ * `selection` from {@link useActiveListItem}. On a standalone list route (no
+ * conversation open, e.g. `/notifications`) the selection is empty, so the
+ * fallback is always returned and behaviour is unchanged.
+ */
+export const pickActiveItemKey = <T>(
+	items: ReadonlyArray<T>,
+	selection: ActiveListSelection | null | undefined,
+	getIdentity: (item: T) => ListItemIdentity,
+	getKey: (item: T) => string | number | null | undefined,
+	fallbackKey?: string | number | null
+): string | null => {
+	if (
+		selection &&
+		(selection.sessionId != null || selection.groupId != null)
+	) {
+		for (const item of items) {
+			if (isListItemActive(selection, getIdentity(item))) {
+				const key = getKey(item);
+				if (key != null && String(key).length) {
+					return String(key);
+				}
+			}
+		}
+	}
+	return fallbackKey != null && String(fallbackKey).length
+		? String(fallbackKey)
+		: null;
+};
