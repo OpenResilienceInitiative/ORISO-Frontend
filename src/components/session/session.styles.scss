@@ -2258,7 +2258,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		right: -9px;
 		width: $unreadButtonSize;
 		height: $unreadButtonSize;
-		background-color: var(--skin-color-primary, $primary);
+		background-color: var(--m3-primary, $primary);
 		font-weight: $font-weight-medium;
 		font-size: 10px;
 		color: $white;
@@ -2281,7 +2281,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	&__forgotSomething {
 		padding: $grid-base-two $grid-base-three;
 		text-align: center;
-		color: $tertiary;
+		color: var(--m3-on-surface-variant, $tertiary);
 		margin: $grid-base-two 0;
 
 		.text {

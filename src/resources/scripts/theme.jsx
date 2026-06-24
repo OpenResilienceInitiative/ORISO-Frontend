@@ -20,20 +20,20 @@ const theme = createTheme({
 	},
 	palette: {
 		primary: {
-			dark: getCssVarValue('--primary-3', '#991b1b'),
-			main: getCssVarValue('--primary', '#dc2626'),
-			light: getCssVarValue('--background-light', '#f3f4f6'),
-			lighter: getCssVarValue('--background-lighter', '#f9fafb')
+			dark: getCssVarValue('--m3-primary-hover', '#991b1b'),
+			main: getCssVarValue('--m3-primary', '#dc2626'),
+			light: getCssVarValue('--m3-surface-container-low', '#f3f4f6'),
+			lighter: getCssVarValue('--m3-surface-container-lowest', '#f9fafb')
 		},
 		info: {
 			main: getCssVarValue('--black', '#000000'),
-			light: getCssVarValue('--tertiary', '#6b7280')
+			light: getCssVarValue('--m3-on-surface-variant', '#6b7280')
 		},
 		error: {
-			main: getCssVarValue('--form-error', '#ef4444')
+			main: getCssVarValue('--m3-error', '#ef4444')
 		},
 		success: {
-			main: getCssVarValue('--form-success', '#10b981')
+			main: getCssVarValue('--m3-success', '#10b981')
 		}
 	},
 
@@ -109,7 +109,7 @@ const theme = createTheme({
 			styleOverrides: {
 				root: {
 					'&:hover': {
-						color: getCssVarValue('--hover-primary', '#b91c1c')
+						color: getCssVarValue('--m3-primary-hover', '#b91c1c')
 					}
 				}
 			}
@@ -150,7 +150,7 @@ const theme = createTheme({
 					'&:hover': {
 						boxShadow: 'none',
 						color: getCssVarValue('--white'),
-						backgroundColor: getCssVarValue('--hover-primary', '#b91c1c')
+						backgroundColor: getCssVarValue('--m3-primary-hover', '#b91c1c')
 					},
 					'&.Mui-disabled': {
 						backgroundColor: 'rgba(0, 0, 0, 0.12)',
@@ -165,8 +165,8 @@ const theme = createTheme({
 					'borderRadius': getCssVarValue('--button-border-radius'),
 					'textTransform': 'none',
 					'&:hover': {
-						backgroundColor: getCssVarValue('--hover-primary', '#b91c1c'),
-						borderColor: getCssVarValue('--hover-primary', '#b91c1c'),
+						backgroundColor: getCssVarValue('--m3-primary-hover', '#b91c1c'),
+						borderColor: getCssVarValue('--m3-primary-hover', '#b91c1c'),
 						color: getCssVarValue('--white')
 					}
 				}

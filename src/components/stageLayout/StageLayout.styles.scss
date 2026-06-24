@@ -115,15 +115,15 @@
 			margin-top: 0;
 			.button__item {
 				color: $text-high-emphasis;
-				border: 2px solid $secondary;
+				border: 2px solid var(--m3-on-surface, $secondary);
 				&:hover {
 					background-color: var(
-						--skin-color-primary-hover,
+						--m3-primary-hover,
 						$hover-primary
 					);
-					color: var(--text-color-contrast-switch, $white);
+					color: var(--m3-on-primary, $white);
 					border-color: var(
-						--skin-color-primary-hover,
+						--m3-primary-hover,
 						$hover-primary
 					);
 				}
@@ -150,7 +150,7 @@
 			text-decoration: underline;
 			padding: 0;
 			white-space: nowrap;
-			color: $tertiary;
+			color: var(--m3-on-surface-variant, $tertiary);
 			pointer-events: auto;
 			position: relative;
 			z-index: 31;
@@ -165,7 +165,7 @@
 			}
 
 			&:hover {
-				color: var(--skin-color-primary-hover, $hover-primary);
+				color: var(--m3-primary-hover, $hover-primary);
 			}
 		}
 
@@ -175,9 +175,9 @@
 	}
 
 	&__legalLinksItem {
-		color: $tertiary;
+		color: var(--m3-on-surface-variant, $tertiary);
 		&:hover {
-			color: var(--skin-color-primary-hover, $hover-primary);
+			color: var(--m3-primary-hover, $hover-primary);
 		}
 	}
 

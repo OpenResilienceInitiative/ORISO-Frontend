@@ -25,6 +25,15 @@ export const SLATE = { hue: 249, chroma: 11.5 };
 export const CONTAINER_TONE_SHIFT = 10;
 export const CONTAINER_CHROMA_FACTOR = 1.05;
 
+/** Hover sits slightly below the role colour (darker in light scheme). */
+export const HOVER_TONE_SHIFT = -8;
+
+/**
+ * Success is not a Material 3 role; ORISO needs one for form states.
+ * Seed-independent anchor — the legacy light value, dark from its palette.
+ */
+export const SUCCESS_ANCHOR = '#0a882f';
+
 /** WCAG-AA body-text contrast; drives every on-colour decision. */
 export const CONTRAST_AA = 4.5;
 

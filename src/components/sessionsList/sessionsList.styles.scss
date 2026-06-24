@@ -257,7 +257,7 @@ $tabBarHeightDesktop: 53px;
 		}
 
 		a {
-			color: var(--skin-color-default, $tertiary);
+			color: var(--m3-primary, $tertiary);
 
 			&:last-of-type {
 				margin-left: $grid-base-three;
@@ -265,7 +265,7 @@ $tabBarHeightDesktop: 53px;
 
 			@media (hover: hover) {
 				&:hover .text {
-					color: var(--skin-color-default, $hover-primary);
+					color: var(--m3-primary, $hover-primary);
 				}
 			}
 		}
@@ -273,12 +273,12 @@ $tabBarHeightDesktop: 53px;
 		&--active {
 			.text {
 				font-weight: $font-weight-medium;
-				color: var(--skin-color-primary-contrast-safe, $primary);
+				color: var(--m3-primary, $primary);
 			}
 
 			&::after {
 				content: '';
-				background: var(--skin-color-primary, $primary);
+				background: var(--m3-primary, $primary);
 				display: block;
 				height: 3px;
 				margin-top: 5px;

@@ -8,7 +8,7 @@
 	}
 
 	&--primary {
-		color: $primary;
+		color: var(--m3-primary, $primary);
 	}
 
 	&__icon {

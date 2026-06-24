@@ -1,7 +1,7 @@
 .link_menu {
 	&__group {
 		.title {
-			color: var(--skin-color-primary-contrast-safe, $primary);
+			color: var(--m3-primary, $primary);
 			margin-bottom: 16px;
 			margin-top: $grid-base-five;
 			font-family: $font-family-divider;
@@ -42,7 +42,7 @@
 
 		&__badge {
 			margin-left: 4px;
-			background-color: $primary;
+			background-color: var(--m3-primary, $primary);
 			color: $white;
 			border-radius: 50%;
 			width: 8px;
