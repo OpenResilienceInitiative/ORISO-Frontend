@@ -19,7 +19,7 @@ describe('Session toolbar filters', () => {
 		mockWebSocket();
 	});
 
-	it('filters unread sessions, drafts, internal group chats, and conversation circles', () => {
+	it('filters unread sessions, drafts, internal group chats, supervision, and conversation circles', () => {
 		cy.consultantSession({
 			session: {
 				id: 9876,
@@ -143,19 +143,12 @@ describe('Session toolbar filters', () => {
 			);
 			expect(
 				chipOrder.indexOf('sessions-list-chip-internal-group')
+			).to.be.lessThan(
+				chipOrder.indexOf('sessions-list-chip-supervision')
+			);
+			expect(
+				chipOrder.indexOf('sessions-list-chip-supervision')
 			).to.be.lessThan(chipOrder.indexOf('sessions-list-chip-groups'));
-			if (chipOrder.includes('sessions-list-chip-supervision')) {
-				expect(
-					chipOrder.indexOf('sessions-list-chip-internal-group')
-				).to.be.lessThan(
-					chipOrder.indexOf('sessions-list-chip-supervision')
-				);
-				expect(
-					chipOrder.indexOf('sessions-list-chip-supervision')
-				).to.be.lessThan(
-					chipOrder.indexOf('sessions-list-chip-groups')
-				);
-			}
 		});
 
 		cy.get('[data-cy=sessions-list-chip-unread]')

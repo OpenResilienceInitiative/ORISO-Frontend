@@ -737,6 +737,7 @@ $sessionShellSurface: var(--m3-surface-container-high, #eae7e8);
 		overflow-x: auto;
 		overflow-y: hidden;
 		-webkit-overflow-scrolling: touch;
+		scroll-behavior: smooth;
 		margin-bottom: $grid-base-two;
 		scrollbar-width: thin;
 
@@ -795,12 +796,12 @@ $sessionShellSurface: var(--m3-surface-container-high, #eae7e8);
 			isolation: isolate;
 			-webkit-tap-highlight-color: transparent;
 			transition:
-				background-color 220ms cubic-bezier(0.2, 0, 0, 1),
-				border-color 220ms cubic-bezier(0.2, 0, 0, 1),
-				box-shadow 220ms cubic-bezier(0.2, 0, 0, 1),
-				color 180ms cubic-bezier(0.2, 0, 0, 1),
-				padding 220ms cubic-bezier(0.2, 0, 0, 1),
-				transform 160ms cubic-bezier(0.2, 0, 0, 1);
+				background-color 260ms cubic-bezier(0.16, 1, 0.3, 1),
+				border-color 260ms cubic-bezier(0.16, 1, 0.3, 1),
+				box-shadow 260ms cubic-bezier(0.16, 1, 0.3, 1),
+				color 200ms cubic-bezier(0.16, 1, 0.3, 1),
+				padding 260ms cubic-bezier(0.16, 1, 0.3, 1),
+				transform 180ms cubic-bezier(0.16, 1, 0.3, 1);
 
 		&::before {
 			content: '';
@@ -853,6 +854,8 @@ $sessionShellSurface: var(--m3-surface-container-high, #eae7e8);
 
 		/* Figma selected chip: dark surface + white label/icons */
 		&--active {
+			animation: sessionsListToolbarChipActivate 180ms
+				cubic-bezier(0.16, 1, 0.3, 1);
 			background-color: $toolbar-chip-selected-bg;
 			border-color: $toolbar-chip-selected-bg;
 			box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
@@ -929,11 +932,12 @@ $sessionShellSurface: var(--m3-surface-container-high, #eae7e8);
 		opacity: 0;
 		overflow: hidden;
 		transform: translateX(-4px);
+		will-change: max-width, margin-left, opacity, transform;
 		transition:
-			max-width 220ms cubic-bezier(0.2, 0, 0, 1),
-			margin-left 220ms cubic-bezier(0.2, 0, 0, 1),
-			opacity 160ms cubic-bezier(0.2, 0, 0, 1),
-			transform 220ms cubic-bezier(0.2, 0, 0, 1);
+			max-width 280ms cubic-bezier(0.16, 1, 0.3, 1),
+			margin-left 280ms cubic-bezier(0.16, 1, 0.3, 1),
+			opacity 180ms cubic-bezier(0.16, 1, 0.3, 1),
+			transform 280ms cubic-bezier(0.16, 1, 0.3, 1);
 	}
 
 	&__chip--active &__chipLabel {
@@ -969,6 +973,7 @@ $sessionShellSurface: var(--m3-surface-container-high, #eae7e8);
 		&__chip,
 		&__chip::before,
 		&__chipLabel {
+			animation: none;
 			transition: none;
 		}
 	}
@@ -1180,5 +1185,15 @@ $sessionShellSurface: var(--m3-surface-container-high, #eae7e8);
 		font-size: 14px;
 		line-height: 20px;
 		color: #444748;
+	}
+}
+
+@keyframes sessionsListToolbarChipActivate {
+	from {
+		transform: scale(0.98);
+	}
+
+	to {
+		transform: scale(1);
 	}
 }
