@@ -11,6 +11,11 @@ import {
 import { useActiveListItem } from '../../hooks/useActiveListItem';
 import { pickActiveItemKey } from '../../utils/listItemSelection';
 import {
+	filterTimelineItems,
+	getFamiliesInFeed,
+	TimelineFamilyFilter
+} from './timelineFilter';
+import {
 	NotificationsContext,
 	UserDataContext,
 	AUTHORITIES,
@@ -120,44 +125,77 @@ export const NotificationsCenter = () => {
 	const [selectedNotificationId, setSelectedNotificationId] = useState<
 		string | null
 	>(notificationFeed[0]?.id || null);
+	// WP-06 Slice 1: timeline family filter chip (exactly one active) + search.
+	const [activeFamily, setActiveFamily] =
+		useState<TimelineFamilyFilter>('all');
+	const [searchQuery, setSearchQuery] = useState('');
 
-	useEffect(() => {
-		if (!selectedNotificationId && notificationFeed.length > 0) {
-			setSelectedNotificationId(notificationFeed[0].id);
-			return;
-		}
+	// Families actually present in the feed, in canonical order (drives chips).
+	const familiesInFeed = useMemo(
+		() => getFamiliesInFeed(notificationFeed),
+		[notificationFeed]
+	);
+
+	// WP-06 Slice 1: client-side filter (family chip + search). Search matches
+	// the client-rendered strings only — ADR-AT-01 forbids server full-text.
+	const filteredFeed = useMemo(
+		() =>
+			filterTimelineItems(
+				notificationFeed,
+				{ family: activeFamily, query: searchQuery },
+				(item) => {
+					const { title, text } = describeItem(item, translate);
+					return `${title} ${text}`;
+				}
+			),
+		[notificationFeed, activeFamily, searchQuery, translate]
+	);
+
+	// Keep the master-detail selection inside the visible (filtered) feed.
+	const effectiveSelectedId = useMemo(() => {
 		if (
 			selectedNotificationId &&
-			!notificationFeed.some((item) => item.id === selectedNotificationId)
+			filteredFeed.some((item) => item.id === selectedNotificationId)
 		) {
-			setSelectedNotificationId(notificationFeed[0]?.id || null);
+			return selectedNotificationId;
 		}
-	}, [notificationFeed, selectedNotificationId]);
+		return filteredFeed[0]?.id ?? null;
+	}, [filteredFeed, selectedNotificationId]);
+
+	useEffect(() => {
+		if (selectedNotificationId !== effectiveSelectedId) {
+			setSelectedNotificationId(effectiveSelectedId);
+		}
+	}, [effectiveSelectedId, selectedNotificationId]);
+
+	// Drop back to "All" if the active family is no longer in the feed.
+	useEffect(() => {
+		if (activeFamily !== 'all' && !familiesInFeed.includes(activeFamily)) {
+			setActiveFamily('all');
+		}
+	}, [familiesInFeed, activeFamily]);
 
 	// WP-06 Slice 0b: resolve a SINGLE active card id through the shared
-	// selection primitive. When a conversation is route-active its card wins;
-	// otherwise the in-page master-detail selection (`selectedNotificationId`)
-	// is used. Exactly one card is active by construction. On the standalone
-	// `/notifications` route the route selection is empty, so this is identical
-	// to the previous behaviour (no visual change).
+	// selection primitive over the visible feed. When a conversation is
+	// route-active its card wins; otherwise the in-page master-detail selection
+	// is used. Exactly one card is active by construction.
 	const activeNotificationId = useMemo(
 		() =>
 			pickActiveItemKey(
-				notificationFeed,
+				filteredFeed,
 				activeSelection,
 				(item) => ({ sessionId: resolveSessionId(item) }),
 				(item) => item.id,
-				selectedNotificationId
+				effectiveSelectedId
 			),
-		[notificationFeed, activeSelection, selectedNotificationId]
+		[filteredFeed, activeSelection, effectiveSelectedId]
 	);
 
 	const selectedNotification = useMemo(
 		() =>
-			notificationFeed.find(
-				(item) => item.id === activeNotificationId
-			) || null,
-		[notificationFeed, activeNotificationId]
+			filteredFeed.find((item) => item.id === activeNotificationId) ||
+			null,
+		[filteredFeed, activeNotificationId]
 	);
 	const selectedNotificationCategory = useMemo(
 		() =>
@@ -219,23 +257,23 @@ export const NotificationsCenter = () => {
 		fromId: string | null,
 		unreadOnly: boolean
 	): string | null => {
-		if (notificationFeed.length === 0) {
+		if (filteredFeed.length === 0) {
 			return null;
 		}
 		const startIndex = fromId
-			? notificationFeed.findIndex((item) => item.id === fromId)
+			? filteredFeed.findIndex((item) => item.id === fromId)
 			: -1;
-		const matchesRule = (item: (typeof notificationFeed)[number]) =>
+		const matchesRule = (item: (typeof filteredFeed)[number]) =>
 			!unreadOnly || !item.readAt;
 
-		for (let i = startIndex + 1; i < notificationFeed.length; i++) {
-			if (matchesRule(notificationFeed[i])) {
-				return notificationFeed[i].id;
+		for (let i = startIndex + 1; i < filteredFeed.length; i++) {
+			if (matchesRule(filteredFeed[i])) {
+				return filteredFeed[i].id;
 			}
 		}
 		for (let i = 0; i <= startIndex; i++) {
-			if (i >= 0 && matchesRule(notificationFeed[i])) {
-				return notificationFeed[i].id;
+			if (i >= 0 && matchesRule(filteredFeed[i])) {
+				return filteredFeed[i].id;
 			}
 		}
 		return null;
@@ -279,7 +317,7 @@ export const NotificationsCenter = () => {
 			true
 		);
 		if (nextUnreadId) {
-			const nextItem = notificationFeed.find(
+			const nextItem = filteredFeed.find(
 				(item) => item.id === nextUnreadId
 			);
 			if (nextItem) {
@@ -322,6 +360,67 @@ export const NotificationsCenter = () => {
 			</div>
 			<div className="notificationsCenter__content">
 				<div className="notificationsCenter__list">
+					{notificationFeed.length > 0 && (
+						<div className="notificationsCenter__filters">
+							<div
+								className="notificationsCenter__chips"
+								role="tablist"
+								aria-label={translate(
+									'notifications.center.title',
+									'Notifications'
+								)}
+							>
+								<button
+									type="button"
+									role="tab"
+									aria-selected={activeFamily === 'all'}
+									className={`notificationsCenter__chip ${
+										activeFamily === 'all'
+											? 'notificationsCenter__chip--active'
+											: ''
+									}`}
+									onClick={() => setActiveFamily('all')}
+								>
+									{translate(
+										'notifications.families.all',
+										'All'
+									)}
+								</button>
+								{familiesInFeed.map((family) => (
+									<button
+										key={family}
+										type="button"
+										role="tab"
+										aria-selected={activeFamily === family}
+										className={`notificationsCenter__chip ${
+											activeFamily === family
+												? 'notificationsCenter__chip--active'
+												: ''
+										}`}
+										onClick={() => setActiveFamily(family)}
+									>
+										{translate(familyLabelKey(family))}
+									</button>
+								))}
+							</div>
+							<input
+								type="search"
+								className="notificationsCenter__search"
+								placeholder={translate(
+									'notifications.center.searchPlaceholder',
+									'Search activity…'
+								)}
+								value={searchQuery}
+								onChange={(event) =>
+									setSearchQuery(event.target.value)
+								}
+								aria-label={translate(
+									'notifications.center.searchPlaceholder',
+									'Search activity…'
+								)}
+							/>
+						</div>
+					)}
 					{notificationFeed.length === 0 ? (
 						<div className="notificationsCenter__empty">
 							{translate(
@@ -329,8 +428,15 @@ export const NotificationsCenter = () => {
 								'No notifications yet.'
 							)}
 						</div>
+					) : filteredFeed.length === 0 ? (
+						<div className="notificationsCenter__empty">
+							{translate(
+								'notifications.center.noResults',
+								'No activity matches your filters.'
+							)}
+						</div>
 					) : (
-						notificationFeed.map((item) =>
+						filteredFeed.map((item) =>
 							(() => {
 								const category = resolveItemCategory(item);
 								const isMessage = category === 'message';
@@ -356,7 +462,11 @@ export const NotificationsCenter = () => {
 														: 'notificationsCenter__listItemTag--system'
 												}`}
 											>
-												{translate(familyLabelKey(descriptor.family))}
+												{translate(
+													familyLabelKey(
+														descriptor.family
+													)
+												)}
 											</span>
 										</div>
 										<div className="notificationsCenter__listItemBody">

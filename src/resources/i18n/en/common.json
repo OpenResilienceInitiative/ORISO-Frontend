@@ -1316,6 +1316,7 @@
 	},
 	"notifications": {
 		"families": {
+			"all": "All",
 			"requests": "Requests",
 			"messages": "Messages",
 			"drafts": "Drafts",
@@ -1409,6 +1410,8 @@
 		"success": "successful",
 		"warning": "warning",
 		"center": {
+			"searchPlaceholder": "Search activity…",
+			"noResults": "No activity matches your filters.",
 			"title": "Notifications",
 			"subtitle": "Recent activities and updates from your chats.",
 			"markAllRead": "Mark all as read",

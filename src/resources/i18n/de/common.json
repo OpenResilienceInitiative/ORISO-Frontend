@@ -1340,6 +1340,7 @@
 	},
 	"notifications": {
 		"families": {
+			"all": "Alle",
 			"requests": "Anfragen",
 			"messages": "Nachrichten",
 			"drafts": "Entwürfe",
@@ -1433,6 +1434,8 @@
 		"success": "Erfolgreich",
 		"warning": "Warnung",
 		"center": {
+			"searchPlaceholder": "Aktivität durchsuchen…",
+			"noResults": "Keine Aktivität entspricht Ihren Filtern.",
 			"title": "Benachrichtigungen",
 			"subtitle": "Aktuelle Ereignisse und Updates aus Ihren Chats.",
 			"markAllRead": "Alle als gelesen markieren",
