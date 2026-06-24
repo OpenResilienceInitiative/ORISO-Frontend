@@ -10,6 +10,7 @@ import { matrixLiveEventBridge } from './matrixLiveEventBridge';
 import { encryptMatrixAttachment } from '../utils/matrixEncryptedAttachment';
 
 const TOKEN_REFRESH_BUFFER_MS = 2 * 60 * 1000;
+const MATRIX_ROOM_ENCRYPTION_ALGORITHM = 'm.megolm.v1.aes-sha2';
 
 interface MatrixFileMessageOptions {
 	abortController?: AbortController;
@@ -256,7 +257,16 @@ export class MatrixClientService {
 		const response = await this.client.createRoom({
 			preset: 'private_chat' as any,
 			invite: [userId],
-			is_direct: true
+			is_direct: true,
+			initial_state: [
+				{
+					type: 'm.room.encryption',
+					state_key: '',
+					content: {
+						algorithm: MATRIX_ROOM_ENCRYPTION_ALGORITHM
+					}
+				}
+			]
 		});
 
 		return response.room_id;

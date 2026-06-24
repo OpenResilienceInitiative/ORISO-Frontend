@@ -146,6 +146,42 @@ describe('Matrix send message privacy', () => {
 		);
 	});
 
+	it('creates Matrix direct message rooms with encryption enabled from the initial state', () => {
+		const service = matrixClientService as any;
+		const createRoom = cy
+			.stub()
+			.resolves({ room_id: '!encrypted-dm:oriso.org' });
+
+		cy.stub(service, 'ensureFreshToken').resolves();
+		service.client = { createRoom };
+
+		cy.then(() =>
+			matrixClientService.createDirectMessageRoom('@asker:oriso.org')
+		).then((roomId) => {
+			expect(roomId).to.equal('!encrypted-dm:oriso.org');
+			expect(createRoom).to.have.been.calledOnceWith(
+				Cypress.sinon.match((options) => {
+					expect(options).to.deep.include({
+						preset: 'private_chat',
+						is_direct: true
+					});
+					expect(options.invite).to.deep.equal([
+						'@asker:oriso.org'
+					]);
+					expect(options.initial_state).to.deep.include({
+						type: 'm.room.encryption',
+						state_key: '',
+						content: {
+							algorithm: 'm.megolm.v1.aes-sha2'
+						}
+					});
+					return true;
+				})
+			);
+			service.client = null;
+		});
+	});
+
 	it('uploads Matrix attachments as encrypted media through the SDK', () => {
 		const service = matrixClientService as any;
 		let uploadedPayload: XMLHttpRequestBodyInit | undefined;
