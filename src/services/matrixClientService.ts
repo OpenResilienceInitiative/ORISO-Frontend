@@ -8,21 +8,12 @@ import {
 import { matrixCallService } from './matrixCallService';
 import { matrixLiveEventBridge } from './matrixLiveEventBridge';
 import { encryptMatrixAttachment } from '../utils/matrixEncryptedAttachment';
+import {
+	assertMatrixRoomEncrypted,
+	buildMatrixRoomEncryptionInitialState
+} from '../utils/matrixRoomEncryption';
 
 const TOKEN_REFRESH_BUFFER_MS = 2 * 60 * 1000;
-export const MATRIX_ROOM_ENCRYPTION_ALGORITHM = 'm.megolm.v1.aes-sha2';
-
-export const buildMatrixRoomEncryptionInitialState = (): {
-	type: 'm.room.encryption';
-	state_key: '';
-	content: { algorithm: typeof MATRIX_ROOM_ENCRYPTION_ALGORITHM };
-} => ({
-	type: 'm.room.encryption',
-	state_key: '',
-	content: {
-		algorithm: MATRIX_ROOM_ENCRYPTION_ALGORITHM
-	}
-});
 
 interface MatrixFileMessageOptions {
 	abortController?: AbortController;
@@ -424,25 +415,7 @@ export class MatrixClientService {
 	}
 
 	private assertEncryptedRoom(roomId: string): void {
-		if (!this.client) {
-			throw new Error('Matrix client not initialized');
-		}
-
-		const clientWithEncryptionState = this.client as MatrixClient & {
-			getRoom?: (roomId: string) => Room | null;
-			isRoomEncrypted?: (roomId: string) => boolean;
-		};
-		const room = clientWithEncryptionState.getRoom?.(roomId);
-		const isEncrypted =
-			clientWithEncryptionState.isRoomEncrypted?.(roomId) ??
-			room?.hasEncryptionStateEvent?.() ??
-			false;
-
-		if (!isEncrypted) {
-			throw new Error(
-				'Cannot send Matrix message before the target room is confirmed as an encrypted Matrix room'
-			);
-		}
+		assertMatrixRoomEncrypted(this.client, roomId);
 	}
 
 	private async uploadFileMessageContent(

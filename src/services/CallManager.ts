@@ -7,10 +7,11 @@
  */
 
 import { MatrixCall } from 'matrix-js-sdk/lib/webrtc/call';
+import { matrixClientService } from './matrixClientService';
 import {
-	buildMatrixRoomEncryptionInitialState,
-	matrixClientService
-} from './matrixClientService';
+	assertMatrixRoomEncrypted,
+	buildMatrixRoomEncryptionInitialState
+} from '../utils/matrixRoomEncryption';
 
 export type CallState =
 	| 'idle'
@@ -187,6 +188,11 @@ class CallManager {
 		// notifying listeners.
 		(async () => {
 			let elementCallRoomId: string | undefined = undefined;
+
+			assertMatrixRoomEncrypted(
+				matrixClientService.getClient(),
+				roomId
+			);
 
 			// For group calls, create a fresh dedicated Element Call room rather
 			// than re-using the session room. This matches the "direct" usage of
@@ -394,6 +400,7 @@ class CallManager {
 				// console.error('❌ Matrix client not available to send call invite');
 				return;
 			}
+			assertMatrixRoomEncrypted(client, signallingRoomId);
 
 			// console.log('📤 Sending m.call.invite to Matrix room:', signallingRoomId);
 
@@ -584,6 +591,10 @@ class CallManager {
 		try {
 			const client = matrixClientService.getClient();
 			if (!client) return;
+			assertMatrixRoomEncrypted(
+				client,
+				callData.signalRoomId || callData.roomId
+			);
 
 			client
 				.sendEvent(

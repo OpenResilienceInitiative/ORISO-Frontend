@@ -43,4 +43,56 @@ describe('Matrix call room privacy', () => {
 			);
 		});
 	});
+
+	it('does not send Element Call invites into unencrypted signalling rooms', () => {
+		const sendEvent = cy.stub().resolves({ event_id: '$call-invite' });
+
+		cy.stub(matrixClientService, 'getClient').returns({
+			getDeviceId: cy.stub().returns('DEVICEID'),
+			isRoomEncrypted: cy
+				.stub()
+				.withArgs('!plain-session-room:oriso.org')
+				.returns(false),
+			sendEvent
+		} as never);
+
+		cy.then(() =>
+			(callManager as any).sendGroupCallInvite(
+				'!plain-session-room:oriso.org',
+				'call-123',
+				true,
+				'!encrypted-call-room:oriso.org',
+				true
+			)
+		).then(() => {
+			expect(sendEvent.callCount).to.equal(0);
+		});
+	});
+
+	it('does not send Element Call hangups into unencrypted signalling rooms', () => {
+		const sendEvent = cy.stub().resolves({ event_id: '$call-hangup' });
+
+		cy.stub(matrixClientService, 'getClient').returns({
+			isRoomEncrypted: cy
+				.stub()
+				.withArgs('!plain-session-room:oriso.org')
+				.returns(false),
+			sendEvent
+		} as never);
+
+		cy.then(() =>
+			(callManager as any).sendElementCallHangup({
+				callId: 'call-123',
+				roomId: '!encrypted-call-room:oriso.org',
+				isVideo: true,
+				isIncoming: false,
+				state: 'connected',
+				usesElementCall: true,
+				elementCallRoomId: '!encrypted-call-room:oriso.org',
+				signalRoomId: '!plain-session-room:oriso.org'
+			})
+		).then(() => {
+			expect(sendEvent.callCount).to.equal(0);
+		});
+	});
 });
