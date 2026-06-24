@@ -1,7 +1,7 @@
 # ORISO · Registration Topic Selection — Material 3 prototype
 
-A standalone sandbox to test the *feel* of a Material 3 collapsible-list topic picker
-for the ORISO registration flow ("Schritt 1 von 4 – Zu welchem Thema suchen Sie Beratung?").
+A standalone sandbox to test the _feel_ of a Material 3 collapsible-list topic picker
+for the ORISO registration flow (5 steps: topic → postcode → center → register → message).
 
 Built on the **same stack as `ORISO-Frontend`** (React + MUI v5 + react-i18next) so the
 `<TopicSelection />` component lifts straight into production.
@@ -9,7 +9,7 @@ Built on the **same stack as `ORISO-Frontend`** (React + MUI v5 + react-i18next)
 ## Run
 
 ```bash
-cd oriso-topic-md3-prototype
+cd prototypes/registration-md3
 npm install
 npm run dev      # → http://localhost:5173
 npm run build    # type-check (tsc) + production build
@@ -37,15 +37,15 @@ npm run build    # type-check (tsc) + production build
 
 ## Key files
 
-| File | Purpose |
-| --- | --- |
-| `src/components/TopicSelection.tsx` | **The reusable MD3 component** — drop into ORISO-Frontend |
-| `src/components/RegistrationLayout.tsx` | Page shell: hero, stepper header, sticky footer |
-| `src/components/LanguageSwitcher.tsx` | Globe menu, 6 languages, RTL-aware |
-| `src/data/topics.ts` | Category/topic catalogue (would come from the topic/ConsultingType API in prod) |
-| `src/locales/*.json` | Translations |
-| `src/theme.ts` | Muted-M3 MUI theme — toned Caritas red + Figma M3 tokens |
-| `public/icons/` | The 29 icons (5 category + 24 topic), copied from the icon set |
+| File                                    | Purpose                                                                         |
+| --------------------------------------- | ------------------------------------------------------------------------------- |
+| `src/components/TopicSelection.tsx`     | **The reusable MD3 component** — drop into ORISO-Frontend                       |
+| `src/components/RegistrationLayout.tsx` | Page shell: hero, stepper header, sticky footer                                 |
+| `src/components/LanguageSwitcher.tsx`   | Globe menu, 6 languages, RTL-aware                                              |
+| `src/data/topics.ts`                    | Category/topic catalogue (would come from the topic/ConsultingType API in prod) |
+| `src/locales/*.json`                    | Translations                                                                    |
+| `src/theme.ts`                          | Muted-M3 MUI theme — toned Caritas red + Figma M3 tokens                        |
+| `public/icons/`                         | The 29 icons (5 category + 24 topic), copied from the icon set                  |
 
 ## Lifting `TopicSelection` into ORISO-Frontend
 
@@ -69,7 +69,7 @@ To productionise:
 
 ## Known limitations / next steps
 
-- **Top bar + stepper are sticky; only the list scrolls.** The multi-step *linear jump-back*
+- **Top bar + stepper are sticky; only the list scrolls.** The multi-step _linear jump-back_
   (deleting an earlier step's chip should return you to that step) is wired conceptually —
   on this single step the ✕ just clears the selection.
 - **Stepper labels** (`reg.stepNames.*`) and step icons are a first pass — confirm the real

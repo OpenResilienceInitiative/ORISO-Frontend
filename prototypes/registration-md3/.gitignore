@@ -3,4 +3,5 @@ dist/
 build/
 .playwright-mcp/
 *.log
+*.tsbuildinfo
 .DS_Store
