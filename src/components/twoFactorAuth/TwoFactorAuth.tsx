@@ -125,7 +125,9 @@ export const TwoFactorAuth = () => {
 				apiDeleteTwoFactorAuth()
 					.then(reloadUserData)
 					.then(() => setOverlayActive(false))
-					.catch((error) => { /* console.log(error); */ });
+					.catch((error) => {
+						/* console.log(error); */
+					});
 			}
 		},
 		[reloadUserData]
@@ -343,8 +345,10 @@ export const TwoFactorAuth = () => {
 						type: BUTTON_TYPES.PRIMARY
 					},
 					(!isConsultant ||
-						getDevToolbarOption(STORAGE_KEY_DISABLE_2FA_DUTY) ===
-							'1') &&
+						(process.env.NODE_ENV !== 'production' &&
+							getDevToolbarOption(
+								STORAGE_KEY_DISABLE_2FA_DUTY
+							) === '1')) &&
 						userData.twoFactorAuth.isActive && {
 							label: translate(
 								'twoFactorAuth.activate.step1.disable'

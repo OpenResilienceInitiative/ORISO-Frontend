@@ -14,6 +14,7 @@ import {
 } from '../../api/apiGetSessionSupervisors';
 import { apiAddSessionSupervisor } from '../../api/apiAddSessionSupervisor';
 import { apiRemoveSessionSupervisor } from '../../api/apiRemoveSessionSupervisor';
+import { matrixClientService } from '../../services/matrixClientService';
 import {
 	apiGetAgencyConsultantList,
 	Consultant
@@ -60,6 +61,10 @@ import {
 	convertUserDataObjectToArray,
 	getUserDataTranslateBase
 } from '../profile/profileHelpers';
+import {
+	isAnonymousMatrixUsername,
+	resolveAnonymousChatDisplayName
+} from '../../utils/anonymousChatDisplayName';
 import { ReactComponent as BackIcon } from '../../resources/img/icons/arrow-left.svg';
 import { UserAvatar } from '../message/UserAvatar';
 import { ConsultantSearchLoader } from './ConsultantSearchLoader';
@@ -429,13 +434,11 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			)
 		});
 		try {
-			const matrixClientService = (window as any).matrixClientService;
-			const client = matrixClientService?.getClient?.();
-			if (client) {
-				await (client as any).sendMessage(matrixRoomId, {
-					msgtype: 'm.text',
-					body: `${SYSTEM_NOTIFICATION_PREFIX}${payload}`
-				});
+			if (matrixClientService.sendMessage) {
+				await matrixClientService.sendMessage(
+					matrixRoomId,
+					`${SYSTEM_NOTIFICATION_PREFIX}${payload}`
+				);
 				return;
 			}
 			await apiSendMessage(
@@ -659,6 +662,69 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		!activeSession.isEnquiry &&
 		activeSession.isSession &&
 		!isChatFinished;
+
+	const headerContactName = (() => {
+		if (isAnonymousAsker) {
+			let storedPseudonym: string | null = null;
+			try {
+				storedPseudonym =
+					sessionStorage.getItem(
+						`anonymous-pseudonym-name-${activeSession.item.id}`
+					) || null;
+			} catch {
+				storedPseudonym = null;
+			}
+			const ownPseudonym = resolveAnonymousChatDisplayName(
+				{
+					username: userData?.userName,
+					displayName: userData?.displayName || storedPseudonym
+				},
+				userData?.displayName || storedPseudonym || undefined
+			);
+			if (ownPseudonym) {
+				return ownPseudonym;
+			}
+			const consultantName = resolveAnonymousChatDisplayName(
+				activeSession.consultant
+			);
+			if (consultantName) {
+				return consultantName;
+			}
+			return null;
+		}
+
+		if (isConsultantUser && isAnonymousChat) {
+			return (
+				resolveAnonymousChatDisplayName(activeSession.user) ||
+				resolveAnonymousChatDisplayName(contact)
+			);
+		}
+
+		if (hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)) {
+			return (
+				contact?.displayName ||
+				(!isAnonymousMatrixUsername(contact?.username)
+					? contact?.username
+					: null)
+			);
+		}
+
+		return (
+			resolveAnonymousChatDisplayName(contact) ||
+			(!isAnonymousMatrixUsername(contact?.username)
+				? contact?.username
+				: null)
+		);
+	})();
+
+	const headerFallbackLabel = translate('sessionList.user.consultantUnknown');
+	const headerTitle = headerContactName || headerFallbackLabel;
+	const headerAvatarDisplayName =
+		headerContactName ||
+		contact?.displayName ||
+		(!isAnonymousMatrixUsername(contact?.username)
+			? contact?.username
+			: undefined);
 
 	const handleRequestEndAnonymousChat = () => {
 		if (isFinishingChat || isChatFinished) {
@@ -928,7 +994,9 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 											username={
 												contact?.username || 'User'
 											}
-											displayName={contact?.displayName}
+											displayName={
+												headerAvatarDisplayName
+											}
 											userId={
 												contact?.username || 'unknown'
 											}
@@ -940,11 +1008,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 						);
 					})()}
 					{hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) && (
-						<h3>
-							{contact?.displayName ||
-								contact?.username ||
-								translate('sessionList.user.consultantUnknown')}
-						</h3>
+						<h3 title={headerTitle}>{headerTitle}</h3>
 					)}
 					{hasUserAuthority(
 						AUTHORITIES.CONSULTANT_DEFAULT,
@@ -952,25 +1016,15 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					) ? (
 						isAskerInfoAvailable() ? (
 							<Link to={userProfileLink}>
-								<h3>
-									{contact?.username ||
-										translate(
-											'sessionList.user.consultantUnknown'
-										)}
-								</h3>
+								<h3 title={headerTitle}>{headerTitle}</h3>
 							</Link>
 						) : (
-							<h3>
-								{contact?.username ||
-									translate(
-										'sessionList.user.consultantUnknown'
-									)}
-							</h3>
+							<h3 title={headerTitle}>{headerTitle}</h3>
 						)
 					) : null}
 				</div>
-				{/* End Chat for anonymous askers (waiting room or active chat) */}
-				{showEndAnonymousChatButton && (
+				{/* End Chat for anonymous askers — desktop only; mobile uses SessionMenu */}
+				{showEndAnonymousChatButton && !untilL && (
 					<button
 						type="button"
 						onClick={handleRequestEndAnonymousChat}

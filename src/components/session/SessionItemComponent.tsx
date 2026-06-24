@@ -66,6 +66,7 @@ import { apiPatchNotificationActiveView } from '../../api/apiPatchNotificationAc
 import { apiPatchUserData } from '../../api/apiPatchUserData';
 import { apiGetUserData } from '../../api/apiGetUserData';
 import { apiGetAnonymousEnquiryDetails } from '../../api/apiGetAnonymousEnquiryDetails';
+import { matrixClientService } from '../../services/matrixClientService';
 import {
 	bindAnonymousChatUnloadCleanup,
 	ensureAnonymousChatPreLogoutCleanup,
@@ -1670,8 +1671,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			);
 
 			if (isMatrixSession) {
-				const matrixClientUserId = (window as any).matrixClientService
-					?.getClient?.()
+				const matrixClientUserId = matrixClientService
+					.getClient()
 					?.getUserId?.();
 				const myMatrixUserId =
 					matrixClientUserId ||
@@ -1847,6 +1848,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				setPseudonymConfirmed(true);
 				try {
 					sessionStorage.setItem(pseudonymStorageKey, '1');
+					sessionStorage.setItem(
+						`anonymous-pseudonym-name-${activeSession.item.id}`,
+						currentPseudonym.displayName
+					);
 				} catch {
 					/* ignore storage errors */
 				}

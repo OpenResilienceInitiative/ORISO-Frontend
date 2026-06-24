@@ -58,6 +58,7 @@ import {
 	SETTING_HIDE_SYSTEM_MESSAGES
 } from '../../api/apiRocketChatSettingsPublic';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
+import { matrixClientService } from '../../services/matrixClientService';
 import { getApiBaseUrl } from '../../resources/scripts/getApiBaseUrl';
 
 interface SessionStreamProps {
@@ -146,7 +147,7 @@ export const SessionStream = ({
 			if (!isMatrixSession || !matrixRoomId) {
 				return;
 			}
-			(window as any).matrixClientService
+			matrixClientService
 				?.sendTyping(matrixRoomId, typing)
 				.catch(() => {});
 		},
@@ -258,9 +259,7 @@ export const SessionStream = ({
 						// MATRIX MIGRATION: Reverse message order - Matrix returns newest first, we want oldest first
 						const reversedMessages = [...matrixMessages].reverse();
 
-						const matrixClient = (
-							window as any
-						).matrixClientService?.getClient?.();
+						const matrixClient = matrixClientService.getClient();
 						const matrixRoom = matrixClient?.getRoom?.(
 							activeSession.rid ||
 								activeSession.item?.matrixRoomId
@@ -534,8 +533,7 @@ export const SessionStream = ({
 		let lastRefreshAt = 0;
 
 		const attachTimelineListener = () => {
-			const matrixClientService = (window as any).matrixClientService;
-			const matrixClient = matrixClientService?.getClient?.();
+			const matrixClient = matrixClientService.getClient?.();
 			if (!matrixClient) {
 				return false;
 			}
@@ -609,7 +607,7 @@ export const SessionStream = ({
 			return;
 		}
 
-		const matrixClient = (window as any).matrixClientService?.getClient?.();
+		const matrixClient = matrixClientService?.getClient?.();
 		if (!matrixClient) {
 			setMatrixTypingUsers([]);
 			return;
@@ -737,6 +735,8 @@ export const SessionStream = ({
 	]);
 
 	// Hard fallback: keep Matrix sessions in sync even if a live event is missed.
+	// 60s is safe because Room.timeline and messageEventEmitter cover real-time updates.
+	const MESSAGE_FALLBACK_INTERVAL_MS = 60_000;
 	useEffect(() => {
 		if (!isMatrixSession || !activeSession.item?.id) {
 			return;
@@ -746,10 +746,17 @@ export const SessionStream = ({
 			if (typeof document !== 'undefined' && document.hidden) {
 				return;
 			}
+			// Skip when Matrix is actively syncing — real-time events are flowing.
+			const matrixSyncState = matrixClientService
+				?.getClient?.()
+				?.getSyncState();
+			if (matrixSyncState === 'SYNCING') {
+				return;
+			}
 			fetchSessionMessages().catch(() => {
 				// keep UI stable on intermittent network/session race conditions
 			});
-		}, 1500);
+		}, MESSAGE_FALLBACK_INTERVAL_MS);
 
 		return () => {
 			window.clearInterval(intervalId);

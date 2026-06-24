@@ -28,11 +28,12 @@ import { useCall } from '../../globalState/provider/CallProvider';
 import { RocketChatUserStatusProvider } from '../../globalState/provider/RocketChatUserStatusProvider';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { E2EEncryptionSupportBanner } from '../E2EEncryptionSupportBanner/E2EEncryptionSupportBanner';
-import { getMatrixHomeserverUrl } from '../../resources/scripts/runtimeConfig';
 import {
 	getMatrixAccessToken,
 	persistMatrixLoginData
 } from '../sessionCookie/getMatrixAccessToken';
+import { matrixClientService } from '../../services/matrixClientService';
+import { MatrixClientProvider } from '../../contexts/MatrixClientContext';
 
 interface AuthenticatedAppProps {
 	onAppReady: Function;
@@ -100,39 +101,10 @@ export const AuthenticatedApp = ({
 									await getMatrixAccessToken();
 								persistMatrixLoginData(matrixLoginData);
 								try {
-									const { MatrixClientService } =
-										await import(
-											'../../services/matrixClientService'
-										);
-									const matrixClientService =
-										new MatrixClientService();
-
-									const homeserverUrl =
-										getMatrixHomeserverUrl();
-									if (!homeserverUrl) {
-										// console.warn('⚠️ REACT_APP_MATRIX_HOMESERVER_URL is not set; skipping Matrix client init');
-									} else {
-										matrixClientService.initializeClient({
-											userId: matrixLoginData.userId,
-											accessToken:
-												matrixLoginData.accessToken,
-											deviceId: matrixLoginData.deviceId,
-											homeserverUrl: homeserverUrl
-										});
-
-										(window as any).matrixClientService =
-											matrixClientService;
-										(window as any).callContext =
-											callContext;
-
-										const { matrixLiveEventBridge } =
-											await import(
-												'../../services/matrixLiveEventBridge'
-											);
-										matrixLiveEventBridge.initialize(
-											matrixClientService.getClient()!
-										);
-									}
+									matrixClientService.initializeClient(
+										matrixLoginData
+									);
+									(window as any).callContext = callContext;
 								} catch (error) {
 									// console.warn('⚠️ Matrix client initialization failed:', error);
 									// Don't fail app startup if Matrix fails
@@ -172,7 +144,7 @@ export const AuthenticatedApp = ({
 
 	if (appReady) {
 		return (
-			<>
+			<MatrixClientProvider>
 				<RocketChatProvider>
 					<RocketChatGetUserRolesProvider>
 						<RocketChatPublicSettingsProvider>
@@ -187,7 +159,7 @@ export const AuthenticatedApp = ({
 						</RocketChatPublicSettingsProvider>
 					</RocketChatGetUserRolesProvider>
 				</RocketChatProvider>
-			</>
+			</MatrixClientProvider>
 		);
 	} else if (loading) {
 		return <Loading />;

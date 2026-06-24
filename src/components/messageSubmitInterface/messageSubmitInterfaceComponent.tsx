@@ -11,6 +11,7 @@ import { createPortal } from 'react-dom';
 import { useHistory, useLocation } from 'react-router-dom';
 
 import { SendMessageButton } from './SendMessageButton';
+import { matrixClientService } from '../../services/matrixClientService';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { STATUS_ENQUIRY } from '../../globalState/interfaces/SessionsDataInterface';
 import {
@@ -1872,9 +1873,14 @@ export const MessageSubmitInterfaceComponent = ({
 					}
 				} else {
 					// Legacy RocketChat upload path
-					const isAttachmentEncryptionEnabledDevTools = parseInt(
-						getDevToolbarOption(STORAGE_KEY_ATTACHMENT_ENCRYPTION)
-					);
+					const isAttachmentEncryptionEnabledDevTools =
+						process.env.NODE_ENV !== 'production'
+							? parseInt(
+									getDevToolbarOption(
+										STORAGE_KEY_ATTACHMENT_ENCRYPTION
+									)
+								)
+							: 1;
 					let attachmentFile = attachment;
 					let signature = null;
 					let encryptEnabled =
@@ -2050,7 +2056,14 @@ export const MessageSubmitInterfaceComponent = ({
 					level: ERROR_LEVEL_WARN
 				}).then();
 
-				isEncrypted = false;
+				window.alert(
+					translate(
+						'e2ee.message.encryption.error',
+						'Encryption failed, message not sent'
+					)
+				);
+				setIsRequestInProgress(false);
+				return;
 			}
 		}
 
@@ -2578,7 +2591,7 @@ export const MessageSubmitInterfaceComponent = ({
 			);
 		});
 		const roomId = getMatrixRoomId();
-		const matrixClient = (window as any).matrixClientService?.getClient?.();
+		const matrixClient = matrixClientService.getClient();
 		const room =
 			roomId && matrixClient ? matrixClient.getRoom(roomId) : null;
 		const roomMembers =

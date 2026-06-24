@@ -161,7 +161,7 @@ export const autoLogin = async ({
 		const { getMatrixAccessToken, persistMatrixLoginData } = await import(
 			'../sessionCookie/getMatrixAccessToken'
 		);
-		const { MatrixClientService } = await import(
+		const { matrixClientService } = await import(
 			'../../services/matrixClientService'
 		);
 
@@ -177,15 +177,7 @@ export const autoLogin = async ({
 
 		persistMatrixLoginData(matrixLoginData);
 
-		const matrixClientService = new MatrixClientService();
-		// console.log('🔷 Initializing Matrix client...');
 		matrixClientService.initializeClient(matrixLoginData);
-
-		// Store Matrix client globally for call functionality
-		(window as any).matrixClientService = matrixClientService;
-
-		// console.log('✅✅✅ Matrix client initialized successfully! ✅✅✅');
-		// console.log('✅ Matrix client available at: window.matrixClientService');
 	} catch (error) {
 		// console.error('❌❌❌ Matrix client initialization FAILED! ❌❌❌');
 		// console.error('❌ Error:', error);

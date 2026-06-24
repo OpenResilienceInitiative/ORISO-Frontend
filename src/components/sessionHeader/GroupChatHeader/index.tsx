@@ -71,13 +71,7 @@ export const GroupChatHeader = ({
 		}
 
 		// Try to get Matrix client (from global window or imported service)
-		const getClient = () => {
-			const globalService = (window as any).matrixClientService;
-			if (globalService && globalService.getClient()) {
-				return globalService.getClient();
-			}
-			return matrixClientService.getClient();
-		};
+		const getClient = () => matrixClientService.getClient();
 
 		// Wait for Matrix client to be available (retry up to 20 times = 10 seconds)
 		let retryCount = 0;

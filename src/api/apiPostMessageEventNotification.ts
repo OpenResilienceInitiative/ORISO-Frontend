@@ -25,7 +25,8 @@ export const apiPostMessageEventNotification = async ({
 		method: FETCH_METHODS.POST,
 		bodyData: JSON.stringify({
 			roomId,
-			messagePreview,
+			// KDG/GDPR: messagePreview is for notification display only and must not exceed 100 chars
+			messagePreview: (messagePreview ?? '').slice(0, 100),
 			matrixRoom,
 			threadRootId: threadRootId || null,
 			supervisorMessage,
@@ -34,4 +35,3 @@ export const apiPostMessageEventNotification = async ({
 		}),
 		responseHandling: []
 	});
-
