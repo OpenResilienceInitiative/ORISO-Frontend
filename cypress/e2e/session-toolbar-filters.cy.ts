@@ -131,6 +131,29 @@ describe('Session toolbar filters', () => {
 		cy.get('[data-cy=sessions-list-chip-internal-group]').scrollIntoView();
 		cy.get('[data-cy=sessions-list-chip-groups]').should('exist');
 		cy.get('[data-cy=sessions-list-chip-groups]').scrollIntoView();
+		cy.get('[data-cy=sessions-list-chips]').should(($chipsScroll) => {
+			const scrollStyle = getComputedStyle($chipsScroll[0]);
+			expect(scrollStyle.scrollbarWidth).to.equal('none');
+			expect(scrollStyle.overflowX).to.equal('auto');
+		});
+		cy.get('[data-cy=sessions-list-chip-internal-group]').should(
+			($chip) => {
+				const chipStyle = getComputedStyle($chip[0]);
+				expect(chipStyle.transitionProperty).to.include(
+					'background-color'
+				);
+				expect(parseFloat(chipStyle.transitionDuration)).to.be.greaterThan(
+					0.15
+				);
+			}
+		);
+		cy.get(
+			'[data-cy=sessions-list-chip-internal-group] .sessionsListToolbar__chipLabel'
+		).should(($label) => {
+			expect(getComputedStyle($label[0]).transitionProperty).to.include(
+				'max-width'
+			);
+		});
 
 		cy.get('[data-cy=sessions-list-chips] [data-cy]').then(($chips) => {
 			const chipOrder = [...$chips].map((chip) =>
