@@ -81,4 +81,11 @@ describe('Matrix session stream privacy', () => {
 			'/messages'
 		);
 	});
+
+	it('does not keep a Matrix file upload REST proxy helper around', () => {
+		cy.readFile('src/api/apiMatrixUpload.ts').should(
+			'not.contain',
+			'/service/matrix/sessions'
+		);
+	});
 });
