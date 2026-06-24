@@ -146,6 +146,37 @@ describe('Matrix send message privacy', () => {
 		);
 	});
 
+	it('refuses to emit Matrix typing metadata before room encryption is verified', () => {
+		const service = matrixClientService as any;
+		const sendTyping = cy.stub().resolves();
+
+		cy.stub(service, 'ensureFreshToken').resolves();
+		service.client = {
+			isRoomEncrypted: cy
+				.stub()
+				.withArgs('!plain-room:oriso.org')
+				.returns(false),
+			sendTyping
+		};
+
+		cy.then(() =>
+			matrixClientService.sendTyping('!plain-room:oriso.org', true).then(
+				() => {
+					throw new Error(
+						'Expected unencrypted Matrix typing event to fail'
+					);
+				},
+				(error) => {
+					expect(error.message).to.contain(
+						'encrypted Matrix room'
+					);
+					expect(sendTyping.callCount).to.equal(0);
+					service.client = null;
+				}
+			)
+		);
+	});
+
 	it('creates Matrix direct message rooms with encryption enabled from the initial state', () => {
 		const service = matrixClientService as any;
 		const createRoom = cy

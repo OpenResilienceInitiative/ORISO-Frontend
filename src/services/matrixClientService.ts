@@ -308,6 +308,8 @@ export class MatrixClientService {
 		if (!this.client) {
 			return;
 		}
+		this.assertEncryptedRoom(roomId);
+
 		try {
 			await this.client.sendTyping(roomId, typing, 30000);
 		} catch (error) {
