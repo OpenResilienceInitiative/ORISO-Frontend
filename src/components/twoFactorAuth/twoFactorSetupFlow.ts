@@ -71,7 +71,7 @@ export const EMAIL_SETUP_STEPS: TwoFactorSetupStepDefinition[] = [
 	{
 		key: 'email-success',
 		icon: 'confirm',
-		labelKey: 'twoFactorAuth.setupDialog.step.verify'
+		labelKey: 'twoFactorAuth.setupDialog.step.confirm'
 	}
 ];
 
