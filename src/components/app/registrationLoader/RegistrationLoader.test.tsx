@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import * as React from 'react';
-import { act, render } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { RegistrationLoader } from './RegistrationLoader';
 
@@ -26,6 +26,29 @@ describe('RegistrationLoader', () => {
 
 	afterEach(() => {
 		vi.useRealTimers();
+	});
+
+	it('keeps loading copy until the completion state is armed', () => {
+		const onFinish = vi.fn();
+		const { rerender } = render(
+			<RegistrationLoader ready={false} onFinish={onFinish} />
+		);
+
+		expect(screen.getAllByText('registration.loader.copy')).toHaveLength(2);
+		expect(screen.queryByText('registration.loader.ready')).toBeNull();
+
+		rerender(<RegistrationLoader ready={true} onFinish={onFinish} />);
+
+		expect(screen.getAllByText('registration.loader.copy')).toHaveLength(2);
+		expect(screen.queryByText('registration.loader.ready')).toBeNull();
+
+		act(() => {
+			vi.advanceTimersByTime(1200);
+		});
+
+		expect(screen.getAllByText('registration.loader.ready')).toHaveLength(
+			2
+		);
 	});
 
 	it('calls onFinish once after ready and the completion delay', () => {

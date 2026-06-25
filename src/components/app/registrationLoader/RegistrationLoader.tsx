@@ -183,7 +183,7 @@ export const RegistrationLoader = ({
 				{t('registration.loader.headline')}
 			</Typography>
 			<Typography sx={{ color: 'text.secondary', textAlign: 'center' }}>
-				{ready
+				{armed
 					? t('registration.loader.ready')
 					: t('registration.loader.copy')}
 			</Typography>
@@ -201,7 +201,7 @@ export const RegistrationLoader = ({
 					whiteSpace: 'nowrap'
 				}}
 			>
-				{ready
+				{armed
 					? t('registration.loader.ready')
 					: t('registration.loader.copy')}
 			</Box>
