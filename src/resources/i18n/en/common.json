@@ -848,6 +848,36 @@
 					}
 				}
 			},
+			"elementCall": {
+				"stackLabel": "Element Call with WebRTC and LiveKit",
+				"stepsHeadline": "How the video call works",
+				"troubleshootingHeadline": "If something does not work",
+				"asker": {
+					"headline": "Video Call",
+					"intro": "Video calls now run directly through Element Call. Element Call uses WebRTC and LiveKit, so no browser switch or extra installation is needed.",
+					"steps": {
+						"open": "Open the online consultation as usual.",
+						"permissions": "Allow camera and microphone when your browser asks.",
+						"call": "Accept the video call when your consultant starts it.",
+						"copyLink": "If you want to open the login link on another device, copy it here:"
+					}
+				},
+				"consultant": {
+					"headline": "Video Call",
+					"intro": "Video calls now run directly through Element Call. Element Call uses WebRTC and LiveKit, so no browser switch or extra installation is needed.",
+					"steps": {
+						"open": "Open the consultation in ORISO as usual.",
+						"permissions": "Allow camera and microphone when your browser asks.",
+						"call": "Start the video call in the chat. Element Call opens the call automatically.",
+						"copyLink": "If you want to open the login link on another device, copy it here:"
+					}
+				},
+				"troubleshooting": {
+					"permissions": "Check whether camera and microphone are allowed in the browser.",
+					"device": "Check that the correct microphone, camera, and speaker are selected.",
+					"connection": "Refresh the page or switch to a stable Wi-Fi connection if video or audio drops."
+				}
+			},
 			"loginLink": {
 				"notification": {
 					"text": "Link copied to clipboard!",
@@ -1274,7 +1304,7 @@
 				"small": "Messages"
 			}
 		},
-		"activity": "Activity",
+		"activity": "Timeline",
 		"language": "Language",
 		"drafts": "Drafts",
 		"liveChat": "Live Chat",
@@ -1286,6 +1316,7 @@
 	},
 	"notifications": {
 		"families": {
+			"all": "All",
 			"requests": "Requests",
 			"messages": "Messages",
 			"drafts": "Drafts",
@@ -1379,6 +1410,8 @@
 		"success": "successful",
 		"warning": "warning",
 		"center": {
+			"searchPlaceholder": "Search activity…",
+			"noResults": "No activity matches your filters.",
 			"title": "Notifications",
 			"subtitle": "Recent activities and updates from your chats.",
 			"markAllRead": "Mark all as read",
@@ -2248,6 +2281,7 @@
 			"restrictions": ".jpg, .png, .pdf, .docx, .xlsx up to a maximum of {{attachment_filesize}}MB"
 		},
 		"empty": "Please select a message",
+		"emptyAllCaughtUp": "Take a breather.\nAll caught up.",
 		"groupChat": {
 			"consultant": {
 				"prefix": "Moderator - "
@@ -2377,12 +2411,20 @@
 			},
 			"chips": {
 				"neu": "Unread",
+				"unread": "Unread",
+				"drafts": "Drafts",
+				"nearby": "Nearby",
+				"create": "Create",
+				"archive": "Archived",
 				"oneToOne": "1-1 counseling",
 				"liveChat": "Live chat",
-				"groups": "Groups",
-				"supervision": "Supervision"
+				"internalGroup": "Internal group chat",
+				"groups": "Conversation circle",
+				"supervision": "Supervision",
+				"chats": "Nearby"
 			},
-			"emptyFilterResult": "No consultations match your search or filters."
+			"emptyFilterResult": "No consultations match your search or filters.",
+			"draftMetadataOnly": "Unsent message saved."
 		},
 		"anonymous": {
 			"tag": "Anonymous"

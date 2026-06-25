@@ -272,6 +272,7 @@ export const Registration = () => {
 	return (
 		<>
 			<StageLayout
+				className="stageLayout--registration"
 				showLegalLinks={true}
 				showLoginLink={true}
 				stage={<Stage hasAnimation={isFirstVisit} />}

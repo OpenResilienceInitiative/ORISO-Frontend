@@ -856,6 +856,36 @@
 					}
 				}
 			},
+			"elementCall": {
+				"stackLabel": "WebRTC ve LiveKit ile Element Call",
+				"stepsHeadline": "Görüntülü arama nasıl çalışır",
+				"troubleshootingHeadline": "Bir şey çalışmazsa",
+				"asker": {
+					"headline": "Görüntülü arama",
+					"intro": "Görüntülü aramalar artık doğrudan Element Call üzerinden çalışır. Element Call, WebRTC ve LiveKit kullanır; bu nedenle tarayıcı değiştirmeniz veya ek bir şey yüklemeniz gerekmez.",
+					"steps": {
+						"open": "Çevrimiçi danışmanlığı her zamanki gibi açın.",
+						"permissions": "Tarayıcınız istediğinde kamera ve mikrofon erişimine izin verin.",
+						"call": "Danışmanınız başlattığında görüntülü aramayı kabul edin.",
+						"copyLink": "Giriş bağlantısını başka bir cihazda açmak isterseniz buradan kopyalayın:"
+					}
+				},
+				"consultant": {
+					"headline": "Görüntülü arama",
+					"intro": "Görüntülü aramalar artık doğrudan Element Call üzerinden çalışır. Element Call, WebRTC ve LiveKit kullanır; bu nedenle tarayıcı değiştirmeniz veya ek bir şey yüklemeniz gerekmez.",
+					"steps": {
+						"open": "Danışmanlığı ORISO'da her zamanki gibi açın.",
+						"permissions": "Tarayıcınız istediğinde kamera ve mikrofon erişimine izin verin.",
+						"call": "Görüntülü aramayı sohbette başlatın. Element Call aramayı otomatik olarak açar.",
+						"copyLink": "Giriş bağlantısını başka bir cihazda açmak isterseniz buradan kopyalayın:"
+					}
+				},
+				"troubleshooting": {
+					"permissions": "Tarayıcıda kamera ve mikrofon izninin verildiğini kontrol edin.",
+					"device": "Doğru mikrofon, kamera ve hoparlörün seçili olduğunu kontrol edin.",
+					"connection": "Görüntü veya ses kesilirse sayfayı yenileyin ya da kararlı bir Wi-Fi bağlantısına geçin."
+				}
+			},
 			"loginLink": {
 				"notification": {
 					"text": "Bağlantı panoya kopyalandı!",
@@ -1262,7 +1292,7 @@
 				"small": "Haberler"
 			}
 		},
-		"activity": "Etkinlik",
+		"activity": "Zaman çizelgesi",
 		"language": "Dil",
 		"drafts": "Taslaklar",
 		"liveChat": "Canlı sohbet",
@@ -2130,6 +2160,7 @@
 			"restrictions": "{{attachment_filesize}}.jpg, .png, .pdf, .docx, .xlsx maksimum MB'a kadar"
 		},
 		"empty": "Lütfen bir mesaj seçin",
+		"emptyAllCaughtUp": "Kısa bir nefes alın.\nHer şey tamam.",
 		"groupChat": {
 			"consultant": {
 				"prefix": "Moderatör - "
@@ -2254,12 +2285,20 @@
 			},
 			"chips": {
 				"neu": "Okunmamış",
+				"unread": "Okunmamış",
+				"drafts": "Taslaklar",
+				"nearby": "Yakın",
+				"create": "Oluştur",
+				"archive": "Arşivlendi",
 				"oneToOne": "Bire bir danışmanlık",
 				"liveChat": "Canlı sohbet",
-				"groups": "Gruplar",
-				"supervision": "Süpervizyon"
+				"internalGroup": "Dahili grup sohbeti",
+				"groups": "Sohbet çevresi",
+				"supervision": "Süpervizyon",
+				"chats": "Yakın"
 			},
-			"emptyFilterResult": "Aramanız veya filtrelerinize uyan istişare yok."
+			"emptyFilterResult": "Aramanız veya filtrelerinize uyan istişare yok.",
+			"draftMetadataOnly": "Gönderilmemiş mesaj kaydedildi."
 		},
 		"anonymous": {
 			"tag": "Anonim"

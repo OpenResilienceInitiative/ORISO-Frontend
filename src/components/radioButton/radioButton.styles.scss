@@ -39,7 +39,7 @@ $radio-button-input-checked-shadow:
 
 		&:checked {
 			box-shadow: $radio-button-input-checked-shadow;
-			background-color: var(--skin-color-primary, $primary);
+			background-color: var(--m3-primary, $primary);
 		}
 
 		&:hover {

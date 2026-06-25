@@ -52,7 +52,7 @@ $link-hover-text-decoration: $link-text-decoration !default;
 	.button-as-link {
 		border: none;
 		background: none;
-		color: $primary;
+		color: var(--m3-primary, $primary);
 		text-decoration: $link-text-decoration;
 		padding-left: 0px;
 		margin-top: $grid-base-four;
@@ -69,7 +69,7 @@ $link-hover-text-decoration: $link-text-decoration !default;
 
 		&:hover {
 			cursor: pointer;
-			color: var(--skin-color-primary-hover, $hover-primary);
+			color: var(--m3-primary-hover, $hover-primary);
 		}
 	}
 
@@ -243,7 +243,7 @@ $link-hover-text-decoration: $link-text-decoration !default;
 
 	&__error {
 		display: flex;
-		color: $form-error;
+		color: var(--m3-error, $form-error);
 		width: 280px;
 		margin-bottom: $grid-base-four;
 

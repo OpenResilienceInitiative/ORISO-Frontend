@@ -1,26 +1,30 @@
 /**
  * WP-06 Activity Timeline — unit coverage for the event-descriptor registry
- * (Slice 0a).
+ * (Slice 0a). Pure-logic vitest spec.
  *
- * Pure-logic spec: imports the registry directly and asserts with chai's
- * `expect`. It does not visit the app or require a backend, so it runs against
- * a blank page. Mirrors the existing logic-spec pattern (e.g. tokens.cy.ts).
+ * Imports the pure registry modules directly (NOT the `./index` barrel, which
+ * also re-exports `icons.tsx` → SVG React components that the vitest/vite
+ * pipeline does not transform). The icon *components* are a thin presentational
+ * lookup with a built-in fallback and are exercised when `NotificationsCenter`
+ * renders; here we assert every descriptor references a declared icon id.
+ *
+ * Runs in CI via `npm run test:unit`. Supersedes the non-CI
+ * `cypress/e2e/eventDescriptors.cy.ts` logic spec.
  */
 
+import { describe, it, expect } from 'vitest';
 import {
 	EVENT_DESCRIPTORS,
 	KNOWN_EVENT_TYPES,
 	FALLBACK_DESCRIPTOR,
-	EVENT_ICONS,
 	getEventDescriptor,
 	isKnownEventType,
-	familyLabelKey,
-	renderEventStrings,
-	getEventIcon,
-	EventFamily
-} from '../../src/components/notificationsCenter/eventDescriptors';
-import enCommon from '../../src/resources/i18n/en/common.json';
-import deCommon from '../../src/resources/i18n/de/common.json';
+	familyLabelKey
+} from './registry';
+import { renderEventStrings } from './renderEventStrings';
+import { EventFamily, EventIconId } from './types';
+import enCommon from '../../../resources/i18n/en/common.json';
+import deCommon from '../../../resources/i18n/de/common.json';
 
 const EXISTING_EMITTED_TYPES = [
 	'inquiry.accepted',
@@ -40,6 +44,23 @@ const ALL_FAMILIES: EventFamily[] = [
 	'calls',
 	'system',
 	'appointments'
+];
+
+// The declared EventIconId union (mirrors types.ts). Descriptors may only point
+// at one of these; the id→SVG mapping lives in icons.tsx with a fallback.
+const KNOWN_ICON_IDS: EventIconId[] = [
+	'requestNew',
+	'requestAccepted',
+	'message',
+	'threadReply',
+	'draft',
+	'handover',
+	'callStarted',
+	'callEnded',
+	'callMissed',
+	'supervisor',
+	'rename',
+	'system'
 ];
 
 // Expected action-target kind per seeded type (origin rule).
@@ -72,36 +93,46 @@ const resolveI18nKey = (obj: any, dottedKey: string): unknown =>
 describe('WP-06 event-descriptor registry', () => {
 	it('seeds a descriptor for every existing emitted event type', () => {
 		EXISTING_EMITTED_TYPES.forEach((type) => {
-			expect(isKnownEventType(type), `known: ${type}`).to.equal(true);
-			expect(EVENT_DESCRIPTORS[type], `descriptor: ${type}`).to.exist;
+			expect(isKnownEventType(type)).toBe(true);
+			expect(EVENT_DESCRIPTORS[type]).toBeDefined();
 		});
+	});
+
+	it('seeds every designed family (Appointments deferred) — 17 types total', () => {
+		// 6 existing + request.new + draft.created + 5 handover + 3 call = 17.
+		expect(KNOWN_EVENT_TYPES.length).toBe(17);
+		[
+			'request.new',
+			'draft.created',
+			'handover.requested',
+			'handover.partial',
+			'handover.all_confirmed',
+			'handover.auto_confirmed',
+			'handover.denied',
+			'call.started',
+			'call.ended',
+			'call.missed'
+		].forEach((type) => expect(isKnownEventType(type)).toBe(true));
 	});
 
 	it('exposes every seeded type via KNOWN_EVENT_TYPES with no duplicates', () => {
 		const unique = new Set(KNOWN_EVENT_TYPES);
-		expect(unique.size).to.equal(KNOWN_EVENT_TYPES.length);
+		expect(unique.size).toBe(KNOWN_EVENT_TYPES.length);
 		EXISTING_EMITTED_TYPES.forEach((type) =>
-			expect(KNOWN_EVENT_TYPES).to.include(type)
+			expect(KNOWN_EVENT_TYPES).toContain(type)
 		);
 	});
 
 	it('gives every descriptor a valid family, category, icon and templates', () => {
 		KNOWN_EVENT_TYPES.forEach((type) => {
 			const d = EVENT_DESCRIPTORS[type];
-			expect(d.eventType, `eventType: ${type}`).to.equal(type);
-			expect(ALL_FAMILIES, `family: ${type}`).to.include(d.family);
-			expect(['system', 'message'], `category: ${type}`).to.include(
-				d.category
-			);
-			// icon id must resolve to a real SVG component
-			expect(EVENT_ICONS[d.icon], `icon component: ${type}`).to.exist;
-			expect(getEventIcon(d.icon), `getEventIcon: ${type}`).to.exist;
-			expect(d.titleTemplate, `title key: ${type}`).to.match(
-				/^notifications\.events\./
-			);
-			expect(d.textTemplate, `text key: ${type}`).to.match(
-				/^notifications\.events\./
-			);
+			expect(d.eventType).toBe(type);
+			expect(ALL_FAMILIES).toContain(d.family);
+			expect(['system', 'message']).toContain(d.category);
+			// icon id must be a declared EventIconId (resolved to an SVG by icons.tsx).
+			expect(KNOWN_ICON_IDS).toContain(d.icon);
+			expect(d.titleTemplate).toMatch(/^notifications\.events\./);
+			expect(d.textTemplate).toMatch(/^notifications\.events\./);
 		});
 	});
 
@@ -119,29 +150,26 @@ describe('WP-06 event-descriptor registry', () => {
 				'calls',
 				'system'
 			] as EventFamily[]
-		).forEach((fam) =>
-			expect(seededFamilies.has(fam), `family seeded: ${fam}`).to.equal(
-				true
-			)
-		);
+		).forEach((fam) => expect(seededFamilies.has(fam)).toBe(true));
+		// Appointments family is declared but intentionally not seeded yet.
+		expect(seededFamilies.has('appointments')).toBe(false);
 	});
 
 	it('returns the fallback descriptor for unknown / empty types', () => {
-		expect(getEventDescriptor('totally.unknown.type')).to.equal(
+		expect(getEventDescriptor('totally.unknown.type')).toBe(
 			FALLBACK_DESCRIPTOR
 		);
-		expect(getEventDescriptor(null)).to.equal(FALLBACK_DESCRIPTOR);
-		expect(getEventDescriptor(undefined)).to.equal(FALLBACK_DESCRIPTOR);
-		expect(isKnownEventType('totally.unknown.type')).to.equal(false);
+		expect(getEventDescriptor(null)).toBe(FALLBACK_DESCRIPTOR);
+		expect(getEventDescriptor(undefined)).toBe(FALLBACK_DESCRIPTOR);
+		expect(isKnownEventType('totally.unknown.type')).toBe(false);
+		expect(KNOWN_ICON_IDS).toContain(FALLBACK_DESCRIPTOR.icon);
 	});
 
 	describe('resolveActionTarget (origin rule)', () => {
 		it('resolves the expected target kind for every seeded type', () => {
 			KNOWN_EVENT_TYPES.forEach((type) => {
 				const target = EVENT_DESCRIPTORS[type].resolveActionTarget({});
-				expect(target.kind, `kind: ${type}`).to.equal(
-					EXPECTED_TARGET_KIND[type]
-				);
+				expect(target.kind).toBe(EXPECTED_TARGET_KIND[type]);
 			});
 		});
 
@@ -151,7 +179,7 @@ describe('WP-06 event-descriptor registry', () => {
 			).resolveActionTarget({
 				actionPath: '/sessions/consultant/sessionView/session/42'
 			});
-			expect(target).to.deep.equal({
+			expect(target).toEqual({
 				kind: 'conversation',
 				path: '/sessions/consultant/sessionView/session/42'
 			});
@@ -164,7 +192,7 @@ describe('WP-06 event-descriptor registry', () => {
 				sourceSessionId: 7,
 				sessionsBasePath: '/sessions/user/view'
 			});
-			expect(target).to.deep.equal({
+			expect(target).toEqual({
 				kind: 'conversation',
 				path: '/sessions/user/view/session/7'
 			});
@@ -176,8 +204,8 @@ describe('WP-06 event-descriptor registry', () => {
 			).resolveActionTarget({
 				actionPath: '/sessions/consultant/sessionPreview'
 			});
-			expect(target.kind).to.equal('request');
-			expect((target as any).path).to.equal(
+			expect(target.kind).toBe('request');
+			expect((target as any).path).toBe(
 				'/sessions/consultant/sessionPreview'
 			);
 		});
@@ -188,7 +216,7 @@ describe('WP-06 event-descriptor registry', () => {
 			).resolveActionTarget({
 				forcedScopeKey: 'scope:session:99|thread:main'
 			});
-			expect(target).to.deep.equal({
+			expect(target).toEqual({
 				kind: 'draft',
 				forcedScopeKey: 'scope:session:99|thread:main',
 				path: null
@@ -202,7 +230,7 @@ describe('WP-06 event-descriptor registry', () => {
 				callRoomId: '!room:matrix',
 				isVideo: true
 			});
-			expect(target).to.deep.equal({
+			expect(target).toEqual({
 				kind: 'join',
 				callRoomId: '!room:matrix',
 				isVideo: true
@@ -218,27 +246,21 @@ describe('WP-06 event-descriptor registry', () => {
 						? FALLBACK_DESCRIPTOR
 						: EVENT_DESCRIPTORS[type];
 				[d.titleTemplate, d.textTemplate].forEach((key) => {
-					expect(
-						typeof resolveI18nKey(enCommon, key),
-						`en ${key}`
-					).to.equal('string');
-					expect(
-						typeof resolveI18nKey(deCommon, key),
-						`de ${key}`
-					).to.equal('string');
+					expect(typeof resolveI18nKey(enCommon, key)).toBe('string');
+					expect(typeof resolveI18nKey(deCommon, key)).toBe('string');
 				});
 			});
 		});
 
-		it('has an English + German label for every family', () => {
+		it('has a non-empty English + German label for every family', () => {
 			ALL_FAMILIES.forEach((fam) => {
 				const key = familyLabelKey(fam);
-				expect(resolveI18nKey(enCommon, key), `en ${key}`).to.be.a(
-					'string'
-				).and.not.be.empty;
-				expect(resolveI18nKey(deCommon, key), `de ${key}`).to.be.a(
-					'string'
-				).and.not.be.empty;
+				const en = resolveI18nKey(enCommon, key);
+				const de = resolveI18nKey(deCommon, key);
+				expect(typeof en).toBe('string');
+				expect(en).not.toBe('');
+				expect(typeof de).toBe('string');
+				expect(de).not.toBe('');
 			});
 		});
 	});
@@ -259,8 +281,8 @@ describe('WP-06 event-descriptor registry', () => {
 				translate,
 				{ fallbackTitle: 'server title', fallbackText: 'server text' }
 			);
-			expect(title).to.equal('New message');
-			expect(text).to.equal('You received a new message.');
+			expect(title).toBe('New message');
+			expect(text).toBe('You received a new message.');
 		});
 
 		it('falls back to server-provided text for unknown types', () => {
@@ -272,10 +294,10 @@ describe('WP-06 event-descriptor registry', () => {
 					fallbackText: 'Server body'
 				}
 			);
-			// fallback descriptor title template exists ("Activity"); text template
-			// is empty, so the server text is used.
-			expect(title).to.equal('Activity');
-			expect(text).to.equal('Server body');
+			// Fallback descriptor title template exists ("Activity"); its text
+			// template is empty, so the server-provided text is used.
+			expect(title).toBe('Activity');
+			expect(text).toBe('Server body');
 		});
 	});
 });

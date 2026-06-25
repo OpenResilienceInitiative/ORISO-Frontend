@@ -81,6 +81,10 @@ import { ReactComponent as CloseCircle } from '../../resources/img/icons/close-c
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../message/messageConstants';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
+import {
+	ChatroomConversationIconType,
+	ChatroomMainInteractionIcon
+} from './ChatroomMainInteractionIcon';
 export interface SessionHeaderProps {
 	consultantAbsent?: SessionConsultantInterface;
 	hasUserInitiatedStopOrLeaveRequest?: React.MutableRefObject<boolean>;
@@ -725,6 +729,14 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		(!isAnonymousMatrixUsername(contact?.username)
 			? contact?.username
 			: undefined);
+	const sessionHeaderConversationIconType: ChatroomConversationIconType =
+		activeSession.isEmptyEnquiry
+			? 'waiting'
+			: activeSession.isEnquiry
+				? 'inquiry'
+				: isAnonymousChat
+					? 'live'
+					: 'nearby';
 
 	const handleRequestEndAnonymousChat = () => {
 		if (isFinishingChat || isChatFinished) {
@@ -935,15 +947,9 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					})}
 				>
 					{(() => {
-						/* Just the "+" on the avatar stack is the supervisor
-						   "add / manage" trigger for 1-on-1 chats (normal +
-						   anonymous). The avatar itself is NOT clickable —
-						   only the plus. Visibility conditions mirror the
-						   old Supervision On/Off pill: feature flag on for
-						   this chat type, caller is a consultant, session is
-						   1-on-1, not enquiry, not viewed by a supervisor.
-						   Mobile keeps the existing session-menu entry;
-						   this wires only the desktop plus. */
+						/* The Figma pill always carries the conversation
+						   type. When supervision management is available,
+						   the plus part remains the only clickable area. */
 						const canOpenSupervisorModal =
 							isSupervisionEnabledForCurrentChat &&
 							hasUserAuthority(
@@ -956,33 +962,22 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 							!untilL;
 						return (
 							<div className="sessionInfo__memberStack">
-								{canOpenSupervisorModal && (
-									<button
-										type="button"
-										className="sessionInfo__memberStackPlus sessionInfo__memberStackPlus--interactive"
-										aria-label={translate(
-											'sessionHeader.supervisor.modal.title',
-											'Supervisor hinzufügen'
-										)}
-										onClick={() =>
-											setIsSupervisorModalOpen(true)
-										}
-									>
-										<svg
-											width="32"
-											height="32"
-											viewBox="0 0 32 32"
-											fill="none"
-											aria-hidden="true"
-										>
-											<path
-												d="M15.167 16.8333H10.167V15.1666H15.167V10.1666H16.8337V15.1666H21.8337V16.8333H16.8337V21.8333H15.167V16.8333Z"
-												fill="#CC1E1C"
-												fillOpacity="0.6"
-											/>
-										</svg>
-									</button>
-								)}
+								<ChatroomMainInteractionIcon
+									type={sessionHeaderConversationIconType}
+									showAddIcon={!activeSession.isEnquiry}
+									addLabel={translate(
+										'sessionHeader.supervisor.modal.title',
+										'Supervisor hinzufügen'
+									)}
+									onAddClick={
+										canOpenSupervisorModal
+											? () =>
+													setIsSupervisorModalOpen(
+														true
+													)
+											: undefined
+									}
+								/>
 								<div className="sessionInfo__memberBubble">
 									{hasUserAuthority(
 										AUTHORITIES.ASKER_DEFAULT,

@@ -9,8 +9,8 @@
 @import './listItemSelection';
 
 // FONTS
-$font-family-sans-serif: Roboto, sans-serif;
-$font-family-divider: RobotoSlab, serif;
+$font-family-sans-serif: 'Inter Variable', arial, sans-serif;
+$font-family-divider: 'Inter Variable', arial, sans-serif;
 
 $font-weight-light: 300;
 $font-weight-regular: 400;
@@ -80,8 +80,8 @@ $yellow-5: #ff9f00;
 $yellow-6: #de8a00;
 
 $message-name-self: $text-low-emphasis;
-$message-name-system: var(--skin-color-default, $primary);
-$message-name-consultant: var(--skin-color-default, $primary);
+$message-name-system: var(--m3-primary, $primary);
+$message-name-consultant: var(--m3-primary, $primary);
 $message-name-user: #167a6f;
 $message-system: #8c878c;
 
@@ -271,6 +271,7 @@ $session-header-background-color: $background-light;
 $session-header-background-color-large: $background-lighter;
 $session-list-item-background-active: $background-lighter;
 $session-list-item-border-radius: 4px;
+
 /* Session list column + card rest state: match app shell #f5f5f5 */
 $sessions-list-background-color-primary: #f5f5f5;
 $sessions-list-background-color-secondary: #f5f5f5;

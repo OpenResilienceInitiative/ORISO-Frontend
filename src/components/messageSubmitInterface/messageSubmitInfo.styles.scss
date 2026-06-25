@@ -19,7 +19,7 @@
 
 		&--red {
 			svg * {
-				fill: $form-error;
+				fill: var(--m3-error, $form-error);
 			}
 		}
 	}
@@ -35,7 +35,7 @@
 		color: $light-grey;
 
 		&--red {
-			color: $form-error;
+			color: var(--m3-error, $form-error);
 		}
 	}
 

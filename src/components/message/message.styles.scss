@@ -33,7 +33,7 @@ $message-avatar-ring: #ebe2e2;
 		text-decoration: underline;
 
 		&:hover {
-			color: var(--skin-color-primary-contrast-safe, $primary);
+			color: var(--m3-primary, $primary);
 			transition: unset;
 		}
 	}
@@ -96,7 +96,7 @@ $message-avatar-ring: #ebe2e2;
 
 	&__headerTime {
 		font-size: $font-size-secondary;
-		color: $tertiary;
+		color: var(--m3-on-surface-variant, $tertiary);
 		white-space: nowrap;
 	}
 
@@ -608,8 +608,7 @@ $message-avatar-ring: #ebe2e2;
 		&::after {
 			content: '';
 			display: inline-block;
-			border-top: 1px solid
-				var(--skin-color-secondary-contrast-safe, $text-divider-color);
+			border-top: 1px solid var(--m3-secondary, $text-divider-color);
 			width: $grid-base-three;
 			vertical-align: middle;
 			margin: 0 0;
@@ -617,11 +616,11 @@ $message-avatar-ring: #ebe2e2;
 		}
 
 		&--lastRead {
-			color: var(--skin-color-primary-contrast-safe, $primary);
+			color: var(--m3-primary, $primary);
 
 			&::before,
 			&::after {
-				border-top: 1px solid var(--skin-color-primary, $primary);
+				border-top: 1px solid var(--m3-primary, $primary);
 			}
 		}
 
@@ -631,7 +630,7 @@ $message-avatar-ring: #ebe2e2;
 	}
 
 	&__message {
-		color: var(--skin-color-default, $secondary);
+		color: var(--m3-primary, $secondary);
 		line-height: $message-lineheight;
 		background-color: #fff1f1;
 		border-radius: 0 12px 12px;
@@ -840,7 +839,7 @@ $message-avatar-ring: #ebe2e2;
 			&__meta {
 				font-size: $font-size-secondary;
 				line-height: $line-height-secondary;
-				color: $tertiary;
+				color: var(--m3-on-surface-variant, $tertiary);
 			}
 		}
 
@@ -1056,7 +1055,7 @@ $message-avatar-ring: #ebe2e2;
 	}
 
 	&__threadButton:hover .messageItem__threadButtonMain {
-		color: var(--skin-color-primary, $primary);
+		color: var(--m3-primary, $primary);
 	}
 
 	&__threadButton:hover .messageItem__threadButtonHover {
@@ -1143,10 +1142,10 @@ $message-avatar-ring: #ebe2e2;
 		cursor: pointer;
 
 		svg {
-			fill: var(--skin-color-secondary, $secondary);
+			fill: var(--m3-secondary, $secondary);
 
 			path {
-				fill: var(--skin-color-secondary, $secondary);
+				fill: var(--m3-secondary, $secondary);
 			}
 
 			&.copy {
@@ -1156,14 +1155,14 @@ $message-avatar-ring: #ebe2e2;
 			}
 
 			&:hover path {
-				fill: var(--skin-color-primary, $primary);
+				fill: var(--m3-primary, $primary);
 			}
 
 			&.success {
 				position: absolute;
 				bottom: 0;
 				left: 50%;
-				fill: $form-success;
+				fill: var(--m3-success, $form-success);
 				width: 18px;
 				transform: translate(-50%, 0) scale(0);
 				opacity: 0;
@@ -1174,7 +1173,7 @@ $message-avatar-ring: #ebe2e2;
 
 				path,
 				&:hover path {
-					fill: $form-success;
+					fill: var(--m3-success, $form-success);
 				}
 			}
 		}
@@ -1195,7 +1194,7 @@ $message-avatar-ring: #ebe2e2;
 	&__time {
 		font-size: $font-size-secondary;
 		line-height: $font-size-tertiary;
-		color: $tertiary;
+		color: var(--m3-on-surface-variant, $tertiary);
 	}
 
 	&__icon {
@@ -1214,7 +1213,7 @@ $message-avatar-ring: #ebe2e2;
 		}
 
 		svg * {
-			fill: $form-success;
+			fill: var(--m3-success, $form-success);
 		}
 
 		&--grey {
@@ -1268,12 +1267,12 @@ $message-avatar-ring: #ebe2e2;
 
 		&__item {
 			&--delete {
-				color: $form-error;
+				color: var(--m3-error, $form-error);
 				text-decoration: none;
 				display: flex;
 
 				svg g {
-					fill: $form-error;
+					fill: var(--m3-error, $form-error);
 				}
 			}
 		}
@@ -1312,7 +1311,7 @@ $message-avatar-ring: #ebe2e2;
 		padding-bottom: 2px;
 
 		* {
-			fill: var(--skin-color-secondary-contrast-safe, $form-primary);
+			fill: var(--m3-secondary, $form-primary);
 		}
 	}
 

@@ -37,6 +37,7 @@ export * from './apiPutConsultantData';
 export * from './apiPutEmail';
 export * from './apiRejectVideoCall';
 export * from './apiSendEnquiry';
+export * from './apiSendMatrixAttachmentMessage';
 export * from './apiSendMessage';
 export * from './apiSessionAssign';
 export * from './apiSetAbsence';

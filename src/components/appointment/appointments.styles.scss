@@ -1,5 +1,5 @@
 .appointments {
-	background-color: $background-lighter;
+	background-color: var(--m3-surface-container-lowest, $background-lighter);
 	display: flex;
 	flex-direction: column;
 	justify-content: stretch;
@@ -25,7 +25,10 @@
 			background-color: $dark-grey;
 
 			@include breakpoint($fromLarge) {
-				background-color: $background-light;
+				background-color: var(
+					--m3-surface-container-low,
+					$background-light
+				);
 			}
 
 			& > div {

@@ -71,13 +71,11 @@ export class MatrixLiveEventBridge {
 				}
 
 				const eventType = event.getType();
-				const roomId = room.roomId;
-				const senderId = event.getSender();
 
 				// console.log("📩 Matrix event:", {
 				// type: eventType,
-				// roomId: roomId,
-				// sender: senderId,
+				// roomId: room.roomId,
+				// sender: event.getSender(),
 				// timestamp: event.getTs()
 				// });
 
@@ -91,10 +89,6 @@ export class MatrixLiveEventBridge {
 					case 'm.call.invite':
 					case 'org.oriso.call.invite':
 						this.handleCallInvite(event, room);
-						break;
-
-					case 'm.call.answer':
-						this.handleCallAnswer(event, room);
 						break;
 
 					case 'm.call.hangup':
@@ -123,23 +117,21 @@ export class MatrixLiveEventBridge {
 	 */
 	private handleRoomMessage(event: MatrixEvent, room: Room): void {
 		const sender = event.getSender();
-		const content = event.getContent();
-		const msgtype = content.msgtype;
-		const body = content.body;
+		const { msgtype } = event.getContent();
 
 		const myUserId = this.client?.getUserId();
 		const isOwnMessage = sender === myUserId;
 
 		// console.log("📬 New message from", sender, "in room", room.roomId);
-		// console.log("   Content:", body?.substring(0, 100));
 
-		// Trigger 'directMessage' event (simulating LiveService)
+		// Trigger only metadata needed to refresh/touch lists. Matrix message
+		// bodies stay inside the Matrix session renderer and are never bridged
+		// into legacy LiveService-style events.
 		this.triggerEvent('directMessage', {
 			roomId: room.roomId,
 			sender: sender,
 			isOwnMessage: isOwnMessage,
 			msgtype: msgtype,
-			body: body,
 			eventId: event.getId(),
 			timestamp: event.getTs()
 		});
@@ -251,29 +243,9 @@ export class MatrixLiveEventBridge {
 	}
 
 	/**
-	 * Handle m.call.answer events.
-	 */
-	private handleCallAnswer(event: MatrixEvent, room: Room): void {
-		const sender = event.getSender();
-		const content = event.getContent();
-		const callId = content.call_id;
-
-		// console.log("📞 Call answered by", sender, "in room", room.roomId);
-
-		this.triggerEvent('callAnswered', {
-			roomId: room.roomId,
-			sender: sender,
-			callId: callId
-		});
-	}
-
-	/**
 	 * Handle m.call.hangup events.
 	 */
 	private handleCallHangup(event: MatrixEvent, room: Room): void {
-		const sender = event.getSender();
-		const content = event.getContent();
-		const callId = content.call_id;
 		const eventTimestamp = event.getTs();
 		const now = Date.now();
 		const ageSeconds = Math.floor((now - eventTimestamp) / 1000);
@@ -281,8 +253,8 @@ export class MatrixLiveEventBridge {
 		// console.log("═══════════════════════════════════════════════");
 		// console.log("📴 CALL HANGUP EVENT RECEIVED");
 		// console.log("═══════════════════════════════════════════════");
-		// console.log("📞 Call ID:", callId);
-		// console.log("👤 Sender:", sender);
+		// console.log("📞 Call ID:", event.getContent().call_id);
+		// console.log("👤 Sender:", event.getSender());
 		// console.log("🏠 Room:", room.roomId);
 		// console.log("⏰ Event timestamp:", new Date(eventTimestamp).toISOString());
 		// console.log("⏱️  Age:", ageSeconds, "seconds old");

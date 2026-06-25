@@ -21,6 +21,18 @@ const getRuntimeConfig = (): RuntimeConfig => {
 	return ((window as any).__ORISO_RUNTIME_CONFIG__ as RuntimeConfig) || {};
 };
 
+const getCypressConfig = (): RuntimeConfig => {
+	if (typeof window === 'undefined') {
+		return {};
+	}
+
+	const cypressEnv = (window as any).Cypress?.env;
+
+	return typeof cypressEnv === 'function'
+		? (cypressEnv() as RuntimeConfig) || {}
+		: {};
+};
+
 /**
  * When the container runtime config is incomplete (e.g. production config.js
  * only has REACT_APP_API_URL), derive sibling service URLs from the app host.
@@ -69,9 +81,15 @@ const pickValue = (...keys: string[]): string | undefined => {
 	if (runtimeValue) {
 		return runtimeValue;
 	}
-	const buildValue = firstNonEmpty(process.env as RuntimeConfig, keys);
+	const processEnv =
+		typeof process !== 'undefined' ? (process.env as RuntimeConfig) : {};
+	const buildValue = firstNonEmpty(processEnv, keys);
 	if (buildValue) {
 		return buildValue;
+	}
+	const cypressValue = firstNonEmpty(getCypressConfig(), keys);
+	if (cypressValue) {
+		return cypressValue;
 	}
 	return firstNonEmpty(inferFromAppHostname(), keys);
 };
@@ -125,6 +143,12 @@ export const getMatrixHomeserverUrl = (): string =>
 			'REACT_APP_MATRIX_URL'
 		)
 	);
+
+/**
+ * ORISO API base URL (https).
+ */
+export const getRuntimeApiBaseUrl = (): string =>
+	ensureHttps(pickValue('REACT_APP_API_URL', 'VITE_API_URL'));
 
 /**
  * Element Call deployment origin (https), with any trailing slashes removed.
