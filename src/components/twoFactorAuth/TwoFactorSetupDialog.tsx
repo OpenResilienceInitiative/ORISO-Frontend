@@ -110,6 +110,7 @@ interface TwoFactorSetupDialogProps {
 	secret?: string;
 	onClose: () => void;
 	onDisable: () => Promise<void> | void;
+	onSetupAborted?: () => void;
 	onSetupComplete: () => Promise<void> | void;
 }
 
@@ -180,6 +181,7 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 	secret,
 	onClose,
 	onDisable,
+	onSetupAborted,
 	onSetupComplete
 }) => {
 	const { t: translate } = useTranslation();
@@ -308,12 +310,22 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 
 	const finishSetup = useCallback(
 		async (nextStep: TwoFactorSetupStep) => {
-			await apiPatchTwoFactorAuthEncourage(false);
-			await onSetupComplete();
 			setStep(nextStep);
 			setOtp('');
 			setErrorKey('');
 			setHelperKey('');
+
+			try {
+				await apiPatchTwoFactorAuthEncourage(false);
+			} catch {
+				// 2FA is already active; encourage is best-effort.
+			}
+
+			try {
+				await onSetupComplete();
+			} catch {
+				// User data refresh failed; success UI still applies.
+			}
 		},
 		[onSetupComplete]
 	);
@@ -360,6 +372,7 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 			await apiPutTwoFactorAuthApp({ secret, otp });
 			await finishSetup('app-success');
 		} catch (error) {
+			onSetupAborted?.();
 			setFetchError(
 				error as Error,
 				'twoFactorAuth.setupDialog.error.appSetup'
@@ -367,7 +380,7 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 		} finally {
 			setIsRequestInProgress(false);
 		}
-	}, [finishSetup, otp, secret, setFetchError]);
+	}, [finishSetup, onSetupAborted, otp, secret, setFetchError]);
 
 	const activateEmail = useCallback(async () => {
 		if (!isOtpValid(otp)) {
@@ -382,6 +395,7 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 			await apiPostTwoFactorAuthEmailWithCode(otp);
 			await finishSetup('email-success');
 		} catch (error) {
+			onSetupAborted?.();
 			setFetchError(
 				error as Error,
 				'twoFactorAuth.setupDialog.error.emailSetup'
@@ -389,7 +403,7 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 		} finally {
 			setIsRequestInProgress(false);
 		}
-	}, [finishSetup, otp, setFetchError]);
+	}, [finishSetup, onSetupAborted, otp, setFetchError]);
 
 	const handlePrimaryAction = useCallback(() => {
 		const nextStep = getNextSetupStep(

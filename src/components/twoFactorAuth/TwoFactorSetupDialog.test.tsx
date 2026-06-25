@@ -220,6 +220,7 @@ const renderDialog = (
 ) => {
 	const onClose = vi.fn();
 	const onDisable = vi.fn();
+	const onSetupAborted = vi.fn();
 	const onSetupComplete = vi.fn();
 
 	const DialogHarness = () => {
@@ -255,6 +256,7 @@ const renderDialog = (
 					email="maxmuster@email.de"
 					onClose={onClose}
 					onDisable={onDisable}
+					onSetupAborted={onSetupAborted}
 					onSetupComplete={onSetupComplete}
 					open
 					qrCode="iVBORw0KGgo="
@@ -272,7 +274,7 @@ const renderDialog = (
 		</>
 	);
 
-	return { onClose, onDisable, onSetupComplete };
+	return { onClose, onDisable, onSetupAborted, onSetupComplete };
 };
 
 describe('TwoFactorSetupDialog', () => {
@@ -470,6 +472,60 @@ describe('TwoFactorSetupDialog', () => {
 		expect(
 			await screen.findByText(
 				'twoFactorAuth.setupDialog.email.success.title'
+			)
+		).toBeTruthy();
+	});
+
+	it('shows success when post-activation encourage fails', async () => {
+		apiPutTwoFactorAuthAppMock.mockResolvedValue(undefined);
+		apiPatchTwoFactorAuthEncourageMock.mockRejectedValue(
+			new Error('ENCOURAGE_FAILED')
+		);
+		const { onSetupComplete } = renderDialog();
+
+		await screen.findByText('twoFactorAuth.setupDialog.decision.app');
+		clickButton('twoFactorAuth.setupDialog.decision.app');
+		clickButton('twoFactorAuth.setupDialog.action.next');
+		clickButton('twoFactorAuth.setupDialog.action.next');
+		fireEvent.change(
+			await screen.findByLabelText(
+				'twoFactorAuth.setupDialog.app.verify.input'
+			),
+			{ target: { value: '123456' } }
+		);
+		clickButton('twoFactorAuth.setupDialog.action.confirm');
+
+		await waitFor(() => expect(onSetupComplete).toHaveBeenCalledTimes(1));
+		expect(
+			await screen.findByText(
+				'twoFactorAuth.setupDialog.app.success.title'
+			)
+		).toBeTruthy();
+		expect(
+			screen.queryByText('twoFactorAuth.setupDialog.error.appSetup')
+		).toBeNull();
+	});
+
+	it('notifies the parent when app activation fails', async () => {
+		apiPutTwoFactorAuthAppMock.mockRejectedValue(new Error('BAD_REQUEST'));
+		const { onSetupAborted } = renderDialog();
+
+		await screen.findByText('twoFactorAuth.setupDialog.decision.app');
+		clickButton('twoFactorAuth.setupDialog.decision.app');
+		clickButton('twoFactorAuth.setupDialog.action.next');
+		clickButton('twoFactorAuth.setupDialog.action.next');
+		fireEvent.change(
+			await screen.findByLabelText(
+				'twoFactorAuth.setupDialog.app.verify.input'
+			),
+			{ target: { value: '123456' } }
+		);
+		clickButton('twoFactorAuth.setupDialog.action.confirm');
+
+		await waitFor(() => expect(onSetupAborted).toHaveBeenCalledTimes(1));
+		expect(
+			await screen.findByText(
+				'twoFactorAuth.setupDialog.error.invalidCode'
 			)
 		).toBeTruthy();
 	});

@@ -75,6 +75,10 @@ export const TwoFactorAuth = () => {
 		setIsSwitchChecked(true);
 	}, [reloadUserData]);
 
+	const abortSetup = useCallback(() => {
+		setIsSwitchChecked(userData.twoFactorAuth.isActive);
+	}, [userData.twoFactorAuth.isActive]);
+
 	const disableTwoFactorAuth = useCallback(async () => {
 		await apiDeleteTwoFactorAuth();
 		await reloadUserData();
@@ -179,6 +183,7 @@ export const TwoFactorAuth = () => {
 				email={userData.email}
 				onClose={closeDialog}
 				onDisable={disableTwoFactorAuth}
+				onSetupAborted={abortSetup}
 				onSetupComplete={completeSetup}
 				open={isDialogOpen}
 				qrCode={userData.twoFactorAuth.qrCode}
