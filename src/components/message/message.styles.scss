@@ -243,7 +243,7 @@ $message-avatar-ring: #ebe2e2;
 		min-width: 200px;
 		max-width: 280px;
 		padding: 8px 0;
-		border: 2px solid #cc1e1c;
+		border: 2px solid var(--m3-primary, #cc1e1c);
 		border-radius: 8px;
 		background: #fff;
 		box-shadow:
@@ -266,7 +266,7 @@ $message-avatar-ring: #ebe2e2;
 		padding: 8px 12px;
 		border: 0;
 		background: #fff;
-		color: #4b515a;
+		color: var(--m3-secondary, #4b515a);
 		cursor: pointer;
 		text-align: left;
 
@@ -288,7 +288,7 @@ $message-avatar-ring: #ebe2e2;
 		}
 
 		path {
-			fill: #4b515a;
+			fill: var(--m3-secondary, #4b515a);
 		}
 	}
 
@@ -296,7 +296,7 @@ $message-avatar-ring: #ebe2e2;
 		font-size: 16px;
 		line-height: 24px;
 		letter-spacing: 0.0313em;
-		color: #4b515a;
+		color: var(--m3-secondary, #4b515a);
 	}
 
 	&__visibilityChip {
@@ -318,8 +318,8 @@ $message-avatar-ring: #ebe2e2;
 	}
 
 	&__visibilityChip--active {
-		background: #cc1e1c;
-		border-color: #cc1e1c;
+		background: var(--m3-primary, #cc1e1c);
+		border-color: var(--m3-primary, #cc1e1c);
 	}
 
 	&__visibilityChipIcon {
@@ -338,12 +338,12 @@ $message-avatar-ring: #ebe2e2;
 		}
 
 		path {
-			fill: #4b515a;
+			fill: var(--m3-secondary, #4b515a);
 		}
 	}
 
 	&__visibilityChipCount {
-		color: #4b515a;
+		color: var(--m3-secondary, #4b515a);
 		font-size: 16px;
 		font-weight: 500;
 		line-height: 1;
@@ -370,7 +370,7 @@ $message-avatar-ring: #ebe2e2;
 		min-width: 260px;
 		max-width: 260px;
 		padding: 8px;
-		border: 2px solid #cc1e1c;
+		border: 2px solid var(--m3-primary, #cc1e1c);
 		border-radius: 12px;
 		background: #fff;
 		box-shadow:
@@ -422,14 +422,14 @@ $message-avatar-ring: #ebe2e2;
 		}
 
 		path {
-			fill: #4c555f;
+			fill: var(--m3-secondary, #4c555f);
 		}
 	}
 
 	&__visibilityMenuSectionTitle {
 		font-size: 12px;
 		line-height: 14px;
-		color: #4c555f;
+		color: var(--m3-secondary, #4c555f);
 		font-weight: 400;
 	}
 
@@ -441,7 +441,7 @@ $message-avatar-ring: #ebe2e2;
 		width: 14px;
 		height: 14px;
 		border-radius: 999px;
-		border: 2px solid #5f6873;
+		border: 2px solid var(--m3-secondary-container, #5f6873);
 		background: #fff;
 		flex: 0 0 14px;
 	}
@@ -492,7 +492,7 @@ $message-avatar-ring: #ebe2e2;
 	&__visibilityMenuSubheading {
 		font-size: 12px;
 		line-height: 1.4;
-		color: #4b515a;
+		color: var(--m3-secondary, #4b515a);
 		text-align: right;
 		padding: 8px 12px 2px;
 	}
@@ -530,7 +530,7 @@ $message-avatar-ring: #ebe2e2;
 		font-size: 12px;
 		font-weight: 700;
 		line-height: 14px;
-		color: #4c555f;
+		color: var(--m3-secondary, #4c555f);
 	}
 
 	&__visibilityMenuPill--active {
@@ -548,7 +548,7 @@ $message-avatar-ring: #ebe2e2;
 		font-size: 10px;
 		line-height: 14px;
 		font-weight: 400;
-		color: #4c555f;
+		color: var(--m3-secondary, #4c555f);
 		padding: 2px 2px 2px 18px;
 	}
 
@@ -692,7 +692,7 @@ $message-avatar-ring: #ebe2e2;
 		blockquote {
 			margin: 8px 0;
 			padding: 4px 0 4px 10px;
-			border-left: 3px solid #cc1e1c; // incoming + default quote color
+			border-left: 3px solid var(--m3-primary, #cc1e1c); // incoming + default quote color
 			background: rgba(204, 30, 28, 0.06);
 			border-radius: 0 6px 6px 0;
 		}
@@ -874,7 +874,7 @@ $message-avatar-ring: #ebe2e2;
 	&__visibleOnlyLabel {
 		font-size: 10px;
 		line-height: 12px;
-		color: #646d78;
+		color: var(--m3-secondary-container, #646d78);
 	}
 
 	&__visibleOnlyChip {
@@ -889,7 +889,7 @@ $message-avatar-ring: #ebe2e2;
 		font-size: 12px;
 		font-weight: 700;
 		line-height: 14px;
-		color: #4b515a;
+		color: var(--m3-secondary, #4b515a);
 		white-space: nowrap;
 	}
 
@@ -935,7 +935,7 @@ $message-avatar-ring: #ebe2e2;
 		gap: 2px;
 		font-size: 12px;
 		line-height: 12px;
-		color: #646d78;
+		color: var(--m3-secondary-container, #646d78);
 	}
 
 	&__senderInfoMetaIcon {
@@ -944,7 +944,7 @@ $message-avatar-ring: #ebe2e2;
 		display: inline-block;
 
 		path {
-			fill: #646d78;
+			fill: var(--m3-secondary-container, #646d78);
 		}
 	}
 
