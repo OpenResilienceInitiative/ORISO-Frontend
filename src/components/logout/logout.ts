@@ -11,7 +11,10 @@ import {
 import { appConfig } from '../../utils/appConfig';
 import { calcomLogout } from './calcomLogout';
 import { callEventListeners } from '../../utils/eventHandler';
-import { getMatrixClientService } from '../../services/matrixClientRegistry';
+import {
+	getMatrixClientService,
+	setMatrixClientServiceRef
+} from '../../services/matrixClientRegistry';
 
 const LEGACY_MATRIX_LOCAL_STORAGE_KEYS = [
 	'matrix_user_id',
@@ -60,6 +63,10 @@ const invalidateCookies = (
 	void getMatrixClientService()
 		?.logout()
 		.catch(() => {});
+	// Reset the module-level Matrix client registry so a stale, still
+	// authenticated client cannot survive sign-out (the React context state is
+	// reset separately in the logout flow / via the post-logout reload).
+	setMatrixClientServiceRef(null);
 	LEGACY_MATRIX_LOCAL_STORAGE_KEYS.forEach((key) => {
 		localStorage.removeItem(key);
 	});

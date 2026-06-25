@@ -170,8 +170,12 @@ export const AuthenticatedApp = ({
 
 	const handleLogout = useCallback(() => {
 		onLogout();
+		// Clear the React context's Matrix client reference on sign-out so a
+		// stale authenticated client cannot survive into a subsequent session
+		// (logout() also resets the module-level registry).
+		setMatrixClientService(null);
 		logout();
-	}, [onLogout]);
+	}, [onLogout, setMatrixClientService]);
 
 	if (appReady) {
 		return (

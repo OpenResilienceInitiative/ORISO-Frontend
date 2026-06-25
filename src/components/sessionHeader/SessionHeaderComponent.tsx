@@ -456,8 +456,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 				matrixRoomId,
 				null,
 				true,
-				'system',
-				null
+				'system'
 			);
 		} catch (_error) {
 			// Non-blocking: supervisor add succeeded; timeline system note can fail silently.

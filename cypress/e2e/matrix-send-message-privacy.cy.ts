@@ -395,17 +395,22 @@ describe('Matrix send message privacy', () => {
 				file,
 				Cypress.sinon.match.object
 			);
+			// FE-H01: plaintext previews must be dropped at the call boundary,
+			// not merely blanked downstream — so threadParentPreview is no
+			// longer forwarded into the notification payload at all.
 			expect(postMessageEventNotification).to.have.been.calledOnceWith({
 				roomId: '!secure-room:oriso.org',
 				matrixRoom: true,
 				threadRootId: '$thread-root',
 				supervisorMessage: true,
-				senderDisplayName: 'Counsellor',
-				threadParentPreview: 'sensitive parent preview'
+				senderDisplayName: 'Counsellor'
 			});
 			const notificationInput =
 				postMessageEventNotification.firstCall.args[0];
 			expect(notificationInput).not.to.have.property('messagePreview');
+			expect(notificationInput).not.to.have.property(
+				'threadParentPreview'
+			);
 			const notificationBody =
 				buildMessageEventNotificationBody(notificationInput);
 			expect(notificationBody).to.deep.equal({

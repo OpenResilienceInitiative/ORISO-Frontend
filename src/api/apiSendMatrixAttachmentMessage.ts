@@ -10,7 +10,6 @@ export interface SendMatrixAttachmentMessageOptions
 	threadRootId?: string | null;
 	supervisorMessage?: boolean;
 	senderDisplayName?: string | null;
-	threadParentPreview?: string | null;
 }
 
 type PostMessageEventNotification = (
@@ -32,13 +31,15 @@ export const apiSendMatrixAttachmentMessage = async (
 		}
 	);
 
+	// SECURITY (FE-H01): never forward plaintext message content
+	// (threadParentPreview) across the Matrix privacy boundary. Only
+	// non-content metadata is sent.
 	postMessageEventNotification({
 		roomId: matrixRoomId,
 		matrixRoom: true,
 		threadRootId: options.threadRootId || null,
 		supervisorMessage: !!options.supervisorMessage,
-		senderDisplayName: options.senderDisplayName || null,
-		threadParentPreview: options.threadParentPreview || null
+		senderDisplayName: options.senderDisplayName || null
 	}).catch(() => undefined);
 
 	return response;

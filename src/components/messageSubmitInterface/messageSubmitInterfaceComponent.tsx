@@ -1868,8 +1868,7 @@ export const MessageSubmitInterfaceComponent = ({
 									userData?.displayName ||
 									userData?.userName ||
 									`${userData?.firstName || ''} ${userData?.lastName || ''}`.trim() ||
-									'User',
-								threadParentPreview: threadParentPreview || null
+									'User'
 							}
 						);
 
@@ -1989,8 +1988,7 @@ export const MessageSubmitInterfaceComponent = ({
 					userData?.displayName ||
 						userData?.userName ||
 						`${userData?.firstName || ''} ${userData?.lastName || ''}`.trim() ||
-						'User',
-					threadParentPreview || null
+						'User'
 				)
 					.then(() => encryptRoom(setE2EEState))
 					.then(() => {
