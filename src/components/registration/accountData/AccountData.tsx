@@ -125,15 +125,15 @@ export const AccountData: FC<{
 						setIsUsernameAvailable(true);
 						return false;
 					} else {
-						return await apiGetIsUsernameAvailable(val)
-							.then(() => {
-								setIsUsernameAvailable(false);
-								return false;
-							})
-							.catch(() => {
-								setIsUsernameAvailable(true);
-								return true;
-							});
+						try {
+							const usernameAvailable =
+								await apiGetIsUsernameAvailable(val);
+							setIsUsernameAvailable(usernameAvailable);
+							return usernameAvailable;
+						} catch {
+							setIsUsernameAvailable(false);
+							return false;
+						}
 					}
 				}}
 			/>

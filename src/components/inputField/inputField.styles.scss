@@ -78,22 +78,22 @@
 		}
 
 		&--invalid {
-			border: 2px solid $form-error !important;
+			border: 2px solid var(--m3-error, $form-error) !important;
 		}
 
 		&--valid {
-			border: 2px solid $form-success !important;
+			border: 2px solid var(--m3-success, $form-success) !important;
 		}
 
 		/* TODO: check if --error state still needed (class added in warningLabels.ts) */
 		&--error {
-			border-color: $form-error !important;
-			color: $form-error;
+			border-color: var(--m3-error, $form-error) !important;
+			color: var(--m3-error, $form-error);
 			border-width: 2px;
 
 			&.inputField__input--valid {
-				border-color: $form-error !important;
-				color: $form-error !important;
+				border-color: var(--m3-error, $form-error) !important;
+				color: var(--m3-error, $form-error) !important;
 
 				& + label {
 					color: $form-primary;

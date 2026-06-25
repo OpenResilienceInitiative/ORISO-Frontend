@@ -48,7 +48,7 @@ $inputHeight: 50px;
 
 		&__option {
 			background-color: $white;
-			color: var(--skin-color-default, $secondary);
+			color: var(--m3-primary, $secondary);
 			min-height: 48px;
 
 			// The `!important` annotation is relevant to not be overridden by inline styles.
@@ -66,47 +66,32 @@ $inputHeight: 50px;
 		&__multi-value {
 			// The `!important` annotation is relevant to not be overridden by inline styles.
 			border-radius: $tab-border-radius !important;
-			border-color: var(
-				--skin-color-primary-contrast-safe,
-				$primary
-			) !important;
+			border-color: var(--m3-primary, $primary) !important;
 			background-color: $tab-background-color-selected !important;
 
 			&:hover {
 				// The `!important` annotation is relevant to not be overridden by inline styles.
-				border-color: var(
-					--skin-color-primary-contrast-safe,
-					$hover-primary
-				) !important;
+				border-color: var(--m3-primary, $hover-primary) !important;
 				background-color: $tab-background-color-selected-hover !important;
 
 				.select__input__multi-value__label,
 				.select__input__multi-value__remove {
-					color: var(
-						--skin-color-primary-contrast-safe,
-						$hover-primary
-					) !important;
+					color: var(--m3-primary, $hover-primary) !important;
 				}
 			}
 
 			&__label {
-				color: var(
-					--skin-color-primary-contrast-safe,
-					$primary
-				) !important;
+				color: var(--m3-primary, $primary) !important;
 			}
 
 			&__remove {
-				color: var(
-					--skin-color-primary-contrast-safe,
-					$primary
-				) !important;
+				color: var(--m3-primary, $primary) !important;
 			}
 		}
 
 		&--error {
 			.select__input__control {
-				border: 2px solid $form-error !important;
+				border: 2px solid var(--m3-error, $form-error) !important;
 
 				// The `!important` annotation is relevant to also cover the `:active` and `:focus`
 				// state, which would otherwise be overridden by inline styles.
@@ -120,7 +105,7 @@ $inputHeight: 50px;
 		&:hover,
 		:focus {
 			background-color: $select-focus-background-color;
-			color: var(--skin-color-default, $selection-focus-color);
+			color: var(--m3-primary, $selection-focus-color);
 		}
 
 		&__icon {
@@ -151,7 +136,7 @@ $inputHeight: 50px;
 		margin: $grid-base $grid-base-three 0;
 
 		p {
-			color: $form-error;
+			color: var(--m3-error, $form-error);
 		}
 	}
 }

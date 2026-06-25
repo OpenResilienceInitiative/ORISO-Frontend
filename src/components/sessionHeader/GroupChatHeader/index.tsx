@@ -33,6 +33,7 @@ import { matrixClientService } from '../../../services/matrixClientService';
 import { RoomMember } from 'matrix-js-sdk';
 import { UserAvatar } from '../../message/UserAvatar';
 import { getTenantSettings } from '../../../utils/tenantSettingsHelper';
+import { ChatroomMainInteractionIcon } from '../ChatroomMainInteractionIcon';
 
 interface GroupChatHeaderProps {
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
@@ -71,13 +72,7 @@ export const GroupChatHeader = ({
 		}
 
 		// Try to get Matrix client (from global window or imported service)
-		const getClient = () => {
-			const globalService = (window as any).matrixClientService;
-			if (globalService && globalService.getClient()) {
-				return globalService.getClient();
-			}
-			return matrixClientService.getClient();
-		};
+		const getClient = () => matrixClientService.getClient();
 
 		// Wait for Matrix client to be available (retry up to 20 times = 10 seconds)
 		let retryCount = 0;
@@ -238,9 +233,16 @@ export const GroupChatHeader = ({
 				});
 				// console.log('✅ Media permissions granted!', stream);
 
-				// Store stream globally
-				(window as any).__preRequestedMediaStream = stream;
-				(window as any).__preRequestedMediaStreamTime = Date.now();
+				// Group calls render Element Call in an iframe which acquires its
+				// own media (on its own origin). Release this warm-up stream so
+				// the camera/mic don't stay on in the parent page.
+				try {
+					stream
+						.getTracks()
+						.forEach((track: MediaStreamTrack) => track.stop());
+				} catch {
+					// ignore
+				}
 			} catch (mediaError: any) {
 				// console.error('❌ Media permission denied:', mediaError);
 
@@ -372,8 +374,10 @@ export const GroupChatHeader = ({
 				<div className="sessionInfo__username sessionInfo__username--deactivate sessionInfo__username--groupChat">
 					<div className="sessionInfo__titleRow">
 						<div className="sessionInfo__memberStack">
-							{/* No supervisor "+" on group chats — supervision
-							    is only offered for 1-on-1 chats. */}
+							<ChatroomMainInteractionIcon
+								type="internal"
+								showAddIcon={isActive && !isJoinGroupChatView}
+							/>
 							{stackedMembers.map((member, index) => {
 								const userId = member.userId || '';
 								const parsedUsername =

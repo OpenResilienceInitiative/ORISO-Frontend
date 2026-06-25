@@ -35,6 +35,7 @@ import { apiGetAskerSessionList } from '../../api';
 import { useTranslation } from 'react-i18next';
 import { MessageSubmitInterfaceSkeleton } from '../messageSubmitInterface/messageSubmitInterfaceSkeleton';
 import { RocketChatUsersOfRoomProvider } from '../../globalState/provider/RocketChatUsersOfRoomProvider';
+import { isMatrixRoomIdHeuristic } from '../../utils/matrixRoomUtils';
 
 const MessageSubmitInterfaceComponent = lazy(() =>
 	import('../messageSubmitInterface/messageSubmitInterfaceComponent').then(
@@ -107,8 +108,11 @@ export const WriteEnquiry: React.FC = () => {
 	const handleOverlayAction = (buttonFunction: string): void => {
 		if (buttonFunction === OVERLAY_FUNCTIONS.REDIRECT) {
 			activateListView();
+			const pathname = isMatrixRoomIdHeuristic(redirectGroupId)
+				? `${endpoints.userSessionsListView}/session/${redirectSessionId}`
+				: `${endpoints.userSessionsListView}/${redirectGroupId}/${redirectSessionId}`;
 			history.push({
-				pathname: `${endpoints.userSessionsListView}/${redirectGroupId}/${redirectSessionId}`
+				pathname
 			});
 		}
 	};

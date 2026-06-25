@@ -40,6 +40,84 @@ export const stopGroupChatSuccessOverlayItem: OverlayItem = {
 	]
 };
 
+export const finishAnonymousChatSecurityOverlayItem: OverlayItem = {
+	svg: XIllustration,
+	illustrationBackground: 'error',
+	headline: 'sessionHeader.anonymous.endChat.confirm.headline',
+	copy: 'sessionHeader.anonymous.endChat.confirm.copy',
+	buttonSet: [
+		{
+			label: 'sessionHeader.anonymous.endChat.confirm.buttonConfirm',
+			function: OVERLAY_FUNCTIONS.FINISH_ANONYMOUS_CHAT,
+			type: BUTTON_TYPES.PRIMARY
+		},
+		{
+			label: 'sessionHeader.anonymous.endChat.confirm.buttonCancel',
+			function: OVERLAY_FUNCTIONS.CLOSE,
+			type: BUTTON_TYPES.SECONDARY
+		}
+	]
+};
+
+export const finishAnonymousChatSuccessOverlayItem: OverlayItem = {
+	svg: CheckIllustration,
+	headline: 'sessionHeader.anonymous.endChat.success.headline',
+	copy: 'sessionHeader.anonymous.endChat.success.copy',
+	buttonSet: [
+		{
+			label: 'sessionHeader.anonymous.endChat.success.buttonClose',
+			function: OVERLAY_FUNCTIONS.REDIRECT,
+			type: BUTTON_TYPES.PRIMARY
+		}
+	]
+};
+
+export const finishAnonymousChatErrorOverlayItem: OverlayItem = {
+	svg: XIllustration,
+	illustrationBackground: 'error',
+	headline: 'sessionHeader.anonymous.endChat.error.headline',
+	copy: 'sessionHeader.anonymous.endChat.error.copy',
+	buttonSet: [
+		{
+			label: 'sessionHeader.anonymous.endChat.error.buttonClose',
+			function: OVERLAY_FUNCTIONS.CLOSE,
+			type: BUTTON_TYPES.PRIMARY
+		}
+	]
+};
+
+export const finishAnonymousChatConsultantSecurityOverlayItem: OverlayItem = {
+	svg: XIllustration,
+	illustrationBackground: 'error',
+	headline: 'sessionHeader.anonymous.endChat.consultant.confirm.headline',
+	copy: 'sessionHeader.anonymous.endChat.consultant.confirm.copy',
+	buttonSet: [
+		{
+			label: 'sessionHeader.anonymous.endChat.consultant.confirm.buttonConfirm',
+			function: OVERLAY_FUNCTIONS.FINISH_ANONYMOUS_CHAT,
+			type: BUTTON_TYPES.PRIMARY
+		},
+		{
+			label: 'sessionHeader.anonymous.endChat.confirm.buttonCancel',
+			function: OVERLAY_FUNCTIONS.CLOSE,
+			type: BUTTON_TYPES.SECONDARY
+		}
+	]
+};
+
+export const finishAnonymousChatConsultantSuccessOverlayItem: OverlayItem = {
+	svg: CheckIllustration,
+	headline: 'sessionHeader.anonymous.endChat.consultant.success.headline',
+	copy: 'sessionHeader.anonymous.endChat.consultant.success.copy',
+	buttonSet: [
+		{
+			label: 'sessionHeader.anonymous.endChat.consultant.success.buttonClose',
+			function: OVERLAY_FUNCTIONS.REDIRECT,
+			type: BUTTON_TYPES.PRIMARY
+		}
+	]
+};
+
 export const groupChatErrorOverlayItem: OverlayItem = {
 	svg: XIllustration,
 	illustrationBackground: 'error',

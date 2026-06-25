@@ -51,6 +51,6 @@
 	}
 
 	&__warning {
-		color: $form-error;
+		color: var(--m3-error, $form-error);
 	}
 }

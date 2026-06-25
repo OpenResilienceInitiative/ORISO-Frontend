@@ -43,7 +43,7 @@
 .pseudonymActionBar__btnChange {
 	flex: 0 0 auto;
 	border-radius: 20px;
-	background: #646d78;
+	background: var(--m3-secondary-container, #646d78);
 	color: #e7effc;
 	padding: 0 28px 0 64px;
 	position: relative;

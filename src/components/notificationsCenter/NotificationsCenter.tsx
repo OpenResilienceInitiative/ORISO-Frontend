@@ -1,15 +1,20 @@
 import * as React from 'react';
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import { ReactComponent as NotificationBellIcon } from '../../resources/img/icons/notification_bell.svg';
-import { apiUrl } from '../../resources/scripts/endpoints';
-import { FETCH_METHODS, fetchData } from '../../api/fetchData';
 import {
-	buildThreadPrefix,
-	parseMessagePrefixes
-} from '../message/messageConstants';
-import { UserAvatar } from '../message/UserAvatar';
-import { apiPostMessageEventNotification } from '../../api/apiPostMessageEventNotification';
+	getEventDescriptor,
+	getEventIcon,
+	renderEventStrings,
+	familyLabelKey,
+	isKnownEventType
+} from './eventDescriptors';
+import { useActiveListItem } from '../../hooks/useActiveListItem';
+import { pickActiveItemKey } from '../../utils/listItemSelection';
+import {
+	filterTimelineItems,
+	getFamiliesInFeed,
+	TimelineFamilyFilter
+} from './timelineFilter';
 import {
 	NotificationsContext,
 	UserDataContext,
@@ -45,14 +50,27 @@ const getNotificationCategory = (item: any): 'system' | 'message' => {
 	return 'system';
 };
 
-const getChatKey = (item: any): string => {
-	if (item?.sourceSessionId) {
-		return `session-${String(item.sourceSessionId)}`;
-	}
-	if (item?.actionPath) {
-		return `path-${String(item.actionPath).split('?')[0]}`;
-	}
-	return `misc-${item?.id || 'unknown'}`;
+// WP-06 Activity Timeline (Slice 0a): category is registry-driven for known
+// event types; unknown / local-only types keep the legacy heuristic so nothing
+// regresses while the backend is incremental.
+const resolveItemCategory = (item: any): 'system' | 'message' =>
+	isKnownEventType(item?.eventType)
+		? getEventDescriptor(item.eventType).category
+		: getNotificationCategory(item);
+
+// WP-06: render an item's visible strings from its event descriptor's i18n
+// templates (ADR-AT-01 — the server record is text-free), falling back to the
+// server-provided title/text until the strict text-free migration (Slice 2).
+const describeItem = (
+	item: any,
+	translate: (key: string, options?: Record<string, unknown>) => string
+) => {
+	const descriptor = getEventDescriptor(item?.eventType);
+	const { title, text } = renderEventStrings(descriptor, translate, {
+		fallbackTitle: item?.title,
+		fallbackText: item?.text
+	});
+	return { descriptor, title, text };
 };
 
 const resolveSessionId = (item: any): string | null => {
@@ -65,20 +83,6 @@ const resolveSessionId = (item: any): string | null => {
 	}
 	const match = String(path).match(/\/(\d+)(?:\?|$)/);
 	return match?.[1] || null;
-};
-
-const resolveRoomRef = (item: any): string | null => {
-	const path = item?.actionPath;
-	if (!path) {
-		return null;
-	}
-	const pathWithoutQuery = String(path).split('?')[0];
-	const parts = pathWithoutQuery.split('/').filter(Boolean);
-	if (parts.length < 2) {
-		return null;
-	}
-	const maybeRoomRef = parts[parts.length - 2];
-	return maybeRoomRef || null;
 };
 
 const resolveThreadRootId = (item: any): string | null => {
@@ -103,18 +107,14 @@ const toNonEmbeddedPath = (path?: string | null): string | null => {
 	return `${basePath}${finalQuery ? `?${finalQuery}` : ''}`;
 };
 
-type ChatPreviewMessage = {
-	id: string;
-	sender: string;
-	text: string;
-	timestamp?: number;
-	threadRootId?: string | null;
-	isThreadMessage?: boolean;
-};
-
 export const NotificationsCenter = () => {
 	const { t: translate, i18n } = useTranslation();
 	const history = useHistory();
+	// WP-06 Slice 0b: the route-derived global selection is the single source of
+	// truth for the active list item. The timeline keeps its own in-page
+	// (master-detail) selection, but defers to the active conversation when one
+	// is open, so it can never disagree with the conversation/request lists.
+	const { selection: activeSelection } = useActiveListItem();
 	const { untilL } = useResponsive();
 	const { userData } = useContext(UserDataContext);
 	const {
@@ -125,40 +125,91 @@ export const NotificationsCenter = () => {
 	const [selectedNotificationId, setSelectedNotificationId] = useState<
 		string | null
 	>(notificationFeed[0]?.id || null);
-	const [chatPreviewMessages, setChatPreviewMessages] = useState<
-		ChatPreviewMessage[]
-	>([]);
-	const [chatPreviewLoading, setChatPreviewLoading] = useState(false);
-	const [chatReplyText, setChatReplyText] = useState('');
-	const [isSendingChatReply, setIsSendingChatReply] = useState(false);
-	const [chatPreviewRefreshToken, setChatPreviewRefreshToken] = useState(0);
+	// WP-06 Slice 1: timeline family filter chip (exactly one active) + search.
+	const [activeFamily, setActiveFamily] =
+		useState<TimelineFamilyFilter>('all');
+	const [searchQuery, setSearchQuery] = useState('');
 
-	useEffect(() => {
-		if (!selectedNotificationId && notificationFeed.length > 0) {
-			setSelectedNotificationId(notificationFeed[0].id);
-			return;
-		}
+	// Families actually present in the feed, in canonical order (drives chips).
+	const familiesInFeed = useMemo(
+		() => getFamiliesInFeed(notificationFeed),
+		[notificationFeed]
+	);
+
+	// WP-06 Slice 1: client-side filter (family chip + search). Search matches
+	// the client-rendered strings only — ADR-AT-01 forbids server full-text.
+	const filteredFeed = useMemo(
+		() =>
+			filterTimelineItems(
+				notificationFeed,
+				{ family: activeFamily, query: searchQuery },
+				(item) => {
+					const { title, text } = describeItem(item, translate);
+					return `${title} ${text}`;
+				}
+			),
+		[notificationFeed, activeFamily, searchQuery, translate]
+	);
+
+	// Keep the master-detail selection inside the visible (filtered) feed.
+	const effectiveSelectedId = useMemo(() => {
 		if (
 			selectedNotificationId &&
-			!notificationFeed.some((item) => item.id === selectedNotificationId)
+			filteredFeed.some((item) => item.id === selectedNotificationId)
 		) {
-			setSelectedNotificationId(notificationFeed[0]?.id || null);
+			return selectedNotificationId;
 		}
-	}, [notificationFeed, selectedNotificationId]);
+		return filteredFeed[0]?.id ?? null;
+	}, [filteredFeed, selectedNotificationId]);
+
+	useEffect(() => {
+		if (selectedNotificationId !== effectiveSelectedId) {
+			setSelectedNotificationId(effectiveSelectedId);
+		}
+	}, [effectiveSelectedId, selectedNotificationId]);
+
+	// Drop back to "All" if the active family is no longer in the feed.
+	useEffect(() => {
+		if (activeFamily !== 'all' && !familiesInFeed.includes(activeFamily)) {
+			setActiveFamily('all');
+		}
+	}, [familiesInFeed, activeFamily]);
+
+	// WP-06 Slice 0b: resolve a SINGLE active card id through the shared
+	// selection primitive over the visible feed. When a conversation is
+	// route-active its card wins; otherwise the in-page master-detail selection
+	// is used. Exactly one card is active by construction.
+	const activeNotificationId = useMemo(
+		() =>
+			pickActiveItemKey(
+				filteredFeed,
+				activeSelection,
+				(item) => ({ sessionId: resolveSessionId(item) }),
+				(item) => item.id,
+				effectiveSelectedId
+			),
+		[filteredFeed, activeSelection, effectiveSelectedId]
+	);
 
 	const selectedNotification = useMemo(
 		() =>
-			notificationFeed.find(
-				(item) => item.id === selectedNotificationId
-			) || null,
-		[notificationFeed, selectedNotificationId]
+			filteredFeed.find((item) => item.id === activeNotificationId) ||
+			null,
+		[filteredFeed, activeNotificationId]
 	);
 	const selectedNotificationCategory = useMemo(
 		() =>
 			selectedNotification
-				? getNotificationCategory(selectedNotification)
+				? resolveItemCategory(selectedNotification)
 				: 'system',
 		[selectedNotification]
+	);
+	const selectedDisplay = useMemo(
+		() =>
+			selectedNotification
+				? describeItem(selectedNotification, translate)
+				: null,
+		[selectedNotification, translate]
 	);
 	const selectedSessionId = useMemo(
 		() => resolveSessionId(selectedNotification),
@@ -169,6 +220,13 @@ export const NotificationsCenter = () => {
 		[selectedNotification]
 	);
 	const canShowChatPreview = selectedNotificationCategory === 'message';
+	const getDefaultSessionsPath = useCallback(
+		() =>
+			hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+				? '/sessions/consultant/sessionView'
+				: '/sessions/user/view',
+		[userData]
+	);
 	const embeddedChatPath = useMemo(() => {
 		if (!canShowChatPreview) {
 			return null;
@@ -189,87 +247,8 @@ export const NotificationsCenter = () => {
 		return `${basePath}${hasQuery ? '&' : '?'}embeddedNotifications=1`;
 	}, [
 		canShowChatPreview,
+		getDefaultSessionsPath,
 		selectedNotification?.actionPath,
-		selectedSessionId,
-		selectedThreadRootId
-	]);
-
-	useEffect(() => {
-		setChatReplyText('');
-	}, [selectedNotificationId]);
-
-	useEffect(() => {
-		const fetchChatPreview = async () => {
-			if (selectedNotificationCategory !== 'message') {
-				setChatPreviewMessages([]);
-				setChatPreviewLoading(false);
-				return;
-			}
-			if (!selectedSessionId) {
-				setChatPreviewMessages([]);
-				setChatPreviewLoading(false);
-				return;
-			}
-			const hasExistingPreview = chatPreviewMessages.length > 0;
-			if (!hasExistingPreview) {
-				setChatPreviewLoading(true);
-			}
-			try {
-				const payload = (await fetchData({
-					url: `${apiUrl}/service/matrix/sessions/${selectedSessionId}/messages`,
-					method: FETCH_METHODS.GET,
-					responseHandling: []
-				})) as {
-					messages?: Array<any>;
-				};
-				const rawMessages = payload?.messages || [];
-				const previewItems = rawMessages
-					.slice(0, 16)
-					.reverse()
-					.map((msg) => {
-						const body = msg?.content?.body || '';
-						const parsed = parseMessagePrefixes(body);
-						const cleaned = parsed.cleanedMessage;
-						const fallbackText =
-							msg?.content?.msgtype &&
-							msg.content.msgtype !== 'm.text'
-								? 'Attachment'
-								: '';
-						return {
-							id: String(msg?.event_id || Math.random()),
-							sender:
-								String(msg?.sender || '')
-									.split(':')[0]
-									.replace('@', '') || 'unknown',
-							text: cleaned || fallbackText,
-							timestamp: Number(msg?.origin_server_ts || 0),
-							threadRootId: parsed.threadRootId || null,
-							isThreadMessage: parsed.isThreadMessage
-						};
-					})
-					.filter((entry) => {
-						if (!entry.text) {
-							return false;
-						}
-						// For thread notifications show only that thread; for regular message notifications show main chat flow.
-						if (selectedThreadRootId) {
-							return entry.threadRootId === selectedThreadRootId;
-						}
-						return !entry.isThreadMessage;
-					});
-
-				setChatPreviewMessages(previewItems);
-			} catch (_error) {
-				setChatPreviewMessages([]);
-			} finally {
-				setChatPreviewLoading(false);
-			}
-		};
-
-		void fetchChatPreview();
-	}, [
-		chatPreviewRefreshToken,
-		selectedNotificationCategory,
 		selectedSessionId,
 		selectedThreadRootId
 	]);
@@ -278,32 +257,27 @@ export const NotificationsCenter = () => {
 		fromId: string | null,
 		unreadOnly: boolean
 	): string | null => {
-		if (notificationFeed.length === 0) {
+		if (filteredFeed.length === 0) {
 			return null;
 		}
 		const startIndex = fromId
-			? notificationFeed.findIndex((item) => item.id === fromId)
+			? filteredFeed.findIndex((item) => item.id === fromId)
 			: -1;
-		const matchesRule = (item: (typeof notificationFeed)[number]) =>
+		const matchesRule = (item: (typeof filteredFeed)[number]) =>
 			!unreadOnly || !item.readAt;
 
-		for (let i = startIndex + 1; i < notificationFeed.length; i++) {
-			if (matchesRule(notificationFeed[i])) {
-				return notificationFeed[i].id;
+		for (let i = startIndex + 1; i < filteredFeed.length; i++) {
+			if (matchesRule(filteredFeed[i])) {
+				return filteredFeed[i].id;
 			}
 		}
 		for (let i = 0; i <= startIndex; i++) {
-			if (i >= 0 && matchesRule(notificationFeed[i])) {
-				return notificationFeed[i].id;
+			if (i >= 0 && matchesRule(filteredFeed[i])) {
+				return filteredFeed[i].id;
 			}
 		}
 		return null;
 	};
-
-	const getDefaultSessionsPath = () =>
-		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
-			? '/sessions/consultant/sessionView'
-			: '/sessions/user/view';
 
 	const openNotification = (item: (typeof notificationFeed)[number]) => {
 		markNotificationAsRead(item.id);
@@ -343,7 +317,7 @@ export const NotificationsCenter = () => {
 			true
 		);
 		if (nextUnreadId) {
-			const nextItem = notificationFeed.find(
+			const nextItem = filteredFeed.find(
 				(item) => item.id === nextUnreadId
 			);
 			if (nextItem) {
@@ -353,50 +327,6 @@ export const NotificationsCenter = () => {
 	};
 
 	const nextUnreadId = getNextNotificationId(selectedNotificationId, true);
-	const selectedRoomRef = resolveRoomRef(selectedNotification);
-
-	const handleSendChatReply = async () => {
-		if (
-			!canShowChatPreview ||
-			!selectedSessionId ||
-			!chatReplyText.trim() ||
-			isSendingChatReply
-		) {
-			return;
-		}
-		setIsSendingChatReply(true);
-		try {
-			const cleanMessage = chatReplyText.trim();
-			const outboundMessage = selectedThreadRootId
-				? `${buildThreadPrefix(selectedThreadRootId)} ${cleanMessage}`
-				: cleanMessage;
-
-			await fetchData({
-				url: `${apiUrl}/service/matrix/sessions/${selectedSessionId}/messages`,
-				method: FETCH_METHODS.POST,
-				bodyData: JSON.stringify({ message: outboundMessage }),
-				responseHandling: []
-			});
-
-			if (selectedRoomRef) {
-				void apiPostMessageEventNotification({
-					roomId: selectedRoomRef,
-					messagePreview: cleanMessage,
-					matrixRoom: selectedRoomRef.startsWith('!'),
-					threadRootId: selectedThreadRootId || null,
-					supervisorMessage: false,
-					senderDisplayName:
-						userData?.displayName || userData?.userName || null,
-					threadParentPreview: null
-				}).catch(() => undefined);
-			}
-
-			setChatReplyText('');
-			setChatPreviewRefreshToken((prev) => prev + 1);
-		} finally {
-			setIsSendingChatReply(false);
-		}
-	};
 
 	return (
 		<div className="notificationsCenter">
@@ -430,6 +360,67 @@ export const NotificationsCenter = () => {
 			</div>
 			<div className="notificationsCenter__content">
 				<div className="notificationsCenter__list">
+					{notificationFeed.length > 0 && (
+						<div className="notificationsCenter__filters">
+							<div
+								className="notificationsCenter__chips"
+								role="tablist"
+								aria-label={translate(
+									'notifications.center.title',
+									'Notifications'
+								)}
+							>
+								<button
+									type="button"
+									role="tab"
+									aria-selected={activeFamily === 'all'}
+									className={`notificationsCenter__chip ${
+										activeFamily === 'all'
+											? 'notificationsCenter__chip--active'
+											: ''
+									}`}
+									onClick={() => setActiveFamily('all')}
+								>
+									{translate(
+										'notifications.families.all',
+										'All'
+									)}
+								</button>
+								{familiesInFeed.map((family) => (
+									<button
+										key={family}
+										type="button"
+										role="tab"
+										aria-selected={activeFamily === family}
+										className={`notificationsCenter__chip ${
+											activeFamily === family
+												? 'notificationsCenter__chip--active'
+												: ''
+										}`}
+										onClick={() => setActiveFamily(family)}
+									>
+										{translate(familyLabelKey(family))}
+									</button>
+								))}
+							</div>
+							<input
+								type="search"
+								className="notificationsCenter__search"
+								placeholder={translate(
+									'notifications.center.searchPlaceholder',
+									'Search activity…'
+								)}
+								value={searchQuery}
+								onChange={(event) =>
+									setSearchQuery(event.target.value)
+								}
+								aria-label={translate(
+									'notifications.center.searchPlaceholder',
+									'Search activity…'
+								)}
+							/>
+						</div>
+					)}
 					{notificationFeed.length === 0 ? (
 						<div className="notificationsCenter__empty">
 							{translate(
@@ -437,17 +428,27 @@ export const NotificationsCenter = () => {
 								'No notifications yet.'
 							)}
 						</div>
+					) : filteredFeed.length === 0 ? (
+						<div className="notificationsCenter__empty">
+							{translate(
+								'notifications.center.noResults',
+								'No activity matches your filters.'
+							)}
+						</div>
 					) : (
-						notificationFeed.map((item) =>
+						filteredFeed.map((item) =>
 							(() => {
-								const category = getNotificationCategory(item);
+								const category = resolveItemCategory(item);
 								const isMessage = category === 'message';
+								const { descriptor, title, text } =
+									describeItem(item, translate);
+								const Icon = getEventIcon(descriptor.icon);
 								return (
 									<button
 										type="button"
 										key={item.id}
 										className={`notificationsCenter__listItem ${
-											selectedNotificationId === item.id
+											activeNotificationId === item.id
 												? 'notificationsCenter__listItem--active'
 												: ''
 										}`}
@@ -461,25 +462,21 @@ export const NotificationsCenter = () => {
 														: 'notificationsCenter__listItemTag--system'
 												}`}
 											>
-												{isMessage
-													? translate(
-															'notifications.center.messageTag',
-															'Message notification'
-														)
-													: translate(
-															'notifications.center.systemTag',
-															'System notification'
-														)}
+												{translate(
+													familyLabelKey(
+														descriptor.family
+													)
+												)}
 											</span>
 										</div>
 										<div className="notificationsCenter__listItemBody">
 											<div className="notificationsCenter__listItemIconCircle">
-												<NotificationBellIcon />
+												<Icon />
 											</div>
 											<div className="notificationsCenter__listItemContent">
 												<div className="notificationsCenter__listItemHeader">
 													<span className="notificationsCenter__listItemTitle">
-														{item.title}
+														{title}
 													</span>
 													<span className="notificationsCenter__listItemTime">
 														{formatRelativeTime(
@@ -489,7 +486,7 @@ export const NotificationsCenter = () => {
 													</span>
 												</div>
 												<div className="notificationsCenter__listItemText">
-													{item.text}
+													{text}
 												</div>
 											</div>
 										</div>
@@ -512,10 +509,10 @@ export const NotificationsCenter = () => {
 					{selectedNotification ? (
 						<div className="notificationsCenter__detailCard">
 							<h3 className="notificationsCenter__detailTitle">
-								{selectedNotification.title}
+								{selectedDisplay?.title}
 							</h3>
 							<p className="notificationsCenter__detailText">
-								{selectedNotification.text}
+								{selectedDisplay?.text}
 							</p>
 							<div className="notificationsCenter__detailActions">
 								<button
@@ -548,128 +545,6 @@ export const NotificationsCenter = () => {
 										src={embeddedChatPath}
 										className="notificationsCenter__embeddedSessionFrame"
 									/>
-								</div>
-							)}
-							{canShowChatPreview && !embeddedChatPath && (
-								<div className="notificationsCenter__chatPreview">
-									<div className="notificationsCenter__chatPreviewHeader">
-										<div className="notificationsCenter__chatPreviewTitle">
-											{translate(
-												'notifications.center.chatPreview',
-												'Chat preview'
-											)}
-										</div>
-										{selectedSessionId && (
-											<div className="notificationsCenter__chatPreviewMeta">
-												{`#${selectedSessionId}`}
-											</div>
-										)}
-									</div>
-									<div className="notificationsCenter__chatPreviewBody">
-										{!selectedSessionId ? (
-											<div className="notificationsCenter__chatPreviewEmpty">
-												{translate(
-													'notifications.center.chatPreviewNoSession',
-													'No chat linked to this notification.'
-												)}
-											</div>
-										) : chatPreviewLoading &&
-										  chatPreviewMessages.length === 0 ? (
-											<div className="notificationsCenter__chatPreviewEmpty">
-												{translate(
-													'notifications.center.chatPreviewLoading',
-													'Loading chat preview...'
-												)}
-											</div>
-										) : chatPreviewMessages.length === 0 ? (
-											<div className="notificationsCenter__chatPreviewEmpty">
-												{translate(
-													'notifications.center.chatPreviewEmpty',
-													'No visible messages yet.'
-												)}
-											</div>
-										) : (
-											chatPreviewMessages.map((entry) => (
-												<div
-													key={entry.id}
-													className="notificationsCenter__chatPreviewMessage"
-												>
-													<div className="notificationsCenter__chatPreviewMessageAvatar">
-														<UserAvatar
-															username={
-																entry.sender
-															}
-															displayName={
-																entry.sender
-															}
-															userId={
-																entry.sender
-															}
-															size="28px"
-														/>
-													</div>
-													<div className="notificationsCenter__chatPreviewMessageContent">
-														<span className="notificationsCenter__chatPreviewSender">
-															{entry.sender}
-														</span>
-														<span className="notificationsCenter__chatPreviewText">
-															{entry.text}
-														</span>
-													</div>
-												</div>
-											))
-										)}
-									</div>
-									<div className="notificationsCenter__chatComposer">
-										<input
-											type="text"
-											className="notificationsCenter__chatComposerInput"
-											placeholder={
-												selectedThreadRootId
-													? translate(
-															'notifications.center.replyInThread',
-															'Reply in this thread...'
-														)
-													: translate(
-															'notifications.center.replyInChat',
-															'Write a message...'
-														)
-											}
-											value={chatReplyText}
-											onChange={(event) =>
-												setChatReplyText(
-													event.target.value
-												)
-											}
-											onKeyDown={(event) => {
-												if (event.key === 'Enter') {
-													event.preventDefault();
-													void handleSendChatReply();
-												}
-											}}
-										/>
-										<button
-											type="button"
-											className="notificationsCenter__chatComposerSend"
-											onClick={() =>
-												void handleSendChatReply()
-											}
-											disabled={
-												isSendingChatReply ||
-												!chatReplyText.trim()
-											}
-										>
-											{isSendingChatReply
-												? translate(
-														'notifications.center.sending',
-														'Sending...'
-													)
-												: translate(
-														'notifications.center.send',
-														'Send'
-													)}
-										</button>
-									</div>
 								</div>
 							)}
 						</div>

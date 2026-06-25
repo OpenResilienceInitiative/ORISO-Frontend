@@ -32,14 +32,20 @@
 
 const settingsProxy = require('./settings');
 const weblateProxy = require('./weblate');
+const apiProxy = require('./api');
 const path = require('path');
 const { proxyPath } = require('../config');
 
-module.exports = (storagePath) =>
-	[...settingsProxy(), ...weblateProxy(storagePath)]
+const prefixWithProxyPath = (routes) =>
+	routes
 		.map(({ path: route, ...routeConfig }) =>
 			route
 				? { ...routeConfig, path: path.join(proxyPath, route) }
 				: routeConfig
 		)
 		.filter(({ name, middleware }) => name && middleware);
+
+module.exports = (storagePath) => [
+	...prefixWithProxyPath([...settingsProxy(), ...weblateProxy(storagePath)]),
+	...apiProxy()
+];

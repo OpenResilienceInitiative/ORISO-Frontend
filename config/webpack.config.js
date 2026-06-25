@@ -365,6 +365,15 @@ module.exports = function (webpackEnv) {
 		module: {
 			strictExportPresence: true,
 			rules: [
+				// @material/material-color-utilities ships ESM with
+				// extensionless internal imports; the "fully specified"
+				// resolution for type:module packages rejects them.
+				{
+					test: /\.js$/,
+					include:
+						/node_modules[\\/]@material[\\/]material-color-utilities/,
+					resolve: { fullySpecified: false }
+				},
 				// Handle node_modules packages that contain sourcemaps
 				shouldUseSourceMap && {
 					enforce: 'pre',
@@ -663,7 +672,8 @@ module.exports = function (webpackEnv) {
 							const onlineUrl =
 								env.raw
 									.REACT_APP_ORGANIZATION_ONLINEBERATUNG_URL ||
-								'https://www.caritas.de/onlineberatung';
+								env.raw.REACT_APP_ORGANIZATION_HOME_URL ||
+								'/';
 							return Buffer.from(
 								content
 									.toString()

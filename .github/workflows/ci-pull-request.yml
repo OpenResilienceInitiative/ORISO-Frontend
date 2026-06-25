@@ -20,9 +20,13 @@ jobs:
       with:
         node_version: '18'
 
+    - name: Run unit tests
+      shell: bash
+      run: npm run test:unit
+
     - name: Create Docker image
       uses: ./.github/actions/docker-build-push
       with:
         push_to_ghcr: false
-        image_name: caritas-frontend
+        image_name: oriso-frontend
         github_token: ${{ secrets.GITHUB_TOKEN }}

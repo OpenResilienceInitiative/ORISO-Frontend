@@ -31,7 +31,7 @@
 			border: none;
 			background: transparent;
 			border-radius: 6px;
-			color: #646d78;
+			color: var(--m3-secondary-container, #646d78);
 			cursor: pointer;
 
 			&:hover {
@@ -40,7 +40,7 @@
 
 			&.is-active {
 				background: #f7d5d5;
-				color: #cc1e1c;
+				color: var(--m3-primary, #cc1e1c);
 			}
 		}
 	}
@@ -52,10 +52,10 @@
 
 		.ProseMirror {
 			position: absolute;
-			top: 56px; // below toolbar strip
-			right: 70px; // keep clear of send/side controls
+			top: 66px; // below toolbar strip
+			right: 64px; // keep clear of send/side controls
 			bottom: 18px; // keep clear of lower visuals
-			left: 24px;
+			left: 16px;
 			direction: ltr;
 			text-align: left;
 			min-height: 0;
@@ -64,14 +64,14 @@
 			padding: 0;
 			outline: none;
 			word-break: break-word;
-			caret-color: #cc1e1c;
+			caret-color: var(--m3-primary, #cc1e1c);
 			box-sizing: border-box;
 
 			@media screen and (min-width: 900px) {
-				top: 56px;
-				right: 70px;
+				top: 66px;
+				right: 64px;
 				bottom: 18px;
-				left: 24px;
+				left: 16px;
 			}
 
 			p {
@@ -96,7 +96,7 @@
 			blockquote {
 				margin: 8px 0;
 				padding: 4px 0 4px 10px;
-				border-left: 3px solid #cc1e1c;
+				border-left: 3px solid var(--m3-primary, #cc1e1c);
 				color: #4a5561;
 				background: rgba(204, 30, 28, 0.04);
 				border-radius: 0 6px 6px 0;
@@ -104,5 +104,3 @@
 		}
 	}
 }
-
-

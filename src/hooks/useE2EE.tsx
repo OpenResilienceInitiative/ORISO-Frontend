@@ -17,6 +17,7 @@ import {
 	apiSendAliasMessage
 } from '../api/apiSendAliasMessage';
 import { RocketChatUsersOfRoomContext } from '../globalState/provider/RocketChatUsersOfRoomProvider';
+import { isMatrixRoom } from '../utils/matrixRoomUtils';
 
 export const ENCRYPT_ROOM_STATE_GET_MEMBERS = 'get_members';
 export const ENCRYPT_ROOM_STATE_GET_USERS_WITHOUT_KEY = 'get_users_without_key';
@@ -77,7 +78,9 @@ export const useE2EE = (
 	);
 	// MATRIX MIGRATION: Make RocketChatUsersOfRoomContext optional (may be null without RocketChat)
 	const rocketChatUsersContext = useContext(RocketChatUsersOfRoomContext);
-	const { reload: reloadUsersOfRoom } = rocketChatUsersContext || { reload: () => Promise.resolve([]) };
+	const { reload: reloadUsersOfRoom } = rocketChatUsersContext || {
+		reload: () => Promise.resolve([])
+	};
 
 	const [keyData, setKeyData] = useState<{
 		key: CryptoKey;
@@ -359,7 +362,7 @@ export const useE2EE = (
 		};
 
 		// MATRIX MIGRATION: Matrix rooms don't use RocketChat E2EE, skip the check
-		if (rid && rid.startsWith('!')) {
+		if (isMatrixRoom(rid)) {
 			setReady(true);
 			return cleanup;
 		}

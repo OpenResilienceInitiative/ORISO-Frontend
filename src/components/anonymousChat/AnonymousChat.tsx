@@ -24,6 +24,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CloseIcon from '@mui/icons-material/Close';
 import { apiAgencySelection } from '../../api/apiAgencySelection';
 import { apiGetConsultantAvailability } from '../../api/apiGetConsultantAvailability';
+import liveChatClosedIllustration from '../../resources/img/illustrations/live-chat-closed.svg';
 import { apiGetTopicsData } from '../../api/apiGetTopicsData';
 import {
 	AgencyDataInterface,
@@ -49,6 +50,7 @@ import TaskAltIcon from '@mui/icons-material/TaskAlt';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import { Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
+import { LIVE_CHAT_OPENING_HOURS } from './liveChatOpeningHours';
 
 interface AnonymousChatProps {
 	onBack: () => void;
@@ -904,13 +906,21 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 			<Dialog
 				open={noAvailabilityModalOpen}
 				onClose={() => setNoAvailabilityModalOpen(false)}
-				maxWidth="sm"
 				fullWidth
+				maxWidth={false}
+				PaperProps={{
+					sx: {
+						width: '100%',
+						maxWidth: '600px',
+						m: { xs: '16px', sm: '32px' },
+						borderRadius: '24px'
+					}
+				}}
 			>
 				<Box
 					sx={{
 						p: { xs: '20px', md: '24px' },
-						borderRadius: '16px'
+						borderRadius: '24px'
 					}}
 				>
 					<Box
@@ -923,9 +933,14 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 					>
 						<Box
 							component="img"
-							src="https://www.figma.com/api/mcp/asset/53e84cfc-9e3d-4075-bc3b-cfcf0903e811"
+							src={liveChatClosedIllustration}
 							alt=""
-							sx={{ width: 72, height: 72 }}
+							sx={{
+								width: 72,
+								height: 72,
+								flexShrink: 0,
+								display: 'block'
+							}}
 						/>
 						<Typography
 							variant="h4"
@@ -946,47 +961,96 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 					</Typography>
 
 					<Box
-						onClick={() => setShowOpeningHoursHint((prev) => !prev)}
 						sx={{
 							border: '1px solid #DAE3F0',
 							borderRadius: '12px',
-							px: '12px',
-							py: '10px',
-							display: 'flex',
-							alignItems: 'center',
-							justifyContent: 'space-between',
-							cursor: 'pointer',
-							mb: showOpeningHoursHint ? '8px' : '16px'
+							p: '8px',
+							mb: '16px'
 						}}
 					>
-						<Box sx={{ display: 'flex', alignItems: 'center' }}>
-							<AccessTimeOutlinedIcon
-								sx={{ fontSize: 18, color: '#4C555F', mr: 1 }}
-							/>
-							<Typography
-								variant="body2"
-								sx={{ color: '#4C555F' }}
-							>
-								{t(
-									'anonymousChat.noAvailability.openingHours',
-									'Reguläre Öffnungszeiten anzeigen'
-								)}
-							</Typography>
-						</Box>
-						<KeyboardArrowDownIcon sx={{ color: '#4C555F' }} />
-					</Box>
-
-					{showOpeningHoursHint && (
-						<Typography
-							variant="body2"
-							sx={{ color: 'text.secondary', mb: '16px' }}
+						<Box
+							onClick={() =>
+								setShowOpeningHoursHint((prev) => !prev)
+							}
+							sx={{
+								display: 'flex',
+								alignItems: 'center',
+								justifyContent: 'space-between',
+								p: '6px',
+								cursor: 'pointer'
+							}}
 						>
-							{t(
-								'anonymousChat.noAvailability.openingHoursHint',
-								'Die Öffnungszeiten finden Sie auf der Seite Ihrer ausgewählten Beratungsstelle.'
-							)}
-						</Typography>
-					)}
+							<Box
+								sx={{
+									display: 'flex',
+									alignItems: 'center',
+									gap: '4px'
+								}}
+							>
+								<AccessTimeOutlinedIcon
+									sx={{ fontSize: 16, color: '#4C555F' }}
+								/>
+								<Typography
+									sx={{
+										color: '#4C555F',
+										fontSize: '12px',
+										lineHeight: '14px'
+									}}
+								>
+									{t(
+										'anonymousChat.noAvailability.openingHours',
+										'Reguläre Öffnungszeiten anzeigen'
+									)}
+								</Typography>
+							</Box>
+							<KeyboardArrowDownIcon
+								sx={{
+									color: '#4C555F',
+									fontSize: 16,
+									transform: showOpeningHoursHint
+										? 'rotate(180deg)'
+										: 'none',
+									transition: 'transform 0.2s'
+								}}
+							/>
+						</Box>
+
+						{showOpeningHoursHint &&
+							LIVE_CHAT_OPENING_HOURS.map((entry, index) => (
+								<Box
+									key={`opening-hours-${index}`}
+									sx={{
+										display: 'flex',
+										alignItems: 'center',
+										justifyContent: 'space-between',
+										px: '16px',
+										py: '8px'
+									}}
+								>
+									<Typography
+										sx={{
+											color: '#4C555F',
+											fontSize: '12px',
+											lineHeight: '14px'
+										}}
+									>
+										{t(
+											`anonymousChat.noAvailability.weekdays.${entry.dayKey}`,
+											entry.day
+										)}
+									</Typography>
+									<Typography
+										sx={{
+											color: '#4C555F',
+											fontSize: '12px',
+											lineHeight: '14px'
+										}}
+									>
+										{entry.time}
+									</Typography>
+								</Box>
+							))}
+					</Box>
 
 					<Typography variant="body1" sx={{ mb: '8px' }}>
 						{t(

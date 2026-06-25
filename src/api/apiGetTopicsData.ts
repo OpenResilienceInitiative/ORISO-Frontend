@@ -14,6 +14,6 @@ export const apiGetTopicsData = async (): Promise<TopicsDataInterface[]> => {
 		if (error.message === FETCH_ERRORS.EMPTY) {
 			return [];
 		}
-		Promise.reject(error);
+		return Promise.reject(error);
 	});
 };

@@ -285,6 +285,9 @@
 		"leaveGroupChat": "Quitter le chat",
 		"mute": "Désactiver le son",
 		"muteDescription": "Désactiver les notifications pour ce chat.",
+		"activateNotification": "Activer les notifications",
+		"privacyPolicy": "Politique de confidentialité",
+		"privacyPolicyDescription": "Découvrez comment ce centre de conseil traite vos données.",
 		"help": "Demander de l'aide",
 		"helpDescription": "Escalader le cas en interne ou en externe sans négliger la protection des données.",
 		"invite": "Inviter plus de personnes",
@@ -853,6 +856,36 @@
 					}
 				}
 			},
+			"elementCall": {
+				"stackLabel": "Element Call avec WebRTC et LiveKit",
+				"stepsHeadline": "Fonctionnement de l'appel vidéo",
+				"troubleshootingHeadline": "Si quelque chose ne fonctionne pas",
+				"asker": {
+					"headline": "Appel vidéo",
+					"intro": "Les appels vidéo passent maintenant directement par Element Call. Element Call utilise WebRTC et LiveKit, il n'est donc pas nécessaire de changer de navigateur ni d'installer un logiciel supplémentaire.",
+					"steps": {
+						"open": "Ouvrez la consultation en ligne comme d'habitude.",
+						"permissions": "Autorisez la caméra et le microphone lorsque votre navigateur vous le demande.",
+						"call": "Acceptez l'appel vidéo lorsque votre conseiller ou conseillère le lance.",
+						"copyLink": "Si vous souhaitez ouvrir le lien de connexion sur un autre appareil, copiez-le ici :"
+					}
+				},
+				"consultant": {
+					"headline": "Appel vidéo",
+					"intro": "Les appels vidéo passent maintenant directement par Element Call. Element Call utilise WebRTC et LiveKit, il n'est donc pas nécessaire de changer de navigateur ni d'installer un logiciel supplémentaire.",
+					"steps": {
+						"open": "Ouvrez la consultation dans ORISO comme d'habitude.",
+						"permissions": "Autorisez la caméra et le microphone lorsque votre navigateur vous le demande.",
+						"call": "Lancez l'appel vidéo dans le chat. Element Call ouvre automatiquement l'appel.",
+						"copyLink": "Si vous souhaitez ouvrir le lien de connexion sur un autre appareil, copiez-le ici :"
+					}
+				},
+				"troubleshooting": {
+					"permissions": "Vérifiez que la caméra et le microphone sont autorisés dans le navigateur.",
+					"device": "Vérifiez que le bon microphone, la bonne caméra et le bon haut-parleur sont sélectionnés.",
+					"connection": "Actualisez la page ou passez à une connexion Wi-Fi stable si l'image ou le son se coupe."
+				}
+			},
 			"loginLink": {
 				"notification": {
 					"text": "Lien copié dans le presse-papiers !",
@@ -1259,7 +1292,7 @@
 				"small": "Nouvelles"
 			}
 		},
-		"activity": "Activité",
+		"activity": "Chronologie",
 		"language": "Langue",
 		"drafts": "Brouillons",
 		"liveChat": "Chat en direct",
@@ -1990,8 +2023,8 @@
 			"decreaseExhale": "Diminuer les secondes d'expiration",
 			"increaseExhale": "Augmenter les secondes d'expiration",
 			"robotUsernameFallback": "Demandeur_9",
-			"robotCard1Title": "Merci de patienter un peu",
-			"robotCard1Body": "Tous les conseillers sont actuellement en entretien. Nous serons avec vous dès que possible.",
+			"robotCard1Title": "Un instant s'il vous plaît",
+			"robotCard1Body": "Tous nos conseillers sont actuellement en consultation en direct. Veuillez patienter encore un court instant ici dans le salon de discussion. Vous pouvez voir ci-dessous combien de personnes sont avant vous dans la file d'attente.",
 			"robotCard2TitlePrefix": "Votre nom d'utilisateur est :",
 			"robotCard2Body": "Pour protéger votre anonymat, nous supprimons vos messages au plus tard 48 heures après la fin du chat.",
 			"robotCard3Title": "Vous n'avez pas besoin d'une réponse immédiate ? Et vous ne voulez pas attendre un chat libre ?",
@@ -2127,6 +2160,7 @@
 			"restrictions": ".jpg, .png, .pdf, .docx, .xlsx jusqu'à un maximum de {{attachment_filesize}} MB"
 		},
 		"empty": "Veuillez sélectionner un message",
+		"emptyAllCaughtUp": "Respirez un instant.\nTout est fait.",
 		"groupChat": {
 			"consultant": {
 				"prefix": "Présentateur ou présentatrice - "
@@ -2251,12 +2285,20 @@
 			},
 			"chips": {
 				"neu": "Non lu",
+				"unread": "Non lu",
+				"drafts": "Brouillons",
+				"nearby": "Proximité",
+				"create": "Créer",
+				"archive": "Archivé",
 				"oneToOne": "Conseil 1-1",
 				"liveChat": "Chat en direct",
-				"groups": "Groupes",
-				"supervision": "Supervision"
+				"internalGroup": "Discussion de groupe interne",
+				"groups": "Cercle de discussion",
+				"supervision": "Supervision",
+				"chats": "Proximité"
 			},
-			"emptyFilterResult": "Aucune consultation ne correspond à votre recherche ou aux filtres."
+			"emptyFilterResult": "Aucune consultation ne correspond à votre recherche ou aux filtres.",
+			"draftMetadataOnly": "Message non envoyé enregistré."
 		},
 		"anonymous": {
 			"tag": "Anonyme"
