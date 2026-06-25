@@ -242,10 +242,6 @@ export const SessionListItemComponent = ({
 			}
 			return [compact, `@${compact}`];
 		};
-		const matrixUserIdFromStorage =
-			typeof window !== 'undefined'
-				? window.localStorage?.getItem('matrix_user_id')
-				: '';
 		const matrixUserIdFromCookie =
 			typeof document !== 'undefined'
 				? document.cookie
@@ -254,7 +250,6 @@ export const SessionListItemComponent = ({
 						?.split('=')[1] || ''
 				: '';
 		const currentUserIds = new Set<string>([
-			...normalizeIds(matrixUserIdFromStorage),
 			...normalizeIds(matrixUserIdFromCookie),
 			...normalizeIds(userData?.userName)
 		]);

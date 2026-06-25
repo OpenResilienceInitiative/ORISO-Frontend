@@ -1,9 +1,20 @@
 import { apiSendMessage } from '../../src/api/apiSendMessage';
 import { apiSendMatrixAttachmentMessage } from '../../src/api/apiSendMatrixAttachmentMessage';
 import { buildMessageEventNotificationBody } from '../../src/api/apiPostMessageEventNotification';
-import { matrixClientService } from '../../src/services/matrixClientService';
+import { setMatrixClientServiceRef } from '../../src/services/matrixClientRegistry';
+import { MatrixClientService } from '../../src/services/matrixClientService';
+
+const matrixClientService = new MatrixClientService();
 
 describe('Matrix send message privacy', () => {
+	beforeEach(() => {
+		setMatrixClientServiceRef(matrixClientService);
+	});
+
+	afterEach(() => {
+		setMatrixClientServiceRef(null);
+	});
+
 	it('does not send Matrix plaintext through the REST proxy when the SDK client is unavailable', () => {
 		const restPayloads: unknown[] = [];
 		cy.stub(matrixClientService, 'getClient').returns(null);
@@ -384,17 +395,22 @@ describe('Matrix send message privacy', () => {
 				file,
 				Cypress.sinon.match.object
 			);
+			// FE-H01: plaintext previews must be dropped at the call boundary,
+			// not merely blanked downstream — so threadParentPreview is no
+			// longer forwarded into the notification payload at all.
 			expect(postMessageEventNotification).to.have.been.calledOnceWith({
 				roomId: '!secure-room:oriso.org',
 				matrixRoom: true,
 				threadRootId: '$thread-root',
 				supervisorMessage: true,
-				senderDisplayName: 'Counsellor',
-				threadParentPreview: 'sensitive parent preview'
+				senderDisplayName: 'Counsellor'
 			});
 			const notificationInput =
 				postMessageEventNotification.firstCall.args[0];
 			expect(notificationInput).not.to.have.property('messagePreview');
+			expect(notificationInput).not.to.have.property(
+				'threadParentPreview'
+			);
 			const notificationBody =
 				buildMessageEventNotificationBody(notificationInput);
 			expect(notificationBody).to.deep.equal({

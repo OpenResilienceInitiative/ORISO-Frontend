@@ -334,10 +334,6 @@ export const MessageItemComponent = ({
 	);
 
 	const currentRecipientIdentifiers = useMemo(() => {
-		const matrixUserIdFromStorage =
-			typeof window !== 'undefined'
-				? window.localStorage?.getItem('matrix_user_id')
-				: '';
 		const matrixUserIdFromCookie =
 			typeof document !== 'undefined'
 				? document.cookie
@@ -347,7 +343,6 @@ export const MessageItemComponent = ({
 				: '';
 		const merged = new Set<string>();
 		[
-			matrixUserIdFromStorage,
 			matrixUserIdFromCookie,
 			userData?.userName,
 			userData?.displayName

@@ -464,6 +464,3 @@ export class MatrixClientService {
 		});
 	}
 }
-
-// Singleton instance
-export const matrixClientService = new MatrixClientService();

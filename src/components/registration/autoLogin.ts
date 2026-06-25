@@ -161,9 +161,6 @@ export const autoLogin = async ({
 		const { getMatrixAccessToken, persistMatrixLoginData } = await import(
 			'../sessionCookie/getMatrixAccessToken'
 		);
-		const { matrixClientService } = await import(
-			'../../services/matrixClientService'
-		);
 
 		// console.log('🔷 Calling getMatrixAccessToken...');
 		const matrixLoginData = await getMatrixAccessToken(
@@ -171,19 +168,15 @@ export const autoLogin = async ({
 			password
 		);
 
-		// console.log('🔷 Matrix login successful! Data:', matrixLoginData);
-		// console.log('🔷 Matrix User ID:', matrixLoginData.userId);
-		// console.log('🔷 Matrix Access Token:', matrixLoginData.accessToken ? 'exists' : 'missing');
-
+		// Only persist the Matrix login data here. The actual Matrix client is
+		// created and registered exactly once by AuthenticatedApp on the
+		// authenticated load, so autoLogin must NOT spin up its own unregistered
+		// client (that produced a second orphan sync loop that was never torn
+		// down on logout).
 		persistMatrixLoginData(matrixLoginData);
-
-		matrixClientService.initializeClient(matrixLoginData);
 	} catch (error) {
-		// console.error('❌❌❌ Matrix client initialization FAILED! ❌❌❌');
-		// console.error('❌ Error:', error);
-		// console.error('❌ Error message:', (error as Error).message);
-		// console.error('❌ Error stack:', (error as Error).stack);
-		// Continue without Matrix client - chat will still work via REST API
+		// console.error('❌❌❌ Matrix login data retrieval FAILED! ❌❌❌');
+		// Continue without Matrix login data - chat will still work via REST API
 	}
 
 	// console.log('🔷🔷🔷 MATRIX LOGIN ATTEMPT COMPLETE 🔷🔷🔷');

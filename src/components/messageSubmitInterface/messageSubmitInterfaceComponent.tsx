@@ -16,7 +16,6 @@ import {
 	shouldBlockMissingLegacyE2eeKey,
 	shouldUseLegacyE2ee
 } from './messageEncryptionMode';
-import { matrixClientService } from '../../services/matrixClientService';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { STATUS_ENQUIRY } from '../../globalState/interfaces/SessionsDataInterface';
 import {
@@ -29,6 +28,7 @@ import {
 	UserDataContext,
 	ActiveSessionContext
 } from '../../globalState';
+import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import { STATUS_ARCHIVED } from '../../globalState/interfaces';
 import {
 	apiGetAgencyConsultantList,
@@ -920,6 +920,7 @@ export const MessageSubmitInterfaceComponent = ({
 		useContext(ActiveSessionContext);
 	const { type, path: listPath } = useContext(SessionTypeContext);
 	const { isE2eeEnabled } = useContext(E2EEContext);
+	const { matrixClientService } = useMatrixClient();
 
 	const [activeInfo, setActiveInfo] = useState(null);
 	const [attachmentSelected, setAttachmentSelected] = useState<File | null>(
@@ -1881,8 +1882,7 @@ export const MessageSubmitInterfaceComponent = ({
 									userData?.displayName ||
 									userData?.userName ||
 									`${userData?.firstName || ''} ${userData?.lastName || ''}`.trim() ||
-									'User',
-								threadParentPreview: threadParentPreview || null
+									'User'
 							}
 						);
 
@@ -2002,8 +2002,7 @@ export const MessageSubmitInterfaceComponent = ({
 					userData?.displayName ||
 						userData?.userName ||
 						`${userData?.firstName || ''} ${userData?.lastName || ''}`.trim() ||
-						'User',
-					threadParentPreview || null
+						'User'
 				)
 					.then(() => encryptRoom(setE2EEState))
 					.then(() => {
@@ -2622,10 +2621,6 @@ export const MessageSubmitInterfaceComponent = ({
 		}
 		const collected = new Map<string, string>();
 		const selfIdentifiers = new Set<string>();
-		const matrixUserIdFromStorage =
-			typeof window !== 'undefined'
-				? window.localStorage?.getItem('matrix_user_id')
-				: '';
 		const matrixUserIdFromCookie =
 			typeof document !== 'undefined'
 				? document.cookie
@@ -2634,7 +2629,6 @@ export const MessageSubmitInterfaceComponent = ({
 						?.split('=')[1] || ''
 				: '';
 		[
-			matrixUserIdFromStorage,
 			matrixUserIdFromCookie,
 			userData?.userName,
 			userData?.displayName
@@ -2644,7 +2638,7 @@ export const MessageSubmitInterfaceComponent = ({
 			);
 		});
 		const roomId = getMatrixRoomId();
-		const matrixClient = matrixClientService.getClient();
+		const matrixClient = matrixClientService?.getClient?.();
 		const room =
 			roomId && matrixClient ? matrixClient.getRoom(roomId) : null;
 		const roomMembers =
@@ -2840,7 +2834,8 @@ export const MessageSubmitInterfaceComponent = ({
 		activeSession?.isGroup,
 		translate,
 		userData?.displayName,
-		userData?.userName
+		userData?.userName,
+		matrixClientService
 	]);
 
 	useEffect(() => {

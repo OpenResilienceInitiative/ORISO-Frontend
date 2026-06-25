@@ -1,7 +1,7 @@
 import { endpoints } from '../resources/scripts/endpoints';
 import { fetchData, FETCH_METHODS } from './fetchData';
 import { apiPostMessageEventNotification } from './apiPostMessageEventNotification';
-import { matrixClientService } from '../services/matrixClientService';
+import { getMatrixClientService } from '../services/matrixClientRegistry';
 
 export const apiSendMessage = (
 	messageData: string,
@@ -12,12 +12,12 @@ export const apiSendMessage = (
 	matrixRoomId?: string, // NEW: Accept Matrix room ID directly
 	threadRootId?: string | null,
 	supervisorMessage?: boolean,
-	senderDisplayName?: string | null,
-	threadParentPreview?: string | null
+	senderDisplayName?: string | null
 ): Promise<any> => {
 	// MATRIX MIGRATION: Use Matrix SDK directly for INSTANT local echo (like Element!)
 	if (sessionId && matrixRoomId) {
-		if (!matrixClientService.getClient()) {
+		const matrixClientService = getMatrixClientService();
+		if (!matrixClientService?.getClient()) {
 			return Promise.reject(new Error('Matrix client not initialized'));
 		}
 
@@ -26,6 +26,9 @@ export const apiSendMessage = (
 		return matrixClientService
 			.sendMessage(matrixRoomId, messageData)
 			.then((response: any) => {
+				// SECURITY (FE-H01): never forward plaintext message content
+				// (messagePreview / threadParentPreview) across the Matrix
+				// privacy boundary. Only non-content metadata is sent.
 				apiPostMessageEventNotification({
 					roomId: matrixRoomId,
 					matrixRoom: true,

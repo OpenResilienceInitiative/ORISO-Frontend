@@ -55,7 +55,7 @@ import {
 	SETTING_HIDE_SYSTEM_MESSAGES
 } from '../../api/apiRocketChatSettingsPublic';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
-import { matrixClientService } from '../../services/matrixClientService';
+import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import { formatMatrixTimelineEvent } from '../../utils/matrixTimelineEventFormatter';
 
 interface SessionStreamProps {
@@ -77,6 +77,7 @@ export const SessionStream = ({
 
 	const { type, path: listPath } = useContext(SessionTypeContext);
 	const { userData } = useContext(UserDataContext);
+	const { matrixClientService } = useMatrixClient();
 	const { subscribe, unsubscribe } = useContext(RocketChatContext);
 	const { getSetting } = useContext(RocketChatGlobalSettingsContext);
 	const { rcGroupId } = useParams<{ rcGroupId: string }>();
@@ -148,7 +149,7 @@ export const SessionStream = ({
 				?.sendTyping(matrixRoomId, typing)
 				.catch(() => {});
 		},
-		[isMatrixSession, matrixRoomId]
+		[isMatrixSession, matrixRoomId, matrixClientService]
 	);
 	const handleSessionTyping = useCallback(
 		(isCleared) => {
@@ -215,12 +216,15 @@ export const SessionStream = ({
 			const resolvedMatrixRoomId = isMatrixRoom(activeSession.rid)
 				? activeSession.rid
 				: activeSession.item?.matrixRoomId;
-			const matrixClient = matrixClientService.getClient();
+			const matrixClient = matrixClientService?.getClient?.();
 			const matrixRoom = resolvedMatrixRoomId
 				? matrixClient?.getRoom?.(resolvedMatrixRoomId)
 				: null;
 			const matrixEvents = resolvedMatrixRoomId
-				? matrixClientService.getRoomMessages(resolvedMatrixRoomId, 100)
+				? matrixClientService?.getRoomMessages?.(
+						resolvedMatrixRoomId,
+						100
+					) || []
 				: [];
 			const encryptedFallbackText = translate(
 				'e2ee.message.encryption.text'
@@ -262,7 +266,13 @@ export const SessionStream = ({
 					: null
 			);
 		});
-	}, [activeSession.rid, activeSession.item, getSetting, translate]);
+	}, [
+		activeSession.rid,
+		activeSession.item,
+		getSetting,
+		translate,
+		matrixClientService
+	]);
 
 	const setSessionRead = useCallback(() => {
 		if (readonly) {
@@ -401,7 +411,7 @@ export const SessionStream = ({
 		let lastRefreshAt = 0;
 
 		const attachTimelineListener = () => {
-			const matrixClient = matrixClientService.getClient?.();
+			const matrixClient = matrixClientService?.getClient?.();
 			if (!matrixClient) {
 				return false;
 			}
@@ -465,7 +475,8 @@ export const SessionStream = ({
 		activeSession.rid,
 		activeSession.item?.matrixRoomId,
 		activeSession.item?.id,
-		fetchSessionMessages
+		fetchSessionMessages,
+		matrixClientService
 	]);
 
 	useEffect(() => {
@@ -557,7 +568,12 @@ export const SessionStream = ({
 			matrixTypingActivityRef.current.clear();
 			setMatrixTypingUsers([]);
 		};
-	}, [isMatrixSession, matrixRoomId, MATRIX_TYPING_STALE_MS]);
+	}, [
+		isMatrixSession,
+		matrixRoomId,
+		MATRIX_TYPING_STALE_MS,
+		matrixClientService
+	]);
 
 	useEffect(() => {
 		const handleLiveMessageEvent = ({
@@ -628,7 +644,12 @@ export const SessionStream = ({
 		return () => {
 			window.clearInterval(intervalId);
 		};
-	}, [isMatrixSession, activeSession.item?.id, fetchSessionMessages]);
+	}, [
+		isMatrixSession,
+		activeSession.item?.id,
+		fetchSessionMessages,
+		matrixClientService
+	]);
 
 	useEffect(
 		() => () => {

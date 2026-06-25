@@ -14,7 +14,6 @@ import {
 } from '../../api/apiGetSessionSupervisors';
 import { apiAddSessionSupervisor } from '../../api/apiAddSessionSupervisor';
 import { apiRemoveSessionSupervisor } from '../../api/apiRemoveSessionSupervisor';
-import { matrixClientService } from '../../services/matrixClientService';
 import {
 	apiGetAgencyConsultantList,
 	Consultant
@@ -81,6 +80,7 @@ import { ReactComponent as CloseCircle } from '../../resources/img/icons/close-c
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../message/messageConstants';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
+import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import {
 	ChatroomConversationIconType,
 	ChatroomMainInteractionIcon
@@ -103,6 +103,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	const sessionsDataContext = useContext(SessionsDataContext);
 	const { addNotification, addEventNotification } =
 		useContext(NotificationsContext);
+	const { matrixClientService } = useMatrixClient();
 	const history = useHistory();
 	const consultingType = useConsultingType(activeSession.item.consultingType);
 	const topic = useTopic(
@@ -438,11 +439,12 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			)
 		});
 		try {
-			if (matrixClientService.sendMessage) {
-				await matrixClientService.sendMessage(
-					matrixRoomId,
-					`${SYSTEM_NOTIFICATION_PREFIX}${payload}`
-				);
+			const client = matrixClientService?.getClient?.();
+			if (client) {
+				await (client as any).sendMessage(matrixRoomId, {
+					msgtype: 'm.text',
+					body: `${SYSTEM_NOTIFICATION_PREFIX}${payload}`
+				});
 				return;
 			}
 			await apiSendMessage(
@@ -454,8 +456,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 				matrixRoomId,
 				null,
 				true,
-				'system',
-				null
+				'system'
 			);
 		} catch (_error) {
 			// Non-blocking: supervisor add succeeded; timeline system note can fail silently.

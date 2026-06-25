@@ -2,7 +2,6 @@ import { createClient, MatrixClient } from 'matrix-js-sdk';
 import { apiUrl } from '../../resources/scripts/endpoints';
 import { getMatrixHomeserverUrl } from '../../resources/scripts/runtimeConfig';
 import { fetchData, FETCH_ERRORS, FETCH_METHODS } from '../../api/fetchData';
-import { setValueInCookie } from './accessSessionCookie';
 
 export interface MatrixLoginData {
 	accessToken: string;
@@ -78,24 +77,15 @@ export const getMatrixAccessToken = (
 };
 
 export const persistMatrixLoginData = (loginData: MatrixLoginData): void => {
-	localStorage.setItem('matrix_user_id', loginData.userId);
-	localStorage.setItem('matrix_access_token', loginData.accessToken);
 	localStorage.setItem(MATRIX_DEVICE_ID_STORAGE_KEY, loginData.deviceId);
 	localStorage.setItem(
 		`${MATRIX_DEVICE_ID_STORAGE_KEY}:${loginData.userId}`,
 		loginData.deviceId
 	);
-	if (loginData.expiresInMs) {
-		localStorage.setItem(
-			'matrix_token_expires_at',
-			String(Date.now() + loginData.expiresInMs)
-		);
-	} else {
-		localStorage.removeItem('matrix_token_expires_at');
-	}
 
-	setValueInCookie('rc_uid', loginData.userId);
-	setValueInCookie('rc_token', loginData.accessToken);
+	const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+	document.cookie = `rc_uid=${loginData.userId}; path=/; SameSite=Strict${secure}`;
+	document.cookie = `rc_token=${loginData.accessToken}; path=/; SameSite=Strict${secure}`;
 };
 
 // Helper function to create Matrix client with stored credentials

@@ -30,12 +30,12 @@ import { useCall } from '../../globalState/provider/CallProvider';
 import { RocketChatUserStatusProvider } from '../../globalState/provider/RocketChatUserStatusProvider';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { E2EEncryptionSupportBanner } from '../E2EEncryptionSupportBanner/E2EEncryptionSupportBanner';
+import { getMatrixHomeserverUrl } from '../../resources/scripts/runtimeConfig';
 import {
 	getMatrixAccessToken,
 	persistMatrixLoginData
 } from '../sessionCookie/getMatrixAccessToken';
-import { matrixClientService } from '../../services/matrixClientService';
-import { MatrixClientProvider } from '../../contexts/MatrixClientContext';
+import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 
 interface AuthenticatedAppProps {
 	onAppReady: Function;
@@ -54,6 +54,7 @@ export const AuthenticatedApp = ({
 	const { joinGroupChat } = useJoinGroupChat();
 	const { setNotifications } = useContext(NotificationsContext);
 	const callContext = useCall();
+	const { setMatrixClientService } = useMatrixClient();
 
 	const [appReady, setAppReady] = useState<boolean>(false);
 	const [loading, setLoading] = useState<boolean>(true);
@@ -113,10 +114,40 @@ export const AuthenticatedApp = ({
 									await getMatrixAccessToken();
 								persistMatrixLoginData(matrixLoginData);
 								try {
-									matrixClientService.initializeClient(
-										matrixLoginData
-									);
-									(window as any).callContext = callContext;
+									const { MatrixClientService } =
+										await import(
+											'../../services/matrixClientService'
+										);
+									const matrixClientService =
+										new MatrixClientService();
+
+									const homeserverUrl =
+										getMatrixHomeserverUrl();
+									if (!homeserverUrl) {
+										// console.warn('⚠️ REACT_APP_MATRIX_HOMESERVER_URL is not set; skipping Matrix client init');
+									} else {
+										matrixClientService.initializeClient({
+											userId: matrixLoginData.userId,
+											accessToken:
+												matrixLoginData.accessToken,
+											deviceId: matrixLoginData.deviceId,
+											homeserverUrl: homeserverUrl
+										});
+
+										setMatrixClientService(
+											matrixClientService
+										);
+										(window as any).callContext =
+											callContext;
+
+										const { matrixLiveEventBridge } =
+											await import(
+												'../../services/matrixLiveEventBridge'
+											);
+										matrixLiveEventBridge.initialize(
+											matrixClientService.getClient()!
+										);
+									}
 								} catch (error) {
 									// console.warn('⚠️ Matrix client initialization failed:', error);
 									// Don't fail app startup if Matrix fails
@@ -151,8 +182,12 @@ export const AuthenticatedApp = ({
 
 	const handleLogout = useCallback(() => {
 		onLogout();
+		// Clear the React context's Matrix client reference on sign-out so a
+		// stale authenticated client cannot survive into a subsequent session
+		// (logout() also resets the module-level registry).
+		setMatrixClientService(null);
 		logout();
-	}, [onLogout]);
+	}, [onLogout, setMatrixClientService]);
 
 	const handlePostRegLoaderFinish = useCallback(() => {
 		setShowPostRegLoader(false);
@@ -172,7 +207,7 @@ export const AuthenticatedApp = ({
 
 	if (appReady) {
 		return (
-			<MatrixClientProvider>
+			<>
 				<RocketChatProvider>
 					<RocketChatGetUserRolesProvider>
 						<RocketChatPublicSettingsProvider>
@@ -187,7 +222,7 @@ export const AuthenticatedApp = ({
 						</RocketChatPublicSettingsProvider>
 					</RocketChatGetUserRolesProvider>
 				</RocketChatProvider>
-			</MatrixClientProvider>
+			</>
 		);
 	} else if (loading) {
 		return <Loading />;

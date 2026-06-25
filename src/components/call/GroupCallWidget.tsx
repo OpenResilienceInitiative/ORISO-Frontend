@@ -6,14 +6,15 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { callManager, CallData } from '../../services/CallManager';
-import { matrixClientService } from '../../services/matrixClientService';
 import {
 	getElementCallBaseUrl,
 	getMatrixHomeserverUrl
 } from '../../resources/scripts/runtimeConfig';
+import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import './GroupCallWidget.scss';
 
 export const GroupCallWidget: React.FC = () => {
+	const { matrixClientService } = useMatrixClient();
 	const [callData, setCallData] = useState<CallData | null>(null);
 	const [callState, setCallState] = useState<string | null>(null);
 	const [elementCallUrl, setElementCallUrl] = useState<string>('');
@@ -127,7 +128,7 @@ export const GroupCallWidget: React.FC = () => {
 
 		// console.log('✅ Incoming group call moving to state', callState, '- setting up Element Call for receiver...');
 		setupElementCall();
-	}, [callState, callData, elementCallUrl]);
+	}, [callState, callData, elementCallUrl, matrixClientService]);
 
 	// Handle outgoing call
 	useEffect(() => {
@@ -137,13 +138,13 @@ export const GroupCallWidget: React.FC = () => {
 
 		// console.log('📞 Starting outgoing call, setting up Element Call...');
 		setupElementCall();
-	}, [callData]);
+	}, [callData, matrixClientService]);
 
 	const setupElementCall = () => {
 		if (!callData) return;
 
 		try {
-			const client = matrixClientService.getClient();
+			const client = matrixClientService?.getClient();
 			if (!client) throw new Error('Matrix client not initialized');
 
 			// For group calls we use the dedicated Element Call room if present.
