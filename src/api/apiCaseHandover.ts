@@ -1,4 +1,5 @@
 import { endpoints } from '../resources/scripts/endpoints';
+import { ListItemsResponseInterface } from '../globalState/interfaces';
 import { fetchData, FETCH_ERRORS, FETCH_METHODS } from './fetchData';
 
 export type CaseHandoverStatusValue =
@@ -46,6 +47,34 @@ export const apiGetCaseHandoverReasons = async (): Promise<
 		url: endpoints.caseHandoverReasons,
 		method: FETCH_METHODS.GET
 	});
+
+export const apiGetCaseHandoverCandidates = async ({
+	query,
+	offset = 0,
+	count = 15,
+	archived = false,
+	signal
+}: {
+	query: string;
+	offset?: number;
+	count?: number;
+	archived?: boolean;
+	signal?: AbortSignal;
+}): Promise<ListItemsResponseInterface> => {
+	const params = new URLSearchParams({
+		query,
+		offset: String(offset),
+		count: String(count),
+		archived: String(archived)
+	});
+
+	return fetchData({
+		url: `${endpoints.caseHandoverCandidates}?${params.toString()}`,
+		method: FETCH_METHODS.GET,
+		responseHandling: [FETCH_ERRORS.FORBIDDEN],
+		...(signal && { signal })
+	});
+};
 
 export const apiGetCaseHandoverStatus = async (
 	sessionId: number

@@ -35,6 +35,7 @@ import { SessionsListSkeleton } from '../sessionsListItem/SessionsListItemSkelet
 import { isAnonymousAskerCandidate } from './sessionClassification';
 import {
 	apiGetAskerSessionList,
+	apiGetCaseHandoverCandidates,
 	apiGetCaseHandoverReasons,
 	apiGetConsultantSessionList,
 	apiRequestCaseHandoverBatchAccess,
@@ -413,6 +414,8 @@ export const SessionsList = ({
 	const [sessionToolbarSearch, setSessionToolbarSearch] = useState('');
 	const [sessionToolbarSelectedPeople, setSessionToolbarSelectedPeople] =
 		useState<string[]>([]);
+	const [caseHandoverCandidateSessions, setCaseHandoverCandidateSessions] =
+		useState<ListItemInterface[]>([]);
 	const [userDrafts, setUserDrafts] = useState<IUserDraftItem[]>([]);
 	const [caseHandoverBatchMode, setCaseHandoverBatchMode] = useState(false);
 	const [caseHandoverSelectedIds, setCaseHandoverSelectedIds] = useState<
@@ -1361,6 +1364,51 @@ export const SessionsList = ({
 			),
 		[userDrafts]
 	);
+	useEffect(() => {
+		const query = sessionToolbarSearch.trim();
+
+		if (!showConsultantToolbarActions) {
+			setCaseHandoverCandidateSessions([]);
+			return;
+		}
+
+		if (!query) {
+			if (sessionToolbarSelectedPeople.length === 0) {
+				setCaseHandoverCandidateSessions([]);
+			}
+			return;
+		}
+
+		const controller = new AbortController();
+		const timeoutId = window.setTimeout(() => {
+			apiGetCaseHandoverCandidates({
+				query,
+				count: 50,
+				archived: sessionListTab === SESSION_LIST_TAB_ARCHIVE,
+				signal: controller.signal
+			})
+				.then(({ sessions: candidateSessions }) => {
+					setCaseHandoverCandidateSessions(
+						candidateSessions || []
+					);
+				})
+				.catch((error) => {
+					if (error?.message !== FETCH_ERRORS.ABORT) {
+						setCaseHandoverCandidateSessions([]);
+					}
+				});
+		}, 250);
+
+		return () => {
+			window.clearTimeout(timeoutId);
+			controller.abort();
+		};
+	}, [
+		sessionListTab,
+		sessionToolbarSearch,
+		sessionToolbarSelectedPeople.length,
+		showConsultantToolbarActions
+	]);
 	const loadUserDrafts = useCallback(async () => {
 		if (!showMySessionToolbar) {
 			setUserDrafts([]);
@@ -1664,8 +1712,28 @@ export const SessionsList = ({
 		}
 	};
 	const finalSessionsList = React.useMemo(
-		() => (sessions || []).filter(filterSessions),
-		[filterSessions, sessions]
+		() => {
+			const baseSessions = (sessions || []).filter(filterSessions);
+			if (caseHandoverCandidateSessions.length === 0) {
+				return baseSessions;
+			}
+
+			const baseSessionIds = new Set(
+				baseSessions
+					.map((session) => session.session?.id || session.chat?.id)
+					.filter(Boolean)
+					.map(String)
+			);
+			const candidates = caseHandoverCandidateSessions
+				.filter(filterSessions)
+				.filter((session) => {
+					const id = session.session?.id || session.chat?.id;
+					return id !== undefined && !baseSessionIds.has(String(id));
+				});
+
+			return [...candidates, ...baseSessions];
+		},
+		[caseHandoverCandidateSessions, filterSessions, sessions]
 	);
 	const sessionToolbarPairs = React.useMemo(
 		() =>

@@ -68,6 +68,8 @@ export const endpoints = {
 	consultantsLanguages:
 		userServiceOrigin + '/service/users/consultants/languages',
 	caseHandoverBatch: userServiceOrigin + '/service/users/case-handover/batch',
+	caseHandoverCandidates:
+		userServiceOrigin + '/service/users/case-handover/candidates',
 	caseHandoverReasons:
 		userServiceOrigin + '/service/users/case-handover/reasons',
 	consultingTypeServiceBase:
