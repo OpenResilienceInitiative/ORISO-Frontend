@@ -1998,6 +1998,11 @@
 				"16": "Thuringia"
 			}
 		},
+		"loader": {
+			"headline": "Welcome.",
+			"copy": "We're setting up your secure counselling room …",
+			"ready": "Your counselling room is ready."
+		},
 		"stepbar": {
 			"of": "of",
 			"step": "Step"

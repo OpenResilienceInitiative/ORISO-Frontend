@@ -2136,6 +2136,11 @@
 			"cid": "Leider konnten wir Ihre Beraterin oder Ihren Berater nicht finden. Bitte wenden Sie sich an Ihre beratende Person, um einen neuen Link zu erhalten oder registrieren Sie sich hier bei Ihrer gewünschten Beratungsstelle.",
 			"tid": "Das von Ihnen gewählte Thema konnte leider nicht gefunden werden. Bitte wählen Sie bei der Registrierung erneut ein passendes Thema aus."
 		},
+		"loader": {
+			"headline": "Willkommen.",
+			"copy": "Wir richten Ihren sicheren Beratungsraum ein …",
+			"ready": "Ihr Beratungsraum ist bereit."
+		},
 		"next": "Weiter",
 		"register": "Registrieren",
 		"stepbar": {
