@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+	isAskerEnquirySubmission,
 	shouldBlockMissingLegacyE2eeKey,
 	shouldUseLegacyE2ee
 } from './messageEncryptionMode';
+import { STATUS_ENQUIRY } from '../../globalState/interfaces/SessionsDataInterface';
 
 describe('messageEncryptionMode', () => {
 	it('uses legacy E2EE for non-Matrix conversations when E2EE is enabled', () => {
@@ -49,6 +51,50 @@ describe('messageEncryptionMode', () => {
 				usesLegacyE2ee: false,
 				encrypted: true,
 				hasKeyId: false
+			})
+		).toBe(false);
+	});
+
+	it('detects asker enquiry submissions from the enquiry list type', () => {
+		expect(
+			isAskerEnquirySubmission({
+				isEnquiryListType: true,
+				sessionStatus: undefined,
+				hasAskerAuthority: true,
+				isAnonymousLiveChat: false
+			})
+		).toBe(true);
+	});
+
+	it('detects redirected asker enquiry submissions from the session status', () => {
+		expect(
+			isAskerEnquirySubmission({
+				isEnquiryListType: false,
+				sessionStatus: STATUS_ENQUIRY,
+				hasAskerAuthority: true,
+				isAnonymousLiveChat: false
+			})
+		).toBe(true);
+	});
+
+	it('does not treat anonymous live chat as an asker enquiry submission', () => {
+		expect(
+			isAskerEnquirySubmission({
+				isEnquiryListType: true,
+				sessionStatus: STATUS_ENQUIRY,
+				hasAskerAuthority: true,
+				isAnonymousLiveChat: true
+			})
+		).toBe(false);
+	});
+
+	it('requires asker authority for enquiry submissions', () => {
+		expect(
+			isAskerEnquirySubmission({
+				isEnquiryListType: true,
+				sessionStatus: STATUS_ENQUIRY,
+				hasAskerAuthority: false,
+				isAnonymousLiveChat: false
 			})
 		).toBe(false);
 	});

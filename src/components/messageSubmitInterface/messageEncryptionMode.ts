@@ -1,7 +1,16 @@
+import { STATUS_ENQUIRY } from '../../globalState/interfaces/SessionsDataInterface';
+
 interface MessageEncryptionModeInput {
 	isE2eeEnabled: boolean;
 	isMatrixSession: boolean;
 	isAskerEnquiry: boolean;
+}
+
+interface AskerEnquirySubmissionInput {
+	isEnquiryListType: boolean;
+	sessionStatus?: number;
+	hasAskerAuthority: boolean;
+	isAnonymousLiveChat: boolean;
 }
 
 interface MissingLegacyKeyGuardInput {
@@ -16,6 +25,16 @@ export const shouldUseLegacyE2ee = ({
 	isAskerEnquiry
 }: MessageEncryptionModeInput): boolean =>
 	isE2eeEnabled && !isMatrixSession && !isAskerEnquiry;
+
+export const isAskerEnquirySubmission = ({
+	isEnquiryListType,
+	sessionStatus,
+	hasAskerAuthority,
+	isAnonymousLiveChat
+}: AskerEnquirySubmissionInput): boolean =>
+	(isEnquiryListType || sessionStatus === STATUS_ENQUIRY) &&
+	hasAskerAuthority &&
+	!isAnonymousLiveChat;
 
 export const shouldBlockMissingLegacyE2eeKey = ({
 	usesLegacyE2ee,

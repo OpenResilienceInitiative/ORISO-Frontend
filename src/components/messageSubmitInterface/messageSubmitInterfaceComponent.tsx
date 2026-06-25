@@ -12,6 +12,7 @@ import { useHistory, useLocation } from 'react-router-dom';
 
 import { SendMessageButton } from './SendMessageButton';
 import {
+	isAskerEnquirySubmission,
 	shouldBlockMissingLegacyE2eeKey,
 	shouldUseLegacyE2ee
 } from './messageEncryptionMode';
@@ -1171,6 +1172,15 @@ export const MessageSubmitInterfaceComponent = ({
 
 	const isAnonymousEnquiryComposer =
 		type === SESSION_LIST_TYPES.ENQUIRY && isAnonymousChat;
+	const isAskerEnquiry = isAskerEnquirySubmission({
+		isEnquiryListType: type === SESSION_LIST_TYPES.ENQUIRY,
+		sessionStatus: activeSession.item?.status,
+		hasAskerAuthority: hasUserAuthority(
+			AUTHORITIES.ASKER_DEFAULT,
+			userData
+		),
+		isAnonymousLiveChat
+	});
 
 	const {
 		onChange: onDraftMessageChange,
@@ -2050,10 +2060,6 @@ export const MessageSubmitInterfaceComponent = ({
 					isMatrixRoom(activeSession.rid) &&
 					activeSession.item?.id
 			);
-		const isAskerEnquiry =
-			type === SESSION_LIST_TYPES.ENQUIRY &&
-			hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
-			!isAnonymousLiveChat;
 		const usesLegacyE2ee = shouldUseLegacyE2ee({
 			isE2eeEnabled,
 			isMatrixSession,
@@ -2135,17 +2141,16 @@ export const MessageSubmitInterfaceComponent = ({
 		getTypedMarkdownMessage,
 		hasMessageContent,
 		isE2eeEnabled,
+		isAskerEnquiry,
 		key,
 		keyID,
-		isAnonymousLiveChat,
 		preselectedFile,
 		sendEnquiry,
 		sendMessage,
 		selectedAudienceValues,
 		isSupervisor,
 		threadRootId,
-		type,
-		userData
+		translate
 	]);
 
 	const handleButtonClick = useCallback(() => {
@@ -2359,10 +2364,7 @@ export const MessageSubmitInterfaceComponent = ({
 	}, [history]);
 
 	const hasUploadFunctionality =
-		(type !== SESSION_LIST_TYPES.ENQUIRY ||
-			(type === SESSION_LIST_TYPES.ENQUIRY &&
-				!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData))) &&
-		!tenant?.settings?.featureAttachmentUploadDisabled;
+		!isAskerEnquiry && !tenant?.settings?.featureAttachmentUploadDisabled;
 	const currentChatType: 'anonymous' | 'oneOnOne' | 'group' | 'supervision' =
 		isSupervisor
 			? 'supervision'
