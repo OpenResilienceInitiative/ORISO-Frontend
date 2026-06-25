@@ -67,13 +67,23 @@ import { useTranslation } from 'react-i18next';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { RocketChatUsersOfRoomContext } from '../../globalState/provider/RocketChatUsersOfRoomProvider';
 import { RoomMember } from 'matrix-js-sdk';
-import { apiPutArchive, apiPutDearchive } from '../../api';
+import {
+	apiGetCaseHandoverStatus,
+	apiPutArchive,
+	apiPutDearchive,
+	CaseHandoverStatus
+} from '../../api';
 import DeleteSession from '../session/DeleteSession';
 import { Overlay, OVERLAY_FUNCTIONS } from '../overlay/Overlay';
 import { archiveSessionSuccessOverlayItem } from '../sessionMenu/sessionMenuHelpers';
 import { mobileListView } from '../app/navigationHandler';
 import LegalLinks from '../legalLinks/LegalLinks';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
+import {
+	isCaseHandoverCandidate,
+	isCaseHandoverDenied,
+	isCaseHandoverPending
+} from '../session/caseHandoverHelpers';
 interface SessionListItemProps {
 	defaultLanguage: string;
 	itemRef?: any;
@@ -81,6 +91,9 @@ interface SessionListItemProps {
 	index: number;
 	isBeforeActive?: boolean;
 	isAfterActive?: boolean;
+	caseHandoverBatchMode?: boolean;
+	caseHandoverSelected?: boolean;
+	onCaseHandoverSelect?: (sessionId: number) => void;
 }
 
 export const SessionListItemComponent = ({
@@ -89,7 +102,10 @@ export const SessionListItemComponent = ({
 	handleKeyDownLisItemContent,
 	index,
 	isBeforeActive = false,
-	isAfterActive = false
+	isAfterActive = false,
+	caseHandoverBatchMode = false,
+	caseHandoverSelected = false,
+	onCaseHandoverSelect
 }: SessionListItemProps) => {
 	const [matrixMembers, setMatrixMembers] = useState<RoomMember[]>([]);
 	const { t: translate } = useTranslation(['common']);
@@ -123,6 +139,8 @@ export const SessionListItemComponent = ({
 	const [overlayItem, setOverlayItem] = useState(null);
 	const [overlayActive, setOverlayActive] = useState(false);
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
+	const [caseHandoverStatus, setCaseHandoverStatus] =
+		useState<CaseHandoverStatus | null>(null);
 
 	// Is List Item active
 	const isChatActive = isActive({
@@ -146,6 +164,14 @@ export const SessionListItemComponent = ({
 		isMatrixRoomIdHeuristic(activeSession.item.groupId) ||
 		isMatrixRoomIdHeuristic(activeSession.item.matrixRoomId);
 	const [plainTextLastMessage, setPlainTextLastMessage] = useState(null);
+	const caseHandoverCandidate = isCaseHandoverCandidate({
+		activeSession,
+		userData,
+		type,
+		sessionListTab
+	});
+	const caseHandoverContentLocked =
+		caseHandoverCandidate && !caseHandoverStatus?.canViewContent;
 
 	// Member count for group chats (used for "+N" avatar). For non-group chats this stays 0.
 	const memberCount = activeSession.isGroup ? rcUsersContext?.total || 0 : 0;
@@ -160,6 +186,13 @@ export const SessionListItemComponent = ({
 	}, []);
 
 	useEffect(() => {
+		if (caseHandoverContentLocked) {
+			setPlainTextLastMessage(
+				translate('caseHandover.list.hiddenPreview')
+			);
+			return;
+		}
+
 		if (isMatrixBackedSession) {
 			setPlainTextLastMessage(translate('e2ee.message.encryption.text'));
 			return;
@@ -218,15 +251,74 @@ export const SessionListItemComponent = ({
 		activeSession.item.e2eLastMessage,
 		activeSession.item.lastMessage,
 		isMatrixBackedSession,
+		caseHandoverContentLocked,
 		translate,
 		ready
 	]);
+
+	useEffect(() => {
+		let cancelled = false;
+		if (!caseHandoverCandidate || !activeSession.item?.id) {
+			setCaseHandoverStatus(null);
+			return () => {
+				cancelled = true;
+			};
+		}
+
+		apiGetCaseHandoverStatus(activeSession.item.id)
+			.then((status) => {
+				if (!cancelled) {
+					setCaseHandoverStatus(status);
+				}
+			})
+			.catch(() => {
+				if (!cancelled) {
+					setCaseHandoverStatus({
+						sessionId: activeSession.item.id,
+						status: 'DENIED',
+						canViewContent: false,
+						clientConsentRequired: false
+					});
+				}
+			});
+
+		return () => {
+			cancelled = true;
+		};
+	}, [activeSession.item?.id, caseHandoverCandidate]);
 
 	const isAsker = hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
 	const isSupervisorView =
 		!isAsker &&
 		!!activeSession?.consultant?.id &&
 		activeSession.consultant.id !== userData.userId;
+	const caseHandoverListLabel = (() => {
+		if (caseHandoverStatus?.canViewContent) {
+			return translate('caseHandover.list.accessGranted');
+		}
+		if (isCaseHandoverPending(caseHandoverStatus?.status)) {
+			return translate('caseHandover.list.awaitingApproval');
+		}
+		if (isCaseHandoverDenied(caseHandoverStatus?.status)) {
+			return translate('caseHandover.list.accessDenied');
+		}
+		return translate('caseHandover.list.requestAccess');
+	})();
+	const canBatchSelectCaseHandover =
+		caseHandoverBatchMode &&
+		caseHandoverCandidate &&
+		!caseHandoverStatus?.canViewContent &&
+		!isCaseHandoverPending(caseHandoverStatus?.status);
+	const handleCaseHandoverActionClick = (
+		event: React.MouseEvent<HTMLButtonElement>
+	) => {
+		event.stopPropagation();
+		if (canBatchSelectCaseHandover && onCaseHandoverSelect) {
+			onCaseHandoverSelect(activeSession.item.id);
+			return;
+		}
+		handleOnClick();
+	};
 
 	const displayLastMessage = useMemo(() => {
 		if (!plainTextLastMessage) return plainTextLastMessage;
@@ -961,6 +1053,8 @@ export const SessionListItemComponent = ({
 				isChatActive && `sessionsListItem--active`,
 				flyoutOpen && 'sessionsListItem--menuOpen',
 				isAnonymousChat && `sessionsListItem--anonymous`,
+				caseHandoverContentLocked &&
+					'sessionsListItem--caseHandoverLocked',
 				isBeforeActive && 'sessionsListItem--beforeActive',
 				isAfterActive && 'sessionsListItem--afterActive'
 			)}
@@ -1487,67 +1581,106 @@ export const SessionListItemComponent = ({
 							listItemAskerRcId={activeSession.item.askerRcId}
 						/>
 					)}
-					{(() => {
-						/* Sessions with status ENQUIRY (Live-Chat queue)
-						   render with the dedicated Live Chat headset-wave
-						   icon + label instead of the 1-1 Beratung combined
-						   mark. The --liveChat modifier sits on the OUTER
+					{caseHandoverCandidate &&
+					!caseHandoverStatus?.canViewContent ? (
+						<button
+							type="button"
+							className={clsx(
+								'sessionsListItem__caseHandoverButton',
+								isCaseHandoverPending(
+									caseHandoverStatus?.status
+								) &&
+									'sessionsListItem__caseHandoverButton--pending',
+								isCaseHandoverDenied(
+									caseHandoverStatus?.status
+								) &&
+									'sessionsListItem__caseHandoverButton--denied',
+								caseHandoverSelected &&
+									'sessionsListItem__caseHandoverButton--selected'
+							)}
+							onClick={handleCaseHandoverActionClick}
+							disabled={
+								caseHandoverBatchMode &&
+								!canBatchSelectCaseHandover
+							}
+						>
+							{caseHandoverBatchMode && (
+								<span
+									className={clsx(
+										'sessionsListItem__caseHandoverCheckbox',
+										caseHandoverSelected &&
+											'sessionsListItem__caseHandoverCheckbox--selected'
+									)}
+									aria-hidden
+								/>
+							)}
+							{caseHandoverBatchMode
+								? translate('caseHandover.batch.selectCase')
+								: caseHandoverListLabel}
+						</button>
+					) : (
+						(() => {
+							/* Sessions with status ENQUIRY (Live-Chat queue)
+							   render with the dedicated Live Chat headset-wave
+							   icon + label instead of the 1-1 Beratung combined
+							   mark. The --liveChat modifier sits on the OUTER
 						   container so its CSS can override the base -12px
 						   right margin that would clip the text. */
-						const isLiveChatSession =
-							activeSession.item.status === STATUS_ENQUIRY;
-						if (isLiveChatSession) {
-							return (
-								<div
-									className={clsx(
-										'sessionsListItem__consultingTypeIcon',
-										'sessionsListItem__consultingTypeIcon--liveChat'
-									)}
-								>
-									<svg
-										width="22"
-										height="19"
-										viewBox="0 0 22 19"
-										fill="none"
-										xmlns="http://www.w3.org/2000/svg"
-										aria-hidden="true"
-									>
-										<path
-											d="M0 18V6L8 0L14.95 5.19175C14.55 5.20842 14.1639 5.25008 13.7917 5.31675C13.4194 5.38342 13.0527 5.47783 12.6917 5.6L8 2.08325L1.66675 6.83325V16.3333H8.11675C8.25558 16.6444 8.41525 16.9361 8.59575 17.2083C8.77642 17.4806 8.97225 17.7445 9.18325 18H0ZM10.8333 17.5833C10.2056 16.9832 9.71533 16.2847 9.3625 15.4875C9.00967 14.6903 8.83325 13.8612 8.83325 13C8.83325 11.2278 9.44992 9.72925 10.6832 8.50425C11.9166 7.27925 13.4111 6.66675 15.1667 6.66675C16.9389 6.66675 18.4375 7.27925 19.6625 8.50425C20.8875 9.72925 21.5 11.2278 21.5 13C21.5 13.8612 21.3306 14.6876 20.9918 15.4792C20.6528 16.2709 20.1638 16.9639 19.525 17.5583L18.7 16.7332C19.2388 16.2499 19.6458 15.6861 19.9207 15.0418C20.1957 14.3973 20.3333 13.7167 20.3333 13C20.3333 11.5555 19.8333 10.3332 18.8333 9.33325C17.8333 8.33325 16.6111 7.83325 15.1667 7.83325C13.7389 7.83325 12.5208 8.33325 11.5125 9.33325C10.5042 10.3332 10 11.5555 10 13C10 13.7167 10.1431 14.3986 10.4292 15.0457C10.7153 15.6931 11.1249 16.2584 11.6582 16.7417L10.8333 17.5833ZM12.6083 15.7917C12.2083 15.4306 11.8958 15.0083 11.6708 14.525C11.4458 14.0417 11.3333 13.5333 11.3333 13C11.3333 11.9278 11.7083 11.0209 12.4583 10.2793C13.2083 9.53758 14.1111 9.16675 15.1667 9.16675C16.2389 9.16675 17.1458 9.53758 17.8875 10.2793C18.6292 11.0209 19 11.9278 19 13C19 13.5278 18.8958 14.0362 18.6875 14.525C18.4792 15.0138 18.1722 15.4388 17.7667 15.8L16.925 14.9832C17.2138 14.7277 17.4374 14.4277 17.5958 14.0832C17.7541 13.7389 17.8333 13.3778 17.8333 13C17.8333 12.2555 17.5749 11.6249 17.0583 11.1082C16.5416 10.5916 15.9111 10.3333 15.1667 10.3333C14.4334 10.3333 13.8056 10.5916 13.2833 11.1082C12.7611 11.6249 12.5 12.2555 12.5 13C12.5 13.3778 12.5833 13.7362 12.75 14.075C12.9167 14.4138 13.1389 14.7111 13.4167 14.9668L12.6083 15.7917ZM14.5833 19V13.9168C14.4332 13.8056 14.3124 13.6708 14.2208 13.5125C14.1291 13.3542 14.0833 13.1833 14.0833 13C14.0833 12.6945 14.1888 12.4376 14.4 12.2292C14.6112 12.0209 14.8667 11.9167 15.1667 11.9167C15.4722 11.9167 15.7292 12.0209 15.9375 12.2292C16.1458 12.4376 16.25 12.6945 16.25 13C16.25 13.1833 16.2097 13.3556 16.1292 13.5168C16.0486 13.6778 15.9222 13.8111 15.75 13.9168V19H14.5833Z"
-											fill="#4B515A"
-										/>
-									</svg>
-									<span className="sessionsListItem__consultingTypeIcon--liveChatLabel">
-										{translate(
-											'sessionList.item.sessionType.liveChat',
-											'Live Chat'
+							const isLiveChatSession =
+								activeSession.item.status === STATUS_ENQUIRY;
+							if (isLiveChatSession) {
+								return (
+									<div
+										className={clsx(
+											'sessionsListItem__consultingTypeIcon',
+											'sessionsListItem__consultingTypeIcon--liveChat'
 										)}
-									</span>
+									>
+										<svg
+											width="22"
+											height="19"
+											viewBox="0 0 22 19"
+											fill="none"
+											xmlns="http://www.w3.org/2000/svg"
+											aria-hidden="true"
+										>
+											<path
+												d="M0 18V6L8 0L14.95 5.19175C14.55 5.20842 14.1639 5.25008 13.7917 5.31675C13.4194 5.38342 13.0527 5.47783 12.6917 5.6L8 2.08325L1.66675 6.83325V16.3333H8.11675C8.25558 16.6444 8.41525 16.9361 8.59575 17.2083C8.77642 17.4806 8.97225 17.7445 9.18325 18H0ZM10.8333 17.5833C10.2056 16.9832 9.71533 16.2847 9.3625 15.4875C9.00967 14.6903 8.83325 13.8612 8.83325 13C8.83325 11.2278 9.44992 9.72925 10.6832 8.50425C11.9166 7.27925 13.4111 6.66675 15.1667 6.66675C16.9389 6.66675 18.4375 7.27925 19.6625 8.50425C20.8875 9.72925 21.5 11.2278 21.5 13C21.5 13.8612 21.3306 14.6876 20.9918 15.4792C20.6528 16.2709 20.1638 16.9639 19.525 17.5583L18.7 16.7332C19.2388 16.2499 19.6458 15.6861 19.9207 15.0418C20.1957 14.3973 20.3333 13.7167 20.3333 13C20.3333 11.5555 19.8333 10.3332 18.8333 9.33325C17.8333 8.33325 16.6111 7.83325 15.1667 7.83325C13.7389 7.83325 12.5208 8.33325 11.5125 9.33325C10.5042 10.3332 10 11.5555 10 13C10 13.7167 10.1431 14.3986 10.4292 15.0457C10.7153 15.6931 11.1249 16.2584 11.6582 16.7417L10.8333 17.5833ZM12.6083 15.7917C12.2083 15.4306 11.8958 15.0083 11.6708 14.525C11.4458 14.0417 11.3333 13.5333 11.3333 13C11.3333 11.9278 11.7083 11.0209 12.4583 10.2793C13.2083 9.53758 14.1111 9.16675 15.1667 9.16675C16.2389 9.16675 17.1458 9.53758 17.8875 10.2793C18.6292 11.0209 19 11.9278 19 13C19 13.5278 18.8958 14.0362 18.6875 14.525C18.4792 15.0138 18.1722 15.4388 17.7667 15.8L16.925 14.9832C17.2138 14.7277 17.4374 14.4277 17.5958 14.0832C17.7541 13.7389 17.8333 13.3778 17.8333 13C17.8333 12.2555 17.5749 11.6249 17.0583 11.1082C16.5416 10.5916 15.9111 10.3333 15.1667 10.3333C14.4334 10.3333 13.8056 10.5916 13.2833 11.1082C12.7611 11.6249 12.5 12.2555 12.5 13C12.5 13.3778 12.5833 13.7362 12.75 14.075C12.9167 14.4138 13.1389 14.7111 13.4167 14.9668L12.6083 15.7917ZM14.5833 19V13.9168C14.4332 13.8056 14.3124 13.6708 14.2208 13.5125C14.1291 13.3542 14.0833 13.1833 14.0833 13C14.0833 12.6945 14.1888 12.4376 14.4 12.2292C14.6112 12.0209 14.8667 11.9167 15.1667 11.9167C15.4722 11.9167 15.7292 12.0209 15.9375 12.2292C16.1458 12.4376 16.25 12.6945 16.25 13C16.25 13.1833 16.2097 13.3556 16.1292 13.5168C16.0486 13.6778 15.9222 13.8111 15.75 13.9168V19H14.5833Z"
+												fill="#4B515A"
+											/>
+										</svg>
+										<span className="sessionsListItem__consultingTypeIcon--liveChatLabel">
+											{translate(
+												'sessionList.item.sessionType.liveChat',
+												'Live Chat'
+											)}
+										</span>
+									</div>
+								);
+							}
+							return (
+								<div className="sessionsListItem__consultingTypeIcon">
+									<img
+										src={
+											activeSession.isGroup
+												? teamImage
+												: oneOnOneImage
+										}
+										alt={
+											activeSession.isGroup
+												? 'Team Beratung'
+												: '1-1 Beratung'
+										}
+										className={
+											activeSession.isGroup
+												? 'sessionsListItem__consultingTypeIcon--team'
+												: 'sessionsListItem__consultingTypeIcon--oneOnOne'
+										}
+									/>
 								</div>
 							);
-						}
-						return (
-							<div className="sessionsListItem__consultingTypeIcon">
-								<img
-									src={
-										activeSession.isGroup
-											? teamImage
-											: oneOnOneImage
-									}
-									alt={
-										activeSession.isGroup
-											? 'Team Beratung'
-											: '1-1 Beratung'
-									}
-									className={
-										activeSession.isGroup
-											? 'sessionsListItem__consultingTypeIcon--team'
-											: 'sessionsListItem__consultingTypeIcon--oneOnOne'
-									}
-								/>
-							</div>
-						);
-					})()}
+						})()
+					)}
 				</div>
 			</div>
 			{overlayActive && overlayItem && (

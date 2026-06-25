@@ -98,6 +98,120 @@ $sessionShellSurface: var(--m3-surface-container-high, #eae7e8);
 		flex-direction: column;
 	}
 
+	&__caseHandoverBatch {
+		padding: 0 24px 12px;
+		background: $sessionShellSurface;
+	}
+
+	&__caseHandoverBatchToggle {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-height: 40px;
+		padding: 0 18px;
+		border: 0;
+		border-radius: 20px;
+		background: #c4000b;
+		color: #ffffff;
+		font-weight: 700;
+		cursor: pointer;
+
+		&:disabled {
+			background: #d8dde3;
+			color: #6d747d;
+			cursor: not-allowed;
+		}
+	}
+
+	&__caseHandoverBatchPanel {
+		padding: 14px;
+		border-radius: 18px;
+		background: #ffffff;
+		border: 1px solid #ffd8d4;
+		box-shadow: 0 1px 3px rgba(45, 34, 33, 0.08);
+	}
+
+	&__caseHandoverBatchHeader {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px;
+		margin-bottom: 12px;
+		color: #30343a;
+		font-size: 14px;
+	}
+
+	&__caseHandoverBatchReasons {
+		display: grid;
+		gap: 8px;
+		margin-bottom: 10px;
+
+		label {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			min-height: 34px;
+			padding: 6px 10px;
+			border-radius: 12px;
+			background: #f5f3f4;
+			font-size: 13px;
+			color: #30343a;
+		}
+
+		input {
+			accent-color: #c4000b;
+		}
+	}
+
+	&__caseHandoverBatchExplanation {
+		display: block;
+		width: 100%;
+		min-height: 84px;
+		padding: 12px;
+		border: 1px solid #ffb4ab;
+		border-radius: 14px;
+		resize: vertical;
+		font: inherit;
+		font-size: 13px;
+		color: #202124;
+	}
+
+	&__caseHandoverBatchActions {
+		display: flex;
+		justify-content: flex-end;
+		gap: 8px;
+		margin-top: 12px;
+
+		button {
+			min-height: 36px;
+			padding: 0 14px;
+			border: 0;
+			border-radius: 18px;
+			background: #eef1f4;
+			color: #4b515a;
+			font-weight: 700;
+			cursor: pointer;
+		}
+
+		.sessionsList__caseHandoverBatchSubmit {
+			background: #c4000b;
+			color: #ffffff;
+
+			&:disabled {
+				background: #d8dde3;
+				color: #6d747d;
+				cursor: not-allowed;
+			}
+		}
+	}
+
+	&__caseHandoverBatchSummary {
+		margin-top: 10px;
+		color: #4b515a;
+		font-size: 13px;
+		font-weight: 600;
+	}
+
 	&__selectWrapper {
 		width: 100%;
 		background-color: $sessionShellSurface;
