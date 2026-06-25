@@ -1386,9 +1386,7 @@ export const SessionsList = ({
 		}
 
 		if (!query) {
-			if (sessionToolbarSelectedPeople.length === 0) {
-				setCaseHandoverCandidateSessions([]);
-			}
+			setCaseHandoverCandidateSessions([]);
 			return;
 		}
 
@@ -1401,9 +1399,7 @@ export const SessionsList = ({
 				signal: controller.signal
 			})
 				.then(({ sessions: candidateSessions }) => {
-					setCaseHandoverCandidateSessions(
-						candidateSessions || []
-					);
+					setCaseHandoverCandidateSessions(candidateSessions || []);
 				})
 				.catch((error) => {
 					if (error?.message !== FETCH_ERRORS.ABORT) {
@@ -1416,12 +1412,7 @@ export const SessionsList = ({
 			window.clearTimeout(timeoutId);
 			controller.abort();
 		};
-	}, [
-		sessionListTab,
-		sessionToolbarSearch,
-		sessionToolbarSelectedPeople.length,
-		showConsultantToolbarActions
-	]);
+	}, [sessionListTab, sessionToolbarSearch, showConsultantToolbarActions]);
 	const loadUserDrafts = useCallback(async () => {
 		if (!showMySessionToolbar) {
 			setUserDrafts([]);
@@ -1724,30 +1715,27 @@ export const SessionsList = ({
 			}
 		}
 	};
-	const finalSessionsList = React.useMemo(
-		() => {
-			const baseSessions = (sessions || []).filter(filterSessions);
-			if (caseHandoverCandidateSessions.length === 0) {
-				return baseSessions;
-			}
+	const finalSessionsList = React.useMemo(() => {
+		const baseSessions = (sessions || []).filter(filterSessions);
+		if (caseHandoverCandidateSessions.length === 0) {
+			return baseSessions;
+		}
 
-			const baseSessionIds = new Set(
-				baseSessions
-					.map((session) => session.session?.id || session.chat?.id)
-					.filter(Boolean)
-					.map(String)
-			);
-			const candidates = caseHandoverCandidateSessions
-				.filter(filterSessions)
-				.filter((session) => {
-					const id = session.session?.id || session.chat?.id;
-					return id !== undefined && !baseSessionIds.has(String(id));
-				});
+		const baseSessionIds = new Set(
+			baseSessions
+				.map((session) => session.session?.id || session.chat?.id)
+				.filter(Boolean)
+				.map(String)
+		);
+		const candidates = caseHandoverCandidateSessions
+			.filter(filterSessions)
+			.filter((session) => {
+				const id = session.session?.id || session.chat?.id;
+				return id !== undefined && !baseSessionIds.has(String(id));
+			});
 
-			return [...candidates, ...baseSessions];
-		},
-		[caseHandoverCandidateSessions, filterSessions, sessions]
-	);
+		return [...candidates, ...baseSessions];
+	}, [caseHandoverCandidateSessions, filterSessions, sessions]);
 	const sessionToolbarPairs = React.useMemo(
 		() =>
 			finalSessionsList.map((raw) => ({
