@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { useState, useEffect, useRef } from 'react';
 import { InputBaseComponentProps, TextField, Typography } from '@mui/material';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useTranslation } from 'react-i18next';
 
 export interface InputProps {
@@ -262,23 +262,26 @@ export const Input = ({
 					{successMesssage}
 				</Typography>
 			)}
-			{multipleCriteria?.map((criteria) => (
-				<Typography
-					key={criteria.info}
-					variant="body2"
-					sx={{
-						mt: '8px',
-						fontSize: '16px',
-						lineHeight: '16px',
-						color: getMultipleCriteriaDesign(criteria).color,
-						display: 'flex',
-						alignItems: 'center'
-					}}
-				>
-					{getMultipleCriteriaDesign(criteria).icon}{' '}
-					{t(criteria.info)}
-				</Typography>
-			))}
+			{multipleCriteria?.map((criteria) => {
+				const criteriaDesign = getMultipleCriteriaDesign(criteria);
+				return (
+					<Typography
+						key={criteria.info}
+						variant="body2"
+						sx={{
+							mt: '8px',
+							fontSize: '16px',
+							lineHeight: '16px',
+							color: criteriaDesign.color,
+							display: 'flex',
+							alignItems: 'center'
+						}}
+					>
+						{criteriaDesign.icon}
+						<span>{t(criteria.info)}</span>
+					</Typography>
+				);
+			})}
 		</>
 	);
 };

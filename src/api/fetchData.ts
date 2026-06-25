@@ -52,6 +52,9 @@ export const FETCH_SUCCESS = {
 	CONTENT: 'CONTENT'
 };
 
+const MATRIX_MIGRATION_DUMMY_RC_TOKEN = 'matrix-migration-dummy-token';
+const MATRIX_MIGRATION_DUMMY_RC_USER_ID = 'matrix-migration-dummy-user';
+
 const invalidateStaleAuthSession = () => {
 	removeAllCookies();
 	removeTokenExpiryFromLocalStorage();
@@ -131,27 +134,29 @@ export const fetchData = ({
 		// but no longer exists after Matrix migration. Send dummy token.
 		const rcHeaders = rcValidation
 			? {
-					rcToken:
+					RCToken:
 						getValueFromCookie('rc_token') ||
-						'matrix-migration-dummy-token',
-					...(getValueFromCookie('rc_uid') && {
-						RCUserId: getValueFromCookie('rc_uid')
-					})
+						MATRIX_MIGRATION_DUMMY_RC_TOKEN,
+					RCUserId:
+						getValueFromCookie('rc_uid') ||
+						MATRIX_MIGRATION_DUMMY_RC_USER_ID
 				}
 			: null;
 
-		const localDevelopmentHeader =
-			isLocalDevelopment &&
-			process.env.REACT_APP_CSRF_WHITELIST_HEADER_PROPERTY
-				? {
-						[process.env.REACT_APP_CSRF_WHITELIST_HEADER_PROPERTY]:
-							csrfToken
-					}
-				: isLocalDevelopment
-					? {
-							'X-WHITELIST-HEADER': csrfToken
-						}
-					: null;
+		const localDevelopmentHeader = isLocalDevelopment
+			? {
+					'X-WHITELIST-HEADER': csrfToken,
+					...(process.env.REACT_APP_CSRF_WHITELIST_HEADER_PROPERTY &&
+					process.env.REACT_APP_CSRF_WHITELIST_HEADER_PROPERTY !==
+						'X-WHITELIST-HEADER'
+						? {
+								[process.env
+									.REACT_APP_CSRF_WHITELIST_HEADER_PROPERTY]:
+									csrfToken
+							}
+						: {})
+				}
+			: null;
 
 		const controller = new AbortController();
 		const timeoutMs = timeout ?? 30_000;

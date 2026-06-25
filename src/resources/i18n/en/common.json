@@ -2044,6 +2044,8 @@
 			}
 		},
 		"back": "Back",
+		"consultantlink": "Your counselor has invited you to online counseling. Please register to get in touch with your counselor.",
+		"consultantlinkAbsent": "This counselor is currently absent. You can still send your request to the counseling center.",
 		"next": "Next",
 		"register": "Register",
 		"title": {

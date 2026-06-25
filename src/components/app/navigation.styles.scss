@@ -119,7 +119,7 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 				}
 
 				.navigation__item--active .navigation__title--figma {
-					color: #cc1e1c;
+					color: var(--m3-primary, #cc1e1c);
 					font-weight: 700;
 				}
 
@@ -161,13 +161,13 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 					}
 
 					&--row.navigation__icon-slot--active {
-						background: #ffdad5;
-						border: 1px solid #cc1e1c;
+						background: var(--m3-primary-fixed, #ffdad5);
+						border: 1px solid var(--m3-primary, #cc1e1c);
 					}
 
 					&--tile.navigation__icon-slot--active {
-						background: #ffdad5;
-						border: 1px solid #cc1e1c;
+						background: var(--m3-primary-fixed, #ffdad5);
+						border: 1px solid var(--m3-primary, #cc1e1c);
 					}
 
 					/* Live-chat availability toggle — defaults to inactive (grey,
@@ -217,13 +217,13 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 					}
 
 					&--logout.navigation__icon-slot--active {
-						background: #ffdad5;
-						border: 1px solid #cc1e1c;
+						background: var(--m3-primary-fixed, #ffdad5);
+						border: 1px solid var(--m3-primary, #cc1e1c);
 					}
 
 					&--logout.navigation__icon-slot--active
 						.navigation__icon__single {
-						color: #cc1e1c;
+						color: var(--m3-primary, #cc1e1c);
 					}
 
 					&__inner {
@@ -279,19 +279,19 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 
 				.navigation__icon-slot--row.navigation__icon-slot--active
 					.navigation__globe-svg {
-					color: #cc1e1c;
+					color: var(--m3-primary, #cc1e1c);
 				}
 
 				.navigation__item--active.navigation__item--nav-row
 					.navigation__icon__single,
 				.navigation__icon-slot--row.navigation__icon-slot--active
 					.navigation__icon__single {
-					color: #cc1e1c;
+					color: var(--m3-primary, #cc1e1c);
 				}
 
 				.navigation__item--active.navigation__item--nav-tile
 					.navigation__icon__single {
-					color: #cc1e1c;
+					color: var(--m3-primary, #cc1e1c);
 				}
 
 				.navigation__icon-slot--row .navigation__icon__outline {
@@ -332,10 +332,10 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 
 				/* Badge: corner dot, half-in/half-out; position:absolute doesn’t affect flex centering */
 				.navigation__icon-slot .navigation__item__count--figma {
-					color: #cc1e1c;
+					color: var(--m3-primary, #cc1e1c);
 					background-color: #fff;
 					outline: none;
-					border: 2px solid #cc1e1c;
+					border: 2px solid var(--m3-primary, #cc1e1c);
 					box-shadow: none;
 					left: auto;
 					top: -5px;
@@ -639,7 +639,7 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 
 		&--active {
 			@include breakpoint($fromLarge) {
-				background: #ffdad5;
+				background: var(--m3-primary-fixed, #ffdad5);
 			}
 
 			.navigation__icon__background::after {

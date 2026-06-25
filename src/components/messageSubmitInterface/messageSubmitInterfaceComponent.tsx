@@ -11,6 +11,10 @@ import { createPortal } from 'react-dom';
 import { useHistory, useLocation } from 'react-router-dom';
 
 import { SendMessageButton } from './SendMessageButton';
+import {
+	shouldBlockMissingLegacyE2eeKey,
+	shouldUseLegacyE2ee
+} from './messageEncryptionMode';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { STATUS_ENQUIRY } from '../../globalState/interfaces/SessionsDataInterface';
 import {
@@ -2038,8 +2042,30 @@ export const MessageSubmitInterfaceComponent = ({
 		const attachmentInput: any = attachmentInputRef.current;
 		const selectedFile = attachmentInput && attachmentInput.files[0];
 		const attachment = preselectedFile || selectedFile;
+		const isMatrixSession =
+			Boolean(activeSession.item?.matrixRoomId) ||
+			Boolean(
+				activeSession.rid &&
+					isMatrixRoom(activeSession.rid) &&
+					activeSession.item?.id
+			);
+		const isAskerEnquiry =
+			type === SESSION_LIST_TYPES.ENQUIRY &&
+			hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
+			!isAnonymousLiveChat;
+		const usesLegacyE2ee = shouldUseLegacyE2ee({
+			isE2eeEnabled,
+			isMatrixSession,
+			isAskerEnquiry
+		});
 
-		if (isE2eeEnabled && encrypted && !keyID) {
+		if (
+			shouldBlockMissingLegacyE2eeKey({
+				usesLegacyE2ee,
+				encrypted,
+				hasKeyId: !!keyID
+			})
+		) {
 			// console.error("Can't send message without key");
 			return;
 		}
@@ -2069,8 +2095,8 @@ export const MessageSubmitInterfaceComponent = ({
 		if (prefixParts.length && message.length > 0) {
 			message = `${prefixParts.join(' ')} ${message}`;
 		}
-		let isEncrypted = isE2eeEnabled;
-		if (message.length > 0 && isE2eeEnabled) {
+		let isEncrypted = usesLegacyE2ee;
+		if (message.length > 0 && isEncrypted) {
 			try {
 				message = await encryptText(message, keyID, key);
 			} catch (e: any) {
@@ -2092,11 +2118,7 @@ export const MessageSubmitInterfaceComponent = ({
 			}
 		}
 
-		if (
-			type === SESSION_LIST_TYPES.ENQUIRY &&
-			hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
-			!isAnonymousLiveChat
-		) {
+		if (isAskerEnquiry) {
 			await sendEnquiry(message, isEncrypted);
 			return;
 		}
@@ -2104,6 +2126,9 @@ export const MessageSubmitInterfaceComponent = ({
 		await sendMessage(message, attachment, isEncrypted);
 	}, [
 		encrypted,
+		activeSession.item?.id,
+		activeSession.item?.matrixRoomId,
+		activeSession.rid,
 		encodeAlignmentForTransport,
 		encodeHighlightColorsForTransport,
 		getTypedMarkdownMessage,

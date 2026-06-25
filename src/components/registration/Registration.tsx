@@ -206,7 +206,7 @@ export const Registration = () => {
 			termsAccepted: 'true',
 			preferredLanguage: locale || 'de',
 			consultingType: registrationData.agency.consultingType,
-			...(preselectedConsultant
+			...(preselectedConsultant && !preselectedConsultant.absent
 				? { consultantId: preselectedConsultant?.consultantId }
 				: {})
 		};

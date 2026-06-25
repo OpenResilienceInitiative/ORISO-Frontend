@@ -121,7 +121,7 @@ export const endpoints = {
 	setAbsence: apiUrl + '/service/users/consultants/absences',
 	startVideoCall: apiUrl + '/service/videocalls/new',
 	tenantServiceBase: apiUrl + '/service/tenant',
-	topicGroups: apiUrl + '/service/consultingtypes/groups',
+	topicGroups: apiUrl + '/service/topic-groups',
 	topicsData: apiUrl + '/service/topic/public/',
 	twoFactorAuth: apiUrl + '/service/users/2fa',
 	twoFactorAuthApp: apiUrl + '/service/users/2fa/app',

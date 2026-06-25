@@ -2127,6 +2127,7 @@
 		},
 		"back": "Zurück",
 		"consultantlink": "Ihre Beraterin oder Ihr Berater hat Sie zur Online-Beratung eingeladen! Bitte registrieren Sie sich, um mit Ihrer beratenden Person in Kontakt zu treten.",
+		"consultantlinkAbsent": "Diese beratende Person ist derzeit abwesend. Sie können Ihre Anfrage trotzdem an die Beratungsstelle senden.",
 		"errors": {
 			"ups": {
 				"text": "Es tut uns leid, da ist wohl etwas schiefgelaufen. Laden Sie die Seite neu und versuchen Sie es erneut.",

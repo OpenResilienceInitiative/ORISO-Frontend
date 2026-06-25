@@ -3,12 +3,20 @@
  * to every style file and scans for leftovers.
  *
  * Usage:
- *   node scripts/theme-migration/sweep.js --apply   rewrite files
- *   node scripts/theme-migration/sweep.js --check   list violations
+ *   node scripts/theme-migration/sweep.js --apply      rewrite files (css vars + sass vars + hex)
+ *   node scripts/theme-migration/sweep.js --apply-hex  rewrite hex literals only
+ *   node scripts/theme-migration/sweep.js --check       list violations
  *
  * The same scan powers the completeness test (#25) and the fallback
  * check (#26) in src/utils/theme/m3Sweep.test.ts, so "done" is defined
  * in exactly one place.
+ *
+ * Hex layer (#143): mapping.hexConversions is value-matched to the dev
+ * token values — every emitted `var(--m3-<role>, #legacy)` resolves to
+ * <=JND of #legacy on dev today (token value == legacy, or token still
+ * undefined so the fallback wins). Roles are looked up directly; there is
+ * no property re-routing, so the rendered colour cannot drift. Hexes with
+ * no zero-change token are left raw (mapping.rawHexNotMigrated).
  */
 'use strict';
 
@@ -107,7 +115,98 @@ const convertSassVars = (content) => {
 	return out.join('\n');
 };
 
-/** Scan one file for leftover legacy usages (post-sweep must be empty). */
+const normalizeHexKey = (hex) => {
+	let h = hex.toLowerCase();
+	if (h.length === 4) {
+		h = `#${h[1]}${h[1]}${h[2]}${h[2]}${h[3]}${h[3]}`;
+	}
+	return h;
+};
+
+const untouchedHex = new Set(
+	(mapping.untouchedHex || []).map((h) => normalizeHexKey(h))
+);
+
+const hexConversions = Object.fromEntries(
+	Object.entries(mapping.hexConversions || {}).map(([hex, role]) => [
+		normalizeHexKey(hex),
+		role
+	])
+);
+
+const hexLiteralPattern = /#([0-9a-fA-F]{3,8})\b/g;
+
+/** True when the hex at `index` is the fallback inside var(--m3-*, #hex). */
+const isInsideM3Fallback = (line, index) => {
+	const varStart = line.lastIndexOf('var(', index);
+	if (varStart === -1) return false;
+	const segment = line.slice(varStart);
+	if (!/^var\(\s*--m3-/.test(segment)) return false;
+	const close = segment.indexOf(')');
+	if (close === -1) return false;
+	const inner = segment.slice(4, close);
+	const comma = inner.indexOf(',');
+	return comma !== -1 && index >= varStart + 4 + comma + 1;
+};
+
+/** User-chosen highlight palette (data-color) is content, not theme chrome. */
+const isHighlightPaletteLine = (line) =>
+	/data-color\s*=/.test(line) ||
+	/messageItem__highlight\[data-color/.test(line);
+
+/**
+ * Converts mapped bare hex literals in CSS declaration values to
+ * `var(--m3-<role>, #legacy)`. Only depth-0 declaration values are
+ * touched; hexes inside functions, Sass var definitions, existing var()
+ * fallbacks, the user highlight palette, and mapping.untouchedHex stay
+ * raw. The role is looked up directly (mapping is value-matched), so the
+ * emitted token resolves to the same colour it replaces.
+ */
+const convertHexLiterals = (content) => {
+	const lines = content.split('\n');
+	let depth = 0;
+	const out = lines.map((line) => {
+		const lineStart = depth;
+		const propMatch = line.match(/^\s*([a-z-]+)\s*:/);
+		const declaration = Boolean(propMatch);
+		const sassDefinition = /^\s*\$/.test(line);
+		let rebuilt = '';
+		let cursor = 0;
+		hexLiteralPattern.lastIndex = 0;
+		let match = hexLiteralPattern.exec(line);
+		while (match) {
+			const original = match[0];
+			const key = normalizeHexKey(original);
+			const before = line.slice(0, match.index);
+			const depthHere =
+				lineStart +
+				(before.match(/\(/g) || []).length -
+				(before.match(/\)/g) || []).length;
+			const role = hexConversions[key];
+			const shouldConvert =
+				declaration &&
+				!sassDefinition &&
+				depthHere === 0 &&
+				role &&
+				!untouchedHex.has(key) &&
+				!isInsideM3Fallback(line, match.index) &&
+				!isHighlightPaletteLine(line);
+			if (shouldConvert) {
+				rebuilt += line.slice(cursor, match.index);
+				rebuilt += `var(${role}, ${original})`;
+				cursor = match.index + original.length;
+			}
+			match = hexLiteralPattern.exec(line);
+		}
+		rebuilt += line.slice(cursor);
+		depth +=
+			(line.match(/\(/g) || []).length - (line.match(/\)/g) || []).length;
+		return rebuilt;
+	});
+	return out.join('\n');
+};
+
+/** Scan one file for leftover legacy css-var / sass-var usages. */
 const scanFile = (file) => {
 	const content = fs.readFileSync(file, 'utf8');
 	const violations = [];
@@ -177,13 +276,19 @@ const scan = () => {
 	return violations;
 };
 
-const apply = () => {
+const apply = (hexOnly = false) => {
 	let changed = 0;
 	for (const file of listStyleFiles()) {
 		const original = fs.readFileSync(file, 'utf8');
-		let next = renameCssVars(original);
+		let next = original;
+		if (!hexOnly) {
+			next = renameCssVars(next);
+		}
 		if (!isExcluded(file)) {
-			next = convertSassVars(next);
+			if (!hexOnly) {
+				next = convertSassVars(next);
+			}
+			next = convertHexLiterals(next);
 		}
 		if (next !== original) {
 			fs.writeFileSync(file, next);
@@ -198,8 +303,11 @@ module.exports = { apply, scan, listStyleFiles, mapping };
 if (require.main === module) {
 	const mode = process.argv[2];
 	if (mode === '--apply') {
-		const changed = apply();
+		const changed = apply(false);
 		process.stdout.write(`rewrote ${changed} files\n`);
+	} else if (mode === '--apply-hex') {
+		const changed = apply(true);
+		process.stdout.write(`rewrote ${changed} files (hex only)\n`);
 	} else {
 		const violations = scan();
 		for (const v of violations) {
