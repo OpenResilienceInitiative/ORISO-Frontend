@@ -5,7 +5,8 @@ import {
 	apiGetCaseHandoverReasons,
 	apiRequestCaseHandoverAccess,
 	CaseHandoverReason,
-	CaseHandoverStatus
+	CaseHandoverStatus,
+	FETCH_ERRORS
 } from '../../api';
 import {
 	isCaseHandoverDenied,
@@ -69,7 +70,7 @@ export const CaseHandoverGate = ({
 			})
 			.catch((requestError) => {
 				const message =
-					requestError?.message === 'FORBIDDEN'
+					requestError?.message === FETCH_ERRORS.FORBIDDEN
 						? translate('caseHandover.error.forbidden')
 						: translate('caseHandover.error.failed');
 				setError(message);

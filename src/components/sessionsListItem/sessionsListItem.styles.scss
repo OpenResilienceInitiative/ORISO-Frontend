@@ -113,13 +113,6 @@ $session-postcode-border: #646d78;
 		}
 	}
 
-	&--caseHandoverLocked {
-		.sessionsListItem__content {
-			background: #ffffff;
-			border-color: #ffd8d4;
-		}
-	}
-
 	&__content {
 		width: calc(100% - 48px);
 		max-width: calc(100% - 48px);
@@ -171,6 +164,12 @@ $session-postcode-border: #646d78;
 
 	&:not(.sessionsListItem--active) .sessionsListItem__content {
 		border-color: $session-light-border;
+	}
+
+	&--caseHandoverLocked:not(.sessionsListItem--active)
+		.sessionsListItem__content {
+		background: #ffffff;
+		border-color: #ffd8d4;
 	}
 
 	&:first-child:not(.sessionsListItem--active) .sessionsListItem__content {

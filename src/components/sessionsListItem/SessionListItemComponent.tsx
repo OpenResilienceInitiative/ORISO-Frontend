@@ -80,6 +80,7 @@ import { mobileListView } from '../app/navigationHandler';
 import LegalLinks from '../legalLinks/LegalLinks';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import {
+	isCaseHandoverAccessControlled,
 	isCaseHandoverCandidate,
 	isCaseHandoverDenied,
 	isCaseHandoverPending
@@ -164,6 +165,11 @@ export const SessionListItemComponent = ({
 		isMatrixRoomIdHeuristic(activeSession.item.groupId) ||
 		isMatrixRoomIdHeuristic(activeSession.item.matrixRoomId);
 	const [plainTextLastMessage, setPlainTextLastMessage] = useState(null);
+	const caseHandoverAccessControlled = isCaseHandoverAccessControlled({
+		activeSession,
+		userData,
+		type
+	});
 	const caseHandoverCandidate = isCaseHandoverCandidate({
 		activeSession,
 		userData,
@@ -171,7 +177,7 @@ export const SessionListItemComponent = ({
 		sessionListTab
 	});
 	const caseHandoverContentLocked =
-		caseHandoverCandidate && !caseHandoverStatus?.canViewContent;
+		caseHandoverAccessControlled && !caseHandoverStatus?.canViewContent;
 
 	// Member count for group chats (used for "+N" avatar). For non-group chats this stays 0.
 	const memberCount = activeSession.isGroup ? rcUsersContext?.total || 0 : 0;
@@ -258,7 +264,7 @@ export const SessionListItemComponent = ({
 
 	useEffect(() => {
 		let cancelled = false;
-		if (!caseHandoverCandidate || !activeSession.item?.id) {
+		if (!caseHandoverAccessControlled || !activeSession.item?.id) {
 			setCaseHandoverStatus(null);
 			return () => {
 				cancelled = true;
@@ -285,7 +291,7 @@ export const SessionListItemComponent = ({
 		return () => {
 			cancelled = true;
 		};
-	}, [activeSession.item?.id, caseHandoverCandidate]);
+	}, [activeSession.item?.id, caseHandoverAccessControlled]);
 
 	const isAsker = hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
 	const isSupervisorView =
@@ -1609,6 +1615,14 @@ export const SessionListItemComponent = ({
 									'sessionsListItem__caseHandoverButton--selected'
 							)}
 							onClick={handleCaseHandoverActionClick}
+							onKeyDown={(event) => {
+								if (
+									event.key === 'Enter' ||
+									event.key === ' '
+								) {
+									event.stopPropagation();
+								}
+							}}
 							disabled={
 								caseHandoverBatchMode &&
 								!canBatchSelectCaseHandover
