@@ -156,9 +156,18 @@ export default function App() {
 	const handlePostcodeChange = (next: string) => {
 		if (next !== postcode) {
 			setCenterId(null);
+			setMessage('');
 			setMaxStep((m) => Math.min(m, 2));
 		}
 		setPostcode(next);
+	};
+
+	const handleCenterChange = (id: string) => {
+		if (id !== centerId) {
+			setMessage('');
+			setMaxStep((m) => Math.min(m, 3));
+		}
+		setCenterId(id);
 	};
 
 	// Removing the topic chip clears the selection and returns to step 1 — a later
@@ -217,7 +226,7 @@ export default function App() {
 				{step === 3 && (
 					<ConsultingCenterStep
 						value={centerId}
-						onChange={setCenterId}
+						onChange={handleCenterChange}
 						postcode={postcode}
 					/>
 				)}
