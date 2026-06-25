@@ -366,6 +366,9 @@ export const NotificationsCenter = () => {
 				markNotificationAsRead(selectedNotification.id);
 				refreshNotificationFeed();
 			})
+			.catch(() => {
+				// keep notification unread when consent decision fails
+			})
 			.finally(() => setCaseHandoverConsentSubmitting(false));
 	};
 
