@@ -14,6 +14,8 @@ import {
 } from '../../globalState';
 import { apiGetConsultingTypes } from '../../api';
 import { Loading } from './Loading';
+import { RegistrationLoader } from './registrationLoader/RegistrationLoader';
+import { POST_REGISTRATION_LOADER_KEY } from '../registration/autoLogin';
 import { handleTokenRefresh } from '../auth/auth';
 import { logout } from '../logout/logout';
 import './authenticatedApp.styles';
@@ -56,6 +58,16 @@ export const AuthenticatedApp = ({
 	const [appReady, setAppReady] = useState<boolean>(false);
 	const [loading, setLoading] = useState<boolean>(true);
 	const [userDataRequested, setUserDataRequested] = useState<boolean>(false);
+	// Freshly-registered askers get a welcome loading animation bridging the
+	// bootstrap below (one-shot flag set just before the post-registration redirect).
+	const [showPostRegLoader, setShowPostRegLoader] = useState<boolean>(() => {
+		const shouldShow =
+			sessionStorage.getItem(POST_REGISTRATION_LOADER_KEY) === 'true';
+		if (shouldShow) {
+			sessionStorage.removeItem(POST_REGISTRATION_LOADER_KEY);
+		}
+		return shouldShow;
+	});
 
 	useEffect(() => {
 		// CRITICAL: Clear ALL old notifications on app mount (prevents phantom call notifications!)
@@ -141,6 +153,22 @@ export const AuthenticatedApp = ({
 		onLogout();
 		logout();
 	}, [onLogout]);
+
+	const handlePostRegLoaderFinish = useCallback(() => {
+		setShowPostRegLoader(false);
+	}, []);
+
+	// Post-registration: bridge the bootstrap load with the welcome animation,
+	// driven by appReady (the real "everything loaded" signal). Falls through to the
+	// usual branches on error (loading=false, appReady=false → redirect to login).
+	if (showPostRegLoader && (loading || appReady)) {
+		return (
+			<RegistrationLoader
+				ready={appReady}
+				onFinish={handlePostRegLoaderFinish}
+			/>
+		);
+	}
 
 	if (appReady) {
 		return (

@@ -1886,6 +1886,11 @@
 				"16": "Thuringe"
 			}
 		},
+		"loader": {
+			"headline": "Bienvenue.",
+			"copy": "Nous préparons votre espace de consultation sécurisé …",
+			"ready": "Votre espace de consultation est prêt."
+		},
 		"stepbar": {
 			"of": "de",
 			"step": "Étape"

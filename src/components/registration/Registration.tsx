@@ -22,7 +22,6 @@ import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet';
 import { StageLayout } from '../../components/stageLayout/StageLayout';
 import useIsFirstVisit from '../../utils/useIsFirstVisit';
-import { ReactComponent as HelloBannerIcon } from '../../resources/img/illustrations/hello-banner.svg';
 import { StepBar } from './stepBar/StepBar';
 import { WelcomeScreen } from './welcomeScreen/WelcomeScreen';
 import {
@@ -36,12 +35,9 @@ import {
 } from '../../globalState';
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
 import {
-	OVERLAY_FUNCTIONS,
-	Overlay,
-	OverlayItem
-} from '../../components/overlay/Overlay';
-import { redirectToApp } from '../../components/registration/autoLogin';
-import { BUTTON_TYPES } from '../../components/button/Button';
+	redirectToApp,
+	POST_REGISTRATION_LOADER_KEY
+} from '../../components/registration/autoLogin';
 import { PreselectionBox } from './preselectionBox/PreselectionBox';
 import { endpoints } from '../../resources/scripts/endpoints';
 import { apiPostRegistration } from '../../api';
@@ -86,28 +82,7 @@ export const Registration = () => {
 	const { locale } = useContext(LocaleContext);
 
 	const [stepData, setStepData] = useState<Partial<RegistrationData>>({});
-	const [redirectOverlayActive, setRedirectOverlayActive] =
-		useState<boolean>(false);
 	const [isRegistering, setIsRegistering] = useState<boolean>(false);
-
-	const handleOverlayAction = (buttonFunction: string) => {
-		if (buttonFunction === OVERLAY_FUNCTIONS.REDIRECT_WITH_BLUR) {
-			redirectToApp();
-		}
-	};
-	const overlayItemRegistrationSuccess: OverlayItem = {
-		illustrationStyle: 'large',
-		svg: HelloBannerIcon,
-		headline: t('registration.overlay.success.headline'),
-		copy: t('registration.overlay.success.copy'),
-		buttonSet: [
-			{
-				label: t('registration.overlay.success.button'),
-				function: OVERLAY_FUNCTIONS.REDIRECT_WITH_BLUR,
-				type: BUTTON_TYPES.AUTO_CLOSE
-			}
-		]
-	};
 
 	const checkForStepsWithMissingMandatoryFields =
 		useCallback((): number[] => {
@@ -225,7 +200,14 @@ export const Registration = () => {
 			)
 				.then(() => {
 					sessionStorage.removeItem(registrationSessionStorageKey);
-					setRedirectOverlayActive(true);
+					// Skip the manual "registration successful" overlay: flag the app
+					// to play the welcome loading animation and go straight into the
+					// chat room (autoLogin already ran inside apiPostRegistration).
+					sessionStorage.setItem(
+						POST_REGISTRATION_LOADER_KEY,
+						'true'
+					);
+					redirectToApp();
 				})
 				.catch((error) => {
 					// console.error('Registration failed:', error);
@@ -438,12 +420,6 @@ export const Registration = () => {
 					</Switch>
 				</Box>
 			</StageLayout>
-			{redirectOverlayActive && (
-				<Overlay
-					item={overlayItemRegistrationSuccess}
-					handleOverlay={handleOverlayAction}
-				/>
-			)}
 		</>
 	);
 };
