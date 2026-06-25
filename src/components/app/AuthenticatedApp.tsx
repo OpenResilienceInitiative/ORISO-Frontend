@@ -36,6 +36,11 @@ import {
 	persistMatrixLoginData
 } from '../sessionCookie/getMatrixAccessToken';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
+import {
+	clearAuthSession,
+	CONSULTANT_LOGIN_BLOCKED_ERROR,
+	markConsultantLoginBlocked
+} from '../auth/consultantLoginBlock';
 
 interface AuthenticatedAppProps {
 	onAppReady: Function;
@@ -98,6 +103,16 @@ export const AuthenticatedApp = ({
 				.then(() => {
 					Promise.all([reloadUserData(), apiGetConsultingTypes()])
 						.then(([userProfileData, consultingTypes]) => {
+							if (
+								hasUserAuthority(
+									AUTHORITIES.CONSULTANT_DEFAULT,
+									userProfileData
+								)
+							) {
+								clearAuthSession();
+								throw new Error(CONSULTANT_LOGIN_BLOCKED_ERROR);
+							}
+
 							// set informal / formal cookie depending on the given userdata
 							setInformal(!userProfileData.formalLanguage);
 							setConsultingTypes(consultingTypes);
@@ -158,11 +173,16 @@ export const AuthenticatedApp = ({
 
 							setAppReady(true);
 						})
-						.catch((error) => {
-							setLoading(false);
-							// console.log(error);
-						});
-				})
+							.catch((error) => {
+								setLoading(false);
+								if (
+									error?.message ===
+									CONSULTANT_LOGIN_BLOCKED_ERROR
+								) {
+									markConsultantLoginBlocked();
+								}
+							});
+					})
 				.catch(() => {
 					setLoading(false);
 				});
