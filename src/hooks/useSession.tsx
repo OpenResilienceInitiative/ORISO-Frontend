@@ -56,7 +56,7 @@ export const useSession = (
 
 	const loadSession = useCallback(() => {
 		// console.log('🔍 useSession.loadSession CALLED:', { rid, sessionId, chatId });
-		
+
 		if (abortController.current) {
 			// console.log('🔍 useSession: Aborting previous request');
 			abortController.current.abort();
@@ -93,13 +93,16 @@ export const useSession = (
 
 		return promise
 			.then(async ({ sessions: [activeSession] }) => {
-				// console.log('✅ useSession: API response received:', { 
+				// console.log('✅ useSession: API response received:', {
 				// hasSession: !!activeSession,
-				// sessionData: activeSession 
+				// sessionData: activeSession
 				// });
-				
+
 				if (activeSession) {
-					const extendedSession = buildExtendedSession(activeSession, rid);
+					const extendedSession = buildExtendedSession(
+						activeSession,
+						rid
+					);
 					// console.log('✅ useSession: Extended session built:', extendedSession);
 					setSession(extendedSession);
 				} else {
@@ -107,7 +110,7 @@ export const useSession = (
 						sessionId &&
 						(await loadCaseHandoverCandidateSession(
 							abortController.current?.signal
-						))
+						).catch(() => false))
 					) {
 						return;
 					}
@@ -122,7 +125,7 @@ export const useSession = (
 				// isAbort: e.message === FETCH_ERRORS.ABORT,
 				// repetitiveId: repetitiveId.current
 				// });
-				
+
 				if (e.message === FETCH_ERRORS.ABORT) {
 					return;
 				}

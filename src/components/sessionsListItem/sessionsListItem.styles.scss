@@ -727,59 +727,6 @@ $session-postcode-border: #646d78;
 			}
 		}
 
-		&__caseHandoverButton {
-			display: inline-flex;
-			align-items: center;
-			justify-content: center;
-			gap: 8px;
-			min-width: 142px;
-			min-height: 38px;
-			margin: 8px 16px 8px 8px;
-			padding: 0 14px;
-			border: 0;
-			border-radius: 18px;
-			background: #c4000b;
-			color: #ffffff;
-			font-family: $font-family-sans-serif;
-			font-size: 13px;
-			font-weight: 700;
-			line-height: 1;
-			cursor: pointer;
-			flex-shrink: 0;
-
-			&:disabled {
-				background: #d8dde3;
-				color: #79818c;
-				cursor: not-allowed;
-			}
-
-			&--pending {
-				background: #667280;
-			}
-
-			&--denied {
-				background: #f7d7d7;
-				color: #a5000a;
-			}
-
-			&--selected {
-				background: #a5000a;
-			}
-		}
-
-		&__caseHandoverCheckbox {
-			width: 14px;
-			height: 14px;
-			border: 2px solid currentColor;
-			border-radius: 3px;
-			background: transparent;
-
-			&--selected {
-				background: currentColor;
-				box-shadow: inset 0 0 0 3px #a5000a;
-			}
-		}
-
 		&--team,
 		&--oneOnOne {
 			// Additional styling if needed
@@ -823,6 +770,59 @@ $session-postcode-border: #646d78;
 
 	.tag {
 		margin-left: $grid-base;
+	}
+
+	&__caseHandoverButton {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		min-width: 142px;
+		min-height: 38px;
+		margin: 8px 16px 8px 8px;
+		padding: 0 14px;
+		border: 0;
+		border-radius: 18px;
+		background: #c4000b;
+		color: #ffffff;
+		font-family: $font-family-sans-serif;
+		font-size: 13px;
+		font-weight: 700;
+		line-height: 1;
+		cursor: pointer;
+		flex-shrink: 0;
+
+		&:disabled {
+			background: #d8dde3;
+			color: #79818c;
+			cursor: not-allowed;
+		}
+
+		&--pending {
+			background: #667280;
+		}
+
+		&--denied {
+			background: #f7d7d7;
+			color: #a5000a;
+		}
+
+		&--selected {
+			background: #a5000a;
+		}
+	}
+
+	&__caseHandoverCheckbox {
+		width: 14px;
+		height: 14px;
+		border: 2px solid currentcolor;
+		border-radius: 3px;
+		background: transparent;
+
+		&--selected {
+			background: currentcolor;
+			box-shadow: inset 0 0 0 3px #a5000a;
+		}
 	}
 }
 

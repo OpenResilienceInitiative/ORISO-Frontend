@@ -1992,7 +1992,13 @@ export const SessionsList = ({
 									)}
 								</span>
 							</div>
-							<div className="sessionsList__caseHandoverBatchReasons">
+							<div
+								className="sessionsList__caseHandoverBatchReasons"
+								role="radiogroup"
+								aria-label={translate(
+									'caseHandover.batch.title'
+								)}
+							>
 								{caseHandoverReasons.map((reason) => (
 									<label key={reason.code}>
 										<input
@@ -2021,6 +2027,9 @@ export const SessionsList = ({
 									)
 								}
 								placeholder={translate(
+									'caseHandover.explanation.placeholder'
+								)}
+								aria-label={translate(
 									'caseHandover.explanation.placeholder'
 								)}
 							/>

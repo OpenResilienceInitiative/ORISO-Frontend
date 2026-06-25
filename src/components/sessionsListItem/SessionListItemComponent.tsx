@@ -1613,6 +1613,11 @@ export const SessionListItemComponent = ({
 								caseHandoverBatchMode &&
 								!canBatchSelectCaseHandover
 							}
+							aria-pressed={
+								caseHandoverBatchMode
+									? caseHandoverSelected
+									: undefined
+							}
 						>
 							{caseHandoverBatchMode && (
 								<span
