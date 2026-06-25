@@ -228,7 +228,6 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 				: undefined);
 
 		updateRegistrationData({
-			...(preselectedZipcode ? { zipcode: preselectedZipcode } : {}),
 			...(directLinkZipcode ? { zipcode: directLinkZipcode } : {}),
 			...(directLinkAgency ? { agency: directLinkAgency } : {}),
 			...(preselectedTopic ? { mainTopic: preselectedTopic } : {})
