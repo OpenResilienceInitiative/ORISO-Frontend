@@ -348,7 +348,7 @@ export const Login = () => {
 						setTwoFactorType(error.options.data.otpType);
 						setIsOtpRequired(true);
 					}
-				} else if (error.message === CONSULTANT_LOGIN_BLOCKED_ERROR) {
+				} else if (error?.message === CONSULTANT_LOGIN_BLOCKED_ERROR) {
 					showConsultantLoginBlockedError();
 				}
 
