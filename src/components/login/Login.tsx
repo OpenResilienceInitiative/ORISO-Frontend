@@ -9,6 +9,11 @@ import {
 import { endpoints } from '../../resources/scripts/endpoints';
 import { Button, BUTTON_TYPES, ButtonItem } from '../button/Button';
 import { autoLogin, redirectToApp } from '../registration/autoLogin';
+import {
+	clearAuthSession,
+	CONSULTANT_LOGIN_BLOCKED_ERROR,
+	consumeConsultantLoginBlocked
+} from '../auth/consultantLoginBlock';
 import { Text } from '../text/Text';
 import { ReactComponent as PersonIcon } from '../../resources/img/icons/person.svg';
 import { ReactComponent as LockIcon } from '../../resources/img/icons/lock.svg';
@@ -223,6 +228,17 @@ export const Login = () => {
 		[locale]
 	);
 
+	const showConsultantLoginBlockedError = useCallback(() => {
+		setShowLoginError(translate('login.warning.failed.consultantBlocked'));
+		setLabelState(VALIDITY_INVALID);
+	}, [translate]);
+
+	useEffect(() => {
+		if (consumeConsultantLoginBlocked()) {
+			showConsultantLoginBlockedError();
+		}
+	}, [showConsultantLoginBlockedError]);
+
 	useEffect(() => {
 		deleteCookieByName('tenantId');
 	}, []);
@@ -242,7 +258,9 @@ export const Login = () => {
 				if (
 					hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
 				) {
-					patchedUserData['available'] = false;
+					clearAuthSession();
+					showConsultantLoginBlockedError();
+					throw new Error(CONSULTANT_LOGIN_BLOCKED_ERROR);
 				}
 
 				if (Object.keys(patchedUserData).length > 0) {
@@ -261,7 +279,14 @@ export const Login = () => {
 					return redirectToApp(gcid);
 				}
 			}),
-		[reloadUserData, locale, initLocale, consultant, gcid]
+		[
+			reloadUserData,
+			locale,
+			initLocale,
+			consultant,
+			gcid,
+			showConsultantLoginBlockedError
+		]
 	);
 
 	useEffect(() => {
@@ -289,20 +314,31 @@ export const Login = () => {
 					tokenResponse.expires_in,
 					tokenResponse.refresh_token,
 					tokenResponse.refresh_expires_in
-					);
-					// Magic-token login is complete once tokens are set.
-					// Continue directly into authenticated app bootstrap.
-					return postLogin();
-				})
-			.catch(() => {
-				setShowLoginError(
-					translate('login.warning.failed.unauthorized.text')
 				);
+				// Magic-token login is complete once tokens are set.
+				// Continue directly into authenticated app bootstrap.
+				return postLogin();
+			})
+			.catch((error) => {
+				if (error.message === CONSULTANT_LOGIN_BLOCKED_ERROR) {
+					showConsultantLoginBlockedError();
+				} else {
+					setShowLoginError(
+						translate('login.warning.failed.unauthorized.text')
+					);
+				}
 			})
 			.finally(() => {
 				setIsRequestInProgress(false);
 			});
-	}, [magicToken, isMagicTokenLoginAttempted, postLogin, translate, gcid]);
+	}, [
+		magicToken,
+		isMagicTokenLoginAttempted,
+		postLogin,
+		translate,
+		gcid,
+		showConsultantLoginBlockedError
+	]);
 
 	const tryLogin = (otp?: string) => {
 		setIsRequestInProgress(true);
@@ -337,6 +373,8 @@ export const Login = () => {
 						setTwoFactorType(error.options.data.otpType);
 						setIsOtpRequired(true);
 					}
+				} else if (error.message === CONSULTANT_LOGIN_BLOCKED_ERROR) {
+					showConsultantLoginBlockedError();
 				}
 
 				setIsRequestInProgress(false);
