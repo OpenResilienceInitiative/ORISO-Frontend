@@ -43,6 +43,11 @@ function loadState(): Partial<PersistedState> {
 		// Never restore credentials from sessionStorage — only in-memory React state.
 		if (parsed.register) {
 			parsed.register = { ...parsed.register, password: '', confirm: '' };
+			// Credentials don't survive reload — don't restore steps beyond registration.
+			if ((parsed.step ?? 1) > 4 || (parsed.maxStep ?? 1) > 4) {
+				parsed.step = Math.min(parsed.step ?? 4, 4);
+				parsed.maxStep = Math.min(parsed.maxStep ?? 4, 4);
+			}
 		}
 		return parsed;
 	} catch {
@@ -112,7 +117,7 @@ export default function App() {
 					? Boolean(centerId)
 					: step === 4
 						? registerValid
-						: message.trim().length > 0; // step 5
+						: registerValid && message.trim().length > 0; // step 5
 
 	const goTo = (next: number) => {
 		setStep(next);
@@ -138,6 +143,10 @@ export default function App() {
 	// step can't stand once the foundational topic choice is empty.
 	const clearSelection = () => {
 		setSelected(null);
+		setPostcode('');
+		setCenterId(null);
+		setRegister(EMPTY_REGISTER);
+		setMessage('');
 		setStep(1);
 		setMaxStep(1);
 	};
