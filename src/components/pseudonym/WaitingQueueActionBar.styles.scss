@@ -120,7 +120,7 @@
 }
 
 .waitingQueueActionBar__hintText {
-	font-family: 'Inter', sans-serif;
+	font-family: Inter, sans-serif;
 	font-size: 14px;
 	line-height: 20px;
 	font-weight: 500;
@@ -144,9 +144,11 @@
 	border-radius: 100px;
 	color: #650033;
 	box-shadow:
+		0 0 0 0 rgba(165, 0, 10, 0.28),
 		0 4px 8px 3px rgba(0, 0, 0, 0.15),
 		0 1px 3px 0 rgba(0, 0, 0, 0.3);
 	overflow: hidden;
+	animation: waitingQueueActionBar-outlineGlow 4.8s ease-in-out infinite;
 }
 
 .waitingQueueActionBar__queueBtn--mobile {
@@ -183,6 +185,8 @@
 		display: block;
 		width: 25px;
 		height: 25px;
+		transform-origin: 50% 50%;
+		animation: waitingQueueActionBar-hourglassTurn 12s ease-in-out infinite;
 	}
 }
 
@@ -192,7 +196,7 @@
 	align-items: baseline;
 	justify-content: center;
 	gap: 0.25ch;
-	font-family: 'Inter', sans-serif;
+	font-family: Inter, sans-serif;
 	font-size: 18px;
 	line-height: 18px;
 	font-weight: 400;
@@ -237,7 +241,7 @@
 }
 
 .waitingQueueActionBar__insteadText {
-	font-family: 'Inter', sans-serif;
+	font-family: Inter, sans-serif;
 	font-size: 14px;
 	line-height: 20px;
 	font-weight: 500;
@@ -301,7 +305,7 @@
 }
 
 .waitingQueueActionBar__localLabel {
-	font-family: 'Inter', sans-serif;
+	font-family: Inter, sans-serif;
 	font-size: 14px;
 	line-height: 24px;
 	font-weight: 500;
@@ -311,7 +315,7 @@
 }
 
 /* ----- DESKTOP (Figma 7062:28313) ----- */
-@media screen and (min-width: 641px) {
+@media screen and (width >= 641px) {
 	.waitingQueueActionBar {
 		padding: 12px 0;
 	}
@@ -461,5 +465,43 @@
 		box-shadow:
 			0 4px 8px 3px rgba(0, 0, 0, 0.15),
 			0 1px 3px 0 rgba(0, 0, 0, 0.3);
+	}
+}
+
+@keyframes waitingQueueActionBar-outlineGlow {
+	0%,
+	100% {
+		border-color: rgba(255, 255, 255, 0.62);
+		box-shadow:
+			0 0 0 0 rgba(165, 0, 10, 0.22),
+			0 4px 8px 3px rgba(0, 0, 0, 0.15),
+			0 1px 3px 0 rgba(0, 0, 0, 0.3);
+	}
+
+	48% {
+		border-color: rgba(255, 255, 255, 0.9);
+		box-shadow:
+			0 0 0 9px rgba(165, 0, 10, 0.18),
+			0 4px 8px 3px rgba(0, 0, 0, 0.15),
+			0 1px 3px 0 rgba(0, 0, 0, 0.3);
+	}
+}
+
+@keyframes waitingQueueActionBar-hourglassTurn {
+	0%,
+	78% {
+		transform: rotate(0deg);
+	}
+
+	86%,
+	100% {
+		transform: rotate(360deg);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.waitingQueueActionBar__queueBtn,
+	.waitingQueueActionBar__queueIcon svg {
+		animation: none;
 	}
 }

@@ -856,6 +856,36 @@
 					}
 				}
 			},
+			"elementCall": {
+				"stackLabel": "Element Call ምስ WebRTCን LiveKitን",
+				"stepsHeadline": "ቪድዮ ጻውዒት ከመይ ይሰርሕ",
+				"troubleshootingHeadline": "ገለ ነገር እንተዘይሰሪሑ",
+				"asker": {
+					"headline": "ቪድዮ ጻውዒት።",
+					"intro": "ቪድዮ ጻውዒታት ሕጂ ብቐጥታ ብ Element Call ይሰርሑ። Element Call WebRTCን LiveKitን ይጥቀም፣ ስለዚ መርበብ ሓበሬታ ምቕያር ወይ ተወሳኺ መተግበሪ ምጽዓን ኣየድልይን።",
+					"steps": {
+						"open": "ናይ ኦንላይን ምኽሪ ከም ቀደሙ ክፈቶ።",
+						"permissions": "መርበብ ሓበሬታኻ ክሓትት ከሎ ንካሜራን ማይክሮፎንን ፍቓድ ሃብ።",
+						"call": "ኣማኻሪኻ ምስ ጀመሮ ነቲ ቪድዮ ጻውዒት ተቐበሎ።",
+						"copyLink": "ነቲ ናይ መእተዊ ሊንክ ኣብ ካልእ መሳርሒ ክትከፍቶ እንተደሊኻ፣ ኣብዚ ቅዳሕዎ:"
+					}
+				},
+				"consultant": {
+					"headline": "ቪድዮ ጻውዒት።",
+					"intro": "ቪድዮ ጻውዒታት ሕጂ ብቐጥታ ብ Element Call ይሰርሑ። Element Call WebRTCን LiveKitን ይጥቀም፣ ስለዚ መርበብ ሓበሬታ ምቕያር ወይ ተወሳኺ መተግበሪ ምጽዓን ኣየድልይን።",
+					"steps": {
+						"open": "ነቲ ምኽሪ ኣብ ORISO ከም ቀደሙ ክፈቶ።",
+						"permissions": "መርበብ ሓበሬታኻ ክሓትት ከሎ ንካሜራን ማይክሮፎንን ፍቓድ ሃብ።",
+						"call": "ነቲ ቪድዮ ጻውዒት ኣብ ቻት ጀምሮ። Element Call ነቲ ጻውዒት ብኣውቶማቲክ ይኸፍቶ።",
+						"copyLink": "ነቲ ናይ መእተዊ ሊንክ ኣብ ካልእ መሳርሒ ክትከፍቶ እንተደሊኻ፣ ኣብዚ ቅዳሕዎ:"
+					}
+				},
+				"troubleshooting": {
+					"permissions": "ካሜራን ማይክሮፎንን ኣብ መርበብ ሓበሬታ ፍቓድ ከም ዘለዎም ፈትሽ።",
+					"device": "ትኽክለኛ ማይክሮፎን፣ ካሜራን ስፒከርን ከም ዝተመርጹ ፈትሽ።",
+					"connection": "ምስሊ ወይ ድምጺ እንተተቋሪጹ ገጹ ኣሐድስ ወይ ናብ ጽኑዕ Wi-Fi ተቐይር።"
+				}
+			},
 			"loginLink": {
 				"notification": {
 					"text": "ሊንክ ናብ ቅንጥብጣብ ሰሌዳ ተቐዲሑ!",
@@ -1262,7 +1292,7 @@
 				"small": "ዜና"
 			}
 		},
-		"activity": "ንቅስታት",
+		"activity": "ናይ ግዜ መስመር",
 		"language": "ቋንቋ",
 		"drafts": "መቕረጽቲ",
 		"liveChat": "ቀጥታ ዝርርብ",
@@ -2130,6 +2160,7 @@
 			"restrictions": ".jpg, .png, .pdf, .docx, .xlsx ክሳብ ዝለዓለ {{attachment_filesize}} MB ዝበጽሕ እዩ።"
 		},
 		"empty": "መልእኽቲ ምረጹ በጃኹም",
+		"emptyAllCaughtUp": "ንእሽቶ ዕረፍቲ ውሰዱ።\nኩሉ ተዛዚሙ ኣሎ።",
 		"groupChat": {
 			"consultant": {
 				"prefix": "ኣካያዲ ስራሕ - "
@@ -2254,12 +2285,20 @@
 			},
 			"chips": {
 				"neu": "Unread",
+				"unread": "Unread",
+				"drafts": "Drafts",
+				"nearby": "ቀረባ",
+				"create": "ፍጠር",
+				"archive": "Archive",
 				"oneToOne": "1-1 ምኽሪ",
 				"liveChat": "ቀጥታዊ ዝርርብ",
-				"groups": "ጉጅለታት",
-				"supervision": "Supervision"
+				"internalGroup": "ውሽጣዊ ናይ ጉጅለ ዝርርብ",
+				"groups": "ናይ ዝርርብ ክበብ",
+				"supervision": "Supervision",
+				"chats": "ቀረባ"
 			},
-			"emptyFilterResult": "ናብ ምድላይ ወይ ፊልተራትካ ዝሰማማዕ ምኽሪ የለን።"
+			"emptyFilterResult": "ናብ ምድላይ ወይ ፊልተራትካ ዝሰማማዕ ምኽሪ የለን።",
+			"draftMetadataOnly": "Unsent message saved."
 		},
 		"anonymous": {
 			"tag": "ስውር"

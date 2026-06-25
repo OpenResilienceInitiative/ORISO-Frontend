@@ -1,0 +1,127 @@
+/* Layout shell for the theme demo route. Every colour rides the
+   --m3-* tokens (with the compiled legacy values as fallbacks) so the
+   preview params repaint the page exactly like the live app. The
+   session cards and message bubbles are painted by the REAL production
+   stylesheets imported next to this one. */
+
+.themeDemo {
+	display: flex;
+	min-height: 100vh;
+	background-color: var(--m3-surface-container-low, $background-light);
+
+	&__list {
+		display: flex;
+		width: 340px;
+		flex-direction: column;
+		flex-shrink: 0;
+		padding: 12px 8px;
+		border-right: 1px solid var(--m3-outline-variant, #c4c7c8);
+		background-color: var(--m3-surface, #fff);
+		gap: 8px;
+	}
+
+	&__listHeader {
+		padding: 4px 8px;
+		color: var(--m3-on-surface, $secondary);
+		font-weight: $font-weight-bold;
+	}
+
+	&__chat {
+		display: flex;
+		min-width: 0;
+		flex: 1;
+		flex-direction: column;
+	}
+
+	&__chatHeader {
+		display: flex;
+		align-items: center;
+		padding: 12px 16px;
+		border-bottom: 1px solid var(--m3-outline-variant, #c4c7c8);
+		background-color: var(--m3-surface, #fff);
+		gap: 12px;
+	}
+
+	&__chatTopic {
+		padding: 2px 10px;
+		background-color: var(--m3-primary-fixed, #ffd9d9);
+		border-radius: 999px;
+		color: var(--m3-on-primary-fixed-variant, #930008);
+		font-size: $font-size-secondary;
+		font-weight: $font-weight-bold;
+	}
+
+	&__chatName {
+		color: var(--m3-on-surface, $secondary);
+		font-weight: $font-weight-bold;
+	}
+
+	&__messages {
+		display: flex;
+		flex: 1;
+		flex-direction: column;
+		justify-content: flex-end;
+		padding: 16px;
+		gap: 4px;
+	}
+
+	&__avatar {
+		display: inline-flex;
+		width: 24px;
+		height: 24px;
+		align-items: center;
+		justify-content: center;
+		margin-right: 6px;
+		background: var(--m3-surface-container-high, #eae7e8);
+		border-radius: 50%;
+	}
+
+	&__editor {
+		padding: 12px 16px 16px;
+	}
+
+	&__textarea {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 12px;
+		border: 2px solid var(--m3-primary, $primary);
+		background-color: var(--m3-surface-container-lowest, #fff);
+		border-radius: 12px;
+	}
+
+	&__placeholder {
+		color: var(--m3-on-surface-variant, $tertiary);
+	}
+
+	&__send {
+		display: flex;
+		width: 32px;
+		height: 32px;
+		align-items: center;
+		justify-content: center;
+		border: 0;
+		background-color: var(--m3-primary, $primary);
+		border-radius: 50%;
+		color: var(--m3-on-primary, #fff);
+	}
+
+	.messageItem {
+		max-width: 80%;
+		align-self: flex-start;
+
+		&--right {
+			align-self: flex-end;
+		}
+	}
+
+	.messageItem__divider {
+		align-self: center;
+	}
+}
+
+@media (max-width: 600px) {
+	.themeDemo__list {
+		display: none;
+	}
+}

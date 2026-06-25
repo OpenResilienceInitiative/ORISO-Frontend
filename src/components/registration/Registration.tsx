@@ -272,6 +272,7 @@ export const Registration = () => {
 	return (
 		<>
 			<StageLayout
+				className="stageLayout--registration"
 				showLegalLinks={true}
 				showLoginLink={true}
 				stage={<Stage hasAnimation={isFirstVisit} />}
@@ -389,18 +390,27 @@ export const Registration = () => {
 										{!nextStepUrl ? (
 											<Button
 												data-cy="button-register"
-												disabled={disabledNextButton || isRegistering}
+												disabled={
+													disabledNextButton ||
+													isRegistering
+												}
 												variant="contained"
 												onClick={onRegisterClick}
 												type={
-													disabledNextButton || isRegistering
+													disabledNextButton ||
+													isRegistering
 														? 'button'
 														: 'submit'
 												}
 											>
 												{isRegistering
-													? t('registration.registering', 'Registering...')
-													: t('registration.register')}
+													? t(
+															'registration.registering',
+															'Registering...'
+														)
+													: t(
+															'registration.register'
+														)}
 											</Button>
 										) : (
 											<Button

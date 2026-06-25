@@ -8,13 +8,13 @@ $checkbox-size: 24px;
 
 		.warning {
 			margin-top: 10px;
-			color: $form-error;
+			color: var(--m3-error, $form-error);
 		}
 	}
 
 	&__label {
 		cursor: pointer;
-		color: var(--skin-color-default, $secondary);
+		color: var(--m3-primary, $secondary);
 		margin: 0 0 0 12px;
 		line-height: 24px;
 	}
@@ -51,12 +51,12 @@ $checkbox-size: 24px;
 		}
 
 		&--error {
-			border: 2px solid $form-error;
+			border: 2px solid var(--m3-error, $form-error);
 		}
 	}
 
 	&__icon {
-		color: var(--skin-color-default, $primary);
+		color: var(--m3-primary, $primary);
 		left: 0;
 		padding: 2px;
 		position: absolute;

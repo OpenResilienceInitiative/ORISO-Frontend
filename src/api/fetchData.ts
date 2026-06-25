@@ -57,6 +57,28 @@ const invalidateStaleAuthSession = () => {
 	removeTokenExpiryFromLocalStorage();
 };
 
+// Guards against repeated reloads when several requests 401 on a public auth
+// route within the same page load. At most one self-healing reload is triggered.
+let staleAuthRecoveryTriggered = false;
+
+// A 401 on a public auth route (login / registration / error pages) means any
+// token we presented is stale or expired. Clear it so the next request is
+// anonymous -- the public endpoints then answer 200 instead of 401. If a stale
+// token was actually sent, reload once to re-bootstrap the app cleanly instead
+// of leaving the user stranded on a blank, crashed page (the uncaught
+// UNAUTHORIZED rejection otherwise prevents the login screen from rendering).
+const recoverFromStaleAuthOnPublicRoute = (
+	hadAuthorization: boolean,
+	reject: (reason?: Error) => void
+) => {
+	invalidateStaleAuthSession();
+	reject(new Error(FETCH_ERRORS.UNAUTHORIZED));
+	if (hadAuthorization && !staleAuthRecoveryTriggered) {
+		staleAuthRecoveryTriggered = true;
+		window.location.reload();
+	}
+};
+
 export class FetchErrorWithOptions extends Error {
 	options = {};
 
@@ -263,20 +285,20 @@ export const fetchData = ({
 						reject(new Error(FETCH_ERRORS.GATEWAY_TIMEOUT));
 					} else if (response.status === 401) {
 						if (isPublicAuthRoute()) {
-							if (!authorization) {
-								invalidateStaleAuthSession();
-							}
-							reject(new Error(FETCH_ERRORS.UNAUTHORIZED));
+							recoverFromStaleAuthOnPublicRoute(
+								Boolean(authorization),
+								reject
+							);
 						} else {
 							logout(true, appConfig.urls.toLogin);
 							reject(new Error(FETCH_ERRORS.UNAUTHORIZED));
 						}
 					}
 				} else if (response.status === 401 && isPublicAuthRoute()) {
-					if (!authorization) {
-						invalidateStaleAuthSession();
-					}
-					reject(new Error(FETCH_ERRORS.UNAUTHORIZED));
+					recoverFromStaleAuthOnPublicRoute(
+						Boolean(authorization),
+						reject
+					);
 				} else {
 					const error = getErrorCaseForStatus(response.status);
 					redirectToErrorPage(error);

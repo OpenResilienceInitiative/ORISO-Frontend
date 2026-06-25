@@ -1,0 +1,80 @@
+.emptyState {
+	--empty-state-animation-size: 176px;
+	--empty-state-lottie-scale: 0.75;
+	--empty-state-headline-width: 360px;
+
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	min-height: 100%;
+	padding: $grid-base-four $grid-base-three;
+	color: var(--m3-on-surface-variant, #444748);
+	text-align: center;
+	box-sizing: border-box;
+	font-family: var(--oriso-body-font-family, #{$font-family-sans-serif});
+
+	@media screen and (width <= 899px) {
+		--empty-state-animation-size: 176px;
+	}
+
+	&__animation {
+		width: var(--empty-state-animation-size);
+		height: var(--empty-state-animation-size);
+		border: 1px solid var(--oriso-primary-fixed-dim, #ffb4aa);
+		border-radius: 50%;
+		background-color: var(--m3-surface-container-lowest, #ffffff);
+		overflow: hidden;
+
+		& > div,
+		svg {
+			width: 100% !important;
+			height: 100% !important;
+		}
+
+		& > div {
+			transform: scale(var(--empty-state-lottie-scale));
+			transform-origin: center;
+		}
+	}
+
+	&__headline {
+		max-width: var(--empty-state-headline-width);
+		margin: $grid-base-four 0 0;
+		color: var(--m3-secondary, #4c555f);
+		font-size: 28px;
+		line-height: 36px;
+		font-weight: $font-weight-regular;
+		font-family: inherit;
+		white-space: pre-line;
+
+		@media screen and (width <= 899px) {
+			font-size: 24px;
+			line-height: 32px;
+		}
+	}
+
+	&--conversation-history {
+		@include breakpoint($fromLarge) {
+			--empty-state-headline-width: 280px;
+		}
+	}
+
+	&--conversation-nothing-to-do {
+		--empty-state-headline-width: 280px;
+	}
+}
+
+.sessionsList__emptyState {
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+	min-height: auto;
+	height: 100%;
+	pointer-events: none;
+
+	@media screen and (width <= 899px) {
+		height: 100dvh;
+	}
+}

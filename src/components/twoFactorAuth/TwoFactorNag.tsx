@@ -44,7 +44,9 @@ export const TwoFactorNag: React.FC<TwoFactorNagProps> = () => {
 		) {
 			setIsShownTwoFactorNag(true);
 			todaysDate >= settings.twofactor.dateTwoFactorObligatory &&
-			getDevToolbarOption(STORAGE_KEY_DISABLE_2FA_DUTY) === '0'
+			(process.env.NODE_ENV !== 'production'
+				? getDevToolbarOption(STORAGE_KEY_DISABLE_2FA_DUTY)
+				: '0') === '0'
 				? setMessage(settings.twofactor.messages[1])
 				: setMessage(settings.twofactor.messages[0]);
 		} else {
@@ -66,7 +68,9 @@ export const TwoFactorNag: React.FC<TwoFactorNagProps> = () => {
 			let todaysDate = new Date(Date.now());
 			if (
 				todaysDate >= settings.twofactor.dateTwoFactorObligatory &&
-				getDevToolbarOption(STORAGE_KEY_DISABLE_2FA_DUTY) === '0'
+				(process.env.NODE_ENV !== 'production'
+					? getDevToolbarOption(STORAGE_KEY_DISABLE_2FA_DUTY)
+					: '0') === '0'
 			) {
 				setForceHideTwoFactorNag(false);
 				return;

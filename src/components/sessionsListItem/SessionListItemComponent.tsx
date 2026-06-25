@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { useContext, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useParams, useHistory } from 'react-router-dom';
+import { useHistory } from 'react-router-dom';
+import { useActiveListItem } from '../../hooks/useActiveListItem';
 import { getSessionsListItemIcon, LIST_ICONS } from './sessionsListItemHelpers';
 import {
 	convertISO8601ToMSSinceEpoch,
@@ -93,11 +94,9 @@ export const SessionListItemComponent = ({
 	const [matrixMembers, setMatrixMembers] = useState<RoomMember[]>([]);
 	const { t: translate } = useTranslation(['common']);
 	const settings = useAppConfig();
-	const { sessionId, rcGroupId: groupIdFromParam } = useParams<{
-		rcGroupId: string;
-		sessionId: string;
-	}>();
-	const sessionIdFromParam = sessionId ? parseInt(sessionId) : null;
+	// WP-06 Slice 0b: route-derived single source of truth for the active item
+	// (replaces the per-component rid/sessionId comparison below).
+	const { isActive } = useActiveListItem();
 	const history = useHistory();
 
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
@@ -126,9 +125,11 @@ export const SessionListItemComponent = ({
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
 
 	// Is List Item active
-	const isChatActive =
-		activeSession.rid === groupIdFromParam ||
-		activeSession.item.id === sessionIdFromParam;
+	const isChatActive = isActive({
+		groupId: activeSession.item.groupId,
+		rid: activeSession.rid,
+		sessionId: activeSession.item.id
+	});
 
 	const language = activeSession.item.language || defaultLanguage;
 	const consultingType = useConsultingType(activeSession.item.consultingType);
@@ -141,6 +142,9 @@ export const SessionListItemComponent = ({
 		activeSession.item.lastMessageType ===
 			ALIAS_MESSAGE_TYPES.MASTER_KEY_LOST
 	);
+	const isMatrixBackedSession =
+		isMatrixRoomIdHeuristic(activeSession.item.groupId) ||
+		isMatrixRoomIdHeuristic(activeSession.item.matrixRoomId);
 	const [plainTextLastMessage, setPlainTextLastMessage] = useState(null);
 
 	// Member count for group chats (used for "+N" avatar). For non-group chats this stays 0.
@@ -156,6 +160,11 @@ export const SessionListItemComponent = ({
 	}, []);
 
 	useEffect(() => {
+		if (isMatrixBackedSession) {
+			setPlainTextLastMessage(translate('e2ee.message.encryption.text'));
+			return;
+		}
+
 		if (!ready) {
 			return;
 		}
@@ -205,8 +214,10 @@ export const SessionListItemComponent = ({
 		keyID,
 		encrypted,
 		activeSession.item.groupId,
+		activeSession.item.matrixRoomId,
 		activeSession.item.e2eLastMessage,
 		activeSession.item.lastMessage,
+		isMatrixBackedSession,
 		translate,
 		ready
 	]);

@@ -14,12 +14,12 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	flex-direction: column;
 	min-height: 0;
 	min-width: 0;
-	background-color: #ffffff;
+	background-color: var(--m3-surface-container-lowest, #ffffff);
 	overflow: hidden;
 
 	@include breakpoint($fromLarge) {
 		margin: 24px;
-		border: 1px solid rgba(211, 47, 47, 0.18);
+		border: 1px solid var(--oriso-primary-fixed-dim, #ffb4aa);
 		border-radius: 32px;
 		box-sizing: border-box;
 	}
@@ -32,7 +32,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		z-index: 1000;
 
 		// Keep composer anchored to the session container on mobile Safari.
-		@media screen and (max-width: 899px) {
+		@media screen and (width <= 899px) {
 			position: absolute;
 			bottom: 0;
 			left: 0;
@@ -44,7 +44,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	.session__submit-interface--withThread {
 		right: 520px;
 
-		@media screen and (max-width: 899px) {
+		@media screen and (width <= 899px) {
 			right: 0;
 		}
 	}
@@ -82,7 +82,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 			z-index: 1000;
 
 			// Keep typing composer anchored to the session container on mobile Safari.
-			@media screen and (max-width: 899px) {
+			@media screen and (width <= 899px) {
 				position: absolute;
 				bottom: 0;
 				left: 0;
@@ -115,52 +115,17 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	&--empty {
 		align-items: center;
 		justify-content: center;
-		background-color: #f2f2f2;
+		background-color: transparent;
 
 		@include breakpoint($fromLarge) {
-			border-color: rgba(211, 47, 47, 0.24);
+			margin: 0;
+			border: 0;
+			border-radius: 0;
 		}
 	}
 
 	&__emptyState {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		gap: 24px;
-		width: 100%;
 		height: 100%;
-		min-height: 320px;
-		padding: 32px;
-		text-align: center;
-		box-sizing: border-box;
-	}
-
-	&__emptyStateMark {
-		width: 176px;
-		height: 176px;
-		border: 1px solid rgba(211, 47, 47, 0.28);
-		border-radius: 50%;
-		background: rgba(255, 255, 255, 0.12);
-
-		@media screen and (width <= 899px) {
-			width: 128px;
-			height: 128px;
-		}
-	}
-
-	&__emptyStateText {
-		max-width: 320px;
-		margin: 0;
-		color: #4f5864;
-		font-size: 20px;
-		line-height: 28px;
-		font-weight: 400;
-
-		@media screen and (width <= 899px) {
-			font-size: 18px;
-			line-height: 26px;
-		}
 	}
 
 	&__acceptance {
@@ -177,18 +142,18 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		overflow-x: hidden;
 		overflow-y: auto;
 		padding: $grid-base-three $grid-base-two 240px;
-		background-color: #fff;
+		background-color: var(--m3-surface-container-lowest, #ffffff);
 
 		@include breakpoint($fromMedium) {
 			padding: $grid-base-three $grid-base-three 240px;
 		}
 
-		@media screen and (max-width: 1366px) {
+		@media screen and (width <= 1366px) {
 			// iPad/tablet: keep last message + Reply action above composer.
 			padding-bottom: calc(320px + env(safe-area-inset-bottom, 0));
 		}
 
-		@media screen and (max-width: 899px) {
+		@media screen and (width <= 899px) {
 			// Leave extra scrollable space so the latest message "Reply" stays above composer.
 			padding-bottom: calc(340px + env(safe-area-inset-bottom, 0));
 		}
@@ -220,7 +185,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		flex-direction: column;
 		z-index: 5;
 
-		@media screen and (max-width: 899px) {
+		@media screen and (width <= 899px) {
 			position: fixed;
 			width: 100%;
 			z-index: 2000;
@@ -252,12 +217,12 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		overflow-y: auto;
 		padding: $grid-base-two $grid-base-two 160px;
 
-		@media screen and (max-width: 1366px) {
+		@media screen and (width <= 1366px) {
 			// iPad/tablet thread composer is taller; allow more bottom scroll room.
 			padding-bottom: calc(260px + env(safe-area-inset-bottom, 0));
 		}
 
-		@media screen and (max-width: 899px) {
+		@media screen and (width <= 899px) {
 			padding-bottom: calc(280px + env(safe-area-inset-bottom, 0));
 		}
 	}
@@ -354,7 +319,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		background: transparent;
 		color: #6d1111;
 		box-shadow: none;
-		font-family: 'Poppins', 'Helvetica Neue', Arial, sans-serif;
+		font-family: var(--oriso-body-font-family, #{$font-family-sans-serif});
 	}
 
 	&__waitingModule--popup {
@@ -504,7 +469,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	}
 
 	&__waitingMiniGamePracticeRestartLabel {
-		font-family: 'Inter', sans-serif;
+		font-family: var(--oriso-body-font-family, #{$font-family-sans-serif});
 		font-size: 16px;
 		line-height: 24px;
 		font-weight: 500;
@@ -534,7 +499,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		padding: 14px 20px;
 		border: none;
 		cursor: pointer;
-		font-family: 'Inter', sans-serif;
+		font-family: var(--oriso-body-font-family, #{$font-family-sans-serif});
 		font-size: 16px;
 		line-height: 24px;
 		font-weight: 500;
@@ -592,7 +557,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		border-radius: 100px;
 		background: #cc1e1c;
 		color: #ffffff;
-		font-family: 'Inter', sans-serif;
+		font-family: var(--oriso-body-font-family, #{$font-family-sans-serif});
 		font-size: 16px;
 		line-height: 24px;
 		font-weight: 500;
@@ -637,7 +602,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		border-radius: 100px;
 		background: #5a5a5a;
 		color: #ffffff;
-		font-family: 'Inter', sans-serif;
+		font-family: var(--oriso-body-font-family, #{$font-family-sans-serif});
 		font-size: 18px;
 		line-height: 24px;
 		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
@@ -1230,7 +1195,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		font-weight: 700;
 		letter-spacing: 0.08em;
 		color: #cc1e1c;
-		font-family: 'Poppins', 'Helvetica Neue', Arial, sans-serif;
+		font-family: var(--oriso-body-font-family, #{$font-family-sans-serif});
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
@@ -1317,7 +1282,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		color: #232323;
 		white-space: pre-wrap;
 		animation: breathing-briefing-fade 420ms ease-in-out;
-		font-family: 'Poppins', 'Helvetica Neue', Arial, sans-serif;
+		font-family: var(--oriso-body-font-family, #{$font-family-sans-serif});
 		font-weight: 500;
 	}
 
@@ -1613,7 +1578,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		border-radius: 1000px;
 		background: #303031;
 		color: #f3f0f0;
-		font-family: 'Inter', sans-serif;
+		font-family: var(--oriso-body-font-family, #{$font-family-sans-serif});
 		font-size: 14px;
 		font-weight: 500;
 		line-height: 20px;
@@ -1654,7 +1619,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	}
 
 	&__selfTimerLabel {
-		font-family: 'Inter', sans-serif;
+		font-family: var(--oriso-body-font-family, #{$font-family-sans-serif});
 		font-size: 14px;
 		font-weight: 500;
 		line-height: 20px;
@@ -1684,7 +1649,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		padding: 16px 18px;
 		border: none;
 		border-radius: 10px;
-		font-family: 'Inter', sans-serif;
+		font-family: var(--oriso-body-font-family, #{$font-family-sans-serif});
 		font-size: 16px;
 		font-weight: 500;
 		line-height: 24px;
@@ -1789,7 +1754,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		gap: 18px;
 		min-height: 420px;
 		text-align: center;
-		font-family: 'Poppins', 'Helvetica Neue', Arial, sans-serif;
+		font-family: var(--oriso-body-font-family, #{$font-family-sans-serif});
 		width: min(940px, 96%);
 		margin: 8px auto 0;
 		padding: clamp(20px, 3.2vw, 38px);
@@ -1989,7 +1954,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		font-size: 17px;
 		font-weight: 600;
 		border: 1px solid rgba(120, 120, 120, 0.3);
-		font-family: 'Poppins', 'Helvetica Neue', Arial, sans-serif;
+		font-family: var(--oriso-body-font-family, #{$font-family-sans-serif});
 		cursor: pointer;
 
 		&--primary {
@@ -2022,7 +1987,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		}
 	}
 
-	@media screen and (max-width: 899px) {
+	@media screen and (width <= 899px) {
 		&__waitingModule {
 			margin: 6px;
 			padding: 12px;
@@ -2244,7 +2209,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 			animation-fill-mode: forwards;
 		}
 
-		@media screen and (max-width: 899px) {
+		@media screen and (width <= 899px) {
 			display: none;
 		}
 	}
@@ -2258,7 +2223,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		right: -9px;
 		width: $unreadButtonSize;
 		height: $unreadButtonSize;
-		background-color: var(--skin-color-primary, $primary);
+		background-color: var(--m3-primary, $primary);
 		font-weight: $font-weight-medium;
 		font-size: 10px;
 		color: $white;
@@ -2271,17 +2236,13 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	&--empty {
 		justify-content: center;
 		align-items: center;
-		display: none;
-
-		@include breakpoint($fromLarge) {
-			display: flex;
-		}
+		display: flex;
 	}
 
 	&__forgotSomething {
 		padding: $grid-base-two $grid-base-three;
 		text-align: center;
-		color: $tertiary;
+		color: var(--m3-on-surface-variant, $tertiary);
 		margin: $grid-base-two 0;
 
 		.text {
@@ -2569,7 +2530,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		-webkit-overflow-scrolling: touch;
 	}
 
-	#session-scroll-container {
+	[id='session-scroll-container'] {
 		overflow-y: auto;
 		overflow-x: hidden;
 		overscroll-behavior: contain;
@@ -2620,6 +2581,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 }
 
 /* Webkit (Chrome, Safari, Edge) */
+
 /* 1. The background of the scrollbar */
 .contentWrapper__list::-webkit-scrollbar,
 .contentWrapper__detail::-webkit-scrollbar {

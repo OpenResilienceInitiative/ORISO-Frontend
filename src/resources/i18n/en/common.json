@@ -848,6 +848,36 @@
 					}
 				}
 			},
+			"elementCall": {
+				"stackLabel": "Element Call with WebRTC and LiveKit",
+				"stepsHeadline": "How the video call works",
+				"troubleshootingHeadline": "If something does not work",
+				"asker": {
+					"headline": "Video Call",
+					"intro": "Video calls now run directly through Element Call. Element Call uses WebRTC and LiveKit, so no browser switch or extra installation is needed.",
+					"steps": {
+						"open": "Open the online consultation as usual.",
+						"permissions": "Allow camera and microphone when your browser asks.",
+						"call": "Accept the video call when your consultant starts it.",
+						"copyLink": "If you want to open the login link on another device, copy it here:"
+					}
+				},
+				"consultant": {
+					"headline": "Video Call",
+					"intro": "Video calls now run directly through Element Call. Element Call uses WebRTC and LiveKit, so no browser switch or extra installation is needed.",
+					"steps": {
+						"open": "Open the consultation in ORISO as usual.",
+						"permissions": "Allow camera and microphone when your browser asks.",
+						"call": "Start the video call in the chat. Element Call opens the call automatically.",
+						"copyLink": "If you want to open the login link on another device, copy it here:"
+					}
+				},
+				"troubleshooting": {
+					"permissions": "Check whether camera and microphone are allowed in the browser.",
+					"device": "Check that the correct microphone, camera, and speaker are selected.",
+					"connection": "Refresh the page or switch to a stable Wi-Fi connection if video or audio drops."
+				}
+			},
 			"loginLink": {
 				"notification": {
 					"text": "Link copied to clipboard!",
@@ -1274,7 +1304,7 @@
 				"small": "Messages"
 			}
 		},
-		"activity": "Activity",
+		"activity": "Timeline",
 		"language": "Language",
 		"drafts": "Drafts",
 		"liveChat": "Live Chat",
@@ -1285,6 +1315,90 @@
 		"tools": "My tools"
 	},
 	"notifications": {
+		"families": {
+			"all": "All",
+			"requests": "Requests",
+			"messages": "Messages",
+			"drafts": "Drafts",
+			"handover": "Handover",
+			"calls": "Calls",
+			"system": "System",
+			"appointments": "Appointments"
+		},
+		"events": {
+			"fallback": {
+				"title": "Activity",
+				"text": ""
+			},
+			"inquiryAccepted": {
+				"title": "Request accepted",
+				"text": "The request was accepted. You can start the conversation."
+			},
+			"messageNew": {
+				"title": "New message",
+				"text": "You received a new message."
+			},
+			"threadReplyNew": {
+				"title": "New thread reply",
+				"text": "There is a new reply in a thread."
+			},
+			"supervisorAdded": {
+				"title": "Supervisor added",
+				"text": "A supervisor was added to this case."
+			},
+			"supervisorRemoved": {
+				"title": "Supervisor removed",
+				"text": "A supervisor was removed from this case."
+			},
+			"supervisorAssigned": {
+				"title": "Supervisor assigned",
+				"text": "A supervisor was assigned to this case."
+			},
+			"counselorRenamed": {
+				"title": "Counsellor renamed",
+				"text": "The counsellor's display name has changed."
+			},
+			"requestNew": {
+				"title": "New client request",
+				"text": "A new client request is waiting."
+			},
+			"draftCreated": {
+				"title": "Draft saved",
+				"text": "You have an unsent draft. Resume where you left off."
+			},
+			"handoverRequested": {
+				"title": "Handover requested",
+				"text": "A case handover was requested. Both parties must confirm."
+			},
+			"handoverPartial": {
+				"title": "Handover partially confirmed",
+				"text": "One party has confirmed the handover."
+			},
+			"handoverAllConfirmed": {
+				"title": "Handover confirmed",
+				"text": "Both parties confirmed. The handover took effect."
+			},
+			"handoverAutoConfirmed": {
+				"title": "Handover auto-confirmed",
+				"text": "The handover was auto-confirmed by policy."
+			},
+			"handoverDenied": {
+				"title": "Handover denied",
+				"text": "The handover was denied and cancelled."
+			},
+			"callStarted": {
+				"title": "Call ongoing",
+				"text": "A call is ongoing. Join to participate."
+			},
+			"callEnded": {
+				"title": "Call ended",
+				"text": "The call has ended."
+			},
+			"callMissed": {
+				"title": "Missed call",
+				"text": "You missed a call."
+			}
+		},
 		"error": "failed",
 		"info": "info",
 		"initialRequest": {
@@ -1296,6 +1410,8 @@
 		"success": "successful",
 		"warning": "warning",
 		"center": {
+			"searchPlaceholder": "Search activity…",
+			"noResults": "No activity matches your filters.",
 			"title": "Notifications",
 			"subtitle": "Recent activities and updates from your chats.",
 			"markAllRead": "Mark all as read",
@@ -2163,6 +2279,7 @@
 			"restrictions": ".jpg, .png, .pdf, .docx, .xlsx up to a maximum of {{attachment_filesize}}MB"
 		},
 		"empty": "Please select a message",
+		"emptyAllCaughtUp": "Take a breather.\nAll caught up.",
 		"groupChat": {
 			"consultant": {
 				"prefix": "Moderator - "
@@ -2292,12 +2409,20 @@
 			},
 			"chips": {
 				"neu": "Unread",
+				"unread": "Unread",
+				"drafts": "Drafts",
+				"nearby": "Nearby",
+				"create": "Create",
+				"archive": "Archived",
 				"oneToOne": "1-1 counseling",
 				"liveChat": "Live chat",
-				"groups": "Groups",
-				"supervision": "Supervision"
+				"internalGroup": "Internal group chat",
+				"groups": "Conversation circle",
+				"supervision": "Supervision",
+				"chats": "Nearby"
 			},
-			"emptyFilterResult": "No consultations match your search or filters."
+			"emptyFilterResult": "No consultations match your search or filters.",
+			"draftMetadataOnly": "Unsent message saved."
 		},
 		"anonymous": {
 			"tag": "Anonymous"

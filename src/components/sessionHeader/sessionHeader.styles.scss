@@ -11,7 +11,7 @@ $iconSize: 24px;
 	background-color: #fff;
 	box-sizing: border-box;
 
-	@media (min-width: 768px) {
+	@media (width >= 768px) {
 		margin-left: 40px;
 		margin-right: 40px;
 	}
@@ -104,14 +104,14 @@ $iconSize: 24px;
 			fill: #6e4d4d;
 
 			svg path {
-				fill: var(--skin-color-default, $secondary);
+				fill: var(--m3-primary, $secondary);
 			}
 
 			&:hover {
 				fill: #5b3f3f;
 
 				svg path {
-					fill: var(--skin-color-default, $primary);
+					fill: var(--m3-primary, $primary);
 				}
 			}
 		}
@@ -120,7 +120,7 @@ $iconSize: 24px;
 	// Mobile-specific back button styling with custom assets
 	&__feedbackBackButton,
 	&__backButton {
-		@media screen and (max-width: 899px) {
+		@media screen and (width < 900px) {
 			width: 28px;
 			height: 28px;
 			background-image: url('../../resources/img/illustrations/default-back.svg');
@@ -161,7 +161,7 @@ $iconSize: 24px;
 		}
 
 		// On mobile, reduce gap and ensure proper overflow handling
-		@media screen and (max-width: 899px) {
+		@media screen and (width < 900px) {
 			gap: 8px;
 			min-width: 0;
 			overflow: hidden;
@@ -184,7 +184,7 @@ $iconSize: 24px;
 			overflow: hidden;
 			text-overflow: ellipsis;
 
-			@media screen and (max-width: 899px) {
+			@media screen and (width < 900px) {
 				font-size: 18px;
 				max-width: calc(100vw - 120px);
 			}
@@ -196,7 +196,7 @@ $iconSize: 24px;
 			gap: 4px;
 
 			// On mobile, ensure titleRow doesn't overflow
-			@media screen and (max-width: 899px) {
+			@media screen and (width < 900px) {
 				width: 100%;
 				min-width: 0;
 			}
@@ -221,7 +221,7 @@ $iconSize: 24px;
 		width: 100%;
 
 		// Reduce gap on mobile to give more space
-		@media screen and (max-width: 899px) {
+		@media screen and (width < 900px) {
 			gap: 8px;
 			align-items: flex-start; // Align to top when text wraps
 		}
@@ -242,7 +242,7 @@ $iconSize: 24px;
 			min-width: 0;
 			flex: 1;
 
-			@media screen and (max-width: 899px) {
+			@media screen and (width < 900px) {
 				font-size: 18px;
 				line-height: 1.3;
 				max-width: calc(100vw - 120px);
@@ -259,7 +259,7 @@ $iconSize: 24px;
 		justify-content: center;
 
 		// Slightly smaller icon on mobile to give more space
-		@media screen and (max-width: 899px) {
+		@media screen and (width < 900px) {
 			width: 36px;
 			height: 36px;
 		}
@@ -267,18 +267,18 @@ $iconSize: 24px;
 		svg {
 			width: 100%;
 			height: 100%;
-			fill: var(--skin-color-default, $secondary) !important;
-			color: var(--skin-color-default, $secondary) !important;
+			fill: var(--m3-primary, $secondary) !important;
+			color: var(--m3-primary, $secondary) !important;
 
 			path {
-				fill: var(--skin-color-default, $secondary) !important;
+				fill: var(--m3-primary, $secondary) !important;
 			}
 		}
 	}
 
 	&__participants {
 		font-size: 12px;
-		color: $tertiary;
+		color: var(--m3-on-surface-variant, $tertiary);
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
@@ -356,7 +356,7 @@ $iconSize: 24px;
 			text-align: left;
 		}
 
-		@media screen and (max-width: 899px) {
+		@media screen and (width < 900px) {
 			padding-left: 0;
 		}
 
@@ -376,15 +376,12 @@ $iconSize: 24px;
 			}
 
 			&--red {
-				color: var(
-					--skin-color-primary-contrast-safe,
-					$primary
-				) !important;
+				color: var(--m3-primary, $primary) !important;
 				text-transform: uppercase;
 			}
 
 			&--clickable {
-				border-bottom: 1px solid $tertiary;
+				border-bottom: 1px solid var(--m3-on-surface-variant, $tertiary);
 				cursor: pointer;
 			}
 
@@ -437,7 +434,7 @@ $iconSize: 24px;
 				padding: 14px $grid-base-two;
 				font-size: $font-size-primary;
 				line-height: $line-height-primary;
-				color: var(--skin-color-secondary, $secondary);
+				color: var(--m3-secondary, $secondary);
 				text-overflow: ellipsis;
 				overflow: hidden;
 				display: flex;
@@ -455,7 +452,7 @@ $iconSize: 24px;
 
 					&:hover {
 						background-color: $hover-select;
-						color: $hover-primary;
+						color: var(--m3-primary-hover, $hover-primary);
 					}
 
 					span {
@@ -532,46 +529,8 @@ $iconSize: 24px;
 		display: inline-flex;
 		align-items: center;
 		margin-right: 4px;
-		margin-left: 10px;
-		min-width: 40px;
-
-		@media screen and (max-width: 899px) {
-			display: none;
-		}
-	}
-
-	/* Plus-as-button variant: only the "+" inside the stack is the
-	   supervisor-management trigger for 1-on-1 chats. The avatar next to
-	   it stays decorative. Applied when the same visibility conditions
-	   as the old Supervision On/Off pill are met. */
-	&__memberStackPlus--interactive {
-		cursor: pointer;
-		padding: 0;
-		transition:
-			background-color 140ms ease,
-			box-shadow 140ms ease,
-			border-color 140ms ease;
-
-		&:hover {
-			background-color: rgba(204, 30, 28, 0.08);
-			border-color: #cc1e1c;
-		}
-
-		&:focus-visible {
-			outline: none;
-			box-shadow: 0 0 0 2px #cc1e1c;
-		}
-	}
-
-	&__memberStackPlus {
-		width: 32px;
-		height: 32px;
-		border-radius: 12px;
-		border: 1px solid #ffd1d1;
-		background: #fff;
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
+		margin-left: 0;
+		min-width: 0;
 		flex: 0 0 auto;
 	}
 
@@ -592,5 +551,164 @@ $iconSize: 24px;
 		display: flex;
 		gap: 12px; // Space between video and voice call buttons
 		align-items: center;
+	}
+}
+
+.chatroomMainInteractionIcon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 2px;
+	height: 40px;
+	min-width: 58px;
+	padding: 0 12px;
+	border-radius: 20px;
+	background: #4c555f;
+	overflow: hidden;
+	flex: 0 0 auto;
+	box-sizing: border-box;
+
+	&--withAdd {
+		min-width: 76px;
+		padding: 0 12px 0 4px;
+		background: #646d78;
+	}
+
+	&__add {
+		width: 32px;
+		height: 40px;
+		border: 0;
+		padding: 0;
+		background: transparent;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		flex: 0 0 auto;
+		color: #fff;
+	}
+
+	&__add--interactive {
+		cursor: pointer;
+
+		&:focus-visible {
+			outline: none;
+
+			.chatroomMainInteractionIcon__addContent {
+				box-shadow: 0 0 0 2px #fff;
+			}
+		}
+	}
+
+	&__addContent {
+		width: 32px;
+		height: 32px;
+		border-radius: 100px;
+		background: #4c555f;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		transition:
+			background-color 140ms ease,
+			box-shadow 140ms ease;
+	}
+
+	&__add--interactive:hover &__addContent {
+		background: #404852;
+	}
+
+	&__addImage {
+		width: 20px;
+		height: 20px;
+		display: block;
+	}
+
+	&__type {
+		width: 24px;
+		height: 24px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		flex: 0 0 auto;
+		position: relative;
+	}
+
+	&__typeMask {
+		width: 24px;
+		height: 24px;
+		display: block;
+		background: #fff;
+		mask-image: var(--chatroom-main-icon-url);
+		mask-size: contain;
+		mask-position: center;
+		mask-repeat: no-repeat;
+		-webkit-mask-image: var(--chatroom-main-icon-url);
+		-webkit-mask-size: contain;
+		-webkit-mask-position: center;
+		-webkit-mask-repeat: no-repeat;
+	}
+
+	&__typeGenerated {
+		width: 24px;
+		height: 24px;
+		display: block;
+		position: relative;
+	}
+
+	&--waiting &__typeGenerated {
+		border: 2px solid #fff;
+		border-left-color: rgba(255, 255, 255, 0.4);
+		border-radius: 50%;
+
+		&::before,
+		&::after {
+			content: '';
+			position: absolute;
+			left: 10px;
+			top: 4px;
+			width: 2px;
+			border-radius: 2px;
+			background: #fff;
+			transform-origin: bottom center;
+		}
+
+		&::before {
+			height: 8px;
+		}
+
+		&::after {
+			height: 7px;
+			transform: rotate(135deg);
+		}
+	}
+
+	&--inquiry &__typeGenerated {
+		&::before {
+			content: '';
+			position: absolute;
+			left: 3px;
+			top: 2px;
+			width: 7px;
+			height: 20px;
+			border-radius: 6px 0 0 6px;
+			background: #ff0000;
+		}
+
+		&::after {
+			content: '';
+			position: absolute;
+			left: 10px;
+			top: 2px;
+			width: 10px;
+			height: 20px;
+			background: linear-gradient(
+				to bottom,
+				#b8b8b8 0,
+				#b8b8b8 5px,
+				transparent 5px,
+				transparent 15px,
+				#b8b8b8 15px,
+				#b8b8b8 20px
+			);
+		}
 	}
 }
