@@ -43,11 +43,11 @@ function loadState(): Partial<PersistedState> {
 		// Never restore credentials from sessionStorage — only in-memory React state.
 		if (parsed.register) {
 			parsed.register = { ...parsed.register, password: '', confirm: '' };
-			// Credentials don't survive reload — don't restore steps beyond registration.
-			if ((parsed.step ?? 1) > 4 || (parsed.maxStep ?? 1) > 4) {
-				parsed.step = Math.min(parsed.step ?? 4, 4);
-				parsed.maxStep = Math.min(parsed.maxStep ?? 4, 4);
-			}
+		}
+		// Credentials don't survive reload — don't restore steps beyond registration.
+		if ((parsed.step ?? 1) > 4 || (parsed.maxStep ?? 1) > 4) {
+			parsed.step = Math.min(parsed.step ?? 4, 4);
+			parsed.maxStep = Math.min(parsed.maxStep ?? 4, 4);
 		}
 		return parsed;
 	} catch {
