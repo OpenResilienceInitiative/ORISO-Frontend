@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { keyframes } from '@mui/system';
+import { alpha } from '@mui/material/styles';
 import { Box, LinearProgress, Typography, useMediaQuery } from '@mui/material';
 import ChatBubbleRoundedIcon from '@mui/icons-material/ChatBubbleRounded';
 
@@ -96,13 +97,13 @@ export const RegistrationLoader = ({
 			sx={{
 				position: 'fixed',
 				inset: 0,
-				zIndex: 1300,
+				zIndex: (theme) => theme.zIndex.modal,
 				display: 'flex',
 				flexDirection: 'column',
 				alignItems: 'center',
 				justifyContent: 'center',
 				p: '24px',
-				backgroundColor: '#fff',
+				backgroundColor: 'background.paper',
 				animation: prefersReducedMotion
 					? 'none'
 					: `${fadeIn} 0.3s ease both`
@@ -126,7 +127,8 @@ export const RegistrationLoader = ({
 						'flex': 1,
 						'height': '6px',
 						'borderRadius': '3px',
-						'backgroundColor': '#0000001A',
+						'backgroundColor': (theme) =>
+							alpha(theme.palette.common.black, 0.1),
 						'& .MuiLinearProgress-bar': {
 							borderRadius: '3px',
 							transition: prefersReducedMotion
@@ -146,15 +148,18 @@ export const RegistrationLoader = ({
 						'display': 'flex',
 						'alignItems': 'center',
 						'justifyContent': 'center',
-						'backgroundColor': armed ? 'primary.main' : '#EBE8E8',
-						'color': armed ? '#fff' : '#444748',
+						'backgroundColor': armed
+							? 'primary.main'
+							: 'action.hover',
+						'color': armed ? 'common.white' : 'text.secondary',
 						'transform':
 							armed && !prefersReducedMotion
 								? 'scale(1.1)'
 								: 'scale(1)',
-						'boxShadow': armed
-							? '0 6px 16px rgba(164, 38, 46, 0.35)'
-							: 'none',
+						'boxShadow': (theme) =>
+							armed
+								? `0 6px 16px ${alpha(theme.palette.primary.main, 0.35)}`
+								: 'none',
 						'transition': prefersReducedMotion
 							? 'background-color 0.3s ease'
 							: 'background-color 0.3s ease, transform 0.3s ease',
@@ -174,7 +179,7 @@ export const RegistrationLoader = ({
 			>
 				{t('registration.loader.headline')}
 			</Typography>
-			<Typography sx={{ color: '#444748', textAlign: 'center' }}>
+			<Typography sx={{ color: 'text.secondary', textAlign: 'center' }}>
 				{ready
 					? t('registration.loader.ready')
 					: t('registration.loader.copy')}
