@@ -1187,7 +1187,8 @@
 				"unauthorized": {
 					"otp": "Your access data is not correct. Please try again.",
 					"text": "Username or password are not correct. Please try again."
-				}
+				},
+				"consultantBlocked": "Consultant accounts cannot sign in here."
 			}
 		}
 	},

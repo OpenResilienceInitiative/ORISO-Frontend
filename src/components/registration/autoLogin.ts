@@ -33,6 +33,11 @@ import {
 import { appConfig } from '../../utils/appConfig';
 import { parseJwt } from '../../utils/parseJWT';
 import { removeRocketChatMasterKeyFromLocalStorage } from '../sessionCookie/accessSessionLocalStorage';
+import {
+	clearAuthSession,
+	CONSULTANT_LOGIN_BLOCKED_ERROR,
+	isConsultantAccessToken
+} from '../auth/consultantLoginBlock';
 
 export interface LoginData {
 	data: {
@@ -139,11 +144,18 @@ export const autoLogin = async ({
 		}
 	}
 
+	const tokenPayload = parseJwt(keycloakRes.access_token);
+
+	if (isConsultantAccessToken(keycloakRes.access_token)) {
+		clearAuthSession();
+		throw new Error(CONSULTANT_LOGIN_BLOCKED_ERROR);
+	}
+
 	if (
 		appConfig.useTenantService &&
 		!appConfig.multitenancyWithSingleDomainEnabled
 	) {
-		const { tenantId } = parseJwt(keycloakRes.access_token);
+		const { tenantId } = tokenPayload;
 		if (tenantId !== autoLoginProps.tenantData.id) {
 			throw new Error(FETCH_ERRORS.UNAUTHORIZED);
 		}

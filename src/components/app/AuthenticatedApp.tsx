@@ -34,6 +34,10 @@ import {
 } from '../sessionCookie/getMatrixAccessToken';
 import { matrixClientService } from '../../services/matrixClientService';
 import { MatrixClientProvider } from '../../contexts/MatrixClientContext';
+import {
+	clearAuthSession,
+	CONSULTANT_LOGIN_BLOCKED_ERROR
+} from '../auth/consultantLoginBlock';
 
 interface AuthenticatedAppProps {
 	onAppReady: Function;
@@ -85,6 +89,16 @@ export const AuthenticatedApp = ({
 				.then(() => {
 					Promise.all([reloadUserData(), apiGetConsultingTypes()])
 						.then(([userProfileData, consultingTypes]) => {
+							if (
+								hasUserAuthority(
+									AUTHORITIES.CONSULTANT_DEFAULT,
+									userProfileData
+								)
+							) {
+								clearAuthSession();
+								throw new Error(CONSULTANT_LOGIN_BLOCKED_ERROR);
+							}
+
 							// set informal / formal cookie depending on the given userdata
 							setInformal(!userProfileData.formalLanguage);
 							setConsultingTypes(consultingTypes);
