@@ -2012,7 +2012,14 @@ export const MessageSubmitInterfaceComponent = ({
 					})
 					.catch((error) => {
 						setIsRequestInProgress(false);
-						// console.log(error);
+						apiPostError({
+							name: error?.name || 'MatrixMessageSendError',
+							message:
+								error?.message ||
+								'Failed to send Matrix chat message',
+							stack: error?.stack,
+							level: ERROR_LEVEL_WARN
+						}).then();
 					});
 			} else {
 				// Matrix file upload already sent the message
