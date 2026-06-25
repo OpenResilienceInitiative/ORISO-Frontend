@@ -1,8 +1,10 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import {
 	CONSULTANT_LOGIN_BLOCKED_ERROR,
-	isConsultantAccessToken
+	consumeConsultantLoginBlocked,
+	isConsultantAccessToken,
+	markConsultantLoginBlocked
 } from './consultantLoginBlock';
 
 const createAccessToken = (payload: unknown) => {
@@ -11,6 +13,28 @@ const createAccessToken = (payload: unknown) => {
 };
 
 describe('consultantLoginBlock', () => {
+	beforeEach(() => {
+		const storage = new Map<string, string>();
+		globalThis.sessionStorage = {
+			getItem: (key: string) => storage.get(key) ?? null,
+			setItem: (key: string, value: string) => {
+				storage.set(key, value);
+			},
+			removeItem: (key: string) => {
+				storage.delete(key);
+			},
+			clear: () => {
+				storage.clear();
+			},
+			key: () => null,
+			length: 0
+		};
+	});
+
+	afterEach(() => {
+		delete (globalThis as { sessionStorage?: Storage }).sessionStorage;
+	});
+
 	it('uses a stable error code for blocked consultant logins', () => {
 		expect(CONSULTANT_LOGIN_BLOCKED_ERROR).toBe('CONSULTANT_LOGIN_BLOCKED');
 	});
@@ -37,5 +61,13 @@ describe('consultantLoginBlock', () => {
 
 	it('ignores missing access tokens', () => {
 		expect(isConsultantAccessToken()).toBe(false);
+	});
+
+	it('marks and consumes a blocked-login redirect flag', () => {
+		expect(consumeConsultantLoginBlocked()).toBe(false);
+
+		markConsultantLoginBlocked();
+		expect(consumeConsultantLoginBlocked()).toBe(true);
+		expect(consumeConsultantLoginBlocked()).toBe(false);
 	});
 });

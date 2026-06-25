@@ -11,7 +11,8 @@ import { Button, BUTTON_TYPES, ButtonItem } from '../button/Button';
 import { autoLogin, redirectToApp } from '../registration/autoLogin';
 import {
 	clearAuthSession,
-	CONSULTANT_LOGIN_BLOCKED_ERROR
+	CONSULTANT_LOGIN_BLOCKED_ERROR,
+	consumeConsultantLoginBlocked
 } from '../auth/consultantLoginBlock';
 import { Text } from '../text/Text';
 import { ReactComponent as PersonIcon } from '../../resources/img/icons/person.svg';
@@ -231,6 +232,12 @@ export const Login = () => {
 		setShowLoginError(translate('login.warning.failed.consultantBlocked'));
 		setLabelState(VALIDITY_INVALID);
 	}, [translate]);
+
+	useEffect(() => {
+		if (consumeConsultantLoginBlocked()) {
+			showConsultantLoginBlockedError();
+		}
+	}, [showConsultantLoginBlockedError]);
 
 	useEffect(() => {
 		deleteCookieByName('tenantId');

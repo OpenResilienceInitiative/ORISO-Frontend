@@ -36,7 +36,8 @@ import { matrixClientService } from '../../services/matrixClientService';
 import { MatrixClientProvider } from '../../contexts/MatrixClientContext';
 import {
 	clearAuthSession,
-	CONSULTANT_LOGIN_BLOCKED_ERROR
+	CONSULTANT_LOGIN_BLOCKED_ERROR,
+	markConsultantLoginBlocked
 } from '../auth/consultantLoginBlock';
 
 interface AuthenticatedAppProps {
@@ -131,7 +132,12 @@ export const AuthenticatedApp = ({
 						})
 						.catch((error) => {
 							setLoading(false);
-							// console.log(error);
+							if (
+								error?.message ===
+								CONSULTANT_LOGIN_BLOCKED_ERROR
+							) {
+								markConsultantLoginBlocked();
+							}
 						});
 				})
 				.catch(() => {
