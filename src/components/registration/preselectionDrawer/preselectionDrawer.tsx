@@ -10,6 +10,7 @@ import { UrlParamsContext } from '../../../globalState/provider/UrlParamsProvide
 
 const ConsultantPreslection = ({ hasError }) => {
 	const { t } = useTranslation();
+	const { consultant } = useContext(UrlParamsContext);
 
 	if (hasError) {
 		return (
@@ -18,14 +19,26 @@ const ConsultantPreslection = ({ hasError }) => {
 	}
 
 	return (
-		<Typography
-			sx={{
-				color: 'white',
-				mt: '24px'
-			}}
-		>
-			{t('registration.consultantlink')}
-		</Typography>
+		<>
+			<Typography
+				sx={{
+					color: 'white',
+					mt: '24px'
+				}}
+			>
+				{consultant?.absent
+					? t(
+							'registration.consultantlinkAbsent',
+							'This counselor is currently absent. You can still send your request to the counseling center.'
+						)
+					: t('registration.consultantlink')}
+			</Typography>
+			{consultant?.absent && consultant.absenceMessage && (
+				<Typography sx={{ color: 'white', mt: '8px' }}>
+					{consultant.absenceMessage}
+				</Typography>
+			)}
+		</>
 	);
 };
 

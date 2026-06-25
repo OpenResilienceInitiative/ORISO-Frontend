@@ -23,6 +23,7 @@ import { useAskerHasAssignedConsultant } from '../../containers/bookings/hooks/u
 import { TermsAndConditions } from '../termsandconditions/TermsAndConditions';
 import { Loading } from './Loading';
 import NotFound from '../notFound/NotFound';
+import { SessionListViewStateProvider } from '../sessionsList/SessionListViewStateContext';
 
 interface RoutingProps {
 	logout?: Function;
@@ -106,84 +107,10 @@ export const Routing = (props: RoutingProps) => {
 												) || [])
 											]}
 										>
-											<div className="contentWrapper__list">
-												<Switch>
-													{routerConfig.listRoutes.map(
-														(
-															route: any
-														): React.ReactElement => (
-															<Route
-																exact={
-																	route.exact ??
-																	true
-																}
-																key={`list-${route.path}`}
-																path={
-																	route.path
-																}
-															>
-																<SessionTypeProvider
-																	type={
-																		route.type ||
-																		null
-																	}
-																>
-																	<route.component
-																		sessionTypes={
-																			route.sessionTypes
-																		}
-																	/>
-																</SessionTypeProvider>
-															</Route>
-														)
-													)}
-												</Switch>
-											</div>
-											<div className="contentWrapper__detail">
-												<Suspense
-													fallback={<Loading />}
-												>
+											<SessionListViewStateProvider>
+												<div className="contentWrapper__list">
 													<Switch>
-														{typeof routerConfig.userProfileRoutes !==
-															'undefined' &&
-															routerConfig.userProfileRoutes.map(
-																(
-																	route: any
-																): React.ReactElement => (
-																	<Route
-																		exact={
-																			route.exact ??
-																			true
-																		}
-																		key={`userProfile-${route.path}`}
-																		path={
-																			route.path
-																		}
-																		render={(
-																			props
-																		) => (
-																			<div className="contentWrapper__userProfile">
-																				<SessionTypeProvider
-																					type={
-																						route.type ||
-																						null
-																					}
-																				>
-																					<route.component
-																						{...props}
-																						type={
-																							route.type ||
-																							null
-																						}
-																					/>
-																				</SessionTypeProvider>
-																			</div>
-																		)}
-																	/>
-																)
-															)}
-
-														{routerConfig.detailRoutes.map(
+														{routerConfig.listRoutes.map(
 															(
 																route: any
 															): React.ReactElement => (
@@ -192,35 +119,111 @@ export const Routing = (props: RoutingProps) => {
 																		route.exact ??
 																		true
 																	}
-																	key={`detail-${route.path}`}
+																	key={`list-${route.path}`}
 																	path={
 																		route.path
 																	}
-																	render={(
-																		componentProps
-																	) => (
-																		<SessionTypeProvider
-																			type={
-																				route.type ||
-																				null
+																>
+																	<SessionTypeProvider
+																		type={
+																			route.type ||
+																			null
+																		}
+																	>
+																		<route.component
+																			sessionTypes={
+																				route.sessionTypes
 																			}
-																		>
-																			<route.component
-																				{...componentProps}
-																				{...props}
+																		/>
+																	</SessionTypeProvider>
+																</Route>
+															)
+														)}
+													</Switch>
+												</div>
+												<div className="contentWrapper__detail">
+													<Suspense
+														fallback={<Loading />}
+													>
+														<Switch>
+															{typeof routerConfig.userProfileRoutes !==
+																'undefined' &&
+																routerConfig.userProfileRoutes.map(
+																	(
+																		route: any
+																	): React.ReactElement => (
+																		<Route
+																			exact={
+																				route.exact ??
+																				true
+																			}
+																			key={`userProfile-${route.path}`}
+																			path={
+																				route.path
+																			}
+																			render={(
+																				props
+																			) => (
+																				<div className="contentWrapper__userProfile">
+																					<SessionTypeProvider
+																						type={
+																							route.type ||
+																							null
+																						}
+																					>
+																						<route.component
+																							{...props}
+																							type={
+																								route.type ||
+																								null
+																							}
+																						/>
+																					</SessionTypeProvider>
+																				</div>
+																			)}
+																		/>
+																	)
+																)}
+
+															{routerConfig.detailRoutes.map(
+																(
+																	route: any
+																): React.ReactElement => (
+																	<Route
+																		exact={
+																			route.exact ??
+																			true
+																		}
+																		key={`detail-${route.path}`}
+																		path={
+																			route.path
+																		}
+																		render={(
+																			componentProps
+																		) => (
+																			<SessionTypeProvider
 																				type={
 																					route.type ||
 																					null
 																				}
-																			/>
-																		</SessionTypeProvider>
-																	)}
-																/>
-															)
-														)}
-													</Switch>
-												</Suspense>
-											</div>
+																			>
+																				<route.component
+																					{...componentProps}
+																					{...props}
+																					type={
+																						route.type ||
+																						null
+																					}
+																				/>
+																			</SessionTypeProvider>
+																		)}
+																	/>
+																)
+															)}
+														</Switch>
+													</Suspense>
+												</div>
+											</SessionListViewStateProvider>
 										</Route>
 										<Route
 											path={

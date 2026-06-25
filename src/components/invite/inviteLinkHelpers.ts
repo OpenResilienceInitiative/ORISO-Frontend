@@ -1,17 +1,16 @@
 import { setTokens } from '../auth/auth';
 import { setValueInCookie } from '../sessionCookie/accessSessionCookie';
 import { generateCsrfToken } from '../../utils/generateCsrfToken';
-import { APP_PATH } from '../../resources/scripts/config';
 import { RedeemInviteLinkSessionResponse } from '../../api/apiRedeemInviteLink';
+import { isMatrixRoomIdHeuristic } from '../../utils/matrixRoomUtils';
 
 export const buildInviteSessionAppUrl = (
 	sessionId: number | string,
 	rcGroupId?: string | null
 ): string => {
-	const basePath = `/${APP_PATH}/sessions/user/view`;
+	const basePath = '/sessions/user/view';
 	const groupId = rcGroupId?.trim();
-	const isMatrixRoomId =
-		Boolean(groupId) && (groupId.startsWith('!') || groupId.includes(':'));
+	const isMatrixRoomId = isMatrixRoomIdHeuristic(groupId);
 
 	if (groupId && !isMatrixRoomId) {
 		return `${window.location.origin}${basePath}/${encodeURIComponent(groupId)}/${sessionId}`;
@@ -32,8 +31,6 @@ export const applyRedeemSessionCredentials = (
 	);
 	setValueInCookie('rc_uid', data.rcUserId);
 	setValueInCookie('rc_token', data.rcToken);
-	localStorage.setItem('matrix_user_id', data.rcUserId);
-	localStorage.setItem('matrix_access_token', data.rcToken);
 	generateCsrfToken(true);
 };
 

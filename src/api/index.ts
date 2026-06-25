@@ -1,6 +1,7 @@
 export * from './apiAgencySelection';
 export * from './apiDeleteAskerAccount';
 export * from './apiDeleteSessionAndUser';
+export * from './apiFinishAnonymousConversation';
 export * from './apiDraftMessages';
 export * from './apiUserDrafts';
 export * from './apiGetSessionSupervisors';
@@ -36,6 +37,7 @@ export * from './apiPutConsultantData';
 export * from './apiPutEmail';
 export * from './apiRejectVideoCall';
 export * from './apiSendEnquiry';
+export * from './apiSendMatrixAttachmentMessage';
 export * from './apiSendMessage';
 export * from './apiSessionAssign';
 export * from './apiSetAbsence';

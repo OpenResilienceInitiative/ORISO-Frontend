@@ -5,7 +5,7 @@
 - **Helm chart:** `caritas-workspace/ORISO-Kubernetes/helm/charts/storybook/`
 - **Deployment template:** `templates/deployment.yaml` → container image `{{ .Values.image.repository }}:{{ .Values.image.tag }}`
 - **Default values:** `helm/charts/storybook/values.yaml` → `repository: caritas-storybook`, `tag: latest` (often `pullPolicy: Never` for local clusters)
-- **Ingress (example):** `caritas-workspace/ORISO-Kubernetes/ingress/22-storybook-ingress.yaml` → host `storybook.oriso-dev.site`, service `oriso-platform-storybook`
+- **Ingress (example):** `caritas-workspace/ORISO-Kubernetes/ingress/22-storybook-ingress.yaml` → host `storybook.oriso.org`, service `oriso-platform-storybook`
 - **Bundled snapshot:** `configmaps/.../all-workloads.yaml` may list `image: caritas-storybook:latest` for `oriso-platform-storybook`
 
 ## How the Docker image is built (this repo)

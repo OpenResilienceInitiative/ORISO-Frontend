@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - dev
 
 env:
   REGISTRY: ghcr.io
@@ -30,5 +31,5 @@ jobs:
       uses: ./.github/actions/docker-build-push
       with:
         push_to_ghcr: true
-        image_name: caritas-frontend
+        image_name: oriso-frontend
         github_token: ${{ secrets.GITHUB_TOKEN }}

@@ -9,6 +9,24 @@ import { appConfig } from '../../utils/appConfig';
 
 export const RENEW_BEFORE_EXPIRY_IN_MS = 10 * 1000; // seconds
 
+export const isPublicAuthRoute = (): boolean => {
+	const { pathname } = window.location;
+	return (
+		/^\/(?:login|registration|error\.401\.html|error\.404\.html|error\.500\.html)(?:\/|$)/.test(
+			pathname
+		) || /^\/[^/]+\/registration(?:\/|$)/.test(pathname)
+	);
+};
+
+export const hasActiveAuthSession = (): boolean => {
+	const tokenExpiry = getTokenExpiryFromLocalStorage();
+	const currentTime = new Date().getTime();
+	return (
+		tokenExpiry.accessTokenValidUntilTime > currentTime ||
+		tokenExpiry.refreshTokenValidUntilTime > currentTime
+	);
+};
+
 export const setTokens = (
 	access_token: string,
 	expires_in: number,

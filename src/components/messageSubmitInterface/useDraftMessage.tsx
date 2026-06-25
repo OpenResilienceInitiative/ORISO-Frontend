@@ -1,4 +1,11 @@
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import {
+	useCallback,
+	useContext,
+	useEffect,
+	useMemo,
+	useRef,
+	useState
+} from 'react';
 import {
 	apiDeleteUserDraft,
 	apiGetUserDraft,
@@ -10,16 +17,13 @@ import { decryptText, encryptText } from '../../utils/encryptionHelpers';
 import { apiPostError, ERROR_LEVEL_WARN } from '../../api/apiPostError';
 import { useE2EE } from '../../hooks/useE2EE';
 import { E2EEContext, ActiveSessionContext } from '../../globalState';
-import { convertFromRaw, EditorState } from 'draft-js';
-import { markdownToDraft } from 'markdown-draft-js';
+import { EditorState } from 'draft-js';
 import { EVENT_PRE_LOGOUT } from '../logout/logout';
 import {
 	addEventListener,
 	removeEventListener
 } from '../../utils/eventHandler';
-import {
-	REMOTE_DRAFT_INDEX_SCOPE
-} from '../../services/draftStore';
+import { REMOTE_DRAFT_INDEX_SCOPE } from '../../services/draftStore';
 
 const SAVE_DRAFT_TIMEOUT = 1500;
 
@@ -58,7 +62,11 @@ export const useDraftMessage = (
 	const scopeKeysToTry = useMemo(
 		() =>
 			Array.from(
-				new Set([forcedScopeKey, roomScopeKey, sessionScopeKey].filter(Boolean))
+				new Set(
+					[forcedScopeKey, roomScopeKey, sessionScopeKey].filter(
+						Boolean
+					)
+				)
 			),
 		[forcedScopeKey, roomScopeKey, sessionScopeKey]
 	);
@@ -71,10 +79,12 @@ export const useDraftMessage = (
 
 	const setEditorWithDraftString = useCallback(
 		(draftString: string) => {
-			const rawObject = markdownToDraft(draftString);
-			const draftContent = convertFromRaw(rawObject);
-			const editorStateWithText = EditorState.createWithContent(draftContent);
-			loadFunction(EditorState.moveFocusToEnd(editorStateWithText), draftString);
+			try {
+				// TipTapComposer reads rawDraft directly (HTML/plain text).
+				loadFunction(EditorState.createEmpty(), draftString || '');
+			} catch {
+				loadFunction(EditorState.createEmpty(), '');
+			}
 		},
 		[loadFunction]
 	);
@@ -84,33 +94,43 @@ export const useDraftMessage = (
 			if (!canUseRemoteApi) {
 				return;
 			}
-			const upsertPayload = {
-				actionPath: options?.actionPath || null,
-				title: options?.title || null,
-				sessionId: options?.sessionId ?? activeSession?.item?.id ?? null,
-				roomRef: options?.roomRef ?? activeSession?.rid ?? null,
-				threadRootId: options?.threadRootId || null,
-				updatedAt: Date.now()
-			};
-			let indexMap: Record<string, any> = {};
 			try {
-				const indexRes = await apiGetUserDraft(REMOTE_DRAFT_INDEX_SCOPE);
-				indexMap = indexRes?.text ? JSON.parse(indexRes.text) : {};
-			} catch (e: any) {
-				if (e?.message !== FETCH_ERRORS.EMPTY) {
-					indexMap = {};
+				const upsertPayload = {
+					actionPath: options?.actionPath || null,
+					title: options?.title || null,
+					sessionId:
+						options?.sessionId ?? activeSession?.item?.id ?? null,
+					roomRef: options?.roomRef ?? activeSession?.rid ?? null,
+					threadRootId: options?.threadRootId || null,
+					updatedAt: Date.now()
+				};
+				let indexMap: Record<string, any> = {};
+				try {
+					const indexRes = await apiGetUserDraft(
+						REMOTE_DRAFT_INDEX_SCOPE
+					);
+					indexMap =
+						indexRes?.text && typeof indexRes.text === 'string'
+							? JSON.parse(indexRes.text)
+							: {};
+				} catch (e: any) {
+					if (e?.message !== FETCH_ERRORS.EMPTY) {
+						indexMap = {};
+					}
 				}
-			}
 
-			if (draftText && draftText.trim().length > 0) {
-				indexMap[remoteScopeKey] = upsertPayload;
-			} else {
-				delete indexMap[remoteScopeKey];
-			}
+				if (draftText && draftText.trim().length > 0) {
+					indexMap[remoteScopeKey] = upsertPayload;
+				} else {
+					delete indexMap[remoteScopeKey];
+				}
 
-			await apiUpsertUserDraft(REMOTE_DRAFT_INDEX_SCOPE, {
-				text: JSON.stringify(indexMap)
-			}).catch();
+				await apiUpsertUserDraft(REMOTE_DRAFT_INDEX_SCOPE, {
+					text: JSON.stringify(indexMap)
+				});
+			} catch {
+				// Draft index is non-critical; ignore failures.
+			}
 		},
 		[
 			activeSession?.item?.id,
@@ -131,7 +151,7 @@ export const useDraftMessage = (
 		const currentLoadVersion = ++loadVersionRef.current;
 		setLoaded(false);
 		setMessageRes(null);
-		if (!canUseRemoteApi) {
+		if (!enabled || !canUseRemoteApi) {
 			setLoaded(true);
 			return () => {
 				abortController?.abort();
@@ -168,11 +188,7 @@ export const useDraftMessage = (
 		return () => {
 			abortController?.abort();
 		};
-	}, [
-		canUseRemoteApi,
-		scopeKeysToTry,
-		setEditorWithDraftString
-	]);
+	}, [enabled, canUseRemoteApi, scopeKeysToTry, setEditorWithDraftString]);
 
 	// If everything is ready for decryption, decrypt the draft message
 	useEffect(() => {
@@ -202,14 +218,7 @@ export const useDraftMessage = (
 			return;
 		}
 
-		decryptText(
-			messageRes.text,
-			keyID,
-			key,
-			encrypted,
-			false,
-			'enc.'
-		)
+		decryptText(messageRes.text, keyID, key, encrypted, false, 'enc.')
 			.catch(() => messageRes.text)
 			.then((msg) => {
 				if (decryptLoadVersion !== loadVersionRef.current) {
@@ -255,15 +264,22 @@ export const useDraftMessage = (
 			}
 
 			if (canUseRemoteApi) {
-				await apiUpsertUserDraft(remoteScopeKey, {
-					text: message,
-					actionPath: options?.actionPath || null,
-					title: options?.title || null,
-					sourceSessionId: options?.sessionId ?? activeSession?.item?.id ?? null,
-					roomRef: options?.roomRef ?? activeSession?.rid ?? null,
-					threadRootId: options?.threadRootId || null
-				}).catch();
-				await updateRemoteDraftIndex(draftMessage);
+				try {
+					await apiUpsertUserDraft(remoteScopeKey, {
+						text: message,
+						actionPath: options?.actionPath || null,
+						title: options?.title || null,
+						sourceSessionId:
+							options?.sessionId ??
+							activeSession?.item?.id ??
+							null,
+						roomRef: options?.roomRef ?? activeSession?.rid ?? null,
+						threadRootId: options?.threadRootId || null
+					});
+					await updateRemoteDraftIndex(draftMessage);
+				} catch {
+					// Draft autosave must never break chat input.
+				}
 			}
 		},
 		[
@@ -339,9 +355,9 @@ export const useDraftMessage = (
 	const clearDraftMessage = useCallback(() => {
 		if (canUseRemoteApi) {
 			scopeKeysToTry.forEach((scopeKey) => {
-				apiDeleteUserDraft(scopeKey).catch();
+				void apiDeleteUserDraft(scopeKey);
 			});
-			updateRemoteDraftIndex('').catch();
+			void updateRemoteDraftIndex('');
 		}
 		setMessage('');
 	}, [canUseRemoteApi, scopeKeysToTry, updateRemoteDraftIndex]);

@@ -116,15 +116,27 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				margin: 0 auto;
 				background-color: #ffffff !important;
 				padding: 0 !important;
-				border-top-left-radius: 32px !important;
-				border-bottom-left-radius: 32px !important;
-				border-bottom-right-radius: 32px !important;
-				box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.1) !important;
-				border: 1px solid #ffd1d1 !important;
+				border-radius: 14px 14px 24px 24px !important;
+				box-shadow: none !important;
+				border: 1px solid #ffb8b2 !important;
 				overflow: visible;
-				min-height: 168px;
-				height: 200px;
+				min-height: 186px;
+				height: 210px;
 				transition: all 240ms ease;
+
+				&::before {
+					content: '';
+					position: absolute;
+					top: 9px;
+					left: 50%;
+					width: 56px;
+					height: 4px;
+					border-radius: 999px;
+					background: #f0aaa5;
+					transform: translateX(-50%);
+					pointer-events: none;
+					z-index: 2;
+				}
 
 				&--expanded {
 					position: fixed !important;
@@ -290,7 +302,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 					background: #ffe2de;
 
 					.textarea__mobileNavigatorHandle {
-						background: #cc1e1c;
+						background: var(--m3-primary, #cc1e1c);
 					}
 				}
 			}
@@ -306,7 +318,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			}
 
 			&__mobileNavigatorHandle--atBottom {
-				background: #cc1e1c;
+				background: var(--m3-primary, #cc1e1c);
 				height: 7px;
 				border-radius: 3px;
 			}
@@ -352,11 +364,11 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 		&__inputWrapper {
 			position: absolute;
-			left: 15px;
-			right: 15px;
-			top: 15px;
-			min-height: 141px;
-			height: 168px;
+			left: 22px;
+			right: 22px;
+			top: 23px;
+			min-height: 140px;
+			height: 164px;
 			display: block;
 			max-height: none;
 			min-height: 0;
@@ -392,8 +404,8 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			line-height: 20px;
 			width: 100%;
 			height: 100%;
-			border-radius: 30px 0 30px 30px;
-			border: 2px solid #cc1e1c;
+			border-radius: 6px 0 18px 18px;
+			border: 1px solid #ffb8b2;
 			box-sizing: border-box;
 			position: relative;
 
@@ -413,7 +425,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			&:focus-visible,
 			&:focus-within {
 				outline: none !important;
-				border: 2px solid #cc1e1c;
+				border: 1px solid #ff9f98;
 			}
 
 			&::placeholder,
@@ -429,7 +441,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				right: 0;
 				bottom: 0;
 				height: 2px;
-				background: #cc1e1c;
+				background: var(--m3-primary, #cc1e1c);
 				border-bottom-right-radius: 30px;
 				pointer-events: none;
 				z-index: 7;
@@ -473,12 +485,12 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 		&__figmaToolbar {
 			position: absolute;
-			top: 9px;
-			left: 12px;
+			top: 13px;
+			left: 24px;
 			z-index: 20;
 			display: block;
-			max-width: calc(100% - 60px);
-			width: calc(100% - 60px);
+			max-width: calc(100% - 88px);
+			width: calc(100% - 88px);
 			height: 30px;
 			overflow: visible;
 
@@ -535,7 +547,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				align-items: center;
 				justify-content: center;
 				cursor: pointer;
-				color: #646d78;
+				color: var(--m3-secondary-container, #646d78);
 				flex: 0 0 auto;
 
 				svg {
@@ -602,12 +614,12 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			}
 
 			&--default button {
-				color: #4b515a;
+				color: var(--m3-secondary, #4b515a);
 				font-weight: 600;
 			}
 
 			&--compact button {
-				color: #646d78;
+				color: var(--m3-secondary-container, #646d78);
 			}
 		}
 
@@ -648,7 +660,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 		}
 
 		&__toolbarButton--selected {
-			color: #cc1e1c !important;
+			color: var(--m3-primary, #cc1e1c) !important;
 		}
 
 		&__toolbarButton--linkSelected {
@@ -666,11 +678,11 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 		&__toolbarButton--selected svg path,
 		&__toolbarButton--selected svg rect {
-			fill: #cc1e1c !important;
+			fill: var(--m3-primary, #cc1e1c) !important;
 		}
 
 		&__toolbarButton--selected svg path[stroke] {
-			stroke: #cc1e1c !important;
+			stroke: var(--m3-primary, #cc1e1c) !important;
 		}
 
 		&__emojiButton {
@@ -1055,11 +1067,15 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 		&__iconWrapper {
 			width: 48px;
 			height: 48px;
-			border-radius: 0 0 0 27px; // top-right pointier, bottom-left less round
+			border: 0;
+			border-radius: 0 6px 0 24px;
+			padding: 0;
 			cursor: pointer;
-			background-color: #cc1e1c;
-			margin-right: 8px;
-			margin-top: 6px;
+			background-color: #f8ceca;
+			color: inherit;
+			appearance: none;
+			font: inherit;
+			margin: 0;
 			display: inline-flex;
 			align-items: center;
 			justify-content: center;
@@ -1076,11 +1092,17 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				transition: transform 220ms ease-out;
 			}
 			&:hover {
-				background-color: var(
-					--skin-color-primary-hover,
-					$hover-primary
-				);
+				background-color: var(--m3-primary-hover, #f3bdb8);
 			}
+			&:focus-visible {
+				outline: 2px solid var(--m3-primary, #cc1e1c);
+				outline-offset: 2px;
+			}
+
+			&--active:not(.textarea__iconWrapper--empty) {
+				background-color: var(--m3-primary, #cc1e1c);
+			}
+
 			&--active .textarea__icon {
 				transform: translate(-48%, -54%) rotate(-22deg);
 			}
@@ -1109,11 +1131,11 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			&--deactivated:hover {
 				cursor: not-allowed;
 				pointer-events: none;
-				background-color: #efb6b6;
+				background-color: #f8ceca;
 				opacity: 1;
 
 				svg rect {
-					fill: var(--text-color-contrast-switch, $white);
+					fill: var(--m3-on-primary, $white);
 				}
 
 				svg {
@@ -1136,7 +1158,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			transform: translate(-50%, -50%) rotate(0deg);
 
 			rect {
-				fill: var(--text-color-contrast-switch, $white);
+				fill: var(--m3-on-primary, $white);
 			}
 
 			&--active {
@@ -1201,14 +1223,14 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 		&__audienceSelector--all {
 			.textarea__audienceSelectorMain,
 			.textarea__audienceSelectorChevron {
-				background: #4c555f;
+				background: var(--m3-secondary, #4c555f);
 			}
 		}
 
 		&__audienceSelector--target {
 			.textarea__audienceSelectorMain,
 			.textarea__audienceSelectorChevron {
-				background: #cc1e1c;
+				background: var(--m3-primary, #cc1e1c);
 			}
 		}
 
@@ -1221,7 +1243,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			max-width: 260px;
 			max-height: min(72vh, 520px);
 			overflow-y: auto;
-			border: 2px solid #cc1e1c;
+			border: 2px solid var(--m3-primary, #cc1e1c);
 			border-radius: 12px;
 			background: #fff !important;
 			opacity: 1;
@@ -1272,7 +1294,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			font-size: 12px;
 			font-weight: 400;
 			line-height: 1.4;
-			color: #4b515a;
+			color: var(--m3-secondary, #4b515a);
 			text-align: right;
 		}
 
@@ -1319,7 +1341,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			border: 0;
 			background: transparent;
 			padding: 6px;
-			color: #4c555f;
+			color: var(--m3-secondary, #4c555f);
 			font-size: 12px;
 			line-height: 14px;
 			cursor: pointer;
@@ -1337,7 +1359,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			width: 14px;
 			height: 14px;
 			border-radius: 999px;
-			border: 2px solid #5f6873;
+			border: 2px solid var(--m3-secondary-container, #5f6873);
 			background: #fff;
 			flex: 0 0 14px;
 		}
@@ -1366,7 +1388,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			justify-content: center;
 			border: 0;
 			background: transparent;
-			color: #4c555f;
+			color: var(--m3-secondary, #4c555f);
 			padding: 4px;
 			cursor: pointer;
 		}
@@ -1413,7 +1435,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			font-size: 10px;
 			line-height: 14px;
 			font-weight: 400;
-			color: #4c555f;
+			color: var(--m3-secondary, #4c555f);
 			padding: 2px 2px 2px 18px;
 		}
 
@@ -1427,7 +1449,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			border: 1px solid #e1e6ee;
 			border-radius: 999px;
 			background: #fff;
-			color: #4c555f;
+			color: var(--m3-secondary, #4c555f);
 			font-size: 12px;
 			font-weight: 700;
 			line-height: 14px;
@@ -1494,7 +1516,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			gap: 6px;
 			border: 0;
 			background: transparent;
-			color: #4c555f;
+			color: var(--m3-secondary, #4c555f);
 			font-size: 12px;
 			font-weight: 500;
 			line-height: 14px;
@@ -1566,19 +1588,19 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				align-self: flex-end;
 
 				* {
-					fill: $tertiary;
+					fill: var(--m3-on-surface-variant, $tertiary);
 				}
 
 				&:hover {
 					* {
-						fill: var(--skin-color-primary, $primary);
+						fill: var(--m3-primary, $primary);
 					}
 				}
 			}
 
 			&--active {
 				svg * {
-					fill: var(--skin-color-primary, $primary);
+					fill: var(--m3-primary, $primary);
 				}
 			}
 		}
@@ -1625,12 +1647,12 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				border: none;
 
 				svg * {
-					color: $tertiary;
+					color: var(--m3-on-surface-variant, $tertiary);
 				}
 
 				&--active {
 					svg * {
-						color: var(--skin-color-primary, $primary);
+						color: var(--m3-primary, $primary);
 					}
 				}
 			}
@@ -1656,7 +1678,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				margin-bottom: 0;
 
 				* {
-					fill: $tertiary;
+					fill: var(--m3-on-surface-variant, $tertiary);
 				}
 			}
 		}
@@ -1685,14 +1707,14 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				height: $attachmentIconSize;
 
 				* {
-					fill: $tertiary;
+					fill: var(--m3-on-surface-variant, $tertiary);
 				}
 			}
 
 			&:hover {
 				svg {
 					* {
-						fill: var(--skin-color-primary, $primary);
+						fill: var(--m3-primary, $primary);
 					}
 				}
 			}
@@ -1722,12 +1744,12 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			cursor: pointer;
 
 			* {
-				fill: $tertiary;
+				fill: var(--m3-on-surface-variant, $tertiary);
 			}
 
 			&:hover {
 				* {
-					fill: var(--skin-color-primary, $primary);
+					fill: var(--m3-primary, $primary);
 				}
 			}
 		}
@@ -1903,7 +1925,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 					height: 16px;
 
 					* {
-						fill: $tertiary;
+						fill: var(--m3-on-surface-variant, $tertiary);
 					}
 				}
 			}
@@ -1961,7 +1983,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				height: $attachmentIconSize;
 
 				* {
-					fill: var(--skin-color-secondary-contrast-safe, $secondary);
+					fill: var(--m3-secondary, $secondary);
 				}
 			}
 
@@ -2006,18 +2028,21 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			height: $grid-base-six;
 			border-radius: $grid-base-three;
 			cursor: pointer;
-			border: 1px solid var(--skin-color-primary, $primary);
+			border: 1px solid var(--m3-primary, $primary);
 			margin: 0 0 4px 14px;
 			align-self: flex-end;
 			background-color: $white;
 			transition: background-color 0.6s ease;
 			overflow: hidden;
 			&:hover {
-				background-color: $background-light;
+				background-color: var(
+					--m3-surface-container-low,
+					$background-light
+				);
 			}
 
 			svg {
-				fill: $primary;
+				fill: var(--m3-primary, $primary);
 				position: relative;
 				left: 50%;
 				top: 50%;
@@ -2027,12 +2052,12 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 		&__buttons {
 			position: absolute;
-			top: 11px;
-			right: 8px;
+			top: 23px;
+			right: 22px;
 			z-index: 8;
 			display: flex;
 			align-items: center;
-			gap: 6px;
+			gap: 0;
 
 			@media screen and (max-width: 899px) {
 				right: -6px;
@@ -2051,7 +2076,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			display: none;
 			border: none;
 			background: rgba(255, 255, 255, 0.95);
-			color: #646d78;
+			color: var(--m3-secondary-container, #646d78);
 			width: 24px;
 			height: 24px;
 			border-radius: 999px;
@@ -2066,7 +2091,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			}
 
 			&:hover {
-				color: #4b515a;
+				color: var(--m3-secondary, #4b515a);
 				background: #ffffff;
 			}
 

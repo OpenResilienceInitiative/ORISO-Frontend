@@ -4,7 +4,10 @@ import {
 	getErrorCaseForStatus,
 	redirectToErrorPage
 } from '../components/error/errorHandling';
+import { isPublicAuthRoute } from '../components/auth/auth';
 import { logout } from '../components/logout/logout';
+import { removeAllCookies } from '../components/sessionCookie/accessSessionCookie';
+import { removeTokenExpiryFromLocalStorage } from '../components/sessionCookie/accessSessionLocalStorage';
 import { appConfig } from '../utils/appConfig';
 import { RequestLog } from '../utils/requestCollector';
 
@@ -47,6 +50,36 @@ export const X_REASON = {
 
 export const FETCH_SUCCESS = {
 	CONTENT: 'CONTENT'
+};
+
+const MATRIX_MIGRATION_DUMMY_RC_TOKEN = 'matrix-migration-dummy-token';
+const MATRIX_MIGRATION_DUMMY_RC_USER_ID = 'matrix-migration-dummy-user';
+
+const invalidateStaleAuthSession = () => {
+	removeAllCookies();
+	removeTokenExpiryFromLocalStorage();
+};
+
+// Guards against repeated reloads when several requests 401 on a public auth
+// route within the same page load. At most one self-healing reload is triggered.
+let staleAuthRecoveryTriggered = false;
+
+// A 401 on a public auth route (login / registration / error pages) means any
+// token we presented is stale or expired. Clear it so the next request is
+// anonymous -- the public endpoints then answer 200 instead of 401. If a stale
+// token was actually sent, reload once to re-bootstrap the app cleanly instead
+// of leaving the user stranded on a blank, crashed page (the uncaught
+// UNAUTHORIZED rejection otherwise prevents the login screen from rendering).
+const recoverFromStaleAuthOnPublicRoute = (
+	hadAuthorization: boolean,
+	reject: (reason?: Error) => void
+) => {
+	invalidateStaleAuthSession();
+	reject(new Error(FETCH_ERRORS.UNAUTHORIZED));
+	if (hadAuthorization && !staleAuthRecoveryTriggered) {
+		staleAuthRecoveryTriggered = true;
+		window.location.reload();
+	}
 };
 
 export class FetchErrorWithOptions extends Error {
@@ -97,30 +130,37 @@ export const fetchData = ({
 
 		const csrfToken = generateCsrfToken();
 
-	// MATRIX MIGRATION: rcToken still required by backend for archive endpoints
-	// but no longer exists after Matrix migration. Send dummy token.
+		// MATRIX MIGRATION: rcToken still required by backend for archive endpoints
+		// but no longer exists after Matrix migration. Send dummy token.
 		const rcHeaders = rcValidation
 			? {
-				rcToken: getValueFromCookie('rc_token') || 'matrix-migration-dummy-token',
-					...(getValueFromCookie('rc_uid') && { RCUserId: getValueFromCookie('rc_uid') })
+					RCToken:
+						getValueFromCookie('rc_token') ||
+						MATRIX_MIGRATION_DUMMY_RC_TOKEN,
+					RCUserId:
+						getValueFromCookie('rc_uid') ||
+						MATRIX_MIGRATION_DUMMY_RC_USER_ID
 				}
 			: null;
 
-		const localDevelopmentHeader = isLocalDevelopment && process.env.REACT_APP_CSRF_WHITELIST_HEADER_PROPERTY
+		const localDevelopmentHeader = isLocalDevelopment
 			? {
-					[process.env.REACT_APP_CSRF_WHITELIST_HEADER_PROPERTY]: csrfToken
-				}
-			: isLocalDevelopment
-			? {
-					'X-WHITELIST-HEADER': csrfToken
+					'X-WHITELIST-HEADER': csrfToken,
+					...(process.env.REACT_APP_CSRF_WHITELIST_HEADER_PROPERTY &&
+					process.env.REACT_APP_CSRF_WHITELIST_HEADER_PROPERTY !==
+						'X-WHITELIST-HEADER'
+						? {
+								[process.env
+									.REACT_APP_CSRF_WHITELIST_HEADER_PROPERTY]:
+									csrfToken
+							}
+						: {})
 				}
 			: null;
 
-		let controller;
-		controller = new AbortController();
-		if (timeout) {
-			setTimeout(() => controller.abort(), timeout);
-		}
+		const controller = new AbortController();
+		const timeoutMs = timeout ?? 30_000;
+		setTimeout(() => controller.abort(), timeoutMs);
 		if (signal) {
 			signal.addEventListener('abort', () => controller.abort());
 		}
@@ -135,11 +175,14 @@ export const fetchData = ({
 			...rcHeaders,
 			...localDevelopmentHeader
 		};
-		
+
 		// Remove any undefined values and undefined keys
 		const cleanHeaders = Object.fromEntries(
-			Object.entries(allHeaders).filter(([key, value]) => 
-				key !== undefined && value !== undefined && key !== 'undefined'
+			Object.entries(allHeaders).filter(
+				([key, value]) =>
+					key !== undefined &&
+					value !== undefined &&
+					key !== 'undefined'
 			)
 		);
 
@@ -246,9 +289,21 @@ export const fetchData = ({
 					) {
 						reject(new Error(FETCH_ERRORS.GATEWAY_TIMEOUT));
 					} else if (response.status === 401) {
-						// console.log(url);
-						logout(true, appConfig.urls.toLogin);
+						if (isPublicAuthRoute()) {
+							recoverFromStaleAuthOnPublicRoute(
+								Boolean(authorization),
+								reject
+							);
+						} else {
+							logout(true, appConfig.urls.toLogin);
+							reject(new Error(FETCH_ERRORS.UNAUTHORIZED));
+						}
 					}
+				} else if (response.status === 401 && isPublicAuthRoute()) {
+					recoverFromStaleAuthOnPublicRoute(
+						Boolean(authorization),
+						reject
+					);
 				} else {
 					const error = getErrorCaseForStatus(response.status);
 					redirectToErrorPage(error);

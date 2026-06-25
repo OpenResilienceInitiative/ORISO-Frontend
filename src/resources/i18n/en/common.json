@@ -285,6 +285,9 @@
 		"leaveGroupChat": "Leave chat",
 		"mute": "Mute",
 		"muteDescription": "Disable notifications for this chat.",
+		"activateNotification": "Activate notifications",
+		"privacyPolicy": "Privacy policy",
+		"privacyPolicyDescription": "Read how this counseling center processes your data.",
 		"help": "Request Help",
 		"helpDescription": "Escalate the case internally or externally without neglecting data protection.",
 		"invite": "Invite More People",
@@ -845,6 +848,36 @@
 					}
 				}
 			},
+			"elementCall": {
+				"stackLabel": "Element Call with WebRTC and LiveKit",
+				"stepsHeadline": "How the video call works",
+				"troubleshootingHeadline": "If something does not work",
+				"asker": {
+					"headline": "Video Call",
+					"intro": "Video calls now run directly through Element Call. Element Call uses WebRTC and LiveKit, so no browser switch or extra installation is needed.",
+					"steps": {
+						"open": "Open the online consultation as usual.",
+						"permissions": "Allow camera and microphone when your browser asks.",
+						"call": "Accept the video call when your consultant starts it.",
+						"copyLink": "If you want to open the login link on another device, copy it here:"
+					}
+				},
+				"consultant": {
+					"headline": "Video Call",
+					"intro": "Video calls now run directly through Element Call. Element Call uses WebRTC and LiveKit, so no browser switch or extra installation is needed.",
+					"steps": {
+						"open": "Open the consultation in ORISO as usual.",
+						"permissions": "Allow camera and microphone when your browser asks.",
+						"call": "Start the video call in the chat. Element Call opens the call automatically.",
+						"copyLink": "If you want to open the login link on another device, copy it here:"
+					}
+				},
+				"troubleshooting": {
+					"permissions": "Check whether camera and microphone are allowed in the browser.",
+					"device": "Check that the correct microphone, camera, and speaker are selected.",
+					"connection": "Refresh the page or switch to a stable Wi-Fi connection if video or audio drops."
+				}
+			},
 			"loginLink": {
 				"notification": {
 					"text": "Link copied to clipboard!",
@@ -1243,6 +1276,8 @@
 		"showMore": "Show more",
 		"systemNotification": "System Notification",
 		"systemNotificationTitle": "System notification",
+		"userLeftChat": "{{name}} left the chat",
+		"anonymousUser": "User",
 		"supervisionEnabledTitle": "Supervision Enabled!",
 		"supervisionEnabledDescription": "{{name}} was added as a consultant supervisor to this chat.",
 		"today": "Today",
@@ -1269,7 +1304,7 @@
 				"small": "Messages"
 			}
 		},
-		"activity": "Activity",
+		"activity": "Timeline",
 		"language": "Language",
 		"drafts": "Drafts",
 		"liveChat": "Live Chat",
@@ -1280,6 +1315,90 @@
 		"tools": "My tools"
 	},
 	"notifications": {
+		"families": {
+			"all": "All",
+			"requests": "Requests",
+			"messages": "Messages",
+			"drafts": "Drafts",
+			"handover": "Handover",
+			"calls": "Calls",
+			"system": "System",
+			"appointments": "Appointments"
+		},
+		"events": {
+			"fallback": {
+				"title": "Activity",
+				"text": ""
+			},
+			"inquiryAccepted": {
+				"title": "Request accepted",
+				"text": "The request was accepted. You can start the conversation."
+			},
+			"messageNew": {
+				"title": "New message",
+				"text": "You received a new message."
+			},
+			"threadReplyNew": {
+				"title": "New thread reply",
+				"text": "There is a new reply in a thread."
+			},
+			"supervisorAdded": {
+				"title": "Supervisor added",
+				"text": "A supervisor was added to this case."
+			},
+			"supervisorRemoved": {
+				"title": "Supervisor removed",
+				"text": "A supervisor was removed from this case."
+			},
+			"supervisorAssigned": {
+				"title": "Supervisor assigned",
+				"text": "A supervisor was assigned to this case."
+			},
+			"counselorRenamed": {
+				"title": "Counsellor renamed",
+				"text": "The counsellor's display name has changed."
+			},
+			"requestNew": {
+				"title": "New client request",
+				"text": "A new client request is waiting."
+			},
+			"draftCreated": {
+				"title": "Draft saved",
+				"text": "You have an unsent draft. Resume where you left off."
+			},
+			"handoverRequested": {
+				"title": "Handover requested",
+				"text": "A case handover was requested. Both parties must confirm."
+			},
+			"handoverPartial": {
+				"title": "Handover partially confirmed",
+				"text": "One party has confirmed the handover."
+			},
+			"handoverAllConfirmed": {
+				"title": "Handover confirmed",
+				"text": "Both parties confirmed. The handover took effect."
+			},
+			"handoverAutoConfirmed": {
+				"title": "Handover auto-confirmed",
+				"text": "The handover was auto-confirmed by policy."
+			},
+			"handoverDenied": {
+				"title": "Handover denied",
+				"text": "The handover was denied and cancelled."
+			},
+			"callStarted": {
+				"title": "Call ongoing",
+				"text": "A call is ongoing. Join to participate."
+			},
+			"callEnded": {
+				"title": "Call ended",
+				"text": "The call has ended."
+			},
+			"callMissed": {
+				"title": "Missed call",
+				"text": "You missed a call."
+			}
+		},
 		"error": "failed",
 		"info": "info",
 		"initialRequest": {
@@ -1291,6 +1410,8 @@
 		"success": "successful",
 		"warning": "warning",
 		"center": {
+			"searchPlaceholder": "Search activity…",
+			"noResults": "No activity matches your filters.",
 			"title": "Notifications",
 			"subtitle": "Recent activities and updates from your chats.",
 			"markAllRead": "Mark all as read",
@@ -1556,6 +1677,10 @@
 			"inquiryAccepted": {
 				"title": "Inquiry accepted",
 				"description": "Your inquiry has been accepted by a counsellor."
+			},
+			"conversationFinished": {
+				"title": "Chat ended",
+				"description": "The advice seeker has ended the anonymous chat."
 			},
 			"mainEmail": {
 				"title": "Allow email notifications"
@@ -1873,6 +1998,11 @@
 				"16": "Thuringia"
 			}
 		},
+		"loader": {
+			"headline": "Welcome.",
+			"copy": "We're setting up your secure counseling room …",
+			"ready": "Your counseling room is ready."
+		},
 		"stepbar": {
 			"of": "of",
 			"step": "Step"
@@ -1919,6 +2049,8 @@
 			}
 		},
 		"back": "Back",
+		"consultantlink": "Your counselor has invited you to online counseling. Please register to get in touch with your counselor.",
+		"consultantlinkAbsent": "This counselor is currently absent. You can still send your request to the counseling center.",
 		"next": "Next",
 		"register": "Register",
 		"title": {
@@ -2010,8 +2142,8 @@
 			"decreaseExhale": "Decrease exhale seconds",
 			"increaseExhale": "Increase exhale seconds",
 			"robotUsernameFallback": "Ratsuchende_r 9",
-			"robotCard1Title": "Please have a little patience",
-			"robotCard1Body": "All counsellors are currently in session. We will be with you as soon as possible.",
+			"robotCard1Title": "Just a moment, please",
+			"robotCard1Body": "All of our advisors are currently in live consultations. Please wait just a moment here in the chat room. You can see below how many people are ahead of you in line.",
 			"robotCard2TitlePrefix": "Your username is:",
 			"robotCard2Body": "To protect your anonymity, we delete your messages no later than 48 hours after the chat has ended.",
 			"robotCard3Title": "Do you not need an immediate response? And don’t want to wait for a free chat?",
@@ -2154,6 +2286,7 @@
 			"restrictions": ".jpg, .png, .pdf, .docx, .xlsx up to a maximum of {{attachment_filesize}}MB"
 		},
 		"empty": "Please select a message",
+		"emptyAllCaughtUp": "Take a breather.\nAll caught up.",
 		"groupChat": {
 			"consultant": {
 				"prefix": "Moderator - "
@@ -2283,12 +2416,20 @@
 			},
 			"chips": {
 				"neu": "Unread",
+				"unread": "Unread",
+				"drafts": "Drafts",
+				"nearby": "Nearby",
+				"create": "Create",
+				"archive": "Archived",
 				"oneToOne": "1-1 counseling",
 				"liveChat": "Live chat",
-				"groups": "Groups",
-				"supervision": "Supervision"
+				"internalGroup": "Internal group chat",
+				"groups": "Conversation circle",
+				"supervision": "Supervision",
+				"chats": "Nearby"
 			},
-			"emptyFilterResult": "No consultations match your search or filters."
+			"emptyFilterResult": "No consultations match your search or filters.",
+			"draftMetadataOnly": "Unsent message saved."
 		},
 		"anonymous": {
 			"tag": "Anonymous"
@@ -2836,7 +2977,24 @@
 		"agencies": {
 			"noresults": "No counseling centers available for this topic."
 		},
-		"start": "Start consultation"
+		"start": "Start consultation",
+		"queue": {
+			"actionsLabel": "Waiting room actions",
+			"calmCompanion": "Open a short calm companion",
+			"calmCompanionHint": "Until the chat begins, a short interactive calm companion. Right here in the chat room",
+			"calmCompanionHintMobileLine1": "Until the chat begins, a short",
+			"calmCompanionHintMobileLine2": "interactive calm companion.",
+			"calmCompanionHintDesktop": "Until the chat begins, a short calm companion. Right here in the chat room",
+			"positionCount_one": "{{count}} person ahead of you",
+			"positionCount_other": "{{count}} people ahead of you",
+			"positionCountSuffix": "still ahead of you",
+			"connecting": "Connecting …",
+			"insteadOfWaiting": "Instead of waiting",
+			"requestLocalCounselor": "Send on-site consultation request",
+			"consultantAccepted": "Your counselor is now expecting you in the chat.",
+			"startChatNow": "Start chat now",
+			"dismissAcceptedBanner": "Dismiss notice"
+		}
 	},
 	"sessionHeader": {
 		"anonymous": {
@@ -2852,6 +3010,39 @@
 				"error": {
 					"title": "Deletion Error",
 					"text": "The account could not be deleted. Please try again."
+				}
+			},
+			"endChat": {
+				"label": "End chat",
+				"ending": "Ending…",
+				"consultant": {
+					"label": "End chat",
+					"confirm": {
+						"headline": "End this anonymous chat?",
+						"copy": "The conversation will be closed for you and the advice seeker.",
+						"buttonConfirm": "End chat"
+					},
+					"success": {
+						"headline": "Chat ended",
+						"copy": "The anonymous chat has been closed.",
+						"buttonClose": "Back to sessions"
+					}
+				},
+				"confirm": {
+					"headline": "Do you really want to end the chat?",
+					"copy": "The conversation will be closed. You will not be able to continue this anonymous chat.",
+					"buttonConfirm": "End chat",
+					"buttonCancel": "Cancel"
+				},
+				"success": {
+					"headline": "Chat ended",
+					"copy": "Thank you for using our live chat. You can close this page now.",
+					"buttonClose": "Close"
+				},
+				"error": {
+					"headline": "Could not end chat",
+					"copy": "The chat could not be ended. Please try again.",
+					"buttonClose": "Close"
 				}
 			}
 		},

@@ -39,6 +39,10 @@ import {
 	SESSION_COUNT
 } from '../../api';
 import { useLiveChatAvailable } from '../../utils/liveChatToggle';
+import {
+	isMatrixRoom,
+	isMatrixRoomIdHeuristic
+} from '../../utils/matrixRoomUtils';
 import { Button } from '../button/Button';
 import './sessionsList.styles';
 import { SCROLL_PAGINATE_THRESHOLD } from './sessionsListConfig';
@@ -63,37 +67,35 @@ import {
 	buildArchiveTabPath,
 	buildCreateGroupChatPath,
 	SessionSearchPersonResult,
-	SessionToolbarChipFilter,
 	SessionsListToolbar
 } from './SessionsListToolbar';
-import { EnquiryFilterChips } from './EnquiryFilterChips';
+import {
+	isConversationCircleSession,
+	isInternalGroupChatSession,
+	normalizeSessionToolbarChip,
+	SessionToolbarChipFilter
+} from './sessionToolbarFilters';
+import { useSessionListViewState } from './SessionListViewStateContext';
+import { apiGetUserDrafts, IUserDraftItem } from '../../api/apiUserDrafts';
+import {
+	DRAFTS_UPDATED_EVENT,
+	REMOTE_DRAFT_INDEX_SCOPE
+} from '../../services/draftStore';
 
 function buildSessionSearchHaystack(
 	raw: ListItemInterface,
 	extended: ExtendedSessionInterface
 ): string {
+	// Keep list search metadata-only; Matrix/E2EE message bodies must not affect results.
 	const parts: string[] = [];
 	const item = extended.item;
+
 	if (item?.topic) {
 		parts.push(
 			typeof item.topic === 'string'
 				? item.topic
 				: (item.topic as TopicSessionInterface).name || ''
 		);
-	}
-	if (item) {
-		if ('lastMessage' in item && item.lastMessage) {
-			parts.push(String(item.lastMessage));
-		}
-		if ('e2eLastMessage' in item && item.e2eLastMessage?.msg) {
-			parts.push(String(item.e2eLastMessage.msg));
-		}
-		if ('hintMessage' in item && item.hintMessage) {
-			parts.push(String(item.hintMessage));
-		}
-	}
-	if (raw.latestMessage) {
-		parts.push(String(raw.latestMessage));
 	}
 	if (raw.user?.username) {
 		parts.push(raw.user.username);
@@ -111,25 +113,160 @@ function buildSessionSearchHaystack(
 }
 
 /**
- * Anonymous-chat sessions are identified by the ORISO convention that the
- * asker's keycloak username is prefixed `Anonymous-` (capital A — the
- * pseudonym-registration flow writes that). Using just the prefix keeps the
- * split clean even though all sessions in this deployment share the same
- * registrationType + `postcode='00000'` on the DB side.
+ * Live-chat / anonymous asker sessions on the registered-enquiry feed.
  */
 function isAnonymousAskerSession(
 	raw: ListItemInterface,
-	_extended: ExtendedSessionInterface
+	extended: ExtendedSessionInterface
 ): boolean {
+	const registrationType =
+		(raw as any)?.session?.registrationType ??
+		(extended as any)?.item?.registrationType;
+	if (registrationType === 'ANONYMOUS') {
+		return true;
+	}
+
 	const candidates = [
 		(raw as any)?.user?.username,
 		(raw as any)?.session?.askerUserName,
-		(raw as any)?.consultant?.username
+		(extended as any)?.item?.askerUserName
 	];
-	return candidates.some(
-		(u) => typeof u === 'string' && u.startsWith('Anonymous-')
-	);
+	if (
+		candidates.some(
+			(u) =>
+				typeof u === 'string' &&
+				(u.startsWith('Anonymous-') || u.startsWith('anon_'))
+		)
+	) {
+		return true;
+	}
+
+	const postcode =
+		(raw as any)?.session?.postcode ?? (extended as any)?.item?.postcode;
+	if (postcode == null || postcode === '') {
+		return false;
+	}
+	return String(postcode) === '00000';
 }
+
+const getSessionIdentityValues = (
+	raw: ListItemInterface,
+	extended: ExtendedSessionInterface
+): string[] => {
+	const item = extended.item as any;
+	const values = [
+		raw.session?.id,
+		raw.chat?.id,
+		raw.chat?.groupId,
+		(raw as any)?.session?.groupId,
+		item?.id,
+		item?.groupId,
+		item?.rid,
+		item?.matrixRoomId,
+		extended.rid
+	]
+		.filter(
+			(value) => value !== null && value !== undefined && value !== ''
+		)
+		.map((value) => String(value));
+
+	return Array.from(new Set(values));
+};
+
+const draftMatchesSession = (
+	draft: IUserDraftItem,
+	raw: ListItemInterface,
+	extended: ExtendedSessionInterface
+) => {
+	const identities = new Set(getSessionIdentityValues(raw, extended));
+	const candidateValues = new Set<string>();
+
+	const addCandidate = (value: unknown) => {
+		if (value === null || value === undefined || value === '') {
+			return;
+		}
+		const normalizedValue = String(value).trim();
+		if (!normalizedValue) {
+			return;
+		}
+		candidateValues.add(normalizedValue);
+		if (normalizedValue.startsWith('scope:')) {
+			const scopeValue = normalizedValue
+				.split('|')
+				.find((part) => part.startsWith('scope:'))
+				?.replace(/^scope:/, '');
+			if (scopeValue) {
+				candidateValues.add(scopeValue);
+			}
+		}
+	};
+
+	[
+		draft.sourceSessionId,
+		(draft as { sessionId?: string | number | null }).sessionId,
+		draft.roomRef,
+		draft.scopeKey
+	].forEach(addCandidate);
+
+	if (draft.actionPath) {
+		try {
+			const parsedPath = new URL(
+				draft.actionPath,
+				window.location.origin
+			);
+			parsedPath.pathname.split('/').forEach(addCandidate);
+			parsedPath.searchParams.forEach((value) => addCandidate(value));
+		} catch {
+			draft.actionPath.split(/[/?&=#]/).forEach(addCandidate);
+		}
+	}
+
+	return Array.from(identities).some((identity) =>
+		candidateValues.has(identity)
+	);
+};
+
+const withDraftScopeParam = (path: string, draftScopeKey: string) => {
+	const [basePath, queryString = ''] = path.split('?');
+	const query = new URLSearchParams(queryString);
+	query.delete('embeddedNotifications');
+	query.set('draftScopeKey', draftScopeKey);
+	const finalQuery = query.toString();
+	return `${basePath}${finalQuery ? `?${finalQuery}` : ''}`;
+};
+
+const normalizeTimestamp = (value?: string | number | null): number => {
+	if (value === null || value === undefined || value === '') {
+		return 0;
+	}
+
+	if (typeof value === 'number') {
+		return value > 1_000_000_000_000 ? value : value * 1000;
+	}
+
+	const numericValue = Number(value);
+	if (!Number.isNaN(numericValue)) {
+		return numericValue > 1_000_000_000_000
+			? numericValue
+			: numericValue * 1000;
+	}
+
+	const parsed = Date.parse(value);
+	return Number.isNaN(parsed) ? 0 : parsed;
+};
+
+const formatDraftTime = (timestamp?: string | null) => {
+	const time = normalizeTimestamp(timestamp);
+	if (!time) {
+		return '';
+	}
+	const diffMin = Math.max(0, Math.floor((Date.now() - time) / 60000));
+	if (diffMin < 1) return 'now';
+	if (diffMin < 60) return `${diffMin}m`;
+	const diffHours = Math.floor(diffMin / 60);
+	if (diffHours < 24) return `${diffHours}h`;
+	return `${Math.floor(diffHours / 24)}d`;
+};
 
 function sessionMatchesToolbar(
 	raw: ListItemInterface,
@@ -137,6 +274,7 @@ function sessionMatchesToolbar(
 	query: string,
 	chip: SessionToolbarChipFilter | null,
 	selectedPersonIds: string[],
+	drafts: IUserDraftItem[],
 	currentUserId?: string
 ): boolean {
 	const chatItem = getChatItemForSession(raw);
@@ -144,7 +282,7 @@ function sessionMatchesToolbar(
 	/*
 	 * Enquiry-feed axis (Anfragen tab):
 	 *   - chip === 'liveChat' → only anonymous asker sessions
-	 *   - chip === 'chats'    → only NON-anonymous sessions
+	 *   - chip === 'nearby'   → only NON-anonymous, non-group sessions
 	 *   - anything else / null → don't filter on this axis
 	 * Runs client-side against the /enquiries/registered feed because this
 	 * install doesn't populate registration_type=ANONYMOUS in the DB.
@@ -153,20 +291,26 @@ function sessionMatchesToolbar(
 	if (chip === 'liveChat' && !isAnonymous) {
 		return false;
 	}
-	if (chip === 'chats' && isAnonymous) {
+	if (chip === 'nearby' && (isAnonymous || extended.isGroup)) {
 		return false;
 	}
 
-	if (chip === 'neu') {
+	if (chip === 'unread') {
 		if (!chatItem || chatItem.messagesRead !== false) {
 			return false;
 		}
-	} else if (chip === 'oneToOne') {
-		if (extended.isGroup) {
+	} else if (chip === 'drafts') {
+		if (
+			!drafts.some((draft) => draftMatchesSession(draft, raw, extended))
+		) {
+			return false;
+		}
+	} else if (chip === 'internalGroup') {
+		if (!isInternalGroupChatSession(extended)) {
 			return false;
 		}
 	} else if (chip === 'groups') {
-		if (!extended.isGroup) {
+		if (!isConversationCircleSession(extended)) {
 			return false;
 		}
 	} else if (chip === 'supervision') {
@@ -196,6 +340,40 @@ function sessionMatchesToolbar(
 	return buildSessionSearchHaystack(raw, extended).toLowerCase().includes(q);
 }
 
+const DraftMetadataListItem = ({
+	draft,
+	onOpen,
+	translate
+}: {
+	draft: IUserDraftItem;
+	onOpen: (draft: IUserDraftItem) => void;
+	translate: (key: string, fallback?: string) => string;
+}) => (
+	<button
+		type="button"
+		className="sessionsListDraftItem"
+		data-cy="sessions-list-draft-item"
+		onClick={() => onOpen(draft)}
+		disabled={!draft.actionPath}
+	>
+		<span className="sessionsListDraftItem__tag">
+			{translate('sessionList.toolbar.chips.drafts', 'Drafts')}
+		</span>
+		<span className="sessionsListDraftItem__title">
+			{draft.title || translate('drafts.center.untitledChat', 'Chat')}
+		</span>
+		<span className="sessionsListDraftItem__meta">
+			{formatDraftTime(draft.updatedAt)}
+		</span>
+		<span className="sessionsListDraftItem__hint">
+			{translate(
+				'sessionList.toolbar.draftMetadataOnly',
+				'Unsent message saved'
+			)}
+		</span>
+	</button>
+);
+
 interface SessionsListProps {
 	defaultLanguage: string;
 	sessionTypes: SESSION_TYPES;
@@ -223,6 +401,7 @@ export const SessionsList = ({
 
 	const { sessions, dispatch } = useContext(SessionsDataContext);
 	const { type, path: listPath } = useContext(SessionTypeContext);
+	const { setSessionListViewState } = useSessionListViewState();
 
 	const {
 		subscribe,
@@ -243,20 +422,18 @@ export const SessionsList = ({
 	const [sessionToolbarSearch, setSessionToolbarSearch] = useState('');
 	const [sessionToolbarSelectedPeople, setSessionToolbarSelectedPeople] =
 		useState<string[]>([]);
+	const [userDrafts, setUserDrafts] = useState<IUserDraftItem[]>([]);
 	/**
 	 * Initial chip selection:
 	 *   - enquiry list: honour ?chip=liveChat in the URL (sidebar toggle
-	 *     deep-link), otherwise default to 'chats' so the tab opens on the
+	 *     deep-link), otherwise default to 'nearby' so the tab opens on the
 	 *     registered enquiries feed
 	 *   - my-session list: no default chip
 	 */
 	const readChipFromUrl = (): SessionToolbarChipFilter | null => {
 		try {
 			const params = new URLSearchParams(window.location.search);
-			const fromUrl = params.get('chip');
-			if (fromUrl === 'liveChat' || fromUrl === 'chats') {
-				return fromUrl;
-			}
+			return normalizeSessionToolbarChip(params.get('chip'));
 		} catch {
 			/* ignore */
 		}
@@ -266,17 +443,18 @@ export const SessionsList = ({
 	const [sessionToolbarChip, setSessionToolbarChip] =
 		useState<SessionToolbarChipFilter | null>(() => {
 			if (type !== SESSION_LIST_TYPES.ENQUIRY) return null;
-			return readChipFromUrl() ?? 'chats';
+			return readChipFromUrl() ?? 'nearby';
 		});
 	/*
 	 * Ref-mirror of the toolbar chip so the memoised `getConsultantSessionList`
 	 * can read the current filter without taking a dep (and restarting the
 	 * fetch whenever the user swaps tabs). Used to auto-page past all-anonymous
-	 * first pages when Chats is selected, and vice versa.
+	 * first pages when Nearby is selected, and vice versa.
 	 */
 	const sessionToolbarChipRef = useRef<SessionToolbarChipFilter | null>(
 		sessionToolbarChip
 	);
+	const skipChipRefetchRef = useRef(true);
 	useEffect(() => {
 		sessionToolbarChipRef.current = sessionToolbarChip;
 	}, [sessionToolbarChip]);
@@ -307,6 +485,80 @@ export const SessionsList = ({
 	 */
 	const [liveChatAvailable] = useLiveChatAvailable();
 
+	const fetchEnquirySessionsWithAutoPage = useCallback(
+		(
+			offset: number,
+			initialID?: string,
+			count?: number,
+			signal?: AbortSignal
+		): Promise<{ sessions: ListItemInterface[]; total: number }> => {
+			const pageSize = count ?? SESSION_COUNT;
+
+			const fetchPage = (
+				pageOffset: number
+			): Promise<{ sessions: ListItemInterface[]; total: number }> =>
+				apiGetConsultantSessionList({
+					type,
+					offset: pageOffset,
+					sessionListTab,
+					count: pageSize,
+					signal
+				}).then(({ sessions, total }) => {
+					if (initialID) {
+						if (
+							getExtendedSession(initialID, sessions) ||
+							total <= pageOffset + pageSize
+						) {
+							return { sessions, total };
+						}
+
+						return fetchPage(pageOffset + pageSize).then(
+							({ sessions: moreSessions, total: nextTotal }) => ({
+								sessions: [...sessions, ...moreSessions],
+								total: nextTotal
+							})
+						);
+					}
+
+					if (
+						type !== SESSION_LIST_TYPES.ENQUIRY ||
+						sessions.length === 0 ||
+						total <= pageOffset + sessions.length
+					) {
+						return { sessions, total };
+					}
+
+					const chip = sessionToolbarChipRef.current;
+					if (chip !== 'nearby' && chip !== 'liveChat') {
+						return { sessions, total };
+					}
+
+					const anyMatch = sessions.some((raw) => {
+						const isAnon = isAnonymousAskerSession(
+							raw,
+							{} as ExtendedSessionInterface
+						);
+						return chip === 'liveChat' ? isAnon : !isAnon;
+					});
+					const pagesFetched =
+						(pageOffset + sessions.length) / SESSION_COUNT;
+					if (anyMatch || pagesFetched >= 10) {
+						return { sessions, total };
+					}
+
+					return fetchPage(pageOffset + sessions.length).then(
+						({ sessions: moreSessions, total: nextTotal }) => ({
+							sessions: [...sessions, ...moreSessions],
+							total: nextTotal
+						})
+					);
+				});
+
+			return fetchPage(offset);
+		},
+		[sessionListTab, type]
+	);
+
 	const getConsultantSessionList = useCallback(
 		(
 			offset: number,
@@ -321,101 +573,91 @@ export const SessionsList = ({
 
 			abortController.current = new AbortController();
 
-			return apiGetConsultantSessionList({
-				type,
+			return fetchEnquirySessionsWithAutoPage(
 				offset,
-				sessionListTab: sessionListTab,
-				count: count ?? SESSION_COUNT,
-				signal: abortController.current.signal
-			})
-				.then(({ sessions, total }) => {
-					if (!initialID) {
-						return { sessions, total };
-					}
-
-					// Check if selected room already loaded
-					if (
-						getExtendedSession(initialID, sessions) ||
-						total <= offset + SESSION_COUNT
-					) {
-						return {
-							sessions,
-							total
-						};
-					}
-
-					return getConsultantSessionList(
-						offset + SESSION_COUNT,
-						initialID
-					).then(({ sessions: moreSessions, total }) => {
-						return {
-							sessions: [...sessions, ...moreSessions],
-							total
-						};
-					});
-				})
-				.then(({ sessions, total }) => {
-					/*
-					 * Auto-page past all-anonymous (or all-registered) first
-					 * pages on the Enquiry tab so the selected chip filter
-					 * isn't empty when it has matches further down the feed.
-					 * Scroll-triggered fetches (offset > 0) and explicit
-					 * initialID lookups run above; this branch only fires for
-					 * the implicit "initial fetch" case.
-					 */
-					if (
-						!initialID &&
-						type === SESSION_LIST_TYPES.ENQUIRY &&
-						sessions.length > 0 &&
-						total > offset + sessions.length
-					) {
-						const chip = sessionToolbarChipRef.current;
-						if (chip === 'chats' || chip === 'liveChat') {
-							const anyMatch = sessions.some((raw) => {
-								const isAnon = isAnonymousAskerSession(
-									raw,
-									{} as ExtendedSessionInterface
-								);
-								return chip === 'liveChat' ? isAnon : !isAnon;
-							});
-							/* Cap at 10 pages so a consultant with thousands
-							   of one-sided enquiries can't hang the list. */
-							const pagesFetched =
-								(offset + sessions.length) / SESSION_COUNT;
-							if (!anyMatch && pagesFetched < 10) {
-								return getConsultantSessionList(
-									offset + sessions.length
-								).then(
-									({ sessions: moreSessions, total: t }) => ({
-										sessions: [
-											...sessions,
-											...moreSessions
-										],
-										total: t
-									})
-								);
-							}
-						}
-					}
-					return { sessions, total };
-				})
-				.then(({ sessions, total }) => {
-					const pageSize = count ?? SESSION_COUNT;
-					/* When the Enquiry auto-pager above fetched extra pages,
-					   sessions.length > pageSize — advance currentOffset to
-					   the start of the deepest page so loadMoreSessions
-					   doesn't re-fetch what's already in state. */
-					const lastLoadedOffset =
-						offset + Math.max(0, sessions.length - pageSize);
-					setCurrentOffset(lastLoadedOffset);
-					setTotalItems(total);
-					setIsRequestInProgress(false);
-					return { sessions, total };
-				});
+				initialID,
+				count,
+				abortController.current.signal
+			).then(({ sessions, total }) => {
+				const pageSize = count ?? SESSION_COUNT;
+				const lastLoadedOffset =
+					offset + Math.max(0, sessions.length - pageSize);
+				setCurrentOffset(lastLoadedOffset);
+				setTotalItems(total);
+				setIsRequestInProgress(false);
+				return { sessions, total };
+			});
 		},
-		/* eslint-disable-next-line react-hooks/exhaustive-deps */
-		[sessionListTab, type, liveChatAvailable]
+		[fetchEnquirySessionsWithAutoPage]
 	);
+
+	const refetchEnquiryList = useCallback(() => {
+		if (type !== SESSION_LIST_TYPES.ENQUIRY) {
+			return Promise.resolve();
+		}
+
+		return fetchEnquirySessionsWithAutoPage(0)
+			.then(({ sessions, total }) => {
+				dispatch({
+					type: SET_SESSIONS,
+					ready: true,
+					sessions
+				});
+				setTotalItems(total);
+				setCurrentOffset(0);
+			})
+			.catch(() => {});
+	}, [dispatch, fetchEnquirySessionsWithAutoPage, type]);
+
+	const refetchSessionList = useCallback(() => {
+		if (type !== SESSION_LIST_TYPES.MY_SESSION) {
+			return Promise.resolve();
+		}
+
+		return getConsultantSessionList(0)
+			.then(({ sessions, total }) => {
+				dispatch({
+					type: SET_SESSIONS,
+					ready: true,
+					sessions
+				});
+				setTotalItems(total);
+				setCurrentOffset(0);
+			})
+			.catch(() => {});
+	}, [dispatch, getConsultantSessionList, type]);
+
+	/*
+	 * Re-run the enquiry fetch when switching Nearby ↔ Live Chat so auto-paging
+	 * scans for the right session type instead of only re-filtering stale pages.
+	 */
+	useEffect(() => {
+		if (type !== SESSION_LIST_TYPES.ENQUIRY) {
+			return;
+		}
+		if (
+			sessionToolbarChip !== 'liveChat' &&
+			sessionToolbarChip !== 'nearby'
+		) {
+			return;
+		}
+		if (skipChipRefetchRef.current) {
+			skipChipRefetchRef.current = false;
+			return;
+		}
+
+		setIsLoading(true);
+		getConsultantSessionList(0)
+			.then(({ sessions }) => {
+				dispatch({
+					type: SET_SESSIONS,
+					ready: true,
+					sessions
+				});
+			})
+			.catch(() => {})
+			.finally(() => setIsLoading(false));
+	}, [dispatch, getConsultantSessionList, sessionToolbarChip, type]);
 
 	const scrollIntoView = useCallback(() => {
 		const activeItem = document.querySelector('.sessionsListItem--active');
@@ -557,9 +799,7 @@ export const SessionsList = ({
 
 							// Check if groupId looks like a Matrix room ID (starts with ! or contains :)
 							const isMatrixRoomId =
-								groupId &&
-								(groupId.startsWith('!') ||
-									groupId.includes(':'));
+								isMatrixRoomIdHeuristic(groupId);
 
 							if (isEmptyEnquiry) {
 								// Empty enquiry: go to write view
@@ -979,11 +1219,36 @@ export const SessionsList = ({
 	useEffect(() => {
 		const onNewMessageEvent = ({
 			roomId,
-			timestamp
+			timestamp,
+			refreshEnquiryList,
+			refreshSessionList,
+			sessionId
 		}: {
 			roomId?: string;
 			timestamp?: number;
+			refreshEnquiryList?: boolean;
+			refreshSessionList?: boolean;
+			sessionId?: number;
 		}) => {
+			if (sessionId) {
+				dispatch({
+					type: REMOVE_SESSIONS,
+					ids: [sessionId]
+				});
+			}
+
+			if (refreshEnquiryList && type === SESSION_LIST_TYPES.ENQUIRY) {
+				void refetchEnquiryList();
+			}
+
+			if (refreshSessionList && type === SESSION_LIST_TYPES.MY_SESSION) {
+				void refetchSessionList();
+			}
+
+			if (refreshEnquiryList || refreshSessionList) {
+				return;
+			}
+
 			if (!roomId) {
 				return;
 			}
@@ -1000,7 +1265,25 @@ export const SessionsList = ({
 		return () => {
 			messageEventEmitter.off(onNewMessageEvent);
 		};
-	}, [touchSessionsByRids]);
+	}, [refetchEnquiryList, refetchSessionList, touchSessionsByRids, type]);
+
+	/*
+	 * Legacy invite-link enquiries do not emit newAnonymousEnquiry over STOMP.
+	 * Poll while Live Chat is selected (without aborting the main list fetch).
+	 */
+	useEffect(() => {
+		if (type !== SESSION_LIST_TYPES.ENQUIRY) {
+			return;
+		}
+		if (sessionToolbarChip !== 'liveChat') {
+			return;
+		}
+
+		const intervalId = window.setInterval(() => {
+			refetchEnquiryList();
+		}, 15000);
+		return () => window.clearInterval(intervalId);
+	}, [refetchEnquiryList, sessionToolbarChip, type]);
 
 	const loadMoreSessions = useCallback(() => {
 		setIsLoading(true);
@@ -1064,15 +1347,74 @@ export const SessionsList = ({
 		type === SESSION_LIST_TYPES.MY_SESSION &&
 		!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
 
-	const showMySessionToolbar = type === SESSION_LIST_TYPES.MY_SESSION;
-	/**
-	 * Enquiry tab gets its own compact chip row (Chats + Live Chat). It
-	 * shares the same `sessionToolbarChip` state as the Gespräch toolbar so
-	 * the same in-memory filter path handles both.
-	 */
-	const showEnquiryFilterChips =
-		type === SESSION_LIST_TYPES.ENQUIRY &&
-		!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
+	const showMySessionToolbar =
+		type === SESSION_LIST_TYPES.MY_SESSION ||
+		type === SESSION_LIST_TYPES.ENQUIRY;
+	const visibleUserDrafts = React.useMemo(
+		() =>
+			userDrafts.filter(
+				(draft) => draft.scopeKey !== REMOTE_DRAFT_INDEX_SCOPE
+			),
+		[userDrafts]
+	);
+	const loadUserDrafts = useCallback(async () => {
+		if (!showMySessionToolbar) {
+			setUserDrafts([]);
+			return;
+		}
+
+		const response = await apiGetUserDrafts(0, 200).catch(() => null);
+		setUserDrafts(response?.items || []);
+	}, [showMySessionToolbar]);
+
+	useEffect(() => {
+		if (!showMySessionToolbar) {
+			setUserDrafts([]);
+			return;
+		}
+
+		void loadUserDrafts();
+
+		const handleDraftsUpdated = () => {
+			void loadUserDrafts();
+		};
+		const intervalId = window.setInterval(loadUserDrafts, 60000);
+		window.addEventListener('focus', handleDraftsUpdated);
+		window.addEventListener(
+			DRAFTS_UPDATED_EVENT,
+			handleDraftsUpdated as EventListener
+		);
+
+		return () => {
+			window.clearInterval(intervalId);
+			window.removeEventListener('focus', handleDraftsUpdated);
+			window.removeEventListener(
+				DRAFTS_UPDATED_EVENT,
+				handleDraftsUpdated as EventListener
+			);
+		};
+	}, [loadUserDrafts, showMySessionToolbar]);
+
+	const handleOpenDraft = useCallback(
+		(draft: IUserDraftItem) => {
+			if (!draft.actionPath) {
+				return;
+			}
+			history.push(withDraftScopeParam(draft.actionPath, draft.scopeKey));
+		},
+		[history]
+	);
+	const translateWithFallback = useCallback(
+		(key: string, fallback?: string) => {
+			const translated = fallback
+				? translate(key, { defaultValue: fallback })
+				: translate(key);
+			return typeof translated === 'string'
+				? translated
+				: String(translated);
+		},
+		[translate]
+	);
 
 	const handleToolbarChipToggle = useCallback(
 		(chip: SessionToolbarChipFilter) => {
@@ -1080,25 +1422,24 @@ export const SessionsList = ({
 			setSessionToolbarChip(nextChip);
 
 			const baseListPath = listPath || '/sessions/consultant/sessionView';
+			const params = new URLSearchParams(location.search);
+			params.delete('sessionListTab');
+			if (nextChip) {
+				params.set('chip', nextChip);
+			} else {
+				params.delete('chip');
+			}
+			const search = params.toString() ? `?${params.toString()}` : '';
 
 			/* Route-driven chips (+ / archive) stay “selected” until URL changes.
 			   Leaving create-group-chat when using a filter avoids + staying dark. */
 			if (groupIdFromParam === 'createGroupChat') {
-				const params = new URLSearchParams(location.search);
-				params.delete('sessionListTab');
-				const search = params.toString() ? `?${params.toString()}` : '';
 				history.push({ pathname: baseListPath, search });
 				return;
 			}
 
 			/* Selecting a filter implies main list: drop archive tab so archive chip matches. */
-			if (
-				sessionListTab === SESSION_LIST_TAB_ARCHIVE &&
-				nextChip !== null
-			) {
-				const params = new URLSearchParams(location.search);
-				params.delete('sessionListTab');
-				const search = params.toString() ? `?${params.toString()}` : '';
+			if (location.search !== search) {
 				history.replace({ pathname: location.pathname, search });
 			}
 		},
@@ -1108,7 +1449,6 @@ export const SessionsList = ({
 			listPath,
 			location.pathname,
 			location.search,
-			sessionListTab,
 			sessionToolbarChip
 		]
 	);
@@ -1145,8 +1485,7 @@ export const SessionsList = ({
 
 			const matrixRoomId =
 				(item as { matrixRoomId?: string })?.matrixRoomId ||
-				(typeof item.groupId === 'string' &&
-				item.groupId.startsWith('!')
+				(typeof item.groupId === 'string' && isMatrixRoom(item.groupId)
 					? item.groupId
 					: null);
 			const matrixRoom = matrixRoomId
@@ -1252,7 +1591,7 @@ export const SessionsList = ({
 					return true;
 				// only show sessions without an assigned consultant in sessionPreview
 				case SESSION_LIST_TYPES.ENQUIRY:
-					return !session?.consultant; // Only show unassigned enquiries
+					return !session?.consultant?.id;
 				default:
 					return true;
 			}
@@ -1304,11 +1643,18 @@ export const SessionsList = ({
 			}
 		}
 	};
-	const finalSessionsList = (sessions || []).filter(filterSessions);
-	const sessionToolbarPairs = finalSessionsList.map((raw) => ({
-		raw,
-		extended: buildExtendedSession(raw, groupIdFromParam)
-	}));
+	const finalSessionsList = React.useMemo(
+		() => (sessions || []).filter(filterSessions),
+		[filterSessions, sessions]
+	);
+	const sessionToolbarPairs = React.useMemo(
+		() =>
+			finalSessionsList.map((raw) => ({
+				raw,
+				extended: buildExtendedSession(raw, groupIdFromParam)
+			})),
+		[finalSessionsList, groupIdFromParam]
+	);
 	const sessionToolbarFilteredPairs = sessionToolbarPairs.filter(
 		({ raw, extended }) =>
 			sessionMatchesToolbar(
@@ -1317,12 +1663,55 @@ export const SessionsList = ({
 				sessionToolbarSearch,
 				sessionToolbarChip,
 				sessionToolbarSelectedPeople,
+				visibleUserDrafts,
 				userData?.userId
 			)
 	);
 	const sortedSessions = sessionToolbarFilteredPairs
 		.map(({ extended }) => extended)
 		.sort(sortSessions);
+	const unmatchedDrafts = React.useMemo(() => {
+		if (sessionToolbarChip !== 'drafts') {
+			return [];
+		}
+
+		return visibleUserDrafts
+			.filter(
+				(draft) =>
+					draft.actionPath &&
+					!sessionToolbarPairs.some(({ raw, extended }) =>
+						draftMatchesSession(draft, raw, extended)
+					)
+			)
+			.sort(
+				(draftA, draftB) =>
+					normalizeTimestamp(draftB.updatedAt) -
+					normalizeTimestamp(draftA.updatedAt)
+			);
+	}, [
+		normalizeTimestamp,
+		sessionToolbarChip,
+		sessionToolbarPairs,
+		visibleUserDrafts
+	]);
+	const visibleListItemCount = sortedSessions.length + unmatchedDrafts.length;
+	const toolbarChipCounts = React.useMemo(() => {
+		const unreadCount = finalSessionsList.filter((raw) => {
+			const chatItem = getChatItemForSession(raw);
+			return chatItem?.messagesRead === false;
+		}).length;
+
+		return {
+			unread: unreadCount,
+			drafts: visibleUserDrafts.length
+		};
+	}, [finalSessionsList, visibleUserDrafts.length]);
+	useEffect(() => {
+		setSessionListViewState(type, {
+			ready: !isLoading,
+			visibleSessionCount: visibleListItemCount
+		});
+	}, [isLoading, setSessionListViewState, type, visibleListItemCount]);
 	const toolbarSearchPeopleResults: SessionSearchPersonResult[] =
 		React.useMemo(() => {
 			const seen = new Set<string>();
@@ -1358,19 +1747,13 @@ export const SessionsList = ({
 					Boolean(entry)
 				);
 		}, [sessionToolbarPairs, translate]);
-	const showSupervisionChip = finalSessionsList.some((raw) => {
-		if (!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)) {
-			return false;
-		}
-		if (!raw.consultant?.id) {
-			return false;
-		}
-		return String(raw.consultant.id) !== String(userData?.userId || '');
-	});
+	const showSupervisionChip =
+		showConsultantToolbarActions &&
+		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
 	const toolbarFilteredOutAll =
 		showMySessionToolbar &&
 		finalSessionsList.length > 0 &&
-		sortedSessions.length === 0;
+		visibleListItemCount === 0;
 	const isSessionListItemActive = (session: ExtendedSessionInterface) =>
 		(session?.rid && session.rid === groupIdFromParam) ||
 		(session?.item?.id !== undefined &&
@@ -1378,14 +1761,14 @@ export const SessionsList = ({
 
 	return (
 		<div className="sessionsList__innerWrapper">
-			{showEnquiryFilterChips && (
+			{/* {showEnquiryFilterChips && (
 				<EnquiryFilterChips
 					translate={translate}
 					activeChip={sessionToolbarChip}
 					onChipToggle={handleToolbarChipToggle}
 					showLiveChatChip={liveChatAvailable}
 				/>
-			)}
+			)} */}
 			{showMySessionToolbar && (
 				<SessionsListToolbar
 					translate={translate}
@@ -1411,6 +1794,7 @@ export const SessionsList = ({
 						sessionListTab === SESSION_LIST_TAB_ARCHIVE
 					}
 					createGroupChatActive={isCreateChatActive}
+					chipCounts={toolbarChipCounts}
 				/>
 			)}
 			<div className="sessionsList__scrollArea">
@@ -1461,6 +1845,17 @@ export const SessionsList = ({
 							)
 						)}
 
+					{!isLoading &&
+						sessionToolbarChip === 'drafts' &&
+						unmatchedDrafts.map((draft) => (
+							<DraftMetadataListItem
+								key={draft.scopeKey}
+								draft={draft}
+								onOpen={handleOpenDraft}
+								translate={translateWithFallback}
+							/>
+						))}
+
 					{isLoading && <SessionsListSkeleton />}
 
 					{isReloadButtonVisible && (
@@ -1484,7 +1879,7 @@ export const SessionsList = ({
 			{!isLoading &&
 				!isCreateChatActive &&
 				!isReloadButtonVisible &&
-				sortedSessions.length === 0 && (
+				visibleListItemCount === 0 && (
 					<EmptyListItem
 						headlineOverride={
 							toolbarFilteredOutAll

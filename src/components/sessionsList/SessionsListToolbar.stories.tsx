@@ -2,10 +2,8 @@ import * as React from 'react';
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { useTranslation } from 'react-i18next';
-import {
-	SessionsListToolbar,
-	type SessionToolbarChipFilter
-} from './SessionsListToolbar';
+import { SessionsListToolbar } from './SessionsListToolbar';
+import type { SessionToolbarChipFilter } from './sessionToolbarFilters';
 import './sessionsList.styles.scss';
 
 const shell: React.CSSProperties = {
@@ -65,7 +63,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'Consultant **MY_SESSION** list toolbar: kebab + search field and horizontal filter chips (create, archive, calendar, groups icon, text filters, supervision). Styling lives in `sessionsList.styles.scss` (`.sessionsListToolbar`). Uses React Router `Link` for create/archive; chips are stateful toggle buttons.'
+					'Consultant **MY_SESSION** list toolbar: kebab + search field and horizontal filter chips (create, archive, unread, drafts, internal group chat, supervision, conversation circle). Styling lives in `sessionsList.styles.scss` (`.sessionsListToolbar`). Uses React Router `Link` for create/archive; chips are stateful toggle buttons.'
 			}
 		}
 	}
@@ -109,15 +107,23 @@ export const WithSearchText: Story = {
 };
 
 export const UnreadFilterActive: Story = {
-	render: () => <SessionsListToolbarPlayground initialChip="neu" />
+	render: () => <SessionsListToolbarPlayground initialChip="unread" />
 };
 
 export const OneToOneFilterActive: Story = {
-	render: () => <SessionsListToolbarPlayground initialChip="oneToOne" />
+	render: () => <SessionsListToolbarPlayground initialChip="nearby" />
 };
 
 export const GroupsFilterActive: Story = {
 	render: () => <SessionsListToolbarPlayground initialChip="groups" />
+};
+
+export const InternalGroupFilterActive: Story = {
+	render: () => <SessionsListToolbarPlayground initialChip="internalGroup" />
+};
+
+export const SupervisionFilterActive: Story = {
+	render: () => <SessionsListToolbarPlayground initialChip="supervision" />
 };
 
 export const ArchiveRouteActive: Story = {

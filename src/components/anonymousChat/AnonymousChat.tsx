@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useState, useEffect, useContext, FC, useCallback } from 'react';
+import { useHistory } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
 	Typography,
@@ -11,11 +12,19 @@ import {
 	Radio,
 	IconButton,
 	InputAdornment,
-	TextField
+	TextField,
+	Dialog
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import AccessTimeOutlinedIcon from '@mui/icons-material/AccessTimeOutlined';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import NorthEastIcon from '@mui/icons-material/NorthEast';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import CloseIcon from '@mui/icons-material/Close';
 import { apiAgencySelection } from '../../api/apiAgencySelection';
+import { apiGetConsultantAvailability } from '../../api/apiGetConsultantAvailability';
+import liveChatClosedIllustration from '../../resources/img/illustrations/live-chat-closed.svg';
 import { apiGetTopicsData } from '../../api/apiGetTopicsData';
 import {
 	AgencyDataInterface,
@@ -32,7 +41,6 @@ import {
 	NOTIFICATION_TYPE_ERROR,
 	NOTIFICATION_TYPE_SUCCESS
 } from '../../globalState';
-import { FETCH_ERRORS } from '../../api';
 import { StageLayout } from '../stageLayout/StageLayout';
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
 import { Loading } from '../app/Loading';
@@ -42,6 +50,7 @@ import TaskAltIcon from '@mui/icons-material/TaskAlt';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import { Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
+import { LIVE_CHAT_OPENING_HOURS } from './liveChatOpeningHours';
 
 interface AnonymousChatProps {
 	onBack: () => void;
@@ -49,6 +58,7 @@ interface AnonymousChatProps {
 
 export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 	const { t } = useTranslation();
+	const history = useHistory();
 	const settings = useAppConfig();
 	const { tenant } = useContext(TenantContext);
 	const { Stage } = useContext(GlobalComponentContext);
@@ -73,6 +83,15 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 	const [isRegistering, setIsRegistering] = useState<boolean>(false);
 	const [username, setUsername] = useState<string>('');
 	const [password, setPassword] = useState<string>('');
+	const [noAvailabilityModalTopic, setNoAvailabilityModalTopic] =
+		useState<TopicsDataInterface | null>(null);
+	const [noAvailabilityModalOpen, setNoAvailabilityModalOpen] =
+		useState<boolean>(false);
+	const [showOpeningHoursHint, setShowOpeningHoursHint] =
+		useState<boolean>(false);
+	const [shownNoAvailabilityTopics, setShownNoAvailabilityTopics] = useState<
+		Set<number>
+	>(new Set());
 
 	// Generate username and 8-character random password on mount
 	useEffect(() => {
@@ -116,6 +135,55 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 				setLoadingTopics(false);
 			});
 	}, []);
+
+	const openNoAvailabilityModal = useCallback(
+		(topic: TopicsDataInterface) => {
+			setNoAvailabilityModalTopic(topic);
+			setNoAvailabilityModalOpen(true);
+			setShowOpeningHoursHint(false);
+		},
+		[]
+	);
+
+	/**
+	 * Real-time, topic-based availability check. Resolves to whether a
+	 * consultant is currently available for the topic and opens the alert when
+	 * not. Mirrors the backend routing logic, so the alert matches what would
+	 * actually happen if the enquiry were created. A failed request resolves to
+	 * `true` (unknown) so transient errors never block the user.
+	 *
+	 * `force` opens the modal even if it was already shown for this topic
+	 * (used on "Beratung starten"); otherwise it auto-shows once per topic.
+	 */
+	const checkConsultantAvailability = useCallback(
+		(
+			topic: TopicsDataInterface,
+			consultingTypeId?: number,
+			{ force = false }: { force?: boolean } = {}
+		): Promise<boolean> =>
+			apiGetConsultantAvailability(topic.id, consultingTypeId)
+				.then((res) => {
+					if (res && res.available === false) {
+						if (force) {
+							openNoAvailabilityModal(topic);
+						} else {
+							setShownNoAvailabilityTopics((prev) => {
+								if (prev.has(topic.id)) {
+									return prev;
+								}
+								const next = new Set(prev);
+								next.add(topic.id);
+								openNoAvailabilityModal(topic);
+								return next;
+							});
+						}
+						return false;
+					}
+					return true;
+				})
+				.catch(() => true),
+		[openNoAvailabilityModal]
+	);
 
 	// Load agencies for a specific topic
 	const loadAgenciesForTopic = useCallback(
@@ -163,11 +231,31 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 							setSelectedAgency(uniqueAgencies[0]);
 							setSelectedTopic(topic);
 						}
+						// Agencies exist, but a counsellor may still be offline:
+						// real-time topic-based availability check.
+						checkConsultantAvailability(
+							topic,
+							uniqueAgencies[0]?.consultingType
+						);
 					} else {
 						setTopicAgencies((prev) => {
 							const newMap = new Map(prev);
 							newMap.set(topic.id, []);
 							return newMap;
+						});
+						setSelectedTopic(topic);
+						setSelectedAgency(null);
+						setShownNoAvailabilityTopics((prev) => {
+							if (prev.has(topic.id)) {
+								return prev;
+							}
+
+							const next = new Set(prev);
+							next.add(topic.id);
+							setNoAvailabilityModalTopic(topic);
+							setNoAvailabilityModalOpen(true);
+							setShowOpeningHoursHint(false);
+							return next;
 						});
 					}
 				})
@@ -181,6 +269,8 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 						newMap.set(topic.id, []);
 						return newMap;
 					});
+					setSelectedTopic(topic);
+					setSelectedAgency(null);
 				})
 				.finally(() => {
 					setLoadingAgencies((prev) => {
@@ -194,7 +284,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 				abortController.abort();
 			};
 		},
-		[topicAgencies, selectedAgency]
+		[topicAgencies, selectedAgency, checkConsultantAvailability]
 	);
 
 	// Handle topic expansion
@@ -218,60 +308,84 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 
 		setIsRegistering(true);
 
-		// Always use "00000" for anonymous chat postcode
-		const validPostcode = '00000';
+		const proceedRegistration = () => {
+			// Always use "00000" for anonymous chat postcode
+			const validPostcode = '00000';
 
-		// Build registration data exactly like normal registration
-		const registrationData = {
-			username: username,
-			password: encodeURIComponent(password),
-			agencyId: selectedAgency.id.toString(),
-			postcode: validPostcode,
-			termsAccepted: 'true',
-			preferredLanguage: locale || 'de',
-			consultingType: selectedAgency.consultingType, // Keep as number, same as normal registration
-			// Use the selected topic - match normal registration structure
-			...(selectedTopic
-				? {
-						mainTopicId: selectedTopic.id.toString(),
-						// topicId is optional in normal registration, set it to mainTopicId if available
-						topicId: selectedTopic.id.toString()
-					}
-				: selectedAgency.topicIds && selectedAgency.topicIds.length > 0
+			// Build registration data exactly like normal registration
+			const registrationData = {
+				username: username,
+				password: encodeURIComponent(password),
+				agencyId: selectedAgency.id.toString(),
+				postcode: validPostcode,
+				termsAccepted: 'true',
+				preferredLanguage: locale || 'de',
+				consultingType: selectedAgency.consultingType, // Keep as number, same as normal registration
+				// Use the selected topic - match normal registration structure
+				...(selectedTopic
 					? {
-							mainTopicId: selectedAgency.topicIds[0].toString(),
-							topicId: selectedAgency.topicIds[0].toString()
+							mainTopicId: selectedTopic.id.toString(),
+							// topicId is optional in normal registration, set it to mainTopicId if available
+							topicId: selectedTopic.id.toString()
 						}
-					: {})
+					: selectedAgency.topicIds &&
+						  selectedAgency.topicIds.length > 0
+						? {
+								mainTopicId:
+									selectedAgency.topicIds[0].toString(),
+								topicId: selectedAgency.topicIds[0].toString()
+							}
+						: {})
+			};
+
+			apiPostRegistration(
+				endpoints.registerAsker,
+				registrationData,
+				settings.multitenancyWithSingleDomainEnabled,
+				tenant
+			)
+				.then(() => {
+					// Registration successful, auto-login completed by apiPostRegistration
+					// Redirect to app (same as normal registration)
+					redirectToApp();
+				})
+				.catch((error) => {
+					// console.error('Anonymous chat registration failed:', error);
+					setIsRegistering(false);
+					addNotification({
+						notificationType: NOTIFICATION_TYPE_ERROR,
+						title: t('registration.errors.ups.title'),
+						text: t('registration.errors.ups.text'),
+						closeable: true,
+						timeout: 3000
+					});
+				});
 		};
 
-		apiPostRegistration(
-			endpoints.registerAsker,
-			registrationData,
-			settings.multitenancyWithSingleDomainEnabled,
-			tenant
-		)
-			.then(() => {
-				// Registration successful, auto-login completed by apiPostRegistration
-				// Redirect to app (same as normal registration)
-				redirectToApp();
-			})
-			.catch((error) => {
-				// console.error('Anonymous chat registration failed:', error);
-				setIsRegistering(false);
-				addNotification({
-					notificationType: NOTIFICATION_TYPE_ERROR,
-					title: t('registration.errors.ups.title'),
-					text: t('registration.errors.ups.text'),
-					closeable: true,
-					timeout: 3000
-				});
+		// Re-verify availability at the moment of starting — presence can change
+		// between selecting the topic and clicking start. Block and show the
+		// alert when no counsellor is available.
+		if (selectedTopic) {
+			checkConsultantAvailability(
+				selectedTopic,
+				selectedAgency.consultingType,
+				{ force: true }
+			).then((available) => {
+				if (!available) {
+					setIsRegistering(false);
+					return;
+				}
+				proceedRegistration();
 			});
+		} else {
+			proceedRegistration();
+		}
 	}, [
 		username,
 		password,
 		selectedAgency,
 		selectedTopic,
+		checkConsultantAvailability,
 		locale,
 		settings,
 		tenant,
@@ -788,6 +902,260 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 					</Button>
 				</Box>
 			</Box>
+
+			<Dialog
+				open={noAvailabilityModalOpen}
+				onClose={() => setNoAvailabilityModalOpen(false)}
+				fullWidth
+				maxWidth={false}
+				PaperProps={{
+					sx: {
+						width: '100%',
+						maxWidth: '600px',
+						m: { xs: '16px', sm: '32px' },
+						borderRadius: '24px'
+					}
+				}}
+			>
+				<Box
+					sx={{
+						p: { xs: '20px', md: '24px' },
+						borderRadius: '24px'
+					}}
+				>
+					<Box
+						sx={{
+							display: 'flex',
+							alignItems: 'center',
+							gap: '12px',
+							mb: '16px'
+						}}
+					>
+						<Box
+							component="img"
+							src={liveChatClosedIllustration}
+							alt=""
+							sx={{
+								width: 72,
+								height: 72,
+								flexShrink: 0,
+								display: 'block'
+							}}
+						/>
+						<Typography
+							variant="h4"
+							sx={{ fontWeight: 700, lineHeight: 1.2 }}
+						>
+							{t(
+								'anonymousChat.noAvailability.title',
+								'Live-Chat ist zurzeit leider geschlossen'
+							)}
+						</Typography>
+					</Box>
+
+					<Typography variant="body1" sx={{ mb: '16px' }}>
+						{t(
+							'anonymousChat.noAvailability.subtitle',
+							'Wenn Sie ohne Registrierung beraten werden möchten, kommen Sie bitte zu den Öffnungszeiten wieder.'
+						)}
+					</Typography>
+
+					<Box
+						sx={{
+							border: '1px solid #DAE3F0',
+							borderRadius: '12px',
+							p: '8px',
+							mb: '16px'
+						}}
+					>
+						<Box
+							onClick={() =>
+								setShowOpeningHoursHint((prev) => !prev)
+							}
+							sx={{
+								display: 'flex',
+								alignItems: 'center',
+								justifyContent: 'space-between',
+								p: '6px',
+								cursor: 'pointer'
+							}}
+						>
+							<Box
+								sx={{
+									display: 'flex',
+									alignItems: 'center',
+									gap: '4px'
+								}}
+							>
+								<AccessTimeOutlinedIcon
+									sx={{ fontSize: 16, color: '#4C555F' }}
+								/>
+								<Typography
+									sx={{
+										color: '#4C555F',
+										fontSize: '12px',
+										lineHeight: '14px'
+									}}
+								>
+									{t(
+										'anonymousChat.noAvailability.openingHours',
+										'Reguläre Öffnungszeiten anzeigen'
+									)}
+								</Typography>
+							</Box>
+							<KeyboardArrowDownIcon
+								sx={{
+									color: '#4C555F',
+									fontSize: 16,
+									transform: showOpeningHoursHint
+										? 'rotate(180deg)'
+										: 'none',
+									transition: 'transform 0.2s'
+								}}
+							/>
+						</Box>
+
+						{showOpeningHoursHint &&
+							LIVE_CHAT_OPENING_HOURS.map((entry, index) => (
+								<Box
+									key={`opening-hours-${index}`}
+									sx={{
+										display: 'flex',
+										alignItems: 'center',
+										justifyContent: 'space-between',
+										px: '16px',
+										py: '8px'
+									}}
+								>
+									<Typography
+										sx={{
+											color: '#4C555F',
+											fontSize: '12px',
+											lineHeight: '14px'
+										}}
+									>
+										{t(
+											`anonymousChat.noAvailability.weekdays.${entry.dayKey}`,
+											entry.day
+										)}
+									</Typography>
+									<Typography
+										sx={{
+											color: '#4C555F',
+											fontSize: '12px',
+											lineHeight: '14px'
+										}}
+									>
+										{entry.time}
+									</Typography>
+								</Box>
+							))}
+					</Box>
+
+					<Typography variant="body1" sx={{ mb: '8px' }}>
+						{t(
+							'anonymousChat.noAvailability.mailHint',
+							'Oder starten Sie jederzeit die anonyme Mail-Beratung: Mit Ihrer Postleitzahl finden Sie eine Beratungsstelle in Ihrer Nähe und schreiben Ihre Anfrage. Für die Antwort brauchen Sie nur eine E-Mail-Adresse - keinen echten Namen.'
+						)}
+					</Typography>
+
+					<Typography
+						variant="body2"
+						sx={{ fontWeight: 700, mb: '16px' }}
+					>
+						{t(
+							'anonymousChat.noAvailability.tip',
+							'Tipp: Nutzen Sie eine E-Mail-Adresse, auf die nur Sie Zugriff haben.'
+						)}
+					</Typography>
+
+					<Button
+						fullWidth
+						variant="contained"
+						onClick={() => history.push('/registration')}
+						sx={{
+							mb: '8px',
+							borderRadius: '999px',
+							py: '14px',
+							backgroundColor: '#A5000A'
+						}}
+						startIcon={<NorthEastIcon />}
+					>
+						{t(
+							'anonymousChat.noAvailability.startMailCounseling',
+							'anonyme Mail-Beratung starten'
+						)}
+					</Button>
+
+					<Typography
+						variant="body2"
+						sx={{
+							textAlign: 'center',
+							color: '#4C555F',
+							fontWeight: 600,
+							mb: '16px'
+						}}
+					>
+						{t(
+							'anonymousChat.noAvailability.responseTime',
+							'Antwort innerhalb von 2 Werktagen'
+						)}
+					</Typography>
+
+					<Box sx={{ display: 'flex', gap: '10px' }}>
+						<Button
+							fullWidth
+							variant="outlined"
+							onClick={() => {
+								setNoAvailabilityModalOpen(false);
+								onBack();
+							}}
+							startIcon={<ArrowBackIcon />}
+							sx={{
+								borderRadius: '24px',
+								borderColor: 'transparent',
+								backgroundColor: '#F0EDEE',
+								color: '#4C555F'
+							}}
+						>
+							{t(
+								'anonymousChat.noAvailability.back',
+								'Zurück zur vorherigen Seite'
+							)}
+						</Button>
+						<Button
+							fullWidth
+							variant="outlined"
+							onClick={() => setNoAvailabilityModalOpen(false)}
+							startIcon={<CloseIcon />}
+							sx={{
+								borderRadius: '8px',
+								borderColor: '#FFE2DE',
+								backgroundColor: '#FFE2DE',
+								color: '#A5000A'
+							}}
+						>
+							{t(
+								'anonymousChat.noAvailability.later',
+								'Später wiederkommen'
+							)}
+						</Button>
+					</Box>
+
+					{noAvailabilityModalTopic?.name && (
+						<Typography
+							variant="caption"
+							sx={{ mt: '12px', display: 'block', opacity: 0.7 }}
+						>
+							{t(
+								'anonymousChat.noAvailability.topicLabel',
+								'Angefragtes Thema: {{topic}}',
+								{ topic: noAvailabilityModalTopic.name }
+							)}
+						</Typography>
+					)}
+				</Box>
+			</Dialog>
 		</StageLayout>
 	);
 };

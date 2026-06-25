@@ -36,6 +36,7 @@ import { GlobalComponentContext } from '../../globalState/provider/GlobalCompone
 import { UrlParamsProvider } from '../../globalState/provider/UrlParamsProvider';
 import { Notifications } from '../notifications/Notifications';
 import { CallProvider } from '../../globalState/provider/CallProvider';
+import { MatrixClientProvider } from '../../globalState/context/MatrixClientContext';
 import { FloatingCallWidget } from '../call/FloatingCallWidget';
 import { GroupCallWidget } from '../call/GroupCallWidget';
 
@@ -147,76 +148,90 @@ const RouterWrapper = ({ extraRoutes }: RouterWrapperProps) => {
 				<Route>
 					<ContextProvider>
 						<CallProvider>
-							<TenantThemingLoader />
-							{startWebsocket && (
-								<WebsocketHandler
-									disconnect={disconnectWebsocket}
-								/>
-							)}
-							<Suspense fallback={<Loading />}>
-								<Switch>
-									{extraRoutes.map(
-										({ route, component: Component }) => (
-											<Route
-												{...route}
-												key={
-													typeof route.path ===
-													'string'
-														? route.path
-														: route.path.join('-')
-												}
-											>
-												<Component />
-											</Route>
-										)
-									)}
-
-									<Route
-										path="/invite/:token/:topicSlug?"
-										exact
-									>
-										<InviteLink />
-									</Route>
-
-									<Route
-										path={[
-											'/registration',
-											'/:consultingTypeSlug/registration'
-										]}
-									>
-										<UrlParamsProvider>
-											<Registration />
-										</UrlParamsProvider>
-									</Route>
-
-									<Route path="/login" exact>
-										<UrlParamsProvider>
-											<Login />
-										</UrlParamsProvider>
-									</Route>
-									<Route
-										path={settings.urls.videoConference}
-										exact
-									>
-										<VideoConference />
-									</Route>
-									<Route path={settings.urls.videoCall} exact>
-										<VideoCall />
-									</Route>
-									<AuthenticatedApp
-										onAppReady={() =>
-											setStartWebsocket(true)
-										}
-										onLogout={() =>
-											setDisconnectWebsocket(true)
-										}
+							<MatrixClientProvider>
+								<TenantThemingLoader />
+								{startWebsocket && (
+									<WebsocketHandler
+										disconnect={disconnectWebsocket}
 									/>
-								</Switch>
-								<NotificationsContainer />
-								<FloatingCallWidget />
-								<GroupCallWidget />
-								{/* Clean implementation using CallManager */}
-							</Suspense>
+								)}
+								<Suspense fallback={<Loading />}>
+									<Switch>
+										{extraRoutes.map(
+											({
+												route,
+												component: Component
+											}) => (
+												<Route
+													{...route}
+													key={
+														typeof route.path ===
+														'string'
+															? route.path
+															: route.path.join(
+																	'-'
+																)
+													}
+												>
+													<Component />
+												</Route>
+											)
+										)}
+
+										{/* Two explicit routes — RR5 optional :param? is unreliable with exact */}
+										<Route path="/invite/:token" exact>
+											<InviteLink />
+										</Route>
+										<Route
+											path="/invite/:token/:topicSlug"
+											exact
+										>
+											<InviteLink />
+										</Route>
+
+										<Route
+											path={[
+												'/registration',
+												'/:consultingTypeSlug/registration'
+											]}
+										>
+											<UrlParamsProvider>
+												<Registration />
+											</UrlParamsProvider>
+										</Route>
+
+										<Route path="/login" exact>
+											<UrlParamsProvider>
+												<Login />
+											</UrlParamsProvider>
+										</Route>
+										<Route
+											path={settings.urls.videoConference}
+											exact
+										>
+											<VideoConference />
+										</Route>
+										<Route
+											path={settings.urls.videoCall}
+											exact
+										>
+											<VideoCall />
+										</Route>
+										<AuthenticatedApp
+											onAppReady={() =>
+												setStartWebsocket(true)
+											}
+											onLogout={() =>
+												setDisconnectWebsocket(true)
+											}
+										/>
+									</Switch>
+									<NotificationsContainer />
+									<FloatingCallWidget />
+									<GroupCallWidget />
+									{/* Clean implementation using CallManager */}
+								</Suspense>
+							</MatrixClientProvider>
 						</CallProvider>
 					</ContextProvider>
 				</Route>

@@ -288,7 +288,10 @@ export const TipTapComposer = forwardRef<
 		const editor = useEditor({
 			extensions: useMemo(
 				() => [
-					StarterKit,
+					// StarterKit v3 bundles Link + Underline; disable them here so the
+					// explicitly-configured standalone extensions below are the only ones
+					// (avoids "Duplicate extension names found: ['link', 'underline']").
+					StarterKit.configure({ link: false, underline: false }),
 					Underline,
 					Superscript,
 					Subscript,
@@ -436,10 +439,18 @@ export const TipTapComposer = forwardRef<
 				return;
 			}
 			setIsSyncingFromValue(true);
-			editor.commands.setContent(normalizedValue);
-			editor.commands.setTextAlign('left');
-			if (enforceEditorMaxLength(editor, maxLength)) {
-				onChange(editor.getHTML());
+			try {
+				editor.commands.setContent(normalizedValue);
+				editor.commands.setTextAlign('left');
+				if (enforceEditorMaxLength(editor, maxLength)) {
+					onChange(editor.getHTML());
+				}
+			} catch {
+				try {
+					editor.commands.clearContent();
+				} catch {
+					// Ignore — a corrupt stored draft must never break the composer.
+				}
 			}
 			setTimeout(() => setIsSyncingFromValue(false), 0);
 		}, [editor, maxLength, onChange, value]);

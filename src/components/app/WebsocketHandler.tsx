@@ -33,6 +33,12 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 	const { releaseToggles } = useAppConfig();
 	const [newStompDirectMessage, setNewStompDirectMessage] =
 		useState<boolean>(false);
+	const [newStompAnonymousEnquiry, setNewStompAnonymousEnquiry] =
+		useState<boolean>(false);
+	const [
+		newStompAnonymousConversationFinished,
+		setNewStompAnonymousConversationFinished
+	] = useState<boolean>(false);
 	const [newStompVideoCallRequest, setNewStompVideoCallRequest] =
 		useState<VideoCallRequestProps>();
 	const { addNotification } = useContext(NotificationsContext);
@@ -90,52 +96,18 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 			}
 		};
 
-	// Listen to Matrix 'videoCallRequest' events
-	const handleMatrixCallRequest = (event: any) => {
-		// console.log('📞 Matrix videoCallRequest event received:', event);
-		
-		// Use CallContext to trigger floating widget
-		const callContext = (window as any).callContext;
-		if (callContext) {
-			// console.log('📞 Triggering incoming call via CallContext');
-			callContext.receiveCall(
-				event.roomId,
-				true, // Assume video for now (we can enhance this later)
-				event.callId,
-				event.sender
-			);
-		} else {
-			// console.error('❌ CallContext not available');
-		}
-	};
-
-		// Listen to Matrix 'callEnded' events
-		const handleMatrixCallEnded = (event: any) => {
-			// console.log('📴 Matrix callEnded event received:', event);
-			
-			// Use CallContext to end the call
-			const callContext = (window as any).callContext;
-			if (callContext) {
-				// console.log('📴 Ending call via CallContext');
-				callContext.hangupCall();
-			} else {
-				// console.error('❌ CallContext not available');
-			}
-		};
-
 		// Register Matrix event listeners
 		matrixLiveEventBridge.on('directMessage', handleMatrixDirectMessage);
-		matrixLiveEventBridge.on('videoCallRequest', handleMatrixCallRequest);
-		matrixLiveEventBridge.on('callEnded', handleMatrixCallEnded);
 
 		// console.log('✅ WebsocketHandler: STOMP + Matrix event listeners registered');
 
 		// Cleanup function
 		return () => {
 			// Unregister Matrix event listeners
-			matrixLiveEventBridge.off('directMessage', handleMatrixDirectMessage);
-			matrixLiveEventBridge.off('videoCallRequest', handleMatrixCallRequest);
-			matrixLiveEventBridge.off('callEnded', handleMatrixCallEnded);
+			matrixLiveEventBridge.off(
+				'directMessage',
+				handleMatrixDirectMessage
+			);
 			// console.log('🧹 WebsocketHandler: Event listeners cleaned up');
 		};
 	}, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -168,6 +140,33 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 	}, [newStompDirectMessage]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	useEffect(() => {
+		if (newStompAnonymousEnquiry) {
+			setNewStompAnonymousEnquiry(false);
+			messageEventEmitter.emit({ refreshEnquiryList: true });
+		}
+	}, [newStompAnonymousEnquiry]); // eslint-disable-line react-hooks/exhaustive-deps
+
+	useEffect(() => {
+		if (newStompAnonymousConversationFinished) {
+			setNewStompAnonymousConversationFinished(false);
+			messageEventEmitter.emit({
+				refreshEnquiryList: true,
+				refreshSessionList: true
+			});
+			messageEventEmitter.emit({});
+			addNotification({
+				notificationType: NOTIFICATION_TYPE_SUCCESS,
+				title: translate(
+					'profile.notifications.conversationFinished.title'
+				),
+				text: translate(
+					'profile.notifications.conversationFinished.description'
+				)
+			});
+		}
+	}, [newStompAnonymousConversationFinished]); // eslint-disable-line react-hooks/exhaustive-deps
+
+	useEffect(() => {
 		if (newStompVideoCallRequest) {
 			addNotification({
 				id: newStompVideoCallRequest.rcGroupId,
@@ -183,18 +182,34 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 			reconnectAttemptCount = 0;
 			stompClient.subscribe('/user/events', function (message) {
 				const stompMessageBody = JSON.parse(message.body);
-				const stompEventType = String(stompMessageBody['eventType'] ?? '');
+				const stompEventType = String(
+					stompMessageBody['eventType'] ?? ''
+				);
 				if (stompEventType === 'directMessage') {
 					setNewStompDirectMessage(true);
+				} else if (
+					stompEventType === 'newAnonymousEnquiry' ||
+					stompEventType === 'NEWANONYMOUSENQUIRY'
+				) {
+					setNewStompAnonymousEnquiry(true);
 				} else if (
 					stompEventType === 'anonymousEnquiryAccepted' ||
 					stompEventType === 'ANONYMOUSENQUIRYACCEPTED'
 				) {
 					addNotification({
 						notificationType: NOTIFICATION_TYPE_SUCCESS,
-						title: translate('profile.notifications.inquiryAccepted.title'),
-						text: translate('profile.notifications.inquiryAccepted.description')
+						title: translate(
+							'profile.notifications.inquiryAccepted.title'
+						),
+						text: translate(
+							'profile.notifications.inquiryAccepted.description'
+						)
 					});
+				} else if (
+					stompEventType === 'anonymousConversationFinished' ||
+					stompEventType === 'ANONYMOUSCONVERSATIONFINISHED'
+				) {
+					setNewStompAnonymousConversationFinished(true);
 				} else if (stompEventType === 'videoCallRequest') {
 					const stompEventContent: VideoCallRequestProps =
 						stompMessageBody['eventContent'];

@@ -66,7 +66,10 @@ import { getValueFromCookie } from '../sessionCookie/accessSessionCookie';
 import { VideoChatDetails, VideoChatDetailsAlias } from './VideoChatDetails';
 import { UserAvatar } from './UserAvatar';
 import clsx from 'clsx';
-import { parseMessagePrefixes } from './messageConstants';
+import {
+	parseMessagePrefixes,
+	SYSTEM_NOTIFICATION_USER_LEFT_CHAT
+} from './messageConstants';
 import { createPortal } from 'react-dom';
 import { ReactComponent as NotificationBellIcon } from '../../resources/img/icons/notification_bell.svg';
 import { ReactComponent as StackVerticalIcon } from '../../resources/img/icons/stack-vertical.svg';
@@ -331,10 +334,6 @@ export const MessageItemComponent = ({
 	);
 
 	const currentRecipientIdentifiers = useMemo(() => {
-		const matrixUserIdFromStorage =
-			typeof window !== 'undefined'
-				? window.localStorage?.getItem('matrix_user_id')
-				: '';
 		const matrixUserIdFromCookie =
 			typeof document !== 'undefined'
 				? document.cookie
@@ -344,7 +343,6 @@ export const MessageItemComponent = ({
 				: '';
 		const merged = new Set<string>();
 		[
-			matrixUserIdFromStorage,
 			matrixUserIdFromCookie,
 			userData?.userName,
 			userData?.displayName
@@ -892,6 +890,20 @@ export const MessageItemComponent = ({
 
 	const isSupervisorFeedback = parsedMessage.isSupervisorFeedback;
 	const isSystemNotification = parsedMessage.isSystemNotification;
+	const isUserLeftChatEvent =
+		parsedMessage.systemNotificationType ===
+		SYSTEM_NOTIFICATION_USER_LEFT_CHAT;
+	const userLeftChatDisplayName = (() => {
+		const fromPayload = parsedMessage.systemNotificationUsername?.trim();
+		if (
+			fromPayload &&
+			!fromPayload.startsWith('enc.') &&
+			!fromPayload.startsWith('@')
+		) {
+			return fromPayload;
+		}
+		return '';
+	})();
 	const systemNotificationTitle =
 		parsedMessage.systemNotificationTitle ||
 		translate('message.systemNotificationTitle', 'System notification');
@@ -1715,6 +1727,21 @@ export const MessageItemComponent = ({
 		}
 	}
 
+	if (isUserLeftChatEvent) {
+		return (
+			<div className="messageItem messageItem--chatEvent">
+				{getMessageDate()}
+				<div className="messageItem__chatEvent">
+					{translate('message.userLeftChat', {
+						name:
+							userLeftChatDisplayName ||
+							translate('message.anonymousUser', 'User')
+					})}
+				</div>
+			</div>
+		);
+	}
+
 	return (
 		<div
 			className={`messageItem ${
@@ -1753,6 +1780,7 @@ export const MessageItemComponent = ({
 									}
 									userId={userId}
 									size="32px"
+									ring={false}
 								/>
 							</div>
 							{showVisibleAudience && (
@@ -1865,6 +1893,7 @@ export const MessageItemComponent = ({
 									lastName={userData?.lastName}
 									userId={userId}
 									size="32px"
+									ring={false}
 								/>
 							</div>
 						</div>

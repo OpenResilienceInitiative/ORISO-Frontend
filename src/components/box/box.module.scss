@@ -16,13 +16,13 @@
 	}
 
 	&--error {
-		background-color: $form-error;
-		color: $form-error;
+		background-color: var(--m3-error, $form-error);
+		color: var(--m3-error, $form-error);
 	}
 
 	&--success {
-		background-color: $form-success;
-		color: $form-success;
+		background-color: var(--m3-success, $form-success);
+		color: var(--m3-success, $form-success);
 	}
 
 	&__title {

@@ -9,11 +9,11 @@ $message-avatar-ring: #ebe2e2;
 	flex-direction: column;
 	margin-bottom: $grid-base-two;
 	opacity: 0;
-	animation: appearMessageItem 500ms ease forwards;
+	animation: appearMessageItem 150ms ease forwards;
 
 	@for $i from 1 through 50 {
 		&:nth-last-child(#{$i}) {
-			animation-delay: $i * 50ms;
+			animation-delay: $i * 15ms;
 		}
 	}
 
@@ -33,7 +33,7 @@ $message-avatar-ring: #ebe2e2;
 		text-decoration: underline;
 
 		&:hover {
-			color: var(--skin-color-primary-contrast-safe, $primary);
+			color: var(--m3-primary, $primary);
 			transition: unset;
 		}
 	}
@@ -96,7 +96,7 @@ $message-avatar-ring: #ebe2e2;
 
 	&__headerTime {
 		font-size: $font-size-secondary;
-		color: $tertiary;
+		color: var(--m3-on-surface-variant, $tertiary);
 		white-space: nowrap;
 	}
 
@@ -243,7 +243,7 @@ $message-avatar-ring: #ebe2e2;
 		min-width: 200px;
 		max-width: 280px;
 		padding: 8px 0;
-		border: 2px solid #cc1e1c;
+		border: 2px solid var(--m3-primary, #cc1e1c);
 		border-radius: 8px;
 		background: #fff;
 		box-shadow:
@@ -266,7 +266,7 @@ $message-avatar-ring: #ebe2e2;
 		padding: 8px 12px;
 		border: 0;
 		background: #fff;
-		color: #4b515a;
+		color: var(--m3-secondary, #4b515a);
 		cursor: pointer;
 		text-align: left;
 
@@ -288,7 +288,7 @@ $message-avatar-ring: #ebe2e2;
 		}
 
 		path {
-			fill: #4b515a;
+			fill: var(--m3-secondary, #4b515a);
 		}
 	}
 
@@ -296,7 +296,7 @@ $message-avatar-ring: #ebe2e2;
 		font-size: 16px;
 		line-height: 24px;
 		letter-spacing: 0.0313em;
-		color: #4b515a;
+		color: var(--m3-secondary, #4b515a);
 	}
 
 	&__visibilityChip {
@@ -318,8 +318,8 @@ $message-avatar-ring: #ebe2e2;
 	}
 
 	&__visibilityChip--active {
-		background: #cc1e1c;
-		border-color: #cc1e1c;
+		background: var(--m3-primary, #cc1e1c);
+		border-color: var(--m3-primary, #cc1e1c);
 	}
 
 	&__visibilityChipIcon {
@@ -338,12 +338,12 @@ $message-avatar-ring: #ebe2e2;
 		}
 
 		path {
-			fill: #4b515a;
+			fill: var(--m3-secondary, #4b515a);
 		}
 	}
 
 	&__visibilityChipCount {
-		color: #4b515a;
+		color: var(--m3-secondary, #4b515a);
 		font-size: 16px;
 		font-weight: 500;
 		line-height: 1;
@@ -370,7 +370,7 @@ $message-avatar-ring: #ebe2e2;
 		min-width: 260px;
 		max-width: 260px;
 		padding: 8px;
-		border: 2px solid #cc1e1c;
+		border: 2px solid var(--m3-primary, #cc1e1c);
 		border-radius: 12px;
 		background: #fff;
 		box-shadow:
@@ -422,14 +422,14 @@ $message-avatar-ring: #ebe2e2;
 		}
 
 		path {
-			fill: #4c555f;
+			fill: var(--m3-secondary, #4c555f);
 		}
 	}
 
 	&__visibilityMenuSectionTitle {
 		font-size: 12px;
 		line-height: 14px;
-		color: #4c555f;
+		color: var(--m3-secondary, #4c555f);
 		font-weight: 400;
 	}
 
@@ -441,7 +441,7 @@ $message-avatar-ring: #ebe2e2;
 		width: 14px;
 		height: 14px;
 		border-radius: 999px;
-		border: 2px solid #5f6873;
+		border: 2px solid var(--m3-secondary-container, #5f6873);
 		background: #fff;
 		flex: 0 0 14px;
 	}
@@ -492,7 +492,7 @@ $message-avatar-ring: #ebe2e2;
 	&__visibilityMenuSubheading {
 		font-size: 12px;
 		line-height: 1.4;
-		color: #4b515a;
+		color: var(--m3-secondary, #4b515a);
 		text-align: right;
 		padding: 8px 12px 2px;
 	}
@@ -530,7 +530,7 @@ $message-avatar-ring: #ebe2e2;
 		font-size: 12px;
 		font-weight: 700;
 		line-height: 14px;
-		color: #4c555f;
+		color: var(--m3-secondary, #4c555f);
 	}
 
 	&__visibilityMenuPill--active {
@@ -548,7 +548,7 @@ $message-avatar-ring: #ebe2e2;
 		font-size: 10px;
 		line-height: 14px;
 		font-weight: 400;
-		color: #4c555f;
+		color: var(--m3-secondary, #4c555f);
 		padding: 2px 2px 2px 18px;
 	}
 
@@ -608,8 +608,7 @@ $message-avatar-ring: #ebe2e2;
 		&::after {
 			content: '';
 			display: inline-block;
-			border-top: 1px solid
-				var(--skin-color-secondary-contrast-safe, $text-divider-color);
+			border-top: 1px solid var(--m3-secondary, $text-divider-color);
 			width: $grid-base-three;
 			vertical-align: middle;
 			margin: 0 0;
@@ -617,11 +616,11 @@ $message-avatar-ring: #ebe2e2;
 		}
 
 		&--lastRead {
-			color: var(--skin-color-primary-contrast-safe, $primary);
+			color: var(--m3-primary, $primary);
 
 			&::before,
 			&::after {
-				border-top: 1px solid var(--skin-color-primary, $primary);
+				border-top: 1px solid var(--m3-primary, $primary);
 			}
 		}
 
@@ -631,7 +630,7 @@ $message-avatar-ring: #ebe2e2;
 	}
 
 	&__message {
-		color: var(--skin-color-default, $secondary);
+		color: var(--m3-primary, $secondary);
 		line-height: $message-lineheight;
 		background-color: #fff1f1;
 		border-radius: 0 12px 12px;
@@ -693,7 +692,7 @@ $message-avatar-ring: #ebe2e2;
 		blockquote {
 			margin: 8px 0;
 			padding: 4px 0 4px 10px;
-			border-left: 3px solid #cc1e1c; // incoming + default quote color
+			border-left: 3px solid var(--m3-primary, #cc1e1c); // incoming + default quote color
 			background: rgba(204, 30, 28, 0.06);
 			border-radius: 0 6px 6px 0;
 		}
@@ -840,7 +839,7 @@ $message-avatar-ring: #ebe2e2;
 			&__meta {
 				font-size: $font-size-secondary;
 				line-height: $line-height-secondary;
-				color: $tertiary;
+				color: var(--m3-on-surface-variant, $tertiary);
 			}
 		}
 
@@ -875,7 +874,7 @@ $message-avatar-ring: #ebe2e2;
 	&__visibleOnlyLabel {
 		font-size: 10px;
 		line-height: 12px;
-		color: #646d78;
+		color: var(--m3-secondary-container, #646d78);
 	}
 
 	&__visibleOnlyChip {
@@ -890,7 +889,7 @@ $message-avatar-ring: #ebe2e2;
 		font-size: 12px;
 		font-weight: 700;
 		line-height: 14px;
-		color: #4b515a;
+		color: var(--m3-secondary, #4b515a);
 		white-space: nowrap;
 	}
 
@@ -936,7 +935,7 @@ $message-avatar-ring: #ebe2e2;
 		gap: 2px;
 		font-size: 12px;
 		line-height: 12px;
-		color: #646d78;
+		color: var(--m3-secondary-container, #646d78);
 	}
 
 	&__senderInfoMetaIcon {
@@ -945,7 +944,7 @@ $message-avatar-ring: #ebe2e2;
 		display: inline-block;
 
 		path {
-			fill: #646d78;
+			fill: var(--m3-secondary-container, #646d78);
 		}
 	}
 
@@ -1056,7 +1055,7 @@ $message-avatar-ring: #ebe2e2;
 	}
 
 	&__threadButton:hover .messageItem__threadButtonMain {
-		color: var(--skin-color-primary, $primary);
+		color: var(--m3-primary, $primary);
 	}
 
 	&__threadButton:hover .messageItem__threadButtonHover {
@@ -1143,10 +1142,10 @@ $message-avatar-ring: #ebe2e2;
 		cursor: pointer;
 
 		svg {
-			fill: var(--skin-color-secondary, $secondary);
+			fill: var(--m3-secondary, $secondary);
 
 			path {
-				fill: var(--skin-color-secondary, $secondary);
+				fill: var(--m3-secondary, $secondary);
 			}
 
 			&.copy {
@@ -1156,14 +1155,14 @@ $message-avatar-ring: #ebe2e2;
 			}
 
 			&:hover path {
-				fill: var(--skin-color-primary, $primary);
+				fill: var(--m3-primary, $primary);
 			}
 
 			&.success {
 				position: absolute;
 				bottom: 0;
 				left: 50%;
-				fill: $form-success;
+				fill: var(--m3-success, $form-success);
 				width: 18px;
 				transform: translate(-50%, 0) scale(0);
 				opacity: 0;
@@ -1174,7 +1173,7 @@ $message-avatar-ring: #ebe2e2;
 
 				path,
 				&:hover path {
-					fill: $form-success;
+					fill: var(--m3-success, $form-success);
 				}
 			}
 		}
@@ -1195,7 +1194,7 @@ $message-avatar-ring: #ebe2e2;
 	&__time {
 		font-size: $font-size-secondary;
 		line-height: $font-size-tertiary;
-		color: $tertiary;
+		color: var(--m3-on-surface-variant, $tertiary);
 	}
 
 	&__icon {
@@ -1214,7 +1213,7 @@ $message-avatar-ring: #ebe2e2;
 		}
 
 		svg * {
-			fill: $form-success;
+			fill: var(--m3-success, $form-success);
 		}
 
 		&--grey {
@@ -1268,15 +1267,33 @@ $message-avatar-ring: #ebe2e2;
 
 		&__item {
 			&--delete {
-				color: $form-error;
+				color: var(--m3-error, $form-error);
 				text-decoration: none;
 				display: flex;
 
 				svg g {
-					fill: $form-error;
+					fill: var(--m3-error, $form-error);
 				}
 			}
 		}
+	}
+}
+
+.messageItem--chatEvent {
+	justify-content: center;
+	margin: 12px 0;
+	flex-direction: unset !important;
+
+	.messageItem__chatEvent {
+		display: inline-block;
+		max-width: 85%;
+		padding: 6px 14px;
+		border-radius: 999px;
+		background: rgba(0, 0, 0, 0.06);
+		color: $text-low-emphasis;
+		font-size: $font-size-tertiary;
+		line-height: 1.4;
+		text-align: center;
 	}
 }
 
@@ -1294,7 +1311,7 @@ $message-avatar-ring: #ebe2e2;
 		padding-bottom: 2px;
 
 		* {
-			fill: var(--skin-color-secondary-contrast-safe, $form-primary);
+			fill: var(--m3-secondary, $form-primary);
 		}
 	}
 

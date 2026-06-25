@@ -60,7 +60,18 @@ const defaultReturns = {
 	'frontend.settings': config,
 	'agencyConsultants': [],
 	'agencyConsultantsLanguages': ['de'],
-	'messages': []
+	'messages': [],
+	'userDrafts': {
+		items: [],
+		page: 0,
+		perPage: 200
+	},
+	'eventNotifications': {
+		items: [],
+		unreadCount: 0,
+		page: 0,
+		perPage: 50
+	}
 };
 
 const setWillReturn = (name: string, data: any, mergeData: boolean = false) => {
@@ -163,6 +174,22 @@ Cypress.Commands.add('mockApi', () => {
 	cy.intercept('GET', `${endpoints.consultantEnquiriesBase}*`, {}).as(
 		'consultantEnquiriesBase'
 	);
+
+	cy.intercept('GET', `${endpoints.userDrafts}*`, (req) => {
+		req.reply(getWillReturn('userDrafts'));
+	}).as('userDrafts');
+
+	cy.intercept('GET', `${endpoints.eventNotifications}*`, (req) => {
+		req.reply(getWillReturn('eventNotifications'));
+	}).as('eventNotifications');
+
+	cy.intercept('PATCH', `${endpoints.eventNotifications}/**`, {
+		statusCode: 204
+	}).as('eventNotificationsPatch');
+
+	cy.intercept('DELETE', endpoints.eventNotifications, {
+		statusCode: 204
+	}).as('eventNotificationsDelete');
 
 	cy.intercept('POST', endpoints.keycloakLogout, {}).as('authLogout');
 

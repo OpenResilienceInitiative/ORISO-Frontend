@@ -4,6 +4,7 @@ on:
   push:
     branches-ignore:
     - main
+    - dev
 
 jobs:
   build:
@@ -17,3 +18,7 @@ jobs:
       uses: ./.github/actions/node-build
       with:
         node_version: '18'
+
+    - name: Run unit tests
+      shell: bash
+      run: npm run test:unit

@@ -1,0 +1,33 @@
+// WP-06 Activity Timeline — shared list-item selection primitive (Slice 0b).
+// The single, canonical definition of the active / focus states for any
+// selectable list item (conversation list, request list, Activity Timeline).
+// Tokens mirror the existing conversation-list treatment so nothing is
+// restyled — this only normalises the states so they cannot drift apart per
+// component (CONTEXT.md "Active item"). Imported from settings.scss, which is
+// prepended to every component stylesheet, so the tokens and mixins are
+// globally available without an explicit import.
+
+// --- Tokens ---
+
+$list-item-selected-bg: #fffafa !default; // lightened active background
+$list-item-accent-ring: #ff9d96 !default; // graduated accent ring colour
+$list-item-accent-ring-width: 2px !default; // canonical selection ring width
+$list-item-action-color: #d93025 !default; // red action-target button colour
+$list-item-resting-border: rgba(0, 0, 0, 0.12) !default; // 1px secondary border
+$list-item-focus-ring: rgba(185, 54, 45, 0.35) !default; // a11y focus ring
+
+// --- Mixins ---
+
+// Active selection: lightened background + 2px accent ring. The ring is an
+// inset box-shadow so selecting an item never changes its box size / shifts
+// layout, and it composes onto any existing border.
+@mixin list-item-active-treatment {
+	background-color: $list-item-selected-bg;
+	box-shadow: inset 0 0 0 $list-item-accent-ring-width $list-item-accent-ring;
+}
+
+// Keyboard focus is independent of selection and layers on top.
+@mixin list-item-focus-treatment {
+	outline: none;
+	box-shadow: 0 0 0 3px $list-item-focus-ring;
+}

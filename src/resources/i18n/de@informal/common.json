@@ -329,6 +329,36 @@
 					}
 				}
 			},
+			"elementCall": {
+				"stackLabel": "Element Call mit WebRTC und LiveKit",
+				"stepsHeadline": "So funktioniert der Video-Call",
+				"troubleshootingHeadline": "Falls etwas nicht klappt",
+				"asker": {
+					"headline": "Video-Call",
+					"intro": "Video-Calls laufen jetzt direkt über Element Call. Element Call nutzt WebRTC und LiveKit, deshalb brauchst Du keinen Browserwechsel und keine zusätzliche Installation.",
+					"steps": {
+						"open": "Öffne die Online-Beratung wie gewohnt.",
+						"permissions": "Erlaube Kamera und Mikrofon, wenn Dein Browser danach fragt.",
+						"call": "Nimm den Video-Call an, sobald Deine Beraterin oder Dein Berater ihn startet.",
+						"copyLink": "Wenn Du den Login-Link auf einem anderen Gerät öffnen möchtest, kopiere ihn hier:"
+					}
+				},
+				"consultant": {
+					"headline": "Video-Call",
+					"intro": "Video-Calls laufen jetzt direkt über Element Call. Element Call nutzt WebRTC und LiveKit, deshalb brauchst Du keinen Browserwechsel und keine zusätzliche Installation.",
+					"steps": {
+						"open": "Öffne die Beratung wie gewohnt in ORISO.",
+						"permissions": "Erlaube Kamera und Mikrofon, wenn Dein Browser danach fragt.",
+						"call": "Starte den Video-Call im Chat. Element Call öffnet den Call automatisch.",
+						"copyLink": "Wenn Du den Login-Link auf einem anderen Gerät öffnen möchtest, kopiere ihn hier:"
+					}
+				},
+				"troubleshooting": {
+					"permissions": "Prüfe, ob Kamera und Mikrofon im Browser erlaubt sind.",
+					"device": "Prüfe, ob das richtige Mikrofon, die richtige Kamera und der richtige Lautsprecher ausgewählt sind.",
+					"connection": "Aktualisiere die Seite oder wechsle in ein stabiles WLAN, falls Bild oder Ton abbrechen."
+				}
+			},
 			"waitingRoom": {
 				"headline": "Es liegt nicht an Dir, sondern an Deinem Browser.",
 				"infoBox": {
@@ -750,8 +780,8 @@
 			"decreaseExhale": "Sekunden für Ausatmen verringern",
 			"increaseExhale": "Sekunden für Ausatmen erhöhen",
 			"robotUsernameFallback": "Ratsuchende_r 9",
-			"robotCard1Title": "Bitte hab etwas Geduld",
-			"robotCard1Body": "Derzeit sind alle Berater_innen im Gespräch. Wir sind schnellstmöglich für Dich da.",
+			"robotCard1Title": "Einen Moment Geduld",
+			"robotCard1Body": "Alle unsere Berater*innen sind gerade im Live-Gespräch. Bitte warte noch einen kurzen Moment hier im Chatraum. Du siehst unten, wie viele Personen noch vor dir an der Reihe sind.",
 			"robotCard2TitlePrefix": "Dein Benutzername lautet:",
 			"robotCard2Body": "Um Deine Anonymität zu schützen, löschen wir Deine Nachrichten spätestens 48 Stunden nachdem der Chat beendet wurde.",
 			"robotCard3Title": "Du benötigst nicht sofort eine Antwort? Und willst nicht auf einen freien Chat warten?",
@@ -855,6 +885,7 @@
 			}
 		},
 		"empty": "Bitte wähle eine Nachricht aus.",
+		"emptyAllCaughtUp": "Kurz durchatmen.\nAlles erledigt.",
 		"reassign": {
 			"system": {
 				"message": {
@@ -922,13 +953,20 @@
 			},
 			"chips": {
 				"neu": "Ungelesen",
+				"unread": "Ungelesen",
+				"drafts": "Entwürfe",
+				"nearby": "Nähe",
+				"create": "Erstellen",
+				"archive": "Archiviert",
 				"oneToOne": "1-1 Beratung",
 				"liveChat": "Live-Chat",
-				"groups": "Gruppen",
+				"internalGroup": "Interner Gruppenchat",
+				"groups": "Gesprächskreis",
 				"supervision": "Supervision",
-				"chats": "Chats"
+				"chats": "Nähe"
 			},
-			"emptyFilterResult": "Keine Beratung entspricht Deiner Suche oder den Filtern."
+			"emptyFilterResult": "Keine Beratung entspricht Deiner Suche oder den Filtern.",
+			"draftMetadataOnly": "Ungesendete Nachricht gespeichert."
 		},
 		"anonymous": {
 			"tag": "Anonymous"
@@ -1165,6 +1203,7 @@
 		"start": "Beratung starten",
 		"pseudonym": {
 			"carimatSubtitle": "Angezeigten Namen auswählen",
+			"carimatPrivacySubtitle": "Deine Privatsphäre",
 			"carimatMessage": "Hi, bevor es losgeht, bestätige bitte deinen zufällig gewählten Namen für diese Sitzung.",
 			"privacyMessage": "Gute Wahl. Zum Schutz deiner Privatsphäre sind alle Nachrichten Ende-zu-Ende verschlüsselt und werden nach 48 Stunden automatisch gelöscht.",
 			"yourPseudonym": "Dein Pseudonym",
@@ -1183,10 +1222,15 @@
 			"actionsLabel": "Wartebereich-Aktionen",
 			"calmCompanion": "Kurze ruhige Begleitung öffnen",
 			"calmCompanionHint": "Bis der Chat beginnt, eine kurze interaktive ruhige Begleitung. Direkt hier im Chatraum",
+			"calmCompanionHintMobileLine1": "Bis der Chat beginnt, eine kurze",
+			"calmCompanionHintMobileLine2": "interaktive ruhige Begleitung.",
+			"calmCompanionHintDesktop": "Bis der Chat beginnt, eine kurze ruhige Begleitung. Direkt hier im Chatraum",
 			"positionCount_one": "{{count}} Person vor dir",
 			"positionCount_other": "{{count}} Personen vor dir",
+			"positionCountSuffix": "Noch vor dir",
 			"connecting": "Wird verbunden …",
-			"requestLocalCounselor": "Anfrage an lokalen Berater senden",
+			"insteadOfWaiting": "Statt zu warten",
+			"requestLocalCounselor": "Vor Ort Beratungsanfrage absenden",
 			"consultantAccepted": "Du wirst jetzt von deiner/deinem Berater_in im Chat erwartet.",
 			"startChatNow": "Jetzt Chat starten",
 			"dismissAcceptedBanner": "Hinweis ausblenden"
@@ -1206,6 +1250,26 @@
 				"error": {
 					"title": "Fehler beim Löschen",
 					"text": "Das Konto konnte nicht gelöscht werden. Bitte versuche es erneut."
+				}
+			},
+			"endChat": {
+				"label": "Chat beenden",
+				"ending": "Wird beendet …",
+				"confirm": {
+					"headline": "Möchtest du den Chat wirklich beenden?",
+					"copy": "Das Gespräch wird geschlossen. Du kannst diesen anonymen Chat nicht fortsetzen.",
+					"buttonConfirm": "Chat beenden",
+					"buttonCancel": "Abbrechen"
+				},
+				"success": {
+					"headline": "Chat beendet",
+					"copy": "Danke, dass du unseren Live-Chat genutzt hast. Du kannst diese Seite jetzt schließen.",
+					"buttonClose": "Schließen"
+				},
+				"error": {
+					"headline": "Chat konnte nicht beendet werden",
+					"copy": "Der Chat konnte nicht beendet werden. Bitte versuche es erneut.",
+					"buttonClose": "Schließen"
 				}
 			}
 		},
@@ -1261,7 +1325,7 @@
 				"nav": "Gespräch"
 			}
 		},
-		"activity": "Aktivität",
+		"activity": "Zeitstrahl",
 		"drafts": "Entwürfe",
 		"liveChat": "Live Chat",
 		"liveChatToggleActive": "Live-Chat verfügbar",

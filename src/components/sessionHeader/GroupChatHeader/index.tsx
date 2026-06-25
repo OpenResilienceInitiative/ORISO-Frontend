@@ -29,10 +29,11 @@ import { Tag } from '../../tag/Tag';
 import { BUTTON_TYPES, Button, ButtonItem } from '../../button/Button';
 import { useAppConfig } from '../../../hooks/useAppConfig';
 import { SessionItemInterface } from '../../../globalState/interfaces';
-import { matrixClientService } from '../../../services/matrixClientService';
+import { useMatrixClient } from '../../../globalState/context/MatrixClientContext';
 import { RoomMember } from 'matrix-js-sdk';
 import { UserAvatar } from '../../message/UserAvatar';
 import { getTenantSettings } from '../../../utils/tenantSettingsHelper';
+import { ChatroomMainInteractionIcon } from '../ChatroomMainInteractionIcon';
 
 interface GroupChatHeaderProps {
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
@@ -52,6 +53,7 @@ export const GroupChatHeader = ({
 	const { t } = useTranslation(['common', 'consultingTypes', 'agencies']);
 	const { activeSession } = useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
+	const { matrixClientService } = useMatrixClient();
 
 	// MATRIX: Get room members from Matrix client
 	const [matrixMembers, setMatrixMembers] = useState<RoomMember[]>([]);
@@ -70,21 +72,12 @@ export const GroupChatHeader = ({
 			return;
 		}
 
-		// Try to get Matrix client (from global window or imported service)
-		const getClient = () => {
-			const globalService = (window as any).matrixClientService;
-			if (globalService && globalService.getClient()) {
-				return globalService.getClient();
-			}
-			return matrixClientService.getClient();
-		};
-
 		// Wait for Matrix client to be available (retry up to 20 times = 10 seconds)
 		let retryCount = 0;
 		const maxRetries = 20;
 
 		const tryLoadMembers = () => {
-			const client = getClient();
+			const client = matrixClientService?.getClient?.();
 
 			if (!client) {
 				retryCount++;
@@ -155,7 +148,7 @@ export const GroupChatHeader = ({
 
 			// Poll for member changes every 5 seconds
 			const intervalId = setInterval(() => {
-				const client = getClient();
+				const client = matrixClientService?.getClient?.();
 				if (client) {
 					const updatedRoom = client.getRoom(matrixRoomId);
 					if (updatedRoom) {
@@ -182,7 +175,7 @@ export const GroupChatHeader = ({
 				delete (window as any).__groupChatHeaderInterval;
 			}
 		};
-	}, [matrixRoomId, matrixMembers.length]);
+	}, [matrixRoomId, matrixMembers.length, matrixClientService]);
 	const { type, path: listPath } = useContext(SessionTypeContext);
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
 	const sessionView = getViewPathForType(type);
@@ -238,9 +231,16 @@ export const GroupChatHeader = ({
 				});
 				// console.log('✅ Media permissions granted!', stream);
 
-				// Store stream globally
-				(window as any).__preRequestedMediaStream = stream;
-				(window as any).__preRequestedMediaStreamTime = Date.now();
+				// Group calls render Element Call in an iframe which acquires its
+				// own media (on its own origin). Release this warm-up stream so
+				// the camera/mic don't stay on in the parent page.
+				try {
+					stream
+						.getTracks()
+						.forEach((track: MediaStreamTrack) => track.stop());
+				} catch {
+					// ignore
+				}
 			} catch (mediaError: any) {
 				// console.error('❌ Media permission denied:', mediaError);
 
@@ -372,8 +372,10 @@ export const GroupChatHeader = ({
 				<div className="sessionInfo__username sessionInfo__username--deactivate sessionInfo__username--groupChat">
 					<div className="sessionInfo__titleRow">
 						<div className="sessionInfo__memberStack">
-							{/* No supervisor "+" on group chats — supervision
-							    is only offered for 1-on-1 chats. */}
+							<ChatroomMainInteractionIcon
+								type="internal"
+								showAddIcon={isActive && !isJoinGroupChatView}
+							/>
 							{stackedMembers.map((member, index) => {
 								const userId = member.userId || '';
 								const parsedUsername =

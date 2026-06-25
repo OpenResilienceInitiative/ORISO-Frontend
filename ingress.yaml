@@ -1,20 +1,20 @@
+# Apply with environment-specific values, e.g.:
+#   ORISO_APP_HOST=app.example.org envsubst < ingress.yaml | kubectl apply -f -
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: frontend-ingress
   namespace: caritas
   annotations:
-    # Traefik entrypoints: HTTP (80) and HTTPS (443)
     traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
-    # cert-manager: Automatically request certificate from Let's Encrypt
     cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
   tls:
   - hosts:
-    - app.oriso.site
-    secretName: app-oriso-site-tls
+    - ${ORISO_APP_HOST}
+    secretName: ${ORISO_APP_TLS_SECRET}
   rules:
-  - host: app.oriso.site
+  - host: ${ORISO_APP_HOST}
     http:
       paths:
       - path: /
@@ -24,4 +24,3 @@ spec:
             name: frontend
             port:
               number: 9001
-

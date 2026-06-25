@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { useState, useEffect, useRef } from 'react';
 import { InputBaseComponentProps, TextField, Typography } from '@mui/material';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useTranslation } from 'react-i18next';
 
 export interface InputProps {
@@ -96,13 +96,28 @@ export const Input = ({
 	};
 
 	const getMultipleCriteriaDesign = (criteria) => {
+		const iconWrapper = (icon) => (
+			<span
+				aria-hidden="true"
+				style={{
+					display: 'inline-flex',
+					alignItems: 'center',
+					justifyContent: 'center',
+					width: '16px',
+					height: '16px',
+					marginRight: '3px',
+					flex: '0 0 16px'
+				}}
+			>
+				{icon}
+			</span>
+		);
 		const blurredIcon = wasBlurred ? (
 			<CancelIcon
 				color="error"
 				sx={{
 					width: '16px',
-					height: '16px',
-					mr: '3px'
+					height: '16px'
 				}}
 			/>
 		) : (
@@ -113,8 +128,7 @@ export const Input = ({
 				color="success"
 				sx={{
 					width: '16px',
-					height: '16px',
-					mr: '3px'
+					height: '16px'
 				}}
 			/>
 		) : (
@@ -124,7 +138,7 @@ export const Input = ({
 		const color = criteria.validation(value)
 			? 'success.main'
 			: blurredColor;
-		return { icon, color };
+		return { icon: iconWrapper(icon), color };
 	};
 	const inputRef = useRef<any>(null);
 	useEffect(() => {
@@ -248,23 +262,26 @@ export const Input = ({
 					{successMesssage}
 				</Typography>
 			)}
-			{multipleCriteria?.map((criteria) => (
-				<Typography
-					key={criteria.info}
-					variant="body2"
-					sx={{
-						mt: '8px',
-						fontSize: '16px',
-						lineHeight: '16px',
-						color: getMultipleCriteriaDesign(criteria).color,
-						display: 'flex',
-						alignItems: 'center'
-					}}
-				>
-					{getMultipleCriteriaDesign(criteria).icon}{' '}
-					{t(criteria.info)}
-				</Typography>
-			))}
+			{multipleCriteria?.map((criteria) => {
+				const criteriaDesign = getMultipleCriteriaDesign(criteria);
+				return (
+					<Typography
+						key={criteria.info}
+						variant="body2"
+						sx={{
+							mt: '8px',
+							fontSize: '16px',
+							lineHeight: '16px',
+							color: criteriaDesign.color,
+							display: 'flex',
+							alignItems: 'center'
+						}}
+					>
+						{criteriaDesign.icon}
+						<span>{t(criteria.info)}</span>
+					</Typography>
+				);
+			})}
 		</>
 	);
 };

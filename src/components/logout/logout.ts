@@ -1,4 +1,5 @@
 import { apiKeycloakLogout } from '../../api/apiLogoutKeycloak';
+import { apiSetLiveChatAvailability } from '../../api/apiSetLiveChatAvailability';
 // // import { apiRocketchatLogout } from '../../api/apiLogoutRocketchat';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { budibaseLogout } from '../budibase/budibaseLogout';
@@ -10,6 +11,16 @@ import {
 import { appConfig } from '../../utils/appConfig';
 import { calcomLogout } from './calcomLogout';
 import { callEventListeners } from '../../utils/eventHandler';
+import {
+	getMatrixClientService,
+	setMatrixClientServiceRef
+} from '../../services/matrixClientRegistry';
+
+const LEGACY_MATRIX_LOCAL_STORAGE_KEYS = [
+	'matrix_user_id',
+	'matrix_access_token',
+	'matrix_token_expires_at'
+] as const;
 
 export const EVENT_PRE_LOGOUT = 'pre_logout';
 
@@ -30,6 +41,10 @@ export const logout = async (
 	const { featureAppointmentsEnabled, featureToolsEnabled } =
 		getTenantSettings();
 
+	/* Drop live-chat availability while the access token is still valid, so the
+	 * anonymous availability count decreases immediately on logout. */
+	await apiSetLiveChatAvailability(false);
+
 	Promise.all([
 		// Skip RocketChat logout due to configuration issues
 		// apiRocketchatLogout(),
@@ -45,6 +60,16 @@ const invalidateCookies = (
 	withRedirect: boolean = true,
 	redirectUrl?: string
 ) => {
+	void getMatrixClientService()
+		?.logout()
+		.catch(() => {});
+	// Reset the module-level Matrix client registry so a stale, still
+	// authenticated client cannot survive sign-out (the React context state is
+	// reset separately in the logout flow / via the post-logout reload).
+	setMatrixClientServiceRef(null);
+	LEGACY_MATRIX_LOCAL_STORAGE_KEYS.forEach((key) => {
+		localStorage.removeItem(key);
+	});
 	removeAllCookies();
 	removeTokenExpiryFromLocalStorage();
 	removeRocketChatMasterKeyFromLocalStorage();
