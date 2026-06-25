@@ -134,9 +134,31 @@ export default function App() {
 		if (step > 1) setStep(step - 1);
 	};
 
-	// Stepper click — jump to any step already reached.
+	// Stepper click — jump to any step already reached. Step 5 stays gated on
+	// valid registration even when maxStep was reached earlier in the session.
 	const handleStepClick = (target: number) => {
-		if (target <= maxStep) setStep(target);
+		if (target > maxStep) return;
+		if (target === 5 && !registerValid) return;
+		setStep(target);
+	};
+
+	const handleTopicChange = (id: string) => {
+		if (id === selected) return;
+		setSelected(id);
+		setPostcode('');
+		setCenterId(null);
+		setRegister(EMPTY_REGISTER);
+		setMessage('');
+		setStep(1);
+		setMaxStep(1);
+	};
+
+	const handlePostcodeChange = (next: string) => {
+		if (next !== postcode) {
+			setCenterId(null);
+			setMaxStep((m) => Math.min(m, 2));
+		}
+		setPostcode(next);
 	};
 
 	// Removing the topic chip clears the selection and returns to step 1 — a later
@@ -182,12 +204,15 @@ export default function App() {
 						<TopicSelection
 							categories={CATEGORIES}
 							value={selected}
-							onChange={setSelected}
+							onChange={handleTopicChange}
 						/>
 					</>
 				)}
 				{step === 2 && (
-					<PostcodeStep value={postcode} onChange={setPostcode} />
+					<PostcodeStep
+						value={postcode}
+						onChange={handlePostcodeChange}
+					/>
 				)}
 				{step === 3 && (
 					<ConsultingCenterStep
