@@ -50,14 +50,16 @@ export const RegistrationLoader = ({
 	const [armed, setArmed] = useState<boolean>(false);
 	const minElapsedRef = useRef<boolean>(false);
 	const finishedRef = useRef<boolean>(false);
+	const onFinishRef = useRef(onFinish);
+	onFinishRef.current = onFinish;
 
 	const finish = useCallback(() => {
 		if (finishedRef.current) {
 			return;
 		}
 		finishedRef.current = true;
-		onFinish();
-	}, [onFinish]);
+		onFinishRef.current();
+	}, []);
 
 	// On mount: ease the bar toward 85% (a progress bar that waits near the end
 	// until the real "loaded" signal tops it off) and arm the min-visible timer.
@@ -123,6 +125,7 @@ export const RegistrationLoader = ({
 					variant="determinate"
 					value={value}
 					color="primary"
+					aria-label={t('registration.loader.headline')}
 					sx={{
 						'flex': 1,
 						'height': '6px',
