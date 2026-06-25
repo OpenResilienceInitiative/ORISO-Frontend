@@ -21,23 +21,18 @@ import {
 } from 'react';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useTranslation } from 'react-i18next';
+import { LocaleContext } from '../../../globalState/context/LocaleContext';
 import {
-	LocaleContext,
 	RegistrationContext,
 	RegistrationData
-} from '../../../globalState';
+} from '../../../globalState/provider/RegistrationProvider';
 import { apiGetTopicGroups } from '../../../api/apiGetTopicGroups';
 import { apiGetTopicsData } from '../../../api/apiGetTopicsData';
-import { apiGetTenantAgenciesTopics } from '../../../api/apiGetTenantAgenciesTopics';
-import { filterTopicsByAgencyCoverage } from './filterTopicsByAgencyCoverage';
-import {
-	TopicsDataInterface,
-	TopicGroup
-} from '../../../globalState/interfaces';
+import { TopicGroup } from '../../../globalState/interfaces/TopicGroups';
+import { TopicsDataInterface } from '../../../globalState/interfaces/TopicsDataInterface';
 import { MetaInfo } from '../metaInfo/MetaInfo';
 import { Loading } from '../../../components/app/Loading';
 import TaskAltIcon from '@mui/icons-material/TaskAlt';
-import { REGISTRATION_DATA_VALIDATION } from '../registrationDataValidation';
 import { UrlParamsContext } from '../../../globalState/provider/UrlParamsProvider';
 
 export const TopicSelection: FC<{
@@ -63,6 +58,11 @@ export const TopicSelection: FC<{
 	const [topicGroupId, setTopicGroupId] = useState<number>(
 		registrationData.topicGroupId || undefined
 	);
+	const compareByLocalizedName = useCallback(
+		(a: { name: string }, b: { name: string }) =>
+			a.name.localeCompare(b.name, locale),
+		[locale]
+	);
 
 	const getTopic = useCallback(
 		(mainTopicId: number) =>
@@ -72,9 +72,7 @@ export const TopicSelection: FC<{
 
 	useEffect(() => {
 		if (
-			REGISTRATION_DATA_VALIDATION.mainTopicId.validation(
-				value?.toString()
-			) &&
+			value != null &&
 			(topicGroups?.some((topicGroup) =>
 				topicGroup.topicIds.includes(value)
 			) ||
@@ -117,55 +115,61 @@ export const TopicSelection: FC<{
 				.filter(filterConsultantTopics)
 				// Filter topics by preselected agency
 				.filter(filterAgencyTopics);
+		let cancelled = false;
+
 		(async () => {
 			setTopics(undefined);
 			setTopicGroups(undefined);
 
-			const topicsResponse = await apiGetTopicsData();
-			let topics = getFilteredTopics(topicsResponse);
-
-			// When the user is browsing topics (no deep-linked topic/agency/consultant),
-			// hide topics that have no agency assigned so registration cannot dead-end on
-			// a topic with zero counselling centres. Fails open on error.
-			if (
-				!preselectedTopic &&
-				!preselectedAgency &&
-				!preselectedConsultant
-			) {
-				try {
-					const agenciesTopics = await apiGetTenantAgenciesTopics();
-					topics = filterTopicsByAgencyCoverage(
-						topics,
-						agenciesTopics
-					);
-				} catch (e) {
-					// keep topics unchanged if agency coverage cannot be determined
-				}
-			}
 			try {
+				const topicsResponse = await apiGetTopicsData();
+				const topics = getFilteredTopics(topicsResponse);
 				const topicIds = topics.map((t) => t.id);
-				const topicGroupsResponse = await apiGetTopicGroups();
-				setTopicGroups(
-					topicGroupsResponse.data.items
+				let filteredTopicGroups: TopicGroup[] = [];
+				let nextListView = !!(
+					preselectedAgency || preselectedConsultant
+				);
+
+				try {
+					const topicGroupsResponse = await apiGetTopicGroups();
+					filteredTopicGroups = topicGroupsResponse.data.items
 						.filter((topicGroup) => topicGroup.topicIds.length > 0)
 						.filter((topicGroup) =>
 							topicGroup.topicIds.some((id) =>
 								topicIds.includes(id)
 							)
 						)
-						.sort((a, b) => {
-							if (a.name === b.name) return 0;
-							return a.name < b.name ? -1 : 1;
-						})
-				);
+						.sort(compareByLocalizedName);
+					nextListView =
+						nextListView ||
+						(filteredTopicGroups.length === 0 && topics.length > 0);
+				} catch (e) {
+					nextListView = true;
+				}
+
+				if (cancelled) return;
+
+				setTopicGroups(filteredTopicGroups);
+				setListView(nextListView);
+				setTopics(topics);
 			} catch (e) {
+				if (cancelled) return;
+
 				setTopicGroups([]);
 				setListView(true);
+				setTopics([]);
 			}
-
-			setTopics(topics);
 		})();
-	}, [preselectedConsultant, preselectedAgency, preselectedTopic, locale]);
+
+		return () => {
+			cancelled = true;
+		};
+	}, [
+		compareByLocalizedName,
+		preselectedConsultant,
+		preselectedAgency,
+		preselectedTopic
+	]);
 
 	return (
 		<>
@@ -203,11 +207,8 @@ export const TopicSelection: FC<{
 						defaultValue={topics.length === 1 ? topics[0].id : ''}
 					>
 						{listView
-							? (topics || [])
-									.sort((a, b) => {
-										if (a.name === b.name) return 0;
-										return a.name < b.name ? -1 : 1;
-									})
+							? [...(topics || [])]
+									.sort(compareByLocalizedName)
 									.map((topic, index) => (
 										<TopicSelect
 											key={`${topic.id}`}
@@ -295,13 +296,7 @@ export const TopicSelection: FC<{
 											{topicGroup.topicIds
 												.map((t) => getTopic(t))
 												.filter(Boolean)
-												.sort((a, b) => {
-													if (a.name === b.name)
-														return 0;
-													return a.name < b.name
-														? -1
-														: 1;
-												})
+												.sort(compareByLocalizedName)
 												.map((topic, index) => (
 													<TopicSelect
 														key={`${topicGroup.id}-${topic.id}`}
