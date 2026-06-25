@@ -237,6 +237,9 @@ export default function App() {
 							multiline
 							minRows={5}
 							fullWidth
+							inputProps={{
+								'aria-label': t('reg.message.placeholder')
+							}}
 							InputProps={{
 								sx: { borderRadius: '12px', bgcolor: '#fff' }
 							}}
