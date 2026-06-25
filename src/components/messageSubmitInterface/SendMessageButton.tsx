@@ -14,22 +14,11 @@ export const SendMessageButton = (props: SendMessageButtonProps) => {
 	const isDisabled = !!props.deactivated;
 
 	return (
-		<span
-			onClick={() =>
-				isDisabled ? null : props.handleSendButton()
-			}
-			role="button"
-			tabIndex={isDisabled ? -1 : 0}
+		<button
+			type="button"
+			disabled={isDisabled}
+			onClick={() => props.handleSendButton()}
 			aria-disabled={isDisabled}
-			onKeyDown={(event) => {
-				if (isDisabled) {
-					return;
-				}
-				if (event.key === 'Enter' || event.key === ' ') {
-					event.preventDefault();
-					props.handleSendButton();
-				}
-			}}
 			className={`textarea__iconWrapper ${
 				props.clicked ? 'textarea__iconWrapper--clicked' : ''
 			} ${props.deactivated ? 'textarea__iconWrapper--deactivated' : 'textarea__iconWrapper--active'} ${
@@ -43,6 +32,6 @@ export const SendMessageButton = (props: SendMessageButtonProps) => {
 				aria-label={translate('enquiry.write.input.button.title')}
 				title={translate('enquiry.write.input.button.title')}
 			/>
-		</span>
+		</button>
 	);
 };

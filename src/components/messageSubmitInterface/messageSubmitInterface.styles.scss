@@ -1032,9 +1032,14 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 		&__iconWrapper {
 			width: 48px;
 			height: 48px;
+			border: 0;
 			border-radius: 0 6px 0 24px;
+			padding: 0;
 			cursor: pointer;
 			background-color: #f8ceca;
+			color: inherit;
+			appearance: none;
+			font: inherit;
 			margin: 0;
 			display: inline-flex;
 			align-items: center;
@@ -1053,6 +1058,10 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			}
 			&:hover {
 				background-color: var(--m3-primary-hover, #f3bdb8);
+			}
+			&:focus-visible {
+				outline: 2px solid var(--m3-primary, #cc1e1c);
+				outline-offset: 2px;
 			}
 
 			&--active:not(.textarea__iconWrapper--empty) {
