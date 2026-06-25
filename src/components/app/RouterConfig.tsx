@@ -19,27 +19,19 @@ import { AUTHORITIES, hasUserAuthority } from '../../globalState';
 import { AppConfigInterface } from '../../globalState/interfaces';
 import { ReactComponent as OverviewIconOutline } from '../../resources/img/icons/overview_outline.svg';
 import { ReactComponent as OverviewIconFilled } from '../../resources/img/icons/overview_filled.svg';
-import { ReactComponent as MessagesIconOutline } from '../../resources/img/icons/messages_outline.svg';
-import { ReactComponent as MessagesIconFilled } from '../../resources/img/icons/messages_filled.svg';
-import { ReactComponent as ProfilIconOutline } from '../../resources/img/icons/profil_outline.svg';
-import { ReactComponent as ProfilIconFilled } from '../../resources/img/icons/profil_filled.svg';
 import { ReactComponent as ToolsIconOutline } from '../../resources/img/icons/tools_outline.svg';
 import { ReactComponent as ToolsIconFilled } from '../../resources/img/icons/tools_filled.svg';
 import { ReactComponent as CalendarIconOutline } from '../../resources/img/icons/calendar_outline.svg';
 import { ReactComponent as CalendarIconFilled } from '../../resources/img/icons/calendar_filled.svg';
-import { ReactComponent as NotificationBellIcon } from '../../resources/img/icons/notification_bell.svg';
-import { ReactComponent as DraftsNavigationIcon } from '../../resources/img/icons/drafts_navigation.svg';
+import { ReactComponent as NavCounsellorRequestIcon } from '../../resources/img/icons/navigation/counsellor_request_400.svg';
+import { ReactComponent as NavCounsellorRequestIconFilled } from '../../resources/img/icons/navigation/counsellor_request_filled.svg';
 import {
-	NavInboxIcon,
 	NavChatsIcon,
 	NavChatsIconHover,
 	NavChatsIconFilled,
 	NavActivityIcon,
 	NavActivityIconHover,
 	NavActivityIconFilled,
-	NavDraftsIcon,
-	NavDraftsIconHover,
-	NavDraftsIconFilled,
 	NavProfileIcon,
 	NavProfileIconHover,
 	NavProfileIconFilled
@@ -136,6 +128,12 @@ export const RouterConfigUser = (
 				}
 			},
 			{
+				condition: (userData) => {
+					return !hasUserAuthority(
+						AUTHORITIES.ASKER_DEFAULT,
+						userData
+					);
+				},
 				to: '/notifications',
 				icon: NavActivityIcon,
 				iconHover: NavActivityIconHover,
@@ -143,16 +141,6 @@ export const RouterConfigUser = (
 				navSlot: 'tile' as const,
 				titleKeys: {
 					large: 'navigation.activity'
-				}
-			},
-			{
-				to: '/drafts',
-				icon: NavDraftsIcon,
-				iconHover: NavDraftsIconHover,
-				iconFilled: NavDraftsIconFilled,
-				navSlot: 'tile' as const,
-				titleKeys: {
-					large: 'navigation.drafts'
 				}
 			},
 			{
@@ -273,7 +261,9 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 			overviewRoute(settings),
 			{
 				to: '/sessions/consultant/sessionPreview',
-				icon: NavInboxIcon,
+				icon: NavCounsellorRequestIcon,
+				iconHover: NavCounsellorRequestIcon,
+				iconFilled: NavCounsellorRequestIconFilled,
 				navSlot: 'row' as const,
 				titleKeys: {
 					large: 'navigation.consultant.enquiries'
@@ -298,16 +288,6 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 				navSlot: 'tile' as const,
 				titleKeys: {
 					large: 'navigation.activity'
-				}
-			},
-			{
-				to: '/drafts',
-				icon: NavDraftsIcon,
-				iconHover: NavDraftsIconHover,
-				iconFilled: NavDraftsIconFilled,
-				navSlot: 'tile' as const,
-				titleKeys: {
-					large: 'navigation.drafts'
 				}
 			},
 			{

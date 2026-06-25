@@ -4,7 +4,7 @@
 	align-items: center;
 	height: 18px;
 	padding: 0 $grid-base;
-	color: var(--text-color-contrast-switch, $secondary);
+	color: var(--m3-on-primary, $secondary);
 	font-size: 12px;
 	border-radius: 8px;
 	word-break: keep-all;

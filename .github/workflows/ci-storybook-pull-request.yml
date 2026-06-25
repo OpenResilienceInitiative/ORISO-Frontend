@@ -24,6 +24,6 @@ jobs:
         uses: ./.github/actions/docker-build-push
         with:
           push_to_ghcr: false
-          image_name: caritas-storybook
+          image_name: oriso-storybook
           dockerfile: Dockerfile.storybook
           github_token: ${{ secrets.GITHUB_TOKEN }}

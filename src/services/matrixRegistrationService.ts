@@ -1,4 +1,5 @@
 import { createClient } from 'matrix-js-sdk';
+import { getMatrixHomeserverUrl } from '../resources/scripts/runtimeConfig';
 
 export interface MatrixRegistrationData {
 	username: string;
@@ -20,8 +21,7 @@ export const registerMatrixUser = async (
 	try {
 		// console.log("🔧 Attempting Matrix registration for user:", registrationData.username);
 
-		const homeserverUrl =
-			process.env.REACT_APP_MATRIX_HOMESERVER_URL?.trim();
+		const homeserverUrl = getMatrixHomeserverUrl();
 		if (!homeserverUrl) {
 			return {
 				success: false,
@@ -89,8 +89,7 @@ export const loginMatrixUser = async (
 	try {
 		// console.log("🔧 Attempting Matrix login for user:", username);
 
-		const homeserverUrl =
-			process.env.REACT_APP_MATRIX_HOMESERVER_URL?.trim();
+		const homeserverUrl = getMatrixHomeserverUrl();
 		if (!homeserverUrl) {
 			return {
 				success: false,

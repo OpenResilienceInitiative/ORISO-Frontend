@@ -1,8 +1,7 @@
 import * as React from 'react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ListInfo } from '../listInfo/ListInfo';
-import { ReactComponent as NoMessagesIllustration } from '../../resources/img/illustrations/no-messages.svg';
+import { EmptyState, EmptyStateVariant } from '../emptyState/EmptyState';
 import {
 	SESSION_LIST_TAB_ARCHIVE,
 	SESSION_LIST_TYPES
@@ -37,7 +36,24 @@ export const EmptyListItem = ({
 				return t('sessionList.empty.mySessions');
 		}
 	}, [headlineOverride, sessionListTab, type, t]);
+
+	const emptyStateVariant = useMemo<EmptyStateVariant>(() => {
+		if (sessionListTab === SESSION_LIST_TAB_ARCHIVE) {
+			return 'archive';
+		}
+
+		if (type === SESSION_LIST_TYPES.ENQUIRY) {
+			return 'inquiry';
+		}
+
+		return 'no-conversations';
+	}, [sessionListTab, type]);
+
 	return (
-		<ListInfo headline={emptyTitle} Illustration={NoMessagesIllustration} />
+		<EmptyState
+			className="sessionsList__emptyState"
+			headline={emptyTitle}
+			variant={emptyStateVariant}
+		/>
 	);
 };

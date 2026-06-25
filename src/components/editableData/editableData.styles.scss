@@ -8,27 +8,30 @@
 		background: none;
 		border: none;
 		border-bottom: 1px solid $line-grey;
-		color: var(--skin-color-default, $secondary);
+		color: var(--m3-primary, $secondary);
 
 		&--empty {
-			color: $tertiary;
-			-webkit-text-fill-color: $tertiary !important;
+			color: var(--m3-on-surface-variant, $tertiary);
+			-webkit-text-fill-color: var(
+				--m3-on-surface-variant,
+				$tertiary
+			) !important;
 		}
 
 		&:disabled {
 			cursor: default;
 			opacity: 1;
-			-webkit-text-fill-color: var(--skin-color-default, $secondary);
+			-webkit-text-fill-color: var(--m3-primary, $secondary);
 		}
 
 		&:focus-visible,
 		&:focus {
-			border-bottom: 1px solid var(--skin-color-default, $primary);
+			border-bottom: 1px solid var(--m3-primary, $primary);
 			outline: none;
 		}
 
 		&::selection {
-			background: rgba(var(--skin-color-default, $primary), 0.1);
+			background: rgba(var(--m3-primary, $primary), 0.1);
 		}
 	}
 
@@ -47,7 +50,7 @@
 		svg {
 			height: 14px;
 			width: 14px;
-			fill: var(--skin-color-secondary-contrast-safe, $secondary);
+			fill: var(--m3-secondary, $secondary);
 		}
 
 		&--edit {
@@ -92,7 +95,7 @@
 
 	&__label--invalid {
 		.text {
-			color: var(--skin-color-default, $form-error);
+			color: var(--m3-primary, $form-error);
 		}
 	}
 

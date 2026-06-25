@@ -72,6 +72,36 @@ const supportsInsertableStreams = () => {
 	}
 };
 
+/**
+ * Derive whether a Matrix m.call.invite represents a video call.
+ * Group invites may set `is_video`; 1:1 WebRTC invites expose video in the SDP offer.
+ */
+export const isVideoCallFromMatrixInviteContent = (
+	content: Record<string, unknown>
+): boolean => {
+	if (content.is_video === false) {
+		return false;
+	}
+	if (content.is_video === true) {
+		return true;
+	}
+
+	const offer = content.offer as { sdp?: string } | undefined;
+	const sdp = offer?.sdp;
+	if (typeof sdp === 'string') {
+		const videoLine = sdp
+			.split('\n')
+			.find((line) => line.startsWith('m=video'));
+		if (videoLine) {
+			const port = videoLine.split(' ')[1];
+			return port !== '0';
+		}
+		return false;
+	}
+
+	return false;
+};
+
 export const hasVideoCallFeature = (userData, consultingTypes) =>
 	userData &&
 	hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&

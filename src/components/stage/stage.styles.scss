@@ -21,12 +21,12 @@ $gridSpacing: $grid-base-four;
 	}
 
 	&__legalLinksItem {
-		color: $tertiary;
+		color: var(--m3-on-surface-variant, $tertiary);
 		text-transform: none;
 		font-weight: normal;
 
 		&:hover {
-			color: var(--skin-color-primary-hover, $hover-primary);
+			color: var(--m3-primary-hover, $hover-primary);
 		}
 	}
 }
@@ -37,8 +37,8 @@ $gridSpacing: $grid-base-four;
 	transition: width $animation-duration-width $animation-easing-width;
 	transition-delay: $animation-duration - $animation-duration-width;
 	text-align: center;
-	background-color: var(--skin-color-primary, $primary);
-	color: var(--text-color-contrast-switch, $text-invert);
+	background-color: var(--m3-primary, $primary);
+	color: var(--m3-on-primary, $text-invert);
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
@@ -188,7 +188,7 @@ $gridSpacing: $grid-base-four;
 			cursor: pointer;
 			padding: 0;
 			white-space: nowrap;
-			color: $tertiary;
+			color: var(--m3-on-surface-variant, $tertiary);
 			pointer-events: auto;
 			position: relative;
 			z-index: 51;
@@ -203,7 +203,7 @@ $gridSpacing: $grid-base-four;
 			}
 
 			&:hover {
-				color: var(--skin-color-primary-hover, $hover-primary);
+				color: var(--m3-primary-hover, $hover-primary);
 			}
 		}
 

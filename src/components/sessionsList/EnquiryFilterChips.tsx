@@ -1,6 +1,6 @@
 import * as React from 'react';
 import clsx from 'clsx';
-import type { SessionToolbarChipFilter } from './SessionsListToolbar';
+import type { SessionToolbarChipFilter } from './sessionToolbarFilters';
 
 interface EnquiryFilterChipsProps {
 	translate: (key: string, defaultValue?: any) => any;
@@ -12,7 +12,7 @@ interface EnquiryFilterChipsProps {
 
 /**
  * Compact filter-chip row for the consultant enquiry tab.
- * Two chips: "Chats" (registered enquiries) and "Live Chat" (anonymous
+ * Two chips: "Nearby" (registered enquiries) and "Live Chat" (anonymous
  * enquiries, shown only when the sidebar live-chat availability toggle is
  * active). Clicking a chip toggles it; clicking the active one again clears
  * the filter so the full list returns.
@@ -35,13 +35,16 @@ export const EnquiryFilterChips: React.FC<EnquiryFilterChipsProps> = ({
 			<div className="sessionsListToolbar__chipRow sessionsListToolbar__chipRow--enquiry">
 				<button
 					type="button"
-					className={chipClass('chats')}
-					onClick={() => onChipToggle('chats')}
-					aria-pressed={activeChip === 'chats'}
-					data-cy="enquiry-list-chip-chats"
+					className={chipClass('nearby')}
+					onClick={() => onChipToggle('nearby')}
+					aria-pressed={activeChip === 'nearby'}
+					data-cy="enquiry-list-chip-nearby"
 				>
 					<span className="sessionsListToolbar__chipLabel">
-						{translate('sessionList.toolbar.chips.chats', 'Chats')}
+						{translate(
+							'sessionList.toolbar.chips.nearby',
+							'Nearby'
+						)}
 					</span>
 				</button>
 				{showLiveChatChip && (

@@ -22,6 +22,8 @@ import { ReactComponent as XIcon } from '../../resources/img/illustrations/x.svg
 import { useTranslation } from 'react-i18next';
 import { useE2EEViewElements } from '../../hooks/useE2EEViewElements';
 import { useTimeoutOverlay } from '../../hooks/useTimeoutOverlay';
+import { resolveSessionRoomRouteId } from '../../utils/matrixRoomUtils';
+import { SessionItemInterface } from '../../globalState/interfaces';
 import {
 	OVERLAY_E2EE,
 	OVERLAY_REQUEST
@@ -37,7 +39,8 @@ export const AcceptAssign = ({ assigned, btnLabel }: AcceptAssignProps) => {
 	const { rcGroupId: groupIdFromParam } = useParams<{ rcGroupId: string }>();
 	const history = useHistory();
 
-	const { activeSession } = useContext(ActiveSessionContext);
+	const { activeSession, reloadActiveSession } =
+		useContext(ActiveSessionContext);
 	const abortController = useRef<AbortController>(null);
 
 	const [overlayItem, setOverlayItem] = useState<OverlayItem>(null);
@@ -89,23 +92,36 @@ export const AcceptAssign = ({ assigned, btnLabel }: AcceptAssignProps) => {
 
 	/** END E2EE */
 
-	const redirectToAcceptedSession = useCallback(() => {
-		if (activeSession.item.id && activeSession.item.groupId) {
-			history.push(
-				`/sessions/consultant/sessionView/${activeSession.item.groupId}/${activeSession.item.id}`
-			);
-			return;
-		}
+	const fetchSessionRoutingAfterAccept = useCallback(
+		async (sessionId: number) => {
+			const {
+				sessions: [refreshedSession]
+			} = await apiGetSessionRoomBySessionId(sessionId);
+			const sessionItem = refreshedSession?.session as
+				| SessionItemInterface
+				| undefined;
+			const roomRouteId = resolveSessionRoomRouteId(sessionItem);
 
-		if (activeSession.item.id) {
-			history.push(
-				`/sessions/consultant/sessionView/session/${activeSession.item.id}`
-			);
-			return;
-		}
+			if (!sessionItem?.id || !roomRouteId) {
+				throw new Error('session room id missing after accept');
+			}
 
-		history.push(`/sessions/consultant/sessionView/`);
-	}, [activeSession.item.groupId, activeSession.item.id, history]);
+			return {
+				id: sessionItem.id,
+				roomRouteId
+			};
+		},
+		[]
+	);
+
+	const redirectToAcceptedSession = useCallback(
+		(routing: { id: number; roomRouteId: string }) => {
+			history.push(
+				`/sessions/consultant/sessionView/${routing.roomRouteId}/${routing.id}${getSessionListTab()}`
+			);
+		},
+		[getSessionListTab, history]
+	);
 
 	const updateActiveSession = useCallback(() => {
 		if (abortController.current) {
@@ -154,9 +170,17 @@ export const AcceptAssign = ({ assigned, btnLabel }: AcceptAssignProps) => {
 		setIsRequestInProgress(true);
 
 		apiEnquiryAcceptance(sessionId)
-			.then(() => encryptRoom(setE2EEState))
-			.then(() => setIsRequestInProgress(false))
-			.then(() => redirectToAcceptedSession())
+			.then(() => fetchSessionRoutingAfterAccept(sessionId))
+			.then((routing) =>
+				encryptRoom(setE2EEState, routing.roomRouteId).then(
+					() => routing
+				)
+			)
+			.then((routing) => {
+				reloadActiveSession?.();
+				setIsRequestInProgress(false);
+				redirectToAcceptedSession(routing);
+			})
 			.catch((error) => {
 				setIsRequestInProgress(false);
 				if (error.message === FETCH_ERRORS.CONFLICT) {

@@ -1,0 +1,46 @@
+{
+	"$comment": "THB-07 legacy→M3 role mapping table. Reviewed once, applied mechanically by sweep.js, enforced by src/utils/theme/m3Sweep.test.ts. Fallbacks always keep the legacy value — zero visual change until the runtime palette is injected (THB-05).",
+	"cssVarRenames": {
+		"--skin-color-primary-contrast-safe": "--m3-primary",
+		"--skin-color-secondary-contrast-safe": "--m3-secondary",
+		"--skin-color-primary-hover": "--m3-primary-hover",
+		"--skin-color-body-background": "--m3-background",
+		"--skin-color-default": "--m3-primary",
+		"--skin-color-secondary": "--m3-secondary",
+		"--skin-color-primary": "--m3-primary",
+		"--text-color-secondary-contrast-switch": "--m3-on-secondary",
+		"--text-color-contrast-switch": "--m3-on-primary"
+	},
+	"$cssVarRenamesNotes": {
+		"--skin-color-primary-contrast-safe": "Legacy runtime contrast switch; M3 guarantees on-colour contrast by construction, primary-on-surface readability is guarded by the too-pale warning (UAT-F).",
+		"--skin-color-default": "Was the tenant primary in disguise (see settings.scss message-name vars).",
+		"--text-color-contrast-switch": "Text/icon on primary background → on-primary role."
+	},
+	"sassVarConversions": {
+		"$primary": "--m3-primary",
+		"$hover-primary": "--m3-primary-hover",
+		"$secondary": "--m3-on-surface",
+		"$tertiary": "--m3-on-surface-variant",
+		"$form-error": "--m3-error",
+		"$form-success": "--m3-success",
+		"$background-light": "--m3-surface-container-low",
+		"$background-lighter": "--m3-surface-container-lowest"
+	},
+	"$sassVarConversionsNotes": {
+		"$secondary": "rgba(0,0,0,0.9) — semantically body text, NOT the brand secondary → on-surface.",
+		"$tertiary": "rgba(0,0,0,0.6) — muted text → on-surface-variant.",
+		"$background-lighter": "Near-white content background → surface-container-lowest."
+	},
+	"excludedFiles": [
+		"src/resources/styles/settings.scss",
+		"src/resources/styles/mui-variables-mapping.scss"
+	],
+	"$excludedFilesNotes": "settings.scss is the fallback source (definitions stay); mui-variables-mapping.scss is the bridge file, updated by hand in the theme.jsx commit.",
+	"knownFunctionWrappedExceptions": [
+		"src/components/button/button.styles.scss:darken($form-success, 5%)",
+		"src/components/button/button.styles.scss:darken($form-error, 8%)"
+	],
+	"$knownFunctionWrappedExceptionsNotes": "Sass colour functions cannot wrap a CSS custom property; these pressed-state shades stay compile-time and keep deriving from the legacy values. Documented follow-up if exotic signal seeds need exact pressed shades.",
+	"untouchedVariables": ["$white", "$black", "$body-font-color"],
+	"$untouchedVariablesNotes": "Context-dependent (text on brand vs plain backgrounds); not part of the documented legacy list and unsafe for a mechanical sweep."
+}

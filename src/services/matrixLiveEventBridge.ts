@@ -1,5 +1,19 @@
 import { MatrixClient, Room, MatrixEvent } from 'matrix-js-sdk';
-import { callManager } from './CallManager';
+
+type CallManagerModule = typeof import('./CallManager');
+
+const getCallManager = (): CallManagerModule['callManager'] => {
+	// Lazy load to avoid circular import with matrixClientService at module init.
+	// eslint-disable-next-line @typescript-eslint/no-require-imports
+	return require('./CallManager').callManager;
+};
+
+const isVideoCallInvite = (content: Record<string, unknown>): boolean => {
+	// eslint-disable-next-line @typescript-eslint/no-require-imports
+	const { isVideoCallFromMatrixInviteContent } =
+		require('../utils/videoCallHelpers') as typeof import('../utils/videoCallHelpers');
+	return isVideoCallFromMatrixInviteContent(content);
+};
 
 /**
  * Bridge between Matrix events and the existing LiveService WebSocket system.
@@ -17,12 +31,22 @@ export class MatrixLiveEventBridge {
 	 * This sets up event listeners for real-time Matrix events.
 	 */
 	public initialize(client: MatrixClient): void {
-		if (this.initialized) {
-			// console.warn("⚠️ MatrixLiveEventBridge already initialized");
+		this.reinitialize(client);
+	}
+
+	/** Detach from the previous client and bind listeners to the active client. */
+	public reinitialize(client: MatrixClient): void {
+		if (this.client === client && this.initialized) {
 			return;
 		}
 
+		if (this.client && this.client !== client) {
+			this.client.removeAllListeners('Room.timeline' as any);
+			this.client.removeAllListeners('sync' as any);
+		}
+
 		this.client = client;
+		this.processedCallInvites.clear();
 		this.setupEventListeners();
 		this.initialized = true;
 
@@ -47,13 +71,11 @@ export class MatrixLiveEventBridge {
 				}
 
 				const eventType = event.getType();
-				const roomId = room.roomId;
-				const senderId = event.getSender();
 
 				// console.log("📩 Matrix event:", {
 				// type: eventType,
-				// roomId: roomId,
-				// sender: senderId,
+				// roomId: room.roomId,
+				// sender: event.getSender(),
 				// timestamp: event.getTs()
 				// });
 
@@ -65,14 +87,12 @@ export class MatrixLiveEventBridge {
 						break;
 
 					case 'm.call.invite':
+					case 'org.oriso.call.invite':
 						this.handleCallInvite(event, room);
 						break;
 
-					case 'm.call.answer':
-						this.handleCallAnswer(event, room);
-						break;
-
 					case 'm.call.hangup':
+					case 'org.oriso.call.hangup':
 						this.handleCallHangup(event, room);
 						break;
 
@@ -97,23 +117,21 @@ export class MatrixLiveEventBridge {
 	 */
 	private handleRoomMessage(event: MatrixEvent, room: Room): void {
 		const sender = event.getSender();
-		const content = event.getContent();
-		const msgtype = content.msgtype;
-		const body = content.body;
+		const { msgtype } = event.getContent();
 
 		const myUserId = this.client?.getUserId();
 		const isOwnMessage = sender === myUserId;
 
 		// console.log("📬 New message from", sender, "in room", room.roomId);
-		// console.log("   Content:", body?.substring(0, 100));
 
-		// Trigger 'directMessage' event (simulating LiveService)
+		// Trigger only metadata needed to refresh/touch lists. Matrix message
+		// bodies stay inside the Matrix session renderer and are never bridged
+		// into legacy LiveService-style events.
 		this.triggerEvent('directMessage', {
 			roomId: room.roomId,
 			sender: sender,
 			isOwnMessage: isOwnMessage,
 			msgtype: msgtype,
-			body: body,
 			eventId: event.getId(),
 			timestamp: event.getTs()
 		});
@@ -168,11 +186,14 @@ export class MatrixLiveEventBridge {
 			return;
 		}
 
-		// Check if this is a LiveKit group call (custom field)
+		// Check if this is an Element Call / LiveKit call (custom field)
 		const isGroupCall = content.is_group_call === true;
-		const isVideo = content.is_video !== false; // Default to video
+		const isElementCall = content.is_element_call === true || isGroupCall;
+		const isVideo = isElementCall
+			? content.is_video !== false
+			: isVideoCallInvite(content);
 
-		if (isGroupCall) {
+		if (isElementCall) {
 			// console.log("✅ LIVEKIT GROUP CALL DETECTED!");
 			// console.log("📞 From:", sender);
 			// console.log("📞 To me:", myUserId);
@@ -187,13 +208,14 @@ export class MatrixLiveEventBridge {
 			// console.log("🔔 CALLING CallManager.receiveCall()");
 			// console.log("═══════════════════════════════════════════════");
 
-			callManager.receiveCall(
+			getCallManager().receiveCall(
 				callRoomId,
 				isVideo,
 				callId,
 				sender,
-				true,
-				room.roomId
+				isGroupCall,
+				room.roomId,
+				true
 			);
 			return;
 		}
@@ -210,9 +232,9 @@ export class MatrixLiveEventBridge {
 		// console.log("🔔 CALLING CallManager.receiveCall()");
 		// console.log("═══════════════════════════════════════════════");
 
-		callManager.receiveCall(
+		getCallManager().receiveCall(
 			room.roomId,
-			true, // Assume video for now (can be enhanced)
+			isVideo,
 			callId,
 			sender,
 			false,
@@ -221,29 +243,9 @@ export class MatrixLiveEventBridge {
 	}
 
 	/**
-	 * Handle m.call.answer events.
-	 */
-	private handleCallAnswer(event: MatrixEvent, room: Room): void {
-		const sender = event.getSender();
-		const content = event.getContent();
-		const callId = content.call_id;
-
-		// console.log("📞 Call answered by", sender, "in room", room.roomId);
-
-		this.triggerEvent('callAnswered', {
-			roomId: room.roomId,
-			sender: sender,
-			callId: callId
-		});
-	}
-
-	/**
 	 * Handle m.call.hangup events.
 	 */
 	private handleCallHangup(event: MatrixEvent, room: Room): void {
-		const sender = event.getSender();
-		const content = event.getContent();
-		const callId = content.call_id;
 		const eventTimestamp = event.getTs();
 		const now = Date.now();
 		const ageSeconds = Math.floor((now - eventTimestamp) / 1000);
@@ -251,8 +253,8 @@ export class MatrixLiveEventBridge {
 		// console.log("═══════════════════════════════════════════════");
 		// console.log("📴 CALL HANGUP EVENT RECEIVED");
 		// console.log("═══════════════════════════════════════════════");
-		// console.log("📞 Call ID:", callId);
-		// console.log("👤 Sender:", sender);
+		// console.log("📞 Call ID:", event.getContent().call_id);
+		// console.log("👤 Sender:", event.getSender());
 		// console.log("🏠 Room:", room.roomId);
 		// console.log("⏰ Event timestamp:", new Date(eventTimestamp).toISOString());
 		// console.log("⏱️  Age:", ageSeconds, "seconds old");
@@ -271,7 +273,7 @@ export class MatrixLiveEventBridge {
 
 		// Use CallManager directly (clean architecture!)
 		// console.log("🔔 CALLING CallManager.endCall()");
-		callManager.endCall();
+		getCallManager().endCall(false);
 	}
 
 	/**
@@ -331,16 +333,24 @@ export class MatrixLiveEventBridge {
 	}
 
 	/**
-	 * Clean up and remove all listeners.
+	 * Remove listeners and detach from the current client without dropping subscribers.
 	 */
-	public destroy(): void {
+	public detach(): void {
 		if (this.client) {
 			this.client.removeAllListeners('Room.timeline' as any);
 			this.client.removeAllListeners('sync' as any);
 		}
-		this.eventCallbacks.clear();
+		this.processedCallInvites.clear();
 		this.initialized = false;
 		this.client = null;
+	}
+
+	/**
+	 * Clean up and remove all listeners.
+	 */
+	public destroy(): void {
+		this.detach();
+		this.eventCallbacks.clear();
 
 		// console.log("🧹 MatrixLiveEventBridge destroyed");
 	}
