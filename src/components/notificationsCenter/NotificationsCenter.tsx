@@ -23,6 +23,7 @@ import {
 } from '../../globalState';
 import { useResponsive } from '../../hooks/useResponsive';
 import { useTranslation } from 'react-i18next';
+import { apiDecideCaseHandoverClientConsent } from '../../api';
 import './notificationsCenter.styles';
 
 const formatRelativeTime = (createdAt: string, locale?: string) => {
@@ -96,6 +97,16 @@ const resolveThreadRootId = (item: any): string | null => {
 	return threadRootId ? decodeURIComponent(threadRootId) : null;
 };
 
+const resolveCaseHandoverRequestId = (item: any): string | null => {
+	const path = item?.actionPath;
+	if (!path || !String(path).includes('?')) {
+		return null;
+	}
+	const query = String(path).split('?')[1];
+	const params = new URLSearchParams(query);
+	return params.get('caseHandoverRequestId');
+};
+
 const toNonEmbeddedPath = (path?: string | null): string | null => {
 	if (!path) {
 		return null;
@@ -120,7 +131,8 @@ export const NotificationsCenter = () => {
 	const {
 		notificationFeed,
 		markNotificationAsRead,
-		markAllNotificationsAsRead
+		markAllNotificationsAsRead,
+		refreshNotificationFeed
 	} = useContext(NotificationsContext);
 	const [selectedNotificationId, setSelectedNotificationId] = useState<
 		string | null
@@ -129,6 +141,10 @@ export const NotificationsCenter = () => {
 	const [activeFamily, setActiveFamily] =
 		useState<TimelineFamilyFilter>('all');
 	const [searchQuery, setSearchQuery] = useState('');
+	const [caseHandoverConsentSubmitting, setCaseHandoverConsentSubmitting] =
+		useState(false);
+	const [caseHandoverConsentError, setCaseHandoverConsentError] =
+		useState('');
 
 	// Families actually present in the feed, in canonical order (drives chips).
 	const familiesInFeed = useMemo(
@@ -169,6 +185,10 @@ export const NotificationsCenter = () => {
 	}, [effectiveSelectedId, selectedNotificationId]);
 
 	// Drop back to "All" if the active family is no longer in the feed.
+	useEffect(() => {
+		setCaseHandoverConsentError('');
+	}, [selectedNotificationId]);
+
 	useEffect(() => {
 		if (activeFamily !== 'all' && !familiesInFeed.includes(activeFamily)) {
 			setActiveFamily('all');
@@ -219,7 +239,15 @@ export const NotificationsCenter = () => {
 		() => resolveThreadRootId(selectedNotification),
 		[selectedNotification]
 	);
+	const selectedCaseHandoverRequestId = useMemo(
+		() => resolveCaseHandoverRequestId(selectedNotification),
+		[selectedNotification]
+	);
 	const canShowChatPreview = selectedNotificationCategory === 'message';
+	const canDecideCaseHandoverConsent =
+		selectedNotification?.eventType === 'case.handover.consent.requested' &&
+		Boolean(selectedSessionId) &&
+		Boolean(selectedCaseHandoverRequestId);
 	const getDefaultSessionsPath = useCallback(
 		() =>
 			hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
@@ -324,6 +352,33 @@ export const NotificationsCenter = () => {
 				openNotification(nextItem);
 			}
 		}
+	};
+
+	const handleCaseHandoverConsentDecision = (approved: boolean) => {
+		if (
+			!selectedNotification ||
+			!selectedSessionId ||
+			!selectedCaseHandoverRequestId
+		) {
+			return;
+		}
+		setCaseHandoverConsentSubmitting(true);
+		setCaseHandoverConsentError('');
+		apiDecideCaseHandoverClientConsent(
+			Number(selectedSessionId),
+			Number(selectedCaseHandoverRequestId),
+			approved
+		)
+			.then(() => {
+				markNotificationAsRead(selectedNotification.id);
+				refreshNotificationFeed();
+			})
+			.catch(() => {
+				setCaseHandoverConsentError(
+					translate('caseHandover.error.failed')
+				);
+			})
+			.finally(() => setCaseHandoverConsentSubmitting(false));
 	};
 
 	const nextUnreadId = getNextNotificationId(selectedNotificationId, true);
@@ -514,6 +569,50 @@ export const NotificationsCenter = () => {
 							<p className="notificationsCenter__detailText">
 								{selectedDisplay?.text}
 							</p>
+							{selectedNotification?.eventType ===
+								'case.handover.consent.requested' && (
+								<div className="notificationsCenter__consentActions">
+									<button
+										type="button"
+										className="notificationsCenter__consentButton notificationsCenter__consentButton--approve"
+										onClick={() =>
+											handleCaseHandoverConsentDecision(
+												true
+											)
+										}
+										disabled={
+											!canDecideCaseHandoverConsent ||
+											caseHandoverConsentSubmitting
+										}
+									>
+										{translate(
+											'caseHandover.consent.approve'
+										)}
+									</button>
+									<button
+										type="button"
+										className="notificationsCenter__consentButton"
+										onClick={() =>
+											handleCaseHandoverConsentDecision(
+												false
+											)
+										}
+										disabled={
+											!canDecideCaseHandoverConsent ||
+											caseHandoverConsentSubmitting
+										}
+									>
+										{translate(
+											'caseHandover.consent.decline'
+										)}
+									</button>
+									{caseHandoverConsentError && (
+										<p className="notificationsCenter__detailText">
+											{caseHandoverConsentError}
+										</p>
+									)}
+								</div>
+							)}
 							<div className="notificationsCenter__detailActions">
 								<button
 									type="button"

@@ -79,6 +79,9 @@ const EXPECTED_TARGET_KIND: Record<string, string> = {
 	'handover.all_confirmed': 'conversation',
 	'handover.auto_confirmed': 'conversation',
 	'handover.denied': 'conversation',
+	'case.handover.consent.requested': 'conversation',
+	'case.handover.granted': 'conversation',
+	'case.handover.consent.declined': 'conversation',
 	'call.started': 'join',
 	'call.ended': 'conversation',
 	'call.missed': 'conversation'
@@ -98,9 +101,9 @@ describe('WP-06 event-descriptor registry', () => {
 		});
 	});
 
-	it('seeds every designed family (Appointments deferred) — 17 types total', () => {
-		// 6 existing + request.new + draft.created + 5 handover + 3 call = 17.
-		expect(KNOWN_EVENT_TYPES.length).toBe(17);
+	it('seeds every designed family (Appointments deferred) — 20 types total', () => {
+		// 7 existing + request.new + draft.created + 8 handover + 3 call = 20.
+		expect(KNOWN_EVENT_TYPES.length).toBe(20);
 		[
 			'request.new',
 			'draft.created',
@@ -109,6 +112,9 @@ describe('WP-06 event-descriptor registry', () => {
 			'handover.all_confirmed',
 			'handover.auto_confirmed',
 			'handover.denied',
+			'case.handover.consent.requested',
+			'case.handover.granted',
+			'case.handover.consent.declined',
 			'call.started',
 			'call.ended',
 			'call.missed'
@@ -168,8 +174,7 @@ describe('WP-06 event-descriptor registry', () => {
 	describe('resolveActionTarget (origin rule)', () => {
 		it('resolves the expected target kind for every seeded type', () => {
 			KNOWN_EVENT_TYPES.forEach((type) => {
-				const target =
-					EVENT_DESCRIPTORS[type].resolveActionTarget({});
+				const target = EVENT_DESCRIPTORS[type].resolveActionTarget({});
 				expect(target.kind).toBe(EXPECTED_TARGET_KIND[type]);
 			});
 		});

@@ -6,6 +6,7 @@ import {
 import { buildExtendedSession, ExtendedSessionInterface } from '../globalState';
 import { apiSetSessionRead, FETCH_ERRORS } from '../api';
 import { apiGetChatRoomById } from '../api/apiGetChatRoomById';
+import { apiGetCaseHandoverCandidates } from '../api/apiCaseHandover';
 
 export const useSession = (
 	rid: string | null,
@@ -22,6 +23,31 @@ export const useSession = (
 	const repetitiveId = useRef(null);
 	const abortController = useRef<AbortController>(null);
 
+	const loadCaseHandoverCandidateSession = useCallback(
+		async (signal?: AbortSignal): Promise<boolean> => {
+			if (!sessionId) {
+				return false;
+			}
+
+			const { sessions } = await apiGetCaseHandoverCandidates({
+				query: String(sessionId),
+				count: 15,
+				signal
+			});
+			const candidate = (sessions || []).find(
+				(item) => item?.session?.id === sessionId
+			);
+			if (!candidate) {
+				return false;
+			}
+
+			setSession(buildExtendedSession(candidate, rid));
+			setReady(true);
+			return true;
+		},
+		[rid, sessionId]
+	);
+
 	useEffect(() => {
 		repetitiveId.current = session?.item?.repetitive
 			? session.item.id
@@ -30,7 +56,7 @@ export const useSession = (
 
 	const loadSession = useCallback(() => {
 		// console.log('🔍 useSession.loadSession CALLED:', { rid, sessionId, chatId });
-		
+
 		if (abortController.current) {
 			// console.log('🔍 useSession: Aborting previous request');
 			abortController.current.abort();
@@ -66,29 +92,40 @@ export const useSession = (
 		}
 
 		return promise
-			.then(({ sessions: [activeSession] }) => {
-				// console.log('✅ useSession: API response received:', { 
+			.then(async ({ sessions: [activeSession] }) => {
+				// console.log('✅ useSession: API response received:', {
 				// hasSession: !!activeSession,
-				// sessionData: activeSession 
+				// sessionData: activeSession
 				// });
-				
+
 				if (activeSession) {
-					const extendedSession = buildExtendedSession(activeSession, rid);
+					const extendedSession = buildExtendedSession(
+						activeSession,
+						rid
+					);
 					// console.log('✅ useSession: Extended session built:', extendedSession);
 					setSession(extendedSession);
 				} else {
+					if (
+						sessionId &&
+						(await loadCaseHandoverCandidateSession(
+							abortController.current?.signal
+						).catch(() => false))
+					) {
+						return;
+					}
 					// console.log('⚠️ useSession: No session in response');
 				}
 				setReady(true);
 			})
-			.catch((e) => {
+			.catch(async (e) => {
 				// console.log('❌ useSession: Error loading session:', {
 				// error: e,
 				// message: e.message,
 				// isAbort: e.message === FETCH_ERRORS.ABORT,
 				// repetitiveId: repetitiveId.current
 				// });
-				
+
 				if (e.message === FETCH_ERRORS.ABORT) {
 					return;
 				}
@@ -103,11 +140,19 @@ export const useSession = (
 						}
 					);
 				}
+				if (
+					sessionId &&
+					(await loadCaseHandoverCandidateSession(
+						abortController.current?.signal
+					).catch(() => false))
+				) {
+					return;
+				}
 				// console.log('❌ useSession: Setting session to null');
 				setSession(null);
 				setReady(true);
 			});
-	}, [rid, sessionId, chatId]);
+	}, [rid, sessionId, chatId, loadCaseHandoverCandidateSession]);
 
 	const readSession = useCallback(() => {
 		if (!session) {

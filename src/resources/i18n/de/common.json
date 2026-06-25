@@ -1410,6 +1410,18 @@
 				"title": "Übergabe abgelehnt",
 				"text": "Die Übergabe wurde abgelehnt und abgebrochen."
 			},
+			"caseHandoverConsentRequested": {
+				"title": "Zugriffsanfrage einer Beratungsperson",
+				"text": "Eine Beratungsperson hat Zugriff auf diesen Fall angefragt. Ihre Zustimmung ist laut Richtlinie erforderlich."
+			},
+			"caseHandoverGranted": {
+				"title": "Neue Beratungsperson hat den Fall übernommen",
+				"text": "Die berechtigte Fallübergabe wurde protokolliert."
+			},
+			"caseHandoverConsentDeclined": {
+				"title": "Fallübergabe abgelehnt",
+				"text": "Die Klient:innen-Zustimmung wurde abgelehnt. Inhalte bleiben gesperrt."
+			},
 			"callStarted": {
 				"title": "Anruf läuft",
 				"text": "Ein Anruf läuft gerade. Treten Sie bei, um teilzunehmen."
@@ -2169,6 +2181,60 @@
 		"overlay": {
 			"close": "Schließen"
 		}
+	},
+	"caseHandover": {
+		"copy": "Dieser Fall ist nur als Metadaten sichtbar. Wählen Sie einen Übergabegrund und erklären Sie, warum Sie Zugriff benötigen.",
+		"batch": {
+			"cancel": "Auswahl schließen",
+			"confirm": "Auswahl anfragen",
+			"required": "Wählen Sie mindestens einen Fall, einen Grund und eine Begründung.",
+			"result": "{{successful}} Anfrage(n) gesendet, {{failed}} fehlgeschlagen.",
+			"selectCase": "Fall auswählen",
+			"selectedCount": "{{count}} ausgewählt",
+			"start": "Mehrere Fälle auswählen",
+			"title": "Mehrfach-Zugriffsanfrage"
+		},
+		"consent": {
+			"approve": "Zugriff freigeben",
+			"decline": "Zugriff ablehnen"
+		},
+		"denied": {
+			"copy": "Die vorherige Anfrage hat keine Inhaltsansicht freigeschaltet.",
+			"title": "Zugriff abgelehnt"
+		},
+		"error": {
+			"failed": "Die Zugriffsanfrage konnte nicht gesendet werden.",
+			"forbidden": "Sie dürfen für diesen Fall keinen Zugriff anfragen.",
+			"required": "Wählen Sie einen Grund und ergänzen Sie eine Begründung."
+		},
+		"explanation": {
+			"placeholder": "Begründung beschreiben"
+		},
+		"eyebrow": "Informationen bleiben verborgen, bis die Anfrage freigegeben ist",
+		"hidden": {
+			"title": "Informationen bleiben verborgen, bis die Anfrage freigegeben ist"
+		},
+		"list": {
+			"accessDenied": "Zugriff abgelehnt",
+			"accessGranted": "Zugriff freigegeben",
+			"awaitingApproval": "Warten auf Freigabe",
+			"hiddenPreview": "Informationen bleiben verborgen, bis die Anfrage freigegeben ist",
+			"requestAccess": "Zugriff anfragen"
+		},
+		"pending": {
+			"copy": "Ihre Anfrage wurde protokolliert und wartet auf die konfigurierte Richtlinienentscheidung.",
+			"title": "Warten auf Freigabe"
+		},
+		"policy": {
+			"clientConsentRequired": "Klient:innen-Zustimmung erforderlich",
+			"defaultAuthority": "Plattform-Richtlinie für Fallübergaben"
+		},
+		"reasons": {
+			"loading": "Gründe werden geladen"
+		},
+		"submit": "Zugriff anfragen",
+		"submitSending": "Wird gesendet",
+		"title": "Zugriff anfragen"
 	},
 	"session": {
 		"waitingMiniGame": {

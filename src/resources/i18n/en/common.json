@@ -1386,6 +1386,18 @@
 				"title": "Handover denied",
 				"text": "The handover was denied and cancelled."
 			},
+			"caseHandoverConsentRequested": {
+				"title": "Counsellor access request",
+				"text": "A counsellor requested access to this case. Your consent is required by policy."
+			},
+			"caseHandoverGranted": {
+				"title": "New counsellor took over your case",
+				"text": "The authorised case handover was logged."
+			},
+			"caseHandoverConsentDeclined": {
+				"title": "Case handover declined",
+				"text": "Client consent was declined. Content visibility remains locked."
+			},
 			"callStarted": {
 				"title": "Call ongoing",
 				"text": "A call is ongoing. Join to participate."
@@ -2103,6 +2115,60 @@
 		"overlay": {
 			"close": "Close"
 		}
+	},
+	"caseHandover": {
+		"copy": "This case is visible as metadata only. Select a handover reason and explain why you need access.",
+		"batch": {
+			"cancel": "Close selection",
+			"confirm": "Request selected",
+			"required": "Select at least one case, one reason, and an explanation.",
+			"result": "{{successful}} request(s) sent, {{failed}} failed.",
+			"selectCase": "Select case",
+			"selectedCount": "{{count}} selected",
+			"start": "Select multiple cases",
+			"title": "Batch access request"
+		},
+		"consent": {
+			"approve": "Approve access",
+			"decline": "Decline access"
+		},
+		"denied": {
+			"copy": "The previous request did not grant content visibility.",
+			"title": "Access denied"
+		},
+		"error": {
+			"failed": "The access request could not be sent.",
+			"forbidden": "You are not allowed to request access for this case.",
+			"required": "Select a reason and add an explanation."
+		},
+		"explanation": {
+			"placeholder": "Describe the reason"
+		},
+		"eyebrow": "Information hidden until request is approved",
+		"hidden": {
+			"title": "Information hidden until request is approved"
+		},
+		"list": {
+			"accessDenied": "Access denied",
+			"accessGranted": "Access granted",
+			"awaitingApproval": "Awaiting approval",
+			"hiddenPreview": "Information hidden until request is approved",
+			"requestAccess": "Request access"
+		},
+		"pending": {
+			"copy": "Your request was recorded and is waiting for the configured policy decision.",
+			"title": "Awaiting approval"
+		},
+		"policy": {
+			"clientConsentRequired": "Client consent required",
+			"defaultAuthority": "Platform handover policy"
+		},
+		"reasons": {
+			"loading": "Loading reasons"
+		},
+		"submit": "Request access",
+		"submitSending": "Sending",
+		"title": "Request access"
 	},
 	"session": {
 		"waitingMiniGame": {
