@@ -15,7 +15,11 @@ import { ReactComponent as LockIcon } from '../../resources/img/icons/lock.svg';
 import { ReactComponent as VerifiedIcon } from '../../resources/img/icons/verified.svg';
 import { StageLayout } from '../stageLayout/StageLayout';
 import { apiGetUserData, FETCH_ERRORS } from '../../api';
-import { OTP_LENGTH, TWO_FACTOR_TYPES } from '../twoFactorAuth/TwoFactorAuth';
+import {
+	OTP_LENGTH,
+	TWO_FACTOR_TYPES,
+	TwoFactorType
+} from '../twoFactorAuth/twoFactorAuthConstants';
 import clsx from 'clsx';
 import {
 	AUTHORITIES,
@@ -132,7 +136,9 @@ export const Login = () => {
 	}, [featureToolsEnabled, gcid]);
 
 	const [pwResetOverlayActive, setPwResetOverlayActive] = useState(false);
-	const [twoFactorType, setTwoFactorType] = useState(TWO_FACTOR_TYPES.NONE);
+	const [twoFactorType, setTwoFactorType] = useState<TwoFactorType>(
+		TWO_FACTOR_TYPES.NONE
+	);
 
 	const inputItemUsername: InputFieldItem = {
 		name: 'username',
@@ -289,11 +295,11 @@ export const Login = () => {
 					tokenResponse.expires_in,
 					tokenResponse.refresh_token,
 					tokenResponse.refresh_expires_in
-					);
-					// Magic-token login is complete once tokens are set.
-					// Continue directly into authenticated app bootstrap.
-					return postLogin();
-				})
+				);
+				// Magic-token login is complete once tokens are set.
+				// Continue directly into authenticated app bootstrap.
+				return postLogin();
+			})
 			.catch(() => {
 				setShowLoginError(
 					translate('login.warning.failed.unauthorized.text')

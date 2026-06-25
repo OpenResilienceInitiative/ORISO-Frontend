@@ -1077,6 +1077,91 @@
 			},
 			"title": "Schütze Dein Konto"
 		},
+		"setupDialog": {
+			"action": {
+				"back": "Zurück",
+				"close": "Schließen",
+				"confirm": "Bestätigen",
+				"copied": "Schlüssel kopiert",
+				"copy": "Schlüssel kopieren",
+				"disable": "Authentifizierung deaktivieren",
+				"next": "Weiter"
+			},
+			"app": {
+				"connect": {
+					"copy": "Öffne die Authenticator-App und füge die Online-Beratung hinzu. Scanne den QR-Code oder gib den Schlüssel manuell ein.",
+					"manual": "Manueller Schlüssel",
+					"missingQr": "Der QR-Code ist gerade nicht verfügbar. Nutze den manuellen Schlüssel.",
+					"missingSecret": "Der Schlüssel ist gerade nicht verfügbar.",
+					"or": "oder",
+					"qrAlt": "QR-Code für die Authenticator-App"
+				},
+				"install": {
+					"android": "Download im Google Play Store",
+					"copy": "Installiere Google Authenticator oder Microsoft Authenticator auf Deinem Smartphone oder Tablet. Beide Apps unterstützen den Sicherheitscode für die Online-Beratung.",
+					"google": {
+						"android": "https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2",
+						"ios": "https://apps.apple.com/de/app/google-authenticator/id388497605",
+						"title": "Google Authenticator"
+					},
+					"ios": "Download im Apple App Store",
+					"microsoft": {
+						"android": "https://play.google.com/store/apps/details?id=com.azure.authenticator",
+						"ios": "https://apps.apple.com/de/app/microsoft-authenticator/id983156458",
+						"title": "Microsoft Authenticator"
+					}
+				},
+				"success": {
+					"title": "App-Authentifizierung erfolgreich eingerichtet."
+				},
+				"verify": {
+					"copy": "Gib den sechsstelligen Code aus der App ein, um die Einrichtung abzuschließen.",
+					"input": "Einmal-Code"
+				}
+			},
+			"decision": {
+				"app": "Sicher per App verbinden",
+				"copy": "Schütze Dein Konto mit einem zweiten Faktor. Die Authenticator-App ist die sicherere Variante; alternativ kannst Du Codes per E-Mail erhalten.",
+				"email": "E-Mail-Code verwenden (weniger sicher)"
+			},
+			"email": {
+				"connect": {
+					"copy": "Wir haben gerade eine E-Mail an {{email}} gesendet. Bitte gib den Code aus der E-Mail hier ein.",
+					"input": "Einmal-Code",
+					"resend": "Neuen Code senden",
+					"resendTitle": "Es hat nicht funktioniert?",
+					"sent": "Neuer Code gesendet."
+				},
+				"select": {
+					"copy": "Gib die E-Mail-Adresse ein, an die wir Deinen Sicherheitscode senden sollen.",
+					"hint": "Wenn Du die E-Mail-Adresse änderst, erhältst Du künftig auch Benachrichtigungen an diese Adresse.",
+					"input": "E-Mail-Adresse"
+				},
+				"success": {
+					"title": "E-Mail-Authentifizierung erfolgreich eingerichtet."
+				}
+			},
+			"error": {
+				"appSetup": "Die App-Authentifizierung konnte nicht eingerichtet werden. Bitte versuche es erneut.",
+				"disable": "Die Zwei-Faktor-Authentifizierung konnte nicht deaktiviert werden.",
+				"emailSend": "Der E-Mail-Code konnte nicht gesendet werden. Bitte versuche es erneut.",
+				"emailSetup": "Die E-Mail-Authentifizierung konnte nicht bestätigt werden. Bitte versuche es erneut.",
+				"invalidCode": "Bitte gib einen gültigen sechsstelligen Code ein.",
+				"invalidEmail": "Bitte gib eine gültige E-Mail-Adresse ein.",
+				"precondition": "Diese E-Mail-Adresse wird bereits verwendet. Bitte wähle eine andere Adresse oder nutze die App.",
+				"roleDisabled": "Die Zwei-Faktor-Authentifizierung ist für Deine Rolle derzeit nicht verfügbar.",
+				"tooManyRequests": "Es wurden zu viele Codes angefordert. Bitte warte kurz und versuche es erneut."
+			},
+			"step": {
+				"confirm": "Bestätigen",
+				"connect": "Verbinden",
+				"decide": "Entscheiden",
+				"install": "Installieren",
+				"select": "Auswählen",
+				"verify": "Prüfen"
+			},
+			"title": "Welche Verbindung möchtest Du verwenden?"
+		},
 		"subtitle": "Nutze neben Deinem Passwort einen zweiten Faktor für die Anmeldung. Dadurch wird Dein Konto zusätzlich abgesichert.",
 		"switch": {
 			"type": {

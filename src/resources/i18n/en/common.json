@@ -2104,6 +2104,35 @@
 			"close": "Close"
 		}
 	},
+	"caseHandover": {
+		"copy": "This case is visible as metadata only. Select a handover reason and explain why you need access.",
+		"denied": {
+			"copy": "The previous request did not grant content visibility.",
+			"title": "Access denied"
+		},
+		"error": {
+			"failed": "The access request could not be sent.",
+			"forbidden": "You are not eligible to request access to this case.",
+			"required": "Select a reason and add an explanation."
+		},
+		"explanation": {
+			"placeholder": "Describe the reason"
+		},
+		"eyebrow": "Information hidden until request is approved",
+		"pending": {
+			"copy": "Your request was recorded and is waiting for the configured policy decision.",
+			"title": "Awaiting approval"
+		},
+		"policy": {
+			"clientConsentRequired": "Client consent is required before access can be activated."
+		},
+		"reasons": {
+			"loading": "Loading reasons"
+		},
+		"submit": "Request access",
+		"submitSending": "Sending",
+		"title": "Request access"
+	},
 	"session": {
 		"waitingMiniGame": {
 			"inhaleExhale": "Inhale exhale breathing guide",
@@ -2649,6 +2678,91 @@
 				"title": "Protect your account now"
 			},
 			"title": "Protect your account"
+		},
+		"setupDialog": {
+			"action": {
+				"back": "Back",
+				"close": "Close",
+				"confirm": "Confirm",
+				"copied": "Key copied",
+				"copy": "Copy key",
+				"disable": "Disable authentication",
+				"next": "Next"
+			},
+			"app": {
+				"connect": {
+					"copy": "Open your authenticator app and add Online-Beratung. Scan the QR code or enter the key manually.",
+					"manual": "Manual key",
+					"missingQr": "The QR code is currently unavailable. Use the manual key instead.",
+					"missingSecret": "The key is currently unavailable.",
+					"or": "or",
+					"qrAlt": "QR code for the authenticator app"
+				},
+				"install": {
+					"android": "Download from Google Play Store",
+					"copy": "Install Google Authenticator or Microsoft Authenticator on your smartphone or tablet. Both apps support the security code for Online-Beratung.",
+					"google": {
+						"android": "https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2",
+						"ios": "https://apps.apple.com/us/app/google-authenticator/id388497605",
+						"title": "Google Authenticator"
+					},
+					"ios": "Download from Apple App Store",
+					"microsoft": {
+						"android": "https://play.google.com/store/apps/details?id=com.azure.authenticator",
+						"ios": "https://apps.apple.com/us/app/microsoft-authenticator/id983156458",
+						"title": "Microsoft Authenticator"
+					}
+				},
+				"success": {
+					"title": "App authentication successfully set up."
+				},
+				"verify": {
+					"copy": "Enter the six-digit code from the app to complete setup.",
+					"input": "One-time code"
+				}
+			},
+			"decision": {
+				"app": "Connect securely via app",
+				"copy": "Protect your account with a second factor. The authenticator app is the more secure option; alternatively you can receive codes by email.",
+				"email": "Use email code (less secure)"
+			},
+			"email": {
+				"connect": {
+					"copy": "We have just sent an email to {{email}}. Please enter the code from that email here.",
+					"input": "One-time code",
+					"resend": "Send new code",
+					"resendTitle": "Did it not work?",
+					"sent": "New code sent."
+				},
+				"select": {
+					"copy": "Enter the email address where we should send your security code.",
+					"hint": "If you change the email address, future notifications will also be sent to this address.",
+					"input": "Email address"
+				},
+				"success": {
+					"title": "Email authentication successfully set up."
+				}
+			},
+			"error": {
+				"appSetup": "App authentication could not be set up. Please try again.",
+				"disable": "Two-factor authentication could not be disabled.",
+				"emailSend": "The email code could not be sent. Please try again.",
+				"emailSetup": "Email authentication could not be confirmed. Please try again.",
+				"invalidCode": "Please enter a valid six-digit code.",
+				"invalidEmail": "Please enter a valid email address.",
+				"precondition": "This email address is already in use. Please choose another address or use the app.",
+				"roleDisabled": "Two-factor authentication is currently not available for your role.",
+				"tooManyRequests": "Too many codes were requested. Please wait briefly and try again."
+			},
+			"step": {
+				"confirm": "Confirm",
+				"connect": "Connect",
+				"decide": "Decide",
+				"install": "Install",
+				"select": "Select",
+				"verify": "Verify"
+			},
+			"title": "What connection do you prefer?"
 		},
 		"overlayButton": {
 			"back": "Back",

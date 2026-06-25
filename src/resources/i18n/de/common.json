@@ -2170,6 +2170,35 @@
 			"close": "Schließen"
 		}
 	},
+	"caseHandover": {
+		"copy": "Dieser Fall ist nur als Metadaten sichtbar. Wählen Sie einen Übergabegrund und erklären Sie, warum Sie Zugriff benötigen.",
+		"denied": {
+			"copy": "Die vorherige Anfrage hat keine Inhaltsansicht freigeschaltet.",
+			"title": "Zugriff abgelehnt"
+		},
+		"error": {
+			"failed": "Die Zugriffsanfrage konnte nicht gesendet werden.",
+			"forbidden": "Sie dürfen für diesen Fall keinen Zugriff anfragen.",
+			"required": "Wählen Sie einen Grund und ergänzen Sie eine Begründung."
+		},
+		"explanation": {
+			"placeholder": "Begründung beschreiben"
+		},
+		"eyebrow": "Informationen bleiben verborgen, bis die Anfrage freigegeben ist",
+		"pending": {
+			"copy": "Ihre Anfrage wurde protokolliert und wartet auf die konfigurierte Richtlinienentscheidung.",
+			"title": "Warten auf Freigabe"
+		},
+		"policy": {
+			"clientConsentRequired": "Klient:innen-Zustimmung ist erforderlich, bevor der Zugriff aktiviert wird."
+		},
+		"reasons": {
+			"loading": "Gründe werden geladen"
+		},
+		"submit": "Zugriff anfragen",
+		"submitSending": "Wird gesendet",
+		"title": "Zugriff anfragen"
+	},
 	"session": {
 		"waitingMiniGame": {
 			"inhaleExhale": "Atemspiel Einatmen Ausatmen",
@@ -2713,6 +2742,91 @@
 				"title": "Schützen Sie nun Ihr Konto"
 			},
 			"title": "Schützen Sie Ihr Konto"
+		},
+		"setupDialog": {
+			"action": {
+				"back": "Zurück",
+				"close": "Schließen",
+				"confirm": "Bestätigen",
+				"copied": "Schlüssel kopiert",
+				"copy": "Schlüssel kopieren",
+				"disable": "Authentifizierung deaktivieren",
+				"next": "Weiter"
+			},
+			"app": {
+				"connect": {
+					"copy": "Öffnen Sie die Authenticator-App und fügen Sie die Online-Beratung hinzu. Scannen Sie den QR-Code oder geben Sie den Schlüssel manuell ein.",
+					"manual": "Manueller Schlüssel",
+					"missingQr": "Der QR-Code ist gerade nicht verfügbar. Nutzen Sie den manuellen Schlüssel.",
+					"missingSecret": "Der Schlüssel ist gerade nicht verfügbar.",
+					"or": "oder",
+					"qrAlt": "QR-Code für die Authenticator-App"
+				},
+				"install": {
+					"android": "Download im Google Play Store",
+					"copy": "Installieren Sie Google Authenticator oder Microsoft Authenticator auf Ihrem Smartphone oder Tablet. Beide Apps unterstützen den Sicherheitscode für die Online-Beratung.",
+					"google": {
+						"android": "https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2",
+						"ios": "https://apps.apple.com/de/app/google-authenticator/id388497605",
+						"title": "Google Authenticator"
+					},
+					"ios": "Download im Apple App Store",
+					"microsoft": {
+						"android": "https://play.google.com/store/apps/details?id=com.azure.authenticator",
+						"ios": "https://apps.apple.com/de/app/microsoft-authenticator/id983156458",
+						"title": "Microsoft Authenticator"
+					}
+				},
+				"success": {
+					"title": "App-Authentifizierung erfolgreich eingerichtet."
+				},
+				"verify": {
+					"copy": "Geben Sie den sechsstelligen Code aus der App ein, um die Einrichtung abzuschließen.",
+					"input": "Einmal-Code"
+				}
+			},
+			"decision": {
+				"app": "Sicher per App verbinden",
+				"copy": "Schützen Sie Ihr Konto mit einem zweiten Faktor. Die Authenticator-App ist die sicherere Variante; alternativ können Sie Codes per E-Mail erhalten.",
+				"email": "E-Mail-Code verwenden (weniger sicher)"
+			},
+			"email": {
+				"connect": {
+					"copy": "Wir haben gerade eine E-Mail an {{email}} gesendet. Bitte geben Sie den Code aus der E-Mail hier ein.",
+					"input": "Einmal-Code",
+					"resend": "Neuen Code senden",
+					"resendTitle": "Es hat nicht funktioniert?",
+					"sent": "Neuer Code gesendet."
+				},
+				"select": {
+					"copy": "Geben Sie die E-Mail-Adresse ein, an die wir Ihren Sicherheitscode senden sollen.",
+					"hint": "Wenn Sie die E-Mail-Adresse ändern, erhalten Sie künftig auch Benachrichtigungen an diese Adresse.",
+					"input": "E-Mail-Adresse"
+				},
+				"success": {
+					"title": "E-Mail-Authentifizierung erfolgreich eingerichtet."
+				}
+			},
+			"error": {
+				"appSetup": "Die App-Authentifizierung konnte nicht eingerichtet werden. Bitte versuchen Sie es erneut.",
+				"disable": "Die Zwei-Faktor-Authentifizierung konnte nicht deaktiviert werden.",
+				"emailSend": "Der E-Mail-Code konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
+				"emailSetup": "Die E-Mail-Authentifizierung konnte nicht bestätigt werden. Bitte versuchen Sie es erneut.",
+				"invalidCode": "Bitte geben Sie einen gültigen sechsstelligen Code ein.",
+				"invalidEmail": "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
+				"precondition": "Diese E-Mail-Adresse wird bereits verwendet. Bitte wählen Sie eine andere Adresse oder nutzen Sie die App.",
+				"roleDisabled": "Die Zwei-Faktor-Authentifizierung ist für Ihre Rolle derzeit nicht verfügbar.",
+				"tooManyRequests": "Es wurden zu viele Codes angefordert. Bitte warten Sie kurz und versuchen Sie es erneut."
+			},
+			"step": {
+				"confirm": "Bestätigen",
+				"connect": "Verbinden",
+				"decide": "Entscheiden",
+				"install": "Installieren",
+				"select": "Auswählen",
+				"verify": "Prüfen"
+			},
+			"title": "Welche Verbindung möchten Sie verwenden?"
 		},
 		"overlayButton": {
 			"back": "Zurück",
