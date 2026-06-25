@@ -62,7 +62,7 @@ import { chatTransportService } from '../../services/chatTransportService';
 import { formatMatrixTimelineEvent } from '../../utils/matrixTimelineEventFormatter';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { CaseHandoverGate } from './CaseHandoverGate';
-import { isCaseHandoverCandidate } from './caseHandoverHelpers';
+import { isCaseHandoverAccessControlled } from './caseHandoverHelpers';
 
 interface SessionStreamProps {
 	readonly: boolean;
@@ -232,13 +232,12 @@ export const SessionStream = ({
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
 	const caseHandoverGateNeeded = useMemo(
 		() =>
-			isCaseHandoverCandidate({
+			isCaseHandoverAccessControlled({
 				activeSession,
 				userData,
-				type,
-				sessionListTab
+				type
 			}),
-		[activeSession, sessionListTab, type, userData]
+		[activeSession, type, userData]
 	);
 
 	const fetchSessionMessages = useCallback(
