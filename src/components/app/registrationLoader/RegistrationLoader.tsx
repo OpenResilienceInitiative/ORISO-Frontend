@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { keyframes } from '@mui/system';
-import { Box, LinearProgress, Typography } from '@mui/material';
+import { Box, LinearProgress, Typography, useMediaQuery } from '@mui/material';
 import ChatBubbleRoundedIcon from '@mui/icons-material/ChatBubbleRounded';
 
 interface RegistrationLoaderProps {
@@ -41,6 +41,10 @@ export const RegistrationLoader = ({
 	onFinish
 }: RegistrationLoaderProps) => {
 	const { t } = useTranslation();
+	const prefersReducedMotion = useMediaQuery(
+		'(prefers-reduced-motion: reduce)'
+	);
+	const finishDelayMs = prefersReducedMotion ? 0 : FINISH_DELAY_MS;
 	const [value, setValue] = useState<number>(8);
 	const [armed, setArmed] = useState<boolean>(false);
 	const minElapsedRef = useRef<boolean>(false);
@@ -79,12 +83,12 @@ export const RegistrationLoader = ({
 			setValue(100);
 			setArmed(true);
 		}, wait);
-		const finishTimer = setTimeout(finish, wait + FINISH_DELAY_MS);
+		const finishTimer = setTimeout(finish, wait + finishDelayMs);
 		return () => {
 			clearTimeout(fillTimer);
 			clearTimeout(finishTimer);
 		};
-	}, [ready, finish]);
+	}, [ready, finish, finishDelayMs]);
 
 	return (
 		<Box
@@ -99,7 +103,9 @@ export const RegistrationLoader = ({
 				justifyContent: 'center',
 				p: '24px',
 				backgroundColor: '#fff',
-				animation: `${fadeIn} 0.3s ease both`
+				animation: prefersReducedMotion
+					? 'none'
+					: `${fadeIn} 0.3s ease both`
 			}}
 		>
 			<Box
@@ -123,8 +129,9 @@ export const RegistrationLoader = ({
 						'backgroundColor': '#0000001A',
 						'& .MuiLinearProgress-bar': {
 							borderRadius: '3px',
-							transition:
-								value >= 100
+							transition: prefersReducedMotion
+								? 'none'
+								: value >= 100
 									? 'transform 0.35s ease-out'
 									: 'transform 2s cubic-bezier(0.4, 0, 0.2, 1)'
 						}
@@ -141,15 +148,20 @@ export const RegistrationLoader = ({
 						'justifyContent': 'center',
 						'backgroundColor': armed ? 'primary.main' : '#EBE8E8',
 						'color': armed ? '#fff' : '#444748',
-						'transform': armed ? 'scale(1.1)' : 'scale(1)',
+						'transform':
+							armed && !prefersReducedMotion
+								? 'scale(1.1)'
+								: 'scale(1)',
 						'boxShadow': armed
 							? '0 6px 16px rgba(164, 38, 46, 0.35)'
 							: 'none',
-						'transition':
-							'background-color 0.3s ease, transform 0.3s ease',
-						'animation': armed
-							? `${pop} 0.45s cubic-bezier(0.34, 1.56, 0.64, 1)`
-							: 'none',
+						'transition': prefersReducedMotion
+							? 'background-color 0.3s ease'
+							: 'background-color 0.3s ease, transform 0.3s ease',
+						'animation':
+							armed && !prefersReducedMotion
+								? `${pop} 0.45s cubic-bezier(0.34, 1.56, 0.64, 1)`
+								: 'none',
 						'& svg': { fontSize: '20px' }
 					}}
 				>
