@@ -217,7 +217,7 @@ export const SessionStream = ({
 	);
 
 	const fetchSessionMessages = useCallback(
-		(forceCaseHandoverAccess = false) => {
+		(forceCaseHandoverAccess = false): Promise<boolean> => {
 			if (abortController.current) {
 				abortController.current.abort();
 			}
@@ -231,7 +231,7 @@ export const SessionStream = ({
 			) {
 				setMessagesItem({ messages: [] });
 				setLoading(false);
-				return Promise.resolve();
+				return Promise.resolve(false);
 			}
 
 			// Matrix-backed sessions must hydrate from the local Matrix SDK timeline.
@@ -271,7 +271,7 @@ export const SessionStream = ({
 					messages: prepareMessages(formattedMessages)
 				});
 				setLoading(false);
-				return Promise.resolve();
+				return Promise.resolve(true);
 			}
 
 			// Legacy RocketChat path
@@ -295,6 +295,7 @@ export const SessionStream = ({
 							)
 						: null
 				);
+				return true;
 			});
 		},
 		[
@@ -405,8 +406,10 @@ export const SessionStream = ({
 
 					if (message.u?.username !== 'rocket-chat-technical-user') {
 						fetchSessionMessages()
-							.then(() => {
-								setSessionRead();
+							.then((loaded) => {
+								if (loaded) {
+									setSessionRead();
+								}
 							})
 							.catch(() => {
 								// prevent error from leaking to console
@@ -753,8 +756,10 @@ export const SessionStream = ({
 			addNewUsersToEncryptedRoom().then();
 
 			fetchSessionMessages()
-				.then(() => {
-					setSessionRead();
+				.then((loaded) => {
+					if (loaded) {
+						setSessionRead();
+					}
 
 					// MATRIX MIGRATION: Skip RocketChat subscriptions for Matrix sessions
 					if (!isMatrixSession && activeSession.rid) {
