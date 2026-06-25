@@ -143,6 +143,8 @@ export const NotificationsCenter = () => {
 	const [searchQuery, setSearchQuery] = useState('');
 	const [caseHandoverConsentSubmitting, setCaseHandoverConsentSubmitting] =
 		useState(false);
+	const [caseHandoverConsentError, setCaseHandoverConsentError] =
+		useState('');
 
 	// Families actually present in the feed, in canonical order (drives chips).
 	const familiesInFeed = useMemo(
@@ -183,6 +185,10 @@ export const NotificationsCenter = () => {
 	}, [effectiveSelectedId, selectedNotificationId]);
 
 	// Drop back to "All" if the active family is no longer in the feed.
+	useEffect(() => {
+		setCaseHandoverConsentError('');
+	}, [selectedNotificationId]);
+
 	useEffect(() => {
 		if (activeFamily !== 'all' && !familiesInFeed.includes(activeFamily)) {
 			setActiveFamily('all');
@@ -357,6 +363,7 @@ export const NotificationsCenter = () => {
 			return;
 		}
 		setCaseHandoverConsentSubmitting(true);
+		setCaseHandoverConsentError('');
 		apiDecideCaseHandoverClientConsent(
 			Number(selectedSessionId),
 			Number(selectedCaseHandoverRequestId),
@@ -367,7 +374,9 @@ export const NotificationsCenter = () => {
 				refreshNotificationFeed();
 			})
 			.catch(() => {
-				// keep notification unread when consent decision fails
+				setCaseHandoverConsentError(
+					translate('caseHandover.error.failed')
+				);
 			})
 			.finally(() => setCaseHandoverConsentSubmitting(false));
 	};
@@ -597,6 +606,11 @@ export const NotificationsCenter = () => {
 											'caseHandover.consent.decline'
 										)}
 									</button>
+									{caseHandoverConsentError && (
+										<p className="notificationsCenter__detailText">
+											{caseHandoverConsentError}
+										</p>
+									)}
 								</div>
 							)}
 							<div className="notificationsCenter__detailActions">
