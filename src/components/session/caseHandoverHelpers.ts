@@ -23,12 +23,11 @@ interface CaseHandoverCandidateInput {
 	sessionListTab?: SESSION_LIST_TAB | string | null;
 }
 
-export const isCaseHandoverCandidate = ({
+export const isCaseHandoverAccessControlled = ({
 	activeSession,
 	userData,
-	type,
-	sessionListTab
-}: CaseHandoverCandidateInput): boolean => {
+	type
+}: Omit<CaseHandoverCandidateInput, 'sessionListTab'>): boolean => {
 	if (!activeSession || !activeSession.item || !userData) {
 		return false;
 	}
@@ -36,9 +35,6 @@ export const isCaseHandoverCandidate = ({
 		return false;
 	}
 	if (type !== SESSION_LIST_TYPES.MY_SESSION) {
-		return false;
-	}
-	if (sessionListTab === SESSION_LIST_TAB_ARCHIVE) {
 		return false;
 	}
 	if (activeSession.isGroup || !activeSession.isSession) {
@@ -54,6 +50,18 @@ export const isCaseHandoverCandidate = ({
 	return (
 		Boolean(ownerId) && String(ownerId) !== String(userData.userId || '')
 	);
+};
+
+export const isCaseHandoverCandidate = ({
+	activeSession,
+	userData,
+	type,
+	sessionListTab
+}: CaseHandoverCandidateInput): boolean => {
+	if (sessionListTab === SESSION_LIST_TAB_ARCHIVE) {
+		return false;
+	}
+	return isCaseHandoverAccessControlled({ activeSession, userData, type });
 };
 
 export const isCaseHandoverPending = (status?: string | null): boolean =>

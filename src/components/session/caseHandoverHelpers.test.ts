@@ -1,9 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
+import { STATUS_ENQUIRY, STATUS_ACTIVE } from '../../globalState/interfaces';
 import {
-	STATUS_ENQUIRY,
-	STATUS_ACTIVE
-} from '../../globalState/interfaces';
-import {
+	isCaseHandoverAccessControlled,
 	isCaseHandoverCandidate,
 	isCaseHandoverDenied,
 	isCaseHandoverPending
@@ -60,6 +58,24 @@ describe('caseHandoverHelpers', () => {
 				type: MY_SESSION_TYPE
 			})
 		).toBe(true);
+	});
+
+	it('keeps archive sessions access-controlled even when batch selection is disabled', () => {
+		expect(
+			isCaseHandoverAccessControlled({
+				activeSession: baseSession,
+				userData: consultantUser,
+				type: MY_SESSION_TYPE
+			})
+		).toBe(true);
+		expect(
+			isCaseHandoverCandidate({
+				activeSession: baseSession,
+				userData: consultantUser,
+				type: MY_SESSION_TYPE,
+				sessionListTab: SESSION_LIST_TAB_ARCHIVE
+			})
+		).toBe(false);
 	});
 
 	it('keeps asker, archive, enquiry, group, and own sessions out of handover candidates', () => {

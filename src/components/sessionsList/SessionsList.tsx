@@ -2048,7 +2048,11 @@ export const SessionsList = ({
 								</button>
 							</div>
 							{caseHandoverBatchSummary && (
-								<div className="sessionsList__caseHandoverBatchSummary">
+								<div
+									className="sessionsList__caseHandoverBatchSummary"
+									role="status"
+									aria-live="polite"
+								>
 									{caseHandoverBatchSummary}
 								</div>
 							)}

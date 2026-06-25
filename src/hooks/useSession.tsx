@@ -31,7 +31,7 @@ export const useSession = (
 
 			const { sessions } = await apiGetCaseHandoverCandidates({
 				query: String(sessionId),
-				count: 1,
+				count: 15,
 				signal
 			});
 			const candidate = (sessions || []).find(
