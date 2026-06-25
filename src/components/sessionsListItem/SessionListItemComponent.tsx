@@ -1554,8 +1554,16 @@ export const SessionListItemComponent = ({
 				</div>
 				<div className="sessionsListItem__row">
 					<SessionListItemLastMessage
-						lastMessage={displayLastMessage}
-						lastMessageType={activeSession.item.lastMessageType}
+						lastMessage={
+							caseHandoverContentLocked
+								? translate('caseHandover.list.hiddenPreview')
+								: displayLastMessage
+						}
+						lastMessageType={
+							caseHandoverContentLocked
+								? null
+								: activeSession.item.lastMessageType
+						}
 						language={language}
 						showLanguage={
 							language &&
@@ -1564,23 +1572,25 @@ export const SessionListItemComponent = ({
 						}
 						showSpan={activeSession.isEmptyEnquiry}
 					/>
-					{activeSession.item.attachment && (
-						<SessionListItemAttachment
-							attachment={activeSession.item.attachment}
-						/>
-					)}
-					{activeSession.item.videoCallMessageDTO && (
-						<SessionListItemVideoCall
-							videoCallMessage={
-								activeSession.item.videoCallMessageDTO
-							}
-							listItemUsername={
-								activeSession.user?.username ||
-								activeSession.consultant?.username
-							}
-							listItemAskerRcId={activeSession.item.askerRcId}
-						/>
-					)}
+					{!caseHandoverContentLocked &&
+						activeSession.item.attachment && (
+							<SessionListItemAttachment
+								attachment={activeSession.item.attachment}
+							/>
+						)}
+					{!caseHandoverContentLocked &&
+						activeSession.item.videoCallMessageDTO && (
+							<SessionListItemVideoCall
+								videoCallMessage={
+									activeSession.item.videoCallMessageDTO
+								}
+								listItemUsername={
+									activeSession.user?.username ||
+									activeSession.consultant?.username
+								}
+								listItemAskerRcId={activeSession.item.askerRcId}
+							/>
+						)}
 					{caseHandoverCandidate &&
 					!caseHandoverStatus?.canViewContent ? (
 						<button

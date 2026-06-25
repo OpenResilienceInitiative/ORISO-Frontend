@@ -118,6 +118,7 @@ export const CaseHandoverGate = ({
 						<div
 							className="caseHandoverGate__reasons"
 							role="radiogroup"
+							aria-label={translate('caseHandover.hidden.title')}
 						>
 							{reasons.map((reason) => (
 								<label
@@ -151,6 +152,9 @@ export const CaseHandoverGate = ({
 								setExplanation(event.target.value)
 							}
 							placeholder={translate(
+								'caseHandover.explanation.placeholder'
+							)}
+							aria-label={translate(
 								'caseHandover.explanation.placeholder'
 							)}
 						/>
