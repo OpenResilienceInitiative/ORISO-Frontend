@@ -100,7 +100,7 @@ $session-postcode-border: #646d78;
 	// Read state: muted gray background for sessions the counselor has already read
 	&--read {
 		.sessionsListItem__content {
-			background-color: #f0f0f0;
+			background-color: var(--m3-surface-container, #f0f0f0);
 		}
 
 		.sessionsListItem__topic {
@@ -109,7 +109,7 @@ $session-postcode-border: #646d78;
 		}
 
 		.sessionsListItem__username {
-			color: $tertiary;
+			color: var(--m3-on-surface-variant, $tertiary);
 		}
 
 		.sessionsListItem__date {
