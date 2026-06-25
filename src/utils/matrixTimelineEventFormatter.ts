@@ -19,8 +19,7 @@ export const formatMatrixTimelineEvent = (
 
 	const content = event?.getClearContent?.() || event?.getContent?.() || {};
 	const senderId = event?.getSender?.() || '';
-	const senderUsername =
-		senderId?.split(':')[0]?.substring(1) || 'unknown';
+	const senderUsername = senderId?.split(':')[0]?.substring(1) || 'unknown';
 	const senderMember = matrixRoom?.getMember?.(senderId);
 	const senderDisplayName =
 		senderMember?.name || senderMember?.rawDisplayName || senderUsername;
@@ -33,7 +32,8 @@ export const formatMatrixTimelineEvent = (
 				? encryptedFallbackText
 				: content?.body || '';
 	const baseMessage: any = {
-		_id: event?.getId?.() || `${senderId}-${event?.getTs?.() || Date.now()}`,
+		_id:
+			event?.getId?.() || `${senderId}-${event?.getTs?.() || Date.now()}`,
 		msg: textMessageContent,
 		ts: new Date(event?.getTs?.() || Date.now()),
 		u: {

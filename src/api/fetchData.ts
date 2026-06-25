@@ -140,18 +140,20 @@ export const fetchData = ({
 				}
 			: null;
 
-		const localDevelopmentHeader =
-			isLocalDevelopment &&
-			process.env.REACT_APP_CSRF_WHITELIST_HEADER_PROPERTY
-				? {
-						[process.env.REACT_APP_CSRF_WHITELIST_HEADER_PROPERTY]:
-							csrfToken
-					}
-				: isLocalDevelopment
-					? {
-							'X-WHITELIST-HEADER': csrfToken
-						}
-					: null;
+		const localDevelopmentHeader = isLocalDevelopment
+			? {
+					'X-WHITELIST-HEADER': csrfToken,
+					...(process.env.REACT_APP_CSRF_WHITELIST_HEADER_PROPERTY &&
+					process.env.REACT_APP_CSRF_WHITELIST_HEADER_PROPERTY !==
+						'X-WHITELIST-HEADER'
+						? {
+								[process.env
+									.REACT_APP_CSRF_WHITELIST_HEADER_PROPERTY]:
+									csrfToken
+							}
+						: {})
+				}
+			: null;
 
 		const controller = new AbortController();
 		const timeoutMs = timeout ?? 30_000;

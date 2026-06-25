@@ -23,8 +23,7 @@ export const apiSendMatrixAttachmentMessage = async (
 	matrixRoomId: string,
 	file: File,
 	options: SendMatrixAttachmentMessageOptions = {},
-	postMessageEventNotification: PostMessageEventNotification =
-		apiPostMessageEventNotification
+	postMessageEventNotification: PostMessageEventNotification = apiPostMessageEventNotification
 ): Promise<any> => {
 	const response = await matrixClientService.sendFileMessage(
 		matrixRoomId,

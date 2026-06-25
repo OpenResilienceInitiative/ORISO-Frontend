@@ -165,7 +165,9 @@ const getSessionIdentityValues = (
 		item?.matrixRoomId,
 		extended.rid
 	]
-		.filter((value) => value !== null && value !== undefined && value !== '')
+		.filter(
+			(value) => value !== null && value !== undefined && value !== ''
+		)
 		.map((value) => String(value));
 
 	return Array.from(new Set(values));
@@ -208,7 +210,10 @@ const draftMatchesSession = (
 
 	if (draft.actionPath) {
 		try {
-			const parsedPath = new URL(draft.actionPath, window.location.origin);
+			const parsedPath = new URL(
+				draft.actionPath,
+				window.location.origin
+			);
 			parsedPath.pathname.split('/').forEach(addCandidate);
 			parsedPath.searchParams.forEach((value) => addCandidate(value));
 		} catch {
@@ -295,7 +300,9 @@ function sessionMatchesToolbar(
 			return false;
 		}
 	} else if (chip === 'drafts') {
-		if (!drafts.some((draft) => draftMatchesSession(draft, raw, extended))) {
+		if (
+			!drafts.some((draft) => draftMatchesSession(draft, raw, extended))
+		) {
 			return false;
 		}
 	} else if (chip === 'internalGroup') {
@@ -353,8 +360,7 @@ const DraftMetadataListItem = ({
 			{translate('sessionList.toolbar.chips.drafts', 'Drafts')}
 		</span>
 		<span className="sessionsListDraftItem__title">
-			{draft.title ||
-				translate('drafts.center.untitledChat', 'Chat')}
+			{draft.title || translate('drafts.center.untitledChat', 'Chat')}
 		</span>
 		<span className="sessionsListDraftItem__meta">
 			{formatDraftTime(draft.updatedAt)}
@@ -1842,12 +1848,12 @@ export const SessionsList = ({
 					{!isLoading &&
 						sessionToolbarChip === 'drafts' &&
 						unmatchedDrafts.map((draft) => (
-								<DraftMetadataListItem
-									key={draft.scopeKey}
-									draft={draft}
-									onOpen={handleOpenDraft}
-									translate={translateWithFallback}
-								/>
+							<DraftMetadataListItem
+								key={draft.scopeKey}
+								draft={draft}
+								onOpen={handleOpenDraft}
+								translate={translateWithFallback}
+							/>
 						))}
 
 					{isLoading && <SessionsListSkeleton />}

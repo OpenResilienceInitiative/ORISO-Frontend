@@ -49,5 +49,4 @@ export const isConversationCircleSession = (
 
 export const isInternalGroupChatSession = (
 	session: SessionToolbarGroupSession
-): boolean =>
-	Boolean(session.isGroup && !isConversationCircleSession(session));
+): boolean => Boolean(session.isGroup && !isConversationCircleSession(session));
