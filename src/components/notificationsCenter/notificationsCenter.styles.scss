@@ -291,6 +291,35 @@
 		max-width: 780px;
 	}
 
+	&__consentActions {
+		display: flex;
+		gap: 10px;
+		flex-wrap: wrap;
+		justify-content: center;
+	}
+
+	&__consentButton {
+		min-height: 40px;
+		padding: 0 16px;
+		border: 1px solid #d1d5db;
+		border-radius: 999px;
+		background: #ffffff;
+		color: #374151;
+		font-weight: 700;
+		cursor: pointer;
+
+		&:disabled {
+			opacity: 0.5;
+			cursor: not-allowed;
+		}
+	}
+
+	&__consentButton--approve {
+		border-color: #c4000b;
+		background: #c4000b;
+		color: #ffffff;
+	}
+
 	&__openButton {
 		width: fit-content;
 		padding: 10px 16px;
@@ -500,7 +529,7 @@
 	}
 }
 
-@media (max-width: 1200px) {
+@media (width <= 1200px) {
 	.notificationsCenter {
 		padding: 16px;
 
@@ -713,7 +742,7 @@
 	}
 }
 
-@media (max-width: 900px) {
+@media (width <= 900px) {
 	.notificationsCenter {
 		padding: 16px;
 

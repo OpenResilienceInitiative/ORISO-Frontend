@@ -35,7 +35,10 @@ import { SessionsListSkeleton } from '../sessionsListItem/SessionsListItemSkelet
 import { isAnonymousAskerCandidate } from './sessionClassification';
 import {
 	apiGetAskerSessionList,
+	apiGetCaseHandoverReasons,
 	apiGetConsultantSessionList,
+	apiRequestCaseHandoverBatchAccess,
+	CaseHandoverReason,
 	FETCH_ERRORS,
 	SESSION_COUNT
 } from '../../api';
@@ -82,6 +85,7 @@ import {
 	DRAFTS_UPDATED_EVENT,
 	REMOTE_DRAFT_INDEX_SCOPE
 } from '../../services/draftStore';
+import { isCaseHandoverCandidate } from '../session/caseHandoverHelpers';
 
 function buildSessionSearchHaystack(
 	raw: ListItemInterface,
@@ -410,6 +414,19 @@ export const SessionsList = ({
 	const [sessionToolbarSelectedPeople, setSessionToolbarSelectedPeople] =
 		useState<string[]>([]);
 	const [userDrafts, setUserDrafts] = useState<IUserDraftItem[]>([]);
+	const [caseHandoverBatchMode, setCaseHandoverBatchMode] = useState(false);
+	const [caseHandoverSelectedIds, setCaseHandoverSelectedIds] = useState<
+		number[]
+	>([]);
+	const [caseHandoverReasons, setCaseHandoverReasons] = useState<
+		CaseHandoverReason[]
+	>([]);
+	const [caseHandoverReasonCode, setCaseHandoverReasonCode] = useState('');
+	const [caseHandoverExplanation, setCaseHandoverExplanation] = useState('');
+	const [caseHandoverBatchSubmitting, setCaseHandoverBatchSubmitting] =
+		useState(false);
+	const [caseHandoverBatchSummary, setCaseHandoverBatchSummary] =
+		useState('');
 	/**
 	 * Initial chip selection:
 	 *   - enquiry list: honour ?chip=liveChat in the URL (sidebar toggle
@@ -1382,6 +1399,22 @@ export const SessionsList = ({
 		};
 	}, [loadUserDrafts, showMySessionToolbar]);
 
+	useEffect(() => {
+		if (!caseHandoverBatchMode) {
+			return;
+		}
+		apiGetCaseHandoverReasons()
+			.then((items) => {
+				setCaseHandoverReasons(items || []);
+				setCaseHandoverReasonCode((current) =>
+					items?.some((item) => item.code === current) ? current : ''
+				);
+			})
+			.catch(() => {
+				setCaseHandoverReasons([]);
+			});
+	}, [caseHandoverBatchMode]);
+
 	const handleOpenDraft = useCallback(
 		(draft: IUserDraftItem) => {
 			if (!draft.actionPath) {
@@ -1657,6 +1690,83 @@ export const SessionsList = ({
 	const sortedSessions = sessionToolbarFilteredPairs
 		.map(({ extended }) => extended)
 		.sort(sortSessions);
+	const caseHandoverSelectableIds = React.useMemo(
+		() =>
+			sortedSessions
+				.filter((session) =>
+					isCaseHandoverCandidate({
+						activeSession: session,
+						userData,
+						type,
+						sessionListTab
+					})
+				)
+				.map((session) => session.item.id)
+				.filter(
+					(sessionId): sessionId is number =>
+						typeof sessionId === 'number'
+				),
+		[sessionListTab, sortedSessions, type, userData]
+	);
+	const handleCaseHandoverSelect = useCallback((sessionId: number) => {
+		setCaseHandoverBatchSummary('');
+		setCaseHandoverSelectedIds((current) =>
+			current.includes(sessionId)
+				? current.filter((id) => id !== sessionId)
+				: [...current, sessionId]
+		);
+	}, []);
+	const handleCloseCaseHandoverBatch = useCallback(() => {
+		setCaseHandoverBatchMode(false);
+		setCaseHandoverSelectedIds([]);
+		setCaseHandoverExplanation('');
+		setCaseHandoverBatchSummary('');
+	}, []);
+	const handleSubmitCaseHandoverBatch = useCallback(() => {
+		if (
+			caseHandoverSelectedIds.length === 0 ||
+			!caseHandoverReasonCode ||
+			!caseHandoverExplanation.trim()
+		) {
+			setCaseHandoverBatchSummary(
+				translate('caseHandover.batch.required')
+			);
+			return;
+		}
+		setCaseHandoverBatchSubmitting(true);
+		setCaseHandoverBatchSummary('');
+		apiRequestCaseHandoverBatchAccess(
+			caseHandoverSelectedIds,
+			caseHandoverReasonCode,
+			caseHandoverExplanation
+		)
+			.then((results) => {
+				const successful = (results || []).filter(
+					(result) => result.success
+				).length;
+				const failed = (results || []).length - successful;
+				setCaseHandoverBatchSummary(
+					translate('caseHandover.batch.result', {
+						successful,
+						failed
+					})
+				);
+				setCaseHandoverSelectedIds([]);
+				void refetchSessionList();
+			})
+			.catch(() => {
+				setCaseHandoverBatchSummary(
+					translate('caseHandover.error.failed')
+				);
+			})
+			.finally(() => setCaseHandoverBatchSubmitting(false));
+	}, [
+		caseHandoverExplanation,
+		caseHandoverReasonCode,
+		caseHandoverSelectedIds,
+		refetchSessionList,
+		translate
+	]);
 	const unmatchedDrafts = React.useMemo(() => {
 		if (sessionToolbarChip !== 'drafts') {
 			return [];
@@ -1784,6 +1894,103 @@ export const SessionsList = ({
 					chipCounts={toolbarChipCounts}
 				/>
 			)}
+			{showConsultantToolbarActions && (
+				<div className="sessionsList__caseHandoverBatch">
+					{!caseHandoverBatchMode ? (
+						<button
+							type="button"
+							className="sessionsList__caseHandoverBatchToggle"
+							onClick={() => {
+								setCaseHandoverBatchMode(true);
+								setCaseHandoverBatchSummary('');
+							}}
+							disabled={caseHandoverSelectableIds.length === 0}
+						>
+							{translate('caseHandover.batch.start')}
+						</button>
+					) : (
+						<div className="sessionsList__caseHandoverBatchPanel">
+							<div className="sessionsList__caseHandoverBatchHeader">
+								<strong>
+									{translate('caseHandover.batch.title')}
+								</strong>
+								<span>
+									{translate(
+										'caseHandover.batch.selectedCount',
+										{
+											count: caseHandoverSelectedIds.length
+										}
+									)}
+								</span>
+							</div>
+							<div className="sessionsList__caseHandoverBatchReasons">
+								{caseHandoverReasons.map((reason) => (
+									<label key={reason.code}>
+										<input
+											type="radio"
+											name="case-handover-batch-reason"
+											checked={
+												caseHandoverReasonCode ===
+												reason.code
+											}
+											onChange={() =>
+												setCaseHandoverReasonCode(
+													reason.code
+												)
+											}
+										/>
+										<span>{reason.label}</span>
+									</label>
+								))}
+							</div>
+							<textarea
+								className="sessionsList__caseHandoverBatchExplanation"
+								value={caseHandoverExplanation}
+								onChange={(event) =>
+									setCaseHandoverExplanation(
+										event.target.value
+									)
+								}
+								placeholder={translate(
+									'caseHandover.explanation.placeholder'
+								)}
+							/>
+							<div className="sessionsList__caseHandoverBatchActions">
+								<button
+									type="button"
+									onClick={handleCloseCaseHandoverBatch}
+								>
+									{translate('caseHandover.batch.cancel')}
+								</button>
+								<button
+									type="button"
+									className="sessionsList__caseHandoverBatchSubmit"
+									onClick={handleSubmitCaseHandoverBatch}
+									disabled={
+										caseHandoverBatchSubmitting ||
+										caseHandoverSelectedIds.length === 0 ||
+										!caseHandoverReasonCode ||
+										!caseHandoverExplanation.trim()
+									}
+								>
+									{caseHandoverBatchSubmitting
+										? translate(
+												'caseHandover.submitSending'
+											)
+										: translate(
+												'caseHandover.batch.confirm'
+											)}
+								</button>
+							</div>
+							{caseHandoverBatchSummary && (
+								<div className="sessionsList__caseHandoverBatchSummary">
+									{caseHandoverBatchSummary}
+								</div>
+							)}
+						</div>
+					)}
+				</div>
+			)}
 			<div className="sessionsList__scrollArea">
 				<div
 					className={clsx('sessionsList__scrollContainer', {
@@ -1826,6 +2033,15 @@ export const SessionsList = ({
 											isSessionListItemActive(
 												sortedSessions[index - 1]
 											)
+										}
+										caseHandoverBatchMode={
+											caseHandoverBatchMode
+										}
+										caseHandoverSelected={caseHandoverSelectedIds.includes(
+											activeSession.item.id
+										)}
+										onCaseHandoverSelect={
+											handleCaseHandoverSelect
 										}
 									/>
 								</ActiveSessionProvider>
