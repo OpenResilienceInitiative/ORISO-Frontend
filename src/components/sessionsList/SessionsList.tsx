@@ -1353,6 +1353,9 @@ export const SessionsList = ({
 	const showConsultantToolbarActions =
 		type === SESSION_LIST_TYPES.MY_SESSION &&
 		!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
+	const showCaseHandoverBatchUi =
+		showConsultantToolbarActions &&
+		sessionListTab !== SESSION_LIST_TAB_ARCHIVE;
 
 	const showMySessionToolbar =
 		type === SESSION_LIST_TYPES.MY_SESSION ||
@@ -1778,6 +1781,14 @@ export const SessionsList = ({
 		setCaseHandoverExplanation('');
 		setCaseHandoverBatchSummary('');
 	}, []);
+	useEffect(() => {
+		if (
+			sessionListTab === SESSION_LIST_TAB_ARCHIVE &&
+			caseHandoverBatchMode
+		) {
+			handleCloseCaseHandoverBatch();
+		}
+	}, [caseHandoverBatchMode, handleCloseCaseHandoverBatch, sessionListTab]);
 	const handleSubmitCaseHandoverBatch = useCallback(() => {
 		if (
 			caseHandoverSelectedIds.length === 0 ||
@@ -1950,7 +1961,7 @@ export const SessionsList = ({
 					chipCounts={toolbarChipCounts}
 				/>
 			)}
-			{showConsultantToolbarActions && (
+			{showCaseHandoverBatchUi && (
 				<div className="sessionsList__caseHandoverBatch">
 					{!caseHandoverBatchMode ? (
 						<button
