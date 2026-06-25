@@ -28,8 +28,6 @@ import {
 } from '../../../globalState';
 import { apiGetTopicGroups } from '../../../api/apiGetTopicGroups';
 import { apiGetTopicsData } from '../../../api/apiGetTopicsData';
-import { apiGetTenantAgenciesTopics } from '../../../api/apiGetTenantAgenciesTopics';
-import { filterTopicsByAgencyCoverage } from './filterTopicsByAgencyCoverage';
 import {
 	TopicsDataInterface,
 	TopicGroup
@@ -122,26 +120,7 @@ export const TopicSelection: FC<{
 			setTopicGroups(undefined);
 
 			const topicsResponse = await apiGetTopicsData();
-			let topics = getFilteredTopics(topicsResponse);
-
-			// When the user is browsing topics (no deep-linked topic/agency/consultant),
-			// hide topics that have no agency assigned so registration cannot dead-end on
-			// a topic with zero counselling centres. Fails open on error.
-			if (
-				!preselectedTopic &&
-				!preselectedAgency &&
-				!preselectedConsultant
-			) {
-				try {
-					const agenciesTopics = await apiGetTenantAgenciesTopics();
-					topics = filterTopicsByAgencyCoverage(
-						topics,
-						agenciesTopics
-					);
-				} catch (e) {
-					// keep topics unchanged if agency coverage cannot be determined
-				}
-			}
+			const topics = getFilteredTopics(topicsResponse);
 			try {
 				const topicIds = topics.map((t) => t.id);
 				const topicGroupsResponse = await apiGetTopicGroups();
