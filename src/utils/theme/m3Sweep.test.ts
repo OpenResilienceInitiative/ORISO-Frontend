@@ -152,22 +152,27 @@ describe('hex layer zero-drift (#143)', () => {
 
 	const sassVars: Record<string, string> = {};
 	for (const m of repoFile('src/resources/styles/settings.scss').matchAll(
-		/^\$([\w-]+):\s*(#[0-9a-fA-F]{3,8})\s*(?:;|\/)/gm
+		/^\$([\w-]+):\s*([^;\n]+?)\s*(?:!default\s*)?;/gm
 	)) {
-		sassVars[m[1]] = m[2];
+		sassVars[m[1]] = m[2].trim();
 	}
 
-	// Resolved dev :root values for the colour --m3-* tokens. Roles absent
-	// here are undefined on dev, so their fallback renders verbatim.
+	// Resolved dev :root values for the --m3-* tokens. Every defined role is
+	// recorded — hex, a #{$var} reference, or any other Sass value (rgba(),
+	// hsl(), var(), a function). Roles absent here are undefined on dev, so
+	// their fallback renders verbatim. Keeping non-hex values (instead of
+	// silently dropping them) lets the drift guard below flag any mapped role
+	// that resolves to a colour it cannot ΔE-compare, rather than passing it.
 	const devTokens: Record<string, string> = {};
 	for (const m of repoFile(
 		'src/resources/styles/mui-variables-mapping.scss'
 	).matchAll(/(--m3-[a-z0-9-]+):\s*([^;]+);/g)) {
 		const value = m[2].trim();
 		const ref = value.match(/^#\{\$([\w-]+)\}$/);
-		if (/^#[0-9a-fA-F]{3,8}$/.test(value)) devTokens[m[1]] = value;
-		else if (ref && sassVars[ref[1]]) devTokens[m[1]] = sassVars[ref[1]];
+		if (ref && sassVars[ref[1]]) devTokens[m[1]] = sassVars[ref[1]];
+		else devTokens[m[1]] = value;
 	}
+	const isHex = (v: string): boolean => /^#[0-9a-fA-F]{3,8}$/.test(v);
 
 	const channels = (hex: string): number[] => {
 		let h = hex.toLowerCase().replace('#', '');
@@ -210,7 +215,17 @@ describe('hex layer zero-drift (#143)', () => {
 		const drift: string[] = [];
 		for (const [hex, role] of Object.entries(hexConversions)) {
 			const value = devTokens[role];
-			if (value && deltaE(hex, value) > JND) {
+			if (!value) continue; // role undefined on dev → the #legacy fallback wins
+			if (!isHex(value)) {
+				// Role is defined with a non-hex value (rgba()/hsl()/var()/function):
+				// it overrides the fallback but cannot be ΔE-compared, so surface it
+				// for manual review instead of letting it pass silently.
+				drift.push(
+					`${hex} → ${role} resolves to non-hex value "${value}" on dev (cannot verify drift)`
+				);
+				continue;
+			}
+			if (deltaE(hex, value) > JND) {
 				drift.push(
 					`${hex} → ${role} renders ${value} (ΔE ${deltaE(hex, value).toFixed(1)})`
 				);
