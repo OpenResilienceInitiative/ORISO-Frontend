@@ -41,7 +41,10 @@ export const EnquiryFilterChips: React.FC<EnquiryFilterChipsProps> = ({
 					data-cy="enquiry-list-chip-nearby"
 				>
 					<span className="sessionsListToolbar__chipLabel">
-						{translate('sessionList.toolbar.chips.nearby', 'Nearby')}
+						{translate(
+							'sessionList.toolbar.chips.nearby',
+							'Nearby'
+						)}
 					</span>
 				</button>
 				{showLiveChatChip && (

@@ -48,8 +48,7 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 	const { key, keyID, encrypted } = useE2EE(props.rid);
 	const { getDevToolbarOption } = useDevToolbar();
 	const { addNotification } = React.useContext(NotificationsContext);
-	const matrixEncryptedFile = (props.attachment as any)
-		.matrix_encrypted_file;
+	const matrixEncryptedFile = (props.attachment as any).matrix_encrypted_file;
 	const isMatrixEncryptedAttachment = Boolean(matrixEncryptedFile);
 	const isEncryptedAttachment =
 		props.t === 'e2e' || isMatrixEncryptedAttachment;
@@ -459,8 +458,7 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 												isMatrixEncryptedAttachment
 													? (
 															getAttachmentSizeMBForKB(
-																props
-																	.attachment
+																props.attachment
 																	.image_size *
 																	1000
 															) / 1000

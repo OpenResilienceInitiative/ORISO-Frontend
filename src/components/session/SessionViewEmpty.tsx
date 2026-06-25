@@ -23,7 +23,9 @@ export const SessionViewEmpty = () => {
 			<EmptyState
 				className="session__emptyState"
 				headline={translate(
-					showSelectMessage ? 'session.empty' : 'session.emptyAllCaughtUp'
+					showSelectMessage
+						? 'session.empty'
+						: 'session.emptyAllCaughtUp'
 				)}
 				variant={
 					showSelectMessage

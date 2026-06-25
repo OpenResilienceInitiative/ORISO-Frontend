@@ -419,12 +419,12 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 			onMouseEnter={() => {
 				handleRef.current?.focus({ preventScroll: true });
 			}}
-				onKeyDown={handleKeyDown}
-				style={{
-					['--sessions-list-thumb-top' as any]: `${thumbStyleVars.thumbTopPx}px`,
-					['--sessions-list-thumb-height' as any]: `${thumbStyleVars.thumbHeightPx}px`
-				}}
-			>
+			onKeyDown={handleKeyDown}
+			style={{
+				['--sessions-list-thumb-top' as any]: `${thumbStyleVars.thumbTopPx}px`,
+				['--sessions-list-thumb-height' as any]: `${thumbStyleVars.thumbHeightPx}px`
+			}}
+		>
 			<span className="sessionsList__resizeHandlePill" />
 		</div>
 	);

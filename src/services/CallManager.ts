@@ -189,10 +189,7 @@ class CallManager {
 		(async () => {
 			let elementCallRoomId: string | undefined = undefined;
 
-			assertMatrixRoomEncrypted(
-				matrixClientService.getClient(),
-				roomId
-			);
+			assertMatrixRoomEncrypted(matrixClientService.getClient(), roomId);
 
 			// For group calls, create a fresh dedicated Element Call room rather
 			// than re-using the session room. This matches the "direct" usage of

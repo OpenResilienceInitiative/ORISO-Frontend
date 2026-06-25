@@ -24,12 +24,12 @@ describe('Notifications center', () => {
 
 		cy.willReturn('eventNotifications', {
 			items: [
-					{
-						id: 42,
-						eventType: 'message.new',
-						category: 'message',
-						title: 'Neue Nachricht',
-						text: 'Sichere Nachricht im Gespräch',
+				{
+					id: 42,
+					eventType: 'message.new',
+					category: 'message',
+					title: 'Neue Nachricht',
+					text: 'Sichere Nachricht im Gespräch',
 					actionPath: '/profile/hilfe',
 					actionLabel: 'Öffnen',
 					sourceSessionId: 123,
@@ -71,10 +71,10 @@ describe('Notifications center', () => {
 
 		cy.visit('/notifications');
 
-			cy.contains('Neue Nachricht').should('be.visible');
-			cy.contains('Sie haben eine neue Nachricht erhalten.').should(
-				'be.visible'
-			);
+		cy.contains('Neue Nachricht').should('be.visible');
+		cy.contains('Sie haben eine neue Nachricht erhalten.').should(
+			'be.visible'
+		);
 		cy.contains('raw encrypted body from matrix service').should(
 			'not.exist'
 		);

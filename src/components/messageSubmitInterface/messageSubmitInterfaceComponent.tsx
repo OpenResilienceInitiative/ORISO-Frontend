@@ -1868,8 +1868,7 @@ export const MessageSubmitInterfaceComponent = ({
 									userData?.userName ||
 									`${userData?.firstName || ''} ${userData?.lastName || ''}`.trim() ||
 									'User',
-								threadParentPreview:
-									threadParentPreview || null
+								threadParentPreview: threadParentPreview || null
 							}
 						);
 

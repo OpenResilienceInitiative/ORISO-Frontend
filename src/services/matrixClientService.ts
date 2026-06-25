@@ -228,10 +228,7 @@ export class MatrixClientService {
 		this.assertEncryptedRoom(roomId);
 
 		try {
-			const content = await this.uploadFileMessageContent(
-				file,
-				options
-			);
+			const content = await this.uploadFileMessageContent(file, options);
 			return await this.client.sendMessage(roomId, content as any);
 		} catch (error) {
 			if (!isMatrixExpiredTokenError(error)) {
@@ -448,13 +445,10 @@ export class MatrixClientService {
 
 		options.uploadProgress?.(100);
 
-		return buildMatrixFileMessageContent(
-			file,
-			{
-				...encryptedAttachment.file,
-				url: uploadResponse.content_uri
-			}
-		);
+		return buildMatrixFileMessageContent(file, {
+			...encryptedAttachment.file,
+			url: uploadResponse.content_uri
+		});
 	}
 
 	private getStoredTokenExpiresAt(): number | null {

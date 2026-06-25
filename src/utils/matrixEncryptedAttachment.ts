@@ -65,9 +65,7 @@ const buildAesCtrParams = (iv: Uint8Array): AesCtrParams => ({
 	length: AES_CTR_LENGTH
 });
 
-const sha256UnpaddedBase64 = async (
-	buffer: ArrayBuffer
-): Promise<string> => {
+const sha256UnpaddedBase64 = async (buffer: ArrayBuffer): Promise<string> => {
 	const hash = await crypto.subtle.digest('SHA-256', buffer);
 	return toUnpaddedBase64(new Uint8Array(hash));
 };

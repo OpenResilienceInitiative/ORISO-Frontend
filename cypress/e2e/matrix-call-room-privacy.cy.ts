@@ -100,19 +100,22 @@ describe('Matrix call room privacy', () => {
 		const sendStateEvent = cy.stub().resolves({});
 
 		cy.stub(matrixClientService, 'getClient').returns({
-			getRoom: cy.stub().withArgs('!plain-call-room:oriso.org').returns({
-				currentState: {
-					getStateEvents: cy.stub().returns({
-						getContent: cy.stub().returns({
-							events: {
-								'org.matrix.msc3401.call.member': 50
-							},
-							state_default: 50,
-							events_default: 0
+			getRoom: cy
+				.stub()
+				.withArgs('!plain-call-room:oriso.org')
+				.returns({
+					currentState: {
+						getStateEvents: cy.stub().returns({
+							getContent: cy.stub().returns({
+								events: {
+									'org.matrix.msc3401.call.member': 50
+								},
+								state_default: 50,
+								events_default: 0
+							})
 						})
-					})
-				}
-			}),
+					}
+				}),
 			isRoomEncrypted: cy
 				.stub()
 				.withArgs('!plain-call-room:oriso.org')

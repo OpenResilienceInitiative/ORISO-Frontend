@@ -289,11 +289,11 @@ export const Login = () => {
 					tokenResponse.expires_in,
 					tokenResponse.refresh_token,
 					tokenResponse.refresh_expires_in
-					);
-					// Magic-token login is complete once tokens are set.
-					// Continue directly into authenticated app bootstrap.
-					return postLogin();
-				})
+				);
+				// Magic-token login is complete once tokens are set.
+				// Continue directly into authenticated app bootstrap.
+				return postLogin();
+			})
 			.catch(() => {
 				setShowLoginError(
 					translate('login.warning.failed.unauthorized.text')

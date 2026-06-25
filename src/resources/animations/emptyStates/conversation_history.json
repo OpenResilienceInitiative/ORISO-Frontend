@@ -1,1 +1,2510 @@
-{"v":"5.12.1","fr":60,"ip":0,"op":173,"w":500,"h":500,"nm":"12 Chart","ddd":0,"assets":[],"layers":[{"ddd":0,"ind":1,"ty":3,"nm":"Main Stroke width - Color Ctrl","sr":1,"ks":{"o":{"a":0,"k":100,"ix":11},"r":{"a":0,"k":0,"ix":10},"p":{"a":0,"k":[250,250,0],"ix":2,"l":2},"a":{"a":0,"k":[250,250,0],"ix":1,"l":2},"s":{"a":0,"k":[100,100,100],"ix":6,"l":2}},"ao":0,"ef":[{"ty":5,"nm":"Stroke width","np":3,"mn":"ADBE Slider Control","ix":1,"en":1,"ef":[{"ty":0,"nm":"Slider","mn":"ADBE Slider Control-0001","ix":1,"v":{"a":0,"k":16,"ix":1}}]},{"ty":5,"nm":"Stroke Highlight","np":3,"mn":"ADBE Slider Control","ix":2,"en":1,"ef":[{"ty":0,"nm":"Slider","mn":"ADBE Slider Control-0001","ix":1,"v":{"a":0,"k":18,"ix":1}}]},{"ty":5,"nm":"Base Color","np":3,"mn":"ADBE Color Control","ix":3,"en":1,"ef":[{"ty":2,"nm":"Color","mn":"ADBE Color Control-0001","ix":1,"v":{"a":0,"k":[0,0,0,1],"ix":1,"x":"var $bm_rt;\n$bm_rt = effect('Base Color')('Color');"}}]},{"ty":5,"nm":"Highlight","np":3,"mn":"ADBE Color Control","ix":4,"en":1,"ef":[{"ty":2,"nm":"Color","mn":"ADBE Color Control-0001","ix":1,"v":{"a":0,"k":[0.20000000298,0.800000011921,0.800000011921,1],"ix":1,"x":"var $bm_rt;\n$bm_rt = effect('Highlight')('Color');"}}]}],"ip":0,"op":180,"st":0,"bm":0},{"ddd":0,"ind":2,"ty":3,"nm":"[C] P","sr":1,"ks":{"o":{"a":0,"k":0,"ix":11},"r":{"a":0,"k":0,"ix":10},"p":{"a":1,"k":[{"i":{"x":0.667,"y":1},"o":{"x":0.333,"y":0},"t":10,"s":[250,250,0],"to":[0,0,0],"ti":[0,0,0]},{"i":{"x":0.213,"y":1},"o":{"x":0.333,"y":0},"t":20,"s":[250,290,0],"to":[0,0,0],"ti":[0,0,0]},{"i":{"x":0.667,"y":1},"o":{"x":0.333,"y":0},"t":80,"s":[250,230,0],"to":[0,0,0],"ti":[0,0,0]},{"i":{"x":0.667,"y":1},"o":{"x":0.333,"y":0},"t":90,"s":[250,290,0],"to":[0,0,0],"ti":[0,0,0]},{"i":{"x":0.667,"y":1},"o":{"x":0.333,"y":0},"t":102,"s":[250,220,0],"to":[0,0,0],"ti":[0,0,0]},{"t":118,"s":[250,250,0]}],"ix":2,"l":2},"a":{"a":0,"k":[0,0,0],"ix":1,"l":2},"s":{"a":0,"k":[100,100,100],"ix":6,"l":2}},"ao":0,"ip":0,"op":180,"st":0,"bm":0},{"ddd":0,"ind":3,"ty":4,"nm":"[TP] Text 1","parent":6,"sr":1,"ks":{"o":{"a":0,"k":100,"ix":11},"r":{"a":0,"k":0,"ix":10},"p":{"a":0,"k":[277.743,133.596,0],"ix":2,"l":2},"a":{"a":0,"k":[277.743,133.596,0],"ix":1,"l":2},"s":{"a":0,"k":[100,100,100],"ix":6,"l":2}},"ao":0,"shapes":[{"ty":"gr","it":[{"ind":0,"ty":"sh","ix":1,"ks":{"a":0,"k":{"i":[[0,0],[0,0]],"o":[[0,0],[0,0]],"v":[[-95.021,0],[95.021,0]],"c":false},"ix":2},"nm":"Path 1","mn":"ADBE Vector Shape - Group","hd":false},{"ty":"st","c":{"a":0,"k":[0,0,0,1],"ix":3,"x":"var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Base Color')('Color');"},"o":{"a":0,"k":100,"ix":4},"w":{"a":0,"k":16,"ix":5,"x":"var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Stroke width')('Slider');"},"lc":2,"lj":2,"bm":0,"nm":"Stroke 1","mn":"ADBE Vector Graphic - Stroke","hd":false},{"ty":"tr","p":{"a":0,"k":[277.743,118.196],"ix":2},"a":{"a":0,"k":[0,0],"ix":1},"s":{"a":0,"k":[100,100],"ix":3},"r":{"a":0,"k":0,"ix":6},"o":{"a":0,"k":100,"ix":7},"sk":{"a":0,"k":0,"ix":4},"sa":{"a":0,"k":0,"ix":5},"nm":"Transform"}],"nm":"Group 2","np":2,"cix":2,"bm":0,"ix":1,"mn":"ADBE Vector Group","hd":false},{"ty":"gr","it":[{"ind":0,"ty":"sh","ix":1,"ks":{"a":0,"k":{"i":[[0,0],[0,0]],"o":[[0,0],[0,0]],"v":[[-32.281,0],[32.281,0]],"c":false},"ix":2},"nm":"Path 1","mn":"ADBE Vector Shape - Group","hd":false},{"ty":"st","c":{"a":0,"k":[0,0,0,1],"ix":3,"x":"var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Base Color')('Color');"},"o":{"a":0,"k":100,"ix":4},"w":{"a":0,"k":16,"ix":5,"x":"var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Stroke width')('Slider');"},"lc":2,"lj":2,"bm":0,"nm":"Stroke 1","mn":"ADBE Vector Graphic - Stroke","hd":false},{"ty":"tr","p":{"a":0,"k":[215.003,148.996],"ix":2},"a":{"a":0,"k":[0,0],"ix":1},"s":{"a":0,"k":[100,100],"ix":3},"r":{"a":0,"k":0,"ix":6},"o":{"a":0,"k":100,"ix":7},"sk":{"a":0,"k":0,"ix":4},"sa":{"a":0,"k":0,"ix":5},"nm":"Transform"}],"nm":"Group 1","np":2,"cix":2,"bm":0,"ix":2,"mn":"ADBE Vector Group","hd":false},{"ty":"tm","s":{"a":1,"k":[{"i":{"x":[0.1],"y":[1]},"o":{"x":[0.333],"y":[0]},"t":82,"s":[0]},{"t":95,"s":[100]}],"ix":1},"e":{"a":1,"k":[{"i":{"x":[0.1],"y":[1]},"o":{"x":[0.333],"y":[0]},"t":26,"s":[0]},{"t":46,"s":[100]}],"ix":2},"o":{"a":0,"k":0,"ix":3},"m":2,"ix":3,"nm":"Trim Paths 1","mn":"ADBE Vector Filter - Trim","hd":false}],"ip":26,"op":92,"st":0,"ct":1,"bm":0},{"ddd":0,"ind":4,"ty":4,"nm":"[TP] Text 2","parent":9,"sr":1,"ks":{"o":{"a":0,"k":100,"ix":11},"r":{"a":0,"k":0,"ix":10},"p":{"a":0,"k":[277.743,243.303,0],"ix":2,"l":2},"a":{"a":0,"k":[277.743,243.303,0],"ix":1,"l":2},"s":{"a":0,"k":[100,100,100],"ix":6,"l":2}},"ao":0,"shapes":[{"ty":"gr","it":[{"ind":0,"ty":"sh","ix":1,"ks":{"a":0,"k":{"i":[[0,0],[0,0]],"o":[[0,0],[0,0]],"v":[[-95.021,0],[95.021,0]],"c":false},"ix":2},"nm":"Path 1","mn":"ADBE Vector Shape - Group","hd":false},{"ty":"st","c":{"a":0,"k":[0,0,0,1],"ix":3,"x":"var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Base Color')('Color');"},"o":{"a":0,"k":100,"ix":4},"w":{"a":0,"k":16,"ix":5,"x":"var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Stroke width')('Slider');"},"lc":2,"lj":2,"bm":0,"nm":"Stroke 1","mn":"ADBE Vector Graphic - Stroke","hd":false},{"ty":"tr","p":{"a":0,"k":[277.743,227.903],"ix":2},"a":{"a":0,"k":[0,0],"ix":1},"s":{"a":0,"k":[100,100],"ix":3},"r":{"a":0,"k":0,"ix":6},"o":{"a":0,"k":100,"ix":7},"sk":{"a":0,"k":0,"ix":4},"sa":{"a":0,"k":0,"ix":5},"nm":"Transform"}],"nm":"Group 2","np":2,"cix":2,"bm":0,"ix":1,"mn":"ADBE Vector Group","hd":false},{"ty":"gr","it":[{"ind":0,"ty":"sh","ix":1,"ks":{"a":0,"k":{"i":[[0,0],[0,0]],"o":[[0,0],[0,0]],"v":[[-32.281,0],[32.281,0]],"c":false},"ix":2},"nm":"Path 1","mn":"ADBE Vector Shape - Group","hd":false},{"ty":"st","c":{"a":0,"k":[0,0,0,1],"ix":3,"x":"var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Base Color')('Color');"},"o":{"a":0,"k":100,"ix":4},"w":{"a":0,"k":16,"ix":5,"x":"var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Stroke width')('Slider');"},"lc":2,"lj":2,"bm":0,"nm":"Stroke 1","mn":"ADBE Vector Graphic - Stroke","hd":false},{"ty":"tr","p":{"a":0,"k":[215.003,258.703],"ix":2},"a":{"a":0,"k":[0,0],"ix":1},"s":{"a":0,"k":[100,100],"ix":3},"r":{"a":0,"k":0,"ix":6},"o":{"a":0,"k":100,"ix":7},"sk":{"a":0,"k":0,"ix":4},"sa":{"a":0,"k":0,"ix":5},"nm":"Transform"}],"nm":"Group 1","np":2,"cix":2,"bm":0,"ix":2,"mn":"ADBE Vector Group","hd":false},{"ty":"tm","s":{"a":1,"k":[{"i":{"x":[0.1],"y":[1]},"o":{"x":[0.333],"y":[0]},"t":95,"s":[0]},{"t":108,"s":[100]}],"ix":1},"e":{"a":1,"k":[{"i":{"x":[0.1],"y":[1]},"o":{"x":[0.333],"y":[0]},"t":40,"s":[0]},{"t":60,"s":[100]}],"ix":2},"o":{"a":0,"k":0,"ix":3},"m":2,"ix":3,"nm":"Trim Paths 1","mn":"ADBE Vector Filter - Trim","hd":false}],"ip":40,"op":105,"st":9,"ct":1,"bm":0},{"ddd":0,"ind":5,"ty":4,"nm":"[TP] Text 3","parent":12,"sr":1,"ks":{"o":{"a":0,"k":100,"ix":11},"r":{"a":0,"k":0,"ix":10},"p":{"a":0,"k":[277.743,350.648,0],"ix":2,"l":2},"a":{"a":0,"k":[277.743,350.648,0],"ix":1,"l":2},"s":{"a":0,"k":[100,100,100],"ix":6,"l":2}},"ao":0,"shapes":[{"ty":"gr","it":[{"ind":0,"ty":"sh","ix":1,"ks":{"a":0,"k":{"i":[[0,0],[0,0]],"o":[[0,0],[0,0]],"v":[[-95.021,0],[95.021,0]],"c":false},"ix":2},"nm":"Path 1","mn":"ADBE Vector Shape - Group","hd":false},{"ty":"st","c":{"a":0,"k":[0,0,0,1],"ix":3,"x":"var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Base Color')('Color');"},"o":{"a":0,"k":100,"ix":4},"w":{"a":0,"k":16,"ix":5,"x":"var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Stroke width')('Slider');"},"lc":2,"lj":2,"bm":0,"nm":"Stroke 1","mn":"ADBE Vector Graphic - Stroke","hd":false},{"ty":"tr","p":{"a":0,"k":[277.743,335.248],"ix":2},"a":{"a":0,"k":[0,0],"ix":1},"s":{"a":0,"k":[100,100],"ix":3},"r":{"a":0,"k":0,"ix":6},"o":{"a":0,"k":100,"ix":7},"sk":{"a":0,"k":0,"ix":4},"sa":{"a":0,"k":0,"ix":5},"nm":"Transform"}],"nm":"Group 2","np":2,"cix":2,"bm":0,"ix":1,"mn":"ADBE Vector Group","hd":false},{"ty":"gr","it":[{"ind":0,"ty":"sh","ix":1,"ks":{"a":0,"k":{"i":[[0,0],[0,0]],"o":[[0,0],[0,0]],"v":[[-32.281,0],[32.281,0]],"c":false},"ix":2},"nm":"Path 1","mn":"ADBE Vector Shape - Group","hd":false},{"ty":"st","c":{"a":0,"k":[0,0,0,1],"ix":3,"x":"var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Base Color')('Color');"},"o":{"a":0,"k":100,"ix":4},"w":{"a":0,"k":16,"ix":5,"x":"var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Stroke width')('Slider');"},"lc":2,"lj":2,"bm":0,"nm":"Stroke 1","mn":"ADBE Vector Graphic - Stroke","hd":false},{"ty":"tr","p":{"a":0,"k":[215.003,366.048],"ix":2},"a":{"a":0,"k":[0,0],"ix":1},"s":{"a":0,"k":[100,100],"ix":3},"r":{"a":0,"k":0,"ix":6},"o":{"a":0,"k":100,"ix":7},"sk":{"a":0,"k":0,"ix":4},"sa":{"a":0,"k":0,"ix":5},"nm":"Transform"}],"nm":"Group 1","np":2,"cix":2,"bm":0,"ix":2,"mn":"ADBE Vector Group","hd":false},{"ty":"tm","s":{"a":1,"k":[{"i":{"x":[0.1],"y":[1]},"o":{"x":[0.333],"y":[0]},"t":106,"s":[0]},{"t":119,"s":[100]}],"ix":1},"e":{"a":1,"k":[{"i":{"x":[0.1],"y":[1]},"o":{"x":[0.333],"y":[0]},"t":52,"s":[0]},{"t":72,"s":[100]}],"ix":2},"o":{"a":0,"k":0,"ix":3},"m":2,"ix":3,"nm":"Trim Paths 1","mn":"ADBE Vector Filter - Trim","hd":false}],"ip":52,"op":116,"st":16,"ct":1,"bm":0},{"ddd":0,"ind":6,"ty":4,"nm":"Text 1","parent":8,"sr":1,"ks":{"o":{"a":0,"k":100,"ix":11},"r":{"a":0,"k":0,"ix":10},"p":{"a":0,"k":[277.743,133.596,0],"ix":2,"l":2},"a":{"a":0,"k":[277.743,133.596,0],"ix":1,"l":2},"s":{"a":0,"k":[100,100,100],"ix":6,"l":2}},"ao":0,"shapes":[{"ty":"gr","it":[{"ind":0,"ty":"sh","ix":1,"ks":{"a":0,"k":{"i":[[0,0],[0,0]],"o":[[0,0],[0,0]],"v":[[-32.281,0],[32.281,0]],"c":false},"ix":2},"nm":"Path 1","mn":"ADBE Vector Shape - Group","hd":false},{"ty":"st","c":{"a":0,"k":[0.20000000298,0.800000011921,0.800000011921,1],"ix":3,"x":"var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Highlight')('Color');"},"o":{"a":0,"k":100,"ix":4},"w":{"a":0,"k":16,"ix":5,"x":"var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Stroke width')('Slider');"},"lc":2,"lj":2,"bm":0,"nm":"Stroke 1","mn":"ADBE Vector Graphic - Stroke","hd":false},{"ty":"tr","p":{"a":0,"k":[215.003,148.996],"ix":2},"a":{"a":0,"k":[0,0],"ix":1},"s":{"a":0,"k":[100,100],"ix":3},"r":{"a":0,"k":0,"ix":6},"o":{"a":0,"k":100,"ix":7},"sk":{"a":0,"k":0,"ix":4},"sa":{"a":0,"k":0,"ix":5},"nm":"Transform"}],"nm":"Group 1","np":2,"cix":2,"bm":0,"ix":1,"mn":"ADBE Vector Group","hd":false},{"ty":"gr","it":[{"ind":0,"ty":"sh","ix":1,"ks":{"a":0,"k":{"i":[[0,0],[0,0]],"o":[[0,0],[0,0]],"v":[[-95.021,0],[95.021,0]],"c":false},"ix":2},"nm":"Path 1","mn":"ADBE Vector Shape - Group","hd":false},{"ty":"st","c":{"a":0,"k":[0.20000000298,0.800000011921,0.800000011921,1],"ix":3,"x":"var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Highlight')('Color');"},"o":{"a":0,"k":100,"ix":4},"w":{"a":0,"k":16,"ix":5,"x":"var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Stroke width')('Slider');"},"lc":2,"lj":2,"bm":0,"nm":"Stroke 1","mn":"ADBE Vector Graphic - Stroke","hd":false},{"ty":"tr","p":{"a":0,"k":[277.743,118.196],"ix":2},"a":{"a":0,"k":[0,0],"ix":1},"s":{"a":0,"k":[100,100],"ix":3},"r":{"a":0,"k":0,"ix":6},"o":{"a":0,"k":100,"ix":7},"sk":{"a":0,"k":0,"ix":4},"sa":{"a":0,"k":0,"ix":5},"nm":"Transform"}],"nm":"Group 2","np":2,"cix":2,"bm":0,"ix":2,"mn":"ADBE Vector Group","hd":false}],"ip":0,"op":180,"st":0,"ct":1,"bm":0},{"ddd":0,"ind":7,"ty":4,"nm":"[M] P 1","td":1,"sr":1,"ks":{"o":{"a":0,"k":100,"ix":11},"r":{"a":0,"k":0,"ix":10},"p":{"a":0,"k":[250.034,249.652,0],"ix":2,"l":2},"a":{"a":0,"k":[250.034,249.652,0],"ix":1,"l":2},"s":{"a":1,"k":[{"i":{"x":[0.667,0.667,0.667],"y":[1,1,1]},"o":{"x":[0.333,0.333,0.333],"y":[0,0,0]},"t":30,"s":[100,100,100]},{"i":{"x":[0.163,0.163,0.667],"y":[1,1,1]},"o":{"x":[0.333,0.333,0.333],"y":[0,0,0]},"t":40,"s":[94,94,100]},{"i":{"x":[0.667,0.667,0.667],"y":[1,1,1]},"o":{"x":[0.333,0.333,0.333],"y":[0,0,0]},"t":90,"s":[106,106,100]},{"i":{"x":[0.667,0.667,0.667],"y":[1,1,1]},"o":{"x":[0.333,0.333,0.333],"y":[0,0,0]},"t":100,"s":[94,94,100]},{"i":{"x":[0.667,0.667,0.667],"y":[1,1,1]},"o":{"x":[0.333,0.333,0.333],"y":[0,0,0]},"t":112,"s":[104,104,100]},{"t":128,"s":[100,100,100]}],"ix":6,"l":2}},"ao":0,"shapes":[{"ty":"gr","it":[{"ind":0,"ty":"sh","ix":1,"ks":{"a":0,"k":{"i":[[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]],"v":[[-1.54,62.419],[26.46,46.902],[171.466,46.902],[171.466,-62.419],[27.966,-62.419],[-0.034,-46.902],[-28.034,-62.419],[-171.466,-62.419],[-171.466,46.902],[-29.54,46.902]],"c":true},"ix":2},"nm":"Path 1","mn":"ADBE Vector Shape - Group","hd":false},{"ty":"fl","c":{"a":0,"k":[1,0,0,1],"ix":4},"o":{"a":0,"k":100,"ix":5},"r":1,"bm":0,"nm":"Fill 1","mn":"ADBE Vector Graphic - Fill","hd":false},{"ty":"tr","p":{"a":0,"k":[250.034,249.652],"ix":2},"a":{"a":0,"k":[0,0],"ix":1},"s":{"a":0,"k":[100,100],"ix":3},"r":{"a":0,"k":0,"ix":6},"o":{"a":0,"k":100,"ix":7},"sk":{"a":0,"k":0,"ix":4},"sa":{"a":0,"k":0,"ix":5},"nm":"Transform"}],"nm":"Group 1","np":2,"cix":2,"bm":0,"ix":1,"mn":"ADBE Vector Group","hd":false}],"ip":0,"op":180,"st":0,"ct":1,"bm":0},{"ddd":0,"ind":8,"ty":4,"nm":"Piece 1","tt":2,"tp":7,"sr":1,"ks":{"o":{"a":0,"k":100,"ix":11},"r":{"a":0,"k":0,"ix":10},"p":{"a":0,"k":[250,250,0],"ix":2,"l":2},"a":{"a":0,"k":[250,250,0],"ix":1,"l":2},"s":{"a":1,"k":[{"i":{"x":[0.667,0.667,0.667],"y":[1,1,1]},"o":{"x":[0.333,0.333,0.333],"y":[0,0,0]},"t":20,"s":[100,100,100]},{"i":{"x":[0.163,0.163,0.667],"y":[1,1,1]},"o":{"x":[0.333,0.333,0.333],"y":[0,0,0]},"t":30,"s":[94,94,100]},{"i":{"x":[0.667,0.667,0.667],"y":[1,1,1]},"o":{"x":[0.333,0.333,0.333],"y":[0,0,0]},"t":80,"s":[106,106,100]},{"i":{"x":[0.667,0.667,0.667],"y":[1,1,1]},"o":{"x":[0.333,0.333,0.333],"y":[0,0,0]},"t":90,"s":[94,94,100]},{"i":{"x":[0.667,0.667,0.667],"y":[1,1,1]},"o":{"x":[0.333,0.333,0.333],"y":[0,0,0]},"t":102,"s":[104,104,100]},{"t":118,"s":[100,100,100]}],"ix":6,"l":2}},"ao":0,"shapes":[{"ty":"gr","it":[{"ind":0,"ty":"sh","ix":1,"ks":{"a":0,"k":{"i":[[0,0],[0,0],[0,0],[0,0],[15.464,0],[0,0],[0,-15.464],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0],[0,-15.464],[0,0],[-15.464,0],[0,0],[0,0],[0,0]],"v":[[-0.034,62.125],[27.966,46.608],[171.466,46.608],[171.466,-34.125],[143.466,-62.125],[-143.466,-62.125],[-171.466,-34.125],[-171.466,46.608],[-28.034,46.608]],"c":true},"ix":2},"nm":"Path 1","mn":"ADBE Vector Shape - Group","hd":false},{"ty":"st","c":{"a":0,"k":[0,0,0,1],"ix":3,"x":"var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Base Color')('Color');"},"o":{"a":0,"k":100,"ix":4},"w":{"a":0,"k":16,"ix":5,"x":"var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Stroke width')('Slider');"},"lc":2,"lj":2,"bm":0,"nm":"Stroke 1","mn":"ADBE Vector Graphic - Stroke","hd":false},{"ty":"tr","p":{"a":0,"k":[250.034,140.625],"ix":2},"a":{"a":0,"k":[0,0],"ix":1},"s":{"a":0,"k":[100,100],"ix":3},"r":{"a":0,"k":0,"ix":6},"o":{"a":0,"k":100,"ix":7},"sk":{"a":0,"k":0,"ix":4},"sa":{"a":0,"k":0,"ix":5},"nm":"Transform"}],"nm":"Group 1","np":2,"cix":2,"bm":0,"ix":1,"mn":"ADBE Vector Group","hd":false},{"ty":"gr","it":[{"ind":0,"ty":"sh","ix":1,"ks":{"a":0,"k":{"i":[[0,0],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0]],"v":[[-4.628,-21.653],[4.628,-21.653],[4.628,21.653]],"c":false},"ix":2},"nm":"Path 1","mn":"ADBE Vector Shape - Group","hd":false},{"ty":"st","c":{"a":0,"k":[0,0,0,1],"ix":3,"x":"var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Base Color')('Color');"},"o":{"a":0,"k":100,"ix":4},"w":{"a":0,"k":16,"ix":5,"x":"var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Stroke width')('Slider');"},"lc":2,"lj":2,"bm":0,"nm":"Stroke 1","mn":"ADBE Vector Graphic - Stroke","hd":false},{"ty":"tr","p":{"a":0,"k":[129.358,133.596],"ix":2},"a":{"a":0,"k":[0,0],"ix":1},"s":{"a":0,"k":[100,100],"ix":3},"r":{"a":1,"k":[{"i":{"x":[0.667],"y":[1]},"o":{"x":[0.333],"y":[0]},"t":10,"s":[0]},{"i":{"x":[0.667],"y":[1]},"o":{"x":[0.333],"y":[0]},"t":20,"s":[20]},{"i":{"x":[0.667],"y":[1]},"o":{"x":[0.333],"y":[0]},"t":40,"s":[-10]},{"i":{"x":[0.667],"y":[1]},"o":{"x":[0.333],"y":[0]},"t":50,"s":[5]},{"t":60,"s":[0]}],"ix":6},"o":{"a":0,"k":100,"ix":7},"sk":{"a":0,"k":0,"ix":4},"sa":{"a":0,"k":0,"ix":5},"nm":"Transform"}],"nm":"Group 2","np":2,"cix":2,"bm":0,"ix":2,"mn":"ADBE Vector Group","hd":false}],"ip":0,"op":180,"st":0,"ct":1,"bm":0},{"ddd":0,"ind":9,"ty":4,"nm":"Text 2","parent":11,"sr":1,"ks":{"o":{"a":0,"k":100,"ix":11},"r":{"a":0,"k":0,"ix":10},"p":{"a":0,"k":[277.743,243.303,0],"ix":2,"l":2},"a":{"a":0,"k":[277.743,243.303,0],"ix":1,"l":2},"s":{"a":0,"k":[100,100,100],"ix":6,"l":2}},"ao":0,"shapes":[{"ty":"gr","it":[{"ind":0,"ty":"sh","ix":1,"ks":{"a":0,"k":{"i":[[0,0],[0,0]],"o":[[0,0],[0,0]],"v":[[-32.281,0],[32.281,0]],"c":false},"ix":2},"nm":"Path 1","mn":"ADBE Vector Shape - Group","hd":false},{"ty":"st","c":{"a":0,"k":[0.20000000298,0.800000011921,0.800000011921,1],"ix":3,"x":"var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Highlight')('Color');"},"o":{"a":0,"k":100,"ix":4},"w":{"a":0,"k":16,"ix":5,"x":"var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Stroke width')('Slider');"},"lc":2,"lj":2,"bm":0,"nm":"Stroke 1","mn":"ADBE Vector Graphic - Stroke","hd":false},{"ty":"tr","p":{"a":0,"k":[215.003,258.703],"ix":2},"a":{"a":0,"k":[0,0],"ix":1},"s":{"a":0,"k":[100,100],"ix":3},"r":{"a":0,"k":0,"ix":6},"o":{"a":0,"k":100,"ix":7},"sk":{"a":0,"k":0,"ix":4},"sa":{"a":0,"k":0,"ix":5},"nm":"Transform"}],"nm":"Group 1","np":2,"cix":2,"bm":0,"ix":1,"mn":"ADBE Vector Group","hd":false},{"ty":"gr","it":[{"ind":0,"ty":"sh","ix":1,"ks":{"a":0,"k":{"i":[[0,0],[0,0]],"o":[[0,0],[0,0]],"v":[[-95.021,0],[95.021,0]],"c":false},"ix":2},"nm":"Path 1","mn":"ADBE Vector Shape - Group","hd":false},{"ty":"st","c":{"a":0,"k":[0.20000000298,0.800000011921,0.800000011921,1],"ix":3,"x":"var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Highlight')('Color');"},"o":{"a":0,"k":100,"ix":4},"w":{"a":0,"k":16,"ix":5,"x":"var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Stroke width')('Slider');"},"lc":2,"lj":2,"bm":0,"nm":"Stroke 1","mn":"ADBE Vector Graphic - Stroke","hd":false},{"ty":"tr","p":{"a":0,"k":[277.743,227.903],"ix":2},"a":{"a":0,"k":[0,0],"ix":1},"s":{"a":0,"k":[100,100],"ix":3},"r":{"a":0,"k":0,"ix":6},"o":{"a":0,"k":100,"ix":7},"sk":{"a":0,"k":0,"ix":4},"sa":{"a":0,"k":0,"ix":5},"nm":"Transform"}],"nm":"Group 2","np":2,"cix":2,"bm":0,"ix":2,"mn":"ADBE Vector Group","hd":false}],"ip":0,"op":180,"st":0,"ct":1,"bm":0},{"ddd":0,"ind":10,"ty":4,"nm":"[M] P 2","td":1,"sr":1,"ks":{"o":{"a":0,"k":100,"ix":11},"r":{"a":0,"k":0,"ix":10},"p":{"a":0,"k":[250,250,0],"ix":2,"l":2},"a":{"a":0,"k":[250,250,0],"ix":1,"l":2},"s":{"a":1,"k":[{"i":{"x":[0.667,0.667,0.667],"y":[1,1,1]},"o":{"x":[0.333,0.333,0.333],"y":[0,0,0]},"t":40,"s":[100,100,100]},{"i":{"x":[0.163,0.163,0.667],"y":[1,1,1]},"o":{"x":[0.333,0.333,0.333],"y":[0,0,0]},"t":50,"s":[94,94,100]},{"i":{"x":[0.667,0.667,0.667],"y":[1,1,1]},"o":{"x":[0.333,0.333,0.333],"y":[0,0,0]},"t":100,"s":[106,106,100]},{"i":{"x":[0.667,0.667,0.667],"y":[1,1,1]},"o":{"x":[0.333,0.333,0.333],"y":[0,0,0]},"t":110,"s":[94,94,100]},{"i":{"x":[0.667,0.667,0.667],"y":[1,1,1]},"o":{"x":[0.333,0.333,0.333],"y":[0,0,0]},"t":122,"s":[104,104,100]},{"t":138,"s":[100,100,100]}],"ix":6,"l":2}},"ao":0,"shapes":[{"ty":"gr","it":[{"ind":0,"ty":"sh","ix":1,"ks":{"a":0,"k":{"i":[[0,0],[0,0],[0,0],[0,0],[0,0],[-15.464,0],[0,0],[0,0],[0,0],[0,0],[0,15.464],[0,0]],"o":[[0,0],[0,0],[0,0],[0,0],[0,15.464],[0,0],[0,0],[0,0],[0,0],[15.464,0],[0,0],[0,0]],"v":[[26.46,-62.473],[-1.54,-46.956],[-29.54,-62.473],[-171.466,-62.473],[-171.466,18.956],[-143.466,46.956],[-28.034,46.956],[-0.034,62.473],[27.966,46.956],[143.466,46.956],[171.466,18.956],[171.466,-62.473]],"c":true},"ix":2},"nm":"Path 1","mn":"ADBE Vector Shape - Group","hd":false},{"ty":"fl","c":{"a":0,"k":[1,0,0,1],"ix":4},"o":{"a":0,"k":100,"ix":5},"r":1,"bm":0,"nm":"Fill 1","mn":"ADBE Vector Graphic - Fill","hd":false},{"ty":"tr","p":{"a":0,"k":[250.034,359.027],"ix":2},"a":{"a":0,"k":[0,0],"ix":1},"s":{"a":0,"k":[100,100],"ix":3},"r":{"a":0,"k":0,"ix":6},"o":{"a":0,"k":100,"ix":7},"sk":{"a":0,"k":0,"ix":4},"sa":{"a":0,"k":0,"ix":5},"nm":"Transform"}],"nm":"Group 1","np":2,"cix":2,"bm":0,"ix":1,"mn":"ADBE Vector Group","hd":false}],"ip":0,"op":180,"st":0,"ct":1,"bm":0},{"ddd":0,"ind":11,"ty":4,"nm":"Piece 2","tt":2,"tp":10,"sr":1,"ks":{"o":{"a":0,"k":100,"ix":11},"r":{"a":0,"k":0,"ix":10},"p":{"a":0,"k":[250.034,249.652,0],"ix":2,"l":2},"a":{"a":0,"k":[250.034,249.652,0],"ix":1,"l":2},"s":{"a":1,"k":[{"i":{"x":[0.667,0.667,0.667],"y":[1,1,1]},"o":{"x":[0.333,0.333,0.333],"y":[0,0,0]},"t":30,"s":[100,100,100]},{"i":{"x":[0.163,0.163,0.667],"y":[1,1,1]},"o":{"x":[0.333,0.333,0.333],"y":[0,0,0]},"t":40,"s":[94,94,100]},{"i":{"x":[0.667,0.667,0.667],"y":[1,1,1]},"o":{"x":[0.333,0.333,0.333],"y":[0,0,0]},"t":90,"s":[106,106,100]},{"i":{"x":[0.667,0.667,0.667],"y":[1,1,1]},"o":{"x":[0.333,0.333,0.333],"y":[0,0,0]},"t":100,"s":[94,94,100]},{"i":{"x":[0.667,0.667,0.667],"y":[1,1,1]},"o":{"x":[0.333,0.333,0.333],"y":[0,0,0]},"t":112,"s":[104,104,100]},{"t":128,"s":[100,100,100]}],"ix":6,"l":2}},"ao":0,"shapes":[{"ty":"gr","it":[{"ind":0,"ty":"sh","ix":1,"ks":{"a":0,"k":{"i":[[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]],"v":[[-1.54,62.419],[26.46,46.902],[171.466,46.902],[171.466,-62.419],[27.966,-62.419],[-0.034,-46.902],[-28.034,-62.419],[-171.466,-62.419],[-171.466,46.902],[-29.54,46.902]],"c":true},"ix":2},"nm":"Path 1","mn":"ADBE Vector Shape - Group","hd":false},{"ty":"st","c":{"a":0,"k":[0,0,0,1],"ix":3,"x":"var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Base Color')('Color');"},"o":{"a":0,"k":100,"ix":4},"w":{"a":0,"k":16,"ix":5,"x":"var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Stroke width')('Slider');"},"lc":2,"lj":2,"bm":0,"nm":"Stroke 1","mn":"ADBE Vector Graphic - Stroke","hd":false},{"ty":"tr","p":{"a":0,"k":[250.034,249.652],"ix":2},"a":{"a":0,"k":[0,0],"ix":1},"s":{"a":0,"k":[100,100],"ix":3},"r":{"a":0,"k":0,"ix":6},"o":{"a":0,"k":100,"ix":7},"sk":{"a":0,"k":0,"ix":4},"sa":{"a":0,"k":0,"ix":5},"nm":"Transform"}],"nm":"Group 1","np":2,"cix":2,"bm":0,"ix":1,"mn":"ADBE Vector Group","hd":false},{"ty":"gr","it":[{"ind":0,"ty":"sh","ix":1,"ks":{"a":0,"k":{"i":[[0,0],[0,0],[0,0],[0.607,4.539],[5.36,0],[0.984,-5.009]],"o":[[0,0],[0,0],[3.24,-4.882],[-0.703,-5.257],[-5.298,0],[0,0]],"v":[[11.702,21.653],[-10.008,21.653],[5.156,0.146],[9.725,-12.688],[-1.005,-21.653],[-11.702,-12.864]],"c":false},"ix":2},"nm":"Path 1","mn":"ADBE Vector Shape - Group","hd":false},{"ty":"st","c":{"a":0,"k":[0,0,0,1],"ix":3,"x":"var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Base Color')('Color');"},"o":{"a":0,"k":100,"ix":4},"w":{"a":0,"k":16,"ix":5,"x":"var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Stroke width')('Slider');"},"lc":2,"lj":2,"bm":0,"nm":"Stroke 1","mn":"ADBE Vector Graphic - Stroke","hd":false},{"ty":"tr","p":{"a":0,"k":[129.358,238.403],"ix":2},"a":{"a":0,"k":[0,0],"ix":1},"s":{"a":0,"k":[100,100],"ix":3},"r":{"a":1,"k":[{"i":{"x":[0.667],"y":[1]},"o":{"x":[0.333],"y":[0]},"t":20,"s":[0]},{"i":{"x":[0.667],"y":[1]},"o":{"x":[0.333],"y":[0]},"t":30,"s":[20]},{"i":{"x":[0.667],"y":[1]},"o":{"x":[0.333],"y":[0]},"t":50,"s":[-10]},{"i":{"x":[0.667],"y":[1]},"o":{"x":[0.333],"y":[0]},"t":60,"s":[5]},{"t":70,"s":[0]}],"ix":6},"o":{"a":0,"k":100,"ix":7},"sk":{"a":0,"k":0,"ix":4},"sa":{"a":0,"k":0,"ix":5},"nm":"Transform"}],"nm":"Group 2","np":2,"cix":2,"bm":0,"ix":2,"mn":"ADBE Vector Group","hd":false}],"ip":0,"op":180,"st":0,"ct":1,"bm":0},{"ddd":0,"ind":12,"ty":4,"nm":"Text 3","parent":13,"sr":1,"ks":{"o":{"a":0,"k":100,"ix":11},"r":{"a":0,"k":0,"ix":10},"p":{"a":0,"k":[277.743,350.648,0],"ix":2,"l":2},"a":{"a":0,"k":[277.743,350.648,0],"ix":1,"l":2},"s":{"a":0,"k":[100,100,100],"ix":6,"l":2}},"ao":0,"shapes":[{"ty":"gr","it":[{"ind":0,"ty":"sh","ix":1,"ks":{"a":0,"k":{"i":[[0,0],[0,0]],"o":[[0,0],[0,0]],"v":[[-32.281,0],[32.281,0]],"c":false},"ix":2},"nm":"Path 1","mn":"ADBE Vector Shape - Group","hd":false},{"ty":"st","c":{"a":0,"k":[0.20000000298,0.800000011921,0.800000011921,1],"ix":3,"x":"var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Highlight')('Color');"},"o":{"a":0,"k":100,"ix":4},"w":{"a":0,"k":16,"ix":5,"x":"var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Stroke width')('Slider');"},"lc":2,"lj":2,"bm":0,"nm":"Stroke 1","mn":"ADBE Vector Graphic - Stroke","hd":false},{"ty":"tr","p":{"a":0,"k":[215.003,366.048],"ix":2},"a":{"a":0,"k":[0,0],"ix":1},"s":{"a":0,"k":[100,100],"ix":3},"r":{"a":0,"k":0,"ix":6},"o":{"a":0,"k":100,"ix":7},"sk":{"a":0,"k":0,"ix":4},"sa":{"a":0,"k":0,"ix":5},"nm":"Transform"}],"nm":"Group 1","np":2,"cix":2,"bm":0,"ix":1,"mn":"ADBE Vector Group","hd":false},{"ty":"gr","it":[{"ind":0,"ty":"sh","ix":1,"ks":{"a":0,"k":{"i":[[0,0],[0,0]],"o":[[0,0],[0,0]],"v":[[-95.021,0],[95.021,0]],"c":false},"ix":2},"nm":"Path 1","mn":"ADBE Vector Shape - Group","hd":false},{"ty":"st","c":{"a":0,"k":[0.20000000298,0.800000011921,0.800000011921,1],"ix":3,"x":"var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Highlight')('Color');"},"o":{"a":0,"k":100,"ix":4},"w":{"a":0,"k":16,"ix":5,"x":"var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Stroke width')('Slider');"},"lc":2,"lj":2,"bm":0,"nm":"Stroke 1","mn":"ADBE Vector Graphic - Stroke","hd":false},{"ty":"tr","p":{"a":0,"k":[277.743,335.248],"ix":2},"a":{"a":0,"k":[0,0],"ix":1},"s":{"a":0,"k":[100,100],"ix":3},"r":{"a":0,"k":0,"ix":6},"o":{"a":0,"k":100,"ix":7},"sk":{"a":0,"k":0,"ix":4},"sa":{"a":0,"k":0,"ix":5},"nm":"Transform"}],"nm":"Group 2","np":2,"cix":2,"bm":0,"ix":2,"mn":"ADBE Vector Group","hd":false}],"ip":0,"op":180,"st":0,"ct":1,"bm":0},{"ddd":0,"ind":13,"ty":4,"nm":"Piece 3","sr":1,"ks":{"o":{"a":0,"k":100,"ix":11},"r":{"a":0,"k":0,"ix":10},"p":{"a":0,"k":[250,250,0],"ix":2,"l":2},"a":{"a":0,"k":[250,250,0],"ix":1,"l":2},"s":{"a":1,"k":[{"i":{"x":[0.667,0.667,0.667],"y":[1,1,1]},"o":{"x":[0.333,0.333,0.333],"y":[0,0,0]},"t":40,"s":[100,100,100]},{"i":{"x":[0.163,0.163,0.667],"y":[1,1,1]},"o":{"x":[0.333,0.333,0.333],"y":[0,0,0]},"t":50,"s":[94,94,100]},{"i":{"x":[0.667,0.667,0.667],"y":[1,1,1]},"o":{"x":[0.333,0.333,0.333],"y":[0,0,0]},"t":100,"s":[106,106,100]},{"i":{"x":[0.667,0.667,0.667],"y":[1,1,1]},"o":{"x":[0.333,0.333,0.333],"y":[0,0,0]},"t":110,"s":[94,94,100]},{"i":{"x":[0.667,0.667,0.667],"y":[1,1,1]},"o":{"x":[0.333,0.333,0.333],"y":[0,0,0]},"t":122,"s":[104,104,100]},{"t":138,"s":[100,100,100]}],"ix":6,"l":2}},"ao":0,"shapes":[{"ty":"gr","it":[{"ind":0,"ty":"sh","ix":1,"ks":{"a":0,"k":{"i":[[0,0],[0,0],[0,0],[0,0],[0,0],[-15.464,0],[0,0],[0,0],[0,0],[0,0],[0,15.464],[0,0]],"o":[[0,0],[0,0],[0,0],[0,0],[0,15.464],[0,0],[0,0],[0,0],[0,0],[15.464,0],[0,0],[0,0]],"v":[[26.46,-62.473],[-1.54,-46.956],[-29.54,-62.473],[-171.466,-62.473],[-171.466,18.956],[-143.466,46.956],[-28.034,46.956],[-0.034,62.473],[27.966,46.956],[143.466,46.956],[171.466,18.956],[171.466,-62.473]],"c":true},"ix":2},"nm":"Path 1","mn":"ADBE Vector Shape - Group","hd":false},{"ty":"st","c":{"a":0,"k":[0,0,0,1],"ix":3,"x":"var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Base Color')('Color');"},"o":{"a":0,"k":100,"ix":4},"w":{"a":0,"k":16,"ix":5,"x":"var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Stroke width')('Slider');"},"lc":2,"lj":2,"bm":0,"nm":"Stroke 1","mn":"ADBE Vector Graphic - Stroke","hd":false},{"ty":"tr","p":{"a":0,"k":[250.034,359.027],"ix":2},"a":{"a":0,"k":[0,0],"ix":1},"s":{"a":0,"k":[100,100],"ix":3},"r":{"a":0,"k":0,"ix":6},"o":{"a":0,"k":100,"ix":7},"sk":{"a":0,"k":0,"ix":4},"sa":{"a":0,"k":0,"ix":5},"nm":"Transform"}],"nm":"Group 1","np":2,"cix":2,"bm":0,"ix":1,"mn":"ADBE Vector Group","hd":false},{"ty":"gr","it":[{"ty":"gr","it":[{"ind":0,"ty":"sh","ix":1,"ks":{"a":0,"k":{"i":[[0,0],[0,-5.979],[5.979,0],[1.807,3.439]],"o":[[5.979,0],[0,5.979],[-4.173,0.021],[0,0]],"v":[[-0.612,-10.826],[10.214,0],[-0.612,10.826],[-10.214,5]],"c":false},"ix":2},"nm":"Path 1","mn":"ADBE Vector Shape - Group","hd":false},{"ty":"st","c":{"a":0,"k":[0,0,0,1],"ix":3,"x":"var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Base Color')('Color');"},"o":{"a":0,"k":100,"ix":4},"w":{"a":0,"k":16,"ix":5,"x":"var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Stroke width')('Slider');"},"lc":2,"lj":2,"bm":0,"nm":"Stroke 1","mn":"ADBE Vector Graphic - Stroke","hd":false},{"ty":"tr","p":{"a":0,"k":[129.971,361.475],"ix":2},"a":{"a":0,"k":[0,0],"ix":1},"s":{"a":0,"k":[100,100],"ix":3},"r":{"a":0,"k":0,"ix":6},"o":{"a":0,"k":100,"ix":7},"sk":{"a":0,"k":0,"ix":4},"sa":{"a":0,"k":0,"ix":5},"nm":"Transform"}],"nm":"Group 2","np":2,"cix":2,"bm":0,"ix":1,"mn":"ADBE Vector Group","hd":false},{"ty":"gr","it":[{"ind":0,"ty":"sh","ix":1,"ks":{"a":0,"k":{"i":[[0,0],[-3.501,0],[0,-5.979],[5.979,0]],"o":[[1.979,-2.577],[5.979,0],[0,5.979],[0,0]],"v":[[-9.657,-6.785],[-1.169,-10.826],[9.657,0],[-1.169,10.826]],"c":false},"ix":2},"nm":"Path 1","mn":"ADBE Vector Shape - Group","hd":false},{"ty":"st","c":{"a":0,"k":[0,0,0,1],"ix":3,"x":"var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Base Color')('Color');"},"o":{"a":0,"k":100,"ix":4},"w":{"a":0,"k":16,"ix":5,"x":"var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Stroke width')('Slider');"},"lc":2,"lj":2,"bm":0,"nm":"Stroke 1","mn":"ADBE Vector Graphic - Stroke","hd":false},{"ty":"tr","p":{"a":0,"k":[130.527,339.822],"ix":2},"a":{"a":0,"k":[0,0],"ix":1},"s":{"a":0,"k":[100,100],"ix":3},"r":{"a":0,"k":0,"ix":6},"o":{"a":0,"k":100,"ix":7},"sk":{"a":0,"k":0,"ix":4},"sa":{"a":0,"k":0,"ix":5},"nm":"Transform"}],"nm":"Group 3","np":2,"cix":2,"bm":0,"ix":2,"mn":"ADBE Vector Group","hd":false},{"ty":"tr","p":{"a":0,"k":[129.971,350.648],"ix":2},"a":{"a":0,"k":[129.971,350.648],"ix":1},"s":{"a":0,"k":[100,100],"ix":3},"r":{"a":1,"k":[{"i":{"x":[0.667],"y":[1]},"o":{"x":[0.333],"y":[0]},"t":30,"s":[0]},{"i":{"x":[0.667],"y":[1]},"o":{"x":[0.333],"y":[0]},"t":40,"s":[20]},{"i":{"x":[0.667],"y":[1]},"o":{"x":[0.333],"y":[0]},"t":60,"s":[-10]},{"i":{"x":[0.667],"y":[1]},"o":{"x":[0.333],"y":[0]},"t":70,"s":[5]},{"t":80,"s":[0]}],"ix":6},"o":{"a":0,"k":100,"ix":7},"sk":{"a":0,"k":0,"ix":4},"sa":{"a":0,"k":0,"ix":5},"nm":"Transform"}],"nm":"Group 2","np":2,"cix":2,"bm":0,"ix":2,"mn":"ADBE Vector Group","hd":false}],"ip":0,"op":180,"st":0,"ct":1,"bm":0}],"markers":[{"tm":0,"cm":"Zero","dr":0}],"props":{}}
+{
+	"v": "5.12.1",
+	"fr": 60,
+	"ip": 0,
+	"op": 173,
+	"w": 500,
+	"h": 500,
+	"nm": "12 Chart",
+	"ddd": 0,
+	"assets": [],
+	"layers": [
+		{
+			"ddd": 0,
+			"ind": 1,
+			"ty": 3,
+			"nm": "Main Stroke width - Color Ctrl",
+			"sr": 1,
+			"ks": {
+				"o": { "a": 0, "k": 100, "ix": 11 },
+				"r": { "a": 0, "k": 0, "ix": 10 },
+				"p": { "a": 0, "k": [250, 250, 0], "ix": 2, "l": 2 },
+				"a": { "a": 0, "k": [250, 250, 0], "ix": 1, "l": 2 },
+				"s": { "a": 0, "k": [100, 100, 100], "ix": 6, "l": 2 }
+			},
+			"ao": 0,
+			"ef": [
+				{
+					"ty": 5,
+					"nm": "Stroke width",
+					"np": 3,
+					"mn": "ADBE Slider Control",
+					"ix": 1,
+					"en": 1,
+					"ef": [
+						{
+							"ty": 0,
+							"nm": "Slider",
+							"mn": "ADBE Slider Control-0001",
+							"ix": 1,
+							"v": { "a": 0, "k": 16, "ix": 1 }
+						}
+					]
+				},
+				{
+					"ty": 5,
+					"nm": "Stroke Highlight",
+					"np": 3,
+					"mn": "ADBE Slider Control",
+					"ix": 2,
+					"en": 1,
+					"ef": [
+						{
+							"ty": 0,
+							"nm": "Slider",
+							"mn": "ADBE Slider Control-0001",
+							"ix": 1,
+							"v": { "a": 0, "k": 18, "ix": 1 }
+						}
+					]
+				},
+				{
+					"ty": 5,
+					"nm": "Base Color",
+					"np": 3,
+					"mn": "ADBE Color Control",
+					"ix": 3,
+					"en": 1,
+					"ef": [
+						{
+							"ty": 2,
+							"nm": "Color",
+							"mn": "ADBE Color Control-0001",
+							"ix": 1,
+							"v": {
+								"a": 0,
+								"k": [0, 0, 0, 1],
+								"ix": 1,
+								"x": "var $bm_rt;\n$bm_rt = effect('Base Color')('Color');"
+							}
+						}
+					]
+				},
+				{
+					"ty": 5,
+					"nm": "Highlight",
+					"np": 3,
+					"mn": "ADBE Color Control",
+					"ix": 4,
+					"en": 1,
+					"ef": [
+						{
+							"ty": 2,
+							"nm": "Color",
+							"mn": "ADBE Color Control-0001",
+							"ix": 1,
+							"v": {
+								"a": 0,
+								"k": [
+									0.20000000298, 0.800000011921,
+									0.800000011921, 1
+								],
+								"ix": 1,
+								"x": "var $bm_rt;\n$bm_rt = effect('Highlight')('Color');"
+							}
+						}
+					]
+				}
+			],
+			"ip": 0,
+			"op": 180,
+			"st": 0,
+			"bm": 0
+		},
+		{
+			"ddd": 0,
+			"ind": 2,
+			"ty": 3,
+			"nm": "[C] P",
+			"sr": 1,
+			"ks": {
+				"o": { "a": 0, "k": 0, "ix": 11 },
+				"r": { "a": 0, "k": 0, "ix": 10 },
+				"p": {
+					"a": 1,
+					"k": [
+						{
+							"i": { "x": 0.667, "y": 1 },
+							"o": { "x": 0.333, "y": 0 },
+							"t": 10,
+							"s": [250, 250, 0],
+							"to": [0, 0, 0],
+							"ti": [0, 0, 0]
+						},
+						{
+							"i": { "x": 0.213, "y": 1 },
+							"o": { "x": 0.333, "y": 0 },
+							"t": 20,
+							"s": [250, 290, 0],
+							"to": [0, 0, 0],
+							"ti": [0, 0, 0]
+						},
+						{
+							"i": { "x": 0.667, "y": 1 },
+							"o": { "x": 0.333, "y": 0 },
+							"t": 80,
+							"s": [250, 230, 0],
+							"to": [0, 0, 0],
+							"ti": [0, 0, 0]
+						},
+						{
+							"i": { "x": 0.667, "y": 1 },
+							"o": { "x": 0.333, "y": 0 },
+							"t": 90,
+							"s": [250, 290, 0],
+							"to": [0, 0, 0],
+							"ti": [0, 0, 0]
+						},
+						{
+							"i": { "x": 0.667, "y": 1 },
+							"o": { "x": 0.333, "y": 0 },
+							"t": 102,
+							"s": [250, 220, 0],
+							"to": [0, 0, 0],
+							"ti": [0, 0, 0]
+						},
+						{ "t": 118, "s": [250, 250, 0] }
+					],
+					"ix": 2,
+					"l": 2
+				},
+				"a": { "a": 0, "k": [0, 0, 0], "ix": 1, "l": 2 },
+				"s": { "a": 0, "k": [100, 100, 100], "ix": 6, "l": 2 }
+			},
+			"ao": 0,
+			"ip": 0,
+			"op": 180,
+			"st": 0,
+			"bm": 0
+		},
+		{
+			"ddd": 0,
+			"ind": 3,
+			"ty": 4,
+			"nm": "[TP] Text 1",
+			"parent": 6,
+			"sr": 1,
+			"ks": {
+				"o": { "a": 0, "k": 100, "ix": 11 },
+				"r": { "a": 0, "k": 0, "ix": 10 },
+				"p": { "a": 0, "k": [277.743, 133.596, 0], "ix": 2, "l": 2 },
+				"a": { "a": 0, "k": [277.743, 133.596, 0], "ix": 1, "l": 2 },
+				"s": { "a": 0, "k": [100, 100, 100], "ix": 6, "l": 2 }
+			},
+			"ao": 0,
+			"shapes": [
+				{
+					"ty": "gr",
+					"it": [
+						{
+							"ind": 0,
+							"ty": "sh",
+							"ix": 1,
+							"ks": {
+								"a": 0,
+								"k": {
+									"i": [
+										[0, 0],
+										[0, 0]
+									],
+									"o": [
+										[0, 0],
+										[0, 0]
+									],
+									"v": [
+										[-95.021, 0],
+										[95.021, 0]
+									],
+									"c": false
+								},
+								"ix": 2
+							},
+							"nm": "Path 1",
+							"mn": "ADBE Vector Shape - Group",
+							"hd": false
+						},
+						{
+							"ty": "st",
+							"c": {
+								"a": 0,
+								"k": [0, 0, 0, 1],
+								"ix": 3,
+								"x": "var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Base Color')('Color');"
+							},
+							"o": { "a": 0, "k": 100, "ix": 4 },
+							"w": {
+								"a": 0,
+								"k": 16,
+								"ix": 5,
+								"x": "var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Stroke width')('Slider');"
+							},
+							"lc": 2,
+							"lj": 2,
+							"bm": 0,
+							"nm": "Stroke 1",
+							"mn": "ADBE Vector Graphic - Stroke",
+							"hd": false
+						},
+						{
+							"ty": "tr",
+							"p": { "a": 0, "k": [277.743, 118.196], "ix": 2 },
+							"a": { "a": 0, "k": [0, 0], "ix": 1 },
+							"s": { "a": 0, "k": [100, 100], "ix": 3 },
+							"r": { "a": 0, "k": 0, "ix": 6 },
+							"o": { "a": 0, "k": 100, "ix": 7 },
+							"sk": { "a": 0, "k": 0, "ix": 4 },
+							"sa": { "a": 0, "k": 0, "ix": 5 },
+							"nm": "Transform"
+						}
+					],
+					"nm": "Group 2",
+					"np": 2,
+					"cix": 2,
+					"bm": 0,
+					"ix": 1,
+					"mn": "ADBE Vector Group",
+					"hd": false
+				},
+				{
+					"ty": "gr",
+					"it": [
+						{
+							"ind": 0,
+							"ty": "sh",
+							"ix": 1,
+							"ks": {
+								"a": 0,
+								"k": {
+									"i": [
+										[0, 0],
+										[0, 0]
+									],
+									"o": [
+										[0, 0],
+										[0, 0]
+									],
+									"v": [
+										[-32.281, 0],
+										[32.281, 0]
+									],
+									"c": false
+								},
+								"ix": 2
+							},
+							"nm": "Path 1",
+							"mn": "ADBE Vector Shape - Group",
+							"hd": false
+						},
+						{
+							"ty": "st",
+							"c": {
+								"a": 0,
+								"k": [0, 0, 0, 1],
+								"ix": 3,
+								"x": "var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Base Color')('Color');"
+							},
+							"o": { "a": 0, "k": 100, "ix": 4 },
+							"w": {
+								"a": 0,
+								"k": 16,
+								"ix": 5,
+								"x": "var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Stroke width')('Slider');"
+							},
+							"lc": 2,
+							"lj": 2,
+							"bm": 0,
+							"nm": "Stroke 1",
+							"mn": "ADBE Vector Graphic - Stroke",
+							"hd": false
+						},
+						{
+							"ty": "tr",
+							"p": { "a": 0, "k": [215.003, 148.996], "ix": 2 },
+							"a": { "a": 0, "k": [0, 0], "ix": 1 },
+							"s": { "a": 0, "k": [100, 100], "ix": 3 },
+							"r": { "a": 0, "k": 0, "ix": 6 },
+							"o": { "a": 0, "k": 100, "ix": 7 },
+							"sk": { "a": 0, "k": 0, "ix": 4 },
+							"sa": { "a": 0, "k": 0, "ix": 5 },
+							"nm": "Transform"
+						}
+					],
+					"nm": "Group 1",
+					"np": 2,
+					"cix": 2,
+					"bm": 0,
+					"ix": 2,
+					"mn": "ADBE Vector Group",
+					"hd": false
+				},
+				{
+					"ty": "tm",
+					"s": {
+						"a": 1,
+						"k": [
+							{
+								"i": { "x": [0.1], "y": [1] },
+								"o": { "x": [0.333], "y": [0] },
+								"t": 82,
+								"s": [0]
+							},
+							{ "t": 95, "s": [100] }
+						],
+						"ix": 1
+					},
+					"e": {
+						"a": 1,
+						"k": [
+							{
+								"i": { "x": [0.1], "y": [1] },
+								"o": { "x": [0.333], "y": [0] },
+								"t": 26,
+								"s": [0]
+							},
+							{ "t": 46, "s": [100] }
+						],
+						"ix": 2
+					},
+					"o": { "a": 0, "k": 0, "ix": 3 },
+					"m": 2,
+					"ix": 3,
+					"nm": "Trim Paths 1",
+					"mn": "ADBE Vector Filter - Trim",
+					"hd": false
+				}
+			],
+			"ip": 26,
+			"op": 92,
+			"st": 0,
+			"ct": 1,
+			"bm": 0
+		},
+		{
+			"ddd": 0,
+			"ind": 4,
+			"ty": 4,
+			"nm": "[TP] Text 2",
+			"parent": 9,
+			"sr": 1,
+			"ks": {
+				"o": { "a": 0, "k": 100, "ix": 11 },
+				"r": { "a": 0, "k": 0, "ix": 10 },
+				"p": { "a": 0, "k": [277.743, 243.303, 0], "ix": 2, "l": 2 },
+				"a": { "a": 0, "k": [277.743, 243.303, 0], "ix": 1, "l": 2 },
+				"s": { "a": 0, "k": [100, 100, 100], "ix": 6, "l": 2 }
+			},
+			"ao": 0,
+			"shapes": [
+				{
+					"ty": "gr",
+					"it": [
+						{
+							"ind": 0,
+							"ty": "sh",
+							"ix": 1,
+							"ks": {
+								"a": 0,
+								"k": {
+									"i": [
+										[0, 0],
+										[0, 0]
+									],
+									"o": [
+										[0, 0],
+										[0, 0]
+									],
+									"v": [
+										[-95.021, 0],
+										[95.021, 0]
+									],
+									"c": false
+								},
+								"ix": 2
+							},
+							"nm": "Path 1",
+							"mn": "ADBE Vector Shape - Group",
+							"hd": false
+						},
+						{
+							"ty": "st",
+							"c": {
+								"a": 0,
+								"k": [0, 0, 0, 1],
+								"ix": 3,
+								"x": "var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Base Color')('Color');"
+							},
+							"o": { "a": 0, "k": 100, "ix": 4 },
+							"w": {
+								"a": 0,
+								"k": 16,
+								"ix": 5,
+								"x": "var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Stroke width')('Slider');"
+							},
+							"lc": 2,
+							"lj": 2,
+							"bm": 0,
+							"nm": "Stroke 1",
+							"mn": "ADBE Vector Graphic - Stroke",
+							"hd": false
+						},
+						{
+							"ty": "tr",
+							"p": { "a": 0, "k": [277.743, 227.903], "ix": 2 },
+							"a": { "a": 0, "k": [0, 0], "ix": 1 },
+							"s": { "a": 0, "k": [100, 100], "ix": 3 },
+							"r": { "a": 0, "k": 0, "ix": 6 },
+							"o": { "a": 0, "k": 100, "ix": 7 },
+							"sk": { "a": 0, "k": 0, "ix": 4 },
+							"sa": { "a": 0, "k": 0, "ix": 5 },
+							"nm": "Transform"
+						}
+					],
+					"nm": "Group 2",
+					"np": 2,
+					"cix": 2,
+					"bm": 0,
+					"ix": 1,
+					"mn": "ADBE Vector Group",
+					"hd": false
+				},
+				{
+					"ty": "gr",
+					"it": [
+						{
+							"ind": 0,
+							"ty": "sh",
+							"ix": 1,
+							"ks": {
+								"a": 0,
+								"k": {
+									"i": [
+										[0, 0],
+										[0, 0]
+									],
+									"o": [
+										[0, 0],
+										[0, 0]
+									],
+									"v": [
+										[-32.281, 0],
+										[32.281, 0]
+									],
+									"c": false
+								},
+								"ix": 2
+							},
+							"nm": "Path 1",
+							"mn": "ADBE Vector Shape - Group",
+							"hd": false
+						},
+						{
+							"ty": "st",
+							"c": {
+								"a": 0,
+								"k": [0, 0, 0, 1],
+								"ix": 3,
+								"x": "var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Base Color')('Color');"
+							},
+							"o": { "a": 0, "k": 100, "ix": 4 },
+							"w": {
+								"a": 0,
+								"k": 16,
+								"ix": 5,
+								"x": "var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Stroke width')('Slider');"
+							},
+							"lc": 2,
+							"lj": 2,
+							"bm": 0,
+							"nm": "Stroke 1",
+							"mn": "ADBE Vector Graphic - Stroke",
+							"hd": false
+						},
+						{
+							"ty": "tr",
+							"p": { "a": 0, "k": [215.003, 258.703], "ix": 2 },
+							"a": { "a": 0, "k": [0, 0], "ix": 1 },
+							"s": { "a": 0, "k": [100, 100], "ix": 3 },
+							"r": { "a": 0, "k": 0, "ix": 6 },
+							"o": { "a": 0, "k": 100, "ix": 7 },
+							"sk": { "a": 0, "k": 0, "ix": 4 },
+							"sa": { "a": 0, "k": 0, "ix": 5 },
+							"nm": "Transform"
+						}
+					],
+					"nm": "Group 1",
+					"np": 2,
+					"cix": 2,
+					"bm": 0,
+					"ix": 2,
+					"mn": "ADBE Vector Group",
+					"hd": false
+				},
+				{
+					"ty": "tm",
+					"s": {
+						"a": 1,
+						"k": [
+							{
+								"i": { "x": [0.1], "y": [1] },
+								"o": { "x": [0.333], "y": [0] },
+								"t": 95,
+								"s": [0]
+							},
+							{ "t": 108, "s": [100] }
+						],
+						"ix": 1
+					},
+					"e": {
+						"a": 1,
+						"k": [
+							{
+								"i": { "x": [0.1], "y": [1] },
+								"o": { "x": [0.333], "y": [0] },
+								"t": 40,
+								"s": [0]
+							},
+							{ "t": 60, "s": [100] }
+						],
+						"ix": 2
+					},
+					"o": { "a": 0, "k": 0, "ix": 3 },
+					"m": 2,
+					"ix": 3,
+					"nm": "Trim Paths 1",
+					"mn": "ADBE Vector Filter - Trim",
+					"hd": false
+				}
+			],
+			"ip": 40,
+			"op": 105,
+			"st": 9,
+			"ct": 1,
+			"bm": 0
+		},
+		{
+			"ddd": 0,
+			"ind": 5,
+			"ty": 4,
+			"nm": "[TP] Text 3",
+			"parent": 12,
+			"sr": 1,
+			"ks": {
+				"o": { "a": 0, "k": 100, "ix": 11 },
+				"r": { "a": 0, "k": 0, "ix": 10 },
+				"p": { "a": 0, "k": [277.743, 350.648, 0], "ix": 2, "l": 2 },
+				"a": { "a": 0, "k": [277.743, 350.648, 0], "ix": 1, "l": 2 },
+				"s": { "a": 0, "k": [100, 100, 100], "ix": 6, "l": 2 }
+			},
+			"ao": 0,
+			"shapes": [
+				{
+					"ty": "gr",
+					"it": [
+						{
+							"ind": 0,
+							"ty": "sh",
+							"ix": 1,
+							"ks": {
+								"a": 0,
+								"k": {
+									"i": [
+										[0, 0],
+										[0, 0]
+									],
+									"o": [
+										[0, 0],
+										[0, 0]
+									],
+									"v": [
+										[-95.021, 0],
+										[95.021, 0]
+									],
+									"c": false
+								},
+								"ix": 2
+							},
+							"nm": "Path 1",
+							"mn": "ADBE Vector Shape - Group",
+							"hd": false
+						},
+						{
+							"ty": "st",
+							"c": {
+								"a": 0,
+								"k": [0, 0, 0, 1],
+								"ix": 3,
+								"x": "var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Base Color')('Color');"
+							},
+							"o": { "a": 0, "k": 100, "ix": 4 },
+							"w": {
+								"a": 0,
+								"k": 16,
+								"ix": 5,
+								"x": "var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Stroke width')('Slider');"
+							},
+							"lc": 2,
+							"lj": 2,
+							"bm": 0,
+							"nm": "Stroke 1",
+							"mn": "ADBE Vector Graphic - Stroke",
+							"hd": false
+						},
+						{
+							"ty": "tr",
+							"p": { "a": 0, "k": [277.743, 335.248], "ix": 2 },
+							"a": { "a": 0, "k": [0, 0], "ix": 1 },
+							"s": { "a": 0, "k": [100, 100], "ix": 3 },
+							"r": { "a": 0, "k": 0, "ix": 6 },
+							"o": { "a": 0, "k": 100, "ix": 7 },
+							"sk": { "a": 0, "k": 0, "ix": 4 },
+							"sa": { "a": 0, "k": 0, "ix": 5 },
+							"nm": "Transform"
+						}
+					],
+					"nm": "Group 2",
+					"np": 2,
+					"cix": 2,
+					"bm": 0,
+					"ix": 1,
+					"mn": "ADBE Vector Group",
+					"hd": false
+				},
+				{
+					"ty": "gr",
+					"it": [
+						{
+							"ind": 0,
+							"ty": "sh",
+							"ix": 1,
+							"ks": {
+								"a": 0,
+								"k": {
+									"i": [
+										[0, 0],
+										[0, 0]
+									],
+									"o": [
+										[0, 0],
+										[0, 0]
+									],
+									"v": [
+										[-32.281, 0],
+										[32.281, 0]
+									],
+									"c": false
+								},
+								"ix": 2
+							},
+							"nm": "Path 1",
+							"mn": "ADBE Vector Shape - Group",
+							"hd": false
+						},
+						{
+							"ty": "st",
+							"c": {
+								"a": 0,
+								"k": [0, 0, 0, 1],
+								"ix": 3,
+								"x": "var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Base Color')('Color');"
+							},
+							"o": { "a": 0, "k": 100, "ix": 4 },
+							"w": {
+								"a": 0,
+								"k": 16,
+								"ix": 5,
+								"x": "var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Stroke width')('Slider');"
+							},
+							"lc": 2,
+							"lj": 2,
+							"bm": 0,
+							"nm": "Stroke 1",
+							"mn": "ADBE Vector Graphic - Stroke",
+							"hd": false
+						},
+						{
+							"ty": "tr",
+							"p": { "a": 0, "k": [215.003, 366.048], "ix": 2 },
+							"a": { "a": 0, "k": [0, 0], "ix": 1 },
+							"s": { "a": 0, "k": [100, 100], "ix": 3 },
+							"r": { "a": 0, "k": 0, "ix": 6 },
+							"o": { "a": 0, "k": 100, "ix": 7 },
+							"sk": { "a": 0, "k": 0, "ix": 4 },
+							"sa": { "a": 0, "k": 0, "ix": 5 },
+							"nm": "Transform"
+						}
+					],
+					"nm": "Group 1",
+					"np": 2,
+					"cix": 2,
+					"bm": 0,
+					"ix": 2,
+					"mn": "ADBE Vector Group",
+					"hd": false
+				},
+				{
+					"ty": "tm",
+					"s": {
+						"a": 1,
+						"k": [
+							{
+								"i": { "x": [0.1], "y": [1] },
+								"o": { "x": [0.333], "y": [0] },
+								"t": 106,
+								"s": [0]
+							},
+							{ "t": 119, "s": [100] }
+						],
+						"ix": 1
+					},
+					"e": {
+						"a": 1,
+						"k": [
+							{
+								"i": { "x": [0.1], "y": [1] },
+								"o": { "x": [0.333], "y": [0] },
+								"t": 52,
+								"s": [0]
+							},
+							{ "t": 72, "s": [100] }
+						],
+						"ix": 2
+					},
+					"o": { "a": 0, "k": 0, "ix": 3 },
+					"m": 2,
+					"ix": 3,
+					"nm": "Trim Paths 1",
+					"mn": "ADBE Vector Filter - Trim",
+					"hd": false
+				}
+			],
+			"ip": 52,
+			"op": 116,
+			"st": 16,
+			"ct": 1,
+			"bm": 0
+		},
+		{
+			"ddd": 0,
+			"ind": 6,
+			"ty": 4,
+			"nm": "Text 1",
+			"parent": 8,
+			"sr": 1,
+			"ks": {
+				"o": { "a": 0, "k": 100, "ix": 11 },
+				"r": { "a": 0, "k": 0, "ix": 10 },
+				"p": { "a": 0, "k": [277.743, 133.596, 0], "ix": 2, "l": 2 },
+				"a": { "a": 0, "k": [277.743, 133.596, 0], "ix": 1, "l": 2 },
+				"s": { "a": 0, "k": [100, 100, 100], "ix": 6, "l": 2 }
+			},
+			"ao": 0,
+			"shapes": [
+				{
+					"ty": "gr",
+					"it": [
+						{
+							"ind": 0,
+							"ty": "sh",
+							"ix": 1,
+							"ks": {
+								"a": 0,
+								"k": {
+									"i": [
+										[0, 0],
+										[0, 0]
+									],
+									"o": [
+										[0, 0],
+										[0, 0]
+									],
+									"v": [
+										[-32.281, 0],
+										[32.281, 0]
+									],
+									"c": false
+								},
+								"ix": 2
+							},
+							"nm": "Path 1",
+							"mn": "ADBE Vector Shape - Group",
+							"hd": false
+						},
+						{
+							"ty": "st",
+							"c": {
+								"a": 0,
+								"k": [
+									0.20000000298, 0.800000011921,
+									0.800000011921, 1
+								],
+								"ix": 3,
+								"x": "var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Highlight')('Color');"
+							},
+							"o": { "a": 0, "k": 100, "ix": 4 },
+							"w": {
+								"a": 0,
+								"k": 16,
+								"ix": 5,
+								"x": "var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Stroke width')('Slider');"
+							},
+							"lc": 2,
+							"lj": 2,
+							"bm": 0,
+							"nm": "Stroke 1",
+							"mn": "ADBE Vector Graphic - Stroke",
+							"hd": false
+						},
+						{
+							"ty": "tr",
+							"p": { "a": 0, "k": [215.003, 148.996], "ix": 2 },
+							"a": { "a": 0, "k": [0, 0], "ix": 1 },
+							"s": { "a": 0, "k": [100, 100], "ix": 3 },
+							"r": { "a": 0, "k": 0, "ix": 6 },
+							"o": { "a": 0, "k": 100, "ix": 7 },
+							"sk": { "a": 0, "k": 0, "ix": 4 },
+							"sa": { "a": 0, "k": 0, "ix": 5 },
+							"nm": "Transform"
+						}
+					],
+					"nm": "Group 1",
+					"np": 2,
+					"cix": 2,
+					"bm": 0,
+					"ix": 1,
+					"mn": "ADBE Vector Group",
+					"hd": false
+				},
+				{
+					"ty": "gr",
+					"it": [
+						{
+							"ind": 0,
+							"ty": "sh",
+							"ix": 1,
+							"ks": {
+								"a": 0,
+								"k": {
+									"i": [
+										[0, 0],
+										[0, 0]
+									],
+									"o": [
+										[0, 0],
+										[0, 0]
+									],
+									"v": [
+										[-95.021, 0],
+										[95.021, 0]
+									],
+									"c": false
+								},
+								"ix": 2
+							},
+							"nm": "Path 1",
+							"mn": "ADBE Vector Shape - Group",
+							"hd": false
+						},
+						{
+							"ty": "st",
+							"c": {
+								"a": 0,
+								"k": [
+									0.20000000298, 0.800000011921,
+									0.800000011921, 1
+								],
+								"ix": 3,
+								"x": "var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Highlight')('Color');"
+							},
+							"o": { "a": 0, "k": 100, "ix": 4 },
+							"w": {
+								"a": 0,
+								"k": 16,
+								"ix": 5,
+								"x": "var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Stroke width')('Slider');"
+							},
+							"lc": 2,
+							"lj": 2,
+							"bm": 0,
+							"nm": "Stroke 1",
+							"mn": "ADBE Vector Graphic - Stroke",
+							"hd": false
+						},
+						{
+							"ty": "tr",
+							"p": { "a": 0, "k": [277.743, 118.196], "ix": 2 },
+							"a": { "a": 0, "k": [0, 0], "ix": 1 },
+							"s": { "a": 0, "k": [100, 100], "ix": 3 },
+							"r": { "a": 0, "k": 0, "ix": 6 },
+							"o": { "a": 0, "k": 100, "ix": 7 },
+							"sk": { "a": 0, "k": 0, "ix": 4 },
+							"sa": { "a": 0, "k": 0, "ix": 5 },
+							"nm": "Transform"
+						}
+					],
+					"nm": "Group 2",
+					"np": 2,
+					"cix": 2,
+					"bm": 0,
+					"ix": 2,
+					"mn": "ADBE Vector Group",
+					"hd": false
+				}
+			],
+			"ip": 0,
+			"op": 180,
+			"st": 0,
+			"ct": 1,
+			"bm": 0
+		},
+		{
+			"ddd": 0,
+			"ind": 7,
+			"ty": 4,
+			"nm": "[M] P 1",
+			"td": 1,
+			"sr": 1,
+			"ks": {
+				"o": { "a": 0, "k": 100, "ix": 11 },
+				"r": { "a": 0, "k": 0, "ix": 10 },
+				"p": { "a": 0, "k": [250.034, 249.652, 0], "ix": 2, "l": 2 },
+				"a": { "a": 0, "k": [250.034, 249.652, 0], "ix": 1, "l": 2 },
+				"s": {
+					"a": 1,
+					"k": [
+						{
+							"i": { "x": [0.667, 0.667, 0.667], "y": [1, 1, 1] },
+							"o": { "x": [0.333, 0.333, 0.333], "y": [0, 0, 0] },
+							"t": 30,
+							"s": [100, 100, 100]
+						},
+						{
+							"i": { "x": [0.163, 0.163, 0.667], "y": [1, 1, 1] },
+							"o": { "x": [0.333, 0.333, 0.333], "y": [0, 0, 0] },
+							"t": 40,
+							"s": [94, 94, 100]
+						},
+						{
+							"i": { "x": [0.667, 0.667, 0.667], "y": [1, 1, 1] },
+							"o": { "x": [0.333, 0.333, 0.333], "y": [0, 0, 0] },
+							"t": 90,
+							"s": [106, 106, 100]
+						},
+						{
+							"i": { "x": [0.667, 0.667, 0.667], "y": [1, 1, 1] },
+							"o": { "x": [0.333, 0.333, 0.333], "y": [0, 0, 0] },
+							"t": 100,
+							"s": [94, 94, 100]
+						},
+						{
+							"i": { "x": [0.667, 0.667, 0.667], "y": [1, 1, 1] },
+							"o": { "x": [0.333, 0.333, 0.333], "y": [0, 0, 0] },
+							"t": 112,
+							"s": [104, 104, 100]
+						},
+						{ "t": 128, "s": [100, 100, 100] }
+					],
+					"ix": 6,
+					"l": 2
+				}
+			},
+			"ao": 0,
+			"shapes": [
+				{
+					"ty": "gr",
+					"it": [
+						{
+							"ind": 0,
+							"ty": "sh",
+							"ix": 1,
+							"ks": {
+								"a": 0,
+								"k": {
+									"i": [
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 0]
+									],
+									"o": [
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 0]
+									],
+									"v": [
+										[-1.54, 62.419],
+										[26.46, 46.902],
+										[171.466, 46.902],
+										[171.466, -62.419],
+										[27.966, -62.419],
+										[-0.034, -46.902],
+										[-28.034, -62.419],
+										[-171.466, -62.419],
+										[-171.466, 46.902],
+										[-29.54, 46.902]
+									],
+									"c": true
+								},
+								"ix": 2
+							},
+							"nm": "Path 1",
+							"mn": "ADBE Vector Shape - Group",
+							"hd": false
+						},
+						{
+							"ty": "fl",
+							"c": { "a": 0, "k": [1, 0, 0, 1], "ix": 4 },
+							"o": { "a": 0, "k": 100, "ix": 5 },
+							"r": 1,
+							"bm": 0,
+							"nm": "Fill 1",
+							"mn": "ADBE Vector Graphic - Fill",
+							"hd": false
+						},
+						{
+							"ty": "tr",
+							"p": { "a": 0, "k": [250.034, 249.652], "ix": 2 },
+							"a": { "a": 0, "k": [0, 0], "ix": 1 },
+							"s": { "a": 0, "k": [100, 100], "ix": 3 },
+							"r": { "a": 0, "k": 0, "ix": 6 },
+							"o": { "a": 0, "k": 100, "ix": 7 },
+							"sk": { "a": 0, "k": 0, "ix": 4 },
+							"sa": { "a": 0, "k": 0, "ix": 5 },
+							"nm": "Transform"
+						}
+					],
+					"nm": "Group 1",
+					"np": 2,
+					"cix": 2,
+					"bm": 0,
+					"ix": 1,
+					"mn": "ADBE Vector Group",
+					"hd": false
+				}
+			],
+			"ip": 0,
+			"op": 180,
+			"st": 0,
+			"ct": 1,
+			"bm": 0
+		},
+		{
+			"ddd": 0,
+			"ind": 8,
+			"ty": 4,
+			"nm": "Piece 1",
+			"tt": 2,
+			"tp": 7,
+			"sr": 1,
+			"ks": {
+				"o": { "a": 0, "k": 100, "ix": 11 },
+				"r": { "a": 0, "k": 0, "ix": 10 },
+				"p": { "a": 0, "k": [250, 250, 0], "ix": 2, "l": 2 },
+				"a": { "a": 0, "k": [250, 250, 0], "ix": 1, "l": 2 },
+				"s": {
+					"a": 1,
+					"k": [
+						{
+							"i": { "x": [0.667, 0.667, 0.667], "y": [1, 1, 1] },
+							"o": { "x": [0.333, 0.333, 0.333], "y": [0, 0, 0] },
+							"t": 20,
+							"s": [100, 100, 100]
+						},
+						{
+							"i": { "x": [0.163, 0.163, 0.667], "y": [1, 1, 1] },
+							"o": { "x": [0.333, 0.333, 0.333], "y": [0, 0, 0] },
+							"t": 30,
+							"s": [94, 94, 100]
+						},
+						{
+							"i": { "x": [0.667, 0.667, 0.667], "y": [1, 1, 1] },
+							"o": { "x": [0.333, 0.333, 0.333], "y": [0, 0, 0] },
+							"t": 80,
+							"s": [106, 106, 100]
+						},
+						{
+							"i": { "x": [0.667, 0.667, 0.667], "y": [1, 1, 1] },
+							"o": { "x": [0.333, 0.333, 0.333], "y": [0, 0, 0] },
+							"t": 90,
+							"s": [94, 94, 100]
+						},
+						{
+							"i": { "x": [0.667, 0.667, 0.667], "y": [1, 1, 1] },
+							"o": { "x": [0.333, 0.333, 0.333], "y": [0, 0, 0] },
+							"t": 102,
+							"s": [104, 104, 100]
+						},
+						{ "t": 118, "s": [100, 100, 100] }
+					],
+					"ix": 6,
+					"l": 2
+				}
+			},
+			"ao": 0,
+			"shapes": [
+				{
+					"ty": "gr",
+					"it": [
+						{
+							"ind": 0,
+							"ty": "sh",
+							"ix": 1,
+							"ks": {
+								"a": 0,
+								"k": {
+									"i": [
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[15.464, 0],
+										[0, 0],
+										[0, -15.464],
+										[0, 0],
+										[0, 0]
+									],
+									"o": [
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, -15.464],
+										[0, 0],
+										[-15.464, 0],
+										[0, 0],
+										[0, 0],
+										[0, 0]
+									],
+									"v": [
+										[-0.034, 62.125],
+										[27.966, 46.608],
+										[171.466, 46.608],
+										[171.466, -34.125],
+										[143.466, -62.125],
+										[-143.466, -62.125],
+										[-171.466, -34.125],
+										[-171.466, 46.608],
+										[-28.034, 46.608]
+									],
+									"c": true
+								},
+								"ix": 2
+							},
+							"nm": "Path 1",
+							"mn": "ADBE Vector Shape - Group",
+							"hd": false
+						},
+						{
+							"ty": "st",
+							"c": {
+								"a": 0,
+								"k": [0, 0, 0, 1],
+								"ix": 3,
+								"x": "var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Base Color')('Color');"
+							},
+							"o": { "a": 0, "k": 100, "ix": 4 },
+							"w": {
+								"a": 0,
+								"k": 16,
+								"ix": 5,
+								"x": "var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Stroke width')('Slider');"
+							},
+							"lc": 2,
+							"lj": 2,
+							"bm": 0,
+							"nm": "Stroke 1",
+							"mn": "ADBE Vector Graphic - Stroke",
+							"hd": false
+						},
+						{
+							"ty": "tr",
+							"p": { "a": 0, "k": [250.034, 140.625], "ix": 2 },
+							"a": { "a": 0, "k": [0, 0], "ix": 1 },
+							"s": { "a": 0, "k": [100, 100], "ix": 3 },
+							"r": { "a": 0, "k": 0, "ix": 6 },
+							"o": { "a": 0, "k": 100, "ix": 7 },
+							"sk": { "a": 0, "k": 0, "ix": 4 },
+							"sa": { "a": 0, "k": 0, "ix": 5 },
+							"nm": "Transform"
+						}
+					],
+					"nm": "Group 1",
+					"np": 2,
+					"cix": 2,
+					"bm": 0,
+					"ix": 1,
+					"mn": "ADBE Vector Group",
+					"hd": false
+				},
+				{
+					"ty": "gr",
+					"it": [
+						{
+							"ind": 0,
+							"ty": "sh",
+							"ix": 1,
+							"ks": {
+								"a": 0,
+								"k": {
+									"i": [
+										[0, 0],
+										[0, 0],
+										[0, 0]
+									],
+									"o": [
+										[0, 0],
+										[0, 0],
+										[0, 0]
+									],
+									"v": [
+										[-4.628, -21.653],
+										[4.628, -21.653],
+										[4.628, 21.653]
+									],
+									"c": false
+								},
+								"ix": 2
+							},
+							"nm": "Path 1",
+							"mn": "ADBE Vector Shape - Group",
+							"hd": false
+						},
+						{
+							"ty": "st",
+							"c": {
+								"a": 0,
+								"k": [0, 0, 0, 1],
+								"ix": 3,
+								"x": "var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Base Color')('Color');"
+							},
+							"o": { "a": 0, "k": 100, "ix": 4 },
+							"w": {
+								"a": 0,
+								"k": 16,
+								"ix": 5,
+								"x": "var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Stroke width')('Slider');"
+							},
+							"lc": 2,
+							"lj": 2,
+							"bm": 0,
+							"nm": "Stroke 1",
+							"mn": "ADBE Vector Graphic - Stroke",
+							"hd": false
+						},
+						{
+							"ty": "tr",
+							"p": { "a": 0, "k": [129.358, 133.596], "ix": 2 },
+							"a": { "a": 0, "k": [0, 0], "ix": 1 },
+							"s": { "a": 0, "k": [100, 100], "ix": 3 },
+							"r": {
+								"a": 1,
+								"k": [
+									{
+										"i": { "x": [0.667], "y": [1] },
+										"o": { "x": [0.333], "y": [0] },
+										"t": 10,
+										"s": [0]
+									},
+									{
+										"i": { "x": [0.667], "y": [1] },
+										"o": { "x": [0.333], "y": [0] },
+										"t": 20,
+										"s": [20]
+									},
+									{
+										"i": { "x": [0.667], "y": [1] },
+										"o": { "x": [0.333], "y": [0] },
+										"t": 40,
+										"s": [-10]
+									},
+									{
+										"i": { "x": [0.667], "y": [1] },
+										"o": { "x": [0.333], "y": [0] },
+										"t": 50,
+										"s": [5]
+									},
+									{ "t": 60, "s": [0] }
+								],
+								"ix": 6
+							},
+							"o": { "a": 0, "k": 100, "ix": 7 },
+							"sk": { "a": 0, "k": 0, "ix": 4 },
+							"sa": { "a": 0, "k": 0, "ix": 5 },
+							"nm": "Transform"
+						}
+					],
+					"nm": "Group 2",
+					"np": 2,
+					"cix": 2,
+					"bm": 0,
+					"ix": 2,
+					"mn": "ADBE Vector Group",
+					"hd": false
+				}
+			],
+			"ip": 0,
+			"op": 180,
+			"st": 0,
+			"ct": 1,
+			"bm": 0
+		},
+		{
+			"ddd": 0,
+			"ind": 9,
+			"ty": 4,
+			"nm": "Text 2",
+			"parent": 11,
+			"sr": 1,
+			"ks": {
+				"o": { "a": 0, "k": 100, "ix": 11 },
+				"r": { "a": 0, "k": 0, "ix": 10 },
+				"p": { "a": 0, "k": [277.743, 243.303, 0], "ix": 2, "l": 2 },
+				"a": { "a": 0, "k": [277.743, 243.303, 0], "ix": 1, "l": 2 },
+				"s": { "a": 0, "k": [100, 100, 100], "ix": 6, "l": 2 }
+			},
+			"ao": 0,
+			"shapes": [
+				{
+					"ty": "gr",
+					"it": [
+						{
+							"ind": 0,
+							"ty": "sh",
+							"ix": 1,
+							"ks": {
+								"a": 0,
+								"k": {
+									"i": [
+										[0, 0],
+										[0, 0]
+									],
+									"o": [
+										[0, 0],
+										[0, 0]
+									],
+									"v": [
+										[-32.281, 0],
+										[32.281, 0]
+									],
+									"c": false
+								},
+								"ix": 2
+							},
+							"nm": "Path 1",
+							"mn": "ADBE Vector Shape - Group",
+							"hd": false
+						},
+						{
+							"ty": "st",
+							"c": {
+								"a": 0,
+								"k": [
+									0.20000000298, 0.800000011921,
+									0.800000011921, 1
+								],
+								"ix": 3,
+								"x": "var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Highlight')('Color');"
+							},
+							"o": { "a": 0, "k": 100, "ix": 4 },
+							"w": {
+								"a": 0,
+								"k": 16,
+								"ix": 5,
+								"x": "var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Stroke width')('Slider');"
+							},
+							"lc": 2,
+							"lj": 2,
+							"bm": 0,
+							"nm": "Stroke 1",
+							"mn": "ADBE Vector Graphic - Stroke",
+							"hd": false
+						},
+						{
+							"ty": "tr",
+							"p": { "a": 0, "k": [215.003, 258.703], "ix": 2 },
+							"a": { "a": 0, "k": [0, 0], "ix": 1 },
+							"s": { "a": 0, "k": [100, 100], "ix": 3 },
+							"r": { "a": 0, "k": 0, "ix": 6 },
+							"o": { "a": 0, "k": 100, "ix": 7 },
+							"sk": { "a": 0, "k": 0, "ix": 4 },
+							"sa": { "a": 0, "k": 0, "ix": 5 },
+							"nm": "Transform"
+						}
+					],
+					"nm": "Group 1",
+					"np": 2,
+					"cix": 2,
+					"bm": 0,
+					"ix": 1,
+					"mn": "ADBE Vector Group",
+					"hd": false
+				},
+				{
+					"ty": "gr",
+					"it": [
+						{
+							"ind": 0,
+							"ty": "sh",
+							"ix": 1,
+							"ks": {
+								"a": 0,
+								"k": {
+									"i": [
+										[0, 0],
+										[0, 0]
+									],
+									"o": [
+										[0, 0],
+										[0, 0]
+									],
+									"v": [
+										[-95.021, 0],
+										[95.021, 0]
+									],
+									"c": false
+								},
+								"ix": 2
+							},
+							"nm": "Path 1",
+							"mn": "ADBE Vector Shape - Group",
+							"hd": false
+						},
+						{
+							"ty": "st",
+							"c": {
+								"a": 0,
+								"k": [
+									0.20000000298, 0.800000011921,
+									0.800000011921, 1
+								],
+								"ix": 3,
+								"x": "var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Highlight')('Color');"
+							},
+							"o": { "a": 0, "k": 100, "ix": 4 },
+							"w": {
+								"a": 0,
+								"k": 16,
+								"ix": 5,
+								"x": "var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Stroke width')('Slider');"
+							},
+							"lc": 2,
+							"lj": 2,
+							"bm": 0,
+							"nm": "Stroke 1",
+							"mn": "ADBE Vector Graphic - Stroke",
+							"hd": false
+						},
+						{
+							"ty": "tr",
+							"p": { "a": 0, "k": [277.743, 227.903], "ix": 2 },
+							"a": { "a": 0, "k": [0, 0], "ix": 1 },
+							"s": { "a": 0, "k": [100, 100], "ix": 3 },
+							"r": { "a": 0, "k": 0, "ix": 6 },
+							"o": { "a": 0, "k": 100, "ix": 7 },
+							"sk": { "a": 0, "k": 0, "ix": 4 },
+							"sa": { "a": 0, "k": 0, "ix": 5 },
+							"nm": "Transform"
+						}
+					],
+					"nm": "Group 2",
+					"np": 2,
+					"cix": 2,
+					"bm": 0,
+					"ix": 2,
+					"mn": "ADBE Vector Group",
+					"hd": false
+				}
+			],
+			"ip": 0,
+			"op": 180,
+			"st": 0,
+			"ct": 1,
+			"bm": 0
+		},
+		{
+			"ddd": 0,
+			"ind": 10,
+			"ty": 4,
+			"nm": "[M] P 2",
+			"td": 1,
+			"sr": 1,
+			"ks": {
+				"o": { "a": 0, "k": 100, "ix": 11 },
+				"r": { "a": 0, "k": 0, "ix": 10 },
+				"p": { "a": 0, "k": [250, 250, 0], "ix": 2, "l": 2 },
+				"a": { "a": 0, "k": [250, 250, 0], "ix": 1, "l": 2 },
+				"s": {
+					"a": 1,
+					"k": [
+						{
+							"i": { "x": [0.667, 0.667, 0.667], "y": [1, 1, 1] },
+							"o": { "x": [0.333, 0.333, 0.333], "y": [0, 0, 0] },
+							"t": 40,
+							"s": [100, 100, 100]
+						},
+						{
+							"i": { "x": [0.163, 0.163, 0.667], "y": [1, 1, 1] },
+							"o": { "x": [0.333, 0.333, 0.333], "y": [0, 0, 0] },
+							"t": 50,
+							"s": [94, 94, 100]
+						},
+						{
+							"i": { "x": [0.667, 0.667, 0.667], "y": [1, 1, 1] },
+							"o": { "x": [0.333, 0.333, 0.333], "y": [0, 0, 0] },
+							"t": 100,
+							"s": [106, 106, 100]
+						},
+						{
+							"i": { "x": [0.667, 0.667, 0.667], "y": [1, 1, 1] },
+							"o": { "x": [0.333, 0.333, 0.333], "y": [0, 0, 0] },
+							"t": 110,
+							"s": [94, 94, 100]
+						},
+						{
+							"i": { "x": [0.667, 0.667, 0.667], "y": [1, 1, 1] },
+							"o": { "x": [0.333, 0.333, 0.333], "y": [0, 0, 0] },
+							"t": 122,
+							"s": [104, 104, 100]
+						},
+						{ "t": 138, "s": [100, 100, 100] }
+					],
+					"ix": 6,
+					"l": 2
+				}
+			},
+			"ao": 0,
+			"shapes": [
+				{
+					"ty": "gr",
+					"it": [
+						{
+							"ind": 0,
+							"ty": "sh",
+							"ix": 1,
+							"ks": {
+								"a": 0,
+								"k": {
+									"i": [
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[-15.464, 0],
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 15.464],
+										[0, 0]
+									],
+									"o": [
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 15.464],
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[15.464, 0],
+										[0, 0],
+										[0, 0]
+									],
+									"v": [
+										[26.46, -62.473],
+										[-1.54, -46.956],
+										[-29.54, -62.473],
+										[-171.466, -62.473],
+										[-171.466, 18.956],
+										[-143.466, 46.956],
+										[-28.034, 46.956],
+										[-0.034, 62.473],
+										[27.966, 46.956],
+										[143.466, 46.956],
+										[171.466, 18.956],
+										[171.466, -62.473]
+									],
+									"c": true
+								},
+								"ix": 2
+							},
+							"nm": "Path 1",
+							"mn": "ADBE Vector Shape - Group",
+							"hd": false
+						},
+						{
+							"ty": "fl",
+							"c": { "a": 0, "k": [1, 0, 0, 1], "ix": 4 },
+							"o": { "a": 0, "k": 100, "ix": 5 },
+							"r": 1,
+							"bm": 0,
+							"nm": "Fill 1",
+							"mn": "ADBE Vector Graphic - Fill",
+							"hd": false
+						},
+						{
+							"ty": "tr",
+							"p": { "a": 0, "k": [250.034, 359.027], "ix": 2 },
+							"a": { "a": 0, "k": [0, 0], "ix": 1 },
+							"s": { "a": 0, "k": [100, 100], "ix": 3 },
+							"r": { "a": 0, "k": 0, "ix": 6 },
+							"o": { "a": 0, "k": 100, "ix": 7 },
+							"sk": { "a": 0, "k": 0, "ix": 4 },
+							"sa": { "a": 0, "k": 0, "ix": 5 },
+							"nm": "Transform"
+						}
+					],
+					"nm": "Group 1",
+					"np": 2,
+					"cix": 2,
+					"bm": 0,
+					"ix": 1,
+					"mn": "ADBE Vector Group",
+					"hd": false
+				}
+			],
+			"ip": 0,
+			"op": 180,
+			"st": 0,
+			"ct": 1,
+			"bm": 0
+		},
+		{
+			"ddd": 0,
+			"ind": 11,
+			"ty": 4,
+			"nm": "Piece 2",
+			"tt": 2,
+			"tp": 10,
+			"sr": 1,
+			"ks": {
+				"o": { "a": 0, "k": 100, "ix": 11 },
+				"r": { "a": 0, "k": 0, "ix": 10 },
+				"p": { "a": 0, "k": [250.034, 249.652, 0], "ix": 2, "l": 2 },
+				"a": { "a": 0, "k": [250.034, 249.652, 0], "ix": 1, "l": 2 },
+				"s": {
+					"a": 1,
+					"k": [
+						{
+							"i": { "x": [0.667, 0.667, 0.667], "y": [1, 1, 1] },
+							"o": { "x": [0.333, 0.333, 0.333], "y": [0, 0, 0] },
+							"t": 30,
+							"s": [100, 100, 100]
+						},
+						{
+							"i": { "x": [0.163, 0.163, 0.667], "y": [1, 1, 1] },
+							"o": { "x": [0.333, 0.333, 0.333], "y": [0, 0, 0] },
+							"t": 40,
+							"s": [94, 94, 100]
+						},
+						{
+							"i": { "x": [0.667, 0.667, 0.667], "y": [1, 1, 1] },
+							"o": { "x": [0.333, 0.333, 0.333], "y": [0, 0, 0] },
+							"t": 90,
+							"s": [106, 106, 100]
+						},
+						{
+							"i": { "x": [0.667, 0.667, 0.667], "y": [1, 1, 1] },
+							"o": { "x": [0.333, 0.333, 0.333], "y": [0, 0, 0] },
+							"t": 100,
+							"s": [94, 94, 100]
+						},
+						{
+							"i": { "x": [0.667, 0.667, 0.667], "y": [1, 1, 1] },
+							"o": { "x": [0.333, 0.333, 0.333], "y": [0, 0, 0] },
+							"t": 112,
+							"s": [104, 104, 100]
+						},
+						{ "t": 128, "s": [100, 100, 100] }
+					],
+					"ix": 6,
+					"l": 2
+				}
+			},
+			"ao": 0,
+			"shapes": [
+				{
+					"ty": "gr",
+					"it": [
+						{
+							"ind": 0,
+							"ty": "sh",
+							"ix": 1,
+							"ks": {
+								"a": 0,
+								"k": {
+									"i": [
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 0]
+									],
+									"o": [
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 0]
+									],
+									"v": [
+										[-1.54, 62.419],
+										[26.46, 46.902],
+										[171.466, 46.902],
+										[171.466, -62.419],
+										[27.966, -62.419],
+										[-0.034, -46.902],
+										[-28.034, -62.419],
+										[-171.466, -62.419],
+										[-171.466, 46.902],
+										[-29.54, 46.902]
+									],
+									"c": true
+								},
+								"ix": 2
+							},
+							"nm": "Path 1",
+							"mn": "ADBE Vector Shape - Group",
+							"hd": false
+						},
+						{
+							"ty": "st",
+							"c": {
+								"a": 0,
+								"k": [0, 0, 0, 1],
+								"ix": 3,
+								"x": "var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Base Color')('Color');"
+							},
+							"o": { "a": 0, "k": 100, "ix": 4 },
+							"w": {
+								"a": 0,
+								"k": 16,
+								"ix": 5,
+								"x": "var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Stroke width')('Slider');"
+							},
+							"lc": 2,
+							"lj": 2,
+							"bm": 0,
+							"nm": "Stroke 1",
+							"mn": "ADBE Vector Graphic - Stroke",
+							"hd": false
+						},
+						{
+							"ty": "tr",
+							"p": { "a": 0, "k": [250.034, 249.652], "ix": 2 },
+							"a": { "a": 0, "k": [0, 0], "ix": 1 },
+							"s": { "a": 0, "k": [100, 100], "ix": 3 },
+							"r": { "a": 0, "k": 0, "ix": 6 },
+							"o": { "a": 0, "k": 100, "ix": 7 },
+							"sk": { "a": 0, "k": 0, "ix": 4 },
+							"sa": { "a": 0, "k": 0, "ix": 5 },
+							"nm": "Transform"
+						}
+					],
+					"nm": "Group 1",
+					"np": 2,
+					"cix": 2,
+					"bm": 0,
+					"ix": 1,
+					"mn": "ADBE Vector Group",
+					"hd": false
+				},
+				{
+					"ty": "gr",
+					"it": [
+						{
+							"ind": 0,
+							"ty": "sh",
+							"ix": 1,
+							"ks": {
+								"a": 0,
+								"k": {
+									"i": [
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0.607, 4.539],
+										[5.36, 0],
+										[0.984, -5.009]
+									],
+									"o": [
+										[0, 0],
+										[0, 0],
+										[3.24, -4.882],
+										[-0.703, -5.257],
+										[-5.298, 0],
+										[0, 0]
+									],
+									"v": [
+										[11.702, 21.653],
+										[-10.008, 21.653],
+										[5.156, 0.146],
+										[9.725, -12.688],
+										[-1.005, -21.653],
+										[-11.702, -12.864]
+									],
+									"c": false
+								},
+								"ix": 2
+							},
+							"nm": "Path 1",
+							"mn": "ADBE Vector Shape - Group",
+							"hd": false
+						},
+						{
+							"ty": "st",
+							"c": {
+								"a": 0,
+								"k": [0, 0, 0, 1],
+								"ix": 3,
+								"x": "var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Base Color')('Color');"
+							},
+							"o": { "a": 0, "k": 100, "ix": 4 },
+							"w": {
+								"a": 0,
+								"k": 16,
+								"ix": 5,
+								"x": "var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Stroke width')('Slider');"
+							},
+							"lc": 2,
+							"lj": 2,
+							"bm": 0,
+							"nm": "Stroke 1",
+							"mn": "ADBE Vector Graphic - Stroke",
+							"hd": false
+						},
+						{
+							"ty": "tr",
+							"p": { "a": 0, "k": [129.358, 238.403], "ix": 2 },
+							"a": { "a": 0, "k": [0, 0], "ix": 1 },
+							"s": { "a": 0, "k": [100, 100], "ix": 3 },
+							"r": {
+								"a": 1,
+								"k": [
+									{
+										"i": { "x": [0.667], "y": [1] },
+										"o": { "x": [0.333], "y": [0] },
+										"t": 20,
+										"s": [0]
+									},
+									{
+										"i": { "x": [0.667], "y": [1] },
+										"o": { "x": [0.333], "y": [0] },
+										"t": 30,
+										"s": [20]
+									},
+									{
+										"i": { "x": [0.667], "y": [1] },
+										"o": { "x": [0.333], "y": [0] },
+										"t": 50,
+										"s": [-10]
+									},
+									{
+										"i": { "x": [0.667], "y": [1] },
+										"o": { "x": [0.333], "y": [0] },
+										"t": 60,
+										"s": [5]
+									},
+									{ "t": 70, "s": [0] }
+								],
+								"ix": 6
+							},
+							"o": { "a": 0, "k": 100, "ix": 7 },
+							"sk": { "a": 0, "k": 0, "ix": 4 },
+							"sa": { "a": 0, "k": 0, "ix": 5 },
+							"nm": "Transform"
+						}
+					],
+					"nm": "Group 2",
+					"np": 2,
+					"cix": 2,
+					"bm": 0,
+					"ix": 2,
+					"mn": "ADBE Vector Group",
+					"hd": false
+				}
+			],
+			"ip": 0,
+			"op": 180,
+			"st": 0,
+			"ct": 1,
+			"bm": 0
+		},
+		{
+			"ddd": 0,
+			"ind": 12,
+			"ty": 4,
+			"nm": "Text 3",
+			"parent": 13,
+			"sr": 1,
+			"ks": {
+				"o": { "a": 0, "k": 100, "ix": 11 },
+				"r": { "a": 0, "k": 0, "ix": 10 },
+				"p": { "a": 0, "k": [277.743, 350.648, 0], "ix": 2, "l": 2 },
+				"a": { "a": 0, "k": [277.743, 350.648, 0], "ix": 1, "l": 2 },
+				"s": { "a": 0, "k": [100, 100, 100], "ix": 6, "l": 2 }
+			},
+			"ao": 0,
+			"shapes": [
+				{
+					"ty": "gr",
+					"it": [
+						{
+							"ind": 0,
+							"ty": "sh",
+							"ix": 1,
+							"ks": {
+								"a": 0,
+								"k": {
+									"i": [
+										[0, 0],
+										[0, 0]
+									],
+									"o": [
+										[0, 0],
+										[0, 0]
+									],
+									"v": [
+										[-32.281, 0],
+										[32.281, 0]
+									],
+									"c": false
+								},
+								"ix": 2
+							},
+							"nm": "Path 1",
+							"mn": "ADBE Vector Shape - Group",
+							"hd": false
+						},
+						{
+							"ty": "st",
+							"c": {
+								"a": 0,
+								"k": [
+									0.20000000298, 0.800000011921,
+									0.800000011921, 1
+								],
+								"ix": 3,
+								"x": "var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Highlight')('Color');"
+							},
+							"o": { "a": 0, "k": 100, "ix": 4 },
+							"w": {
+								"a": 0,
+								"k": 16,
+								"ix": 5,
+								"x": "var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Stroke width')('Slider');"
+							},
+							"lc": 2,
+							"lj": 2,
+							"bm": 0,
+							"nm": "Stroke 1",
+							"mn": "ADBE Vector Graphic - Stroke",
+							"hd": false
+						},
+						{
+							"ty": "tr",
+							"p": { "a": 0, "k": [215.003, 366.048], "ix": 2 },
+							"a": { "a": 0, "k": [0, 0], "ix": 1 },
+							"s": { "a": 0, "k": [100, 100], "ix": 3 },
+							"r": { "a": 0, "k": 0, "ix": 6 },
+							"o": { "a": 0, "k": 100, "ix": 7 },
+							"sk": { "a": 0, "k": 0, "ix": 4 },
+							"sa": { "a": 0, "k": 0, "ix": 5 },
+							"nm": "Transform"
+						}
+					],
+					"nm": "Group 1",
+					"np": 2,
+					"cix": 2,
+					"bm": 0,
+					"ix": 1,
+					"mn": "ADBE Vector Group",
+					"hd": false
+				},
+				{
+					"ty": "gr",
+					"it": [
+						{
+							"ind": 0,
+							"ty": "sh",
+							"ix": 1,
+							"ks": {
+								"a": 0,
+								"k": {
+									"i": [
+										[0, 0],
+										[0, 0]
+									],
+									"o": [
+										[0, 0],
+										[0, 0]
+									],
+									"v": [
+										[-95.021, 0],
+										[95.021, 0]
+									],
+									"c": false
+								},
+								"ix": 2
+							},
+							"nm": "Path 1",
+							"mn": "ADBE Vector Shape - Group",
+							"hd": false
+						},
+						{
+							"ty": "st",
+							"c": {
+								"a": 0,
+								"k": [
+									0.20000000298, 0.800000011921,
+									0.800000011921, 1
+								],
+								"ix": 3,
+								"x": "var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Highlight')('Color');"
+							},
+							"o": { "a": 0, "k": 100, "ix": 4 },
+							"w": {
+								"a": 0,
+								"k": 16,
+								"ix": 5,
+								"x": "var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Stroke width')('Slider');"
+							},
+							"lc": 2,
+							"lj": 2,
+							"bm": 0,
+							"nm": "Stroke 1",
+							"mn": "ADBE Vector Graphic - Stroke",
+							"hd": false
+						},
+						{
+							"ty": "tr",
+							"p": { "a": 0, "k": [277.743, 335.248], "ix": 2 },
+							"a": { "a": 0, "k": [0, 0], "ix": 1 },
+							"s": { "a": 0, "k": [100, 100], "ix": 3 },
+							"r": { "a": 0, "k": 0, "ix": 6 },
+							"o": { "a": 0, "k": 100, "ix": 7 },
+							"sk": { "a": 0, "k": 0, "ix": 4 },
+							"sa": { "a": 0, "k": 0, "ix": 5 },
+							"nm": "Transform"
+						}
+					],
+					"nm": "Group 2",
+					"np": 2,
+					"cix": 2,
+					"bm": 0,
+					"ix": 2,
+					"mn": "ADBE Vector Group",
+					"hd": false
+				}
+			],
+			"ip": 0,
+			"op": 180,
+			"st": 0,
+			"ct": 1,
+			"bm": 0
+		},
+		{
+			"ddd": 0,
+			"ind": 13,
+			"ty": 4,
+			"nm": "Piece 3",
+			"sr": 1,
+			"ks": {
+				"o": { "a": 0, "k": 100, "ix": 11 },
+				"r": { "a": 0, "k": 0, "ix": 10 },
+				"p": { "a": 0, "k": [250, 250, 0], "ix": 2, "l": 2 },
+				"a": { "a": 0, "k": [250, 250, 0], "ix": 1, "l": 2 },
+				"s": {
+					"a": 1,
+					"k": [
+						{
+							"i": { "x": [0.667, 0.667, 0.667], "y": [1, 1, 1] },
+							"o": { "x": [0.333, 0.333, 0.333], "y": [0, 0, 0] },
+							"t": 40,
+							"s": [100, 100, 100]
+						},
+						{
+							"i": { "x": [0.163, 0.163, 0.667], "y": [1, 1, 1] },
+							"o": { "x": [0.333, 0.333, 0.333], "y": [0, 0, 0] },
+							"t": 50,
+							"s": [94, 94, 100]
+						},
+						{
+							"i": { "x": [0.667, 0.667, 0.667], "y": [1, 1, 1] },
+							"o": { "x": [0.333, 0.333, 0.333], "y": [0, 0, 0] },
+							"t": 100,
+							"s": [106, 106, 100]
+						},
+						{
+							"i": { "x": [0.667, 0.667, 0.667], "y": [1, 1, 1] },
+							"o": { "x": [0.333, 0.333, 0.333], "y": [0, 0, 0] },
+							"t": 110,
+							"s": [94, 94, 100]
+						},
+						{
+							"i": { "x": [0.667, 0.667, 0.667], "y": [1, 1, 1] },
+							"o": { "x": [0.333, 0.333, 0.333], "y": [0, 0, 0] },
+							"t": 122,
+							"s": [104, 104, 100]
+						},
+						{ "t": 138, "s": [100, 100, 100] }
+					],
+					"ix": 6,
+					"l": 2
+				}
+			},
+			"ao": 0,
+			"shapes": [
+				{
+					"ty": "gr",
+					"it": [
+						{
+							"ind": 0,
+							"ty": "sh",
+							"ix": 1,
+							"ks": {
+								"a": 0,
+								"k": {
+									"i": [
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[-15.464, 0],
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 15.464],
+										[0, 0]
+									],
+									"o": [
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 15.464],
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[0, 0],
+										[15.464, 0],
+										[0, 0],
+										[0, 0]
+									],
+									"v": [
+										[26.46, -62.473],
+										[-1.54, -46.956],
+										[-29.54, -62.473],
+										[-171.466, -62.473],
+										[-171.466, 18.956],
+										[-143.466, 46.956],
+										[-28.034, 46.956],
+										[-0.034, 62.473],
+										[27.966, 46.956],
+										[143.466, 46.956],
+										[171.466, 18.956],
+										[171.466, -62.473]
+									],
+									"c": true
+								},
+								"ix": 2
+							},
+							"nm": "Path 1",
+							"mn": "ADBE Vector Shape - Group",
+							"hd": false
+						},
+						{
+							"ty": "st",
+							"c": {
+								"a": 0,
+								"k": [0, 0, 0, 1],
+								"ix": 3,
+								"x": "var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Base Color')('Color');"
+							},
+							"o": { "a": 0, "k": 100, "ix": 4 },
+							"w": {
+								"a": 0,
+								"k": 16,
+								"ix": 5,
+								"x": "var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Stroke width')('Slider');"
+							},
+							"lc": 2,
+							"lj": 2,
+							"bm": 0,
+							"nm": "Stroke 1",
+							"mn": "ADBE Vector Graphic - Stroke",
+							"hd": false
+						},
+						{
+							"ty": "tr",
+							"p": { "a": 0, "k": [250.034, 359.027], "ix": 2 },
+							"a": { "a": 0, "k": [0, 0], "ix": 1 },
+							"s": { "a": 0, "k": [100, 100], "ix": 3 },
+							"r": { "a": 0, "k": 0, "ix": 6 },
+							"o": { "a": 0, "k": 100, "ix": 7 },
+							"sk": { "a": 0, "k": 0, "ix": 4 },
+							"sa": { "a": 0, "k": 0, "ix": 5 },
+							"nm": "Transform"
+						}
+					],
+					"nm": "Group 1",
+					"np": 2,
+					"cix": 2,
+					"bm": 0,
+					"ix": 1,
+					"mn": "ADBE Vector Group",
+					"hd": false
+				},
+				{
+					"ty": "gr",
+					"it": [
+						{
+							"ty": "gr",
+							"it": [
+								{
+									"ind": 0,
+									"ty": "sh",
+									"ix": 1,
+									"ks": {
+										"a": 0,
+										"k": {
+											"i": [
+												[0, 0],
+												[0, -5.979],
+												[5.979, 0],
+												[1.807, 3.439]
+											],
+											"o": [
+												[5.979, 0],
+												[0, 5.979],
+												[-4.173, 0.021],
+												[0, 0]
+											],
+											"v": [
+												[-0.612, -10.826],
+												[10.214, 0],
+												[-0.612, 10.826],
+												[-10.214, 5]
+											],
+											"c": false
+										},
+										"ix": 2
+									},
+									"nm": "Path 1",
+									"mn": "ADBE Vector Shape - Group",
+									"hd": false
+								},
+								{
+									"ty": "st",
+									"c": {
+										"a": 0,
+										"k": [0, 0, 0, 1],
+										"ix": 3,
+										"x": "var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Base Color')('Color');"
+									},
+									"o": { "a": 0, "k": 100, "ix": 4 },
+									"w": {
+										"a": 0,
+										"k": 16,
+										"ix": 5,
+										"x": "var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Stroke width')('Slider');"
+									},
+									"lc": 2,
+									"lj": 2,
+									"bm": 0,
+									"nm": "Stroke 1",
+									"mn": "ADBE Vector Graphic - Stroke",
+									"hd": false
+								},
+								{
+									"ty": "tr",
+									"p": {
+										"a": 0,
+										"k": [129.971, 361.475],
+										"ix": 2
+									},
+									"a": { "a": 0, "k": [0, 0], "ix": 1 },
+									"s": { "a": 0, "k": [100, 100], "ix": 3 },
+									"r": { "a": 0, "k": 0, "ix": 6 },
+									"o": { "a": 0, "k": 100, "ix": 7 },
+									"sk": { "a": 0, "k": 0, "ix": 4 },
+									"sa": { "a": 0, "k": 0, "ix": 5 },
+									"nm": "Transform"
+								}
+							],
+							"nm": "Group 2",
+							"np": 2,
+							"cix": 2,
+							"bm": 0,
+							"ix": 1,
+							"mn": "ADBE Vector Group",
+							"hd": false
+						},
+						{
+							"ty": "gr",
+							"it": [
+								{
+									"ind": 0,
+									"ty": "sh",
+									"ix": 1,
+									"ks": {
+										"a": 0,
+										"k": {
+											"i": [
+												[0, 0],
+												[-3.501, 0],
+												[0, -5.979],
+												[5.979, 0]
+											],
+											"o": [
+												[1.979, -2.577],
+												[5.979, 0],
+												[0, 5.979],
+												[0, 0]
+											],
+											"v": [
+												[-9.657, -6.785],
+												[-1.169, -10.826],
+												[9.657, 0],
+												[-1.169, 10.826]
+											],
+											"c": false
+										},
+										"ix": 2
+									},
+									"nm": "Path 1",
+									"mn": "ADBE Vector Shape - Group",
+									"hd": false
+								},
+								{
+									"ty": "st",
+									"c": {
+										"a": 0,
+										"k": [0, 0, 0, 1],
+										"ix": 3,
+										"x": "var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Base Color')('Color');"
+									},
+									"o": { "a": 0, "k": 100, "ix": 4 },
+									"w": {
+										"a": 0,
+										"k": 16,
+										"ix": 5,
+										"x": "var $bm_rt;\n$bm_rt = thisComp.layer('Main Stroke width - Color Ctrl').effect('Stroke width')('Slider');"
+									},
+									"lc": 2,
+									"lj": 2,
+									"bm": 0,
+									"nm": "Stroke 1",
+									"mn": "ADBE Vector Graphic - Stroke",
+									"hd": false
+								},
+								{
+									"ty": "tr",
+									"p": {
+										"a": 0,
+										"k": [130.527, 339.822],
+										"ix": 2
+									},
+									"a": { "a": 0, "k": [0, 0], "ix": 1 },
+									"s": { "a": 0, "k": [100, 100], "ix": 3 },
+									"r": { "a": 0, "k": 0, "ix": 6 },
+									"o": { "a": 0, "k": 100, "ix": 7 },
+									"sk": { "a": 0, "k": 0, "ix": 4 },
+									"sa": { "a": 0, "k": 0, "ix": 5 },
+									"nm": "Transform"
+								}
+							],
+							"nm": "Group 3",
+							"np": 2,
+							"cix": 2,
+							"bm": 0,
+							"ix": 2,
+							"mn": "ADBE Vector Group",
+							"hd": false
+						},
+						{
+							"ty": "tr",
+							"p": { "a": 0, "k": [129.971, 350.648], "ix": 2 },
+							"a": { "a": 0, "k": [129.971, 350.648], "ix": 1 },
+							"s": { "a": 0, "k": [100, 100], "ix": 3 },
+							"r": {
+								"a": 1,
+								"k": [
+									{
+										"i": { "x": [0.667], "y": [1] },
+										"o": { "x": [0.333], "y": [0] },
+										"t": 30,
+										"s": [0]
+									},
+									{
+										"i": { "x": [0.667], "y": [1] },
+										"o": { "x": [0.333], "y": [0] },
+										"t": 40,
+										"s": [20]
+									},
+									{
+										"i": { "x": [0.667], "y": [1] },
+										"o": { "x": [0.333], "y": [0] },
+										"t": 60,
+										"s": [-10]
+									},
+									{
+										"i": { "x": [0.667], "y": [1] },
+										"o": { "x": [0.333], "y": [0] },
+										"t": 70,
+										"s": [5]
+									},
+									{ "t": 80, "s": [0] }
+								],
+								"ix": 6
+							},
+							"o": { "a": 0, "k": 100, "ix": 7 },
+							"sk": { "a": 0, "k": 0, "ix": 4 },
+							"sa": { "a": 0, "k": 0, "ix": 5 },
+							"nm": "Transform"
+						}
+					],
+					"nm": "Group 2",
+					"np": 2,
+					"cix": 2,
+					"bm": 0,
+					"ix": 2,
+					"mn": "ADBE Vector Group",
+					"hd": false
+				}
+			],
+			"ip": 0,
+			"op": 180,
+			"st": 0,
+			"ct": 1,
+			"bm": 0
+		}
+	],
+	"markers": [{ "tm": 0, "cm": "Zero", "dr": 0 }],
+	"props": {}
+}

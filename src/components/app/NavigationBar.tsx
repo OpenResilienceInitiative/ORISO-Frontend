@@ -53,8 +53,7 @@ export interface NavigationBarProps {
 }
 
 const REGEX_DASH = /\//g;
-const stripLocalePrefix = (label: string) =>
-	label.replace(/^\([^)]+\)\s*/, '');
+const stripLocalePrefix = (label: string) => label.replace(/^\([^)]+\)\s*/, '');
 const hyphenateRailLabel = (label: string, breakAfter: number) => {
 	if (/\s/.test(label)) {
 		return label.replace(/\s+/, '\n');
@@ -77,7 +76,9 @@ const getFigmaRailLabel = (to: string, label: string) => {
 	}
 
 	const breakAfter = railBreaks[to];
-	return breakAfter ? hyphenateRailLabel(compactLabel, breakAfter) : compactLabel;
+	return breakAfter
+		? hyphenateRailLabel(compactLabel, breakAfter)
+		: compactLabel;
 };
 
 export const NavigationBar = ({
@@ -364,19 +365,19 @@ export const NavigationBar = ({
 								) : dualIcon ? (
 									<>
 										{Icon && (
-												<Icon
-													title={label}
-													aria-label={label}
-													className="navigation__icon__outline"
-												/>
-											)}
-											{IconFilled && (
-												<IconFilled
-													title={label}
-													aria-label={label}
-													className="navigation__icon__filled"
-												/>
-											)}
+											<Icon
+												title={label}
+												aria-label={label}
+												className="navigation__icon__outline"
+											/>
+										)}
+										{IconFilled && (
+											<IconFilled
+												title={label}
+												aria-label={label}
+												className="navigation__icon__filled"
+											/>
+										)}
 									</>
 								) : (
 									Icon && (
@@ -631,9 +632,12 @@ export const NavigationBar = ({
 							{figmaConsultantNav && (
 								<span className="navigation__title navigation__title--figma">
 									{stripLocalePrefix(
-										translate([activeLocale, activeLocale], {
-											ns: 'languages'
-										})
+										translate(
+											[activeLocale, activeLocale],
+											{
+												ns: 'languages'
+											}
+										)
 									)}
 								</span>
 							)}
