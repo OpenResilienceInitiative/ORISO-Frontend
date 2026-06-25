@@ -506,6 +506,35 @@ describe('TwoFactorSetupDialog', () => {
 		).toBeNull();
 	});
 
+	it('does not show success when user data refresh fails after app activation', async () => {
+		apiPutTwoFactorAuthAppMock.mockResolvedValue(undefined);
+		apiPatchTwoFactorAuthEncourageMock.mockResolvedValue(undefined);
+		const onSetupComplete = vi
+			.fn()
+			.mockRejectedValue(new Error('SYNC_FAILED'));
+		const { onSetupAborted } = renderDialog({ onSetupComplete });
+
+		await screen.findByText('twoFactorAuth.setupDialog.decision.app');
+		clickButton('twoFactorAuth.setupDialog.decision.app');
+		clickButton('twoFactorAuth.setupDialog.action.next');
+		clickButton('twoFactorAuth.setupDialog.action.next');
+		fireEvent.change(
+			await screen.findByLabelText(
+				'twoFactorAuth.setupDialog.app.verify.input'
+			),
+			{ target: { value: '123456' } }
+		);
+		clickButton('twoFactorAuth.setupDialog.action.confirm');
+
+		await waitFor(() => expect(onSetupAborted).toHaveBeenCalledTimes(1));
+		expect(
+			await screen.findByText('twoFactorAuth.setupDialog.error.appSetup')
+		).toBeTruthy();
+		expect(
+			screen.queryByText('twoFactorAuth.setupDialog.app.success.title')
+		).toBeNull();
+	});
+
 	it('notifies the parent when app activation fails', async () => {
 		apiPutTwoFactorAuthAppMock.mockRejectedValue(new Error('BAD_REQUEST'));
 		const { onSetupAborted } = renderDialog();

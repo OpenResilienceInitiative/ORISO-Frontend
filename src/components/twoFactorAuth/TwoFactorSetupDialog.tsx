@@ -309,8 +309,7 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 	}, [isRequestInProgress]);
 
 	const finishSetup = useCallback(
-		async (nextStep: TwoFactorSetupStep) => {
-			setStep(nextStep);
+		async (nextStep: TwoFactorSetupStep, syncErrorKey: string) => {
 			setOtp('');
 			setErrorKey('');
 			setHelperKey('');
@@ -323,11 +322,13 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 
 			try {
 				await onSetupComplete();
+				setStep(nextStep);
 			} catch {
-				// User data refresh failed; success UI still applies.
+				onSetupAborted?.();
+				setErrorKey(syncErrorKey);
 			}
 		},
-		[onSetupComplete]
+		[onSetupAborted, onSetupComplete]
 	);
 
 	const sendEmailActivationCode = useCallback(
@@ -370,7 +371,10 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 
 		try {
 			await apiPutTwoFactorAuthApp({ secret, otp });
-			await finishSetup('app-success');
+			await finishSetup(
+				'app-success',
+				'twoFactorAuth.setupDialog.error.appSetup'
+			);
 		} catch (error) {
 			onSetupAborted?.();
 			setFetchError(
@@ -393,7 +397,10 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 
 		try {
 			await apiPostTwoFactorAuthEmailWithCode(otp);
-			await finishSetup('email-success');
+			await finishSetup(
+				'email-success',
+				'twoFactorAuth.setupDialog.error.emailSetup'
+			);
 		} catch (error) {
 			onSetupAborted?.();
 			setFetchError(
