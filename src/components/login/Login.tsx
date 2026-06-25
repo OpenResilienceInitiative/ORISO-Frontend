@@ -12,7 +12,8 @@ import { autoLogin, redirectToApp } from '../registration/autoLogin';
 import {
 	clearAuthSession,
 	CONSULTANT_LOGIN_BLOCKED_ERROR,
-	consumeConsultantLoginBlocked
+	consumeConsultantLoginBlocked,
+	isConsultantAccessToken
 } from '../auth/consultantLoginBlock';
 import { Text } from '../text/Text';
 import { ReactComponent as PersonIcon } from '../../resources/img/icons/person.svg';
@@ -309,6 +310,10 @@ export const Login = () => {
 
 		apiConsumeMagicLinkLogin(magicToken)
 			.then((tokenResponse) => {
+				if (isConsultantAccessToken(tokenResponse.access_token)) {
+					throw new Error(CONSULTANT_LOGIN_BLOCKED_ERROR);
+				}
+
 				setTokens(
 					tokenResponse.access_token,
 					tokenResponse.expires_in,
@@ -320,7 +325,7 @@ export const Login = () => {
 				return postLogin();
 			})
 			.catch((error) => {
-				if (error.message === CONSULTANT_LOGIN_BLOCKED_ERROR) {
+				if (error?.message === CONSULTANT_LOGIN_BLOCKED_ERROR) {
 					showConsultantLoginBlockedError();
 				} else {
 					setShowLoginError(
@@ -373,7 +378,7 @@ export const Login = () => {
 						setTwoFactorType(error.options.data.otpType);
 						setIsOtpRequired(true);
 					}
-				} else if (error.message === CONSULTANT_LOGIN_BLOCKED_ERROR) {
+				} else if (error?.message === CONSULTANT_LOGIN_BLOCKED_ERROR) {
 					showConsultantLoginBlockedError();
 				}
 
