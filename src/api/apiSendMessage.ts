@@ -1,38 +1,9 @@
-import { endpoints, apiUrl } from '../resources/scripts/endpoints';
-import { fetchData, FETCH_ERRORS, FETCH_METHODS } from './fetchData';
+import { endpoints } from '../resources/scripts/endpoints';
+import { fetchData, FETCH_METHODS } from './fetchData';
 import { apiPostMessageEventNotification } from './apiPostMessageEventNotification';
 import { getMatrixClientService } from '../services/matrixClientRegistry';
 
 export const toPreview = (text: string): string => text.slice(0, 100);
-
-const sendMatrixMessageViaRest = (
-	sessionId: number,
-	messageData: string,
-	matrixRoomId: string,
-	threadRootId?: string | null,
-	supervisorMessage?: boolean,
-	senderDisplayName?: string | null,
-	threadParentPreview?: string | null
-): Promise<any> => {
-	const matrixUrl = `${apiUrl}/service/matrix/sessions/${sessionId}/messages`;
-	return fetchData({
-		url: matrixUrl,
-		method: FETCH_METHODS.POST,
-		bodyData: JSON.stringify({ message: messageData }),
-		responseHandling: [FETCH_ERRORS.FORBIDDEN]
-	}).then((fallbackResponse) => {
-		apiPostMessageEventNotification({
-			roomId: matrixRoomId,
-			messagePreview: toPreview(messageData),
-			matrixRoom: true,
-			threadRootId: threadRootId || null,
-			supervisorMessage: !!supervisorMessage,
-			senderDisplayName: senderDisplayName || null,
-			threadParentPreview: threadParentPreview || null
-		}).catch(() => undefined);
-		return fallbackResponse;
-	});
-};
 
 export const apiSendMessage = (
 	messageData: string,
@@ -50,15 +21,7 @@ export const apiSendMessage = (
 	if (sessionId && matrixRoomId) {
 		const matrixClientService = getMatrixClientService();
 		if (!matrixClientService?.getClient()) {
-			return sendMatrixMessageViaRest(
-				sessionId,
-				messageData,
-				matrixRoomId,
-				threadRootId,
-				supervisorMessage,
-				senderDisplayName,
-				threadParentPreview
-			);
+			return Promise.reject(new Error('Matrix client not initialized'));
 		}
 
 		// Matrix message bodies must stay on the Matrix SDK path so room

@@ -1,9 +1,20 @@
 import { apiSendMessage } from '../../src/api/apiSendMessage';
 import { apiSendMatrixAttachmentMessage } from '../../src/api/apiSendMatrixAttachmentMessage';
 import { buildMessageEventNotificationBody } from '../../src/api/apiPostMessageEventNotification';
-import { matrixClientService } from '../../src/services/matrixClientService';
+import { setMatrixClientServiceRef } from '../../src/services/matrixClientRegistry';
+import { MatrixClientService } from '../../src/services/matrixClientService';
+
+const matrixClientService = new MatrixClientService();
 
 describe('Matrix send message privacy', () => {
+	beforeEach(() => {
+		setMatrixClientServiceRef(matrixClientService);
+	});
+
+	afterEach(() => {
+		setMatrixClientServiceRef(null);
+	});
+
 	it('does not send Matrix plaintext through the REST proxy when the SDK client is unavailable', () => {
 		const restPayloads: unknown[] = [];
 		cy.stub(matrixClientService, 'getClient').returns(null);
