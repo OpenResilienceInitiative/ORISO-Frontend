@@ -124,19 +124,19 @@ export const TopicSelection: FC<{
 			try {
 				const topicIds = topics.map((t) => t.id);
 				const topicGroupsResponse = await apiGetTopicGroups();
-				setTopicGroups(
-					topicGroupsResponse.data.items
-						.filter((topicGroup) => topicGroup.topicIds.length > 0)
-						.filter((topicGroup) =>
-							topicGroup.topicIds.some((id) =>
-								topicIds.includes(id)
-							)
-						)
-						.sort((a, b) => {
-							if (a.name === b.name) return 0;
-							return a.name < b.name ? -1 : 1;
-						})
-				);
+				const filteredTopicGroups = topicGroupsResponse.data.items
+					.filter((topicGroup) => topicGroup.topicIds.length > 0)
+					.filter((topicGroup) =>
+						topicGroup.topicIds.some((id) => topicIds.includes(id))
+					)
+					.sort((a, b) => {
+						if (a.name === b.name) return 0;
+						return a.name < b.name ? -1 : 1;
+					});
+				setTopicGroups(filteredTopicGroups);
+				if (filteredTopicGroups.length === 0 && topics.length > 0) {
+					setListView(true);
+				}
 			} catch (e) {
 				setTopicGroups([]);
 				setListView(true);
