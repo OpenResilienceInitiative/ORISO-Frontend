@@ -280,7 +280,9 @@ export const Input = ({
 						{icon}
 						{isFulfilled && (
 							<span className="sr-only">
-								{t('registration.password.criteria.fulfilled')}
+								{t(
+									'registration.account.password.criteria.fulfilled'
+								)}
 								:{' '}
 							</span>
 						)}
