@@ -45,7 +45,9 @@ describe('Input password criteria accessibility', () => {
 
 		expect(screen.getByText(/fulfilled\s*:/i)).toBeTruthy();
 		expect(
-			screen.queryByText('registration.password.criteria.fulfilled')
+			screen.queryByText(
+				/registration\.account\.password\.criteria\.fulfilled/i
+			)
 		).toBeNull();
 	});
 });
