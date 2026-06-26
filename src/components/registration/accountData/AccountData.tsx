@@ -7,7 +7,6 @@ import {
 	IconButton,
 	InputAdornment,
 	Link,
-	TextField,
 	Typography
 } from '@mui/material';
 import * as React from 'react';
@@ -37,11 +36,11 @@ import { REGISTRATION_DATA_VALIDATION } from '../registrationDataValidation';
 import LegalLinks from '../../../components/legalLinks/LegalLinks';
 import {
 	registrationMd3,
-	registrationMd3TextFieldSx,
 	registrationScreenIntroSx,
 	registrationScreenKickerSx,
 	registrationScreenTitleSx
 } from '../registrationDesign/registrationDesign';
+import { OrisoTextField } from '../../form/OrisoTextField';
 import { AnimalAvatar } from '../../pseudonym/AnimalAvatar';
 import {
 	generateAvatar,
@@ -429,7 +428,7 @@ export const AccountData: FC<{
 				)}
 			</Box>
 
-			<TextField
+			<OrisoTextField
 				value={username}
 				onChange={(event) => {
 					const normalizedVal = event.target.value
@@ -457,9 +456,8 @@ export const AccountData: FC<{
 						</InputAdornment>
 					)
 				}}
-				sx={{ ...registrationMd3TextFieldSx }}
 			/>
-			<TextField
+			<OrisoTextField
 				value={password}
 				onChange={(event) => setPassword(event.target.value)}
 				placeholder={t('registration.account.password.label')}
@@ -505,10 +503,10 @@ export const AccountData: FC<{
 						</InputAdornment>
 					)
 				}}
-				sx={{ mt: '24px', ...registrationMd3TextFieldSx }}
+				sx={{ mt: '24px' }}
 			/>
 			<PasswordRuleChips password={password} />
-			<TextField
+			<OrisoTextField
 				value={repeatPassword}
 				onChange={(event) => setRepeatPassword(event.target.value)}
 				placeholder={t('registration.account.repeatPassword.label')}
@@ -569,7 +567,7 @@ export const AccountData: FC<{
 						</InputAdornment>
 					)
 				}}
-				sx={{ mt: '20px', ...registrationMd3TextFieldSx }}
+				sx={{ mt: '20px' }}
 			/>
 			<FormGroup sx={{ mt: '20px' }}>
 				<FormControlLabel

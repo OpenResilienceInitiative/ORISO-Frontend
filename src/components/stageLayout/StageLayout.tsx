@@ -25,6 +25,8 @@ import {
 } from '@mui/material';
 import { SvgIconProps } from '@mui/material/SvgIcon';
 import { InfoDrawer } from '../registration/infoDrawer/InfoDrawer';
+import { Link as RouterLink, useHistory } from 'react-router-dom';
+import { toSameOriginRoute } from './stageLayoutRoutes';
 
 interface StageLayoutProps {
 	className?: string;
@@ -53,9 +55,20 @@ export const StageLayout = ({
 	const { selectableLocales } = useContext(LocaleContext);
 	const { specificAgency } = useContext(AgencySpecificContext);
 	const settings = useAppConfig();
+	const history = useHistory();
 	const loginUrl = `${settings.urls.toLogin}${
 		loginParams ? `?${loginParams}` : ''
 	}`;
+	const loginRoute = toSameOriginRoute(loginUrl);
+	const registrationRoute = toSameOriginRoute(settings.urls.toRegistration);
+	const handleRegistrationClick = () => {
+		if (registrationRoute) {
+			history.push(registrationRoute);
+			return;
+		}
+
+		window.location.assign(settings.urls.toRegistration);
+	};
 
 	return (
 		<div className={clsx('stageLayout', className)}>
@@ -87,7 +100,12 @@ export const StageLayout = ({
 
 							{showLoginLink && (
 								<IconButton
-									href={loginUrl}
+									{...(loginRoute
+										? {
+												component: RouterLink,
+												to: loginRoute
+											}
+										: { href: loginUrl })}
 									edge="end"
 									color="inherit"
 									aria-label={translate(
@@ -145,8 +163,15 @@ export const StageLayout = ({
 						>
 							<MuiButton
 								className="stageLayout__toLogin__button"
-								component="a"
-								href={loginUrl}
+								{...(loginRoute
+									? {
+											component: RouterLink,
+											to: loginRoute
+										}
+									: {
+											component: 'a',
+											href: loginUrl
+										})}
 								variant="outlined"
 								startIcon={<LoginDoorIcon />}
 								sx={{
@@ -200,22 +225,16 @@ export const StageLayout = ({
 								)}
 								type={'infoSmall'}
 							/>
-							<a
+							<Button
 								className="login__tenantRegistrationLink"
-								href={settings.urls.toRegistration}
-								target="_self"
-								tabIndex={-1}
-							>
-								<Button
-									item={{
-										label: translate(
-											'login.register.linkLabel'
-										),
-										type: 'TERTIARY'
-									}}
-									isLink
-								/>
-							</a>
+								item={{
+									label: translate(
+										'login.register.linkLabel'
+									),
+									type: 'TERTIARY'
+								}}
+								buttonHandle={handleRegistrationClick}
+							/>
 						</div>
 					)}
 				</Box>
