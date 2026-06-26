@@ -77,11 +77,19 @@ export const getMatrixAccessToken = (
 };
 
 export const persistMatrixLoginData = (loginData: MatrixLoginData): void => {
+	localStorage.setItem('matrix_access_token', loginData.accessToken);
+	localStorage.setItem('matrix_user_id', loginData.userId);
 	localStorage.setItem(MATRIX_DEVICE_ID_STORAGE_KEY, loginData.deviceId);
 	localStorage.setItem(
 		`${MATRIX_DEVICE_ID_STORAGE_KEY}:${loginData.userId}`,
 		loginData.deviceId
 	);
+	if (loginData.expiresInMs) {
+		localStorage.setItem(
+			'matrix_token_expires_at',
+			(Date.now() + loginData.expiresInMs).toString()
+		);
+	}
 
 	const secure = window.location.protocol === 'https:' ? '; Secure' : '';
 	document.cookie = `rc_uid=${loginData.userId}; path=/; SameSite=Strict${secure}`;
