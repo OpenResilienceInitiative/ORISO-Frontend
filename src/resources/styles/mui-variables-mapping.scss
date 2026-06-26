@@ -10,6 +10,7 @@
 	--font-weight-medium: #{$font-weight-medium};
 	--font-weight-bold: #{$font-weight-bold};
 	--white: #{$white};
+
 	// Brand family = OrisoScheme engine output for the Caritas seed #a5000a
 	// (computeOrisoPalette({primary: '#a5000a'}).tokens — matches the Figma
 	// M3/sys/light set). `primary` is the darker foundational brand colour;
@@ -22,6 +23,7 @@
 	--m3-primary-container: #cc1e1c;
 	--m3-on-primary-container: #ffe2de;
 	--m3-primary-fixed: #ffdad5;
+
 	// Light brand tint reused as the "outside" outline / focus-ring colour.
 	--m3-primary-outline: #ffdad5;
 	--m3-primary-fixed-dim: #ffb4aa;
