@@ -249,11 +249,15 @@ export const TopicSelection: FC<{
 						{listView
 							? [...(topics || [])]
 									.sort(compareTopicsByDisplayName)
-									.map((topic, index) => (
+									.map((topic, index, sortedTopics) => (
 										<TopicSelect
 											key={`${topic.id}`}
 											topics={topics}
 											index={index}
+											isLast={
+												index ===
+												sortedTopics.length - 1
+											}
 											topic={topic}
 											locale={locale}
 											checked={value === topic?.id}
@@ -298,7 +302,7 @@ export const TopicSelection: FC<{
 											sx={{
 												'boxShadow': 'none',
 												'border': `1px solid ${registrationMd3.outlineVariant}`,
-												'borderRadius': '16px',
+												'borderRadius': '32px',
 												'overflow': 'hidden',
 												'mb': '12px',
 												'backgroundColor':
@@ -382,35 +386,46 @@ export const TopicSelection: FC<{
 													.sort(
 														compareTopicsByDisplayName
 													)
-													.map((topic, index) => (
-														<TopicSelect
-															key={`${topicGroup.id}-${topic.id}`}
-															topics={topics}
-															index={index}
-															topic={topic}
-															locale={locale}
-															checked={
-																value ===
-																	topic.id &&
-																topicGroup.id ===
-																	topicGroupId
-															}
-															onChange={() => {
-																setValue(
-																	topic.id
-																);
-																setTopicGroupId(
-																	topicGroup.id
-																);
-																onChange({
-																	mainTopic:
-																		topic,
-																	topicGroupId:
-																		topicGroup?.id
-																});
-															}}
-														/>
-													))}
+													.map(
+														(
+															topic,
+															index,
+															sortedTopics
+														) => (
+															<TopicSelect
+																key={`${topicGroup.id}-${topic.id}`}
+																topics={topics}
+																index={index}
+																isLast={
+																	index ===
+																	sortedTopics.length -
+																		1
+																}
+																topic={topic}
+																locale={locale}
+																checked={
+																	value ===
+																		topic.id &&
+																	topicGroup.id ===
+																		topicGroupId
+																}
+																onChange={() => {
+																	setValue(
+																		topic.id
+																	);
+																	setTopicGroupId(
+																		topicGroup.id
+																	);
+																	onChange({
+																		mainTopic:
+																			topic,
+																		topicGroupId:
+																			topicGroup?.id
+																	});
+																}}
+															/>
+														)
+													)}
 											</AccordionDetails>
 										</Accordion>
 									)
@@ -422,7 +437,15 @@ export const TopicSelection: FC<{
 	);
 };
 
-const TopicSelect = ({ topics, topic, locale, index, onChange, checked }) => {
+const TopicSelect = ({
+	topics,
+	topic,
+	locale,
+	index,
+	isLast,
+	onChange,
+	checked
+}) => {
 	const display = getRegistrationTopicDisplay(topic, locale);
 
 	return (
@@ -503,7 +526,9 @@ const TopicSelect = ({ topics, topic, locale, index, onChange, checked }) => {
 							sx={{
 								width: 64,
 								height: 64,
-								borderRadius: '12px',
+								borderRadius: isLast
+									? '12px 12px 12px 32px'
+									: '12px',
 								bgcolor: 'transparent',
 								flexShrink: 0
 							}}

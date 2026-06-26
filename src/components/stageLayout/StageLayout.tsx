@@ -14,6 +14,7 @@ import { MENUPLACEMENT_BOTTOM_LEFT } from '../select/SelectDropdown';
 import {
 	AppBar,
 	Box,
+	Button as MuiButton,
 	Divider,
 	IconButton,
 	Slide,
@@ -21,7 +22,7 @@ import {
 	Typography,
 	useScrollTrigger
 } from '@mui/material';
-import LoginIcon from '@mui/icons-material/Login';
+import LoginRoundedIcon from '@mui/icons-material/LoginRounded';
 import { InfoDrawer } from '../registration/infoDrawer/InfoDrawer';
 
 interface StageLayoutProps {
@@ -51,6 +52,9 @@ export const StageLayout = ({
 	const { selectableLocales } = useContext(LocaleContext);
 	const { specificAgency } = useContext(AgencySpecificContext);
 	const settings = useAppConfig();
+	const loginUrl = `${settings.urls.toLogin}${
+		loginParams ? `?${loginParams}` : ''
+	}`;
 
 	return (
 		<div className={clsx('stageLayout', className)}>
@@ -82,15 +86,13 @@ export const StageLayout = ({
 
 							{showLoginLink && (
 								<IconButton
-									href={`${settings.urls.toLogin}${
-										loginParams ? `?${loginParams}` : ''
-									}`}
+									href={loginUrl}
 									edge="start"
 									color="inherit"
 									aria-label="menu"
 									sx={{ ml: '4px' }}
 								>
-									<LoginIcon color="inherit" />
+									<LoginRoundedIcon color="inherit" />
 								</IconButton>
 							)}
 						</Box>
@@ -138,24 +140,37 @@ export const StageLayout = ({
 							className="stageLayout__toLogin"
 							sx={{ display: { xs: 'none', md: 'block' } }}
 						>
-							<div className="stageLayout__toLogin__button">
-								<a
-									href={`${settings.urls.toLogin}${
-										loginParams ? `?${loginParams}` : ''
-									}`}
-									tabIndex={-1}
-								>
-									<Button
-										item={{
-											label: translate(
-												'registration.login.label'
-											),
-											type: 'TERTIARY'
-										}}
-										isLink
-									/>
-								</a>
-							</div>
+							<MuiButton
+								className="stageLayout__toLogin__button"
+								component="a"
+								href={loginUrl}
+								variant="outlined"
+								startIcon={<LoginRoundedIcon />}
+								sx={{
+									'minHeight': '48px',
+									'minWidth': '148px',
+									'borderRadius': '999px',
+									'px': 2.75,
+									'py': 1,
+									'fontSize': '16px',
+									'fontWeight': 700,
+									'lineHeight': 1.2,
+									'textTransform': 'none',
+									'color': 'var(--m3-on-surface, #1b1b1c)',
+									'borderColor':
+										'var(--m3-outline-variant, #c4c7c8)',
+									'backgroundColor':
+										'rgba(255, 255, 255, 0.92)',
+									'&:hover': {
+										borderColor:
+											'var(--m3-primary, #a4262e)',
+										backgroundColor:
+											'rgba(164, 38, 46, 0.04)'
+									}
+								}}
+							>
+								{translate('registration.login.label')}
+							</MuiButton>
 						</Box>
 					)}
 
