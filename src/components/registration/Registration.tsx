@@ -10,6 +10,7 @@ import {
 } from 'react';
 import {
 	Route,
+	Redirect,
 	Switch,
 	useHistory,
 	useLocation,
@@ -22,7 +23,6 @@ import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet';
 import { StageLayout } from '../../components/stageLayout/StageLayout';
 import useIsFirstVisit from '../../utils/useIsFirstVisit';
-import { WelcomeScreen } from './welcomeScreen/WelcomeScreen';
 import {
 	RegistrationContext,
 	TenantContext,
@@ -119,14 +119,34 @@ export const Registration = () => {
 		[availableSteps, step]
 	);
 
-	const [prevStepUrl, nextStepUrl] = useMemo(
-		() => [
-			`${generatePath(path, { topicSlug, step: availableSteps[currStepIndex - 1]?.name || 'welcome' })}${location.search}`,
-			availableSteps[currStepIndex + 1]
-				? `${generatePath(path, { topicSlug, step: availableSteps[currStepIndex + 1]?.name || 'welcome' })}${location.search}`
+	const [prevStepUrl, nextStepUrl] = useMemo(() => {
+		const firstStepName = availableSteps[0]?.name || 'topic-selection';
+		const previousStepName =
+			availableSteps[Math.max(currStepIndex - 1, 0)]?.name ||
+			firstStepName;
+		const nextStepName = availableSteps[currStepIndex + 1]?.name;
+
+		return [
+			`${generatePath(path, {
+				topicSlug,
+				step: previousStepName
+			})}${location.search}`,
+			nextStepName
+				? `${generatePath(path, {
+						topicSlug,
+						step: nextStepName
+					})}${location.search}`
 				: null
-		],
-		[availableSteps, currStepIndex, path, topicSlug, location.search]
+		];
+	}, [availableSteps, currStepIndex, path, topicSlug, location.search]);
+
+	const firstStepUrl = useMemo(
+		() =>
+			`${generatePath(path, {
+				topicSlug,
+				step: availableSteps[0]?.name || 'topic-selection'
+			})}${location.search}`,
+		[availableSteps, location.search, path, topicSlug]
 	);
 
 	const mergedRegistrationData = useMemo(
@@ -652,7 +672,7 @@ export const Registration = () => {
 							</form>
 						</Route>
 						<Route>
-							<WelcomeScreen nextStepUrl={nextStepUrl} />
+							<Redirect to={firstStepUrl} />
 						</Route>
 					</Switch>
 				</Box>

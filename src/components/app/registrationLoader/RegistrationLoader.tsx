@@ -5,6 +5,8 @@ import { keyframes } from '@mui/system';
 import { alpha } from '@mui/material/styles';
 import { Box, LinearProgress, Typography, useMediaQuery } from '@mui/material';
 import ChatBubbleRoundedIcon from '@mui/icons-material/ChatBubbleRounded';
+import MailRoundedIcon from '@mui/icons-material/MailRounded';
+import LockRoundedIcon from '@mui/icons-material/LockRounded';
 
 interface RegistrationLoaderProps {
 	/** The real "everything loaded" signal from the app bootstrap (appReady). */
@@ -80,6 +82,19 @@ export const RegistrationLoader = ({
 	const finishedRef = useRef<boolean>(false);
 	const onFinishRef = useRef(onFinish);
 	onFinishRef.current = onFinish;
+
+	const benefitItems = [
+		{
+			icon: MailRoundedIcon,
+			title: t('registration.welcomeScreen.info3.title'),
+			text: t('registration.welcomeScreen.info3.text')
+		},
+		{
+			icon: LockRoundedIcon,
+			title: t('registration.welcomeScreen.info4.title'),
+			text: t('registration.welcomeScreen.info4.text')
+		}
+	];
 
 	const finish = useCallback(() => {
 		if (finishedRef.current) {
@@ -237,6 +252,7 @@ export const RegistrationLoader = ({
 				sx={{
 					color: 'text.secondary',
 					textAlign: 'center',
+					maxWidth: 360,
 					animation:
 						finishing && !prefersReducedMotion
 							? `${contentDrift} ${FINISH_ZOOM_MS}ms ease both`
@@ -247,6 +263,75 @@ export const RegistrationLoader = ({
 					? t('registration.loader.ready')
 					: t('registration.loader.copy')}
 			</Typography>
+			<Box
+				sx={{
+					width: '100%',
+					maxWidth: 560,
+					mt: { xs: 3, sm: 4 },
+					display: 'grid',
+					gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+					gap: 1.5,
+					animation:
+						finishing && !prefersReducedMotion
+							? `${contentDrift} ${FINISH_ZOOM_MS}ms ease both`
+							: 'none'
+				}}
+			>
+				{benefitItems.map(({ icon: Icon, title, text }) => (
+					<Box
+						key={title}
+						sx={{
+							display: 'grid',
+							gridTemplateColumns: '32px 1fr',
+							alignItems: 'start',
+							gap: 1.25,
+							p: 1.5,
+							borderRadius: 3,
+							border: (theme) =>
+								`1px solid ${alpha(theme.palette.primary.main, 0.18)}`,
+							backgroundColor: (theme) =>
+								alpha(theme.palette.primary.main, 0.045)
+						}}
+					>
+						<Box
+							sx={{
+								width: 32,
+								height: 32,
+								borderRadius: '50%',
+								display: 'flex',
+								alignItems: 'center',
+								justifyContent: 'center',
+								color: 'primary.main',
+								backgroundColor: (theme) =>
+									alpha(theme.palette.primary.main, 0.08)
+							}}
+						>
+							<Icon sx={{ fontSize: 18 }} />
+						</Box>
+						<Box>
+							<Typography
+								variant="subtitle2"
+								sx={{
+									fontWeight: 700,
+									lineHeight: 1.25,
+									mb: 0.25
+								}}
+							>
+								{title}
+							</Typography>
+							<Typography
+								variant="body2"
+								sx={{
+									color: 'text.secondary',
+									lineHeight: 1.35
+								}}
+							>
+								{text}
+							</Typography>
+						</Box>
+					</Box>
+				))}
+			</Box>
 			<Box
 				role="status"
 				aria-live="polite"
