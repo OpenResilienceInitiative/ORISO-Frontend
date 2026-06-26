@@ -2,6 +2,7 @@ import { endpoints } from '../resources/scripts/endpoints';
 import { fetchData, FETCH_METHODS } from './fetchData';
 import { apiPostMessageEventNotification } from './apiPostMessageEventNotification';
 import { getMatrixClientService } from '../services/matrixClientRegistry';
+import type { MatrixClientService } from '../services/matrixClientService';
 
 export const apiSendMessage = (
 	messageData: string,
@@ -12,11 +13,13 @@ export const apiSendMessage = (
 	matrixRoomId?: string, // NEW: Accept Matrix room ID directly
 	threadRootId?: string | null,
 	supervisorMessage?: boolean,
-	senderDisplayName?: string | null
+	senderDisplayName?: string | null,
+	matrixClientServiceOverride?: MatrixClientService | null
 ): Promise<any> => {
 	// MATRIX MIGRATION: Use Matrix SDK directly for INSTANT local echo (like Element!)
 	if (sessionId && matrixRoomId) {
-		const matrixClientService = getMatrixClientService();
+		const matrixClientService =
+			matrixClientServiceOverride || getMatrixClientService();
 		if (!matrixClientService?.getClient()) {
 			return Promise.reject(new Error('Matrix client not initialized'));
 		}
