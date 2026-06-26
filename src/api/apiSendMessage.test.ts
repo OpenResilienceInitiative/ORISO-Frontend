@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { apiSendMessage } from './apiSendMessage';
+import { getMatrixClientService } from '../services/matrixClientRegistry';
 
 vi.mock('../resources/scripts/endpoints', () => ({
 	endpoints: {
@@ -49,5 +50,36 @@ describe('apiSendMessage', () => {
 			'Hello Matrix'
 		);
 		expect(response).toEqual({ success: true, event_id: '$event' });
+	});
+
+	it('falls back to the registered Matrix client service when no override is provided', async () => {
+		const sendMessage = vi.fn(() =>
+			Promise.resolve({ event_id: '$fallback-event' })
+		);
+		vi.mocked(getMatrixClientService).mockReturnValue({
+			getClient: () => ({}),
+			sendMessage
+		} as any);
+
+		const response = await apiSendMessage(
+			'Hello from registry',
+			'!fallback:example.org',
+			true,
+			false,
+			103024,
+			'!fallback:example.org',
+			null,
+			false,
+			'Counselor'
+		);
+
+		expect(sendMessage).toHaveBeenCalledWith(
+			'!fallback:example.org',
+			'Hello from registry'
+		);
+		expect(response).toEqual({
+			success: true,
+			event_id: '$fallback-event'
+		});
 	});
 });
