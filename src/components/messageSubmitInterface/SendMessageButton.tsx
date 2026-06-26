@@ -7,17 +7,23 @@ interface SendMessageButtonProps {
 	deactivated?: boolean;
 	isEmpty?: boolean;
 	handleSendButton: Function;
+	type?: 'button' | 'submit';
 }
 
 export const SendMessageButton = (props: SendMessageButtonProps) => {
 	const { t: translate } = useTranslation();
 	const isDisabled = !!props.deactivated;
+	const buttonType = props.type || 'button';
 
 	return (
 		<button
-			type="button"
+			type={buttonType}
 			disabled={isDisabled}
-			onClick={() => props.handleSendButton()}
+			onClick={
+				buttonType === 'button'
+					? () => props.handleSendButton()
+					: undefined
+			}
 			aria-disabled={isDisabled}
 			className={`textarea__iconWrapper ${
 				props.clicked ? 'textarea__iconWrapper--clicked' : ''

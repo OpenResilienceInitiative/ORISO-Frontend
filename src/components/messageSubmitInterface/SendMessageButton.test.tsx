@@ -36,6 +36,32 @@ describe('SendMessageButton', () => {
 		expect(handleSendButton).toHaveBeenCalledTimes(1);
 	});
 
+	it('can delegate sending to a parent form submit handler', () => {
+		const handleSubmit = vi.fn((event: React.FormEvent) => {
+			event.preventDefault();
+		});
+		const handleSendButton = vi.fn();
+
+		render(
+			<form onSubmit={handleSubmit}>
+				<SendMessageButton
+					type="submit"
+					handleSendButton={handleSendButton}
+				/>
+			</form>
+		);
+
+		const button = screen.getByRole('button', {
+			name: 'enquiry.write.input.button.title'
+		});
+		expect(button.getAttribute('type')).toBe('submit');
+
+		fireEvent.click(button);
+
+		expect(handleSubmit).toHaveBeenCalledTimes(1);
+		expect(handleSendButton).not.toHaveBeenCalled();
+	});
+
 	it('does not send while disabled', () => {
 		const handleSendButton = vi.fn();
 

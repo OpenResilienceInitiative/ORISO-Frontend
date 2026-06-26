@@ -2241,6 +2241,14 @@ export const MessageSubmitInterfaceComponent = ({
 		userData
 	]);
 
+	const handleFormSubmit = useCallback(
+		(event: React.FormEvent<HTMLFormElement>) => {
+			event.preventDefault();
+			handleButtonClick();
+		},
+		[handleButtonClick]
+	);
+
 	// Key binding function for Draft.js to handle Ctrl+Enter / Cmd+Enter
 	// Only returns a command when modifier keys are pressed, otherwise returns undefined
 	// to let Draft.js handle Enter normally (create new line)
@@ -3830,7 +3838,7 @@ export const MessageSubmitInterfaceComponent = ({
 				</div>
 			)}
 
-			<form className="textarea">
+			<form className="textarea" onSubmit={handleFormSubmit}>
 				<div
 					className={clsx(
 						'textarea__wrapper',
@@ -5222,6 +5230,7 @@ export const MessageSubmitInterfaceComponent = ({
 								<ToolbarScrollRightIcon />
 							</button>
 							<SendMessageButton
+								type="submit"
 								handleSendButton={handleButtonClick}
 								clicked={isRequestInProgress}
 								deactivated={
