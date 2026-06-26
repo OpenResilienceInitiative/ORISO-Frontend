@@ -78,8 +78,7 @@ describe('two-factor setup dialog', () => {
 
 		cy.visit('/profile/einstellungen/sicherheit');
 		cy.contains('Zwei-Faktor-Authentifizierung').should('exist');
-		// Default mock config has a past binding date, so the switch is hidden.
-		cy.get('.twoFactorAuth__edit__button').click();
+		cy.get('.twoFactorAuth__switch').click();
 
 		cy.contains('Welche Verbindung möchten Sie verwenden?');
 		cy.get('.app').should('have.class', 'app--blur');
