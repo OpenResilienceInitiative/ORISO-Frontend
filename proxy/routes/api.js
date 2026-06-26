@@ -21,11 +21,15 @@ const resolveRemoteApiTarget = () =>
 const resolveRemoteFrontendOrigin = () =>
 	normalizeTarget(process.env.REACT_APP_DEV_REMOTE_FRONTEND_ORIGIN);
 
+const shouldVerifyProxyCertificate = () =>
+	String(process.env.REACT_APP_DEV_PROXY_SECURE || 'true').toLowerCase() !==
+	'false';
+
 const createRemoteProxy = (target) =>
 	createProxyMiddleware({
 		target,
 		changeOrigin: true,
-		secure: true,
+		secure: shouldVerifyProxyCertificate(),
 		logLevel: 'warn',
 		onProxyReq: (proxyReq) => {
 			const remoteFrontendOrigin = resolveRemoteFrontendOrigin();
