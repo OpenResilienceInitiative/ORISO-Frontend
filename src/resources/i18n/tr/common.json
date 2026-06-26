@@ -1888,8 +1888,8 @@
 		},
 		"loader": {
 			"headline": "Hoş geldiniz.",
-			"copy": "Güvenli danışmanlık odanızı hazırlıyoruz …",
-			"ready": "Danışmanlık odanız hazır."
+			"copy": "Güvenli görüşme alanınızı hazırlıyoruz, birkaç saniye sürebilir …",
+			"ready": "Güvenli görüşme alanınız hazır. Başlayabilirsiniz."
 		},
 		"stepbar": {
 			"of": "itibaren",
