@@ -143,6 +143,9 @@ describe('OrisoScheme golden lock (seed #A5000A, light)', () => {
 		expect(tokens['--oriso-lottie-secondary-color']).toBe(
 			tokens['--m3-secondary-container']
 		);
+		expect(tokens['--m3-primary-outline']).toBe(
+			tokens['--m3-on-primary-fixed-variant']
+		);
 		expect(tokens['--oriso-primary-fixed']).toBe(
 			tokens['--m3-primary-fixed']
 		);
