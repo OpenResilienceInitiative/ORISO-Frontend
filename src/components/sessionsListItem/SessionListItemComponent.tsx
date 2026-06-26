@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useContext, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useActiveListItem } from '../../hooks/useActiveListItem';
 import { getSessionsListItemIcon, LIST_ICONS } from './sessionsListItemHelpers';
 import {
@@ -97,7 +97,7 @@ export const SessionListItemComponent = ({
 	// WP-06 Slice 0b: route-derived single source of truth for the active item
 	// (replaces the per-component rid/sessionId comparison below).
 	const { isActive } = useActiveListItem();
-	const history = useHistory();
+	const navigate = useNavigate();
 
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
 	const getSessionListTab = () =>
@@ -318,7 +318,7 @@ export const SessionListItemComponent = ({
 		return (
 			<div
 				onClick={() =>
-					history.push(
+					navigate(
 						`/sessions/consultant/sessionView/${activeSession.item.id}`
 					)
 				}
@@ -379,7 +379,7 @@ export const SessionListItemComponent = ({
 				// Original RocketChat behavior: navigate with groupId
 				const targetPath = `${listPath}/${activeSession.item.groupId}/${activeSession.item.id}${getSessionListTab()}`;
 				// console.log('🚀 Navigating with RocketChat groupId:', targetPath);
-				history.push(targetPath);
+				navigate(targetPath);
 			} else if (
 				hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
 				activeSession.isEmptyEnquiry
@@ -387,12 +387,12 @@ export const SessionListItemComponent = ({
 				// Empty enquiry: go to write view
 				const targetPath = `/sessions/user/view/write/${activeSession.item.id}`;
 				// console.log('🚀 Navigating to write view:', targetPath);
-				history.push(targetPath);
+				navigate(targetPath);
 			} else {
 				// MATRIX MIGRATION FIX: Navigate by session ID for Matrix rooms or sessions without groupId
 				const targetPath = `${listPath}/session/${activeSession.item.id}${getSessionListTab()}`;
 				// console.log('🚀 Navigating by session ID (Matrix or no groupId):', targetPath);
-				history.push(targetPath);
+				navigate(targetPath);
 			}
 		}
 	};
@@ -432,12 +432,12 @@ export const SessionListItemComponent = ({
 				reloadActiveSession();
 				setTimeout(() => {
 					if (window.innerWidth >= 900) {
-						history.push(
+						navigate(
 							`${listPath}/${activeSession.item.groupId}/${activeSession.item.id}${getSessionListTab()}`
 						);
 					} else {
 						mobileListView();
-						history.push(listPath);
+						navigate(listPath);
 					}
 				}, 1000);
 			})
@@ -467,7 +467,7 @@ export const SessionListItemComponent = ({
 					});
 
 					mobileListView();
-					history.push(listPath);
+					navigate(listPath);
 				})
 				.catch((error) => {
 					// console.error(error);
@@ -483,7 +483,7 @@ export const SessionListItemComponent = ({
 
 	const onSuccessDeleteSession = () => {
 		mobileListView();
-		history.push(listPath);
+		navigate(listPath);
 	};
 
 	const iconVariant = () => {
@@ -542,7 +542,7 @@ export const SessionListItemComponent = ({
 		return (
 			<div
 				onClick={() =>
-					history.push(
+					navigate(
 						`${listPath}/sessionView/${activeSession.item.id}${getSessionListTab()}`
 					)
 				}

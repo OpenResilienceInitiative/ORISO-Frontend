@@ -6,7 +6,7 @@ import {
 	useEffect,
 	useState
 } from 'react';
-import { generatePath, Link, Redirect, useHistory } from 'react-router-dom';
+import { generatePath, Link, Navigate, useNavigate } from 'react-router-dom';
 import {
 	AUTHORITIES,
 	getContact,
@@ -87,7 +87,7 @@ export interface SessionMenuProps {
 
 export const SessionMenu = (props: SessionMenuProps) => {
 	const { t: translate } = useTranslation();
-	const history = useHistory();
+	const navigate = useNavigate();
 
 	const legalLinks = useContext(LegalLinksContext);
 	const settings = useAppConfig();
@@ -147,7 +147,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	}, [handleClick, activeSession, userData]);
 
 	const handleBookingButton = () => {
-		history.push('/booking/');
+		navigate('/booking/');
 	};
 
 	const handleStopGroupChat = () => {
@@ -176,12 +176,12 @@ export const SessionMenu = (props: SessionMenuProps) => {
 				// Short timeout to wait for RC events finished
 				setTimeout(() => {
 					if (window.innerWidth >= 900) {
-						history.push(
+						navigate(
 							`${listPath}/${activeSession.item.groupId}/${activeSession.item.id}}`
 						);
 					} else {
 						mobileListView();
-						history.push(listPath);
+						navigate(listPath);
 					}
 					setFlyoutOpen(false);
 				}, 1000);
@@ -250,7 +250,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 					});
 
 					mobileListView();
-					history.push(listPath);
+					navigate(listPath);
 				})
 				.catch((error) => {
 					// console.error(error);
@@ -262,7 +262,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 					setFlyoutOpen(false);
 				});
 		} else if (buttonFunction === 'GOTO_MANUAL') {
-			history.push('/profile/hilfe/videoCall');
+			navigate('/profile/hilfe/videoCall');
 		}
 	};
 
@@ -287,30 +287,33 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 	const groupChatInfoLink = hasGroupId
 		? generatePath(baseUrl, {
-				...(activeSession.item as TReducedSessionItemInterface),
+				groupId: activeSession.item.groupId,
+				id: String(activeSession.item.id),
 				subRoute: 'groupChatInfo'
 			})
 		: '';
 	const editGroupChatSettingsLink = hasGroupId
 		? generatePath(baseUrl, {
-				...(activeSession.item as TReducedSessionItemInterface),
+				groupId: activeSession.item.groupId,
+				id: String(activeSession.item.id),
 				subRoute: 'editGroupChat'
 			})
 		: '';
 	// MATRIX MIGRATION: Generate userProfileLink based on whether groupId exists
 	const userProfileLink = hasGroupId
 		? generatePath(baseUrl, {
-				...(activeSession.item as TReducedSessionItemInterface),
+				groupId: activeSession.item.groupId,
+				id: String(activeSession.item.id),
 				subRoute: 'userProfile'
 			})
 		: generatePath(baseUrl, {
-				id: activeSession.item.id,
+				id: String(activeSession.item.id),
 				subRoute: 'userProfile'
 			});
 
 	if (redirectToSessionsList) {
 		mobileListView();
-		return <Redirect to={listPath + getSessionListTab()} />;
+		return <Navigate to={listPath + getSessionListTab()} replace />;
 	}
 
 	const buttonStartCall: ButtonItem = {
@@ -430,7 +433,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 				);
 				if (
 					window.confirm(
-						'Camera/microphone access requires HTTPS. Redirect to secure connection?'
+						'Camera/microphone access requires HTTPS. Navigate to secure connection?'
 					)
 				) {
 					window.location.href = httpsUrl;
@@ -869,12 +872,10 @@ const SessionMenuFlyoutGroup = ({
 			{isGroupChatOwner(activeSession, userData) &&
 				!activeSession.item.active && (
 					<Link
-						to={{
-							pathname: editGroupChatSettingsLink,
-							state: {
-								isEditMode: true,
-								prevIsInfoPage: false
-							}
+						to={editGroupChatSettingsLink}
+						state={{
+							isEditMode: true,
+							prevIsInfoPage: false
 						}}
 						className="sessionMenu__item sessionMenu__button"
 					>

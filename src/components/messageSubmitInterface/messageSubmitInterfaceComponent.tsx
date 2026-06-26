@@ -8,7 +8,7 @@ import {
 	useState
 } from 'react';
 import { createPortal } from 'react-dom';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 import { SendMessageButton } from './SendMessageButton';
 import {
@@ -928,7 +928,7 @@ export const MessageSubmitInterfaceComponent = ({
 		};
 	}, []);
 	const tenant = useTenant();
-	const history = useHistory();
+	const navigate = useNavigate();
 	const location = useLocation();
 	const { getDevToolbarOption } = useDevToolbar();
 
@@ -2215,12 +2215,12 @@ export const MessageSubmitInterfaceComponent = ({
 						// Short timeout to wait for RC events finished
 						setTimeout(() => {
 							if (window.innerWidth >= 900) {
-								history.push(
+								navigate(
 									`${listPath}/${activeSession.item.groupId}/${activeSession.item.id}}`
 								);
 							} else {
 								mobileListView();
-								history.push(listPath);
+								navigate(listPath);
 							}
 						}, 1000);
 					}
@@ -2235,7 +2235,7 @@ export const MessageSubmitInterfaceComponent = ({
 		activeSession.item.groupId,
 		activeSession.item.id,
 		getTypedMarkdownMessage,
-		history,
+		navigate,
 		isRequestInProgress,
 		isVoiceRecording,
 		isSessionArchived,
@@ -2411,8 +2411,8 @@ export const MessageSubmitInterfaceComponent = ({
 	}, [activeInfo, activeSession, translate]);
 
 	const handleBookingButton = useCallback(() => {
-		history.push('/booking/');
-	}, [history]);
+		navigate('/booking/');
+	}, [navigate]);
 
 	const hasUploadFunctionality =
 		!isAskerEnquiry && !tenant?.settings?.featureAttachmentUploadDisabled;

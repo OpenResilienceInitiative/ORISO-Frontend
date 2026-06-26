@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useCallback, useContext, useEffect, useState } from 'react';
-import { useParams, useHistory } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Loading } from '../app/Loading';
 import {
 	RocketChatContext,
@@ -29,7 +29,7 @@ import { agencyLogoAtom } from '../../store/agencyLogoAtom';
 export const SessionView = () => {
 	const { rcGroupId: groupIdFromParam, sessionId: sessionIdFromParam } =
 		useParams<{ rcGroupId: string; sessionId: string }>();
-	const history = useHistory();
+	const navigate = useNavigate();
 
 	// console.log('🔥 SessionView MOUNTED:', {
 	// groupIdFromParam,
@@ -122,7 +122,7 @@ export const SessionView = () => {
 
 		if (activeSessionReady && !activeSession) {
 			// console.log('🔥 No active session - redirecting to list');
-			history.push(
+			navigate(
 				listPath +
 					(sessionListTab ? `?sessionListTab=${sessionListTab}` : '')
 			);
@@ -135,7 +135,7 @@ export const SessionView = () => {
 			// 	activeSession.rid !== currentGroupId.current &&
 			// 	activeSession.item.id.toString() === currentSessionId.current
 			// ) {
-			// 	history.push(
+			// 	navigate(
 			// 		`${listPath}/${activeSession.rid}/${activeSession.item.id}${
 			// 			sessionListTab
 			// 				? `?sessionListTab=${sessionListTab}`
@@ -165,7 +165,7 @@ export const SessionView = () => {
 		currentSessionId,
 		currentGroupId,
 		listPath,
-		history
+		navigate
 	]);
 
 	useEffect(() => {

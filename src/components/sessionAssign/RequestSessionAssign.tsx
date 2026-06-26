@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useContext, useEffect, useState } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
 import { BUTTON_TYPES } from '../button/Button';
@@ -35,7 +35,7 @@ export const ACCEPTED_GROUP_CLOSE = 'CLOSE';
 
 export const RequestSessionAssign = (props: { value?: string }) => {
 	const { t: translate } = useTranslation();
-	const history = useHistory();
+	const navigate = useNavigate();
 
 	const { activeSession } = useContext(ActiveSessionContext);
 	const { path: listPath } = useContext(SessionTypeContext);
@@ -176,7 +176,7 @@ export const RequestSessionAssign = (props: { value?: string }) => {
 				setOverlayItem(null);
 				setOverlayActive(false);
 
-				history.push(
+				navigate(
 					`${listPath}/${activeSession.item.groupId}/${activeSession.item.id}`
 				);
 				break;

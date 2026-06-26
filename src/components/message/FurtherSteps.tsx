@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import './furtherSteps.styles';
 import { Headline } from '../headline/Headline';
 import { Text } from '../text/Text';
@@ -28,7 +28,7 @@ import { useTranslation } from 'react-i18next';
 
 export const FurtherSteps = () => {
 	const { t: translate } = useTranslation();
-	const history = useHistory();
+	const navigate = useNavigate();
 
 	const [isOverlayActive, setIsOverlayActive] = useState<boolean>(false);
 	const [isSuccessOverlay, setIsSuccessOverlay] = useState<boolean>(false);
@@ -163,12 +163,9 @@ export const FurtherSteps = () => {
 	);
 
 	const redirectTo2FA = () => {
-		history.push({
-			pathname: '/profile/einstellungen/sicherheit',
-			state: {
+		navigate('/profile/einstellungen/sicherheit', { state: {
 				openTwoFactor: true
-			}
-		});
+			} });
 	};
 
 	return (

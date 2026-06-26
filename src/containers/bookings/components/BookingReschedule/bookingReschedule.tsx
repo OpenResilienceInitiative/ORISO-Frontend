@@ -16,11 +16,7 @@ export const BookingReschedule = () => {
 	);
 	const settings = useAppConfig();
 
-	const location = useLocation<{
-		askerId: string;
-		rescheduleLink: string;
-		bookingId: number;
-	}>();
+	const location = useLocation();
 
 	const userId = isConsultant ? location.state.askerId : userData.userId;
 

@@ -5,7 +5,7 @@ import { useAppConfig } from '../../../../hooks/useAppConfig';
 export const BookingCancellation = () => {
 	const settings = useAppConfig();
 
-	const location = useLocation<{ uid: string }>();
+	const location = useLocation();
 
 	return (
 		(settings.calcomUrl && (

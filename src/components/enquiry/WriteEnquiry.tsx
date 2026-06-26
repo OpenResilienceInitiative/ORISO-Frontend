@@ -7,7 +7,7 @@ import {
 	lazy,
 	Suspense
 } from 'react';
-import { useParams, useHistory } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 
 import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
 import { BUTTON_TYPES } from '../button/Button';
@@ -47,7 +47,7 @@ export const WriteEnquiry: React.FC = () => {
 	const { t: translate } = useTranslation();
 	const { sessionId } = useParams<{ sessionId: string }>();
 	const sessionIdFromParam = sessionId ? parseInt(sessionId) : null;
-	const history = useHistory();
+	const navigate = useNavigate();
 
 	const { fixed: fixedLanguages } = useContext(LanguagesContext);
 
@@ -111,7 +111,7 @@ export const WriteEnquiry: React.FC = () => {
 			const pathname = isMatrixRoomIdHeuristic(redirectGroupId)
 				? `${endpoints.userSessionsListView}/session/${redirectSessionId}`
 				: `${endpoints.userSessionsListView}/${redirectGroupId}/${redirectSessionId}`;
-			history.push({
+			navigate({
 				pathname
 			});
 		}

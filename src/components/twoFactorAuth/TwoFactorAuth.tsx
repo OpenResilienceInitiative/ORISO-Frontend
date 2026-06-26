@@ -26,10 +26,7 @@ export { OTP_LENGTH, TWO_FACTOR_TYPES } from './twoFactorAuthConstants';
 
 export const TwoFactorAuth = () => {
 	const { t: translate } = useTranslation();
-	const location = useLocation<{
-		openTwoFactor?: boolean;
-		isEditMode?: boolean;
-	}>();
+	const location = useLocation();
 	const { userData, reloadUserData } = useContext(UserDataContext);
 	const settings = useAppConfig();
 	const { getDevToolbarOption } = useDevToolbar();

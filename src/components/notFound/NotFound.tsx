@@ -1,17 +1,17 @@
 import React from 'react';
 import styled from 'styled-components';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { Button, BUTTON_TYPES } from '../button/Button';
 
 const NotFound = () => {
-	const history = useHistory();
+	const navigate = useNavigate();
 	const settings = useAppConfig();
 	const { t: translate } = useTranslation(['common']);
 
 	const handleGoHome = () => {
-		history.push(settings.urls.landingpage || '/');
+		navigate(settings.urls.landingpage || '/');
 	};
 
 	return (

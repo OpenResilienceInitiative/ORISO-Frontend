@@ -16,10 +16,10 @@ import { TWO_FACTOR_TYPES } from '../twoFactorAuth/twoFactorAuthConstants';
 import { Overlay, OVERLAY_FUNCTIONS } from '../overlay/Overlay';
 import { useTranslation } from 'react-i18next';
 import { useAppConfig } from '../../hooks/useAppConfig';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 export const ConsultantPrivateData = () => {
-	const history = useHistory();
+	const navigate = useNavigate();
 	const { t: translate } = useTranslation();
 	const { userData, reloadUserData } = useContext(UserDataContext);
 	const [isEditDisabled, setIsEditDisabled] = useState<boolean>(true);
@@ -144,13 +144,10 @@ export const ConsultantPrivateData = () => {
 				break;
 			case OVERLAY_FUNCTIONS.CONFIRM_EDIT:
 				if (isTwoFactorBinding) {
-					history.push({
-						pathname: '/profile/einstellungen/sicherheit',
-						state: {
+					navigate('/profile/einstellungen/sicherheit', { state: {
 							openTwoFactor: true,
 							isEditMode: true
-						}
-					});
+						} });
 				} else {
 					apiDeleteTwoFactorAuth().then(() => {
 						setOverlayActive(false);
