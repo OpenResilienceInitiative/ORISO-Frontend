@@ -1,4 +1,4 @@
-import { Box, InputAdornment, TextField, Typography } from '@mui/material';
+import { Box, InputAdornment, Typography } from '@mui/material';
 import * as React from 'react';
 import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
 import {
@@ -14,9 +14,9 @@ import { RegistrationContext, RegistrationData } from '../../../globalState';
 import { REGISTRATION_DATA_VALIDATION } from '../registrationDataValidation';
 import {
 	registrationMd3,
-	registrationMd3TextFieldSx,
 	registrationScreenTitleSx
 } from '../registrationDesign/registrationDesign';
+import { OrisoTextField } from '../../form/OrisoTextField';
 
 export const ZipcodeInput: FC<{
 	onChange: Dispatch<SetStateAction<Partial<RegistrationData>>>;
@@ -101,7 +101,7 @@ export const ZipcodeInput: FC<{
 				</Typography>
 			</Box>
 			<Box sx={{ width: '100%', maxWidth: 340 }}>
-				<TextField
+				<OrisoTextField
 					value={value}
 					onChange={(event) => {
 						const nextValue = event.target.value
@@ -129,7 +129,6 @@ export const ZipcodeInput: FC<{
 							</InputAdornment>
 						)
 					}}
-					sx={registrationMd3TextFieldSx}
 				/>
 			</Box>
 		</Box>

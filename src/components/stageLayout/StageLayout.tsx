@@ -25,6 +25,9 @@ import {
 } from '@mui/material';
 import { SvgIconProps } from '@mui/material/SvgIcon';
 import { InfoDrawer } from '../registration/infoDrawer/InfoDrawer';
+import { __RouterContext } from 'react-router';
+import { Link as RouterLink } from 'react-router-dom';
+import { toSameOriginRoute } from './stageLayoutRoutes';
 
 interface StageLayoutProps {
 	className?: string;
@@ -52,10 +55,22 @@ export const StageLayout = ({
 	const legalLinks = useContext(LegalLinksContext);
 	const { selectableLocales } = useContext(LocaleContext);
 	const { specificAgency } = useContext(AgencySpecificContext);
+	const routerContext = useContext(__RouterContext);
 	const settings = useAppConfig();
 	const loginUrl = `${settings.urls.toLogin}${
 		loginParams ? `?${loginParams}` : ''
 	}`;
+	const loginRoute = toSameOriginRoute(loginUrl);
+	const registrationRoute = toSameOriginRoute(settings.urls.toRegistration);
+	const registrationHref = registrationRoute || settings.urls.toRegistration;
+	const handleRegistrationClick = () => {
+		if (registrationRoute && routerContext?.history) {
+			routerContext.history.push(registrationRoute);
+			return;
+		}
+
+		window.location.assign(registrationHref);
+	};
 
 	return (
 		<div className={clsx('stageLayout', className)}>
@@ -87,7 +102,12 @@ export const StageLayout = ({
 
 							{showLoginLink && (
 								<IconButton
-									href={loginUrl}
+									{...(loginRoute && routerContext
+										? {
+												component: RouterLink,
+												to: loginRoute
+											}
+										: { href: loginRoute || loginUrl })}
 									edge="end"
 									color="inherit"
 									aria-label={translate(
@@ -145,8 +165,15 @@ export const StageLayout = ({
 						>
 							<MuiButton
 								className="stageLayout__toLogin__button"
-								component="a"
-								href={loginUrl}
+								{...(loginRoute && routerContext
+									? {
+											component: RouterLink,
+											to: loginRoute
+										}
+									: {
+											component: 'a',
+											href: loginRoute || loginUrl
+										})}
 								variant="outlined"
 								startIcon={<LoginDoorIcon />}
 								sx={{
@@ -200,22 +227,16 @@ export const StageLayout = ({
 								)}
 								type={'infoSmall'}
 							/>
-							<a
+							<Button
 								className="login__tenantRegistrationLink"
-								href={settings.urls.toRegistration}
-								target="_self"
-								tabIndex={-1}
-							>
-								<Button
-									item={{
-										label: translate(
-											'login.register.linkLabel'
-										),
-										type: 'TERTIARY'
-									}}
-									isLink
-								/>
-							</a>
+								item={{
+									label: translate(
+										'login.register.linkLabel'
+									),
+									type: 'TERTIARY'
+								}}
+								buttonHandle={handleRegistrationClick}
+							/>
 						</div>
 					)}
 				</Box>
