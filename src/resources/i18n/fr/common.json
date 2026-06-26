@@ -1888,8 +1888,8 @@
 		},
 		"loader": {
 			"headline": "Bienvenue.",
-			"copy": "Nous préparons votre espace de consultation sécurisé …",
-			"ready": "Votre espace de consultation est prêt."
+			"copy": "Nous préparons votre espace de consultation sécurisé, encore un instant …",
+			"ready": "Votre espace de consultation est prêt. Vous pouvez commencer."
 		},
 		"stepbar": {
 			"of": "de",
