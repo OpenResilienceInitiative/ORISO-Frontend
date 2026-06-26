@@ -220,7 +220,9 @@ describe('TopicSelection', () => {
 			screen.getByText('Soziale Notlagen, Krisen & Finanzen')
 		);
 
-		expect(screen.getAllByText('U25 Suizidprävention')).toHaveLength(2);
+		await waitFor(() => {
+			expect(screen.getAllByText('U25 Suizidprävention')).toHaveLength(2);
+		});
 
 		const duplicateRows = screen
 			.getAllByText('U25 Suizidprävention')
