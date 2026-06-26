@@ -41,13 +41,13 @@ $gridSpacing: $grid-base-four;
 	background:
 		radial-gradient(
 			circle at var(--stage-mx, 32%) var(--stage-my, 24%),
-			rgba(255, 255, 255, 0.22),
+			rgba(255, 255, 255, var(--stage-glow-opacity, 0.32)),
 			rgba(255, 255, 255, 0) 40%
 		),
 		radial-gradient(
-			560px circle at var(--stage-mx, 32%) var(--stage-my, 24%),
-			rgba(255, 138, 128, 0.34),
-			rgba(255, 138, 128, 0) 60%
+			660px circle at var(--stage-mx, 32%) var(--stage-my, 24%),
+			rgba(255, 180, 168, var(--stage-glow-opacity, 0.32)),
+			rgba(255, 180, 168, 0) 62%
 		),
 		linear-gradient(152deg, #da2530 0%, #c0121f 46%, #7c0d15 100%);
 	color: var(--m3-on-primary, $text-invert);

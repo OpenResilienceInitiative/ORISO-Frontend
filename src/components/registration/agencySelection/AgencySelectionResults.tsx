@@ -126,7 +126,7 @@ export const AgencySelectionResults = ({
 					width: '100%',
 					minWidth: 0,
 					py: 1.75,
-					pl: 2,
+					pl: { xs: 2, sm: 2.5 },
 					pr: { xs: 7, sm: 7.5 }
 				}}
 			>
@@ -198,7 +198,7 @@ export const AgencySelectionResults = ({
 							/>
 						}
 						sx={{
-							'alignSelf': 'center',
+							'alignSelf': 'flex-start',
 							'gridColumn': { xs: '2 / 3', sm: 'auto' },
 							'justifySelf': { xs: 'start', sm: 'auto' },
 							'color': registrationMd3.onSurfaceVariant,
@@ -206,6 +206,7 @@ export const AgencySelectionResults = ({
 							'fontSize': 14,
 							'textTransform': 'none',
 							'minWidth': { xs: 44, sm: 'auto' },
+							'mt': { xs: 0, sm: 0.5 },
 							'px': { xs: 1, sm: 1.25 },
 							'whiteSpace': 'nowrap',
 							'&:hover': {

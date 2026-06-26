@@ -184,6 +184,11 @@ export function recolorSvg(svgText: string, iconColor: string): string {
 	const svg = doc.documentElement;
 	svg.setAttribute('width', '100%');
 	svg.setAttribute('height', '100%');
+	svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+	svg.setAttribute(
+		'style',
+		`${svg.getAttribute('style') || ''};display:block;max-width:100%;max-height:100%;overflow:visible;`
+	);
 	const keep = new Set(['none', 'white', '#fff', '#ffffff']);
 	svg.querySelectorAll(
 		'path, circle, rect, ellipse, line, polyline, polygon'

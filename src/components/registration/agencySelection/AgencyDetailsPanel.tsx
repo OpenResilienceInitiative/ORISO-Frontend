@@ -310,7 +310,8 @@ export const AgencyDetailsPanel = ({
 					display: 'grid',
 					gap: 1.75,
 					pt: 1.5,
-					pb: 0.25
+					pb: 0.25,
+					ml: { xs: 0, sm: 'calc(48px + 14px)' }
 				}}
 			>
 				{details.address && (
@@ -374,21 +375,47 @@ export const AgencyDetailsPanel = ({
 
 				{mapSrc && (
 					<Box
-						component="iframe"
-						title={`${t(
-							'registration.agency.details.openInMaps',
-							'In Karte öffnen'
-						)} - ${agency.name}`}
-						src={mapSrc}
-						loading="lazy"
 						sx={{
-							display: 'block',
-							width: '100%',
-							height: { xs: 160, sm: 180 },
-							border: `1px solid ${registrationMd3.outlineVariant}`,
-							borderRadius: '12px'
+							'width': '100%',
+							'height': { xs: 172, sm: 190 },
+							'minHeight': 150,
+							'maxHeight': 360,
+							'resize': 'vertical',
+							'overflow': 'auto',
+							'border': `1px solid ${registrationMd3.outlineVariant}`,
+							'borderRadius': '12px',
+							'position': 'relative',
+							'backgroundColor': registrationMd3.surface,
+							'&::after': {
+								content: '""',
+								position: 'absolute',
+								right: 4,
+								bottom: 4,
+								width: 12,
+								height: 12,
+								borderRight: `2px solid ${registrationMd3.primary}`,
+								borderBottom: `2px solid ${registrationMd3.primary}`,
+								pointerEvents: 'none'
+							}
 						}}
-					/>
+					>
+						<Box
+							component="iframe"
+							title={`${t(
+								'registration.agency.details.openInMaps',
+								'In Karte öffnen'
+							)} - ${agency.name}`}
+							src={mapSrc}
+							loading="lazy"
+							sx={{
+								display: 'block',
+								width: '100%',
+								height: '100%',
+								border: 0,
+								borderRadius: '11px'
+							}}
+						/>
+					</Box>
 				)}
 
 				<InfoRow

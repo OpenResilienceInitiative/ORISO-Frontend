@@ -81,8 +81,17 @@ export const RegistrationStepper = ({
 
 	return (
 		<Box
+			className="registrationStepperSticky"
 			sx={{
+				position: 'sticky',
+				top: { xs: '48px', md: '80px' },
+				zIndex: 62,
 				width: '100%',
+				mx: { xs: -2, md: -3 },
+				px: { xs: 2, md: 3 },
+				pt: { xs: 1, md: 0 },
+				backgroundColor: 'rgba(255, 255, 255, 0.96)',
+				backdropFilter: 'blur(8px)',
 				borderBottom: `1px solid ${registrationMd3.outlineVariant}`,
 				pb: { xs: 1.5, md: 2 },
 				mb: { xs: 2, md: 3 }

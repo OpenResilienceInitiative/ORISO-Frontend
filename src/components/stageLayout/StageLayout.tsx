@@ -165,10 +165,25 @@ export const StageLayout = ({
 									'backgroundColor':
 										'rgba(255, 255, 255, 0.92)',
 									'&:hover': {
+										color: 'var(--m3-on-secondary, #ffffff)',
 										borderColor:
-											'var(--m3-primary, #a4262e)',
+											'var(--m3-secondary, #4c555f)',
 										backgroundColor:
-											'rgba(164, 38, 46, 0.04)'
+											'var(--m3-secondary, #4c555f)'
+									},
+									'&&:active, &&:active:hover': {
+										'color':
+											'var(--m3-on-primary, #ffffff)',
+										'WebkitTextFillColor':
+											'var(--m3-on-primary, #ffffff)',
+										'borderColor':
+											'var(--m3-primary, #a4262e)',
+										'backgroundColor':
+											'var(--m3-primary, #a4262e)',
+										'& .MuiButton-startIcon, & .MuiButton-endIcon':
+											{
+												color: 'var(--m3-on-primary, #ffffff)'
+											}
 									}
 								}}
 							>

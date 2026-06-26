@@ -325,16 +325,24 @@ export const Registration = () => {
 			return;
 		}
 
-		const data = {
+		const mergedData = {
 			...registrationData,
-			...stepData,
-			mainTopicId: registrationData.mainTopic.id.toString(),
-			topicId: registrationData.topic?.id?.toString(),
-			agencyId: registrationData.agency.id.toString(),
-			postcode: registrationData.zipcode,
+			...stepData
+		};
+		const selectedTopic = mergedData.topic || mergedData.mainTopic;
+		const data = {
+			...mergedData,
+			mainTopicId: selectedTopic?.id?.toString(),
+			topicId: selectedTopic?.id?.toString(),
+			topicIds: selectedTopic?.id ? [selectedTopic.id] : [],
+			agencyId: mergedData.agency?.id?.toString(),
+			postcode: mergedData.zipcode,
 			termsAccepted: 'true',
 			preferredLanguage: locale || 'de',
-			consultingType: registrationData.agency.consultingType,
+			consultingType:
+				mergedData.agency?.consultingType != null
+					? String(mergedData.agency.consultingType)
+					: undefined,
 			...(preselectedConsultant && !preselectedConsultant.absent
 				? { consultantId: preselectedConsultant?.consultantId }
 				: {})

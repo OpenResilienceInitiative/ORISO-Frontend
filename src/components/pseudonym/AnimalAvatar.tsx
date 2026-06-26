@@ -17,7 +17,7 @@ export const AnimalAvatar: React.FC<AnimalAvatarProps> = ({
 }) => {
 	const [avatarHtml, setAvatarHtml] = useState<string | null>(null);
 	const borderWidth = 2;
-	const padding = Math.max(8, Math.round(size * 0.1));
+	const padding = Math.max(14, Math.round(size * 0.18));
 	const innerSize = Math.max(0, size - padding * 2 - borderWidth * 2);
 
 	useEffect(() => {
@@ -63,7 +63,10 @@ export const AnimalAvatar: React.FC<AnimalAvatarProps> = ({
 					width: innerSize,
 					height: innerSize,
 					position: 'relative',
-					overflow: 'hidden'
+					display: 'flex',
+					alignItems: 'center',
+					justifyContent: 'center',
+					overflow: 'visible'
 				}}
 				aria-hidden="true"
 				dangerouslySetInnerHTML={

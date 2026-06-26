@@ -81,9 +81,17 @@ export const Stage = ({
 
 		current.x += deltaX * 0.06;
 		current.y += deltaY * 0.06;
+		const glowOpacity = Math.max(
+			0.08,
+			Math.min(0.42, 0.42 - current.y * 0.0028)
+		);
 
 		rootNode.style.setProperty('--stage-mx', `${current.x.toFixed(2)}%`);
 		rootNode.style.setProperty('--stage-my', `${current.y.toFixed(2)}%`);
+		rootNode.style.setProperty(
+			'--stage-glow-opacity',
+			glowOpacity.toFixed(3)
+		);
 
 		if (Math.abs(deltaX) > 0.02 || Math.abs(deltaY) > 0.02) {
 			glowAnimationFrameRef.current =
