@@ -26,6 +26,16 @@ export interface RegisterValues {
 	privacy: boolean;
 }
 
+const USERNAME_REGEX = /^[a-z0-9_-]+$/;
+
+function normalizeUsername(value: string): string {
+	return value.toLowerCase().replace(/[^a-z0-9_-]/g, '');
+}
+
+function isUsernameValid(username: string): boolean {
+	return username.length >= 5 && USERNAME_REGEX.test(username);
+}
+
 /**
  * The four password rules, modelled as data so the UI can render *and*
  * live-check each one. `labelKey` is an i18n key; `test` is the predicate.
@@ -53,7 +63,7 @@ function allPasswordRulesPass(password: string): boolean {
 /** Gate for the "Continue" button: valid username + strong password + match + consent. */
 export function isRegisterValid(v: RegisterValues): boolean {
 	return (
-		v.username.trim().length >= 5 &&
+		isUsernameValid(v.username) &&
 		allPasswordRulesPass(v.password) &&
 		v.confirm === v.password &&
 		v.privacy
@@ -93,13 +103,20 @@ export default function RegisterStep({
 			<TextField
 				value={value.username}
 				onChange={(e) =>
-					onChange({ ...value, username: e.target.value })
+					onChange({
+						...value,
+						// Match the production flow: lowercase only, numbers, "_" and "-".
+						username: normalizeUsername(e.target.value)
+					})
 				}
 				placeholder={t('reg.register.username')}
 				helperText={t('reg.register.usernameHint')}
 				fullWidth
 				autoComplete="username"
-				inputProps={{ 'aria-label': t('reg.register.username') }}
+				inputProps={{
+					'aria-label': t('reg.register.username'),
+					'autoCapitalize': 'none'
+				}}
 				InputProps={{
 					startAdornment: (
 						<InputAdornment position="start">
