@@ -1795,10 +1795,12 @@ export const MessageSubmitInterfaceComponent = ({
 						onSendButton && onSendButton(response);
 					})
 				)
-				.then(() => {
+				.then(async () => {
 					setEditorState(EditorState.createEmpty());
 					setComposerText('');
 					composerRef.current?.clear();
+					await clearDraftMessage();
+					setActiveInfo('');
 				})
 				.then(() => setIsRequestInProgress(false))
 				.catch((error) => {
@@ -1810,6 +1812,7 @@ export const MessageSubmitInterfaceComponent = ({
 			encryptRoom,
 			language,
 			onSendButton,
+			clearDraftMessage,
 			setE2EEState
 		]
 	);
