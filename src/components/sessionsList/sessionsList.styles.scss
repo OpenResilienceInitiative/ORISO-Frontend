@@ -1134,7 +1134,7 @@ $sessionShellSurface: var(--m3-surface-container-high, #eae7e8);
 		height: 40px;
 		border-radius: 999px;
 		background: var(--m3-primary-container, #cc1e1c);
-		color: #ffe2de;
+		color: var(--m3-on-primary-container, #ffe2de);
 		font-size: 16px;
 		font-weight: 600;
 		display: inline-flex;

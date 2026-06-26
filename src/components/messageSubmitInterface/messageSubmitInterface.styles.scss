@@ -1095,7 +1095,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				background-color: var(--m3-primary-hover, #f3bdb8);
 			}
 			&:focus-visible {
-				outline: 2px solid var(--m3-primary-outline, #ffdad5);
+				outline: 2px solid var(--m3-primary-container, #cc1e1c);
 				outline-offset: 2px;
 			}
 
@@ -1105,6 +1105,10 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 			&--active .textarea__icon {
 				transform: translate(-48%, -54%) rotate(-22deg);
+
+				rect {
+					fill: var(--m3-on-primary-container, #ffe2de);
+				}
 			}
 			&--clicked {
 				.textarea__icon {
@@ -1231,6 +1235,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			.textarea__audienceSelectorMain,
 			.textarea__audienceSelectorChevron {
 				background: var(--m3-primary-container, #cc1e1c);
+				color: var(--m3-on-primary-container, #ffe2de);
 			}
 		}
 

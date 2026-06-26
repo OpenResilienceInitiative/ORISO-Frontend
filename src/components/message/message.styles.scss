@@ -351,11 +351,11 @@ $message-avatar-ring: #ebe2e2;
 
 	&__visibilityChip--active .messageItem__visibilityChipCount,
 	&__visibilityChip--active .messageItem__visibilityChipIcon {
-		color: #fff;
+		color: var(--m3-on-primary-container, #ffe2de);
 	}
 
 	&__visibilityChip--active .messageItem__visibilityChipIcon path {
-		fill: #fff;
+		fill: var(--m3-on-primary-container, #ffe2de);
 	}
 
 	&__visibilityChip--incoming {

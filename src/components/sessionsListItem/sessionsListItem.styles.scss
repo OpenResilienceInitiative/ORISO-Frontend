@@ -620,7 +620,7 @@ $session-postcode-border: #646d78;
 			display: flex;
 			align-items: center;
 			justify-content: center;
-			color: $white;
+			color: var(--m3-on-primary-container, #ffe2de);
 			font-weight: $font-weight-bold;
 			font-size: 12px;
 		}
