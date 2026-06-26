@@ -90,14 +90,34 @@ const suggestButtonSx = (filled: boolean) =>
 		'& .MuiButton-startIcon': {
 			mr: 0.625
 		},
+		'& .registration-suggest-icon': {
+			filter: filled ? 'brightness(0) invert(1)' : 'none',
+			transition: 'filter 140ms ease'
+		},
 		'&:hover': filled
 			? {
 					backgroundColor: registrationMd3.primaryDark
 				}
 			: {
-					borderColor: registrationMd3.outline,
-					backgroundColor: registrationMd3.hoverLayer
+					'color': registrationMd3.onSecondary,
+					'borderColor': registrationMd3.secondary,
+					'backgroundColor': registrationMd3.secondary,
+					'& .registration-suggest-icon': {
+						filter: 'brightness(0) invert(1)'
+					}
 				},
+		'&&:active, &&:active:hover': {
+			'color': registrationMd3.onPrimary,
+			'WebkitTextFillColor': registrationMd3.onPrimary,
+			'borderColor': registrationMd3.primary,
+			'backgroundColor': registrationMd3.primary,
+			'& .MuiButton-startIcon, & .MuiButton-endIcon': {
+				color: registrationMd3.onPrimary
+			},
+			'& .registration-suggest-icon': {
+				filter: 'brightness(0) invert(1)'
+			}
+		},
 		'&:focus-visible': {
 			outline: `2px solid ${registrationMd3.focus}`,
 			outlineOffset: 2
@@ -282,6 +302,7 @@ export const AccountData: FC<{
 			startIcon={
 				<Box
 					component="img"
+					className="registration-suggest-icon"
 					src={icon}
 					alt=""
 					sx={{ width: 17, height: 17, flexShrink: 0 }}

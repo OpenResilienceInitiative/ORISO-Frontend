@@ -315,7 +315,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 			// Build registration data exactly like normal registration
 			const registrationData = {
 				username: username,
-				password: encodeURIComponent(password),
+				password: password,
 				agencyId: selectedAgency.id.toString(),
 				postcode: validPostcode,
 				termsAccepted: 'true',

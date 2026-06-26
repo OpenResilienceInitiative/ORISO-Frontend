@@ -135,33 +135,52 @@ export const TopicSelection: FC<{
 			}
 
 			const rect = node.getBoundingClientRect();
+			const stickyStepper = document.querySelector<HTMLElement>(
+				'.registrationStepperSticky'
+			);
+			const stickyBottom =
+				stickyStepper?.getBoundingClientRect().bottom || 88;
+			const targetTop = Math.max(64, stickyBottom + 12);
 			const shouldScroll =
-				rect.top < 96 || rect.top > window.innerHeight * 0.42;
+				rect.top < targetTop || rect.top > targetTop + 24;
 			if (!shouldScroll) {
 				return;
 			}
 
-			window.scrollTo({
-				top: Math.max(0, window.scrollY + rect.top - 88),
-				behavior: 'smooth'
-			});
-		}, 60);
+			const scrollRoot = node.closest<HTMLElement>(
+				'.stageLayout--registration'
+			);
+			const scrollTop =
+				scrollRoot && scrollRoot.scrollHeight > scrollRoot.clientHeight
+					? scrollRoot.scrollTop
+					: window.scrollY;
+			const top = Math.max(0, scrollTop + rect.top - targetTop);
+
+			if (
+				scrollRoot &&
+				scrollRoot.scrollHeight > scrollRoot.clientHeight
+			) {
+				scrollRoot.scrollTo({ top, behavior: 'smooth' });
+				return;
+			}
+
+			window.scrollTo({ top, behavior: 'smooth' });
+		}, 160);
 	}, []);
 
 	const toggleTopicGroup = useCallback(
 		(groupId: number) => {
+			const isExpanded = expandedTopicGroupIds.includes(groupId);
 			setExpandedTopicGroupIds((currentIds) => {
-				const isExpanded = currentIds.includes(groupId);
-				if (!isExpanded) {
-					scrollTopicGroupIntoView(groupId);
-				}
-
 				return isExpanded
 					? currentIds.filter((id) => id !== groupId)
 					: [...currentIds, groupId];
 			});
+			if (!isExpanded) {
+				scrollTopicGroupIntoView(groupId);
+			}
 		},
-		[scrollTopicGroupIntoView]
+		[expandedTopicGroupIds, scrollTopicGroupIntoView]
 	);
 
 	useEffect(() => {
@@ -341,7 +360,11 @@ export const TopicSelection: FC<{
 						role="radiogroup"
 						aria-label="topic-selection"
 						data-cy="topic-radio-group"
-						sx={{ display: 'grid', gap: 1.5 }}
+						sx={{
+							display: 'grid',
+							gap: 1.5,
+							pb: { xs: 16, md: 0 }
+						}}
 					>
 						{listView
 							? [...(topics || [])]
@@ -420,20 +443,25 @@ export const TopicSelection: FC<{
 											sx={{
 												'boxShadow': 'none',
 												'border': `1px solid ${registrationMd3.outlineVariant}`,
-												'borderRadius': 4,
+												'borderRadius': '32px',
 												'overflow': 'hidden',
 												'backgroundColor':
 													registrationMd3.surface,
 												'&:before': {
 													display: 'none'
 												},
+												'&&, &&:first-of-type, &&:last-of-type':
+													{
+														borderRadius: '32px'
+													},
 												'& .MuiAccordionSummary-root:hover':
 													{
 														backgroundColor:
 															registrationMd3.hoverLayer
 													},
-												'&.Mui-expanded': {
-													margin: 0
+												'&&.Mui-expanded': {
+													margin: 0,
+													borderRadius: '32px'
 												}
 											}}
 										>
@@ -452,7 +480,12 @@ export const TopicSelection: FC<{
 												sx={{
 													'minHeight': 68,
 													'px': 2,
+													'borderRadius': '32px',
 													'background': `linear-gradient(100deg, ${registrationMd3.surfaceContainerHigh} 0%, ${registrationMd3.surfaceContainerLow} 90%)`,
+													'&.Mui-expanded': {
+														borderRadius:
+															'32px 32px 0 0'
+													},
 													'& .MuiAccordionSummary-content':
 														{
 															alignItems:
