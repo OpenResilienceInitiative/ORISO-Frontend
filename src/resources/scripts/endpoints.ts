@@ -87,6 +87,7 @@ export const endpoints = {
 		),
 	magicLinkRequest: userServiceOrigin + '/service/users/magic-link/request',
 	magicLinkConsume: userServiceOrigin + '/service/users/magic-link/consume',
+	matrixAccessToken: userServiceOrigin + '/service/matrix/me/token',
 	messageRead: apiUrl + '/api/v1/subscriptions.read',
 	messages: {
 		get: userServiceOrigin + '/service/messages',

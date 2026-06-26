@@ -13,6 +13,7 @@ declare namespace NodeJS {
 		readonly REACT_APP_AGENCY_SERVICE_ORIGIN?: string;
 		readonly REACT_APP_CONSULTING_TYPE_SERVICE_ORIGIN?: string;
 		readonly REACT_APP_KEYCLOAK_ORIGIN?: string;
+		readonly REACT_APP_DISABLE_LIVE_WEBSOCKET?: string;
 	}
 }
 

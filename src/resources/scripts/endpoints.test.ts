@@ -34,6 +34,9 @@ describe('endpoints service origins', () => {
 		expect(endpoints.messages.get).toBe(
 			'http://localhost:8082/service/messages'
 		);
+		expect(endpoints.matrixAccessToken).toBe(
+			'http://localhost:8082/service/matrix/me/token'
+		);
 		expect(endpoints.anonymousEnquiryDetails(123)).toBe(
 			'http://localhost:8082/service/conversations/anonymous/123'
 		);
@@ -47,6 +50,9 @@ describe('endpoints service origins', () => {
 
 		expect(endpoints.userData).toBe(
 			'https://api.oriso.org/service/users/data'
+		);
+		expect(endpoints.matrixAccessToken).toBe(
+			'https://api.oriso.org/service/matrix/me/token'
 		);
 		expect(endpoints.consultingTypeServiceBase).toBe(
 			'https://api.oriso.org/service/consultingtypes'

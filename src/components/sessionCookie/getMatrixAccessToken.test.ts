@@ -3,7 +3,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { persistMatrixLoginData } from './getMatrixAccessToken';
 
 vi.mock('../../resources/scripts/endpoints', () => ({
-	apiUrl: 'https://api.example.test'
+	endpoints: {
+		matrixAccessToken: 'https://api.example.test/service/matrix/me/token'
+	}
 }));
 
 vi.mock('../../resources/scripts/runtimeConfig', () => ({
