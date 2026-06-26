@@ -5,13 +5,13 @@
 Propose → show it **visually** → then proceed. Build the smallest coherent slice,
 run it / screenshot it so Frank can react to something real, and end with a short
 check-back question on direction before expanding scope. He explicitly values that
-I *don't* "just do things" and batch many speculative changes — small reviewable
+I _don't_ "just do things" and batch many speculative changes — small reviewable
 increments with a visual checkpoint are "genau die richtige Portion". Asking a good
 clarifying question is a feature, not friction.
 
 ## What this is
 
-A standalone sandbox to test the *feel* of a Material 3 collapsible-list topic
+A standalone sandbox to test the _feel_ of a Material 3 collapsible-list topic
 picker for the ORISO registration flow. Same stack as `ORISO-Frontend`
 (React + MUI v5 + react-i18next) so `TopicSelection.tsx` lifts into production.
 
@@ -37,13 +37,13 @@ Run: `npm install && npm run dev` → http://localhost:5173 · `npm run build` t
 ## Registration steps (5-step flow)
 
 1. **Fokus wählen** (topic) · 2. **Postleitzahl** · 3. **Beratungsstelle** (consulting center) ·
-4. **Registrieren** · 5. **Anfrage stellen** (message composer; the animated send/preload is
-ORISO-Frontend issue #256).
+2. **Registrieren** · 5. **Anfrage stellen** (message composer; the animated send/preload is
+   ORISO-Frontend issue #256).
 
 Each step is its own component: `TopicSelection`, `PostcodeStep`, `ConsultingCenterStep`,
 `RegisterStep`, plus an inline message step in `App.tsx`. All values are **controlled in
-`App.tsx`** and persisted to **sessionStorage** (`oriso-registration` key) — survive
-navigation + reload within the tab, cleared on tab close. The stepper is **clickable** up to
+`App.tsx`** and kept **in memory only** so sensitive counselling/registration context is not
+left behind in browser storage on reload. The stepper is **clickable** up to
 the highest step reached (`maxStep` prop → `onStepClick`); the "Schritt X von Y" text was
 dropped (the visual stepper conveys it). Per-step next-button label via `nextLabel`
 (Weiter / Registrieren / Anfrage senden). `RegisterStep` exports `isRegisterValid` + a
@@ -79,7 +79,7 @@ The content column is a **CSS grid**: `gridTemplateRows: 'auto minmax(0,1fr) aut
 with `height: 100dvh; overflow: hidden`. Header group = row 1, scrolling list =
 row 2 (`minmax(0,1fr)` so it can shrink below content and scroll internally),
 footer = row 3 (always pinned/visible). Do NOT go back to a flex column with
-`flex:1` on the scroller — without a *definite* height the scroller grows to its
+`flex:1` on the scroller — without a _definite_ height the scroller grows to its
 content on mobile, pushing the footer off-screen (`overflow:hidden` then clips it)
 and killing scroll. The footer is "total wichtig" and must always be visible.
 

@@ -26,6 +26,8 @@ npm run build    # type-check (tsc) + production build
   visible** — no scrolling to find it.
 - A **✓ badge** on a collapsed category that holds the current selection, plus a
   "Ausgewählt: …" summary in the footer.
+- **Sensitive values stay in memory only.** Topic, postcode, registration data and the
+  free-text request reset on reload instead of being persisted in browser storage.
 - **Reworked layout** per feedback: toned-down (muted, lower-chroma) Caritas-red hero,
   compact `REGISTRIERUNG` label + segmented stepper, roomier top bar for language + login,
   left-anchored content.

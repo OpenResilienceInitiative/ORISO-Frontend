@@ -25,72 +25,24 @@ const EMPTY_REGISTER: RegisterValues = {
 };
 const STORAGE_KEY = 'oriso-registration';
 
-interface PersistedState {
-	step: number;
-	maxStep: number;
-	selected: string | null;
-	postcode: string;
-	centerId: string | null;
-	register: RegisterValues;
-	message: string;
-}
-
-function loadState(): Partial<PersistedState> {
-	try {
-		const parsed = JSON.parse(
-			sessionStorage.getItem(STORAGE_KEY) || '{}'
-		) as Partial<PersistedState>;
-		// Never restore credentials from sessionStorage — only in-memory React state.
-		if (parsed.register) {
-			parsed.register = { ...parsed.register, password: '', confirm: '' };
-		}
-		// Credentials don't survive reload — don't restore steps beyond registration.
-		if ((parsed.step ?? 1) > 4 || (parsed.maxStep ?? 1) > 4) {
-			parsed.step = Math.min(parsed.step ?? 4, 4);
-			parsed.maxStep = Math.min(parsed.maxStep ?? 4, 4);
-		}
-		return parsed;
-	} catch {
-		return {};
-	}
-}
-
 export default function App() {
 	const { t } = useTranslation();
-	const initial = loadState();
 
-	// All step values live here (controlled) so navigating between steps keeps
-	// what was entered. Persisted to sessionStorage: survives navigation + reload
-	// within the tab, cleared when the tab closes.
-	const [step, setStep] = useState(initial.step ?? 1);
-	const [maxStep, setMaxStep] = useState(
-		initial.maxStep ?? initial.step ?? 1
-	);
-	const [selected, setSelected] = useState<string | null>(
-		initial.selected ?? null
-	);
-	const [postcode, setPostcode] = useState(initial.postcode ?? '');
-	const [centerId, setCenterId] = useState<string | null>(
-		initial.centerId ?? null
-	);
-	const [register, setRegister] = useState<RegisterValues>(
-		initial.register ?? EMPTY_REGISTER
-	);
-	const [message, setMessage] = useState(initial.message ?? '');
+	// Keep all registration values in memory only. This prototype covers
+	// counselling topics and free-text requests, so reload persistence would leave
+	// sensitive context in browser storage.
+	const [step, setStep] = useState(1);
+	const [maxStep, setMaxStep] = useState(1);
+	const [selected, setSelected] = useState<string | null>(null);
+	const [postcode, setPostcode] = useState('');
+	const [centerId, setCenterId] = useState<string | null>(null);
+	const [register, setRegister] = useState<RegisterValues>(EMPTY_REGISTER);
+	const [message, setMessage] = useState('');
 	const [toast, setToast] = useState<string | null>(null);
 
 	useEffect(() => {
-		const state: PersistedState = {
-			step,
-			maxStep,
-			selected,
-			postcode,
-			centerId,
-			register: { ...register, password: '', confirm: '' },
-			message
-		};
-		sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-	}, [step, maxStep, selected, postcode, centerId, register, message]);
+		sessionStorage.removeItem(STORAGE_KEY);
+	}, []);
 
 	const selectedTopic = useMemo(() => {
 		if (!selected) return null;
