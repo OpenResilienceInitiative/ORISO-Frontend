@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { UrlParamsContext } from '../../../globalState/provider/UrlParamsProvider';
 import { useAgenciesForRegistration } from '../../../containers/registration/hooks/useAgenciesForRegistration';
 import { Loading } from '../../../components/app/Loading';
+import { registrationMd3 } from '../registrationDesign/registrationDesign';
 
 export const AgencySelection: FC<{
 	onChange: Dispatch<SetStateAction<Partial<RegistrationData>>>;
@@ -54,7 +55,14 @@ export const AgencySelection: FC<{
 
 	return (
 		<>
-			<Typography variant="h3">
+			<Typography
+				variant="h3"
+				sx={{
+					color: registrationMd3.onSurface,
+					fontWeight: 800,
+					lineHeight: 1.2
+				}}
+			>
 				{preselectedConsultant?.agencies?.length === 1 ||
 				agencies?.length === 1
 					? t('registration.agency.consultantheadline')

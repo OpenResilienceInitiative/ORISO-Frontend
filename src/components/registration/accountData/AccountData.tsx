@@ -4,7 +4,8 @@ import {
 	InputAdornment,
 	Typography,
 	Link,
-	FormControlLabel
+	FormControlLabel,
+	Box
 } from '@mui/material';
 import * as React from 'react';
 import {
@@ -30,6 +31,7 @@ import { RegistrationContext, RegistrationData } from '../../../globalState';
 import { apiGetIsUsernameAvailable } from '../../../api/apiGetIsUsernameAvailable';
 import { REGISTRATION_DATA_VALIDATION } from '../registrationDataValidation';
 import LegalLinks from '../../../components/legalLinks/LegalLinks';
+import { registrationMd3 } from '../registrationDesign/registrationDesign';
 
 export const passwordCriteria = [
 	{
@@ -91,11 +93,24 @@ export const AccountData: FC<{
 	]);
 
 	return (
-		<>
-			<Typography variant="h3">
+		<Box sx={{ maxWidth: 560 }}>
+			<Typography
+				variant="h3"
+				sx={{
+					color: registrationMd3.onSurface,
+					fontWeight: 800,
+					lineHeight: 1.2
+				}}
+			>
 				{t('registration.account.headline')}
 			</Typography>
-			<Typography sx={{ mt: '16px' }}>
+			<Typography
+				sx={{
+					mt: '12px',
+					mb: '20px',
+					color: registrationMd3.onSurfaceVariant
+				}}
+			>
 				{t('registration.account.subline')}
 			</Typography>
 			<Input
@@ -255,6 +270,6 @@ export const AccountData: FC<{
 					}
 				/>
 			</FormGroup>
-		</>
+		</Box>
 	);
 };

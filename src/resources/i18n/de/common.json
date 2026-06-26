@@ -1994,6 +1994,15 @@
 			"title": "Registrierung abschließen"
 		},
 		"headline": "Registrierung",
+		"md3": {
+			"stepNames": {
+				"focus": "Fokus wählen",
+				"postcode": "Postleitzahl",
+				"agency": "Beratungsstelle",
+				"register": "Registrieren",
+				"request": "Anfrage stellen"
+			}
+		},
 		"login": {
 			"helper": "Bereits registriert?",
 			"label": "Einloggen"

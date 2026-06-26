@@ -51,7 +51,7 @@ describe('RegistrationLoader', () => {
 		);
 	});
 
-	it('calls onFinish once after ready and the completion delay', () => {
+	it('calls onFinish once after ready and the completion zoom-out', () => {
 		const onFinish = vi.fn();
 		const { rerender } = render(
 			<RegistrationLoader ready={false} onFinish={onFinish} />
@@ -65,6 +65,12 @@ describe('RegistrationLoader', () => {
 
 		act(() => {
 			vi.advanceTimersByTime(700);
+		});
+
+		expect(onFinish).not.toHaveBeenCalled();
+
+		act(() => {
+			vi.advanceTimersByTime(820);
 		});
 
 		expect(onFinish).toHaveBeenCalledTimes(1);
@@ -90,7 +96,7 @@ describe('RegistrationLoader', () => {
 		rerender(<RegistrationLoader ready={true} onFinish={secondFinish} />);
 
 		act(() => {
-			vi.advanceTimersByTime(200);
+			vi.advanceTimersByTime(1020);
 		});
 
 		expect(firstFinish).not.toHaveBeenCalled();
