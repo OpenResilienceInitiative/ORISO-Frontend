@@ -85,11 +85,13 @@ export const RegistrationLoader = ({
 
 	const benefitItems = [
 		{
+			id: 'professional-response',
 			icon: MailRoundedIcon,
 			title: t('registration.welcomeScreen.info3.title'),
 			text: t('registration.welcomeScreen.info3.text')
 		},
 		{
+			id: 'anonymous-free',
 			icon: LockRoundedIcon,
 			title: t('registration.welcomeScreen.info4.title'),
 			text: t('registration.welcomeScreen.info4.text')
@@ -277,9 +279,9 @@ export const RegistrationLoader = ({
 							: 'none'
 				}}
 			>
-				{benefitItems.map(({ icon: Icon, title, text }) => (
+				{benefitItems.map(({ id, icon: Icon, title, text }) => (
 					<Box
-						key={title}
+						key={id}
 						sx={{
 							display: 'grid',
 							gridTemplateColumns: '32px 1fr',
