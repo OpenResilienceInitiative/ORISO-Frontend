@@ -673,7 +673,7 @@ const RegistrationFooterBackLink = ({
 			'whiteSpace': 'nowrap',
 			'px': { xs: 0.5, sm: 1, md: 1.25 },
 			'py': { xs: 0.75, sm: 1 },
-			'mx': { xs: -0.5, sm: -1, md: -1.25 },
+			'mx': { xs: -0.5, sm: 0 },
 			'borderRadius': '999px',
 			'&:hover': {
 				backgroundColor: registrationMd3.hoverLayer
