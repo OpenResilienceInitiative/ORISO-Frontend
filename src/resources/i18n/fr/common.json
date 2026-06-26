@@ -1719,6 +1719,8 @@
 		}
 	},
 	"registration": {
+		"selectedLabel": "Sélectionné",
+		"noneSelected": "Veuillez choisir un thème pour continuer.",
 		"accordion": {
 			"item": {
 				"continueButton": {
@@ -1860,6 +1862,7 @@
 			},
 			"criteria": {
 				"fulfilled": "Répond à",
+				"open": "Ouvert",
 				"length": "au moins 9 caractères",
 				"number": "au moins un chiffre",
 				"specialChar": "au moins un caractère spécial",
@@ -1951,7 +1954,8 @@
 			"username": {
 				"error": {
 					"tooShort": "Votre nom d'utilisateur est trop court.",
-					"unavailable": "Ce nom d'utilisateur est déjà pris."
+					"unavailable": "Ce nom d'utilisateur est déjà pris.",
+					"retry": "Nous n'avons pas pu vérifier ce nom d'utilisateur pour le moment. Veuillez réessayer."
 				},
 				"hint": "Nom de connexion anonyme. N'utilisez pas de vrai nom ni d'initiales.",
 				"info": "Nom de connexion anonyme. N'utilisez pas de vrai nom ni d'initiales.",

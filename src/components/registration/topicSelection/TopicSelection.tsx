@@ -21,7 +21,8 @@ import {
 	SetStateAction,
 	Dispatch,
 	useCallback,
-	useRef
+	useRef,
+	useMemo
 } from 'react';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
@@ -70,10 +71,45 @@ export const TopicSelection: FC<{
 	const [topicGroupId, setTopicGroupId] = useState<number | undefined>(
 		registrationData?.topicGroupId || undefined
 	);
+	const [selectedPlacementId, setSelectedPlacementId] = useState<
+		string | undefined
+	>();
 	const [expandedTopicGroupIds, setExpandedTopicGroupIds] = useState<
 		number[]
 	>([]);
 	const topicGroupRefs = useRef<Record<number, HTMLDivElement | null>>({});
+	const firstGroupedPlacementId = useMemo(
+		() =>
+			topicGroups?.flatMap((topicGroup) => topicGroup.topics)[0]
+				?.placementId,
+		[topicGroups]
+	);
+	const activeGroupedPlacementId = useMemo(() => {
+		if (selectedPlacementId) {
+			return selectedPlacementId;
+		}
+
+		if (value == null) {
+			return firstGroupedPlacementId;
+		}
+
+		return (
+			topicGroups
+				?.flatMap((topicGroup) => topicGroup.topics)
+				.find(
+					(placement) =>
+						placement.topic.id === value &&
+						(!topicGroupId ||
+							placement.topicGroupId === topicGroupId)
+				)?.placementId || firstGroupedPlacementId
+		);
+	}, [
+		firstGroupedPlacementId,
+		selectedPlacementId,
+		topicGroupId,
+		topicGroups,
+		value
+	]);
 
 	const compareTopicsByDisplayName = useCallback(
 		(a: TopicsDataInterface, b: TopicsDataInterface) =>
@@ -155,7 +191,22 @@ export const TopicSelection: FC<{
 
 			return [selectedGroupId || topicGroups[0].id];
 		});
-	}, [topicGroups, topicGroupId, value]);
+
+		if (!selectedPlacementId && value != null) {
+			const selectedPlacement = topicGroups
+				.flatMap((topicGroup) => topicGroup.topics)
+				.find(
+					(placement) =>
+						placement.topic.id === value &&
+						(!topicGroupId ||
+							placement.topicGroupId === topicGroupId)
+				);
+
+			if (selectedPlacement) {
+				setSelectedPlacementId(selectedPlacement.placementId);
+			}
+		}
+	}, [topicGroups, topicGroupId, value, selectedPlacementId]);
 
 	useEffect(() => {
 		const hasGroupedTopic =
@@ -310,10 +361,19 @@ export const TopicSelection: FC<{
 											)}
 											locale={locale}
 											checked={value === topic?.id}
+											tabIndex={
+												value === topic.id ||
+												(value == null && index === 0)
+													? 0
+													: -1
+											}
 											singleTopic={topics.length === 1}
 											onChange={() => {
 												setValue(topic.id);
 												setTopicGroupId(undefined);
+												setSelectedPlacementId(
+													`list/${topic.id}`
+												);
 												onChange({
 													mainTopic: topic,
 													topicGroupId: undefined
@@ -475,12 +535,14 @@ export const TopicSelection: FC<{
 																}
 																locale={locale}
 																checked={
-																	value ===
-																		placement
-																			.topic
-																			.id &&
-																	topicGroup.id ===
-																		topicGroupId
+																	selectedPlacementId ===
+																	placement.placementId
+																}
+																tabIndex={
+																	activeGroupedPlacementId ===
+																	placement.placementId
+																		? 0
+																		: -1
 																}
 																onChange={() => {
 																	setValue(
@@ -490,6 +552,9 @@ export const TopicSelection: FC<{
 																	);
 																	setTopicGroupId(
 																		topicGroup.id
+																	);
+																	setSelectedPlacementId(
+																		placement.placementId
 																	);
 																	onChange({
 																		mainTopic:
@@ -522,6 +587,7 @@ const TopicSelect = ({
 	isLast,
 	onChange,
 	checked,
+	tabIndex,
 	singleTopic = false
 }: {
 	topics: TopicsDataInterface[];
@@ -532,9 +598,46 @@ const TopicSelect = ({
 	isLast: boolean;
 	onChange: () => void;
 	checked: boolean;
+	tabIndex: number;
 	singleTopic?: boolean;
 }) => {
 	const display = getRegistrationTopicDisplay(topic, locale);
+	const handleKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
+		if (event.key === 'Enter' || event.key === ' ') {
+			event.preventDefault();
+			onChange();
+			return;
+		}
+
+		if (
+			event.key !== 'ArrowDown' &&
+			event.key !== 'ArrowRight' &&
+			event.key !== 'ArrowUp' &&
+			event.key !== 'ArrowLeft'
+		) {
+			return;
+		}
+
+		const group = event.currentTarget.closest('[role="radiogroup"]');
+		const radios = Array.from(
+			group?.querySelectorAll<HTMLElement>(
+				'[role="radio"]:not([aria-disabled="true"])'
+			) || []
+		);
+		const currentIndex = radios.indexOf(event.currentTarget);
+
+		if (currentIndex < 0 || radios.length === 0) {
+			return;
+		}
+
+		event.preventDefault();
+		const direction =
+			event.key === 'ArrowDown' || event.key === 'ArrowRight' ? 1 : -1;
+		const nextIndex =
+			(currentIndex + direction + radios.length) % radios.length;
+		radios[nextIndex].focus();
+		radios[nextIndex].click();
+	};
 
 	return (
 		<Box sx={{ listStyle: 'none' }}>
@@ -543,9 +646,12 @@ const TopicSelect = ({
 				data-cy={`topic-selection-radio-${topic.id}`}
 				role="radio"
 				aria-checked={checked}
+				aria-disabled={singleTopic || undefined}
+				tabIndex={singleTopic ? -1 : tabIndex}
 				selected={checked}
 				disabled={singleTopic}
 				onClick={onChange}
+				onKeyDown={handleKeyDown}
 				sx={{
 					'px': 2,
 					'py': 1.5,

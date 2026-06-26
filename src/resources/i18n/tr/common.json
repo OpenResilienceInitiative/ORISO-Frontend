@@ -1881,6 +1881,7 @@
 			},
 			"criteria": {
 				"fulfilled": "Gerçekleştirildi",
+				"open": "Açık",
 				"length": "en az 9 karakter",
 				"number": "en az bir sayı",
 				"specialChar": "en az bir özel karakter",
@@ -1972,7 +1973,8 @@
 			"username": {
 				"error": {
 					"tooShort": "Kullanıcı adınız çok kısa.",
-					"unavailable": "Bu kullanıcı adı zaten alınmış."
+					"unavailable": "Bu kullanıcı adı zaten alınmış.",
+					"retry": "Bu kullanıcı adını şu anda kontrol edemedik. Lütfen tekrar deneyin."
 				},
 				"hint": "Anonim oturum açma adı. Lütfen gerçek ad veya baş harf kullanmayın.",
 				"info": "Anonim oturum açma adı. Lütfen gerçek ad veya baş harf kullanmayın.",
@@ -1985,7 +1987,7 @@
 		"consultantlinkAbsent": "Bu danışman şu anda yok. Talebinizi yine de danışma merkezine gönderebilirsiniz.",
 		"errors": {
 			"ups": {
-				"title": "Oops!",
+				"title": "Hata!",
 				"text": "Üzgünüz, bir şeyler ters gitti. Lütfen sayfayı yenileyin ve tekrar deneyin."
 			},
 			"aid": "Seçtiğiniz danışma merkezi maalesef bulunamadı. Lütfen kayıt sırasında yeniden bir danışma merkezi seçin.",

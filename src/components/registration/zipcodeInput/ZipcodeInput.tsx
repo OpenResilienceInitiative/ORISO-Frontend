@@ -36,6 +36,11 @@ export const ZipcodeInput: FC<{
 			});
 		} else {
 			setDisabledNextButton(true);
+			onChange({
+				zipcode: undefined,
+				agencyId: undefined,
+				agency: undefined
+			});
 		}
 	}, [setDisabledNextButton, onChange, value]);
 

@@ -63,6 +63,11 @@ export const AgencySelectionResults = ({
 	const onlyExternalAgencies = results?.every((agency) => agency.external);
 	const isSingleResultAndNotOnlyExternal =
 		results?.length === 1 && !onlyExternalAgencies;
+	const selectAgency = (agency: AgencyDataInterface) => {
+		setDisabledNextButton(false);
+		setSelectedAgency(agency);
+		onChange({ agency });
+	};
 
 	useEffect(() => {
 		if (
@@ -368,13 +373,15 @@ export const AgencySelectionResults = ({
 							results?.[0].id.toString() ||
 							''
 						}
-						onChange={() => {
-							if (!results?.[0]) {
+						onChange={(event) => {
+							const agency = results?.find(
+								(item) =>
+									item.id.toString() === event.target.value
+							);
+							if (!agency) {
 								return;
 							}
-							setDisabledNextButton(false);
-							setSelectedAgency(results[0]);
-							onChange({ agency: results[0] });
+							selectAgency(agency);
 						}}
 					>
 						<Box
@@ -440,6 +447,15 @@ export const AgencySelectionResults = ({
 						aria-label="agency-selection-radio-group"
 						name="agency-selection-radio-group"
 						value={selectedAgency?.id?.toString() || ''}
+						onChange={(event) => {
+							const agency = results?.find(
+								(item) =>
+									item.id.toString() === event.target.value
+							);
+							if (agency) {
+								selectAgency(agency);
+							}
+						}}
 					>
 						{results
 							?.filter((agency) => !agency.external)
@@ -463,9 +479,7 @@ export const AgencySelectionResults = ({
 									<FormControlLabel
 										data-cy={`agency-selection-radio-${agency.id}`}
 										onClick={() => {
-											setDisabledNextButton(false);
-											setSelectedAgency(agency);
-											onChange({ agency });
+											selectAgency(agency);
 										}}
 										labelPlacement="start"
 										sx={{

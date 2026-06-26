@@ -43,6 +43,7 @@ export const registrationMd3 = {
 	surfaceContainerHigh: '#ebe8e8',
 	secondary: '#4c555f',
 	primary: '#a4262e',
+	onPrimary: '#ffffff',
 	primaryDark: '#7e1d23',
 	error: '#b1005e',
 	focus: '#2d6f7b',

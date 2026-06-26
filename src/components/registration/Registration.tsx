@@ -167,10 +167,7 @@ export const Registration = () => {
 
 	const onPrevClick = useCallback(() => {
 		setStepData({});
-		if (history) {
-			history.push(prevStepUrl);
-		}
-	}, [history, prevStepUrl]);
+	}, []);
 
 	const onClearSelection = useCallback(() => {
 		setStepData({});
@@ -268,7 +265,7 @@ export const Registration = () => {
 	const clickableStepperStepNames = useMemo(
 		() =>
 			availableSteps
-				.slice(0, Math.max(currStepIndex + 1, 0))
+				.slice(0, Math.max(currStepIndex, 0))
 				.map(({ name }) => name),
 		[availableSteps, currStepIndex]
 	);

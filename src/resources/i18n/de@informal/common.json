@@ -624,6 +624,8 @@
 		}
 	},
 	"registration": {
+		"selectedLabel": "Ausgewählt",
+		"noneSelected": "Bitte wähle ein Thema, um fortzufahren.",
 		"agency": {
 			"preselected": {
 				"prefix": "Deine vorausgewählte Beratungsstelle: "
@@ -751,7 +753,9 @@
 			"subline": "Um Deine Anonymität zu schützen, raten wir Dir, nicht Deinen tatsächlichen Namen oder Initialen zu verwenden.",
 			"username": {
 				"error": {
-					"tooShort": "Dein Benutzername ist zu kurz."
+					"tooShort": "Dein Benutzername ist zu kurz.",
+					"unavailable": "Dieser Benutzername ist bereits vergeben.",
+					"retry": "Wir konnten den Benutzernamen gerade nicht prüfen. Bitte versuche es erneut."
 				},
 				"info": "Anonymer Login-Name. Bitte keine echten Namen oder Initialen verwenden.",
 				"success": "Dein Benutzername ist geeignet."

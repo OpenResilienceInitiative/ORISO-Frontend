@@ -2039,6 +2039,7 @@
 			},
 			"criteria": {
 				"fulfilled": "Erfüllt",
+				"open": "Offen",
 				"length": "mindestens 9 Zeichen",
 				"number": "mindestens eine Zahl",
 				"specialChar": "mindestens ein Sonderzeichen",
@@ -2151,7 +2152,8 @@
 			"username": {
 				"error": {
 					"tooShort": "Ihr Benutzername ist zu kurz.",
-					"unavailable": "Dieser Benutzername ist bereits vergeben."
+					"unavailable": "Dieser Benutzername ist bereits vergeben.",
+					"retry": "Wir konnten den Benutzernamen gerade nicht prüfen. Bitte versuchen Sie es erneut."
 				},
 				"info": "Anonymer Login-Name. Bitte keine echten Namen oder Initialen verwenden.",
 				"label": "Benutzername",

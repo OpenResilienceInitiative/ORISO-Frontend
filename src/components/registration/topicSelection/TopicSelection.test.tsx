@@ -132,6 +132,7 @@ describe('TopicSelection', () => {
 	afterEach(() => {
 		cleanup();
 		vi.clearAllMocks();
+		vi.unstubAllGlobals();
 	});
 
 	it('renders public topics without requiring legacy agency coverage', async () => {
@@ -158,6 +159,7 @@ describe('TopicSelection', () => {
 	});
 
 	it('renders the curated presentation categories with duplicate topic placements', async () => {
+		vi.stubGlobal('scrollTo', vi.fn());
 		apiGetTopicsDataMock.mockResolvedValue([
 			topicWithSlug(
 				1,
@@ -219,6 +221,34 @@ describe('TopicSelection', () => {
 		);
 
 		expect(screen.getAllByText('U25 Suizidprävention')).toHaveLength(2);
+
+		const duplicateRows = screen
+			.getAllByText('U25 Suizidprävention')
+			.map((node) => node.closest('[role="radio"]'));
+
+		fireEvent.click(duplicateRows[1]!);
+
+		expect(
+			duplicateRows.filter(
+				(row) => row?.getAttribute('aria-checked') === 'true'
+			)
+		).toHaveLength(1);
+		expect(duplicateRows[1]?.getAttribute('tabindex')).toBe('0');
+		expect(duplicateRows[0]?.getAttribute('tabindex')).toBe('-1');
+
+		fireEvent.keyDown(duplicateRows[1]!, { key: 'ArrowUp' });
+
+		await waitFor(() => {
+			const radios = screen.getAllByRole('radio');
+			expect(
+				radios.filter(
+					(row) => row.getAttribute('aria-checked') === 'true'
+				)
+			).toHaveLength(1);
+			expect(
+				radios.filter((row) => row.getAttribute('tabindex') === '0')
+			).toHaveLength(1);
+		});
 	});
 
 	it('leaves loading state when the public topics request fails', async () => {

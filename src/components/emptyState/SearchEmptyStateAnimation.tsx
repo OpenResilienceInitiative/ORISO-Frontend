@@ -11,13 +11,17 @@ export const SearchEmptyStateAnimation = () => {
 	useEffect(() => {
 		let mounted = true;
 
-		import('../../resources/animations/emptyStates/search.json').then(
-			(module) => {
+		import('../../resources/animations/emptyStates/search.json')
+			.then((module) => {
 				if (mounted) {
 					setAnimationData(module.default ?? module);
 				}
-			}
-		);
+			})
+			.catch(() => {
+				if (mounted) {
+					setAnimationData(null);
+				}
+			});
 
 		return () => {
 			mounted = false;

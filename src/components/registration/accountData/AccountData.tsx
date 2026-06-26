@@ -68,8 +68,10 @@ const toRegistrationUsername = (displayName: string) => {
 		.replace(/_{2,}/g, '_');
 	const safeBase = normalized || 'oriso';
 	const suffix = Math.floor(100 + Math.random() * 900);
+	const suffixText = `_${suffix}`;
+	const maxBaseLength = 48 - suffixText.length;
 
-	return `${safeBase}_${suffix}`.slice(0, 48);
+	return `${safeBase.slice(0, maxBaseLength)}${suffixText}`;
 };
 
 const suggestButtonSx = (filled: boolean) =>
@@ -82,7 +84,7 @@ const suggestButtonSx = (filled: boolean) =>
 		'flex': '1 1 auto',
 		'borderRadius': '8px',
 		'textTransform': 'none',
-		'color': filled ? '#fff' : registrationMd3.onSurface,
+		'color': filled ? registrationMd3.onPrimary : registrationMd3.onSurface,
 		'borderColor': registrationMd3.outlineVariant,
 		'backgroundColor': filled ? registrationMd3.primary : undefined,
 		'& .MuiButton-startIcon': {
@@ -125,11 +127,14 @@ export const AccountData: FC<{
 		useState<boolean>(false);
 	const [usernameAvailabilityChecked, setUsernameAvailabilityChecked] =
 		useState<boolean>(false);
+	const [usernameAvailabilityFailed, setUsernameAvailabilityFailed] =
+		useState<boolean>(false);
 	const { setDisabledNextButton } = useContext(RegistrationContext);
 
 	const resetUsernameAvailability = useCallback(() => {
 		setUsernameAvailabilityChecked(false);
 		setIsUsernameAvailable(true);
+		setUsernameAvailabilityFailed(false);
 		setUsernameWasBlurred(false);
 	}, []);
 
@@ -161,8 +166,12 @@ export const AccountData: FC<{
 		if (!isUsernameLongEnough) {
 			setIsUsernameAvailable(true);
 			setUsernameAvailabilityChecked(false);
+			setUsernameAvailabilityFailed(false);
 			return;
 		}
+
+		setUsernameAvailabilityChecked(false);
+		setUsernameAvailabilityFailed(false);
 
 		let canceled = false;
 		const timeout = window.setTimeout(async () => {
@@ -176,8 +185,9 @@ export const AccountData: FC<{
 				}
 			} catch {
 				if (!canceled) {
-					setIsUsernameAvailable(false);
-					setUsernameAvailabilityChecked(true);
+					setIsUsernameAvailable(true);
+					setUsernameAvailabilityChecked(false);
+					setUsernameAvailabilityFailed(true);
 				}
 			}
 		}, 350);
@@ -191,6 +201,7 @@ export const AccountData: FC<{
 	useEffect(() => {
 		if (
 			usernameAvailabilityChecked &&
+			!usernameAvailabilityFailed &&
 			isUsernameAvailable &&
 			isUsernameLongEnough &&
 			isPasswordValid &&
@@ -209,6 +220,7 @@ export const AccountData: FC<{
 		dataProtectionChecked,
 		isUsernameAvailable,
 		usernameAvailabilityChecked,
+		usernameAvailabilityFailed,
 		isUsernameLongEnough,
 		isPasswordValid,
 		setDisabledNextButton,
@@ -217,14 +229,17 @@ export const AccountData: FC<{
 
 	const usernameHasError =
 		(usernameWasBlurred && !isUsernameLongEnough) ||
+		usernameAvailabilityFailed ||
 		(usernameAvailabilityChecked && !isUsernameAvailable);
 	const usernameHelperText = usernameHasError
 		? isUsernameAvailable
 			? t('registration.account.username.error.tooShort')
 			: t('registration.account.username.error.unavailable')
-		: usernameAvailabilityChecked && isUsernameAvailable
-			? t('registration.account.username.success')
-			: t('registration.account.username.info');
+		: usernameAvailabilityFailed
+			? t('registration.account.username.error.retry')
+			: usernameAvailabilityChecked && isUsernameAvailable
+				? t('registration.account.username.success')
+				: t('registration.account.username.info');
 	const visibilityButtonSx = {
 		'color': registrationMd3.onSurfaceVariant,
 		'&:hover': {

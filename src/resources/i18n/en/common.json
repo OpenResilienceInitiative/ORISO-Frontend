@@ -1983,6 +1983,7 @@
 			},
 			"criteria": {
 				"fulfilled": "fulfilled",
+				"open": "open",
 				"length": "At least 9 characters",
 				"number": "at least one number",
 				"specialChar": "at least one special character",
@@ -2074,7 +2075,8 @@
 			"username": {
 				"error": {
 					"tooShort": "Your username is too short.",
-					"unavailable": "This username is already taken."
+					"unavailable": "This username is already taken.",
+					"retry": "We could not check this username right now. Please try again."
 				},
 				"hint": "Anonymous login name. Please do not use real names or initials.",
 				"info": "Anonymous login name. Please do not use real names or initials.",

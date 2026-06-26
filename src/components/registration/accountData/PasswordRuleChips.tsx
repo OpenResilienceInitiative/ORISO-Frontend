@@ -18,8 +18,6 @@ const ruleIcons = [
 	pwSpecialIcon
 ] as const;
 
-const metBackground = '#e2eff9';
-const metForeground = '#1f6ca6';
 const spring = 'transform 440ms cubic-bezier(0.34, 1.3, 0.5, 1)';
 const colorTransition =
 	'background-color 240ms ease, color 240ms ease, border-color 240ms ease';
@@ -175,9 +173,9 @@ export const PasswordRuleChips = ({ password }: { password: string }) => {
 						rule.met
 							? t(
 									'registration.password.criteria.fulfilled',
-									'erfüllt'
+									'fulfilled'
 								)
-							: t('registration.password.criteria.open', 'offen')
+							: t('registration.password.criteria.open', 'open')
 					}`}
 					sx={{
 						flex: '0 0 auto',
@@ -194,10 +192,10 @@ export const PasswordRuleChips = ({ password }: { password: string }) => {
 							? 'transparent'
 							: registrationMd3.outlineVariant,
 						backgroundColor: rule.met
-							? metBackground
+							? registrationMd3.focusLayer
 							: registrationMd3.surface,
 						color: rule.met
-							? metForeground
+							? registrationMd3.focus
 							: registrationMd3.onSurfaceVariant,
 						transition: colorTransition
 					}}
@@ -209,7 +207,7 @@ export const PasswordRuleChips = ({ password }: { password: string }) => {
 							height: 18,
 							flexShrink: 0,
 							backgroundColor: rule.met
-								? metForeground
+								? registrationMd3.focus
 								: registrationMd3.onSurfaceVariant,
 							transition: 'background-color 240ms ease',
 							maskImage: `url(${rule.icon})`,

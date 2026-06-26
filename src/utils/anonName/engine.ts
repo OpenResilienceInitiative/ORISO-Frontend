@@ -52,7 +52,35 @@ const PASTEL_COLORS = [
 	'#A03F6B'
 ];
 
-const pick = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
+const secureRandomInt = (maxExclusive: number): number => {
+	if (maxExclusive <= 0) {
+		return 0;
+	}
+
+	const cryptoObject =
+		typeof crypto !== 'undefined' &&
+		typeof crypto.getRandomValues === 'function'
+			? crypto
+			: undefined;
+
+	if (!cryptoObject) {
+		return Math.floor(Math.random() * maxExclusive);
+	}
+
+	const maxUint32 = 0xffffffff;
+	const limit = maxUint32 - (maxUint32 % maxExclusive);
+	const values = new Uint32Array(1);
+	let value = 0;
+
+	do {
+		cryptoObject.getRandomValues(values);
+		value = values[0];
+	} while (value >= limit);
+
+	return value % maxExclusive;
+};
+
+const pick = <T>(arr: T[]): T => arr[secureRandomInt(arr.length)];
 
 /** Perceived luminance (0–1) of a #rrggbb colour (same weights as the widget). */
 export function luminance(hex: string): number {
@@ -81,8 +109,15 @@ export interface Pseudonym {
 /** Languages the engine ships (others should fall back to one of these). */
 export const SUPPORTED = Object.keys(LANGUAGE_DATA);
 
-const dataFor = (lang: string): NickLang =>
-	LANGUAGE_DATA[lang] ?? LANGUAGE_DATA.en ?? LANGUAGE_DATA.de;
+const dataFor = (lang: string): NickLang => {
+	const normalizedLang = lang.toLowerCase().split(/[-_@.]/)[0];
+	return (
+		LANGUAGE_DATA[normalizedLang] ??
+		LANGUAGE_DATA[lang] ??
+		LANGUAGE_DATA.en ??
+		LANGUAGE_DATA.de
+	);
+};
 
 const avatarFor = (file: string): Avatar => {
 	const bg = pick(PASTEL_COLORS);
@@ -135,7 +170,7 @@ export function generatePassword(): string {
 	];
 	while (chars.length < 16) chars.push(pick([...all]));
 	for (let i = chars.length - 1; i > 0; i--) {
-		const j = Math.floor(Math.random() * (i + 1));
+		const j = secureRandomInt(i + 1);
 		[chars[i], chars[j]] = [chars[j], chars[i]];
 	}
 	return chars.join('');
