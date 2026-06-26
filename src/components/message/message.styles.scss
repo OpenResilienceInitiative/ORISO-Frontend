@@ -243,7 +243,7 @@ $message-avatar-ring: #ebe2e2;
 		min-width: 200px;
 		max-width: 280px;
 		padding: 8px 0;
-		border: 2px solid var(--m3-primary, #cc1e1c);
+		border: 2px solid var(--m3-primary-container, #cc1e1c);
 		border-radius: 8px;
 		background: #fff;
 		box-shadow:
@@ -318,8 +318,8 @@ $message-avatar-ring: #ebe2e2;
 	}
 
 	&__visibilityChip--active {
-		background: var(--m3-primary, #cc1e1c);
-		border-color: var(--m3-primary, #cc1e1c);
+		background: var(--m3-primary-container, #cc1e1c);
+		border-color: var(--m3-primary-container, #cc1e1c);
 	}
 
 	&__visibilityChipIcon {
@@ -370,7 +370,7 @@ $message-avatar-ring: #ebe2e2;
 		min-width: 260px;
 		max-width: 260px;
 		padding: 8px;
-		border: 2px solid var(--m3-primary, #cc1e1c);
+		border: 2px solid var(--m3-primary-container, #cc1e1c);
 		border-radius: 12px;
 		background: #fff;
 		box-shadow:
@@ -692,7 +692,7 @@ $message-avatar-ring: #ebe2e2;
 		blockquote {
 			margin: 8px 0;
 			padding: 4px 0 4px 10px;
-			border-left: 3px solid var(--m3-primary, #cc1e1c); // incoming + default quote color
+			border-left: 3px solid var(--m3-primary-container, #cc1e1c); // incoming + default quote color
 			background: rgba(204, 30, 28, 0.06);
 			border-radius: 0 6px 6px 0;
 		}

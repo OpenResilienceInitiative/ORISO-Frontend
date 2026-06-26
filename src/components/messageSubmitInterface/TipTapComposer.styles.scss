@@ -40,7 +40,7 @@
 
 			&.is-active {
 				background: #f7d5d5;
-				color: var(--m3-primary, #cc1e1c);
+				color: var(--m3-primary-container, #cc1e1c);
 			}
 		}
 	}
@@ -64,7 +64,7 @@
 			padding: 0;
 			outline: none;
 			word-break: break-word;
-			caret-color: var(--m3-primary, #cc1e1c);
+			caret-color: var(--m3-primary-container, #cc1e1c);
 			box-sizing: border-box;
 
 			@media screen and (min-width: 900px) {
@@ -96,7 +96,7 @@
 			blockquote {
 				margin: 8px 0;
 				padding: 4px 0 4px 10px;
-				border-left: 3px solid var(--m3-primary, #cc1e1c);
+				border-left: 3px solid var(--m3-primary-container, #cc1e1c);
 				color: #4a5561;
 				background: rgba(204, 30, 28, 0.04);
 				border-radius: 0 6px 6px 0;

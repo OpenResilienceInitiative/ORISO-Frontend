@@ -11,6 +11,7 @@
  *
  * Traces: UAT-B (Tests #1, #2, #5, #6, #9 in THB — Test Logic).
  */
+import * as fs from 'fs';
 import * as path from 'path';
 import { describe, expect, it } from 'vitest';
 import { computeOrisoPalette } from './orisoScheme';
@@ -164,5 +165,37 @@ describe('--m3-* token contract (generated inventory)', () => {
 		);
 		const missing = consumed.filter((name) => !(name in tokens));
 		expect(missing).toEqual([]);
+	});
+});
+
+/**
+ * The static :root brand block (mui-variables-mapping.scss) is the default
+ * Caritas palette used when no tenant seed is stored. It MUST equal the
+ * engine output for the brand seed #a5000a, so the static default and any
+ * seed-driven theme render the same brand — and so the #cc1e1c primary
+ * regression cannot come back. (Neutrals are asserted against the golden
+ * benchmark above; this guards the brand family.)
+ */
+describe('static :root brand mirrors the engine (#a5000a)', () => {
+	const scss = fs.readFileSync(
+		path.join(
+			process.cwd(),
+			'src/resources/styles/mui-variables-mapping.scss'
+		),
+		'utf8'
+	);
+	const staticValue = (name: string): string | undefined =>
+		scss
+			.match(new RegExp(`${name}:\\s*(#[0-9a-fA-F]{3,8})\\s*;`))?.[1]
+			?.toLowerCase();
+	const engine = computeOrisoPalette({ primary: '#a5000a' }, 'light').tokens;
+
+	it.each([
+		'--m3-primary',
+		'--m3-primary-hover',
+		'--m3-primary-container',
+		'--m3-on-primary-container'
+	])('%s static literal equals the engine value', (token) => {
+		expect(staticValue(token)).toBe(engine[token].toLowerCase());
 	});
 });
