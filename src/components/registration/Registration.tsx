@@ -1,4 +1,4 @@
-import { Typography, Link, Button, Box } from '@mui/material';
+import { Link, Button, Box, Chip, Stack, Avatar } from '@mui/material';
 import * as React from 'react';
 import {
 	useState,
@@ -22,7 +22,6 @@ import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet';
 import { StageLayout } from '../../components/stageLayout/StageLayout';
 import useIsFirstVisit from '../../utils/useIsFirstVisit';
-import { StepBar } from './stepBar/StepBar';
 import { WelcomeScreen } from './welcomeScreen/WelcomeScreen';
 import {
 	RegistrationContext,
@@ -44,6 +43,14 @@ import { apiPostRegistration } from '../../api';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { REGISTRATION_DATA_VALIDATION } from './registrationDataValidation';
 import { UrlParamsContext } from '../../globalState/provider/UrlParamsProvider';
+import { RegistrationStepper } from './registrationStepper/RegistrationStepper';
+import {
+	getRegistrationTopicDisplay,
+	getRegistrationTopicIcon,
+	registrationMd3
+} from './registrationDesign/registrationDesign';
+import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 
 /**
  * This type of registration is currently not supporting:
@@ -116,6 +123,27 @@ export const Registration = () => {
 		],
 		[availableSteps, currStepIndex, path, topicSlug, location.search]
 	);
+
+	const mergedRegistrationData = useMemo(
+		() => ({
+			...registrationData,
+			...stepData
+		}),
+		[registrationData, stepData]
+	);
+
+	const selectedTopic = mergedRegistrationData.mainTopic;
+	const selectedAgency = mergedRegistrationData.agency;
+	const selectedLabel =
+		(selectedTopic
+			? getRegistrationTopicDisplay(selectedTopic, locale).title
+			: null) ||
+		selectedTopic?.name ||
+		selectedAgency?.name ||
+		null;
+	const selectedIcon = selectedTopic
+		? getRegistrationTopicIcon(selectedTopic)
+		: undefined;
 
 	const onNextClick = useCallback(() => {
 		updateRegistrationData(stepData);
@@ -262,7 +290,7 @@ export const Registration = () => {
 			>
 				<Box
 					sx={{
-						maxWidth: '560px !important',
+						maxWidth: '780px !important',
 						width: '100%'
 					}}
 				>
@@ -279,95 +307,148 @@ export const Registration = () => {
 									.map(({ name }) => name)
 									.join(',')}
 							>
-								<Box sx={{ marginBottom: '96px' }}>
-									<Typography
-										sx={{ mb: '24px' }}
-										component="h1"
-										variant="h2"
-									>
-										{t('registration.headline')}
-									</Typography>
-
+								<Box sx={{ marginBottom: '112px' }}>
 									<PreselectionBox hasDrawer={false} />
-									<StepBar
-										maxNumberOfSteps={availableSteps.length}
-										currentStep={currStepIndex + 1}
+									<RegistrationStepper
+										currentStepName={step}
 									/>
 
-									<Switch>
-										{availableSteps.map(
-											({
-												name,
-												component: Component
-											}) => (
-												<Route
-													path={generatePath(path, {
-														topicSlug,
-														step: name
-													})}
-													key={name}
-												>
-													<Component
-														onChange={setStepData}
-														onNextClick={
-															onNextClick
-														}
-														nextStepUrl={
-															nextStepUrl
-														}
-													/>
-												</Route>
-											)
-										)}
-									</Switch>
+									<Box
+										sx={{
+											maxWidth: '780px',
+											mr: 'auto'
+										}}
+									>
+										<Switch>
+											{availableSteps.map(
+												({
+													name,
+													component: Component
+												}) => (
+													<Route
+														path={generatePath(
+															path,
+															{
+																topicSlug,
+																step: name
+															}
+														)}
+														key={name}
+													>
+														<Component
+															onChange={
+																setStepData
+															}
+															onNextClick={
+																onNextClick
+															}
+															nextStepUrl={
+																nextStepUrl
+															}
+														/>
+													</Route>
+												)
+											)}
+										</Switch>
+									</Box>
 								</Box>
 								<Box
 									sx={{
-										height: '96px',
+										minHeight: '96px',
 										position: 'fixed',
 										bottom: '0',
 										right: '0',
 										px: {
 											xs: '16px',
-											md: 'calc((100vw - 550px) / 2)',
+											md: '32px',
 											lg: '0'
 										},
 										width: { xs: '100vw', lg: '60vw' },
-										backgroundColor: 'white',
-										borderTop: '1px solid #c6c5c4',
+										backgroundColor:
+											'rgba(255, 255, 255, 0.94)',
+										backdropFilter: 'blur(8px)',
+										borderTop: `1px solid ${registrationMd3.outlineVariant}`,
 										display: 'flex',
 										justifyContent: 'center',
 										alignItems: 'center',
-										zIndex: 1
+										zIndex: 65
 									}}
 								>
-									<Box
+									<Stack
+										direction="row"
+										spacing={{ xs: 1.5, md: 2 }}
+										alignItems="center"
+										justifyContent="space-between"
 										sx={{
-											maxWidth: {
-												xs: '600px',
-												lg: '700px'
-											},
-											display: 'flex',
-											justifyContent: 'space-between',
-											alignItems: 'center',
-											width: {
-												xs: '100%',
-												lg: 'calc(60vw - 300px)'
-											}
+											width: '100%',
+											maxWidth: '780px',
+											minWidth: 0
 										}}
 									>
 										<Link
 											sx={{
 												textDecoration: 'none',
-												color: 'info.light',
-												fontWeight: '600'
+												color: registrationMd3.onSurfaceVariant,
+												fontWeight: '700',
+												display: 'inline-flex',
+												alignItems: 'center',
+												gap: '8px',
+												whiteSpace: 'nowrap'
 											}}
 											component={RouterLink}
 											onClick={onPrevClick}
 											to={prevStepUrl}
 										>
+											<ArrowBackRoundedIcon fontSize="small" />
 											{t('registration.back')}
 										</Link>
+										<Box
+											sx={{
+												display: {
+													xs: 'none',
+													sm: 'flex'
+												},
+												justifyContent: 'center',
+												minWidth: 0,
+												flex: 1
+											}}
+										>
+											{selectedLabel ? (
+												<Chip
+													avatar={
+														selectedIcon ? (
+															<Avatar
+																src={
+																	selectedIcon
+																}
+																alt=""
+															/>
+														) : undefined
+													}
+													label={selectedLabel}
+													variant="outlined"
+													sx={{
+														'maxWidth': '100%',
+														'height': '42px',
+														'borderRadius': '999px',
+														'bgcolor': '#fff',
+														'fontWeight': 700,
+														'borderColor':
+															registrationMd3.outlineVariant,
+														'& .MuiChip-label': {
+															overflow: 'hidden',
+															textOverflow:
+																'ellipsis',
+															whiteSpace: 'nowrap'
+														},
+														'& .MuiChip-avatar': {
+															width: 28,
+															height: 28
+														}
+													}}
+												/>
+											) : null}
+										</Box>
 
 										{!nextStepUrl ? (
 											<Button
@@ -384,6 +465,21 @@ export const Registration = () => {
 														? 'button'
 														: 'submit'
 												}
+												sx={{
+													borderRadius: '999px',
+													px: { xs: 3, md: 4 },
+													py: 1.25,
+													fontWeight: 800,
+													minWidth: {
+														xs: 150,
+														md: 176
+													},
+													boxShadow:
+														disabledNextButton ||
+														isRegistering
+															? 'none'
+															: '0 6px 18px rgba(164, 38, 46, 0.30)'
+												}}
 											>
 												{isRegistering
 													? t(
@@ -400,7 +496,24 @@ export const Registration = () => {
 												disabled={disabledNextButton}
 												variant="contained"
 												onClick={onNextClick}
-												sx={{ width: 'unset' }}
+												endIcon={
+													<ArrowForwardRoundedIcon />
+												}
+												sx={{
+													width: 'unset',
+													borderRadius: '999px',
+													px: { xs: 3, md: 4 },
+													py: 1.25,
+													fontWeight: 800,
+													minWidth: {
+														xs: 150,
+														md: 176
+													},
+													boxShadow:
+														disabledNextButton
+															? 'none'
+															: '0 6px 18px rgba(164, 38, 46, 0.30)'
+												}}
 												type={
 													disabledNextButton
 														? 'button'
@@ -410,7 +523,7 @@ export const Registration = () => {
 												{t('registration.next')}
 											</Button>
 										)}
-									</Box>
+									</Stack>
 								</Box>
 							</form>
 						</Route>

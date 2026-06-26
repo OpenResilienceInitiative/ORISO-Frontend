@@ -24,10 +24,37 @@ const fadeIn = keyframes`
 	to   { opacity: 1; }
 `;
 
+const flagZoomOut = keyframes`
+	0% {
+		transform: scale(1);
+		opacity: 1;
+	}
+	58% {
+		transform: scale(1.35);
+		opacity: 1;
+	}
+	100% {
+		transform: scale(34);
+		opacity: 0;
+	}
+`;
+
+const contentDrift = keyframes`
+	0% {
+		transform: translateY(0) scale(1);
+		opacity: 1;
+	}
+	100% {
+		transform: translateY(-10px) scale(0.98);
+		opacity: 0;
+	}
+`;
+
 // Keep the bar visible long enough to read as intentional even if the load is fast,
 // give a short beat after "ready" for the icon to arm, and never hang forever.
 const MIN_VISIBLE_MS = 1200;
 const FINISH_DELAY_MS = 700;
+const FINISH_ZOOM_MS = 820;
 const SAFETY_MS = 20000;
 
 /**
@@ -48,6 +75,7 @@ export const RegistrationLoader = ({
 	const finishDelayMs = prefersReducedMotion ? 0 : FINISH_DELAY_MS;
 	const [value, setValue] = useState<number>(8);
 	const [armed, setArmed] = useState<boolean>(false);
+	const [finishing, setFinishing] = useState<boolean>(false);
 	const minElapsedRef = useRef<boolean>(false);
 	const finishedRef = useRef<boolean>(false);
 	const onFinishRef = useRef(onFinish);
@@ -86,12 +114,19 @@ export const RegistrationLoader = ({
 			setValue(100);
 			setArmed(true);
 		}, wait);
-		const finishTimer = setTimeout(finish, wait + finishDelayMs);
+		const zoomTimer = setTimeout(() => {
+			setFinishing(true);
+		}, wait + finishDelayMs);
+		const finishTimer = setTimeout(
+			finish,
+			wait + finishDelayMs + (prefersReducedMotion ? 0 : FINISH_ZOOM_MS)
+		);
 		return () => {
 			clearTimeout(fillTimer);
+			clearTimeout(zoomTimer);
 			clearTimeout(finishTimer);
 		};
-	}, [ready, finish, finishDelayMs]);
+	}, [ready, finish, finishDelayMs, prefersReducedMotion]);
 
 	return (
 		<Box
@@ -106,6 +141,7 @@ export const RegistrationLoader = ({
 				justifyContent: 'center',
 				p: '24px',
 				backgroundColor: 'background.paper',
+				overflow: 'hidden',
 				animation: prefersReducedMotion
 					? 'none'
 					: `${fadeIn} 0.3s ease both`
@@ -118,7 +154,11 @@ export const RegistrationLoader = ({
 					display: 'flex',
 					alignItems: 'center',
 					gap: '16px',
-					mb: '28px'
+					mb: '28px',
+					animation:
+						finishing && !prefersReducedMotion
+							? `${contentDrift} ${FINISH_ZOOM_MS}ms ease both`
+							: 'none'
 				}}
 			>
 				<LinearProgress
@@ -167,9 +207,12 @@ export const RegistrationLoader = ({
 							? 'background-color 0.3s ease'
 							: 'background-color 0.3s ease, transform 0.3s ease',
 						'animation':
-							armed && !prefersReducedMotion
-								? `${pop} 0.45s cubic-bezier(0.34, 1.56, 0.64, 1)`
-								: 'none',
+							finishing && !prefersReducedMotion
+								? `${flagZoomOut} ${FINISH_ZOOM_MS}ms cubic-bezier(0.2, 0, 0, 1) both`
+								: armed && !prefersReducedMotion
+									? `${pop} 0.45s cubic-bezier(0.34, 1.56, 0.64, 1)`
+									: 'none',
+						'transformOrigin': 'center',
 						'& svg': { fontSize: '20px' }
 					}}
 				>
@@ -178,11 +221,28 @@ export const RegistrationLoader = ({
 			</Box>
 			<Typography
 				variant="h5"
-				sx={{ fontWeight: 600, textAlign: 'center', mb: '8px' }}
+				sx={{
+					fontWeight: 600,
+					textAlign: 'center',
+					mb: '8px',
+					animation:
+						finishing && !prefersReducedMotion
+							? `${contentDrift} ${FINISH_ZOOM_MS}ms ease both`
+							: 'none'
+				}}
 			>
 				{t('registration.loader.headline')}
 			</Typography>
-			<Typography sx={{ color: 'text.secondary', textAlign: 'center' }}>
+			<Typography
+				sx={{
+					color: 'text.secondary',
+					textAlign: 'center',
+					animation:
+						finishing && !prefersReducedMotion
+							? `${contentDrift} ${FINISH_ZOOM_MS}ms ease both`
+							: 'none'
+				}}
+			>
 				{armed
 					? t('registration.loader.ready')
 					: t('registration.loader.copy')}

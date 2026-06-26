@@ -1938,6 +1938,15 @@
 			"title": "Complete registration"
 		},
 		"headline": "Registration",
+		"md3": {
+			"stepNames": {
+				"focus": "Choose focus",
+				"postcode": "Postcode",
+				"agency": "Consulting center",
+				"register": "Register",
+				"request": "Send request"
+			}
+		},
 		"login": {
 			"helper": "Already registered?",
 			"label": "Login"
