@@ -2035,12 +2035,15 @@
 			"summary": "Your topic:"
 		},
 		"account": {
+			"autoSuggest": "Suggest data automatically",
 			"headline": "Capture login data",
 			"password": {
-				"criteria1": "at least 9 characters",
-				"criteria2": "at least one number",
-				"criteria3": "Upper/lower case",
-				"criteria4": "at least one special character",
+				"criteria1": "min. 16 characters",
+				"criteria2": "1 number",
+				"criteria3": "1 uppercase letter",
+				"criteria4": "1 lowercase letter",
+				"criteria5": "1 special character",
+				"criteriaLabel": "Password requirements",
 				"label": "Password"
 			},
 			"repeatPassword": {
@@ -2048,14 +2051,21 @@
 				"label": "Repeat password",
 				"success": "Your password is identical."
 			},
+			"suggest": {
+				"all": "All 3 together",
+				"allShort": "All 3",
+				"avatar": "Avatar",
+				"password": "Password",
+				"username": "Username"
+			},
 			"subline": "To protect your anonymity, we advise you not to use your real name or initials.",
 			"username": {
 				"error": {
 					"available": "Your username is too short.",
 					"unavailable": "This username is already taken."
 				},
-				"hint": "5 or more characters",
-				"info": "5 or more characters",
+				"hint": "Anonymous login name. Please do not use real names or initials.",
+				"info": "Anonymous login name. Please do not use real names or initials.",
 				"label": "Username",
 				"success": "Your username is available."
 			}

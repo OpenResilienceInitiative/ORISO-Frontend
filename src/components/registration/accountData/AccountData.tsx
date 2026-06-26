@@ -1,5 +1,6 @@
 import {
 	Box,
+	Button,
 	Checkbox,
 	FormControlLabel,
 	FormGroup,
@@ -13,25 +14,24 @@ import * as React from 'react';
 import {
 	Dispatch,
 	FC,
+	ReactNode,
 	SetStateAction,
+	useCallback,
 	useContext,
 	useEffect,
 	useState
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
-import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
-import {
-	hasMixedLetters,
-	hasNumber,
-	hasSpecialChar
-} from '../../../utils/validateInputValue';
+import VpnKeyOutlinedIcon from '@mui/icons-material/VpnKeyOutlined';
 import { LegalLinksContext } from '../../../globalState/provider/LegalLinksProvider';
-import { RegistrationContext, RegistrationData } from '../../../globalState';
+import {
+	LocaleContext,
+	RegistrationContext,
+	RegistrationData
+} from '../../../globalState';
 import { apiGetIsUsernameAvailable } from '../../../api/apiGetIsUsernameAvailable';
 import { REGISTRATION_DATA_VALIDATION } from '../registrationDataValidation';
 import LegalLinks from '../../../components/legalLinks/LegalLinks';
@@ -39,38 +39,82 @@ import {
 	registrationMd3,
 	registrationMd3TextFieldSx
 } from '../registrationDesign/registrationDesign';
+import { AnimalAvatar } from '../../pseudonym/AnimalAvatar';
+import {
+	generateAvatar,
+	generatePassword,
+	generatePseudonym,
+	regeneratePseudonym,
+	type Pseudonym
+} from '../../../utils/pseudonymGenerator';
+import { PasswordRuleChips } from './PasswordRuleChips';
+import { allPasswordCriteriaPass } from './passwordRules';
+import genUserIcon from '../../../resources/img/registration-md3/icons/gen-user.svg';
+import genKeyIcon from '../../../resources/img/registration-md3/icons/gen-key.svg';
+import genAvatarIcon from '../../../resources/img/registration-md3/icons/gen-avatar.svg';
+import genDiceIcon from '../../../resources/img/registration-md3/icons/gen-dice.svg';
 
-export const passwordCriteria = [
-	{
-		info: 'registration.account.password.criteria1',
-		validation: (val) => val.length > 8
-	},
-	{
-		info: 'registration.account.password.criteria2',
-		validation: (val) => hasNumber(val)
-	},
-	{
-		info: 'registration.account.password.criteria3',
-		validation: (val) => hasMixedLetters(val)
-	},
-	{
-		info: 'registration.account.password.criteria4',
-		validation: (val) => hasSpecialChar(val)
-	}
-];
+const toRegistrationUsername = (displayName: string) => {
+	const normalized = displayName
+		.normalize('NFD')
+		.replace(/[\u0300-\u036f]/g, '')
+		.toLowerCase()
+		.replace(/ß/g, 'ss')
+		.replace(/[^a-z0-9]+/g, '_')
+		.replace(/^_+|_+$/g, '')
+		.replace(/_{2,}/g, '_');
+	const safeBase = normalized || 'oriso';
+	const suffix = Math.floor(100 + Math.random() * 900);
+
+	return `${safeBase}_${suffix}`.slice(0, 48);
+};
+
+const suggestButtonSx = (filled: boolean) =>
+	({
+		'px': 1,
+		'py': 0.75,
+		'fontSize': 13.5,
+		'lineHeight': '20px',
+		'minWidth': 0,
+		'flex': '1 1 auto',
+		'borderRadius': '8px',
+		'textTransform': 'none',
+		'color': filled ? '#fff' : registrationMd3.onSurface,
+		'borderColor': registrationMd3.outlineVariant,
+		'backgroundColor': filled ? registrationMd3.primary : undefined,
+		'& .MuiButton-startIcon': {
+			mr: 0.625
+		},
+		'&:hover': filled
+			? {
+					backgroundColor: registrationMd3.primaryDark
+				}
+			: {
+					borderColor: registrationMd3.outline,
+					backgroundColor: registrationMd3.hoverLayer
+				},
+		'&:focus-visible': {
+			outline: `2px solid ${registrationMd3.focus}`,
+			outlineOffset: 2
+		}
+	}) as const;
 
 export const AccountData: FC<{
 	onChange: Dispatch<SetStateAction<Partial<RegistrationData>>>;
 }> = ({ onChange }) => {
 	const legalLinks = useContext(LegalLinksContext);
+	const { locale } = useContext(LocaleContext);
 	const { t } = useTranslation();
+	const [identity, setIdentity] = useState<Pseudonym>(() =>
+		generatePseudonym(locale)
+	);
 	const [password, setPassword] = useState<string>('');
 	const [repeatPassword, setRepeatPassword] = useState<string>('');
-	const [isPasswordVisible, setIsPasswordVisible] = useState<boolean>();
+	const [isPasswordVisible, setIsPasswordVisible] = useState<boolean>(false);
 	const [dataProtectionChecked, setDataProtectionChecked] =
 		useState<boolean>(false);
 	const [isRepeatPasswordVisible, setIsRepeatPasswordVisible] =
-		useState<boolean>();
+		useState<boolean>(false);
 	const [username, setUsername] = useState<string>('');
 	const [isUsernameAvailable, setIsUsernameAvailable] =
 		useState<boolean>(true);
@@ -80,11 +124,31 @@ export const AccountData: FC<{
 		useState<boolean>(false);
 	const { setDisabledNextButton } = useContext(RegistrationContext);
 
+	const resetUsernameAvailability = useCallback(() => {
+		setUsernameAvailabilityChecked(false);
+		setIsUsernameAvailable(true);
+		setUsernameWasBlurred(false);
+	}, []);
+
+	const applyGeneratedUsername = useCallback(
+		(nextIdentity: Pseudonym) => {
+			setIdentity(nextIdentity);
+			setUsername(toRegistrationUsername(nextIdentity.displayName));
+			resetUsernameAvailability();
+		},
+		[resetUsernameAvailability]
+	);
+
+	useEffect(() => {
+		applyGeneratedUsername(identity);
+		// Run once so first entry shows the same generated identity until the
+		// user intentionally changes it.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
 	const isUsernameLongEnough =
 		REGISTRATION_DATA_VALIDATION.username.validation(username);
-	const isPasswordValid = passwordCriteria.every((criteria) =>
-		criteria.validation(password)
-	);
+	const isPasswordValid = allPasswordCriteriaPass(password);
 	const repeatPasswordMismatch =
 		repeatPassword.length > 0 && repeatPassword !== password;
 	const repeatPasswordMatches =
@@ -155,7 +219,9 @@ export const AccountData: FC<{
 		? isUsernameAvailable
 			? t('registration.account.username.error.available')
 			: t('registration.account.username.error.unavailable')
-		: t('registration.account.username.info');
+		: usernameAvailabilityChecked && isUsernameAvailable
+			? t('registration.account.username.success')
+			: t('registration.account.username.info');
 	const visibilityButtonSx = {
 		'color': registrationMd3.onSurfaceVariant,
 		'&:hover': {
@@ -168,27 +234,169 @@ export const AccountData: FC<{
 		}
 	} as const;
 
-	return (
-		<Box sx={{ maxWidth: 560 }}>
-			<Typography
-				variant="h3"
+	const suggestUsername = () =>
+		applyGeneratedUsername(regeneratePseudonym(identity, locale));
+	const suggestAvatar = () =>
+		setIdentity((currentIdentity) => ({
+			...currentIdentity,
+			avatar: generateAvatar(locale)
+		}));
+	const suggestPassword = () => {
+		const generatedPassword = generatePassword();
+		setPassword(generatedPassword);
+		setRepeatPassword(generatedPassword);
+		setIsPasswordVisible(true);
+		setIsRepeatPasswordVisible(true);
+	};
+	const suggestAll = () => {
+		applyGeneratedUsername(regeneratePseudonym(identity, locale));
+		suggestPassword();
+	};
+	const suggestButton = (
+		icon: string,
+		label: ReactNode,
+		onClick: () => void,
+		filled = false
+	) => (
+		<Button
+			variant={filled ? 'contained' : 'outlined'}
+			onClick={onClick}
+			startIcon={
+				<Box
+					component="img"
+					src={icon}
+					alt=""
+					sx={{ width: 17, height: 17, flexShrink: 0 }}
+				/>
+			}
+			sx={suggestButtonSx(filled)}
+		>
+			<Box
+				component="span"
 				sx={{
-					color: registrationMd3.onSurface,
-					fontWeight: 800,
-					lineHeight: 1.2
+					overflow: 'hidden',
+					textOverflow: 'ellipsis',
+					whiteSpace: 'nowrap'
 				}}
 			>
-				{t('registration.account.headline')}
-			</Typography>
+				{label}
+			</Box>
+		</Button>
+	);
+
+	return (
+		<Box sx={{ maxWidth: 540, width: '100%', mx: 'auto' }}>
+			<Box
+				sx={{
+					display: 'flex',
+					gap: 2,
+					alignItems: 'flex-start',
+					justifyContent: 'space-between'
+				}}
+			>
+				<Box sx={{ flex: 1, minWidth: 0 }}>
+					<Typography
+						variant="h3"
+						sx={{
+							color: registrationMd3.onSurface,
+							fontWeight: 800,
+							lineHeight: 1.2
+						}}
+					>
+						{t('registration.account.headline')}
+					</Typography>
+					<Typography
+						sx={{
+							mt: '12px',
+							color: registrationMd3.onSurfaceVariant
+						}}
+					>
+						{t('registration.account.subline')}
+					</Typography>
+				</Box>
+				<Box
+					sx={{
+						'flexShrink': 0,
+						'mt': { xs: '-4px', md: '-8px' },
+						'& > div': {
+							width: { xs: 88, sm: 104 },
+							height: { xs: 88, sm: 104 }
+						}
+					}}
+				>
+					<AnimalAvatar avatar={identity.avatar} size={104} />
+				</Box>
+			</Box>
+
 			<Typography
 				sx={{
-					mt: '12px',
-					mb: '20px',
+					mt: '24px',
+					mb: '8px',
+					fontSize: 11,
+					fontWeight: 700,
+					letterSpacing: 1,
+					textTransform: 'uppercase',
 					color: registrationMd3.onSurfaceVariant
 				}}
 			>
-				{t('registration.account.subline')}
+				{t('registration.account.autoSuggest')}
 			</Typography>
+			<Box
+				sx={{
+					display: 'flex',
+					flexWrap: 'nowrap',
+					gap: 0.75,
+					mb: '24px',
+					overflow: 'hidden',
+					containerType: 'inline-size'
+				}}
+			>
+				{suggestButton(
+					genUserIcon,
+					t('registration.account.suggest.username'),
+					suggestUsername
+				)}
+				{suggestButton(
+					genKeyIcon,
+					t('registration.account.suggest.password'),
+					suggestPassword
+				)}
+				{suggestButton(
+					genAvatarIcon,
+					t('registration.account.suggest.avatar'),
+					suggestAvatar
+				)}
+				{suggestButton(
+					genDiceIcon,
+					<>
+						<Box
+							component="span"
+							sx={{
+								'display': 'none',
+								'@container (min-width: 520px)': {
+									display: 'inline'
+								}
+							}}
+						>
+							{t('registration.account.suggest.all')}
+						</Box>
+						<Box
+							component="span"
+							sx={{
+								'display': 'inline',
+								'@container (min-width: 520px)': {
+									display: 'none'
+								}
+							}}
+						>
+							{t('registration.account.suggest.allShort')}
+						</Box>
+					</>,
+					suggestAll,
+					true
+				)}
+			</Box>
+
 			<TextField
 				value={username}
 				onChange={(event) => {
@@ -217,7 +425,7 @@ export const AccountData: FC<{
 						</InputAdornment>
 					)
 				}}
-				sx={{ mt: '24px', ...registrationMd3TextFieldSx }}
+				sx={{ ...registrationMd3TextFieldSx }}
 			/>
 			<TextField
 				value={password}
@@ -232,7 +440,7 @@ export const AccountData: FC<{
 				InputProps={{
 					startAdornment: (
 						<InputAdornment position="start">
-							<LockOutlinedIcon
+							<VpnKeyOutlinedIcon
 								sx={{ color: registrationMd3.onSurfaceVariant }}
 							/>
 						</InputAdornment>
@@ -267,63 +475,7 @@ export const AccountData: FC<{
 				}}
 				sx={{ mt: '24px', ...registrationMd3TextFieldSx }}
 			/>
-			<Box
-				component="ul"
-				sx={{ listStyle: 'none', m: 0, mt: 1.25, p: 0 }}
-			>
-				{passwordCriteria.map((criteria) => {
-					const passed = criteria.validation(password);
-
-					return (
-						<Box
-							component="li"
-							key={criteria.info}
-							sx={{
-								display: 'flex',
-								alignItems: 'center',
-								gap: 1,
-								mb: 0.5
-							}}
-						>
-							{passed ? (
-								<CheckCircleRoundedIcon
-									sx={{
-										fontSize: 20,
-										color: registrationMd3.primary
-									}}
-								/>
-							) : (
-								<RadioButtonUncheckedIcon
-									sx={{
-										fontSize: 20,
-										color: registrationMd3.outline
-									}}
-								/>
-							)}
-							<Typography
-								variant="body2"
-								sx={{
-									fontSize: '16px',
-									lineHeight: '22px',
-									color: passed
-										? registrationMd3.onSurface
-										: registrationMd3.onSurfaceVariant
-								}}
-							>
-								{passed && (
-									<span className="sr-only">
-										{t(
-											'registration.password.criteria.fulfilled'
-										)}
-										:{' '}
-									</span>
-								)}
-								{t(criteria.info)}
-							</Typography>
-						</Box>
-					);
-				})}
-			</Box>
+			<PasswordRuleChips password={password} />
 			<TextField
 				value={repeatPassword}
 				onChange={(event) => setRepeatPassword(event.target.value)}
@@ -350,7 +502,7 @@ export const AccountData: FC<{
 				InputProps={{
 					startAdornment: (
 						<InputAdornment position="start">
-							<LockOutlinedIcon
+							<VpnKeyOutlinedIcon
 								sx={{ color: registrationMd3.onSurfaceVariant }}
 							/>
 						</InputAdornment>

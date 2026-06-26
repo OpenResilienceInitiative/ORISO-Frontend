@@ -32,7 +32,8 @@ import {
 	UserDataContext,
 	SessionTypeContext,
 	useTenant,
-	ActiveSessionContext
+	ActiveSessionContext,
+	LocaleContext
 } from '../../globalState';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import {
@@ -398,6 +399,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const { userData, setUserData } = useContext(UserDataContext);
 	const { addEventNotification } = useContext(NotificationsContext);
 	const { type } = useContext(SessionTypeContext);
+	const { locale } = useContext(LocaleContext);
 	const legalLinks = useContext(LegalLinksContext);
 	const { matrixClientService } = useMatrixClient();
 	const location = useLocation();
@@ -564,11 +566,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		[activeSession.item.id]
 	);
 	const [currentPseudonym, setCurrentPseudonym] = useState<Pseudonym>(() =>
-		generatePseudonym()
+		generatePseudonym(locale)
 	);
 	const handleRegeneratePseudonym = useCallback(() => {
-		setCurrentPseudonym((prev) => regeneratePseudonym(prev));
-	}, []);
+		setCurrentPseudonym((prev) => regeneratePseudonym(prev, locale));
+	}, [locale]);
 	const [robotSequenceVisibleCount, setRobotSequenceVisibleCount] =
 		useState(0);
 	const timerRef = useRef<number | null>(null);

@@ -1912,12 +1912,15 @@
 			"summary": "Votre sujet"
 		},
 		"account": {
+			"autoSuggest": "Suggérer automatiquement",
 			"headline": "Saisir les données de connexion",
 			"password": {
-				"criteria1": "au moins 9 caractères",
-				"criteria2": "au moins un chiffre",
-				"criteria3": "Majuscules et minuscules",
-				"criteria4": "au moins un caractère spécial",
+				"criteria1": "min. 16 caractères",
+				"criteria2": "1 chiffre",
+				"criteria3": "1 majuscule",
+				"criteria4": "1 minuscule",
+				"criteria5": "1 caractère spécial",
+				"criteriaLabel": "Exigences du mot de passe",
 				"label": "Mot de passe"
 			},
 			"repeatPassword": {
@@ -1925,14 +1928,21 @@
 				"label": "Répéter le mot de passe",
 				"success": "Votre mot de passe est identique."
 			},
+			"suggest": {
+				"all": "Les 3 ensemble",
+				"allShort": "Les 3",
+				"avatar": "Avatar",
+				"password": "Mot de passe",
+				"username": "Nom d'utilisateur"
+			},
 			"subline": "Afin de protéger votre anonymat, nous vous conseillons de ne pas utiliser votre nom réel ou vos initiales.",
 			"username": {
 				"error": {
 					"available": "Votre nom d'utilisateur est trop court.",
 					"unavailable": "Ce nom d'utilisateur est déjà pris."
 				},
-				"hint": "5 caractères ou plus",
-				"info": "5 caractères ou plus",
+				"hint": "Nom de connexion anonyme. N'utilisez pas de vrai nom ni d'initiales.",
+				"info": "Nom de connexion anonyme. N'utilisez pas de vrai nom ni d'initiales.",
 				"label": "Nom d'utilisateur",
 				"success": "Votre nom d'utilisateur est approprié."
 			}

@@ -1933,18 +1933,28 @@
 			"summary": "Senin konun:"
 		},
 		"account": {
+			"autoSuggest": "Bilgileri otomatik öner",
 			"headline": "Oturum açma verilerini girin",
 			"password": {
-				"criteria1": "en az 9 karakter",
-				"criteria2": "en az bir sayı",
-				"criteria3": "Büyük/küçük harf",
-				"criteria4": "en az bir özel karakter",
-				"label": "şifre"
+				"criteria1": "en az 16 karakter",
+				"criteria2": "1 sayı",
+				"criteria3": "1 büyük harf",
+				"criteria4": "1 küçük harf",
+				"criteria5": "1 özel karakter",
+				"criteriaLabel": "Şifre gereksinimleri",
+				"label": "Şifre"
 			},
 			"repeatPassword": {
 				"error": "Şifreniz aynı değil.",
 				"label": "Şifreyi tekrarla",
 				"success": "Şifreniz aynı."
+			},
+			"suggest": {
+				"all": "Üçünü birlikte",
+				"allShort": "Üçü",
+				"avatar": "Avatar",
+				"password": "Şifre",
+				"username": "Kullanıcı adı"
 			},
 			"subline": "Anonimliğinizi korumak için gerçek adınızı veya baş harflerinizi kullanmamanızı tavsiye ederiz.",
 			"username": {
@@ -1952,8 +1962,8 @@
 					"available": "Kullanıcı adınız çok kısa.",
 					"unavailable": "Bu kullanıcı adı zaten alınmış."
 				},
-				"hint": "5 veya daha fazla karakter",
-				"info": "5 veya daha fazla karakter",
+				"hint": "Anonim oturum açma adı. Lütfen gerçek ad veya baş harf kullanmayın.",
+				"info": "Anonim oturum açma adı. Lütfen gerçek ad veya baş harf kullanmayın.",
 				"label": "Kullanıcı adı",
 				"success": "Kullanıcı adınız uygun."
 			}

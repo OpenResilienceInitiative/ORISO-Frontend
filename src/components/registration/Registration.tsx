@@ -52,6 +52,7 @@ import {
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
 
 /**
  * This type of registration is currently not supporting:
@@ -138,14 +139,13 @@ export const Registration = () => {
 
 	const selectedTopic = mergedRegistrationData.mainTopic;
 	const selectedAgency = mergedRegistrationData.agency;
-	const selectedLabel =
+	const selectedTopicLabel =
 		(selectedTopic
 			? getRegistrationTopicDisplay(selectedTopic, locale).title
 			: null) ||
 		selectedTopic?.name ||
-		selectedAgency?.name ||
 		null;
-	const selectedIcon = selectedTopic
+	const selectedTopicIcon = selectedTopic
 		? getRegistrationTopicIconForGroup(
 				selectedTopic,
 				mergedRegistrationData.topicGroupId
@@ -201,6 +201,71 @@ export const Registration = () => {
 		setDisabledNextButton,
 		topicSlug,
 		updateRegistrationData
+	]);
+
+	const onClearPostcodeSelection = useCallback(() => {
+		setStepData({});
+		setDisabledNextButton?.(true);
+		updateRegistrationData({
+			zipcode: undefined,
+			agency: undefined,
+			agencyId: undefined
+		});
+		history.push(
+			`${generatePath(path, {
+				topicSlug,
+				step: 'zipcode'
+			})}${location.search}`
+		);
+	}, [
+		history,
+		location.search,
+		path,
+		setDisabledNextButton,
+		topicSlug,
+		updateRegistrationData
+	]);
+
+	const footerChips = useMemo<RegistrationFooterChipItem[]>(() => {
+		const chips: RegistrationFooterChipItem[] = [];
+
+		if (selectedTopicLabel) {
+			chips.push({
+				key: 'topic',
+				label: selectedTopicLabel,
+				icon: selectedTopicIcon,
+				onDelete: onClearSelection
+			});
+		} else if (selectedAgency?.name) {
+			chips.push({
+				key: 'agency',
+				label: selectedAgency.name,
+				onDelete: onClearSelection
+			});
+		}
+
+		if (
+			REGISTRATION_DATA_VALIDATION.zipcode.validation(
+				mergedRegistrationData.zipcode
+			)
+		) {
+			chips.push({
+				key: 'zipcode',
+				label: mergedRegistrationData.zipcode,
+				iconNode: <PlaceRoundedIcon />,
+				fixed: true,
+				onDelete: onClearPostcodeSelection
+			});
+		}
+
+		return chips;
+	}, [
+		mergedRegistrationData.zipcode,
+		onClearPostcodeSelection,
+		onClearSelection,
+		selectedAgency?.name,
+		selectedTopicIcon,
+		selectedTopicLabel
 	]);
 
 	const handleSubmit = useCallback(
@@ -363,7 +428,7 @@ export const Registration = () => {
 									<Box
 										sx={{
 											maxWidth: '780px',
-											mr: 'auto'
+											mx: 'auto'
 										}}
 									>
 										<Switch>
@@ -454,10 +519,8 @@ export const Registration = () => {
 												onClick={onPrevClick}
 												label={t('registration.back')}
 											/>
-											<RegistrationFooterChip
-												label={selectedLabel}
-												icon={selectedIcon}
-												onDelete={onClearSelection}
+											<RegistrationFooterChips
+												chips={footerChips}
 												selectedPrefix={selectedPrefix}
 												emptyLabel={noneSelectedLabel}
 											/>
@@ -491,10 +554,8 @@ export const Registration = () => {
 												}
 											}}
 										>
-											<RegistrationFooterChip
-												label={selectedLabel}
-												icon={selectedIcon}
-												onDelete={onClearSelection}
+											<RegistrationFooterChips
+												chips={footerChips}
 												selectedPrefix={selectedPrefix}
 												emptyLabel={noneSelectedLabel}
 												mobile
@@ -581,22 +642,27 @@ const RegistrationFooterBackLink = ({
 	</Link>
 );
 
-const RegistrationFooterChip = ({
-	label,
-	icon,
-	onDelete,
+interface RegistrationFooterChipItem {
+	key: string;
+	label: string;
+	icon?: string;
+	iconNode?: React.ReactElement;
+	fixed?: boolean;
+	onDelete: () => void;
+}
+
+const RegistrationFooterChips = ({
+	chips,
 	selectedPrefix,
 	emptyLabel,
 	mobile = false
 }: {
-	label?: string | null;
-	icon?: string;
-	onDelete: () => void;
+	chips: RegistrationFooterChipItem[];
 	selectedPrefix: string;
 	emptyLabel: string;
 	mobile?: boolean;
 }) => {
-	if (!label) {
+	if (chips.length === 0) {
 		return mobile ? null : (
 			<Typography
 				sx={{
@@ -610,14 +676,15 @@ const RegistrationFooterChip = ({
 		);
 	}
 
-	const chip = (
+	const renderChip = (chip: RegistrationFooterChipItem) => (
 		<Chip
+			key={chip.key}
 			avatar={
-				icon ? (
+				chip.icon ? (
 					<Avatar alt="" sx={{ bgcolor: 'transparent' }}>
 						<Box
 							component="img"
-							src={icon}
+							src={chip.icon}
 							aria-hidden
 							sx={{
 								position: 'absolute',
@@ -631,7 +698,7 @@ const RegistrationFooterChip = ({
 						/>
 						<Box
 							component="img"
-							src={icon}
+							src={chip.icon}
 							alt=""
 							sx={{
 								position: 'relative',
@@ -643,15 +710,16 @@ const RegistrationFooterChip = ({
 					</Avatar>
 				) : undefined
 			}
-			label={label}
-			onDelete={onDelete}
+			icon={chip.iconNode}
+			label={chip.label}
+			onDelete={chip.onDelete}
 			deleteIcon={<CloseRoundedIcon />}
 			variant="outlined"
-			aria-label={selectedPrefix}
+			aria-label={`${selectedPrefix}: ${chip.label}`}
 			sx={{
 				'maxWidth': '100%',
-				'minWidth': 96,
-				'flexShrink': 1,
+				'minWidth': chip.fixed ? 0 : 96,
+				'flexShrink': chip.fixed ? 0 : 1,
 				'height': '38px',
 				'borderRadius': '999px',
 				'bgcolor': '#fff',
@@ -666,6 +734,11 @@ const RegistrationFooterChip = ({
 				'& .MuiChip-avatar': {
 					width: 26,
 					height: 26
+				},
+				'& .MuiChip-icon': {
+					color: registrationMd3.onSurfaceVariant,
+					ml: 1,
+					fontSize: 20
 				},
 				'& .MuiChip-deleteIcon': {
 					color: registrationMd3.onSurfaceVariant,
@@ -714,10 +787,12 @@ const RegistrationFooterChip = ({
 					minWidth: 0,
 					maxWidth: '100%',
 					display: 'flex',
+					flexWrap: mobile ? 'wrap' : 'nowrap',
+					gap: 1,
 					justifyContent: 'center'
 				}}
 			>
-				{chip}
+				{chips.map(renderChip)}
 			</Box>
 		</Box>
 	);

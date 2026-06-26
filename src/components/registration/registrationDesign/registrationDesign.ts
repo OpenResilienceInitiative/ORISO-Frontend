@@ -52,6 +52,8 @@ export const registrationMd3 = {
 		'linear-gradient(152deg, #DA2530 0%, #C0121F 46%, #7C0D15 100%)'
 } as const;
 
+const registrationMd3Autofill = '#e8f0fe';
+
 export const registrationMd3TextFieldSx = {
 	'& .MuiOutlinedInput-root': {
 		'borderRadius': '12px',
@@ -75,11 +77,20 @@ export const registrationMd3TextFieldSx = {
 		},
 		'&.Mui-error fieldset': {
 			borderWidth: 2
+		},
+		'&:has(input:-webkit-autofill)': {
+			backgroundColor: registrationMd3Autofill
 		}
 	},
 	'& .MuiInputBase-input': {
 		'paddingTop': '16px',
 		'paddingBottom': '16px',
+		'&:-webkit-autofill': {
+			WebkitBoxShadow: `0 0 0 100px ${registrationMd3Autofill} inset`,
+			WebkitTextFillColor: registrationMd3.onSurface,
+			caretColor: registrationMd3.onSurface,
+			transition: 'background-color 9999s ease-out 0s'
+		},
 		'&::placeholder': {
 			color: registrationMd3.onSurfaceVariant,
 			opacity: 1

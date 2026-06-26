@@ -2112,12 +2112,15 @@
 			}
 		},
 		"account": {
+			"autoSuggest": "Daten automatisch vorschlagen",
 			"headline": "Anmeldedaten erfassen",
 			"password": {
-				"criteria1": "mindestens 9 Zeichen",
-				"criteria2": "mindestens eine Zahl",
-				"criteria3": "Groß-/Kleinschreibung",
-				"criteria4": "mindestens ein Sonderzeichen",
+				"criteria1": "min. 16 Zeichen",
+				"criteria2": "1x Zahl",
+				"criteria3": "1x Großbuchstabe",
+				"criteria4": "1x Kleinbuchstabe",
+				"criteria5": "1x Sonderzeichen",
+				"criteriaLabel": "Passwort-Anforderungen",
 				"label": "Passwort"
 			},
 			"repeatPassword": {
@@ -2125,13 +2128,20 @@
 				"label": "Passwort wiederholen",
 				"success": "Ihr Passwort ist identisch."
 			},
+			"suggest": {
+				"all": "Alle 3 zusammen",
+				"allShort": "Alle 3",
+				"avatar": "Avatar",
+				"password": "Passwort",
+				"username": "Benutzername"
+			},
 			"subline": "Um Ihre Anonymität zu schützen, raten wir Ihnen, nicht Ihren tatsächlichen Namen oder Initialen zu verwenden.",
 			"username": {
 				"error": {
 					"available": "Ihr Benutzername ist zu kurz.",
 					"unavailable": "Dieser Benutzername ist bereits vergeben."
 				},
-				"info": "5 oder mehr Zeichen",
+				"info": "Anonymer Login-Name. Bitte keine echten Namen oder Initialen verwenden.",
 				"label": "Benutzername",
 				"success": "Ihr Benutzername ist geeignet."
 			}
