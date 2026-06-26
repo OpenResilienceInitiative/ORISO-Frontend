@@ -302,7 +302,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 					background: #ffe2de;
 
 					.textarea__mobileNavigatorHandle {
-						background: var(--m3-primary, #cc1e1c);
+						background: var(--m3-primary-container, #cc1e1c);
 					}
 				}
 			}
@@ -318,7 +318,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			}
 
 			&__mobileNavigatorHandle--atBottom {
-				background: var(--m3-primary, #cc1e1c);
+				background: var(--m3-primary-container, #cc1e1c);
 				height: 7px;
 				border-radius: 3px;
 			}
@@ -441,7 +441,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				right: 0;
 				bottom: 0;
 				height: 2px;
-				background: var(--m3-primary, #cc1e1c);
+				background: var(--m3-primary-container, #cc1e1c);
 				border-bottom-right-radius: 30px;
 				pointer-events: none;
 				z-index: 7;
@@ -660,7 +660,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 		}
 
 		&__toolbarButton--selected {
-			color: var(--m3-primary, #cc1e1c) !important;
+			color: var(--m3-primary-container, #cc1e1c) !important;
 		}
 
 		&__toolbarButton--linkSelected {
@@ -678,11 +678,11 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 		&__toolbarButton--selected svg path,
 		&__toolbarButton--selected svg rect {
-			fill: var(--m3-primary, #cc1e1c) !important;
+			fill: var(--m3-primary-container, #cc1e1c) !important;
 		}
 
 		&__toolbarButton--selected svg path[stroke] {
-			stroke: var(--m3-primary, #cc1e1c) !important;
+			stroke: var(--m3-primary-container, #cc1e1c) !important;
 		}
 
 		&__emojiButton {
@@ -1095,16 +1095,20 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				background-color: var(--m3-primary-hover, #f3bdb8);
 			}
 			&:focus-visible {
-				outline: 2px solid var(--m3-primary, #cc1e1c);
+				outline: 2px solid var(--m3-primary-outline, #ffdad5);
 				outline-offset: 2px;
 			}
 
 			&--active:not(.textarea__iconWrapper--empty) {
-				background-color: var(--m3-primary, #cc1e1c);
+				background-color: var(--m3-primary-container, #cc1e1c);
 			}
 
 			&--active .textarea__icon {
 				transform: translate(-48%, -54%) rotate(-22deg);
+
+				rect {
+					fill: var(--m3-on-primary-container, #ffe2de);
+				}
 			}
 			&--clicked {
 				.textarea__icon {
@@ -1230,7 +1234,8 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 		&__audienceSelector--target {
 			.textarea__audienceSelectorMain,
 			.textarea__audienceSelectorChevron {
-				background: var(--m3-primary, #cc1e1c);
+				background: var(--m3-primary-container, #cc1e1c);
+				color: var(--m3-on-primary-container, #ffe2de);
 			}
 		}
 
@@ -1243,7 +1248,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			max-width: 260px;
 			max-height: min(72vh, 520px);
 			overflow-y: auto;
-			border: 2px solid var(--m3-primary, #cc1e1c);
+			border: 2px solid var(--m3-primary-container, #cc1e1c);
 			border-radius: 12px;
 			background: #fff !important;
 			opacity: 1;

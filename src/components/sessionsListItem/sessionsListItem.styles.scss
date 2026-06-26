@@ -347,7 +347,7 @@ $session-postcode-border: #646d78;
 		background: white !important;
 		width: 280px;
 		max-width: calc(100vw - 40px);
-		border: 2px solid var(--m3-primary, #cc1e1c);
+		border: 2px solid var(--m3-primary-container, #cc1e1c);
 		border-radius: 8px;
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 		overflow: hidden;
@@ -616,11 +616,11 @@ $session-postcode-border: #646d78;
 		}
 
 		&--plus {
-			background-color: var(--m3-primary, #cc1e1c);
+			background-color: var(--m3-primary-container, #cc1e1c);
 			display: flex;
 			align-items: center;
 			justify-content: center;
-			color: $white;
+			color: var(--m3-on-primary-container, #ffe2de);
 			font-weight: $font-weight-bold;
 			font-size: 12px;
 		}

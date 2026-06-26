@@ -11,6 +11,7 @@
  *
  * Traces: UAT-B (Tests #1, #2, #5, #6, #9 in THB — Test Logic).
  */
+import * as fs from 'fs';
 import * as path from 'path';
 import { describe, expect, it } from 'vitest';
 import { computeOrisoPalette } from './orisoScheme';
@@ -142,6 +143,9 @@ describe('OrisoScheme golden lock (seed #A5000A, light)', () => {
 		expect(tokens['--oriso-lottie-secondary-color']).toBe(
 			tokens['--m3-secondary-container']
 		);
+		expect(tokens['--m3-primary-outline']).toBe(
+			tokens['--m3-on-primary-fixed-variant']
+		);
 		expect(tokens['--oriso-primary-fixed']).toBe(
 			tokens['--m3-primary-fixed']
 		);
@@ -164,5 +168,66 @@ describe('--m3-* token contract (generated inventory)', () => {
 		);
 		const missing = consumed.filter((name) => !(name in tokens));
 		expect(missing).toEqual([]);
+	});
+});
+
+/**
+ * The static :root brand block (mui-variables-mapping.scss) is the default
+ * Caritas palette used when no tenant seed is stored. It MUST equal the
+ * engine output for the brand seed #a5000a, so the static default and any
+ * seed-driven theme render the same brand — and so the #cc1e1c primary
+ * regression cannot come back. (Neutrals are asserted against the golden
+ * benchmark above; this guards the brand family.)
+ */
+describe('static :root brand mirrors the engine (#a5000a)', () => {
+	const scss = fs.readFileSync(
+		path.join(
+			process.cwd(),
+			'src/resources/styles/mui-variables-mapping.scss'
+		),
+		'utf8'
+	);
+	const staticValue = (name: string): string | undefined =>
+		scss
+			.match(new RegExp(`${name}:\\s*(#[0-9a-fA-F]{3,8})\\s*;`))?.[1]
+			?.toLowerCase();
+	const engine = computeOrisoPalette({ primary: '#a5000a' }, 'light').tokens;
+
+	it.each([
+		'--m3-primary',
+		'--m3-primary-hover',
+		'--m3-primary-container',
+		'--m3-on-primary-container',
+		'--m3-primary-outline'
+	])('%s static literal equals the engine value', (token) => {
+		expect(staticValue(token)).toBe(engine[token].toLowerCase());
+	});
+});
+
+/**
+ * Dark set keeps the messenger's grayish identity (not seed-tinted/pinkish).
+ * The engine already computes a dark scheme; this guards that its neutrals
+ * stay near-neutral grey and the secondary stays a cool slate, so whenever
+ * end-user dark mode is switched on the brand character is preserved.
+ */
+describe('dark scheme preserves the grayish identity', () => {
+	const dark = computeOrisoPalette({ primary: '#a5000a' }, 'dark').tokens;
+	const rgb = (hex: string): number[] =>
+		[1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+	const spread = (hex: string): number => {
+		const [r, g, b] = rgb(hex);
+		return Math.max(r, g, b) - Math.min(r, g, b);
+	};
+
+	it.each(['--m3-surface', '--m3-background', '--m3-on-surface'])(
+		'%s is a near-neutral grey, not seed-tinted',
+		(token) => {
+			expect(spread(dark[token])).toBeLessThan(10);
+		}
+	);
+
+	it('dark secondary is a cool slate (blue ≥ red), never a warm pink', () => {
+		const [r, , b] = rgb(dark['--m3-secondary']);
+		expect(b).toBeGreaterThanOrEqual(r);
 	});
 });

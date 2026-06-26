@@ -306,6 +306,9 @@ export const computeOrisoPalette = (
 		'--m3-on-primary-container': brand.onContainer,
 		'--m3-primary-hover': brand.hover,
 		'--m3-primary-fixed': brand.fixed,
+		// Dedicated focus/outline accent: keep it dark enough to stay visible
+		// on the light brand surfaces that use it for keyboard focus.
+		'--m3-primary-outline': brand.onFixedVariant,
 		'--m3-primary-fixed-dim': brand.fixedDim,
 		'--m3-on-primary-fixed': brand.onFixed,
 		'--m3-on-primary-fixed-variant': brand.onFixedVariant,
