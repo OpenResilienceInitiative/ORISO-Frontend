@@ -7,6 +7,14 @@
 			top: 0;
 			z-index: 70;
 			background-color: var(--m3-background, $body-bg);
+
+			@include breakpoint($fromLarge) {
+				background: linear-gradient(
+					90deg,
+					transparent 0 40vw,
+					var(--m3-background, $body-bg) 40vw 100%
+				);
+			}
 		}
 
 		.stageLayout__stage.stage {
@@ -20,7 +28,7 @@
 			z-index: 25;
 			background: var(--m3-background, $body-bg);
 
-			@include breakpoint($fromXLarge) {
+			@include breakpoint($fromLarge) {
 				background: linear-gradient(
 					90deg,
 					transparent 0 40vw,
@@ -50,7 +58,7 @@
 
 		.stageLayout__content {
 			justify-content: flex-start;
-			align-items: flex-start;
+			align-items: center;
 			margin-top: 48px !important;
 			padding-top: $grid-base-four;
 			padding-bottom: 120px;

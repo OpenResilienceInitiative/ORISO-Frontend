@@ -18,11 +18,12 @@ import {
 	Divider,
 	IconButton,
 	Slide,
+	SvgIcon,
 	Toolbar,
 	Typography,
 	useScrollTrigger
 } from '@mui/material';
-import LoginRoundedIcon from '@mui/icons-material/LoginRounded';
+import { SvgIconProps } from '@mui/material/SvgIcon';
 import { InfoDrawer } from '../registration/infoDrawer/InfoDrawer';
 
 interface StageLayoutProps {
@@ -87,12 +88,14 @@ export const StageLayout = ({
 							{showLoginLink && (
 								<IconButton
 									href={loginUrl}
-									edge="start"
+									edge="end"
 									color="inherit"
-									aria-label="menu"
+									aria-label={translate(
+										'registration.login.label'
+									)}
 									sx={{ ml: '4px' }}
 								>
-									<LoginRoundedIcon color="inherit" />
+									<LoginDoorIcon color="inherit" />
 								</IconButton>
 							)}
 						</Box>
@@ -145,7 +148,7 @@ export const StageLayout = ({
 								component="a"
 								href={loginUrl}
 								variant="outlined"
-								startIcon={<LoginRoundedIcon />}
+								startIcon={<LoginDoorIcon />}
 								sx={{
 									'minHeight': '48px',
 									'minWidth': '148px',
@@ -256,3 +259,14 @@ export const StageLayout = ({
 		</div>
 	);
 };
+
+const LoginDoorIcon = (props: SvgIconProps) => (
+	<SvgIcon {...props} viewBox="0 0 24 24">
+		<path
+			fillRule="evenodd"
+			clipRule="evenodd"
+			d="M1.99958 4.99976C1.99958 3.3432 3.34303 1.99976 4.99958 1.99976H13.0002C14.6568 1.99976 16.0002 3.3432 16.0002 4.99976V6.49976H13.9996V4.99976C13.9996 4.44756 13.5524 4.00037 13.0002 4.00037H8.83958L11.6005 5.85476C12.494 6.45476 13.0002 7.48976 13.0002 8.56124V16.0003C13.5524 16.0003 13.9996 15.5521 13.9996 15V13.5H16.0002V15C16.0002 16.6565 14.6568 18 13.0002 18V18.7978C13.0002 19.9996 12.3955 21.0168 11.503 21.5671C10.6012 22.1231 9.41522 22.1868 8.39887 21.5043L3.39919 18.1453C2.50668 17.5453 1.99951 16.5103 1.99951 15.4388L1.99958 4.99976ZM4.0002 5.20226C4.0002 4.68664 4.25052 4.31819 4.54675 4.13538C4.83269 3.95913 5.1683 3.9432 5.4852 4.15601L10.4849 7.51505C10.7811 7.7138 10.9996 8.10099 10.9996 8.56131V18.7978C10.9996 19.3134 10.7492 19.6819 10.453 19.8647C10.1671 20.0409 9.83146 20.0568 9.51456 19.844L4.51488 16.485C4.21862 16.2862 4.0002 15.8991 4.0002 15.4387V5.20226Z"
+		/>
+		<path d="M14.2931 10.7072C13.9022 10.3162 13.9022 9.68344 14.2931 9.2925L17.2931 6.2925C17.6831 5.9025 18.3169 5.9025 18.7069 6.2925C19.0978 6.68344 19.0978 7.31624 18.7069 7.70718L17.4141 8.99999H20.9999C21.5521 8.99999 22.0002 9.44812 22.0002 10.0003C22.0002 10.5525 21.5521 10.9997 20.9999 10.9997H17.4141L18.7069 12.2925C19.0978 12.6834 19.0978 13.3162 18.7069 13.7072C18.3169 14.0972 17.6831 14.0972 17.2931 13.7072L14.2931 10.7072Z" />
+	</SvgIcon>
+);

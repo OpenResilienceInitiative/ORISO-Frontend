@@ -1719,6 +1719,8 @@
 		}
 	},
 	"registration": {
+		"selectedLabel": "ተመሪጹ",
+		"noneSelected": "ንምቕጻል በጃኹም ሓደ ኣርእስቲ ምረጹ።",
 		"accordion": {
 			"item": {
 				"continueButton": {
@@ -1744,6 +1746,18 @@
 				},
 				"headline": "ምኽሪ ኣብ ፖስታ ኮድ ዘማእከለ እዩ።",
 				"languages": "እዚ ማእከል ምኽሪ እዚ ብዛዕባ፤"
+			},
+			"details": {
+				"aboutLabel": "ብዛዕባ እዚ ማእከል ምኽሪ",
+				"addressLabel": "ኣድራሻ",
+				"hoursLabel": "ሰዓታት ስራሕ",
+				"languagesLabel": "ቋንቋታት",
+				"less": "ውሑድ",
+				"more": "ተወሳኺ",
+				"navigate": "መንገዲ ጀምር",
+				"openInMaps": "ኣብ ካርታ ክፈት",
+				"phoneLabel": "ተሌፎን",
+				"websiteLabel": "መርበብ ሓበሬታ"
 			},
 			"search": "ዚፕ ኮድ ድለዩ።",
 			"summary": "ማእከል ምኽርኹም፤"
@@ -1848,6 +1862,7 @@
 			},
 			"criteria": {
 				"fulfilled": "ተፈጺሙ",
+				"open": "ክፍት",
 				"length": "እንተወሓደ 9 ፊደላት",
 				"number": "እንተወሓደ ሓደ ቁጽሪ",
 				"specialChar": "እንተወሓደ ሓደ ፍሉይ ገጸ ባህሪ",
@@ -1912,12 +1927,15 @@
 			"summary": "ኣርእስትኻ፤"
 		},
 		"account": {
+			"autoSuggest": "ዝርዝር ብርእሱ ይምክር",
 			"headline": "ዝርዝር መእተዊ ምሓዝ",
 			"password": {
-				"criteria1": "እንተወሓደ 9 ፊደላት",
-				"criteria2": "እንተወሓደ ሓደ ቁጽሪ",
-				"criteria3": "ዓበይቲ/ንእሽቶ ፊደላት",
-				"criteria4": "እንተወሓደ ሓደ ፍሉይ ገጸ ባህሪ",
+				"criteria1": "እንተወሓደ 16 ፊደላት",
+				"criteria2": "1 ቁጽሪ",
+				"criteria3": "1 ዓቢ ፊደል",
+				"criteria4": "1 ንእሽቶ ፊደል",
+				"criteria5": "1 ፍሉይ ገጸ ባህሪ",
+				"criteriaLabel": "ናይ መሕለፊ ቓል ጠለባት",
 				"label": "መሕለፊ ቓል"
 			},
 			"repeatPassword": {
@@ -1925,13 +1943,22 @@
 				"label": "ፓስዎርድ ምድጋም",
 				"success": "ፓስዎርድካ ተመሳሳሊ እዩ።"
 			},
+			"suggest": {
+				"all": "ሰለስቲኦም ብሓባር",
+				"allShort": "ሰለስቲኦም",
+				"avatar": "Avatar",
+				"password": "መሕለፊ ቓል",
+				"username": "ስም ተጠቃሚ"
+			},
 			"subline": "ስምካ ንኸይፍለጥ፡ ትኽክለኛ ስምካ ወይ ቀዳሞት ፊደላትካ ከይትጥቀም ንመክር።",
 			"username": {
 				"error": {
-					"available": "ስም ተጠቃሚኻ ኣዝዩ ሓጺር እዩ።",
-					"unavailable": "እዚ ናይ ተጠቃሚ ስም ድሮ ተወሰደ።"
+					"tooShort": "ስም ተጠቃሚኻ ኣዝዩ ሓጺር እዩ።",
+					"unavailable": "እዚ ናይ ተጠቃሚ ስም ድሮ ተወሰደ።",
+					"retry": "ነዚ ስም ተጠቃሚ ሕጂ ክንፈትሾ ኣይከኣልናን። በጃኹም ደጊምኩም ፈትኑ።"
 				},
-				"hint": "5 ወይ ካብዚ ብዙሕ ፊደላት",
+				"hint": "ስም መእተዊ ዘይፍለጥ። ትኽክለኛ ስም ወይ ቀዳሞት ፊደላት ኣይትጠቀም።",
+				"info": "ስም መእተዊ ዘይፍለጥ። ትኽክለኛ ስም ወይ ቀዳሞት ፊደላት ኣይትጠቀም።",
 				"label": "ስም ተጠቃሚ",
 				"success": "ስም ተጠቃሚኻ ይሰማማዕ እዩ።"
 			}

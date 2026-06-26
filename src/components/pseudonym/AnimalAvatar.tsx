@@ -1,94 +1,58 @@
-import React from 'react';
-import { ReactComponent as CatSvg } from './animals/cat.svg';
-import { ReactComponent as RabbitSvg } from './animals/rabbit.svg';
-import { ReactComponent as FoxSvg } from './animals/fox.svg';
-import { ReactComponent as OwlSvg } from './animals/owl.svg';
-import { ReactComponent as HedgehogSvg } from './animals/hedgehog.svg';
-import { ReactComponent as DolphinSvg } from './animals/dolphin.svg';
-import { ReactComponent as PenguinSvg } from './animals/penguin.svg';
-import { ReactComponent as KoalaSvg } from './animals/koala.svg';
-import { ReactComponent as PandaSvg } from './animals/panda.svg';
-import { ReactComponent as OtterSvg } from './animals/otter.svg';
-import { ReactComponent as SquirrelSvg } from './animals/squirrel.svg';
-import { ReactComponent as TurtleSvg } from './animals/turtle.svg';
-import { ReactComponent as ButterflySvg } from './animals/butterfly.svg';
-import { ReactComponent as HummingbirdSvg } from './animals/hummingbird.svg';
-import { ReactComponent as SeashoreSvg } from './animals/seahorse.svg';
-import { ReactComponent as ChameleonSvg } from './animals/chameleon.svg';
-import { ReactComponent as FireflySvg } from './animals/firefly.svg';
-import { ReactComponent as BearSvg } from './animals/bear.svg';
-import { ReactComponent as SwanSvg } from './animals/swan.svg';
-import { ReactComponent as FrogSvg } from './animals/frog.svg';
-import type { AnimalType } from '../../utils/pseudonymGenerator';
+import React, { useEffect, useState } from 'react';
+import { type Avatar, renderAvatarSvg } from '../../utils/pseudonymGenerator';
 
 interface AnimalAvatarProps {
-	animalType: AnimalType;
-	/** Background color for the avatar circle. Defaults to '#FFD9D9'. */
-	avatarColor?: string;
+	avatar: Avatar;
 	/** Outer circle size in px (Figma default = 108) */
 	size?: number;
 }
 
-type SvgComponent = React.FC<React.SVGProps<SVGSVGElement>>;
-
-/** Wraps an imported SVG so it fills the inner avatar box absolutely. */
-const svgIcon =
-	(Svg: SvgComponent): React.FC =>
-	() => (
-		<Svg
-			width="100%"
-			height="100%"
-			style={{ position: 'absolute', inset: 0 }}
-			aria-hidden="true"
-		/>
-	);
-
-const ANIMAL_COMPONENTS: Record<AnimalType, React.FC> = {
-	cat: svgIcon(CatSvg),
-	rabbit: svgIcon(RabbitSvg),
-	fox: svgIcon(FoxSvg),
-	owl: svgIcon(OwlSvg),
-	hedgehog: svgIcon(HedgehogSvg),
-	dolphin: svgIcon(DolphinSvg),
-	penguin: svgIcon(PenguinSvg),
-	koala: svgIcon(KoalaSvg),
-	panda: svgIcon(PandaSvg),
-	otter: svgIcon(OtterSvg),
-	bear: svgIcon(BearSvg),
-	squirrel: svgIcon(SquirrelSvg),
-	turtle: svgIcon(TurtleSvg),
-	butterfly: svgIcon(ButterflySvg),
-	hummingbird: svgIcon(HummingbirdSvg),
-	seahorse: svgIcon(SeashoreSvg),
-	swan: svgIcon(SwanSvg),
-	chameleon: svgIcon(ChameleonSvg),
-	firefly: svgIcon(FireflySvg),
-	frog: svgIcon(FrogSvg)
-};
-
 /**
- * Circular avatar (108×108 default) displaying the animal icon on a
- * per-animal background color from ANIMAL_COLORS.
+ * Circular generated avatar. The SVG itself is loaded on demand and recolored
+ * by the shared anonymous-name engine so light and dark backgrounds stay legible.
  */
 export const AnimalAvatar: React.FC<AnimalAvatarProps> = ({
-	animalType,
-	avatarColor = '#FFD9D9',
+	avatar,
 	size = 108
 }) => {
-	const AnimalInner = ANIMAL_COMPONENTS[animalType] || ANIMAL_COMPONENTS.cat;
-	const innerSize = size - 12; // 6px padding on each side
+	const [avatarHtml, setAvatarHtml] = useState<string | null>(null);
+	const borderWidth = 2;
+	const padding = Math.max(8, Math.round(size * 0.1));
+	const innerSize = Math.max(0, size - padding * 2 - borderWidth * 2);
+
+	useEffect(() => {
+		let canceled = false;
+		setAvatarHtml(null);
+		renderAvatarSvg(avatar)
+			.then((html) => {
+				if (!canceled) {
+					setAvatarHtml(html);
+				}
+			})
+			.catch(() => {
+				if (!canceled) {
+					setAvatarHtml(null);
+				}
+			});
+
+		return () => {
+			canceled = true;
+		};
+	}, [avatar]);
 
 	return (
 		<div
 			style={{
 				display: 'flex',
-				padding: 6,
+				padding,
 				justifyContent: 'center',
 				alignItems: 'center',
 				borderRadius: size / 2,
-				background: avatarColor,
+				background: avatar.bg,
 				width: size,
 				height: size,
+				boxSizing: 'border-box',
+				border: `${borderWidth}px solid #c4c7c8`,
 				boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.10)',
 				overflow: 'hidden',
 				flexShrink: 0
@@ -101,9 +65,11 @@ export const AnimalAvatar: React.FC<AnimalAvatarProps> = ({
 					position: 'relative',
 					overflow: 'hidden'
 				}}
-			>
-				<AnimalInner />
-			</div>
+				aria-hidden="true"
+				dangerouslySetInnerHTML={
+					avatarHtml ? { __html: avatarHtml } : undefined
+				}
+			/>
 		</div>
 	);
 };

@@ -1,6 +1,6 @@
-import { Box, InputAdornment, Typography } from '@mui/material';
+import { Box, InputAdornment, TextField, Typography } from '@mui/material';
 import * as React from 'react';
-import FmdGoodIcon from '@mui/icons-material/FmdGood';
+import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
 import {
 	useState,
 	FC,
@@ -10,10 +10,13 @@ import {
 	SetStateAction
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Input } from '../../../components/input/input';
 import { RegistrationContext, RegistrationData } from '../../../globalState';
 import { REGISTRATION_DATA_VALIDATION } from '../registrationDataValidation';
-import { registrationMd3 } from '../registrationDesign/registrationDesign';
+import {
+	registrationMd3,
+	registrationMd3TextFieldSx,
+	registrationScreenTitleSx
+} from '../registrationDesign/registrationDesign';
 
 export const ZipcodeInput: FC<{
 	onChange: Dispatch<SetStateAction<Partial<RegistrationData>>>;
@@ -33,6 +36,11 @@ export const ZipcodeInput: FC<{
 			});
 		} else {
 			setDisabledNextButton(true);
+			onChange({
+				zipcode: undefined,
+				agencyId: undefined,
+				agency: undefined
+			});
 		}
 	}, [setDisabledNextButton, onChange, value]);
 
@@ -59,17 +67,14 @@ export const ZipcodeInput: FC<{
 					mb: 2.5
 				}}
 			>
-				<FmdGoodIcon
+				<PlaceRoundedIcon
 					sx={{ fontSize: 32, color: registrationMd3.primary }}
 				/>
 			</Box>
 			<Typography
+				component="h1"
 				variant="h3"
-				sx={{
-					color: registrationMd3.onSurface,
-					fontWeight: 800,
-					lineHeight: 1.2
-				}}
+				sx={registrationScreenTitleSx}
 			>
 				{t('registration.zipcode.headline')}
 			</Typography>
@@ -96,29 +101,35 @@ export const ZipcodeInput: FC<{
 				</Typography>
 			</Box>
 			<Box sx={{ width: '100%', maxWidth: 340 }}>
-				<Input
-					inputProps={{
-						'data-cy': 'input-postal-code'
-					}}
-					autoComplete="postal-code"
-					inputMode="numeric"
-					inputType="text"
-					isValueValid={async (val: string) => val.length === 5}
-					startAdornment={
-						<InputAdornment position="start">
-							<FmdGoodIcon
-								sx={{ color: registrationMd3.onSurfaceVariant }}
-							/>
-						</InputAdornment>
-					}
-					onInputChange={(val: string) => {
-						const reg = /^\d*$/;
-						if (val.length < 6 && reg.test(val)) {
-							setValue(val);
-						}
-					}}
+				<TextField
 					value={value}
-					label={t('registration.zipcode.label')}
+					onChange={(event) => {
+						const nextValue = event.target.value
+							.replace(/\D/g, '')
+							.slice(0, 5);
+						setValue(nextValue);
+					}}
+					placeholder={t('registration.zipcode.label')}
+					fullWidth
+					autoComplete="postal-code"
+					inputProps={{
+						'data-cy': 'input-postal-code',
+						'inputMode': 'numeric',
+						'maxLength': 5,
+						'aria-label': t('registration.zipcode.label')
+					}}
+					InputProps={{
+						startAdornment: (
+							<InputAdornment position="start">
+								<PlaceRoundedIcon
+									sx={{
+										color: registrationMd3.onSurfaceVariant
+									}}
+								/>
+							</InputAdornment>
+						)
+					}}
+					sx={registrationMd3TextFieldSx}
 				/>
 			</Box>
 		</Box>

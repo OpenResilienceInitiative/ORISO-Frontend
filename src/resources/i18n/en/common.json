@@ -1843,6 +1843,8 @@
 				}
 			}
 		},
+		"selectedLabel": "Selected",
+		"noneSelected": "Please choose a topic to continue.",
 		"age": {
 			"dropdown": "Select age*",
 			"headline": "Specify age"
@@ -1860,6 +1862,18 @@
 				},
 				"headline": "Counseling centers for postal code",
 				"languages": "This counseling center advises you in:"
+			},
+			"details": {
+				"aboutLabel": "About this center",
+				"addressLabel": "Address",
+				"hoursLabel": "Opening hours",
+				"languagesLabel": "Languages",
+				"less": "Less",
+				"more": "More",
+				"navigate": "Start navigation",
+				"openInMaps": "Open in maps",
+				"phoneLabel": "Phone",
+				"websiteLabel": "Website"
 			},
 			"search": "Search for a postal code",
 			"summary": "Your counseling center:"
@@ -1969,6 +1983,7 @@
 			},
 			"criteria": {
 				"fulfilled": "fulfilled",
+				"open": "open",
 				"length": "At least 9 characters",
 				"number": "at least one number",
 				"specialChar": "at least one special character",
@@ -2033,12 +2048,15 @@
 			"summary": "Your topic:"
 		},
 		"account": {
+			"autoSuggest": "Suggest data automatically",
 			"headline": "Capture login data",
 			"password": {
-				"criteria1": "at least 9 characters",
-				"criteria2": "at least one number",
-				"criteria3": "Upper/lower case",
-				"criteria4": "at least one special character",
+				"criteria1": "min. 16 characters",
+				"criteria2": "1 number",
+				"criteria3": "1 uppercase letter",
+				"criteria4": "1 lowercase letter",
+				"criteria5": "1 special character",
+				"criteriaLabel": "Password requirements",
 				"label": "Password"
 			},
 			"repeatPassword": {
@@ -2046,13 +2064,22 @@
 				"label": "Repeat password",
 				"success": "Your password is identical."
 			},
+			"suggest": {
+				"all": "All 3 together",
+				"allShort": "All 3",
+				"avatar": "Avatar",
+				"password": "Password",
+				"username": "Username"
+			},
 			"subline": "To protect your anonymity, we advise you not to use your real name or initials.",
 			"username": {
 				"error": {
-					"available": "Your username is too short.",
-					"unavailable": "This username is already taken."
+					"tooShort": "Your username is too short.",
+					"unavailable": "This username is already taken.",
+					"retry": "We could not check this username right now. Please try again."
 				},
-				"hint": "5 or more characters",
+				"hint": "Anonymous login name. Please do not use real names or initials.",
+				"info": "Anonymous login name. Please do not use real names or initials.",
 				"label": "Username",
 				"success": "Your username is available."
 			}

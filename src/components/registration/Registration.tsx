@@ -1,4 +1,4 @@
-import { Avatar, Box, Button, Chip, Link } from '@mui/material';
+import { Avatar, Box, Button, Chip, Link, Typography } from '@mui/material';
 import * as React from 'react';
 import {
 	useState,
@@ -46,11 +46,13 @@ import { UrlParamsContext } from '../../globalState/provider/UrlParamsProvider';
 import { RegistrationStepper } from './registrationStepper/RegistrationStepper';
 import {
 	getRegistrationTopicDisplay,
-	getRegistrationTopicIcon,
+	getRegistrationTopicIconForGroup,
 	registrationMd3
 } from './registrationDesign/registrationDesign';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
 
 /**
  * This type of registration is currently not supporting:
@@ -137,16 +139,23 @@ export const Registration = () => {
 
 	const selectedTopic = mergedRegistrationData.mainTopic;
 	const selectedAgency = mergedRegistrationData.agency;
-	const selectedLabel =
+	const selectedTopicLabel =
 		(selectedTopic
 			? getRegistrationTopicDisplay(selectedTopic, locale).title
 			: null) ||
 		selectedTopic?.name ||
-		selectedAgency?.name ||
 		null;
-	const selectedIcon = selectedTopic
-		? getRegistrationTopicIcon(selectedTopic)
+	const selectedTopicIcon = selectedTopic
+		? getRegistrationTopicIconForGroup(
+				selectedTopic,
+				mergedRegistrationData.topicGroupId
+			)
 		: undefined;
+	const selectedPrefix = t('registration.selectedLabel', 'Ausgewählt');
+	const noneSelectedLabel = t(
+		'registration.noneSelected',
+		'Bitte wählen Sie ein Thema, um fortzufahren.'
+	);
 
 	const onNextClick = useCallback(() => {
 		updateRegistrationData(stepData);
@@ -157,14 +166,8 @@ export const Registration = () => {
 	}, [updateRegistrationData, stepData, history, nextStepUrl]);
 
 	const onPrevClick = useCallback(() => {
-		if (stepData.zipcode) {
-			registrationData.zipcode = '';
-		}
 		setStepData({});
-		if (history) {
-			history.push(prevStepUrl);
-		}
-	}, [registrationData, stepData, history, prevStepUrl]);
+	}, []);
 
 	const onClearSelection = useCallback(() => {
 		setStepData({});
@@ -194,13 +197,105 @@ export const Registration = () => {
 		updateRegistrationData
 	]);
 
-	const handleSubmit = useCallback(
-		(e: FormEvent<HTMLFormElement>) => {
-			e.preventDefault();
-			if (disabledNextButton) return;
-			onNextClick();
+	const onClearPostcodeSelection = useCallback(() => {
+		setStepData({});
+		setDisabledNextButton?.(true);
+		updateRegistrationData({
+			zipcode: undefined,
+			agency: undefined,
+			agencyId: undefined
+		});
+		history.push(
+			`${generatePath(path, {
+				topicSlug,
+				step: 'zipcode'
+			})}${location.search}`
+		);
+	}, [
+		history,
+		location.search,
+		path,
+		setDisabledNextButton,
+		topicSlug,
+		updateRegistrationData
+	]);
+
+	const footerChips = useMemo<RegistrationFooterChipItem[]>(() => {
+		const chips: RegistrationFooterChipItem[] = [];
+
+		if (selectedTopicLabel) {
+			chips.push({
+				key: 'topic',
+				label: selectedTopicLabel,
+				icon: selectedTopicIcon,
+				onDelete: onClearSelection
+			});
+		} else if (selectedAgency?.name) {
+			chips.push({
+				key: 'agency',
+				label: selectedAgency.name,
+				onDelete: onClearSelection
+			});
+		}
+
+		if (
+			REGISTRATION_DATA_VALIDATION.zipcode.validation(
+				mergedRegistrationData.zipcode
+			)
+		) {
+			chips.push({
+				key: 'zipcode',
+				label: mergedRegistrationData.zipcode,
+				iconNode: <PlaceRoundedIcon />,
+				fixed: true,
+				onDelete: onClearPostcodeSelection
+			});
+		}
+
+		return chips;
+	}, [
+		mergedRegistrationData.zipcode,
+		onClearPostcodeSelection,
+		onClearSelection,
+		selectedAgency?.name,
+		selectedTopicIcon,
+		selectedTopicLabel
+	]);
+
+	const clickableStepperStepNames = useMemo(
+		() =>
+			availableSteps
+				.slice(0, Math.max(currStepIndex, 0))
+				.map(({ name }) => name),
+		[availableSteps, currStepIndex]
+	);
+
+	const onStepperClick = useCallback(
+		(targetStepName: string) => {
+			const targetStepIndex = availableSteps.findIndex(
+				({ name }) => name === targetStepName
+			);
+
+			if (targetStepIndex < 0 || targetStepIndex > currStepIndex) {
+				return;
+			}
+
+			setStepData({});
+			history.push(
+				`${generatePath(path, {
+					topicSlug,
+					step: targetStepName
+				})}${location.search}`
+			);
 		},
-		[disabledNextButton, onNextClick]
+		[
+			availableSteps,
+			currStepIndex,
+			history,
+			location.search,
+			path,
+			topicSlug
+		]
 	);
 
 	useEffect(() => {
@@ -300,6 +395,27 @@ export const Registration = () => {
 		isRegistering
 	]);
 
+	const handleSubmit = useCallback(
+		(e: FormEvent<HTMLFormElement>) => {
+			e.preventDefault();
+			if (disabledNextButton || isRegistering) return;
+
+			if (nextStepUrl) {
+				onNextClick();
+				return;
+			}
+
+			onRegisterClick();
+		},
+		[
+			disabledNextButton,
+			isRegistering,
+			nextStepUrl,
+			onNextClick,
+			onRegisterClick
+		]
+	);
+
 	const stepPaths = useMemo(
 		() =>
 			availableSteps.reduce(
@@ -338,16 +454,27 @@ export const Registration = () => {
 									.map(({ name }) => name)
 									.join(',')}
 							>
-								<Box sx={{ marginBottom: '112px' }}>
+								<Box
+									sx={{
+										marginBottom: {
+											xs: '144px',
+											sm: '112px'
+										}
+									}}
+								>
 									<PreselectionBox hasDrawer={false} />
 									<RegistrationStepper
 										currentStepName={step}
+										clickableStepNames={
+											clickableStepperStepNames
+										}
+										onStepClick={onStepperClick}
 									/>
 
 									<Box
 										sx={{
 											maxWidth: '780px',
-											mr: 'auto'
+											mx: 'auto'
 										}}
 									>
 										<Switch>
@@ -386,7 +513,10 @@ export const Registration = () => {
 								</Box>
 								<Box
 									sx={{
-										minHeight: '96px',
+										minHeight: {
+											xs: 'auto',
+											sm: '96px'
+										},
 										position: 'fixed',
 										bottom: '0',
 										right: '0',
@@ -403,6 +533,11 @@ export const Registration = () => {
 										display: 'flex',
 										justifyContent: 'center',
 										alignItems: 'center',
+										pt: { xs: 1.5, sm: 0 },
+										pb: {
+											xs: 'calc(12px + env(safe-area-inset-bottom))',
+											sm: 0
+										},
 										zIndex: 65
 									}}
 								>
@@ -422,7 +557,8 @@ export const Registration = () => {
 												gridTemplateColumns:
 													'auto minmax(0, 1fr) auto',
 												alignItems: 'center',
-												gap: 2
+												columnGap: { sm: 2.5, md: 3 },
+												rowGap: 1
 											}}
 										>
 											<RegistrationFooterBackLink
@@ -430,10 +566,10 @@ export const Registration = () => {
 												onClick={onPrevClick}
 												label={t('registration.back')}
 											/>
-											<RegistrationFooterChip
-												label={selectedLabel}
-												icon={selectedIcon}
-												onDelete={onClearSelection}
+											<RegistrationFooterChips
+												chips={footerChips}
+												selectedPrefix={selectedPrefix}
+												emptyLabel={noneSelectedLabel}
 											/>
 											<RegistrationFooterPrimaryButton
 												nextStepUrl={nextStepUrl}
@@ -441,10 +577,6 @@ export const Registration = () => {
 													disabledNextButton
 												}
 												isRegistering={isRegistering}
-												onRegisterClick={
-													onRegisterClick
-												}
-												onNextClick={onNextClick}
 												registerLabel={t(
 													'registration.register'
 												)}
@@ -465,10 +597,10 @@ export const Registration = () => {
 												}
 											}}
 										>
-											<RegistrationFooterChip
-												label={selectedLabel}
-												icon={selectedIcon}
-												onDelete={onClearSelection}
+											<RegistrationFooterChips
+												chips={footerChips}
+												selectedPrefix={selectedPrefix}
+												emptyLabel={noneSelectedLabel}
 												mobile
 											/>
 											<Box
@@ -494,10 +626,6 @@ export const Registration = () => {
 													isRegistering={
 														isRegistering
 													}
-													onRegisterClick={
-														onRegisterClick
-													}
-													onNextClick={onNextClick}
 													registerLabel={t(
 														'registration.register'
 													)}
@@ -536,13 +664,24 @@ const RegistrationFooterBackLink = ({
 }) => (
 	<Link
 		sx={{
-			textDecoration: 'none',
-			color: registrationMd3.onSurfaceVariant,
-			fontWeight: '700',
-			display: 'inline-flex',
-			alignItems: 'center',
-			gap: '8px',
-			whiteSpace: 'nowrap'
+			'textDecoration': 'none',
+			'color': registrationMd3.onSurfaceVariant,
+			'fontWeight': '700',
+			'display': 'inline-flex',
+			'alignItems': 'center',
+			'gap': '8px',
+			'whiteSpace': 'nowrap',
+			'px': { xs: 0.5, sm: 1, md: 1.25 },
+			'py': { xs: 0.75, sm: 1 },
+			'mx': { xs: -0.5, sm: -1, md: -1.25 },
+			'borderRadius': '999px',
+			'&:hover': {
+				backgroundColor: registrationMd3.hoverLayer
+			},
+			'&:focus-visible': {
+				outline: `2px solid ${registrationMd3.focus}`,
+				outlineOffset: 2
+			}
 		}}
 		component={RouterLink}
 		onClick={onClick}
@@ -553,20 +692,111 @@ const RegistrationFooterBackLink = ({
 	</Link>
 );
 
-const RegistrationFooterChip = ({
-	label,
-	icon,
-	onDelete,
+interface RegistrationFooterChipItem {
+	key: string;
+	label: string;
+	icon?: string;
+	iconNode?: React.ReactElement;
+	fixed?: boolean;
+	onDelete: () => void;
+}
+
+const RegistrationFooterChips = ({
+	chips,
+	selectedPrefix,
+	emptyLabel,
 	mobile = false
 }: {
-	label?: string | null;
-	icon?: string;
-	onDelete: () => void;
+	chips: RegistrationFooterChipItem[];
+	selectedPrefix: string;
+	emptyLabel: string;
 	mobile?: boolean;
 }) => {
-	if (!label) {
-		return mobile ? null : <Box sx={{ minWidth: 0 }} />;
+	if (chips.length === 0) {
+		return mobile ? null : (
+			<Typography
+				sx={{
+					fontSize: 13,
+					color: registrationMd3.outline,
+					textAlign: 'center'
+				}}
+			>
+				{emptyLabel}
+			</Typography>
+		);
 	}
+
+	const renderChip = (chip: RegistrationFooterChipItem) => (
+		<Chip
+			key={chip.key}
+			avatar={
+				chip.icon ? (
+					<Avatar alt="" sx={{ bgcolor: 'transparent' }}>
+						<Box
+							component="img"
+							src={chip.icon}
+							aria-hidden
+							sx={{
+								position: 'absolute',
+								inset: 0,
+								width: '100%',
+								height: '100%',
+								objectFit: 'cover',
+								filter: 'blur(5px)',
+								transform: 'scale(1.6)'
+							}}
+						/>
+						<Box
+							component="img"
+							src={chip.icon}
+							alt=""
+							sx={{
+								position: 'relative',
+								width: '82%',
+								height: '82%',
+								objectFit: 'contain'
+							}}
+						/>
+					</Avatar>
+				) : undefined
+			}
+			icon={chip.iconNode}
+			label={chip.label}
+			onDelete={chip.onDelete}
+			deleteIcon={<CloseRoundedIcon />}
+			variant="outlined"
+			aria-label={`${selectedPrefix}: ${chip.label}`}
+			sx={{
+				'maxWidth': '100%',
+				'minWidth': chip.fixed ? 0 : 96,
+				'flexShrink': chip.fixed ? 0 : 1,
+				'height': '38px',
+				'borderRadius': '999px',
+				'bgcolor': '#fff',
+				'fontWeight': 600,
+				'fontSize': 14,
+				'borderColor': registrationMd3.outlineVariant,
+				'& .MuiChip-label': {
+					overflow: 'hidden',
+					textOverflow: 'ellipsis',
+					whiteSpace: 'nowrap'
+				},
+				'& .MuiChip-avatar': {
+					width: 26,
+					height: 26
+				},
+				'& .MuiChip-icon': {
+					color: registrationMd3.onSurfaceVariant,
+					ml: 1,
+					fontSize: 20
+				},
+				'& .MuiChip-deleteIcon': {
+					color: registrationMd3.onSurfaceVariant,
+					fontSize: 20
+				}
+			}}
+		/>
+	);
 
 	return (
 		<Box
@@ -574,46 +804,46 @@ const RegistrationFooterChip = ({
 				minWidth: 0,
 				overflow: 'hidden',
 				display: 'flex',
+				flexDirection: mobile ? 'column' : 'row',
+				flexWrap: mobile ? 'wrap' : 'nowrap',
 				justifyContent: 'center',
 				alignItems: 'center',
-				mb: mobile ? 1.25 : 0
+				textAlign: mobile ? 'center' : 'left',
+				gap: mobile ? 1 : 1,
+				mb: mobile ? 1.5 : 0,
+				containerType: mobile ? undefined : 'inline-size'
 			}}
 		>
-			<Chip
-				avatar={
-					icon ? (
-						<Avatar
-							src={icon}
-							alt=""
-							imgProps={{
-								loading: 'lazy',
-								decoding: 'async'
-							}}
-						/>
-					) : undefined
-				}
-				label={label}
-				onDelete={onDelete}
-				variant="outlined"
+			<Typography
 				sx={{
-					'maxWidth': '100%',
-					'minWidth': 0,
-					'height': '42px',
-					'borderRadius': '999px',
-					'bgcolor': '#fff',
-					'fontWeight': 700,
-					'borderColor': registrationMd3.outlineVariant,
-					'& .MuiChip-label': {
-						overflow: 'hidden',
-						textOverflow: 'ellipsis',
-						whiteSpace: 'nowrap'
-					},
-					'& .MuiChip-avatar': {
-						width: 28,
-						height: 28
+					'fontSize': mobile ? 11 : 13,
+					'fontWeight': mobile ? 700 : 400,
+					'letterSpacing': mobile ? 1 : 0,
+					'textTransform': mobile ? 'uppercase' : 'none',
+					'color': registrationMd3.onSurfaceVariant,
+					'flexShrink': 0,
+					'whiteSpace': 'nowrap',
+					'mb': mobile ? -0.25 : 0,
+					'@container (max-width: 360px)': {
+						display: 'none'
 					}
 				}}
-			/>
+			>
+				{selectedPrefix}
+				{mobile ? '' : ':'}
+			</Typography>
+			<Box
+				sx={{
+					minWidth: 0,
+					maxWidth: '100%',
+					display: 'flex',
+					flexWrap: mobile ? 'wrap' : 'nowrap',
+					gap: 1,
+					justifyContent: 'center'
+				}}
+			>
+				{chips.map(renderChip)}
+			</Box>
 		</Box>
 	);
 };
@@ -622,8 +852,6 @@ const RegistrationFooterPrimaryButton = ({
 	nextStepUrl,
 	disabledNextButton,
 	isRegistering,
-	onRegisterClick,
-	onNextClick,
 	registerLabel,
 	registeringLabel,
 	nextLabel
@@ -631,8 +859,6 @@ const RegistrationFooterPrimaryButton = ({
 	nextStepUrl: string | null;
 	disabledNextButton?: boolean;
 	isRegistering: boolean;
-	onRegisterClick: () => void;
-	onNextClick: () => void;
 	registerLabel: string;
 	registeringLabel: string;
 	nextLabel: string;
@@ -640,10 +866,11 @@ const RegistrationFooterPrimaryButton = ({
 	const disabled = Boolean(disabledNextButton || isRegistering);
 	const buttonSx = {
 		'borderRadius': '999px',
-		'px': { xs: 3, md: 4 },
-		'py': 1.25,
-		'fontWeight': 800,
-		'minWidth': { xs: 150, md: 176 },
+		'px': { xs: 3, sm: 4.5, md: 5 },
+		'py': 1.35,
+		'fontSize': 17,
+		'fontWeight': 700,
+		'minWidth': { xs: 150, sm: 188, md: 196 },
 		'boxShadow': disabled ? 'none' : '0 6px 18px rgba(164, 38, 46, 0.30)',
 		'&:hover': {
 			boxShadow: disabled ? 'none' : '0 8px 22px rgba(164, 38, 46, 0.40)'
@@ -655,7 +882,6 @@ const RegistrationFooterPrimaryButton = ({
 			data-cy="button-next"
 			disabled={disabledNextButton}
 			variant="contained"
-			onClick={onNextClick}
 			endIcon={<ArrowForwardRoundedIcon />}
 			sx={{ width: 'unset', ...buttonSx }}
 			type={disabledNextButton ? 'button' : 'submit'}
@@ -667,7 +893,6 @@ const RegistrationFooterPrimaryButton = ({
 			data-cy="button-register"
 			disabled={disabled}
 			variant="contained"
-			onClick={onRegisterClick}
 			type={disabled ? 'button' : 'submit'}
 			sx={buttonSx}
 		>

@@ -1885,6 +1885,8 @@
 				}
 			}
 		},
+		"selectedLabel": "Ausgewählt",
+		"noneSelected": "Bitte wählen Sie ein Thema, um fortzufahren.",
 		"age": {
 			"dropdown": "Alter auswählen*",
 			"headline": "Alter angeben"
@@ -1912,6 +1914,18 @@
 				},
 				"headline": "Beratungsstellen zur Postleitzahl",
 				"languages": "Diese Beratungsstelle berät Sie auf:"
+			},
+			"details": {
+				"aboutLabel": "Zu dieser Beratungsstelle",
+				"addressLabel": "Adresse",
+				"hoursLabel": "Öffnungszeiten",
+				"languagesLabel": "Sprachen",
+				"less": "Weniger",
+				"more": "Mehr",
+				"navigate": "Navigation starten",
+				"openInMaps": "In Karte öffnen",
+				"phoneLabel": "Telefon",
+				"websiteLabel": "Webseite"
 			},
 			"search": "Suche nach einer PLZ",
 			"summary": "Ihre Beratungsstelle:"
@@ -2025,6 +2039,7 @@
 			},
 			"criteria": {
 				"fulfilled": "Erfüllt",
+				"open": "Offen",
 				"length": "mindestens 9 Zeichen",
 				"number": "mindestens eine Zahl",
 				"specialChar": "mindestens ein Sonderzeichen",
@@ -2110,12 +2125,15 @@
 			}
 		},
 		"account": {
+			"autoSuggest": "Daten automatisch vorschlagen",
 			"headline": "Anmeldedaten erfassen",
 			"password": {
-				"criteria1": "mindestens 9 Zeichen",
-				"criteria2": "mindestens eine Zahl",
-				"criteria3": "Groß-/Kleinschreibung",
-				"criteria4": "mindestens ein Sonderzeichen",
+				"criteria1": "min. 16 Zeichen",
+				"criteria2": "1x Zahl",
+				"criteria3": "1x Großbuchstabe",
+				"criteria4": "1x Kleinbuchstabe",
+				"criteria5": "1x Sonderzeichen",
+				"criteriaLabel": "Passwort-Anforderungen",
 				"label": "Passwort"
 			},
 			"repeatPassword": {
@@ -2123,13 +2141,21 @@
 				"label": "Passwort wiederholen",
 				"success": "Ihr Passwort ist identisch."
 			},
+			"suggest": {
+				"all": "Alle 3 zusammen",
+				"allShort": "Alle 3",
+				"avatar": "Avatar",
+				"password": "Passwort",
+				"username": "Benutzername"
+			},
 			"subline": "Um Ihre Anonymität zu schützen, raten wir Ihnen, nicht Ihren tatsächlichen Namen oder Initialen zu verwenden.",
 			"username": {
 				"error": {
-					"available": "Ihr Benutzername ist zu kurz.",
-					"unavailable": "Dieser Benutzername ist bereits vergeben."
+					"tooShort": "Ihr Benutzername ist zu kurz.",
+					"unavailable": "Dieser Benutzername ist bereits vergeben.",
+					"retry": "Wir konnten den Benutzernamen gerade nicht prüfen. Bitte versuchen Sie es erneut."
 				},
-				"info": "5 oder mehr Zeichen",
+				"info": "Anonymer Login-Name. Bitte keine echten Namen oder Initialen verwenden.",
 				"label": "Benutzername",
 				"success": "Ihr Benutzername ist geeignet."
 			}

@@ -624,6 +624,8 @@
 		}
 	},
 	"registration": {
+		"selectedLabel": "Ausgewählt",
+		"noneSelected": "Bitte wähle ein Thema, um fortzufahren.",
 		"agency": {
 			"preselected": {
 				"prefix": "Deine vorausgewählte Beratungsstelle: "
@@ -638,6 +640,18 @@
 					"subline": "Bitte versuche es mit einer anderen Postleitzahl oder besuche unsere Website, um eine Beratungsstelle in Deiner Nähe zu finden."
 				},
 				"languages": "Diese Beratungsstelle berät Dich auf:"
+			},
+			"details": {
+				"aboutLabel": "Zu dieser Beratungsstelle",
+				"addressLabel": "Adresse",
+				"hoursLabel": "Öffnungszeiten",
+				"languagesLabel": "Sprachen",
+				"less": "Weniger",
+				"more": "Mehr",
+				"navigate": "Navigation starten",
+				"openInMaps": "In Karte öffnen",
+				"phoneLabel": "Telefon",
+				"websiteLabel": "Webseite"
 			},
 			"summary": "Deine Beratungsstelle"
 		},
@@ -716,15 +730,34 @@
 			}
 		},
 		"account": {
+			"autoSuggest": "Daten automatisch vorschlagen",
+			"password": {
+				"criteria1": "min. 16 Zeichen",
+				"criteria2": "1x Zahl",
+				"criteria3": "1x Großbuchstabe",
+				"criteria4": "1x Kleinbuchstabe",
+				"criteria5": "1x Sonderzeichen",
+				"criteriaLabel": "Passwort-Anforderungen"
+			},
 			"repeatPassword": {
 				"error": "Dein Passwort ist nicht identisch",
 				"success": "Dein Passwort ist identisch"
 			},
+			"suggest": {
+				"all": "Alle 3 zusammen",
+				"allShort": "Alle 3",
+				"avatar": "Avatar",
+				"password": "Passwort",
+				"username": "Benutzername"
+			},
 			"subline": "Um Deine Anonymität zu schützen, raten wir Dir, nicht Deinen tatsächlichen Namen oder Initialen zu verwenden.",
 			"username": {
 				"error": {
-					"available": "Dein Benutzername ist zu kurz."
+					"tooShort": "Dein Benutzername ist zu kurz.",
+					"unavailable": "Dieser Benutzername ist bereits vergeben.",
+					"retry": "Wir konnten den Benutzernamen gerade nicht prüfen. Bitte versuche es erneut."
 				},
+				"info": "Anonymer Login-Name. Bitte keine echten Namen oder Initialen verwenden.",
 				"success": "Dein Benutzername ist geeignet."
 			}
 		},

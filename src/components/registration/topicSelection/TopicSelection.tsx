@@ -6,9 +6,11 @@ import {
 	AccordionSummary,
 	Avatar,
 	Box,
-	FormControlLabel,
+	Divider,
+	List,
+	ListItemButton,
+	ListItemText,
 	Radio,
-	RadioGroup,
 	FormControl
 } from '@mui/material';
 import {
@@ -18,27 +20,31 @@ import {
 	useEffect,
 	SetStateAction,
 	Dispatch,
-	useCallback
+	useCallback,
+	useRef,
+	useMemo
 } from 'react';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
+import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import { useTranslation } from 'react-i18next';
 import { LocaleContext } from '../../../globalState/context/LocaleContext';
 import {
 	RegistrationContext,
 	RegistrationData
 } from '../../../globalState/provider/RegistrationProvider';
-import { apiGetTopicGroups } from '../../../api/apiGetTopicGroups';
 import { apiGetTopicsData } from '../../../api/apiGetTopicsData';
-import { TopicGroup } from '../../../globalState/interfaces/TopicGroups';
 import { TopicsDataInterface } from '../../../globalState/interfaces/TopicsDataInterface';
 import { Loading } from '../../../components/app/Loading';
 import TaskAltIcon from '@mui/icons-material/TaskAlt';
 import { UrlParamsContext } from '../../../globalState/provider/UrlParamsProvider';
 import {
-	getRegistrationCategoryIcon,
+	buildRegistrationTopicPresentationGroups,
 	getRegistrationTopicDisplay,
 	getRegistrationTopicIcon,
-	registrationMd3
+	registrationMd3,
+	registrationScreenIntroSx,
+	registrationScreenTitleSx,
+	RegistrationTopicPresentationGroup
 } from '../registrationDesign/registrationDesign';
 
 export const TopicSelection: FC<{
@@ -55,23 +61,56 @@ export const TopicSelection: FC<{
 	} = useContext(UrlParamsContext);
 	const { t } = useTranslation();
 	const { locale } = useContext(LocaleContext);
-	const [value, setValue] = useState<number>(
-		registrationData.mainTopicId || undefined
+	const [value, setValue] = useState<number | undefined>(
+		registrationData?.mainTopicId || undefined
 	);
-	const [topicGroups, setTopicGroups] = useState<TopicGroup[]>();
+	const [topicGroups, setTopicGroups] =
+		useState<RegistrationTopicPresentationGroup[]>();
 	const [topics, setTopics] = useState<TopicsDataInterface[]>();
 	const [listView, setListView] = useState<boolean>(false);
-	const [topicGroupId, setTopicGroupId] = useState<number>(
-		registrationData.topicGroupId || undefined
+	const [topicGroupId, setTopicGroupId] = useState<number | undefined>(
+		registrationData?.topicGroupId || undefined
 	);
+	const [selectedPlacementId, setSelectedPlacementId] = useState<
+		string | undefined
+	>();
 	const [expandedTopicGroupIds, setExpandedTopicGroupIds] = useState<
 		number[]
 	>([]);
-	const compareByLocalizedName = useCallback(
-		(a: { name: string }, b: { name: string }) =>
-			a.name.localeCompare(b.name, locale),
-		[locale]
+	const topicGroupRefs = useRef<Record<number, HTMLDivElement | null>>({});
+	const firstGroupedPlacementId = useMemo(
+		() =>
+			topicGroups?.flatMap((topicGroup) => topicGroup.topics)[0]
+				?.placementId,
+		[topicGroups]
 	);
+	const activeGroupedPlacementId = useMemo(() => {
+		if (selectedPlacementId) {
+			return selectedPlacementId;
+		}
+
+		if (value == null) {
+			return firstGroupedPlacementId;
+		}
+
+		return (
+			topicGroups
+				?.flatMap((topicGroup) => topicGroup.topics)
+				.find(
+					(placement) =>
+						placement.topic.id === value &&
+						(!topicGroupId ||
+							placement.topicGroupId === topicGroupId)
+				)?.placementId || firstGroupedPlacementId
+		);
+	}, [
+		firstGroupedPlacementId,
+		selectedPlacementId,
+		topicGroupId,
+		topicGroups,
+		value
+	]);
+
 	const compareTopicsByDisplayName = useCallback(
 		(a: TopicsDataInterface, b: TopicsDataInterface) =>
 			getRegistrationTopicDisplay(a, locale).title.localeCompare(
@@ -81,10 +120,48 @@ export const TopicSelection: FC<{
 		[locale]
 	);
 
-	const getTopic = useCallback(
-		(mainTopicId: number) =>
-			topics?.find((topic) => topic?.id === mainTopicId),
-		[topics]
+	const scrollTopicGroupIntoView = useCallback((groupId: number) => {
+		window.setTimeout(() => {
+			const node = topicGroupRefs.current[groupId];
+			if (!node || typeof window === 'undefined') {
+				return;
+			}
+
+			const prefersReducedMotion =
+				typeof window.matchMedia === 'function' &&
+				window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+			if (prefersReducedMotion) {
+				return;
+			}
+
+			const rect = node.getBoundingClientRect();
+			const shouldScroll =
+				rect.top < 96 || rect.top > window.innerHeight * 0.42;
+			if (!shouldScroll) {
+				return;
+			}
+
+			window.scrollTo({
+				top: Math.max(0, window.scrollY + rect.top - 88),
+				behavior: 'smooth'
+			});
+		}, 60);
+	}, []);
+
+	const toggleTopicGroup = useCallback(
+		(groupId: number) => {
+			setExpandedTopicGroupIds((currentIds) => {
+				const isExpanded = currentIds.includes(groupId);
+				if (!isExpanded) {
+					scrollTopicGroupIntoView(groupId);
+				}
+
+				return isExpanded
+					? currentIds.filter((id) => id !== groupId)
+					: [...currentIds, groupId];
+			});
+		},
+		[scrollTopicGroupIntoView]
 	);
 
 	useEffect(() => {
@@ -102,22 +179,47 @@ export const TopicSelection: FC<{
 
 			const selectedGroupId =
 				topicGroupId ||
-				topicGroups.find((topicGroup) =>
-					topicGroup.topicIds.includes(value)
-				)?.id;
+				(value != null
+					? topicGroups.find((topicGroup) =>
+							topicGroup.topicIds.includes(value)
+						)?.id
+					: undefined);
+
+			if (!topicGroupId && selectedGroupId) {
+				setTopicGroupId(selectedGroupId);
+			}
 
 			return [selectedGroupId || topicGroups[0].id];
 		});
-	}, [topicGroups, topicGroupId, value]);
+
+		if (!selectedPlacementId && value != null) {
+			const selectedPlacement = topicGroups
+				.flatMap((topicGroup) => topicGroup.topics)
+				.find(
+					(placement) =>
+						placement.topic.id === value &&
+						(!topicGroupId ||
+							placement.topicGroupId === topicGroupId)
+				);
+
+			if (selectedPlacement) {
+				setSelectedPlacementId(selectedPlacement.placementId);
+			}
+		}
+	}, [topicGroups, topicGroupId, value, selectedPlacementId]);
 
 	useEffect(() => {
-		if (
+		const hasGroupedTopic =
 			value != null &&
-			(topicGroups?.some((topicGroup) =>
+			topicGroups?.some((topicGroup) =>
 				topicGroup.topicIds.includes(value)
-			) ||
-				(listView && topics?.some((topic) => topic.id === value)))
-		) {
+			);
+		const hasListedTopic =
+			value != null &&
+			listView &&
+			topics?.some((topic) => topic.id === value);
+
+		if (hasGroupedTopic || hasListedTopic) {
 			setDisabledNextButton(false);
 		}
 	}, [setDisabledNextButton, value, topicGroups, listView, topics]);
@@ -136,13 +238,13 @@ export const TopicSelection: FC<{
 	}, [topics, onChange]);
 
 	useEffect(() => {
-		const filterConsultantTopics = (t) =>
+		const filterConsultantTopics = (t: TopicsDataInterface) =>
 			!preselectedConsultant ||
 			preselectedConsultant.agencies.some((a) =>
 				a.topicIds?.includes(t.id)
 			);
 
-		const filterAgencyTopics = (t) =>
+		const filterAgencyTopics = (t: TopicsDataInterface) =>
 			!preselectedAgency || preselectedAgency.topicIds?.includes(t.id);
 
 		const getFilteredTopics = (topics: TopicsDataInterface[]) =>
@@ -163,35 +265,21 @@ export const TopicSelection: FC<{
 
 			try {
 				const topicsResponse = await apiGetTopicsData();
-				const topics = getFilteredTopics(topicsResponse);
-				const topicIds = topics.map((t) => t.id);
-				let filteredTopicGroups: TopicGroup[] = [];
-				let nextListView = !!(
-					preselectedAgency || preselectedConsultant
-				);
-
-				try {
-					const topicGroupsResponse = await apiGetTopicGroups();
-					filteredTopicGroups = topicGroupsResponse.data.items
-						.filter((topicGroup) => topicGroup.topicIds.length > 0)
-						.filter((topicGroup) =>
-							topicGroup.topicIds.some((id) =>
-								topicIds.includes(id)
-							)
-						)
-						.sort(compareByLocalizedName);
-					nextListView =
-						nextListView ||
-						(filteredTopicGroups.length === 0 && topics.length > 0);
-				} catch (e) {
-					nextListView = true;
-				}
+				const filteredTopics = getFilteredTopics(topicsResponse);
+				const presentationGroups =
+					buildRegistrationTopicPresentationGroups(
+						filteredTopics,
+						locale
+					);
+				const nextListView =
+					!!(preselectedAgency || preselectedConsultant) ||
+					presentationGroups.length === 0;
 
 				if (cancelled) return;
 
-				setTopicGroups(filteredTopicGroups);
+				setTopicGroups(presentationGroups);
 				setListView(nextListView);
-				setTopics(topics);
+				setTopics(filteredTopics);
 			} catch (e) {
 				if (cancelled) return;
 
@@ -204,25 +292,34 @@ export const TopicSelection: FC<{
 		return () => {
 			cancelled = true;
 		};
-	}, [
-		compareByLocalizedName,
-		preselectedConsultant,
-		preselectedAgency,
-		preselectedTopic
-	]);
+	}, [locale, preselectedConsultant, preselectedAgency, preselectedTopic]);
 
 	return (
 		<>
 			{topics?.length === 1 ? (
-				<Typography variant="h3" sx={{ mb: '24px' }}>
+				<Typography
+					component="h1"
+					variant="h3"
+					sx={{ mb: '24px', ...registrationScreenTitleSx }}
+				>
 					{t('registration.topic.oneResult')}
 				</Typography>
 			) : (
 				<>
-					<Typography variant="h3">
+					<Typography
+						component="h1"
+						variant="h3"
+						sx={registrationScreenTitleSx}
+					>
 						{t('registration.topic.headline')}
 					</Typography>
-					<Typography sx={{ mt: '16px', mb: '24px' }}>
+					<Typography
+						sx={{
+							mt: '16px',
+							mb: '24px',
+							...registrationScreenIntroSx
+						}}
+					>
 						{t('registration.topic.subline')}
 					</Typography>
 				</>
@@ -240,11 +337,11 @@ export const TopicSelection: FC<{
 				</Box>
 			) : (
 				<FormControl sx={{ width: '100%' }}>
-					<RadioGroup
+					<Box
+						role="radiogroup"
 						aria-label="topic-selection"
-						name="topic-selection"
-						data-cy={`topic-radio-group`}
-						defaultValue={topics.length === 1 ? topics[0].id : ''}
+						data-cy="topic-radio-group"
+						sx={{ display: 'grid', gap: 1.5 }}
 					>
 						{listView
 							? [...(topics || [])]
@@ -259,52 +356,72 @@ export const TopicSelection: FC<{
 												sortedTopics.length - 1
 											}
 											topic={topic}
+											topicIcon={getRegistrationTopicIcon(
+												topic
+											)}
 											locale={locale}
 											checked={value === topic?.id}
+											tabIndex={
+												value === topic.id ||
+												(value == null && index === 0)
+													? 0
+													: -1
+											}
+											singleTopic={topics.length === 1}
 											onChange={() => {
 												setValue(topic.id);
+												setTopicGroupId(undefined);
+												setSelectedPlacementId(
+													`list/${topic.id}`
+												);
 												onChange({
-													mainTopic: topic
+													mainTopic: topic,
+													topicGroupId: undefined
 												});
 											}}
 										/>
 									))
-							: (topicGroups || []).map(
-									(topicGroup, groupIndex) => (
+							: (topicGroups || []).map((topicGroup) => {
+									const expanded =
+										expandedTopicGroupIds.includes(
+											topicGroup.id
+										);
+									const holdsSelection =
+										topicGroup.id === topicGroupId &&
+										value != null;
+
+									return (
 										<Accordion
 											data-cy={`topic-group-${topicGroup.id}`}
 											key={`topicGroup-${topicGroup.id}`}
-											expanded={expandedTopicGroupIds.includes(
-												topicGroup.id
-											)}
-											onChange={() => {
-												setExpandedTopicGroupIds(
-													(currentIds) =>
-														currentIds.includes(
-															topicGroup.id
-														)
-															? currentIds.filter(
-																	(id) =>
-																		id !==
-																		topicGroup.id
-																)
-															: [
-																	...currentIds,
-																	topicGroup.id
-																]
-												);
+											ref={(node) => {
+												topicGroupRefs.current[
+													topicGroup.id
+												] = node;
 											}}
+											expanded={expanded}
+											onChange={() =>
+												toggleTopicGroup(topicGroup.id)
+											}
 											disableGutters
 											elevation={0}
 											TransitionProps={{
-												unmountOnExit: true
+												unmountOnExit: true,
+												timeout: {
+													enter: 220,
+													exit: 170
+												},
+												style: {
+													transitionDelay: expanded
+														? '0ms'
+														: '50ms'
+												}
 											}}
 											sx={{
 												'boxShadow': 'none',
 												'border': `1px solid ${registrationMd3.outlineVariant}`,
-												'borderRadius': '32px',
+												'borderRadius': 4,
 												'overflow': 'hidden',
-												'mb': '12px',
 												'backgroundColor':
 													registrationMd3.surface,
 												'&:before': {
@@ -322,18 +439,18 @@ export const TopicSelection: FC<{
 										>
 											<AccordionSummary
 												expandIcon={
-													<ExpandMoreIcon
+													<ExpandMoreRoundedIcon
 														sx={{
 															color: registrationMd3.onSurfaceVariant,
-															width: '32px',
-															height: '32px'
+															width: 32,
+															height: 32
 														}}
 													/>
 												}
-												aria-controls={`panel-${topicGroup.name}-content`}
-												id={`panel-${topicGroup.name}`}
+												aria-controls={`panel-${topicGroup.categoryId}-content`}
+												id={`panel-${topicGroup.categoryId}`}
 												sx={{
-													'minHeight': '72px',
+													'minHeight': 68,
 													'px': 2,
 													'background': `linear-gradient(100deg, ${registrationMd3.surfaceContainerHigh} 0%, ${registrationMd3.surfaceContainerLow} 90%)`,
 													'& .MuiAccordionSummary-content':
@@ -341,96 +458,120 @@ export const TopicSelection: FC<{
 															alignItems:
 																'center',
 															gap: 1.5,
-															my: 1.25
+															my: 1.25,
+															minWidth: 0
 														},
 													'& .MuiAccordionSummary-content.Mui-expanded':
 														{
-															m: '12px 0'
+															m: '10px 0'
 														}
 												}}
 											>
 												<Avatar
-													src={getRegistrationCategoryIcon(
-														groupIndex
-													)}
+													src={topicGroup.icon}
 													alt=""
 													imgProps={{
 														loading: 'lazy',
 														decoding: 'async'
 													}}
 													sx={{
-														width: 54,
-														height: 54,
+														width: 52,
+														height: 52,
 														bgcolor: 'transparent',
-														border: `2px solid ${registrationMd3.onSurface}`
+														border: `2px solid ${registrationMd3.onSurface}`,
+														flexShrink: 0
 													}}
 												/>
 												<Typography
-													variant="h4"
+													variant="h6"
 													sx={{
-														lineHeight: '30px',
-														fontWeight: '700',
+														flex: 1,
+														minWidth: 0,
+														fontWeight: 700,
 														color: registrationMd3.onSurface
 													}}
 												>
 													{topicGroup.name}
 												</Typography>
+												{holdsSelection &&
+													!expanded && (
+														<CheckCircleRoundedIcon
+															sx={{
+																color: registrationMd3.primary,
+																fontSize: 20,
+																mr: 0.5
+															}}
+															aria-hidden
+														/>
+													)}
 											</AccordionSummary>
 											<AccordionDetails
 												sx={{ p: 0 }}
 												data-cy={`topic-group-${topicGroup.id}-topic-selection-radio-group`}
 											>
-												{topicGroup.topicIds
-													.map((t) => getTopic(t))
-													.filter(Boolean)
-													.sort(
-														compareTopicsByDisplayName
-													)
-													.map(
+												<List disablePadding>
+													{topicGroup.topics.map(
 														(
-															topic,
+															placement,
 															index,
-															sortedTopics
+															placements
 														) => (
 															<TopicSelect
-																key={`${topicGroup.id}-${topic.id}`}
+																key={
+																	placement.placementId
+																}
 																topics={topics}
 																index={index}
 																isLast={
 																	index ===
-																	sortedTopics.length -
+																	placements.length -
 																		1
 																}
-																topic={topic}
+																topic={
+																	placement.topic
+																}
+																topicIcon={
+																	placement.icon
+																}
 																locale={locale}
 																checked={
-																	value ===
-																		topic.id &&
-																	topicGroup.id ===
-																		topicGroupId
+																	selectedPlacementId ===
+																	placement.placementId
+																}
+																tabIndex={
+																	activeGroupedPlacementId ===
+																	placement.placementId
+																		? 0
+																		: -1
 																}
 																onChange={() => {
 																	setValue(
-																		topic.id
+																		placement
+																			.topic
+																			.id
 																	);
 																	setTopicGroupId(
 																		topicGroup.id
 																	);
+																	setSelectedPlacementId(
+																		placement.placementId
+																	);
 																	onChange({
 																		mainTopic:
-																			topic,
+																			placement.topic,
 																		topicGroupId:
-																			topicGroup?.id
+																			topicGroup.id
 																	});
 																}}
 															/>
 														)
 													)}
+												</List>
 											</AccordionDetails>
 										</Accordion>
-									)
-								)}
-					</RadioGroup>
+									);
+								})}
+					</Box>
 				</FormControl>
 			)}
 		</>
@@ -440,34 +581,82 @@ export const TopicSelection: FC<{
 const TopicSelect = ({
 	topics,
 	topic,
+	topicIcon,
 	locale,
 	index,
 	isLast,
 	onChange,
-	checked
+	checked,
+	tabIndex,
+	singleTopic = false
+}: {
+	topics: TopicsDataInterface[];
+	topic: TopicsDataInterface;
+	topicIcon: string;
+	locale?: string;
+	index: number;
+	isLast: boolean;
+	onChange: () => void;
+	checked: boolean;
+	tabIndex: number;
+	singleTopic?: boolean;
 }) => {
 	const display = getRegistrationTopicDisplay(topic, locale);
+	const handleKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
+		if (event.key === 'Enter' || event.key === ' ') {
+			event.preventDefault();
+			onChange();
+			return;
+		}
+
+		if (
+			event.key !== 'ArrowDown' &&
+			event.key !== 'ArrowRight' &&
+			event.key !== 'ArrowUp' &&
+			event.key !== 'ArrowLeft'
+		) {
+			return;
+		}
+
+		const group = event.currentTarget.closest('[role="radiogroup"]');
+		const radios = Array.from(
+			group?.querySelectorAll<HTMLElement>(
+				'[role="radio"]:not([aria-disabled="true"])'
+			) || []
+		);
+		const currentIndex = radios.indexOf(event.currentTarget);
+
+		if (currentIndex < 0 || radios.length === 0) {
+			return;
+		}
+
+		event.preventDefault();
+		const direction =
+			event.key === 'ArrowDown' || event.key === 'ArrowRight' ? 1 : -1;
+		const nextIndex =
+			(currentIndex + direction + radios.length) % radios.length;
+		radios[nextIndex].focus();
+		radios[nextIndex].click();
+	};
 
 	return (
-		<Box
-			key={topic.id}
-			sx={{
-				borderTop:
-					index === 0
-						? 'none'
-						: `1px solid ${registrationMd3.outlineVariant}`
-			}}
-		>
-			<FormControlLabel
+		<Box sx={{ listStyle: 'none' }}>
+			{index > 0 && <Divider component="div" sx={{ mx: 2 }} />}
+			<ListItemButton
 				data-cy={`topic-selection-radio-${topic.id}`}
-				disabled={topics.length === 1}
-				labelPlacement="start"
+				role="radio"
+				aria-checked={checked}
+				aria-disabled={singleTopic || undefined}
+				tabIndex={singleTopic ? -1 : tabIndex}
+				selected={checked}
+				disabled={singleTopic}
+				onClick={onChange}
+				onKeyDown={handleKeyDown}
 				sx={{
-					'alignItems': 'stretch',
-					'display': 'flex',
-					'm': 0,
-					'width': '100%',
-					'justifyContent': 'space-between',
+					'px': 2,
+					'py': 1.5,
+					'alignItems': 'flex-start',
+					'gap': 1.75,
 					'backgroundColor': checked
 						? registrationMd3.selectedLayer
 						: registrationMd3.surface,
@@ -476,93 +665,78 @@ const TopicSelect = ({
 							? registrationMd3.selectedLayer
 							: registrationMd3.hoverLayer
 					},
-					'& .MuiFormControlLabel-label': {
-						width: '100%'
+					'&.Mui-selected': {
+						backgroundColor: registrationMd3.selectedLayer
+					},
+					'&.Mui-selected:hover': {
+						backgroundColor: registrationMd3.selectedLayer
 					}
 				}}
-				value={topic?.id}
-				control={
-					<Radio
-						tabIndex={0}
-						onClick={onChange}
-						checked={checked}
-						sx={{
-							alignSelf: 'flex-start',
-							mt: '22px',
-							mx: 1.5,
-							color: registrationMd3.outline
-						}}
-						checkedIcon={
-							topics.length === 1 ? (
-								<TaskAltIcon color="info" />
-							) : undefined
+			>
+				<Avatar
+					src={topicIcon}
+					alt=""
+					variant="rounded"
+					imgProps={{
+						loading: 'lazy',
+						decoding: 'async'
+					}}
+					sx={{
+						width: 64,
+						height: 64,
+						borderRadius: isLast ? '12px 12px 12px 32px' : '12px',
+						bgcolor: 'transparent',
+						flexShrink: 0
+					}}
+				/>
+				<ListItemText
+					primary={display.title}
+					secondary={display.description}
+					primaryTypographyProps={{
+						variant: 'subtitle1',
+						color: registrationMd3.onSurface,
+						fontWeight: 700,
+						lineHeight: 1.35,
+						sx: {
+							overflowWrap: 'normal',
+							wordBreak: 'normal',
+							hyphens: 'auto'
 						}
-						icon={
-							topics.length === 1 ? (
-								<TaskAltIcon color="info" />
-							) : undefined
+					}}
+					secondaryTypographyProps={{
+						variant: 'body2',
+						color: registrationMd3.onSurfaceVariant,
+						sx: {
+							lineHeight: 1.45
 						}
-					/>
-				}
-				label={
-					<Box
-						sx={{
-							display: 'flex',
-							alignItems: 'flex-start',
-							gap: 1.75,
-							py: 1.5,
-							pr: 2,
-							minWidth: 0
-						}}
-					>
-						<Avatar
-							src={getRegistrationTopicIcon(topic)}
-							alt=""
-							variant="rounded"
-							imgProps={{
-								loading: 'lazy',
-								decoding: 'async'
-							}}
-							sx={{
-								width: 64,
-								height: 64,
-								borderRadius: isLast
-									? '12px 12px 12px 32px'
-									: '12px',
-								bgcolor: 'transparent',
-								flexShrink: 0
-							}}
-						/>
-						<Box sx={{ minWidth: 0, pt: '2px' }}>
-							<Typography
-								variant="subtitle1"
-								sx={{
-									fontWeight: 700,
-									color: registrationMd3.onSurface,
-									lineHeight: 1.35,
-									overflowWrap: 'normal',
-									wordBreak: 'normal',
-									hyphens: 'auto'
-								}}
-							>
-								{display.title}
-							</Typography>
-							{display.description && (
-								<Typography
-									variant="body2"
-									sx={{
-										mt: 0.25,
-										color: registrationMd3.onSurfaceVariant,
-										lineHeight: 1.45
-									}}
-								>
-									{display.description}
-								</Typography>
-							)}
-						</Box>
-					</Box>
-				}
-			/>
+					}}
+					sx={{ my: 0, minWidth: 0 }}
+				/>
+				<Radio
+					checked={checked}
+					tabIndex={-1}
+					disableRipple
+					edge="end"
+					onClick={(event) => event.stopPropagation()}
+					onChange={onChange}
+					inputProps={{ 'aria-hidden': true }}
+					sx={{
+						mt: 0.5,
+						alignSelf: 'flex-start',
+						color: registrationMd3.outline
+					}}
+					checkedIcon={
+						topics.length === 1 ? (
+							<TaskAltIcon color="info" />
+						) : undefined
+					}
+					icon={
+						topics.length === 1 ? (
+							<TaskAltIcon color="info" />
+						) : undefined
+					}
+				/>
+			</ListItemButton>
 		</Box>
 	);
 };
