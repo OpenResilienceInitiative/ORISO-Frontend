@@ -2018,7 +2018,8 @@ export const MessageSubmitInterfaceComponent = ({
 					userData?.displayName ||
 						userData?.userName ||
 						`${userData?.firstName || ''} ${userData?.lastName || ''}`.trim() ||
-						'User'
+						'User',
+					matrixClientService
 				)
 					.then(() => encryptRoom(setE2EEState))
 					.then(() => {
@@ -2060,6 +2061,7 @@ export const MessageSubmitInterfaceComponent = ({
 			isSupervisor,
 			key,
 			keyID,
+			matrixClientService,
 			onSendButton,
 			setE2EEState,
 			threadParentPreview,
