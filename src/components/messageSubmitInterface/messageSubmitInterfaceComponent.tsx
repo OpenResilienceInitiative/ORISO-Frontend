@@ -1795,11 +1795,11 @@ export const MessageSubmitInterfaceComponent = ({
 						onSendButton && onSendButton(response);
 					})
 				)
-				.then(() => {
+				.then(async () => {
 					setEditorState(EditorState.createEmpty());
 					setComposerText('');
 					composerRef.current?.clear();
-					clearDraftMessage();
+					await clearDraftMessage();
 					setActiveInfo('');
 				})
 				.then(() => setIsRequestInProgress(false))

@@ -134,12 +134,16 @@ describe('useDraftMessage', () => {
 			await Promise.resolve();
 		});
 
-		act(() => {
-			result.current.clearDraftMessage();
+		await act(async () => {
+			await result.current.clearDraftMessage();
 		});
 
 		await act(async () => {
 			await vi.advanceTimersByTimeAsync(1600);
+		});
+
+		act(() => {
+			unmount();
 		});
 
 		const staleDraftSave = mocks.apiUpsertUserDraft.mock.calls.find(
@@ -152,7 +156,5 @@ describe('useDraftMessage', () => {
 		expect(mocks.apiDeleteUserDraft).toHaveBeenCalledWith(
 			'scope:session-42|thread:main'
 		);
-
-		unmount();
 	});
 });
