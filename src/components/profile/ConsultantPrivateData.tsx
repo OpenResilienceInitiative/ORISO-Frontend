@@ -12,7 +12,7 @@ import {
 	FETCH_ERRORS,
 	X_REASON
 } from '../../api';
-import { TWO_FACTOR_TYPES } from '../twoFactorAuth/TwoFactorAuth';
+import { TWO_FACTOR_TYPES } from '../twoFactorAuth/twoFactorAuthConstants';
 import { Overlay, OVERLAY_FUNCTIONS } from '../overlay/Overlay';
 import { useTranslation } from 'react-i18next';
 import { useAppConfig } from '../../hooks/useAppConfig';

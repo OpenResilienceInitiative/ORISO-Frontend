@@ -38,6 +38,7 @@ export const FETCH_ERRORS = {
 	TIMEOUT: 'TIMEOUT',
 	UNAUTHORIZED: 'UNAUTHORIZED',
 	PRECONDITION_FAILED: 'PRECONDITION FAILED',
+	TOO_MANY_REQUESTS: 'TOO_MANY_REQUESTS',
 	X_REASON: 'X-Reason'
 };
 
@@ -278,6 +279,13 @@ export const fetchData = ({
 						)
 					) {
 						reject(new Error(FETCH_ERRORS.PRECONDITION_FAILED));
+					} else if (
+						response.status === 429 &&
+						responseHandling.includes(
+							FETCH_ERRORS.TOO_MANY_REQUESTS
+						)
+					) {
+						reject(new Error(FETCH_ERRORS.TOO_MANY_REQUESTS));
 					} else if (
 						response.status === 500 &&
 						responseHandling.includes(FETCH_ERRORS.ABORTED)

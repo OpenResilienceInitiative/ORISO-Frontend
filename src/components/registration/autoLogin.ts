@@ -189,7 +189,8 @@ export const autoLogin = async ({
 // Set in sessionStorage right before the post-registration redirect. The app
 // bootstrap (AuthenticatedApp) reads it once to play the welcome loading animation
 // that bridges the user-data/Matrix load, instead of the bare spinner, then clears it.
-export const POST_REGISTRATION_LOADER_KEY = 'onlineBeratung_postRegistrationLoader';
+export const POST_REGISTRATION_LOADER_KEY =
+	'onlineBeratung_postRegistrationLoader';
 
 export const redirectToApp = (gcid?: string) => {
 	const params = gcid ? `?gcid=${gcid}` : '';

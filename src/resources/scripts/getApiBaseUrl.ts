@@ -22,12 +22,14 @@ export const getApiBaseUrl = (): string => {
 		return normalizeApiUrl(cypressApiUrl);
 	}
 
+	const processEnv: Record<string, string | undefined> =
+		typeof process === 'undefined' ? {} : (process.env ?? {});
 	const buildTimeApiUrl =
-		process.env.REACT_APP_API_URL || process.env.VITE_API_URL;
+		processEnv.REACT_APP_API_URL || processEnv.VITE_API_URL;
 
 	// Local dev: same-origin relative URLs are proxied to REACT_APP_DEV_REMOTE_API_URL
 	// by proxy/routes/api.js. Calling a remote https API directly causes CORS failures.
-	if (process.env.NODE_ENV === 'development') {
+	if (processEnv.NODE_ENV === 'development') {
 		if (buildTimeApiUrl && isLocalApiHost(buildTimeApiUrl)) {
 			return normalizeApiUrl(buildTimeApiUrl);
 		}

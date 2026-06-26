@@ -14,7 +14,7 @@ import { Overlay, OverlayItem, OVERLAY_FUNCTIONS } from '../overlay/Overlay';
 import { ReactComponent as CheckIllustration } from '../../resources/img/illustrations/check.svg';
 import { ReactComponent as XIllustration } from '../../resources/img/illustrations/x.svg';
 import { apiDeleteEmail } from '../../api/apiDeleteEmail';
-import { TWO_FACTOR_TYPES } from '../twoFactorAuth/TwoFactorAuth';
+import { TWO_FACTOR_TYPES } from '../twoFactorAuth/twoFactorAuthConstants';
 import { Headline } from '../headline/Headline';
 import { useTranslation } from 'react-i18next';
 
@@ -211,7 +211,9 @@ export const AskerAboutMeData = () => {
 			apiDeleteEmail()
 				.then((response) => {
 					setIsRequestInProgress(false);
-					reloadUserData().catch((error) => { /* console.log(error); */ });
+					reloadUserData().catch((error) => {
+						/* console.log(error); */
+					});
 					setEmail(null);
 					setOverlay(overlaySuccess);
 				})
@@ -231,7 +233,9 @@ export const AskerAboutMeData = () => {
 				if (isEmail2faActive) {
 					apiDeleteTwoFactorAuth().then(() => {
 						handleConfirm();
-						reloadUserData().catch((error) => { /* console.log(error); */ });
+						reloadUserData().catch((error) => {
+							/* console.log(error); */
+						});
 					});
 				} else {
 					handleConfirm();
