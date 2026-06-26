@@ -1885,6 +1885,8 @@
 				}
 			}
 		},
+		"selectedLabel": "Ausgewählt",
+		"noneSelected": "Bitte wählen Sie ein Thema, um fortzufahren.",
 		"age": {
 			"dropdown": "Alter auswählen*",
 			"headline": "Alter angeben"

@@ -1932,6 +1932,7 @@
 					"unavailable": "Ce nom d'utilisateur est déjà pris."
 				},
 				"hint": "5 caractères ou plus",
+				"info": "5 caractères ou plus",
 				"label": "Nom d'utilisateur",
 				"success": "Votre nom d'utilisateur est approprié."
 			}

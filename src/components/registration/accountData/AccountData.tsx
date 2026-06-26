@@ -1,26 +1,30 @@
 import {
+	Box,
 	Checkbox,
-	FormGroup,
-	InputAdornment,
-	Typography,
-	Link,
 	FormControlLabel,
-	Box
+	FormGroup,
+	IconButton,
+	InputAdornment,
+	Link,
+	TextField,
+	Typography
 } from '@mui/material';
 import * as React from 'react';
 import {
-	useState,
+	Dispatch,
+	FC,
+	SetStateAction,
 	useContext,
 	useEffect,
-	FC,
-	Dispatch,
-	SetStateAction
+	useState
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import PersonIcon from '@mui/icons-material/Person';
-import LockIcon from '@mui/icons-material/Lock';
-import { Input } from '../../../components/input/input';
+import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
+import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import {
 	hasMixedLetters,
 	hasNumber,
@@ -31,7 +35,10 @@ import { RegistrationContext, RegistrationData } from '../../../globalState';
 import { apiGetIsUsernameAvailable } from '../../../api/apiGetIsUsernameAvailable';
 import { REGISTRATION_DATA_VALIDATION } from '../registrationDataValidation';
 import LegalLinks from '../../../components/legalLinks/LegalLinks';
-import { registrationMd3 } from '../registrationDesign/registrationDesign';
+import {
+	registrationMd3,
+	registrationMd3TextFieldSx
+} from '../registrationDesign/registrationDesign';
 
 export const passwordCriteria = [
 	{
@@ -67,13 +74,59 @@ export const AccountData: FC<{
 	const [username, setUsername] = useState<string>('');
 	const [isUsernameAvailable, setIsUsernameAvailable] =
 		useState<boolean>(true);
+	const [usernameWasBlurred, setUsernameWasBlurred] =
+		useState<boolean>(false);
+	const [usernameAvailabilityChecked, setUsernameAvailabilityChecked] =
+		useState<boolean>(false);
 	const { setDisabledNextButton } = useContext(RegistrationContext);
+
+	const isUsernameLongEnough =
+		REGISTRATION_DATA_VALIDATION.username.validation(username);
+	const isPasswordValid = passwordCriteria.every((criteria) =>
+		criteria.validation(password)
+	);
+	const repeatPasswordMismatch =
+		repeatPassword.length > 0 && repeatPassword !== password;
+	const repeatPasswordMatches =
+		repeatPassword.length > 0 && repeatPassword === password;
+
+	useEffect(() => {
+		if (!isUsernameLongEnough) {
+			setIsUsernameAvailable(true);
+			setUsernameAvailabilityChecked(false);
+			return;
+		}
+
+		let canceled = false;
+		const timeout = window.setTimeout(async () => {
+			try {
+				const usernameAvailable =
+					await apiGetIsUsernameAvailable(username);
+
+				if (!canceled) {
+					setIsUsernameAvailable(usernameAvailable);
+					setUsernameAvailabilityChecked(true);
+				}
+			} catch {
+				if (!canceled) {
+					setIsUsernameAvailable(false);
+					setUsernameAvailabilityChecked(true);
+				}
+			}
+		}, 350);
+
+		return () => {
+			canceled = true;
+			window.clearTimeout(timeout);
+		};
+	}, [isUsernameLongEnough, username]);
 
 	useEffect(() => {
 		if (
+			usernameAvailabilityChecked &&
 			isUsernameAvailable &&
-			REGISTRATION_DATA_VALIDATION.username.validation(username) &&
-			REGISTRATION_DATA_VALIDATION.password.validation(password) &&
+			isUsernameLongEnough &&
+			isPasswordValid &&
 			password === repeatPassword &&
 			dataProtectionChecked
 		) {
@@ -88,9 +141,32 @@ export const AccountData: FC<{
 		repeatPassword,
 		dataProtectionChecked,
 		isUsernameAvailable,
+		usernameAvailabilityChecked,
+		isUsernameLongEnough,
+		isPasswordValid,
 		setDisabledNextButton,
 		onChange
 	]);
+
+	const usernameHasError =
+		(usernameWasBlurred && !isUsernameLongEnough) ||
+		(usernameAvailabilityChecked && !isUsernameAvailable);
+	const usernameHelperText = usernameHasError
+		? isUsernameAvailable
+			? t('registration.account.username.error.available')
+			: t('registration.account.username.error.unavailable')
+		: t('registration.account.username.info');
+	const visibilityButtonSx = {
+		'color': registrationMd3.onSurfaceVariant,
+		'&:hover': {
+			color: registrationMd3.onSurfaceVariant,
+			backgroundColor: registrationMd3.focusLayer
+		},
+		'&:focus-visible': {
+			outline: `2px solid ${registrationMd3.focus}`,
+			outlineOffset: 2
+		}
+	} as const;
 
 	return (
 		<Box sx={{ maxWidth: 560 }}>
@@ -113,121 +189,203 @@ export const AccountData: FC<{
 			>
 				{t('registration.account.subline')}
 			</Typography>
-			<Input
-				startAdornment={
-					<InputAdornment position="start">
-						<PersonIcon color="info" />
-					</InputAdornment>
-				}
-				onInputChange={(val: string) => {
-					// Only allow lowercase letters, numbers, underscores and dashes
-					const normalizedVal = val
+			<TextField
+				value={username}
+				onChange={(event) => {
+					const normalizedVal = event.target.value
 						.toLowerCase()
 						.replace(/[^a-z0-9_-]/g, '');
 					setUsername(normalizedVal);
+					setUsernameAvailabilityChecked(false);
+					setIsUsernameAvailable(true);
 				}}
-				value={username}
-				label={t('registration.account.username.label')}
-				info={t('registration.account.username.info')}
-				errorMessage={
-					isUsernameAvailable
-						? t('registration.account.username.error.available')
-						: t('registration.account.username.error.unavailable')
-				}
-				successMesssage={t('registration.account.username.success')}
-				isValueValid={async (val: string) => {
-					if (val.length < 5) {
-						setIsUsernameAvailable(true);
-						return false;
-					} else {
-						try {
-							const usernameAvailable =
-								await apiGetIsUsernameAvailable(val);
-							setIsUsernameAvailable(usernameAvailable);
-							return usernameAvailable;
-						} catch {
-							setIsUsernameAvailable(false);
-							return false;
-						}
-					}
+				onBlur={() => setUsernameWasBlurred(true)}
+				placeholder={t('registration.account.username.label')}
+				helperText={usernameHelperText}
+				error={usernameHasError}
+				fullWidth
+				autoComplete="username"
+				inputProps={{
+					'aria-label': t('registration.account.username.label')
 				}}
+				InputProps={{
+					startAdornment: (
+						<InputAdornment position="start">
+							<PersonOutlineIcon
+								sx={{ color: registrationMd3.onSurfaceVariant }}
+							/>
+						</InputAdornment>
+					)
+				}}
+				sx={{ mt: '24px', ...registrationMd3TextFieldSx }}
 			/>
-			<Input
-				inputType={isPasswordVisible ? 'text' : 'password'}
-				startAdornment={
-					<InputAdornment position="start">
-						<LockIcon color="info" />
-					</InputAdornment>
-				}
-				endAdornment={
-					<InputAdornment
-						position="start"
-						aria-label={t('login.password.show')}
-						title={t('login.password.show')}
-					>
-						<VisibilityIcon
-							sx={{ cursor: 'pointer', color: 'info.light' }}
-							onClick={() => {
-								setIsPasswordVisible(!isPasswordVisible);
-							}}
-							tabIndex={0}
-							onKeyDown={(e) => {
-								if (e.key === 'Enter') {
-									setIsPasswordVisible(!isPasswordVisible);
-								}
-							}}
-						/>
-					</InputAdornment>
-				}
-				onInputChange={(val: string) => {
-					setPassword(val);
-				}}
+			<TextField
 				value={password}
-				label={t('registration.account.password.label')}
-				multipleCriteria={passwordCriteria}
+				onChange={(event) => setPassword(event.target.value)}
+				placeholder={t('registration.account.password.label')}
+				type={isPasswordVisible ? 'text' : 'password'}
+				fullWidth
+				autoComplete="new-password"
+				inputProps={{
+					'aria-label': t('registration.account.password.label')
+				}}
+				InputProps={{
+					startAdornment: (
+						<InputAdornment position="start">
+							<LockOutlinedIcon
+								sx={{ color: registrationMd3.onSurfaceVariant }}
+							/>
+						</InputAdornment>
+					),
+					endAdornment: (
+						<InputAdornment position="end">
+							<IconButton
+								onClick={() =>
+									setIsPasswordVisible(!isPasswordVisible)
+								}
+								edge="end"
+								aria-label={t(
+									isPasswordVisible
+										? 'login.password.hide'
+										: 'login.password.show'
+								)}
+								title={t(
+									isPasswordVisible
+										? 'login.password.hide'
+										: 'login.password.show'
+								)}
+								sx={visibilityButtonSx}
+							>
+								{isPasswordVisible ? (
+									<VisibilityOffIcon />
+								) : (
+									<VisibilityIcon />
+								)}
+							</IconButton>
+						</InputAdornment>
+					)
+				}}
+				sx={{ mt: '24px', ...registrationMd3TextFieldSx }}
 			/>
-			<Input
-				inputType={isRepeatPasswordVisible ? 'text' : 'password'}
-				startAdornment={
-					<InputAdornment position="start">
-						<LockIcon color="info" />
-					</InputAdornment>
-				}
-				endAdornment={
-					<InputAdornment
-						position="start"
-						aria-label={t('login.password.show')}
-						title={t('login.password.show')}
-					>
-						<VisibilityIcon
-							sx={{ cursor: 'pointer', color: 'info.light' }}
-							tabIndex={0}
-							onClick={() => {
-								setIsRepeatPasswordVisible(
-									!isRepeatPasswordVisible
-								);
+			<Box
+				component="ul"
+				sx={{ listStyle: 'none', m: 0, mt: 1.25, p: 0 }}
+			>
+				{passwordCriteria.map((criteria) => {
+					const passed = criteria.validation(password);
+
+					return (
+						<Box
+							component="li"
+							key={criteria.info}
+							sx={{
+								display: 'flex',
+								alignItems: 'center',
+								gap: 1,
+								mb: 0.5
 							}}
-							onKeyDown={(e) => {
-								if (e.key === 'Enter') {
+						>
+							{passed ? (
+								<CheckCircleRoundedIcon
+									sx={{
+										fontSize: 20,
+										color: registrationMd3.primary
+									}}
+								/>
+							) : (
+								<RadioButtonUncheckedIcon
+									sx={{
+										fontSize: 20,
+										color: registrationMd3.outline
+									}}
+								/>
+							)}
+							<Typography
+								variant="body2"
+								sx={{
+									fontSize: '16px',
+									lineHeight: '22px',
+									color: passed
+										? registrationMd3.onSurface
+										: registrationMd3.onSurfaceVariant
+								}}
+							>
+								{passed && (
+									<span className="sr-only">
+										{t(
+											'registration.password.criteria.fulfilled'
+										)}
+										:{' '}
+									</span>
+								)}
+								{t(criteria.info)}
+							</Typography>
+						</Box>
+					);
+				})}
+			</Box>
+			<TextField
+				value={repeatPassword}
+				onChange={(event) => setRepeatPassword(event.target.value)}
+				placeholder={t('registration.account.repeatPassword.label')}
+				type={isRepeatPasswordVisible ? 'text' : 'password'}
+				error={repeatPasswordMismatch}
+				helperText={
+					repeatPasswordMismatch
+						? t('registration.account.repeatPassword.error')
+						: repeatPasswordMatches
+							? t('registration.account.repeatPassword.success')
+							: undefined
+				}
+				FormHelperTextProps={{
+					sx: repeatPasswordMatches
+						? { color: `${registrationMd3.primary} !important` }
+						: undefined
+				}}
+				fullWidth
+				autoComplete="new-password"
+				inputProps={{
+					'aria-label': t('registration.account.repeatPassword.label')
+				}}
+				InputProps={{
+					startAdornment: (
+						<InputAdornment position="start">
+							<LockOutlinedIcon
+								sx={{ color: registrationMd3.onSurfaceVariant }}
+							/>
+						</InputAdornment>
+					),
+					endAdornment: (
+						<InputAdornment position="end">
+							<IconButton
+								onClick={() =>
 									setIsRepeatPasswordVisible(
 										!isRepeatPasswordVisible
-									);
+									)
 								}
-							}}
-						/>
-					</InputAdornment>
-				}
-				onInputChange={setRepeatPassword}
-				value={repeatPassword}
-				info="&nbsp;"
-				label={t('registration.account.repeatPassword.label')}
-				isValueValid={async (val) =>
-					val === password && password.length > 0
-				}
-				errorMessage={t('registration.account.repeatPassword.error')}
-				successMesssage={t(
-					'registration.account.repeatPassword.success'
-				)}
+								edge="end"
+								aria-label={t(
+									isRepeatPasswordVisible
+										? 'login.password.hide'
+										: 'login.password.show'
+								)}
+								title={t(
+									isRepeatPasswordVisible
+										? 'login.password.hide'
+										: 'login.password.show'
+								)}
+								sx={visibilityButtonSx}
+							>
+								{isRepeatPasswordVisible ? (
+									<VisibilityOffIcon />
+								) : (
+									<VisibilityIcon />
+								)}
+							</IconButton>
+						</InputAdornment>
+					)
+				}}
+				sx={{ mt: '20px', ...registrationMd3TextFieldSx }}
 			/>
 			<FormGroup sx={{ mt: '20px' }}>
 				<FormControlLabel

@@ -1727,6 +1727,8 @@
 				}
 			}
 		},
+		"selectedLabel": "Seçildi",
+		"noneSelected": "Devam etmek için lütfen bir konu seçin.",
 		"age": {
 			"dropdown": "Yaş seçin*",
 			"headline": "Yaş belirtiniz"
@@ -1735,6 +1737,16 @@
 			"headline": "Danışma merkezinizi seçin",
 			"preselected": {
 				"prefix": "Önceden seçtiğiniz danışma merkeziniz: "
+			},
+			"consultantheadline": "Danışma merkeziniz",
+			"infoOverlay": {
+				"backButtonLabel": "Başka bir danışma merkezi seçin",
+				"nextButtonLabel": "Danışma merkezini seçin ve devam edin"
+			},
+			"noresult": {
+				"headline": "Çevrimiçi danışma merkezi bulunamadı",
+				"label": "Danışma merkezi aramasına git",
+				"subline": "Şu anda yakınınızda çevrimiçi bir danışma merkezi bulunmuyor. Web sitemizde konunuzla ilgili yerel danışma merkezlerini bulabilirsiniz."
 			},
 			"result": {
 				"external": {
@@ -1826,6 +1838,15 @@
 			"title": "Kaydı tamamlayın"
 		},
 		"headline": "Kayıt",
+		"md3": {
+			"stepNames": {
+				"focus": "Odak seç",
+				"postcode": "Posta kodu",
+				"agency": "Danışma merkezi",
+				"register": "Kayıt ol",
+				"request": "Talep gönder"
+			}
+		},
 		"login": {
 			"helper": "Zaten kayıtlı mısınız?",
 			"label": "Giriş yap"
@@ -1932,11 +1953,23 @@
 					"unavailable": "Bu kullanıcı adı zaten alınmış."
 				},
 				"hint": "5 veya daha fazla karakter",
+				"info": "5 veya daha fazla karakter",
 				"label": "Kullanıcı adı",
 				"success": "Kullanıcı adınız uygun."
 			}
 		},
 		"back": "Geri",
+		"consultantlink": "Danışmanınız sizi çevrimiçi danışmanlığa davet etti. Danışmanınızla iletişime geçmek için lütfen kayıt olun.",
+		"consultantlinkAbsent": "Bu danışman şu anda yok. Talebinizi yine de danışma merkezine gönderebilirsiniz.",
+		"errors": {
+			"ups": {
+				"title": "Oops!",
+				"text": "Üzgünüz, bir şeyler ters gitti. Lütfen sayfayı yenileyin ve tekrar deneyin."
+			},
+			"aid": "Seçtiğiniz danışma merkezi maalesef bulunamadı. Lütfen kayıt sırasında yeniden bir danışma merkezi seçin.",
+			"cid": "Danışmanınız maalesef bulunamadı. Lütfen yeni bir bağlantı almak için danışmanınızla iletişime geçin veya istediğiniz danışma merkezine buradan kayıt olun.",
+			"tid": "Seçtiğiniz konu maalesef bulunamadı. Lütfen kayıt sırasında yeniden uygun bir konu seçin."
+		},
 		"next": "Daha ileri",
 		"register": "Kayıt Olun",
 		"title": {

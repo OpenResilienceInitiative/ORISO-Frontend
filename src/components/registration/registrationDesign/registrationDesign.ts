@@ -13,15 +13,23 @@ import childrenYouth from '../../../resources/img/registration-md3/icons/t-01-ki
 import curesParents01 from '../../../resources/img/registration-md3/icons/t-01-kuren-fu-r-mu-tter-und-va-ter.png';
 import pregnancy from '../../../resources/img/registration-md3/icons/t-01-schwangerschaft.png';
 import u25Prevention01 from '../../../resources/img/registration-md3/icons/t-01-u25-suizidpra-vention.png';
+import bereavement02 from '../../../resources/img/registration-md3/icons/t-02-trauerberatung.png';
 import hospicePalliative from '../../../resources/img/registration-md3/icons/t-02-hospiz-und-palliativberatung.png';
 import lifeInOldAge from '../../../resources/img/registration-md3/icons/t-02-leben-im-alter.png';
 import legalGuardianship02 from '../../../resources/img/registration-md3/icons/t-02-rechtliche-betreuung-und-vorsorge.png';
-import migration from '../../../resources/img/registration-md3/icons/t-03-aus-ru-ck-und-weiterwanderung.png';
+import migration03 from '../../../resources/img/registration-md3/icons/t-03-migration.png';
+import initialReturnMigration03 from '../../../resources/img/registration-md3/icons/t-03-aus-ru-ck-und-weiterwanderung.png';
 import disabilityPsych from '../../../resources/img/registration-md3/icons/t-04-behinderung-und-psychische-beeintra-chtigung.png';
-import hivAids from '../../../resources/img/registration-md3/icons/t-04-hiv-und-aids.png';
+import hivAids04 from '../../../resources/img/registration-md3/icons/t-04-hiv-und-aids.png';
+import childYouthRehab04 from '../../../resources/img/registration-md3/icons/t-04-kinder-und-jugend-reha.png';
+import curesParents04 from '../../../resources/img/registration-md3/icons/t-04-kuren-fu-r-mu-tter-und-va-ter.png';
+import addiction04 from '../../../resources/img/registration-md3/icons/t-04-sucht.png';
 import generalSocial from '../../../resources/img/registration-md3/icons/t-05-allgemeine-sozialberatung.png';
 import debt from '../../../resources/img/registration-md3/icons/t-05-schulden.png';
 import offending from '../../../resources/img/registration-md3/icons/t-05-straffa-lligkeit.png';
+import hivAids05 from '../../../resources/img/registration-md3/icons/t-05-hiv-und-aids.png';
+import legalGuardianship05 from '../../../resources/img/registration-md3/icons/t-05-rechtliche-betreuung-und-vorsorge.png';
+import u25Prevention05 from '../../../resources/img/registration-md3/icons/t-05-u25-suizidpra-vention.png';
 
 export const registrationMd3 = {
 	onSurface: '#1b1b1c',
@@ -29,13 +37,64 @@ export const registrationMd3 = {
 	outline: '#74777b',
 	outlineVariant: '#c4c7c8',
 	surface: '#ffffff',
+	surfaceContainerLowest: '#ffffff',
 	surfaceContainerLow: '#f7f4f4',
 	surfaceContainer: '#f1eeee',
 	surfaceContainerHigh: '#ebe8e8',
+	secondary: '#4c555f',
 	primary: '#a4262e',
 	primaryDark: '#7e1d23',
+	focus: '#2d6f7b',
+	focusLayer: 'rgba(45, 111, 123, 0.12)',
 	selectedLayer: 'rgba(164, 38, 46, 0.08)',
-	hoverLayer: 'rgba(27, 27, 28, 0.04)'
+	hoverLayer: 'rgba(27, 27, 28, 0.04)',
+	heroGradient:
+		'linear-gradient(152deg, #DA2530 0%, #C0121F 46%, #7C0D15 100%)'
+} as const;
+
+export const registrationMd3TextFieldSx = {
+	'& .MuiOutlinedInput-root': {
+		'borderRadius': '12px',
+		'backgroundColor': registrationMd3.surfaceContainerLowest,
+		'color': registrationMd3.onSurface,
+		'fontSize': 17,
+		'transition':
+			'border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease',
+		'& fieldset': {
+			borderColor: registrationMd3.outlineVariant
+		},
+		'&:hover fieldset': {
+			borderColor: registrationMd3.outline
+		},
+		'&.Mui-focused': {
+			boxShadow: `0 0 0 4px ${registrationMd3.focusLayer}`
+		},
+		'&.Mui-focused fieldset': {
+			borderColor: registrationMd3.focus,
+			borderWidth: 2
+		},
+		'&.Mui-error fieldset': {
+			borderWidth: 2
+		}
+	},
+	'& .MuiInputBase-input': {
+		'paddingTop': '16px',
+		'paddingBottom': '16px',
+		'&::placeholder': {
+			color: registrationMd3.onSurfaceVariant,
+			opacity: 1
+		}
+	},
+	'& .MuiInputAdornment-root': {
+		color: registrationMd3.onSurfaceVariant
+	},
+	'& .MuiFormHelperText-root': {
+		marginLeft: 0,
+		marginTop: '8px',
+		fontSize: '14px',
+		lineHeight: '20px',
+		color: registrationMd3.onSurfaceVariant
+	}
 } as const;
 
 const categoryIcons = [
@@ -57,9 +116,12 @@ const topicIconBySlug: Record<string, string> = {
 	'hospice-palliative-care-counselling': hospicePalliative,
 	'life-in-old-age': lifeInOldAge,
 	'legal-guardianship-advance-care': legalGuardianship02,
-	'initial-return-further-migration': migration,
+	'initial-return-further-migration': initialReturnMigration03,
+	'migration': migration03,
 	'disability-psychological-impairment': disabilityPsych,
-	'hiv-aids': hivAids,
+	'hiv-aids': hivAids04,
+	'sucht': addiction04,
+	'trauerberatung': bereavement02,
 	'general-social-counselling': generalSocial,
 	'debt': debt,
 	'offending': offending
@@ -76,9 +138,9 @@ const topicIconByInternalIdentifier: Record<string, string> = {
 	'hospice-palliative': hospicePalliative,
 	'life-in-old-age': lifeInOldAge,
 	'legal-guardianship': legalGuardianship02,
-	'migration': migration,
+	'migration': initialReturnMigration03,
 	'disability-psych': disabilityPsych,
-	'hiv-aids': hivAids,
+	'hiv-aids': hivAids04,
 	'general-social': generalSocial,
 	'debt': debt,
 	'offending': offending
@@ -94,6 +156,7 @@ const topicDisplayCopyByKey: Record<
 	{
 		de: RegistrationTopicCopy;
 		en: RegistrationTopicCopy;
+		tr: RegistrationTopicCopy;
 	}
 > = {
 	'parents-and-family': {
@@ -106,6 +169,11 @@ const topicDisplayCopyByKey: Record<
 			title: 'Parents and family',
 			description:
 				'Support for parenting questions, conflict, and family pressure.'
+		},
+		tr: {
+			title: 'Ebeveynler ve aile',
+			description:
+				'Ebeveynlik soruları, çatışmalar veya aile içi krizlerde anlayışlı destek bulabilirsiniz.'
 		}
 	},
 	'children-youth-counselling': {
@@ -118,6 +186,11 @@ const topicDisplayCopyByKey: Record<
 			title: 'Children and young people',
 			description:
 				'Support and a listening ear when everyday life becomes too much.'
+		},
+		tr: {
+			title: 'Çocuklar ve gençler',
+			description:
+				'Günlük yaşam fazla geldiğinde burada yardım ve sizi dinleyen biri var.'
 		}
 	},
 	'child-youth-rehabilitation': {
@@ -130,6 +203,11 @@ const topicDisplayCopyByKey: Record<
 			title: 'Child and youth rehabilitation',
 			description:
 				'Rehabilitation guidance for children and young people.'
+		},
+		tr: {
+			title: 'Çocuk ve gençlik rehabilitasyonu',
+			description:
+				'Hastalık veya zorlanmadan sonra yeniden güç kazanmak isteyen gençler için.'
 		}
 	},
 	'cures-mothers-fathers': {
@@ -141,6 +219,11 @@ const topicDisplayCopyByKey: Record<
 		en: {
 			title: 'Rehabilitation cures for parents',
 			description: 'Guidance on recovery programs for exhausted parents.'
+		},
+		tr: {
+			title: 'Anneler ve babalar için kürler',
+			description:
+				'Yorgun ebeveynlerin yeniden güç toplamasına yardımcı olan kür programları hakkında danışmanlık.'
 		}
 	},
 	'pregnancy': {
@@ -153,6 +236,11 @@ const topicDisplayCopyByKey: Record<
 			title: 'Pregnancy',
 			description:
 				'Support for pregnancy-related questions and difficult circumstances.'
+		},
+		tr: {
+			title: 'Hamilelik',
+			description:
+				'Sorularınız, belirsizlikleriniz veya zor durumlarınız olduğunda yanınızdayız.'
 		}
 	},
 	'u25-suicide-prevention': {
@@ -165,6 +253,11 @@ const topicDisplayCopyByKey: Record<
 			title: 'U25 suicide prevention',
 			description:
 				'Anonymous support for young people in crisis or with suicidal thoughts.'
+		},
+		tr: {
+			title: 'U25 intiharı önleme',
+			description:
+				'Kriz yaşayan veya intihar düşünceleri olan gençler için anonim destek.'
 		}
 	},
 	'counselling-men-boys': {
@@ -177,6 +270,11 @@ const topicDisplayCopyByKey: Record<
 			title: 'Counselling for men and boys',
 			description:
 				'A safe space for men and boys to talk openly about worries.'
+		},
+		tr: {
+			title: 'Erkek çocuklar ve erkekler için danışmanlık',
+			description:
+				'Erkeklerin ve erkek çocukların endişelerini açıkça konuşabileceği güvenli bir alan.'
 		}
 	},
 	'hospice-palliative-care-counselling': {
@@ -189,6 +287,11 @@ const topicDisplayCopyByKey: Record<
 			title: 'Hospice and palliative care',
 			description:
 				'Counselling around serious illness, dying, farewell, and care.'
+		},
+		tr: {
+			title: 'Hospis ve palyatif danışmanlık',
+			description:
+				'Ağır hastalık, ölüm, veda ve bakım süreçlerinde danışmanlık.'
 		}
 	},
 	'life-in-old-age': {
@@ -201,6 +304,11 @@ const topicDisplayCopyByKey: Record<
 			title: 'Life in old age',
 			description:
 				'Support for questions around ageing, care, and everyday life.'
+		},
+		tr: {
+			title: 'Yaşlılıkta yaşam',
+			description:
+				'Yaşlanma, bakım ve günlük yaşamla ilgili sorularda destek.'
 		}
 	},
 	'legal-guardianship-advance-care': {
@@ -213,6 +321,11 @@ const topicDisplayCopyByKey: Record<
 			title: 'Legal guardianship and advance care',
 			description:
 				'Guidance on guardianship, powers of attorney, and advance care.'
+		},
+		tr: {
+			title: 'Yasal temsil ve önlem danışmanlığı',
+			description:
+				'Vesayet, vekaletname ve kişisel önlemler konusunda yönlendirme.'
 		}
 	},
 	'initial-return-further-migration': {
@@ -225,6 +338,26 @@ const topicDisplayCopyByKey: Record<
 			title: 'Migration and return',
 			description:
 				'Counselling on migration, return, and onward movement.'
+		},
+		tr: {
+			title: 'Göç ve geri dönüş',
+			description:
+				'Göç, geri dönüş ve sonraki adımlar hakkında danışmanlık.'
+		}
+	},
+	'migration': {
+		de: {
+			title: 'Migration',
+			description:
+				'Unterstützung bei Ankommen, Integration und Orientierung.'
+		},
+		en: {
+			title: 'Migration',
+			description: 'Support with arrival, integration, and orientation.'
+		},
+		tr: {
+			title: 'Göç',
+			description: 'Varış, entegrasyon ve yön bulma konusunda destek.'
 		}
 	},
 	'disability-psychological-impairment': {
@@ -237,6 +370,11 @@ const topicDisplayCopyByKey: Record<
 			title: 'Disability and psychological impairment',
 			description:
 				'Support for participation, everyday life, and psychological strain.'
+		},
+		tr: {
+			title: 'Engellilik ve psikolojik zorlanma',
+			description:
+				'Katılım, günlük yaşam ve psikolojik yüklerle ilgili sorularda destek.'
 		}
 	},
 	'hiv-aids': {
@@ -249,6 +387,42 @@ const topicDisplayCopyByKey: Record<
 			title: 'HIV and AIDS',
 			description:
 				'Confidential counselling about HIV, AIDS, health, and everyday life.'
+		},
+		tr: {
+			title: 'HIV ve AIDS',
+			description:
+				'HIV, AIDS, sağlık ve günlük yaşam hakkında gizli danışmanlık.'
+		}
+	},
+	'sucht': {
+		de: {
+			title: 'Sucht',
+			description:
+				'Beratung bei Suchtfragen, Abhängigkeit und belastenden Gewohnheiten.'
+		},
+		en: {
+			title: 'Addiction',
+			description:
+				'Counselling for addiction questions, dependency, and harmful habits.'
+		},
+		tr: {
+			title: 'Bağımlılık',
+			description:
+				'Bağımlılık soruları, bağımlılık durumu ve zorlayıcı alışkanlıklar için danışmanlık.'
+		}
+	},
+	'trauerberatung': {
+		de: {
+			title: 'Trauerberatung',
+			description: 'Begleitung bei Verlust, Abschied und schwerer Trauer.'
+		},
+		en: {
+			title: 'Bereavement counselling',
+			description: 'Support with loss, farewell, and grief.'
+		},
+		tr: {
+			title: 'Yas danışmanlığı',
+			description: 'Kayıp, veda ve derin yas dönemlerinde destek.'
 		}
 	},
 	'general-social-counselling': {
@@ -260,6 +434,10 @@ const topicDisplayCopyByKey: Record<
 		en: {
 			title: 'General social counselling',
 			description: 'Help with social, financial, and personal questions.'
+		},
+		tr: {
+			title: 'Genel sosyal danışmanlık',
+			description: 'Sosyal, maddi ve kişisel sorularda yardım.'
 		}
 	},
 	'debt': {
@@ -272,6 +450,11 @@ const topicDisplayCopyByKey: Record<
 			title: 'Debt',
 			description:
 				'Counselling for financial worries, reminders, and over-indebtedness.'
+		},
+		tr: {
+			title: 'Borç',
+			description:
+				'Maddi kaygılar, ihtarlar ve aşırı borçlanma konusunda danışmanlık.'
 		}
 	},
 	'offending': {
@@ -284,6 +467,11 @@ const topicDisplayCopyByKey: Record<
 			title: 'Offending',
 			description:
 				'Support for questions around offending, restart, and daily life.'
+		},
+		tr: {
+			title: 'Suç ve yeniden başlangıç',
+			description:
+				'Suç, yeniden başlangıç ve günlük yaşamla ilgili sorularda destek.'
 		}
 	}
 };
@@ -307,6 +495,167 @@ const topicDisplayCopyByInternalIdentifier: Record<string, string> = {
 	'offending': 'offending'
 };
 
+export type RegistrationCategoryId =
+	| 'familie'
+	| 'alter'
+	| 'soziales'
+	| 'gesundheit'
+	| 'migration';
+
+type PresentationTopicDefinition = {
+	key: string;
+	icon: string;
+};
+
+type PresentationCategoryDefinition = {
+	id: number;
+	categoryId: RegistrationCategoryId;
+	icon: string;
+	topics: PresentationTopicDefinition[];
+};
+
+export type RegistrationTopicPlacement = {
+	placementId: string;
+	topic: TopicsDataInterface;
+	icon: string;
+	topicGroupId: number;
+	categoryId: RegistrationCategoryId;
+};
+
+export type RegistrationTopicPresentationGroup = {
+	id: number;
+	categoryId: RegistrationCategoryId;
+	name: string;
+	icon: string;
+	topicIds: number[];
+	topics: RegistrationTopicPlacement[];
+};
+
+const presentationCategoryDefinitions: PresentationCategoryDefinition[] = [
+	{
+		id: 10001,
+		categoryId: 'familie',
+		icon: category01,
+		topics: [
+			{ key: 'parents-and-family', icon: parentsFamily },
+			{ key: 'children-youth-counselling', icon: childrenYouth },
+			{ key: 'child-youth-rehabilitation', icon: childYouthRehab01 },
+			{ key: 'cures-mothers-fathers', icon: curesParents01 },
+			{ key: 'counselling-men-boys', icon: menBoys },
+			{ key: 'pregnancy', icon: pregnancy },
+			{ key: 'u25-suicide-prevention', icon: u25Prevention01 }
+		]
+	},
+	{
+		id: 10002,
+		categoryId: 'alter',
+		icon: category02,
+		topics: [
+			{ key: 'life-in-old-age', icon: lifeInOldAge },
+			{
+				key: 'legal-guardianship-advance-care',
+				icon: legalGuardianship02
+			},
+			{
+				key: 'hospice-palliative-care-counselling',
+				icon: hospicePalliative
+			},
+			{ key: 'trauerberatung', icon: bereavement02 }
+		]
+	},
+	{
+		id: 10003,
+		categoryId: 'soziales',
+		icon: category05,
+		topics: [
+			{ key: 'general-social-counselling', icon: generalSocial },
+			{ key: 'debt', icon: debt },
+			{ key: 'offending', icon: offending },
+			{ key: 'u25-suicide-prevention', icon: u25Prevention05 },
+			{
+				key: 'legal-guardianship-advance-care',
+				icon: legalGuardianship05
+			},
+			{ key: 'hiv-aids', icon: hivAids05 }
+		]
+	},
+	{
+		id: 10004,
+		categoryId: 'gesundheit',
+		icon: category04,
+		topics: [
+			{
+				key: 'disability-psychological-impairment',
+				icon: disabilityPsych
+			},
+			{ key: 'sucht', icon: addiction04 },
+			{ key: 'hiv-aids', icon: hivAids04 },
+			{ key: 'child-youth-rehabilitation', icon: childYouthRehab04 },
+			{ key: 'cures-mothers-fathers', icon: curesParents04 }
+		]
+	},
+	{
+		id: 10005,
+		categoryId: 'migration',
+		icon: category03,
+		topics: [
+			{ key: 'migration', icon: migration03 },
+			{
+				key: 'initial-return-further-migration',
+				icon: initialReturnMigration03
+			}
+		]
+	}
+];
+
+const categoryCopyById: Record<
+	RegistrationCategoryId,
+	{ de: string; en: string; tr: string }
+> = {
+	familie: {
+		de: 'Familie, Kinder & Jugend',
+		en: 'Family, children & youth',
+		tr: 'Aile, çocuklar ve gençler'
+	},
+	alter: {
+		de: 'Alter, Pflege & Abschied',
+		en: 'Ageing, care & farewell',
+		tr: 'Yaşlılık, bakım ve veda'
+	},
+	soziales: {
+		de: 'Soziale Notlagen, Krisen & Finanzen',
+		en: 'Social hardship, crises & finances',
+		tr: 'Sosyal zorluklar, krizler ve finans'
+	},
+	gesundheit: {
+		de: 'Gesundheit, Behinderung & Sucht',
+		en: 'Health, disability & addiction',
+		tr: 'Sağlık, engellilik ve bağımlılık'
+	},
+	migration: {
+		de: 'Migration & Integration',
+		en: 'Migration & integration',
+		tr: 'Göç ve entegrasyon'
+	}
+};
+
+const getRegistrationCopyLocale = (locale?: string): 'de' | 'en' | 'tr' => {
+	if (locale?.startsWith('de')) {
+		return 'de';
+	}
+
+	if (locale?.startsWith('tr')) {
+		return 'tr';
+	}
+
+	return 'en';
+};
+
+export const getRegistrationCategoryName = (
+	categoryId: RegistrationCategoryId,
+	locale?: string
+) => categoryCopyById[categoryId][getRegistrationCopyLocale(locale)];
+
 const getRegistrationTopicKey = (
 	topic?: Pick<TopicsDataInterface, 'slug' | 'internalIdentifier'>
 ) =>
@@ -328,10 +677,8 @@ export const getRegistrationTopicDisplay = (
 	locale?: string
 ) => {
 	const key = getRegistrationTopicKey(topic);
-	const copy =
-		topicDisplayCopyByKey[key || '']?.[
-			locale?.startsWith('de') ? 'de' : 'en'
-		];
+	const copyLocale = getRegistrationCopyLocale(locale);
+	const copy = topicDisplayCopyByKey[key || '']?.[copyLocale];
 
 	return {
 		title: copy?.title || topic?.titles?.long || topic?.name || '',
@@ -339,5 +686,70 @@ export const getRegistrationTopicDisplay = (
 	};
 };
 
-export const getRegistrationCategoryIcon = (index: number) =>
-	categoryIcons[index % categoryIcons.length];
+export const buildRegistrationTopicPresentationGroups = (
+	topics: TopicsDataInterface[],
+	locale?: string
+): RegistrationTopicPresentationGroup[] => {
+	const topicByKey = new Map<string, TopicsDataInterface>();
+
+	topics.forEach((topic) => {
+		const key = getRegistrationTopicKey(topic);
+		if (key) {
+			topicByKey.set(key, topic);
+		}
+	});
+
+	return presentationCategoryDefinitions
+		.map((category) => {
+			const placements = category.topics.flatMap((placement) => {
+				const topic = topicByKey.get(placement.key);
+
+				if (!topic) {
+					return [];
+				}
+
+				return [
+					{
+						placementId: `${category.categoryId}/${placement.key}`,
+						topic,
+						icon: placement.icon,
+						topicGroupId: category.id,
+						categoryId: category.categoryId
+					}
+				];
+			});
+
+			return {
+				id: category.id,
+				categoryId: category.categoryId,
+				name: getRegistrationCategoryName(category.categoryId, locale),
+				icon: category.icon,
+				topicIds: placements.map(({ topic }) => topic.id),
+				topics: placements
+			};
+		})
+		.filter(({ topics }) => topics.length > 0);
+};
+
+export const getRegistrationTopicIconForGroup = (
+	topic?: Pick<TopicsDataInterface, 'slug' | 'internalIdentifier'>,
+	topicGroupId?: number
+) => {
+	const key = getRegistrationTopicKey(topic);
+	const category = presentationCategoryDefinitions.find(
+		({ id }) => id === topicGroupId
+	);
+	const placement = category?.topics.find((topic) => topic.key === key);
+
+	return placement?.icon || getRegistrationTopicIcon(topic);
+};
+
+export const getRegistrationCategoryIcon = (indexOrGroupId: number) => {
+	const category = presentationCategoryDefinitions.find(
+		({ id }) => id === indexOrGroupId
+	);
+
+	return (
+		category?.icon || categoryIcons[indexOrGroupId % categoryIcons.length]
+	);
+};

@@ -1843,6 +1843,8 @@
 				}
 			}
 		},
+		"selectedLabel": "Selected",
+		"noneSelected": "Please choose a topic to continue.",
 		"age": {
 			"dropdown": "Select age*",
 			"headline": "Specify age"
@@ -2053,6 +2055,7 @@
 					"unavailable": "This username is already taken."
 				},
 				"hint": "5 or more characters",
+				"info": "5 or more characters",
 				"label": "Username",
 				"success": "Your username is available."
 			}
