@@ -45,6 +45,7 @@ export const useDraftMessage = (
 	const draftSaveTimeout = useRef(null);
 	const loadVersionRef = useRef(0);
 	const latestMessageRef = useRef<string>('');
+	const skipNextCleanupSaveRef = useRef(false);
 
 	const { keyID, key, encrypted, ready } = useE2EE(activeSession.rid);
 
@@ -308,6 +309,7 @@ export const useDraftMessage = (
 				return;
 			}
 
+			skipNextCleanupSaveRef.current = false;
 			latestMessageRef.current = markdownMessage || '';
 			setMessage(markdownMessage);
 
@@ -322,11 +324,26 @@ export const useDraftMessage = (
 		[loaded, saveDraftMessage]
 	);
 
+	const saveDraftMessageRef = useRef(saveDraftMessage);
+	const messageRef = useRef(message);
+
+	useEffect(() => {
+		saveDraftMessageRef.current = saveDraftMessage;
+	}, [saveDraftMessage]);
+
+	useEffect(() => {
+		messageRef.current = message;
+	}, [message]);
+
 	const onLogout = useCallback(
 		async (args) => {
 			if (draftSaveTimeout.current) {
 				clearTimeout(draftSaveTimeout.current);
 				draftSaveTimeout.current = null;
+			}
+			if (skipNextCleanupSaveRef.current) {
+				skipNextCleanupSaveRef.current = false;
+				return args;
 			}
 			await saveDraftMessage(latestMessageRef.current || message);
 			return args;
@@ -348,11 +365,23 @@ export const useDraftMessage = (
 				clearTimeout(draftSaveTimeout.current);
 				draftSaveTimeout.current = null;
 			}
-			saveDraftMessage(latestMessageRef.current || message).then();
+			if (skipNextCleanupSaveRef.current) {
+				skipNextCleanupSaveRef.current = false;
+				return;
+			}
+			saveDraftMessageRef
+				.current(latestMessageRef.current || messageRef.current)
+				.then();
 		};
-	}, [message, saveDraftMessage]);
+	}, []);
 
 	const clearDraftMessage = useCallback(() => {
+		if (draftSaveTimeout.current) {
+			clearTimeout(draftSaveTimeout.current);
+			draftSaveTimeout.current = null;
+		}
+		latestMessageRef.current = '';
+		skipNextCleanupSaveRef.current = true;
 		if (canUseRemoteApi) {
 			scopeKeysToTry.forEach((scopeKey) => {
 				void apiDeleteUserDraft(scopeKey);

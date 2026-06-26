@@ -1799,6 +1799,8 @@ export const MessageSubmitInterfaceComponent = ({
 					setEditorState(EditorState.createEmpty());
 					setComposerText('');
 					composerRef.current?.clear();
+					clearDraftMessage();
+					setActiveInfo('');
 				})
 				.then(() => setIsRequestInProgress(false))
 				.catch((error) => {
@@ -1810,6 +1812,7 @@ export const MessageSubmitInterfaceComponent = ({
 			encryptRoom,
 			language,
 			onSendButton,
+			clearDraftMessage,
 			setE2EEState
 		]
 	);
