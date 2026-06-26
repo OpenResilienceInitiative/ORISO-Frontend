@@ -69,9 +69,11 @@ export const deriveActiveSelection = (
 		return EMPTY_SELECTION;
 	}
 	for (const path of SESSION_ROUTE_PATTERNS) {
-		const match = matchPath<{ rcGroupId?: string; sessionId?: string }>(
-			pathname,
-			{ path, exact: false }
+		// react-router v7: matchPath(pattern, pathname) — pattern first, and
+		// `end: false` replaces v5's `exact: false` (prefix match).
+		const match = matchPath<'rcGroupId' | 'sessionId', string>(
+			{ path, end: false },
+			pathname
 		);
 		if (match) {
 			return {
