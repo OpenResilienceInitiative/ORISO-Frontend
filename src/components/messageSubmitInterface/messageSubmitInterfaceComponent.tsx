@@ -71,6 +71,7 @@ import {
 	normalizeHighlightColor,
 	toolbarCustomClasses
 } from './richtextHelpers';
+import { resolveComposerMessageSnapshot } from './composerMessageSnapshot';
 import { ReactComponent as AudioOnIcon } from '../../resources/img/icons/audio-on.svg';
 import { ReactComponent as RemoveIcon } from '../../resources/img/icons/x.svg';
 import { ReactComponent as CalendarMonthIcon } from '../../resources/img/icons/calendar-month-navigation.svg';
@@ -1285,7 +1286,7 @@ export const MessageSubmitInterfaceComponent = ({
 	const getTypedMarkdownMessage = useCallback(() => {
 		const liveEditorHtml = composerRef.current?.getHTML();
 		// Use latest editor snapshot first to avoid stale last-action/last-char issues.
-		return (liveEditorHtml ?? composerText).trim();
+		return resolveComposerMessageSnapshot(liveEditorHtml, composerText);
 	}, [composerText]);
 
 	const hasMessageContent = useCallback((rawMessage?: string | null) => {
