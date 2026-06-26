@@ -16,7 +16,9 @@ export const AnimalAvatar: React.FC<AnimalAvatarProps> = ({
 	size = 108
 }) => {
 	const [avatarHtml, setAvatarHtml] = useState<string | null>(null);
-	const innerSize = size - 12; // 6px padding on each side
+	const borderWidth = 2;
+	const padding = Math.max(8, Math.round(size * 0.1));
+	const innerSize = Math.max(0, size - padding * 2 - borderWidth * 2);
 
 	useEffect(() => {
 		let canceled = false;
@@ -42,13 +44,15 @@ export const AnimalAvatar: React.FC<AnimalAvatarProps> = ({
 		<div
 			style={{
 				display: 'flex',
-				padding: 6,
+				padding,
 				justifyContent: 'center',
 				alignItems: 'center',
 				borderRadius: size / 2,
 				background: avatar.bg,
 				width: size,
 				height: size,
+				boxSizing: 'border-box',
+				border: `${borderWidth}px solid #c4c7c8`,
 				boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.10)',
 				overflow: 'hidden',
 				flexShrink: 0

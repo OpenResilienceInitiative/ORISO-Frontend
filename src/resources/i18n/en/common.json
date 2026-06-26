@@ -1863,6 +1863,18 @@
 				"headline": "Counseling centers for postal code",
 				"languages": "This counseling center advises you in:"
 			},
+			"details": {
+				"aboutLabel": "About this center",
+				"addressLabel": "Address",
+				"hoursLabel": "Opening hours",
+				"languagesLabel": "Languages",
+				"less": "Less",
+				"more": "More",
+				"navigate": "Start navigation",
+				"openInMaps": "Open in maps",
+				"phoneLabel": "Phone",
+				"websiteLabel": "Website"
+			},
 			"search": "Search for a postal code",
 			"summary": "Your counseling center:"
 		},

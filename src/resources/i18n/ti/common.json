@@ -1745,6 +1745,18 @@
 				"headline": "ምኽሪ ኣብ ፖስታ ኮድ ዘማእከለ እዩ።",
 				"languages": "እዚ ማእከል ምኽሪ እዚ ብዛዕባ፤"
 			},
+			"details": {
+				"aboutLabel": "ብዛዕባ እዚ ማእከል ምኽሪ",
+				"addressLabel": "ኣድራሻ",
+				"hoursLabel": "ሰዓታት ስራሕ",
+				"languagesLabel": "ቋንቋታት",
+				"less": "ውሑድ",
+				"more": "ተወሳኺ",
+				"navigate": "መንገዲ ጀምር",
+				"openInMaps": "ኣብ ካርታ ክፈት",
+				"phoneLabel": "ተሌፎን",
+				"websiteLabel": "መርበብ ሓበሬታ"
+			},
 			"search": "ዚፕ ኮድ ድለዩ።",
 			"summary": "ማእከል ምኽርኹም፤"
 		},

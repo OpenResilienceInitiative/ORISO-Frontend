@@ -166,14 +166,11 @@ export const Registration = () => {
 	}, [updateRegistrationData, stepData, history, nextStepUrl]);
 
 	const onPrevClick = useCallback(() => {
-		if (stepData.zipcode) {
-			registrationData.zipcode = '';
-		}
 		setStepData({});
 		if (history) {
 			history.push(prevStepUrl);
 		}
-	}, [registrationData, stepData, history, prevStepUrl]);
+	}, [history, prevStepUrl]);
 
 	const onClearSelection = useCallback(() => {
 		setStepData({});
@@ -268,13 +265,40 @@ export const Registration = () => {
 		selectedTopicLabel
 	]);
 
-	const handleSubmit = useCallback(
-		(e: FormEvent<HTMLFormElement>) => {
-			e.preventDefault();
-			if (disabledNextButton) return;
-			onNextClick();
+	const clickableStepperStepNames = useMemo(
+		() =>
+			availableSteps
+				.slice(0, Math.max(currStepIndex + 1, 0))
+				.map(({ name }) => name),
+		[availableSteps, currStepIndex]
+	);
+
+	const onStepperClick = useCallback(
+		(targetStepName: string) => {
+			const targetStepIndex = availableSteps.findIndex(
+				({ name }) => name === targetStepName
+			);
+
+			if (targetStepIndex < 0 || targetStepIndex > currStepIndex) {
+				return;
+			}
+
+			setStepData({});
+			history.push(
+				`${generatePath(path, {
+					topicSlug,
+					step: targetStepName
+				})}${location.search}`
+			);
 		},
-		[disabledNextButton, onNextClick]
+		[
+			availableSteps,
+			currStepIndex,
+			history,
+			location.search,
+			path,
+			topicSlug
+		]
 	);
 
 	useEffect(() => {
@@ -374,6 +398,27 @@ export const Registration = () => {
 		isRegistering
 	]);
 
+	const handleSubmit = useCallback(
+		(e: FormEvent<HTMLFormElement>) => {
+			e.preventDefault();
+			if (disabledNextButton || isRegistering) return;
+
+			if (nextStepUrl) {
+				onNextClick();
+				return;
+			}
+
+			onRegisterClick();
+		},
+		[
+			disabledNextButton,
+			isRegistering,
+			nextStepUrl,
+			onNextClick,
+			onRegisterClick
+		]
+	);
+
 	const stepPaths = useMemo(
 		() =>
 			availableSteps.reduce(
@@ -423,6 +468,10 @@ export const Registration = () => {
 									<PreselectionBox hasDrawer={false} />
 									<RegistrationStepper
 										currentStepName={step}
+										clickableStepNames={
+											clickableStepperStepNames
+										}
+										onStepClick={onStepperClick}
 									/>
 
 									<Box
@@ -511,7 +560,8 @@ export const Registration = () => {
 												gridTemplateColumns:
 													'auto minmax(0, 1fr) auto',
 												alignItems: 'center',
-												gap: 2
+												columnGap: { sm: 2.5, md: 3 },
+												rowGap: 1
 											}}
 										>
 											<RegistrationFooterBackLink
@@ -530,10 +580,6 @@ export const Registration = () => {
 													disabledNextButton
 												}
 												isRegistering={isRegistering}
-												onRegisterClick={
-													onRegisterClick
-												}
-												onNextClick={onNextClick}
 												registerLabel={t(
 													'registration.register'
 												)}
@@ -583,10 +629,6 @@ export const Registration = () => {
 													isRegistering={
 														isRegistering
 													}
-													onRegisterClick={
-														onRegisterClick
-													}
-													onNextClick={onNextClick}
 													registerLabel={t(
 														'registration.register'
 													)}
@@ -625,13 +667,24 @@ const RegistrationFooterBackLink = ({
 }) => (
 	<Link
 		sx={{
-			textDecoration: 'none',
-			color: registrationMd3.onSurfaceVariant,
-			fontWeight: '700',
-			display: 'inline-flex',
-			alignItems: 'center',
-			gap: '8px',
-			whiteSpace: 'nowrap'
+			'textDecoration': 'none',
+			'color': registrationMd3.onSurfaceVariant,
+			'fontWeight': '700',
+			'display': 'inline-flex',
+			'alignItems': 'center',
+			'gap': '8px',
+			'whiteSpace': 'nowrap',
+			'px': { xs: 0.5, sm: 1, md: 1.25 },
+			'py': { xs: 0.75, sm: 1 },
+			'mx': { xs: -0.5, sm: -1, md: -1.25 },
+			'borderRadius': '999px',
+			'&:hover': {
+				backgroundColor: registrationMd3.hoverLayer
+			},
+			'&:focus-visible': {
+				outline: `2px solid ${registrationMd3.focus}`,
+				outlineOffset: 2
+			}
 		}}
 		component={RouterLink}
 		onClick={onClick}
@@ -802,8 +855,6 @@ const RegistrationFooterPrimaryButton = ({
 	nextStepUrl,
 	disabledNextButton,
 	isRegistering,
-	onRegisterClick,
-	onNextClick,
 	registerLabel,
 	registeringLabel,
 	nextLabel
@@ -811,8 +862,6 @@ const RegistrationFooterPrimaryButton = ({
 	nextStepUrl: string | null;
 	disabledNextButton?: boolean;
 	isRegistering: boolean;
-	onRegisterClick: () => void;
-	onNextClick: () => void;
 	registerLabel: string;
 	registeringLabel: string;
 	nextLabel: string;
@@ -820,11 +869,11 @@ const RegistrationFooterPrimaryButton = ({
 	const disabled = Boolean(disabledNextButton || isRegistering);
 	const buttonSx = {
 		'borderRadius': '999px',
-		'px': 4,
+		'px': { xs: 3, sm: 4.5, md: 5 },
 		'py': 1.35,
 		'fontSize': 17,
 		'fontWeight': 700,
-		'minWidth': { xs: 150, sm: 176 },
+		'minWidth': { xs: 150, sm: 188, md: 196 },
 		'boxShadow': disabled ? 'none' : '0 6px 18px rgba(164, 38, 46, 0.30)',
 		'&:hover': {
 			boxShadow: disabled ? 'none' : '0 8px 22px rgba(164, 38, 46, 0.40)'
@@ -836,7 +885,6 @@ const RegistrationFooterPrimaryButton = ({
 			data-cy="button-next"
 			disabled={disabledNextButton}
 			variant="contained"
-			onClick={onNextClick}
 			endIcon={<ArrowForwardRoundedIcon />}
 			sx={{ width: 'unset', ...buttonSx }}
 			type={disabledNextButton ? 'button' : 'submit'}
@@ -848,7 +896,6 @@ const RegistrationFooterPrimaryButton = ({
 			data-cy="button-register"
 			disabled={disabled}
 			variant="contained"
-			onClick={onRegisterClick}
 			type={disabled ? 'button' : 'submit'}
 			sx={buttonSx}
 		>

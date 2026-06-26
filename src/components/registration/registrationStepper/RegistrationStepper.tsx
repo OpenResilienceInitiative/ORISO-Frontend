@@ -50,12 +50,20 @@ const CANONICAL_STEPS: {
 ];
 
 export const RegistrationStepper = ({
-	currentStepName
+	currentStepName,
+	onStepClick,
+	clickableStepNames = []
 }: {
 	currentStepName: string;
+	onStepClick?: (stepName: string) => void;
+	clickableStepNames?: string[];
 }) => {
 	const { t } = useTranslation();
 	const activeRef = useRef<HTMLDivElement>(null);
+	const clickableStepNameSet = useMemo(
+		() => new Set(clickableStepNames),
+		[clickableStepNames]
+	);
 	const currentIndex = useMemo(() => {
 		const index = CANONICAL_STEPS.findIndex(
 			({ name }) => name === currentStepName
@@ -106,6 +114,9 @@ export const RegistrationStepper = ({
 					({ name, labelKey, fallback, Icon }, i) => {
 						const done = i < currentIndex;
 						const active = i === currentIndex;
+						const clickable =
+							Boolean(onStepClick) &&
+							clickableStepNameSet.has(name);
 						const label = t(labelKey, fallback);
 
 						return (
@@ -113,17 +124,54 @@ export const RegistrationStepper = ({
 								<Box
 									ref={active ? activeRef : undefined}
 									aria-current={active ? 'step' : undefined}
+									aria-label={clickable ? label : undefined}
+									onClick={
+										clickable
+											? () => onStepClick?.(name)
+											: undefined
+									}
+									onKeyDown={
+										clickable
+											? (event) => {
+													if (
+														event.key === 'Enter' ||
+														event.key === ' '
+													) {
+														event.preventDefault();
+														onStepClick?.(name);
+													}
+												}
+											: undefined
+									}
+									role={clickable ? 'button' : undefined}
+									tabIndex={clickable ? 0 : undefined}
 									sx={{
-										display: 'flex',
-										flexDirection: 'column',
-										alignItems: 'center',
-										gap: 0.5,
-										width: { xs: 86, md: 112 },
-										flexShrink: 0,
-										borderRadius: 2
+										'display': 'flex',
+										'flexDirection': 'column',
+										'alignItems': 'center',
+										'gap': 0.5,
+										'width': { xs: 86, md: 112 },
+										'flexShrink': 0,
+										'borderRadius': 2,
+										'cursor': clickable
+											? 'pointer'
+											: 'default',
+										'outline': 'none',
+										'&:focus-visible': {
+											boxShadow: `0 0 0 3px ${registrationMd3.focusLayer}`
+										},
+										'&:hover .registration-stepper-dot':
+											clickable
+												? {
+														transform: active
+															? 'scale(1.03)'
+															: 'scale(1.06)'
+													}
+												: undefined
 									}}
 								>
 									<Box
+										className="registration-stepper-dot"
 										sx={{
 											width: { xs: 36, md: 44 },
 											height: { xs: 36, md: 44 },
@@ -146,7 +194,8 @@ export const RegistrationStepper = ({
 											boxShadow: active
 												? `0 0 0 5px ${registrationMd3.selectedLayer}`
 												: 'none',
-											transition: 'all .2s ease'
+											transition:
+												'transform 180ms ease, background-color 200ms ease, color 200ms ease, border-color 200ms ease, box-shadow 200ms ease'
 										}}
 									>
 										{done ? (

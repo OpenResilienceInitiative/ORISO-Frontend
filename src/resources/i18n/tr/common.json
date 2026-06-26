@@ -1757,6 +1757,18 @@
 				"headline": "Posta koduna göre danışmanlık merkezleri",
 				"languages": "Bu danışma merkezi size şu konularda tavsiyelerde bulunur:"
 			},
+			"details": {
+				"aboutLabel": "Bu danışma merkezi hakkında",
+				"addressLabel": "Adres",
+				"hoursLabel": "Çalışma saatleri",
+				"languagesLabel": "Diller",
+				"less": "Daha az",
+				"more": "Daha fazla",
+				"navigate": "Navigasyonu başlat",
+				"openInMaps": "Haritada aç",
+				"phoneLabel": "Telefon",
+				"websiteLabel": "Web sitesi"
+			},
 			"search": "Bir posta kodu arayın",
 			"summary": "Danışma merkeziniz:"
 		},

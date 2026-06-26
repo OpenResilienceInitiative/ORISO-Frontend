@@ -1915,6 +1915,18 @@
 				"headline": "Beratungsstellen zur Postleitzahl",
 				"languages": "Diese Beratungsstelle berät Sie auf:"
 			},
+			"details": {
+				"aboutLabel": "Zu dieser Beratungsstelle",
+				"addressLabel": "Adresse",
+				"hoursLabel": "Öffnungszeiten",
+				"languagesLabel": "Sprachen",
+				"less": "Weniger",
+				"more": "Mehr",
+				"navigate": "Navigation starten",
+				"openInMaps": "In Karte öffnen",
+				"phoneLabel": "Telefon",
+				"websiteLabel": "Webseite"
+			},
 			"search": "Suche nach einer PLZ",
 			"summary": "Ihre Beratungsstelle:"
 		},

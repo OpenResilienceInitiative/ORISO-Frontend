@@ -44,6 +44,7 @@ export const registrationMd3 = {
 	secondary: '#4c555f',
 	primary: '#a4262e',
 	primaryDark: '#7e1d23',
+	error: '#b1005e',
 	focus: '#2d6f7b',
 	focusLayer: 'rgba(45, 111, 123, 0.12)',
 	selectedLayer: 'rgba(164, 38, 46, 0.08)',
@@ -76,6 +77,7 @@ export const registrationMd3TextFieldSx = {
 			borderWidth: 2
 		},
 		'&.Mui-error fieldset': {
+			borderColor: registrationMd3.error,
 			borderWidth: 2
 		},
 		'&:has(input:-webkit-autofill)': {
@@ -105,7 +107,34 @@ export const registrationMd3TextFieldSx = {
 		fontSize: '14px',
 		lineHeight: '20px',
 		color: registrationMd3.onSurfaceVariant
+	},
+	'& .MuiFormHelperText-root.Mui-error': {
+		color: `${registrationMd3.error} !important`
 	}
+} as const;
+
+export const registrationScreenTitleSx = {
+	color: registrationMd3.onSurface,
+	fontSize: { xs: 28, sm: 28 },
+	fontWeight: 700,
+	lineHeight: '35px',
+	letterSpacing: 0
+} as const;
+
+export const registrationScreenIntroSx = {
+	color: registrationMd3.onSurfaceVariant,
+	fontSize: 16,
+	lineHeight: '24px',
+	letterSpacing: 0
+} as const;
+
+export const registrationScreenKickerSx = {
+	color: registrationMd3.onSurfaceVariant,
+	fontSize: 14,
+	fontWeight: 600,
+	lineHeight: '20px',
+	letterSpacing: '0.1px',
+	textTransform: 'uppercase'
 } as const;
 
 const categoryIcons = [

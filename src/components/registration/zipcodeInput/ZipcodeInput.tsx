@@ -14,7 +14,8 @@ import { RegistrationContext, RegistrationData } from '../../../globalState';
 import { REGISTRATION_DATA_VALIDATION } from '../registrationDataValidation';
 import {
 	registrationMd3,
-	registrationMd3TextFieldSx
+	registrationMd3TextFieldSx,
+	registrationScreenTitleSx
 } from '../registrationDesign/registrationDesign';
 
 export const ZipcodeInput: FC<{
@@ -66,12 +67,9 @@ export const ZipcodeInput: FC<{
 				/>
 			</Box>
 			<Typography
+				component="h1"
 				variant="h3"
-				sx={{
-					color: registrationMd3.onSurface,
-					fontWeight: 800,
-					lineHeight: 1.2
-				}}
+				sx={registrationScreenTitleSx}
 			>
 				{t('registration.zipcode.headline')}
 			</Typography>

@@ -37,7 +37,10 @@ import { REGISTRATION_DATA_VALIDATION } from '../registrationDataValidation';
 import LegalLinks from '../../../components/legalLinks/LegalLinks';
 import {
 	registrationMd3,
-	registrationMd3TextFieldSx
+	registrationMd3TextFieldSx,
+	registrationScreenIntroSx,
+	registrationScreenKickerSx,
+	registrationScreenTitleSx
 } from '../registrationDesign/registrationDesign';
 import { AnimalAvatar } from '../../pseudonym/AnimalAvatar';
 import {
@@ -296,19 +299,16 @@ export const AccountData: FC<{
 			>
 				<Box sx={{ flex: 1, minWidth: 0 }}>
 					<Typography
+						component="h1"
 						variant="h3"
-						sx={{
-							color: registrationMd3.onSurface,
-							fontWeight: 800,
-							lineHeight: 1.2
-						}}
+						sx={registrationScreenTitleSx}
 					>
 						{t('registration.account.headline')}
 					</Typography>
 					<Typography
 						sx={{
 							mt: '12px',
-							color: registrationMd3.onSurfaceVariant
+							...registrationScreenIntroSx
 						}}
 					>
 						{t('registration.account.subline')}
@@ -332,11 +332,7 @@ export const AccountData: FC<{
 				sx={{
 					mt: '24px',
 					mb: '8px',
-					fontSize: 11,
-					fontWeight: 700,
-					letterSpacing: 1,
-					textTransform: 'uppercase',
-					color: registrationMd3.onSurfaceVariant
+					...registrationScreenKickerSx
 				}}
 			>
 				{t('registration.account.autoSuggest')}

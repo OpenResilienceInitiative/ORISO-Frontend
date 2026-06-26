@@ -1745,6 +1745,18 @@
 				"headline": "Centres de consultation par code postal",
 				"languages": "Ce service de consultation vous conseille sur :"
 			},
+			"details": {
+				"aboutLabel": "À propos de ce centre",
+				"addressLabel": "Adresse",
+				"hoursLabel": "Horaires d'ouverture",
+				"languagesLabel": "Langues",
+				"less": "Moins",
+				"more": "Plus",
+				"navigate": "Démarrer la navigation",
+				"openInMaps": "Ouvrir dans la carte",
+				"phoneLabel": "Téléphone",
+				"websiteLabel": "Site web"
+			},
 			"search": "Recherche par code postal",
 			"summary": "Votre centre de consultation :"
 		},

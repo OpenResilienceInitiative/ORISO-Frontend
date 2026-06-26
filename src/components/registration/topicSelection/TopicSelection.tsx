@@ -41,6 +41,8 @@ import {
 	getRegistrationTopicDisplay,
 	getRegistrationTopicIcon,
 	registrationMd3,
+	registrationScreenIntroSx,
+	registrationScreenTitleSx,
 	RegistrationTopicPresentationGroup
 } from '../registrationDesign/registrationDesign';
 
@@ -244,15 +246,29 @@ export const TopicSelection: FC<{
 	return (
 		<>
 			{topics?.length === 1 ? (
-				<Typography variant="h3" sx={{ mb: '24px' }}>
+				<Typography
+					component="h1"
+					variant="h3"
+					sx={{ mb: '24px', ...registrationScreenTitleSx }}
+				>
 					{t('registration.topic.oneResult')}
 				</Typography>
 			) : (
 				<>
-					<Typography variant="h3">
+					<Typography
+						component="h1"
+						variant="h3"
+						sx={registrationScreenTitleSx}
+					>
 						{t('registration.topic.headline')}
 					</Typography>
-					<Typography sx={{ mt: '16px', mb: '24px' }}>
+					<Typography
+						sx={{
+							mt: '16px',
+							mb: '24px',
+							...registrationScreenIntroSx
+						}}
+					>
 						{t('registration.topic.subline')}
 					</Typography>
 				</>
