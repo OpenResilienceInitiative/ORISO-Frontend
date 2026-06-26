@@ -179,8 +179,8 @@
 
 .anonymousConsentGate__btnAccept {
 	border-radius: 100px;
-	background: var(--m3-primary, #cc1e1c);
-	color: #ffffff;
+	background: var(--m3-primary-container, #cc1e1c);
+	color: var(--m3-on-primary-container, #ffe2de);
 
 	&:hover:not(:disabled) {
 		background: #a5000a;
