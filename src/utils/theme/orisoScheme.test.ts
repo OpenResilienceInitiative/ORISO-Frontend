@@ -199,3 +199,31 @@ describe('static :root brand mirrors the engine (#a5000a)', () => {
 		expect(staticValue(token)).toBe(engine[token].toLowerCase());
 	});
 });
+
+/**
+ * Dark set keeps the messenger's grayish identity (not seed-tinted/pinkish).
+ * The engine already computes a dark scheme; this guards that its neutrals
+ * stay near-neutral grey and the secondary stays a cool slate, so whenever
+ * end-user dark mode is switched on the brand character is preserved.
+ */
+describe('dark scheme preserves the grayish identity', () => {
+	const dark = computeOrisoPalette({ primary: '#a5000a' }, 'dark').tokens;
+	const rgb = (hex: string): number[] =>
+		[1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+	const spread = (hex: string): number => {
+		const [r, g, b] = rgb(hex);
+		return Math.max(r, g, b) - Math.min(r, g, b);
+	};
+
+	it.each(['--m3-surface', '--m3-background', '--m3-on-surface'])(
+		'%s is a near-neutral grey, not seed-tinted',
+		(token) => {
+			expect(spread(dark[token])).toBeLessThan(10);
+		}
+	);
+
+	it('dark secondary is a cool slate (blue ≥ red), never a warm pink', () => {
+		const [r, , b] = rgb(dark['--m3-secondary']);
+		expect(b).toBeGreaterThanOrEqual(r);
+	});
+});
