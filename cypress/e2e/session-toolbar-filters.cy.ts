@@ -166,7 +166,9 @@ describe('Session toolbar filters', () => {
 			);
 
 			expect(chipOrder).to.include('sessions-list-chip-internal-group');
-			expect(chipOrder.indexOf('sessions-list-chip-archive')).to.be.lessThan(
+			expect(
+				chipOrder.indexOf('sessions-list-chip-archive')
+			).to.be.lessThan(
 				chipOrder.indexOf('sessions-list-chip-internal-group')
 			);
 			expect(
@@ -206,9 +208,7 @@ describe('Session toolbar filters', () => {
 
 		cy.get('[data-cy=sessions-list-chip-nearby]').click();
 		cy.location('search').should('contain', 'chip=nearby');
-		cy.get('.sessionsListItem')
-			.its('length')
-			.should('be.greaterThan', 1);
+		cy.get('.sessionsListItem').its('length').should('be.greaterThan', 1);
 
 		cy.get('[data-cy=sessions-list-chip-internal-group]').click();
 		cy.location('search').should('contain', 'chip=internalGroup');

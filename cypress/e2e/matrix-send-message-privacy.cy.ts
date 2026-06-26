@@ -1,16 +1,31 @@
 import { apiSendMessage } from '../../src/api/apiSendMessage';
 import { apiSendMatrixAttachmentMessage } from '../../src/api/apiSendMatrixAttachmentMessage';
 import { buildMessageEventNotificationBody } from '../../src/api/apiPostMessageEventNotification';
-import { matrixClientService } from '../../src/services/matrixClientService';
+import { setMatrixClientServiceRef } from '../../src/services/matrixClientRegistry';
+import { MatrixClientService } from '../../src/services/matrixClientService';
+
+const matrixClientService = new MatrixClientService();
 
 describe('Matrix send message privacy', () => {
+	beforeEach(() => {
+		setMatrixClientServiceRef(matrixClientService);
+	});
+
+	afterEach(() => {
+		setMatrixClientServiceRef(null);
+	});
+
 	it('does not send Matrix plaintext through the REST proxy when the SDK client is unavailable', () => {
 		const restPayloads: unknown[] = [];
 		cy.stub(matrixClientService, 'getClient').returns(null);
-		cy.intercept('POST', '**/service/matrix/sessions/123/messages', (req) => {
-			restPayloads.push(req.body);
-			req.reply({ statusCode: 201, body: { ok: true } });
-		}).as('matrixRestSend');
+		cy.intercept(
+			'POST',
+			'**/service/matrix/sessions/123/messages',
+			(req) => {
+				restPayloads.push(req.body);
+				req.reply({ statusCode: 201, body: { ok: true } });
+			}
+		).as('matrixRestSend');
 
 		cy.then(() =>
 			apiSendMessage(
@@ -43,10 +58,14 @@ describe('Matrix send message privacy', () => {
 		cy.stub(matrixClientService, 'sendMessage').rejects(
 			new Error('SDK send failed')
 		);
-		cy.intercept('POST', '**/service/matrix/sessions/123/messages', (req) => {
-			restPayloads.push(req.body);
-			req.reply({ statusCode: 201, body: { ok: true } });
-		}).as('matrixRestSend');
+		cy.intercept(
+			'POST',
+			'**/service/matrix/sessions/123/messages',
+			(req) => {
+				restPayloads.push(req.body);
+				req.reply({ statusCode: 201, body: { ok: true } });
+			}
+		).as('matrixRestSend');
 
 		cy.then(() =>
 			apiSendMessage(
@@ -87,23 +106,25 @@ describe('Matrix send message privacy', () => {
 		};
 
 		cy.then(() =>
-			matrixClientService.sendMessage(
-				'!plain-room:oriso.org',
-				'sensitive Matrix message body'
-			).then(
-				() => {
-					throw new Error(
-						'Expected unencrypted Matrix room send to fail'
-					);
-				},
-				(error) => {
-					expect(error.message).to.contain(
-						'encrypted Matrix room'
-					);
-					expect(sendMessage.callCount).to.equal(0);
-					service.client = null;
-				}
-			)
+			matrixClientService
+				.sendMessage(
+					'!plain-room:oriso.org',
+					'sensitive Matrix message body'
+				)
+				.then(
+					() => {
+						throw new Error(
+							'Expected unencrypted Matrix room send to fail'
+						);
+					},
+					(error) => {
+						expect(error.message).to.contain(
+							'encrypted Matrix room'
+						);
+						expect(sendMessage.callCount).to.equal(0);
+						service.client = null;
+					}
+				)
 		);
 	});
 
@@ -169,9 +190,7 @@ describe('Matrix send message privacy', () => {
 					);
 				},
 				(error) => {
-					expect(error.message).to.contain(
-						'encrypted Matrix room'
-					);
+					expect(error.message).to.contain('encrypted Matrix room');
 					expect(sendTyping.callCount).to.equal(0);
 					service.client = null;
 				}
@@ -198,9 +217,7 @@ describe('Matrix send message privacy', () => {
 						preset: 'private_chat',
 						is_direct: true
 					});
-					expect(options.invite).to.deep.equal([
-						'@asker:oriso.org'
-					]);
+					expect(options.invite).to.deep.equal(['@asker:oriso.org']);
 					expect(options.initial_state).to.deep.include({
 						type: 'm.room.encryption',
 						state_key: '',
@@ -221,15 +238,17 @@ describe('Matrix send message privacy', () => {
 		let uploadOptions: any;
 		const uploadContent = cy
 			.stub()
-			.callsFake(async (payload: XMLHttpRequestBodyInit, options: any) => {
-				uploadedPayload = payload;
-				uploadOptions = options;
-				options.progressHandler({ loaded: 5, total: 10 });
-				return Promise.resolve({ content_uri: 'mxc://oriso.org/file' });
-			});
-		const sendMessage = cy
-			.stub()
-			.resolves({ event_id: '$file-message' });
+			.callsFake(
+				async (payload: XMLHttpRequestBodyInit, options: any) => {
+					uploadedPayload = payload;
+					uploadOptions = options;
+					options.progressHandler({ loaded: 5, total: 10 });
+					return Promise.resolve({
+						content_uri: 'mxc://oriso.org/file'
+					});
+				}
+			);
+		const sendMessage = cy.stub().resolves({ event_id: '$file-message' });
 		const progressUpdates: number[] = [];
 		const file = new File(['sensitive attachment'], 'case-note.txt', {
 			type: 'text/plain'
@@ -246,10 +265,14 @@ describe('Matrix send message privacy', () => {
 		};
 
 		cy.then(() =>
-			matrixClientService.sendFileMessage('!secure-room:oriso.org', file, {
-				uploadProgress: (percentUpload) =>
-					progressUpdates.push(percentUpload)
-			})
+			matrixClientService.sendFileMessage(
+				'!secure-room:oriso.org',
+				file,
+				{
+					uploadProgress: (percentUpload) =>
+						progressUpdates.push(percentUpload)
+				}
+			)
 		).then(() => {
 			expect(uploadContent).to.have.callCount(1);
 			expect(uploadedPayload).not.to.equal(file);
@@ -372,17 +395,22 @@ describe('Matrix send message privacy', () => {
 				file,
 				Cypress.sinon.match.object
 			);
+			// FE-H01: plaintext previews must be dropped at the call boundary,
+			// not merely blanked downstream — so threadParentPreview is no
+			// longer forwarded into the notification payload at all.
 			expect(postMessageEventNotification).to.have.been.calledOnceWith({
 				roomId: '!secure-room:oriso.org',
 				matrixRoom: true,
 				threadRootId: '$thread-root',
 				supervisorMessage: true,
-				senderDisplayName: 'Counsellor',
-				threadParentPreview: 'sensitive parent preview'
+				senderDisplayName: 'Counsellor'
 			});
 			const notificationInput =
 				postMessageEventNotification.firstCall.args[0];
 			expect(notificationInput).not.to.have.property('messagePreview');
+			expect(notificationInput).not.to.have.property(
+				'threadParentPreview'
+			);
 			const notificationBody =
 				buildMessageEventNotificationBody(notificationInput);
 			expect(notificationBody).to.deep.equal({

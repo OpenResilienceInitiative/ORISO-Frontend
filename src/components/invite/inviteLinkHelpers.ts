@@ -31,8 +31,6 @@ export const applyRedeemSessionCredentials = (
 	);
 	setValueInCookie('rc_uid', data.rcUserId);
 	setValueInCookie('rc_token', data.rcToken);
-	localStorage.setItem('matrix_user_id', data.rcUserId);
-	localStorage.setItem('matrix_access_token', data.rcToken);
 	generateCsrfToken(true);
 };
 

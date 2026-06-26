@@ -1,7 +1,5 @@
-import {
-	matrixClientService,
-	MatrixFileMessageOptions
-} from '../services/matrixClientService';
+import { MatrixFileMessageOptions } from '../services/matrixClientService';
+import { getMatrixClientService } from '../services/matrixClientRegistry';
 import {
 	apiPostMessageEventNotification,
 	MessageEventNotificationInput
@@ -12,7 +10,6 @@ export interface SendMatrixAttachmentMessageOptions
 	threadRootId?: string | null;
 	supervisorMessage?: boolean;
 	senderDisplayName?: string | null;
-	threadParentPreview?: string | null;
 }
 
 type PostMessageEventNotification = (
@@ -23,10 +20,9 @@ export const apiSendMatrixAttachmentMessage = async (
 	matrixRoomId: string,
 	file: File,
 	options: SendMatrixAttachmentMessageOptions = {},
-	postMessageEventNotification: PostMessageEventNotification =
-		apiPostMessageEventNotification
+	postMessageEventNotification: PostMessageEventNotification = apiPostMessageEventNotification
 ): Promise<any> => {
-	const response = await matrixClientService.sendFileMessage(
+	const response = await getMatrixClientService()?.sendFileMessage(
 		matrixRoomId,
 		file,
 		{
@@ -35,13 +31,15 @@ export const apiSendMatrixAttachmentMessage = async (
 		}
 	);
 
+	// SECURITY (FE-H01): never forward plaintext message content
+	// (threadParentPreview) across the Matrix privacy boundary. Only
+	// non-content metadata is sent.
 	postMessageEventNotification({
 		roomId: matrixRoomId,
 		matrixRoom: true,
 		threadRootId: options.threadRootId || null,
 		supervisorMessage: !!options.supervisorMessage,
-		senderDisplayName: options.senderDisplayName || null,
-		threadParentPreview: options.threadParentPreview || null
+		senderDisplayName: options.senderDisplayName || null
 	}).catch(() => undefined);
 
 	return response;

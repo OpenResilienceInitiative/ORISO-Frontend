@@ -19,9 +19,7 @@ type SessionListViewStateByType = Partial<
 >;
 
 type SessionListViewStateContextValue = {
-	getSessionListViewState: (
-		type: SESSION_LIST_TYPES
-	) => SessionListViewState;
+	getSessionListViewState: (type: SESSION_LIST_TYPES) => SessionListViewState;
 	setSessionListViewState: (
 		type: SESSION_LIST_TYPES,
 		state: SessionListViewState
@@ -44,8 +42,9 @@ export const SessionListViewStateProvider = ({
 }: {
 	children: ReactNode;
 }) => {
-	const [stateByType, setStateByType] =
-		useState<SessionListViewStateByType>({});
+	const [stateByType, setStateByType] = useState<SessionListViewStateByType>(
+		{}
+	);
 
 	const setSessionListViewState = useCallback(
 		(type: SESSION_LIST_TYPES, state: SessionListViewState) => {

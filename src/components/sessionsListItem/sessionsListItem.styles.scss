@@ -97,6 +97,26 @@ $session-postcode-border: #646d78;
 		}
 	}
 
+	// Read state: muted gray background for sessions the counselor has already read
+	&--read {
+		.sessionsListItem__content {
+			background-color: var(--m3-surface-container, #f0f0f0);
+		}
+
+		.sessionsListItem__topic {
+			background-color: $session-topic-chip-bg;
+			opacity: 0.65;
+		}
+
+		.sessionsListItem__username {
+			color: var(--m3-on-surface-variant, $tertiary);
+		}
+
+		.sessionsListItem__date {
+			opacity: 0.65;
+		}
+	}
+
 	&:hover {
 		cursor: pointer;
 	}
@@ -327,7 +347,7 @@ $session-postcode-border: #646d78;
 		background: white !important;
 		width: 280px;
 		max-width: calc(100vw - 40px);
-		border: 2px solid #cc1e1c;
+		border: 2px solid var(--m3-primary, #cc1e1c);
 		border-radius: 8px;
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 		overflow: hidden;
@@ -746,7 +766,7 @@ $session-postcode-border: #646d78;
 				flex-shrink: 0;
 
 				* {
-					fill: #4b515a !important;
+					fill: var(--m3-secondary, #4b515a) !important;
 				}
 			}
 		}
@@ -755,7 +775,7 @@ $session-postcode-border: #646d78;
 			font-family: $font-family-sans-serif;
 			font-size: 13px;
 			font-weight: 700;
-			color: #4b515a;
+			color: var(--m3-secondary, #4b515a);
 			line-height: 1;
 			letter-spacing: 0.01em;
 		}

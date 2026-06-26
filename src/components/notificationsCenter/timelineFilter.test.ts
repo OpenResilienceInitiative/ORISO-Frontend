@@ -60,7 +60,13 @@ describe('WP-06 timeline filter', () => {
 	describe('filterTimelineItems', () => {
 		it('"all" with no query returns everything (stable order)', () => {
 			expect(
-				ids(filterTimelineItems(feed, { family: 'all', query: '' }, searchText))
+				ids(
+					filterTimelineItems(
+						feed,
+						{ family: 'all', query: '' },
+						searchText
+					)
+				)
 			).to.deep.equal(['1', '2', '3', '4', '5', '6', '7', '8']);
 		});
 
@@ -99,7 +105,13 @@ describe('WP-06 timeline filter', () => {
 
 		it('search is a case-insensitive substring over getSearchText', () => {
 			expect(
-				ids(filterTimelineItems(feed, { family: 'all', query: 'ANNA' }, searchText))
+				ids(
+					filterTimelineItems(
+						feed,
+						{ family: 'all', query: 'ANNA' },
+						searchText
+					)
+				)
 			).to.deep.equal(['1']);
 			expect(
 				ids(
@@ -144,7 +156,11 @@ describe('WP-06 timeline filter', () => {
 
 		it('ignores a whitespace-only query', () => {
 			expect(
-				filterTimelineItems(feed, { family: 'all', query: '   ' }, searchText)
+				filterTimelineItems(
+					feed,
+					{ family: 'all', query: '   ' },
+					searchText
+				)
 			).to.have.length(feed.length);
 		});
 

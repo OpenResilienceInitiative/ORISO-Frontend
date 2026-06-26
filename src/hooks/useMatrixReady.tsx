@@ -1,47 +1,37 @@
 import { useState, useEffect } from 'react';
-import { matrixClientService } from '../services/matrixClientService';
-
+import { ClientEvent } from 'matrix-js-sdk';
+import { useMatrixClient } from '../globalState/context/MatrixClientContext';
 /**
- * Hook to check if Matrix client is initialized and ready for calls
- * Returns true when Matrix client exists and sync state is 'PREPARED'
+ * Hook to check if Matrix client is initialized and ready for calls.
+ * Returns true when Matrix client exists and sync state is 'PREPARED'.
  */
 export const useMatrixReady = (): boolean => {
+	const { matrixClientService } = useMatrixClient();
 	const [isReady, setIsReady] = useState<boolean>(false);
 
 	useEffect(() => {
-		const checkMatrixReady = () => {
-			const client = matrixClientService.getClient();
+		if (!matrixClientService) {
+			setIsReady(false);
+			return;
+		}
 
-			if (!client) {
-				setIsReady(false);
-				return;
-			}
+		const client = matrixClientService?.getClient?.();
+		if (!client) {
+			setIsReady(false);
+			return;
+		}
 
-			const ready = matrixClientService.isReady();
-			setIsReady(ready);
-
-			if (!ready) {
-				return matrixClientService.onSyncStateChange(
-					(state: string | null) => {
-						setIsReady(matrixClientService.isReady());
-					}
-				);
-			}
+		const updateReady = () => {
+			setIsReady(client.getSyncState() === 'PREPARED');
 		};
 
-		const unsubscribe = checkMatrixReady();
-
-		const interval = setInterval(() => {
-			setIsReady(matrixClientService.isReady());
-		}, 500);
+		updateReady();
+		client.on(ClientEvent.Sync, updateReady);
 
 		return () => {
-			if (typeof unsubscribe === 'function') {
-				unsubscribe();
-			}
-			clearInterval(interval);
+			client.removeListener(ClientEvent.Sync, updateReady);
 		};
-	}, []);
+	}, [matrixClientService]);
 
 	return isReady;
 };

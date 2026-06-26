@@ -168,8 +168,7 @@ describe('WP-06 event-descriptor registry', () => {
 	describe('resolveActionTarget (origin rule)', () => {
 		it('resolves the expected target kind for every seeded type', () => {
 			KNOWN_EVENT_TYPES.forEach((type) => {
-				const target =
-					EVENT_DESCRIPTORS[type].resolveActionTarget({});
+				const target = EVENT_DESCRIPTORS[type].resolveActionTarget({});
 				expect(target.kind).toBe(EXPECTED_TARGET_KIND[type]);
 			});
 		});

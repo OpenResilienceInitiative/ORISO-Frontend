@@ -7,29 +7,24 @@ interface SendMessageButtonProps {
 	deactivated?: boolean;
 	isEmpty?: boolean;
 	handleSendButton: Function;
+	type?: 'button' | 'submit';
 }
 
 export const SendMessageButton = (props: SendMessageButtonProps) => {
 	const { t: translate } = useTranslation();
 	const isDisabled = !!props.deactivated;
+	const buttonType = props.type || 'button';
 
 	return (
-		<span
-			onClick={() =>
-				isDisabled ? null : props.handleSendButton()
+		<button
+			type={buttonType}
+			disabled={isDisabled}
+			onClick={
+				buttonType === 'button'
+					? () => props.handleSendButton()
+					: undefined
 			}
-			role="button"
-			tabIndex={isDisabled ? -1 : 0}
 			aria-disabled={isDisabled}
-			onKeyDown={(event) => {
-				if (isDisabled) {
-					return;
-				}
-				if (event.key === 'Enter' || event.key === ' ') {
-					event.preventDefault();
-					props.handleSendButton();
-				}
-			}}
 			className={`textarea__iconWrapper ${
 				props.clicked ? 'textarea__iconWrapper--clicked' : ''
 			} ${props.deactivated ? 'textarea__iconWrapper--deactivated' : 'textarea__iconWrapper--active'} ${
@@ -43,6 +38,6 @@ export const SendMessageButton = (props: SendMessageButtonProps) => {
 				aria-label={translate('enquiry.write.input.button.title')}
 				title={translate('enquiry.write.input.button.title')}
 			/>
-		</span>
+		</button>
 	);
 };

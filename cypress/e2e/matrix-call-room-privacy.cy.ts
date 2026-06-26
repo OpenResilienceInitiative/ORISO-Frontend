@@ -1,7 +1,18 @@
 import { callManager } from '../../src/services/CallManager';
-import { matrixClientService } from '../../src/services/matrixClientService';
+import { setMatrixClientServiceRef } from '../../src/services/matrixClientRegistry';
+import { MatrixClientService } from '../../src/services/matrixClientService';
+
+const matrixClientService = new MatrixClientService();
 
 describe('Matrix call room privacy', () => {
+	beforeEach(() => {
+		setMatrixClientServiceRef(matrixClientService);
+	});
+
+	afterEach(() => {
+		setMatrixClientServiceRef(null);
+	});
+
 	it('creates dedicated Element Call rooms with encryption enabled from the initial state', () => {
 		const createRoom = cy
 			.stub()
@@ -100,19 +111,22 @@ describe('Matrix call room privacy', () => {
 		const sendStateEvent = cy.stub().resolves({});
 
 		cy.stub(matrixClientService, 'getClient').returns({
-			getRoom: cy.stub().withArgs('!plain-call-room:oriso.org').returns({
-				currentState: {
-					getStateEvents: cy.stub().returns({
-						getContent: cy.stub().returns({
-							events: {
-								'org.matrix.msc3401.call.member': 50
-							},
-							state_default: 50,
-							events_default: 0
+			getRoom: cy
+				.stub()
+				.withArgs('!plain-call-room:oriso.org')
+				.returns({
+					currentState: {
+						getStateEvents: cy.stub().returns({
+							getContent: cy.stub().returns({
+								events: {
+									'org.matrix.msc3401.call.member': 50
+								},
+								state_default: 50,
+								events_default: 0
+							})
 						})
-					})
-				}
-			}),
+					}
+				}),
 			isRoomEncrypted: cy
 				.stub()
 				.withArgs('!plain-call-room:oriso.org')

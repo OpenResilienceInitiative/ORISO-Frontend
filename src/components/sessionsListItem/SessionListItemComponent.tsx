@@ -242,10 +242,6 @@ export const SessionListItemComponent = ({
 			}
 			return [compact, `@${compact}`];
 		};
-		const matrixUserIdFromStorage =
-			typeof window !== 'undefined'
-				? window.localStorage?.getItem('matrix_user_id')
-				: '';
 		const matrixUserIdFromCookie =
 			typeof document !== 'undefined'
 				? document.cookie
@@ -254,7 +250,6 @@ export const SessionListItemComponent = ({
 						?.split('=')[1] || ''
 				: '';
 		const currentUserIds = new Set<string>([
-			...normalizeIds(matrixUserIdFromStorage),
 			...normalizeIds(matrixUserIdFromCookie),
 			...normalizeIds(userData?.userName)
 		]);
@@ -596,6 +591,9 @@ export const SessionListItemComponent = ({
 					'sessionsListItem--groupChat',
 					isChatActive && 'sessionsListItem--active',
 					flyoutOpen && 'sessionsListItem--menuOpen',
+					!isChatActive &&
+						activeSession.item.messagesRead &&
+						'sessionsListItem--read',
 					isBeforeActive && 'sessionsListItem--beforeActive',
 					isAfterActive && 'sessionsListItem--afterActive'
 				)}
@@ -961,6 +959,9 @@ export const SessionListItemComponent = ({
 				isChatActive && `sessionsListItem--active`,
 				flyoutOpen && 'sessionsListItem--menuOpen',
 				isAnonymousChat && `sessionsListItem--anonymous`,
+				!isChatActive &&
+					activeSession.item.messagesRead &&
+					'sessionsListItem--read',
 				isBeforeActive && 'sessionsListItem--beforeActive',
 				isAfterActive && 'sessionsListItem--afterActive'
 			)}

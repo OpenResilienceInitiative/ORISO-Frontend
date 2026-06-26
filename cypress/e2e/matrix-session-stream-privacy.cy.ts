@@ -37,28 +37,35 @@ describe('Matrix session stream privacy', () => {
 			},
 			0
 		);
-		cy.intercept('GET', '**/service/matrix/sessions/123/messages', (req) => {
-			restMessageRequests += 1;
-			req.reply({
-				messages: [
-					{
-						event_id: '$event-id',
-						sender: '@asker:oriso.org',
-						origin_server_ts: 1782302400000,
-						content: {
-							msgtype: 'm.text',
-							body: 'raw REST Matrix body must stay hidden'
+		cy.intercept(
+			'GET',
+			'**/service/matrix/sessions/123/messages',
+			(req) => {
+				restMessageRequests += 1;
+				req.reply({
+					messages: [
+						{
+							event_id: '$event-id',
+							sender: '@asker:oriso.org',
+							origin_server_ts: 1782302400000,
+							content: {
+								msgtype: 'm.text',
+								body: 'raw REST Matrix body must stay hidden'
+							}
 						}
-					}
-				]
-			});
-		}).as('matrixRestMessages');
+					]
+				});
+			}
+		).as('matrixRestMessages');
 
 		cy.fastLogin({ userId: USER_CONSULTANT });
 		cy.get('a[href="/sessions/consultant/sessionView"]').click();
 		cy.wait('@consultantSessions');
 		cy.get('[data-cy=session-list-item]').first().click();
-		cy.location('pathname').should('contain', '/sessions/consultant/sessionView');
+		cy.location('pathname').should(
+			'contain',
+			'/sessions/consultant/sessionView'
+		);
 		cy.get('.contentWrapper__detail').should('be.visible');
 
 		cy.then(() => {

@@ -54,9 +54,9 @@ describe('Matrix group call privacy', () => {
 						expect(error.message).to.contain(
 							'encrypted Matrix room'
 						);
-						expect(waitUntilRoomReadyForGroupCalls.callCount).to.equal(
-							0
-						);
+						expect(
+							waitUntilRoomReadyForGroupCalls.callCount
+						).to.equal(0);
 						expect(createGroupCall.callCount).to.equal(0);
 						expect(enter.callCount).to.equal(0);
 					}

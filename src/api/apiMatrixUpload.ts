@@ -1,4 +1,4 @@
-import { matrixClientService } from '../services/matrixClientService';
+import { getMatrixClientService } from '../services/matrixClientRegistry';
 
 interface MatrixUploadControl {
 	abort: () => void;
@@ -17,8 +17,8 @@ export const apiMatrixUploadFile = (
 	const abortController = new AbortController();
 	handleUploadControl({ abort: () => abortController.abort() });
 
-	return matrixClientService
-		.sendFileMessage(matrixRoomId, attachment, {
+	return getMatrixClientService()
+		?.sendFileMessage(matrixRoomId, attachment, {
 			abortController,
 			uploadProgress
 		})

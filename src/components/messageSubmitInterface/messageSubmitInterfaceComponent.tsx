@@ -11,7 +11,11 @@ import { createPortal } from 'react-dom';
 import { useHistory, useLocation } from 'react-router-dom';
 
 import { SendMessageButton } from './SendMessageButton';
-import { matrixClientService } from '../../services/matrixClientService';
+import {
+	isAskerEnquirySubmission,
+	shouldBlockMissingLegacyE2eeKey,
+	shouldUseLegacyE2ee
+} from './messageEncryptionMode';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { STATUS_ENQUIRY } from '../../globalState/interfaces/SessionsDataInterface';
 import {
@@ -24,6 +28,7 @@ import {
 	UserDataContext,
 	ActiveSessionContext
 } from '../../globalState';
+import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import { STATUS_ARCHIVED } from '../../globalState/interfaces';
 import {
 	apiGetAgencyConsultantList,
@@ -62,9 +67,11 @@ import {
 	escapeMarkdownChars,
 	handleEditorBeforeInput,
 	handleEditorPastedText,
+	INPUT_MAX_LENGTH,
 	normalizeHighlightColor,
 	toolbarCustomClasses
 } from './richtextHelpers';
+import { resolveComposerMessageSnapshot } from './composerMessageSnapshot';
 import { ReactComponent as AudioOnIcon } from '../../resources/img/icons/audio-on.svg';
 import { ReactComponent as RemoveIcon } from '../../resources/img/icons/x.svg';
 import { ReactComponent as CalendarMonthIcon } from '../../resources/img/icons/calendar-month-navigation.svg';
@@ -130,6 +137,33 @@ const staticToolbarPlugin = createToolbarPlugin({
 });
 const { Toolbar } = staticToolbarPlugin;
 const VOICE_RECORDING_MAX_DURATION_SEC = 180;
+const MESSAGE_LENGTH_WARNING_THRESHOLD = Math.floor(INPUT_MAX_LENGTH * 0.9);
+
+const getPlainTextFromComposerValue = (rawMessage?: string | null): string => {
+	const value = rawMessage || '';
+	if (!value.trim()) {
+		return '';
+	}
+
+	const normalizedValue = value
+		.replace(/<br\s*\/?>/gi, '\n')
+		.replace(/<\/(p|div|li|h[1-6]|blockquote|pre)>/gi, '\n');
+
+	if (typeof document !== 'undefined') {
+		const container = document.createElement('div');
+		container.innerHTML = normalizedValue;
+		return (container.textContent || '')
+			.replace(/\u00a0/g, ' ')
+			.replace(/\u200b/g, '');
+	}
+
+	return normalizedValue
+		.replace(/<[^>]+>/g, ' ')
+		.replace(/&nbsp;/gi, ' ')
+		.replace(/&#160;/gi, ' ')
+		.replace(/\u00a0/g, ' ')
+		.replace(/\u200b/g, '');
+};
 
 const INFO_TYPES = {
 	ABSENT: 'ABSENT',
@@ -915,6 +949,7 @@ export const MessageSubmitInterfaceComponent = ({
 		useContext(ActiveSessionContext);
 	const { type, path: listPath } = useContext(SessionTypeContext);
 	const { isE2eeEnabled } = useContext(E2EEContext);
+	const { matrixClientService } = useMatrixClient();
 
 	const [activeInfo, setActiveInfo] = useState(null);
 	const [attachmentSelected, setAttachmentSelected] = useState<File | null>(
@@ -1167,6 +1202,15 @@ export const MessageSubmitInterfaceComponent = ({
 
 	const isAnonymousEnquiryComposer =
 		type === SESSION_LIST_TYPES.ENQUIRY && isAnonymousChat;
+	const isAskerEnquiry = isAskerEnquirySubmission({
+		isEnquiryListType: type === SESSION_LIST_TYPES.ENQUIRY,
+		sessionStatus: activeSession.item?.status,
+		hasAskerAuthority: hasUserAuthority(
+			AUTHORITIES.ASKER_DEFAULT,
+			userData
+		),
+		isAnonymousLiveChat
+	});
 
 	const {
 		onChange: onDraftMessageChange,
@@ -1242,23 +1286,11 @@ export const MessageSubmitInterfaceComponent = ({
 	const getTypedMarkdownMessage = useCallback(() => {
 		const liveEditorHtml = composerRef.current?.getHTML();
 		// Use latest editor snapshot first to avoid stale last-action/last-char issues.
-		return (liveEditorHtml ?? composerText).trim();
+		return resolveComposerMessageSnapshot(liveEditorHtml, composerText);
 	}, [composerText]);
 
 	const hasMessageContent = useCallback((rawMessage?: string | null) => {
-		const value = (rawMessage || '').trim();
-		if (!value) {
-			return false;
-		}
-		// TipTap returns structural HTML (for example "<p></p>") even when empty.
-		const plainText = value
-			.replace(/<[^>]+>/g, ' ')
-			.replace(/&nbsp;/gi, ' ')
-			.replace(/&#160;/gi, ' ')
-			.replace(/\u00a0/g, ' ')
-			.replace(/\u200b/g, '')
-			.trim();
-		return plainText.length > 0;
+		return getPlainTextFromComposerValue(rawMessage).trim().length > 0;
 	}, []);
 
 	const encodeHighlightColorsForTransport = useCallback(
@@ -1867,9 +1899,7 @@ export const MessageSubmitInterfaceComponent = ({
 									userData?.displayName ||
 									userData?.userName ||
 									`${userData?.firstName || ''} ${userData?.lastName || ''}`.trim() ||
-									'User',
-								threadParentPreview:
-									threadParentPreview || null
+									'User'
 							}
 						);
 
@@ -1990,7 +2020,7 @@ export const MessageSubmitInterfaceComponent = ({
 						userData?.userName ||
 						`${userData?.firstName || ''} ${userData?.lastName || ''}`.trim() ||
 						'User',
-					threadParentPreview || null
+					matrixClientService
 				)
 					.then(() => encryptRoom(setE2EEState))
 					.then(() => {
@@ -2000,7 +2030,14 @@ export const MessageSubmitInterfaceComponent = ({
 					})
 					.catch((error) => {
 						setIsRequestInProgress(false);
-						// console.log(error);
+						apiPostError({
+							name: error?.name || 'MatrixMessageSendError',
+							message:
+								error?.message ||
+								'Failed to send Matrix chat message',
+							stack: error?.stack,
+							level: ERROR_LEVEL_WARN
+						}).then();
 					});
 			} else {
 				// Matrix file upload already sent the message
@@ -2025,6 +2062,7 @@ export const MessageSubmitInterfaceComponent = ({
 			isSupervisor,
 			key,
 			keyID,
+			matrixClientService,
 			onSendButton,
 			setE2EEState,
 			threadParentPreview,
@@ -2040,20 +2078,46 @@ export const MessageSubmitInterfaceComponent = ({
 		const attachmentInput: any = attachmentInputRef.current;
 		const selectedFile = attachmentInput && attachmentInput.files[0];
 		const attachment = preselectedFile || selectedFile;
+		const isMatrixSession =
+			Boolean(activeSession.item?.matrixRoomId) ||
+			Boolean(
+				activeSession.rid &&
+					isMatrixRoom(activeSession.rid) &&
+					activeSession.item?.id
+			);
+		const usesLegacyE2ee = shouldUseLegacyE2ee({
+			isE2eeEnabled,
+			isMatrixSession,
+			isAskerEnquiry
+		});
 
-		if (isE2eeEnabled && encrypted && !keyID) {
+		if (
+			shouldBlockMissingLegacyE2eeKey({
+				usesLegacyE2ee,
+				encrypted,
+				hasKeyId: !!keyID
+			})
+		) {
 			// console.error("Can't send message without key");
 			return;
 		}
 
-		if (hasMessageContent(getTypedMarkdownMessage()) || attachment) {
+		const currentTypedMessage = getTypedMarkdownMessage();
+		if (
+			getPlainTextFromComposerValue(currentTypedMessage).length >
+			INPUT_MAX_LENGTH
+		) {
+			return null;
+		}
+
+		if (hasMessageContent(currentTypedMessage) || attachment) {
 			setIsRequestInProgress(true);
 		} else {
 			return null;
 		}
 
 		let message = encodeAlignmentForTransport(
-			encodeHighlightColorsForTransport(getTypedMarkdownMessage())
+			encodeHighlightColorsForTransport(currentTypedMessage)
 		).trim();
 		const prefixParts: string[] = [];
 		if (threadRootId) {
@@ -2071,8 +2135,8 @@ export const MessageSubmitInterfaceComponent = ({
 		if (prefixParts.length && message.length > 0) {
 			message = `${prefixParts.join(' ')} ${message}`;
 		}
-		let isEncrypted = isE2eeEnabled;
-		if (message.length > 0 && isE2eeEnabled) {
+		let isEncrypted = usesLegacyE2ee;
+		if (message.length > 0 && isEncrypted) {
 			try {
 				message = await encryptText(message, keyID, key);
 			} catch (e: any) {
@@ -2094,11 +2158,7 @@ export const MessageSubmitInterfaceComponent = ({
 			}
 		}
 
-		if (
-			type === SESSION_LIST_TYPES.ENQUIRY &&
-			hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
-			!isAnonymousLiveChat
-		) {
+		if (isAskerEnquiry) {
 			await sendEnquiry(message, isEncrypted);
 			return;
 		}
@@ -2106,22 +2166,24 @@ export const MessageSubmitInterfaceComponent = ({
 		await sendMessage(message, attachment, isEncrypted);
 	}, [
 		encrypted,
+		activeSession.item?.id,
+		activeSession.item?.matrixRoomId,
+		activeSession.rid,
 		encodeAlignmentForTransport,
 		encodeHighlightColorsForTransport,
 		getTypedMarkdownMessage,
 		hasMessageContent,
 		isE2eeEnabled,
+		isAskerEnquiry,
 		key,
 		keyID,
-		isAnonymousLiveChat,
 		preselectedFile,
 		sendEnquiry,
 		sendMessage,
 		selectedAudienceValues,
 		isSupervisor,
 		threadRootId,
-		type,
-		userData
+		translate
 	]);
 
 	const handleButtonClick = useCallback(() => {
@@ -2130,6 +2192,12 @@ export const MessageSubmitInterfaceComponent = ({
 		}
 		if (isVoiceRecording) {
 			stopVoiceRecording({ sendAfterStop: true });
+			return null;
+		}
+		if (
+			getPlainTextFromComposerValue(getTypedMarkdownMessage()).length >
+			INPUT_MAX_LENGTH
+		) {
 			return null;
 		}
 
@@ -2163,6 +2231,7 @@ export const MessageSubmitInterfaceComponent = ({
 	}, [
 		activeSession.item.groupId,
 		activeSession.item.id,
+		getTypedMarkdownMessage,
 		history,
 		isRequestInProgress,
 		isVoiceRecording,
@@ -2174,6 +2243,14 @@ export const MessageSubmitInterfaceComponent = ({
 		uploadProgress,
 		userData
 	]);
+
+	const handleFormSubmit = useCallback(
+		(event: React.FormEvent<HTMLFormElement>) => {
+			event.preventDefault();
+			handleButtonClick();
+		},
+		[handleButtonClick]
+	);
 
 	// Key binding function for Draft.js to handle Ctrl+Enter / Cmd+Enter
 	// Only returns a command when modifier keys are pressed, otherwise returns undefined
@@ -2335,10 +2412,7 @@ export const MessageSubmitInterfaceComponent = ({
 	}, [history]);
 
 	const hasUploadFunctionality =
-		(type !== SESSION_LIST_TYPES.ENQUIRY ||
-			(type === SESSION_LIST_TYPES.ENQUIRY &&
-				!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData))) &&
-		!tenant?.settings?.featureAttachmentUploadDisabled;
+		!isAskerEnquiry && !tenant?.settings?.featureAttachmentUploadDisabled;
 	const currentChatType: 'anonymous' | 'oneOnOne' | 'group' | 'supervision' =
 		isSupervisor
 			? 'supervision'
@@ -2596,10 +2670,6 @@ export const MessageSubmitInterfaceComponent = ({
 		}
 		const collected = new Map<string, string>();
 		const selfIdentifiers = new Set<string>();
-		const matrixUserIdFromStorage =
-			typeof window !== 'undefined'
-				? window.localStorage?.getItem('matrix_user_id')
-				: '';
 		const matrixUserIdFromCookie =
 			typeof document !== 'undefined'
 				? document.cookie
@@ -2608,7 +2678,6 @@ export const MessageSubmitInterfaceComponent = ({
 						?.split('=')[1] || ''
 				: '';
 		[
-			matrixUserIdFromStorage,
 			matrixUserIdFromCookie,
 			userData?.userName,
 			userData?.displayName
@@ -2618,7 +2687,7 @@ export const MessageSubmitInterfaceComponent = ({
 			);
 		});
 		const roomId = getMatrixRoomId();
-		const matrixClient = matrixClientService.getClient();
+		const matrixClient = matrixClientService?.getClient?.();
 		const room =
 			roomId && matrixClient ? matrixClient.getRoom(roomId) : null;
 		const roomMembers =
@@ -2814,7 +2883,8 @@ export const MessageSubmitInterfaceComponent = ({
 		activeSession?.isGroup,
 		translate,
 		userData?.displayName,
-		userData?.userName
+		userData?.userName,
+		matrixClientService
 	]);
 
 	useEffect(() => {
@@ -3400,8 +3470,25 @@ export const MessageSubmitInterfaceComponent = ({
 		return `${String(minutes)}:${String(seconds).padStart(2, '0')}`;
 	}, []);
 	const typedMessage = getTypedMarkdownMessage();
+	const typedMessageLength =
+		getPlainTextFromComposerValue(typedMessage).length;
+	const isMessageLengthWarning =
+		typedMessageLength >= MESSAGE_LENGTH_WARNING_THRESHOLD;
+	const isMessageOverLimit = typedMessageLength > INPUT_MAX_LENGTH;
+	const characterCounterAnnouncement = isMessageOverLimit
+		? translate(
+				'message.submit.characterCounter.overLimit',
+				'Message is over the character limit.'
+			)
+		: isMessageLengthWarning
+			? translate(
+					'message.submit.characterCounter.warning',
+					'Message is approaching the character limit.'
+				)
+			: '';
 	const canSendMessage =
-		!!attachmentSelected || hasMessageContent(typedMessage);
+		(!!attachmentSelected || hasMessageContent(typedMessage)) &&
+		!isMessageOverLimit;
 
 	const handleToolbarAction = useCallback((action: string) => {
 		composerRef.current?.runAction(action);
@@ -3754,7 +3841,7 @@ export const MessageSubmitInterfaceComponent = ({
 				</div>
 			)}
 
-			<form className="textarea">
+			<form className="textarea" onSubmit={handleFormSubmit}>
 				<div
 					className={clsx(
 						'textarea__wrapper',
@@ -5001,6 +5088,7 @@ export const MessageSubmitInterfaceComponent = ({
 											placeholder={placeholder}
 											showToolbar={false}
 											readOnly={!!uploadProgress}
+											maxLength={INPUT_MAX_LENGTH}
 											onSubmitShortcut={() => {
 												if (
 													!uploadProgress &&
@@ -5010,6 +5098,35 @@ export const MessageSubmitInterfaceComponent = ({
 												}
 											}}
 										/>
+										<div
+											className={clsx(
+												'textarea__characterCounter',
+												isMessageLengthWarning &&
+													'textarea__characterCounter--warning',
+												isMessageOverLimit &&
+													'textarea__characterCounter--error',
+												isVoiceRecording &&
+													'textarea__characterCounter--hidden'
+											)}
+											aria-label={translate(
+												'message.submit.characterCounter.ariaLabel',
+												'{{current}} of {{maximum}} characters',
+												{
+													current: typedMessageLength,
+													maximum: INPUT_MAX_LENGTH
+												}
+											)}
+										>
+											{typedMessageLength}/
+											{INPUT_MAX_LENGTH}
+										</div>
+										<span
+											className="sr-only"
+											role="status"
+											aria-live="polite"
+										>
+											{characterCounterAnnouncement}
+										</span>
 									</>
 								)}
 							</div>
@@ -5116,6 +5233,7 @@ export const MessageSubmitInterfaceComponent = ({
 								<ToolbarScrollRightIcon />
 							</button>
 							<SendMessageButton
+								type="submit"
 								handleSendButton={handleButtonClick}
 								clicked={isRequestInProgress}
 								deactivated={

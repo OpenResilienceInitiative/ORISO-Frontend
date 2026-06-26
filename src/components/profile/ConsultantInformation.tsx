@@ -114,14 +114,12 @@ export const ConsultantInformation = () => {
 						</span>
 					)}
 				</div>
-				{/* TEMPORARILY HIDDEN — personal QR code + contact link in
-				    consultant profile. Restore by uncommenting the block below. */}
-				{/* {hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) && (
+				{hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) && (
 					<PersonalRegistrationLink
 						cid={userData.userId}
 						className="profile__user__personal_link mb--1"
 					/>
-				)} */}
+				)}
 			</div>
 			<div>
 				<Text

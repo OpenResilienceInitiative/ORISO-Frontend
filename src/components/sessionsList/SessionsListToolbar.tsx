@@ -236,7 +236,9 @@ const FilterChip = ({
 		>
 			<Icon
 				className="sessionsListToolbar__chipIconSvg"
-				hasIndicator={chip.id === 'unread' && Boolean(count && count > 0)}
+				hasIndicator={
+					chip.id === 'unread' && Boolean(count && count > 0)
+				}
 			/>
 			<span
 				className="sessionsListToolbar__chipLabel"
@@ -643,15 +645,12 @@ export const SessionsListToolbar = ({
 				<div className="sessionsListToolbar__chipsRow">
 					{showConsultantActions && (
 						<Link
-							className={clsx(
-								'sessionsListToolbar__chip',
-								{
-									'sessionsListToolbar__chip--iconOnly':
-										!createGroupChatActive,
-									'sessionsListToolbar__chip--active':
-										createGroupChatActive
-								}
-							)}
+							className={clsx('sessionsListToolbar__chip', {
+								'sessionsListToolbar__chip--iconOnly':
+									!createGroupChatActive,
+								'sessionsListToolbar__chip--active':
+									createGroupChatActive
+							})}
 							to={createGroupChatPath}
 							aria-label={translate(
 								'sessionList.createChat.buttonTitle'

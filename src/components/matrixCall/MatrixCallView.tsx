@@ -7,7 +7,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { MatrixCall } from 'matrix-js-sdk/lib/webrtc/call';
 import { CallState } from 'matrix-js-sdk/lib/webrtc/call';
 import { matrixCallService } from '../../services/matrixCallService';
-import { matrixClientService } from '../../services/matrixClientService';
+import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import './MatrixCallView.styles.scss';
 
 interface MatrixCallViewProps {
@@ -21,6 +21,7 @@ export const MatrixCallView: React.FC<MatrixCallViewProps> = ({
 	isVideoCall,
 	onCallEnd
 }) => {
+	const { matrixClientService } = useMatrixClient();
 	const localVideoRef = useRef<HTMLVideoElement>(null);
 	const remoteVideoRef = useRef<HTMLVideoElement>(null);
 
@@ -37,7 +38,7 @@ export const MatrixCallView: React.FC<MatrixCallViewProps> = ({
 
 		// console.log('🔥 MatrixCallView INIT - Room:', roomId, '| Answer mode:', isAnswering);
 
-		if (!matrixClientService.hasActiveClient()) {
+		if (!matrixClientService) {
 			setError('Matrix client not available');
 			return;
 		}
@@ -111,7 +112,7 @@ export const MatrixCallView: React.FC<MatrixCallViewProps> = ({
 				(activeCall as any).hangup();
 			}
 		};
-	}, []); // Run ONCE only!
+	}, [matrixClientService, roomId, isVideoCall]); // Re-run when Matrix client becomes available
 
 	// Monitor call state
 	useEffect(() => {
