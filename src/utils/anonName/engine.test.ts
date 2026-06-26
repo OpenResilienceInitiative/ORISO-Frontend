@@ -45,4 +45,13 @@ describe('anonymous name engine', () => {
 		expect(password).toHaveLength(16);
 		expect(allPasswordCriteriaPass(password)).toBe(true);
 	});
+
+	it('generates URI-safe passwords for the registration payload', () => {
+		for (let i = 0; i < 50; i++) {
+			const password = generatePassword();
+
+			expect(encodeURIComponent(password)).toBe(password);
+			expect(allPasswordCriteriaPass(password)).toBe(true);
+		}
+	});
 });
