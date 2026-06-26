@@ -150,6 +150,35 @@ export const getMatrixHomeserverUrl = (): string =>
 export const getRuntimeApiBaseUrl = (): string =>
 	ensureHttps(pickValue('REACT_APP_API_URL', 'VITE_API_URL'));
 
+const getServiceOrigin = (key: string, fallbackOrigin: string): string =>
+	stripTrailingSlashes(ensureHttps(pickValue(key) || fallbackOrigin));
+
+export const getUserServiceOrigin = (
+	fallbackOrigin = getRuntimeApiBaseUrl()
+): string => getServiceOrigin('REACT_APP_USER_SERVICE_ORIGIN', fallbackOrigin);
+
+export const getTenantServiceOrigin = (
+	fallbackOrigin = getRuntimeApiBaseUrl()
+): string =>
+	getServiceOrigin('REACT_APP_TENANT_SERVICE_ORIGIN', fallbackOrigin);
+
+export const getAgencyServiceOrigin = (
+	fallbackOrigin = getRuntimeApiBaseUrl()
+): string =>
+	getServiceOrigin('REACT_APP_AGENCY_SERVICE_ORIGIN', fallbackOrigin);
+
+export const getConsultingTypeServiceOrigin = (
+	fallbackOrigin = getRuntimeApiBaseUrl()
+): string =>
+	getServiceOrigin(
+		'REACT_APP_CONSULTING_TYPE_SERVICE_ORIGIN',
+		fallbackOrigin
+	);
+
+export const getKeycloakOrigin = (
+	fallbackOrigin = getRuntimeApiBaseUrl()
+): string => getServiceOrigin('REACT_APP_KEYCLOAK_ORIGIN', fallbackOrigin);
+
 /**
  * Element Call deployment origin (https), with any trailing slashes removed.
  */

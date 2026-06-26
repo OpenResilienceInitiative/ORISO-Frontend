@@ -1,5 +1,5 @@
 import { createClient, MatrixClient } from 'matrix-js-sdk';
-import { apiUrl } from '../../resources/scripts/endpoints';
+import { endpoints } from '../../resources/scripts/endpoints';
 import { getMatrixHomeserverUrl } from '../../resources/scripts/runtimeConfig';
 import { fetchData, FETCH_ERRORS, FETCH_METHODS } from '../../api/fetchData';
 
@@ -50,7 +50,7 @@ export const getMatrixAccessToken = (
 	_username?: string,
 	_password?: string
 ): Promise<MatrixLoginData> => {
-	const tokenUrl = `${apiUrl}/service/matrix/me/token`;
+	const tokenUrl = endpoints.matrixAccessToken;
 	return fetchData({
 		url: tokenUrl,
 		method: FETCH_METHODS.GET,
