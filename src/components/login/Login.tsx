@@ -1,6 +1,13 @@
 import '../../polyfill';
 import * as React from 'react';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import {
+	useCallback,
+	useContext,
+	useEffect,
+	useMemo,
+	useRef,
+	useState
+} from 'react';
 import { endpoints } from '../../resources/scripts/endpoints';
 import { Button, BUTTON_TYPES, ButtonItem } from '../button/Button';
 import { autoLogin, redirectToApp } from '../registration/autoLogin';
@@ -86,6 +93,7 @@ export const Login = () => {
 	const [activeLoginMethod] = useState<LoginMethod>('password');
 	const [username, setUsername] = useState<string>('');
 	const [password, setPassword] = useState<string>('');
+	const passwordInputRef = useRef<HTMLInputElement>(null);
 	const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 	const [magicLinkUsername, setMagicLinkUsername] = useState<string>('');
 	const [isButtonDisabled, setIsButtonDisabled] = useState<boolean>(
@@ -539,6 +547,7 @@ export const Login = () => {
 										error={labelState === VALIDITY_INVALID}
 										fullWidth
 										autoComplete="current-password"
+										inputRef={passwordInputRef}
 										inputProps={{
 											'aria-label': translate(
 												'login.password.label'
@@ -558,12 +567,19 @@ export const Login = () => {
 												<InputAdornment position="end">
 													<IconButton
 														type="button"
-														onClick={() =>
+														onMouseDown={(event) =>
+															event.preventDefault()
+														}
+														onClick={() => {
 															setIsPasswordVisible(
 																(isVisible) =>
 																	!isVisible
-															)
-														}
+															);
+															window.requestAnimationFrame(
+																() =>
+																	passwordInputRef.current?.focus()
+															);
+														}}
 														edge="end"
 														aria-label={translate(
 															isPasswordVisible

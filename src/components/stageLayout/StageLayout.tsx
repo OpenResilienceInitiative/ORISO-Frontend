@@ -25,7 +25,8 @@ import {
 } from '@mui/material';
 import { SvgIconProps } from '@mui/material/SvgIcon';
 import { InfoDrawer } from '../registration/infoDrawer/InfoDrawer';
-import { Link as RouterLink, useHistory } from 'react-router-dom';
+import { __RouterContext } from 'react-router';
+import { Link as RouterLink } from 'react-router-dom';
 import { toSameOriginRoute } from './stageLayoutRoutes';
 
 interface StageLayoutProps {
@@ -54,20 +55,21 @@ export const StageLayout = ({
 	const legalLinks = useContext(LegalLinksContext);
 	const { selectableLocales } = useContext(LocaleContext);
 	const { specificAgency } = useContext(AgencySpecificContext);
+	const routerContext = useContext(__RouterContext);
 	const settings = useAppConfig();
-	const history = useHistory();
 	const loginUrl = `${settings.urls.toLogin}${
 		loginParams ? `?${loginParams}` : ''
 	}`;
 	const loginRoute = toSameOriginRoute(loginUrl);
 	const registrationRoute = toSameOriginRoute(settings.urls.toRegistration);
+	const registrationHref = registrationRoute || settings.urls.toRegistration;
 	const handleRegistrationClick = () => {
-		if (registrationRoute) {
-			history.push(registrationRoute);
+		if (registrationRoute && routerContext?.history) {
+			routerContext.history.push(registrationRoute);
 			return;
 		}
 
-		window.location.assign(settings.urls.toRegistration);
+		window.location.assign(registrationHref);
 	};
 
 	return (
@@ -100,12 +102,12 @@ export const StageLayout = ({
 
 							{showLoginLink && (
 								<IconButton
-									{...(loginRoute
+									{...(loginRoute && routerContext
 										? {
 												component: RouterLink,
 												to: loginRoute
 											}
-										: { href: loginUrl })}
+										: { href: loginRoute || loginUrl })}
 									edge="end"
 									color="inherit"
 									aria-label={translate(
@@ -163,14 +165,14 @@ export const StageLayout = ({
 						>
 							<MuiButton
 								className="stageLayout__toLogin__button"
-								{...(loginRoute
+								{...(loginRoute && routerContext
 									? {
 											component: RouterLink,
 											to: loginRoute
 										}
 									: {
 											component: 'a',
-											href: loginUrl
+											href: loginRoute || loginUrl
 										})}
 								variant="outlined"
 								startIcon={<LoginDoorIcon />}
