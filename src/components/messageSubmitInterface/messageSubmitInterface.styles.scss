@@ -1095,7 +1095,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				background-color: var(--m3-primary-hover, #f3bdb8);
 			}
 			&:focus-visible {
-				outline: 2px solid var(--m3-primary-container, #cc1e1c);
+				outline: 2px solid var(--m3-primary-outline, #ffdad5);
 				outline-offset: 2px;
 			}
 
