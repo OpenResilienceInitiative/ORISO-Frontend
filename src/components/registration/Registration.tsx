@@ -1,4 +1,4 @@
-import { Link, Button, Box, Chip, Stack, Avatar } from '@mui/material';
+import { Avatar, Box, Button, Chip, Link } from '@mui/material';
 import * as React from 'react';
 import {
 	useState,
@@ -80,6 +80,7 @@ export const Registration = () => {
 	const { addNotification } = useContext(NotificationsContext);
 	const {
 		disabledNextButton,
+		setDisabledNextButton,
 		updateRegistrationData,
 		registrationData,
 		availableSteps
@@ -90,6 +91,8 @@ export const Registration = () => {
 
 	const [stepData, setStepData] = useState<Partial<RegistrationData>>({});
 	const [isRegistering, setIsRegistering] = useState<boolean>(false);
+	const [clearSelectionVersion, setClearSelectionVersion] =
+		useState<number>(0);
 
 	const checkForStepsWithMissingMandatoryFields =
 		useCallback((): number[] => {
@@ -162,6 +165,34 @@ export const Registration = () => {
 			history.push(prevStepUrl);
 		}
 	}, [registrationData, stepData, history, prevStepUrl]);
+
+	const onClearSelection = useCallback(() => {
+		setStepData({});
+		setClearSelectionVersion((version) => version + 1);
+		setDisabledNextButton?.(true);
+		updateRegistrationData({
+			mainTopic: undefined,
+			mainTopicId: undefined,
+			topic: undefined,
+			topicId: undefined,
+			topicGroupId: undefined,
+			agency: undefined,
+			agencyId: undefined
+		});
+		history.push(
+			`${generatePath(path, {
+				topicSlug,
+				step: 'topic-selection'
+			})}${location.search}`
+		);
+	}, [
+		history,
+		location.search,
+		path,
+		setDisabledNextButton,
+		topicSlug,
+		updateRegistrationData
+	]);
 
 	const handleSubmit = useCallback(
 		(e: FormEvent<HTMLFormElement>) => {
@@ -336,6 +367,7 @@ export const Registration = () => {
 														key={name}
 													>
 														<Component
+															key={`${name}-${clearSelectionVersion}`}
 															onChange={
 																setStepData
 															}
@@ -374,156 +406,112 @@ export const Registration = () => {
 										zIndex: 65
 									}}
 								>
-									<Stack
-										direction="row"
-										spacing={{ xs: 1.5, md: 2 }}
-										alignItems="center"
-										justifyContent="space-between"
+									<Box
 										sx={{
 											width: '100%',
 											maxWidth: '780px',
 											minWidth: 0
 										}}
 									>
-										<Link
-											sx={{
-												textDecoration: 'none',
-												color: registrationMd3.onSurfaceVariant,
-												fontWeight: '700',
-												display: 'inline-flex',
-												alignItems: 'center',
-												gap: '8px',
-												whiteSpace: 'nowrap'
-											}}
-											component={RouterLink}
-											onClick={onPrevClick}
-											to={prevStepUrl}
-										>
-											<ArrowBackRoundedIcon fontSize="small" />
-											{t('registration.back')}
-										</Link>
 										<Box
 											sx={{
 												display: {
 													xs: 'none',
-													sm: 'flex'
+													sm: 'grid'
 												},
-												justifyContent: 'center',
-												minWidth: 0,
-												flex: 1
+												gridTemplateColumns:
+													'auto minmax(0, 1fr) auto',
+												alignItems: 'center',
+												gap: 2
 											}}
 										>
-											{selectedLabel ? (
-												<Chip
-													avatar={
-														selectedIcon ? (
-															<Avatar
-																src={
-																	selectedIcon
-																}
-																alt=""
-															/>
-														) : undefined
-													}
-													label={selectedLabel}
-													variant="outlined"
-													sx={{
-														'maxWidth': '100%',
-														'height': '42px',
-														'borderRadius': '999px',
-														'bgcolor': '#fff',
-														'fontWeight': 700,
-														'borderColor':
-															registrationMd3.outlineVariant,
-														'& .MuiChip-label': {
-															overflow: 'hidden',
-															textOverflow:
-																'ellipsis',
-															whiteSpace: 'nowrap'
-														},
-														'& .MuiChip-avatar': {
-															width: 28,
-															height: 28
-														}
-													}}
-												/>
-											) : null}
-										</Box>
-
-										{!nextStepUrl ? (
-											<Button
-												data-cy="button-register"
-												disabled={
-													disabledNextButton ||
-													isRegistering
-												}
-												variant="contained"
-												onClick={onRegisterClick}
-												type={
-													disabledNextButton ||
-													isRegistering
-														? 'button'
-														: 'submit'
-												}
-												sx={{
-													borderRadius: '999px',
-													px: { xs: 3, md: 4 },
-													py: 1.25,
-													fontWeight: 800,
-													minWidth: {
-														xs: 150,
-														md: 176
-													},
-													boxShadow:
-														disabledNextButton ||
-														isRegistering
-															? 'none'
-															: '0 6px 18px rgba(164, 38, 46, 0.30)'
-												}}
-											>
-												{isRegistering
-													? t(
-															'registration.registering',
-															'Registering...'
-														)
-													: t(
-															'registration.register'
-														)}
-											</Button>
-										) : (
-											<Button
-												data-cy="button-next"
-												disabled={disabledNextButton}
-												variant="contained"
-												onClick={onNextClick}
-												endIcon={
-													<ArrowForwardRoundedIcon />
-												}
-												sx={{
-													width: 'unset',
-													borderRadius: '999px',
-													px: { xs: 3, md: 4 },
-													py: 1.25,
-													fontWeight: 800,
-													minWidth: {
-														xs: 150,
-														md: 176
-													},
-													boxShadow:
-														disabledNextButton
-															? 'none'
-															: '0 6px 18px rgba(164, 38, 46, 0.30)'
-												}}
-												type={
+											<RegistrationFooterBackLink
+												to={prevStepUrl}
+												onClick={onPrevClick}
+												label={t('registration.back')}
+											/>
+											<RegistrationFooterChip
+												label={selectedLabel}
+												icon={selectedIcon}
+												onDelete={onClearSelection}
+											/>
+											<RegistrationFooterPrimaryButton
+												nextStepUrl={nextStepUrl}
+												disabledNextButton={
 													disabledNextButton
-														? 'button'
-														: 'submit'
 												}
+												isRegistering={isRegistering}
+												onRegisterClick={
+													onRegisterClick
+												}
+												onNextClick={onNextClick}
+												registerLabel={t(
+													'registration.register'
+												)}
+												registeringLabel={t(
+													'registration.registering',
+													'Registering...'
+												)}
+												nextLabel={t(
+													'registration.next'
+												)}
+											/>
+										</Box>
+										<Box
+											sx={{
+												display: {
+													xs: 'block',
+													sm: 'none'
+												}
+											}}
+										>
+											<RegistrationFooterChip
+												label={selectedLabel}
+												icon={selectedIcon}
+												onDelete={onClearSelection}
+												mobile
+											/>
+											<Box
+												sx={{
+													display: 'flex',
+													alignItems: 'center',
+													gap: 1.5
+												}}
 											>
-												{t('registration.next')}
-											</Button>
-										)}
-									</Stack>
+												<RegistrationFooterBackLink
+													to={prevStepUrl}
+													onClick={onPrevClick}
+													label={t(
+														'registration.back'
+													)}
+												/>
+												<Box sx={{ flex: 1 }} />
+												<RegistrationFooterPrimaryButton
+													nextStepUrl={nextStepUrl}
+													disabledNextButton={
+														disabledNextButton
+													}
+													isRegistering={
+														isRegistering
+													}
+													onRegisterClick={
+														onRegisterClick
+													}
+													onNextClick={onNextClick}
+													registerLabel={t(
+														'registration.register'
+													)}
+													registeringLabel={t(
+														'registration.registering',
+														'Registering...'
+													)}
+													nextLabel={t(
+														'registration.next'
+													)}
+												/>
+											</Box>
+										</Box>
+									</Box>
 								</Box>
 							</form>
 						</Route>
@@ -534,5 +522,156 @@ export const Registration = () => {
 				</Box>
 			</StageLayout>
 		</>
+	);
+};
+
+const RegistrationFooterBackLink = ({
+	to,
+	onClick,
+	label
+}: {
+	to: string;
+	onClick: () => void;
+	label: string;
+}) => (
+	<Link
+		sx={{
+			textDecoration: 'none',
+			color: registrationMd3.onSurfaceVariant,
+			fontWeight: '700',
+			display: 'inline-flex',
+			alignItems: 'center',
+			gap: '8px',
+			whiteSpace: 'nowrap'
+		}}
+		component={RouterLink}
+		onClick={onClick}
+		to={to}
+	>
+		<ArrowBackRoundedIcon fontSize="small" />
+		{label}
+	</Link>
+);
+
+const RegistrationFooterChip = ({
+	label,
+	icon,
+	onDelete,
+	mobile = false
+}: {
+	label?: string | null;
+	icon?: string;
+	onDelete: () => void;
+	mobile?: boolean;
+}) => {
+	if (!label) {
+		return mobile ? null : <Box sx={{ minWidth: 0 }} />;
+	}
+
+	return (
+		<Box
+			sx={{
+				minWidth: 0,
+				overflow: 'hidden',
+				display: 'flex',
+				justifyContent: 'center',
+				alignItems: 'center',
+				mb: mobile ? 1.25 : 0
+			}}
+		>
+			<Chip
+				avatar={
+					icon ? (
+						<Avatar
+							src={icon}
+							alt=""
+							imgProps={{
+								loading: 'lazy',
+								decoding: 'async'
+							}}
+						/>
+					) : undefined
+				}
+				label={label}
+				onDelete={onDelete}
+				variant="outlined"
+				sx={{
+					'maxWidth': '100%',
+					'minWidth': 0,
+					'height': '42px',
+					'borderRadius': '999px',
+					'bgcolor': '#fff',
+					'fontWeight': 700,
+					'borderColor': registrationMd3.outlineVariant,
+					'& .MuiChip-label': {
+						overflow: 'hidden',
+						textOverflow: 'ellipsis',
+						whiteSpace: 'nowrap'
+					},
+					'& .MuiChip-avatar': {
+						width: 28,
+						height: 28
+					}
+				}}
+			/>
+		</Box>
+	);
+};
+
+const RegistrationFooterPrimaryButton = ({
+	nextStepUrl,
+	disabledNextButton,
+	isRegistering,
+	onRegisterClick,
+	onNextClick,
+	registerLabel,
+	registeringLabel,
+	nextLabel
+}: {
+	nextStepUrl: string | null;
+	disabledNextButton?: boolean;
+	isRegistering: boolean;
+	onRegisterClick: () => void;
+	onNextClick: () => void;
+	registerLabel: string;
+	registeringLabel: string;
+	nextLabel: string;
+}) => {
+	const disabled = Boolean(disabledNextButton || isRegistering);
+	const buttonSx = {
+		'borderRadius': '999px',
+		'px': { xs: 3, md: 4 },
+		'py': 1.25,
+		'fontWeight': 800,
+		'minWidth': { xs: 150, md: 176 },
+		'boxShadow': disabled ? 'none' : '0 6px 18px rgba(164, 38, 46, 0.30)',
+		'&:hover': {
+			boxShadow: disabled ? 'none' : '0 8px 22px rgba(164, 38, 46, 0.40)'
+		}
+	};
+
+	return nextStepUrl ? (
+		<Button
+			data-cy="button-next"
+			disabled={disabledNextButton}
+			variant="contained"
+			onClick={onNextClick}
+			endIcon={<ArrowForwardRoundedIcon />}
+			sx={{ width: 'unset', ...buttonSx }}
+			type={disabledNextButton ? 'button' : 'submit'}
+		>
+			{nextLabel}
+		</Button>
+	) : (
+		<Button
+			data-cy="button-register"
+			disabled={disabled}
+			variant="contained"
+			onClick={onRegisterClick}
+			type={disabled ? 'button' : 'submit'}
+			sx={buttonSx}
+		>
+			{isRegistering ? registeringLabel : registerLabel}
+		</Button>
 	);
 };
