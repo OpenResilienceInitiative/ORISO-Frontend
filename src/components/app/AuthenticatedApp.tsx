@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Redirect } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { Routing } from './Routing';
 import {
@@ -228,5 +228,5 @@ export const AuthenticatedApp = ({
 		return <Loading />;
 	}
 
-	return <Redirect to="/login" />;
+	return <Navigate to="/login" replace />;
 };

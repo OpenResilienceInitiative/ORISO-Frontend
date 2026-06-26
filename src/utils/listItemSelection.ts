@@ -71,14 +71,15 @@ export const deriveActiveSelection = (
 	for (const path of SESSION_ROUTE_PATTERNS) {
 		// react-router v7: matchPath(pattern, pathname) — pattern first, and
 		// `end: false` replaces v5's `exact: false` (prefix match).
-		const match = matchPath<'rcGroupId' | 'sessionId', string>(
-			{ path, end: false },
-			pathname
-		);
+		const match = matchPath({ path, end: false }, pathname);
 		if (match) {
+			const params = match.params as {
+				rcGroupId?: string;
+				sessionId?: string;
+			};
 			return {
-				groupId: norm(match.params.rcGroupId),
-				sessionId: norm(match.params.sessionId)
+				groupId: norm(params.rcGroupId),
+				sessionId: norm(params.sessionId)
 			};
 		}
 	}

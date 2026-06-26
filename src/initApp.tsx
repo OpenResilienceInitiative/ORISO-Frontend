@@ -12,7 +12,7 @@ import { lazy, useEffect, useState } from 'react';
 import './resources/styles/mui-variables-mapping.scss';
 import { createAppTheme } from './resources/scripts/theme';
 import { THEME_APPLIED_EVENT } from './utils/theme/applyTenantTheme';
-import { Redirect } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { Privacy } from './components/legalInformationLinks/Privacy';
 import { Imprint } from './components/legalInformationLinks/Imprint';
 
@@ -66,10 +66,15 @@ if (container) {
 						component: ThemeDemo
 					},
 					{
+						// v7 dropped optional params (:step?), so the wizard's
+						// step is captured by explicit routes; Registration reads
+						// it via useParams and renders the WelcomeScreen when absent.
 						route: {
 							path: [
-								'/registration/:step?',
-								'/:topicSlug/registration/:step?'
+								'/registration',
+								'/registration/:step',
+								'/:topicSlug/registration',
+								'/:topicSlug/registration/:step'
 							]
 						},
 						component: NewRegistration
@@ -79,9 +84,9 @@ if (container) {
 							path: '/themen'
 						},
 						component: () => (
-							<Redirect
+							<Navigate
 								to={'/registration/topic-selection'}
-								from={'/themen'}
+								replace
 							/>
 						)
 					},

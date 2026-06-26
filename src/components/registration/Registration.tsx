@@ -9,13 +9,9 @@ import {
 	FormEvent
 } from 'react';
 import {
-	Route,
-	Switch,
-	useHistory,
+	useNavigate,
 	useLocation,
 	useParams,
-	useRouteMatch,
-	generatePath,
 	Link as RouterLink
 } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -71,12 +67,26 @@ export const Registration = () => {
 	const settings = useAppConfig();
 	const isFirstVisit = useIsFirstVisit();
 	const location = useLocation();
-	const history = useHistory();
-	const { path } = useRouteMatch();
+	const navigate = useNavigate();
 	const { step, topicSlug } = useParams<{
-		step: string;
-		topicSlug: string;
+		step?: string;
+		topicSlug?: string;
 	}>();
+
+	// Build an absolute step URL from the route params (replaces v5's
+	// generatePath(useRouteMatch().path, …)). `welcome`/no step → the bare
+	// registration path, which renders the WelcomeScreen.
+	const makeStepUrl = useCallback(
+		(stepName?: string | null) => {
+			const base = topicSlug
+				? `/${topicSlug}/registration`
+				: '/registration';
+			return stepName && stepName !== 'welcome'
+				? `${base}/${stepName}${location.search}`
+				: `${base}${location.search}`;
+		},
+		[topicSlug, location.search]
+	);
 
 	const { Stage } = useContext(GlobalComponentContext);
 	const { addNotification } = useContext(NotificationsContext);
@@ -119,14 +129,19 @@ export const Registration = () => {
 		[availableSteps, step]
 	);
 
+	// The step form renders only for a real step; any other path (incl. the
+	// bare /registration and an unknown :step) falls back to the WelcomeScreen,
+	// matching the v5 catch-all <Route> behaviour.
+	const activeStep = availableSteps[currStepIndex];
+
 	const [prevStepUrl, nextStepUrl] = useMemo(
 		() => [
-			`${generatePath(path, { topicSlug, step: availableSteps[currStepIndex - 1]?.name || 'welcome' })}${location.search}`,
+			makeStepUrl(availableSteps[currStepIndex - 1]?.name),
 			availableSteps[currStepIndex + 1]
-				? `${generatePath(path, { topicSlug, step: availableSteps[currStepIndex + 1]?.name || 'welcome' })}${location.search}`
+				? makeStepUrl(availableSteps[currStepIndex + 1]?.name)
 				: null
 		],
-		[availableSteps, currStepIndex, path, topicSlug, location.search]
+		[availableSteps, currStepIndex, makeStepUrl]
 	);
 
 	const mergedRegistrationData = useMemo(
@@ -160,10 +175,10 @@ export const Registration = () => {
 	const onNextClick = useCallback(() => {
 		updateRegistrationData(stepData);
 		setStepData({});
-		if (history && nextStepUrl) {
-			history.push(nextStepUrl);
+		if (nextStepUrl) {
+			navigate(nextStepUrl);
 		}
-	}, [updateRegistrationData, stepData, history, nextStepUrl]);
+	}, [updateRegistrationData, stepData, navigate, nextStepUrl]);
 
 	const onPrevClick = useCallback(() => {
 		setStepData({});
@@ -182,20 +197,8 @@ export const Registration = () => {
 			agency: undefined,
 			agencyId: undefined
 		});
-		history.push(
-			`${generatePath(path, {
-				topicSlug,
-				step: 'topic-selection'
-			})}${location.search}`
-		);
-	}, [
-		history,
-		location.search,
-		path,
-		setDisabledNextButton,
-		topicSlug,
-		updateRegistrationData
-	]);
+		navigate(makeStepUrl('topic-selection'));
+	}, [navigate, makeStepUrl, setDisabledNextButton, updateRegistrationData]);
 
 	const onClearPostcodeSelection = useCallback(() => {
 		setStepData({});
@@ -205,20 +208,8 @@ export const Registration = () => {
 			agency: undefined,
 			agencyId: undefined
 		});
-		history.push(
-			`${generatePath(path, {
-				topicSlug,
-				step: 'zipcode'
-			})}${location.search}`
-		);
-	}, [
-		history,
-		location.search,
-		path,
-		setDisabledNextButton,
-		topicSlug,
-		updateRegistrationData
-	]);
+		navigate(makeStepUrl('zipcode'));
+	}, [navigate, makeStepUrl, setDisabledNextButton, updateRegistrationData]);
 
 	const footerChips = useMemo<RegistrationFooterChipItem[]>(() => {
 		const chips: RegistrationFooterChipItem[] = [];
@@ -281,21 +272,9 @@ export const Registration = () => {
 			}
 
 			setStepData({});
-			history.push(
-				`${generatePath(path, {
-					topicSlug,
-					step: targetStepName
-				})}${location.search}`
-			);
+			navigate(makeStepUrl(targetStepName));
 		},
-		[
-			availableSteps,
-			currStepIndex,
-			history,
-			location.search,
-			path,
-			topicSlug
-		]
+		[availableSteps, currStepIndex, navigate, makeStepUrl]
 	);
 
 	useEffect(() => {
@@ -305,18 +284,14 @@ export const Registration = () => {
 			.filter((missingStep) => missingStep < currStepIndex);
 
 		if (missingPreviousSteps.length > 0) {
-			history.push(
-				`${generatePath(path, { topicSlug, step: availableSteps[missingPreviousSteps[0]]?.name })}${location.search}`
-			);
+			navigate(makeStepUrl(availableSteps[missingPreviousSteps[0]]?.name));
 		}
 	}, [
 		availableSteps,
 		checkForStepsWithMissingMandatoryFields,
-		history,
-		location.search,
-		currStepIndex,
-		path,
-		topicSlug
+		navigate,
+		makeStepUrl,
+		currStepIndex
 	]);
 
 	const onRegisterClick = useCallback(() => {
@@ -424,16 +399,6 @@ export const Registration = () => {
 		]
 	);
 
-	const stepPaths = useMemo(
-		() =>
-			availableSteps.reduce(
-				(acc, { name }) =>
-					acc.concat(generatePath(path, { topicSlug, step: name })),
-				[]
-			),
-		[availableSteps, path, topicSlug]
-	);
-
 	return (
 		<>
 			<StageLayout
@@ -449,8 +414,8 @@ export const Registration = () => {
 						width: '100%'
 					}}
 				>
-					<Switch>
-						<Route path={stepPaths}>
+					{activeStep ? (
+						<>
 							<Helmet>
 								<meta name="robots" content="noindex"></meta>
 							</Helmet>
@@ -485,38 +450,17 @@ export const Registration = () => {
 											mx: 'auto'
 										}}
 									>
-										<Switch>
-											{availableSteps.map(
-												({
-													name,
-													component: Component
-												}) => (
-													<Route
-														path={generatePath(
-															path,
-															{
-																topicSlug,
-																step: name
-															}
-														)}
-														key={name}
-													>
-														<Component
-															key={`${name}-${clearSelectionVersion}`}
-															onChange={
-																setStepData
-															}
-															onNextClick={
-																onNextClick
-															}
-															nextStepUrl={
-																nextStepUrl
-															}
-														/>
-													</Route>
-												)
-											)}
-										</Switch>
+										{(() => {
+											const StepComponent = activeStep.component;
+											return (
+												<StepComponent
+													key={`${activeStep.name}-${clearSelectionVersion}`}
+													onChange={setStepData}
+													onNextClick={onNextClick}
+													nextStepUrl={nextStepUrl}
+												/>
+											);
+										})()}
 									</Box>
 								</Box>
 								<Box
@@ -650,11 +594,10 @@ export const Registration = () => {
 									</Box>
 								</Box>
 							</form>
-						</Route>
-						<Route>
-							<WelcomeScreen nextStepUrl={nextStepUrl} />
-						</Route>
-					</Switch>
+						</>
+					) : (
+						<WelcomeScreen nextStepUrl={nextStepUrl} />
+					)}
 				</Box>
 			</StageLayout>
 		</>
