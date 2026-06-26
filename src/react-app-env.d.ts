@@ -10,6 +10,7 @@ declare namespace NodeJS {
 		readonly VITE_API_URL?: string;
 		readonly REACT_APP_USER_SERVICE_ORIGIN?: string;
 		readonly REACT_APP_TENANT_SERVICE_ORIGIN?: string;
+		readonly REACT_APP_LOCAL_TENANT_ID?: string;
 		readonly REACT_APP_AGENCY_SERVICE_ORIGIN?: string;
 		readonly REACT_APP_CONSULTING_TYPE_SERVICE_ORIGIN?: string;
 		readonly REACT_APP_KEYCLOAK_ORIGIN?: string;

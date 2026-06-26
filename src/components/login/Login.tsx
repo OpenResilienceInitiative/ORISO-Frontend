@@ -56,6 +56,7 @@ import { budibaseLogout } from '../budibase/budibaseLogout';
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
 import { UrlParamsContext } from '../../globalState/provider/UrlParamsProvider';
 import { setTokens } from '../auth/auth';
+import { getLocalTenantId } from '../../resources/scripts/runtimeConfig';
 
 const regexAccountDeletedError = /account disabled/i;
 
@@ -231,6 +232,10 @@ export const Login = () => {
 
 	useEffect(() => {
 		deleteCookieByName('tenantId');
+		const localTenantId = getLocalTenantId();
+		if (localTenantId) {
+			setValueInCookie('tenantId', localTenantId);
+		}
 	}, []);
 
 	const postLogin = useCallback(
