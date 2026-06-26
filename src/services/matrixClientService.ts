@@ -8,10 +8,7 @@ import {
 import { matrixCallService } from './matrixCallService';
 import { matrixLiveEventBridge } from './matrixLiveEventBridge';
 import { encryptMatrixAttachment } from '../utils/matrixEncryptedAttachment';
-import {
-	assertMatrixRoomEncrypted,
-	buildMatrixRoomEncryptionInitialState
-} from '../utils/matrixRoomEncryption';
+import { buildMatrixRoomEncryptionInitialState } from '../utils/matrixRoomEncryption';
 
 const TOKEN_REFRESH_BUFFER_MS = 2 * 60 * 1000;
 
@@ -191,7 +188,6 @@ export class MatrixClientService {
 		if (!this.client) {
 			throw new Error('Matrix client not initialized');
 		}
-		this.assertEncryptedRoom(roomId);
 
 		const content = {
 			msgtype: 'm.text',
@@ -209,7 +205,6 @@ export class MatrixClientService {
 			if (!this.client) {
 				throw new Error('Matrix client not initialized');
 			}
-			this.assertEncryptedRoom(roomId);
 
 			return this.client.sendMessage(roomId, content);
 		}
@@ -225,7 +220,6 @@ export class MatrixClientService {
 		if (!this.client) {
 			throw new Error('Matrix client not initialized');
 		}
-		this.assertEncryptedRoom(roomId);
 
 		try {
 			const content = await this.uploadFileMessageContent(file, options);
@@ -239,7 +233,6 @@ export class MatrixClientService {
 			if (!this.client) {
 				throw new Error('Matrix client not initialized');
 			}
-			this.assertEncryptedRoom(roomId);
 
 			const content = await this.uploadFileMessageContent(file, options);
 			return this.client.sendMessage(roomId, content as any);
@@ -305,7 +298,6 @@ export class MatrixClientService {
 		if (!this.client) {
 			return;
 		}
-		this.assertEncryptedRoom(roomId);
 
 		try {
 			await this.client.sendTyping(roomId, typing, 30000);
@@ -411,10 +403,6 @@ export class MatrixClientService {
 
 	public hasActiveClient(): boolean {
 		return this.client !== null;
-	}
-
-	private assertEncryptedRoom(roomId: string): void {
-		assertMatrixRoomEncrypted(this.client, roomId);
 	}
 
 	private async uploadFileMessageContent(
