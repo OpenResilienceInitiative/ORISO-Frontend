@@ -1950,7 +1950,7 @@
 			"subline": "Afin de protéger votre anonymat, nous vous conseillons de ne pas utiliser votre nom réel ou vos initiales.",
 			"username": {
 				"error": {
-					"available": "Votre nom d'utilisateur est trop court.",
+					"tooShort": "Votre nom d'utilisateur est trop court.",
 					"unavailable": "Ce nom d'utilisateur est déjà pris."
 				},
 				"hint": "Nom de connexion anonyme. N'utilisez pas de vrai nom ni d'initiales.",

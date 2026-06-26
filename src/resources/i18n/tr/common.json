@@ -1971,7 +1971,7 @@
 			"subline": "Anonimliğinizi korumak için gerçek adınızı veya baş harflerinizi kullanmamanızı tavsiye ederiz.",
 			"username": {
 				"error": {
-					"available": "Kullanıcı adınız çok kısa.",
+					"tooShort": "Kullanıcı adınız çok kısa.",
 					"unavailable": "Bu kullanıcı adı zaten alınmış."
 				},
 				"hint": "Anonim oturum açma adı. Lütfen gerçek ad veya baş harf kullanmayın.",

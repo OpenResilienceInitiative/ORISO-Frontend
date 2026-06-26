@@ -363,7 +363,19 @@ export const AgencySelectionResults = ({
 						data-cy="agency-selection-radio-group"
 						aria-label="agency-selection-radio-group"
 						name="agency-selection-radio-group"
-						value={results?.[0].name || ''}
+						value={
+							selectedAgency?.id?.toString() ||
+							results?.[0].id.toString() ||
+							''
+						}
+						onChange={() => {
+							if (!results?.[0]) {
+								return;
+							}
+							setDisabledNextButton(false);
+							setSelectedAgency(results[0]);
+							onChange({ agency: results[0] });
+						}}
 					>
 						<Box
 							sx={{
@@ -393,7 +405,7 @@ export const AgencySelectionResults = ({
 										m: 0
 									}
 								}}
-								value={results?.[0].name || ''}
+								value={results?.[0].id.toString() || ''}
 								control={
 									<Radio
 										sx={{

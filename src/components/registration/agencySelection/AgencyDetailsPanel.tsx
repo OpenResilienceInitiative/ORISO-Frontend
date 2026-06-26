@@ -203,6 +203,23 @@ function nativeNavHref(
 	return osmLink(details);
 }
 
+function safeWebUrl(url: string | undefined): string | undefined {
+	if (!url) {
+		return undefined;
+	}
+
+	try {
+		const parsed = new URL(url, 'https://oriso.org');
+		if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+			return undefined;
+		}
+
+		return parsed.href;
+	} catch {
+		return undefined;
+	}
+}
+
 const mapActionSx = {
 	'display': 'inline-flex',
 	'alignItems': 'center',
@@ -279,6 +296,10 @@ export const AgencyDetailsPanel = ({
 	const nativeMapHref = useMemo(
 		() => nativeNavHref(details, agency.name),
 		[agency.name, details]
+	);
+	const safeDetailsUrl = useMemo(
+		() => safeWebUrl(details.url),
+		[details.url]
 	);
 
 	return (
@@ -413,7 +434,7 @@ export const AgencyDetailsPanel = ({
 					</InfoRow>
 				)}
 
-				{details.url && (
+				{safeDetailsUrl && (
 					<InfoRow
 						icon={<LanguageRoundedIcon fontSize="small" />}
 						label={t(
@@ -422,12 +443,12 @@ export const AgencyDetailsPanel = ({
 						)}
 					>
 						<Link
-							href={details.url}
+							href={safeDetailsUrl}
 							target="_blank"
 							rel="noopener noreferrer"
 							sx={mapActionSx}
 						>
-							{details.url}
+							{safeDetailsUrl}
 							<OpenInNewRoundedIcon sx={{ fontSize: 16 }} />
 						</Link>
 					</InfoRow>

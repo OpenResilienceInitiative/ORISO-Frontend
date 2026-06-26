@@ -2073,7 +2073,7 @@
 			"subline": "To protect your anonymity, we advise you not to use your real name or initials.",
 			"username": {
 				"error": {
-					"available": "Your username is too short.",
+					"tooShort": "Your username is too short.",
 					"unavailable": "This username is already taken."
 				},
 				"hint": "Anonymous login name. Please do not use real names or initials.",

@@ -751,7 +751,7 @@
 			"subline": "Um Deine Anonymität zu schützen, raten wir Dir, nicht Deinen tatsächlichen Namen oder Initialen zu verwenden.",
 			"username": {
 				"error": {
-					"available": "Dein Benutzername ist zu kurz."
+					"tooShort": "Dein Benutzername ist zu kurz."
 				},
 				"info": "Anonymer Login-Name. Bitte keine echten Namen oder Initialen verwenden.",
 				"success": "Dein Benutzername ist geeignet."

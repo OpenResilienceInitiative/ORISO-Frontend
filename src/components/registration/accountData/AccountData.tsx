@@ -220,7 +220,7 @@ export const AccountData: FC<{
 		(usernameAvailabilityChecked && !isUsernameAvailable);
 	const usernameHelperText = usernameHasError
 		? isUsernameAvailable
-			? t('registration.account.username.error.available')
+			? t('registration.account.username.error.tooShort')
 			: t('registration.account.username.error.unavailable')
 		: usernameAvailabilityChecked && isUsernameAvailable
 			? t('registration.account.username.success')
