@@ -432,7 +432,7 @@ export const SessionsList = ({
 	 */
 	const readChipFromUrl = (): SessionToolbarChipFilter | null => {
 		try {
-			const params = new URLSearchParams(window.location.search);
+			const params = new URLSearchParams(location.search);
 			return normalizeSessionToolbarChip(params.get('chip'));
 		} catch {
 			/* ignore */
