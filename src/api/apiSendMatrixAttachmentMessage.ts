@@ -4,6 +4,7 @@ import {
 	apiPostMessageEventNotification,
 	MessageEventNotificationInput
 } from './apiPostMessageEventNotification';
+import { chatTransportService } from '../services/chatTransportService';
 
 export interface SendMatrixAttachmentMessageOptions
 	extends MatrixFileMessageOptions {
@@ -22,6 +23,13 @@ export const apiSendMatrixAttachmentMessage = async (
 	options: SendMatrixAttachmentMessageOptions = {},
 	postMessageEventNotification: PostMessageEventNotification = apiPostMessageEventNotification
 ): Promise<any> => {
+	if (chatTransportService.isFacadeEnabled()) {
+		return chatTransportService.sendFileMessage(matrixRoomId, file, {
+			...options,
+			postMessageEventNotification
+		});
+	}
+
 	const response = await getMatrixClientService()?.sendFileMessage(
 		matrixRoomId,
 		file,
