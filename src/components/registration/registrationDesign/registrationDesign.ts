@@ -43,6 +43,14 @@ export const registrationMd3 = {
 
 export const registrationMd3TextFieldSx = orisoTextFieldSx;
 
+export const registrationMotion = {
+	easeOut: 'cubic-bezier(0.22, 1, 0.36, 1)',
+	softSpring: 'cubic-bezier(0.34, 1.24, 0.44, 1)',
+	quick: '180ms',
+	standard: '240ms',
+	slow: '320ms'
+} as const;
+
 export const registrationScreenTitleSx = {
 	color: registrationMd3.onSurface,
 	fontSize: { xs: 28, sm: 28 },

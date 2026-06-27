@@ -1721,6 +1721,7 @@
 	"registration": {
 		"selectedLabel": "ተመሪጹ",
 		"noneSelected": "ንምቕጻል በጃኹም ሓደ ኣርእስቲ ምረጹ።",
+		"topicInstruction": "ሓደ ኣርእስቲ ምረጹ።",
 		"accordion": {
 			"item": {
 				"continueButton": {

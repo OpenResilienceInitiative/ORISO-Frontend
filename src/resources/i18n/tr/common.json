@@ -1729,6 +1729,7 @@
 		},
 		"selectedLabel": "Seçildi",
 		"noneSelected": "Devam etmek için lütfen bir konu seçin.",
+		"topicInstruction": "Bir konu seçin.",
 		"age": {
 			"dropdown": "Yaş seçin*",
 			"headline": "Yaş belirtiniz"

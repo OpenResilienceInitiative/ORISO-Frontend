@@ -42,6 +42,7 @@ import {
 	getRegistrationTopicDisplay,
 	getRegistrationTopicIcon,
 	registrationMd3,
+	registrationMotion,
 	registrationScreenIntroSx,
 	registrationScreenTitleSx,
 	RegistrationTopicPresentationGroup
@@ -110,7 +111,6 @@ export const TopicSelection: FC<{
 		topicGroups,
 		value
 	]);
-
 	const compareTopicsByDisplayName = useCallback(
 		(a: TopicsDataInterface, b: TopicsDataInterface) =>
 			getRegistrationTopicDisplay(a, locale).title.localeCompare(
@@ -404,206 +404,292 @@ export const TopicSelection: FC<{
 											}}
 										/>
 									))
-							: (topicGroups || []).map((topicGroup) => {
-									const expanded =
-										expandedTopicGroupIds.includes(
-											topicGroup.id
-										);
-									const holdsSelection =
-										topicGroup.id === topicGroupId &&
-										value != null;
+							: (topicGroups || []).map(
+									(topicGroup, groupIndex) => {
+										const expanded =
+											expandedTopicGroupIds.includes(
+												topicGroup.id
+											);
+										const holdsSelection =
+											topicGroup.id === topicGroupId &&
+											value != null;
+										const enterDelay =
+											130 + groupIndex * 55;
 
-									return (
-										<Accordion
-											data-cy={`topic-group-${topicGroup.id}`}
-											key={`topicGroup-${topicGroup.id}`}
-											ref={(node) => {
-												topicGroupRefs.current[
-													topicGroup.id
-												] = node;
-											}}
-											expanded={expanded}
-											onChange={() =>
-												toggleTopicGroup(topicGroup.id)
-											}
-											disableGutters
-											elevation={0}
-											TransitionProps={{
-												unmountOnExit: true,
-												timeout: {
-													enter: 220,
-													exit: 170
-												},
-												style: {
-													transitionDelay: expanded
-														? '0ms'
-														: '50ms'
+										return (
+											<Accordion
+												className="registrationTopicGroup"
+												data-cy={`topic-group-${topicGroup.id}`}
+												key={`topicGroup-${topicGroup.id}`}
+												ref={(node) => {
+													topicGroupRefs.current[
+														topicGroup.id
+													] = node;
+												}}
+												expanded={expanded}
+												onChange={() =>
+													toggleTopicGroup(
+														topicGroup.id
+													)
 												}
-											}}
-											sx={{
-												'boxShadow': 'none',
-												'border': `1px solid ${registrationMd3.outlineVariant}`,
-												'borderRadius': '32px',
-												'overflow': 'hidden',
-												'backgroundColor':
-													registrationMd3.surface,
-												'&:before': {
-													display: 'none'
-												},
-												'&&, &&:first-of-type, &&:last-of-type':
-													{
+												disableGutters
+												elevation={0}
+												TransitionProps={{
+													unmountOnExit: true,
+													timeout: {
+														enter: 260,
+														exit: 200
+													},
+													style: {
+														transitionTimingFunction:
+															registrationMotion.easeOut,
+														transitionDelay:
+															expanded
+																? '0ms'
+																: '50ms'
+													}
+												}}
+												sx={{
+													'boxShadow': 'none',
+													'border': `1px solid ${registrationMd3.outlineVariant}`,
+													'borderRadius': '32px',
+													'overflow': 'hidden',
+													'backgroundColor':
+														registrationMd3.surface,
+													'position': 'relative',
+													'willChange':
+														'transform, box-shadow',
+													'animation': `registrationTopicGroupEnter ${registrationMotion.slow} ${registrationMotion.easeOut} ${enterDelay}ms both`,
+													'transition': `transform ${registrationMotion.standard} ${registrationMotion.softSpring}, box-shadow ${registrationMotion.standard} ${registrationMotion.easeOut}, border-color ${registrationMotion.standard} ${registrationMotion.easeOut}`,
+													'&:before': {
+														display: 'none'
+													},
+													'&&, &&:first-of-type, &&:last-of-type':
+														{
+															borderRadius: '32px'
+														},
+													'&:hover': {
+														transform:
+															'translateY(-2px) scale(1.012)',
+														boxShadow:
+															'0 18px 38px rgba(27, 27, 28, 0.12)',
+														borderColor:
+															'rgba(45, 111, 123, 0.32)',
+														zIndex: 2
+													},
+													'&:hover + .registrationTopicGroup':
+														{
+															transform:
+																'translateY(2px) scale(0.996)'
+														},
+													'&:has(+ .registrationTopicGroup:hover)':
+														{
+															transform:
+																'translateY(-1px) scale(0.998)'
+														},
+													'& .MuiAccordionSummary-root:hover':
+														{
+															backgroundColor:
+																registrationMd3.hoverLayer
+														},
+													'&&.Mui-expanded': {
+														margin: 0,
 														borderRadius: '32px'
 													},
-												'& .MuiAccordionSummary-root:hover':
-													{
-														backgroundColor:
-															registrationMd3.hoverLayer
-													},
-												'&&.Mui-expanded': {
-													margin: 0,
-													borderRadius: '32px'
-												}
-											}}
-										>
-											<AccordionSummary
-												expandIcon={
-													<ExpandMoreRoundedIcon
-														sx={{
-															color: registrationMd3.onSurfaceVariant,
-															width: 32,
-															height: 32
-														}}
-													/>
-												}
-												aria-controls={`panel-${topicGroup.categoryId}-content`}
-												id={`panel-${topicGroup.categoryId}`}
-												sx={{
-													'minHeight': 68,
-													'px': 2,
-													'borderRadius': '32px',
-													'background': `linear-gradient(100deg, ${registrationMd3.surfaceContainerHigh} 0%, ${registrationMd3.surfaceContainerLow} 90%)`,
-													'&.Mui-expanded': {
-														borderRadius:
-															'32px 32px 0 0'
-													},
-													'& .MuiAccordionSummary-content':
+													'@keyframes registrationTopicGroupEnter':
 														{
-															alignItems:
-																'center',
-															gap: 1.5,
-															my: 1.25,
-															minWidth: 0
+															'0%': {
+																opacity: 0,
+																translate:
+																	'0 18px',
+																scale: 0.985
+															},
+															'100%': {
+																opacity: 1,
+																translate:
+																	'0 0',
+																scale: 1
+															}
 														},
-													'& .MuiAccordionSummary-content.Mui-expanded':
+													'@media (hover: none)': {
+														'&:hover': {
+															transform: 'none',
+															boxShadow: 'none'
+														},
+														'&:hover + .registrationTopicGroup':
+															{
+																transform:
+																	'none'
+															},
+														'&:has(+ .registrationTopicGroup:hover)':
+															{
+																transform:
+																	'none'
+															}
+													},
+													'@media (prefers-reduced-motion: reduce)':
 														{
-															m: '10px 0'
+															'animation': 'none',
+															'transition':
+																'none',
+															'&:hover': {
+																transform:
+																	'none'
+															}
 														}
 												}}
 											>
-												<Avatar
-													src={topicGroup.icon}
-													alt=""
-													imgProps={{
-														loading: 'lazy',
-														decoding: 'async'
-													}}
+												<AccordionSummary
+													expandIcon={
+														<ExpandMoreRoundedIcon
+															sx={{
+																color: registrationMd3.onSurfaceVariant,
+																width: 32,
+																height: 32,
+																transition: `transform ${registrationMotion.standard} ${registrationMotion.easeOut}`
+															}}
+														/>
+													}
+													aria-controls={`panel-${topicGroup.categoryId}-content`}
+													id={`panel-${topicGroup.categoryId}`}
 													sx={{
-														width: 52,
-														height: 52,
-														bgcolor: 'transparent',
-														border: `2px solid ${registrationMd3.onSurface}`,
-														flexShrink: 0
-													}}
-												/>
-												<Typography
-													variant="h6"
-													sx={{
-														flex: 1,
-														minWidth: 0,
-														fontWeight: 700,
-														color: registrationMd3.onSurface
+														'minHeight': 68,
+														'px': 2,
+														'borderRadius': '32px',
+														'background': `linear-gradient(100deg, ${registrationMd3.surfaceContainerHigh} 0%, ${registrationMd3.surfaceContainerLow} 90%)`,
+														'transition': `background-color ${registrationMotion.standard} ${registrationMotion.easeOut}`,
+														'&.Mui-expanded': {
+															borderRadius:
+																'32px 32px 0 0'
+														},
+														'& .MuiAccordionSummary-content':
+															{
+																alignItems:
+																	'center',
+																gap: 1.5,
+																my: 1.25,
+																minWidth: 0
+															},
+														'& .MuiAccordionSummary-content.Mui-expanded':
+															{
+																m: '10px 0'
+															}
 													}}
 												>
-													{topicGroup.name}
-												</Typography>
-												{holdsSelection &&
-													!expanded && (
-														<CheckCircleRoundedIcon
-															sx={{
-																color: registrationMd3.primary,
-																fontSize: 20,
-																mr: 0.5
-															}}
-															aria-hidden
-														/>
-													)}
-											</AccordionSummary>
-											<AccordionDetails
-												sx={{ p: 0 }}
-												data-cy={`topic-group-${topicGroup.id}-topic-selection-radio-group`}
-											>
-												<List disablePadding>
-													{topicGroup.topics.map(
-														(
-															placement,
-															index,
-															placements
-														) => (
-															<TopicSelect
-																key={
-																	placement.placementId
-																}
-																topics={topics}
-																index={index}
-																isLast={
-																	index ===
-																	placements.length -
-																		1
-																}
-																topic={
-																	placement.topic
-																}
-																topicIcon={
-																	placement.icon
-																}
-																locale={locale}
-																checked={
-																	selectedPlacementId ===
-																	placement.placementId
-																}
-																tabIndex={
-																	activeGroupedPlacementId ===
-																	placement.placementId
-																		? 0
-																		: -1
-																}
-																onChange={() => {
-																	setValue(
-																		placement
-																			.topic
-																			.id
-																	);
-																	setTopicGroupId(
-																		topicGroup.id
-																	);
-																	setSelectedPlacementId(
-																		placement.placementId
-																	);
-																	onChange({
-																		mainTopic:
-																			placement.topic,
-																		topicGroupId:
-																			topicGroup.id
-																	});
+													<Avatar
+														src={topicGroup.icon}
+														alt=""
+														imgProps={{
+															loading: 'lazy',
+															decoding: 'async'
+														}}
+														sx={{
+															width: 52,
+															height: 52,
+															bgcolor:
+																'transparent',
+															border: `2px solid ${registrationMd3.onSurface}`,
+															flexShrink: 0
+														}}
+													/>
+													<Typography
+														variant="h6"
+														sx={{
+															flex: 1,
+															minWidth: 0,
+															fontWeight: 700,
+															color: registrationMd3.onSurface
+														}}
+													>
+														{topicGroup.name}
+													</Typography>
+													{holdsSelection &&
+														!expanded && (
+															<CheckCircleRoundedIcon
+																sx={{
+																	color: registrationMd3.primary,
+																	fontSize: 20,
+																	mr: 0.5
 																}}
+																aria-hidden
 															/>
-														)
-													)}
-												</List>
-											</AccordionDetails>
-										</Accordion>
-									);
-								})}
+														)}
+												</AccordionSummary>
+												<AccordionDetails
+													sx={{ p: 0 }}
+													data-cy={`topic-group-${topicGroup.id}-topic-selection-radio-group`}
+												>
+													<List disablePadding>
+														{topicGroup.topics.map(
+															(
+																placement,
+																index,
+																placements
+															) => (
+																<TopicSelect
+																	key={
+																		placement.placementId
+																	}
+																	topics={
+																		topics
+																	}
+																	index={
+																		index
+																	}
+																	isLast={
+																		index ===
+																		placements.length -
+																			1
+																	}
+																	topic={
+																		placement.topic
+																	}
+																	topicIcon={
+																		placement.icon
+																	}
+																	locale={
+																		locale
+																	}
+																	checked={
+																		selectedPlacementId ===
+																		placement.placementId
+																	}
+																	tabIndex={
+																		activeGroupedPlacementId ===
+																		placement.placementId
+																			? 0
+																			: -1
+																	}
+																	onChange={() => {
+																		setValue(
+																			placement
+																				.topic
+																				.id
+																		);
+																		setTopicGroupId(
+																			topicGroup.id
+																		);
+																		setSelectedPlacementId(
+																			placement.placementId
+																		);
+																		onChange(
+																			{
+																				mainTopic:
+																					placement.topic,
+																				topicGroupId:
+																					topicGroup.id
+																			}
+																		);
+																	}}
+																/>
+															)
+														)}
+													</List>
+												</AccordionDetails>
+											</Accordion>
+										);
+									}
+								)}
 					</Box>
 				</FormControl>
 			)}
@@ -693,16 +779,23 @@ const TopicSelect = ({
 					'backgroundColor': checked
 						? registrationMd3.selectedLayer
 						: registrationMd3.surface,
+					'transition': `background-color ${registrationMotion.standard} ${registrationMotion.easeOut}, transform ${registrationMotion.quick} ${registrationMotion.easeOut}`,
 					'&:hover': {
 						backgroundColor: checked
 							? registrationMd3.selectedLayer
-							: registrationMd3.hoverLayer
+							: registrationMd3.hoverLayer,
+						transform: 'translateX(2px)'
 					},
 					'&.Mui-selected': {
 						backgroundColor: registrationMd3.selectedLayer
 					},
 					'&.Mui-selected:hover': {
 						backgroundColor: registrationMd3.selectedLayer
+					},
+					'@media (hover: none)': {
+						'&:hover': {
+							transform: 'none'
+						}
 					}
 				}}
 			>
