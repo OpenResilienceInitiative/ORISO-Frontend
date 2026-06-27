@@ -30,3 +30,40 @@ jobs:
         push_to_ghcr: false
         image_name: oriso-frontend
         github_token: ${{ secrets.GITHUB_TOKEN }}
+
+  playwright-smoke:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v6
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: npm
+
+    - name: Install dependencies
+      shell: bash
+      run: npm ci --ignore-scripts --legacy-peer-deps
+
+    - name: Install Playwright browser
+      shell: bash
+      run: npx playwright install --with-deps chromium
+
+    - name: Run Playwright public-route smoke tests
+      shell: bash
+      env:
+        CI: 'true'
+      # playwright.config.ts boots `npm run dev` (reads the committed .env) and
+      # asserts the migrated public routes render without an uncaught exception.
+      run: npx playwright test
+
+    - name: Upload Playwright report
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: playwright-report
+        path: playwright-report/
+        retention-days: 7

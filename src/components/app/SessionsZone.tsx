@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
-import { SessionTypeProvider } from '../../globalState';
+import { SessionTypeProvider } from '../../globalState/provider/SessionTypeProvider';
 import { SessionListViewStateProvider } from '../sessionsList/SessionListViewStateContext';
 import { Loading } from './Loading';
 import { toV7Paths, stripPrefix } from '../../utils/routeHelpers';

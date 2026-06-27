@@ -220,6 +220,7 @@
 		"build": "node scripts/build.js",
 		"test": "cross-env NODE_ENV=development FAST_REFRESH=false BROWSER=none REACT_APP_API_URL=http://127.0.0.1:9001 HTTPS=0 PORT=9001 WDS_SOCKET_PORT=9001 concurrently --kill-others --success first \"npm run dev\" \"wait-on http://127.0.0.1:9001 && cypress run\"",
 		"test:unit": "vitest run --passWithNoTests",
+		"test:smoke": "playwright test",
 		"test:components": "NODE_ENV=development cypress run --component --headed",
 		"test:build": "cross-env NODE_ENV=production FAST_REFRESH=false BROWSER=none PORT=9001 CYPRESS_WS_URL=http://127.0.0.1:9002 REACT_APP_API_URL=http://127.0.0.1:9001 concurrently --kill-others --success first \"npm run start\" \"wait-on http://127.0.0.1:9001 && cypress run\"",
 		"release": "standard-version",
