@@ -1,0 +1,120 @@
+{
+	"app": {
+		"brandTitle": "Danışmanlık ve Yardım",
+		"brandSubtitle": "Çevrimiçi. Anonim. Güvenli.",
+		"login": "Giriş yap",
+		"imprint": "Künye",
+		"privacy": "Gizlilik politikası",
+		"partners": "Caritas ve ortaklarının bir hizmetidir"
+	},
+	"reg": {
+		"title": "Kayıt",
+		"step": "Adım {{current}} / {{total}}",
+		"question": "Hangi konuda danışmanlık arıyorsunuz?",
+		"subtitle": "Danışmanlık hizmetlerimizden bir konu seçin.",
+		"back": "Geri",
+		"next": "Devam",
+		"selectedLabel": "Seçildi",
+		"noneSelected": "Devam etmek için lütfen bir konu seçin.",
+		"language": "Dil",
+		"removeSelection": "Seçimi kaldır",
+		"stepNames": {
+			"fokus": "Konu seç",
+			"plz": "Posta kodu",
+			"beratungsstelle": "Danışma merkezi",
+			"registrieren": "Kayıt ol",
+			"anfrage": "Talep gönder"
+		},
+		"postcode": {
+			"title": "Size en iyi şekilde danışmanlık verebilmemiz için posta kodunuza ihtiyacımız var",
+			"whyIntro": "Neden? Çünkü o zaman uzmanlarımız:",
+			"why1": "yaşadığınız yerin çevresindeki yardım olanaklarını bilir",
+			"why2": "bulunduğunuz eyaletin yasalarını bilir",
+			"placeholder": "Posta kodunuz"
+		},
+		"center": {
+			"title": "Danışma merkezini seçin",
+			"intro": "{{postcode}} posta kodu için danışma merkezleri:",
+			"advisesIn": "Bu danışma merkezi size şu dilde danışmanlık verir: Almanca (DE)",
+			"info": "Daha fazla bilgi"
+		},
+		"register": {
+			"title": "Giriş bilgilerini girin",
+			"subtitle": "Anonimliğinizi korumak için gerçek adınızı veya baş harflerinizi kullanmamanızı öneririz.",
+			"username": "Kullanıcı adı",
+			"usernameHint": "5 veya daha fazla karakter",
+			"password": "Parola",
+			"confirm": "Parolayı tekrar edin",
+			"mismatch": "Parolalar eşleşmiyor",
+			"rule": {
+				"length": "en az 9 karakter",
+				"number": "en az bir rakam",
+				"case": "büyük ve küçük harf",
+				"special": "en az bir özel karakter"
+			},
+			"privacyBefore": "",
+			"privacyLink": "gizlilik politikasını",
+			"privacyAfter": " okudum. Bu web sitesi kimlik doğrulama ve gezinme için çerezler kullanır.",
+			"showPassword": "Parolayı göster",
+			"hidePassword": "Parolayı gizle",
+			"submit": "Kayıt ol"
+		},
+		"message": {
+			"title": "Talep gönder",
+			"subtitle": "Lütfen talebinizi kısaca açıklayın. Daha sonra yazmaya istediğiniz zaman devam edebilirsiniz.",
+			"placeholder": "Mesajınız…"
+		},
+		"send": "Talep gönder",
+		"sent": "Talep gönderildi"
+	},
+	"category": {
+		"familie": "Aile, Çocuk ve Gençlik",
+		"alter": "Yaşlılık, Bakım ve Veda",
+		"migration": "Göç ve Entegrasyon",
+		"gesundheit": "Sağlık, Engellilik ve Bağımlılık",
+		"soziales": "Sosyal Sıkıntılar, Krizler ve Finans"
+	},
+	"topic": {
+		"eltern-und-familie": { "title": "Ebeveyn ve Aile" },
+		"kinder-und-jugendliche": { "title": "Çocuklar ve Gençler" },
+		"kinder-und-jugend-reha": {
+			"title": "Çocuk ve Gençlik Rehabilitasyonu"
+		},
+		"kuren-fuer-muetter-und-vaeter": {
+			"title": "Anne ve Babalar için Kür"
+		},
+		"jungen-und-maennerberatung": {
+			"title": "Erkek ve Oğlan Danışmanlığı"
+		},
+		"schwangerschaft": { "title": "Hamilelik" },
+		"u25-suizidpraevention": { "title": "U25 İntihar Önleme" },
+		"leben-im-alter": { "title": "Yaşlılıkta Yaşam" },
+		"rechtliche-betreuung-und-vorsorge": {
+			"title": "Yasal Vesayet ve Önlem"
+		},
+		"hospiz-und-palliativberatung": {
+			"title": "Hospis ve Palyatif Danışmanlık"
+		},
+		"trauerberatung": { "title": "Yas Danışmanlığı" },
+		"migration": { "title": "Göç" },
+		"aus-rueck-und-weiterwanderung": {
+			"title": "Göç, Geri Dönüş ve İleri Göç"
+		},
+		"behinderung-und-psychische-beeintraechtigung": {
+			"title": "Engellilik ve Ruh Sağlığı"
+		},
+		"sucht": { "title": "Bağımlılık" },
+		"hiv-und-aids": { "title": "HIV ve AIDS" },
+		"allgemeine-sozialberatung": { "title": "Genel Sosyal Danışmanlık" },
+		"schulden": { "title": "Borçlar" },
+		"straffaelligkeit": { "title": "Suç ve Ceza Adaleti" }
+	},
+	"lang": {
+		"de": "Deutsch",
+		"en": "English",
+		"tr": "Türkçe",
+		"ar": "العربية",
+		"uk": "Українська",
+		"ru": "Русский"
+	}
+}

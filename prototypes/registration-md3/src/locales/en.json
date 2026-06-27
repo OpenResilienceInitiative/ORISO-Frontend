@@ -1,0 +1,157 @@
+{
+  "app": {
+    "brandTitle": "Counselling & Help",
+    "brandSubtitle": "Online. Anonymous. Safe.",
+    "login": "Log in",
+    "imprint": "Imprint",
+    "privacy": "Privacy policy",
+    "partners": "A service of Caritas and its partners"
+  },
+  "reg": {
+    "title": "Registration",
+    "step": "Step {{current}} of {{total}}",
+    "question": "What topic are you seeking counselling for?",
+    "subtitle": "Choose a topic from our range of counselling services.",
+    "back": "Back",
+    "next": "Continue",
+    "selectedLabel": "Selected",
+    "noneSelected": "Please choose a topic to continue.",
+    "language": "Language",
+    "removeSelection": "Remove selection",
+    "stepNames": { "fokus": "Choose focus", "plz": "Postcode", "beratungsstelle": "Consulting center", "registrieren": "Register", "anfrage": "Send request" },
+    "postcode": {
+      "title": "To be able to advise you as best as possible, we need your postcode",
+      "whyIntro": "Why? Because then our specialists:",
+      "why1": "know the help available around your place of residence",
+      "why2": "know the laws of your federal state",
+      "placeholder": "Your postcode"
+    },
+    "center": {
+      "title": "Choose consulting center",
+      "intro": "Counseling centers for postal code {{postcode}}:",
+      "advisesIn": "This counseling center advises you in: German (DE)",
+      "info": "More information"
+    },
+    "register": {
+      "title": "Capture login data",
+      "subtitle": "To protect your anonymity, we advise you not to use your real name or initials.",
+      "username": "Username",
+      "usernameHint": "5 or more characters",
+      "password": "Password",
+      "confirm": "Repeat password",
+      "mismatch": "Passwords do not match",
+      "rule": {
+        "length": "at least 9 characters",
+        "number": "at least one number",
+        "case": "upper & lower case",
+        "special": "at least one special character"
+      },
+      "privacyBefore": "I have read the ",
+      "privacyLink": "privacy policy",
+      "privacyAfter": ". This website uses cookies for authentication and navigation.",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password",
+      "submit": "Register"
+    },
+    "message": {
+      "title": "Send request",
+      "subtitle": "Briefly describe your concern. You can continue writing anytime later.",
+      "placeholder": "Your message …"
+    },
+    "send": "Send request",
+    "sent": "Request sent"
+  },
+  "lang": {
+    "de": "Deutsch",
+    "en": "English",
+    "tr": "Türkçe",
+    "ar": "العربية",
+    "uk": "Українська",
+    "ru": "Русский"
+  },
+  "category": {
+    "familie": "Family, Children & Youth",
+    "alter": "Age, Care & Farewell",
+    "migration": "Migration & Integration",
+    "gesundheit": "Health, Disability & Addiction",
+    "soziales": "Social Hardship, Crises & Finances"
+  },
+  "topic": {
+    "eltern-und-familie": {
+      "title": "Parents & Family",
+      "desc": "Whether parenting questions, conflicts or family crises – here you'll find understanding support."
+    },
+    "kinder-und-jugendliche": {
+      "title": "Children & Adolescents",
+      "desc": "When everyday life gets to be too much – young people find help and a listening ear here."
+    },
+    "kinder-und-jugend-reha": {
+      "title": "Children's & Youth Rehabilitation",
+      "desc": "For children and young people who want to regain strength after illness or strain."
+    },
+    "kuren-fuer-muetter-und-vaeter": {
+      "title": "Health Cures for Mothers & Fathers",
+      "desc": "Exhausted parents deserve rest – cure programmes help you find your way back to yourself."
+    },
+    "jungen-und-maennerberatung": {
+      "title": "Counselling for Boys & Men",
+      "desc": "A safe space for men and boys to talk openly about worries and burdens."
+    },
+    "schwangerschaft": {
+      "title": "Pregnancy",
+      "desc": "Whether questions, uncertainty or difficult circumstances – we are here for you in every situation."
+    },
+    "u25-suizidpraevention": {
+      "title": "U25 Suicide Prevention",
+      "desc": "When life becomes too hard – young people find immediate support and stability here."
+    },
+    "leben-im-alter": {
+      "title": "Living in Old Age",
+      "desc": "Growing older brings new questions – we help you shape everyday life well and with dignity."
+    },
+    "rechtliche-betreuung-und-vorsorge": {
+      "title": "Legal Guardianship & Advance Care",
+      "desc": "So that important decisions are settled – support with powers of attorney and guardianship."
+    },
+    "hospiz-und-palliativberatung": {
+      "title": "Hospice & Palliative Counselling",
+      "desc": "Support at the end of life – for those affected and their loved ones in a difficult time."
+    },
+    "trauerberatung": {
+      "title": "Grief Counselling",
+      "desc": "Grief needs time and space – we accompany you with empathy through the pain of loss."
+    },
+    "migration": {
+      "title": "Migration",
+      "desc": "Arriving in a new country is not easy – we support you on the way into your new life."
+    },
+    "aus-rueck-und-weiterwanderung": {
+      "title": "Emigration, Return & Onward Migration",
+      "desc": "Whether returning or moving on – advice on your residence status and centre of life."
+    },
+    "behinderung-und-psychische-beeintraechtigung": {
+      "title": "Disability & Mental Health",
+      "desc": "Living with disability or mental strain – we help you find everyday support and services."
+    },
+    "sucht": {
+      "title": "Addiction",
+      "desc": "Addiction affects the whole family – confidential counselling for those affected and relatives."
+    },
+    "hiv-und-aids": {
+      "title": "HIV & Aids",
+      "desc": "Discreet, non-judgemental and empathetic – we stand by you with HIV and Aids."
+    },
+    "allgemeine-sozialberatung": {
+      "title": "General Social Counselling",
+      "desc": "For questions about benefits, authorities or difficult situations – we are here for you."
+    },
+    "schulden": {
+      "title": "Debt",
+      "desc": "Debt can be overwhelming – together we'll find a way out of financial distress."
+    },
+    "straffaelligkeit": {
+      "title": "Offending & Criminal Justice",
+      "desc": "A fresh start after a mistake – support for those affected and their families, without judgement."
+    }
+  }
+}
