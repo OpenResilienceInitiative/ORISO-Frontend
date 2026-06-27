@@ -3,6 +3,7 @@ import { fetchData, FETCH_METHODS } from './fetchData';
 import { apiPostMessageEventNotification } from './apiPostMessageEventNotification';
 import { getMatrixClientService } from '../services/matrixClientRegistry';
 import type { MatrixClientService } from '../services/matrixClientService';
+import { chatTransportService } from '../services/chatTransportService';
 
 export const apiSendMessage = (
 	messageData: string,
@@ -16,6 +17,20 @@ export const apiSendMessage = (
 	senderDisplayName?: string | null,
 	matrixClientServiceOverride?: MatrixClientService | null
 ): Promise<any> => {
+	if (chatTransportService.isFacadeEnabled()) {
+		return chatTransportService.sendTextMessage({
+			roomIdOrSessionId: rcGroupIdOrSessionId,
+			message: messageData,
+			sendMailNotification,
+			isEncrypted,
+			sessionId,
+			matrixRoomId,
+			threadRootId,
+			supervisorMessage,
+			senderDisplayName
+		});
+	}
+
 	// MATRIX MIGRATION: Use Matrix SDK directly for INSTANT local echo (like Element!)
 	if (sessionId && matrixRoomId) {
 		const matrixClientService =

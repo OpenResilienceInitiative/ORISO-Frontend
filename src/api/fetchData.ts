@@ -306,6 +306,8 @@ export const fetchData = ({
 							logout(true, appConfig.urls.toLogin);
 							reject(new Error(FETCH_ERRORS.UNAUTHORIZED));
 						}
+					} else {
+						reject(new Error(FETCH_ERRORS.CATCH_ALL));
 					}
 				} else if (response.status === 401 && isPublicAuthRoute()) {
 					recoverFromStaleAuthOnPublicRoute(

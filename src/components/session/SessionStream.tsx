@@ -56,7 +56,9 @@ import {
 } from '../../api/apiRocketChatSettingsPublic';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
+import { chatTransportService } from '../../services/chatTransportService';
 import { formatMatrixTimelineEvent } from '../../utils/matrixTimelineEventFormatter';
+import { useAppConfig } from '../../hooks/useAppConfig';
 
 interface SessionStreamProps {
 	readonly: boolean;
@@ -73,6 +75,9 @@ export const SessionStream = ({
 	const MATRIX_TYPING_TRIGGER_MS = 1000;
 	const MATRIX_TYPING_STALE_MS = 3600;
 	const { t: translate } = useTranslation();
+	const appConfig = useAppConfig();
+	const chatTransportFacadeEnabled =
+		chatTransportService.isFacadeEnabled(appConfig);
 	const history = useHistory();
 
 	const { type, path: listPath } = useContext(SessionTypeContext);
@@ -114,26 +119,39 @@ export const SessionStream = ({
 	const matrixTypingTimeoutRef = useRef<number | null>(null);
 	const matrixTypingLastTriggerRef = useRef(0);
 	const matrixTypingActivityRef = useRef<Map<string, number>>(new Map());
-	const isMatrixSession = useMemo(
-		() =>
-			Boolean(
-				((!activeSession.rid || isMatrixRoom(activeSession.rid)) &&
-					activeSession.item?.id) ||
-					activeSession.item?.matrixRoomId
-			),
-		[
-			activeSession.rid,
-			activeSession.item?.id,
-			activeSession.item?.matrixRoomId
-		]
+	const resolvedChatSession = useMemo(
+		() => chatTransportService.resolveSession(activeSession),
+		[activeSession]
 	);
-	const matrixRoomId = useMemo(
-		() =>
-			isMatrixRoom(activeSession.rid)
-				? activeSession.rid
-				: activeSession.item?.matrixRoomId || '',
-		[activeSession.rid, activeSession.item?.matrixRoomId]
-	);
+	const isMatrixSession = useMemo(() => {
+		if (chatTransportFacadeEnabled) {
+			return resolvedChatSession.isMatrixSession;
+		}
+		return Boolean(
+			((!activeSession.rid || isMatrixRoom(activeSession.rid)) &&
+				activeSession.item?.id) ||
+				activeSession.item?.matrixRoomId
+		);
+	}, [
+		chatTransportFacadeEnabled,
+		resolvedChatSession.isMatrixSession,
+		activeSession.rid,
+		activeSession.item?.id,
+		activeSession.item?.matrixRoomId
+	]);
+	const matrixRoomId = useMemo(() => {
+		if (chatTransportFacadeEnabled) {
+			return resolvedChatSession.matrixRoomId || '';
+		}
+		return isMatrixRoom(activeSession.rid)
+			? activeSession.rid
+			: activeSession.item?.matrixRoomId || '';
+	}, [
+		chatTransportFacadeEnabled,
+		resolvedChatSession.matrixRoomId,
+		activeSession.rid,
+		activeSession.item?.matrixRoomId
+	]);
 	const clearMatrixTypingTimeout = useCallback(() => {
 		if (matrixTypingTimeoutRef.current) {
 			window.clearTimeout(matrixTypingTimeoutRef.current);
@@ -145,11 +163,17 @@ export const SessionStream = ({
 			if (!isMatrixSession || !matrixRoomId) {
 				return;
 			}
-			matrixClientService
-				?.sendTyping(matrixRoomId, typing)
-				.catch(() => {});
+			const transport = chatTransportFacadeEnabled
+				? chatTransportService
+				: matrixClientService;
+			transport?.sendTyping(matrixRoomId, typing).catch(() => {});
 		},
-		[isMatrixSession, matrixRoomId, matrixClientService]
+		[
+			chatTransportFacadeEnabled,
+			isMatrixSession,
+			matrixRoomId,
+			matrixClientService
+		]
 	);
 	const handleSessionTyping = useCallback(
 		(isCleared) => {
@@ -209,22 +233,35 @@ export const SessionStream = ({
 		// Matrix-backed sessions must hydrate from the local Matrix SDK timeline.
 		// Pulling message history through ORISO REST would move decrypted/plaintext
 		// bodies outside the room encryption boundary.
-		const isMatrixBackedSession =
-			Boolean(activeSession.item?.matrixRoomId) ||
-			isMatrixRoom(activeSession.rid);
+		const resolvedSession = chatTransportFacadeEnabled
+			? resolvedChatSession
+			: chatTransportService.resolveSession(activeSession);
+		const isMatrixBackedSession = chatTransportFacadeEnabled
+			? resolvedSession.isMatrixSession
+			: Boolean(activeSession.item?.matrixRoomId) ||
+				isMatrixRoom(activeSession.rid);
 		if (isMatrixBackedSession) {
-			const resolvedMatrixRoomId = isMatrixRoom(activeSession.rid)
-				? activeSession.rid
-				: activeSession.item?.matrixRoomId;
+			const resolvedMatrixRoomId = chatTransportFacadeEnabled
+				? resolvedSession.matrixRoomId
+				: isMatrixRoom(activeSession.rid)
+					? activeSession.rid
+					: activeSession.item?.matrixRoomId;
 			const matrixClient = matrixClientService?.getClient?.();
 			const matrixRoom = resolvedMatrixRoomId
-				? matrixClient?.getRoom?.(resolvedMatrixRoomId)
+				? chatTransportFacadeEnabled
+					? chatTransportService.getMatrixRoom(resolvedMatrixRoomId)
+					: matrixClient?.getRoom?.(resolvedMatrixRoomId)
 				: null;
 			const matrixEvents = resolvedMatrixRoomId
-				? matrixClientService?.getRoomMessages?.(
-						resolvedMatrixRoomId,
-						100
-					) || []
+				? chatTransportFacadeEnabled
+					? chatTransportService.getMatrixRoomMessages(
+							resolvedMatrixRoomId,
+							100
+						)
+					: matrixClientService?.getRoomMessages?.(
+							resolvedMatrixRoomId,
+							100
+						) || []
 				: [];
 			const encryptedFallbackText = translate(
 				'e2ee.message.encryption.text'
@@ -267,11 +304,12 @@ export const SessionStream = ({
 			);
 		});
 	}, [
-		activeSession.rid,
-		activeSession.item,
+		activeSession,
+		chatTransportFacadeEnabled,
 		getSetting,
-		translate,
-		matrixClientService
+		matrixClientService,
+		resolvedChatSession,
+		translate
 	]);
 
 	const setSessionRead = useCallback(() => {
@@ -393,14 +431,21 @@ export const SessionStream = ({
 	// MATRIX MIGRATION: Real-time message sync for Matrix sessions
 	useEffect(() => {
 		// Only for Matrix sessions.
-		const isMatrixSession = Boolean(
-			activeSession.item?.id &&
-				(activeSession.item?.matrixRoomId ||
-					isMatrixRoom(activeSession.rid))
-		);
-		const matrixRoomId = isMatrixRoom(activeSession.rid)
-			? activeSession.rid
-			: activeSession.item?.matrixRoomId;
+		const resolvedSession = chatTransportFacadeEnabled
+			? resolvedChatSession
+			: chatTransportService.resolveSession(activeSession);
+		const isMatrixSession = chatTransportFacadeEnabled
+			? resolvedSession.isMatrixSession
+			: Boolean(
+					activeSession.item?.id &&
+						(activeSession.item?.matrixRoomId ||
+							isMatrixRoom(activeSession.rid))
+				);
+		const matrixRoomId = chatTransportFacadeEnabled
+			? resolvedSession.matrixRoomId
+			: isMatrixRoom(activeSession.rid)
+				? activeSession.rid
+				: activeSession.item?.matrixRoomId;
 
 		if (!isMatrixSession || !matrixRoomId) {
 			return;
@@ -411,11 +456,6 @@ export const SessionStream = ({
 		let lastRefreshAt = 0;
 
 		const attachTimelineListener = () => {
-			const matrixClient = matrixClientService?.getClient?.();
-			if (!matrixClient) {
-				return false;
-			}
-
 			const handleMatrixTimeline = (
 				event: any,
 				room: any,
@@ -444,6 +484,19 @@ export const SessionStream = ({
 					// keep UI stable if a timeline event races with navigation
 				});
 			};
+
+			if (chatTransportFacadeEnabled) {
+				detachTimelineListener = chatTransportService.onMatrixTimeline(
+					matrixRoomId,
+					handleMatrixTimeline
+				);
+				return Boolean(detachTimelineListener);
+			}
+
+			const matrixClient = matrixClientService?.getClient?.();
+			if (!matrixClient) {
+				return false;
+			}
 
 			(matrixClient as any).on('Room.timeline', handleMatrixTimeline);
 			detachTimelineListener = () => {
@@ -475,6 +528,8 @@ export const SessionStream = ({
 		activeSession.rid,
 		activeSession.item?.matrixRoomId,
 		activeSession.item?.id,
+		chatTransportFacadeEnabled,
+		resolvedChatSession,
 		fetchSessionMessages,
 		matrixClientService
 	]);

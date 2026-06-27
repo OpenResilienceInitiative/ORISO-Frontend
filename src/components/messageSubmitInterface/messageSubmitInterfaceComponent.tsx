@@ -16,6 +16,7 @@ import {
 	shouldBlockMissingLegacyE2eeKey,
 	shouldUseLegacyE2ee
 } from './messageEncryptionMode';
+import { chatTransportService } from '../../services/chatTransportService';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { STATUS_ENQUIRY } from '../../globalState/interfaces/SessionsDataInterface';
 import {
@@ -112,6 +113,7 @@ import {
 import { getIconForAttachmentType } from '../message/messageHelpers';
 import { TipTapComposer, TipTapComposerRef } from './TipTapComposer';
 import { HIGHLIGHT_SNIPPET_SELECTED_EVENT } from './highlightSnippetEvents';
+import { useAppConfig } from '../../hooks/useAppConfig';
 
 //Linkify Plugin
 const omitKey = (key, { [key]: _, ...obj }) => obj;
@@ -927,6 +929,9 @@ export const MessageSubmitInterfaceComponent = ({
 			// console.log('🔥 MessageSubmitInterface UNMOUNTED');
 		};
 	}, []);
+	const appConfig = useAppConfig();
+	const chatTransportFacadeEnabled =
+		chatTransportService.isFacadeEnabled(appConfig);
 	const tenant = useTenant();
 	const history = useHistory();
 	const location = useLocation();
@@ -1858,20 +1863,29 @@ export const MessageSubmitInterfaceComponent = ({
 			const sendToRoomWithId = activeSession.rid || activeSession.item.id;
 			// MATRIX MIGRATION: Determine if this is a Matrix-backed session.
 			// Some sessions still have a legacy rid while exposing matrixRoomId.
-			const isMatrixSession =
-				Boolean(activeSession.item?.matrixRoomId) ||
-				Boolean(
-					activeSession.rid &&
-						isMatrixRoom(activeSession.rid) &&
-						activeSession.item?.id
-				);
+			const resolvedChatSession =
+				chatTransportService.resolveSession(activeSession);
+			const isMatrixSession = chatTransportFacadeEnabled
+				? resolvedChatSession.isMatrixSession
+				: Boolean(activeSession.item?.matrixRoomId) ||
+					Boolean(
+						activeSession.rid &&
+							isMatrixRoom(activeSession.rid) &&
+							activeSession.item?.id
+					);
 			const matrixSessionId = isMatrixSession
-				? activeSession.item.id
+				? Number(
+						chatTransportFacadeEnabled
+							? resolvedChatSession.sessionId
+							: activeSession.item.id
+					) || undefined
 				: undefined;
 			const matrixRoomId = isMatrixSession
-				? isMatrixRoom(activeSession.rid)
-					? activeSession.rid
-					: activeSession.item?.matrixRoomId
+				? chatTransportFacadeEnabled
+					? resolvedChatSession.matrixRoomId
+					: isMatrixRoom(activeSession.rid)
+						? activeSession.rid
+						: activeSession.item?.matrixRoomId
 				: undefined;
 			const getSendMailNotificationStatus = () => !activeSession.isGroup;
 
@@ -2055,6 +2069,7 @@ export const MessageSubmitInterfaceComponent = ({
 			activeSession.item.id,
 			activeSession.item?.matrixRoomId,
 			activeSession.rid,
+			chatTransportFacadeEnabled,
 			cleanupAttachment,
 			encryptRoom,
 			getDevToolbarOption,
@@ -3806,11 +3821,15 @@ export const MessageSubmitInterfaceComponent = ({
 		[setIsExpandedComposer]
 	);
 
-	const matrixRoomId = isMatrixRoom(activeSession?.rid)
-		? activeSession.rid
-		: isMatrixRoom(activeSession?.item?.matrixRoomId)
-			? activeSession.item.matrixRoomId
-			: null;
+	const resolvedChatSession =
+		chatTransportService.resolveSession(activeSession);
+	const matrixRoomId = chatTransportFacadeEnabled
+		? resolvedChatSession.matrixRoomId || null
+		: isMatrixRoom(activeSession?.rid)
+			? activeSession.rid
+			: isMatrixRoom(activeSession?.item?.matrixRoomId)
+				? activeSession.item.matrixRoomId
+				: null;
 
 	// MATRIX MIGRATION: legacy RocketChat E2EE gates do not apply to Matrix rooms.
 	if (!e2EEReady && activeSession.rid && !matrixRoomId) {
