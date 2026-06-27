@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useContext } from 'react';
-import { useLocation } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import {
 	AUTHORITIES,
 	hasUserAuthority,
@@ -17,13 +17,24 @@ export const BookingReschedule = () => {
 	const settings = useAppConfig();
 
 	const location = useLocation();
+	const state = location.state as {
+		askerId?: string;
+		rescheduleLink?: string;
+		bookingId?: string;
+	} | null;
 
-	const userId = isConsultant ? location.state.askerId : userData.userId;
+	// Direct navigation (no router state) would crash on state.* below — send
+	// the user back to the bookings overview instead.
+	if (!state?.rescheduleLink) {
+		return <Navigate to="/booking/events" replace />;
+	}
+
+	const userId = isConsultant ? state.askerId : userData.userId;
 
 	return (
 		(settings.calcomUrl && (
 			<iframe
-				src={`${settings.calcomUrl}${location.state.rescheduleLink}&metadata[bookingId]=${location.state.bookingId}&metadata[user]=${userId}`}
+				src={`${settings.calcomUrl}${state.rescheduleLink}&metadata[bookingId]=${state.bookingId}&metadata[user]=${userId}`}
 				frameBorder={0}
 				scrolling="false"
 				width="100%"
