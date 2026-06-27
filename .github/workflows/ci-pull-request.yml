@@ -31,39 +31,10 @@ jobs:
         image_name: oriso-frontend
         github_token: ${{ secrets.GITHUB_TOKEN }}
 
-  playwright-smoke:
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v6
-
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: npm
-
-    - name: Install dependencies
-      shell: bash
-      run: npm ci --ignore-scripts --legacy-peer-deps
-
-    - name: Install Playwright browser
-      shell: bash
-      run: npx playwright install --with-deps chromium
-
-    - name: Run Playwright public-route smoke tests
-      shell: bash
-      env:
-        CI: 'true'
-      # playwright.config.ts boots `npm run dev` (reads the committed .env) and
-      # asserts the migrated public routes render without an uncaught exception.
-      run: npx playwright test
-
-    - name: Upload Playwright report
-      if: failure()
-      uses: actions/upload-artifact@v4
-      with:
-        name: playwright-report
-        path: playwright-report/
-        retention-days: 7
+# NOTE: the Playwright public-route smoke (`npm run test:smoke`) is intentionally
+# NOT a CI job. The app's bootstrap requires a reachable backend to render; CI
+# runners can't reach the dev cluster, so a browser smoke would need Cypress's
+# full API-mock layer (which is also why the Cypress suite isn't wired to CI).
+# The router migration's automated CI coverage is the vitest routing suite
+# (src/components/app/SessionsZone.routing.test.tsx, both roles) + the build/test
+# job above. Playwright stays a local smoke against the dev backend.

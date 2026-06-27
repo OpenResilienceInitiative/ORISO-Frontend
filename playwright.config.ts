@@ -1,13 +1,15 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Playwright smoke config for the react-router v7 migration.
+ * Playwright smoke config for the react-router v7 migration. LOCAL-ONLY
+ * (`npm run test:smoke`) — not a CI job: the app's bootstrap needs a reachable
+ * backend to render, and CI runners can't reach the dev cluster (the same reason
+ * the Cypress suite isn't wired to CI). Run it locally with the dev backend
+ * reachable (the committed .env points at the dev cluster).
  *
- * Boots the real CRA dev server (which serves the migrated app and proxies API
- * calls to the dev backend) and runs browser-level smoke specs against the
- * public routes. The specs assert that routes render without an uncaught
- * exception — a real router/render crash — independent of backend availability,
- * so they stay green in CI even when the dev API is unreachable.
+ * Boots the real CRA dev server and asserts the public routes render without an
+ * uncaught exception. CI coverage of the migration's routing lives in vitest
+ * (src/components/app/SessionsZone.routing.test.tsx).
  */
 export default defineConfig({
 	testDir: './playwright',
