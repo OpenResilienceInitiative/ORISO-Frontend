@@ -9,6 +9,7 @@ import {
 	FormEvent
 } from 'react';
 import {
+	Navigate,
 	useNavigate,
 	useLocation,
 	useParams,
@@ -18,7 +19,6 @@ import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet';
 import { StageLayout } from '../../components/stageLayout/StageLayout';
 import useIsFirstVisit from '../../utils/useIsFirstVisit';
-import { WelcomeScreen } from './welcomeScreen/WelcomeScreen';
 import {
 	RegistrationContext,
 	TenantContext,
@@ -43,7 +43,8 @@ import { RegistrationStepper } from './registrationStepper/RegistrationStepper';
 import {
 	getRegistrationTopicDisplay,
 	getRegistrationTopicIconForGroup,
-	registrationMd3
+	registrationMd3,
+	registrationMotion
 } from './registrationDesign/registrationDesign';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
@@ -74,8 +75,8 @@ export const Registration = () => {
 	}>();
 
 	// Build an absolute step URL from the route params (replaces v5's
-	// generatePath(useRouteMatch().path, …)). `welcome`/no step → the bare
-	// registration path, which renders the WelcomeScreen.
+	// generatePath(useRouteMatch().path, …)). No/`welcome` step → the bare
+	// registration path (which then redirects to the first step).
 	const makeStepUrl = useCallback(
 		(stepName?: string | null) => {
 			const base = topicSlug
@@ -129,20 +130,27 @@ export const Registration = () => {
 		[availableSteps, step]
 	);
 
-	// The step form renders only for a real step; any other path (incl. the
-	// bare /registration and an unknown :step) falls back to the WelcomeScreen,
-	// matching the v5 catch-all <Route> behaviour.
+	// The step form renders only for a real step; bare /registration (no/unknown
+	// :step) redirects to the first step — dev's stabilized entry, no separate
+	// welcome screen.
 	const activeStep = availableSteps[currStepIndex];
 
-	const [prevStepUrl, nextStepUrl] = useMemo(
-		() => [
-			makeStepUrl(availableSteps[currStepIndex - 1]?.name),
-			availableSteps[currStepIndex + 1]
-				? makeStepUrl(availableSteps[currStepIndex + 1]?.name)
-				: null
-		],
-		[availableSteps, currStepIndex, makeStepUrl]
+	const firstStepUrl = useMemo(
+		() => makeStepUrl(availableSteps[0]?.name || 'topic-selection'),
+		[availableSteps, makeStepUrl]
 	);
+
+	const [prevStepUrl, nextStepUrl] = useMemo(() => {
+		const previousStepName =
+			availableSteps[Math.max(currStepIndex - 1, 0)]?.name ||
+			availableSteps[0]?.name ||
+			'topic-selection';
+		const nextStepName = availableSteps[currStepIndex + 1]?.name;
+		return [
+			makeStepUrl(previousStepName),
+			nextStepName ? makeStepUrl(nextStepName) : null
+		];
+	}, [availableSteps, currStepIndex, makeStepUrl]);
 
 	const mergedRegistrationData = useMemo(
 		() => ({
@@ -171,6 +179,10 @@ export const Registration = () => {
 		'registration.noneSelected',
 		'Bitte wählen Sie ein Thema, um fortzufahren.'
 	);
+	const footerEmptyLabel =
+		step === 'topic-selection'
+			? t('registration.topicInstruction', 'Wählen Sie ein Thema aus.')
+			: noneSelectedLabel;
 
 	const onNextClick = useCallback(() => {
 		updateRegistrationData(stepData);
@@ -465,32 +477,48 @@ export const Registration = () => {
 								</Box>
 								<Box
 									sx={{
-										minHeight: {
+										'minHeight': {
 											xs: 'auto',
 											sm: '96px'
 										},
-										position: 'fixed',
-										bottom: '0',
-										right: '0',
-										px: {
-											xs: '16px',
+										'position': 'fixed',
+										'bottom': '0',
+										'right': '0',
+										'px': {
+											xs: '20px',
+											sm: '24px',
 											md: '32px',
-											lg: '16px'
+											lg: '32px'
 										},
-										width: { xs: '100vw', lg: '60vw' },
-										backgroundColor:
+										'width': { xs: '100vw', lg: '60vw' },
+										'backgroundColor':
 											'rgba(255, 255, 255, 0.94)',
-										backdropFilter: 'blur(8px)',
-										borderTop: `1px solid ${registrationMd3.outlineVariant}`,
-										display: 'flex',
-										justifyContent: 'center',
-										alignItems: 'center',
-										pt: { xs: 1.5, sm: 0 },
-										pb: {
+										'backdropFilter': 'blur(8px)',
+										'borderTop': `1px solid ${registrationMd3.outlineVariant}`,
+										'display': 'flex',
+										'justifyContent': 'center',
+										'alignItems': 'center',
+										'pt': { xs: 1.5, sm: 0 },
+										'pb': {
 											xs: 'calc(12px + env(safe-area-inset-bottom))',
 											sm: 0
 										},
-										zIndex: 65
+										'zIndex': 65,
+										'animation': `registrationFooterEnter ${registrationMotion.slow} ${registrationMotion.easeOut} both`,
+										'@keyframes registrationFooterEnter': {
+											'0%': {
+												opacity: 0,
+												transform: 'translateY(18px)'
+											},
+											'100%': {
+												opacity: 1,
+												transform: 'translateY(0)'
+											}
+										},
+										'@media (prefers-reduced-motion: reduce)':
+											{
+												animation: 'none'
+											}
 									}}
 								>
 									<Box
@@ -521,7 +549,7 @@ export const Registration = () => {
 											<RegistrationFooterChips
 												chips={footerChips}
 												selectedPrefix={selectedPrefix}
-												emptyLabel={noneSelectedLabel}
+												emptyLabel={footerEmptyLabel}
 											/>
 											<RegistrationFooterPrimaryButton
 												nextStepUrl={nextStepUrl}
@@ -552,7 +580,7 @@ export const Registration = () => {
 											<RegistrationFooterChips
 												chips={footerChips}
 												selectedPrefix={selectedPrefix}
-												emptyLabel={noneSelectedLabel}
+												emptyLabel={footerEmptyLabel}
 												mobile
 											/>
 											<Box
@@ -596,7 +624,7 @@ export const Registration = () => {
 							</form>
 						</>
 					) : (
-						<WelcomeScreen nextStepUrl={nextStepUrl} />
+						<Navigate to={firstStepUrl} replace />
 					)}
 				</Box>
 			</StageLayout>
@@ -664,12 +692,17 @@ const RegistrationFooterChips = ({
 	mobile?: boolean;
 }) => {
 	if (chips.length === 0) {
-		return mobile ? null : (
+		return (
 			<Typography
+				data-cy="registration-footer-empty-selection"
 				sx={{
-					fontSize: 13,
+					fontSize: mobile ? 13 : 13,
+					fontWeight: mobile ? 600 : 400,
 					color: registrationMd3.outline,
-					textAlign: 'center'
+					textAlign: 'center',
+					lineHeight: 1.4,
+					px: mobile ? 1 : 0,
+					mb: mobile ? 1.25 : 0
 				}}
 			>
 				{emptyLabel}

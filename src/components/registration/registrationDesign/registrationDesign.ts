@@ -1,4 +1,8 @@
 import { TopicsDataInterface } from '../../../globalState/interfaces/TopicsDataInterface';
+import {
+	orisoInputColors,
+	orisoTextFieldSx
+} from '../../form/orisoInputDesign';
 
 import category01 from '../../../resources/img/registration-md3/icons/cat-01.png';
 import category02 from '../../../resources/img/registration-md3/icons/cat-02.png';
@@ -32,87 +36,19 @@ import legalGuardianship05 from '../../../resources/img/registration-md3/icons/t
 import u25Prevention05 from '../../../resources/img/registration-md3/icons/t-05-u25-suizidpra-vention.png';
 
 export const registrationMd3 = {
-	onSurface: '#1b1b1c',
-	onSurfaceVariant: '#444748',
-	outline: '#74777b',
-	outlineVariant: '#c4c7c8',
-	surface: '#ffffff',
-	surfaceContainerLowest: '#ffffff',
-	surfaceContainerLow: '#f7f4f4',
-	surfaceContainer: '#f1eeee',
-	surfaceContainerHigh: '#ebe8e8',
-	secondary: '#4c555f',
-	onSecondary: '#ffffff',
-	primary: '#a4262e',
-	onPrimary: '#ffffff',
-	primaryDark: '#7e1d23',
-	error: '#b1005e',
-	focus: '#2d6f7b',
-	focusLayer: 'rgba(45, 111, 123, 0.12)',
-	selectedLayer: 'rgba(164, 38, 46, 0.08)',
-	hoverLayer: 'rgba(27, 27, 28, 0.04)',
+	...orisoInputColors,
 	heroGradient:
 		'linear-gradient(152deg, #DA2530 0%, #C0121F 46%, #7C0D15 100%)'
 } as const;
 
-const registrationMd3Autofill = '#e8f0fe';
+export const registrationMd3TextFieldSx = orisoTextFieldSx;
 
-export const registrationMd3TextFieldSx = {
-	'& .MuiOutlinedInput-root': {
-		'borderRadius': '12px',
-		'backgroundColor': registrationMd3.surfaceContainerLowest,
-		'color': registrationMd3.onSurface,
-		'fontSize': 17,
-		'transition':
-			'border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease',
-		'& fieldset': {
-			borderColor: registrationMd3.outlineVariant
-		},
-		'&:hover fieldset': {
-			borderColor: registrationMd3.outline
-		},
-		'&.Mui-focused': {
-			boxShadow: `0 0 0 4px ${registrationMd3.focusLayer}`
-		},
-		'&.Mui-focused fieldset': {
-			borderColor: registrationMd3.focus,
-			borderWidth: 2
-		},
-		'&.Mui-error fieldset': {
-			borderColor: registrationMd3.error,
-			borderWidth: 2
-		},
-		'&:has(input:-webkit-autofill)': {
-			backgroundColor: registrationMd3Autofill
-		}
-	},
-	'& .MuiInputBase-input': {
-		'paddingTop': '16px',
-		'paddingBottom': '16px',
-		'&:-webkit-autofill': {
-			WebkitBoxShadow: `0 0 0 100px ${registrationMd3Autofill} inset`,
-			WebkitTextFillColor: registrationMd3.onSurface,
-			caretColor: registrationMd3.onSurface,
-			transition: 'background-color 9999s ease-out 0s'
-		},
-		'&::placeholder': {
-			color: registrationMd3.onSurfaceVariant,
-			opacity: 1
-		}
-	},
-	'& .MuiInputAdornment-root': {
-		color: registrationMd3.onSurfaceVariant
-	},
-	'& .MuiFormHelperText-root': {
-		marginLeft: 0,
-		marginTop: '8px',
-		fontSize: '14px',
-		lineHeight: '20px',
-		color: registrationMd3.onSurfaceVariant
-	},
-	'& .MuiFormHelperText-root.Mui-error': {
-		color: `${registrationMd3.error} !important`
-	}
+export const registrationMotion = {
+	easeOut: 'cubic-bezier(0.22, 1, 0.36, 1)',
+	softSpring: 'cubic-bezier(0.34, 1.24, 0.44, 1)',
+	quick: '180ms',
+	standard: '240ms',
+	slow: '320ms'
 } as const;
 
 export const registrationScreenTitleSx = {

@@ -155,12 +155,15 @@ export function generateAvatar(lang = 'de'): Avatar {
 }
 
 /** A 16-char password guaranteed to contain a digit, an upper- and a lowercase
- *  letter, and a special character. No ambiguous look-alikes. */
+ *  letter, and a special character. No ambiguous look-alikes. Keep special
+ *  characters URI-safe: registration currently sends the password through an
+ *  encoded JSON payload before auto-login reuses the raw value.
+ */
 export function generatePassword(): string {
 	const lower = 'abcdefghijkmnpqrstuvwxyz';
 	const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
 	const digit = '23456789';
-	const special = '!@#$%&*?-_+';
+	const special = '!-_*';
 	const all = lower + upper + digit + special;
 	const chars = [
 		pick([...lower]),

@@ -228,6 +228,9 @@ export const getHostnamesWithoutCookieDomain = (): string[] => {
 		.filter(Boolean);
 };
 
+export const getLocalTenantId = (): string | undefined =>
+	pickValue('REACT_APP_LOCAL_TENANT_ID');
+
 export const getElementUrl = (): string =>
 	stripTrailingSlashes(
 		ensureHttps(

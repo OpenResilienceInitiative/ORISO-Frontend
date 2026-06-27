@@ -12,6 +12,7 @@ import { lazy, useEffect, useState } from 'react';
 import './resources/styles/mui-variables-mapping.scss';
 import { createAppTheme } from './resources/scripts/theme';
 import { THEME_APPLIED_EVENT } from './utils/theme/applyTenantTheme';
+import { syncLocalTenantCookie } from './utils/localTenantCookie';
 import { Navigate } from 'react-router-dom';
 import { Privacy } from './components/legalInformationLinks/Privacy';
 import { Imprint } from './components/legalInformationLinks/Imprint';
@@ -51,6 +52,8 @@ const AppThemeProvider = ({ children }: { children: React.ReactNode }) => {
 };
 
 // React 19 uses createRoot API
+syncLocalTenantCookie();
+
 const container = document.getElementById('appRoot');
 if (container) {
 	const root = createRoot(container);

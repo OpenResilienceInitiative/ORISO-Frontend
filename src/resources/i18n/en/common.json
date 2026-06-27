@@ -1845,6 +1845,7 @@
 		},
 		"selectedLabel": "Selected",
 		"noneSelected": "Please choose a topic to continue.",
+		"topicInstruction": "Choose a topic.",
 		"age": {
 			"dropdown": "Select age*",
 			"headline": "Specify age"

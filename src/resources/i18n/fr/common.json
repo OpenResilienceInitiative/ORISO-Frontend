@@ -1721,6 +1721,7 @@
 	"registration": {
 		"selectedLabel": "Sélectionné",
 		"noneSelected": "Veuillez choisir un thème pour continuer.",
+		"topicInstruction": "Choisissez un thème.",
 		"accordion": {
 			"item": {
 				"continueButton": {

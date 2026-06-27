@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { Children, ReactElement, ReactNode, useContext } from 'react';
-import { Button } from '../button/Button';
 import { Text } from '../text/Text';
 import './StageLayout.styles.scss';
 import clsx from 'clsx';
@@ -25,6 +24,10 @@ import {
 } from '@mui/material';
 import { SvgIconProps } from '@mui/material/SvgIcon';
 import { InfoDrawer } from '../registration/infoDrawer/InfoDrawer';
+import { registrationMotion } from '../registration/registrationDesign/registrationDesign';
+import { Link as RouterLink, useInRouterContext } from 'react-router-dom';
+import { toSameOriginRoute } from './stageLayoutRoutes';
+import CenterFocusStrongRoundedIcon from '@mui/icons-material/CenterFocusStrongRounded';
 
 interface StageLayoutProps {
 	className?: string;
@@ -52,10 +55,16 @@ export const StageLayout = ({
 	const legalLinks = useContext(LegalLinksContext);
 	const { selectableLocales } = useContext(LocaleContext);
 	const { specificAgency } = useContext(AgencySpecificContext);
+	// v7 removed __RouterContext; useInRouterContext() answers the same question
+	// (is a Router mounted?) used below to pick <RouterLink> vs a plain anchor.
+	const routerContext = useInRouterContext();
 	const settings = useAppConfig();
 	const loginUrl = `${settings.urls.toLogin}${
 		loginParams ? `?${loginParams}` : ''
 	}`;
+	const loginRoute = toSameOriginRoute(loginUrl);
+	const registrationRoute = toSameOriginRoute(settings.urls.toRegistration);
+	const registrationHref = registrationRoute || settings.urls.toRegistration;
 
 	return (
 		<div className={clsx('stageLayout', className)}>
@@ -87,7 +96,12 @@ export const StageLayout = ({
 
 							{showLoginLink && (
 								<IconButton
-									href={loginUrl}
+									{...(loginRoute && routerContext
+										? {
+												component: RouterLink,
+												to: loginRoute
+											}
+										: { href: loginRoute || loginUrl })}
 									edge="end"
 									color="inherit"
 									aria-label={translate(
@@ -119,16 +133,30 @@ export const StageLayout = ({
 				<Box
 					className={`stageLayout__header`}
 					sx={{
-						display: showRegistrationLink
+						'display': showRegistrationLink
 							? 'flex'
 							: { xs: 'none', md: 'flex' },
-						mt: {
+						'mt': {
 							xs: showRegistrationLink ? '48px' : 0,
 							md: 0
 						},
-						height: { xs: 'auto', md: undefined },
-						minHeight: { xs: '48px', md: undefined },
-						py: { xs: 1, md: 0 }
+						'height': { xs: 'auto', md: '72px' },
+						'minHeight': { xs: '48px', md: '72px' },
+						'py': { xs: 1, md: 1.5 },
+						'animation': `registrationHeaderEnter ${registrationMotion.standard} ${registrationMotion.easeOut} both`,
+						'@keyframes registrationHeaderEnter': {
+							'0%': {
+								opacity: 0,
+								transform: 'translateY(-16px)'
+							},
+							'100%': {
+								opacity: 1,
+								transform: 'translateY(0)'
+							}
+						},
+						'@media (prefers-reduced-motion: reduce)': {
+							animation: 'none'
+						}
 					}}
 				>
 					{selectableLocales.length > 1 && (
@@ -145,8 +173,15 @@ export const StageLayout = ({
 						>
 							<MuiButton
 								className="stageLayout__toLogin__button"
-								component="a"
-								href={loginUrl}
+								{...(loginRoute && routerContext
+									? {
+											component: RouterLink,
+											to: loginRoute
+										}
+									: {
+											component: 'a',
+											href: loginRoute || loginUrl
+										})}
 								variant="outlined"
 								startIcon={<LoginDoorIcon />}
 								sx={{
@@ -193,30 +228,44 @@ export const StageLayout = ({
 					)}
 
 					{showRegistrationLink && (
-						<div className="login__tenantRegistration">
-							<Text
-								text={translate(
-									'login.register.infoText.title'
-								)}
-								type={'infoSmall'}
-							/>
-							<a
-								className="login__tenantRegistrationLink"
-								href={settings.urls.toRegistration}
-								target="_self"
-								tabIndex={-1}
+						<Box
+							className="login__tenantRegistration"
+							sx={{
+								gap: { xs: 1, sm: 1.5 },
+								justifyContent: 'flex-end',
+								width: '100%'
+							}}
+						>
+							<Typography
+								variant="body2"
+								sx={{
+									display: { xs: 'none', sm: 'block' },
+									color: 'var(--m3-on-surface-variant, #4f565d)',
+									fontWeight: 600,
+									lineHeight: 1.2,
+									whiteSpace: 'nowrap'
+								}}
 							>
-								<Button
-									item={{
-										label: translate(
-											'login.register.linkLabel'
-										),
-										type: 'TERTIARY'
-									}}
-									isLink
-								/>
-							</a>
-						</div>
+								{translate('login.register.infoText.title')}
+							</Typography>
+							<MuiButton
+								className="login__tenantRegistrationLink"
+								{...(registrationRoute && routerContext
+									? {
+											component: RouterLink,
+											to: registrationRoute
+										}
+									: {
+											component: 'a',
+											href: registrationHref
+										})}
+								variant="outlined"
+								startIcon={<CenterFocusStrongRoundedIcon />}
+								sx={registrationHeaderButtonSx}
+							>
+								{translate('login.register.linkLabel')}
+							</MuiButton>
+						</Box>
 					)}
 				</Box>
 
@@ -274,6 +323,47 @@ export const StageLayout = ({
 		</div>
 	);
 };
+
+const registrationHeaderButtonSx = {
+	'minHeight': '48px',
+	'borderRadius': '999px',
+	'px': { xs: 2, md: 2.75 },
+	'py': 1,
+	'fontSize': { xs: '14px', md: '16px' },
+	'fontWeight': 700,
+	'lineHeight': 1.2,
+	'textTransform': 'none',
+	'color': 'var(--m3-primary, #a4262e)',
+	'borderColor': 'var(--m3-primary, #a4262e)',
+	'backgroundColor': 'rgba(255, 255, 255, 0.94)',
+	'boxShadow': '0 8px 22px rgba(164, 38, 46, 0.08)',
+	'transition':
+		'background-color 180ms ease, border-color 180ms ease, color 180ms ease, box-shadow 180ms ease, transform 180ms ease',
+	'& .MuiButton-startIcon': {
+		color: 'inherit',
+		mr: 0.75
+	},
+	'&:hover': {
+		color: 'var(--m3-on-secondary, #ffffff)',
+		borderColor: 'var(--m3-secondary, #4c555f)',
+		backgroundColor: 'var(--m3-secondary, #4c555f)',
+		boxShadow: '0 10px 26px rgba(76, 85, 95, 0.18)',
+		transform: 'translateY(-1px)'
+	},
+	'&&:active, &&:active:hover': {
+		color: 'var(--m3-on-primary, #ffffff)',
+		WebkitTextFillColor: 'var(--m3-on-primary, #ffffff)',
+		borderColor: 'var(--m3-primary, #a4262e)',
+		backgroundColor: 'var(--m3-primary, #a4262e)',
+		boxShadow: '0 8px 20px rgba(164, 38, 46, 0.18)',
+		transform: 'translateY(0)'
+	},
+	'&:focus-visible': {
+		outline: 'none',
+		boxShadow:
+			'0 0 0 3px rgba(45, 111, 123, 0.12), 0 8px 22px rgba(164, 38, 46, 0.08)'
+	}
+} as const;
 
 const LoginDoorIcon = (props: SvgIconProps) => (
 	<SvgIcon {...props} viewBox="0 0 24 24">

@@ -36,6 +36,12 @@ describe('RegistrationLoader', () => {
 
 		expect(screen.getAllByText('registration.loader.copy')).toHaveLength(2);
 		expect(screen.queryByText('registration.loader.ready')).toBeNull();
+		expect(
+			screen.getByText('registration.welcomeScreen.info3.title')
+		).toBeDefined();
+		expect(
+			screen.getByText('registration.welcomeScreen.info4.title')
+		).toBeDefined();
 
 		rerender(<RegistrationLoader ready={true} onFinish={onFinish} />);
 

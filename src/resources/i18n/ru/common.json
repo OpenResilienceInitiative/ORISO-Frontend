@@ -1721,6 +1721,7 @@
 	"registration": {
 		"selectedLabel": "Выбрано",
 		"noneSelected": "Выберите тему, чтобы продолжить.",
+		"topicInstruction": "Выберите тему.",
 		"accordion": {
 			"item": {
 				"continueButton": {
