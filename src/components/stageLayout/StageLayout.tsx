@@ -24,6 +24,7 @@ import {
 } from '@mui/material';
 import { SvgIconProps } from '@mui/material/SvgIcon';
 import { InfoDrawer } from '../registration/infoDrawer/InfoDrawer';
+import { registrationMotion } from '../registration/registrationDesign/registrationDesign';
 import { __RouterContext } from 'react-router';
 import { Link as RouterLink } from 'react-router-dom';
 import { toSameOriginRoute } from './stageLayoutRoutes';
@@ -131,16 +132,30 @@ export const StageLayout = ({
 				<Box
 					className={`stageLayout__header`}
 					sx={{
-						display: showRegistrationLink
+						'display': showRegistrationLink
 							? 'flex'
 							: { xs: 'none', md: 'flex' },
-						mt: {
+						'mt': {
 							xs: showRegistrationLink ? '48px' : 0,
 							md: 0
 						},
-						height: { xs: 'auto', md: '72px' },
-						minHeight: { xs: '48px', md: '72px' },
-						py: { xs: 1, md: 1.5 }
+						'height': { xs: 'auto', md: '72px' },
+						'minHeight': { xs: '48px', md: '72px' },
+						'py': { xs: 1, md: 1.5 },
+						'animation': `registrationHeaderEnter ${registrationMotion.standard} ${registrationMotion.easeOut} both`,
+						'@keyframes registrationHeaderEnter': {
+							'0%': {
+								opacity: 0,
+								transform: 'translateY(-16px)'
+							},
+							'100%': {
+								opacity: 1,
+								transform: 'translateY(0)'
+							}
+						},
+						'@media (prefers-reduced-motion: reduce)': {
+							animation: 'none'
+						}
 					}}
 				>
 					{selectableLocales.length > 1 && (

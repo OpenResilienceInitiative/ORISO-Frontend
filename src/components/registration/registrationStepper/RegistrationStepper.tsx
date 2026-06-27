@@ -9,7 +9,10 @@ import ChatBubbleRoundedIcon from '@mui/icons-material/ChatBubbleRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import { SvgIconComponent } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
-import { registrationMd3 } from '../registrationDesign/registrationDesign';
+import {
+	registrationMd3,
+	registrationMotion
+} from '../registrationDesign/registrationDesign';
 
 const CANONICAL_STEPS: {
 	name: string;
@@ -83,22 +86,36 @@ export const RegistrationStepper = ({
 		<Box
 			className="registrationStepperSticky"
 			sx={{
-				position: 'sticky',
-				top: { xs: '48px', md: '72px' },
-				zIndex: 68,
-				boxSizing: 'border-box',
-				width: { xs: '100vw', lg: '60vw' },
-				ml: {
+				'position': 'sticky',
+				'top': { xs: '48px', md: '72px' },
+				'zIndex': 68,
+				'boxSizing': 'border-box',
+				'width': { xs: '100vw', lg: '60vw' },
+				'ml': {
 					xs: 'calc((100% - 100vw) / 2)',
 					lg: 'calc((100% - 60vw) / 2)'
 				},
-				px: { xs: 2, sm: 3, lg: 4 },
-				pt: { xs: 1, md: 1.5 },
-				backgroundColor: 'rgba(255, 255, 255, 0.96)',
-				backdropFilter: 'blur(8px)',
-				borderBottom: `1px solid ${registrationMd3.outlineVariant}`,
-				pb: { xs: 1.5, md: 2 },
-				mb: { xs: 2, md: 3 }
+				'px': { xs: 2, sm: 3, lg: 4 },
+				'pt': { xs: 1, md: 1.5 },
+				'backgroundColor': 'rgba(255, 255, 255, 0.96)',
+				'backdropFilter': 'blur(8px)',
+				'borderBottom': `1px solid ${registrationMd3.outlineVariant}`,
+				'pb': { xs: 1.5, md: 2 },
+				'mb': { xs: 2, md: 3 },
+				'animation': `registrationStepperEnter ${registrationMotion.slow} ${registrationMotion.easeOut} 70ms both`,
+				'@keyframes registrationStepperEnter': {
+					'0%': {
+						opacity: 0,
+						transform: 'translateY(-10px)'
+					},
+					'100%': {
+						opacity: 1,
+						transform: 'translateY(0)'
+					}
+				},
+				'@media (prefers-reduced-motion: reduce)': {
+					animation: 'none'
+				}
 			}}
 		>
 			<Typography

@@ -626,6 +626,7 @@
 	"registration": {
 		"selectedLabel": "Ausgewählt",
 		"noneSelected": "Bitte wähle ein Thema, um fortzufahren.",
+		"topicInstruction": "Wähle ein Thema aus.",
 		"agency": {
 			"preselected": {
 				"prefix": "Deine vorausgewählte Beratungsstelle: "

@@ -47,7 +47,8 @@ import { RegistrationStepper } from './registrationStepper/RegistrationStepper';
 import {
 	getRegistrationTopicDisplay,
 	getRegistrationTopicIconForGroup,
-	registrationMd3
+	registrationMd3,
+	registrationMotion
 } from './registrationDesign/registrationDesign';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
@@ -176,6 +177,10 @@ export const Registration = () => {
 		'registration.noneSelected',
 		'Bitte wählen Sie ein Thema, um fortzufahren.'
 	);
+	const footerEmptyLabel =
+		step === 'topic-selection'
+			? t('registration.topicInstruction', 'Wählen Sie ein Thema aus.')
+			: noneSelectedLabel;
 
 	const onNextClick = useCallback(() => {
 		updateRegistrationData(stepData);
@@ -541,33 +546,48 @@ export const Registration = () => {
 								</Box>
 								<Box
 									sx={{
-										minHeight: {
+										'minHeight': {
 											xs: 'auto',
 											sm: '96px'
 										},
-										position: 'fixed',
-										bottom: '0',
-										right: '0',
-										px: {
+										'position': 'fixed',
+										'bottom': '0',
+										'right': '0',
+										'px': {
 											xs: '20px',
 											sm: '24px',
 											md: '32px',
 											lg: '32px'
 										},
-										width: { xs: '100vw', lg: '60vw' },
-										backgroundColor:
+										'width': { xs: '100vw', lg: '60vw' },
+										'backgroundColor':
 											'rgba(255, 255, 255, 0.94)',
-										backdropFilter: 'blur(8px)',
-										borderTop: `1px solid ${registrationMd3.outlineVariant}`,
-										display: 'flex',
-										justifyContent: 'center',
-										alignItems: 'center',
-										pt: { xs: 1.5, sm: 0 },
-										pb: {
+										'backdropFilter': 'blur(8px)',
+										'borderTop': `1px solid ${registrationMd3.outlineVariant}`,
+										'display': 'flex',
+										'justifyContent': 'center',
+										'alignItems': 'center',
+										'pt': { xs: 1.5, sm: 0 },
+										'pb': {
 											xs: 'calc(12px + env(safe-area-inset-bottom))',
 											sm: 0
 										},
-										zIndex: 65
+										'zIndex': 65,
+										'animation': `registrationFooterEnter ${registrationMotion.slow} ${registrationMotion.easeOut} both`,
+										'@keyframes registrationFooterEnter': {
+											'0%': {
+												opacity: 0,
+												transform: 'translateY(18px)'
+											},
+											'100%': {
+												opacity: 1,
+												transform: 'translateY(0)'
+											}
+										},
+										'@media (prefers-reduced-motion: reduce)':
+											{
+												animation: 'none'
+											}
 									}}
 								>
 									<Box
@@ -598,7 +618,7 @@ export const Registration = () => {
 											<RegistrationFooterChips
 												chips={footerChips}
 												selectedPrefix={selectedPrefix}
-												emptyLabel={noneSelectedLabel}
+												emptyLabel={footerEmptyLabel}
 											/>
 											<RegistrationFooterPrimaryButton
 												nextStepUrl={nextStepUrl}
@@ -629,7 +649,7 @@ export const Registration = () => {
 											<RegistrationFooterChips
 												chips={footerChips}
 												selectedPrefix={selectedPrefix}
-												emptyLabel={noneSelectedLabel}
+												emptyLabel={footerEmptyLabel}
 												mobile
 											/>
 											<Box
@@ -742,12 +762,17 @@ const RegistrationFooterChips = ({
 	mobile?: boolean;
 }) => {
 	if (chips.length === 0) {
-		return mobile ? null : (
+		return (
 			<Typography
+				data-cy="registration-footer-empty-selection"
 				sx={{
-					fontSize: 13,
+					fontSize: mobile ? 13 : 13,
+					fontWeight: mobile ? 600 : 400,
 					color: registrationMd3.outline,
-					textAlign: 'center'
+					textAlign: 'center',
+					lineHeight: 1.4,
+					px: mobile ? 1 : 0,
+					mb: mobile ? 1.25 : 0
 				}}
 			>
 				{emptyLabel}
