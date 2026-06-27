@@ -96,6 +96,7 @@ export const Input = ({
 	};
 
 	const getMultipleCriteriaDesign = (criteria) => {
+		const isFulfilled = criteria.validation(value);
 		const iconWrapper = (icon) => (
 			<span
 				aria-hidden="true"
@@ -112,7 +113,15 @@ export const Input = ({
 				{icon}
 			</span>
 		);
-		const blurredIcon = wasBlurred ? (
+		const icon = isFulfilled ? (
+			<CheckCircleIcon
+				color="success"
+				sx={{
+					width: '16px',
+					height: '16px'
+				}}
+			/>
+		) : wasBlurred ? (
 			<CancelIcon
 				color="error"
 				sx={{
@@ -123,22 +132,12 @@ export const Input = ({
 		) : (
 			'•'
 		);
-		const icon = criteria.validation(value) ? (
-			<CheckCircleIcon
-				color="success"
-				sx={{
-					width: '16px',
-					height: '16px'
-				}}
-			/>
-		) : (
-			blurredIcon
-		);
-		const blurredColor = wasBlurred ? 'error.main' : 'info.light';
-		const color = criteria.validation(value)
+		const color = isFulfilled
 			? 'success.main'
-			: blurredColor;
-		return { icon: iconWrapper(icon), color };
+			: wasBlurred
+				? 'error.main'
+				: 'info.light';
+		return { isFulfilled, icon: iconWrapper(icon), color };
 	};
 	const inputRef = useRef<any>(null);
 	useEffect(() => {
@@ -263,7 +262,8 @@ export const Input = ({
 				</Typography>
 			)}
 			{multipleCriteria?.map((criteria) => {
-				const criteriaDesign = getMultipleCriteriaDesign(criteria);
+				const { icon, color, isFulfilled } =
+					getMultipleCriteriaDesign(criteria);
 				return (
 					<Typography
 						key={criteria.info}
@@ -272,12 +272,18 @@ export const Input = ({
 							mt: '8px',
 							fontSize: '16px',
 							lineHeight: '16px',
-							color: criteriaDesign.color,
+							color,
 							display: 'flex',
 							alignItems: 'center'
 						}}
 					>
-						{criteriaDesign.icon}
+						{icon}
+						{isFulfilled && (
+							<span className="sr-only">
+								{t('registration.password.criteria.fulfilled')}
+								:{' '}
+							</span>
+						)}
 						<span>{t(criteria.info)}</span>
 					</Typography>
 				);
