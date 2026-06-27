@@ -84,12 +84,16 @@ export const RegistrationStepper = ({
 			className="registrationStepperSticky"
 			sx={{
 				position: 'sticky',
-				top: { xs: '48px', md: '80px' },
-				zIndex: 62,
-				width: '100%',
-				mx: { xs: -2, md: -3 },
-				px: { xs: 2, md: 3 },
-				pt: { xs: 1, md: 0 },
+				top: { xs: '48px', md: '72px' },
+				zIndex: 68,
+				boxSizing: 'border-box',
+				width: { xs: '100vw', lg: '60vw' },
+				ml: {
+					xs: 'calc((100% - 100vw) / 2)',
+					lg: 'calc((100% - 60vw) / 2)'
+				},
+				px: { xs: 2, sm: 3, lg: 4 },
+				pt: { xs: 1, md: 1.5 },
 				backgroundColor: 'rgba(255, 255, 255, 0.96)',
 				backdropFilter: 'blur(8px)',
 				borderBottom: `1px solid ${registrationMd3.outlineVariant}`,
@@ -104,7 +108,10 @@ export const RegistrationStepper = ({
 					letterSpacing: 1.2,
 					textTransform: 'uppercase',
 					color: registrationMd3.onSurfaceVariant,
-					mb: 1
+					mb: 1,
+					width: '100%',
+					maxWidth: '780px',
+					mx: 'auto'
 				}}
 			>
 				{t('registration.headline')}
@@ -116,6 +123,9 @@ export const RegistrationStepper = ({
 					'overflowX': { xs: 'auto', md: 'visible' },
 					'pb': { xs: 0.5, md: 0 },
 					'scrollbarWidth': 'none',
+					'width': '100%',
+					'maxWidth': '780px',
+					'mx': 'auto',
 					'&::-webkit-scrollbar': { display: 'none' }
 				}}
 			>

@@ -549,9 +549,10 @@ export const Registration = () => {
 										bottom: '0',
 										right: '0',
 										px: {
-											xs: '16px',
+											xs: '20px',
+											sm: '24px',
 											md: '32px',
-											lg: '16px'
+											lg: '32px'
 										},
 										width: { xs: '100vw', lg: '60vw' },
 										backgroundColor:

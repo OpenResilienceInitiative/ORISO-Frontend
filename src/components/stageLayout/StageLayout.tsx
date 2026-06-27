@@ -138,9 +138,9 @@ export const StageLayout = ({
 							xs: showRegistrationLink ? '48px' : 0,
 							md: 0
 						},
-						height: { xs: 'auto', md: undefined },
-						minHeight: { xs: '48px', md: undefined },
-						py: { xs: 1, md: 0 }
+						height: { xs: 'auto', md: '72px' },
+						minHeight: { xs: '48px', md: '72px' },
+						py: { xs: 1, md: 1.5 }
 					}}
 				>
 					{selectableLocales.length > 1 && (
