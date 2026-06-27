@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { Children, ReactElement, ReactNode, useContext } from 'react';
-import { Button } from '../button/Button';
 import { Text } from '../text/Text';
 import './StageLayout.styles.scss';
 import clsx from 'clsx';
@@ -28,6 +27,7 @@ import { InfoDrawer } from '../registration/infoDrawer/InfoDrawer';
 import { __RouterContext } from 'react-router';
 import { Link as RouterLink } from 'react-router-dom';
 import { toSameOriginRoute } from './stageLayoutRoutes';
+import CenterFocusStrongRoundedIcon from '@mui/icons-material/CenterFocusStrongRounded';
 
 interface StageLayoutProps {
 	className?: string;
@@ -63,14 +63,6 @@ export const StageLayout = ({
 	const loginRoute = toSameOriginRoute(loginUrl);
 	const registrationRoute = toSameOriginRoute(settings.urls.toRegistration);
 	const registrationHref = registrationRoute || settings.urls.toRegistration;
-	const handleRegistrationClick = () => {
-		if (registrationRoute && routerContext?.history) {
-			routerContext.history.push(registrationRoute);
-			return;
-		}
-
-		window.location.assign(registrationHref);
-	};
 
 	return (
 		<div className={clsx('stageLayout', className)}>
@@ -220,24 +212,44 @@ export const StageLayout = ({
 					)}
 
 					{showRegistrationLink && (
-						<div className="login__tenantRegistration">
-							<Text
-								text={translate(
-									'login.register.infoText.title'
-								)}
-								type={'infoSmall'}
-							/>
-							<Button
-								className="login__tenantRegistrationLink"
-								item={{
-									label: translate(
-										'login.register.linkLabel'
-									),
-									type: 'TERTIARY'
+						<Box
+							className="login__tenantRegistration"
+							sx={{
+								gap: { xs: 1, sm: 1.5 },
+								justifyContent: 'flex-end',
+								width: '100%'
+							}}
+						>
+							<Typography
+								variant="body2"
+								sx={{
+									display: { xs: 'none', sm: 'block' },
+									color: 'var(--m3-on-surface-variant, #4f565d)',
+									fontWeight: 600,
+									lineHeight: 1.2,
+									whiteSpace: 'nowrap'
 								}}
-								buttonHandle={handleRegistrationClick}
-							/>
-						</div>
+							>
+								{translate('login.register.infoText.title')}
+							</Typography>
+							<MuiButton
+								className="login__tenantRegistrationLink"
+								{...(registrationRoute && routerContext
+									? {
+											component: RouterLink,
+											to: registrationRoute
+										}
+									: {
+											component: 'a',
+											href: registrationHref
+										})}
+								variant="outlined"
+								startIcon={<CenterFocusStrongRoundedIcon />}
+								sx={registrationHeaderButtonSx}
+							>
+								{translate('login.register.linkLabel')}
+							</MuiButton>
+						</Box>
 					)}
 				</Box>
 
@@ -295,6 +307,47 @@ export const StageLayout = ({
 		</div>
 	);
 };
+
+const registrationHeaderButtonSx = {
+	'minHeight': '48px',
+	'borderRadius': '999px',
+	'px': { xs: 2, md: 2.75 },
+	'py': 1,
+	'fontSize': { xs: '14px', md: '16px' },
+	'fontWeight': 700,
+	'lineHeight': 1.2,
+	'textTransform': 'none',
+	'color': 'var(--m3-primary, #a4262e)',
+	'borderColor': 'var(--m3-primary, #a4262e)',
+	'backgroundColor': 'rgba(255, 255, 255, 0.94)',
+	'boxShadow': '0 8px 22px rgba(164, 38, 46, 0.08)',
+	'transition':
+		'background-color 180ms ease, border-color 180ms ease, color 180ms ease, box-shadow 180ms ease, transform 180ms ease',
+	'& .MuiButton-startIcon': {
+		color: 'inherit',
+		mr: 0.75
+	},
+	'&:hover': {
+		color: 'var(--m3-on-secondary, #ffffff)',
+		borderColor: 'var(--m3-secondary, #4c555f)',
+		backgroundColor: 'var(--m3-secondary, #4c555f)',
+		boxShadow: '0 10px 26px rgba(76, 85, 95, 0.18)',
+		transform: 'translateY(-1px)'
+	},
+	'&&:active, &&:active:hover': {
+		color: 'var(--m3-on-primary, #ffffff)',
+		WebkitTextFillColor: 'var(--m3-on-primary, #ffffff)',
+		borderColor: 'var(--m3-primary, #a4262e)',
+		backgroundColor: 'var(--m3-primary, #a4262e)',
+		boxShadow: '0 8px 20px rgba(164, 38, 46, 0.18)',
+		transform: 'translateY(0)'
+	},
+	'&:focus-visible': {
+		outline: 'none',
+		boxShadow:
+			'0 0 0 3px rgba(45, 111, 123, 0.12), 0 8px 22px rgba(164, 38, 46, 0.08)'
+	}
+} as const;
 
 const LoginDoorIcon = (props: SvgIconProps) => (
 	<SvgIcon {...props} viewBox="0 0 24 24">
