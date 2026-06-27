@@ -1,7 +1,8 @@
 # Local Development
 
 This setup runs the frontend on `localhost:9001`, points UserService calls to a local
-UserService on `localhost:8082`, and leaves all other APIs on the configured remote API ingress.
+UserService on `localhost:8082`, points TenantService calls to a local TenantService
+on `localhost:8081`, and leaves the remaining APIs on the configured remote API ingress.
 
 ## 1. Create `.env`
 
@@ -25,8 +26,10 @@ REACT_APP_DEV_REMOTE_API_URL=https://api.oriso-dev.site
 # Local UserService. Remove/comment this line to use the broad API instead.
 REACT_APP_USER_SERVICE_ORIGIN=http://localhost:8082
 
-# Optional service-specific overrides. Keep commented unless that service is local too.
-# REACT_APP_TENANT_SERVICE_ORIGIN=https://api.oriso-dev.site
+# Service-specific overrides for this setup. Keep the remaining services commented
+# unless those services are local too.
+REACT_APP_TENANT_SERVICE_ORIGIN=http://localhost:8081
+REACT_APP_LOCAL_TENANT_ID=1
 # REACT_APP_AGENCY_SERVICE_ORIGIN=https://api.oriso-dev.site
 # REACT_APP_CONSULTING_TYPE_SERVICE_ORIGIN=https://api.oriso-dev.site
 
@@ -69,5 +72,9 @@ http://localhost:9001
 - `REACT_APP_USER_SERVICE_ORIGIN=http://localhost:8082` sends UserService, Matrix token,
   message, and session calls to the local UserService.
 - If `REACT_APP_USER_SERVICE_ORIGIN` is absent, those calls fall back to `REACT_APP_API_URL`.
+- `REACT_APP_TENANT_SERVICE_ORIGIN=http://localhost:8081` sends TenantService calls to
+  the local TenantService.
+- `REACT_APP_LOCAL_TENANT_ID=1` sets the local `tenantId` cookie for localhost because
+  localhost has no tenant subdomain.
 - Keep the other service-specific origins commented unless you are also running those services
   locally.

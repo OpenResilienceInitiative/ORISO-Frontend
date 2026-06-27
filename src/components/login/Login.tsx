@@ -47,7 +47,6 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import {
-	deleteCookieByName,
 	getValueFromCookie,
 	setValueInCookie
 } from '../sessionCookie/accessSessionCookie';
@@ -192,10 +191,6 @@ export const Login = () => {
 		},
 		[locale]
 	);
-
-	useEffect(() => {
-		deleteCookieByName('tenantId');
-	}, []);
 
 	const postLogin = useCallback(
 		() =>
