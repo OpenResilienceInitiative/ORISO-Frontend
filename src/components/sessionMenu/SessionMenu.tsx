@@ -433,7 +433,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 				);
 				if (
 					window.confirm(
-						'Camera/microphone access requires HTTPS. Navigate to secure connection?'
+						'Camera/microphone access requires HTTPS. Redirect to secure connection?'
 					)
 				) {
 					window.location.href = httpsUrl;

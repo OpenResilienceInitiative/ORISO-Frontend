@@ -207,7 +207,7 @@ export const SessionStream = ({
 		abortController.current = new AbortController();
 
 		// Matrix-backed sessions must hydrate from the local Matrix SDK timeline.
-		// Pulling message navigate through ORISO REST would move decrypted/plaintext
+		// Pulling message history through ORISO REST would move decrypted/plaintext
 		// bodies outside the room encryption boundary.
 		const isMatrixBackedSession =
 			Boolean(activeSession.item?.matrixRoomId) ||
