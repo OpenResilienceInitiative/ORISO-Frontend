@@ -23,9 +23,13 @@ export const BookingReschedule = () => {
 		bookingId?: string;
 	} | null;
 
-	// Direct navigation (no router state) would crash on state.* below — send
-	// the user back to the bookings overview instead.
-	if (!state?.rescheduleLink) {
+	// Direct navigation (or partial state) would crash on state.* below — every
+	// field the iframe URL needs must be present, else bail to the overview.
+	if (
+		!state?.rescheduleLink ||
+		!state?.bookingId ||
+		(isConsultant && !state?.askerId)
+	) {
 		return <Navigate to="/booking/events" replace />;
 	}
 

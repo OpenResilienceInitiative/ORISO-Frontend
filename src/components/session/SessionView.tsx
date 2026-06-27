@@ -124,7 +124,8 @@ export const SessionView = () => {
 			// console.log('🔥 No active session - redirecting to list');
 			navigate(
 				listPath +
-					(sessionListTab ? `?sessionListTab=${sessionListTab}` : '')
+					(sessionListTab ? `?sessionListTab=${sessionListTab}` : ''),
+				{ replace: true }
 			);
 			return;
 		} else if (activeSessionReady) {

@@ -102,7 +102,8 @@ export const GroupChatInfo = () => {
 		if (!activeSession) {
 			navigate(
 				listPath +
-					(sessionListTab ? `?sessionListTab=${sessionListTab}` : '')
+					(sessionListTab ? `?sessionListTab=${sessionListTab}` : ''),
+				{ replace: true }
 			);
 			return;
 		}

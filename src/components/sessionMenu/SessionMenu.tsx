@@ -177,7 +177,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 				setTimeout(() => {
 					if (window.innerWidth >= 900) {
 						navigate(
-							`${listPath}/${activeSession.item.groupId}/${activeSession.item.id}}`
+							`${listPath}/${activeSession.item.groupId}/${activeSession.item.id}`
 						);
 					} else {
 						mobileListView();
