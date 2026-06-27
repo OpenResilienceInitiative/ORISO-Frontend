@@ -30,3 +30,11 @@ jobs:
         push_to_ghcr: false
         image_name: oriso-frontend
         github_token: ${{ secrets.GITHUB_TOKEN }}
+
+# NOTE: the Playwright public-route smoke (`npm run test:smoke`) is intentionally
+# NOT a CI job. The app's bootstrap requires a reachable backend to render; CI
+# runners can't reach the dev cluster, so a browser smoke would need Cypress's
+# full API-mock layer (which is also why the Cypress suite isn't wired to CI).
+# The router migration's automated CI coverage is the vitest routing suite
+# (src/components/app/SessionsZone.routing.test.tsx, both roles) + the build/test
+# job above. Playwright stays a local smoke against the dev backend.

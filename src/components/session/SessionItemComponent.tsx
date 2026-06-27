@@ -40,7 +40,7 @@ import {
 	STATUS_EMPTY,
 	STATUS_ENQUIRY
 } from '../../globalState/interfaces/SessionsDataInterface';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import * as Tone from 'tone';
 import { RocketChatUsersOfRoomProvider } from '../../globalState/provider/RocketChatUsersOfRoomProvider';
 import './session.styles';
@@ -403,7 +403,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const legalLinks = useContext(LegalLinksContext);
 	const { matrixClientService } = useMatrixClient();
 	const location = useLocation();
-	const history = useHistory();
+	const navigate = useNavigate();
 	const isEmbeddedNotificationsView =
 		new URLSearchParams(location.search).get('embeddedNotifications') ===
 		'1';
@@ -4293,7 +4293,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 														onClick={(event) => {
 															event.preventDefault();
 															event.stopPropagation();
-															history.push(
+															navigate(
 																'/registration'
 															);
 														}}
@@ -4881,7 +4881,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					<MuiButton
 						fullWidth
 						variant="contained"
-						onClick={() => history.push('/registration')}
+						onClick={() => navigate('/registration')}
 						sx={{
 							mb: '8px',
 							borderRadius: '999px',
@@ -4915,7 +4915,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						<MuiButton
 							fullWidth
 							variant="outlined"
-							onClick={() => history.goBack()}
+							onClick={() => navigate(-1)}
 							startIcon={<ArrowBackIcon />}
 							sx={{
 								borderRadius: '24px',

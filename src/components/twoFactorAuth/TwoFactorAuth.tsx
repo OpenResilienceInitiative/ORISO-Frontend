@@ -26,16 +26,19 @@ export { OTP_LENGTH, TWO_FACTOR_TYPES } from './twoFactorAuthConstants';
 
 export const TwoFactorAuth = () => {
 	const { t: translate } = useTranslation();
-	const location = useLocation<{
-		openTwoFactor?: boolean;
+	const location = useLocation();
+	// v7 dropped the useLocation<T>() generic; cast the nav state back to a
+	// known shape so these reads stay type-checked.
+	const locationState = (location.state ?? {}) as {
 		isEditMode?: boolean;
-	}>();
+		openTwoFactor?: boolean;
+	};
 	const { userData, reloadUserData } = useContext(UserDataContext);
 	const settings = useAppConfig();
 	const { getDevToolbarOption } = useDevToolbar();
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
 	const [isEditMode, setIsEditMode] = useState(
-		location.state?.isEditMode ?? false
+		locationState.isEditMode ?? false
 	);
 	const [isSwitchChecked, setIsSwitchChecked] = useState<boolean>(
 		userData.twoFactorAuth.isActive
@@ -55,10 +58,10 @@ export const TwoFactorAuth = () => {
 		userData.twoFactorAuth.isActive;
 
 	useEffect(() => {
-		if (location.state?.openTwoFactor) {
+		if (locationState.openTwoFactor) {
 			setIsDialogOpen(true);
 		}
-	}, [location.state?.openTwoFactor]);
+	}, [locationState.openTwoFactor]);
 
 	useEffect(() => {
 		setIsSwitchChecked(userData.twoFactorAuth.isActive);

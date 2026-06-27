@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useEffect, useContext, useState, useCallback } from 'react';
-import { Link, Redirect, useParams, useHistory } from 'react-router-dom';
+import { Link, Navigate, useParams, useNavigate } from 'react-router-dom';
 import {
 	AUTHORITIES,
 	SessionTypeContext,
@@ -56,7 +56,7 @@ import {
 export const GroupChatInfo = () => {
 	const settings = useAppConfig();
 	const { t: translate } = useTranslation();
-	const history = useHistory();
+	const navigate = useNavigate();
 	const tenantData = useTenant();
 	const { rcGroupId: groupIdFromParam } = useParams<{ rcGroupId: string }>();
 	const featureGroupChatV2Enabled =
@@ -100,9 +100,10 @@ export const GroupChatInfo = () => {
 		}
 
 		if (!activeSession) {
-			history.push(
+			navigate(
 				listPath +
-					(sessionListTab ? `?sessionListTab=${sessionListTab}` : '')
+					(sessionListTab ? `?sessionListTab=${sessionListTab}` : ''),
+				{ replace: true }
 			);
 			return;
 		}
@@ -110,7 +111,7 @@ export const GroupChatInfo = () => {
 		if (activeSession.isGroup && !activeSession.item.consultingType) {
 			setIsV2GroupChat(true);
 		}
-	}, [activeSession, history, listPath, ready, sessionListTab]);
+	}, [activeSession, navigate, listPath, ready, sessionListTab]);
 
 	const handleStopGroupChatButton = () => {
 		setOverlayItem(stopGroupChatSecurityOverlayItem);
@@ -173,7 +174,7 @@ export const GroupChatInfo = () => {
 	if (!activeSession) return null;
 
 	if (redirectToSessionsList) {
-		return <Redirect to={listPath + getSessionListTab()} />;
+		return <Navigate to={listPath + getSessionListTab()} replace />;
 	}
 
 	const showCreator =
@@ -367,16 +368,14 @@ export const GroupChatInfo = () => {
 								!activeSession.item.active ? (
 									<Link
 										className="groupChatInfo__innerWrapper__editButton"
-										to={{
-											pathname: `${listPath}/${
-												activeSession.item.groupId
-											}/${
-												activeSession.item.id
-											}/editGroupChat${getSessionListTab()}`,
-											state: {
-												isEditMode: true,
-												prevIsInfoPage: true
-											}
+										to={`${listPath}/${
+											activeSession.item.groupId
+										}/${
+											activeSession.item.id
+										}/editGroupChat${getSessionListTab()}`}
+										state={{
+											isEditMode: true,
+											prevIsInfoPage: true
 										}}
 									>
 										<Button

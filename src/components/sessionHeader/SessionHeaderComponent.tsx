@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useContext, useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Link, useHistory } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import clsx from 'clsx';
 import { handleNumericTranslation } from '../../utils/translate';
 import { mobileListView } from '../app/navigationHandler';
@@ -104,7 +104,8 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	const { addNotification, addEventNotification } =
 		useContext(NotificationsContext);
 	const { matrixClientService } = useMatrixClient();
-	const history = useHistory();
+	const navigate = useNavigate();
+	const location = useLocation();
 	const consultingType = useConsultingType(activeSession.item.consultingType);
 	const topic = useTopic(
 		(activeSession.item.topic as TopicSessionInterface).id
@@ -528,7 +529,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					'sessionHeader.supervisor.success.add.text',
 					'Der Supervisor wurde erfolgreich hinzugefügt.'
 				)} (${selectedSupervisorName} -> ${chatDisplayName})`,
-				actionPath: history.location.pathname + history.location.search,
+				actionPath: location.pathname + location.search,
 				actionLabel: translate(
 					'notifications.center.open',
 					'Open chat'
@@ -611,7 +612,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					'sessionHeader.supervisor.success.remove.text',
 					'Der Supervisor wurde erfolgreich entfernt.'
 				)} (${supervisorToRemoveName} <- ${chatDisplayName})`,
-				actionPath: history.location.pathname + history.location.search,
+				actionPath: location.pathname + location.search,
 				actionLabel: translate(
 					'notifications.center.open',
 					'Open chat'
@@ -762,7 +763,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			setIsEndChatOverlayActive(false);
 			setEndChatOverlayItem(null);
 			if (isConsultantUser && isAnonymousChat) {
-				history.push('/sessions/consultant/sessionView');
+				navigate('/sessions/consultant/sessionView');
 			} else {
 				window.location.href = appConfig.urls.toEntry;
 			}
@@ -874,7 +875,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 				category: 'system'
 			});
 			setTimeout(() => {
-				history.push(listPath + getSessionListTab());
+				navigate(listPath + getSessionListTab());
 			}, 2000);
 		} catch (error) {
 			setIsDeletingAccount(false);
