@@ -296,6 +296,21 @@ export const TopicSelection: FC<{
 
 				if (cancelled) return;
 
+				setExpandedTopicGroupIds((currentIds) => {
+					const existingIds = currentIds.filter((id) =>
+						presentationGroups.some(
+							(topicGroup) => topicGroup.id === id
+						)
+					);
+
+					if (existingIds.length > 0) {
+						return existingIds;
+					}
+
+					return presentationGroups[0]?.id
+						? [presentationGroups[0].id]
+						: [];
+				});
 				setTopicGroups(presentationGroups);
 				setListView(nextListView);
 				setTopics(filteredTopics);
