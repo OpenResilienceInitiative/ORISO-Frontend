@@ -256,6 +256,16 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
 	const getSessionListTab = () =>
 		`${sessionListTab ? `?sessionListTab=${sessionListTab}` : ''}`;
+	// Activity events point at the conversation, not a transient thread/embedded
+	// view — strip ephemeral query params from the saved action path.
+	const getCanonicalConversationActionPath = () => {
+		const params = new URLSearchParams(location.search);
+		params.delete('threadRootId');
+		params.delete('threadMessageId');
+		params.delete('embeddedNotifications');
+		const query = params.toString();
+		return `${location.pathname}${query ? `?${query}` : ''}`;
+	};
 	const { type, path: listPath } = useContext(SessionTypeContext);
 
 	useEffect(() => {
@@ -529,7 +539,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					'sessionHeader.supervisor.success.add.text',
 					'Der Supervisor wurde erfolgreich hinzugefügt.'
 				)} (${selectedSupervisorName} -> ${chatDisplayName})`,
-				actionPath: location.pathname + location.search,
+				actionPath: getCanonicalConversationActionPath(),
 				actionLabel: translate(
 					'notifications.center.open',
 					'Open chat'
@@ -612,7 +622,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					'sessionHeader.supervisor.success.remove.text',
 					'Der Supervisor wurde erfolgreich entfernt.'
 				)} (${supervisorToRemoveName} <- ${chatDisplayName})`,
-				actionPath: location.pathname + location.search,
+				actionPath: getCanonicalConversationActionPath(),
 				actionLabel: translate(
 					'notifications.center.open',
 					'Open chat'
@@ -763,7 +773,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			setIsEndChatOverlayActive(false);
 			setEndChatOverlayItem(null);
 			if (isConsultantUser && isAnonymousChat) {
-				navigate('/sessions/consultant/sessionView');
+				navigate(listPath + getSessionListTab());
 			} else {
 				window.location.href = appConfig.urls.toEntry;
 			}
