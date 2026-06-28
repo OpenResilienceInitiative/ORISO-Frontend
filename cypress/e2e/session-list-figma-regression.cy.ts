@@ -57,6 +57,26 @@ describe('Session list Figma regression', () => {
 			},
 			1
 		);
+		cy.consultantSession(
+			{
+				session: {
+					id: 24680,
+					status: 2,
+					consultingType: 1,
+					postcode: 54321,
+					registrationType: 'REGISTERED',
+					lastMessage: 'Auto-selected postcode stays hidden',
+					e2eLastMessage: {
+						t: '1606900238',
+						msg: 'Auto-selected postcode stays hidden'
+					}
+				},
+				user: {
+					username: 'Auto Select U25'
+				}
+			},
+			2
+		);
 
 		cy.fastLogin({
 			userId: USER_CONSULTANT
@@ -164,6 +184,12 @@ describe('Session list Figma regression', () => {
 		cy.get('@secondRegisteredNearbySession')
 			.should('contain.text', '99322')
 			.and('contain.text', 'Nähe')
+			.and('not.contain.text', 'Live Chat');
+		cy.get('[data-cy=session-list-item]')
+			.eq(2)
+			.should('contain.text', 'Auto Select U25')
+			.and('contain.text', 'Nähe')
+			.and('not.contain.text', '54321')
 			.and('not.contain.text', 'Live Chat');
 	});
 });

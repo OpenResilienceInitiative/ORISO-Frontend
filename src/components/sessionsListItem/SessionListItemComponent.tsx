@@ -17,6 +17,7 @@ import { resolveAnonymousChatDisplayName } from '../../utils/anonymousChatDispla
 import { UserAvatar } from '../message/UserAvatar';
 import { ConsultantSearchLoader } from '../sessionHeader/ConsultantSearchLoader';
 import { MenuVerticalIcon, ShowPasswordIcon } from '../../resources/img/icons';
+import { config } from '../../resources/scripts/config';
 import { ReactComponent as ArchiveIcon } from '../../resources/img/icons/inbox.svg';
 import { ReactComponent as TrashIcon } from '../../resources/img/icons/trash.svg';
 import { ReactComponent as BellOffIcon } from '../../resources/img/icons/bell-off.svg';
@@ -99,8 +100,10 @@ export const SessionListItemComponent = ({
 	const { userData } = useContext(UserDataContext);
 	const { path: listPath, type } = useContext(SessionTypeContext);
 	const { isE2eeEnabled } = useContext(E2EEContext);
-	const { activeSession, reloadActiveSession } =
-		useContext(ActiveSessionContext);
+	const activeSessionContext = useContext(ActiveSessionContext);
+	const activeSession = activeSessionContext?.activeSession;
+	const reloadActiveSession = activeSessionContext?.reloadActiveSession;
+	const sessionItem = activeSession?.item;
 	const { dispatch: sessionsDispatch } = useContext(SessionsDataContext);
 	const legalLinks = useContext(LegalLinksContext);
 
@@ -112,7 +115,7 @@ export const SessionListItemComponent = ({
 		top: 0,
 		left: 0
 	});
-	const dropdownId = `session-list-item-menu-${activeSession.item.id}`;
+	const dropdownId = `session-list-item-menu-${sessionItem?.id ?? 'inactive'}`;
 	const dropdownLabel = translate('groupChat.info.settings.headline');
 	const [overlayItem, setOverlayItem] = useState(null);
 	const [overlayActive, setOverlayActive] = useState(false);
@@ -120,29 +123,32 @@ export const SessionListItemComponent = ({
 
 	useEffect(() => {
 		setFlyoutOpen(false);
-	}, [activeSession.item.id, location.pathname, location.search]);
+	}, [sessionItem?.id, location.pathname, location.search]);
 
 	// Is List Item active
-	const isChatActive = isActive({
-		groupId: activeSession.item.groupId,
-		rid: activeSession.rid,
-		sessionId: activeSession.item.id
-	});
+	const isChatActive = activeSession
+		? isActive({
+				groupId: sessionItem?.groupId,
+				rid: activeSession.rid,
+				sessionId: sessionItem?.id
+			})
+		: false;
 
-	const language = activeSession.item.language || defaultLanguage;
-	const consultingType = useConsultingType(activeSession.item.consultingType);
-	const topicId =
-		(activeSession.item.topic as TopicSessionInterface)?.id || null;
+	const language = sessionItem?.language || defaultLanguage;
+	const consultingType = useConsultingType(sessionItem?.consultingType);
+	const topicId = (sessionItem?.topic as TopicSessionInterface)?.id || null;
 	const topic = useTopic(topicId);
+	const autoSelectPostcode =
+		consultingType?.registration?.autoSelectPostcode ??
+		config.registration.consultingTypeDefaults.autoSelectPostcode;
 
 	const { key, keyID, encrypted, ready } = useE2EE(
-		activeSession.item.groupId,
-		activeSession.item.lastMessageType ===
-			ALIAS_MESSAGE_TYPES.MASTER_KEY_LOST
+		sessionItem?.groupId || null,
+		sessionItem?.lastMessageType === ALIAS_MESSAGE_TYPES.MASTER_KEY_LOST
 	);
 	const isMatrixBackedSession =
-		isMatrixRoomIdHeuristic(activeSession.item.groupId) ||
-		isMatrixRoomIdHeuristic(activeSession.item.matrixRoomId);
+		isMatrixRoomIdHeuristic(sessionItem?.groupId) ||
+		isMatrixRoomIdHeuristic(sessionItem?.matrixRoomId);
 	const [plainTextLastMessage, setPlainTextLastMessage] = useState(null);
 
 	useEffect(() => {
@@ -155,14 +161,18 @@ export const SessionListItemComponent = ({
 			return;
 		}
 
+		if (!sessionItem) {
+			return;
+		}
+
 		if (isE2eeEnabled) {
-			if (!activeSession.item.e2eLastMessage) return;
+			if (!sessionItem.e2eLastMessage) return;
 			decryptText(
-				activeSession.item.e2eLastMessage.msg,
+				sessionItem.e2eLastMessage.msg,
 				keyID,
 				key,
 				encrypted,
-				activeSession.item.e2eLastMessage.t === 'e2e'
+				sessionItem.e2eLastMessage.t === 'e2e'
 			)
 				.catch((e): string =>
 					translate(
@@ -180,15 +190,15 @@ export const SessionListItemComponent = ({
 				});
 		} else {
 			if (
-				activeSession.item.e2eLastMessage &&
-				activeSession.item.e2eLastMessage.t === 'e2e'
+				sessionItem.e2eLastMessage &&
+				sessionItem.e2eLastMessage.t === 'e2e'
 			) {
 				setPlainTextLastMessage(
 					translate('e2ee.message.encryption.text')
 				);
 			} else {
 				const rawMessageObject = markdownToDraft(
-					activeSession.item.lastMessage
+					sessionItem.lastMessage
 				);
 				const contentStateMessage = convertFromRaw(rawMessageObject);
 				setPlainTextLastMessage(contentStateMessage.getPlainText());
@@ -199,10 +209,7 @@ export const SessionListItemComponent = ({
 		key,
 		keyID,
 		encrypted,
-		activeSession.item.groupId,
-		activeSession.item.matrixRoomId,
-		activeSession.item.e2eLastMessage,
-		activeSession.item.lastMessage,
+		sessionItem,
 		isMatrixBackedSession,
 		translate,
 		ready
@@ -491,7 +498,7 @@ export const SessionListItemComponent = ({
 		setFlyoutOpen(false);
 		apiPutDearchive(activeSession.item.id)
 			.then(() => {
-				reloadActiveSession();
+				reloadActiveSession?.();
 				setTimeout(() => {
 					if (window.innerWidth >= 900) {
 						history.push(
@@ -745,7 +752,10 @@ export const SessionListItemComponent = ({
 		]
 	});
 	const shouldShowPostcode =
-		!isAsker && !isAnonymousChat && Boolean(postcodeLabel);
+		!isAsker &&
+		!autoSelectPostcode &&
+		!isAnonymousChat &&
+		Boolean(postcodeLabel);
 
 	return (
 		<div
@@ -1328,38 +1338,27 @@ export const SessionListItemComponent = ({
 								</div>
 							);
 						}
-						if (!activeSession.isGroup) {
-							return (
-								<div
-									className={clsx(
-										'sessionsListItem__consultingTypeIcon',
-										'sessionsListItem__consultingTypeIcon--nearby'
-									)}
-								>
-									<img
-										src={nearbyConversationIcon}
-										alt={translate(
-											'sessionList.toolbar.chips.nearby',
-											'Nähe'
-										)}
-										className="sessionsListItem__consultingTypeIcon--nearbyIcon"
-									/>
-									<span className="sessionsListItem__consultingTypeIcon--nearbyLabel">
-										{translate(
-											'sessionList.toolbar.chips.nearby',
-											'Nähe'
-										)}
-									</span>
-								</div>
-							);
-						}
 						return (
-							<div className="sessionsListItem__consultingTypeIcon">
+							<div
+								className={clsx(
+									'sessionsListItem__consultingTypeIcon',
+									'sessionsListItem__consultingTypeIcon--nearby'
+								)}
+							>
 								<img
-									src={teamImage}
-									alt="Team Beratung"
-									className="sessionsListItem__consultingTypeIcon--team"
+									src={nearbyConversationIcon}
+									alt={translate(
+										'sessionList.toolbar.chips.nearby',
+										'Nähe'
+									)}
+									className="sessionsListItem__consultingTypeIcon--nearbyIcon"
 								/>
+								<span className="sessionsListItem__consultingTypeIcon--nearbyLabel">
+									{translate(
+										'sessionList.toolbar.chips.nearby',
+										'Nähe'
+									)}
+								</span>
 							</div>
 						);
 					})()}
