@@ -3874,6 +3874,8 @@ export const MessageSubmitInterfaceComponent = ({
 					<div
 						className={clsx(
 							'textarea__wrapper-send-message',
+							canSendMessage &&
+								'textarea__wrapper-send-message--ready',
 							isExpandedComposer &&
 								'textarea__wrapper-send-message--expanded'
 						)}
