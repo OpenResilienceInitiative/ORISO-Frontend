@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useContext, useEffect, useState } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Stomp } from '@stomp/stompjs';
 import * as SockJS from 'sockjs-client';
 import { endpoints } from '../../resources/scripts/endpoints';
@@ -31,7 +31,7 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 	const liveWebsocketDisabled =
 		process.env.REACT_APP_DISABLE_LIVE_WEBSOCKET === '1';
 	const { t: translate } = useTranslation();
-	const history = useHistory();
+	const navigate = useNavigate();
 	const { releaseToggles } = useAppConfig();
 	const [newStompDirectMessage, setNewStompDirectMessage] =
 		useState<boolean>(false);
@@ -146,7 +146,7 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 			) {
 				sendNotification(translate('notifications.message.new'), {
 					onclick: () => {
-						history.push(`/sessions/consultant/sessionView`);
+						navigate(`/sessions/consultant/sessionView`);
 					}
 				});
 			}

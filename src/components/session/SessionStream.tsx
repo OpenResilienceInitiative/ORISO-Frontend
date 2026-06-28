@@ -7,7 +7,7 @@ import {
 	useRef,
 	useState
 } from 'react';
-import { useParams, useHistory } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Loading } from '../app/Loading';
 import { SessionItemComponent } from './SessionItemComponent';
 import {
@@ -75,10 +75,10 @@ export const SessionStream = ({
 	const MATRIX_TYPING_TRIGGER_MS = 1000;
 	const MATRIX_TYPING_STALE_MS = 3600;
 	const { t: translate } = useTranslation();
+	const navigate = useNavigate();
 	const appConfig = useAppConfig();
 	const chatTransportFacadeEnabled =
 		chatTransportService.isFacadeEnabled(appConfig);
-	const history = useHistory();
 
 	const { type, path: listPath } = useContext(SessionTypeContext);
 	const { userData } = useContext(UserDataContext);
@@ -419,12 +419,12 @@ export const SessionStream = ({
 					// then redirect him to the listview
 					if (type === SESSION_LIST_TYPES.MY_SESSION) {
 						if (activeSession?.item?.groupId === rcGroupId) {
-							history.push(listPath);
+							navigate(listPath);
 						}
 					}
 				}
 			},
-			[activeSession, rcGroupId, listPath, type, history]
+			[activeSession, rcGroupId, listPath, type, navigate]
 		)
 	);
 
@@ -843,7 +843,7 @@ export const SessionStream = ({
 
 	const handleOverlayAction = (buttonFunction: string) => {
 		if (buttonFunction === OVERLAY_FUNCTIONS.REDIRECT) {
-			history.push(
+			navigate(
 				listPath +
 					(sessionListTab ? `?sessionListTab=${sessionListTab}` : '')
 			);

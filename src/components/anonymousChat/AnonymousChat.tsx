@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useState, useEffect, useContext, FC, useCallback } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
 	Typography,
@@ -58,7 +58,7 @@ interface AnonymousChatProps {
 
 export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 	const { t } = useTranslation();
-	const history = useHistory();
+	const navigate = useNavigate();
 	const settings = useAppConfig();
 	const { tenant } = useContext(TenantContext);
 	const { Stage } = useContext(GlobalComponentContext);
@@ -1072,7 +1072,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 					<Button
 						fullWidth
 						variant="contained"
-						onClick={() => history.push('/registration')}
+						onClick={() => navigate('/registration')}
 						sx={{
 							mb: '8px',
 							borderRadius: '999px',

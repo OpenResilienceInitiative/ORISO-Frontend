@@ -5,7 +5,7 @@ import { LoadingIndicator } from '../../../../components/loadingIndicator/Loadin
 import { EmptyType, EmptyState } from '../EmptyState';
 import './overviewCard.styles.scss';
 import { useTranslation } from 'react-i18next';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 interface OverviewCardProps {
 	allMessagesPaths: string;
@@ -29,7 +29,7 @@ export const OverviewCard = ({
 	emptyType
 }: OverviewCardProps) => {
 	const { t: translate } = useTranslation();
-	const history = useHistory();
+	const navigate = useNavigate();
 
 	const countStr = useMemo(
 		() => (dataListLength > MAX_COUNT ? `${MAX_COUNT}+` : dataListLength),
@@ -50,7 +50,7 @@ export const OverviewCard = ({
 			</Card.Content>
 			<Card.Footer className="footer">
 				<Button
-					buttonHandle={() => history.push(allMessagesPaths)}
+					buttonHandle={() => navigate(allMessagesPaths)}
 					item={{
 						label: translate('overview.viewAll'),
 						type: BUTTON_TYPES.SMALL_ICON,

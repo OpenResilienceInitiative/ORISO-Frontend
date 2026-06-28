@@ -9,14 +9,10 @@ import {
 	FormEvent
 } from 'react';
 import {
-	Route,
-	Redirect,
-	Switch,
-	useHistory,
+	Navigate,
+	useNavigate,
 	useLocation,
 	useParams,
-	useRouteMatch,
-	generatePath,
 	Link as RouterLink
 } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -72,12 +68,26 @@ export const Registration = () => {
 	const settings = useAppConfig();
 	const isFirstVisit = useIsFirstVisit();
 	const location = useLocation();
-	const history = useHistory();
-	const { path } = useRouteMatch();
+	const navigate = useNavigate();
 	const { step, topicSlug } = useParams<{
-		step: string;
-		topicSlug: string;
+		step?: string;
+		topicSlug?: string;
 	}>();
+
+	// Build an absolute step URL from the route params (replaces v5's
+	// generatePath(useRouteMatch().path, …)). No/`welcome` step → the bare
+	// registration path (which then redirects to the first step).
+	const makeStepUrl = useCallback(
+		(stepName?: string | null) => {
+			const base = topicSlug
+				? `/${topicSlug}/registration`
+				: '/registration';
+			return stepName && stepName !== 'welcome'
+				? `${base}/${stepName}${location.search}`
+				: `${base}${location.search}`;
+		},
+		[topicSlug, location.search]
+	);
 
 	const { Stage } = useContext(GlobalComponentContext);
 	const { addNotification } = useContext(NotificationsContext);
@@ -120,35 +130,27 @@ export const Registration = () => {
 		[availableSteps, step]
 	);
 
-	const [prevStepUrl, nextStepUrl] = useMemo(() => {
-		const firstStepName = availableSteps[0]?.name || 'topic-selection';
-		const previousStepName =
-			availableSteps[Math.max(currStepIndex - 1, 0)]?.name ||
-			firstStepName;
-		const nextStepName = availableSteps[currStepIndex + 1]?.name;
-
-		return [
-			`${generatePath(path, {
-				topicSlug,
-				step: previousStepName
-			})}${location.search}`,
-			nextStepName
-				? `${generatePath(path, {
-						topicSlug,
-						step: nextStepName
-					})}${location.search}`
-				: null
-		];
-	}, [availableSteps, currStepIndex, path, topicSlug, location.search]);
+	// The step form renders only for a real step; bare /registration (no/unknown
+	// :step) redirects to the first step — dev's stabilized entry, no separate
+	// welcome screen.
+	const activeStep = availableSteps[currStepIndex];
 
 	const firstStepUrl = useMemo(
-		() =>
-			`${generatePath(path, {
-				topicSlug,
-				step: availableSteps[0]?.name || 'topic-selection'
-			})}${location.search}`,
-		[availableSteps, location.search, path, topicSlug]
+		() => makeStepUrl(availableSteps[0]?.name || 'topic-selection'),
+		[availableSteps, makeStepUrl]
 	);
+
+	const [prevStepUrl, nextStepUrl] = useMemo(() => {
+		const previousStepName =
+			availableSteps[Math.max(currStepIndex - 1, 0)]?.name ||
+			availableSteps[0]?.name ||
+			'topic-selection';
+		const nextStepName = availableSteps[currStepIndex + 1]?.name;
+		return [
+			makeStepUrl(previousStepName),
+			nextStepName ? makeStepUrl(nextStepName) : null
+		];
+	}, [availableSteps, currStepIndex, makeStepUrl]);
 
 	const mergedRegistrationData = useMemo(
 		() => ({
@@ -185,10 +187,10 @@ export const Registration = () => {
 	const onNextClick = useCallback(() => {
 		updateRegistrationData(stepData);
 		setStepData({});
-		if (history && nextStepUrl) {
-			history.push(nextStepUrl);
+		if (nextStepUrl) {
+			navigate(nextStepUrl);
 		}
-	}, [updateRegistrationData, stepData, history, nextStepUrl]);
+	}, [updateRegistrationData, stepData, navigate, nextStepUrl]);
 
 	const onPrevClick = useCallback(() => {
 		setStepData({});
@@ -207,20 +209,8 @@ export const Registration = () => {
 			agency: undefined,
 			agencyId: undefined
 		});
-		history.push(
-			`${generatePath(path, {
-				topicSlug,
-				step: 'topic-selection'
-			})}${location.search}`
-		);
-	}, [
-		history,
-		location.search,
-		path,
-		setDisabledNextButton,
-		topicSlug,
-		updateRegistrationData
-	]);
+		navigate(makeStepUrl('topic-selection'));
+	}, [navigate, makeStepUrl, setDisabledNextButton, updateRegistrationData]);
 
 	const onClearPostcodeSelection = useCallback(() => {
 		setStepData({});
@@ -230,20 +220,8 @@ export const Registration = () => {
 			agency: undefined,
 			agencyId: undefined
 		});
-		history.push(
-			`${generatePath(path, {
-				topicSlug,
-				step: 'zipcode'
-			})}${location.search}`
-		);
-	}, [
-		history,
-		location.search,
-		path,
-		setDisabledNextButton,
-		topicSlug,
-		updateRegistrationData
-	]);
+		navigate(makeStepUrl('zipcode'));
+	}, [navigate, makeStepUrl, setDisabledNextButton, updateRegistrationData]);
 
 	const footerChips = useMemo<RegistrationFooterChipItem[]>(() => {
 		const chips: RegistrationFooterChipItem[] = [];
@@ -306,21 +284,9 @@ export const Registration = () => {
 			}
 
 			setStepData({});
-			history.push(
-				`${generatePath(path, {
-					topicSlug,
-					step: targetStepName
-				})}${location.search}`
-			);
+			navigate(makeStepUrl(targetStepName));
 		},
-		[
-			availableSteps,
-			currStepIndex,
-			history,
-			location.search,
-			path,
-			topicSlug
-		]
+		[availableSteps, currStepIndex, navigate, makeStepUrl]
 	);
 
 	useEffect(() => {
@@ -330,18 +296,14 @@ export const Registration = () => {
 			.filter((missingStep) => missingStep < currStepIndex);
 
 		if (missingPreviousSteps.length > 0) {
-			history.push(
-				`${generatePath(path, { topicSlug, step: availableSteps[missingPreviousSteps[0]]?.name })}${location.search}`
-			);
+			navigate(makeStepUrl(availableSteps[missingPreviousSteps[0]]?.name));
 		}
 	}, [
 		availableSteps,
 		checkForStepsWithMissingMandatoryFields,
-		history,
-		location.search,
-		currStepIndex,
-		path,
-		topicSlug
+		navigate,
+		makeStepUrl,
+		currStepIndex
 	]);
 
 	const onRegisterClick = useCallback(() => {
@@ -449,16 +411,6 @@ export const Registration = () => {
 		]
 	);
 
-	const stepPaths = useMemo(
-		() =>
-			availableSteps.reduce(
-				(acc, { name }) =>
-					acc.concat(generatePath(path, { topicSlug, step: name })),
-				[]
-			),
-		[availableSteps, path, topicSlug]
-	);
-
 	return (
 		<>
 			<StageLayout
@@ -474,8 +426,8 @@ export const Registration = () => {
 						width: '100%'
 					}}
 				>
-					<Switch>
-						<Route path={stepPaths}>
+					{activeStep ? (
+						<>
 							<Helmet>
 								<meta name="robots" content="noindex"></meta>
 							</Helmet>
@@ -510,38 +462,17 @@ export const Registration = () => {
 											mx: 'auto'
 										}}
 									>
-										<Switch>
-											{availableSteps.map(
-												({
-													name,
-													component: Component
-												}) => (
-													<Route
-														path={generatePath(
-															path,
-															{
-																topicSlug,
-																step: name
-															}
-														)}
-														key={name}
-													>
-														<Component
-															key={`${name}-${clearSelectionVersion}`}
-															onChange={
-																setStepData
-															}
-															onNextClick={
-																onNextClick
-															}
-															nextStepUrl={
-																nextStepUrl
-															}
-														/>
-													</Route>
-												)
-											)}
-										</Switch>
+										{(() => {
+											const StepComponent = activeStep.component;
+											return (
+												<StepComponent
+													key={`${activeStep.name}-${clearSelectionVersion}`}
+													onChange={setStepData}
+													onNextClick={onNextClick}
+													nextStepUrl={nextStepUrl}
+												/>
+											);
+										})()}
 									</Box>
 								</Box>
 								<Box
@@ -691,11 +622,10 @@ export const Registration = () => {
 									</Box>
 								</Box>
 							</form>
-						</Route>
-						<Route>
-							<Redirect to={firstStepUrl} />
-						</Route>
-					</Switch>
+						</>
+					) : (
+						<Navigate to={firstStepUrl} replace />
+					)}
 				</Box>
 			</StageLayout>
 		</>

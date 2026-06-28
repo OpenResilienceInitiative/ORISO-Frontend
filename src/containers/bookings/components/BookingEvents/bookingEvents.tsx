@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useContext } from 'react';
-import { NavLink, Redirect, Route, Switch, useHistory } from 'react-router-dom';
+import { NavLink, Navigate, Route, Routes, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
 	Button,
@@ -27,7 +27,7 @@ import {
 
 export const BookingEvents = () => {
 	const { t: translate } = useTranslation();
-	const history = useHistory();
+	const navigate = useNavigate();
 
 	const { userData } = useContext(UserDataContext);
 	const consultingTypes = useConsultingTypes();
@@ -43,7 +43,7 @@ export const BookingEvents = () => {
 	};
 
 	const handleBookingButton = () => {
-		history.push('/booking/');
+		navigate('/booking/');
 	};
 
 	return (
@@ -71,7 +71,9 @@ export const BookingEvents = () => {
 								>
 									<NavLink
 										to={`/booking/events${tab.url}`}
-										activeClassName="active"
+										className={({ isActive }) =>
+											isActive ? 'active' : ''
+										}
 									>
 										{translate(tab.title)}
 									</NavLink>
@@ -103,48 +105,57 @@ export const BookingEvents = () => {
 				)}
 			</div>
 			<div className="bookingEvents__innerWrapper">
-				<Switch>
+				<Routes>
 					{bookingRoutes
 						.filter((tab) =>
 							solveTabConditions(tab, userData, consultingTypes)
 						)
 						.map((tab) => (
 							<Route
-								path={`/booking/events${tab.url}`}
+								path={tab.url.replace(/^\//, '')}
 								key={`/booking/events${tab.url}`}
-							>
-								<div
-									className="booking__content"
-									style={{ height: '100%' }}
-								>
-									{tab.elements
-										.reduce(
-											(
-												acc: SingleComponentType[],
-												element
-											) =>
-												acc.concat(
-													isTabGroup(element)
-														? element.elements
-														: element
-												),
-											[]
-										)
-										.filter((element) =>
-											solveCondition(
-												element.condition,
-												userData,
-												consultingTypes
+								element={
+									<div
+										className="booking__content"
+										style={{ height: '100%' }}
+									>
+										{tab.elements
+											.reduce(
+												(
+													acc: SingleComponentType[],
+													element
+												) =>
+													acc.concat(
+														isTabGroup(element)
+															? element.elements
+															: element
+													),
+												[]
 											)
-										)
-										.map((element, i) => (
-											<element.component key={i} />
-										))}
-								</div>
-							</Route>
+											.filter((element) =>
+												solveCondition(
+													element.condition,
+													userData,
+													consultingTypes
+												)
+											)
+											.map((element, i) => (
+												<element.component key={i} />
+											))}
+									</div>
+								}
+							/>
 						))}
-					<Redirect to={`/booking/events${bookingRoutes[0].url}`} />
-				</Switch>
+					<Route
+						path="*"
+						element={
+							<Navigate
+								to={`/booking/events${bookingRoutes[0].url}`}
+								replace
+							/>
+						}
+					/>
+				</Routes>
 			</div>
 		</div>
 	);

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
 	apiDeleteUserDraft,
@@ -80,7 +80,7 @@ const withDraftScopeParam = (path: string, draftScopeKey?: string | null) => {
 
 export const DraftsCenter = () => {
 	const { t: translate } = useTranslation();
-	const history = useHistory();
+	const navigate = useNavigate();
 	const { untilL } = useResponsive();
 	const [selectedDraftKey, setSelectedDraftKey] = useState<string | null>(
 		null
@@ -167,9 +167,9 @@ export const DraftsCenter = () => {
 			if (!entry.actionPath) {
 				return;
 			}
-			history.push(withDraftScopeParam(entry.actionPath, entry.scopeKey));
+			navigate(withDraftScopeParam(entry.actionPath, entry.scopeKey));
 		},
-		[history]
+		[navigate]
 	);
 
 	const handleSelectDraft = useCallback(

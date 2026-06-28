@@ -15,7 +15,6 @@ import { UrlParamsContext } from './UrlParamsProvider';
 import { getUrlParameter } from '../../utils/getUrlParameter';
 import { apiGetTopicById } from '../../api/apiGetTopicId';
 import { apiGetAgencyById } from '../../api';
-import { RouteProps, useRouteMatch } from 'react-router-dom';
 import { TopicSelection } from '../../components/registration/topicSelection/TopicSelection';
 import { ZipcodeInput } from '../../components/registration/zipcodeInput/ZipcodeInput';
 import { AgencySelection } from '../../components/registration/agencySelection/AgencySelection';
@@ -48,7 +47,6 @@ interface RegistrationContextInterface {
 	updateRegistrationData?: (data: Partial<RegistrationData>) => void;
 	availableSteps?: {
 		component: any;
-		route: Omit<RouteProps, 'path'> & { path: string };
 		name: string;
 		//urlSuffix?: string;
 		mandatoryFields?: string[];
@@ -72,8 +70,6 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 			registrationSessionStorageKey,
 			JSON.stringify(data)
 		);
-
-	const { url } = useRouteMatch();
 
 	const [loading, setLoading] = useState<boolean>(true);
 	const [disabledNextButton, setDisabledNextButton] = useState<boolean>(true);
@@ -110,49 +106,35 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 		[preselectedConsultant]
 	);
 
+	// Step URLs are now derived from the route `:step` param in Registration.tsx
+	// (react-router v7 removed useRouteMatch), so steps no longer carry a `route`.
 	const defaultSteps = useMemo(
 		() => [
 			{
 				component: TopicSelection,
 				name: 'topic-selection',
-				route: {
-					path: `${url}/topic-selection`,
-					exact: true
-				},
 				mandatoryFields: ['mainTopic'],
 				condition: ({ topic }) => !!topic
 			},
 			{
 				component: ZipcodeInput,
 				name: 'zipcode',
-				route: {
-					path: `${url}/zipcode`,
-					exact: true
-				},
 				mandatoryFields: ['zipcode'],
 				condition: ({ zipcode }) => !!zipcode
 			},
 			{
 				component: AgencySelection,
 				name: 'agency-selection',
-				route: {
-					path: `${url}/agency-selection`,
-					exact: true
-				},
 				mandatoryFields: ['agency'],
 				condition: ({ agency }) => !!agency
 			},
 			{
 				component: AccountData,
 				name: 'account-data',
-				route: {
-					path: `/account-data`,
-					exact: true
-				},
 				mandatoryFields: ['username', 'password']
 			}
 		],
-		[url]
+		[]
 	);
 	const [availableSteps, setAvailableSteps] = useState(defaultSteps);
 

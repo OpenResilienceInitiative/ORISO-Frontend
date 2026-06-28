@@ -1,16 +1,22 @@
 import * as React from 'react';
-import { useLocation } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAppConfig } from '../../../../hooks/useAppConfig';
 
 export const BookingCancellation = () => {
 	const settings = useAppConfig();
 
-	const location = useLocation<{ uid: string }>();
+	const location = useLocation();
+	const state = location.state as { uid?: string } | null;
+
+	// Guard against a direct visit with no router state (would crash below).
+	if (!state?.uid) {
+		return <Navigate to="/booking/events" replace />;
+	}
 
 	return (
 		(settings.calcomUrl && (
 			<iframe
-				src={`${settings.calcomUrl}/cancel/${location.state.uid}`}
+				src={`${settings.calcomUrl}/cancel/${state.uid}`}
 				frameBorder={0}
 				scrolling="false"
 				width="100%"
