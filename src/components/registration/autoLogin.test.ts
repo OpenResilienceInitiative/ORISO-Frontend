@@ -267,7 +267,8 @@ describe('autoLogin', () => {
 		);
 		vi.mocked(apiRocketChatFetchMyKeys).mockResolvedValue({
 			private_key: 'encrypted-private',
-			public_key: JSON.stringify({ n: 'stored-public-key' })
+			public_key: JSON.stringify({ n: 'stored-public-key' }),
+			success: true
 		});
 		const { decryptPrivateKey } = await import(
 			'../../utils/encryptionHelpers'
