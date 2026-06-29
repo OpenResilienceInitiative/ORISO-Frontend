@@ -1,12 +1,33 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { autoLogin } from './autoLogin';
+import { autoLogin, handleE2EESetup } from './autoLogin';
 import { getKeycloakAccessToken } from '../sessionCookie/getKeycloakAccessToken';
 import {
 	getMatrixAccessToken,
 	persistMatrixLoginData
 } from '../sessionCookie/getMatrixAccessToken';
 import { setTokens } from '../auth/auth';
+import { getBudibaseAccessToken } from '../sessionCookie/getBudibaseAccessToken';
+import { parseJwt } from '../../utils/parseJWT';
+import { apiRocketChatFetchMyKeys } from '../../api/apiRocketChatFetchMyKeys';
+import { apiRocketChatSetUserKeys } from '../../api/apiRocketChatSetUserKeys';
+import { apiUpdateUserE2EKeys } from '../../api';
+import {
+	createAndStoreKeys,
+	deriveMasterKeyFromPassword,
+	encryptPrivateKey,
+	readMasterKeyFromLocalStorage,
+	storeKeys,
+	writeMasterKeyToLocalStorage
+} from '../../utils/encryptionHelpers';
+
+const mockAppConfig = vi.hoisted(() => ({
+	multitenancyWithSingleDomainEnabled: false,
+	useTenantService: false,
+	urls: {
+		redirectToApp: '/sessions'
+	}
+}));
 
 vi.mock('../sessionCookie/getKeycloakAccessToken', () => ({
 	getKeycloakAccessToken: vi.fn()
@@ -81,13 +102,7 @@ vi.mock('../sessionCookie/getBudibaseAccessToken', () => ({
 }));
 
 vi.mock('../../utils/appConfig', () => ({
-	appConfig: {
-		multitenancyWithSingleDomainEnabled: false,
-		useTenantService: false,
-		urls: {
-			redirectToApp: '/sessions'
-		}
-	}
+	appConfig: mockAppConfig
 }));
 
 vi.mock('../../utils/parseJWT', () => ({
@@ -112,6 +127,9 @@ const matrixResponse = {
 describe('autoLogin', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		mockAppConfig.multitenancyWithSingleDomainEnabled = false;
+		mockAppConfig.useTenantService = false;
+		mockAppConfig.urls.redirectToApp = '/sessions';
 		vi.mocked(getKeycloakAccessToken).mockResolvedValue(keycloakResponse);
 		vi.mocked(getMatrixAccessToken).mockResolvedValue(matrixResponse);
 	});
@@ -164,5 +182,108 @@ describe('autoLogin', () => {
 			'secret!',
 			null
 		);
+	});
+
+	it('throws unauthorized when tenant validation fails', async () => {
+		mockAppConfig.useTenantService = true;
+		vi.mocked(parseJwt).mockReturnValue({ tenantId: 'tenant-from-token' });
+
+		await expect(
+			autoLogin({
+				username: 'shanzae@example.com',
+				password: 'secret!',
+				tenantData: { id: 'selected-tenant', settings: {} } as any
+			})
+		).rejects.toThrow('UNAUTHORIZED');
+
+		expect(getMatrixAccessToken).not.toHaveBeenCalled();
+	});
+
+	it('continues login when Matrix login data cannot be loaded', async () => {
+		vi.mocked(getMatrixAccessToken).mockRejectedValue(
+			new Error('matrix unavailable')
+		);
+
+		await autoLogin({
+			username: 'shanzae@example.com',
+			password: 'secret!',
+			tenantData: { settings: {} } as any
+		});
+
+		expect(setTokens).toHaveBeenCalled();
+		expect(persistMatrixLoginData).not.toHaveBeenCalled();
+	});
+
+	it('loads Budibase access token when feature tools are enabled', async () => {
+		await autoLogin({
+			username: 'shanzae@example.com',
+			password: 'secret!',
+			tenantData: {
+				settings: {
+					featureToolsEnabled: true
+				}
+			} as any
+		});
+
+		expect(getBudibaseAccessToken).toHaveBeenCalledWith(
+			'encoded:shanzae@example.com',
+			'secret!',
+			{ featureToolsEnabled: true }
+		);
+	});
+	it('creates and stores new E2EE keys when no Rocket.Chat keys exist', async () => {
+		vi.mocked(deriveMasterKeyFromPassword).mockResolvedValue(
+			'master-key' as any
+		);
+		vi.mocked(apiRocketChatFetchMyKeys).mockResolvedValue({});
+		vi.mocked(createAndStoreKeys).mockResolvedValue({
+			privateKey: 'private-key',
+			publicKey: JSON.stringify({ n: 'public-key-material' })
+		} as any);
+		vi.mocked(encryptPrivateKey).mockResolvedValue(
+			'encrypted-private-key' as any
+		);
+		vi.mocked(apiRocketChatSetUserKeys).mockResolvedValue({});
+		vi.mocked(apiUpdateUserE2EKeys).mockResolvedValue({});
+
+		await handleE2EESetup('secret!', 'rc-user-id');
+
+		expect(createAndStoreKeys).toHaveBeenCalled();
+		expect(apiRocketChatSetUserKeys).toHaveBeenCalledWith(
+			JSON.stringify({ n: 'public-key-material' }),
+			'encrypted-private-key'
+		);
+		expect(apiUpdateUserE2EKeys).toHaveBeenCalledWith(
+			'public-key-material'
+		);
+	});
+
+	it('resets keys and relogs in when encrypted keys cannot be decrypted without a persisted master key', async () => {
+		const reloginCallback = vi.fn().mockResolvedValue('relogged');
+		vi.mocked(deriveMasterKeyFromPassword).mockResolvedValue(
+			'master-key' as any
+		);
+		vi.mocked(apiRocketChatFetchMyKeys).mockResolvedValue({
+			private_key: 'encrypted-private',
+			public_key: JSON.stringify({ n: 'stored-public-key' })
+		});
+		const { decryptPrivateKey } = await import(
+			'../../utils/encryptionHelpers'
+		);
+		const { apiRocketChatResetE2EKey } = await import(
+			'../../api/apiRocketChatResetE2EKey'
+		);
+		vi.mocked(decryptPrivateKey).mockRejectedValue(new Error('bad key'));
+		vi.mocked(readMasterKeyFromLocalStorage).mockReturnValue(null);
+
+		await handleE2EESetup('secret!', 'rc-user-id', reloginCallback);
+
+		expect(apiRocketChatResetE2EKey).toHaveBeenCalled();
+		expect(writeMasterKeyToLocalStorage).toHaveBeenCalledWith(
+			'master-key',
+			'rc-user-id'
+		);
+		expect(reloginCallback).toHaveBeenCalled();
+		expect(storeKeys).not.toHaveBeenCalled();
 	});
 });

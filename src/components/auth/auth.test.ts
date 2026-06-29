@@ -1,11 +1,18 @@
 // @vitest-environment jsdom
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { hasActiveAuthSession, isPublicAuthRoute, setTokens } from './auth';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	handleTokenRefresh,
+	hasActiveAuthSession,
+	isPublicAuthRoute,
+	setTokens
+} from './auth';
 import { setValueInCookie } from '../sessionCookie/accessSessionCookie';
 import {
 	getTokenExpiryFromLocalStorage,
 	setTokenExpiryInLocalStorage
 } from '../sessionCookie/accessSessionLocalStorage';
+import { logout } from '../logout/logout';
+import { refreshKeycloakAccessToken } from '../sessionCookie/refreshKeycloakAccessToken';
 
 vi.mock('../sessionCookie/accessSessionCookie', () => ({
 	setValueInCookie: vi.fn()
@@ -36,6 +43,10 @@ describe('auth helpers', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		window.history.replaceState({}, '', '/login');
+	});
+
+	afterEach(() => {
+		vi.useRealTimers();
 	});
 
 	it.each([
@@ -87,6 +98,68 @@ describe('auth helpers', () => {
 		});
 
 		expect(hasActiveAuthSession()).toBe(false);
-		vi.useRealTimers();
+	});
+
+	it('logs out and rejects when access and refresh tokens are expired', async () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2026-06-29T00:00:00.000Z'));
+		vi.mocked(getTokenExpiryFromLocalStorage).mockReturnValue({
+			accessTokenValidUntilTime: Date.now() - 1,
+			refreshTokenValidUntilTime: Date.now() - 1
+		});
+
+		await expect(handleTokenRefresh(false)).rejects.toBeUndefined();
+
+		expect(logout).toHaveBeenCalledWith(false, '/login');
+	});
+
+	it('refreshes tokens when only the access token is expired', async () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2026-06-29T00:00:00.000Z'));
+		vi.mocked(getTokenExpiryFromLocalStorage).mockReturnValue({
+			accessTokenValidUntilTime: Date.now() - 1,
+			refreshTokenValidUntilTime: Date.now() + 60_000
+		});
+		vi.mocked(refreshKeycloakAccessToken).mockResolvedValue({
+			data: {},
+			access_token: 'new-access',
+			expires_in: 300,
+			refresh_token: 'new-refresh',
+			refresh_expires_in: 600
+		});
+
+		await expect(handleTokenRefresh()).resolves.toBeUndefined();
+
+		expect(refreshKeycloakAccessToken).toHaveBeenCalled();
+		expect(setValueInCookie).toHaveBeenCalledWith('keycloak', 'new-access');
+		expect(setValueInCookie).toHaveBeenCalledWith(
+			'refreshToken',
+			'new-refresh'
+		);
+	});
+
+	it('starts refresh and logout timers when tokens are still valid', async () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2026-06-29T00:00:00.000Z'));
+		vi.mocked(getTokenExpiryFromLocalStorage).mockReturnValue({
+			accessTokenValidUntilTime: Date.now() + 20_000,
+			refreshTokenValidUntilTime: Date.now() + 40_000
+		});
+		vi.mocked(refreshKeycloakAccessToken).mockResolvedValue({
+			data: {},
+			access_token: 'timer-access',
+			expires_in: 300,
+			refresh_token: 'timer-refresh',
+			refresh_expires_in: 600
+		});
+
+		await handleTokenRefresh();
+		await vi.advanceTimersByTimeAsync(10_000);
+
+		expect(refreshKeycloakAccessToken).toHaveBeenCalled();
+
+		await vi.advanceTimersByTimeAsync(30_000);
+
+		expect(logout).toHaveBeenCalledWith(true, '/login');
 	});
 });
