@@ -21,7 +21,9 @@ const config: StorybookConfig = {
 		// Atom batch 1 (generated)
 		'../src/components/{box,card,modal,loadingIndicator,scrollableSection,form,Page,legalPageWrapper,Switch,tooltip}/**/*.stories.@(ts|tsx)',
 		// Molecule batch 1 (generated)
-		'../src/components/{infoTooltip,tagSelect,banner,select,editableData,flyoutMenu,generateQrCode,emptyState}/**/*.stories.@(ts|tsx)'
+		'../src/components/{infoTooltip,tagSelect,banner,select,editableData,flyoutMenu,generateQrCode,emptyState}/**/*.stories.@(ts|tsx)',
+		// Organism batch 1 (generated)
+		'../src/components/{header,sessionMenu,askerInfo,twoFactorAuth,appointment,notificationsCenter,walkthrough,banUser}/**/*.stories.@(ts|tsx)'
 	],
 	addons: ['@storybook/addon-mcp'],
 	framework: { name: '@storybook/react-vite', options: {} },
