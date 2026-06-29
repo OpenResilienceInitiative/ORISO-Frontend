@@ -19,7 +19,9 @@ const config: StorybookConfig = {
 		// PROOF originals
 		'../src/components/{text,tag,headline,loadingSpinner}/**/*.stories.@(ts|tsx)',
 		// Atom batch 1 (generated)
-		'../src/components/{box,card,modal,loadingIndicator,scrollableSection,form,Page,legalPageWrapper,Switch,tooltip}/**/*.stories.@(ts|tsx)',
+		'../src/components/{box,card,modal,loadingIndicator,scrollableSection,form,Page,Switch,tooltip}/**/*.stories.@(ts|tsx)',
+		// Template (composes lower levels)
+		'../src/components/legalPageWrapper/**/*.stories.@(ts|tsx)',
 		// Molecule batch 1 (generated)
 		'../src/components/{infoTooltip,tagSelect,banner,select,editableData,flyoutMenu,generateQrCode,emptyState}/**/*.stories.@(ts|tsx)',
 		// Organism batch 1 (generated)
