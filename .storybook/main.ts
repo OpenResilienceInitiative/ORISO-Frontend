@@ -19,7 +19,9 @@ const config: StorybookConfig = {
 		// PROOF originals
 		'../src/components/{text,tag,headline,loadingSpinner}/**/*.stories.@(ts|tsx)',
 		// Atom batch 1 (generated)
-		'../src/components/{box,card,modal,loadingIndicator,scrollableSection,form,Page,legalPageWrapper,Switch,tooltip}/**/*.stories.@(ts|tsx)'
+		'../src/components/{box,card,modal,loadingIndicator,scrollableSection,form,Page,legalPageWrapper,Switch,tooltip}/**/*.stories.@(ts|tsx)',
+		// Molecule batch 1 (generated)
+		'../src/components/{infoTooltip,tagSelect,banner,select,editableData,flyoutMenu,generateQrCode,emptyState}/**/*.stories.@(ts|tsx)'
 	],
 	addons: ['@storybook/addon-mcp'],
 	framework: { name: '@storybook/react-vite', options: {} },
