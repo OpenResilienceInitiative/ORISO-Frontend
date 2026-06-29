@@ -235,7 +235,9 @@ describe('autoLogin', () => {
 		vi.mocked(deriveMasterKeyFromPassword).mockResolvedValue(
 			'master-key' as any
 		);
-		vi.mocked(apiRocketChatFetchMyKeys).mockResolvedValue({});
+		vi.mocked(apiRocketChatFetchMyKeys).mockResolvedValue({
+			success: true
+		});
 		vi.mocked(createAndStoreKeys).mockResolvedValue({
 			privateKey: 'private-key',
 			publicKey: JSON.stringify({ n: 'public-key-material' })
