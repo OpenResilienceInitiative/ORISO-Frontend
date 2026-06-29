@@ -2,6 +2,7 @@ import type { StorybookConfig } from '@storybook/react-vite';
 import { mergeConfig } from 'vite';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import path from 'node:path';
+import svgr from 'vite-plugin-svgr';
 
 // PROOF/build-out config (SB10 + Vite). Original SB7/webpack config kept as main.ts.sb7.bak.
 // Hardening (full preview shell) still pending.
@@ -18,16 +19,37 @@ const config: StorybookConfig = {
 		// PROOF originals
 		'../src/components/{text,tag,headline,loadingSpinner}/**/*.stories.@(ts|tsx)',
 		// Atom batch 1 (generated)
-		'../src/components/{box,card,modal,loadingIndicator,scrollableSection,form,Page,Switch,tooltip}/**/*.stories.@(ts|tsx)'
+		'../src/components/{box,card,modal,loadingIndicator,scrollableSection,form,Page,legalPageWrapper,Switch,tooltip}/**/*.stories.@(ts|tsx)'
 	],
 	addons: ['@storybook/addon-mcp'],
 	framework: { name: '@storybook/react-vite', options: {} },
 	async viteFinal(cfg) {
 		return mergeConfig(cfg, {
-			// NOTE (hardening): CRA's @svgr/webpack emits BOTH `default = URL` and
-			// `named ReactComponent = component` for .svg. vite-plugin-svgr can't do
-			// both at once cleanly, so svg-importing components are deferred to the
-			// hardening phase (needs a custom svgr template / magical-svg plugin).
+			plugins: [
+				// svgr handles the `?react` query -> React component
+				svgr(),
+				// CRA-faithful .svg dual export: replicate @svgr/webpack so that
+				//   import url from './x.svg'            -> the asset URL (default)
+				//   import { ReactComponent } from './x.svg' -> the React component
+				{
+					name: 'cra-svg-dual-export',
+					enforce: 'pre',
+					load(id: string) {
+						const [file, query] = id.split('?');
+						if (file.endsWith('.svg') && !query) {
+							return (
+								`export { default } from ${JSON.stringify(
+									file + '?url'
+								)};\n` +
+								`export { default as ReactComponent } from ${JSON.stringify(
+									file + '?react'
+								)};`
+							);
+						}
+						return null;
+					}
+				}
+			],
 			// CRA components read process.env.REACT_APP_*; keep them from crashing under Vite.
 			define: { 'process.env': {} },
 			// webpack resolved extensionless imports incl. .scss (e.g. import './x.styles'); mirror that.
