@@ -2,7 +2,7 @@ import { Meta, StoryObj } from '@storybook/react';
 import { Headline } from './Headline';
 
 const meta = {
-	title: 'DISPLAY/Headline',
+	title: 'Atoms/Headline',
 	component: Headline,
 	tags: ['autodocs'],
 	parameters: {
