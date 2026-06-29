@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { persistMatrixLoginData } from './getMatrixAccessToken';
 
 vi.mock('../../resources/scripts/endpoints', () => ({
@@ -17,6 +17,29 @@ vi.mock('../../api/fetchData', () => ({
 	FETCH_METHODS: { GET: 'GET' },
 	fetchData: vi.fn()
 }));
+
+const storage = new Map<string, string>();
+const localStorageMock = {
+	clear: vi.fn(() => storage.clear()),
+	getItem: vi.fn((key: string) => storage.get(key) ?? null),
+	removeItem: vi.fn((key: string) => storage.delete(key)),
+	setItem: vi.fn((key: string, value: string) =>
+		storage.set(key, String(value))
+	)
+};
+
+beforeEach(() => {
+	storage.clear();
+	Object.defineProperty(window, 'localStorage', {
+		value: localStorageMock,
+		configurable: true
+	});
+	Object.defineProperty(globalThis, 'localStorage', {
+		value: localStorageMock,
+		configurable: true
+	});
+	vi.clearAllMocks();
+});
 
 afterEach(() => {
 	vi.useRealTimers();
