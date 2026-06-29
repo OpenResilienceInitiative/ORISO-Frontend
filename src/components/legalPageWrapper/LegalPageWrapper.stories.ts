@@ -2,7 +2,7 @@ import { Meta, StoryObj } from '@storybook/react';
 import { LegalPageWrapper } from './LegalPageWrapper';
 
 const meta = {
-	title: 'Atoms/LegalPageWrapper',
+	title: 'Templates/LegalPageWrapper',
 	component: LegalPageWrapper,
 	tags: ['autodocs'],
 	parameters: {
