@@ -95,6 +95,7 @@ vi.mock('../../utils/parseJWT', () => ({
 }));
 
 const keycloakResponse = {
+	data: {},
 	access_token: 'keycloak-access',
 	expires_in: 300,
 	refresh_token: 'keycloak-refresh',
