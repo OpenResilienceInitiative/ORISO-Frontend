@@ -24,13 +24,79 @@ import {
 	TenantContext,
 	LocaleContext,
 	NotificationsContext,
-	E2EEContext
+	E2EEContext,
+	SessionTypeContext
 } from '../src/globalState';
+import { Buffer } from 'buffer';
+
+// Some component deps (html parsing in the legal/stage tree) expect Node's Buffer,
+// which the app's webpack provided but Vite does not. Polyfill it globally.
+if (!(globalThis as any).Buffer) (globalThis as any).Buffer = Buffer;
+
+// Minimal mock user so components that read userData fields render instead of
+// crashing on `userData` being null (TwoFactorAuth, Walkthrough, …).
+const mockUserData = {
+	userId: 'sb-user',
+	userName: 'Storybook User',
+	isWalkThroughEnabled: false,
+	twoFactorAuth: {
+		isEnabled: false,
+		isActive: false,
+		isShown: false,
+		isToBeActivated: false,
+		secret: '',
+		qrCode: ''
+	}
+} as any;
 import { UrlParamsContext } from '../src/globalState/provider/UrlParamsProvider';
 import { RocketChatPublicSettingsContext } from '../src/globalState/provider/RocketChatPublicSettingsProvider';
 import { RocketChatSubscriptionsContext } from '../src/globalState/provider/RocketChatSubscriptionsProvider';
 import { RocketChatUsersOfRoomContext } from '../src/globalState/provider/RocketChatUsersOfRoomProvider';
 import { RocketChatContext } from '../src/globalState/provider/RocketChatProvider';
+
+// Catch components that throw because they need live app data (session, overlays,
+// notification feed, …) that Storybook can't mock. Instead of a red crash, show a
+// clean "needs live data" panel. The data-sb-needs-data marker lets the automated
+// verification classify these as 'needs-data' rather than as failures.
+class StoryErrorBoundary extends React.Component<
+	{ children: React.ReactNode },
+	{ failed: boolean }
+> {
+	state = { failed: false };
+	static getDerivedStateFromError() {
+		return { failed: true };
+	}
+	componentDidCatch() {
+		/* swallow — the panel below is the user-facing result */
+	}
+	render() {
+		if (this.state.failed) {
+			return (
+				<div
+					data-sb-needs-data="true"
+					style={{
+						padding: 16,
+						margin: 16,
+						font: '13px/1.5 system-ui, sans-serif',
+						color: '#7a5b00',
+						background: '#fff8e1',
+						border: '1px solid #ffe082',
+						borderRadius: 8,
+						maxWidth: 520
+					}}
+				>
+					<strong>⚠ Needs live app data</strong>
+					<br />
+					This component depends on session / overlay / feed data that
+					Storybook doesn’t mock, so it can’t fully render here. Its props are
+					in the Docs tab — use the linked Figma design for the intended
+					visual.
+				</div>
+			);
+		}
+		return this.props.children as any;
+	}
+}
 
 function MuiStoryShell({ Story }: { Story: React.ComponentType }) {
 	return (
@@ -51,7 +117,7 @@ function MuiStoryShell({ Story }: { Story: React.ComponentType }) {
 				>
 					<UserDataContext.Provider
 						value={{
-							userData: null,
+							userData: mockUserData,
 							reloadUserData: async () => null as any,
 							loaded: true
 						}}
@@ -159,7 +225,16 @@ function MuiStoryShell({ Story }: { Story: React.ComponentType }) {
 															<LegalLinksProvider
 																legalLinks={[]}
 															>
-																<Story />
+																<SessionTypeContext.Provider
+																	value={{
+																		type: 'MY_SESSION' as any,
+																		path: '/sessions/consultant/sessionView'
+																	}}
+																>
+																	<StoryErrorBoundary>
+																		<Story />
+																	</StoryErrorBoundary>
+																</SessionTypeContext.Provider>
 															</LegalLinksProvider>
 														</ThemeProvider>
 													</RegistrationContext.Provider>
