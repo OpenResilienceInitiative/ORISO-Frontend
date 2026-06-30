@@ -62,6 +62,10 @@ const config: StorybookConfig = {
 			define: { 'process.env': {} },
 			// webpack resolved extensionless imports incl. .scss (e.g. import './x.styles'); mirror that.
 			resolve: {
+				// force a SINGLE React instance — otherwise Vite can bundle a 2nd copy
+				// for SB internals, which breaks hooks ("Invalid hook call") and makes
+				// every context return null, crashing every story via the decorator.
+				dedupe: ['react', 'react-dom'],
 				extensions: [
 					'.mjs',
 					'.js',
