@@ -137,6 +137,8 @@ $sessionShellSurface: var(--m3-surface-container-high, #eae7e8);
 		&--hasToolbar {
 			padding-top: 0;
 			margin-top: 0;
+			margin-left: 22px;
+			margin-right: 22px;
 		}
 	}
 
@@ -433,7 +435,7 @@ $sessionShellSurface: var(--m3-surface-container-high, #eae7e8);
 		.sessionsListItem {
 			justify-content: center;
 			align-items: center;
-			margin-bottom: 4px;
+			margin-bottom: 0px;
 
 			&__content {
 				display: flex;
@@ -543,7 +545,7 @@ $sessionShellSurface: var(--m3-surface-container-high, #eae7e8);
 	$toolbar-chip-border-rest: #e1e6ee;
 	$toolbar-chip-hover-bg: #eef1f6;
 	$toolbar-chip-hover-border: #d1d8e6;
-	$toolbar-chip-selected-bg: #3b4044;
+	$toolbar-chip-selected-bg: #410001;
 	$toolbar-chip-selected-fg: #ffffff;
 
 	flex: 0;
@@ -886,8 +888,8 @@ $sessionShellSurface: var(--m3-surface-container-high, #eae7e8);
 
 		@media (hover: hover) {
 			&--active:hover {
-				background-color: #303539;
-				border-color: #303539;
+				background-color: #5f1313;
+				border-color: #5f1313;
 				color: $toolbar-chip-selected-fg;
 
 				&::before {
