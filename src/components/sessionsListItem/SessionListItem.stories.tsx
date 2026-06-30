@@ -36,7 +36,7 @@ const ORISO_M3_FIGMA_URL =
 	'https://www.figma.com/design/RTUi1rcrEWECXz8rNFmj7Q/Design-System-M3_ORISO?node-id=60853-24182&p=f&t=ieIskw4Lz5hlc7iM-0';
 
 const listShell: React.CSSProperties = {
-	backgroundColor: '#f5f5f5',
+	backgroundColor: '#eae7e8',
 	maxWidth: 440,
 	margin: '0 auto',
 	padding: '4px 8px'

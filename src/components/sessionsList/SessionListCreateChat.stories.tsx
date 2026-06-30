@@ -28,7 +28,7 @@ export const Default: Story = {
 		(StoryEl) => (
 			<div
 				style={{
-					backgroundColor: '#f5f5f5',
+					backgroundColor: '#eae7e8',
 					padding: 16,
 					minWidth: 360
 				}}

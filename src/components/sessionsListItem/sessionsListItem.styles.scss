@@ -1,24 +1,25 @@
 $icon-size: 24px;
 $icon-size-small: 16px;
 $session-card-bg: #eae7e8;
-$session-card-hover-bg: #eadcdc;
+$session-card-hover-bg: #f0e7e7;
 
 // WP-06 Slice 0b: source the active-state colours from the shared list-item
 // selection tokens (settings.scss → _listItemSelection.scss). Values are
 // unchanged — this only makes them the single canonical source.
-$session-card-selected-bg: $list-item-selected-bg;
-$session-light-border: rgba(255, 255, 255, 0.58);
-$session-selected-border: $list-item-accent-ring;
-$session-active-border: $list-item-action-color;
-$session-focus-ring: $list-item-focus-ring;
-$session-topic-chip-bg: #646d78;
-$session-topic-chip-color: #ffffff;
-$session-postcode-border: #646d78;
+$session-card-selected-bg: #f6f3f3;
+$session-light-border: #f7f2f2;
+$session-selected-border: #ffb4aa;
+$session-active-border: #cc1e1c;
+$session-focus-ring: #ffdad5;
+$session-topic-chip-bg: #ffb4aa;
+$session-topic-chip-color: #410001;
+$session-postcode-border: #ffb4aa;
+$session-postcode-color: #cc1e1c;
 
 .sessionsListItem {
 	display: flex;
 	color: $body-font-color;
-	margin-bottom: 10px;
+	margin-bottom: 0px;
 	transition:
 		background-color 160ms ease,
 		border-color 160ms ease,
@@ -33,7 +34,10 @@ $session-postcode-border: #646d78;
 	}
 
 	&:first-of-type {
-		margin-top: 3px;
+		margin-top: 0px;
+	}
+	&:last-child {
+		margin-bottom: 15px;
 	}
 
 	@keyframes appearSessionListItem {
@@ -78,6 +82,11 @@ $session-postcode-border: #646d78;
 			color: #ffffff !important;
 		}
 
+		.sessionsListItem__menuIcon {
+			border-color: $session-selected-border;
+			color: #410001;
+		}
+
 		// Make consulting type icons red when card is active
 		.sessionsListItem__consultingTypeIcon {
 			svg,
@@ -100,12 +109,11 @@ $session-postcode-border: #646d78;
 	// Read state: muted gray background for sessions the counselor has already read
 	&--read {
 		.sessionsListItem__content {
-			background-color: var(--m3-surface-container, #f0f0f0);
+			background-color: $session-card-bg;
 		}
 
 		.sessionsListItem__topic {
 			background-color: $session-topic-chip-bg;
-			opacity: 0.65;
 		}
 
 		.sessionsListItem__username {
@@ -134,16 +142,16 @@ $session-postcode-border: #646d78;
 	}
 
 	&__content {
-		width: calc(100% - 48px);
-		max-width: calc(100% - 48px);
+		width: 100%;
+		max-width: 100%;
 		min-width: 0;
 		box-sizing: border-box;
 		min-height: 112px;
 		padding: 0;
-		margin: 0 24px;
+		margin: 0;
 		background-color: $session-card-bg;
 		border: 1px solid $session-light-border;
-		border-radius: 24px;
+		border-radius: 0px;
 		transition:
 			background-color 160ms ease,
 			border-color 160ms ease,
@@ -153,13 +161,13 @@ $session-postcode-border: #646d78;
 		overflow: hidden;
 
 		&--anonymous {
-			border: 1px solid #9e9e9e; // Gray border for anonymous chat cards
+			border-color: $session-light-border;
 		}
 
 		@include breakpoint($fromMedium) {
-			margin: 0 24px;
-			width: calc(100% - 48px);
-			max-width: calc(100% - 48px);
+			margin: 0;
+			width: 100%;
+			max-width: 100%;
 		}
 
 		&:focus {
@@ -516,7 +524,7 @@ $session-postcode-border: #646d78;
 		font-size: 14px;
 		line-height: 8px;
 		letter-spacing: 0.28px;
-		color: $session-postcode-border;
+		color: $session-postcode-color;
 		white-space: nowrap;
 		flex-shrink: 0;
 	}

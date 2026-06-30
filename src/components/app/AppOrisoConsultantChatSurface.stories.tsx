@@ -55,6 +55,7 @@ import './authenticatedApp.styles.scss';
 import './navigation.styles.scss';
 import '../sessionsList/sessionsList.styles.scss';
 import '../sessionsListItem/sessionsListItem.styles.scss';
+import '../message/message.styles.scss';
 import '../messageSubmitInterface/messageSubmitInterface.styles';
 
 const APP_ORISO_CHAT_FIGMA_URL =
@@ -1232,7 +1233,82 @@ function ChatPanel() {
 			<div style={styles.topicDivider}>
 				<span style={styles.topicPill}>Suchtprobleme</span>
 			</div>
-			<div style={styles.messageArea} aria-label="Chatverlauf" />
+			<div style={styles.messageArea} aria-label="Chatverlauf">
+				<div className="messageItem__divider" style={styles.dayDivider}>
+					Heute
+				</div>
+				<div className="messageItem" style={styles.messageItem}>
+					<div className="messageItem__messageWrap">
+						<span className="messageItem__avatar">
+							<UserAvatar
+								username="sanftes.alpaka.kala@oriso.invalid"
+								displayName="Sanftes Alpaka Kala"
+								userId="active-chat"
+								size="32px"
+								ring={false}
+							/>
+						</span>
+						<div className="messageItem__content">
+							<div className="messageItem__header">
+								<span className="messageItem__username messageItem__username--user">
+									Sanftes Alpaka Kala
+								</span>
+								<span className="messageItem__headerTime">
+									09:18
+								</span>
+							</div>
+							<div className="messageItem__message">
+								Ich habe heute wieder starkes Verlangen und
+								brauche kurz Orientierung.
+							</div>
+						</div>
+					</div>
+				</div>
+				<div
+					className="messageItem messageItem--right"
+					style={styles.messageItem}
+				>
+					<div className="messageItem__messageWrap messageItem__messageWrap--right">
+						<div className="messageItem__content">
+							<div className="messageItem__header">
+								<span className="messageItem__headerTime">
+									09:21
+								</span>
+							</div>
+							<div className="messageItem__message">
+								Danke, dass du dich meldest. Lass uns zuerst die
+								nächsten 10 Minuten strukturieren.
+							</div>
+						</div>
+					</div>
+				</div>
+				<div className="messageItem" style={styles.messageItem}>
+					<div className="messageItem__messageWrap">
+						<span className="messageItem__avatar">
+							<UserAvatar
+								username="sanftes.alpaka.kala@oriso.invalid"
+								displayName="Sanftes Alpaka Kala"
+								userId="active-chat"
+								size="32px"
+								ring={false}
+							/>
+						</span>
+						<div className="messageItem__content">
+							<div className="messageItem__header">
+								<span className="messageItem__username messageItem__username--user">
+									Sanftes Alpaka Kala
+								</span>
+								<span className="messageItem__headerTime">
+									09:24
+								</span>
+							</div>
+							<div className="messageItem__message">
+								Okay. Ich bin gerade zuhause und kann schreiben.
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
 			<div style={styles.composerDock}>
 				<ComposerPreview />
 			</div>
@@ -1374,7 +1450,7 @@ const styles = {
 	listScroll: {
 		height: 'calc(100% - 118px)',
 		overflow: 'hidden auto',
-		padding: '8px 8px 0',
+		padding: '0',
 		scrollbarWidth: 'none'
 	} satisfies React.CSSProperties,
 	consultingTypeLabel: {
@@ -1483,7 +1559,16 @@ const styles = {
 	messageArea: {
 		overflow: 'hidden auto',
 		background: '#FFFFFF',
-		minHeight: 0
+		minHeight: 0,
+		padding: '32px 40px'
+	} satisfies React.CSSProperties,
+	messageItem: {
+		opacity: 1,
+		animation: 'none'
+	} satisfies React.CSSProperties,
+	dayDivider: {
+		opacity: 1,
+		animation: 'none'
 	} satisfies React.CSSProperties,
 	composerDock: {
 		padding: '0 12px 10px',
