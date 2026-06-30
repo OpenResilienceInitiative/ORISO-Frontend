@@ -89,10 +89,19 @@ const settings = {
 
 describe('RouterConfigConsultant navigation', () => {
 	it('exposes the existing drafts center in the consultant rail', () => {
-		const navigation = RouterConfigConsultant(settings).navigation;
+		const routerConfig = RouterConfigConsultant(settings);
+		const navigation = routerConfig.navigation;
 
 		expect(navigation.map((item) => item.to)).toEqual(
 			expect.arrayContaining(['/notifications', '/drafts', '/profile'])
+		);
+		expect(routerConfig.profileRoutes).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					path: '/drafts',
+					exact: true
+				})
+			])
 		);
 
 		const notificationIndex = navigation.findIndex(

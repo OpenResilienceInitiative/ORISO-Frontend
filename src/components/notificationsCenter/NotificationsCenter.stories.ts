@@ -1,21 +1,20 @@
 import { Meta, StoryObj } from '@storybook/react';
 import { NotificationsCenter } from './NotificationsCenter';
+import { APP_ORISO_FIGMA_URL } from '../storybookDesignLinks';
 
 const meta = {
 	title: 'Organisms/NotificationsCenter',
 	component: NotificationsCenter,
 	tags: ['autodocs', 'needs-data'],
 	parameters: {
-		// TODO: paste this component's Figma node URL (right-click the frame in
-		// Figma -> "Copy link to selection") to show it in the story's Design tab.
 		design: {
 			type: 'figma',
-			url: 'https://www.figma.com/design/REPLACE_FILE_KEY/ORISO?node-id=0-1'
+			url: APP_ORISO_FIGMA_URL
 		},
 		docs: {
 			description: {
 				component:
-					'Activity timeline center: a master-detail list of notifications with family-filter chips, search, and an embedded chat preview. Reads its feed from NotificationsContext.'
+					'Activity Timeline center: a master-detail list of activity events with family-filter chips, search, and an embedded chat preview. Reads its feed from the app activity context.'
 			}
 		}
 	}

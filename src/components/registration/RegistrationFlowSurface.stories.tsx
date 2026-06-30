@@ -14,11 +14,10 @@ import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
 import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded';
 import { StepBar } from './stepBar/StepBar';
 import { OrisoTextField } from '../form/OrisoTextField';
-
-const ORISO_M3_FIGMA_URL =
-	'https://www.figma.com/design/RTUi1rcrEWECXz8rNFmj7Q/Design-System-M3_ORISO?node-id=60853-24182&p=f&t=ieIskw4Lz5hlc7iM-0';
-const APP_ORISO_FIGMA_URL =
-	'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=316-17725&t=XHH5HQNmA8DUWl2U-0';
+import {
+	APP_ORISO_FIGMA_URL,
+	ORISO_M3_FIGMA_URL
+} from '../storybookDesignLinks';
 
 const topics = [
 	{
@@ -56,10 +55,59 @@ const agencies = [
 	}
 ];
 
+const moveRadioSelection = (
+	event: React.KeyboardEvent<HTMLElement>,
+	values: string[],
+	currentValue: string,
+	onSelect: (value: string) => void
+) => {
+	const currentIndex = values.indexOf(currentValue);
+	const lastIndex = values.length - 1;
+	const nextIndexByKey: Record<string, number> = {
+		ArrowDown: currentIndex === lastIndex ? 0 : currentIndex + 1,
+		ArrowRight: currentIndex === lastIndex ? 0 : currentIndex + 1,
+		ArrowUp: currentIndex <= 0 ? lastIndex : currentIndex - 1,
+		ArrowLeft: currentIndex <= 0 ? lastIndex : currentIndex - 1,
+		Home: 0,
+		End: lastIndex
+	};
+	const nextIndex = nextIndexByKey[event.key];
+
+	if (nextIndex === undefined || !values[nextIndex]) {
+		return;
+	}
+
+	event.preventDefault();
+	const nextValue = values[nextIndex];
+	onSelect(nextValue);
+	event.currentTarget
+		.closest('[role="radiogroup"]')
+		?.querySelector<HTMLElement>(`[data-radio-value="${nextValue}"]`)
+		?.focus();
+};
+
+const selectRadioWithKeyboard = (
+	event: React.KeyboardEvent<HTMLElement>,
+	value: string,
+	values: string[],
+	currentValue: string,
+	onSelect: (value: string) => void
+) => {
+	if (event.key === ' ' || event.key === 'Enter') {
+		event.preventDefault();
+		onSelect(value);
+		return;
+	}
+
+	moveRadioSelection(event, values, currentValue, onSelect);
+};
+
 function RegistrationFlowSurface() {
 	const [selectedTopic, setSelectedTopic] = useState('family');
 	const [selectedAgency, setSelectedAgency] = useState('caritas');
 	const [zipcode, setZipcode] = useState('10115');
+	const topicIds = topics.map((topic) => topic.id);
+	const agencyIds = agencies.map((agency) => agency.id);
 
 	return (
 		<Box sx={styles.viewport}>
@@ -87,16 +135,31 @@ function RegistrationFlowSurface() {
 							Gruppierte Themenkarte mit eindeutiger Auswahl und
 							Beschreibung.
 						</Typography>
-						<Box sx={styles.topicList} role="radiogroup">
+						<Box
+							sx={styles.topicList}
+							role="radiogroup"
+							aria-label="Thema waehlen"
+						>
 							{topics.map((topic) => {
 								const selected = selectedTopic === topic.id;
 								return (
 									<Box
 										key={topic.id}
-										component="button"
-										type="button"
+										role="radio"
+										aria-checked={selected}
+										tabIndex={selected ? 0 : -1}
+										data-radio-value={topic.id}
 										onClick={() =>
 											setSelectedTopic(topic.id)
+										}
+										onKeyDown={(event) =>
+											selectRadioWithKeyboard(
+												event,
+												topic.id,
+												topicIds,
+												selectedTopic,
+												setSelectedTopic
+											)
 										}
 										sx={{
 											...styles.topicButton,
@@ -108,6 +171,9 @@ function RegistrationFlowSurface() {
 										<Radio
 											checked={selected}
 											tabIndex={-1}
+											inputProps={{
+												'aria-hidden': true
+											}}
 											sx={styles.radio}
 										/>
 										<Box sx={{ minWidth: 0 }}>
@@ -171,17 +237,32 @@ function RegistrationFlowSurface() {
 							<Typography variant="h5" sx={styles.sectionTitle}>
 								Beratungsstelle auswaehlen
 							</Typography>
-							<Box sx={styles.agencyGrid}>
+							<Box
+								sx={styles.agencyGrid}
+								role="radiogroup"
+								aria-label="Beratungsstelle auswaehlen"
+							>
 								{agencies.map((agency) => {
 									const selected =
 										selectedAgency === agency.id;
 									return (
 										<Box
 											key={agency.id}
-											component="button"
-											type="button"
+											role="radio"
+											aria-checked={selected}
+											tabIndex={selected ? 0 : -1}
+											data-radio-value={agency.id}
 											onClick={() =>
 												setSelectedAgency(agency.id)
+											}
+											onKeyDown={(event) =>
+												selectRadioWithKeyboard(
+													event,
+													agency.id,
+													agencyIds,
+													selectedAgency,
+													setSelectedAgency
+												)
 											}
 											sx={{
 												...styles.agencyCard,
