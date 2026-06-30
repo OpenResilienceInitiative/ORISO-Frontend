@@ -1,4 +1,4 @@
-ARG NODE_VERSION=18.16.1
+ARG NODE_VERSION=18.20.8
 ARG PORT=80
 
 # Build stage
@@ -41,4 +41,3 @@ RUN echo "server { \
 EXPOSE ${PORT}
 
 CMD ["nginx", "-g", "daemon off;"]
-
