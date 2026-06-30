@@ -6,11 +6,11 @@ const meta = {
 	component: Header,
 	tags: ['autodocs', 'needs-data'],
 	parameters: {
-		// TODO: paste this component's Figma node URL (right-click the frame in
-		// Figma -> "Copy link to selection") to show it in the story's Design tab.
+		// Figma: the full consultant session view (App.Oriso); the Header bar is the
+		// top of this frame. Replace with a Header-only node link for a tighter match.
 		design: {
 			type: 'figma',
-			url: 'https://www.figma.com/design/REPLACE_FILE_KEY/ORISO?node-id=0-1'
+			url: 'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=316-17725'
 		},
 		docs: {
 			description: {
