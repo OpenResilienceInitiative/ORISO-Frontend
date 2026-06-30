@@ -60,7 +60,14 @@ const config: StorybookConfig = {
 				// force a SINGLE React instance — otherwise Vite can bundle a 2nd copy
 				// for SB internals, which breaks hooks ("Invalid hook call") and makes
 				// every context return null, crashing every story via the decorator.
-				dedupe: ['react', 'react-dom'],
+				dedupe: [
+					'react',
+					'react-dom',
+					'@emotion/react',
+					'@emotion/styled',
+					'@mui/material',
+					'@mui/icons-material'
+				],
 				extensions: [
 					'.mjs',
 					'.js',

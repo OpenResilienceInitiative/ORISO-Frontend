@@ -76,31 +76,35 @@ class StoryErrorBoundary extends React.Component<
 	}
 	render() {
 		if (this.state.failed) {
-			return (
-				<div
-					data-sb-needs-data="true"
-					style={{
-						padding: 16,
-						margin: 16,
-						font: '13px/1.5 system-ui, sans-serif',
-						color: '#7a5b00',
-						background: '#fff8e1',
-						border: '1px solid #ffe082',
-						borderRadius: 8,
-						maxWidth: 520
-					}}
-				>
-					<strong>⚠ Needs live app data</strong>
-					<br />
-					This component depends on session / overlay / feed data that
-					Storybook doesn’t mock, so it can’t fully render here. Its
-					props are in the Docs tab — use the linked Figma design for
-					the intended visual.
-				</div>
-			);
+			return <NeedsLiveDataPanel />;
 		}
 		return this.props.children as any;
 	}
+}
+
+function NeedsLiveDataPanel() {
+	return (
+		<div
+			data-sb-needs-data="true"
+			style={{
+				padding: 16,
+				margin: 16,
+				font: '13px/1.5 system-ui, sans-serif',
+				color: '#7a5b00',
+				background: '#fff8e1',
+				border: '1px solid #ffe082',
+				borderRadius: 8,
+				maxWidth: 520
+			}}
+		>
+			<strong>Needs live app data</strong>
+			<br />
+			This component depends on session / overlay / feed data that
+			Storybook does not mock, so it cannot fully render here. Its props
+			are in the Docs tab. Use the linked Figma design for the intended
+			visual.
+		</div>
+	);
 }
 
 const storybookTopic = (
@@ -281,6 +285,8 @@ const storybookJsonResponse = (body: unknown) =>
 		headers: { 'content-type': 'application/json' }
 	});
 
+const storybookEmptyResponse = () => new Response(null, { status: 204 });
+
 const storybookRequestUrl = (input: RequestInfo | URL): string => {
 	if (typeof input === 'string') {
 		return input;
@@ -293,6 +299,192 @@ const storybookRequestUrl = (input: RequestInfo | URL): string => {
 	return input.url;
 };
 
+const storybookUrl = (input: RequestInfo | URL): URL | null => {
+	try {
+		return new URL(storybookRequestUrl(input), window.location.origin);
+	} catch {
+		return null;
+	}
+};
+
+const storybookServiceHosts = new Set([
+	'api.storybook.test',
+	'auth.storybook.test',
+	'matrix.storybook.test',
+	'call.storybook.test',
+	'livekit.storybook.test'
+]);
+
+const storybookLocalApiPrefixes = ['/api/', '/service/', '/p/api/'];
+
+const isStorybookServiceUrl = (url: URL): boolean =>
+	storybookServiceHosts.has(url.hostname);
+
+const isStorybookLocalApiUrl = (url: URL): boolean =>
+	url.origin === window.location.origin &&
+	storybookLocalApiPrefixes.some((prefix) => url.pathname.startsWith(prefix));
+
+const storybookMatrixLoginData = {
+	accessToken: 'storybook-matrix-access-token',
+	userId: '@storybook:matrix.storybook.test',
+	deviceId: 'ORISO_WEB_STORYBOOK',
+	homeserverUrl: 'https://matrix.storybook.test',
+	expiresInMs: 60 * 60 * 1000
+};
+
+const storybookPublicSettings = {
+	e2eEnabled: { value: true },
+	enableE2eEncryption: { value: true },
+	E2E_Enable: { value: true }
+};
+
+const storybookEventNotificationFeed = {
+	items: [],
+	unreadCount: 0,
+	page: 0,
+	perPage: 50
+};
+
+const storybookKeycloakToken = {
+	access_token: 'storybook-keycloak-access-token',
+	refresh_token: 'storybook-keycloak-refresh-token',
+	token_type: 'Bearer',
+	expires_in: 3600
+};
+
+const storybookLiveKitToken = {
+	token: 'storybook-livekit-token'
+};
+
+const storybookMatrixResponse = (url: URL, method: string): Response => {
+	if (url.pathname.includes('/login')) {
+		return storybookJsonResponse({
+			access_token: storybookMatrixLoginData.accessToken,
+			user_id: storybookMatrixLoginData.userId,
+			device_id: storybookMatrixLoginData.deviceId,
+			expires_in_ms: storybookMatrixLoginData.expiresInMs
+		});
+	}
+
+	if (url.pathname.includes('/sync')) {
+		return storybookJsonResponse({
+			next_batch: 'storybook-batch',
+			rooms: { join: {} }
+		});
+	}
+
+	if (url.pathname.includes('/createRoom')) {
+		return storybookJsonResponse({
+			room_id: '!storybook:matrix.storybook.test'
+		});
+	}
+
+	if (url.pathname.includes('/send/')) {
+		return storybookJsonResponse({ event_id: '$storybook' });
+	}
+
+	if (method === 'PUT' || method === 'POST') {
+		return storybookJsonResponse({});
+	}
+
+	return storybookJsonResponse({});
+};
+
+const storybookApiResponse = (url: URL, method: string): Response | null => {
+	if (url.hostname === 'auth.storybook.test') {
+		if (url.pathname.includes('/protocol/openid-connect/token')) {
+			return storybookJsonResponse(storybookKeycloakToken);
+		}
+		if (url.pathname.includes('/protocol/openid-connect/logout')) {
+			return storybookEmptyResponse();
+		}
+	}
+
+	if (url.hostname === 'matrix.storybook.test') {
+		return storybookMatrixResponse(url, method);
+	}
+
+	if (url.pathname.includes('/auth/realms/')) {
+		if (url.pathname.includes('/protocol/openid-connect/token')) {
+			return storybookJsonResponse(storybookKeycloakToken);
+		}
+		if (url.pathname.includes('/protocol/openid-connect/logout')) {
+			return storybookEmptyResponse();
+		}
+	}
+
+	if (url.pathname === '/api/livekit/token') {
+		return storybookJsonResponse(storybookLiveKitToken);
+	}
+
+	if (url.pathname === '/service/matrix/me/token') {
+		return storybookJsonResponse(storybookMatrixLoginData);
+	}
+
+	if (url.pathname === '/service/settings') {
+		return storybookJsonResponse(storybookPublicSettings);
+	}
+
+	if (url.pathname === '/p/api/settings') {
+		return storybookJsonResponse(config);
+	}
+
+	if (url.pathname === '/api/v1/settings.public') {
+		return storybookJsonResponse({
+			count: 0,
+			offset: 0,
+			total: 0,
+			settings: []
+		});
+	}
+
+	if (url.pathname.startsWith('/service/users/event-notifications')) {
+		return method === 'GET'
+			? storybookJsonResponse(storybookEventNotificationFeed)
+			: storybookJsonResponse({});
+	}
+
+	if (url.pathname.includes('/service/topic/public/')) {
+		return storybookJsonResponse(storybookTopics);
+	}
+
+	if (url.pathname.match(/\/service\/agencies(?:\?|$)/)) {
+		return storybookJsonResponse(storybookAgencies);
+	}
+
+	if (url.pathname.match(/\/service\/consultingtypes\/\d+\/full(?:\?|$)/)) {
+		return storybookJsonResponse(storybookConsultingType);
+	}
+
+	if (url.pathname.includes('/service/users/consultants/languages')) {
+		return storybookJsonResponse({ languages: ['en', 'ar', 'uk'] });
+	}
+
+	if (
+		url.pathname.includes('/service/conversations/consultants/availability')
+	) {
+		return storybookJsonResponse({ available: true });
+	}
+
+	if (url.pathname === '/service/users/data') {
+		return storybookJsonResponse(mockUserData);
+	}
+
+	if (url.pathname.includes('/service/users/sessions')) {
+		return storybookJsonResponse([]);
+	}
+
+	if (url.pathname.startsWith('/service/live')) {
+		return storybookJsonResponse({});
+	}
+
+	if (isStorybookServiceUrl(url) || isStorybookLocalApiUrl(url)) {
+		return storybookJsonResponse({});
+	}
+
+	return null;
+};
+
 const installStorybookFetchMocks = () => {
 	const marker = '__orisoStorybookFetchMockInstalled';
 	const originalFetch = globalThis.fetch?.bind(globalThis);
@@ -302,30 +494,17 @@ const installStorybookFetchMocks = () => {
 
 	(globalThis as any)[marker] = true;
 	globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
-		const url = storybookRequestUrl(input);
+		const url = storybookUrl(input);
+		const method =
+			init?.method ||
+			(input instanceof Request ? input.method : undefined) ||
+			'GET';
+		const response = url
+			? storybookApiResponse(url, method.toUpperCase())
+			: null;
 
-		if (!url.includes('api.storybook.test')) {
-			return originalFetch(input, init);
-		}
-
-		if (url.includes('/service/topic/public/')) {
-			return storybookJsonResponse(storybookTopics);
-		}
-
-		if (url.match(/\/service\/agencies(?:\?|$)/)) {
-			return storybookJsonResponse(storybookAgencies);
-		}
-
-		if (url.match(/\/service\/consultingtypes\/\d+\/full(?:\?|$)/)) {
-			return storybookJsonResponse(storybookConsultingType);
-		}
-
-		if (url.includes('/service/users/consultants/languages')) {
-			return storybookJsonResponse({ languages: ['en', 'ar', 'uk'] });
-		}
-
-		if (url.includes('/service/conversations/consultants/availability')) {
-			return storybookJsonResponse({ available: true });
+		if (response) {
+			return response;
 		}
 
 		return originalFetch(input, init);
@@ -334,7 +513,249 @@ const installStorybookFetchMocks = () => {
 
 installStorybookFetchMocks();
 
-function MuiStoryShell({ Story }: { Story: React.ComponentType }) {
+class StorybookWebSocketMock extends EventTarget {
+	static CONNECTING = 0;
+	static OPEN = 1;
+	static CLOSING = 2;
+	static CLOSED = 3;
+
+	binaryType: BinaryType = 'blob';
+	bufferedAmount = 0;
+	extensions = '';
+	onclose: ((event: CloseEvent) => void) | null = null;
+	onerror: ((event: Event) => void) | null = null;
+	onmessage: ((event: MessageEvent) => void) | null = null;
+	onopen: ((event: Event) => void) | null = null;
+	protocol = '';
+	readyState = StorybookWebSocketMock.CONNECTING;
+	url: string;
+
+	constructor(url: string | URL) {
+		super();
+		this.url = String(url);
+		window.setTimeout(() => {
+			if (this.readyState !== StorybookWebSocketMock.CONNECTING) {
+				return;
+			}
+			this.readyState = StorybookWebSocketMock.OPEN;
+			const event = new Event('open');
+			this.onopen?.(event);
+			this.dispatchEvent(event);
+		}, 0);
+	}
+
+	close() {
+		if (this.readyState === StorybookWebSocketMock.CLOSED) {
+			return;
+		}
+		this.readyState = StorybookWebSocketMock.CLOSED;
+		const event = new CloseEvent('close', { code: 1000 });
+		this.onclose?.(event);
+		this.dispatchEvent(event);
+	}
+
+	send(data: string | ArrayBufferLike | Blob | ArrayBufferView) {
+		const payload = this.storybookRocketChatPayload(data);
+		if (!payload) {
+			return;
+		}
+		window.setTimeout(() => this.emitMessage(payload), 0);
+	}
+
+	private emitMessage(payload: unknown) {
+		if (this.readyState !== StorybookWebSocketMock.OPEN) {
+			return;
+		}
+		const event = new MessageEvent('message', {
+			data: JSON.stringify(payload)
+		});
+		this.onmessage?.(event);
+		this.dispatchEvent(event);
+	}
+
+	private storybookRocketChatPayload(
+		data: string | ArrayBufferLike | Blob | ArrayBufferView
+	): Record<string, unknown> | null {
+		if (typeof data !== 'string') {
+			return null;
+		}
+
+		try {
+			const message = JSON.parse(data);
+			if (message.msg === 'connect') {
+				return { msg: 'connected', session: 'storybook' };
+			}
+			if (message.msg === 'ping') {
+				return { msg: 'pong' };
+			}
+			if (message.msg === 'method') {
+				return {
+					msg: 'result',
+					id: message.id,
+					result: this.storybookRocketChatMethodResult(message.method)
+				};
+			}
+			if (message.msg === 'sub') {
+				return { msg: 'ready', subs: [message.id] };
+			}
+		} catch {
+			return null;
+		}
+
+		return null;
+	}
+
+	private storybookRocketChatMethodResult(method: string): unknown {
+		switch (method) {
+			case 'login':
+				return {
+					id: 'storybook-rocket-user',
+					token: 'storybook-rocket-token'
+				};
+			case 'rooms/get':
+			case 'subscriptions/get':
+				return [];
+			case 'public-settings/get':
+				return [];
+			case 'getUsersOfRoom':
+				return { total: 0, records: [] };
+			default:
+				return {};
+		}
+	}
+}
+
+const shouldMockRealtimeUrl = (url: string | URL): boolean => {
+	try {
+		return isStorybookServiceUrl(
+			new URL(String(url), window.location.href)
+		);
+	} catch {
+		return false;
+	}
+};
+
+const installStorybookRealtimeMocks = () => {
+	const marker = '__orisoStorybookRealtimeMocksInstalled';
+	if ((globalThis as any)[marker]) {
+		return;
+	}
+	(globalThis as any)[marker] = true;
+
+	const OriginalWebSocket = globalThis.WebSocket;
+	const StorybookWebSocket = function (
+		this: WebSocket,
+		url: string | URL,
+		protocols?: string | string[]
+	) {
+		if (shouldMockRealtimeUrl(url)) {
+			return new StorybookWebSocketMock(url);
+		}
+		return new OriginalWebSocket(url, protocols as any);
+	} as any;
+	StorybookWebSocket.CONNECTING = OriginalWebSocket.CONNECTING;
+	StorybookWebSocket.OPEN = OriginalWebSocket.OPEN;
+	StorybookWebSocket.CLOSING = OriginalWebSocket.CLOSING;
+	StorybookWebSocket.CLOSED = OriginalWebSocket.CLOSED;
+	StorybookWebSocket.prototype = OriginalWebSocket.prototype;
+	globalThis.WebSocket = StorybookWebSocket;
+
+	const OriginalEventSource = (globalThis as any).EventSource;
+	if (OriginalEventSource) {
+		const StorybookEventSource = function (
+			this: EventSource,
+			url: string | URL,
+			eventSourceInitDict?: EventSourceInit
+		) {
+			if (!shouldMockRealtimeUrl(url)) {
+				return new OriginalEventSource(url, eventSourceInitDict);
+			}
+			const target = new EventTarget() as EventSource;
+			Object.assign(target, {
+				url: String(url),
+				withCredentials: Boolean(eventSourceInitDict?.withCredentials),
+				readyState: EventSource.OPEN,
+				onopen: null,
+				onmessage: null,
+				onerror: null,
+				close: () => {
+					Object.defineProperty(target, 'readyState', {
+						value: EventSource.CLOSED,
+						configurable: true
+					});
+				}
+			});
+			return target;
+		} as any;
+		StorybookEventSource.CONNECTING = OriginalEventSource.CONNECTING;
+		StorybookEventSource.OPEN = OriginalEventSource.OPEN;
+		StorybookEventSource.CLOSED = OriginalEventSource.CLOSED;
+		StorybookEventSource.prototype = OriginalEventSource.prototype;
+		(globalThis as any).EventSource = StorybookEventSource;
+	}
+};
+
+const installStorybookNotificationMock = () => {
+	const marker = '__orisoStorybookNotificationMockInstalled';
+	if ((globalThis as any)[marker]) {
+		return;
+	}
+	(globalThis as any)[marker] = true;
+
+	class StorybookNotification extends EventTarget {
+		static permission: NotificationPermission = 'denied';
+		static maxActions = 0;
+		static requestPermission = async (): Promise<NotificationPermission> =>
+			'denied';
+
+		badge = '';
+		body = '';
+		data: unknown = null;
+		dir: NotificationDirection = 'auto';
+		icon = '';
+		image = '';
+		lang = '';
+		onclick: ((event: Event) => void) | null = null;
+		onclose: ((event: Event) => void) | null = null;
+		onerror: ((event: Event) => void) | null = null;
+		onshow: ((event: Event) => void) | null = null;
+		renotify = false;
+		requireInteraction = false;
+		silent = true;
+		tag = '';
+		timestamp = Date.now();
+		title: string;
+		vibrate: readonly number[] = [];
+
+		constructor(title: string, options: NotificationOptions = {}) {
+			super();
+			this.title = title;
+			Object.assign(this, options);
+		}
+
+		close() {
+			const event = new Event('close');
+			this.onclose?.(event);
+			this.dispatchEvent(event);
+		}
+	}
+
+	Object.defineProperty(globalThis, 'Notification', {
+		configurable: true,
+		value: StorybookNotification
+	});
+};
+
+installStorybookRealtimeMocks();
+installStorybookNotificationMock();
+
+function MuiStoryShell({
+	Story,
+	needsLiveData
+}: {
+	Story: React.ComponentType;
+	needsLiveData: boolean;
+}) {
 	return (
 		<AppConfigContext.Provider value={config}>
 			<LocaleContext.Provider
@@ -460,7 +881,11 @@ function MuiStoryShell({ Story }: { Story: React.ComponentType }) {
 																	}}
 																>
 																	<StoryErrorBoundary>
-																		<Story />
+																		{needsLiveData ? (
+																			<NeedsLiveDataPanel />
+																		) : (
+																			<Story />
+																		)}
 																	</StoryErrorBoundary>
 																</SessionTypeContext.Provider>
 															</LegalLinksProvider>
@@ -490,11 +915,17 @@ export const withMuiTheme = (Story: React.ComponentType, context: any) => {
 	const initialPath =
 		context.parameters?.router?.initialPath ||
 		`${window.location.pathname}${window.location.search}`;
+	const needsLiveData =
+		context.tags?.includes('needs-data') ||
+		context.parameters?.needsLiveData === true;
 	return (
 		<MemoryRouter initialEntries={[initialPath]}>
 			<Suspense fallback={<Loading />}>
 				<I18nextProvider i18n={i18n}>
-					<MuiStoryShell Story={Story} />
+					<MuiStoryShell
+						Story={Story}
+						needsLiveData={needsLiveData}
+					/>
 				</I18nextProvider>
 			</Suspense>
 		</MemoryRouter>
