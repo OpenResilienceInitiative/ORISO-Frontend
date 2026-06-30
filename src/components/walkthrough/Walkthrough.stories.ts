@@ -4,8 +4,14 @@ import { Walkthrough } from './Walkthrough';
 const meta = {
 	title: 'Organisms/Walkthrough',
 	component: Walkthrough,
-	tags: ['autodocs'],
+	tags: ['autodocs', 'needs-data'],
 	parameters: {
+		// TODO: paste this component's Figma node URL (right-click the frame in
+		// Figma -> "Copy link to selection") to show it in the story's Design tab.
+		design: {
+			type: 'figma',
+			url: 'https://www.figma.com/design/REPLACE_FILE_KEY/ORISO?node-id=0-1'
+		},
 		docs: {
 			description: {
 				component:
