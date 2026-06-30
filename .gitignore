@@ -46,3 +46,6 @@ yarn-error.log*
 tmp*/
 .tmp-proof/
 graphify-out/*
+
+# chromatic build log
+build-storybook.log
