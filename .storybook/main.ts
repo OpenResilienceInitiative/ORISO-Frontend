@@ -27,6 +27,8 @@ const config: StorybookConfig = {
 		// Organism batch 1 (generated)
 		'../src/components/{header,sessionMenu,askerInfo,twoFactorAuth,appointment,notificationsCenter,walkthrough,banUser}/**/*.stories.@(ts|tsx)'
 	],
+	// SB7 served these (compound-web.css etc. referenced by preview-head.html)
+	staticDirs: ['./static', '../public'],
 	addons: ['@storybook/addon-mcp'],
 	framework: { name: '@storybook/react-vite', options: {} },
 	async viteFinal(cfg) {
