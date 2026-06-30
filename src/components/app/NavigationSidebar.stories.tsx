@@ -1,65 +1,237 @@
 import * as React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import { useEffect, useMemo, useState } from 'react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent } from 'storybook/test';
+import { NavigationBar } from './NavigationBar';
+import { RouterConfigConsultant } from './RouterConfig';
+import { config } from '../../resources/scripts/config';
+import {
+	AUTHORITIES,
+	ConsultingTypesContext,
+	LocaleContext,
+	SessionsDataContext,
+	TenantContext,
+	UserDataContext
+} from '../../globalState';
+import './navigation.styles.scss';
 
-/**
- * NavigationSidebar Component
- * 
- * Icon-only navigation sidebar with modern rounded rectangular button design.
- * Inspired by Element chat application with hover effects and active states.
- * 
- * **Features:**
- * - 48x48px rounded rectangular containers (12px border-radius)
- * - Semi-transparent white backgrounds on red sidebar
- * - Hover effects (brightness increase)
- * - Vertical spacing (4px between items)
- * - Horizontally centered icons
- * - 5 navigation items: Initial inquiries, My consultations, Profile, Language, Log out
- * 
- * **Implementation:** `src/components/app/NavigationBar.tsx`
- * **Styles:** `src/components/app/navigation.styles.scss`
- */
-const meta: Meta = {
+const APP_ORISO_CHAT_FIGMA_URL =
+	'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=316-17725&t=XHH5HQNmA8DUWl2U-0';
+const ORISO_M3_FIGMA_URL =
+	'https://www.figma.com/design/RTUi1rcrEWECXz8rNFmj7Q/Design-System-M3_ORISO?node-id=60853-24182&p=f&t=ieIskw4Lz5hlc7iM-0';
+
+const consultantUserData = {
+	userId: 'consultant-storybook',
+	userName: 'beraterin@example.invalid',
+	displayName: 'Beraterin ORISO',
+	grantedAuthorities: [AUTHORITIES.CONSULTANT_DEFAULT],
+	agencies: [],
+	appointmentFeatureEnabled: false,
+	available: false,
+	consultingTypes: {},
+	e2eEncryptionEnabled: false,
+	emailToggles: [],
+	formalLanguage: false,
+	hasArchive: true,
+	isDisplayNameEditable: true,
+	isWalkThroughEnabled: false,
+	languages: ['de', 'en'],
+	preferredLanguage: 'de',
+	userRoles: ['CONSULTANT'],
+	termsAndConditionsConfirmation: '',
+	dataPrivacyConfirmation: '',
+	twoFactorAuth: {
+		isEnabled: false,
+		isActive: false,
+		isShown: false,
+		isToBeActivated: false,
+		secret: '',
+		qrCode: ''
+	}
+} as any;
+
+const consultingTypes = [
+	{
+		id: 1,
+		showAskerProfile: true,
+		isVideoCallAllowed: true,
+		titles: {
+			default: '1-1 Beratung',
+			short: '1-1',
+			long: '1-1 Beratung',
+			welcome: 'Willkommen',
+			registrationDropdown: '1-1 Beratung'
+		}
+	}
+] as any;
+
+const storybookSettings = {
+	...config,
+	disableVideoAppointments: true,
+	useOverviewPage: false
+} as any;
+
+function RuntimeNavigationRail() {
+	const [logoutClicked, setLogoutClicked] = useState(false);
+
+	useEffect(() => {
+		let previousLiveChatAvailability: string | null = null;
+		try {
+			previousLiveChatAvailability = localStorage.getItem(
+				'caritas_liveChatAvailability'
+			);
+			localStorage.removeItem('caritas_liveChatAvailability');
+		} catch {
+			/* Storybook determinism only. */
+		}
+
+		return () => {
+			try {
+				if (previousLiveChatAvailability == null) {
+					localStorage.removeItem('caritas_liveChatAvailability');
+				} else {
+					localStorage.setItem(
+						'caritas_liveChatAvailability',
+						previousLiveChatAvailability
+					);
+				}
+			} catch {
+				/* Storybook cleanup only. */
+			}
+		};
+	}, []);
+
+	const routerConfig = useMemo(() => {
+		return RouterConfigConsultant(storybookSettings);
+	}, []);
+
+	return (
+		<UserDataContext.Provider
+			value={{
+				userData: consultantUserData,
+				reloadUserData: async () => consultantUserData,
+				loaded: true
+			}}
+		>
+			<ConsultingTypesContext.Provider
+				value={{
+					consultingTypes,
+					setConsultingTypes: () => {}
+				}}
+			>
+				<SessionsDataContext.Provider
+					value={{
+						ready: true,
+						sessions: [],
+						dispatch: () => {}
+					}}
+				>
+					<TenantContext.Provider
+						value={{
+							tenant: {
+								id: 1,
+								name: 'ORISO Storybook',
+								settings: {
+									featureToolsEnabled: false
+								}
+							} as any,
+							setTenant: () => {}
+						}}
+					>
+						<LocaleContext.Provider
+							value={{
+								locale: 'de',
+								selectableLocales: ['de', 'en'],
+								setLocale: () => {},
+								initLocale: 'de'
+							}}
+						>
+							<div
+								className="navigationSidebarStory"
+								data-logout-clicked={logoutClicked}
+							>
+								<style>
+									{`
+										.navigationSidebarStory {
+											width: 85px;
+											height: 860px;
+											min-height: 720px;
+											background: #eae7e8;
+											overflow: hidden;
+										}
+
+										.navigationSidebarStory .navigation__wrapper {
+											width: 85px;
+											height: 100%;
+										}
+									`}
+								</style>
+								<NavigationBar
+									routerConfig={routerConfig}
+									onLogout={() => setLogoutClicked(true)}
+								/>
+							</div>
+						</LocaleContext.Provider>
+					</TenantContext.Provider>
+				</SessionsDataContext.Provider>
+			</ConsultingTypesContext.Provider>
+		</UserDataContext.Provider>
+	);
+}
+
+const meta = {
 	title: 'Components/Layout/NavigationSidebar',
+	component: RuntimeNavigationRail,
 	tags: ['autodocs'],
 	parameters: {
+		layout: 'fullscreen',
+		backgrounds: { default: 'gray' },
+		router: {
+			initialPath: '/sessions/consultant/sessionView/session/3363'
+		},
+		design: [
+			{
+				type: 'figma',
+				name: 'App.Oriso consultant rail',
+				url: APP_ORISO_CHAT_FIGMA_URL
+			},
+			{
+				type: 'figma',
+				name: 'Design System M3 ORISO',
+				url: ORISO_M3_FIGMA_URL
+			}
+		],
 		docs: {
 			description: {
-				component: 'Icon-only navigation sidebar with modern rounded rectangular button design. Inspired by Element chat application with hover effects and active states.'
+				component:
+					'Runtime Storybook target for the actual `NavigationBar` consultant rail used by the app. This replaces the previous documentation-only placeholder so Storybook MCP renders the real navigation classes, RouterConfig labels, locale switch, live-chat switch, active route state, and logout action.'
 			}
 		}
 	}
-};
+} satisfies Meta<typeof RuntimeNavigationRail>;
 
 export default meta;
-type Story = StoryObj;
+type Story = StoryObj<typeof meta>;
 
-/**
- * Documentation only - Component requires router and context providers
- * 
- * The NavigationSidebar component is integrated into the main application
- * and requires React Router and context providers.
- * 
- * **Visual Design:**
- * - Red sidebar background (#C41E3A or similar)
- * - White/semi-transparent icon containers
- * - Rounded rectangles (12px border-radius)
- * - 24px icons
- */
-export const Documentation: Story = {
-	render: () => (
-		<div style={{ padding: '20px' }}>
-			<h3>NavigationSidebar Component</h3>
-			<p>Icon-only navigation sidebar with modern design:</p>
-			<ul>
-				<li>48x48px rounded rectangular containers</li>
-				<li>Semi-transparent white backgrounds</li>
-				<li>Hover effects and active states</li>
-				<li>5 navigation buttons (Initial inquiries, My consultations, Profile, Language, Log out)</li>
-				<li>24px icons, 4px vertical spacing</li>
-			</ul>
-			<p><strong>Implementation:</strong> `src/components/app/NavigationBar.tsx`</p>
-			<p><strong>Styles:</strong> `src/components/app/navigation.styles.scss`</p>
-		</div>
-	)
+export const RuntimeConsultantRail: Story = {
+	render: () => <RuntimeNavigationRail />,
+	play: async ({ canvasElement }) => {
+		const storyShell = canvasElement.querySelector(
+			'.navigationSidebarStory'
+		);
+		const activeSessionsLink = canvasElement.querySelector(
+			'a[href="/sessions/consultant/sessionView"]'
+		);
+		await expect(activeSessionsLink).not.toBeNull();
+		await expect(activeSessionsLink).toHaveClass(
+			'navigation__item--active'
+		);
+
+		const logoutAction = canvasElement.querySelector(
+			'.navigation__item--nav-logout'
+		);
+		await expect(logoutAction).not.toBeNull();
+		await userEvent.click(logoutAction as HTMLElement);
+		await expect(storyShell).toHaveAttribute('data-logout-clicked', 'true');
+	}
 };
-

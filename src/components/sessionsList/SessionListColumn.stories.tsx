@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useState } from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useTranslation } from 'react-i18next';
 import { SessionsListToolbar } from './SessionsListToolbar';
 import type { SessionToolbarChipFilter } from './sessionToolbarFilters';
@@ -10,6 +10,11 @@ import oneOnOneImage from '../../resources/img/illustrations/one-on-one.svg';
 import teamImage from '../../resources/img/illustrations/Team.svg';
 import './sessionsList.styles.scss';
 import '../sessionsListItem/sessionsListItem.styles.scss';
+
+const APP_ORISO_CHAT_FIGMA_URL =
+	'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=316-17725&t=XHH5HQNmA8DUWl2U-0';
+const ORISO_M3_FIGMA_URL =
+	'https://www.figma.com/design/RTUi1rcrEWECXz8rNFmj7Q/Design-System-M3_ORISO?node-id=60853-24182&p=f&t=ieIskw4Lz5hlc7iM-0';
 
 const column: React.CSSProperties = {
 	backgroundColor: '#f5f5f5',
@@ -174,6 +179,18 @@ const meta = {
 	parameters: {
 		layout: 'fullscreen',
 		backgrounds: { default: 'gray' },
+		design: [
+			{
+				type: 'figma',
+				name: 'App.Oriso consultant chat',
+				url: APP_ORISO_CHAT_FIGMA_URL
+			},
+			{
+				type: 'figma',
+				name: 'Design System M3 ORISO',
+				url: ORISO_M3_FIGMA_URL
+			}
+		],
 		docs: {
 			description: {
 				component:
