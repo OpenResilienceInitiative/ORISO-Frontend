@@ -25,8 +25,7 @@ import {
 import { SvgIconProps } from '@mui/material/SvgIcon';
 import { InfoDrawer } from '../registration/infoDrawer/InfoDrawer';
 import { registrationMotion } from '../registration/registrationDesign/registrationDesign';
-import { __RouterContext } from 'react-router';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useInRouterContext } from 'react-router-dom';
 import { toSameOriginRoute } from './stageLayoutRoutes';
 import CenterFocusStrongRoundedIcon from '@mui/icons-material/CenterFocusStrongRounded';
 
@@ -56,7 +55,9 @@ export const StageLayout = ({
 	const legalLinks = useContext(LegalLinksContext);
 	const { selectableLocales } = useContext(LocaleContext);
 	const { specificAgency } = useContext(AgencySpecificContext);
-	const routerContext = useContext(__RouterContext);
+	// v7 removed __RouterContext; useInRouterContext() answers the same question
+	// (is a Router mounted?) used below to pick <RouterLink> vs a plain anchor.
+	const routerContext = useInRouterContext();
 	const settings = useAppConfig();
 	const loginUrl = `${settings.urls.toLogin}${
 		loginParams ? `?${loginParams}` : ''

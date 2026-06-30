@@ -22,7 +22,7 @@ import {
 import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
 import { Button, BUTTON_TYPES, ButtonItem } from '../button/Button';
 import { logout } from '../logout/logout';
-import { Redirect } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { ReactComponent as WarningIcon } from '../../resources/img/icons/i.svg';
 import './joinChat.styles';
 import { Headline } from '../headline/Headline';
@@ -336,7 +336,7 @@ export const JoinGroupChatView = ({
 
 	if (redirectToSessionsList) {
 		mobileListView();
-		return <Redirect to={listPath + getSessionListTab()} />;
+		return <Navigate to={listPath + getSessionListTab()} replace />;
 	}
 
 	return (

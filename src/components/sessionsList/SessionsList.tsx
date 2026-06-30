@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { useHistory, useLocation, useParams } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import {
 	getChatItemForSession,
 	getSessionType,
@@ -376,7 +376,7 @@ export const SessionsList = ({
 
 	const { rcGroupId: groupIdFromParam, sessionId: sessionIdFromParam } =
 		useParams<{ rcGroupId: string; sessionId: string }>();
-	const history = useHistory();
+	const navigate = useNavigate();
 	const location = useLocation();
 
 	const initialId = useUpdatingRef(groupIdFromParam || sessionIdFromParam);
@@ -419,7 +419,7 @@ export const SessionsList = ({
 	 */
 	const readChipFromUrl = (): SessionToolbarChipFilter | null => {
 		try {
-			const params = new URLSearchParams(window.location.search);
+			const params = new URLSearchParams(location.search);
 			return normalizeSessionToolbarChip(params.get('chip'));
 		} catch {
 			/* ignore */
@@ -792,17 +792,17 @@ export const SessionsList = ({
 								// Empty enquiry: go to write view
 								const targetPath = `${baseListPath}/write/${sessionId}`;
 								// console.log('🚀 Navigating to write view:', targetPath);
-								history.push(targetPath);
+								navigate(targetPath);
 							} else if (groupId && !isMatrixRoomId) {
 								// Original RocketChat behavior: navigate with groupId
 								const targetPath = `${baseListPath}/${groupId}/${sessionId}`;
 								// console.log('🚀 Navigating with groupId:', targetPath);
-								history.push(targetPath);
+								navigate(targetPath);
 							} else {
 								// MATRIX MIGRATION FIX: Navigate by session ID for Matrix rooms or sessions without groupId
 								const targetPath = `${baseListPath}/session/${sessionId}`;
 								// console.log('🚀 Navigating by session ID:', targetPath);
-								history.push(targetPath);
+								navigate(targetPath);
 							}
 						}
 					}
@@ -1387,9 +1387,9 @@ export const SessionsList = ({
 			if (!draft.actionPath) {
 				return;
 			}
-			history.push(withDraftScopeParam(draft.actionPath, draft.scopeKey));
+			navigate(withDraftScopeParam(draft.actionPath, draft.scopeKey));
 		},
-		[history]
+		[navigate]
 	);
 	const translateWithFallback = useCallback(
 		(key: string, fallback?: string) => {
@@ -1421,18 +1421,18 @@ export const SessionsList = ({
 			/* Route-driven chips (+ / archive) stay “selected” until URL changes.
 			   Leaving create-group-chat when using a filter avoids + staying dark. */
 			if (groupIdFromParam === 'createGroupChat') {
-				history.push({ pathname: baseListPath, search });
+				navigate({ pathname: baseListPath, search });
 				return;
 			}
 
 			/* Selecting a filter implies main list: drop archive tab so archive chip matches. */
 			if (location.search !== search) {
-				history.replace({ pathname: location.pathname, search });
+				navigate({ pathname: location.pathname, search }, { replace: true });
 			}
 		},
 		[
 			groupIdFromParam,
-			history,
+			navigate,
 			listPath,
 			location.pathname,
 			location.search,
@@ -1888,7 +1888,7 @@ Watch for inactive groups because there is no api endpoint
  */
 const useGroupWatcher = (isLoading: boolean) => {
 	const { sessions, dispatch } = useContext(SessionsDataContext);
-	const history = useHistory();
+	const location = useLocation();
 
 	const hasSessionChanged = useCallback(
 		(newSession) => {
@@ -1909,7 +1909,7 @@ const useGroupWatcher = (isLoading: boolean) => {
 			(s) => !!s.chat && !s.chat.subscribed
 		);
 
-		if ((history?.location?.state as any)?.isEditMode) return;
+		if ((location?.state as any)?.isEditMode) return;
 
 		if (inactiveGroupSessions.length <= 0) {
 			return;
@@ -1966,7 +1966,7 @@ const useGroupWatcher = (isLoading: boolean) => {
 			.catch((e) => {
 				// console.log(e);
 			});
-	}, [dispatch, hasSessionChanged, history?.location?.state, sessions]);
+	}, [dispatch, hasSessionChanged, location?.state, sessions]);
 
 	const [startWatcher, stopWatcher, isWatcherRunning] = useWatcher(
 		refreshInactiveGroupSessions,

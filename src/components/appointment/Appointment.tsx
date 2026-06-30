@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useCallback, useContext, useState } from 'react';
-import { generatePath, useHistory } from 'react-router-dom';
+import { generatePath, useNavigate } from 'react-router-dom';
 import { Button, BUTTON_TYPES, ButtonItem } from '../button/Button';
 import { Box } from '../box/Box';
 import {
@@ -37,7 +37,7 @@ export const Appointment = ({
 }: AppointmentProps) => {
 	const settings = useAppConfig();
 	const { t: translate } = useTranslation();
-	const history = useHistory();
+	const navigate = useNavigate();
 
 	const { userData } = useContext(UserDataContext);
 
@@ -125,14 +125,14 @@ export const Appointment = ({
 					setOverlayItem(null);
 					break;
 				case 'GOTO_MANUAL':
-					history.push('/profile/hilfe/videoCall');
+					navigate('/profile/hilfe/videoCall');
 					break;
 			}
 		},
 		[
 			appointment,
 			deleteClick,
-			history,
+			navigate,
 			settings.urls.consultantVideoConference
 		]
 	);

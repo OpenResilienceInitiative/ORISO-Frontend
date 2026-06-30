@@ -7,7 +7,7 @@ import {
 	useMemo,
 	useRef
 } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
 	desktopView,
 	mobileDetailView,
@@ -129,7 +129,7 @@ const IconUnselected = () => (
 
 export const CreateGroupChatView = () => {
 	const { t: translate } = useTranslation();
-	const history = useHistory();
+	const navigate = useNavigate();
 	const {
 		userData,
 		userData: { agencies = [] }
@@ -292,7 +292,7 @@ export const CreateGroupChatView = () => {
 	}, [selectedChatTopic, selectedAgency, selectedConsultants]);
 
 	const handleBackButton = () => {
-		history.push('/sessions/consultant/sessionView');
+		navigate('/sessions/consultant/sessionView');
 	};
 
 	const chatTopicInputItem: InputFieldItem = {
@@ -507,14 +507,14 @@ export const CreateGroupChatView = () => {
 					JSON.stringify(overlayItem) ===
 					JSON.stringify(createChatSuccessOverlayItem)
 				) {
-					history.push('/sessions/consultant/sessionView');
+					navigate('/sessions/consultant/sessionView');
 				} else {
 					setOverlayActive(false);
 					setOverlayItem({});
 				}
 			}
 		},
-		[createChatSuccessOverlayItem, history, overlayItem]
+		[createChatSuccessOverlayItem, navigate, overlayItem]
 	);
 
 	return (

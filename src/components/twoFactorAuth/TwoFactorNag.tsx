@@ -1,5 +1,6 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
+import { useOpenTwoFactorSettings } from '../../hooks/useOpenTwoFactorSettings';
 import { UserDataContext } from '../../globalState';
 import { BUTTON_TYPES } from '../button/Button';
 import { Overlay, OVERLAY_FUNCTIONS } from '../overlay/Overlay';
@@ -17,8 +18,8 @@ interface TwoFactorNagProps {}
 
 export const TwoFactorNag: React.FC<TwoFactorNagProps> = () => {
 	const { t: translate } = useTranslation();
-	const history = useHistory();
-	const location = useLocation<{ openTwoFactor?: boolean }>();
+	const openTwoFactorSettings = useOpenTwoFactorSettings();
+	const location = useLocation();
 
 	const settings = useAppConfig();
 	const { userData } = useContext(UserDataContext);
@@ -87,12 +88,7 @@ export const TwoFactorNag: React.FC<TwoFactorNagProps> = () => {
 
 	const handleOverlayAction = (buttonFunction: string) => {
 		if (buttonFunction === OVERLAY_FUNCTIONS.REDIRECT) {
-			history.push({
-				pathname: '/profile/einstellungen/sicherheit',
-				state: {
-					openTwoFactor: true
-				}
-			});
+			openTwoFactorSettings();
 			handleTwoFactorNag(true);
 			setIsShownTwoFactorNag(false);
 		}

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useContext } from 'react';
 import { isMobile } from 'react-device-detect';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Button, ButtonItem, BUTTON_TYPES } from '../button/Button';
 import { ReactComponent as CallOnIcon } from '../../resources/img/icons/call-on.svg';
 import { ReactComponent as CallOffIcon } from '../../resources/img/icons/call-off.svg';
@@ -51,7 +51,7 @@ const getInitials = (text: string) => {
 
 export const IncomingVideoCall = (props: IncomingVideoCallProps) => {
 	const { t: translate } = useTranslation();
-	const history = useHistory();
+	const navigate = useNavigate();
 
 	const { removeNotification } = useContext(NotificationsContext);
 	const { joinVideoCall } = useJoinVideoCall();
@@ -227,7 +227,7 @@ export const IncomingVideoCall = (props: IncomingVideoCallProps) => {
 						<button
 							onClick={() => {
 								handleRejectVideoCall();
-								history.push('/profile/hilfe/videoCall');
+								navigate('/profile/hilfe/videoCall');
 							}}
 							className="px--2 text--bold"
 							type="button"

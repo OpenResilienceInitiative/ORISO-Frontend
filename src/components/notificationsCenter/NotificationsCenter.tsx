@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
 	getEventDescriptor,
 	getEventIcon,
@@ -109,7 +109,7 @@ const toNonEmbeddedPath = (path?: string | null): string | null => {
 
 export const NotificationsCenter = () => {
 	const { t: translate, i18n } = useTranslation();
-	const history = useHistory();
+	const navigate = useNavigate();
 	// WP-06 Slice 0b: the route-derived global selection is the single source of
 	// truth for the active list item. The timeline keeps its own in-page
 	// (master-detail) selection, but defers to the active conversation when one
@@ -284,10 +284,10 @@ export const NotificationsCenter = () => {
 		if (untilL) {
 			const directPath = toNonEmbeddedPath(item.actionPath);
 			if (directPath) {
-				history.push(directPath);
+				navigate(directPath);
 				return;
 			}
-			history.push(getDefaultSessionsPath());
+			navigate(getDefaultSessionsPath());
 			return;
 		}
 		setSelectedNotificationId(item.id);
@@ -305,10 +305,10 @@ export const NotificationsCenter = () => {
 		}
 		const directPath = toNonEmbeddedPath(selectedNotification.actionPath);
 		if (directPath) {
-			history.push(directPath);
+			navigate(directPath);
 			return;
 		}
-		history.push(getDefaultSessionsPath());
+		navigate(getDefaultSessionsPath());
 	};
 
 	const handleNextNotification = () => {

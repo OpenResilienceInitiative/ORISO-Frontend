@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useContext } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
 	Button,
@@ -25,7 +25,7 @@ interface NoBookings {
 
 export const NoBookingsBooked: React.FC<NoBookings> = ({ sessions }) => {
 	const { t: translate } = useTranslation();
-	const history = useHistory();
+	const navigate = useNavigate();
 	const { userData } = useContext(UserDataContext);
 
 	const isConsultant = hasUserAuthority(
@@ -39,7 +39,7 @@ export const NoBookingsBooked: React.FC<NoBookings> = ({ sessions }) => {
 	};
 
 	const handleBookingButton = () => {
-		history.push('/booking/');
+		navigate('/booking/');
 	};
 
 	return (

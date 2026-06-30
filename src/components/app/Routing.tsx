@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { useContext, useMemo, Suspense } from 'react';
-import { Route, Switch, Redirect, useLocation } from 'react-router-dom';
+import { useContext, useMemo } from 'react';
+import { Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { RouterConfigUser, RouterConfigConsultant } from './RouterConfig';
 import { AbsenceHandler } from './AbsenceHandler';
 import {
@@ -8,8 +8,7 @@ import {
 	hasUserAuthority,
 	AUTHORITIES,
 	ConsultingTypesContext,
-	E2EEProvider,
-	SessionTypeProvider
+	E2EEProvider
 } from '../../globalState';
 import { NavigationBar } from './NavigationBar';
 import { Header } from '../header/Header';
@@ -18,12 +17,11 @@ import { NonPlainRoutesWrapper } from './NonPlainRoutesWrapper';
 import { Walkthrough } from '../walkthrough/Walkthrough';
 import { TwoFactorNag } from '../twoFactorAuth/TwoFactorNag';
 import { useAppConfig } from '../../hooks/useAppConfig';
-import { useResponsive } from '../../hooks/useResponsive';
 import { useAskerHasAssignedConsultant } from '../../containers/bookings/hooks/useAskerHasAssignedConsultant';
 import { TermsAndConditions } from '../termsandconditions/TermsAndConditions';
-import { Loading } from './Loading';
 import NotFound from '../notFound/NotFound';
-import { SessionListViewStateProvider } from '../sessionsList/SessionListViewStateContext';
+import { SessionsZone } from './SessionsZone';
+import { toV7Paths } from '../../utils/routeHelpers';
 
 interface RoutingProps {
 	logout?: Function;
@@ -32,7 +30,6 @@ interface RoutingProps {
 export const Routing = (props: RoutingProps) => {
 	const location = useLocation();
 	const settings = useAppConfig();
-	const { untilL } = useResponsive();
 	const { userData } = useContext(UserDataContext);
 	const { consultingTypes } = useContext(ConsultingTypesContext);
 	const hasAssignedConsultant = useAskerHasAssignedConsultant();
@@ -44,344 +41,153 @@ export const Routing = (props: RoutingProps) => {
 		return RouterConfigUser(settings, hasAssignedConsultant);
 	}, [userData, settings, hasAssignedConsultant]);
 
-	const allRoutes = () =>
-		[
-			...(routerConfig.listRoutes || []),
-			...(routerConfig.detailRoutes || []),
-			...(routerConfig.userProfileRoutes || []),
-			...(routerConfig.profileRoutes || []),
-			...(routerConfig.appointmentRoutes || []),
-			...(routerConfig.toolsRoutes || [])
-		].map((route) => route.path, []);
+	const isConsultant = hasUserAuthority(
+		AUTHORITIES.CONSULTANT_DEFAULT,
+		userData
+	);
+	const defaultSessionsPath =
+		'/sessions/' +
+		(isConsultant ? 'consultant/sessionPreview' : 'user/view');
 
-	const isEmbeddedNotificationsView =
+	const useEmbeddedNotificationsLayout =
 		new URLSearchParams(location.search).get('embeddedNotifications') ===
 		'1';
-	const useEmbeddedNotificationsLayout = isEmbeddedNotificationsView;
+
+	// Child routes of the pathless layout route take relative paths.
+	const rel = (path: string) => path.replace(/^\//, '');
+	const logout = () => props.logout();
 
 	return (
-		<Switch>
+		<Routes>
+			{/* Plain routes render WITHOUT the app shell (no NavigationBar). */}
 			{routerConfig.plainRoutes
 				?.filter(
 					(route: any) =>
 						!route.condition ||
 						route.condition(userData, consultingTypes)
 				)
-				.map(
-					(route: any): React.ReactElement => (
+				.flatMap((route: any) =>
+					toV7Paths(route).map((path) => (
 						<Route
-							exact={route.exact ?? true}
-							key={`plain-${route.path}`}
-							path={route.path}
-						>
-							<route.component />
-						</Route>
-					)
+							key={`plain-${path}`}
+							path={path}
+							element={<route.component />}
+						/>
+					))
 				)}
-			<Route path={allRoutes()}>
-				<Walkthrough />
-				<E2EEProvider>
-					<NonPlainRoutesWrapper logoutHandler={() => props.logout()}>
-						<div
-							className={`app__wrapper ${
-								useEmbeddedNotificationsLayout
-									? 'app__wrapper--embeddedNotifications'
-									: ''
-							}`}
-						>
-							<NavigationBar
-								routerConfig={routerConfig}
-								onLogout={() => props.logout()}
-							/>
-							<section className="contentWrapper">
-								<Header />
-								<div className="contentWrapper__content">
-									<Switch>
-										<Route
-											path={[
-												...(routerConfig.listRoutes?.map(
-													(route: any) => route.path
-												) || []),
-												...(routerConfig.detailRoutes?.map(
-													(route: any) => route.path
-												) || [])
-											]}
-										>
-											<SessionListViewStateProvider>
-												<div className="contentWrapper__list">
-													<Switch>
-														{routerConfig.listRoutes.map(
-															(
-																route: any
-															): React.ReactElement => (
-																<Route
-																	exact={
-																		route.exact ??
-																		true
-																	}
-																	key={`list-${route.path}`}
-																	path={
-																		route.path
-																	}
-																>
-																	<SessionTypeProvider
-																		type={
-																			route.type ||
-																			null
-																		}
-																	>
-																		<route.component
-																			sessionTypes={
-																				route.sessionTypes
-																			}
-																		/>
-																	</SessionTypeProvider>
-																</Route>
-															)
-														)}
-													</Switch>
-												</div>
-												<div className="contentWrapper__detail">
-													<Suspense
-														fallback={<Loading />}
-													>
-														<Switch>
-															{typeof routerConfig.userProfileRoutes !==
-																'undefined' &&
-																routerConfig.userProfileRoutes.map(
-																	(
-																		route: any
-																	): React.ReactElement => (
-																		<Route
-																			exact={
-																				route.exact ??
-																				true
-																			}
-																			key={`userProfile-${route.path}`}
-																			path={
-																				route.path
-																			}
-																			render={(
-																				props
-																			) => (
-																				<div className="contentWrapper__userProfile">
-																					<SessionTypeProvider
-																						type={
-																							route.type ||
-																							null
-																						}
-																					>
-																						<route.component
-																							{...props}
-																							type={
-																								route.type ||
-																								null
-																							}
-																						/>
-																					</SessionTypeProvider>
-																				</div>
-																			)}
-																		/>
-																	)
-																)}
 
-															{routerConfig.detailRoutes.map(
-																(
-																	route: any
-																): React.ReactElement => (
-																	<Route
-																		exact={
-																			route.exact ??
-																			true
-																		}
-																		key={`detail-${route.path}`}
-																		path={
-																			route.path
-																		}
-																		render={(
-																			componentProps
-																		) => (
-																			<SessionTypeProvider
-																				type={
-																					route.type ||
-																					null
-																				}
-																			>
-																				<route.component
-																					{...componentProps}
-																					{...props}
-																					type={
-																						route.type ||
-																						null
-																					}
-																				/>
-																			</SessionTypeProvider>
-																		)}
-																	/>
-																)
-															)}
-														</Switch>
-													</Suspense>
-												</div>
-											</SessionListViewStateProvider>
-										</Route>
-										<Route
-											path={
-												routerConfig.profileRoutes?.map(
-													(route: any) => route.path
-												) || []
-											}
-										>
-											<div className="contentWrapper__profile">
-												<Switch>
-													{routerConfig.profileRoutes
-														?.filter(
-															(route: any) =>
-																!route.condition ||
-																route.condition(
-																	userData,
-																	consultingTypes
-																)
-														)
-														.map(
-															(
-																route: any
-															): React.ReactElement => (
-																<Route
-																	exact={
-																		route.exact ??
-																		true
-																	}
-																	key={`profile-${route.path}`}
-																	path={
-																		route.path
-																	}
-																	render={() => (
-																		<route.component
-																			{...props}
-																			type={
-																				route.type ||
-																				null
-																			}
-																		/>
-																	)}
-																/>
-															)
-														)}
-												</Switch>
-											</div>
-										</Route>
-										<Route
-											path={
-												routerConfig.appointmentRoutes?.map(
-													(route: any) => route.path
-												) || []
-											}
-										>
-											<div className="contentWrapper__booking">
-												<Switch>
-													{routerConfig.appointmentRoutes?.map(
-														(
-															route: any
-														): React.ReactElement => (
-															<Route
-																exact={
-																	route.exact ??
-																	true
-																}
-																key={`booking-${route.path}`}
-																path={
-																	route.path
-																}
-																render={() => (
-																	<route.component
-																		{...props}
-																		type={
-																			route.type ||
-																			null
-																		}
-																	/>
-																)}
-															/>
-														)
-													)}
-												</Switch>
-											</div>
-										</Route>
-										<Route
-											path={
-												routerConfig.toolsRoutes?.map(
-													(route: any) => route.path
-												) || []
-											}
-										>
-											<div className="contentWrapper__tools">
-												<Switch>
-													{routerConfig.toolsRoutes?.map(
-														(
-															route: any
-														): React.ReactElement => (
-															<Route
-																exact={
-																	route.exact ??
-																	true
-																}
-																key={`tools-${route.path}`}
-																path={
-																	route.path
-																}
-																render={() => (
-																	<route.component
-																		{...props}
-																		type={
-																			route.type ||
-																			null
-																		}
-																	/>
-																)}
-															/>
-														)
-													)}
-												</Switch>
-											</div>
-										</Route>
-									</Switch>
+			{/* Authenticated app shell (layout route): chrome + <Outlet/>. */}
+			<Route
+				element={
+					<>
+						<Walkthrough />
+						<E2EEProvider>
+							<NonPlainRoutesWrapper logoutHandler={logout}>
+								<div
+									className={`app__wrapper ${
+										useEmbeddedNotificationsLayout
+											? 'app__wrapper--embeddedNotifications'
+											: ''
+									}`}
+								>
+									<NavigationBar
+										routerConfig={routerConfig}
+										onLogout={logout}
+									/>
+									<section className="contentWrapper">
+										<Header />
+										<div className="contentWrapper__content">
+											<Outlet />
+										</div>
+									</section>
+									{/* Privacy / data-protection overlay: askers only
+									    (incl. anonymous), not consultants */}
+									{hasUserAuthority(
+										AUTHORITIES.ASKER_DEFAULT,
+										userData
+									) && <TermsAndConditions />}
+									{hasUserAuthority(
+										AUTHORITIES.CONSULTANT_DEFAULT,
+										userData
+									) && <AbsenceHandler />}
+									{hasUserAuthority(
+										AUTHORITIES.CONSULTANT_DEFAULT,
+										userData
+									) && <ReleaseNote />}
+									{hasUserAuthority(
+										AUTHORITIES.CONSULTANT_DEFAULT,
+										userData
+									) && <TwoFactorNag />}
 								</div>
-							</section>
-							{/* Privacy / data-protection overlay: askers only (incl. anonymous), not consultants */}
-							{hasUserAuthority(
-								AUTHORITIES.ASKER_DEFAULT,
-								userData
-							) && <TermsAndConditions />}
-							{hasUserAuthority(
-								AUTHORITIES.CONSULTANT_DEFAULT,
-								userData
-							) && <AbsenceHandler />}
-							{hasUserAuthority(
-								AUTHORITIES.CONSULTANT_DEFAULT,
-								userData
-							) && <ReleaseNote />}
-							{hasUserAuthority(
-								AUTHORITIES.CONSULTANT_DEFAULT,
-								userData
-							) && <TwoFactorNag />}
-						</div>
-					</NonPlainRoutesWrapper>
-				</E2EEProvider>
-			</Route>
-			{/* Temporary route for 404 page testing */}
-			<Route path="/404" exact>
-				<NotFound />
-			</Route>
-			<Redirect
-				from="*"
-				to={
-					'/sessions/' +
-					(hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
-						? 'consultant/sessionPreview'
-						: 'user/view')
+							</NonPlainRoutesWrapper>
+						</E2EEProvider>
+					</>
 				}
-			/>
-		</Switch>
+			>
+				<Route
+					path="sessions/*"
+					element={<SessionsZone routerConfig={routerConfig} />}
+				/>
+
+				{routerConfig.profileRoutes
+					?.filter(
+						(route: any) =>
+							!route.condition ||
+							route.condition(userData, consultingTypes)
+					)
+					.flatMap((route: any) =>
+						toV7Paths(route).map((path) => (
+							<Route
+								key={`profile-${path}`}
+								path={rel(path)}
+								element={
+									<div className="contentWrapper__profile">
+										<route.component
+											type={route.type || null}
+										/>
+									</div>
+								}
+							/>
+						))
+					)}
+
+				{routerConfig.appointmentRoutes?.flatMap((route: any) =>
+					toV7Paths(route).map((path) => (
+						<Route
+							key={`booking-${path}`}
+							path={rel(path)}
+							element={
+								<div className="contentWrapper__booking">
+									<route.component type={route.type || null} />
+								</div>
+							}
+						/>
+					))
+				)}
+
+				{routerConfig.toolsRoutes?.flatMap((route: any) =>
+					toV7Paths(route).map((path) => (
+						<Route
+							key={`tools-${path}`}
+							path={rel(path)}
+							element={
+								<div className="contentWrapper__tools">
+									<route.component type={route.type || null} />
+								</div>
+							}
+						/>
+					))
+				)}
+
+				{/* Temporary route for 404 page testing */}
+				<Route path="404" element={<NotFound />} />
+
+				{/* Catch-all → default session view for the user's role. */}
+				<Route
+					path="*"
+					element={<Navigate to={defaultSessionsPath} replace />}
+				/>
+			</Route>
+		</Routes>
 	);
 };

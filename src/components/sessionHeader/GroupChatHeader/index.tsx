@@ -345,10 +345,8 @@ export const GroupChatHeader = ({
 		`${sessionListTab ? `?sessionListTab=${sessionListTab}` : ''}`;
 	const baseUrl = `${listPath}/:groupId/:id/:subRoute?/:extraPath?${getSessionListTab()}`;
 	const groupChatInfoLink = generatePath(baseUrl, {
-		...(activeSession.item as Omit<
-			SessionItemInterface,
-			'attachment' | 'topic' | 'e2eLastMessage' | 'videoCallMessageDTO'
-		>),
+		groupId: activeSession.item.groupId,
+		id: String(activeSession.item.id),
 		subRoute: 'groupChatInfo'
 	});
 	const visibleMembers = matrixMembers.filter((member) => {
