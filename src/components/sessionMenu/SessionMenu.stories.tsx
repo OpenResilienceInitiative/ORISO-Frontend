@@ -1,10 +1,8 @@
-import * as React from 'react';
 import { Meta, StoryObj } from '@storybook/react';
 import { SessionMenu } from './SessionMenu';
+import { APP_ORISO_FIGMA_URL } from '../storybookDesignLinks';
 
-// MutableRefObject<boolean> required prop: a plain object literal with a
-// mutable `current` field exactly matches the type the component expects.
-const hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean> = {
+const hasUserInitiatedStopOrLeaveRequest = {
 	current: false
 };
 
@@ -13,11 +11,9 @@ const meta = {
 	component: SessionMenu,
 	tags: ['autodocs', 'needs-data'],
 	parameters: {
-		// TODO: paste this component's Figma node URL (right-click the frame in
-		// Figma -> "Copy link to selection") to show it in the story's Design tab.
 		design: {
 			type: 'figma',
-			url: 'https://www.figma.com/design/REPLACE_FILE_KEY/ORISO?node-id=0-1'
+			url: APP_ORISO_FIGMA_URL
 		},
 		docs: {
 			description: {

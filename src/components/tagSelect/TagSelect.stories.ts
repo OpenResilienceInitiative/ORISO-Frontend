@@ -37,3 +37,14 @@ export const LongLabel: Story = {
 		handleTagSelectClick: () => {}
 	}
 };
+
+export const Selected: Story = {
+	args: {
+		id: 'tag-selected',
+		name: 'topics',
+		value: 3,
+		label: 'Selected topic',
+		defaultChecked: true,
+		handleTagSelectClick: () => {}
+	}
+};

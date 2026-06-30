@@ -1,4 +1,5 @@
 import { Meta, StoryObj } from '@storybook/react';
+import { Box } from '@mui/material';
 import React from 'react';
 import { Banner } from './Banner';
 
@@ -19,12 +20,20 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+function BannerStoryContent({ children }: { children: React.ReactNode }) {
+	return (
+		<Box component="span" sx={{ display: 'block', px: 2, py: 1.5 }}>
+			{children}
+		</Box>
+	);
+}
+
 export const Default: Story = {
 	render: (args) => (
 		<Banner {...args}>
-			<span style={{ padding: '12px 16px', display: 'block' }}>
+			<BannerStoryContent>
 				This is an informational banner message.
-			</span>
+			</BannerStoryContent>
 		</Banner>
 	)
 };
@@ -32,9 +41,9 @@ export const Default: Story = {
 export const Closable: Story = {
 	render: (args) => (
 		<Banner {...args} onClose={() => {}}>
-			<span style={{ padding: '12px 16px', display: 'block' }}>
+			<BannerStoryContent>
 				This banner can be dismissed with the close button.
-			</span>
+			</BannerStoryContent>
 		</Banner>
 	)
 };
