@@ -13,7 +13,7 @@ import theme from '../src/resources/scripts/theme';
 import { config } from '../src/resources/scripts/config';
 import { LegalLinksProvider } from '../src/globalState/provider/LegalLinksProvider';
 import { init, FALLBACK_LNG } from '../src/i18n';
-import { BrowserRouter as Router } from 'react-router-dom';
+import { MemoryRouter } from 'react-router-dom';
 import { Loading } from '../src/components/app/Loading';
 import { Suspense } from 'react';
 import {
@@ -53,6 +53,11 @@ import { RocketChatPublicSettingsContext } from '../src/globalState/provider/Roc
 import { RocketChatSubscriptionsContext } from '../src/globalState/provider/RocketChatSubscriptionsProvider';
 import { RocketChatUsersOfRoomContext } from '../src/globalState/provider/RocketChatUsersOfRoomProvider';
 import { RocketChatContext } from '../src/globalState/provider/RocketChatProvider';
+import type {
+	AgencyDataInterface,
+	ConsultingTypeInterface,
+	TopicsDataInterface
+} from '../src/globalState/interfaces';
 
 // Catch components that throw because they need live app data (session, overlays,
 // notification feed, …) that Storybook can't mock. Instead of a red crash, show a
@@ -88,15 +93,246 @@ class StoryErrorBoundary extends React.Component<
 					<strong>⚠ Needs live app data</strong>
 					<br />
 					This component depends on session / overlay / feed data that
-					Storybook doesn’t mock, so it can’t fully render here. Its props are
-					in the Docs tab — use the linked Figma design for the intended
-					visual.
+					Storybook doesn’t mock, so it can’t fully render here. Its
+					props are in the Docs tab — use the linked Figma design for
+					the intended visual.
 				</div>
 			);
 		}
 		return this.props.children as any;
 	}
 }
+
+const storybookTopic = (
+	id: number,
+	slug: string,
+	name: string,
+	description: string
+): TopicsDataInterface => ({
+	id,
+	name,
+	slug,
+	description,
+	internalIdentifier: slug,
+	status: 'active',
+	createDate: '2026-06-30T00:00:00.000Z',
+	updateDate: '2026-06-30T00:00:00.000Z',
+	fallbackUrl: 'https://www.caritas.de/hilfeundberatung/onlineberatung/',
+	titles: {
+		short: name,
+		long: name,
+		registrationDropdown: name,
+		welcome: name
+	}
+});
+
+const storybookTopics: TopicsDataInterface[] = [
+	storybookTopic(
+		1,
+		'parents-and-family',
+		'Eltern & Familie',
+		'Beratung bei Fragen zu Familie, Erziehung und Zusammenleben.'
+	),
+	storybookTopic(
+		2,
+		'children-youth-counselling',
+		'Kinder- und Jugendberatung',
+		'Unterstützung für junge Menschen und ihre Bezugspersonen.'
+	),
+	storybookTopic(
+		3,
+		'u25-suicide-prevention',
+		'U25 Suizidprävention',
+		'Anonyme Begleitung für junge Menschen in Krisen.'
+	),
+	storybookTopic(
+		4,
+		'general-social-counselling',
+		'Allgemeine Sozialberatung',
+		'Orientierung bei sozialen, finanziellen und behördlichen Fragen.'
+	),
+	storybookTopic(
+		5,
+		'debt',
+		'Schuldnerberatung',
+		'Hilfe bei Schulden, Mahnungen und finanzieller Überforderung.'
+	),
+	storybookTopic(
+		6,
+		'migration',
+		'Migration & Integration',
+		'Beratung zu Ankommen, Aufenthalt und Integration.'
+	),
+	storybookTopic(
+		7,
+		'life-in-old-age',
+		'Leben im Alter',
+		'Unterstützung bei Pflege, Alltag und sozialer Teilhabe.'
+	),
+	storybookTopic(
+		8,
+		'disability-psychological-impairment',
+		'Behinderung & psychische Belastung',
+		'Beratung zu Teilhabe, Belastung und passenden Hilfen.'
+	)
+];
+
+const storybookConsultingType: ConsultingTypeInterface = {
+	id: 1,
+	showAskerProfile: true,
+	titles: {
+		default: 'Onlineberatung',
+		short: 'Onlineberatung',
+		long: 'ORISO Onlineberatung',
+		welcome: 'Willkommen in der Onlineberatung',
+		registrationDropdown: 'Onlineberatung'
+	},
+	isVideoCallAllowed: true,
+	isSubsequentRegistrationAllowed: true,
+	urls: {
+		registrationPostcodeFallbackUrl:
+			'https://www.caritas.de/hilfeundberatung/onlineberatung/',
+		requiredAidMissingRedirectUrl:
+			'https://www.caritas.de/hilfeundberatung/'
+	},
+	registration: {
+		autoSelectAgency: false,
+		autoSelectPostcode: false,
+		notes: {}
+	},
+	groupChat: {
+		isGroupChat: false,
+		groupChatRules: ['']
+	},
+	description: 'Storybook fixture for the public ORISO registration flow.',
+	slug: 'onlineberatung',
+	languageFormal: true,
+	welcomeScreen: {
+		anonymous: {
+			title: 'Willkommen',
+			text: 'Beschreiben Sie kurz Ihr Anliegen.'
+		}
+	}
+};
+
+const storybookAgencies: AgencyDataInterface[] = [
+	{
+		id: 101,
+		name: 'Caritas Beratungszentrum Köln Mitte',
+		description:
+			'Beratung zu Familie, sozialen Notlagen und Migration. Termine sind online, telefonisch oder vor Ort möglich.',
+		city: 'Köln',
+		postcode: '50667',
+		consultingType: 1,
+		offline: false,
+		external: false,
+		tenantId: 1,
+		topicIds: [1, 4, 6],
+		consultingTypeRel: storybookConsultingType,
+		address: 'Domkloster 3, 50667 Köln',
+		phone: '0221 123 45 0',
+		openingHours: 'Mo-Do 9-17 Uhr · Fr 9-13 Uhr',
+		lat: 50.9413,
+		lng: 6.9583
+	} as AgencyDataInterface,
+	{
+		id: 102,
+		name: 'U25 Onlineberatung Rheinland',
+		description:
+			'Anonyme Krisenbegleitung für junge Menschen bis 25 Jahre mit geschulten Peers und Fachberatung.',
+		city: 'Köln',
+		postcode: '50674',
+		consultingType: 1,
+		offline: false,
+		external: false,
+		tenantId: 1,
+		topicIds: [2, 3],
+		consultingTypeRel: storybookConsultingType,
+		address: 'Hohenstaufenring 2, 50674 Köln',
+		phone: '0221 95 41 21 0',
+		openingHours: 'Mo-Fr 9-16 Uhr',
+		lat: 50.9352,
+		lng: 6.9378
+	} as AgencyDataInterface,
+	{
+		id: 103,
+		name: 'Schuldnerberatung Köln-Nord',
+		description:
+			'Vertrauliche Beratung bei Schulden, Mahnungen, Pfändungen und Haushaltsplanung.',
+		city: 'Köln',
+		postcode: '50733',
+		consultingType: 1,
+		offline: false,
+		external: false,
+		tenantId: 1,
+		topicIds: [4, 5],
+		consultingTypeRel: storybookConsultingType,
+		address: 'Neusser Straße 120, 50733 Köln',
+		phone: '0221 48 90 33',
+		openingHours: 'Mo, Mi, Do 9-15 Uhr',
+		lat: 50.9636,
+		lng: 6.9542
+	} as AgencyDataInterface
+];
+
+const storybookJsonResponse = (body: unknown) =>
+	new Response(JSON.stringify(body), {
+		status: 200,
+		headers: { 'content-type': 'application/json' }
+	});
+
+const storybookRequestUrl = (input: RequestInfo | URL): string => {
+	if (typeof input === 'string') {
+		return input;
+	}
+
+	if (input instanceof URL) {
+		return input.toString();
+	}
+
+	return input.url;
+};
+
+const installStorybookFetchMocks = () => {
+	const marker = '__orisoStorybookFetchMockInstalled';
+	const originalFetch = globalThis.fetch?.bind(globalThis);
+	if (!originalFetch || (globalThis as any)[marker]) {
+		return;
+	}
+
+	(globalThis as any)[marker] = true;
+	globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+		const url = storybookRequestUrl(input);
+
+		if (!url.includes('api.storybook.test')) {
+			return originalFetch(input, init);
+		}
+
+		if (url.includes('/service/topic/public/')) {
+			return storybookJsonResponse(storybookTopics);
+		}
+
+		if (url.match(/\/service\/agencies(?:\?|$)/)) {
+			return storybookJsonResponse(storybookAgencies);
+		}
+
+		if (url.match(/\/service\/consultingtypes\/\d+\/full(?:\?|$)/)) {
+			return storybookJsonResponse(storybookConsultingType);
+		}
+
+		if (url.includes('/service/users/consultants/languages')) {
+			return storybookJsonResponse({ languages: ['en', 'ar', 'uk'] });
+		}
+
+		if (url.includes('/service/conversations/consultants/availability')) {
+			return storybookJsonResponse({ available: true });
+		}
+
+		return originalFetch(input, init);
+	};
+};
+
+installStorybookFetchMocks();
 
 function MuiStoryShell({ Story }: { Story: React.ComponentType }) {
 	return (
@@ -200,22 +436,14 @@ function MuiStoryShell({ Story }: { Story: React.ComponentType }) {
 																agencyId: null,
 																username: null,
 																password: null,
-																zipcode: null,
-																mainTopic: {
-																	id: 1,
-																	name: 'Topic',
-																	slug: 'topic1',
-																	description:
-																		'',
-																	internalIdentifier:
-																		'topic1',
-																	status: '',
-																	createDate:
-																		'',
-																	updateDate:
-																		''
-																},
-																mainTopicId: 1
+																zipcode:
+																	'50667',
+																mainTopic:
+																	storybookTopics[0],
+																mainTopicId:
+																	storybookTopics[0]
+																		.id,
+																topicGroupId: 10001
 															}
 														}}
 													>
@@ -252,21 +480,24 @@ function MuiStoryShell({ Story }: { Story: React.ComponentType }) {
 	);
 }
 
-export const withMuiTheme = (Story: React.ComponentType) => {
+export const withMuiTheme = (Story: React.ComponentType, context: any) => {
 	const [{ locale }] = useGlobals();
 	useEffect(() => {
 		if (locale && typeof locale === 'string') {
 			void i18n.changeLanguage(locale);
 		}
 	}, [locale]);
+	const initialPath =
+		context.parameters?.router?.initialPath ||
+		`${window.location.pathname}${window.location.search}`;
 	return (
-		<Router>
+		<MemoryRouter initialEntries={[initialPath]}>
 			<Suspense fallback={<Loading />}>
 				<I18nextProvider i18n={i18n}>
 					<MuiStoryShell Story={Story} />
 				</I18nextProvider>
 			</Suspense>
-		</Router>
+		</MemoryRouter>
 	);
 };
 

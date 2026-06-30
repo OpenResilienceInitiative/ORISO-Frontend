@@ -16,16 +16,11 @@ const settingsMain = path
 
 const config: StorybookConfig = {
 	stories: [
-		// PROOF originals
-		'../src/components/{text,tag,headline,loadingSpinner}/**/*.stories.@(ts|tsx)',
-		// Atom batch 1 (generated)
-		'../src/components/{box,card,modal,loadingIndicator,scrollableSection,form,Page,Switch,tooltip}/**/*.stories.@(ts|tsx)',
-		// Template (composes lower levels)
-		'../src/components/legalPageWrapper/**/*.stories.@(ts|tsx)',
-		// Molecule batch 1 (generated)
-		'../src/components/{infoTooltip,tagSelect,banner,select,editableData,flyoutMenu,generateQrCode,emptyState}/**/*.stories.@(ts|tsx)',
-		// Organism batch 1 (generated)
-		'../src/components/{header,sessionMenu,askerInfo,twoFactorAuth,appointment,notificationsCenter,walkthrough,banUser}/**/*.stories.@(ts|tsx)'
+		// Expose every migrated component story to Storybook MCP. The MCP only sees
+		// stories included here, so keep real product surfaces (registration,
+		// session list, composer-adjacent pieces) in the catalog instead of only
+		// the first atomic proof batch.
+		'../src/components/**/*.stories.@(ts|tsx)'
 	],
 	// SB7 served these (compound-web.css etc. referenced by preview-head.html)
 	staticDirs: ['./static', '../public'],

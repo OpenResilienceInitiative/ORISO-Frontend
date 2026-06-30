@@ -11,36 +11,43 @@ import * as ReactDOM from 'react-dom';
 elementClosest(window);
 
 // Polyfill for findDOMNode (removed in React 19) for intro.js-react compatibility
-if (!(ReactDOM as any).findDOMNode) {
-	(ReactDOM as any).findDOMNode = function (componentOrElement: any) {
-		if (componentOrElement == null) {
-			return null;
-		}
-		if (componentOrElement.nodeType === 1) {
-			return componentOrElement;
-		}
-		// Try to get the DOM node from React fiber
-		if (componentOrElement._reactInternals) {
-			const fiber = componentOrElement._reactInternals;
-			let node = fiber;
-			while (node) {
-				if (node.stateNode && node.stateNode.nodeType === 1) {
-					return node.stateNode;
-				}
-				if (node.child) {
-					node = node.child;
-				} else if (node.sibling) {
-					node = node.sibling;
-				} else {
-					while (node && !node.sibling && node.return) {
-						node = node.return;
+const reactDOMWithFindDomNode = ReactDOM as typeof ReactDOM & {
+	findDOMNode?: (componentOrElement: any) => Element | null;
+};
+
+if (!reactDOMWithFindDomNode.findDOMNode) {
+	Object.defineProperty(reactDOMWithFindDomNode, 'findDOMNode', {
+		configurable: true,
+		value: function (componentOrElement: any) {
+			if (componentOrElement == null) {
+				return null;
+			}
+			if (componentOrElement.nodeType === 1) {
+				return componentOrElement;
+			}
+			// Try to get the DOM node from React fiber
+			if (componentOrElement._reactInternals) {
+				const fiber = componentOrElement._reactInternals;
+				let node = fiber;
+				while (node) {
+					if (node.stateNode && node.stateNode.nodeType === 1) {
+						return node.stateNode;
 					}
-					if (node) {
+					if (node.child) {
+						node = node.child;
+					} else if (node.sibling) {
 						node = node.sibling;
+					} else {
+						while (node && !node.sibling && node.return) {
+							node = node.return;
+						}
+						if (node) {
+							node = node.sibling;
+						}
 					}
 				}
 			}
+			return null;
 		}
-		return null;
-	};
+	});
 }
