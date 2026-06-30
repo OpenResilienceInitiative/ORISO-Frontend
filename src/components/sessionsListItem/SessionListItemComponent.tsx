@@ -49,6 +49,7 @@ import { TopicSessionInterface } from '../../globalState/interfaces';
 import { markdownToDraft } from 'markdown-draft-js';
 import { convertFromRaw } from 'draft-js';
 import './sessionsListItem.styles';
+import { getSessionsListItemIcon, LIST_ICONS } from './sessionsListItemHelpers';
 import { SessionListItemVideoCall } from './SessionListItemVideoCall';
 import { SessionListItemAttachment } from './SessionListItemAttachment';
 import clsx from 'clsx';
