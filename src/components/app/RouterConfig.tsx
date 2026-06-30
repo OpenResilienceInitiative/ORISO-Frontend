@@ -32,6 +32,9 @@ import {
 	NavActivityIcon,
 	NavActivityIconHover,
 	NavActivityIconFilled,
+	NavDraftsIcon,
+	NavDraftsIconHover,
+	NavDraftsIconFilled,
 	NavProfileIcon,
 	NavProfileIconHover,
 	NavProfileIconFilled
@@ -288,6 +291,16 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 				navSlot: 'tile' as const,
 				titleKeys: {
 					large: 'navigation.activity'
+				}
+			},
+			{
+				to: '/drafts',
+				icon: NavDraftsIcon,
+				iconHover: NavDraftsIconHover,
+				iconFilled: NavDraftsIconFilled,
+				navSlot: 'row' as const,
+				titleKeys: {
+					large: 'navigation.drafts'
 				}
 			},
 			{

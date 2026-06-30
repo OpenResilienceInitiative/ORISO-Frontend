@@ -7,13 +7,12 @@ import { Text } from '../text/Text';
 import { Headline, HeadlineLevel } from '../headline/Headline';
 import { ReactComponent as XIcon } from '../../resources/img/icons/x.svg';
 import clsx from 'clsx';
+import FocusTrap from 'focus-trap-react';
 import './overlay.styles';
 import { useTranslation } from 'react-i18next';
 import { ModalContext } from '../../globalState';
 import { OVERLAY_TYPES } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
 import { LoadingIndicator } from '../loadingIndicator/LoadingIndicator';
-
-const FocusTrap = require('focus-trap-react');
 
 export const OVERLAY_FUNCTIONS = {
 	CLOSE: 'CLOSE',

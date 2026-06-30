@@ -2,7 +2,7 @@ import { Meta, StoryObj } from '@storybook/react';
 import { Tag } from './Tag';
 
 const meta = {
-	title: 'DISPLAY/Tag',
+	title: 'Atoms/Tag',
 	component: Tag,
 	tags: ['autodocs'],
 	parameters: {
