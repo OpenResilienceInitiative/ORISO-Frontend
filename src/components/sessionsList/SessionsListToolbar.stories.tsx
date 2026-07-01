@@ -1,18 +1,19 @@
 import * as React from 'react';
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { userEvent, within } from 'storybook/test';
 import { useTranslation } from 'react-i18next';
 import { SessionsListToolbar } from './SessionsListToolbar';
+import type { SessionSearchPersonResult } from './SessionsListToolbar';
 import type { SessionToolbarChipFilter } from './sessionToolbarFilters';
+import {
+	APP_ORISO_CHAT_FIGMA_URL,
+	ORISO_M3_FIGMA_URL
+} from '../storybookDesignLinks';
 import './sessionsList.styles.scss';
 
-const APP_ORISO_CHAT_FIGMA_URL =
-	'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=316-17725&t=XHH5HQNmA8DUWl2U-0';
-const ORISO_M3_FIGMA_URL =
-	'https://www.figma.com/design/RTUi1rcrEWECXz8rNFmj7Q/Design-System-M3_ORISO?node-id=60853-24182&p=f&t=ieIskw4Lz5hlc7iM-0';
-
 const shell: React.CSSProperties = {
-	backgroundColor: '#f5f5f5',
+	backgroundColor: '#eae7e8',
 	padding: 16,
 	maxWidth: 520,
 	margin: '0 auto'
@@ -24,19 +25,49 @@ type ToolbarDemoProps = {
 	initialChip?: SessionToolbarChipFilter | null;
 	archiveTabActive?: boolean;
 	createGroupChatActive?: boolean;
+	initialSearch?: string;
+	initialSelectedPersonIds?: string[];
 };
+
+const searchPeopleResults: SessionSearchPersonResult[] = [
+	{
+		id: 'sanftes-alpaka-kala',
+		name: 'Sanftes Alpaka Kala',
+		subtitle: 'Suchtprobleme'
+	},
+	{
+		id: 'ratsuchender-r3',
+		name: 'Ratsuchender R3',
+		subtitle: '1-1 Beratung'
+	},
+	{
+		id: 'ruhiges-yak-kim',
+		name: 'ruhiges Yak Kim',
+		subtitle: 'Familienberatung'
+	},
+	{
+		id: 'traeger-admins-caritas',
+		name: 'Träger Admins Caritas',
+		subtitle: 'Team Intern'
+	}
+];
 
 function SessionsListToolbarPlayground({
 	showConsultantActions = true,
 	showSupervisionChip = true,
 	initialChip = null,
 	archiveTabActive = false,
-	createGroupChatActive = false
+	createGroupChatActive = false,
+	initialSearch = '',
+	initialSelectedPersonIds = []
 }: ToolbarDemoProps) {
 	const { t } = useTranslation();
-	const [search, setSearch] = useState('');
+	const [search, setSearch] = useState(initialSearch);
 	const [activeChip, setActiveChip] =
 		useState<SessionToolbarChipFilter | null>(initialChip);
+	const [selectedPersonIds, setSelectedPersonIds] = useState<string[]>(
+		initialSelectedPersonIds
+	);
 
 	return (
 		<div style={shell}>
@@ -44,22 +75,33 @@ function SessionsListToolbarPlayground({
 				translate={t}
 				searchValue={search}
 				onSearchChange={setSearch}
+				searchPeopleResults={searchPeopleResults}
+				selectedPersonIds={selectedPersonIds}
+				onSelectedPersonIdsChange={setSelectedPersonIds}
 				activeChip={activeChip}
 				onChipToggle={(chip) =>
 					setActiveChip((prev) => (prev === chip ? null : chip))
 				}
 				showConsultantActions={showConsultantActions}
 				showSupervisionChip={showSupervisionChip}
+				showLiveChatChip
 				createGroupChatPath="/sessions/consultant/sessionView/createGroupChat"
 				archiveTabPath="/sessions/consultant/sessionView?sessionListTab=archive"
 				archiveTabActive={archiveTabActive}
 				createGroupChatActive={createGroupChatActive}
+				chipCounts={{
+					unread: 4,
+					drafts: 2,
+					liveChat: 1,
+					supervision: 1,
+					groups: 3
+				}}
 			/>
 		</div>
 	);
 }
 
-const meta = {
+const meta: Meta = {
 	title: 'Components/Session/List/SessionsListToolbar',
 	tags: ['autodocs'],
 	parameters: {
@@ -84,7 +126,7 @@ const meta = {
 			}
 		}
 	}
-} satisfies Meta;
+};
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -123,6 +165,29 @@ export const WithSearchText: Story = {
 	render: () => <ToolbarWithSearchPreset />
 };
 
+export const SearchPanelOpen: Story = {
+	render: () => <SessionsListToolbarPlayground initialSearch="Ratsuch" />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await userEvent.click(canvas.getByRole('searchbox'));
+	}
+};
+
+export const SearchWithSelectedPeople: Story = {
+	render: () => (
+		<SessionsListToolbarPlayground
+			initialSelectedPersonIds={[
+				'sanftes-alpaka-kala',
+				'ruhiges-yak-kim'
+			]}
+		/>
+	)
+};
+
+export const DraftsFilterActive: Story = {
+	render: () => <SessionsListToolbarPlayground initialChip="drafts" />
+};
+
 export const UnreadFilterActive: Story = {
 	render: () => <SessionsListToolbarPlayground initialChip="unread" />
 };
@@ -139,8 +204,7 @@ export const InternalGroupFilterActive: Story = {
 	parameters: {
 		docs: {
 			description: {
-				story:
-					'Shows the toolbar with the internal group chat filter chip selected.'
+				story: 'Shows the toolbar with the internal group chat filter chip selected.'
 			}
 		}
 	},
