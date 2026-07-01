@@ -12,6 +12,7 @@
 
 	&--yellow {
 		background-color: $yellow-3;
+		color: var(--m3-on-surface, $secondary);
 	}
 
 	&--green {
