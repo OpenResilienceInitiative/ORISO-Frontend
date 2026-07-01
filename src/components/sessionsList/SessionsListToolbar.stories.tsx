@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useState } from 'react';
-import type { Meta, StoryObj } from '@storybook/react-vite';
-import { userEvent, within } from 'storybook/test';
+import type { Meta, StoryObj } from '@storybook/react';
+import { userEvent, within } from '@storybook/testing-library';
 import { useTranslation } from 'react-i18next';
 import { SessionsListToolbar } from './SessionsListToolbar';
 import type { SessionSearchPersonResult } from './SessionsListToolbar';
@@ -97,7 +97,7 @@ function SessionsListToolbarPlayground({
 	);
 }
 
-const meta = {
+const meta: Meta = {
 	title: 'Components/Session/List/SessionsListToolbar',
 	tags: ['autodocs'],
 	parameters: {
@@ -110,7 +110,7 @@ const meta = {
 			}
 		}
 	}
-} satisfies Meta;
+};
 
 export default meta;
 type Story = StoryObj<typeof meta>;

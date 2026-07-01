@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useEffect, useMemo, useState } from 'react';
-import type { Meta, StoryObj } from '@storybook/react-vite';
+import type { Meta, StoryObj } from '@storybook/react';
 import PhoneRoundedIcon from '@mui/icons-material/PhoneRounded';
 import VideocamRoundedIcon from '@mui/icons-material/VideocamRounded';
 import SupervisedUserCircleRoundedIcon from '@mui/icons-material/SupervisedUserCircleRounded';
@@ -50,7 +50,13 @@ import { RouterConfigConsultant } from './RouterConfig';
 import { Routing } from './Routing';
 import { config } from '../../resources/scripts/config';
 import { MenuVerticalIcon } from '../../resources/img/icons';
-import { SETTING_HIDE_SYSTEM_MESSAGES } from '../../api/apiRocketChatSettingsPublic';
+import {
+	SETTING_E2E_ENABLE,
+	SETTING_HIDE_SYSTEM_MESSAGES,
+	SETTING_MESSAGE_ALLOWDELETING,
+	SETTING_MESSAGE_SHOWDELETEDSTATUS,
+	type TSetting
+} from '../../api/apiRocketChatSettingsPublic';
 import './authenticatedApp.styles.scss';
 import './navigation.styles.scss';
 import '../sessionsList/sessionsList.styles.scss';
@@ -649,10 +655,22 @@ function AppOrisoRoutingRuntimeProviders({
 	children: React.ReactNode;
 }) {
 	const notificationNoop = () => {};
-	const getSetting = (id: string) => ({
-		_id: id,
-		value: id === SETTING_HIDE_SYSTEM_MESSAGES ? [] : false
-	});
+	const settings: TSetting[] = [
+		{ _id: SETTING_HIDE_SYSTEM_MESSAGES, enterprise: false, value: [] },
+		{ _id: SETTING_E2E_ENABLE, enterprise: false, value: false },
+		{
+			_id: SETTING_MESSAGE_ALLOWDELETING,
+			enterprise: false,
+			value: false
+		},
+		{
+			_id: SETTING_MESSAGE_SHOWDELETEDSTATUS,
+			enterprise: false,
+			value: false
+		}
+	];
+	const getSetting = <T extends TSetting>(id: T['_id']): T | null =>
+		(settings.find((setting) => setting._id === id) as T) ?? null;
 
 	return (
 		<AppConfigContext.Provider value={appOrisoRouterSettings}>
@@ -669,7 +687,7 @@ function AppOrisoRoutingRuntimeProviders({
 					value={{
 						userData: mockUserData,
 						reloadUserData: async () => mockUserData,
-						loaded: true
+						setUserData: () => {}
 					}}
 				>
 					<ConsultingTypesContext.Provider
@@ -698,14 +716,15 @@ function AppOrisoRoutingRuntimeProviders({
 											subscribe: () => {},
 											unsubscribe: () => {},
 											listen: () => {},
-											sendMethod: async () => ({}),
+											sendMethod: (async () =>
+												settings) as any,
 											close: () => {},
 											rcWebsocket: null
 										}}
 									>
 										<RocketChatGlobalSettingsContext.Provider
 											value={{
-												settings: [],
+												settings,
 												settingsReady: true,
 												getSetting
 											}}
@@ -941,7 +960,7 @@ function AppOrisoRuntimeProviders({ children }: { children: React.ReactNode }) {
 			value={{
 				userData: mockUserData,
 				reloadUserData: async () => mockUserData,
-				loaded: true
+				setUserData: () => {}
 			}}
 		>
 			<SessionTypeContext.Provider
@@ -1150,7 +1169,7 @@ function ComposerPreview() {
 						value={{
 							userData: mockUserData,
 							reloadUserData: async () => mockUserData,
-							loaded: true
+							setUserData: () => {}
 						}}
 					>
 						<ComposerBoundary>
@@ -1326,6 +1345,15 @@ function AppOrisoConsultantChatSurface() {
 	);
 }
 
+function AppOrisoRoutingFetchMockDecorator({
+	children
+}: {
+	children: React.ReactNode;
+}) {
+	useEffect(() => installAppOrisoRoutingFetchMocks(), []);
+	return <>{children}</>;
+}
+
 const meta = {
 	title: 'App.Oriso/Consultant chat surface',
 	tags: ['autodocs'],
@@ -1365,7 +1393,13 @@ export const ConsultantChat: Story = {
 
 export const RuntimeRoutingShell: Story = {
 	name: 'Runtime Routing Shell',
-	beforeEach: () => installAppOrisoRoutingFetchMocks(),
+	decorators: [
+		(Story) => (
+			<AppOrisoRoutingFetchMockDecorator>
+				<Story />
+			</AppOrisoRoutingFetchMockDecorator>
+		)
+	],
 	render: () => <AppOrisoRoutingRuntimeShell />
 };
 

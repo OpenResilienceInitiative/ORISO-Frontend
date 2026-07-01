@@ -7,12 +7,14 @@ $session-card-hover-bg: #f0e7e7;
 // selection tokens (settings.scss → _listItemSelection.scss). Values are
 // unchanged — this only makes them the single canonical source.
 $session-card-selected-bg: #f6f3f3;
-$session-light-border: #f7f2f2;
+$session-light-border: #fff;
 $session-selected-border: #ffb4aa;
 $session-active-border: #cc1e1c;
 $session-focus-ring: #ffdad5;
 $session-topic-chip-bg: #ffb4aa;
 $session-topic-chip-color: #410001;
+$session-chip-hover-bg: #cc1e1c;
+$session-chip-hover-color: #ffffff;
 $session-postcode-border: #ffb4aa;
 $session-postcode-color: #cc1e1c;
 
