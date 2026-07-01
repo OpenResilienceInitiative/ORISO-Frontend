@@ -173,7 +173,7 @@ function FullColumnPlayground() {
 	);
 }
 
-const meta = {
+const meta: Meta = {
 	title: 'Components/Session/List/Session list column',
 	tags: ['autodocs'],
 	parameters: {
@@ -198,7 +198,7 @@ const meta = {
 			}
 		}
 	}
-} satisfies Meta;
+};
 
 export default meta;
 type Story = StoryObj<typeof meta>;

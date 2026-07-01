@@ -120,8 +120,8 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				box-shadow: none !important;
 				border: 1px solid #ffb4aa !important;
 				overflow: visible;
-				min-height: 196px;
-				height: 196px;
+				min-height: var(--composer-height, 196px);
+				height: var(--composer-height, 196px);
 				transition: all 240ms ease;
 
 				&::before {
@@ -156,6 +156,10 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 					pointer-events: auto;
 				}
 
+				&--resizing {
+					transition: none;
+				}
+
 				// On mobile, full edge-to-edge width, no outer border
 				// (only in the collapsed state — expanded uses desktop positioning)
 				@media screen and (width <= 899px) {
@@ -175,8 +179,8 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 					}
 
 					&--ready {
-						min-height: 180px;
-						height: 180px;
+						min-height: var(--composer-height, 180px);
+						height: var(--composer-height, 180px);
 					}
 				}
 			}
@@ -307,7 +311,8 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				justify-content: center;
 				height: 36px;
 				border-radius: 8px;
-				cursor: pointer;
+				cursor: ns-resize;
+				touch-action: none;
 
 				&:active {
 					background: #ffe2de;
@@ -370,6 +375,36 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 			&__input {
 				border-radius: 0 0 30px 30px;
+			}
+		}
+
+		&__composerResizeHandle {
+			position: absolute;
+			top: 0;
+			left: 50%;
+			width: 112px;
+			height: 28px;
+			padding: 0;
+			border: 0;
+			border-radius: 0 0 10px 10px;
+			background: transparent;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			transform: translateX(-50%);
+			cursor: ns-resize;
+			touch-action: none;
+			z-index: 5;
+
+			&:hover,
+			&:focus-visible,
+			&:active {
+				outline: none;
+
+				.textarea__mobileNavigatorHandle {
+					background: var(--m3-primary-container, #cc1e1c);
+					height: 7px;
+				}
 			}
 		}
 

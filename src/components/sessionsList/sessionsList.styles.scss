@@ -137,8 +137,8 @@ $sessionShellSurface: var(--m3-surface-container-high, #eae7e8);
 		&--hasToolbar {
 			padding-top: 0;
 			margin-top: 0;
-			margin-left: 22px;
-			margin-right: 22px;
+			margin-left: 25px;
+			margin-right: 25px;
 		}
 	}
 
@@ -215,16 +215,11 @@ $sessionShellSurface: var(--m3-surface-container-high, #eae7e8);
 		right: -3px;
 		top: 50%;
 		width: 6px;
-		height: var(--sessions-list-thumb-height, 56px);
+		height: 56px;
 		border-radius: 999px;
 		background: #ffffff;
 		transform: translateY(-50%);
 		transition: box-shadow 140ms ease;
-	}
-
-	&__resizeHandle[data-scrollable='true'] &__resizeHandlePill {
-		top: 0;
-		transform: translateY(var(--sessions-list-thumb-top, 0px));
 	}
 
 	&__resizeHandle:hover &__resizeHandlePill {
@@ -234,18 +229,9 @@ $sessionShellSurface: var(--m3-surface-container-high, #eae7e8);
 		transform: translateY(-50%) scaleX(1.08);
 	}
 
-	&__resizeHandle[data-scrollable='true']:hover &__resizeHandlePill {
-		transform: translateY(var(--sessions-list-thumb-top, 0px)) scaleX(1.08);
-	}
-
 	&__resizeHandle[data-dragging='true'] &__resizeHandlePill {
 		background: var(--m3-primary-fixed, #ffdad5);
 		transform: translateY(-50%) scaleX(1.12);
-	}
-
-	&__resizeHandle[data-scrollable='true'][data-dragging='true']
-		&__resizeHandlePill {
-		transform: translateY(var(--sessions-list-thumb-top, 0px)) scaleX(1.12);
 	}
 
 	&__resizeHandle:focus-visible &__resizeHandlePill {

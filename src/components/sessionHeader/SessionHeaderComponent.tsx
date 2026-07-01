@@ -1030,94 +1030,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 						)
 					) : null}
 				</div>
-				{/* End Chat for anonymous askers — desktop only; mobile uses SessionMenu */}
-				{showEndAnonymousChatButton && !untilL && (
-					<button
-						type="button"
-						onClick={handleRequestEndAnonymousChat}
-						disabled={isFinishingChat}
-						className="sessionInfo__endChatButton"
-						data-cy="session-header-end-anonymous-chat"
-					>
-						{isFinishingChat
-							? translate(
-									'sessionHeader.anonymous.endChat.ending',
-									'Ending…'
-								)
-							: translate(
-									'sessionHeader.anonymous.endChat.label',
-									'End chat'
-								)}
-					</button>
-				)}
-				{/* End Chat for consultants in anonymous live chat */}
-				{showConsultantEndAnonymousChatButton && !untilL && (
-					<button
-						type="button"
-						onClick={handleRequestEndAnonymousChat}
-						disabled={isFinishingChat}
-						className="sessionInfo__endChatButton"
-						data-cy="session-header-end-anonymous-chat-consultant"
-					>
-						{isFinishingChat
-							? translate(
-									'sessionHeader.anonymous.endChat.ending',
-									'Ending…'
-								)
-							: translate(
-									'sessionHeader.anonymous.endChat.consultant.label',
-									'End chat'
-								)}
-					</button>
-				)}
-				{/* Delete Account Button for Consultants viewing Anonymous Chats (not supervisors, not during enquiry) */}
-				{hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
-					isAnonymousChat &&
-					!isSupervisor &&
-					!activeSession.isEnquiry &&
-					!untilL && (
-						<button
-							onClick={handleDeleteAnonymousAccount}
-							disabled={isAccountDeleted || isDeletingAccount}
-							style={{
-								padding: '8px 16px',
-								marginRight: '20px',
-								borderRadius: '20px', // Oval button
-								border: 'none',
-								backgroundColor: isAccountDeleted
-									? '#9e9e9e'
-									: '#c62828',
-								color: 'white',
-								fontSize: '14px',
-								fontWeight: '500',
-								cursor:
-									isAccountDeleted || isDeletingAccount
-										? 'not-allowed'
-										: 'pointer',
-								opacity:
-									isAccountDeleted || isDeletingAccount
-										? 0.6
-										: 1,
-								transition: 'all 0.3s ease',
-								marginLeft: '12px'
-							}}
-						>
-							{isAccountDeleted
-								? translate(
-										'sessionHeader.anonymous.deleteAccount.deleted',
-										'Gelöscht'
-									)
-								: isDeletingAccount
-									? translate(
-											'sessionHeader.anonymous.deleteAccount.deleting',
-											'Löschen...'
-										)
-									: translate(
-											'sessionHeader.anonymous.deleteAccount.label',
-											'Konto löschen'
-										)}
-						</button>
-					)}
+				{/* Anonymous end/delete actions live in SessionMenu on all breakpoints. */}
 				{/* Supervisor Management Button replaced by the "+" overlay on
 				    the avatar stack above. Keeping the render behind a hard
 				    `false` preserves the original markup for reference without
@@ -1187,7 +1100,6 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 						setIsSupervisorModalOpen(true)
 					}
 					showMobileDeleteAnonymousAccountAction={
-						untilL &&
 						hasUserAuthority(
 							AUTHORITIES.CONSULTANT_DEFAULT,
 							userData

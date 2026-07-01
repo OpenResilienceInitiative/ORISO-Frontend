@@ -14,6 +14,7 @@ import {
 	AUTHORITIES,
 	buildExtendedSession,
 	ExtendedSessionInterface,
+	getContact,
 	getExtendedSession,
 	hasUserAuthority,
 	REMOVE_SESSIONS,
@@ -125,10 +126,12 @@ function isAnonymousAskerSession(
 		(extended as any)?.item?.registrationType;
 	const postcode =
 		(raw as any)?.session?.postcode ?? (extended as any)?.item?.postcode;
+	const contact = getContact(extended as ListItemInterface);
 	return isAnonymousAskerCandidate({
 		registrationType,
 		postcode,
 		usernames: [
+			contact?.username,
 			(raw as any)?.user?.username,
 			(raw as any)?.session?.askerUserName,
 			(extended as any)?.item?.askerUserName
@@ -429,7 +432,7 @@ export const SessionsList = ({
 
 	const [sessionToolbarChip, setSessionToolbarChip] =
 		useState<SessionToolbarChipFilter | null>(() => {
-			if (type !== SESSION_LIST_TYPES.ENQUIRY) return null;
+			if (type !== SESSION_LIST_TYPES.ENQUIRY) return readChipFromUrl();
 			return readChipFromUrl() ?? 'nearby';
 		});
 	/*
@@ -452,10 +455,21 @@ export const SessionsList = ({
 	 * we're already on it.
 	 */
 	useEffect(() => {
-		if (type !== SESSION_LIST_TYPES.ENQUIRY) return;
+		if (
+			type !== SESSION_LIST_TYPES.ENQUIRY &&
+			type !== SESSION_LIST_TYPES.MY_SESSION
+		) {
+			return;
+		}
 		const fromUrl = readChipFromUrl();
 		if (fromUrl && fromUrl !== sessionToolbarChip) {
 			setSessionToolbarChip(fromUrl);
+		} else if (
+			type === SESSION_LIST_TYPES.MY_SESSION &&
+			!fromUrl &&
+			sessionToolbarChip
+		) {
+			setSessionToolbarChip(null);
 		}
 		/* eslint-disable-next-line react-hooks/exhaustive-deps */
 	}, [location.search, type]);
@@ -1427,7 +1441,10 @@ export const SessionsList = ({
 
 			/* Selecting a filter implies main list: drop archive tab so archive chip matches. */
 			if (location.search !== search) {
-				navigate({ pathname: location.pathname, search }, { replace: true });
+				navigate(
+					{ pathname: location.pathname, search },
+					{ replace: true }
+				);
 			}
 		},
 		[
