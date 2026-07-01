@@ -1,0 +1,118 @@
+{
+	"app": {
+		"brandTitle": "الاستشارة والمساعدة",
+		"brandSubtitle": "عبر الإنترنت. مجهول الهوية. آمن.",
+		"login": "تسجيل الدخول",
+		"imprint": "بيانات الناشر",
+		"privacy": "سياسة الخصوصية",
+		"partners": "خدمة من كاريتاس وشركائها"
+	},
+	"reg": {
+		"title": "التسجيل",
+		"step": "الخطوة {{current}} من {{total}}",
+		"question": "ما الموضوع الذي تبحث عن استشارة بشأنه؟",
+		"subtitle": "اختر موضوعًا من خدمات الاستشارة لدينا.",
+		"back": "رجوع",
+		"next": "متابعة",
+		"selectedLabel": "المحدد",
+		"noneSelected": "يرجى اختيار موضوع للمتابعة.",
+		"language": "اللغة",
+		"removeSelection": "إزالة التحديد",
+		"stepNames": {
+			"fokus": "اختر الموضوع",
+			"plz": "الرمز البريدي",
+			"beratungsstelle": "مركز الاستشارة",
+			"registrieren": "التسجيل",
+			"anfrage": "إرسال الطلب"
+		},
+		"postcode": {
+			"title": "حتى نتمكن من تقديم أفضل استشارة لك، نحتاج إلى رمزك البريدي",
+			"whyIntro": "لماذا؟ لأن المختصين لدينا حينها:",
+			"why1": "يعرفون عروض المساعدة المتوفرة حول مكان سكنك",
+			"why2": "يعرفون قوانين ولايتك",
+			"placeholder": "رمزك البريدي"
+		},
+		"center": {
+			"title": "اختر مركز الاستشارة",
+			"intro": "مراكز الاستشارة للرمز البريدي {{postcode}}:",
+			"advisesIn": "يقدم لك مركز الاستشارة هذا المشورة باللغة: الألمانية (DE)",
+			"info": "مزيد من المعلومات"
+		},
+		"register": {
+			"title": "إدخال بيانات تسجيل الدخول",
+			"subtitle": "لحماية هويتك المجهولة، ننصحك بعدم استخدام اسمك الحقيقي أو الأحرف الأولى من اسمك.",
+			"username": "اسم المستخدم",
+			"usernameHint": "5 أحرف أو أكثر",
+			"password": "كلمة المرور",
+			"confirm": "أعد إدخال كلمة المرور",
+			"mismatch": "كلمتا المرور غير متطابقتين",
+			"rule": {
+				"length": "9 أحرف على الأقل",
+				"number": "رقم واحد على الأقل",
+				"case": "أحرف كبيرة وصغيرة",
+				"special": "رمز خاص واحد على الأقل"
+			},
+			"privacyBefore": "لقد قرأت ",
+			"privacyLink": "سياسة الخصوصية",
+			"privacyAfter": ". يستخدم هذا الموقع ملفات تعريف الارتباط للمصادقة والتنقل.",
+			"showPassword": "إظهار كلمة المرور",
+			"hidePassword": "إخفاء كلمة المرور",
+			"submit": "التسجيل"
+		},
+		"message": {
+			"title": "إرسال الطلب",
+			"subtitle": "يرجى وصف طلبك بإيجاز. يمكنك متابعة الكتابة لاحقًا في أي وقت.",
+			"placeholder": "رسالتك…"
+		},
+		"send": "إرسال الطلب",
+		"sent": "تم إرسال الطلب"
+	},
+	"lang": {
+		"de": "Deutsch",
+		"en": "English",
+		"tr": "Türkçe",
+		"ar": "العربية",
+		"uk": "Українська",
+		"ru": "Русский"
+	},
+	"category": {
+		"familie": "الأسرة والأطفال والشباب",
+		"alter": "الشيخوخة والرعاية والوداع",
+		"migration": "الهجرة والاندماج",
+		"gesundheit": "الصحة والإعاقة والإدمان",
+		"soziales": "الضوائق الاجتماعية والأزمات والشؤون المالية"
+	},
+	"topic": {
+		"eltern-und-familie": { "title": "الوالدان والأسرة" },
+		"kinder-und-jugendliche": { "title": "الأطفال والمراهقون" },
+		"kinder-und-jugend-reha": { "title": "إعادة تأهيل الأطفال والشباب" },
+		"kuren-fuer-muetter-und-vaeter": {
+			"title": "علاج استشفائي للأمهات والآباء"
+		},
+		"jungen-und-maennerberatung": { "title": "استشارة للرجال والفتيان" },
+		"schwangerschaft": { "title": "الحمل" },
+		"u25-suizidpraevention": {
+			"title": "الوقاية من الانتحار لمن هم دون 25"
+		},
+		"leben-im-alter": { "title": "الحياة في الشيخوخة" },
+		"rechtliche-betreuung-und-vorsorge": {
+			"title": "الوصاية القانونية والرعاية المسبقة"
+		},
+		"hospiz-und-palliativberatung": {
+			"title": "استشارة الرعاية التلطيفية والمأوى"
+		},
+		"trauerberatung": { "title": "استشارة الحزن والفقدان" },
+		"migration": { "title": "الهجرة" },
+		"aus-rueck-und-weiterwanderung": {
+			"title": "الهجرة والعودة والهجرة اللاحقة"
+		},
+		"behinderung-und-psychische-beeintraechtigung": {
+			"title": "الإعاقة والصحة النفسية"
+		},
+		"sucht": { "title": "الإدمان" },
+		"hiv-und-aids": { "title": "فيروس نقص المناعة والإيدز" },
+		"allgemeine-sozialberatung": { "title": "الاستشارة الاجتماعية العامة" },
+		"schulden": { "title": "الديون" },
+		"straffaelligkeit": { "title": "الجريمة والعدالة الجنائية" }
+	}
+}
