@@ -32,6 +32,7 @@ import {
 } from '../../globalState/interfaces';
 import { SessionListItemComponent } from '../sessionsListItem/SessionListItemComponent';
 import { SessionsListSkeleton } from '../sessionsListItem/SessionsListItemSkeleton';
+import { isAnonymousAskerCandidate } from './sessionClassification';
 import {
 	apiGetAskerSessionList,
 	apiGetConsultantSessionList,
@@ -122,31 +123,17 @@ function isAnonymousAskerSession(
 	const registrationType =
 		(raw as any)?.session?.registrationType ??
 		(extended as any)?.item?.registrationType;
-	if (registrationType === 'ANONYMOUS') {
-		return true;
-	}
-
-	const candidates = [
-		(raw as any)?.user?.username,
-		(raw as any)?.session?.askerUserName,
-		(extended as any)?.item?.askerUserName
-	];
-	if (
-		candidates.some(
-			(u) =>
-				typeof u === 'string' &&
-				(u.startsWith('Anonymous-') || u.startsWith('anon_'))
-		)
-	) {
-		return true;
-	}
-
 	const postcode =
 		(raw as any)?.session?.postcode ?? (extended as any)?.item?.postcode;
-	if (postcode == null || postcode === '') {
-		return false;
-	}
-	return String(postcode) === '00000';
+	return isAnonymousAskerCandidate({
+		registrationType,
+		postcode,
+		usernames: [
+			(raw as any)?.user?.username,
+			(raw as any)?.session?.askerUserName,
+			(extended as any)?.item?.askerUserName
+		]
+	});
 }
 
 const getSessionIdentityValues = (

@@ -59,7 +59,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 		}
 
 		// On mobile, ensure no extra spacing and proper positioning
-		@media screen and (max-width: 899px) {
+		@media screen and (width <= 899px) {
 			padding: 12px 12px;
 			padding-bottom: calc(12px + env(safe-area-inset-bottom, 0));
 			position: absolute;
@@ -87,7 +87,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			justify-content: center;
 			position: relative;
 
-			@media screen and (max-width: 899px) {
+			@media screen and (width <= 899px) {
 				margin: 0;
 			}
 
@@ -111,28 +111,28 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			&-send-message {
 				display: block;
 				width: 100%;
-				max-width: 891px;
+				max-width: 895px;
 				position: relative;
 				margin: 0 auto;
 				background-color: #ffffff !important;
 				padding: 0 !important;
-				border-radius: 14px 14px 24px 24px !important;
+				border-radius: 24px 4px 24px 24px !important;
 				box-shadow: none !important;
-				border: 1px solid #ffb8b2 !important;
+				border: 1px solid #ffdad5 !important;
 				overflow: visible;
-				min-height: 186px;
-				height: 210px;
+				min-height: 196px;
+				height: 196px;
 				transition: all 240ms ease;
 
 				&::before {
 					content: '';
 					position: absolute;
-					top: 9px;
+					top: 6px;
 					left: 50%;
-					width: 56px;
+					width: 57px;
 					height: 4px;
 					border-radius: 999px;
-					background: #f0aaa5;
+					background: #ffb4aa;
 					transform: translateX(-50%);
 					pointer-events: none;
 					z-index: 2;
@@ -158,7 +158,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 				// On mobile, full edge-to-edge width, no outer border
 				// (only in the collapsed state — expanded uses desktop positioning)
-				@media screen and (max-width: 899px) {
+				@media screen and (width <= 899px) {
 					&:not(.textarea__wrapper-send-message--expanded) {
 						margin: 0;
 						width: 100%;
@@ -166,6 +166,17 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 						border: 0 !important;
 						border-radius: 0 !important;
 						box-shadow: none !important;
+					}
+
+					&:active::before {
+						top: 4px;
+						height: 8px;
+						background: #a5000a;
+					}
+
+					&--ready {
+						min-height: 180px;
+						height: 180px;
 					}
 				}
 			}
@@ -232,7 +243,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			display: none;
 		}
 
-		@media screen and (max-width: 899px) {
+		@media screen and (width <= 899px) {
 			&__mobileNavigator {
 				display: flex;
 				align-items: center;
@@ -364,17 +375,17 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 		&__inputWrapper {
 			position: absolute;
-			left: 22px;
-			right: 22px;
-			top: 23px;
-			min-height: 140px;
-			height: 164px;
+			left: 16px;
+			right: 16px;
+			top: 16px;
+			bottom: 16px;
+			height: auto;
 			display: block;
 			max-height: none;
 			min-height: 0;
 			transition: all 220ms ease;
 
-			@media screen and (max-width: 899px) {
+			@media screen and (width <= 899px) {
 				left: 0;
 				right: 0;
 				top: 0;
@@ -385,8 +396,8 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 		&__wrapper-send-message--expanded .textarea__inputWrapper {
 			top: 16px;
-			left: 14px;
-			right: 14px;
+			left: 16px;
+			right: 16px;
 			bottom: 16px;
 			height: auto;
 		}
@@ -404,18 +415,18 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			line-height: 20px;
 			width: 100%;
 			height: 100%;
-			border-radius: 6px 0 18px 18px;
-			border: 1px solid #ffb8b2;
+			border-radius: 16px 4px 16px 16px;
+			border: 1px solid #ffb4aa;
 			box-sizing: border-box;
 			position: relative;
 
-			@media screen and (max-width: 899px) {
+			@media screen and (width <= 899px) {
 				border-radius: 0px 0 30px 30px;
 			}
 
 			// Expanded state on mobile restores the desktop rounded top-left
 			.textarea__wrapper-send-message--expanded & {
-				@media screen and (max-width: 899px) {
+				@media screen and (width <= 899px) {
 					border-radius: 30px 0 30px 30px;
 				}
 			}
@@ -425,7 +436,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			&:focus-visible,
 			&:focus-within {
 				outline: none !important;
-				border: 1px solid #ff9f98;
+				border: 2px solid #cc1e1c;
 			}
 
 			&::placeholder,
@@ -446,6 +457,10 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				pointer-events: none;
 				z-index: 7;
 			}
+		}
+
+		&__wrapper-send-message--ready .textarea__input {
+			border: 2px solid #cc1e1c;
 		}
 
 		&__characterCounter {
@@ -477,7 +492,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				display: none;
 			}
 
-			@media screen and (max-width: 899px) {
+			@media screen and (width <= 899px) {
 				right: 58px;
 				bottom: 7px;
 			}
@@ -485,7 +500,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 		&__figmaToolbar {
 			position: absolute;
-			top: 13px;
+			top: 4px;
 			left: 24px;
 			z-index: 20;
 			display: block;
@@ -498,7 +513,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				height: 34px;
 			}
 
-			@media screen and (max-width: 899px) {
+			@media screen and (width <= 899px) {
 				left: 10px;
 				max-width: calc(100% - 96px);
 				width: calc(100% - 96px);
@@ -578,7 +593,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				display: none;
 			}
 
-			@media screen and (max-width: 899px) {
+			@media screen and (width <= 899px) {
 				gap: 8px;
 			}
 
@@ -1187,7 +1202,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			gap: 2px;
 			touch-action: manipulation;
 
-			@media screen and (max-width: 899px) {
+			@media screen and (width <= 899px) {
 				bottom: 45px;
 			}
 		}
@@ -2064,13 +2079,13 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			align-items: center;
 			gap: 0;
 
-			@media screen and (max-width: 899px) {
+			@media screen and (width <= 899px) {
 				right: -6px;
 				top: -4px;
 			}
 
 			.textarea__wrapper-send-message--expanded & {
-				@media screen and (max-width: 899px) {
+				@media screen and (width <= 899px) {
 					right: 0;
 					top: 0;
 				}
@@ -2100,7 +2115,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				background: #ffffff;
 			}
 
-			@media screen and (max-width: 899px) {
+			@media screen and (width <= 899px) {
 				display: none;
 			}
 		}
