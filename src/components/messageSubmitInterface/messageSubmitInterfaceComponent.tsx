@@ -998,6 +998,13 @@ export const MessageSubmitInterfaceComponent = ({
 		typeof window !== 'undefined' ? window.innerWidth <= 899 : false
 	);
 	const [isExpandedComposer, setIsExpandedComposer] = useState(false);
+	const [composerHeight, setComposerHeight] = useState<number | null>(null);
+	const [isComposerResizing, setIsComposerResizing] = useState(false);
+	const composerResizeStartRef = useRef<{
+		pointerId: number;
+		startY: number;
+		startHeight: number;
+	} | null>(null);
 	const [isAudienceMenuOpen, setIsAudienceMenuOpen] = useState(false);
 	const [audienceOverlayBounds, setAudienceOverlayBounds] = useState<{
 		top: number;
@@ -3791,34 +3798,131 @@ export const MessageSubmitInterfaceComponent = ({
 		onMobileNavigateBottom?.();
 	}, [onMobileNavigateBottom]);
 
-	const handleComposerDragHandlePointerDown = useCallback(
+	const getComposerHeightBounds = useCallback(() => {
+		const minHeight = window.innerWidth <= 899 ? 180 : 196;
+		const maxHeight = Math.max(
+			minHeight,
+			Math.min(
+				window.innerHeight * 0.72,
+				window.innerWidth <= 899 ? 520 : 640
+			)
+		);
+		return { minHeight, maxHeight };
+	}, []);
+
+	const clampComposerHeight = useCallback(
+		(height: number) => {
+			const { minHeight, maxHeight } = getComposerHeightBounds();
+			return Math.round(Math.min(Math.max(height, minHeight), maxHeight));
+		},
+		[getComposerHeightBounds]
+	);
+
+	const handleComposerResizePointerDown = useCallback(
 		(e: React.PointerEvent<HTMLButtonElement>) => {
 			if (e.pointerType === 'mouse' && e.button !== 0) return;
+			e.preventDefault();
+			e.stopPropagation();
+
 			const target = e.currentTarget;
+			const composerShell = target.closest(
+				'.textarea__wrapper-send-message'
+			) as HTMLElement | null;
+			const startHeight =
+				composerShell?.getBoundingClientRect().height ||
+				composerHeight ||
+				getComposerHeightBounds().minHeight;
+
+			composerResizeStartRef.current = {
+				pointerId: e.pointerId,
+				startY: e.clientY,
+				startHeight
+			};
+			setIsComposerResizing(true);
+
 			try {
 				target.setPointerCapture(e.pointerId);
 			} catch {}
-			let fired = false;
-			const timer = window.setTimeout(() => {
-				fired = true;
-				setIsExpandedComposer((prev) => !prev);
-			}, 400);
-			const cleanup = () => {
-				window.clearTimeout(timer);
-				target.removeEventListener('pointerup', onEnd);
-				target.removeEventListener('pointercancel', onEnd);
+
+			const handlePointerMove = (event: PointerEvent) => {
+				const start = composerResizeStartRef.current;
+				if (!start || event.pointerId !== start.pointerId) {
+					return;
+				}
+
+				const deltaY = event.clientY - start.startY;
+				setComposerHeight(
+					clampComposerHeight(start.startHeight - deltaY)
+				);
+			};
+
+			const cleanup = (event?: PointerEvent) => {
+				if (
+					event &&
+					composerResizeStartRef.current &&
+					event.pointerId !== composerResizeStartRef.current.pointerId
+				) {
+					return;
+				}
+				document.removeEventListener('pointermove', handlePointerMove);
+				document.removeEventListener('pointerup', cleanup);
+				document.removeEventListener('pointercancel', cleanup);
 				try {
 					target.releasePointerCapture(e.pointerId);
 				} catch {}
+				composerResizeStartRef.current = null;
+				setIsComposerResizing(false);
 			};
-			const onEnd = () => {
-				if (!fired) cleanup();
-				else cleanup();
-			};
-			target.addEventListener('pointerup', onEnd);
-			target.addEventListener('pointercancel', onEnd);
+
+			document.addEventListener('pointermove', handlePointerMove);
+			document.addEventListener('pointerup', cleanup);
+			document.addEventListener('pointercancel', cleanup);
 		},
-		[setIsExpandedComposer]
+		[
+			clampComposerHeight,
+			composerHeight,
+			getComposerHeightBounds,
+			setComposerHeight
+		]
+	);
+
+	const handleComposerResizeKeyDown = useCallback(
+		(e: React.KeyboardEvent<HTMLButtonElement>) => {
+			const { minHeight, maxHeight } = getComposerHeightBounds();
+			const step = e.shiftKey ? 48 : 24;
+			const currentHeight = composerHeight || minHeight;
+
+			switch (e.key) {
+				case 'ArrowUp':
+					e.preventDefault();
+					setComposerHeight(
+						clampComposerHeight(currentHeight + step)
+					);
+					return;
+				case 'ArrowDown':
+					e.preventDefault();
+					setComposerHeight(
+						clampComposerHeight(currentHeight - step)
+					);
+					return;
+				case 'Home':
+					e.preventDefault();
+					setComposerHeight(minHeight);
+					return;
+				case 'End':
+					e.preventDefault();
+					setComposerHeight(maxHeight);
+					return;
+				default:
+					return;
+			}
+		},
+		[
+			clampComposerHeight,
+			composerHeight,
+			getComposerHeightBounds,
+			setComposerHeight
+		]
 	);
 
 	const resolvedChatSession =
@@ -3850,7 +3954,8 @@ export const MessageSubmitInterfaceComponent = ({
 				className,
 				'messageSubmit__wrapper',
 				isExpandedComposer && 'messageSubmit__wrapper--expanded',
-				isTypingActive && 'messageSubmit__wrapper--withTyping'
+				isTypingActive && 'messageSubmit__wrapper--withTyping',
+				isComposerResizing && 'messageSubmit__wrapper--resizing'
 			)}
 			style={expandedComposerStyle}
 		>
@@ -3877,9 +3982,36 @@ export const MessageSubmitInterfaceComponent = ({
 							canSendMessage &&
 								'textarea__wrapper-send-message--ready',
 							isExpandedComposer &&
-								'textarea__wrapper-send-message--expanded'
+								'textarea__wrapper-send-message--expanded',
+							isComposerResizing &&
+								'textarea__wrapper-send-message--resizing'
 						)}
+						style={
+							!isExpandedComposer && composerHeight
+								? ({
+										'--composer-height': `${composerHeight}px`
+									} as React.CSSProperties)
+								: undefined
+						}
 					>
+						{!isMobileViewport &&
+							!threadRootId &&
+							!isExpandedComposer && (
+								<button
+									type="button"
+									className="textarea__composerResizeHandle"
+									onPointerDown={
+										handleComposerResizePointerDown
+									}
+									onKeyDown={handleComposerResizeKeyDown}
+									aria-label={translate(
+										'message.mobileNav.dragToExpand',
+										'Drag to resize composer'
+									)}
+								>
+									<span className="textarea__mobileNavigatorHandle" />
+								</button>
+							)}
 						{isMobileViewport &&
 							!threadRootId &&
 							!isExpandedComposer && (
@@ -3899,8 +4031,9 @@ export const MessageSubmitInterfaceComponent = ({
 										type="button"
 										className="textarea__mobileNavigatorCenter"
 										onPointerDown={
-											handleComposerDragHandlePointerDown
+											handleComposerResizePointerDown
 										}
+										onKeyDown={handleComposerResizeKeyDown}
 										aria-label={translate(
 											'message.mobileNav.dragToExpand',
 											'Drag to resize composer'

@@ -12,7 +12,7 @@ import './sessionsList.styles.scss';
 import '../sessionsListItem/sessionsListItem.styles.scss';
 
 const column: React.CSSProperties = {
-	backgroundColor: '#f5f5f5',
+	backgroundColor: '#eae7e8',
 	maxWidth: 420,
 	minHeight: 560,
 	margin: '0 auto',
@@ -168,7 +168,7 @@ function FullColumnPlayground() {
 	);
 }
 
-const meta = {
+const meta: Meta = {
 	title: 'Components/Session/List/Session list column',
 	tags: ['autodocs'],
 	parameters: {
@@ -177,11 +177,11 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'**Composite:** toolbar + sample cards on **#f5f5f5** (same shell as production). Useful for visual regression and stakeholder review. Does not include `ResizableHandle` or real data providers.'
+					'**Composite:** toolbar + sample cards on **#eae7e8** (same shell as production). Useful for visual regression and stakeholder review. Does not include `ResizableHandle` or real data providers.'
 			}
 		}
 	}
-} satisfies Meta;
+};
 
 export default meta;
 type Story = StoryObj<typeof meta>;

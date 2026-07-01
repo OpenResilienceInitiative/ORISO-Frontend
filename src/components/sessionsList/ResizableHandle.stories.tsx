@@ -52,7 +52,7 @@ function ResizeDemo({
 					width,
 					position: 'relative',
 					flexShrink: 0,
-					background: '#f5f5f5',
+					background: '#eae7e8',
 					border: '1px solid #e0e0e0',
 					padding: 12,
 					boxSizing: 'border-box'

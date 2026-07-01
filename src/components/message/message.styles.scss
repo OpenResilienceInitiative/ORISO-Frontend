@@ -42,8 +42,11 @@ $message-avatar-ring: #ebe2e2;
 		align-items: flex-end;
 
 		.messageItem__message {
+			background-color: #cc1e1c;
+			border-color: #cc1e1c;
+			color: #ffffff;
 			margin: 4px 0;
-			border-radius: 12px 12px 0;
+			border-radius: 16px 4px 16px 16px;
 		}
 
 		.messageItem__divider {
@@ -630,10 +633,11 @@ $message-avatar-ring: #ebe2e2;
 	}
 
 	&__message {
-		color: var(--m3-primary, $secondary);
+		color: var(--m3-on-surface, #1d1b20);
 		line-height: $message-lineheight;
-		background-color: #fff1f1;
-		border-radius: 0 12px 12px;
+		background-color: #ffe2de;
+		border: 1px solid #ffdad5;
+		border-radius: 4px 16px 16px 16px;
 		margin: 4px 0;
 		padding: $grid-base-two;
 		text-align: left;
@@ -654,8 +658,8 @@ $message-avatar-ring: #ebe2e2;
 		}
 
 		&--systemNotification {
-			background: #fff6f7;
-			border: 1px solid #ffd9df;
+			background: #fffafa;
+			border: 1px solid #ffdad5;
 			border-radius: 12px;
 		}
 
