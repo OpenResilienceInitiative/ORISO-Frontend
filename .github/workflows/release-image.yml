@@ -93,9 +93,7 @@ jobs:
           context: .
           file: Dockerfile
           push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }}:${{ inputs.version }}
-            ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }}:v${{ inputs.version }}
+          tags: ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }}:${{ inputs.version }}
           labels: |
             org.opencontainers.image.title=${{ env.IMAGE_NAME }}
             org.opencontainers.image.version=${{ inputs.version }}
