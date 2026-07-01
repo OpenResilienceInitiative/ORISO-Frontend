@@ -1,0 +1,115 @@
+name: Release Frontend Image
+
+run-name: Release frontend v${{ inputs.version }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release version without the v prefix, for example 2.0.1
+        required: true
+        type: string
+      create_tag:
+        description: Create and push Git tag from this release branch
+        required: true
+        default: true
+        type: boolean
+
+env:
+  REGISTRY: ghcr.io
+  ORG: openresilienceinitiative
+  IMAGE_NAME: oriso-frontend
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  release:
+    name: Create tag and publish image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout release branch
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Validate release input
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          VERSION="${{ inputs.version }}"
+          EXPECTED_BRANCH="release/frontend-${VERSION}"
+
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Version must use MAJOR.MINOR.PATCH format, for example 2.0.1"
+            exit 1
+          fi
+
+          if [[ "${GITHUB_REF_NAME}" != "$EXPECTED_BRANCH" ]]; then
+            echo "This workflow must run from ${EXPECTED_BRANCH}"
+            echo "Current ref is ${GITHUB_REF_NAME}"
+            exit 1
+          fi
+
+          if git ls-remote --tags origin "refs/tags/v${VERSION}" | grep -q "refs/tags/v${VERSION}"; then
+            echo "Tag v${VERSION} already exists. Choose a new version or delete the incorrect tag first."
+            exit 1
+          fi
+
+      - name: Build frontend application
+        uses: ./.github/actions/node-build
+        with:
+          node_version: '18'
+
+      - name: Create and push release tag
+        if: ${{ inputs.create_tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          VERSION="${{ inputs.version }}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "v${VERSION}" -m "Release frontend v${VERSION}"
+          git push origin "v${VERSION}"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push release image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }}:${{ inputs.version }}
+            ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }}:v${{ inputs.version }}
+          labels: |
+            org.opencontainers.image.title=${{ env.IMAGE_NAME }}
+            org.opencontainers.image.version=${{ inputs.version }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Release summary
+        shell: bash
+        run: |
+          {
+            echo "### Frontend release image"
+            echo ""
+            echo "- Git tag: \`v${{ inputs.version }}\`"
+            echo "- Image: \`${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }}:${{ inputs.version }}\`"
+            echo "- Source branch: \`${GITHUB_REF_NAME}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
