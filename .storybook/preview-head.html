@@ -3,9 +3,11 @@
 <link rel="stylesheet" href="compound-web.css">
 
 <!--
-  Storybook-only runtime config. The app reads window.__ORISO_RUNTIME_CONFIG__
-  before falling back to build-time env vars; without the app container config,
-  modules that touch Keycloak config at import time crash the Storybook iframe.
+  Storybook-only runtime config. The app's runtimeConfig.ts reads
+  window.__ORISO_RUNTIME_CONFIG__ first; without a real container/.env,
+  getKeycloakRealm() throws at module import (endpoints.ts), which crashes
+  the whole preview and leaves every canvas blank. This inline script runs
+  before the deferred preview module, so the dummy values are in place.
 -->
 <script>
   window.__ORISO_RUNTIME_CONFIG__ = {
@@ -17,6 +19,5 @@
     REACT_APP_LIVEKIT_WS_URL: 'wss://livekit.storybook.test'
   };
 </script>
-
 
 <!-- ci trigger storybook -->

@@ -1,14 +1,36 @@
 import { Meta, StoryObj } from '@storybook/react';
 import { Headline } from './Headline';
 
+const headlineLevelOptions = [1, 2, 3, 4, 5] as const;
+const headlineLevelMapping = {
+	1: '1',
+	2: '2',
+	3: '3',
+	4: '4',
+	5: '5'
+};
+
 const meta = {
-	title: 'DISPLAY/Headline',
+	title: 'Atoms/Headline',
 	component: Headline,
 	tags: ['autodocs'],
+	argTypes: {
+		semanticLevel: {
+			control: 'select',
+			options: headlineLevelOptions,
+			mapping: headlineLevelMapping
+		},
+		styleLevel: {
+			control: 'select',
+			options: headlineLevelOptions,
+			mapping: headlineLevelMapping
+		}
+	},
 	parameters: {
 		docs: {
 			description: {
-				component: 'Headline component for displaying headings with semantic HTML levels.'
+				component:
+					'Headline component for displaying headings with semantic HTML levels.'
 			}
 		}
 	}
