@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useState } from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useTranslation } from 'react-i18next';
 import { SessionsListToolbar } from './SessionsListToolbar';
 import type { SessionToolbarChipFilter } from './sessionToolbarFilters';
@@ -11,8 +11,13 @@ import teamImage from '../../resources/img/illustrations/Team.svg';
 import './sessionsList.styles.scss';
 import '../sessionsListItem/sessionsListItem.styles.scss';
 
+const APP_ORISO_CHAT_FIGMA_URL =
+	'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=316-17725&t=XHH5HQNmA8DUWl2U-0';
+const ORISO_M3_FIGMA_URL =
+	'https://www.figma.com/design/RTUi1rcrEWECXz8rNFmj7Q/Design-System-M3_ORISO?node-id=60853-24182&p=f&t=ieIskw4Lz5hlc7iM-0';
+
 const column: React.CSSProperties = {
-	backgroundColor: '#f5f5f5',
+	backgroundColor: '#eae7e8',
 	maxWidth: 420,
 	minHeight: 560,
 	margin: '0 auto',
@@ -168,20 +173,32 @@ function FullColumnPlayground() {
 	);
 }
 
-const meta = {
+const meta: Meta = {
 	title: 'Components/Session/List/Session list column',
 	tags: ['autodocs'],
 	parameters: {
 		layout: 'fullscreen',
 		backgrounds: { default: 'gray' },
+		design: [
+			{
+				type: 'figma',
+				name: 'App.Oriso consultant chat',
+				url: APP_ORISO_CHAT_FIGMA_URL
+			},
+			{
+				type: 'figma',
+				name: 'Design System M3 ORISO',
+				url: ORISO_M3_FIGMA_URL
+			}
+		],
 		docs: {
 			description: {
 				component:
-					'**Composite:** toolbar + sample cards on **#f5f5f5** (same shell as production). Useful for visual regression and stakeholder review. Does not include `ResizableHandle` or real data providers.'
+					'**Composite:** toolbar + sample cards on **#eae7e8** (same shell as production). Useful for visual regression and stakeholder review. Does not include `ResizableHandle` or real data providers.'
 			}
 		}
 	}
-} satisfies Meta;
+};
 
 export default meta;
 type Story = StoryObj<typeof meta>;

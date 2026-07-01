@@ -1,0 +1,37 @@
+.legalLinkModal__content {
+	color: #1e1e1e;
+	font-size: 16px;
+	line-height: 1.4;
+	white-space: normal;
+	word-break: break-word;
+
+	p,
+	h1,
+	h2,
+	h3,
+	h4,
+	ul,
+	ol {
+		margin: 0;
+	}
+
+	p + p,
+	p + h2,
+	p + h3,
+	h2 + p,
+	h3 + p,
+	ul + p,
+	ol + p {
+		margin-top: 12px;
+	}
+
+	ul,
+	ol {
+		padding-left: 18px;
+	}
+
+	a {
+		color: #a5000a;
+		text-decoration: underline;
+	}
+}

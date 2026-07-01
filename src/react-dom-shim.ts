@@ -2,7 +2,7 @@
 import * as ReactDOM from '../node_modules/react-dom/index.js';
 
 // Polyfill findDOMNode for React 19 compatibility
-const findDOMNode = function (componentOrElement: any) {
+const findDOMNode = (componentOrElement: any): Element | null => {
 	if (componentOrElement == null) {
 		return null;
 	}
@@ -34,8 +34,9 @@ const findDOMNode = function (componentOrElement: any) {
 	return null;
 };
 
-// Export a modified react-dom module with findDOMNode
-export default ReactDOM;
+const reactDOMWithFindDomNode = Object.assign({}, ReactDOM, { findDOMNode });
+
+// Export a local react-dom wrapper with findDOMNode without mutating the ESM namespace.
+export default reactDOMWithFindDomNode;
 export * from '../node_modules/react-dom/index.js';
 export { findDOMNode };
-

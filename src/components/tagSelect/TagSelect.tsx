@@ -8,7 +8,14 @@ export interface TagItem {
 	value: number;
 }
 
-export const TagSelect = (props) => {
+export interface TagSelectProps extends TagItem {
+	checked?: boolean;
+	defaultChecked?: boolean;
+	handleTagSelectClick?: React.MouseEventHandler<HTMLInputElement>;
+	onChange?: React.ChangeEventHandler<HTMLInputElement>;
+}
+
+export const TagSelect = (props: TagSelectProps) => {
 	return (
 		<div className="tagSelect">
 			<input
@@ -16,8 +23,11 @@ export const TagSelect = (props) => {
 				id={props.id}
 				name={props.name}
 				value={props.value}
+				checked={props.checked}
+				defaultChecked={props.defaultChecked}
 				className="tagSelect__input"
 				onClick={props.handleTagSelectClick}
+				onChange={props.onChange}
 			/>
 			<label htmlFor={props.id} className="tagSelect__label">
 				{props.label}

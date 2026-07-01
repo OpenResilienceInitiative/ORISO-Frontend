@@ -4,7 +4,7 @@ import { SessionListCreateChat } from './SessionListCreateChat';
 import './sessionsList.styles.scss';
 import '../sessionsListItem/sessionsListItem.styles.scss';
 
-const meta = {
+const meta: Meta<typeof SessionListCreateChat> = {
 	title: 'Components/Session/List/SessionListCreateChat',
 	component: SessionListCreateChat,
 	tags: ['autodocs'],
@@ -18,7 +18,7 @@ const meta = {
 			}
 		}
 	}
-} satisfies Meta<typeof SessionListCreateChat>;
+};
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -28,7 +28,7 @@ export const Default: Story = {
 		(StoryEl) => (
 			<div
 				style={{
-					backgroundColor: '#f5f5f5',
+					backgroundColor: '#eae7e8',
 					padding: 16,
 					minWidth: 360
 				}}
