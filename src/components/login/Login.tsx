@@ -16,6 +16,7 @@ import {
 	consumeConsultantLoginBlocked,
 	isConsultantAccessToken
 } from '../auth/consultantLoginBlock';
+import { appConfig } from '../../utils/appConfig';
 import { Text } from '../text/Text';
 import { ReactComponent as PersonIcon } from '../../resources/img/icons/person.svg';
 import { ReactComponent as LockIcon } from '../../resources/img/icons/lock.svg';
@@ -195,6 +196,7 @@ export const Login = () => {
 				}
 
 				if (
+					appConfig.blockConsultantAppLogin &&
 					hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
 				) {
 					clearAuthSession();
@@ -248,7 +250,10 @@ export const Login = () => {
 
 		apiConsumeMagicLinkLogin(magicToken)
 			.then((tokenResponse) => {
-				if (isConsultantAccessToken(tokenResponse.access_token)) {
+				if (
+					appConfig.blockConsultantAppLogin &&
+					isConsultantAccessToken(tokenResponse.access_token)
+				) {
 					clearAuthSession();
 					throw new Error(CONSULTANT_LOGIN_BLOCKED_ERROR);
 				}
