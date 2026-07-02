@@ -26,7 +26,6 @@ export * from './apiGetTenantAgenciesTopics';
 export * from './apiGetUserData';
 export * from './apiGroupChatSettings';
 export * from './apiLogoutKeycloak';
-export * from './apiLogoutRocketchat';
 export * from './apiPostAdditionalEnquiry';
 export * from './apiPostRegistration';
 export * from './apiPutArchive';
