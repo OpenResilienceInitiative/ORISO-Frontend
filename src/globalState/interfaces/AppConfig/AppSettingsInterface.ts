@@ -23,8 +23,6 @@ export interface AppSettingsInterface {
 	useOverviewPage?: boolean;
 	/** feature flag for the documentation  */
 	documentationEnabled?: boolean;
-	/** when enabled and e2ee is active (see rocket.chat) attachments will be e2e encrypted */
+	/** legacy attachment encryption flag (removed with the Rocket.Chat E2EE teardown) */
 	attachmentEncryption?: boolean;
-	/** Strangler flag for routing chat operations through ChatTransport facade */
-	featureChatTransportFacadeEnabled?: boolean;
 }

@@ -929,9 +929,6 @@ export const MessageSubmitInterfaceComponent = ({
 			// console.log('🔥 MessageSubmitInterface UNMOUNTED');
 		};
 	}, []);
-	const appConfig = useAppConfig();
-	const chatTransportFacadeEnabled =
-		chatTransportService.isFacadeEnabled(appConfig);
 	const tenant = useTenant();
 	const navigate = useNavigate();
 	const location = useLocation();
@@ -1861,31 +1858,16 @@ export const MessageSubmitInterfaceComponent = ({
 	const sendMessage = useCallback(
 		async (message, attachment: File, isEncrypted) => {
 			const sendToRoomWithId = activeSession.rid || activeSession.item.id;
-			// MATRIX MIGRATION: Determine if this is a Matrix-backed session.
+			// Determine if this is a Matrix-backed session.
 			// Some sessions still have a legacy rid while exposing matrixRoomId.
 			const resolvedChatSession =
 				chatTransportService.resolveSession(activeSession);
-			const isMatrixSession = chatTransportFacadeEnabled
-				? resolvedChatSession.isMatrixSession
-				: Boolean(activeSession.item?.matrixRoomId) ||
-					Boolean(
-						activeSession.rid &&
-							isMatrixRoom(activeSession.rid) &&
-							activeSession.item?.id
-					);
+			const isMatrixSession = resolvedChatSession.isMatrixSession;
 			const matrixSessionId = isMatrixSession
-				? Number(
-						chatTransportFacadeEnabled
-							? resolvedChatSession.sessionId
-							: activeSession.item.id
-					) || undefined
+				? Number(resolvedChatSession.sessionId) || undefined
 				: undefined;
 			const matrixRoomId = isMatrixSession
-				? chatTransportFacadeEnabled
-					? resolvedChatSession.matrixRoomId
-					: isMatrixRoom(activeSession.rid)
-						? activeSession.rid
-						: activeSession.item?.matrixRoomId
+				? resolvedChatSession.matrixRoomId
 				: undefined;
 			const getSendMailNotificationStatus = () => !activeSession.isGroup;
 
@@ -2069,7 +2051,6 @@ export const MessageSubmitInterfaceComponent = ({
 			activeSession.item.id,
 			activeSession.item?.matrixRoomId,
 			activeSession.rid,
-			chatTransportFacadeEnabled,
 			cleanupAttachment,
 			encryptRoom,
 			getDevToolbarOption,
@@ -3823,13 +3804,7 @@ export const MessageSubmitInterfaceComponent = ({
 
 	const resolvedChatSession =
 		chatTransportService.resolveSession(activeSession);
-	const matrixRoomId = chatTransportFacadeEnabled
-		? resolvedChatSession.matrixRoomId || null
-		: isMatrixRoom(activeSession?.rid)
-			? activeSession.rid
-			: isMatrixRoom(activeSession?.item?.matrixRoomId)
-				? activeSession.item.matrixRoomId
-				: null;
+	const matrixRoomId = resolvedChatSession.matrixRoomId || null;
 
 	// MATRIX MIGRATION: legacy RocketChat E2EE gates do not apply to Matrix rooms.
 	if (!e2EEReady && activeSession.rid && !matrixRoomId) {

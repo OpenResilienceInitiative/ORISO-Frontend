@@ -24,7 +24,6 @@ import {
 import {
 	apiGetAgencyConsultantList,
 	apiGetCaseHandoverStatus,
-	apiGetSessionData,
 	CaseHandoverStatus,
 	FETCH_ERRORS
 } from '../../api';
@@ -52,15 +51,10 @@ import useDebounceCallback from '../../hooks/useDebounceCallback';
 import { useSearchParam } from '../../hooks/useSearchParams';
 import { useTranslation } from 'react-i18next';
 import { prepareConsultantDataForSelect } from '../sessionAssign/sessionAssignHelper';
-import {
-	IArraySetting,
-	SETTING_HIDE_SYSTEM_MESSAGES
-} from '../../api/apiRocketChatSettingsPublic';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import { chatTransportService } from '../../services/chatTransportService';
 import { formatMatrixTimelineEvent } from '../../utils/matrixTimelineEventFormatter';
-import { useAppConfig } from '../../hooks/useAppConfig';
 import { CaseHandoverGate } from './CaseHandoverGate';
 import { isCaseHandoverAccessControlled } from './caseHandoverHelpers';
 
@@ -80,15 +74,11 @@ export const SessionStream = ({
 	const MATRIX_TYPING_STALE_MS = 3600;
 	const { t: translate } = useTranslation();
 	const navigate = useNavigate();
-	const appConfig = useAppConfig();
-	const chatTransportFacadeEnabled =
-		chatTransportService.isFacadeEnabled(appConfig);
 
 	const { type, path: listPath } = useContext(SessionTypeContext);
 	const { userData } = useContext(UserDataContext);
 	const { matrixClientService } = useMatrixClient();
 	const { subscribe, unsubscribe } = useContext(RocketChatContext);
-	const { getSetting } = useContext(RocketChatGlobalSettingsContext);
 	const { rcGroupId } = useParams<{ rcGroupId: string }>();
 
 	// MATRIX MIGRATION: Track component mount/unmount
@@ -131,35 +121,8 @@ export const SessionStream = ({
 		() => chatTransportService.resolveSession(activeSession),
 		[activeSession]
 	);
-	const isMatrixSession = useMemo(() => {
-		if (chatTransportFacadeEnabled) {
-			return resolvedChatSession.isMatrixSession;
-		}
-		return Boolean(
-			((!activeSession.rid || isMatrixRoom(activeSession.rid)) &&
-				activeSession.item?.id) ||
-				activeSession.item?.matrixRoomId
-		);
-	}, [
-		chatTransportFacadeEnabled,
-		resolvedChatSession.isMatrixSession,
-		activeSession.rid,
-		activeSession.item?.id,
-		activeSession.item?.matrixRoomId
-	]);
-	const matrixRoomId = useMemo(() => {
-		if (chatTransportFacadeEnabled) {
-			return resolvedChatSession.matrixRoomId || '';
-		}
-		return isMatrixRoom(activeSession.rid)
-			? activeSession.rid
-			: activeSession.item?.matrixRoomId || '';
-	}, [
-		chatTransportFacadeEnabled,
-		resolvedChatSession.matrixRoomId,
-		activeSession.rid,
-		activeSession.item?.matrixRoomId
-	]);
+	const isMatrixSession = resolvedChatSession.isMatrixSession;
+	const matrixRoomId = resolvedChatSession.matrixRoomId || '';
 	const clearMatrixTypingTimeout = useCallback(() => {
 		if (matrixTypingTimeoutRef.current) {
 			window.clearTimeout(matrixTypingTimeoutRef.current);
@@ -171,17 +134,9 @@ export const SessionStream = ({
 			if (!isMatrixSession || !matrixRoomId) {
 				return;
 			}
-			const transport = chatTransportFacadeEnabled
-				? chatTransportService
-				: matrixClientService;
-			transport?.sendTyping(matrixRoomId, typing).catch(() => {});
+			chatTransportService.sendTyping(matrixRoomId, typing).catch(() => {});
 		},
-		[
-			chatTransportFacadeEnabled,
-			isMatrixSession,
-			matrixRoomId,
-			matrixClientService
-		]
+		[isMatrixSession, matrixRoomId]
 	);
 	const handleSessionTyping = useCallback(
 		(isCleared) => {
@@ -261,37 +216,16 @@ export const SessionStream = ({
 			// Matrix-backed sessions must hydrate from the local Matrix SDK timeline.
 			// Pulling message history through ORISO REST would move decrypted/plaintext
 			// bodies outside the room encryption boundary.
-			const resolvedSession = chatTransportFacadeEnabled
-				? resolvedChatSession
-				: chatTransportService.resolveSession(activeSession);
-			const isMatrixBackedSession = chatTransportFacadeEnabled
-				? resolvedSession.isMatrixSession
-				: Boolean(activeSession.item?.matrixRoomId) ||
-					isMatrixRoom(activeSession.rid);
-			if (isMatrixBackedSession) {
-				const resolvedMatrixRoomId = chatTransportFacadeEnabled
-					? resolvedSession.matrixRoomId
-					: isMatrixRoom(activeSession.rid)
-						? activeSession.rid
-						: activeSession.item?.matrixRoomId;
-				const matrixClient = matrixClientService?.getClient?.();
+			if (resolvedChatSession.isMatrixSession) {
+				const resolvedMatrixRoomId = resolvedChatSession.matrixRoomId;
 				const matrixRoom = resolvedMatrixRoomId
-					? chatTransportFacadeEnabled
-						? chatTransportService.getMatrixRoom(
-								resolvedMatrixRoomId
-							)
-						: matrixClient?.getRoom?.(resolvedMatrixRoomId)
+					? chatTransportService.getMatrixRoom(resolvedMatrixRoomId)
 					: null;
 				const matrixEvents = resolvedMatrixRoomId
-					? chatTransportFacadeEnabled
-						? chatTransportService.getMatrixRoomMessages(
-								resolvedMatrixRoomId,
-								100
-							)
-						: matrixClientService?.getRoomMessages?.(
-								resolvedMatrixRoomId,
-								100
-							) || []
+					? chatTransportService.getMatrixRoomMessages(
+							resolvedMatrixRoomId,
+							100
+						)
 					: [];
 				const encryptedFallbackText = translate(
 					'e2ee.message.encryption.text'
@@ -313,37 +247,15 @@ export const SessionStream = ({
 				return Promise.resolve(true);
 			}
 
-			// Legacy RocketChat path
-			return apiGetSessionData(
-				activeSession.rid,
-				abortController.current.signal
-			).then((messagesData) => {
-				const hiddenSystemMessages = getSetting<IArraySetting>(
-					SETTING_HIDE_SYSTEM_MESSAGES
-				);
-				setMessagesItem(
-					messagesData
-						? prepareMessages(
-								messagesData.messages.filter(
-									(message) =>
-										!hiddenSystemMessages ||
-										!hiddenSystemMessages.value.includes(
-											message.t
-										)
-								)
-							)
-						: null
-				);
-				return true;
-			});
+			// Sessions without a Matrix room (stale pre-migration data) render
+			// an empty history instead of pulling legacy Rocket.Chat messages.
+			setMessagesItem({ messages: [] });
+			setLoading(false);
+			return Promise.resolve(true);
 		},
 		[
-			activeSession,
 			caseHandoverGateNeeded,
 			caseHandoverStatus?.canViewContent,
-			chatTransportFacadeEnabled,
-			getSetting,
-			matrixClientService,
 			resolvedChatSession,
 			translate
 		]
@@ -533,26 +445,15 @@ export const SessionStream = ({
 		)
 	);
 
-	// MATRIX MIGRATION: Real-time message sync for Matrix sessions
+	// Real-time message sync via the Matrix timeline listener.
 	useEffect(() => {
 		// Only for Matrix sessions.
-		const resolvedSession = chatTransportFacadeEnabled
-			? resolvedChatSession
-			: chatTransportService.resolveSession(activeSession);
-		const isMatrixSession = chatTransportFacadeEnabled
-			? resolvedSession.isMatrixSession
-			: Boolean(
-					activeSession.item?.id &&
-						(activeSession.item?.matrixRoomId ||
-							isMatrixRoom(activeSession.rid))
-				);
-		const matrixRoomId = chatTransportFacadeEnabled
-			? resolvedSession.matrixRoomId
-			: isMatrixRoom(activeSession.rid)
-				? activeSession.rid
-				: activeSession.item?.matrixRoomId;
+		if (!resolvedChatSession.isMatrixSession) {
+			return;
+		}
+		const matrixRoomId = resolvedChatSession.matrixRoomId;
 
-		if (!isMatrixSession || !matrixRoomId) {
+		if (!matrixRoomId) {
 			return;
 		}
 
@@ -590,27 +491,11 @@ export const SessionStream = ({
 				});
 			};
 
-			if (chatTransportFacadeEnabled) {
-				detachTimelineListener = chatTransportService.onMatrixTimeline(
-					matrixRoomId,
-					handleMatrixTimeline
-				);
-				return Boolean(detachTimelineListener);
-			}
-
-			const matrixClient = matrixClientService?.getClient?.();
-			if (!matrixClient) {
-				return false;
-			}
-
-			(matrixClient as any).on('Room.timeline', handleMatrixTimeline);
-			detachTimelineListener = () => {
-				(matrixClient as any).off(
-					'Room.timeline',
-					handleMatrixTimeline
-				);
-			};
-			return true;
+			detachTimelineListener = chatTransportService.onMatrixTimeline(
+				matrixRoomId,
+				handleMatrixTimeline
+			);
+			return Boolean(detachTimelineListener);
 		};
 
 		// Try immediately, then retry until Matrix client is ready.
@@ -629,15 +514,7 @@ export const SessionStream = ({
 			}
 			detachTimelineListener?.();
 		};
-	}, [
-		activeSession.rid,
-		activeSession.item?.matrixRoomId,
-		activeSession.item?.id,
-		chatTransportFacadeEnabled,
-		resolvedChatSession,
-		fetchSessionMessages,
-		matrixClientService
-	]);
+	}, [resolvedChatSession, fetchSessionMessages]);
 
 	useEffect(() => {
 		if (!isMatrixSession || !matrixRoomId) {
