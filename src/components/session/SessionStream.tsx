@@ -988,7 +988,7 @@ export const SessionStream = ({
 		return (
 			<div className="session__wrapper">
 				<CaseHandoverGate
-					session={activeSession}
+					sessionId={activeSession.item.id}
 					status={caseHandoverStatus}
 					onStatusChange={handleCaseHandoverStatusChange}
 				/>
