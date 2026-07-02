@@ -67,6 +67,11 @@ export const endpoints = {
 	consultantStatistics: apiUrl + '/service/statistics/consultant',
 	consultantsLanguages:
 		userServiceOrigin + '/service/users/consultants/languages',
+	caseHandoverBatch: userServiceOrigin + '/service/users/case-handover/batch',
+	caseHandoverCandidates:
+		userServiceOrigin + '/service/users/case-handover/candidates',
+	caseHandoverReasons:
+		userServiceOrigin + '/service/users/case-handover/reasons',
 	consultingTypeServiceBase:
 		consultingTypeServiceOrigin + '/service/consultingtypes',
 	deleteAskerAccount: userServiceOrigin + '/service/users/account',

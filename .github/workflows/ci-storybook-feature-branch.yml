@@ -1,4 +1,4 @@
-name: CI - Storybook Feature Branch
+name: Storybook Branch Validation
 
 on:
   push:
@@ -7,14 +7,15 @@ on:
       - dev
 
 jobs:
-  build:
+  validate:
+    name: lint, type-check and build frontend
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Build frontend application
+      - name: Run frontend validation and build
         uses: ./.github/actions/node-build
         with:
           node_version: '18'

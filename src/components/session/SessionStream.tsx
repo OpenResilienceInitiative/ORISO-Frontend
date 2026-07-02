@@ -23,7 +23,9 @@ import {
 } from '../../globalState';
 import {
 	apiGetAgencyConsultantList,
+	apiGetCaseHandoverStatus,
 	apiGetSessionData,
+	CaseHandoverStatus,
 	FETCH_ERRORS
 } from '../../api';
 import {
@@ -59,6 +61,8 @@ import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import { chatTransportService } from '../../services/chatTransportService';
 import { formatMatrixTimelineEvent } from '../../utils/matrixTimelineEventFormatter';
 import { useAppConfig } from '../../hooks/useAppConfig';
+import { CaseHandoverGate } from './CaseHandoverGate';
+import { isCaseHandoverAccessControlled } from './caseHandoverHelpers';
 
 interface SessionStreamProps {
 	readonly: boolean;
@@ -103,6 +107,10 @@ export const SessionStream = ({
 
 	const { activeSession, readActiveSession } =
 		useContext(ActiveSessionContext);
+	const [caseHandoverStatus, setCaseHandoverStatus] =
+		useState<CaseHandoverStatus | null>(null);
+	const [caseHandoverStatusLoading, setCaseHandoverStatusLoading] =
+		useState(false);
 
 	const { addNewUsersToEncryptedRoom } = useE2EE(activeSession?.rid);
 	const { isE2eeEnabled } = useContext(E2EEContext);
@@ -222,95 +230,125 @@ export const SessionStream = ({
 	);
 
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
+	const caseHandoverGateNeeded = useMemo(
+		() =>
+			isCaseHandoverAccessControlled({
+				activeSession,
+				userData,
+				type
+			}),
+		[activeSession, type, userData]
+	);
 
-	const fetchSessionMessages = useCallback(() => {
-		if (abortController.current) {
-			abortController.current.abort();
-		}
+	const fetchSessionMessages = useCallback(
+		(forceCaseHandoverAccess = false): Promise<boolean> => {
+			if (abortController.current) {
+				abortController.current.abort();
+			}
 
-		abortController.current = new AbortController();
+			abortController.current = new AbortController();
 
-		// Matrix-backed sessions must hydrate from the local Matrix SDK timeline.
-		// Pulling message history through ORISO REST would move decrypted/plaintext
-		// bodies outside the room encryption boundary.
-		const resolvedSession = chatTransportFacadeEnabled
-			? resolvedChatSession
-			: chatTransportService.resolveSession(activeSession);
-		const isMatrixBackedSession = chatTransportFacadeEnabled
-			? resolvedSession.isMatrixSession
-			: Boolean(activeSession.item?.matrixRoomId) ||
-				isMatrixRoom(activeSession.rid);
-		if (isMatrixBackedSession) {
-			const resolvedMatrixRoomId = chatTransportFacadeEnabled
-				? resolvedSession.matrixRoomId
-				: isMatrixRoom(activeSession.rid)
-					? activeSession.rid
-					: activeSession.item?.matrixRoomId;
-			const matrixClient = matrixClientService?.getClient?.();
-			const matrixRoom = resolvedMatrixRoomId
-				? chatTransportFacadeEnabled
-					? chatTransportService.getMatrixRoom(resolvedMatrixRoomId)
-					: matrixClient?.getRoom?.(resolvedMatrixRoomId)
-				: null;
-			const matrixEvents = resolvedMatrixRoomId
-				? chatTransportFacadeEnabled
-					? chatTransportService.getMatrixRoomMessages(
-							resolvedMatrixRoomId,
-							100
-						)
-					: matrixClientService?.getRoomMessages?.(
-							resolvedMatrixRoomId,
-							100
-						) || []
-				: [];
-			const encryptedFallbackText = translate(
-				'e2ee.message.encryption.text'
-			);
-			const formattedMessages = matrixEvents
-				.map((event: any) =>
-					formatMatrixTimelineEvent(
-						event,
-						matrixRoom,
-						encryptedFallbackText
-					)
-				)
-				.filter(Boolean);
+			if (
+				caseHandoverGateNeeded &&
+				!forceCaseHandoverAccess &&
+				!caseHandoverStatus?.canViewContent
+			) {
+				setMessagesItem({ messages: [] });
+				setLoading(false);
+				return Promise.resolve(false);
+			}
 
-			setMessagesItem({ messages: prepareMessages(formattedMessages) });
-			setLoading(false);
-			return Promise.resolve();
-		}
-
-		// Legacy RocketChat path
-		return apiGetSessionData(
-			activeSession.rid,
-			abortController.current.signal
-		).then((messagesData) => {
-			const hiddenSystemMessages = getSetting<IArraySetting>(
-				SETTING_HIDE_SYSTEM_MESSAGES
-			);
-			setMessagesItem(
-				messagesData
-					? prepareMessages(
-							messagesData.messages.filter(
-								(message) =>
-									!hiddenSystemMessages ||
-									!hiddenSystemMessages.value.includes(
-										message.t
-									)
+			// Matrix-backed sessions must hydrate from the local Matrix SDK timeline.
+			// Pulling message history through ORISO REST would move decrypted/plaintext
+			// bodies outside the room encryption boundary.
+			const resolvedSession = chatTransportFacadeEnabled
+				? resolvedChatSession
+				: chatTransportService.resolveSession(activeSession);
+			const isMatrixBackedSession = chatTransportFacadeEnabled
+				? resolvedSession.isMatrixSession
+				: Boolean(activeSession.item?.matrixRoomId) ||
+					isMatrixRoom(activeSession.rid);
+			if (isMatrixBackedSession) {
+				const resolvedMatrixRoomId = chatTransportFacadeEnabled
+					? resolvedSession.matrixRoomId
+					: isMatrixRoom(activeSession.rid)
+						? activeSession.rid
+						: activeSession.item?.matrixRoomId;
+				const matrixClient = matrixClientService?.getClient?.();
+				const matrixRoom = resolvedMatrixRoomId
+					? chatTransportFacadeEnabled
+						? chatTransportService.getMatrixRoom(
+								resolvedMatrixRoomId
 							)
+						: matrixClient?.getRoom?.(resolvedMatrixRoomId)
+					: null;
+				const matrixEvents = resolvedMatrixRoomId
+					? chatTransportFacadeEnabled
+						? chatTransportService.getMatrixRoomMessages(
+								resolvedMatrixRoomId,
+								100
+							)
+						: matrixClientService?.getRoomMessages?.(
+								resolvedMatrixRoomId,
+								100
+							) || []
+					: [];
+				const encryptedFallbackText = translate(
+					'e2ee.message.encryption.text'
+				);
+				const formattedMessages = matrixEvents
+					.map((event: any) =>
+						formatMatrixTimelineEvent(
+							event,
+							matrixRoom,
+							encryptedFallbackText
 						)
-					: null
-			);
-		});
-	}, [
-		activeSession,
-		chatTransportFacadeEnabled,
-		getSetting,
-		matrixClientService,
-		resolvedChatSession,
-		translate
-	]);
+					)
+					.filter(Boolean);
+
+				setMessagesItem({
+					messages: prepareMessages(formattedMessages)
+				});
+				setLoading(false);
+				return Promise.resolve(true);
+			}
+
+			// Legacy RocketChat path
+			return apiGetSessionData(
+				activeSession.rid,
+				abortController.current.signal
+			).then((messagesData) => {
+				const hiddenSystemMessages = getSetting<IArraySetting>(
+					SETTING_HIDE_SYSTEM_MESSAGES
+				);
+				setMessagesItem(
+					messagesData
+						? prepareMessages(
+								messagesData.messages.filter(
+									(message) =>
+										!hiddenSystemMessages ||
+										!hiddenSystemMessages.value.includes(
+											message.t
+										)
+								)
+							)
+						: null
+				);
+				return true;
+			});
+		},
+		[
+			activeSession,
+			caseHandoverGateNeeded,
+			caseHandoverStatus?.canViewContent,
+			chatTransportFacadeEnabled,
+			getSetting,
+			matrixClientService,
+			resolvedChatSession,
+			translate
+		]
+	);
+	const fetchSessionMessagesRef = useUpdatingRef(fetchSessionMessages);
 
 	const setSessionRead = useCallback(() => {
 		if (readonly) {
@@ -319,6 +357,71 @@ export const SessionStream = ({
 
 		readActiveSession();
 	}, [readActiveSession, readonly]);
+
+	const loadAfterCaseHandoverGranted = useCallback(() => {
+		setLoading(true);
+		return fetchSessionMessagesRef
+			.current(true)
+			.then(() => setSessionRead())
+			.catch(() => setMessagesItem({ messages: [] }))
+			.finally(() => setLoading(false));
+	}, [fetchSessionMessagesRef, setSessionRead]);
+
+	useEffect(() => {
+		let cancelled = false;
+		const sessionId = activeSession.item?.id;
+
+		setCaseHandoverStatus(null);
+		setMessagesItem({ messages: [] });
+
+		if (!caseHandoverGateNeeded || !sessionId) {
+			setCaseHandoverStatusLoading(false);
+			return () => {
+				cancelled = true;
+			};
+		}
+
+		setCaseHandoverStatusLoading(true);
+
+		apiGetCaseHandoverStatus(sessionId)
+			.then((nextStatus) => {
+				if (cancelled) {
+					return;
+				}
+				setCaseHandoverStatus(nextStatus);
+				if (nextStatus.canViewContent) {
+					loadAfterCaseHandoverGranted();
+				} else {
+					setLoading(false);
+				}
+			})
+			.catch(() => {
+				if (cancelled) {
+					return;
+				}
+				setCaseHandoverStatus({
+					sessionId,
+					status: 'DENIED',
+					canViewContent: false,
+					clientConsentRequired: false,
+					auditOutcome: 'ACCESS_DENIED'
+				});
+				setLoading(false);
+			})
+			.finally(() => {
+				if (!cancelled) {
+					setCaseHandoverStatusLoading(false);
+				}
+			});
+
+		return () => {
+			cancelled = true;
+		};
+	}, [
+		activeSession.item?.id,
+		caseHandoverGateNeeded,
+		loadAfterCaseHandoverGranted
+	]);
 
 	/**
 	 * ToDo: roomMessageBounce is just a temporary fix because currently
@@ -348,8 +451,10 @@ export const SessionStream = ({
 
 					if (message.u?.username !== 'rocket-chat-technical-user') {
 						fetchSessionMessages()
-							.then(() => {
-								setSessionRead();
+							.then((loaded) => {
+								if (loaded) {
+									setSessionRead();
+								}
 							})
 							.catch(() => {
 								// prevent error from leaking to console
@@ -724,8 +829,10 @@ export const SessionStream = ({
 			addNewUsersToEncryptedRoom().then();
 
 			fetchSessionMessages()
-				.then(() => {
-					setSessionRead();
+				.then((loaded) => {
+					if (loaded) {
+						setSessionRead();
+					}
 
 					// MATRIX MIGRATION: Skip RocketChat subscriptions for Matrix sessions
 					if (!isMatrixSession && activeSession.rid) {
@@ -859,12 +966,35 @@ export const SessionStream = ({
 	// activeSessionId: activeSession?.item?.id
 	// });
 
+	if (caseHandoverGateNeeded && caseHandoverStatusLoading) {
+		return <Loading />;
+	}
+
 	if (loading) {
 		// console.log('🔥 SessionStream: Showing loading spinner');
 		return <Loading />;
 	}
 
 	// console.log('🔥 SessionStream: Rendering session content');
+
+	const handleCaseHandoverStatusChange = (nextStatus: CaseHandoverStatus) => {
+		setCaseHandoverStatus(nextStatus);
+		if (nextStatus.canViewContent) {
+			loadAfterCaseHandoverGranted();
+		}
+	};
+
+	if (caseHandoverGateNeeded && !caseHandoverStatus?.canViewContent) {
+		return (
+			<div className="session__wrapper">
+				<CaseHandoverGate
+					sessionId={activeSession.item.id}
+					status={caseHandoverStatus}
+					onStatusChange={handleCaseHandoverStatusChange}
+				/>
+			</div>
+		);
+	}
 
 	return (
 		<div className="session__wrapper">
