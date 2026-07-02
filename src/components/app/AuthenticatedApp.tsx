@@ -35,6 +35,7 @@ import {
 	CONSULTANT_LOGIN_BLOCKED_ERROR,
 	markConsultantLoginBlocked
 } from '../auth/consultantLoginBlock';
+import { appConfig } from '../../utils/appConfig';
 
 interface AuthenticatedAppProps {
 	onAppReady: Function;
@@ -98,6 +99,7 @@ export const AuthenticatedApp = ({
 					Promise.all([reloadUserData(), apiGetConsultingTypes()])
 						.then(([userProfileData, consultingTypes]) => {
 							if (
+								appConfig.blockConsultantAppLogin &&
 								hasUserAuthority(
 									AUTHORITIES.CONSULTANT_DEFAULT,
 									userProfileData

@@ -103,7 +103,10 @@ export const autoLogin = async ({
 
 	const tokenPayload = parseJwt(keycloakRes.access_token);
 
-	if (isConsultantAccessToken(keycloakRes.access_token)) {
+	if (
+		appConfig.blockConsultantAppLogin &&
+		isConsultantAccessToken(keycloakRes.access_token)
+	) {
 		clearAuthSession();
 		throw new Error(CONSULTANT_LOGIN_BLOCKED_ERROR);
 	}
