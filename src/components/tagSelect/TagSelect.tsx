@@ -16,6 +16,15 @@ export interface TagSelectProps extends TagItem {
 }
 
 export const TagSelect = (props: TagSelectProps) => {
+	// An input must be either controlled (`checked`) or uncontrolled
+	// (`defaultChecked`) — passing both makes React warn. Prefer the
+	// controlled value when the caller supplies it, otherwise fall back
+	// to the uncontrolled default.
+	const checkedProps =
+		props.checked !== undefined
+			? { checked: props.checked }
+			: { defaultChecked: props.defaultChecked };
+
 	return (
 		<div className="tagSelect">
 			<input
@@ -23,8 +32,7 @@ export const TagSelect = (props: TagSelectProps) => {
 				id={props.id}
 				name={props.name}
 				value={props.value}
-				checked={props.checked}
-				defaultChecked={props.defaultChecked}
+				{...checkedProps}
 				className="tagSelect__input"
 				onClick={props.handleTagSelectClick}
 				onChange={props.onChange}

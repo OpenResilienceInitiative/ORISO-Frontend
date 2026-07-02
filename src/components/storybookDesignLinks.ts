@@ -1,6 +1,7 @@
 export const APP_ORISO_FIGMA_URL =
 	'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=316-17725&t=XHH5HQNmA8DUWl2U-0';
 
+// TODO: point to the actual chat-surface Figma frame once available
 export const APP_ORISO_CHAT_FIGMA_URL = APP_ORISO_FIGMA_URL;
 
 export const ORISO_M3_FIGMA_URL =

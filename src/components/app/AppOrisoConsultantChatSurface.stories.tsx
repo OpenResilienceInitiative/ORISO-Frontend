@@ -692,7 +692,7 @@ function AppOrisoConsultantRoomProviders({
 					ready: true,
 					users: [],
 					moderators: [],
-					total: 3,
+					total: 0,
 					reload: async () => []
 				}}
 			>
