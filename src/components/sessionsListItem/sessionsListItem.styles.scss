@@ -17,6 +17,12 @@ $session-chip-hover-bg: #646d78;
 $session-chip-hover-color: #ffffff;
 $session-postcode-border: #ffb4aa;
 $session-postcode-color: #410001;
+$case-handover-action: var(--m3-primary, $primary);
+$case-handover-action-hover: var(--m3-primary-hover, $hover-primary);
+$case-handover-action-disabled: var(--m3-surface-variant, #d8dde3);
+$case-handover-status-muted: var(--m3-on-surface-variant, #667280);
+$case-handover-denied-bg: var(--m3-error-container, #f7d7d7);
+$case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 
 .sessionsListItem {
 	display: flex;
@@ -209,6 +215,12 @@ $session-postcode-color: #410001;
 
 	&:not(.sessionsListItem--active) .sessionsListItem__content {
 		border-color: $session-light-border;
+	}
+
+	&--caseHandoverLocked:not(.sessionsListItem--active)
+		.sessionsListItem__content {
+		background: #ffffff;
+		border-color: #ffd8d4;
 	}
 
 	&:first-child:not(.sessionsListItem--active) .sessionsListItem__content {
@@ -859,6 +871,59 @@ $session-postcode-color: #410001;
 
 	.tag {
 		margin-left: $grid-base;
+	}
+
+	&__caseHandoverButton {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		min-width: 142px;
+		min-height: 38px;
+		margin: 8px 16px 8px 8px;
+		padding: 0 14px;
+		border: 0;
+		border-radius: 18px;
+		background: $case-handover-action;
+		color: #ffffff;
+		font-family: $font-family-sans-serif;
+		font-size: 13px;
+		font-weight: 700;
+		line-height: 1;
+		cursor: pointer;
+		flex-shrink: 0;
+
+		&:disabled {
+			background: $case-handover-action-disabled;
+			color: $case-handover-status-muted;
+			cursor: not-allowed;
+		}
+
+		&--pending {
+			background: $case-handover-status-muted;
+		}
+
+		&--denied {
+			background: $case-handover-denied-bg;
+			color: $case-handover-denied-text;
+		}
+
+		&--selected {
+			background: $case-handover-action-hover;
+		}
+	}
+
+	&__caseHandoverCheckbox {
+		width: 14px;
+		height: 14px;
+		border: 2px solid currentcolor;
+		border-radius: 3px;
+		background: transparent;
+
+		&--selected {
+			background: currentcolor;
+			box-shadow: inset 0 0 0 3px $case-handover-action-hover;
+		}
 	}
 }
 
