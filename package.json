@@ -233,7 +233,7 @@
 		"browserstack": "browserstack-cypress run --sync --env BROWSER=none,REACT_APP_API_URL=http://127.0.0.1:9001,HTTPS=0,PORT=9001,WDS_SOCKET_PORT=9001",
 		"storybook": "storybook dev -p 6006",
 		"build-storybook": "storybook build",
-		"test:unit": "vitest run --passWithNoTests"
+		"test:unit": "vitest run \"src/**/*.{test,spec}.{ts,tsx}\" --passWithNoTests"
 	},
 	"eslintConfig": {
 		"extends": [
