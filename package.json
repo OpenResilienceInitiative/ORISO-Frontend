@@ -204,6 +204,7 @@
 		"ts-loader": "^9.5.1",
 		"ts-node": "^10.9.2",
 		"typescript": "^5.3.3",
+		"vitest": "3.2.6",
 		"wait-on": "^7.2.0",
 		"webpack": "^5.89.0",
 		"webpack-dev-server": "^4.15.1",
@@ -231,7 +232,8 @@
 		"prepare": "husky install",
 		"browserstack": "browserstack-cypress run --sync --env BROWSER=none,REACT_APP_API_URL=http://127.0.0.1:9001,HTTPS=0,PORT=9001,WDS_SOCKET_PORT=9001",
 		"storybook": "storybook dev -p 6006",
-		"build-storybook": "storybook build"
+		"build-storybook": "storybook build",
+		"test:unit": "vitest run --passWithNoTests"
 	},
 	"eslintConfig": {
 		"extends": [
