@@ -281,6 +281,7 @@ export const Login = () => {
 		apiConsumeMagicLinkLogin(magicToken)
 			.then((tokenResponse) => {
 				if (isConsultantAccessToken(tokenResponse.access_token)) {
+					clearAuthSession();
 					throw new Error(CONSULTANT_LOGIN_BLOCKED_ERROR);
 				}
 
