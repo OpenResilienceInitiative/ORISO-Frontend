@@ -20,6 +20,10 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
+	args: {
+		trigger: <button type="button">Hover me</button>,
+		children: <span>Helpful information shown in the tooltip.</span>
+	},
 	render: () => (
 		<Tooltip trigger={<button type="button">Hover me</button>}>
 			<span>Helpful information shown in the tooltip.</span>
@@ -28,6 +32,11 @@ export const Default: Story = {
 };
 
 export const Top: Story = {
+	args: {
+		direction: 'top',
+		trigger: <button type="button">Top</button>,
+		children: <span>Tooltip positioned above the trigger.</span>
+	},
 	render: () => (
 		<Tooltip direction="top" trigger={<button type="button">Top</button>}>
 			<span>Tooltip positioned above the trigger.</span>
@@ -36,6 +45,11 @@ export const Top: Story = {
 };
 
 export const Left: Story = {
+	args: {
+		direction: 'left',
+		trigger: <button type="button">Left</button>,
+		children: <span>Tooltip positioned to the left of the trigger.</span>
+	},
 	render: () => (
 		<Tooltip direction="left" trigger={<button type="button">Left</button>}>
 			<span>Tooltip positioned to the left of the trigger.</span>
@@ -44,8 +58,16 @@ export const Left: Story = {
 };
 
 export const Right: Story = {
+	args: {
+		direction: 'right',
+		trigger: <button type="button">Right</button>,
+		children: <span>Tooltip positioned to the right of the trigger.</span>
+	},
 	render: () => (
-		<Tooltip direction="right" trigger={<button type="button">Right</button>}>
+		<Tooltip
+			direction="right"
+			trigger={<button type="button">Right</button>}
+		>
 			<span>Tooltip positioned to the right of the trigger.</span>
 		</Tooltip>
 	)

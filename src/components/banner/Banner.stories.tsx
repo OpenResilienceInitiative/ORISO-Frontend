@@ -29,6 +29,9 @@ function BannerStoryContent({ children }: { children: React.ReactNode }) {
 }
 
 export const Default: Story = {
+	args: {
+		children: null
+	},
 	render: (args) => (
 		<Banner {...args}>
 			<BannerStoryContent>
@@ -39,6 +42,9 @@ export const Default: Story = {
 };
 
 export const Closable: Story = {
+	args: {
+		children: null
+	},
 	render: (args) => (
 		<Banner {...args} onClose={() => {}}>
 			<BannerStoryContent>

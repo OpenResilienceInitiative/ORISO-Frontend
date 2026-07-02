@@ -756,11 +756,14 @@ function MuiStoryShell({
 	Story: React.ComponentType;
 	needsLiveData: boolean;
 }) {
+	const storyContent = needsLiveData ? <NeedsLiveDataPanel /> : <Story />;
+
 	return (
 		<AppConfigContext.Provider value={config}>
 			<LocaleContext.Provider
 				value={{
 					locale: 'de',
+					locales: ['de', 'en'],
 					selectableLocales: ['de', 'en'],
 					setLocale: () => {},
 					initLocale: 'de'
@@ -775,8 +778,8 @@ function MuiStoryShell({
 					<UserDataContext.Provider
 						value={{
 							userData: mockUserData,
-							reloadUserData: async () => null as any,
-							loaded: true
+							setUserData: () => {},
+							reloadUserData: async () => mockUserData
 						}}
 					>
 						<UrlParamsContext.Provider
@@ -797,7 +800,7 @@ function MuiStoryShell({
 									subscribe: () => {},
 									unsubscribe: () => {},
 									listen: () => {},
-									sendMethod: async () => ({}),
+									sendMethod: async () => undefined,
 									close: () => {},
 									rcWebsocket: null
 								}}
@@ -822,9 +825,13 @@ function MuiStoryShell({
 										<RocketChatPublicSettingsContext.Provider
 											value={{
 												settingsReady: true,
-												getSetting: () => ({
-													value: false
-												})
+												settings: [],
+												getSetting: () =>
+													({
+														_id: 'storybook-setting',
+														value: false,
+														enterprise: false
+													}) as any
 											}}
 										>
 											<E2EEContext.Provider
@@ -838,13 +845,25 @@ function MuiStoryShell({
 												<NotificationsContext.Provider
 													value={{
 														notifications: [],
+														notificationFeed: [],
+														unreadNotificationCount: 0,
 														setNotifications:
 															() => {},
 														hasNotification: () =>
 															false,
 														addNotification:
 															() => {},
+														addEventNotification:
+															() => {},
+														refreshNotificationFeed:
+															() => {},
 														removeNotification:
+															() => {},
+														markNotificationAsRead:
+															() => {},
+														markAllNotificationsAsRead:
+															() => {},
+														clearNotificationFeed:
 															() => {}
 													}}
 												>
@@ -880,12 +899,14 @@ function MuiStoryShell({
 																		path: '/sessions/consultant/sessionView'
 																	}}
 																>
+																	<div
+																		id="banner"
+																		aria-live="polite"
+																	/>
 																	<StoryErrorBoundary>
-																		{needsLiveData ? (
-																			<NeedsLiveDataPanel />
-																		) : (
-																			<Story />
-																		)}
+																		{
+																			storyContent
+																		}
 																	</StoryErrorBoundary>
 																</SessionTypeContext.Provider>
 															</LegalLinksProvider>
@@ -967,7 +988,7 @@ const preview: Preview = {
 			]
 		}
 	},
-	globals: {
+	initialGlobals: {
 		locale: FALLBACK_LNG,
 		locales: {
 			de: { icon: '🇩🇪', title: 'Deutsch', right: 'DE' },
