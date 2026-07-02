@@ -1,9 +1,8 @@
-name: Reusable Node Build steps
+name: Reusable Node validation and build steps
 
 inputs:
   node_version:
     required: true
-    type: string
 
 runs:
   using: 'composite'
@@ -17,6 +16,10 @@ runs:
   - name: Install dependencies
     shell: bash
     run: npm ci --ignore-scripts --legacy-peer-deps
+
+  - name: Lint scripts and type-check
+    shell: bash
+    run: npm run lint:scripts
 
   - name: Build app
     shell: bash

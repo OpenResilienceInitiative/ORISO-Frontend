@@ -1,4 +1,4 @@
-name: CI - Storybook Pull Request
+name: Storybook PR Validation
 
 on:
   pull_request:
@@ -8,19 +8,20 @@ env:
   ORG: openresilienceinitiative
 
 jobs:
-  build:
+  validate:
+    name: lint, type-check, build and Storybook Docker validation
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Build frontend application
+      - name: Run frontend validation and build
         uses: ./.github/actions/node-build
         with:
           node_version: '18'
 
-      - name: Create Storybook Docker image
+      - name: Storybook Docker build validation without publishing
         uses: ./.github/actions/docker-build-push
         with:
           push_to_ghcr: false

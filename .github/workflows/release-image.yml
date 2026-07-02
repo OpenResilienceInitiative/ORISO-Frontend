@@ -1,6 +1,6 @@
-name: Release Frontend Image
+name: Frontend Release Image
 
-run-name: Release frontend v${{ inputs.version }}
+run-name: Publish frontend release image v${{ inputs.version }}
 
 on:
   workflow_dispatch:
@@ -26,7 +26,7 @@ permissions:
 
 jobs:
   release:
-    name: Create tag and publish image
+    name: validate, build, tag and publish release image
     runs-on: ubuntu-latest
 
     steps:
@@ -59,7 +59,7 @@ jobs:
             exit 1
           fi
 
-      - name: Build frontend application
+      - name: Run frontend validation and build
         uses: ./.github/actions/node-build
         with:
           node_version: '18'
@@ -87,7 +87,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push release image
+      - name: Publish versioned frontend Docker image
         uses: docker/build-push-action@v7
         with:
           context: .
