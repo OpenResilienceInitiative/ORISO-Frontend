@@ -84,7 +84,6 @@ export const useSession = (
 				abortController.current.signal
 			);
 		} else {
-			// console.log('🔍 useSession: Loading by rid (groupId):', rid);
 			promise = apiGetSessionRoomsByGroupIds(
 				[rid],
 				abortController.current.signal
@@ -93,17 +92,11 @@ export const useSession = (
 
 		return promise
 			.then(async ({ sessions: [activeSession] }) => {
-				// console.log('✅ useSession: API response received:', {
-				// hasSession: !!activeSession,
-				// sessionData: activeSession
-				// });
-
 				if (activeSession) {
 					const extendedSession = buildExtendedSession(
 						activeSession,
 						rid
 					);
-					// console.log('✅ useSession: Extended session built:', extendedSession);
 					setSession(extendedSession);
 				} else {
 					if (
@@ -114,24 +107,15 @@ export const useSession = (
 					) {
 						return;
 					}
-					// console.log('⚠️ useSession: No session in response');
 				}
 				setReady(true);
 			})
 			.catch(async (e) => {
-				// console.log('❌ useSession: Error loading session:', {
-				// error: e,
-				// message: e.message,
-				// isAbort: e.message === FETCH_ERRORS.ABORT,
-				// repetitiveId: repetitiveId.current
-				// });
-
 				if (e.message === FETCH_ERRORS.ABORT) {
 					return;
 				}
 
 				if (repetitiveId.current) {
-					// console.log('🔄 useSession: Retrying with repetitiveId:', repetitiveId.current);
 					return apiGetChatRoomById(repetitiveId.current).then(
 						({ sessions: [session] }) => {
 							// console.log('✅ useSession: Repetitive session loaded:', session);

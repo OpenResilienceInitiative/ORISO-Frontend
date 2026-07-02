@@ -9,7 +9,7 @@ export type CaseHandoverStatusValue =
 	| 'GRANTED'
 	| 'DENIED'
 	| 'CLIENT_CONSENT_DECLINED'
-	| string;
+	| (string & {});
 
 export interface CaseHandoverReason {
 	code: string;

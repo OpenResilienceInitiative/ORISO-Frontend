@@ -5,9 +5,9 @@ import {
 	apiGetCaseHandoverReasons,
 	apiRequestCaseHandoverAccess,
 	CaseHandoverReason,
-	CaseHandoverStatus,
-	FETCH_ERRORS
-} from '../../api';
+	CaseHandoverStatus
+} from '../../api/apiCaseHandover';
+import { FETCH_ERRORS } from '../../api/fetchData';
 import {
 	isCaseHandoverDenied,
 	isCaseHandoverPending
@@ -31,6 +31,13 @@ export const CaseHandoverGate = ({
 	const [explanation, setExplanation] = useState('');
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [error, setError] = useState('');
+
+	useEffect(() => {
+		setReasonCode('');
+		setExplanation('');
+		setError('');
+		setIsSubmitting(false);
+	}, [sessionId]);
 
 	useEffect(() => {
 		apiGetCaseHandoverReasons()

@@ -8,6 +8,13 @@ $mobileNavigationHeight: 76px;
 $tabBarHeightMobile: 77px;
 $tabBarHeightDesktop: 53px;
 $sessionShellSurface: var(--m3-surface-container-high, #eae7e8);
+$caseHandoverAction: var(--m3-primary, $primary);
+$caseHandoverActionDisabled: var(--m3-surface-variant, #d8dde3);
+$caseHandoverTextMuted: var(--m3-on-surface-variant, #6d747d);
+$caseHandoverPanelBorder: var(--m3-primary-fixed-dim, #ffb4aa);
+$caseHandoverPanelSurface: var(--m3-surface, #ffffff);
+$caseHandoverFieldSurface: var(--m3-surface-container-low, #f5f3f4);
+$caseHandoverBodyText: var(--m3-on-surface, #30343a);
 
 .sessionsList,
 .session {
@@ -111,14 +118,14 @@ $sessionShellSurface: var(--m3-surface-container-high, #eae7e8);
 		padding: 0 18px;
 		border: 0;
 		border-radius: 20px;
-		background: #c4000b;
+		background: $caseHandoverAction;
 		color: #ffffff;
 		font-weight: 700;
 		cursor: pointer;
 
 		&:disabled {
-			background: #d8dde3;
-			color: #6d747d;
+			background: $caseHandoverActionDisabled;
+			color: $caseHandoverTextMuted;
 			cursor: not-allowed;
 		}
 	}
@@ -126,8 +133,8 @@ $sessionShellSurface: var(--m3-surface-container-high, #eae7e8);
 	&__caseHandoverBatchPanel {
 		padding: 14px;
 		border-radius: 18px;
-		background: #ffffff;
-		border: 1px solid #ffd8d4;
+		background: $caseHandoverPanelSurface;
+		border: 1px solid $caseHandoverPanelBorder;
 		box-shadow: 0 1px 3px rgba(45, 34, 33, 0.08);
 	}
 
@@ -137,7 +144,7 @@ $sessionShellSurface: var(--m3-surface-container-high, #eae7e8);
 		justify-content: space-between;
 		gap: 8px;
 		margin-bottom: 12px;
-		color: #30343a;
+		color: $caseHandoverBodyText;
 		font-size: 14px;
 	}
 
@@ -153,13 +160,13 @@ $sessionShellSurface: var(--m3-surface-container-high, #eae7e8);
 			min-height: 34px;
 			padding: 6px 10px;
 			border-radius: 12px;
-			background: #f5f3f4;
+			background: $caseHandoverFieldSurface;
 			font-size: 13px;
-			color: #30343a;
+			color: $caseHandoverBodyText;
 		}
 
 		input {
-			accent-color: #c4000b;
+			accent-color: $caseHandoverAction;
 		}
 	}
 
@@ -168,12 +175,12 @@ $sessionShellSurface: var(--m3-surface-container-high, #eae7e8);
 		width: 100%;
 		min-height: 84px;
 		padding: 12px;
-		border: 1px solid #ffb4ab;
+		border: 1px solid $caseHandoverPanelBorder;
 		border-radius: 14px;
 		resize: vertical;
 		font: inherit;
 		font-size: 13px;
-		color: #202124;
+		color: $caseHandoverBodyText;
 	}
 
 	&__caseHandoverBatchActions {
@@ -187,19 +194,19 @@ $sessionShellSurface: var(--m3-surface-container-high, #eae7e8);
 			padding: 0 14px;
 			border: 0;
 			border-radius: 18px;
-			background: #eef1f4;
-			color: #4b515a;
+			background: $caseHandoverFieldSurface;
+			color: $caseHandoverTextMuted;
 			font-weight: 700;
 			cursor: pointer;
 		}
 
 		.sessionsList__caseHandoverBatchSubmit {
-			background: #c4000b;
+			background: $caseHandoverAction;
 			color: #ffffff;
 
 			&:disabled {
-				background: #d8dde3;
-				color: #6d747d;
+				background: $caseHandoverActionDisabled;
+				color: $caseHandoverTextMuted;
 				cursor: not-allowed;
 			}
 		}
@@ -207,7 +214,7 @@ $sessionShellSurface: var(--m3-surface-container-high, #eae7e8);
 
 	&__caseHandoverBatchSummary {
 		margin-top: 10px;
-		color: #4b515a;
+		color: $caseHandoverTextMuted;
 		font-size: 13px;
 		font-weight: 600;
 	}

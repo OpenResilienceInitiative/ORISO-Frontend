@@ -586,7 +586,8 @@ export const NotificationsCenter = () => {
 										}
 									>
 										{translate(
-											'caseHandover.consent.approve'
+											'caseHandover.consent.approve',
+											'Approve'
 										)}
 									</button>
 									<button
@@ -603,11 +604,15 @@ export const NotificationsCenter = () => {
 										}
 									>
 										{translate(
-											'caseHandover.consent.decline'
+											'caseHandover.consent.decline',
+											'Decline'
 										)}
 									</button>
 									{caseHandoverConsentError && (
-										<p className="notificationsCenter__detailText">
+										<p
+											className="notificationsCenter__detailText"
+											role="alert"
+										>
 											{caseHandoverConsentError}
 										</p>
 									)}

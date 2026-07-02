@@ -358,12 +358,23 @@ export const SessionStream = ({
 		readActiveSession();
 	}, [readActiveSession, readonly]);
 
+	const loadAfterCaseHandoverGranted = useCallback(() => {
+		setLoading(true);
+		return fetchSessionMessagesRef
+			.current(true)
+			.then(() => setSessionRead())
+			.catch(() => setMessagesItem({ messages: [] }))
+			.finally(() => setLoading(false));
+	}, [fetchSessionMessagesRef, setSessionRead]);
+
 	useEffect(() => {
 		let cancelled = false;
 		const sessionId = activeSession.item?.id;
 
+		setCaseHandoverStatus(null);
+		setMessagesItem({ messages: [] });
+
 		if (!caseHandoverGateNeeded || !sessionId) {
-			setCaseHandoverStatus(null);
 			setCaseHandoverStatusLoading(false);
 			return () => {
 				cancelled = true;
@@ -371,7 +382,6 @@ export const SessionStream = ({
 		}
 
 		setCaseHandoverStatusLoading(true);
-		setMessagesItem({ messages: [] });
 
 		apiGetCaseHandoverStatus(sessionId)
 			.then((nextStatus) => {
@@ -380,12 +390,7 @@ export const SessionStream = ({
 				}
 				setCaseHandoverStatus(nextStatus);
 				if (nextStatus.canViewContent) {
-					setLoading(true);
-					fetchSessionMessagesRef
-						.current(true)
-						.then(() => setSessionRead())
-						.catch(() => setMessagesItem({ messages: [] }))
-						.finally(() => setLoading(false));
+					loadAfterCaseHandoverGranted();
 				} else {
 					setLoading(false);
 				}
@@ -415,8 +420,7 @@ export const SessionStream = ({
 	}, [
 		activeSession.item?.id,
 		caseHandoverGateNeeded,
-		fetchSessionMessagesRef,
-		setSessionRead
+		loadAfterCaseHandoverGranted
 	]);
 
 	/**
@@ -976,11 +980,7 @@ export const SessionStream = ({
 	const handleCaseHandoverStatusChange = (nextStatus: CaseHandoverStatus) => {
 		setCaseHandoverStatus(nextStatus);
 		if (nextStatus.canViewContent) {
-			setLoading(true);
-			fetchSessionMessages(true)
-				.then(() => setSessionRead())
-				.catch(() => setMessagesItem({ messages: [] }))
-				.finally(() => setLoading(false));
+			loadAfterCaseHandoverGranted();
 		}
 	};
 

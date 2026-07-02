@@ -1,5 +1,8 @@
 import { AUTHORITIES, hasUserAuthority } from '../../globalState';
-import { STATUS_ENQUIRY } from '../../globalState/interfaces';
+import {
+	STATUS_ENQUIRY,
+	UserDataInterface
+} from '../../globalState/interfaces';
 import {
 	SESSION_LIST_TAB,
 	SESSION_LIST_TAB_ARCHIVE,
@@ -16,9 +19,26 @@ export const CASE_HANDOVER_DENIED_STATUSES = [
 	'CLIENT_CONSENT_DECLINED'
 ];
 
+interface CaseHandoverSessionInput {
+	item?: {
+		status?: number | string;
+	};
+	consultant?: {
+		id?: string | number;
+	};
+	isEmptyEnquiry?: boolean;
+	isGroup?: boolean;
+	isSession?: boolean;
+}
+
+interface CaseHandoverUserInput {
+	userId?: string | number;
+	grantedAuthorities?: readonly string[];
+}
+
 interface CaseHandoverCandidateInput {
-	activeSession: any;
-	userData: any;
+	activeSession: CaseHandoverSessionInput | null;
+	userData: CaseHandoverUserInput | null;
 	type: SESSION_LIST_TYPES;
 	sessionListTab?: SESSION_LIST_TAB | string | null;
 }
@@ -31,7 +51,12 @@ export const isCaseHandoverAccessControlled = ({
 	if (!activeSession || !activeSession.item || !userData) {
 		return false;
 	}
-	if (hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)) {
+	if (
+		hasUserAuthority(
+			AUTHORITIES.ASKER_DEFAULT,
+			userData as UserDataInterface
+		)
+	) {
 		return false;
 	}
 	if (type !== SESSION_LIST_TYPES.MY_SESSION) {

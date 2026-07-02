@@ -291,13 +291,6 @@
 		max-width: 780px;
 	}
 
-	&__consentActions {
-		display: flex;
-		gap: 10px;
-		flex-wrap: wrap;
-		justify-content: center;
-	}
-
 	&__consentButton {
 		min-height: 40px;
 		padding: 0 16px;
@@ -315,9 +308,13 @@
 	}
 
 	&__consentButton--approve {
-		border-color: #c4000b;
-		background: #c4000b;
+		border-color: #e63946;
+		background: #e63946;
 		color: #ffffff;
+	}
+
+	&__consentButton:focus-visible {
+		@include list-item-focus-treatment;
 	}
 
 	&__openButton {
@@ -336,6 +333,13 @@
 	}
 
 	&__detailActions {
+		display: flex;
+		gap: 10px;
+		flex-wrap: wrap;
+		justify-content: center;
+	}
+
+	&__consentActions {
 		display: flex;
 		gap: 10px;
 		flex-wrap: wrap;
@@ -529,7 +533,8 @@
 	}
 }
 
-@media (width <= 1200px) {
+// stylelint-disable-next-line media-feature-range-notation
+@media (max-width: 1200px) {
 	.notificationsCenter {
 		padding: 16px;
 
@@ -742,7 +747,8 @@
 	}
 }
 
-@media (width <= 900px) {
+// stylelint-disable-next-line media-feature-range-notation
+@media (max-width: 900px) {
 	.notificationsCenter {
 		padding: 16px;
 

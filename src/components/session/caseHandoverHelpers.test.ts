@@ -126,6 +126,66 @@ describe('caseHandoverHelpers', () => {
 		).toBe(false);
 	});
 
+	it('keeps missing, asker, non-my-session, enquiry, group, and own sessions out of access control', () => {
+		const commonInput = {
+			activeSession: baseSession,
+			userData: consultantUser,
+			type: MY_SESSION_TYPE
+		};
+
+		expect(
+			isCaseHandoverAccessControlled({
+				...commonInput,
+				activeSession: null
+			})
+		).toBe(false);
+		expect(
+			isCaseHandoverAccessControlled({
+				...commonInput,
+				userData: null
+			})
+		).toBe(false);
+		expect(
+			isCaseHandoverAccessControlled({
+				...commonInput,
+				userData: {
+					userId: 'asker',
+					grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT]
+				}
+			})
+		).toBe(false);
+		expect(
+			isCaseHandoverAccessControlled({
+				...commonInput,
+				type: 'ENQUIRY' as SessionListType
+			})
+		).toBe(false);
+		expect(
+			isCaseHandoverAccessControlled({
+				...commonInput,
+				activeSession: {
+					...baseSession,
+					item: { ...baseSession.item, status: STATUS_ENQUIRY }
+				}
+			})
+		).toBe(false);
+		expect(
+			isCaseHandoverAccessControlled({
+				...commonInput,
+				activeSession: { ...baseSession, isGroup: true }
+			})
+		).toBe(false);
+		expect(
+			isCaseHandoverAccessControlled({
+				...commonInput,
+				activeSession: {
+					...baseSession,
+					consultant: { id: consultantUser.userId }
+				}
+			})
+		).toBe(false);
+	});
+
 	it('groups pending and denied statuses for list and gate display', () => {
 		expect(isCaseHandoverPending('PENDING')).toBe(true);
 		expect(isCaseHandoverPending('PENDING_CLIENT_CONSENT')).toBe(true);
