@@ -2011,10 +2011,18 @@ export const MessageSubmitInterfaceComponent = ({
 		if (threadRootId) {
 			prefixParts.push(buildThreadPrefix(threadRootId));
 		}
+		// VISIBLE_TO recipient targeting is an opt-in supervisor/coordinator aside
+		// (ADR-008) and only exists when the audience selector is actually shown —
+		// i.e. there is more than one human counterpart (group / supervision). In a
+		// 1:1 conversation the selector is hidden, so a reply must never carry a
+		// VISIBLE_TO prefix, regardless of any stale selection state.
+		const humanTargetCount = audienceOptions.filter(
+			(option) => option.value !== '__all__'
+		).length;
 		const explicitAudience = selectedAudienceValues.filter(
 			(value) => value !== '__all__'
 		);
-		if (explicitAudience.length > 0) {
+		if (humanTargetCount > 1 && explicitAudience.length > 0) {
 			prefixParts.push(buildVisibleToPrefix(explicitAudience));
 		}
 		if (isSupervisor) {
@@ -2043,6 +2051,7 @@ export const MessageSubmitInterfaceComponent = ({
 		sendEnquiry,
 		sendMessage,
 		selectedAudienceValues,
+		audienceOptions,
 		isSupervisor,
 		threadRootId
 	]);
@@ -2704,13 +2713,12 @@ export const MessageSubmitInterfaceComponent = ({
 				};
 			})
 			.sort((a, b) => a.label.localeCompare(b.label));
-		// "Send to all" (no VISIBLE_TO targeting) must stay available and be the
-		// default for ordinary conversations — targeting is an opt-in supervisor/
-		// coordinator aside (ADR-008). Only a supervision-restricted context may
-		// drop it. Without this, a session whose sole other collected member is a
-		// service account collapses to a single non-'all' option and silently
-		// prefixes every reply VISIBLE_TO that non-recipient, hiding it from the asker.
-		const includeAllOption = !restrictToSupervisionAudience || mapped.length > 1;
+		// The audience selector (and thus any VISIBLE_TO targeting) is meant for
+		// group/supervision conversations with more than one human counterpart.
+		// A 1:1 conversation has no real targets here (the asker is filtered out
+		// by their enc.* member name), so it collapses to zero options and the
+		// selector stays hidden (showAudienceSelector: audienceTargetCount <= 1).
+		const includeAllOption = mapped.length > 1;
 		const nextOptions = includeAllOption
 			? [defaultOption, ...mapped]
 			: mapped;
