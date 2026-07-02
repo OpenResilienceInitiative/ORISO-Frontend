@@ -68,7 +68,8 @@ import {
 	apiGetCaseHandoverStatus,
 	apiPutArchive,
 	apiPutDearchive,
-	CaseHandoverStatus
+	CaseHandoverStatus,
+	FETCH_ERRORS
 } from '../../api';
 import { Overlay, OVERLAY_FUNCTIONS } from '../overlay/Overlay';
 import { archiveSessionSuccessOverlayItem } from '../sessionMenu/sessionMenuHelpers';
@@ -275,8 +276,12 @@ export const SessionListItemComponent = ({
 					setCaseHandoverStatus(status);
 				}
 			})
-			.catch(() => {
-				if (!cancelled) {
+			.catch((error) => {
+				if (cancelled) {
+					return;
+				}
+
+				if (error?.message === FETCH_ERRORS.FORBIDDEN) {
 					setCaseHandoverStatus({
 						sessionId: activeSession.item.id,
 						status: 'DENIED',
@@ -284,7 +289,10 @@ export const SessionListItemComponent = ({
 						clientConsentRequired: false,
 						auditOutcome: 'ACCESS_DENIED'
 					});
+					return;
 				}
+
+				setCaseHandoverStatus(null);
 			})
 			.finally(() => {
 				if (!cancelled) {
