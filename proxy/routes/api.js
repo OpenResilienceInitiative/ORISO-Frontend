@@ -22,8 +22,11 @@ const resolveRemoteFrontendOrigin = () =>
 	normalizeTarget(process.env.REACT_APP_DEV_REMOTE_FRONTEND_ORIGIN);
 
 const shouldVerifyProxyCertificate = () =>
-	String(process.env.REACT_APP_DEV_PROXY_SECURE || 'true').toLowerCase() !==
-	'false';
+	String(
+		process.env.REACT_APP_DEV_PROXY_SECURE ??
+			process.env.REACT_APP_DEV_REMOTE_API_SECURE ??
+			'true'
+	).toLowerCase() !== 'false';
 
 const createRemoteProxy = (target) =>
 	createProxyMiddleware({

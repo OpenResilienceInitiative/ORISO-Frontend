@@ -215,9 +215,30 @@ const seeds: EventDescriptor[] = [
 		i18nKey: 'handoverDenied',
 		resolveActionTarget: conversationTarget
 	}),
+	descriptor('case.handover.consent.requested', {
+		family: 'handover',
+		category: 'system',
+		icon: 'handover',
+		i18nKey: 'caseHandoverConsentRequested',
+		resolveActionTarget: conversationTarget
+	}),
+	descriptor('case.handover.granted', {
+		family: 'handover',
+		category: 'system',
+		icon: 'handover',
+		i18nKey: 'caseHandoverGranted',
+		resolveActionTarget: conversationTarget
+	}),
+	descriptor('case.handover.consent.declined', {
+		family: 'handover',
+		category: 'system',
+		icon: 'handover',
+		i18nKey: 'caseHandoverConsentDeclined',
+		resolveActionTarget: conversationTarget
+	}),
 
 	// ----- Calls family (Slice 5) -----
-	// Live, joinable call → Join overlay (does not navigate).
+	// Live, joinable call -> Join overlay (does not navigate).
 	descriptor('call.started', {
 		family: 'calls',
 		category: 'system',
