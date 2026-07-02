@@ -1,4 +1,4 @@
-name: CI - Storybook Main
+name: Storybook Build and Publish
 
 on:
   push:
@@ -11,7 +11,8 @@ env:
   ORG: openresilienceinitiative
 
 jobs:
-  build:
+  publish:
+    name: lint, type-check, build and publish Storybook image
     runs-on: ubuntu-latest
 
     permissions:
@@ -22,12 +23,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Build frontend application
+      - name: Run frontend validation and build
         uses: ./.github/actions/node-build
         with:
           node_version: '18'
 
-      - name: Create and Publish Storybook Docker image
+      - name: Publish Storybook Docker image
         uses: ./.github/actions/docker-build-push
         with:
           push_to_ghcr: true
