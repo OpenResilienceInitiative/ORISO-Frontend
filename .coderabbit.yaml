@@ -13,14 +13,14 @@ reviews:
   poem: false
 
   auto_review:
-    enabled: false
-    description_keyword: "coderabbit: review"
-    auto_incremental_review: false
-    drafts: false
-    labels:
-      - "coderabbit"
+    enabled: true
+    auto_incremental_review: true
+    drafts: true
     base_branches:
       - "dev"
+      - "main"
+      - "release/.*"
+      - "hotfix/.*"
 
   path_filters:
     - "!node_modules/**"
