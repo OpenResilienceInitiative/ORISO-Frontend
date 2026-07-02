@@ -2586,7 +2586,10 @@ export const MessageSubmitInterfaceComponent = ({
 			}
 			if (
 				memberId.includes('@system') ||
-				memberId.includes('@caritas.local')
+				memberId.includes('@caritas.local') ||
+				// Agency provisioning/service bots (@agency-<id>-service) are not
+				// human recipients — never offer them as an audience target.
+				/^@agency-\d+-service:/.test(memberId)
 			) {
 				return;
 			}
@@ -2701,7 +2704,13 @@ export const MessageSubmitInterfaceComponent = ({
 				};
 			})
 			.sort((a, b) => a.label.localeCompare(b.label));
-		const includeAllOption = mapped.length > 1;
+		// "Send to all" (no VISIBLE_TO targeting) must stay available and be the
+		// default for ordinary conversations — targeting is an opt-in supervisor/
+		// coordinator aside (ADR-008). Only a supervision-restricted context may
+		// drop it. Without this, a session whose sole other collected member is a
+		// service account collapses to a single non-'all' option and silently
+		// prefixes every reply VISIBLE_TO that non-recipient, hiding it from the asker.
+		const includeAllOption = !restrictToSupervisionAudience || mapped.length > 1;
 		const nextOptions = includeAllOption
 			? [defaultOption, ...mapped]
 			: mapped;
