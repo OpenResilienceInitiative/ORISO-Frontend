@@ -1,13 +1,7 @@
 import '../../polyfill';
 import * as React from 'react';
 import { ComponentType, useState, lazy, Suspense, useContext } from 'react';
-import {
-	BrowserRouter as Router,
-	Switch,
-	Route,
-	RouteProps,
-	Redirect
-} from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { StageProps } from '../stage/stage';
 import '../../resources/styles/styles';
 import { ContextProvider } from '../../globalState/state';
@@ -36,6 +30,7 @@ import { GlobalComponentContext } from '../../globalState/provider/GlobalCompone
 import { UrlParamsProvider } from '../../globalState/provider/UrlParamsProvider';
 import { Notifications } from '../notifications/Notifications';
 import { CallProvider } from '../../globalState/provider/CallProvider';
+import { MatrixClientProvider } from '../../globalState/context/MatrixClientContext';
 import { FloatingCallWidget } from '../call/FloatingCallWidget';
 import { GroupCallWidget } from '../call/GroupCallWidget';
 
@@ -51,19 +46,13 @@ const InviteLink = lazy(() =>
 	}))
 );
 
-const Registration = lazy(() =>
-	import('../registration/Registration').then((m) => ({
-		default: m.Registration
-	}))
-);
-
 const VideoConference = lazy(
 	() => import('../videoConference/VideoConference')
 );
 const VideoCall = lazy(() => import('../videoCall/VideoCall'));
 
 type TExtraRoute = {
-	route: RouteProps;
+	route: { path: string | string[] };
 	component: ComponentType;
 };
 
@@ -140,91 +129,95 @@ const RouterWrapper = ({ extraRoutes }: RouterWrapperProps) => {
 
 	return (
 		<Router>
-			<Switch>
-				{settings.urls.landingpage !== '/' && (
-					<Redirect from="/" to={settings.urls.landingpage} exact />
-				)}
-				<Route>
-					<ContextProvider>
-						<CallProvider>
-							<TenantThemingLoader />
-							{startWebsocket && (
-								<WebsocketHandler
-									disconnect={disconnectWebsocket}
-								/>
-							)}
-							<Suspense fallback={<Loading />}>
-								<Switch>
-									{extraRoutes.map(
-										({ route, component: Component }) => (
+			{/* v7: providers move above <Routes> (they use no routing hooks);
+			    the old pathless catch-all <Route> wrapper is gone. */}
+			<ContextProvider>
+				<CallProvider>
+					<MatrixClientProvider>
+						<TenantThemingLoader />
+						{startWebsocket && (
+							<WebsocketHandler
+								disconnect={disconnectWebsocket}
+							/>
+						)}
+						<Suspense fallback={<Loading />}>
+							<Routes>
+								{settings.urls.landingpage !== '/' && (
+									<Route
+										path="/"
+										element={
+											<Navigate
+												to={settings.urls.landingpage}
+												replace
+											/>
+										}
+									/>
+								)}
+
+								{/* Injected routes (registration, legal pages,
+								    theme demo); array paths → one <Route> each. */}
+								{extraRoutes.flatMap(
+									({ route, component: Component }) =>
+										(Array.isArray(route.path)
+											? route.path
+											: [route.path]
+										).map((path) => (
 											<Route
-												{...route}
-												key={
-													typeof route.path ===
-													'string'
-														? route.path
-														: route.path.join('-')
-												}
-											>
-												<Component />
-											</Route>
-										)
-									)}
+												key={path}
+												path={path}
+												element={<Component />}
+											/>
+										))
+								)}
 
-									{/* Two explicit routes — RR5 optional :param? is unreliable with exact */}
-									<Route path="/invite/:token" exact>
-										<InviteLink />
-									</Route>
-									<Route
-										path="/invite/:token/:topicSlug"
-										exact
-									>
-										<InviteLink />
-									</Route>
-
-									<Route
-										path={[
-											'/registration',
-											'/:consultingTypeSlug/registration'
-										]}
-									>
-										<UrlParamsProvider>
-											<Registration />
-										</UrlParamsProvider>
-									</Route>
-
-									<Route path="/login" exact>
+								<Route
+									path="/invite/:token"
+									element={<InviteLink />}
+								/>
+								<Route
+									path="/invite/:token/:topicSlug"
+									element={<InviteLink />}
+								/>
+								<Route
+									path="/login"
+									element={
 										<UrlParamsProvider>
 											<Login />
 										</UrlParamsProvider>
-									</Route>
-									<Route
-										path={settings.urls.videoConference}
-										exact
-									>
-										<VideoConference />
-									</Route>
-									<Route path={settings.urls.videoCall} exact>
-										<VideoCall />
-									</Route>
-									<AuthenticatedApp
-										onAppReady={() =>
-											setStartWebsocket(true)
-										}
-										onLogout={() =>
-											setDisconnectWebsocket(true)
-										}
-									/>
-								</Switch>
-								<NotificationsContainer />
-								<FloatingCallWidget />
-								<GroupCallWidget />
-								{/* Clean implementation using CallManager */}
-							</Suspense>
-						</CallProvider>
-					</ContextProvider>
-				</Route>
-			</Switch>
+									}
+								/>
+								<Route
+									path={settings.urls.videoConference}
+									element={<VideoConference />}
+								/>
+								<Route
+									path={settings.urls.videoCall}
+									element={<VideoCall />}
+								/>
+
+								{/* Catch-all: the authenticated app owns its own
+								    routing and redirects to /login when signed out. */}
+								<Route
+									path="*"
+									element={
+										<AuthenticatedApp
+											onAppReady={() =>
+												setStartWebsocket(true)
+											}
+											onLogout={() =>
+												setDisconnectWebsocket(true)
+											}
+										/>
+									}
+								/>
+							</Routes>
+							<NotificationsContainer />
+							<FloatingCallWidget />
+							<GroupCallWidget />
+						</Suspense>
+					</MatrixClientProvider>
+				</CallProvider>
+			</ContextProvider>
 		</Router>
 	);
 };

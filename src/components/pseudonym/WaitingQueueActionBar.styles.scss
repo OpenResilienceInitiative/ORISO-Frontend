@@ -60,7 +60,7 @@
 	height: 75px;
 	padding: 0;
 	border-radius: 20px;
-	border: 2px solid #4c555f;
+	border: 2px solid var(--m3-secondary, #4c555f);
 	background: #f0edee;
 	box-shadow:
 		0 4px 8px 3px rgba(0, 0, 0, 0.15),
@@ -125,7 +125,7 @@
 	line-height: 20px;
 	font-weight: 500;
 	letter-spacing: 0.25px;
-	color: #4c555f;
+	color: var(--m3-secondary, #4c555f);
 	margin: 0;
 }
 
@@ -228,7 +228,7 @@
 	display: flex;
 	align-items: center;
 	gap: 12px;
-	color: #4c555f;
+	color: var(--m3-secondary, #4c555f);
 }
 
 .waitingQueueActionBar__insteadHint--desktop {
@@ -266,7 +266,7 @@
 	padding: 16px 24px;
 	border: none;
 	border-radius: 32px;
-	background: #4c555f;
+	background: var(--m3-secondary, #4c555f);
 	color: #ffffff;
 	cursor: pointer;
 	box-shadow:

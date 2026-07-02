@@ -1,21 +1,35 @@
 import '../../polyfill';
 import * as React from 'react';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import {
-	InputField,
-	InputFieldItem,
-	InputFieldLabelState
-} from '../inputField/InputField';
+	useCallback,
+	useContext,
+	useEffect,
+	useMemo,
+	useRef,
+	useState
+} from 'react';
 import { endpoints } from '../../resources/scripts/endpoints';
 import { Button, BUTTON_TYPES, ButtonItem } from '../button/Button';
 import { autoLogin, redirectToApp } from '../registration/autoLogin';
+import {
+	clearAuthSession,
+	CONSULTANT_LOGIN_BLOCKED_ERROR,
+	consumeConsultantLoginBlocked,
+	isConsultantAccessToken
+} from '../auth/consultantLoginBlock';
 import { Text } from '../text/Text';
 import { ReactComponent as PersonIcon } from '../../resources/img/icons/person.svg';
 import { ReactComponent as LockIcon } from '../../resources/img/icons/lock.svg';
 import { ReactComponent as VerifiedIcon } from '../../resources/img/icons/verified.svg';
+import { ReactComponent as ShowPasswordIcon } from '../../resources/img/icons/eye.svg';
+import { ReactComponent as HidePasswordIcon } from '../../resources/img/icons/eye-closed.svg';
 import { StageLayout } from '../stageLayout/StageLayout';
 import { apiGetUserData, FETCH_ERRORS } from '../../api';
-import { OTP_LENGTH, TWO_FACTOR_TYPES } from '../twoFactorAuth/TwoFactorAuth';
+import {
+	OTP_LENGTH,
+	TWO_FACTOR_TYPES,
+	TwoFactorType
+} from '../twoFactorAuth/twoFactorAuthConstants';
 import clsx from 'clsx';
 import {
 	AUTHORITIES,
@@ -52,8 +66,12 @@ import { budibaseLogout } from '../budibase/budibaseLogout';
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
 import { UrlParamsContext } from '../../globalState/provider/UrlParamsProvider';
 import { setTokens } from '../auth/auth';
+import { IconButton, InputAdornment } from '@mui/material';
+import { OrisoTextField } from '../form/OrisoTextField';
+import { orisoInputColors } from '../form/orisoInputDesign';
 
 const regexAccountDeletedError = /account disabled/i;
+type LoginFieldLabelState = typeof VALIDITY_INVALID | null;
 
 export const Login = () => {
 	type LoginMethod = 'password' | 'magicLink';
@@ -77,10 +95,12 @@ export const Login = () => {
 	const hasTenant = tenant != null;
 
 	const { consultant, loaded: isReady } = useContext(UrlParamsContext);
-	const [labelState, setLabelState] = useState<InputFieldLabelState>(null);
+	const [labelState, setLabelState] = useState<LoginFieldLabelState>(null);
 	const [activeLoginMethod] = useState<LoginMethod>('password');
 	const [username, setUsername] = useState<string>('');
 	const [password, setPassword] = useState<string>('');
+	const passwordInputRef = useRef<HTMLInputElement>(null);
+	const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 	const [magicLinkUsername, setMagicLinkUsername] = useState<string>('');
 	const [isButtonDisabled, setIsButtonDisabled] = useState<boolean>(
 		username.length > 0 && password.length > 0
@@ -132,53 +152,9 @@ export const Login = () => {
 	}, [featureToolsEnabled, gcid]);
 
 	const [pwResetOverlayActive, setPwResetOverlayActive] = useState(false);
-	const [twoFactorType, setTwoFactorType] = useState(TWO_FACTOR_TYPES.NONE);
-
-	const inputItemUsername: InputFieldItem = {
-		name: 'username',
-		class: 'login',
-		id: 'username',
-		type: 'text',
-		label: translate('login.user.label'),
-		content: username,
-		icon: <PersonIcon />,
-		...(labelState && { labelState })
-	};
-
-	const inputItemMagicLinkUsername: InputFieldItem = {
-		name: 'magicLinkUsername',
-		class: 'login',
-		id: 'magicLinkUsername',
-		type: 'text',
-		label: translate('login.magicLink.usernameLabel'),
-		content: magicLinkUsername,
-		icon: <PersonIcon />
-	};
-
-	const inputItemPassword: InputFieldItem = {
-		name: 'password',
-		id: 'passwordInput',
-		type: 'password',
-		label: translate('login.password.label'),
-		content: password,
-		icon: <LockIcon />,
-		...(labelState && { labelState })
-	};
-
-	const otpInputItem: InputFieldItem = {
-		content: otp,
-		id: 'otp',
-		infoText:
-			twoFactorType === TWO_FACTOR_TYPES.APP
-				? translate(`login.warning.failed.app.otp.missing`)
-				: '',
-		label: translate('twoFactorAuth.activate.otp.input.label.text'),
-		name: 'otp',
-		type: 'text',
-		icon: <VerifiedIcon />,
-		maxLength: OTP_LENGTH,
-		tabIndex: isOtpRequired ? 0 : -1
-	};
+	const [twoFactorType, setTwoFactorType] = useState<TwoFactorType>(
+		TWO_FACTOR_TYPES.NONE
+	);
 
 	const handleUsernameChange = (event) => {
 		setUsername(event.target.value);
@@ -223,6 +199,17 @@ export const Login = () => {
 		[locale]
 	);
 
+	const showConsultantLoginBlockedError = useCallback(() => {
+		setShowLoginError(translate('login.warning.failed.consultantBlocked'));
+		setLabelState(VALIDITY_INVALID);
+	}, [translate]);
+
+	useEffect(() => {
+		if (consumeConsultantLoginBlocked()) {
+			showConsultantLoginBlockedError();
+		}
+	}, [showConsultantLoginBlockedError]);
+
 	useEffect(() => {
 		deleteCookieByName('tenantId');
 	}, []);
@@ -242,7 +229,9 @@ export const Login = () => {
 				if (
 					hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
 				) {
-					patchedUserData['available'] = false;
+					clearAuthSession();
+					showConsultantLoginBlockedError();
+					throw new Error(CONSULTANT_LOGIN_BLOCKED_ERROR);
 				}
 
 				if (Object.keys(patchedUserData).length > 0) {
@@ -261,7 +250,14 @@ export const Login = () => {
 					return redirectToApp(gcid);
 				}
 			}),
-		[reloadUserData, locale, initLocale, consultant, gcid]
+		[
+			reloadUserData,
+			locale,
+			initLocale,
+			consultant,
+			gcid,
+			showConsultantLoginBlockedError
+		]
 	);
 
 	useEffect(() => {
@@ -284,6 +280,11 @@ export const Login = () => {
 
 		apiConsumeMagicLinkLogin(magicToken)
 			.then((tokenResponse) => {
+				if (isConsultantAccessToken(tokenResponse.access_token)) {
+					clearAuthSession();
+					throw new Error(CONSULTANT_LOGIN_BLOCKED_ERROR);
+				}
+
 				setTokens(
 					tokenResponse.access_token,
 					tokenResponse.expires_in,
@@ -294,15 +295,26 @@ export const Login = () => {
 				// Continue directly into authenticated app bootstrap.
 				return postLogin();
 			})
-			.catch(() => {
-				setShowLoginError(
-					translate('login.warning.failed.unauthorized.text')
-				);
+			.catch((error) => {
+				if (error?.message === CONSULTANT_LOGIN_BLOCKED_ERROR) {
+					showConsultantLoginBlockedError();
+				} else {
+					setShowLoginError(
+						translate('login.warning.failed.unauthorized.text')
+					);
+				}
 			})
 			.finally(() => {
 				setIsRequestInProgress(false);
 			});
-	}, [magicToken, isMagicTokenLoginAttempted, postLogin, translate, gcid]);
+	}, [
+		magicToken,
+		isMagicTokenLoginAttempted,
+		postLogin,
+		translate,
+		gcid,
+		showConsultantLoginBlockedError
+	]);
 
 	const tryLogin = (otp?: string) => {
 		setIsRequestInProgress(true);
@@ -337,6 +349,8 @@ export const Login = () => {
 						setTwoFactorType(error.options.data.otpType);
 						setIsOtpRequired(true);
 					}
+				} else if (error?.message === CONSULTANT_LOGIN_BLOCKED_ERROR) {
+					showConsultantLoginBlockedError();
 				}
 
 				setIsRequestInProgress(false);
@@ -500,26 +514,146 @@ export const Login = () => {
 									type="infoSmall"
 								/>
 							) : (
-								<InputField
-									item={
+								<OrisoTextField
+									id={
 										activeLoginMethod === 'password'
-											? inputItemUsername
-											: inputItemMagicLinkUsername
+											? 'username'
+											: 'magicLinkUsername'
 									}
-									inputHandle={
+									name={
+										activeLoginMethod === 'password'
+											? 'username'
+											: 'magicLinkUsername'
+									}
+									type="text"
+									value={
+										activeLoginMethod === 'password'
+											? username
+											: magicLinkUsername
+									}
+									onChange={
 										activeLoginMethod === 'password'
 											? handleUsernameChange
 											: handleMagicLinkUsernameChange
 									}
-									keyUpHandle={handleKeyUp}
+									onKeyUp={handleKeyUp}
+									placeholder={
+										activeLoginMethod === 'password'
+											? translate('login.user.label')
+											: translate(
+													'login.magicLink.usernameLabel'
+												)
+									}
+									error={
+										activeLoginMethod === 'password' &&
+										labelState === VALIDITY_INVALID
+									}
+									fullWidth
+									autoComplete="username"
+									inputProps={{
+										'aria-label':
+											activeLoginMethod === 'password'
+												? translate('login.user.label')
+												: translate(
+														'login.magicLink.usernameLabel'
+													)
+									}}
+									InputProps={{
+										startAdornment: (
+											<InputAdornment position="start">
+												<PersonIcon
+													color={
+														orisoInputColors.onSurfaceVariant
+													}
+												/>
+											</InputAdornment>
+										)
+									}}
+									sx={{ mb: '20px' }}
 								/>
 							)}
 							{activeLoginMethod === 'password' && (
 								<>
-									<InputField
-										item={inputItemPassword}
-										inputHandle={handlePasswordChange}
-										keyUpHandle={handleKeyUp}
+									<OrisoTextField
+										id="passwordInput"
+										name="password"
+										type={
+											isPasswordVisible
+												? 'text'
+												: 'password'
+										}
+										value={password}
+										onChange={handlePasswordChange}
+										onKeyUp={handleKeyUp}
+										placeholder={translate(
+											'login.password.label'
+										)}
+										error={labelState === VALIDITY_INVALID}
+										fullWidth
+										autoComplete="current-password"
+										inputRef={passwordInputRef}
+										inputProps={{
+											'aria-label': translate(
+												'login.password.label'
+											)
+										}}
+										InputProps={{
+											startAdornment: (
+												<InputAdornment position="start">
+													<LockIcon
+														color={
+															orisoInputColors.onSurfaceVariant
+														}
+													/>
+												</InputAdornment>
+											),
+											endAdornment: (
+												<InputAdornment position="end">
+													<IconButton
+														type="button"
+														onMouseDown={(event) =>
+															event.preventDefault()
+														}
+														onClick={() => {
+															setIsPasswordVisible(
+																(isVisible) =>
+																	!isVisible
+															);
+															window.requestAnimationFrame(
+																() =>
+																	passwordInputRef.current?.focus()
+															);
+														}}
+														edge="end"
+														aria-label={translate(
+															isPasswordVisible
+																? 'login.password.hide'
+																: 'login.password.show'
+														)}
+														title={translate(
+															isPasswordVisible
+																? 'login.password.hide'
+																: 'login.password.show'
+														)}
+													>
+														{isPasswordVisible ? (
+															<HidePasswordIcon
+																color={
+																	orisoInputColors.onSurfaceVariant
+																}
+															/>
+														) : (
+															<ShowPasswordIcon
+																color={
+																	orisoInputColors.onSurfaceVariant
+																}
+															/>
+														)}
+													</IconButton>
+												</InputAdornment>
+											)
+										}}
+										sx={{ mb: '20px' }}
 									/>
 									<div
 										className={clsx('loginForm__otp', {
@@ -537,10 +671,45 @@ export const Login = () => {
 												type="infoLargeAlternative"
 											/>
 										)}
-										<InputField
-											item={otpInputItem}
-											inputHandle={handleOtpChange}
-											keyUpHandle={handleKeyUp}
+										<OrisoTextField
+											id="otp"
+											name="otp"
+											type="text"
+											value={otp}
+											onChange={handleOtpChange}
+											onKeyUp={handleKeyUp}
+											placeholder={translate(
+												'twoFactorAuth.activate.otp.input.label.text'
+											)}
+											helperText={
+												twoFactorType ===
+												TWO_FACTOR_TYPES.APP
+													? translate(
+															`login.warning.failed.app.otp.missing`
+														)
+													: ''
+											}
+											fullWidth
+											inputProps={{
+												'aria-label': translate(
+													'twoFactorAuth.activate.otp.input.label.text'
+												),
+												'maxLength': OTP_LENGTH,
+												'tabIndex': isOtpRequired
+													? 0
+													: -1
+											}}
+											InputProps={{
+												startAdornment: (
+													<InputAdornment position="start">
+														<VerifiedIcon
+															color={
+																orisoInputColors.onSurfaceVariant
+															}
+														/>
+													</InputAdornment>
+												)
+											}}
 										/>
 										{twoFactorType ===
 											TWO_FACTOR_TYPES.EMAIL && (

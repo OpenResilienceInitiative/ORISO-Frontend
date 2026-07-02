@@ -23,11 +23,20 @@ export const isMatrixRoomEncrypted = (
 		isRoomEncrypted?: (roomId: string) => boolean;
 	};
 	const room = clientWithEncryptionState.getRoom?.(roomId);
+	const roomWithState = room as Room & {
+		currentState?: {
+			getStateEvents?: (eventType: string, stateKey?: string) => unknown;
+		};
+	};
+	const roomEncryptionEvent = roomWithState?.currentState?.getStateEvents?.(
+		'm.room.encryption',
+		''
+	);
 
 	return (
-		clientWithEncryptionState.isRoomEncrypted?.(roomId) ??
-		room?.hasEncryptionStateEvent?.() ??
-		false
+		!!clientWithEncryptionState.isRoomEncrypted?.(roomId) ||
+		!!room?.hasEncryptionStateEvent?.() ||
+		!!roomEncryptionEvent
 	);
 };
 

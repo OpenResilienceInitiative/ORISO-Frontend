@@ -1,4 +1,4 @@
-name: CI - Pull Request
+name: Frontend PR Validation
 
 on:
   pull_request:
@@ -8,25 +8,34 @@ env:
   ORG: openresilienceinitiative
 
 jobs:
-  build:
+  validate:
+    name: lint, type-check, test, build and Docker validation
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v6
+      - name: Checkout repository
+        uses: actions/checkout@v6
 
-    - name: Build frontend application
-      uses: ./.github/actions/node-build
-      with:
-        node_version: '18'
+      - name: Run frontend validation and build
+        uses: ./.github/actions/node-build
+        with:
+          node_version: '18'
 
-    - name: Run unit tests
-      shell: bash
-      run: npm run test:unit
+      - name: Run unit tests
+        shell: bash
+        run: npm run test:unit
 
-    - name: Create Docker image
-      uses: ./.github/actions/docker-build-push
-      with:
-        push_to_ghcr: false
-        image_name: oriso-frontend
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Docker build validation without publishing
+        uses: ./.github/actions/docker-build-push
+        with:
+          push_to_ghcr: false
+          image_name: oriso-frontend
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+# NOTE: the Playwright public-route smoke (`npm run test:smoke`) is intentionally
+# NOT a CI job. The app's bootstrap requires a reachable backend to render; CI
+# runners can't reach the dev cluster, so a browser smoke would need Cypress's
+# full API-mock layer (which is also why the Cypress suite isn't wired to CI).
+# The router migration's automated CI coverage is the vitest routing suite
+# (src/components/app/SessionsZone.routing.test.tsx, both roles) + the build/test
+# job above. Playwright stays a local smoke against the dev backend.

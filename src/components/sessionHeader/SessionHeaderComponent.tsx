@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useContext, useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Link, useHistory } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import clsx from 'clsx';
 import { handleNumericTranslation } from '../../utils/translate';
 import { mobileListView } from '../app/navigationHandler';
@@ -14,7 +14,6 @@ import {
 } from '../../api/apiGetSessionSupervisors';
 import { apiAddSessionSupervisor } from '../../api/apiAddSessionSupervisor';
 import { apiRemoveSessionSupervisor } from '../../api/apiRemoveSessionSupervisor';
-import { matrixClientService } from '../../services/matrixClientService';
 import {
 	apiGetAgencyConsultantList,
 	Consultant
@@ -81,6 +80,7 @@ import { ReactComponent as CloseCircle } from '../../resources/img/icons/close-c
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../message/messageConstants';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
+import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import {
 	ChatroomConversationIconType,
 	ChatroomMainInteractionIcon
@@ -103,7 +103,9 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	const sessionsDataContext = useContext(SessionsDataContext);
 	const { addNotification, addEventNotification } =
 		useContext(NotificationsContext);
-	const history = useHistory();
+	const { matrixClientService } = useMatrixClient();
+	const navigate = useNavigate();
+	const location = useLocation();
 	const consultingType = useConsultingType(activeSession.item.consultingType);
 	const topic = useTopic(
 		(activeSession.item.topic as TopicSessionInterface).id
@@ -254,6 +256,16 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
 	const getSessionListTab = () =>
 		`${sessionListTab ? `?sessionListTab=${sessionListTab}` : ''}`;
+	// Activity events point at the conversation, not a transient thread/embedded
+	// view — strip ephemeral query params from the saved action path.
+	const getCanonicalConversationActionPath = () => {
+		const params = new URLSearchParams(location.search);
+		params.delete('threadRootId');
+		params.delete('threadMessageId');
+		params.delete('embeddedNotifications');
+		const query = params.toString();
+		return `${location.pathname}${query ? `?${query}` : ''}`;
+	};
 	const { type, path: listPath } = useContext(SessionTypeContext);
 
 	useEffect(() => {
@@ -438,11 +450,12 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			)
 		});
 		try {
-			if (matrixClientService.sendMessage) {
-				await matrixClientService.sendMessage(
-					matrixRoomId,
-					`${SYSTEM_NOTIFICATION_PREFIX}${payload}`
-				);
+			const client = matrixClientService?.getClient?.();
+			if (client) {
+				await (client as any).sendMessage(matrixRoomId, {
+					msgtype: 'm.text',
+					body: `${SYSTEM_NOTIFICATION_PREFIX}${payload}`
+				});
 				return;
 			}
 			await apiSendMessage(
@@ -454,8 +467,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 				matrixRoomId,
 				null,
 				true,
-				'system',
-				null
+				'system'
 			);
 		} catch (_error) {
 			// Non-blocking: supervisor add succeeded; timeline system note can fail silently.
@@ -527,7 +539,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					'sessionHeader.supervisor.success.add.text',
 					'Der Supervisor wurde erfolgreich hinzugefügt.'
 				)} (${selectedSupervisorName} -> ${chatDisplayName})`,
-				actionPath: history.location.pathname + history.location.search,
+				actionPath: getCanonicalConversationActionPath(),
 				actionLabel: translate(
 					'notifications.center.open',
 					'Open chat'
@@ -610,7 +622,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					'sessionHeader.supervisor.success.remove.text',
 					'Der Supervisor wurde erfolgreich entfernt.'
 				)} (${supervisorToRemoveName} <- ${chatDisplayName})`,
-				actionPath: history.location.pathname + history.location.search,
+				actionPath: getCanonicalConversationActionPath(),
 				actionLabel: translate(
 					'notifications.center.open',
 					'Open chat'
@@ -761,7 +773,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			setIsEndChatOverlayActive(false);
 			setEndChatOverlayItem(null);
 			if (isConsultantUser && isAnonymousChat) {
-				history.push('/sessions/consultant/sessionView');
+				navigate(listPath + getSessionListTab());
 			} else {
 				window.location.href = appConfig.urls.toEntry;
 			}
@@ -873,7 +885,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 				category: 'system'
 			});
 			setTimeout(() => {
-				history.push(listPath + getSessionListTab());
+				navigate(listPath + getSessionListTab());
 			}, 2000);
 		} catch (error) {
 			setIsDeletingAccount(false);

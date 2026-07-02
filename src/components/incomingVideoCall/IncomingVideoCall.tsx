@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useContext } from 'react';
 import { isMobile } from 'react-device-detect';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Button, ButtonItem, BUTTON_TYPES } from '../button/Button';
 import { ReactComponent as CallOnIcon } from '../../resources/img/icons/call-on.svg';
 import { ReactComponent as CallOffIcon } from '../../resources/img/icons/call-off.svg';
@@ -15,7 +15,7 @@ import { ReactComponent as CloseIcon } from '../../resources/img/icons/x.svg';
 import { useTranslation } from 'react-i18next';
 import { useJoinVideoCall } from '../sessionHeader/GroupChatHeader/useJoinVideoCall';
 import { isMatrixRoom } from '../../utils/matrixRoomUtils';
-import { matrixClientService } from '../../services/matrixClientService';
+import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 
 export interface VideoCallRequestProps {
 	rcGroupId: string;
@@ -51,10 +51,11 @@ const getInitials = (text: string) => {
 
 export const IncomingVideoCall = (props: IncomingVideoCallProps) => {
 	const { t: translate } = useTranslation();
-	const history = useHistory();
+	const navigate = useNavigate();
 
 	const { removeNotification } = useContext(NotificationsContext);
 	const { joinVideoCall } = useJoinVideoCall();
+	const { matrixClientService } = useMatrixClient();
 	const decodedUsername = decodeUsername(props.videoCall.initiatorUsername);
 
 	const buttonAnswerCall: ButtonItem = {
@@ -133,8 +134,8 @@ export const IncomingVideoCall = (props: IncomingVideoCallProps) => {
 			// console.log('📞 Rejecting Matrix call in room:', props.videoCall.rcGroupId);
 
 			// Get Matrix client and find the active call
-			const client = matrixClientService.getClient();
-			if (client) {
+			if (matrixClientService) {
+				const client = matrixClientService.getClient();
 				const calls = client?.callEventHandler?.calls;
 
 				if (calls) {
@@ -174,7 +175,8 @@ export const IncomingVideoCall = (props: IncomingVideoCallProps) => {
 		decodedUsername,
 		props.videoCall.initiatorRcUserId,
 		props.videoCall.rcGroupId,
-		removeIncomingVideoCallNotification
+		removeIncomingVideoCallNotification,
+		matrixClientService
 	]);
 
 	return (
@@ -225,7 +227,7 @@ export const IncomingVideoCall = (props: IncomingVideoCallProps) => {
 						<button
 							onClick={() => {
 								handleRejectVideoCall();
-								history.push('/profile/hilfe/videoCall');
+								navigate('/profile/hilfe/videoCall');
 							}}
 							className="px--2 text--bold"
 							type="button"

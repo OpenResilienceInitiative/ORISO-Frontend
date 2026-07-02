@@ -1,5 +1,5 @@
 import { ConsultingTypeInterface } from './ConsultingTypeInterface';
-import { TWO_FACTOR_TYPES } from '../../components/twoFactorAuth/TwoFactorAuth';
+import { TWO_FACTOR_TYPES } from '../../components/twoFactorAuth/twoFactorAuthConstants';
 
 export interface UserDataInterface {
 	absenceMessage?: string;

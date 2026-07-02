@@ -51,6 +51,10 @@ const config: StorybookConfig = {
 
 		return {
 			...config,
+			output: {
+				...config.output,
+				publicPath: '/'
+			},
 			resolve: {
 				...config.resolve,
 				modules: [

@@ -20,9 +20,9 @@ import profileRoutes from './profile.routes';
 import {
 	Link,
 	NavLink,
-	Redirect,
+	Navigate,
 	Route,
-	Switch,
+	Routes,
 	useLocation,
 	generatePath
 } from 'react-router-dom';
@@ -279,7 +279,9 @@ export const Profile = () => {
 												to={generatePath(
 													`/profile${tab.url}`
 												)}
-												activeClassName="active"
+												className={({ isActive }) =>
+													isActive ? 'active' : ''
+												}
 												role="tab"
 												tabIndex={index === 0 ? 0 : -1}
 												ref={(el) => {
@@ -323,7 +325,7 @@ export const Profile = () => {
 			</div>
 			<div className="profile__innerWrapper">
 				<div>
-					<Switch>
+					<Routes>
 						{fromL ? (
 							// Render tabs for desktop
 							profileRoutes(
@@ -341,68 +343,75 @@ export const Profile = () => {
 								)
 								.map((tab) => (
 									<Route
-										path={`/profile${tab.url}`}
+										path={`${tab.url.replace(/^\//, '')}/*`}
 										key={`/profile${tab.url}`}
-									>
-										<div className="profile__content">
-											{tab.elements
-												.reduce(
-													(
-														acc: SingleComponentType[],
-														element
-													) =>
-														acc.concat(
-															isTabGroup(element)
-																? element.elements
-																: element
-														),
-													[]
-												)
-												.filter((element) =>
-													solveCondition(
-														element.condition,
-														userData,
-														consultingTypes ?? []
+										element={
+											<div className="profile__content">
+												{tab.elements
+													.reduce(
+														(
+															acc: SingleComponentType[],
+															element
+														) =>
+															acc.concat(
+																isTabGroup(
+																	element
+																)
+																	? element.elements
+																	: element
+															),
+														[]
 													)
-												)
-												.sort(
-													(a, b) =>
-														(a?.order || 99) -
-														(b?.order || 99)
-												)
-												.map((element, i) => (
-													<ProfileItem
-														key={i}
-														element={element}
-														index={i}
-													/>
-												))}
-										</div>
-									</Route>
+													.filter((element) =>
+														solveCondition(
+															element.condition,
+															userData,
+															consultingTypes ??
+																[]
+														)
+													)
+													.sort(
+														(a, b) =>
+															(a?.order || 99) -
+															(b?.order || 99)
+													)
+													.map((element, i) => (
+														<ProfileItem
+															key={i}
+															element={element}
+															index={i}
+														/>
+													))}
+											</div>
+										}
+									/>
 								))
 						) : (
-							// Render submenu for mobile
-							<Route
-								path={profileRoutes(
-									settings,
-									tenant,
-									selectableLocales,
-									isFirstVisit
-								)
-									.filter((tab) =>
-										solveTabConditions(
-											tab,
-											userData,
-											consultingTypes ?? []
-										)
+							// Render submenu for mobile (one route per tab base)
+							profileRoutes(
+								settings,
+								tenant,
+								selectableLocales,
+								isFirstVisit
+							)
+								.filter((tab) =>
+									solveTabConditions(
+										tab,
+										userData,
+										consultingTypes ?? []
 									)
-									.map((tab) => `/profile${tab.url}`)}
-								exact
-							>
-								<div className="profile__content">
-									<LinkMenu items={mobileMenu} />
-								</div>
-							</Route>
+								)
+								.map((tab) => (
+									<Route
+										path={tab.url.replace(/^\//, '')}
+										key={`menu/profile${tab.url}`}
+										element={
+											<div className="profile__content">
+												<LinkMenu items={mobileMenu} />
+											</div>
+										}
+									/>
+								))
 						)}
 
 						{!fromL &&
@@ -432,38 +441,52 @@ export const Profile = () => {
 										.map((element) =>
 											isTabGroup(element) ? (
 												<Route
-													path={`/profile${tab.url}${element.url}`}
+													path={`${tab.url.replace(
+														/^\//,
+														''
+													)}${element.url}`}
 													key={`/profile${tab.url}${element.url}`}
-												>
-													<div className="profile__content">
-														<ProfileGroup
-															group={element}
-															key={`/profile${tab.url}${element.url}`}
-														/>
-													</div>
-												</Route>
+													element={
+														<div className="profile__content">
+															<ProfileGroup
+																group={element}
+																key={`/profile${tab.url}${element.url}`}
+															/>
+														</div>
+													}
+												/>
 											) : (
 												<Route
-													path={`/profile${tab.url}`}
+													path={tab.url.replace(
+														/^\//,
+														''
+													)}
 													key={`/profile${tab.url}`}
-												>
-													<element.component />
-												</Route>
+													element={
+														<element.component />
+													}
+												/>
 											)
 										);
 								})}
 
-						<Redirect
-							to={`/profile${
-								profileRoutes(
-									settings,
-									tenant,
-									selectableLocales,
-									isFirstVisit
-								)[0].url
-							}`}
+						<Route
+							path="*"
+							element={
+								<Navigate
+									to={`/profile${
+										profileRoutes(
+											settings,
+											tenant,
+											selectableLocales,
+											isFirstVisit
+										)[0].url
+									}`}
+									replace
+								/>
+							}
 						/>
-					</Switch>
+					</Routes>
 				</div>
 				<div className="profile__footer">
 					<LegalLinks

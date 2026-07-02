@@ -7,7 +7,7 @@
  */
 
 import { MatrixCall } from 'matrix-js-sdk/lib/webrtc/call';
-import { matrixClientService } from './matrixClientService';
+import { getMatrixClientService } from './matrixClientRegistry';
 import {
 	assertMatrixRoomEncrypted,
 	buildMatrixRoomEncryptionInitialState
@@ -134,7 +134,8 @@ class CallManager {
 		} else {
 			// Auto-detect based on room member count
 			try {
-				const client = matrixClientService.getClient();
+				const matrixClientService = getMatrixClientService();
+				const client = matrixClientService?.getClient?.();
 				// console.log(`   Matrix client available: ${!!client}`);
 
 				if (client) {
@@ -189,7 +190,10 @@ class CallManager {
 		(async () => {
 			let elementCallRoomId: string | undefined = undefined;
 
-			assertMatrixRoomEncrypted(matrixClientService.getClient(), roomId);
+			assertMatrixRoomEncrypted(
+				getMatrixClientService()?.getClient(),
+				roomId
+			);
 
 			// For group calls, create a fresh dedicated Element Call room rather
 			// than re-using the session room. This matches the "direct" usage of
@@ -246,7 +250,8 @@ class CallManager {
 	 * use-case (notably the power levels for `org.matrix.msc3401.call.member`).
 	 */
 	private async createElementCallRoom(sourceRoomId: string): Promise<string> {
-		const client = matrixClientService.getClient();
+		const matrixClientService = getMatrixClientService();
+		const client = matrixClientService?.getClient?.();
 
 		if (!client) {
 			throw new Error(
@@ -314,7 +319,8 @@ class CallManager {
 	 */
 	private async ensureGroupCallPermissions(roomId: string): Promise<void> {
 		try {
-			const client = matrixClientService.getClient();
+			const matrixClientService = getMatrixClientService();
+			const client = matrixClientService?.getClient?.();
 
 			if (!client) {
 				// console.warn("⚠️  Matrix client not available, cannot adjust power levels for group call");
@@ -364,6 +370,7 @@ class CallManager {
 
 			// matrix-js-sdk signature: sendStateEvent(roomId, eventType, content, stateKey?)
 			// We must NOT pass the content as the stateKey (it becomes "[object Object]" in the URL).
+			// Custom ORISO event type — not in matrix-js-sdk typings
 			await client.sendStateEvent(
 				roomId,
 				'm.room.power_levels' as any,
@@ -392,7 +399,8 @@ class CallManager {
 		isGroupCall: boolean = false
 	): void {
 		try {
-			const client = matrixClientService.getClient();
+			const matrixClientService = getMatrixClientService();
+			const client = matrixClientService?.getClient?.();
 
 			if (!client) {
 				// console.error('❌ Matrix client not available to send call invite');
@@ -403,6 +411,7 @@ class CallManager {
 			// console.log('📤 Sending m.call.invite to Matrix room:', signallingRoomId);
 
 			// Send m.call.invite event
+			// Custom ORISO event type — not in matrix-js-sdk typings
 			client
 				.sendEvent(signallingRoomId, 'org.oriso.call.invite' as any, {
 					call_id: callId,
@@ -587,13 +596,15 @@ class CallManager {
 
 	private sendElementCallHangup(callData: CallData): void {
 		try {
-			const client = matrixClientService.getClient();
+			const matrixClientService = getMatrixClientService();
+			const client = matrixClientService?.getClient?.();
 			if (!client) return;
 			assertMatrixRoomEncrypted(
 				client,
 				callData.signalRoomId || callData.roomId
 			);
 
+			// Custom ORISO event type — not in matrix-js-sdk typings
 			client
 				.sendEvent(
 					callData.signalRoomId || callData.roomId,

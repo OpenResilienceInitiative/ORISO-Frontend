@@ -2,26 +2,26 @@ import * as React from 'react';
 import { useCallback } from 'react';
 import Switch from 'react-switch';
 import { useTranslation } from 'react-i18next';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Headline } from '../headline/Headline';
 import { Text } from '../text/Text';
 import { useLiveChatAvailable } from '../../utils/liveChatToggle';
 
 export const LiveChatAvailability = () => {
 	const { t: translate } = useTranslation();
-	const history = useHistory();
+	const navigate = useNavigate();
 	const [liveChatAvailable, setLiveChatAvailable] = useLiveChatAvailable();
 
 	const handleToggle = useCallback(
 		(checked: boolean) => {
 			setLiveChatAvailable(checked);
 			if (checked) {
-				history.push(
+				navigate(
 					'/sessions/consultant/sessionPreview?chip=liveChat'
 				);
 			}
 		},
-		[history, setLiveChatAvailable]
+		[navigate, setLiveChatAvailable]
 	);
 
 	return (

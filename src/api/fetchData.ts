@@ -38,6 +38,7 @@ export const FETCH_ERRORS = {
 	TIMEOUT: 'TIMEOUT',
 	UNAUTHORIZED: 'UNAUTHORIZED',
 	PRECONDITION_FAILED: 'PRECONDITION FAILED',
+	TOO_MANY_REQUESTS: 'TOO_MANY_REQUESTS',
 	X_REASON: 'X-Reason'
 };
 
@@ -51,6 +52,9 @@ export const X_REASON = {
 export const FETCH_SUCCESS = {
 	CONTENT: 'CONTENT'
 };
+
+const MATRIX_MIGRATION_DUMMY_RC_TOKEN = 'matrix-migration-dummy-token';
+const MATRIX_MIGRATION_DUMMY_RC_USER_ID = 'matrix-migration-dummy-user';
 
 const invalidateStaleAuthSession = () => {
 	removeAllCookies();
@@ -131,27 +135,29 @@ export const fetchData = ({
 		// but no longer exists after Matrix migration. Send dummy token.
 		const rcHeaders = rcValidation
 			? {
-					rcToken:
+					RCToken:
 						getValueFromCookie('rc_token') ||
-						'matrix-migration-dummy-token',
-					...(getValueFromCookie('rc_uid') && {
-						RCUserId: getValueFromCookie('rc_uid')
-					})
+						MATRIX_MIGRATION_DUMMY_RC_TOKEN,
+					RCUserId:
+						getValueFromCookie('rc_uid') ||
+						MATRIX_MIGRATION_DUMMY_RC_USER_ID
 				}
 			: null;
 
-		const localDevelopmentHeader =
-			isLocalDevelopment &&
-			process.env.REACT_APP_CSRF_WHITELIST_HEADER_PROPERTY
-				? {
-						[process.env.REACT_APP_CSRF_WHITELIST_HEADER_PROPERTY]:
-							csrfToken
-					}
-				: isLocalDevelopment
-					? {
-							'X-WHITELIST-HEADER': csrfToken
-						}
-					: null;
+		const localDevelopmentHeader = isLocalDevelopment
+			? {
+					'X-WHITELIST-HEADER': csrfToken,
+					...(process.env.REACT_APP_CSRF_WHITELIST_HEADER_PROPERTY &&
+					process.env.REACT_APP_CSRF_WHITELIST_HEADER_PROPERTY !==
+						'X-WHITELIST-HEADER'
+						? {
+								[process.env
+									.REACT_APP_CSRF_WHITELIST_HEADER_PROPERTY]:
+									csrfToken
+							}
+						: {})
+				}
+			: null;
 
 		const controller = new AbortController();
 		const timeoutMs = timeout ?? 30_000;
@@ -274,6 +280,13 @@ export const fetchData = ({
 					) {
 						reject(new Error(FETCH_ERRORS.PRECONDITION_FAILED));
 					} else if (
+						response.status === 429 &&
+						responseHandling.includes(
+							FETCH_ERRORS.TOO_MANY_REQUESTS
+						)
+					) {
+						reject(new Error(FETCH_ERRORS.TOO_MANY_REQUESTS));
+					} else if (
 						response.status === 500 &&
 						responseHandling.includes(FETCH_ERRORS.ABORTED)
 					) {
@@ -293,6 +306,8 @@ export const fetchData = ({
 							logout(true, appConfig.urls.toLogin);
 							reject(new Error(FETCH_ERRORS.UNAUTHORIZED));
 						}
+					} else {
+						reject(new Error(FETCH_ERRORS.CATCH_ALL));
 					}
 				} else if (response.status === 401 && isPublicAuthRoute()) {
 					recoverFromStaleAuthOnPublicRoute(

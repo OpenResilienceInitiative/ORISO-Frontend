@@ -7,6 +7,7 @@ export * from './apiUserDrafts';
 export * from './apiGetSessionSupervisors';
 export * from './apiAddSessionSupervisor';
 export * from './apiRemoveSessionSupervisor';
+export * from './apiCaseHandover';
 export * from './apiEnquiryAcceptance';
 export * from './apiGetAgenciesByTenant';
 export * from './apiGetAgencyConsultantList';

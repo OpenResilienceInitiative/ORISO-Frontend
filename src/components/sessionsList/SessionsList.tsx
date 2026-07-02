@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { useHistory, useLocation, useParams } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import {
 	getChatItemForSession,
 	getSessionType,
@@ -32,9 +32,14 @@ import {
 } from '../../globalState/interfaces';
 import { SessionListItemComponent } from '../sessionsListItem/SessionListItemComponent';
 import { SessionsListSkeleton } from '../sessionsListItem/SessionsListItemSkeleton';
+import { isAnonymousAskerCandidate } from './sessionClassification';
 import {
 	apiGetAskerSessionList,
+	apiGetCaseHandoverCandidates,
+	apiGetCaseHandoverReasons,
 	apiGetConsultantSessionList,
+	apiRequestCaseHandoverBatchAccess,
+	CaseHandoverReason,
 	FETCH_ERRORS,
 	SESSION_COUNT
 } from '../../api';
@@ -81,6 +86,7 @@ import {
 	DRAFTS_UPDATED_EVENT,
 	REMOTE_DRAFT_INDEX_SCOPE
 } from '../../services/draftStore';
+import { isCaseHandoverCandidate } from '../session/caseHandoverHelpers';
 
 function buildSessionSearchHaystack(
 	raw: ListItemInterface,
@@ -122,31 +128,17 @@ function isAnonymousAskerSession(
 	const registrationType =
 		(raw as any)?.session?.registrationType ??
 		(extended as any)?.item?.registrationType;
-	if (registrationType === 'ANONYMOUS') {
-		return true;
-	}
-
-	const candidates = [
-		(raw as any)?.user?.username,
-		(raw as any)?.session?.askerUserName,
-		(extended as any)?.item?.askerUserName
-	];
-	if (
-		candidates.some(
-			(u) =>
-				typeof u === 'string' &&
-				(u.startsWith('Anonymous-') || u.startsWith('anon_'))
-		)
-	) {
-		return true;
-	}
-
 	const postcode =
 		(raw as any)?.session?.postcode ?? (extended as any)?.item?.postcode;
-	if (postcode == null || postcode === '') {
-		return false;
-	}
-	return String(postcode) === '00000';
+	return isAnonymousAskerCandidate({
+		registrationType,
+		postcode,
+		usernames: [
+			(raw as any)?.user?.username,
+			(raw as any)?.session?.askerUserName,
+			(extended as any)?.item?.askerUserName
+		]
+	});
 }
 
 const getSessionIdentityValues = (
@@ -389,7 +381,7 @@ export const SessionsList = ({
 
 	const { rcGroupId: groupIdFromParam, sessionId: sessionIdFromParam } =
 		useParams<{ rcGroupId: string; sessionId: string }>();
-	const history = useHistory();
+	const navigate = useNavigate();
 	const location = useLocation();
 
 	const initialId = useUpdatingRef(groupIdFromParam || sessionIdFromParam);
@@ -422,7 +414,22 @@ export const SessionsList = ({
 	const [sessionToolbarSearch, setSessionToolbarSearch] = useState('');
 	const [sessionToolbarSelectedPeople, setSessionToolbarSelectedPeople] =
 		useState<string[]>([]);
+	const [caseHandoverCandidateSessions, setCaseHandoverCandidateSessions] =
+		useState<ListItemInterface[]>([]);
 	const [userDrafts, setUserDrafts] = useState<IUserDraftItem[]>([]);
+	const [caseHandoverBatchMode, setCaseHandoverBatchMode] = useState(false);
+	const [caseHandoverSelectedIds, setCaseHandoverSelectedIds] = useState<
+		number[]
+	>([]);
+	const [caseHandoverReasons, setCaseHandoverReasons] = useState<
+		CaseHandoverReason[]
+	>([]);
+	const [caseHandoverReasonCode, setCaseHandoverReasonCode] = useState('');
+	const [caseHandoverExplanation, setCaseHandoverExplanation] = useState('');
+	const [caseHandoverBatchSubmitting, setCaseHandoverBatchSubmitting] =
+		useState(false);
+	const [caseHandoverBatchSummary, setCaseHandoverBatchSummary] =
+		useState('');
 	/**
 	 * Initial chip selection:
 	 *   - enquiry list: honour ?chip=liveChat in the URL (sidebar toggle
@@ -432,7 +439,7 @@ export const SessionsList = ({
 	 */
 	const readChipFromUrl = (): SessionToolbarChipFilter | null => {
 		try {
-			const params = new URLSearchParams(window.location.search);
+			const params = new URLSearchParams(location.search);
 			return normalizeSessionToolbarChip(params.get('chip'));
 		} catch {
 			/* ignore */
@@ -805,17 +812,17 @@ export const SessionsList = ({
 								// Empty enquiry: go to write view
 								const targetPath = `${baseListPath}/write/${sessionId}`;
 								// console.log('🚀 Navigating to write view:', targetPath);
-								history.push(targetPath);
+								navigate(targetPath);
 							} else if (groupId && !isMatrixRoomId) {
 								// Original RocketChat behavior: navigate with groupId
 								const targetPath = `${baseListPath}/${groupId}/${sessionId}`;
 								// console.log('🚀 Navigating with groupId:', targetPath);
-								history.push(targetPath);
+								navigate(targetPath);
 							} else {
 								// MATRIX MIGRATION FIX: Navigate by session ID for Matrix rooms or sessions without groupId
 								const targetPath = `${baseListPath}/session/${sessionId}`;
 								// console.log('🚀 Navigating by session ID:', targetPath);
-								history.push(targetPath);
+								navigate(targetPath);
 							}
 						}
 					}
@@ -1346,6 +1353,9 @@ export const SessionsList = ({
 	const showConsultantToolbarActions =
 		type === SESSION_LIST_TYPES.MY_SESSION &&
 		!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
+	const showCaseHandoverBatchUi =
+		showConsultantToolbarActions &&
+		sessionListTab !== SESSION_LIST_TAB_ARCHIVE;
 
 	const showMySessionToolbar =
 		type === SESSION_LIST_TYPES.MY_SESSION ||
@@ -1357,6 +1367,42 @@ export const SessionsList = ({
 			),
 		[userDrafts]
 	);
+	useEffect(() => {
+		const query = sessionToolbarSearch.trim();
+
+		if (!showConsultantToolbarActions) {
+			setCaseHandoverCandidateSessions([]);
+			return;
+		}
+
+		if (!query) {
+			setCaseHandoverCandidateSessions([]);
+			return;
+		}
+
+		const controller = new AbortController();
+		const timeoutId = window.setTimeout(() => {
+			apiGetCaseHandoverCandidates({
+				query,
+				count: 50,
+				archived: sessionListTab === SESSION_LIST_TAB_ARCHIVE,
+				signal: controller.signal
+			})
+				.then(({ sessions: candidateSessions }) => {
+					setCaseHandoverCandidateSessions(candidateSessions || []);
+				})
+				.catch((error) => {
+					if (error?.message !== FETCH_ERRORS.ABORT) {
+						setCaseHandoverCandidateSessions([]);
+					}
+				});
+		}, 250);
+
+		return () => {
+			window.clearTimeout(timeoutId);
+			controller.abort();
+		};
+	}, [sessionListTab, sessionToolbarSearch, showConsultantToolbarActions]);
 	const loadUserDrafts = useCallback(async () => {
 		if (!showMySessionToolbar) {
 			setUserDrafts([]);
@@ -1395,14 +1441,30 @@ export const SessionsList = ({
 		};
 	}, [loadUserDrafts, showMySessionToolbar]);
 
+	useEffect(() => {
+		if (!caseHandoverBatchMode) {
+			return;
+		}
+		apiGetCaseHandoverReasons()
+			.then((items) => {
+				setCaseHandoverReasons(items || []);
+				setCaseHandoverReasonCode((current) =>
+					items?.some((item) => item.code === current) ? current : ''
+				);
+			})
+			.catch(() => {
+				setCaseHandoverReasons([]);
+			});
+	}, [caseHandoverBatchMode]);
+
 	const handleOpenDraft = useCallback(
 		(draft: IUserDraftItem) => {
 			if (!draft.actionPath) {
 				return;
 			}
-			history.push(withDraftScopeParam(draft.actionPath, draft.scopeKey));
+			navigate(withDraftScopeParam(draft.actionPath, draft.scopeKey));
 		},
-		[history]
+		[navigate]
 	);
 	const translateWithFallback = useCallback(
 		(key: string, fallback?: string) => {
@@ -1434,18 +1496,18 @@ export const SessionsList = ({
 			/* Route-driven chips (+ / archive) stay “selected” until URL changes.
 			   Leaving create-group-chat when using a filter avoids + staying dark. */
 			if (groupIdFromParam === 'createGroupChat') {
-				history.push({ pathname: baseListPath, search });
+				navigate({ pathname: baseListPath, search });
 				return;
 			}
 
 			/* Selecting a filter implies main list: drop archive tab so archive chip matches. */
 			if (location.search !== search) {
-				history.replace({ pathname: location.pathname, search });
+				navigate({ pathname: location.pathname, search }, { replace: true });
 			}
 		},
 		[
 			groupIdFromParam,
-			history,
+			navigate,
 			listPath,
 			location.pathname,
 			location.search,
@@ -1643,10 +1705,27 @@ export const SessionsList = ({
 			}
 		}
 	};
-	const finalSessionsList = React.useMemo(
-		() => (sessions || []).filter(filterSessions),
-		[filterSessions, sessions]
-	);
+	const finalSessionsList = React.useMemo(() => {
+		const baseSessions = (sessions || []).filter(filterSessions);
+		if (caseHandoverCandidateSessions.length === 0) {
+			return baseSessions;
+		}
+
+		const baseSessionIds = new Set(
+			baseSessions
+				.map((session) => session.session?.id || session.chat?.id)
+				.filter(Boolean)
+				.map(String)
+		);
+		const candidates = caseHandoverCandidateSessions
+			.filter(filterSessions)
+			.filter((session) => {
+				const id = session.session?.id || session.chat?.id;
+				return id !== undefined && !baseSessionIds.has(String(id));
+			});
+
+		return [...candidates, ...baseSessions];
+	}, [caseHandoverCandidateSessions, filterSessions, sessions]);
 	const sessionToolbarPairs = React.useMemo(
 		() =>
 			finalSessionsList.map((raw) => ({
@@ -1670,6 +1749,91 @@ export const SessionsList = ({
 	const sortedSessions = sessionToolbarFilteredPairs
 		.map(({ extended }) => extended)
 		.sort(sortSessions);
+	const caseHandoverSelectableIds = React.useMemo(
+		() =>
+			sortedSessions
+				.filter((session) =>
+					isCaseHandoverCandidate({
+						activeSession: session,
+						userData,
+						type,
+						sessionListTab
+					})
+				)
+				.map((session) => session.item.id)
+				.filter(
+					(sessionId): sessionId is number =>
+						typeof sessionId === 'number'
+				),
+		[sessionListTab, sortedSessions, type, userData]
+	);
+	const handleCaseHandoverSelect = useCallback((sessionId: number) => {
+		setCaseHandoverBatchSummary('');
+		setCaseHandoverSelectedIds((current) =>
+			current.includes(sessionId)
+				? current.filter((id) => id !== sessionId)
+				: [...current, sessionId]
+		);
+	}, []);
+	const handleCloseCaseHandoverBatch = useCallback(() => {
+		setCaseHandoverBatchMode(false);
+		setCaseHandoverSelectedIds([]);
+		setCaseHandoverExplanation('');
+		setCaseHandoverBatchSummary('');
+	}, []);
+	useEffect(() => {
+		if (
+			sessionListTab === SESSION_LIST_TAB_ARCHIVE &&
+			caseHandoverBatchMode
+		) {
+			handleCloseCaseHandoverBatch();
+		}
+	}, [caseHandoverBatchMode, handleCloseCaseHandoverBatch, sessionListTab]);
+	const handleSubmitCaseHandoverBatch = useCallback(() => {
+		if (
+			caseHandoverSelectedIds.length === 0 ||
+			!caseHandoverReasonCode ||
+			!caseHandoverExplanation.trim()
+		) {
+			setCaseHandoverBatchSummary(
+				translate('caseHandover.batch.required')
+			);
+			return;
+		}
+		setCaseHandoverBatchSubmitting(true);
+		setCaseHandoverBatchSummary('');
+		apiRequestCaseHandoverBatchAccess(
+			caseHandoverSelectedIds,
+			caseHandoverReasonCode,
+			caseHandoverExplanation
+		)
+			.then((results) => {
+				const successful = (results || []).filter(
+					(result) => result.success
+				).length;
+				const failed = (results || []).length - successful;
+				setCaseHandoverBatchSummary(
+					translate('caseHandover.batch.result', {
+						successful,
+						failed
+					})
+				);
+				setCaseHandoverSelectedIds([]);
+				void refetchSessionList();
+			})
+			.catch(() => {
+				setCaseHandoverBatchSummary(
+					translate('caseHandover.error.failed')
+				);
+			})
+			.finally(() => setCaseHandoverBatchSubmitting(false));
+	}, [
+		caseHandoverExplanation,
+		caseHandoverReasonCode,
+		caseHandoverSelectedIds,
+		refetchSessionList,
+		translate
+	]);
 	const unmatchedDrafts = React.useMemo(() => {
 		if (sessionToolbarChip !== 'drafts') {
 			return [];
@@ -1797,6 +1961,116 @@ export const SessionsList = ({
 					chipCounts={toolbarChipCounts}
 				/>
 			)}
+			{showCaseHandoverBatchUi && (
+				<div className="sessionsList__caseHandoverBatch">
+					{!caseHandoverBatchMode ? (
+						<button
+							type="button"
+							className="sessionsList__caseHandoverBatchToggle"
+							onClick={() => {
+								setCaseHandoverBatchMode(true);
+								setCaseHandoverBatchSummary('');
+							}}
+							disabled={caseHandoverSelectableIds.length === 0}
+						>
+							{translate('caseHandover.batch.start')}
+						</button>
+					) : (
+						<div className="sessionsList__caseHandoverBatchPanel">
+							<div className="sessionsList__caseHandoverBatchHeader">
+								<strong>
+									{translate('caseHandover.batch.title')}
+								</strong>
+								<span>
+									{translate(
+										'caseHandover.batch.selectedCount',
+										{
+											count: caseHandoverSelectedIds.length
+										}
+									)}
+								</span>
+							</div>
+							<div
+								className="sessionsList__caseHandoverBatchReasons"
+								role="radiogroup"
+								aria-label={translate(
+									'caseHandover.batch.title'
+								)}
+							>
+								{caseHandoverReasons.map((reason) => (
+									<label key={reason.code}>
+										<input
+											type="radio"
+											name="case-handover-batch-reason"
+											checked={
+												caseHandoverReasonCode ===
+												reason.code
+											}
+											onChange={() =>
+												setCaseHandoverReasonCode(
+													reason.code
+												)
+											}
+										/>
+										<span>{reason.label}</span>
+									</label>
+								))}
+							</div>
+							<textarea
+								className="sessionsList__caseHandoverBatchExplanation"
+								value={caseHandoverExplanation}
+								onChange={(event) =>
+									setCaseHandoverExplanation(
+										event.target.value
+									)
+								}
+								placeholder={translate(
+									'caseHandover.explanation.placeholder'
+								)}
+								aria-label={translate(
+									'caseHandover.explanation.placeholder'
+								)}
+							/>
+							<div className="sessionsList__caseHandoverBatchActions">
+								<button
+									type="button"
+									onClick={handleCloseCaseHandoverBatch}
+								>
+									{translate('caseHandover.batch.cancel')}
+								</button>
+								<button
+									type="button"
+									className="sessionsList__caseHandoverBatchSubmit"
+									onClick={handleSubmitCaseHandoverBatch}
+									disabled={
+										caseHandoverBatchSubmitting ||
+										caseHandoverSelectedIds.length === 0 ||
+										!caseHandoverReasonCode ||
+										!caseHandoverExplanation.trim()
+									}
+								>
+									{caseHandoverBatchSubmitting
+										? translate(
+												'caseHandover.submitSending'
+											)
+										: translate(
+												'caseHandover.batch.confirm'
+											)}
+								</button>
+							</div>
+							{caseHandoverBatchSummary && (
+								<div
+									className="sessionsList__caseHandoverBatchSummary"
+									role="status"
+									aria-live="polite"
+								>
+									{caseHandoverBatchSummary}
+								</div>
+							)}
+						</div>
+					)}
+				</div>
+			)}
 			<div className="sessionsList__scrollArea">
 				<div
 					className={clsx('sessionsList__scrollContainer', {
@@ -1839,6 +2113,15 @@ export const SessionsList = ({
 											isSessionListItemActive(
 												sortedSessions[index - 1]
 											)
+										}
+										caseHandoverBatchMode={
+											caseHandoverBatchMode
+										}
+										caseHandoverSelected={caseHandoverSelectedIds.includes(
+											activeSession.item.id
+										)}
+										onCaseHandoverSelect={
+											handleCaseHandoverSelect
 										}
 									/>
 								</ActiveSessionProvider>
@@ -1901,7 +2184,7 @@ Watch for inactive groups because there is no api endpoint
  */
 const useGroupWatcher = (isLoading: boolean) => {
 	const { sessions, dispatch } = useContext(SessionsDataContext);
-	const history = useHistory();
+	const location = useLocation();
 
 	const hasSessionChanged = useCallback(
 		(newSession) => {
@@ -1922,7 +2205,7 @@ const useGroupWatcher = (isLoading: boolean) => {
 			(s) => !!s.chat && !s.chat.subscribed
 		);
 
-		if ((history?.location?.state as any)?.isEditMode) return;
+		if ((location?.state as any)?.isEditMode) return;
 
 		if (inactiveGroupSessions.length <= 0) {
 			return;
@@ -1979,7 +2262,7 @@ const useGroupWatcher = (isLoading: boolean) => {
 			.catch((e) => {
 				// console.log(e);
 			});
-	}, [dispatch, hasSessionChanged, history?.location?.state, sessions]);
+	}, [dispatch, hasSessionChanged, location?.state, sessions]);
 
 	const [startWatcher, stopWatcher, isWatcherRunning] = useWatcher(
 		refreshInactiveGroupSessions,

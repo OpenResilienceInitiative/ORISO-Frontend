@@ -1,6 +1,6 @@
-import { InputAdornment, Typography } from '@mui/material';
+import { Box, InputAdornment, Typography } from '@mui/material';
 import * as React from 'react';
-import FmdGoodIcon from '@mui/icons-material/FmdGood';
+import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
 import {
 	useState,
 	FC,
@@ -10,9 +10,13 @@ import {
 	SetStateAction
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Input } from '../../../components/input/input';
 import { RegistrationContext, RegistrationData } from '../../../globalState';
 import { REGISTRATION_DATA_VALIDATION } from '../registrationDataValidation';
+import {
+	registrationMd3,
+	registrationScreenTitleSx
+} from '../registrationDesign/registrationDesign';
+import { OrisoTextField } from '../../form/OrisoTextField';
 
 export const ZipcodeInput: FC<{
 	onChange: Dispatch<SetStateAction<Partial<RegistrationData>>>;
@@ -32,41 +36,101 @@ export const ZipcodeInput: FC<{
 			});
 		} else {
 			setDisabledNextButton(true);
+			onChange({
+				zipcode: undefined,
+				agencyId: undefined,
+				agency: undefined
+			});
 		}
 	}, [setDisabledNextButton, onChange, value]);
 
 	return (
-		<>
-			<Typography variant="h3">
+		<Box
+			sx={{
+				maxWidth: '520px',
+				mx: 'auto',
+				display: 'flex',
+				flexDirection: 'column',
+				alignItems: 'center',
+				textAlign: 'center'
+			}}
+		>
+			<Box
+				sx={{
+					width: 64,
+					height: 64,
+					borderRadius: '50%',
+					bgcolor: registrationMd3.surfaceContainer,
+					display: 'flex',
+					alignItems: 'center',
+					justifyContent: 'center',
+					mb: 2.5
+				}}
+			>
+				<PlaceRoundedIcon
+					sx={{ fontSize: 32, color: registrationMd3.primary }}
+				/>
+			</Box>
+			<Typography
+				component="h1"
+				variant="h3"
+				sx={registrationScreenTitleSx}
+			>
 				{t('registration.zipcode.headline')}
 			</Typography>
-			<Typography sx={{ mt: '16px' }}>
-				{t('registration.zipcode.subline')}
-			</Typography>
-			<Typography>{t('registration.zipcode.bullet1')}</Typography>
-			<Typography>{t('registration.zipcode.bullet2')}</Typography>
-			<Input
-				inputProps={{
-					'data-cy': 'input-postal-code'
+			<Box
+				sx={{
+					width: '100%',
+					textAlign: 'left',
+					bgcolor: registrationMd3.surfaceContainer,
+					borderRadius: '16px',
+					px: 3,
+					py: 2.5,
+					mt: 3,
+					mb: 4
 				}}
-				autoComplete="postal-code"
-				inputMode="numeric"
-				inputType="text"
-				isValueValid={async (val: string) => val.length === 5}
-				startAdornment={
-					<InputAdornment position="start">
-						<FmdGoodIcon color="info" />
-					</InputAdornment>
-				}
-				onInputChange={(val: string) => {
-					const reg = /^\d*$/;
-					if (val.length < 6 && reg.test(val)) {
-						setValue(val);
-					}
-				}}
-				value={value}
-				label={t('registration.zipcode.label')}
-			/>
-		</>
+			>
+				<Typography sx={{ fontWeight: 700, mb: 1 }}>
+					{t('registration.zipcode.subline')}
+				</Typography>
+				<Typography sx={{ color: registrationMd3.onSurfaceVariant }}>
+					{t('registration.zipcode.bullet1')}
+				</Typography>
+				<Typography sx={{ color: registrationMd3.onSurfaceVariant }}>
+					{t('registration.zipcode.bullet2')}
+				</Typography>
+			</Box>
+			<Box sx={{ width: '100%', maxWidth: 340 }}>
+				<OrisoTextField
+					value={value}
+					onChange={(event) => {
+						const nextValue = event.target.value
+							.replace(/\D/g, '')
+							.slice(0, 5);
+						setValue(nextValue);
+					}}
+					placeholder={t('registration.zipcode.label')}
+					fullWidth
+					autoComplete="postal-code"
+					inputProps={{
+						'data-cy': 'input-postal-code',
+						'inputMode': 'numeric',
+						'maxLength': 5,
+						'aria-label': t('registration.zipcode.label')
+					}}
+					InputProps={{
+						startAdornment: (
+							<InputAdornment position="start">
+								<PlaceRoundedIcon
+									sx={{
+										color: registrationMd3.onSurfaceVariant
+									}}
+								/>
+							</InputAdornment>
+						)
+					}}
+				/>
+			</Box>
+		</Box>
 	);
 };

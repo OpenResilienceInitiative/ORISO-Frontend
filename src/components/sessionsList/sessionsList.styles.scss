@@ -8,6 +8,13 @@ $mobileNavigationHeight: 76px;
 $tabBarHeightMobile: 77px;
 $tabBarHeightDesktop: 53px;
 $sessionShellSurface: var(--m3-surface-container-high, #eae7e8);
+$caseHandoverAction: var(--m3-primary, $primary);
+$caseHandoverActionDisabled: var(--m3-surface-variant, #d8dde3);
+$caseHandoverTextMuted: var(--m3-on-surface-variant, #6d747d);
+$caseHandoverPanelBorder: var(--m3-primary-fixed-dim, #ffb4aa);
+$caseHandoverPanelSurface: var(--m3-surface, #ffffff);
+$caseHandoverFieldSurface: var(--m3-surface-container-low, #f5f3f4);
+$caseHandoverBodyText: var(--m3-on-surface, #30343a);
 
 .sessionsList,
 .session {
@@ -96,6 +103,120 @@ $sessionShellSurface: var(--m3-surface-container-high, #eae7e8);
 		position: relative;
 		display: flex;
 		flex-direction: column;
+	}
+
+	&__caseHandoverBatch {
+		padding: 0 24px 12px;
+		background: $sessionShellSurface;
+	}
+
+	&__caseHandoverBatchToggle {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-height: 40px;
+		padding: 0 18px;
+		border: 0;
+		border-radius: 20px;
+		background: $caseHandoverAction;
+		color: #ffffff;
+		font-weight: 700;
+		cursor: pointer;
+
+		&:disabled {
+			background: $caseHandoverActionDisabled;
+			color: $caseHandoverTextMuted;
+			cursor: not-allowed;
+		}
+	}
+
+	&__caseHandoverBatchPanel {
+		padding: 14px;
+		border-radius: 18px;
+		background: $caseHandoverPanelSurface;
+		border: 1px solid $caseHandoverPanelBorder;
+		box-shadow: 0 1px 3px rgba(45, 34, 33, 0.08);
+	}
+
+	&__caseHandoverBatchHeader {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px;
+		margin-bottom: 12px;
+		color: $caseHandoverBodyText;
+		font-size: 14px;
+	}
+
+	&__caseHandoverBatchReasons {
+		display: grid;
+		gap: 8px;
+		margin-bottom: 10px;
+
+		label {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			min-height: 34px;
+			padding: 6px 10px;
+			border-radius: 12px;
+			background: $caseHandoverFieldSurface;
+			font-size: 13px;
+			color: $caseHandoverBodyText;
+		}
+
+		input {
+			accent-color: $caseHandoverAction;
+		}
+	}
+
+	&__caseHandoverBatchExplanation {
+		display: block;
+		width: 100%;
+		min-height: 84px;
+		padding: 12px;
+		border: 1px solid $caseHandoverPanelBorder;
+		border-radius: 14px;
+		resize: vertical;
+		font: inherit;
+		font-size: 13px;
+		color: $caseHandoverBodyText;
+	}
+
+	&__caseHandoverBatchActions {
+		display: flex;
+		justify-content: flex-end;
+		gap: 8px;
+		margin-top: 12px;
+
+		button {
+			min-height: 36px;
+			padding: 0 14px;
+			border: 0;
+			border-radius: 18px;
+			background: $caseHandoverFieldSurface;
+			color: $caseHandoverTextMuted;
+			font-weight: 700;
+			cursor: pointer;
+		}
+
+		.sessionsList__caseHandoverBatchSubmit {
+			background: $caseHandoverAction;
+			color: #ffffff;
+
+			&:disabled {
+				background: $caseHandoverActionDisabled;
+				color: $caseHandoverTextMuted;
+				cursor: not-allowed;
+			}
+		}
+	}
+
+	&__caseHandoverBatchSummary {
+		margin-top: 10px;
+		color: $caseHandoverTextMuted;
+		font-size: 13px;
+		font-weight: 600;
 	}
 
 	&__selectWrapper {
@@ -237,7 +358,7 @@ $sessionShellSurface: var(--m3-surface-container-high, #eae7e8);
 	}
 
 	&__resizeHandle[data-dragging='true'] &__resizeHandlePill {
-		background: #ffdad5;
+		background: var(--m3-primary-fixed, #ffdad5);
 		transform: translateY(-50%) scaleX(1.12);
 	}
 
@@ -247,7 +368,7 @@ $sessionShellSurface: var(--m3-surface-container-high, #eae7e8);
 	}
 
 	&__resizeHandle:focus-visible &__resizeHandlePill {
-		box-shadow: 0 0 0 1px #ffdad5;
+		box-shadow: 0 0 0 1px var(--m3-primary-fixed, #ffdad5);
 	}
 
 	&__functionalityWrapper {
@@ -1133,8 +1254,8 @@ $sessionShellSurface: var(--m3-surface-container-high, #eae7e8);
 		width: 40px;
 		height: 40px;
 		border-radius: 999px;
-		background: #cc1e1c;
-		color: #ffe2de;
+		background: var(--m3-primary-container, #cc1e1c);
+		color: var(--m3-on-primary-container, #ffe2de);
 		font-size: 16px;
 		font-weight: 600;
 		display: inline-flex;

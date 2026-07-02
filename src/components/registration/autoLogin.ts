@@ -33,6 +33,11 @@ import {
 import { appConfig } from '../../utils/appConfig';
 import { parseJwt } from '../../utils/parseJWT';
 import { removeRocketChatMasterKeyFromLocalStorage } from '../sessionCookie/accessSessionLocalStorage';
+import {
+	clearAuthSession,
+	CONSULTANT_LOGIN_BLOCKED_ERROR,
+	isConsultantAccessToken
+} from '../auth/consultantLoginBlock';
 
 export interface LoginData {
 	data: {
@@ -139,11 +144,18 @@ export const autoLogin = async ({
 		}
 	}
 
+	const tokenPayload = parseJwt(keycloakRes.access_token);
+
+	if (isConsultantAccessToken(keycloakRes.access_token)) {
+		clearAuthSession();
+		throw new Error(CONSULTANT_LOGIN_BLOCKED_ERROR);
+	}
+
 	if (
 		appConfig.useTenantService &&
 		!appConfig.multitenancyWithSingleDomainEnabled
 	) {
-		const { tenantId } = parseJwt(keycloakRes.access_token);
+		const { tenantId } = tokenPayload;
 		if (tenantId !== autoLoginProps.tenantData.id) {
 			throw new Error(FETCH_ERRORS.UNAUTHORIZED);
 		}
@@ -161,9 +173,6 @@ export const autoLogin = async ({
 		const { getMatrixAccessToken, persistMatrixLoginData } = await import(
 			'../sessionCookie/getMatrixAccessToken'
 		);
-		const { matrixClientService } = await import(
-			'../../services/matrixClientService'
-		);
 
 		// console.log('🔷 Calling getMatrixAccessToken...');
 		const matrixLoginData = await getMatrixAccessToken(
@@ -171,19 +180,15 @@ export const autoLogin = async ({
 			password
 		);
 
-		// console.log('🔷 Matrix login successful! Data:', matrixLoginData);
-		// console.log('🔷 Matrix User ID:', matrixLoginData.userId);
-		// console.log('🔷 Matrix Access Token:', matrixLoginData.accessToken ? 'exists' : 'missing');
-
+		// Only persist the Matrix login data here. The actual Matrix client is
+		// created and registered exactly once by AuthenticatedApp on the
+		// authenticated load, so autoLogin must NOT spin up its own unregistered
+		// client (that produced a second orphan sync loop that was never torn
+		// down on logout).
 		persistMatrixLoginData(matrixLoginData);
-
-		matrixClientService.initializeClient(matrixLoginData);
 	} catch (error) {
-		// console.error('❌❌❌ Matrix client initialization FAILED! ❌❌❌');
-		// console.error('❌ Error:', error);
-		// console.error('❌ Error message:', (error as Error).message);
-		// console.error('❌ Error stack:', (error as Error).stack);
-		// Continue without Matrix client - chat will still work via REST API
+		// console.error('❌❌❌ Matrix login data retrieval FAILED! ❌❌❌');
+		// Continue without Matrix login data - chat will still work via REST API
 	}
 
 	// console.log('🔷🔷🔷 MATRIX LOGIN ATTEMPT COMPLETE 🔷🔷🔷');
@@ -192,6 +197,12 @@ export const autoLogin = async ({
 		await getBudibaseAccessToken(username, password, tenantSettings);
 	}
 };
+
+// Set in sessionStorage right before the post-registration redirect. The app
+// bootstrap (AuthenticatedApp) reads it once to play the welcome loading animation
+// that bridges the user-data/Matrix load, instead of the bare spinner, then clears it.
+export const POST_REGISTRATION_LOADER_KEY =
+	'onlineBeratung_postRegistrationLoader';
 
 export const redirectToApp = (gcid?: string) => {
 	const params = gcid ? `?gcid=${gcid}` : '';

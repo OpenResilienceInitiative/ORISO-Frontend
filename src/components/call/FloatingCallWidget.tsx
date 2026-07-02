@@ -6,10 +6,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { callManager, CallData } from '../../services/CallManager';
 import { matrixCallService } from '../../services/matrixCallService';
-import { matrixClientService } from '../../services/matrixClientService';
+import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import './FloatingCallWidget.scss';
 
 export const FloatingCallWidget: React.FC = () => {
+	const { matrixClientService } = useMatrixClient();
 	const [callData, setCallData] = useState<CallData | null>(null);
 	const [callDuration, setCallDuration] = useState(0);
 	const [isMuted, setIsMuted] = useState(false);
@@ -72,7 +73,7 @@ export const FloatingCallWidget: React.FC = () => {
 		// 🚫 SKIP if this is a group call - GroupCallWidget will handle it
 		if (callData.isGroup) return;
 
-		if (!matrixClientService.hasActiveClient()) return;
+		if (!matrixClientService) return;
 
 		const client = matrixClientService.getClient();
 		if (!client) return;
@@ -102,7 +103,7 @@ export const FloatingCallWidget: React.FC = () => {
 				setOtherUserInitial(initial);
 			}
 		}
-	}, [callData]);
+	}, [callData, matrixClientService]);
 
 	// Handle outgoing call initiation
 	useEffect(() => {
@@ -232,7 +233,7 @@ export const FloatingCallWidget: React.FC = () => {
 	const handleAnswer = async () => {
 		if (!callData || !callData.isIncoming) return;
 		try {
-			const client = matrixClientService.getClient();
+			const client = matrixClientService?.getClient();
 			if (!client) throw new Error('Matrix client not available');
 
 			const calls = client.callEventHandler?.calls;

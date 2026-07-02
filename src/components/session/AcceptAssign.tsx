@@ -7,7 +7,7 @@ import {
 	useRef,
 	useState
 } from 'react';
-import { useParams, useHistory } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { ActiveSessionContext } from '../../globalState';
 import './session.styles';
 import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
@@ -37,7 +37,7 @@ interface AcceptAssignProps {
 export const AcceptAssign = ({ assigned, btnLabel }: AcceptAssignProps) => {
 	const { t: translate } = useTranslation();
 	const { rcGroupId: groupIdFromParam } = useParams<{ rcGroupId: string }>();
-	const history = useHistory();
+	const navigate = useNavigate();
 
 	const { activeSession, reloadActiveSession } =
 		useContext(ActiveSessionContext);
@@ -116,11 +116,11 @@ export const AcceptAssign = ({ assigned, btnLabel }: AcceptAssignProps) => {
 
 	const redirectToAcceptedSession = useCallback(
 		(routing: { id: number; roomRouteId: string }) => {
-			history.push(
+			navigate(
 				`/sessions/consultant/sessionView/${routing.roomRouteId}/${routing.id}${getSessionListTab()}`
 			);
 		},
-		[getSessionListTab, history]
+		[getSessionListTab, navigate]
 	);
 
 	const updateActiveSession = useCallback(() => {
@@ -195,7 +195,7 @@ export const AcceptAssign = ({ assigned, btnLabel }: AcceptAssignProps) => {
 		switch (buttonFunction) {
 			case OVERLAY_FUNCTIONS.CLOSE:
 				setOverlayItem(null);
-				history.push(
+				navigate(
 					`/sessions/consultant/sessionPreview${getSessionListTab()}`
 				);
 				break;

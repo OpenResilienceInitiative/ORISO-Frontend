@@ -175,8 +175,8 @@ $inputSpacing: 32px;
 	}
 
 	&__participantsPlusIcon--open .createChat__participantsPlusBg {
-		fill: #646d78;
-		stroke: #646d78;
+		fill: var(--m3-secondary-container, #646d78);
+		stroke: var(--m3-secondary-container, #646d78);
 	}
 
 	&__participantsPlusIcon--open .createChat__participantsPlusPath {

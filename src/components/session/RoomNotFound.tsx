@@ -1,12 +1,12 @@
 import * as React from 'react';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button, BUTTON_TYPES } from '../button/Button';
 import { MessageSubmitInfo } from '../messageSubmitInterface/MessageSubmitInfo';
 
 export const RoomNotFound = () => {
 	const { t: translate } = useTranslation();
-	const history = useHistory();
+	const navigate = useNavigate();
 
 	return (
 		<div>
@@ -24,7 +24,7 @@ export const RoomNotFound = () => {
 						</p>
 						<Button
 							buttonHandle={() => {
-								history.go(0);
+								window.location.reload();
 							}}
 							item={{
 								type: BUTTON_TYPES.LINK_INLINE,

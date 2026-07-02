@@ -624,6 +624,9 @@
 		}
 	},
 	"registration": {
+		"selectedLabel": "Ausgewählt",
+		"noneSelected": "Bitte wähle ein Thema, um fortzufahren.",
+		"topicInstruction": "Wähle ein Thema aus.",
 		"agency": {
 			"preselected": {
 				"prefix": "Deine vorausgewählte Beratungsstelle: "
@@ -638,6 +641,18 @@
 					"subline": "Bitte versuche es mit einer anderen Postleitzahl oder besuche unsere Website, um eine Beratungsstelle in Deiner Nähe zu finden."
 				},
 				"languages": "Diese Beratungsstelle berät Dich auf:"
+			},
+			"details": {
+				"aboutLabel": "Zu dieser Beratungsstelle",
+				"addressLabel": "Adresse",
+				"hoursLabel": "Öffnungszeiten",
+				"languagesLabel": "Sprachen",
+				"less": "Weniger",
+				"more": "Mehr",
+				"navigate": "Navigation starten",
+				"openInMaps": "In Karte öffnen",
+				"phoneLabel": "Telefon",
+				"websiteLabel": "Webseite"
 			},
 			"summary": "Deine Beratungsstelle"
 		},
@@ -716,15 +731,34 @@
 			}
 		},
 		"account": {
+			"autoSuggest": "Daten automatisch vorschlagen",
+			"password": {
+				"criteria1": "min. 16 Zeichen",
+				"criteria2": "1x Zahl",
+				"criteria3": "1x Großbuchstabe",
+				"criteria4": "1x Kleinbuchstabe",
+				"criteria5": "1x Sonderzeichen",
+				"criteriaLabel": "Passwort-Anforderungen"
+			},
 			"repeatPassword": {
 				"error": "Dein Passwort ist nicht identisch",
 				"success": "Dein Passwort ist identisch"
 			},
+			"suggest": {
+				"all": "Alle 3 zusammen",
+				"allShort": "Alle 3",
+				"avatar": "Avatar",
+				"password": "Passwort",
+				"username": "Benutzername"
+			},
 			"subline": "Um Deine Anonymität zu schützen, raten wir Dir, nicht Deinen tatsächlichen Namen oder Initialen zu verwenden.",
 			"username": {
 				"error": {
-					"available": "Dein Benutzername ist zu kurz."
+					"tooShort": "Dein Benutzername ist zu kurz.",
+					"unavailable": "Dieser Benutzername ist bereits vergeben.",
+					"retry": "Wir konnten den Benutzernamen gerade nicht prüfen. Bitte versuche es erneut."
 				},
+				"info": "Anonymer Login-Name. Bitte keine echten Namen oder Initialen verwenden.",
 				"success": "Dein Benutzername ist geeignet."
 			}
 		},
@@ -1076,6 +1110,91 @@
 				"title": "Schütze nun Dein Konto"
 			},
 			"title": "Schütze Dein Konto"
+		},
+		"setupDialog": {
+			"action": {
+				"back": "Zurück",
+				"close": "Schließen",
+				"confirm": "Bestätigen",
+				"copied": "Schlüssel kopiert",
+				"copy": "Schlüssel kopieren",
+				"disable": "Authentifizierung deaktivieren",
+				"next": "Weiter"
+			},
+			"app": {
+				"connect": {
+					"copy": "Öffne die Authenticator-App und füge die Online-Beratung hinzu. Scanne den QR-Code oder gib den Schlüssel manuell ein.",
+					"manual": "Manueller Schlüssel",
+					"missingQr": "Der QR-Code ist gerade nicht verfügbar. Nutze den manuellen Schlüssel.",
+					"missingSecret": "Der Schlüssel ist gerade nicht verfügbar.",
+					"or": "oder",
+					"qrAlt": "QR-Code für die Authenticator-App"
+				},
+				"install": {
+					"android": "Download im Google Play Store",
+					"copy": "Installiere Google Authenticator oder Microsoft Authenticator auf Deinem Smartphone oder Tablet. Beide Apps unterstützen den Sicherheitscode für die Online-Beratung.",
+					"google": {
+						"android": "https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2",
+						"ios": "https://apps.apple.com/de/app/google-authenticator/id388497605",
+						"title": "Google Authenticator"
+					},
+					"ios": "Download im Apple App Store",
+					"microsoft": {
+						"android": "https://play.google.com/store/apps/details?id=com.azure.authenticator",
+						"ios": "https://apps.apple.com/de/app/microsoft-authenticator/id983156458",
+						"title": "Microsoft Authenticator"
+					}
+				},
+				"success": {
+					"title": "App-Authentifizierung erfolgreich eingerichtet."
+				},
+				"verify": {
+					"copy": "Gib den sechsstelligen Code aus der App ein, um die Einrichtung abzuschließen.",
+					"input": "Einmal-Code"
+				}
+			},
+			"decision": {
+				"app": "Sicher per App verbinden",
+				"copy": "Schütze Dein Konto mit einem zweiten Faktor. Die Authenticator-App ist die sicherere Variante; alternativ kannst Du Codes per E-Mail erhalten.",
+				"email": "E-Mail-Code verwenden (weniger sicher)"
+			},
+			"email": {
+				"connect": {
+					"copy": "Wir haben gerade eine E-Mail an {{email}} gesendet. Bitte gib den Code aus der E-Mail hier ein.",
+					"input": "Einmal-Code",
+					"resend": "Neuen Code senden",
+					"resendTitle": "Es hat nicht funktioniert?",
+					"sent": "Neuer Code gesendet."
+				},
+				"select": {
+					"copy": "Gib die E-Mail-Adresse ein, an die wir Deinen Sicherheitscode senden sollen.",
+					"hint": "Wenn Du die E-Mail-Adresse änderst, erhältst Du künftig auch Benachrichtigungen an diese Adresse.",
+					"input": "E-Mail-Adresse"
+				},
+				"success": {
+					"title": "E-Mail-Authentifizierung erfolgreich eingerichtet."
+				}
+			},
+			"error": {
+				"appSetup": "Die App-Authentifizierung konnte nicht eingerichtet werden. Bitte versuche es erneut.",
+				"disable": "Die Zwei-Faktor-Authentifizierung konnte nicht deaktiviert werden.",
+				"emailSend": "Der E-Mail-Code konnte nicht gesendet werden. Bitte versuche es erneut.",
+				"emailSetup": "Die E-Mail-Authentifizierung konnte nicht bestätigt werden. Bitte versuche es erneut.",
+				"invalidCode": "Bitte gib einen gültigen sechsstelligen Code ein.",
+				"invalidEmail": "Bitte gib eine gültige E-Mail-Adresse ein.",
+				"precondition": "Diese E-Mail-Adresse wird bereits verwendet. Bitte wähle eine andere Adresse oder nutze die App.",
+				"roleDisabled": "Die Zwei-Faktor-Authentifizierung ist für Deine Rolle derzeit nicht verfügbar.",
+				"tooManyRequests": "Es wurden zu viele Codes angefordert. Bitte warte kurz und versuche es erneut."
+			},
+			"step": {
+				"confirm": "Bestätigen",
+				"connect": "Verbinden",
+				"decide": "Entscheiden",
+				"install": "Installieren",
+				"select": "Auswählen",
+				"verify": "Prüfen"
+			},
+			"title": "Welche Verbindung möchtest Du verwenden?"
 		},
 		"subtitle": "Nutze neben Deinem Passwort einen zweiten Faktor für die Anmeldung. Dadurch wird Dein Konto zusätzlich abgesichert.",
 		"switch": {

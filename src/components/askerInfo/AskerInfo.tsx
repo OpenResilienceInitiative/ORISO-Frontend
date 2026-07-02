@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useContext, useEffect } from 'react';
-import { Link, useParams, useHistory } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { SESSION_LIST_TAB } from '../session/sessionHelpers';
 import { SessionTypeContext, ActiveSessionProvider } from '../../globalState';
 import { Loading } from '../app/Loading';
@@ -22,7 +22,7 @@ import { AskerInfoContent } from './AskerInfoContent';
 export const AskerInfo = () => {
 	const { t: translate } = useTranslation();
 	const { rcGroupId: groupIdFromParam } = useParams<{ rcGroupId: string }>();
-	const history = useHistory();
+	const navigate = useNavigate();
 
 	const { path: listPath } = useContext(SessionTypeContext);
 
@@ -35,11 +35,11 @@ export const AskerInfo = () => {
 			return;
 		}
 
-		history.push(
+		navigate(
 			listPath +
 				(sessionListTab ? `?sessionListTab=${sessionListTab}` : '')
 		);
-	}, [activeSession, history, listPath, ready, sessionListTab]);
+	}, [activeSession, navigate, listPath, ready, sessionListTab]);
 
 	const { fromL } = useResponsive();
 	useEffect(() => {

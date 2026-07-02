@@ -1,3 +1,5 @@
 # public directory
 *
 !.gitignore
+!anon-animals/
+!anon-animals/*.svg

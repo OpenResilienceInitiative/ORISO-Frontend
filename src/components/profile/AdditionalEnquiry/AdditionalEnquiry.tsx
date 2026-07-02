@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useContext, useState, useEffect } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { UserDataContext } from '../../../globalState';
 import { Button, ButtonItem, BUTTON_TYPES } from '../../button/Button';
 import {
@@ -27,7 +27,7 @@ import {
 
 export const AdditionalEnquiry: React.FC = () => {
 	const { t: translate } = useTranslation(['common', 'consultingTypes']);
-	const history = useHistory();
+	const navigate = useNavigate();
 
 	const { reloadUserData } = useContext(UserDataContext);
 	const [isButtonDisabled, setIsButtonDisabled] = useState(true);
@@ -188,7 +188,7 @@ export const AdditionalEnquiry: React.FC = () => {
 		if (buttonFunction === OVERLAY_FUNCTIONS.REDIRECT) {
 			mobileListView();
 			if (!sessionId) {
-				history.push({
+				navigate({
 					pathname: `/sessions/user/view`
 				});
 				return;
@@ -199,7 +199,7 @@ export const AdditionalEnquiry: React.FC = () => {
 			   the asker lands in a regular chat surface with the message
 			   composer, matching the behaviour of an enquiry picked from
 			   the list. */
-			history.push({
+			navigate({
 				pathname: `/sessions/user/view/session/${sessionId}`
 			});
 		} else if (buttonFunction === OVERLAY_FUNCTIONS.CLOSE) {

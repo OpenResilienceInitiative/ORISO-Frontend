@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { useState, useEffect, useRef } from 'react';
 import { InputBaseComponentProps, TextField, Typography } from '@mui/material';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useTranslation } from 'react-i18next';
 
 export interface InputProps {
@@ -96,6 +96,7 @@ export const Input = ({
 	};
 
 	const getMultipleCriteriaDesign = (criteria) => {
+		const isFulfilled = criteria.validation(value);
 		const iconWrapper = (icon) => (
 			<span
 				aria-hidden="true"
@@ -112,7 +113,15 @@ export const Input = ({
 				{icon}
 			</span>
 		);
-		const blurredIcon = wasBlurred ? (
+		const icon = isFulfilled ? (
+			<CheckCircleIcon
+				color="success"
+				sx={{
+					width: '16px',
+					height: '16px'
+				}}
+			/>
+		) : wasBlurred ? (
 			<CancelIcon
 				color="error"
 				sx={{
@@ -123,22 +132,12 @@ export const Input = ({
 		) : (
 			'•'
 		);
-		const icon = criteria.validation(value) ? (
-			<CheckCircleIcon
-				color="success"
-				sx={{
-					width: '16px',
-					height: '16px'
-				}}
-			/>
-		) : (
-			blurredIcon
-		);
-		const blurredColor = wasBlurred ? 'error.main' : 'info.light';
-		const color = criteria.validation(value)
+		const color = isFulfilled
 			? 'success.main'
-			: blurredColor;
-		return { icon: iconWrapper(icon), color };
+			: wasBlurred
+				? 'error.main'
+				: 'info.light';
+		return { isFulfilled, icon: iconWrapper(icon), color };
 	};
 	const inputRef = useRef<any>(null);
 	useEffect(() => {
@@ -262,23 +261,33 @@ export const Input = ({
 					{successMesssage}
 				</Typography>
 			)}
-			{multipleCriteria?.map((criteria) => (
-				<Typography
-					key={criteria.info}
-					variant="body2"
-					sx={{
-						mt: '8px',
-						fontSize: '16px',
-						lineHeight: '16px',
-						color: getMultipleCriteriaDesign(criteria).color,
-						display: 'flex',
-						alignItems: 'center'
-					}}
-				>
-					{getMultipleCriteriaDesign(criteria).icon}{' '}
-					{t(criteria.info)}
-				</Typography>
-			))}
+			{multipleCriteria?.map((criteria) => {
+				const { icon, color, isFulfilled } =
+					getMultipleCriteriaDesign(criteria);
+				return (
+					<Typography
+						key={criteria.info}
+						variant="body2"
+						sx={{
+							mt: '8px',
+							fontSize: '16px',
+							lineHeight: '16px',
+							color,
+							display: 'flex',
+							alignItems: 'center'
+						}}
+					>
+						{icon}
+						{isFulfilled && (
+							<span className="sr-only">
+								{t('registration.password.criteria.fulfilled')}
+								:{' '}
+							</span>
+						)}
+						<span>{t(criteria.info)}</span>
+					</Typography>
+				);
+			})}
 		</>
 	);
 };

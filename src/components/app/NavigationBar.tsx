@@ -7,7 +7,7 @@ import {
 	useRef,
 	useState
 } from 'react';
-import { Link, useLocation, useHistory } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
 	NavGlobeIcon,
 	NavGlobeIconHover,
@@ -125,7 +125,7 @@ export const NavigationBar = ({
 	}, [onLogout]);
 
 	const location = useLocation();
-	const history = useHistory();
+	const navigate = useNavigate();
 
 	/**
 	 * Toggle live-chat availability. When turning ON we push the consultant
@@ -138,9 +138,9 @@ export const NavigationBar = ({
 		const nextActive = !liveChatAvailable;
 		setLiveChatAvailable(nextActive);
 		if (nextActive) {
-			history.push('/sessions/consultant/sessionPreview?chip=liveChat');
+			navigate('/sessions/consultant/sessionPreview?chip=liveChat');
 		}
-	}, [liveChatAvailable, history]);
+	}, [liveChatAvailable, navigate]);
 
 	const figmaConsultantNav = true;
 	/**

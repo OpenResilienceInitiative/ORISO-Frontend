@@ -1,13 +1,14 @@
 import { useCallback, useContext } from 'react';
 import { ActiveSessionContext } from '../../../../globalState';
+import { useMatrixClient } from '../../../../globalState/context/MatrixClientContext';
 import {
 	getElementCallBaseUrl,
 	getMatrixHomeserverUrl
 } from '../../../../resources/scripts/runtimeConfig';
-import { matrixClientService } from '../../../../services/matrixClientService';
 
 export const useStartVideoCall = () => {
 	const { activeSession } = useContext(ActiveSessionContext);
+	const { matrixClientService } = useMatrixClient();
 
 	const onStartVideoCall = useCallback(() => {
 		// console.log("═══════════════════════════════════════════════");
@@ -34,7 +35,7 @@ export const useStartVideoCall = () => {
 			// console.log('📞 Opening Element Call for group video call...');
 
 			// Get Matrix homeserver from current client
-			const client = matrixClientService.getClient();
+			const client = matrixClientService?.getClient?.();
 			const homeserverUrl =
 				client?.getHomeserverUrl() || getMatrixHomeserverUrl();
 
@@ -82,7 +83,11 @@ export const useStartVideoCall = () => {
 			);
 		}
 		// console.log("═══════════════════════════════════════════════");
-	}, [activeSession.item.groupId, activeSession.item.matrixRoomId]);
+	}, [
+		activeSession.item.groupId,
+		activeSession.item.matrixRoomId,
+		matrixClientService
+	]);
 
 	return {
 		url: '', // No longer used

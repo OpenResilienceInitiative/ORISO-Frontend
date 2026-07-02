@@ -1,7 +1,18 @@
 import { callManager } from '../../src/services/CallManager';
-import { matrixClientService } from '../../src/services/matrixClientService';
+import { setMatrixClientServiceRef } from '../../src/services/matrixClientRegistry';
+import { MatrixClientService } from '../../src/services/matrixClientService';
+
+const matrixClientService = new MatrixClientService();
 
 describe('Matrix call room privacy', () => {
+	beforeEach(() => {
+		setMatrixClientServiceRef(matrixClientService);
+	});
+
+	afterEach(() => {
+		setMatrixClientServiceRef(null);
+	});
+
 	it('creates dedicated Element Call rooms with encryption enabled from the initial state', () => {
 		const createRoom = cy
 			.stub()

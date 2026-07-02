@@ -1,7 +1,7 @@
 import { Steps } from 'intro.js-react';
 import * as React from 'react';
 import { useContext, useCallback, useRef } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 import 'intro.js/introjs.css';
 import './walkthrough.styles.scss';
@@ -17,7 +17,7 @@ export const Walkthrough = () => {
 	const ref = useRef<any>(null);
 	const settings = useAppConfig();
 	const { userData, reloadUserData } = useContext(UserDataContext);
-	const history = useHistory();
+	const navigate = useNavigate();
 
 	const onChangeStep = useCallback(() => {
 		ref.current.props.steps.forEach((step, key) => {
@@ -66,7 +66,7 @@ export const Walkthrough = () => {
 			}}
 			onBeforeChange={(nextStepIndex) => {
 				if (stepsData[nextStepIndex]?.path) {
-					history.push(stepsData[nextStepIndex].path);
+					navigate(stepsData[nextStepIndex].path);
 					onChangeStep();
 				}
 			}}

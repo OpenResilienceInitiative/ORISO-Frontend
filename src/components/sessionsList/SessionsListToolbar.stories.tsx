@@ -119,10 +119,25 @@ export const GroupsFilterActive: Story = {
 };
 
 export const InternalGroupFilterActive: Story = {
+	parameters: {
+		docs: {
+			description: {
+				story:
+					'Shows the toolbar with the internal group chat filter chip selected.'
+			}
+		}
+	},
 	render: () => <SessionsListToolbarPlayground initialChip="internalGroup" />
 };
 
 export const SupervisionFilterActive: Story = {
+	parameters: {
+		docs: {
+			description: {
+				story: 'Shows the toolbar with the supervision filter chip selected.'
+			}
+		}
+	},
 	render: () => <SessionsListToolbarPlayground initialChip="supervision" />
 };
 

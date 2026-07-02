@@ -38,7 +38,7 @@ export const SUCCESS_ANCHOR = '#0a882f';
 export const CONTRAST_AA = 4.5;
 
 /** Tone recipes for the secondary/tertiary families (light scheme). */
-export const SECONDARY_TONES = { role: 41, container: 46, onContainer: 94 };
+export const SECONDARY_TONES = { role: 36, container: 46, onContainer: 94 };
 export const TERTIARY_TONES = { role: 40, container: 67, onContainer: 24 };
 
 /**

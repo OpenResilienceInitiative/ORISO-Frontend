@@ -45,6 +45,7 @@ interface TipTapComposerProps {
 	placeholder: string;
 	showToolbar: boolean;
 	readOnly: boolean;
+	maxLength?: number;
 	onChange: (value: string) => void;
 	onSubmitShortcut: () => void;
 	onSelectionSnippet?: (payload: HighlightSnippetPayload | null) => void;
@@ -204,6 +205,47 @@ const serializeBlocks = (node?: JSONContent): string => {
 const serializeEditorToMarkdown = (doc?: JSONContent): string =>
 	serializeBlocks(doc).trim();
 
+const getEditorPlainTextLength = (editorLike: any): number =>
+	(editorLike?.state?.doc?.textContent || '').length;
+
+const getSelectionTextLength = (
+	editorLike: any,
+	from: number,
+	to: number
+): number => (editorLike?.state?.doc?.textBetween(from, to, '') || '').length;
+
+const getAvailableInputLength = (
+	editorLike: any,
+	from: number,
+	to: number,
+	maxLength?: number
+): number | null => {
+	if (!maxLength) {
+		return null;
+	}
+
+	const currentLength = getEditorPlainTextLength(editorLike);
+	const selectedLength = getSelectionTextLength(editorLike, from, to);
+	return maxLength - (currentLength - selectedLength);
+};
+
+const enforceEditorMaxLength = (
+	editorLike: any,
+	maxLength?: number
+): boolean => {
+	if (!maxLength) {
+		return false;
+	}
+
+	const plainText = editorLike?.state?.doc?.textContent || '';
+	if (plainText.length <= maxLength) {
+		return false;
+	}
+
+	editorLike.commands.setContent(plainText.slice(0, maxLength));
+	return true;
+};
+
 const Superscript = Mark.create({
 	name: 'superscript',
 	parseHTML() {
@@ -234,6 +276,7 @@ export const TipTapComposer = forwardRef<
 			placeholder,
 			showToolbar,
 			readOnly,
+			maxLength,
 			onChange,
 			onSubmitShortcut,
 			onSelectionSnippet
@@ -270,6 +313,64 @@ export const TipTapComposer = forwardRef<
 			content: value || '',
 			editable: !readOnly,
 			editorProps: {
+				handleTextInput: (view, from, to, text) => {
+					const availableLength = getAvailableInputLength(
+						view,
+						from,
+						to,
+						maxLength
+					);
+					if (
+						availableLength === null ||
+						text.length <= availableLength
+					) {
+						return false;
+					}
+					if (availableLength <= 0) {
+						return true;
+					}
+					view.dispatch(
+						view.state.tr.insertText(
+							text.slice(0, availableLength),
+							from,
+							to
+						)
+					);
+					return true;
+				},
+				handlePaste: (view, event) => {
+					const pastedText =
+						event.clipboardData?.getData('text/plain') || '';
+					if (!pastedText) {
+						return false;
+					}
+
+					const { from, to } = view.state.selection;
+					const availableLength = getAvailableInputLength(
+						view,
+						from,
+						to,
+						maxLength
+					);
+					if (
+						availableLength === null ||
+						pastedText.length <= availableLength
+					) {
+						return false;
+					}
+
+					event.preventDefault();
+					if (availableLength > 0) {
+						view.dispatch(
+							view.state.tr.insertText(
+								pastedText.slice(0, availableLength),
+								from,
+								to
+							)
+						);
+					}
+					return true;
+				},
 				handleKeyDown: (_, event) => {
 					if (
 						event.key === 'Enter' &&
@@ -284,6 +385,10 @@ export const TipTapComposer = forwardRef<
 			},
 			onUpdate: ({ editor: currentEditor }) => {
 				if (isSyncingFromValue) {
+					return;
+				}
+				if (enforceEditorMaxLength(currentEditor, maxLength)) {
+					onChange(currentEditor.getHTML());
 					return;
 				}
 				onChange(currentEditor.getHTML());
@@ -337,6 +442,9 @@ export const TipTapComposer = forwardRef<
 			try {
 				editor.commands.setContent(normalizedValue);
 				editor.commands.setTextAlign('left');
+				if (enforceEditorMaxLength(editor, maxLength)) {
+					onChange(editor.getHTML());
+				}
 			} catch {
 				try {
 					editor.commands.clearContent();
@@ -345,7 +453,7 @@ export const TipTapComposer = forwardRef<
 				}
 			}
 			setTimeout(() => setIsSyncingFromValue(false), 0);
-		}, [editor, value]);
+		}, [editor, maxLength, onChange, value]);
 
 		useImperativeHandle(ref, () => ({
 			clear: () => {

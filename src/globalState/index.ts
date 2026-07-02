@@ -22,4 +22,5 @@ export * from './provider/ModalProvider';
 export * from './provider/TopicsProvider';
 
 export * from './context/LocaleContext';
+export * from './context/ModalContext';
 export * from './context/UserDataContext';

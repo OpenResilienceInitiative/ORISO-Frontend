@@ -45,12 +45,13 @@ export const useDraftMessage = (
 	const draftSaveTimeout = useRef(null);
 	const loadVersionRef = useRef(0);
 	const latestMessageRef = useRef<string>('');
+	const skipNextCleanupSaveRef = useRef(false);
 
 	const { keyID, key, encrypted, ready } = useE2EE(activeSession.rid);
 
 	const [loaded, setLoaded] = useState(false);
 	const [messageRes, setMessageRes] = useState<IUserDraftItem>(null);
-	const [message, setMessage] = useState(null);
+	const [, setMessage] = useState(null);
 	const threadKey = options?.threadRootId || 'main';
 	const roomScopeKey = activeSession?.rid
 		? `scope:${String(activeSession.rid)}|thread:${threadKey}`
@@ -208,6 +209,7 @@ export const useDraftMessage = (
 		if (!isE2eeEnabled || !encrypted) {
 			if (decryptLoadVersion === loadVersionRef.current) {
 				setEditorWithDraftString(messageRes.text);
+				latestMessageRef.current = messageRes.text || '';
 				setMessage(messageRes.text);
 				setLoaded(true);
 			}
@@ -225,6 +227,7 @@ export const useDraftMessage = (
 					return;
 				}
 				setEditorWithDraftString(msg);
+				latestMessageRef.current = msg || '';
 				setMessage(msg);
 				setLoaded(true);
 			});
@@ -308,6 +311,7 @@ export const useDraftMessage = (
 				return;
 			}
 
+			skipNextCleanupSaveRef.current = false;
 			latestMessageRef.current = markdownMessage || '';
 			setMessage(markdownMessage);
 
@@ -322,16 +326,26 @@ export const useDraftMessage = (
 		[loaded, saveDraftMessage]
 	);
 
+	const saveDraftMessageRef = useRef(saveDraftMessage);
+
+	useEffect(() => {
+		saveDraftMessageRef.current = saveDraftMessage;
+	}, [saveDraftMessage]);
+
 	const onLogout = useCallback(
 		async (args) => {
 			if (draftSaveTimeout.current) {
 				clearTimeout(draftSaveTimeout.current);
 				draftSaveTimeout.current = null;
 			}
-			await saveDraftMessage(latestMessageRef.current || message);
+			if (skipNextCleanupSaveRef.current) {
+				skipNextCleanupSaveRef.current = false;
+				return args;
+			}
+			await saveDraftMessage(latestMessageRef.current);
 			return args;
 		},
-		[message, saveDraftMessage]
+		[saveDraftMessage]
 	);
 
 	useEffect(() => {
@@ -348,16 +362,28 @@ export const useDraftMessage = (
 				clearTimeout(draftSaveTimeout.current);
 				draftSaveTimeout.current = null;
 			}
-			saveDraftMessage(latestMessageRef.current || message).then();
+			if (skipNextCleanupSaveRef.current) {
+				skipNextCleanupSaveRef.current = false;
+				return;
+			}
+			saveDraftMessageRef.current(latestMessageRef.current).then();
 		};
-	}, [message, saveDraftMessage]);
+	}, []);
 
-	const clearDraftMessage = useCallback(() => {
+	const clearDraftMessage = useCallback(async () => {
+		if (draftSaveTimeout.current) {
+			clearTimeout(draftSaveTimeout.current);
+			draftSaveTimeout.current = null;
+		}
+		latestMessageRef.current = '';
+		skipNextCleanupSaveRef.current = true;
 		if (canUseRemoteApi) {
-			scopeKeysToTry.forEach((scopeKey) => {
-				void apiDeleteUserDraft(scopeKey);
-			});
-			void updateRemoteDraftIndex('');
+			await Promise.allSettled([
+				...scopeKeysToTry.map((scopeKey) =>
+					apiDeleteUserDraft(scopeKey)
+				),
+				updateRemoteDraftIndex('')
+			]);
 		}
 		setMessage('');
 	}, [canUseRemoteApi, scopeKeysToTry, updateRemoteDraftIndex]);

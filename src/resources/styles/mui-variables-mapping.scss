@@ -10,13 +10,22 @@
 	--font-weight-medium: #{$font-weight-medium};
 	--font-weight-bold: #{$font-weight-bold};
 	--white: #{$white};
-	--primary: #{$primary};
-	--m3-primary: #{$primary};
-	--m3-primary-hover: #{$hover-primary};
+
+	// Brand family = OrisoScheme engine output for the Caritas seed #a5000a
+	// (computeOrisoPalette({primary: '#a5000a'}).tokens — matches the Figma
+	// M3/sys/light set). `primary` is the darker foundational brand colour;
+	// `primary-hover` is the engine's auto-derived darker active shade (locked,
+	// not tenant-editable); `primary-container` stays the brighter #cc1e1c.
+	--primary: #a5000a;
+	--m3-primary: #a5000a;
+	--m3-primary-hover: #820006;
 	--m3-on-primary: #{$white};
-	--m3-primary-container: #{$primary};
-	--m3-on-primary-container: #{$white};
+	--m3-primary-container: #cc1e1c;
+	--m3-on-primary-container: #ffe2de;
 	--m3-primary-fixed: #ffdad5;
+
+	// Darker accent ring for visible keyboard focus on light brand surfaces.
+	--m3-primary-outline: #930008;
 	--m3-primary-fixed-dim: #ffb4aa;
 	--m3-on-primary-fixed: #410001;
 	--m3-on-primary-fixed-variant: #930008;
@@ -43,7 +52,7 @@
 	--m3-outline-variant: #c4c7c8;
 	--m3-error: #{$form-error};
 	--m3-success: #{$form-success};
-	--oriso-app-action: #{$primary};
+	--oriso-app-action: #a5000a;
 	--oriso-lottie-accent-color: var(--oriso-primary-fixed-dim, #ffb4aa);
 	--oriso-lottie-secondary-color: var(--m3-secondary-container, #646d78);
 	--background-light: #{$background-light};

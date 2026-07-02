@@ -32,13 +32,15 @@ import {
 	UserDataContext,
 	SessionTypeContext,
 	useTenant,
-	ActiveSessionContext
+	ActiveSessionContext,
+	LocaleContext
 } from '../../globalState';
+import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import {
 	STATUS_EMPTY,
 	STATUS_ENQUIRY
 } from '../../globalState/interfaces/SessionsDataInterface';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import * as Tone from 'tone';
 import { RocketChatUsersOfRoomProvider } from '../../globalState/provider/RocketChatUsersOfRoomProvider';
 import './session.styles';
@@ -66,7 +68,6 @@ import { apiPatchNotificationActiveView } from '../../api/apiPatchNotificationAc
 import { apiPatchUserData } from '../../api/apiPatchUserData';
 import { apiGetUserData } from '../../api/apiGetUserData';
 import { apiGetAnonymousEnquiryDetails } from '../../api/apiGetAnonymousEnquiryDetails';
-import { matrixClientService } from '../../services/matrixClientService';
 import {
 	bindAnonymousChatUnloadCleanup,
 	ensureAnonymousChatPreLogoutCleanup,
@@ -398,9 +399,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const { userData, setUserData } = useContext(UserDataContext);
 	const { addEventNotification } = useContext(NotificationsContext);
 	const { type } = useContext(SessionTypeContext);
+	const { locale } = useContext(LocaleContext);
 	const legalLinks = useContext(LegalLinksContext);
+	const { matrixClientService } = useMatrixClient();
 	const location = useLocation();
-	const history = useHistory();
+	const navigate = useNavigate();
 	const isEmbeddedNotificationsView =
 		new URLSearchParams(location.search).get('embeddedNotifications') ===
 		'1';
@@ -563,11 +566,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		[activeSession.item.id]
 	);
 	const [currentPseudonym, setCurrentPseudonym] = useState<Pseudonym>(() =>
-		generatePseudonym()
+		generatePseudonym(locale)
 	);
 	const handleRegeneratePseudonym = useCallback(() => {
-		setCurrentPseudonym((prev) => regeneratePseudonym(prev));
-	}, []);
+		setCurrentPseudonym((prev) => regeneratePseudonym(prev, locale));
+	}, [locale]);
 	const [robotSequenceVisibleCount, setRobotSequenceVisibleCount] =
 		useState(0);
 	const timerRef = useRef<number | null>(null);
@@ -1672,11 +1675,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 			if (isMatrixSession) {
 				const matrixClientUserId = matrixClientService
-					.getClient()
+					?.getClient?.()
 					?.getUserId?.();
 				const myMatrixUserId =
 					matrixClientUserId ||
-					localStorage.getItem('matrix_user_id') ||
 					(typeof document !== 'undefined' &&
 						document.cookie
 							.split('; ')
@@ -1701,7 +1703,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		[
 			activeSession.rid,
 			activeSession.item?.matrixRoomId,
-			userData?.userName
+			userData?.userName,
+			matrixClientService
 		]
 	);
 
@@ -4290,7 +4293,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 														onClick={(event) => {
 															event.preventDefault();
 															event.stopPropagation();
-															history.push(
+															navigate(
 																'/registration'
 															);
 														}}
@@ -4878,7 +4881,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					<MuiButton
 						fullWidth
 						variant="contained"
-						onClick={() => history.push('/registration')}
+						onClick={() => navigate('/registration')}
 						sx={{
 							mb: '8px',
 							borderRadius: '999px',
@@ -4912,7 +4915,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						<MuiButton
 							fullWidth
 							variant="outlined"
-							onClick={() => history.goBack()}
+							onClick={() => navigate(-1)}
 							startIcon={<ArrowBackIcon />}
 							sx={{
 								borderRadius: '24px',
