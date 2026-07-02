@@ -46,5 +46,4 @@ export * from './apiTwoFactorAuth';
 export * from './apiUpdatePassword';
 export * from './apiMatrixUpload';
 export * from './fetchData';
-export * from './fetchRCData';
 export * from './apiDeleteUserFromRoom';

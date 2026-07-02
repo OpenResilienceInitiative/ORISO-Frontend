@@ -99,47 +99,12 @@ export const endpoints = {
 	myMessagesBase:
 		userServiceOrigin + '/service/conversations/consultants/mymessages/',
 	passwordReset: userServiceOrigin + '/service/users/password/change',
-	rc: {
-		accessToken: apiUrl + '/api/v1/login',
-		e2ee: {
-			fetchMyKeys: apiUrl + '/api/v1/e2e.fetchMyKeys',
-			getUsersOfRoomWithoutKey:
-				apiUrl + '/api/v1/e2e.getUsersOfRoomWithoutKey',
-			setRoomKeyID: apiUrl + '/api/v1/e2e.setRoomKeyID',
-			setUserPublicAndPrivateKeys:
-				apiUrl + '/api/v1/e2e.setUserPublicAndPrivateKeys',
-			updateGroupKey: apiUrl + '/api/v1/e2e.updateGroupKey'
-		},
-		groups: {
-			members: apiUrl + '/api/v1/groups.members'
-		},
-		logout: apiUrl + '/api/v1/logout',
-		rooms: {
-			get: apiUrl + '/api/v1/rooms.get',
-			info: apiUrl + '/api/v1/rooms.info'
-		},
-		settings: {
-			public: apiUrl + '/api/v1/settings.public'
-		},
-		subscriptions: {
-			get: apiUrl + '/api/v1/subscriptions.get',
-			read: apiUrl + '/api/v1/subscriptions.read',
-			getOne: apiUrl + '/api/v1/subscriptions.getOne'
-		},
-		users: {
-			getStatus: apiUrl + '/api/v1/users.getStatus',
-			info: apiUrl + '/api/v1/users.info',
-			resetE2EKey: apiUrl + '/api/v1/users.resetE2EKey'
-		}
-	},
 	registerAsker: userServiceOrigin + '/service/users/askers/new',
 	baseUserService: userServiceOrigin + '/service/users',
 	//todo delete?
 	registerAskerNewConsultingType:
 		userServiceOrigin + '/service/users/askers/consultingType/new',
 	rejectVideoCall: apiUrl + '/service/videocalls/reject',
-	rocketchatAccessToken: apiUrl + '/api/v1/login',
-	rocketchatLogout: apiUrl + '/api/v1/logout',
 	sendAliasMessage: userServiceOrigin + '/service/messages/aliasonly/new',
 	sendMessage: userServiceOrigin + '/service/messages/new',
 	sessionBase: userServiceOrigin + '/service/users/sessions',

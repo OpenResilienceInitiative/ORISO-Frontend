@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { createContext, useCallback, useEffect, useState } from 'react';
 import {
-	apiRocketChatSettingsPublic,
+	apiMatrixSettingsPublic,
 	SETTING_E2E_ENABLE,
 	SETTING_FILEUPLOAD_MAXFILESIZE,
 	SETTING_HIDE_SYSTEM_MESSAGES,
@@ -9,7 +9,7 @@ import {
 	SETTING_MESSAGE_MAXALLOWEDSIZE,
 	SETTING_MESSAGE_SHOWDELETEDSTATUS,
 	TSetting
-} from '../../api/apiRocketChatSettingsPublic';
+} from '../../api/apiMatrixSettingsPublic';
 import { getFallbackPublicSettings } from '../../api/apiMatrixSettingsPublic';
 
 const SETTINGS_TO_FETCH = [
@@ -21,30 +21,34 @@ const SETTINGS_TO_FETCH = [
 	SETTING_HIDE_SYSTEM_MESSAGES
 ];
 
-type RocketChatGlobalSettingsContextProps = {
+type ServerSettingsContextProps = {
 	settings: TSetting[];
 	settingsReady: boolean;
 	getSetting: <T extends TSetting>(id: T['_id']) => T | null;
 };
 
-export const RocketChatGlobalSettingsContext =
-	createContext<RocketChatGlobalSettingsContextProps>(null);
+export const ServerSettingsContext =
+	createContext<ServerSettingsContextProps>(null);
 
-export const RocketChatGlobalSettingsProvider = (props) => {
+/**
+ * Chat-related server settings (message size, deletability, ...).
+ * Resolved from the backend server settings with static fallbacks —
+ * no Rocket.Chat involved.
+ */
+export const ServerSettingsProvider = (props) => {
 	const [settings, setSettings] = useState<TSetting[]>([]);
 	const [settingsReady, setSettingsReady] = useState(false);
 
 	useEffect(() => {
 		let cancelled = false;
 
-		apiRocketChatSettingsPublic(SETTINGS_TO_FETCH)
+		apiMatrixSettingsPublic(SETTINGS_TO_FETCH)
 			.then((res) => {
 				if (!cancelled) {
 					setSettings(res.settings);
 				}
 			})
-			.catch((error) => {
-				console.error('Failed to load public settings:', error);
+			.catch(() => {
 				if (!cancelled) {
 					setSettings(getFallbackPublicSettings(SETTINGS_TO_FETCH));
 				}
@@ -68,10 +72,10 @@ export const RocketChatGlobalSettingsProvider = (props) => {
 	);
 
 	return (
-		<RocketChatGlobalSettingsContext.Provider
+		<ServerSettingsContext.Provider
 			value={{ settings, settingsReady, getSetting }}
 		>
 			{props.children}
-		</RocketChatGlobalSettingsContext.Provider>
+		</ServerSettingsContext.Provider>
 	);
 };

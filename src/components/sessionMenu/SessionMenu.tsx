@@ -61,7 +61,7 @@ import { useSearchParam } from '../../hooks/useSearchParams';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { useTranslation } from 'react-i18next';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
-import { RocketChatUsersOfRoomContext } from '../../globalState/provider/RocketChatUsersOfRoomProvider';
+import { useMatrixRoomUsers } from '../../hooks/useMatrixRoomUsers';
 import LegalLinks from '../legalLinks/LegalLinks';
 
 type TReducedSessionItemInterface = Omit<
@@ -817,8 +817,7 @@ const SessionMenuFlyoutGroup = ({
 	const { t: translate } = useTranslation();
 	const { userData } = useContext(UserDataContext);
 	const { activeSession } = useContext(ActiveSessionContext);
-	// MATRIX MIGRATION: RocketChatUsersOfRoomContext may be null for Matrix rooms, use fallback
-	const rcUsersContext = useContext(RocketChatUsersOfRoomContext);
+	const rcUsersContext = useMatrixRoomUsers();
 	const moderators = rcUsersContext?.moderators || [];
 
 	return (

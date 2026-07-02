@@ -16,7 +16,6 @@ import {
 	mobileUserProfileView
 } from '../app/navigationHandler';
 import { useTranslation } from 'react-i18next';
-import { RocketChatUsersOfRoomProvider } from '../../globalState/provider/RocketChatUsersOfRoomProvider';
 import { AskerInfoContent } from './AskerInfoContent';
 
 export const AskerInfo = () => {
@@ -58,56 +57,52 @@ export const AskerInfo = () => {
 
 	return (
 		<ActiveSessionProvider activeSession={activeSession}>
-			<RocketChatUsersOfRoomProvider>
-				<div className="askerInfo__wrapper">
-					<div className="askerInfo__header">
-						<div className="askerInfo__header__wrapper">
-							<Link
-								to={`${listPath}/${
-									activeSession.item.groupId
-								}/${activeSession.item.id}${
-									sessionListTab
-										? `?sessionListTab=${sessionListTab}`
-										: ''
-								}`}
-								className="askerInfo__header__backButton"
-							>
-								<BackIcon
-									aria-label={translate('app.back')}
-									title={translate('app.back')}
-								/>
-							</Link>
-							<h3 className="askerInfo__header__title">
-								{translate('profile.header.title')}
-							</h3>
-						</div>
-						<div className="askerInfo__header__metaInfo">
-							<p className="askerInfo__header__username askerInfo__header__username--withBackButton">
-								{activeSession.user.username}
-							</p>
-						</div>
+			<div className="askerInfo__wrapper">
+				<div className="askerInfo__header">
+					<div className="askerInfo__header__wrapper">
+						<Link
+							to={`${listPath}/${
+								activeSession.item.groupId
+							}/${activeSession.item.id}${
+								sessionListTab
+									? `?sessionListTab=${sessionListTab}`
+									: ''
+							}`}
+							className="askerInfo__header__backButton"
+						>
+							<BackIcon
+								aria-label={translate('app.back')}
+								title={translate('app.back')}
+							/>
+						</Link>
+						<h3 className="askerInfo__header__title">
+							{translate('profile.header.title')}
+						</h3>
 					</div>
-					<div className="askerInfo__innerWrapper">
-						<div className="askerInfo__user">
-							<div className="askerInfo__icon">
-								<PersonIcon
-									className="askerInfo__icon--user"
-									title={translate(
-										'profile.data.profileIcon'
-									)}
-									aria-label={translate(
-										'profile.data.profileIcon'
-									)}
-								/>
-							</div>
-							<h2>{activeSession.user.username}</h2>
-						</div>
-						<div className="askerInfo__content">
-							<AskerInfoContent />
-						</div>
+					<div className="askerInfo__header__metaInfo">
+						<p className="askerInfo__header__username askerInfo__header__username--withBackButton">
+							{activeSession.user.username}
+						</p>
 					</div>
 				</div>
-			</RocketChatUsersOfRoomProvider>
+				<div className="askerInfo__innerWrapper">
+					<div className="askerInfo__user">
+						<div className="askerInfo__icon">
+							<PersonIcon
+								className="askerInfo__icon--user"
+								title={translate('profile.data.profileIcon')}
+								aria-label={translate(
+									'profile.data.profileIcon'
+								)}
+							/>
+						</div>
+						<h2>{activeSession.user.username}</h2>
+					</div>
+					<div className="askerInfo__content">
+						<AskerInfoContent />
+					</div>
+				</div>
+			</div>
 		</ActiveSessionProvider>
 	);
 };
