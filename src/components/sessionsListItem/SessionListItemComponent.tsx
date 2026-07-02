@@ -140,6 +140,8 @@ export const SessionListItemComponent = ({
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
 	const [caseHandoverStatus, setCaseHandoverStatus] =
 		useState<CaseHandoverStatus | null>(null);
+	const [caseHandoverStatusLoading, setCaseHandoverStatusLoading] =
+		useState(false);
 
 	useEffect(() => {
 		setFlyoutOpen(false);
@@ -260,11 +262,13 @@ export const SessionListItemComponent = ({
 		let cancelled = false;
 		if (!caseHandoverAccessControlled || !activeSession?.item?.id) {
 			setCaseHandoverStatus(null);
+			setCaseHandoverStatusLoading(false);
 			return () => {
 				cancelled = true;
 			};
 		}
 
+		setCaseHandoverStatusLoading(true);
 		apiGetCaseHandoverStatus(activeSession.item.id)
 			.then((status) => {
 				if (!cancelled) {
@@ -280,6 +284,11 @@ export const SessionListItemComponent = ({
 						clientConsentRequired: false,
 						auditOutcome: 'ACCESS_DENIED'
 					});
+				}
+			})
+			.finally(() => {
+				if (!cancelled) {
+					setCaseHandoverStatusLoading(false);
 				}
 			});
 
@@ -308,8 +317,13 @@ export const SessionListItemComponent = ({
 	const canBatchSelectCaseHandover =
 		caseHandoverBatchMode &&
 		caseHandoverCandidate &&
+		!caseHandoverStatusLoading &&
 		!caseHandoverStatus?.canViewContent &&
 		!isCaseHandoverPending(caseHandoverStatus?.status);
+	const canShowCaseHandoverAction =
+		caseHandoverCandidate &&
+		!caseHandoverStatusLoading &&
+		!caseHandoverStatus?.canViewContent;
 
 	const displayLastMessage = useMemo(() => {
 		if (!plainTextLastMessage) return plainTextLastMessage;
@@ -1452,8 +1466,7 @@ export const SessionListItemComponent = ({
 								listItemAskerRcId={activeSession.item.askerRcId}
 							/>
 						)}
-					{caseHandoverCandidate &&
-					!caseHandoverStatus?.canViewContent ? (
+					{canShowCaseHandoverAction ? (
 						<button
 							type="button"
 							className={clsx(

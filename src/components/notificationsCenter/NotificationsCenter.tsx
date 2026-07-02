@@ -107,6 +107,14 @@ const resolveCaseHandoverRequestId = (item: any): string | null => {
 	return params.get('caseHandoverRequestId');
 };
 
+const parseNumericId = (value?: string | null): number | null => {
+	if (!value || !/^\d+$/.test(value)) {
+		return null;
+	}
+	const parsed = Number(value);
+	return Number.isSafeInteger(parsed) ? parsed : null;
+};
+
 const toNonEmbeddedPath = (path?: string | null): string | null => {
 	if (!path) {
 		return null;
@@ -243,11 +251,19 @@ export const NotificationsCenter = () => {
 		() => resolveCaseHandoverRequestId(selectedNotification),
 		[selectedNotification]
 	);
+	const selectedSessionNumericId = useMemo(
+		() => parseNumericId(selectedSessionId),
+		[selectedSessionId]
+	);
+	const selectedCaseHandoverRequestNumericId = useMemo(
+		() => parseNumericId(selectedCaseHandoverRequestId),
+		[selectedCaseHandoverRequestId]
+	);
 	const canShowChatPreview = selectedNotificationCategory === 'message';
 	const canDecideCaseHandoverConsent =
 		selectedNotification?.eventType === 'case.handover.consent.requested' &&
-		Boolean(selectedSessionId) &&
-		Boolean(selectedCaseHandoverRequestId);
+		selectedSessionNumericId !== null &&
+		selectedCaseHandoverRequestNumericId !== null;
 	const getDefaultSessionsPath = useCallback(
 		() =>
 			hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
@@ -357,16 +373,17 @@ export const NotificationsCenter = () => {
 	const handleCaseHandoverConsentDecision = (approved: boolean) => {
 		if (
 			!selectedNotification ||
-			!selectedSessionId ||
-			!selectedCaseHandoverRequestId
+			selectedSessionNumericId === null ||
+			selectedCaseHandoverRequestNumericId === null
 		) {
+			setCaseHandoverConsentError(translate('caseHandover.error.failed'));
 			return;
 		}
 		setCaseHandoverConsentSubmitting(true);
 		setCaseHandoverConsentError('');
 		apiDecideCaseHandoverClientConsent(
-			Number(selectedSessionId),
-			Number(selectedCaseHandoverRequestId),
+			selectedSessionNumericId,
+			selectedCaseHandoverRequestNumericId,
 			approved
 		)
 			.then(() => {
