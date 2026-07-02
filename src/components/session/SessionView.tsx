@@ -3,7 +3,6 @@ import { useCallback, useContext, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Loading } from '../app/Loading';
 import {
-	RocketChatContext,
 	SessionTypeContext,
 	UserDataContext,
 	ActiveSessionProvider
@@ -41,7 +40,6 @@ export const SessionView = () => {
 
 	const { type, path: listPath } = useContext(SessionTypeContext);
 	const { userData } = useContext(UserDataContext);
-	const { ready: rcReady } = useContext(RocketChatContext);
 
 	const [loading, setLoading] = useState(true);
 	const [readonly, setReadonly] = useState(true);
@@ -113,7 +111,6 @@ export const SessionView = () => {
 	}, [checkMutedUserForThisSession]);
 
 	useEffect(() => {
-		// MATRIX MIGRATION: Don't wait for RocketChat to be ready
 		// console.log('🔥 SessionView useEffect:', {
 		// activeSessionReady,
 		// hasActiveSession: !!activeSession,
