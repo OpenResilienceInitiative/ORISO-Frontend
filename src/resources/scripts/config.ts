@@ -52,7 +52,6 @@ export const config: AppConfigInterface = {
 	useTenantService: true,
 	useApiClusterSettings: true, // Feature flag to enable the cluster use the cluster settings instead of the config file
 	mainTenantSubdomainForSingleDomainMultitenancy: 'app',
-	attachmentEncryption: true, // Legacy flag for attachment encryption (removed with the Rocket.Chat E2EE teardown)
 
 	requestCollector: {
 		limit: 10,

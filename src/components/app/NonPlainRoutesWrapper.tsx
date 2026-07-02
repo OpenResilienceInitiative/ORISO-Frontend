@@ -1,35 +1,17 @@
-import React, { useContext, useEffect } from 'react';
-import { E2EEContext } from '../../globalState';
-import { loadKeysFromRocketChat } from '../../utils/encryptionHelpers';
+import React from 'react';
 
 interface NonPlainRoutesWrapperProps {
 	children?: React.ReactNode;
 	logoutHandler?: Function;
 }
 
+/**
+ * Historical wrapper that restored legacy Rocket.Chat E2EE keys on
+ * non-plain routes. RC E2EE is removed (Matrix-only app), so this is a
+ * plain pass-through kept only to avoid touching the route tree.
+ */
 export const NonPlainRoutesWrapper: React.FC<NonPlainRoutesWrapperProps> = ({
-	children,
-	logoutHandler
+	children
 }) => {
-	const { reloadPrivateKey } = useContext(E2EEContext);
-
-	useEffect(() => {
-		const tryToLoadKeys = async () => {
-			if (
-				sessionStorage.getItem('public_key') &&
-				sessionStorage.getItem('private_key')
-			)
-				return;
-
-			try {
-				// DISABLED: await loadKeysFromRocketChat(); // RocketChat removed
-				reloadPrivateKey();
-			} catch {
-				logoutHandler();
-			}
-		};
-		tryToLoadKeys();
-	}, [reloadPrivateKey, logoutHandler]);
-
 	return <>{children}</>;
 };

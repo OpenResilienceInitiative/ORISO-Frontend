@@ -14,12 +14,6 @@ import './passwordReset.styles';
 import { Headline } from '../headline/Headline';
 import { Text } from '../text/Text';
 import {
-	encryptPrivateKey,
-	deriveMasterKeyFromPassword
-} from '../../utils/encryptionHelpers';
-import { apiRocketChatSetUserKeys } from '../../api/apiRocketChatSetUserKeys';
-import { getValueFromCookie } from '../sessionCookie/accessSessionCookie';
-import {
 	AUTHORITIES,
 	hasUserAuthority,
 	UserDataContext
@@ -31,7 +25,6 @@ import { apiUpdatePasswordAppointments } from '../../api/apiUpdatePasswordAppoin
 
 export const PasswordReset = () => {
 	const { t: translate } = useTranslation();
-	const rcUid = getValueFromCookie('rc_uid');
 	const { featureAppointmentsEnabled } = getTenantSettings();
 	const { userData } = useContext(UserDataContext);
 	const isConsultant = hasUserAuthority(
@@ -54,7 +47,6 @@ export const PasswordReset = () => {
 		useState('');
 	const [confirmPasswordSuccessMessage, setConfirmPasswordSuccessMessage] =
 		useState('');
-	const [hasMasterKeyError, setHasMasterKeyError] = useState(false);
 
 	const [overlayActive, setOverlayActive] = useState(false);
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
@@ -136,7 +128,6 @@ export const PasswordReset = () => {
 
 	const handleInputOldChange = (event) => {
 		setOldPasswordErrorMessage('');
-		setHasMasterKeyError(false);
 		setOldPassword(event.target.value);
 	};
 
@@ -163,11 +154,9 @@ export const PasswordReset = () => {
 				translate('profile.functions.password.reset.secure')
 			);
 			setNewPasswordErrorMessage('');
-			setHasMasterKeyError(false);
 		} else {
 			setNewPasswordSuccessMessage('');
 			setNewPasswordErrorMessage('');
-			setHasMasterKeyError(false);
 		}
 	};
 
@@ -203,59 +192,21 @@ export const PasswordReset = () => {
 		}
 
 		if (isValid) {
-			setHasMasterKeyError(false);
 			setIsRequestInProgress(true);
 			setOldPasswordErrorMessage('');
 
 			apiUpdatePassword(oldPassword, newPassword)
 				.then(async () => {
-					try {
-						// always execute reset logic to ensure master key is updated even if E2ee is enabled or not
-
-						// create new masterkey from newPassword
-						const newMasterKey = await deriveMasterKeyFromPassword(
-							rcUid,
+					isConsultant &&
+						featureAppointmentsEnabled &&
+						apiUpdatePasswordAppointments(
+							userData.email,
 							newPassword
 						);
 
-						// encrypt private key with new masterkey
-						const encryptedPrivateKey = await encryptPrivateKey(
-							sessionStorage.getItem('private_key'),
-							newMasterKey
-						);
-
-						// save with rocket chat
-						await apiRocketChatSetUserKeys(
-							sessionStorage.getItem('public_key'),
-							encryptedPrivateKey
-						);
-
-						isConsultant &&
-							featureAppointmentsEnabled &&
-							apiUpdatePasswordAppointments(
-								userData.email,
-								newPassword
-							);
-
-						setOverlayActive(true);
-						setIsRequestInProgress(false);
-						logout(false, settings.urls.toLogin);
-					} catch (e) {
-						// rechange password to the old password
-						await apiUpdatePassword(newPassword, oldPassword).catch(
-							() => {
-								// if an error happens here we keep the newPassword but don't upgrade the masterKey
-								// and hope it works next login attempt
-							}
-						);
-						setHasMasterKeyError(true);
-
-						featureAppointmentsEnabled &&
-							apiUpdatePasswordAppointments(
-								userData.email,
-								oldPassword
-							);
-					}
+					setOverlayActive(true);
+					setIsRequestInProgress(false);
+					logout(false, settings.urls.toLogin);
 				})
 				.catch(() => {
 					// error handling for password update error
@@ -327,12 +278,6 @@ export const PasswordReset = () => {
 						</div>
 					</div>
 				</div>
-
-				{hasMasterKeyError && (
-					<div className="passwordReset__error">
-						{translate('profile.functions.masterKey.saveError')}
-					</div>
-				)}
 
 				<div className="button__wrapper">
 					<Button

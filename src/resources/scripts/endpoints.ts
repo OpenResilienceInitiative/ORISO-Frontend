@@ -45,7 +45,6 @@ export const endpoints = {
 		agencyServiceOrigin +
 		`/service/appointservice/consultants/${userId}/bookings?status=${status}`,
 	askerSessions: userServiceOrigin + '/service/users/sessions/askers',
-	attachmentUpload: apiUrl + '/service/uploads/new/',
 	banUser: (rcUserId, chatId) =>
 		userServiceOrigin + `/service/users/${rcUserId}/chat/${chatId}/ban`,
 	budibaseTools: (userId: string) =>
@@ -166,6 +165,5 @@ export const endpoints = {
 	},
 	setAppointmentSuccessMessage:
 		userServiceOrigin + '/service/messages/aliasWithContent/new',
-	userUpdateE2EKey: userServiceOrigin + '/service/users/chat/e2e',
 	videocallServiceBase: apiUrl + '/service/videocalls'
 };

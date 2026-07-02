@@ -23,6 +23,4 @@ export interface AppSettingsInterface {
 	useOverviewPage?: boolean;
 	/** feature flag for the documentation  */
 	documentationEnabled?: boolean;
-	/** legacy attachment encryption flag (removed with the Rocket.Chat E2EE teardown) */
-	attachmentEncryption?: boolean;
 }
