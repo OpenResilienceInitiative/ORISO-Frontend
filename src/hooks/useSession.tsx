@@ -4,7 +4,8 @@ import {
 	apiGetSessionRoomsByGroupIds
 } from '../api/apiGetSessionRooms';
 import { buildExtendedSession, ExtendedSessionInterface } from '../globalState';
-import { apiSetSessionRead, FETCH_ERRORS } from '../api';
+import { FETCH_ERRORS } from '../api';
+import { chatTransportService } from '../services/chatTransportService';
 import { apiGetChatRoomById } from '../api/apiGetChatRoomById';
 import { apiGetCaseHandoverCandidates } from '../api/apiCaseHandover';
 
@@ -144,7 +145,12 @@ export const useSession = (
 		}
 
 		if (!session.item.messagesRead) {
-			apiSetSessionRead(session.rid).then();
+			// Matrix read receipt on the latest room event. Sessions without
+			// a Matrix room are a safe no-op (no legacy read call).
+			const { matrixRoomId } = chatTransportService.resolveSession(session);
+			if (matrixRoomId) {
+				chatTransportService.markRoomAsRead(matrixRoomId).catch(() => {});
+			}
 		}
 	}, [session]);
 

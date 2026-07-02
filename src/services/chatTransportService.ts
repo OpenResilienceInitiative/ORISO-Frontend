@@ -194,6 +194,31 @@ class ChatTransportService {
 			Promise.resolve()
 		);
 	}
+
+	/**
+	 * Send a Matrix read receipt for the latest event of the room.
+	 * Safe no-op when the Matrix client or room is not available —
+	 * there is no legacy fallback transport.
+	 */
+	public async markRoomAsRead(matrixRoomId: string): Promise<void> {
+		const matrixClient = getMatrixClientService()?.getClient?.();
+		if (!matrixClient || !matrixRoomId) {
+			return;
+		}
+
+		const room = matrixClient.getRoom?.(matrixRoomId);
+		const events = room?.getLiveTimeline?.()?.getEvents?.() || [];
+		const latestEvent = events[events.length - 1];
+		if (!latestEvent) {
+			return;
+		}
+
+		try {
+			await (matrixClient as any).sendReadReceipt(latestEvent);
+		} catch {
+			// keep UI responsive; the receipt is retried on the next read
+		}
+	}
 }
 
 export const chatTransportService = new ChatTransportService();
