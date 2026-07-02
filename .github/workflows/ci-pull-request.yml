@@ -1,4 +1,4 @@
-name: CI - Pull Request
+name: Frontend PR Validation
 
 on:
   pull_request:
@@ -8,21 +8,22 @@ env:
   ORG: openresilienceinitiative
 
 jobs:
-  build:
+  validate:
+    name: lint, type-check, build and Docker validation
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v6
+      - name: Checkout repository
+        uses: actions/checkout@v6
 
-    - name: Build frontend application
-      uses: ./.github/actions/node-build
-      with:
-        node_version: '18'
+      - name: Run frontend validation and build
+        uses: ./.github/actions/node-build
+        with:
+          node_version: '18'
 
-    - name: Create Docker image
-      uses: ./.github/actions/docker-build-push
-      with:
-        push_to_ghcr: false
-        image_name: oriso-frontend
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Docker build validation without publishing
+        uses: ./.github/actions/docker-build-push
+        with:
+          push_to_ghcr: false
+          image_name: oriso-frontend
+          github_token: ${{ secrets.GITHUB_TOKEN }}
