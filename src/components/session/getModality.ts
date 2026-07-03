@@ -61,7 +61,9 @@ export const getModality = (item?: ListItemInterface): Modality => {
 		if (session.teamSession === true) {
 			return Modality.INTERNAL_GROUP;
 		}
-		if ((session.registrationType as string) === REGISTRATION_TYPE_ANONYMOUS) {
+		if (
+			(session.registrationType as string) === REGISTRATION_TYPE_ANONYMOUS
+		) {
 			return Modality.LIVE_CHAT;
 		}
 		return Modality.AGENCY_COUNSELLING;

@@ -113,7 +113,7 @@ export const PrivacyMessageCard: React.FC<PrivacyMessageCardProps> = ({
 					{/* Pre-typing pause feels more "human" — the typing dots
 					    linger a little and the first character only appears
 					    after a deliberate beat (see `startDelayMs` below). */}
-					<TypingReveal typingMs={skipTyping ? 0 : 1400}>
+					<TypingReveal typingMs={skipTyping ? 0 : 700}>
 						<div className="pseudonymCard__bubble privacyMessageCard__bubble">
 							<p className="pseudonymCard__bubbleText privacyMessageCard__bubbleText">
 								{skipTyping ? (
@@ -121,7 +121,7 @@ export const PrivacyMessageCard: React.FC<PrivacyMessageCardProps> = ({
 								) : (
 									<TypewriterText
 										text={message}
-										startDelayMs={550}
+										startDelayMs={220}
 										onDone={handleTypingDone}
 									/>
 								)}
