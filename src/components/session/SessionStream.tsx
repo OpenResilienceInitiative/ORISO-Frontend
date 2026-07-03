@@ -20,10 +20,11 @@ import {
 import {
 	apiGetAgencyConsultantList,
 	apiGetCaseHandoverStatus,
+	apiGetSessionSupervisors,
 	CaseHandoverStatus,
 	FETCH_ERRORS
 } from '../../api';
-import { prepareMessages } from './sessionHelpers';
+import { mergeMatrixMessages, prepareMessages } from './sessionHelpers';
 import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import './session.styles';
 import useUpdatingRef from '../../hooks/useUpdatingRef';
@@ -80,6 +81,12 @@ export const SessionStream = ({
 	const abortController = useRef<AbortController>(null);
 	const hasUserInitiatedStopOrLeaveRequest = useRef<boolean>(false);
 
+	// ADR-008: per-session supervision side room id, resolved for authorized
+	// supervisors/consultants. When present we also load & merge its messages
+	// so asides render for members — the client is never a member of this room.
+	const [supervisionRoomId, setSupervisionRoomId] = useState<
+		string | undefined
+	>(undefined);
 	const [matrixTypingUsers, setMatrixTypingUsers] = useState<string[]>([]);
 	const matrixTypingTimeoutRef = useRef<number | null>(null);
 	const matrixTypingLastTriggerRef = useRef(0);
@@ -159,6 +166,46 @@ export const SessionStream = ({
 		[activeSession, type, userData]
 	);
 
+	// ADR-008: resolve the per-session supervision side room id for members.
+	// The backend only returns supervisor entries (with the side room id) to
+	// authorized callers, so non-members never receive one and asides stay
+	// invisible to them. The security boundary is Matrix room membership.
+	useEffect(() => {
+		let cancelled = false;
+		const sessionId = activeSession.item?.id;
+
+		setSupervisionRoomId(undefined);
+
+		if (
+			!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) ||
+			!sessionId
+		) {
+			return () => {
+				cancelled = true;
+			};
+		}
+
+		apiGetSessionSupervisors(sessionId)
+			.then((supervisors) => {
+				if (cancelled) {
+					return;
+				}
+				const sideRoomId = supervisors.find(
+					(s) => s.matrixRoomId
+				)?.matrixRoomId;
+				setSupervisionRoomId(sideRoomId || undefined);
+			})
+			.catch(() => {
+				if (!cancelled) {
+					setSupervisionRoomId(undefined);
+				}
+			});
+
+		return () => {
+			cancelled = true;
+		};
+	}, [activeSession.item?.id, userData]);
+
 	const fetchSessionMessages = useCallback(
 		(forceCaseHandoverAccess = false): Promise<boolean> => {
 			if (abortController.current) {
@@ -182,27 +229,39 @@ export const SessionStream = ({
 			// bodies outside the room encryption boundary.
 			if (resolvedChatSession.isMatrixSession) {
 				const resolvedMatrixRoomId = resolvedChatSession.matrixRoomId;
-				const matrixRoom = resolvedMatrixRoomId
-					? chatTransportService.getMatrixRoom(resolvedMatrixRoomId)
-					: null;
-				const matrixEvents = resolvedMatrixRoomId
-					? chatTransportService.getMatrixRoomMessages(
-							resolvedMatrixRoomId,
-							100
-						)
-					: [];
 				const encryptedFallbackText = translate(
 					'e2ee.message.encryption.text'
 				);
-				const formattedMessages = matrixEvents
-					.map((event: any) =>
-						formatMatrixTimelineEvent(
-							event,
-							matrixRoom,
-							encryptedFallbackText
+
+				const loadRoomMessages = (roomId?: string | null) => {
+					if (!roomId) {
+						return [];
+					}
+					const matrixRoom =
+						chatTransportService.getMatrixRoom(roomId);
+					return chatTransportService
+						.getMatrixRoomMessages(roomId, 100)
+						.map((event: any) =>
+							formatMatrixTimelineEvent(
+								event,
+								matrixRoom,
+								encryptedFallbackText
+							)
 						)
-					)
-					.filter(Boolean);
+						.filter(Boolean);
+				};
+
+				const clientMessages = loadRoomMessages(resolvedMatrixRoomId);
+				// ADR-008: merge the supervision side room's asides so they
+				// render for members. The client is never a member of the side
+				// room, so it never loads these.
+				const supervisionMessages = supervisionRoomId
+					? loadRoomMessages(supervisionRoomId)
+					: [];
+				const formattedMessages = mergeMatrixMessages(
+					clientMessages,
+					supervisionMessages
+				);
 
 				setMessagesItem({
 					messages: prepareMessages(formattedMessages)
@@ -221,6 +280,7 @@ export const SessionStream = ({
 			caseHandoverGateNeeded,
 			caseHandoverStatus?.canViewContent,
 			resolvedChatSession,
+			supervisionRoomId,
 			translate
 		]
 	);
@@ -305,23 +365,32 @@ export const SessionStream = ({
 		if (!resolvedChatSession.isMatrixSession) {
 			return;
 		}
-		const matrixRoomId = resolvedChatSession.matrixRoomId;
+		const clientRoomId = resolvedChatSession.matrixRoomId;
 
-		if (!matrixRoomId) {
+		if (!clientRoomId) {
 			return;
 		}
 
+		// ADR-008: listen on the client room AND (for members) the supervision
+		// side room, so newly-sent asides appear live for authorized viewers.
+		const watchedRoomIds = supervisionRoomId
+			? [clientRoomId, supervisionRoomId]
+			: [clientRoomId];
+
 		let retryTimer: number | null = null;
-		let detachTimelineListener: (() => void) | null = null;
+		let detachTimelineListeners: Array<() => void> = [];
 		let lastRefreshAt = 0;
 
-		const attachTimelineListener = () => {
+		const attachTimelineListeners = () => {
 			const handleMatrixTimeline = (
 				event: any,
 				room: any,
 				toStartOfTimeline: boolean
 			) => {
-				if (toStartOfTimeline || room?.roomId !== matrixRoomId) {
+				if (
+					toStartOfTimeline ||
+					!watchedRoomIds.includes(room?.roomId)
+				) {
 					return;
 				}
 
@@ -345,17 +414,29 @@ export const SessionStream = ({
 				});
 			};
 
-			detachTimelineListener = chatTransportService.onMatrixTimeline(
-				matrixRoomId,
-				handleMatrixTimeline
-			);
-			return Boolean(detachTimelineListener);
+			const detachers = watchedRoomIds
+				.map((roomId) =>
+					chatTransportService.onMatrixTimeline(
+						roomId,
+						handleMatrixTimeline
+					)
+				)
+				.filter(Boolean) as Array<() => void>;
+
+			// Only consider attach successful once every watched room is bound.
+			if (detachers.length !== watchedRoomIds.length) {
+				detachers.forEach((detach) => detach());
+				return false;
+			}
+
+			detachTimelineListeners = detachers;
+			return true;
 		};
 
 		// Try immediately, then retry until Matrix client is ready.
-		if (!attachTimelineListener()) {
+		if (!attachTimelineListeners()) {
 			retryTimer = window.setInterval(() => {
-				if (attachTimelineListener() && retryTimer) {
+				if (attachTimelineListeners() && retryTimer) {
 					window.clearInterval(retryTimer);
 					retryTimer = null;
 				}
@@ -366,9 +447,9 @@ export const SessionStream = ({
 			if (retryTimer) {
 				window.clearInterval(retryTimer);
 			}
-			detachTimelineListener?.();
+			detachTimelineListeners.forEach((detach) => detach());
 		};
-	}, [resolvedChatSession, fetchSessionMessages]);
+	}, [resolvedChatSession, supervisionRoomId, fetchSessionMessages]);
 
 	useEffect(() => {
 		if (!isMatrixSession || !matrixRoomId) {
