@@ -33,6 +33,15 @@ export interface AppConfigInterface extends AppSettingsInterface {
 	groupChat?: GroupChatConfig;
 	registration: {
 		useConsultingTypeSlug?: boolean;
+		/**
+		 * Consulting type id used for the public agency search during
+		 * registration when the user has not selected a consulting type
+		 * (FE#245). The backend requires the parameter, so it cannot be
+		 * omitted. Defaults to 1 (the historic hard-coded value) so
+		 * existing tenants keep their behavior; deployments whose agencies
+		 * use another modality can override it here.
+		 */
+		defaultConsultingTypeId?: number;
 		consultingTypeDefaults: {
 			autoSelectPostcode: boolean;
 			autoSelectAgency: boolean;
