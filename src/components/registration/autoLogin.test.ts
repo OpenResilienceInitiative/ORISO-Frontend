@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { autoLogin, handleE2EESetup } from './autoLogin';
+import { autoLogin } from './autoLogin';
 import { getKeycloakAccessToken } from '../sessionCookie/getKeycloakAccessToken';
 import {
 	getMatrixAccessToken,
@@ -9,17 +9,6 @@ import {
 import { setTokens } from '../auth/auth';
 import { getBudibaseAccessToken } from '../sessionCookie/getBudibaseAccessToken';
 import { parseJwt } from '../../utils/parseJWT';
-import { apiRocketChatFetchMyKeys } from '../../api/apiRocketChatFetchMyKeys';
-import { apiRocketChatSetUserKeys } from '../../api/apiRocketChatSetUserKeys';
-import { apiUpdateUserE2EKeys } from '../../api';
-import {
-	createAndStoreKeys,
-	deriveMasterKeyFromPassword,
-	encryptPrivateKey,
-	readMasterKeyFromLocalStorage,
-	storeKeys,
-	writeMasterKeyToLocalStorage
-} from '../../utils/encryptionHelpers';
 
 const mockAppConfig = vi.hoisted(() => ({
 	multitenancyWithSingleDomainEnabled: false,
@@ -38,30 +27,8 @@ vi.mock('../sessionCookie/getMatrixAccessToken', () => ({
 	persistMatrixLoginData: vi.fn()
 }));
 
-vi.mock('../sessionCookie/getRocketchatAccessToken', () => ({
-	getRocketchatAccessToken: vi.fn()
-}));
-
-vi.mock('../sessionCookie/accessSessionCookie', () => ({
-	setValueInCookie: vi.fn()
-}));
-
-vi.mock('../../utils/generateCsrfToken', () => ({
-	generateCsrfToken: vi.fn()
-}));
-
 vi.mock('../../utils/encryptionHelpers', () => ({
-	createAndStoreKeys: vi.fn(),
-	decryptPrivateKey: vi.fn(),
-	deriveMasterKeyFromPassword: vi.fn(),
-	encodeUsername: vi.fn((username: string) => `encoded:${username}`),
-	encryptForParticipant: vi.fn(),
-	encryptPrivateKey: vi.fn(),
-	getTmpMasterKey: vi.fn(),
-	importRawEncryptionKey: vi.fn(),
-	readMasterKeyFromLocalStorage: vi.fn(),
-	storeKeys: vi.fn(),
-	writeMasterKeyToLocalStorage: vi.fn()
+	encodeUsername: vi.fn((username: string) => `encoded:${username}`)
 }));
 
 vi.mock('../auth/auth', () => ({
@@ -69,32 +36,7 @@ vi.mock('../auth/auth', () => ({
 }));
 
 vi.mock('../../api', () => ({
-	FETCH_ERRORS: { UNAUTHORIZED: 'UNAUTHORIZED' },
-	apiUpdateUserE2EKeys: vi.fn()
-}));
-
-vi.mock('../../api/apiRocketChatFetchMyKeys', () => ({
-	apiRocketChatFetchMyKeys: vi.fn()
-}));
-
-vi.mock('../../api/apiRocketChatSetUserKeys', () => ({
-	apiRocketChatSetUserKeys: vi.fn()
-}));
-
-vi.mock('../../api/apiRocketChatSubscriptionsGet', () => ({
-	apiRocketChatSubscriptionsGet: vi.fn()
-}));
-
-vi.mock('../../api/apiRocketChatRoomsGet', () => ({
-	apiRocketChatRoomsGet: vi.fn()
-}));
-
-vi.mock('../../api/apiRocketChatUpdateGroupKey', () => ({
-	apiRocketChatUpdateGroupKey: vi.fn()
-}));
-
-vi.mock('../../api/apiRocketChatResetE2EKey', () => ({
-	apiRocketChatResetE2EKey: vi.fn()
+	FETCH_ERRORS: { UNAUTHORIZED: 'UNAUTHORIZED' }
 }));
 
 vi.mock('../sessionCookie/getBudibaseAccessToken', () => ({
@@ -230,63 +172,5 @@ describe('autoLogin', () => {
 			'secret!',
 			{ featureToolsEnabled: true }
 		);
-	});
-	it('creates and stores new E2EE keys when no Rocket.Chat keys exist', async () => {
-		vi.mocked(deriveMasterKeyFromPassword).mockResolvedValue(
-			'master-key' as any
-		);
-		vi.mocked(apiRocketChatFetchMyKeys).mockResolvedValue({
-			success: true
-		});
-		vi.mocked(createAndStoreKeys).mockResolvedValue({
-			privateKey: 'private-key',
-			publicKey: JSON.stringify({ n: 'public-key-material' })
-		} as any);
-		vi.mocked(encryptPrivateKey).mockResolvedValue(
-			'encrypted-private-key' as any
-		);
-		vi.mocked(apiRocketChatSetUserKeys).mockResolvedValue({});
-		vi.mocked(apiUpdateUserE2EKeys).mockResolvedValue({});
-
-		await handleE2EESetup('secret!', 'rc-user-id');
-
-		expect(createAndStoreKeys).toHaveBeenCalled();
-		expect(apiRocketChatSetUserKeys).toHaveBeenCalledWith(
-			JSON.stringify({ n: 'public-key-material' }),
-			'encrypted-private-key'
-		);
-		expect(apiUpdateUserE2EKeys).toHaveBeenCalledWith(
-			'public-key-material'
-		);
-	});
-
-	it('resets keys and relogs in when encrypted keys cannot be decrypted without a persisted master key', async () => {
-		const reloginCallback = vi.fn().mockResolvedValue('relogged');
-		vi.mocked(deriveMasterKeyFromPassword).mockResolvedValue(
-			'master-key' as any
-		);
-		vi.mocked(apiRocketChatFetchMyKeys).mockResolvedValue({
-			private_key: 'encrypted-private',
-			public_key: JSON.stringify({ n: 'stored-public-key' }),
-			success: true
-		});
-		const { decryptPrivateKey } = await import(
-			'../../utils/encryptionHelpers'
-		);
-		const { apiRocketChatResetE2EKey } = await import(
-			'../../api/apiRocketChatResetE2EKey'
-		);
-		vi.mocked(decryptPrivateKey).mockRejectedValue(new Error('bad key'));
-		vi.mocked(readMasterKeyFromLocalStorage).mockReturnValue(null);
-
-		await handleE2EESetup('secret!', 'rc-user-id', reloginCallback);
-
-		expect(apiRocketChatResetE2EKey).toHaveBeenCalled();
-		expect(writeMasterKeyToLocalStorage).toHaveBeenCalledWith(
-			'master-key',
-			'rc-user-id'
-		);
-		expect(reloginCallback).toHaveBeenCalled();
-		expect(storeKeys).not.toHaveBeenCalled();
 	});
 });

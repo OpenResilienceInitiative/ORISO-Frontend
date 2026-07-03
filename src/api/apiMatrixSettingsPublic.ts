@@ -1,18 +1,55 @@
 import { apiServerSettings } from './apiServerSettings';
 import type { ServerAppConfigInterface } from '../globalState/interfaces';
-import type {
-	IBooleanSetting,
-	TSetting,
-	TRocketChatSettingsPublicResponse
-} from './apiRocketChatSettingsShared';
-import {
-	SETTING_E2E_ENABLE,
-	SETTING_FILEUPLOAD_MAXFILESIZE,
-	SETTING_HIDE_SYSTEM_MESSAGES,
-	SETTING_MESSAGE_ALLOWDELETING,
-	SETTING_MESSAGE_MAXALLOWEDSIZE,
-	SETTING_MESSAGE_SHOWDELETEDSTATUS
-} from './apiRocketChatSettingsShared';
+
+export const SETTING_E2E_ENABLE = 'E2E_Enable';
+export const SETTING_MESSAGE_MAXALLOWEDSIZE = 'Message_MaxAllowedSize';
+export const SETTING_FILEUPLOAD_MAXFILESIZE = 'FileUpload_MaxFileSize';
+export const SETTING_MESSAGE_ALLOWDELETING = 'Message_AllowDeleting';
+export const SETTING_HIDE_SYSTEM_MESSAGES = 'Hide_System_Messages';
+export const SETTING_MESSAGE_SHOWDELETEDSTATUS = 'Message_ShowDeletedStatus';
+
+export type TSetting =
+	| IStringSetting
+	| INumberSetting
+	| IBooleanSetting
+	| IArraySetting;
+
+export interface IStringSetting {
+	_id: never;
+	enterprise: boolean;
+	value: string;
+}
+
+export interface INumberSetting {
+	_id:
+		| typeof SETTING_MESSAGE_MAXALLOWEDSIZE
+		| typeof SETTING_FILEUPLOAD_MAXFILESIZE;
+	enterprise: boolean;
+	value: number;
+}
+
+export interface IBooleanSetting {
+	_id:
+		| typeof SETTING_E2E_ENABLE
+		| typeof SETTING_MESSAGE_ALLOWDELETING
+		| typeof SETTING_MESSAGE_SHOWDELETEDSTATUS;
+	enterprise: boolean;
+	value: boolean;
+}
+
+export interface IArraySetting {
+	_id: typeof SETTING_HIDE_SYSTEM_MESSAGES;
+	enterprise: boolean;
+	value: any[];
+}
+
+export type TPublicSettingsResponse = {
+	count: number;
+	offset: number;
+	total: number;
+	success: boolean;
+	settings: TSetting[];
+};
 
 const DEFAULT_SETTINGS: TSetting[] = [
 	{
@@ -157,7 +194,7 @@ export const getFallbackPublicSettings = (
 
 export const apiMatrixSettingsPublic = async (
 	settingsEntries: string[] | null = null
-): Promise<TRocketChatSettingsPublicResponse> => {
+): Promise<TPublicSettingsResponse> => {
 	let serverSettings: ServerAppConfigInterface | null = null;
 	let serviceSettings: TSetting[] | null = null;
 

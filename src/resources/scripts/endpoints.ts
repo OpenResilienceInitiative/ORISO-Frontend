@@ -45,7 +45,6 @@ export const endpoints = {
 		agencyServiceOrigin +
 		`/service/appointservice/consultants/${userId}/bookings?status=${status}`,
 	askerSessions: userServiceOrigin + '/service/users/sessions/askers',
-	attachmentUpload: apiUrl + '/service/uploads/new/',
 	banUser: (rcUserId, chatId) =>
 		userServiceOrigin + `/service/users/${rcUserId}/chat/${chatId}/ban`,
 	budibaseTools: (userId: string) =>
@@ -93,7 +92,6 @@ export const endpoints = {
 	magicLinkRequest: userServiceOrigin + '/service/users/magic-link/request',
 	magicLinkConsume: userServiceOrigin + '/service/users/magic-link/consume',
 	matrixAccessToken: userServiceOrigin + '/service/matrix/me/token',
-	messageRead: apiUrl + '/api/v1/subscriptions.read',
 	messages: {
 		get: userServiceOrigin + '/service/messages',
 		delete: userServiceOrigin + '/service/messages/:messageId'
@@ -101,47 +99,12 @@ export const endpoints = {
 	myMessagesBase:
 		userServiceOrigin + '/service/conversations/consultants/mymessages/',
 	passwordReset: userServiceOrigin + '/service/users/password/change',
-	rc: {
-		accessToken: apiUrl + '/api/v1/login',
-		e2ee: {
-			fetchMyKeys: apiUrl + '/api/v1/e2e.fetchMyKeys',
-			getUsersOfRoomWithoutKey:
-				apiUrl + '/api/v1/e2e.getUsersOfRoomWithoutKey',
-			setRoomKeyID: apiUrl + '/api/v1/e2e.setRoomKeyID',
-			setUserPublicAndPrivateKeys:
-				apiUrl + '/api/v1/e2e.setUserPublicAndPrivateKeys',
-			updateGroupKey: apiUrl + '/api/v1/e2e.updateGroupKey'
-		},
-		groups: {
-			members: apiUrl + '/api/v1/groups.members'
-		},
-		logout: apiUrl + '/api/v1/logout',
-		rooms: {
-			get: apiUrl + '/api/v1/rooms.get',
-			info: apiUrl + '/api/v1/rooms.info'
-		},
-		settings: {
-			public: apiUrl + '/api/v1/settings.public'
-		},
-		subscriptions: {
-			get: apiUrl + '/api/v1/subscriptions.get',
-			read: apiUrl + '/api/v1/subscriptions.read',
-			getOne: apiUrl + '/api/v1/subscriptions.getOne'
-		},
-		users: {
-			getStatus: apiUrl + '/api/v1/users.getStatus',
-			info: apiUrl + '/api/v1/users.info',
-			resetE2EKey: apiUrl + '/api/v1/users.resetE2EKey'
-		}
-	},
 	registerAsker: userServiceOrigin + '/service/users/askers/new',
 	baseUserService: userServiceOrigin + '/service/users',
 	//todo delete?
 	registerAskerNewConsultingType:
 		userServiceOrigin + '/service/users/askers/consultingType/new',
 	rejectVideoCall: apiUrl + '/service/videocalls/reject',
-	rocketchatAccessToken: apiUrl + '/api/v1/login',
-	rocketchatLogout: apiUrl + '/api/v1/logout',
 	sendAliasMessage: userServiceOrigin + '/service/messages/aliasonly/new',
 	sendMessage: userServiceOrigin + '/service/messages/new',
 	sessionBase: userServiceOrigin + '/service/users/sessions',
@@ -170,6 +133,5 @@ export const endpoints = {
 	},
 	setAppointmentSuccessMessage:
 		userServiceOrigin + '/service/messages/aliasWithContent/new',
-	userUpdateE2EKey: userServiceOrigin + '/service/users/chat/e2e',
 	videocallServiceBase: apiUrl + '/service/videocalls'
 };

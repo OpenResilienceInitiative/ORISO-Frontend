@@ -11,11 +11,7 @@ import { createPortal } from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 import { SendMessageButton } from './SendMessageButton';
-import {
-	isAskerEnquirySubmission,
-	shouldBlockMissingLegacyE2eeKey,
-	shouldUseLegacyE2ee
-} from './messageEncryptionMode';
+import { isAskerEnquirySubmission } from './messageEncryptionMode';
 import { chatTransportService } from '../../services/chatTransportService';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { STATUS_ENQUIRY } from '../../globalState/interfaces/SessionsDataInterface';
@@ -37,8 +33,7 @@ import {
 	apiGetSessionSupervisors,
 	apiSendEnquiry,
 	apiSendMatrixAttachmentMessage,
-	apiSendMessage,
-	apiUploadAttachment
+	apiSendMessage
 } from '../../api';
 import {
 	MessageSubmitInfo,
@@ -88,12 +83,6 @@ import {
 	buildVisibleToPrefix,
 	buildThreadPrefix
 } from '../message/messageConstants';
-import {
-	encryptAttachment,
-	encryptText,
-	getSignature
-} from '../../utils/encryptionHelpers';
-import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import { useE2EE } from '../../hooks/useE2EE';
 import { apiPostError, ERROR_LEVEL_WARN } from '../../api/apiPostError';
 import { useE2EEViewElements } from '../../hooks/useE2EEViewElements';
@@ -102,10 +91,6 @@ import { useTimeoutOverlay } from '../../hooks/useTimeoutOverlay';
 import { SubscriptionKeyLost } from '../session/SubscriptionKeyLost';
 import { RoomNotFound } from '../session/RoomNotFound';
 import { useDraftMessage } from './useDraftMessage';
-import {
-	STORAGE_KEY_ATTACHMENT_ENCRYPTION,
-	useDevToolbar
-} from '../devToolbar/DevToolbar';
 import {
 	OVERLAY_E2EE,
 	OVERLAY_REQUEST
@@ -929,13 +914,9 @@ export const MessageSubmitInterfaceComponent = ({
 			// console.log('🔥 MessageSubmitInterface UNMOUNTED');
 		};
 	}, []);
-	const appConfig = useAppConfig();
-	const chatTransportFacadeEnabled =
-		chatTransportService.isFacadeEnabled(appConfig);
 	const tenant = useTenant();
 	const navigate = useNavigate();
 	const location = useLocation();
-	const { getDevToolbarOption } = useDevToolbar();
 
 	const textareaInputRef = useRef<HTMLDivElement>(null);
 	const inputWrapperRef = useRef<HTMLSpanElement>(null);
@@ -1868,38 +1849,21 @@ export const MessageSubmitInterfaceComponent = ({
 	const sendMessage = useCallback(
 		async (message, attachment: File, isEncrypted) => {
 			const sendToRoomWithId = activeSession.rid || activeSession.item.id;
-			// MATRIX MIGRATION: Determine if this is a Matrix-backed session.
+			// Determine if this is a Matrix-backed session.
 			// Some sessions still have a legacy rid while exposing matrixRoomId.
 			const resolvedChatSession =
 				chatTransportService.resolveSession(activeSession);
-			const isMatrixSession = chatTransportFacadeEnabled
-				? resolvedChatSession.isMatrixSession
-				: Boolean(activeSession.item?.matrixRoomId) ||
-					Boolean(
-						activeSession.rid &&
-							isMatrixRoom(activeSession.rid) &&
-							activeSession.item?.id
-					);
+			const isMatrixSession = resolvedChatSession.isMatrixSession;
 			const matrixSessionId = isMatrixSession
-				? Number(
-						chatTransportFacadeEnabled
-							? resolvedChatSession.sessionId
-							: activeSession.item.id
-					) || undefined
+				? Number(resolvedChatSession.sessionId) || undefined
 				: undefined;
 			const matrixRoomId = isMatrixSession
-				? chatTransportFacadeEnabled
-					? resolvedChatSession.matrixRoomId
-					: isMatrixRoom(activeSession.rid)
-						? activeSession.rid
-						: activeSession.item?.matrixRoomId
+				? resolvedChatSession.matrixRoomId
 				: undefined;
 			const getSendMailNotificationStatus = () => !activeSession.isGroup;
 
 			if (attachment) {
-				let res: any;
-
-				// MATRIX MIGRATION: Keep Matrix attachments on the SDK media path.
+				// Matrix attachments stay on the SDK media path.
 				if (matrixSessionId) {
 					try {
 						if (!matrixRoomId) {
@@ -1926,8 +1890,6 @@ export const MessageSubmitInterfaceComponent = ({
 									'User'
 							}
 						);
-
-						res = { success: true };
 					} catch (error: any) {
 						const status =
 							error?.status ||
@@ -1949,77 +1911,12 @@ export const MessageSubmitInterfaceComponent = ({
 						return;
 					}
 				} else {
-					// Legacy RocketChat upload path
-					const isAttachmentEncryptionEnabledDevTools =
-						process.env.NODE_ENV !== 'production'
-							? parseInt(
-									getDevToolbarOption(
-										STORAGE_KEY_ATTACHMENT_ENCRYPTION
-									)
-								)
-							: 1;
-					let attachmentFile = attachment;
-					let signature = null;
-					let encryptEnabled =
-						isEncrypted && !!isAttachmentEncryptionEnabledDevTools;
-
-					if (encryptEnabled) {
-						try {
-							signature = await getSignature(attachment);
-							attachmentFile = await encryptAttachment(
-								attachment,
-								keyID,
-								key
-							);
-						} catch (e: any) {
-							encryptEnabled = false;
-
-							apiPostError({
-								name: e.name,
-								message: e.message,
-								stack: e.stack,
-								level: ERROR_LEVEL_WARN
-							}).then();
-						}
-					}
-
-					res = await apiUploadAttachment(
-						attachmentFile,
-						sendToRoomWithId,
-						getSendMailNotificationStatus(),
-						setUploadProgress,
-						setAttachmentUpload,
-						encryptEnabled,
-						signature
-					).catch((res: XMLHttpRequest) => {
-						if (res.status === 413) {
-							handleAttachmentUploadError(
-								INFO_TYPES.ATTACHMENT_SIZE_ERROR
-							);
-						} else if (res.status === 415) {
-							handleAttachmentUploadError(
-								INFO_TYPES.ATTACHMENT_FORMAT_ERROR
-							);
-						} else if (
-							res.status === 403 &&
-							res.getResponseHeader('X-Reason') ===
-								'QUOTA_REACHED'
-						) {
-							handleAttachmentUploadError(
-								INFO_TYPES.ATTACHMENT_QUOTA_REACHED_ERROR
-							);
-						} else {
-							handleAttachmentUploadError(
-								INFO_TYPES.ATTACHMENT_OTHER_ERROR
-							);
-						}
-
-						return null;
-					});
-
-					if (!res) {
-						return;
-					}
+					// Sessions without a Matrix room cannot receive
+					// attachments anymore (legacy Rocket.Chat upload removed).
+					handleAttachmentUploadError(
+						INFO_TYPES.ATTACHMENT_OTHER_ERROR
+					);
+					return;
 				}
 			}
 
@@ -2076,17 +1973,13 @@ export const MessageSubmitInterfaceComponent = ({
 			activeSession.item.id,
 			activeSession.item?.matrixRoomId,
 			activeSession.rid,
-			chatTransportFacadeEnabled,
 			cleanupAttachment,
 			encryptRoom,
-			getDevToolbarOption,
 			getTypedMarkdownMessage,
 			hasMessageContent,
 			handleAttachmentUploadError,
 			handleMessageSendSuccess,
 			isSupervisor,
-			key,
-			keyID,
 			matrixClientService,
 			onSendButton,
 			setE2EEState,
@@ -2103,29 +1996,6 @@ export const MessageSubmitInterfaceComponent = ({
 		const attachmentInput: any = attachmentInputRef.current;
 		const selectedFile = attachmentInput && attachmentInput.files[0];
 		const attachment = preselectedFile || selectedFile;
-		const isMatrixSession =
-			Boolean(activeSession.item?.matrixRoomId) ||
-			Boolean(
-				activeSession.rid &&
-					isMatrixRoom(activeSession.rid) &&
-					activeSession.item?.id
-			);
-		const usesLegacyE2ee = shouldUseLegacyE2ee({
-			isE2eeEnabled,
-			isMatrixSession,
-			isAskerEnquiry
-		});
-
-		if (
-			shouldBlockMissingLegacyE2eeKey({
-				usesLegacyE2ee,
-				encrypted,
-				hasKeyId: !!keyID
-			})
-		) {
-			// console.error("Can't send message without key");
-			return;
-		}
 
 		const currentTypedMessage = getTypedMarkdownMessage();
 		if (
@@ -2148,10 +2018,18 @@ export const MessageSubmitInterfaceComponent = ({
 		if (threadRootId) {
 			prefixParts.push(buildThreadPrefix(threadRootId));
 		}
+		// VISIBLE_TO recipient targeting is an opt-in supervisor/coordinator aside
+		// (ADR-008) and only exists when the audience selector is actually shown —
+		// i.e. there is more than one human counterpart (group / supervision). In a
+		// 1:1 conversation the selector is hidden, so a reply must never carry a
+		// VISIBLE_TO prefix, regardless of any stale selection state.
+		const humanTargetCount = audienceOptions.filter(
+			(option) => option.value !== '__all__'
+		).length;
 		const explicitAudience = selectedAudienceValues.filter(
 			(value) => value !== '__all__'
 		);
-		if (explicitAudience.length > 0) {
+		if (humanTargetCount > 1 && explicitAudience.length > 0) {
 			prefixParts.push(buildVisibleToPrefix(explicitAudience));
 		}
 		if (isSupervisor) {
@@ -2160,28 +2038,9 @@ export const MessageSubmitInterfaceComponent = ({
 		if (prefixParts.length && message.length > 0) {
 			message = `${prefixParts.join(' ')} ${message}`;
 		}
-		let isEncrypted = usesLegacyE2ee;
-		if (message.length > 0 && isEncrypted) {
-			try {
-				message = await encryptText(message, keyID, key);
-			} catch (e: any) {
-				apiPostError({
-					name: e.name,
-					message: e.message,
-					stack: e.stack,
-					level: ERROR_LEVEL_WARN
-				}).then();
-
-				window.alert(
-					translate(
-						'e2ee.message.encryption.error',
-						'Encryption failed, message not sent'
-					)
-				);
-				setIsRequestInProgress(false);
-				return;
-			}
-		}
+		// Legacy Rocket.Chat client-side message encryption is removed;
+		// Matrix messages go through the SDK path unencrypted (ADR-004).
+		const isEncrypted = false;
 
 		if (isAskerEnquiry) {
 			await sendEnquiry(message, isEncrypted);
@@ -2190,25 +2049,18 @@ export const MessageSubmitInterfaceComponent = ({
 
 		await sendMessage(message, attachment, isEncrypted);
 	}, [
-		encrypted,
-		activeSession.item?.id,
-		activeSession.item?.matrixRoomId,
-		activeSession.rid,
 		encodeAlignmentForTransport,
 		encodeHighlightColorsForTransport,
 		getTypedMarkdownMessage,
 		hasMessageContent,
-		isE2eeEnabled,
 		isAskerEnquiry,
-		key,
-		keyID,
 		preselectedFile,
 		sendEnquiry,
 		sendMessage,
 		selectedAudienceValues,
+		audienceOptions,
 		isSupervisor,
-		threadRootId,
-		translate
+		threadRootId
 	]);
 
 	const handleButtonClick = useCallback(() => {
@@ -2463,12 +2315,12 @@ export const MessageSubmitInterfaceComponent = ({
 					? featureVoiceMessagesSupervisionChatsEnabled !== false
 					: featureVoiceMessagesOneOnOneChatsEnabled !== false);
 
-	const getMatrixRoomId = useCallback(() => {
-		if (isMatrixRoom(activeSession?.rid)) {
-			return activeSession.rid;
-		}
-		return activeSession?.item?.matrixRoomId || null;
-	}, [activeSession?.item?.matrixRoomId, activeSession?.rid]);
+	const getMatrixRoomId = useCallback(
+		() =>
+			chatTransportService.resolveSession(activeSession).matrixRoomId ||
+			null,
+		[activeSession]
+	);
 
 	const deriveLabelFromUserId = useCallback((rawUserId: string) => {
 		if (!rawUserId) {
@@ -2750,7 +2602,10 @@ export const MessageSubmitInterfaceComponent = ({
 			}
 			if (
 				memberId.includes('@system') ||
-				memberId.includes('@caritas.local')
+				memberId.includes('@caritas.local') ||
+				// Agency provisioning/service bots (@agency-<id>-service) are not
+				// human recipients — never offer them as an audience target.
+				/^@agency-\d+-service:/.test(memberId)
 			) {
 				return;
 			}
@@ -2865,6 +2720,11 @@ export const MessageSubmitInterfaceComponent = ({
 				};
 			})
 			.sort((a, b) => a.label.localeCompare(b.label));
+		// The audience selector (and thus any VISIBLE_TO targeting) is meant for
+		// group/supervision conversations with more than one human counterpart.
+		// A 1:1 conversation has no real targets here (the asker is filtered out
+		// by their enc.* member name), so it collapses to zero options and the
+		// selector stays hidden (showAudienceSelector: audienceTargetCount <= 1).
 		const includeAllOption = mapped.length > 1;
 		const nextOptions = includeAllOption
 			? [defaultOption, ...mapped]
@@ -3927,13 +3787,7 @@ export const MessageSubmitInterfaceComponent = ({
 
 	const resolvedChatSession =
 		chatTransportService.resolveSession(activeSession);
-	const matrixRoomId = chatTransportFacadeEnabled
-		? resolvedChatSession.matrixRoomId || null
-		: isMatrixRoom(activeSession?.rid)
-			? activeSession.rid
-			: isMatrixRoom(activeSession?.item?.matrixRoomId)
-				? activeSession.item.matrixRoomId
-				: null;
+	const matrixRoomId = resolvedChatSession.matrixRoomId || null;
 
 	// MATRIX MIGRATION: legacy RocketChat E2EE gates do not apply to Matrix rooms.
 	if (!e2EEReady && activeSession.rid && !matrixRoomId) {

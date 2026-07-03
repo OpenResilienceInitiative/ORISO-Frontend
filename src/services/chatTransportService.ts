@@ -3,16 +3,12 @@ import {
 	apiPostMessageEventNotification,
 	MessageEventNotificationInput
 } from '../api/apiPostMessageEventNotification';
-import { FETCH_METHODS, fetchData } from '../api/fetchData';
-import { endpoints } from '../resources/scripts/endpoints';
-import { appConfig } from '../utils/appConfig';
 import { isMatrixRoom } from '../utils/matrixRoomUtils';
 import { getMatrixClientService } from './matrixClientRegistry';
-import { MatrixFileMessageOptions } from './matrixClientService';
-
-export interface ChatTransportConfig {
-	featureChatTransportFacadeEnabled?: boolean;
-}
+import type {
+	MatrixClientService,
+	MatrixFileMessageOptions
+} from './matrixClientService';
 
 export interface ChatTransportSession {
 	rid?: string | null;
@@ -39,6 +35,7 @@ export interface SendTextMessageOptions {
 	threadRootId?: string | null;
 	supervisorMessage?: boolean;
 	senderDisplayName?: string | null;
+	matrixClientServiceOverride?: MatrixClientService | null;
 }
 
 export interface SendFileMessageOptions extends MatrixFileMessageOptions {
@@ -57,12 +54,6 @@ type TimelineListener = (
 ) => void;
 
 class ChatTransportService {
-	public isFacadeEnabled(
-		config: ChatTransportConfig | null = appConfig
-	): boolean {
-		return config?.featureChatTransportFacadeEnabled === true;
-	}
-
 	public resolveSession(
 		session?: ChatTransportSession | null
 	): ResolvedChatTransportSession {
@@ -83,51 +74,45 @@ class ChatTransportService {
 	}
 
 	public async sendTextMessage({
-		roomIdOrSessionId,
 		message,
-		sendMailNotification,
-		isEncrypted,
-		sessionId,
 		matrixRoomId,
 		threadRootId,
 		supervisorMessage,
-		senderDisplayName
+		senderDisplayName,
+		matrixClientServiceOverride
 	}: SendTextMessageOptions): Promise<any> {
-		if (sessionId && matrixRoomId) {
-			const matrixClientService = getMatrixClientService();
-			if (!matrixClientService?.getClient()) {
-				return Promise.reject(
-					new Error('Matrix client not initialized')
-				);
-			}
-
-			const response = await matrixClientService.sendMessage(
-				matrixRoomId,
-				message
+		// Matrix is the only chat transport. Sessions without a Matrix room
+		// (stale pre-migration data) fail gracefully instead of falling back
+		// to the removed Rocket.Chat REST path.
+		if (!matrixRoomId) {
+			return Promise.reject(
+				new Error('Cannot send message: session has no Matrix room')
 			);
-
-			apiPostMessageEventNotification({
-				roomId: matrixRoomId,
-				matrixRoom: true,
-				threadRootId: threadRootId || null,
-				supervisorMessage: !!supervisorMessage,
-				senderDisplayName: senderDisplayName || null
-			}).catch(() => undefined);
-
-			return { success: true, event_id: response.event_id };
 		}
 
-		return fetchData({
-			url: endpoints.sendMessage,
-			method: FETCH_METHODS.POST,
-			headersData: { rcGroupId: roomIdOrSessionId },
-			rcValidation: true,
-			bodyData: JSON.stringify({
-				message,
-				t: isEncrypted ? 'e2e' : '',
-				sendNotification: sendMailNotification
-			})
-		});
+		const matrixClientService =
+			matrixClientServiceOverride || getMatrixClientService();
+		if (!matrixClientService?.getClient()) {
+			return Promise.reject(new Error('Matrix client not initialized'));
+		}
+
+		const response = await matrixClientService.sendMessage(
+			matrixRoomId,
+			message
+		);
+
+		// SECURITY (FE-H01): never forward plaintext message content
+		// (messagePreview / threadParentPreview) across the Matrix privacy
+		// boundary. Only non-content metadata is sent.
+		apiPostMessageEventNotification({
+			roomId: matrixRoomId,
+			matrixRoom: true,
+			threadRootId: threadRootId || null,
+			supervisorMessage: !!supervisorMessage,
+			senderDisplayName: senderDisplayName || null
+		}).catch(() => undefined);
+
+		return { success: true, event_id: response.event_id };
 	}
 
 	public async sendFileMessage(
@@ -208,6 +193,31 @@ class ChatTransportService {
 			getMatrixClientService()?.sendTyping(roomId, typing) ||
 			Promise.resolve()
 		);
+	}
+
+	/**
+	 * Send a Matrix read receipt for the latest event of the room.
+	 * Safe no-op when the Matrix client or room is not available —
+	 * there is no legacy fallback transport.
+	 */
+	public async markRoomAsRead(matrixRoomId: string): Promise<void> {
+		const matrixClient = getMatrixClientService()?.getClient?.();
+		if (!matrixClient || !matrixRoomId) {
+			return;
+		}
+
+		const room = matrixClient.getRoom?.(matrixRoomId);
+		const events = room?.getLiveTimeline?.()?.getEvents?.() || [];
+		const latestEvent = events[events.length - 1];
+		if (!latestEvent) {
+			return;
+		}
+
+		try {
+			await (matrixClient as any).sendReadReceipt(latestEvent);
+		} catch {
+			// keep UI responsive; the receipt is retried on the next read
+		}
 	}
 }
 

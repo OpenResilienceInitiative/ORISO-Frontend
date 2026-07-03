@@ -18,7 +18,6 @@ import {
 	getExtendedSession,
 	hasUserAuthority,
 	REMOVE_SESSIONS,
-	RocketChatContext,
 	SessionsDataContext,
 	SessionTypeContext,
 	SET_SESSIONS,
@@ -54,13 +53,6 @@ import './sessionsList.styles';
 import { SCROLL_PAGINATE_THRESHOLD } from './sessionsListConfig';
 import clsx from 'clsx';
 import useUpdatingRef from '../../hooks/useUpdatingRef';
-import useDebounceCallback from '../../hooks/useDebounceCallback';
-import {
-	EVENT_ROOMS_CHANGED,
-	EVENT_SUBSCRIPTIONS_CHANGED,
-	SUB_STREAM_NOTIFY_USER
-} from '../app/RocketChat';
-import { getValueFromCookie } from '../sessionCookie/accessSessionCookie';
 import { apiGetSessionRoomsByGroupIds } from '../../api/apiGetSessionRooms';
 import { useWatcher } from '../../hooks/useWatcher';
 import { useSearchParam } from '../../hooks/useSearchParams';
@@ -390,19 +382,12 @@ export const SessionsList = ({
 	const initialId = useUpdatingRef(groupIdFromParam || sessionIdFromParam);
 	const hasAutoOpenedRef = useRef(false);
 
-	const rcUid = useRef(getValueFromCookie('rc_uid'));
 	const internalListRef = useRef<HTMLDivElement | null>(null);
 	const listRef = scrollContainerRef ?? internalListRef;
 
 	const { sessions, dispatch } = useContext(SessionsDataContext);
 	const { type, path: listPath } = useContext(SessionTypeContext);
 	const { setSessionListViewState } = useSessionListViewState();
-
-	const {
-		subscribe,
-		unsubscribe,
-		ready: socketReady
-	} = useContext(RocketChatContext);
 
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
 
@@ -907,8 +892,6 @@ export const SessionsList = ({
 		userData
 	]);
 	/* eslint-enable */
-	// Refresh myself
-	const subscribed = useRef(false);
 
 	const handleRIDs = useCallback(
 		(rids: string[]) => {
@@ -1010,6 +993,9 @@ export const SessionsList = ({
 		[dispatch, sessionListTab, sessionTypes, sessions, userData.userId]
 	);
 
+	const handleRIDsRef = useUpdatingRef(handleRIDs);
+	const sessionsRef = useUpdatingRef(sessions);
+
 	const touchSessionsByRids = useCallback(
 		(ridsWithTimestamp: Array<{ rid: string; timestamp: number }>) => {
 			if (!ridsWithTimestamp.length) {
@@ -1064,179 +1050,6 @@ export const SessionsList = ({
 		[dispatch, sessions]
 	);
 
-	const onRoomsChanged = useCallback(
-		(args) => {
-			if (args.length === 0) return;
-
-			const roomEvents = args
-				// Get all collected roomEvents
-				.map(([roomEvent]) => roomEvent)
-				.filter(([, room]) => room._id !== 'GENERAL')
-				// Reduce all room events of the same room to a single roomEvent
-				.reduce((acc, [event, room]) => {
-					const index = acc.findIndex(([, r]) => r._id === room._id);
-					if (index < 0) {
-						acc.push([event, room]);
-					} else {
-						// Keep last event because insert/update is equal
-						// only removed is different
-						acc.splice(index, 1, [event, room]);
-					}
-					return acc;
-				}, []);
-
-			if (roomEvents.length === 0) return;
-
-			touchSessionsByRids(
-				roomEvents.map(([, room]) => {
-					const rawTimestamp =
-						room?.lm?.$date ||
-						room?.lm ||
-						room?.lastMessage?.ts?.$date ||
-						room?.lastMessage?.ts ||
-						room?.ts?.$date ||
-						room?.ts ||
-						room?._updatedAt?.$date ||
-						room?._updatedAt ||
-						Date.now();
-					const parsedTimestamp = Number.isNaN(Number(rawTimestamp))
-						? Date.parse(rawTimestamp)
-						: Number(rawTimestamp);
-
-					return {
-						rid: room._id,
-						timestamp:
-							!parsedTimestamp || Number.isNaN(parsedTimestamp)
-								? Date.now()
-								: parsedTimestamp
-					};
-				})
-			);
-
-			handleRIDs(roomEvents.map(([, room]) => room._id));
-		},
-		[handleRIDs, touchSessionsByRids]
-	);
-
-	const onSubscriptionsChanged = useCallback(
-		(args) => {
-			if (args.length === 0) return;
-
-			const subscriptionEvents = args
-				// Get all collected roomEvents
-				.map(([subscriptionEvent]) => subscriptionEvent)
-				.filter(([, subscription]) => subscription.rid !== 'GENERAL')
-				// Reduce all room events of the same room to a single roomEvent
-				.reduce((acc, [event, subscription]) => {
-					const index = acc.findIndex(
-						([, r]) => r.rid === subscription.rid
-					);
-					if (index < 0) {
-						acc.push([event, subscription]);
-					} else {
-						// Keep last event because insert/update is equal
-						// only removed is different
-						acc.splice(index, 1, [event, subscription]);
-					}
-					return acc;
-				}, []);
-
-			if (subscriptionEvents.length === 0) return;
-
-			touchSessionsByRids(
-				subscriptionEvents.map(([, subscription]) => {
-					const rawTimestamp =
-						subscription?.ts?.$date ||
-						subscription?.ts ||
-						subscription?._updatedAt?.$date ||
-						subscription?._updatedAt ||
-						Date.now();
-					const parsedTimestamp = Number.isNaN(Number(rawTimestamp))
-						? Date.parse(rawTimestamp)
-						: Number(rawTimestamp);
-
-					return {
-						rid: subscription.rid,
-						timestamp:
-							!parsedTimestamp || Number.isNaN(parsedTimestamp)
-								? Date.now()
-								: parsedTimestamp
-					};
-				})
-			);
-
-			handleRIDs(
-				subscriptionEvents.map(([, subscription]) => subscription.rid)
-			);
-		},
-		[handleRIDs, touchSessionsByRids]
-	);
-
-	const onDebounceSubscriptionsChanged = useUpdatingRef(
-		useDebounceCallback(onSubscriptionsChanged, 500, true)
-	);
-
-	const onDebounceRoomsChanged = useUpdatingRef(
-		useDebounceCallback(onRoomsChanged, 500, true)
-	);
-
-	// Subscribe to all my messages
-	useEffect(() => {
-		const userId = rcUid.current;
-
-		if (socketReady && !subscribed.current) {
-			subscribed.current = true;
-			subscribe(
-				{
-					name: SUB_STREAM_NOTIFY_USER,
-					event: EVENT_SUBSCRIPTIONS_CHANGED,
-					userId
-				},
-				onDebounceSubscriptionsChanged
-			);
-			subscribe(
-				{
-					name: SUB_STREAM_NOTIFY_USER,
-					event: EVENT_ROOMS_CHANGED,
-					userId
-				},
-				onDebounceRoomsChanged
-			);
-		} else if (!socketReady) {
-			// Reconnect
-			subscribed.current = false;
-		}
-
-		return () => {
-			if (subscribed.current) {
-				subscribed.current = false;
-				unsubscribe(
-					{
-						name: SUB_STREAM_NOTIFY_USER,
-						event: EVENT_SUBSCRIPTIONS_CHANGED,
-						userId
-					},
-					onDebounceSubscriptionsChanged
-				);
-				unsubscribe(
-					{
-						name: SUB_STREAM_NOTIFY_USER,
-						event: EVENT_ROOMS_CHANGED,
-						userId
-					},
-					onDebounceRoomsChanged
-				);
-			}
-		};
-	}, [
-		onDebounceRoomsChanged,
-		onDebounceSubscriptionsChanged,
-		socketReady,
-		subscribe,
-		subscribed,
-		unsubscribe
-	]);
-
 	useEffect(() => {
 		const onNewMessageEvent = ({
 			roomId,
@@ -1280,13 +1093,38 @@ export const SessionsList = ({
 					timestamp: timestamp || Date.now()
 				}
 			]);
+
+			// Refresh the backend room state (messagesRead / lastMessage) for
+			// the touched session so unread badges update on Matrix events —
+			// this replaces the removed Rocket.Chat subscription stream.
+			const touchedSession = sessionsRef.current.find(
+				(s) =>
+					s?.chat?.groupId === roomId ||
+					s?.session?.groupId === roomId ||
+					(s?.session as { matrixRoomId?: string })?.matrixRoomId ===
+						roomId
+			);
+			const touchedGroupId =
+				touchedSession?.chat?.groupId ||
+				touchedSession?.session?.groupId;
+			if (touchedGroupId) {
+				handleRIDsRef.current([touchedGroupId]);
+			}
 		};
 
 		messageEventEmitter.on(onNewMessageEvent);
 		return () => {
 			messageEventEmitter.off(onNewMessageEvent);
 		};
-	}, [refetchEnquiryList, refetchSessionList, touchSessionsByRids, type]);
+	}, [
+		dispatch,
+		handleRIDsRef,
+		refetchEnquiryList,
+		refetchSessionList,
+		sessionsRef,
+		touchSessionsByRids,
+		type
+	]);
 
 	/*
 	 * Legacy invite-link enquiries do not emit newAnonymousEnquiry over STOMP.
