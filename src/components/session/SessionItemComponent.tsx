@@ -407,6 +407,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		new URLSearchParams(location.search).get('embeddedNotifications') ===
 		'1';
 	const [isSupervisor, setIsSupervisor] = useState(false);
+	// ADR-008: per-session supervision side room id (shared by all supervisor
+	// entries). Aside sends are routed here so the client never receives them.
+	const [supervisionRoomId, setSupervisionRoomId] = useState<
+		string | undefined
+	>(undefined);
 	const [showWaitingMiniGame, setShowWaitingMiniGame] = useState(false);
 	const [breathPhase, setBreathPhase] = useState<BreathPhase>('inhale');
 	const [phaseTotalMs, setPhaseTotalMs] = useState(0);
@@ -1712,6 +1717,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		if (!isSupervisionEnabledForCurrentChat) {
 			setIsSupervisor(false);
 			setSupervisionReason(null);
+			setSupervisionRoomId(undefined);
 			return;
 		}
 		if (
@@ -1728,15 +1734,23 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						(s) => s.supervisorConsultantId === userData.userId
 					);
 					setSupervisionReason(currentSupervisor?.notes || null);
+					// ADR-008: all supervisor entries share the one per-session
+					// supervision side room id — take it from any entry.
+					const sideRoomId = supervisors.find(
+						(s) => s.matrixRoomId
+					)?.matrixRoomId;
+					setSupervisionRoomId(sideRoomId || undefined);
 				})
 				.catch((error) => {
 					// console.error('Failed to check supervisor status:', error);
 					setIsSupervisor(false);
 					setSupervisionReason(null);
+					setSupervisionRoomId(undefined);
 				});
 		} else {
 			setIsSupervisor(false);
 			setSupervisionReason(null);
+			setSupervisionRoomId(undefined);
 		}
 	}, [activeSession.item.id, userData, isSupervisionEnabledForCurrentChat]);
 
@@ -4558,6 +4572,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							typingUsers={props.typingUsers}
 							handleMessageSendSuccess={handleMessageSendSuccess}
 							isSupervisor={isSupervisor}
+							supervisionRoomId={supervisionRoomId}
 							threadRootId={activeThreadRootId}
 							threadParentPreview={
 								activeThreadRootMessage
@@ -4678,6 +4693,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										handleMessageSendSuccess
 									}
 									isSupervisor={isSupervisor}
+									supervisionRoomId={supervisionRoomId}
 									mobileUnreadCount={newMessages}
 									mobileIsScrolledToBottom={
 										isScrolledToBottom
