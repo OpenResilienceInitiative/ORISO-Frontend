@@ -106,6 +106,7 @@ export const AuthenticatedApp = ({
 								)
 							) {
 								clearAuthSession();
+								markConsultantLoginBlocked();
 								throw new Error(CONSULTANT_LOGIN_BLOCKED_ERROR);
 							}
 
@@ -168,20 +169,14 @@ export const AuthenticatedApp = ({
 							}
 
 							setAppReady(true);
-							})
-							.catch((error) => {
-								setLoading(false);
-								if (
-									error?.message ===
-									CONSULTANT_LOGIN_BLOCKED_ERROR
-							) {
-									markConsultantLoginBlocked();
-								}
-							});
-					})
-					.catch(() => {
-						setLoading(false);
-					});
+						})
+						.catch(() => {
+							setLoading(false);
+						});
+				})
+				.catch(() => {
+					setLoading(false);
+				});
 		}
 	}, [
 		locale,

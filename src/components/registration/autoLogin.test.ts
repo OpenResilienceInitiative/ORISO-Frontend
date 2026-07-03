@@ -84,7 +84,7 @@ describe('autoLogin', () => {
 		});
 
 		expect(getKeycloakAccessToken).toHaveBeenCalledWith(
-			'encoded:shanzae@example.com',
+			'shanzae%40example.com',
 			'secret!',
 			null
 		);
@@ -101,7 +101,7 @@ describe('autoLogin', () => {
 		expect(persistMatrixLoginData).toHaveBeenCalledWith(matrixResponse);
 	});
 
-	it('retries with the entered username when encoded username login is unauthorized', async () => {
+	it('retries with the legacy encoded username when entered username login is unauthorized', async () => {
 		vi.mocked(getKeycloakAccessToken)
 			.mockRejectedValueOnce(new Error('UNAUTHORIZED'))
 			.mockResolvedValueOnce(keycloakResponse);
@@ -114,13 +114,13 @@ describe('autoLogin', () => {
 
 		expect(getKeycloakAccessToken).toHaveBeenNthCalledWith(
 			1,
-			'encoded:shanzae@example.com',
+			'shanzae%40example.com',
 			'secret!',
 			null
 		);
 		expect(getKeycloakAccessToken).toHaveBeenNthCalledWith(
 			2,
-			'shanzae%40example.com',
+			'encoded:shanzae@example.com',
 			'secret!',
 			null
 		);
@@ -168,7 +168,7 @@ describe('autoLogin', () => {
 		});
 
 		expect(getBudibaseAccessToken).toHaveBeenCalledWith(
-			'encoded:shanzae@example.com',
+			'shanzae%40example.com',
 			'secret!',
 			{ featureToolsEnabled: true }
 		);

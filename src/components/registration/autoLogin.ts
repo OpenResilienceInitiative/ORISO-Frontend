@@ -69,33 +69,34 @@ export const autoLogin = async ({
 	const tenantSettings = (autoLoginProps?.tenantData?.settings ||
 		{}) as TenantDataSettingsInterface;
 
-	let userHash = encodeUsername(autoLoginProps.username);
-	let username = userHash;
+	let userHash = autoLoginProps.username;
+	let username = encodeURIComponent(userHash);
 	let keycloakRes;
 
-	// console.log("🔐 DEBUG: autoLogin - encoded username:", username);
+	const legacyEncodedUsername = encodeUsername(autoLoginProps.username);
 
-	// Login with enc username and fallback to unencrypted username
+	// Prefer the entered username for current Keycloak users. Older accounts may
+	// still require the legacy encoded username, so keep that as the fallback.
 	try {
-		// console.log("🔐 DEBUG: autoLogin - attempting Keycloak login with encoded username");
+		// console.log("🔐 DEBUG: autoLogin - attempting Keycloak login with entered username");
 		keycloakRes = await loginKeycloak(
 			username,
 			password,
 			autoLoginProps.otp
 		);
-		// console.log("🔐 DEBUG: autoLogin - Keycloak login successful with encoded username");
+		// console.log("🔐 DEBUG: autoLogin - Keycloak login successful with entered username");
 	} catch (e: any) {
-		// console.log("🔐 DEBUG: autoLogin - Keycloak login failed with encoded username:", e.message);
+		// console.log("🔐 DEBUG: autoLogin - Keycloak login failed with entered username:", e.message);
 		if (e.message === FETCH_ERRORS.UNAUTHORIZED) {
-			userHash = autoLoginProps.username;
-			username = encodeURIComponent(userHash);
-			// console.log("🔐 DEBUG: autoLogin - retrying with unencoded username:", username);
+			userHash = legacyEncodedUsername;
+			username = legacyEncodedUsername;
+			// console.log("🔐 DEBUG: autoLogin - retrying with legacy encoded username:", username);
 			keycloakRes = await loginKeycloak(
 				username,
 				password,
 				autoLoginProps.otp
 			);
-			// console.log("🔐 DEBUG: autoLogin - Keycloak login successful with unencoded username");
+			// console.log("🔐 DEBUG: autoLogin - Keycloak login successful with legacy encoded username");
 		} else {
 			throw e;
 		}

@@ -220,14 +220,7 @@ export const Login = () => {
 					return redirectToApp(gcid);
 				}
 			}),
-		[
-			reloadUserData,
-			locale,
-			initLocale,
-			consultant,
-			gcid,
-			showConsultantLoginBlockedError
-		]
+		[reloadUserData, locale, initLocale, consultant, gcid]
 	);
 
 	useEffect(() => {
@@ -269,25 +262,14 @@ export const Login = () => {
 				return postLogin();
 			})
 			.catch((error) => {
-				if (error?.message === CONSULTANT_LOGIN_BLOCKED_ERROR) {
-					showConsultantLoginBlockedError();
-				} else {
-					setShowLoginError(
-						translate('login.warning.failed.unauthorized.text')
-					);
-				}
+				setShowLoginError(
+					translate('login.warning.failed.unauthorized.text')
+				);
 			})
 			.finally(() => {
 				setIsRequestInProgress(false);
 			});
-	}, [
-		magicToken,
-		isMagicTokenLoginAttempted,
-		postLogin,
-		translate,
-		gcid,
-		showConsultantLoginBlockedError
-	]);
+	}, [magicToken, isMagicTokenLoginAttempted, postLogin, translate, gcid]);
 
 	const tryLogin = (otp?: string) => {
 		setIsRequestInProgress(true);
@@ -322,8 +304,6 @@ export const Login = () => {
 						setTwoFactorType(error.options.data.otpType);
 						setIsOtpRequired(true);
 					}
-				} else if (error?.message === CONSULTANT_LOGIN_BLOCKED_ERROR) {
-					showConsultantLoginBlockedError();
 				}
 
 				setIsRequestInProgress(false);
