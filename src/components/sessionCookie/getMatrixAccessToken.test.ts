@@ -110,7 +110,8 @@ describe('getMatrixAccessToken', () => {
 		expect(fetchData).toHaveBeenCalledWith({
 			url: 'https://api.example.test/service/matrix/me/token',
 			method: 'GET',
-			responseHandling: ['CATCH_ALL']
+			responseHandling: ['CATCH_ALL'],
+			recoverOnPublicAuthRoute: false
 		});
 	});
 

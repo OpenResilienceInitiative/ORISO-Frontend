@@ -105,6 +105,7 @@ interface FetchDataProps {
 	responseHandling?: string[];
 	timeout?: number;
 	signal?: AbortSignal;
+	recoverOnPublicAuthRoute?: boolean;
 }
 
 export const fetchData = ({
@@ -116,7 +117,8 @@ export const fetchData = ({
 	skipAuth,
 	responseHandling,
 	timeout,
-	signal
+	signal,
+	recoverOnPublicAuthRoute = true
 }: FetchDataProps): Promise<any> =>
 	new Promise((resolve, reject) => {
 		const reqLog = new RequestLog(url, method, timeout);
@@ -297,7 +299,7 @@ export const fetchData = ({
 					) {
 						reject(new Error(FETCH_ERRORS.GATEWAY_TIMEOUT));
 					} else if (response.status === 401) {
-						if (isPublicAuthRoute()) {
+						if (isPublicAuthRoute() && recoverOnPublicAuthRoute) {
 							recoverFromStaleAuthOnPublicRoute(
 								Boolean(authorization),
 								reject
@@ -309,7 +311,11 @@ export const fetchData = ({
 					} else {
 						reject(new Error(FETCH_ERRORS.CATCH_ALL));
 					}
-				} else if (response.status === 401 && isPublicAuthRoute()) {
+				} else if (
+					response.status === 401 &&
+					isPublicAuthRoute() &&
+					recoverOnPublicAuthRoute
+				) {
 					recoverFromStaleAuthOnPublicRoute(
 						Boolean(authorization),
 						reject
