@@ -54,7 +54,8 @@ export const getMatrixAccessToken = (
 	return fetchData({
 		url: tokenUrl,
 		method: FETCH_METHODS.GET,
-		responseHandling: [FETCH_ERRORS.CATCH_ALL]
+		responseHandling: [FETCH_ERRORS.CATCH_ALL],
+		recoverOnPublicAuthRoute: false
 	}).then((response) => {
 		const homeserverUrl = getMatrixHomeserverUrl();
 		if (!homeserverUrl) {

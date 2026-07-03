@@ -11,12 +11,6 @@ import {
 import { endpoints } from '../../resources/scripts/endpoints';
 import { Button, BUTTON_TYPES, ButtonItem } from '../button/Button';
 import { autoLogin, redirectToApp } from '../registration/autoLogin';
-import {
-	clearAuthSession,
-	CONSULTANT_LOGIN_BLOCKED_ERROR,
-	consumeConsultantLoginBlocked,
-	isConsultantAccessToken
-} from '../auth/consultantLoginBlock';
 import { Text } from '../text/Text';
 import { ReactComponent as PersonIcon } from '../../resources/img/icons/person.svg';
 import { ReactComponent as LockIcon } from '../../resources/img/icons/lock.svg';
@@ -199,17 +193,6 @@ export const Login = () => {
 		[locale]
 	);
 
-	const showConsultantLoginBlockedError = useCallback(() => {
-		setShowLoginError(translate('login.warning.failed.consultantBlocked'));
-		setLabelState(VALIDITY_INVALID);
-	}, [translate]);
-
-	useEffect(() => {
-		if (consumeConsultantLoginBlocked()) {
-			showConsultantLoginBlockedError();
-		}
-	}, [showConsultantLoginBlockedError]);
-
 	useEffect(() => {
 		deleteCookieByName('tenantId');
 	}, []);
@@ -224,14 +207,6 @@ export const Login = () => {
 					locale !== initLocale
 				) {
 					patchedUserData['preferredLanguage'] = locale;
-				}
-
-				if (
-					hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
-				) {
-					clearAuthSession();
-					showConsultantLoginBlockedError();
-					throw new Error(CONSULTANT_LOGIN_BLOCKED_ERROR);
 				}
 
 				if (Object.keys(patchedUserData).length > 0) {
@@ -250,14 +225,7 @@ export const Login = () => {
 					return redirectToApp(gcid);
 				}
 			}),
-		[
-			reloadUserData,
-			locale,
-			initLocale,
-			consultant,
-			gcid,
-			showConsultantLoginBlockedError
-		]
+		[reloadUserData, locale, initLocale, consultant, gcid]
 	);
 
 	useEffect(() => {
@@ -280,11 +248,6 @@ export const Login = () => {
 
 		apiConsumeMagicLinkLogin(magicToken)
 			.then((tokenResponse) => {
-				if (isConsultantAccessToken(tokenResponse.access_token)) {
-					clearAuthSession();
-					throw new Error(CONSULTANT_LOGIN_BLOCKED_ERROR);
-				}
-
 				setTokens(
 					tokenResponse.access_token,
 					tokenResponse.expires_in,
@@ -296,25 +259,14 @@ export const Login = () => {
 				return postLogin();
 			})
 			.catch((error) => {
-				if (error?.message === CONSULTANT_LOGIN_BLOCKED_ERROR) {
-					showConsultantLoginBlockedError();
-				} else {
-					setShowLoginError(
-						translate('login.warning.failed.unauthorized.text')
-					);
-				}
+				setShowLoginError(
+					translate('login.warning.failed.unauthorized.text')
+				);
 			})
 			.finally(() => {
 				setIsRequestInProgress(false);
 			});
-	}, [
-		magicToken,
-		isMagicTokenLoginAttempted,
-		postLogin,
-		translate,
-		gcid,
-		showConsultantLoginBlockedError
-	]);
+	}, [magicToken, isMagicTokenLoginAttempted, postLogin, translate, gcid]);
 
 	const tryLogin = (otp?: string) => {
 		setIsRequestInProgress(true);
@@ -349,8 +301,6 @@ export const Login = () => {
 						setTwoFactorType(error.options.data.otpType);
 						setIsOtpRequired(true);
 					}
-				} else if (error?.message === CONSULTANT_LOGIN_BLOCKED_ERROR) {
-					showConsultantLoginBlockedError();
 				}
 
 				setIsRequestInProgress(false);
