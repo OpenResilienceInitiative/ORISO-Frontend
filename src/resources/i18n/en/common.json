@@ -1093,6 +1093,15 @@
 		"zh": "Chinese",
 		"zu": "isiZulu"
 	},
+	"legal": {
+		"notice": {
+			"fallbackLanguage": "This text is not available in your language and is shown in its original language.",
+			"machineTranslated": "Machine translated — the German version is legally binding.",
+			"showOriginal": "Show original",
+			"showingOriginal": "You are viewing the original version.",
+			"showTranslation": "Show translation"
+		}
+	},
 	"login": {
 		"button": {
 			"label": "Login"
@@ -1888,6 +1897,13 @@
 				"openInMaps": "Open in maps",
 				"phoneLabel": "Phone",
 				"websiteLabel": "Website"
+			},
+			"legal": {
+				"department": "Department",
+				"headline": "Data privacy notes of the counseling center",
+				"imprintHeadline": "Imprint of the counseling center",
+				"label": "Legal",
+				"unavailable": "The data privacy notes cannot be loaded at the moment."
 			},
 			"search": "Search for a postal code",
 			"summary": "Your counseling center:"

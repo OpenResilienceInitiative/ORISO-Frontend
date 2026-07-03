@@ -3,7 +3,7 @@ import * as React from 'react';
 
 import { Stage } from '../stage/stage';
 import './legalPageWrapper.styles.scss';
-import htmlParser from '../../resources/scripts/util/htmlParser';
+import { LegalContentRenderer } from '../legalContent/LegalContentRenderer';
 
 export interface LegalPageWrapperProps {
 	className?: string;
@@ -18,7 +18,12 @@ export const LegalPageWrapper = ({
 			<Stage className="stageLayout__stage" />
 			<div className={clsx('stageLayout__content', className)}>
 				<section className="template">
-					{typeof content === 'string' && htmlParser(content)}
+					{/* Resolves multilingual legal content (language map with
+					    optional machine-translation markers) to the UI
+					    language; plain HTML passes through unchanged. */}
+					{typeof content === 'string' && (
+						<LegalContentRenderer content={content} />
+					)}
 				</section>
 			</div>
 		</div>
