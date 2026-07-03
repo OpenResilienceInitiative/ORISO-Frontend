@@ -197,12 +197,20 @@ export const PasswordReset = () => {
 
 			apiUpdatePassword(oldPassword, newPassword)
 				.then(async () => {
-					isConsultant &&
-						featureAppointmentsEnabled &&
-						apiUpdatePasswordAppointments(
+					// Must complete BEFORE logout clears the auth cookies —
+					// otherwise the appointments-password update races the
+					// session invalidation and dies with a 401 (stale
+					// appointments/CalDAV password). A failure must not block
+					// the logout itself.
+					if (isConsultant && featureAppointmentsEnabled) {
+						await apiUpdatePasswordAppointments(
 							userData.email,
 							newPassword
-						);
+						).catch(() => {
+							// keep the logout flowing; the appointments
+							// password can be re-synced on next login
+						});
+					}
 
 					setOverlayActive(true);
 					setIsRequestInProgress(false);
