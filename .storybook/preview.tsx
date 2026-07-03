@@ -27,10 +27,6 @@ import {
 	E2EEContext
 } from '../src/globalState';
 import { UrlParamsContext } from '../src/globalState/provider/UrlParamsProvider';
-import { RocketChatPublicSettingsContext } from '../src/globalState/provider/RocketChatPublicSettingsProvider';
-import { RocketChatSubscriptionsContext } from '../src/globalState/provider/RocketChatSubscriptionsProvider';
-import { RocketChatUsersOfRoomContext } from '../src/globalState/provider/RocketChatUsersOfRoomProvider';
-import { RocketChatContext } from '../src/globalState/provider/RocketChatProvider';
 
 function MuiStoryShell({ Story }: { Story: React.ComponentType }) {
 	return (
@@ -67,44 +63,7 @@ function MuiStoryShell({ Story }: { Story: React.ComponentType }) {
 								zipcode: ''
 							}}
 						>
-							<RocketChatContext.Provider
-								value={{
-									ready: true,
-									send: () => {},
-									subscribe: () => {},
-									unsubscribe: () => {},
-									listen: () => {},
-									sendMethod: async () => ({}),
-									close: () => {},
-									rcWebsocket: null
-								}}
-							>
-								<RocketChatSubscriptionsContext.Provider
-									value={{
-										subscriptionsReady: true,
-										subscriptions: [],
-										roomsReady: true,
-										rooms: []
-									}}
-								>
-									<RocketChatUsersOfRoomContext.Provider
-										value={{
-											ready: true,
-											users: [],
-											moderators: [],
-											total: 0,
-											reload: async () => []
-										}}
-									>
-										<RocketChatPublicSettingsContext.Provider
-											value={{
-												settingsReady: true,
-												getSetting: () => ({
-													value: false
-												})
-											}}
-										>
-											<E2EEContext.Provider
+							<E2EEContext.Provider
 												value={{
 													key: '',
 													reloadPrivateKey: () => {},
@@ -164,11 +123,7 @@ function MuiStoryShell({ Story }: { Story: React.ComponentType }) {
 														</ThemeProvider>
 													</RegistrationContext.Provider>
 												</NotificationsContext.Provider>
-											</E2EEContext.Provider>
-										</RocketChatPublicSettingsContext.Provider>
-									</RocketChatUsersOfRoomContext.Provider>
-								</RocketChatSubscriptionsContext.Provider>
-							</RocketChatContext.Provider>
+							</E2EEContext.Provider>
 						</UrlParamsContext.Provider>
 					</UserDataContext.Provider>
 				</TenantContext.Provider>
