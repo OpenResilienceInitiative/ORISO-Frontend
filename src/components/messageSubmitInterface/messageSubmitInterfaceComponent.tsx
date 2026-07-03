@@ -12,6 +12,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 
 import { SendMessageButton } from './SendMessageButton';
 import { isAskerEnquirySubmission } from './messageEncryptionMode';
+import { resolveAsideTargetRoomId } from './asideRouting';
 import { chatTransportService } from '../../services/chatTransportService';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { STATUS_ENQUIRY } from '../../globalState/interfaces/SessionsDataInterface';
@@ -174,6 +175,8 @@ export interface MessageSubmitInterfaceComponentProps {
 	/** Anonymous enquiry after "Jetzt Chat starten" — use live chat send, not enquiry API. */
 	isAnonymousLiveChat?: boolean;
 	isSupervisor?: boolean;
+	/** ADR-008: per-session supervision side room id; aside sends go here, never the client room. */
+	supervisionRoomId?: string;
 	threadRootId?: string | null;
 	threadParentPreview?: string | null;
 	mobileUnreadCount?: number;
@@ -194,6 +197,7 @@ export const MessageSubmitInterfaceComponent = ({
 	handleMessageSendSuccess: onMessageSendSuccess,
 	isAnonymousLiveChat = false,
 	isSupervisor,
+	supervisionRoomId,
 	threadRootId,
 	threadParentPreview,
 	mobileUnreadCount = 0,
@@ -1847,7 +1851,7 @@ export const MessageSubmitInterfaceComponent = ({
 	]);
 
 	const sendMessage = useCallback(
-		async (message, attachment: File, isEncrypted) => {
+		async (message, attachment: File, isEncrypted, isAside = false) => {
 			const sendToRoomWithId = activeSession.rid || activeSession.item.id;
 			// Determine if this is a Matrix-backed session.
 			// Some sessions still have a legacy rid while exposing matrixRoomId.
@@ -1857,9 +1861,30 @@ export const MessageSubmitInterfaceComponent = ({
 			const matrixSessionId = isMatrixSession
 				? Number(resolvedChatSession.sessionId) || undefined
 				: undefined;
-			const matrixRoomId = isMatrixSession
+			const clientRoomId = isMatrixSession
 				? resolvedChatSession.matrixRoomId
 				: undefined;
+			// ADR-008: aside messages (supervisor feedback / explicit VISIBLE_TO)
+			// go to the supervision side room, never the client-facing room.
+			const asideRouting = resolveAsideTargetRoomId({
+				isAside,
+				clientRoomId,
+				supervisionRoomId
+			});
+			if (asideRouting.abort) {
+				// An aside with no side room must never leak into the client
+				// room — abort the send and surface an error instead.
+				setIsRequestInProgress(false);
+				handleAttachmentUploadError(INFO_TYPES.ATTACHMENT_OTHER_ERROR);
+				apiPostError({
+					name: 'SupervisionAsideRoutingError',
+					message:
+						'Aside message has no supervision side room id; send aborted to avoid leaking into the client room',
+					level: ERROR_LEVEL_WARN
+				}).then();
+				return;
+			}
+			const matrixRoomId = asideRouting.targetRoomId ?? undefined;
 			const getSendMailNotificationStatus = () => !activeSession.isGroup;
 
 			if (attachment) {
@@ -1983,6 +2008,7 @@ export const MessageSubmitInterfaceComponent = ({
 			matrixClientService,
 			onSendButton,
 			setE2EEState,
+			supervisionRoomId,
 			threadParentPreview,
 			threadRootId,
 			userData?.displayName,
@@ -2029,12 +2055,18 @@ export const MessageSubmitInterfaceComponent = ({
 		const explicitAudience = selectedAudienceValues.filter(
 			(value) => value !== '__all__'
 		);
-		if (humanTargetCount > 1 && explicitAudience.length > 0) {
+		const hasExplicitAudience =
+			humanTargetCount > 1 && explicitAudience.length > 0;
+		if (hasExplicitAudience) {
 			prefixParts.push(buildVisibleToPrefix(explicitAudience));
 		}
 		if (isSupervisor) {
 			prefixParts.push(SUPERVISOR_FEEDBACK_PREFIX);
 		}
+		// ADR-008: any message carrying an aside (supervisor feedback OR an
+		// explicit VISIBLE_TO audience) must be routed to the supervision side
+		// room, never the client-facing room.
+		const isAside = Boolean(isSupervisor) || hasExplicitAudience;
 		if (prefixParts.length && message.length > 0) {
 			message = `${prefixParts.join(' ')} ${message}`;
 		}
@@ -2047,7 +2079,7 @@ export const MessageSubmitInterfaceComponent = ({
 			return;
 		}
 
-		await sendMessage(message, attachment, isEncrypted);
+		await sendMessage(message, attachment, isEncrypted, isAside);
 	}, [
 		encodeAlignmentForTransport,
 		encodeHighlightColorsForTransport,
