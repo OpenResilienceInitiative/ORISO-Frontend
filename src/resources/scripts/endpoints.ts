@@ -149,6 +149,9 @@ export const endpoints = {
 	setAbsence: userServiceOrigin + '/service/users/consultants/absences',
 	startVideoCall: apiUrl + '/service/videocalls/new',
 	tenantServiceBase: tenantServiceOrigin + '/service/tenant',
+	dpaSignatureConfirm: (token: string) =>
+		tenantServiceOrigin +
+		`/service/tenant/public/dpa/confirm/${encodeURIComponent(token)}`,
 	topicGroups: consultingTypeServiceOrigin + '/service/topic-groups',
 	topicsData: consultingTypeServiceOrigin + '/service/topic/public/',
 	twoFactorAuth: userServiceOrigin + '/service/users/2fa',
