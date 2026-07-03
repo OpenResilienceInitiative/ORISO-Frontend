@@ -20,6 +20,20 @@ const absolutizeResolveModule = (dir: string) =>
 			? dir
 			: path.join(projectRoot, dir);
 
+const storybookExcludedWebpackPlugins = new Set([
+	'CopyPlugin',
+	'ESLintWebpackPlugin',
+	'ForkTsCheckerWebpackPlugin',
+	'ForkTsCheckerWarningWebpackPlugin',
+	'HtmlWebpackPlugin',
+	'InterpolateHtmlPlugin',
+	'ReactRefreshPlugin'
+]);
+
+const isStorybookSafeWebpackPlugin = (plugin: {
+	constructor?: { name?: string };
+}) => !storybookExcludedWebpackPlugins.has(plugin?.constructor?.name || '');
+
 /** Storybook 7 only auto-switches this shim for react-dom@18; React 19 needs the createRoot-based shim. */
 const reactDomShimReact18 = requireProject.resolve(
 	'@storybook/react-dom-shim/dist/react-18'
@@ -57,12 +71,15 @@ const config: StorybookConfig = {
 			(p: { constructor?: { name?: string } }) =>
 				p?.constructor?.name !== 'ModuleScopePlugin'
 		);
+		const webpackPlugins = (webpackConfig.plugins || []).filter(
+			isStorybookSafeWebpackPlugin
+		);
 
 		return {
 			...config,
 			output: {
 				...config.output,
-				publicPath: '/'
+				publicPath: ''
 			},
 			resolve: {
 				...config.resolve,
@@ -98,11 +115,15 @@ const config: StorybookConfig = {
 					/^react\/jsx-dev-runtime$/,
 					requireProject.resolve('react/jsx-dev-runtime')
 				),
+				new webpack.NormalModuleReplacementPlugin(
+					/^domhandler\/lib\/node$/,
+					domhandlerLegacyNodeEntry
+				),
 				// Ignore intro.js CSS entirely in Storybook - it's not needed
 				new webpack.IgnorePlugin({
 					resourceRegExp: /intro\.js\/introjs\.css$/
 				}),
-				...webpackConfig.plugins,
+				...webpackPlugins,
 				...config.plugins
 			],
 			module: {
@@ -147,7 +168,9 @@ const config: StorybookConfig = {
 		docsMode: false
 	},
 	typescript: {
-		reactDocgen: 'react-docgen-typescript',
+		// The full app graph is large enough that react-docgen-typescript can
+		// leave the preview stuck at DocGenPlugin during local development.
+		reactDocgen: false,
 		reactDocgenTypescriptOptions: {
 			shouldExtractLiteralValuesFromEnum: true,
 			propFilter: (prop) => {

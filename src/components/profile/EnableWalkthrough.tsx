@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Headline } from '../headline/Headline';
 import { Text } from '../text/Text';
-import Switch from 'react-switch';
+import { Switch } from '../Switch';
 import { useContext } from 'react';
 import { UserDataContext } from '../../globalState';
 
@@ -25,25 +25,23 @@ export const EnableWalkthrough = () => {
 					className="tertiary"
 				/>
 			</div>
-			<label className="twoFactorAuth__switch">
+			<div className="twoFactorAuth__switch">
 				<Switch
 					onChange={() => {
 						apiPatchConsultantData({
 							walkThroughEnabled: !isWalkThroughEnabled
 						})
 							.then(reloadUserData)
-							.catch((error) => { /* console.log(error); */ });
+							.catch((error) => {
+								/* console.log(error); */
+							});
 					}}
 					checked={userData.isWalkThroughEnabled}
-					uncheckedIcon={false}
-					checkedIcon={false}
-					width={48}
-					height={26}
-					onColor="#0A882F"
-					offColor="#8C878C"
-					boxShadow="0px 1px 4px rgba(0, 0, 0, 0.6)"
-					handleDiameter={27}
-					activeBoxShadow="none"
+					aria-label={
+						isWalkThroughEnabled
+							? translate('walkthrough.switch.active.label')
+							: translate('walkthrough.switch.deactive.label')
+					}
 				/>
 				<Text
 					text={
@@ -53,7 +51,7 @@ export const EnableWalkthrough = () => {
 					}
 					type="standard"
 				/>
-			</label>
+			</div>
 		</div>
 	);
 };
