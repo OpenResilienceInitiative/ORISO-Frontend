@@ -64,65 +64,53 @@ function MuiStoryShell({ Story }: { Story: React.ComponentType }) {
 							}}
 						>
 							<E2EEContext.Provider
-												value={{
-													key: '',
-													reloadPrivateKey: () => {},
-													isE2eeEnabled: false,
-													e2EEReady: true
-												}}
-											>
-												<NotificationsContext.Provider
-													value={{
-														notifications: [],
-														setNotifications:
-															() => {},
-														hasNotification: () =>
-															false,
-														addNotification:
-															() => {},
-														removeNotification:
-															() => {}
-													}}
-												>
-													<RegistrationContext.Provider
-														value={{
-															setDisabledNextButton:
-																() => null,
-															registrationData: {
-																agency: null,
-																agencyId: null,
-																username: null,
-																password: null,
-																zipcode: null,
-																mainTopic: {
-																	id: 1,
-																	name: 'Topic',
-																	slug: 'topic1',
-																	description:
-																		'',
-																	internalIdentifier:
-																		'topic1',
-																	status: '',
-																	createDate:
-																		'',
-																	updateDate:
-																		''
-																},
-																mainTopicId: 1
-															}
-														}}
-													>
-														<ThemeProvider
-															theme={theme}
-														>
-															<LegalLinksProvider
-																legalLinks={[]}
-															>
-																<Story />
-															</LegalLinksProvider>
-														</ThemeProvider>
-													</RegistrationContext.Provider>
-												</NotificationsContext.Provider>
+								value={{
+									key: '',
+									reloadPrivateKey: () => {},
+									isE2eeEnabled: false,
+									e2EEReady: true
+								}}
+							>
+								<NotificationsContext.Provider
+									value={{
+										notifications: [],
+										setNotifications: () => {},
+										hasNotification: () => false,
+										addNotification: () => {},
+										removeNotification: () => {}
+									}}
+								>
+									<RegistrationContext.Provider
+										value={{
+											setDisabledNextButton: () => null,
+											registrationData: {
+												agency: null,
+												agencyId: null,
+												username: null,
+												password: null,
+												zipcode: null,
+												mainTopic: {
+													id: 1,
+													name: 'Topic',
+													slug: 'topic1',
+													description: '',
+													internalIdentifier:
+														'topic1',
+													status: '',
+													createDate: '',
+													updateDate: ''
+												},
+												mainTopicId: 1
+											}
+										}}
+									>
+										<ThemeProvider theme={theme}>
+											<LegalLinksProvider legalLinks={[]}>
+												<Story />
+											</LegalLinksProvider>
+										</ThemeProvider>
+									</RegistrationContext.Provider>
+								</NotificationsContext.Provider>
 							</E2EEContext.Provider>
 						</UrlParamsContext.Provider>
 					</UserDataContext.Provider>
