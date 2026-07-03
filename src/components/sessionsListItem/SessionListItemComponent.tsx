@@ -76,6 +76,7 @@ import { archiveSessionSuccessOverlayItem } from '../sessionMenu/sessionMenuHelp
 import { mobileListView } from '../app/navigationHandler';
 import LegalLinks from '../legalLinks/LegalLinks';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
+import { LegalLinkModal } from '../legalLinks/LegalLinkModal';
 import { getSessionDropdownPosition } from './sessionDropdownPosition';
 import {
 	isCaseHandoverAccessControlled,
@@ -138,6 +139,10 @@ export const SessionListItemComponent = ({
 	const dropdownLabel = translate('groupChat.info.settings.headline');
 	const [overlayItem, setOverlayItem] = useState(null);
 	const [overlayActive, setOverlayActive] = useState(false);
+	const [legalModal, setLegalModal] = useState<{
+		title: string;
+		url: string;
+	} | null>(null);
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
 	const [caseHandoverStatus, setCaseHandoverStatus] =
 		useState<CaseHandoverStatus | null>(null);
@@ -1106,11 +1111,22 @@ export const SessionListItemComponent = ({
 															}
 														>
 															{(_, url) => (
-																<a
-																	href={url}
-																	target="_blank"
-																	rel="noreferrer"
+																<button
+																	type="button"
 																	className="sessionsListItem__dropdownOption"
+																	onClick={() => {
+																		setFlyoutOpen(
+																			false
+																		);
+																		setLegalModal(
+																			{
+																				title: translate(
+																					'chatFlyout.privacyPolicy'
+																				),
+																				url
+																			}
+																		);
+																	}}
 																>
 																	<PrivacyPolicyIcon className="sessionsListItem__dropdownOptionIcon" />
 																	<div className="sessionsListItem__dropdownOptionCenter">
@@ -1130,7 +1146,7 @@ export const SessionListItemComponent = ({
 																			)}
 																		</p>
 																	</div>
-																</a>
+																</button>
 															)}
 														</LegalLinks>
 														<LegalLinks
@@ -1147,11 +1163,22 @@ export const SessionListItemComponent = ({
 															}
 														>
 															{(_, url) => (
-																<a
-																	href={url}
-																	target="_blank"
-																	rel="noreferrer"
+																<button
+																	type="button"
 																	className="sessionsListItem__dropdownOption"
+																	onClick={() => {
+																		setFlyoutOpen(
+																			false
+																		);
+																		setLegalModal(
+																			{
+																				title: translate(
+																					'chatFlyout.imprint'
+																				),
+																				url
+																			}
+																		);
+																	}}
 																>
 																	<ImprintIcon className="sessionsListItem__dropdownOptionIcon" />
 																	<div className="sessionsListItem__dropdownOptionCenter">
@@ -1166,7 +1193,7 @@ export const SessionListItemComponent = ({
 																			</kbd>
 																		</div>
 																	</div>
-																</a>
+																</button>
 															)}
 														</LegalLinks>
 													</div>
@@ -1586,6 +1613,13 @@ export const SessionListItemComponent = ({
 				<Overlay
 					item={overlayItem}
 					handleOverlay={handleOverlayAction}
+				/>
+			)}
+			{legalModal && (
+				<LegalLinkModal
+					title={legalModal.title}
+					url={legalModal.url}
+					onClose={() => setLegalModal(null)}
 				/>
 			)}
 		</div>

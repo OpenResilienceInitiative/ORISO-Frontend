@@ -13,7 +13,7 @@ import teamImage from '../../resources/img/illustrations/Team.svg';
 import './sessionsListItem.styles.scss';
 
 const listShell: React.CSSProperties = {
-	backgroundColor: '#f5f5f5',
+	backgroundColor: '#eae7e8',
 	maxWidth: 440,
 	margin: '0 auto',
 	padding: '4px 8px'

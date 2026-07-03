@@ -24,6 +24,15 @@ const absolutizeResolveModule = (dir: string) =>
 const reactDomShimReact18 = requireProject.resolve(
 	'@storybook/react-dom-shim/dist/react-18'
 );
+const domhandlerLegacyNodeEntry = path.join(
+	projectRoot,
+	'node_modules',
+	'html-dom-parser',
+	'node_modules',
+	'domhandler',
+	'lib',
+	'node.js'
+);
 
 const config: StorybookConfig = {
 	stories: ['../src/**/*.stories.@(js|jsx|ts|tsx)'],
@@ -73,6 +82,9 @@ const config: StorybookConfig = {
 					...webpackConfig.resolve.alias,
 					...config.resolve.alias,
 					'@storybook/react-dom-shim': reactDomShimReact18,
+					// html-dom-parser@1.x imports this legacy subpath, but
+					// domhandler@5 blocks it via package exports when hoisted.
+					'domhandler/lib/node$': domhandlerLegacyNodeEntry,
 					'react-dom$': requireProject.resolve('react-dom')
 				},
 				plugins: resolvePlugins

@@ -258,6 +258,8 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		&--hasToolbar {
 			padding-top: 0;
 			margin-top: 0;
+			margin-left: 25px;
+			margin-right: 25px;
 		}
 	}
 
@@ -334,16 +336,11 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		right: -3px;
 		top: 50%;
 		width: 6px;
-		height: var(--sessions-list-thumb-height, 56px);
+		height: 56px;
 		border-radius: 999px;
 		background: #ffffff;
 		transform: translateY(-50%);
 		transition: box-shadow 140ms ease;
-	}
-
-	&__resizeHandle[data-scrollable='true'] &__resizeHandlePill {
-		top: 0;
-		transform: translateY(var(--sessions-list-thumb-top, 0px));
 	}
 
 	&__resizeHandle:hover &__resizeHandlePill {
@@ -353,18 +350,9 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		transform: translateY(-50%) scaleX(1.08);
 	}
 
-	&__resizeHandle[data-scrollable='true']:hover &__resizeHandlePill {
-		transform: translateY(var(--sessions-list-thumb-top, 0px)) scaleX(1.08);
-	}
-
 	&__resizeHandle[data-dragging='true'] &__resizeHandlePill {
 		background: var(--m3-primary-fixed, #ffdad5);
 		transform: translateY(-50%) scaleX(1.12);
-	}
-
-	&__resizeHandle[data-scrollable='true'][data-dragging='true']
-		&__resizeHandlePill {
-		transform: translateY(var(--sessions-list-thumb-top, 0px)) scaleX(1.12);
 	}
 
 	&__resizeHandle:focus-visible &__resizeHandlePill {
@@ -554,7 +542,7 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		.sessionsListItem {
 			justify-content: center;
 			align-items: center;
-			margin-bottom: 4px;
+			margin-bottom: 0px;
 
 			&__content {
 				display: flex;
@@ -664,7 +652,7 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 	$toolbar-chip-border-rest: #e1e6ee;
 	$toolbar-chip-hover-bg: #eef1f6;
 	$toolbar-chip-hover-border: #d1d8e6;
-	$toolbar-chip-selected-bg: #3b4044;
+	$toolbar-chip-selected-bg: #410001;
 	$toolbar-chip-selected-fg: #ffffff;
 
 	flex: 0;
@@ -1007,8 +995,8 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 
 		@media (hover: hover) {
 			&--active:hover {
-				background-color: #303539;
-				border-color: #303539;
+				background-color: #5f1313;
+				border-color: #5f1313;
 				color: $toolbar-chip-selected-fg;
 
 				&::before {
