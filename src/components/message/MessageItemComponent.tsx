@@ -893,17 +893,12 @@ export const MessageItemComponent = ({
 	const isUserLeftChatEvent =
 		parsedMessage.systemNotificationType ===
 		SYSTEM_NOTIFICATION_USER_LEFT_CHAT;
-	const userLeftChatDisplayName = (() => {
-		const fromPayload = parsedMessage.systemNotificationUsername?.trim();
-		if (
-			fromPayload &&
-			!fromPayload.startsWith('enc.') &&
-			!fromPayload.startsWith('@')
-		) {
-			return fromPayload;
-		}
-		return '';
-	})();
+	const userLeftChatEventText = hasUserAuthority(
+		AUTHORITIES.CONSULTANT_DEFAULT,
+		userData
+	)
+		? translate('message.userLeftChat', 'User left the chat')
+		: translate('message.consultantLeftChat', 'Consultant left the chat');
 	const systemNotificationTitle =
 		parsedMessage.systemNotificationTitle ||
 		translate('message.systemNotificationTitle', 'System notification');
@@ -1732,11 +1727,7 @@ export const MessageItemComponent = ({
 			<div className="messageItem messageItem--chatEvent">
 				{getMessageDate()}
 				<div className="messageItem__chatEvent">
-					{translate('message.userLeftChat', {
-						name:
-							userLeftChatDisplayName ||
-							translate('message.anonymousUser', 'User')
-					})}
+					{userLeftChatEventText}
 				</div>
 			</div>
 		);

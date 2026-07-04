@@ -5255,28 +5255,6 @@ export const MessageSubmitInterfaceComponent = ({
 												}
 											}}
 										/>
-										<div
-											className={clsx(
-												'textarea__characterCounter',
-												isMessageLengthWarning &&
-													'textarea__characterCounter--warning',
-												isMessageOverLimit &&
-													'textarea__characterCounter--error',
-												isVoiceRecording &&
-													'textarea__characterCounter--hidden'
-											)}
-											aria-label={translate(
-												'message.submit.characterCounter.ariaLabel',
-												'{{current}} of {{maximum}} characters',
-												{
-													current: typedMessageLength,
-													maximum: INPUT_MAX_LENGTH
-												}
-											)}
-										>
-											{typedMessageLength}/
-											{INPUT_MAX_LENGTH}
-										</div>
 										<span
 											className="sr-only"
 											role="status"
