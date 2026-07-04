@@ -53,6 +53,14 @@ type TimelineListener = (
 	toStartOfTimeline: boolean
 ) => void;
 
+export type MatrixRoomLifecycleChange =
+	| {
+			type: 'myMembership';
+			membership: string;
+			prevMembership?: string;
+	  }
+	| { type: 'tombstoned' };
+
 class ChatTransportService {
 	public resolveSession(
 		session?: ChatTransportSession | null
@@ -185,6 +193,114 @@ class ChatTransportService {
 
 		return () => {
 			(matrixClient as any).off('Room.timeline', handleTimeline);
+		};
+	}
+
+	/**
+	 * Watch room-lifecycle signals that end the user's participation in a
+	 * room: own-membership changes to leave/ban (kick, ban or a room purge
+	 * via the Synapse admin API) and m.room.tombstone state events (room
+	 * shut down / replaced). This replaces the legacy Rocket.Chat
+	 * `subscriptions-changed` "removed" notify stream.
+	 */
+	public onMatrixRoomLifecycle(
+		matrixRoomId: string,
+		listener: (change: MatrixRoomLifecycleChange) => void
+	): (() => void) | null {
+		const matrixClient = getMatrixClientService()?.getClient?.();
+		if (!matrixClient) {
+			return null;
+		}
+
+		const handleMyMembership = (
+			room: Room,
+			membership: string,
+			prevMembership?: string
+		) => {
+			if (room?.roomId !== matrixRoomId) {
+				return;
+			}
+			if (membership !== 'leave' && membership !== 'ban') {
+				return;
+			}
+			listener({ type: 'myMembership', membership, prevMembership });
+		};
+
+		const handleTimeline = (event: MatrixEvent, room: Room) => {
+			if (room?.roomId !== matrixRoomId) {
+				return;
+			}
+			if (event?.getType?.() !== 'm.room.tombstone') {
+				return;
+			}
+			listener({ type: 'tombstoned' });
+		};
+
+		(matrixClient as any).on('Room.myMembership', handleMyMembership);
+		(matrixClient as any).on('Room.timeline', handleTimeline);
+
+		return () => {
+			(matrixClient as any).off('Room.myMembership', handleMyMembership);
+			(matrixClient as any).off('Room.timeline', handleTimeline);
+		};
+	}
+
+	/**
+	 * Members of a Matrix room. The client syncs with lazyLoadMembers, so
+	 * the cached member list can be partial until loadMembersIfNeeded()
+	 * fetched the full membership state from the homeserver.
+	 */
+	public async loadMatrixRoomMembers(matrixRoomId: string): Promise<any[]> {
+		const room = this.getMatrixRoom(matrixRoomId);
+		if (!room) {
+			return [];
+		}
+		try {
+			await (room as any).loadMembersIfNeeded?.();
+		} catch {
+			// fall back to the (possibly partial) cached member list
+		}
+		return room.getMembers?.() || [];
+	}
+
+	/**
+	 * Watch membership updates of a room (join/leave/ban/invite and lazy-load
+	 * completion) so member-driven UI can re-read the member list.
+	 */
+	public onMatrixRoomMembers(
+		matrixRoomId: string,
+		listener: () => void
+	): (() => void) | null {
+		const matrixClient = getMatrixClientService()?.getClient?.();
+		if (!matrixClient) {
+			return null;
+		}
+
+		const handleRoomStateMembers = (_event: any, state: any) => {
+			if (state?.roomId && state.roomId !== matrixRoomId) {
+				return;
+			}
+			listener();
+		};
+		const handleMembership = (_event: any, member: any) => {
+			if (member?.roomId && member.roomId !== matrixRoomId) {
+				return;
+			}
+			listener();
+		};
+
+		(matrixClient as any).on('RoomState.members', handleRoomStateMembers);
+		(matrixClient as any).on('RoomMember.membership', handleMembership);
+
+		return () => {
+			(matrixClient as any).off(
+				'RoomState.members',
+				handleRoomStateMembers
+			);
+			(matrixClient as any).off(
+				'RoomMember.membership',
+				handleMembership
+			);
 		};
 	}
 
