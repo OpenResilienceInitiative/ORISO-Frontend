@@ -5,7 +5,6 @@ import { setAskerSessions } from './helper/askerSessions';
 import { setConsultantSessions } from './helper/consultantSessions';
 import { setMessages } from './helper/messages';
 import { config } from '../../../src/resources/scripts/config';
-import usersChatApi from './api/users/chat';
 import usersConsultantsApi from './api/users/consultants';
 import usersDataApi from './api/users/data';
 import usersSessionsApi from './api/users/sessions';
@@ -13,8 +12,6 @@ import apiAgencies from './api/agencies';
 import apiAppointments from './api/appointments';
 import apiConsultingTypes from './api/consultTypes';
 import apiMessages from './api/messages';
-import apiRc from './api/rc';
-import apiUploads from './api/uploads';
 import apiVideocalls from './api/videocalls';
 import loginCommand from './helper/login';
 import fastLoginCommand from './helper/fastLogin';
@@ -26,9 +23,6 @@ import apiTopics from './api/topic';
 let overrides = {};
 
 const defaultReturns = {
-	'attachmentUpload': {
-		statusCode: 201
-	},
 	'userData': {
 		emailToggles: [
 			{
@@ -231,7 +225,6 @@ Cypress.Commands.add('mockApi', () => {
 		req.reply(getWillReturn('releases_markup'));
 	}).as('releases_markup');
 
-	usersChatApi(cy, getWillReturn, setWillReturn);
 	usersConsultantsApi(cy, getWillReturn, setWillReturn);
 	usersDataApi(cy, getWillReturn, setWillReturn);
 	usersSessionsApi(cy, getWillReturn, setWillReturn);
@@ -239,9 +232,7 @@ Cypress.Commands.add('mockApi', () => {
 	apiAppointments(cy);
 	apiConsultingTypes(cy, getWillReturn, setWillReturn);
 	apiMessages(cy, getWillReturn, setWillReturn);
-	apiRc(cy, getWillReturn, setWillReturn);
 	apiTopics(cy, getWillReturn, setWillReturn);
-	apiUploads(cy, getWillReturn, setWillReturn);
 	apiVideocalls(cy);
 });
 

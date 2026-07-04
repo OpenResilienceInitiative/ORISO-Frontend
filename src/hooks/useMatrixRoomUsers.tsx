@@ -8,10 +8,28 @@ export type RoomUser = {
 	displayName?: string;
 };
 
+const mapMembersToRoomUsers = (members: any[]): RoomUser[] =>
+	members
+		.filter((member: any) => Boolean(member?.userId))
+		.map((member: any) => {
+			const userId = `${member.userId}`;
+			const localPart = userId.split(':')[0].replace(/^@/, '');
+			return {
+				_id: userId,
+				username: localPart,
+				displayName: member?.name || member?.rawDisplayName || localPart
+			};
+		});
+
 /**
  * Members of the active session's Matrix room, in the shape the legacy
  * Rocket.Chat users-of-room context used to provide. Sessions without a
  * Matrix room yield an empty list (graceful degradation).
+ *
+ * The Matrix client syncs with lazyLoadMembers, so the local member cache
+ * can be partial. The hook loads the full membership from the homeserver
+ * (loadMembersIfNeeded) before reading and re-reads on membership updates
+ * (RoomState.members / RoomMember.membership).
  */
 export const useMatrixRoomUsers = (): {
 	users: RoomUser[];
@@ -31,22 +49,54 @@ export const useMatrixRoomUsers = (): {
 			return;
 		}
 
-		const room = chatTransportService.getMatrixRoom(matrixRoomId);
-		const members = room?.getMembers?.() || [];
-		setUsers(
-			members
-				.filter((member: any) => Boolean(member?.userId))
-				.map((member: any) => {
-					const userId = `${member.userId}`;
-					const localPart = userId.split(':')[0].replace(/^@/, '');
-					return {
-						_id: userId,
-						username: localPart,
-						displayName:
-							member?.name || member?.rawDisplayName || localPart
-					};
+		let cancelled = false;
+		let retryTimer: number | null = null;
+		let detachMembersListener: (() => void) | null = null;
+
+		const refreshMembers = () => {
+			chatTransportService
+				.loadMatrixRoomMembers(matrixRoomId)
+				.then((members) => {
+					if (!cancelled) {
+						setUsers(mapMembersToRoomUsers(members));
+					}
 				})
-		);
+				.catch(() => {
+					// keep the previous member state on transient errors
+				});
+		};
+
+		const attachMembersListener = () => {
+			detachMembersListener = chatTransportService.onMatrixRoomMembers(
+				matrixRoomId,
+				refreshMembers
+			);
+			return Boolean(detachMembersListener);
+		};
+
+		refreshMembers();
+
+		// The Matrix client may not be initialized yet (e.g. right after
+		// login) — retry until it is, then re-read the members once.
+		if (!attachMembersListener()) {
+			retryTimer = window.setInterval(() => {
+				if (attachMembersListener()) {
+					if (retryTimer) {
+						window.clearInterval(retryTimer);
+						retryTimer = null;
+					}
+					refreshMembers();
+				}
+			}, 500);
+		}
+
+		return () => {
+			cancelled = true;
+			if (retryTimer) {
+				window.clearInterval(retryTimer);
+			}
+			detachMembersListener?.();
+		};
 	}, [matrixRoomId]);
 
 	const moderators = useMemo(() => {

@@ -7,7 +7,7 @@ import { UserDataContext } from '../../globalState';
 import { ReactComponent as CheckIcon } from '../../resources/img/illustrations/check.svg';
 import './absenceFormular.styles';
 import { Headline } from '../headline/Headline';
-import Switch from 'react-switch';
+import { Switch } from '../Switch';
 import { Text } from '../text/Text';
 import { Textarea } from '../form/textarea';
 import { isMobile } from 'react-device-detect';
@@ -101,15 +101,7 @@ export const AbsenceFormular = () => {
 						className="mr--1"
 						onChange={() => saveAbsence(!isAbsent)}
 						checked={isAbsent}
-						uncheckedIcon={false}
-						checkedIcon={false}
-						width={48}
-						height={26}
-						onColor="#0A882F"
-						offColor="#8C878C"
-						boxShadow="0px 1px 4px rgba(0, 0, 0, 0.6)"
-						handleDiameter={27}
-						activeBoxShadow="none"
+						aria-label={translate('absence.checkbox.label')}
 					/>
 					<Text
 						text={translate('absence.checkbox.label')}
