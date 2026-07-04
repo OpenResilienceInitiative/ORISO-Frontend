@@ -376,6 +376,7 @@
 		"notice": {
 			"fallbackLanguage": "Dieser Text liegt nicht in Deiner Sprache vor und wird in seiner Originalsprache angezeigt.",
 			"machineTranslated": "Maschinell übersetzt — rechtlich verbindlich ist die deutsche Fassung.",
+			"placeholder": "Hinweis: Dieser Text ist ein Platzhalter und noch nicht rechtsverbindlich gepflegt.",
 			"showOriginal": "Original anzeigen",
 			"showingOriginal": "Du siehst die Originalfassung.",
 			"showTranslation": "Übersetzung anzeigen"
