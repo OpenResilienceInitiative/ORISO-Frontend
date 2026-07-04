@@ -23,15 +23,28 @@ import {
 	CaseHandoverStatus,
 	FETCH_ERRORS
 } from '../../api';
-import { prepareMessages } from './sessionHelpers';
+import {
+	prepareMessages,
+	SESSION_LIST_TAB,
+	SESSION_LIST_TYPES
+} from './sessionHelpers';
 import { isMatrixRoom } from '../../utils/matrixRoomUtils';
+import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
+import { BUTTON_TYPES } from '../button/Button';
+import { logout } from '../logout/logout';
+import { ReactComponent as CheckIcon } from '../../resources/img/illustrations/check.svg';
 import './session.styles';
 import useUpdatingRef from '../../hooks/useUpdatingRef';
+import { useSearchParam } from '../../hooks/useSearchParams';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { prepareConsultantDataForSelect } from '../sessionAssign/sessionAssignHelper';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
-import { chatTransportService } from '../../services/chatTransportService';
+import {
+	chatTransportService,
+	MatrixRoomLifecycleChange
+} from '../../services/chatTransportService';
 import { formatMatrixTimelineEvent } from '../../utils/matrixTimelineEventFormatter';
 import { CaseHandoverGate } from './CaseHandoverGate';
 import { isCaseHandoverAccessControlled } from './caseHandoverHelpers';
@@ -51,10 +64,12 @@ export const SessionStream = ({
 	const MATRIX_TYPING_TRIGGER_MS = 1000;
 	const MATRIX_TYPING_STALE_MS = 3600;
 	const { t: translate } = useTranslation();
+	const navigate = useNavigate();
 
-	const { type } = useContext(SessionTypeContext);
+	const { type, path: listPath } = useContext(SessionTypeContext);
 	const { userData } = useContext(UserDataContext);
 	const { matrixClientService } = useMatrixClient();
+	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
 
 	// MATRIX MIGRATION: Track component mount/unmount
 	useEffect(() => {
@@ -66,6 +81,8 @@ export const SessionStream = ({
 
 	const subscribed = useRef(false);
 	const [messagesItem, setMessagesItem] = useState(null);
+	const [overlayItem, setOverlayItem] = useState<OverlayItem>(null);
+	const [isOverlayActive, setIsOverlayActive] = useState(false);
 	const [loading, setLoading] = useState(true);
 
 	const { activeSession, readActiveSession } =
@@ -370,6 +387,91 @@ export const SessionStream = ({
 		};
 	}, [resolvedChatSession, fetchSessionMessages]);
 
+	const groupChatStoppedOverlay: OverlayItem = useMemo(
+		() => ({
+			svg: CheckIcon,
+			headline: translate('groupChat.stopped.overlay.headline'),
+			buttonSet: [
+				{
+					label: translate('groupChat.stopped.overlay.button1Label'),
+					function: OVERLAY_FUNCTIONS.REDIRECT,
+					type: BUTTON_TYPES.PRIMARY
+				},
+				{
+					label: translate('groupChat.stopped.overlay.button2Label'),
+					function: OVERLAY_FUNCTIONS.LOGOUT,
+					type: BUTTON_TYPES.SECONDARY
+				}
+			]
+		}),
+		[translate]
+	);
+
+	// Restores the legacy Rocket.Chat "subscriptions-changed removed" UX on
+	// Matrix signals (own membership -> leave/ban after a kick, ban or admin
+	// room purge; m.room.tombstone when a room is shut down/replaced):
+	// - group chat ended: "group chat stopped" overlay, unless this user
+	//   initiated the stop/leave (SessionMenu already shows its own overlay);
+	// - 1:1 participant removed (e.g. session reassignment): redirect back
+	//   to the session list.
+	const handleMatrixRoomLifecycle = useUpdatingRef(
+		useCallback(
+			(_change: MatrixRoomLifecycleChange) => {
+				if (activeSession.isGroup) {
+					if (hasUserInitiatedStopOrLeaveRequest.current) {
+						hasUserInitiatedStopOrLeaveRequest.current = false;
+					} else {
+						setOverlayItem(groupChatStoppedOverlay);
+						setIsOverlayActive(true);
+					}
+				} else if (type === SESSION_LIST_TYPES.MY_SESSION) {
+					navigate(listPath);
+				}
+			},
+			[
+				activeSession.isGroup,
+				groupChatStoppedOverlay,
+				listPath,
+				navigate,
+				type
+			]
+		)
+	);
+
+	useEffect(() => {
+		if (!isMatrixSession || !matrixRoomId) {
+			return;
+		}
+
+		let retryTimer: number | null = null;
+		let detachLifecycleListener: (() => void) | null = null;
+
+		const attachLifecycleListener = () => {
+			detachLifecycleListener = chatTransportService.onMatrixRoomLifecycle(
+				matrixRoomId,
+				(change) => handleMatrixRoomLifecycle.current(change)
+			);
+			return Boolean(detachLifecycleListener);
+		};
+
+		// Try immediately, then retry until Matrix client is ready.
+		if (!attachLifecycleListener()) {
+			retryTimer = window.setInterval(() => {
+				if (attachLifecycleListener() && retryTimer) {
+					window.clearInterval(retryTimer);
+					retryTimer = null;
+				}
+			}, 500);
+		}
+
+		return () => {
+			if (retryTimer) {
+				window.clearInterval(retryTimer);
+			}
+			detachLifecycleListener?.();
+		};
+	}, [isMatrixSession, matrixRoomId, handleMatrixRoomLifecycle]);
+
 	useEffect(() => {
 		if (!isMatrixSession || !matrixRoomId) {
 			setMatrixTypingUsers([]);
@@ -636,6 +738,17 @@ export const SessionStream = ({
 
 	// console.log('🔥 SessionStream: Rendering session content');
 
+	const handleOverlayAction = (buttonFunction: string) => {
+		if (buttonFunction === OVERLAY_FUNCTIONS.REDIRECT) {
+			navigate(
+				listPath +
+					(sessionListTab ? `?sessionListTab=${sessionListTab}` : '')
+			);
+		} else if (buttonFunction === OVERLAY_FUNCTIONS.LOGOUT) {
+			logout();
+		}
+	};
+
 	const handleCaseHandoverStatusChange = (nextStatus: CaseHandoverStatus) => {
 		setCaseHandoverStatus(nextStatus);
 		if (nextStatus.canViewContent) {
@@ -667,6 +780,12 @@ export const SessionStream = ({
 				bannedUsers={bannedUsers}
 				refreshMessages={fetchSessionMessages}
 			/>
+			{isOverlayActive && (
+				<Overlay
+					item={overlayItem}
+					handleOverlay={handleOverlayAction}
+				/>
+			)}
 		</div>
 	);
 };
