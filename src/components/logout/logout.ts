@@ -1,13 +1,9 @@
 import { apiKeycloakLogout } from '../../api/apiLogoutKeycloak';
 import { apiSetLiveChatAvailability } from '../../api/apiSetLiveChatAvailability';
-// // import { apiRocketchatLogout } from '../../api/apiLogoutRocketchat';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { budibaseLogout } from '../budibase/budibaseLogout';
 import { removeAllCookies } from '../sessionCookie/accessSessionCookie';
-import {
-	removeRocketChatMasterKeyFromLocalStorage,
-	removeTokenExpiryFromLocalStorage
-} from '../sessionCookie/accessSessionLocalStorage';
+import { removeTokenExpiryFromLocalStorage } from '../sessionCookie/accessSessionLocalStorage';
 import { appConfig } from '../../utils/appConfig';
 import { calcomLogout } from './calcomLogout';
 import { callEventListeners } from '../../utils/eventHandler';
@@ -46,8 +42,6 @@ export const logout = async (
 	await apiSetLiveChatAvailability(false);
 
 	Promise.all([
-		// Skip RocketChat logout due to configuration issues
-		// apiRocketchatLogout(),
 		apiKeycloakLogout(),
 		featureAppointmentsEnabled && calcomLogout(),
 		featureToolsEnabled && budibaseLogout()
@@ -72,7 +66,6 @@ const invalidateCookies = (
 	});
 	removeAllCookies();
 	removeTokenExpiryFromLocalStorage();
-	removeRocketChatMasterKeyFromLocalStorage();
 	if (withRedirect) {
 		redirectAfterLogout(redirectUrl);
 	}

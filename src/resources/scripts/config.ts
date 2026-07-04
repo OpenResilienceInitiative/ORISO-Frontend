@@ -52,8 +52,7 @@ export const config: AppConfigInterface = {
 	useTenantService: true,
 	useApiClusterSettings: true, // Feature flag to enable the cluster use the cluster settings instead of the config file
 	mainTenantSubdomainForSingleDomainMultitenancy: 'app',
-	attachmentEncryption: true, // Feature flag for attachment end to end encryption - e2e must also be enabled in rocket.chat
-	featureChatTransportFacadeEnabled: false,
+	blockConsultantAppLogin: false, // Block consultant-role app logins (PR #273). Off until an activation-state check exists — the bare role matches every counsellor.
 
 	requestCollector: {
 		limit: 10,

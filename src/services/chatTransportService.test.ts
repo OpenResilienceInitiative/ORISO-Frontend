@@ -1,0 +1,241 @@
+// @vitest-environment jsdom
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { chatTransportService } from './chatTransportService';
+import { setMatrixClientServiceRef } from './matrixClientRegistry';
+
+// Hoisted above the imports by vitest: endpoints/runtimeConfig read these
+// REACT_APP_* vars at module load.
+vi.hoisted(() => {
+	const env = process.env as Record<string, string>;
+	env.REACT_APP_API_URL = 'http://localhost:9001';
+	env.REACT_APP_KEYCLOAK_REALM = 'oriso';
+});
+
+const ROOM_ID = '!room:matrix.oriso.org';
+const OTHER_ROOM_ID = '!other:matrix.oriso.org';
+
+type Listener = (...args: any[]) => void;
+
+/**
+ * Minimal Matrix client double: enough of the EventEmitter surface for
+ * onMatrixRoomLifecycle / onMatrixRoomMembers plus getRoom for member loading.
+ */
+const createFakeMatrixClient = (room: any = null) => {
+	const listeners = new Map<string, Set<Listener>>();
+	return {
+		on: (event: string, listener: Listener) => {
+			if (!listeners.has(event)) {
+				listeners.set(event, new Set());
+			}
+			listeners.get(event).add(listener);
+		},
+		off: (event: string, listener: Listener) => {
+			listeners.get(event)?.delete(listener);
+		},
+		emit: (event: string, ...args: any[]) => {
+			listeners.get(event)?.forEach((listener) => listener(...args));
+		},
+		listenerCount: (event: string) => listeners.get(event)?.size || 0,
+		getRoom: (roomId: string) => (room && roomId === ROOM_ID ? room : null)
+	};
+};
+
+describe('chatTransportService Matrix room lifecycle', () => {
+	let fakeClient: ReturnType<typeof createFakeMatrixClient>;
+
+	beforeEach(() => {
+		fakeClient = createFakeMatrixClient();
+		setMatrixClientServiceRef({
+			getClient: () => fakeClient
+		} as any);
+	});
+
+	afterEach(() => {
+		setMatrixClientServiceRef(null);
+	});
+
+	it('returns null when the Matrix client is not initialized', () => {
+		setMatrixClientServiceRef(null);
+		expect(
+			chatTransportService.onMatrixRoomLifecycle(ROOM_ID, () => {})
+		).toBeNull();
+	});
+
+	it('notifies when own membership changes to leave for the watched room', () => {
+		const listener = vi.fn();
+		chatTransportService.onMatrixRoomLifecycle(ROOM_ID, listener);
+
+		fakeClient.emit(
+			'Room.myMembership',
+			{ roomId: ROOM_ID },
+			'leave',
+			'join'
+		);
+
+		expect(listener).toHaveBeenCalledWith({
+			type: 'myMembership',
+			membership: 'leave',
+			prevMembership: 'join'
+		});
+	});
+
+	it('notifies when own membership changes to ban', () => {
+		const listener = vi.fn();
+		chatTransportService.onMatrixRoomLifecycle(ROOM_ID, listener);
+
+		fakeClient.emit(
+			'Room.myMembership',
+			{ roomId: ROOM_ID },
+			'ban',
+			'join'
+		);
+
+		expect(listener).toHaveBeenCalledWith({
+			type: 'myMembership',
+			membership: 'ban',
+			prevMembership: 'join'
+		});
+	});
+
+	it('ignores own-membership changes of other rooms and non-terminal memberships', () => {
+		const listener = vi.fn();
+		chatTransportService.onMatrixRoomLifecycle(ROOM_ID, listener);
+
+		fakeClient.emit(
+			'Room.myMembership',
+			{ roomId: OTHER_ROOM_ID },
+			'leave',
+			'join'
+		);
+		fakeClient.emit(
+			'Room.myMembership',
+			{ roomId: ROOM_ID },
+			'join',
+			'invite'
+		);
+
+		expect(listener).not.toHaveBeenCalled();
+	});
+
+	it('notifies on m.room.tombstone timeline events for the watched room', () => {
+		const listener = vi.fn();
+		chatTransportService.onMatrixRoomLifecycle(ROOM_ID, listener);
+
+		fakeClient.emit(
+			'Room.timeline',
+			{ getType: () => 'm.room.tombstone' },
+			{ roomId: ROOM_ID },
+			false
+		);
+
+		expect(listener).toHaveBeenCalledWith({ type: 'tombstoned' });
+	});
+
+	it('ignores non-tombstone timeline events', () => {
+		const listener = vi.fn();
+		chatTransportService.onMatrixRoomLifecycle(ROOM_ID, listener);
+
+		fakeClient.emit(
+			'Room.timeline',
+			{ getType: () => 'm.room.message' },
+			{ roomId: ROOM_ID },
+			false
+		);
+
+		expect(listener).not.toHaveBeenCalled();
+	});
+
+	it('detaches listeners on cleanup', () => {
+		const listener = vi.fn();
+		const detach = chatTransportService.onMatrixRoomLifecycle(
+			ROOM_ID,
+			listener
+		);
+
+		detach();
+		fakeClient.emit(
+			'Room.myMembership',
+			{ roomId: ROOM_ID },
+			'leave',
+			'join'
+		);
+
+		expect(listener).not.toHaveBeenCalled();
+		expect(fakeClient.listenerCount('Room.myMembership')).toBe(0);
+		expect(fakeClient.listenerCount('Room.timeline')).toBe(0);
+	});
+});
+
+describe('chatTransportService Matrix room members', () => {
+	afterEach(() => {
+		setMatrixClientServiceRef(null);
+	});
+
+	it('loads full membership from the homeserver before reading (lazyLoadMembers)', async () => {
+		const loadMembersIfNeeded = vi.fn(() => Promise.resolve());
+		const members = [{ userId: '@a:x' }, { userId: '@b:x' }];
+		const room = {
+			loadMembersIfNeeded,
+			getMembers: () => members
+		};
+		setMatrixClientServiceRef({
+			getClient: () => createFakeMatrixClient(room)
+		} as any);
+
+		const result =
+			await chatTransportService.loadMatrixRoomMembers(ROOM_ID);
+
+		expect(loadMembersIfNeeded).toHaveBeenCalled();
+		expect(result).toEqual(members);
+	});
+
+	it('falls back to the cached member list when the lazy load fails', async () => {
+		const members = [{ userId: '@a:x' }];
+		const room = {
+			loadMembersIfNeeded: () => Promise.reject(new Error('offline')),
+			getMembers: () => members
+		};
+		setMatrixClientServiceRef({
+			getClient: () => createFakeMatrixClient(room)
+		} as any);
+
+		await expect(
+			chatTransportService.loadMatrixRoomMembers(ROOM_ID)
+		).resolves.toEqual(members);
+	});
+
+	it('returns an empty list when the room is unknown', async () => {
+		setMatrixClientServiceRef({
+			getClient: () => createFakeMatrixClient(null)
+		} as any);
+
+		await expect(
+			chatTransportService.loadMatrixRoomMembers(ROOM_ID)
+		).resolves.toEqual([]);
+	});
+
+	it('notifies on RoomState.members and RoomMember.membership for the watched room only', () => {
+		const fakeClient = createFakeMatrixClient();
+		setMatrixClientServiceRef({
+			getClient: () => fakeClient
+		} as any);
+
+		const listener = vi.fn();
+		const detach = chatTransportService.onMatrixRoomMembers(
+			ROOM_ID,
+			listener
+		);
+
+		fakeClient.emit('RoomState.members', {}, { roomId: ROOM_ID }, {});
+		fakeClient.emit('RoomMember.membership', {}, { roomId: ROOM_ID });
+		expect(listener).toHaveBeenCalledTimes(2);
+
+		fakeClient.emit('RoomState.members', {}, { roomId: OTHER_ROOM_ID }, {});
+		fakeClient.emit('RoomMember.membership', {}, { roomId: OTHER_ROOM_ID });
+		expect(listener).toHaveBeenCalledTimes(2);
+
+		detach();
+		fakeClient.emit('RoomState.members', {}, { roomId: ROOM_ID }, {});
+		expect(listener).toHaveBeenCalledTimes(2);
+	});
+});

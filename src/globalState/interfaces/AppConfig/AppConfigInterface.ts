@@ -31,6 +31,13 @@ export interface AppConfigInterface extends AppSettingsInterface {
 		};
 	};
 	groupChat?: GroupChatConfig;
+	/**
+	 * Blocks accounts with the `consultant` realm role from the app login.
+	 * Default off: the block (PR #273) keys on the role every counsellor
+	 * carries and locks the whole professional side out of the platform.
+	 * Re-enable only together with an activation-state check.
+	 */
+	blockConsultantAppLogin?: boolean;
 	registration: {
 		useConsultingTypeSlug?: boolean;
 		/**

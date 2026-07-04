@@ -7,16 +7,12 @@ import {
 	useRef,
 	useState
 } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
 import { Loading } from '../app/Loading';
 import { SessionItemComponent } from './SessionItemComponent';
 import {
 	AUTHORITIES,
 	ConsultantListContext,
-	E2EEContext,
 	hasUserAuthority,
-	RocketChatContext,
-	RocketChatGlobalSettingsContext,
 	SessionTypeContext,
 	UserDataContext,
 	ActiveSessionContext
@@ -24,7 +20,6 @@ import {
 import {
 	apiGetAgencyConsultantList,
 	apiGetCaseHandoverStatus,
-	apiGetSessionData,
 	CaseHandoverStatus,
 	FETCH_ERRORS
 } from '../../api';
@@ -33,34 +28,24 @@ import {
 	SESSION_LIST_TAB,
 	SESSION_LIST_TYPES
 } from './sessionHelpers';
-import { getValueFromCookie } from '../sessionCookie/accessSessionCookie';
+import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
 import { BUTTON_TYPES } from '../button/Button';
 import { logout } from '../logout/logout';
 import { ReactComponent as CheckIcon } from '../../resources/img/illustrations/check.svg';
-import useTyping from '../../utils/useTyping';
-import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import './session.styles';
-import { useE2EE } from '../../hooks/useE2EE';
-import {
-	EVENT_SUBSCRIPTIONS_CHANGED,
-	SUB_STREAM_NOTIFY_USER,
-	SUB_STREAM_ROOM_MESSAGES
-} from '../app/RocketChat';
 import useUpdatingRef from '../../hooks/useUpdatingRef';
-import useDebounceCallback from '../../hooks/useDebounceCallback';
 import { useSearchParam } from '../../hooks/useSearchParams';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { prepareConsultantDataForSelect } from '../sessionAssign/sessionAssignHelper';
-import {
-	IArraySetting,
-	SETTING_HIDE_SYSTEM_MESSAGES
-} from '../../api/apiRocketChatSettingsPublic';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
-import { chatTransportService } from '../../services/chatTransportService';
+import {
+	chatTransportService,
+	MatrixRoomLifecycleChange
+} from '../../services/chatTransportService';
 import { formatMatrixTimelineEvent } from '../../utils/matrixTimelineEventFormatter';
-import { useAppConfig } from '../../hooks/useAppConfig';
 import { CaseHandoverGate } from './CaseHandoverGate';
 import { isCaseHandoverAccessControlled } from './caseHandoverHelpers';
 
@@ -80,16 +65,11 @@ export const SessionStream = ({
 	const MATRIX_TYPING_STALE_MS = 3600;
 	const { t: translate } = useTranslation();
 	const navigate = useNavigate();
-	const appConfig = useAppConfig();
-	const chatTransportFacadeEnabled =
-		chatTransportService.isFacadeEnabled(appConfig);
 
 	const { type, path: listPath } = useContext(SessionTypeContext);
 	const { userData } = useContext(UserDataContext);
 	const { matrixClientService } = useMatrixClient();
-	const { subscribe, unsubscribe } = useContext(RocketChatContext);
-	const { getSetting } = useContext(RocketChatGlobalSettingsContext);
-	const { rcGroupId } = useParams<{ rcGroupId: string }>();
+	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
 
 	// MATRIX MIGRATION: Track component mount/unmount
 	useEffect(() => {
@@ -101,9 +81,9 @@ export const SessionStream = ({
 
 	const subscribed = useRef(false);
 	const [messagesItem, setMessagesItem] = useState(null);
+	const [overlayItem, setOverlayItem] = useState<OverlayItem>(null);
 	const [isOverlayActive, setIsOverlayActive] = useState(false);
 	const [loading, setLoading] = useState(true);
-	const [overlayItem, setOverlayItem] = useState(null);
 
 	const { activeSession, readActiveSession } =
 		useContext(ActiveSessionContext);
@@ -112,17 +92,11 @@ export const SessionStream = ({
 	const [caseHandoverStatusLoading, setCaseHandoverStatusLoading] =
 		useState(false);
 
-	const { addNewUsersToEncryptedRoom } = useE2EE(activeSession?.rid);
-	const { isE2eeEnabled } = useContext(E2EEContext);
 	const { setConsultantList } = useContext(ConsultantListContext);
 
 	const abortController = useRef<AbortController>(null);
 	const hasUserInitiatedStopOrLeaveRequest = useRef<boolean>(false);
 
-	const displayName = userData.displayName || userData.userName;
-
-	const { subscribeTyping, unsubscribeTyping, handleTyping, typingUsers } =
-		useTyping(activeSession?.rid, userData.userName, displayName);
 	const [matrixTypingUsers, setMatrixTypingUsers] = useState<string[]>([]);
 	const matrixTypingTimeoutRef = useRef<number | null>(null);
 	const matrixTypingLastTriggerRef = useRef(0);
@@ -131,35 +105,8 @@ export const SessionStream = ({
 		() => chatTransportService.resolveSession(activeSession),
 		[activeSession]
 	);
-	const isMatrixSession = useMemo(() => {
-		if (chatTransportFacadeEnabled) {
-			return resolvedChatSession.isMatrixSession;
-		}
-		return Boolean(
-			((!activeSession.rid || isMatrixRoom(activeSession.rid)) &&
-				activeSession.item?.id) ||
-				activeSession.item?.matrixRoomId
-		);
-	}, [
-		chatTransportFacadeEnabled,
-		resolvedChatSession.isMatrixSession,
-		activeSession.rid,
-		activeSession.item?.id,
-		activeSession.item?.matrixRoomId
-	]);
-	const matrixRoomId = useMemo(() => {
-		if (chatTransportFacadeEnabled) {
-			return resolvedChatSession.matrixRoomId || '';
-		}
-		return isMatrixRoom(activeSession.rid)
-			? activeSession.rid
-			: activeSession.item?.matrixRoomId || '';
-	}, [
-		chatTransportFacadeEnabled,
-		resolvedChatSession.matrixRoomId,
-		activeSession.rid,
-		activeSession.item?.matrixRoomId
-	]);
+	const isMatrixSession = resolvedChatSession.isMatrixSession;
+	const matrixRoomId = resolvedChatSession.matrixRoomId || '';
 	const clearMatrixTypingTimeout = useCallback(() => {
 		if (matrixTypingTimeoutRef.current) {
 			window.clearTimeout(matrixTypingTimeoutRef.current);
@@ -171,56 +118,48 @@ export const SessionStream = ({
 			if (!isMatrixSession || !matrixRoomId) {
 				return;
 			}
-			const transport = chatTransportFacadeEnabled
-				? chatTransportService
-				: matrixClientService;
-			transport?.sendTyping(matrixRoomId, typing).catch(() => {});
+			chatTransportService
+				.sendTyping(matrixRoomId, typing)
+				.catch(() => {});
 		},
-		[
-			chatTransportFacadeEnabled,
-			isMatrixSession,
-			matrixRoomId,
-			matrixClientService
-		]
+		[isMatrixSession, matrixRoomId]
 	);
 	const handleSessionTyping = useCallback(
 		(isCleared) => {
-			if (isMatrixSession && matrixRoomId) {
-				clearMatrixTypingTimeout();
-
-				const cancelTyping = () => {
-					sendMatrixTyping(false);
-					matrixTypingTimeoutRef.current = null;
-					matrixTypingLastTriggerRef.current = 0;
-				};
-
-				const now = Date.now();
-				if (!isCleared) {
-					if (
-						matrixTypingLastTriggerRef.current +
-							MATRIX_TYPING_TRIGGER_MS <
-						now
-					) {
-						sendMatrixTyping(true);
-						matrixTypingLastTriggerRef.current = now;
-					}
-					matrixTypingTimeoutRef.current = window.setTimeout(
-						cancelTyping,
-						MATRIX_TYPING_TIMEOUT_MS
-					);
-				} else {
-					matrixTypingTimeoutRef.current = window.setTimeout(
-						cancelTyping,
-						250
-					);
-				}
+			if (!isMatrixSession || !matrixRoomId) {
 				return;
 			}
-			handleTyping(isCleared);
+			clearMatrixTypingTimeout();
+
+			const cancelTyping = () => {
+				sendMatrixTyping(false);
+				matrixTypingTimeoutRef.current = null;
+				matrixTypingLastTriggerRef.current = 0;
+			};
+
+			const now = Date.now();
+			if (!isCleared) {
+				if (
+					matrixTypingLastTriggerRef.current +
+						MATRIX_TYPING_TRIGGER_MS <
+					now
+				) {
+					sendMatrixTyping(true);
+					matrixTypingLastTriggerRef.current = now;
+				}
+				matrixTypingTimeoutRef.current = window.setTimeout(
+					cancelTyping,
+					MATRIX_TYPING_TIMEOUT_MS
+				);
+			} else {
+				matrixTypingTimeoutRef.current = window.setTimeout(
+					cancelTyping,
+					250
+				);
+			}
 		},
 		[
 			clearMatrixTypingTimeout,
-			handleTyping,
 			isMatrixSession,
 			matrixRoomId,
 			sendMatrixTyping,
@@ -229,7 +168,6 @@ export const SessionStream = ({
 		]
 	);
 
-	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
 	const caseHandoverGateNeeded = useMemo(
 		() =>
 			isCaseHandoverAccessControlled({
@@ -261,37 +199,16 @@ export const SessionStream = ({
 			// Matrix-backed sessions must hydrate from the local Matrix SDK timeline.
 			// Pulling message history through ORISO REST would move decrypted/plaintext
 			// bodies outside the room encryption boundary.
-			const resolvedSession = chatTransportFacadeEnabled
-				? resolvedChatSession
-				: chatTransportService.resolveSession(activeSession);
-			const isMatrixBackedSession = chatTransportFacadeEnabled
-				? resolvedSession.isMatrixSession
-				: Boolean(activeSession.item?.matrixRoomId) ||
-					isMatrixRoom(activeSession.rid);
-			if (isMatrixBackedSession) {
-				const resolvedMatrixRoomId = chatTransportFacadeEnabled
-					? resolvedSession.matrixRoomId
-					: isMatrixRoom(activeSession.rid)
-						? activeSession.rid
-						: activeSession.item?.matrixRoomId;
-				const matrixClient = matrixClientService?.getClient?.();
+			if (resolvedChatSession.isMatrixSession) {
+				const resolvedMatrixRoomId = resolvedChatSession.matrixRoomId;
 				const matrixRoom = resolvedMatrixRoomId
-					? chatTransportFacadeEnabled
-						? chatTransportService.getMatrixRoom(
-								resolvedMatrixRoomId
-							)
-						: matrixClient?.getRoom?.(resolvedMatrixRoomId)
+					? chatTransportService.getMatrixRoom(resolvedMatrixRoomId)
 					: null;
 				const matrixEvents = resolvedMatrixRoomId
-					? chatTransportFacadeEnabled
-						? chatTransportService.getMatrixRoomMessages(
-								resolvedMatrixRoomId,
-								100
-							)
-						: matrixClientService?.getRoomMessages?.(
-								resolvedMatrixRoomId,
-								100
-							) || []
+					? chatTransportService.getMatrixRoomMessages(
+							resolvedMatrixRoomId,
+							100
+						)
 					: [];
 				const encryptedFallbackText = translate(
 					'e2ee.message.encryption.text'
@@ -313,37 +230,15 @@ export const SessionStream = ({
 				return Promise.resolve(true);
 			}
 
-			// Legacy RocketChat path
-			return apiGetSessionData(
-				activeSession.rid,
-				abortController.current.signal
-			).then((messagesData) => {
-				const hiddenSystemMessages = getSetting<IArraySetting>(
-					SETTING_HIDE_SYSTEM_MESSAGES
-				);
-				setMessagesItem(
-					messagesData
-						? prepareMessages(
-								messagesData.messages.filter(
-									(message) =>
-										!hiddenSystemMessages ||
-										!hiddenSystemMessages.value.includes(
-											message.t
-										)
-								)
-							)
-						: null
-				);
-				return true;
-			});
+			// Sessions without a Matrix room (stale pre-migration data) render
+			// an empty history instead of pulling legacy Rocket.Chat messages.
+			setMessagesItem({ messages: [] });
+			setLoading(false);
+			return Promise.resolve(true);
 		},
 		[
-			activeSession,
 			caseHandoverGateNeeded,
 			caseHandoverStatus?.canViewContent,
-			chatTransportFacadeEnabled,
-			getSetting,
-			matrixClientService,
 			resolvedChatSession,
 			translate
 		]
@@ -423,136 +318,15 @@ export const SessionStream = ({
 		loadAfterCaseHandoverGranted
 	]);
 
-	/**
-	 * ToDo: roomMessageBounce is just a temporary fix because currently
-	 * every message gets marked but on every changed message we are loading all
-	 * messages. Maybe in future we will only update single message as it changes
-	 */
-	const handleRoomMessage = useCallback(
-		(args) => {
-			if (args.length === 0) return;
-
-			args
-				// Map collected from debounce callback
-				.map(([[message]]) => message)
-				.forEach((message) => {
-					if (message.t === 'user-muted') {
-						checkMutedUserForThisSession();
-						return;
-					}
-
-					if (message.t === 'au') {
-						// Handle this event only for groups because on session assigning its already handled
-						if (isE2eeEnabled && activeSession.isGroup) {
-							addNewUsersToEncryptedRoom().then();
-						}
-						return;
-					}
-
-					if (message.u?.username !== 'rocket-chat-technical-user') {
-						fetchSessionMessages()
-							.then((loaded) => {
-								if (loaded) {
-									setSessionRead();
-								}
-							})
-							.catch(() => {
-								// prevent error from leaking to console
-							});
-					}
-				});
-		},
-
-		[
-			checkMutedUserForThisSession,
-			isE2eeEnabled,
-			activeSession.isGroup,
-			addNewUsersToEncryptedRoom,
-			fetchSessionMessages,
-			setSessionRead
-		]
-	);
-
-	const onDebounceMessage = useUpdatingRef(
-		useDebounceCallback(handleRoomMessage, 500, true)
-	);
-
-	const groupChatStoppedOverlay: OverlayItem = useMemo(
-		() => ({
-			svg: CheckIcon,
-			headline: translate('groupChat.stopped.overlay.headline'),
-			buttonSet: [
-				{
-					label: translate('groupChat.stopped.overlay.button1Label'),
-					function: OVERLAY_FUNCTIONS.REDIRECT,
-					type: BUTTON_TYPES.PRIMARY
-				},
-				{
-					label: translate('groupChat.stopped.overlay.button2Label'),
-					function: OVERLAY_FUNCTIONS.LOGOUT,
-					type: BUTTON_TYPES.SECONDARY
-				}
-			]
-		}),
-		[translate]
-	);
-
-	const handleChatStopped = useUpdatingRef(
-		useCallback(
-			([event]) => {
-				if (event === 'removed') {
-					// If the user has initiated the stop or leave request, he/she is already
-					// shown an appropriate overlay during the process via the SessionMenu component.
-					// Thus, there is no need for an additional notification.
-					if (hasUserInitiatedStopOrLeaveRequest.current) {
-						hasUserInitiatedStopOrLeaveRequest.current = false;
-					} else {
-						setOverlayItem(groupChatStoppedOverlay);
-						setIsOverlayActive(true);
-					}
-				}
-			},
-			[groupChatStoppedOverlay]
-		)
-	);
-
-	const handleSubscriptionChanged = useUpdatingRef(
-		useCallback(
-			([event]) => {
-				if (event === 'removed') {
-					// user was removed from the session and is still in a session view
-					// then redirect him to the listview
-					if (type === SESSION_LIST_TYPES.MY_SESSION) {
-						if (activeSession?.item?.groupId === rcGroupId) {
-							navigate(listPath);
-						}
-					}
-				}
-			},
-			[activeSession, rcGroupId, listPath, type, navigate]
-		)
-	);
-
-	// MATRIX MIGRATION: Real-time message sync for Matrix sessions
+	// Real-time message sync via the Matrix timeline listener.
 	useEffect(() => {
 		// Only for Matrix sessions.
-		const resolvedSession = chatTransportFacadeEnabled
-			? resolvedChatSession
-			: chatTransportService.resolveSession(activeSession);
-		const isMatrixSession = chatTransportFacadeEnabled
-			? resolvedSession.isMatrixSession
-			: Boolean(
-					activeSession.item?.id &&
-						(activeSession.item?.matrixRoomId ||
-							isMatrixRoom(activeSession.rid))
-				);
-		const matrixRoomId = chatTransportFacadeEnabled
-			? resolvedSession.matrixRoomId
-			: isMatrixRoom(activeSession.rid)
-				? activeSession.rid
-				: activeSession.item?.matrixRoomId;
+		if (!resolvedChatSession.isMatrixSession) {
+			return;
+		}
+		const matrixRoomId = resolvedChatSession.matrixRoomId;
 
-		if (!isMatrixSession || !matrixRoomId) {
+		if (!matrixRoomId) {
 			return;
 		}
 
@@ -590,27 +364,11 @@ export const SessionStream = ({
 				});
 			};
 
-			if (chatTransportFacadeEnabled) {
-				detachTimelineListener = chatTransportService.onMatrixTimeline(
-					matrixRoomId,
-					handleMatrixTimeline
-				);
-				return Boolean(detachTimelineListener);
-			}
-
-			const matrixClient = matrixClientService?.getClient?.();
-			if (!matrixClient) {
-				return false;
-			}
-
-			(matrixClient as any).on('Room.timeline', handleMatrixTimeline);
-			detachTimelineListener = () => {
-				(matrixClient as any).off(
-					'Room.timeline',
-					handleMatrixTimeline
-				);
-			};
-			return true;
+			detachTimelineListener = chatTransportService.onMatrixTimeline(
+				matrixRoomId,
+				handleMatrixTimeline
+			);
+			return Boolean(detachTimelineListener);
 		};
 
 		// Try immediately, then retry until Matrix client is ready.
@@ -629,15 +387,93 @@ export const SessionStream = ({
 			}
 			detachTimelineListener?.();
 		};
-	}, [
-		activeSession.rid,
-		activeSession.item?.matrixRoomId,
-		activeSession.item?.id,
-		chatTransportFacadeEnabled,
-		resolvedChatSession,
-		fetchSessionMessages,
-		matrixClientService
-	]);
+	}, [resolvedChatSession, fetchSessionMessages]);
+
+	const groupChatStoppedOverlay: OverlayItem = useMemo(
+		() => ({
+			svg: CheckIcon,
+			headline: translate('groupChat.stopped.overlay.headline'),
+			buttonSet: [
+				{
+					label: translate('groupChat.stopped.overlay.button1Label'),
+					function: OVERLAY_FUNCTIONS.REDIRECT,
+					type: BUTTON_TYPES.PRIMARY
+				},
+				{
+					label: translate('groupChat.stopped.overlay.button2Label'),
+					function: OVERLAY_FUNCTIONS.LOGOUT,
+					type: BUTTON_TYPES.SECONDARY
+				}
+			]
+		}),
+		[translate]
+	);
+
+	// Restores the legacy Rocket.Chat "subscriptions-changed removed" UX on
+	// Matrix signals (own membership -> leave/ban after a kick, ban or admin
+	// room purge; m.room.tombstone when a room is shut down/replaced):
+	// - group chat ended: "group chat stopped" overlay, unless this user
+	//   initiated the stop/leave (SessionMenu already shows its own overlay);
+	// - 1:1 participant removed (e.g. session reassignment): redirect back
+	//   to the session list.
+	const handleMatrixRoomLifecycle = useUpdatingRef(
+		useCallback(
+			(_change: MatrixRoomLifecycleChange) => {
+				if (activeSession.isGroup) {
+					if (hasUserInitiatedStopOrLeaveRequest.current) {
+						hasUserInitiatedStopOrLeaveRequest.current = false;
+					} else {
+						setOverlayItem(groupChatStoppedOverlay);
+						setIsOverlayActive(true);
+					}
+				} else if (type === SESSION_LIST_TYPES.MY_SESSION) {
+					navigate(listPath);
+				}
+			},
+			[
+				activeSession.isGroup,
+				groupChatStoppedOverlay,
+				listPath,
+				navigate,
+				type
+			]
+		)
+	);
+
+	useEffect(() => {
+		if (!isMatrixSession || !matrixRoomId) {
+			return;
+		}
+
+		let retryTimer: number | null = null;
+		let detachLifecycleListener: (() => void) | null = null;
+
+		const attachLifecycleListener = () => {
+			detachLifecycleListener =
+				chatTransportService.onMatrixRoomLifecycle(
+					matrixRoomId,
+					(change) => handleMatrixRoomLifecycle.current(change)
+				);
+			return Boolean(detachLifecycleListener);
+		};
+
+		// Try immediately, then retry until Matrix client is ready.
+		if (!attachLifecycleListener()) {
+			retryTimer = window.setInterval(() => {
+				if (attachLifecycleListener() && retryTimer) {
+					window.clearInterval(retryTimer);
+					retryTimer = null;
+				}
+			}, 500);
+		}
+
+		return () => {
+			if (retryTimer) {
+				window.clearInterval(retryTimer);
+			}
+			detachLifecycleListener?.();
+		};
+	}, [isMatrixSession, matrixRoomId, handleMatrixRoomLifecycle]);
 
 	useEffect(() => {
 		if (!isMatrixSession || !matrixRoomId) {
@@ -825,48 +661,18 @@ export const SessionStream = ({
 		} else {
 			subscribed.current = true;
 
-			// check if any user needs to be added when opening session view
-			addNewUsersToEncryptedRoom().then();
-
 			fetchSessionMessages()
 				.then((loaded) => {
 					if (loaded) {
 						setSessionRead();
 					}
-
-					// MATRIX MIGRATION: Skip RocketChat subscriptions for Matrix sessions
-					if (!isMatrixSession && activeSession.rid) {
-						subscribe(
-							{
-								name: SUB_STREAM_ROOM_MESSAGES,
-								roomId: activeSession.rid
-							},
-							onDebounceMessage
-						);
-
-						subscribe(
-							{
-								name: SUB_STREAM_NOTIFY_USER,
-								event: EVENT_SUBSCRIPTIONS_CHANGED,
-								userId: getValueFromCookie('rc_uid')
-							},
-							activeSession.isGroup
-								? handleChatStopped
-								: handleSubscriptionChanged
-						);
-
-						subscribeTyping();
-					} else {
-						// console.log('🔷 Matrix session detected - using Matrix real-time events (no RocketChat subscription)');
-					}
-
 					setLoading(false);
 				})
 				.catch((e) => {
 					if (e.message !== FETCH_ERRORS.ABORT) {
 						// console.error('error fetchSessionMessages', e);
 					}
-					// MATRIX MIGRATION: Still show UI even if messages fail to load
+					// Still show UI even if messages fail to load
 					setLoading(false);
 					setMessagesItem({ messages: [] });
 				});
@@ -882,44 +688,13 @@ export const SessionStream = ({
 
 			if (subscribed.current && activeSession) {
 				subscribed.current = false;
-
-				unsubscribe(
-					{
-						name: SUB_STREAM_ROOM_MESSAGES,
-						roomId: activeSession.rid
-					},
-					onDebounceMessage
-				);
-
-				unsubscribe(
-					{
-						name: SUB_STREAM_NOTIFY_USER,
-						event: EVENT_SUBSCRIPTIONS_CHANGED,
-						userId: getValueFromCookie('rc_uid')
-					},
-					activeSession.isGroup
-						? handleChatStopped
-						: handleSubscriptionChanged
-				);
-
-				unsubscribeTyping();
 			}
 		};
 	}, [
 		activeSession,
-		// MATRIX MIGRATION: Removed function dependencies to prevent infinite loop
-		// Functions are stable and don't need to be in dependencies
-		// addNewUsersToEncryptedRoom,
-		// fetchSessionMessages,
-		// handleChatStopped,
-		// handleSubscriptionChanged,
-		// onDebounceMessage,
-		// setSessionRead,
-		// subscribe,
-		// subscribeTyping,
+		// Function dependencies intentionally omitted to prevent re-subscribe
+		// loops; fetchSessionMessages/setSessionRead are stable per session.
 		type,
-		// unsubscribe,
-		// unsubscribeTyping,
 		userData
 	]);
 
@@ -948,17 +723,6 @@ export const SessionStream = ({
 		userData
 	]);
 
-	const handleOverlayAction = (buttonFunction: string) => {
-		if (buttonFunction === OVERLAY_FUNCTIONS.REDIRECT) {
-			navigate(
-				listPath +
-					(sessionListTab ? `?sessionListTab=${sessionListTab}` : '')
-			);
-		} else if (buttonFunction === OVERLAY_FUNCTIONS.LOGOUT) {
-			logout();
-		}
-	};
-
 	// console.log('🔥 SessionStream RENDER:', {
 	// loading,
 	// hasMessages: !!messagesItem,
@@ -976,6 +740,17 @@ export const SessionStream = ({
 	}
 
 	// console.log('🔥 SessionStream: Rendering session content');
+
+	const handleOverlayAction = (buttonFunction: string) => {
+		if (buttonFunction === OVERLAY_FUNCTIONS.REDIRECT) {
+			navigate(
+				listPath +
+					(sessionListTab ? `?sessionListTab=${sessionListTab}` : '')
+			);
+		} else if (buttonFunction === OVERLAY_FUNCTIONS.LOGOUT) {
+			logout();
+		}
+	};
 
 	const handleCaseHandoverStatusChange = (nextStatus: CaseHandoverStatus) => {
 		setCaseHandoverStatus(nextStatus);
@@ -1003,7 +778,7 @@ export const SessionStream = ({
 					hasUserInitiatedStopOrLeaveRequest
 				}
 				isTyping={handleSessionTyping}
-				typingUsers={isMatrixSession ? matrixTypingUsers : typingUsers}
+				typingUsers={matrixTypingUsers}
 				messages={messagesItem?.messages}
 				bannedUsers={bannedUsers}
 				refreshMessages={fetchSessionMessages}
