@@ -1,10 +1,7 @@
 import * as React from 'react';
 import { useCallback, useEffect, useState } from 'react';
-import {
-	SelectDropdown,
-	SelectOption,
-	SelectOptionsMulti
-} from '../select/SelectDropdown';
+import { SelectChangeEvent } from '@mui/material/Select';
+import { OrisoMultiSelect, OrisoSelectOption } from '../form/OrisoSelect';
 import { ReactComponent as Info } from '../../resources/img/icons/i.svg';
 import { Text } from '../text/Text';
 import './askerInfoToolsOptions.styles';
@@ -24,8 +21,10 @@ export const AskerInfoToolsOptions = (
 	props: AskerInfoToolsOptionsInterface
 ) => {
 	const { t: translate } = useTranslation();
-	const [selectedTools, setSelectedTools] = useState<SelectOption[]>([]);
-	const [availableTools, setAvailableTools] = useState<SelectOption[]>([]);
+	const [selectedTools, setSelectedTools] = useState<string[]>([]);
+	const [availableTools, setAvailableTools] = useState<OrisoSelectOption[]>(
+		[]
+	);
 	const [infoAboutToolsModal, setInfoAboutToolsModal] = useState<
 		APIToolsInterface[]
 	>([]);
@@ -66,13 +65,10 @@ export const AskerInfoToolsOptions = (
 
 	const setSelectedToolsOptions = useCallback(
 		(toolsData: APIToolsInterface[]) => {
-			let toolsSelected = [];
+			const toolsSelected: string[] = [];
 			toolsData.forEach((tool) => {
 				if (tool.sharedWithAdviceSeeker) {
-					toolsSelected.push({
-						value: tool.toolId,
-						label: tool.title
-					});
+					toolsSelected.push(tool.toolId);
 				}
 			});
 			setSelectedTools(toolsSelected);
@@ -81,7 +77,7 @@ export const AskerInfoToolsOptions = (
 	);
 
 	const updateTools = useCallback(
-		(fromModal: boolean, selectedOption?: SelectOptionsMulti) => {
+		(fromModal: boolean, selectedValues?: string[]) => {
 			let activeTools: string[];
 			if (fromModal) {
 				activeTools = infoAboutToolsModal
@@ -91,17 +87,8 @@ export const AskerInfoToolsOptions = (
 					.map((toolActive) => toolActive.toolId);
 				setSelectedToolsOptions(infoAboutToolsModal);
 			} else {
-				let selected = [];
-				if (selectedOption.removedValue) {
-					selected = selectedTools.filter(
-						(tool) =>
-							tool.value !== selectedOption.removedValue.value
-					);
-				} else if (selectedOption.option) {
-					selected = [...selectedTools, selectedOption.option];
-				}
-				setSelectedTools(selected);
-				activeTools = selected.map((tool) => tool.value);
+				activeTools = selectedValues || [];
+				setSelectedTools(activeTools);
 				updateSharedToolsModal(activeTools, false);
 			}
 			apiPutTools(props.askerId, activeTools).catch(() => {
@@ -119,15 +106,18 @@ export const AskerInfoToolsOptions = (
 		[
 			infoAboutToolsModal,
 			props.askerId,
-			selectedTools,
 			setSelectedToolsOptions,
 			updateSharedToolsModal
 		]
 	);
 
 	const selectHandler = useCallback(
-		(selectedOption: SelectOptionsMulti) => {
-			updateTools(false, selectedOption);
+		(event: SelectChangeEvent<string[]>) => {
+			const value = event.target.value;
+			updateTools(
+				false,
+				typeof value === 'string' ? value.split(',') : value
+			);
 		},
 		[updateTools]
 	);
@@ -142,13 +132,10 @@ export const AskerInfoToolsOptions = (
 					};
 				})
 			);
-			let toolsSelected = [];
+			let toolsSelected: string[] = [];
 			toolsData.forEach((tool) => {
 				if (tool.sharedWithAdviceSeeker) {
-					toolsSelected.push({
-						value: tool.toolId,
-						label: tool.title
-					});
+					toolsSelected.push(tool.toolId);
 				}
 			});
 			setSelectedTools(toolsSelected);
@@ -158,7 +145,7 @@ export const AskerInfoToolsOptions = (
 	);
 
 	const resetToolsAfterCloseModal = useCallback(() => {
-		const activeTools = selectedTools.map((tool) => tool.value);
+		const activeTools = selectedTools;
 		const resetTools = infoAboutToolsModal.map((tool) => {
 			return activeTools.includes(tool.toolId)
 				? {
@@ -255,22 +242,18 @@ export const AskerInfoToolsOptions = (
 				<Info />
 				{translate('userProfile.tools.openModal')}
 			</button>
-			<SelectDropdown
-				handleDropdownSelect={(_, selectedOption: SelectOptionsMulti) =>
-					selectHandler(selectedOption)
-				}
+			<OrisoMultiSelect
 				id="tools-select"
-				menuPlacement="bottom"
-				menuPosition="fixed"
-				menuShouldBlockScroll
-				selectedOptions={availableTools}
-				isSearchable={false}
-				isMulti
-				isClearable={false}
-				defaultValue={selectedTools}
-				placeholder={translate('userProfile.tools.optionsPlaceholder')}
-				hasError={hasError}
-				errorMessage={translate('userProfile.tools.options.saveError')}
+				label={translate('userProfile.tools.optionsPlaceholder')}
+				options={availableTools}
+				value={selectedTools}
+				onChange={selectHandler}
+				error={hasError}
+				helperText={
+					hasError
+						? translate('userProfile.tools.options.saveError')
+						: undefined
+				}
 			/>
 			{showModal && overlayContent && (
 				<Overlay

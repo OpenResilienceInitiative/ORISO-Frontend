@@ -2,14 +2,15 @@ import React, { useContext, useEffect, useState } from 'react';
 import { apiPutConsultantData } from '../../api';
 import { UserDataContext } from '../../globalState';
 import { Button, ButtonItem, BUTTON_TYPES } from '../button/Button';
+import { OrisoMultiSelect } from '../form/OrisoSelect';
 import { Headline } from '../headline/Headline';
-import { SelectDropdown, SelectOption } from '../select/SelectDropdown';
 import { Text } from '../text/Text';
 
 import './profile.styles';
 import { isUniqueLanguage } from './profileHelpers';
 import { LanguagesContext } from '../../globalState/provider/LanguagesProvider';
 import { useTranslation } from 'react-i18next';
+import { SelectChangeEvent } from '@mui/material/Select';
 
 export const ConsultantSpokenLanguages: React.FC = () => {
 	const { t: translate } = useTranslation();
@@ -36,10 +37,15 @@ export const ConsultantSpokenLanguages: React.FC = () => {
 		setPreviousLanguages([...userData.languages]);
 	}, [userData]);
 
-	const selectHandler = (e: SelectOption[]) => {
+	const selectHandler = (event: SelectChangeEvent<string[]>) => {
+		const value = event.target.value;
+		const selectedValues =
+			typeof value === 'string' ? value.split(',') : value;
 		const newLanguages = [
 			...fixedLanguages,
-			...e.map((languageObject) => languageObject.value)
+			...selectedValues.filter(
+				(language) => !fixedLanguages.includes(language)
+			)
 		];
 
 		setSelectedLanguages(newLanguages.filter(isUniqueLanguage));
@@ -74,7 +80,7 @@ export const ConsultantSpokenLanguages: React.FC = () => {
 		return {
 			value: language,
 			label: translate(`languages.${language}`),
-			isFixed: fixedLanguages.indexOf(language) !== -1
+			disabled: fixedLanguages.indexOf(language) !== -1
 		};
 	});
 
@@ -93,22 +99,20 @@ export const ConsultantSpokenLanguages: React.FC = () => {
 				/>
 			</div>
 			<div className="spokenLanguages__languageSelect">
-				<SelectDropdown
-					handleDropdownSelect={selectHandler}
+				<OrisoMultiSelect
 					id="spoken-languages-select"
-					menuPlacement="bottom"
-					selectedOptions={languageOptions}
-					isClearable={false}
-					isSearchable
-					isMulti
-					hasError={hasError}
-					errorMessage={translate(
-						'profile.functions.spokenLanguages.saveError'
-					)}
-					defaultValue={languageOptions.filter(
-						(option) =>
-							selectedLanguages.indexOf(option.value) !== -1
-					)}
+					label={translate('profile.spokenLanguages.title')}
+					options={languageOptions}
+					value={selectedLanguages}
+					onChange={selectHandler}
+					error={hasError}
+					helperText={
+						hasError
+							? translate(
+									'profile.functions.spokenLanguages.saveError'
+								)
+							: undefined
+					}
 				/>
 
 				{JSON.stringify(previousLanguages) !==
