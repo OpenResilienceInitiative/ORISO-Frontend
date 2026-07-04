@@ -29,22 +29,127 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Select: Story = {
-	render: () => {
-		const [value, setValue] = React.useState('live-chat');
+const SelectStory = () => {
+	const [value, setValue] = React.useState('live-chat');
 
-		return (
-			<Box sx={{ width: 280 }}>
+	return (
+		<Box sx={{ width: 280 }}>
+			<OrisoSelect
+				label="Chat type"
+				value={value}
+				options={options}
+				helperText="Supporting text"
+				onChange={(event) => setValue(event.target.value)}
+			/>
+		</Box>
+	);
+};
+
+const TextareaStory = () => {
+	const [value, setValue] = React.useState(
+		'This is a longer message for the textarea.'
+	);
+
+	return (
+		<Box sx={{ width: 360 }}>
+			<OrisoTextarea
+				label="Message"
+				value={value}
+				minRows={4}
+				helperText={`${value.length} / 500`}
+				onChange={(event) => setValue(event.target.value)}
+				fullWidth
+			/>
+		</Box>
+	);
+};
+
+const MultiSelectStory = () => {
+	const [value, setValue] = React.useState<string[]>([
+		'live-chat',
+		'internal'
+	]);
+
+	const handleChange = (event: SelectChangeEvent<string[]>) => {
+		const nextValue = event.target.value;
+		setValue(
+			typeof nextValue === 'string' ? nextValue.split(',') : nextValue
+		);
+	};
+
+	return (
+		<Box sx={{ width: 360 }}>
+			<OrisoMultiSelect
+				label="Chat types"
+				value={value}
+				options={options}
+				helperText="Select one or more options"
+				onChange={handleChange}
+			/>
+		</Box>
+	);
+};
+
+const StateMatrixStory = () => {
+	const [selectValue, setSelectValue] = React.useState('live-chat');
+	const [multiValue, setMultiValue] = React.useState<string[]>([
+		'live-chat',
+		'one-to-one'
+	]);
+	const [textareaValue, setTextareaValue] = React.useState('Textarea input');
+
+	return (
+		<Stack spacing={4} sx={{ width: 760 }}>
+			<Typography variant="h6">M3 ORISO form controls</Typography>
+			<Box
+				sx={{
+					display: 'grid',
+					gridTemplateColumns: 'repeat(2, minmax(280px, 1fr))',
+					gap: '32px 24px'
+				}}
+			>
 				<OrisoSelect
-					label="Chat type"
-					value={value}
+					label="Select"
+					value={selectValue}
 					options={options}
 					helperText="Supporting text"
-					onChange={(event) => setValue(event.target.value)}
+					onChange={(event) => setSelectValue(event.target.value)}
+				/>
+				<OrisoSelect
+					label="Select error"
+					value=""
+					options={options}
+					error
+					helperText="Supporting text"
+				/>
+				<OrisoTextarea
+					label="Textarea"
+					value={textareaValue}
+					helperText="Supporting text"
+					minRows={4}
+					onChange={(event) => setTextareaValue(event.target.value)}
+				/>
+				<OrisoMultiSelect
+					label="Multiselect"
+					value={multiValue}
+					options={options}
+					helperText="Supporting text"
+					onChange={(event) => {
+						const nextValue = event.target.value;
+						setMultiValue(
+							typeof nextValue === 'string'
+								? nextValue.split(',')
+								: nextValue
+						);
+					}}
 				/>
 			</Box>
-		);
-	}
+		</Stack>
+	);
+};
+
+export const Select: Story = {
+	render: () => <SelectStory />
 };
 
 export const SelectError: Story = {
@@ -62,24 +167,7 @@ export const SelectError: Story = {
 };
 
 export const Textarea: Story = {
-	render: () => {
-		const [value, setValue] = React.useState(
-			'This is a longer message for the textarea.'
-		);
-
-		return (
-			<Box sx={{ width: 360 }}>
-				<OrisoTextarea
-					label="Message"
-					value={value}
-					minRows={4}
-					helperText={`${value.length} / 500`}
-					onChange={(event) => setValue(event.target.value)}
-					fullWidth
-				/>
-			</Box>
-		);
-	}
+	render: () => <TextareaStory />
 };
 
 export const TextareaError: Story = {
@@ -98,92 +186,9 @@ export const TextareaError: Story = {
 };
 
 export const MultiSelect: Story = {
-	render: () => {
-		const [value, setValue] = React.useState<string[]>([
-			'live-chat',
-			'internal'
-		]);
-
-		const handleChange = (event: SelectChangeEvent<string[]>) => {
-			const nextValue = event.target.value;
-			setValue(
-				typeof nextValue === 'string' ? nextValue.split(',') : nextValue
-			);
-		};
-
-		return (
-			<Box sx={{ width: 360 }}>
-				<OrisoMultiSelect
-					label="Chat types"
-					value={value}
-					options={options}
-					helperText="Select one or more options"
-					onChange={handleChange}
-				/>
-			</Box>
-		);
-	}
+	render: () => <MultiSelectStory />
 };
 
 export const StateMatrix: Story = {
-	render: () => {
-		const [selectValue, setSelectValue] = React.useState('live-chat');
-		const [multiValue, setMultiValue] = React.useState<string[]>([
-			'live-chat',
-			'one-to-one'
-		]);
-		const [textareaValue, setTextareaValue] =
-			React.useState('Textarea input');
-
-		return (
-			<Stack spacing={4} sx={{ width: 760 }}>
-				<Typography variant="h6">M3 ORISO form controls</Typography>
-				<Box
-					sx={{
-						display: 'grid',
-						gridTemplateColumns: 'repeat(2, minmax(280px, 1fr))',
-						gap: '32px 24px'
-					}}
-				>
-					<OrisoSelect
-						label="Select"
-						value={selectValue}
-						options={options}
-						helperText="Supporting text"
-						onChange={(event) => setSelectValue(event.target.value)}
-					/>
-					<OrisoSelect
-						label="Select error"
-						value=""
-						options={options}
-						error
-						helperText="Supporting text"
-					/>
-					<OrisoTextarea
-						label="Textarea"
-						value={textareaValue}
-						helperText="Supporting text"
-						minRows={4}
-						onChange={(event) =>
-							setTextareaValue(event.target.value)
-						}
-					/>
-					<OrisoMultiSelect
-						label="Multiselect"
-						value={multiValue}
-						options={options}
-						helperText="Supporting text"
-						onChange={(event) => {
-							const nextValue = event.target.value;
-							setMultiValue(
-								typeof nextValue === 'string'
-									? nextValue.split(',')
-									: nextValue
-							);
-						}}
-					/>
-				</Box>
-			</Stack>
-		);
-	}
+	render: () => <StateMatrixStory />
 };
