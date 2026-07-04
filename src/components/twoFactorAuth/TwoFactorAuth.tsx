@@ -2,7 +2,6 @@ import * as React from 'react';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
-import Switch from 'react-switch';
 import { apiDeleteTwoFactorAuth } from '../../api';
 import {
 	AUTHORITIES,
@@ -11,6 +10,7 @@ import {
 } from '../../globalState';
 import { Button, BUTTON_TYPES } from '../button/Button';
 import { Headline } from '../headline/Headline';
+import { Switch } from '../Switch';
 import { Text } from '../text/Text';
 import { PenIcon } from '../../resources/img/icons';
 import { useAppConfig } from '../../hooks/useAppConfig';
@@ -139,19 +139,17 @@ export const TwoFactorAuth = () => {
 				/>
 			</div>
 			{!isTwoFactorBinding && (
-				<label className="twoFactorAuth__switch">
+				<div className="twoFactorAuth__switch">
 					<Switch
 						onChange={handleSwitchChange}
 						checked={isSwitchChecked}
-						uncheckedIcon={false}
-						checkedIcon={false}
-						width={48}
-						height={26}
-						onColor="#0A882F"
-						offColor="#8C878C"
-						boxShadow="0px 1px 4px rgba(0, 0, 0, 0.6)"
-						handleDiameter={27}
-						activeBoxShadow="none"
+						aria-label={
+							isSwitchChecked
+								? translate('twoFactorAuth.switch.active.label')
+								: translate(
+										'twoFactorAuth.switch.deactive.label'
+									)
+						}
 					/>
 					<Text
 						text={
@@ -163,7 +161,7 @@ export const TwoFactorAuth = () => {
 						}
 						type="standard"
 					/>
-				</label>
+				</div>
 			)}
 			{(isSwitchChecked || isTwoFactorBinding) &&
 				userData.twoFactorAuth.type && (

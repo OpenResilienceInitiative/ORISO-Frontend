@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { useCallback } from 'react';
-import Switch from 'react-switch';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Headline } from '../headline/Headline';
+import { Switch } from '../Switch';
 import { Text } from '../text/Text';
 import { useLiveChatAvailable } from '../../utils/liveChatToggle';
 
@@ -16,9 +16,7 @@ export const LiveChatAvailability = () => {
 		(checked: boolean) => {
 			setLiveChatAvailable(checked);
 			if (checked) {
-				navigate(
-					'/sessions/consultant/sessionPreview?chip=liveChat'
-				);
+				navigate('/sessions/consultant/sessionPreview?chip=liveChat');
 			}
 		},
 		[navigate, setLiveChatAvailable]
@@ -42,15 +40,9 @@ export const LiveChatAvailability = () => {
 						className="mr--1"
 						onChange={handleToggle}
 						checked={liveChatAvailable}
-						uncheckedIcon={false}
-						checkedIcon={false}
-						width={48}
-						height={26}
-						onColor="#0A882F"
-						offColor="#8C878C"
-						boxShadow="0px 1px 4px rgba(0, 0, 0, 0.6)"
-						handleDiameter={27}
-						activeBoxShadow="none"
+						aria-label={translate(
+							'profile.functions.liveChat.toggleLabel'
+						)}
 					/>
 					<Text
 						text={translate(
