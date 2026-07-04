@@ -36,8 +36,7 @@ const createFakeMatrixClient = (room: any = null) => {
 			listeners.get(event)?.forEach((listener) => listener(...args));
 		},
 		listenerCount: (event: string) => listeners.get(event)?.size || 0,
-		getRoom: (roomId: string) =>
-			room && roomId === ROOM_ID ? room : null
+		getRoom: (roomId: string) => (room && roomId === ROOM_ID ? room : null)
 	};
 };
 
@@ -66,7 +65,12 @@ describe('chatTransportService Matrix room lifecycle', () => {
 		const listener = vi.fn();
 		chatTransportService.onMatrixRoomLifecycle(ROOM_ID, listener);
 
-		fakeClient.emit('Room.myMembership', { roomId: ROOM_ID }, 'leave', 'join');
+		fakeClient.emit(
+			'Room.myMembership',
+			{ roomId: ROOM_ID },
+			'leave',
+			'join'
+		);
 
 		expect(listener).toHaveBeenCalledWith({
 			type: 'myMembership',
@@ -79,7 +83,12 @@ describe('chatTransportService Matrix room lifecycle', () => {
 		const listener = vi.fn();
 		chatTransportService.onMatrixRoomLifecycle(ROOM_ID, listener);
 
-		fakeClient.emit('Room.myMembership', { roomId: ROOM_ID }, 'ban', 'join');
+		fakeClient.emit(
+			'Room.myMembership',
+			{ roomId: ROOM_ID },
+			'ban',
+			'join'
+		);
 
 		expect(listener).toHaveBeenCalledWith({
 			type: 'myMembership',
@@ -98,7 +107,12 @@ describe('chatTransportService Matrix room lifecycle', () => {
 			'leave',
 			'join'
 		);
-		fakeClient.emit('Room.myMembership', { roomId: ROOM_ID }, 'join', 'invite');
+		fakeClient.emit(
+			'Room.myMembership',
+			{ roomId: ROOM_ID },
+			'join',
+			'invite'
+		);
 
 		expect(listener).not.toHaveBeenCalled();
 	});
@@ -139,7 +153,12 @@ describe('chatTransportService Matrix room lifecycle', () => {
 		);
 
 		detach();
-		fakeClient.emit('Room.myMembership', { roomId: ROOM_ID }, 'leave', 'join');
+		fakeClient.emit(
+			'Room.myMembership',
+			{ roomId: ROOM_ID },
+			'leave',
+			'join'
+		);
 
 		expect(listener).not.toHaveBeenCalled();
 		expect(fakeClient.listenerCount('Room.myMembership')).toBe(0);
@@ -163,7 +182,8 @@ describe('chatTransportService Matrix room members', () => {
 			getClient: () => createFakeMatrixClient(room)
 		} as any);
 
-		const result = await chatTransportService.loadMatrixRoomMembers(ROOM_ID);
+		const result =
+			await chatTransportService.loadMatrixRoomMembers(ROOM_ID);
 
 		expect(loadMembersIfNeeded).toHaveBeenCalled();
 		expect(result).toEqual(members);

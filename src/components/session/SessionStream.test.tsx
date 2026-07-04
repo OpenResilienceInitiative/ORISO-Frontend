@@ -148,7 +148,9 @@ const renderSessionStream = ({ isGroup }: { isGroup: boolean }) => {
 	return render(
 		<MemoryRouter>
 			<UserDataContext.Provider
-				value={{ userData: askerUserData, setUserData: () => {} } as any}
+				value={
+					{ userData: askerUserData, setUserData: () => {} } as any
+				}
 			>
 				<SessionTypeContext.Provider
 					value={{

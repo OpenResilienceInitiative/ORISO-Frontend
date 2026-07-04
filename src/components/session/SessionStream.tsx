@@ -118,7 +118,9 @@ export const SessionStream = ({
 			if (!isMatrixSession || !matrixRoomId) {
 				return;
 			}
-			chatTransportService.sendTyping(matrixRoomId, typing).catch(() => {});
+			chatTransportService
+				.sendTyping(matrixRoomId, typing)
+				.catch(() => {});
 		},
 		[isMatrixSession, matrixRoomId]
 	);
@@ -447,10 +449,11 @@ export const SessionStream = ({
 		let detachLifecycleListener: (() => void) | null = null;
 
 		const attachLifecycleListener = () => {
-			detachLifecycleListener = chatTransportService.onMatrixRoomLifecycle(
-				matrixRoomId,
-				(change) => handleMatrixRoomLifecycle.current(change)
-			);
+			detachLifecycleListener =
+				chatTransportService.onMatrixRoomLifecycle(
+					matrixRoomId,
+					(change) => handleMatrixRoomLifecycle.current(change)
+				);
 			return Boolean(detachLifecycleListener);
 		};
 
