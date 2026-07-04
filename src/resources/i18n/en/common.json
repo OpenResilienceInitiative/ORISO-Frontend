@@ -1097,6 +1097,7 @@
 		"notice": {
 			"fallbackLanguage": "This text is not available in your language and is shown in its original language.",
 			"machineTranslated": "Machine translated — the German version is legally binding.",
+			"placeholder": "Note: This text is a placeholder and is not yet maintained in a legally binding form.",
 			"showOriginal": "Show original",
 			"showingOriginal": "You are viewing the original version.",
 			"showTranslation": "Show translation"
