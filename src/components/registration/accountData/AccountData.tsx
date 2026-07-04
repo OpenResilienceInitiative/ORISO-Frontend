@@ -51,6 +51,7 @@ import {
 } from '../../../utils/pseudonymGenerator';
 import { PasswordRuleChips } from './PasswordRuleChips';
 import { allPasswordCriteriaPass } from './passwordRules';
+import { getUsernameFeedback } from './usernameFeedback';
 import genUserIcon from '../../../resources/img/registration-md3/icons/gen-user.svg';
 import genKeyIcon from '../../../resources/img/registration-md3/icons/gen-key.svg';
 import genAvatarIcon from '../../../resources/img/registration-md3/icons/gen-avatar.svg';
@@ -248,19 +249,15 @@ export const AccountData: FC<{
 		onChange
 	]);
 
-	const usernameHasError =
-		(usernameWasBlurred && !isUsernameLongEnough) ||
-		usernameAvailabilityFailed ||
-		(usernameAvailabilityChecked && !isUsernameAvailable);
-	const usernameHelperText = usernameHasError
-		? isUsernameAvailable
-			? t('registration.account.username.error.tooShort')
-			: t('registration.account.username.error.unavailable')
-		: usernameAvailabilityFailed
-			? t('registration.account.username.error.retry')
-			: usernameAvailabilityChecked && isUsernameAvailable
-				? t('registration.account.username.success')
-				: t('registration.account.username.info');
+	const { hasError: usernameHasError, helperTextKey: usernameHelperTextKey } =
+		getUsernameFeedback({
+			wasBlurred: usernameWasBlurred,
+			isLongEnough: isUsernameLongEnough,
+			isAvailable: isUsernameAvailable,
+			availabilityChecked: usernameAvailabilityChecked,
+			availabilityCheckFailed: usernameAvailabilityFailed
+		});
+	const usernameHelperText = t(usernameHelperTextKey);
 	const visibilityButtonSx = {
 		'color': registrationMd3.onSurfaceVariant,
 		'&:hover': {
