@@ -124,6 +124,10 @@ export const config: AppConfigInterface = {
 		}
 	},
 	registration: {
+		// FE#245: fallback consulting type for the public agency search when
+		// none is selected. 1 = historic default; override per deployment
+		// when agencies use a different modality.
+		defaultConsultingTypeId: 1,
 		consultingTypeDefaults: {
 			autoSelectPostcode: false,
 			autoSelectAgency: false

@@ -18,6 +18,9 @@ const keycloakOrigin = getKeycloakOrigin(apiUrl);
 export const endpoints = {
 	agencyConsultants: userServiceOrigin + '/service/users/consultants',
 	agencyServiceBase: agencyServiceOrigin + '/service/agencies',
+	agencyDepartmentLegal: (agencyId: number, topicId: number) =>
+		agencyServiceOrigin +
+		`/service/agencies/${agencyId}/topics/${topicId}/legal`,
 	agencyTopics: agencyServiceOrigin + '/service/agencies/topics',
 	agenciesByTenant: agencyServiceOrigin + '/service/agencies/by-tenant',
 	additionalEnquiry: userServiceOrigin + '/service/users/askers/session/new',

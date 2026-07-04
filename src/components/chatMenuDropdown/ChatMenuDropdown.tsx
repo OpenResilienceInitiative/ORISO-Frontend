@@ -74,6 +74,7 @@ export const ChatMenuDropdownItem = ({
 	description,
 	shortcut,
 	disabled = false,
+	active = false,
 	className,
 	children,
 	...rest
@@ -84,6 +85,7 @@ export const ChatMenuDropdownItem = ({
 	description?: React.ReactNode;
 	shortcut?: React.ReactNode;
 	disabled?: boolean;
+	active?: boolean;
 	className?: string;
 	children?: React.ReactNode;
 	[key: string]: any;
@@ -94,6 +96,7 @@ export const ChatMenuDropdownItem = ({
 		className: clsx(
 			'chatMenuDropdown__item',
 			disabled && 'chatMenuDropdown__item--disabled',
+			active && 'chatMenuDropdown__item--active',
 			className
 		),
 		...(Component === 'button'
