@@ -51,10 +51,12 @@ import {
 } from '../../../utils/pseudonymGenerator';
 import { PasswordRuleChips } from './PasswordRuleChips';
 import { allPasswordCriteriaPass } from './passwordRules';
+import { getUsernameFeedback } from './usernameFeedback';
 import genUserIcon from '../../../resources/img/registration-md3/icons/gen-user.svg';
 import genKeyIcon from '../../../resources/img/registration-md3/icons/gen-key.svg';
 import genAvatarIcon from '../../../resources/img/registration-md3/icons/gen-avatar.svg';
 import genDiceIcon from '../../../resources/img/registration-md3/icons/gen-dice.svg';
+import { DepartmentLegalSection } from '../../departmentLegal/DepartmentLegalSection';
 
 const toRegistrationUsername = (displayName: string) => {
 	const normalized = displayName
@@ -148,7 +150,8 @@ export const AccountData: FC<{
 		useState<boolean>(false);
 	const [usernameAvailabilityFailed, setUsernameAvailabilityFailed] =
 		useState<boolean>(false);
-	const { setDisabledNextButton } = useContext(RegistrationContext);
+	const { setDisabledNextButton, registrationData } =
+		useContext(RegistrationContext);
 
 	const resetUsernameAvailability = useCallback(() => {
 		setUsernameAvailabilityChecked(false);
@@ -246,19 +249,15 @@ export const AccountData: FC<{
 		onChange
 	]);
 
-	const usernameHasError =
-		(usernameWasBlurred && !isUsernameLongEnough) ||
-		usernameAvailabilityFailed ||
-		(usernameAvailabilityChecked && !isUsernameAvailable);
-	const usernameHelperText = usernameHasError
-		? isUsernameAvailable
-			? t('registration.account.username.error.tooShort')
-			: t('registration.account.username.error.unavailable')
-		: usernameAvailabilityFailed
-			? t('registration.account.username.error.retry')
-			: usernameAvailabilityChecked && isUsernameAvailable
-				? t('registration.account.username.success')
-				: t('registration.account.username.info');
+	const { hasError: usernameHasError, helperTextKey: usernameHelperTextKey } =
+		getUsernameFeedback({
+			wasBlurred: usernameWasBlurred,
+			isLongEnough: isUsernameLongEnough,
+			isAvailable: isUsernameAvailable,
+			availabilityChecked: usernameAvailabilityChecked,
+			availabilityCheckFailed: usernameAvailabilityFailed
+		});
+	const usernameHelperText = t(usernameHelperTextKey);
 	const visibilityButtonSx = {
 		'color': registrationMd3.onSurfaceVariant,
 		'&:hover': {
@@ -610,6 +609,16 @@ export const AccountData: FC<{
 					}
 				/>
 			</FormGroup>
+			{/* Department-specific data privacy policy: shown when the
+			    selected agency has a published DPP for the selected topic;
+			    falls back to the tenant text if it cannot be loaded. */}
+			<Box sx={{ mt: '12px' }}>
+				<DepartmentLegalSection
+					agency={registrationData?.agency}
+					topic={registrationData?.mainTopic}
+					variant="consent"
+				/>
+			</Box>
 		</Box>
 	);
 };

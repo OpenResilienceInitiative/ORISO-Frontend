@@ -16,6 +16,13 @@ export interface TenantDataInterface {
 		dataPrivacyConfirmation: string;
 		termsAndConditionsConfirmation: string;
 		renderedPrivacy: string;
+		/**
+		 * Raw stored language->HTML maps incl. `<lang>__meta` machine-
+		 * translation metadata keys (additive TenantService fields; absent
+		 * on older backends). May be empty when no content is stored.
+		 */
+		impressumLanguages?: Record<string, string>;
+		privacyLanguages?: Record<string, string>;
 	};
 	settings?: TenantDataSettingsInterface;
 }

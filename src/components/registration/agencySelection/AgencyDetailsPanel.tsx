@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Box, Collapse, Link, Typography } from '@mui/material';
-import { useMemo, type ReactNode } from 'react';
+import { useContext, useMemo, type ReactNode } from 'react';
 import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
 import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded';
 import CallRoundedIcon from '@mui/icons-material/CallRounded';
@@ -9,10 +9,16 @@ import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
 import NavigationRoundedIcon from '@mui/icons-material/NavigationRounded';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import LanguageRoundedIcon from '@mui/icons-material/LanguageRounded';
+import PrivacyTipOutlinedIcon from '@mui/icons-material/PrivacyTipOutlined';
 import { useTranslation } from 'react-i18next';
+import { RegistrationContext } from '../../../globalState';
 import { AgencyDataInterface } from '../../../globalState/interfaces';
 import { registrationMd3 } from '../registrationDesign/registrationDesign';
 import { AgencyLanguages } from './AgencyLanguages';
+import {
+	DepartmentLegalSection,
+	getDepartmentForTopic
+} from '../../departmentLegal/DepartmentLegalSection';
 
 interface AgencyDetailsPanelProps {
 	agency: AgencyDataInterface;
@@ -290,6 +296,12 @@ export const AgencyDetailsPanel = ({
 	open
 }: AgencyDetailsPanelProps) => {
 	const { t } = useTranslation();
+	const { registrationData } = useContext(RegistrationContext);
+	const selectedTopic = registrationData?.mainTopic;
+	const department = getDepartmentForTopic(agency, selectedTopic);
+	const hasDepartmentLegal =
+		department?.hasPublishedDpp === true ||
+		department?.hasPublishedImprint === true;
 	const details = useMemo(() => getAgencyDetails(agency), [agency]);
 	const mapSrc = useMemo(() => osmEmbedSrc(details), [details]);
 	const webMapHref = useMemo(() => osmLink(details), [details]);
@@ -490,6 +502,21 @@ export const AgencyDetailsPanel = ({
 						)}
 					>
 						{details.about}
+					</InfoRow>
+				)}
+
+				{hasDepartmentLegal && (
+					<InfoRow
+						icon={<PrivacyTipOutlinedIcon fontSize="small" />}
+						label={t(
+							'registration.agency.legal.label',
+							'Rechtliches'
+						)}
+					>
+						<DepartmentLegalSection
+							agency={agency}
+							topic={selectedTopic}
+						/>
 					</InfoRow>
 				)}
 			</Box>
