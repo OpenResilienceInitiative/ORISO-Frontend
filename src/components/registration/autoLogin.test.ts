@@ -9,10 +9,15 @@ import {
 import { setTokens } from '../auth/auth';
 import { getBudibaseAccessToken } from '../sessionCookie/getBudibaseAccessToken';
 import { parseJwt } from '../../utils/parseJWT';
+import {
+	clearAuthSession,
+	isConsultantAccessToken
+} from '../auth/consultantLoginBlock';
 
 const mockAppConfig = vi.hoisted(() => ({
 	multitenancyWithSingleDomainEnabled: false,
 	useTenantService: false,
+	blockConsultantAppLogin: false,
 	urls: {
 		redirectToApp: '/sessions'
 	}
@@ -51,6 +56,12 @@ vi.mock('../../utils/parseJWT', () => ({
 	parseJwt: vi.fn()
 }));
 
+vi.mock('../auth/consultantLoginBlock', () => ({
+	clearAuthSession: vi.fn(),
+	CONSULTANT_LOGIN_BLOCKED_ERROR: 'CONSULTANT_LOGIN_BLOCKED',
+	isConsultantAccessToken: vi.fn()
+}));
+
 const keycloakResponse = {
 	data: {},
 	access_token: 'keycloak-access',
@@ -71,9 +82,65 @@ describe('autoLogin', () => {
 		vi.clearAllMocks();
 		mockAppConfig.multitenancyWithSingleDomainEnabled = false;
 		mockAppConfig.useTenantService = false;
+		mockAppConfig.blockConsultantAppLogin = false;
 		mockAppConfig.urls.redirectToApp = '/sessions';
 		vi.mocked(getKeycloakAccessToken).mockResolvedValue(keycloakResponse);
 		vi.mocked(getMatrixAccessToken).mockResolvedValue(matrixResponse);
+		vi.mocked(isConsultantAccessToken).mockReturnValue(false);
+	});
+
+	// The consultant login block (PR #273 originally blocked EVERY counsellor
+	// because it keyed on the bare `consultant` realm role). isConsultantAccessToken
+	// itself is covered in consultantLoginBlock.test.ts; these lock the autoLogin
+	// integration: the block only fires when the flag is on AND the token is a
+	// consultant, and it clears the session instead of leaving a half-login.
+	describe('consultant app-login block', () => {
+		it('blocks and clears the session when the flag is on and the token is a consultant', async () => {
+			mockAppConfig.blockConsultantAppLogin = true;
+			vi.mocked(isConsultantAccessToken).mockReturnValue(true);
+
+			await expect(
+				autoLogin({
+					username: 'consultant@example.com',
+					password: 'secret!',
+					tenantData: { settings: {} } as any
+				})
+			).rejects.toThrow('CONSULTANT_LOGIN_BLOCKED');
+
+			// Keycloak login sets tokens first; the block then clears the session
+			// and aborts before Matrix login proceeds.
+			expect(clearAuthSession).toHaveBeenCalledTimes(1);
+			expect(getMatrixAccessToken).not.toHaveBeenCalled();
+			expect(persistMatrixLoginData).not.toHaveBeenCalled();
+		});
+
+		it('allows a consultant when the flag is off', async () => {
+			mockAppConfig.blockConsultantAppLogin = false;
+			vi.mocked(isConsultantAccessToken).mockReturnValue(true);
+
+			await autoLogin({
+				username: 'consultant@example.com',
+				password: 'secret!',
+				tenantData: { settings: {} } as any
+			});
+
+			expect(clearAuthSession).not.toHaveBeenCalled();
+			expect(setTokens).toHaveBeenCalled();
+		});
+
+		it('allows a non-consultant (asker) even when the flag is on', async () => {
+			mockAppConfig.blockConsultantAppLogin = true;
+			vi.mocked(isConsultantAccessToken).mockReturnValue(false);
+
+			await autoLogin({
+				username: 'asker@example.com',
+				password: 'secret!',
+				tenantData: { settings: {} } as any
+			});
+
+			expect(clearAuthSession).not.toHaveBeenCalled();
+			expect(setTokens).toHaveBeenCalled();
+		});
 	});
 
 	it('logs in with Keycloak, stores auth tokens, and persists Matrix login data', async () => {
