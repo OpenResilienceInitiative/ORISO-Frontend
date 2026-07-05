@@ -24,6 +24,7 @@ import {
 	CaseHandoverStatus,
 	FETCH_ERRORS
 } from '../../api';
+import { apiPostError, ERROR_LEVEL_WARN } from '../../api/apiPostError';
 import {
 	mergeMatrixMessages,
 	prepareMessages,
@@ -453,12 +454,31 @@ export const SessionStream = ({
 			return true;
 		};
 
-		// Try immediately, then retry until Matrix client is ready.
+		// Try immediately, then retry until the Matrix client is ready.
+		// Cap the retries so a client that never initializes stops spinning
+		// silently (20 attempts * 500ms = 10s) and surfaces a diagnostic.
+		const MAX_ATTACH_ATTEMPTS = 20;
+		let attachAttempts = 0;
 		if (!attachTimelineListeners()) {
 			retryTimer = window.setInterval(() => {
-				if (attachTimelineListeners() && retryTimer) {
-					window.clearInterval(retryTimer);
-					retryTimer = null;
+				attachAttempts += 1;
+				if (attachTimelineListeners()) {
+					if (retryTimer) {
+						window.clearInterval(retryTimer);
+						retryTimer = null;
+					}
+					return;
+				}
+				if (attachAttempts >= MAX_ATTACH_ATTEMPTS) {
+					if (retryTimer) {
+						window.clearInterval(retryTimer);
+						retryTimer = null;
+					}
+					const attachError = new Error(
+						`SessionStream: gave up attaching Matrix timeline listener for room ${matrixRoomId} after ${MAX_ATTACH_ATTEMPTS} attempts (Matrix client never became ready)`
+					) as Error & { level?: typeof ERROR_LEVEL_WARN };
+					attachError.level = ERROR_LEVEL_WARN;
+					apiPostError(attachError).catch(() => undefined);
 				}
 			}, 500);
 		}
@@ -539,12 +559,29 @@ export const SessionStream = ({
 			return Boolean(detachLifecycleListener);
 		};
 
-		// Try immediately, then retry until Matrix client is ready.
+		// Try immediately, then retry until Matrix client is ready — but cap the
+		// attempts so a client that never initializes can't spin this interval
+		// forever silently (same hazard as the timeline-attach retry above).
+		const MAX_ATTACH_ATTEMPTS = 20;
+		let attachAttempts = 0;
 		if (!attachLifecycleListener()) {
 			retryTimer = window.setInterval(() => {
+				attachAttempts += 1;
 				if (attachLifecycleListener() && retryTimer) {
 					window.clearInterval(retryTimer);
 					retryTimer = null;
+					return;
+				}
+				if (attachAttempts >= MAX_ATTACH_ATTEMPTS) {
+					if (retryTimer) {
+						window.clearInterval(retryTimer);
+						retryTimer = null;
+					}
+					const attachError = new Error(
+						`SessionStream: gave up attaching Matrix room lifecycle listener for room ${matrixRoomId} after ${MAX_ATTACH_ATTEMPTS} attempts (Matrix client never became ready)`
+					);
+					(attachError as any).level = ERROR_LEVEL_WARN;
+					apiPostError(attachError).catch(() => undefined);
 				}
 			}, 500);
 		}

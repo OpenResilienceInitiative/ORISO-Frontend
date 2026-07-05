@@ -11,6 +11,17 @@ vi.hoisted(() => {
 	env.REACT_APP_KEYCLOAK_REALM = 'oriso';
 });
 
+// The metadata-only notification is a network side effect; stub it so the
+// transport tests stay deterministic and offline. We assert it never leaks
+// message content (FE-H01) by inspecting the call args.
+const apiPostMessageEventNotification = vi.fn(
+	(_input: unknown): Promise<unknown> => Promise.resolve({})
+);
+vi.mock('../api/apiPostMessageEventNotification', () => ({
+	apiPostMessageEventNotification: (input: unknown) =>
+		apiPostMessageEventNotification(input)
+}));
+
 const ROOM_ID = '!room:matrix.oriso.org';
 const OTHER_ROOM_ID = '!other:matrix.oriso.org';
 
@@ -237,5 +248,168 @@ describe('chatTransportService Matrix room members', () => {
 		detach();
 		fakeClient.emit('RoomState.members', {}, { roomId: ROOM_ID }, {});
 		expect(listener).toHaveBeenCalledTimes(2);
+	});
+});
+
+describe('chatTransportService sendTextMessage (Matrix-only transport)', () => {
+	beforeEach(() => {
+		apiPostMessageEventNotification.mockClear();
+	});
+
+	afterEach(() => {
+		setMatrixClientServiceRef(null);
+	});
+
+	it('rejects (no silent success, no RC path) when the session has no Matrix room', async () => {
+		const sendMessage = vi.fn();
+		const override = {
+			getClient: () => createFakeMatrixClient(),
+			sendMessage
+		} as any;
+
+		await expect(
+			chatTransportService.sendTextMessage({
+				roomIdOrSessionId: 42,
+				message: 'hello',
+				sendMailNotification: false,
+				isEncrypted: false,
+				matrixRoomId: undefined,
+				matrixClientServiceOverride: override
+			})
+		).rejects.toThrow('Cannot send message: session has no Matrix room');
+
+		// The removed Rocket.Chat fallback must not be reached: no send, no
+		// metadata notification.
+		expect(sendMessage).not.toHaveBeenCalled();
+		expect(apiPostMessageEventNotification).not.toHaveBeenCalled();
+	});
+
+	it('rejects when a Matrix room exists but the client is not initialized', async () => {
+		const override = {
+			getClient: () => null,
+			sendMessage: vi.fn()
+		} as any;
+
+		await expect(
+			chatTransportService.sendTextMessage({
+				roomIdOrSessionId: ROOM_ID,
+				message: 'hello',
+				sendMailNotification: false,
+				isEncrypted: false,
+				matrixRoomId: ROOM_ID,
+				matrixClientServiceOverride: override
+			})
+		).rejects.toThrow('Matrix client not initialized');
+	});
+
+	it('sends via the Matrix client with the room id and message when a room id is present', async () => {
+		const sendMessage = vi.fn(() =>
+			Promise.resolve({ event_id: '$evt:matrix.oriso.org' })
+		);
+		const override = {
+			getClient: () => createFakeMatrixClient(),
+			sendMessage
+		} as any;
+
+		const result = await chatTransportService.sendTextMessage({
+			roomIdOrSessionId: ROOM_ID,
+			message: 'hello world',
+			sendMailNotification: false,
+			isEncrypted: false,
+			matrixRoomId: ROOM_ID,
+			matrixClientServiceOverride: override
+		});
+
+		expect(sendMessage).toHaveBeenCalledWith(ROOM_ID, 'hello world');
+		expect(result).toEqual({
+			success: true,
+			event_id: '$evt:matrix.oriso.org'
+		});
+
+		// A metadata-only notification fires, and it never carries the
+		// plaintext message body across the Matrix privacy boundary (FE-H01).
+		expect(apiPostMessageEventNotification).toHaveBeenCalledTimes(1);
+		const notificationArg =
+			apiPostMessageEventNotification.mock.calls[0][0];
+		expect(notificationArg).toMatchObject({
+			roomId: ROOM_ID,
+			matrixRoom: true
+		});
+		expect(JSON.stringify(notificationArg)).not.toContain('hello world');
+	});
+});
+
+describe('chatTransportService markRoomAsRead', () => {
+	afterEach(() => {
+		setMatrixClientServiceRef(null);
+	});
+
+	const setClientWithRoom = (room: any) => {
+		setMatrixClientServiceRef({
+			getClient: () => ({
+				getRoom: (roomId: string) =>
+					room && roomId === ROOM_ID ? room : null,
+				sendReadReceipt: room?.sendReadReceipt
+			})
+		} as any);
+	};
+
+	it('sends a read receipt for the latest live-timeline event', async () => {
+		const latestEvent = { id: 'latest' };
+		const sendReadReceipt = vi.fn(() => Promise.resolve());
+		const room = {
+			getLiveTimeline: () => ({
+				getEvents: () => [{ id: 'older' }, latestEvent]
+			}),
+			sendReadReceipt
+		};
+		setClientWithRoom(room);
+
+		await chatTransportService.markRoomAsRead(ROOM_ID);
+
+		expect(sendReadReceipt).toHaveBeenCalledTimes(1);
+		expect(sendReadReceipt).toHaveBeenCalledWith(latestEvent);
+	});
+
+	it('is a safe no-op (no throw) when the Matrix client is missing', async () => {
+		setMatrixClientServiceRef(null);
+		await expect(
+			chatTransportService.markRoomAsRead(ROOM_ID)
+		).resolves.toBeUndefined();
+	});
+
+	it('is a safe no-op when the room is unknown', async () => {
+		setClientWithRoom(null);
+		await expect(
+			chatTransportService.markRoomAsRead(ROOM_ID)
+		).resolves.toBeUndefined();
+	});
+
+	it('is a safe no-op when the room has no events', async () => {
+		const sendReadReceipt = vi.fn(() => Promise.resolve());
+		const room = {
+			getLiveTimeline: () => ({ getEvents: () => [] }),
+			sendReadReceipt
+		};
+		setClientWithRoom(room);
+
+		await expect(
+			chatTransportService.markRoomAsRead(ROOM_ID)
+		).resolves.toBeUndefined();
+		expect(sendReadReceipt).not.toHaveBeenCalled();
+	});
+
+	it('swallows a failing read-receipt send (no throw)', async () => {
+		const room = {
+			getLiveTimeline: () => ({
+				getEvents: () => [{ id: 'latest' }]
+			}),
+			sendReadReceipt: () => Promise.reject(new Error('offline'))
+		};
+		setClientWithRoom(room);
+
+		await expect(
+			chatTransportService.markRoomAsRead(ROOM_ID)
+		).resolves.toBeUndefined();
 	});
 });
