@@ -128,8 +128,23 @@ jobs:
 
       - name: Install Cursor CLI
         if: steps.guard.outputs.run == 'true'
+        env:
+          # Pin the Cursor Agent CLI to an immutable versioned build instead of
+          # piping the mutable `curl https://cursor.com/install | bash` installer
+          # into a shell. That installer runs whatever code the vendor serves at
+          # request time inside a job that holds a write-capable token, which is a
+          # prompt-injection / supply-chain surface. Cursor does not publish a
+          # checksum for the tarball, so the pinned immutable version URL is the
+          # integrity anchor. Bump CURSOR_CLI_VERSION deliberately to upgrade.
+          CURSOR_CLI_VERSION: "2026.07.01-41b2de7"
         run: |
-          curl https://cursor.com/install -fsS | bash
+          set -euo pipefail
+          arch="$(uname -m)"; case "$arch" in x86_64|amd64) arch=x64;; arm64|aarch64) arch=arm64;; esac
+          install_dir="$HOME/.local/share/cursor-agent/versions/${CURSOR_CLI_VERSION}"
+          mkdir -p "$install_dir" "$HOME/.local/bin"
+          curl -fSL "https://downloads.cursor.com/lab/${CURSOR_CLI_VERSION}/linux/${arch}/agent-cli-package.tar.gz" \
+            | tar --strip-components=1 -xzf - -C "$install_dir"
+          ln -sf "$install_dir/cursor-agent" "$HOME/.local/bin/cursor-agent"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
           "$HOME/.local/bin/cursor-agent" --version
 
