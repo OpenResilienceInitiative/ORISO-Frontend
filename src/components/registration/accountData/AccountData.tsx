@@ -55,6 +55,7 @@ import genUserIcon from '../../../resources/img/registration-md3/icons/gen-user.
 import genKeyIcon from '../../../resources/img/registration-md3/icons/gen-key.svg';
 import genAvatarIcon from '../../../resources/img/registration-md3/icons/gen-avatar.svg';
 import genDiceIcon from '../../../resources/img/registration-md3/icons/gen-dice.svg';
+import { getUsernameHelperTextKey } from './usernameHelperText';
 
 const toRegistrationUsername = (displayName: string) => {
 	const normalized = displayName
@@ -250,15 +251,14 @@ export const AccountData: FC<{
 		(usernameWasBlurred && !isUsernameLongEnough) ||
 		usernameAvailabilityFailed ||
 		(usernameAvailabilityChecked && !isUsernameAvailable);
-	const usernameHelperText = usernameHasError
-		? isUsernameAvailable
-			? t('registration.account.username.error.tooShort')
-			: t('registration.account.username.error.unavailable')
-		: usernameAvailabilityFailed
-			? t('registration.account.username.error.retry')
-			: usernameAvailabilityChecked && isUsernameAvailable
-				? t('registration.account.username.success')
-				: t('registration.account.username.info');
+	const usernameHelperText = t(
+		getUsernameHelperTextKey({
+			usernameHasError,
+			usernameAvailabilityFailed,
+			isUsernameAvailable,
+			usernameAvailabilityChecked
+		})
+	);
 	const visibilityButtonSx = {
 		'color': registrationMd3.onSurfaceVariant,
 		'&:hover': {

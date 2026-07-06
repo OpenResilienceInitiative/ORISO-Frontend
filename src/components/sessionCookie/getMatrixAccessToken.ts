@@ -13,6 +13,11 @@ export interface MatrixLoginData {
 
 const MATRIX_DEVICE_ID_STORAGE_KEY = 'matrix_device_id';
 const MATRIX_DEVICE_ID_PREFIX = 'ORISO_WEB_';
+const MATRIX_DISABLED_ERROR = 'MATRIX_DISABLED';
+
+const isMatrixTokenBootstrapDisabled = (): boolean =>
+	process.env.REACT_APP_DISABLE_LIVE_WEBSOCKET === '1' ||
+	process.env.REACT_APP_DISABLE_LIVE_WEBSOCKET === 'true';
 
 const createBrowserDeviceId = (): string => {
 	const randomValue =
@@ -50,6 +55,10 @@ export const getMatrixAccessToken = (
 	_username?: string,
 	_password?: string
 ): Promise<MatrixLoginData> => {
+	if (isMatrixTokenBootstrapDisabled()) {
+		return Promise.reject(new Error(MATRIX_DISABLED_ERROR));
+	}
+
 	const tokenUrl = endpoints.matrixAccessToken;
 	return fetchData({
 		url: tokenUrl,

@@ -10,7 +10,7 @@ export const getKeycloakAccessToken = (
 ): Promise<LoginData> =>
 	new Promise((resolve, reject) => {
 		// console.log("🔐 DEBUG: getKeycloakAccessToken called with:", { username, password: password ? "***" : "undefined", otp });
-		
+
 		const data = `username=${username}&password=${password}${
 			otp ? `&otp=${otp}` : ``
 		}&client_id=app&grant_type=password`;
@@ -22,8 +22,7 @@ export const getKeycloakAccessToken = (
 		const req = new Request(url, {
 			method: 'POST',
 			headers: {
-				'Content-Type': 'application/x-www-form-urlencoded',
-				'cache-control': 'no-cache'
+				'Content-Type': 'application/x-www-form-urlencoded'
 			},
 			credentials: 'include',
 			body: data
@@ -35,16 +34,23 @@ export const getKeycloakAccessToken = (
 			.then((response) => {
 				// console.log("🔐 DEBUG: Keycloak response status:", response.status);
 				// console.log("🔐 DEBUG: Keycloak response headers:", Object.fromEntries(response.headers.entries()));
-				
+
 				if (response.status === 200) {
 					// console.log("🔐 DEBUG: SUCCESS - Processing 200 response");
-					response.json().then((data) => {
-						// console.log("🔐 DEBUG: SUCCESS - Parsed JSON data:", data);
-						resolve(data);
-					}).catch((jsonError) => {
-						// console.error("🔐 DEBUG: ERROR - Failed to parse JSON:", jsonError);
-						reject(new Error('Failed to parse Keycloak response JSON'));
-					});
+					response
+						.json()
+						.then((data) => {
+							// console.log("🔐 DEBUG: SUCCESS - Parsed JSON data:", data);
+							resolve(data);
+						})
+						.catch((jsonError) => {
+							// console.error("🔐 DEBUG: ERROR - Failed to parse JSON:", jsonError);
+							reject(
+								new Error(
+									'Failed to parse Keycloak response JSON'
+								)
+							);
+						});
 				} else if (response.status === 400) {
 					// console.log("🔐 DEBUG: BAD REQUEST - Processing 400 response");
 					response.json().then((data) => {

@@ -54,6 +54,7 @@ beforeEach(() => {
 
 afterEach(() => {
 	vi.useRealTimers();
+	vi.unstubAllEnvs();
 	localStorage.clear();
 });
 
@@ -91,6 +92,14 @@ describe('persistMatrixLoginData', () => {
 });
 
 describe('getMatrixAccessToken', () => {
+	it('skips the API call when local live websocket bootstrap is disabled', async () => {
+		vi.stubEnv('REACT_APP_DISABLE_LIVE_WEBSOCKET', '1');
+
+		await expect(getMatrixAccessToken()).rejects.toThrow('MATRIX_DISABLED');
+
+		expect(fetchData).not.toHaveBeenCalled();
+	});
+
 	it('loads Matrix credentials from the API and uses the response device id', async () => {
 		vi.mocked(fetchData).mockResolvedValue({
 			accessToken: 'matrix-token',

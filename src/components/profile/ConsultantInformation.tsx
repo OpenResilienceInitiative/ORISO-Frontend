@@ -30,7 +30,6 @@ export const ConsultantInformation = () => {
 	const { userData, reloadUserData } = useContext(UserDataContext);
 	const { addNotification } = useContext(NotificationsContext);
 	const [isEditEnabled, setIsEditEnabled] = useState(false);
-	const [isSaveDisabled, setIsSaveDisabled] = useState(false);
 	const [editedDisplayName, setEditedDisplayName] = useState('');
 	const [initialDisplayName, setInitialDisplayName] = useState('');
 	const [isSlugEditEnabled, setIsSlugEditEnabled] = useState(false);
@@ -45,16 +44,19 @@ export const ConsultantInformation = () => {
 	};
 
 	const saveEditButton: ButtonItem = {
-		disabled: isSaveDisabled,
+		disabled: !editedDisplayName?.trim(),
 		label: translate('profile.data.edit.button.save'),
 		type: BUTTON_TYPES.LINK
 	};
 
-	const handleValidDisplayName = (displayName) => {
+	const handleValidDisplayName = useCallback((displayName) => {
 		setEditedDisplayName(displayName);
-	};
+	}, []);
 
 	const handleCancelEditButton = () => {
+		const displayName = userData.displayName || userData.userName || '';
+		setInitialDisplayName(displayName);
+		setEditedDisplayName(displayName);
 		setIsEditEnabled(false);
 	};
 
@@ -81,9 +83,9 @@ export const ConsultantInformation = () => {
 			});
 	};
 
-	const handleValidPublicSlug = (publicSlug) => {
+	const handleValidPublicSlug = useCallback((publicSlug) => {
 		setEditedPublicSlug(publicSlug?.toLowerCase() ?? '');
-	};
+	}, []);
 
 	const handleCancelSlugEditButton = () => {
 		setEditedPublicSlug(
@@ -135,23 +137,24 @@ export const ConsultantInformation = () => {
 	};
 
 	useEffect(() => {
-		if (editedDisplayName) {
-			setIsSaveDisabled(false);
-		} else {
-			setIsSaveDisabled(true);
+		if (isEditEnabled) {
+			return;
 		}
-	}, [editedDisplayName]);
 
-	useEffect(() => {
-		setInitialDisplayName(userData.displayName || userData.userName);
-		setEditedDisplayName(userData.displayName);
-	}, [userData.displayName, userData.userName]);
+		if (isSlugEditEnabled) {
+			return;
+		}
+
+		const displayName = userData.displayName || userData.userName || '';
+		setInitialDisplayName(displayName);
+		setEditedDisplayName(displayName);
+	}, [isEditEnabled, userData.displayName, userData.userName]);
 
 	useEffect(() => {
 		setEditedPublicSlug(
 			userData.pendingPublicSlug || userData.publicSlug || ''
 		);
-	}, [userData.pendingPublicSlug, userData.publicSlug]);
+	}, [isSlugEditEnabled, userData.pendingPublicSlug, userData.publicSlug]);
 
 	useEffect(() => {
 		const normalizedPublicSlug = editedPublicSlug.trim().toLowerCase();

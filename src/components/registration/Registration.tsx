@@ -38,6 +38,13 @@ import { endpoints } from '../../resources/scripts/endpoints';
 import { apiPostRegistration } from '../../api';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { REGISTRATION_DATA_VALIDATION } from './registrationDataValidation';
+import {
+	getRegistrationValidationFields,
+	getConsultantDirectLinkTopicIds
+} from './registrationSteps';
+import { getUrlParameter } from '../../utils/getUrlParameter';
+import { resolveRegistrationConsultingType } from './resolveRegistrationConsultingType';
+import { normalizePreferredLanguage } from '../../utils/normalizePreferredLanguage';
 import { UrlParamsContext } from '../../globalState/provider/UrlParamsProvider';
 import { RegistrationStepper } from './registrationStepper/RegistrationStepper';
 import {
@@ -96,7 +103,8 @@ export const Registration = () => {
 		setDisabledNextButton,
 		updateRegistrationData,
 		registrationData,
-		availableSteps
+		availableSteps,
+		registrationConsultingType
 	} = useContext(RegistrationContext);
 	const { consultant: preselectedConsultant } = useContext(UrlParamsContext);
 	const { tenant } = useContext(TenantContext);
@@ -207,7 +215,9 @@ export const Registration = () => {
 			topicId: undefined,
 			topicGroupId: undefined,
 			agency: undefined,
-			agencyId: undefined
+			agencyId: undefined,
+			age: undefined,
+			state: undefined
 		});
 		navigate(makeStepUrl('topic-selection'));
 	}, [navigate, makeStepUrl, setDisabledNextButton, updateRegistrationData]);
@@ -218,7 +228,9 @@ export const Registration = () => {
 		updateRegistrationData({
 			zipcode: undefined,
 			agency: undefined,
-			agencyId: undefined
+			agencyId: undefined,
+			age: undefined,
+			state: undefined
 		});
 		navigate(makeStepUrl('zipcode'));
 	}, [navigate, makeStepUrl, setDisabledNextButton, updateRegistrationData]);
@@ -296,7 +308,9 @@ export const Registration = () => {
 			.filter((missingStep) => missingStep < currStepIndex);
 
 		if (missingPreviousSteps.length > 0) {
-			navigate(makeStepUrl(availableSteps[missingPreviousSteps[0]]?.name));
+			navigate(
+				makeStepUrl(availableSteps[missingPreviousSteps[0]]?.name)
+			);
 		}
 	}, [
 		availableSteps,
@@ -304,6 +318,34 @@ export const Registration = () => {
 		navigate,
 		makeStepUrl,
 		currStepIndex
+	]);
+
+	useEffect(() => {
+		if (
+			!getUrlParameter('cid') ||
+			step !== 'topic-selection' ||
+			!nextStepUrl
+		) {
+			return;
+		}
+
+		const topicIds = getConsultantDirectLinkTopicIds(
+			preselectedConsultant,
+			registrationData?.agency
+		);
+		if (
+			topicIds.length === 1 &&
+			registrationData?.mainTopic?.id === topicIds[0]
+		) {
+			navigate(nextStepUrl, { replace: true });
+		}
+	}, [
+		step,
+		nextStepUrl,
+		navigate,
+		preselectedConsultant,
+		registrationData?.agency,
+		registrationData?.mainTopic?.id
 	]);
 
 	const onRegisterClick = useCallback(() => {
@@ -325,18 +367,19 @@ export const Registration = () => {
 			agencyId: mergedData.agency?.id?.toString(),
 			postcode: mergedData.zipcode,
 			termsAccepted: 'true',
-			preferredLanguage: locale || 'de',
-			consultingType:
-				mergedData.agency?.consultingType != null
-					? String(mergedData.agency.consultingType)
-					: undefined,
+			preferredLanguage: normalizePreferredLanguage(locale),
+			consultingType: resolveRegistrationConsultingType(
+				mergedData.agency,
+				registrationConsultingType,
+				preselectedConsultant?.agencies
+			),
 			...(preselectedConsultant && !preselectedConsultant.absent
 				? { consultantId: preselectedConsultant?.consultantId }
 				: {})
 		};
 
 		if (
-			Object.keys(REGISTRATION_DATA_VALIDATION).every((item) =>
+			getRegistrationValidationFields(availableSteps).every((item) =>
 				REGISTRATION_DATA_VALIDATION[item].validation(data[item])
 			)
 		) {
@@ -387,7 +430,9 @@ export const Registration = () => {
 		addNotification,
 		t,
 		locale,
-		isRegistering
+		isRegistering,
+		availableSteps,
+		registrationConsultingType
 	]);
 
 	const handleSubmit = useCallback(
@@ -450,6 +495,9 @@ export const Registration = () => {
 									<PreselectionBox hasDrawer={false} />
 									<RegistrationStepper
 										currentStepName={step}
+										visibleStepNames={availableSteps.map(
+											({ name }) => name
+										)}
 										clickableStepNames={
 											clickableStepperStepNames
 										}
@@ -463,7 +511,8 @@ export const Registration = () => {
 										}}
 									>
 										{(() => {
-											const StepComponent = activeStep.component;
+											const StepComponent =
+												activeStep.component;
 											return (
 												<StepComponent
 													key={`${activeStep.name}-${clearSelectionVersion}`}
