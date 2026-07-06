@@ -1093,6 +1093,16 @@
 		"zh": "Chinese",
 		"zu": "isiZulu"
 	},
+	"legal": {
+		"notice": {
+			"fallbackLanguage": "This text is not available in your language and is shown in its original language.",
+			"machineTranslated": "Machine translated — the German version is legally binding.",
+			"placeholder": "Note: This text is a placeholder and is not yet maintained in a legally binding form.",
+			"showOriginal": "Show original",
+			"showingOriginal": "You are viewing the original version.",
+			"showTranslation": "Show translation"
+		}
+	},
 	"login": {
 		"button": {
 			"label": "Login"
@@ -1277,7 +1287,8 @@
 		"showMore": "Show more",
 		"systemNotification": "System Notification",
 		"systemNotificationTitle": "System notification",
-		"userLeftChat": "{{name}} left the chat",
+		"userLeftChat": "User has left the chat",
+		"consultantLeftChat": "Consultant has left the chat",
 		"anonymousUser": "User",
 		"supervisionEnabledTitle": "Supervision Enabled!",
 		"supervisionEnabledDescription": "{{name}} was added as a consultant supervisor to this chat.",
@@ -1888,6 +1899,13 @@
 				"openInMaps": "Open in maps",
 				"phoneLabel": "Phone",
 				"websiteLabel": "Website"
+			},
+			"legal": {
+				"department": "Department",
+				"headline": "Data privacy notes of the counseling center",
+				"imprintHeadline": "Imprint of the counseling center",
+				"label": "Legal",
+				"unavailable": "The data privacy notes cannot be loaded at the moment."
 			},
 			"search": "Search for a postal code",
 			"summary": "Your counseling center:"

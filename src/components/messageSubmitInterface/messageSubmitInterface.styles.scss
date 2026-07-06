@@ -6,8 +6,8 @@ $message-submit-interface-textarea-box-shadow: inset 0 2px 0 0
 $navWidth: $grid-base-twelve;
 $contentWidthSmall: 100vw;
 $contentWidth: calc((100vw - #{$navWidth}) / 12 * 8);
-$inputBorder: 1px solid #fcdfdf; // Default light red border (1px)
-$inputBorderActive: 2px solid #da5248; // Active/focused red border (2px)
+$inputBorder: 1px solid #ffb4aa; // Figma M3 outline
+$inputBorderActive: 1px solid #cc1e1c; // Figma active outline
 $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 .session,
@@ -118,10 +118,10 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				padding: 0 !important;
 				border-radius: 24px 4px 24px 24px !important;
 				box-shadow: none !important;
-				border: 1px solid #ffdad5 !important;
+				border: 1px solid #ffb4aa !important;
 				overflow: visible;
-				min-height: 196px;
-				height: 196px;
+				min-height: var(--composer-height, 196px);
+				height: var(--composer-height, 196px);
 				transition: all 240ms ease;
 
 				&::before {
@@ -141,11 +141,11 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				&--expanded {
 					position: fixed !important;
 					left: 50vw !important;
-					top: 50vh !important;
+					top: auto !important;
 					right: auto !important;
-					bottom: auto !important;
 					inset: auto !important;
-					margin-top: -850px;
+					bottom: 24px !important;
+					margin-top: 0;
 					max-width: none;
 					height: min(78vh, 760px);
 					max-height: calc(100vh - 96px);
@@ -154,6 +154,10 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 					box-shadow: 0 20px 70px rgba(0, 0, 0, 0.25) !important;
 					overflow: hidden;
 					pointer-events: auto;
+				}
+
+				&--resizing {
+					transition: none;
 				}
 
 				// On mobile, full edge-to-edge width, no outer border
@@ -168,15 +172,17 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 						box-shadow: none !important;
 					}
 
+					&::before {
+						display: none;
+					}
+
 					&:active::before {
-						top: 4px;
-						height: 8px;
-						background: #a5000a;
+						display: none;
 					}
 
 					&--ready {
-						min-height: 180px;
-						height: 180px;
+						min-height: var(--composer-height, 180px);
+						height: var(--composer-height, 180px);
 					}
 				}
 			}
@@ -265,7 +271,6 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			}
 
 			&__mobileNavigator > button {
-				flex: 1; /* each gets equal width */
 				display: flex;
 				align-items: center;
 				justify-content: center;
@@ -307,7 +312,8 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				justify-content: center;
 				height: 36px;
 				border-radius: 8px;
-				cursor: pointer;
+				cursor: ns-resize;
+				touch-action: none;
 
 				&:active {
 					background: #ffe2de;
@@ -316,6 +322,15 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 						background: var(--m3-primary-container, #cc1e1c);
 					}
 				}
+			}
+
+			&__mobileNavigator > .textarea__mobileNavigatorButton {
+				flex: 1 1 0;
+			}
+
+			&__mobileNavigator > .textarea__mobileNavigatorCenter {
+				flex: 0 0 112px;
+				width: 112px;
 			}
 
 			&__mobileNavigatorHandle {
@@ -370,6 +385,36 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 			&__input {
 				border-radius: 0 0 30px 30px;
+			}
+		}
+
+		&__composerResizeHandle {
+			position: absolute;
+			top: 0;
+			left: 50%;
+			width: 112px;
+			height: 28px;
+			padding: 0;
+			border: 0;
+			border-radius: 0 0 10px 10px;
+			background: transparent;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			transform: translateX(-50%);
+			cursor: ns-resize;
+			touch-action: none;
+			z-index: 5;
+
+			&:hover,
+			&:focus-visible,
+			&:active {
+				outline: none;
+
+				.textarea__mobileNavigatorHandle {
+					background: var(--m3-primary-container, #cc1e1c);
+					height: 7px;
+				}
 			}
 		}
 
@@ -436,7 +481,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			&:focus-visible,
 			&:focus-within {
 				outline: none !important;
-				border: 2px solid #cc1e1c;
+				border: 1px solid #ff9f98;
 			}
 
 			&::placeholder,
@@ -1086,7 +1131,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			border-radius: 0 6px 0 24px;
 			padding: 0;
 			cursor: pointer;
-			background-color: #f8ceca;
+			background-color: #ffe2de;
 			color: inherit;
 			appearance: none;
 			font: inherit;
@@ -1107,7 +1152,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				transition: transform 220ms ease-out;
 			}
 			&:hover {
-				background-color: var(--m3-primary-hover, #f3bdb8);
+				background-color: var(--m3-primary-fixed, #ffdad5);
 			}
 			&:focus-visible {
 				outline: 2px solid var(--m3-primary-outline, #ffdad5);
@@ -1150,7 +1195,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			&--deactivated:hover {
 				cursor: not-allowed;
 				pointer-events: none;
-				background-color: #f8ceca;
+				background-color: #ffe2de;
 				opacity: 1;
 
 				svg rect {

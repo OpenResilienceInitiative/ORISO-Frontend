@@ -20,7 +20,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	@include breakpoint($fromLarge) {
 		margin: 24px;
 		border: 1px solid var(--oriso-primary-fixed-dim, #ffb4aa);
-		border-radius: 32px;
+		border-radius: 28px;
 		box-sizing: border-box;
 	}
 

@@ -6,7 +6,7 @@ import {
 	UpdateSessionListProvider,
 	UserDataProvider,
 	WebsocketConnectionDeactivatedProvider,
-	RocketChatGlobalSettingsProvider,
+	ServerSettingsProvider,
 	SessionsDataProvider,
 	ModalProvider,
 	AgencySpecificProvider,
@@ -36,7 +36,7 @@ function ContextProvider({ children }) {
 				<AgencySpecificProvider />,
 				<WebsocketConnectionDeactivatedProvider />,
 				<SessionsDataProvider />,
-				<RocketChatGlobalSettingsProvider />,
+				<ServerSettingsProvider />,
 				<ModalProvider />
 			]}
 		>

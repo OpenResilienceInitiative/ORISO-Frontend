@@ -1,7 +1,12 @@
 import '../../polyfill';
 import * as React from 'react';
 import { ComponentType, useState, lazy, Suspense, useContext } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import {
+	BrowserRouter as Router,
+	Routes,
+	Route,
+	Navigate
+} from 'react-router-dom';
 import { StageProps } from '../stage/stage';
 import '../../resources/styles/styles';
 import { ContextProvider } from '../../globalState/state';
@@ -43,6 +48,11 @@ const AuthenticatedApp = lazy(() =>
 const InviteLink = lazy(() =>
 	import('../invite/InviteLink').then((m) => ({
 		default: m.InviteLink
+	}))
+);
+const DpaSign = lazy(() =>
+	import('../dpaSign/DpaSign').then((m) => ({
+		default: m.DpaSign
 	}))
 );
 
@@ -177,6 +187,10 @@ const RouterWrapper = ({ extraRoutes }: RouterWrapperProps) => {
 								<Route
 									path="/invite/:token/:topicSlug"
 									element={<InviteLink />}
+								/>
+								<Route
+									path="/dpa-sign/:token"
+									element={<DpaSign />}
 								/>
 								<Route
 									path="/login"

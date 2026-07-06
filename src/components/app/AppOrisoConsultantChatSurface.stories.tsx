@@ -20,8 +20,6 @@ import {
 	LocaleContext,
 	NotificationsContext,
 	REMOVE_SESSIONS,
-	RocketChatContext,
-	RocketChatGlobalSettingsContext,
 	SessionTypeContext,
 	SessionsDataContext,
 	SET_SESSIONS,
@@ -41,8 +39,6 @@ import type {
 	TopicsDataInterface
 } from '../../globalState/interfaces';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
-import { RocketChatSubscriptionsContext } from '../../globalState/provider/RocketChatSubscriptionsProvider';
-import { RocketChatUsersOfRoomContext } from '../../globalState/provider/RocketChatUsersOfRoomProvider';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import { LanguagesContext } from '../../globalState/provider/LanguagesProvider';
 import { NavigationBar } from './NavigationBar';
@@ -50,16 +46,17 @@ import { RouterConfigConsultant } from './RouterConfig';
 import { Routing } from './Routing';
 import { config } from '../../resources/scripts/config';
 import { MenuVerticalIcon } from '../../resources/img/icons';
-import { SETTING_HIDE_SYSTEM_MESSAGES } from '../../api/apiRocketChatSettingsPublic';
-import {
-	APP_ORISO_CHAT_FIGMA_URL,
-	ORISO_M3_FIGMA_URL
-} from '../storybookDesignLinks';
 import './authenticatedApp.styles.scss';
 import './navigation.styles.scss';
 import '../sessionsList/sessionsList.styles.scss';
 import '../sessionsListItem/sessionsListItem.styles.scss';
+import '../message/message.styles.scss';
 import '../messageSubmitInterface/messageSubmitInterface.styles';
+
+const APP_ORISO_CHAT_FIGMA_URL =
+	'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=316-17725&t=XHH5HQNmA8DUWl2U-0';
+const ORISO_M3_FIGMA_URL =
+	'https://www.figma.com/design/RTUi1rcrEWECXz8rNFmj7Q/Design-System-M3_ORISO?node-id=60853-24182&p=f&t=ieIskw4Lz5hlc7iM-0';
 
 const searchPeopleResults = [
 	{
@@ -405,7 +402,7 @@ const runtimeDrafts = [
 		id: 1,
 		scopeKey: 'session:3363',
 		text: 'Ich melde mich gleich mit einem konkreten Vorschlag.',
-		title: 'ruhiges Yak Kim',
+		title: 'Sanftes Alpaka Kala',
 		sourceSessionId: 3363,
 		actionPath: '/sessions/consultant/sessionView/session/3363',
 		updatedAt: '2026-03-18T08:22:00.000Z'
@@ -641,77 +638,12 @@ function RuntimeSessionsDataProvider({
 	);
 }
 
-function AppOrisoConsultantReferenceDataProviders({
-	children
-}: {
-	children: React.ReactNode;
-}) {
-	return (
-		<UserDataContext.Provider
-			value={{
-				userData: mockUserData,
-				reloadUserData: async () => mockUserData,
-				loaded: true
-			}}
-		>
-			<ConsultingTypesContext.Provider
-				value={{
-					consultingTypes: runtimeConsultingTypes,
-					setConsultingTypes: () => {}
-				}}
-			>
-				<TopicsContext.Provider
-					value={{
-						topics: runtimeTopics,
-						refreshTopics: () => {}
-					}}
-				>
-					{children}
-				</TopicsContext.Provider>
-			</ConsultingTypesContext.Provider>
-		</UserDataContext.Provider>
-	);
-}
-
-function AppOrisoConsultantRoomProviders({
-	children
-}: {
-	children: React.ReactNode;
-}) {
-	return (
-		<RocketChatSubscriptionsContext.Provider
-			value={{
-				subscriptionsReady: true,
-				subscriptions: [],
-				roomsReady: true,
-				rooms: []
-			}}
-		>
-			<RocketChatUsersOfRoomContext.Provider
-				value={{
-					ready: true,
-					users: [],
-					moderators: [],
-					total: 0,
-					reload: async () => []
-				}}
-			>
-				{children}
-			</RocketChatUsersOfRoomContext.Provider>
-		</RocketChatSubscriptionsContext.Provider>
-	);
-}
-
 function AppOrisoRoutingRuntimeProviders({
 	children
 }: {
 	children: React.ReactNode;
 }) {
 	const notificationNoop = () => {};
-	const getSetting = (id: string) => ({
-		_id: id,
-		value: id === SETTING_HIDE_SYSTEM_MESSAGES ? [] : false
-	});
 
 	return (
 		<AppConfigContext.Provider value={appOrisoRouterSettings}>
@@ -724,83 +656,78 @@ function AppOrisoRoutingRuntimeProviders({
 					setLocale: () => {}
 				}}
 			>
-				<AppOrisoConsultantReferenceDataProviders>
-					<LanguagesContext.Provider
+				<UserDataContext.Provider
+					value={{
+						userData: mockUserData,
+						reloadUserData: async () => mockUserData,
+						setUserData: () => {}
+					}}
+				>
+					<ConsultingTypesContext.Provider
 						value={{
-							fixed: ['de'],
-							spoken: ['de', 'en']
+							consultingTypes: runtimeConsultingTypes,
+							setConsultingTypes: () => {}
 						}}
 					>
-						<RuntimeSessionsDataProvider>
-							<RocketChatContext.Provider
+						<TopicsContext.Provider
+							value={{
+								topics: runtimeTopics,
+								refreshTopics: () => {}
+							}}
+						>
+							<LanguagesContext.Provider
 								value={{
-									ready: true,
-									send: () => {},
-									subscribe: () => {},
-									unsubscribe: () => {},
-									listen: () => {},
-									sendMethod: async () => ({}),
-									close: () => {},
-									rcWebsocket: null
+									fixed: ['de'],
+									spoken: ['de', 'en']
 								}}
 							>
-								<RocketChatGlobalSettingsContext.Provider
-									value={{
-										settings: [],
-										settingsReady: true,
-										getSetting
-									}}
-								>
-									<AppOrisoConsultantRoomProviders>
-										<ConsultantListContext.Provider
+								<RuntimeSessionsDataProvider>
+									<ConsultantListContext.Provider
+										value={{
+											consultantList: [],
+											setConsultantList: () => {}
+										}}
+									>
+										<NotificationsContext.Provider
 											value={{
-												consultantList: [],
-												setConsultantList: () => {}
+												notifications: [],
+												notificationFeed: [],
+												unreadNotificationCount: 0,
+												setNotifications:
+													notificationNoop,
+												hasNotification: () => false,
+												addNotification:
+													notificationNoop,
+												addEventNotification:
+													notificationNoop,
+												refreshNotificationFeed:
+													notificationNoop,
+												removeNotification:
+													notificationNoop,
+												markNotificationAsRead:
+													notificationNoop,
+												markAllNotificationsAsRead:
+													notificationNoop,
+												clearNotificationFeed:
+													notificationNoop
 											}}
 										>
-											<NotificationsContext.Provider
+											<MatrixClientContext.Provider
 												value={{
-													notifications: [],
-													notificationFeed: [],
-													unreadNotificationCount: 0,
-													setNotifications:
-														notificationNoop,
-													hasNotification: () =>
-														false,
-													addNotification:
-														notificationNoop,
-													addEventNotification:
-														notificationNoop,
-													refreshNotificationFeed:
-														notificationNoop,
-													removeNotification:
-														notificationNoop,
-													markNotificationAsRead:
-														notificationNoop,
-													markAllNotificationsAsRead:
-														notificationNoop,
-													clearNotificationFeed:
-														notificationNoop
+													matrixClientService: null,
+													setMatrixClientService:
+														() => {}
 												}}
 											>
-												<MatrixClientContext.Provider
-													value={{
-														matrixClientService:
-															null,
-														setMatrixClientService:
-															() => {}
-													}}
-												>
-													{children}
-												</MatrixClientContext.Provider>
-											</NotificationsContext.Provider>
-										</ConsultantListContext.Provider>
-									</AppOrisoConsultantRoomProviders>
-								</RocketChatGlobalSettingsContext.Provider>
-							</RocketChatContext.Provider>
-						</RuntimeSessionsDataProvider>
-					</LanguagesContext.Provider>
-				</AppOrisoConsultantReferenceDataProviders>
+												{children}
+											</MatrixClientContext.Provider>
+										</NotificationsContext.Provider>
+									</ConsultantListContext.Provider>
+								</RuntimeSessionsDataProvider>
+							</LanguagesContext.Provider>
+						</TopicsContext.Provider>
+					</ConsultingTypesContext.Provider>
+				</UserDataContext.Provider>
 			</LocaleContext.Provider>
 		</AppConfigContext.Provider>
 	);
@@ -956,37 +883,55 @@ function RuntimeSidebar() {
 
 function AppOrisoRuntimeProviders({ children }: { children: React.ReactNode }) {
 	return (
-		<AppOrisoConsultantReferenceDataProviders>
+		<UserDataContext.Provider
+			value={{
+				userData: mockUserData,
+				reloadUserData: async () => mockUserData,
+				setUserData: () => {}
+			}}
+		>
 			<SessionTypeContext.Provider
 				value={{
 					type: SESSION_LIST_TYPES.MY_SESSION,
 					path: '/sessions/consultant/sessionView'
 				}}
 			>
-				<SessionsDataContext.Provider
+				<ConsultingTypesContext.Provider
 					value={{
-						ready: true,
-						sessions: runtimeSessions,
-						dispatch: () => {}
+						consultingTypes: runtimeConsultingTypes,
+						setConsultingTypes: () => {}
 					}}
 				>
-					<AppOrisoConsultantRoomProviders>
-						<E2EEContext.Provider
+					<TopicsContext.Provider
+						value={{
+							topics: runtimeTopics,
+							refreshTopics: () => {}
+						}}
+					>
+						<SessionsDataContext.Provider
 							value={{
-								key: '',
-								reloadPrivateKey: () => {},
-								isE2eeEnabled: false,
-								e2EEReady: true
+								ready: true,
+								sessions: runtimeSessions,
+								dispatch: () => {}
 							}}
 						>
-							<LegalLinksContext.Provider value={[]}>
-								{children}
-							</LegalLinksContext.Provider>
-						</E2EEContext.Provider>
-					</AppOrisoConsultantRoomProviders>
-				</SessionsDataContext.Provider>
+							<E2EEContext.Provider
+								value={{
+									key: '',
+									reloadPrivateKey: () => {},
+									isE2eeEnabled: false,
+									e2EEReady: true
+								}}
+							>
+								<LegalLinksContext.Provider value={[]}>
+									{children}
+								</LegalLinksContext.Provider>
+							</E2EEContext.Provider>
+						</SessionsDataContext.Provider>
+					</TopicsContext.Provider>
+				</ConsultingTypesContext.Provider>
 			</SessionTypeContext.Provider>
-		</AppOrisoConsultantReferenceDataProviders>
+		</UserDataContext.Provider>
 	);
 }
 
@@ -1132,7 +1077,7 @@ function ComposerPreview() {
 						value={{
 							userData: mockUserData,
 							reloadUserData: async () => mockUserData,
-							loaded: true
+							setUserData: () => {}
 						}}
 					>
 						<ComposerBoundary>
@@ -1215,7 +1160,82 @@ function ChatPanel() {
 			<div style={styles.topicDivider}>
 				<span style={styles.topicPill}>Suchtprobleme</span>
 			</div>
-			<div style={styles.messageArea} aria-label="Chatverlauf" />
+			<div style={styles.messageArea} aria-label="Chatverlauf">
+				<div className="messageItem__divider" style={styles.dayDivider}>
+					Heute
+				</div>
+				<div className="messageItem" style={styles.messageItem}>
+					<div className="messageItem__messageWrap">
+						<span className="messageItem__avatar">
+							<UserAvatar
+								username="sanftes.alpaka.kala@oriso.invalid"
+								displayName="Sanftes Alpaka Kala"
+								userId="active-chat"
+								size="32px"
+								ring={false}
+							/>
+						</span>
+						<div className="messageItem__content">
+							<div className="messageItem__header">
+								<span className="messageItem__username messageItem__username--user">
+									Sanftes Alpaka Kala
+								</span>
+								<span className="messageItem__headerTime">
+									09:18
+								</span>
+							</div>
+							<div className="messageItem__message">
+								Ich habe heute wieder starkes Verlangen und
+								brauche kurz Orientierung.
+							</div>
+						</div>
+					</div>
+				</div>
+				<div
+					className="messageItem messageItem--right"
+					style={styles.messageItem}
+				>
+					<div className="messageItem__messageWrap messageItem__messageWrap--right">
+						<div className="messageItem__content">
+							<div className="messageItem__header">
+								<span className="messageItem__headerTime">
+									09:21
+								</span>
+							</div>
+							<div className="messageItem__message">
+								Danke, dass du dich meldest. Lass uns zuerst die
+								nächsten 10 Minuten strukturieren.
+							</div>
+						</div>
+					</div>
+				</div>
+				<div className="messageItem" style={styles.messageItem}>
+					<div className="messageItem__messageWrap">
+						<span className="messageItem__avatar">
+							<UserAvatar
+								username="sanftes.alpaka.kala@oriso.invalid"
+								displayName="Sanftes Alpaka Kala"
+								userId="active-chat"
+								size="32px"
+								ring={false}
+							/>
+						</span>
+						<div className="messageItem__content">
+							<div className="messageItem__header">
+								<span className="messageItem__username messageItem__username--user">
+									Sanftes Alpaka Kala
+								</span>
+								<span className="messageItem__headerTime">
+									09:24
+								</span>
+							</div>
+							<div className="messageItem__message">
+								Okay. Ich bin gerade zuhause und kann schreiben.
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
 			<div style={styles.composerDock}>
 				<ComposerPreview />
 			</div>
@@ -1231,6 +1251,15 @@ function AppOrisoConsultantChatSurface() {
 			<ChatPanel />
 		</div>
 	);
+}
+
+function AppOrisoRoutingFetchMockDecorator({
+	children
+}: {
+	children: React.ReactNode;
+}) {
+	useEffect(() => installAppOrisoRoutingFetchMocks(), []);
+	return <>{children}</>;
 }
 
 const meta = {
@@ -1272,7 +1301,13 @@ export const ConsultantChat: Story = {
 
 export const RuntimeRoutingShell: Story = {
 	name: 'Runtime Routing Shell',
-	beforeEach: () => installAppOrisoRoutingFetchMocks(),
+	decorators: [
+		(Story) => (
+			<AppOrisoRoutingFetchMockDecorator>
+				<Story />
+			</AppOrisoRoutingFetchMockDecorator>
+		)
+	],
 	render: () => <AppOrisoRoutingRuntimeShell />
 };
 
@@ -1357,7 +1392,7 @@ const styles = {
 	listScroll: {
 		height: 'calc(100% - 118px)',
 		overflow: 'hidden auto',
-		padding: '8px 8px 0',
+		padding: '0',
 		scrollbarWidth: 'none'
 	} satisfies React.CSSProperties,
 	consultingTypeLabel: {
@@ -1466,7 +1501,16 @@ const styles = {
 	messageArea: {
 		overflow: 'hidden auto',
 		background: '#FFFFFF',
-		minHeight: 0
+		minHeight: 0,
+		padding: '32px 40px'
+	} satisfies React.CSSProperties,
+	messageItem: {
+		opacity: 1,
+		animation: 'none'
+	} satisfies React.CSSProperties,
+	dayDivider: {
+		opacity: 1,
+		animation: 'none'
 	} satisfies React.CSSProperties,
 	composerDock: {
 		padding: '0 12px 10px',

@@ -11,11 +11,8 @@ import { createPortal } from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 import { SendMessageButton } from './SendMessageButton';
-import {
-	isAskerEnquirySubmission,
-	shouldBlockMissingLegacyE2eeKey,
-	shouldUseLegacyE2ee
-} from './messageEncryptionMode';
+import { isAskerEnquirySubmission } from './messageEncryptionMode';
+import { resolveAsideTargetRoomId } from './asideRouting';
 import { chatTransportService } from '../../services/chatTransportService';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { STATUS_ENQUIRY } from '../../globalState/interfaces/SessionsDataInterface';
@@ -37,8 +34,7 @@ import {
 	apiGetSessionSupervisors,
 	apiSendEnquiry,
 	apiSendMatrixAttachmentMessage,
-	apiSendMessage,
-	apiUploadAttachment
+	apiSendMessage
 } from '../../api';
 import {
 	MessageSubmitInfo,
@@ -88,12 +84,6 @@ import {
 	buildVisibleToPrefix,
 	buildThreadPrefix
 } from '../message/messageConstants';
-import {
-	encryptAttachment,
-	encryptText,
-	getSignature
-} from '../../utils/encryptionHelpers';
-import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import { useE2EE } from '../../hooks/useE2EE';
 import { apiPostError, ERROR_LEVEL_WARN } from '../../api/apiPostError';
 import { useE2EEViewElements } from '../../hooks/useE2EEViewElements';
@@ -102,10 +92,6 @@ import { useTimeoutOverlay } from '../../hooks/useTimeoutOverlay';
 import { SubscriptionKeyLost } from '../session/SubscriptionKeyLost';
 import { RoomNotFound } from '../session/RoomNotFound';
 import { useDraftMessage } from './useDraftMessage';
-import {
-	STORAGE_KEY_ATTACHMENT_ENCRYPTION,
-	useDevToolbar
-} from '../devToolbar/DevToolbar';
 import {
 	OVERLAY_E2EE,
 	OVERLAY_REQUEST
@@ -189,6 +175,8 @@ export interface MessageSubmitInterfaceComponentProps {
 	/** Anonymous enquiry after "Jetzt Chat starten" — use live chat send, not enquiry API. */
 	isAnonymousLiveChat?: boolean;
 	isSupervisor?: boolean;
+	/** ADR-008: per-session supervision side room id; aside sends go here, never the client room. */
+	supervisionRoomId?: string;
 	threadRootId?: string | null;
 	threadParentPreview?: string | null;
 	mobileUnreadCount?: number;
@@ -209,6 +197,7 @@ export const MessageSubmitInterfaceComponent = ({
 	handleMessageSendSuccess: onMessageSendSuccess,
 	isAnonymousLiveChat = false,
 	isSupervisor,
+	supervisionRoomId,
 	threadRootId,
 	threadParentPreview,
 	mobileUnreadCount = 0,
@@ -929,13 +918,9 @@ export const MessageSubmitInterfaceComponent = ({
 			// console.log('🔥 MessageSubmitInterface UNMOUNTED');
 		};
 	}, []);
-	const appConfig = useAppConfig();
-	const chatTransportFacadeEnabled =
-		chatTransportService.isFacadeEnabled(appConfig);
 	const tenant = useTenant();
 	const navigate = useNavigate();
 	const location = useLocation();
-	const { getDevToolbarOption } = useDevToolbar();
 
 	const textareaInputRef = useRef<HTMLDivElement>(null);
 	const inputWrapperRef = useRef<HTMLSpanElement>(null);
@@ -998,6 +983,13 @@ export const MessageSubmitInterfaceComponent = ({
 		typeof window !== 'undefined' ? window.innerWidth <= 899 : false
 	);
 	const [isExpandedComposer, setIsExpandedComposer] = useState(false);
+	const [composerHeight, setComposerHeight] = useState<number | null>(null);
+	const [isComposerResizing, setIsComposerResizing] = useState(false);
+	const composerResizeStartRef = useRef<{
+		pointerId: number;
+		startY: number;
+		startHeight: number;
+	} | null>(null);
 	const [isAudienceMenuOpen, setIsAudienceMenuOpen] = useState(false);
 	const [audienceOverlayBounds, setAudienceOverlayBounds] = useState<{
 		top: number;
@@ -1859,40 +1851,44 @@ export const MessageSubmitInterfaceComponent = ({
 	]);
 
 	const sendMessage = useCallback(
-		async (message, attachment: File, isEncrypted) => {
+		async (message, attachment: File, isEncrypted, isAside = false) => {
 			const sendToRoomWithId = activeSession.rid || activeSession.item.id;
-			// MATRIX MIGRATION: Determine if this is a Matrix-backed session.
+			// Determine if this is a Matrix-backed session.
 			// Some sessions still have a legacy rid while exposing matrixRoomId.
 			const resolvedChatSession =
 				chatTransportService.resolveSession(activeSession);
-			const isMatrixSession = chatTransportFacadeEnabled
-				? resolvedChatSession.isMatrixSession
-				: Boolean(activeSession.item?.matrixRoomId) ||
-					Boolean(
-						activeSession.rid &&
-							isMatrixRoom(activeSession.rid) &&
-							activeSession.item?.id
-					);
+			const isMatrixSession = resolvedChatSession.isMatrixSession;
 			const matrixSessionId = isMatrixSession
-				? Number(
-						chatTransportFacadeEnabled
-							? resolvedChatSession.sessionId
-							: activeSession.item.id
-					) || undefined
+				? Number(resolvedChatSession.sessionId) || undefined
 				: undefined;
-			const matrixRoomId = isMatrixSession
-				? chatTransportFacadeEnabled
-					? resolvedChatSession.matrixRoomId
-					: isMatrixRoom(activeSession.rid)
-						? activeSession.rid
-						: activeSession.item?.matrixRoomId
+			const clientRoomId = isMatrixSession
+				? resolvedChatSession.matrixRoomId
 				: undefined;
+			// ADR-008: aside messages (supervisor feedback / explicit VISIBLE_TO)
+			// go to the supervision side room, never the client-facing room.
+			const asideRouting = resolveAsideTargetRoomId({
+				isAside,
+				clientRoomId,
+				supervisionRoomId
+			});
+			if (asideRouting.abort) {
+				// An aside with no side room must never leak into the client
+				// room — abort the send and surface an error instead.
+				setIsRequestInProgress(false);
+				handleAttachmentUploadError(INFO_TYPES.ATTACHMENT_OTHER_ERROR);
+				apiPostError({
+					name: 'SupervisionAsideRoutingError',
+					message:
+						'Aside message has no supervision side room id; send aborted to avoid leaking into the client room',
+					level: ERROR_LEVEL_WARN
+				}).then();
+				return;
+			}
+			const matrixRoomId = asideRouting.targetRoomId ?? undefined;
 			const getSendMailNotificationStatus = () => !activeSession.isGroup;
 
 			if (attachment) {
-				let res: any;
-
-				// MATRIX MIGRATION: Keep Matrix attachments on the SDK media path.
+				// Matrix attachments stay on the SDK media path.
 				if (matrixSessionId) {
 					try {
 						if (!matrixRoomId) {
@@ -1919,8 +1915,6 @@ export const MessageSubmitInterfaceComponent = ({
 									'User'
 							}
 						);
-
-						res = { success: true };
 					} catch (error: any) {
 						const status =
 							error?.status ||
@@ -1942,77 +1936,12 @@ export const MessageSubmitInterfaceComponent = ({
 						return;
 					}
 				} else {
-					// Legacy RocketChat upload path
-					const isAttachmentEncryptionEnabledDevTools =
-						process.env.NODE_ENV !== 'production'
-							? parseInt(
-									getDevToolbarOption(
-										STORAGE_KEY_ATTACHMENT_ENCRYPTION
-									)
-								)
-							: 1;
-					let attachmentFile = attachment;
-					let signature = null;
-					let encryptEnabled =
-						isEncrypted && !!isAttachmentEncryptionEnabledDevTools;
-
-					if (encryptEnabled) {
-						try {
-							signature = await getSignature(attachment);
-							attachmentFile = await encryptAttachment(
-								attachment,
-								keyID,
-								key
-							);
-						} catch (e: any) {
-							encryptEnabled = false;
-
-							apiPostError({
-								name: e.name,
-								message: e.message,
-								stack: e.stack,
-								level: ERROR_LEVEL_WARN
-							}).then();
-						}
-					}
-
-					res = await apiUploadAttachment(
-						attachmentFile,
-						sendToRoomWithId,
-						getSendMailNotificationStatus(),
-						setUploadProgress,
-						setAttachmentUpload,
-						encryptEnabled,
-						signature
-					).catch((res: XMLHttpRequest) => {
-						if (res.status === 413) {
-							handleAttachmentUploadError(
-								INFO_TYPES.ATTACHMENT_SIZE_ERROR
-							);
-						} else if (res.status === 415) {
-							handleAttachmentUploadError(
-								INFO_TYPES.ATTACHMENT_FORMAT_ERROR
-							);
-						} else if (
-							res.status === 403 &&
-							res.getResponseHeader('X-Reason') ===
-								'QUOTA_REACHED'
-						) {
-							handleAttachmentUploadError(
-								INFO_TYPES.ATTACHMENT_QUOTA_REACHED_ERROR
-							);
-						} else {
-							handleAttachmentUploadError(
-								INFO_TYPES.ATTACHMENT_OTHER_ERROR
-							);
-						}
-
-						return null;
-					});
-
-					if (!res) {
-						return;
-					}
+					// Sessions without a Matrix room cannot receive
+					// attachments anymore (legacy Rocket.Chat upload removed).
+					handleAttachmentUploadError(
+						INFO_TYPES.ATTACHMENT_OTHER_ERROR
+					);
+					return;
 				}
 			}
 
@@ -2069,20 +1998,17 @@ export const MessageSubmitInterfaceComponent = ({
 			activeSession.item.id,
 			activeSession.item?.matrixRoomId,
 			activeSession.rid,
-			chatTransportFacadeEnabled,
 			cleanupAttachment,
 			encryptRoom,
-			getDevToolbarOption,
 			getTypedMarkdownMessage,
 			hasMessageContent,
 			handleAttachmentUploadError,
 			handleMessageSendSuccess,
 			isSupervisor,
-			key,
-			keyID,
 			matrixClientService,
 			onSendButton,
 			setE2EEState,
+			supervisionRoomId,
 			threadParentPreview,
 			threadRootId,
 			userData?.displayName,
@@ -2096,29 +2022,6 @@ export const MessageSubmitInterfaceComponent = ({
 		const attachmentInput: any = attachmentInputRef.current;
 		const selectedFile = attachmentInput && attachmentInput.files[0];
 		const attachment = preselectedFile || selectedFile;
-		const isMatrixSession =
-			Boolean(activeSession.item?.matrixRoomId) ||
-			Boolean(
-				activeSession.rid &&
-					isMatrixRoom(activeSession.rid) &&
-					activeSession.item?.id
-			);
-		const usesLegacyE2ee = shouldUseLegacyE2ee({
-			isE2eeEnabled,
-			isMatrixSession,
-			isAskerEnquiry
-		});
-
-		if (
-			shouldBlockMissingLegacyE2eeKey({
-				usesLegacyE2ee,
-				encrypted,
-				hasKeyId: !!keyID
-			})
-		) {
-			// console.error("Can't send message without key");
-			return;
-		}
 
 		const currentTypedMessage = getTypedMarkdownMessage();
 		if (
@@ -2141,67 +2044,55 @@ export const MessageSubmitInterfaceComponent = ({
 		if (threadRootId) {
 			prefixParts.push(buildThreadPrefix(threadRootId));
 		}
+		// VISIBLE_TO recipient targeting is an opt-in supervisor/coordinator aside
+		// (ADR-008) and only exists when the audience selector is actually shown —
+		// i.e. there is more than one human counterpart (group / supervision). In a
+		// 1:1 conversation the selector is hidden, so a reply must never carry a
+		// VISIBLE_TO prefix, regardless of any stale selection state.
+		const humanTargetCount = audienceOptions.filter(
+			(option) => option.value !== '__all__'
+		).length;
 		const explicitAudience = selectedAudienceValues.filter(
 			(value) => value !== '__all__'
 		);
-		if (explicitAudience.length > 0) {
+		const hasExplicitAudience =
+			humanTargetCount > 1 && explicitAudience.length > 0;
+		if (hasExplicitAudience) {
 			prefixParts.push(buildVisibleToPrefix(explicitAudience));
 		}
 		if (isSupervisor) {
 			prefixParts.push(SUPERVISOR_FEEDBACK_PREFIX);
 		}
+		// ADR-008: any message carrying an aside (supervisor feedback OR an
+		// explicit VISIBLE_TO audience) must be routed to the supervision side
+		// room, never the client-facing room.
+		const isAside = Boolean(isSupervisor) || hasExplicitAudience;
 		if (prefixParts.length && message.length > 0) {
 			message = `${prefixParts.join(' ')} ${message}`;
 		}
-		let isEncrypted = usesLegacyE2ee;
-		if (message.length > 0 && isEncrypted) {
-			try {
-				message = await encryptText(message, keyID, key);
-			} catch (e: any) {
-				apiPostError({
-					name: e.name,
-					message: e.message,
-					stack: e.stack,
-					level: ERROR_LEVEL_WARN
-				}).then();
-
-				window.alert(
-					translate(
-						'e2ee.message.encryption.error',
-						'Encryption failed, message not sent'
-					)
-				);
-				setIsRequestInProgress(false);
-				return;
-			}
-		}
+		// Legacy Rocket.Chat client-side message encryption is removed;
+		// Matrix messages go through the SDK path unencrypted (ADR-004).
+		const isEncrypted = false;
 
 		if (isAskerEnquiry) {
 			await sendEnquiry(message, isEncrypted);
 			return;
 		}
 
-		await sendMessage(message, attachment, isEncrypted);
+		await sendMessage(message, attachment, isEncrypted, isAside);
 	}, [
-		encrypted,
-		activeSession.item?.id,
-		activeSession.item?.matrixRoomId,
-		activeSession.rid,
 		encodeAlignmentForTransport,
 		encodeHighlightColorsForTransport,
 		getTypedMarkdownMessage,
 		hasMessageContent,
-		isE2eeEnabled,
 		isAskerEnquiry,
-		key,
-		keyID,
 		preselectedFile,
 		sendEnquiry,
 		sendMessage,
 		selectedAudienceValues,
+		audienceOptions,
 		isSupervisor,
-		threadRootId,
-		translate
+		threadRootId
 	]);
 
 	const handleButtonClick = useCallback(() => {
@@ -2456,12 +2347,12 @@ export const MessageSubmitInterfaceComponent = ({
 					? featureVoiceMessagesSupervisionChatsEnabled !== false
 					: featureVoiceMessagesOneOnOneChatsEnabled !== false);
 
-	const getMatrixRoomId = useCallback(() => {
-		if (isMatrixRoom(activeSession?.rid)) {
-			return activeSession.rid;
-		}
-		return activeSession?.item?.matrixRoomId || null;
-	}, [activeSession?.item?.matrixRoomId, activeSession?.rid]);
+	const getMatrixRoomId = useCallback(
+		() =>
+			chatTransportService.resolveSession(activeSession).matrixRoomId ||
+			null,
+		[activeSession]
+	);
 
 	const deriveLabelFromUserId = useCallback((rawUserId: string) => {
 		if (!rawUserId) {
@@ -2743,7 +2634,10 @@ export const MessageSubmitInterfaceComponent = ({
 			}
 			if (
 				memberId.includes('@system') ||
-				memberId.includes('@caritas.local')
+				memberId.includes('@caritas.local') ||
+				// Agency provisioning/service bots (@agency-<id>-service) are not
+				// human recipients — never offer them as an audience target.
+				/^@agency-\d+-service:/.test(memberId)
 			) {
 				return;
 			}
@@ -2858,6 +2752,11 @@ export const MessageSubmitInterfaceComponent = ({
 				};
 			})
 			.sort((a, b) => a.label.localeCompare(b.label));
+		// The audience selector (and thus any VISIBLE_TO targeting) is meant for
+		// group/supervision conversations with more than one human counterpart.
+		// A 1:1 conversation has no real targets here (the asker is filtered out
+		// by their enc.* member name), so it collapses to zero options and the
+		// selector stays hidden (showAudienceSelector: audienceTargetCount <= 1).
 		const includeAllOption = mapped.length > 1;
 		const nextOptions = includeAllOption
 			? [defaultOption, ...mapped]
@@ -3791,45 +3690,136 @@ export const MessageSubmitInterfaceComponent = ({
 		onMobileNavigateBottom?.();
 	}, [onMobileNavigateBottom]);
 
-	const handleComposerDragHandlePointerDown = useCallback(
+	const getComposerHeightBounds = useCallback(() => {
+		const minHeight = window.innerWidth <= 899 ? 180 : 196;
+		const maxHeight = Math.max(
+			minHeight,
+			Math.min(
+				window.innerHeight * 0.72,
+				window.innerWidth <= 899 ? 520 : 640
+			)
+		);
+		return { minHeight, maxHeight };
+	}, []);
+
+	const clampComposerHeight = useCallback(
+		(height: number) => {
+			const { minHeight, maxHeight } = getComposerHeightBounds();
+			return Math.round(Math.min(Math.max(height, minHeight), maxHeight));
+		},
+		[getComposerHeightBounds]
+	);
+
+	const handleComposerResizePointerDown = useCallback(
 		(e: React.PointerEvent<HTMLButtonElement>) => {
 			if (e.pointerType === 'mouse' && e.button !== 0) return;
+			e.preventDefault();
+			e.stopPropagation();
+
 			const target = e.currentTarget;
+			const composerShell = target.closest(
+				'.textarea__wrapper-send-message'
+			) as HTMLElement | null;
+			const startHeight =
+				composerShell?.getBoundingClientRect().height ||
+				composerHeight ||
+				getComposerHeightBounds().minHeight;
+
+			composerResizeStartRef.current = {
+				pointerId: e.pointerId,
+				startY: e.clientY,
+				startHeight
+			};
+			setIsComposerResizing(true);
+
 			try {
 				target.setPointerCapture(e.pointerId);
 			} catch {}
-			let fired = false;
-			const timer = window.setTimeout(() => {
-				fired = true;
-				setIsExpandedComposer((prev) => !prev);
-			}, 400);
-			const cleanup = () => {
-				window.clearTimeout(timer);
-				target.removeEventListener('pointerup', onEnd);
-				target.removeEventListener('pointercancel', onEnd);
+
+			const handlePointerMove = (event: PointerEvent) => {
+				const start = composerResizeStartRef.current;
+				if (!start || event.pointerId !== start.pointerId) {
+					return;
+				}
+
+				const deltaY = event.clientY - start.startY;
+				setComposerHeight(
+					clampComposerHeight(start.startHeight - deltaY)
+				);
+			};
+
+			const cleanup = (event?: PointerEvent) => {
+				if (
+					event &&
+					composerResizeStartRef.current &&
+					event.pointerId !== composerResizeStartRef.current.pointerId
+				) {
+					return;
+				}
+				document.removeEventListener('pointermove', handlePointerMove);
+				document.removeEventListener('pointerup', cleanup);
+				document.removeEventListener('pointercancel', cleanup);
 				try {
 					target.releasePointerCapture(e.pointerId);
 				} catch {}
+				composerResizeStartRef.current = null;
+				setIsComposerResizing(false);
 			};
-			const onEnd = () => {
-				if (!fired) cleanup();
-				else cleanup();
-			};
-			target.addEventListener('pointerup', onEnd);
-			target.addEventListener('pointercancel', onEnd);
+
+			document.addEventListener('pointermove', handlePointerMove);
+			document.addEventListener('pointerup', cleanup);
+			document.addEventListener('pointercancel', cleanup);
 		},
-		[setIsExpandedComposer]
+		[
+			clampComposerHeight,
+			composerHeight,
+			getComposerHeightBounds,
+			setComposerHeight
+		]
+	);
+
+	const handleComposerResizeKeyDown = useCallback(
+		(e: React.KeyboardEvent<HTMLButtonElement>) => {
+			const { minHeight, maxHeight } = getComposerHeightBounds();
+			const step = e.shiftKey ? 48 : 24;
+			const currentHeight = composerHeight || minHeight;
+
+			switch (e.key) {
+				case 'ArrowUp':
+					e.preventDefault();
+					setComposerHeight(
+						clampComposerHeight(currentHeight + step)
+					);
+					return;
+				case 'ArrowDown':
+					e.preventDefault();
+					setComposerHeight(
+						clampComposerHeight(currentHeight - step)
+					);
+					return;
+				case 'Home':
+					e.preventDefault();
+					setComposerHeight(minHeight);
+					return;
+				case 'End':
+					e.preventDefault();
+					setComposerHeight(maxHeight);
+					return;
+				default:
+					return;
+			}
+		},
+		[
+			clampComposerHeight,
+			composerHeight,
+			getComposerHeightBounds,
+			setComposerHeight
+		]
 	);
 
 	const resolvedChatSession =
 		chatTransportService.resolveSession(activeSession);
-	const matrixRoomId = chatTransportFacadeEnabled
-		? resolvedChatSession.matrixRoomId || null
-		: isMatrixRoom(activeSession?.rid)
-			? activeSession.rid
-			: isMatrixRoom(activeSession?.item?.matrixRoomId)
-				? activeSession.item.matrixRoomId
-				: null;
+	const matrixRoomId = resolvedChatSession.matrixRoomId || null;
 
 	// MATRIX MIGRATION: legacy RocketChat E2EE gates do not apply to Matrix rooms.
 	if (!e2EEReady && activeSession.rid && !matrixRoomId) {
@@ -3850,7 +3840,8 @@ export const MessageSubmitInterfaceComponent = ({
 				className,
 				'messageSubmit__wrapper',
 				isExpandedComposer && 'messageSubmit__wrapper--expanded',
-				isTypingActive && 'messageSubmit__wrapper--withTyping'
+				isTypingActive && 'messageSubmit__wrapper--withTyping',
+				isComposerResizing && 'messageSubmit__wrapper--resizing'
 			)}
 			style={expandedComposerStyle}
 		>
@@ -3877,9 +3868,36 @@ export const MessageSubmitInterfaceComponent = ({
 							canSendMessage &&
 								'textarea__wrapper-send-message--ready',
 							isExpandedComposer &&
-								'textarea__wrapper-send-message--expanded'
+								'textarea__wrapper-send-message--expanded',
+							isComposerResizing &&
+								'textarea__wrapper-send-message--resizing'
 						)}
+						style={
+							!isExpandedComposer && composerHeight
+								? ({
+										'--composer-height': `${composerHeight}px`
+									} as React.CSSProperties)
+								: undefined
+						}
 					>
+						{!isMobileViewport &&
+							!threadRootId &&
+							!isExpandedComposer && (
+								<button
+									type="button"
+									className="textarea__composerResizeHandle"
+									onPointerDown={
+										handleComposerResizePointerDown
+									}
+									onKeyDown={handleComposerResizeKeyDown}
+									aria-label={translate(
+										'message.mobileNav.dragToExpand',
+										'Drag to resize composer'
+									)}
+								>
+									<span className="textarea__mobileNavigatorHandle" />
+								</button>
+							)}
 						{isMobileViewport &&
 							!threadRootId &&
 							!isExpandedComposer && (
@@ -3899,8 +3917,9 @@ export const MessageSubmitInterfaceComponent = ({
 										type="button"
 										className="textarea__mobileNavigatorCenter"
 										onPointerDown={
-											handleComposerDragHandlePointerDown
+											handleComposerResizePointerDown
 										}
+										onKeyDown={handleComposerResizeKeyDown}
 										aria-label={translate(
 											'message.mobileNav.dragToExpand',
 											'Drag to resize composer'
@@ -5122,28 +5141,6 @@ export const MessageSubmitInterfaceComponent = ({
 												}
 											}}
 										/>
-										<div
-											className={clsx(
-												'textarea__characterCounter',
-												isMessageLengthWarning &&
-													'textarea__characterCounter--warning',
-												isMessageOverLimit &&
-													'textarea__characterCounter--error',
-												isVoiceRecording &&
-													'textarea__characterCounter--hidden'
-											)}
-											aria-label={translate(
-												'message.submit.characterCounter.ariaLabel',
-												'{{current}} of {{maximum}} characters',
-												{
-													current: typedMessageLength,
-													maximum: INPUT_MAX_LENGTH
-												}
-											)}
-										>
-											{typedMessageLength}/
-											{INPUT_MAX_LENGTH}
-										</div>
 										<span
 											className="sr-only"
 											role="status"

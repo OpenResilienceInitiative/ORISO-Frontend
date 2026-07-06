@@ -36,14 +36,20 @@ describe('getModality', () => {
 	it('prefers an explicit backend conversationType over the heuristic', () => {
 		// looks like AGENCY_COUNSELLING by heuristic, but the backend says LIVE_CHAT
 		const item = asItem({
-			session: { registrationType: 'REGISTERED', conversationType: 'LIVE_CHAT' }
+			session: {
+				registrationType: 'REGISTERED',
+				conversationType: 'LIVE_CHAT'
+			}
 		});
 		expect(getModality(item)).toBe(Modality.LIVE_CHAT);
 	});
 
 	it('ignores an unknown explicit conversationType and falls back to the heuristic', () => {
 		const item = asItem({
-			session: { registrationType: 'ANONYMOUS', conversationType: 'NONSENSE' }
+			session: {
+				registrationType: 'ANONYMOUS',
+				conversationType: 'NONSENSE'
+			}
 		});
 		expect(getModality(item)).toBe(Modality.LIVE_CHAT);
 	});

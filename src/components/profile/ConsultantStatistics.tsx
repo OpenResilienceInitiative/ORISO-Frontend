@@ -5,8 +5,8 @@ import {
 	ApiGetConsultantStatisticsInterface,
 	ConsultantStatisticsDTO
 } from '../../api';
+import { OrisoSelect } from '../form/OrisoSelect';
 import { Headline } from '../headline/Headline';
-import { SelectDropdown, SelectDropdownItem } from '../select/SelectDropdown';
 import { Text } from '../text/Text';
 import { ReactComponent as PersonsIcon } from '../../resources/img/icons/persons.svg';
 import { ReactComponent as SpeechBubbleIcon } from '../../resources/img/icons/speech-bubble.svg';
@@ -18,6 +18,7 @@ import './statistics.styles';
 import './profile.styles';
 import { useTranslation } from 'react-i18next';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
+import { SelectChangeEvent } from '@mui/material/Select';
 
 const statisticsPeriodOptionCurrentMonth = 'currentMonth';
 const statisticsPeriodOptionLastMonth = 'lastMonth';
@@ -145,15 +146,8 @@ export const ConsultantStatistics = () => {
 		? getPeriodOptions()
 		: statisticsPeriodOptions[0];
 
-	const selectDropdown: SelectDropdownItem = {
-		id: 'statisticsSelect',
-		selectedOptions: statisticsPeriodOptions,
-		handleDropdownSelect: (selectedOption) =>
-			setStatisticsPeriod(selectedOption.value),
-		useIconOption: false,
-		isSearchable: false,
-		menuPlacement: 'bottom',
-		defaultValue: preSelectedOption
+	const handleStatisticsPeriodSelect = (event: SelectChangeEvent<string>) => {
+		setStatisticsPeriod(event.target.value as statisticOptions);
 	};
 
 	const getConsultantStatistics = (startDate: string, endDate: string) => {
@@ -217,7 +211,13 @@ export const ConsultantStatistics = () => {
 					text={translate('profile.statistics.period.prefix')}
 					type="infoLargeAlternative"
 				/>
-				<SelectDropdown {...selectDropdown} />
+				<OrisoSelect
+					id="statisticsSelect"
+					label={translate('profile.statistics.period.prefix')}
+					options={statisticsPeriodOptions}
+					value={preSelectedOption.value}
+					onChange={handleStatisticsPeriodSelect}
+				/>
 			</div>
 			<div className="b--1 p--3 mb--4">
 				<Text

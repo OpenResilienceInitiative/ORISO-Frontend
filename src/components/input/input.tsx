@@ -1,9 +1,10 @@
 import * as React from 'react';
 import { useState, useEffect, useRef } from 'react';
-import { InputBaseComponentProps, TextField, Typography } from '@mui/material';
+import { InputBaseComponentProps, Typography } from '@mui/material';
 import CancelIcon from '@mui/icons-material/Cancel';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useTranslation } from 'react-i18next';
+import { OrisoTextField } from '../form/OrisoTextField';
 
 export interface InputProps {
 	label: string;
@@ -151,7 +152,7 @@ export const Input = ({
 
 	return (
 		<>
-			<TextField
+			<OrisoTextField
 				inputRef={inputRef}
 				type={inputType || 'text'}
 				fullWidth

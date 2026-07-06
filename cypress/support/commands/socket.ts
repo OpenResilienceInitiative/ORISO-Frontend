@@ -31,36 +31,19 @@ Cypress.Commands.add('emitDirectMessage', (index?: number) => {
 		cy.addMessage({}, index || 0);
 
 		cy.get<() => Server>('@mockSocketServer').then((mockSocketServer) => {
-			cy.get('@mockSocketServerSubscriptions').then(
-				({ get: getSubscriptions }) => {
-					const subscriptions = getSubscriptions();
-					mockSocketServer()
-						.clients()
-						.forEach((client: ExtendedClient) => {
-							if (client.type === 'Stomp') {
-								client.send(
-									`a["MESSAGE\\ndestination:/user/events\\ncontent-type:application/json\\nsubscription:sub-0\\nmessage-id:${uuid()}\\ncontent-length:29\\n\\n{\\"eventType\\":\\"directMessage\\"}\\u0000"]`
-								);
-							} else if (client.type === 'RC') {
-								client.send(
-									JSON.stringify({
-										msg: 'changed',
-										collection: 'stream-room-messages',
-										fields: {
-											args: [{}],
-											eventName:
-												subscriptions[
-													'stream-room-messages'
-												][0]
-										}
-									})
-								);
-							}
-						});
+			// Rocket.Chat is gone (Matrix-only migration): only the
+			// LiveService STOMP event remains for direct messages.
+			mockSocketServer()
+				.clients()
+				.forEach((client: ExtendedClient) => {
+					if (client.type === 'Stomp') {
+						client.send(
+							`a["MESSAGE\\ndestination:/user/events\\ncontent-type:application/json\\nsubscription:sub-0\\nmessage-id:${uuid()}\\ncontent-length:29\\n\\n{\\"eventType\\":\\"directMessage\\"}\\u0000"]`
+						);
+					}
+				});
 
-					resolve();
-				}
-			);
+			resolve();
 		});
 	});
 });

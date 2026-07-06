@@ -1107,6 +1107,16 @@
 		"zh": "Chinesisch",
 		"zu": "isiZulu"
 	},
+	"legal": {
+		"notice": {
+			"fallbackLanguage": "Dieser Text liegt nicht in Ihrer Sprache vor und wird in seiner Originalsprache angezeigt.",
+			"machineTranslated": "Maschinell übersetzt — rechtlich verbindlich ist die deutsche Fassung.",
+			"placeholder": "Hinweis: Dieser Text ist ein Platzhalter und noch nicht rechtsverbindlich gepflegt.",
+			"showOriginal": "Original anzeigen",
+			"showingOriginal": "Sie sehen die Originalfassung.",
+			"showTranslation": "Übersetzung anzeigen"
+		}
+	},
 	"login": {
 		"button": {
 			"label": "Anmelden"
@@ -1292,7 +1302,8 @@
 		"showMore": "Mehr anzeigen",
 		"systemNotification": "Systembenachrichtigung",
 		"systemNotificationTitle": "Systembenachrichtigung",
-		"userLeftChat": "{{name}} hat den Chat verlassen",
+		"userLeftChat": "Benutzer hat den Chat verlassen",
+		"consultantLeftChat": "Berater:in hat den Chat verlassen",
 		"anonymousUser": "Benutzer",
 		"supervisionEnabledTitle": "Supervision aktiviert!",
 		"supervisionEnabledDescription": "{{name}} wurde als Supervisor-Berater:in zu diesem Chat hinzugefügt.",
@@ -1940,6 +1951,13 @@
 				"openInMaps": "In Karte öffnen",
 				"phoneLabel": "Telefon",
 				"websiteLabel": "Webseite"
+			},
+			"legal": {
+				"department": "Fachbereich",
+				"headline": "Datenschutzhinweise der Beratungsstelle",
+				"imprintHeadline": "Impressum der Beratungsstelle",
+				"label": "Rechtliches",
+				"unavailable": "Die Datenschutzhinweise können derzeit nicht geladen werden."
 			},
 			"search": "Suche nach einer PLZ",
 			"summary": "Ihre Beratungsstelle:"
