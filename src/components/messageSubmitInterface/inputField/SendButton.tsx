@@ -1,8 +1,7 @@
 import * as React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
-import { ReactComponent as PaperPlaneIcon } from '../../../resources/img/icons/paper-plane.svg';
+import { ReactComponent as SendPlaneIcon } from '../../../resources/img/icons/paper-plane.svg';
 import {
 	deriveSendButtonState,
 	getSendButtonTransition,
@@ -20,8 +19,10 @@ export { deriveSendButtonState };
 
 /**
  * Figma "Nachricht senden" (489:16565): 48×48, bottom-left 24 / top-right 4
- * radius. Empty = chevron on the pale fixed container, ready = paper plane
- * rotated in on primary. Sending launches the fly-out animation.
+ * radius. One paper plane throughout: at rest (pointing right) on the pale
+ * fixed container when empty, rotated up on primary-container when ready —
+ * the empty → ready transition rotates the plane. Sending launches the
+ * fly-out animation.
  */
 export const SendButton = ({
 	state,
@@ -59,15 +60,12 @@ export const SendButton = ({
 			title={translate('enquiry.write.input.button.title')}
 			aria-label={translate('enquiry.write.input.button.title')}
 		>
-			<span className="sendButton__glyph sendButton__chevron" aria-hidden>
-				<ChevronRightRoundedIcon fontSize="medium" />
-			</span>
 			<span
-				className="sendButton__glyph sendButton__plane"
+				className="sendButton__plane"
 				aria-hidden
 				onAnimationEnd={() => setIsFlyingOut(false)}
 			>
-				<PaperPlaneIcon className="sendButton__planeIcon" />
+				<SendPlaneIcon className="sendButton__planeIcon" />
 			</span>
 		</button>
 	);
