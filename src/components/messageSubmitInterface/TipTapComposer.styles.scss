@@ -67,7 +67,7 @@
 			caret-color: var(--m3-primary-container, #cc1e1c);
 			box-sizing: border-box;
 
-			@media screen and (min-width: 900px) {
+			@media screen and (width >= 900px) {
 				top: 66px;
 				right: 64px;
 				bottom: 18px;

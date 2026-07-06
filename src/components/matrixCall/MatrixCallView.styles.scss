@@ -218,7 +218,7 @@
 }
 
 // Mobile responsive
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .matrix-call {
     &__local-video {
       width: 120px;

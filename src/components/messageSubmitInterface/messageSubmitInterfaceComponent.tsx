@@ -10,7 +10,8 @@ import {
 import { createPortal } from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-import { SendMessageButton } from './SendMessageButton';
+import { SendButton } from './inputField/SendButton';
+import { deriveSendButtonState } from './inputField/sendButtonState';
 import { isAskerEnquirySubmission } from './messageEncryptionMode';
 import { resolveAsideTargetRoomId } from './asideRouting';
 import { chatTransportService } from '../../services/chatTransportService';
@@ -5253,16 +5254,15 @@ export const MessageSubmitInterfaceComponent = ({
 							>
 								<ToolbarScrollRightIcon />
 							</button>
-							<SendMessageButton
+							<SendButton
 								type="submit"
-								handleSendButton={handleButtonClick}
-								clicked={isRequestInProgress}
-								deactivated={
-									!canSendMessage ||
-									!!uploadProgress ||
-									isVoiceRecording
-								}
-								isEmpty={!canSendMessage}
+								onSend={handleButtonClick}
+								state={deriveSendButtonState({
+									hasContent: canSendMessage,
+									isSending: isRequestInProgress,
+									isDisabled:
+										!!uploadProgress || isVoiceRecording
+								})}
 							/>
 						</div>
 					</div>

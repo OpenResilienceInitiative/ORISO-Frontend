@@ -146,11 +146,11 @@
 	color: var(--switch-primary);
 }
 
-.switch:hover .input:not(:disabled):not(:checked) + .track .target {
+.switch:hover .input:not(:disabled, :checked) + .track .target {
 	background: rgba(27, 27, 28, 0.08);
 }
 
-.switch:hover .input:not(:disabled):not(:checked) + .track .handle {
+.switch:hover .input:not(:disabled, :checked) + .track .handle {
 	background: var(--switch-on-surface-variant);
 }
 
@@ -168,7 +168,7 @@
 	width: 28px;
 }
 
-.switch:active .input:not(:disabled):not(:checked) + .track .target {
+.switch:active .input:not(:disabled, :checked) + .track .target {
 	background: rgba(27, 27, 28, 0.1);
 }
 
