@@ -15,9 +15,9 @@ export const ToolsList = () => {
 	const { userData } = useContext(UserDataContext);
 
 	useEffect(() => {
-		apiGetTools(userData.userId).then((resp: APIToolsInterface[]) =>
-			setToolsList(resp)
-		);
+		apiGetTools(userData.userId)
+			.then((resp: APIToolsInterface[]) => setToolsList(resp))
+			.catch(() => setToolsList([]));
 	}, []); // eslint-disable-line react-hooks/exhaustive-deps
 
 	return (

@@ -222,9 +222,13 @@ export const AskerInfoToolsOptions = (
 
 	useEffect(() => {
 		if (props.askerId) {
-			apiGetTools(props.askerId).then((resp: APIToolsInterface[]) => {
-				setAvailableToolsOptions(resp);
-			});
+			apiGetTools(props.askerId)
+				.then((resp: APIToolsInterface[]) => {
+					setAvailableToolsOptions(resp);
+				})
+				.catch(() => {
+					setAvailableToolsOptions([]);
+				});
 		}
 	}, [props.askerId]); // eslint-disable-line react-hooks/exhaustive-deps
 

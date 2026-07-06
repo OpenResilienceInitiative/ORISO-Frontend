@@ -163,11 +163,15 @@ export function RocketChatUnreadProvider({
 				relevantSubscriptions
 					.filter((s) => s.unread > 0)
 					.map((s) => s.rid)
-			).then(({ sessions }) => {
-				// It will send a browser notification if there is a new enquiry
-				maybeSendNewEnquiryNotification(sessions);
-				handleSessions(sessions, relevantSubscriptions);
-			});
+			)
+				.then(({ sessions }) => {
+					// It will send a browser notification if there is a new enquiry
+					maybeSendNewEnquiryNotification(sessions);
+					handleSessions(sessions, relevantSubscriptions);
+				})
+				.catch(() => {
+					handleSessions([], relevantSubscriptions);
+				});
 		} else {
 			handleSessions([], relevantSubscriptions);
 		}

@@ -145,7 +145,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 					right: auto !important;
 					bottom: auto !important;
 					inset: auto !important;
-					margin-top: -850px;
+					transform: translate(-50%, -50%);
 					max-width: none;
 					height: min(78vh, 760px);
 					max-height: calc(100vh - 96px);
@@ -500,36 +500,38 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 		&__characterCounter {
 			position: absolute;
-			right: 76px;
-			bottom: 8px;
+			right: 24px;
+			bottom: 18px;
 			z-index: 9;
-			padding: 2px 7px;
-			border-radius: 10px;
-			background: rgba(255, 255, 255, 0.92);
+			min-width: 72px;
+			padding: 3px 8px;
+			border: 1px solid rgba(116, 120, 120, 0.24);
+			border-radius: 999px;
+			background: rgba(255, 255, 255, 0.96);
 			color: #646d78;
-			font-size: 11px;
+			font-size: 12px;
 			font-weight: 500;
-			line-height: 16px;
+			line-height: 18px;
+			text-align: center;
+			box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 			pointer-events: none;
 
 			&--warning {
 				background: #fff6d6;
+				border-color: rgba(147, 99, 0, 0.24);
 				color: #936300;
 			}
 
 			&--error {
 				background: #ffe7e7;
+				border-color: rgba(176, 0, 32, 0.24);
 				color: #b00020;
 				font-weight: 600;
 			}
 
-			&--hidden {
-				display: none;
-			}
-
 			@media screen and (width <= 899px) {
-				right: 58px;
-				bottom: 7px;
+				right: 14px;
+				bottom: 14px;
 			}
 		}
 
