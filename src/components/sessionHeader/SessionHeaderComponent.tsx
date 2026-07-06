@@ -1466,7 +1466,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 												}}
 												label={translate(
 													'sessionHeader.supervisor.modal.reasonLabel',
-													'Grund fÃ¼r die Supervision'
+													'Grund für die Supervision'
 												)}
 												placeholder={translate(
 													'sessionHeader.supervisor.modal.reasonPlaceholder',
