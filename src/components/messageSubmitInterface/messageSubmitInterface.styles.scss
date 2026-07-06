@@ -117,24 +117,17 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				padding: 0 !important;
 				border-radius: 24px 4px 24px 24px !important;
 				box-shadow: none !important;
-				border: 1px solid #ffb4aa !important;
+				border: 1px solid var(--m3-primary-fixed, #ffdad5) !important;
 				overflow: visible;
 				min-height: var(--composer-height, 196px);
 				height: var(--composer-height, 196px);
 				transition: all 240ms ease;
 
-				&::before {
-					content: '';
-					position: absolute;
-					top: 6px;
-					left: 50%;
-					width: 57px;
-					height: 4px;
-					border-radius: 999px;
-					background: #ffb4aa;
-					transform: translateX(-50%);
-					pointer-events: none;
-					z-index: 2;
+				// Handle touched (Figma 1168:38130): the outer frame darkens
+				// while the composer is being resized.
+				&--resizing {
+					border: 2px solid var(--m3-on-primary-fixed-variant, #930008) !important;
+					transition: none;
 				}
 
 				&--expanded {
@@ -153,10 +146,6 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 					box-shadow: 0 20px 70px rgba(0, 0, 0, 0.25) !important;
 					overflow: hidden;
 					pointer-events: auto;
-				}
-
-				&--resizing {
-					transition: none;
 				}
 
 				// On mobile, full edge-to-edge width, no outer border
@@ -430,7 +419,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			width: 100%;
 			height: 100%;
 			border-radius: 16px 4px 16px 16px;
-			border: 1px solid #ffb4aa;
+			border: 1px solid var(--m3-primary-fixed, #ffdad5);
 			box-sizing: border-box;
 			position: relative;
 
@@ -445,12 +434,13 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				}
 			}
 
-			// Active/focused state - red border
+			// Focus never draws its own ring here — the container "selected"
+			// state (2px primary border) is the single focus indicator, so
+			// only one field ever carries it.
 			&:focus,
 			&:focus-visible,
 			&:focus-within {
 				outline: none !important;
-				border: 1px solid #ff9f98;
 			}
 
 			&::placeholder,
@@ -473,8 +463,10 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			}
 		}
 
-		&__wrapper-send-message--ready .textarea__input {
-			border: 2px solid #cc1e1c;
+		// Figma "Selected": the inner textcomponent carries the 2px primary
+		// border while the editor is focused (independent of ready-to-send).
+		&__wrapper-send-message--selected .textarea__input {
+			border: 2px solid var(--m3-primary-container, #cc1e1c);
 		}
 
 		&__characterCounter {

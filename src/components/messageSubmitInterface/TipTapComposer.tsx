@@ -49,6 +49,8 @@ interface TipTapComposerProps {
 	onChange: (value: string) => void;
 	onSubmitShortcut: () => void;
 	onSelectionSnippet?: (payload: HighlightSnippetPayload | null) => void;
+	/** Editor gained/lost focus — drives the Figma "Selected" container state. */
+	onFocusChange?: (focused: boolean) => void;
 }
 
 const escapeMarkdownText = (value: string): string =>
@@ -279,7 +281,8 @@ export const TipTapComposer = forwardRef<
 			maxLength,
 			onChange,
 			onSubmitShortcut,
-			onSelectionSnippet
+			onSelectionSnippet,
+			onFocusChange
 		},
 		ref
 	) => {
@@ -382,6 +385,12 @@ export const TipTapComposer = forwardRef<
 					}
 					return false;
 				}
+			},
+			onFocus: () => {
+				onFocusChange?.(true);
+			},
+			onBlur: () => {
+				onFocusChange?.(false);
 			},
 			onUpdate: ({ editor: currentEditor }) => {
 				if (isSyncingFromValue) {

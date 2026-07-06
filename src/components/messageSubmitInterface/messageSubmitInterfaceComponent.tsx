@@ -992,6 +992,7 @@ export const MessageSubmitInterfaceComponent = ({
 	const [isExpandedComposer, setIsExpandedComposer] = useState(false);
 	const [composerHeight, setComposerHeight] = useState<number | null>(null);
 	const [isComposerResizing, setIsComposerResizing] = useState(false);
+	const [isComposerSelected, setIsComposerSelected] = useState(false);
 	const composerResizeStartRef = useRef<{
 		pointerId: number;
 		startY: number;
@@ -3846,6 +3847,8 @@ export const MessageSubmitInterfaceComponent = ({
 							'textarea__wrapper-send-message',
 							canSendMessage &&
 								'textarea__wrapper-send-message--ready',
+							isComposerSelected &&
+								'textarea__wrapper-send-message--selected',
 							isExpandedComposer &&
 								'textarea__wrapper-send-message--expanded',
 							isComposerResizing &&
@@ -5108,6 +5111,9 @@ export const MessageSubmitInterfaceComponent = ({
 											showToolbar={false}
 											readOnly={!!uploadProgress}
 											maxLength={INPUT_MAX_LENGTH}
+											onFocusChange={
+												setIsComposerSelected
+											}
 											onSubmitShortcut={() => {
 												if (
 													!uploadProgress &&
