@@ -12,6 +12,12 @@ import { useNavigate, useLocation } from 'react-router-dom';
 
 import { SendButton } from './inputField/SendButton';
 import { deriveSendButtonState } from './inputField/sendButtonState';
+import { DragHandle } from './inputField/DragHandle';
+import {
+	clampComposerHeight as clampComposerHeightPure,
+	getComposerHeightBounds as getComposerHeightBoundsPure,
+	stepComposerHeight
+} from './inputField/composerResize';
 import { isAskerEnquirySubmission } from './messageEncryptionMode';
 import { resolveAsideTargetRoomId } from './asideRouting';
 import { chatTransportService } from '../../services/chatTransportService';
@@ -3691,23 +3697,17 @@ export const MessageSubmitInterfaceComponent = ({
 		onMobileNavigateBottom?.();
 	}, [onMobileNavigateBottom]);
 
-	const getComposerHeightBounds = useCallback(() => {
-		const minHeight = window.innerWidth <= 899 ? 180 : 196;
-		const maxHeight = Math.max(
-			minHeight,
-			Math.min(
-				window.innerHeight * 0.72,
-				window.innerWidth <= 899 ? 520 : 640
-			)
-		);
-		return { minHeight, maxHeight };
-	}, []);
+	const getComposerHeightBounds = useCallback(
+		() =>
+			getComposerHeightBoundsPure({
+				viewportWidth: window.innerWidth,
+				viewportHeight: window.innerHeight
+			}),
+		[]
+	);
 
 	const clampComposerHeight = useCallback(
-		(height: number) => {
-			const { minHeight, maxHeight } = getComposerHeightBounds();
-			return Math.round(Math.min(Math.max(height, minHeight), maxHeight));
-		},
+		(height: number) => clampComposerHeightPure(height, getComposerHeightBounds()),
 		[getComposerHeightBounds]
 	);
 
@@ -3781,41 +3781,19 @@ export const MessageSubmitInterfaceComponent = ({
 
 	const handleComposerResizeKeyDown = useCallback(
 		(e: React.KeyboardEvent<HTMLButtonElement>) => {
-			const { minHeight, maxHeight } = getComposerHeightBounds();
-			const step = e.shiftKey ? 48 : 24;
-			const currentHeight = composerHeight || minHeight;
-
-			switch (e.key) {
-				case 'ArrowUp':
-					e.preventDefault();
-					setComposerHeight(
-						clampComposerHeight(currentHeight + step)
-					);
-					return;
-				case 'ArrowDown':
-					e.preventDefault();
-					setComposerHeight(
-						clampComposerHeight(currentHeight - step)
-					);
-					return;
-				case 'Home':
-					e.preventDefault();
-					setComposerHeight(minHeight);
-					return;
-				case 'End':
-					e.preventDefault();
-					setComposerHeight(maxHeight);
-					return;
-				default:
-					return;
+			const bounds = getComposerHeightBounds();
+			const nextHeight = stepComposerHeight(
+				composerHeight || bounds.minHeight,
+				{ key: e.key, shiftKey: e.shiftKey },
+				bounds
+			);
+			if (nextHeight === null) {
+				return;
 			}
+			e.preventDefault();
+			setComposerHeight(nextHeight);
 		},
-		[
-			clampComposerHeight,
-			composerHeight,
-			getComposerHeightBounds,
-			setComposerHeight
-		]
+		[composerHeight, getComposerHeightBounds, setComposerHeight]
 	);
 
 	const resolvedChatSession =
@@ -3884,20 +3862,17 @@ export const MessageSubmitInterfaceComponent = ({
 						{!isMobileViewport &&
 							!threadRootId &&
 							!isExpandedComposer && (
-								<button
-									type="button"
-									className="textarea__composerResizeHandle"
+								<DragHandle
 									onPointerDown={
 										handleComposerResizePointerDown
 									}
 									onKeyDown={handleComposerResizeKeyDown}
-									aria-label={translate(
+									touched={isComposerResizing}
+									ariaLabel={translate(
 										'message.mobileNav.dragToExpand',
 										'Drag to resize composer'
 									)}
-								>
-									<span className="textarea__mobileNavigatorHandle" />
-								</button>
+								/>
 							)}
 						{isMobileViewport &&
 							!threadRootId &&

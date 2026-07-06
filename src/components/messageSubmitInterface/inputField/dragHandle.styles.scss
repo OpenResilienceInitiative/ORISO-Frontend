@@ -1,0 +1,58 @@
+/*
+ * Drag handle — Figma 1168:38118. Pill 57×4, primary-fixed-dim, radius 24,
+ * centered on the outer container edge in a 16px touch zone (widened to a
+ * comfortable pointer target). Touched: on-primary-fixed-variant + growth.
+ */
+.dragHandle {
+	position: absolute;
+	top: 0;
+	left: 50%;
+	transform: translateX(-50%);
+	width: 112px;
+	height: 16px;
+	margin: 0;
+	padding: 4px 0;
+	border: 0;
+	background: transparent;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	cursor: ns-resize;
+	touch-action: none;
+	z-index: 5;
+
+	&__pill {
+		width: 57px;
+		height: 4px;
+		border-radius: 24px;
+		background: var(--m3-primary-fixed-dim, #ffb4aa);
+		transition:
+			background-color 150ms ease,
+			transform 150ms ease;
+	}
+
+	&:hover &__pill {
+		background: var(--m3-primary-container, #cc1e1c);
+	}
+
+	&:focus-visible {
+		outline: none;
+
+		.dragHandle__pill {
+			outline: 2px solid var(--m3-primary-outline, #930008);
+			outline-offset: 4px;
+		}
+	}
+
+	&--touched &__pill,
+	&:active &__pill {
+		background: var(--m3-on-primary-fixed-variant, #930008);
+		transform: scaleY(1.75) scaleX(1.1);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.dragHandle__pill {
+		transition: none;
+	}
+}

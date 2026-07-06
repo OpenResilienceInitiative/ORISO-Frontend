@@ -387,36 +387,6 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			}
 		}
 
-		&__composerResizeHandle {
-			position: absolute;
-			top: 0;
-			left: 50%;
-			width: 112px;
-			height: 28px;
-			padding: 0;
-			border: 0;
-			border-radius: 0 0 10px 10px;
-			background: transparent;
-			display: inline-flex;
-			align-items: center;
-			justify-content: center;
-			transform: translateX(-50%);
-			cursor: ns-resize;
-			touch-action: none;
-			z-index: 5;
-
-			&:hover,
-			&:focus-visible,
-			&:active {
-				outline: none;
-
-				.textarea__mobileNavigatorHandle {
-					background: var(--m3-primary-container, #cc1e1c);
-					height: 7px;
-				}
-			}
-		}
-
 		&__inputWrapper {
 			position: absolute;
 			left: 16px;
