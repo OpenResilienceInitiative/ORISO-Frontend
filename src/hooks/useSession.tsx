@@ -147,9 +147,12 @@ export const useSession = (
 		if (!session.item.messagesRead) {
 			// Matrix read receipt on the latest room event. Sessions without
 			// a Matrix room are a safe no-op (no legacy read call).
-			const { matrixRoomId } = chatTransportService.resolveSession(session);
+			const { matrixRoomId } =
+				chatTransportService.resolveSession(session);
 			if (matrixRoomId) {
-				chatTransportService.markRoomAsRead(matrixRoomId).catch(() => {});
+				chatTransportService
+					.markRoomAsRead(matrixRoomId)
+					.catch(() => {});
 			}
 		}
 	}, [session]);

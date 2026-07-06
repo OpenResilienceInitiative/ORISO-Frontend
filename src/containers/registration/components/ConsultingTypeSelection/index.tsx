@@ -1,16 +1,14 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { SelectChangeEvent } from '@mui/material/Select';
+import { OrisoSelect } from '../../../../components/form/OrisoSelect';
 import { Text } from '../../../../components/text/Text';
-import {
-	SelectDropdown,
-	SelectDropdownItem
-} from '../../../../components/select/SelectDropdown';
 import { ConsultingTypeInterface } from '../../../../globalState/interfaces';
 
 interface ConsultingTypeSelectionArgs {
 	value: string;
 	onChange: (value: string) => void;
-	onKeyDown?: (ev: KeyboardEvent) => void;
+	onKeyDown?: (event: any) => void;
 	consultingTypes: ConsultingTypeInterface[];
 }
 
@@ -38,19 +36,16 @@ export const ConsultingTypeSelection = ({
 		[consultingTypes, t]
 	);
 
-	const consultingTypeSelect: SelectDropdownItem = {
-		id: 'consultingTypeSelection',
-		selectedOptions: consultingTypeOptions,
-		handleDropdownSelect: (selectedOption) =>
-			onChange(selectedOption.value),
-		selectInputLabel: t(
-			'registration.consultingTypeAgencySelection.consultingType.select.label'
-		),
-		menuPlacement: 'bottom',
-		// find by the value or set as default the first one
-		defaultValue:
-			consultingTypeOptions.find((cTO) => cTO.value === value) ||
-			consultingTypeOptions[0]
+	const selectLabel = t(
+		'registration.consultingTypeAgencySelection.consultingType.select.label'
+	);
+	const selectValue =
+		consultingTypeOptions.find((cTO) => cTO.value === value)?.value ||
+		consultingTypeOptions[0]?.value ||
+		'';
+
+	const handleConsultingTypeSelect = (event: SelectChangeEvent<string>) => {
+		onChange(event.target.value);
 	};
 
 	return (
@@ -61,7 +56,14 @@ export const ConsultingTypeSelection = ({
 				)}
 				type="standard"
 			/>
-			<SelectDropdown {...consultingTypeSelect} onKeyDown={onKeyDown} />
+			<OrisoSelect
+				id="consultingTypeSelection"
+				label={selectLabel}
+				options={consultingTypeOptions}
+				value={selectValue}
+				onChange={handleConsultingTypeSelect}
+				onKeyDown={(event) => onKeyDown?.(event)}
+			/>
 		</div>
 	);
 };

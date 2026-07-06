@@ -74,8 +74,11 @@ import { GroupChatHeader } from './GroupChatHeader';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { useResponsive } from '../../hooks/useResponsive';
 import { useTopic } from '../../globalState';
-import { SelectDropdown, SelectDropdownItem } from '../select/SelectDropdown';
+import { SelectDropdownItem } from '../select/SelectDropdown';
 import { Button, ButtonItem, BUTTON_TYPES } from '../button/Button';
+import { OrisoSelect } from '../form/OrisoSelect';
+import { OrisoTextarea } from '../form/OrisoTextarea';
+import { SelectChangeEvent } from '@mui/material/Select';
 import { ReactComponent as CloseCircle } from '../../resources/img/icons/close-circle.svg';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../message/messageConstants';
@@ -181,13 +184,18 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	const [supervisionReasonError, setSupervisionReasonError] = useState(false);
 	const [isAddingSupervisor, setIsAddingSupervisor] = useState(false);
 
-	// Prepare SelectDropdown for consultant selection
+	const getConsultantSelectLabel = (consultant: Consultant) =>
+		[consultant.firstName, consultant.lastName].filter(Boolean).join(' ') ||
+		consultant.displayName ||
+		consultant.username ||
+		consultant.consultantId;
+
 	const consultantSelectDropdown = React.useMemo<SelectDropdownItem>(
 		() => ({
 			id: 'supervisor-consultant-select',
 			selectedOptions: availableConsultants.map((consultant) => ({
-				value: consultant.consultantId,
-				label: `${consultant.firstName} ${consultant.lastName}`
+				value: consultant.consultantId.toString(),
+				label: getConsultantSelectLabel(consultant)
 			})),
 			defaultValue: selectedConsultantId
 				? {
@@ -195,7 +203,13 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 						label: availableConsultants.find(
 							(c) => c.consultantId === selectedConsultantId
 						)
-							? `${availableConsultants.find((c) => c.consultantId === selectedConsultantId).firstName} ${availableConsultants.find((c) => c.consultantId === selectedConsultantId).lastName}`
+							? getConsultantSelectLabel(
+									availableConsultants.find(
+										(c) =>
+											c.consultantId ===
+											selectedConsultantId
+									)
+								)
 							: ''
 					}
 				: null,
@@ -223,6 +237,16 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		}),
 		[availableConsultants, selectedConsultantId, translate]
 	);
+
+	const handleSupervisorConsultantSelect = (
+		event: SelectChangeEvent<string>
+	) => {
+		const selectedOption = consultantSelectDropdown.selectedOptions.find(
+			(option) => option.value.toString() === event.target.value
+		);
+
+		consultantSelectDropdown.handleDropdownSelect(selectedOption);
+	};
 
 	// Prepare Button for add supervisor
 	const addSupervisorButton: ButtonItem = React.useMemo(
@@ -1262,7 +1286,14 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 										)}
 									</div>
 								) : (
-									<div>
+									<div
+										style={{
+											display: 'flex',
+											flexDirection: 'column',
+											gap: '20px',
+											width: '100%'
+										}}
+									>
 										{supervisors.map((supervisor) => (
 											<div
 												key={supervisor.id}
@@ -1393,26 +1424,32 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 								) : (
 									<div>
 										<div style={{ width: '100%' }}>
-											<SelectDropdown
-												{...consultantSelectDropdown}
+											<OrisoSelect
+												id="supervisor-consultant-select"
+												label={
+													consultantSelectDropdown.selectInputLabel
+												}
+												options={
+													consultantSelectDropdown.selectedOptions
+												}
+												value={
+													selectedConsultantId || ''
+												}
+												onChange={
+													handleSupervisorConsultantSelect
+												}
 											/>
 										</div>
-										<div style={{ marginTop: '12px' }}>
-											<label
-												style={{
-													display: 'block',
-													marginBottom: '8px',
-													fontSize: '14px',
-													fontWeight: '500',
-													color: '#3F373F'
-												}}
-											>
+										<div style={{ width: '100%' }}>
+											<span style={{ display: 'none' }}>
 												{translate(
 													'sessionHeader.supervisor.modal.reasonLabel',
 													'Grund für die Supervision'
 												)}
-											</label>
-											<textarea
+											</span>
+											<OrisoTextarea
+												fullWidth
+												minRows={5}
 												value={supervisionReason}
 												onChange={(e) => {
 													setSupervisionReason(
@@ -1427,22 +1464,16 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 														);
 													}
 												}}
+												label={translate(
+													'sessionHeader.supervisor.modal.reasonLabel',
+													'Grund für die Supervision'
+												)}
 												placeholder={translate(
 													'sessionHeader.supervisor.modal.reasonPlaceholder',
 													'Bitte geben Sie den Grund für die Supervision an...'
 												)}
-												style={{
-													width: '100%',
-													minHeight: '80px',
-													padding: '8px',
-													border: supervisionReasonError
-														? '1px solid #c62828'
-														: '1px solid #ddd',
-													borderRadius: '4px',
-													fontSize: '14px',
-													fontFamily: 'inherit',
-													resize: 'vertical'
-												}}
+												error={supervisionReasonError}
+												sx={{ mt: 0 }}
 											/>
 											{supervisionReasonError && (
 												<div

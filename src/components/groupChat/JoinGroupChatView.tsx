@@ -137,7 +137,6 @@ export const JoinGroupChatView = ({
 		[translate]
 	);
 
-
 	const updateGroupChatInfo = useCallback(() => {
 		return apiGetGroupChatInfo(activeSession.item.id)
 			.then((res) => {

@@ -37,7 +37,8 @@ Module._load = function patchedLoad(this: unknown, ...args: unknown[]) {
 	if (request === './CallManager') {
 		return {
 			callManager: {
-				receiveCall: (...callArgs: unknown[]) => receiveCall(...callArgs),
+				receiveCall: (...callArgs: unknown[]) =>
+					receiveCall(...callArgs),
 				endCall: (...callArgs: unknown[]) => endCall(...callArgs)
 			}
 		};

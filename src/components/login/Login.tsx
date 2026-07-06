@@ -1,12 +1,6 @@
 import '../../polyfill';
 import * as React from 'react';
-import {
-	useCallback,
-	useContext,
-	useEffect,
-	useRef,
-	useState
-} from 'react';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { endpoints } from '../../resources/scripts/endpoints';
 import { Button, BUTTON_TYPES, ButtonItem } from '../button/Button';
 import { autoLogin, redirectToApp } from '../registration/autoLogin';
@@ -371,7 +365,6 @@ export const Login = () => {
 			handleLogin();
 		}
 	};
-
 
 	const onPasswordResetClick = () => {
 		setValueInCookie(

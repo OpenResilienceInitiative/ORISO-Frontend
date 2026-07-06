@@ -49,6 +49,7 @@ import {
 	isMatrixRoomIdHeuristic
 } from '../../utils/matrixRoomUtils';
 import { Button } from '../button/Button';
+import { OrisoTextarea } from '../form/OrisoTextarea';
 import './sessionsList.styles';
 import { SCROLL_PAGINATE_THRESHOLD } from './sessionsListConfig';
 import clsx from 'clsx';
@@ -1871,7 +1872,7 @@ export const SessionsList = ({
 									</label>
 								))}
 							</div>
-							<textarea
+							<OrisoTextarea
 								className="sessionsList__caseHandoverBatchExplanation"
 								value={caseHandoverExplanation}
 								onChange={(event) =>
@@ -1879,7 +1880,7 @@ export const SessionsList = ({
 										event.target.value
 									)
 								}
-								placeholder={translate(
+								label={translate(
 									'caseHandover.explanation.placeholder'
 								)}
 								aria-label={translate(
