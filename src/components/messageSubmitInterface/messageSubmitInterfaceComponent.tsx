@@ -5148,20 +5148,6 @@ export const MessageSubmitInterfaceComponent = ({
 										>
 											{characterCounterAnnouncement}
 										</span>
-										<div
-											className={clsx(
-												'textarea__characterCounter',
-												isMessageOverLimit &&
-													'textarea__characterCounter--error',
-												!isMessageOverLimit &&
-													isMessageLengthWarning &&
-													'textarea__characterCounter--warning'
-											)}
-											aria-hidden="true"
-										>
-											{typedMessageLength}/
-											{INPUT_MAX_LENGTH}
-										</div>
 									</>
 								)}
 							</div>

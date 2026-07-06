@@ -1293,9 +1293,17 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 }
 
 .messageItem--chatEvent {
+	align-items: center;
+	display: flex;
 	justify-content: center;
 	margin: 12px 0;
-	flex-direction: unset !important;
+	flex-direction: column !important;
+	width: 100%;
+
+	.messageItem__divider {
+		align-self: stretch;
+		width: 100%;
+	}
 
 	.messageItem__chatEvent {
 		display: inline-block;

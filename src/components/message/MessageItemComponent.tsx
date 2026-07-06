@@ -893,113 +893,12 @@ export const MessageItemComponent = ({
 	const isUserLeftChatEvent =
 		parsedMessage.systemNotificationType ===
 		SYSTEM_NOTIFICATION_USER_LEFT_CHAT;
-	const safeUserLeftChatDisplayName = (() => {
-		const fromPayload = parsedMessage.systemNotificationUsername?.trim();
-		if (
-			fromPayload &&
-			!fromPayload.startsWith('enc.') &&
-			!fromPayload.startsWith('@')
-		) {
-			return fromPayload;
-		}
-		return '';
-	})();
-	const getComparableUserLeftChatValue = useCallback(
-		(rawValue?: string | null) =>
-			makeComparableAudienceLabel(normalizeAudienceLabel(rawValue || '')),
-		[makeComparableAudienceLabel, normalizeAudienceLabel]
-	);
-	const userLeftChatActorLabel = useMemo(() => {
-		const payloadValue = parsedMessage.systemNotificationUsername || '';
-		const comparablePayload = getComparableUserLeftChatValue(payloadValue);
-		const consultantComparableValues = new Set<string>();
-		const userComparableValues = new Set<string>();
-		const addComparableValue = (
-			target: Set<string>,
-			rawValue?: string | null
-		) => {
-			const comparableValue = getComparableUserLeftChatValue(rawValue);
-			if (comparableValue) {
-				target.add(comparableValue);
-			}
-		};
-
-		addComparableValue(
-			consultantComparableValues,
-			activeSession?.consultant?.id
-		);
-		addComparableValue(
-			consultantComparableValues,
-			activeSession?.consultant?.username
-		);
-		addComparableValue(
-			consultantComparableValues,
-			activeSession?.consultant?.displayName
-		);
-		(consultantContext?.consultantList || []).forEach((entry) => {
-			addComparableValue(consultantComparableValues, entry?.value);
-			addComparableValue(consultantComparableValues, entry?.username);
-			addComparableValue(consultantComparableValues, entry?.rawUsername);
-			addComparableValue(
-				consultantComparableValues,
-				entry?.consultantDisplayName
-			);
-		});
-
-		addComparableValue(
-			userComparableValues,
-			activeSession?.item?.askerRcId
-		);
-		addComparableValue(userComparableValues, activeSession?.user?.username);
-		addComparableValue(
-			userComparableValues,
-			activeSession?.user?.displayName
-		);
-
-		if (comparablePayload) {
-			if (consultantComparableValues.has(comparablePayload)) {
-				return translate(
-					'message.leftChatConsultantLabel',
-					'Consultant'
-				);
-			}
-			if (userComparableValues.has(comparablePayload)) {
-				return translate('message.leftChatUserLabel', 'User');
-			}
-		}
-
-		if (safeUserLeftChatDisplayName) {
-			const normalizedDisplayName =
-				safeUserLeftChatDisplayName.toLowerCase();
-			if (
-				normalizedDisplayName.includes('consultant') ||
-				normalizedDisplayName.includes('berater')
-			) {
-				return translate(
-					'message.leftChatConsultantLabel',
-					'Consultant'
-				);
-			}
-			return translate('message.leftChatUserLabel', 'User');
-		}
-
-		return hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
-			? translate('message.leftChatUserLabel', 'User')
-			: translate('message.leftChatConsultantLabel', 'Consultant');
-	}, [
-		activeSession?.consultant?.displayName,
-		activeSession?.consultant?.id,
-		activeSession?.consultant?.username,
-		activeSession?.item?.askerRcId,
-		activeSession?.user?.displayName,
-		activeSession?.user?.username,
-		consultantContext?.consultantList,
-		getComparableUserLeftChatValue,
-		parsedMessage.systemNotificationUsername,
-		safeUserLeftChatDisplayName,
-		translate,
+	const userLeftChatEventText = hasUserAuthority(
+		AUTHORITIES.CONSULTANT_DEFAULT,
 		userData
-	]);
+	)
+		? translate('message.userLeftChat', 'User left the chat')
+		: translate('message.consultantLeftChat', 'Consultant left the chat');
 	const systemNotificationTitle =
 		parsedMessage.systemNotificationTitle ||
 		translate('message.systemNotificationTitle', 'System notification');
@@ -1827,9 +1726,7 @@ export const MessageItemComponent = ({
 			<div className="messageItem messageItem--chatEvent">
 				{getMessageDate()}
 				<div className="messageItem__chatEvent">
-					{translate('message.userLeftChat', {
-						name: userLeftChatActorLabel
-					})}
+					{userLeftChatEventText}
 				</div>
 			</div>
 		);

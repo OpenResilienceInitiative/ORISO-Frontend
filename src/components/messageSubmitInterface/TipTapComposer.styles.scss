@@ -54,7 +54,7 @@
 			position: absolute;
 			top: 66px; // below toolbar strip
 			right: 64px; // keep clear of send/side controls
-			bottom: 46px; // keep clear of lower counter/visuals
+			bottom: 18px; // keep clear of lower visuals
 			left: 16px;
 			direction: ltr;
 			text-align: left;
@@ -70,7 +70,7 @@
 			@media screen and (min-width: 900px) {
 				top: 66px;
 				right: 64px;
-				bottom: 46px;
+				bottom: 18px;
 				left: 16px;
 			}
 
