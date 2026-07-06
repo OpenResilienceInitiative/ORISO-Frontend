@@ -19,8 +19,11 @@ import { PenIcon } from '../../resources/img/icons';
 import { Button, ButtonItem, BUTTON_TYPES } from '../button/Button';
 import { EditableData } from '../editableData/EditableData';
 import { apiPatchUserData } from '../../api/apiPatchUserData';
+import { apiPutConsultantData } from '../../api/apiPutConsultantData';
 import { useTranslation } from 'react-i18next';
 import { useAppConfig } from '../../hooks/useAppConfig';
+
+const PUBLIC_SLUG_PATTERN = /^[a-z]+(-[a-z]+)*$/;
 
 export const ConsultantInformation = () => {
 	const { t: translate } = useTranslation();
@@ -30,6 +33,11 @@ export const ConsultantInformation = () => {
 	const [isSaveDisabled, setIsSaveDisabled] = useState(false);
 	const [editedDisplayName, setEditedDisplayName] = useState('');
 	const [initialDisplayName, setInitialDisplayName] = useState('');
+	const [isSlugEditEnabled, setIsSlugEditEnabled] = useState(false);
+	const [editedPublicSlug, setEditedPublicSlug] = useState('');
+	const [isSlugSaveDisabled, setIsSlugSaveDisabled] = useState(true);
+	const [isSlugRequestInProgress, setIsSlugRequestInProgress] =
+		useState(false);
 
 	const cancelEditButton: ButtonItem = {
 		label: translate('profile.data.edit.button.cancel'),
@@ -73,6 +81,59 @@ export const ConsultantInformation = () => {
 			});
 	};
 
+	const handleValidPublicSlug = (publicSlug) => {
+		setEditedPublicSlug(publicSlug?.toLowerCase() ?? '');
+	};
+
+	const handleCancelSlugEditButton = () => {
+		setEditedPublicSlug(
+			userData.pendingPublicSlug || userData.publicSlug || ''
+		);
+		setIsSlugEditEnabled(false);
+	};
+
+	const handleSaveSlugEditButton = () => {
+		if (isSlugRequestInProgress) {
+			return;
+		}
+
+		const normalizedPublicSlug = editedPublicSlug.trim().toLowerCase();
+		setIsSlugRequestInProgress(true);
+
+		apiPutConsultantData({
+			email: userData.email?.trim(),
+			firstname: userData.firstName?.trim(),
+			lastname: userData.lastName?.trim(),
+			languages: userData.languages || [],
+			publicSlug: normalizedPublicSlug
+		})
+			.then(reloadUserData)
+			.then(() => {
+				addNotification({
+					notificationType: NOTIFICATION_TYPE_SUCCESS,
+					title: translate(
+						'profile.data.publicSlug.notification.title'
+					),
+					text: translate('profile.data.publicSlug.notification.text')
+				});
+				setIsSlugEditEnabled(false);
+			})
+			.catch(() => {
+				addNotification({
+					notificationType: NOTIFICATION_TYPE_ERROR,
+					title: translate('profile.notifications.error.title'),
+					text: translate(
+						'profile.data.publicSlug.notification.error'
+					),
+					closeable: true,
+					timeout: 60000
+				});
+			})
+			.finally(() => {
+				setIsSlugRequestInProgress(false);
+			});
+	};
+
 	useEffect(() => {
 		if (editedDisplayName) {
 			setIsSaveDisabled(false);
@@ -86,12 +147,47 @@ export const ConsultantInformation = () => {
 		setEditedDisplayName(userData.displayName);
 	}, [userData.displayName, userData.userName]);
 
+	useEffect(() => {
+		setEditedPublicSlug(
+			userData.pendingPublicSlug || userData.publicSlug || ''
+		);
+	}, [userData.pendingPublicSlug, userData.publicSlug]);
+
+	useEffect(() => {
+		const normalizedPublicSlug = editedPublicSlug.trim().toLowerCase();
+		const currentSlug =
+			userData.pendingPublicSlug || userData.publicSlug || '';
+		setIsSlugSaveDisabled(
+			isSlugRequestInProgress ||
+				normalizedPublicSlug === currentSlug ||
+				!PUBLIC_SLUG_PATTERN.test(normalizedPublicSlug)
+		);
+	}, [
+		editedPublicSlug,
+		isSlugRequestInProgress,
+		userData.pendingPublicSlug,
+		userData.publicSlug
+	]);
+
 	const isDisplayNameFeatureEnabled = hasUserAuthority(
 		AUTHORITIES.CONSULTANT_DEFAULT,
 		userData
 	)
 		? true
 		: userData?.isDisplayNameEditable;
+
+	const publicSlugStatusText =
+		userData.publicSlugStatus === 'PENDING' && userData.pendingPublicSlug
+			? translate('profile.data.publicSlug.status.pending', {
+					slug: userData.pendingPublicSlug
+				})
+			: userData.publicSlugStatus === 'REJECTED'
+				? translate('profile.data.publicSlug.status.rejected')
+				: userData.publicSlug
+					? translate('profile.data.publicSlug.status.active', {
+							slug: userData.publicSlug
+						})
+					: translate('profile.data.publicSlug.status.empty');
 
 	return (
 		<div>
@@ -116,7 +212,9 @@ export const ConsultantInformation = () => {
 				</div>
 				{hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) && (
 					<PersonalRegistrationLink
-						cid={userData.userId}
+						consultantIdentifier={
+							userData.publicSlug || userData.userId
+						}
 						className="profile__user__personal_link mb--1"
 					/>
 				)}
@@ -147,17 +245,75 @@ export const ConsultantInformation = () => {
 					/>
 				</div>
 			)}
+			{hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) && (
+				<div className="mt--2">
+					<div className="flex flex--fd-row flex--jc-sb">
+						<Headline
+							className="pr--3"
+							text={translate('profile.data.publicSlug.label')}
+							semanticLevel="5"
+						/>
+						{!isSlugEditEnabled && (
+							<span
+								role="button"
+								className="tertiary"
+								onClick={() => {
+									setIsSlugEditEnabled(true);
+								}}
+							>
+								<PenIcon />
+							</span>
+						)}
+					</div>
+					<Text
+						text={translate('profile.data.publicSlug.info')}
+						type="standard"
+						className="tertiary"
+					/>
+					<EditableData
+						label={translate('profile.data.publicSlug.input')}
+						type="text"
+						initialValue={
+							userData.pendingPublicSlug ||
+							userData.publicSlug ||
+							''
+						}
+						isDisabled={!isSlugEditEnabled}
+						onValueIsValid={handleValidPublicSlug}
+					/>
+					<Text
+						text={publicSlugStatusText}
+						type="standard"
+						className="tertiary"
+					/>
+					{isSlugEditEnabled && (
+						<div className="editableData__buttonSet editableData__buttonSet--edit">
+							<Button
+								item={cancelEditButton}
+								buttonHandle={handleCancelSlugEditButton}
+							/>
+							<Button
+								item={{
+									...saveEditButton,
+									disabled: isSlugSaveDisabled
+								}}
+								buttonHandle={handleSaveSlugEditButton}
+							/>
+						</div>
+					)}
+				</div>
+			)}
 		</div>
 	);
 };
 
 type PersonalRegistrationLinkProps = {
-	cid: string;
+	consultantIdentifier: string;
 	className: string;
 };
 
 const PersonalRegistrationLink = ({
-	cid,
+	consultantIdentifier,
 	className
 }: PersonalRegistrationLinkProps) => {
 	const { t: translate } = useTranslation();
@@ -167,7 +323,7 @@ const PersonalRegistrationLink = ({
 
 	const copyRegistrationLink = useCallback(async () => {
 		await copyTextToClipboard(
-			`${settings.urls.registration}?cid=${cid}`,
+			`${settings.urls.registration}?cid=${consultantIdentifier}`,
 			() => {
 				addNotification({
 					notificationType: NOTIFICATION_TYPE_SUCCESS,
@@ -180,7 +336,12 @@ const PersonalRegistrationLink = ({
 				});
 			}
 		);
-	}, [settings.urls.registration, cid, addNotification, translate]);
+	}, [
+		settings.urls.registration,
+		consultantIdentifier,
+		addNotification,
+		translate
+	]);
 
 	return (
 		<div
@@ -188,7 +349,7 @@ const PersonalRegistrationLink = ({
 		>
 			<div className="mt--1">
 				<GenerateQrCode
-					url={`${settings.urls.registration}?cid=${cid}`}
+					url={`${settings.urls.registration}?cid=${consultantIdentifier}`}
 					filename={'kontaktlink'}
 					headline={translate(`qrCode.personal.overlay.headline`)}
 					text={translate(`qrCode.personal.overlay.info`)}

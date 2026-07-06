@@ -473,6 +473,12 @@
 					"tooltip": "Teile Deinen persönlichen Kontakt-Link mit jemanden, damit diese Person eine Onlineberatung direkt mit Dir starten kann."
 				}
 			},
+			"publicSlug": {
+				"info": "Verwende nur Kleinbuchstaben und Bindestriche. Neue Namen werden erst nach Freigabe durch eine Administration aktiv.",
+				"notification": {
+					"error": "Der Name des Kontakt-Links konnte nicht gespeichert werden. Bitte prüfe das Format oder wähle einen anderen Namen."
+				}
+			},
 			"register": {
 				"consultingModeInfo": {
 					"singleChats": "In diesen Themenfeldern erhältst Du eine persönliche Beratung. Schreibe uns Dein Anliegen!"

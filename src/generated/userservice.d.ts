@@ -510,6 +510,11 @@ declare namespace UserService {
 			 * ['de','en']
 			 */
 			languages: string[];
+			/**
+			 * example:
+			 * nikunj-rohit
+			 */
+			publicSlug?: string;
 		}
 		export interface PatchConsultantDTO {
 			/**
@@ -684,6 +689,17 @@ declare namespace UserService {
 			 */
 			absenceMessage?: string;
 			agencies?: AgencyDTO[];
+			/**
+			 * example:
+			 * nikunj-rohit
+			 */
+			publicSlug?: string;
+			/**
+			 * example:
+			 * nikunj-rohit
+			 */
+			pendingPublicSlug?: string;
+			publicSlugStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
 			userRoles?: string[];
 			grantedAuthorities?: string[];
 			consultingTypes?: ConsultingTypeMap;
