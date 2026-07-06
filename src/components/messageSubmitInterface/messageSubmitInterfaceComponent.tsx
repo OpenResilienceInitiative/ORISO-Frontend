@@ -56,29 +56,17 @@ import {
 	ATTACHMENT_MAX_SIZE_IN_MB,
 	getAttachmentSizeMBForKB
 } from './attachmentHelpers';
-import PluginsEditor from '@draft-js-plugins/editor';
 import {
 	ContentState,
 	convertToRaw,
-	DraftHandleValue,
 	EditorState,
 	RichUtils
 } from 'draft-js';
 import { draftToMarkdown } from 'markdown-draft-js';
-import createLinkifyPlugin from '@draft-js-plugins/linkify';
-import createToolbarPlugin from '@draft-js-plugins/static-toolbar';
-import {
-	BoldButton,
-	ItalicButton,
-	UnorderedListButton
-} from '@draft-js-plugins/buttons';
 import {
 	escapeMarkdownChars,
-	handleEditorBeforeInput,
-	handleEditorPastedText,
 	INPUT_MAX_LENGTH,
-	normalizeHighlightColor,
-	toolbarCustomClasses
+	normalizeHighlightColor
 } from './richtextHelpers';
 import { resolveComposerMessageSnapshot } from './composerMessageSnapshot';
 import { ReactComponent as AudioOnIcon } from '../../resources/img/icons/audio-on.svg';
@@ -113,29 +101,7 @@ import { TipTapComposer, TipTapComposerRef } from './TipTapComposer';
 import { HIGHLIGHT_SNIPPET_SELECTED_EVENT } from './highlightSnippetEvents';
 import { useAppConfig } from '../../hooks/useAppConfig';
 
-//Linkify Plugin
-const omitKey = (key, { [key]: _, ...obj }) => obj;
-
 type AttachmentUploadControl = Pick<XMLHttpRequest, 'abort'>;
-const linkifyPlugin = createLinkifyPlugin({
-	component: (props) => {
-		return (
-			/* eslint-disable */
-			<a
-				{...omitKey('blockKey', props)}
-				href={props.href}
-				onClick={() => window.open(props.href, '_blank')}
-			></a>
-			/* eslint-enable */
-		);
-	}
-});
-
-//Static Toolbar Plugin
-const staticToolbarPlugin = createToolbarPlugin({
-	theme: toolbarCustomClasses
-});
-const { Toolbar } = staticToolbarPlugin;
 const VOICE_RECORDING_MAX_DURATION_SEC = 180;
 const MESSAGE_LENGTH_WARNING_THRESHOLD = Math.floor(INPUT_MAX_LENGTH * 0.9);
 
