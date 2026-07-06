@@ -16,6 +16,7 @@ import { DragHandle } from './inputField/DragHandle';
 import { ComposerToolbar } from './inputField/ComposerToolbar';
 import { DefaultActionBar } from './inputField/DefaultActionBar';
 import { EmojiPickerPopup } from './inputField/EmojiPickerPopup';
+import { RecipientSplitButton } from './inputField/RecipientSplitButton';
 import { getMenuDirection } from './inputField/menuDirection';
 import {
 	clampComposerHeight as clampComposerHeightPure,
@@ -3184,53 +3185,21 @@ export const MessageSubmitInterfaceComponent = ({
 								)}
 								ref={audienceMenuRef}
 							>
-								<button
-									type="button"
-									className="textarea__audienceSelectorMain"
-									onClick={() =>
+								<RecipientSplitButton
+									label={selectedAudienceChipLabel}
+									icon={selectedAudienceIcon}
+									isOpen={isAudienceMenuOpen}
+									isMulti={isMultiAudienceSelection}
+									onToggle={() =>
 										setIsAudienceMenuOpen(
 											(previousState) => !previousState
 										)
 									}
-									aria-haspopup="listbox"
-									aria-expanded={isAudienceMenuOpen}
-								>
-									<span className="textarea__audienceSelectorIcon">
-										{selectedAudienceIcon}
-									</span>
-									<span
-										className={clsx(
-											'textarea__audienceSelectorName',
-											isMultiAudienceSelection &&
-												'textarea__audienceSelectorName--multi'
-										)}
-									>
-										{selectedAudienceChipLabel}
-									</span>
-								</button>
-								<button
-									type="button"
-									className="textarea__audienceSelectorChevron"
-									onClick={() =>
-										setIsAudienceMenuOpen(
-											(previousState) => !previousState
-										)
-									}
-									aria-label={translate(
+									chevronLabel={translate(
 										'message.audience.openMenu',
 										'Open send-to menu'
 									)}
-									aria-haspopup="listbox"
-									aria-expanded={isAudienceMenuOpen}
-								>
-									<AudienceChipChevronIcon
-										className={clsx(
-											'textarea__audienceSelectorArrow',
-											isAudienceMenuOpen &&
-												'textarea__audienceSelectorArrow--open'
-										)}
-									/>
-								</button>
+								/>
 								{isAudienceMenuOpen && (
 									<>
 										{typeof document !== 'undefined' &&
