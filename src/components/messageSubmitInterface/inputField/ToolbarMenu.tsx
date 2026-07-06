@@ -1,5 +1,13 @@
 import * as React from 'react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import {
+	autoUpdate,
+	computePosition,
+	flip,
+	offset,
+	shift
+} from '@floating-ui/dom';
 import type { MenuDirection } from './menuDirection';
 
 export interface ToolbarMenuItem {
@@ -15,20 +23,46 @@ export interface ToolbarMenuProps {
 	direction: MenuDirection;
 	onClose: () => void;
 	ariaLabel: string;
+	/** The toolbar button the menu is anchored to. */
+	anchorEl: HTMLElement | null;
 }
 
 /**
- * Floating menu anchored to its toolbar button (Figma 7086:46390): opens
- * bottom-to-top when the composer is minimized or on mobile, top-down in
- * fullscreen. Closes on outside pointer-down and Escape.
+ * Floating toolbar menu (Figma 7086:46390). Prefers to open bottom-to-top when
+ * the composer is docked/minimized or on mobile and top-down in fullscreen, but
+ * it is positioned with floating-ui and portalled to the body so it flips into
+ * view instead of clipping off-screen or behind the toolbar's overflow.
  */
 export const ToolbarMenu = ({
 	items,
 	direction,
 	onClose,
-	ariaLabel
+	ariaLabel,
+	anchorEl
 }: ToolbarMenuProps) => {
 	const menuRef = useRef<HTMLDivElement | null>(null);
+	const [position, setPosition] = useState<{ top: number; left: number }>({
+		top: -9999,
+		left: -9999
+	});
+
+	useEffect(() => {
+		const menuEl = menuRef.current;
+		if (!anchorEl || !menuEl) {
+			return;
+		}
+		return autoUpdate(anchorEl, menuEl, () => {
+			computePosition(anchorEl, menuEl, {
+				placement:
+					direction === 'up' ? 'top-start' : 'bottom-start',
+				middleware: [
+					offset(6),
+					flip({ padding: 8 }),
+					shift({ padding: 8 })
+				]
+			}).then(({ x, y }) => setPosition({ left: x, top: y }));
+		});
+	}, [anchorEl, direction]);
 
 	useEffect(() => {
 		const handlePointerDown = (event: PointerEvent) => {
@@ -57,12 +91,17 @@ export const ToolbarMenu = ({
 		};
 	}, [onClose]);
 
-	return (
+	if (typeof document === 'undefined') {
+		return null;
+	}
+
+	return createPortal(
 		<div
 			ref={menuRef}
 			role="menu"
 			aria-label={ariaLabel}
 			className={`composerToolbar__menu composerToolbar__menu--${direction}`}
+			style={{ top: position.top, left: position.left }}
 		>
 			{items.map((item) => (
 				<button
@@ -99,6 +138,7 @@ export const ToolbarMenu = ({
 					)}
 				</button>
 			))}
-		</div>
+		</div>,
+		document.body
 	);
 };

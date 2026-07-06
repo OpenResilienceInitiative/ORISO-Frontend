@@ -1,6 +1,6 @@
 import * as React from 'react';
 import type { TFunction } from 'i18next';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import UndoIcon from '@mui/icons-material/Undo';
 import RedoIcon from '@mui/icons-material/Redo';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
@@ -68,6 +68,7 @@ export const ComposerToolbar = ({
 	translate
 }: ComposerToolbarProps) => {
 	const [openMenu, setOpenMenu] = useState<ComposerToolbarMenu>(null);
+	const anchorRefs = useRef<Record<string, HTMLSpanElement | null>>({});
 
 	const toggleMenu = useCallback(
 		(menu: Exclude<ComposerToolbarMenu, null>) =>
@@ -215,7 +216,12 @@ export const ComposerToolbar = ({
 		items: ToolbarMenuItem[],
 		withChevron = true
 	) => (
-		<span className="composerToolbar__menuAnchor">
+		<span
+			className="composerToolbar__menuAnchor"
+			ref={(el) => {
+				anchorRefs.current[menu] = el;
+			}}
+		>
 			<ToolbarButton
 				label={label}
 				onClick={() => toggleMenu(menu)}
@@ -236,6 +242,7 @@ export const ComposerToolbar = ({
 					direction={direction}
 					onClose={closeMenu}
 					ariaLabel={label}
+					anchorEl={anchorRefs.current[menu]}
 				/>
 			)}
 		</span>
