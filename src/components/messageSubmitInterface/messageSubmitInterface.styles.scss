@@ -469,6 +469,15 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			border: 2px solid var(--m3-primary-container, #cc1e1c);
 		}
 
+		// Figma 7851:34817 — in the selected state the pale send button gets a
+		// red top+right edge so the container's frame stays continuous at the
+		// top-right notch (the ready state is already fully red).
+		&__wrapper-send-message--selected .sendButton--empty,
+		&__wrapper-send-message--selected .sendButton--disabled {
+			border-top: 2px solid var(--m3-primary-container, #cc1e1c);
+			border-right: 2px solid var(--m3-primary-container, #cc1e1c);
+		}
+
 		&__characterCounter {
 			position: absolute;
 			right: 76px;

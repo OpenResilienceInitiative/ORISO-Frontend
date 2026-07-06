@@ -23,9 +23,6 @@ import DisabledByDefaultRoundedIcon from '@mui/icons-material/DisabledByDefaultR
 import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
 import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
 import ChecklistIcon from '@mui/icons-material/Checklist';
-import FormatAlignLeftIcon from '@mui/icons-material/FormatAlignLeft';
-import FormatAlignCenterIcon from '@mui/icons-material/FormatAlignCenter';
-import FormatAlignRightIcon from '@mui/icons-material/FormatAlignRight';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
 import { ToolbarButton, ToolbarDivider } from './ToolbarButton';
@@ -36,7 +33,6 @@ import './composerToolbar.styles.scss';
 export type ComposerToolbarMenu =
 	| 'heading'
 	| 'list'
-	| 'align'
 	| 'highlight'
 	| 'overflow'
 	| null;
@@ -117,28 +113,6 @@ export const ComposerToolbar = ({
 			onSelect: () => onAction('taskList')
 		}
 	];
-
-	const alignItems: ToolbarMenuItem[] = (
-		[
-			['alignLeft', 'Align left', <FormatAlignLeftIcon fontSize="inherit" />],
-			[
-				'alignCenter',
-				'Align center',
-				<FormatAlignCenterIcon fontSize="inherit" />
-			],
-			[
-				'alignRight',
-				'Align right',
-				<FormatAlignRightIcon fontSize="inherit" />
-			]
-		] as const
-	).map(([action, fallback, glyph]) => ({
-		key: action,
-		label: translate(`message.submit.toolbar.${action}`, fallback),
-		glyph,
-		selected: isActionSelected(action),
-		onSelect: () => onAction(action)
-	}));
 
 	const highlightItems: ToolbarMenuItem[] = (
 		[
@@ -306,15 +280,6 @@ export const ComposerToolbar = ({
 			)}
 			{!isMobile && (
 				<>
-					{renderMenuAnchor(
-						'align',
-						translate(
-							'message.submit.toolbar.align',
-							'Alignment'
-						),
-						<FormatAlignLeftIcon fontSize="inherit" />,
-						alignItems
-					)}
 					<ToolbarButton
 						label={translate(
 							'message.submit.toolbar.quote',
