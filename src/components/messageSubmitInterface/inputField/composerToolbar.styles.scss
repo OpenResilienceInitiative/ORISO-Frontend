@@ -1,0 +1,223 @@
+/*
+ * Composer toolbar — Figma "Text Editor Menu Variants" (487:19879) and
+ * "Tip Tap Menu" (7086:46390). Buttons 38×32 radius 12, icons 16px,
+ * dividers 1×24 secondary. Menus float above (docked/mobile) or below
+ * (fullscreen) their anchor.
+ */
+.composerToolbar {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	padding: 4px 8px 0 17px;
+	min-height: 40px;
+	flex-wrap: nowrap;
+	overflow-x: auto;
+	overflow-y: visible;
+	scrollbar-width: none;
+
+	&::-webkit-scrollbar {
+		display: none;
+	}
+
+	&__button {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 2px;
+		width: 38px;
+		min-width: 38px;
+		height: 32px;
+		padding: 0;
+		margin: 0;
+		border: 0;
+		border-radius: 12px;
+		background: transparent;
+		color: var(--m3-secondary, #4c555f);
+		font-size: 16px;
+		cursor: pointer;
+		transition: background-color 120ms ease;
+
+		svg {
+			width: 16px;
+			height: 16px;
+		}
+
+		&:hover {
+			background: var(--m3-surface-container, #f0edee);
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary-outline, #930008);
+			outline-offset: 1px;
+		}
+
+		&--selected {
+			color: var(--m3-primary-container, #cc1e1c);
+			background: var(--m3-primary-fixed, #ffdad5);
+		}
+
+		&--labeled {
+			width: auto;
+			min-width: 0;
+			padding: 0 10px;
+		}
+	}
+
+	&__buttonText {
+		font-size: 14px;
+		font-weight: 500;
+		line-height: 24px;
+	}
+
+	&__chevron {
+		width: 10px !important;
+		height: 10px !important;
+	}
+
+	&__hGlyph {
+		font-size: 14px;
+		font-weight: 600;
+		line-height: 1;
+	}
+
+	&__divider {
+		display: inline-block;
+		width: 1px;
+		height: 24px;
+		margin: 0 4px;
+		background: var(--m3-secondary, #4c555f);
+		opacity: 0.4;
+		flex: 0 0 auto;
+	}
+
+	&__menuAnchor {
+		position: relative;
+		display: inline-flex;
+	}
+
+	&__menu {
+		position: absolute;
+		left: 0;
+		z-index: 60;
+		min-width: 176px;
+		padding: 6px;
+		border-radius: 12px;
+		background: #fff;
+		box-shadow:
+			0 4px 8px 3px rgba(0, 0, 0, 0.08),
+			0 1px 3px rgba(0, 0, 0, 0.2);
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+
+		&--up {
+			bottom: calc(100% + 8px);
+			transform-origin: bottom left;
+			animation: composer-menu-in-up 140ms cubic-bezier(0.2, 0, 0, 1);
+		}
+
+		&--down {
+			top: calc(100% + 4px);
+			transform-origin: top left;
+			animation: composer-menu-in-down 140ms cubic-bezier(0.2, 0, 0, 1);
+		}
+	}
+
+	&__menuItem {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		padding: 8px 12px;
+		border: 0;
+		border-radius: 8px;
+		background: transparent;
+		color: var(--m3-secondary, #4c555f);
+		font-size: 14px;
+		line-height: 20px;
+		text-align: left;
+		cursor: pointer;
+
+		&:hover {
+			background: var(--m3-surface-container, #f0edee);
+		}
+
+		&--selected {
+			color: var(--m3-primary-container, #cc1e1c);
+			background: var(--m3-primary-fixed, #ffdad5);
+		}
+	}
+
+	&__menuGlyph {
+		display: inline-flex;
+		align-items: center;
+		font-size: 16px;
+
+		svg {
+			width: 16px;
+			height: 16px;
+		}
+	}
+
+	&__menuCheck {
+		margin-left: auto;
+		font-size: 13px;
+	}
+
+	&__swatch {
+		display: inline-block;
+		width: 14px;
+		height: 14px;
+		border-radius: 4px;
+
+		&--yellow {
+			background: #ffe57f;
+		}
+
+		&--orange {
+			background: #ffcc80;
+		}
+
+		&--rose {
+			background: #f8bbd0;
+		}
+
+		&--mint {
+			background: #b2dfdb;
+		}
+
+		&--blue {
+			background: #b3e5fc;
+		}
+	}
+}
+
+@keyframes composer-menu-in-up {
+	from {
+		opacity: 0;
+		transform: scaleY(0.9) translateY(4px);
+	}
+
+	to {
+		opacity: 1;
+		transform: scaleY(1) translateY(0);
+	}
+}
+
+@keyframes composer-menu-in-down {
+	from {
+		opacity: 0;
+		transform: scaleY(0.9) translateY(-4px);
+	}
+
+	to {
+		opacity: 1;
+		transform: scaleY(1) translateY(0);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.composerToolbar__menu--up,
+	.composerToolbar__menu--down {
+		animation: none;
+	}
+}
