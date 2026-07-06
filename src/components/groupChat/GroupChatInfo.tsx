@@ -48,10 +48,7 @@ import { GroupChatCopyLinks } from './GroupChatCopyLinks';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { useTranslation } from 'react-i18next';
 import { getPrettyDateFromMessageDate } from '../../utils/dateHelpers';
-import {
-	RocketChatUsersOfRoomContext,
-	RocketChatUsersOfRoomProvider
-} from '../../globalState/provider/RocketChatUsersOfRoomProvider';
+import { useMatrixRoomUsers } from '../../hooks/useMatrixRoomUsers';
 
 export const GroupChatInfo = () => {
 	const settings = useAppConfig();
@@ -243,164 +240,166 @@ export const GroupChatInfo = () => {
 
 	return (
 		<ActiveSessionProvider activeSession={activeSession}>
-			<RocketChatUsersOfRoomProvider watch>
-				<div className="groupChatInfo__wrapper">
-					<div className="groupChatInfo__header">
-						<div className="groupChatInfo__header__wrapper">
-							<Link
-								to={`${listPath}/${activeSession.item.groupId}/${
-									activeSession.item.id
-								}${getSessionListTab()}`}
-								className="groupChatInfo__header__backButton"
-							>
-								<BackIcon />
-							</Link>
-							<h3 className="groupChatInfo__header__title">
-								{translate('groupChat.info.headline')}
-							</h3>
-						</div>
-						<div className="groupChatInfo__header__metaInfo">
-							<p className="groupChatInfo__header__username">
-								{typeof activeSession.item.topic === 'string' ? activeSession.item.topic : activeSession.item.topic?.name || ''}
-							</p>
-						</div>
+			<div className="groupChatInfo__wrapper">
+				<div className="groupChatInfo__header">
+					<div className="groupChatInfo__header__wrapper">
+						<Link
+							to={`${listPath}/${activeSession.item.groupId}/${
+								activeSession.item.id
+							}${getSessionListTab()}`}
+							className="groupChatInfo__header__backButton"
+						>
+							<BackIcon />
+						</Link>
+						<h3 className="groupChatInfo__header__title">
+							{translate('groupChat.info.headline')}
+						</h3>
 					</div>
-					<div className="groupChatInfo__innerWrapper">
-						<div className="groupChatInfo__user">
-							<div className="groupChatInfo__icon">
-								<GroupChatIcon className="groupChatInfo__icon--chatInfo" />
-								{activeSession.item.active ? (
-									<span className="groupChatInfo__icon--active"></span>
-								) : null}
-							</div>
-							<h2>{typeof activeSession.item.topic === 'string' ? activeSession.item.topic : activeSession.item.topic?.name || ''}</h2>
-						</div>
-						{activeSession.item.active &&
-						activeSession.item.subscribed ? (
-							<div className="groupChatInfo__innerWrapper__stopButton">
-								<Button
-									item={stopChatButtonSet}
-									buttonHandle={handleStopGroupChatButton}
-								/>
-							</div>
-						) : null}
-						<div className="groupChatInfo__content">
-							<div className="groupChatInfo__content__item groupChatInfo__data">
-								<Text
-									text={translate(
-										'groupChat.info.subscribers.headline'
-									)}
-									type="divider"
-								/>
-
-								{featureGroupChatV2Enabled && isV2GroupChat && (
-									<div className="groupChatInfo__groupChatContainer">
-										<GroupChatCopyLinks
-											id={activeSession.item.groupId}
-											groupChatId={activeSession.item.id.toString()}
-										/>
-									</div>
-								)}
-								<SubscriberList
-									isCurrentUserModerator={
-										isCurrentUserModerator
-									}
-								/>
-							</div>
-
-							<div className="groupChatInfo__content__item groupChatInfo__data">
-								<Text
-									text={translate(
-										'groupChat.info.settings.headline'
-									)}
-									type="divider"
-								/>
-
-								{(showCreator || showCreateDate) && (
-									<div className="groupChatInfo__data__group">
-										{showCreator && (
-											<div className="groupChatInfo__data__item">
-												<p className="groupChatInfo__data__label">
-													{translate(
-														'groupChat.info.settings.creator'
-													)}
-												</p>
-												<p className="groupChatInfo__data__content">
-													{
-														activeSession.consultant
-															.displayName
-													}
-												</p>
-											</div>
-										)}
-										{showCreateDate && (
-											<div className="groupChatInfo__data__item">
-												<p className="groupChatInfo__data__label">
-													{translate(
-														'groupChat.info.settings.createDate'
-													)}
-												</p>
-												<p className="groupChatInfo__data__content">
-													{getCreationDate(
-														new Date(
-															activeSession.item.createdAt
-														)
-													)}
-												</p>
-											</div>
-										)}
-									</div>
-								)}
-								{preparedSettings.map((item, index) => (
-									<div
-										className="groupChatInfo__data__item"
-										key={index}
-									>
-										<p className="groupChatInfo__data__label">
-											{item.label}
-										</p>
-										<p className="groupChatInfo__data__content">
-											{item.value}
-										</p>
-									</div>
-								))}
-								{isGroupChatOwner(activeSession, userData) &&
-								!activeSession.item.active ? (
-									<Link
-										className="groupChatInfo__innerWrapper__editButton"
-										to={`${listPath}/${
-											activeSession.item.groupId
-										}/${
-											activeSession.item.id
-										}/editGroupChat${getSessionListTab()}`}
-										state={{
-											isEditMode: true,
-											prevIsInfoPage: true
-										}}
-									>
-										<Button
-											item={{
-												label: translate(
-													'groupChat.info.settings.edit'
-												),
-												type: 'LINK',
-												id: 'editGroupChat'
-											}}
-											isLink={true}
-										/>
-									</Link>
-								) : null}
-							</div>
-						</div>
+					<div className="groupChatInfo__header__metaInfo">
+						<p className="groupChatInfo__header__username">
+							{typeof activeSession.item.topic === 'string'
+								? activeSession.item.topic
+								: activeSession.item.topic?.name || ''}
+						</p>
 					</div>
-					{overlayActive ? (
-						<Overlay
-							item={overlayItem}
-							handleOverlay={handleOverlayAction}
-						/>
-					) : null}
 				</div>
-			</RocketChatUsersOfRoomProvider>
+				<div className="groupChatInfo__innerWrapper">
+					<div className="groupChatInfo__user">
+						<div className="groupChatInfo__icon">
+							<GroupChatIcon className="groupChatInfo__icon--chatInfo" />
+							{activeSession.item.active ? (
+								<span className="groupChatInfo__icon--active"></span>
+							) : null}
+						</div>
+						<h2>
+							{typeof activeSession.item.topic === 'string'
+								? activeSession.item.topic
+								: activeSession.item.topic?.name || ''}
+						</h2>
+					</div>
+					{activeSession.item.active &&
+					activeSession.item.subscribed ? (
+						<div className="groupChatInfo__innerWrapper__stopButton">
+							<Button
+								item={stopChatButtonSet}
+								buttonHandle={handleStopGroupChatButton}
+							/>
+						</div>
+					) : null}
+					<div className="groupChatInfo__content">
+						<div className="groupChatInfo__content__item groupChatInfo__data">
+							<Text
+								text={translate(
+									'groupChat.info.subscribers.headline'
+								)}
+								type="divider"
+							/>
+
+							{featureGroupChatV2Enabled && isV2GroupChat && (
+								<div className="groupChatInfo__groupChatContainer">
+									<GroupChatCopyLinks
+										id={activeSession.item.groupId}
+										groupChatId={activeSession.item.id.toString()}
+									/>
+								</div>
+							)}
+							<SubscriberList
+								isCurrentUserModerator={isCurrentUserModerator}
+							/>
+						</div>
+
+						<div className="groupChatInfo__content__item groupChatInfo__data">
+							<Text
+								text={translate(
+									'groupChat.info.settings.headline'
+								)}
+								type="divider"
+							/>
+
+							{(showCreator || showCreateDate) && (
+								<div className="groupChatInfo__data__group">
+									{showCreator && (
+										<div className="groupChatInfo__data__item">
+											<p className="groupChatInfo__data__label">
+												{translate(
+													'groupChat.info.settings.creator'
+												)}
+											</p>
+											<p className="groupChatInfo__data__content">
+												{
+													activeSession.consultant
+														.displayName
+												}
+											</p>
+										</div>
+									)}
+									{showCreateDate && (
+										<div className="groupChatInfo__data__item">
+											<p className="groupChatInfo__data__label">
+												{translate(
+													'groupChat.info.settings.createDate'
+												)}
+											</p>
+											<p className="groupChatInfo__data__content">
+												{getCreationDate(
+													new Date(
+														activeSession.item.createdAt
+													)
+												)}
+											</p>
+										</div>
+									)}
+								</div>
+							)}
+							{preparedSettings.map((item, index) => (
+								<div
+									className="groupChatInfo__data__item"
+									key={index}
+								>
+									<p className="groupChatInfo__data__label">
+										{item.label}
+									</p>
+									<p className="groupChatInfo__data__content">
+										{item.value}
+									</p>
+								</div>
+							))}
+							{isGroupChatOwner(activeSession, userData) &&
+							!activeSession.item.active ? (
+								<Link
+									className="groupChatInfo__innerWrapper__editButton"
+									to={`${listPath}/${
+										activeSession.item.groupId
+									}/${
+										activeSession.item.id
+									}/editGroupChat${getSessionListTab()}`}
+									state={{
+										isEditMode: true,
+										prevIsInfoPage: true
+									}}
+								>
+									<Button
+										item={{
+											label: translate(
+												'groupChat.info.settings.edit'
+											),
+											type: 'LINK',
+											id: 'editGroupChat'
+										}}
+										isLink={true}
+									/>
+								</Link>
+							) : null}
+						</div>
+					</div>
+				</div>
+				{overlayActive ? (
+					<Overlay
+						item={overlayItem}
+						handleOverlay={handleOverlayAction}
+					/>
+				) : null}
+			</div>
 		</ActiveSessionProvider>
 	);
 };
@@ -413,8 +412,7 @@ const SubscriberList = ({
 	const { t: translate } = useTranslation();
 
 	const { activeSession } = useContext(ActiveSessionContext);
-	// MATRIX MIGRATION: RocketChatUsersOfRoomContext may be null for Matrix rooms, use fallback
-	const rcUsersContext = useContext(RocketChatUsersOfRoomContext);
+	const rcUsersContext = useMatrixRoomUsers();
 	const users = rcUsersContext?.users || [];
 	const moderators = rcUsersContext?.moderators || [];
 

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { autoLogin, handleE2EESetup } from './autoLogin';
+import { autoLogin } from './autoLogin';
 import { getKeycloakAccessToken } from '../sessionCookie/getKeycloakAccessToken';
 import {
 	getMatrixAccessToken,
@@ -9,21 +9,15 @@ import {
 import { setTokens } from '../auth/auth';
 import { getBudibaseAccessToken } from '../sessionCookie/getBudibaseAccessToken';
 import { parseJwt } from '../../utils/parseJWT';
-import { apiRocketChatFetchMyKeys } from '../../api/apiRocketChatFetchMyKeys';
-import { apiRocketChatSetUserKeys } from '../../api/apiRocketChatSetUserKeys';
-import { apiUpdateUserE2EKeys } from '../../api';
 import {
-	createAndStoreKeys,
-	deriveMasterKeyFromPassword,
-	encryptPrivateKey,
-	readMasterKeyFromLocalStorage,
-	storeKeys,
-	writeMasterKeyToLocalStorage
-} from '../../utils/encryptionHelpers';
+	clearAuthSession,
+	isConsultantAccessToken
+} from '../auth/consultantLoginBlock';
 
 const mockAppConfig = vi.hoisted(() => ({
 	multitenancyWithSingleDomainEnabled: false,
 	useTenantService: false,
+	blockConsultantAppLogin: false,
 	urls: {
 		redirectToApp: '/sessions'
 	}
@@ -38,30 +32,8 @@ vi.mock('../sessionCookie/getMatrixAccessToken', () => ({
 	persistMatrixLoginData: vi.fn()
 }));
 
-vi.mock('../sessionCookie/getRocketchatAccessToken', () => ({
-	getRocketchatAccessToken: vi.fn()
-}));
-
-vi.mock('../sessionCookie/accessSessionCookie', () => ({
-	setValueInCookie: vi.fn()
-}));
-
-vi.mock('../../utils/generateCsrfToken', () => ({
-	generateCsrfToken: vi.fn()
-}));
-
 vi.mock('../../utils/encryptionHelpers', () => ({
-	createAndStoreKeys: vi.fn(),
-	decryptPrivateKey: vi.fn(),
-	deriveMasterKeyFromPassword: vi.fn(),
-	encodeUsername: vi.fn((username: string) => `encoded:${username}`),
-	encryptForParticipant: vi.fn(),
-	encryptPrivateKey: vi.fn(),
-	getTmpMasterKey: vi.fn(),
-	importRawEncryptionKey: vi.fn(),
-	readMasterKeyFromLocalStorage: vi.fn(),
-	storeKeys: vi.fn(),
-	writeMasterKeyToLocalStorage: vi.fn()
+	encodeUsername: vi.fn((username: string) => `encoded:${username}`)
 }));
 
 vi.mock('../auth/auth', () => ({
@@ -69,32 +41,7 @@ vi.mock('../auth/auth', () => ({
 }));
 
 vi.mock('../../api', () => ({
-	FETCH_ERRORS: { UNAUTHORIZED: 'UNAUTHORIZED' },
-	apiUpdateUserE2EKeys: vi.fn()
-}));
-
-vi.mock('../../api/apiRocketChatFetchMyKeys', () => ({
-	apiRocketChatFetchMyKeys: vi.fn()
-}));
-
-vi.mock('../../api/apiRocketChatSetUserKeys', () => ({
-	apiRocketChatSetUserKeys: vi.fn()
-}));
-
-vi.mock('../../api/apiRocketChatSubscriptionsGet', () => ({
-	apiRocketChatSubscriptionsGet: vi.fn()
-}));
-
-vi.mock('../../api/apiRocketChatRoomsGet', () => ({
-	apiRocketChatRoomsGet: vi.fn()
-}));
-
-vi.mock('../../api/apiRocketChatUpdateGroupKey', () => ({
-	apiRocketChatUpdateGroupKey: vi.fn()
-}));
-
-vi.mock('../../api/apiRocketChatResetE2EKey', () => ({
-	apiRocketChatResetE2EKey: vi.fn()
+	FETCH_ERRORS: { UNAUTHORIZED: 'UNAUTHORIZED' }
 }));
 
 vi.mock('../sessionCookie/getBudibaseAccessToken', () => ({
@@ -107,6 +54,12 @@ vi.mock('../../utils/appConfig', () => ({
 
 vi.mock('../../utils/parseJWT', () => ({
 	parseJwt: vi.fn()
+}));
+
+vi.mock('../auth/consultantLoginBlock', () => ({
+	clearAuthSession: vi.fn(),
+	CONSULTANT_LOGIN_BLOCKED_ERROR: 'CONSULTANT_LOGIN_BLOCKED',
+	isConsultantAccessToken: vi.fn()
 }));
 
 const keycloakResponse = {
@@ -129,9 +82,65 @@ describe('autoLogin', () => {
 		vi.clearAllMocks();
 		mockAppConfig.multitenancyWithSingleDomainEnabled = false;
 		mockAppConfig.useTenantService = false;
+		mockAppConfig.blockConsultantAppLogin = false;
 		mockAppConfig.urls.redirectToApp = '/sessions';
 		vi.mocked(getKeycloakAccessToken).mockResolvedValue(keycloakResponse);
 		vi.mocked(getMatrixAccessToken).mockResolvedValue(matrixResponse);
+		vi.mocked(isConsultantAccessToken).mockReturnValue(false);
+	});
+
+	// The consultant login block (PR #273 originally blocked EVERY counsellor
+	// because it keyed on the bare `consultant` realm role). isConsultantAccessToken
+	// itself is covered in consultantLoginBlock.test.ts; these lock the autoLogin
+	// integration: the block only fires when the flag is on AND the token is a
+	// consultant, and it clears the session instead of leaving a half-login.
+	describe('consultant app-login block', () => {
+		it('blocks and clears the session when the flag is on and the token is a consultant', async () => {
+			mockAppConfig.blockConsultantAppLogin = true;
+			vi.mocked(isConsultantAccessToken).mockReturnValue(true);
+
+			await expect(
+				autoLogin({
+					username: 'consultant@example.com',
+					password: 'secret!',
+					tenantData: { settings: {} } as any
+				})
+			).rejects.toThrow('CONSULTANT_LOGIN_BLOCKED');
+
+			// Keycloak login sets tokens first; the block then clears the session
+			// and aborts before Matrix login proceeds.
+			expect(clearAuthSession).toHaveBeenCalledTimes(1);
+			expect(getMatrixAccessToken).not.toHaveBeenCalled();
+			expect(persistMatrixLoginData).not.toHaveBeenCalled();
+		});
+
+		it('allows a consultant when the flag is off', async () => {
+			mockAppConfig.blockConsultantAppLogin = false;
+			vi.mocked(isConsultantAccessToken).mockReturnValue(true);
+
+			await autoLogin({
+				username: 'consultant@example.com',
+				password: 'secret!',
+				tenantData: { settings: {} } as any
+			});
+
+			expect(clearAuthSession).not.toHaveBeenCalled();
+			expect(setTokens).toHaveBeenCalled();
+		});
+
+		it('allows a non-consultant (asker) even when the flag is on', async () => {
+			mockAppConfig.blockConsultantAppLogin = true;
+			vi.mocked(isConsultantAccessToken).mockReturnValue(false);
+
+			await autoLogin({
+				username: 'asker@example.com',
+				password: 'secret!',
+				tenantData: { settings: {} } as any
+			});
+
+			expect(clearAuthSession).not.toHaveBeenCalled();
+			expect(setTokens).toHaveBeenCalled();
+		});
 	});
 
 	it('logs in with Keycloak, stores auth tokens, and persists Matrix login data', async () => {
@@ -230,63 +239,5 @@ describe('autoLogin', () => {
 			'secret!',
 			{ featureToolsEnabled: true }
 		);
-	});
-	it('creates and stores new E2EE keys when no Rocket.Chat keys exist', async () => {
-		vi.mocked(deriveMasterKeyFromPassword).mockResolvedValue(
-			'master-key' as any
-		);
-		vi.mocked(apiRocketChatFetchMyKeys).mockResolvedValue({
-			success: true
-		});
-		vi.mocked(createAndStoreKeys).mockResolvedValue({
-			privateKey: 'private-key',
-			publicKey: JSON.stringify({ n: 'public-key-material' })
-		} as any);
-		vi.mocked(encryptPrivateKey).mockResolvedValue(
-			'encrypted-private-key' as any
-		);
-		vi.mocked(apiRocketChatSetUserKeys).mockResolvedValue({});
-		vi.mocked(apiUpdateUserE2EKeys).mockResolvedValue({});
-
-		await handleE2EESetup('secret!', 'rc-user-id');
-
-		expect(createAndStoreKeys).toHaveBeenCalled();
-		expect(apiRocketChatSetUserKeys).toHaveBeenCalledWith(
-			JSON.stringify({ n: 'public-key-material' }),
-			'encrypted-private-key'
-		);
-		expect(apiUpdateUserE2EKeys).toHaveBeenCalledWith(
-			'public-key-material'
-		);
-	});
-
-	it('resets keys and relogs in when encrypted keys cannot be decrypted without a persisted master key', async () => {
-		const reloginCallback = vi.fn().mockResolvedValue('relogged');
-		vi.mocked(deriveMasterKeyFromPassword).mockResolvedValue(
-			'master-key' as any
-		);
-		vi.mocked(apiRocketChatFetchMyKeys).mockResolvedValue({
-			private_key: 'encrypted-private',
-			public_key: JSON.stringify({ n: 'stored-public-key' }),
-			success: true
-		});
-		const { decryptPrivateKey } = await import(
-			'../../utils/encryptionHelpers'
-		);
-		const { apiRocketChatResetE2EKey } = await import(
-			'../../api/apiRocketChatResetE2EKey'
-		);
-		vi.mocked(decryptPrivateKey).mockRejectedValue(new Error('bad key'));
-		vi.mocked(readMasterKeyFromLocalStorage).mockReturnValue(null);
-
-		await handleE2EESetup('secret!', 'rc-user-id', reloginCallback);
-
-		expect(apiRocketChatResetE2EKey).toHaveBeenCalled();
-		expect(writeMasterKeyToLocalStorage).toHaveBeenCalledWith(
-			'master-key',
-			'rc-user-id'
-		);
-		expect(reloginCallback).toHaveBeenCalled();
-		expect(storeKeys).not.toHaveBeenCalled();
 	});
 });

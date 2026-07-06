@@ -31,8 +31,24 @@ export interface AppConfigInterface extends AppSettingsInterface {
 		};
 	};
 	groupChat?: GroupChatConfig;
+	/**
+	 * Blocks accounts with the `consultant` realm role from the app login.
+	 * Default off: the block (PR #273) keys on the role every counsellor
+	 * carries and locks the whole professional side out of the platform.
+	 * Re-enable only together with an activation-state check.
+	 */
+	blockConsultantAppLogin?: boolean;
 	registration: {
 		useConsultingTypeSlug?: boolean;
+		/**
+		 * Consulting type id used for the public agency search during
+		 * registration when the user has not selected a consulting type
+		 * (FE#245). The backend requires the parameter, so it cannot be
+		 * omitted. Defaults to 1 (the historic hard-coded value) so
+		 * existing tenants keep their behavior; deployments whose agencies
+		 * use another modality can override it here.
+		 */
+		defaultConsultingTypeId?: number;
 		consultingTypeDefaults: {
 			autoSelectPostcode: boolean;
 			autoSelectAgency: boolean;

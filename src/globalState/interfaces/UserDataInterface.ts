@@ -52,6 +52,18 @@ export interface AgencyDataInterface {
 	consultingTypeRel?: ConsultingTypeInterface;
 	topicIds?: number[];
 	agencyLogo?: string | null;
+	/**
+	 * The agency's departments (one per assigned topic) with the publication
+	 * state of their own legal texts. Only present on backends with
+	 * AgencyService #90 - older backends simply never send it.
+	 */
+	departments?: AgencyDepartmentDataInterface[];
+}
+
+export interface AgencyDepartmentDataInterface {
+	topicId: number;
+	hasPublishedDpp?: boolean;
+	hasPublishedImprint?: boolean;
 }
 
 export interface ConsultingTypeDataInterface {

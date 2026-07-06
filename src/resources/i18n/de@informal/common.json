@@ -372,6 +372,16 @@
 			}
 		}
 	},
+	"legal": {
+		"notice": {
+			"fallbackLanguage": "Dieser Text liegt nicht in Deiner Sprache vor und wird in seiner Originalsprache angezeigt.",
+			"machineTranslated": "Maschinell übersetzt — rechtlich verbindlich ist die deutsche Fassung.",
+			"placeholder": "Hinweis: Dieser Text ist ein Platzhalter und noch nicht rechtsverbindlich gepflegt.",
+			"showOriginal": "Original anzeigen",
+			"showingOriginal": "Du siehst die Originalfassung.",
+			"showTranslation": "Übersetzung anzeigen"
+		}
+	},
 	"message": {
 		"appointmentCancelled": {
 			"title": "Dein Termin wurde abgesagt"
@@ -653,6 +663,13 @@
 				"openInMaps": "In Karte öffnen",
 				"phoneLabel": "Telefon",
 				"websiteLabel": "Webseite"
+			},
+			"legal": {
+				"department": "Fachbereich",
+				"headline": "Datenschutzhinweise der Beratungsstelle",
+				"imprintHeadline": "Impressum der Beratungsstelle",
+				"label": "Rechtliches",
+				"unavailable": "Die Datenschutzhinweise können derzeit nicht geladen werden."
 			},
 			"summary": "Deine Beratungsstelle"
 		},

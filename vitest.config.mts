@@ -1,6 +1,23 @@
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+	resolve: {
+		// The webpack build resolves extensionless style imports
+		// (e.g. `import './session.styles'`) to .scss files; mirror that so
+		// components using this pattern can be imported in tests. Vitest
+		// stubs style modules by default, so no sass compile happens.
+		extensions: [
+			'.mjs',
+			'.js',
+			'.mts',
+			'.ts',
+			'.jsx',
+			'.tsx',
+			'.json',
+			'.scss',
+			'.css'
+		]
+	},
 	test: {
 		include: ['src/**/*.test.{ts,tsx}'],
 		// The app's runtimeConfig reads REACT_APP_* vars at module load and

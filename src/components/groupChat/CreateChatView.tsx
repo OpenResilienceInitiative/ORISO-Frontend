@@ -456,16 +456,20 @@ export const CreateGroupChatView = () => {
 		} as any)
 			.then((response) => {
 				// Refresh session list
-				apiGetSessionRoomsByGroupIds([response.groupId]).then(
-					({ sessions }) => {
+				return apiGetSessionRoomsByGroupIds([response.groupId])
+					.then(({ sessions }) => {
 						dispatch({
 							type: UPDATE_SESSIONS,
 							sessions: sessions
 						});
-						setOverlayItem(createChatSuccessOverlayItem);
-						setOverlayActive(true);
-					}
-				);
+					})
+					.catch(() => {
+						// The group was created successfully. Do not leave the
+						// user on the create form if the follow-up refresh fails.
+					})
+					.finally(() => {
+						navigate('/sessions/consultant/sessionView');
+					});
 			})
 			.catch(() => {
 				setOverlayItem(createChatErrorOverlayItem);
@@ -480,6 +484,7 @@ export const CreateGroupChatView = () => {
 		selectedAgency,
 		selectedConsultants,
 		dispatch,
+		navigate,
 		createChatSuccessOverlayItem,
 		createChatErrorOverlayItem
 	]);

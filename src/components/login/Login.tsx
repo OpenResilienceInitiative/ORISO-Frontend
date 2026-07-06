@@ -1,16 +1,16 @@
 import '../../polyfill';
 import * as React from 'react';
-import {
-	useCallback,
-	useContext,
-	useEffect,
-	useMemo,
-	useRef,
-	useState
-} from 'react';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { endpoints } from '../../resources/scripts/endpoints';
 import { Button, BUTTON_TYPES, ButtonItem } from '../button/Button';
 import { autoLogin, redirectToApp } from '../registration/autoLogin';
+import {
+	clearAuthSession,
+	CONSULTANT_LOGIN_BLOCKED_ERROR,
+	consumeConsultantLoginBlocked,
+	isConsultantAccessToken
+} from '../auth/consultantLoginBlock';
+import { appConfig } from '../../utils/appConfig';
 import { Text } from '../text/Text';
 import { ReactComponent as PersonIcon } from '../../resources/img/icons/person.svg';
 import { ReactComponent as LockIcon } from '../../resources/img/icons/lock.svg';
@@ -28,7 +28,6 @@ import clsx from 'clsx';
 import {
 	AUTHORITIES,
 	hasUserAuthority,
-	RocketChatGlobalSettingsContext,
 	TenantContext,
 	UserDataContext,
 	LocaleContext
@@ -37,13 +36,8 @@ import { UserDataInterface } from '../../globalState/interfaces';
 import '../../resources/styles/styles';
 import './login.styles';
 import useIsFirstVisit from '../../utils/useIsFirstVisit';
-import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
 import { VALIDITY_INVALID } from '../registration/registrationHelpers';
 import { TwoFactorAuthResendMail } from '../twoFactorAuth/TwoFactorAuthResendMail';
-import {
-	IBooleanSetting,
-	SETTING_E2E_ENABLE
-} from '../../api/apiRocketChatSettingsPublic';
 import { useTranslation } from 'react-i18next';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import {
@@ -74,7 +68,6 @@ export const Login = () => {
 
 	const { locale, initLocale } = useContext(LocaleContext);
 	const { tenant } = useContext(TenantContext);
-	const { getSetting } = useContext(RocketChatGlobalSettingsContext);
 	const { userData, reloadUserData } = useContext(UserDataContext);
 	const { Stage } = useContext(GlobalComponentContext);
 	const gcid = useSearchParam<string>('gcid');
@@ -145,7 +138,6 @@ export const Login = () => {
 		}
 	}, [featureToolsEnabled, gcid]);
 
-	const [pwResetOverlayActive, setPwResetOverlayActive] = useState(false);
 	const [twoFactorType, setTwoFactorType] = useState<TwoFactorType>(
 		TWO_FACTOR_TYPES.NONE
 	);
@@ -170,28 +162,16 @@ export const Login = () => {
 		setOtp(event.target.value);
 	};
 
-	const handlePwOverlayReset = useCallback(
-		(buttonFunction: string) => {
-			if (buttonFunction === OVERLAY_FUNCTIONS.REDIRECT) {
-				setValueInCookie(
-					'KEYCLOAK_LOCALE',
-					locale,
-					endpoints.loginResetPasswordLink
-						.split('/')
-						.slice(0, -1)
-						.join('/')
-				);
-				window.open(
-					endpoints.loginResetPasswordLink,
-					'_self',
-					'noreferrer'
-				);
-			} else if (buttonFunction === OVERLAY_FUNCTIONS.CLOSE) {
-				setPwResetOverlayActive(false);
-			}
-		},
-		[locale]
-	);
+	const showConsultantLoginBlockedError = useCallback(() => {
+		setShowLoginError(translate('login.warning.failed.consultantBlocked'));
+		setLabelState(VALIDITY_INVALID);
+	}, [translate]);
+
+	useEffect(() => {
+		if (consumeConsultantLoginBlocked()) {
+			showConsultantLoginBlockedError();
+		}
+	}, [showConsultantLoginBlockedError]);
 
 	useEffect(() => {
 		deleteCookieByName('tenantId');
@@ -207,6 +187,15 @@ export const Login = () => {
 					locale !== initLocale
 				) {
 					patchedUserData['preferredLanguage'] = locale;
+				}
+
+				if (
+					appConfig.blockConsultantAppLogin &&
+					hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+				) {
+					clearAuthSession();
+					showConsultantLoginBlockedError();
+					throw new Error(CONSULTANT_LOGIN_BLOCKED_ERROR);
 				}
 
 				if (Object.keys(patchedUserData).length > 0) {
@@ -248,6 +237,14 @@ export const Login = () => {
 
 		apiConsumeMagicLinkLogin(magicToken)
 			.then((tokenResponse) => {
+				if (
+					appConfig.blockConsultantAppLogin &&
+					isConsultantAccessToken(tokenResponse.access_token)
+				) {
+					clearAuthSession();
+					throw new Error(CONSULTANT_LOGIN_BLOCKED_ERROR);
+				}
+
 				setTokens(
 					tokenResponse.access_token,
 					tokenResponse.expires_in,
@@ -369,36 +366,7 @@ export const Login = () => {
 		}
 	};
 
-	const pwResetOverlay: OverlayItem = useMemo(
-		() => ({
-			headline: translate('login.password.reset.warn.overlay.title'),
-			copy: translate('login.password.reset.warn.overlay.description'),
-			buttonSet: [
-				{
-					label: translate(
-						'login.password.reset.warn.overlay.button.accept'
-					),
-					function: OVERLAY_FUNCTIONS.REDIRECT,
-					type: BUTTON_TYPES.SECONDARY
-				},
-				{
-					label: translate(
-						'login.password.reset.warn.overlay.button.cancel'
-					),
-					function: OVERLAY_FUNCTIONS.CLOSE,
-					type: BUTTON_TYPES.PRIMARY
-				}
-			]
-		}),
-		[translate]
-	);
-
-	const onPasswordResetClick = (e) => {
-		if (getSetting<IBooleanSetting>(SETTING_E2E_ENABLE)?.value) {
-			e.preventDefault();
-			setPwResetOverlayActive(true);
-			return;
-		}
+	const onPasswordResetClick = () => {
 		setValueInCookie(
 			'KEYCLOAK_LOCALE',
 			locale,
@@ -788,13 +756,6 @@ export const Login = () => {
 					</div>
 				</div>
 			</StageLayout>
-			{pwResetOverlayActive && (
-				<Overlay
-					item={pwResetOverlay}
-					handleOverlayClose={() => setPwResetOverlayActive(false)}
-					handleOverlay={handlePwOverlayReset}
-				/>
-			)}
 		</>
 	);
 };
