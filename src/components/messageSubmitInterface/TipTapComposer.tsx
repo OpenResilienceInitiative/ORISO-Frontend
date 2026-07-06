@@ -16,6 +16,10 @@ import Placeholder from '@tiptap/extension-placeholder';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import {
+	createMentionExtension,
+	MentionProvider
+} from './inputField/extensions/createMentionExtension';
+import {
 	FormatBold,
 	FormatListBulleted,
 	FilterList,
@@ -53,6 +57,8 @@ interface TipTapComposerProps {
 	onSelectionSnippet?: (payload: HighlightSnippetPayload | null) => void;
 	/** Editor gained/lost focus — drives the Figma "Selected" container state. */
 	onFocusChange?: (focused: boolean) => void;
+	/** Enables Slack-like @-mentions for agency consultants when provided. */
+	mentionProvider?: MentionProvider;
 }
 
 const escapeMarkdownText = (value: string): string =>
@@ -284,7 +290,8 @@ export const TipTapComposer = forwardRef<
 			onChange,
 			onSubmitShortcut,
 			onSelectionSnippet,
-			onFocusChange
+			onFocusChange,
+			mentionProvider
 		},
 		ref
 	) => {
@@ -313,8 +320,14 @@ export const TipTapComposer = forwardRef<
 						placeholder
 					}),
 					TaskList,
-					TaskItem.configure({ nested: true })
+					TaskItem.configure({ nested: true }),
+					...(mentionProvider
+						? [createMentionExtension(mentionProvider)]
+						: [])
 				],
+				// mentionProvider is captured once on mount — the provider reads
+				// live data via its closures, so it need not be a dep.
+				// eslint-disable-next-line react-hooks/exhaustive-deps
 				[placeholder]
 			),
 			content: value || '',

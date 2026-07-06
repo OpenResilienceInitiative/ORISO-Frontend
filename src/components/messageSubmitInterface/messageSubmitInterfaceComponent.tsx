@@ -2908,8 +2908,56 @@ export const MessageSubmitInterfaceComponent = ({
 	}, []);
 
 	const handleMentionInsert = useCallback(() => {
+		composerRef.current?.focus();
 		composerRef.current?.insertText('@');
 	}, []);
+
+	// Live snapshot for the mention provider — the TipTap extension is created
+	// once on mount, so its getCandidates closure reads through this ref to
+	// always see the current agency directory and room membership.
+	const mentionDataRef = useRef({
+		directory: agencyConsultantDirectory,
+		inRoomValues: new Set<string>(),
+		selfId: userData?.userId as string | undefined
+	});
+	mentionDataRef.current = {
+		directory: agencyConsultantDirectory,
+		inRoomValues: new Set(
+			audienceOptions
+				.filter((option) => option.value !== '__all__')
+				.flatMap((option) => [
+					...Array.from(getComparableAudienceIds(option.value)),
+					...Array.from(getComparableAudienceIds(option.label))
+				])
+		),
+		selfId: userData?.userId
+	};
+
+	const mentionProvider = useMemo(
+		() => ({
+			selfId: userData?.userId,
+			notInChatLabel: translate(
+				'message.mention.notInChat',
+				'nicht im Chat'
+			),
+			getCandidates: () => {
+				const { directory, inRoomValues } = mentionDataRef.current;
+				return Array.from(directory.entries()).map(
+					([consultantId, info]) => ({
+						id: consultantId,
+						displayName: info.displayName,
+						username: info.username,
+						isInRoom: Array.from(
+							getComparableAudienceIds(info.username)
+						).some((id) => inRoomValues.has(id))
+					})
+				);
+			}
+		}),
+		// Stable identity: reads live data through the ref.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[]
+	);
 
 	const handleToolbarMouseDown = useCallback(
 		(event: React.MouseEvent<HTMLDivElement>) => {
@@ -3732,6 +3780,7 @@ export const MessageSubmitInterfaceComponent = ({
 											onFocusChange={
 												setIsComposerSelected
 											}
+											mentionProvider={mentionProvider}
 											onSubmitShortcut={() => {
 												if (
 													!uploadProgress &&
