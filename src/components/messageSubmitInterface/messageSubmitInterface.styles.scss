@@ -141,11 +141,11 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				&--expanded {
 					position: fixed !important;
 					left: 50vw !important;
-					top: 50vh !important;
+					top: auto !important;
 					right: auto !important;
-					bottom: auto !important;
 					inset: auto !important;
-					margin-top: -850px;
+					bottom: 24px !important;
+					margin-top: 0;
 					max-width: none;
 					height: min(78vh, 760px);
 					max-height: calc(100vh - 96px);
@@ -172,10 +172,12 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 						box-shadow: none !important;
 					}
 
+					&::before {
+						display: none;
+					}
+
 					&:active::before {
-						top: 4px;
-						height: 8px;
-						background: #a5000a;
+						display: none;
 					}
 
 					&--ready {
@@ -269,7 +271,6 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			}
 
 			&__mobileNavigator > button {
-				flex: 1; /* each gets equal width */
 				display: flex;
 				align-items: center;
 				justify-content: center;
@@ -321,6 +322,15 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 						background: var(--m3-primary-container, #cc1e1c);
 					}
 				}
+			}
+
+			&__mobileNavigator > .textarea__mobileNavigatorButton {
+				flex: 1 1 0;
+			}
+
+			&__mobileNavigator > .textarea__mobileNavigatorCenter {
+				flex: 0 0 112px;
+				width: 112px;
 			}
 
 			&__mobileNavigatorHandle {
