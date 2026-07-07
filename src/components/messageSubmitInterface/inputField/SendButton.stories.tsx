@@ -70,7 +70,7 @@ function ArmDemo() {
 	);
 }
 
-export const ArmTransition: Story = {
+export const ArmTransition: StoryObj = {
 	name: 'Transition empty → ready (rotate in)',
 	render: () => <ArmDemo />,
 	play: async ({ canvasElement }) => {
@@ -102,7 +102,7 @@ function FlyOutDemo() {
 	);
 }
 
-export const FlyOutOnSend: Story = {
+export const FlyOutOnSend: StoryObj = {
 	name: 'Fly-out on send',
 	render: () => <FlyOutDemo />,
 	play: async ({ canvasElement }) => {

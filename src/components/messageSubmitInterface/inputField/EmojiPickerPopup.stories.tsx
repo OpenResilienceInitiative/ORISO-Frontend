@@ -49,6 +49,6 @@ function PickerDemo() {
 	);
 }
 
-export const Picker: Story = {
+export const Picker: StoryObj = {
 	render: () => <PickerDemo />
 };

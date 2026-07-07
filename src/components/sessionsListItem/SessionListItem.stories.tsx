@@ -671,8 +671,8 @@ function RuntimeSessionListItem() {
 			<UserDataContext.Provider
 				value={{
 					userData: runtimeUserData,
-					reloadUserData: async () => runtimeUserData,
-					loaded: true
+					setUserData: () => {},
+					reloadUserData: async () => runtimeUserData
 				}}
 			>
 				<SessionTypeContext.Provider
