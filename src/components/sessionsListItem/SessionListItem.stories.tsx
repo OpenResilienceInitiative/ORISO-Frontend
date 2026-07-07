@@ -31,8 +31,6 @@ import {
 	STATUS_ACTIVE
 } from '../../globalState/interfaces';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
-import { RocketChatSubscriptionsContext } from '../../globalState/provider/RocketChatSubscriptionsProvider';
-import { RocketChatUsersOfRoomContext } from '../../globalState/provider/RocketChatUsersOfRoomProvider';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import { SessionListItemComponent } from './SessionListItemComponent';
 import './sessionsListItem.styles.scss';
@@ -702,53 +700,30 @@ function RuntimeSessionListItem() {
 									dispatch: () => {}
 								}}
 							>
-								<RocketChatSubscriptionsContext.Provider
+								<E2EEContext.Provider
 									value={{
-										subscriptionsReady: true,
-										subscriptions: [],
-										roomsReady: true,
-										rooms: []
+										key: '',
+										reloadPrivateKey: () => {},
+										isE2eeEnabled: false,
+										e2EEReady: true
 									}}
 								>
-									<RocketChatUsersOfRoomContext.Provider
-										value={{
-											ready: true,
-											users: [],
-											moderators: [],
-											total: 0,
-											reload: async () => []
-										}}
-									>
-										<E2EEContext.Provider
+									<LegalLinksContext.Provider value={[]}>
+										<ActiveSessionContext.Provider
 											value={{
-												key: '',
-												reloadPrivateKey: () => {},
-												isE2eeEnabled: false,
-												e2EEReady: true
+												activeSession,
+												reloadActiveSession: () => {},
+												readActiveSession: () => {}
 											}}
 										>
-											<LegalLinksContext.Provider
-												value={[]}
-											>
-												<ActiveSessionContext.Provider
-													value={{
-														activeSession,
-														reloadActiveSession:
-															() => {},
-														readActiveSession:
-															() => {}
-													}}
-												>
-													<SessionListItemComponent
-														defaultLanguage="de"
-														handleKeyDownLisItemContent={() => {}}
-														index={0}
-													/>
-												</ActiveSessionContext.Provider>
-											</LegalLinksContext.Provider>
-										</E2EEContext.Provider>
-									</RocketChatUsersOfRoomContext.Provider>
-								</RocketChatSubscriptionsContext.Provider>
+											<SessionListItemComponent
+												defaultLanguage="de"
+												handleKeyDownLisItemContent={() => {}}
+												index={0}
+											/>
+										</ActiveSessionContext.Provider>
+									</LegalLinksContext.Provider>
+								</E2EEContext.Provider>
 							</SessionsDataContext.Provider>
 						</TopicsContext.Provider>
 					</ConsultingTypesContext.Provider>
