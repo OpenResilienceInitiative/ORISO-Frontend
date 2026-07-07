@@ -450,6 +450,14 @@ describe('TwoFactorSetupDialog', () => {
 				'maxmuster@email.de'
 			)
 		);
+		// The connect step only renders after apiPutTwoFactorAuthEmail resolves
+		// and its state updates flush — on loaded CI runners that can exceed the
+		// 1s default findBy timeout, so anchor the step change generously first.
+		await screen.findByLabelText(
+			'twoFactorAuth.setupDialog.email.connect.input',
+			{},
+			{ timeout: 10000 }
+		);
 		fireEvent.click(
 			await screen.findByRole('button', {
 				name: 'twoFactorAuth.setupDialog.email.connect.resend'
