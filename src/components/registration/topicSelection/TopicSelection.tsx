@@ -4,8 +4,10 @@ import {
 	Accordion,
 	AccordionDetails,
 	AccordionSummary,
+	Alert,
 	Avatar,
 	Box,
+	Button,
 	Divider,
 	List,
 	ListItemButton,
@@ -75,6 +77,8 @@ export const TopicSelection: FC<{
 	const [selectedPlacementId, setSelectedPlacementId] = useState<
 		string | undefined
 	>();
+	const [loadError, setLoadError] = useState<boolean>(false);
+	const [reloadKey, setReloadKey] = useState<number>(0);
 	const [expandedTopicGroupIds, setExpandedTopicGroupIds] = useState<
 		number[]
 	>([]);
@@ -281,6 +285,7 @@ export const TopicSelection: FC<{
 		(async () => {
 			setTopics(undefined);
 			setTopicGroups(undefined);
+			setLoadError(false);
 
 			try {
 				const topicsResponse = await apiGetTopicsData();
@@ -320,13 +325,20 @@ export const TopicSelection: FC<{
 				setTopicGroups([]);
 				setListView(true);
 				setTopics([]);
+				setLoadError(true);
 			}
 		})();
 
 		return () => {
 			cancelled = true;
 		};
-	}, [locale, preselectedConsultant, preselectedAgency, preselectedTopic]);
+	}, [
+		locale,
+		preselectedConsultant,
+		preselectedAgency,
+		preselectedTopic,
+		reloadKey
+	]);
 
 	return (
 		<>
@@ -369,6 +381,32 @@ export const TopicSelection: FC<{
 				>
 					<Loading />
 				</Box>
+			) : loadError ? (
+				<Alert
+					severity="error"
+					role="alert"
+					data-cy="topic-selection-load-error"
+					sx={{ mt: '8px', borderRadius: '16px' }}
+					action={
+						<Button
+							color="inherit"
+							size="small"
+							onClick={() => setReloadKey((key) => key + 1)}
+						>
+							{t('registration.topic.loadErrorRetry')}
+						</Button>
+					}
+				>
+					{t('registration.topic.loadError')}
+				</Alert>
+			) : topics.length === 0 ? (
+				<Typography
+					role="status"
+					data-cy="topic-selection-empty"
+					sx={{ mt: '8px', ...registrationScreenIntroSx }}
+				>
+					{t('registration.topic.empty')}
+				</Typography>
 			) : (
 				<FormControl sx={{ width: '100%' }}>
 					<Box

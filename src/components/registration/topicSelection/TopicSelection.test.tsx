@@ -263,4 +263,37 @@ describe('TopicSelection', () => {
 		});
 		expect(apiGetTopicGroupsMock).not.toHaveBeenCalled();
 	});
+
+	it('shows a visible error alert with retry when the topics request fails', async () => {
+		apiGetTopicsDataMock.mockRejectedValueOnce(new Error('network'));
+
+		renderTopicSelection();
+
+		const alert = await screen.findByRole('alert');
+		expect(alert.textContent).toContain('registration.topic.loadError');
+
+		// Retry refetches and replaces the alert with the loaded topics.
+		apiGetTopicsDataMock.mockResolvedValueOnce([
+			topic(9, 'Schuldenberatung')
+		]);
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'registration.topic.loadErrorRetry'
+			})
+		);
+
+		expect(await screen.findByText('Schuldenberatung')).toBeDefined();
+		expect(screen.queryByRole('alert')).toBeNull();
+		expect(apiGetTopicsDataMock).toHaveBeenCalledTimes(2);
+	});
+
+	it('shows an empty state instead of an error when the request succeeds with no topics', async () => {
+		apiGetTopicsDataMock.mockResolvedValue([]);
+
+		renderTopicSelection();
+
+		const emptyState = await screen.findByRole('status');
+		expect(emptyState.textContent).toContain('registration.topic.empty');
+		expect(screen.queryByRole('alert')).toBeNull();
+	});
 });

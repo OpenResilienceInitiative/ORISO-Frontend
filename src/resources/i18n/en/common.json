@@ -2075,6 +2075,9 @@
 				"backButtonLabel": "Select another topic",
 				"nextButtonLabel": "Select topic and continue"
 			},
+			"empty": "No topics are available at the moment. Please try again later.",
+			"loadError": "The topics could not be loaded. Please try again.",
+			"loadErrorRetry": "Try again",
 			"oneResult": "We advise you on the topic",
 			"subline": "Choose a topic from our counseling services.",
 			"summary": "Your topic:"

@@ -2221,6 +2221,9 @@
 				"backButtonLabel": "Anderes Thema auswählen",
 				"nextButtonLabel": "Thema auswählen und fortfahren"
 			},
+			"empty": "Derzeit sind keine Themen verfügbar. Bitte versuchen Sie es später erneut.",
+			"loadError": "Die Themen konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
+			"loadErrorRetry": "Erneut versuchen",
 			"oneResult": "Wir beraten Sie zum Thema",
 			"subline": "Wählen Sie ein Thema aus unserem Beratungsangebot aus.",
 			"summary": "Ihr Thema:"
