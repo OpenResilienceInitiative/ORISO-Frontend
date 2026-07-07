@@ -119,7 +119,7 @@ export const endpoints = {
 		tenantServiceOrigin +
 		`/service/tenant/public/dpa/confirm/${encodeURIComponent(token)}`,
 	topicGroups: consultingTypeServiceOrigin + '/service/topic-groups',
-	topicsData: consultingTypeServiceOrigin + '/service/topic/public/',
+	topicsData: consultingTypeServiceOrigin + '/service/topic/public',
 	twoFactorAuth: userServiceOrigin + '/service/users/2fa',
 	twoFactorAuthApp: userServiceOrigin + '/service/users/2fa/app',
 	twoFactorAuthEmail: userServiceOrigin + '/service/users/2fa/email',
