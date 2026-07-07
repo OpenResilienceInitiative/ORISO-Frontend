@@ -1,8 +1,4 @@
-import { v4 as uuidv4 } from "uuid";
-import { endpoints } from "../resources/scripts/endpoints";
-import { fetchData, FETCH_METHODS, FETCH_ERRORS } from "./fetchData";
 import { ErrorInfo } from "react";
-import StackTrace from "stacktrace-js";
 
 export interface ErrorResponse {}
 
@@ -41,21 +37,12 @@ export type ErrorRequestBody = {
         info?: ErrorInfo;
 };
 
+// For the Matrix integration errors are no longer posted to logstash; this
+// stub keeps the call sites working and simply resolves.
 export const apiPostError = async (
         error: TError,
         info?: ErrorInfo,
         correlationId?: string
 ): Promise<ErrorResponse> => {
-        // For Matrix integration, we will just log errors to console instead of posting to logstash
-        // console.warn("Matrix Frontend Error:", {
-        // error: error.message,
-        // level: error.level || "ERROR",
-        // url: window?.location?.href,
-        // timestamp: new Date().toISOString(),
-        // correlationId: correlationId || uuidv4(),
-        // ...(info ? { info: info } : {})
-        // });
-        
-        // Return a mock response to avoid breaking the calling code
         return Promise.resolve({});
 };

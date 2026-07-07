@@ -3,7 +3,6 @@ import { useContext, useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import clsx from 'clsx';
-import { handleNumericTranslation } from '../../utils/translate';
 import { mobileListView } from '../app/navigationHandler';
 import { apiDeleteSessionAndUser } from '../../api/apiDeleteSessionAndUser';
 import { apiFinishAnonymousConversation } from '../../api/apiFinishAnonymousConversation';
@@ -57,10 +56,6 @@ import { logout } from '../logout/logout';
 import { appConfig } from '../../utils/appConfig';
 import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import {
-	convertUserDataObjectToArray,
-	getUserDataTranslateBase
-} from '../profile/profileHelpers';
-import {
 	isAnonymousMatrixUsername,
 	resolveAnonymousChatDisplayName
 } from '../../utils/anonymousChatDisplayName';
@@ -79,7 +74,6 @@ import { Button, ButtonItem, BUTTON_TYPES } from '../button/Button';
 import { OrisoSelect } from '../form/OrisoSelect';
 import { OrisoTextarea } from '../form/OrisoTextarea';
 import { SelectChangeEvent } from '@mui/material/Select';
-import { ReactComponent as CloseCircle } from '../../resources/img/icons/close-circle.svg';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../message/messageConstants';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
@@ -267,15 +261,6 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		[selectedConsultantId, isAddingSupervisor, translate]
 	);
 
-	const preparedUserSessionData =
-		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
-		userSessionData
-			? convertUserDataObjectToArray(userSessionData)
-			: null;
-	const translateBase = getUserDataTranslateBase(
-		activeSession.item.consultingType
-	);
-
 	const [isSubscriberFlyoutOpen, setIsSubscriberFlyoutOpen] = useState(false);
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
 	const getSessionListTab = () =>
@@ -330,12 +315,15 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 				// console.warn('Cannot load consultants: No agency ID in session');
 			}
 		}
+		// loadAvailableConsultants is re-created every render; the modal-open
+		// and agency deps below are the intended triggers.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		isSupervisorModalOpen,
 		activeSession.agency?.id,
 		activeSession.item?.agencyId,
 		isSupervisionEnabledForCurrentChat
-	]); // eslint-disable-line react-hooks/exhaustive-deps
+	]);
 
 	const loadSupervisors = async () => {
 		if (!isSupervisionEnabledForCurrentChat) {

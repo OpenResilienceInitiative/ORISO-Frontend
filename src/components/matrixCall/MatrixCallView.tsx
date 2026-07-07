@@ -29,7 +29,8 @@ export const MatrixCallView: React.FC<MatrixCallViewProps> = ({
 	const [isMuted, setIsMuted] = useState(false);
 	const [isVideoMuted, setIsVideoMuted] = useState(false);
 	const [activeCall, setActiveCall] = useState<MatrixCall | null>(null);
-	const [error, setError] = useState<string | null>(null);
+	// Only the setter is used; the error state is currently not rendered.
+	const [, setError] = useState<string | null>(null);
 
 	// Initialize call ONCE on mount
 	useEffect(() => {
@@ -112,6 +113,10 @@ export const MatrixCallView: React.FC<MatrixCallViewProps> = ({
 				(activeCall as any).hangup();
 			}
 		};
+		// activeCall is deliberately omitted: this effect must initialize the
+		// call once per room/client; re-running it when activeCall is set would
+		// hang up and restart the call.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [matrixClientService, roomId, isVideoCall]); // Re-run when Matrix client becomes available
 
 	// Monitor call state

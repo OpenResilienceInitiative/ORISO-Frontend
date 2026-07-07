@@ -56,7 +56,7 @@ import {
 	ATTACHMENT_MAX_SIZE_IN_MB,
 	getAttachmentSizeMBForKB
 } from './attachmentHelpers';
-import { ContentState, convertToRaw, EditorState, RichUtils } from 'draft-js';
+import { ContentState, convertToRaw, EditorState } from 'draft-js';
 import { draftToMarkdown } from 'markdown-draft-js';
 import {
 	escapeMarkdownChars,
@@ -94,7 +94,6 @@ import {
 import { getIconForAttachmentType } from '../message/messageHelpers';
 import { TipTapComposer, TipTapComposerRef } from './TipTapComposer';
 import { HIGHLIGHT_SNIPPET_SELECTED_EVENT } from './highlightSnippetEvents';
-import { useAppConfig } from '../../hooks/useAppConfig';
 
 type AttachmentUploadControl = Pick<XMLHttpRequest, 'abort'>;
 const VOICE_RECORDING_MAX_DURATION_SEC = 180;
@@ -332,7 +331,8 @@ export const MessageSubmitInterfaceComponent = ({
 		null
 	);
 	const composerRef = useRef<TipTapComposerRef | null>(null);
-	const [isRichtextActive, setIsRichtextActive] = useState(true);
+	// Rich text mode is permanently on; only the value is needed.
+	const [isRichtextActive] = useState(true);
 	const [isConsultantAbsent, setIsConsultantAbsent] = useState(
 		hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
 			activeSession.consultant?.absent
@@ -364,7 +364,9 @@ export const MessageSubmitInterfaceComponent = ({
 		startHeight: number;
 	} | null>(null);
 	const [isAudienceMenuOpen, setIsAudienceMenuOpen] = useState(false);
-	const [audienceOverlayBounds, setAudienceOverlayBounds] = useState<{
+	// Only the setter is needed while the audience blur overlay is disabled
+	// (see audienceMenuOverlayStyle below).
+	const [, setAudienceOverlayBounds] = useState<{
 		top: number;
 		left: number;
 		width: number;
@@ -446,9 +448,6 @@ export const MessageSubmitInterfaceComponent = ({
 	// to groupChat.groupId on group chats
 	// to session.groupId on session chats
 	const {
-		keyID,
-		key,
-		encrypted,
 		subscriptionKeyLost,
 		roomNotFound,
 		encryptRoom,
@@ -935,63 +934,6 @@ export const MessageSubmitInterfaceComponent = ({
 		}
 	}, [editorState, draftLoaded, isRichtextActive, scrollEditorToBottom]);
 
-	const handleEditorChange = useCallback(
-		(currentEditorState) => {
-			if (
-				draftLoaded &&
-				currentEditorState.getCurrentContent() !==
-					editorState.getCurrentContent() &&
-				isTyping
-			) {
-				isTyping(!currentEditorState.getCurrentContent().hasText());
-			}
-			setEditorState(currentEditorState);
-			onDraftMessageChange(getTypedMarkdownMessage());
-			// Auto-scroll to bottom when content changes (new lines, formatting, bullet lists, etc.)
-			// scrollEditorToBottom handles multiple attempts internally to catch DOM updates
-			scrollEditorToBottom();
-		},
-		[
-			draftLoaded,
-			editorState,
-			getTypedMarkdownMessage,
-			isTyping,
-			onDraftMessageChange,
-			scrollEditorToBottom
-		]
-	);
-
-	const handleEditorKeyCommand = useCallback(
-		(command) => {
-			const newState = RichUtils.handleKeyCommand(editorState, command);
-			if (newState) {
-				handleEditorChange(newState);
-				// Auto-scroll after formatting is applied
-				// Use multiple delays to catch DOM updates at different stages
-				// Rich text mode needs more aggressive scrolling due to Draft.js DOM update delays
-				if (isRichtextActive) {
-					setTimeout(() => scrollEditorToBottom(), 0);
-					setTimeout(() => scrollEditorToBottom(), 50);
-					setTimeout(() => scrollEditorToBottom(), 150);
-					setTimeout(() => scrollEditorToBottom(), 300);
-					setTimeout(() => scrollEditorToBottom(), 500);
-					setTimeout(() => scrollEditorToBottom(), 700);
-				} else {
-					setTimeout(() => scrollEditorToBottom(), 0);
-					setTimeout(() => scrollEditorToBottom(), 50);
-				}
-				return 'handled';
-			}
-			return 'not-handled';
-		},
-		[
-			editorState,
-			handleEditorChange,
-			isRichtextActive,
-			scrollEditorToBottom
-		]
-	);
-
 	const resizeTextarea = useCallback(() => {
 		const textInput: any = textareaInputRef.current;
 		if (!textInput) return;
@@ -1010,7 +952,6 @@ export const MessageSubmitInterfaceComponent = ({
 		} else {
 			textareaMaxHeight = 218;
 		}
-		const richtextHeight = 38;
 		const fileHeight = 48;
 
 		// Default min heights from CSS: mobile 88px, desktop 106px
@@ -1086,20 +1027,7 @@ export const MessageSubmitInterfaceComponent = ({
 
 		// Auto-scroll to bottom after resize completes (especially important for bullet lists)
 		scrollEditorToBottom();
-	}, [
-		attachmentSelected,
-		isRichtextActive,
-		editorState,
-		scrollEditorToBottom
-	]);
-
-	const toggleAbsentMessage = useCallback(() => {
-		//TODO: not react way: use state and based on that set a class
-		const infoWrapper = document.querySelector('.messageSubmitInfoWrapper');
-		if (infoWrapper) {
-			infoWrapper.classList.toggle('messageSubmitInfoWrapper--hidden');
-		}
-	}, []);
+	}, [attachmentSelected, editorState, scrollEditorToBottom]);
 
 	// Keep chat input ready for direct typing when opening/changing chats.
 	useEffect(() => {
@@ -1349,10 +1277,7 @@ export const MessageSubmitInterfaceComponent = ({
 			}
 		},
 		[
-			activeSession.isGroup,
-			activeSession.item.id,
-			activeSession.item?.matrixRoomId,
-			activeSession.rid,
+			activeSession,
 			cleanupAttachment,
 			encryptRoom,
 			getTypedMarkdownMessage,
@@ -1364,7 +1289,6 @@ export const MessageSubmitInterfaceComponent = ({
 			onSendButton,
 			setE2EEState,
 			supervisionRoomId,
-			threadParentPreview,
 			threadRootId,
 			userData?.displayName,
 			userData?.firstName,
@@ -1514,43 +1438,6 @@ export const MessageSubmitInterfaceComponent = ({
 			handleButtonClick();
 		},
 		[handleButtonClick]
-	);
-
-	// Key binding function for Draft.js to handle Ctrl+Enter / Cmd+Enter
-	// Only returns a command when modifier keys are pressed, otherwise returns undefined
-	// to let Draft.js handle Enter normally (create new line)
-	const keyBindingFn = useCallback((e: React.KeyboardEvent) => {
-		// Handle Ctrl+Enter (Windows/Linux) or Cmd+Enter (Mac) to send message
-		if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-			return 'send-message';
-		}
-		// Return undefined (not null) to let Draft.js handle Enter normally
-		return undefined;
-	}, []);
-
-	// Enhanced handleEditorKeyCommand to handle send message shortcut
-	const enhancedHandleEditorKeyCommand = useCallback(
-		(command) => {
-			// Handle send message command (Ctrl+Enter / Cmd+Enter)
-			if (command === 'send-message') {
-				if (!uploadProgress && !isRequestInProgress) {
-					handleButtonClick();
-				}
-				return 'handled';
-			}
-			// If command is null/undefined, return 'not-handled' to let Draft.js handle Enter normally
-			if (command == null) {
-				return 'not-handled';
-			}
-			// For all other commands, delegate to original handler
-			return handleEditorKeyCommand(command);
-		},
-		[
-			handleEditorKeyCommand,
-			uploadProgress,
-			isRequestInProgress,
-			handleButtonClick
-		]
 	);
 
 	const handleAttachmentSelect = useCallback(() => {
@@ -2139,6 +2026,7 @@ export const MessageSubmitInterfaceComponent = ({
 		type,
 		activeSession?.item?.status,
 		activeSession?.consultant?.username,
+		activeSession?.consultant?.displayName,
 		activeSession?.consultant?.id,
 		activeSession?.item?.askerRcId,
 		activeSession?.user?.username,
@@ -2769,6 +2657,9 @@ export const MessageSubmitInterfaceComponent = ({
 	const isToolbarActionSelected = useCallback(
 		(action: string) =>
 			composerRef.current?.isActionActive(action) || false,
+		// composerText is intentionally listed: it forces the toolbar to
+		// re-evaluate the active formatting state as the user types.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[composerText]
 	);
 
@@ -2914,9 +2805,6 @@ export const MessageSubmitInterfaceComponent = ({
 	const handleMobileBackNavigation = useCallback(() => {
 		onMobileNavigateBack?.();
 	}, [onMobileNavigateBack]);
-	const handleMobileDownNavigation = useCallback(() => {
-		onMobileNavigateDown?.();
-	}, [onMobileNavigateDown]);
 	const handleMobileBottomNavigation = useCallback(() => {
 		onMobileNavigateBottom?.();
 	}, [onMobileNavigateBottom]);

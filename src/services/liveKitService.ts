@@ -5,10 +5,8 @@
 import {
 	Room,
 	RoomEvent,
-	Track,
 	RemoteParticipant,
-	RemoteTrackPublication,
-	LocalParticipant
+	RemoteTrackPublication
 } from 'livekit-client';
 import { getLiveKitWsUrl } from '../resources/scripts/runtimeConfig';
 import { getValueFromCookie } from '../components/sessionCookie/accessSessionCookie';

@@ -21,7 +21,6 @@ const meta = {
 } satisfies Meta<typeof EmojiPickerPopup>;
 
 export default meta;
-type Story = StoryObj<typeof meta>;
 
 function PickerDemo() {
 	const [picked, setPicked] = useState<string[]>([]);

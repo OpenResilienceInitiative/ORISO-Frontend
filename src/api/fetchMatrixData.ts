@@ -7,7 +7,6 @@ export const fetchMatrixData = (
         ignoreErrors: boolean = false
 ): Promise<any> => {
         const matrixToken = getValueFromCookie("matrix_token");
-        const matrixUid = getValueFromCookie("matrix_uid");
 
         const headers: Record<string, string> = {
                 "Content-Type": "application/json",

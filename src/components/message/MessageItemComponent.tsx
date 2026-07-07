@@ -74,10 +74,6 @@ import { createPortal } from 'react-dom';
 import { ReactComponent as NotificationBellIcon } from '../../resources/img/icons/notification_bell.svg';
 import { ReactComponent as StackVerticalIcon } from '../../resources/img/icons/stack-vertical.svg';
 import { ReactComponent as EyeIcon } from '../../resources/img/icons/eye.svg';
-import { ReactComponent as ArrowLeftIcon } from '../../resources/img/icons/arrow-left.svg';
-import { ReactComponent as StackVerticalCircleIcon } from '../../resources/img/icons/stack-vertical-circle.svg';
-import { ReactComponent as PenIcon } from '../../resources/img/icons/pen.svg';
-import { ReactComponent as ArrowForwardIcon } from '../../resources/img/icons/arrow-forward.svg';
 import { formatMessagePersonName } from './messageNameUtils';
 import { useMatrixRoomUsers } from '../../hooks/useMatrixRoomUsers';
 import { ConsultantListContext } from '../../globalState/provider/ConsultantListProvider';
@@ -886,7 +882,9 @@ export const MessageItemComponent = ({
 					)
 				: ''
 		);
-	}, [decryptedMessage]);
+		// parsedMessage is memoized on decryptedMessage, so this stays
+		// equivalent to depending on decryptedMessage alone.
+	}, [decryptedMessage, parsedMessage.cleanedMessage]);
 
 	const isSupervisorFeedback = parsedMessage.isSupervisorFeedback;
 	const isSystemNotification = parsedMessage.isSystemNotification;

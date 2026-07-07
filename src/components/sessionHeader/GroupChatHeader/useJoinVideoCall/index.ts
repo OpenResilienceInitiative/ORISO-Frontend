@@ -4,15 +4,11 @@ import {
 	UserDataContext,
 	hasUserAuthority
 } from '../../../../globalState';
-import { generatePath } from 'react-router-dom';
-import { useAppConfig } from '../../../../hooks/useAppConfig';
-import { apiJoinGroupChat } from '../../../../api';
 
 const regexUUID =
 	/(\b[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12}\b)/;
 
 export const useJoinVideoCall = () => {
-	const { urls } = useAppConfig();
 	const { userData } = useContext(UserDataContext);
 
 	const isConsultant = hasUserAuthority(
@@ -39,7 +35,7 @@ export const useJoinVideoCall = () => {
 			// console.log('📞 Opening call in new tab:', callUrl);
 			window.open(callUrl, '_blank');
 		},
-		[urls.videoCall]
+		[]
 	);
 
 	const onJoinConsultantCall = useCallback(

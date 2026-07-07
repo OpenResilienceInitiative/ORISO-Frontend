@@ -485,7 +485,6 @@ export const CreateGroupChatView = () => {
 		selectedConsultants,
 		dispatch,
 		navigate,
-		createChatSuccessOverlayItem,
 		createChatErrorOverlayItem
 	]);
 

@@ -489,7 +489,8 @@ export const SessionStream = ({
 			}
 			detachTimelineListeners.forEach((detach) => detach());
 		};
-	}, [resolvedChatSession, supervisionRoomId, fetchSessionMessages]);
+		// matrixRoomId is derived from resolvedChatSession (already a dep).
+	}, [resolvedChatSession, supervisionRoomId, fetchSessionMessages, matrixRoomId]);
 
 	const groupChatStoppedOverlay: OverlayItem = useMemo(
 		() => ({
@@ -605,7 +606,10 @@ export const SessionStream = ({
 			setMatrixTypingUsers([]);
 			return;
 		}
-		matrixTypingActivityRef.current.clear();
+		// Snapshot the ref content for the cleanup below (the Map instance is
+		// stable for the lifetime of the component).
+		const matrixTypingActivity = matrixTypingActivityRef.current;
+		matrixTypingActivity.clear();
 
 		const updateMatrixTypingUsers = () => {
 			const room = matrixClient.getRoom?.(matrixRoomId);
@@ -680,7 +684,7 @@ export const SessionStream = ({
 				handleRoomMemberTyping
 			);
 			window.clearInterval(refreshInterval);
-			matrixTypingActivityRef.current.clear();
+			matrixTypingActivity.clear();
 			setMatrixTypingUsers([]);
 		};
 	}, [
@@ -809,6 +813,7 @@ export const SessionStream = ({
 				subscribed.current = false;
 			}
 		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		activeSession,
 		// Function dependencies intentionally omitted to prevent re-subscribe

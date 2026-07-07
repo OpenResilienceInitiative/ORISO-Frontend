@@ -38,7 +38,6 @@ const meta = {
 } satisfies Meta<typeof MentionList>;
 
 export default meta;
-type Story = StoryObj<typeof meta>;
 
 export const MixedMembership: StoryObj = {
 	render: () => (

@@ -12,7 +12,6 @@ import './FloatingCallWidget.scss';
 export const FloatingCallWidget: React.FC = () => {
 	const { matrixClientService } = useMatrixClient();
 	const [callData, setCallData] = useState<CallData | null>(null);
-	const [callDuration, setCallDuration] = useState(0);
 	const [isMuted, setIsMuted] = useState(false);
 	const [isVideoOff, setIsVideoOff] = useState(false);
 	const [isFullscreen, setIsFullscreen] = useState(false);
@@ -56,7 +55,6 @@ export const FloatingCallWidget: React.FC = () => {
 			setCallData(newCallData);
 			if (!newCallData) {
 				callInitiatedRef.current = false;
-				setCallDuration(0);
 			} else {
 				// Reset callInitiatedRef for new calls
 				callInitiatedRef.current = false;
@@ -171,19 +169,6 @@ export const FloatingCallWidget: React.FC = () => {
 			remoteVideoRef.current
 		);
 	}, [callData?.matrixCall, callData?.state]);
-
-	// Call duration timer
-	useEffect(() => {
-		if (callData?.state === 'connected') {
-			const interval = setInterval(
-				() => setCallDuration((prev) => prev + 1),
-				1000
-			);
-			return () => clearInterval(interval);
-		} else {
-			setCallDuration(0);
-		}
-	}, [callData?.state]);
 
 	// Dragging
 	const handleMouseDown = (e: React.MouseEvent) => {
@@ -300,29 +285,6 @@ export const FloatingCallWidget: React.FC = () => {
 		setIsFullscreen(!isFullscreen);
 		if (!isFullscreen) setIsMinimized(false);
 	};
-	const toggleMinimized = () => {
-		setIsMinimized(!isMinimized);
-		if (!isMinimized) setIsFullscreen(false);
-	};
-
-	const formatDuration = (seconds: number) => {
-		const mins = Math.floor(seconds / 60);
-		const secs = seconds % 60;
-		return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-	};
-
-	const getStatusText = () => {
-		if (callData.isIncoming && callData.state === 'ringing')
-			return callData.isVideo
-				? 'Incoming Video Call'
-				: 'Incoming Audio Call';
-		if (!callData.isIncoming && callData.state === 'ringing')
-			return callData.isVideo ? 'Calling...' : 'Calling (audio)...';
-		if (callData.state === 'connecting') return 'Connecting...';
-		if (callData.state === 'connected') return formatDuration(callDuration);
-		return callData.isVideo ? 'Video Call' : 'Audio Call';
-	};
-
 	// Only render for 1-on-1 calls (not group calls)
 	// Group calls are handled by GroupCallWidget
 	if (!callData || callData.usesElementCall || callData.isGroup) return null;
