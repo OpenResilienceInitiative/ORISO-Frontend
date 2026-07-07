@@ -56,12 +56,7 @@ import {
 	ATTACHMENT_MAX_SIZE_IN_MB,
 	getAttachmentSizeMBForKB
 } from './attachmentHelpers';
-import {
-	ContentState,
-	convertToRaw,
-	EditorState,
-	RichUtils
-} from 'draft-js';
+import { ContentState, convertToRaw, EditorState, RichUtils } from 'draft-js';
 import { draftToMarkdown } from 'markdown-draft-js';
 import {
 	escapeMarkdownChars,
@@ -184,36 +179,6 @@ export const MessageSubmitInterfaceComponent = ({
 	onMobileNavigateDown,
 	onMobileNavigateBottom
 }: MessageSubmitInterfaceComponentProps) => {
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 	const ComposerMobileBackIcon = () => (
 		<svg
 			width="5"
@@ -2875,7 +2840,7 @@ export const MessageSubmitInterfaceComponent = ({
 
 	const handleMentionInsert = useCallback(() => {
 		composerRef.current?.focus();
-		composerRef.current?.insertText('@');
+		composerRef.current?.insertMentionTrigger();
 	}, []);
 
 	// Live snapshot for the mention provider — the TipTap extension is created
@@ -2966,7 +2931,8 @@ export const MessageSubmitInterfaceComponent = ({
 	);
 
 	const clampComposerHeight = useCallback(
-		(height: number) => clampComposerHeightPure(height, getComposerHeightBounds()),
+		(height: number) =>
+			clampComposerHeightPure(height, getComposerHeightBounds()),
 		[getComposerHeightBounds]
 	);
 
@@ -3681,9 +3647,15 @@ export const MessageSubmitInterfaceComponent = ({
 															hasUploadFunctionality &&
 															isVoiceMessageEnabledForCurrentChat
 														}
-														isRecording={isVoiceRecording}
-														onMicClick={toggleVoiceRecording}
-														isEmojiOpen={isEmojiStripOpen}
+														isRecording={
+															isVoiceRecording
+														}
+														onMicClick={
+															toggleVoiceRecording
+														}
+														isEmojiOpen={
+															isEmojiStripOpen
+														}
 														onEmojiClick={() =>
 															setIsEmojiStripOpen(
 																(prev) => !prev
@@ -3698,7 +3670,9 @@ export const MessageSubmitInterfaceComponent = ({
 														onAttachmentClick={
 															handleAttachmentSelect
 														}
-														isExpanded={isExpandedComposer}
+														isExpanded={
+															isExpandedComposer
+														}
 														onExpandToggle={
 															toggleExpandedComposer
 														}
@@ -3709,7 +3683,9 @@ export const MessageSubmitInterfaceComponent = ({
 															direction={
 																composerMenuDirection
 															}
-															onPick={handleEmojiPick}
+															onPick={
+																handleEmojiPick
+															}
 															onClose={() =>
 																setIsEmojiStripOpen(
 																	false
@@ -3720,14 +3696,22 @@ export const MessageSubmitInterfaceComponent = ({
 												</span>
 											) : (
 												<ComposerToolbar
-													direction={composerMenuDirection}
+													direction={
+														composerMenuDirection
+													}
 													isMobile={isMobileViewport}
-													isExpanded={isExpandedComposer}
-													onAction={handleToolbarAction}
+													isExpanded={
+														isExpandedComposer
+													}
+													onAction={
+														handleToolbarAction
+													}
 													isActionSelected={
 														isToolbarActionSelected
 													}
-													onCollapse={openCompactActionStrip}
+													onCollapse={
+														openCompactActionStrip
+													}
 													onExpandToggle={
 														toggleExpandedComposer
 													}

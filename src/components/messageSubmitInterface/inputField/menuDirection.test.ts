@@ -8,17 +8,17 @@ describe('getMenuDirection', () => {
 		);
 	});
 
-	it('opens bottom-to-top on mobile, even in fullscreen', () => {
+	it('opens bottom-to-top on docked mobile', () => {
 		expect(getMenuDirection({ isExpanded: false, isMobile: true })).toBe(
-			'up'
-		);
-		expect(getMenuDirection({ isExpanded: true, isMobile: true })).toBe(
 			'up'
 		);
 	});
 
-	it('opens top-down in desktop fullscreen mode', () => {
+	it('opens top-down in the maximized editor on desktop and mobile', () => {
 		expect(getMenuDirection({ isExpanded: true, isMobile: false })).toBe(
+			'down'
+		);
+		expect(getMenuDirection({ isExpanded: true, isMobile: true })).toBe(
 			'down'
 		);
 	});

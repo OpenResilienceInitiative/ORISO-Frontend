@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ReactComponent as SendPlaneIcon } from '../../../resources/img/icons/paper-plane.svg';
+import SendIcon from '@mui/icons-material/Send';
 import {
 	deriveSendButtonState,
 	getSendButtonTransition,
@@ -34,7 +34,10 @@ export const SendButton = ({
 	const [isFlyingOut, setIsFlyingOut] = useState(false);
 
 	useEffect(() => {
-		const transition = getSendButtonTransition(previousState.current, state);
+		const transition = getSendButtonTransition(
+			previousState.current,
+			state
+		);
 		previousState.current = state;
 		if (transition === 'fly-out') {
 			setIsFlyingOut(true);
@@ -65,7 +68,7 @@ export const SendButton = ({
 				aria-hidden
 				onAnimationEnd={() => setIsFlyingOut(false)}
 			>
-				<SendPlaneIcon className="sendButton__planeIcon" />
+				<SendIcon className="sendButton__planeIcon" />
 			</span>
 		</button>
 	);

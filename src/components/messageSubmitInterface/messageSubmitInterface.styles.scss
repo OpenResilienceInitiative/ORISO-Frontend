@@ -126,7 +126,8 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				// Handle touched (Figma 1168:38130): the outer frame darkens
 				// while the composer is being resized.
 				&--resizing {
-					border: 2px solid var(--m3-on-primary-fixed-variant, #930008) !important;
+					border: 2px solid
+						var(--m3-on-primary-fixed-variant, #930008) !important;
 					transition: none;
 				}
 
@@ -517,7 +518,9 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			position: absolute;
 			top: 4px;
 			left: 8px;
-			right: 64px;
+
+			// keep clear of the 48px send button flush at right:16
+			right: 72px;
 			z-index: 20;
 			display: block;
 			overflow: visible;
@@ -985,9 +988,11 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			background: #fff !important;
 			opacity: 1;
 			padding: 8px;
+
+			// Regular M3 elevation — no spread halo bleeding over the composer.
 			box-shadow:
-				0 30px 28px rgba(0, 0, 0, 0.1),
-				0 0 30px 28px rgba(0, 0, 0, 0.05);
+				0 4px 8px 3px rgba(0, 0, 0, 0.08),
+				0 1px 3px rgba(0, 0, 0, 0.2);
 			z-index: 999999;
 			overflow: visible;
 		}
@@ -1788,17 +1793,21 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 		}
 
 		&__buttons {
+			// Send button sits flush in the input field's top-right corner:
+			// the inputWrapper is inset 16px, so the button's 4px corner meets
+			// the field's 4px corner and the 24px bottom-left radius forms the
+			// Figma notch (489:16565).
 			position: absolute;
-			top: 23px;
-			right: 22px;
+			top: 16px;
+			right: 16px;
 			z-index: 8;
 			display: flex;
 			align-items: center;
 			gap: 0;
 
 			@media screen and (width <= 899px) {
-				right: -6px;
-				top: -4px;
+				right: 0;
+				top: 0;
 			}
 
 			.textarea__wrapper-send-message--expanded & {

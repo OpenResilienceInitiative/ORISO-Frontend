@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
 	ActiveSessionContext,
 	AUTHORITIES,
@@ -148,7 +148,11 @@ export const buildMockGroupSession = () =>
 			hintMessage: '',
 			messageDate: Date.now(),
 			messagesRead: false,
-			moderators: ['consultant-storybook'],
+			// Moderator ids intentionally without a homeserver domain — the
+			// audience matcher tokenizes on non-alphanumerics, so a domain
+			// token shared with every room member would classify everyone
+			// as moderator.
+			moderators: ['bruno.p', 'heinz.haltstill', 'volker.vorlaut'],
 			repetitive: false,
 			startDate: '2026-07-01',
 			startTime: '10:00',
@@ -156,11 +160,47 @@ export const buildMockGroupSession = () =>
 			topic: 'Träger Admins Caritas'
 		},
 		user: {
-			username: 'mario-k@example.invalid',
-			displayName: 'Mario K',
+			username: 'alpaka.leon@example.invalid',
+			displayName: 'Gutmütiges Alpaka Leon',
 			sessionData: {}
 		},
 		consultant: storybookConsultant
+	}) as any;
+
+/**
+ * Room membership for the group story — drives the real recipient split
+ * button + "Message visible to" audience menu (1 client, counsellors,
+ * 3 moderators, like the Figma group chat frame). The domain must not share
+ * tokens with the consultant's identity, or the self-filter would drop
+ * every member.
+ */
+export const storybookGroupRoomMembers = [
+	{ userId: '@beraterin:beratung.local', name: 'Beraterin ORISO' },
+	{ userId: '@alpaka.leon:beratung.local', name: 'Gutmütiges Alpaka Leon' },
+	{
+		userId: '@melania.paulstaetter:beratung.local',
+		name: 'Melania Paulstätter'
+	},
+	{ userId: '@a.kraeger:beratung.local', name: 'A. Kräger' },
+	{ userId: '@bruno.p:beratung.local', name: 'Bruno P.' },
+	{ userId: '@heinz.haltstill:beratung.local', name: 'Heinz Haltstill' },
+	{ userId: '@volker.vorlaut:beratung.local', name: 'Volker Vorlaut' }
+];
+
+/**
+ * Minimal Matrix client stand-in: just enough for the composer to read the
+ * room membership when building the audience options.
+ */
+export const buildMockMatrixClientService = (
+	members: Array<{ userId: string; name: string }>
+) =>
+	({
+		getClient: () => ({
+			getRoom: () => ({
+				getMembers: () => members,
+				getJoinedMembers: () => members
+			})
+		})
 	}) as any;
 
 const jsonResponse = (body: unknown, status = 200) =>
@@ -217,8 +257,15 @@ const installComposerFetchMocks = () => {
 			return jsonResponse(storybookAgencyConsultants);
 		}
 
-		if (/\/service\/users\/sessions\/\d+\/supervisors$/.test(pathname)) {
-			return jsonResponse(storybookSessionSupervisors);
+		// Supervisors only exist on the 1:1 session fixture. Returning them for
+		// the group chat too would flip the audience selector into supervision
+		// mode and hide the room members.
+		if (/\/service\/users\/sessions\/(\d+)\/supervisors$/.test(pathname)) {
+			return jsonResponse(
+				pathname.includes('/sessions/360/')
+					? storybookSessionSupervisors
+					: []
+			);
 		}
 
 		if (pathname.endsWith('/service/users/drafts')) {
@@ -239,17 +286,26 @@ const installComposerFetchMocks = () => {
 
 export function ComposerStoryDecorator({
 	activeSession,
+	roomMembers,
 	children
 }: {
 	activeSession?: any;
+	roomMembers?: Array<{ userId: string; name: string }>;
 	children: React.ReactNode;
 }) {
-	useEffect(() => installComposerFetchMocks(), []);
+	// Install during render (useState initializer), not in an effect: the
+	// composer fires its consultant/supervisor fetches from child effects,
+	// which run BEFORE this parent's effects — an effect-installed mock would
+	// always be one render too late and the @-mention directory stayed empty.
+	const [restoreFetchMocks] = useState(() => installComposerFetchMocks());
+	useEffect(() => restoreFetchMocks, [restoreFetchMocks]);
 
 	return (
 		<MatrixClientContext.Provider
 			value={{
-				matrixClientService: null,
+				matrixClientService: roomMembers?.length
+					? buildMockMatrixClientService(roomMembers)
+					: null,
 				setMatrixClientService: () => {}
 			}}
 		>
