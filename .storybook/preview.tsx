@@ -757,6 +757,7 @@ function MuiStoryShell({
 			<LocaleContext.Provider
 				value={{
 					locale: 'de',
+					locales: ['de', 'en'],
 					selectableLocales: ['de', 'en'],
 					setLocale: () => {},
 					initLocale: 'de'
@@ -771,8 +772,8 @@ function MuiStoryShell({
 					<UserDataContext.Provider
 						value={{
 							userData: mockUserData,
-							reloadUserData: async () => null as any,
-							loaded: true
+							setUserData: () => {},
+							reloadUserData: async () => null as any
 						}}
 					>
 						<UrlParamsContext.Provider
@@ -797,10 +798,17 @@ function MuiStoryShell({
 								<NotificationsContext.Provider
 									value={{
 										notifications: [],
+										notificationFeed: [],
+										unreadNotificationCount: 0,
 										setNotifications: () => {},
 										hasNotification: () => false,
 										addNotification: () => {},
-										removeNotification: () => {}
+										addEventNotification: () => {},
+										refreshNotificationFeed: () => {},
+										removeNotification: () => {},
+										markNotificationAsRead: () => {},
+										markAllNotificationsAsRead: () => {},
+										clearNotificationFeed: () => {}
 									}}
 								>
 									<RegistrationContext.Provider
@@ -910,7 +918,7 @@ const preview: Preview = {
 			]
 		}
 	},
-	globals: {
+	initialGlobals: {
 		locale: FALLBACK_LNG,
 		locales: {
 			de: { icon: '🇩🇪', title: 'Deutsch', right: 'DE' },

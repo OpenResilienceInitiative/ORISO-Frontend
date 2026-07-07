@@ -40,7 +40,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const MixedMembership: Story = {
+export const MixedMembership: StoryObj = {
 	render: () => (
 		<MentionList
 			ref={createRef<MentionListRef>()}
@@ -51,7 +51,7 @@ export const MixedMembership: Story = {
 	)
 };
 
-export const AllInChat: Story = {
+export const AllInChat: StoryObj = {
 	render: () => (
 		<MentionList
 			ref={createRef<MentionListRef>()}

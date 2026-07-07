@@ -53,16 +53,16 @@ const SplitButtonDemo = ({
 	);
 };
 
-export const SingleRecipient: Story = {
+export const SingleRecipient: StoryObj = {
 	render: () => <SplitButtonDemo label="A. Kräger" icon={<PersonIcon />} />
 };
 
-export const MultipleRecipients: Story = {
+export const MultipleRecipients: StoryObj = {
 	render: () => (
 		<SplitButtonDemo label="3 Personen" icon={<GroupIcon />} isMulti />
 	)
 };
 
-export const AllRecipients: Story = {
+export const AllRecipients: StoryObj = {
 	render: () => <SplitButtonDemo label="Alle" icon={<GroupIcon />} />
 };
