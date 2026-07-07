@@ -162,7 +162,7 @@
 	padding: 12px 18px;
 	border: none;
 	cursor: pointer;
-	font-family: 'Inter', sans-serif;
+	font-family: Inter, sans-serif;
 	font-size: 14px;
 	line-height: 20px;
 	font-weight: 500;
@@ -202,7 +202,7 @@
 	}
 }
 
-@media screen and (max-width: 640px) {
+@media screen and (width <= 640px) {
 	.breathingTutorialCard {
 		padding: 8px 12px;
 		gap: 18px;

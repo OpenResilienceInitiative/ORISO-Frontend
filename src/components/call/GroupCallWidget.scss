@@ -220,7 +220,7 @@
 	}
 }
 
-@media (max-width: 640px) {
+@media (width <= 640px) {
 	.group-call-widget {
 		border-radius: 12px;
 	}
@@ -391,7 +391,7 @@
 }
 
 /* Responsive adjustments */
-@media (max-width: 1024px) {
+@media (width <= 1024px) {
 	.livekit-room-container,
 	.element-call-container {
 		width: 95vw;
@@ -399,7 +399,7 @@
 	}
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
 	.livekit-room-container,
 	.element-call-container {
 		width: 100vw;

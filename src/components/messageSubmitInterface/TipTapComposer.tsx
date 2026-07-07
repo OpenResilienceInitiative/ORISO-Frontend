@@ -13,6 +13,12 @@ import Link from '@tiptap/extension-link';
 import Highlight from '@tiptap/extension-highlight';
 import TextAlign from '@tiptap/extension-text-align';
 import Placeholder from '@tiptap/extension-placeholder';
+import TaskList from '@tiptap/extension-task-list';
+import TaskItem from '@tiptap/extension-task-item';
+import {
+	createMentionExtension,
+	MentionProvider
+} from './inputField/extensions/createMentionExtension';
 import {
 	FormatBold,
 	FormatListBulleted,
@@ -35,6 +41,8 @@ export interface TipTapComposerRef {
 	setText: (value: string) => void;
 	getHTML: () => string;
 	insertText: (value: string) => void;
+	/** Inserts '@' so the mention suggestion reliably opens. */
+	insertMentionTrigger: () => void;
 	insertSnippet: (payload: HighlightSnippetPayload) => void;
 	runAction: (action: string) => void;
 	isActionActive: (action: string) => boolean;
@@ -49,6 +57,10 @@ interface TipTapComposerProps {
 	onChange: (value: string) => void;
 	onSubmitShortcut: () => void;
 	onSelectionSnippet?: (payload: HighlightSnippetPayload | null) => void;
+	/** Editor gained/lost focus — drives the Figma "Selected" container state. */
+	onFocusChange?: (focused: boolean) => void;
+	/** Enables Slack-like @-mentions for agency consultants when provided. */
+	mentionProvider?: MentionProvider;
 }
 
 const escapeMarkdownText = (value: string): string =>
@@ -279,7 +291,9 @@ export const TipTapComposer = forwardRef<
 			maxLength,
 			onChange,
 			onSubmitShortcut,
-			onSelectionSnippet
+			onSelectionSnippet,
+			onFocusChange,
+			mentionProvider
 		},
 		ref
 	) => {
@@ -306,8 +320,16 @@ export const TipTapComposer = forwardRef<
 					}),
 					Placeholder.configure({
 						placeholder
-					})
+					}),
+					TaskList,
+					TaskItem.configure({ nested: true }),
+					...(mentionProvider
+						? [createMentionExtension(mentionProvider)]
+						: [])
 				],
+				// mentionProvider is captured once on mount — the provider reads
+				// live data via its closures, so it need not be a dep.
+				// eslint-disable-next-line react-hooks/exhaustive-deps
 				[placeholder]
 			),
 			content: value || '',
@@ -382,6 +404,12 @@ export const TipTapComposer = forwardRef<
 					}
 					return false;
 				}
+			},
+			onFocus: () => {
+				onFocusChange?.(true);
+			},
+			onBlur: () => {
+				onFocusChange?.(false);
 			},
 			onUpdate: ({ editor: currentEditor }) => {
 				if (isSyncingFromValue) {
@@ -477,6 +505,27 @@ export const TipTapComposer = forwardRef<
 				}
 				editor.chain().focus().insertContent(nextValue).run();
 			},
+			insertMentionTrigger: () => {
+				if (!editor) {
+					return;
+				}
+				// The mention suggestion only fires on '@' at a line start or
+				// after whitespace — a bare '@' pasted right behind text would
+				// silently do nothing, so pad it when needed.
+				const { $from } = editor.state.selection;
+				const textBefore = $from.parent.textBetween(
+					0,
+					$from.parentOffset,
+					undefined,
+					'￼'
+				);
+				const needsSpace = /\S$/.test(textBefore);
+				editor
+					.chain()
+					.focus()
+					.insertContent(needsSpace ? ' @' : '@')
+					.run();
+			},
 			insertSnippet: (payload: HighlightSnippetPayload) => {
 				if (!editor || !payload?.text) {
 					return;
@@ -531,6 +580,16 @@ export const TipTapComposer = forwardRef<
 							.focus()
 							.toggleHeading({ level: 3 })
 							.run();
+						return;
+					case 'heading4':
+						editor
+							.chain()
+							.focus()
+							.toggleHeading({ level: 4 })
+							.run();
+						return;
+					case 'taskList':
+						editor.chain().focus().toggleTaskList().run();
 						return;
 					case 'alignLeft':
 						editor.chain().focus().setTextAlign('left').run();
@@ -707,6 +766,10 @@ export const TipTapComposer = forwardRef<
 						return editor.isActive('heading', { level: 2 });
 					case 'heading3':
 						return editor.isActive('heading', { level: 3 });
+					case 'heading4':
+						return editor.isActive('heading', { level: 4 });
+					case 'taskList':
+						return editor.isActive('taskList');
 					case 'alignLeft':
 						return (
 							activeTextAlign !== 'center' &&

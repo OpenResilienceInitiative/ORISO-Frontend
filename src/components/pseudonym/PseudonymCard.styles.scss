@@ -72,6 +72,7 @@
 	flex: 1 1 auto;
 	max-width: 560px;
 	padding-top: 6px;
+
 	/* Pull content left so the bubble slides a little under the avatar,
 	   giving the avatar a "sitting on top-left corner" overlap effect. */
 	margin-left: -32px;
@@ -92,7 +93,7 @@
 }
 
 .pseudonymCard__headerName {
-	font-family: 'Inter', sans-serif;
+	font-family: Inter, sans-serif;
 	font-size: 14px;
 	font-weight: 600;
 	line-height: 16px;
@@ -100,7 +101,7 @@
 }
 
 .pseudonymCard__headerSubtitle {
-	font-family: 'Inter', sans-serif;
+	font-family: Inter, sans-serif;
 	font-size: 12px;
 	font-weight: 500;
 	line-height: 14px;
@@ -120,6 +121,7 @@
 	border-radius: 4px 14px 14px 14px;
 	background: #eeeeee;
 	box-sizing: border-box;
+
 	/* Smoothly accommodate the revealed pseudonym block so the bubble
 	   grows instead of snapping its height when the display column
 	   slides in. */
@@ -194,7 +196,7 @@
 }
 
 .pseudonymCard__label {
-	font-family: 'Inter', sans-serif;
+	font-family: Inter, sans-serif;
 	font-size: 13px;
 	font-weight: 600;
 	line-height: 32px;
@@ -206,7 +208,7 @@
 }
 
 .pseudonymCard__name {
-	font-family: 'Inter', sans-serif;
+	font-family: Inter, sans-serif;
 	font-size: 22px;
 	font-weight: 700;
 	line-height: 28px;
@@ -217,7 +219,7 @@
 }
 
 /* Mobile shrink */
-@media screen and (max-width: 640px) {
+@media screen and (width <= 640px) {
 	.pseudonymCard__wrap {
 		gap: 10px;
 	}
