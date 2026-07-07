@@ -46,8 +46,10 @@ export const AcceptAssign = ({ assigned, btnLabel }: AcceptAssignProps) => {
 	const [overlayItem, setOverlayItem] = useState<OverlayItem>(null);
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
-	const getSessionListTab = () =>
-		`${sessionListTab ? `?sessionListTab=${sessionListTab}` : ''}`;
+	const getSessionListTab = useCallback(
+		() => `${sessionListTab ? `?sessionListTab=${sessionListTab}` : ''}`,
+		[sessionListTab]
+	);
 
 	/* E2EE */
 	const { encryptRoom } = useE2EE(groupIdFromParam);

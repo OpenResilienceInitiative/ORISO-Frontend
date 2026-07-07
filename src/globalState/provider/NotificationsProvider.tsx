@@ -10,7 +10,6 @@ import {
 import { v4 as uuid } from 'uuid';
 import {
 	IncomingVideoCallProps,
-	NOTIFICATION_TYPE_CALL,
 	NotificationTypeCall
 } from '../../components/incomingVideoCall/IncomingVideoCall';
 import {

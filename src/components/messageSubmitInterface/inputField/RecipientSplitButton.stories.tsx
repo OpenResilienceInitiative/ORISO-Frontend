@@ -27,7 +27,6 @@ const meta = {
 } satisfies Meta<typeof RecipientSplitButton>;
 
 export default meta;
-type Story = StoryObj<typeof meta>;
 
 // Hooks must live in a proper component — calling useState inside the
 // story's render() violates react-hooks/rules-of-hooks and fails CI lint.

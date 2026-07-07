@@ -227,7 +227,7 @@
 		"test:build": "cross-env NODE_ENV=production FAST_REFRESH=false BROWSER=none PORT=9001 CYPRESS_WS_URL=http://127.0.0.1:9002 REACT_APP_API_URL=http://127.0.0.1:9001 concurrently --kill-others --success first \"npm run start\" \"wait-on http://127.0.0.1:9001 && cypress run\"",
 		"release": "standard-version",
 		"lint": "npm run lint:scripts && npm run lint:style",
-		"lint:scripts": "eslint src && tsc",
+		"lint:scripts": "eslint src --max-warnings=0 && tsc",
 		"lint:style": "stylelint src/**/*.scss",
 		"lint:style:fix": "stylelint --fix src/**/*.scss",
 		"cypress": "run-p cypress:*",

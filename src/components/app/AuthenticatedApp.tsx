@@ -178,11 +178,16 @@ export const AuthenticatedApp = ({
 					setLoading(false);
 				});
 		}
+		// callContext is deliberately omitted: the CallProvider context value is
+		// recreated on every call-state change and would re-run this bootstrap
+		// effect; it is only mirrored to window.callContext here.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		locale,
 		setConsultingTypes,
 		setInformal,
 		setLocale,
+		setMatrixClientService,
 		reloadUserData,
 		userDataRequested
 	]);

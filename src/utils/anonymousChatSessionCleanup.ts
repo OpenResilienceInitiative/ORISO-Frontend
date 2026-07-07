@@ -15,8 +15,6 @@ import {
 	STATUS_FINISHED
 } from '../globalState/interfaces/SessionsDataInterface';
 let pendingSessionId: number | null = null;
-let pendingMatrixRoomId: string | null = null;
-let pendingUsername: string | null = null;
 let preLogoutListenerRegistered = false;
 
 const isOpenAnonymousSessionStatus = (status: unknown): boolean => {
@@ -42,13 +40,9 @@ export const registerAnonymousChatSessionForCleanup = (
 		(sessionStatus != null && !isOpenAnonymousSessionStatus(sessionStatus))
 	) {
 		pendingSessionId = null;
-		pendingMatrixRoomId = null;
-		pendingUsername = null;
 		return;
 	}
 	pendingSessionId = sessionId;
-	pendingMatrixRoomId = matrixRoomId ?? null;
-	pendingUsername = username ?? null;
 };
 
 export const finishAnonymousChatSessionKeepalive = (
@@ -84,8 +78,6 @@ export const finishPendingAnonymousChatSession = async (): Promise<void> => {
 
 	const sessionId = pendingSessionId;
 	pendingSessionId = null;
-	pendingMatrixRoomId = null;
-	pendingUsername = null;
 
 	try {
 		await apiFinishAnonymousConversation(sessionId);

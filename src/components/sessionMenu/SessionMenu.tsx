@@ -18,7 +18,6 @@ import {
 	SessionsDataContext,
 	REMOVE_SESSIONS
 } from '../../globalState';
-import { SessionItemInterface } from '../../globalState/interfaces';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import {
 	SESSION_LIST_TAB,
@@ -32,14 +31,12 @@ import {
 	leaveGroupChatSecurityOverlayItem,
 	leaveGroupChatSuccessOverlayItem,
 	stopGroupChatSecurityOverlayItem,
-	stopGroupChatSuccessOverlayItem,
-	videoCallErrorOverlayItem
+	stopGroupChatSuccessOverlayItem
 } from './sessionMenuHelpers';
 import {
 	apiPutArchive,
 	apiPutDearchive,
 	apiPutGroupChat,
-	apiStartVideoCall,
 	GROUP_CHAT_API
 } from '../../api';
 import { logout } from '../logout/logout';
@@ -58,11 +55,9 @@ import '../sessionHeader/sessionHeader.styles';
 import './sessionMenu.styles';
 import { Button, BUTTON_TYPES, ButtonItem } from '../button/Button';
 import { ReactComponent as CalendarMonthPlusIcon } from '../../resources/img/icons/calendar-plus.svg';
-import { supportsE2EEncryptionVideoCall } from '../../utils/videoCallHelpers';
 import DeleteSession from '../session/DeleteSession';
 import { Text } from '../text/Text';
 import { useSearchParam } from '../../hooks/useSearchParams';
-import { useAppConfig } from '../../hooks/useAppConfig';
 import { useTranslation } from 'react-i18next';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import { useMatrixRoomUsers } from '../../hooks/useMatrixRoomUsers';
@@ -74,11 +69,6 @@ import {
 	ChatMenuDropdownHeader,
 	ChatMenuDropdownItemContent as SessionMenuItemContent
 } from '../chatMenuDropdown/ChatMenuDropdown';
-
-type TReducedSessionItemInterface = Omit<
-	SessionItemInterface,
-	'attachment' | 'topic' | 'e2eLastMessage' | 'videoCallMessageDTO'
->;
 
 export interface SessionMenuProps {
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
@@ -101,7 +91,6 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	const navigate = useNavigate();
 
 	const legalLinks = useContext(LegalLinksContext);
-	const settings = useAppConfig();
 
 	const { userData } = useContext(UserDataContext);
 	const { type, path: listPath } = useContext(SessionTypeContext);
