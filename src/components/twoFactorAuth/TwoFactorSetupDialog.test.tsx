@@ -450,7 +450,11 @@ describe('TwoFactorSetupDialog', () => {
 				'maxmuster@email.de'
 			)
 		);
-		clickButton('twoFactorAuth.setupDialog.email.connect.resend');
+		fireEvent.click(
+			await screen.findByRole('button', {
+				name: 'twoFactorAuth.setupDialog.email.connect.resend'
+			})
+		);
 		await waitFor(() =>
 			expect(apiPutTwoFactorAuthEmailMock).toHaveBeenCalledTimes(2)
 		);

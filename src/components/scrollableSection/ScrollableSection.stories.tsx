@@ -44,11 +44,14 @@ function LongScrollableBody() {
 }
 
 export const BodyOnly: Story = {
+	args: {
+		children: [<LongScrollableBody key="body" />]
+	},
 	render: () => (
 		<ScrollableStoryFrame>
 			<div style={storyPanelStyle}>
 				<ScrollableSection>
-					<LongScrollableBody />
+					{[<LongScrollableBody key="body" />]}
 				</ScrollableSection>
 			</div>
 		</ScrollableStoryFrame>
@@ -56,6 +59,12 @@ export const BodyOnly: Story = {
 };
 
 export const HeaderAndBody: Story = {
+	args: {
+		children: [
+			<div key="header">Header</div>,
+			<LongScrollableBody key="body" />
+		]
+	},
 	render: () => (
 		<ScrollableStoryFrame>
 			<div style={storyPanelStyle}>
@@ -69,6 +78,13 @@ export const HeaderAndBody: Story = {
 };
 
 export const HeaderBodyFooter: Story = {
+	args: {
+		children: [
+			<div key="header">Header</div>,
+			<LongScrollableBody key="body" />,
+			<div key="footer">Footer</div>
+		]
+	},
 	render: () => (
 		<ScrollableStoryFrame>
 			<div style={storyPanelStyle}>

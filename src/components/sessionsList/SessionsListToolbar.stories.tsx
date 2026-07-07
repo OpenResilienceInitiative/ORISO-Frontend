@@ -6,6 +6,10 @@ import { useTranslation } from 'react-i18next';
 import { SessionsListToolbar } from './SessionsListToolbar';
 import type { SessionSearchPersonResult } from './SessionsListToolbar';
 import type { SessionToolbarChipFilter } from './sessionToolbarFilters';
+import {
+	APP_ORISO_CHAT_FIGMA_URL,
+	ORISO_M3_FIGMA_URL
+} from '../storybookDesignLinks';
 import './sessionsList.styles.scss';
 
 const shell: React.CSSProperties = {
@@ -103,6 +107,18 @@ const meta: Meta = {
 	parameters: {
 		layout: 'fullscreen',
 		backgrounds: { default: 'gray' },
+		design: [
+			{
+				type: 'figma',
+				name: 'App.Oriso consultant chat',
+				url: APP_ORISO_CHAT_FIGMA_URL
+			},
+			{
+				type: 'figma',
+				name: 'Design System M3 ORISO',
+				url: ORISO_M3_FIGMA_URL
+			}
+		],
 		docs: {
 			description: {
 				component:

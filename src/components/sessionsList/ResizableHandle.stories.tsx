@@ -90,7 +90,8 @@ export const Default: Story = {
 	args: {
 		currentWidth: 320,
 		minWidth: 80,
-		maxWidth: 600
+		maxWidth: 600,
+		onResize: () => {}
 	},
 	render: (args) => <ResizeDemo {...args} />
 };
@@ -99,7 +100,8 @@ export const NarrowMin: Story = {
 	args: {
 		currentWidth: 320,
 		minWidth: 120,
-		maxWidth: 400
+		maxWidth: 400,
+		onResize: () => {}
 	},
 	render: (args) => <ResizeDemo {...args} />
 };
