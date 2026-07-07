@@ -41,6 +41,8 @@ export interface TipTapComposerRef {
 	setText: (value: string) => void;
 	getHTML: () => string;
 	insertText: (value: string) => void;
+	/** Inserts '@' so the mention suggestion reliably opens. */
+	insertMentionTrigger: () => void;
 	insertSnippet: (payload: HighlightSnippetPayload) => void;
 	runAction: (action: string) => void;
 	isActionActive: (action: string) => boolean;
@@ -502,6 +504,27 @@ export const TipTapComposer = forwardRef<
 					return;
 				}
 				editor.chain().focus().insertContent(nextValue).run();
+			},
+			insertMentionTrigger: () => {
+				if (!editor) {
+					return;
+				}
+				// The mention suggestion only fires on '@' at a line start or
+				// after whitespace — a bare '@' pasted right behind text would
+				// silently do nothing, so pad it when needed.
+				const { $from } = editor.state.selection;
+				const textBefore = $from.parent.textBetween(
+					0,
+					$from.parentOffset,
+					undefined,
+					'￼'
+				);
+				const needsSpace = /\S$/.test(textBefore);
+				editor
+					.chain()
+					.focus()
+					.insertContent(needsSpace ? ' @' : '@')
+					.run();
 			},
 			insertSnippet: (payload: HighlightSnippetPayload) => {
 				if (!editor || !payload?.text) {

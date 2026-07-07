@@ -14,9 +14,7 @@ const meta = {
 	tags: ['autodocs'],
 	parameters: {
 		layout: 'centered',
-		design: [
-			{ type: 'figma', name: 'Split button', url: SPLIT_FIGMA_URL }
-		],
+		design: [{ type: 'figma', name: 'Split button', url: SPLIT_FIGMA_URL }],
 		docs: {
 			description: {
 				component:
@@ -31,48 +29,40 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+// Hooks must live in a proper component — calling useState inside the
+// story's render() violates react-hooks/rules-of-hooks and fails CI lint.
+const SplitButtonDemo = ({
+	label,
+	icon,
+	isMulti = false
+}: {
+	label: string;
+	icon: React.ReactNode;
+	isMulti?: boolean;
+}) => {
+	const [open, setOpen] = useState(false);
+	return (
+		<RecipientSplitButton
+			label={label}
+			icon={icon}
+			isOpen={open}
+			isMulti={isMulti}
+			onToggle={() => setOpen((o) => !o)}
+			chevronLabel="Open send-to menu"
+		/>
+	);
+};
+
 export const SingleRecipient: Story = {
-	render: () => {
-		const [open, setOpen] = useState(false);
-		return (
-			<RecipientSplitButton
-				label="A. Kräger"
-				icon={<PersonIcon />}
-				isOpen={open}
-				onToggle={() => setOpen((o) => !o)}
-				chevronLabel="Open send-to menu"
-			/>
-		);
-	}
+	render: () => <SplitButtonDemo label="A. Kräger" icon={<PersonIcon />} />
 };
 
 export const MultipleRecipients: Story = {
-	render: () => {
-		const [open, setOpen] = useState(false);
-		return (
-			<RecipientSplitButton
-				label="3 Personen"
-				icon={<GroupIcon />}
-				isOpen={open}
-				isMulti
-				onToggle={() => setOpen((o) => !o)}
-				chevronLabel="Open send-to menu"
-			/>
-		);
-	}
+	render: () => (
+		<SplitButtonDemo label="3 Personen" icon={<GroupIcon />} isMulti />
+	)
 };
 
 export const AllRecipients: Story = {
-	render: () => {
-		const [open, setOpen] = useState(false);
-		return (
-			<RecipientSplitButton
-				label="Alle"
-				icon={<GroupIcon />}
-				isOpen={open}
-				onToggle={() => setOpen((o) => !o)}
-				chevronLabel="Open send-to menu"
-			/>
-		);
-	}
+	render: () => <SplitButtonDemo label="Alle" icon={<GroupIcon />} />
 };

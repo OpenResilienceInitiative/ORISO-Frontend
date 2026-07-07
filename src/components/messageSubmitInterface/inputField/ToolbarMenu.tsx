@@ -1,13 +1,7 @@
 import * as React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import {
-	autoUpdate,
-	computePosition,
-	flip,
-	offset,
-	shift
-} from '@floating-ui/dom';
+import { autoUpdate, computePosition, offset, shift } from '@floating-ui/dom';
 import type { MenuDirection } from './menuDirection';
 
 export interface ToolbarMenuItem {
@@ -53,13 +47,12 @@ export const ToolbarMenu = ({
 		}
 		return autoUpdate(anchorEl, menuEl, () => {
 			computePosition(anchorEl, menuEl, {
-				placement:
-					direction === 'up' ? 'top-start' : 'bottom-start',
-				middleware: [
-					offset(6),
-					flip({ padding: 8 }),
-					shift({ padding: 8 })
-				]
+				// The Figma direction rule is authoritative: docked/mobile menus
+				// always open upward, the maximized editor opens them downward.
+				// No flip() — flipping against the rule renders the menu over
+				// the editor content instead of on top of the toolbar.
+				placement: direction === 'up' ? 'top-start' : 'bottom-start',
+				middleware: [offset(6), shift({ padding: 8 })]
 			}).then(({ x, y }) => setPosition({ left: x, top: y }));
 		});
 	}, [anchorEl, direction]);

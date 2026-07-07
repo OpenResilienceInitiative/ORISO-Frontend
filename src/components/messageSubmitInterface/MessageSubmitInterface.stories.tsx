@@ -5,7 +5,8 @@ import { MessageSubmitInterfaceComponent } from './messageSubmitInterfaceCompone
 import {
 	buildMockActiveSession,
 	buildMockGroupSession,
-	ComposerStoryDecorator
+	ComposerStoryDecorator,
+	storybookGroupRoomMembers
 } from './__storybook__/composerStoryDecorator';
 import './messageSubmitInterface.styles.scss';
 
@@ -14,7 +15,10 @@ const INPUT_FIELD_FIGMA_URL =
 
 const shellStyle: React.CSSProperties = {
 	background: '#eae7e8',
-	minHeight: 320,
+	// Tall enough that the docked toolbar menus (which open upward, like in
+	// the app where the composer sits at the bottom of the screen) stay
+	// visible inside the story canvas.
+	minHeight: 560,
 	padding: 24,
 	position: 'relative',
 	boxSizing: 'border-box',
@@ -25,13 +29,18 @@ const shellStyle: React.CSSProperties = {
 
 function ComposerShell({
 	activeSession,
+	roomMembers,
 	...composerProps
 }: {
 	activeSession?: any;
+	roomMembers?: Array<{ userId: string; name: string }>;
 } & Partial<React.ComponentProps<typeof MessageSubmitInterfaceComponent>>) {
 	return (
 		<div className="session" style={shellStyle}>
-			<ComposerStoryDecorator activeSession={activeSession}>
+			<ComposerStoryDecorator
+				activeSession={activeSession}
+				roomMembers={roomMembers}
+			>
 				<MessageSubmitInterfaceComponent
 					placeholder="Nachricht an Klient:in schreiben"
 					onSendButton={() => {}}
@@ -105,7 +114,12 @@ export const ReadyToSend: Story = {
 
 export const GroupChat: Story = {
 	name: 'Group chat (multiple recipients)',
-	render: () => <ComposerShell activeSession={buildMockGroupSession()} />
+	render: () => (
+		<ComposerShell
+			activeSession={buildMockGroupSession()}
+			roomMembers={storybookGroupRoomMembers}
+		/>
+	)
 };
 
 export const Supervisor: Story = {

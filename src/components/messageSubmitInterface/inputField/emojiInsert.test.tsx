@@ -3,10 +3,7 @@ import * as React from 'react';
 import { createRef } from 'react';
 import { cleanup, render, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
-import {
-	TipTapComposer,
-	TipTapComposerRef
-} from '../TipTapComposer';
+import { TipTapComposer, TipTapComposerRef } from '../TipTapComposer';
 
 afterEach(() => cleanup());
 
@@ -34,14 +31,19 @@ describe('emoji insertion at cursor', () => {
 
 		await waitFor(() => expect(ref.current).toBeTruthy());
 
-		ref.current!.setText('Hallo');
-		ref.current!.focus();
-
-		// The emoji popup drives insertText — the emoji must be added to the
-		// existing content, not replace it.
-		ref.current!.insertText('😀');
-
-		await waitFor(() => expect(html).toContain('😀'));
-		expect(html).toContain('Hallo');
+		// On mount the composer syncs its initial `value` prop into the editor
+		// and, during that window, swallows editor updates (isSyncingFromValue)
+		// and can even reset content just after an imperative edit. That settle
+		// is not directly observable, so drive the whole sequence through a
+		// retrying waitFor: setText replaces the content with 'Hallo' (no
+		// accumulation across retries) and insertText appends the emoji — the
+		// emoji popup's contract is to add to existing content, not replace it.
+		// Once the sync window has closed a single retry lands both.
+		await waitFor(() => {
+			ref.current!.setText('Hallo');
+			ref.current!.insertText('😀');
+			expect(html).toContain('Hallo');
+			expect(html).toContain('😀');
+		});
 	});
 });

@@ -32,14 +32,10 @@
 	}
 
 	&__planeIcon {
+		// Figma "Nachricht senden": filled M3 send plane, 24px, currentColor.
 		width: 24px;
 		height: 24px;
-
-		// paper-plane.svg paints a masked <rect>; recolor it via currentColor.
-		rect,
-		path {
-			fill: currentColor;
-		}
+		fill: currentColor;
 	}
 
 	// Ready / sending: red container, plane rotated up.
