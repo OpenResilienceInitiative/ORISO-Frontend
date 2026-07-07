@@ -12,6 +12,7 @@ import {
 	isCaseHandoverDenied,
 	isCaseHandoverPending
 } from './caseHandoverHelpers';
+import { OrisoTextarea } from '../form/OrisoTextarea';
 import './caseHandoverGate.styles';
 
 interface CaseHandoverGateProps {
@@ -153,13 +154,13 @@ export const CaseHandoverGate = ({
 								</label>
 							))}
 						</div>
-						<textarea
+						<OrisoTextarea
 							className="caseHandoverGate__explanation"
 							value={explanation}
 							onChange={(event) =>
 								setExplanation(event.target.value)
 							}
-							placeholder={translate(
+							label={translate(
 								'caseHandover.explanation.placeholder'
 							)}
 							aria-label={translate(

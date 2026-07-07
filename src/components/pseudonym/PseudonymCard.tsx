@@ -92,7 +92,7 @@ export const PseudonymCard: React.FC<PseudonymCardProps> = ({
 						</span>
 					</div>
 
-					<TypingReveal typingMs={skipTyping ? 0 : 1400}>
+					<TypingReveal typingMs={skipTyping ? 0 : 700}>
 						<div className="pseudonymCard__bubble">
 							<p className="pseudonymCard__bubbleText">
 								{skipTyping ? (
@@ -100,7 +100,7 @@ export const PseudonymCard: React.FC<PseudonymCardProps> = ({
 								) : (
 									<TypewriterText
 										text={message}
-										startDelayMs={550}
+										startDelayMs={220}
 										onDone={handleTypewriterDone}
 									/>
 								)}

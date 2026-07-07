@@ -33,11 +33,3 @@ export const removeTokenExpiryFromLocalStorage = () => {
 	removeLocalStorageItem('auth.access_token_valid_until');
 	removeLocalStorageItem('auth.refresh_token_valid_until');
 };
-
-export const removeRocketChatMasterKeyFromLocalStorage = () => {
-	for (const [key] of Object.entries(localStorage)) {
-		if (key.startsWith('mk_')) {
-			localStorage.removeItem(key);
-		}
-	}
-};

@@ -30,11 +30,6 @@ const fastLoginCommand = (getWillReturn, setWillReturn) =>
 					}
 					if (res.data.userId) {
 						cy.setCookie('rc_uid', res.data.userId);
-						// masterkey dev user pregnancy
-						window.localStorage.setItem(
-							`mk_${res.data.userId}`,
-							'[225,59,174,132,235,143,199,190,136,68,11,58,123,91,159,241,78,226,65,110,22,100,84,127,59,84,180,138,210,94,176,144]'
-						);
 					}
 				});
 

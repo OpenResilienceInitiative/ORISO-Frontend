@@ -3,6 +3,18 @@ $icon-size-small: 24px;
 $message-lineheight: 21px;
 $message-attachment-color: $secondary !default;
 $message-avatar-ring: #ebe2e2;
+$message-incoming-bg: var(--m3-surface-container-high, #eae7e8);
+$message-outgoing-bg: var(--m3-on-primary-container, #ffe2de);
+$message-outgoing-text: var(--m3-on-surface, #1a1c1e);
+
+.messageItem__mention {
+	padding: 0 4px;
+	border-radius: 6px;
+	background: var(--m3-primary-fixed, #ffdad5);
+	color: var(--m3-primary-container, #cc1e1c);
+	font-weight: 500;
+	white-space: nowrap;
+}
 
 .messageItem {
 	display: flex;
@@ -42,11 +54,16 @@ $message-avatar-ring: #ebe2e2;
 		align-items: flex-end;
 
 		.messageItem__message {
-			background-color: #cc1e1c;
-			border-color: #cc1e1c;
-			color: #ffffff;
+			background-color: $message-outgoing-bg;
+			border-color: $message-outgoing-bg;
+			color: $message-outgoing-text;
 			margin: 4px 0;
 			border-radius: 16px 4px 16px 16px;
+		}
+
+		.messageItem__message a,
+		.messageItem__message a:hover {
+			color: var(--m3-primary, $primary);
 		}
 
 		.messageItem__divider {
@@ -635,8 +652,8 @@ $message-avatar-ring: #ebe2e2;
 	&__message {
 		color: var(--m3-on-surface, #1d1b20);
 		line-height: $message-lineheight;
-		background-color: #ffe2de;
-		border: 1px solid #ffdad5;
+		background-color: $message-incoming-bg;
+		border: 1px solid $message-incoming-bg;
 		border-radius: 4px 16px 16px 16px;
 		margin: 4px 0;
 		padding: $grid-base-two;
@@ -848,8 +865,9 @@ $message-avatar-ring: #ebe2e2;
 		}
 
 		&--myMessage {
-			color: #1c1b1f;
-			background-color: #ebe2e2;
+			color: $message-outgoing-text;
+			background-color: $message-outgoing-bg;
+			border-color: $message-outgoing-bg;
 
 			.messageItem__message__attachment {
 				background-color: $white;
@@ -857,12 +875,12 @@ $message-avatar-ring: #ebe2e2;
 
 			a,
 			a:hover {
-				color: #1c1b1f;
+				color: var(--m3-primary, $primary);
 			}
 
 			blockquote {
-				border-left-color: #7d4c4c;
-				background: rgba(125, 76, 76, 0.08);
+				border-left-color: var(--m3-primary, $primary);
+				background: rgba(165, 0, 10, 0.08);
 			}
 		}
 	}
@@ -1284,9 +1302,17 @@ $message-avatar-ring: #ebe2e2;
 }
 
 .messageItem--chatEvent {
+	align-items: center;
+	display: flex;
 	justify-content: center;
 	margin: 12px 0;
-	flex-direction: unset !important;
+	flex-direction: column !important;
+	width: 100%;
+
+	.messageItem__divider {
+		align-self: stretch;
+		width: 100%;
+	}
 
 	.messageItem__chatEvent {
 		display: inline-block;
@@ -1407,17 +1433,17 @@ $message-avatar-ring: #ebe2e2;
 		}
 	}
 
-	// Color for outgoing messages (myMessage - white)
+	// Color for outgoing messages on the light pink bubble.
 	&--myMessage {
-		color: #ffffff; // White color for outgoing messages
+		color: var(--m3-primary, $primary);
 
 		&:hover {
-			color: #e6e6e6;
+			color: var(--m3-primary-hover, $hover-primary);
 			text-decoration: none;
 		}
 
 		&:focus {
-			outline: 2px solid #ffffff;
+			outline: 2px solid var(--m3-primary, $primary);
 			outline-offset: 2px;
 			border-radius: 4px;
 		}

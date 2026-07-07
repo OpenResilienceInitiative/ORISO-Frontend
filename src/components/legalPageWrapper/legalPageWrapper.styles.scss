@@ -52,4 +52,17 @@
 		justify-content: flex-start;
 		padding-top: 48px;
 	}
+
+	// Clearly visible warning shown while the tenant legal text is missing
+	// or empty (placeholder state, not legally maintained yet).
+	&__placeholderNotice {
+		background-color: $yellow-1;
+		border-left: 4px solid $yellow-6;
+		border-radius: 4px;
+		color: var(--m3-on-surface, $primary);
+		font-size: $font-size-primary;
+		font-weight: $font-weight-medium;
+		margin: 0 0 $grid-base-two;
+		padding: $grid-base-two;
+	}
 }

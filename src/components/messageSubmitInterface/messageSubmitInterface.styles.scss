@@ -1,5 +1,4 @@
 $attachmentIconSize: 20px;
-$sendIconSize: 24px;
 $message-submit-interface-textarea-shadow-color: rgb(255, 255, 255) !default;
 $message-submit-interface-textarea-box-shadow: inset 0 2px 0 0
 	$message-submit-interface-textarea-shadow-color !default;
@@ -118,34 +117,28 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				padding: 0 !important;
 				border-radius: 24px 4px 24px 24px !important;
 				box-shadow: none !important;
-				border: 1px solid #ffb4aa !important;
+				border: 1px solid var(--m3-primary-fixed, #ffdad5) !important;
 				overflow: visible;
 				min-height: var(--composer-height, 196px);
 				height: var(--composer-height, 196px);
 				transition: all 240ms ease;
 
-				&::before {
-					content: '';
-					position: absolute;
-					top: 6px;
-					left: 50%;
-					width: 57px;
-					height: 4px;
-					border-radius: 999px;
-					background: #ffb4aa;
-					transform: translateX(-50%);
-					pointer-events: none;
-					z-index: 2;
+				// Handle touched (Figma 1168:38130): the outer frame darkens
+				// while the composer is being resized.
+				&--resizing {
+					border: 2px solid
+						var(--m3-on-primary-fixed-variant, #930008) !important;
+					transition: none;
 				}
 
 				&--expanded {
 					position: fixed !important;
 					left: 50vw !important;
-					top: 50vh !important;
+					top: auto !important;
 					right: auto !important;
-					bottom: auto !important;
 					inset: auto !important;
-					margin-top: -850px;
+					bottom: 24px !important;
+					margin-top: 0;
 					max-width: none;
 					height: min(78vh, 760px);
 					max-height: calc(100vh - 96px);
@@ -154,10 +147,6 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 					box-shadow: 0 20px 70px rgba(0, 0, 0, 0.25) !important;
 					overflow: hidden;
 					pointer-events: auto;
-				}
-
-				&--resizing {
-					transition: none;
 				}
 
 				// On mobile, full edge-to-edge width, no outer border
@@ -172,10 +161,12 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 						box-shadow: none !important;
 					}
 
+					&::before {
+						display: none;
+					}
+
 					&:active::before {
-						top: 4px;
-						height: 8px;
-						background: #a5000a;
+						display: none;
 					}
 
 					&--ready {
@@ -269,7 +260,6 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			}
 
 			&__mobileNavigator > button {
-				flex: 1; /* each gets equal width */
 				display: flex;
 				align-items: center;
 				justify-content: center;
@@ -321,6 +311,15 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 						background: var(--m3-primary-container, #cc1e1c);
 					}
 				}
+			}
+
+			&__mobileNavigator > .textarea__mobileNavigatorButton {
+				flex: 1 1 0;
+			}
+
+			&__mobileNavigator > .textarea__mobileNavigatorCenter {
+				flex: 0 0 112px;
+				width: 112px;
 			}
 
 			&__mobileNavigatorHandle {
@@ -378,36 +377,6 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			}
 		}
 
-		&__composerResizeHandle {
-			position: absolute;
-			top: 0;
-			left: 50%;
-			width: 112px;
-			height: 28px;
-			padding: 0;
-			border: 0;
-			border-radius: 0 0 10px 10px;
-			background: transparent;
-			display: inline-flex;
-			align-items: center;
-			justify-content: center;
-			transform: translateX(-50%);
-			cursor: ns-resize;
-			touch-action: none;
-			z-index: 5;
-
-			&:hover,
-			&:focus-visible,
-			&:active {
-				outline: none;
-
-				.textarea__mobileNavigatorHandle {
-					background: var(--m3-primary-container, #cc1e1c);
-					height: 7px;
-				}
-			}
-		}
-
 		&__inputWrapper {
 			position: absolute;
 			left: 16px;
@@ -451,7 +420,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			width: 100%;
 			height: 100%;
 			border-radius: 16px 4px 16px 16px;
-			border: 1px solid #ffb4aa;
+			border: 1px solid var(--m3-primary-fixed, #ffdad5);
 			box-sizing: border-box;
 			position: relative;
 
@@ -466,12 +435,13 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				}
 			}
 
-			// Active/focused state - red border
+			// Focus never draws its own ring here — the container "selected"
+			// state (2px primary border) is the single focus indicator, so
+			// only one field ever carries it.
 			&:focus,
 			&:focus-visible,
 			&:focus-within {
 				outline: none !important;
-				border: 1px solid #ff9f98;
 			}
 
 			&::placeholder,
@@ -494,8 +464,19 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			}
 		}
 
-		&__wrapper-send-message--ready .textarea__input {
-			border: 2px solid #cc1e1c;
+		// Figma "Selected": the inner textcomponent carries the 2px primary
+		// border while the editor is focused (independent of ready-to-send).
+		&__wrapper-send-message--selected .textarea__input {
+			border: 2px solid var(--m3-primary-container, #cc1e1c);
+		}
+
+		// Figma 7851:34817 — in the selected state the pale send button gets a
+		// red top+right edge so the container's frame stays continuous at the
+		// top-right notch (the ready state is already fully red).
+		&__wrapper-send-message--selected .sendButton--empty,
+		&__wrapper-send-message--selected .sendButton--disabled {
+			border-top: 2px solid var(--m3-primary-container, #cc1e1c);
+			border-right: 2px solid var(--m3-primary-container, #cc1e1c);
 		}
 
 		&__characterCounter {
@@ -536,199 +517,13 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 		&__figmaToolbar {
 			position: absolute;
 			top: 4px;
-			left: 24px;
+			left: 8px;
+
+			// keep clear of the 48px send button flush at right:16
+			right: 72px;
 			z-index: 20;
 			display: block;
-			max-width: calc(100% - 88px);
-			width: calc(100% - 88px);
-			height: 30px;
 			overflow: visible;
-
-			&--emoji {
-				height: 34px;
-			}
-
-			@media screen and (width <= 899px) {
-				left: 10px;
-				max-width: calc(100% - 96px);
-				width: calc(100% - 96px);
-
-				// Mobile scroll cue: fade edge + subtle hint icon
-				&::after {
-					content: '';
-					position: absolute;
-					top: 0;
-					right: 0;
-					width: 34px;
-					height: 30px;
-					border-radius: 0 8px 8px 0;
-					background: linear-gradient(
-						to right,
-						rgba(255, 255, 255, 0),
-						rgba(255, 255, 255, 0.95)
-					);
-					pointer-events: none;
-					z-index: 3;
-				}
-
-				&::before {
-					content: '⇆';
-					position: absolute;
-					top: 6px;
-					right: 8px;
-					font-size: 11px;
-					line-height: 1;
-					color: rgba(100, 109, 120, 0.75);
-					pointer-events: none;
-					z-index: 4;
-					animation: toolbar-scroll-hint-pulse 1.6s ease-in-out
-						infinite;
-				}
-			}
-
-			button {
-				border: none;
-				background: transparent;
-				padding: 0;
-				margin: 0;
-				width: 28px;
-				height: 28px;
-				display: inline-flex;
-				align-items: center;
-				justify-content: center;
-				cursor: pointer;
-				color: var(--m3-secondary-container, #646d78);
-				flex: 0 0 auto;
-
-				svg {
-					display: block;
-				}
-
-				&:hover {
-					background: #f2f2f2;
-					border-radius: 8px;
-				}
-			}
-		}
-
-		&__figmaToolbarPanel {
-			position: absolute;
-			inset: 0;
-			display: inline-flex;
-			align-items: center;
-			gap: 10px;
-			overflow-x: auto;
-			-ms-overflow-style: none;
-			scrollbar-width: none;
-			transition:
-				opacity 180ms ease,
-				transform 220ms ease;
-
-			&::-webkit-scrollbar {
-				display: none;
-			}
-
-			@media screen and (width <= 899px) {
-				gap: 8px;
-			}
-
-			&--active {
-				opacity: 1;
-				pointer-events: auto;
-				transform: translateY(0) scale(1);
-			}
-
-			&--hidden {
-				opacity: 0;
-				pointer-events: none;
-				transform: translateY(-6px) scale(0.98);
-			}
-
-			&--emoji {
-				gap: 8px;
-			}
-
-			&--highlight {
-				gap: 8px;
-			}
-
-			&--heading,
-			&--list,
-			&--align,
-			&--code {
-				gap: 8px;
-			}
-
-			&--compact {
-				gap: 10px;
-			}
-
-			&--default button {
-				color: var(--m3-secondary, #4b515a);
-				font-weight: 600;
-			}
-
-			&--compact button {
-				color: var(--m3-secondary-container, #646d78);
-			}
-		}
-
-		&__figmaToolbarDivider {
-			width: 1px;
-			height: 24px;
-			background: rgba(75, 81, 90, 0.11);
-			flex: 0 0 auto;
-		}
-
-		&__toolbarCloseButton {
-			width: 24px !important;
-			height: 24px !important;
-			border-radius: 6px;
-			padding: 0 !important;
-		}
-
-		&__toolbarAddButton {
-			width: 65px !important;
-			padding: 4px 8px !important;
-			border-radius: 12px;
-			display: inline-flex !important;
-			align-items: center;
-			justify-content: center;
-			gap: 6px;
-			color: rgba(75, 81, 90, 0.69) !important;
-			font-size: 14px;
-			font-weight: 500;
-			line-height: 24px;
-
-			span {
-				line-height: 1;
-			}
-		}
-
-		&__toolbarExpandButton--active svg {
-			transform: rotate(180deg);
-		}
-
-		&__toolbarButton--selected {
-			color: var(--m3-primary-container, #cc1e1c) !important;
-		}
-
-		&__toolbarButton--linkSelected {
-			color: #2274f0 !important;
-		}
-
-		&__toolbarButton--linkSelected svg path,
-		&__toolbarButton--linkSelected svg rect {
-			fill: #2274f0 !important;
-		}
-
-		&__toolbarButton--linkSelected svg path[stroke] {
-			stroke: #2274f0 !important;
-		}
-
-		&__toolbarButton--selected svg path,
-		&__toolbarButton--selected svg rect {
-			fill: var(--m3-primary-container, #cc1e1c) !important;
 		}
 
 		&__toolbarButton--selected svg path[stroke] {
@@ -1114,116 +909,6 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			}
 		}
 
-		&__iconWrapper {
-			width: 48px;
-			height: 48px;
-			border: 0;
-			border-radius: 0 6px 0 24px;
-			padding: 0;
-			cursor: pointer;
-			background-color: #ffe2de;
-			color: inherit;
-			appearance: none;
-			font: inherit;
-			margin: 0;
-			display: inline-flex;
-			align-items: center;
-			justify-content: center;
-			transition:
-				background-color 0.6s ease,
-				opacity 0.3s ease;
-			overflow: hidden;
-			position: relative;
-
-			&--empty {
-				opacity: 1;
-			}
-			svg {
-				transition: transform 220ms ease-out;
-			}
-			&:hover {
-				background-color: var(--m3-primary-fixed, #ffdad5);
-			}
-			&:focus-visible {
-				outline: 2px solid var(--m3-primary-outline, #ffdad5);
-				outline-offset: 2px;
-			}
-
-			&--active:not(.textarea__iconWrapper--empty) {
-				background-color: var(--m3-primary-container, #cc1e1c);
-			}
-
-			&--active .textarea__icon {
-				transform: translate(-48%, -54%) rotate(-22deg);
-
-				rect {
-					fill: var(--m3-on-primary-container, #ffe2de);
-				}
-			}
-			&--clicked {
-				.textarea__icon {
-					animation: sendButtonToNormal 300ms ease-out forwards;
-				}
-			}
-
-			@keyframes sendButtonToNormal {
-				0% {
-					transform: translate(-48%, -54%) rotate(-22deg);
-					opacity: 1;
-				}
-				60% {
-					transform: translate(-50%, -51%) rotate(5deg);
-					opacity: 1;
-				}
-				100% {
-					transform: translate(-50%, -50%) rotate(0deg);
-					opacity: 1;
-				}
-			}
-
-			&--deactivated,
-			&--deactivated:hover {
-				cursor: not-allowed;
-				pointer-events: none;
-				background-color: #ffe2de;
-				opacity: 1;
-
-				svg rect {
-					fill: var(--m3-on-primary, $white);
-				}
-
-				svg {
-					opacity: 0.8;
-				}
-
-				.textarea__icon {
-					transform: translate(-50%, -50%) rotate(0deg);
-				}
-			}
-		}
-
-		&__icon {
-			width: $sendIconSize;
-			height: $sendIconSize;
-			margin: 0;
-			position: absolute;
-			top: 45%;
-			left: 57%;
-			transform: translate(-50%, -50%) rotate(0deg);
-
-			rect {
-				fill: var(--m3-on-primary, $white);
-			}
-
-			&--active {
-				background-color: $line-ochre;
-			}
-
-			&--hoverstate:hover {
-				background-color: $light-brown;
-			}
-		}
-
 		&__audienceSelector {
 			position: absolute;
 			right: 30px;
@@ -1303,9 +988,11 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			background: #fff !important;
 			opacity: 1;
 			padding: 8px;
+
+			// Regular M3 elevation — no spread halo bleeding over the composer.
 			box-shadow:
-				0 30px 28px rgba(0, 0, 0, 0.1),
-				0 0 30px 28px rgba(0, 0, 0, 0.05);
+				0 4px 8px 3px rgba(0, 0, 0, 0.08),
+				0 1px 3px rgba(0, 0, 0, 0.2);
 			z-index: 999999;
 			overflow: visible;
 		}
@@ -2106,17 +1793,21 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 		}
 
 		&__buttons {
+			// Send button sits flush in the input field's top-right corner:
+			// the inputWrapper is inset 16px, so the button's 4px corner meets
+			// the field's 4px corner and the 24px bottom-left radius forms the
+			// Figma notch (489:16565).
 			position: absolute;
-			top: 23px;
-			right: 22px;
+			top: 16px;
+			right: 16px;
 			z-index: 8;
 			display: flex;
 			align-items: center;
 			gap: 0;
 
 			@media screen and (width <= 899px) {
-				right: -6px;
-				top: -4px;
+				right: 0;
+				top: 0;
 			}
 
 			.textarea__wrapper-send-message--expanded & {

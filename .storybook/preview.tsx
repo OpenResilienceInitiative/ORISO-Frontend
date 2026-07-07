@@ -49,10 +49,6 @@ const mockUserData = {
 	}
 } as any;
 import { UrlParamsContext } from '../src/globalState/provider/UrlParamsProvider';
-import { RocketChatPublicSettingsContext } from '../src/globalState/provider/RocketChatPublicSettingsProvider';
-import { RocketChatSubscriptionsContext } from '../src/globalState/provider/RocketChatSubscriptionsProvider';
-import { RocketChatUsersOfRoomContext } from '../src/globalState/provider/RocketChatUsersOfRoomProvider';
-import { RocketChatContext } from '../src/globalState/provider/RocketChatProvider';
 import type {
 	AgencyDataInterface,
 	ConsultingTypeInterface,
@@ -756,14 +752,11 @@ function MuiStoryShell({
 	Story: React.ComponentType;
 	needsLiveData: boolean;
 }) {
-	const storyContent = needsLiveData ? <NeedsLiveDataPanel /> : <Story />;
-
 	return (
 		<AppConfigContext.Provider value={config}>
 			<LocaleContext.Provider
 				value={{
 					locale: 'de',
-					locales: ['de', 'en'],
 					selectableLocales: ['de', 'en'],
 					setLocale: () => {},
 					initLocale: 'de'
@@ -778,8 +771,8 @@ function MuiStoryShell({
 					<UserDataContext.Provider
 						value={{
 							userData: mockUserData,
-							setUserData: () => {},
-							reloadUserData: async () => mockUserData
+							reloadUserData: async () => null as any,
+							loaded: true
 						}}
 					>
 						<UrlParamsContext.Provider
@@ -793,131 +786,60 @@ function MuiStoryShell({
 								zipcode: ''
 							}}
 						>
-							<RocketChatContext.Provider
+							<E2EEContext.Provider
 								value={{
-									ready: true,
-									send: () => {},
-									subscribe: () => {},
-									unsubscribe: () => {},
-									listen: () => {},
-									sendMethod: async () => undefined,
-									close: () => {},
-									rcWebsocket: null
+									key: '',
+									reloadPrivateKey: () => {},
+									isE2eeEnabled: false,
+									e2EEReady: true
 								}}
 							>
-								<RocketChatSubscriptionsContext.Provider
+								<NotificationsContext.Provider
 									value={{
-										subscriptionsReady: true,
-										subscriptions: [],
-										roomsReady: true,
-										rooms: []
+										notifications: [],
+										setNotifications: () => {},
+										hasNotification: () => false,
+										addNotification: () => {},
+										removeNotification: () => {}
 									}}
 								>
-									<RocketChatUsersOfRoomContext.Provider
+									<RegistrationContext.Provider
 										value={{
-											ready: true,
-											users: [],
-											moderators: [],
-											total: 0,
-											reload: async () => []
+											setDisabledNextButton: () => null,
+											registrationData: {
+												agency: null,
+												agencyId: null,
+												username: null,
+												password: null,
+												zipcode: '50667',
+												mainTopic: storybookTopics[0],
+												mainTopicId:
+													storybookTopics[0].id,
+												topicGroupId: 10001
+											}
 										}}
 									>
-										<RocketChatPublicSettingsContext.Provider
-											value={{
-												settingsReady: true,
-												settings: [],
-												getSetting: () =>
-													({
-														_id: 'storybook-setting',
-														value: false,
-														enterprise: false
-													}) as any
-											}}
-										>
-											<E2EEContext.Provider
-												value={{
-													key: '',
-													reloadPrivateKey: () => {},
-													isE2eeEnabled: false,
-													e2EEReady: true
-												}}
-											>
-												<NotificationsContext.Provider
+										<ThemeProvider theme={theme}>
+											<LegalLinksProvider legalLinks={[]}>
+												<SessionTypeContext.Provider
 													value={{
-														notifications: [],
-														notificationFeed: [],
-														unreadNotificationCount: 0,
-														setNotifications:
-															() => {},
-														hasNotification: () =>
-															false,
-														addNotification:
-															() => {},
-														addEventNotification:
-															() => {},
-														refreshNotificationFeed:
-															() => {},
-														removeNotification:
-															() => {},
-														markNotificationAsRead:
-															() => {},
-														markAllNotificationsAsRead:
-															() => {},
-														clearNotificationFeed:
-															() => {}
+														type: 'MY_SESSION' as any,
+														path: '/sessions/consultant/sessionView'
 													}}
 												>
-													<RegistrationContext.Provider
-														value={{
-															setDisabledNextButton:
-																() => null,
-															registrationData: {
-																agency: null,
-																agencyId: null,
-																username: null,
-																password: null,
-																zipcode:
-																	'50667',
-																mainTopic:
-																	storybookTopics[0],
-																mainTopicId:
-																	storybookTopics[0]
-																		.id,
-																topicGroupId: 10001
-															}
-														}}
-													>
-														<ThemeProvider
-															theme={theme}
-														>
-															<LegalLinksProvider
-																legalLinks={[]}
-															>
-																<SessionTypeContext.Provider
-																	value={{
-																		type: 'MY_SESSION' as any,
-																		path: '/sessions/consultant/sessionView'
-																	}}
-																>
-																	<div
-																		id="banner"
-																		aria-live="polite"
-																	/>
-																	<StoryErrorBoundary>
-																		{
-																			storyContent
-																		}
-																	</StoryErrorBoundary>
-																</SessionTypeContext.Provider>
-															</LegalLinksProvider>
-														</ThemeProvider>
-													</RegistrationContext.Provider>
-												</NotificationsContext.Provider>
-											</E2EEContext.Provider>
-										</RocketChatPublicSettingsContext.Provider>
-									</RocketChatUsersOfRoomContext.Provider>
-								</RocketChatSubscriptionsContext.Provider>
-							</RocketChatContext.Provider>
+													<StoryErrorBoundary>
+														{needsLiveData ? (
+															<NeedsLiveDataPanel />
+														) : (
+															<Story />
+														)}
+													</StoryErrorBoundary>
+												</SessionTypeContext.Provider>
+											</LegalLinksProvider>
+										</ThemeProvider>
+									</RegistrationContext.Provider>
+								</NotificationsContext.Provider>
+							</E2EEContext.Provider>
 						</UrlParamsContext.Provider>
 					</UserDataContext.Provider>
 				</TenantContext.Provider>
@@ -988,7 +910,7 @@ const preview: Preview = {
 			]
 		}
 	},
-	initialGlobals: {
+	globals: {
 		locale: FALLBACK_LNG,
 		locales: {
 			de: { icon: '🇩🇪', title: 'Deutsch', right: 'DE' },

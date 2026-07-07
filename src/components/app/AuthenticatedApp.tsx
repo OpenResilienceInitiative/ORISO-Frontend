@@ -7,7 +7,6 @@ import {
 	hasUserAuthority,
 	AUTHORITIES,
 	ConsultingTypesContext,
-	RocketChatProvider,
 	InformalContext,
 	LocaleContext,
 	NotificationsContext
@@ -21,13 +20,8 @@ import { logout } from '../logout/logout';
 import './authenticatedApp.styles';
 import './navigation.styles';
 import { requestPermissions } from '../../utils/notificationHelpers';
-import { RocketChatSubscriptionsProvider } from '../../globalState/provider/RocketChatSubscriptionsProvider';
-import { RocketChatUnreadProvider } from '../../globalState/provider/RocketChatUnreadProvider';
-import { RocketChatPublicSettingsProvider } from '../../globalState/provider/RocketChatPublicSettingsProvider';
-import { RocketChatGetUserRolesProvider } from '../../globalState/provider/RocketChatSytemUsersProvider';
 import { useJoinGroupChat } from '../../hooks/useJoinGroupChat';
 import { useCall } from '../../globalState/provider/CallProvider';
-import { RocketChatUserStatusProvider } from '../../globalState/provider/RocketChatUserStatusProvider';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { E2EEncryptionSupportBanner } from '../E2EEncryptionSupportBanner/E2EEncryptionSupportBanner';
 import { getMatrixHomeserverUrl } from '../../resources/scripts/runtimeConfig';
@@ -41,6 +35,7 @@ import {
 	CONSULTANT_LOGIN_BLOCKED_ERROR,
 	markConsultantLoginBlocked
 } from '../auth/consultantLoginBlock';
+import { appConfig } from '../../utils/appConfig';
 
 interface AuthenticatedAppProps {
 	onAppReady: Function;
@@ -104,12 +99,14 @@ export const AuthenticatedApp = ({
 					Promise.all([reloadUserData(), apiGetConsultingTypes()])
 						.then(([userProfileData, consultingTypes]) => {
 							if (
+								appConfig.blockConsultantAppLogin &&
 								hasUserAuthority(
 									AUTHORITIES.CONSULTANT_DEFAULT,
 									userProfileData
 								)
 							) {
 								clearAuthSession();
+								markConsultantLoginBlocked();
 								throw new Error(CONSULTANT_LOGIN_BLOCKED_ERROR);
 							}
 
@@ -172,20 +169,14 @@ export const AuthenticatedApp = ({
 							}
 
 							setAppReady(true);
-							})
-							.catch((error) => {
-								setLoading(false);
-								if (
-									error?.message ===
-									CONSULTANT_LOGIN_BLOCKED_ERROR
-							) {
-									markConsultantLoginBlocked();
-								}
-							});
-					})
-					.catch(() => {
-						setLoading(false);
-					});
+						})
+						.catch(() => {
+							setLoading(false);
+						});
+				})
+				.catch(() => {
+					setLoading(false);
+				});
 		}
 	}, [
 		locale,
@@ -228,20 +219,8 @@ export const AuthenticatedApp = ({
 	if (appReady) {
 		return (
 			<>
-				<RocketChatProvider>
-					<RocketChatGetUserRolesProvider>
-						<RocketChatPublicSettingsProvider>
-							<RocketChatSubscriptionsProvider>
-								<RocketChatUnreadProvider>
-									<RocketChatUserStatusProvider>
-										<E2EEncryptionSupportBanner />
-										<Routing logout={handleLogout} />
-									</RocketChatUserStatusProvider>
-								</RocketChatUnreadProvider>
-							</RocketChatSubscriptionsProvider>
-						</RocketChatPublicSettingsProvider>
-					</RocketChatGetUserRolesProvider>
-				</RocketChatProvider>
+				<E2EEncryptionSupportBanner />
+				<Routing logout={handleLogout} />
 			</>
 		);
 	} else if (loading) {

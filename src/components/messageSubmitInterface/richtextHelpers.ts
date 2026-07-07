@@ -161,7 +161,13 @@ export const sanitizeHtmlDefaultOptions = {
 		h5: ['style'],
 		h6: ['style'],
 		mark: ['style', 'data-color'],
-		span: ['style', 'class', 'data-color'],
+		span: [
+			'style',
+			'class',
+			'data-color',
+			'data-mention-id',
+			'data-mention-username'
+		],
 		img: ['src', 'alt', 'title', 'width', 'height', 'loading', 'decoding', 'class']
 	},
 	allowedStyles: {

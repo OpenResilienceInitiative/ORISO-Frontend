@@ -58,6 +58,7 @@ describe('getKeycloakAccessToken', () => {
 			'https://api.oriso-dev.site/auth/realms/online-beratung/protocol/openid-connect/token'
 		);
 		expect(request.method).toBe('POST');
+		expect(request.credentials).toBe('omit');
 		expect(await request.text()).toBe(
 			'username=shanzae@example.com&password=secret%21&client_id=app&grant_type=password'
 		);

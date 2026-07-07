@@ -18,7 +18,7 @@ import {
 	ActiveSessionContext
 } from '../../globalState';
 import { UserDataInterface } from '../../globalState/interfaces';
-import { SelectDropdown } from '../select/SelectDropdown';
+import { OrisoSelect } from '../form/OrisoSelect';
 import { useE2EE } from '../../hooks/useE2EE';
 import {
 	ALIAS_MESSAGE_TYPES,
@@ -26,10 +26,8 @@ import {
 	ConsultantReassignment,
 	ReassignStatus
 } from '../../api/apiSendAliasMessage';
-import {
-	prepareConsultantDataForSelect,
-	prepareSelectDropdown
-} from './sessionAssignHelper';
+import { prepareConsultantDataForSelect } from './sessionAssignHelper';
+import { SelectChangeEvent } from '@mui/material/Select';
 
 export const ACCEPTED_GROUP_CLOSE = 'CLOSE';
 
@@ -138,6 +136,16 @@ export const RequestSessionAssign = (props: { value?: string }) => {
 		initOverlays(selectedOption, userData);
 	};
 
+	const handleConsultantSelect = (event: SelectChangeEvent<string>) => {
+		const selectedConsultant = consultantList.find(
+			(consultant) => consultant.value === event.target.value
+		);
+
+		if (selectedConsultant) {
+			handleDatalistSelect(selectedConsultant);
+		}
+	};
+
 	const handleOverlayAction = (buttonFunction: string) => {
 		switch (buttonFunction) {
 			case OVERLAY_FUNCTIONS.ASSIGN:
@@ -158,7 +166,9 @@ export const RequestSessionAssign = (props: { value?: string }) => {
 									);
 									initOverlays(selectedOption, profileData);
 								})
-								.catch((error) => { /* console.log(error); */ });
+								.catch((error) => {
+									/* console.log(error); */
+								});
 						}
 					})
 					.catch((error) => {
@@ -189,14 +199,15 @@ export const RequestSessionAssign = (props: { value?: string }) => {
 
 	return (
 		<div className="assign__wrapper">
-			<SelectDropdown
-				menuShouldBlockScroll
-				menuPosition="fixed"
-				{...prepareSelectDropdown({
-					consultantList,
-					handleDatalistSelect,
-					value: props.value
-				})}
+			<OrisoSelect
+				id="assignSelect"
+				label={translate('session.u25.assignment.placeholder')}
+				options={consultantList.map((consultant) => ({
+					value: consultant.value,
+					label: consultant.label
+				}))}
+				value={props.value || selectedOption?.value || ''}
+				onChange={handleConsultantSelect}
 			/>
 			{overlayActive && (
 				<Overlay

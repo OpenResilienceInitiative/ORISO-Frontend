@@ -41,8 +41,8 @@ $inputHeight: 50px;
 		}
 
 		&__option {
-			background-color: $white;
-			color: var(--m3-primary, $secondary);
+			background-color: var(--m3-surface, #fcf9f9);
+			color: var(--m3-on-surface, #1b1b1c);
 			min-height: 48px;
 
 			// The `!important` annotation is relevant to not be overridden by inline styles.
@@ -52,34 +52,43 @@ $inputHeight: 50px;
 			&--is-focused {
 				// The `!important` annotation is relevant to also cover the `:active`
 				// state, which would otherwise be overridden by inline styles.
-				background-color: $select-focus-background-color !important;
-				color: $selection-focus-color;
+				background-color: var(
+					--m3-hover-layer,
+					rgba(27, 27, 28, 0.04)
+				) !important;
+				color: var(--m3-primary, #a5000a);
 			}
 		}
 
 		&__multi-value {
 			// The `!important` annotation is relevant to not be overridden by inline styles.
-			border-radius: $tab-border-radius !important;
-			border-color: var(--m3-primary, $primary) !important;
-			background-color: $tab-background-color-selected !important;
+			border-radius: 999px !important;
+			border-color: transparent !important;
+			background-color: var(
+				--m3-selected-layer,
+				rgba(165, 0, 10, 0.08)
+			) !important;
 
 			&:hover {
 				// The `!important` annotation is relevant to not be overridden by inline styles.
-				border-color: var(--m3-primary, $hover-primary) !important;
-				background-color: $tab-background-color-selected-hover !important;
+				border-color: transparent !important;
+				background-color: var(
+					--m3-selected-layer,
+					rgba(165, 0, 10, 0.12)
+				) !important;
 
 				.select__input__multi-value__label,
 				.select__input__multi-value__remove {
-					color: var(--m3-primary, $hover-primary) !important;
+					color: var(--m3-primary, #a5000a) !important;
 				}
 			}
 
 			&__label {
-				color: var(--m3-primary, $primary) !important;
+				color: var(--m3-primary, #a5000a) !important;
 			}
 
 			&__remove {
-				color: var(--m3-primary, $primary) !important;
+				color: var(--m3-primary, #a5000a) !important;
 			}
 		}
 

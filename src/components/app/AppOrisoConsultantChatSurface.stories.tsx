@@ -20,8 +20,6 @@ import {
 	LocaleContext,
 	NotificationsContext,
 	REMOVE_SESSIONS,
-	RocketChatContext,
-	RocketChatGlobalSettingsContext,
 	SessionTypeContext,
 	SessionsDataContext,
 	SET_SESSIONS,
@@ -41,8 +39,6 @@ import type {
 	TopicsDataInterface
 } from '../../globalState/interfaces';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
-import { RocketChatSubscriptionsContext } from '../../globalState/provider/RocketChatSubscriptionsProvider';
-import { RocketChatUsersOfRoomContext } from '../../globalState/provider/RocketChatUsersOfRoomProvider';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import { LanguagesContext } from '../../globalState/provider/LanguagesProvider';
 import { NavigationBar } from './NavigationBar';
@@ -50,23 +46,17 @@ import { RouterConfigConsultant } from './RouterConfig';
 import { Routing } from './Routing';
 import { config } from '../../resources/scripts/config';
 import { MenuVerticalIcon } from '../../resources/img/icons';
-import {
-	SETTING_E2E_ENABLE,
-	SETTING_HIDE_SYSTEM_MESSAGES,
-	SETTING_MESSAGE_ALLOWDELETING,
-	SETTING_MESSAGE_SHOWDELETEDSTATUS,
-	type TSetting
-} from '../../api/apiRocketChatSettingsPublic';
-import {
-	APP_ORISO_CHAT_FIGMA_URL,
-	ORISO_M3_FIGMA_URL
-} from '../storybookDesignLinks';
 import './authenticatedApp.styles.scss';
 import './navigation.styles.scss';
 import '../sessionsList/sessionsList.styles.scss';
 import '../sessionsListItem/sessionsListItem.styles.scss';
 import '../message/message.styles.scss';
 import '../messageSubmitInterface/messageSubmitInterface.styles';
+
+const APP_ORISO_CHAT_FIGMA_URL =
+	'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=316-17725&t=XHH5HQNmA8DUWl2U-0';
+const ORISO_M3_FIGMA_URL =
+	'https://www.figma.com/design/RTUi1rcrEWECXz8rNFmj7Q/Design-System-M3_ORISO?node-id=60853-24182&p=f&t=ieIskw4Lz5hlc7iM-0';
 
 const searchPeopleResults = [
 	{
@@ -654,22 +644,6 @@ function AppOrisoRoutingRuntimeProviders({
 	children: React.ReactNode;
 }) {
 	const notificationNoop = () => {};
-	const settings: TSetting[] = [
-		{ _id: SETTING_HIDE_SYSTEM_MESSAGES, enterprise: false, value: [] },
-		{ _id: SETTING_E2E_ENABLE, enterprise: false, value: false },
-		{
-			_id: SETTING_MESSAGE_ALLOWDELETING,
-			enterprise: false,
-			value: false
-		},
-		{
-			_id: SETTING_MESSAGE_SHOWDELETEDSTATUS,
-			enterprise: false,
-			value: false
-		}
-	];
-	const getSetting = <T extends TSetting>(id: T['_id']): T | null =>
-		(settings.find((setting) => setting._id === id) as T) ?? null;
 
 	return (
 		<AppConfigContext.Provider value={appOrisoRouterSettings}>
@@ -708,93 +682,47 @@ function AppOrisoRoutingRuntimeProviders({
 								}}
 							>
 								<RuntimeSessionsDataProvider>
-									<RocketChatContext.Provider
+									<ConsultantListContext.Provider
 										value={{
-											ready: true,
-											send: () => {},
-											subscribe: () => {},
-											unsubscribe: () => {},
-											listen: () => {},
-											sendMethod: (async () =>
-												settings) as any,
-											close: () => {},
-											rcWebsocket: null
+											consultantList: [],
+											setConsultantList: () => {}
 										}}
 									>
-										<RocketChatGlobalSettingsContext.Provider
+										<NotificationsContext.Provider
 											value={{
-												settings,
-												settingsReady: true,
-												getSetting
+												notifications: [],
+												notificationFeed: [],
+												unreadNotificationCount: 0,
+												setNotifications:
+													notificationNoop,
+												hasNotification: () => false,
+												addNotification:
+													notificationNoop,
+												addEventNotification:
+													notificationNoop,
+												refreshNotificationFeed:
+													notificationNoop,
+												removeNotification:
+													notificationNoop,
+												markNotificationAsRead:
+													notificationNoop,
+												markAllNotificationsAsRead:
+													notificationNoop,
+												clearNotificationFeed:
+													notificationNoop
 											}}
 										>
-											<RocketChatSubscriptionsContext.Provider
+											<MatrixClientContext.Provider
 												value={{
-													subscriptionsReady: true,
-													subscriptions: [],
-													roomsReady: true,
-													rooms: []
+													matrixClientService: null,
+													setMatrixClientService:
+														() => {}
 												}}
 											>
-												<RocketChatUsersOfRoomContext.Provider
-													value={{
-														ready: true,
-														users: [],
-														moderators: [],
-														total: 3,
-														reload: async () => []
-													}}
-												>
-													<ConsultantListContext.Provider
-														value={{
-															consultantList: [],
-															setConsultantList:
-																() => {}
-														}}
-													>
-														<NotificationsContext.Provider
-															value={{
-																notifications:
-																	[],
-																notificationFeed:
-																	[],
-																unreadNotificationCount: 0,
-																setNotifications:
-																	notificationNoop,
-																hasNotification:
-																	() => false,
-																addNotification:
-																	notificationNoop,
-																addEventNotification:
-																	notificationNoop,
-																refreshNotificationFeed:
-																	notificationNoop,
-																removeNotification:
-																	notificationNoop,
-																markNotificationAsRead:
-																	notificationNoop,
-																markAllNotificationsAsRead:
-																	notificationNoop,
-																clearNotificationFeed:
-																	notificationNoop
-															}}
-														>
-															<MatrixClientContext.Provider
-																value={{
-																	matrixClientService:
-																		null,
-																	setMatrixClientService:
-																		() => {}
-																}}
-															>
-																{children}
-															</MatrixClientContext.Provider>
-														</NotificationsContext.Provider>
-													</ConsultantListContext.Provider>
-												</RocketChatUsersOfRoomContext.Provider>
-											</RocketChatSubscriptionsContext.Provider>
-										</RocketChatGlobalSettingsContext.Provider>
-									</RocketChatContext.Provider>
+												{children}
+											</MatrixClientContext.Provider>
+										</NotificationsContext.Provider>
+									</ConsultantListContext.Provider>
 								</RuntimeSessionsDataProvider>
 							</LanguagesContext.Provider>
 						</TopicsContext.Provider>
@@ -987,37 +915,18 @@ function AppOrisoRuntimeProviders({ children }: { children: React.ReactNode }) {
 								dispatch: () => {}
 							}}
 						>
-							<RocketChatSubscriptionsContext.Provider
+							<E2EEContext.Provider
 								value={{
-									subscriptionsReady: true,
-									subscriptions: [],
-									roomsReady: true,
-									rooms: []
+									key: '',
+									reloadPrivateKey: () => {},
+									isE2eeEnabled: false,
+									e2EEReady: true
 								}}
 							>
-								<RocketChatUsersOfRoomContext.Provider
-									value={{
-										ready: true,
-										users: [],
-										moderators: [],
-										total: 3,
-										reload: async () => []
-									}}
-								>
-									<E2EEContext.Provider
-										value={{
-											key: '',
-											reloadPrivateKey: () => {},
-											isE2eeEnabled: false,
-											e2EEReady: true
-										}}
-									>
-										<LegalLinksContext.Provider value={[]}>
-											{children}
-										</LegalLinksContext.Provider>
-									</E2EEContext.Provider>
-								</RocketChatUsersOfRoomContext.Provider>
-							</RocketChatSubscriptionsContext.Provider>
+								<LegalLinksContext.Provider value={[]}>
+									{children}
+								</LegalLinksContext.Provider>
+							</E2EEContext.Provider>
 						</SessionsDataContext.Provider>
 					</TopicsContext.Provider>
 				</ConsultingTypesContext.Provider>

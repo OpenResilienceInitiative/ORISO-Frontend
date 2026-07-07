@@ -1,0 +1,81 @@
+import * as React from 'react';
+import { createContext, useCallback, useEffect, useState } from 'react';
+import {
+	apiMatrixSettingsPublic,
+	SETTING_E2E_ENABLE,
+	SETTING_FILEUPLOAD_MAXFILESIZE,
+	SETTING_HIDE_SYSTEM_MESSAGES,
+	SETTING_MESSAGE_ALLOWDELETING,
+	SETTING_MESSAGE_MAXALLOWEDSIZE,
+	SETTING_MESSAGE_SHOWDELETEDSTATUS,
+	TSetting
+} from '../../api/apiMatrixSettingsPublic';
+import { getFallbackPublicSettings } from '../../api/apiMatrixSettingsPublic';
+
+const SETTINGS_TO_FETCH = [
+	SETTING_E2E_ENABLE,
+	SETTING_MESSAGE_MAXALLOWEDSIZE,
+	SETTING_FILEUPLOAD_MAXFILESIZE,
+	SETTING_MESSAGE_ALLOWDELETING,
+	SETTING_MESSAGE_SHOWDELETEDSTATUS,
+	SETTING_HIDE_SYSTEM_MESSAGES
+];
+
+type ServerSettingsContextProps = {
+	settings: TSetting[];
+	settingsReady: boolean;
+	getSetting: <T extends TSetting>(id: T['_id']) => T | null;
+};
+
+export const ServerSettingsContext =
+	createContext<ServerSettingsContextProps>(null);
+
+/**
+ * Chat-related server settings (message size, deletability, ...).
+ * Resolved from the backend server settings with static fallbacks —
+ * no Rocket.Chat involved.
+ */
+export const ServerSettingsProvider = (props) => {
+	const [settings, setSettings] = useState<TSetting[]>([]);
+	const [settingsReady, setSettingsReady] = useState(false);
+
+	useEffect(() => {
+		let cancelled = false;
+
+		apiMatrixSettingsPublic(SETTINGS_TO_FETCH)
+			.then((res) => {
+				if (!cancelled) {
+					setSettings(res.settings);
+				}
+			})
+			.catch(() => {
+				if (!cancelled) {
+					setSettings(getFallbackPublicSettings(SETTINGS_TO_FETCH));
+				}
+			})
+			.finally(() => {
+				if (!cancelled) {
+					setSettingsReady(true);
+				}
+			});
+
+		return () => {
+			cancelled = true;
+		};
+	}, []);
+
+	const getSetting = useCallback(
+		<T extends TSetting>(id: T['_id']): T | null => {
+			return (settings.find((s) => s._id === id) as T) ?? null;
+		},
+		[settings]
+	);
+
+	return (
+		<ServerSettingsContext.Provider
+			value={{ settings, settingsReady, getSetting }}
+		>
+			{props.children}
+		</ServerSettingsContext.Provider>
+	);
+};

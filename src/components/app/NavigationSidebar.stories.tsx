@@ -109,8 +109,8 @@ function RuntimeNavigationRail() {
 		<UserDataContext.Provider
 			value={{
 				userData: consultantUserData,
-				setUserData: () => {},
-				reloadUserData: async () => consultantUserData
+				reloadUserData: async () => consultantUserData,
+				loaded: true
 			}}
 		>
 			<ConsultingTypesContext.Provider
@@ -141,7 +141,6 @@ function RuntimeNavigationRail() {
 						<LocaleContext.Provider
 							value={{
 								locale: 'de',
-								locales: ['de', 'en'],
 								selectableLocales: ['de', 'en'],
 								setLocale: () => {},
 								initLocale: 'de'

@@ -29,6 +29,41 @@ const config: StorybookConfig = {
 	async viteFinal(cfg) {
 		return mergeConfig(cfg, {
 			plugins: [
+				// The virtual project-annotations module imports @storybook/react's
+				// dist files by absolute /node_modules/... path. Vite doesn't map
+				// bare `import React from 'react'` inside such files onto the
+				// pre-bundled dep, so the raw CJS react/index.js gets served as ESM
+				// and the preview boot dies ("does not provide an export named
+				// 'default'"). Re-resolving those imports as if they came from
+				// project source routes them through the optimizer again.
+				{
+					name: 'oriso-force-optimized-react',
+					enforce: 'pre' as const,
+					async resolveId(
+						id: string,
+						importer: string | undefined,
+						options: any
+					) {
+						if (
+							!importer ||
+							!importer.includes('node_modules') ||
+							importer.includes('.vite') ||
+							![
+								'react',
+								'react-dom',
+								'react-dom/client',
+								'react/jsx-runtime',
+								'react/jsx-dev-runtime'
+							].includes(id)
+						) {
+							return null;
+						}
+						return this.resolve(id, path.join(srcDir, 'index.ts'), {
+							...options,
+							skipSelf: true
+						});
+					}
+				},
 				// svgr handles the `?react` query -> React component
 				svgr(),
 				// CRA-faithful .svg dual export: replicate @svgr/webpack so that
