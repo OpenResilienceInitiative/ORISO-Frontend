@@ -28,7 +28,7 @@
 	border: none;
 	cursor: pointer;
 	overflow: hidden;
-	font-family: 'Inter', sans-serif;
+	font-family: Inter, sans-serif;
 	font-weight: 500;
 	transition:
 		background 160ms ease,
@@ -91,7 +91,7 @@
 }
 
 /* Desktop: bigger Figma-spec type sizes, wider padding */
-@media screen and (min-width: 900px) {
+@media screen and (width >= 900px) {
 	.pseudonymActionBar {
 		padding: 16px 24px;
 		gap: 4px;
@@ -118,7 +118,7 @@
 }
 
 /* Ultra-wide spec (Figma 390 phone frame looked giant): keep above sane */
-@media screen and (max-width: 420px) {
+@media screen and (width <= 420px) {
 	.pseudonymActionBar {
 		padding: 10px 8px calc(10px + env(safe-area-inset-bottom, 0));
 	}

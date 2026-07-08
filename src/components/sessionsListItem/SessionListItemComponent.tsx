@@ -49,7 +49,6 @@ import { TopicSessionInterface } from '../../globalState/interfaces';
 import { markdownToDraft } from 'markdown-draft-js';
 import { convertFromRaw } from 'draft-js';
 import './sessionsListItem.styles';
-import { getSessionsListItemIcon, LIST_ICONS } from './sessionsListItemHelpers';
 import { SessionListItemVideoCall } from './SessionListItemVideoCall';
 import { SessionListItemAttachment } from './SessionListItemAttachment';
 import clsx from 'clsx';
@@ -677,38 +676,6 @@ export const SessionListItemComponent = ({
 				});
 		}
 	};
-
-	const onSuccessDeleteSession = () => {
-		mobileListView();
-		navigate(listPath);
-	};
-
-	const iconVariant = () => {
-		if (activeSession.isGroup) {
-			return {
-				variant: LIST_ICONS.IS_GROUP_CHAT,
-				title: translate('message.groupChat')
-			};
-		} else if (activeSession.isEmptyEnquiry) {
-			return {
-				variant: LIST_ICONS.IS_NEW_ENQUIRY,
-				title: translate('message.newEnquiry')
-			};
-		} else if (activeSession.item.messagesRead) {
-			return {
-				variant: LIST_ICONS.IS_READ,
-				title: translate('message.read')
-			};
-		} else {
-			return {
-				variant: LIST_ICONS.IS_UNREAD,
-				title: translate('message.unread')
-			};
-		}
-	};
-
-	const Icon = getSessionsListItemIcon(iconVariant().variant);
-	const iconTitle = iconVariant().title;
 
 	const prettyPrintDate = (
 		messageDate: number, // seconds since epoch

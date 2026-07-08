@@ -55,6 +55,7 @@ const KNOWN_ICON_IDS: EventIconId[] = [
 	'threadReply',
 	'draft',
 	'handover',
+	'handoverDenied',
 	'callStarted',
 	'callEnded',
 	'callMissed',

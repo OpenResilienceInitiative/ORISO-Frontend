@@ -7,13 +7,16 @@
  */
 
 import * as React from 'react';
-import { ReactComponent as RequestNewIcon } from '../../../resources/img/icons/speech-bubble-plus.svg';
-import { ReactComponent as RequestAcceptedIcon } from '../../../resources/img/icons/checkmark_circle.svg';
+// Timeline redesign: icons exported from the App.Oriso Figma icon library
+// (Design System-M3_ORISO) where available; app icons otherwise.
+import { ReactComponent as RequestNewIcon } from '../../../resources/img/icons/timeline-request-client.svg';
+import { ReactComponent as RequestAcceptedIcon } from '../../../resources/img/icons/timeline-case-accepted.svg';
 import { ReactComponent as MessageIcon } from '../../../resources/img/icons/speech-bubble.svg';
 import { ReactComponent as ThreadReplyIcon } from '../../../resources/img/icons/corner-up-left.svg';
 import { ReactComponent as DraftIcon } from '../../../resources/img/icons/pen-paper.svg';
 import { ReactComponent as HandoverIcon } from '../../../resources/img/icons/persons-two.svg';
-import { ReactComponent as CallStartedIcon } from '../../../resources/img/icons/call-on.svg';
+import { ReactComponent as HandoverDeniedIcon } from '../../../resources/img/icons/timeline-case-denied.svg';
+import { ReactComponent as CallStartedIcon } from '../../../resources/img/icons/timeline-add-call.svg';
 import { ReactComponent as CallEndedIcon } from '../../../resources/img/icons/call.svg';
 import { ReactComponent as CallMissedIcon } from '../../../resources/img/icons/call-off.svg';
 import { ReactComponent as SupervisorIcon } from '../../../resources/img/icons/shield.svg';
@@ -30,6 +33,7 @@ export const EVENT_ICONS: Record<EventIconId, SvgIcon> = {
 	threadReply: ThreadReplyIcon,
 	draft: DraftIcon,
 	handover: HandoverIcon,
+	handoverDenied: HandoverDeniedIcon,
 	callStarted: CallStartedIcon,
 	callEnded: CallEndedIcon,
 	callMissed: CallMissedIcon,

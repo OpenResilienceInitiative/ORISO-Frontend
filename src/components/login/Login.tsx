@@ -214,7 +214,14 @@ export const Login = () => {
 					return redirectToApp(gcid);
 				}
 			}),
-		[reloadUserData, locale, initLocale, consultant, gcid]
+		[
+			reloadUserData,
+			locale,
+			initLocale,
+			consultant,
+			gcid,
+			showConsultantLoginBlockedError
+		]
 	);
 
 	useEffect(() => {

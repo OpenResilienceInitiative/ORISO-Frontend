@@ -89,9 +89,9 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 		useState<boolean>(false);
 	const [showOpeningHoursHint, setShowOpeningHoursHint] =
 		useState<boolean>(false);
-	const [shownNoAvailabilityTopics, setShownNoAvailabilityTopics] = useState<
-		Set<number>
-	>(new Set());
+	// Only the setter is needed: the current value is read via the functional
+	// updater to show the no-availability modal once per topic.
+	const [, setShownNoAvailabilityTopics] = useState<Set<number>>(new Set());
 
 	// Generate username and 8-character random password on mount
 	useEffect(() => {
@@ -134,6 +134,9 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 			.finally(() => {
 				setLoadingTopics(false);
 			});
+		// Mount-only fetch; loadAgenciesForTopic changes with agency state and
+		// must not re-trigger the topics request.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	const openNoAvailabilityModal = useCallback(

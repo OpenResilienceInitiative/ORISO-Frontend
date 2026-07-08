@@ -6,13 +6,19 @@ import React, {
 	useState
 } from 'react';
 import { EditorContent, useEditor } from '@tiptap/react';
-import { JSONContent, Mark } from '@tiptap/core';
+import { Mark } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
 import Highlight from '@tiptap/extension-highlight';
 import TextAlign from '@tiptap/extension-text-align';
 import Placeholder from '@tiptap/extension-placeholder';
+import TaskList from '@tiptap/extension-task-list';
+import TaskItem from '@tiptap/extension-task-item';
+import {
+	createMentionExtension,
+	MentionProvider
+} from './inputField/extensions/createMentionExtension';
 import {
 	FormatBold,
 	FormatListBulleted,
@@ -35,6 +41,8 @@ export interface TipTapComposerRef {
 	setText: (value: string) => void;
 	getHTML: () => string;
 	insertText: (value: string) => void;
+	/** Inserts '@' so the mention suggestion reliably opens. */
+	insertMentionTrigger: () => void;
 	insertSnippet: (payload: HighlightSnippetPayload) => void;
 	runAction: (action: string) => void;
 	isActionActive: (action: string) => boolean;
@@ -49,161 +57,11 @@ interface TipTapComposerProps {
 	onChange: (value: string) => void;
 	onSubmitShortcut: () => void;
 	onSelectionSnippet?: (payload: HighlightSnippetPayload | null) => void;
+	/** Editor gained/lost focus — drives the Figma "Selected" container state. */
+	onFocusChange?: (focused: boolean) => void;
+	/** Enables Slack-like @-mentions for agency consultants when provided. */
+	mentionProvider?: MentionProvider;
 }
-
-const escapeMarkdownText = (value: string): string =>
-	value.replace(/([\\`*_~\[\]()])/g, '\\$1');
-
-const applyTextMarks = (
-	text: string,
-	marks: Array<{ type: string; attrs?: Record<string, any> }> = []
-): string => {
-	if (!text) {
-		return '';
-	}
-
-	let result = text;
-	const linkMark = marks.find((mark) => mark.type === 'link');
-	const codeMark = marks.some((mark) => mark.type === 'code');
-	const boldMark = marks.some((mark) => mark.type === 'bold');
-	const italicMark = marks.some((mark) => mark.type === 'italic');
-	const strikeMark = marks.some((mark) => mark.type === 'strike');
-	const underlineMark = marks.some((mark) => mark.type === 'underline');
-	const highlightMark = marks.some((mark) => mark.type === 'highlight');
-
-	if (codeMark) {
-		result = `\`${result}\``;
-	}
-	if (boldMark) {
-		result = `**${result}**`;
-	}
-	if (italicMark) {
-		result = `*${result}*`;
-	}
-	if (strikeMark) {
-		result = `~~${result}~~`;
-	}
-	if (underlineMark) {
-		result = `<u>${result}</u>`;
-	}
-	if (highlightMark) {
-		result = `<mark>${result}</mark>`;
-	}
-	if (linkMark?.attrs?.href) {
-		result = `[${result}](${linkMark.attrs.href})`;
-	}
-
-	return result;
-};
-
-const serializeInlineNodes = (nodes: JSONContent[] = []): string =>
-	nodes
-		.map((node) => {
-			if (node.type === 'text') {
-				return applyTextMarks(
-					escapeMarkdownText(node.text || ''),
-					(node.marks as Array<{
-						type: string;
-						attrs?: Record<string, any>;
-					}>) || []
-				);
-			}
-			if (node.type === 'hardBreak') {
-				return '\n';
-			}
-			if (node.content?.length) {
-				return serializeInlineNodes(node.content);
-			}
-			return '';
-		})
-		.join('');
-
-const serializeBlocks = (node?: JSONContent): string => {
-	if (!node) {
-		return '';
-	}
-
-	if (node.type === 'doc') {
-		return (node.content || [])
-			.map((child) => serializeBlocks(child).trimEnd())
-			.filter(Boolean)
-			.join('\n\n');
-	}
-
-	if (node.type === 'paragraph') {
-		return serializeInlineNodes(node.content || []);
-	}
-
-	if (node.type === 'heading') {
-		const level = Math.min(Math.max(node.attrs?.level || 1, 1), 6);
-		return `${'#'.repeat(level)} ${serializeInlineNodes(node.content || [])}`;
-	}
-
-	if (node.type === 'blockquote') {
-		const quoted = (node.content || [])
-			.map((child) => serializeBlocks(child))
-			.filter(Boolean)
-			.join('\n')
-			.split('\n')
-			.map((line) => `> ${line}`)
-			.join('\n');
-		return quoted;
-	}
-
-	if (node.type === 'bulletList') {
-		return (node.content || [])
-			.map((item) => {
-				const text = (item.content || [])
-					.map((child) => serializeBlocks(child))
-					.join('\n')
-					.trim();
-				return `- ${text}`;
-			})
-			.join('\n');
-	}
-
-	if (node.type === 'orderedList') {
-		return (node.content || [])
-			.map((item, index) => {
-				const text = (item.content || [])
-					.map((child) => serializeBlocks(child))
-					.join('\n')
-					.trim();
-				return `${index + 1}. ${text}`;
-			})
-			.join('\n');
-	}
-
-	if (node.type === 'listItem') {
-		return (node.content || [])
-			.map((child) => serializeBlocks(child))
-			.join('\n');
-	}
-
-	if (node.type === 'codeBlock') {
-		const text = serializeInlineNodes(node.content || []);
-		return `\`\`\`\n${text}\n\`\`\``;
-	}
-
-	if (node.type === 'text') {
-		return applyTextMarks(
-			escapeMarkdownText(node.text || ''),
-			(node.marks as Array<{
-				type: string;
-				attrs?: Record<string, any>;
-			}>) || []
-		);
-	}
-
-	if (node.content?.length) {
-		return node.content.map((child) => serializeBlocks(child)).join('\n');
-	}
-
-	return '';
-};
-
-const serializeEditorToMarkdown = (doc?: JSONContent): string =>
-	serializeBlocks(doc).trim();
 
 const getEditorPlainTextLength = (editorLike: any): number =>
 	(editorLike?.state?.doc?.textContent || '').length;
@@ -279,7 +137,9 @@ export const TipTapComposer = forwardRef<
 			maxLength,
 			onChange,
 			onSubmitShortcut,
-			onSelectionSnippet
+			onSelectionSnippet,
+			onFocusChange,
+			mentionProvider
 		},
 		ref
 	) => {
@@ -306,8 +166,16 @@ export const TipTapComposer = forwardRef<
 					}),
 					Placeholder.configure({
 						placeholder
-					})
+					}),
+					TaskList,
+					TaskItem.configure({ nested: true }),
+					...(mentionProvider
+						? [createMentionExtension(mentionProvider)]
+						: [])
 				],
+				// mentionProvider is captured once on mount — the provider reads
+				// live data via its closures, so it need not be a dep.
+				// eslint-disable-next-line react-hooks/exhaustive-deps
 				[placeholder]
 			),
 			content: value || '',
@@ -382,6 +250,12 @@ export const TipTapComposer = forwardRef<
 					}
 					return false;
 				}
+			},
+			onFocus: () => {
+				onFocusChange?.(true);
+			},
+			onBlur: () => {
+				onFocusChange?.(false);
 			},
 			onUpdate: ({ editor: currentEditor }) => {
 				if (isSyncingFromValue) {
@@ -477,6 +351,27 @@ export const TipTapComposer = forwardRef<
 				}
 				editor.chain().focus().insertContent(nextValue).run();
 			},
+			insertMentionTrigger: () => {
+				if (!editor) {
+					return;
+				}
+				// The mention suggestion only fires on '@' at a line start or
+				// after whitespace — a bare '@' pasted right behind text would
+				// silently do nothing, so pad it when needed.
+				const { $from } = editor.state.selection;
+				const textBefore = $from.parent.textBetween(
+					0,
+					$from.parentOffset,
+					undefined,
+					'￼'
+				);
+				const needsSpace = /\S$/.test(textBefore);
+				editor
+					.chain()
+					.focus()
+					.insertContent(needsSpace ? ' @' : '@')
+					.run();
+			},
 			insertSnippet: (payload: HighlightSnippetPayload) => {
 				if (!editor || !payload?.text) {
 					return;
@@ -531,6 +426,16 @@ export const TipTapComposer = forwardRef<
 							.focus()
 							.toggleHeading({ level: 3 })
 							.run();
+						return;
+					case 'heading4':
+						editor
+							.chain()
+							.focus()
+							.toggleHeading({ level: 4 })
+							.run();
+						return;
+					case 'taskList':
+						editor.chain().focus().toggleTaskList().run();
 						return;
 					case 'alignLeft':
 						editor.chain().focus().setTextAlign('left').run();
@@ -707,6 +612,10 @@ export const TipTapComposer = forwardRef<
 						return editor.isActive('heading', { level: 2 });
 					case 'heading3':
 						return editor.isActive('heading', { level: 3 });
+					case 'heading4':
+						return editor.isActive('heading', { level: 4 });
+					case 'taskList':
+						return editor.isActive('taskList');
 					case 'alignLeft':
 						return (
 							activeTextAlign !== 'center' &&

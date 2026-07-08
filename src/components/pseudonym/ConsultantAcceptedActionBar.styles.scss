@@ -38,7 +38,7 @@
 }
 
 .consultantAcceptedActionBar__hintText {
-	font-family: 'Inter', sans-serif;
+	font-family: Inter, sans-serif;
 	font-size: 16px;
 	line-height: 24px;
 	font-weight: 500;
@@ -130,7 +130,7 @@
 }
 
 .consultantAcceptedActionBar__startBtnLabel {
-	font-family: 'Inter', sans-serif;
+	font-family: Inter, sans-serif;
 	font-size: 24px;
 	line-height: 32px;
 	font-weight: 500;
@@ -138,7 +138,7 @@
 	white-space: nowrap;
 }
 
-@media screen and (max-width: 640px) {
+@media screen and (width <= 640px) {
 	.consultantAcceptedActionBar {
 		padding: 12px 14px calc(12px + env(safe-area-inset-bottom, 0));
 	}

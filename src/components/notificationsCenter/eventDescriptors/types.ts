@@ -51,6 +51,7 @@ export type EventIconId =
 	| 'threadReply'
 	| 'draft'
 	| 'handover'
+	| 'handoverDenied'
 	| 'callStarted'
 	| 'callEnded'
 	| 'callMissed'

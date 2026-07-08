@@ -1,14 +1,20 @@
-import { Meta, StoryObj } from '@storybook/react';
+import { Meta, StoryObj } from '@storybook/react-vite';
 import { TopicSelection } from './TopicSelection';
+import { ORISO_M3_FIGMA_URL } from '../../storybookDesignLinks';
 
 const meta = {
 	title: 'REGISTRATION/TopicSelection',
 	component: TopicSelection,
 	tags: ['autodocs'],
 	parameters: {
+		design: {
+			type: 'figma',
+			url: ORISO_M3_FIGMA_URL
+		},
 		docs: {
 			description: {
-				component: 'TopicSelection component for selecting topics during registration.'
+				component:
+					'TopicSelection component for selecting topics during registration.'
 			}
 		}
 	}

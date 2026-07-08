@@ -4,31 +4,16 @@ import {
 	AUTHORITIES,
 	SessionTypeContext,
 	UserDataContext,
-	getContact,
 	hasUserAuthority,
-	useConsultingType,
 	ActiveSessionContext
 } from '../../../globalState';
 import { useSearchParam } from '../../../hooks/useSearchParams';
-import {
-	SESSION_LIST_TAB,
-	SESSION_LIST_TYPES,
-	getViewPathForType,
-	isUserModerator
-} from '../../session/sessionHelpers';
-import { isMobile } from 'react-device-detect';
+import { SESSION_LIST_TAB } from '../../session/sessionHelpers';
 import { mobileListView } from '../../app/navigationHandler';
 import { BackIcon, GroupChatInfoIcon } from '../../../resources/img/icons';
 import { useTranslation } from 'react-i18next';
-import { getGroupChatDate } from '../../session/sessionDateHelpers';
-import { getValueFromCookie } from '../../sessionCookie/accessSessionCookie';
 import { decodeUsername } from '../../../utils/encryptionHelpers';
-import { FlyoutMenu } from '../../flyoutMenu/FlyoutMenu';
-import { BanUser, BanUserOverlay } from '../../banUser/BanUser';
-import { Tag } from '../../tag/Tag';
 import { BUTTON_TYPES, Button, ButtonItem } from '../../button/Button';
-import { useAppConfig } from '../../../hooks/useAppConfig';
-import { SessionItemInterface } from '../../../globalState/interfaces';
 import { useMatrixClient } from '../../../globalState/context/MatrixClientContext';
 import { RoomMember } from 'matrix-js-sdk';
 import { UserAvatar } from '../../message/UserAvatar';
@@ -46,10 +31,6 @@ export const GroupChatHeader = ({
 	isJoinGroupChatView,
 	bannedUsers
 }: GroupChatHeaderProps) => {
-	const { releaseToggles } = useAppConfig();
-
-	const [isUserBanOverlayOpen, setIsUserBanOverlayOpen] =
-		useState<boolean>(false);
 	const { t } = useTranslation(['common', 'consultingTypes', 'agencies']);
 	const { activeSession } = useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
@@ -176,11 +157,8 @@ export const GroupChatHeader = ({
 			}
 		};
 	}, [matrixRoomId, matrixMembers.length, matrixClientService]);
-	const { type, path: listPath } = useContext(SessionTypeContext);
+	const { path: listPath } = useContext(SessionTypeContext);
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
-	const sessionView = getViewPathForType(type);
-	const consultingType = useConsultingType(activeSession.item.consultingType);
-	const [flyoutOpenId, setFlyoutOpenId] = useState('');
 	const isConsultant = hasUserAuthority(
 		AUTHORITIES.CONSULTANT_DEFAULT,
 		userData
@@ -281,30 +259,6 @@ export const GroupChatHeader = ({
 	const sessionTabPath = `${
 		sessionListTab ? `?sessionListTab=${sessionListTab}` : ''
 	}`;
-
-	const isCurrentUserModerator = isUserModerator({
-		chatItem: activeSession.item,
-		rcUserId: getValueFromCookie('rc_uid')
-	});
-
-	const userSessionData = getContact(activeSession)?.sessionData || {};
-	const isAskerInfoAvailable = () =>
-		!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
-		consultingType?.showAskerProfile &&
-		activeSession.isSession &&
-		((type === SESSION_LIST_TYPES.ENQUIRY &&
-			Object.entries(userSessionData).length !== 0) ||
-			SESSION_LIST_TYPES.ENQUIRY !== type);
-
-	const [isSubscriberFlyoutOpen, setIsSubscriberFlyoutOpen] = useState(false);
-
-	const handleFlyout = (e) => {
-		if (!isSubscriberFlyoutOpen) {
-			setIsSubscriberFlyoutOpen(true);
-		} else if (e.target.id === 'subscriberButton') {
-			setIsSubscriberFlyoutOpen(false);
-		}
-	};
 
 	// Voice call button
 	const buttonStartCall: ButtonItem = {
