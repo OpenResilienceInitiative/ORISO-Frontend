@@ -1,342 +1,514 @@
+// Timeline / notifications page — Figma "App.Oriso → Zeitstrahl | Timeline"
+// (nodes 7576-22889 / 7582-27615). Shares the conversation page interaction
+// pattern: resizable list column + vertical dragger + detail surface.
+// Palette mirrors the M3 ORISO tokens (orisoInputDesign.ts):
+//   primary          #a5000a   on-primary        #ffffff
+//   primary-container#ffdad7   selected surface  #ffecef
+//   surface          #fcf9f9   surface-container #f1eeee
+//   on-surface       #1b1b1c   on-surface-variant#444748
+//   secondary        #4c555f   outline-variant   #c4c7c7
+
 .notificationsCenter {
 	display: flex;
-	flex-direction: column;
-	gap: 16px;
-	padding: 24px;
+	flex-direction: row;
 	height: 100%;
+	min-height: 0;
+	background: #fcf9f9;
 
-	&__header {
+	&__listColumn {
+		position: relative;
 		display: flex;
-		align-items: flex-start;
-		justify-content: space-between;
-		gap: 16px;
+		flex-direction: column;
+		min-height: 0;
+		flex-shrink: 0;
+		padding: 16px 20px 16px 16px;
+		gap: 4px;
+		background: var(--m3-surface-container-high, #eae7e8);
 	}
 
-	&__title {
-		margin: 0;
-		font-size: 26px;
-		font-weight: 700;
-	}
+	// Reuses the conversation page toolbar (search pill + filter chips,
+	// sessionsListToolbar__*). The column provides its own padding/surface.
+	&__listColumn .sessionsListToolbar {
+		padding: 0;
+		background: transparent;
 
-	&__subtitle {
-		margin: 8px 0 0;
-		color: #6b7280;
-	}
+		.sessionsListToolbar__search {
+			margin-bottom: 8px;
+			max-width: none;
+		}
 
-	&__actions {
-		display: flex;
-		gap: 8px;
-		flex-wrap: wrap;
-	}
-
-	&__actionButton {
-		border: 1px solid #d1d5db;
-		background: #fff;
-		color: #374151;
-		border-radius: 8px;
-		padding: 8px 12px;
-		font-size: 14px;
-		cursor: pointer;
-	}
-
-	&__actionButton:hover {
-		background: #f9fafb;
-	}
-
-	&__content {
-		display: grid;
-		grid-template-columns: minmax(280px, 420px) 1fr;
-		gap: 16px;
-		min-height: 420px;
-		height: calc(100% - 80px);
-	}
-
-	&__list,
-	&__detail {
-		background: #fff;
-		border: 1px solid #e5e7eb;
-		border-radius: 12px;
-		overflow: auto;
-	}
-
-	&__detail {
-		background: #fff2f4;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
-	&__detail--embeddedChat {
-		overflow: hidden;
-		align-items: center;
-		justify-content: flex-start;
-		padding-top: 12px;
-
-		.notificationsCenter__detailCard {
-			padding-top: 40px;
-			margin: 0 auto;
+		.sessionsListToolbar__chipsScroll {
+			margin-bottom: 8px;
 		}
 	}
 
-	// WP-06 Slice 1: timeline filter bar (family chips + search). Sticky so it
-	// stays pinned while the activity list scrolls.
-	&__filters {
-		position: sticky;
-		top: 0;
-		z-index: 1;
+	// Scrollable timeline list. Grouped-list contract shared with the
+	// conversation sidebar (sessionsListItem): items sit flush in a stack,
+	// only the group ends and the neighbours of the active card are rounded.
+	&__list {
+		flex: 1;
+		min-height: 0;
+		overflow-y: auto;
 		display: flex;
 		flex-direction: column;
-		gap: 8px;
-		padding: 12px 12px 8px;
-		background: #fff;
-		border-bottom: 1px solid #f2f2f2;
+		padding-right: 2px;
+		scrollbar-width: none;
+
+		&::-webkit-scrollbar {
+			display: none;
+		}
 	}
 
-	&__chips {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 6px;
-	}
-
-	&__chip {
-		appearance: none;
-		border: 1px solid #e5e7eb;
-		background: #fff;
-		color: #4b515a;
-		border-radius: 999px;
-		padding: 4px 12px;
-		font-size: 12px;
-		font-weight: 600;
-		cursor: pointer;
-		transition:
-			background-color 160ms ease,
-			border-color 160ms ease,
-			color 160ms ease;
-	}
-
-	&__chip:hover {
-		background: #fafafa;
-	}
-
-	// Active chip reuses the shared selection tokens (settings.scss →
-	// _listItemSelection.scss) so the timeline matches the conversation lists.
-	&__chip--active {
-		background: $list-item-selected-bg;
-		border-color: $list-item-accent-ring;
-		color: $list-item-action-color;
-	}
-
-	&__chip:focus-visible {
-		@include list-item-focus-treatment;
-	}
-
-	&__search {
-		appearance: none;
-		width: 100%;
-		box-sizing: border-box;
-		border: 1px solid #e5e7eb;
-		border-radius: 999px;
-		padding: 8px 14px;
-		font-size: 13px;
-		color: #1e1e1e;
-		background: #fff;
-	}
-
-	&__search:focus-visible {
-		@include list-item-focus-treatment;
-	}
-
-	&__listItem {
-		width: 100%;
-		display: flex;
-		flex-direction: column;
-		gap: 6px;
-		padding: 14px 16px;
-		border: none;
-		border-bottom: 1px solid #f2f2f2;
-		background: #fff;
-		text-align: left;
-		cursor: pointer;
+	&__listRow {
 		position: relative;
-	}
-
-	&__listItemTagRow {
 		display: flex;
-		margin-bottom: 4px;
-	}
-
-	&__listItemTag {
-		display: inline-flex;
-		align-items: center;
-		padding: 3px 10px;
-		border-radius: 999px;
-		font-size: 11px;
-		font-weight: 700;
-		text-transform: uppercase;
-		letter-spacing: 0.2px;
-	}
-
-	&__listItemTag--system {
-		background: #ff2f55;
-		color: #fff;
-	}
-
-	&__listItemTag--message {
-		background: #e63946;
-		color: #fff;
-	}
-
-	&__listItem:hover {
-		background: #fafafa;
-	}
-
-	// WP-06 Slice 0b: keyboard focus is independent of selection (a11y).
-	&__listItem:focus-visible {
-		@include list-item-focus-treatment;
-	}
-
-	// WP-06 Slice 0b: normalise the active row to the shared selection
-	// treatment (lightened background + 2px accent ring) so the timeline
-	// matches the conversation/request lists instead of a one-off colour.
-	&__listItem--active {
-		@include list-item-active-treatment;
-	}
-
-	&__listItemHeader {
-		display: flex;
-		justify-content: space-between;
+		align-items: stretch;
 		gap: 8px;
+		flex-shrink: 0;
+
+		// Smoothly open/close the gap around the selected card.
+		transition: margin 240ms cubic-bezier(0.16, 1, 0.3, 1);
 	}
 
-	&__listItemBody {
+	// Timeline card (Figma: surface-container fill, white hairline outline,
+	// flush corners inside the group).
+	&__card {
+		appearance: none;
+		flex: 1;
+		min-width: 0;
 		display: flex;
 		align-items: flex-start;
 		gap: 12px;
-	}
+		text-align: left;
+		padding: 16px 20px;
+		border: 1px solid #ffffff;
+		border-radius: 0;
+		background: #eae7e8;
+		cursor: pointer;
+		position: relative;
+		box-sizing: border-box;
+		transition:
+			background-color 140ms ease,
+			border-color 140ms ease,
+			border-radius 240ms cubic-bezier(0.16, 1, 0.3, 1),
+			box-shadow 140ms ease;
 
-	&__listItemIconCircle {
-		flex-shrink: 0;
-		width: 38px;
-		height: 38px;
-		border-radius: 50%;
-		background: #ffecef;
-		display: flex;
-		align-items: center;
-		justify-content: center;
+		&:hover {
+			background: #f0e7e7;
+		}
 
-		svg {
-			width: 22px;
-			height: 22px;
+		&:focus-visible {
+			@include list-item-focus-treatment;
 		}
 	}
 
-	&__listItemContent {
+	// Group ends: large radius on the first/last card of the stack
+	// (Figma dev inspect: border-radius 32px at group boundaries).
+	&__listRow:first-child:not(.notificationsCenter__listRow--active)
+		.notificationsCenter__card {
+		border-top-left-radius: 32px;
+		border-top-right-radius: 32px;
+	}
+
+	&__listRow:last-child:not(.notificationsCenter__listRow--active)
+		.notificationsCenter__card {
+		border-bottom-left-radius: 32px;
+		border-bottom-right-radius: 32px;
+	}
+
+	// Neighbours of the active card round the corners facing the gap.
+	&__listRow--beforeActive .notificationsCenter__card {
+		border-bottom-left-radius: 32px;
+		border-bottom-right-radius: 32px;
+	}
+
+	&__listRow--afterActive .notificationsCenter__card {
+		border-top-left-radius: 32px;
+		border-top-right-radius: 32px;
+	}
+
+	&__cardIconColumn {
 		display: flex;
 		flex-direction: column;
+		align-items: center;
 		gap: 6px;
-		min-width: 0;
+		flex-shrink: 0;
+	}
+
+	// Figma: white circle with a subtle outline ring around the event icon.
+	&__cardIcon {
+		width: 40px;
+		height: 40px;
+		border-radius: 50%;
+		border: 1px solid #dcd9d9;
+		background: #ffffff;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		color: #4c555f;
+
+		svg {
+			width: 20px;
+			height: 20px;
+			fill: currentcolor;
+
+			path {
+				fill: currentcolor;
+			}
+		}
+	}
+
+	// Dotted timeline connector under the card icon.
+	&__cardConnector {
+		width: 0;
 		flex: 1;
+		min-height: 14px;
+		margin-top: 2px;
+		border-left: 3px dotted #a9acac;
 	}
 
-	&__listItemTitle {
+	&__cardContent {
+		flex: 1;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
+
+	&__cardTitleRow {
+		display: flex;
+		align-items: baseline;
+		gap: 8px;
+	}
+
+	&__cardTitle {
+		font-size: 15px;
 		font-weight: 600;
-		color: #222;
+		color: #1b1b1c;
 	}
 
-	&__listItemTime {
+	// Figma: supporting text with the timestamp right-aligned on the same line.
+	&__cardBodyRow {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 12px;
+	}
+
+	&__cardText {
+		flex: 1;
+		min-width: 0;
+		font-size: 13px;
+		color: #444748;
+		overflow: hidden;
+		display: -webkit-box;
+		-webkit-line-clamp: 1;
+		-webkit-box-orient: vertical;
+	}
+
+	&__cardTime {
 		font-size: 12px;
 		color: #6b7280;
 		white-space: nowrap;
 	}
 
-	&__listItemText {
-		font-size: 14px;
-		color: #4b5563;
-		display: -webkit-box;
-		-webkit-line-clamp: 2;
-		-webkit-box-orient: vertical;
-		overflow: hidden;
+	&__cardTime--footer {
+		align-self: flex-end;
+		margin-top: 4px;
 	}
 
-	&__listItemUnread {
+	&__cardUnread {
 		position: absolute;
-		right: 10px;
-		bottom: 12px;
+		top: 12px;
+		right: 12px;
 		width: 8px;
 		height: 8px;
 		border-radius: 50%;
-		background: #e63946;
+		background: #a5000a;
 	}
 
+	// The selected notification pops out of the stack with vertical spacing
+	// (Figma: detached card), like the active session in the conversation list.
+	&__listRow--active {
+		margin: 12px 0;
+
+		&:first-child {
+			margin-top: 0;
+		}
+
+		&:last-child {
+			margin-bottom: 0;
+		}
+	}
+
+	// Active card (Figma: white surface, red border, fully rounded).
+	// Selecting a card grows it in subtly (same easing as the toolbar chips).
+	&__card--active {
+		background: #ffffff;
+		border: 2px solid #a5000a;
+		border-radius: 28px;
+		padding: 15px 19px;
+		animation: notificationsCenterCardActivate 240ms
+			cubic-bezier(0.16, 1, 0.3, 1);
+		transform-origin: center left;
+
+		&:hover {
+			background: #ffffff;
+			border-color: #a5000a;
+		}
+
+		.notificationsCenter__cardIcon {
+			border: none;
+			border-radius: 50%;
+			background: #a5000a;
+			color: #ffffff;
+
+			svg {
+				fill: #ffffff;
+
+				path {
+					fill: #ffffff;
+				}
+			}
+		}
+
+		.notificationsCenter__cardConnector {
+			border-left-color: #a5000a;
+			min-height: 35px;
+		}
+
+		.notificationsCenter__cardTitle {
+			color: #1b1b1c;
+		}
+
+		.notificationsCenter__cardText {
+			-webkit-line-clamp: 3;
+			padding-right: 24px;
+		}
+
+		.notificationsCenter__cardTime--footer {
+			color: #a5000a;
+			font-weight: 600;
+		}
+
+		.notificationsCenter__cardUnread {
+			display: none;
+		}
+	}
+
+	// "..." actions on the active card.
+	&__cardMenu {
+		position: absolute;
+		top: 10px;
+		right: 10px;
+	}
+
+	// The expander reserves its own column, so keep the menu inside the card.
+	&__listRow--withExpander &__cardMenu {
+		right: 62px;
+	}
+
+	// Figma: white oval with a soft red-tinted ring around the "..." glyph.
+	&__cardMenuButton {
+		appearance: none;
+		width: 44px;
+		height: 28px;
+		border: 1px solid #ffdad5;
+		border-radius: 999px;
+		background: #ffffff;
+		color: #444748;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		cursor: pointer;
+
+		svg {
+			width: 18px;
+			height: 18px;
+		}
+
+		&:hover {
+			background: #ffdad7;
+		}
+
+		&:focus-visible {
+			@include list-item-focus-treatment;
+		}
+	}
+
+	// Vertical expander pill attached to the active message card
+	// (Figma: filled red pill with the expand glyph).
+	&__expander {
+		appearance: none;
+		flex-shrink: 0;
+		width: 46px;
+		border: none;
+		border-radius: 23px;
+		background: #a5000a;
+		color: #ffffff;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		cursor: pointer;
+		transition: background-color 140ms ease;
+
+		svg {
+			width: 20px;
+			height: 20px;
+		}
+
+		&:hover,
+		&--open,
+		&--open:hover {
+			background: #7e0008;
+		}
+
+		&:focus-visible {
+			@include list-item-focus-treatment;
+		}
+	}
+
+	// Detail surface (right of the dragger).
+	&__detail {
+		flex: 1;
+		min-width: 0;
+		min-height: 0;
+		padding: 16px 16px 16px 20px;
+		display: flex;
+		background-color: #eae7e8;
+	}
+
+	// Figma: white card, red border, radius 24.
 	&__detailCard {
-		padding: 24px;
+		flex: 1;
+		min-width: 0;
 		display: flex;
 		flex-direction: column;
-		gap: 16px;
-		width: min(100%, 1040px);
-		max-width: 1040px;
 		align-items: center;
-		text-align: center;
+		justify-content: center;
+		border: 1.5px solid #a5000a;
+		border-radius: 32px;
+		background: #ffffff;
+		overflow: hidden;
+	}
+
+	&__detailCard--embedded {
+		align-items: stretch;
+		justify-content: stretch;
+	}
+
+	&__detailBody {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 28px;
+		padding: 48px 32px;
+		max-width: 720px;
+		width: 100%;
+		box-sizing: border-box;
+		overflow-y: auto;
+	}
+
+	&__detailHeader {
+		display: flex;
+		align-items: center;
+		gap: 24px;
+	}
+
+	&__detailIcon {
+		flex-shrink: 0;
+		color: #444748;
+		display: inline-flex;
+
+		svg {
+			width: 56px;
+			height: 56px;
+			fill: currentcolor;
+
+			path {
+				fill: currentcolor;
+			}
+		}
 	}
 
 	&__detailTitle {
 		margin: 0;
-		font-size: 22px;
+		font-size: 28px;
+		line-height: 36px;
+		font-weight: 500;
+		color: #1b1b1c;
 	}
 
 	&__detailText {
 		margin: 0;
-		color: #374151;
-		line-height: 1.5;
-		max-width: 780px;
-	}
-
-	&__consentButton {
-		min-height: 40px;
-		padding: 0 16px;
-		border: 1px solid #d1d5db;
-		border-radius: 999px;
-		background: #ffffff;
-		color: #374151;
-		font-weight: 700;
-		cursor: pointer;
-
-		&:disabled {
-			opacity: 0.5;
-			cursor: not-allowed;
-		}
-	}
-
-	&__consentButton--approve {
-		border-color: #e63946;
-		background: #e63946;
-		color: #ffffff;
-	}
-
-	&__consentButton:focus-visible {
-		@include list-item-focus-treatment;
-	}
-
-	&__openButton {
-		width: fit-content;
-		padding: 10px 16px;
-		border: none;
-		border-radius: 999px;
-		background: #e63946;
-		color: #fff;
-		font-weight: 600;
-		cursor: pointer;
-	}
-
-	&__openButton:hover {
-		background: #cf3440;
+		font-size: 16px;
+		line-height: 1.6;
+		color: #444748;
+		max-width: 640px;
+		text-align: left;
 	}
 
 	&__detailActions {
 		display: flex;
-		gap: 10px;
+		gap: 12px;
 		flex-wrap: wrap;
 		justify-content: center;
+		margin-top: 8px;
+	}
+
+	// Figma: big red pill "View Conversation" with expand glyph.
+	&__openButton {
+		display: inline-flex;
+		align-items: center;
+		gap: 10px;
+		min-height: 56px;
+		padding: 0 32px;
+		border: none;
+		border-radius: 999px;
+		background: #a5000a;
+		color: #ffffff;
+		font-size: 16px;
+		font-weight: 600;
+		cursor: pointer;
+		transition: background-color 140ms ease;
+
+		svg {
+			width: 18px;
+			height: 18px;
+		}
+
+		&:hover {
+			background: #7e0008;
+		}
+
+		&:focus-visible {
+			@include list-item-focus-treatment;
+		}
+	}
+
+	&__nextButton {
+		min-height: 56px;
+		padding: 0 24px;
+		border: 1px solid #c4c7c7;
+		border-radius: 999px;
+		background: #ffffff;
+		color: #4c555f;
+		font-size: 15px;
+		font-weight: 600;
+		cursor: pointer;
+
+		&:hover {
+			background: #f7f4f4;
+		}
+
+		&:disabled {
+			opacity: 0.45;
+			cursor: not-allowed;
+		}
+
+		&:focus-visible {
+			@include list-item-focus-treatment;
+		}
 	}
 
 	&__consentActions {
@@ -346,220 +518,30 @@
 		justify-content: center;
 	}
 
-	&__nextButton {
-		width: fit-content;
-		padding: 10px 16px;
-		border: 1px solid #e5a5ae;
+	&__consentButton {
+		min-height: 44px;
+		padding: 0 20px;
+		border: 1px solid #c4c7c7;
 		border-radius: 999px;
-		background: #fff;
-		color: #b42334;
-		font-weight: 600;
+		background: #ffffff;
+		color: #4c555f;
+		font-weight: 700;
 		cursor: pointer;
-	}
 
-	&__nextButton:disabled {
-		opacity: 0.45;
-		cursor: not-allowed;
-	}
-
-	&__chatSummary {
-		width: 100%;
-		max-width: 560px;
-		padding: 14px;
-		border: 1px solid #f4d1d7;
-		border-radius: 10px;
-		background: #fff8f9;
-	}
-
-	&__chatSummaryTitle {
-		font-weight: 700;
-		margin-bottom: 10px;
-		text-align: left;
-	}
-
-	&__chatSummaryList {
-		display: flex;
-		flex-direction: column;
-		gap: 8px;
-	}
-
-	&__chatSummaryItem {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		border: 1px solid #f6dde1;
-		border-radius: 8px;
-		padding: 8px 10px;
-		background: #fff;
-		cursor: pointer;
-		text-align: left;
-	}
-
-	&__chatSummaryItem:hover {
-		background: #fff3f5;
-	}
-
-	&__chatSummaryItemLabel {
-		font-weight: 600;
-		color: #2f2f2f;
-	}
-
-	&__chatSummaryItemMeta {
-		font-size: 12px;
-		color: #6b7280;
-	}
-
-	&__chatPreview {
-		width: min(100%, 980px);
-		max-width: 980px;
-		padding: 14px;
-		border: 1px solid #f4d1d7;
-		border-radius: 10px;
-		background: #fff8f9;
-	}
-
-	&__chatPreviewHeader {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		margin-bottom: 10px;
-	}
-
-	&__chatPreviewTitle {
-		font-weight: 700;
-	}
-
-	&__chatPreviewMeta {
-		font-size: 12px;
-		color: #6b7280;
-	}
-
-	&__chatPreviewBody {
-		display: flex;
-		flex-direction: column;
-		gap: 8px;
-		max-height: 240px;
-		overflow: auto;
-		padding-right: 2px;
-	}
-
-	&__chatPreviewMessage {
-		display: flex;
-		flex-direction: row;
-		align-items: flex-start;
-		gap: 10px;
-		padding: 8px 10px;
-		border-radius: 8px;
-		background: #fff;
-		border: 1px solid #f3e5e8;
-		text-align: left;
-	}
-
-	&__chatPreviewMessageAvatar {
-		flex-shrink: 0;
-		padding-top: 1px;
-	}
-
-	&__chatPreviewMessageContent {
-		display: flex;
-		flex-direction: column;
-		gap: 2px;
-		min-width: 0;
-	}
-
-	&__chatPreviewSender {
-		font-size: 12px;
-		font-weight: 700;
-		color: #374151;
-	}
-
-	&__chatPreviewText {
-		font-size: 13px;
-		color: #374151;
-		line-height: 1.35;
-		word-break: break-word;
-	}
-
-	&__chatPreviewEmpty {
-		font-size: 13px;
-		color: #6b7280;
-		padding: 10px;
-		background: #fff;
-		border-radius: 8px;
-		border: 1px solid #f3e5e8;
-		text-align: left;
-	}
-
-	&__chatComposer {
-		margin-top: 12px;
-		display: flex;
-		gap: 8px;
-		align-items: center;
-	}
-
-	&__chatComposerInput {
-		flex: 1;
-		border: 1px solid #ebc8ce;
-		border-radius: 999px;
-		padding: 10px 14px;
-		font-size: 14px;
-		outline: none;
-		background: #fff;
-	}
-
-	&__chatComposerInput:focus {
-		border-color: #e63946;
-	}
-
-	&__chatComposerSend {
-		border: none;
-		border-radius: 999px;
-		background: #e63946;
-		color: #fff;
-		font-weight: 700;
-		padding: 10px 14px;
-		cursor: pointer;
-	}
-
-	&__chatComposerSend:disabled {
-		opacity: 0.45;
-		cursor: not-allowed;
-	}
-
-	&__empty,
-	&__emptyDetail {
-		padding: 24px;
-		color: #6b7280;
-	}
-}
-
-// stylelint-disable-next-line media-feature-range-notation
-@media (max-width: 1200px) {
-	.notificationsCenter {
-		padding: 16px;
-
-		&__content {
-			grid-template-columns: 1fr;
-			height: auto;
+		&:disabled {
+			opacity: 0.5;
+			cursor: not-allowed;
 		}
 
-		&__detail {
-			display: none;
+		&:focus-visible {
+			@include list-item-focus-treatment;
 		}
 	}
-}
 
-.notificationsCenter {
-	&__embeddedSession {
-		width: 100%;
-		max-width: 1240px;
-		height: min(70vh, 780px);
-		height: min(70dvh, 780px);
-		border: 1px solid #f4d1d7;
-		border-radius: 12px;
-		background: #fff;
-		overflow: hidden;
-		margin: 0 auto;
+	&__consentButton--approve {
+		border-color: #a5000a;
+		background: #a5000a;
+		color: #ffffff;
 	}
 
 	&__embeddedSessionFrame {
@@ -568,177 +550,6 @@
 		border: 0;
 		background: #fff;
 	}
-}
-
-.notificationsCenter {
-	&__nextButton:disabled {
-		opacity: 0.45;
-		cursor: not-allowed;
-	}
-
-	&__chatSummary {
-		width: 100%;
-		max-width: 560px;
-		padding: 14px;
-		border: 1px solid #f4d1d7;
-		border-radius: 10px;
-		background: #fff8f9;
-	}
-
-	&__chatSummaryTitle {
-		font-weight: 700;
-		margin-bottom: 10px;
-		text-align: left;
-	}
-
-	&__chatSummaryList {
-		display: flex;
-		flex-direction: column;
-		gap: 8px;
-	}
-
-	&__chatSummaryItem {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		border: 1px solid #f6dde1;
-		border-radius: 8px;
-		padding: 8px 10px;
-		background: #fff;
-		cursor: pointer;
-		text-align: left;
-	}
-
-	&__chatSummaryItem:hover {
-		background: #fff3f5;
-	}
-
-	&__chatSummaryItemLabel {
-		font-weight: 600;
-		color: #2f2f2f;
-	}
-
-	&__chatSummaryItemMeta {
-		font-size: 12px;
-		color: #6b7280;
-	}
-
-	&__chatPreview {
-		width: min(100%, 980px);
-		max-width: 980px;
-		padding: 14px;
-		border: 1px solid #f4d1d7;
-		border-radius: 10px;
-		background: #fff8f9;
-	}
-
-	&__chatPreviewHeader {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		margin-bottom: 10px;
-	}
-
-	&__chatPreviewTitle {
-		font-weight: 700;
-	}
-
-	&__chatPreviewMeta {
-		font-size: 12px;
-		color: #6b7280;
-	}
-
-	&__chatPreviewBody {
-		display: flex;
-		flex-direction: column;
-		gap: 8px;
-		max-height: 240px;
-		overflow: auto;
-		padding-right: 2px;
-	}
-
-	&__chatPreviewMessage {
-		display: flex;
-		flex-direction: row;
-		align-items: flex-start;
-		gap: 10px;
-		padding: 8px 10px;
-		border-radius: 8px;
-		background: #fff;
-		border: 1px solid #f3e5e8;
-		text-align: left;
-	}
-
-	&__chatPreviewMessageAvatar {
-		flex-shrink: 0;
-		padding-top: 1px;
-	}
-
-	&__chatPreviewMessageContent {
-		display: flex;
-		flex-direction: column;
-		gap: 2px;
-		min-width: 0;
-	}
-
-	&__chatPreviewSender {
-		font-size: 12px;
-		font-weight: 700;
-		color: #374151;
-	}
-
-	&__chatPreviewText {
-		font-size: 13px;
-		color: #374151;
-		line-height: 1.35;
-		word-break: break-word;
-	}
-
-	&__chatPreviewEmpty {
-		font-size: 13px;
-		color: #6b7280;
-		padding: 10px;
-		background: #fff;
-		border-radius: 8px;
-		border: 1px solid #f3e5e8;
-		text-align: left;
-	}
-
-	&__chatComposer {
-		margin-top: 12px;
-		display: flex;
-		gap: 8px;
-		align-items: center;
-	}
-
-	&__chatComposerInput {
-		flex: 1;
-		border: 1px solid #ebc8ce;
-		border-radius: 999px;
-		padding: 10px 14px;
-		font-size: 14px;
-		outline: none;
-		background: #fff;
-	}
-
-	&__chatComposerInput:focus {
-		border-color: #e63946;
-	}
-
-	&__chatComposerSend {
-		border: none;
-		border-radius: 999px;
-		background: #e63946;
-		color: #fff;
-		font-weight: 700;
-		padding: 10px 14px;
-		cursor: pointer;
-	}
-
-	&__chatComposerSend:disabled {
-		opacity: 0.45;
-		cursor: not-allowed;
-	}
 
 	&__empty,
 	&__emptyDetail {
@@ -747,31 +558,47 @@
 	}
 }
 
-// stylelint-disable-next-line media-feature-range-notation
-@media (max-width: 900px) {
-	.notificationsCenter {
-		padding: 16px;
+// Selection pop: the card grows in from slightly smaller to full size.
+@keyframes notificationsCenterCardActivate {
+	0% {
+		transform: scale(0.96);
+	}
 
-		&__content {
-			grid-template-columns: 1fr;
-			height: auto;
+	100% {
+		transform: scale(1);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.notificationsCenter {
+		&__listRow,
+		&__card {
+			transition: none;
+		}
+
+		&__card--active {
+			animation: none;
+		}
+	}
+}
+
+// Below the desktop breakpoint the timeline is a single full-width list and
+// opening a notification navigates directly (no in-page detail).
+// stylelint-disable-next-line media-feature-range-notation
+@media (max-width: 1200px) {
+	.notificationsCenter {
+		&__listColumn {
+			flex: 1;
+			width: auto;
+			padding: 16px;
 		}
 
 		&__detail {
-			align-items: stretch;
-			justify-content: flex-start;
+			display: none;
 		}
 
-		&__detailCard {
-			width: 100%;
-			max-width: none;
-			padding: 14px;
-			align-items: stretch;
-			text-align: left;
-		}
-
-		&__embeddedSession {
-			height: min(62dvh, 560px);
+		.sessionsList__resizeHandle {
+			display: none;
 		}
 	}
 }

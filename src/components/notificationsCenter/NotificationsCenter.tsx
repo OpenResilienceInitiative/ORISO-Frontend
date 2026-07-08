@@ -1,6 +1,17 @@
 import * as React from 'react';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import {
+	useCallback,
+	useContext,
+	useEffect,
+	useMemo,
+	useRef,
+	useState
+} from 'react';
 import { useNavigate } from 'react-router-dom';
+import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
+import DoneAllIcon from '@mui/icons-material/DoneAll';
+import OpenInFullIcon from '@mui/icons-material/OpenInFull';
+import { Menu, MenuItem } from '@mui/material';
 import {
 	getEventDescriptor,
 	getEventIcon,
@@ -8,6 +19,7 @@ import {
 	familyLabelKey,
 	isKnownEventType
 } from './eventDescriptors';
+import { EventFamily } from './eventDescriptors/types';
 import { useActiveListItem } from '../../hooks/useActiveListItem';
 import { pickActiveItemKey } from '../../utils/listItemSelection';
 import {
@@ -24,7 +36,40 @@ import {
 import { useResponsive } from '../../hooks/useResponsive';
 import { useTranslation } from 'react-i18next';
 import { apiDecideCaseHandoverClientConsent } from '../../api';
+import { ResizableHandle } from '../sessionsList/ResizableHandle';
+import {
+	IconClose,
+	IconMenuDots,
+	IconSearch
+} from '../sessionsList/SessionsListToolbar';
+import { ReactComponent as AllFamiliesIcon } from '../../resources/img/icons/list.svg';
+import { ReactComponent as RequestsFamilyIcon } from '../../resources/img/icons/timeline-request-client.svg';
+import { ReactComponent as MessagesFamilyIcon } from '../../resources/img/icons/speech-bubble.svg';
+import { ReactComponent as DraftsFamilyIcon } from '../../resources/img/icons/pen-paper.svg';
+import { ReactComponent as HandoverFamilyIcon } from '../../resources/img/icons/persons-two.svg';
+import { ReactComponent as CallsFamilyIcon } from '../../resources/img/icons/timeline-add-call.svg';
+import { ReactComponent as SystemFamilyIcon } from '../../resources/img/icons/notification_bell.svg';
+import { ReactComponent as AppointmentsFamilyIcon } from '../../resources/img/icons/calendar.svg';
+import '../sessionsList/sessionsList.styles';
 import './notificationsCenter.styles';
+
+const TIMELINE_WIDTH_STORAGE_KEY = 'notificationsTimeline_width';
+const TIMELINE_MIN_WIDTH = 300;
+const TIMELINE_MAX_WIDTH = 600;
+const TIMELINE_DEFAULT_WIDTH = 400;
+
+const FAMILY_ICONS: Record<
+	EventFamily,
+	React.ComponentType<React.SVGProps<SVGSVGElement>>
+> = {
+	requests: RequestsFamilyIcon,
+	messages: MessagesFamilyIcon,
+	drafts: DraftsFamilyIcon,
+	handover: HandoverFamilyIcon,
+	calls: CallsFamilyIcon,
+	system: SystemFamilyIcon,
+	appointments: AppointmentsFamilyIcon
+};
 
 const formatRelativeTime = (createdAt: string, locale?: string) => {
 	const normalizedCreatedAt =
@@ -134,7 +179,7 @@ export const NotificationsCenter = () => {
 	// (master-detail) selection, but defers to the active conversation when one
 	// is open, so it can never disagree with the conversation/request lists.
 	const { selection: activeSelection } = useActiveListItem();
-	const { untilL } = useResponsive();
+	const { untilL, fromL } = useResponsive();
 	const { userData } = useContext(UserDataContext);
 	const {
 		notificationFeed,
@@ -153,6 +198,36 @@ export const NotificationsCenter = () => {
 		useState(false);
 	const [caseHandoverConsentError, setCaseHandoverConsentError] =
 		useState('');
+	// Timeline redesign: embedded conversation preview is opt-in through the
+	// expander pill attached to the active card (Figma: Active Chat History
+	// Selection state) instead of always-on.
+	const [embeddedChatOpen, setEmbeddedChatOpen] = useState(false);
+	const [cardMenuAnchor, setCardMenuAnchor] = useState<HTMLElement | null>(
+		null
+	);
+	const listScrollRef = useRef<HTMLDivElement | null>(null);
+	const searchInputRef = useRef<HTMLInputElement | null>(null);
+
+	// Timeline redesign: resizable list column, same interaction pattern as the
+	// conversation page (SessionsListWrapper + ResizableHandle).
+	const [listWidth, setListWidth] = useState<number>(() => {
+		const saved = localStorage.getItem(TIMELINE_WIDTH_STORAGE_KEY);
+		const width = saved
+			? Number.parseInt(saved, 10)
+			: TIMELINE_DEFAULT_WIDTH;
+		return Math.min(
+			Math.max(
+				Number.isNaN(width) ? TIMELINE_DEFAULT_WIDTH : width,
+				TIMELINE_MIN_WIDTH
+			),
+			TIMELINE_MAX_WIDTH
+		);
+	});
+
+	const handleListResize = useCallback((width: number) => {
+		setListWidth(width);
+		localStorage.setItem(TIMELINE_WIDTH_STORAGE_KEY, width.toString());
+	}, []);
 
 	// Families actually present in the feed, in canonical order (drives chips).
 	const familiesInFeed = useMemo(
@@ -218,6 +293,11 @@ export const NotificationsCenter = () => {
 			),
 		[filteredFeed, activeSelection, effectiveSelectedId]
 	);
+
+	// The embedded conversation preview never outlives its notification.
+	useEffect(() => {
+		setEmbeddedChatOpen(false);
+	}, [activeNotificationId]);
 
 	const selectedNotification = useMemo(
 		() =>
@@ -399,100 +479,155 @@ export const NotificationsCenter = () => {
 	};
 
 	const nextUnreadId = getNextNotificationId(selectedNotificationId, true);
+	const SelectedIcon = selectedDisplay
+		? getEventIcon(selectedDisplay.descriptor.icon)
+		: null;
+	const showEmbeddedChat = Boolean(
+		embeddedChatOpen && canShowChatPreview && embeddedChatPath
+	);
+
+	// Same filter-chip contract as the conversation page toolbar: inactive
+	// chips are icon-only pills, the active chip expands with its label.
+	const renderFamilyChip = (
+		family: TimelineFamilyFilter,
+		Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>,
+		label: string
+	) => {
+		const isActive = activeFamily === family;
+		return (
+			<button
+				key={family}
+				type="button"
+				role="tab"
+				aria-selected={isActive}
+				title={label}
+				aria-label={label}
+				className={`sessionsListToolbar__chip ${
+					isActive
+						? 'sessionsListToolbar__chip--active'
+						: 'sessionsListToolbar__chip--iconOnly'
+				}`}
+				onClick={() => setActiveFamily(family)}
+			>
+				<Icon className="sessionsListToolbar__chipIconSvg sessionsListToolbar__chipIconSvg--asset" />
+				<span
+					className="sessionsListToolbar__chipLabel"
+					aria-hidden={!isActive}
+				>
+					{label}
+				</span>
+			</button>
+		);
+	};
 
 	return (
 		<div className="notificationsCenter">
-			<div className="notificationsCenter__header">
-				<div className="notificationsCenter__titleBlock">
-					<h2 className="notificationsCenter__title">
-						{translate(
-							'notifications.center.title',
-							'Notifications'
-						)}
-					</h2>
-					<p className="notificationsCenter__subtitle">
-						{translate(
-							'notifications.center.subtitle',
-							'Recent activities and updates from your chats.'
-						)}
-					</p>
-				</div>
-				<div className="notificationsCenter__actions">
-					<button
-						type="button"
-						className="notificationsCenter__actionButton"
-						onClick={markAllNotificationsAsRead}
-					>
-						{translate(
-							'notifications.center.markAllRead',
-							'Mark all as read'
-						)}
-					</button>
-				</div>
-			</div>
-			<div className="notificationsCenter__content">
-				<div className="notificationsCenter__list">
+			<div
+				className="notificationsCenter__listColumn"
+				style={{ width: fromL ? `${listWidth}px` : undefined }}
+			>
+				<div className="sessionsListToolbar notificationsCenter__toolbar">
+					<div className="sessionsListToolbar__search">
+						<div className="sessionsListToolbar__searchInner">
+							<button
+								type="button"
+								className="sessionsListToolbar__iconButton"
+								aria-label={translate(
+									'notifications.center.searchPlaceholder',
+									'Search activity…'
+								)}
+								onClick={() => searchInputRef.current?.focus()}
+							>
+								<IconMenuDots />
+							</button>
+							<div className="sessionsListToolbar__searchFieldWrap">
+								<input
+									type="search"
+									className="sessionsListToolbar__searchInput"
+									placeholder={translate(
+										'notifications.center.searchPlaceholder',
+										'Search activity…'
+									)}
+									value={searchQuery}
+									onChange={(event) =>
+										setSearchQuery(event.target.value)
+									}
+									aria-label={translate(
+										'notifications.center.searchPlaceholder',
+										'Search activity…'
+									)}
+									autoComplete="off"
+									ref={searchInputRef}
+								/>
+							</div>
+							{searchQuery ? (
+								<button
+									type="button"
+									className="sessionsListToolbar__searchActionButton"
+									onClick={() => setSearchQuery('')}
+									aria-label={translate(
+										'sessionList.toolbar.search.clear',
+										'Clear search'
+									)}
+								>
+									<IconClose />
+								</button>
+							) : (
+								<div
+									className="sessionsListToolbar__searchIconWrap"
+									aria-hidden
+								>
+									<IconSearch />
+								</div>
+							)}
+						</div>
+					</div>
 					{notificationFeed.length > 0 && (
-						<div className="notificationsCenter__filters">
+						<div className="sessionsListToolbar__chipsScroll">
 							<div
-								className="notificationsCenter__chips"
+								className="sessionsListToolbar__chipsRow"
 								role="tablist"
 								aria-label={translate(
 									'notifications.center.title',
 									'Notifications'
 								)}
 							>
-								<button
-									type="button"
-									role="tab"
-									aria-selected={activeFamily === 'all'}
-									className={`notificationsCenter__chip ${
-										activeFamily === 'all'
-											? 'notificationsCenter__chip--active'
-											: ''
-									}`}
-									onClick={() => setActiveFamily('all')}
-								>
-									{translate(
+								{renderFamilyChip(
+									'all',
+									AllFamiliesIcon,
+									translate(
 										'notifications.families.all',
 										'All'
+									)
+								)}
+								{familiesInFeed.map((family) =>
+									renderFamilyChip(
+										family,
+										FAMILY_ICONS[family] ||
+											SystemFamilyIcon,
+										translate(familyLabelKey(family))
+									)
+								)}
+								<button
+									type="button"
+									className="sessionsListToolbar__chip sessionsListToolbar__chip--iconOnly"
+									onClick={markAllNotificationsAsRead}
+									title={translate(
+										'notifications.center.markAllRead',
+										'Mark all as read'
 									)}
+									aria-label={translate(
+										'notifications.center.markAllRead',
+										'Mark all as read'
+									)}
+								>
+									<DoneAllIcon className="sessionsListToolbar__chipIconSvg" />
 								</button>
-								{familiesInFeed.map((family) => (
-									<button
-										key={family}
-										type="button"
-										role="tab"
-										aria-selected={activeFamily === family}
-										className={`notificationsCenter__chip ${
-											activeFamily === family
-												? 'notificationsCenter__chip--active'
-												: ''
-										}`}
-										onClick={() => setActiveFamily(family)}
-									>
-										{translate(familyLabelKey(family))}
-									</button>
-								))}
 							</div>
-							<input
-								type="search"
-								className="notificationsCenter__search"
-								placeholder={translate(
-									'notifications.center.searchPlaceholder',
-									'Search activity…'
-								)}
-								value={searchQuery}
-								onChange={(event) =>
-									setSearchQuery(event.target.value)
-								}
-								aria-label={translate(
-									'notifications.center.searchPlaceholder',
-									'Search activity…'
-								)}
-							/>
 						</div>
 					)}
+				</div>
+				<div className="notificationsCenter__list" ref={listScrollRef}>
 					{notificationFeed.length === 0 ? (
 						<div className="notificationsCenter__empty">
 							{translate(
@@ -508,81 +643,237 @@ export const NotificationsCenter = () => {
 							)}
 						</div>
 					) : (
-						filteredFeed.map((item) =>
-							(() => {
-								const category = resolveItemCategory(item);
-								const isMessage = category === 'message';
-								const { descriptor, title, text } =
-									describeItem(item, translate);
-								const Icon = getEventIcon(descriptor.icon);
-								return (
+						filteredFeed.map((item, index) => {
+							const category = resolveItemCategory(item);
+							const isMessage = category === 'message';
+							const isActive = activeNotificationId === item.id;
+							// Same grouped-list contract as the conversation
+							// sidebar: neighbours of the active card round the
+							// corners facing it (--beforeActive/--afterActive).
+							const activeIndex = filteredFeed.findIndex(
+								(feedItem) =>
+									feedItem.id === activeNotificationId
+							);
+							const isBeforeActive =
+								activeIndex !== -1 && index === activeIndex - 1;
+							const isAfterActive =
+								activeIndex !== -1 && index === activeIndex + 1;
+							const { descriptor, title, text } = describeItem(
+								item,
+								translate
+							);
+							const Icon = getEventIcon(descriptor.icon);
+							return (
+								<div
+									key={item.id}
+									className={`notificationsCenter__listRow ${
+										isActive
+											? 'notificationsCenter__listRow--active'
+											: ''
+									} ${
+										isActive && isMessage
+											? 'notificationsCenter__listRow--withExpander'
+											: ''
+									} ${
+										isBeforeActive
+											? 'notificationsCenter__listRow--beforeActive'
+											: ''
+									} ${
+										isAfterActive
+											? 'notificationsCenter__listRow--afterActive'
+											: ''
+									}`}
+								>
 									<button
 										type="button"
-										key={item.id}
-										className={`notificationsCenter__listItem ${
-											activeNotificationId === item.id
-												? 'notificationsCenter__listItem--active'
+										className={`notificationsCenter__card ${
+											isActive
+												? 'notificationsCenter__card--active'
 												: ''
 										}`}
 										onClick={() => openNotification(item)}
 									>
-										<div className="notificationsCenter__listItemTagRow">
-											<span
-												className={`notificationsCenter__listItemTag ${
-													isMessage
-														? 'notificationsCenter__listItemTag--message'
-														: 'notificationsCenter__listItemTag--system'
-												}`}
-											>
-												{translate(
-													familyLabelKey(
-														descriptor.family
-													)
-												)}
-											</span>
-										</div>
-										<div className="notificationsCenter__listItemBody">
-											<div className="notificationsCenter__listItemIconCircle">
+										<span className="notificationsCenter__cardIconColumn">
+											<span className="notificationsCenter__cardIcon">
 												<Icon />
-											</div>
-											<div className="notificationsCenter__listItemContent">
-												<div className="notificationsCenter__listItemHeader">
-													<span className="notificationsCenter__listItemTitle">
-														{title}
-													</span>
-													<span className="notificationsCenter__listItemTime">
+											</span>
+											<span className="notificationsCenter__cardConnector" />
+										</span>
+										<span className="notificationsCenter__cardContent">
+											<span className="notificationsCenter__cardTitleRow">
+												<span className="notificationsCenter__cardTitle">
+													{title}
+												</span>
+											</span>
+											<span className="notificationsCenter__cardBodyRow">
+												<span className="notificationsCenter__cardText">
+													{text}
+												</span>
+												{!isActive && (
+													<span className="notificationsCenter__cardTime">
 														{formatRelativeTime(
 															item.createdAt,
 															i18n.language
 														)}
 													</span>
-												</div>
-												<div className="notificationsCenter__listItemText">
-													{text}
-												</div>
-											</div>
-										</div>
+												)}
+											</span>
+											{isActive && (
+												<span className="notificationsCenter__cardTime notificationsCenter__cardTime--footer">
+													{formatRelativeTime(
+														item.createdAt,
+														i18n.language
+													)}
+												</span>
+											)}
+										</span>
 										{!item.readAt && (
-											<span className="notificationsCenter__listItemUnread" />
+											<span className="notificationsCenter__cardUnread" />
 										)}
 									</button>
-								);
-							})()
-						)
+									{isActive && (
+										<span
+											className="notificationsCenter__cardMenu"
+											onClick={(event) =>
+												event.stopPropagation()
+											}
+											onKeyDown={(event) =>
+												event.stopPropagation()
+											}
+											role="presentation"
+										>
+											<button
+												type="button"
+												className="notificationsCenter__cardMenuButton"
+												aria-label={translate(
+													'notifications.center.cardMenu',
+													'Notification actions'
+												)}
+												onClick={(event) =>
+													setCardMenuAnchor(
+														event.currentTarget
+													)
+												}
+											>
+												<MoreHorizIcon />
+											</button>
+										</span>
+									)}
+									{isActive && isMessage && (
+										<button
+											type="button"
+											className={`notificationsCenter__expander ${
+												showEmbeddedChat
+													? 'notificationsCenter__expander--open'
+													: ''
+											}`}
+											aria-pressed={showEmbeddedChat}
+											aria-label={translate(
+												'notifications.center.togglePreview',
+												'Toggle conversation preview'
+											)}
+											onClick={() => {
+												markNotificationAsRead(item.id);
+												setEmbeddedChatOpen(
+													!embeddedChatOpen
+												);
+											}}
+										>
+											<OpenInFullIcon />
+										</button>
+									)}
+								</div>
+							);
+						})
 					)}
 				</div>
+				<Menu
+					anchorEl={cardMenuAnchor}
+					open={Boolean(cardMenuAnchor)}
+					onClose={() => setCardMenuAnchor(null)}
+					anchorOrigin={{
+						vertical: 'bottom',
+						horizontal: 'right'
+					}}
+					transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+				>
+					<MenuItem
+						onClick={() => {
+							setCardMenuAnchor(null);
+							handleOpenAction();
+						}}
+					>
+						{selectedNotification?.actionLabel ||
+							translate('notifications.center.open', 'Open chat')}
+					</MenuItem>
+					<MenuItem
+						onClick={() => {
+							if (selectedNotification) {
+								markNotificationAsRead(selectedNotification.id);
+							}
+							setCardMenuAnchor(null);
+						}}
+					>
+						{translate(
+							'notifications.center.markRead',
+							'Mark as read'
+						)}
+					</MenuItem>
+					<MenuItem
+						onClick={() => {
+							markAllNotificationsAsRead();
+							setCardMenuAnchor(null);
+						}}
+					>
+						{translate(
+							'notifications.center.markAllRead',
+							'Mark all as read'
+						)}
+					</MenuItem>
+				</Menu>
+				{fromL && (
+					<ResizableHandle
+						currentWidth={listWidth}
+						onResize={handleListResize}
+						scrollTargetRef={listScrollRef}
+						minWidth={TIMELINE_MIN_WIDTH}
+						maxWidth={TIMELINE_MAX_WIDTH}
+					/>
+				)}
+			</div>
+			<div className="notificationsCenter__detail">
 				<div
-					className={`notificationsCenter__detail ${
-						canShowChatPreview && embeddedChatPath
-							? 'notificationsCenter__detail--embeddedChat'
+					className={`notificationsCenter__detailCard ${
+						showEmbeddedChat
+							? 'notificationsCenter__detailCard--embedded'
 							: ''
 					}`}
 				>
-					{selectedNotification ? (
-						<div className="notificationsCenter__detailCard">
-							<h3 className="notificationsCenter__detailTitle">
-								{selectedDisplay?.title}
-							</h3>
+					{!selectedNotification ? (
+						<div className="notificationsCenter__emptyDetail">
+							{translate(
+								'notifications.center.emptyDetail',
+								'Select a notification to see the details.'
+							)}
+						</div>
+					) : showEmbeddedChat ? (
+						<iframe
+							title="notifications-chat-session"
+							src={embeddedChatPath}
+							className="notificationsCenter__embeddedSessionFrame"
+						/>
+					) : (
+						<div className="notificationsCenter__detailBody">
+							<div className="notificationsCenter__detailHeader">
+								{SelectedIcon && (
+									<span className="notificationsCenter__detailIcon">
+										<SelectedIcon />
+									</span>
+								)}
+								<h2 className="notificationsCenter__detailTitle">
+									{selectedDisplay?.title}
+								</h2>
+							</div>
 							<p className="notificationsCenter__detailText">
 								{selectedDisplay?.text}
 							</p>
@@ -641,10 +932,11 @@ export const NotificationsCenter = () => {
 									className="notificationsCenter__openButton"
 									onClick={handleOpenAction}
 								>
+									<OpenInFullIcon />
 									{selectedNotification.actionLabel ||
 										translate(
 											'notifications.center.open',
-											'Open chat'
+											'View Conversation'
 										)}
 								</button>
 								<button
@@ -659,22 +951,6 @@ export const NotificationsCenter = () => {
 									)}
 								</button>
 							</div>
-							{canShowChatPreview && embeddedChatPath && (
-								<div className="notificationsCenter__embeddedSession">
-									<iframe
-										title="notifications-chat-session"
-										src={embeddedChatPath}
-										className="notificationsCenter__embeddedSessionFrame"
-									/>
-								</div>
-							)}
-						</div>
-					) : (
-						<div className="notificationsCenter__emptyDetail">
-							{translate(
-								'notifications.center.emptyDetail',
-								'Select a notification to see the details.'
-							)}
 						</div>
 					)}
 				</div>
