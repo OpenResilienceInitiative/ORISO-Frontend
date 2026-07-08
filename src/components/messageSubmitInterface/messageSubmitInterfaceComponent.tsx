@@ -553,6 +553,9 @@ export const MessageSubmitInterfaceComponent = ({
 
 	const isAnonymousEnquiryComposer =
 		type === SESSION_LIST_TYPES.ENQUIRY && isAnonymousChat;
+	const hasMatrixRoom = Boolean(
+		chatTransportService.resolveSession(activeSession).matrixRoomId
+	);
 	const isAskerEnquiry = isAskerEnquirySubmission({
 		isEnquiryListType: type === SESSION_LIST_TYPES.ENQUIRY,
 		sessionStatus: activeSession.item?.status,
@@ -560,7 +563,8 @@ export const MessageSubmitInterfaceComponent = ({
 			AUTHORITIES.ASKER_DEFAULT,
 			userData
 		),
-		isAnonymousLiveChat
+		isAnonymousLiveChat,
+		hasMatrixRoom
 	});
 
 	const {
@@ -1084,7 +1088,15 @@ export const MessageSubmitInterfaceComponent = ({
 				})
 				.then(() => setIsRequestInProgress(false))
 				.catch((error) => {
-					// console.log(error);
+					setIsRequestInProgress(false);
+					apiPostError({
+						name: error?.name || 'EnquiryMessageSendError',
+						message:
+							error?.message ||
+							'Failed to send enquiry message',
+						stack: error?.stack,
+						level: ERROR_LEVEL_WARN
+					}).then();
 				});
 		},
 		[
