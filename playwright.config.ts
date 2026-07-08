@@ -1,5 +1,12 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const deployedBaseURL =
+	process.env.PLAYWRIGHT_BASE_URL || process.env.ORISO_APP_BASE_URL;
+const runsBaselineOnly = process.argv.some((arg) =>
+	arg.includes('registration-baseline.smoke.spec.ts')
+);
+const shouldStartLocalWebServer = !deployedBaseURL && !runsBaselineOnly;
+
 /**
  * Playwright smoke config for the react-router v7 migration. LOCAL-ONLY
  * (`npm run test:smoke`) — not a CI job: the app's bootstrap needs a reachable
@@ -20,17 +27,19 @@ export default defineConfig({
 	workers: process.env.CI ? 1 : undefined,
 	reporter: process.env.CI ? [['github'], ['list']] : 'list',
 	use: {
-		baseURL: 'http://localhost:9001',
+		baseURL: deployedBaseURL || 'http://localhost:9001',
 		trace: 'on-first-retry'
 	},
-	projects: [
-		{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }
-	],
-	webServer: {
-		command:
-			'cross-env BROWSER=none PORT=9001 WDS_SOCKET_PORT=9001 FAST_REFRESH=false npm run dev',
-		url: 'http://localhost:9001',
-		reuseExistingServer: !process.env.CI,
-		timeout: 180_000
-	}
+	projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+	...(shouldStartLocalWebServer
+		? {
+				webServer: {
+					command:
+						'cross-env BROWSER=none PORT=9001 WDS_SOCKET_PORT=9001 FAST_REFRESH=false npm run dev',
+					url: 'http://localhost:9001',
+					reuseExistingServer: !process.env.CI,
+					timeout: 180_000
+				}
+			}
+		: {})
 });
