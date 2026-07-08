@@ -1,8 +1,150 @@
 declare namespace AgencyService {
 	namespace Schemas {
-		export type AgencyAdminAllowedPermissionToggles =
-			AgencyAdminAllowedPermissionToggles;
-		export type AgencyAdminControls = AgencyAdminControls;
+		export interface AgencyAdminAllowedPermissionToggles {
+			/**
+			 * example:
+			 * true
+			 */
+			appearance?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			anonymousChat?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			calls?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			groupChat?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			supervision?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			supervisionAnonymousChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			supervisionOneOnOneChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			audioCalls?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			audioCallsAnonymousChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			audioCallsOneOnOneChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			audioCallsGroupChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			audioCallsSupervisionChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			videoCalls?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			videoCallsAnonymousChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			videoCallsOneOnOneChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			videoCallsGroupChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			videoCallsSupervisionChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			threads?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			threadsAnonymousChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			threadsOneOnOneChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			threadsGroupChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			threadsSupervisionChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			voiceMessages?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			voiceMessagesAnonymousChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			voiceMessagesOneOnOneChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			voiceMessagesGroupChats?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			voiceMessagesSupervisionChats?: boolean;
+		}
+		export interface AgencyAdminControls {
+			/**
+			 * example:
+			 * true
+			 */
+			permissionsPageEnabled?: boolean;
+			allowedPermissionToggles?: AgencyAdminAllowedPermissionToggles;
+		}
 		export interface AgencyDepartmentDTO {
 			/**
 			 * example:
@@ -194,7 +336,227 @@ declare namespace AgencyService {
 			 */
 			departments?: AgencyDepartmentDTO[];
 		}
-		export type Settings = Settings;
+		export interface Settings {
+			/**
+			 * example:
+			 * false
+			 */
+			featureStatisticsEnabled?: boolean;
+			/**
+			 * example:
+			 * false
+			 */
+			featureTopicsEnabled?: boolean;
+			/**
+			 * example:
+			 * false
+			 */
+			topicsInRegistrationEnabled?: boolean;
+			/**
+			 * example:
+			 * false
+			 */
+			featureDemographicsEnabled?: boolean;
+			/**
+			 * example:
+			 * false
+			 */
+			featureAppointmentsEnabled?: boolean;
+			/**
+			 * example:
+			 * false
+			 */
+			featureGroupChatV2Enabled?: boolean;
+			/**
+			 * example:
+			 * false
+			 */
+			featureToolsEnabled?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			featureAnonymousChatEnabled?: boolean;
+			/**
+			 * example:
+			 * true
+			 */
+			featureCallsEnabled?: boolean;
+			/**
+			 * Master toggle for supervision functionality (adding/removing supervisors, supervision views).
+			 * example:
+			 * true
+			 */
+			featureSupervisionEnabled?: boolean;
+			/**
+			 * Enable supervision functionality in anonymous chats.
+			 * example:
+			 * true
+			 */
+			featureSupervisionAnonymousChatsEnabled?: boolean;
+			/**
+			 * Enable supervision functionality in 1-on-1 chats.
+			 * example:
+			 * true
+			 */
+			featureSupervisionOneOnOneChatsEnabled?: boolean;
+			/**
+			 * Master toggle for audio call button availability (all chat types).
+			 * example:
+			 * true
+			 */
+			featureAudioCallsEnabled?: boolean;
+			/**
+			 * Enable audio call button in anonymous chats.
+			 * example:
+			 * true
+			 */
+			featureAudioCallsAnonymousChatsEnabled?: boolean;
+			/**
+			 * Enable audio call button in 1-on-1 chats.
+			 * example:
+			 * true
+			 */
+			featureAudioCallsOneOnOneChatsEnabled?: boolean;
+			/**
+			 * Enable audio call button in group chats.
+			 * example:
+			 * true
+			 */
+			featureAudioCallsGroupChatsEnabled?: boolean;
+			/**
+			 * Enable audio call button when a user is in supervision mode.
+			 * example:
+			 * true
+			 */
+			featureAudioCallsSupervisionChatsEnabled?: boolean;
+			/**
+			 * Master toggle for video call button availability (all chat types).
+			 * example:
+			 * true
+			 */
+			featureVideoCallsEnabled?: boolean;
+			/**
+			 * Enable video call button in anonymous chats.
+			 * example:
+			 * true
+			 */
+			featureVideoCallsAnonymousChatsEnabled?: boolean;
+			/**
+			 * Enable video call button in 1-on-1 chats.
+			 * example:
+			 * true
+			 */
+			featureVideoCallsOneOnOneChatsEnabled?: boolean;
+			/**
+			 * Enable video call button in group chats.
+			 * example:
+			 * true
+			 */
+			featureVideoCallsGroupChatsEnabled?: boolean;
+			/**
+			 * Enable video call button when a user is in supervision mode.
+			 * example:
+			 * true
+			 */
+			featureVideoCallsSupervisionChatsEnabled?: boolean;
+			/**
+			 * Master toggle for threads availability (all chat types).
+			 * example:
+			 * true
+			 */
+			featureThreadsEnabled?: boolean;
+			/**
+			 * Enable threads in anonymous chats.
+			 * example:
+			 * true
+			 */
+			featureThreadsAnonymousChatsEnabled?: boolean;
+			/**
+			 * Enable threads in group chats.
+			 * example:
+			 * true
+			 */
+			featureThreadsGroupChatsEnabled?: boolean;
+			/**
+			 * Enable threads in 1-on-1 chats.
+			 * example:
+			 * true
+			 */
+			featureThreadsOneOnOneEnabled?: boolean;
+			/**
+			 * Enable threads when a user is in supervision mode.
+			 * example:
+			 * true
+			 */
+			featureThreadsSupervisionChatsEnabled?: boolean;
+			/**
+			 * Master toggle for voice messages availability (all chat types).
+			 * example:
+			 * true
+			 */
+			featureVoiceMessagesEnabled?: boolean;
+			/**
+			 * Enable voice messages in anonymous chats.
+			 * example:
+			 * true
+			 */
+			featureVoiceMessagesAnonymousChatsEnabled?: boolean;
+			/**
+			 * Enable voice messages in 1-on-1 chats.
+			 * example:
+			 * true
+			 */
+			featureVoiceMessagesOneOnOneChatsEnabled?: boolean;
+			/**
+			 * Enable voice messages in group chats.
+			 * example:
+			 * true
+			 */
+			featureVoiceMessagesGroupChatsEnabled?: boolean;
+			/**
+			 * Enable voice messages when a user is in supervision mode.
+			 * example:
+			 * true
+			 */
+			featureVoiceMessagesSupervisionChatsEnabled?: boolean;
+			/**
+			 * example:
+			 * false
+			 */
+			featureAttachmentUploadDisabled?: boolean;
+			/**
+			 * example:
+			 * 1234-1234-1234-1234
+			 */
+			featureToolsOICDToken?: string;
+			/**
+			 * example:
+			 * [en, de, fr]
+			 */
+			activeLanguages?: string[];
+			/**
+			 * example:
+			 * false
+			 */
+			showAskerProfile?: boolean;
+			/**
+			 * example:
+			 * false
+			 */
+			isVideoCallAllowed?: boolean;
+			/**
+			 * example:
+			 * false
+			 */
+			featureSystemNotificationEmailsEnabled?: boolean;
+			/**
+			 * example:
+			 * false
+			 */
+			featureCentralDataProtectionTemplateEnabled?: boolean;
+			agencyAdminControls?: AgencyAdminControls;
+		}
 	}
 }
 declare namespace Paths {

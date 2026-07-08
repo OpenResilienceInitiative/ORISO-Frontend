@@ -2496,6 +2496,7 @@ declare namespace Paths {
 			export interface $400 {}
 			export interface $401 {}
 			export interface $403 {}
+			export interface $409 {}
 			export interface $412 {}
 			export interface $429 {}
 			export interface $500 {}
@@ -2964,6 +2965,7 @@ declare namespace Paths {
 			export interface $400 {}
 			export interface $401 {}
 			export interface $403 {}
+			export interface $409 {}
 			export interface $412 {}
 			export interface $500 {}
 		}

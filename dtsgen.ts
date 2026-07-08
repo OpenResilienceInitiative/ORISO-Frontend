@@ -50,10 +50,10 @@ const fetchSpec = async (specPath: string): Promise<any> => {
 };
 
 /**
- * Rewrites cross-file schema references
- * (`<some-file>.yaml#/components/schemas/X`) to local pointers
- * (`#/components/schemas/X`). The referenced schemas themselves are merged
- * into the main spec by `mergeRefSchemas`.
+ * Rewrites cross-file component references of any kind
+ * (`<some-file>.yaml#/components/<kind>/X`) to local pointers
+ * (`#/components/<kind>/X`). The referenced components themselves are merged
+ * into the main spec by `mergeRefComponents`.
  */
 const rewriteExternalRefs = (node: unknown): void => {
 	if (node == null || typeof node !== 'object') {
@@ -66,9 +66,9 @@ const rewriteExternalRefs = (node: unknown): void => {
 	const obj = node as Record<string, unknown>;
 	const ref = obj.$ref;
 	if (typeof ref === 'string' && !ref.startsWith('#')) {
-		const match = /#\/components\/schemas\/([^/]+)$/.exec(ref);
+		const match = /#\/(components\/[^/]+\/[^/]+)$/.exec(ref);
 		if (match) {
-			obj.$ref = `#/components/schemas/${match[1]}`;
+			obj.$ref = `#/${match[1]}`;
 		}
 	}
 	Object.values(obj).forEach(rewriteExternalRefs);
@@ -95,15 +95,74 @@ const normalizeInvalidTypes = (node: unknown): void => {
 	Object.values(obj).forEach(normalizeInvalidTypes);
 };
 
-const mergeRefSchemas = (main: any, refSpecs: any[]): void => {
+const COMPONENT_KINDS = [
+	'schemas',
+	'responses',
+	'parameters',
+	'requestBodies',
+	'headers',
+	'examples',
+	'links',
+	'callbacks',
+	'securitySchemes'
+];
+
+/**
+ * Returns the `components/<kind>/<name>` target of an entry that is nothing
+ * but a single cross-file `$ref` (an alias stub), or null otherwise.
+ */
+const externalAliasTarget = (
+	entry: unknown
+): { kind: string; name: string } | null => {
+	if (entry == null || typeof entry !== 'object' || Array.isArray(entry)) {
+		return null;
+	}
+	const keys = Object.keys(entry as object);
+	if (keys.length !== 1 || keys[0] !== '$ref') {
+		return null;
+	}
+	const ref = (entry as Record<string, unknown>).$ref;
+	if (typeof ref !== 'string' || ref.startsWith('#')) {
+		return null;
+	}
+	const match = /#\/components\/([^/]+)\/([^/]+)$/.exec(ref);
+	return match ? { kind: match[1], name: match[2] } : null;
+};
+
+const mergeRefComponents = (main: any, refSpecs: any[]): void => {
 	main.components = main.components ?? {};
-	main.components.schemas = main.components.schemas ?? {};
-	for (const refSpec of refSpecs) {
-		const schemas = refSpec?.components?.schemas ?? {};
-		for (const [name, schema] of Object.entries(schemas)) {
-			// The main spec's own definition wins on name collisions.
-			if (!(name in main.components.schemas)) {
-				main.components.schemas[name] = schema;
+	for (const kind of COMPONENT_KINDS) {
+		// Collect this kind from all referenced specs; first spec wins.
+		const external: Record<string, unknown> = {};
+		for (const refSpec of refSpecs) {
+			for (const [name, def] of Object.entries(
+				refSpec?.components?.[kind] ?? {}
+			)) {
+				if (!(name in external)) {
+					external[name] = def;
+				}
+			}
+		}
+		if (!main.components[kind] && Object.keys(external).length === 0) {
+			continue;
+		}
+		main.components[kind] = main.components[kind] ?? {};
+		// Resolve alias stubs first: a main-spec entry that is nothing but a
+		// cross-file $ref to a same-named component (e.g. `AgencyAdminControls:
+		// { $ref: './components/agency-settings.yaml#/components/schemas/
+		// AgencyAdminControls' }`) would otherwise be rewritten to a local
+		// pointer at itself and emit a self-referential alias
+		// (`export type X = X;`).
+		for (const [name, def] of Object.entries(main.components[kind])) {
+			const target = externalAliasTarget(def);
+			if (target && target.kind === kind && target.name in external) {
+				main.components[kind][name] = external[target.name];
+			}
+		}
+		// The main spec's own (non-alias) definition wins on name collisions.
+		for (const [name, def] of Object.entries(external)) {
+			if (!(name in main.components[kind])) {
+				main.components[kind][name] = def;
 			}
 		}
 	}
@@ -119,7 +178,7 @@ const mergeRefSchemas = (main: any, refSpecs: any[]): void => {
 			const refSpecs = await Promise.all(
 				(service.refs ?? []).map(fetchSpec)
 			);
-			mergeRefSchemas(spec, refSpecs);
+			mergeRefComponents(spec, refSpecs);
 			rewriteExternalRefs(spec);
 			normalizeInvalidTypes(spec);
 
