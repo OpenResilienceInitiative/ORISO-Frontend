@@ -8,7 +8,6 @@ import {
 import { matrixCallService } from './matrixCallService';
 import { matrixLiveEventBridge } from './matrixLiveEventBridge';
 import { encryptMatrixAttachment } from '../utils/matrixEncryptedAttachment';
-import { buildMatrixRoomEncryptionInitialState } from '../utils/matrixRoomEncryption';
 
 const TOKEN_REFRESH_BUFFER_MS = 2 * 60 * 1000;
 
@@ -247,11 +246,13 @@ export class MatrixClientService {
 			throw new Error('Matrix client not initialized');
 		}
 
+		// Matrix E2EE is disabled: the app applies its own encryption layer,
+		// so rooms are created without m.room.encryption (matching the
+		// UserService-created session rooms).
 		const response = await this.client.createRoom({
 			preset: 'private_chat' as any,
 			invite: [userId],
-			is_direct: true,
-			initial_state: [buildMatrixRoomEncryptionInitialState()]
+			is_direct: true
 		});
 
 		return response.room_id;

@@ -8,10 +8,6 @@
 
 import { MatrixCall } from 'matrix-js-sdk/lib/webrtc/call';
 import { getMatrixClientService } from './matrixClientRegistry';
-import {
-	assertMatrixRoomEncrypted,
-	buildMatrixRoomEncryptionInitialState
-} from '../utils/matrixRoomEncryption';
 
 export type CallState =
 	| 'idle'
@@ -190,11 +186,6 @@ class CallManager {
 		(async () => {
 			let elementCallRoomId: string | undefined = undefined;
 
-			assertMatrixRoomEncrypted(
-				getMatrixClientService()?.getClient(),
-				roomId
-			);
-
 			// For group calls, create a fresh dedicated Element Call room rather
 			// than re-using the session room. This matches the "direct" usage of
 			// call.oriso.site where each call lives in its own Matrix room with
@@ -269,7 +260,9 @@ class CallManager {
 			// Same as Element Call: a room suitable for group chats
 			preset: 'public_chat',
 			name,
-			initial_state: [buildMatrixRoomEncryptionInitialState()],
+			// Matrix E2EE is disabled: the app applies its own encryption
+			// layer, so call rooms are created without m.room.encryption
+			// (matching the UserService-created session rooms).
 			power_level_content_override: {
 				invite: 100,
 				kick: 100,
@@ -326,8 +319,6 @@ class CallManager {
 				// console.warn("⚠️  Matrix client not available, cannot adjust power levels for group call");
 				return;
 			}
-			assertMatrixRoomEncrypted(client, roomId);
-
 			const room = client.getRoom(roomId);
 			if (!room) {
 				// console.warn("⚠️  Room not found when trying to adjust power levels for group call:", roomId);
@@ -406,8 +397,6 @@ class CallManager {
 				// console.error('❌ Matrix client not available to send call invite');
 				return;
 			}
-			assertMatrixRoomEncrypted(client, signallingRoomId);
-
 			// console.log('📤 Sending m.call.invite to Matrix room:', signallingRoomId);
 
 			// Send m.call.invite event
@@ -599,10 +588,6 @@ class CallManager {
 			const matrixClientService = getMatrixClientService();
 			const client = matrixClientService?.getClient?.();
 			if (!client) return;
-			assertMatrixRoomEncrypted(
-				client,
-				callData.signalRoomId || callData.roomId
-			);
 
 			// Custom ORISO event type — not in matrix-js-sdk typings
 			client

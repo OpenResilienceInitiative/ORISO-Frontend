@@ -11,7 +11,6 @@ import {
 	GroupCallEvent
 } from 'matrix-js-sdk/lib/webrtc/groupCall';
 import { CallFeed } from 'matrix-js-sdk/lib/webrtc/callFeed';
-import { assertMatrixRoomEncrypted } from '../utils/matrixRoomEncryption';
 
 export interface GroupCallParticipant {
 	userId: string;
@@ -47,8 +46,6 @@ class MatrixGroupCallService {
 			// console.error('❌', error);
 			throw error;
 		}
-
-		assertMatrixRoomEncrypted(this.client, roomId);
 
 		this.onParticipantsChanged = onParticipantsChanged;
 		this.onError = onError;
