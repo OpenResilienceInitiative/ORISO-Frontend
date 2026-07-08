@@ -61,7 +61,11 @@ export const ConsultantSpokenLanguages: React.FC = () => {
 			email: userData.email.trim(),
 			firstname: userData.firstName.trim(),
 			lastname: userData.lastName.trim(),
-			languages: selectedLanguages.filter(isUniqueLanguage)
+			// The generated DTO narrows languages to the LanguageCode union;
+			// the picker works with plain ISO 639-1 strings.
+			languages: selectedLanguages.filter(
+				isUniqueLanguage
+			) as UserService.Schemas.LanguageCode[]
 		})
 			.then(reloadUserData)
 			.then(() => {
