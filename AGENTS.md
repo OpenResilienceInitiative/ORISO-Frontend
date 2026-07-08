@@ -1,5 +1,12 @@
 # AGENTS.md
 
+## Orchestration
+
+- For non-trivial tasks, or whenever the user says "loop", run the `goal-loop` skill: intake → plan → iterate think/implement/verify until acceptance criteria pass → regression-check → pr-prep. Task docs live in `docs/cursor-orchestrator/YYYY-MM-DD_short-feature-name/`.
+- Delegate broad exploration to the `codebase-explorer` subagent, planning to `planner`, post-implementation validation to `verifier`, and touched-scope security review to `security-auditor`.
+- Stop for confirmation before: credentials, external service setup, destructive commands, and opening/updating a PR.
+- Capture reusable lessons in `.learnings/LEARNINGS.md`; promote to this file only if broadly applicable.
+
 ## Context First
 
 - Treat `dev` as the normal integration branch for ORISO feature PRs unless the task says otherwise.
