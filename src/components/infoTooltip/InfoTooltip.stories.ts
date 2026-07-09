@@ -35,7 +35,8 @@ export const ProfileView: Story = {
 		info: {
 			id: 2,
 			name: 'Anonymous',
-			description: 'Your identity stays private throughout the conversation.'
+			description:
+				'Your identity stays private throughout the conversation.'
 		},
 		translation: { prefix: 'agency.info', ns: 'agencies' },
 		isProfileView: true

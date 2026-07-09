@@ -1,6 +1,6 @@
 import * as React from 'react';
 import dayjs, { Dayjs } from 'dayjs';
-import { Box, ButtonBase, IconButton, Typography } from '@mui/material';
+import { Box, Button, ButtonBase, IconButton, Typography } from '@mui/material';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
@@ -16,7 +16,7 @@ export interface OrisoCalendarProps {
 	onChange?: (value: Dayjs) => void;
 	minDate?: Dayjs;
 	maxDate?: Dayjs;
-	/** First day of the week: 0 = Sunday, 1 = Monday. */
+	/** First day of the week: 0 = Sunday (Figma default), 1 = Monday. */
 	weekStart?: 0 | 1;
 	/** Month shown when no value is selected. */
 	referenceDate?: Dayjs;
@@ -25,6 +25,11 @@ export interface OrisoCalendarProps {
 	/** Render without the elevated container (for embedding in popovers). */
 	disableContainer?: boolean;
 	autoFocus?: boolean;
+	/** Figma docked picker footer: shown when either callback is provided. */
+	onCancel?: () => void;
+	onAccept?: () => void;
+	cancelLabel?: string;
+	okLabel?: string;
 }
 
 const DEFAULT_DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -47,6 +52,9 @@ const dayCellSx = {
 	'&:hover': {
 		backgroundColor: orisoDateTimeColors.hoverLayer
 	},
+	'&.orisoCalendarDay--outside': {
+		color: orisoDateTimeColors.disabledText
+	},
 	'&.orisoCalendarDay--today': {
 		border: `1px solid ${orisoDateTimeColors.primary}`,
 		color: orisoDateTimeColors.primary
@@ -64,22 +72,23 @@ const dayCellSx = {
 	}
 } as const;
 
-const yearCellSx = {
-	'height': '36px',
-	'borderRadius': '18px',
+// Figma docked picker: month/year dropdowns open a scrollable list; the
+// selected entry is a filled pill.
+const menuItemSx = {
+	'width': '100%',
+	'height': '40px',
+	'borderRadius': '20px',
+	'justifyContent': 'center',
 	'color': orisoDateTimeColors.onSurface,
 	...orisoPickerTypography.bodyLarge,
 	'&:hover': {
 		backgroundColor: orisoDateTimeColors.hoverLayer
 	},
-	'&.orisoCalendarYear--selected, &.orisoCalendarYear--selected:hover': {
-		backgroundColor: orisoDateTimeColors.primary,
-		color: orisoDateTimeColors.onPrimary
-	},
-	'&.orisoCalendarYear--current': {
-		border: `1px solid ${orisoDateTimeColors.primary}`,
-		color: orisoDateTimeColors.primary
-	},
+	'&.orisoCalendarMenuItem--selected, &.orisoCalendarMenuItem--selected:hover':
+		{
+			backgroundColor: orisoDateTimeColors.primary,
+			color: orisoDateTimeColors.onPrimary
+		},
 	'&.Mui-disabled': {
 		color: orisoDateTimeColors.disabledText
 	}
@@ -92,22 +101,48 @@ const navIconSx = {
 	}
 } as const;
 
+const selectorButtonSx = {
+	'height': '36px',
+	'borderRadius': '18px',
+	'padding': '0 4px 0 8px',
+	'gap': '2px',
+	'color': orisoDateTimeColors.onSurfaceVariant,
+	...orisoPickerTypography.labelLarge,
+	'&:hover': {
+		backgroundColor: orisoDateTimeColors.hoverLayer
+	}
+} as const;
+
+const actionButtonSx = {
+	color: orisoDateTimeColors.primary,
+	textTransform: 'none',
+	borderRadius: '20px',
+	padding: '10px 12px',
+	...orisoPickerTypography.labelLarge
+} as const;
+
+type CalendarView = 'days' | 'months' | 'years';
+
 export const OrisoCalendar = ({
 	value,
 	onChange,
 	minDate,
 	maxDate,
-	weekStart = 1,
+	weekStart = 0,
 	referenceDate,
 	dayLabels = DEFAULT_DAY_LABELS,
 	disableContainer,
-	autoFocus
+	autoFocus,
+	onCancel,
+	onAccept,
+	cancelLabel = 'Cancel',
+	okLabel = 'OK'
 }: OrisoCalendarProps) => {
 	const today = dayjs();
 	const initialMonth = (value ?? referenceDate ?? today).startOf('month');
 	const [viewMonth, setViewMonth] = React.useState<Dayjs>(initialMonth);
-	const [yearView, setYearView] = React.useState(false);
-	const yearListRef = React.useRef<HTMLDivElement>(null);
+	const [view, setView] = React.useState<CalendarView>('days');
+	const menuListRef = React.useRef<HTMLDivElement>(null);
 
 	React.useEffect(() => {
 		if (value) {
@@ -116,13 +151,13 @@ export const OrisoCalendar = ({
 	}, [value]);
 
 	React.useEffect(() => {
-		if (yearView && yearListRef.current) {
-			const selected = yearListRef.current.querySelector<HTMLElement>(
-				'.orisoCalendarYear--selected, .orisoCalendarYear--current'
+		if (view !== 'days' && menuListRef.current) {
+			const selected = menuListRef.current.querySelector<HTMLElement>(
+				'.orisoCalendarMenuItem--selected'
 			);
 			selected?.scrollIntoView({ block: 'center' });
 		}
-	}, [yearView]);
+	}, [view]);
 
 	const minYear = (minDate ?? today.subtract(100, 'year')).year();
 	const maxYear = (maxDate ?? today.add(100, 'year')).year();
@@ -154,19 +189,44 @@ export const OrisoCalendar = ({
 		const nextValue = value
 			? day.hour(value.hour()).minute(value.minute())
 			: day;
+		if (!day.isSame(viewMonth, 'month')) {
+			setViewMonth(day.startOf('month'));
+		}
 		onChange?.(nextValue);
 	};
 
-	const handleSelectYear = (year: number) => {
-		setViewMonth(viewMonth.year(year));
-		setYearView(false);
-	};
+	const showFooter = Boolean(onCancel || onAccept);
+	const gridHeight = DAY_CELL_SIZE * 7 + 24;
 
-	const isPrevDisabled =
-		minDate &&
-		viewMonth.subtract(1, 'month').endOf('month').isBefore(minDate, 'day');
-	const isNextDisabled =
-		maxDate && viewMonth.add(1, 'month').isAfter(maxDate, 'day');
+	const renderMenuList = (
+		items: { key: number; label: string; selected: boolean }[],
+		onSelect: (key: number) => void
+	) => (
+		<Box
+			ref={menuListRef}
+			sx={{
+				height: `${gridHeight}px`,
+				overflowY: 'auto',
+				display: 'flex',
+				flexDirection: 'column',
+				gap: '4px',
+				padding: '4px 8px'
+			}}
+		>
+			{items.map((item) => (
+				<ButtonBase
+					key={item.key}
+					onClick={() => onSelect(item.key)}
+					className={
+						item.selected ? 'orisoCalendarMenuItem--selected' : ''
+					}
+					sx={menuItemSx}
+				>
+					{item.label}
+				</ButtonBase>
+			))}
+		</Box>
+	);
 
 	return (
 		<Box
@@ -174,99 +234,123 @@ export const OrisoCalendar = ({
 				disableContainer ? { width: '304px' } : orisoCalendarContainerSx
 			}
 		>
+			{/* Figma docked header: ‹ Month ▾ › on the left, ‹ Year ▾ › right */}
 			<Box
 				sx={{
 					display: 'flex',
 					alignItems: 'center',
 					justifyContent: 'space-between',
-					height: '48px',
-					paddingLeft: '4px'
+					height: '48px'
 				}}
 			>
-				<ButtonBase
-					onClick={() => setYearView(!yearView)}
-					aria-label={
-						yearView ? 'Switch to day view' : 'Switch to year view'
-					}
-					sx={{
-						'height': '36px',
-						'borderRadius': '18px',
-						'padding': '0 4px 0 12px',
-						'gap': '4px',
-						'color': orisoDateTimeColors.onSurfaceVariant,
-						...orisoPickerTypography.labelLarge,
-						'&:hover': {
-							backgroundColor: orisoDateTimeColors.hoverLayer
+				<Box sx={{ display: 'flex', alignItems: 'center' }}>
+					<IconButton
+						size="small"
+						aria-label="Previous month"
+						disabled={view !== 'days'}
+						onClick={() =>
+							setViewMonth(viewMonth.subtract(1, 'month'))
 						}
-					}}
-				>
-					{viewMonth.format('MMMM YYYY')}
-					<ArrowDropDownIcon
-						sx={{
-							fontSize: '20px',
-							transform: yearView ? 'rotate(180deg)' : 'none',
-							transition: 'transform 120ms ease'
-						}}
-					/>
-				</ButtonBase>
-				{!yearView && (
-					<Box sx={{ display: 'flex' }}>
-						<IconButton
-							size="small"
-							aria-label="Previous month"
-							disabled={Boolean(isPrevDisabled)}
-							onClick={() =>
-								setViewMonth(viewMonth.subtract(1, 'month'))
-							}
-							sx={navIconSx}
-						>
-							<ChevronLeftIcon />
-						</IconButton>
-						<IconButton
-							size="small"
-							aria-label="Next month"
-							disabled={Boolean(isNextDisabled)}
-							onClick={() =>
-								setViewMonth(viewMonth.add(1, 'month'))
-							}
-							sx={navIconSx}
-						>
-							<ChevronRightIcon />
-						</IconButton>
-					</Box>
-				)}
-			</Box>
-			{yearView ? (
-				<Box
-					ref={yearListRef}
-					sx={{
-						display: 'grid',
-						gridTemplateColumns: 'repeat(3, 1fr)',
-						gap: '8px',
-						maxHeight: `${DAY_CELL_SIZE * 7}px`,
-						overflowY: 'auto',
-						padding: '4px'
-					}}
-				>
-					{years.map((year) => (
-						<ButtonBase
-							key={year}
-							onClick={() => handleSelectYear(year)}
-							className={
-								(value?.year() === year
-									? 'orisoCalendarYear--selected '
-									: '') +
-								(today.year() === year && value?.year() !== year
-									? 'orisoCalendarYear--current'
-									: '')
-							}
-							sx={yearCellSx}
-						>
-							{year}
-						</ButtonBase>
-					))}
+						sx={navIconSx}
+					>
+						<ChevronLeftIcon />
+					</IconButton>
+					<ButtonBase
+						onClick={() =>
+							setView(view === 'months' ? 'days' : 'months')
+						}
+						aria-label="Select month"
+						sx={selectorButtonSx}
+					>
+						{viewMonth.format('MMM')}
+						<ArrowDropDownIcon
+							sx={{
+								fontSize: '20px',
+								transform:
+									view === 'months'
+										? 'rotate(180deg)'
+										: 'none',
+								transition: 'transform 120ms ease'
+							}}
+						/>
+					</ButtonBase>
+					<IconButton
+						size="small"
+						aria-label="Next month"
+						disabled={view !== 'days'}
+						onClick={() => setViewMonth(viewMonth.add(1, 'month'))}
+						sx={navIconSx}
+					>
+						<ChevronRightIcon />
+					</IconButton>
 				</Box>
-			) : (
+				<Box sx={{ display: 'flex', alignItems: 'center' }}>
+					<IconButton
+						size="small"
+						aria-label="Previous year"
+						disabled={view !== 'days'}
+						onClick={() =>
+							setViewMonth(viewMonth.subtract(1, 'year'))
+						}
+						sx={navIconSx}
+					>
+						<ChevronLeftIcon />
+					</IconButton>
+					<ButtonBase
+						onClick={() =>
+							setView(view === 'years' ? 'days' : 'years')
+						}
+						aria-label="Select year"
+						sx={selectorButtonSx}
+					>
+						{viewMonth.format('YYYY')}
+						<ArrowDropDownIcon
+							sx={{
+								fontSize: '20px',
+								transform:
+									view === 'years'
+										? 'rotate(180deg)'
+										: 'none',
+								transition: 'transform 120ms ease'
+							}}
+						/>
+					</ButtonBase>
+					<IconButton
+						size="small"
+						aria-label="Next year"
+						disabled={view !== 'days'}
+						onClick={() => setViewMonth(viewMonth.add(1, 'year'))}
+						sx={navIconSx}
+					>
+						<ChevronRightIcon />
+					</IconButton>
+				</Box>
+			</Box>
+			{view === 'months' &&
+				renderMenuList(
+					Array.from({ length: 12 }, (_, month) => ({
+						key: month,
+						label: dayjs().month(month).format('MMMM'),
+						selected: viewMonth.month() === month
+					})),
+					(month) => {
+						setViewMonth(viewMonth.month(month));
+						setView('days');
+					}
+				)}
+			{view === 'years' &&
+				renderMenuList(
+					years.map((year) => ({
+						key: year,
+						label: String(year),
+						selected: viewMonth.year() === year
+					})),
+					(year) => {
+						setViewMonth(viewMonth.year(year));
+						setView('days');
+					}
+				)}
+			{view === 'days' && (
 				<Box role="grid" aria-label={viewMonth.format('MMMM YYYY')}>
 					<Box
 						role="row"
@@ -299,7 +383,8 @@ export const OrisoCalendar = ({
 							sx={{
 								display: 'grid',
 								gridTemplateColumns: 'repeat(7, 1fr)',
-								justifyItems: 'center'
+								justifyItems: 'center',
+								marginBottom: '4px'
 							}}
 						>
 							{week.map((day) => {
@@ -307,18 +392,6 @@ export const OrisoCalendar = ({
 									viewMonth,
 									'month'
 								);
-								if (!isCurrentMonth) {
-									return (
-										<Box
-											key={day.format('YYYY-MM-DD')}
-											sx={{
-												width: `${DAY_CELL_SIZE}px`,
-												height: `${DAY_CELL_SIZE}px`
-											}}
-										/>
-									);
-								}
-
 								const isSelected = Boolean(
 									value && day.isSame(value, 'day')
 								);
@@ -344,7 +417,10 @@ export const OrisoCalendar = ({
 												? 'orisoCalendarDay--selected '
 												: '') +
 											(isToday && !isSelected
-												? 'orisoCalendarDay--today'
+												? 'orisoCalendarDay--today '
+												: '') +
+											(!isCurrentMonth && !isSelected
+												? 'orisoCalendarDay--outside'
 												: '')
 										}
 										sx={dayCellSx}
@@ -355,6 +431,27 @@ export const OrisoCalendar = ({
 							})}
 						</Box>
 					))}
+				</Box>
+			)}
+			{showFooter && (
+				<Box
+					sx={{
+						display: 'flex',
+						justifyContent: 'flex-end',
+						gap: '4px',
+						paddingTop: '4px'
+					}}
+				>
+					{onCancel && (
+						<Button onClick={onCancel} sx={actionButtonSx}>
+							{cancelLabel}
+						</Button>
+					)}
+					{onAccept && (
+						<Button onClick={onAccept} sx={actionButtonSx}>
+							{okLabel}
+						</Button>
+					)}
 				</Box>
 			)}
 		</Box>

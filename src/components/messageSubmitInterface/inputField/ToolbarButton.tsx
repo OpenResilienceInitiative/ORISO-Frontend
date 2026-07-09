@@ -24,7 +24,9 @@ export const ToolbarButton = ({
 	<button
 		type="button"
 		aria-label={label}
-		aria-pressed={expanded === undefined ? selected || undefined : undefined}
+		aria-pressed={
+			expanded === undefined ? selected || undefined : undefined
+		}
 		aria-expanded={expanded}
 		disabled={disabled}
 		onClick={onClick}

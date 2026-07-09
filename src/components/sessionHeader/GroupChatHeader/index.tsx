@@ -260,7 +260,6 @@ export const GroupChatHeader = ({
 		sessionListTab ? `?sessionListTab=${sessionListTab}` : ''
 	}`;
 
-
 	// Voice call button
 	const buttonStartCall: ButtonItem = {
 		type: BUTTON_TYPES.SMALL_ICON,

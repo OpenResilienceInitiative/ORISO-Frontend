@@ -55,7 +55,7 @@ export const orisoPickerElevation =
 export const orisoCalendarContainerSx = {
 	width: '328px',
 	borderRadius: '16px',
-	backgroundColor: orisoDateTimeColors.surface,
+	backgroundColor: orisoDateTimeColors.surfaceContainerHigh,
 	boxShadow: orisoPickerElevation,
 	padding: '8px 12px 12px',
 	boxSizing: 'border-box'

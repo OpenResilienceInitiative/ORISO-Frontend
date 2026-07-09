@@ -49,8 +49,6 @@ describe('DefaultActionBar', () => {
 		expect(
 			screen.getByRole('button', { name: 'Emoji panel' })
 		).toBeTruthy();
-		expect(
-			screen.getByRole('button', { name: 'Mention' })
-		).toBeTruthy();
+		expect(screen.getByRole('button', { name: 'Mention' })).toBeTruthy();
 	});
 });

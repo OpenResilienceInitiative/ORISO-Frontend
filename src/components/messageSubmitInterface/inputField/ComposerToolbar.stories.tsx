@@ -36,9 +36,7 @@ function ToolbarHarness({
 				direction={direction}
 				isMobile={isMobile}
 				isExpanded={isExpanded}
-				onAction={(a) =>
-					setSelected((s) => ({ ...s, [a]: !s[a] }))
-				}
+				onAction={(a) => setSelected((s) => ({ ...s, [a]: !s[a] }))}
 				isActionSelected={(a) => !!selected[a]}
 				onCollapse={() => {}}
 				onExpandToggle={() => {}}

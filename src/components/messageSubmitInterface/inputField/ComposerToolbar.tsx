@@ -91,7 +91,10 @@ export const ComposerToolbar = ({
 	const listItems: ToolbarMenuItem[] = [
 		{
 			key: 'bulletList',
-			label: translate('message.submit.toolbar.bulletList', 'Bullet List'),
+			label: translate(
+				'message.submit.toolbar.bulletList',
+				'Bullet List'
+			),
 			glyph: <FormatListBulletedIcon fontSize="inherit" />,
 			selected: isActionSelected('bulletList'),
 			onSelect: () => onAction('bulletList')
@@ -207,7 +210,8 @@ export const ComposerToolbar = ({
 		}
 	];
 
-	const MenuChevron = direction === 'up' ? KeyboardArrowUpIcon : KeyboardArrowDownIcon;
+	const MenuChevron =
+		direction === 'up' ? KeyboardArrowUpIcon : KeyboardArrowDownIcon;
 
 	const renderMenuAnchor = (
 		menu: Exclude<ComposerToolbarMenu, null>,
@@ -309,10 +313,7 @@ export const ComposerToolbar = ({
 					</ToolbarButton>
 					<ToolbarDivider />
 					<ToolbarButton
-						label={translate(
-							'message.submit.toolbar.bold',
-							'Bold'
-						)}
+						label={translate('message.submit.toolbar.bold', 'Bold')}
 						onClick={() => onAction('bold')}
 						selected={isActionSelected('bold')}
 					>
@@ -369,10 +370,7 @@ export const ComposerToolbar = ({
 						false
 					)}
 					<ToolbarButton
-						label={translate(
-							'message.submit.toolbar.link',
-							'Link'
-						)}
+						label={translate('message.submit.toolbar.link', 'Link')}
 						onClick={() => onAction('setLink')}
 					>
 						<LinkIcon fontSize="inherit" />

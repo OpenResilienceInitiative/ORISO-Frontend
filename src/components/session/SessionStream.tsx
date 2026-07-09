@@ -490,7 +490,12 @@ export const SessionStream = ({
 			detachTimelineListeners.forEach((detach) => detach());
 		};
 		// matrixRoomId is derived from resolvedChatSession (already a dep).
-	}, [resolvedChatSession, supervisionRoomId, fetchSessionMessages, matrixRoomId]);
+	}, [
+		resolvedChatSession,
+		supervisionRoomId,
+		fetchSessionMessages,
+		matrixRoomId
+	]);
 
 	const groupChatStoppedOverlay: OverlayItem = useMemo(
 		() => ({

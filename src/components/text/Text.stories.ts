@@ -8,7 +8,8 @@ const meta = {
 	parameters: {
 		docs: {
 			description: {
-				component: 'Text component for displaying text content with various styling options.'
+				component:
+					'Text component for displaying text content with various styling options.'
 			}
 		}
 	}
