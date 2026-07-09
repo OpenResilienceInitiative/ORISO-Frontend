@@ -132,6 +132,7 @@ const INFO_TYPES = {
 	ATTACHMENT_FORMAT_ERROR: 'ATTACHMENT_FORMAT_ERROR',
 	ATTACHMENT_QUOTA_REACHED_ERROR: 'ATTACHMENT_QUOTA_REACHED_ERROR',
 	ATTACHMENT_OTHER_ERROR: 'ATTACHMENT_OTHER_ERROR',
+	MESSAGE_SEND_ERROR: 'MESSAGE_SEND_ERROR',
 	VOICE_RECORDING_ERROR: 'VOICE_RECORDING_ERROR'
 };
 
@@ -316,6 +317,10 @@ export const MessageSubmitInterfaceComponent = ({
 	const { type, path: listPath } = useContext(SessionTypeContext);
 	const { isE2eeEnabled } = useContext(E2EEContext);
 	const { matrixClientService } = useMatrixClient();
+	const resolvedChatSession = useMemo(
+		() => chatTransportService.resolveSession(activeSession),
+		[activeSession]
+	);
 
 	const [activeInfo, setActiveInfo] = useState(null);
 	const [attachmentSelected, setAttachmentSelected] = useState<File | null>(
@@ -553,6 +558,7 @@ export const MessageSubmitInterfaceComponent = ({
 
 	const isAnonymousEnquiryComposer =
 		type === SESSION_LIST_TYPES.ENQUIRY && isAnonymousChat;
+	const hasMatrixRoom = Boolean(resolvedChatSession.matrixRoomId);
 	const isAskerEnquiry = isAskerEnquirySubmission({
 		isEnquiryListType: type === SESSION_LIST_TYPES.ENQUIRY,
 		sessionStatus: activeSession.item?.status,
@@ -560,7 +566,8 @@ export const MessageSubmitInterfaceComponent = ({
 			AUTHORITIES.ASKER_DEFAULT,
 			userData
 		),
-		isAnonymousLiveChat
+		isAnonymousLiveChat,
+		hasMatrixRoom
 	});
 
 	const {
@@ -1084,7 +1091,16 @@ export const MessageSubmitInterfaceComponent = ({
 				})
 				.then(() => setIsRequestInProgress(false))
 				.catch((error) => {
-					// console.log(error);
+					setIsRequestInProgress(false);
+					setActiveInfo(INFO_TYPES.MESSAGE_SEND_ERROR);
+					apiPostError({
+						name: error?.name || 'EnquiryMessageSendError',
+						message:
+							error?.message ||
+							'Failed to send enquiry message',
+						stack: error?.stack,
+						level: ERROR_LEVEL_WARN
+					}).then();
 				});
 		},
 		[
@@ -1138,8 +1154,6 @@ export const MessageSubmitInterfaceComponent = ({
 			const sendToRoomWithId = activeSession.rid || activeSession.item.id;
 			// Determine if this is a Matrix-backed session.
 			// Some sessions still have a legacy rid while exposing matrixRoomId.
-			const resolvedChatSession =
-				chatTransportService.resolveSession(activeSession);
 			const isMatrixSession = resolvedChatSession.isMatrixSession;
 			const matrixSessionId = isMatrixSession
 				? Number(resolvedChatSession.sessionId) || undefined
@@ -1287,6 +1301,7 @@ export const MessageSubmitInterfaceComponent = ({
 			isSupervisor,
 			matrixClientService,
 			onSendButton,
+			resolvedChatSession,
 			setE2EEState,
 			supervisionRoomId,
 			threadRootId,
@@ -1535,6 +1550,12 @@ export const MessageSubmitInterfaceComponent = ({
 				infoHeadline: translate('attachments.error.other.headline'),
 				infoMessage: translate('attachments.error.other.message')
 			};
+		} else if (activeInfo === INFO_TYPES.MESSAGE_SEND_ERROR) {
+			infoData = {
+				isInfo: false,
+				infoHeadline: translate('statusOverlay.error.headline'),
+				infoMessage: translate('statusOverlay.error.text')
+			};
 		} else if (activeInfo === INFO_TYPES.VOICE_RECORDING_ERROR) {
 			infoData = {
 				isInfo: false,
@@ -1590,10 +1611,8 @@ export const MessageSubmitInterfaceComponent = ({
 					: featureVoiceMessagesOneOnOneChatsEnabled !== false);
 
 	const getMatrixRoomId = useCallback(
-		() =>
-			chatTransportService.resolveSession(activeSession).matrixRoomId ||
-			null,
-		[activeSession]
+		() => resolvedChatSession.matrixRoomId || null,
+		[resolvedChatSession]
 	);
 
 	const deriveLabelFromUserId = useCallback((rawUserId: string) => {
@@ -2914,8 +2933,6 @@ export const MessageSubmitInterfaceComponent = ({
 		isMobile: isMobileViewport
 	});
 
-	const resolvedChatSession =
-		chatTransportService.resolveSession(activeSession);
 	const matrixRoomId = resolvedChatSession.matrixRoomId || null;
 
 	// MATRIX MIGRATION: legacy RocketChat E2EE gates do not apply to Matrix rooms.
