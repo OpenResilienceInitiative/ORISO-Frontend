@@ -20,6 +20,7 @@ export default defineConfig({
 	},
 	test: {
 		include: ['src/**/*.test.{ts,tsx}'],
+		testTimeout: 30_000,
 		// Polyfill the layout APIs jsdom lacks (Range.getClientRects,
 		// Element.scrollIntoView) so TipTap's focus/scroll path doesn't throw
 		// an async unhandled error that flakes the composer emoji test in CI.

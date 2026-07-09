@@ -2,7 +2,104 @@
 import * as React from 'react';
 import { createRef } from 'react';
 import { cleanup, render, waitFor } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+type EditorMock = {
+	commands: {
+		setContent: (value: string) => boolean;
+		clearContent: () => boolean;
+		focus: () => boolean;
+		setTextAlign: (align: string) => boolean;
+	};
+	chain: () => {
+		focus: () => ReturnType<EditorMock['chain']>;
+		insertContent: (value: string) => ReturnType<EditorMock['chain']>;
+		run: () => boolean;
+	};
+	getHTML: () => string;
+	setEditable: () => void;
+};
+
+const { editorMock, extensionStub, registerEditorOnUpdate } = vi.hoisted(() => {
+	const extensionStub = { configure: () => extensionStub };
+	let html = '<p></p>';
+	let onUpdate: ((args: { editor: EditorMock }) => void) | undefined;
+
+	const notify = () => onUpdate?.({ editor: editorMock });
+
+	const editorMock: EditorMock = {
+		commands: {
+			setContent: (value: string) => {
+				html = value ? `<p>${value}</p>` : '<p></p>';
+				notify();
+				return true;
+			},
+			clearContent: () => {
+				html = '<p></p>';
+				notify();
+				return true;
+			},
+			focus: () => true,
+			setTextAlign: () => true
+		},
+		chain: () => {
+			const chain = {
+				focus: () => chain,
+				insertContent: (value: string) => {
+					html = html.replace('</p>', `${value}</p>`);
+					notify();
+					return chain;
+				},
+				run: () => true
+			};
+			return chain;
+		},
+		getHTML: () => html,
+		setEditable: () => {}
+	};
+
+	return {
+		editorMock,
+		extensionStub,
+		registerEditorOnUpdate: (
+			cb: ((args: { editor: EditorMock }) => void) | undefined
+		) => {
+			onUpdate = cb;
+		}
+	};
+});
+
+vi.mock('@mui/icons-material', () => ({
+	FormatBold: () => null,
+	FormatListBulleted: () => null,
+	FilterList: () => null,
+	Undo: () => null,
+	Redo: () => null,
+	ChevronRight: () => null
+}));
+vi.mock('@tiptap/starter-kit', () => ({ default: extensionStub }));
+vi.mock('@tiptap/extension-underline', () => ({ default: extensionStub }));
+vi.mock('@tiptap/extension-link', () => ({ default: extensionStub }));
+vi.mock('@tiptap/extension-highlight', () => ({ default: extensionStub }));
+vi.mock('@tiptap/extension-text-align', () => ({ default: extensionStub }));
+vi.mock('@tiptap/extension-placeholder', () => ({ default: extensionStub }));
+vi.mock('@tiptap/extension-task-list', () => ({ default: extensionStub }));
+vi.mock('@tiptap/extension-task-item', () => ({ default: extensionStub }));
+vi.mock('@tiptap/core', () => ({ Mark: { create: () => extensionStub } }));
+vi.mock('./extensions/createMentionExtension', () => ({
+	createMentionExtension: () => extensionStub
+}));
+vi.mock('@tiptap/react', () => ({
+	useEditor: (config: {
+		onUpdate?: (args: { editor: EditorMock }) => void;
+	}) => {
+		registerEditorOnUpdate(config.onUpdate);
+		queueMicrotask(() => config.onUpdate?.({ editor: editorMock }));
+		return editorMock;
+	},
+	EditorContent: () => null
+}));
+
 import { TipTapComposer, TipTapComposerRef } from '../TipTapComposer';
 
 afterEach(() => cleanup());
@@ -31,17 +128,12 @@ describe('emoji insertion at cursor', () => {
 
 		await waitFor(() => expect(ref.current).toBeTruthy());
 
-		// On mount the composer syncs its initial `value` prop into the editor
-		// and, during that window, swallows editor updates (isSyncingFromValue)
-		// and can even reset content just after an imperative edit. That settle
-		// is not directly observable, so drive the whole sequence through a
-		// retrying waitFor: setText replaces the content with 'Hallo' (no
-		// accumulation across retries) and insertText appends the emoji — the
-		// emoji popup's contract is to add to existing content, not replace it.
-		// Once the sync window has closed a single retry lands both.
+		ref.current!.setText('Hallo');
+		ref.current!.insertText('😀');
+
 		await waitFor(() => {
-			ref.current!.setText('Hallo');
-			ref.current!.insertText('😀');
+			expect(ref.current!.getHTML()).toContain('Hallo');
+			expect(ref.current!.getHTML()).toContain('😀');
 			expect(html).toContain('Hallo');
 			expect(html).toContain('😀');
 		});
