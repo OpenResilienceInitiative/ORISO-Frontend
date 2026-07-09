@@ -1,4 +1,3 @@
-// CACHE BUST: 1760919318 - DEBUG VERSION
 import { FetchErrorWithOptions, FETCH_ERRORS } from '../../api';
 import { endpoints } from '../../resources/scripts/endpoints';
 import { LoginData } from '../registration/autoLogin';
@@ -24,7 +23,9 @@ export const getKeycloakAccessToken = (
 			headers: {
 				'Content-Type': 'application/x-www-form-urlencoded'
 			},
-			credentials: 'include',
+			// The password grant is authenticated by the form body. Do not send
+			// stale browser auth cookies to Keycloak's token endpoint.
+			credentials: 'omit',
 			body: data
 		});
 

@@ -7,7 +7,6 @@ import {
 	hasUserAuthority,
 	AUTHORITIES,
 	ConsultingTypesContext,
-	RocketChatProvider,
 	InformalContext,
 	LocaleContext,
 	NotificationsContext
@@ -21,13 +20,8 @@ import { logout } from '../logout/logout';
 import './authenticatedApp.styles';
 import './navigation.styles';
 import { requestPermissions } from '../../utils/notificationHelpers';
-import { RocketChatSubscriptionsProvider } from '../../globalState/provider/RocketChatSubscriptionsProvider';
-import { RocketChatUnreadProvider } from '../../globalState/provider/RocketChatUnreadProvider';
-import { RocketChatPublicSettingsProvider } from '../../globalState/provider/RocketChatPublicSettingsProvider';
-import { RocketChatGetUserRolesProvider } from '../../globalState/provider/RocketChatSytemUsersProvider';
 import { useJoinGroupChat } from '../../hooks/useJoinGroupChat';
 import { useCall } from '../../globalState/provider/CallProvider';
-import { RocketChatUserStatusProvider } from '../../globalState/provider/RocketChatUserStatusProvider';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { E2EEncryptionSupportBanner } from '../E2EEncryptionSupportBanner/E2EEncryptionSupportBanner';
 import { getMatrixHomeserverUrl } from '../../resources/scripts/runtimeConfig';
@@ -36,6 +30,12 @@ import {
 	persistMatrixLoginData
 } from '../sessionCookie/getMatrixAccessToken';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
+import {
+	clearAuthSession,
+	CONSULTANT_LOGIN_BLOCKED_ERROR,
+	markConsultantLoginBlocked
+} from '../auth/consultantLoginBlock';
+import { appConfig } from '../../utils/appConfig';
 
 interface AuthenticatedAppProps {
 	onAppReady: Function;
@@ -98,6 +98,18 @@ export const AuthenticatedApp = ({
 				.then(() => {
 					Promise.all([reloadUserData(), apiGetConsultingTypes()])
 						.then(([userProfileData, consultingTypes]) => {
+							if (
+								appConfig.blockConsultantAppLogin &&
+								hasUserAuthority(
+									AUTHORITIES.CONSULTANT_DEFAULT,
+									userProfileData
+								)
+							) {
+								clearAuthSession();
+								markConsultantLoginBlocked();
+								throw new Error(CONSULTANT_LOGIN_BLOCKED_ERROR);
+							}
+
 							// set informal / formal cookie depending on the given userdata
 							setInformal(!userProfileData.formalLanguage);
 							setConsultingTypes(consultingTypes);
@@ -158,20 +170,24 @@ export const AuthenticatedApp = ({
 
 							setAppReady(true);
 						})
-						.catch((error) => {
+						.catch(() => {
 							setLoading(false);
-							// console.log(error);
 						});
 				})
 				.catch(() => {
 					setLoading(false);
 				});
 		}
+		// callContext is deliberately omitted: the CallProvider context value is
+		// recreated on every call-state change and would re-run this bootstrap
+		// effect; it is only mirrored to window.callContext here.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		locale,
 		setConsultingTypes,
 		setInformal,
 		setLocale,
+		setMatrixClientService,
 		reloadUserData,
 		userDataRequested
 	]);
@@ -208,20 +224,8 @@ export const AuthenticatedApp = ({
 	if (appReady) {
 		return (
 			<>
-				<RocketChatProvider>
-					<RocketChatGetUserRolesProvider>
-						<RocketChatPublicSettingsProvider>
-							<RocketChatSubscriptionsProvider>
-								<RocketChatUnreadProvider>
-									<RocketChatUserStatusProvider>
-										<E2EEncryptionSupportBanner />
-										<Routing logout={handleLogout} />
-									</RocketChatUserStatusProvider>
-								</RocketChatUnreadProvider>
-							</RocketChatSubscriptionsProvider>
-						</RocketChatPublicSettingsProvider>
-					</RocketChatGetUserRolesProvider>
-				</RocketChatProvider>
+				<E2EEncryptionSupportBanner />
+				<Routing logout={handleLogout} />
 			</>
 		);
 	} else if (loading) {

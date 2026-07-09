@@ -52,7 +52,7 @@ function ResizeDemo({
 					width,
 					position: 'relative',
 					flexShrink: 0,
-					background: '#f5f5f5',
+					background: '#eae7e8',
 					border: '1px solid #e0e0e0',
 					padding: 12,
 					boxSizing: 'border-box'
@@ -90,7 +90,8 @@ export const Default: Story = {
 	args: {
 		currentWidth: 320,
 		minWidth: 80,
-		maxWidth: 600
+		maxWidth: 600,
+		onResize: () => {}
 	},
 	render: (args) => <ResizeDemo {...args} />
 };
@@ -99,7 +100,8 @@ export const NarrowMin: Story = {
 	args: {
 		currentWidth: 320,
 		minWidth: 120,
-		maxWidth: 400
+		maxWidth: 400,
+		onResize: () => {}
 	},
 	render: (args) => <ResizeDemo {...args} />
 };

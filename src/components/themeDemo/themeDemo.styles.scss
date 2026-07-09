@@ -120,7 +120,7 @@
 	}
 }
 
-@media (max-width: 600px) {
+@media (width <= 600px) {
 	.themeDemo__list {
 		display: none;
 	}

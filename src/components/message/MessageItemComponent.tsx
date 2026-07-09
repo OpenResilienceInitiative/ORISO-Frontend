@@ -7,7 +7,7 @@ import {
 	hasUserAuthority,
 	AUTHORITIES,
 	E2EEContext,
-	RocketChatGlobalSettingsContext,
+	ServerSettingsContext,
 	ActiveSessionContext
 } from '../../globalState';
 import { STATUS_ARCHIVED } from '../../globalState/interfaces';
@@ -55,7 +55,7 @@ import { ReactComponent as DeletedIcon } from '../../resources/img/icons/deleted
 import {
 	IBooleanSetting,
 	SETTING_MESSAGE_ALLOWDELETING
-} from '../../api/apiRocketChatSettingsPublic';
+} from '../../api/apiMatrixSettingsPublic';
 import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
 import { ReactComponent as XIllustration } from '../../resources/img/illustrations/x.svg';
 import { BUTTON_TYPES } from '../button/Button';
@@ -74,12 +74,8 @@ import { createPortal } from 'react-dom';
 import { ReactComponent as NotificationBellIcon } from '../../resources/img/icons/notification_bell.svg';
 import { ReactComponent as StackVerticalIcon } from '../../resources/img/icons/stack-vertical.svg';
 import { ReactComponent as EyeIcon } from '../../resources/img/icons/eye.svg';
-import { ReactComponent as ArrowLeftIcon } from '../../resources/img/icons/arrow-left.svg';
-import { ReactComponent as StackVerticalCircleIcon } from '../../resources/img/icons/stack-vertical-circle.svg';
-import { ReactComponent as PenIcon } from '../../resources/img/icons/pen.svg';
-import { ReactComponent as ArrowForwardIcon } from '../../resources/img/icons/arrow-forward.svg';
 import { formatMessagePersonName } from './messageNameUtils';
-import { RocketChatUsersOfRoomContext } from '../../globalState/provider/RocketChatUsersOfRoomProvider';
+import { useMatrixRoomUsers } from '../../hooks/useMatrixRoomUsers';
 import { ConsultantListContext } from '../../globalState/provider/ConsultantListProvider';
 
 const ActiveKebabIcon = () => (
@@ -309,7 +305,7 @@ export const MessageItemComponent = ({
 	const { activeSession, reloadActiveSession } =
 		useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
-	const rcUsersContext = useContext(RocketChatUsersOfRoomContext);
+	const rcUsersContext = useMatrixRoomUsers();
 	const consultantContext = useContext(ConsultantListContext);
 	const getComparableRecipientIds = useCallback(
 		(rawValue?: string | null) => {
@@ -886,24 +882,21 @@ export const MessageItemComponent = ({
 					)
 				: ''
 		);
-	}, [decryptedMessage]);
+		// parsedMessage is memoized on decryptedMessage, so this stays
+		// equivalent to depending on decryptedMessage alone.
+	}, [decryptedMessage, parsedMessage.cleanedMessage]);
 
 	const isSupervisorFeedback = parsedMessage.isSupervisorFeedback;
 	const isSystemNotification = parsedMessage.isSystemNotification;
 	const isUserLeftChatEvent =
 		parsedMessage.systemNotificationType ===
 		SYSTEM_NOTIFICATION_USER_LEFT_CHAT;
-	const userLeftChatDisplayName = (() => {
-		const fromPayload = parsedMessage.systemNotificationUsername?.trim();
-		if (
-			fromPayload &&
-			!fromPayload.startsWith('enc.') &&
-			!fromPayload.startsWith('@')
-		) {
-			return fromPayload;
-		}
-		return '';
-	})();
+	const userLeftChatEventText = hasUserAuthority(
+		AUTHORITIES.CONSULTANT_DEFAULT,
+		userData
+	)
+		? translate('message.userLeftChat', 'User left the chat')
+		: translate('message.consultantLeftChat', 'Consultant left the chat');
 	const systemNotificationTitle =
 		parsedMessage.systemNotificationTitle ||
 		translate('message.systemNotificationTitle', 'System notification');
@@ -1168,7 +1161,6 @@ export const MessageItemComponent = ({
 	const resolvedIncomingDisplayName = !isMyMessage
 		? consultantMatch?.consultantDisplayName ||
 			roomUser?.displayName ||
-			roomUser?.name ||
 			displayName
 		: displayName;
 	const normalizedIncomingName = (resolvedIncomingDisplayName || '').trim();
@@ -1732,11 +1724,7 @@ export const MessageItemComponent = ({
 			<div className="messageItem messageItem--chatEvent">
 				{getMessageDate()}
 				<div className="messageItem__chatEvent">
-					{translate('message.userLeftChat', {
-						name:
-							userLeftChatDisplayName ||
-							translate('message.anonymousUser', 'User')
-					})}
+					{userLeftChatEventText}
 				</div>
 			</div>
 		);
@@ -2213,7 +2201,7 @@ const MessageFlyoutMenu = ({
 	isArchived: boolean;
 }) => {
 	const { activeSession } = useContext(ActiveSessionContext);
-	const { getSetting } = useContext(RocketChatGlobalSettingsContext);
+	const { getSetting } = useContext(ServerSettingsContext);
 	const [isUserBanOverlayOpen, setIsUserBanOverlayOpen] =
 		useState<boolean>(false);
 

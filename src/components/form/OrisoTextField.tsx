@@ -14,5 +14,10 @@ const mergeTextFieldSx = (sx?: TextFieldProps['sx']): TextFieldProps['sx'] => {
 };
 
 export const OrisoTextField = ({ sx, ...props }: TextFieldProps) => (
-	<TextField {...props} sx={mergeTextFieldSx(sx)} />
+	<TextField
+		{...props}
+		label={props.label ?? props.placeholder}
+		placeholder={props.label ? props.placeholder : undefined}
+		sx={mergeTextFieldSx(sx)}
+	/>
 );

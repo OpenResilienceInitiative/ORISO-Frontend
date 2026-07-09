@@ -19,7 +19,7 @@ import {
 	UserDataContext
 } from '../../globalState';
 import { InputField, InputFieldItem } from '../inputField/InputField';
-import { SelectDropdown, SelectDropdownItem } from '../select/SelectDropdown';
+import { OrisoSelect } from '../form/OrisoSelect';
 import { TOPIC_LENGTHS } from './createChatHelpers';
 import { ReactComponent as CheckIcon } from '../../resources/img/illustrations/check.svg';
 import { ReactComponent as XIcon } from '../../resources/img/illustrations/x.svg';
@@ -35,6 +35,7 @@ import {
 	Consultant
 } from '../../api/apiGetAgencyConsultantList';
 import { apiCreateGroupChat } from '../../api/apiGroupChatSettings';
+import { SelectChangeEvent } from '@mui/material/Select';
 
 const IconPlusCircle = ({ open }: { open: boolean }) => (
 	<svg
@@ -317,37 +318,20 @@ export const CreateGroupChatView = () => {
 		setSelectedChatTopic(chatTopic);
 	};
 
-	const handleAgencySelect = (selectedOption) => {
-		setSelectedAgency(parseInt(selectedOption.value));
+	const handleAgencySelect = (event: SelectChangeEvent<string>) => {
+		setSelectedAgency(parseInt(event.target.value));
 		setSelectedConsultants([]); // Reset consultants when agency changes
 		setParticipantsMenuOpen(false);
 		setParticipantSearch('');
 	};
 
-	const getOptionOfSelectedAgency = useCallback(() => {
-		const agency = agencies.find((agency) => agency.id === selectedAgency);
-		return agency
-			? {
-					value: agency.id.toString(),
-					label: agency.name
-				}
-			: null;
-	}, [agencies, selectedAgency]);
-
-	const agencySelectDropdown = useMemo<SelectDropdownItem>(
-		() => ({
-			id: 'agency',
-			selectedOptions: agencies.map(({ id, name }) => ({
+	const agencyOptions = useMemo(
+		() =>
+			agencies.map(({ id, name }) => ({
 				value: id.toString(),
 				label: name
 			})),
-			defaultValue: getOptionOfSelectedAgency(),
-			handleDropdownSelect: handleAgencySelect,
-			selectInputLabel: translate('groupChat.create.agencySelect.label'),
-			isSearchable: true,
-			menuPlacement: 'bottom'
-		}),
-		[agencies, getOptionOfSelectedAgency, translate]
+		[agencies]
 	);
 
 	const tr = useCallback(
@@ -472,16 +456,20 @@ export const CreateGroupChatView = () => {
 		} as any)
 			.then((response) => {
 				// Refresh session list
-				apiGetSessionRoomsByGroupIds([response.groupId]).then(
-					({ sessions }) => {
+				return apiGetSessionRoomsByGroupIds([response.groupId])
+					.then(({ sessions }) => {
 						dispatch({
 							type: UPDATE_SESSIONS,
 							sessions: sessions
 						});
-						setOverlayItem(createChatSuccessOverlayItem);
-						setOverlayActive(true);
-					}
-				);
+					})
+					.catch(() => {
+						// The group was created successfully. Do not leave the
+						// user on the create form if the follow-up refresh fails.
+					})
+					.finally(() => {
+						navigate('/sessions/consultant/sessionView');
+					});
 			})
 			.catch(() => {
 				setOverlayItem(createChatErrorOverlayItem);
@@ -496,7 +484,7 @@ export const CreateGroupChatView = () => {
 		selectedAgency,
 		selectedConsultants,
 		dispatch,
-		createChatSuccessOverlayItem,
+		navigate,
 		createChatErrorOverlayItem
 	]);
 
@@ -544,7 +532,13 @@ export const CreateGroupChatView = () => {
 					inputHandle={handleChatTopicInput}
 				/>
 
-				<SelectDropdown {...agencySelectDropdown} />
+				<OrisoSelect
+					id="agency"
+					label={translate('groupChat.create.agencySelect.label')}
+					options={agencyOptions}
+					value={selectedAgency?.toString() || ''}
+					onChange={handleAgencySelect}
+				/>
 				<div
 					className="createChat__participantsPicker"
 					ref={participantsPickerRef}

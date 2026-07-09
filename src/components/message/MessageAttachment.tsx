@@ -7,20 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { apiUrl } from '../../resources/scripts/endpoints';
 import { useCallback, useRef } from 'react';
 import { FETCH_METHODS, fetchData } from '../../api';
-import {
-	decryptAttachment,
-	ENCRYPTION_VERSION_ACTIVE,
-	KEY_ID_LENGTH,
-	MAX_PREFIX_LENGTH,
-	VECTOR_LENGTH,
-	VERSION_SEPERATOR
-} from '../../utils/encryptionHelpers';
 import { decryptMatrixAttachment } from '../../utils/matrixEncryptedAttachment';
-import { useE2EE } from '../../hooks/useE2EE';
-import {
-	STORAGE_KEY_ATTACHMENT_ENCRYPTION,
-	useDevToolbar
-} from '../devToolbar/DevToolbar';
 import {
 	NotificationsContext,
 	NOTIFICATION_TYPE_ERROR
@@ -45,8 +32,6 @@ const DECRYPTION_FINISHED = 'decryption_finished';
 
 export const MessageAttachment = (props: MessageAttachmentProps) => {
 	const { t: translate } = useTranslation();
-	const { key, keyID, encrypted } = useE2EE(props.rid);
-	const { getDevToolbarOption } = useDevToolbar();
 	const { addNotification } = React.useContext(NotificationsContext);
 	const matrixEncryptedFile = (props.attachment as any).matrix_encrypted_file;
 	const isMatrixEncryptedAttachment = Boolean(matrixEncryptedFile);
@@ -71,14 +56,14 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 				attachmentStatus === DECRYPTION_ERROR
 			)
 				return;
-			const isAttachmentEncryptionEnabledDevTools =
-				process.env.NODE_ENV !== 'production'
-					? parseInt(
-							getDevToolbarOption(
-								STORAGE_KEY_ATTACHMENT_ENCRYPTION
-							)
-						)
-					: 1;
+
+			// Legacy Rocket.Chat attachment encryption is removed; those
+			// attachments (old pre-migration data) cannot be decrypted.
+			if (isEncryptedAttachment && !isMatrixEncryptedAttachment) {
+				setAttachmentStatus(DECRYPTION_ERROR);
+				return;
+			}
+
 			setAttachmentStatus(IS_DECRYPTING);
 
 			const data = await fetchData({
@@ -90,12 +75,7 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 				}
 			});
 
-			const shouldDecrypt =
-				isMatrixEncryptedAttachment ||
-				(encrypted &&
-					props.t === 'e2e' &&
-					isAttachmentEncryptionEnabledDevTools);
-			const skipDecryption = !shouldDecrypt;
+			const skipDecryption = !isMatrixEncryptedAttachment;
 			let blobUrl;
 
 			if (skipDecryption) {
@@ -135,43 +115,6 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 					type: props.file.type
 				});
 				blobUrl = window.URL.createObjectURL(blob);
-			} else {
-				// encrypted
-				const text = await data.text();
-				const encryptedData = await decryptAttachment(
-					text,
-					props.attachment.title,
-					keyID,
-					key
-				).catch((error) => {
-					setAttachmentStatus(DECRYPTION_ERROR);
-
-					addNotification({
-						notificationType: NOTIFICATION_TYPE_ERROR,
-						title: translate('e2ee.attachment.error.title'),
-						text: translate('e2ee.attachment.error.text'),
-						closeable: true,
-						timeout: 60000
-					});
-
-					apiPostError({
-						name: error.name,
-						message: error.message,
-						stack: error.stack,
-						level: ERROR_LEVEL_WARN
-					}).then();
-
-					return null;
-				});
-
-				if (!encryptedData) {
-					return;
-				}
-
-				const blobData = new Blob([encryptedData], {
-					type: props.file.type
-				});
-				blobUrl = window.URL.createObjectURL(blobData);
 			}
 
 			setEncryptedFile(blobUrl);
@@ -179,15 +122,10 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 		},
 		[
 			attachmentStatus,
-			encrypted,
+			isEncryptedAttachment,
 			isMatrixEncryptedAttachment,
-			key,
-			keyID,
 			matrixEncryptedFile,
-			props.attachment.title,
-			props.t,
 			props.file.type,
-			getDevToolbarOption,
 			addNotification,
 			translate
 		]
@@ -454,33 +392,12 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 										]
 									)}{' '}
 									{props.attachment.image_size
-										? `| ${
-												isMatrixEncryptedAttachment
-													? (
-															getAttachmentSizeMBForKB(
-																props.attachment
-																	.image_size *
-																	1000
-															) / 1000
-														).toFixed(2)
-													: (
-															getAttachmentSizeMBForKB(
-																Math.floor(
-																	(props
-																		.attachment
-																		.image_size -
-																		KEY_ID_LENGTH -
-																		MAX_PREFIX_LENGTH -
-																		VERSION_SEPERATOR.length -
-																		ENCRYPTION_VERSION_ACTIVE.length -
-																		100) /
-																		2 -
-																		VECTOR_LENGTH *
-																			2
-																) * 1000
-															) / 1000
-														).toFixed(2)
-											}${translate(
+										? `| ${(
+												getAttachmentSizeMBForKB(
+													props.attachment
+														.image_size * 1000
+												) / 1000
+											).toFixed(2)}${translate(
 												'attachments.type.label.mb'
 											)}`
 										: null}

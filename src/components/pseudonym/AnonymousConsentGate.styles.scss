@@ -61,7 +61,7 @@
 }
 
 .anonymousConsentGate__title {
-	font-family: 'Inter', sans-serif;
+	font-family: Inter, sans-serif;
 	font-size: 32px;
 	line-height: 1.2em;
 	font-weight: 600;
@@ -70,7 +70,7 @@
 }
 
 .anonymousConsentGate__body {
-	font-family: 'Inter', sans-serif;
+	font-family: Inter, sans-serif;
 	font-size: 16px;
 	line-height: 1.4em;
 	color: #1f2937;
@@ -78,7 +78,7 @@
 }
 
 .anonymousConsentGate__consent {
-	font-family: 'Inter', sans-serif;
+	font-family: Inter, sans-serif;
 	font-size: 16px;
 	line-height: 1.4em;
 	font-weight: 700;
@@ -96,7 +96,7 @@
 }
 
 .anonymousConsentGate__rejectedNotice {
-	font-family: 'Inter', sans-serif;
+	font-family: Inter, sans-serif;
 	font-size: 14px;
 	line-height: 1.4em;
 	font-weight: 500;
@@ -142,7 +142,7 @@
 	padding: 8px 14px;
 	border: none;
 	cursor: pointer;
-	font-family: 'Inter', sans-serif;
+	font-family: Inter, sans-serif;
 	font-size: 13px;
 	line-height: 18px;
 	font-weight: 500;
@@ -187,7 +187,7 @@
 	}
 }
 
-@media screen and (max-width: 640px) {
+@media screen and (width <= 640px) {
 	.anonymousConsentGate {
 		padding: 16px;
 	}

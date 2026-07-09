@@ -18,6 +18,9 @@ const keycloakOrigin = getKeycloakOrigin(apiUrl);
 export const endpoints = {
 	agencyConsultants: userServiceOrigin + '/service/users/consultants',
 	agencyServiceBase: agencyServiceOrigin + '/service/agencies',
+	agencyDepartmentLegal: (agencyId: number, topicId: number) =>
+		agencyServiceOrigin +
+		`/service/agencies/${agencyId}/topics/${topicId}/legal`,
 	agencyTopics: agencyServiceOrigin + '/service/agencies/topics',
 	agenciesByTenant: agencyServiceOrigin + '/service/agencies/by-tenant',
 	additionalEnquiry: userServiceOrigin + '/service/users/askers/session/new',
@@ -45,7 +48,6 @@ export const endpoints = {
 		agencyServiceOrigin +
 		`/service/appointservice/consultants/${userId}/bookings?status=${status}`,
 	askerSessions: userServiceOrigin + '/service/users/sessions/askers',
-	attachmentUpload: apiUrl + '/service/uploads/new/',
 	banUser: (rcUserId, chatId) =>
 		userServiceOrigin + `/service/users/${rcUserId}/chat/${chatId}/ban`,
 	budibaseTools: (userId: string) =>
@@ -67,6 +69,11 @@ export const endpoints = {
 	consultantStatistics: apiUrl + '/service/statistics/consultant',
 	consultantsLanguages:
 		userServiceOrigin + '/service/users/consultants/languages',
+	caseHandoverBatch: userServiceOrigin + '/service/users/case-handover/batch',
+	caseHandoverCandidates:
+		userServiceOrigin + '/service/users/case-handover/candidates',
+	caseHandoverReasons:
+		userServiceOrigin + '/service/users/case-handover/reasons',
 	consultingTypeServiceBase:
 		consultingTypeServiceOrigin + '/service/consultingtypes',
 	deleteAskerAccount: userServiceOrigin + '/service/users/account',
@@ -88,7 +95,6 @@ export const endpoints = {
 	magicLinkRequest: userServiceOrigin + '/service/users/magic-link/request',
 	magicLinkConsume: userServiceOrigin + '/service/users/magic-link/consume',
 	matrixAccessToken: userServiceOrigin + '/service/matrix/me/token',
-	messageRead: apiUrl + '/api/v1/subscriptions.read',
 	messages: {
 		get: userServiceOrigin + '/service/messages',
 		delete: userServiceOrigin + '/service/messages/:messageId'
@@ -96,47 +102,12 @@ export const endpoints = {
 	myMessagesBase:
 		userServiceOrigin + '/service/conversations/consultants/mymessages/',
 	passwordReset: userServiceOrigin + '/service/users/password/change',
-	rc: {
-		accessToken: apiUrl + '/api/v1/login',
-		e2ee: {
-			fetchMyKeys: apiUrl + '/api/v1/e2e.fetchMyKeys',
-			getUsersOfRoomWithoutKey:
-				apiUrl + '/api/v1/e2e.getUsersOfRoomWithoutKey',
-			setRoomKeyID: apiUrl + '/api/v1/e2e.setRoomKeyID',
-			setUserPublicAndPrivateKeys:
-				apiUrl + '/api/v1/e2e.setUserPublicAndPrivateKeys',
-			updateGroupKey: apiUrl + '/api/v1/e2e.updateGroupKey'
-		},
-		groups: {
-			members: apiUrl + '/api/v1/groups.members'
-		},
-		logout: apiUrl + '/api/v1/logout',
-		rooms: {
-			get: apiUrl + '/api/v1/rooms.get',
-			info: apiUrl + '/api/v1/rooms.info'
-		},
-		settings: {
-			public: apiUrl + '/api/v1/settings.public'
-		},
-		subscriptions: {
-			get: apiUrl + '/api/v1/subscriptions.get',
-			read: apiUrl + '/api/v1/subscriptions.read',
-			getOne: apiUrl + '/api/v1/subscriptions.getOne'
-		},
-		users: {
-			getStatus: apiUrl + '/api/v1/users.getStatus',
-			info: apiUrl + '/api/v1/users.info',
-			resetE2EKey: apiUrl + '/api/v1/users.resetE2EKey'
-		}
-	},
 	registerAsker: userServiceOrigin + '/service/users/askers/new',
 	baseUserService: userServiceOrigin + '/service/users',
 	//todo delete?
 	registerAskerNewConsultingType:
 		userServiceOrigin + '/service/users/askers/consultingType/new',
 	rejectVideoCall: apiUrl + '/service/videocalls/reject',
-	rocketchatAccessToken: apiUrl + '/api/v1/login',
-	rocketchatLogout: apiUrl + '/api/v1/logout',
 	sendAliasMessage: userServiceOrigin + '/service/messages/aliasonly/new',
 	sendMessage: userServiceOrigin + '/service/messages/new',
 	sessionBase: userServiceOrigin + '/service/users/sessions',
@@ -144,8 +115,11 @@ export const endpoints = {
 	setAbsence: userServiceOrigin + '/service/users/consultants/absences',
 	startVideoCall: apiUrl + '/service/videocalls/new',
 	tenantServiceBase: tenantServiceOrigin + '/service/tenant',
+	dpaSignatureConfirm: (token: string) =>
+		tenantServiceOrigin +
+		`/service/tenant/public/dpa/confirm/${encodeURIComponent(token)}`,
 	topicGroups: consultingTypeServiceOrigin + '/service/topic-groups',
-	topicsData: consultingTypeServiceOrigin + '/service/topic/public/',
+	topicsData: consultingTypeServiceOrigin + '/service/topic/public',
 	twoFactorAuth: userServiceOrigin + '/service/users/2fa',
 	twoFactorAuthApp: userServiceOrigin + '/service/users/2fa/app',
 	twoFactorAuthEmail: userServiceOrigin + '/service/users/2fa/email',
@@ -162,6 +136,5 @@ export const endpoints = {
 	},
 	setAppointmentSuccessMessage:
 		userServiceOrigin + '/service/messages/aliasWithContent/new',
-	userUpdateE2EKey: userServiceOrigin + '/service/users/chat/e2e',
 	videocallServiceBase: apiUrl + '/service/videocalls'
 };

@@ -42,26 +42,21 @@ import {
 } from '../../globalState/interfaces/SessionsDataInterface';
 import { useNavigate, useLocation } from 'react-router-dom';
 import * as Tone from 'tone';
-import { RocketChatUsersOfRoomProvider } from '../../globalState/provider/RocketChatUsersOfRoomProvider';
 import './session.styles';
 import { useDebouncedCallback } from 'use-debounce';
 import { ReactComponent as ArrowDoubleDownIcon } from '../../resources/img/icons/arrow-double-down.svg';
-import { ReactComponent as PersonCircleIcon } from '../../resources/img/icons/person-circle.svg';
 import { ReactComponent as NotificationBellIcon } from '../../resources/img/icons/notification_bell.svg';
-import { ReactComponent as WelcomeIllustration } from '../../resources/img/illustrations/welcome.svg';
 import breathLevelEmojiSprite from '../../resources/img/icons/breath-level-emojis.svg';
 import smoothScroll from './smoothScrollHelper';
 import { DragAndDropArea } from '../dragAndDropArea/DragAndDropArea';
 import useMeasure from 'react-use-measure';
 import { AcceptAssign } from './AcceptAssign';
-import { WaitingRoomContent } from '../videoConference/WaitingRoomContent';
 import { useTranslation } from 'react-i18next';
 import useDebounceCallback from '../../hooks/useDebounceCallback';
 import { apiPostError, TError } from '../../api/apiPostError';
 import { useE2EE } from '../../hooks/useE2EE';
 import { MessageSubmitInterfaceSkeleton } from '../messageSubmitInterface/messageSubmitInterfaceSkeleton';
 import { MessageSubmitErrorBoundary } from '../messageSubmitInterface/MessageSubmitErrorBoundary';
-import { Text } from '../text/Text';
 import { EncryptionBanner } from './EncryptionBanner';
 import { apiGetSessionSupervisors } from '../../api/apiGetSessionSupervisors';
 import { apiPatchNotificationActiveView } from '../../api/apiPatchNotificationActiveView';
@@ -152,7 +147,6 @@ type BreathTiming = {
 	exhale: number;
 };
 type BreathPresetId = 'starter334' | 'standard446' | 'deep556';
-const DEFAULT_BREATH_PHASE_SECONDS = 4;
 const BREATHING_PRESETS: Array<{
 	id: BreathPresetId;
 	label: string;
@@ -408,11 +402,16 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		new URLSearchParams(location.search).get('embeddedNotifications') ===
 		'1';
 	const [isSupervisor, setIsSupervisor] = useState(false);
+	// ADR-008: per-session supervision side room id (shared by all supervisor
+	// entries). Aside sends are routed here so the client never receives them.
+	const [supervisionRoomId, setSupervisionRoomId] = useState<
+		string | undefined
+	>(undefined);
 	const [showWaitingMiniGame, setShowWaitingMiniGame] = useState(false);
 	const [breathPhase, setBreathPhase] = useState<BreathPhase>('inhale');
 	const [phaseTotalMs, setPhaseTotalMs] = useState(0);
 	const [phaseMsLeft, setPhaseMsLeft] = useState(0);
-	const [breathCycles, setBreathCycles] = useState(0);
+	const [, setBreathCycles] = useState(0);
 	const [breathProgress, setBreathProgress] = useState(0.2);
 	const [selectedPresetId, setSelectedPresetId] =
 		useState<BreathPresetId>('standard446');
@@ -466,15 +465,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const [bubbleTypedLen, setBubbleTypedLen] = useState(0);
 	const [briefingTypedText, setBriefingTypedText] = useState('');
 	const [briefingTypewriterBusy, setBriefingTypewriterBusy] = useState(false);
-	const [gameStatusTypedText, setGameStatusTypedText] = useState('');
-	const [gameStatusTypewriterBusy, setGameStatusTypewriterBusy] =
-		useState(false);
-	const [levelBadgeTypedText, setLevelBadgeTypedText] = useState('');
-	const [levelBadgeTypewriterBusy, setLevelBadgeTypewriterBusy] =
-		useState(false);
-	const [centerStageTypedText, setCenterStageTypedText] = useState('');
-	const [centerStageTypewriterBusy, setCenterStageTypewriterBusy] =
-		useState(false);
+	const [, setGameStatusTypedText] = useState('');
+	const [, setGameStatusTypewriterBusy] = useState(false);
+	const [, setLevelBadgeTypedText] = useState('');
+	const [, setLevelBadgeTypewriterBusy] = useState(false);
+	const [, setCenterStageTypedText] = useState('');
+	const [, setCenterStageTypewriterBusy] = useState(false);
 	const [joinPromptEscalated, setJoinPromptEscalated] = useState(false);
 	/**
 	 * Initial values for the consent/pseudonym gates are read synchronously
@@ -755,7 +751,6 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		return resolved;
 	}, [
 		activeSession.item.askerRcId,
-		activeSession.item.id,
 		activeSession.user?.username,
 		contact?.displayName,
 		contact?.username,
@@ -1286,7 +1281,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		setCurrentLevel(nextLevel);
 		setStageMessage(BREATH_LEVELS[nextLevel - 1].success);
 		startPhase('inhale');
-	}, [breathPhase, currentLevel, startPhase, translate, waitingGameStage]);
+	}, [breathPhase, currentLevel, startPhase, waitingGameStage]);
 
 	/**
 	 * Keep the Carimat bubble text in sync with the current breath phase
@@ -1713,6 +1708,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		if (!isSupervisionEnabledForCurrentChat) {
 			setIsSupervisor(false);
 			setSupervisionReason(null);
+			setSupervisionRoomId(undefined);
 			return;
 		}
 		if (
@@ -1729,15 +1725,23 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						(s) => s.supervisorConsultantId === userData.userId
 					);
 					setSupervisionReason(currentSupervisor?.notes || null);
+					// ADR-008: all supervisor entries share the one per-session
+					// supervision side room id — take it from any entry.
+					const sideRoomId = supervisors.find(
+						(s) => s.matrixRoomId
+					)?.matrixRoomId;
+					setSupervisionRoomId(sideRoomId || undefined);
 				})
 				.catch((error) => {
 					// console.error('Failed to check supervisor status:', error);
 					setIsSupervisor(false);
 					setSupervisionReason(null);
+					setSupervisionRoomId(undefined);
 				});
 		} else {
 			setIsSupervisor(false);
 			setSupervisionReason(null);
+			setSupervisionRoomId(undefined);
 		}
 	}, [activeSession.item.id, userData, isSupervisionEnabledForCurrentChat]);
 
@@ -1863,7 +1867,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				/* keep card visible on failure so user can retry */
 			})
 			.finally(() => setPseudonymSaving(false));
-	}, [currentPseudonym, pseudonymSaving, pseudonymStorageKey, setUserData]);
+	}, [
+		activeSession.item.id,
+		currentPseudonym,
+		pseudonymSaving,
+		pseudonymStorageKey,
+		setUserData
+	]);
 
 	/**
 	 * Poll the live anonymous-enquiry details while the asker is in the
@@ -2015,7 +2025,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		void import('../messageSubmitInterface/messageSubmitInterfaceComponent')
 			.then(() => setWaitingGateDismissed(true))
 			.catch(() => setWaitingGateDismissed(true));
-	}, []);
+	}, [setWaitingGateDismissed]);
 
 	useEffect(() => {
 		if (!shouldShowRobotMessages) {
@@ -2191,6 +2201,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		setCurrentLevel(nextLevel);
 		setStageMessage(BREATH_LEVELS[nextLevel - 1].success);
 		window.setTimeout(() => startPhase('inhale'), 0);
+		// translate is deliberately omitted: a language switch must not
+		// re-run this effect, which advances the breathing game state.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		breathPhase,
 		clearBreathTimer,
@@ -2536,6 +2549,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		if (messages && messages.length > 0 && !initialScrollCompleted) {
 			enableInitialScroll();
 		}
+		// enableInitialScroll is a plain function re-created every render;
+		// including it would run this effect on each render instead of on
+		// message/scroll-state changes.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [messages, initialScrollCompleted]);
 
 	useEffect(() => {
@@ -3315,7 +3332,6 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											   top (inhale) row only. */
 											const min = 1;
 											const max = 7;
-											const center = 4;
 											const value = Math.min(
 												max,
 												Math.max(
@@ -4559,6 +4575,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							typingUsers={props.typingUsers}
 							handleMessageSendSuccess={handleMessageSendSuccess}
 							isSupervisor={isSupervisor}
+							supervisionRoomId={supervisionRoomId}
 							threadRootId={activeThreadRootId}
 							threadParentPreview={
 								activeThreadRootMessage
@@ -4679,6 +4696,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										handleMessageSendSuccess
 									}
 									isSupervisor={isSupervisor}
+									supervisionRoomId={supervisionRoomId}
 									mobileUnreadCount={newMessages}
 									mobileIsScrolledToBottom={
 										isScrolledToBottom

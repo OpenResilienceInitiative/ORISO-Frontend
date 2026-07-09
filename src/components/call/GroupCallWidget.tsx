@@ -87,6 +87,9 @@ export const GroupCallWidget: React.FC = () => {
 			x: Math.max(padding, (window.innerWidth - width) / 2),
 			y: Math.max(padding, (window.innerHeight - height) / 2)
 		});
+		// Re-center only when a new call starts or the url changes; the full
+		// callData object gets a new identity on every call-state update.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [callData?.callId, callData?.usesElementCall, elementCallUrl]);
 
 	useEffect(() => {
@@ -128,6 +131,9 @@ export const GroupCallWidget: React.FC = () => {
 
 		// console.log('✅ Incoming group call moving to state', callState, '- setting up Element Call for receiver...');
 		setupElementCall();
+		// setupElementCall is re-created every render; including it would make
+		// this effect run on each render instead of on call-state changes.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [callState, callData, elementCallUrl, matrixClientService]);
 
 	// Handle outgoing call
@@ -138,6 +144,10 @@ export const GroupCallWidget: React.FC = () => {
 
 		// console.log('📞 Starting outgoing call, setting up Element Call...');
 		setupElementCall();
+		// setupElementCall is re-created every render and elementCallUrl is only
+		// used as an "already set up" guard; adding them would re-run this
+		// effect on every render.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [callData, matrixClientService]);
 
 	const setupElementCall = () => {
@@ -244,53 +254,6 @@ export const GroupCallWidget: React.FC = () => {
 			// console.error('❌ Failed to setup Element Call:', err);
 			alert(`Failed to start call: ${(err as Error).message}`);
 			callManager.endCall();
-		}
-	};
-
-	// Handle Element Call widget API actions
-	const handleWidgetAction = async (
-		action: string,
-		requestId: string,
-		data: any,
-		client: any,
-		source: Window
-	) => {
-		try {
-			// console.log(`📞 Element Call widget action: ${action}`, data);
-
-			// Element Call requests Matrix operations via widget API
-			// We proxy these to our authenticated Matrix client
-			let response: any = { success: false };
-
-			switch (action) {
-				case 'm.sticker':
-				case 'm.room.message':
-					// Element Call wants to send a message - not needed for calls
-					response = { success: true };
-					break;
-
-				case 'io.element.join':
-					// Element Call ready to join - already handled by URL params
-					response = { success: true };
-					break;
-
-				default:
-					// console.log(`ℹ️  Unhandled widget action: ${action}`);
-					response = { success: true };
-			}
-
-			// Send response back to Element Call
-			source.postMessage(
-				{
-					api: 'toWidget',
-					action: action,
-					requestId: requestId,
-					response: response
-				},
-				'*'
-			);
-		} catch (err) {
-			// console.error('❌ Error handling widget action:', err);
 		}
 	};
 
@@ -449,6 +412,9 @@ export const GroupCallWidget: React.FC = () => {
 				window.removeEventListener('touchend', handleTouchEnd);
 			};
 		}
+		// The drag handlers are re-created every render; subscribing on
+		// isDragging transitions only is intentional.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isDragging]);
 
 	// Only render for group calls

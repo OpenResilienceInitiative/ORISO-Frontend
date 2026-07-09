@@ -1,12 +1,10 @@
 import * as React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button, BUTTON_TYPES } from '../button/Button';
 import { MessageSubmitInfo } from '../messageSubmitInterface/MessageSubmitInfo';
 
 export const RoomNotFound = () => {
 	const { t: translate } = useTranslation();
-	const navigate = useNavigate();
 
 	return (
 		<div>

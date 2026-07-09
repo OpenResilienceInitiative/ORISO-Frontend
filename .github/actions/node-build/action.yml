@@ -1,4 +1,4 @@
-name: Reusable Node Build steps
+name: Reusable Node validation and build steps
 
 inputs:
   node_version:
@@ -17,6 +17,16 @@ runs:
   - name: Install dependencies
     shell: bash
     run: npm ci --ignore-scripts --legacy-peer-deps
+
+  - name: Lint scripts and type-check
+    shell: bash
+    run: npm run lint:scripts
+
+  - name: Run unit tests
+    shell: bash
+    # Runs before the Docker image is built/published so a red test blocks
+    # the (previously untested) :dev image on pushes to dev/main.
+    run: npm run test:unit
 
   - name: Build app
     shell: bash

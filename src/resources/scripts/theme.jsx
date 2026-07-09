@@ -202,6 +202,73 @@ const createAppTheme = () =>
 					}
 				}
 			},
+			MuiMenu: {
+				defaultProps: {
+					transitionDuration: 180,
+					MenuListProps: {
+						disablePadding: true
+					}
+				},
+				styleOverrides: {
+					paper: {
+						width: '301px',
+						maxWidth: 'calc(100vw - 32px)',
+						padding: '8px',
+						border: `1px solid ${getCssVarValue(
+							'--m3-primary-container',
+							'#cc1e1c'
+						)}`,
+						borderRadius: '8px',
+						boxShadow: '0 4px 12px rgba(0, 0, 0, 0.12)',
+						boxSizing: 'border-box'
+					},
+					list: {
+						padding: 0
+					}
+				}
+			},
+			MuiMenuItem: {
+				styleOverrides: {
+					root: {
+						'alignItems': 'flex-start',
+						'gap': '12px',
+						'minHeight': 'auto',
+						'padding': '12px 16px',
+						'borderRadius': '8px',
+						'color': '#4c555f',
+						'fontFamily': getCssVarValue(
+							'--font-family-sans-serif'
+						),
+						'fontSize': '16px',
+						'lineHeight': '24px',
+						'whiteSpace': 'normal',
+						'transition':
+							'background-color 150ms ease, color 150ms ease',
+						'& .MuiListItemIcon-root': {
+							minWidth: '20px',
+							color: 'inherit'
+						},
+						'&:hover': {
+							backgroundColor: '#e7effc',
+							color: '#a5000a'
+						},
+						'&.Mui-focusVisible': {
+							backgroundColor: '#e7effc',
+							color: '#a5000a',
+							outline: '2px solid rgba(204, 30, 28, 0.42)',
+							outlineOffset: '-2px'
+						},
+						'&:active, &.Mui-selected, &.Mui-selected:hover': {
+							backgroundColor: '#cc1e1c',
+							color: '#ffdad5'
+						},
+						'&.Mui-disabled': {
+							color: '#9ba4b0',
+							opacity: 1
+						}
+					}
+				}
+			},
 			MuiTooltip: {
 				styleOverrides: {
 					tooltip: {

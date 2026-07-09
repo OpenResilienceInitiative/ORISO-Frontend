@@ -1,0 +1,106 @@
+/*
+ * Send button — Figma "Nachricht senden" (node 489:16565).
+ * 48×48, radius bottom-left 24 / top-right 4 (mirrors the input container
+ * notch). One paper plane throughout: at rest on primary-fixed when empty,
+ * rotated up on primary-container when ready. The empty → ready change
+ * rotates the plane; sending flies it out, then it settles back.
+ */
+.sendButton {
+	position: relative;
+	width: 48px;
+	height: 48px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 0 4px 0 24px;
+	appearance: none;
+	cursor: pointer;
+	overflow: hidden;
+	background-color: var(--m3-primary-fixed, #ffdad5);
+	transition: background-color 250ms cubic-bezier(0.2, 0, 0, 1);
+
+	&__plane {
+		position: absolute;
+		inset: 0;
+		display: grid;
+		place-items: center;
+		color: var(--m3-on-primary, #fff);
+
+		// Rest position (empty): plane points to the upper right as drawn.
+		transform: rotate(0deg);
+		transition: transform 300ms cubic-bezier(0.2, 0, 0, 1);
+	}
+
+	&__planeIcon {
+		// Figma "Nachricht senden": filled M3 send plane, 24px, currentColor.
+		width: 24px;
+		height: 24px;
+		fill: currentColor;
+	}
+
+	// Ready / sending: red container, plane rotated up.
+	&--ready,
+	&--sending {
+		background-color: var(--m3-primary-container, #cc1e1c);
+	}
+
+	&--ready &__plane,
+	&--sending &__plane {
+		transform: rotate(-45deg);
+	}
+
+	// Empty / disabled: plane sits on the pale container with a muted tint so
+	// a white plane stays legible; not interactive.
+	&--empty &__plane,
+	&--disabled &__plane {
+		color: var(--m3-primary-container, #cc1e1c);
+	}
+
+	&--flyout &__plane {
+		animation: send-button-fly-out 420ms cubic-bezier(0.4, 0, 0.2, 1)
+			forwards;
+	}
+
+	&--disabled,
+	&--disabled:hover,
+	&--empty,
+	&--empty:hover {
+		cursor: not-allowed;
+	}
+
+	&--disabled &__plane {
+		opacity: 0.55;
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary-outline, #ffdad5);
+		outline-offset: 2px;
+	}
+}
+
+@keyframes send-button-fly-out {
+	0% {
+		opacity: 1;
+		transform: rotate(-45deg);
+	}
+
+	30% {
+		transform: translate(-5px, 4px) rotate(-45deg);
+	}
+
+	100% {
+		opacity: 0;
+		transform: translate(52px, -44px) rotate(-30deg) scale(0.9);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.sendButton,
+	.sendButton__plane {
+		transition: none;
+	}
+
+	.sendButton--flyout .sendButton__plane {
+		animation: none;
+	}
+}

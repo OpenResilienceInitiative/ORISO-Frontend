@@ -1,8 +1,30 @@
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+	resolve: {
+		// The webpack build resolves extensionless style imports
+		// (e.g. `import './session.styles'`) to .scss files; mirror that so
+		// components using this pattern can be imported in tests. Vitest
+		// stubs style modules by default, so no sass compile happens.
+		extensions: [
+			'.mjs',
+			'.js',
+			'.mts',
+			'.ts',
+			'.jsx',
+			'.tsx',
+			'.json',
+			'.scss',
+			'.css'
+		]
+	},
 	test: {
 		include: ['src/**/*.test.{ts,tsx}'],
+		// Polyfill the layout APIs jsdom lacks (Range.getClientRects,
+		// Element.scrollIntoView) so TipTap's focus/scroll path doesn't throw
+		// an async unhandled error that flakes the composer emoji test in CI.
+		// Guarded internally, so it is a no-op under the node environment.
+		setupFiles: ['./src/test/jsdomPolyfills.ts'],
 		// The app's runtimeConfig reads REACT_APP_* vars at module load and
 		// throws if the Keycloak realm is missing. Vite only auto-loads VITE_*
 		// vars, so provide the minimum here to let component/router tests that

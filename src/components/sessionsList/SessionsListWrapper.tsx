@@ -1,17 +1,15 @@
 import * as React from 'react';
 import { useContext, useRef, useState, useCallback } from 'react';
 import { ResizableHandle } from './ResizableHandle';
-import { SESSION_LIST_TYPES, SESSION_TYPES } from '../session/sessionHelpers';
+import { SESSION_TYPES } from '../session/sessionHelpers';
 import {
 	AUTHORITIES,
 	hasUserAuthority,
-	SessionTypeContext,
 	UserDataContext
 } from '../../globalState';
 import { SessionsList } from './SessionsList';
 import './sessionsList.styles';
 import { LanguagesContext } from '../../globalState/provider/LanguagesProvider';
-import { useTranslation } from 'react-i18next';
 import { useResponsive } from '../../hooks/useResponsive';
 import { SESSIONS_LIST_RESIZE } from './sessionsListResize.constants';
 
@@ -24,11 +22,9 @@ export const SessionsListWrapper = ({
 }: SessionsListWrapperProps) => {
 	const { ICON_ONLY_THRESHOLD, SNAP_THRESHOLD } = SESSIONS_LIST_RESIZE;
 	const MIN_WIDTH = 80;
-	const { t: translate } = useTranslation();
 	const { fromL } = useResponsive();
 	const { fixed: fixedLanguages } = useContext(LanguagesContext);
 	const { userData } = useContext(UserDataContext);
-	const { type } = useContext(SessionTypeContext);
 	const listScrollRef = useRef<HTMLDivElement | null>(null);
 
 	// Resizable sidebar width

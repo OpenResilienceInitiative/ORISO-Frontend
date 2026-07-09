@@ -28,7 +28,7 @@ const isElementUiOrigin = (): boolean => {
 
 export const UIVersionToggle = () => {
 	const { t } = useTranslation();
-	const [useNewUI, setUseNewUI] = useState(isElementUiOrigin);
+	const [useNewUI] = useState(isElementUiOrigin);
 
 	const toggleUI = async () => {
 		const newVersion = useNewUI ? 'classic' : 'new';

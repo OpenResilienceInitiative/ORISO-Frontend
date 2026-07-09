@@ -36,12 +36,8 @@ export { STORAGE_KEY_E2EE_DISABLED };
 export const STORAGE_KEY_TRANSLATION_DISABLE_CACHE =
 	'translation_disable_cache';
 export const STORAGE_KEY_ENABLE_TRANSLATION_CHECK = 'enable_translation_check';
-export const STORAGE_KEY_ATTACHMENT_ENCRYPTION = 'attachement_encryption';
 
-const DEV_ONLY_SWITCH_KEYS = new Set([
-	STORAGE_KEY_E2EE_DISABLED,
-	STORAGE_KEY_ATTACHMENT_ENCRYPTION
-]);
+const DEV_ONLY_SWITCH_KEYS = new Set([STORAGE_KEY_E2EE_DISABLED]);
 
 const DEVTOOLBAR_EVENT = 'devToolbar';
 
@@ -157,23 +153,6 @@ const LOCAL_STORAGE_SWITCHES: (TLocalStorageSwitches | null)[] = [
 		value: '1',
 		description:
 			'Disable the release notes dialog if there are new release notes added'
-	},
-	{
-		label: 'DEV E2EE',
-		key: STORAGE_KEY_E2EE_DISABLED,
-		type: TOGGLE,
-		choices: { '0': 'Enabled', '1': 'Disabled' },
-		value: '0',
-		description: 'Disable end-to-end encryption. DEV only'
-	},
-	{
-		label: 'DEV ATTACHMENT ENCRYPTION',
-		key: STORAGE_KEY_ATTACHMENT_ENCRYPTION,
-		type: TOGGLE,
-		choices: { '0': 'Disabled', '1': 'Enabled' },
-		value: (appConfig) => (appConfig.attachmentEncryption ? '1' : '0'),
-		description:
-			'Disable attachment encryption. Enable only when e2ee is also enabled. DEV only'
 	},
 	{
 		label: 'DEV Error Boundary',

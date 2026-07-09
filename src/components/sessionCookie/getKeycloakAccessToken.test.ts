@@ -59,6 +59,7 @@ describe('getKeycloakAccessToken', () => {
 		);
 		expect(request.method).toBe('POST');
 		expect(request.headers.has('cache-control')).toBe(false);
+		expect(request.credentials).toBe('omit');
 		expect(await request.text()).toBe(
 			'username=shanzae@example.com&password=secret%21&client_id=app&grant_type=password'
 		);
