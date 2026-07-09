@@ -36,6 +36,18 @@ describe('messageEncryptionMode', () => {
 		).toBe(false);
 	});
 
+	it('does not use the enquiry endpoint once the session has a Matrix room', () => {
+		expect(
+			isAskerEnquirySubmission({
+				isEnquiryListType: false,
+				sessionStatus: STATUS_ENQUIRY,
+				hasAskerAuthority: true,
+				isAnonymousLiveChat: false,
+				hasMatrixRoom: true
+			})
+		).toBe(false);
+	});
+
 	it('requires asker authority for enquiry submissions', () => {
 		expect(
 			isAskerEnquirySubmission({
