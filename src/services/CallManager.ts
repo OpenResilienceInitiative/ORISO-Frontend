@@ -190,11 +190,6 @@ class CallManager {
 		(async () => {
 			let elementCallRoomId: string | undefined = undefined;
 
-			assertMatrixRoomEncrypted(
-				getMatrixClientService()?.getClient(),
-				roomId
-			);
-
 			// For group calls, create a fresh dedicated Element Call room rather
 			// than re-using the session room. This matches the "direct" usage of
 			// call.oriso.site where each call lives in its own Matrix room with
@@ -406,7 +401,6 @@ class CallManager {
 				// console.error('❌ Matrix client not available to send call invite');
 				return;
 			}
-			assertMatrixRoomEncrypted(client, signallingRoomId);
 
 			// console.log('📤 Sending m.call.invite to Matrix room:', signallingRoomId);
 
@@ -599,10 +593,6 @@ class CallManager {
 			const matrixClientService = getMatrixClientService();
 			const client = matrixClientService?.getClient?.();
 			if (!client) return;
-			assertMatrixRoomEncrypted(
-				client,
-				callData.signalRoomId || callData.roomId
-			);
 
 			// Custom ORISO event type — not in matrix-js-sdk typings
 			client
