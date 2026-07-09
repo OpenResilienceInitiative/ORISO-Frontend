@@ -106,7 +106,9 @@ export const ConsultantInformation = () => {
 			email: userData.email?.trim(),
 			firstname: userData.firstName?.trim(),
 			lastname: userData.lastName?.trim(),
-			languages: userData.languages || [],
+			// The generated DTO narrows languages to the LanguageCode union.
+			languages: (userData.languages ||
+				[]) as UserService.Schemas.LanguageCode[],
 			publicSlug: normalizedPublicSlug
 		})
 			.then(reloadUserData)
