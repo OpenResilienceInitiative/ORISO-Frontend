@@ -93,7 +93,9 @@ export const Appointment = (param: {
 			/>
 			<div className="appointmentSet">
 				<div className="appointmentSet--flex">
-					{appointmentIcon}
+					<span className="appointmentSet__titleIcon">
+						{appointmentIcon}
+					</span>
 					<Headline
 						semanticLevel="5"
 						text={appointmentTitle}
