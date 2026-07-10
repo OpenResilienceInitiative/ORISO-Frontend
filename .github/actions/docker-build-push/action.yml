@@ -38,6 +38,7 @@ runs:
         type=sha
         type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
         type=raw,value=dev,enable=${{ github.ref == 'refs/heads/dev' }}
+        type=raw,value=pre-dev,enable=${{ github.ref == 'refs/heads/pre-dev' }}
 
   - name: Build Docker image and publish when enabled
     id: build
