@@ -8,7 +8,8 @@ const meta = {
 	parameters: {
 		docs: {
 			description: {
-				component: 'Tag component for displaying labels with color variants.'
+				component:
+					'Tag component for displaying labels with color variants.'
 			}
 		}
 	}

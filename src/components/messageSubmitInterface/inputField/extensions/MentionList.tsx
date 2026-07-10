@@ -1,10 +1,5 @@
 import * as React from 'react';
-import {
-	forwardRef,
-	useEffect,
-	useImperativeHandle,
-	useState
-} from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import type { MentionCandidate } from './mentionFiltering';
 import './mentionList.styles.scss';
 

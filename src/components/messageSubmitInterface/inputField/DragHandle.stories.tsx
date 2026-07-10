@@ -3,10 +3,7 @@ import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, waitFor, within } from 'storybook/test';
 import { DragHandle } from './DragHandle';
-import {
-	getComposerHeightBounds,
-	stepComposerHeight
-} from './composerResize';
+import { getComposerHeightBounds, stepComposerHeight } from './composerResize';
 
 const meta = {
 	title: 'Components/Composer/DragHandle',

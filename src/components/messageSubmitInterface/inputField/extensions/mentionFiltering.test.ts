@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-	filterMentionCandidates,
-	MentionCandidate
-} from './mentionFiltering';
+import { filterMentionCandidates, MentionCandidate } from './mentionFiltering';
 
 const c = (
 	id: string,

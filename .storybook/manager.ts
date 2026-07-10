@@ -8,6 +8,3 @@ addons.setConfig({
 	enableShortcuts: true,
 	showToolbar: true
 });
-
-
-

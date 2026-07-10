@@ -8,7 +8,8 @@ const meta = {
 	parameters: {
 		docs: {
 			description: {
-				component: 'LoadingSpinner component for displaying loading states.'
+				component:
+					'LoadingSpinner component for displaying loading states.'
 			}
 		}
 	}

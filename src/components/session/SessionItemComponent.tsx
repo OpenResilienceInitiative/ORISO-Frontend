@@ -3332,7 +3332,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											   top (inhale) row only. */
 											const min = 1;
 											const max = 7;
-												const value = Math.min(
+											const value = Math.min(
 												max,
 												Math.max(
 													min,

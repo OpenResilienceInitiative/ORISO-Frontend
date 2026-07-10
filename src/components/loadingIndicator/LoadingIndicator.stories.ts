@@ -5,7 +5,13 @@ const meta = {
 	title: 'Atoms/LoadingIndicator',
 	component: LoadingIndicator,
 	tags: ['autodocs'],
-	parameters: { docs: { description: { component: 'Animated bouncing loading spinner indicator.' } } }
+	parameters: {
+		docs: {
+			description: {
+				component: 'Animated bouncing loading spinner indicator.'
+			}
+		}
+	}
 } satisfies Meta<typeof LoadingIndicator>;
 
 export default meta;

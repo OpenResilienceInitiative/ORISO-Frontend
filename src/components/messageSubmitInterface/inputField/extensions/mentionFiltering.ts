@@ -10,10 +10,7 @@ export interface MentionCandidate {
 }
 
 const normalize = (value: string): string =>
-	value
-		.toLowerCase()
-		.normalize('NFD')
-		.replace(/[̀-ͯ]/g, '');
+	value.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
 /**
  * Filters agency consultants for the @-mention popup. Diacritics-insensitive

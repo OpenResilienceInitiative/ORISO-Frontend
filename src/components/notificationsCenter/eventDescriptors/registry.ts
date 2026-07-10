@@ -211,7 +211,7 @@ const seeds: EventDescriptor[] = [
 	descriptor('handover.denied', {
 		family: 'handover',
 		category: 'system',
-		icon: 'handover',
+		icon: 'handoverDenied',
 		i18nKey: 'handoverDenied',
 		resolveActionTarget: conversationTarget
 	}),
@@ -232,7 +232,7 @@ const seeds: EventDescriptor[] = [
 	descriptor('case.handover.consent.declined', {
 		family: 'handover',
 		category: 'system',
-		icon: 'handover',
+		icon: 'handoverDenied',
 		i18nKey: 'caseHandoverConsentDeclined',
 		resolveActionTarget: conversationTarget
 	}),

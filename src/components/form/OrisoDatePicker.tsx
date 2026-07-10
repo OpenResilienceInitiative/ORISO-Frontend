@@ -41,11 +41,13 @@ export const OrisoDatePicker = ({
 	fullWidth = true,
 	minDate,
 	maxDate,
-	weekStart = 1,
+	weekStart = 0,
 	placeholder,
 	id
 }: OrisoDatePickerProps) => {
 	const [anchorEl, setAnchorEl] = React.useState<HTMLElement | null>(null);
+	// Figma docked picker: day clicks are a draft, committed with OK.
+	const [draft, setDraft] = React.useState<Dayjs | null>(null);
 	const [inputText, setInputText] = React.useState(
 		value ? value.format(format) : ''
 	);
@@ -69,8 +71,15 @@ export const OrisoDatePicker = ({
 		}
 	};
 
-	const handleSelect = (day: Dayjs) => {
-		onChange?.(day);
+	const openPicker = (anchor: HTMLElement | null) => {
+		setDraft(value);
+		setAnchorEl(anchor);
+	};
+
+	const handleAccept = () => {
+		if (draft) {
+			onChange?.(draft);
+		}
 		setAnchorEl(null);
 	};
 
@@ -100,7 +109,7 @@ export const OrisoDatePicker = ({
 								edge="end"
 								disabled={disabled}
 								onClick={(event) =>
-									setAnchorEl(
+									openPicker(
 										event.currentTarget.closest(
 											'.MuiFormControl-root'
 										) as HTMLElement
@@ -131,13 +140,15 @@ export const OrisoDatePicker = ({
 				}}
 			>
 				<OrisoCalendar
-					value={value}
-					onChange={handleSelect}
+					value={draft ?? value}
+					onChange={setDraft}
 					minDate={minDate}
 					maxDate={maxDate}
 					weekStart={weekStart}
 					disableContainer
 					autoFocus
+					onCancel={() => setAnchorEl(null)}
+					onAccept={handleAccept}
 				/>
 			</Popover>
 		</>

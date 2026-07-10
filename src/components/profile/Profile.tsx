@@ -228,21 +228,24 @@ export const Profile = () => {
 							(fromL || subpage) && 'flex__col--25p'
 						}`}
 					>
-					{fromL || !subpage ? (
-						<>
-							<div className="profile__icon profile__icon--avatar flex__col--no-grow">
-								<UserAvatar
-									username={userData.userName}
-									displayName={userData.displayName || userData.userName}
-									userId={userData.userId}
-									size="56px"
-								/>
-							</div>
-							<h3 className="text--nowrap text--ellipsis">
-								{headline}
-							</h3>
-						</>
-					) : (
+						{fromL || !subpage ? (
+							<>
+								<div className="profile__icon profile__icon--avatar flex__col--no-grow">
+									<UserAvatar
+										username={userData.userName}
+										displayName={
+											userData.displayName ||
+											userData.userName
+										}
+										userId={userData.userId}
+										size="56px"
+									/>
+								</div>
+								<h3 className="text--nowrap text--ellipsis">
+									{headline}
+								</h3>
+							</>
+						) : (
 							<Link to={`/profile`}>
 								<BackIcon
 									title={translate('app.back')}
@@ -284,7 +287,8 @@ export const Profile = () => {
 												role="tab"
 												tabIndex={index === 0 ? 0 : -1}
 												ref={(el) => {
-													ref_tabs.current[index] = el;
+													ref_tabs.current[index] =
+														el;
 												}}
 												onKeyDown={(e) =>
 													handleKeyDownTabs(e, index)
@@ -325,93 +329,96 @@ export const Profile = () => {
 			<div className="profile__innerWrapper">
 				<div>
 					<Routes>
-						{fromL ? (
-							// Render tabs for desktop
-							profileRoutes(
-								settings,
-								tenant,
-								selectableLocales,
-								isFirstVisit
-							)
-								.filter((tab) =>
-									solveTabConditions(
-										tab,
-										userData,
-										consultingTypes ?? []
-									)
+						{fromL
+							? // Render tabs for desktop
+								profileRoutes(
+									settings,
+									tenant,
+									selectableLocales,
+									isFirstVisit
 								)
-								.map((tab) => (
-									<Route
-										path={`${tab.url.replace(/^\//, '')}/*`}
-										key={`/profile${tab.url}`}
-										element={
-											<div className="profile__content">
-												{tab.elements
-													.reduce(
-														(
-															acc: SingleComponentType[],
-															element
-														) =>
-															acc.concat(
-																isTabGroup(
-																	element
-																)
-																	? element.elements
-																	: element
-															),
-														[]
-													)
-													.filter((element) =>
-														solveCondition(
-															element.condition,
-															userData,
-															consultingTypes ??
-																[]
+									.filter((tab) =>
+										solveTabConditions(
+											tab,
+											userData,
+											consultingTypes ?? []
+										)
+									)
+									.map((tab) => (
+										<Route
+											path={`${tab.url.replace(/^\//, '')}/*`}
+											key={`/profile${tab.url}`}
+											element={
+												<div className="profile__content">
+													{tab.elements
+														.reduce(
+															(
+																acc: SingleComponentType[],
+																element
+															) =>
+																acc.concat(
+																	isTabGroup(
+																		element
+																	)
+																		? element.elements
+																		: element
+																),
+															[]
 														)
-													)
-													.sort(
-														(a, b) =>
-															(a?.order || 99) -
-															(b?.order || 99)
-													)
-													.map((element, i) => (
-														<ProfileItem
-															key={i}
-															element={element}
-															index={i}
-														/>
-													))}
-											</div>
-										}
-									/>
-								))
-						) : (
-							// Render submenu for mobile (one route per tab base)
-							profileRoutes(
-								settings,
-								tenant,
-								selectableLocales,
-								isFirstVisit
-							)
-								.filter((tab) =>
-									solveTabConditions(
-										tab,
-										userData,
-										consultingTypes ?? []
-									)
+														.filter((element) =>
+															solveCondition(
+																element.condition,
+																userData,
+																consultingTypes ??
+																	[]
+															)
+														)
+														.sort(
+															(a, b) =>
+																(a?.order ||
+																	99) -
+																(b?.order || 99)
+														)
+														.map((element, i) => (
+															<ProfileItem
+																key={i}
+																element={
+																	element
+																}
+																index={i}
+															/>
+														))}
+												</div>
+											}
+										/>
+									))
+							: // Render submenu for mobile (one route per tab base)
+								profileRoutes(
+									settings,
+									tenant,
+									selectableLocales,
+									isFirstVisit
 								)
-								.map((tab) => (
-									<Route
-										path={tab.url.replace(/^\//, '')}
-										key={`menu/profile${tab.url}`}
-										element={
-											<div className="profile__content">
-												<LinkMenu items={mobileMenu} />
-											</div>
-										}
-									/>
-								))
-						)}
+									.filter((tab) =>
+										solveTabConditions(
+											tab,
+											userData,
+											consultingTypes ?? []
+										)
+									)
+									.map((tab) => (
+										<Route
+											path={tab.url.replace(/^\//, '')}
+											key={`menu/profile${tab.url}`}
+											element={
+												<div className="profile__content">
+													<LinkMenu
+														items={mobileMenu}
+													/>
+												</div>
+											}
+										/>
+									))}
 
 						{!fromL &&
 							// Render groups as routes for mobile

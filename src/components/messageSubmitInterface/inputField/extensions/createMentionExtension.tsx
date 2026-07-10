@@ -3,10 +3,7 @@ import Mention from '@tiptap/extension-mention';
 import type { SuggestionOptions } from '@tiptap/suggestion';
 import { computePosition, flip, offset, shift } from '@floating-ui/dom';
 import { MentionList, MentionListRef } from './MentionList';
-import {
-	filterMentionCandidates,
-	MentionCandidate
-} from './mentionFiltering';
+import { filterMentionCandidates, MentionCandidate } from './mentionFiltering';
 
 export interface MentionProvider {
 	/** Returns the agency consultants to offer for the given query. */
@@ -105,7 +102,7 @@ export const createMentionExtension = (provider: MentionProvider) => {
 			return [
 				'span',
 				{
-					class: 'messageItem__mention',
+					'class': 'messageItem__mention',
 					'data-mention-id': node.attrs.id,
 					'data-mention-username': node.attrs.label ?? node.attrs.id
 				},

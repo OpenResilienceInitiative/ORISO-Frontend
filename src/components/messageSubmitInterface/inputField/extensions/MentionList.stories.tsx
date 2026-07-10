@@ -5,7 +5,12 @@ import { MentionList, MentionListRef } from './MentionList';
 import type { MentionCandidate } from './mentionFiltering';
 
 const items: MentionCandidate[] = [
-	{ id: '1', displayName: 'A. Kräger', username: 'a.kraeger', isInRoom: true },
+	{
+		id: '1',
+		displayName: 'A. Kräger',
+		username: 'a.kraeger',
+		isInRoom: true
+	},
 	{
 		id: '2',
 		displayName: 'B. Beraterin',
