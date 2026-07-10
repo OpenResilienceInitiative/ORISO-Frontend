@@ -1,5 +1,9 @@
 # Learnings
 
+## 2026-07-08 — matrix-js-sdk production logging
+
+`matrix-js-sdk` defaults child loggers to `DEBUG`, so `FetchHttpApi` sync lines appear even when app `console.log` calls are removed. Call `logger.setLevel('error')` at startup and patch `getChild` so child namespaces inherit the same level; pass `logger` into every `createClient` call.
+
 ## 2026-07-10 — JS-driven widget size vs CSS min-height
 
 When a call (or other) widget sets `width`/`height` via inline styles for resize/auto-fit, a stylesheet `min-height` on the same element can silently win and break aspect ratio. Prefer `min-height: 0` (or matching the JS min) when size is state-driven.

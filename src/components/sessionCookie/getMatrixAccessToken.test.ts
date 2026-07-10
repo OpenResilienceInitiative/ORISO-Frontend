@@ -9,6 +9,7 @@ import {
 import { fetchData } from '../../api/fetchData';
 import { getMatrixHomeserverUrl } from '../../resources/scripts/runtimeConfig';
 import { createClient } from 'matrix-js-sdk';
+import { getMatrixClientLogger } from '../../utils/matrixLogging';
 
 vi.mock('../../resources/scripts/endpoints', () => ({
 	endpoints: {
@@ -213,7 +214,8 @@ describe('getMatrixAccessToken', () => {
 			accessToken: 'matrix-token',
 			userId: '@consultant:matrix.example.test',
 			deviceId: 'ORISO_WEB_TEST_DEVICE',
-			fallbackICEServerAllowed: true
+			fallbackICEServerAllowed: true,
+			logger: getMatrixClientLogger()
 		});
 		expect(client).toEqual({
 			config: {
@@ -221,7 +223,8 @@ describe('getMatrixAccessToken', () => {
 				accessToken: 'matrix-token',
 				userId: '@consultant:matrix.example.test',
 				deviceId: 'ORISO_WEB_TEST_DEVICE',
-				fallbackICEServerAllowed: true
+				fallbackICEServerAllowed: true,
+				logger: getMatrixClientLogger()
 			}
 		});
 	});

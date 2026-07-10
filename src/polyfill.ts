@@ -8,6 +8,10 @@ import 'element-scroll-polyfill';
 import elementClosest from 'element-closest';
 import * as ReactDOM from 'react-dom';
 
+(
+	globalThis as typeof globalThis & { TONE_SILENCE_LOGGING?: boolean }
+).TONE_SILENCE_LOGGING = true;
+
 elementClosest(window);
 
 // Polyfill for findDOMNode (removed in React 19) for intro.js-react compatibility
