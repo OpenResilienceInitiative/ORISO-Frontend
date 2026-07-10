@@ -121,56 +121,42 @@ export const AuthenticatedApp = ({
 						})
 						.then(async (userProfileData) => {
 							// 🔷 CRITICAL: Initialize Matrix client for all authenticated users
-							try {
-								const matrixLoginData =
-									await getMatrixAccessToken();
-								persistMatrixLoginData(matrixLoginData);
-								try {
-									const { MatrixClientService } =
-										await import(
-											'../../services/matrixClientService'
-										);
-									const matrixClientService =
-										new MatrixClientService();
+							const matrixLoginData =
+								await getMatrixAccessToken();
+							persistMatrixLoginData(matrixLoginData);
+							const { MatrixClientService } = await import(
+								'../../services/matrixClientService'
+							);
+							const matrixClientService =
+								new MatrixClientService();
 
-									const homeserverUrl =
-										getMatrixHomeserverUrl();
-									if (!homeserverUrl) {
-										// console.warn('⚠️ REACT_APP_MATRIX_HOMESERVER_URL is not set; skipping Matrix client init');
-									} else {
-										matrixClientService.initializeClient({
-											userId: matrixLoginData.userId,
-											accessToken:
-												matrixLoginData.accessToken,
-											deviceId: matrixLoginData.deviceId,
-											homeserverUrl: homeserverUrl
-										});
+							const homeserverUrl = getMatrixHomeserverUrl();
+							if (homeserverUrl) {
+								await matrixClientService.initializeClient({
+									userId: matrixLoginData.userId,
+									accessToken: matrixLoginData.accessToken,
+									deviceId: matrixLoginData.deviceId,
+									homeserverUrl
+								});
 
-										setMatrixClientService(
-											matrixClientService
-										);
-										(window as any).callContext =
-											callContext;
+								setMatrixClientService(matrixClientService);
+								(window as any).callContext = callContext;
 
-										const { matrixLiveEventBridge } =
-											await import(
-												'../../services/matrixLiveEventBridge'
-											);
-										matrixLiveEventBridge.initialize(
-											matrixClientService.getClient()!
-										);
-									}
-								} catch (error) {
-									// console.warn('⚠️ Matrix client initialization failed:', error);
-									// Don't fail app startup if Matrix fails
-								}
-							} catch {
-								// console.warn('⚠️ No Matrix credentials found in localStorage');
+								const { matrixLiveEventBridge } = await import(
+									'../../services/matrixLiveEventBridge'
+								);
+								matrixLiveEventBridge.initialize(
+									matrixClientService.getClient()!
+								);
 							}
 
 							setAppReady(true);
 						})
-						.catch(() => {
+						.catch((error) => {
+							console.error(
+								'Authenticated app bootstrap failed',
+								error
+							);
 							setLoading(false);
 						});
 				})

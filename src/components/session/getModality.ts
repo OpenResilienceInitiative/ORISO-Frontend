@@ -55,7 +55,9 @@ export const getModality = (item?: ListItemInterface): Modality => {
 
 	// 2. Fallback heuristic (centralised here, deleted once the column is populated everywhere).
 	if (chat) {
-		return chat.repetitive ? Modality.SELF_HELP : Modality.INTERNAL_GROUP;
+		return chat.repeatCount !== undefined || chat.repetitive
+			? Modality.SELF_HELP
+			: Modality.INTERNAL_GROUP;
 	}
 	if (session) {
 		if (session.teamSession === true) {

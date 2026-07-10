@@ -61,6 +61,7 @@ const KNOWN_ICON_IDS: EventIconId[] = [
 	'callMissed',
 	'supervisor',
 	'rename',
+	'appointment',
 	'system'
 ];
 
@@ -85,7 +86,10 @@ const EXPECTED_TARGET_KIND: Record<string, string> = {
 	'case.handover.consent.declined': 'conversation',
 	'call.started': 'join',
 	'call.ended': 'conversation',
-	'call.missed': 'conversation'
+	'call.missed': 'conversation',
+	'group_chat.reminder': 'conversation',
+	'group_chat.opened': 'groupChatJoin',
+	'group_chat.cancelled': 'conversation'
 };
 
 // Resolve a dotted i18n key against a loaded common.json object.
@@ -102,9 +106,9 @@ describe('WP-06 event-descriptor registry', () => {
 		});
 	});
 
-	it('seeds every designed family (Appointments deferred) — 20 types total', () => {
+	it('seeds group-chat lifecycle events in the appointments family', () => {
 		// 7 existing + request.new + draft.created + 8 handover + 3 call = 20.
-		expect(KNOWN_EVENT_TYPES.length).toBe(20);
+		expect(KNOWN_EVENT_TYPES.length).toBe(23);
 		[
 			'request.new',
 			'draft.created',
@@ -118,7 +122,10 @@ describe('WP-06 event-descriptor registry', () => {
 			'case.handover.consent.declined',
 			'call.started',
 			'call.ended',
-			'call.missed'
+			'call.missed',
+			'group_chat.reminder',
+			'group_chat.opened',
+			'group_chat.cancelled'
 		].forEach((type) => expect(isKnownEventType(type)).toBe(true));
 	});
 
@@ -158,8 +165,7 @@ describe('WP-06 event-descriptor registry', () => {
 				'system'
 			] as EventFamily[]
 		).forEach((fam) => expect(seededFamilies.has(fam)).toBe(true));
-		// Appointments family is declared but intentionally not seeded yet.
-		expect(seededFamilies.has('appointments')).toBe(false);
+		expect(seededFamilies.has('appointments')).toBe(true);
 	});
 
 	it('returns the fallback descriptor for unknown / empty types', () => {
@@ -202,6 +208,20 @@ describe('WP-06 event-descriptor registry', () => {
 			expect(target).toEqual({
 				kind: 'conversation',
 				path: '/sessions/user/view/session/7'
+			});
+		});
+
+		it('opens a group-chat occurrence through its stable series conversation', () => {
+			const target = getEventDescriptor(
+				'group_chat.opened'
+			).resolveActionTarget({
+				seriesId: 42,
+				sessionsBasePath: '/sessions/consultant/sessionView'
+			});
+
+			expect(target).toEqual({
+				kind: 'groupChatJoin',
+				path: '/sessions/consultant/sessionView/session/42'
 			});
 		});
 

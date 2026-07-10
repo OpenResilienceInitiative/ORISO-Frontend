@@ -135,6 +135,42 @@ $inputSpacing: 32px;
 		margin: 0 0 $inputSpacing 0;
 	}
 
+	&__seriesFields {
+		width: $chat-input-width;
+		margin: 0 0 $inputSpacing;
+		padding: 16px;
+		border: 1px solid var(--m3-outline-variant, #c8c5ca);
+		border-radius: 8px;
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 16px;
+
+		legend {
+			padding: 0 6px;
+		}
+
+		label {
+			display: flex;
+			flex-direction: column;
+			gap: 6px;
+			font-size: 14px;
+		}
+
+		input,
+		select {
+			min-height: 44px;
+			padding: 8px;
+			border: 1px solid #8c878c;
+			border-radius: 5px;
+			background: #fff;
+			font: inherit;
+		}
+
+		@media (width <= 480px) {
+			grid-template-columns: 1fr;
+		}
+	}
+
 	&__participantsRow {
 		display: flex;
 		align-items: center;
@@ -394,6 +430,39 @@ $inputSpacing: 32px;
 	&__explanation {
 		font-size: 12px;
 		margin: 0 0 $grid-base-four;
+	}
+
+	&__authorContent {
+		width: $chat-input-width;
+		margin: 0 0 $inputSpacing;
+		padding: $grid-base-three;
+		border: 1px solid #d8dcdf;
+		border-radius: 8px;
+
+		label,
+		.createChat__rules {
+			display: grid;
+			gap: $grid-base;
+			margin-top: $grid-base-two;
+		}
+
+		textarea,
+		select {
+			box-sizing: border-box;
+			width: 100%;
+			padding: $grid-base-two;
+		}
+	}
+
+	&__languageTabs {
+		display: flex;
+		gap: $grid-base;
+		margin-top: $grid-base-two;
+
+		button[aria-selected='true'] {
+			border-color: #a5000a;
+			color: #a5000a;
+		}
 	}
 }
 

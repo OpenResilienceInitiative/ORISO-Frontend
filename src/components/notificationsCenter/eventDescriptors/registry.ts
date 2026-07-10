@@ -38,11 +38,20 @@ const buildConversationPath = (params: EventActionParams): string | null => {
 		const base = params.sessionsBasePath || DEFAULT_SESSIONS_BASE_PATH;
 		return `${base}/session/${params.sourceSessionId}`;
 	}
+	if (params.seriesId != null && params.seriesId !== '') {
+		const base = params.sessionsBasePath || DEFAULT_SESSIONS_BASE_PATH;
+		return `${base}/session/${params.seriesId}`;
+	}
 	return null;
 };
 
 const conversationTarget = (params: EventActionParams): EventActionTarget => ({
 	kind: 'conversation',
+	path: buildConversationPath(params)
+});
+
+const groupChatJoinTarget = (params: EventActionParams): EventActionTarget => ({
+	kind: 'groupChatJoin',
 	path: buildConversationPath(params)
 });
 
@@ -258,6 +267,29 @@ const seeds: EventDescriptor[] = [
 		category: 'system',
 		icon: 'callMissed',
 		i18nKey: 'callMissed',
+		resolveActionTarget: conversationTarget
+	}),
+
+	// ----- Self-help group occurrence lifecycle -----
+	descriptor('group_chat.reminder', {
+		family: 'appointments',
+		category: 'system',
+		icon: 'appointment',
+		i18nKey: 'groupChatReminder',
+		resolveActionTarget: conversationTarget
+	}),
+	descriptor('group_chat.opened', {
+		family: 'appointments',
+		category: 'system',
+		icon: 'appointment',
+		i18nKey: 'groupChatOpened',
+		resolveActionTarget: groupChatJoinTarget
+	}),
+	descriptor('group_chat.cancelled', {
+		family: 'appointments',
+		category: 'system',
+		icon: 'appointment',
+		i18nKey: 'groupChatCancelled',
 		resolveActionTarget: conversationTarget
 	})
 ];

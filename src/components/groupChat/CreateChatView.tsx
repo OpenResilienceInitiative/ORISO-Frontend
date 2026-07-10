@@ -7,7 +7,7 @@ import {
 	useMemo,
 	useRef
 } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import {
 	desktopView,
 	mobileDetailView,
@@ -16,11 +16,23 @@ import {
 import {
 	SessionsDataContext,
 	UPDATE_SESSIONS,
-	UserDataContext
+	UserDataContext,
+	useTenant
 } from '../../globalState';
 import { InputField, InputFieldItem } from '../inputField/InputField';
 import { OrisoSelect } from '../form/OrisoSelect';
-import { TOPIC_LENGTHS } from './createChatHelpers';
+import {
+	buildGroupChatSeriesRequest,
+	buildOneOffDuplicateFields,
+	getValidDateFormatForSelectedDate,
+	getValidTimeFormatForSelectedTime,
+	isGroupChatFeatureEnabled,
+	TOPIC_LENGTHS
+} from './createChatHelpers';
+import {
+	GroupChatSeriesFields,
+	GroupChatSeriesFieldsValue
+} from './GroupChatSeriesFields';
 import { ReactComponent as CheckIcon } from '../../resources/img/illustrations/check.svg';
 import { ReactComponent as XIcon } from '../../resources/img/illustrations/x.svg';
 import { ButtonItem, BUTTON_TYPES, Button } from '../button/Button';
@@ -31,11 +43,13 @@ import { useResponsive } from '../../hooks/useResponsive';
 import { apiGetSessionRoomsByGroupIds } from '../../api/apiGetSessionRooms';
 import { useTranslation } from 'react-i18next';
 import {
-	apiGetAgencyConsultantList,
+	apiGetTenantConsultantList,
 	Consultant
 } from '../../api/apiGetAgencyConsultantList';
 import { apiCreateGroupChat } from '../../api/apiGroupChatSettings';
 import { SelectChangeEvent } from '@mui/material/Select';
+import { GroupChatAuthorContentFields } from './GroupChatAuthorContentFields';
+import { GroupChatAuthorContentDraft } from './groupChatAuthorContent';
 
 const IconPlusCircle = ({ open }: { open: boolean }) => (
 	<svg
@@ -128,17 +142,72 @@ const IconUnselected = () => (
 	</svg>
 );
 
-export const CreateGroupChatView = () => {
-	const { t: translate } = useTranslation();
+const CreateGroupChatForm = () => {
+	const { t: translate, i18n } = useTranslation();
+	const tenantData = useTenant();
+	const activeLanguages = useMemo(
+		() =>
+			Array.from(
+				new Set(
+					(tenantData?.settings?.activeLanguages?.length
+						? tenantData.settings.activeLanguages
+						: [i18n.resolvedLanguage || i18n.language || 'de']
+					).map((language) => language.split('-')[0])
+				)
+			),
+		[
+			i18n.language,
+			i18n.resolvedLanguage,
+			tenantData?.settings?.activeLanguages
+		]
+	);
+	const initialAuthorLanguage = activeLanguages[0] || 'de';
+	const [authorContent, setAuthorContent] =
+		useState<GroupChatAuthorContentDraft>({
+			sourceLanguage: initialAuthorLanguage,
+			hintMessageTranslations: { [initialAuthorLanguage]: '' },
+			groupChatRulesTranslations: { [initialAuthorLanguage]: [''] }
+		});
 	const navigate = useNavigate();
+	const location = useLocation();
+	const duplicateOccurrence = (
+		location.state as {
+			duplicateOccurrence?: {
+				topic: string;
+				start: string;
+				duration: number;
+				modality: GroupChatSeriesFieldsValue['modality'];
+			};
+		} | null
+	)?.duplicateOccurrence;
 	const {
 		userData,
 		userData: { agencies = [] }
 	} = useContext(UserDataContext);
 
 	const { dispatch } = useContext(SessionsDataContext);
-	const [selectedChatTopic, setSelectedChatTopic] = useState('');
+	const [selectedChatTopic, setSelectedChatTopic] = useState(
+		() => duplicateOccurrence?.topic || ''
+	);
 	const [selectedAgency, setSelectedAgency] = useState<number | null>(null);
+	const [seriesFields, setSeriesFields] =
+		useState<GroupChatSeriesFieldsValue>(() =>
+			duplicateOccurrence
+				? buildOneOffDuplicateFields(duplicateOccurrence)
+				: {
+						startDate: getValidDateFormatForSelectedDate(
+							new Date()
+						),
+						startTime: getValidTimeFormatForSelectedTime(
+							new Date()
+						),
+						duration: 60,
+						repeatCount: 1,
+						interval: 'WEEKLY',
+						modality: 'TEXT'
+					}
+		);
+	const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 	const [selectedConsultants, setSelectedConsultants] = useState<string[]>(
 		[]
 	);
@@ -215,7 +284,7 @@ export const CreateGroupChatView = () => {
 	// Fetch consultants when agency changes
 	useEffect(() => {
 		if (selectedAgency) {
-			apiGetAgencyConsultantList(selectedAgency.toString())
+			apiGetTenantConsultantList()
 				.then((consultants) => {
 					// ✅ FIX 1: Filter out current user from consultant list
 					// ✅ FIX 2: Remove duplicates using consultantId as unique key
@@ -284,13 +353,22 @@ export const CreateGroupChatView = () => {
 		if (
 			isChatTopicValid &&
 			selectedAgency &&
-			selectedConsultants.length > 0
+			seriesFields.startDate &&
+			seriesFields.startTime &&
+			seriesFields.repeatCount >= 1 &&
+			seriesFields.repeatCount <= 365
 		) {
 			setIsCreateButtonDisabled(false);
 		} else {
 			setIsCreateButtonDisabled(true);
 		}
-	}, [selectedChatTopic, selectedAgency, selectedConsultants]);
+	}, [
+		selectedChatTopic,
+		selectedAgency,
+		seriesFields.startDate,
+		seriesFields.startTime,
+		seriesFields.repeatCount
+	]);
 
 	const handleBackButton = () => {
 		navigate('/sessions/consultant/sessionView');
@@ -437,23 +515,34 @@ export const CreateGroupChatView = () => {
 	);
 
 	const handleCreateButton = useCallback(() => {
-		if (isRequestInProgress) {
+		if (isRequestInProgress || selectedAgency === null) {
 			return;
 		}
 		setIsRequestInProgress(true);
 
 		// Use the proper API function
-		apiCreateGroupChat({
-			topic: selectedChatTopic,
-			startDate: new Date().toISOString().split('T')[0],
-			startTime: '00:00',
-			duration: 60,
-			agencyId: selectedAgency,
-			hintMessage: '',
-			repetitive: false,
-			featureGroupChatV2Enabled: true,
-			consultantIds: selectedConsultants
-		} as any)
+		apiCreateGroupChat(
+			buildGroupChatSeriesRequest({
+				topic: selectedChatTopic,
+				startDate: seriesFields.startDate,
+				startTime: seriesFields.startTime,
+				duration: seriesFields.duration,
+				agencyId: selectedAgency,
+				hintMessage:
+					authorContent.hintMessageTranslations[
+						authorContent.sourceLanguage
+					] || '',
+				sourceLanguage: authorContent.sourceLanguage,
+				hintMessageTranslations: authorContent.hintMessageTranslations,
+				groupChatRulesTranslations:
+					authorContent.groupChatRulesTranslations,
+				repeatCount: seriesFields.repeatCount,
+				chatInterval: seriesFields.interval,
+				modality: seriesFields.modality,
+				timezone,
+				consultantIds: selectedConsultants
+			})
+		)
 			.then((response) => {
 				// Refresh session list
 				return apiGetSessionRoomsByGroupIds([response.groupId])
@@ -482,7 +571,10 @@ export const CreateGroupChatView = () => {
 		isRequestInProgress,
 		selectedChatTopic,
 		selectedAgency,
+		seriesFields,
+		timezone,
 		selectedConsultants,
+		authorContent,
 		dispatch,
 		navigate,
 		createChatErrorOverlayItem
@@ -538,6 +630,16 @@ export const CreateGroupChatView = () => {
 					options={agencyOptions}
 					value={selectedAgency?.toString() || ''}
 					onChange={handleAgencySelect}
+				/>
+
+				<GroupChatSeriesFields
+					value={seriesFields}
+					onChange={setSeriesFields}
+				/>
+				<GroupChatAuthorContentFields
+					activeLanguages={activeLanguages}
+					value={authorContent}
+					onChange={setAuthorContent}
 				/>
 				<div
 					className="createChat__participantsPicker"
@@ -713,4 +815,14 @@ export const CreateGroupChatView = () => {
 			)}
 		</div>
 	);
+};
+
+export const CreateGroupChatView = () => {
+	const tenantData = useTenant();
+
+	if (!isGroupChatFeatureEnabled(tenantData)) {
+		return <Navigate to="/sessions/consultant/sessionView" replace />;
+	}
+
+	return <CreateGroupChatForm />;
 };

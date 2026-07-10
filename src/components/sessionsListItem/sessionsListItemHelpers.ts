@@ -2,6 +2,7 @@ import { ReactComponent as OpenEnvelopeIcon } from '../../resources/img/icons/en
 import { ReactComponent as GroupChatIcon } from '../../resources/img/icons/speech-bubble.svg';
 import { ReactComponent as NewEnquiryIcon } from '../../resources/img/icons/plus.svg';
 import { ReactComponent as ClosedEnvelopeIcon } from '../../resources/img/icons/envelope.svg';
+import { isMatrixRoomIdHeuristic } from '../../utils/matrixRoomUtils';
 
 export const LIST_ICONS = {
 	IS_READ: 'IS_READ',
@@ -21,4 +22,42 @@ export const getSessionsListItemIcon = (variant: string) => {
 		default:
 			return ClosedEnvelopeIcon;
 	}
+};
+
+interface SessionNavigationPathOptions {
+	listPath: string;
+	sessionId: number | string;
+	groupId?: string;
+	rid?: string;
+	isGroup: boolean;
+	isAsker: boolean;
+	isEmptyEnquiry: boolean;
+	tabSuffix: string;
+}
+
+export const getSessionNavigationPath = ({
+	listPath,
+	sessionId,
+	groupId,
+	rid,
+	isGroup,
+	isAsker,
+	isEmptyEnquiry,
+	tabSuffix
+}: SessionNavigationPathOptions) => {
+	const roomId = groupId ?? rid;
+
+	if (isGroup && roomId) {
+		return `${listPath}/${encodeURIComponent(roomId)}/${sessionId}${tabSuffix}`;
+	}
+
+	if (groupId && !isMatrixRoomIdHeuristic(groupId)) {
+		return `${listPath}/${groupId}/${sessionId}${tabSuffix}`;
+	}
+
+	if (isAsker && isEmptyEnquiry) {
+		return `/sessions/user/view/write/${sessionId}`;
+	}
+
+	return `${listPath}/session/${sessionId}${tabSuffix}`;
 };

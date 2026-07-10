@@ -56,6 +56,33 @@ describe('group chat API helpers', () => {
 		);
 	});
 
+	it('sends finite Series settings without leaking the client feature flag', async () => {
+		vi.mocked(fetchData).mockResolvedValue({ groupId: 'group-series' });
+
+		await apiCreateGroupChat({
+			...groupChat,
+			featureGroupChatV2Enabled: true,
+			repeatCount: 4,
+			chatInterval: 'BIWEEKLY',
+			modality: 'VIDEO',
+			timezone: 'Europe/Berlin',
+			consultantIds: ['co-mod-1']
+		});
+
+		expect(fetchData).toHaveBeenCalledWith(
+			expect.objectContaining({
+				bodyData: JSON.stringify({
+					...groupChat,
+					repeatCount: 4,
+					chatInterval: 'BIWEEKLY',
+					modality: 'VIDEO',
+					timezone: 'Europe/Berlin',
+					consultantIds: ['co-mod-1']
+				})
+			})
+		);
+	});
+
 	it('updates an existing chat room', async () => {
 		vi.mocked(fetchData).mockResolvedValue({ groupId: 'group-123' });
 

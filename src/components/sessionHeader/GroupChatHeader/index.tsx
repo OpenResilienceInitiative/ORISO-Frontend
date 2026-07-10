@@ -19,6 +19,9 @@ import { RoomMember } from 'matrix-js-sdk';
 import { UserAvatar } from '../../message/UserAvatar';
 import { getTenantSettings } from '../../../utils/tenantSettingsHelper';
 import { ChatroomMainInteractionIcon } from '../ChatroomMainInteractionIcon';
+import { groupChatCallCapabilities } from './groupChatCallCapabilities';
+import { SessionMenu } from '../../sessionMenu/SessionMenu';
+import { shouldShowGroupChatMenu } from './groupChatHeaderMenu';
 
 interface GroupChatHeaderProps {
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
@@ -285,12 +288,17 @@ export const GroupChatHeader = ({
 	} = getTenantSettings();
 
 	const isCallsEnabled = featureCallsEnabled !== false;
+	const modalityCalls = groupChatCallCapabilities(
+		activeSession.item.modality
+	);
 	const isAudioCallsEnabled =
 		isCallsEnabled &&
+		modalityCalls.audio &&
 		featureAudioCallsEnabled !== false &&
 		featureAudioCallsGroupChatsEnabled !== false;
 	const isVideoCallsEnabled =
 		isCallsEnabled &&
+		modalityCalls.video &&
 		featureVideoCallsEnabled !== false &&
 		featureVideoCallsGroupChatsEnabled !== false;
 
@@ -431,7 +439,19 @@ export const GroupChatHeader = ({
 						</div>
 					)}
 
-				{/* Group header uses only inline call controls; hide flyout 3-dot menu here. */}
+				{shouldShowGroupChatMenu({
+					isActive,
+					isJoinGroupChatView
+				}) && (
+					<SessionMenu
+						hasUserInitiatedStopOrLeaveRequest={
+							hasUserInitiatedStopOrLeaveRequest
+						}
+						isAskerInfoAvailable={false}
+						isJoinGroupChatView={isJoinGroupChatView}
+						bannedUsers={bannedUsers}
+					/>
+				)}
 			</div>
 			{/* <div className="sessionInfo__metaInfo">
 			{activeSession.item.active &&
