@@ -4,7 +4,13 @@ $message-lineheight: 21px;
 $message-attachment-color: $secondary !default;
 $message-avatar-ring: #ebe2e2;
 $message-incoming-bg: var(--m3-surface-container-high, #eae7e8);
-$message-outgoing-bg: var(--m3-on-primary-container, #ffe2de);
+// Use the always-light `primary-fixed` (tonal palette tone 90) rather than
+// `on-primary-container`. The latter is a foreground/contrast role whose
+// lightness flips with the tenant seed brightness, so bright-red tenants
+// (e.g. Kiel) got a dark bubble under the fixed-dark outgoing text below,
+// making outgoing messages unreadable. `primary-fixed` stays light for
+// every seed and keeps the branded tint.
+$message-outgoing-bg: var(--m3-primary-fixed, #ffdad5);
 $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 
 .messageItem__mention {
