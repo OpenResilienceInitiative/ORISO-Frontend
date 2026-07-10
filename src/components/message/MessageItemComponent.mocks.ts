@@ -1,5 +1,4 @@
 import type { ComponentProps } from 'react';
-import { ALIAS_MESSAGE_TYPES } from '../../api/apiSendAliasMessage';
 import { AUTHORITIES, type ExtendedSessionInterface } from '../../globalState';
 import {
 	REGISTRATION_TYPE_REGISTERED,
