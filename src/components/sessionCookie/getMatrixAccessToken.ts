@@ -2,6 +2,7 @@ import { createClient, MatrixClient } from 'matrix-js-sdk';
 import { endpoints } from '../../resources/scripts/endpoints';
 import { getMatrixHomeserverUrl } from '../../resources/scripts/runtimeConfig';
 import { fetchData, FETCH_ERRORS, FETCH_METHODS } from '../../api/fetchData';
+import { getMatrixClientLogger } from '../../utils/matrixLogging';
 
 export interface MatrixLoginData {
 	accessToken: string;
@@ -106,6 +107,7 @@ export const createMatrixClient = (
 		accessToken: loginData.accessToken,
 		userId: loginData.userId,
 		deviceId: loginData.deviceId,
-		fallbackICEServerAllowed: true
+		fallbackICEServerAllowed: true,
+		logger: getMatrixClientLogger()
 	});
 };
