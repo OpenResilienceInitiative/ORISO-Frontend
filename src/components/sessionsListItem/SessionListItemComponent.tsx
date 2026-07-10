@@ -26,6 +26,9 @@ import { ReactComponent as HelpIcon } from '../../resources/img/icons/i.svg';
 import { ReactComponent as ImprintIcon } from '../../resources/img/icons/imprint.svg';
 import { ReactComponent as PlusIcon } from '../../resources/img/icons/plus.svg';
 import { ReactComponent as PackageIcon } from '../../resources/img/icons/documents.svg';
+import { ReactComponent as TextModalityIcon } from '../../resources/img/icons/chat.svg';
+import { ReactComponent as AudioModalityIcon } from '../../resources/img/icons/call.svg';
+import { ReactComponent as VideoModalityIcon } from '../../resources/img/icons/video-call.svg';
 import nearbyConversationIcon from '../../resources/img/icons/chatroom/nearby_conv_type_200.svg';
 import teamImage from '../../resources/img/illustrations/Team.svg';
 import {
@@ -61,6 +64,7 @@ import { parseMessagePrefixes } from '../message/messageConstants';
 import { useE2EE } from '../../hooks/useE2EE';
 import { useSearchParam } from '../../hooks/useSearchParams';
 import { SessionListItemLastMessage } from './SessionListItemLastMessage';
+import { getSessionNavigationPath } from './sessionsListItemHelpers';
 import { ALIAS_MESSAGE_TYPES } from '../../api/apiSendAliasMessage';
 import { useTranslation } from 'react-i18next';
 import {
@@ -121,6 +125,12 @@ export const SessionListItemComponent = ({
 	const { isE2eeEnabled } = useContext(E2EEContext);
 	const activeSessionContext = useContext(ActiveSessionContext);
 	const activeSession = activeSessionContext?.activeSession;
+	const GroupModalityIcon =
+		activeSession?.item?.modality === 'VIDEO'
+			? VideoModalityIcon
+			: activeSession?.item?.modality === 'AUDIO'
+				? AudioModalityIcon
+				: TextModalityIcon;
 	const reloadActiveSession = activeSessionContext?.reloadActiveSession;
 	const sessionItem = activeSession?.item;
 	const { dispatch: sessionsDispatch } = useContext(SessionsDataContext);
@@ -514,32 +524,19 @@ export const SessionListItemComponent = ({
 		// isAsker: hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)
 		// });
 
-		// For sessions without groupId (Matrix migration), navigate by session ID
 		if (activeSession.item.id !== undefined) {
-			// Check if groupId looks like a Matrix room ID (starts with ! or contains :)
-			const isMatrixRoomId = isMatrixRoomIdHeuristic(
-				activeSession.item.groupId
+			navigate(
+				getSessionNavigationPath({
+					listPath,
+					sessionId: activeSession.item.id,
+					groupId: activeSession.item.groupId,
+					rid: activeSession.rid,
+					isGroup: activeSession.isGroup,
+					isAsker,
+					isEmptyEnquiry: activeSession.isEmptyEnquiry,
+					tabSuffix: getSessionListTab()
+				})
 			);
-
-			if (activeSession.item.groupId && !isMatrixRoomId) {
-				// Original RocketChat behavior: navigate with groupId
-				const targetPath = `${listPath}/${activeSession.item.groupId}/${activeSession.item.id}${getSessionListTab()}`;
-				// console.log('🚀 Navigating with RocketChat groupId:', targetPath);
-				navigate(targetPath);
-			} else if (
-				hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
-				activeSession.isEmptyEnquiry
-			) {
-				// Empty enquiry: go to write view
-				const targetPath = `/sessions/user/view/write/${activeSession.item.id}`;
-				// console.log('🚀 Navigating to write view:', targetPath);
-				navigate(targetPath);
-			} else {
-				// MATRIX MIGRATION FIX: Navigate by session ID for Matrix rooms or sessions without groupId
-				const targetPath = `${listPath}/session/${activeSession.item.id}${getSessionListTab()}`;
-				// console.log('🚀 Navigating by session ID (Matrix or no groupId):', targetPath);
-				navigate(targetPath);
-			}
 		}
 	};
 
@@ -1426,6 +1423,15 @@ export const SessionListItemComponent = ({
 								'sessionsListItem__username--readLabel'
 						)}
 					>
+						{activeSession.isGroup &&
+							activeSession.item.modality && (
+								<GroupModalityIcon
+									className="sessionsListItem__groupModalityIcon"
+									aria-label={translate(
+										`groupChat.create.modality.options.${activeSession.item.modality.toLowerCase()}`
+									)}
+								/>
+							)}
 						{sessionTopic}
 					</div>
 				</div>

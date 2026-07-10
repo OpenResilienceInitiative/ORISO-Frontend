@@ -341,11 +341,24 @@ declare namespace UserService {
 			 * false
 			 */
 			repetitive: boolean;
+			repeatCount?: number;
+			chatInterval?:
+				| 'DAILY'
+				| 'WEEKLY'
+				| 'BIWEEKLY'
+				| 'MONTHLY'
+				| 'QUARTERLY'
+				| 'YEARLY';
+			modality?: 'TEXT' | 'AUDIO' | 'VIDEO';
+			timezone?: string;
 			/**
 			 * example:
 			 * Hint
 			 */
 			hintMessage?: string;
+			sourceLanguage?: string;
+			hintMessageTranslations?: Record<string, string>;
+			groupChatRulesTranslations?: Record<string, string[]>;
 		}
 		export interface ChatInfoResponseDTO {
 			/**
@@ -1947,6 +1960,11 @@ declare namespace UserService {
 			 */
 			tenantId?: number;
 		}
+		export interface GroupChatParticipantDTO {
+			consultantId: string;
+			role: 'OWNER' | 'CO_MODERATOR' | 'PARTICIPANT';
+			displayName: string;
+		}
 		export interface UserChatDTO {
 			/**
 			 * example:
@@ -1978,6 +1996,17 @@ declare namespace UserService {
 			 * false
 			 */
 			repetitive: boolean;
+			repeatCount?: number;
+			currentOccurrenceIndex?: number;
+			chatInterval?:
+				| 'DAILY'
+				| 'WEEKLY'
+				| 'BIWEEKLY'
+				| 'MONTHLY'
+				| 'QUARTERLY'
+				| 'YEARLY';
+			modality?: 'TEXT' | 'AUDIO' | 'VIDEO';
+			timezone?: string;
 			/**
 			 * example:
 			 * false
@@ -2016,6 +2045,7 @@ declare namespace UserService {
 			 */
 			subscribed?: boolean;
 			moderators?: string[];
+			participants?: GroupChatParticipantDTO[];
 			startDateWithTime?: string; // date-time
 			/**
 			 * example:
@@ -2028,6 +2058,9 @@ declare namespace UserService {
 			 * Hint
 			 */
 			hintMessage?: string;
+			sourceLanguage?: string;
+			hintMessageTranslations?: Record<string, string>;
+			groupChatRulesTranslations?: Record<string, string[]>;
 		}
 		export interface UserDTO {
 			/**

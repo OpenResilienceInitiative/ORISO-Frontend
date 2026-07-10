@@ -33,6 +33,13 @@ describe('getModality', () => {
 		expect(getModality(item)).toBe(Modality.SELF_HELP);
 	});
 
+	it('classifies a one-occurrence Series as SELF_HELP', () => {
+		const item = asItem({
+			chat: { repetitive: false, repeatCount: 1 }
+		});
+		expect(getModality(item)).toBe(Modality.SELF_HELP);
+	});
+
 	it('prefers an explicit backend conversationType over the heuristic', () => {
 		// looks like AGENCY_COUNSELLING by heuristic, but the backend says LIVE_CHAT
 		const item = asItem({

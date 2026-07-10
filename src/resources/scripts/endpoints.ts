@@ -82,6 +82,7 @@ export const endpoints = {
 	email: userServiceOrigin + '/service/users/email',
 	error: apiUrl + '/service/logstash',
 	groupChatBase: userServiceOrigin + '/service/users/chat/',
+	chatSeriesBase: userServiceOrigin + '/service/users/chat-series/',
 	keycloakAccessToken:
 		keycloakOrigin + getKeycloakAuthPath('/protocol/openid-connect/token'),
 	keycloakLogout:

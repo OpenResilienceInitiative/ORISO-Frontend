@@ -19,6 +19,9 @@ import { RoomMember } from 'matrix-js-sdk';
 import { UserAvatar } from '../../message/UserAvatar';
 import { getTenantSettings } from '../../../utils/tenantSettingsHelper';
 import { ChatroomMainInteractionIcon } from '../ChatroomMainInteractionIcon';
+import { groupChatCallCapabilities } from './groupChatCallCapabilities';
+import { SessionMenu } from '../../sessionMenu/SessionMenu';
+import { shouldShowGroupChatMenu } from './groupChatHeaderMenu';
 
 interface GroupChatHeaderProps {
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
@@ -285,12 +288,17 @@ export const GroupChatHeader = ({
 	} = getTenantSettings();
 
 	const isCallsEnabled = featureCallsEnabled !== false;
+	const modalityCalls = groupChatCallCapabilities(
+		activeSession.item.modality
+	);
 	const isAudioCallsEnabled =
 		isCallsEnabled &&
+		modalityCalls.audio &&
 		featureAudioCallsEnabled !== false &&
 		featureAudioCallsGroupChatsEnabled !== false;
 	const isVideoCallsEnabled =
 		isCallsEnabled &&
+		modalityCalls.video &&
 		featureVideoCallsEnabled !== false &&
 		featureVideoCallsGroupChatsEnabled !== false;
 
@@ -431,132 +439,20 @@ export const GroupChatHeader = ({
 						</div>
 					)}
 
-				{/* Group header uses only inline call controls; hide flyout 3-dot menu here. */}
+				{shouldShowGroupChatMenu({
+					isActive,
+					isJoinGroupChatView
+				}) && (
+					<SessionMenu
+						hasUserInitiatedStopOrLeaveRequest={
+							hasUserInitiatedStopOrLeaveRequest
+						}
+						isAskerInfoAvailable={false}
+						isJoinGroupChatView={isJoinGroupChatView}
+						bannedUsers={bannedUsers}
+					/>
+				)}
 			</div>
-			{/* <div className="sessionInfo__metaInfo">
-			{activeSession.item.active &&
-				activeSession.item.subscribed &&
-				!isJoinGroupChatView && (
-						<div
-							className="sessionInfo__metaInfo__content sessionInfo__metaInfo__content--clickable"
-							id="subscriberButton"
-							onClick={(e) => handleFlyout(e)}
-						>
-							{t('groupChat.active.sessionInfo.subscriber')}
-							{isSubscriberFlyoutOpen && (
-								<div className="sessionInfo__metaInfo__flyout">
-									<ul>
-										{users.map((subscriber, index) => (
-											<li
-												className={
-													isCurrentUserModerator &&
-													!bannedUsers.includes(
-														subscriber.username
-													) &&
-													!moderators.includes(
-														subscriber._id
-													)
-														? 'has-flyout'
-														: ''
-												}
-												key={`subscriber-${subscriber._id}`}
-												onClick={() => {
-													if (
-														!bannedUsers.includes(
-															subscriber.username
-														)
-													) {
-														setFlyoutOpenId(
-															subscriber._id
-														);
-													}
-												}}
-											>
-												<span>
-													{decodeUsername(
-														subscriber.displayName ||
-															subscriber.username
-													)}
-												</span>
-												{isCurrentUserModerator &&
-													!moderators.includes(
-														subscriber._id
-													) && (
-														<>
-															<FlyoutMenu
-																isHidden={bannedUsers.includes(
-																	subscriber.username
-																)}
-																position={
-																	window.innerWidth <=
-																	520
-																		? 'left'
-																		: 'right'
-																}
-																isOpen={
-																	flyoutOpenId ===
-																	subscriber._id
-																}
-																handleClose={() =>
-																	setFlyoutOpenId(
-																		null
-																	)
-																}
-															>
-																<BanUser
-																	userName={decodeUsername(
-																		subscriber.username
-																	)}
-																	rcUserId={
-																		subscriber._id
-																	}
-																	chatId={
-																		activeSession
-																			.item
-																			.id
-																	}
-																	handleUserBan={() => {
-																		setIsUserBanOverlayOpen(
-																			true
-																		);
-																	}}
-																/>
-															</FlyoutMenu>{' '}
-															<BanUserOverlay
-																overlayActive={
-																	isUserBanOverlayOpen
-																}
-																userName={decodeUsername(
-																	subscriber.username
-																)}
-																handleOverlay={() => {
-																	setIsUserBanOverlayOpen(
-																		false
-																	);
-																}}
-															></BanUserOverlay>
-														</>
-													)}
-												{isCurrentUserModerator &&
-													bannedUsers.includes(
-														subscriber.username
-													) && (
-														<Tag
-															className="bannedUserTag"
-															color="red"
-															text={t(
-																'banUser.is.banned'
-															)}
-														/>
-													)}
-											</li>
-										))}
-									</ul>
-								</div>
-							)}
-						</div>
-					)}
-			</div> */}
 		</div>
 	);
 };

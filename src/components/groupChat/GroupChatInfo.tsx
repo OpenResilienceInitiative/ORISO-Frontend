@@ -18,7 +18,7 @@ import {
 	apiPutGroupChat,
 	GROUP_CHAT_API
 } from '../../api';
-import { isGroupChatOwner } from './groupChatHelpers';
+import { canModerateGroupChat, isGroupChatOwner } from './groupChatHelpers';
 import { getGroupChatDate } from '../session/sessionDateHelpers';
 import { durationSelectOptionsSet } from './createChatHelpers';
 import {
@@ -49,6 +49,9 @@ import { useAppConfig } from '../../hooks/useAppConfig';
 import { useTranslation } from 'react-i18next';
 import { getPrettyDateFromMessageDate } from '../../utils/dateHelpers';
 import { useMatrixRoomUsers } from '../../hooks/useMatrixRoomUsers';
+import { GroupChatCalendarMenu } from './GroupChatCalendarMenu';
+import { GroupChatRoleManager } from './GroupChatRoleManager';
+import { getGroupChatPlannedStart } from './groupChatDate';
 
 export const GroupChatInfo = () => {
 	const settings = useAppConfig();
@@ -173,7 +176,7 @@ export const GroupChatInfo = () => {
 	if (redirectToSessionsList) {
 		return <Navigate to={listPath + getSessionListTab()} replace />;
 	}
-
+	const calendarStart = getGroupChatPlannedStart(activeSession.item);
 	const showCreator =
 		settings.groupChat?.info?.showCreator &&
 		activeSession?.consultant?.displayName;
@@ -181,10 +184,12 @@ export const GroupChatInfo = () => {
 		settings.groupChat?.info?.showCreationDate &&
 		activeSession?.item?.createdAt;
 
-	const isCurrentUserModerator = isUserModerator({
-		chatItem: activeSession.item,
-		rcUserId: getValueFromCookie('rc_uid')
-	});
+	const isCurrentUserModerator =
+		canModerateGroupChat(activeSession, userData) ||
+		isUserModerator({
+			chatItem: activeSession.item,
+			rcUserId: getValueFromCookie('rc_uid')
+		});
 
 	const preparedSettings: Array<{ label: string; value: string }> = [
 		{
@@ -277,7 +282,8 @@ export const GroupChatInfo = () => {
 								: activeSession.item.topic?.name || ''}
 						</h2>
 					</div>
-					{activeSession.item.active &&
+					{canModerateGroupChat(activeSession, userData) &&
+					activeSession.item.active &&
 					activeSession.item.subscribed ? (
 						<div className="groupChatInfo__innerWrapper__stopButton">
 							<Button
@@ -286,6 +292,15 @@ export const GroupChatInfo = () => {
 							/>
 						</div>
 					) : null}
+					{calendarStart && (
+						<div className="groupChatInfo__calendar">
+							<GroupChatCalendarMenu
+								start={calendarStart}
+								durationMinutes={activeSession.item.duration}
+								eventId={activeSession.item.id}
+							/>
+						</div>
+					)}
 					<div className="groupChatInfo__content">
 						<div className="groupChatInfo__content__item groupChatInfo__data">
 							<Text
@@ -306,6 +321,16 @@ export const GroupChatInfo = () => {
 							<SubscriberList
 								isCurrentUserModerator={isCurrentUserModerator}
 							/>
+							{activeSession.item.participants?.length &&
+							userData?.userId ? (
+								<GroupChatRoleManager
+									seriesId={activeSession.item.id}
+									currentUserId={userData.userId}
+									participants={
+										activeSession.item.participants
+									}
+								/>
+							) : null}
 						</div>
 
 						<div className="groupChatInfo__content__item groupChatInfo__data">

@@ -31,11 +31,12 @@ const getOrCreateMatrixDeviceId = (
 	userId: string,
 	responseDeviceId?: string
 ): string => {
+	const userStorageKey = `${MATRIX_DEVICE_ID_STORAGE_KEY}:${userId}`;
 	if (responseDeviceId) {
+		localStorage.setItem(userStorageKey, responseDeviceId);
 		return responseDeviceId;
 	}
 
-	const userStorageKey = `${MATRIX_DEVICE_ID_STORAGE_KEY}:${userId}`;
 	const storedDeviceId = localStorage.getItem(userStorageKey);
 	if (storedDeviceId) {
 		return storedDeviceId;
@@ -46,11 +47,28 @@ const getOrCreateMatrixDeviceId = (
 	return deviceId;
 };
 
+const getOrCreateRequestedDeviceId = (): string => {
+	const storedDeviceId = localStorage.getItem(MATRIX_DEVICE_ID_STORAGE_KEY);
+	if (storedDeviceId) {
+		return storedDeviceId;
+	}
+
+	const deviceId = createBrowserDeviceId();
+	localStorage.setItem(MATRIX_DEVICE_ID_STORAGE_KEY, deviceId);
+	return deviceId;
+};
+
 export const getMatrixAccessToken = (
 	_username?: string,
 	_password?: string
 ): Promise<MatrixLoginData> => {
-	const tokenUrl = endpoints.matrixAccessToken;
+	const requestedDeviceId = getOrCreateRequestedDeviceId();
+	const querySeparator = endpoints.matrixAccessToken.includes('?')
+		? '&'
+		: '?';
+	const tokenUrl = `${endpoints.matrixAccessToken}${querySeparator}deviceId=${encodeURIComponent(
+		requestedDeviceId
+	)}`;
 	return fetchData({
 		url: tokenUrl,
 		method: FETCH_METHODS.GET,
@@ -61,6 +79,11 @@ export const getMatrixAccessToken = (
 		if (!homeserverUrl) {
 			throw new Error(
 				'REACT_APP_MATRIX_HOMESERVER_URL is not configured'
+			);
+		}
+		if (!response.accessToken || !response.userId || !response.deviceId) {
+			throw new Error(
+				'Matrix login did not return a device-bound access token'
 			);
 		}
 

@@ -99,6 +99,9 @@ export interface GroupChatItemInterface {
 	duration: number;
 	groupId: string;
 	hintMessage: string;
+	sourceLanguage?: string;
+	hintMessageTranslations?: Record<string, string>;
+	groupChatRulesTranslations?: Record<string, string[]>;
 	id: number;
 	lastMessage: string;
 	lastMessageType?: string;
@@ -109,9 +112,16 @@ export interface GroupChatItemInterface {
 	messageDate: number;
 	messagesRead: boolean;
 	moderators: string[];
+	participants?: UserService.Schemas.GroupChatParticipantDTO[];
 	repetitive: boolean;
+	repeatCount?: number;
+	currentOccurrenceIndex?: number;
+	chatInterval?: UserService.Schemas.UserChatDTO['chatInterval'];
+	modality?: UserService.Schemas.UserChatDTO['modality'];
+	timezone?: string;
 	startDate: string;
 	startTime: string;
+	startDateWithTime?: string;
 	subscribed: boolean;
 	topic: string;
 	createdAt: string;
