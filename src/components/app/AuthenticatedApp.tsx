@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useCallback, useContext, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Routing } from './Routing';
 import {
 	UserDataContext,
@@ -36,6 +36,7 @@ import {
 	markConsultantLoginBlocked
 } from '../auth/consultantLoginBlock';
 import { appConfig } from '../../utils/appConfig';
+import { withTimeout } from '../../utils/promiseTimeout';
 
 interface AuthenticatedAppProps {
 	onAppReady: Function;
@@ -55,6 +56,13 @@ export const AuthenticatedApp = ({
 	const { setNotifications } = useContext(NotificationsContext);
 	const callContext = useCall();
 	const { setMatrixClientService } = useMatrixClient();
+	const mounted = useRef(true);
+	useEffect(
+		() => () => {
+			mounted.current = false;
+		},
+		[]
+	);
 
 	const [appReady, setAppReady] = useState<boolean>(false);
 	const [loading, setLoading] = useState<boolean>(true);
@@ -119,58 +127,88 @@ export const AuthenticatedApp = ({
 							}
 							return userProfileData;
 						})
-						.then(async (userProfileData) => {
-							// 🔷 CRITICAL: Initialize Matrix client for all authenticated users
+						.then(async () => {
+							const matrixBootstrapActive = { current: true };
 							try {
-								const matrixLoginData =
-									await getMatrixAccessToken();
-								persistMatrixLoginData(matrixLoginData);
-								try {
-									const { MatrixClientService } =
-										await import(
-											'../../services/matrixClientService'
-										);
-									const matrixClientService =
-										new MatrixClientService();
-
-									const homeserverUrl =
-										getMatrixHomeserverUrl();
-									if (!homeserverUrl) {
-										// console.warn('⚠️ REACT_APP_MATRIX_HOMESERVER_URL is not set; skipping Matrix client init');
-									} else {
-										matrixClientService.initializeClient({
-											userId: matrixLoginData.userId,
-											accessToken:
-												matrixLoginData.accessToken,
-											deviceId: matrixLoginData.deviceId,
-											homeserverUrl: homeserverUrl
-										});
-
-										setMatrixClientService(
-											matrixClientService
-										);
-										(window as any).callContext =
-											callContext;
-
-										const { matrixLiveEventBridge } =
-											await import(
-												'../../services/matrixLiveEventBridge'
+								await withTimeout(
+									(async () => {
+										const matrixLoginData =
+											await getMatrixAccessToken();
+										persistMatrixLoginData(matrixLoginData);
+										const homeserverUrl =
+											getMatrixHomeserverUrl();
+										if (homeserverUrl) {
+											const { MatrixClientService } =
+												await import(
+													'../../services/matrixClientService'
+												);
+											const matrixClientService =
+												new MatrixClientService();
+											await matrixClientService.initializeClient(
+												{
+													userId: matrixLoginData.userId,
+													accessToken:
+														matrixLoginData.accessToken,
+													deviceId:
+														matrixLoginData.deviceId,
+													homeserverUrl
+												}
 											);
-										matrixLiveEventBridge.initialize(
-											matrixClientService.getClient()!
-										);
-									}
-								} catch (error) {
-									// console.warn('⚠️ Matrix client initialization failed:', error);
-									// Don't fail app startup if Matrix fails
-								}
-							} catch {
-								// console.warn('⚠️ No Matrix credentials found in localStorage');
+											if (
+												!matrixBootstrapActive.current ||
+												!mounted.current
+											) {
+												matrixClientService.stopAndCleanup();
+												return;
+											}
+
+											setMatrixClientService(
+												matrixClientService
+											);
+											(window as any).callContext =
+												callContext;
+
+											const { matrixLiveEventBridge } =
+												await import(
+													'../../services/matrixLiveEventBridge'
+												);
+											if (
+												!matrixBootstrapActive.current ||
+												!mounted.current
+											) {
+												matrixClientService.stopAndCleanup();
+												return;
+											}
+											const matrixClient =
+												matrixClientService.getClient();
+											if (!matrixClient) {
+												throw new Error(
+													'Matrix client missing after initialization'
+												);
+											}
+											matrixLiveEventBridge.initialize(
+												matrixClient
+											);
+										}
+									})(),
+									15_000,
+									'Matrix bootstrap timed out'
+								);
+							} catch (matrixError) {
+								matrixBootstrapActive.current = false;
+								console.error(
+									'Matrix bootstrap failed; continuing with non-chat features',
+									matrixError
+								);
 							}
 
 							setAppReady(true);
 						})
-						.catch(() => {
+						.catch((error) => {
+							console.error(
+								'Authenticated app bootstrap failed',
+								error
+							);
 							setLoading(false);
 						});
 				})

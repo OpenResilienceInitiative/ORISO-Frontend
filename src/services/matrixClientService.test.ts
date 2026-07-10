@@ -1,5 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { getMatrixAccessToken } from '../components/sessionCookie/getMatrixAccessToken';
+import { buildMatrixCryptoStorePrefix } from './matrixCrypto';
 import { MatrixClientService } from './matrixClientService';
+
+const mockedMatrixClient = vi.hoisted(() => ({
+	initRustCrypto: vi.fn(),
+	on: vi.fn(),
+	removeAllListeners: vi.fn(),
+	startClient: vi.fn(),
+	stopClient: vi.fn()
+}));
+
+vi.mock('../components/sessionCookie/getMatrixAccessToken', () => ({
+	createMatrixClient: vi.fn(() => mockedMatrixClient),
+	getMatrixAccessToken: vi.fn(),
+	persistMatrixLoginData: vi.fn()
+}));
 
 vi.hoisted(() => {
 	process.env.REACT_APP_KEYCLOAK_REALM = 'oriso';
@@ -31,9 +47,120 @@ const setClient = (
 
 describe('MatrixClientService', () => {
 	beforeEach(() => {
+		vi.clearAllMocks();
+		mockedMatrixClient.initRustCrypto.mockResolvedValue(undefined);
 		vi.stubGlobal('localStorage', {
 			getItem: vi.fn(() => null)
 		});
+	});
+
+	it('initializes Rust crypto before registering sync and starting the client', async () => {
+		const callOrder: string[] = [];
+		mockedMatrixClient.initRustCrypto.mockImplementation(async () => {
+			callOrder.push('crypto');
+		});
+		mockedMatrixClient.on.mockImplementation(() => {
+			callOrder.push('listener');
+		});
+		mockedMatrixClient.startClient.mockImplementation(() => {
+			callOrder.push('start');
+		});
+		const service = new MatrixClientService();
+
+		await service.initializeClient({
+			userId: '@alice:matrix.localhost',
+			accessToken: 'access-token',
+			deviceId: 'DEVICE_ONE',
+			homeserverUrl: 'http://matrix.localhost:18008'
+		});
+
+		expect(callOrder).toEqual(['crypto', 'listener', 'start']);
+		expect(mockedMatrixClient.initRustCrypto).toHaveBeenCalledWith({
+			useIndexedDB: true,
+			cryptoDatabasePrefix: buildMatrixCryptoStorePrefix(
+				'@alice:matrix.localhost',
+				'DEVICE_ONE'
+			)
+		});
+	});
+
+	it('surfaces Rust crypto failures without leaving a client running', async () => {
+		mockedMatrixClient.initRustCrypto.mockRejectedValueOnce(
+			new Error('crypto store unavailable')
+		);
+		const service = new MatrixClientService();
+
+		await expect(
+			service.initializeClient({
+				userId: '@alice:matrix.localhost',
+				accessToken: 'access-token',
+				deviceId: 'DEVICE_ONE',
+				homeserverUrl: 'http://matrix.localhost:18008'
+			})
+		).rejects.toThrow('crypto store unavailable');
+
+		expect(mockedMatrixClient.on).not.toHaveBeenCalled();
+		expect(mockedMatrixClient.startClient).not.toHaveBeenCalled();
+		expect(service.getClient()).toBeNull();
+	});
+
+	it('waits for replacement-client crypto initialization during token refresh', async () => {
+		let resolveCrypto: (() => void) | undefined;
+		mockedMatrixClient.initRustCrypto.mockReturnValueOnce(
+			new Promise<void>((resolve) => {
+				resolveCrypto = resolve;
+			})
+		);
+		vi.mocked(getMatrixAccessToken).mockResolvedValueOnce({
+			userId: '@alice:matrix.localhost',
+			accessToken: 'replacement-token',
+			deviceId: 'DEVICE_ONE',
+			homeserverUrl: 'http://matrix.localhost:18008'
+		});
+		const service = new MatrixClientService();
+
+		let refreshCompleted = false;
+		const refresh = service.refreshMatrixToken().then(() => {
+			refreshCompleted = true;
+		});
+		await new Promise((resolve) => globalThis.setTimeout(resolve, 0));
+
+		expect(refreshCompleted).toBe(false);
+		expect(mockedMatrixClient.startClient).not.toHaveBeenCalled();
+		resolveCrypto?.();
+		await refresh;
+		expect(mockedMatrixClient.startClient).toHaveBeenCalledOnce();
+	});
+
+	it('contains a failed fire-and-forget refresh from the sync listener', async () => {
+		let syncListener:
+			| ((
+					state: string,
+					previous: string | null,
+					error?: unknown
+			  ) => void)
+			| undefined;
+		mockedMatrixClient.on.mockImplementation((_event, listener) => {
+			syncListener = listener;
+		});
+		vi.mocked(getMatrixAccessToken).mockRejectedValueOnce(
+			new Error('refresh failed')
+		);
+		const service = new MatrixClientService();
+		await service.initializeClient({
+			userId: '@alice:matrix.localhost',
+			accessToken: 'expired-token',
+			deviceId: 'DEVICE_ONE',
+			homeserverUrl: 'http://matrix.localhost:18008'
+		});
+
+		syncListener?.('ERROR', null, {
+			httpStatus: 401,
+			message: 'Access token has expired'
+		});
+		await new Promise((resolve) => globalThis.setTimeout(resolve, 0));
+
+		expect(getMatrixAccessToken).toHaveBeenCalledOnce();
 	});
 
 	it('sends Matrix messages in migration rooms without native Matrix encryption state', async () => {

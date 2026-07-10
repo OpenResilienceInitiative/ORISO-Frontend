@@ -23,6 +23,7 @@ import {
 	SET_SESSIONS,
 	UPDATE_SESSIONS,
 	UserDataContext,
+	useTenant,
 	ActiveSessionProvider
 } from '../../globalState';
 import {
@@ -81,6 +82,9 @@ import {
 	REMOTE_DRAFT_INDEX_SCOPE
 } from '../../services/draftStore';
 import { isCaseHandoverCandidate } from '../session/caseHandoverHelpers';
+import { FutureTimelinePanel } from './FutureTimelinePanel';
+import { canModerateGroupChat } from '../groupChat/groupChatHelpers';
+import { ChatOccurrence } from '../../api/apiGetChatOccurrences';
 
 function buildSessionSearchHaystack(
 	raw: ListItemInterface,
@@ -393,6 +397,7 @@ export const SessionsList = ({
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
 
 	const { userData } = useContext(UserDataContext);
+	const tenantData = useTenant();
 
 	const [isLoading, setIsLoading] = useState(true);
 	const [currentOffset, setCurrentOffset] = useState(0);
@@ -1206,6 +1211,9 @@ export const SessionsList = ({
 	const showConsultantToolbarActions =
 		type === SESSION_LIST_TYPES.MY_SESSION &&
 		!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
+	const showCreateGroupChatAction =
+		showConsultantToolbarActions &&
+		tenantData?.settings?.featureGroupChatV2Enabled === true;
 	const showCaseHandoverBatchUi =
 		showConsultantToolbarActions &&
 		sessionListTab !== SESSION_LIST_TAB_ARCHIVE;
@@ -1778,6 +1786,39 @@ export const SessionsList = ({
 		(session?.rid && session.rid === groupIdFromParam) ||
 		(session?.item?.id !== undefined &&
 			String(session.item.id) === String(sessionIdFromParam || ''));
+	const futureTimelineSeries = React.useMemo(
+		() =>
+			sortedSessions
+				.filter(
+					(session) =>
+						session.isGroup &&
+						session.item.repeatCount !== undefined
+				)
+				.map((session) => ({
+					id: session.item.id,
+					canModerate: canModerateGroupChat(session, userData),
+					topic:
+						typeof session.item.topic === 'string'
+							? session.item.topic
+							: session.item.topic?.name || 'Group chat'
+				})),
+		[sortedSessions, userData]
+	);
+	const handleDuplicateOccurrence = React.useCallback(
+		(occurrence: ChatOccurrence, topic: string) => {
+			navigate(buildCreateGroupChatPath(sessionListTab || undefined), {
+				state: {
+					duplicateOccurrence: {
+						topic,
+						start: occurrence.start,
+						duration: occurrence.duration,
+						modality: occurrence.modality
+					}
+				}
+			});
+		},
+		[navigate, sessionListTab]
+	);
 
 	return (
 		<div className="sessionsList__innerWrapper">
@@ -1800,6 +1841,7 @@ export const SessionsList = ({
 					activeChip={isCreateChatActive ? null : sessionToolbarChip}
 					onChipToggle={handleToolbarChipToggle}
 					showConsultantActions={showConsultantToolbarActions}
+					showCreateGroupChatAction={showCreateGroupChatAction}
 					showSupervisionChip={showSupervisionChip}
 					/* Live-Chat chip shows on Gespräch too once the sidebar
 					   availability toggle is ON — it narrows the
@@ -1815,6 +1857,14 @@ export const SessionsList = ({
 					}
 					createGroupChatActive={isCreateChatActive}
 					chipCounts={toolbarChipCounts}
+				/>
+			)}
+			{showMySessionToolbar && futureTimelineSeries.length > 0 && (
+				<FutureTimelinePanel
+					series={futureTimelineSeries}
+					consultantId={userData.userId}
+					includeAppointments={sessionToolbarChip === null}
+					onDuplicateOccurrence={handleDuplicateOccurrence}
 				/>
 			)}
 			{showCaseHandoverBatchUi && (

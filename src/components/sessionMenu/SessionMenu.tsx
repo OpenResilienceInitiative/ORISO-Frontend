@@ -41,7 +41,10 @@ import {
 } from '../../api';
 import { logout } from '../logout/logout';
 import { mobileListView } from '../app/navigationHandler';
-import { isGroupChatOwner } from '../groupChat/groupChatHelpers';
+import {
+	canModerateGroupChat,
+	isGroupChatOwner
+} from '../groupChat/groupChatHelpers';
 import { ReactComponent as LeaveChatIcon } from '../../resources/img/icons/out.svg';
 import { ReactComponent as GroupChatInfoIcon } from '../../resources/img/icons/i.svg';
 import { ReactComponent as StopGroupChatIcon } from '../../resources/img/icons/x.svg';
@@ -564,6 +567,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 						className="sessionMenu__icon sessionMenu__icon--desktop"
 						aria-expanded={Boolean(flyoutOpen)}
 						aria-controls="flyout"
+						aria-label={translate('app.menu')}
 					>
 						<MenuVerticalIcon
 							title={translate('app.menu')}
@@ -577,6 +581,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 						className="sessionMenu__icon sessionMenu__icon--mobile"
 						aria-expanded={Boolean(flyoutOpen)}
 						aria-controls="flyout"
+						aria-label={translate('app.menu')}
 					>
 						<MenuVerticalIcon
 							title={translate('app.menu')}
@@ -958,7 +963,8 @@ const SessionMenuFlyoutGroup = ({
 				</Link>
 			)}
 			{activeSession.item.subscribed &&
-				hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) && (
+				hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
+				canModerateGroupChat(activeSession, userData) && (
 					<div
 						onClick={handleStopGroupChat}
 						className="sessionMenu__item chatMenuDropdown__item sessionMenu__button"

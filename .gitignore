@@ -13,6 +13,8 @@
 /playwright-report
 /test-results
 /playwright/.cache
+/.playwright-cli/
+/output/playwright/
 
 # production
 /build

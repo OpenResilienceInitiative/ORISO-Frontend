@@ -26,7 +26,7 @@ export const useSession = (
 
 	const loadCaseHandoverCandidateSession = useCallback(
 		async (signal?: AbortSignal): Promise<boolean> => {
-			if (!sessionId) {
+			if (sessionId === undefined || sessionId === null) {
 				return false;
 			}
 
@@ -67,26 +67,30 @@ export const useSession = (
 
 		let promise;
 
-		if (!rid && !sessionId && !chatId) {
+		if (
+			!rid &&
+			(sessionId === undefined || sessionId === null) &&
+			(chatId === undefined || chatId === null)
+		) {
 			// console.log('⚠️ useSession: No rid, sessionId, or chatId provided - returning early');
 			return;
 		}
 
-		if (chatId) {
+		if (chatId !== undefined && chatId !== null) {
 			// console.log('🔍 useSession: Loading by chatId:', chatId);
 			promise = apiGetChatRoomById(
 				chatId,
 				abortController.current.signal
 			);
-		} else if (sessionId) {
+		} else if (rid) {
+			promise = apiGetSessionRoomsByGroupIds(
+				[rid],
+				abortController.current.signal
+			);
+		} else if (sessionId !== undefined && sessionId !== null) {
 			// console.log('🔍 useSession: Loading by sessionId:', sessionId);
 			promise = apiGetSessionRoomBySessionId(
 				sessionId,
-				abortController.current.signal
-			);
-		} else {
-			promise = apiGetSessionRoomsByGroupIds(
-				[rid],
 				abortController.current.signal
 			);
 		}
@@ -101,7 +105,8 @@ export const useSession = (
 					setSession(extendedSession);
 				} else {
 					if (
-						sessionId &&
+						sessionId !== undefined &&
+						sessionId !== null &&
 						(await loadCaseHandoverCandidateSession(
 							abortController.current?.signal
 						).catch(() => false))
@@ -126,7 +131,8 @@ export const useSession = (
 					);
 				}
 				if (
-					sessionId &&
+					sessionId !== undefined &&
+					sessionId !== null &&
 					(await loadCaseHandoverCandidateSession(
 						abortController.current?.signal
 					).catch(() => false))

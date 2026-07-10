@@ -20,6 +20,7 @@ import {
 	isKnownEventType
 } from './eventDescriptors';
 import { EventFamily } from './eventDescriptors/types';
+import { resolveNotificationActionPath } from './notificationActionTarget';
 import { useActiveListItem } from '../../hooks/useActiveListItem';
 import { pickActiveItemKey } from '../../utils/listItemSelection';
 import {
@@ -120,8 +121,14 @@ const describeItem = (
 };
 
 const resolveSessionId = (item: any): string | null => {
-	if (item?.sourceSessionId) {
+	if (item?.sourceSessionId != null) {
 		return String(item.sourceSessionId);
+	}
+	if (item?.params?.sourceSessionId != null) {
+		return String(item.params.sourceSessionId);
+	}
+	if (item?.params?.seriesId != null) {
+		return String(item.params.seriesId);
 	}
 	const path = item?.actionPath;
 	if (!path) {
@@ -351,6 +358,13 @@ export const NotificationsCenter = () => {
 				: '/sessions/user/view',
 		[userData]
 	);
+	const getNotificationActionPath = useCallback(
+		(item: (typeof notificationFeed)[number]) =>
+			toNonEmbeddedPath(
+				resolveNotificationActionPath(item, getDefaultSessionsPath())
+			),
+		[getDefaultSessionsPath]
+	);
 	const embeddedChatPath = useMemo(() => {
 		if (!canShowChatPreview) {
 			return null;
@@ -406,7 +420,7 @@ export const NotificationsCenter = () => {
 	const openNotification = (item: (typeof notificationFeed)[number]) => {
 		markNotificationAsRead(item.id);
 		if (untilL) {
-			const directPath = toNonEmbeddedPath(item.actionPath);
+			const directPath = getNotificationActionPath(item);
 			if (directPath) {
 				navigate(directPath);
 				return;
@@ -427,7 +441,7 @@ export const NotificationsCenter = () => {
 		if (nextUnreadId && nextUnreadId !== selectedNotification.id) {
 			setSelectedNotificationId(nextUnreadId);
 		}
-		const directPath = toNonEmbeddedPath(selectedNotification.actionPath);
+		const directPath = getNotificationActionPath(selectedNotification);
 		if (directPath) {
 			navigate(directPath);
 			return;
@@ -804,7 +818,16 @@ export const NotificationsCenter = () => {
 						}}
 					>
 						{selectedNotification?.actionLabel ||
-							translate('notifications.center.open', 'Open chat')}
+							translate(
+								selectedNotification?.eventType ===
+									'group_chat.opened'
+									? 'notifications.center.join'
+									: 'notifications.center.open',
+								selectedNotification?.eventType ===
+									'group_chat.opened'
+									? 'Join'
+									: 'Open chat'
+							)}
 					</MenuItem>
 					<MenuItem
 						onClick={() => {
@@ -935,8 +958,14 @@ export const NotificationsCenter = () => {
 									<OpenInFullIcon />
 									{selectedNotification.actionLabel ||
 										translate(
-											'notifications.center.open',
-											'View Conversation'
+											selectedNotification.eventType ===
+												'group_chat.opened'
+												? 'notifications.center.join'
+												: 'notifications.center.open',
+											selectedNotification.eventType ===
+												'group_chat.opened'
+												? 'Join'
+												: 'Open chat'
 										)}
 								</button>
 								<button
