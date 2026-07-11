@@ -23,6 +23,34 @@ const isModality = (value: unknown): value is Modality =>
 	typeof value === 'string' &&
 	(Object.values(Modality) as string[]).includes(value);
 
+type ConversationItem = Partial<SessionItemInterface> &
+	Partial<GroupChatItemInterface> & {
+		askerUserName?: string;
+		conversationType?: string;
+		teamSession?: boolean;
+	};
+
+type ModalityInput =
+	| ListItemInterface
+	| {
+			item?: ConversationItem | null;
+			isGroup?: boolean;
+			isSession?: boolean;
+			user?: { username?: string | null };
+	  };
+
+const isAnonymousUsername = (username?: string | null): boolean =>
+	typeof username === 'string' &&
+	(username.startsWith('Anonymous-') || username.startsWith('anon_'));
+
+const isAnonymousPostcode = (postcode?: number | string | null): boolean => {
+	if (postcode === null || postcode === undefined) {
+		return false;
+	}
+	const value = String(postcode).trim();
+	return value === '0' || value === '00000';
+};
+
 /**
  * The single source of truth for a conversation's modality on the frontend.
  *
@@ -36,16 +64,24 @@ const isModality = (value: unknown): value is Modality =>
  * significant: a group `chat` is checked before `teamSession`, which is checked before the
  * anonymous (live-chat) signal, so an internal group is never mislabelled as agency counselling.
  */
-export const getModality = (item?: ListItemInterface): Modality => {
-	const session = item?.session as
+export const getModality = (item?: ModalityInput): Modality => {
+	const activeSession = item && 'item' in item ? item : undefined;
+	const listItem =
+		item && !('item' in item) ? (item as ListItemInterface) : undefined;
+	const activeItem = activeSession?.item;
+	const user = activeSession?.user ?? listItem?.user;
+	const session = (
+		activeItem && !activeSession?.isGroup ? activeItem : listItem?.session
+	) as
 		| (SessionItemInterface & {
+				askerUserName?: string;
 				teamSession?: boolean;
 				conversationType?: string;
 		  })
 		| undefined;
-	const chat = item?.chat as
-		| (GroupChatItemInterface & { conversationType?: string })
-		| undefined;
+	const chat = (
+		activeItem && activeSession?.isGroup ? activeItem : listItem?.chat
+	) as (GroupChatItemInterface & { conversationType?: string }) | undefined;
 
 	// 1. An explicit backend modality wins once it is populated (ADR-006 target state).
 	const explicit = session?.conversationType ?? chat?.conversationType;
@@ -55,14 +91,20 @@ export const getModality = (item?: ListItemInterface): Modality => {
 
 	// 2. Fallback heuristic (centralised here, deleted once the column is populated everywhere).
 	if (chat) {
-		return chat.repetitive ? Modality.SELF_HELP : Modality.INTERNAL_GROUP;
+		return chat.repeatCount !== undefined || chat.repetitive
+			? Modality.SELF_HELP
+			: Modality.INTERNAL_GROUP;
 	}
 	if (session) {
 		if (session.teamSession === true) {
 			return Modality.INTERNAL_GROUP;
 		}
 		if (
-			(session.registrationType as string) === REGISTRATION_TYPE_ANONYMOUS
+			(session.registrationType as string) ===
+				REGISTRATION_TYPE_ANONYMOUS ||
+			isAnonymousPostcode(session.postcode) ||
+			isAnonymousUsername(session.askerUserName) ||
+			isAnonymousUsername(user?.username)
 		) {
 			return Modality.LIVE_CHAT;
 		}

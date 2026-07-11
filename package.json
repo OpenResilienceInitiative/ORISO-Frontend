@@ -223,6 +223,8 @@
 		"test": "cross-env NODE_ENV=development FAST_REFRESH=false BROWSER=none REACT_APP_API_URL=http://127.0.0.1:9001 HTTPS=0 PORT=9001 WDS_SOCKET_PORT=9001 concurrently --kill-others --success first \"npm run dev\" \"wait-on http://127.0.0.1:9001 && cypress run\"",
 		"test:unit": "vitest run --maxWorkers=2 --minWorkers=1",
 		"test:smoke": "playwright test",
+		"test:matrix-megolm": "node scripts/matrixMegolmSmoke.mjs",
+		"test:matrix-browser-reload": "concurrently --kill-others --success first \"vite --config vite.matrix-smoke.config.ts --host 127.0.0.1 --port 9010\" \"wait-on http://127.0.0.1:9010/playwright/matrix-crypto-browser-harness.html && PLAYWRIGHT_BASE_URL=http://127.0.0.1:9010 playwright test playwright/matrix-crypto-reload.smoke.spec.ts --project=chromium --reporter=list\"",
 		"test:smoke:baseline": "playwright test playwright/registration-baseline.smoke.spec.ts",
 		"test:components": "NODE_ENV=development cypress run --component --headed",
 		"test:build": "cross-env NODE_ENV=production FAST_REFRESH=false BROWSER=none PORT=9001 CYPRESS_WS_URL=http://127.0.0.1:9002 REACT_APP_API_URL=http://127.0.0.1:9001 concurrently --kill-others --success first \"npm run start\" \"wait-on http://127.0.0.1:9001 && cypress run\"",

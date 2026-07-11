@@ -44,4 +44,25 @@ describe('session toolbar module helpers', () => {
 		).toBe(false);
 		expect(isInternalGroupChatSession({ isGroup: false })).toBe(false);
 	});
+
+	it('prefers explicit modality over conflicting repetitive metadata', () => {
+		expect(
+			isConversationCircleSession({
+				isGroup: true,
+				item: {
+					conversationType: 'INTERNAL_GROUP',
+					repetitive: true
+				}
+			})
+		).toBe(false);
+		expect(
+			isConversationCircleSession({
+				isGroup: true,
+				item: {
+					conversationType: 'SELF_HELP',
+					repetitive: false
+				}
+			})
+		).toBe(true);
+	});
 });

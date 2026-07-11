@@ -14,7 +14,6 @@ import {
 	AUTHORITIES,
 	buildExtendedSession,
 	ExtendedSessionInterface,
-	getContact,
 	getExtendedSession,
 	hasUserAuthority,
 	REMOVE_SESSIONS,
@@ -23,6 +22,7 @@ import {
 	SET_SESSIONS,
 	UPDATE_SESSIONS,
 	UserDataContext,
+	useTenant,
 	ActiveSessionProvider
 } from '../../globalState';
 import {
@@ -32,7 +32,7 @@ import {
 } from '../../globalState/interfaces';
 import { SessionListItemComponent } from '../sessionsListItem/SessionListItemComponent';
 import { SessionsListSkeleton } from '../sessionsListItem/SessionsListItemSkeleton';
-import { isAnonymousAskerCandidate } from './sessionClassification';
+import { getModality, Modality } from '../session/getModality';
 import {
 	apiGetAskerSessionList,
 	apiGetCaseHandoverCandidates,
@@ -81,6 +81,9 @@ import {
 	REMOTE_DRAFT_INDEX_SCOPE
 } from '../../services/draftStore';
 import { isCaseHandoverCandidate } from '../session/caseHandoverHelpers';
+import { FutureTimelinePanel } from './FutureTimelinePanel';
+import { canModerateGroupChat } from '../groupChat/groupChatHelpers';
+import { ChatOccurrence } from '../../api/apiGetChatOccurrences';
 
 function buildSessionSearchHaystack(
 	raw: ListItemInterface,
@@ -117,24 +120,9 @@ function buildSessionSearchHaystack(
  */
 function isAnonymousAskerSession(
 	raw: ListItemInterface,
-	extended: ExtendedSessionInterface
+	_extended: ExtendedSessionInterface
 ): boolean {
-	const registrationType =
-		(raw as any)?.session?.registrationType ??
-		(extended as any)?.item?.registrationType;
-	const postcode =
-		(raw as any)?.session?.postcode ?? (extended as any)?.item?.postcode;
-	const contact = getContact(extended as ListItemInterface);
-	return isAnonymousAskerCandidate({
-		registrationType,
-		postcode,
-		usernames: [
-			contact?.username,
-			(raw as any)?.user?.username,
-			(raw as any)?.session?.askerUserName,
-			(extended as any)?.item?.askerUserName
-		]
-	});
+	return getModality(raw) === Modality.LIVE_CHAT;
 }
 
 const getSessionIdentityValues = (
@@ -393,6 +381,7 @@ export const SessionsList = ({
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
 
 	const { userData } = useContext(UserDataContext);
+	const tenantData = useTenant();
 
 	const [isLoading, setIsLoading] = useState(true);
 	const [currentOffset, setCurrentOffset] = useState(0);
@@ -913,7 +902,11 @@ export const SessionsList = ({
 									(s) => s?.chat?.groupId === rid
 								);
 								// If repetitive group chat reload it by id because groupId has changed
-								if (loadedSession?.chat?.repetitive) {
+								if (
+									loadedSession &&
+									getModality(loadedSession) ===
+										Modality.SELF_HELP
+								) {
 									return ['reload', loadedSession.chat.id];
 								}
 								return ['removed', rid];
@@ -943,7 +936,11 @@ export const SessionsList = ({
 								(s) => s?.chat?.groupId === rid
 							);
 							// If repetitive group chat reload it by id because groupId has changed
-							if (loadedSession?.chat?.repetitive) {
+							if (
+								loadedSession &&
+								getModality(loadedSession) ===
+									Modality.SELF_HELP
+							) {
 								return ['reload', loadedSession.chat.id];
 							}
 							return ['removed', rid];
@@ -1206,6 +1203,9 @@ export const SessionsList = ({
 	const showConsultantToolbarActions =
 		type === SESSION_LIST_TYPES.MY_SESSION &&
 		!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
+	const showCreateGroupChatAction =
+		showConsultantToolbarActions &&
+		tenantData?.settings?.featureGroupChatV2Enabled === true;
 	const showCaseHandoverBatchUi =
 		showConsultantToolbarActions &&
 		sessionListTab !== SESSION_LIST_TAB_ARCHIVE;
@@ -1778,6 +1778,39 @@ export const SessionsList = ({
 		(session?.rid && session.rid === groupIdFromParam) ||
 		(session?.item?.id !== undefined &&
 			String(session.item.id) === String(sessionIdFromParam || ''));
+	const futureTimelineSeries = React.useMemo(
+		() =>
+			sortedSessions
+				.filter(
+					(session) =>
+						session.isGroup &&
+						session.item.repeatCount !== undefined
+				)
+				.map((session) => ({
+					id: session.item.id,
+					canModerate: canModerateGroupChat(session, userData),
+					topic:
+						typeof session.item.topic === 'string'
+							? session.item.topic
+							: session.item.topic?.name || 'Group chat'
+				})),
+		[sortedSessions, userData]
+	);
+	const handleDuplicateOccurrence = React.useCallback(
+		(occurrence: ChatOccurrence, topic: string) => {
+			navigate(buildCreateGroupChatPath(sessionListTab || undefined), {
+				state: {
+					duplicateOccurrence: {
+						topic,
+						start: occurrence.start,
+						duration: occurrence.duration,
+						modality: occurrence.modality
+					}
+				}
+			});
+		},
+		[navigate, sessionListTab]
+	);
 
 	return (
 		<div className="sessionsList__innerWrapper">
@@ -1800,6 +1833,7 @@ export const SessionsList = ({
 					activeChip={isCreateChatActive ? null : sessionToolbarChip}
 					onChipToggle={handleToolbarChipToggle}
 					showConsultantActions={showConsultantToolbarActions}
+					showCreateGroupChatAction={showCreateGroupChatAction}
 					showSupervisionChip={showSupervisionChip}
 					/* Live-Chat chip shows on Gespräch too once the sidebar
 					   availability toggle is ON — it narrows the
@@ -1815,6 +1849,14 @@ export const SessionsList = ({
 					}
 					createGroupChatActive={isCreateChatActive}
 					chipCounts={toolbarChipCounts}
+				/>
+			)}
+			{showMySessionToolbar && futureTimelineSeries.length > 0 && (
+				<FutureTimelinePanel
+					series={futureTimelineSeries}
+					consultantId={userData.userId}
+					includeAppointments={sessionToolbarChip === null}
+					onDuplicateOccurrence={handleDuplicateOccurrence}
 				/>
 			)}
 			{showCaseHandoverBatchUi && (
@@ -2090,14 +2132,16 @@ const useGroupWatcher = (isLoading: boolean) => {
 					dispatch({
 						type: REMOVE_SESSIONS,
 						ids: removedGroupSessions
-							.filter((s) => !s.chat.repetitive)
+							.filter(
+								(s) => getModality(s) !== Modality.SELF_HELP
+							)
 							.map((s) => s.chat.groupId)
 					});
 				}
 
 				// Update repetitive chats by id because groupId has changed
 				const repetitiveGroupSessions = removedGroupSessions.filter(
-					(s) => s.chat.repetitive
+					(s) => getModality(s) === Modality.SELF_HELP
 				);
 				if (repetitiveGroupSessions.length > 0) {
 					Promise.all(

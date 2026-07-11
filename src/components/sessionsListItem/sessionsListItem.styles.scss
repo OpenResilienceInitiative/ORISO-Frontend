@@ -25,6 +25,12 @@ $case-handover-denied-bg: var(--m3-error-container, #f7d7d7);
 $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 
 .sessionsListItem {
+	&__groupModalityIcon {
+		width: $grid-base-two;
+		height: $grid-base-two;
+		margin-right: $grid-base;
+		vertical-align: text-bottom;
+	}
 	display: flex;
 	color: $body-font-color;
 	margin-bottom: 0px;

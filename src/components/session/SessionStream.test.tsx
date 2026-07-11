@@ -24,7 +24,13 @@ const mocks = vi.hoisted(() => {
 		navigate: vi.fn(),
 		logout: vi.fn(),
 		lifecycleListeners: [] as ((change: any) => void)[],
+		timelineListeners: [] as ((
+			event: any,
+			room: any,
+			toStart: boolean
+		) => void)[],
 		detachLifecycle: vi.fn(),
+		getMatrixRoomMessages: vi.fn(() => []),
 		resolveSession: vi.fn(() => ({
 			isMatrixSession: true,
 			matrixRoomId: ROOM_ID,
@@ -64,10 +70,21 @@ vi.mock('../../services/chatTransportService', () => ({
 	chatTransportService: {
 		resolveSession: mocks.resolveSession,
 		getMatrixRoom: vi.fn(() => null),
-		getMatrixRoomMessages: vi.fn(() => []),
+		getMatrixRoomMessages: mocks.getMatrixRoomMessages,
 		sendTyping: vi.fn(() => Promise.resolve()),
 		markRoomAsRead: vi.fn(() => Promise.resolve()),
-		onMatrixTimeline: vi.fn(() => () => {}),
+		onMatrixTimeline: vi.fn(
+			(
+				_roomId: string,
+				listener: (event: any, room: any, toStart: boolean) => void
+			) => {
+				mocks.timelineListeners.push(listener);
+				return () => {
+					const index = mocks.timelineListeners.indexOf(listener);
+					if (index >= 0) mocks.timelineListeners.splice(index, 1);
+				};
+			}
+		),
 		onMatrixRoomLifecycle: vi.fn(
 			(_roomId: string, listener: (change: any) => void) => {
 				mocks.lifecycleListeners.push(listener);
@@ -197,6 +214,7 @@ describe('SessionStream Matrix room lifecycle', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mocks.lifecycleListeners.length = 0;
+		mocks.timelineListeners.length = 0;
 		mocks.sessionItemProps = null;
 	});
 
@@ -279,5 +297,34 @@ describe('SessionStream Matrix room lifecycle', () => {
 
 		unmount();
 		expect(mocks.detachLifecycle).toHaveBeenCalled();
+	});
+
+	it('refreshes a clear message when delayed decryption lands inside the coalescing window', async () => {
+		renderSessionStream({ isGroup: true });
+
+		await waitFor(() => {
+			expect(mocks.timelineListeners.length).toBe(1);
+		});
+		const callsBeforeTimelineEvents =
+			mocks.getMatrixRoomMessages.mock.calls.length;
+		const encryptedEvent = { getType: () => 'm.room.encrypted' };
+		const decryptedEvent = { getType: () => 'm.room.message' };
+		const room = { roomId: ROOM_ID };
+
+		act(() => {
+			mocks.timelineListeners.forEach((listener) => {
+				listener(encryptedEvent, room, false);
+				listener(decryptedEvent, room, false);
+			});
+		});
+
+		await waitFor(
+			() => {
+				expect(mocks.getMatrixRoomMessages).toHaveBeenCalledTimes(
+					callsBeforeTimelineEvents + 2
+				);
+			},
+			{ timeout: 500 }
+		);
 	});
 });

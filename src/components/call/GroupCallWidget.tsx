@@ -11,6 +11,7 @@ import {
 	getMatrixHomeserverUrl
 } from '../../resources/scripts/runtimeConfig';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
+import { getElementCallAccessToken } from '../sessionCookie/getMatrixAccessToken';
 import './GroupCallWidget.scss';
 
 export const GroupCallWidget: React.FC = () => {
@@ -33,6 +34,7 @@ export const GroupCallWidget: React.FC = () => {
 	} | null>(null);
 	const iframeRef = useRef<HTMLIFrameElement>(null);
 	const containerRef = useRef<HTMLDivElement>(null);
+	const setupInProgressRef = useRef(false);
 	const [isFullscreen, setIsFullscreen] = useState(false);
 
 	// Subscribe to CallManager
@@ -46,6 +48,7 @@ export const GroupCallWidget: React.FC = () => {
 			}
 			if (!newCallData) {
 				setElementCallUrl('');
+				setupInProgressRef.current = false;
 			}
 		});
 		const currentCall = callManager.getCurrentCall();
@@ -130,7 +133,7 @@ export const GroupCallWidget: React.FC = () => {
 		if (callState !== 'connecting' && callState !== 'in_call') return;
 
 		// console.log('✅ Incoming group call moving to state', callState, '- setting up Element Call for receiver...');
-		setupElementCall();
+		void setupElementCall();
 		// setupElementCall is re-created every render; including it would make
 		// this effect run on each render instead of on call-state changes.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -143,15 +146,16 @@ export const GroupCallWidget: React.FC = () => {
 		if (elementCallUrl) return; // Already set up
 
 		// console.log('📞 Starting outgoing call, setting up Element Call...');
-		setupElementCall();
+		void setupElementCall();
 		// setupElementCall is re-created every render and elementCallUrl is only
 		// used as an "already set up" guard; adding them would re-run this
 		// effect on every render.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [callData, matrixClientService]);
 
-	const setupElementCall = () => {
-		if (!callData) return;
+	const setupElementCall = async () => {
+		if (!callData || setupInProgressRef.current) return;
+		setupInProgressRef.current = true;
 
 		try {
 			const client = matrixClientService?.getClient();
@@ -160,26 +164,27 @@ export const GroupCallWidget: React.FC = () => {
 			// For group calls we use the dedicated Element Call room if present.
 			const roomId =
 				(callData as any).elementCallRoomId || callData.roomId;
+			const elementCallLogin = await getElementCallAccessToken();
 			const homeserverUrl =
-				client.getHomeserverUrl() || getMatrixHomeserverUrl();
+				elementCallLogin.homeserverUrl ||
+				client.getHomeserverUrl() ||
+				getMatrixHomeserverUrl();
 			if (!homeserverUrl) {
 				throw new Error(
 					'Matrix homeserver URL is missing. Set REACT_APP_MATRIX_HOMESERVER_URL or ensure the client reports a homeserver URL.'
 				);
 			}
 
-			// Get Matrix credentials
-			const accessToken =
-				(client as any).accessToken ||
-				localStorage.getItem('matrix_access_token');
-			const userId =
-				client.getUserId() || localStorage.getItem('matrix_user_id');
-			const deviceId =
-				(client as any).deviceId ||
-				localStorage.getItem('matrix_device_id');
+			// Element Call runs on a different origin and therefore must own a
+			// separate Matrix device/crypto store. Reusing the ORISO app device
+			// causes the two clients to overwrite each other's device keys.
+			const { accessToken, userId, deviceId } = elementCallLogin;
 
-			if (!accessToken || !userId) {
+			if (!accessToken || !userId || !deviceId) {
 				throw new Error('Matrix authentication not available');
+			}
+			if (client.getUserId() && client.getUserId() !== userId) {
+				throw new Error('Element Call Matrix identity mismatch');
 			}
 
 			// Element Call - open the specific Matrix room directly.
@@ -251,6 +256,7 @@ export const GroupCallWidget: React.FC = () => {
 				iframeRef.current.onload = sendCredentials;
 			}
 		} catch (err) {
+			setupInProgressRef.current = false;
 			// console.error('❌ Failed to setup Element Call:', err);
 			alert(`Failed to start call: ${(err as Error).message}`);
 			callManager.endCall();
@@ -267,7 +273,7 @@ export const GroupCallWidget: React.FC = () => {
 		// directly in the call UI without any extra "Join" step.
 		if (!elementCallUrl) {
 			// console.log('📞 Answer clicked, setting up Element Call immediately for receiver...');
-			setupElementCall();
+			void setupElementCall();
 		}
 	};
 

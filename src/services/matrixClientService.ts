@@ -6,6 +6,7 @@ import {
 	persistMatrixLoginData
 } from '../components/sessionCookie/getMatrixAccessToken';
 import { matrixCallService } from './matrixCallService';
+import { buildMatrixCryptoStorePrefix } from './matrixCrypto';
 import { matrixLiveEventBridge } from './matrixLiveEventBridge';
 import { encryptMatrixAttachment } from '../utils/matrixEncryptedAttachment';
 import { buildMatrixRoomEncryptionInitialState } from '../utils/matrixRoomEncryption';
@@ -94,7 +95,7 @@ export class MatrixClientService {
 	private syncStateListeners = new Set<(state: string | null) => void>();
 
 	// Initialize client with login data
-	public initializeClient(loginData: MatrixLoginData): void {
+	public async initializeClient(loginData: MatrixLoginData): Promise<void> {
 		this.stopCurrentClient();
 		this.loginData = loginData;
 		this.client = createMatrixClient(loginData);
@@ -108,6 +109,18 @@ export class MatrixClientService {
 		// console.log('🔧 Matrix client will fetch TURN/STUN servers from homeserver');
 
 		const client = this.client;
+		try {
+			await client.initRustCrypto({
+				useIndexedDB: true,
+				cryptoDatabasePrefix: buildMatrixCryptoStorePrefix(
+					loginData.userId,
+					loginData.deviceId
+				)
+			});
+		} catch (error) {
+			this.stopCurrentClient();
+			throw error;
+		}
 
 		(client as any).on(
 			'sync',
@@ -121,7 +134,7 @@ export class MatrixClientService {
 				}
 
 				if (state === 'ERROR' && isMatrixExpiredTokenError(syncError)) {
-					void this.refreshMatrixToken();
+					this.refreshMatrixTokenSafely();
 				}
 			}
 		);
@@ -161,15 +174,19 @@ export class MatrixClientService {
 		}
 
 		this.refreshingToken = getMatrixAccessToken()
-			.then((loginData) => {
+			.then(async (loginData) => {
 				persistMatrixLoginData(loginData);
-				this.initializeClient(loginData);
+				await this.initializeClient(loginData);
 			})
 			.finally(() => {
 				this.refreshingToken = null;
 			});
 
 		return this.refreshingToken;
+	}
+
+	private refreshMatrixTokenSafely(): void {
+		void this.refreshMatrixToken().catch(() => undefined);
 	}
 
 	public async ensureFreshToken(): Promise<void> {
@@ -368,7 +385,7 @@ export class MatrixClientService {
 		);
 
 		this.refreshTimer = window.setTimeout(() => {
-			void this.refreshMatrixToken();
+			this.refreshMatrixTokenSafely();
 		}, refreshInMs);
 	}
 

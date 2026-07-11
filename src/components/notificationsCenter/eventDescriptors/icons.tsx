@@ -22,6 +22,7 @@ import { ReactComponent as CallMissedIcon } from '../../../resources/img/icons/c
 import { ReactComponent as SupervisorIcon } from '../../../resources/img/icons/shield.svg';
 import { ReactComponent as RenameIcon } from '../../../resources/img/icons/pen.svg';
 import { ReactComponent as SystemIcon } from '../../../resources/img/icons/notification_bell.svg';
+import { ReactComponent as AppointmentIcon } from '../../../resources/img/icons/chat-booking.svg';
 import { EventIconId } from './types';
 
 type SvgIcon = React.ComponentType<React.SVGProps<SVGSVGElement>>;
@@ -39,6 +40,7 @@ export const EVENT_ICONS: Record<EventIconId, SvgIcon> = {
 	callMissed: CallMissedIcon,
 	supervisor: SupervisorIcon,
 	rename: RenameIcon,
+	appointment: AppointmentIcon,
 	system: SystemIcon
 };
 

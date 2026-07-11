@@ -57,6 +57,7 @@ export type EventIconId =
 	| 'callMissed'
 	| 'supervisor'
 	| 'rename'
+	| 'appointment'
 	| 'system';
 
 /**
@@ -71,6 +72,8 @@ export interface EventActionParams {
 	actionPath?: string | null;
 	/** Session id the event belongs to, when known. */
 	sourceSessionId?: string | number | null;
+	/** Stable self-help group Series id, used when no materialized Session id exists. */
+	seriesId?: string | number | null;
 	/** Matrix room id / RC group id, when known. */
 	roomRef?: string | null;
 	/** Draft resume scope key (`forcedScopeKey`) for draft events. */
@@ -102,6 +105,7 @@ export interface EventActionParams {
  */
 export type EventActionTarget =
 	| { kind: 'conversation'; path: string | null }
+	| { kind: 'groupChatJoin'; path: string | null }
 	| { kind: 'request'; path: string | null }
 	| { kind: 'draft'; forcedScopeKey: string | null; path: string | null }
 	| { kind: 'join'; callRoomId: string | null; isVideo: boolean }

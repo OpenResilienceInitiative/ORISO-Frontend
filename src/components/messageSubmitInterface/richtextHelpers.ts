@@ -105,8 +105,7 @@ export const markdownToDraftDefaultOptions = {
 	remarkablePreset: 'commonmark',
 	remarkableOptions: {
 		html: true,
-		breaks: true,
-		linkify: true
+		breaks: true
 	}
 };
 
