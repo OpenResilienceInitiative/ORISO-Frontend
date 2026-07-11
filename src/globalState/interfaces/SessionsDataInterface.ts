@@ -61,6 +61,11 @@ export interface TopicSessionInterface {
 }
 
 export interface SessionItemInterface {
+	conversationType?:
+		| 'AGENCY_COUNSELLING'
+		| 'LIVE_CHAT'
+		| 'INTERNAL_GROUP'
+		| 'SELF_HELP';
 	agencyId: number;
 	askerRcId: string;
 	attachment: UserService.Schemas.SessionAttachmentDTO;
@@ -80,6 +85,7 @@ export interface SessionItemInterface {
 	messageTime?: number;
 	postcode: number;
 	registrationType: registrationTypeRegistered;
+	teamSession?: boolean;
 	status:
 		| statusEmpty
 		| statusEnquiry
@@ -92,6 +98,11 @@ export interface SessionItemInterface {
 }
 
 export interface GroupChatItemInterface {
+	conversationType?:
+		| 'AGENCY_COUNSELLING'
+		| 'LIVE_CHAT'
+		| 'INTERNAL_GROUP'
+		| 'SELF_HELP';
 	active: boolean;
 	assignedAgencies: AgencyService.Schemas.AgencyResponseDTO[];
 	attachment: UserService.Schemas.SessionAttachmentDTO;

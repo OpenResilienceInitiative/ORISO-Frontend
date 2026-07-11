@@ -3,10 +3,8 @@ import { useContext, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useActiveListItem } from '../../hooks/useActiveListItem';
-import {
-	getDisplayablePostcode,
-	isAnonymousAskerCandidate
-} from '../sessionsList/sessionClassification';
+import { getDisplayablePostcode } from '../sessionsList/sessionClassification';
+import { getModality, Modality } from '../session/getModality';
 import {
 	convertISO8601ToMSSinceEpoch,
 	getPrettyDateFromMessageDate,
@@ -867,14 +865,7 @@ export const SessionListItemComponent = ({
 	}
 
 	const postcodeLabel = getDisplayablePostcode(activeSession.item.postcode);
-	const isAnonymousChat = isAnonymousAskerCandidate({
-		registrationType: (activeSession.item as any).registrationType,
-		postcode: activeSession.item.postcode,
-		usernames: [
-			activeSession.user?.username,
-			(activeSession.item as any).askerUserName
-		]
-	});
+	const isAnonymousChat = getModality(activeSession) === Modality.LIVE_CHAT;
 	const shouldShowPostcode =
 		!isAsker &&
 		!autoSelectPostcode &&
