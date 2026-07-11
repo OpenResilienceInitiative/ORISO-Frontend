@@ -1,7 +1,7 @@
 export interface GroupChatAuthorContent {
 	sourceLanguage?: string;
-	hintMessageTranslations?: Record<string, string>;
-	groupChatRulesTranslations?: Record<string, string[]>;
+	hintMessageTranslations?: Record<string, string> | null;
+	groupChatRulesTranslations?: Record<string, string[]> | null;
 }
 
 export interface GroupChatAuthorContentDraft {
@@ -84,15 +84,17 @@ export const resolveGroupChatAuthorContent = ({
 	legacyRules: string[];
 }) => {
 	const languages = fallbackLanguages(language, sourceLanguage);
+	const safeHintMessageTranslations = hintMessageTranslations || {};
+	const safeGroupChatRulesTranslations = groupChatRulesTranslations || {};
 	const hintMessage =
 		languages
-			.map((candidate) => hintMessageTranslations[candidate])
+			.map((candidate) => safeHintMessageTranslations[candidate])
 			.find((candidate) => !!candidate?.trim()) ||
 		legacyHintMessage ||
 		'';
 	const rules =
 		languages
-			.map((candidate) => groupChatRulesTranslations[candidate])
+			.map((candidate) => safeGroupChatRulesTranslations[candidate])
 			.find((candidate) => candidate?.some((rule) => !!rule.trim()))
 			?.filter((rule) => !!rule.trim()) || legacyRules;
 

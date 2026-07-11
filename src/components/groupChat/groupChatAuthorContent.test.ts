@@ -62,6 +62,22 @@ describe('resolveGroupChatAuthorContent', () => {
 			rules: ['Legacy rule']
 		});
 	});
+
+	it('falls back to legacy fields when the API returns null translation maps', () => {
+		const legacyPayload = JSON.parse(`{
+			"language": "de",
+			"sourceLanguage": "de",
+			"hintMessageTranslations": null,
+			"groupChatRulesTranslations": null,
+			"legacyHintMessage": "Legacy welcome",
+			"legacyRules": ["Legacy rule"]
+		}`);
+
+		expect(resolveGroupChatAuthorContent(legacyPayload)).toEqual({
+			hintMessage: 'Legacy welcome',
+			rules: ['Legacy rule']
+		});
+	});
 });
 
 describe('group-chat language normalization', () => {
