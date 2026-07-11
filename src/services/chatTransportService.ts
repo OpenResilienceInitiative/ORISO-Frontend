@@ -53,6 +53,10 @@ type TimelineListener = (
 	toStartOfTimeline: boolean
 ) => void;
 type DecryptionListener = (event: MatrixEvent, error?: Error) => void;
+type PendingDecryption = {
+	listener: DecryptionListener;
+	timeout: ReturnType<typeof setTimeout>;
+};
 
 export type MatrixRoomLifecycleChange =
 	| {
@@ -178,19 +182,28 @@ class ChatTransportService {
 		if (!matrixClient) {
 			return null;
 		}
-		const pendingDecryptions = new Map<MatrixEvent, DecryptionListener>();
+		const pendingDecryptions = new Map<MatrixEvent, PendingDecryption>();
+		let detached = false;
+		const clearPendingDecryption = (event: MatrixEvent) => {
+			const pending = pendingDecryptions.get(event);
+			if (!pending) return;
+			clearTimeout(pending.timeout);
+			event.off('Event.decrypted' as any, pending.listener as any);
+			pendingDecryptions.delete(event);
+		};
 
 		const handleTimeline = (
 			event: MatrixEvent,
 			room: Room,
 			toStartOfTimeline: boolean
 		) => {
-			if (room?.roomId !== matrixRoomId) {
+			if (detached || room?.roomId !== matrixRoomId) {
 				return;
 			}
 			listener(event, room, toStartOfTimeline);
 
 			if (
+				detached ||
 				toStartOfTimeline ||
 				event.getType() !== 'm.room.encrypted' ||
 				pendingDecryptions.has(event)
@@ -205,12 +218,18 @@ class ChatTransportService {
 				if (error || decryptedEvent.getType() === 'm.room.encrypted') {
 					return;
 				}
-				event.off('Event.decrypted' as any, handleDecrypted as any);
-				pendingDecryptions.delete(event);
+				clearPendingDecryption(event);
 				listener(decryptedEvent, room, false);
 			};
 
-			pendingDecryptions.set(event, handleDecrypted);
+			const timeout = setTimeout(
+				() => clearPendingDecryption(event),
+				5 * 60 * 1000
+			);
+			pendingDecryptions.set(event, {
+				listener: handleDecrypted,
+				timeout
+			});
 			event.on('Event.decrypted' as any, handleDecrypted as any);
 			if (event.getType() !== 'm.room.encrypted') {
 				handleDecrypted(event);
@@ -220,11 +239,11 @@ class ChatTransportService {
 		(matrixClient as any).on('Room.timeline', handleTimeline);
 
 		return () => {
+			detached = true;
 			(matrixClient as any).off('Room.timeline', handleTimeline);
-			pendingDecryptions.forEach((decryptionListener, event) => {
-				event.off('Event.decrypted' as any, decryptionListener as any);
-			});
-			pendingDecryptions.clear();
+			Array.from(pendingDecryptions.keys()).forEach(
+				clearPendingDecryption
+			);
 		};
 	}
 
