@@ -52,6 +52,7 @@ type TimelineListener = (
 	room: Room,
 	toStartOfTimeline: boolean
 ) => void;
+type DecryptionListener = (event: MatrixEvent, error?: Error) => void;
 
 export type MatrixRoomLifecycleChange =
 	| {
@@ -177,6 +178,7 @@ class ChatTransportService {
 		if (!matrixClient) {
 			return null;
 		}
+		const pendingDecryptions = new Map<MatrixEvent, DecryptionListener>();
 
 		const handleTimeline = (
 			event: MatrixEvent,
@@ -187,12 +189,42 @@ class ChatTransportService {
 				return;
 			}
 			listener(event, room, toStartOfTimeline);
+
+			if (
+				toStartOfTimeline ||
+				event.getType() !== 'm.room.encrypted' ||
+				pendingDecryptions.has(event)
+			) {
+				return;
+			}
+
+			const handleDecrypted = (
+				decryptedEvent: MatrixEvent,
+				error?: Error
+			) => {
+				if (error || decryptedEvent.getType() === 'm.room.encrypted') {
+					return;
+				}
+				event.off('Event.decrypted' as any, handleDecrypted as any);
+				pendingDecryptions.delete(event);
+				listener(decryptedEvent, room, false);
+			};
+
+			pendingDecryptions.set(event, handleDecrypted);
+			event.on('Event.decrypted' as any, handleDecrypted as any);
+			if (event.getType() !== 'm.room.encrypted') {
+				handleDecrypted(event);
+			}
 		};
 
 		(matrixClient as any).on('Room.timeline', handleTimeline);
 
 		return () => {
 			(matrixClient as any).off('Room.timeline', handleTimeline);
+			pendingDecryptions.forEach((decryptionListener, event) => {
+				event.off('Event.decrypted' as any, decryptionListener as any);
+			});
+			pendingDecryptions.clear();
 		};
 	}
 

@@ -51,6 +51,60 @@ const createFakeMatrixClient = (room: any = null) => {
 	};
 };
 
+describe('chatTransportService Matrix timeline', () => {
+	let fakeClient: ReturnType<typeof createFakeMatrixClient>;
+
+	beforeEach(() => {
+		fakeClient = createFakeMatrixClient();
+		setMatrixClientServiceRef({
+			getClient: () => fakeClient
+		} as any);
+	});
+
+	afterEach(() => {
+		setMatrixClientServiceRef(null);
+	});
+
+	it('notifies again when a live encrypted event decrypts after first delivery', () => {
+		const decryptionListeners = new Set<Listener>();
+		let eventType = 'm.room.encrypted';
+		const event = {
+			getType: () => eventType,
+			on: (name: string, listener: Listener) => {
+				if (name === 'Event.decrypted')
+					decryptionListeners.add(listener);
+			},
+			off: (name: string, listener: Listener) => {
+				if (name === 'Event.decrypted')
+					decryptionListeners.delete(listener);
+			},
+			emitDecrypted: (error?: Error) => {
+				if (!error) eventType = 'm.room.message';
+				decryptionListeners.forEach((listener) =>
+					listener(event, error)
+				);
+			}
+		};
+		const room = { roomId: ROOM_ID };
+		const listener = vi.fn();
+		const detach = chatTransportService.onMatrixTimeline(ROOM_ID, listener);
+
+		fakeClient.emit('Room.timeline', event, room, false);
+		expect(listener).toHaveBeenCalledTimes(1);
+		expect(listener).toHaveBeenLastCalledWith(event, room, false);
+
+		event.emitDecrypted(new Error('room key not available yet'));
+		expect(listener).toHaveBeenCalledTimes(1);
+
+		event.emitDecrypted();
+		expect(listener).toHaveBeenCalledTimes(2);
+		expect(listener).toHaveBeenLastCalledWith(event, room, false);
+
+		detach?.();
+		expect(decryptionListeners.size).toBe(0);
+	});
+});
+
 describe('chatTransportService Matrix room lifecycle', () => {
 	let fakeClient: ReturnType<typeof createFakeMatrixClient>;
 
