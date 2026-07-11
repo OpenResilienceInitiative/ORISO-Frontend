@@ -78,9 +78,10 @@
 	&__video {
 		width: 100%;
 		height: 100%;
-		object-fit: cover;
+		object-fit: contain; // letterbox remote / mismatched aspect
 
 		&--local {
+			object-fit: cover;
 			transform: scaleX(-1); // Mirror local video
 		}
 	}
