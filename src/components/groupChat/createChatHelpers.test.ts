@@ -89,13 +89,32 @@ describe('buildGroupChatSeriesRequest', () => {
 			modality: 'AUDIO',
 			timezone: 'Europe/Berlin',
 			hintMessage: '',
-			groupChatRulesTranslations: { de: ['', '  ', 'Respect'] },
+			groupChatRulesTranslations: { de: ['', '  ', '  Respect  '] },
 			consultantIds: []
 		});
 
 		expect(request.groupChatRulesTranslations).toEqual({
 			de: ['Respect']
 		});
+	});
+
+	it('omits group rules when every locale contains only blanks', () => {
+		const request = buildGroupChatSeriesRequest({
+			topic: 'Peer support',
+			agencyId: 17,
+			startDate: '2026-08-04',
+			startTime: '18:30',
+			duration: 60,
+			repeatCount: 1,
+			chatInterval: 'WEEKLY',
+			modality: 'TEXT',
+			timezone: 'Europe/Berlin',
+			hintMessage: '',
+			groupChatRulesTranslations: { de: ['', '  '] },
+			consultantIds: []
+		});
+
+		expect(request.groupChatRulesTranslations).toBeUndefined();
 	});
 });
 

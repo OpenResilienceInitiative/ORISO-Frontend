@@ -186,6 +186,21 @@ describe('MatrixLiveEventBridge initialize / timeline binding', () => {
 		// Bodies never cross into the bridged event (Matrix privacy boundary).
 		expect(JSON.stringify(payload)).not.toContain('secret body');
 	});
+
+	it('refreshes metadata only once when an encrypted message decrypts later', () => {
+		bridge.initialize(client as any);
+		const callback = vi.fn();
+		bridge.on('directMessage', callback);
+		const event = makeEvent({ type: 'm.room.encrypted' });
+
+		client.emit('Room.timeline', event, room, false);
+		event.emitDecrypted({
+			type: 'm.room.message',
+			content: { msgtype: 'm.text', body: 'secret body' }
+		});
+
+		expect(callback).toHaveBeenCalledTimes(1);
+	});
 });
 
 describe('MatrixLiveEventBridge call-invite de-dupe & stale handling', () => {
@@ -273,7 +288,10 @@ describe('MatrixLiveEventBridge call-invite de-dupe & stale handling', () => {
 	});
 
 	it('routes an encrypted group-call invite after a later successful decryption', () => {
-		const event = makeEvent({ type: 'm.room.encrypted' });
+		const event = makeEvent({
+			type: 'm.room.encrypted',
+			ts: Date.now() - 11_000
+		});
 
 		client.emit('Room.timeline', event, room, false);
 		expect(receiveCall).not.toHaveBeenCalled();

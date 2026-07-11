@@ -34,18 +34,22 @@ export const buildGroupChatSeriesRequest = ({
 }: GroupChatSeriesFormValue): groupChatSettings => {
 	const normalizedRules = groupChatRulesTranslations
 		? Object.fromEntries(
-				Object.entries(groupChatRulesTranslations).map(
-					([language, rules]) => [
-						language,
-						rules.map((rule) => rule.trim()).filter(Boolean)
-					]
+				Object.entries(groupChatRulesTranslations).flatMap(
+					([language, rules]) => {
+						const normalized = rules
+							.map((rule) => rule.trim())
+							.filter(Boolean);
+						return normalized.length
+							? [[language, normalized]]
+							: [];
+					}
 				)
 			)
 		: undefined;
 
 	return {
 		...form,
-		...(normalizedRules
+		...(normalizedRules && Object.keys(normalizedRules).length
 			? { groupChatRulesTranslations: normalizedRules }
 			: {}),
 		repetitive: repeatCount > 1,

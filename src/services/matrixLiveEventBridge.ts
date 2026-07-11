@@ -91,10 +91,16 @@ export class MatrixLiveEventBridge {
 		);
 	}
 
-	private dispatchTimelineEvent(event: MatrixEvent, room: Room): void {
+	private dispatchTimelineEvent(
+		event: MatrixEvent,
+		room: Room,
+		fromDecryptionRetry = false
+	): void {
 		switch (event.getType()) {
 			case 'm.room.message':
-				this.handleRoomMessage(event, room);
+				if (!fromDecryptionRetry) {
+					this.handleRoomMessage(event, room);
+				}
 				break;
 
 			case 'm.room.encrypted':
@@ -107,7 +113,7 @@ export class MatrixLiveEventBridge {
 
 			case 'm.call.invite':
 			case 'org.oriso.call.invite':
-				this.handleCallInvite(event, room);
+				this.handleCallInvite(event, room, fromDecryptionRetry);
 				break;
 
 			case 'm.call.hangup':
@@ -143,7 +149,7 @@ export class MatrixLiveEventBridge {
 
 			completed = true;
 			cleanup();
-			this.dispatchTimelineEvent(decryptedEvent, room);
+			this.dispatchTimelineEvent(decryptedEvent, room, true);
 		};
 
 		event.on('Event.decrypted' as any, listener as any);
@@ -199,7 +205,11 @@ export class MatrixLiveEventBridge {
 	/**
 	 * Handle m.call.invite events (incoming calls).
 	 */
-	private handleCallInvite(event: MatrixEvent, room: Room): void {
+	private handleCallInvite(
+		event: MatrixEvent,
+		room: Room,
+		fromDecryptionRetry = false
+	): void {
 		const sender = event.getSender();
 		const content = event.getContent();
 		const callId = content.call_id;
@@ -220,7 +230,7 @@ export class MatrixLiveEventBridge {
 
 		// CRITICAL: Ignore old call invites (> 10 seconds = from history/replay!)
 		// This prevents phantom notifications on login/reload
-		if (ageSeconds > 10) {
+		if (!fromDecryptionRetry && ageSeconds > 10) {
 			// console.log("🚫 IGNORING OLD CALL INVITE (from history, not a new call!)");
 			// console.log("═══════════════════════════════════════════════");
 			this.processedCallInvites.add(callId);
