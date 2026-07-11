@@ -29,14 +29,35 @@ export const isGroupChatFeatureEnabled = (
 export const buildGroupChatSeriesRequest = ({
 	repeatCount,
 	chatInterval,
+	groupChatRulesTranslations,
 	...form
-}: GroupChatSeriesFormValue): groupChatSettings => ({
-	...form,
-	repetitive: repeatCount > 1,
-	repeatCount,
-	...(repeatCount > 1 ? { chatInterval } : {}),
-	featureGroupChatV2Enabled: true
-});
+}: GroupChatSeriesFormValue): groupChatSettings => {
+	const normalizedRules = groupChatRulesTranslations
+		? Object.fromEntries(
+				Object.entries(groupChatRulesTranslations).flatMap(
+					([language, rules]) => {
+						const normalized = rules
+							.map((rule) => rule.trim())
+							.filter(Boolean);
+						return normalized.length
+							? [[language, normalized]]
+							: [];
+					}
+				)
+			)
+		: undefined;
+
+	return {
+		...form,
+		...(normalizedRules && Object.keys(normalizedRules).length
+			? { groupChatRulesTranslations: normalizedRules }
+			: {}),
+		repetitive: repeatCount > 1,
+		repeatCount,
+		...(repeatCount > 1 ? { chatInterval } : {}),
+		featureGroupChatV2Enabled: true
+	};
+};
 
 export const buildOneOffDuplicateFields = ({
 	topic,

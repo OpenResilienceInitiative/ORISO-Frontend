@@ -7,6 +7,22 @@ interface GroupChatAuthorizationUser {
 	userId?: string;
 }
 
+interface V2GroupChatSession {
+	isGroup?: boolean;
+	item?: {
+		modality?: string;
+		consultingType?: number;
+	};
+}
+
+export const isV2GroupChatSession = ({
+	isGroup,
+	item
+}: V2GroupChatSession): boolean =>
+	Boolean(
+		isGroup && ['TEXT', 'AUDIO', 'VIDEO'].includes(item?.modality || '')
+	);
+
 export const isGroupChatOwner = (
 	activeSession: GroupChatAuthorizationSession,
 	userData?: GroupChatAuthorizationUser

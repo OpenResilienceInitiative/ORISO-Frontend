@@ -18,7 +18,11 @@ import {
 	apiPutGroupChat,
 	GROUP_CHAT_API
 } from '../../api';
-import { canModerateGroupChat, isGroupChatOwner } from './groupChatHelpers';
+import {
+	canModerateGroupChat,
+	isGroupChatOwner,
+	isV2GroupChatSession
+} from './groupChatHelpers';
 import { getGroupChatDate } from '../session/sessionDateHelpers';
 import { durationSelectOptionsSet } from './createChatHelpers';
 import {
@@ -108,9 +112,7 @@ export const GroupChatInfo = () => {
 			return;
 		}
 
-		if (activeSession.isGroup && !activeSession.item.consultingType) {
-			setIsV2GroupChat(true);
-		}
+		setIsV2GroupChat(isV2GroupChatSession(activeSession));
 	}, [activeSession, navigate, listPath, ready, sessionListTab]);
 
 	const handleStopGroupChatButton = () => {
@@ -313,8 +315,7 @@ export const GroupChatInfo = () => {
 							{featureGroupChatV2Enabled && isV2GroupChat && (
 								<div className="groupChatInfo__groupChatContainer">
 									<GroupChatCopyLinks
-										id={activeSession.item.groupId}
-										groupChatId={activeSession.item.id.toString()}
+										seriesId={activeSession.item.id}
 									/>
 								</div>
 							)}
