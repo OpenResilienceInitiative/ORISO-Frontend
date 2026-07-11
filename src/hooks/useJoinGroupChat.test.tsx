@@ -17,14 +17,14 @@ vi.mock('../globalState', () => ({
 describe('useJoinGroupChat', () => {
 	beforeEach(() => vi.clearAllMocks());
 
-	it('joins a V2 Series through the canonical join endpoint', () => {
+	it('assigns an invited user before the visible join action', () => {
 		const { result } = renderHook(() => useJoinGroupChat());
 
 		act(() => result.current.joinGroupChat('1013'));
 
 		expect(apiPutGroupChat).toHaveBeenCalledWith(
 			'1013',
-			GROUP_CHAT_API.JOIN
+			GROUP_CHAT_API.ASSIGN
 		);
 	});
 });
