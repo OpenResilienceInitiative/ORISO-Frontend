@@ -72,6 +72,7 @@ import {
 	ChatMenuDropdownHeader,
 	ChatMenuDropdownItemContent as SessionMenuItemContent
 } from '../chatMenuDropdown/ChatMenuDropdown';
+import { sessionMenuOwnsCallControls } from './callControlOwnership';
 
 export interface SessionMenuProps {
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
@@ -522,7 +523,8 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 	return (
 		<div className="sessionMenu__wrapper">
-			{hasVideoCallFeatures() &&
+			{sessionMenuOwnsCallControls(activeSession.isGroup) &&
+				hasVideoCallFeatures() &&
 				!props.isSupervisor &&
 				(isAudioCallsEnabled || isVideoCallsEnabled) && (
 					<div

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	canModerateGroupChat,
+	isV2GroupChatSession,
 	shouldShowGroupChatJoinView
 } from './groupChatHelpers';
 
@@ -76,5 +77,16 @@ describe('shouldShowGroupChatJoinView', () => {
 				isBanned: true
 			})
 		).toBe(false);
+	});
+});
+
+describe('isV2GroupChatSession', () => {
+	it('recognizes a self-help Series even when consultingType is present', () => {
+		expect(
+			isV2GroupChatSession({
+				isGroup: true,
+				item: { modality: 'TEXT', consultingType: 1 }
+			})
+		).toBe(true);
 	});
 });
