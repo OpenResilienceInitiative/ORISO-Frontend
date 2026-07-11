@@ -66,7 +66,8 @@ export const endpoints = {
 		userServiceOrigin + '/service/conversations/consultants/availability',
 	consultantSessions:
 		userServiceOrigin + '/service/users/sessions/consultants?status=2&',
-	consultantStatistics: apiUrl + '/service/statistics/consultant',
+	consultantStatistics:
+		userServiceOrigin + '/service/users/statistics/consultant',
 	consultantsLanguages:
 		userServiceOrigin + '/service/users/consultants/languages',
 	caseHandoverBatch: userServiceOrigin + '/service/users/case-handover/batch',
