@@ -12,7 +12,20 @@ import {
 } from '../../resources/scripts/runtimeConfig';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import { getElementCallAccessToken } from '../sessionCookie/getMatrixAccessToken';
+import {
+	getAutoFitStageSize,
+	RESIZE_EDGES,
+	resizeCursorForEdge,
+	resizeStageFromPointer,
+	type ResizeEdge,
+	type Size
+} from '../../utils/videoTileSizing';
 import './GroupCallWidget.scss';
+
+const GROUP_DEFAULT_WIDTH = 520;
+const GROUP_DEFAULT_HEIGHT = 320;
+const GROUP_ASPECT = GROUP_DEFAULT_WIDTH / GROUP_DEFAULT_HEIGHT;
+const GROUP_MIN = { width: 280, height: 180 };
 
 export const GroupCallWidget: React.FC = () => {
 	const { matrixClientService } = useMatrixClient();
@@ -21,8 +34,13 @@ export const GroupCallWidget: React.FC = () => {
 	const [elementCallUrl, setElementCallUrl] = useState<string>('');
 	const [isDismissed, setIsDismissed] = useState(false);
 
-	// Dragging state
+	// Dragging / resize state
 	const [isDragging, setIsDragging] = useState(false);
+	const [isResizing, setIsResizing] = useState(false);
+	const [stageSize, setStageSize] = useState<Size>({
+		width: GROUP_DEFAULT_WIDTH,
+		height: GROUP_DEFAULT_HEIGHT
+	});
 	const [position, setPosition] = useState({ x: 100, y: 100 });
 	const [isMobileView, setIsMobileView] = useState(false);
 	const [isMobileCompact, setIsMobileCompact] = useState(false);
@@ -32,10 +50,45 @@ export const GroupCallWidget: React.FC = () => {
 		elemX: number;
 		elemY: number;
 	} | null>(null);
+	const resizeStartRef = useRef<{
+		edge: ResizeEdge;
+		x: number;
+		y: number;
+		width: number;
+		height: number;
+		posX: number;
+		posY: number;
+	} | null>(null);
+	const [resizeCursor, setResizeCursor] = useState('nwse-resize');
 	const iframeRef = useRef<HTMLIFrameElement>(null);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const setupInProgressRef = useRef(false);
 	const [isFullscreen, setIsFullscreen] = useState(false);
+
+	const getGroupBounds = () => ({
+		minWidth: GROUP_MIN.width,
+		minHeight: GROUP_MIN.height,
+		maxWidth: Math.max(GROUP_MIN.width, window.innerWidth - 32),
+		maxHeight: Math.max(GROUP_MIN.height, window.innerHeight - 32)
+	});
+
+	const applyAutoFit = () => {
+		const bounds = getGroupBounds();
+		const next = getAutoFitStageSize({
+			aspectRatio: GROUP_ASPECT,
+			maxWidth: bounds.maxWidth,
+			maxHeight: bounds.maxHeight,
+			preferredWidth: GROUP_DEFAULT_WIDTH,
+			preferredHeight: GROUP_DEFAULT_HEIGHT,
+			minWidth: bounds.minWidth,
+			minHeight: bounds.minHeight
+		});
+		setStageSize(next);
+		setPosition({
+			x: Math.max(16, (window.innerWidth - next.width) / 2),
+			y: Math.max(16, (window.innerHeight - next.height) / 2)
+		});
+	};
 
 	// Subscribe to CallManager
 	useEffect(() => {
@@ -75,21 +128,12 @@ export const GroupCallWidget: React.FC = () => {
 	useEffect(() => {
 		if (!callData || !callData.usesElementCall) return;
 
-		const padding = 16;
-		const maxWidth = 520;
-		const maxHeight = 320;
-		const width = Math.min(maxWidth, window.innerWidth - padding * 2);
-		const height = Math.min(maxHeight, window.innerHeight - padding * 2);
-
 		if (window.innerWidth <= 640) {
 			setPosition({ x: 0, y: 0 });
 			return;
 		}
 
-		setPosition({
-			x: Math.max(padding, (window.innerWidth - width) / 2),
-			y: Math.max(padding, (window.innerHeight - height) / 2)
-		});
+		applyAutoFit();
 		// Re-center only when a new call starts or the url changes; the full
 		// callData object gets a new identity on every call-state update.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -113,12 +157,13 @@ export const GroupCallWidget: React.FC = () => {
 			const data = event.data;
 			if (!data || typeof data !== 'object') return;
 			if (data.type !== 'oriso-call-ended') return;
-			// console.log('📴 Element Call ended (message from iframe)');
 			setElementCallUrl('');
 			setCallData(null);
 			setCallState(null);
 			setIsDismissed(true);
-			callManager.endCall();
+			if (callManager.hasActiveCall()) {
+				callManager.endCall();
+			}
 		};
 		window.addEventListener('message', handleMessage);
 		return () => window.removeEventListener('message', handleMessage);
@@ -334,13 +379,13 @@ export const GroupCallWidget: React.FC = () => {
 
 	// Dragging handlers (mouse + touch)
 	const handleMouseDown = (e: React.MouseEvent) => {
-		if (isMobileView) return;
+		if (isMobileView || isResizing) return;
 		const target = e.target as HTMLElement;
 		const isDragHandle = !!target.closest('.element-call-drag-handle');
 		if (elementCallUrl && !isDragHandle) return;
 		if (
 			target.closest(
-				'.btn-end-call, .btn-answer, .btn-decline, iframe, .element-call-close'
+				'.btn-end-call, .btn-answer, .btn-decline, iframe, .element-call-close, .element-call-fullscreen, .element-call-autofit, .call-resize-handle'
 			)
 		)
 			return;
@@ -354,13 +399,13 @@ export const GroupCallWidget: React.FC = () => {
 	};
 
 	const handleTouchStart = (e: React.TouchEvent) => {
-		if (isMobileView) return;
+		if (isMobileView || isResizing) return;
 		const target = e.target as HTMLElement;
 		const isDragHandle = !!target.closest('.element-call-drag-handle');
 		if (elementCallUrl && !isDragHandle) return;
 		if (
 			target.closest(
-				'.btn-end-call, .btn-answer, .btn-decline, iframe, .element-call-close'
+				'.btn-end-call, .btn-answer, .btn-decline, iframe, .element-call-close, .element-call-fullscreen, .element-call-autofit, .call-resize-handle'
 			)
 		)
 			return;
@@ -374,7 +419,45 @@ export const GroupCallWidget: React.FC = () => {
 		};
 	};
 
-	const handleMouseMove = (e: MouseEvent) => {
+	const handleResizePointerDown = (
+		e: React.PointerEvent,
+		edge: ResizeEdge
+	) => {
+		if (e.button !== 0) return;
+		e.preventDefault();
+		e.stopPropagation();
+		if (isMobileView || isFullscreen || isMobileCompact) return;
+		(e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+		setIsResizing(true);
+		setResizeCursor(resizeCursorForEdge(edge));
+		resizeStartRef.current = {
+			edge,
+			x: e.clientX,
+			y: e.clientY,
+			width: stageSize.width,
+			height: stageSize.height,
+			posX: position.x,
+			posY: position.y
+		};
+	};
+
+	const handlePointerMove = (e: PointerEvent) => {
+		if (isResizing && resizeStartRef.current) {
+			const start = resizeStartRef.current;
+			const widgetAspect = start.width / start.height || GROUP_ASPECT;
+			const next = resizeStageFromPointer({
+				edge: start.edge,
+				startSize: { width: start.width, height: start.height },
+				startPosition: { x: start.posX, y: start.posY },
+				dx: e.clientX - start.x,
+				dy: e.clientY - start.y,
+				aspectRatio: widgetAspect,
+				bounds: getGroupBounds()
+			});
+			setStageSize(next.size);
+			setPosition(next.position);
+			return;
+		}
 		if (!isDragging || !dragRef.current) return;
 		const dx = e.clientX - dragRef.current.startX;
 		const dy = e.clientY - dragRef.current.startY;
@@ -395,9 +478,11 @@ export const GroupCallWidget: React.FC = () => {
 		});
 	};
 
-	const handleMouseUp = () => {
+	const handlePointerUp = () => {
 		setIsDragging(false);
+		setIsResizing(false);
 		dragRef.current = null;
+		resizeStartRef.current = null;
 	};
 
 	const handleTouchEnd = () => {
@@ -406,22 +491,26 @@ export const GroupCallWidget: React.FC = () => {
 	};
 
 	useEffect(() => {
-		if (isDragging) {
-			window.addEventListener('mousemove', handleMouseMove);
-			window.addEventListener('mouseup', handleMouseUp);
+		if (isDragging || isResizing) {
+			window.addEventListener('pointermove', handlePointerMove);
+			window.addEventListener('pointerup', handlePointerUp);
+			window.addEventListener('pointercancel', handlePointerUp);
 			window.addEventListener('touchmove', handleTouchMove);
 			window.addEventListener('touchend', handleTouchEnd);
+			document.body.style.userSelect = 'none';
 			return () => {
-				window.removeEventListener('mousemove', handleMouseMove);
-				window.removeEventListener('mouseup', handleMouseUp);
+				window.removeEventListener('pointermove', handlePointerMove);
+				window.removeEventListener('pointerup', handlePointerUp);
+				window.removeEventListener('pointercancel', handlePointerUp);
 				window.removeEventListener('touchmove', handleTouchMove);
 				window.removeEventListener('touchend', handleTouchEnd);
+				document.body.style.userSelect = '';
 			};
 		}
 		// The drag handlers are re-created every render; subscribing on
-		// isDragging transitions only is intentional.
+		// isDragging / isResizing transitions only is intentional.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [isDragging]);
+	}, [isDragging, isResizing]);
 
 	// Only render for group calls
 	if (isDismissed || !callData || !callData.usesElementCall) return null;
@@ -432,8 +521,12 @@ export const GroupCallWidget: React.FC = () => {
 				<div className="call-modal-backdrop" aria-hidden="true" />
 			)}
 			<div
-				className={`group-call-widget ${isDragging ? 'dragging' : ''} ${isMobileView ? 'group-call-widget--mobile' : ''} ${isMobileCompact ? 'group-call-widget--mobile-compact' : ''} ${isFullscreen ? 'group-call-widget--fullscreen' : ''}`}
-				style={{ left: `${position.x}px`, top: `${position.y}px` }}
+				className={`group-call-widget ${isDragging ? 'dragging' : ''} ${isResizing ? 'resizing' : ''} ${isMobileView ? 'group-call-widget--mobile' : ''} ${isMobileCompact ? 'group-call-widget--mobile-compact' : ''} ${isFullscreen ? 'group-call-widget--fullscreen' : ''}`}
+				style={{
+					left: `${position.x}px`,
+					top: `${position.y}px`,
+					...(isResizing ? { cursor: resizeCursor } : {})
+				}}
 				onMouseDown={handleMouseDown}
 				onTouchStart={handleTouchStart}
 			>
@@ -469,7 +562,18 @@ export const GroupCallWidget: React.FC = () => {
 					</div>
 				) : elementCallUrl ? (
 					/* Active call - show Element Call iframe */
-					<div className="element-call-container" ref={containerRef}>
+					<div
+						className="element-call-container"
+						ref={containerRef}
+						style={
+							isMobileView || isFullscreen
+								? undefined
+								: {
+										width: `${stageSize.width}px`,
+										height: `${stageSize.height}px`
+									}
+						}
+					>
 						<div className="element-call-drag-handle" />
 						<button
 							className="element-call-close"
@@ -478,6 +582,20 @@ export const GroupCallWidget: React.FC = () => {
 						>
 							×
 						</button>
+						{!isMobileView && !isFullscreen && (
+							<button
+								type="button"
+								className="element-call-autofit"
+								onClick={(e) => {
+									e.stopPropagation();
+									applyAutoFit();
+								}}
+								aria-label="Auto-fit call window"
+								title="Auto-fit"
+							>
+								⛶
+							</button>
+						)}
 						<button
 							className="element-call-fullscreen"
 							onClick={handleToggleFullscreen}
@@ -516,6 +634,24 @@ export const GroupCallWidget: React.FC = () => {
 							allowFullScreen
 							title="Group video call"
 						/>
+						{!isMobileView &&
+							!isFullscreen &&
+							RESIZE_EDGES.map((edge) => (
+								<div
+									key={edge}
+									className={`call-resize-handle call-resize-handle--${edge}`}
+									role="separator"
+									aria-orientation={
+										edge === 'n' || edge === 's'
+											? 'horizontal'
+											: 'vertical'
+									}
+									aria-label={`Resize video call window (${edge})`}
+									onPointerDown={(e) =>
+										handleResizePointerDown(e, edge)
+									}
+								/>
+							))}
 					</div>
 				) : (
 					/* Connecting state */
