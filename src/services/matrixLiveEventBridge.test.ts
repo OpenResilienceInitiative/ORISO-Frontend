@@ -64,7 +64,7 @@ type Listener = (...args: any[]) => void;
  */
 const createFakeMatrixClient = (userId = MY_USER_ID) => {
 	const listeners = new Map<string, Set<Listener>>();
-	return {
+	const event = {
 		on: (event: string, listener: Listener) => {
 			if (!listeners.has(event)) {
 				listeners.set(event, new Set());
@@ -80,6 +80,7 @@ const createFakeMatrixClient = (userId = MY_USER_ID) => {
 			listeners.get(event)?.forEach((listener) => listener(...args));
 		}
 	};
+	return event;
 };
 
 const makeEvent = (overrides: Record<string, any> = {}) => {
@@ -90,13 +91,36 @@ const makeEvent = (overrides: Record<string, any> = {}) => {
 		ts = Date.now(),
 		id = '$evt:matrix.oriso.org'
 	} = overrides;
-	return {
-		getType: () => type,
-		getContent: () => content,
+	let currentType = type;
+	let currentContent = content;
+	const listeners = new Map<string, Set<Listener>>();
+	const event = {
+		getType: () => currentType,
+		getContent: () => currentContent,
 		getSender: () => sender,
 		getTs: () => ts,
-		getId: () => id
+		getId: () => id,
+		on: (event: string, listener: Listener) => {
+			if (!listeners.has(event)) listeners.set(event, new Set());
+			listeners.get(event)!.add(listener);
+		},
+		off: (event: string, listener: Listener) => {
+			listeners.get(event)?.delete(listener);
+		},
+		emitDecrypted: (
+			clearEvent?: { type: string; content: Record<string, any> },
+			error?: Error
+		) => {
+			if (clearEvent && !error) {
+				currentType = clearEvent.type;
+				currentContent = clearEvent.content;
+			}
+			listeners
+				.get('Event.decrypted')
+				?.forEach((listener) => listener(event, error));
+		}
 	};
+	return event;
 };
 
 const room = { roomId: ROOM_ID };
@@ -246,6 +270,45 @@ describe('MatrixLiveEventBridge call-invite de-dupe & stale handling', () => {
 		expect(args[1]).toBe(true); // isVideo
 		expect(args[2]).toBe('call-group'); // callId
 		expect(args[4]).toBe(true); // isGroupCall
+	});
+
+	it('routes an encrypted group-call invite after a later successful decryption', () => {
+		const event = makeEvent({ type: 'm.room.encrypted' });
+
+		client.emit('Room.timeline', event, room, false);
+		expect(receiveCall).not.toHaveBeenCalled();
+
+		// A missing room key can fail the first attempt. The bridge must remain
+		// subscribed so the Rust-Crypto retry can deliver the clear event later.
+		event.emitDecrypted(undefined, new Error('missing room key'));
+		expect(receiveCall).not.toHaveBeenCalled();
+
+		event.emitDecrypted({
+			type: 'org.oriso.call.invite',
+			content: {
+				call_id: 'call-encrypted',
+				is_group_call: true,
+				is_element_call: true,
+				is_video: true,
+				call_room_id: '!element:matrix.oriso.org'
+			}
+		});
+
+		expect(receiveCall).toHaveBeenCalledTimes(1);
+		expect(receiveCall).toHaveBeenCalledWith(
+			'!element:matrix.oriso.org',
+			true,
+			'call-encrypted',
+			OTHER_USER_ID,
+			true,
+			ROOM_ID,
+			true
+		);
+
+		// Further SDK notifications for the same MatrixEvent must not dispatch it
+		// again after the bridge has consumed the successful decryption.
+		event.emitDecrypted();
+		expect(receiveCall).toHaveBeenCalledTimes(1);
 	});
 
 	it('ignores stale hangups but ends the call for a fresh hangup', () => {

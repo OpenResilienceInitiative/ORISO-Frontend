@@ -25,6 +25,13 @@ export class MatrixLiveEventBridge {
 	private eventCallbacks: Map<string, Set<(event: any) => void>> = new Map();
 	private initialized: boolean = false;
 	private processedCallInvites: Set<string> = new Set(); // Track processed call IDs
+	private pendingEncryptedEvents = new Map<
+		MatrixEvent,
+		{
+			listener: (event: MatrixEvent, error?: Error) => void;
+			timeout: ReturnType<typeof setTimeout>;
+		}
+	>();
 
 	/**
 	 * Initialize the bridge with a Matrix client.
@@ -43,6 +50,7 @@ export class MatrixLiveEventBridge {
 		if (this.client && this.client !== client) {
 			this.client.removeAllListeners('Room.timeline' as any);
 			this.client.removeAllListeners('sync' as any);
+			this.clearPendingEncryptedEvents();
 		}
 
 		this.client = client;
@@ -70,36 +78,7 @@ export class MatrixLiveEventBridge {
 					return;
 				}
 
-				const eventType = event.getType();
-
-				// console.log("📩 Matrix event:", {
-				// type: eventType,
-				// roomId: room.roomId,
-				// sender: event.getSender(),
-				// timestamp: event.getTs()
-				// });
-
-				// Handle different event types
-				switch (eventType) {
-					case 'm.room.message':
-					case 'm.room.encrypted':
-						this.handleRoomMessage(event, room);
-						break;
-
-					case 'm.call.invite':
-					case 'org.oriso.call.invite':
-						this.handleCallInvite(event, room);
-						break;
-
-					case 'm.call.hangup':
-					case 'org.oriso.call.hangup':
-						this.handleCallHangup(event, room);
-						break;
-
-					default:
-						// Ignore other events
-						break;
-				}
+				this.dispatchTimelineEvent(event, room);
 			}
 		);
 
@@ -110,6 +89,86 @@ export class MatrixLiveEventBridge {
 				// console.log("🔄 Matrix sync state:", state, "(previous:", prevState, ")");
 			}
 		);
+	}
+
+	private dispatchTimelineEvent(event: MatrixEvent, room: Room): void {
+		switch (event.getType()) {
+			case 'm.room.message':
+				this.handleRoomMessage(event, room);
+				break;
+
+			case 'm.room.encrypted':
+				// Room.timeline can fire before Rust-Crypto has the Megolm key.
+				// Keep the existing metadata refresh, but also redispatch the clear
+				// event when a later decryption retry succeeds.
+				this.handleRoomMessage(event, room);
+				this.waitForSuccessfulDecryption(event, room);
+				break;
+
+			case 'm.call.invite':
+			case 'org.oriso.call.invite':
+				this.handleCallInvite(event, room);
+				break;
+
+			case 'm.call.hangup':
+			case 'org.oriso.call.hangup':
+				this.handleCallHangup(event, room);
+				break;
+
+			default:
+				break;
+		}
+	}
+
+	private waitForSuccessfulDecryption(event: MatrixEvent, room: Room): void {
+		if (this.pendingEncryptedEvents.has(event)) return;
+
+		let completed = false;
+		let timeout: ReturnType<typeof setTimeout>;
+		const cleanup = () => {
+			event.off('Event.decrypted' as any, listener as any);
+			clearTimeout(timeout);
+			this.pendingEncryptedEvents.delete(event);
+		};
+		const listener = (decryptedEvent: MatrixEvent, error?: Error) => {
+			// Rust-Crypto emits Event.decrypted for a failed attempt too. Keep
+			// listening so receipt of a delayed room key can retry successfully.
+			if (
+				completed ||
+				error ||
+				decryptedEvent.getType() === 'm.room.encrypted'
+			) {
+				return;
+			}
+
+			completed = true;
+			cleanup();
+			this.dispatchTimelineEvent(decryptedEvent, room);
+		};
+
+		event.on('Event.decrypted' as any, listener as any);
+		timeout = setTimeout(
+			() => {
+				completed = true;
+				cleanup();
+			},
+			5 * 60 * 1000
+		);
+		this.pendingEncryptedEvents.set(event, { listener, timeout });
+
+		// Close the small race where decryption finishes between the initial
+		// type check and listener registration.
+		if (event.getType() !== 'm.room.encrypted') {
+			listener(event);
+		}
+	}
+
+	private clearPendingEncryptedEvents(): void {
+		this.pendingEncryptedEvents.forEach(({ listener, timeout }, event) => {
+			event.off('Event.decrypted' as any, listener as any);
+			clearTimeout(timeout);
+		});
+		this.pendingEncryptedEvents.clear();
 	}
 
 	/**
@@ -340,6 +399,7 @@ export class MatrixLiveEventBridge {
 			this.client.removeAllListeners('Room.timeline' as any);
 			this.client.removeAllListeners('sync' as any);
 		}
+		this.clearPendingEncryptedEvents();
 		this.processedCallInvites.clear();
 		this.initialized = false;
 		this.client = null;
