@@ -37,6 +37,7 @@ import '../../resources/styles/styles';
 import './login.styles';
 import useIsFirstVisit from '../../utils/useIsFirstVisit';
 import { VALIDITY_INVALID } from '../registration/registrationHelpers';
+import { buildRegistrationLink } from './groupChatRegistrationLink';
 import { TwoFactorAuthResendMail } from '../twoFactorAuth/TwoFactorAuthResendMail';
 import { useTranslation } from 'react-i18next';
 import { useAppConfig } from '../../hooks/useAppConfig';
@@ -71,6 +72,10 @@ export const Login = () => {
 	const { userData, reloadUserData } = useContext(UserDataContext);
 	const { Stage } = useContext(GlobalComponentContext);
 	const gcid = useSearchParam<string>('gcid');
+	const registrationUrl = buildRegistrationLink(
+		settings.urls.toRegistration,
+		gcid
+	);
 	const magicToken = useSearchParam<string>('magicToken');
 	const isFirstVisit = useIsFirstVisit();
 
@@ -388,6 +393,7 @@ export const Login = () => {
 				stage={<Stage hasAnimation={isFirstVisit} isReady={isReady} />}
 				showLegalLinks
 				showRegistrationLink={hasTenant}
+				registrationUrl={registrationUrl}
 			>
 				<div className="loginForm">
 					<div className="loginForm__inner">
@@ -717,7 +723,7 @@ export const Login = () => {
 									<button
 										onClick={() =>
 											window.open(
-												settings.urls.toRegistration,
+												registrationUrl,
 												'_self'
 											)
 										}

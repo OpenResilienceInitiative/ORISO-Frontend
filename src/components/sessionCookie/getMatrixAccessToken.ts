@@ -13,9 +13,13 @@ export interface MatrixLoginData {
 }
 
 const MATRIX_DEVICE_ID_STORAGE_KEY = 'matrix_device_id';
+const MATRIX_CALL_DEVICE_ID_STORAGE_KEY = 'matrix_call_device_id';
 const MATRIX_DEVICE_ID_PREFIX = 'ORISO_WEB_';
+const MATRIX_CALL_DEVICE_ID_PREFIX = 'ORISO_CALL_';
 
-const createBrowserDeviceId = (): string => {
+const createBrowserDeviceId = (
+	prefix: string = MATRIX_DEVICE_ID_PREFIX
+): string => {
 	const randomValue =
 		typeof crypto !== 'undefined' && crypto.randomUUID
 			? crypto.randomUUID().replace(/-/g, '')
@@ -23,20 +27,19 @@ const createBrowserDeviceId = (): string => {
 					.toString(36)
 					.slice(2)}`;
 
-	return `${MATRIX_DEVICE_ID_PREFIX}${randomValue
-		.toUpperCase()
-		.slice(0, 24)}`;
+	return `${prefix}${randomValue.toUpperCase().slice(0, 24)}`;
 };
 
 const getOrCreateMatrixDeviceId = (
 	userId: string,
 	responseDeviceId?: string
 ): string => {
+	const userStorageKey = `${MATRIX_DEVICE_ID_STORAGE_KEY}:${userId}`;
 	if (responseDeviceId) {
+		localStorage.setItem(userStorageKey, responseDeviceId);
 		return responseDeviceId;
 	}
 
-	const userStorageKey = `${MATRIX_DEVICE_ID_STORAGE_KEY}:${userId}`;
 	const storedDeviceId = localStorage.getItem(userStorageKey);
 	if (storedDeviceId) {
 		return storedDeviceId;
@@ -47,11 +50,32 @@ const getOrCreateMatrixDeviceId = (
 	return deviceId;
 };
 
-export const getMatrixAccessToken = (
-	_username?: string,
-	_password?: string
-): Promise<MatrixLoginData> => {
-	const tokenUrl = endpoints.matrixAccessToken;
+const getOrCreateRequestedDeviceId = (
+	storageKey: string = MATRIX_DEVICE_ID_STORAGE_KEY,
+	prefix: string = MATRIX_DEVICE_ID_PREFIX
+): string => {
+	const storedDeviceId = localStorage.getItem(storageKey);
+	if (storedDeviceId) {
+		return storedDeviceId;
+	}
+
+	const deviceId = createBrowserDeviceId(prefix);
+	localStorage.setItem(storageKey, deviceId);
+	return deviceId;
+};
+
+export const getElementCallAccessToken = (): Promise<MatrixLoginData> => {
+	const requestedDeviceId = getOrCreateRequestedDeviceId(
+		MATRIX_CALL_DEVICE_ID_STORAGE_KEY,
+		MATRIX_CALL_DEVICE_ID_PREFIX
+	);
+	const querySeparator = endpoints.matrixAccessToken.includes('?')
+		? '&'
+		: '?';
+	const tokenUrl = `${endpoints.matrixAccessToken}${querySeparator}deviceId=${encodeURIComponent(
+		requestedDeviceId
+	)}`;
+
 	return fetchData({
 		url: tokenUrl,
 		method: FETCH_METHODS.GET,
@@ -62,6 +86,54 @@ export const getMatrixAccessToken = (
 		if (!homeserverUrl) {
 			throw new Error(
 				'REACT_APP_MATRIX_HOMESERVER_URL is not configured'
+			);
+		}
+		if (!response.accessToken || !response.userId || !response.deviceId) {
+			throw new Error(
+				'Element Call login did not return a device-bound access token'
+			);
+		}
+
+		localStorage.setItem(
+			MATRIX_CALL_DEVICE_ID_STORAGE_KEY,
+			response.deviceId
+		);
+		return {
+			accessToken: response.accessToken,
+			userId: response.userId,
+			deviceId: response.deviceId,
+			homeserverUrl,
+			expiresInMs: response.expiresInMs
+		};
+	});
+};
+
+export const getMatrixAccessToken = (
+	_username?: string,
+	_password?: string
+): Promise<MatrixLoginData> => {
+	const requestedDeviceId = getOrCreateRequestedDeviceId();
+	const querySeparator = endpoints.matrixAccessToken.includes('?')
+		? '&'
+		: '?';
+	const tokenUrl = `${endpoints.matrixAccessToken}${querySeparator}deviceId=${encodeURIComponent(
+		requestedDeviceId
+	)}`;
+	return fetchData({
+		url: tokenUrl,
+		method: FETCH_METHODS.GET,
+		responseHandling: [FETCH_ERRORS.CATCH_ALL],
+		recoverOnPublicAuthRoute: false
+	}).then((response) => {
+		const homeserverUrl = getMatrixHomeserverUrl();
+		if (!homeserverUrl) {
+			throw new Error(
+				'REACT_APP_MATRIX_HOMESERVER_URL is not configured'
+			);
+		}
+		if (!response.accessToken || !response.userId || !response.deviceId) {
+			throw new Error(
+				'Matrix login did not return a device-bound access token'
 			);
 		}
 

@@ -614,6 +614,43 @@
 		}
 	},
 	"groupChat": {
+		"calendar": {
+			"add": "Zum Kalender hinzufügen",
+			"defaultTitle": "Online-Termin",
+			"download": "ICS herunterladen",
+			"google": "Google Kalender",
+			"outlook": "Outlook Kalender",
+			"titleLabel": "Neutraler Kalendertitel"
+		},
+		"futureTimeline": {
+			"appointmentFallback": "Termin",
+			"ariaLabel": "Zukünftige Termine",
+			"commandError": "Der Termin konnte nicht geändert werden. Bitte erneut versuchen.",
+			"duplicate": "Als Einzeltermin duplizieren",
+			"empty": "Keine bevorstehenden Termine.",
+			"groupChatFallback": "Gruppenchat",
+			"hide": "Zukünftige Termine ausblenden",
+			"loadMore": "Drei weitere Monate laden",
+			"loadError": "Einige zukünftige Termine konnten nicht geladen werden.",
+			"loading": "Zukünftige Termine werden geladen…",
+			"now": "Jetzt",
+			"revealAriaLabel": "Zukünftige Termine anzeigen",
+			"show": "Zukünftige Termine anzeigen",
+			"skip": "Termin überspringen"
+		},
+		"roles": {
+			"CO_MODERATOR": "Co-Moderator:in",
+			"OWNER": "Eigentümer:in",
+			"PARTICIPANT": "Teilnehmende",
+			"headline": "Rollen im Beratungsteam",
+			"remove": "Aus der Gruppe entfernen",
+			"removeError": "Die Person konnte nicht aus der Gruppe entfernt werden. Bitte erneut versuchen.",
+			"roleLabel": "Rolle für {{name}}",
+			"transfer": "Primäre Eigentümerschaft übertragen",
+			"transferError": "Die primäre Eigentümerschaft konnte nicht übertragen werden. Bitte erneut versuchen.",
+			"transferLabel": "Primäre Eigentümerschaft an {{name}} übertragen",
+			"updateError": "Die Rolle konnte nicht aktualisiert werden. Bitte erneut versuchen."
+		},
 		"active": {
 			"sessionInfo": {
 				"subscriber": "Teilnehmende"
@@ -635,6 +672,30 @@
 			}
 		},
 		"create": {
+			"duration": "Dauer",
+			"interval": {
+				"label": "Intervall",
+				"options": {
+					"biweekly": "Alle zwei Wochen",
+					"daily": "Täglich",
+					"monthly": "Monatlich",
+					"quarterly": "Vierteljährlich",
+					"weekly": "Wöchentlich",
+					"yearly": "Jährlich"
+				}
+			},
+			"modality": {
+				"label": "Format",
+				"options": {
+					"audio": "Audio",
+					"text": "Text",
+					"video": "Video"
+				}
+			},
+			"repeatCount": "Anzahl der Termine",
+			"schedule": "Terminplanung",
+			"startDate": "Startdatum",
+			"startTime": "Startzeit",
 			"agencySelect": {
 				"label": "Beratungsstelle"
 			},
@@ -662,6 +723,18 @@
 			"hintMessage": {
 				"explanation": "Hinweis: Diese Informationen sind für alle Administrator:innen des Gruppenchats sichtbar.",
 				"label": "Hinweisfeld"
+			},
+			"authorContent": {
+				"title": "Begrüßung und Gruppenregeln",
+				"sourceLanguage": "Ausgangssprache",
+				"welcome": "Begrüßung (maximal 120 Zeichen)",
+				"rules": "Gruppenregeln",
+				"rule": "Regel",
+				"addRule": "Regel hinzufügen",
+				"removeRule": "Entfernen",
+				"translate": "In aktive Sprachen übersetzen",
+				"translating": "Wird übersetzt…",
+				"translationError": "Übersetzung fehlgeschlagen. Der Text wurde beibehalten; bitte erneut versuchen."
 			},
 			"listItem": {
 				"label": "Neuer Chat"
@@ -720,6 +793,18 @@
 			}
 		},
 		"join": {
+			"timeConversions": "Spielerische Zeitangaben",
+			"waitingArea": {
+				"catMinutes": "{{value}} Katzenminuten",
+				"discomfort": {
+					"late": "verspätet",
+					"onTime": "pünktlich",
+					"slightlyLate": "leicht verspätet",
+					"veryLate": "stark verspätet"
+				},
+				"dogMinutes": "{{value}} Hundeminuten",
+				"romanMinutes": "{{value}} Minuten"
+			},
 			"button": {
 				"label": {
 					"join": "Teilnehmen",
@@ -1445,6 +1530,18 @@
 			"callMissed": {
 				"title": "Verpasster Anruf",
 				"text": "Sie haben einen Anruf verpasst."
+			},
+			"groupChatReminder": {
+				"title": "Erinnerung an einen Online-Termin",
+				"text": "Ein Online-Termin steht bald an."
+			},
+			"groupChatOpened": {
+				"title": "Online-Termin geöffnet",
+				"text": "Der Online-Termin ist geöffnet. Sie können jetzt beitreten."
+			},
+			"groupChatCancelled": {
+				"title": "Online-Termin abgesagt",
+				"text": "Der Online-Termin wurde abgesagt."
 			}
 		},
 		"error": "Fehlgeschlagen",
@@ -1467,6 +1564,7 @@
 			"empty": "Noch keine Benachrichtigungen.",
 			"emptyDetail": "Wählen Sie eine Benachrichtigung aus, um Details zu sehen.",
 			"open": "Chat öffnen",
+			"join": "Beitreten",
 			"systemTag": "Systembenachrichtigung",
 			"messageTag": "Nachrichtenbenachrichtigung"
 		},

@@ -19,6 +19,8 @@ import {
 	apiMarkEventNotificationRead
 } from '../../api/apiEventNotifications';
 import { getValueFromCookie } from '../../components/sessionCookie/accessSessionCookie';
+import { EventActionParams } from '../../components/notificationsCenter/eventDescriptors';
+import { parseEventActionParams } from '../../components/notificationsCenter/notificationActionTarget';
 
 export const NOTIFICATION_DEFAULT_TIMEOUT = 3000;
 
@@ -80,6 +82,7 @@ export type NotificationFeedItem = {
 	actionPath?: string;
 	actionLabel?: string;
 	sourceSessionId?: string;
+	params?: EventActionParams;
 	category: 'system' | 'message';
 };
 
@@ -92,6 +95,7 @@ export type EventNotificationInput = {
 	actionPath?: string;
 	actionLabel?: string;
 	sourceSessionId?: string | number;
+	params?: EventActionParams;
 };
 
 const NOTIFICATION_FEED_MAX_ITEMS = 50;
@@ -154,6 +158,7 @@ export function NotificationsProvider(props) {
 					item.sourceSessionId != null
 						? String(item.sourceSessionId)
 						: undefined,
+				params: parseEventActionParams(item.params),
 				category: item.category === 'message' ? 'message' : 'system'
 			}));
 			setNotificationFeed(normalized);
@@ -224,6 +229,7 @@ export function NotificationsProvider(props) {
 					event.sourceSessionId != null
 						? String(event.sourceSessionId)
 						: undefined,
+				params: event.params,
 				category: event.category === 'message' ? 'message' : 'system'
 			};
 			setNotificationFeed((existing) =>

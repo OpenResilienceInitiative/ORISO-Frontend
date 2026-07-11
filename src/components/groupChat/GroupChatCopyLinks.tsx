@@ -10,18 +10,15 @@ import { GenerateQrCode } from '../generateQrCode/GenerateQrCode';
 import './groupChatCopyLinks.scss';
 import { useTranslation } from 'react-i18next';
 import { useAppConfig } from '../../hooks/useAppConfig';
+import { buildGroupChatInviteLink } from './groupChatInviteLink';
 
 type GroupChatCopyLinksProps = {
-	id: string;
-	groupChatId: string;
+	seriesId: number;
 };
 
-export const GroupChatCopyLinks = ({
-	id,
-	groupChatId
-}: GroupChatCopyLinksProps) => {
+export const GroupChatCopyLinks = ({ seriesId }: GroupChatCopyLinksProps) => {
 	const settings = useAppConfig();
-	const url = `${settings.urls.toLogin}?gcid=${id}`;
+	const url = buildGroupChatInviteLink(settings.urls.toLogin, seriesId);
 	const { addNotification } = useContext(NotificationsContext);
 	const { t: translate } = useTranslation();
 
@@ -43,7 +40,7 @@ export const GroupChatCopyLinks = ({
 					url={url}
 					headline={translate('groupChat.qrCode.headline')}
 					text={translate('groupChat.qrCode.text')}
-					filename={`group-chat-${groupChatId}`}
+					filename={`group-chat-${seriesId}`}
 				/>
 			</div>
 			<div className="GroupChatCopyLinks_copyLink">

@@ -602,6 +602,43 @@
 		}
 	},
 	"groupChat": {
+		"calendar": {
+			"add": "Add to calendar",
+			"defaultTitle": "Online appointment",
+			"download": "Download ICS",
+			"google": "Google Calendar",
+			"outlook": "Outlook Calendar",
+			"titleLabel": "Neutral calendar title"
+		},
+		"futureTimeline": {
+			"appointmentFallback": "Appointment",
+			"ariaLabel": "Future timeline",
+			"commandError": "The occurrence could not be changed. Please try again.",
+			"duplicate": "Duplicate as one-off",
+			"empty": "No upcoming events.",
+			"groupChatFallback": "Group chat",
+			"hide": "Hide future events",
+			"loadMore": "Load three more months",
+			"loadError": "Some future events could not be loaded.",
+			"loading": "Loading future events…",
+			"now": "Now",
+			"revealAriaLabel": "Reveal future timeline",
+			"show": "Show future events",
+			"skip": "Skip occurrence"
+		},
+		"roles": {
+			"CO_MODERATOR": "Co-moderator",
+			"OWNER": "Owner",
+			"PARTICIPANT": "Participant",
+			"headline": "Counsellor roles",
+			"remove": "Remove from group",
+			"removeError": "The participant could not be removed. Please try again.",
+			"roleLabel": "Role for {{name}}",
+			"transfer": "Transfer primary ownership",
+			"transferError": "Primary ownership could not be transferred. Please try again.",
+			"transferLabel": "Transfer primary ownership to {{name}}",
+			"updateError": "The role could not be updated. Please try again."
+		},
 		"active": {
 			"sessionInfo": {
 				"subscriber": "Participants"
@@ -623,6 +660,30 @@
 			}
 		},
 		"create": {
+			"duration": "Duration",
+			"interval": {
+				"label": "Interval",
+				"options": {
+					"biweekly": "Every two weeks",
+					"daily": "Daily",
+					"monthly": "Monthly",
+					"quarterly": "Quarterly",
+					"weekly": "Weekly",
+					"yearly": "Yearly"
+				}
+			},
+			"modality": {
+				"label": "Format",
+				"options": {
+					"audio": "Audio",
+					"text": "Text",
+					"video": "Video"
+				}
+			},
+			"repeatCount": "Occurrences",
+			"schedule": "Schedule",
+			"startDate": "Start date",
+			"startTime": "Start time",
 			"agencySelect": {
 				"label": "Agency"
 			},
@@ -650,6 +711,18 @@
 			"hintMessage": {
 				"explanation": "Note: This information is visible to all administrators of the group chat.",
 				"label": "Note field"
+			},
+			"authorContent": {
+				"title": "Welcome and group rules",
+				"sourceLanguage": "Source language",
+				"welcome": "Welcome message (maximum 120 characters)",
+				"rules": "Group rules",
+				"rule": "Rule",
+				"addRule": "Add rule",
+				"removeRule": "Remove",
+				"translate": "Translate into active languages",
+				"translating": "Translating…",
+				"translationError": "Translation failed. Your text was kept; please try again."
 			},
 			"listItem": {
 				"label": "New chat"
@@ -706,6 +779,18 @@
 			}
 		},
 		"join": {
+			"timeConversions": "Playful time conversions",
+			"waitingArea": {
+				"catMinutes": "{{value}} cat minutes",
+				"discomfort": {
+					"late": "late",
+					"onTime": "on time",
+					"slightlyLate": "slightly late",
+					"veryLate": "very late"
+				},
+				"dogMinutes": "{{value}} dog minutes",
+				"romanMinutes": "{{value}} roman minutes"
+			},
 			"button": {
 				"label": {
 					"join": "Join",
@@ -1421,6 +1506,18 @@
 			"callMissed": {
 				"title": "Missed call",
 				"text": "You missed a call."
+			},
+			"groupChatReminder": {
+				"title": "Online appointment reminder",
+				"text": "An online appointment is coming up."
+			},
+			"groupChatOpened": {
+				"title": "Online appointment opened",
+				"text": "The online appointment is open. Join when you are ready."
+			},
+			"groupChatCancelled": {
+				"title": "Online appointment cancelled",
+				"text": "The online appointment was cancelled."
 			}
 		},
 		"error": "failed",
@@ -1443,6 +1540,7 @@
 			"empty": "No notifications yet.",
 			"emptyDetail": "Select a notification to see the details.",
 			"open": "Open chat",
+			"join": "Join",
 			"systemTag": "System notification",
 			"messageTag": "Message notification"
 		},

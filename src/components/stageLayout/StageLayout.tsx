@@ -37,6 +37,7 @@ interface StageLayoutProps {
 	showLoginLink?: boolean;
 	showRegistrationLink?: boolean;
 	loginParams?: string;
+	registrationUrl?: string;
 	showRegistrationInfoDrawer?: boolean;
 }
 
@@ -48,6 +49,7 @@ export const StageLayout = ({
 	showLoginLink,
 	showRegistrationLink,
 	loginParams,
+	registrationUrl,
 	showRegistrationInfoDrawer
 }: StageLayoutProps) => {
 	const trigger = useScrollTrigger();
@@ -63,8 +65,10 @@ export const StageLayout = ({
 		loginParams ? `?${loginParams}` : ''
 	}`;
 	const loginRoute = toSameOriginRoute(loginUrl);
-	const registrationRoute = toSameOriginRoute(settings.urls.toRegistration);
-	const registrationHref = registrationRoute || settings.urls.toRegistration;
+	const resolvedRegistrationUrl =
+		registrationUrl || settings.urls.toRegistration;
+	const registrationRoute = toSameOriginRoute(resolvedRegistrationUrl);
+	const registrationHref = registrationRoute || resolvedRegistrationUrl;
 
 	return (
 		<div className={clsx('stageLayout', className)}>

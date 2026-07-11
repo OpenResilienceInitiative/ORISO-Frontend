@@ -31,6 +31,7 @@ import {
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
 import {
 	redirectToApp,
+	getPostRegistrationGroupChatId,
 	POST_REGISTRATION_LOADER_KEY
 } from '../../components/registration/autoLogin';
 import { PreselectionBox } from './preselectionBox/PreselectionBox';
@@ -296,7 +297,9 @@ export const Registration = () => {
 			.filter((missingStep) => missingStep < currStepIndex);
 
 		if (missingPreviousSteps.length > 0) {
-			navigate(makeStepUrl(availableSteps[missingPreviousSteps[0]]?.name));
+			navigate(
+				makeStepUrl(availableSteps[missingPreviousSteps[0]]?.name)
+			);
 		}
 	}, [
 		availableSteps,
@@ -356,7 +359,9 @@ export const Registration = () => {
 						POST_REGISTRATION_LOADER_KEY,
 						'true'
 					);
-					redirectToApp();
+					redirectToApp(
+						getPostRegistrationGroupChatId(location.search)
+					);
 				})
 				.catch((error) => {
 					// console.error('Registration failed:', error);
@@ -387,7 +392,8 @@ export const Registration = () => {
 		addNotification,
 		t,
 		locale,
-		isRegistering
+		isRegistering,
+		location.search
 	]);
 
 	const handleSubmit = useCallback(
@@ -463,7 +469,8 @@ export const Registration = () => {
 										}}
 									>
 										{(() => {
-											const StepComponent = activeStep.component;
+											const StepComponent =
+												activeStep.component;
 											return (
 												<StepComponent
 													key={`${activeStep.name}-${clearSelectionVersion}`}

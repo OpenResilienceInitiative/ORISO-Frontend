@@ -40,6 +40,35 @@
 		}
 	}
 
+	&__countdown {
+		width: min(100%, $grid-base * 56);
+		text-align: center;
+		margin: $grid-base-two 0;
+	}
+
+	&__countdownValue {
+		display: block;
+		font-size: clamp(2.5rem, 10vw, 5rem);
+		font-variant-numeric: tabular-nums;
+		line-height: 1;
+	}
+
+	&__timePills {
+		display: flex;
+		gap: $grid-base;
+		overflow-x: auto;
+		padding: $grid-base-two 0;
+		scroll-snap-type: x proximity;
+
+		span {
+			flex: 0 0 auto;
+			padding: $grid-base $grid-base-two;
+			border-radius: 999px;
+			background: var(--m3-secondary-container, #e0e7ef);
+			scroll-snap-align: start;
+		}
+	}
+
 	&__button-container {
 		text-align: center;
 		padding: $grid-base-six $grid-base-four;

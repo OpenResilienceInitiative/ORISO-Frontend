@@ -52,6 +52,11 @@ type TimelineListener = (
 	room: Room,
 	toStartOfTimeline: boolean
 ) => void;
+type DecryptionListener = (event: MatrixEvent, error?: Error) => void;
+type PendingDecryption = {
+	listener: DecryptionListener;
+	timeout: ReturnType<typeof setTimeout>;
+};
 
 export type MatrixRoomLifecycleChange =
 	| {
@@ -177,22 +182,68 @@ class ChatTransportService {
 		if (!matrixClient) {
 			return null;
 		}
+		const pendingDecryptions = new Map<MatrixEvent, PendingDecryption>();
+		let detached = false;
+		const clearPendingDecryption = (event: MatrixEvent) => {
+			const pending = pendingDecryptions.get(event);
+			if (!pending) return;
+			clearTimeout(pending.timeout);
+			event.off('Event.decrypted' as any, pending.listener as any);
+			pendingDecryptions.delete(event);
+		};
 
 		const handleTimeline = (
 			event: MatrixEvent,
 			room: Room,
 			toStartOfTimeline: boolean
 		) => {
-			if (room?.roomId !== matrixRoomId) {
+			if (detached || room?.roomId !== matrixRoomId) {
 				return;
 			}
 			listener(event, room, toStartOfTimeline);
+
+			if (
+				detached ||
+				toStartOfTimeline ||
+				event.getType() !== 'm.room.encrypted' ||
+				pendingDecryptions.has(event)
+			) {
+				return;
+			}
+
+			const handleDecrypted = (
+				decryptedEvent: MatrixEvent,
+				error?: Error
+			) => {
+				if (error || decryptedEvent.getType() === 'm.room.encrypted') {
+					return;
+				}
+				clearPendingDecryption(event);
+				listener(decryptedEvent, room, false);
+			};
+
+			const timeout = setTimeout(
+				() => clearPendingDecryption(event),
+				5 * 60 * 1000
+			);
+			pendingDecryptions.set(event, {
+				listener: handleDecrypted,
+				timeout
+			});
+			event.on('Event.decrypted' as any, handleDecrypted as any);
+			if (event.getType() !== 'm.room.encrypted') {
+				handleDecrypted(event);
+			}
 		};
 
 		(matrixClient as any).on('Room.timeline', handleTimeline);
 
 		return () => {
+			detached = true;
 			(matrixClient as any).off('Room.timeline', handleTimeline);
+			Array.from(pendingDecryptions.keys()).forEach(
+				clearPendingDecryption
+			);
 		};
 	}
 

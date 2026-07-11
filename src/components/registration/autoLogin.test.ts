@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { autoLogin } from './autoLogin';
+import { autoLogin, getPostRegistrationGroupChatId } from './autoLogin';
 import { getKeycloakAccessToken } from '../sessionCookie/getKeycloakAccessToken';
 import {
 	getMatrixAccessToken,
@@ -240,4 +240,25 @@ describe('autoLogin', () => {
 			{ featureToolsEnabled: true }
 		);
 	});
+});
+
+describe('getPostRegistrationGroupChatId', () => {
+	it('preserves the group chat deep link through registration', () => {
+		expect(
+			getPostRegistrationGroupChatId('?gcid=%21room%3Amatrix.localhost')
+		).toBe('!room:matrix.localhost');
+	});
+
+	it('returns undefined without a group chat deep link', () => {
+		expect(
+			getPostRegistrationGroupChatId('?topic=counseling')
+		).toBeUndefined();
+	});
+
+	it.each(['?gcid=', '?gcid=%20%20%20'])(
+		'returns undefined for an empty group chat deep link',
+		(search) => {
+			expect(getPostRegistrationGroupChatId(search)).toBeUndefined();
+		}
+	);
 });

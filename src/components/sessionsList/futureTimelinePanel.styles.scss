@@ -1,0 +1,44 @@
+.futureTimeline {
+	padding: $grid-base $grid-base-two;
+	border-bottom: 1px solid var(--m3-outline-variant, #c8c5ca);
+
+	&__divider {
+		display: grid;
+		grid-template-columns: 1fr auto;
+		align-items: center;
+		gap: $grid-base;
+
+		input {
+			width: 100%;
+		}
+
+		button {
+			border: 0;
+			background: transparent;
+			text-decoration: underline;
+			cursor: pointer;
+		}
+	}
+
+	&__events {
+		display: grid;
+		gap: $grid-base;
+		padding-top: $grid-base-two;
+		max-height: 320px;
+		overflow-y: auto;
+
+		article {
+			display: flex;
+			flex-direction: column;
+			padding: $grid-base-two;
+			border-radius: $box-border-radius;
+			background: var(--m3-surface-container, #f1f3f5);
+		}
+	}
+}
+
+.futureTimeline__eventActions {
+	display: flex;
+	gap: $grid-base;
+	flex-wrap: wrap;
+}

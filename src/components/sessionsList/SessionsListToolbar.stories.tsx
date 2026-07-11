@@ -83,6 +83,7 @@ function SessionsListToolbarPlayground({
 					setActiveChip((prev) => (prev === chip ? null : chip))
 				}
 				showConsultantActions={showConsultantActions}
+				showCreateGroupChatAction={showConsultantActions}
 				showSupervisionChip={showSupervisionChip}
 				showLiveChatChip
 				createGroupChatPath="/sessions/consultant/sessionView/createGroupChat"
@@ -151,6 +152,7 @@ function ToolbarWithSearchPreset() {
 					setActiveChip((p) => (p === chip ? null : chip))
 				}
 				showConsultantActions
+				showCreateGroupChatAction
 				showSupervisionChip
 				createGroupChatPath="/sessions/consultant/sessionView/createGroupChat"
 				archiveTabPath="/sessions/consultant/sessionView?sessionListTab=archive"

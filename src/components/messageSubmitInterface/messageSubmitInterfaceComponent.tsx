@@ -27,6 +27,7 @@ import { isAskerEnquirySubmission } from './messageEncryptionMode';
 import { resolveAsideTargetRoomId } from './asideRouting';
 import { chatTransportService } from '../../services/chatTransportService';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
+import { getModality, Modality } from '../session/getModality';
 import { STATUS_ENQUIRY } from '../../globalState/interfaces/SessionsDataInterface';
 import {
 	AUTHORITIES,
@@ -499,12 +500,7 @@ export const MessageSubmitInterfaceComponent = ({
 	}, [location.pathname, location.search, threadRootId]);
 
 	const contact = getContact(activeSession);
-	const isAnonymousChat =
-		activeSession.item.postcode === 0 ||
-		activeSession.item.postcode?.toString() === '00000' ||
-		(activeSession.item as any).registrationType === 'ANONYMOUS' ||
-		contact?.username?.startsWith('Anonymous-') ||
-		activeSession.user?.username?.startsWith('Anonymous-');
+	const isAnonymousChat = getModality(activeSession) === Modality.LIVE_CHAT;
 
 	const draftTitle = useMemo(() => {
 		const topicName =
@@ -1096,8 +1092,7 @@ export const MessageSubmitInterfaceComponent = ({
 					apiPostError({
 						name: error?.name || 'EnquiryMessageSendError',
 						message:
-							error?.message ||
-							'Failed to send enquiry message',
+							error?.message || 'Failed to send enquiry message',
 						stack: error?.stack,
 						level: ERROR_LEVEL_WARN
 					}).then();

@@ -275,3 +275,22 @@ $inputMaxWidth: 500px;
 		}
 	}
 }
+
+.groupChatInfo__roles {
+	margin-top: $grid-base-three;
+	display: grid;
+	gap: $grid-base-two;
+}
+
+.groupChatInfo__roleRow {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: $grid-base-two;
+	flex-wrap: wrap;
+
+	select,
+	button {
+		min-height: $input-field-height;
+	}
+}

@@ -143,6 +143,7 @@ function FullColumnPlayground() {
 					activeChip={chip}
 					onChipToggle={(c) => setChip((p) => (p === c ? null : c))}
 					showConsultantActions
+					showCreateGroupChatAction
 					showSupervisionChip
 					createGroupChatPath="/sessions/consultant/sessionView/createGroupChat"
 					archiveTabPath="/sessions/consultant/sessionView?sessionListTab=archive"
@@ -220,6 +221,7 @@ function ToolbarCreateChatColumn() {
 					activeChip={null}
 					onChipToggle={() => {}}
 					showConsultantActions
+					showCreateGroupChatAction
 					showSupervisionChip={false}
 					createGroupChatPath="/sessions/consultant/sessionView/createGroupChat"
 					archiveTabPath="/sessions/consultant/sessionView?sessionListTab=archive"

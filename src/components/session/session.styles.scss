@@ -119,6 +119,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 
 		@include breakpoint($fromLarge) {
 			margin: 0;
+			width: 100%;
 			border: 0;
 			border-radius: 0;
 		}
