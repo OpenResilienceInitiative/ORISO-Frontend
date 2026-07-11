@@ -8,6 +8,7 @@ import { FETCH_ERRORS } from '../api';
 import { chatTransportService } from '../services/chatTransportService';
 import { apiGetChatRoomById } from '../api/apiGetChatRoomById';
 import { apiGetCaseHandoverCandidates } from '../api/apiCaseHandover';
+import { getModality, Modality } from '../components/session/getModality';
 
 export const useSession = (
 	rid: string | null,
@@ -50,9 +51,10 @@ export const useSession = (
 	);
 
 	useEffect(() => {
-		repetitiveId.current = session?.item?.repetitive
-			? session.item.id
-			: null;
+		repetitiveId.current =
+			getModality(session) === Modality.SELF_HELP
+				? session.item.id
+				: null;
 	}, [session]);
 
 	const loadSession = useCallback(() => {

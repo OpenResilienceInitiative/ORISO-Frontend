@@ -14,7 +14,6 @@ import {
 	AUTHORITIES,
 	buildExtendedSession,
 	ExtendedSessionInterface,
-	getContact,
 	getExtendedSession,
 	hasUserAuthority,
 	REMOVE_SESSIONS,
@@ -33,7 +32,7 @@ import {
 } from '../../globalState/interfaces';
 import { SessionListItemComponent } from '../sessionsListItem/SessionListItemComponent';
 import { SessionsListSkeleton } from '../sessionsListItem/SessionsListItemSkeleton';
-import { isAnonymousAskerCandidate } from './sessionClassification';
+import { getModality, Modality } from '../session/getModality';
 import {
 	apiGetAskerSessionList,
 	apiGetCaseHandoverCandidates,
@@ -121,24 +120,9 @@ function buildSessionSearchHaystack(
  */
 function isAnonymousAskerSession(
 	raw: ListItemInterface,
-	extended: ExtendedSessionInterface
+	_extended: ExtendedSessionInterface
 ): boolean {
-	const registrationType =
-		(raw as any)?.session?.registrationType ??
-		(extended as any)?.item?.registrationType;
-	const postcode =
-		(raw as any)?.session?.postcode ?? (extended as any)?.item?.postcode;
-	const contact = getContact(extended as ListItemInterface);
-	return isAnonymousAskerCandidate({
-		registrationType,
-		postcode,
-		usernames: [
-			contact?.username,
-			(raw as any)?.user?.username,
-			(raw as any)?.session?.askerUserName,
-			(extended as any)?.item?.askerUserName
-		]
-	});
+	return getModality(raw) === Modality.LIVE_CHAT;
 }
 
 const getSessionIdentityValues = (
@@ -918,7 +902,11 @@ export const SessionsList = ({
 									(s) => s?.chat?.groupId === rid
 								);
 								// If repetitive group chat reload it by id because groupId has changed
-								if (loadedSession?.chat?.repetitive) {
+								if (
+									loadedSession &&
+									getModality(loadedSession) ===
+										Modality.SELF_HELP
+								) {
 									return ['reload', loadedSession.chat.id];
 								}
 								return ['removed', rid];
@@ -948,7 +936,11 @@ export const SessionsList = ({
 								(s) => s?.chat?.groupId === rid
 							);
 							// If repetitive group chat reload it by id because groupId has changed
-							if (loadedSession?.chat?.repetitive) {
+							if (
+								loadedSession &&
+								getModality(loadedSession) ===
+									Modality.SELF_HELP
+							) {
 								return ['reload', loadedSession.chat.id];
 							}
 							return ['removed', rid];
@@ -2140,14 +2132,16 @@ const useGroupWatcher = (isLoading: boolean) => {
 					dispatch({
 						type: REMOVE_SESSIONS,
 						ids: removedGroupSessions
-							.filter((s) => !s.chat.repetitive)
+							.filter(
+								(s) => getModality(s) !== Modality.SELF_HELP
+							)
 							.map((s) => s.chat.groupId)
 					});
 				}
 
 				// Update repetitive chats by id because groupId has changed
 				const repetitiveGroupSessions = removedGroupSessions.filter(
-					(s) => s.chat.repetitive
+					(s) => getModality(s) === Modality.SELF_HELP
 				);
 				if (repetitiveGroupSessions.length > 0) {
 					Promise.all(

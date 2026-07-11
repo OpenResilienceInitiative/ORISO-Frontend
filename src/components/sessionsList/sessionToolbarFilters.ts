@@ -1,3 +1,5 @@
+import { getModality, Modality } from '../session/getModality';
+
 export type SessionToolbarChipFilter =
 	| 'unread'
 	| 'drafts'
@@ -10,6 +12,7 @@ export type SessionToolbarChipFilter =
 export type SessionToolbarGroupSession = {
 	isGroup?: boolean;
 	item?: {
+		conversationType?: `${Modality}`;
 		repetitive?: boolean;
 	} | null;
 };
@@ -45,7 +48,8 @@ export const normalizeSessionToolbarChip = (
 // Group chat filters must rely on room metadata, never encrypted message bodies.
 export const isConversationCircleSession = (
 	session: SessionToolbarGroupSession
-): boolean => Boolean(session.isGroup && session.item?.repetitive);
+): boolean =>
+	Boolean(session.isGroup) && getModality(session) === Modality.SELF_HELP;
 
 export const isInternalGroupChatSession = (
 	session: SessionToolbarGroupSession

@@ -12,6 +12,7 @@ import {
 import { ResizeObserver } from '@juggle/resize-observer';
 import clsx from 'clsx';
 import { scrollToEnd, isMyMessage, SESSION_LIST_TYPES } from './sessionHelpers';
+import { getModality, Modality } from './getModality';
 import { formatToHHMM } from '../../utils/dateHelpers';
 import {
 	isMatrixRoom,
@@ -596,12 +597,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		featureThreadsSupervisionChatsEnabled = true
 	} = getTenantSettings();
 	const contact = getContact(activeSession);
-	const isAnonymousChat =
-		activeSession.item.postcode === 0 ||
-		activeSession.item.postcode?.toString() === '00000' ||
-		(activeSession.item as any).registrationType === 'ANONYMOUS' ||
-		contact?.username?.startsWith('Anonymous-') ||
-		activeSession.user?.username?.startsWith('Anonymous-');
+	const isAnonymousChat = getModality(activeSession) === Modality.LIVE_CHAT;
 	const chatType: 'anonymous' | 'oneOnOne' | 'group' | 'supervision' =
 		isSupervisor
 			? 'supervision'

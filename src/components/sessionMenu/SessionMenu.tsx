@@ -9,7 +9,6 @@ import {
 import { generatePath, Link, Navigate, useNavigate } from 'react-router-dom';
 import {
 	AUTHORITIES,
-	getContact,
 	hasUserAuthority,
 	SessionTypeContext,
 	useConsultingType,
@@ -24,6 +23,7 @@ import {
 	SESSION_LIST_TAB_ARCHIVE,
 	SESSION_LIST_TYPES
 } from '../session/sessionHelpers';
+import { getModality, Modality } from '../session/getModality';
 import { Overlay, OVERLAY_FUNCTIONS } from '../overlay/Overlay';
 import {
 	archiveSessionSuccessOverlayItem,
@@ -160,7 +160,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 	const handleStopGroupChat = () => {
 		stopGroupChatSecurityOverlayItem.copy =
-			activeSession.isGroup && activeSession.item.repetitive
+			getModality(activeSession) === Modality.SELF_HELP
 				? translate('groupChat.stopChat.securityOverlay.copyRepeat')
 				: translate('groupChat.stopChat.securityOverlay.copySingle');
 		setOverlayItem(stopGroupChatSecurityOverlayItem);
@@ -338,13 +338,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		icon: <VideoCallHeaderIcon />
 	};
 
-	const contact = getContact(activeSession);
-	const isAnonymousChat =
-		activeSession.item.postcode === 0 ||
-		activeSession.item.postcode?.toString() === '00000' ||
-		(activeSession.item as any).registrationType === 'ANONYMOUS' ||
-		contact?.username?.startsWith('Anonymous-') ||
-		activeSession.user?.username?.startsWith('Anonymous-');
+	const isAnonymousChat = getModality(activeSession) === Modality.LIVE_CHAT;
 	const showAnonymousMobileMenu =
 		Boolean(props.showMobileEndAnonymousChatAction) ||
 		Boolean(props.showMobileDeleteAnonymousAccountAction) ||
