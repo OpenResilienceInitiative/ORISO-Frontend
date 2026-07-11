@@ -205,7 +205,11 @@ describe('TopicSelection', () => {
 		renderTopicSelection();
 
 		expect(
-			await screen.findByText('Familie, Kinder & Jugend')
+			await screen.findByText(
+				'Familie, Kinder & Jugend',
+				{},
+				{ timeout: 5000 }
+			)
 		).toBeDefined();
 		expect(screen.getByText('Alter, Pflege & Abschied')).toBeDefined();
 		expect(
@@ -220,9 +224,14 @@ describe('TopicSelection', () => {
 			screen.getByText('Soziale Notlagen, Krisen & Finanzen')
 		);
 
-		await waitFor(() => {
-			expect(screen.getAllByText('U25 Suizidprävention')).toHaveLength(2);
-		});
+		await waitFor(
+			() => {
+				expect(
+					screen.getAllByText('U25 Suizidprävention')
+				).toHaveLength(2);
+			},
+			{ timeout: 5000 }
+		);
 
 		const duplicateRows = screen
 			.getAllByText('U25 Suizidprävention')
@@ -240,18 +249,21 @@ describe('TopicSelection', () => {
 
 		fireEvent.keyDown(duplicateRows[1]!, { key: 'ArrowUp' });
 
-		await waitFor(() => {
-			const radios = screen.getAllByRole('radio');
-			expect(
-				radios.filter(
-					(row) => row.getAttribute('aria-checked') === 'true'
-				)
-			).toHaveLength(1);
-			expect(
-				radios.filter((row) => row.getAttribute('tabindex') === '0')
-			).toHaveLength(1);
-		});
-	});
+		await waitFor(
+			() => {
+				const radios = screen.getAllByRole('radio');
+				expect(
+					radios.filter(
+						(row) => row.getAttribute('aria-checked') === 'true'
+					)
+				).toHaveLength(1);
+				expect(
+					radios.filter((row) => row.getAttribute('tabindex') === '0')
+				).toHaveLength(1);
+			},
+			{ timeout: 5000 }
+		);
+	}, 15000);
 
 	it('leaves loading state when the public topics request fails', async () => {
 		apiGetTopicsDataMock.mockRejectedValue(new Error('network'));

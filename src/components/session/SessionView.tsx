@@ -24,6 +24,7 @@ import { useSession } from '../../hooks/useSession';
 import { SessionStream } from './SessionStream';
 import { useSetAtom } from 'jotai';
 import { agencyLogoAtom } from '../../store/agencyLogoAtom';
+import { shouldShowGroupChatJoinView } from '../groupChat/groupChatHelpers';
 
 export const SessionView = () => {
 	const { rcGroupId: groupIdFromParam, sessionId: sessionIdFromParam } =
@@ -205,9 +206,12 @@ export const SessionView = () => {
 	// });
 
 	if (
-		activeSession.isGroup &&
-		(!activeSession.item.subscribed ||
-			bannedUsers.includes(userData.userName))
+		shouldShowGroupChatJoinView({
+			isGroup: activeSession.isGroup,
+			active: activeSession.item.active,
+			subscribed: activeSession.item.subscribed,
+			isBanned: bannedUsers.includes(userData.userName)
+		})
 	) {
 		// console.log('🔥 Showing JoinGroupChatView');
 		return (

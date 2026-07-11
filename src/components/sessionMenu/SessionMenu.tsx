@@ -9,7 +9,6 @@ import {
 import { generatePath, Link, Navigate, useNavigate } from 'react-router-dom';
 import {
 	AUTHORITIES,
-	getContact,
 	hasUserAuthority,
 	SessionTypeContext,
 	useConsultingType,
@@ -24,6 +23,7 @@ import {
 	SESSION_LIST_TAB_ARCHIVE,
 	SESSION_LIST_TYPES
 } from '../session/sessionHelpers';
+import { getModality, Modality } from '../session/getModality';
 import { Overlay, OVERLAY_FUNCTIONS } from '../overlay/Overlay';
 import {
 	archiveSessionSuccessOverlayItem,
@@ -41,7 +41,10 @@ import {
 } from '../../api';
 import { logout } from '../logout/logout';
 import { mobileListView } from '../app/navigationHandler';
-import { isGroupChatOwner } from '../groupChat/groupChatHelpers';
+import {
+	canModerateGroupChat,
+	isGroupChatOwner
+} from '../groupChat/groupChatHelpers';
 import { ReactComponent as LeaveChatIcon } from '../../resources/img/icons/out.svg';
 import { ReactComponent as GroupChatInfoIcon } from '../../resources/img/icons/i.svg';
 import { ReactComponent as StopGroupChatIcon } from '../../resources/img/icons/x.svg';
@@ -69,6 +72,7 @@ import {
 	ChatMenuDropdownHeader,
 	ChatMenuDropdownItemContent as SessionMenuItemContent
 } from '../chatMenuDropdown/ChatMenuDropdown';
+import { sessionMenuOwnsCallControls } from './callControlOwnership';
 
 export interface SessionMenuProps {
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
@@ -156,7 +160,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 	const handleStopGroupChat = () => {
 		stopGroupChatSecurityOverlayItem.copy =
-			activeSession.isGroup && activeSession.item.repetitive
+			getModality(activeSession) === Modality.SELF_HELP
 				? translate('groupChat.stopChat.securityOverlay.copyRepeat')
 				: translate('groupChat.stopChat.securityOverlay.copySingle');
 		setOverlayItem(stopGroupChatSecurityOverlayItem);
@@ -334,13 +338,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		icon: <VideoCallHeaderIcon />
 	};
 
-	const contact = getContact(activeSession);
-	const isAnonymousChat =
-		activeSession.item.postcode === 0 ||
-		activeSession.item.postcode?.toString() === '00000' ||
-		(activeSession.item as any).registrationType === 'ANONYMOUS' ||
-		contact?.username?.startsWith('Anonymous-') ||
-		activeSession.user?.username?.startsWith('Anonymous-');
+	const isAnonymousChat = getModality(activeSession) === Modality.LIVE_CHAT;
 	const showAnonymousMobileMenu =
 		Boolean(props.showMobileEndAnonymousChatAction) ||
 		Boolean(props.showMobileDeleteAnonymousAccountAction) ||
@@ -519,7 +517,8 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 	return (
 		<div className="sessionMenu__wrapper">
-			{hasVideoCallFeatures() &&
+			{sessionMenuOwnsCallControls(activeSession.isGroup) &&
+				hasVideoCallFeatures() &&
 				!props.isSupervisor &&
 				(isAudioCallsEnabled || isVideoCallsEnabled) && (
 					<div
@@ -564,6 +563,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 						className="sessionMenu__icon sessionMenu__icon--desktop"
 						aria-expanded={Boolean(flyoutOpen)}
 						aria-controls="flyout"
+						aria-label={translate('app.menu')}
 					>
 						<MenuVerticalIcon
 							title={translate('app.menu')}
@@ -577,6 +577,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 						className="sessionMenu__icon sessionMenu__icon--mobile"
 						aria-expanded={Boolean(flyoutOpen)}
 						aria-controls="flyout"
+						aria-label={translate('app.menu')}
 					>
 						<MenuVerticalIcon
 							title={translate('app.menu')}
@@ -958,7 +959,8 @@ const SessionMenuFlyoutGroup = ({
 				</Link>
 			)}
 			{activeSession.item.subscribed &&
-				hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) && (
+				hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
+				canModerateGroupChat(activeSession, userData) && (
 					<div
 						onClick={handleStopGroupChat}
 						className="sessionMenu__item chatMenuDropdown__item sessionMenu__button"

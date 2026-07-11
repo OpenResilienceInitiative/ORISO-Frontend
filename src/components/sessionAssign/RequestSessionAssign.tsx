@@ -174,7 +174,7 @@ export const RequestSessionAssign = (props: { value?: string }) => {
 					.catch((error) => {
 						if (error === FETCH_ERRORS.CONFLICT) {
 							return null;
-						} else console.log(error);
+						}
 					});
 				break;
 			case OVERLAY_FUNCTIONS.REASSIGN:

@@ -11,6 +11,24 @@ describe('getModality', () => {
 		expect(getModality(item)).toBe(Modality.LIVE_CHAT);
 	});
 
+	it('keeps the legacy anonymous-postcode fallback during backend rollout', () => {
+		const item = asItem({
+			session: { registrationType: 'REGISTERED', postcode: 0 }
+		});
+		expect(getModality(item)).toBe(Modality.LIVE_CHAT);
+	});
+
+	it('keeps the legacy anonymous-username fallback on the active-session shape', () => {
+		const activeSession = {
+			item: { registrationType: 'REGISTERED', postcode: 10115 },
+			user: { username: 'Anonymous-legacy' },
+			isGroup: false,
+			isSession: true
+		};
+
+		expect(getModality(activeSession)).toBe(Modality.LIVE_CHAT);
+	});
+
 	it('classifies a registered session as AGENCY_COUNSELLING', () => {
 		const item = asItem({ session: { registrationType: 'REGISTERED' } });
 		expect(getModality(item)).toBe(Modality.AGENCY_COUNSELLING);
@@ -33,6 +51,13 @@ describe('getModality', () => {
 		expect(getModality(item)).toBe(Modality.SELF_HELP);
 	});
 
+	it('classifies a one-occurrence Series as SELF_HELP', () => {
+		const item = asItem({
+			chat: { repetitive: false, repeatCount: 1 }
+		});
+		expect(getModality(item)).toBe(Modality.SELF_HELP);
+	});
+
 	it('prefers an explicit backend conversationType over the heuristic', () => {
 		// looks like AGENCY_COUNSELLING by heuristic, but the backend says LIVE_CHAT
 		const item = asItem({
@@ -42,6 +67,20 @@ describe('getModality', () => {
 			}
 		});
 		expect(getModality(item)).toBe(Modality.LIVE_CHAT);
+	});
+
+	it('prefers an explicit modality on the active-session shape over conflicting legacy fields', () => {
+		const activeSession = {
+			item: {
+				conversationType: 'LIVE_CHAT',
+				registrationType: 'REGISTERED',
+				postcode: 10115
+			},
+			isGroup: false,
+			isSession: true
+		};
+
+		expect(getModality(activeSession)).toBe(Modality.LIVE_CHAT);
 	});
 
 	it('ignores an unknown explicit conversationType and falls back to the heuristic', () => {

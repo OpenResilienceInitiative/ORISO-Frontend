@@ -8,6 +8,7 @@ import { FETCH_ERRORS } from '../api';
 import { chatTransportService } from '../services/chatTransportService';
 import { apiGetChatRoomById } from '../api/apiGetChatRoomById';
 import { apiGetCaseHandoverCandidates } from '../api/apiCaseHandover';
+import { getModality, Modality } from '../components/session/getModality';
 
 export const useSession = (
 	rid: string | null,
@@ -26,7 +27,7 @@ export const useSession = (
 
 	const loadCaseHandoverCandidateSession = useCallback(
 		async (signal?: AbortSignal): Promise<boolean> => {
-			if (!sessionId) {
+			if (sessionId === undefined || sessionId === null) {
 				return false;
 			}
 
@@ -50,9 +51,10 @@ export const useSession = (
 	);
 
 	useEffect(() => {
-		repetitiveId.current = session?.item?.repetitive
-			? session.item.id
-			: null;
+		repetitiveId.current =
+			getModality(session) === Modality.SELF_HELP
+				? session.item.id
+				: null;
 	}, [session]);
 
 	const loadSession = useCallback(() => {
@@ -67,26 +69,30 @@ export const useSession = (
 
 		let promise;
 
-		if (!rid && !sessionId && !chatId) {
+		if (
+			!rid &&
+			(sessionId === undefined || sessionId === null) &&
+			(chatId === undefined || chatId === null)
+		) {
 			// console.log('⚠️ useSession: No rid, sessionId, or chatId provided - returning early');
 			return;
 		}
 
-		if (chatId) {
+		if (chatId !== undefined && chatId !== null) {
 			// console.log('🔍 useSession: Loading by chatId:', chatId);
 			promise = apiGetChatRoomById(
 				chatId,
 				abortController.current.signal
 			);
-		} else if (sessionId) {
+		} else if (rid) {
+			promise = apiGetSessionRoomsByGroupIds(
+				[rid],
+				abortController.current.signal
+			);
+		} else if (sessionId !== undefined && sessionId !== null) {
 			// console.log('🔍 useSession: Loading by sessionId:', sessionId);
 			promise = apiGetSessionRoomBySessionId(
 				sessionId,
-				abortController.current.signal
-			);
-		} else {
-			promise = apiGetSessionRoomsByGroupIds(
-				[rid],
 				abortController.current.signal
 			);
 		}
@@ -101,7 +107,8 @@ export const useSession = (
 					setSession(extendedSession);
 				} else {
 					if (
-						sessionId &&
+						sessionId !== undefined &&
+						sessionId !== null &&
 						(await loadCaseHandoverCandidateSession(
 							abortController.current?.signal
 						).catch(() => false))
@@ -126,7 +133,8 @@ export const useSession = (
 					);
 				}
 				if (
-					sessionId &&
+					sessionId !== undefined &&
+					sessionId !== null &&
 					(await loadCaseHandoverCandidateSession(
 						abortController.current?.signal
 					).catch(() => false))

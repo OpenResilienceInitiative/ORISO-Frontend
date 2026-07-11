@@ -150,8 +150,34 @@ export const getMatrixHomeserverUrl = (): string =>
 export const getRuntimeApiBaseUrl = (): string =>
 	ensureHttps(pickValue('REACT_APP_API_URL', 'VITE_API_URL'));
 
+const isLocalServiceOrigin = (value?: string | null): boolean =>
+	/^(https?:\/\/)?(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/i.test(
+		String(value || '').trim()
+	);
+
+/**
+ * In local dev, remote service origins must stay same-origin so webpack-dev-server
+ * can proxy /service and /auth to REACT_APP_DEV_REMOTE_API_URL. Absolute remote
+ * URLs bypass the proxy and trigger browser CORS failures.
+ */
+const resolveServiceOriginForEnvironment = (origin: string): string => {
+	if (!origin) {
+		return '';
+	}
+
+	const nodeEnv =
+		typeof process !== 'undefined' ? process.env.NODE_ENV : undefined;
+	if (nodeEnv === 'development' && !isLocalServiceOrigin(origin)) {
+		return '';
+	}
+
+	return origin;
+};
+
 const getServiceOrigin = (key: string, fallbackOrigin: string): string =>
-	stripTrailingSlashes(ensureHttps(pickValue(key) || fallbackOrigin));
+	resolveServiceOriginForEnvironment(
+		stripTrailingSlashes(ensureHttps(pickValue(key) || fallbackOrigin))
+	);
 
 export const getUserServiceOrigin = (
 	fallbackOrigin = getRuntimeApiBaseUrl()

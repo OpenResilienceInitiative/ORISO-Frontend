@@ -1,3 +1,90 @@
+import { groupChatSettings } from '../../api/apiGroupChatSettings';
+
+export type GroupChatInterval = NonNullable<groupChatSettings['chatInterval']>;
+export type GroupChatModality = NonNullable<groupChatSettings['modality']>;
+
+export interface GroupChatSeriesFormValue {
+	topic: string;
+	agencyId: number;
+	startDate: string;
+	startTime: string;
+	duration: number;
+	repeatCount: number;
+	chatInterval: GroupChatInterval;
+	modality: GroupChatModality;
+	timezone: string;
+	hintMessage: string;
+	sourceLanguage?: string;
+	hintMessageTranslations?: Record<string, string>;
+	groupChatRulesTranslations?: Record<string, string[]>;
+	consultantIds: string[];
+}
+
+export const isGroupChatFeatureEnabled = (
+	tenant?: {
+		settings?: { featureGroupChatV2Enabled?: boolean };
+	} | null
+) => tenant?.settings?.featureGroupChatV2Enabled === true;
+
+export const buildGroupChatSeriesRequest = ({
+	repeatCount,
+	chatInterval,
+	groupChatRulesTranslations,
+	...form
+}: GroupChatSeriesFormValue): groupChatSettings => {
+	const normalizedRules = groupChatRulesTranslations
+		? Object.fromEntries(
+				Object.entries(groupChatRulesTranslations).flatMap(
+					([language, rules]) => {
+						const normalized = rules
+							.map((rule) => rule.trim())
+							.filter(Boolean);
+						return normalized.length
+							? [[language, normalized]]
+							: [];
+					}
+				)
+			)
+		: undefined;
+
+	return {
+		...form,
+		...(normalizedRules && Object.keys(normalizedRules).length
+			? { groupChatRulesTranslations: normalizedRules }
+			: {}),
+		repetitive: repeatCount > 1,
+		repeatCount,
+		...(repeatCount > 1 ? { chatInterval } : {}),
+		featureGroupChatV2Enabled: true
+	};
+};
+
+export const buildOneOffDuplicateFields = ({
+	topic,
+	start,
+	duration,
+	modality
+}: {
+	topic: string;
+	start: string;
+	duration: number;
+	modality: GroupChatModality;
+}) => {
+	const plannedStart = new Date(start);
+	if (Number.isNaN(plannedStart.getTime())) {
+		throw new Error('A valid occurrence start is required for duplication');
+	}
+	return {
+		topic,
+		startDate: getValidDateFormatForSelectedDate(plannedStart),
+		startTime: getValidTimeFormatForSelectedTime(plannedStart),
+		duration,
+		repeatCount: 1,
+		interval: 'WEEKLY' as GroupChatInterval,
+		modality
+	};
+};
+
 export const TOPIC_LENGTHS = {
 	MIN: 3,
 	MAX: 50
