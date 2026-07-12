@@ -445,6 +445,36 @@
 			"unreadFilter": "Ungelesen",
 			"showPreview": "Chat-Vorschau anzeigen",
 			"showDetails": "Details anzeigen"
+		},
+		"events": {
+			"requestDenied": {
+				"title": "Anfrage abgelehnt",
+				"text": "Die Klient:innen-Anfrage wurde abgelehnt."
+			},
+			"waitingRoomClientJoined": {
+				"title": "Klient:in im Warteraum",
+				"text": "Eine Klient:in ist dem Warteraum beigetreten."
+			},
+			"callInvited": {
+				"title": "Einladung zu internem Gruppenanruf",
+				"text": "Du wurdest zu einem internen Gruppenanruf eingeladen."
+			},
+			"appointmentRequested": {
+				"title": "Termin für einen Anruf angefragt",
+				"text": "Es liegt eine neue Terminanfrage für einen Anruf vor."
+			},
+			"appointmentScheduled": {
+				"title": "Termin vor Ort geplant",
+				"text": "Ein Termin vor Ort wurde vereinbart."
+			},
+			"appointmentCancelled": {
+				"title": "Termin abgesagt",
+				"text": "Ein geplanter Termin wurde abgesagt."
+			},
+			"appointmentBriefing": {
+				"title": "Termin-Briefing",
+				"text": "Eine Übersicht deiner anstehenden Termine liegt bereit."
+			}
 		}
 	},
 	"overlay": {

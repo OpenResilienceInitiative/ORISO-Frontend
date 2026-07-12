@@ -59,6 +59,18 @@ const mockFeed: NotificationFeedItem[] = [
 		actionPath: '/sessions/consultant/sessionPreview'
 	}),
 	feedItem({
+		id: '3a',
+		eventType: 'appointment.requested',
+		createdAt: minutesAgo(50)
+	}),
+	feedItem({
+		id: '3b',
+		eventType: 'request.denied',
+		createdAt: minutesAgo(70),
+		readAt: minutesAgo(65),
+		actionPath: '/sessions/consultant/sessionPreview'
+	}),
+	feedItem({
 		id: '4',
 		eventType: 'inquiry.accepted',
 		createdAt: minutesAgo(90),
@@ -99,6 +111,35 @@ const mockFeed: NotificationFeedItem[] = [
 		createdAt: minutesAgo(60 * 30),
 		readAt: minutesAgo(60 * 29),
 		sourceSessionId: '105'
+	}),
+	feedItem({
+		id: '9a',
+		eventType: 'call.invited',
+		createdAt: minutesAgo(60 * 32),
+		sourceSessionId: '106'
+	}),
+	feedItem({
+		id: '9b',
+		eventType: 'appointment.cancelled',
+		createdAt: minutesAgo(60 * 36),
+		readAt: minutesAgo(60 * 35)
+	}),
+	feedItem({
+		id: '9c',
+		eventType: 'appointment.scheduled',
+		createdAt: minutesAgo(60 * 40),
+		readAt: minutesAgo(60 * 39)
+	}),
+	feedItem({
+		id: '9d',
+		eventType: 'appointment.briefing',
+		createdAt: minutesAgo(60 * 44),
+		readAt: minutesAgo(60 * 43)
+	}),
+	feedItem({
+		id: '9e',
+		eventType: 'waiting_room.client.joined',
+		createdAt: minutesAgo(60 * 46)
 	}),
 	feedItem({
 		id: '10',

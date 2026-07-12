@@ -51,6 +51,7 @@ const ALL_FAMILIES: EventFamily[] = [
 const KNOWN_ICON_IDS: EventIconId[] = [
 	'requestNew',
 	'requestAccepted',
+	'requestDenied',
 	'message',
 	'threadReply',
 	'draft',
@@ -59,9 +60,15 @@ const KNOWN_ICON_IDS: EventIconId[] = [
 	'callStarted',
 	'callEnded',
 	'callMissed',
+	'callInvited',
 	'supervisor',
 	'rename',
 	'appointment',
+	'appointmentRequested',
+	'appointmentScheduled',
+	'appointmentCancelled',
+	'appointmentBriefing',
+	'waitingRoom',
 	'system'
 ];
 
@@ -87,9 +94,17 @@ const EXPECTED_TARGET_KIND: Record<string, string> = {
 	'call.started': 'join',
 	'call.ended': 'conversation',
 	'call.missed': 'conversation',
+	'call.invited': 'conversation',
 	'group_chat.reminder': 'conversation',
 	'group_chat.opened': 'groupChatJoin',
-	'group_chat.cancelled': 'conversation'
+	'group_chat.cancelled': 'conversation',
+	// Figma design review 2026-07-12 — designed types seeded ahead of writers.
+	'request.denied': 'request',
+	'waiting_room.client.joined': 'request',
+	'appointment.requested': 'conversation',
+	'appointment.scheduled': 'conversation',
+	'appointment.cancelled': 'conversation',
+	'appointment.briefing': 'conversation'
 };
 
 // Resolve a dotted i18n key against a loaded common.json object.
@@ -107,11 +122,13 @@ describe('WP-06 event-descriptor registry', () => {
 	});
 
 	it('seeds group-chat lifecycle events in the appointments family', () => {
-		// 7 existing + request.new + draft.created + 8 handover + 3 call
-		// + 3 group-chat lifecycle = 23.
-		expect(KNOWN_EVENT_TYPES.length).toBe(23);
+		// 7 existing + 3 requests (new/denied/waiting-room) + draft.created
+		// + 8 handover + 4 call + 3 group-chat lifecycle + 4 appointments = 30.
+		expect(KNOWN_EVENT_TYPES.length).toBe(30);
 		[
 			'request.new',
+			'request.denied',
+			'waiting_room.client.joined',
 			'draft.created',
 			'handover.requested',
 			'handover.partial',
@@ -124,9 +141,14 @@ describe('WP-06 event-descriptor registry', () => {
 			'call.started',
 			'call.ended',
 			'call.missed',
+			'call.invited',
 			'group_chat.reminder',
 			'group_chat.opened',
-			'group_chat.cancelled'
+			'group_chat.cancelled',
+			'appointment.requested',
+			'appointment.scheduled',
+			'appointment.cancelled',
+			'appointment.briefing'
 		].forEach((type) => expect(isKnownEventType(type)).toBe(true));
 	});
 

@@ -1518,6 +1518,34 @@
 			"groupChatCancelled": {
 				"title": "Online appointment cancelled",
 				"text": "The online appointment was cancelled."
+			},
+			"requestDenied": {
+				"title": "Request denied",
+				"text": "The client request was denied."
+			},
+			"waitingRoomClientJoined": {
+				"title": "Client joined waiting room",
+				"text": "A client has joined the waiting room."
+			},
+			"callInvited": {
+				"title": "Invitation to internal group call",
+				"text": "You have been invited to an internal group call."
+			},
+			"appointmentRequested": {
+				"title": "Call appointment requested",
+				"text": "There is a new appointment request for a call."
+			},
+			"appointmentScheduled": {
+				"title": "Local appointment scheduled",
+				"text": "An in-person appointment has been scheduled."
+			},
+			"appointmentCancelled": {
+				"title": "Appointment cancelled",
+				"text": "A scheduled appointment has been cancelled."
+			},
+			"appointmentBriefing": {
+				"title": "Appointments briefing",
+				"text": "A briefing of your upcoming appointments is ready."
 			}
 		},
 		"error": "failed",
