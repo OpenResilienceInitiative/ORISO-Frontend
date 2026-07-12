@@ -61,4 +61,26 @@ describe('WaitingAreaRules', () => {
 			container.querySelector('.joinChat__rules')?.getAttribute('aria-label')
 		).toBe('Chat rules');
 	});
+
+	it('does not cycle when the user prefers reduced motion', () => {
+		const mql = {
+			matches: true,
+			media: '(prefers-reduced-motion: reduce)',
+			addEventListener: vi.fn(),
+			removeEventListener: vi.fn()
+		};
+		vi.stubGlobal(
+			'matchMedia',
+			vi.fn().mockReturnValue(mql as unknown as MediaQueryList)
+		);
+		const { container } = render(
+			<WaitingAreaRules rules={['a', 'b', 'c']} />
+		);
+		act(() => {
+			vi.advanceTimersByTime(8000);
+		});
+		const active = container.querySelector(`.${ACTIVE}`);
+		expect(active?.textContent).toBe('a');
+		vi.unstubAllGlobals();
+	});
 });

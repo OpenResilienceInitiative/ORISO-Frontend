@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { usePrefersReducedMotion } from '../../hooks/usePrefersReducedMotion';
 import { useCyclingIndex } from './useCyclingIndex';
 
 const RULE_CYCLE_INTERVAL_MS = 4000;
@@ -15,7 +16,10 @@ interface WaitingAreaRulesProps {
  * all statically (handled in joinChat.styles.scss) — motion is never required to read a rule.
  */
 export const WaitingAreaRules = ({ rules, ariaLabel }: WaitingAreaRulesProps) => {
-	const activeIndex = useCyclingIndex(rules.length, RULE_CYCLE_INTERVAL_MS);
+	const prefersReducedMotion = usePrefersReducedMotion();
+	const activeIndex = useCyclingIndex(rules.length, RULE_CYCLE_INTERVAL_MS, {
+		enabled: !prefersReducedMotion
+	});
 
 	if (rules.length === 0) {
 		return null;
