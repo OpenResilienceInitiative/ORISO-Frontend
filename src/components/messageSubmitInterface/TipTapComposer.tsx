@@ -83,6 +83,9 @@ interface TipTapComposerProps {
 const getEditorPlainTextLength = (editorLike: any): number =>
 	(editorLike?.state?.doc?.textContent || '').length;
 
+const isEditorReady = (editorLike: any): boolean =>
+	Boolean(editorLike && !editorLike.isDestroyed);
+
 const getSelectionTextLength = (
 	editorLike: any,
 	from: number,
@@ -108,7 +111,7 @@ const enforceEditorMaxLength = (
 	editorLike: any,
 	maxLength?: number
 ): boolean => {
-	if (!maxLength) {
+	if (!maxLength || !isEditorReady(editorLike)) {
 		return false;
 	}
 
@@ -288,7 +291,7 @@ export const TipTapComposer = forwardRef<
 				onFocusChange?.(false);
 			},
 			onUpdate: ({ editor: currentEditor }) => {
-				if (isSyncingFromValue) {
+				if (isSyncingFromValue || !isEditorReady(currentEditor)) {
 					return;
 				}
 				if (enforceEditorMaxLength(currentEditor, maxLength)) {
@@ -298,7 +301,7 @@ export const TipTapComposer = forwardRef<
 				onChange(currentEditor.getHTML());
 			},
 			onSelectionUpdate: ({ editor: currentEditor }) => {
-				if (!onSelectionSnippet) {
+				if (!onSelectionSnippet || !isEditorReady(currentEditor)) {
 					return;
 				}
 				const { from, to } = currentEditor.state.selection;
@@ -318,14 +321,14 @@ export const TipTapComposer = forwardRef<
 		});
 
 		useEffect(() => {
-			if (!editor) {
+			if (!isEditorReady(editor)) {
 				return;
 			}
 			editor.setEditable(!readOnly);
 		}, [editor, readOnly]);
 
 		useEffect(() => {
-			if (!editor) {
+			if (!isEditorReady(editor)) {
 				return;
 			}
 			const normalizedValue = (value || '')
@@ -361,28 +364,34 @@ export const TipTapComposer = forwardRef<
 
 		useImperativeHandle(ref, () => ({
 			clear: () => {
-				editor?.commands.clearContent();
+				if (isEditorReady(editor)) {
+					editor.commands.clearContent();
+				}
 			},
 			focus: () => {
-				editor?.commands.focus();
+				if (isEditorReady(editor)) {
+					editor.commands.focus();
+				}
 			},
 			setText: (nextValue: string) => {
-				editor?.commands.setContent(nextValue || '');
+				if (isEditorReady(editor)) {
+					editor.commands.setContent(nextValue || '');
+				}
 			},
 			getHTML: () => {
-				if (!editor) {
+				if (!isEditorReady(editor)) {
 					return '';
 				}
 				return editor.getHTML();
 			},
 			insertText: (nextValue: string) => {
-				if (!editor || !nextValue) {
+				if (!isEditorReady(editor) || !nextValue) {
 					return;
 				}
 				editor.chain().focus().insertContent(nextValue).run();
 			},
 			insertMentionTrigger: () => {
-				if (!editor) {
+				if (!isEditorReady(editor)) {
 					return;
 				}
 				// The mention suggestion only fires on '@' at a line start or
@@ -403,7 +412,7 @@ export const TipTapComposer = forwardRef<
 					.run();
 			},
 			insertSnippet: (payload: HighlightSnippetPayload) => {
-				if (!editor || !payload?.text) {
+				if (!isEditorReady(editor) || !payload?.text) {
 					return;
 				}
 				const anchorMeta = payload.anchorId
@@ -419,7 +428,7 @@ export const TipTapComposer = forwardRef<
 					.run();
 			},
 			runAction: (action: string) => {
-				if (!editor) {
+				if (!isEditorReady(editor)) {
 					return;
 				}
 
@@ -625,7 +634,7 @@ export const TipTapComposer = forwardRef<
 				}
 			},
 			isActionActive: (action: string) => {
-				if (!editor) {
+				if (!isEditorReady(editor)) {
 					return false;
 				}
 				const activeTextAlign = editor.isActive('heading')
@@ -685,7 +694,7 @@ export const TipTapComposer = forwardRef<
 			}
 		}));
 
-		if (!editor) {
+		if (!isEditorReady(editor)) {
 			return <div className="tiptap-composer__loading" />;
 		}
 
