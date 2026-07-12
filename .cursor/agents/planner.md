@@ -14,6 +14,6 @@ When invoked:
 3. Produce content for `01-spike.md` (current behavior, root cause or gap, chosen approach, risks) and `02-implementation-plan.md` (impacted files, subtask table with per-subtask verify commands, test strategy).
 4. Every subtask must be small enough for one focused loop iteration and have a concrete verification command.
 5. If requirements are incomplete, list only the smallest set of blocking questions.
-6. Respect ORISO invariants: branch from `dev`, reuse design tokens and shared hooks, preserve Matrix/chat/draft privacy boundaries.
+6. Respect ORISO invariants: branch from `pre-dev`, reuse design tokens and shared hooks, preserve Matrix/chat/draft privacy boundaries.
 
 Keep output concise, actionable, and file-oriented. No narrative essays.

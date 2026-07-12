@@ -6,8 +6,8 @@ alwaysApply: true
 # Git Workflow
 
 - Inspect `git status` before starting implementation.
-- Never implement directly on `dev`. Branch from `dev` first: `cursor/<ticket-or-feature>/<short-slug>`.
+- Never implement directly on `pre-dev`. Branch from `pre-dev` first: `cursor/<ticket-or-feature>/<short-slug>`.
 - If the working tree is dirty with unrelated changes, ask before any fetch/rebase/reset/checkout that could touch them.
 - Commit only when the user asks. Keep the diff coherent — no drive-by edits to unrelated files.
-- Compare PRs against `origin/dev`.
+- Compare PRs against `origin/pre-dev`.
 - Never force-push, hard-reset, or rewrite pushed history without an explicit user request.
