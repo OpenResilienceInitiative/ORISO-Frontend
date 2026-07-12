@@ -202,28 +202,30 @@ export class MatrixClientService {
 	public async sendMessage(roomId: string, message: string): Promise<any> {
 		await this.ensureFreshToken();
 
-		if (!this.client) {
-			throw new Error('Matrix client not initialized');
-		}
-
 		const content = {
 			msgtype: 'm.text',
 			body: message
 		} as any;
+		const sendToRoom = async () => {
+			const client = this.client;
+			if (!client) {
+				throw new Error('Matrix client not initialized');
+			}
+			if (!client.getRoom(roomId)) {
+				await client.joinRoom(roomId);
+			}
+			return client.sendMessage(roomId, content);
+		};
 
 		try {
-			return await this.client.sendMessage(roomId, content);
+			return await sendToRoom();
 		} catch (error) {
 			if (!isMatrixExpiredTokenError(error)) {
 				throw error;
 			}
 
 			await this.refreshMatrixToken();
-			if (!this.client) {
-				throw new Error('Matrix client not initialized');
-			}
-
-			return this.client.sendMessage(roomId, content);
+			return sendToRoom();
 		}
 	}
 

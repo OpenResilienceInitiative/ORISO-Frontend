@@ -3,7 +3,11 @@ import {
 	apiPostMessageEventNotification,
 	MessageEventNotificationInput
 } from '../api/apiPostMessageEventNotification';
-import { isMatrixRoom } from '../utils/matrixRoomUtils';
+import { apiGetSessionRoomBySessionId } from '../api/apiGetSessionRooms';
+import {
+	isMatrixRoom,
+	resolveSessionRoomRouteId
+} from '../utils/matrixRoomUtils';
 import { getMatrixClientService } from './matrixClientRegistry';
 import type {
 	MatrixClientService,
@@ -89,15 +93,24 @@ class ChatTransportService {
 	public async sendTextMessage({
 		message,
 		matrixRoomId,
+		sessionId,
 		threadRootId,
 		supervisorMessage,
 		senderDisplayName,
 		matrixClientServiceOverride
 	}: SendTextMessageOptions): Promise<any> {
+		let resolvedMatrixRoomId = matrixRoomId;
+		if (!resolvedMatrixRoomId && sessionId) {
+			const { sessions } = await apiGetSessionRoomBySessionId(sessionId);
+			resolvedMatrixRoomId = resolveSessionRoomRouteId(
+				sessions?.[0]?.session
+			);
+		}
+
 		// Matrix is the only chat transport. Sessions without a Matrix room
 		// (stale pre-migration data) fail gracefully instead of falling back
 		// to the removed Rocket.Chat REST path.
-		if (!matrixRoomId) {
+		if (!resolvedMatrixRoomId) {
 			return Promise.reject(
 				new Error('Cannot send message: session has no Matrix room')
 			);
@@ -110,7 +123,7 @@ class ChatTransportService {
 		}
 
 		const response = await matrixClientService.sendMessage(
-			matrixRoomId,
+			resolvedMatrixRoomId,
 			message
 		);
 
@@ -118,7 +131,7 @@ class ChatTransportService {
 		// (messagePreview / threadParentPreview) across the Matrix privacy
 		// boundary. Only non-content metadata is sent.
 		apiPostMessageEventNotification({
-			roomId: matrixRoomId,
+			roomId: resolvedMatrixRoomId,
 			matrixRoom: true,
 			threadRootId: threadRootId || null,
 			supervisorMessage: !!supervisorMessage,
