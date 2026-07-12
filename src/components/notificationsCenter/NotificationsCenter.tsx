@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
 import OpenInFullIcon from '@mui/icons-material/OpenInFull';
+import MarkChatUnreadOutlinedIcon from '@mui/icons-material/MarkChatUnreadOutlined';
 import { Menu, MenuItem } from '@mui/material';
 import {
 	getEventDescriptor,
@@ -38,12 +39,7 @@ import { useResponsive } from '../../hooks/useResponsive';
 import { useTranslation } from 'react-i18next';
 import { apiDecideCaseHandoverClientConsent } from '../../api';
 import { ResizableHandle } from '../sessionsList/ResizableHandle';
-import {
-	IconClose,
-	IconMenuDots,
-	IconSearch
-} from '../sessionsList/SessionsListToolbar';
-import { ReactComponent as AllFamiliesIcon } from '../../resources/img/icons/list.svg';
+import { ListSearchField } from '../listSearchField/ListSearchField';
 import { ReactComponent as RequestsFamilyIcon } from '../../resources/img/icons/timeline-request-client.svg';
 import { ReactComponent as MessagesFamilyIcon } from '../../resources/img/icons/speech-bubble.svg';
 import { ReactComponent as DraftsFamilyIcon } from '../../resources/img/icons/pen-paper.svg';
@@ -194,12 +190,19 @@ export const NotificationsCenter = () => {
 		markAllNotificationsAsRead,
 		refreshNotificationFeed
 	} = useContext(NotificationsContext);
+	// Design feedback 2026-07-12: on mobile nothing is pre-selected — a
+	// selection immediately opens the conversation there, so an auto-selected
+	// first card would be surprising. Desktop keeps the first card selected so
+	// the detail pane is never empty.
 	const [selectedNotificationId, setSelectedNotificationId] = useState<
 		string | null
-	>(notificationFeed[0]?.id || null);
-	// WP-06 Slice 1: timeline family filter chip (exactly one active) + search.
+	>(untilL ? null : notificationFeed[0]?.id || null);
+	// WP-06 Slice 1: timeline family filter chip + search. `null` = no chip
+	// active = show everything (the former "All" chip duplicated this default
+	// and is gone). Chips toggle and always compose on top of the search query.
 	const [activeFamily, setActiveFamily] =
-		useState<TimelineFamilyFilter>('all');
+		useState<TimelineFamilyFilter>(null);
+	const [unreadOnly, setUnreadOnly] = useState(false);
 	const [searchQuery, setSearchQuery] = useState('');
 	const [caseHandoverConsentSubmitting, setCaseHandoverConsentSubmitting] =
 		useState(false);
@@ -213,7 +216,6 @@ export const NotificationsCenter = () => {
 		null
 	);
 	const listScrollRef = useRef<HTMLDivElement | null>(null);
-	const searchInputRef = useRef<HTMLInputElement | null>(null);
 
 	// Timeline redesign: resizable list column, same interaction pattern as the
 	// conversation page (SessionsListWrapper + ResizableHandle).
@@ -248,16 +250,17 @@ export const NotificationsCenter = () => {
 		() =>
 			filterTimelineItems(
 				notificationFeed,
-				{ family: activeFamily, query: searchQuery },
+				{ family: activeFamily, query: searchQuery, unreadOnly },
 				(item) => {
 					const { title, text } = describeItem(item, translate);
 					return `${title} ${text}`;
 				}
 			),
-		[notificationFeed, activeFamily, searchQuery, translate]
+		[notificationFeed, activeFamily, searchQuery, unreadOnly, translate]
 	);
 
 	// Keep the master-detail selection inside the visible (filtered) feed.
+	// Mobile never auto-selects (see selectedNotificationId above).
 	const effectiveSelectedId = useMemo(() => {
 		if (
 			selectedNotificationId &&
@@ -265,8 +268,8 @@ export const NotificationsCenter = () => {
 		) {
 			return selectedNotificationId;
 		}
-		return filteredFeed[0]?.id ?? null;
-	}, [filteredFeed, selectedNotificationId]);
+		return untilL ? null : (filteredFeed[0]?.id ?? null);
+	}, [filteredFeed, selectedNotificationId, untilL]);
 
 	useEffect(() => {
 		if (selectedNotificationId !== effectiveSelectedId) {
@@ -280,8 +283,12 @@ export const NotificationsCenter = () => {
 	}, [selectedNotificationId]);
 
 	useEffect(() => {
-		if (activeFamily !== 'all' && !familiesInFeed.includes(activeFamily)) {
-			setActiveFamily('all');
+		if (
+			activeFamily &&
+			activeFamily !== 'all' &&
+			!familiesInFeed.includes(activeFamily)
+		) {
+			setActiveFamily(null);
 		}
 	}, [familiesInFeed, activeFamily]);
 
@@ -301,10 +308,22 @@ export const NotificationsCenter = () => {
 		[filteredFeed, activeSelection, effectiveSelectedId]
 	);
 
-	// The embedded conversation preview never outlives its notification.
+	// Preview-first (design feedback 2026-07-12): selecting a chat event shows
+	// the embedded conversation preview right away (Slack-style activity view);
+	// the plain text detail is one toggle away via the card menu. Non-message
+	// events keep the text detail. The preview never outlives its notification.
+	// E2EE note: the preview is the user's own session view rendered in the
+	// same client — decryption stays client-side, nothing extra leaves the
+	// device (same boundary as ADR-AT-01).
 	useEffect(() => {
-		setEmbeddedChatOpen(false);
-	}, [activeNotificationId]);
+		const item =
+			filteredFeed.find(
+				(feedItem) => feedItem.id === activeNotificationId
+			) || null;
+		setEmbeddedChatOpen(
+			Boolean(item && resolveItemCategory(item) === 'message')
+		);
+	}, [activeNotificationId, filteredFeed]);
 
 	const selectedNotification = useMemo(
 		() =>
@@ -502,8 +521,10 @@ export const NotificationsCenter = () => {
 
 	// Same filter-chip contract as the conversation page toolbar: inactive
 	// chips are icon-only pills, the active chip expands with its label.
+	// Chips are toggles (aria-pressed): clicking the active chip clears the
+	// filter — no dedicated "All" chip, no selection means everything.
 	const renderFamilyChip = (
-		family: TimelineFamilyFilter,
+		family: EventFamily,
 		Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>,
 		label: string
 	) => {
@@ -512,8 +533,7 @@ export const NotificationsCenter = () => {
 			<button
 				key={family}
 				type="button"
-				role="tab"
-				aria-selected={isActive}
+				aria-pressed={isActive}
 				title={label}
 				aria-label={label}
 				className={`sessionsListToolbar__chip ${
@@ -521,7 +541,7 @@ export const NotificationsCenter = () => {
 						? 'sessionsListToolbar__chip--active'
 						: 'sessionsListToolbar__chip--iconOnly'
 				}`}
-				onClick={() => setActiveFamily(family)}
+				onClick={() => setActiveFamily(isActive ? null : family)}
 			>
 				<Icon className="sessionsListToolbar__chipIconSvg sessionsListToolbar__chipIconSvg--asset" />
 				<span
@@ -541,79 +561,28 @@ export const NotificationsCenter = () => {
 				style={{ width: fromL ? `${listWidth}px` : undefined }}
 			>
 				<div className="sessionsListToolbar notificationsCenter__toolbar">
-					<div className="sessionsListToolbar__search">
-						<div className="sessionsListToolbar__searchInner">
-							<button
-								type="button"
-								className="sessionsListToolbar__iconButton"
-								aria-label={translate(
-									'notifications.center.searchPlaceholder',
-									'Search activity…'
-								)}
-								onClick={() => searchInputRef.current?.focus()}
-							>
-								<IconMenuDots />
-							</button>
-							<div className="sessionsListToolbar__searchFieldWrap">
-								<input
-									type="search"
-									className="sessionsListToolbar__searchInput"
-									placeholder={translate(
-										'notifications.center.searchPlaceholder',
-										'Search activity…'
-									)}
-									value={searchQuery}
-									onChange={(event) =>
-										setSearchQuery(event.target.value)
-									}
-									aria-label={translate(
-										'notifications.center.searchPlaceholder',
-										'Search activity…'
-									)}
-									autoComplete="off"
-									ref={searchInputRef}
-								/>
-							</div>
-							{searchQuery ? (
-								<button
-									type="button"
-									className="sessionsListToolbar__searchActionButton"
-									onClick={() => setSearchQuery('')}
-									aria-label={translate(
-										'sessionList.toolbar.search.clear',
-										'Clear search'
-									)}
-								>
-									<IconClose />
-								</button>
-							) : (
-								<div
-									className="sessionsListToolbar__searchIconWrap"
-									aria-hidden
-								>
-									<IconSearch />
-								</div>
-							)}
-						</div>
-					</div>
+					<ListSearchField
+						value={searchQuery}
+						onChange={setSearchQuery}
+						placeholder={translate(
+							'notifications.center.searchPlaceholder',
+							'Search activity…'
+						)}
+						clearLabel={translate(
+							'sessionList.toolbar.search.clear',
+							'Clear search'
+						)}
+					/>
 					{notificationFeed.length > 0 && (
 						<div className="sessionsListToolbar__chipsScroll">
 							<div
 								className="sessionsListToolbar__chipsRow"
-								role="tablist"
+								role="group"
 								aria-label={translate(
 									'notifications.center.title',
 									'Notifications'
 								)}
 							>
-								{renderFamilyChip(
-									'all',
-									AllFamiliesIcon,
-									translate(
-										'notifications.families.all',
-										'All'
-									)
-								)}
 								{familiesInFeed.map((family) =>
 									renderFamilyChip(
 										family,
@@ -622,6 +591,37 @@ export const NotificationsCenter = () => {
 										translate(familyLabelKey(family))
 									)
 								)}
+								<button
+									type="button"
+									aria-pressed={unreadOnly}
+									className={`sessionsListToolbar__chip ${
+										unreadOnly
+											? 'sessionsListToolbar__chip--active'
+											: 'sessionsListToolbar__chip--iconOnly'
+									}`}
+									onClick={() =>
+										setUnreadOnly((value) => !value)
+									}
+									title={translate(
+										'notifications.center.unreadFilter',
+										'Unread'
+									)}
+									aria-label={translate(
+										'notifications.center.unreadFilter',
+										'Unread'
+									)}
+								>
+									<MarkChatUnreadOutlinedIcon className="sessionsListToolbar__chipIconSvg" />
+									<span
+										className="sessionsListToolbar__chipLabel"
+										aria-hidden={!unreadOnly}
+									>
+										{translate(
+											'notifications.center.unreadFilter',
+											'Unread'
+										)}
+									</span>
+								</button>
 								<button
 									type="button"
 									className="sessionsListToolbar__chip sessionsListToolbar__chip--iconOnly"
@@ -658,8 +658,6 @@ export const NotificationsCenter = () => {
 						</div>
 					) : (
 						filteredFeed.map((item, index) => {
-							const category = resolveItemCategory(item);
-							const isMessage = category === 'message';
 							const isActive = activeNotificationId === item.id;
 							// Same grouped-list contract as the conversation
 							// sidebar: neighbours of the active card round the
@@ -685,7 +683,7 @@ export const NotificationsCenter = () => {
 											? 'notificationsCenter__listRow--active'
 											: ''
 									} ${
-										isActive && isMessage
+										isActive
 											? 'notificationsCenter__listRow--withExpander'
 											: ''
 									} ${
@@ -773,25 +771,23 @@ export const NotificationsCenter = () => {
 											</button>
 										</span>
 									)}
-									{isActive && isMessage && (
+									{/* Design feedback 2026-07-12: the side pill on the
+									    active card navigates straight into the event's
+									    origin (Figma arrow affordance) — it no longer
+									    toggles the preview, which is open by default
+									    for chat events. */}
+									{isActive && (
 										<button
 											type="button"
-											className={`notificationsCenter__expander ${
-												showEmbeddedChat
-													? 'notificationsCenter__expander--open'
-													: ''
-											}`}
-											aria-pressed={showEmbeddedChat}
-											aria-label={translate(
-												'notifications.center.togglePreview',
-												'Toggle conversation preview'
-											)}
-											onClick={() => {
-												markNotificationAsRead(item.id);
-												setEmbeddedChatOpen(
-													!embeddedChatOpen
-												);
-											}}
+											className="notificationsCenter__expander"
+											aria-label={
+												item.actionLabel ||
+												translate(
+													'notifications.center.open',
+													'View Conversation'
+												)
+											}
+											onClick={handleOpenAction}
 										>
 											<OpenInFullIcon />
 										</button>
@@ -829,6 +825,23 @@ export const NotificationsCenter = () => {
 									: 'Open chat'
 							)}
 					</MenuItem>
+					{canShowChatPreview && (
+						<MenuItem
+							onClick={() => {
+								setEmbeddedChatOpen((value) => !value);
+								setCardMenuAnchor(null);
+							}}
+						>
+							{translate(
+								showEmbeddedChat
+									? 'notifications.center.showDetails'
+									: 'notifications.center.showPreview',
+								showEmbeddedChat
+									? 'Show details'
+									: 'Show conversation preview'
+							)}
+						</MenuItem>
+					)}
 					<MenuItem
 						onClick={() => {
 							if (selectedNotification) {

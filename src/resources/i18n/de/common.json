@@ -1566,7 +1566,10 @@
 			"open": "Chat öffnen",
 			"join": "Beitreten",
 			"systemTag": "Systembenachrichtigung",
-			"messageTag": "Nachrichtenbenachrichtigung"
+			"messageTag": "Nachrichtenbenachrichtigung",
+			"unreadFilter": "Ungelesen",
+			"showPreview": "Chat-Vorschau anzeigen",
+			"showDetails": "Details anzeigen"
 		},
 		"threadReply": {
 			"title": "Neue Thread-Antwort"
@@ -1823,7 +1826,7 @@
 			},
 			"inquiryAccepted": {
 				"title": "Anfrage angenommen",
-				"description": "Ihre Anfrage wurde von einer Beratungsfachkraft angenommen."
+				"description": "Ihre Anfrage wurde von einer Beraterin oder einem Berater angenommen."
 			},
 			"conversationFinished": {
 				"title": "Chat beendet",
@@ -1874,10 +1877,6 @@
 			"newMessage": {
 				"title": "Neue Chat-Nachricht",
 				"description": "Einer der Ihnen zugewiesenen Ratsuchenden hat Ihnen geantwortet"
-			},
-			"inquiryAccepted": {
-				"title": "Anfrage angenommen",
-				"description": "Ihre Anfrage wurde von einer Beraterin oder einem Berater angenommen."
 			},
 			"feed": {
 				"title": "System-Benachrichtigungen",
@@ -2483,7 +2482,7 @@
 					"receiveGift": "Kleines Geschenk erhalten"
 				},
 				"serenity": {
-					"instruction": "Das Geschenk ist ein kleines Mantra, das vielen Menschen durch schwierige Zeiten geholfen hat. Es heißt das Gelassenheitsgebet: \u201CGott, gib mir die Gelassenheit, Dinge hinzunehmen, die ich nicht ändern kann, den Mut, Dinge zu ändern, die ich ändern kann, und die Weisheit, das eine vom anderen zu unterscheiden.\u201D"
+					"instruction": "Das Geschenk ist ein kleines Mantra, das vielen Menschen durch schwierige Zeiten geholfen hat. Es heißt das Gelassenheitsgebet: “Gott, gib mir die Gelassenheit, Dinge hinzunehmen, die ich nicht ändern kann, den Mut, Dinge zu ändern, die ich ändern kann, und die Weisheit, das eine vom anderen zu unterscheiden.”"
 				}
 			},
 			"presets": {

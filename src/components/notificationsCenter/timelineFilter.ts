@@ -13,8 +13,13 @@
 import { EventFamily } from './eventDescriptors/types';
 import { getEventDescriptor } from './eventDescriptors/registry';
 
-/** The active family chip: one real family, or `all`. Exactly one at a time. */
-export type TimelineFamilyFilter = 'all' | EventFamily;
+/**
+ * The active family chip: one real family, `all`, or `null`. No chip selected
+ * (`null`) means "no filter" — identical to `all`, which is kept for backward
+ * compatibility but is no longer rendered as its own chip (design feedback
+ * 2026-07-12: the default state IS "all"; a dedicated chip only duplicates it).
+ */
+export type TimelineFamilyFilter = 'all' | EventFamily | null;
 
 /**
  * Canonical chip order. Mirrors the registry families; `appointments` is
@@ -34,11 +39,18 @@ export const TIMELINE_FAMILY_ORDER: ReadonlyArray<EventFamily> = [
 export interface TimelineFilterState {
 	family: TimelineFamilyFilter;
 	query: string;
+	/**
+	 * Only keep unread items. A separate dimension on purpose: it composes
+	 * with the family chip AND the search query (feedback 2026-07-12 — the
+	 * chips act as refinements on top of the search, not as modes).
+	 */
+	unreadOnly?: boolean;
 }
 
 /** Minimal shape the filter needs from a feed item. */
 export interface TimelineFilterableItem {
 	eventType?: string | null;
+	readAt?: string | null;
 }
 
 const familyOf = (item: TimelineFilterableItem): EventFamily =>
@@ -49,7 +61,7 @@ const normalize = (value: string): string => value.trim().toLowerCase();
 const matchesFamily = (
 	item: TimelineFilterableItem,
 	family: TimelineFamilyFilter
-): boolean => family === 'all' || familyOf(item) === family;
+): boolean => family === null || family === 'all' || familyOf(item) === family;
 
 /**
  * The families actually present in the feed, in canonical order. Used to render
@@ -75,6 +87,9 @@ export const filterTimelineItems = <T extends TimelineFilterableItem>(
 	const query = normalize(state.query || '');
 	return items.filter((item) => {
 		if (!matchesFamily(item, state.family)) {
+			return false;
+		}
+		if (state.unreadOnly && item.readAt) {
 			return false;
 		}
 		if (!query) {

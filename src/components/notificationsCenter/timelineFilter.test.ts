@@ -154,6 +154,70 @@ describe('WP-06 timeline filter', () => {
 			).to.have.length(0);
 		});
 
+		it('null family (no chip selected) behaves like "all"', () => {
+			expect(
+				ids(
+					filterTimelineItems(
+						feed,
+						{ family: null, query: '' },
+						searchText
+					)
+				)
+			).to.deep.equal(['1', '2', '3', '4', '5', '6', '7', '8']);
+		});
+
+		it('unreadOnly keeps only items without readAt and composes with family + query', () => {
+			const mixed = [
+				{
+					id: 'r1',
+					eventType: 'message.new',
+					text: 'Unread message',
+					readAt: null
+				},
+				{
+					id: 'r2',
+					eventType: 'message.new',
+					text: 'Read message',
+					readAt: '2026-07-11T10:00:00Z'
+				},
+				{
+					id: 'r3',
+					eventType: 'draft.created',
+					text: 'Unread draft',
+					readAt: null
+				}
+			];
+			expect(
+				ids(
+					filterTimelineItems(
+						mixed,
+						{ family: null, query: '', unreadOnly: true },
+						searchText
+					)
+				)
+			).to.deep.equal(['r1', 'r3']);
+			// composes with the family chip …
+			expect(
+				ids(
+					filterTimelineItems(
+						mixed,
+						{ family: 'messages', query: '', unreadOnly: true },
+						searchText
+					)
+				)
+			).to.deep.equal(['r1']);
+			// … and with the search query on top
+			expect(
+				ids(
+					filterTimelineItems(
+						mixed,
+						{ family: null, query: 'draft', unreadOnly: true },
+						searchText
+					)
+				)
+			).to.deep.equal(['r3']);
+		});
+
 		it('ignores a whitespace-only query', () => {
 			expect(
 				filterTimelineItems(

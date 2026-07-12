@@ -1542,7 +1542,10 @@
 			"open": "Open chat",
 			"join": "Join",
 			"systemTag": "System notification",
-			"messageTag": "Message notification"
+			"messageTag": "Message notification",
+			"unreadFilter": "Unread",
+			"showPreview": "Show conversation preview",
+			"showDetails": "Show details"
 		},
 		"threadReply": {
 			"title": "New thread reply"
@@ -2419,7 +2422,7 @@
 					"receiveGift": "Receive little gift"
 				},
 				"serenity": {
-					"instruction": "The gift is a little mantra that's helped tons of people get through tough times. It's called the serenity prayer: \u201CGod, grant me the serenity to accept the things I cannot change, the courage to change the things I can, and the wisdom to know the difference.\u201D"
+					"instruction": "The gift is a little mantra that's helped tons of people get through tough times. It's called the serenity prayer: “God, grant me the serenity to accept the things I cannot change, the courage to change the things I can, and the wisdom to know the difference.”"
 				}
 			},
 			"presets": {

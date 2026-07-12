@@ -440,6 +440,11 @@
 		},
 		"message": {
 			"new": "Du hast eine neue Nachricht!"
+		},
+		"center": {
+			"unreadFilter": "Ungelesen",
+			"showPreview": "Chat-Vorschau anzeigen",
+			"showDetails": "Details anzeigen"
 		}
 	},
 	"overlay": {
@@ -885,7 +890,7 @@
 					"receiveGift": "Kleines Geschenk erhalten"
 				},
 				"serenity": {
-					"instruction": "Das Geschenk ist ein kleines Mantra, das vielen Menschen durch schwierige Zeiten geholfen hat. Es heißt das Gelassenheitsgebet: \u201CGott, gib mir die Gelassenheit, Dinge hinzunehmen, die ich nicht ändern kann, den Mut, Dinge zu ändern, die ich ändern kann, und die Weisheit, das eine vom anderen zu unterscheiden.\u201D"
+					"instruction": "Das Geschenk ist ein kleines Mantra, das vielen Menschen durch schwierige Zeiten geholfen hat. Es heißt das Gelassenheitsgebet: “Gott, gib mir die Gelassenheit, Dinge hinzunehmen, die ich nicht ändern kann, den Mut, Dinge zu ändern, die ich ändern kann, und die Weisheit, das eine vom anderen zu unterscheiden.”"
 				}
 			},
 			"presets": {
