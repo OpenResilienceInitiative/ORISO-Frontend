@@ -6,10 +6,7 @@ import { UserAvatar } from './UserAvatar';
 
 export interface MessageAvatarProps {
 	isGroup: boolean;
-	isUserMessage: boolean;
 	isSystemNotification: boolean;
-	/** Reserved for future outgoing-specific styling; 1-on-1 uses animal either way. */
-	isMyMessage?: boolean;
 	userId: string;
 	username: string;
 	displayName: string;

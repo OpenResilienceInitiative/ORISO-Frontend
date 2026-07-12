@@ -141,15 +141,10 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 			position: relative;
 		}
 
-		&--left {
-			// padding-left: 64px;
-		}
-
 		&--right {
 			flex-direction: row-reverse;
 			align-self: flex-end;
 			margin-left: auto;
-			// padding-right: 32px;
 		}
 
 		&--furtherSteps {
@@ -213,7 +208,6 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 	}
 
 	&__sideColumn--left {
-		// position: absolute;
 		left: 4px;
 		top: -18px;
 		z-index: 5;

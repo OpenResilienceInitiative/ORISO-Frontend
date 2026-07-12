@@ -16,10 +16,6 @@ const meta: Meta<typeof MessageAvatar> = {
 			control: 'boolean',
 			description: 'Whether the active session is a group chat'
 		},
-		isUserMessage: {
-			control: 'boolean',
-			description: 'Whether the message is from the client/asker'
-		},
 		isSystemNotification: {
 			control: 'boolean',
 			description: 'System notifications render no avatar here'
@@ -51,8 +47,7 @@ const baseIdentity = {
 export const ClientIn1on1Chat: Story = {
 	args: {
 		...baseIdentity,
-		isGroup: false,
-		isUserMessage: true
+		isGroup: false
 	},
 	play: async ({ canvasElement }) => {
 		await waitFor(() => {
@@ -78,8 +73,7 @@ export const ConsultantIn1on1Chat: Story = {
 		displayName: 'Dr. Müller',
 		firstName: 'Anna',
 		lastName: 'Müller',
-		isGroup: false,
-		isUserMessage: false
+		isGroup: false
 	},
 	play: async ({ canvasElement }) => {
 		await waitFor(() => {
@@ -100,8 +94,7 @@ export const InternalGroupChat: Story = {
 		displayName: 'Team Lead',
 		firstName: 'Team',
 		lastName: 'Lead',
-		isGroup: true,
-		isUserMessage: false
+		isGroup: true
 	}
 };
 
@@ -111,8 +104,7 @@ export const InternalGroupChat: Story = {
 export const ClientInGroupChat: Story = {
 	args: {
 		...baseIdentity,
-		isGroup: true,
-		isUserMessage: true
+		isGroup: true
 	}
 };
 
@@ -127,7 +119,6 @@ export const AllVariants: Story = {
 				label: 'Client 1-on-1',
 				props: {
 					isGroup: false,
-					isUserMessage: true,
 					isSystemNotification: false,
 					userId: 'user-1',
 					username: 'sanftes.alpaka',
@@ -139,7 +130,6 @@ export const AllVariants: Story = {
 				label: 'Consultant 1-on-1 (animal)',
 				props: {
 					isGroup: false,
-					isUserMessage: false,
 					isSystemNotification: false,
 					userId: 'consultant-1',
 					username: 'karina.p',
@@ -153,7 +143,6 @@ export const AllVariants: Story = {
 				label: 'Internal Group',
 				props: {
 					isGroup: true,
-					isUserMessage: false,
 					isSystemNotification: false,
 					userId: 'consultant-2',
 					username: 'angela.k',
@@ -167,7 +156,6 @@ export const AllVariants: Story = {
 				label: 'Client in Group',
 				props: {
 					isGroup: true,
-					isUserMessage: true,
 					isSystemNotification: false,
 					userId: 'user-2',
 					username: 'freundliche.katze',

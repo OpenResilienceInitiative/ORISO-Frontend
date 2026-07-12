@@ -1769,7 +1769,6 @@ export const MessageItemComponent = ({
 							<div className="messageItem__avatar">
 								<MessageAvatar
 									isGroup={!!activeSession?.isGroup}
-									isUserMessage={isUserMessage()}
 									isSystemNotification={false}
 									userId={userId}
 									username={username}
@@ -1888,9 +1887,7 @@ export const MessageItemComponent = ({
 							<div className="messageItem__avatar">
 								<MessageAvatar
 									isGroup={!!activeSession?.isGroup}
-									isUserMessage={isUserMessage()}
 									isSystemNotification={false}
-									isMyMessage={true}
 									userId={userId}
 									username={username}
 									displayName={displayName}
