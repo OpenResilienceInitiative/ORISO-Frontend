@@ -1631,7 +1631,8 @@
 					"changePassword": "Şifre değiştirme",
 					"title": "Güvenlik"
 				},
-				"title": "Ayarlar"
+				"title": "Ayarlar",
+				"keyboardShortcuts": "Klavye Kısayolları"
 			}
 		},
 		"spokenLanguages": {
@@ -2976,6 +2977,111 @@
 			"remove": {
 				"confirm": "Bu süpervizörü kaldırmak istediğinizden emin misiniz?"
 			}
+		}
+	},
+	"shortcuts": {
+		"title": "Klavye Kısayolları",
+		"description": "Sohbet kısayollarını özelleştirin. Değişiklikler hemen uygulanır ve bu cihazda kaydedilir.",
+		"automaticallyConfigured": "otomatik yapılandırıldı",
+		"disableShortcut": "Devre dışı",
+		"restoreDefaults": "Varsayılanları Geri Yükle",
+		"restoreDefaultsSuccess": "Varsayılan kısayollar geri yüklendi.",
+		"primaryModifier": "Primary modifier",
+		"help": {
+			"title": "Klavye kısayolları",
+			"close": "Kapat"
+		},
+		"palette": {
+			"title": "Komut Paleti",
+			"close": "Kapat",
+			"searchPlaceholder": "Komut ara…",
+			"allShortcuts": "Tüm kısayollar"
+		},
+		"editingBanner": "Mesaj düzenleniyor",
+		"editingCancel": "İptal",
+		"categories": {
+			"messaging": "Mesajlaşma",
+			"navigation": "Gezinme",
+			"attachments": "Ekler",
+			"emoji": "Emoji ve Tepkiler",
+			"application": "Uygulama"
+		},
+		"actions": {
+			"sendMessage": {
+				"label": "Mesaj Gönder",
+				"description": "Geçerli sohbet mesajını gönderir."
+			},
+			"insertNewLine": {
+				"label": "Yeni Satır Ekle",
+				"description": "Yeni satır ekler. Gönderme kısayolundan türetilir."
+			},
+			"showShortcutHelp": {
+				"label": "Klavye Kısayollarını Göster",
+				"description": "Klavye kısayolları yardımını açar."
+			},
+			"focusInput": {
+				"label": "Focus Message Input",
+				"description": "Move focus to the message composer."
+			},
+			"uploadFile": {
+				"label": "Upload File",
+				"description": "Open the file attachment picker."
+			},
+			"searchMessages": {
+				"label": "Search Messages",
+				"description": "Search messages in the current conversation."
+			},
+			"editLastMessage": {
+				"label": "Edit Last Message",
+				"description": "Edit your last sent message."
+			},
+			"cancelReplyOrEdit": {
+				"label": "Cancel Reply or Edit",
+				"description": "Cancel the current reply or edit."
+			},
+			"openEmojiPicker": {
+				"label": "Open Emoji Picker",
+				"description": "Open the emoji picker."
+			},
+			"startNewConversation": {
+				"label": "Start New Conversation",
+				"description": "Start a new conversation."
+			},
+			"openCommandPalette": {
+				"label": "Open Command Palette",
+				"description": "Open the command palette."
+			}
+		},
+		"conflicts": {
+			"duplicate": "Bu kısayol zaten atanmış.",
+			"reserved": "Bu kısayol tarayıcı tarafından ayrılmıştır.",
+			"browserConflict": "Bu kısayol yaygın tarayıcı kısayollarıyla çakışır.",
+			"sendNewline": "Mesaj Gönder ve Yeni Satır aynı kısayolu kullanamaz.",
+			"unsupported": "Bu kısayol seçeneği desteklenmiyor.",
+			"cannotDisable": "Bu kısayol devre dışı bırakılamaz.",
+			"unsafePlainKey": "Bu tuş yazarken kısayol olarak kullanılamaz."
+		},
+		"hints": {
+			"enterSends": "Enter sends the message",
+			"shiftEnterNewline": "Shift+Enter inserts a new line",
+			"enterNewline": "Enter inserts a new line",
+			"ctrlEnterSends": "Ctrl+Enter sends the message",
+			"cmdEnterSends": "Cmd+Enter sends the message"
+		},
+		"lockedNewline": "Enter mesaj gönderirken Shift+Enter olarak kilitlenir.",
+		"resetAction": "Sıfırla",
+		"restoreDefaultsConfirm": "Tüm kısayollar varsayılana döndürülsün mü?",
+		"restoreDefaultsConfirmYes": "Geri yükle",
+		"restoreDefaultsConfirmNo": "İptal",
+		"keys": {
+			"enter": "Enter",
+			"escape": "Esc",
+			"arrowUp": "↑",
+			"shift": "Shift",
+			"alt": "Alt",
+			"option": "Option",
+			"ctrl": "Ctrl",
+			"cmd": "Cmd"
 		}
 	}
 }

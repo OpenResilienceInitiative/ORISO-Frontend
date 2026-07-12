@@ -1,0 +1,153 @@
+.commandPaletteDialog {
+	border: none;
+	padding: 0;
+	background: transparent;
+	max-width: min(32rem, calc(100vw - 2rem));
+	width: 100%;
+	max-height: min(85vh, calc(100% - 2rem));
+	margin: auto;
+	overflow: hidden;
+
+	&::backdrop {
+		background: rgba(0, 0, 0, 0.45);
+	}
+
+	&__panel {
+		background: var(--surface-primary, #fff);
+		color: inherit;
+		border-radius: 12px;
+		box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+		padding: 1rem 1.1rem 1.15rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+		max-height: min(85vh, calc(100vh - 2rem));
+		overflow: hidden;
+		box-sizing: border-box;
+	}
+
+	&__header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem;
+		flex-shrink: 0;
+
+		h2 {
+			margin: 0;
+			font-size: 1.05rem;
+		}
+	}
+
+	&__close {
+		border: none;
+		background: transparent;
+		font-size: 1.4rem;
+		line-height: 1;
+		cursor: pointer;
+		padding: 0.15rem 0.4rem;
+		opacity: 0.7;
+	}
+
+	&__search {
+		width: 100%;
+		box-sizing: border-box;
+		padding: 0.55rem 0.7rem;
+		border-radius: 8px;
+		border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+		font: inherit;
+		flex-shrink: 0;
+	}
+
+	&__scroll {
+		overflow: auto;
+		flex: 1 1 auto;
+		min-height: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+	}
+
+	&__list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 0.2rem;
+	}
+
+	&__item {
+		width: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem;
+		padding: 0.55rem 0.65rem;
+		border: none;
+		border-radius: 8px;
+		background: transparent;
+		cursor: pointer;
+		font: inherit;
+		text-align: left;
+		color: inherit;
+
+		&:hover,
+		&:focus-visible {
+			background: color-mix(in srgb, currentColor 8%, transparent);
+			outline: none;
+		}
+
+		kbd {
+			font-family: inherit;
+			font-size: 0.75rem;
+			padding: 0.15rem 0.4rem;
+			border-radius: 4px;
+			border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+			white-space: nowrap;
+		}
+	}
+
+	&__bindings {
+		font-size: 0.8125rem;
+		opacity: 0.9;
+		border-top: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+		padding-top: 0.5rem;
+
+		summary {
+			cursor: pointer;
+			margin-bottom: 0.4rem;
+			user-select: none;
+		}
+
+		h3 {
+			margin: 0.5rem 0 0.25rem;
+			font-size: 0.7rem;
+			text-transform: uppercase;
+			letter-spacing: 0.04em;
+			opacity: 0.7;
+		}
+
+		ul {
+			list-style: none;
+			margin: 0;
+			padding: 0;
+		}
+
+		li {
+			display: flex;
+			justify-content: space-between;
+			gap: 0.5rem;
+			padding: 0.2rem 0;
+		}
+
+		kbd {
+			font-family: inherit;
+			font-size: 0.7rem;
+			padding: 0.1rem 0.3rem;
+			border-radius: 3px;
+			border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+			white-space: nowrap;
+		}
+	}
+}

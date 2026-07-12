@@ -92,6 +92,7 @@ export const DefaultActionBar = ({
 			onClick={onEmojiClick}
 			selected={isEmojiOpen}
 			expanded={isEmojiOpen}
+			data-emoji-picker-toggle=""
 		>
 			<AddReactionOutlinedIcon fontSize="inherit" />
 		</ToolbarButton>

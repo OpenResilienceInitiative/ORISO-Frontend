@@ -12,6 +12,10 @@ import {
 	AgencySpecificProvider,
 	TopicsProvider
 } from '.';
+import { KeyboardShortcutsProvider } from '../features/keyboard-shortcuts';
+import { useGlobalShortcuts } from '../features/keyboard-shortcuts/hooks/useGlobalShortcuts';
+import { ShortcutHelpDialog } from '../features/keyboard-shortcuts/components/ShortcutHelpDialog';
+import { CommandPaletteDialog } from '../features/keyboard-shortcuts/components/CommandPaletteDialog';
 
 function ProviderComposer({ contexts, children }) {
 	return contexts.reduceRight(
@@ -22,6 +26,32 @@ function ProviderComposer({ contexts, children }) {
 		children
 	);
 }
+
+const KeyboardShortcutsShell = ({
+	children
+}: {
+	children?: React.ReactNode;
+}) => {
+	useGlobalShortcuts(true);
+	return (
+		<>
+			{children}
+			<ShortcutHelpDialog />
+			<CommandPaletteDialog />
+		</>
+	);
+};
+
+/** Must sit after UserDataProvider so preferences can isolate by userId. */
+const KeyboardShortcutsRoot = ({
+	children
+}: {
+	children?: React.ReactNode;
+}) => (
+	<KeyboardShortcutsProvider>
+		<KeyboardShortcutsShell>{children}</KeyboardShortcutsShell>
+	</KeyboardShortcutsProvider>
+);
 
 function ContextProvider({ children }) {
 	return (
@@ -37,7 +67,8 @@ function ContextProvider({ children }) {
 				<WebsocketConnectionDeactivatedProvider />,
 				<SessionsDataProvider />,
 				<ServerSettingsProvider />,
-				<ModalProvider />
+				<ModalProvider />,
+				<KeyboardShortcutsRoot />
 			]}
 		>
 			{children}
