@@ -25,6 +25,7 @@ import {
 } from './inputField/composerResize';
 import { isAskerEnquirySubmission } from './messageEncryptionMode';
 import { resolveAsideTargetRoomId } from './asideRouting';
+import { reloadSessionAfterSendIfNeeded } from './sessionRefreshAfterSend';
 import { chatTransportService } from '../../services/chatTransportService';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { getModality, Modality } from '../session/getModality';
@@ -1136,6 +1137,13 @@ export const MessageSubmitInterfaceComponent = ({
 	);
 
 	const handleMessageSendSuccess = useCallback(() => {
+		reloadSessionAfterSendIfNeeded(
+			{
+				isMatrixSession: resolvedChatSession.isMatrixSession,
+				clientRoomId: resolvedChatSession.matrixRoomId
+			},
+			reloadActiveSession
+		);
 		onMessageSendSuccess?.();
 		setEditorState(EditorState.createEmpty());
 		setComposerText('');
@@ -1168,6 +1176,9 @@ export const MessageSubmitInterfaceComponent = ({
 		audienceOptions,
 		clearDraftMessage,
 		onMessageSendSuccess,
+		reloadActiveSession,
+		resolvedChatSession.isMatrixSession,
+		resolvedChatSession.matrixRoomId,
 		resizeTextarea
 	]);
 
