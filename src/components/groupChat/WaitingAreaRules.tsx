@@ -29,7 +29,10 @@ export const WaitingAreaRules = ({ rules, ariaLabel }: WaitingAreaRulesProps) =>
 		<ul className="joinChat__rules" aria-label={ariaLabel}>
 			{rules.map((rule, index) => (
 				<li
-					key={index}
+					// Rules have no id; a composite key stays unique even for two
+					// identical rule strings and survives the list changing between
+					// occurrences (unlike a bare array index).
+					key={`${index}-${rule}`}
 					className={
 						index === activeIndex
 							? 'joinChat__rule joinChat__rule--active'
