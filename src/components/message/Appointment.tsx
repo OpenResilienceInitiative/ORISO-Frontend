@@ -153,9 +153,11 @@ export const Appointment = (param: {
 				)}
 				{showAddToCalendarComponent && (
 					<DownloadICSFile
-						date={appointmentDate}
-						duration={appointmentHours}
+						start={parsedData.date}
+						durationMinutes={duration}
 						title={parsedData.title}
+						description={parsedData.note}
+						location={parsedData.location}
 					/>
 				)}
 			</div>
