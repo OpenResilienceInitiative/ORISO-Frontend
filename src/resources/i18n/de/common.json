@@ -803,7 +803,8 @@
 					"veryLate": "stark verspätet"
 				},
 				"dogMinutes": "{{value}} Hundeminuten",
-				"romanMinutes": "{{value}} Minuten"
+				"romanMinutes": "{{value}} Minuten",
+				"rulesLabel": "Chat-Regeln"
 			},
 			"button": {
 				"label": {

@@ -34,6 +34,7 @@ import { useTimeoutOverlay } from '../../hooks/useTimeoutOverlay';
 import { OVERLAY_REQUEST } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
 import { FALLBACK_LNG } from '../../i18n';
 import { getWaitingAreaTime } from './groupChatWaitingArea';
+import { WaitingAreaRules } from './WaitingAreaRules';
 import { resolveGroupChatAuthorContent } from './groupChatAuthorContent';
 import { getGroupChatPlannedStart } from './groupChatDate';
 import { translateWithFallback } from '../../utils/translationFallback';
@@ -382,9 +383,13 @@ export const JoinGroupChatView = ({
 						</div>
 					</div>
 				)}
-				{groupChatRules.map((rule, index) => (
-					<Text text={rule} type="standard" key={index} />
-				))}
+				<WaitingAreaRules
+					rules={groupChatRules}
+					ariaLabel={tr(
+						'groupChat.join.waitingArea.rulesLabel',
+						'Chat rules'
+					)}
+				/>
 			</div>
 			<div className="joinChat__button-container">
 				{!hasUserAuthority(AUTHORITIES.CREATE_NEW_CHAT, userData) &&
