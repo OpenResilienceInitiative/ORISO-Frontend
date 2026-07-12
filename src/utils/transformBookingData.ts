@@ -32,6 +32,8 @@ export const transformBookingData = (bookings: BookingEventsInterface[]) => {
 		bookingEvents.push({
 			id: event.id,
 			date,
+			startTime: event.startTime,
+			endTime: event.endTime,
 			title: event.title,
 			duration,
 			location: event.location,
