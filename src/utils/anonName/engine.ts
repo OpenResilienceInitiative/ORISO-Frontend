@@ -154,6 +154,36 @@ export function generateAvatar(lang = 'de'): Avatar {
 	return avatarFor(pick(pick(dataFor(lang).groups).animals).svg);
 }
 
+const ALL_ANIMAL_FILES = [
+	...new Set(
+		Object.values(LANGUAGE_DATA)
+			.flatMap((lang) => lang.groups)
+			.flatMap((group) => group.animals)
+			.map((animal) => animal.svg)
+	)
+];
+
+function hashUserId(userId: string): number {
+	let hash = 0;
+	for (let i = 0; i < userId.length; i++) {
+		hash = (hash << 5) - hash + userId.charCodeAt(i);
+		hash |= 0;
+	}
+	return Math.abs(hash);
+}
+
+/** Deterministic avatar derived from a stable user identifier. */
+export function generateAvatarForUser(userId: string): Avatar {
+	const absHash = hashUserId(userId);
+	const bg = PASTEL_COLORS[absHash % PASTEL_COLORS.length];
+	const iconColor = luminance(bg) < 0.5 ? '#ffffff' : '#1a1a1a';
+	const animalFile =
+		ALL_ANIMAL_FILES[absHash % ALL_ANIMAL_FILES.length] ??
+		ALL_ANIMAL_FILES[0];
+
+	return { file: animalFile, bg, iconColor };
+}
+
 /** A 16-char password guaranteed to contain a digit, an upper- and a lowercase
  *  letter, and a special character. No ambiguous look-alikes. Keep special
  *  characters URI-safe: registration currently sends the password through an
