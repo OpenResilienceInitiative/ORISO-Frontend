@@ -3,6 +3,7 @@ import React, {
 	useEffect,
 	useImperativeHandle,
 	useMemo,
+	useRef,
 	useState
 } from 'react';
 import { EditorContent, useEditor } from '@tiptap/react';
@@ -27,7 +28,13 @@ import {
 	Redo,
 	ChevronRight
 } from '@mui/icons-material';
+import { useChatComposerShortcuts } from '../../features/keyboard-shortcuts/hooks/useChatComposerShortcuts';
 import './TipTapComposer.styles.scss';
+
+const isMentionSuggestionOpen = (): boolean =>
+	!!document.querySelector(
+		'.mentionList__popup .mentionList, .mentionList[role="listbox"]'
+	);
 
 export interface HighlightSnippetPayload {
 	text: string;
@@ -61,6 +68,16 @@ interface TipTapComposerProps {
 	onFocusChange?: (focused: boolean) => void;
 	/** Enables Slack-like @-mentions for agency consultants when provided. */
 	mentionProvider?: MentionProvider;
+	/** Shortcut: edit the last own message (returns true if handled). */
+	onEditLast?: () => boolean;
+	/** Shortcut: cancel the current reply/edit (returns true if handled). */
+	onCancel?: () => boolean;
+	/** Shortcut: open the file attachment picker (returns true if handled). */
+	onUpload?: () => boolean;
+	/** Shortcut: open the emoji picker (returns true if handled). */
+	onOpenEmoji?: () => boolean;
+	/** True when the composer has no text and no attachment. */
+	isComposerEmpty?: boolean;
 }
 
 const getEditorPlainTextLength = (editorLike: any): number =>
@@ -139,11 +156,29 @@ export const TipTapComposer = forwardRef<
 			onSubmitShortcut,
 			onSelectionSnippet,
 			onFocusChange,
-			mentionProvider
+			mentionProvider,
+			onEditLast,
+			onCancel,
+			onUpload,
+			onOpenEmoji,
+			isComposerEmpty
 		},
 		ref
 	) => {
 		const [isSyncingFromValue, setIsSyncingFromValue] = useState(false);
+
+		const { handleComposerKeyDown } = useChatComposerShortcuts({
+			onSend: onSubmitShortcut,
+			disabled: readOnly,
+			hasOpenSuggestions: false,
+			onEditLast,
+			onCancel,
+			onUpload,
+			onOpenEmoji,
+			isComposerEmpty
+		});
+		const shortcutHandlerRef = useRef(handleComposerKeyDown);
+		shortcutHandlerRef.current = handleComposerKeyDown;
 
 		const editor = useEditor({
 			extensions: useMemo(
@@ -240,15 +275,10 @@ export const TipTapComposer = forwardRef<
 					return true;
 				},
 				handleKeyDown: (_, event) => {
-					if (
-						event.key === 'Enter' &&
-						(event.ctrlKey || event.metaKey)
-					) {
-						event.preventDefault();
-						onSubmitShortcut();
-						return true;
+					if (isMentionSuggestionOpen()) {
+						return false;
 					}
-					return false;
+					return shortcutHandlerRef.current(event);
 				}
 			},
 			onFocus: () => {

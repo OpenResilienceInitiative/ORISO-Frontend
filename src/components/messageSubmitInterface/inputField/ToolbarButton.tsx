@@ -1,14 +1,16 @@
 import * as React from 'react';
 
 export interface ToolbarButtonProps {
-	label: string;
-	onClick?: () => void;
-	selected?: boolean;
-	expanded?: boolean;
-	disabled?: boolean;
+	'label': string;
+	'onClick'?: () => void;
+	'selected'?: boolean;
+	'expanded'?: boolean;
+	'disabled'?: boolean;
 	/** Optional visible text next to the icon (e.g. the "Add" button). */
-	text?: string;
-	children: React.ReactNode;
+	'text'?: string;
+	'children': React.ReactNode;
+	/** Extra attrs for outside-click / toggle coordination. */
+	'data-emoji-picker-toggle'?: string;
 }
 
 /** 38×32 icon button, radius 12, per Figma Tip Tap menu buttons. */
@@ -19,7 +21,8 @@ export const ToolbarButton = ({
 	expanded,
 	disabled = false,
 	text,
-	children
+	children,
+	'data-emoji-picker-toggle': emojiPickerToggle
 }: ToolbarButtonProps) => (
 	<button
 		type="button"
@@ -30,6 +33,7 @@ export const ToolbarButton = ({
 		aria-expanded={expanded}
 		disabled={disabled}
 		onClick={onClick}
+		data-emoji-picker-toggle={emojiPickerToggle}
 		className={[
 			'composerToolbar__button',
 			text && 'composerToolbar__button--labeled',

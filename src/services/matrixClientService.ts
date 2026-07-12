@@ -227,6 +227,22 @@ export class MatrixClientService {
 		}
 	}
 
+	public async editMessage(
+		roomId: string,
+		eventId: string,
+		message: string
+	): Promise<any> {
+		await this.ensureFreshToken();
+		if (!this.client) throw new Error('Matrix client not initialized');
+		const content = {
+			'msgtype': 'm.text',
+			'body': `* ${message}`,
+			'm.new_content': { msgtype: 'm.text', body: message },
+			'm.relates_to': { rel_type: 'm.replace', event_id: eventId }
+		};
+		return this.client.sendMessage(roomId, content as any);
+	}
+
 	public async sendFileMessage(
 		roomId: string,
 		file: File,
