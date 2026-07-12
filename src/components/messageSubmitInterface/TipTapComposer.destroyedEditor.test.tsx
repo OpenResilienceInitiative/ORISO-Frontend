@@ -48,7 +48,7 @@ describe('TipTapComposer destroyed editor lifecycle', () => {
 		const ref = createRef<TipTapComposerRef>();
 		const onChange = vi.fn();
 
-		render(
+		const view = render(
 			<TipTapComposer
 				ref={ref}
 				value=""
@@ -69,5 +69,24 @@ describe('TipTapComposer destroyed editor lifecycle', () => {
 			mocks.options.onUpdate({ editor: mocks.editor })
 		).not.toThrow();
 		expect(onChange).not.toHaveBeenCalled();
+
+		view.rerender(
+			<TipTapComposer
+				ref={ref}
+				value=""
+				placeholder="test"
+				showToolbar={true}
+				readOnly={false}
+				onChange={onChange}
+				onSubmitShortcut={() => {}}
+			/>
+		);
+		expect(
+			view.container.querySelector('.tiptap-composer__loading')
+		).toBeTruthy();
+		expect(view.container.querySelector('.tiptap-composer')).toBeNull();
+		expect(
+			view.container.querySelector('.tiptap-composer__toolbar')
+		).toBeNull();
 	});
 });
