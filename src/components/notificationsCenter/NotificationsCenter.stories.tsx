@@ -1,6 +1,7 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { NotificationsCenter } from './NotificationsCenter';
+import { KNOWN_EVENT_TYPES } from './eventDescriptors';
 import { APP_ORISO_FIGMA_URL } from '../storybookDesignLinks';
 import {
 	NotificationsContext,
@@ -248,4 +249,25 @@ export const ClientView: Story = {
 /** Empty state. */
 export const Empty: Story = {
 	decorators: [withTimelineData([])]
+};
+
+/**
+ * QA sweep: one card per seeded event type (all 30, unread), so every
+ * descriptor's icon, i18n strings and detail rendering can be checked in one
+ * place. Order follows the registry.
+ */
+export const AllEventTypes: Story = {
+	decorators: [
+		withTimelineData(
+			KNOWN_EVENT_TYPES.map((eventType, index) =>
+				feedItem({
+					id: `qa-${index}`,
+					eventType,
+					createdAt: minutesAgo(5 + index * 7),
+					sourceSessionId: '101',
+					actionPath: '/sessions/consultant/sessionView/room-101/101'
+				})
+			)
+		)
+	]
 };

@@ -1957,6 +1957,28 @@
 				"button": "ok",
 				"headline": "You have successfully deleted your email address."
 			}
+		},
+		"notificationSettings": {
+			"title": "Notifications",
+			"description": "These settings apply to your account on every device and browser.",
+			"globalMute": "Mute all notifications",
+			"deviceSilence": {
+				"title": "Silence this device",
+				"description": "Only this browser stays quiet — your other devices keep notifying."
+			},
+			"browser": {
+				"title": "Browser notifications",
+				"description": "Show desktop notifications while the app is in the background."
+			},
+			"preview": {
+				"title": "Show message content",
+				"description": "Shows the message text inside the notification. Off by default for privacy."
+			},
+			"sounds": "Notification sounds",
+			"families": {
+				"title": "Notify about",
+				"description": "Choose which event families may trigger notifications."
+			}
 		}
 	},
 	"qrCode": {

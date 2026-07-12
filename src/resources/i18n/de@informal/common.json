@@ -653,6 +653,28 @@
 			"successOverlay": {
 				"headline": "Du hast Deine E-Mail-Adresse erfolgreich gelöscht."
 			}
+		},
+		"notificationSettings": {
+			"title": "Benachrichtigungen",
+			"description": "Diese Einstellungen gelten für dein Konto auf allen Geräten und Browsern.",
+			"globalMute": "Alle Benachrichtigungen stummschalten",
+			"deviceSilence": {
+				"title": "Dieses Gerät stummschalten",
+				"description": "Nur dieser Browser bleibt still — deine anderen Geräte benachrichtigen weiterhin."
+			},
+			"browser": {
+				"title": "Browser-Benachrichtigungen",
+				"description": "Desktop-Benachrichtigungen anzeigen, wenn die App im Hintergrund ist."
+			},
+			"preview": {
+				"title": "Nachrichteninhalt anzeigen",
+				"description": "Zeigt den Nachrichtentext in der Benachrichtigung. Aus Datenschutzgründen standardmäßig aus."
+			},
+			"sounds": "Benachrichtigungstöne",
+			"families": {
+				"title": "Benachrichtigen bei",
+				"description": "Wähle, welche Ereignis-Familien Benachrichtigungen auslösen dürfen."
+			}
 		}
 	},
 	"qrCode": {
