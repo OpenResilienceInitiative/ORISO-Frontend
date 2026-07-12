@@ -11,6 +11,7 @@ import { useSearchParam } from '../../../hooks/useSearchParams';
 import { SESSION_LIST_TAB } from '../../session/sessionHelpers';
 import { mobileListView } from '../../app/navigationHandler';
 import { BackIcon, GroupChatInfoIcon } from '../../../resources/img/icons';
+import { ReactComponent as PeopleIcon } from '../../../resources/img/icons/persons-two.svg';
 import { useTranslation } from 'react-i18next';
 import { decodeUsername } from '../../../utils/encryptionHelpers';
 import { BUTTON_TYPES, Button, ButtonItem } from '../../button/Button';
@@ -317,7 +318,10 @@ export const GroupChatHeader = ({
 			!userId.includes('@system') && !userId.includes('@caritas.local')
 		);
 	});
-	const stackedMembers = visibleMembers.slice(0, 3);
+	// Figma #430: up to 4 members render every avatar; beyond that we collapse
+	// the stack into a single "+N people" count badge instead of avatars.
+	const showMemberCountBadge = visibleMembers.length > 4;
+	const stackedMembers = showMemberCountBadge ? [] : visibleMembers;
 
 	return (
 		<div className="sessionInfo">
@@ -336,6 +340,14 @@ export const GroupChatHeader = ({
 								type="internal"
 								showAddIcon={isActive && !isJoinGroupChatView}
 							/>
+							{showMemberCountBadge && (
+								<div className="sessionInfo__memberCount">
+									<span className="sessionInfo__memberCountNumber">
+										+{visibleMembers.length}
+									</span>
+									<PeopleIcon className="sessionInfo__memberCountIcon" />
+								</div>
+							)}
 							{stackedMembers.map((member, index) => {
 								const userId = member.userId || '';
 								const parsedUsername =
