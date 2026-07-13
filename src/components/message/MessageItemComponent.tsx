@@ -16,7 +16,7 @@ import { MessageDisplayName } from './MessageDisplayName';
 import { formatToHHMM } from '../../utils/dateHelpers';
 import { markdownToDraft } from 'markdown-draft-js';
 import { stateToHTML } from 'draft-js-export-html';
-import { convertFromRaw, ContentState } from 'draft-js';
+import { convertFromRaw } from 'draft-js';
 import {
 	markdownToDraftDefaultOptions,
 	normalizeHighlightColor,
@@ -861,27 +861,38 @@ export const MessageItemComponent = ({
 			return;
 		}
 
-		const rawMessageObject = markdownToDraft(
-			preparedMessage,
-			markdownToDraftDefaultOptions
-		);
-		const contentStateMessage: ContentState =
-			convertFromRaw(rawMessageObject);
+		try {
+			const rawMessageObject = markdownToDraft(
+				preparedMessage,
+				markdownToDraftDefaultOptions
+			);
+			const contentStateMessage = convertFromRaw(rawMessageObject);
 
-		setRenderedMessage(
-			contentStateMessage.hasText()
-				? sanitizeHtml(
-						renderHighlightTokens(
-							renderImageMarkers(
-								urlifyLinksInText(
-									stateToHTML(contentStateMessage)
+			setRenderedMessage(
+				contentStateMessage.hasText()
+					? sanitizeHtml(
+							renderHighlightTokens(
+								renderImageMarkers(
+									urlifyLinksInText(
+										stateToHTML(contentStateMessage)
+									)
 								)
-							)
-						),
-						sanitizeHtmlDefaultOptions
-					)
-				: ''
-		);
+							),
+							sanitizeHtmlDefaultOptions
+						)
+					: ''
+			);
+		} catch (error) {
+			// Markdown parsing failed; fall back to the sanitized raw message.
+			// eslint-disable-next-line no-console
+			console.debug(
+				'Message markdown render failed, using raw text',
+				error
+			);
+			setRenderedMessage(
+				sanitizeHtml(preparedMessage, sanitizeHtmlDefaultOptions)
+			);
+		}
 		// parsedMessage is memoized on decryptedMessage, so this stays
 		// equivalent to depending on decryptedMessage alone.
 	}, [decryptedMessage, parsedMessage.cleanedMessage]);

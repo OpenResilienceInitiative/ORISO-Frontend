@@ -1,3 +1,4 @@
+import './configureMatrixLogging';
 import './polyfill';
 import * as React from 'react';
 import { createRoot } from 'react-dom/client';

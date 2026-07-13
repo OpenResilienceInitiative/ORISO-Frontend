@@ -15,3 +15,7 @@ TipTap empty docs are markup like `<p></p>`. Using `!composerText.trim()` for �
 ## 2026-07-12 — Browser shortcut conflicts need capture phase
 
 App handlers for Cmd/Ctrl+F, Cmd/Ctrl+Shift+N, Cmd/Ctrl+K must listen in the capture phase and `preventDefault()` before the browser’s default Find / New Window / etc. Bubble-phase listeners are too late. Also set `activeInTextInput: true` when the action must work with the composer focused.
+
+## 2026-07-08 — matrix-js-sdk production logging
+
+`matrix-js-sdk` defaults child loggers to `DEBUG`, so `FetchHttpApi` sync lines appear even when app `console.log` calls are removed. Call `logger.setLevel('error')` at startup and patch `getChild` so child namespaces inherit the same level; pass `logger` into every `createClient` call.
