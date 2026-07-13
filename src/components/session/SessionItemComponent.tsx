@@ -1621,16 +1621,18 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			return map;
 		}
 		messages.forEach((message) => {
+			// MSC3440 (#435): relation first, legacy [THREAD:] prefix fallback.
 			const parsed = parseMessagePrefixes(message.message);
-			if (parsed.isThreadMessage && parsed.threadRootId) {
-				const existing = map.get(parsed.threadRootId) || {
+			const rootId = message.threadRootEventId || parsed.threadRootId;
+			if (rootId) {
+				const existing = map.get(rootId) || {
 					replyCount: 0,
 					lastReplyText: ''
 				};
 				existing.replyCount += 1;
 				existing.lastReplyText =
 					'Last reply at ' + formatToHHMM(message.messageTime);
-				map.set(parsed.threadRootId, existing);
+				map.set(rootId, existing);
 			}
 		});
 		return map;
@@ -2575,10 +2577,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				return false;
 			}
 			const parsed = parseMessagePrefixes(message.message);
-			if (!parsed.isThreadMessage || !parsed.threadRootId) {
+			const rootId = message.threadRootEventId || parsed.threadRootId;
+			if (!rootId) {
 				return false;
 			}
-			if (activeThreadRootId === parsed.threadRootId) {
+			if (activeThreadRootId === rootId) {
 				return false;
 			}
 			if (isMyMessageMatrix(message.userId)) {
@@ -2589,9 +2592,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 		newThreadReplies.forEach((message) => {
 			const parsed = parseMessagePrefixes(message.message);
+			const rootId = message.threadRootEventId || parsed.threadRootId;
 			const params = new URLSearchParams(location.search);
-			if (parsed.threadRootId) {
-				params.set('threadRootId', parsed.threadRootId);
+			if (rootId) {
+				params.set('threadRootId', rootId);
 			}
 			params.set('threadMessageId', message._id);
 			const actionPath = `${location.pathname}?${params.toString()}`;

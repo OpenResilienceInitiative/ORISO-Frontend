@@ -8,6 +8,7 @@ import { describe, it, expect } from 'vitest';
 import {
 	buildTextMessageContent,
 	getReplyToEventId,
+	getThreadRootId,
 	stripReplyFallback
 } from './messageRelations';
 
@@ -100,5 +101,70 @@ describe('reply relations (m.relates_to / m.in_reply_to)', () => {
 			expect(stripReplyFallback('')).toBe('');
 			expect(stripReplyFallback(undefined as any)).toBe('');
 		});
+	});
+});
+
+describe('thread relations (MSC3440 m.thread)', () => {
+	it('builds a thread relation with reply fallback to the root', () => {
+		expect(
+			buildTextMessageContent('thread-antwort', {
+				threadRootId: '$root:hs'
+			})
+		).toEqual({
+			'msgtype': 'm.text',
+			'body': 'thread-antwort',
+			'm.relates_to': {
+				'rel_type': 'm.thread',
+				'event_id': '$root:hs',
+				'is_falling_back': true,
+				'm.in_reply_to': { event_id: '$root:hs' }
+			}
+		});
+	});
+
+	it('reply INSIDE a thread targets the replied event, not the root', () => {
+		expect(
+			buildTextMessageContent('reply-in-thread', {
+				threadRootId: '$root:hs',
+				replyToEventId: '$msg:hs'
+			})
+		).toEqual({
+			'msgtype': 'm.text',
+			'body': 'reply-in-thread',
+			'm.relates_to': {
+				'rel_type': 'm.thread',
+				'event_id': '$root:hs',
+				'is_falling_back': false,
+				'm.in_reply_to': { event_id: '$msg:hs' }
+			}
+		});
+	});
+
+	it('getThreadRootId reads the thread root from a relation', () => {
+		expect(
+			getThreadRootId({
+				'm.relates_to': {
+					'rel_type': 'm.thread',
+					'event_id': '$root:hs',
+					'm.in_reply_to': { event_id: '$x:hs' }
+				}
+			})
+		).toBe('$root:hs');
+		expect(getThreadRootId({ msgtype: 'm.text', body: 'x' })).toBe(null);
+		expect(
+			getThreadRootId({
+				'm.relates_to': {
+					'm.in_reply_to': { event_id: '$x:hs' }
+				}
+			})
+		).toBe(null);
+		expect(getThreadRootId(undefined)).toBe(null);
+	});
+
+	it('a plain reply stays a plain reply (no thread rel_type)', () => {
+		const content = buildTextMessageContent('nur reply', {
+			replyToEventId: '$orig:hs'
+		});
+		expect((content['m.relates_to'] as any).rel_type).toBeUndefined();
 	});
 });

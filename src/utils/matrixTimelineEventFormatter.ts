@@ -1,4 +1,8 @@
-import { getReplyToEventId, stripReplyFallback } from './messageRelations';
+import {
+	getReplyToEventId,
+	getThreadRootId,
+	stripReplyFallback
+} from './messageRelations';
 
 const getMatrixMediaDownloadPath = (contentUrl: string): string => {
 	if (!contentUrl.startsWith('mxc://')) {
@@ -53,6 +57,10 @@ export const formatMatrixTimelineEvent = (
 	};
 	if (replyToEventId) {
 		baseMessage.replyToEventId = replyToEventId;
+	}
+	const threadRootEventId = getThreadRootId(content);
+	if (threadRootEventId) {
+		baseMessage.threadRootEventId = threadRootEventId;
 	}
 
 	const mediaUrl = content?.file?.url || content?.url;

@@ -119,7 +119,10 @@ class ChatTransportService {
 		const response = await matrixClientService.sendMessage(
 			matrixRoomId,
 			message,
-			{ replyToEventId: replyToEventId || null }
+			{
+				replyToEventId: replyToEventId || null,
+				threadRootId: threadRootId || null
+			}
 		);
 
 		// SECURITY (FE-H01): never forward plaintext message content

@@ -431,7 +431,8 @@ describe('chatTransportService sendTextMessage (Matrix-only transport)', () => {
 		});
 
 		expect(sendMessage).toHaveBeenCalledWith(ROOM_ID, 'hello world', {
-			replyToEventId: null
+			replyToEventId: null,
+			threadRootId: null
 		});
 		expect(result).toEqual({
 			success: true,
@@ -554,7 +555,8 @@ describe('chatTransportService reply relation (#435)', () => {
 			matrixClientServiceOverride: fake
 		});
 		expect(sendMessage).toHaveBeenCalledWith(ROOM_ID, 'antwort', {
-			replyToEventId: '$orig:hs'
+			replyToEventId: '$orig:hs',
+			threadRootId: null
 		});
 		expect(result).toEqual({ success: true, event_id: '$new:hs' });
 	});
@@ -570,7 +572,8 @@ describe('chatTransportService reply relation (#435)', () => {
 			matrixClientServiceOverride: fake
 		});
 		expect(sendMessage).toHaveBeenCalledWith(ROOM_ID, 'normal', {
-			replyToEventId: null
+			replyToEventId: null,
+			threadRootId: null
 		});
 	});
 

@@ -13,9 +13,20 @@
 export interface TextMessageContentOptions {
 	/** Event id of the message being replied to (rich reply). */
 	replyToEventId?: string | null;
+	/** MSC3440: root event id when the message belongs to a thread. */
+	threadRootId?: string | null;
 }
 
-/** Build `m.room.message` content, attaching a reply relation when given. */
+/**
+ * Build `m.room.message` content, attaching relations when given.
+ *
+ * - reply only            → `m.in_reply_to`
+ * - thread only           → `rel_type: m.thread` + falling-back reply to the
+ *                            root (spec-compliant rendering on non-thread
+ *                            clients)
+ * - reply inside a thread → `rel_type: m.thread` + real reply
+ *                            (`is_falling_back: false`) to the replied event
+ */
 export const buildTextMessageContent = (
 	message: string,
 	options?: TextMessageContentOptions
@@ -24,12 +35,31 @@ export const buildTextMessageContent = (
 		msgtype: 'm.text',
 		body: message
 	};
-	if (options?.replyToEventId) {
+	if (options?.threadRootId) {
+		content['m.relates_to'] = {
+			'rel_type': 'm.thread',
+			'event_id': options.threadRootId,
+			'is_falling_back': !options.replyToEventId,
+			'm.in_reply_to': {
+				event_id: options.replyToEventId || options.threadRootId
+			}
+		};
+	} else if (options?.replyToEventId) {
 		content['m.relates_to'] = {
 			'm.in_reply_to': { event_id: options.replyToEventId }
 		};
 	}
 	return content;
+};
+
+/** Read the MSC3440 thread root from event content, null when not a thread. */
+export const getThreadRootId = (content: unknown): string | null => {
+	const relatesTo = (content as Record<string, any>)?.['m.relates_to'];
+	if (relatesTo?.rel_type !== 'm.thread') {
+		return null;
+	}
+	const eventId = relatesTo?.event_id;
+	return typeof eventId === 'string' && eventId ? eventId : null;
 };
 
 /**

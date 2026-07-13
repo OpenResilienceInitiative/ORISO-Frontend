@@ -250,6 +250,8 @@ export interface MessageItem {
 	isVideoActive?: boolean;
 	/** Relations foundation (#435): id of the replied-to event, if a reply. */
 	replyToEventId?: string | null;
+	/** MSC3440: thread root event id when the message is a thread reply. */
+	threadRootEventId?: string | null;
 }
 
 interface MessageItemComponentProps extends MessageItem {
@@ -309,6 +311,7 @@ export const MessageItemComponent = ({
 	threadSummary,
 	onOpenThread,
 	replyToEventId,
+	threadRootEventId,
 	replyQuote,
 	onReplyDirect
 }: MessageItemComponentProps) => {
@@ -1750,22 +1753,23 @@ export const MessageItemComponent = ({
 		}
 	}
 
+	// MSC3440 (#435): thread membership comes from the m.thread relation;
+	// legacy [THREAD:...] prefixes keep working as a read-only fallback.
+	const effectiveThreadRootId =
+		threadRootEventId || parsedMessage.threadRootId || null;
+	const isThreadReply = Boolean(effectiveThreadRootId);
 	if (!forceShow) {
-		if (
-			renderMode === 'main' &&
-			threadsEnabled &&
-			parsedMessage.isThreadMessage
-		) {
+		if (renderMode === 'main' && threadsEnabled && isThreadReply) {
 			return null;
 		}
 		if (renderMode === 'thread') {
 			if (!threadsEnabled) {
 				return null;
 			}
-			if (!parsedMessage.isThreadMessage) {
+			if (!isThreadReply) {
 				return null;
 			}
-			if (threadRootId && parsedMessage.threadRootId !== threadRootId) {
+			if (threadRootId && effectiveThreadRootId !== threadRootId) {
 				return null;
 			}
 		}

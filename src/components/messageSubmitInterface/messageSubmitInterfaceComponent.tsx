@@ -77,8 +77,7 @@ import { Headline } from '../headline/Headline';
 import { useTranslation } from 'react-i18next';
 import {
 	SUPERVISOR_FEEDBACK_PREFIX,
-	buildVisibleToPrefix,
-	buildThreadPrefix
+	buildVisibleToPrefix
 } from '../message/messageConstants';
 import { useE2EE } from '../../hooks/useE2EE';
 import { apiPostError, ERROR_LEVEL_WARN } from '../../api/apiPostError';
@@ -1344,9 +1343,10 @@ export const MessageSubmitInterfaceComponent = ({
 			encodeHighlightColorsForTransport(currentTypedMessage)
 		).trim();
 		const prefixParts: string[] = [];
-		if (threadRootId) {
-			prefixParts.push(buildThreadPrefix(threadRootId));
-		}
+		// Relations foundation (#435): thread membership travels as the
+		// MSC3440 m.thread relation on the event (see chatTransportService),
+		// not as a [THREAD:...] text prefix anymore. Old messages with the
+		// prefix keep rendering via the legacy parse fallback.
 		// VISIBLE_TO recipient targeting is an opt-in supervisor/coordinator aside
 		// (ADR-008) and only exists when the audience selector is actually shown —
 		// i.e. there is more than one human counterpart (group / supervision). In a
