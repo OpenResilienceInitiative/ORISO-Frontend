@@ -441,7 +441,18 @@
 		"message": {
 			"new": "Du hast eine neue Nachricht!"
 		},
+		"families": {
+			"all": "Alle",
+			"requests": "Anfragen",
+			"messages": "Nachrichten",
+			"drafts": "Entwürfe",
+			"handover": "Übergabe",
+			"calls": "Anrufe",
+			"system": "System",
+			"appointments": "Termine"
+		},
 		"center": {
+			"searchPlaceholder": "Aktivität durchsuchen…",
 			"unreadFilter": "Ungelesen",
 			"showPreview": "Chat-Vorschau anzeigen",
 			"showDetails": "Details anzeigen"
@@ -674,6 +685,11 @@
 			"families": {
 				"title": "Benachrichtigen bei",
 				"description": "Wähle, welche Ereignis-Familien Benachrichtigungen auslösen dürfen."
+			}
+		},
+		"routes": {
+			"settings": {
+				"keyboardShortcuts": "Tastaturkürzel"
 			}
 		}
 	},
@@ -1524,5 +1540,110 @@
 		"liveChatToggleActive": "Live-Chat verfügbar",
 		"liveChatToggleInactive": "Live-Chat nicht verfügbar",
 		"myProfile": "Mein Profil"
+	},
+	"shortcuts": {
+		"title": "Tastaturkürzel",
+		"description": "Tastenkürzel für den Chat anpassen. Änderungen gelten sofort und werden auf diesem Gerät gespeichert.",
+		"automaticallyConfigured": "automatisch konfiguriert",
+		"disableShortcut": "Deaktiviert",
+		"restoreDefaults": "Standard wiederherstellen",
+		"restoreDefaultsSuccess": "Standard-Tastaturkürzel wiederhergestellt.",
+		"primaryModifier": "Primärer Modifizierer",
+		"help": {
+			"title": "Tastaturkürzel",
+			"close": "Schließen"
+		},
+		"palette": {
+			"title": "Befehlspalette",
+			"close": "Schließen",
+			"searchPlaceholder": "Befehle suchen…",
+			"allShortcuts": "Alle Tastaturkürzel"
+		},
+		"editingBanner": "Nachricht bearbeiten",
+		"editingCancel": "Abbrechen",
+		"categories": {
+			"messaging": "Nachrichten",
+			"navigation": "Navigation",
+			"attachments": "Anhänge",
+			"emoji": "Emoji und Reaktionen",
+			"application": "Anwendung"
+		},
+		"actions": {
+			"sendMessage": {
+				"label": "Nachricht senden",
+				"description": "Sendet die aktuelle Chat-Nachricht."
+			},
+			"insertNewLine": {
+				"label": "Neue Zeile einfügen",
+				"description": "Fügt eine neue Zeile im Eingabefeld ein. Wird vom Sende-Kürzel abgeleitet."
+			},
+			"showShortcutHelp": {
+				"label": "Tastaturkürzel anzeigen",
+				"description": "Öffnet die Hilfe zu Tastaturkürzeln."
+			},
+			"focusInput": {
+				"label": "Eingabefeld fokussieren",
+				"description": "Setzt den Fokus auf das Nachrichteneingabefeld."
+			},
+			"uploadFile": {
+				"label": "Datei hochladen",
+				"description": "Öffnet die Dateiauswahl für Anhänge."
+			},
+			"searchMessages": {
+				"label": "Nachrichten suchen",
+				"description": "Durchsucht Nachrichten in der aktuellen Unterhaltung."
+			},
+			"editLastMessage": {
+				"label": "Letzte Nachricht bearbeiten",
+				"description": "Bearbeitet Ihre zuletzt gesendete Nachricht."
+			},
+			"cancelReplyOrEdit": {
+				"label": "Antwort oder Bearbeitung abbrechen",
+				"description": "Bricht die aktuelle Antwort oder Bearbeitung ab."
+			},
+			"openEmojiPicker": {
+				"label": "Emoji-Auswahl öffnen",
+				"description": "Öffnet die Emoji-Auswahl."
+			},
+			"startNewConversation": {
+				"label": "Neue Unterhaltung starten",
+				"description": "Startet eine neue Unterhaltung."
+			},
+			"openCommandPalette": {
+				"label": "Befehlspalette öffnen",
+				"description": "Öffnet die Befehlspalette."
+			}
+		},
+		"conflicts": {
+			"duplicate": "Dieses Tastaturkürzel ist bereits vergeben.",
+			"reserved": "Dieses Tastaturkürzel ist vom Browser reserviert.",
+			"browserConflict": "Dieses Tastaturkürzel steht im Konflikt mit gängigen Browser-Kürzeln.",
+			"sendNewline": "Nachricht senden und Neue Zeile dürfen nicht dasselbe Kürzel verwenden.",
+			"unsupported": "Diese Kürzel-Option wird nicht unterstützt.",
+			"cannotDisable": "Dieses Tastaturkürzel kann nicht deaktiviert werden.",
+			"unsafePlainKey": "Diese Taste kann während der Eingabe nicht als Kürzel verwendet werden."
+		},
+		"hints": {
+			"enterSends": "Enter sendet die Nachricht",
+			"shiftEnterNewline": "Umschalt+Enter fügt eine neue Zeile ein",
+			"enterNewline": "Enter fügt eine neue Zeile ein",
+			"ctrlEnterSends": "Strg+Enter sendet die Nachricht",
+			"cmdEnterSends": "Cmd+Enter sendet die Nachricht"
+		},
+		"lockedNewline": "Auf Umschalt+Enter festgelegt, solange Enter die Nachricht sendet.",
+		"resetAction": "Zurücksetzen",
+		"restoreDefaultsConfirm": "Alle Tastenkürzel auf die Standardwerte zurücksetzen?",
+		"restoreDefaultsConfirmYes": "Zurücksetzen",
+		"restoreDefaultsConfirmNo": "Abbrechen",
+		"keys": {
+			"enter": "Enter",
+			"escape": "Esc",
+			"arrowUp": "↑",
+			"shift": "Umschalt",
+			"alt": "Alt",
+			"option": "Option",
+			"ctrl": "Strg",
+			"cmd": "Cmd"
+		}
 	}
 }

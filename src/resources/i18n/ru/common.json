@@ -1631,7 +1631,8 @@
 					"changePassword": "Изменить пароль",
 					"title": "Безопасность"
 				},
-				"title": "Настройки"
+				"title": "Настройки",
+				"keyboardShortcuts": "Горячие клавиши"
 			}
 		},
 		"spokenLanguages": {
@@ -2946,6 +2947,111 @@
 			"remove": {
 				"confirm": "Вы уверены, что хотите удалить этого супервизора?"
 			}
+		}
+	},
+	"shortcuts": {
+		"title": "Горячие клавиши",
+		"description": "Настройте сочетания клавиш для чата. Изменения применяются сразу и сохраняются на этом устройстве.",
+		"automaticallyConfigured": "настроено автоматически",
+		"disableShortcut": "Отключено",
+		"restoreDefaults": "Восстановить значения по умолчанию",
+		"restoreDefaultsSuccess": "Стандартные горячие клавиши восстановлены.",
+		"primaryModifier": "Primary modifier",
+		"help": {
+			"title": "Горячие клавиши",
+			"close": "Закрыть"
+		},
+		"palette": {
+			"title": "Палитра команд",
+			"close": "Закрыть",
+			"searchPlaceholder": "Поиск команд…",
+			"allShortcuts": "Все горячие клавиши"
+		},
+		"editingBanner": "Редактирование сообщения",
+		"editingCancel": "Отмена",
+		"categories": {
+			"messaging": "Сообщения",
+			"navigation": "Навигация",
+			"attachments": "Вложения",
+			"emoji": "Эмодзи и реакции",
+			"application": "Приложение"
+		},
+		"actions": {
+			"sendMessage": {
+				"label": "Отправить сообщение",
+				"description": "Отправляет текущее сообщение чата."
+			},
+			"insertNewLine": {
+				"label": "Вставить новую строку",
+				"description": "Вставляет новую строку. Определяется сочетанием для отправки."
+			},
+			"showShortcutHelp": {
+				"label": "Показать горячие клавиши",
+				"description": "Открывает справку по горячим клавишам."
+			},
+			"focusInput": {
+				"label": "Focus Message Input",
+				"description": "Move focus to the message composer."
+			},
+			"uploadFile": {
+				"label": "Upload File",
+				"description": "Open the file attachment picker."
+			},
+			"searchMessages": {
+				"label": "Search Messages",
+				"description": "Search messages in the current conversation."
+			},
+			"editLastMessage": {
+				"label": "Edit Last Message",
+				"description": "Edit your last sent message."
+			},
+			"cancelReplyOrEdit": {
+				"label": "Cancel Reply or Edit",
+				"description": "Cancel the current reply or edit."
+			},
+			"openEmojiPicker": {
+				"label": "Open Emoji Picker",
+				"description": "Open the emoji picker."
+			},
+			"startNewConversation": {
+				"label": "Start New Conversation",
+				"description": "Start a new conversation."
+			},
+			"openCommandPalette": {
+				"label": "Open Command Palette",
+				"description": "Open the command palette."
+			}
+		},
+		"conflicts": {
+			"duplicate": "Это сочетание уже назначено.",
+			"reserved": "Это сочетание зарезервировано браузером.",
+			"browserConflict": "Это сочетание конфликтует с типичными сочетаниями браузера.",
+			"sendNewline": "Отправка и новая строка не могут использовать одно сочетание.",
+			"unsupported": "Этот вариант сочетания не поддерживается.",
+			"cannotDisable": "Это сочетание нельзя отключить.",
+			"unsafePlainKey": "Эту клавишу нельзя использовать как сочетание во время ввода."
+		},
+		"hints": {
+			"enterSends": "Enter sends the message",
+			"shiftEnterNewline": "Shift+Enter inserts a new line",
+			"enterNewline": "Enter inserts a new line",
+			"ctrlEnterSends": "Ctrl+Enter sends the message",
+			"cmdEnterSends": "Cmd+Enter sends the message"
+		},
+		"lockedNewline": "Зафиксировано как Shift+Enter, пока Enter отправляет сообщение.",
+		"resetAction": "Сбросить",
+		"restoreDefaultsConfirm": "Восстановить все сочетания клавиш по умолчанию?",
+		"restoreDefaultsConfirmYes": "Восстановить",
+		"restoreDefaultsConfirmNo": "Отмена",
+		"keys": {
+			"enter": "Enter",
+			"escape": "Esc",
+			"arrowUp": "↑",
+			"shift": "Shift",
+			"alt": "Alt",
+			"option": "Option",
+			"ctrl": "Ctrl",
+			"cmd": "Cmd"
 		}
 	}
 }

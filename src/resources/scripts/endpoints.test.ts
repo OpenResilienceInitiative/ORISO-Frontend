@@ -1,9 +1,12 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-const loadEndpoints = async (env: Record<string, string | undefined> = {}) => {
+const loadEndpoints = async (
+	env: Record<string, string | undefined> = {},
+	nodeEnv: 'development' | 'production' = 'production'
+) => {
 	vi.resetModules();
-	vi.stubEnv('NODE_ENV', 'production');
+	vi.stubEnv('NODE_ENV', nodeEnv);
 	vi.stubEnv('REACT_APP_KEYCLOAK_REALM', 'online-beratung');
 	vi.stubEnv('REACT_APP_API_URL', 'https://api.oriso.org');
 
@@ -59,6 +62,22 @@ describe('endpoints service origins', () => {
 		);
 		expect(endpoints.keycloakAccessToken).toBe(
 			'https://api.oriso.org/auth/realms/online-beratung/protocol/openid-connect/token'
+		);
+	});
+
+	it('uses relative service paths in development to avoid CORS', async () => {
+		const { endpoints } = await loadEndpoints(
+			{
+				REACT_APP_API_URL: 'https://api.oriso-dev.site',
+				REACT_APP_USER_SERVICE_ORIGIN: 'https://api.oriso-dev.site'
+			},
+			'development'
+		);
+
+		expect(endpoints.userData).toBe('/service/users/data');
+		expect(endpoints.serviceSettings).toBe('/service/settings');
+		expect(endpoints.keycloakAccessToken).toBe(
+			'/auth/realms/online-beratung/protocol/openid-connect/token'
 		);
 	});
 });

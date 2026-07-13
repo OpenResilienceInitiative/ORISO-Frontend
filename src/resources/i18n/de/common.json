@@ -356,14 +356,6 @@
 				"long": "Februar",
 				"short": "Feb"
 			},
-			"10": {
-				"long": "November",
-				"short": "Nov"
-			},
-			"11": {
-				"long": "Dezember",
-				"short": "Dez"
-			},
 			"2": {
 				"long": "März",
 				"short": "Mär"
@@ -395,6 +387,14 @@
 			"9": {
 				"long": "Oktober",
 				"short": "Okt"
+			},
+			"10": {
+				"long": "November",
+				"short": "Nov"
+			},
+			"11": {
+				"long": "Dezember",
+				"short": "Dez"
 			}
 		}
 	},
@@ -803,7 +803,8 @@
 					"veryLate": "stark verspätet"
 				},
 				"dogMinutes": "{{value}} Hundeminuten",
-				"romanMinutes": "{{value}} Minuten"
+				"romanMinutes": "{{value}} Minuten",
+				"rulesLabel": "Chat-Regeln"
 			},
 			"button": {
 				"label": {
@@ -905,9 +906,6 @@
 				"headline": "Video-Call",
 				"intro": "Damit Sie an Video-Calls teilnehmen können, müssen Sie sich über einen der unterstützten Browser anmelden. Die Chat-Beratung funktioniert weiterhin mit Firefox.",
 				"steps": {
-					"1.1": "Folgen Sie dem Link zu ",
-					"1.2": " oder ",
-					"1.3": " (nur für macOS und iOS verfügbar)",
 					"2": "Laden Sie einen der unterstützten Browser herunter.",
 					"3": "Installieren Sie diesen auf Ihrem PC/Laptop/Tablet/Smartphone.",
 					"4": {
@@ -916,6 +914,9 @@
 					},
 					"5": "Melden Sie sich bei der Online-Beratung an.",
 					"6": "Bitten Sie Ihre_n Berater_in Sie nochmals anzurufen.",
+					"1.1": "Folgen Sie dem Link zu ",
+					"1.2": " oder ",
+					"1.3": " (nur für macOS und iOS verfügbar)",
 					"headline": {
 						"1": "Schritt-für-Schritt-Anleitung",
 						"2": "Sie haben bereits Google Chrome, Microsoft Edge oder Safari?"
@@ -930,9 +931,6 @@
 				"headline": "Video-Call",
 				"intro": "Um einen Video-Call durchführen zu können, müssen Sie sich über einen der unterstützten Browser anmelden. Die Chat-Beratung funktioniert weiterhin mit Firefox.",
 				"steps": {
-					"1.1": "Folgen Sie dem Link zu ",
-					"1.2": " oder ",
-					"1.3": " (nur für macOS und iOS verfügbar)",
 					"2": "Laden Sie einen der unterstützten Browser herunter. Dafür brauchen Sie möglicherweise die Unterstützung Ihrer EDV.",
 					"3": "Installieren Sie diesen auf Ihrem PC/Laptop/Tablet/Smartphone.",
 					"4": {
@@ -941,6 +939,9 @@
 					},
 					"5": "Melden Sie sich bei der Online-Beratung an.",
 					"6": "Starten Sie den Video-Call.",
+					"1.1": "Folgen Sie dem Link zu ",
+					"1.2": " oder ",
+					"1.3": " (nur für macOS und iOS verfügbar)",
 					"headline": {
 						"1": "Schritt-für-Schritt-Anleitung",
 						"2": "Sie haben bereits Google Chrome, Microsoft Edge oder Safari?"
@@ -1938,7 +1939,8 @@
 					"changePassword": "Passwort ändern",
 					"title": "Sicherheit"
 				},
-				"title": "Einstellungen"
+				"title": "Einstellungen",
+				"keyboardShortcuts": "Tastaturkürzel"
 			}
 		},
 		"spokenLanguages": {
@@ -2240,13 +2242,6 @@
 			"options": {
 				"0": "außerhalb Deutschlands",
 				"1": "Baden-Württemberg",
-				"10": "Nordrhein-Westfalen",
-				"11": "Rheinland-Pfalz",
-				"12": "Saarland",
-				"13": "Sachsen",
-				"14": "Sachsen-Anhalt",
-				"15": "Schleswig-Holstein",
-				"16": "Thüringen",
 				"2": "Bayern",
 				"3": "Berlin",
 				"4": "Brandenburg",
@@ -2254,7 +2249,14 @@
 				"6": "Hamburg",
 				"7": "Hessen",
 				"8": "Mecklenburg-Vorpommern",
-				"9": "Niedersachsen"
+				"9": "Niedersachsen",
+				"10": "Nordrhein-Westfalen",
+				"11": "Rheinland-Pfalz",
+				"12": "Saarland",
+				"13": "Sachsen",
+				"14": "Sachsen-Anhalt",
+				"15": "Schleswig-Holstein",
+				"16": "Thüringen"
 			}
 		},
 		"submitButton": {
@@ -3153,16 +3155,20 @@
 			"age": {
 				"0": "unter 12",
 				"1": "12",
+				"2": "13",
+				"3": "14",
+				"4": "15",
+				"5": "16",
+				"6": "17",
+				"7": "18",
+				"8": "19",
+				"9": "20",
 				"10": "21",
 				"11": "22",
 				"12": "23",
 				"13": "24",
 				"14": "25",
 				"15": "über 25",
-				"2": "13",
-				"3": "14",
-				"4": "15",
-				"5": "16",
 				"50": "20",
 				"51": "21",
 				"52": "22",
@@ -3170,10 +3176,6 @@
 				"54": "24",
 				"55": "25",
 				"56": "26",
-				"6": "17",
-				"7": "18",
-				"8": "19",
-				"9": "20",
 				"selectLabel": "Alter auswählen*"
 			},
 			"gender": {
@@ -3191,13 +3193,6 @@
 			"state": {
 				"0": "außerhalb Deutschlands",
 				"1": "Baden-Württemberg",
-				"10": "Nordrhein-Westfalen",
-				"11": "Rheinland-Pfalz",
-				"12": "Saarland",
-				"13": "Sachsen",
-				"14": "Sachsen-Anhalt",
-				"15": "Schleswig-Holstein",
-				"16": "Thüringen",
 				"2": "Bayern",
 				"3": "Berlin",
 				"4": "Brandenburg",
@@ -3206,6 +3201,13 @@
 				"7": "Hessen",
 				"8": "Mecklenburg-Vorpommern",
 				"9": "Niedersachsen",
+				"10": "Nordrhein-Westfalen",
+				"11": "Rheinland-Pfalz",
+				"12": "Saarland",
+				"13": "Sachsen",
+				"14": "Sachsen-Anhalt",
+				"15": "Schleswig-Holstein",
+				"16": "Thüringen",
 				"selectLabel": "Bundesland auswählen*"
 			}
 		}
@@ -3548,6 +3550,111 @@
 			"remove": {
 				"confirm": "Möchten Sie diesen Supervisor wirklich entfernen?"
 			}
+		}
+	},
+	"shortcuts": {
+		"title": "Tastaturkürzel",
+		"description": "Tastenkürzel für den Chat anpassen. Änderungen gelten sofort und werden auf diesem Gerät gespeichert.",
+		"automaticallyConfigured": "automatisch konfiguriert",
+		"disableShortcut": "Deaktiviert",
+		"restoreDefaults": "Standard wiederherstellen",
+		"restoreDefaultsSuccess": "Standard-Tastaturkürzel wiederhergestellt.",
+		"primaryModifier": "Primärer Modifizierer",
+		"help": {
+			"title": "Tastaturkürzel",
+			"close": "Schließen"
+		},
+		"palette": {
+			"title": "Befehlspalette",
+			"close": "Schließen",
+			"searchPlaceholder": "Befehle suchen…",
+			"allShortcuts": "Alle Tastaturkürzel"
+		},
+		"editingBanner": "Nachricht bearbeiten",
+		"editingCancel": "Abbrechen",
+		"categories": {
+			"messaging": "Nachrichten",
+			"navigation": "Navigation",
+			"attachments": "Anhänge",
+			"emoji": "Emoji und Reaktionen",
+			"application": "Anwendung"
+		},
+		"actions": {
+			"sendMessage": {
+				"label": "Nachricht senden",
+				"description": "Sendet die aktuelle Chat-Nachricht."
+			},
+			"insertNewLine": {
+				"label": "Neue Zeile einfügen",
+				"description": "Fügt eine neue Zeile im Eingabefeld ein. Wird vom Sende-Kürzel abgeleitet."
+			},
+			"showShortcutHelp": {
+				"label": "Tastaturkürzel anzeigen",
+				"description": "Öffnet die Hilfe zu Tastaturkürzeln."
+			},
+			"focusInput": {
+				"label": "Eingabefeld fokussieren",
+				"description": "Setzt den Fokus auf das Nachrichteneingabefeld."
+			},
+			"uploadFile": {
+				"label": "Datei hochladen",
+				"description": "Öffnet die Dateiauswahl für Anhänge."
+			},
+			"searchMessages": {
+				"label": "Nachrichten suchen",
+				"description": "Durchsucht Nachrichten in der aktuellen Unterhaltung."
+			},
+			"editLastMessage": {
+				"label": "Letzte Nachricht bearbeiten",
+				"description": "Bearbeitet Ihre zuletzt gesendete Nachricht."
+			},
+			"cancelReplyOrEdit": {
+				"label": "Antwort oder Bearbeitung abbrechen",
+				"description": "Bricht die aktuelle Antwort oder Bearbeitung ab."
+			},
+			"openEmojiPicker": {
+				"label": "Emoji-Auswahl öffnen",
+				"description": "Öffnet die Emoji-Auswahl."
+			},
+			"startNewConversation": {
+				"label": "Neue Unterhaltung starten",
+				"description": "Startet eine neue Unterhaltung."
+			},
+			"openCommandPalette": {
+				"label": "Befehlspalette öffnen",
+				"description": "Öffnet die Befehlspalette."
+			}
+		},
+		"conflicts": {
+			"duplicate": "Dieses Tastaturkürzel ist bereits vergeben.",
+			"reserved": "Dieses Tastaturkürzel ist vom Browser reserviert.",
+			"browserConflict": "Dieses Tastaturkürzel steht im Konflikt mit gängigen Browser-Kürzeln.",
+			"sendNewline": "Nachricht senden und Neue Zeile dürfen nicht dasselbe Kürzel verwenden.",
+			"unsupported": "Diese Kürzel-Option wird nicht unterstützt.",
+			"cannotDisable": "Dieses Tastaturkürzel kann nicht deaktiviert werden.",
+			"unsafePlainKey": "Diese Taste kann während der Eingabe nicht als Kürzel verwendet werden."
+		},
+		"hints": {
+			"enterSends": "Enter sendet die Nachricht",
+			"shiftEnterNewline": "Umschalt+Enter fügt eine neue Zeile ein",
+			"enterNewline": "Enter fügt eine neue Zeile ein",
+			"ctrlEnterSends": "Strg+Enter sendet die Nachricht",
+			"cmdEnterSends": "Cmd+Enter sendet die Nachricht"
+		},
+		"lockedNewline": "Auf Umschalt+Enter festgelegt, solange Enter die Nachricht sendet.",
+		"resetAction": "Zurücksetzen",
+		"restoreDefaultsConfirm": "Alle Tastenkürzel auf die Standardwerte zurücksetzen?",
+		"restoreDefaultsConfirmYes": "Zurücksetzen",
+		"restoreDefaultsConfirmNo": "Abbrechen",
+		"keys": {
+			"enter": "Enter",
+			"escape": "Esc",
+			"arrowUp": "↑",
+			"shift": "Umschalt",
+			"alt": "Alt",
+			"option": "Option",
+			"ctrl": "Strg",
+			"cmd": "Cmd"
 		}
 	}
 }
