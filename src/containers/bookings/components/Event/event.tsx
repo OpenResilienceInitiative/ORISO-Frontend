@@ -82,11 +82,13 @@ export const Event: React.FC<EventProps> = ({ event, bookingStatus }) => {
 	};
 
 	const handleRescheduleAppointment = (event: BookingEventUiInterface) => {
-		navigate('/booking/reschedule', { state: {
+		navigate('/booking/reschedule', {
+			state: {
 				rescheduleLink: event.rescheduleLink,
 				bookingId: event.id,
 				askerId: event.askerId
-			} });
+			}
+		});
 	};
 
 	const handleVideoLink = (videoAppointmentId: string) => {
@@ -132,9 +134,11 @@ export const Event: React.FC<EventProps> = ({ event, bookingStatus }) => {
 					{activeBookings && (
 						<div className="bookingEvents__ics--mobile bookingEvents--flex bookingEvents--pointer">
 							<DownloadICSFile
-								date={event.date}
-								duration={event.duration}
+								start={event.startTime}
+								end={event.endTime}
 								title={event.title}
+								description={event.description}
+								uid={event.uid}
 							/>
 						</div>
 					)}
@@ -189,9 +193,11 @@ export const Event: React.FC<EventProps> = ({ event, bookingStatus }) => {
 				{activeBookings && (
 					<div className="bookingEvents__ics bookingEvents--flex bookingEvents--pointer">
 						<DownloadICSFile
-							date={event.date}
-							duration={event.duration}
+							start={event.startTime}
+							end={event.endTime}
 							title={event.title}
+							description={event.description}
+							uid={event.uid}
 						/>
 					</div>
 				)}
