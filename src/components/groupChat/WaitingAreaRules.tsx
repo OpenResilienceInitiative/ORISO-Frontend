@@ -15,7 +15,10 @@ interface WaitingAreaRulesProps {
  * so screen readers get the whole list at once, and `prefers-reduced-motion` shows them
  * all statically (handled in joinChat.styles.scss) — motion is never required to read a rule.
  */
-export const WaitingAreaRules = ({ rules, ariaLabel }: WaitingAreaRulesProps) => {
+export const WaitingAreaRules = ({
+	rules,
+	ariaLabel
+}: WaitingAreaRulesProps) => {
 	const prefersReducedMotion = usePrefersReducedMotion();
 	const activeIndex = useCyclingIndex(rules.length, RULE_CYCLE_INTERVAL_MS, {
 		enabled: !prefersReducedMotion

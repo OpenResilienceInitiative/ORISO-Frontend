@@ -441,10 +441,7 @@ describe('chatTransportService sendTextMessage (Matrix-only transport)', () => {
 		});
 
 		expect(apiGetSessionRoomBySessionId).toHaveBeenCalledWith(42);
-		expect(sendMessage).toHaveBeenCalledWith(
-			ROOM_ID,
-			'hello after accept'
-		);
+		expect(sendMessage).toHaveBeenCalledWith(ROOM_ID, 'hello after accept');
 	});
 
 	it('rejects when refreshing a stale session still returns no Matrix room', async () => {

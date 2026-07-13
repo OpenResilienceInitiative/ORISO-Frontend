@@ -58,7 +58,9 @@ describe('WaitingAreaRules', () => {
 			<WaitingAreaRules rules={['a']} ariaLabel="Chat rules" />
 		);
 		expect(
-			container.querySelector('.joinChat__rules')?.getAttribute('aria-label')
+			container
+				.querySelector('.joinChat__rules')
+				?.getAttribute('aria-label')
 		).toBe('Chat rules');
 	});
 

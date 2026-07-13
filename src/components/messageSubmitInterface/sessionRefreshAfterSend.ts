@@ -6,8 +6,7 @@ type SessionRefreshAfterSendInput = {
 export const shouldReloadSessionAfterSend = ({
 	isMatrixSession,
 	clientRoomId
-}: SessionRefreshAfterSendInput): boolean =>
-	isMatrixSession && !clientRoomId;
+}: SessionRefreshAfterSendInput): boolean => isMatrixSession && !clientRoomId;
 
 export const reloadSessionAfterSendIfNeeded = (
 	input: SessionRefreshAfterSendInput,

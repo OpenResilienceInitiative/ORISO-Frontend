@@ -240,7 +240,9 @@ describe('MatrixClientService', () => {
 		mockedMatrixClient.joinRoom.mockResolvedValue({
 			roomId: '!room:example.org'
 		});
-		mockedMatrixClient.sendMessage.mockResolvedValue({ event_id: '$event' });
+		mockedMatrixClient.sendMessage.mockResolvedValue({
+			event_id: '$event'
+		});
 
 		await expect(
 			service.sendMessage('!room:example.org', 'Hello after refresh')

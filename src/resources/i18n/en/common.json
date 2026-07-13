@@ -1519,6 +1519,34 @@
 			"groupChatCancelled": {
 				"title": "Online appointment cancelled",
 				"text": "The online appointment was cancelled."
+			},
+			"requestDenied": {
+				"title": "Request denied",
+				"text": "The client request was denied."
+			},
+			"waitingRoomClientJoined": {
+				"title": "Client joined waiting room",
+				"text": "A client has joined the waiting room."
+			},
+			"callInvited": {
+				"title": "Invitation to internal group call",
+				"text": "You have been invited to an internal group call."
+			},
+			"appointmentRequested": {
+				"title": "Call appointment requested",
+				"text": "There is a new appointment request for a call."
+			},
+			"appointmentScheduled": {
+				"title": "Local appointment scheduled",
+				"text": "An in-person appointment has been scheduled."
+			},
+			"appointmentCancelled": {
+				"title": "Appointment cancelled",
+				"text": "A scheduled appointment has been cancelled."
+			},
+			"appointmentBriefing": {
+				"title": "Appointments briefing",
+				"text": "A briefing of your upcoming appointments is ready."
 			}
 		},
 		"error": "failed",
@@ -1543,7 +1571,10 @@
 			"open": "Open chat",
 			"join": "Join",
 			"systemTag": "System notification",
-			"messageTag": "Message notification"
+			"messageTag": "Message notification",
+			"unreadFilter": "Unread",
+			"showPreview": "Show conversation preview",
+			"showDetails": "Show details"
 		},
 		"threadReply": {
 			"title": "New thread reply"
@@ -1927,6 +1958,28 @@
 			"successOverlay": {
 				"button": "ok",
 				"headline": "You have successfully deleted your email address."
+			}
+		},
+		"notificationSettings": {
+			"title": "Notifications",
+			"description": "These settings apply to your account on every device and browser.",
+			"globalMute": "Mute all notifications",
+			"deviceSilence": {
+				"title": "Silence this device",
+				"description": "Only this browser stays quiet — your other devices keep notifying."
+			},
+			"browser": {
+				"title": "Browser notifications",
+				"description": "Show desktop notifications while the app is in the background."
+			},
+			"preview": {
+				"title": "Show message content",
+				"description": "Shows the message text inside the notification. Off by default for privacy."
+			},
+			"sounds": "Notification sounds",
+			"families": {
+				"title": "Notify about",
+				"description": "Choose which event families may trigger notifications."
 			}
 		}
 	},

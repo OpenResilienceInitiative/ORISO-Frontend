@@ -10,7 +10,8 @@ const installMatchMedia = (initialMatches: boolean) => {
 	const mql = {
 		matches: initialMatches,
 		media: '(prefers-reduced-motion: reduce)',
-		addEventListener: (_: 'change', cb: ChangeListener) => listeners.add(cb),
+		addEventListener: (_: 'change', cb: ChangeListener) =>
+			listeners.add(cb),
 		removeEventListener: (_: 'change', cb: ChangeListener) =>
 			listeners.delete(cb),
 		emit(matches: boolean) {

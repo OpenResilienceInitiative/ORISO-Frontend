@@ -15,6 +15,7 @@ import { OverviewBookings } from './OverviewMobile/Bookings';
 import { OverviewSessions } from './OverviewMobile/Sessions';
 import { profileRoutesSettings } from './profileSettings.routes';
 import { profileRoutesHelp } from './profileHelp.routes';
+import { NotificationSettingsPanel } from './NotificationSettings';
 import {
 	TenantDataInterface,
 	AppConfigInterface
@@ -231,6 +232,8 @@ const profileRoutes = (
 						isFirstVisit && !browserNotificationsSettings().visited,
 					url: '/browser',
 					elements: [
+						// Legacy per-browser panel (localStorage) while the new
+						// notification system is toggled off …
 						{
 							component: BrowserNotification,
 							column: COLUMN_RIGHT,
@@ -238,7 +241,19 @@ const profileRoutes = (
 								hasUserAuthority(
 									AUTHORITIES.CONSULTANT_DEFAULT,
 									userData
-								)
+								) &&
+								!settings?.releaseToggles
+									?.enableNewNotifications
+						},
+						// … and the WP-06 Slice 6b cross-device panel (Matrix
+						// account data) once it is on. Available to every role:
+						// askers get notified about handover consent & messages.
+						{
+							component: NotificationSettingsPanel,
+							column: COLUMN_RIGHT,
+							condition: () =>
+								!!settings?.releaseToggles
+									?.enableNewNotifications
 						}
 					]
 				}

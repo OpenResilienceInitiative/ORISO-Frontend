@@ -440,6 +440,52 @@
 		},
 		"message": {
 			"new": "Du hast eine neue Nachricht!"
+		},
+		"families": {
+			"all": "Alle",
+			"requests": "Anfragen",
+			"messages": "Nachrichten",
+			"drafts": "Entwürfe",
+			"handover": "Übergabe",
+			"calls": "Anrufe",
+			"system": "System",
+			"appointments": "Termine"
+		},
+		"center": {
+			"searchPlaceholder": "Aktivität durchsuchen…",
+			"unreadFilter": "Ungelesen",
+			"showPreview": "Chat-Vorschau anzeigen",
+			"showDetails": "Details anzeigen"
+		},
+		"events": {
+			"requestDenied": {
+				"title": "Anfrage abgelehnt",
+				"text": "Die Klient:innen-Anfrage wurde abgelehnt."
+			},
+			"waitingRoomClientJoined": {
+				"title": "Klient:in im Warteraum",
+				"text": "Eine Klient:in ist dem Warteraum beigetreten."
+			},
+			"callInvited": {
+				"title": "Einladung zu internem Gruppenanruf",
+				"text": "Du wurdest zu einem internen Gruppenanruf eingeladen."
+			},
+			"appointmentRequested": {
+				"title": "Termin für einen Anruf angefragt",
+				"text": "Es liegt eine neue Terminanfrage für einen Anruf vor."
+			},
+			"appointmentScheduled": {
+				"title": "Termin vor Ort geplant",
+				"text": "Ein Termin vor Ort wurde vereinbart."
+			},
+			"appointmentCancelled": {
+				"title": "Termin abgesagt",
+				"text": "Ein geplanter Termin wurde abgesagt."
+			},
+			"appointmentBriefing": {
+				"title": "Termin-Briefing",
+				"text": "Eine Übersicht deiner anstehenden Termine liegt bereit."
+			}
 		}
 	},
 	"overlay": {
@@ -617,6 +663,28 @@
 			},
 			"successOverlay": {
 				"headline": "Du hast Deine E-Mail-Adresse erfolgreich gelöscht."
+			}
+		},
+		"notificationSettings": {
+			"title": "Benachrichtigungen",
+			"description": "Diese Einstellungen gelten für dein Konto auf allen Geräten und Browsern.",
+			"globalMute": "Alle Benachrichtigungen stummschalten",
+			"deviceSilence": {
+				"title": "Dieses Gerät stummschalten",
+				"description": "Nur dieser Browser bleibt still — deine anderen Geräte benachrichtigen weiterhin."
+			},
+			"browser": {
+				"title": "Browser-Benachrichtigungen",
+				"description": "Desktop-Benachrichtigungen anzeigen, wenn die App im Hintergrund ist."
+			},
+			"preview": {
+				"title": "Nachrichteninhalt anzeigen",
+				"description": "Zeigt den Nachrichtentext in der Benachrichtigung. Aus Datenschutzgründen standardmäßig aus."
+			},
+			"sounds": "Benachrichtigungstöne",
+			"families": {
+				"title": "Benachrichtigen bei",
+				"description": "Wähle, welche Ereignis-Familien Benachrichtigungen auslösen dürfen."
 			}
 		},
 		"routes": {
