@@ -43,6 +43,9 @@ describe('endpoints service origins', () => {
 		expect(endpoints.tenantServiceBase).toBe(
 			'https://api.oriso.org/service/tenant'
 		);
+		expect(endpoints.topicsData).toBe(
+			'https://api.oriso.org/service/topic/public'
+		);
 	});
 
 	it('falls back to the broad API origin when service origins are absent', async () => {
