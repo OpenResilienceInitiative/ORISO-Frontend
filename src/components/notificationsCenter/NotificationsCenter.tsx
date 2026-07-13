@@ -277,11 +277,13 @@ export const NotificationsCenter = () => {
 		}
 	}, [effectiveSelectedId, selectedNotificationId]);
 
-	// Drop back to "All" if the active family is no longer in the feed.
+	// Clear any stale case-handover consent error when the selection changes.
 	useEffect(() => {
 		setCaseHandoverConsentError('');
 	}, [selectedNotificationId]);
 
+	// Clear the active family filter when that family is no longer in the feed
+	// (no selection means "show everything" — there is no "All" chip).
 	useEffect(() => {
 		if (
 			activeFamily &&
@@ -571,6 +573,10 @@ export const NotificationsCenter = () => {
 						clearLabel={translate(
 							'sessionList.toolbar.search.clear',
 							'Clear search'
+						)}
+						menuLabel={translate(
+							'sessionList.toolbar.search.toggle',
+							'Open or close search results'
 						)}
 					/>
 					{notificationFeed.length > 0 && (

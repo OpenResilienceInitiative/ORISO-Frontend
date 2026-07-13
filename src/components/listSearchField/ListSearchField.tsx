@@ -14,6 +14,12 @@ export interface ListSearchFieldProps {
 	/** Accessible label for the clear button. */
 	clearLabel: string;
 	/**
+	 * Accessible label for the leading kebab button. Defaults to the placeholder
+	 * for backwards compatibility, but callers should pass a distinct label so
+	 * the button and the input don't announce the same thing to screen readers.
+	 */
+	menuLabel?: string;
+	/**
 	 * Optional handler for the leading kebab button. When omitted the button
 	 * simply focuses the input (same affordance as the conversation list).
 	 */
@@ -35,6 +41,7 @@ export const ListSearchField = ({
 	onChange,
 	placeholder,
 	clearLabel,
+	menuLabel,
 	onMenuClick,
 	className
 }: ListSearchFieldProps) => {
@@ -46,7 +53,7 @@ export const ListSearchField = ({
 				<button
 					type="button"
 					className="sessionsListToolbar__iconButton"
-					aria-label={placeholder}
+					aria-label={menuLabel || placeholder}
 					onClick={onMenuClick || (() => inputRef.current?.focus())}
 				>
 					<IconMenuDots />
