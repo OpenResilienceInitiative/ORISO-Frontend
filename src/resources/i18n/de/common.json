@@ -1402,7 +1402,13 @@
 			"moderatorEndedTitle": "Videokonferenz wurde beendet: {{time}}",
 			"moderatorStartedTitle": "Moderator:in {{name}} hat eine Videokonferenz gestartet"
 		},
-		"yesterday": "Gestern"
+		"yesterday": "Gestern",
+		"reply": {
+			"previewLabel": "Antwort an",
+			"cancel": "Antwort verwerfen",
+			"quoteLabel": "Antwort auf",
+			"quoteUnknown": "Frühere Nachricht"
+		}
 	},
 	"navigation": {
 		"appointments": "Video - Termine",

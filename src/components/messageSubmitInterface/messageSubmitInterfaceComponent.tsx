@@ -153,6 +153,13 @@ export interface MessageSubmitInterfaceComponentProps {
 	supervisionRoomId?: string;
 	threadRootId?: string | null;
 	threadParentPreview?: string | null;
+	/**
+	 * Relations foundation (#435): direct-reply context. When set, the next
+	 * send carries an m.in_reply_to relation to this event and the composer
+	 * shows a cancelable quote preview.
+	 */
+	replyTo?: { eventId: string; author: string; text: string } | null;
+	onCancelReply?: () => void;
 	mobileUnreadCount?: number;
 	mobileIsScrolledToBottom?: boolean;
 	onMobileNavigateBack?: () => void;
@@ -174,6 +181,8 @@ export const MessageSubmitInterfaceComponent = ({
 	supervisionRoomId,
 	threadRootId,
 	threadParentPreview,
+	replyTo,
+	onCancelReply,
 	mobileUnreadCount = 0,
 	mobileIsScrolledToBottom = false,
 	onMobileNavigateBack,
@@ -1258,13 +1267,16 @@ export const MessageSubmitInterfaceComponent = ({
 						userData?.userName ||
 						`${userData?.firstName || ''} ${userData?.lastName || ''}`.trim() ||
 						'User',
-					matrixClientService
+					matrixClientService,
+					replyTo?.eventId || null
 				)
 					.then(() => encryptRoom(setE2EEState))
 					.then(() => {
 						onSendButton && onSendButton();
 						handleMessageSendSuccess();
 						cleanupAttachment();
+						// Reply context is consumed by the send (#435).
+						onCancelReply && onCancelReply();
 					})
 					.catch((error) => {
 						setIsRequestInProgress(false);
@@ -1300,6 +1312,8 @@ export const MessageSubmitInterfaceComponent = ({
 			setE2EEState,
 			supervisionRoomId,
 			threadRootId,
+			replyTo?.eventId,
+			onCancelReply,
 			userData?.displayName,
 			userData?.firstName,
 			userData?.lastName,
@@ -2964,6 +2978,35 @@ export const MessageSubmitInterfaceComponent = ({
 			)}
 
 			<form className="textarea" onSubmit={handleFormSubmit}>
+				{/* Relations foundation (#435): cancelable reply-quote preview,
+				    docked inside the composer box above the input. */}
+				{replyTo && (
+					<div className="messageSubmit__replyPreview" role="status">
+						<div className="messageSubmit__replyPreviewContent">
+							<span className="messageSubmit__replyPreviewLabel">
+								{translate(
+									'message.reply.previewLabel',
+									'Antwort an'
+								)}{' '}
+								<strong>{replyTo.author}</strong>
+							</span>
+							<span className="messageSubmit__replyPreviewText">
+								{replyTo.text}
+							</span>
+						</div>
+						<button
+							type="button"
+							className="messageSubmit__replyPreviewCancel"
+							onClick={() => onCancelReply && onCancelReply()}
+							aria-label={translate(
+								'message.reply.cancel',
+								'Antwort verwerfen'
+							)}
+						>
+							×
+						</button>
+					</div>
+				)}
 				<div
 					className={clsx(
 						'textarea__wrapper',

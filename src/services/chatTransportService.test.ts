@@ -430,7 +430,9 @@ describe('chatTransportService sendTextMessage (Matrix-only transport)', () => {
 			matrixClientServiceOverride: override
 		});
 
-		expect(sendMessage).toHaveBeenCalledWith(ROOM_ID, 'hello world');
+		expect(sendMessage).toHaveBeenCalledWith(ROOM_ID, 'hello world', {
+			replyToEventId: null
+		});
 		expect(result).toEqual({
 			success: true,
 			event_id: '$evt:matrix.oriso.org'
@@ -521,5 +523,73 @@ describe('chatTransportService markRoomAsRead', () => {
 		await expect(
 			chatTransportService.markRoomAsRead(ROOM_ID)
 		).resolves.toBeUndefined();
+	});
+});
+
+describe('chatTransportService reply relation (#435)', () => {
+	beforeEach(() => {
+		apiPostMessageEventNotification.mockClear();
+	});
+
+	const makeServiceFake = () => {
+		const sendMessage = vi.fn(async () => ({ event_id: '$new:hs' }));
+		return {
+			fake: {
+				getClient: () => ({}) as any,
+				sendMessage
+			} as any,
+			sendMessage
+		};
+	};
+
+	it('passes replyToEventId through to the Matrix send as an option', async () => {
+		const { fake, sendMessage } = makeServiceFake();
+		const result = await chatTransportService.sendTextMessage({
+			roomIdOrSessionId: ROOM_ID,
+			message: 'antwort',
+			sendMailNotification: false,
+			isEncrypted: true,
+			matrixRoomId: ROOM_ID,
+			replyToEventId: '$orig:hs',
+			matrixClientServiceOverride: fake
+		});
+		expect(sendMessage).toHaveBeenCalledWith(ROOM_ID, 'antwort', {
+			replyToEventId: '$orig:hs'
+		});
+		expect(result).toEqual({ success: true, event_id: '$new:hs' });
+	});
+
+	it('sends without reply options when not replying', async () => {
+		const { fake, sendMessage } = makeServiceFake();
+		await chatTransportService.sendTextMessage({
+			roomIdOrSessionId: ROOM_ID,
+			message: 'normal',
+			sendMailNotification: false,
+			isEncrypted: true,
+			matrixRoomId: ROOM_ID,
+			matrixClientServiceOverride: fake
+		});
+		expect(sendMessage).toHaveBeenCalledWith(ROOM_ID, 'normal', {
+			replyToEventId: null
+		});
+	});
+
+	it('FE-H01: the metadata notification never carries reply content or ids beyond metadata', async () => {
+		const { fake } = makeServiceFake();
+		await chatTransportService.sendTextMessage({
+			roomIdOrSessionId: ROOM_ID,
+			message: 'geheime antwort',
+			sendMailNotification: false,
+			isEncrypted: true,
+			matrixRoomId: ROOM_ID,
+			replyToEventId: '$orig:hs',
+			matrixClientServiceOverride: fake
+		});
+		expect(apiPostMessageEventNotification).toHaveBeenCalledTimes(1);
+		const payload = apiPostMessageEventNotification.mock
+			.calls[0][0] as Record<string, unknown>;
+		const serialized = JSON.stringify(payload);
+		expect(serialized).not.toContain('geheime antwort');
+		expect(serialized).not.toContain('$orig:hs');
 	});
 });

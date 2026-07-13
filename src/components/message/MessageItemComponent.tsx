@@ -248,6 +248,8 @@ export interface MessageItem {
 	t: null | 'e2e' | 'rm' | 'room-removed-read-only' | 'room-set-read-only';
 	rid: string;
 	isVideoActive?: boolean;
+	/** Relations foundation (#435): id of the replied-to event, if a reply. */
+	replyToEventId?: string | null;
 }
 
 interface MessageItemComponentProps extends MessageItem {
@@ -264,6 +266,12 @@ interface MessageItemComponentProps extends MessageItem {
 		lastReplyText: string;
 	};
 	onOpenThread?: () => void;
+	/** Relations foundation (#435): this message replies to that event. */
+	replyToEventId?: string | null;
+	/** Resolved quote of the replied-to message (author + text), if known. */
+	replyQuote?: { author: string; text: string } | null;
+	/** Start a direct reply to THIS message (wires the composer). */
+	onReplyDirect?: () => void;
 	handleDecryptionErrors: (
 		id: string,
 		messageTime: string,
@@ -299,7 +307,10 @@ export const MessageItemComponent = ({
 	threadRootId,
 	forceShow = false,
 	threadSummary,
-	onOpenThread
+	onOpenThread,
+	replyToEventId,
+	replyQuote,
+	onReplyDirect
 }: MessageItemComponentProps) => {
 	const { t: translate } = useTranslation();
 	const { activeSession, reloadActiveSession } =
@@ -996,11 +1007,20 @@ export const MessageItemComponent = ({
 		isVideoCallMessage && !videoCallMessage?.eventType;
 	const actionMenuItems = useMemo(
 		() => [
-			{
-				key: 'reply-direct',
-				label: translate('message.menu.replyDirect', 'Reply directly'),
-				icon: <MenuReplyDirectIcon />
-			},
+			// Relations foundation (#435): only offer direct reply where a
+			// handler is wired (main timeline; not the thread panel).
+			...(onReplyDirect
+				? [
+						{
+							key: 'reply-direct',
+							label: translate(
+								'message.menu.replyDirect',
+								'Reply directly'
+							),
+							icon: <MenuReplyDirectIcon />
+						}
+					]
+				: []),
 			{
 				key: 'reply-thread',
 				label: translate('message.menu.replyThread', 'Reply in Thread'),
@@ -1022,7 +1042,7 @@ export const MessageItemComponent = ({
 				icon: <MenuDeleteIcon />
 			}
 		],
-		[translate]
+		[translate, onReplyDirect]
 	);
 
 	const handleActionMenuItemClick = useCallback(
@@ -1031,8 +1051,12 @@ export const MessageItemComponent = ({
 			if (actionKey === 'reply-thread' && onOpenThread) {
 				onOpenThread();
 			}
+			// Relations foundation (#435): direct reply finally has a handler.
+			if (actionKey === 'reply-direct' && onReplyDirect) {
+				onReplyDirect();
+			}
 		},
-		[onOpenThread]
+		[onOpenThread, onReplyDirect]
 	);
 
 	const toggleActionMenu = useCallback(
@@ -1409,6 +1433,34 @@ export const MessageItemComponent = ({
 									{translate(
 										'message.feedbackTag',
 										'Feedback'
+									)}
+								</div>
+							)}
+							{/* Relations foundation (#435): quote of the replied-to
+							    message, rendered from the m.in_reply_to relation. */}
+							{replyToEventId && !isSystemNotification && (
+								<div
+									className={`messageItem__replyQuote ${
+										isMyMessage
+											? 'messageItem__replyQuote--myMessage'
+											: ''
+									}`}
+									aria-label={translate(
+										'message.reply.quoteLabel',
+										'Antwort auf'
+									)}
+								>
+									<span className="messageItem__replyQuoteAuthor">
+										{replyQuote?.author ||
+											translate(
+												'message.reply.quoteUnknown',
+												'Frühere Nachricht'
+											)}
+									</span>
+									{replyQuote?.text && (
+										<span className="messageItem__replyQuoteText">
+											{replyQuote.text}
+										</span>
 									)}
 								</div>
 							)}

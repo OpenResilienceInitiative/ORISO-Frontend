@@ -1,3 +1,5 @@
+import { getReplyToEventId, stripReplyFallback } from './messageRelations';
+
 const getMatrixMediaDownloadPath = (contentUrl: string): string => {
 	if (!contentUrl.startsWith('mxc://')) {
 		return contentUrl;
@@ -25,12 +27,19 @@ export const formatMatrixTimelineEvent = (
 		senderMember?.name || senderMember?.rawDisplayName || senderUsername;
 	const isUndecryptedEvent =
 		eventType === 'm.room.encrypted' && !content?.msgtype;
-	const textMessageContent =
+	// Relations foundation (#435): replies are the m.in_reply_to relation.
+	// The legacy Element quote-fallback in the body would duplicate the quote
+	// we render from the relation, so it is stripped for reply events.
+	const replyToEventId = getReplyToEventId(content);
+	const rawTextContent =
 		content?.msgtype === 'm.text'
 			? content?.formatted_body || content?.body || ''
 			: isUndecryptedEvent
 				? encryptedFallbackText
 				: content?.body || '';
+	const textMessageContent = replyToEventId
+		? stripReplyFallback(rawTextContent)
+		: rawTextContent;
 	const baseMessage: any = {
 		_id:
 			event?.getId?.() || `${senderId}-${event?.getTs?.() || Date.now()}`,
@@ -42,6 +51,9 @@ export const formatMatrixTimelineEvent = (
 			name: senderDisplayName
 		}
 	};
+	if (replyToEventId) {
+		baseMessage.replyToEventId = replyToEventId;
+	}
 
 	const mediaUrl = content?.file?.url || content?.url;
 	if (mediaUrl && content?.msgtype !== 'm.text') {

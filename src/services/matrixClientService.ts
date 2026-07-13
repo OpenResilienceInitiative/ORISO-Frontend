@@ -10,6 +10,10 @@ import { buildMatrixCryptoStorePrefix } from './matrixCrypto';
 import { matrixLiveEventBridge } from './matrixLiveEventBridge';
 import { encryptMatrixAttachment } from '../utils/matrixEncryptedAttachment';
 import { buildMatrixRoomEncryptionInitialState } from '../utils/matrixRoomEncryption';
+import {
+	TextMessageContentOptions,
+	buildTextMessageContent
+} from '../utils/messageRelations';
 
 const TOKEN_REFRESH_BUFFER_MS = 2 * 60 * 1000;
 
@@ -199,17 +203,20 @@ export class MatrixClientService {
 	}
 
 	// Send message to a room
-	public async sendMessage(roomId: string, message: string): Promise<any> {
+	public async sendMessage(
+		roomId: string,
+		message: string,
+		options?: TextMessageContentOptions
+	): Promise<any> {
 		await this.ensureFreshToken();
 
 		if (!this.client) {
 			throw new Error('Matrix client not initialized');
 		}
 
-		const content = {
-			msgtype: 'm.text',
-			body: message
-		} as any;
+		// Relations foundation (#435): a reply is the spec relation on the
+		// content (m.relates_to / m.in_reply_to), built by the pure helper.
+		const content = buildTextMessageContent(message, options) as any;
 
 		try {
 			return await this.client.sendMessage(roomId, content);

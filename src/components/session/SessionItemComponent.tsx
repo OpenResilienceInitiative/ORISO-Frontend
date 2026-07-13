@@ -2876,6 +2876,55 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		setActiveThreadRootMessage(null);
 	}, []);
 
+	// Relations foundation (#435): direct-reply context for the composer.
+	const [replyTo, setReplyTo] = useState<{
+		eventId: string;
+		author: string;
+		text: string;
+	} | null>(null);
+
+	const handleReplyDirect = useCallback((message: MessageItem) => {
+		setReplyTo({
+			eventId: message._id,
+			author: message.displayName || message.username,
+			text: parseMessagePrefixes(message.message).cleanedMessage.replace(
+				/<[^>]*>/g,
+				''
+			)
+		});
+	}, []);
+
+	const handleCancelReply = useCallback(() => setReplyTo(null), []);
+
+	// A reply context never survives a conversation switch.
+	useEffect(() => {
+		setReplyTo(null);
+	}, [activeSession?.rid]);
+
+	// Resolve the quote of a replied-to message from the loaded timeline; a
+	// reply whose target is outside the loaded window degrades to a generic
+	// quote label inside the item.
+	const resolveReplyQuote = useCallback(
+		(replyToEventId?: string | null) => {
+			if (!replyToEventId) {
+				return null;
+			}
+			const target = (messages || []).find(
+				(candidate: MessageItem) => candidate._id === replyToEventId
+			);
+			if (!target) {
+				return null;
+			}
+			return {
+				author: target.displayName || target.username,
+				text: parseMessagePrefixes(target.message)
+					.cleanedMessage.replace(/<[^>]*>/g, '')
+					.slice(0, 200)
+			};
+		},
+		[messages]
+	);
+
 	// If threads become disabled while a thread panel is open, close it immediately.
 	useEffect(() => {
 		if (!isThreadsEnabled && activeThreadRootId) {
@@ -4393,6 +4442,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 														)
 												: undefined
 										}
+										replyQuote={resolveReplyQuote(
+											message.replyToEventId
+										)}
+										onReplyDirect={() =>
+											handleReplyDirect(message)
+										}
 										{...message}
 									/>
 								</React.Fragment>
@@ -4693,6 +4748,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									}
 									isSupervisor={isSupervisor}
 									supervisionRoomId={supervisionRoomId}
+									replyTo={replyTo}
+									onCancelReply={handleCancelReply}
 									mobileUnreadCount={newMessages}
 									mobileIsScrolledToBottom={
 										isScrolledToBottom

@@ -1455,3 +1455,41 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 		}
 	}
 }
+
+// Relations foundation (#435): quote block of the replied-to message,
+// rendered above the reply body from the m.in_reply_to relation.
+.messageItem__replyQuote {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	margin-bottom: 6px;
+	padding: 6px 10px;
+	border-left: 3px solid var(--m3-primary, #a5000a);
+	border-radius: 4px;
+	background: var(--m3-surface-container, rgba(0, 0, 0, 0.05));
+	font-size: 12px;
+	line-height: 1.4;
+
+	&--myMessage {
+		background: rgba(255, 255, 255, 0.16);
+		border-left-color: var(--m3-on-primary, #ffffff);
+	}
+
+	.messageItem__replyQuoteAuthor {
+		font-weight: 600;
+		color: var(--m3-on-surface-variant, #4c555f);
+	}
+
+	&--myMessage .messageItem__replyQuoteAuthor {
+		color: inherit;
+	}
+
+	.messageItem__replyQuoteText {
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+		color: inherit;
+		opacity: 0.85;
+	}
+}

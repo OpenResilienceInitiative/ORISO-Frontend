@@ -33,6 +33,12 @@ export interface SendTextMessageOptions {
 	sessionId?: number;
 	matrixRoomId?: string;
 	threadRootId?: string | null;
+	/**
+	 * Relations foundation (#435): event id of the message being replied to.
+	 * Sent as `m.relates_to`/`m.in_reply_to` on the Matrix event content —
+	 * never forwarded to the metadata notification (FE-H01 boundary).
+	 */
+	replyToEventId?: string | null;
 	supervisorMessage?: boolean;
 	senderDisplayName?: string | null;
 	matrixClientServiceOverride?: MatrixClientService | null;
@@ -90,6 +96,7 @@ class ChatTransportService {
 		message,
 		matrixRoomId,
 		threadRootId,
+		replyToEventId,
 		supervisorMessage,
 		senderDisplayName,
 		matrixClientServiceOverride
@@ -111,7 +118,8 @@ class ChatTransportService {
 
 		const response = await matrixClientService.sendMessage(
 			matrixRoomId,
-			message
+			message,
+			{ replyToEventId: replyToEventId || null }
 		);
 
 		// SECURITY (FE-H01): never forward plaintext message content
