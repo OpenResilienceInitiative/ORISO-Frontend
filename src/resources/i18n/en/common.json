@@ -789,7 +789,8 @@
 					"veryLate": "very late"
 				},
 				"dogMinutes": "{{value}} dog minutes",
-				"romanMinutes": "{{value}} roman minutes"
+				"romanMinutes": "{{value}} roman minutes",
+				"rulesLabel": "Chat rules"
 			},
 			"button": {
 				"label": {
