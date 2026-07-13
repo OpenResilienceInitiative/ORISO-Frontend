@@ -1777,36 +1777,40 @@ export const MessageItemComponent = ({
 					!isMyMessage &&
 					!isSystemNotification && (
 						<div className="messageItem__sideColumn messageItem__sideColumn--left">
-							<div className="messageItem__avatar">
-								<MessageAvatar
-									isGroup={!!activeSession?.isGroup}
-									isSystemNotification={false}
-									userId={userId}
-									username={username}
-									displayName={resolvedIncomingDisplayName}
-									firstName={
-										resolvedIncomingNameParts.firstName
+							<div className="messageItem__sideColumnGroup messageItem__sideColumnGroup--left">
+								<div className="messageItem__avatar">
+									<MessageAvatar
+										isGroup={!!activeSession?.isGroup}
+										isSystemNotification={false}
+										userId={userId}
+										username={username}
+										displayName={
+											resolvedIncomingDisplayName
+										}
+										firstName={
+											resolvedIncomingNameParts.firstName
+										}
+										lastName={
+											resolvedIncomingNameParts.lastName
+										}
+										size={32}
+									/>
+								</div>
+								<button
+									type="button"
+									className="messageItem__kebabButton messageItem__kebabButton--left"
+									aria-label="More"
+									onClick={(event) =>
+										toggleActionMenu(event, 'left')
 									}
-									lastName={
-										resolvedIncomingNameParts.lastName
-									}
-									size={32}
-								/>
+								>
+									{isActionMenuOpen ? (
+										<ActiveKebabIcon />
+									) : (
+										<StackVerticalIcon className="messageItem__kebabIconDefault" />
+									)}
+								</button>
 							</div>
-							<button
-								type="button"
-								className="messageItem__kebabButton messageItem__kebabButton--left"
-								aria-label="More"
-								onClick={(event) =>
-									toggleActionMenu(event, 'left')
-								}
-							>
-								{isActionMenuOpen ? (
-									<ActiveKebabIcon />
-								) : (
-									<StackVerticalIcon className="messageItem__kebabIconDefault" />
-								)}
-							</button>
 							{showVisibleAudience && (
 								<button
 									type="button"
@@ -1881,31 +1885,33 @@ export const MessageItemComponent = ({
 									</span>
 								</button>
 							)}
-							<button
-								type="button"
-								className="messageItem__kebabButton messageItem__kebabButton--right"
-								aria-label="More"
-								onClick={(event) =>
-									toggleActionMenu(event, 'right')
-								}
-							>
-								{isActionMenuOpen ? (
-									<ActiveKebabIcon />
-								) : (
-									<StackVerticalIcon className="messageItem__kebabIconDefault" />
-								)}
-							</button>
-							<div className="messageItem__avatar">
-								<MessageAvatar
-									isGroup={!!activeSession?.isGroup}
-									isSystemNotification={false}
-									userId={userId}
-									username={username}
-									displayName={displayName}
-									firstName={userData?.firstName}
-									lastName={userData?.lastName}
-									size={32}
-								/>
+							<div className="messageItem__sideColumnGroup messageItem__sideColumnGroup--right">
+								<button
+									type="button"
+									className="messageItem__kebabButton messageItem__kebabButton--right"
+									aria-label="More"
+									onClick={(event) =>
+										toggleActionMenu(event, 'right')
+									}
+								>
+									{isActionMenuOpen ? (
+										<ActiveKebabIcon />
+									) : (
+										<StackVerticalIcon className="messageItem__kebabIconDefault" />
+									)}
+								</button>
+								<div className="messageItem__avatar">
+									<MessageAvatar
+										isGroup={!!activeSession?.isGroup}
+										isSystemNotification={false}
+										userId={userId}
+										username={username}
+										displayName={displayName}
+										firstName={userData?.firstName}
+										lastName={userData?.lastName}
+										size={32}
+									/>
+								</div>
 							</div>
 						</div>
 					)}
@@ -1927,57 +1933,6 @@ export const MessageItemComponent = ({
 							) : null}
 						</div>
 					)}
-
-					{onOpenThread &&
-						renderMode === 'main' &&
-						!alias?.messageType && (
-							<button
-								type="button"
-								className={clsx(
-									'messageItem__threadButton',
-									isMyMessage &&
-										'messageItem__threadButton--right',
-									threadSummary?.replyCount
-										? 'messageItem__threadButton--hasReplies'
-										: ''
-								)}
-								onClick={(e) => {
-									e.preventDefault();
-									e.stopPropagation();
-									onOpenThread();
-								}}
-							>
-								<span className="messageItem__threadButtonMain">
-									{threadSummary?.replyCount
-										? translate(
-												'message.thread.replies',
-												'{{count}} replies',
-												{
-													count: threadSummary.replyCount
-												}
-											)
-										: translate(
-												'message.thread.reply',
-												'Reply'
-											)}
-								</span>
-								{threadSummary?.replyCount ? (
-									<span className="messageItem__threadButtonMeta">
-										{threadSummary.lastReplyText}
-									</span>
-								) : (
-									<span className="messageItem__threadButtonMeta">
-										&nbsp;
-									</span>
-								)}
-								<span className="messageItem__threadButtonHover">
-									{translate(
-										'message.thread.view',
-										'View thread'
-									)}
-								</span>
-							</button>
-						)}
 				</div>
 			</div>
 			{isActionMenuOpen && actionMenuPosition
