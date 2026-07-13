@@ -882,7 +882,13 @@ export const MessageItemComponent = ({
 						)
 					: ''
 			);
-		} catch {
+		} catch (error) {
+			// Markdown parsing failed; fall back to the sanitized raw message.
+			// eslint-disable-next-line no-console
+			console.debug(
+				'Message markdown render failed, using raw text',
+				error
+			);
 			setRenderedMessage(
 				sanitizeHtml(preparedMessage, sanitizeHtmlDefaultOptions)
 			);
