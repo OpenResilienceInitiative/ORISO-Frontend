@@ -132,3 +132,102 @@ export const getValidTimeFormatForSelectedTime = (selectedTime): string => {
 		selectedTime.getMinutes()
 	)}`;
 };
+
+/**
+ * The subset of a group-chat session item (GroupChatItemInterface) needed to
+ * pre-fill the edit form. Typed structurally so the mapper stays a pure,
+ * trivially testable leaf util.
+ */
+export interface GroupChatEditSource {
+	topic: string;
+	duration: number;
+	startDate: string;
+	startTime?: string;
+	startDateWithTime?: string;
+	repetitive?: boolean;
+	repeatCount?: number;
+	chatInterval?: GroupChatInterval;
+	modality?: GroupChatModality;
+	hintMessage?: string;
+	sourceLanguage?: string;
+	hintMessageTranslations?: Record<string, string>;
+	groupChatRulesTranslations?: Record<string, string[]>;
+	participants?: { consultantId: string }[];
+	assignedAgencies?: { id: number }[];
+}
+
+export interface GroupChatEditDraft {
+	topic: string;
+	agencyId: number | null;
+	seriesFields: {
+		startDate: string;
+		startTime: string;
+		duration: number;
+		repeatCount: number;
+		interval: GroupChatInterval;
+		modality: GroupChatModality;
+	};
+	authorContent: {
+		sourceLanguage: string;
+		hintMessageTranslations: Record<string, string>;
+		groupChatRulesTranslations: Record<string, string[]>;
+	};
+	consultantIds: string[];
+}
+
+/**
+ * Turn a persisted group-chat series item into a fully-populated edit draft.
+ *
+ * The whole point is loss-free round-tripping: `updateChat` on the backend
+ * rewrites topic, schedule AND author content (hintMessage + translations +
+ * rules) from the submitted payload, so a schedule-only edit must resubmit the
+ * existing content verbatim. Every field is therefore carried over; absent
+ * translations fall back to a single-language map seeded from `hintMessage`.
+ */
+export const buildGroupChatEditDraft = (
+	source: GroupChatEditSource,
+	fallbackLanguage = 'de'
+): GroupChatEditDraft => {
+	const startSource = source.startDateWithTime || source.startDate;
+	const start = new Date(startSource);
+	if (Number.isNaN(start.getTime())) {
+		throw new Error(
+			'A valid series start is required to edit the schedule'
+		);
+	}
+
+	const repeatCount =
+		source.repeatCount && source.repeatCount > 0 ? source.repeatCount : 1;
+	const sourceLanguage = source.sourceLanguage || fallbackLanguage;
+	const hintMessageTranslations =
+		source.hintMessageTranslations &&
+		Object.keys(source.hintMessageTranslations).length
+			? source.hintMessageTranslations
+			: { [sourceLanguage]: source.hintMessage || '' };
+	const groupChatRulesTranslations =
+		source.groupChatRulesTranslations &&
+		Object.keys(source.groupChatRulesTranslations).length
+			? source.groupChatRulesTranslations
+			: { [sourceLanguage]: [''] };
+
+	return {
+		topic: source.topic,
+		agencyId: source.assignedAgencies?.[0]?.id ?? null,
+		seriesFields: {
+			startDate: getValidDateFormatForSelectedDate(start),
+			startTime: getValidTimeFormatForSelectedTime(start),
+			duration: source.duration,
+			repeatCount,
+			interval: source.chatInterval || 'WEEKLY',
+			modality: source.modality || 'TEXT'
+		},
+		authorContent: {
+			sourceLanguage,
+			hintMessageTranslations,
+			groupChatRulesTranslations
+		},
+		consultantIds: (source.participants || []).map(
+			(participant) => participant.consultantId
+		)
+	};
+};

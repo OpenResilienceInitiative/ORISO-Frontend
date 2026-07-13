@@ -7,7 +7,12 @@ import {
 	useMemo,
 	useRef
 } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import {
+	Navigate,
+	useLocation,
+	useNavigate,
+	useParams
+} from 'react-router-dom';
 import {
 	desktopView,
 	mobileDetailView,
@@ -23,10 +28,12 @@ import {
 import { InputField, InputFieldItem } from '../inputField/InputField';
 import { OrisoSelect } from '../form/OrisoSelect';
 import {
+	buildGroupChatEditDraft,
 	buildGroupChatSeriesRequest,
 	buildOneOffDuplicateFields,
 	getValidDateFormatForSelectedDate,
 	getValidTimeFormatForSelectedTime,
+	GroupChatEditSource,
 	isGroupChatFeatureEnabled,
 	TOPIC_LENGTHS
 } from './createChatHelpers';
@@ -47,7 +54,11 @@ import {
 	apiGetTenantConsultantList,
 	Consultant
 } from '../../api/apiGetAgencyConsultantList';
-import { apiCreateGroupChat } from '../../api/apiGroupChatSettings';
+import {
+	apiCreateGroupChat,
+	apiUpdateGroupChat
+} from '../../api/apiGroupChatSettings';
+import { useSession } from '../../hooks/useSession';
 import { SelectChangeEvent } from '@mui/material/Select';
 import { GroupChatAuthorContentFields } from './GroupChatAuthorContentFields';
 import {
@@ -189,6 +200,17 @@ const CreateGroupChatForm = () => {
 			};
 		} | null
 	)?.duplicateOccurrence;
+	// Edit mode is driven by the route: /:rcGroupId/:sessionId/editGroupChat
+	// (RouterConfig) reuses this same view. The create route has no params.
+	const { rcGroupId: editRcGroupId, sessionId: editSessionIdParam } =
+		useParams<{ rcGroupId: string; sessionId: string }>();
+	const isEditMode = Boolean(editSessionIdParam);
+	const editChatId = editSessionIdParam ? Number(editSessionIdParam) : null;
+	const { session: editSession } = useSession(
+		isEditMode ? (editRcGroupId ?? null) : null,
+		editChatId ?? undefined
+	);
+	const editPrefilledRef = useRef(false);
 	const {
 		userData,
 		userData: { agencies = [] }
@@ -235,6 +257,36 @@ const CreateGroupChatForm = () => {
 	const [overlayActive, setOverlayActive] = useState(false);
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
 	const participantsPickerRef = useRef<HTMLDivElement | null>(null);
+
+	// Edit mode: hydrate the whole form from the persisted series exactly once,
+	// once the session has loaded. Prefilling every field (schedule AND author
+	// content) is what keeps a schedule-only edit from wiping hint/rules, since
+	// the backend rewrites all of them from the submitted payload.
+	useEffect(() => {
+		if (!isEditMode || editPrefilledRef.current) {
+			return;
+		}
+		const item = editSession?.item;
+		if (!item) {
+			return;
+		}
+		try {
+			const draft = buildGroupChatEditDraft(
+				item as unknown as GroupChatEditSource
+			);
+			setSelectedChatTopic(draft.topic);
+			setSelectedAgency(draft.agencyId);
+			setSeriesFields(draft.seriesFields);
+			setAuthorContent((current) => ({
+				...current,
+				...draft.authorContent
+			}));
+			setSelectedConsultants(draft.consultantIds);
+			editPrefilledRef.current = true;
+		} catch {
+			// Invalid persisted start etc. — keep the submit guard engaged.
+		}
+	}, [isEditMode, editSession]);
 
 	const createChatSuccessOverlayItem = useMemo<OverlayItem>(
 		() => ({
@@ -505,11 +557,15 @@ const CreateGroupChatForm = () => {
 
 	const buttonSetCreate = useMemo<ButtonItem>(
 		() => ({
-			label: translate('groupChat.create.button.label') || 'Create',
+			label: isEditMode
+				? translate('groupChat.edit.button.label', {
+						defaultValue: 'Speichern'
+					})
+				: translate('groupChat.create.button.label') || 'Create',
 			function: OVERLAY_FUNCTIONS.CLOSE,
 			type: BUTTON_TYPES.PRIMARY
 		}),
-		[translate]
+		[translate, isEditMode]
 	);
 
 	const buttonSetCancel = useMemo<ButtonItem>(
@@ -525,30 +581,37 @@ const CreateGroupChatForm = () => {
 		if (isRequestInProgress || selectedAgency === null) {
 			return;
 		}
+		// Never submit an un-hydrated edit: it would overwrite the series with
+		// blank author content. Wait until the prefill effect has run.
+		if (isEditMode && !editPrefilledRef.current) {
+			return;
+		}
 		setIsRequestInProgress(true);
 
-		// Use the proper API function
-		apiCreateGroupChat(
-			buildGroupChatSeriesRequest({
-				topic: selectedChatTopic,
-				startDate: seriesFields.startDate,
-				startTime: seriesFields.startTime,
-				duration: seriesFields.duration,
-				agencyId: selectedAgency,
-				hintMessage:
-					authorContent.hintMessageTranslations[
-						authorContent.sourceLanguage
-					] || '',
-				sourceLanguage: authorContent.sourceLanguage,
-				hintMessageTranslations: authorContent.hintMessageTranslations,
-				groupChatRulesTranslations:
-					authorContent.groupChatRulesTranslations,
-				repeatCount: seriesFields.repeatCount,
-				chatInterval: seriesFields.interval,
-				modality: seriesFields.modality,
-				timezone,
-				consultantIds: selectedConsultants
-			})
+		const seriesRequest = buildGroupChatSeriesRequest({
+			topic: selectedChatTopic,
+			startDate: seriesFields.startDate,
+			startTime: seriesFields.startTime,
+			duration: seriesFields.duration,
+			agencyId: selectedAgency,
+			hintMessage:
+				authorContent.hintMessageTranslations[
+					authorContent.sourceLanguage
+				] || '',
+			sourceLanguage: authorContent.sourceLanguage,
+			hintMessageTranslations: authorContent.hintMessageTranslations,
+			groupChatRulesTranslations:
+				authorContent.groupChatRulesTranslations,
+			repeatCount: seriesFields.repeatCount,
+			chatInterval: seriesFields.interval,
+			modality: seriesFields.modality,
+			timezone,
+			consultantIds: selectedConsultants
+		});
+
+		(isEditMode && editChatId !== null
+			? apiUpdateGroupChat(editChatId, seriesRequest)
+			: apiCreateGroupChat(seriesRequest)
 		)
 			.then((response) => {
 				// Refresh session list
@@ -576,6 +639,8 @@ const CreateGroupChatForm = () => {
 			});
 	}, [
 		isRequestInProgress,
+		isEditMode,
+		editChatId,
 		selectedChatTopic,
 		selectedAgency,
 		seriesFields,
@@ -615,13 +680,22 @@ const CreateGroupChatForm = () => {
 						<BackIcon />
 					</span>
 					<h3 className="createChat__header__title">
-						{translate('groupChat.create.title') ||
-							'Create Group Chat'}
+						{isEditMode
+							? translate('groupChat.edit.title', {
+									defaultValue: 'Gruppen-Chat bearbeiten'
+								})
+							: translate('groupChat.create.title') ||
+								'Create Group Chat'}
 					</h3>
 				</div>
 				<p className="createChat__header__subtitle">
-					{translate('groupChat.create.subtitle') ||
-						'Create a new group chat with selected consultants'}
+					{isEditMode
+						? translate('groupChat.edit.subtitle', {
+								defaultValue:
+									'Zeitplan und Inhalte dieser Serie ändern'
+							})
+						: translate('groupChat.create.subtitle') ||
+							'Create a new group chat with selected consultants'}
 				</p>
 			</div>
 
