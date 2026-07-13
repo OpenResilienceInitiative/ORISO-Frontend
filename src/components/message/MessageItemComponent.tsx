@@ -1927,57 +1927,6 @@ export const MessageItemComponent = ({
 							) : null}
 						</div>
 					)}
-
-					{onOpenThread &&
-						renderMode === 'main' &&
-						!alias?.messageType && (
-							<button
-								type="button"
-								className={clsx(
-									'messageItem__threadButton',
-									isMyMessage &&
-										'messageItem__threadButton--right',
-									threadSummary?.replyCount
-										? 'messageItem__threadButton--hasReplies'
-										: ''
-								)}
-								onClick={(e) => {
-									e.preventDefault();
-									e.stopPropagation();
-									onOpenThread();
-								}}
-							>
-								<span className="messageItem__threadButtonMain">
-									{threadSummary?.replyCount
-										? translate(
-												'message.thread.replies',
-												'{{count}} replies',
-												{
-													count: threadSummary.replyCount
-												}
-											)
-										: translate(
-												'message.thread.reply',
-												'Reply'
-											)}
-								</span>
-								{threadSummary?.replyCount ? (
-									<span className="messageItem__threadButtonMeta">
-										{threadSummary.lastReplyText}
-									</span>
-								) : (
-									<span className="messageItem__threadButtonMeta">
-										&nbsp;
-									</span>
-								)}
-								<span className="messageItem__threadButtonHover">
-									{translate(
-										'message.thread.view',
-										'View thread'
-									)}
-								</span>
-							</button>
-						)}
 				</div>
 			</div>
 			{isActionMenuOpen && actionMenuPosition

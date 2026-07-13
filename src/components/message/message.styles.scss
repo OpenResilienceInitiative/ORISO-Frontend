@@ -214,7 +214,7 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 	}
 
 	&__sideColumn--left {
-		left: 4px;
+		left: 0px;
 		top: -18px;
 		z-index: 5;
 	}
@@ -222,7 +222,7 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 	&__sideColumn--right {
 		position: absolute;
 		right: -32px;
-		bottom: -18px;
+		bottom: -14px;
 		z-index: 5;
 	}
 
@@ -399,10 +399,12 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 
 	&__visibilityChip--incoming {
 		margin-top: -2px;
+		translate: 0% 50%;
 	}
 
 	&__visibilityChip--outgoing {
 		margin-bottom: -2px;
+		translate: 0% -50%;
 	}
 
 	&__visibilityMenu {
