@@ -17,7 +17,8 @@ export const AnimalAvatar: React.FC<AnimalAvatarProps> = ({
 }) => {
 	const [avatarHtml, setAvatarHtml] = useState<string | null>(null);
 	const borderWidth = 2;
-	const padding = Math.max(14, Math.round(size * 0.18));
+	const minPadding = size >= 60 ? 8 : 2;
+	const padding = Math.max(minPadding, Math.round(size * 0.12));
 	const innerSize = Math.max(0, size - padding * 2 - borderWidth * 2);
 
 	useEffect(() => {

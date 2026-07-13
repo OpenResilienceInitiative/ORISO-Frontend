@@ -789,7 +789,8 @@
 					"veryLate": "very late"
 				},
 				"dogMinutes": "{{value}} dog minutes",
-				"romanMinutes": "{{value}} roman minutes"
+				"romanMinutes": "{{value}} roman minutes",
+				"rulesLabel": "Chat rules"
 			},
 			"button": {
 				"label": {
@@ -1518,6 +1519,34 @@
 			"groupChatCancelled": {
 				"title": "Online appointment cancelled",
 				"text": "The online appointment was cancelled."
+			},
+			"requestDenied": {
+				"title": "Request denied",
+				"text": "The client request was denied."
+			},
+			"waitingRoomClientJoined": {
+				"title": "Client joined waiting room",
+				"text": "A client has joined the waiting room."
+			},
+			"callInvited": {
+				"title": "Invitation to internal group call",
+				"text": "You have been invited to an internal group call."
+			},
+			"appointmentRequested": {
+				"title": "Call appointment requested",
+				"text": "There is a new appointment request for a call."
+			},
+			"appointmentScheduled": {
+				"title": "Local appointment scheduled",
+				"text": "An in-person appointment has been scheduled."
+			},
+			"appointmentCancelled": {
+				"title": "Appointment cancelled",
+				"text": "A scheduled appointment has been cancelled."
+			},
+			"appointmentBriefing": {
+				"title": "Appointments briefing",
+				"text": "A briefing of your upcoming appointments is ready."
 			}
 		},
 		"error": "failed",
@@ -1542,7 +1571,10 @@
 			"open": "Open chat",
 			"join": "Join",
 			"systemTag": "System notification",
-			"messageTag": "Message notification"
+			"messageTag": "Message notification",
+			"unreadFilter": "Unread",
+			"showPreview": "Show conversation preview",
+			"showDetails": "Show details"
 		},
 		"threadReply": {
 			"title": "New thread reply"
@@ -1869,7 +1901,8 @@
 					"changePassword": "Change password",
 					"title": "Security"
 				},
-				"title": "Settings"
+				"title": "Settings",
+				"keyboardShortcuts": "Keyboard Shortcuts"
 			}
 		},
 		"spokenLanguages": {
@@ -1925,6 +1958,28 @@
 			"successOverlay": {
 				"button": "ok",
 				"headline": "You have successfully deleted your email address."
+			}
+		},
+		"notificationSettings": {
+			"title": "Notifications",
+			"description": "These settings apply to your account on every device and browser.",
+			"globalMute": "Mute all notifications",
+			"deviceSilence": {
+				"title": "Silence this device",
+				"description": "Only this browser stays quiet — your other devices keep notifying."
+			},
+			"browser": {
+				"title": "Browser notifications",
+				"description": "Show desktop notifications while the app is in the background."
+			},
+			"preview": {
+				"title": "Show message content",
+				"description": "Shows the message text inside the notification. Off by default for privacy."
+			},
+			"sounds": "Notification sounds",
+			"families": {
+				"title": "Notify about",
+				"description": "Choose which event families may trigger notifications."
 			}
 		}
 	},
@@ -2419,7 +2474,7 @@
 					"receiveGift": "Receive little gift"
 				},
 				"serenity": {
-					"instruction": "The gift is a little mantra that's helped tons of people get through tough times. It's called the serenity prayer: \u201CGod, grant me the serenity to accept the things I cannot change, the courage to change the things I can, and the wisdom to know the difference.\u201D"
+					"instruction": "The gift is a little mantra that's helped tons of people get through tough times. It's called the serenity prayer: “God, grant me the serenity to accept the things I cannot change, the courage to change the things I can, and the wisdom to know the difference.”"
 				}
 			},
 			"presets": {
@@ -3397,6 +3452,111 @@
 			"remove": {
 				"confirm": "Are you sure you want to remove this supervisor?"
 			}
+		}
+	},
+	"shortcuts": {
+		"title": "Keyboard Shortcuts",
+		"description": "Customize chat shortcuts. Changes apply immediately and are saved on this device.",
+		"automaticallyConfigured": "automatically configured",
+		"disableShortcut": "Disabled",
+		"restoreDefaults": "Restore Defaults",
+		"restoreDefaultsSuccess": "Default shortcuts restored.",
+		"primaryModifier": "Primary modifier",
+		"help": {
+			"title": "Keyboard shortcuts",
+			"close": "Close"
+		},
+		"palette": {
+			"title": "Command Palette",
+			"close": "Close",
+			"searchPlaceholder": "Search commands…",
+			"allShortcuts": "All shortcuts"
+		},
+		"editingBanner": "Editing message",
+		"editingCancel": "Cancel",
+		"categories": {
+			"messaging": "Messaging",
+			"navigation": "Navigation",
+			"attachments": "Attachments",
+			"emoji": "Emoji and Reactions",
+			"application": "Application"
+		},
+		"actions": {
+			"sendMessage": {
+				"label": "Send Message",
+				"description": "Send the current chat message."
+			},
+			"insertNewLine": {
+				"label": "Insert New Line",
+				"description": "Insert a new line in the message composer. Derived from the send shortcut."
+			},
+			"showShortcutHelp": {
+				"label": "Show Keyboard Shortcuts",
+				"description": "Open the keyboard shortcuts help dialog."
+			},
+			"focusInput": {
+				"label": "Focus Message Input",
+				"description": "Move focus to the message composer."
+			},
+			"uploadFile": {
+				"label": "Upload File",
+				"description": "Open the file attachment picker."
+			},
+			"searchMessages": {
+				"label": "Search Messages",
+				"description": "Search messages in the current conversation."
+			},
+			"editLastMessage": {
+				"label": "Edit Last Message",
+				"description": "Edit your last sent message."
+			},
+			"cancelReplyOrEdit": {
+				"label": "Cancel Reply or Edit",
+				"description": "Cancel the current reply or edit."
+			},
+			"openEmojiPicker": {
+				"label": "Open Emoji Picker",
+				"description": "Open the emoji picker."
+			},
+			"startNewConversation": {
+				"label": "Start New Conversation",
+				"description": "Start a new conversation."
+			},
+			"openCommandPalette": {
+				"label": "Open Command Palette",
+				"description": "Open the command palette."
+			}
+		},
+		"conflicts": {
+			"duplicate": "This shortcut is already assigned.",
+			"reserved": "This shortcut is reserved by the browser.",
+			"browserConflict": "This shortcut conflicts with common browser shortcuts.",
+			"sendNewline": "Send Message and Insert New Line cannot use the same shortcut.",
+			"unsupported": "This shortcut option is not supported.",
+			"cannotDisable": "This shortcut cannot be disabled.",
+			"unsafePlainKey": "This key cannot be used as a shortcut while typing."
+		},
+		"hints": {
+			"enterSends": "Enter sends the message",
+			"shiftEnterNewline": "Shift+Enter inserts a new line",
+			"enterNewline": "Enter inserts a new line",
+			"ctrlEnterSends": "Ctrl+Enter sends the message",
+			"cmdEnterSends": "Cmd+Enter sends the message"
+		},
+		"lockedNewline": "Locked to Shift+Enter while Enter sends the message.",
+		"resetAction": "Reset",
+		"restoreDefaultsConfirm": "Restore all shortcuts to their defaults?",
+		"restoreDefaultsConfirmYes": "Restore",
+		"restoreDefaultsConfirmNo": "Cancel",
+		"keys": {
+			"enter": "Enter",
+			"escape": "Esc",
+			"arrowUp": "↑",
+			"shift": "Shift",
+			"alt": "Alt",
+			"option": "Option",
+			"ctrl": "Ctrl",
+			"cmd": "Cmd"
 		}
 	}
 }

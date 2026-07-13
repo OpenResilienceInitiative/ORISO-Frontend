@@ -88,6 +88,12 @@ export interface SessionHeaderProps {
 	hasUserInitiatedStopOrLeaveRequest?: React.MutableRefObject<boolean>;
 	isJoinGroupChatView?: boolean;
 	bannedUsers: string[];
+	/**
+	 * Controls the header "+" add button. When omitted the button follows the
+	 * legacy behavior (shown only outside enquiry states). Provide an explicit
+	 * value to force the button on/off per state (Figma #430).
+	 */
+	showAddButton?: boolean;
 }
 
 export const SessionHeaderComponent = (props: SessionHeaderProps) => {
@@ -985,7 +991,10 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 							<div className="sessionInfo__memberStack">
 								<ChatroomMainInteractionIcon
 									type={sessionHeaderConversationIconType}
-									showAddIcon={!activeSession.isEnquiry}
+									showAddIcon={
+										props.showAddButton ??
+										!activeSession.isEnquiry
+									}
 									addLabel={translate(
 										'sessionHeader.supervisor.modal.title',
 										'Supervisor hinzufügen'

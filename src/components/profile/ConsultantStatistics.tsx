@@ -17,7 +17,6 @@ import dayjs from 'dayjs';
 import './statistics.styles';
 import './profile.styles';
 import { useTranslation } from 'react-i18next';
-import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { SelectChangeEvent } from '@mui/material/Select';
 
 const statisticsPeriodOptionCurrentMonth = 'currentMonth';
@@ -73,7 +72,6 @@ export const ConsultantStatistics = () => {
 	const [selectedStatistics, setSelectedStatistics] =
 		useState<ConsultantStatisticsDTO>(null);
 	const [csvData, setCsvData] = useState([]);
-	const { featureAppointmentsEnabled } = getTenantSettings();
 
 	const csvHeaders = [
 		{
@@ -84,27 +82,11 @@ export const ConsultantStatistics = () => {
 		},
 		{
 			label: translate(
-				'profile.statistics.csvHeader.numberOfSentMessages'
-			),
-			key: 'numberOfSentMessages'
-		},
-		{
-			label: translate(
 				'profile.statistics.csvHeader.numberOfSessionsWhereConsultantWasActive'
 			),
-			key: 'numberOfSessionsWhereConsultantWasActive'
-		},
-		{
-			label: translate('profile.statistics.csvHeader.videoCallDuration'),
-			key: 'videoCallDuration'
-		},
-		featureAppointmentsEnabled && {
-			label: translate(
-				'profile.statistics.csvHeader.numberOfAppointments'
-			),
-			key: 'numberOfAppointments'
+			key: 'numberOfActiveSessions'
 		}
-	].filter(Boolean);
+	];
 
 	const statisticsPeriodOptions: {
 		value: statisticOptions;
@@ -157,25 +139,11 @@ export const ConsultantStatistics = () => {
 		setIsRequestInProgress(true);
 		apiGetConsultantStatistics({ startDate, endDate })
 			.then((response: ConsultantStatisticsDTO) => {
-				const videoCallDurationMinutes = Math.floor(
-					response.videoCallDuration / 60
-				);
-				const videoCallDurationSeconds =
-					response.videoCallDuration % 60;
 				const data = [
 					{
 						numberOfAssignedSessions:
 							response.numberOfAssignedSessions,
-						numberOfSentMessages: response.numberOfSentMessages,
-						numberOfSessionsWhereConsultantWasActive:
-							response.numberOfSessionsWhereConsultantWasActive,
-						videoCallDuration:
-							videoCallDurationMinutes +
-							':' +
-							videoCallDurationSeconds,
-						numberOfAppointments:
-							featureAppointmentsEnabled &&
-							response.numberOfAppointments
+						numberOfActiveSessions: response.numberOfActiveSessions
 					}
 				];
 
@@ -252,12 +220,13 @@ export const ConsultantStatistics = () => {
 								focusable="false"
 							/>
 							<p>
-								{selectedStatistics?.numberOfSentMessages || 0}
+								{selectedStatistics?.numberOfActiveSessions ||
+									0}
 							</p>
 						</span>
 						<Text
 							text={translate(
-								'profile.statistics.csvHeader.numberOfSentMessages'
+								'profile.statistics.csvHeader.numberOfSessionsWhereConsultantWasActive'
 							)}
 							type="standard"
 						/>

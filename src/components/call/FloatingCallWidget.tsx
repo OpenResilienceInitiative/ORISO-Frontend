@@ -7,7 +7,21 @@ import React, { useEffect, useRef, useState } from 'react';
 import { callManager, CallData } from '../../services/CallManager';
 import { matrixCallService } from '../../services/matrixCallService';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
+import {
+	getAutoFitStageSize,
+	normalizeAspectRatio,
+	RESIZE_EDGES,
+	resizeCursorForEdge,
+	resizeStageFromPointer,
+	type ResizeEdge,
+	type Size
+} from '../../utils/videoTileSizing';
 import './FloatingCallWidget.scss';
+
+const FLOATING_DEFAULT_WIDTH = 460;
+const FLOATING_DEFAULT_HEIGHT = 560;
+const FLOATING_MIN = { width: 300, height: 400 };
+const DEFAULT_VIDEO_ASPECT = 16 / 9;
 
 export const FloatingCallWidget: React.FC = () => {
 	const { matrixClientService } = useMatrixClient();
@@ -20,34 +34,108 @@ export const FloatingCallWidget: React.FC = () => {
 	const [, forceUpdate] = useState(0); // 🔥 Force re-render trigger
 
 	const [isDragging, setIsDragging] = useState(false);
+	const [isResizing, setIsResizing] = useState(false);
+	const [stageSize, setStageSize] = useState<Size>({
+		width: FLOATING_DEFAULT_WIDTH,
+		height: FLOATING_DEFAULT_HEIGHT
+	});
+	const [videoAspect, setVideoAspect] = useState(DEFAULT_VIDEO_ASPECT);
 	const [position, setPosition] = useState(() => {
 		// Center the popup initially
-		const popupWidth = 460;
-		const popupHeight = 560;
+		const popupWidth = FLOATING_DEFAULT_WIDTH;
+		const popupHeight = FLOATING_DEFAULT_HEIGHT;
 		return {
 			x: (window.innerWidth - popupWidth) / 2,
 			y: (window.innerHeight - popupHeight) / 2
 		};
 	});
 	const dragStartPos = useRef({ x: 0, y: 0 });
+	const resizeStartRef = useRef<{
+		edge: ResizeEdge;
+		x: number;
+		y: number;
+		width: number;
+		height: number;
+		posX: number;
+		posY: number;
+	} | null>(null);
+	const [resizeCursor, setResizeCursor] = useState('nwse-resize');
 
 	const localVideoRef = useRef<HTMLVideoElement>(null);
 	const remoteVideoRef = useRef<HTMLVideoElement>(null);
 	const callInitiatedRef = useRef(false);
 	const widgetRef = useRef<HTMLDivElement>(null);
 
-	// Re-center the modal whenever a new call starts
+	const getFloatingBounds = () => ({
+		minWidth: FLOATING_MIN.width,
+		minHeight: FLOATING_MIN.height,
+		maxWidth: Math.max(FLOATING_MIN.width, window.innerWidth - 32),
+		maxHeight: Math.max(FLOATING_MIN.height, window.innerHeight - 32)
+	});
+
+	const applyAutoFit = (aspect: number = videoAspect) => {
+		const bounds = getFloatingBounds();
+		const next = getAutoFitStageSize({
+			aspectRatio: aspect,
+			maxWidth: bounds.maxWidth,
+			maxHeight: bounds.maxHeight,
+			preferredWidth: FLOATING_DEFAULT_WIDTH,
+			preferredHeight: FLOATING_DEFAULT_HEIGHT,
+			minWidth: bounds.minWidth,
+			minHeight: bounds.minHeight
+		});
+		setStageSize(next);
+		setPosition({
+			x: Math.max(16, (window.innerWidth - next.width) / 2),
+			y: Math.max(16, (window.innerHeight - next.height) / 2)
+		});
+	};
+
+	// Re-center / auto-fit whenever a new call starts
 	useEffect(() => {
 		if (!callData?.callId) return;
-		const popupWidth = 460;
-		const popupHeight = 560;
-		setPosition({
-			x: Math.max(16, (window.innerWidth - popupWidth) / 2),
-			y: Math.max(16, (window.innerHeight - popupHeight) / 2)
-		});
+		setVideoAspect(DEFAULT_VIDEO_ASPECT);
 		setIsFullscreen(false);
 		setIsMinimized(false);
+		applyAutoFit(DEFAULT_VIDEO_ASPECT);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [callData?.callId]);
+
+	// Track remote video intrinsic aspect for letterbox / resize
+	useEffect(() => {
+		const video = remoteVideoRef.current;
+		if (!video || !callData?.isVideo) return;
+
+		const syncAspect = () => {
+			const next = normalizeAspectRatio(
+				video.videoWidth,
+				video.videoHeight,
+				DEFAULT_VIDEO_ASPECT
+			);
+			setVideoAspect((prev) => {
+				if (Math.abs(prev - next) <= 0.01) return prev;
+				return next;
+			});
+		};
+
+		syncAspect();
+		video.addEventListener('loadedmetadata', syncAspect);
+		video.addEventListener('resize', syncAspect);
+		return () => {
+			video.removeEventListener('loadedmetadata', syncAspect);
+			video.removeEventListener('resize', syncAspect);
+		};
+	}, [callData?.matrixCall, callData?.state, callData?.isVideo]);
+
+	// When remote track aspect becomes known/changes, re-fit the stage once
+	const lastFittedAspectRef = useRef(DEFAULT_VIDEO_ASPECT);
+	useEffect(() => {
+		if (!callData?.isVideo || isFullscreen || isMinimized) return;
+		if (Math.abs(lastFittedAspectRef.current - videoAspect) <= 0.01) return;
+		lastFittedAspectRef.current = videoAspect;
+		applyAutoFit(videoAspect);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [videoAspect, callData?.isVideo, isFullscreen, isMinimized]);
 
 	// Subscribe to CallManager
 	useEffect(() => {
@@ -172,9 +260,12 @@ export const FloatingCallWidget: React.FC = () => {
 
 	// Dragging
 	const handleMouseDown = (e: React.MouseEvent) => {
+		if (isResizing) return;
 		if (
 			(e.target as HTMLElement).closest('.call-controls') ||
-			(e.target as HTMLElement).closest('.window-controls')
+			(e.target as HTMLElement).closest('.window-controls') ||
+			(e.target as HTMLElement).closest('.call-resize-handle') ||
+			(e.target as HTMLElement).closest('.call-stage-controls')
 		)
 			return;
 		setIsDragging(true);
@@ -184,24 +275,73 @@ export const FloatingCallWidget: React.FC = () => {
 		};
 	};
 
+	const handleResizePointerDown = (
+		e: React.PointerEvent,
+		edge: ResizeEdge
+	) => {
+		if (e.button !== 0) return;
+		e.preventDefault();
+		e.stopPropagation();
+		if (isFullscreen || isMinimized) return;
+		(e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+		setIsResizing(true);
+		setResizeCursor(resizeCursorForEdge(edge));
+		resizeStartRef.current = {
+			edge,
+			x: e.clientX,
+			y: e.clientY,
+			width: stageSize.width,
+			height: stageSize.height,
+			posX: position.x,
+			posY: position.y
+		};
+	};
+
 	useEffect(() => {
-		const handleMouseMove = (e: MouseEvent) => {
+		const handlePointerMove = (e: PointerEvent) => {
+			if (isResizing && resizeStartRef.current) {
+				const start = resizeStartRef.current;
+				const widgetAspect =
+					start.width / start.height || DEFAULT_VIDEO_ASPECT;
+				const next = resizeStageFromPointer({
+					edge: start.edge,
+					startSize: { width: start.width, height: start.height },
+					startPosition: { x: start.posX, y: start.posY },
+					dx: e.clientX - start.x,
+					dy: e.clientY - start.y,
+					aspectRatio: widgetAspect,
+					bounds: getFloatingBounds()
+				});
+				setStageSize(next.size);
+				setPosition(next.position);
+				return;
+			}
 			if (!isDragging) return;
 			setPosition({
 				x: e.clientX - dragStartPos.current.x,
 				y: e.clientY - dragStartPos.current.y
 			});
 		};
-		const handleMouseUp = () => isDragging && setIsDragging(false);
-		if (isDragging) {
-			window.addEventListener('mousemove', handleMouseMove);
-			window.addEventListener('mouseup', handleMouseUp);
+		const handlePointerUp = () => {
+			if (isDragging) setIsDragging(false);
+			if (isResizing) {
+				setIsResizing(false);
+				resizeStartRef.current = null;
+			}
+		};
+		if (isDragging || isResizing) {
+			window.addEventListener('pointermove', handlePointerMove);
+			window.addEventListener('pointerup', handlePointerUp);
+			window.addEventListener('pointercancel', handlePointerUp);
+			document.body.style.userSelect = 'none';
 		}
 		return () => {
-			window.removeEventListener('mousemove', handleMouseMove);
-			window.removeEventListener('mouseup', handleMouseUp);
+			window.removeEventListener('pointermove', handlePointerMove);
+			window.removeEventListener('pointerup', handlePointerUp);
+			window.removeEventListener('pointercancel', handlePointerUp);
+			document.body.style.userSelect = '';
 		};
-	}, [isDragging, position]);
+	}, [isDragging, isResizing]);
 
 	// Cleanup
 	useEffect(() => {
@@ -289,7 +429,14 @@ export const FloatingCallWidget: React.FC = () => {
 	// Group calls are handled by GroupCallWidget
 	if (!callData || callData.usesElementCall || callData.isGroup) return null;
 
-	const widgetClass = `floating-call-widget ${isFullscreen ? 'fullscreen' : isMinimized ? 'minimized' : 'normal'}`;
+	const showStageControls =
+		callData.isVideo &&
+		!isFullscreen &&
+		!isMinimized &&
+		callData.state !== 'ringing' &&
+		!!callData.matrixCall;
+
+	const widgetClass = `floating-call-widget ${isFullscreen ? 'fullscreen' : isMinimized ? 'minimized' : 'normal'}${isResizing ? ' resizing' : ''}`;
 
 	return (
 		<>
@@ -303,7 +450,18 @@ export const FloatingCallWidget: React.FC = () => {
 					position: 'fixed',
 					left: isFullscreen ? 0 : `${position.x}px`,
 					top: isFullscreen ? 0 : `${position.y}px`,
-					cursor: isDragging ? 'grabbing' : 'default'
+					cursor: isDragging
+						? 'grabbing'
+						: isResizing
+							? resizeCursor
+							: 'default',
+					...(isFullscreen || isMinimized
+						? {}
+						: {
+								width: `${stageSize.width}px`,
+								height: `${stageSize.height}px`,
+								minHeight: undefined
+							})
 				}}
 				onMouseDown={handleMouseDown}
 			>
@@ -326,23 +484,47 @@ export const FloatingCallWidget: React.FC = () => {
 						</span>
 					</div>
 
-					<button
-						className="fullscreen-toggle"
-						onClick={(e) => {
-							e.stopPropagation();
-							toggleFullscreen();
-						}}
-						title="Fullscreen"
-					>
-						<svg
-							width="18"
-							height="18"
-							viewBox="0 0 24 24"
-							fill="currentColor"
+					<div className="call-stage-controls">
+						{showStageControls && (
+							<button
+								type="button"
+								className="auto-fit-toggle"
+								onClick={(e) => {
+									e.stopPropagation();
+									applyAutoFit(videoAspect);
+								}}
+								title="Auto-fit video"
+								aria-label="Auto-fit video to window"
+							>
+								<svg
+									width="18"
+									height="18"
+									viewBox="0 0 24 24"
+									fill="currentColor"
+									aria-hidden="true"
+								>
+									<path d="M3 5v4h2V7h2V5H3zm12 0v2h2v2h2V5h-4zM5 15H3v4h4v-2H5v-2zm14 2h-2v2h4v-4h-2v2zM7 9h10v6H7V9z" />
+								</svg>
+							</button>
+						)}
+						<button
+							className="fullscreen-toggle"
+							onClick={(e) => {
+								e.stopPropagation();
+								toggleFullscreen();
+							}}
+							title="Fullscreen"
 						>
-							<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z" />
-						</svg>
-					</button>
+							<svg
+								width="18"
+								height="18"
+								viewBox="0 0 24 24"
+								fill="currentColor"
+							>
+								<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z" />
+							</svg>
+						</button>
+					</div>
 				</div>
 
 				{/* Video area */}
@@ -516,6 +698,24 @@ export const FloatingCallWidget: React.FC = () => {
 						</>
 					)}
 				</div>
+
+				{showStageControls &&
+					RESIZE_EDGES.map((edge) => (
+						<div
+							key={edge}
+							className={`call-resize-handle call-resize-handle--${edge}`}
+							role="separator"
+							aria-orientation={
+								edge === 'n' || edge === 's'
+									? 'horizontal'
+									: 'vertical'
+							}
+							aria-label={`Resize video call window (${edge})`}
+							onPointerDown={(e) =>
+								handleResizePointerDown(e, edge)
+							}
+						/>
+					))}
 			</div>
 		</>
 	);

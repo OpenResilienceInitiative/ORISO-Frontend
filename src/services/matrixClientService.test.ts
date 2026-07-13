@@ -7,6 +7,9 @@ const mockedMatrixClient = vi.hoisted(() => ({
 	initRustCrypto: vi.fn(),
 	on: vi.fn(),
 	removeAllListeners: vi.fn(),
+	getRoom: vi.fn(),
+	joinRoom: vi.fn(),
+	sendMessage: vi.fn(),
 	startClient: vi.fn(),
 	stopClient: vi.fn()
 }));
@@ -186,6 +189,71 @@ describe('MatrixClientService', () => {
 			msgtype: 'm.text',
 			body: 'Hello Matrix'
 		});
+	});
+
+	it('joins a newly accepted room that is not yet present in the running client', async () => {
+		const callOrder: string[] = [];
+		const joinRoom = vi.fn(async () => {
+			callOrder.push('join');
+			return { roomId: '!room:example.org' };
+		});
+		const sendMessage = vi.fn(async () => {
+			callOrder.push('send');
+			return { event_id: '$event' };
+		});
+		const service = new MatrixClientService();
+		setClient(service, {
+			getRoom: () => null,
+			joinRoom,
+			sendMessage
+		});
+
+		await service.sendMessage('!room:example.org', 'Hello after accept');
+
+		expect(joinRoom).toHaveBeenCalledWith('!room:example.org');
+		expect(sendMessage).toHaveBeenCalled();
+		expect(callOrder).toEqual(['join', 'send']);
+	});
+
+	it('refreshes an expired token during join and retries join before sending', async () => {
+		const expiredError = {
+			errcode: 'M_UNKNOWN',
+			httpStatus: 401,
+			message: 'Access token has expired'
+		};
+		const firstJoin = vi.fn(() => Promise.reject(expiredError));
+		const service = new MatrixClientService();
+		setClient(service, {
+			getRoom: () => null,
+			joinRoom: firstJoin,
+			sendMessage: vi.fn(),
+			stopClient: vi.fn(),
+			removeAllListeners: vi.fn()
+		});
+		vi.mocked(getMatrixAccessToken).mockResolvedValueOnce({
+			userId: '@alice:matrix.localhost',
+			accessToken: 'replacement-token',
+			deviceId: 'DEVICE_ONE',
+			homeserverUrl: 'http://matrix.localhost:18008'
+		});
+		mockedMatrixClient.getRoom.mockReturnValue(null);
+		mockedMatrixClient.joinRoom.mockResolvedValue({
+			roomId: '!room:example.org'
+		});
+		mockedMatrixClient.sendMessage.mockResolvedValue({
+			event_id: '$event'
+		});
+
+		await expect(
+			service.sendMessage('!room:example.org', 'Hello after refresh')
+		).resolves.toEqual({ event_id: '$event' });
+
+		expect(firstJoin).toHaveBeenCalledOnce();
+		expect(getMatrixAccessToken).toHaveBeenCalledOnce();
+		expect(mockedMatrixClient.joinRoom).toHaveBeenCalledWith(
+			'!room:example.org'
+		);
+		expect(mockedMatrixClient.sendMessage).toHaveBeenCalledOnce();
 	});
 
 	it('sends typing state in migration rooms without native Matrix encryption state', async () => {

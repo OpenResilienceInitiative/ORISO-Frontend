@@ -546,6 +546,37 @@ $iconSize: 24px;
 		flex: 0 0 auto;
 	}
 
+	// Figma #430: collapsed "+N people" badge shown for groups with >4 members.
+	&__memberCount {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		height: 32px;
+		padding: 0 12px;
+		margin-left: -10px;
+		border-radius: 20px;
+		background: #ffd1d1;
+		color: var(--m3-primary, $primary);
+		flex: 0 0 auto;
+	}
+
+	&__memberCountNumber {
+		font-size: 14px;
+		font-weight: 600;
+		line-height: 1;
+		white-space: nowrap;
+	}
+
+	&__memberCountIcon {
+		width: 18px;
+		height: 18px;
+		flex: 0 0 auto;
+
+		path {
+			fill: currentColor;
+		}
+	}
+
 	// Video call buttons spacing
 	&__videoCallButtons {
 		display: flex;

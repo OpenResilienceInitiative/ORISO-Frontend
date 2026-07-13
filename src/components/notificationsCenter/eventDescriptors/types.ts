@@ -47,6 +47,7 @@ export type EventCategory = 'system' | 'message';
 export type EventIconId =
 	| 'requestNew'
 	| 'requestAccepted'
+	| 'requestDenied'
 	| 'message'
 	| 'threadReply'
 	| 'draft'
@@ -55,9 +56,15 @@ export type EventIconId =
 	| 'callStarted'
 	| 'callEnded'
 	| 'callMissed'
+	| 'callInvited'
 	| 'supervisor'
 	| 'rename'
 	| 'appointment'
+	| 'appointmentRequested'
+	| 'appointmentScheduled'
+	| 'appointmentCancelled'
+	| 'appointmentBriefing'
+	| 'waitingRoom'
 	| 'system';
 
 /**

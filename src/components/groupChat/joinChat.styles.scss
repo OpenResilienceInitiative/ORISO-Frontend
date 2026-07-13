@@ -69,6 +69,49 @@
 		}
 	}
 
+	// Netiquette rules: one spotlighted at a time, cross-fading every ~4s
+	// (WaitingAreaRules + useCyclingIndex). Inactive rules keep opacity:0 only —
+	// never display:none/visibility:hidden — so screen readers still get the whole
+	// list. prefers-reduced-motion shows every rule statically in normal flow.
+	&__rules {
+		list-style: none;
+		margin: $grid-base-two 0 0;
+		padding: 0;
+		display: grid;
+		justify-items: center;
+		text-align: center;
+		min-height: $grid-base-six;
+	}
+
+	&__rule {
+		grid-area: 1 / 1;
+		margin: 0;
+		opacity: 0;
+		pointer-events: none;
+		transition: opacity 0.4s ease;
+
+		&--active {
+			opacity: 1;
+			pointer-events: auto;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		&__rules {
+			display: block;
+		}
+
+		&__rule {
+			opacity: 1;
+			pointer-events: auto;
+			transition: none;
+
+			& + & {
+				margin-top: $grid-base;
+			}
+		}
+	}
+
 	&__button-container {
 		text-align: center;
 		padding: $grid-base-six $grid-base-four;

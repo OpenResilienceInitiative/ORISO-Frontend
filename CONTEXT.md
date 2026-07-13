@@ -60,6 +60,56 @@ _Avoid_: per-component active state, local `isActive` flags duplicated across li
   Live **participant count** ("3 in call") is **in scope** (full-calls decision). Recommended source of truth: **Matrix-RTC member state** (`m.call.member`/MSC3401), which ElementCall already maintains via `matrixRTC.getRoomSession()` and the client can subscribe to live; alternative is a backend query of the LiveKit room API. This is the live signal that gates the **Join** overlay.
 - **Rocket.Chat vs Matrix.** Notification delivery is already Matrix-native (`MatrixEventListenerService` `/sync`), but `useE2EE` still implements the _Rocket.Chat_ E2EE scheme and skips Matrix rooms. "We do notifications via Rocket.Chat" is no longer true; "client E2EE is still Rocket.Chat-shaped" is.
 
+## Self-Help Group Chat & Lobby
+
+_(Cross-repo feature. Canonical write model lives in **ORISO-UserService** (`Chat` + `GroupChatParticipant`); this section is the shared glossary. Decisions: extend the existing Group Chat feature + refactor in the touched radius; Matrix-only (no Rocket.Chat remnants); real E2EE via SDK **Megolm-first** (ADR-004/005); red-green TDD.)_
+
+**Self-Help Group Chat** (Selbsthilfe-Gruppen-Chat):
+The recurring, scheduled, consultant-owned, multi-participant chat. Canonical entity: UserService **`Chat`** (+ `GroupChatParticipant`). One `Chat` row already means "a group chat"; the reference wireframes (Caritas "Sonntag-Chat", "Dienstag-Chat", …) are instances of this.
+_Avoid_: "peer chat", "Gruppenchat" (aliases), "conversation" (reserve for the consulting-type/registration concept).
+
+**Group Chat Series vs. Occurrence** (decided — model A):
+A **Series** is the single source-of-truth rule row (`start`, `interval`, **`repeatCount`**). **Occurrences are computed virtually** from the rule (iCal-RRULE-style); a Matrix room is materialised **only for the imminent/active** occurrence (extends today's rolling-row `ChatReCreator`). The "must be deleted manually" bug = today's series has **no end** (`nextStart()` rolls `WEEKLY` forever); a finite `repeatCount` makes it **auto-terminate** — no manual deletion, no per-occurrence row pile-up. Listing upcoming occurrences (Lobby) and calendar export ("next N appointments") are computed from the rule.
+_**Interval**_: expand `Chat.ChatInterval` from `WEEKLY`-only to {DAILY, WEEKLY, BIWEEKLY, MONTHLY, QUARTERLY, YEARLY}; `nextStart()` computes per interval.
+
+**Occurrence Exception / Override** (iCal `EXDATE`-style):
+A background entry that makes the virtual-occurrence computation **skip** a specific future date ("this Tuesday is cancelled") without touching the Series rule; the same mechanism can **override** one occurrence's topic/time. Lets model A support single-date cancellations that a materialised-row model would get "for free".
+
+**Future Timeline & the "Now" divider** (revises — and **replaces** — the earlier "Lobby in the Anfragen section", which is **dropped**):
+Group chats live **directly in Gespräche/Chats** (the time-ordered conversation list, `MY_SESSION`) — **not** in the Anfragen/enquiry section. Upcoming scheduled occurrences are **not a separate list**: they are the **future extension of the same conversation list**, revealed by a **horizontal draggable divider** whose line marks **now** (the last past/current event). Default = divider at top, list shows past/current as today; drag it and the list no longer stops at the last chat but continues into the future (upcoming occurrences/events). Backend still distinguishes **past / active / upcoming** (upcoming = **virtual occurrences** computed from the Series rule, model A), but there is **no separate frontend Lobby surface** and the ENQUIRY triage flow stays untouched. When an occurrence opens it simply crosses **above** the now-line (active) and fires a system notification (Activity Timeline event).
+Dragging is a **reveal-gesture into a timeline mode**, not a permanent re-sort — default stays today's time-of-last-message order (reading an item never reorders; only a new message bumps it), the future part just extends it forward. The future part shows **all upcoming events unified** (group-chat occurrences **+** AppointmentService appointments), chronological. **Pagination**: load ~**3 months** ahead, then a **"load more" button** (never materialise an unbounded recurring tail). It **respects the active `SessionToolbarChipFilter`**: no filter → all chats/events; a type filter (e.g. Group) → only that type, past **and** future.
+_a11y (ADR-004)_: the drag interaction needs a non-drag equivalent (keyboard/toggle) for screen-reader & motor-impaired users.
+_Avoid_: a separate "Lobby" list; putting occurrences into the ENQUIRY data type; conflating the Future Timeline (the list's future part) with the **Waiting Area** (the per-occurrence pre-open screen).
+
+**Waiting Area** (Wartebereich):
+The pre-open holding screen a participant lands in before the chat is open. Reuses the existing video `WaitingRoom` component (today video-conference-bound) and is **also** reused for live chat. Shows: a configurable **waiting-area system message**, a countdown to the occurrence, and cycling **Netiquette Rules**.
+_Avoid_: "Lobby" (the Lobby is the list/holding concept; the Waiting Area is the screen).
+
+**Occurrence lifecycle end** (decided):
+An occurrence auto-closes at its **planned end** (`startDate + duration`) — reuses today's `DeactivateGroupChatService` stale-close machinery — after which the room is torn down and the Series rolls to the next occurrence (or completes at `repeatCount`). Past T-0 the Waiting-Area countdown **runs into the negative** with per-minute escalating "discomfort" emojis (moderator-is-late indicator), no dismissal, until planned end. **Any counsellor** (Owner *or* Co-Moderator — not only the Owner) can also **end it early** via the room menu ("Event beenden" + confirmation popup).
+
+**Deep-Link Join**:
+A direct link to *today's* occurrence that drops a participant straight into the **Waiting Area**. An unregistered person quick-registers first, then lands in the Waiting Area of the clicked occurrence.
+
+**Netiquette Rule** (= "Spielregeln" = `groupChatRules` — **one concept, three names**, confirmed in code):
+A short (**≤120 chars**), author-configured, **multilingual** conduct message, authored at chat-creation via a config popup (one tab per language), shown as horizontally-scrollable **label pills** cycling in the Waiting Area (~4 s each). **Today** `groupChatRules` is `[string]` on the **ConsultingType**, static in i18n files; the change **promotes it to per-Series author-authored data**, with the **ConsultingType rules kept as the default/fallback**. Distinct from the **Welcome/System Message** (`hintMessage`) — a single free per-Series message, also multilingual.
+
+**Config-text translation** (reuses the Case-Handover/Legal module):
+The multilingual authoring of Netiquette Rules + Welcome Message reuses **TenantService `TranslationFacade.translate(sourceLang, targetLangs[], fields)`** (provider-agnostic LLM: OpenRouter/Mistral; API keys global+masked) — the same module behind the Admin `TranslateOnPublishModal` for legal cards. Frontend is re-implemented in **MUI** (Admin's is Ant Design) but the backend contract + fallback are shared. **Boundary**: only **author-written config text** (rules/welcome) is ever sent to the LLM — **never chat content, never user PII** (those stay E2EE).
+_Display fallback chain_: requested language → English → creator's source language → a standard canned phrase (present in all languages).
+
+**Participant identity** (group chat):
+Every participant is a **real Matrix identity** (needed for Megolm E2EE), on a spectrum: a hidden **auto-generated `anon_` account** (generated creds the user never sees; deactivated ~6 h / deleted ~47 h — the existing live-chat mechanism) is the low-threshold default; the user may **opt in to a persistent pseudonym** (own nickname, no PII, key-backup on) to be a recognised "regular" across recurring occurrences. There is **no** credential-less/ephemeral session — anonymity is achieved by disposable *real* accounts, not by skipping accounts.
+
+**Group Chat roles & ownership** (decided):
+Membership is **explicit**, replacing the legacy implicit "all consultants of the chat's agencies are moderators" derivation (over-broad + E2EE-unsafe). Roles on `GroupChatParticipant`: **Owner** (moderator; **multiple owners allowed**, ownership **transferable** via the member menu), invited **Co-Moderators**, and client **Participants**. The invite picker is **tenant-scoped** (via the Agency→Tenant chain) — implemented as a **relaxable policy**, not hardcoded, so cross-tenant invites can be enabled later.
+
+**Reachable Email** (opt-in):
+An optional email the participant may add (end-of-conversation upgrade popup) — the **only recovery anchor** for auto-assigned passwords, plus the reminder channel. Lives on the **identity layer** (Keycloak/UserService), encrypted at rest, **never in the Matrix room**. Attaching it makes a pseudonym real-world-linkable, so it is always the user's opt-in choice.
+
+**Confidentiality-neutral comms** (decision):
+Because participation reveals sensitive facts (addiction self-help), all outbound artefacts that leave the E2EE boundary — **calendar entries (ICS), reminder & recovery emails** — carry a **neutral, non-sensitive, tenant-independent identity**: no topic, no Träger branding (Caritas/Kreuzbund), no "Sucht". **Reminder & recovery emails are content-free teasers** ("a session is coming up shortly — log in for details" / "restore your access") — all real content stays behind login, so the mail body leaks nothing and branding is moot; only the sender stays neutral. Calendar (ICS) title defaults to a neutral label, editable by the creator.
+
 ## Example dialogue
 
 > **Dev:** When the client sends "Voll gut das du das so denkst", what does the server store?

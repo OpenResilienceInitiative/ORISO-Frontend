@@ -140,14 +140,17 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 		max-width: min(71%, 600px);
 		position: relative;
 
+		&--left,
 		&--right {
-			flex-direction: row-reverse;
-			align-self: center;
-			margin-left: auto;
-			align-items: center;
+			align-items: start;
 			gap: 4px;
 			position: relative;
-			padding-right: 32px;
+		}
+
+		&--right {
+			flex-direction: row-reverse;
+			align-self: flex-end;
+			margin-left: auto;
 		}
 
 		&--furtherSteps {
@@ -168,9 +171,9 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 		height: 48px;
 		min-width: 48px;
 		min-height: 48px;
-		border: 10px solid #fff;
+		border: 8px solid #fff;
 		border-radius: 999px;
-		background: #ffd9d9;
+		background: #fff;
 		overflow: hidden;
 		display: inline-flex;
 		align-items: center;
@@ -203,13 +206,23 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 		z-index: 6;
 	}
 
+	&__sideColumn--left,
 	&__sideColumn--right {
 		align-items: center;
 		justify-content: center;
 		margin-bottom: 0;
+	}
+
+	&__sideColumn--left {
+		left: 4px;
+		top: -18px;
+		z-index: 5;
+	}
+
+	&__sideColumn--right {
 		position: absolute;
-		right: -4px;
-		bottom: 40px;
+		right: -32px;
+		bottom: -18px;
 		z-index: 5;
 	}
 
@@ -603,11 +616,17 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 		align-items: center;
 		justify-content: center;
 		flex-shrink: 0;
+		z-index: 5;
 	}
 
 	&__systemAvatarIcon {
 		width: 15px;
 		height: 15px;
+
+		@media (min-resolution: 1.5dppx), (min-width: 1920px) {
+			width: 19px;
+			height: 19px;
+		}
 
 		* {
 			fill: #e53952;
@@ -775,8 +794,23 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 			text-align: right;
 		}
 
-		span:not(.messageItem__highlight) {
+		span:not(.messageItem__highlight, .messageItem__messageTime) {
 			display: inline;
+		}
+
+		.messageItem__messageTime {
+			display: block;
+			width: 100%;
+			margin-top: 4px;
+			line-height: 1;
+			font-size: $font-size-secondary;
+			color: var(--m3-on-surface-variant, $tertiary);
+			white-space: nowrap;
+			text-align: right;
+
+			&--outgoing {
+				text-align: left;
+			}
 		}
 
 		&__attachment {

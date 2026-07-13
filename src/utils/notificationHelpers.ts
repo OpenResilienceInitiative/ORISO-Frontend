@@ -1,5 +1,8 @@
 import { v4 as uuidv4 } from 'uuid';
 import incomingNotification from '../resources/audio/incomingNotification.mp3';
+import { isNotificationSuppressed } from './notificationSettings/model';
+import { notificationSettingsStore } from './notificationSettings/store';
+import { EventFamily } from '../components/notificationsCenter/eventDescriptors/types';
 
 const audio =
 	'Audio' in window
@@ -14,6 +17,12 @@ type ExtraNotificationOptions = {
 	onclick?: Function;
 	onclose?: Function;
 	onshow?: Function;
+	/**
+	 * WP-06 Slice 6a: the event family this notification belongs to — checked
+	 * against the cross-device settings (global mute, per-family toggles,
+	 * device silence). Defaults to `messages` for the legacy call sites.
+	 */
+	family?: EventFamily;
 };
 
 export const PERMISSION_GRANTED = 'granted';
@@ -53,6 +62,15 @@ export const sendNotification = (
 
 	const options = opts || {};
 
+	// WP-06 Slice 6a: honour the cross-device settings (account-wide mute,
+	// per-family toggles and the per-device silence switch).
+	const { settings, device } = notificationSettingsStore.getState();
+	if (
+		isNotificationSuppressed(settings, device, options.family || 'messages')
+	) {
+		return;
+	}
+
 	// If always is false and window has the focus do not send any notification
 	if (!options.showAlways && document.hasFocus()) {
 		return;
@@ -65,7 +83,8 @@ export const sendNotification = (
 	});
 
 	notification.onshow = () => {
-		if (audio) {
+		// Sound obeys its own cross-device toggle (Slice 6a).
+		if (audio && settings.sounds.enabled) {
 			audio.play().then();
 		}
 		options.onshow && options.onshow(notification);

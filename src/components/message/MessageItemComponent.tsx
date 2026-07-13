@@ -64,7 +64,7 @@ import { FlyoutMenu } from '../flyoutMenu/FlyoutMenu';
 import { BanUser, BanUserOverlay } from '../banUser/BanUser';
 import { getValueFromCookie } from '../sessionCookie/accessSessionCookie';
 import { VideoChatDetails, VideoChatDetailsAlias } from './VideoChatDetails';
-import { UserAvatar } from './UserAvatar';
+import { MessageAvatar } from './MessageAvatar';
 import clsx from 'clsx';
 import {
 	parseMessagePrefixes,
@@ -882,7 +882,13 @@ export const MessageItemComponent = ({
 						)
 					: ''
 			);
-		} catch {
+		} catch (error) {
+			// Markdown parsing failed; fall back to the sanitized raw message.
+			// eslint-disable-next-line no-console
+			console.debug(
+				'Message markdown render failed, using raw text',
+				error
+			);
 			setRenderedMessage(
 				sanitizeHtml(preparedMessage, sanitizeHtmlDefaultOptions)
 			);
@@ -1197,6 +1203,17 @@ export const MessageItemComponent = ({
 		videoCallMessage?.eventType === 'IGNORED_CALL' &&
 		activeSession?.isGroup;
 
+	const messageTimeInBubble = messageTime ? (
+		<span
+			className={clsx(
+				'messageItem__messageTime',
+				isMyMessage && 'messageItem__messageTime--outgoing'
+			)}
+		>
+			{formatToHHMM(messageTime)}
+		</span>
+	) : null;
+
 	const messageContent = (): React.ReactElement => {
 		switch (true) {
 			case isMasterKeyLostMessage:
@@ -1289,22 +1306,25 @@ export const MessageItemComponent = ({
 				);
 			case isDeleteMessage:
 				return (
-					<div className="messageItem__message messageItem__message--deleted flex flex--ai-c">
-						<div className="mr--1">
-							<DeletedIcon
-								width={14}
-								height={14}
-								aria-hidden="true"
-								focusable="false"
-							/>
+					<div className="messageItem__message messageItem__message--deleted">
+						<div className="flex flex--ai-c">
+							<div className="mr--1">
+								<DeletedIcon
+									width={14}
+									height={14}
+									aria-hidden="true"
+									focusable="false"
+								/>
+							</div>
+							<div>
+								{translate(
+									isMyMessage
+										? 'message.delete.deleted.own'
+										: 'message.delete.deleted.other'
+								)}
+							</div>
 						</div>
-						<div>
-							{translate(
-								isMyMessage
-									? 'message.delete.deleted.own'
-									: 'message.delete.deleted.other'
-							)}
-						</div>
+						{messageTimeInBubble}
 					</div>
 				);
 			default:
@@ -1326,11 +1346,6 @@ export const MessageItemComponent = ({
 										resolvedIncomingNameParts.lastName
 									}
 								/>
-								{messageTime ? (
-									<span className="messageItem__headerTime">
-										{formatToHHMM(messageTime)}
-									</span>
-								) : null}
 								{/* MATRIX MIGRATION: Temporarily hide message menu */}
 								{false && (
 									<MessageFlyoutMenu
@@ -1630,6 +1645,7 @@ export const MessageItemComponent = ({
 										hasRenderedMessage={hasRenderedMessage}
 									/>
 								))}
+							{!isSystemNotification && messageTimeInBubble}
 						</div>
 						{showVisibleAudience && !isMyMessage && (
 							<div className="messageItem__visibleOnly">
@@ -1748,7 +1764,7 @@ export const MessageItemComponent = ({
 			<div
 				className={`
 					messageItem__messageWrap
-					${isMyMessage ? 'messageItem__messageWrap--right' : ''}
+					${isMyMessage ? 'messageItem__messageWrap--right' : 'messageItem__messageWrap--left'}
 					${isFurtherStepsMessage ? 'messageItem__messageWrap--furtherSteps' : ''}
 					${
 						isE2EEActivatedMessage
@@ -1760,9 +1776,12 @@ export const MessageItemComponent = ({
 				{!alias?.messageType &&
 					!isMyMessage &&
 					!isSystemNotification && (
-						<div className="messageItem__sideColumn">
+						<div className="messageItem__sideColumn messageItem__sideColumn--left">
 							<div className="messageItem__avatar">
-								<UserAvatar
+								<MessageAvatar
+									isGroup={!!activeSession?.isGroup}
+									isSystemNotification={false}
+									userId={userId}
 									username={username}
 									displayName={resolvedIncomingDisplayName}
 									firstName={
@@ -1771,11 +1790,23 @@ export const MessageItemComponent = ({
 									lastName={
 										resolvedIncomingNameParts.lastName
 									}
-									userId={userId}
-									size="32px"
-									ring={false}
+									size={32}
 								/>
 							</div>
+							<button
+								type="button"
+								className="messageItem__kebabButton messageItem__kebabButton--left"
+								aria-label="More"
+								onClick={(event) =>
+									toggleActionMenu(event, 'left')
+								}
+							>
+								{isActionMenuOpen ? (
+									<ActiveKebabIcon />
+								) : (
+									<StackVerticalIcon className="messageItem__kebabIconDefault" />
+								)}
+							</button>
 							{showVisibleAudience && (
 								<button
 									type="button"
@@ -1805,20 +1836,6 @@ export const MessageItemComponent = ({
 									</span>
 								</button>
 							)}
-							<button
-								type="button"
-								className="messageItem__kebabButton messageItem__kebabButton--left"
-								aria-label="More"
-								onClick={(event) =>
-									toggleActionMenu(event, 'left')
-								}
-							>
-								{isActionMenuOpen ? (
-									<ActiveKebabIcon />
-								) : (
-									<StackVerticalIcon className="messageItem__kebabIconDefault" />
-								)}
-							</button>
 						</div>
 					)}
 				{!alias?.messageType &&
@@ -1879,14 +1896,15 @@ export const MessageItemComponent = ({
 								)}
 							</button>
 							<div className="messageItem__avatar">
-								<UserAvatar
+								<MessageAvatar
+									isGroup={!!activeSession?.isGroup}
+									isSystemNotification={false}
+									userId={userId}
 									username={username}
 									displayName={displayName}
 									firstName={userData?.firstName}
 									lastName={userData?.lastName}
-									userId={userId}
-									size="32px"
-									ring={false}
+									size={32}
 								/>
 							</div>
 						</div>
@@ -1897,11 +1915,6 @@ export const MessageItemComponent = ({
 					{isMyMessage && formattedName && !alias?.messageType && (
 						<div className="messageItem__senderInfo">
 							<div className="messageItem__senderInfoPrimary">
-								{messageTime ? (
-									<span className="messageItem__headerTime">
-										{formatToHHMM(messageTime)}
-									</span>
-								) : null}
 								<div className="messageItem__senderInfoName">
 									{formattedName}
 								</div>

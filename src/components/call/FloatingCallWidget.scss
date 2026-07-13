@@ -21,10 +21,16 @@
 	}
 
 	&.normal {
-		width: 460px;
-		min-height: 560px;
+		width: min(460px, calc(100vw - 32px));
+		/* Height is driven by inline stageSize; avoid min-height fighting auto-fit/resize */
+		min-height: 0;
+		height: auto;
 		display: flex;
 		flex-direction: column;
+	}
+
+	&.resizing {
+		transition: none;
 	}
 
 	&.fullscreen {
@@ -67,7 +73,14 @@
 		}
 	}
 
-	.fullscreen-toggle {
+	.call-stage-controls {
+		display: flex;
+		align-items: center;
+		gap: 4px;
+	}
+
+	.fullscreen-toggle,
+	.auto-fit-toggle {
 		background: transparent;
 		border: none;
 		color: #b8b8b8;
@@ -86,8 +99,8 @@
 		position: relative;
 		width: 100%;
 		flex: 1;
-		min-height: 380px;
-		background: #e8e8e8; // Light gray background
+		min-height: 0;
+		background: #1a1a1a; // Letterbox bars for contain
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -95,7 +108,8 @@
 		.remote-video {
 			width: 100%;
 			height: 100%;
-			object-fit: cover;
+			object-fit: contain;
+			background: #1a1a1a;
 		}
 
 		// Off-screen but playing — used for audio-only WebRTC playback
@@ -252,6 +266,121 @@
 		.call-btn {
 			padding: 8px 16px;
 			font-size: 12px;
+		}
+	}
+
+	.call-resize-handle {
+		position: absolute;
+		z-index: 6;
+		touch-action: none;
+
+		&--n,
+		&--s {
+			left: 12px;
+			right: 12px;
+			height: 10px;
+			cursor: ns-resize;
+		}
+
+		&--n {
+			top: 0;
+		}
+
+		&--s {
+			bottom: 0;
+		}
+
+		&--e,
+		&--w {
+			top: 12px;
+			bottom: 12px;
+			width: 10px;
+			cursor: ew-resize;
+		}
+
+		&--e {
+			right: 0;
+		}
+
+		&--w {
+			left: 0;
+		}
+
+		&--ne,
+		&--nw,
+		&--se,
+		&--sw {
+			width: 16px;
+			height: 16px;
+		}
+
+		&--ne {
+			top: 0;
+			right: 0;
+			cursor: nesw-resize;
+		}
+
+		&--nw {
+			top: 0;
+			left: 0;
+			cursor: nwse-resize;
+		}
+
+		&--se {
+			right: 0;
+			bottom: 0;
+			cursor: nwse-resize;
+
+			&::after {
+				content: '';
+				position: absolute;
+				right: 4px;
+				bottom: 4px;
+				width: 10px;
+				height: 10px;
+				border-right: 2px solid rgba(255, 255, 255, 0.65);
+				border-bottom: 2px solid rgba(255, 255, 255, 0.65);
+			}
+		}
+
+		&--sw {
+			left: 0;
+			bottom: 0;
+			cursor: nesw-resize;
+		}
+	}
+}
+
+@media (max-width: 480px) {
+	.floating-call-widget.normal {
+		width: calc(100vw - 16px) !important;
+		max-width: calc(100vw - 16px);
+		/* Keep JS-driven height; only constrain width on narrow screens */
+
+		.call-video-area {
+			min-height: 220px;
+
+			.local-video {
+				width: 72px;
+				height: 72px;
+				bottom: 12px;
+				right: 12px;
+			}
+		}
+
+		.call-controls {
+			padding: 12px;
+			gap: 10px;
+			min-height: 80px;
+		}
+
+		.call-btn {
+			width: 44px;
+			height: 44px;
+		}
+
+		.call-resize-handle {
+			display: none;
 		}
 	}
 }
