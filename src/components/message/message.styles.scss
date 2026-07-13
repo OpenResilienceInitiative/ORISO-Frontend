@@ -399,10 +399,12 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 
 	&__visibilityChip--incoming {
 		margin-top: -2px;
+		translate: 0% 50%;
 	}
 
 	&__visibilityChip--outgoing {
 		margin-bottom: -2px;
+		translate: 0% -50%;
 	}
 
 	&__visibilityMenu {
