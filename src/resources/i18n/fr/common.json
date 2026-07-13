@@ -680,7 +680,8 @@
 			}
 		},
 		"edit": {
-			"title": "Paramètres de chat"
+			"title": "Paramètres de chat",
+			"subtitle": "Modifier le calendrier et le contenu de cette série"
 		},
 		"info": {
 			"headline": "Infos sur le chat",

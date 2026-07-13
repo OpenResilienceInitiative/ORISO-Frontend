@@ -558,9 +558,7 @@ const CreateGroupChatForm = () => {
 	const buttonSetCreate = useMemo<ButtonItem>(
 		() => ({
 			label: isEditMode
-				? translate('groupChat.edit.button.label', {
-						defaultValue: 'Speichern'
-					})
+				? translate('groupChat.save.button.label')
 				: translate('groupChat.create.button.label') || 'Create',
 			function: OVERLAY_FUNCTIONS.CLOSE,
 			type: BUTTON_TYPES.PRIMARY
@@ -681,19 +679,14 @@ const CreateGroupChatForm = () => {
 					</span>
 					<h3 className="createChat__header__title">
 						{isEditMode
-							? translate('groupChat.edit.title', {
-									defaultValue: 'Gruppen-Chat bearbeiten'
-								})
+							? translate('groupChat.edit.title')
 							: translate('groupChat.create.title') ||
 								'Create Group Chat'}
 					</h3>
 				</div>
 				<p className="createChat__header__subtitle">
 					{isEditMode
-						? translate('groupChat.edit.subtitle', {
-								defaultValue:
-									'Zeitplan und Inhalte dieser Serie ändern'
-							})
+						? translate('groupChat.edit.subtitle')
 						: translate('groupChat.create.subtitle') ||
 							'Create a new group chat with selected consultants'}
 				</p>
