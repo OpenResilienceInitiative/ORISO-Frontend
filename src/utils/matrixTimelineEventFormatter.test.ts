@@ -74,6 +74,30 @@ describe('formatMatrixTimelineEvent edit relation (m.replace)', () => {
 	});
 });
 
+describe('formatMatrixTimelineEvent mentions relation (m.mentions)', () => {
+	it('exposes mentionedUserIds for a received event carrying m.mentions', () => {
+		const formatted = formatMatrixTimelineEvent(
+			makeEvent({
+				'msgtype': 'm.text',
+				'body': 'Hallo @Anna',
+				'm.mentions': { user_ids: ['@anna:hs'] }
+			}),
+			null,
+			'verschlüsselt'
+		);
+		expect(formatted.mentionedUserIds).toEqual(['@anna:hs']);
+	});
+
+	it('leaves normal messages untouched (no mentions key)', () => {
+		const formatted = formatMatrixTimelineEvent(
+			makeEvent({ msgtype: 'm.text', body: 'hallo' }),
+			null,
+			'verschlüsselt'
+		);
+		expect(formatted.mentionedUserIds).toBeUndefined();
+	});
+});
+
 describe('extractReactionEvents', () => {
 	const makeReactionEvent = (
 		id: string,

@@ -19,6 +19,41 @@ import {
 	applyMessageEdits
 } from './messageRelations';
 
+describe('buildTextMessageContent with mentions (#435)', () => {
+	it('adds the m.mentions fragment when mentionedUserIds are given', () => {
+		expect(
+			buildTextMessageContent('Hallo @Anna', {
+				mentionedUserIds: ['@anna:hs']
+			})
+		).toEqual({
+			'msgtype': 'm.text',
+			'body': 'Hallo @Anna',
+			'm.mentions': { user_ids: ['@anna:hs'] }
+		});
+	});
+
+	it('combines mentions with a reply relation', () => {
+		expect(
+			buildTextMessageContent('Danke @Anna', {
+				replyToEventId: '$orig:hs',
+				mentionedUserIds: ['@anna:hs']
+			})
+		).toEqual({
+			'msgtype': 'm.text',
+			'body': 'Danke @Anna',
+			'm.relates_to': {
+				'm.in_reply_to': { event_id: '$orig:hs' }
+			},
+			'm.mentions': { user_ids: ['@anna:hs'] }
+		});
+	});
+
+	it('omits m.mentions entirely when there are no mentions', () => {
+		const content = buildTextMessageContent('hallo');
+		expect(content).not.toHaveProperty('m.mentions');
+	});
+});
+
 describe('reply relations (m.relates_to / m.in_reply_to)', () => {
 	describe('buildTextMessageContent', () => {
 		it('builds plain m.text content without a relation by default', () => {

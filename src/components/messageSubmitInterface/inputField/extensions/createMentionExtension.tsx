@@ -14,6 +14,31 @@ export interface MentionProvider {
 }
 
 /**
+ * Intentional mentions (#435): a resolved Matrix room-member id, stored as
+ * `data-mention-matrix-id` alongside the default `id`/`label` attrs. Absent
+ * for candidates the composer couldn't resolve to a real room member (a
+ * consultant not yet in the chat) — `extractMentionedUserIds` then simply
+ * has nothing to read for that pill, which is the correct, safe behavior
+ * (never guess a Matrix id from a display name).
+ */
+const MentionWithMatrixId = Mention.extend({
+	addAttributes() {
+		return {
+			...this.parent?.(),
+			matrixUserId: {
+				default: null,
+				parseHTML: (element: HTMLElement) =>
+					element.getAttribute('data-mention-matrix-id'),
+				renderHTML: (attributes: { matrixUserId?: string | null }) =>
+					attributes.matrixUserId
+						? { 'data-mention-matrix-id': attributes.matrixUserId }
+						: {}
+			}
+		};
+	}
+});
+
+/**
  * Configures the TipTap Mention extension with a Slack-like suggestion popup.
  * Candidates come from the injected provider (agency consultants + room
  * membership); the pill stores the consultant id + matrix id so the message
@@ -96,7 +121,7 @@ export const createMentionExtension = (provider: MentionProvider) => {
 		}
 	};
 
-	return Mention.configure({
+	return MentionWithMatrixId.configure({
 		HTMLAttributes: { class: 'messageItem__mention' },
 		renderHTML({ options, node }) {
 			return [
@@ -104,7 +129,10 @@ export const createMentionExtension = (provider: MentionProvider) => {
 				{
 					'class': 'messageItem__mention',
 					'data-mention-id': node.attrs.id,
-					'data-mention-username': node.attrs.label ?? node.attrs.id
+					'data-mention-username': node.attrs.label ?? node.attrs.id,
+					...(node.attrs.matrixUserId
+						? { 'data-mention-matrix-id': node.attrs.matrixUserId }
+						: {})
 				},
 				`@${node.attrs.label ?? node.attrs.id}`
 			];

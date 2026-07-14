@@ -27,6 +27,7 @@ import { isAskerEnquirySubmission } from './messageEncryptionMode';
 import { resolveAsideTargetRoomId } from './asideRouting';
 import { reloadSessionAfterSendIfNeeded } from './sessionRefreshAfterSend';
 import { chatTransportService } from '../../services/chatTransportService';
+import { extractMentionedUserIds } from '../../utils/messageMentions';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { getModality, Modality } from '../session/getModality';
 import { STATUS_ENQUIRY } from '../../globalState/interfaces/SessionsDataInterface';
@@ -1347,6 +1348,12 @@ export const MessageSubmitInterfaceComponent = ({
 				hasTextContent && (!attachment || !matrixSessionId);
 
 			if (shouldSendTextMessage) {
+				// Intentional mentions (#435): read from the composer's own
+				// HTML (mention pills carry data-mention-matrix-id there)
+				// before it is cleared by handleMessageSendSuccess.
+				const mentionedUserIds = extractMentionedUserIds(
+					composerRef.current?.getHTML()
+				);
 				// MATRIX MIGRATION: For group chats, Matrix room ID is in activeSession.rid
 				await apiSendMessage(
 					message,
@@ -1362,7 +1369,8 @@ export const MessageSubmitInterfaceComponent = ({
 						`${userData?.firstName || ''} ${userData?.lastName || ''}`.trim() ||
 						'User',
 					matrixClientService,
-					replyTo?.eventId || null
+					replyTo?.eventId || null,
+					mentionedUserIds
 				)
 					.then(() => encryptRoom(setE2EEState))
 					.then(() => {
@@ -3048,6 +3056,7 @@ export const MessageSubmitInterfaceComponent = ({
 	const mentionDataRef = useRef({
 		directory: agencyConsultantDirectory,
 		inRoomValues: new Set<string>(),
+		matrixUserIdByComparableId: new Map<string, string>(),
 		selfId: userData?.userId as string | undefined
 	});
 	mentionDataRef.current = {
@@ -3060,6 +3069,31 @@ export const MessageSubmitInterfaceComponent = ({
 					...Array.from(getComparableAudienceIds(option.label))
 				])
 		),
+		// Intentional mentions (#435): audienceOptions already resolves room
+		// members to their real Matrix user id (option.value is member.userId
+		// for room members — see the audience-options effect above). Reusing
+		// that instead of a second room-member fetch keeps this a single
+		// source of truth, and only ever a *resolved* member id ends up here.
+		matrixUserIdByComparableId: new Map(
+			audienceOptions
+				.filter(
+					(option) =>
+						option.value !== '__all__' &&
+						/^@[^:@\s]+:.+$/.test(option.value)
+				)
+				.flatMap((option) =>
+					Array.from(
+						new Set([
+							...Array.from(
+								getComparableAudienceIds(option.value)
+							),
+							...Array.from(
+								getComparableAudienceIds(option.label)
+							)
+						])
+					).map((id): [string, string] => [id, option.value])
+				)
+		),
 		selfId: userData?.userId
 	};
 
@@ -3071,16 +3105,26 @@ export const MessageSubmitInterfaceComponent = ({
 				'nicht im Chat'
 			),
 			getCandidates: () => {
-				const { directory, inRoomValues } = mentionDataRef.current;
+				const { directory, inRoomValues, matrixUserIdByComparableId } =
+					mentionDataRef.current;
 				return Array.from(directory.entries()).map(
-					([consultantId, info]) => ({
-						id: consultantId,
-						displayName: info.displayName,
-						username: info.username,
-						isInRoom: Array.from(
-							getComparableAudienceIds(info.username)
-						).some((id) => inRoomValues.has(id))
-					})
+					([consultantId, info]) => {
+						const comparableIds = getComparableAudienceIds(
+							info.username
+						);
+						const matrixUserId = Array.from(comparableIds)
+							.map((id) => matrixUserIdByComparableId.get(id))
+							.find(Boolean);
+						return {
+							id: consultantId,
+							displayName: info.displayName,
+							username: info.username,
+							matrixUserId,
+							isInRoom: Array.from(comparableIds).some((id) =>
+								inRoomValues.has(id)
+							)
+						};
+					}
 				);
 			}
 		}),

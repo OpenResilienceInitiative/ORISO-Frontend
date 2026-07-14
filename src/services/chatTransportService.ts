@@ -43,6 +43,8 @@ export interface SendTextMessageOptions {
 	 * never forwarded to the metadata notification (FE-H01 boundary).
 	 */
 	replyToEventId?: string | null;
+	/** Intentional mentions (#435): resolved Matrix user ids, sent as m.mentions. */
+	mentionedUserIds?: string[];
 	supervisorMessage?: boolean;
 	senderDisplayName?: string | null;
 	matrixClientServiceOverride?: MatrixClientService | null;
@@ -122,6 +124,7 @@ class ChatTransportService {
 		sessionId,
 		threadRootId,
 		replyToEventId,
+		mentionedUserIds,
 		supervisorMessage,
 		senderDisplayName,
 		matrixClientServiceOverride
@@ -154,7 +157,8 @@ class ChatTransportService {
 			message,
 			{
 				replyToEventId: replyToEventId || null,
-				threadRootId: threadRootId || null
+				threadRootId: threadRootId || null,
+				mentionedUserIds
 			}
 		);
 

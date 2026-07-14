@@ -1,3 +1,5 @@
+import { buildMentionsContent } from './messageMentions';
+
 /**
  * Relations foundation (#435) — Matrix message relations, pure helpers.
  *
@@ -15,6 +17,8 @@ export interface TextMessageContentOptions {
 	replyToEventId?: string | null;
 	/** MSC3440: root event id when the message belongs to a thread. */
 	threadRootId?: string | null;
+	/** Resolved Matrix user ids to intentionally mention (m.mentions). */
+	mentionedUserIds?: string[];
 }
 
 /**
@@ -49,6 +53,7 @@ export const buildTextMessageContent = (
 			'm.in_reply_to': { event_id: options.replyToEventId }
 		};
 	}
+	Object.assign(content, buildMentionsContent(options?.mentionedUserIds));
 	return content;
 };
 

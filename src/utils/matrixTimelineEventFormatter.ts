@@ -5,6 +5,7 @@ import {
 	getEditedBody,
 	stripReplyFallback
 } from './messageRelations';
+import { getMentionedUserIdsFromContent } from './messageMentions';
 
 const getMatrixMediaDownloadPath = (contentUrl: string): string => {
 	if (!contentUrl.startsWith('mxc://')) {
@@ -71,6 +72,12 @@ export const formatMatrixTimelineEvent = (
 	if (replaceTargetId) {
 		baseMessage.replaceTargetId = replaceTargetId;
 		baseMessage.editedBody = getEditedBody(content);
+	}
+	// Intentional mentions (#435): exposed for downstream UI (e.g. the
+	// timeline @mentions filter chip, #420) to test membership against.
+	const mentionedUserIds = getMentionedUserIdsFromContent(content);
+	if (mentionedUserIds.length > 0) {
+		baseMessage.mentionedUserIds = mentionedUserIds;
 	}
 
 	const mediaUrl = content?.file?.url || content?.url;
