@@ -9,7 +9,14 @@ import {
 	buildTextMessageContent,
 	getReplyToEventId,
 	getThreadRootId,
-	stripReplyFallback
+	stripReplyFallback,
+	buildEditContent,
+	getReplaceTargetId,
+	getEditedBody,
+	buildReactionContent,
+	getReactionTarget,
+	aggregateReactions,
+	applyMessageEdits
 } from './messageRelations';
 
 describe('reply relations (m.relates_to / m.in_reply_to)', () => {
@@ -166,5 +173,205 @@ describe('thread relations (MSC3440 m.thread)', () => {
 			replyToEventId: '$orig:hs'
 		});
 		expect((content['m.relates_to'] as any).rel_type).toBeUndefined();
+	});
+});
+
+describe('editing relations (m.replace)', () => {
+	describe('buildEditContent', () => {
+		it('builds a fallback body prefixed with "* " and an m.new_content', () => {
+			expect(buildEditContent('korrigierter text', '$orig:hs')).toEqual({
+				'msgtype': 'm.text',
+				'body': '* korrigierter text',
+				'm.new_content': {
+					msgtype: 'm.text',
+					body: 'korrigierter text'
+				},
+				'm.relates_to': {
+					rel_type: 'm.replace',
+					event_id: '$orig:hs'
+				}
+			});
+		});
+	});
+
+	describe('getReplaceTargetId', () => {
+		it('reads the edited event id from an m.replace relation', () => {
+			expect(
+				getReplaceTargetId({
+					'm.relates_to': {
+						rel_type: 'm.replace',
+						event_id: '$orig:hs'
+					}
+				})
+			).toBe('$orig:hs');
+		});
+
+		it('returns null for non-edit content and junk shapes', () => {
+			expect(getReplaceTargetId({ msgtype: 'm.text', body: 'x' })).toBe(
+				null
+			);
+			expect(getReplaceTargetId(undefined)).toBe(null);
+			expect(
+				getReplaceTargetId({
+					'm.relates_to': { rel_type: 'm.thread', event_id: '$x:hs' }
+				})
+			).toBe(null);
+		});
+	});
+
+	describe('getEditedBody', () => {
+		it('reads the replacement body from m.new_content', () => {
+			expect(
+				getEditedBody({
+					'msgtype': 'm.text',
+					'body': '* korrigierter text',
+					'm.new_content': {
+						msgtype: 'm.text',
+						body: 'korrigierter text'
+					},
+					'm.relates_to': {
+						rel_type: 'm.replace',
+						event_id: '$orig:hs'
+					}
+				})
+			).toBe('korrigierter text');
+		});
+
+		it('returns null when there is no m.new_content', () => {
+			expect(getEditedBody({ msgtype: 'm.text', body: 'x' })).toBe(null);
+			expect(getEditedBody(undefined)).toBe(null);
+		});
+	});
+});
+
+describe('reaction relations (m.annotation)', () => {
+	describe('buildReactionContent', () => {
+		it('builds m.reaction content annotating the target event with a key', () => {
+			expect(buildReactionContent('$msg:hs', '👍')).toEqual({
+				'm.relates_to': {
+					rel_type: 'm.annotation',
+					event_id: '$msg:hs',
+					key: '👍'
+				}
+			});
+		});
+	});
+
+	describe('getReactionTarget', () => {
+		it('reads the target event id and key from m.reaction content', () => {
+			expect(
+				getReactionTarget({
+					'm.relates_to': {
+						rel_type: 'm.annotation',
+						event_id: '$msg:hs',
+						key: '👍'
+					}
+				})
+			).toEqual({ eventId: '$msg:hs', key: '👍' });
+		});
+
+		it('returns null for non-annotation content and junk shapes', () => {
+			expect(getReactionTarget({ msgtype: 'm.text', body: 'x' })).toBe(
+				null
+			);
+			expect(getReactionTarget(undefined)).toBe(null);
+			expect(
+				getReactionTarget({
+					'm.relates_to': { rel_type: 'm.replace', event_id: '$x:hs' }
+				})
+			).toBe(null);
+		});
+	});
+
+	describe('aggregateReactions', () => {
+		it('groups reactions by key, counts them, and marks the own reaction', () => {
+			const reactions = [
+				{
+					eventId: '$r1:hs',
+					senderId: '@anna:hs',
+					content: buildReactionContent('$msg:hs', '👍')
+				},
+				{
+					eventId: '$r2:hs',
+					senderId: '@bob:hs',
+					content: buildReactionContent('$msg:hs', '👍')
+				},
+				{
+					eventId: '$r3:hs',
+					senderId: '@me:hs',
+					content: buildReactionContent('$msg:hs', '❤️')
+				},
+				{
+					eventId: '$r4:hs',
+					senderId: '@carla:hs',
+					content: buildReactionContent('$other:hs', '👍')
+				}
+			];
+
+			expect(aggregateReactions(reactions, '$msg:hs', '@me:hs')).toEqual([
+				{
+					key: '👍',
+					count: 2,
+					senderIds: ['@anna:hs', '@bob:hs'],
+					ownEventId: null
+				},
+				{
+					key: '❤️',
+					count: 1,
+					senderIds: ['@me:hs'],
+					ownEventId: '$r3:hs'
+				}
+			]);
+		});
+
+		it('returns an empty array when there are no reactions for the target', () => {
+			expect(aggregateReactions([], '$msg:hs', '@me:hs')).toEqual([]);
+		});
+	});
+});
+
+describe('applyMessageEdits', () => {
+	it('replaces the body of the original message with the latest edit and drops the edit event', () => {
+		const messages = [
+			{ _id: '$orig:hs', ts: 1000, msg: 'erste version' },
+			{
+				_id: '$edit1:hs',
+				ts: 2000,
+				replaceTargetId: '$orig:hs',
+				editedBody: 'zweite version'
+			},
+			{
+				_id: '$edit2:hs',
+				ts: 3000,
+				replaceTargetId: '$orig:hs',
+				editedBody: 'dritte version'
+			}
+		];
+
+		expect(applyMessageEdits(messages)).toEqual([
+			{
+				_id: '$orig:hs',
+				ts: 1000,
+				msg: 'dritte version',
+				isEdited: true
+			}
+		]);
+	});
+
+	it('leaves messages without an edit untouched', () => {
+		const messages = [{ _id: '$orig:hs', ts: 1000, msg: 'unverändert' }];
+		expect(applyMessageEdits(messages)).toEqual(messages);
+	});
+
+	it('drops an edit event that targets an unknown/out-of-window original', () => {
+		const messages = [
+			{
+				_id: '$edit:hs',
+				ts: 2000,
+				replaceTargetId: '$missing:hs',
+				editedBody: 'zu spät'
+			}
+		];
+		expect(applyMessageEdits(messages)).toEqual([]);
 	});
 });

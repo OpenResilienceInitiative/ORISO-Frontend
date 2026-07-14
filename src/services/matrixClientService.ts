@@ -12,7 +12,9 @@ import { encryptMatrixAttachment } from '../utils/matrixEncryptedAttachment';
 import { buildMatrixRoomEncryptionInitialState } from '../utils/matrixRoomEncryption';
 import {
 	TextMessageContentOptions,
-	buildTextMessageContent
+	buildTextMessageContent,
+	buildEditContent,
+	buildReactionContent
 } from '../utils/messageRelations';
 
 const TOKEN_REFRESH_BUFFER_MS = 2 * 60 * 1000;
@@ -232,6 +234,81 @@ export class MatrixClientService {
 
 			return this.client.sendMessage(roomId, content);
 		}
+	}
+
+	// Edit a previously sent message (m.replace)
+	public async editMessage(
+		roomId: string,
+		targetEventId: string,
+		message: string
+	): Promise<any> {
+		await this.ensureFreshToken();
+
+		if (!this.client) {
+			throw new Error('Matrix client not initialized');
+		}
+
+		const content = buildEditContent(message, targetEventId) as any;
+
+		try {
+			return await this.client.sendMessage(roomId, content);
+		} catch (error) {
+			if (!isMatrixExpiredTokenError(error)) {
+				throw error;
+			}
+
+			await this.refreshMatrixToken();
+			if (!this.client) {
+				throw new Error('Matrix client not initialized');
+			}
+
+			return this.client.sendMessage(roomId, content);
+		}
+	}
+
+	// React to a message (m.annotation)
+	public async sendReaction(
+		roomId: string,
+		targetEventId: string,
+		key: string
+	): Promise<any> {
+		await this.ensureFreshToken();
+
+		if (!this.client) {
+			throw new Error('Matrix client not initialized');
+		}
+
+		const content = buildReactionContent(targetEventId, key) as any;
+
+		try {
+			return await this.client.sendEvent(
+				roomId,
+				'm.reaction' as any,
+				content
+			);
+		} catch (error) {
+			if (!isMatrixExpiredTokenError(error)) {
+				throw error;
+			}
+
+			await this.refreshMatrixToken();
+			if (!this.client) {
+				throw new Error('Matrix client not initialized');
+			}
+
+			return this.client.sendEvent(roomId, 'm.reaction' as any, content);
+		}
+	}
+
+	// Redact an event (used to remove a reaction)
+	public async redactEvent(roomId: string, eventId: string): Promise<any> {
+		await this.ensureFreshToken();
+
+		if (!this.client) {
+			throw new Error('Matrix client not initialized');
+		}
+
+		return this.client.redactEvent(roomId, eventId);
 	}
 
 	public async sendFileMessage(

@@ -126,6 +126,19 @@ export const ReplyingToMessage: Story = {
 	)
 };
 
+export const EditingMessage: Story = {
+	name: 'Editing (m.replace preview)',
+	render: () => (
+		<ComposerShell
+			editingMessage={{
+				eventId: '$orig:matrix.oriso.org',
+				text: 'Ich habe seit letzter Woche große Problem mit meinem Vermieter und weiß nicht weiter.'
+			}}
+			onCancelEdit={() => {}}
+		/>
+	)
+};
+
 export const GroupChat: Story = {
 	name: 'Group chat (multiple recipients)',
 	render: () => (

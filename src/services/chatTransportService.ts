@@ -44,6 +44,26 @@ export interface SendTextMessageOptions {
 	matrixClientServiceOverride?: MatrixClientService | null;
 }
 
+export interface EditTextMessageOptions {
+	matrixRoomId: string;
+	targetEventId: string;
+	message: string;
+	matrixClientServiceOverride?: MatrixClientService | null;
+}
+
+export interface SendReactionOptions {
+	matrixRoomId: string;
+	targetEventId: string;
+	key: string;
+	matrixClientServiceOverride?: MatrixClientService | null;
+}
+
+export interface RemoveReactionOptions {
+	matrixRoomId: string;
+	reactionEventId: string;
+	matrixClientServiceOverride?: MatrixClientService | null;
+}
+
 export interface SendFileMessageOptions extends MatrixFileMessageOptions {
 	threadRootId?: string | null;
 	supervisorMessage?: boolean;
@@ -135,6 +155,70 @@ class ChatTransportService {
 			supervisorMessage: !!supervisorMessage,
 			senderDisplayName: senderDisplayName || null
 		}).catch(() => undefined);
+
+		return { success: true, event_id: response.event_id };
+	}
+
+	/** Edit a previously sent message (m.replace), same relations mechanic as reply/thread. */
+	public async editTextMessage({
+		matrixRoomId,
+		targetEventId,
+		message,
+		matrixClientServiceOverride
+	}: EditTextMessageOptions): Promise<any> {
+		const matrixClientService =
+			matrixClientServiceOverride || getMatrixClientService();
+		if (!matrixClientService?.getClient()) {
+			return Promise.reject(new Error('Matrix client not initialized'));
+		}
+
+		const response = await matrixClientService.editMessage(
+			matrixRoomId,
+			targetEventId,
+			message
+		);
+
+		return { success: true, event_id: response.event_id };
+	}
+
+	/** React to a message (m.annotation). */
+	public async sendReaction({
+		matrixRoomId,
+		targetEventId,
+		key,
+		matrixClientServiceOverride
+	}: SendReactionOptions): Promise<any> {
+		const matrixClientService =
+			matrixClientServiceOverride || getMatrixClientService();
+		if (!matrixClientService?.getClient()) {
+			return Promise.reject(new Error('Matrix client not initialized'));
+		}
+
+		const response = await matrixClientService.sendReaction(
+			matrixRoomId,
+			targetEventId,
+			key
+		);
+
+		return { success: true, event_id: response.event_id };
+	}
+
+	/** Remove a reaction by redacting the reaction event (un-react). */
+	public async removeReaction({
+		matrixRoomId,
+		reactionEventId,
+		matrixClientServiceOverride
+	}: RemoveReactionOptions): Promise<any> {
+		const matrixClientService =
+			matrixClientServiceOverride || getMatrixClientService();
+		if (!matrixClientService?.getClient()) {
+			return Promise.reject(new Error('Matrix client not initialized'));
+		}
+
+		const response = await matrixClientService.redactEvent(
+			matrixRoomId,
+			reactionEventId
+		);
 
 		return { success: true, event_id: response.event_id };
 	}

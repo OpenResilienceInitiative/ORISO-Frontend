@@ -47,7 +47,11 @@ describe('apiSendMessage', () => {
 
 		expect(sendMessage).toHaveBeenCalledWith(
 			'!room:example.org',
-			'Hello Matrix'
+			'Hello Matrix',
+			{
+				replyToEventId: null,
+				threadRootId: null
+			}
 		);
 		expect(response).toEqual({ success: true, event_id: '$event' });
 	});
@@ -75,7 +79,8 @@ describe('apiSendMessage', () => {
 
 		expect(sendMessage).toHaveBeenCalledWith(
 			'!fallback:example.org',
-			'Hello from registry'
+			'Hello from registry',
+			{ replyToEventId: null, threadRootId: null }
 		);
 		expect(response).toEqual({
 			success: true,

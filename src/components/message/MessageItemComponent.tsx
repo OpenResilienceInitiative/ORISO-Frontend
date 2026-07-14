@@ -77,6 +77,18 @@ import { ReactComponent as EyeIcon } from '../../resources/img/icons/eye.svg';
 import { formatMessagePersonName } from './messageNameUtils';
 import { useMatrixRoomUsers } from '../../hooks/useMatrixRoomUsers';
 import { ConsultantListContext } from '../../globalState/provider/ConsultantListProvider';
+import { AggregatedReaction } from '../../utils/messageRelations';
+
+const QUICK_REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
+
+const AddReactionIcon = () => (
+	<svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden>
+		<path
+			d="M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16Zm0-1.5a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13ZM7 9.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm6 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm-6.5 2h7a3.5 3.5 0 0 1-7 0Z"
+			fill="#4B515A"
+		/>
+	</svg>
+);
 
 const ActiveKebabIcon = () => (
 	<svg width="28" height="32" viewBox="0 0 28 32" fill="none" aria-hidden>
@@ -129,6 +141,14 @@ const MenuForwardIcon = () => (
 	<svg width="20" height="14" viewBox="0 0 20 14" fill="none" aria-hidden>
 		<path
 			d="M14 12L12.575 10.6L17.175 6L12.575 1.4L14 0L20 6L14 12ZM0 14V10C0 8.61667 0.483333 7.44167 1.45 6.475C2.43333 5.49167 3.61667 5 5 5H11.175L7.575 1.4L9 0L15 6L9 12L7.575 10.6L11.175 7H5C4.16667 7 3.45833 7.29167 2.875 7.875C2.29167 8.45833 2 9.16667 2 10V14H0Z"
+			fill="#4B515A"
+		/>
+	</svg>
+);
+const MenuEditIcon = () => (
+	<svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
+		<path
+			d="M0 18V14.25L13.2 1.05C13.4 0.85 13.6208 0.7 13.8625 0.6C14.1042 0.5 14.3583 0.45 14.625 0.45C14.8917 0.45 15.15 0.5 15.4 0.6C15.65 0.7 15.8667 0.85 16.05 1.05L17.425 2.45C17.625 2.63333 17.7708 2.85 17.8625 3.1C17.9542 3.35 18 3.6 18 3.85C18 4.11667 17.9542 4.37083 17.8625 4.6125C17.7708 4.85417 17.625 5.07083 17.425 5.2625L4.25 18H0ZM2 16H3.4L11.2 8.2L10.525 7.5L9.8 6.8L2 14.6V16Z"
 			fill="#4B515A"
 		/>
 	</svg>
@@ -252,6 +272,8 @@ export interface MessageItem {
 	replyToEventId?: string | null;
 	/** MSC3440: thread root event id when the message is a thread reply. */
 	threadRootEventId?: string | null;
+	/** Editing (m.replace, #435): true when a later m.replace was applied. */
+	isEdited?: boolean;
 }
 
 interface MessageItemComponentProps extends MessageItem {
@@ -274,6 +296,14 @@ interface MessageItemComponentProps extends MessageItem {
 	replyQuote?: { author: string; text: string } | null;
 	/** Start a direct reply to THIS message (wires the composer). */
 	onReplyDirect?: () => void;
+	/** Start editing THIS message (wires the composer, own messages only). */
+	onEditDirect?: () => void;
+	/** Reactions (m.annotation, #435): aggregated pills for this message. */
+	reactions?: AggregatedReaction[];
+	/** Add own reaction with the given emoji key. */
+	onReact?: (key: string) => void;
+	/** Remove own reaction by redacting the given reaction event id. */
+	onUnreact?: (reactionEventId: string) => void;
 	handleDecryptionErrors: (
 		id: string,
 		messageTime: string,
@@ -312,8 +342,13 @@ export const MessageItemComponent = ({
 	onOpenThread,
 	replyToEventId,
 	threadRootEventId,
+	isEdited,
 	replyQuote,
-	onReplyDirect
+	onReplyDirect,
+	onEditDirect,
+	reactions,
+	onReact,
+	onUnreact
 }: MessageItemComponentProps) => {
 	const { t: translate } = useTranslation();
 	const { activeSession, reloadActiveSession } =
@@ -382,6 +417,9 @@ export const MessageItemComponent = ({
 		left: number;
 	} | null>(null);
 	const visibilityMenuRef = React.useRef<HTMLDivElement | null>(null);
+	// Reactions (m.annotation, #435): quick-react emoji picker.
+	const [isReactionPickerOpen, setIsReactionPickerOpen] = useState(false);
+	const reactionPickerRef = React.useRef<HTMLDivElement | null>(null);
 	const [expandedVisibilitySections, setExpandedVisibilitySections] =
 		useState<{
 			clients: boolean;
@@ -439,6 +477,24 @@ export const MessageItemComponent = ({
 		return () =>
 			document.removeEventListener('mousedown', handleOutsideClick);
 	}, [isVisibilityMenuOpen]);
+
+	useEffect(() => {
+		if (!isReactionPickerOpen) {
+			return;
+		}
+		const handleOutsideClick = (event: MouseEvent) => {
+			const target = event.target as Node | null;
+			if (!target) {
+				return;
+			}
+			if (!reactionPickerRef.current?.contains(target)) {
+				setIsReactionPickerOpen(false);
+			}
+		};
+		document.addEventListener('mousedown', handleOutsideClick);
+		return () =>
+			document.removeEventListener('mousedown', handleOutsideClick);
+	}, [isReactionPickerOpen]);
 
 	useEffect((): void => {
 		if (isE2eeEnabled && message) {
@@ -1029,6 +1085,20 @@ export const MessageItemComponent = ({
 				label: translate('message.menu.replyThread', 'Reply in Thread'),
 				icon: <MenuReplyThreadIcon />
 			},
+			// Editing (m.replace, #435): own messages only, where a handler
+			// is wired (main timeline; not the thread panel).
+			...(onEditDirect
+				? [
+						{
+							key: 'edit',
+							label: translate(
+								'message.menu.edit',
+								'Edit Message'
+							),
+							icon: <MenuEditIcon />
+						}
+					]
+				: []),
 			{
 				key: 'mark-text',
 				label: translate('message.menu.markText', 'Mark Text'),
@@ -1045,7 +1115,7 @@ export const MessageItemComponent = ({
 				icon: <MenuDeleteIcon />
 			}
 		],
-		[translate, onReplyDirect]
+		[translate, onReplyDirect, onEditDirect]
 	);
 
 	const handleActionMenuItemClick = useCallback(
@@ -1058,8 +1128,11 @@ export const MessageItemComponent = ({
 			if (actionKey === 'reply-direct' && onReplyDirect) {
 				onReplyDirect();
 			}
+			if (actionKey === 'edit' && onEditDirect) {
+				onEditDirect();
+			}
 		},
-		[onOpenThread, onReplyDirect]
+		[onOpenThread, onReplyDirect, onEditDirect]
 	);
 
 	const toggleActionMenu = useCallback(
@@ -1353,6 +1426,20 @@ export const MessageItemComponent = ({
 										{formatToHHMM(messageTime)}
 									</span>
 								) : null}
+								{isEdited && (
+									<span
+										className="messageItem__editedMarker"
+										title={translate(
+											'message.edit.markerTitle',
+											'Nachricht wurde bearbeitet'
+										)}
+									>
+										{translate(
+											'message.edit.marker',
+											'(bearbeitet)'
+										)}
+									</span>
+								)}
 								{/* MATRIX MIGRATION: Temporarily hide message menu */}
 								{false && (
 									<MessageFlyoutMenu
@@ -1945,6 +2032,97 @@ export const MessageItemComponent = ({
 
 				<div className="messageItem__content">
 					{messageContent()}
+					{/* Reactions (m.annotation, #435): aggregated pills + quick-react picker. */}
+					{!alias?.messageType &&
+						!isSystemNotification &&
+						((reactions && reactions.length > 0) || onReact) && (
+							<div
+								className={clsx(
+									'messageItem__reactions',
+									isMyMessage &&
+										'messageItem__reactions--right'
+								)}
+							>
+								{(reactions || []).map((reaction) => (
+									<button
+										key={reaction.key}
+										type="button"
+										className={clsx(
+											'messageItem__reactionPill',
+											reaction.ownEventId &&
+												'messageItem__reactionPill--mine'
+										)}
+										onClick={() =>
+											reaction.ownEventId
+												? onUnreact?.(
+														reaction.ownEventId
+													)
+												: onReact?.(reaction.key)
+										}
+										aria-label={translate(
+											'message.reaction.count',
+											'{{key}} reacted by {{count}}',
+											{
+												key: reaction.key,
+												count: reaction.count
+											}
+										)}
+									>
+										<span aria-hidden>{reaction.key}</span>
+										<span className="messageItem__reactionPillCount">
+											{reaction.count}
+										</span>
+									</button>
+								))}
+								{onReact && (
+									<div
+										className="messageItem__reactionAdd"
+										ref={reactionPickerRef}
+									>
+										<button
+											type="button"
+											className="messageItem__reactionAddButton"
+											aria-label={translate(
+												'message.reaction.add',
+												'React'
+											)}
+											onClick={() =>
+												setIsReactionPickerOpen(
+													(open) => !open
+												)
+											}
+										>
+											<AddReactionIcon />
+										</button>
+										{isReactionPickerOpen && (
+											<div
+												className="messageItem__reactionPicker"
+												role="menu"
+											>
+												{QUICK_REACTION_EMOJIS.map(
+													(emoji) => (
+														<button
+															key={emoji}
+															type="button"
+															className="messageItem__reactionPickerEmoji"
+															role="menuitem"
+															onClick={() => {
+																onReact(emoji);
+																setIsReactionPickerOpen(
+																	false
+																);
+															}}
+														>
+															{emoji}
+														</button>
+													)
+												)}
+											</div>
+										)}
+									</div>
+								)}
+							</div>
+						)}
 					{isMyMessage && formattedName && !alias?.messageType && (
 						<div className="messageItem__senderInfo">
 							<div className="messageItem__senderInfoPrimary">
@@ -1953,6 +2131,20 @@ export const MessageItemComponent = ({
 										{formatToHHMM(messageTime)}
 									</span>
 								) : null}
+								{isEdited && (
+									<span
+										className="messageItem__editedMarker"
+										title={translate(
+											'message.edit.markerTitle',
+											'Nachricht wurde bearbeitet'
+										)}
+									>
+										{translate(
+											'message.edit.marker',
+											'(bearbeitet)'
+										)}
+									</span>
+								)}
 								<div className="messageItem__senderInfoName">
 									{formattedName}
 								</div>

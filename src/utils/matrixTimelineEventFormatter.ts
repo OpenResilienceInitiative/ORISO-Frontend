@@ -1,6 +1,8 @@
 import {
 	getReplyToEventId,
 	getThreadRootId,
+	getReplaceTargetId,
+	getEditedBody,
 	stripReplyFallback
 } from './messageRelations';
 
@@ -62,6 +64,14 @@ export const formatMatrixTimelineEvent = (
 	if (threadRootEventId) {
 		baseMessage.threadRootEventId = threadRootEventId;
 	}
+	// Relations foundation (#435): edits (m.replace) are folded onto the
+	// original message by applyMessageEdits(); they are not messages on
+	// their own, so callers filter them out using replaceTargetId.
+	const replaceTargetId = getReplaceTargetId(content);
+	if (replaceTargetId) {
+		baseMessage.replaceTargetId = replaceTargetId;
+		baseMessage.editedBody = getEditedBody(content);
+	}
 
 	const mediaUrl = content?.file?.url || content?.url;
 	if (mediaUrl && content?.msgtype !== 'm.text') {
@@ -92,3 +102,24 @@ export const formatMatrixTimelineEvent = (
 
 	return baseMessage;
 };
+
+export interface RawReactionEvent {
+	eventId: string;
+	senderId: string;
+	content: unknown;
+}
+
+/**
+ * Pick `m.reaction` events out of a raw Matrix room timeline. Reactions are
+ * a distinct event type (not `m.room.message`), so they never pass through
+ * formatMatrixTimelineEvent and are collected separately for
+ * aggregateReactions().
+ */
+export const extractReactionEvents = (events: any[]): RawReactionEvent[] =>
+	(events || [])
+		.filter((event) => event?.getType?.() === 'm.reaction')
+		.map((event) => ({
+			eventId: event.getId?.(),
+			senderId: event.getSender?.(),
+			content: event.getContent?.()
+		}));

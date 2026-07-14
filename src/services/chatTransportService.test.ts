@@ -596,3 +596,70 @@ describe('chatTransportService reply relation (#435)', () => {
 		expect(serialized).not.toContain('$orig:hs');
 	});
 });
+
+describe('chatTransportService editing + reactions (#435)', () => {
+	afterEach(() => {
+		setMatrixClientServiceRef(null);
+	});
+
+	it('editTextMessage sends an m.replace edit via the Matrix client', async () => {
+		const editMessage = vi.fn(async () => ({ event_id: '$edit:hs' }));
+		const override = { getClient: () => ({}), editMessage } as any;
+
+		const result = await chatTransportService.editTextMessage({
+			matrixRoomId: ROOM_ID,
+			targetEventId: '$orig:hs',
+			message: 'korrigiert',
+			matrixClientServiceOverride: override
+		});
+
+		expect(editMessage).toHaveBeenCalledWith(
+			ROOM_ID,
+			'$orig:hs',
+			'korrigiert'
+		);
+		expect(result).toEqual({ success: true, event_id: '$edit:hs' });
+	});
+
+	it('editTextMessage rejects when the Matrix client is not initialized', async () => {
+		const override = { getClient: () => null } as any;
+
+		await expect(
+			chatTransportService.editTextMessage({
+				matrixRoomId: ROOM_ID,
+				targetEventId: '$orig:hs',
+				message: 'korrigiert',
+				matrixClientServiceOverride: override
+			})
+		).rejects.toThrow('Matrix client not initialized');
+	});
+
+	it('sendReaction sends an m.annotation reaction via the Matrix client', async () => {
+		const sendReaction = vi.fn(async () => ({ event_id: '$reaction:hs' }));
+		const override = { getClient: () => ({}), sendReaction } as any;
+
+		const result = await chatTransportService.sendReaction({
+			matrixRoomId: ROOM_ID,
+			targetEventId: '$msg:hs',
+			key: '👍',
+			matrixClientServiceOverride: override
+		});
+
+		expect(sendReaction).toHaveBeenCalledWith(ROOM_ID, '$msg:hs', '👍');
+		expect(result).toEqual({ success: true, event_id: '$reaction:hs' });
+	});
+
+	it('removeReaction redacts the reaction event via the Matrix client', async () => {
+		const redactEvent = vi.fn(async () => ({ event_id: '$redaction:hs' }));
+		const override = { getClient: () => ({}), redactEvent } as any;
+
+		const result = await chatTransportService.removeReaction({
+			matrixRoomId: ROOM_ID,
+			reactionEventId: '$reaction:hs',
+			matrixClientServiceOverride: override
+		});
+
+		expect(redactEvent).toHaveBeenCalledWith(ROOM_ID, '$reaction:hs');
+		expect(result).toEqual({ success: true, event_id: '$redaction:hs' });
+	});
+});

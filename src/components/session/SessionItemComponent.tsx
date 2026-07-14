@@ -22,6 +22,12 @@ import {
 	MessageItem,
 	MessageItemComponent
 } from '../message/MessageItemComponent';
+import {
+	ReactionEvent,
+	AggregatedReaction,
+	aggregateReactions
+} from '../../utils/messageRelations';
+import { chatTransportService } from '../../services/chatTransportService';
 import { SessionHeaderComponent } from '../sessionHeader/SessionHeaderComponent';
 import { Button, BUTTON_TYPES, ButtonItem } from '../button/Button';
 import {
@@ -115,6 +121,8 @@ const MessageSubmitInterfaceComponent = lazy(() =>
 interface SessionItemProps {
 	isTyping?: Function;
 	messages?: MessageItem[];
+	/** Reactions (m.annotation, #435): raw reaction events for the loaded window. */
+	reactionEvents?: ReactionEvent[];
 	typingUsers: string[];
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
 	bannedUsers: string[];
@@ -1593,6 +1601,49 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			: featureSupervisionOneOnOneChatsEnabled !== false);
 
 	const messages = useMemo(() => props.messages, [props && props.messages]); // eslint-disable-line react-hooks/exhaustive-deps
+	// Reactions (m.annotation, #435).
+	const reactionEvents = useMemo(
+		() => props.reactionEvents || [],
+		[props.reactionEvents]
+	);
+	const ownMatrixUserId = matrixClientService?.getClient?.()?.getUserId?.();
+	const getReactionsFor = useCallback(
+		(messageId: string): AggregatedReaction[] =>
+			aggregateReactions(
+				reactionEvents,
+				messageId,
+				ownMatrixUserId || ''
+			),
+		[reactionEvents, ownMatrixUserId]
+	);
+	const handleReact = useCallback(
+		(messageId: string, key: string) => {
+			const matrixRoomId = isMatrixRoom(activeSession.rid)
+				? activeSession.rid
+				: activeSession.item?.matrixRoomId || activeSession.rid;
+			if (!matrixRoomId) {
+				return;
+			}
+			chatTransportService
+				.sendReaction({ matrixRoomId, targetEventId: messageId, key })
+				.catch(() => undefined);
+		},
+		[activeSession.rid, activeSession.item?.matrixRoomId]
+	);
+	const handleUnreact = useCallback(
+		(reactionEventId: string) => {
+			const matrixRoomId = isMatrixRoom(activeSession.rid)
+				? activeSession.rid
+				: activeSession.item?.matrixRoomId || activeSession.rid;
+			if (!matrixRoomId) {
+				return;
+			}
+			chatTransportService
+				.removeReaction({ matrixRoomId, reactionEventId })
+				.catch(() => undefined);
+		},
+		[activeSession.rid, activeSession.item?.matrixRoomId]
+	);
 	const [initialScrollCompleted, setInitialScrollCompleted] = useState(false);
 	const scrollContainerRef = React.useRef<HTMLDivElement>(null);
 	const [isScrolledToBottom, setIsScrolledToBottom] = useState(true);
@@ -2900,9 +2951,28 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	const handleCancelReply = useCallback(() => setReplyTo(null), []);
 
-	// A reply context never survives a conversation switch.
+	// Editing (m.replace, #435): edit-in-progress context for the composer.
+	const [editingMessage, setEditingMessage] = useState<{
+		eventId: string;
+		text: string;
+	} | null>(null);
+
+	const handleEditDirect = useCallback((message: MessageItem) => {
+		setEditingMessage({
+			eventId: message._id,
+			text: parseMessagePrefixes(message.message).cleanedMessage.replace(
+				/<[^>]*>/g,
+				''
+			)
+		});
+	}, []);
+
+	const handleCancelEdit = useCallback(() => setEditingMessage(null), []);
+
+	// A reply or edit context never survives a conversation switch.
 	useEffect(() => {
 		setReplyTo(null);
+		setEditingMessage(null);
 	}, [activeSession?.rid]);
 
 	// Resolve the quote of a replied-to message from the loaded timeline; a
@@ -4452,6 +4522,19 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										onReplyDirect={() =>
 											handleReplyDirect(message)
 										}
+										onEditDirect={
+											isMyMessageMatrix(message.userId)
+												? () =>
+														handleEditDirect(
+															message
+														)
+												: undefined
+										}
+										reactions={getReactionsFor(message._id)}
+										onReact={(key: string) =>
+											handleReact(message._id, key)
+										}
+										onUnreact={handleUnreact}
 										{...message}
 									/>
 								</React.Fragment>
@@ -4614,6 +4697,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										renderMode="thread"
 										threadsEnabled={true}
 										threadRootId={activeThreadRootId}
+										reactions={getReactionsFor(message._id)}
+										onReact={(key: string) =>
+											handleReact(message._id, key)
+										}
+										onUnreact={handleUnreact}
 										{...message}
 									/>
 								</React.Fragment>
@@ -4754,6 +4842,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									supervisionRoomId={supervisionRoomId}
 									replyTo={replyTo}
 									onCancelReply={handleCancelReply}
+									editingMessage={editingMessage}
+									onCancelEdit={handleCancelEdit}
 									mobileUnreadCount={newMessages}
 									mobileIsScrolledToBottom={
 										isScrolledToBottom

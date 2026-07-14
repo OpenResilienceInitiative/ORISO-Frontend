@@ -159,6 +159,13 @@ export interface MessageSubmitInterfaceComponentProps {
 	 */
 	replyTo?: { eventId: string; author: string; text: string } | null;
 	onCancelReply?: () => void;
+	/**
+	 * Editing (m.replace, #435): when set, the composer prefills this
+	 * message's text and the next send edits it in place instead of sending
+	 * a new message.
+	 */
+	editingMessage?: { eventId: string; text: string } | null;
+	onCancelEdit?: () => void;
 	mobileUnreadCount?: number;
 	mobileIsScrolledToBottom?: boolean;
 	onMobileNavigateBack?: () => void;
@@ -182,6 +189,8 @@ export const MessageSubmitInterfaceComponent = ({
 	threadParentPreview,
 	replyTo,
 	onCancelReply,
+	editingMessage,
+	onCancelEdit,
 	mobileUnreadCount = 0,
 	mobileIsScrolledToBottom = false,
 	onMobileNavigateBack,
@@ -559,6 +568,16 @@ export const MessageSubmitInterfaceComponent = ({
 		},
 		[normalizeInitialAlignment]
 	);
+
+	// Editing (#435): prefill the composer with the message being edited.
+	useEffect(() => {
+		if (!editingMessage) {
+			return;
+		}
+		setComposerText(editingMessage.text);
+		composerRef.current?.setText(editingMessage.text);
+		composerRef.current?.focus();
+	}, [editingMessage?.eventId, editingMessage?.text]);
 
 	const isAnonymousEnquiryComposer =
 		type === SESSION_LIST_TYPES.ENQUIRY && isAnonymousChat;
@@ -1187,6 +1206,44 @@ export const MessageSubmitInterfaceComponent = ({
 			const matrixRoomId = asideRouting.targetRoomId ?? undefined;
 			const getSendMailNotificationStatus = () => !activeSession.isGroup;
 
+			// Editing (m.replace, #435): replaces the target event's content;
+			// no attachments, prefixes, or reply/thread relations apply.
+			if (editingMessage) {
+				if (!matrixRoomId) {
+					setIsRequestInProgress(false);
+					apiPostError({
+						name: 'MatrixMessageEditError',
+						message:
+							'Cannot edit message: session has no Matrix room',
+						level: ERROR_LEVEL_WARN
+					}).then();
+					return;
+				}
+				await chatTransportService
+					.editTextMessage({
+						matrixRoomId,
+						targetEventId: editingMessage.eventId,
+						message
+					})
+					.then(() => {
+						onSendButton && onSendButton();
+						handleMessageSendSuccess();
+						onCancelEdit && onCancelEdit();
+					})
+					.catch((error) => {
+						setIsRequestInProgress(false);
+						apiPostError({
+							name: error?.name || 'MatrixMessageEditError',
+							message:
+								error?.message ||
+								'Failed to edit Matrix chat message',
+							stack: error?.stack,
+							level: ERROR_LEVEL_WARN
+						}).then();
+					});
+				return;
+			}
+
 			if (attachment) {
 				// Matrix attachments stay on the SDK media path.
 				if (matrixSessionId) {
@@ -1313,6 +1370,8 @@ export const MessageSubmitInterfaceComponent = ({
 			threadRootId,
 			replyTo?.eventId,
 			onCancelReply,
+			editingMessage,
+			onCancelEdit,
 			userData?.displayName,
 			userData?.firstName,
 			userData?.lastName,
@@ -3001,6 +3060,29 @@ export const MessageSubmitInterfaceComponent = ({
 							aria-label={translate(
 								'message.reply.cancel',
 								'Antwort verwerfen'
+							)}
+						>
+							×
+						</button>
+					</div>
+				)}
+				{/* Editing (m.replace, #435): cancelable edit-in-progress banner,
+				    same dock as the reply preview. */}
+				{editingMessage && (
+					<div className="messageSubmit__editPreview" role="status">
+						<span className="messageSubmit__editPreviewLabel">
+							{translate(
+								'message.edit.previewLabel',
+								'Nachricht bearbeiten'
+							)}
+						</span>
+						<button
+							type="button"
+							className="messageSubmit__editPreviewCancel"
+							onClick={() => onCancelEdit && onCancelEdit()}
+							aria-label={translate(
+								'message.edit.cancel',
+								'Bearbeiten abbrechen'
 							)}
 						>
 							×

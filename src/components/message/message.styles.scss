@@ -126,6 +126,14 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 		white-space: nowrap;
 	}
 
+	// Editing (m.replace, #435): marker next to the timestamp.
+	&__editedMarker {
+		font-size: $font-size-secondary;
+		color: var(--m3-on-surface-variant, $tertiary);
+		font-style: italic;
+		white-space: nowrap;
+	}
+
 	&--full {
 		.messageItem__messageWrap {
 			max-width: 100%;
@@ -1491,5 +1499,95 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 		overflow: hidden;
 		color: inherit;
 		opacity: 0.85;
+	}
+}
+
+// Reactions (m.annotation, #435): aggregated pills + quick-react picker.
+.messageItem__reactions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 4px;
+	margin-top: 4px;
+
+	&--right {
+		justify-content: flex-end;
+	}
+
+	.messageItem__reactionPill {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		padding: 2px 8px;
+		border: 1px solid var(--m3-outline-variant, rgba(0, 0, 0, 0.15));
+		border-radius: 999px;
+		background: var(--m3-surface-container, rgba(0, 0, 0, 0.05));
+		font-size: 13px;
+		line-height: 1.4;
+		cursor: pointer;
+
+		&:hover,
+		&:focus-visible {
+			background: var(--m3-surface-container-high, rgba(0, 0, 0, 0.1));
+		}
+
+		&--mine {
+			border-color: var(--m3-primary, #a5000a);
+			background: var(--m3-primary-container, rgba(165, 0, 10, 0.1));
+		}
+
+		.messageItem__reactionPillCount {
+			color: var(--m3-on-surface-variant, #4c555f);
+			font-size: 12px;
+		}
+	}
+
+	.messageItem__reactionAdd {
+		position: relative;
+	}
+
+	.messageItem__reactionAddButton {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 24px;
+		height: 24px;
+		border: 1px solid var(--m3-outline-variant, rgba(0, 0, 0, 0.15));
+		border-radius: 999px;
+		background: transparent;
+		cursor: pointer;
+
+		&:hover,
+		&:focus-visible {
+			background: var(--m3-surface-container, rgba(0, 0, 0, 0.05));
+		}
+	}
+
+	.messageItem__reactionPicker {
+		position: absolute;
+		bottom: calc(100% + 4px);
+		left: 0;
+		display: flex;
+		gap: 4px;
+		padding: 6px;
+		border-radius: 8px;
+		background: var(--m3-surface-container-high, #fff);
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+		z-index: 100;
+
+		.messageItem__reactionPickerEmoji {
+			border: none;
+			background: none;
+			font-size: 18px;
+			line-height: 1;
+			padding: 4px;
+			cursor: pointer;
+			border-radius: 4px;
+
+			&:hover,
+			&:focus-visible {
+				background: var(--m3-surface-container, rgba(0, 0, 0, 0.05));
+			}
+		}
 	}
 }

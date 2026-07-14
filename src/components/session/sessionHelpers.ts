@@ -207,7 +207,8 @@ export const prepareMessages = (messagesData): MessageItem[] => {
 				isVideoActive: i === lastVideoCallIndex,
 				// Relations foundation (#435): relations survive the mapping.
 				replyToEventId: message.replyToEventId || null,
-				threadRootEventId: message.threadRootEventId || null
+				threadRootEventId: message.threadRootEventId || null,
+				isEdited: !!message.isEdited
 			};
 		})
 		.filter((item) => {
