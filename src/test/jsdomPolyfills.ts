@@ -50,3 +50,56 @@ if (typeof Element !== 'undefined') {
 		Element.prototype.scrollIntoView = () => {};
 	}
 }
+
+/**
+ * jsdom 24 does not implement the Web Storage API (localStorage/
+ * sessionStorage) at all — added upstream only in jsdom 26. Several
+ * production modules (notificationSettings store, thread unread state, the
+ * i18n dev toolbar) read/write localStorage at module load or in effects, so
+ * without this every jsdom-environment test touching them throws
+ * "Cannot read properties of undefined". A minimal in-memory Storage
+ * implementation is sufficient — tests only need get/set/remove/clear
+ * semantics, not persistence across runs.
+ */
+class InMemoryStorage implements Storage {
+	private store = new Map<string, string>();
+
+	get length(): number {
+		return this.store.size;
+	}
+
+	clear(): void {
+		this.store.clear();
+	}
+
+	getItem(key: string): string | null {
+		return this.store.has(key) ? this.store.get(key)! : null;
+	}
+
+	key(index: number): string | null {
+		return Array.from(this.store.keys())[index] ?? null;
+	}
+
+	removeItem(key: string): void {
+		this.store.delete(key);
+	}
+
+	setItem(key: string, value: string): void {
+		this.store.set(key, String(value));
+	}
+}
+
+if (typeof window !== 'undefined') {
+	if (typeof window.localStorage === 'undefined') {
+		Object.defineProperty(window, 'localStorage', {
+			value: new InMemoryStorage(),
+			configurable: true
+		});
+	}
+	if (typeof window.sessionStorage === 'undefined') {
+		Object.defineProperty(window, 'sessionStorage', {
+			value: new InMemoryStorage(),
+			configurable: true
+		});
+	}
+}

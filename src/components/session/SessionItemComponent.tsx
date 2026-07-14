@@ -28,6 +28,12 @@ import {
 	aggregateReactions
 } from '../../utils/messageRelations';
 import { chatTransportService } from '../../services/chatTransportService';
+import { computeThreadSummaries } from '../../utils/threadSummaries';
+import {
+	getThreadLastReadTs,
+	markThreadRead,
+	isThreadUnread
+} from '../../utils/threadUnread';
 import { SessionHeaderComponent } from '../sessionHeader/SessionHeaderComponent';
 import { Button, BUTTON_TYPES, ButtonItem } from '../button/Button';
 import {
@@ -1600,6 +1606,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			: featureSupervisionOneOnOneChatsEnabled !== false);
 
 	const messages = useMemo(() => props.messages, [props && props.messages]); // eslint-disable-line react-hooks/exhaustive-deps
+	const resolvedMatrixRoomId = isMatrixRoom(activeSession.rid)
+		? activeSession.rid
+		: activeSession.item?.matrixRoomId || activeSession.rid;
 	// Reactions (m.annotation, #435).
 	const reactionEvents = useMemo(
 		() => props.reactionEvents || [],
@@ -1617,31 +1626,32 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	);
 	const handleReact = useCallback(
 		(messageId: string, key: string) => {
-			const matrixRoomId = isMatrixRoom(activeSession.rid)
-				? activeSession.rid
-				: activeSession.item?.matrixRoomId || activeSession.rid;
-			if (!matrixRoomId) {
+			if (!resolvedMatrixRoomId) {
 				return;
 			}
 			chatTransportService
-				.sendReaction({ matrixRoomId, targetEventId: messageId, key })
+				.sendReaction({
+					matrixRoomId: resolvedMatrixRoomId,
+					targetEventId: messageId,
+					key
+				})
 				.catch(() => undefined);
 		},
-		[activeSession.rid, activeSession.item?.matrixRoomId]
+		[resolvedMatrixRoomId]
 	);
 	const handleUnreact = useCallback(
 		(reactionEventId: string) => {
-			const matrixRoomId = isMatrixRoom(activeSession.rid)
-				? activeSession.rid
-				: activeSession.item?.matrixRoomId || activeSession.rid;
-			if (!matrixRoomId) {
+			if (!resolvedMatrixRoomId) {
 				return;
 			}
 			chatTransportService
-				.removeReaction({ matrixRoomId, reactionEventId })
+				.removeReaction({
+					matrixRoomId: resolvedMatrixRoomId,
+					reactionEventId
+				})
 				.catch(() => undefined);
 		},
-		[activeSession.rid, activeSession.item?.matrixRoomId]
+		[resolvedMatrixRoomId]
 	);
 	const [initialScrollCompleted, setInitialScrollCompleted] = useState(false);
 	const scrollContainerRef = React.useRef<HTMLDivElement>(null);
@@ -1662,31 +1672,50 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const [activeThreadRootMessage, setActiveThreadRootMessage] =
 		useState<MessageItem | null>(null);
 	const knownMessageIdsRef = useRef<Set<string>>(new Set());
+	// Thread-panel-UX (#435): pure summary computation (unit-tested).
+	const threadSummariesRaw = useMemo(
+		() => computeThreadSummaries(messages || []),
+		[messages]
+	);
 	const threadSummaries = useMemo(() => {
 		const map = new Map<
 			string,
 			{ replyCount: number; lastReplyText: string }
 		>();
-		if (!messages) {
-			return map;
-		}
-		messages.forEach((message) => {
-			// MSC3440 (#435): relation first, legacy [THREAD:] prefix fallback.
-			const parsed = parseMessagePrefixes(message.message);
-			const rootId = message.threadRootEventId || parsed.threadRootId;
-			if (rootId) {
-				const existing = map.get(rootId) || {
-					replyCount: 0,
-					lastReplyText: ''
-				};
-				existing.replyCount += 1;
-				existing.lastReplyText =
-					'Last reply at ' + formatToHHMM(message.messageTime);
-				map.set(rootId, existing);
-			}
+		threadSummariesRaw.forEach((summary, rootId) => {
+			map.set(rootId, {
+				replyCount: summary.replyCount,
+				lastReplyText:
+					'Last reply at ' +
+					formatToHHMM(new Date(summary.lastReplyTs).toString())
+			});
 		});
 		return map;
-	}, [messages]);
+	}, [threadSummariesRaw]);
+	// Per-thread unread (#435): device-local approximation, bumped whenever
+	// a thread is opened (markThreadRead) so the derived map recomputes.
+	const [threadReadVersion, setThreadReadVersion] = useState(0);
+	const threadUnreadByRoot = useMemo(() => {
+		const map = new Map<string, boolean>();
+		if (!resolvedMatrixRoomId) {
+			return map;
+		}
+		threadSummariesRaw.forEach((summary, rootId) => {
+			const lastReadTs = getThreadLastReadTs(
+				resolvedMatrixRoomId,
+				rootId
+			);
+			map.set(rootId, isThreadUnread(summary.lastReplyTs, lastReadTs));
+		});
+		return map;
+		// threadReadVersion is a change signal only (localStorage isn't reactive).
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [threadSummariesRaw, resolvedMatrixRoomId, threadReadVersion]);
+	const [isThreadListOpen, setIsThreadListOpen] = useState(false);
+	const unreadThreadCount = useMemo(
+		() => Array.from(threadUnreadByRoot.values()).filter(Boolean).length,
+		[threadUnreadByRoot]
+	);
 	const [headerRef, headerBounds] = useMeasure({ polyfill: ResizeObserver });
 	const { ready, key, keyID, encrypted, subscriptionKeyLost } = useE2EE(
 		activeSession.rid
@@ -2920,15 +2949,36 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		}
 	};
 
-	const handleOpenThread = useCallback((message: MessageItem) => {
-		setActiveThreadRootId(message._id);
-		setActiveThreadRootMessage(message);
-	}, []);
+	const handleOpenThread = useCallback(
+		(message: MessageItem) => {
+			setActiveThreadRootId(message._id);
+			setActiveThreadRootMessage(message);
+			setIsThreadListOpen(false);
+			// Per-thread unread (#435): opening a thread marks it read up to
+			// its current last reply.
+			const summary = threadSummariesRaw.get(message._id);
+			if (resolvedMatrixRoomId && summary) {
+				markThreadRead(
+					resolvedMatrixRoomId,
+					message._id,
+					summary.lastReplyTs
+				);
+				setThreadReadVersion((version) => version + 1);
+			}
+		},
+		[threadSummariesRaw, resolvedMatrixRoomId]
+	);
 
 	const handleCloseThread = useCallback(() => {
 		setActiveThreadRootId(null);
 		setActiveThreadRootMessage(null);
 	}, []);
+
+	const getMessageById = useCallback(
+		(id: string): MessageItem | null =>
+			(messages || []).find((candidate) => candidate._id === id) || null,
+		[messages]
+	);
 
 	// Relations foundation (#435): direct-reply context for the composer.
 	const [replyTo, setReplyTo] = useState<{
@@ -3138,6 +3188,88 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					/>
 				)}
 			</div>
+
+			{/* Thread-panel-UX (#435): per-room list of all threads. */}
+			{!isEmbeddedNotificationsView &&
+				isThreadsEnabled &&
+				threadSummariesRaw.size > 0 && (
+					<div className="session__threadListBar">
+						<button
+							type="button"
+							className={clsx(
+								'session__threadListToggle',
+								isThreadListOpen &&
+									'session__threadListToggle--active'
+							)}
+							onClick={() => setIsThreadListOpen((open) => !open)}
+						>
+							{translate('message.thread.listToggle', 'Threads')}
+							{' ('}
+							{threadSummariesRaw.size}
+							{')'}
+							{unreadThreadCount > 0 && (
+								<span className="session__threadListUnreadBadge">
+									{unreadThreadCount}
+								</span>
+							)}
+						</button>
+						{isThreadListOpen && (
+							<div
+								className="session__threadListPanel"
+								role="menu"
+							>
+								{Array.from(threadSummariesRaw.values())
+									.sort(
+										(a, b) => b.lastReplyTs - a.lastReplyTs
+									)
+									.map((summary) => (
+										<button
+											key={summary.rootId}
+											type="button"
+											role="menuitem"
+											className="session__threadListEntry"
+											onClick={() => {
+												const rootMessage =
+													getMessageById(
+														summary.rootId
+													);
+												if (rootMessage) {
+													handleOpenThread(
+														rootMessage
+													);
+												}
+											}}
+										>
+											{threadUnreadByRoot.get(
+												summary.rootId
+											) && (
+												<span
+													className="session__threadListUnreadDot"
+													aria-hidden
+												/>
+											)}
+											<span className="session__threadListEntryPreview">
+												{summary.rootPreview ||
+													translate(
+														'message.thread.unknownRoot',
+														'Frühere Nachricht'
+													)}
+											</span>
+											<span className="session__threadListEntryMeta">
+												{translate(
+													'message.thread.replies',
+													'{{count}} replies',
+													{
+														count: summary.replyCount
+													}
+												)}
+											</span>
+										</button>
+									))}
+							</div>
+						)}
+					</div>
+				)}
 
 			<div
 				id="session-scroll-container"
