@@ -13,7 +13,7 @@ reviews:
   poem: false
 
   auto_review:
-    enabled: false
+    enabled: true
     description_keyword: "coderabbit: review"
     auto_incremental_review: false
     drafts: false

@@ -25,6 +25,7 @@ import {
 } from './inputField/composerResize';
 import { isAskerEnquirySubmission } from './messageEncryptionMode';
 import { resolveAsideTargetRoomId } from './asideRouting';
+import { reloadSessionAfterSendIfNeeded } from './sessionRefreshAfterSend';
 import { chatTransportService } from '../../services/chatTransportService';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { getModality, Modality } from '../session/getModality';
@@ -94,6 +95,18 @@ import {
 import { getIconForAttachmentType } from '../message/messageHelpers';
 import { TipTapComposer, TipTapComposerRef } from './TipTapComposer';
 import { HIGHLIGHT_SNIPPET_SELECTED_EVENT } from './highlightSnippetEvents';
+import { isMyMessage } from '../session/sessionHelpers';
+import { transportMarkupToComposerHtml } from './transportMarkupToComposerHtml';
+import type { MessageItem } from '../message/MessageItemComponent';
+import { useKeyboardShortcuts } from '../../features/keyboard-shortcuts/context/KeyboardShortcutsProvider';
+import {
+	hasOpenModalDialog,
+	resolveEffectiveBinding
+} from '../../features/keyboard-shortcuts/utils/resolveAction';
+import {
+	isImeComposing,
+	matchesShortcut
+} from '../../features/keyboard-shortcuts/utils/match';
 
 type AttachmentUploadControl = Pick<XMLHttpRequest, 'abort'>;
 const VOICE_RECORDING_MAX_DURATION_SEC = 180;
@@ -171,6 +184,14 @@ export interface MessageSubmitInterfaceComponentProps {
 	onMobileNavigateBack?: () => void;
 	onMobileNavigateDown?: () => void;
 	onMobileNavigateBottom?: () => void;
+	/** All messages in the current session — used to find the last own message for editing. */
+	messages?: MessageItem[];
+	/** Close the thread panel (for Escape shortcut). */
+	onCloseThread?: () => void;
+	/** Notify parent of a local optimistic edit (messageId → new text). */
+	onLocalMessageEdit?: (messageId: string, newText: string) => void;
+	/** Prefer Matrix-aware ownership from SessionItem when provided. */
+	isOwnMessage?: (userId: string) => boolean;
 }
 
 export const MessageSubmitInterfaceComponent = ({
@@ -195,7 +216,11 @@ export const MessageSubmitInterfaceComponent = ({
 	mobileIsScrolledToBottom = false,
 	onMobileNavigateBack,
 	onMobileNavigateDown,
-	onMobileNavigateBottom
+	onMobileNavigateBottom,
+	messages,
+	onCloseThread,
+	onLocalMessageEdit,
+	isOwnMessage
 }: MessageSubmitInterfaceComponentProps) => {
 	const ComposerMobileBackIcon = () => (
 		<svg
@@ -374,6 +399,9 @@ export const MessageSubmitInterfaceComponent = ({
 	const [isEmojiStripOpen, setIsEmojiStripOpen] = useState(false);
 	const [isCompactActionStripOpen, setIsCompactActionStripOpen] =
 		useState(true);
+	const [editingMessageId, setEditingMessageId] = useState<string | null>(
+		null
+	);
 	const [isMobileViewport, setIsMobileViewport] = useState<boolean>(() =>
 		typeof window !== 'undefined' ? window.innerWidth <= 899 : false
 	);
@@ -1136,6 +1164,13 @@ export const MessageSubmitInterfaceComponent = ({
 	);
 
 	const handleMessageSendSuccess = useCallback(() => {
+		reloadSessionAfterSendIfNeeded(
+			{
+				isMatrixSession: resolvedChatSession.isMatrixSession,
+				clientRoomId: resolvedChatSession.matrixRoomId
+			},
+			reloadActiveSession
+		);
 		onMessageSendSuccess?.();
 		setEditorState(EditorState.createEmpty());
 		setComposerText('');
@@ -1168,6 +1203,9 @@ export const MessageSubmitInterfaceComponent = ({
 		audienceOptions,
 		clearDraftMessage,
 		onMessageSendSuccess,
+		reloadActiveSession,
+		resolvedChatSession.isMatrixSession,
+		resolvedChatSession.matrixRoomId,
 		resizeTextarea
 	]);
 
@@ -1441,14 +1479,40 @@ export const MessageSubmitInterfaceComponent = ({
 			return;
 		}
 
+		// Shortcut: edit an existing message via Matrix m.replace
+		if (editingMessageId) {
+			const matrixRoomId = resolvedChatSession.matrixRoomId;
+			if (matrixRoomId && matrixClientService) {
+				try {
+					await matrixClientService.editMessage(
+						matrixRoomId,
+						editingMessageId,
+						getPlainTextFromComposerValue(message) || message
+					);
+					onLocalMessageEdit?.(editingMessageId, message);
+				} catch {
+					// Editing failed silently — fall through to clear state
+				}
+			}
+			setEditingMessageId(null);
+			setIsRequestInProgress(false);
+			composerRef.current?.clear();
+			setComposerText('');
+			return;
+		}
+
 		await sendMessage(message, attachment, isEncrypted, isAside);
 	}, [
+		editingMessageId,
 		encodeAlignmentForTransport,
 		encodeHighlightColorsForTransport,
 		getTypedMarkdownMessage,
 		hasMessageContent,
 		isAskerEnquiry,
+		matrixClientService,
+		onLocalMessageEdit,
 		preselectedFile,
+		resolvedChatSession,
 		sendEnquiry,
 		sendMessage,
 		selectedAudienceValues,
@@ -2759,6 +2823,163 @@ export const MessageSubmitInterfaceComponent = ({
 		setIsCompactActionStripOpen(false);
 	}, []);
 
+	// ── Keyboard shortcut handlers ───────────────────────────────────────────
+	// TipTap stores empty docs as markup (e.g. <p></p>) — use plain text.
+	const isComposerEmpty =
+		!hasMessageContent(composerText) && !attachmentSelected;
+
+	const handleEditLast = useCallback((): boolean => {
+		if (!messages || messages.length === 0) {
+			return false;
+		}
+		const owns = isOwnMessage ?? isMyMessage;
+		for (let i = messages.length - 1; i >= 0; i--) {
+			const msg = messages[i];
+			if (!owns(msg.userId)) {
+				continue;
+			}
+			// Skip deleted (t === 'rm') and aliased (system) messages
+			if (msg.t === 'rm' || msg.alias) {
+				continue;
+			}
+			if (!msg.message?.trim()) {
+				continue;
+			}
+			const composerHtml = transportMarkupToComposerHtml(msg.message);
+			if (!hasMessageContent(composerHtml)) {
+				continue;
+			}
+			setEditingMessageId(msg._id);
+			setComposerText(composerHtml);
+			composerRef.current?.setText(composerHtml);
+			requestAnimationFrame(() => composerRef.current?.focus());
+			return true;
+		}
+		return false;
+	}, [messages, isOwnMessage, hasMessageContent]);
+
+	const handleCancelEdit = useCallback((): boolean => {
+		if (isEmojiStripOpen) {
+			setIsEmojiStripOpen(false);
+			return true;
+		}
+		if (editingMessageId) {
+			setEditingMessageId(null);
+			setComposerText('');
+			composerRef.current?.clear();
+			requestAnimationFrame(() => composerRef.current?.focus());
+			return true;
+		}
+		if (highlightedSnippet) {
+			setHighlightedSnippet(null);
+			return true;
+		}
+		if (onCloseThread) {
+			onCloseThread();
+			return true;
+		}
+		if (isExpandedComposer) {
+			setIsExpandedComposer(false);
+			return true;
+		}
+		return false;
+	}, [
+		isEmojiStripOpen,
+		editingMessageId,
+		highlightedSnippet,
+		onCloseThread,
+		isExpandedComposer
+	]);
+
+	const handleUpload = useCallback((): boolean => {
+		if (!hasUploadFunctionality || !!uploadProgress || isVoiceRecording) {
+			return false;
+		}
+		handleAttachmentSelect();
+		return true;
+	}, [
+		hasUploadFunctionality,
+		uploadProgress,
+		isVoiceRecording,
+		handleAttachmentSelect
+	]);
+
+	const handleOpenEmoji = useCallback((): boolean => {
+		if (isEmojiStripOpen) {
+			setIsEmojiStripOpen(false);
+			return true;
+		}
+		openCompactActionStrip();
+		setIsEmojiStripOpen(true);
+		return true;
+	}, [isEmojiStripOpen, openCompactActionStrip]);
+
+	const { preferences: shortcutPreferences, platform: shortcutPlatform } =
+		useKeyboardShortcuts();
+
+	// Window capture so ⌘/Ctrl+E toggles even when focus is inside the picker.
+	useEffect(() => {
+		const onKeyDown = (event: KeyboardEvent) => {
+			if (event.defaultPrevented || isImeComposing(event)) {
+				return;
+			}
+			if (hasOpenModalDialog()) {
+				return;
+			}
+			const binding = resolveEffectiveBinding(
+				shortcutPreferences,
+				'chat.openEmojiPicker',
+				shortcutPlatform
+			);
+			if (
+				!binding ||
+				!matchesShortcut(event, binding, shortcutPlatform)
+			) {
+				return;
+			}
+			event.preventDefault();
+			event.stopPropagation();
+			handleOpenEmoji();
+		};
+		window.addEventListener('keydown', onKeyDown, true);
+		return () => window.removeEventListener('keydown', onKeyDown, true);
+	}, [shortcutPreferences, shortcutPlatform, handleOpenEmoji]);
+
+	// Listen for CustomEvents dispatched from CommandPaletteDialog
+	useEffect(() => {
+		const onUploadEvent = () => {
+			if (
+				hasUploadFunctionality &&
+				!uploadProgress &&
+				!isVoiceRecording
+			) {
+				handleAttachmentSelect();
+			}
+		};
+		const onEmojiEvent = () => {
+			handleOpenEmoji();
+		};
+		window.addEventListener('oriso:shortcut:uploadFile', onUploadEvent);
+		window.addEventListener('oriso:shortcut:openEmoji', onEmojiEvent);
+		return () => {
+			window.removeEventListener(
+				'oriso:shortcut:uploadFile',
+				onUploadEvent
+			);
+			window.removeEventListener(
+				'oriso:shortcut:openEmoji',
+				onEmojiEvent
+			);
+		};
+	}, [
+		hasUploadFunctionality,
+		uploadProgress,
+		isVoiceRecording,
+		handleAttachmentSelect,
+		handleOpenEmoji
+	]);
+	// ── End shortcut handlers ────────────────────────────────────────────────
+
 	const toggleExpandedComposer = useCallback(() => {
 		setIsExpandedComposer((prev) => !prev);
 	}, []);
@@ -2812,8 +3033,8 @@ export const MessageSubmitInterfaceComponent = ({
 		if (!emoji) {
 			return;
 		}
+		// Keep the picker open so users can insert multiple emojis.
 		composerRef.current?.insertText(`${emoji} `);
-		setIsEmojiStripOpen(false);
 	}, []);
 
 	const handleMentionInsert = useCallback(() => {
@@ -3567,7 +3788,9 @@ export const MessageSubmitInterfaceComponent = ({
 								className={clsx(
 									'textarea__input',
 									attachmentSelected &&
-										'textarea__input--attachmentMode'
+										'textarea__input--attachmentMode',
+									editingMessageId &&
+										'textarea__input--editing'
 								)}
 								ref={textareaInputRef}
 								onKeyUp={(e) => {
@@ -3658,6 +3881,29 @@ export const MessageSubmitInterfaceComponent = ({
 									</div>
 								) : (
 									<>
+										{editingMessageId && (
+											<div
+												className="textarea__editingBanner"
+												role="status"
+											>
+												<span className="textarea__editingBanner__label">
+													{translate(
+														'shortcuts.editingBanner'
+													)}
+												</span>
+												<button
+													type="button"
+													className="textarea__editingBanner__cancel"
+													onClick={() => {
+														handleCancelEdit();
+													}}
+												>
+													{translate(
+														'shortcuts.editingCancel'
+													)}
+												</button>
+											</div>
+										)}
 										<div
 											className="textarea__figmaToolbar"
 											onMouseDown={handleToolbarMouseDown}
@@ -3756,6 +4002,10 @@ export const MessageSubmitInterfaceComponent = ({
 												setIsComposerSelected
 											}
 											mentionProvider={mentionProvider}
+											isComposerEmpty={isComposerEmpty}
+											onEditLast={handleEditLast}
+											onCancel={handleCancelEdit}
+											onUpload={handleUpload}
 											onSubmitShortcut={() => {
 												if (
 													!uploadProgress &&

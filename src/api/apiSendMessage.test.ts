@@ -80,7 +80,10 @@ describe('apiSendMessage', () => {
 		expect(sendMessage).toHaveBeenCalledWith(
 			'!fallback:example.org',
 			'Hello from registry',
-			{ replyToEventId: null, threadRootId: null }
+			{
+				replyToEventId: null,
+				threadRootId: null
+			}
 		);
 		expect(response).toEqual({
 			success: true,

@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import sanitizeHtml from 'sanitize-html';
 import { PrettyDate } from '../../utils/dateHelpers';
+import { getMatrixClientLogger } from '../../utils/matrixLogging';
 import {
 	UserDataContext,
 	hasUserAuthority,
@@ -16,7 +17,7 @@ import { MessageDisplayName } from './MessageDisplayName';
 import { formatToHHMM } from '../../utils/dateHelpers';
 import { markdownToDraft } from 'markdown-draft-js';
 import { stateToHTML } from 'draft-js-export-html';
-import { convertFromRaw, ContentState } from 'draft-js';
+import { convertFromRaw } from 'draft-js';
 import {
 	markdownToDraftDefaultOptions,
 	normalizeHighlightColor,
@@ -64,7 +65,7 @@ import { FlyoutMenu } from '../flyoutMenu/FlyoutMenu';
 import { BanUser, BanUserOverlay } from '../banUser/BanUser';
 import { getValueFromCookie } from '../sessionCookie/accessSessionCookie';
 import { VideoChatDetails, VideoChatDetailsAlias } from './VideoChatDetails';
-import { UserAvatar } from './UserAvatar';
+import { MessageAvatar } from './MessageAvatar';
 import clsx from 'clsx';
 import {
 	parseMessagePrefixes,
@@ -89,6 +90,8 @@ const AddReactionIcon = () => (
 		/>
 	</svg>
 );
+
+const logger = getMatrixClientLogger();
 
 const ActiveKebabIcon = () => (
 	<svg width="28" height="32" viewBox="0 0 28 32" fill="none" aria-hidden>
@@ -931,27 +934,37 @@ export const MessageItemComponent = ({
 			return;
 		}
 
-		const rawMessageObject = markdownToDraft(
-			preparedMessage,
-			markdownToDraftDefaultOptions
-		);
-		const contentStateMessage: ContentState =
-			convertFromRaw(rawMessageObject);
+		try {
+			const rawMessageObject = markdownToDraft(
+				preparedMessage,
+				markdownToDraftDefaultOptions
+			);
+			const contentStateMessage = convertFromRaw(rawMessageObject);
 
-		setRenderedMessage(
-			contentStateMessage.hasText()
-				? sanitizeHtml(
-						renderHighlightTokens(
-							renderImageMarkers(
-								urlifyLinksInText(
-									stateToHTML(contentStateMessage)
+			setRenderedMessage(
+				contentStateMessage.hasText()
+					? sanitizeHtml(
+							renderHighlightTokens(
+								renderImageMarkers(
+									urlifyLinksInText(
+										stateToHTML(contentStateMessage)
+									)
 								)
-							)
-						),
-						sanitizeHtmlDefaultOptions
-					)
-				: ''
-		);
+							),
+							sanitizeHtmlDefaultOptions
+						)
+					: ''
+			);
+		} catch (error) {
+			// Markdown parsing failed; fall back to the sanitized raw message.
+			logger.debug(
+				'Message markdown render failed, using raw text',
+				error
+			);
+			setRenderedMessage(
+				sanitizeHtml(preparedMessage, sanitizeHtmlDefaultOptions)
+			);
+		}
 		// parsedMessage is memoized on decryptedMessage, so this stays
 		// equivalent to depending on decryptedMessage alone.
 	}, [decryptedMessage, parsedMessage.cleanedMessage]);
@@ -1292,6 +1305,29 @@ export const MessageItemComponent = ({
 		videoCallMessage?.eventType === 'IGNORED_CALL' &&
 		activeSession?.isGroup;
 
+	const messageTimeInBubble = messageTime ? (
+		<span
+			className={clsx(
+				'messageItem__messageTime',
+				isMyMessage && 'messageItem__messageTime--outgoing'
+			)}
+		>
+			{formatToHHMM(messageTime)}
+			{/* Editing (m.replace, #435): marker next to the bubble timestamp. */}
+			{isEdited && (
+				<span
+					className="messageItem__editedMarker"
+					title={translate(
+						'message.edit.markerTitle',
+						'Nachricht wurde bearbeitet'
+					)}
+				>
+					{translate('message.edit.marker', '(bearbeitet)')}
+				</span>
+			)}
+		</span>
+	) : null;
+
 	const messageContent = (): React.ReactElement => {
 		switch (true) {
 			case isMasterKeyLostMessage:
@@ -1384,22 +1420,25 @@ export const MessageItemComponent = ({
 				);
 			case isDeleteMessage:
 				return (
-					<div className="messageItem__message messageItem__message--deleted flex flex--ai-c">
-						<div className="mr--1">
-							<DeletedIcon
-								width={14}
-								height={14}
-								aria-hidden="true"
-								focusable="false"
-							/>
+					<div className="messageItem__message messageItem__message--deleted">
+						<div className="flex flex--ai-c">
+							<div className="mr--1">
+								<DeletedIcon
+									width={14}
+									height={14}
+									aria-hidden="true"
+									focusable="false"
+								/>
+							</div>
+							<div>
+								{translate(
+									isMyMessage
+										? 'message.delete.deleted.own'
+										: 'message.delete.deleted.other'
+								)}
+							</div>
 						</div>
-						<div>
-							{translate(
-								isMyMessage
-									? 'message.delete.deleted.own'
-									: 'message.delete.deleted.other'
-							)}
-						</div>
+						{messageTimeInBubble}
 					</div>
 				);
 			default:
@@ -1421,25 +1460,6 @@ export const MessageItemComponent = ({
 										resolvedIncomingNameParts.lastName
 									}
 								/>
-								{messageTime ? (
-									<span className="messageItem__headerTime">
-										{formatToHHMM(messageTime)}
-									</span>
-								) : null}
-								{isEdited && (
-									<span
-										className="messageItem__editedMarker"
-										title={translate(
-											'message.edit.markerTitle',
-											'Nachricht wurde bearbeitet'
-										)}
-									>
-										{translate(
-											'message.edit.marker',
-											'(bearbeitet)'
-										)}
-									</span>
-								)}
 								{/* MATRIX MIGRATION: Temporarily hide message menu */}
 								{false && (
 									<MessageFlyoutMenu
@@ -1767,6 +1787,7 @@ export const MessageItemComponent = ({
 										hasRenderedMessage={hasRenderedMessage}
 									/>
 								))}
+							{!isSystemNotification && messageTimeInBubble}
 						</div>
 						{showVisibleAudience && !isMyMessage && (
 							<div className="messageItem__visibleOnly">
@@ -1886,7 +1907,7 @@ export const MessageItemComponent = ({
 			<div
 				className={`
 					messageItem__messageWrap
-					${isMyMessage ? 'messageItem__messageWrap--right' : ''}
+					${isMyMessage ? 'messageItem__messageWrap--right' : 'messageItem__messageWrap--left'}
 					${isFurtherStepsMessage ? 'messageItem__messageWrap--furtherSteps' : ''}
 					${
 						isE2EEActivatedMessage
@@ -1898,21 +1919,40 @@ export const MessageItemComponent = ({
 				{!alias?.messageType &&
 					!isMyMessage &&
 					!isSystemNotification && (
-						<div className="messageItem__sideColumn">
-							<div className="messageItem__avatar">
-								<UserAvatar
-									username={username}
-									displayName={resolvedIncomingDisplayName}
-									firstName={
-										resolvedIncomingNameParts.firstName
+						<div className="messageItem__sideColumn messageItem__sideColumn--left">
+							<div className="messageItem__sideColumnGroup messageItem__sideColumnGroup--left">
+								<div className="messageItem__avatar">
+									<MessageAvatar
+										isGroup={!!activeSession?.isGroup}
+										isSystemNotification={false}
+										userId={userId}
+										username={username}
+										displayName={
+											resolvedIncomingDisplayName
+										}
+										firstName={
+											resolvedIncomingNameParts.firstName
+										}
+										lastName={
+											resolvedIncomingNameParts.lastName
+										}
+										size={32}
+									/>
+								</div>
+								<button
+									type="button"
+									className="messageItem__kebabButton messageItem__kebabButton--left"
+									aria-label="More"
+									onClick={(event) =>
+										toggleActionMenu(event, 'left')
 									}
-									lastName={
-										resolvedIncomingNameParts.lastName
-									}
-									userId={userId}
-									size="32px"
-									ring={false}
-								/>
+								>
+									{isActionMenuOpen ? (
+										<ActiveKebabIcon />
+									) : (
+										<StackVerticalIcon className="messageItem__kebabIconDefault" />
+									)}
+								</button>
 							</div>
 							{showVisibleAudience && (
 								<button
@@ -1943,20 +1983,6 @@ export const MessageItemComponent = ({
 									</span>
 								</button>
 							)}
-							<button
-								type="button"
-								className="messageItem__kebabButton messageItem__kebabButton--left"
-								aria-label="More"
-								onClick={(event) =>
-									toggleActionMenu(event, 'left')
-								}
-							>
-								{isActionMenuOpen ? (
-									<ActiveKebabIcon />
-								) : (
-									<StackVerticalIcon className="messageItem__kebabIconDefault" />
-								)}
-							</button>
 						</div>
 					)}
 				{!alias?.messageType &&
@@ -2002,30 +2028,33 @@ export const MessageItemComponent = ({
 									</span>
 								</button>
 							)}
-							<button
-								type="button"
-								className="messageItem__kebabButton messageItem__kebabButton--right"
-								aria-label="More"
-								onClick={(event) =>
-									toggleActionMenu(event, 'right')
-								}
-							>
-								{isActionMenuOpen ? (
-									<ActiveKebabIcon />
-								) : (
-									<StackVerticalIcon className="messageItem__kebabIconDefault" />
-								)}
-							</button>
-							<div className="messageItem__avatar">
-								<UserAvatar
-									username={username}
-									displayName={displayName}
-									firstName={userData?.firstName}
-									lastName={userData?.lastName}
-									userId={userId}
-									size="32px"
-									ring={false}
-								/>
+							<div className="messageItem__sideColumnGroup messageItem__sideColumnGroup--right">
+								<button
+									type="button"
+									className="messageItem__kebabButton messageItem__kebabButton--right"
+									aria-label="More"
+									onClick={(event) =>
+										toggleActionMenu(event, 'right')
+									}
+								>
+									{isActionMenuOpen ? (
+										<ActiveKebabIcon />
+									) : (
+										<StackVerticalIcon className="messageItem__kebabIconDefault" />
+									)}
+								</button>
+								<div className="messageItem__avatar">
+									<MessageAvatar
+										isGroup={!!activeSession?.isGroup}
+										isSystemNotification={false}
+										userId={userId}
+										username={username}
+										displayName={displayName}
+										firstName={userData?.firstName}
+										lastName={userData?.lastName}
+										size={32}
+									/>
+								</div>
 							</div>
 						</div>
 					)}
@@ -2126,25 +2155,6 @@ export const MessageItemComponent = ({
 					{isMyMessage && formattedName && !alias?.messageType && (
 						<div className="messageItem__senderInfo">
 							<div className="messageItem__senderInfoPrimary">
-								{messageTime ? (
-									<span className="messageItem__headerTime">
-										{formatToHHMM(messageTime)}
-									</span>
-								) : null}
-								{isEdited && (
-									<span
-										className="messageItem__editedMarker"
-										title={translate(
-											'message.edit.markerTitle',
-											'Nachricht wurde bearbeitet'
-										)}
-									>
-										{translate(
-											'message.edit.marker',
-											'(bearbeitet)'
-										)}
-									</span>
-								)}
 								<div className="messageItem__senderInfoName">
 									{formattedName}
 								</div>
@@ -2157,57 +2167,6 @@ export const MessageItemComponent = ({
 							) : null}
 						</div>
 					)}
-
-					{onOpenThread &&
-						renderMode === 'main' &&
-						!alias?.messageType && (
-							<button
-								type="button"
-								className={clsx(
-									'messageItem__threadButton',
-									isMyMessage &&
-										'messageItem__threadButton--right',
-									threadSummary?.replyCount
-										? 'messageItem__threadButton--hasReplies'
-										: ''
-								)}
-								onClick={(e) => {
-									e.preventDefault();
-									e.stopPropagation();
-									onOpenThread();
-								}}
-							>
-								<span className="messageItem__threadButtonMain">
-									{threadSummary?.replyCount
-										? translate(
-												'message.thread.replies',
-												'{{count}} replies',
-												{
-													count: threadSummary.replyCount
-												}
-											)
-										: translate(
-												'message.thread.reply',
-												'Reply'
-											)}
-								</span>
-								{threadSummary?.replyCount ? (
-									<span className="messageItem__threadButtonMeta">
-										{threadSummary.lastReplyText}
-									</span>
-								) : (
-									<span className="messageItem__threadButtonMeta">
-										&nbsp;
-									</span>
-								)}
-								<span className="messageItem__threadButtonHover">
-									{translate(
-										'message.thread.view',
-										'View thread'
-									)}
-								</span>
-							</button>
-						)}
 				</div>
 			</div>
 			{isActionMenuOpen && actionMenuPosition

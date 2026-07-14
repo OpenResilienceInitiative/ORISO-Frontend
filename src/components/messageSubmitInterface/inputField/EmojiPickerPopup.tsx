@@ -25,17 +25,22 @@ export const EmojiPickerPopup = ({
 
 	useEffect(() => {
 		const handlePointerDown = (event: PointerEvent) => {
-			const target = event.target as Node | null;
-			if (
-				popupRef.current &&
-				target &&
-				!popupRef.current.contains(target)
-			) {
+			const target = event.target;
+			if (!(target instanceof Element)) {
+				return;
+			}
+			// Toggle button owns open/close — don't close here or the following
+			// click will reopen the picker.
+			if (target.closest('[data-emoji-picker-toggle]')) {
+				return;
+			}
+			if (popupRef.current && !popupRef.current.contains(target)) {
 				onClose();
 			}
 		};
 		const handleKeyDown = (event: KeyboardEvent) => {
 			if (event.key === 'Escape') {
+				event.preventDefault();
 				onClose();
 			}
 		};

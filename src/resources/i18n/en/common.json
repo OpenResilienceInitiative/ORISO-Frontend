@@ -789,7 +789,8 @@
 					"veryLate": "very late"
 				},
 				"dogMinutes": "{{value}} dog minutes",
-				"romanMinutes": "{{value}} roman minutes"
+				"romanMinutes": "{{value}} roman minutes",
+				"rulesLabel": "Chat rules"
 			},
 			"button": {
 				"label": {
@@ -1906,7 +1907,8 @@
 					"changePassword": "Change password",
 					"title": "Security"
 				},
-				"title": "Settings"
+				"title": "Settings",
+				"keyboardShortcuts": "Keyboard Shortcuts"
 			}
 		},
 		"spokenLanguages": {
@@ -3456,6 +3458,111 @@
 			"remove": {
 				"confirm": "Are you sure you want to remove this supervisor?"
 			}
+		}
+	},
+	"shortcuts": {
+		"title": "Keyboard Shortcuts",
+		"description": "Customize chat shortcuts. Changes apply immediately and are saved on this device.",
+		"automaticallyConfigured": "automatically configured",
+		"disableShortcut": "Disabled",
+		"restoreDefaults": "Restore Defaults",
+		"restoreDefaultsSuccess": "Default shortcuts restored.",
+		"primaryModifier": "Primary modifier",
+		"help": {
+			"title": "Keyboard shortcuts",
+			"close": "Close"
+		},
+		"palette": {
+			"title": "Command Palette",
+			"close": "Close",
+			"searchPlaceholder": "Search commands…",
+			"allShortcuts": "All shortcuts"
+		},
+		"editingBanner": "Editing message",
+		"editingCancel": "Cancel",
+		"categories": {
+			"messaging": "Messaging",
+			"navigation": "Navigation",
+			"attachments": "Attachments",
+			"emoji": "Emoji and Reactions",
+			"application": "Application"
+		},
+		"actions": {
+			"sendMessage": {
+				"label": "Send Message",
+				"description": "Send the current chat message."
+			},
+			"insertNewLine": {
+				"label": "Insert New Line",
+				"description": "Insert a new line in the message composer. Derived from the send shortcut."
+			},
+			"showShortcutHelp": {
+				"label": "Show Keyboard Shortcuts",
+				"description": "Open the keyboard shortcuts help dialog."
+			},
+			"focusInput": {
+				"label": "Focus Message Input",
+				"description": "Move focus to the message composer."
+			},
+			"uploadFile": {
+				"label": "Upload File",
+				"description": "Open the file attachment picker."
+			},
+			"searchMessages": {
+				"label": "Search Messages",
+				"description": "Search messages in the current conversation."
+			},
+			"editLastMessage": {
+				"label": "Edit Last Message",
+				"description": "Edit your last sent message."
+			},
+			"cancelReplyOrEdit": {
+				"label": "Cancel Reply or Edit",
+				"description": "Cancel the current reply or edit."
+			},
+			"openEmojiPicker": {
+				"label": "Open Emoji Picker",
+				"description": "Open the emoji picker."
+			},
+			"startNewConversation": {
+				"label": "Start New Conversation",
+				"description": "Start a new conversation."
+			},
+			"openCommandPalette": {
+				"label": "Open Command Palette",
+				"description": "Open the command palette."
+			}
+		},
+		"conflicts": {
+			"duplicate": "This shortcut is already assigned.",
+			"reserved": "This shortcut is reserved by the browser.",
+			"browserConflict": "This shortcut conflicts with common browser shortcuts.",
+			"sendNewline": "Send Message and Insert New Line cannot use the same shortcut.",
+			"unsupported": "This shortcut option is not supported.",
+			"cannotDisable": "This shortcut cannot be disabled.",
+			"unsafePlainKey": "This key cannot be used as a shortcut while typing."
+		},
+		"hints": {
+			"enterSends": "Enter sends the message",
+			"shiftEnterNewline": "Shift+Enter inserts a new line",
+			"enterNewline": "Enter inserts a new line",
+			"ctrlEnterSends": "Ctrl+Enter sends the message",
+			"cmdEnterSends": "Cmd+Enter sends the message"
+		},
+		"lockedNewline": "Locked to Shift+Enter while Enter sends the message.",
+		"resetAction": "Reset",
+		"restoreDefaultsConfirm": "Restore all shortcuts to their defaults?",
+		"restoreDefaultsConfirmYes": "Restore",
+		"restoreDefaultsConfirmNo": "Cancel",
+		"keys": {
+			"enter": "Enter",
+			"escape": "Esc",
+			"arrowUp": "↑",
+			"shift": "Shift",
+			"alt": "Alt",
+			"option": "Option",
+			"ctrl": "Ctrl",
+			"cmd": "Cmd"
 		}
 	}
 }
