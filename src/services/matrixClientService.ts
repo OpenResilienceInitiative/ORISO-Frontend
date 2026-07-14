@@ -210,28 +210,46 @@ export class MatrixClientService {
 	): Promise<any> {
 		await this.ensureFreshToken();
 
-		if (!this.client) {
-			throw new Error('Matrix client not initialized');
-		}
-
-		// Relations foundation (#435): a reply is the spec relation on the
-		// content (m.relates_to / m.in_reply_to), built by the pure helper.
+		// Relations foundation (#435): a reply/thread is the spec relation on the
+		// content (m.relates_to / m.in_reply_to / m.thread), built by the pure helper.
 		const content = buildTextMessageContent(message, options) as any;
+		const sendToRoom = async () => {
+			const client = this.client;
+			if (!client) {
+				throw new Error('Matrix client not initialized');
+			}
+			if (!client.getRoom(roomId)) {
+				await client.joinRoom(roomId);
+			}
+			return client.sendMessage(roomId, content);
+		};
 
 		try {
-			return await this.client.sendMessage(roomId, content);
+			return await sendToRoom();
 		} catch (error) {
 			if (!isMatrixExpiredTokenError(error)) {
 				throw error;
 			}
 
 			await this.refreshMatrixToken();
-			if (!this.client) {
-				throw new Error('Matrix client not initialized');
-			}
-
-			return this.client.sendMessage(roomId, content);
+			return sendToRoom();
 		}
+	}
+
+	public async editMessage(
+		roomId: string,
+		eventId: string,
+		message: string
+	): Promise<any> {
+		await this.ensureFreshToken();
+		if (!this.client) throw new Error('Matrix client not initialized');
+		const content = {
+			'msgtype': 'm.text',
+			'body': `* ${message}`,
+			'm.new_content': { msgtype: 'm.text', body: message },
+			'm.relates_to': { rel_type: 'm.replace', event_id: eventId }
+		};
+		return this.client.sendMessage(roomId, content as any);
 	}
 
 	public async sendFileMessage(

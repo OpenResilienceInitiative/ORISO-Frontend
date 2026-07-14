@@ -1,8 +1,15 @@
 # AGENTS.md
 
+## Orchestration
+
+- For non-trivial tasks, or whenever the user says "loop", run the `goal-loop` skill: intake → plan → iterate think/implement/verify until acceptance criteria pass → regression-check → pr-prep. Task docs live in `docs/cursor-orchestrator/YYYY-MM-DD_short-feature-name/`.
+- Delegate broad exploration to the `codebase-explorer` subagent, planning to `planner`, post-implementation validation to `verifier`, and touched-scope security review to `security-auditor`.
+- Stop for confirmation before: credentials, external service setup, destructive commands, and opening/updating a PR.
+- Capture reusable lessons in `.learnings/LEARNINGS.md`; promote to this file only if broadly applicable.
+
 ## Context First
 
-- Treat `dev` as the normal integration branch for ORISO feature PRs unless the task says otherwise.
+- Treat `pre-dev` as the normal integration branch for ORISO feature PRs unless the task says otherwise.
 - Before non-trivial changes, skim `.understand-anything/README.md`, `.understand-anything/ARCHITECTURE.md`, and `.understand-anything/knowledge-graph.json` for fast repo context.
 - Use `CONTEXT.md` for Activity Timeline and notification vocabulary; avoid inventing parallel terms.
 
@@ -27,7 +34,7 @@
 
 ## Review Expectations
 
-- Cursor should compare PRs against `origin/dev` for normal ORISO feature work.
+- Cursor should compare PRs against `origin/pre-dev` for normal ORISO feature work.
 - CodeRabbit is optional/manual and should not be treated as the primary automated reviewer.
 - Automated review should flag missing tests, duplicated UI architecture, unsafe privacy changes, and mergeability risks.
 - Only auto-fix issues that are clearly scoped and testable. Leave architectural or ambiguous changes as review comments.

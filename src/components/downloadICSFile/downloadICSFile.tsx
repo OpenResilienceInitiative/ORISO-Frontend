@@ -1,62 +1,34 @@
 import * as React from 'react';
 import { Text } from '../text/Text';
 import { ReactComponent as CalendarICSIcon } from '../../resources/img/icons/calendar-ics.svg';
-import { addMissingZero } from '../../utils/dateHelpers';
 import './downloadICSFile.styles';
 import { useTranslation } from 'react-i18next';
+import { buildAppointmentIcs } from '../../utils/appointmentIcs';
+import { downloadICSFile } from '../../utils/downloadICSFile';
 
 export interface AppointmentInfoICS {
-	date: string;
-	duration: string;
+	/** Start as ISO-8601 string, epoch millis or Date. */
+	start: string | number | Date;
+	/** End of the appointment; alternative to `durationMinutes`. */
+	end?: string | number | Date;
+	/** Length in minutes; alternative to `end`. */
+	durationMinutes?: number;
 	title: string;
+	description?: string;
+	location?: string;
+	/** Stable id (e.g. the booking uid) so re-exports update the same event. */
+	uid?: string;
 }
 
-const downloadICSFile = (filename: string, icsMSG: string) => {
-	const link = document.createElement('a');
-	link.download = `${filename}.ics`;
-	link.href = `data:text/calendar;",${escape(icsMSG)}`;
-	document.body.appendChild(link);
-	link.click();
-	document.body.removeChild(link);
-};
-
 const handleICSAppointment = (appointmentInfo: AppointmentInfoICS) => {
-	const date = appointmentInfo.date.split(' ')[1];
-	const [day, month, year] = date.split('.');
-	const [startHour, , endHour] = appointmentInfo.duration.split(' ');
-	const timeStart = new Date('01/01/2007 ' + startHour);
-	const timeEnd = new Date('01/01/2007 ' + endHour);
-	const duration = appointmentInfo.duration.split('-').length
-		? appointmentInfo.duration
-		: (Math.abs(timeEnd.getTime() - timeStart.getTime()) / (1000 * 60)) %
-			60;
-
-	const icsMSG =
-		'BEGIN:VCALENDAR\n' +
-		'VERSION:2.0\n' +
-		'CALSCALE:GREGORIAN\n' +
-		'PRODID:adamgibbons/ics\n' +
-		'METHOD:PUBLISH\n' +
-		'X-PUBLISHED-TTL:PT1H\n' +
-		'BEGIN:VEVENT\n' +
-		'SUMMARY:' +
-		appointmentInfo.title +
-		'\n' +
-		'DTSTART:' +
-		'20' +
-		addMissingZero(parseInt(year)) +
-		addMissingZero(parseInt(month)) +
-		day +
-		'T' +
-		startHour.replace(':', '') +
-		'00\n' +
-		'DURATION:PT' +
-		duration +
-		'M\n' +
-		'END:VEVENT\n' +
-		'END:VCALENDAR\n';
-
-	downloadICSFile(appointmentInfo.title, icsMSG);
+	try {
+		const ics = buildAppointmentIcs(appointmentInfo);
+		downloadICSFile(appointmentInfo.title || 'appointment', ics);
+	} catch (error) {
+		// Never let a malformed appointment crash the surrounding message/list.
+		// eslint-disable-next-line no-console
+		console.error('Could not create calendar file', error);
+	}
 };
 
 export const DownloadICSFile = (params: AppointmentInfoICS) => {
@@ -64,7 +36,7 @@ export const DownloadICSFile = (params: AppointmentInfoICS) => {
 	return (
 		<div
 			className="downloadICSFile--flex"
-			onClick={handleICSAppointment.bind(this, params)}
+			onClick={() => handleICSAppointment(params)}
 		>
 			<CalendarICSIcon className="downloadICSFile__icon" />
 			<Text

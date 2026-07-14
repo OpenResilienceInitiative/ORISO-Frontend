@@ -105,7 +105,6 @@ import liveChatClosedIllustration from '../../resources/img/illustrations/live-c
 import NorthEastIcon from '@mui/icons-material/NorthEast';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CloseIcon from '@mui/icons-material/Close';
-
 const MessageSubmitInterfaceComponent = lazy(() =>
 	import('../messageSubmitInterface/messageSubmitInterfaceComponent').then(
 		(m) => ({ default: m.MessageSubmitInterfaceComponent })
@@ -4648,6 +4647,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							onMobileNavigateBottom={
 								handleScrollToBottomButtonClick
 							}
+							messages={messages}
+							onCloseThread={handleCloseThread}
+							isOwnMessage={isMyMessageMatrix}
 						/>
 					</div>
 				</div>
@@ -4767,6 +4769,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									onMobileNavigateBottom={
 										handleScrollToBottomButtonClick
 									}
+									messages={messages}
+									onCloseThread={handleCloseThread}
+									isOwnMessage={isMyMessageMatrix}
 								/>
 							</MessageSubmitErrorBoundary>
 						</Suspense>

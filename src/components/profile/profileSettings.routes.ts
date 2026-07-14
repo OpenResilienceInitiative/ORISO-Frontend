@@ -12,6 +12,7 @@ import { TwoFactorAuth } from '../twoFactorAuth/TwoFactorAuth';
 import { ConsultantNotifications } from './ConsultantNotifications';
 import { DeleteAccount } from './DeleteAccount';
 import { Locale } from './Locale';
+import { KeyboardShortcutsSettings } from '../../features/keyboard-shortcuts/components/KeyboardShortcutsSettings';
 
 export const profileRoutesSettings = (
 	selectableLocales: string[],
@@ -62,6 +63,17 @@ export const profileRoutesSettings = (
 			{
 				condition: () => selectableLocales.length > 1,
 				component: Locale,
+				column: COLUMN_RIGHT,
+				order: 1
+			}
+		]
+	},
+	{
+		title: 'profile.routes.settings.keyboardShortcuts',
+		url: '/tastatur',
+		elements: [
+			{
+				component: KeyboardShortcutsSettings,
 				column: COLUMN_RIGHT,
 				order: 1
 			}
