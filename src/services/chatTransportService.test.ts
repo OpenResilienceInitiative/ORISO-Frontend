@@ -22,6 +22,12 @@ vi.mock('../api/apiPostMessageEventNotification', () => ({
 		apiPostMessageEventNotification(input)
 }));
 
+const apiGetSessionRoomBySessionId = vi.fn();
+vi.mock('../api/apiGetSessionRooms', () => ({
+	apiGetSessionRoomBySessionId: (sessionId: number) =>
+		apiGetSessionRoomBySessionId(sessionId)
+}));
+
 const ROOM_ID = '!room:matrix.oriso.org';
 const OTHER_ROOM_ID = '!other:matrix.oriso.org';
 
@@ -410,6 +416,51 @@ describe('chatTransportService sendTextMessage (Matrix-only transport)', () => {
 				matrixClientServiceOverride: override
 			})
 		).rejects.toThrow('Matrix client not initialized');
+	});
+
+	it('refreshes a stale pre-accept session to resolve its Matrix room before sending', async () => {
+		apiGetSessionRoomBySessionId.mockResolvedValueOnce({
+			sessions: [{ session: { id: 42, matrixRoomId: ROOM_ID } }]
+		});
+		const sendMessage = vi.fn(() =>
+			Promise.resolve({ event_id: '$evt:matrix.oriso.org' })
+		);
+		const override = {
+			getClient: () => createFakeMatrixClient(),
+			sendMessage
+		} as any;
+
+		await chatTransportService.sendTextMessage({
+			roomIdOrSessionId: 42,
+			message: 'hello after accept',
+			sendMailNotification: false,
+			isEncrypted: false,
+			sessionId: 42,
+			matrixRoomId: undefined,
+			matrixClientServiceOverride: override
+		});
+
+		expect(apiGetSessionRoomBySessionId).toHaveBeenCalledWith(42);
+		expect(sendMessage).toHaveBeenCalledWith(ROOM_ID, 'hello after accept');
+	});
+
+	it('rejects when refreshing a stale session still returns no Matrix room', async () => {
+		apiGetSessionRoomBySessionId.mockResolvedValueOnce({ sessions: [] });
+
+		await expect(
+			chatTransportService.sendTextMessage({
+				roomIdOrSessionId: 42,
+				message: 'hello',
+				sendMailNotification: false,
+				isEncrypted: false,
+				sessionId: 42,
+				matrixRoomId: undefined,
+				matrixClientServiceOverride: {
+					getClient: () => createFakeMatrixClient(),
+					sendMessage: vi.fn()
+				} as any
+			})
+		).rejects.toThrow('Cannot send message: session has no Matrix room');
 	});
 
 	it('sends via the Matrix client with the room id and message when a room id is present', async () => {

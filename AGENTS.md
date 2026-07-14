@@ -28,7 +28,9 @@
     - `npm run lint:scripts`
     - `npm run lint:style`
     - `npm run build`
-- If a full command is too expensive or blocked by existing unrelated failures, run the narrowest relevant command and state the blocker precisely.
+- **Hard gate before opening a PR:** `npm run test:unit`, `npm run lint:scripts`, `npm run lint:style`, and `npm run build` must pass. A PR without this passing output is not done.
+- For changes that need a running backend, start the workspace infra stack first: `make verify` in the workspace root (see workspace `AGENTS.md`). Validate the affected flow against it before opening the PR.
+- The narrowest-relevant-command shortcut applies to intermediate iterations only — never to the final pre-PR gate. If the gate is blocked by pre-existing unrelated failures, state the blocker precisely in the PR body.
 
 ## Review Expectations
 

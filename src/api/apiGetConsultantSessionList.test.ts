@@ -28,20 +28,41 @@ vi.mock('./fetchData', () => ({
 }));
 
 describe('apiGetConsultantSessionList', () => {
-	it('loads registered enquiries for the enquiry tab', async () => {
-		vi.mocked(fetchData).mockResolvedValue({ sessions: [] });
+	it('loads both registered and anonymous enquiries for the enquiry tab', async () => {
+		vi.mocked(fetchData).mockImplementation((async ({ url }: any) =>
+			url.includes('/anonymous')
+				? { sessions: [{ session: { id: 2 } }] }
+				: { sessions: [{ session: { id: 1 } }] }) as any);
 
-		await apiGetConsultantSessionList({
+		const result = await apiGetConsultantSessionList({
 			type: SESSION_LIST_TYPES.ENQUIRY
 		});
 
-		expect(fetchData).toHaveBeenCalledWith({
-			url: `https://api.oriso-dev.site/service/conversations/consultants/enquiries/registered?count=${SESSION_COUNT}&filter=all&offset=0`,
-			method: 'GET',
-			rcValidation: true,
-			responseHandling: ['EMPTY'],
-			timeout: TIMEOUT
+		const calledUrls = vi
+			.mocked(fetchData)
+			.mock.calls.map(([arg]: any) => arg.url);
+		expect(calledUrls).toContain(
+			`https://api.oriso-dev.site/service/conversations/consultants/enquiries/registered?count=${SESSION_COUNT}&filter=all&offset=0`
+		);
+		expect(calledUrls).toContain(
+			`https://api.oriso-dev.site/service/conversations/consultants/enquiries/anonymous?count=${SESSION_COUNT}&filter=all&offset=0`
+		);
+		// Both feeds are merged so true-anonymous live-chat sessions appear alongside registered ones.
+		expect(result.sessions.map((s: any) => s.session.id).sort()).toEqual([
+			1, 2
+		]);
+	});
+
+	it('dedupes sessions present in both enquiry feeds by session id', async () => {
+		vi.mocked(fetchData).mockResolvedValue({
+			sessions: [{ session: { id: 7 } }]
 		});
+
+		const result = await apiGetConsultantSessionList({
+			type: SESSION_LIST_TYPES.ENQUIRY
+		});
+
+		expect(result.sessions.map((s: any) => s.session.id)).toEqual([7]);
 	});
 
 	it('loads consultant sessions with pagination', async () => {
