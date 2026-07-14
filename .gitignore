@@ -52,4 +52,6 @@ graphify-out/*
 # chromatic build log
 build-storybook.log
 docs/*
+!docs/storybook/
+!docs/storybook/**
 *.pem

@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import sanitizeHtml from 'sanitize-html';
 import { PrettyDate } from '../../utils/dateHelpers';
+import { getMatrixClientLogger } from '../../utils/matrixLogging';
 import {
 	UserDataContext,
 	hasUserAuthority,
@@ -77,6 +78,8 @@ import { ReactComponent as EyeIcon } from '../../resources/img/icons/eye.svg';
 import { formatMessagePersonName } from './messageNameUtils';
 import { useMatrixRoomUsers } from '../../hooks/useMatrixRoomUsers';
 import { ConsultantListContext } from '../../globalState/provider/ConsultantListProvider';
+
+const logger = getMatrixClientLogger();
 
 const ActiveKebabIcon = () => (
 	<svg width="28" height="32" viewBox="0 0 28 32" fill="none" aria-hidden>
@@ -884,8 +887,7 @@ export const MessageItemComponent = ({
 			);
 		} catch (error) {
 			// Markdown parsing failed; fall back to the sanitized raw message.
-			// eslint-disable-next-line no-console
-			console.debug(
+			logger.debug(
 				'Message markdown render failed, using raw text',
 				error
 			);
