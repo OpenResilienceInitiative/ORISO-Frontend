@@ -136,6 +136,19 @@ const config: StorybookConfig = {
 						]
 					}
 				}
+			},
+			// Avoid Vite/MUI circular prebundle races that crash the preview with
+			// "styled_default is not a function" (blank canvas for every story).
+			optimizeDeps: {
+				include: [
+					'@emotion/react',
+					'@emotion/styled',
+					'@mui/material',
+					'@mui/material/styles',
+					'@mui/material/styles/styled',
+					'@mui/system',
+					'@mui/icons-material'
+				]
 			}
 		});
 	}

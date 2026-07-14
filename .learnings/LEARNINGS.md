@@ -15,6 +15,9 @@ Format:
 
 - Context: `docs/cursor-orchestrator/2026-07-14_pr-385-review-cursor-docs/` (PR #385 review)
 - Lesson: Keep `goal-loop`, `pr-prep`, `AGENTS.md`, and `git-workflow.mdc` on the same base (`pre-dev`). If orchestration writes under `docs/cursor-orchestrator/`, add a `.gitignore` negation or the trail cannot be committed.
+## 2026-07-14 — Storybook Vite + MUI `styled_default`
+
+Blank Storybook canvas with `styled_default is not a function` is a Vite prebundle race around `@emotion/styled` / `@mui/material`. Fix: early `import '@mui/material/styles/styled'` in `.storybook/preview.tsx`, `optimizeDeps.include` for emotion/MUI in `.storybook/main.ts`, and clear `node_modules/.cache/storybook` after changing those.
 
 ## 2026-07-10 — JS-driven widget size vs CSS min-height
 
