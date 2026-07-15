@@ -1249,6 +1249,30 @@
 		"resetPasswort": {
 			"label": "Forgot password?"
 		},
+		"resetPassword": {
+			"request": {
+				"headline": "Forgot password?",
+				"text": "If you have provided your email address, you can reset your password. Enter your email address and press submit. We will then send you a link that you can use to reset your password.",
+				"usernameLabel": "Email",
+				"submitLabel": "Submit",
+				"usernameRequired": "Please enter your email first.",
+				"notEnabled": "Resetting the password is currently not possible for this account."
+			},
+			"sent": {
+				"headline": "An email with further instructions has been sent to you.",
+				"text": "You should receive an email with further instructions shortly."
+			},
+			"backToLogin": "Back to login",
+			"setNew": {
+				"headline": "Set a new password",
+				"text": "Please enter your new password.",
+				"newLabel": "New password",
+				"confirmLabel": "Confirm new password",
+				"submitLabel": "Save password",
+				"success": "Your password has been changed successfully. You can now log in.",
+				"invalidToken": "This link is invalid or has expired. Please request a new one."
+			}
+		},
 		"magicLink": {
 			"label": "Login with magic link",
 			"submitLabel": "Send magic link",

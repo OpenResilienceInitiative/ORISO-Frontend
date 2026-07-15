@@ -1,6 +1,7 @@
 import '../../polyfill';
 import * as React from 'react';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { endpoints } from '../../resources/scripts/endpoints';
 import { Button, BUTTON_TYPES, ButtonItem } from '../button/Button';
 import { autoLogin, redirectToApp } from '../registration/autoLogin';
@@ -66,6 +67,7 @@ export const Login = () => {
 	type LoginMethod = 'password' | 'magicLink';
 	const settings = useAppConfig();
 	const { t: translate } = useTranslation();
+	const navigate = useNavigate();
 
 	const { locale, initLocale } = useContext(LocaleContext);
 	const { tenant } = useContext(TenantContext);
@@ -379,12 +381,7 @@ export const Login = () => {
 	};
 
 	const onPasswordResetClick = () => {
-		setValueInCookie(
-			'KEYCLOAK_LOCALE',
-			locale,
-			endpoints.loginResetPasswordLink.split('/').slice(0, -1).join('/')
-		);
-		window.open(endpoints.loginResetPasswordLink, '_self', 'noreferrer');
+		navigate('/password-reset');
 	};
 
 	return (
