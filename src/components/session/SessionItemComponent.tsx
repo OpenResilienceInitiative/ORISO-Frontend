@@ -389,7 +389,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const { t: translate } = useTranslation();
 	const tenantData = useTenant();
 
-	const { activeSession } = useContext(ActiveSessionContext);
+	const { activeSession, reloadActiveSession } =
+		useContext(ActiveSessionContext);
 	const { userData, setUserData } = useContext(UserDataContext);
 	const { addEventNotification } = useContext(NotificationsContext);
 	const { type } = useContext(SessionTypeContext);
@@ -1883,6 +1884,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 		let cancelled = false;
 		const sessionId = activeSession.item.id;
+		const hasMatrixRoom = Boolean(activeSession.item?.matrixRoomId);
 
 		const refresh = () => {
 			apiGetAnonymousEnquiryDetails(sessionId)
@@ -1905,6 +1907,15 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						details.status !== 'NEW'
 					) {
 						setConsultantAccepted(true);
+						/* Accepting provisions the Matrix room server-side,
+						   but the session in memory was loaded before that
+						   and still has no matrixRoomId — without it the
+						   chat never connects. Reload the session on every
+						   poll tick until the room id arrives (acceptance
+						   can race the room creation by a moment). */
+						if (!hasMatrixRoom) {
+							reloadActiveSession?.();
+						}
 					}
 				})
 				.catch(() => {
@@ -1920,7 +1931,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			cancelled = true;
 			window.clearInterval(poll);
 		};
-	}, [isInAnonymousWaitingQueuePhase, activeSession.item?.id]);
+	}, [
+		isInAnonymousWaitingQueuePhase,
+		activeSession.item?.id,
+		activeSession.item?.matrixRoomId,
+		reloadActiveSession
+	]);
 
 	/**
 	 * When an anonymous asker leaves (logout, navigate away, tab close), finish the
@@ -2017,10 +2033,20 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	}, []);
 
 	const handleStartAcceptedChat = useCallback(() => {
+		/* Safety net: if the accepted session still lacks its Matrix room
+		   id (reload raced the room provisioning), fetch it again now so
+		   the unlocked composer can actually send. */
+		if (!activeSession.item?.matrixRoomId) {
+			reloadActiveSession?.();
+		}
 		void import('../messageSubmitInterface/messageSubmitInterfaceComponent')
 			.then(() => setWaitingGateDismissed(true))
 			.catch(() => setWaitingGateDismissed(true));
-	}, [setWaitingGateDismissed]);
+	}, [
+		activeSession.item?.matrixRoomId,
+		reloadActiveSession,
+		setWaitingGateDismissed
+	]);
 
 	useEffect(() => {
 		if (!shouldShowRobotMessages) {
