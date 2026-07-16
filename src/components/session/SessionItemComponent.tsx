@@ -65,7 +65,6 @@ import { apiPatchUserData } from '../../api/apiPatchUserData';
 import { apiGetUserData } from '../../api/apiGetUserData';
 import { apiGetAnonymousEnquiryDetails } from '../../api/apiGetAnonymousEnquiryDetails';
 import {
-	bindAnonymousChatUnloadCleanup,
 	ensureAnonymousChatPreLogoutCleanup,
 	registerAnonymousChatSessionForCleanup
 } from '../../utils/anonymousChatSessionCleanup';
@@ -1898,14 +1897,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							? details.numAvailableConsultants
 							: null
 					);
-					/* Anything other than INITIAL/NEW means a consultant has
-					   started handling this enquiry — flip the action bar to
-					   the "Start chat now" prompt. */
-					if (
-						details?.status &&
-						details.status !== 'INITIAL' &&
-						details.status !== 'NEW'
-					) {
+					/* Only IN_PROGRESS means a consultant is handling this
+					   enquiry. DONE/IN_ARCHIVE must NOT flip the bar — a
+					   finished session would otherwise show "Start chat
+					   now" over a chat that can never connect. */
+					if (details?.status === 'IN_PROGRESS') {
 						setConsultantAccepted(true);
 						/* Accepting provisions the Matrix room server-side,
 						   but the session in memory was loaded before that
@@ -1939,8 +1935,15 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	]);
 
 	/**
-	 * When an anonymous asker leaves (logout, navigate away, tab close), finish the
-	 * session immediately so the waiting queue count drops for everyone else.
+	 * When an anonymous asker logs out, finish the session so the waiting
+	 * queue count drops for everyone else.
+	 *
+	 * Deliberately NOT bound to pagehide/unload: pagehide also fires on a
+	 * plain page refresh or navigation, and finishing there sets the session
+	 * to DONE and deactivates the anonymous Keycloak user — permanently
+	 * removing the enquiry from the consultant queue while the asker is
+	 * still waiting. Abandoned sessions are expired server-side by the
+	 * anonymous deactivate workflow instead.
 	 */
 	useEffect(() => {
 		ensureAnonymousChatPreLogoutCleanup();
@@ -1958,8 +1961,6 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				: activeSession.item?.matrixRoomId,
 			userData?.userName
 		);
-
-		return bindAnonymousChatUnloadCleanup(activeSession.item.id);
 	}, [
 		isAnonymousAskerExperience,
 		activeSession.item?.id,
