@@ -106,7 +106,6 @@ export type RegistrationStepFilterParams = {
 	preselectedConsultantId?: string | null;
 	preselectedConsultant?: ConsultantDirectLink | null;
 	preselectedTopic?: unknown;
-	selectedMainTopic?: unknown;
 	directLinkAgency?: unknown;
 	directLinkZipcode?: string;
 };
@@ -140,7 +139,7 @@ export const filterRegistrationStepsForDirectLink = (
 
 		return !step.condition?.({
 			agency: params.directLinkAgency,
-			topic: params.preselectedTopic || params.selectedMainTopic,
+			topic: params.preselectedTopic,
 			zipcode: params.directLinkZipcode
 		});
 	});

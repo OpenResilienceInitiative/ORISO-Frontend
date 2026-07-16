@@ -56,7 +56,6 @@ import genUserIcon from '../../../resources/img/registration-md3/icons/gen-user.
 import genKeyIcon from '../../../resources/img/registration-md3/icons/gen-key.svg';
 import genAvatarIcon from '../../../resources/img/registration-md3/icons/gen-avatar.svg';
 import genDiceIcon from '../../../resources/img/registration-md3/icons/gen-dice.svg';
-import { getUsernameHelperTextKey } from './usernameHelperText';
 import { DepartmentLegalSection } from '../../departmentLegal/DepartmentLegalSection';
 
 const toRegistrationUsername = (displayName: string) => {
@@ -250,7 +249,7 @@ export const AccountData: FC<{
 		onChange
 	]);
 
-	const { hasError: usernameHasError } = getUsernameFeedback({
+	const { hasError: usernameHasError, helperTextKey } = getUsernameFeedback({
 		wasBlurred: usernameWasBlurred,
 		isLongEnough: isUsernameLongEnough,
 		isAvailable: isUsernameAvailable,
@@ -258,14 +257,7 @@ export const AccountData: FC<{
 		availabilityCheckFailed: usernameAvailabilityFailed
 	});
 
-	const usernameHelperText = t(
-		getUsernameHelperTextKey({
-			usernameHasError,
-			usernameAvailabilityFailed,
-			isUsernameAvailable,
-			usernameAvailabilityChecked
-		})
-	);
+	const usernameHelperText = t(helperTextKey);
 
 	const visibilityButtonSx = {
 		'color': registrationMd3.onSurfaceVariant,

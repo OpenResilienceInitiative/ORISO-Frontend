@@ -259,7 +259,6 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 				preselectedConsultantId,
 				preselectedConsultant,
 				preselectedTopic,
-				selectedMainTopic: registrationData?.mainTopic,
 				directLinkAgency,
 				directLinkZipcode
 			})
@@ -299,27 +298,6 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 		registrationData?.agency?.id,
 		registrationData?.age,
 		registrationData?.state,
-		updateRegistrationData
-	]);
-
-	useEffect(() => {
-		if (!preselectedConsultant) {
-			return;
-		}
-
-		const agency = getDirectLinkAgency(registrationData?.mainTopic);
-		if (agency && agency.id !== registrationData?.agency?.id) {
-			updateRegistrationData({
-				agency,
-				zipcode: registrationData?.zipcode || DIRECT_LINK_POSTCODE
-			});
-		}
-	}, [
-		getDirectLinkAgency,
-		preselectedConsultant,
-		registrationData?.agency?.id,
-		registrationData?.mainTopic,
-		registrationData?.zipcode,
 		updateRegistrationData
 	]);
 

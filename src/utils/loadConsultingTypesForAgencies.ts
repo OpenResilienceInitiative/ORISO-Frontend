@@ -31,8 +31,8 @@ export const loadConsultingTypesForAgencies = async (
 	const uniqueConsultingTypeIds = [
 		...new Set(
 			agenciesWithConsultingType
-				.map((a) => a?.consultingType)
-				.filter((ct) => ct !== null && ct !== undefined)
+				.map((a) => a.consultingType)
+				.filter((ct): ct is number => ct != null)
 		)
 	];
 

@@ -45,7 +45,6 @@ import {
 } from './registrationSteps';
 import { getUrlParameter } from '../../utils/getUrlParameter';
 import { resolveRegistrationConsultingType } from './resolveRegistrationConsultingType';
-import { normalizePreferredLanguage } from '../../utils/normalizePreferredLanguage';
 import { UrlParamsContext } from '../../globalState/provider/UrlParamsProvider';
 import { RegistrationStepper } from './registrationStepper/RegistrationStepper';
 import {
@@ -368,7 +367,7 @@ export const Registration = () => {
 			agencyId: mergedData.agency?.id?.toString(),
 			postcode: mergedData.zipcode,
 			termsAccepted: 'true',
-			preferredLanguage: normalizePreferredLanguage(locale),
+			preferredLanguage: locale,
 			consultingType: resolveRegistrationConsultingType(
 				mergedData.agency,
 				registrationConsultingType,

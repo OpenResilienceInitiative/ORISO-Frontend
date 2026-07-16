@@ -143,21 +143,18 @@ export const ConsultantInformation = () => {
 			return;
 		}
 
+		const displayName = userData.displayName || userData.userName || '';
+		setInitialDisplayName(displayName);
+		setEditedDisplayName(displayName);
+	}, [isEditEnabled, userData.displayName, userData.userName]);
+
+	useEffect(() => {
+		// While the slug is being edited, background userData refreshes must
+		// not overwrite the user's unsaved typing.
 		if (isSlugEditEnabled) {
 			return;
 		}
 
-		const displayName = userData.displayName || userData.userName || '';
-		setInitialDisplayName(displayName);
-		setEditedDisplayName(displayName);
-	}, [
-		isEditEnabled,
-		isSlugEditEnabled,
-		userData.displayName,
-		userData.userName
-	]);
-
-	useEffect(() => {
 		setEditedPublicSlug(
 			userData.pendingPublicSlug || userData.publicSlug || ''
 		);
@@ -209,15 +206,18 @@ export const ConsultantInformation = () => {
 						semanticLevel="5"
 					/>
 					{isDisplayNameFeatureEnabled && !isEditEnabled && (
-						<span
-							role="button"
-							className="tertiary"
+						<button
+							type="button"
+							className="button-as-link tertiary"
 							onClick={() => {
 								setIsEditEnabled(true);
 							}}
+							aria-label={translate(
+								'profile.data.edit.button.edit'
+							)}
 						>
 							<PenIcon />
-						</span>
+						</button>
 					)}
 				</div>
 				{hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) && (
@@ -264,15 +264,18 @@ export const ConsultantInformation = () => {
 							semanticLevel="5"
 						/>
 						{!isSlugEditEnabled && (
-							<span
-								role="button"
-								className="tertiary"
+							<button
+								type="button"
+								className="button-as-link tertiary"
 								onClick={() => {
 									setIsSlugEditEnabled(true);
 								}}
+								aria-label={translate(
+									'profile.data.edit.button.edit'
+								)}
 							>
 								<PenIcon />
-							</span>
+							</button>
 						)}
 					</div>
 					<Text
