@@ -509,6 +509,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	);
 	const [consultantAccepted, setConsultantAccepted] = useState(false);
 	/**
+	 * The anonymous enquiry was finished server-side (asker logout, backend
+	 * expiry workflow, admin cleanup) while this tab was still on the
+	 * waiting screen. Waiting longer is pointless — no consultant can see
+	 * a finished enquiry — so the queue UI switches to a closed notice.
+	 */
+	const [enquiryClosed, setEnquiryClosed] = useState(false);
+	/**
 	 * Live count of consultants currently available for this anonymous
 	 * enquiry, fed by the `apiGetAnonymousEnquiryDetails` poll. `null` while
 	 * unknown. When this drops to 0 the "Live-Chat ist zurzeit leider
@@ -663,6 +670,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const liveChatClosedModalOpen =
 		isInAnonymousWaitingQueuePhase &&
 		!consultantAccepted &&
+		!enquiryClosed &&
 		numAvailableConsultants === 0 &&
 		!liveChatClosedDismissed;
 	const isJoinRoomAvailable = Boolean(activeSession.consultant?.id);
@@ -1877,7 +1885,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	 * enquiries queued ahead for the same consulting type.
 	 */
 	useEffect(() => {
-		if (!isInAnonymousWaitingQueuePhase || !activeSession.item?.id) {
+		if (
+			!isInAnonymousWaitingQueuePhase ||
+			!activeSession.item?.id ||
+			enquiryClosed
+		) {
 			return;
 		}
 
@@ -1889,6 +1901,18 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			apiGetAnonymousEnquiryDetails(sessionId)
 				.then((details) => {
 					if (cancelled) return;
+					/* DONE/IN_ARCHIVE: the enquiry was finished server-side.
+					   Consultants can never see or accept it — stop polling
+					   and show the closed notice instead of queue position
+					   and availability, which would suggest it is still
+					   waiting. */
+					if (
+						details?.status === 'DONE' ||
+						details?.status === 'IN_ARCHIVE'
+					) {
+						setEnquiryClosed(true);
+						return;
+					}
 					if (typeof details?.peopleAhead === 'number') {
 						setQueuePeopleAhead(details.peopleAhead);
 					}
@@ -1931,7 +1955,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		isInAnonymousWaitingQueuePhase,
 		activeSession.item?.id,
 		activeSession.item?.matrixRoomId,
-		reloadActiveSession
+		reloadActiveSession,
+		enquiryClosed
 	]);
 
 	/**
@@ -4639,8 +4664,23 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				</div>
 			)}
 
+			{shouldShowPseudonymGate && pseudonymConfirmed && enquiryClosed && (
+				<div className="session__pseudonymActionBarSlot">
+					<div
+						className="session__anonymousEnquiryClosedNote"
+						role="status"
+					>
+						{translate(
+							'anonymousChat.enquiryClosed',
+							'Dieser Live-Chat wurde beendet. Um einen neuen Chat zu starten, öffnen Sie bitte Ihren Einladungslink erneut.'
+						)}
+					</div>
+				</div>
+			)}
+
 			{shouldShowPseudonymGate &&
 				pseudonymConfirmed &&
+				!enquiryClosed &&
 				!consultantAccepted && (
 					<div className="session__pseudonymActionBarSlot">
 						<WaitingQueueActionBar
@@ -4652,6 +4692,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 			{shouldShowPseudonymGate &&
 				pseudonymConfirmed &&
+				!enquiryClosed &&
 				consultantAccepted && (
 					<div className="session__pseudonymActionBarSlot">
 						<ConsultantAcceptedActionBar
