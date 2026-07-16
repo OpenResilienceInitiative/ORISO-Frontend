@@ -354,6 +354,7 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 	}, [
 		preselectedConsultant,
 		preselectedTopic,
+		registrationData?.agency,
 		registrationData?.mainTopic?.id,
 		updateRegistrationData
 	]);

@@ -250,14 +250,13 @@ export const AccountData: FC<{
 		onChange
 	]);
 
-	const { hasError: usernameHasError, helperTextKey: usernameHelperTextKey } =
-		getUsernameFeedback({
-			wasBlurred: usernameWasBlurred,
-			isLongEnough: isUsernameLongEnough,
-			isAvailable: isUsernameAvailable,
-			availabilityChecked: usernameAvailabilityChecked,
-			availabilityCheckFailed: usernameAvailabilityFailed
-		});
+	const { hasError: usernameHasError } = getUsernameFeedback({
+		wasBlurred: usernameWasBlurred,
+		isLongEnough: isUsernameLongEnough,
+		isAvailable: isUsernameAvailable,
+		availabilityChecked: usernameAvailabilityChecked,
+		availabilityCheckFailed: usernameAvailabilityFailed
+	});
 
 	const usernameHelperText = t(
 		getUsernameHelperTextKey({

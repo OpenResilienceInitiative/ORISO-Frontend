@@ -150,7 +150,12 @@ export const ConsultantInformation = () => {
 		const displayName = userData.displayName || userData.userName || '';
 		setInitialDisplayName(displayName);
 		setEditedDisplayName(displayName);
-	}, [isEditEnabled, userData.displayName, userData.userName]);
+	}, [
+		isEditEnabled,
+		isSlugEditEnabled,
+		userData.displayName,
+		userData.userName
+	]);
 
 	useEffect(() => {
 		setEditedPublicSlug(

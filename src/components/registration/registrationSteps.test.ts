@@ -1,9 +1,18 @@
-import { describe, expect, it } from 'vitest';
+// @vitest-environment jsdom
+import { describe, expect, it, vi } from 'vitest';
 import {
 	filterRegistrationStepsForDirectLink,
 	getConsultantDirectLinkTopicIds,
 	RegistrationStep
 } from './registrationSteps';
+
+// The step registry imports the real step components and the globalState
+// barrel, whose import chains reach i18n, lottie and other browser-only
+// module-scope side effects. This test only exercises the pure step-filter
+// helpers, so stub those imports out (vi.mock is hoisted above the imports).
+vi.mock('./demographicInput/AgeInput', () => ({ AgeInput: () => null }));
+vi.mock('./demographicInput/StateInput', () => ({ StateInput: () => null }));
+vi.mock('../../globalState', () => ({}));
 
 const baseSteps: RegistrationStep[] = [
 	{
