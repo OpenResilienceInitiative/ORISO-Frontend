@@ -440,6 +440,52 @@
 		},
 		"message": {
 			"new": "Du hast eine neue Nachricht!"
+		},
+		"families": {
+			"all": "Alle",
+			"requests": "Anfragen",
+			"messages": "Nachrichten",
+			"drafts": "Entwürfe",
+			"handover": "Übergabe",
+			"calls": "Anrufe",
+			"system": "System",
+			"appointments": "Termine"
+		},
+		"center": {
+			"searchPlaceholder": "Aktivität durchsuchen…",
+			"unreadFilter": "Ungelesen",
+			"showPreview": "Chat-Vorschau anzeigen",
+			"showDetails": "Details anzeigen"
+		},
+		"events": {
+			"requestDenied": {
+				"title": "Anfrage abgelehnt",
+				"text": "Die Klient:innen-Anfrage wurde abgelehnt."
+			},
+			"waitingRoomClientJoined": {
+				"title": "Klient:in im Warteraum",
+				"text": "Eine Klient:in ist dem Warteraum beigetreten."
+			},
+			"callInvited": {
+				"title": "Einladung zu internem Gruppenanruf",
+				"text": "Du wurdest zu einem internen Gruppenanruf eingeladen."
+			},
+			"appointmentRequested": {
+				"title": "Termin für einen Anruf angefragt",
+				"text": "Es liegt eine neue Terminanfrage für einen Anruf vor."
+			},
+			"appointmentScheduled": {
+				"title": "Termin vor Ort geplant",
+				"text": "Ein Termin vor Ort wurde vereinbart."
+			},
+			"appointmentCancelled": {
+				"title": "Termin abgesagt",
+				"text": "Ein geplanter Termin wurde abgesagt."
+			},
+			"appointmentBriefing": {
+				"title": "Termin-Briefing",
+				"text": "Eine Übersicht deiner anstehenden Termine liegt bereit."
+			}
 		}
 	},
 	"overlay": {
@@ -623,6 +669,33 @@
 			},
 			"successOverlay": {
 				"headline": "Du hast Deine E-Mail-Adresse erfolgreich gelöscht."
+			}
+		},
+		"notificationSettings": {
+			"title": "Benachrichtigungen",
+			"description": "Diese Einstellungen gelten für dein Konto auf allen Geräten und Browsern.",
+			"globalMute": "Alle Benachrichtigungen stummschalten",
+			"deviceSilence": {
+				"title": "Dieses Gerät stummschalten",
+				"description": "Nur dieser Browser bleibt still — deine anderen Geräte benachrichtigen weiterhin."
+			},
+			"browser": {
+				"title": "Browser-Benachrichtigungen",
+				"description": "Desktop-Benachrichtigungen anzeigen, wenn die App im Hintergrund ist."
+			},
+			"preview": {
+				"title": "Nachrichteninhalt anzeigen",
+				"description": "Zeigt den Nachrichtentext in der Benachrichtigung. Aus Datenschutzgründen standardmäßig aus."
+			},
+			"sounds": "Benachrichtigungstöne",
+			"families": {
+				"title": "Benachrichtigen bei",
+				"description": "Wähle, welche Ereignis-Familien Benachrichtigungen auslösen dürfen."
+			}
+		},
+		"routes": {
+			"settings": {
+				"keyboardShortcuts": "Tastaturkürzel"
 			}
 		}
 	},
@@ -891,7 +964,7 @@
 					"receiveGift": "Kleines Geschenk erhalten"
 				},
 				"serenity": {
-					"instruction": "Das Geschenk ist ein kleines Mantra, das vielen Menschen durch schwierige Zeiten geholfen hat. Es heißt das Gelassenheitsgebet: \u201CGott, gib mir die Gelassenheit, Dinge hinzunehmen, die ich nicht ändern kann, den Mut, Dinge zu ändern, die ich ändern kann, und die Weisheit, das eine vom anderen zu unterscheiden.\u201D"
+					"instruction": "Das Geschenk ist ein kleines Mantra, das vielen Menschen durch schwierige Zeiten geholfen hat. Es heißt das Gelassenheitsgebet: “Gott, gib mir die Gelassenheit, Dinge hinzunehmen, die ich nicht ändern kann, den Mut, Dinge zu ändern, die ich ändern kann, und die Weisheit, das eine vom anderen zu unterscheiden.”"
 				}
 			},
 			"presets": {
@@ -1376,7 +1449,8 @@
 			"consultantAccepted": "Du wirst jetzt von deiner/deinem Berater_in im Chat erwartet.",
 			"startChatNow": "Jetzt Chat starten",
 			"dismissAcceptedBanner": "Hinweis ausblenden"
-		}
+		},
+		"enquiryClosed": "Dieser Live-Chat wurde beendet. Um einen neuen Chat zu starten, öffne bitte deinen Einladungslink erneut."
 	},
 	"sessionHeader": {
 		"anonymous": {
@@ -1473,5 +1547,110 @@
 		"liveChatToggleActive": "Live-Chat verfügbar",
 		"liveChatToggleInactive": "Live-Chat nicht verfügbar",
 		"myProfile": "Mein Profil"
+	},
+	"shortcuts": {
+		"title": "Tastaturkürzel",
+		"description": "Tastenkürzel für den Chat anpassen. Änderungen gelten sofort und werden auf diesem Gerät gespeichert.",
+		"automaticallyConfigured": "automatisch konfiguriert",
+		"disableShortcut": "Deaktiviert",
+		"restoreDefaults": "Standard wiederherstellen",
+		"restoreDefaultsSuccess": "Standard-Tastaturkürzel wiederhergestellt.",
+		"primaryModifier": "Primärer Modifizierer",
+		"help": {
+			"title": "Tastaturkürzel",
+			"close": "Schließen"
+		},
+		"palette": {
+			"title": "Befehlspalette",
+			"close": "Schließen",
+			"searchPlaceholder": "Befehle suchen…",
+			"allShortcuts": "Alle Tastaturkürzel"
+		},
+		"editingBanner": "Nachricht bearbeiten",
+		"editingCancel": "Abbrechen",
+		"categories": {
+			"messaging": "Nachrichten",
+			"navigation": "Navigation",
+			"attachments": "Anhänge",
+			"emoji": "Emoji und Reaktionen",
+			"application": "Anwendung"
+		},
+		"actions": {
+			"sendMessage": {
+				"label": "Nachricht senden",
+				"description": "Sendet die aktuelle Chat-Nachricht."
+			},
+			"insertNewLine": {
+				"label": "Neue Zeile einfügen",
+				"description": "Fügt eine neue Zeile im Eingabefeld ein. Wird vom Sende-Kürzel abgeleitet."
+			},
+			"showShortcutHelp": {
+				"label": "Tastaturkürzel anzeigen",
+				"description": "Öffnet die Hilfe zu Tastaturkürzeln."
+			},
+			"focusInput": {
+				"label": "Eingabefeld fokussieren",
+				"description": "Setzt den Fokus auf das Nachrichteneingabefeld."
+			},
+			"uploadFile": {
+				"label": "Datei hochladen",
+				"description": "Öffnet die Dateiauswahl für Anhänge."
+			},
+			"searchMessages": {
+				"label": "Nachrichten suchen",
+				"description": "Durchsucht Nachrichten in der aktuellen Unterhaltung."
+			},
+			"editLastMessage": {
+				"label": "Letzte Nachricht bearbeiten",
+				"description": "Bearbeitet Ihre zuletzt gesendete Nachricht."
+			},
+			"cancelReplyOrEdit": {
+				"label": "Antwort oder Bearbeitung abbrechen",
+				"description": "Bricht die aktuelle Antwort oder Bearbeitung ab."
+			},
+			"openEmojiPicker": {
+				"label": "Emoji-Auswahl öffnen",
+				"description": "Öffnet die Emoji-Auswahl."
+			},
+			"startNewConversation": {
+				"label": "Neue Unterhaltung starten",
+				"description": "Startet eine neue Unterhaltung."
+			},
+			"openCommandPalette": {
+				"label": "Befehlspalette öffnen",
+				"description": "Öffnet die Befehlspalette."
+			}
+		},
+		"conflicts": {
+			"duplicate": "Dieses Tastaturkürzel ist bereits vergeben.",
+			"reserved": "Dieses Tastaturkürzel ist vom Browser reserviert.",
+			"browserConflict": "Dieses Tastaturkürzel steht im Konflikt mit gängigen Browser-Kürzeln.",
+			"sendNewline": "Nachricht senden und Neue Zeile dürfen nicht dasselbe Kürzel verwenden.",
+			"unsupported": "Diese Kürzel-Option wird nicht unterstützt.",
+			"cannotDisable": "Dieses Tastaturkürzel kann nicht deaktiviert werden.",
+			"unsafePlainKey": "Diese Taste kann während der Eingabe nicht als Kürzel verwendet werden."
+		},
+		"hints": {
+			"enterSends": "Enter sendet die Nachricht",
+			"shiftEnterNewline": "Umschalt+Enter fügt eine neue Zeile ein",
+			"enterNewline": "Enter fügt eine neue Zeile ein",
+			"ctrlEnterSends": "Strg+Enter sendet die Nachricht",
+			"cmdEnterSends": "Cmd+Enter sendet die Nachricht"
+		},
+		"lockedNewline": "Auf Umschalt+Enter festgelegt, solange Enter die Nachricht sendet.",
+		"resetAction": "Zurücksetzen",
+		"restoreDefaultsConfirm": "Alle Tastenkürzel auf die Standardwerte zurücksetzen?",
+		"restoreDefaultsConfirmYes": "Zurücksetzen",
+		"restoreDefaultsConfirmNo": "Abbrechen",
+		"keys": {
+			"enter": "Enter",
+			"escape": "Esc",
+			"arrowUp": "↑",
+			"shift": "Umschalt",
+			"alt": "Alt",
+			"option": "Option",
+			"ctrl": "Strg",
+			"cmd": "Cmd"
+		}
 	}
 }

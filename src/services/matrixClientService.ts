@@ -6,6 +6,7 @@ import {
 	persistMatrixLoginData
 } from '../components/sessionCookie/getMatrixAccessToken';
 import { matrixCallService } from './matrixCallService';
+import { buildMatrixCryptoStorePrefix } from './matrixCrypto';
 import { matrixLiveEventBridge } from './matrixLiveEventBridge';
 import { encryptMatrixAttachment } from '../utils/matrixEncryptedAttachment';
 import { buildMatrixRoomEncryptionInitialState } from '../utils/matrixRoomEncryption';
@@ -94,7 +95,7 @@ export class MatrixClientService {
 	private syncStateListeners = new Set<(state: string | null) => void>();
 
 	// Initialize client with login data
-	public initializeClient(loginData: MatrixLoginData): void {
+	public async initializeClient(loginData: MatrixLoginData): Promise<void> {
 		this.stopCurrentClient();
 		this.loginData = loginData;
 		this.client = createMatrixClient(loginData);
@@ -108,6 +109,18 @@ export class MatrixClientService {
 		// console.log('🔧 Matrix client will fetch TURN/STUN servers from homeserver');
 
 		const client = this.client;
+		try {
+			await client.initRustCrypto({
+				useIndexedDB: true,
+				cryptoDatabasePrefix: buildMatrixCryptoStorePrefix(
+					loginData.userId,
+					loginData.deviceId
+				)
+			});
+		} catch (error) {
+			this.stopCurrentClient();
+			throw error;
+		}
 
 		(client as any).on(
 			'sync',
@@ -121,7 +134,7 @@ export class MatrixClientService {
 				}
 
 				if (state === 'ERROR' && isMatrixExpiredTokenError(syncError)) {
-					void this.refreshMatrixToken();
+					this.refreshMatrixTokenSafely();
 				}
 			}
 		);
@@ -161,15 +174,19 @@ export class MatrixClientService {
 		}
 
 		this.refreshingToken = getMatrixAccessToken()
-			.then((loginData) => {
+			.then(async (loginData) => {
 				persistMatrixLoginData(loginData);
-				this.initializeClient(loginData);
+				await this.initializeClient(loginData);
 			})
 			.finally(() => {
 				this.refreshingToken = null;
 			});
 
 		return this.refreshingToken;
+	}
+
+	private refreshMatrixTokenSafely(): void {
+		void this.refreshMatrixToken().catch(() => undefined);
 	}
 
 	public async ensureFreshToken(): Promise<void> {
@@ -185,29 +202,47 @@ export class MatrixClientService {
 	public async sendMessage(roomId: string, message: string): Promise<any> {
 		await this.ensureFreshToken();
 
-		if (!this.client) {
-			throw new Error('Matrix client not initialized');
-		}
-
 		const content = {
 			msgtype: 'm.text',
 			body: message
 		} as any;
+		const sendToRoom = async () => {
+			const client = this.client;
+			if (!client) {
+				throw new Error('Matrix client not initialized');
+			}
+			if (!client.getRoom(roomId)) {
+				await client.joinRoom(roomId);
+			}
+			return client.sendMessage(roomId, content);
+		};
 
 		try {
-			return await this.client.sendMessage(roomId, content);
+			return await sendToRoom();
 		} catch (error) {
 			if (!isMatrixExpiredTokenError(error)) {
 				throw error;
 			}
 
 			await this.refreshMatrixToken();
-			if (!this.client) {
-				throw new Error('Matrix client not initialized');
-			}
-
-			return this.client.sendMessage(roomId, content);
+			return sendToRoom();
 		}
+	}
+
+	public async editMessage(
+		roomId: string,
+		eventId: string,
+		message: string
+	): Promise<any> {
+		await this.ensureFreshToken();
+		if (!this.client) throw new Error('Matrix client not initialized');
+		const content = {
+			'msgtype': 'm.text',
+			'body': `* ${message}`,
+			'm.new_content': { msgtype: 'm.text', body: message },
+			'm.relates_to': { rel_type: 'm.replace', event_id: eventId }
+		};
+		return this.client.sendMessage(roomId, content as any);
 	}
 
 	public async sendFileMessage(
@@ -368,7 +403,7 @@ export class MatrixClientService {
 		);
 
 		this.refreshTimer = window.setTimeout(() => {
-			void this.refreshMatrixToken();
+			this.refreshMatrixTokenSafely();
 		}, refreshInMs);
 	}
 

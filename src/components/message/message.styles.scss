@@ -4,7 +4,13 @@ $message-lineheight: 21px;
 $message-attachment-color: $secondary !default;
 $message-avatar-ring: #ebe2e2;
 $message-incoming-bg: var(--m3-surface-container-high, #eae7e8);
-$message-outgoing-bg: var(--m3-on-primary-container, #ffe2de);
+// Use the always-light `primary-fixed` (tonal palette tone 90) rather than
+// `on-primary-container`. The latter is a foreground/contrast role whose
+// lightness flips with the tenant seed brightness, so bright-red tenants
+// (e.g. Kiel) got a dark bubble under the fixed-dark outgoing text below,
+// making outgoing messages unreadable. `primary-fixed` stays light for
+// every seed and keeps the branded tint.
+$message-outgoing-bg: var(--m3-primary-fixed, #ffdad5);
 $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 
 .messageItem__mention {
@@ -19,7 +25,7 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 .messageItem {
 	display: flex;
 	flex-direction: column;
-	margin-bottom: $grid-base-two;
+	margin-bottom: 32px;
 	opacity: 0;
 	animation: appearMessageItem 150ms ease forwards;
 
@@ -134,14 +140,17 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 		max-width: min(71%, 600px);
 		position: relative;
 
+		&--left,
 		&--right {
-			flex-direction: row-reverse;
-			align-self: center;
-			margin-left: auto;
-			align-items: center;
+			align-items: start;
 			gap: 4px;
 			position: relative;
-			padding-right: 32px;
+		}
+
+		&--right {
+			flex-direction: row-reverse;
+			align-self: flex-end;
+			margin-left: auto;
 		}
 
 		&--furtherSteps {
@@ -162,9 +171,9 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 		height: 48px;
 		min-width: 48px;
 		min-height: 48px;
-		border: 10px solid #fff;
+		border: 8px solid #fff;
 		border-radius: 999px;
-		background: #ffd9d9;
+		background: #fff;
 		overflow: hidden;
 		display: inline-flex;
 		align-items: center;
@@ -188,23 +197,46 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 	}
 
 	&__sideColumn {
-		display: inline-flex;
+		display: flex;
 		flex-direction: column;
+		justify-content: space-between;
 		align-items: center;
 		flex-shrink: 0;
 		margin-top: 0;
 		position: relative;
 		z-index: 6;
+		height: stretch;
+	}
+
+	&__sideColumn--left,
+	&__sideColumn--right {
+		align-items: center;
+		margin-bottom: 0;
+	}
+
+	&__sideColumn--left {
+		z-index: 5;
 	}
 
 	&__sideColumn--right {
-		align-items: center;
-		justify-content: center;
-		margin-bottom: 0;
 		position: absolute;
-		right: -4px;
-		bottom: 40px;
+		right: -32px;
+		bottom: -14px;
 		z-index: 5;
+	}
+
+	&__sideColumnGroup {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+
+		&--left {
+			translate: 0% -25%;
+		}
+
+		&--right {
+			margin-top: auto;
+		}
 	}
 
 	&--right {
@@ -379,11 +411,15 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 	}
 
 	&__visibilityChip--incoming {
+		bottom: -16px;
 		margin-top: -2px;
+		translate: 0% 50%;
 	}
 
 	&__visibilityChip--outgoing {
+		top: -16px;
 		margin-bottom: -2px;
+		translate: 0% -50%;
 	}
 
 	&__visibilityMenu {
@@ -597,11 +633,17 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 		align-items: center;
 		justify-content: center;
 		flex-shrink: 0;
+		z-index: 5;
 	}
 
 	&__systemAvatarIcon {
 		width: 15px;
 		height: 15px;
+
+		@media (min-resolution: 1.5dppx), (min-width: 1920px) {
+			width: 19px;
+			height: 19px;
+		}
 
 		* {
 			fill: #e53952;
@@ -769,8 +811,23 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 			text-align: right;
 		}
 
-		span:not(.messageItem__highlight) {
+		span:not(.messageItem__highlight, .messageItem__messageTime) {
 			display: inline;
+		}
+
+		.messageItem__messageTime {
+			display: block;
+			width: 100%;
+			margin-top: 4px;
+			line-height: 1;
+			font-size: $font-size-secondary;
+			color: var(--m3-on-surface-variant, $tertiary);
+			white-space: nowrap;
+			text-align: right;
+
+			&--outgoing {
+				text-align: left;
+			}
 		}
 
 		&__attachment {
@@ -891,6 +948,7 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 		gap: 6px;
 		flex-wrap: wrap;
 		margin: 2px 0 6px;
+		padding-left: 20px;
 	}
 
 	&__visibleOnlyLabel {

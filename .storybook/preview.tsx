@@ -1,3 +1,6 @@
+// Force MUI styled-engine init before any @mui/* prebundles run.
+// Without this, Vite can crash the preview with "styled_default is not a function".
+import '@mui/material/styles/styled';
 // Compound styles loaded via preview-head.html
 import '../src/resources/styles/styles.scss';
 import '../src/resources/styles/mui-variables-mapping.scss';

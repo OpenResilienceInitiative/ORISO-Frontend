@@ -28,6 +28,7 @@ interface SessionsListToolbarProps {
 	activeChip: SessionToolbarChipFilter | null;
 	onChipToggle: (chip: SessionToolbarChipFilter) => void;
 	showConsultantActions: boolean;
+	showCreateGroupChatAction: boolean;
 	showSupervisionChip: boolean;
 	/** Show the "Live-Chat" filter chip (tied to the sidebar availability toggle). */
 	showLiveChatChip?: boolean;
@@ -261,6 +262,7 @@ export const SessionsListToolbar = ({
 	activeChip,
 	onChipToggle,
 	showConsultantActions,
+	showCreateGroupChatAction,
 	showSupervisionChip,
 	showLiveChatChip = false,
 	createGroupChatPath,
@@ -643,7 +645,7 @@ export const SessionsListToolbar = ({
 				style={{ display: showSearchDropdown ? 'none' : undefined }}
 			>
 				<div className="sessionsListToolbar__chipsRow">
-					{showConsultantActions && (
+					{showCreateGroupChatAction && (
 						<Link
 							className={clsx('sessionsListToolbar__chip', {
 								'sessionsListToolbar__chip--iconOnly':

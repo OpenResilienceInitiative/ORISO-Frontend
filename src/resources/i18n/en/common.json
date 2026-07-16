@@ -602,6 +602,43 @@
 		}
 	},
 	"groupChat": {
+		"calendar": {
+			"add": "Add to calendar",
+			"defaultTitle": "Online appointment",
+			"download": "Download ICS",
+			"google": "Google Calendar",
+			"outlook": "Outlook Calendar",
+			"titleLabel": "Neutral calendar title"
+		},
+		"futureTimeline": {
+			"appointmentFallback": "Appointment",
+			"ariaLabel": "Future timeline",
+			"commandError": "The occurrence could not be changed. Please try again.",
+			"duplicate": "Duplicate as one-off",
+			"empty": "No upcoming events.",
+			"groupChatFallback": "Group chat",
+			"hide": "Hide future events",
+			"loadMore": "Load three more months",
+			"loadError": "Some future events could not be loaded.",
+			"loading": "Loading future events…",
+			"now": "Now",
+			"revealAriaLabel": "Reveal future timeline",
+			"show": "Show future events",
+			"skip": "Skip occurrence"
+		},
+		"roles": {
+			"CO_MODERATOR": "Co-moderator",
+			"OWNER": "Owner",
+			"PARTICIPANT": "Participant",
+			"headline": "Counsellor roles",
+			"remove": "Remove from group",
+			"removeError": "The participant could not be removed. Please try again.",
+			"roleLabel": "Role for {{name}}",
+			"transfer": "Transfer primary ownership",
+			"transferError": "Primary ownership could not be transferred. Please try again.",
+			"transferLabel": "Transfer primary ownership to {{name}}",
+			"updateError": "The role could not be updated. Please try again."
+		},
 		"active": {
 			"sessionInfo": {
 				"subscriber": "Participants"
@@ -623,6 +660,30 @@
 			}
 		},
 		"create": {
+			"duration": "Duration",
+			"interval": {
+				"label": "Interval",
+				"options": {
+					"biweekly": "Every two weeks",
+					"daily": "Daily",
+					"monthly": "Monthly",
+					"quarterly": "Quarterly",
+					"weekly": "Weekly",
+					"yearly": "Yearly"
+				}
+			},
+			"modality": {
+				"label": "Format",
+				"options": {
+					"audio": "Audio",
+					"text": "Text",
+					"video": "Video"
+				}
+			},
+			"repeatCount": "Occurrences",
+			"schedule": "Schedule",
+			"startDate": "Start date",
+			"startTime": "Start time",
 			"agencySelect": {
 				"label": "Agency"
 			},
@@ -650,6 +711,18 @@
 			"hintMessage": {
 				"explanation": "Note: This information is visible to all administrators of the group chat.",
 				"label": "Note field"
+			},
+			"authorContent": {
+				"title": "Welcome and group rules",
+				"sourceLanguage": "Source language",
+				"welcome": "Welcome message (maximum 120 characters)",
+				"rules": "Group rules",
+				"rule": "Rule",
+				"addRule": "Add rule",
+				"removeRule": "Remove",
+				"translate": "Translate into active languages",
+				"translating": "Translating…",
+				"translationError": "Translation failed. Your text was kept; please try again."
 			},
 			"listItem": {
 				"label": "New chat"
@@ -706,6 +779,19 @@
 			}
 		},
 		"join": {
+			"timeConversions": "Playful time conversions",
+			"waitingArea": {
+				"catMinutes": "{{value}} cat minutes",
+				"discomfort": {
+					"late": "late",
+					"onTime": "on time",
+					"slightlyLate": "slightly late",
+					"veryLate": "very late"
+				},
+				"dogMinutes": "{{value}} dog minutes",
+				"romanMinutes": "{{value}} roman minutes",
+				"rulesLabel": "Chat rules"
+			},
 			"button": {
 				"label": {
 					"join": "Join",
@@ -1421,6 +1507,46 @@
 			"callMissed": {
 				"title": "Missed call",
 				"text": "You missed a call."
+			},
+			"groupChatReminder": {
+				"title": "Online appointment reminder",
+				"text": "An online appointment is coming up."
+			},
+			"groupChatOpened": {
+				"title": "Online appointment opened",
+				"text": "The online appointment is open. Join when you are ready."
+			},
+			"groupChatCancelled": {
+				"title": "Online appointment cancelled",
+				"text": "The online appointment was cancelled."
+			},
+			"requestDenied": {
+				"title": "Request denied",
+				"text": "The client request was denied."
+			},
+			"waitingRoomClientJoined": {
+				"title": "Client joined waiting room",
+				"text": "A client has joined the waiting room."
+			},
+			"callInvited": {
+				"title": "Invitation to internal group call",
+				"text": "You have been invited to an internal group call."
+			},
+			"appointmentRequested": {
+				"title": "Call appointment requested",
+				"text": "There is a new appointment request for a call."
+			},
+			"appointmentScheduled": {
+				"title": "Local appointment scheduled",
+				"text": "An in-person appointment has been scheduled."
+			},
+			"appointmentCancelled": {
+				"title": "Appointment cancelled",
+				"text": "A scheduled appointment has been cancelled."
+			},
+			"appointmentBriefing": {
+				"title": "Appointments briefing",
+				"text": "A briefing of your upcoming appointments is ready."
 			}
 		},
 		"error": "failed",
@@ -1443,8 +1569,12 @@
 			"empty": "No notifications yet.",
 			"emptyDetail": "Select a notification to see the details.",
 			"open": "Open chat",
+			"join": "Join",
 			"systemTag": "System notification",
-			"messageTag": "Message notification"
+			"messageTag": "Message notification",
+			"unreadFilter": "Unread",
+			"showPreview": "Show conversation preview",
+			"showDetails": "Show details"
 		},
 		"threadReply": {
 			"title": "New thread reply"
@@ -1787,7 +1917,8 @@
 					"changePassword": "Change password",
 					"title": "Security"
 				},
-				"title": "Settings"
+				"title": "Settings",
+				"keyboardShortcuts": "Keyboard Shortcuts"
 			}
 		},
 		"spokenLanguages": {
@@ -1843,6 +1974,28 @@
 			"successOverlay": {
 				"button": "ok",
 				"headline": "You have successfully deleted your email address."
+			}
+		},
+		"notificationSettings": {
+			"title": "Notifications",
+			"description": "These settings apply to your account on every device and browser.",
+			"globalMute": "Mute all notifications",
+			"deviceSilence": {
+				"title": "Silence this device",
+				"description": "Only this browser stays quiet — your other devices keep notifying."
+			},
+			"browser": {
+				"title": "Browser notifications",
+				"description": "Show desktop notifications while the app is in the background."
+			},
+			"preview": {
+				"title": "Show message content",
+				"description": "Shows the message text inside the notification. Off by default for privacy."
+			},
+			"sounds": "Notification sounds",
+			"families": {
+				"title": "Notify about",
+				"description": "Choose which event families may trigger notifications."
 			}
 		}
 	},
@@ -2337,7 +2490,7 @@
 					"receiveGift": "Receive little gift"
 				},
 				"serenity": {
-					"instruction": "The gift is a little mantra that's helped tons of people get through tough times. It's called the serenity prayer: \u201CGod, grant me the serenity to accept the things I cannot change, the courage to change the things I can, and the wisdom to know the difference.\u201D"
+					"instruction": "The gift is a little mantra that's helped tons of people get through tough times. It's called the serenity prayer: “God, grant me the serenity to accept the things I cannot change, the courage to change the things I can, and the wisdom to know the difference.”"
 				}
 			},
 			"presets": {
@@ -3220,7 +3373,8 @@
 			"consultantAccepted": "Your counselor is now expecting you in the chat.",
 			"startChatNow": "Start chat now",
 			"dismissAcceptedBanner": "Dismiss notice"
-		}
+		},
+		"enquiryClosed": "This live chat has ended. To start a new chat, please open your invite link again."
 	},
 	"sessionHeader": {
 		"anonymous": {
@@ -3315,6 +3469,111 @@
 			"remove": {
 				"confirm": "Are you sure you want to remove this supervisor?"
 			}
+		}
+	},
+	"shortcuts": {
+		"title": "Keyboard Shortcuts",
+		"description": "Customize chat shortcuts. Changes apply immediately and are saved on this device.",
+		"automaticallyConfigured": "automatically configured",
+		"disableShortcut": "Disabled",
+		"restoreDefaults": "Restore Defaults",
+		"restoreDefaultsSuccess": "Default shortcuts restored.",
+		"primaryModifier": "Primary modifier",
+		"help": {
+			"title": "Keyboard shortcuts",
+			"close": "Close"
+		},
+		"palette": {
+			"title": "Command Palette",
+			"close": "Close",
+			"searchPlaceholder": "Search commands…",
+			"allShortcuts": "All shortcuts"
+		},
+		"editingBanner": "Editing message",
+		"editingCancel": "Cancel",
+		"categories": {
+			"messaging": "Messaging",
+			"navigation": "Navigation",
+			"attachments": "Attachments",
+			"emoji": "Emoji and Reactions",
+			"application": "Application"
+		},
+		"actions": {
+			"sendMessage": {
+				"label": "Send Message",
+				"description": "Send the current chat message."
+			},
+			"insertNewLine": {
+				"label": "Insert New Line",
+				"description": "Insert a new line in the message composer. Derived from the send shortcut."
+			},
+			"showShortcutHelp": {
+				"label": "Show Keyboard Shortcuts",
+				"description": "Open the keyboard shortcuts help dialog."
+			},
+			"focusInput": {
+				"label": "Focus Message Input",
+				"description": "Move focus to the message composer."
+			},
+			"uploadFile": {
+				"label": "Upload File",
+				"description": "Open the file attachment picker."
+			},
+			"searchMessages": {
+				"label": "Search Messages",
+				"description": "Search messages in the current conversation."
+			},
+			"editLastMessage": {
+				"label": "Edit Last Message",
+				"description": "Edit your last sent message."
+			},
+			"cancelReplyOrEdit": {
+				"label": "Cancel Reply or Edit",
+				"description": "Cancel the current reply or edit."
+			},
+			"openEmojiPicker": {
+				"label": "Open Emoji Picker",
+				"description": "Open the emoji picker."
+			},
+			"startNewConversation": {
+				"label": "Start New Conversation",
+				"description": "Start a new conversation."
+			},
+			"openCommandPalette": {
+				"label": "Open Command Palette",
+				"description": "Open the command palette."
+			}
+		},
+		"conflicts": {
+			"duplicate": "This shortcut is already assigned.",
+			"reserved": "This shortcut is reserved by the browser.",
+			"browserConflict": "This shortcut conflicts with common browser shortcuts.",
+			"sendNewline": "Send Message and Insert New Line cannot use the same shortcut.",
+			"unsupported": "This shortcut option is not supported.",
+			"cannotDisable": "This shortcut cannot be disabled.",
+			"unsafePlainKey": "This key cannot be used as a shortcut while typing."
+		},
+		"hints": {
+			"enterSends": "Enter sends the message",
+			"shiftEnterNewline": "Shift+Enter inserts a new line",
+			"enterNewline": "Enter inserts a new line",
+			"ctrlEnterSends": "Ctrl+Enter sends the message",
+			"cmdEnterSends": "Cmd+Enter sends the message"
+		},
+		"lockedNewline": "Locked to Shift+Enter while Enter sends the message.",
+		"resetAction": "Reset",
+		"restoreDefaultsConfirm": "Restore all shortcuts to their defaults?",
+		"restoreDefaultsConfirmYes": "Restore",
+		"restoreDefaultsConfirmNo": "Cancel",
+		"keys": {
+			"enter": "Enter",
+			"escape": "Esc",
+			"arrowUp": "↑",
+			"shift": "Shift",
+			"alt": "Alt",
+			"option": "Option",
+			"ctrl": "Ctrl",
+			"cmd": "Cmd"
 		}
 	}
 }

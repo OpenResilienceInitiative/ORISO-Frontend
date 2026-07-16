@@ -22,6 +22,12 @@ vi.mock('../api/apiPostMessageEventNotification', () => ({
 		apiPostMessageEventNotification(input)
 }));
 
+const apiGetSessionRoomBySessionId = vi.fn();
+vi.mock('../api/apiGetSessionRooms', () => ({
+	apiGetSessionRoomBySessionId: (sessionId: number) =>
+		apiGetSessionRoomBySessionId(sessionId)
+}));
+
 const ROOM_ID = '!room:matrix.oriso.org';
 const OTHER_ROOM_ID = '!other:matrix.oriso.org';
 
@@ -50,6 +56,116 @@ const createFakeMatrixClient = (room: any = null) => {
 		getRoom: (roomId: string) => (room && roomId === ROOM_ID ? room : null)
 	};
 };
+
+const createFakeEncryptedMatrixEvent = () => {
+	const decryptionListeners = new Set<Listener>();
+	let eventType = 'm.room.encrypted';
+	const event = {
+		getType: () => eventType,
+		on: (name: string, listener: Listener) => {
+			if (name === 'Event.decrypted') decryptionListeners.add(listener);
+		},
+		off: (name: string, listener: Listener) => {
+			if (name === 'Event.decrypted')
+				decryptionListeners.delete(listener);
+		},
+		emitDecrypted: (error?: Error) => {
+			if (!error) eventType = 'm.room.message';
+			decryptionListeners.forEach((listener) => listener(event, error));
+		}
+	};
+	return { decryptionListeners, event };
+};
+
+describe('chatTransportService Matrix timeline', () => {
+	let fakeClient: ReturnType<typeof createFakeMatrixClient>;
+
+	beforeEach(() => {
+		fakeClient = createFakeMatrixClient();
+		setMatrixClientServiceRef({
+			getClient: () => fakeClient
+		} as any);
+	});
+
+	afterEach(() => {
+		setMatrixClientServiceRef(null);
+	});
+
+	it('notifies again when a live encrypted event decrypts after first delivery', () => {
+		const { decryptionListeners, event } = createFakeEncryptedMatrixEvent();
+		const room = { roomId: ROOM_ID };
+		const listener = vi.fn();
+		const detach = chatTransportService.onMatrixTimeline(ROOM_ID, listener);
+
+		fakeClient.emit('Room.timeline', event, room, false);
+		expect(listener).toHaveBeenCalledTimes(1);
+		expect(listener).toHaveBeenLastCalledWith(event, room, false);
+
+		event.emitDecrypted(new Error('room key not available yet'));
+		expect(listener).toHaveBeenCalledTimes(1);
+
+		event.emitDecrypted();
+		expect(listener).toHaveBeenCalledTimes(2);
+		expect(listener).toHaveBeenLastCalledWith(event, room, false);
+
+		detach?.();
+		expect(decryptionListeners.size).toBe(0);
+	});
+
+	it('does not register a decryption listener after synchronous detach', () => {
+		const { decryptionListeners, event } = createFakeEncryptedMatrixEvent();
+		const room = { roomId: ROOM_ID };
+		let detach: (() => void) | null = null;
+		const listener = vi.fn(() => detach?.());
+		detach = chatTransportService.onMatrixTimeline(ROOM_ID, listener);
+
+		fakeClient.emit('Room.timeline', event, room, false);
+		expect(listener).toHaveBeenCalledTimes(1);
+		expect(decryptionListeners.size).toBe(0);
+
+		event.emitDecrypted();
+		expect(listener).toHaveBeenCalledTimes(1);
+	});
+
+	it('removes a pending decryption listener on detach', () => {
+		const { decryptionListeners, event } = createFakeEncryptedMatrixEvent();
+		const room = { roomId: ROOM_ID };
+		const listener = vi.fn();
+		const detach = chatTransportService.onMatrixTimeline(ROOM_ID, listener);
+
+		fakeClient.emit('Room.timeline', event, room, false);
+		expect(listener).toHaveBeenCalledTimes(1);
+		expect(decryptionListeners.size).toBe(1);
+
+		detach?.();
+		expect(decryptionListeners.size).toBe(0);
+
+		event.emitDecrypted();
+		expect(listener).toHaveBeenCalledTimes(1);
+	});
+
+	it('expires a pending decryption listener after five minutes', () => {
+		vi.useFakeTimers();
+		try {
+			const { decryptionListeners, event } =
+				createFakeEncryptedMatrixEvent();
+			const room = { roomId: ROOM_ID };
+			const listener = vi.fn();
+			chatTransportService.onMatrixTimeline(ROOM_ID, listener);
+
+			fakeClient.emit('Room.timeline', event, room, false);
+			expect(decryptionListeners.size).toBe(1);
+
+			vi.advanceTimersByTime(5 * 60 * 1000);
+			expect(decryptionListeners.size).toBe(0);
+
+			event.emitDecrypted();
+			expect(listener).toHaveBeenCalledTimes(1);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+});
 
 describe('chatTransportService Matrix room lifecycle', () => {
 	let fakeClient: ReturnType<typeof createFakeMatrixClient>;
@@ -300,6 +416,51 @@ describe('chatTransportService sendTextMessage (Matrix-only transport)', () => {
 				matrixClientServiceOverride: override
 			})
 		).rejects.toThrow('Matrix client not initialized');
+	});
+
+	it('refreshes a stale pre-accept session to resolve its Matrix room before sending', async () => {
+		apiGetSessionRoomBySessionId.mockResolvedValueOnce({
+			sessions: [{ session: { id: 42, matrixRoomId: ROOM_ID } }]
+		});
+		const sendMessage = vi.fn(() =>
+			Promise.resolve({ event_id: '$evt:matrix.oriso.org' })
+		);
+		const override = {
+			getClient: () => createFakeMatrixClient(),
+			sendMessage
+		} as any;
+
+		await chatTransportService.sendTextMessage({
+			roomIdOrSessionId: 42,
+			message: 'hello after accept',
+			sendMailNotification: false,
+			isEncrypted: false,
+			sessionId: 42,
+			matrixRoomId: undefined,
+			matrixClientServiceOverride: override
+		});
+
+		expect(apiGetSessionRoomBySessionId).toHaveBeenCalledWith(42);
+		expect(sendMessage).toHaveBeenCalledWith(ROOM_ID, 'hello after accept');
+	});
+
+	it('rejects when refreshing a stale session still returns no Matrix room', async () => {
+		apiGetSessionRoomBySessionId.mockResolvedValueOnce({ sessions: [] });
+
+		await expect(
+			chatTransportService.sendTextMessage({
+				roomIdOrSessionId: 42,
+				message: 'hello',
+				sendMailNotification: false,
+				isEncrypted: false,
+				sessionId: 42,
+				matrixRoomId: undefined,
+				matrixClientServiceOverride: {
+					getClient: () => createFakeMatrixClient(),
+					sendMessage: vi.fn()
+				} as any
+			})
+		).rejects.toThrow('Cannot send message: session has no Matrix room');
 	});
 
 	it('sends via the Matrix client with the room id and message when a room id is present', async () => {

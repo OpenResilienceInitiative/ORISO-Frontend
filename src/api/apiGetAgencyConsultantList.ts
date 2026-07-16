@@ -25,3 +25,15 @@ export const apiGetAgencyConsultantList = async (
 		return [];
 	}
 };
+
+export const apiGetTenantConsultantList = async (): Promise<Consultant[]> => {
+	try {
+		return await fetchData({
+			url: `${endpoints.chatSeriesBase}consultants`,
+			method: FETCH_METHODS.GET,
+			responseHandling: [FETCH_ERRORS.CATCH_ALL]
+		});
+	} catch {
+		return [];
+	}
+};

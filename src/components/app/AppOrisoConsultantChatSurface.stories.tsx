@@ -983,6 +983,7 @@ function SessionListPanel() {
 						)
 					}
 					showConsultantActions
+					showCreateGroupChatAction
 					showSupervisionChip
 					showLiveChatChip
 					createGroupChatPath="/sessions/consultant/sessionView/createGroupChat"

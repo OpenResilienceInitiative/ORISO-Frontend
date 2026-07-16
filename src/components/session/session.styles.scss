@@ -119,6 +119,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 
 		@include breakpoint($fromLarge) {
 			margin: 0;
+			width: 100%;
 			border: 0;
 			border-radius: 0;
 		}
@@ -991,6 +992,15 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		position: relative;
 		width: 100%;
 		border-top: 1px solid rgba(0, 0, 0, 0.06);
+	}
+
+	&__anonymousEnquiryClosedNote {
+		padding: 16px 24px;
+		text-align: center;
+		font-size: 15px;
+		line-height: 1.4;
+		color: #4c555f;
+		background-color: #f4f6f9;
 	}
 
 	&__content--consentGate {

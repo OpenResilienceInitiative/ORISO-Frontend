@@ -38,11 +38,20 @@ const buildConversationPath = (params: EventActionParams): string | null => {
 		const base = params.sessionsBasePath || DEFAULT_SESSIONS_BASE_PATH;
 		return `${base}/session/${params.sourceSessionId}`;
 	}
+	if (params.seriesId != null && params.seriesId !== '') {
+		const base = params.sessionsBasePath || DEFAULT_SESSIONS_BASE_PATH;
+		return `${base}/session/${params.seriesId}`;
+	}
 	return null;
 };
 
 const conversationTarget = (params: EventActionParams): EventActionTarget => ({
 	kind: 'conversation',
+	path: buildConversationPath(params)
+});
+
+const groupChatJoinTarget = (params: EventActionParams): EventActionTarget => ({
+	kind: 'groupChatJoin',
 	path: buildConversationPath(params)
 });
 
@@ -169,6 +178,26 @@ const seeds: EventDescriptor[] = [
 		i18nKey: 'requestNew',
 		resolveActionTarget: requestTarget
 	}),
+	// Figma design review 2026-07-12 (Timeline History Pannel): seed the
+	// designed-but-not-yet-emitted types so the frontend is ready the moment a
+	// backend writer appears (Slice-0a philosophy — seed ALL designed types).
+	descriptor('request.denied', {
+		family: 'requests',
+		category: 'system',
+		icon: 'requestDenied',
+		i18nKey: 'requestDenied',
+		resolveActionTarget: requestTarget
+	}),
+	// A client entering the live-chat waiting room originates from the
+	// request/enquiry view (WP-06 Tier 3 — descriptor seeded ahead of the
+	// writer).
+	descriptor('waiting_room.client.joined', {
+		family: 'requests',
+		category: 'system',
+		icon: 'waitingRoom',
+		i18nKey: 'waitingRoomClientJoined',
+		resolveActionTarget: requestTarget
+	}),
 
 	// ----- Drafts family (self-event; Slice 3 overlay) -----
 	descriptor('draft.created', {
@@ -258,6 +287,67 @@ const seeds: EventDescriptor[] = [
 		category: 'system',
 		icon: 'callMissed',
 		i18nKey: 'callMissed',
+		resolveActionTarget: conversationTarget
+	}),
+	// Invitation to an internal (team) group call — Figma 2026-07-12.
+	descriptor('call.invited', {
+		family: 'calls',
+		category: 'system',
+		icon: 'callInvited',
+		i18nKey: 'callInvited',
+		resolveActionTarget: conversationTarget
+	}),
+
+	// ----- Appointments family (Figma 2026-07-12; writers still deferred) -----
+	descriptor('appointment.requested', {
+		family: 'appointments',
+		category: 'system',
+		icon: 'appointmentRequested',
+		i18nKey: 'appointmentRequested',
+		resolveActionTarget: conversationTarget
+	}),
+	descriptor('appointment.scheduled', {
+		family: 'appointments',
+		category: 'system',
+		icon: 'appointmentScheduled',
+		i18nKey: 'appointmentScheduled',
+		resolveActionTarget: conversationTarget
+	}),
+	descriptor('appointment.cancelled', {
+		family: 'appointments',
+		category: 'system',
+		icon: 'appointmentCancelled',
+		i18nKey: 'appointmentCancelled',
+		resolveActionTarget: conversationTarget
+	}),
+	descriptor('appointment.briefing', {
+		family: 'appointments',
+		category: 'system',
+		icon: 'appointmentBriefing',
+		i18nKey: 'appointmentBriefing',
+		resolveActionTarget: conversationTarget
+	}),
+
+	// ----- Self-help group occurrence lifecycle -----
+	descriptor('group_chat.reminder', {
+		family: 'appointments',
+		category: 'system',
+		icon: 'appointment',
+		i18nKey: 'groupChatReminder',
+		resolveActionTarget: conversationTarget
+	}),
+	descriptor('group_chat.opened', {
+		family: 'appointments',
+		category: 'system',
+		icon: 'appointment',
+		i18nKey: 'groupChatOpened',
+		resolveActionTarget: groupChatJoinTarget
+	}),
+	descriptor('group_chat.cancelled', {
+		family: 'appointments',
+		category: 'system',
+		icon: 'appointment',
+		i18nKey: 'groupChatCancelled',
 		resolveActionTarget: conversationTarget
 	})
 ];

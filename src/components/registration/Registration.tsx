@@ -31,6 +31,7 @@ import {
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
 import {
 	redirectToApp,
+	getPostRegistrationGroupChatId,
 	POST_REGISTRATION_LOADER_KEY
 } from '../../components/registration/autoLogin';
 import { PreselectionBox } from './preselectionBox/PreselectionBox';
@@ -399,7 +400,9 @@ export const Registration = () => {
 						POST_REGISTRATION_LOADER_KEY,
 						'true'
 					);
-					redirectToApp();
+					redirectToApp(
+						getPostRegistrationGroupChatId(location.search)
+					);
 				})
 				.catch((error) => {
 					// console.error('Registration failed:', error);
@@ -432,7 +435,8 @@ export const Registration = () => {
 		locale,
 		isRegistering,
 		availableSteps,
-		registrationConsultingType
+		registrationConsultingType,
+		location.search
 	]);
 
 	const handleSubmit = useCallback(

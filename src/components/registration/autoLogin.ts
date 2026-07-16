@@ -157,7 +157,15 @@ export const autoLogin = async ({
 export const POST_REGISTRATION_LOADER_KEY =
 	'onlineBeratung_postRegistrationLoader';
 
+export const getPostRegistrationGroupChatId = (search: string) => {
+	const value = new URLSearchParams(search).get('gcid')?.trim();
+	return value || undefined;
+};
+
 export const redirectToApp = (gcid?: string) => {
-	const params = gcid ? `?gcid=${gcid}` : '';
+	const value = gcid?.trim();
+	const params = value
+		? `?${new URLSearchParams({ gcid: value }).toString()}`
+		: '';
 	window.location.href = appConfig.urls.redirectToApp + params;
 };

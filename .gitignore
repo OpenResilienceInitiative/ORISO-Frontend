@@ -13,6 +13,8 @@
 /playwright-report
 /test-results
 /playwright/.cache
+/.playwright-cli/
+/output/playwright/
 
 # production
 /build
@@ -50,3 +52,6 @@ graphify-out/*
 # chromatic build log
 build-storybook.log
 docs/*
+!docs/storybook/
+!docs/storybook/**
+*.pem

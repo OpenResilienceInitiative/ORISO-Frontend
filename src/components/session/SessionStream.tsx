@@ -401,6 +401,12 @@ export const SessionStream = ({
 		let retryTimer: number | null = null;
 		let detachTimelineListeners: Array<() => void> = [];
 		let lastRefreshAt = 0;
+		const refreshMessages = () => {
+			lastRefreshAt = Date.now();
+			fetchSessionMessages().catch(() => {
+				// keep UI stable if a timeline event races with navigation
+			});
+		};
 
 		const attachTimelineListeners = () => {
 			const handleMatrixTimeline = (
@@ -423,16 +429,14 @@ export const SessionStream = ({
 					return;
 				}
 
-				// Coalesce bursts (decrypt + relation updates) into one fetch.
+				// Coalesce encrypted/metadata bursts, but never drop a clear message:
+				// delayed Matrix decryption mutates the event after its fallback rendered.
 				const now = Date.now();
-				if (now - lastRefreshAt < 120) {
+				const elapsed = now - lastRefreshAt;
+				if (eventType !== 'm.room.message' && elapsed < 120) {
 					return;
 				}
-				lastRefreshAt = now;
-
-				fetchSessionMessages().catch(() => {
-					// keep UI stable if a timeline event races with navigation
-				});
+				refreshMessages();
 			};
 
 			const detachers = watchedRoomIds

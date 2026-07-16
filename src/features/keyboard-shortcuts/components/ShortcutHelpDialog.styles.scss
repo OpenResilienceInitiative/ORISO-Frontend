@@ -1,0 +1,93 @@
+.shortcutHelpDialog {
+	border: none;
+	padding: 0;
+	background: transparent;
+	max-width: min(28rem, calc(100vw - 2rem));
+	width: 100%;
+	max-height: min(85vh, calc(100% - 2rem));
+	margin: auto;
+	overflow: hidden;
+
+	&::backdrop {
+		background: rgba(0, 0, 0, 0.4);
+	}
+
+	&__panel {
+		background: var(--m3-surface, #fff);
+		color: inherit;
+		border-radius: 8px;
+		padding: 1.25rem 1.5rem;
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+		display: flex;
+		flex-direction: column;
+		max-height: min(85vh, calc(100vh - 2rem));
+		overflow: hidden;
+		box-sizing: border-box;
+	}
+
+	&__header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		margin-bottom: 1rem;
+		flex-shrink: 0;
+
+		h2 {
+			margin: 0;
+			font-size: 1.125rem;
+		}
+	}
+
+	&__close {
+		border: none;
+		background: transparent;
+		font-size: 1.5rem;
+		line-height: 1;
+		cursor: pointer;
+		padding: 0.25rem;
+	}
+
+	&__body {
+		overflow: auto;
+		flex: 1 1 auto;
+		min-height: 0;
+		padding-right: 0.15rem;
+	}
+
+	&__group {
+		margin-bottom: 1rem;
+
+		&:last-child {
+			margin-bottom: 0;
+		}
+
+		h3 {
+			margin: 0 0 0.5rem;
+			font-size: 0.9375rem;
+		}
+	}
+
+	&__list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+
+		li {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			gap: 1rem;
+			padding: 0.35rem 0;
+		}
+
+		kbd {
+			font-family: inherit;
+			font-size: 0.8125rem;
+			padding: 0.15rem 0.4rem;
+			border: 1px solid currentColor;
+			border-radius: 4px;
+			white-space: nowrap;
+		}
+	}
+}

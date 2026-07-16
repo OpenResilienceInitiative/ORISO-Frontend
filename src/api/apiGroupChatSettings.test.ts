@@ -43,15 +43,49 @@ describe('group chat API helpers', () => {
 	it('creates a v2 chat room when the feature flag is enabled', async () => {
 		vi.mocked(fetchData).mockResolvedValue({ groupId: 'group-v2' });
 
-		await apiCreateGroupChat({
-			...groupChat,
-			featureGroupChatV2Enabled: true
-		});
+		await expect(
+			apiCreateGroupChat({
+				...groupChat,
+				featureGroupChatV2Enabled: true
+			})
+		).resolves.toEqual({ groupId: 'group-v2' });
 
 		expect(fetchData).toHaveBeenCalledWith(
 			expect.objectContaining({
 				url: 'https://api.oriso-dev.site/service/users/chat/v2/new',
 				method: 'POST'
+			})
+		);
+	});
+
+	it('sends finite Series settings without leaking the client feature flag', async () => {
+		vi.mocked(fetchData).mockResolvedValue({ groupId: 'group-series' });
+
+		await expect(
+			apiCreateGroupChat({
+				...groupChat,
+				featureGroupChatV2Enabled: true,
+				repeatCount: 4,
+				chatInterval: 'BIWEEKLY',
+				modality: 'VIDEO',
+				timezone: 'Europe/Berlin',
+				consultantIds: ['co-mod-1']
+			})
+		).resolves.toEqual({ groupId: 'group-series' });
+
+		expect(fetchData).toHaveBeenCalledWith(
+			expect.objectContaining({
+				url: 'https://api.oriso-dev.site/service/users/chat/v2/new',
+				method: 'POST',
+				bodyData: JSON.stringify({
+					...groupChat,
+					repeatCount: 4,
+					chatInterval: 'BIWEEKLY',
+					modality: 'VIDEO',
+					timezone: 'Europe/Berlin',
+					consultantIds: ['co-mod-1']
+				}),
+				responseHandling: ['CONTENT']
 			})
 		);
 	});

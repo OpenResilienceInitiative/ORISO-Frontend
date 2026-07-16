@@ -52,15 +52,49 @@ export const apiGetConsultantSessionList = async ({
 	}
 
 	/*
-	 * Enquiry list — always pull /enquiries/registered. The split between
-	 * "Chats" and "Live Chat" happens client-side based on whether the
-	 * session's asker-username starts with `Anonymous-` / `anon_` or uses
-	 * postcode `00000`, because invite-link and legacy anonymous flows store
-	 * sessions under registration_type=REGISTERED. The /enquiries/anonymous
-	 * endpoint only lists registration_type=ANONYMOUS rows.
+	 * Enquiry list — pull BOTH feeds and merge:
+	 *  - /enquiries/registered: registered enquiries plus legacy anonymous
+	 *    flows that store sessions under registration_type=REGISTERED.
+	 *  - /enquiries/anonymous: true registration_type=ANONYMOUS live-chat
+	 *    sessions, including topic-queue sessions created from a LIVE_CHAT
+	 *    invite link (cross-agency / cross-tenant topic queue).
+	 * The client-side "Chats" vs "Live Chat" split still applies afterwards.
 	 */
-	const registeredUrl =
-		`${endpoints.consultantEnquiriesBase}registered?` +
-		`count=${count}&filter=all&offset=${offset}`;
-	return fetchListUrl(registeredUrl, signal);
+	const query = `count=${count}&filter=all&offset=${offset}`;
+	const registeredUrl = `${endpoints.consultantEnquiriesBase}registered?${query}`;
+	const anonymousUrl = `${endpoints.consultantEnquiriesBase}anonymous?${query}`;
+
+	const [registered, anonymous] = await Promise.all([
+		fetchListUrl(registeredUrl, signal),
+		// The anonymous queue is best-effort: a failure there must not hide the
+		// registered enquiries a consultant is responsible for. It must be
+		// loud, though — a silent empty result is indistinguishable from
+		// "no live chat enquiries" and hides backend 500s from diagnosis.
+		fetchListUrl(anonymousUrl, signal).catch((error) => {
+			console.error(
+				'Anonymous enquiry feed failed — live chat enquiries may be missing from the list:',
+				error
+			);
+			return { sessions: [] } as ListItemsResponseInterface;
+		})
+	]);
+
+	return mergeEnquiryFeeds(registered, anonymous);
+};
+
+/** Merge two enquiry feeds, de-duplicating by session id (registered wins on conflict). */
+const mergeEnquiryFeeds = (
+	registered: ListItemsResponseInterface,
+	anonymous: ListItemsResponseInterface
+): ListItemsResponseInterface => {
+	const registeredSessions = registered?.sessions ?? [];
+	const anonymousSessions = anonymous?.sessions ?? [];
+	const seen = new Set(
+		registeredSessions.map((item: any) => item?.session?.id)
+	);
+	const merged = [
+		...registeredSessions,
+		...anonymousSessions.filter((item: any) => !seen.has(item?.session?.id))
+	];
+	return { ...registered, sessions: merged };
 };

@@ -66,7 +66,8 @@ export const endpoints = {
 		userServiceOrigin + '/service/conversations/consultants/availability',
 	consultantSessions:
 		userServiceOrigin + '/service/users/sessions/consultants?status=2&',
-	consultantStatistics: apiUrl + '/service/statistics/consultant',
+	consultantStatistics:
+		userServiceOrigin + '/service/users/statistics/consultant',
 	consultantsLanguages:
 		userServiceOrigin + '/service/users/consultants/languages',
 	caseHandoverBatch: userServiceOrigin + '/service/users/case-handover/batch',
@@ -80,8 +81,11 @@ export const endpoints = {
 	draftMessages: userServiceOrigin + '/service/messages/draft',
 	userDrafts: userServiceOrigin + '/service/users/drafts',
 	email: userServiceOrigin + '/service/users/email',
-	error: apiUrl + '/service/logstash',
+	// logstash intake was retired; client crash reports now go to UserService's
+	// OBS-P3 error-intake endpoint, which logs them into SigNoz (ORISO-Helm#62).
+	error: userServiceOrigin + '/service/error-reports',
 	groupChatBase: userServiceOrigin + '/service/users/chat/',
+	chatSeriesBase: userServiceOrigin + '/service/users/chat-series/',
 	keycloakAccessToken:
 		keycloakOrigin + getKeycloakAuthPath('/protocol/openid-connect/token'),
 	keycloakLogout:

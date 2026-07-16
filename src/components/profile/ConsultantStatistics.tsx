@@ -10,6 +10,7 @@ import { Headline } from '../headline/Headline';
 import { Text } from '../text/Text';
 import { ReactComponent as PersonsIcon } from '../../resources/img/icons/persons.svg';
 import { ReactComponent as SpeechBubbleIcon } from '../../resources/img/icons/speech-bubble.svg';
+import { ReactComponent as SpeechBubblePlusIcon } from '../../resources/img/icons/speech-bubble-plus.svg';
 import { ReactComponent as DownloadIcon } from '../../resources/img/icons/download.svg';
 import { CSVLink } from 'react-csv';
 import { formatToDDMMYYYY } from '../../utils/dateHelpers';
@@ -17,7 +18,6 @@ import dayjs from 'dayjs';
 import './statistics.styles';
 import './profile.styles';
 import { useTranslation } from 'react-i18next';
-import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { SelectChangeEvent } from '@mui/material/Select';
 
 const statisticsPeriodOptionCurrentMonth = 'currentMonth';
@@ -73,7 +73,6 @@ export const ConsultantStatistics = () => {
 	const [selectedStatistics, setSelectedStatistics] =
 		useState<ConsultantStatisticsDTO>(null);
 	const [csvData, setCsvData] = useState([]);
-	const { featureAppointmentsEnabled } = getTenantSettings();
 
 	const csvHeaders = [
 		{
@@ -84,27 +83,19 @@ export const ConsultantStatistics = () => {
 		},
 		{
 			label: translate(
+				'profile.statistics.csvHeader.numberOfSessionsWhereConsultantWasActive'
+			),
+			key: 'numberOfActiveSessions'
+		},
+		{
+			label: translate(
 				'profile.statistics.csvHeader.numberOfSentMessages'
 			),
 			key: 'numberOfSentMessages'
-		},
-		{
-			label: translate(
-				'profile.statistics.csvHeader.numberOfSessionsWhereConsultantWasActive'
-			),
-			key: 'numberOfSessionsWhereConsultantWasActive'
-		},
-		{
-			label: translate('profile.statistics.csvHeader.videoCallDuration'),
-			key: 'videoCallDuration'
-		},
-		featureAppointmentsEnabled && {
-			label: translate(
-				'profile.statistics.csvHeader.numberOfAppointments'
-			),
-			key: 'numberOfAppointments'
 		}
-	].filter(Boolean);
+	];
+
+	const currentYear = dayjs().get('year');
 
 	const statisticsPeriodOptions: {
 		value: statisticOptions;
@@ -120,11 +111,19 @@ export const ConsultantStatistics = () => {
 		},
 		{
 			value: statisticsPeriodOptionCurrentYear,
-			label: translate('profile.statistics.period.currentYear')
+			// Caritas parity: the year picker shows the concrete year, not
+			// just "current"/"past" - appending it needs no new translation
+			// keys across all 6 languages, unlike a "Jahres {{year}}" key
+			// would (grammar differs per language, e.g. genitive in German).
+			label: `${translate(
+				'profile.statistics.period.currentYear'
+			)} (${currentYear})`
 		},
 		{
 			value: statisticsPeriodOptionLastYear,
-			label: translate('profile.statistics.period.lastYear')
+			label: `${translate(
+				'profile.statistics.period.lastYear'
+			)} (${currentYear - 1})`
 		}
 	];
 
@@ -157,25 +156,12 @@ export const ConsultantStatistics = () => {
 		setIsRequestInProgress(true);
 		apiGetConsultantStatistics({ startDate, endDate })
 			.then((response: ConsultantStatisticsDTO) => {
-				const videoCallDurationMinutes = Math.floor(
-					response.videoCallDuration / 60
-				);
-				const videoCallDurationSeconds =
-					response.videoCallDuration % 60;
 				const data = [
 					{
 						numberOfAssignedSessions:
 							response.numberOfAssignedSessions,
-						numberOfSentMessages: response.numberOfSentMessages,
-						numberOfSessionsWhereConsultantWasActive:
-							response.numberOfSessionsWhereConsultantWasActive,
-						videoCallDuration:
-							videoCallDurationMinutes +
-							':' +
-							videoCallDurationSeconds,
-						numberOfAppointments:
-							featureAppointmentsEnabled &&
-							response.numberOfAppointments
+						numberOfActiveSessions: response.numberOfActiveSessions,
+						numberOfSentMessages: response.numberOfSentMessages
 					}
 				];
 
@@ -245,9 +231,27 @@ export const ConsultantStatistics = () => {
 							type="standard"
 						/>
 					</div>
-					<div className="statistics__visualization pl--4">
+					<div className="statistics__visualization pl--4 pr--4 br--1">
 						<span>
 							<SpeechBubbleIcon
+								aria-hidden="true"
+								focusable="false"
+							/>
+							<p>
+								{selectedStatistics?.numberOfActiveSessions ||
+									0}
+							</p>
+						</span>
+						<Text
+							text={translate(
+								'profile.statistics.csvHeader.numberOfSessionsWhereConsultantWasActive'
+							)}
+							type="standard"
+						/>
+					</div>
+					<div className="statistics__visualization pl--4">
+						<span>
+							<SpeechBubblePlusIcon
 								aria-hidden="true"
 								focusable="false"
 							/>

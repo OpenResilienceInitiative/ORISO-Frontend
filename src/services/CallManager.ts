@@ -190,11 +190,6 @@ class CallManager {
 		(async () => {
 			let elementCallRoomId: string | undefined = undefined;
 
-			assertMatrixRoomEncrypted(
-				getMatrixClientService()?.getClient(),
-				roomId
-			);
-
 			// For group calls, create a fresh dedicated Element Call room rather
 			// than re-using the session room. This matches the "direct" usage of
 			// call.oriso.site where each call lives in its own Matrix room with
@@ -406,7 +401,6 @@ class CallManager {
 				// console.error('❌ Matrix client not available to send call invite');
 				return;
 			}
-			assertMatrixRoomEncrypted(client, signallingRoomId);
 
 			// console.log('📤 Sending m.call.invite to Matrix room:', signallingRoomId);
 
@@ -550,46 +544,35 @@ class CallManager {
 	 * End the current call
 	 */
 	public endCall(notifyRemote: boolean = true): void {
-		// console.log("═══════════════════════════════════════════════");
-		// console.log("📴 CallManager.endCall()");
-		// console.log("═══════════════════════════════════════════════");
-
-		if (!this.currentCall) {
-			// console.log("ℹ️  No active call to end");
+		// Snapshot + clear first so nested hangup → state:ended → endCall()
+		// (and late oriso-call-ended messages) cannot read null.matrixCall.
+		const call = this.currentCall;
+		if (!call) {
 			return;
 		}
+		this.currentCall = null;
 
-		if (notifyRemote && this.currentCall.usesElementCall) {
-			this.sendElementCallHangup(this.currentCall);
+		if (notifyRemote && call.usesElementCall) {
+			this.sendElementCallHangup(call);
 		}
 
 		// Hangup Matrix call (this will send m.call.hangup event to other side)
-		if (this.currentCall.matrixCall) {
-			// console.log("📞 Hanging up Matrix call object...");
+		if (call.matrixCall) {
 			try {
-				(this.currentCall.matrixCall as any).hangup();
-				// console.log("✅ Matrix call hangup sent (other side will receive it)");
-			} catch (err) {
-				// console.error("❌ Error hanging up Matrix call:", err);
+				(call.matrixCall as any).hangup();
+			} catch {
+				// Hangup can throw if the call is already tearing down
 			}
 		}
 
 		// Stop local media streams
 		const stream = (window as any).__activeMediaStream;
 		if (stream) {
-			// console.log("🧹 Stopping local media stream...");
 			stream.getTracks().forEach((track: any) => {
 				track.stop();
-				// console.log(`   Stopped ${track.kind} track`);
 			});
 			delete (window as any).__activeMediaStream;
-			// console.log("✅ Local media stream stopped");
 		}
-
-		this.currentCall = null;
-
-		// console.log("✅ Call ended and cleared");
-		// console.log("═══════════════════════════════════════════════");
 
 		this.notifyListeners();
 	}
@@ -599,10 +582,6 @@ class CallManager {
 			const matrixClientService = getMatrixClientService();
 			const client = matrixClientService?.getClient?.();
 			if (!client) return;
-			assertMatrixRoomEncrypted(
-				client,
-				callData.signalRoomId || callData.roomId
-			);
 
 			// Custom ORISO event type — not in matrix-js-sdk typings
 			client

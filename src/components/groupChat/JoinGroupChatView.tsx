@@ -33,6 +33,11 @@ import { useTranslation } from 'react-i18next';
 import { useTimeoutOverlay } from '../../hooks/useTimeoutOverlay';
 import { OVERLAY_REQUEST } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
 import { FALLBACK_LNG } from '../../i18n';
+import { getWaitingAreaTime } from './groupChatWaitingArea';
+import { WaitingAreaRules } from './WaitingAreaRules';
+import { resolveGroupChatAuthorContent } from './groupChatAuthorContent';
+import { getGroupChatPlannedStart } from './groupChatDate';
+import { translateWithFallback } from '../../utils/translationFallback';
 
 interface JoinGroupChatViewProps {
 	forceBannedOverlay?: boolean;
@@ -43,7 +48,15 @@ export const JoinGroupChatView = ({
 	forceBannedOverlay = false,
 	bannedUsers = []
 }: JoinGroupChatViewProps) => {
-	const { t: translate } = useTranslation(['common', 'consultingTypes']);
+	const { t: translate, i18n } = useTranslation([
+		'common',
+		'consultingTypes'
+	]);
+	const tr = useCallback(
+		(key: string, fallback: string, options?: Record<string, unknown>) =>
+			translateWithFallback(translate, key, fallback, options),
+		[translate]
+	);
 	const { activeSession, reloadActiveSession } =
 		useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
@@ -55,6 +68,7 @@ export const JoinGroupChatView = ({
 
 	const [isButtonDisabled, setIsButtonDisabled] = useState(false);
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
+	const [now, setNow] = useState(() => new Date());
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
 	const getSessionListTab = () =>
 		`${sessionListTab ? `?sessionListTab=${sessionListTab}` : ''}`;
@@ -251,7 +265,7 @@ export const JoinGroupChatView = ({
 		}
 	}, [forceBannedOverlay, bannedUserOverlay]);
 
-	const groupChatRules = useMemo(() => {
+	const legacyGroupChatRules = useMemo(() => {
 		const transKeys = [
 			`consultingType.${topic?.id ?? 'noConsultingType'}.groupChatRules`,
 			`consultingType.fallback.groupChatRules`
@@ -277,6 +291,44 @@ export const JoinGroupChatView = ({
 		);
 	}, [consultingType?.groupChat?.groupChatRules, topic?.id, translate]);
 
+	const authorContent = useMemo(
+		() =>
+			resolveGroupChatAuthorContent({
+				language: i18n.resolvedLanguage || i18n.language,
+				sourceLanguage: activeSession.item.sourceLanguage,
+				hintMessageTranslations:
+					activeSession.item.hintMessageTranslations,
+				groupChatRulesTranslations:
+					activeSession.item.groupChatRulesTranslations,
+				legacyHintMessage: activeSession.item.hintMessage,
+				legacyRules: legacyGroupChatRules
+			}),
+		[
+			activeSession.item.groupChatRulesTranslations,
+			activeSession.item.hintMessage,
+			activeSession.item.hintMessageTranslations,
+			activeSession.item.sourceLanguage,
+			i18n.language,
+			i18n.resolvedLanguage,
+			legacyGroupChatRules
+		]
+	);
+	const groupChatRules = authorContent.rules;
+	const plannedStart = getGroupChatPlannedStart(activeSession.item);
+	const plannedStartMillis = plannedStart?.getTime();
+
+	useEffect(() => {
+		if (plannedStartMillis === undefined) {
+			return;
+		}
+		const timer = window.setInterval(() => setNow(new Date()), 1000);
+		return () => window.clearInterval(timer);
+	}, [plannedStartMillis]);
+
+	const waitingTime = plannedStart
+		? getWaitingAreaTime(now, plannedStart)
+		: null;
+
 	if (redirectToSessionsList) {
 		mobileListView();
 		return <Navigate to={listPath + getSessionListTab()} replace />;
@@ -293,9 +345,51 @@ export const JoinGroupChatView = ({
 					text={translate('groupChat.join.content.headline')}
 					semanticLevel="4"
 				/>
-				{groupChatRules.map((groupChatRuleText, i) => (
-					<Text text={groupChatRuleText} type="standard" key={i} />
-				))}
+				{!!authorContent.hintMessage && (
+					<Text text={authorContent.hintMessage} type="standard" />
+				)}
+				{waitingTime && (
+					<div className="joinChat__countdown">
+						<span
+							className="joinChat__countdownValue"
+							aria-label={`${waitingTime.label} ${tr(
+								`groupChat.join.waitingArea.discomfort.${waitingTime.discomfortLabel}`,
+								waitingTime.discomfortLabel
+							)}`}
+						>
+							{waitingTime.label}{' '}
+							<span aria-hidden="true">
+								{waitingTime.discomfortEmoji}
+							</span>
+						</span>
+						<div
+							className="joinChat__timePills"
+							tabIndex={0}
+							role="list"
+							aria-label={tr(
+								'groupChat.join.timeConversions',
+								'Playful time conversions'
+							)}
+						>
+							{waitingTime.pills.map((pill) => (
+								<span key={pill.kind} role="listitem">
+									{tr(
+										`groupChat.join.waitingArea.${pill.kind}Minutes`,
+										`${pill.value} ${pill.kind} minutes`,
+										{ value: pill.value }
+									)}
+								</span>
+							))}
+						</div>
+					</div>
+				)}
+				<WaitingAreaRules
+					rules={groupChatRules}
+					ariaLabel={tr(
+						'groupChat.join.waitingArea.rulesLabel',
+						'Chat rules'
+					)}
+				/>
 			</div>
 			<div className="joinChat__button-container">
 				{!hasUserAuthority(AUTHORITIES.CREATE_NEW_CHAT, userData) &&

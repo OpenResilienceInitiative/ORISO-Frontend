@@ -1,7 +1,11 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LANGUAGE_DATA } from './data';
-import { generatePassword, generatePseudonym } from './engine';
+import {
+	generateAvatarForUser,
+	generatePassword,
+	generatePseudonym
+} from './engine';
 import { allPasswordCriteriaPass } from '../../components/registration/accountData/passwordRules';
 
 describe('anonymous name engine', () => {
@@ -53,5 +57,17 @@ describe('anonymous name engine', () => {
 			expect(encodeURIComponent(password)).toBe(password);
 			expect(allPasswordCriteriaPass(password)).toBe(true);
 		}
+	});
+
+	it('generates a stable avatar for the same user id', () => {
+		const first = generateAvatarForUser('client-asker-1');
+		const second = generateAvatarForUser('client-asker-1');
+		const other = generateAvatarForUser('consultant-2');
+
+		expect(second).toEqual(first);
+		expect(other).not.toEqual(first);
+		expect(first.file).toBeTruthy();
+		expect(first.bg).toMatch(/^#[0-9A-Fa-f]{6}$/);
+		expect(['#ffffff', '#1a1a1a']).toContain(first.iconColor);
 	});
 });

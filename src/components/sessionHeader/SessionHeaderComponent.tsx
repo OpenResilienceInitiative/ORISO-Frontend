@@ -43,6 +43,7 @@ import {
 	SESSION_LIST_TAB,
 	SESSION_LIST_TYPES
 } from '../session/sessionHelpers';
+import { getModality, Modality } from '../session/getModality';
 import { SessionMenu } from '../sessionMenu/SessionMenu';
 import {
 	finishAnonymousChatErrorOverlayItem,
@@ -87,6 +88,12 @@ export interface SessionHeaderProps {
 	hasUserInitiatedStopOrLeaveRequest?: React.MutableRefObject<boolean>;
 	isJoinGroupChatView?: boolean;
 	bannedUsers: string[];
+	/**
+	 * Controls the header "+" add button. When omitted the button follows the
+	 * legacy behavior (shown only outside enquiry states). Provide an explicit
+	 * value to force the button on/off per state (Figma #430).
+	 */
+	showAddButton?: boolean;
 }
 
 export const SessionHeaderComponent = (props: SessionHeaderProps) => {
@@ -135,11 +142,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	);
 
 	// Check if this is an anonymous chat
-	const isAnonymousChat =
-		activeSession.item.postcode === 0 ||
-		activeSession.item.postcode?.toString() === '00000' ||
-		(activeSession.item as any).registrationType === 'ANONYMOUS' ||
-		contact?.username?.startsWith('Anonymous-');
+	const isAnonymousChat = getModality(activeSession) === Modality.LIVE_CHAT;
 	const isSupervisionEnabledForCurrentChat =
 		featureSupervisionEnabled !== false &&
 		(isAnonymousChat
@@ -988,7 +991,10 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 							<div className="sessionInfo__memberStack">
 								<ChatroomMainInteractionIcon
 									type={sessionHeaderConversationIconType}
-									showAddIcon={!activeSession.isEnquiry}
+									showAddIcon={
+										props.showAddButton ??
+										!activeSession.isEnquiry
+									}
 									addLabel={translate(
 										'sessionHeader.supervisor.modal.title',
 										'Supervisor hinzufügen'

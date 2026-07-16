@@ -2,12 +2,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	createMatrixClient,
+	getElementCallAccessToken,
 	getMatrixAccessToken,
 	persistMatrixLoginData
 } from './getMatrixAccessToken';
 import { fetchData } from '../../api/fetchData';
 import { getMatrixHomeserverUrl } from '../../resources/scripts/runtimeConfig';
 import { createClient } from 'matrix-js-sdk';
+import { getMatrixClientLogger } from '../../utils/matrixLogging';
 
 vi.mock('../../resources/scripts/endpoints', () => ({
 	endpoints: {
@@ -50,6 +52,9 @@ beforeEach(() => {
 		configurable: true
 	});
 	vi.clearAllMocks();
+	vi.mocked(getMatrixHomeserverUrl).mockReturnValue(
+		'https://matrix.example.test'
+	);
 });
 
 afterEach(() => {
@@ -101,6 +106,7 @@ describe('getMatrixAccessToken', () => {
 	});
 
 	it('loads Matrix credentials from the API and uses the response device id', async () => {
+		localStorage.setItem('matrix_device_id', 'ORISO_WEB_EXISTING_DEVICE');
 		vi.mocked(fetchData).mockResolvedValue({
 			accessToken: 'matrix-token',
 			deviceId: 'RESPONSE_DEVICE',
@@ -117,14 +123,34 @@ describe('getMatrixAccessToken', () => {
 		});
 
 		expect(fetchData).toHaveBeenCalledWith({
-			url: 'https://api.example.test/service/matrix/me/token',
+			url: 'https://api.example.test/service/matrix/me/token?deviceId=ORISO_WEB_EXISTING_DEVICE',
 			method: 'GET',
 			responseHandling: ['CATCH_ALL'],
 			recoverOnPublicAuthRoute: false
 		});
 	});
 
-	it('reuses a stored browser device id when the API omits one', async () => {
+	it('creates and sends a stable browser device id before requesting a token', async () => {
+		Object.defineProperty(globalThis, 'crypto', {
+			value: { randomUUID: () => '12345678-90ab-cdef-1234-567890abcdef' },
+			configurable: true
+		});
+		vi.mocked(fetchData).mockResolvedValue({
+			accessToken: 'matrix-token',
+			deviceId: 'ORISO_WEB_1234567890ABCDEF12345678',
+			userId: '@new-user:matrix.example.test'
+		});
+
+		await getMatrixAccessToken();
+
+		expect(fetchData).toHaveBeenCalledWith(
+			expect.objectContaining({
+				url: 'https://api.example.test/service/matrix/me/token?deviceId=ORISO_WEB_1234567890ABCDEF12345678'
+			})
+		);
+	});
+
+	it('rejects a token response without a device-bound identity', async () => {
 		localStorage.setItem(
 			'matrix_device_id:@user:matrix.example.test',
 			'STORED_DEVICE'
@@ -134,9 +160,9 @@ describe('getMatrixAccessToken', () => {
 			userId: '@user:matrix.example.test'
 		});
 
-		await expect(getMatrixAccessToken()).resolves.toMatchObject({
-			deviceId: 'STORED_DEVICE'
-		});
+		await expect(getMatrixAccessToken()).rejects.toThrow(
+			'Matrix login did not return a device-bound access token'
+		);
 	});
 
 	it('creates a browser device id when neither API nor storage has one', async () => {
@@ -146,6 +172,7 @@ describe('getMatrixAccessToken', () => {
 		});
 		vi.mocked(fetchData).mockResolvedValue({
 			accessToken: 'matrix-token',
+			deviceId: 'ORISO_WEB_1234567890ABCDEF12345678',
 			userId: '@new-user:matrix.example.test'
 		});
 
@@ -162,6 +189,7 @@ describe('getMatrixAccessToken', () => {
 	it('throws when Matrix homeserver URL is missing', async () => {
 		vi.mocked(fetchData).mockResolvedValue({
 			accessToken: 'matrix-token',
+			deviceId: 'ORISO_WEB_TEST_DEVICE',
 			userId: '@user:matrix.example.test'
 		});
 		vi.mocked(getMatrixHomeserverUrl).mockReturnValue('');
@@ -195,7 +223,8 @@ describe('getMatrixAccessToken', () => {
 			accessToken: 'matrix-token',
 			userId: '@consultant:matrix.example.test',
 			deviceId: 'ORISO_WEB_TEST_DEVICE',
-			fallbackICEServerAllowed: true
+			fallbackICEServerAllowed: true,
+			logger: getMatrixClientLogger()
 		});
 		expect(client).toEqual({
 			config: {
@@ -203,8 +232,39 @@ describe('getMatrixAccessToken', () => {
 				accessToken: 'matrix-token',
 				userId: '@consultant:matrix.example.test',
 				deviceId: 'ORISO_WEB_TEST_DEVICE',
-				fallbackICEServerAllowed: true
+				fallbackICEServerAllowed: true,
+				logger: getMatrixClientLogger()
 			}
 		});
+	});
+});
+
+describe('getElementCallAccessToken', () => {
+	it('uses a dedicated stable device instead of the ORISO app device', async () => {
+		localStorage.setItem('matrix_device_id', 'ORISO_WEB_MAIN_DEVICE');
+		Object.defineProperty(globalThis, 'crypto', {
+			value: { randomUUID: () => '12345678-90ab-cdef-1234-567890abcdef' },
+			configurable: true
+		});
+		vi.mocked(fetchData).mockResolvedValue({
+			accessToken: 'element-call-token',
+			deviceId: 'ORISO_CALL_1234567890ABCDEF12345678',
+			userId: '@user:matrix.example.test'
+		});
+
+		const result = await getElementCallAccessToken();
+
+		expect(result.deviceId).toBe('ORISO_CALL_1234567890ABCDEF12345678');
+		expect(fetchData).toHaveBeenCalledWith(
+			expect.objectContaining({
+				url: 'https://api.example.test/service/matrix/me/token?deviceId=ORISO_CALL_1234567890ABCDEF12345678'
+			})
+		);
+		expect(localStorage.getItem('matrix_device_id')).toBe(
+			'ORISO_WEB_MAIN_DEVICE'
+		);
+		expect(localStorage.getItem('matrix_call_device_id')).toBe(
+			'ORISO_CALL_1234567890ABCDEF12345678'
+		);
 	});
 });

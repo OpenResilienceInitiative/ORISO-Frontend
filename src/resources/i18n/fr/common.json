@@ -1631,7 +1631,8 @@
 					"changePassword": "Modifier le mot de passe",
 					"title": "Sécurité"
 				},
-				"title": "Réglages"
+				"title": "Réglages",
+				"keyboardShortcuts": "Raccourcis clavier"
 			}
 		},
 		"spokenLanguages": {
@@ -2946,6 +2947,111 @@
 			"remove": {
 				"confirm": "Êtes-vous sûr de vouloir supprimer ce superviseur ?"
 			}
+		}
+	},
+	"shortcuts": {
+		"title": "Raccourcis clavier",
+		"description": "Personnalisez les raccourcis du chat. Les modifications s’appliquent immédiatement et sont enregistrées sur cet appareil.",
+		"automaticallyConfigured": "configuré automatiquement",
+		"disableShortcut": "Désactivé",
+		"restoreDefaults": "Restaurer les valeurs par défaut",
+		"restoreDefaultsSuccess": "Raccourcis par défaut restaurés.",
+		"primaryModifier": "Primary modifier",
+		"help": {
+			"title": "Raccourcis clavier",
+			"close": "Fermer"
+		},
+		"palette": {
+			"title": "Palette de commandes",
+			"close": "Fermer",
+			"searchPlaceholder": "Rechercher des commandes…",
+			"allShortcuts": "Tous les raccourcis"
+		},
+		"editingBanner": "Modification du message",
+		"editingCancel": "Annuler",
+		"categories": {
+			"messaging": "Messagerie",
+			"navigation": "Navigation",
+			"attachments": "Pièces jointes",
+			"emoji": "Emojis et réactions",
+			"application": "Application"
+		},
+		"actions": {
+			"sendMessage": {
+				"label": "Envoyer le message",
+				"description": "Envoie le message de chat actuel."
+			},
+			"insertNewLine": {
+				"label": "Insérer une nouvelle ligne",
+				"description": "Insère une nouvelle ligne. Dérivé du raccourci d’envoi."
+			},
+			"showShortcutHelp": {
+				"label": "Afficher les raccourcis clavier",
+				"description": "Ouvre l’aide des raccourcis clavier."
+			},
+			"focusInput": {
+				"label": "Focus Message Input",
+				"description": "Move focus to the message composer."
+			},
+			"uploadFile": {
+				"label": "Upload File",
+				"description": "Open the file attachment picker."
+			},
+			"searchMessages": {
+				"label": "Search Messages",
+				"description": "Search messages in the current conversation."
+			},
+			"editLastMessage": {
+				"label": "Edit Last Message",
+				"description": "Edit your last sent message."
+			},
+			"cancelReplyOrEdit": {
+				"label": "Cancel Reply or Edit",
+				"description": "Cancel the current reply or edit."
+			},
+			"openEmojiPicker": {
+				"label": "Open Emoji Picker",
+				"description": "Open the emoji picker."
+			},
+			"startNewConversation": {
+				"label": "Start New Conversation",
+				"description": "Start a new conversation."
+			},
+			"openCommandPalette": {
+				"label": "Open Command Palette",
+				"description": "Open the command palette."
+			}
+		},
+		"conflicts": {
+			"duplicate": "Ce raccourci est déjà attribué.",
+			"reserved": "Ce raccourci est réservé par le navigateur.",
+			"browserConflict": "Ce raccourci entre en conflit avec des raccourcis courants du navigateur.",
+			"sendNewline": "Envoyer et Nouvelle ligne ne peuvent pas utiliser le même raccourci.",
+			"unsupported": "Cette option de raccourci n’est pas prise en charge.",
+			"cannotDisable": "Ce raccourci ne peut pas être désactivé.",
+			"unsafePlainKey": "Cette touche ne peut pas être utilisée comme raccourci pendant la saisie."
+		},
+		"hints": {
+			"enterSends": "Enter sends the message",
+			"shiftEnterNewline": "Shift+Enter inserts a new line",
+			"enterNewline": "Enter inserts a new line",
+			"ctrlEnterSends": "Ctrl+Enter sends the message",
+			"cmdEnterSends": "Cmd+Enter sends the message"
+		},
+		"lockedNewline": "Verrouillé sur Maj+Entrée tant qu’Entrée envoie le message.",
+		"resetAction": "Réinitialiser",
+		"restoreDefaultsConfirm": "Restaurer tous les raccourcis par défaut ?",
+		"restoreDefaultsConfirmYes": "Restaurer",
+		"restoreDefaultsConfirmNo": "Annuler",
+		"keys": {
+			"enter": "Entrée",
+			"escape": "Échap",
+			"arrowUp": "↑",
+			"shift": "Maj",
+			"alt": "Alt",
+			"option": "Option",
+			"ctrl": "Ctrl",
+			"cmd": "Cmd"
 		}
 	}
 }
