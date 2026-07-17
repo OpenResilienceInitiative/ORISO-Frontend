@@ -1,5 +1,11 @@
 # AGENTS.md
 
+## Parent Router First
+
+- This file is a repo-local supplement for `/Users/frankgerhardt/ORISO/ORISO-Frontend`.
+- Before using these repo-specific rules, load `/Users/frankgerhardt/ORISO/AGENTS.md` and the ORISO parent project files it points to.
+- Keep durable cross-project ORISO rules in the parent project files or parent `skills/`, not in this repo-local supplement.
+
 ## Orchestration
 
 - For non-trivial tasks, or whenever the user says "loop", run the `goal-loop` skill: intake → plan → iterate think/implement/verify until acceptance criteria pass → regression-check → pr-prep. Task docs live in `docs/cursor-orchestrator/YYYY-MM-DD_short-feature-name/`.
@@ -9,7 +15,7 @@
 
 ## Context First
 
-- Treat `pre-dev` as the normal integration branch for ORISO feature PRs unless the task says otherwise.
+- Treat `pre-dev` as the normal integration branch for ORISO feature PRs unless the task says otherwise. Keep `dev` stable for QA, as defined by the parent ORISO router.
 - Before non-trivial changes, skim `.understand-anything/README.md`, `.understand-anything/ARCHITECTURE.md`, and `.understand-anything/knowledge-graph.json` for fast repo context.
 - Use `CONTEXT.md` for Activity Timeline and notification vocabulary; avoid inventing parallel terms.
 
@@ -29,8 +35,8 @@
     - `npm run lint:style`
     - `npm run build`
 - **Hard gate before opening a PR:** `npm run test:unit`, `npm run lint:scripts`, `npm run lint:style`, and `npm run build` must pass. A PR without this passing output is not done.
-- For changes that need a running backend, start the workspace infra stack first: `make verify` in the workspace root (see workspace `AGENTS.md`). Validate the affected flow against it before opening the PR.
-- The narrowest-relevant-command shortcut applies to intermediate iterations only — never to the final pre-PR gate. If the gate is blocked by pre-existing unrelated failures, state the blocker precisely in the PR body.
+- For changes that need a running backend, use the canonical repo integration tests plus the parent `oriso-e2e-quality-gate` flow. There is currently no workspace-root `Makefile`; do not cite `make verify` as an available gate until a real harness is added and routed by the parent project.
+- The narrowest-relevant-command shortcut applies to intermediate iterations only. If the final gate is blocked by pre-existing unrelated failures, state the blocker precisely in the PR body.
 
 ## Review Expectations
 
