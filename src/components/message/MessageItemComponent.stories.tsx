@@ -24,6 +24,7 @@ import {
 	mockLongGermanMessage,
 	mockMessageItemComponentProps,
 	mockServerSettingsContext,
+	mockCaseHandoverGrantedMessage,
 	mockSystemNotificationMessage,
 	mockUserData,
 	mockVisibilityMessage
@@ -225,6 +226,24 @@ export const SystemNotification: Story = {
 			displayName: 'system',
 			username: 'system',
 			message: mockSystemNotificationMessage
+		}),
+		...baseHandlers
+	}
+};
+
+export const CaseHandoverGranted: Story = {
+	name: 'Case handover granted (system card)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: 'system',
+			displayName: 'system',
+			username: 'system',
+			message: mockCaseHandoverGrantedMessage
 		}),
 		...baseHandlers
 	}
