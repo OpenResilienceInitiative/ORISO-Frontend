@@ -2701,7 +2701,20 @@
 		"toolbar": {
 			"search": {
 				"label": "Search consultations",
-				"placeholder": "Search"
+				"placeholder": "Search",
+				"refineHint": "Refine your search further using filters",
+				"confirm": "Confirm selection",
+				"close": "Close search",
+				"clear": "Clear search",
+				"emptyPeople": "No matching people found.",
+				"emptyTypes": "No chat types available.",
+				"emptyTopics": "No topics found for your counseling centers.",
+				"tabs": {
+					"people": "People",
+					"type": "By type",
+					"centre": "Counseling center",
+					"archiveOnly": "Archive only"
+				}
 			},
 			"menu": {
 				"ariaLabel": "List options"
