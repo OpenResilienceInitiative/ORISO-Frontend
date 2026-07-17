@@ -72,4 +72,11 @@ interface ReleaseToggles {
 	enableNewNotifications?: boolean;
 	featureVideoGroupChatsEnabled?: boolean;
 	enableMagicLinksLogin?: boolean;
+	/**
+	 * #439 MSC3814 "dehydrated devices": when on, park a sleeping device
+	 * server-side so Megolm keys sent during a login gap are delivered and the
+	 * gap becomes readable on next login. Hard-depends on the key-backup /
+	 * secret-storage setup (#437) and on the homeserver supporting MSC3814.
+	 */
+	enableDeviceDehydration?: boolean;
 }
