@@ -599,14 +599,18 @@ export const MessageSubmitInterfaceComponent = ({
 	);
 
 	// Editing (#435): prefill the composer with the message being edited.
+	// Depend on the specific fields (not the object identity) so a new
+	// editingMessage reference with the same content doesn't re-run the effect.
+	const editingMessageEventId = editingMessage?.eventId;
+	const editingMessageText = editingMessage?.text;
 	useEffect(() => {
-		if (!editingMessage) {
+		if (editingMessageText === undefined) {
 			return;
 		}
-		setComposerText(editingMessage.text);
-		composerRef.current?.setText(editingMessage.text);
+		setComposerText(editingMessageText);
+		composerRef.current?.setText(editingMessageText);
 		composerRef.current?.focus();
-	}, [editingMessage?.eventId, editingMessage?.text]);
+	}, [editingMessageEventId, editingMessageText]);
 
 	const isAnonymousEnquiryComposer =
 		type === SESSION_LIST_TYPES.ENQUIRY && isAnonymousChat;
@@ -1525,8 +1529,7 @@ export const MessageSubmitInterfaceComponent = ({
 		sendMessage,
 		selectedAudienceValues,
 		audienceOptions,
-		isSupervisor,
-		threadRootId
+		isSupervisor
 	]);
 
 	const handleButtonClick = useCallback(() => {
