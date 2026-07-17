@@ -753,6 +753,7 @@
 			}
 		},
 		"edit.title": "Chat settings",
+		"edit.subtitle": "Change this series' schedule and content",
 		"info": {
 			"headline": "Chat-Info",
 			"settings": {
@@ -1682,6 +1683,22 @@
 					"tooltip": "Share your personal contact link with someone so they can start an online consultation directly with you."
 				}
 			},
+			"publicSlug": {
+				"info": "Use lowercase letters and hyphens only. New slugs become active after admin approval.",
+				"input": "Public contact link name",
+				"label": "Public contact link",
+				"notification": {
+					"error": "The contact link name could not be saved. Please check the format or choose another name.",
+					"text": "The contact link name was submitted for approval.",
+					"title": "Request saved"
+				},
+				"status": {
+					"active": "Active link name: {{slug}}",
+					"empty": "No public link name is active yet. The UUID link is still used.",
+					"pending": "Waiting for admin approval: {{slug}}",
+					"rejected": "The last requested link name was rejected."
+				}
+			},
 			"profileIcon": "Profile icon",
 			"register": {
 				"button": {
@@ -2393,7 +2410,57 @@
 		},
 		"submit": "Request access",
 		"submitSending": "Sending",
-		"title": "Request access"
+		"title": "Request access",
+		"menu": {
+			"label": "Case handover options",
+			"selectMultiple": {
+				"title": "Select multiple conversations",
+				"description": "You can instantly select several cases from the chat history and apply a case handover at once."
+			},
+			"confirmSelection": {
+				"title": "Confirm selection",
+				"description": "Proceed with your currently selected items to request a case handover."
+			},
+			"deselect": {
+				"title": "Deselect and close",
+				"description": "Deselects everything and closes the batch mode."
+			}
+		},
+		"curtain": {
+			"intro": {
+				"title": "How can I see the inquiry here?",
+				"copy": "Start by using the search bar to choose either the counselor you need or your agency department. Then, select the conversation. Quick tip: use the bulk option in the menu to select multiple items.",
+				"cta": "Show me step by step"
+			},
+			"reason": {
+				"title": "Please select a reason",
+				"subtitle": "Before you proceed, you need to select a reason to send an inquiry"
+			},
+			"describe": {
+				"title": "Please describe the reason",
+				"subtitle": "Please briefly explain why you need access to this case."
+			},
+			"back": "Back",
+			"next": "Next",
+			"consentPending": "Client consent is required before access is activated."
+		},
+		"accepted": {
+			"title": "Your inquiry has been accepted by a consultant.",
+			"copy": "{{advisor}} from the counselling centre {{organisation}} is now taking care of your request. All messages remain end-to-end encrypted and visible only to the people involved in your counselling.",
+			"cta": "View conversation",
+			"advisorFallback": "A consultant",
+			"organisationFallback": "your counselling centre"
+		},
+		"systemMessage": {
+			"badge": "System notification",
+			"selectedReason": "Selected reason: {{reason}}",
+			"explanation": "Explanation: {{explanation}}",
+			"tookOverTitle": "New counsellor took over your case",
+			"noActionNeeded": "You don't need to take any action",
+			"importantTitle": "Important notification",
+			"supervisionTitle": "Supervision activated!",
+			"supervisionBody": "{{advisor}} has been added to this chat as a supervising advisor."
+		}
 	},
 	"session": {
 		"waitingMiniGame": {
@@ -2690,7 +2757,20 @@
 		"toolbar": {
 			"search": {
 				"label": "Search consultations",
-				"placeholder": "Search"
+				"placeholder": "Search",
+				"refineHint": "Refine your search further using filters",
+				"confirm": "Confirm selection",
+				"close": "Close search",
+				"clear": "Clear search",
+				"emptyPeople": "No matching people found.",
+				"emptyTypes": "No chat types available.",
+				"emptyTopics": "No topics found for your counseling centers.",
+				"tabs": {
+					"people": "People",
+					"type": "By type",
+					"centre": "Counseling center",
+					"archiveOnly": "Archive only"
+				}
 			},
 			"menu": {
 				"ariaLabel": "List options"
@@ -3363,7 +3443,8 @@
 			"consultantAccepted": "Your counselor is now expecting you in the chat.",
 			"startChatNow": "Start chat now",
 			"dismissAcceptedBanner": "Dismiss notice"
-		}
+		},
+		"enquiryClosed": "This live chat has ended. To start a new chat, please open your invite link again."
 	},
 	"sessionHeader": {
 		"anonymous": {

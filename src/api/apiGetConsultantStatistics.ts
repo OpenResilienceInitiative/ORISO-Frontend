@@ -6,6 +6,7 @@ export interface ConsultantStatisticsDTO {
 	endDate: string;
 	numberOfAssignedSessions: number;
 	numberOfActiveSessions: number;
+	numberOfSentMessages: number;
 }
 
 export interface ApiGetConsultantStatisticsInterface {

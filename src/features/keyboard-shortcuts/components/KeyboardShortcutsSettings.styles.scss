@@ -115,7 +115,7 @@
 			background: color-mix(in srgb, currentColor 4%, transparent);
 		}
 
-		@media (max-width: 560px) {
+		@media (width <= 560px) {
 			grid-template-columns: 1fr;
 			gap: 0.45rem;
 			padding: 0.75rem 0.45rem;

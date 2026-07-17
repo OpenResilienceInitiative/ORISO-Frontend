@@ -69,8 +69,10 @@ import { MessageAvatar } from './MessageAvatar';
 import clsx from 'clsx';
 import {
 	parseMessagePrefixes,
-	SYSTEM_NOTIFICATION_USER_LEFT_CHAT
+	SYSTEM_NOTIFICATION_USER_LEFT_CHAT,
+	SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED
 } from './messageConstants';
+import { CaseHandoverSystemMessageCard } from '../caseHandover/CaseHandoverClientCards';
 import { createPortal } from 'react-dom';
 import { ReactComponent as NotificationBellIcon } from '../../resources/img/icons/notification_bell.svg';
 import { ReactComponent as StackVerticalIcon } from '../../resources/img/icons/stack-vertical.svg';
@@ -974,6 +976,9 @@ export const MessageItemComponent = ({
 	const isUserLeftChatEvent =
 		parsedMessage.systemNotificationType ===
 		SYSTEM_NOTIFICATION_USER_LEFT_CHAT;
+	const isCaseHandoverGrantedEvent =
+		parsedMessage.systemNotificationType ===
+		SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED;
 	const userLeftChatEventText = hasUserAuthority(
 		AUTHORITIES.CONSULTANT_DEFAULT,
 		userData
@@ -986,6 +991,12 @@ export const MessageItemComponent = ({
 	const systemNotificationDescription =
 		parsedMessage.systemNotificationDescription ||
 		parsedMessage.cleanedMessage;
+	const systemNotificationReasonLabel =
+		parsedMessage.systemNotificationReasonLabel;
+	const systemNotificationExplanation =
+		parsedMessage.systemNotificationExplanation;
+	const systemNotificationRawDescription =
+		parsedMessage.systemNotificationDescription;
 	const renderedMessageWithoutPrefix = renderedMessage;
 
 	const hasRenderedMessage =
@@ -1520,24 +1531,52 @@ export const MessageItemComponent = ({
 									: 'messageItem__message'
 							} ${isSystemNotification ? 'messageItem__message--systemNotification' : ''}`}
 						>
-							{isSystemNotification && (
-								<>
-									<div className="messageItem__systemNotificationTag">
-										{translate(
-											'message.systemNotification',
-											'System Notification'
+							{isSystemNotification &&
+								isCaseHandoverGrantedEvent && (
+									<CaseHandoverSystemMessageCard
+										title={translate(
+											'caseHandover.systemMessage.tookOverTitle'
 										)}
-									</div>
-									<div className="messageItem__systemNotificationTitle">
-										{systemNotificationTitle}
-									</div>
-									{systemNotificationDescription && (
-										<div className="messageItem__systemNotificationDescription">
-											{systemNotificationDescription}
+										subtitle={translate(
+											'caseHandover.systemMessage.noActionNeeded'
+										)}
+										reasonLabel={
+											systemNotificationReasonLabel ||
+											undefined
+										}
+										explanation={
+											systemNotificationExplanation ||
+											undefined
+										}
+									>
+										{systemNotificationRawDescription && (
+											<p className="messageItem__systemNotificationDescription">
+												{
+													systemNotificationRawDescription
+												}
+											</p>
+										)}
+									</CaseHandoverSystemMessageCard>
+								)}
+							{isSystemNotification &&
+								!isCaseHandoverGrantedEvent && (
+									<>
+										<div className="messageItem__systemNotificationTag">
+											{translate(
+												'message.systemNotification',
+												'System Notification'
+											)}
 										</div>
-									)}
-								</>
-							)}
+										<div className="messageItem__systemNotificationTitle">
+											{systemNotificationTitle}
+										</div>
+										{systemNotificationDescription && (
+											<div className="messageItem__systemNotificationDescription">
+												{systemNotificationDescription}
+											</div>
+										)}
+									</>
+								)}
 							{isSupervisorFeedback && (
 								<div className="messageItem__feedbackTag">
 									{translate(

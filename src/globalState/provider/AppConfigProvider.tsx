@@ -38,20 +38,22 @@ export const AppConfigProvider = ({
 			.catch(() => config)
 			.then((config) =>
 				config.useApiClusterSettings
-					? apiServerSettings().then((serverSettings) =>
-							Object.keys(serverSettings ?? {}).reduce(
-								(current, key) => {
-									current[key] =
-										key === 'releaseToggles'
-											? transformReleaseToggles(
-													serverSettings[key]
-												)
-											: serverSettings[key]?.value;
-									return current;
-								},
-								config
+					? apiServerSettings()
+							.then((serverSettings) =>
+								Object.keys(serverSettings ?? {}).reduce(
+									(current, key) => {
+										current[key] =
+											key === 'releaseToggles'
+												? transformReleaseToggles(
+														serverSettings[key]
+													)
+												: serverSettings[key]?.value;
+										return current;
+									},
+									config
+								)
 							)
-						)
+							.catch(() => config)
 					: config
 			)
 			.then(setAppConfig);

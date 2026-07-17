@@ -1,6 +1,8 @@
 export const SUPERVISOR_FEEDBACK_PREFIX = '[SUPERVISOR_FEEDBACK]';
 export const SYSTEM_NOTIFICATION_PREFIX = '[SYSTEM_NOTIFICATION]';
 export const SYSTEM_NOTIFICATION_USER_LEFT_CHAT = 'USER_LEFT_CHAT';
+export const SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED =
+	'CASE_HANDOVER_GRANTED';
 export const VISIBLE_TO_PREFIX = '[VISIBLE_TO:';
 export const THREAD_PREFIX = '[THREAD:';
 export const THREAD_SUFFIX = ']';
@@ -21,6 +23,8 @@ export const parseMessagePrefixes = (message?: string | null) => {
 			systemNotificationDescription: '',
 			systemNotificationType: null as string | null,
 			systemNotificationUsername: '',
+			systemNotificationReasonLabel: '',
+			systemNotificationExplanation: '',
 			visibleToUserIds: [] as string[],
 			isThreadMessage: false,
 			threadRootId: null as string | null
@@ -34,6 +38,8 @@ export const parseMessagePrefixes = (message?: string | null) => {
 	let systemNotificationDescription = '';
 	let systemNotificationType: string | null = null;
 	let systemNotificationUsername = '';
+	let systemNotificationReasonLabel = '';
+	let systemNotificationExplanation = '';
 	let visibleToUserIds: string[] = [];
 	let threadRootId: string | null = null;
 
@@ -97,11 +103,15 @@ export const parseMessagePrefixes = (message?: string | null) => {
 				description?: string;
 				type?: string;
 				username?: string;
+				reasonLabel?: string;
+				explanation?: string;
 			};
 			systemNotificationType = parsed?.type?.trim() || null;
 			systemNotificationUsername = parsed?.username?.trim() || '';
 			systemNotificationTitle = parsed?.title?.trim() || '';
 			systemNotificationDescription = parsed?.description?.trim() || '';
+			systemNotificationReasonLabel = parsed?.reasonLabel?.trim() || '';
+			systemNotificationExplanation = parsed?.explanation?.trim() || '';
 		} catch (_error) {
 			const lines = payload
 				.split('\n')
@@ -122,6 +132,8 @@ export const parseMessagePrefixes = (message?: string | null) => {
 		systemNotificationDescription,
 		systemNotificationType,
 		systemNotificationUsername,
+		systemNotificationReasonLabel,
+		systemNotificationExplanation,
 		visibleToUserIds,
 		isThreadMessage: !!threadRootId,
 		threadRootId

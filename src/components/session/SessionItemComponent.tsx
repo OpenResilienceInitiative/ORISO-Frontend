@@ -77,7 +77,6 @@ import { apiPatchUserData } from '../../api/apiPatchUserData';
 import { apiGetUserData } from '../../api/apiGetUserData';
 import { apiGetAnonymousEnquiryDetails } from '../../api/apiGetAnonymousEnquiryDetails';
 import {
-	bindAnonymousChatUnloadCleanup,
 	ensureAnonymousChatPreLogoutCleanup,
 	registerAnonymousChatSessionForCleanup
 } from '../../utils/anonymousChatSessionCleanup';
@@ -403,7 +402,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const { t: translate } = useTranslation();
 	const tenantData = useTenant();
 
-	const { activeSession } = useContext(ActiveSessionContext);
+	const { activeSession, reloadActiveSession } =
+		useContext(ActiveSessionContext);
 	const { userData, setUserData } = useContext(UserDataContext);
 	const { addEventNotification } = useContext(NotificationsContext);
 	const { type } = useContext(SessionTypeContext);
@@ -522,6 +522,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		null
 	);
 	const [consultantAccepted, setConsultantAccepted] = useState(false);
+	/**
+	 * The anonymous enquiry was finished server-side (asker logout, backend
+	 * expiry workflow, admin cleanup) while this tab was still on the
+	 * waiting screen. Waiting longer is pointless — no consultant can see
+	 * a finished enquiry — so the queue UI switches to a closed notice.
+	 */
+	const [enquiryClosed, setEnquiryClosed] = useState(false);
 	/**
 	 * Live count of consultants currently available for this anonymous
 	 * enquiry, fed by the `apiGetAnonymousEnquiryDetails` poll. `null` while
@@ -677,6 +684,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const liveChatClosedModalOpen =
 		isInAnonymousWaitingQueuePhase &&
 		!consultantAccepted &&
+		!enquiryClosed &&
 		numAvailableConsultants === 0 &&
 		!liveChatClosedDismissed;
 	const isJoinRoomAvailable = Boolean(activeSession.consultant?.id);
@@ -1959,17 +1967,34 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	 * enquiries queued ahead for the same consulting type.
 	 */
 	useEffect(() => {
-		if (!isInAnonymousWaitingQueuePhase || !activeSession.item?.id) {
+		if (
+			!isInAnonymousWaitingQueuePhase ||
+			!activeSession.item?.id ||
+			enquiryClosed
+		) {
 			return;
 		}
 
 		let cancelled = false;
 		const sessionId = activeSession.item.id;
+		const hasMatrixRoom = Boolean(activeSession.item?.matrixRoomId);
 
 		const refresh = () => {
 			apiGetAnonymousEnquiryDetails(sessionId)
 				.then((details) => {
 					if (cancelled) return;
+					/* DONE/IN_ARCHIVE: the enquiry was finished server-side.
+					   Consultants can never see or accept it — stop polling
+					   and show the closed notice instead of queue position
+					   and availability, which would suggest it is still
+					   waiting. */
+					if (
+						details?.status === 'DONE' ||
+						details?.status === 'IN_ARCHIVE'
+					) {
+						setEnquiryClosed(true);
+						return;
+					}
 					if (typeof details?.peopleAhead === 'number') {
 						setQueuePeopleAhead(details.peopleAhead);
 					}
@@ -1978,15 +2003,21 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							? details.numAvailableConsultants
 							: null
 					);
-					/* Anything other than INITIAL/NEW means a consultant has
-					   started handling this enquiry — flip the action bar to
-					   the "Start chat now" prompt. */
-					if (
-						details?.status &&
-						details.status !== 'INITIAL' &&
-						details.status !== 'NEW'
-					) {
+					/* Only IN_PROGRESS means a consultant is handling this
+					   enquiry. DONE/IN_ARCHIVE must NOT flip the bar — a
+					   finished session would otherwise show "Start chat
+					   now" over a chat that can never connect. */
+					if (details?.status === 'IN_PROGRESS') {
 						setConsultantAccepted(true);
+						/* Accepting provisions the Matrix room server-side,
+						   but the session in memory was loaded before that
+						   and still has no matrixRoomId — without it the
+						   chat never connects. Reload the session on every
+						   poll tick until the room id arrives (acceptance
+						   can race the room creation by a moment). */
+						if (!hasMatrixRoom) {
+							reloadActiveSession?.();
+						}
 					}
 				})
 				.catch(() => {
@@ -2002,11 +2033,24 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			cancelled = true;
 			window.clearInterval(poll);
 		};
-	}, [isInAnonymousWaitingQueuePhase, activeSession.item?.id]);
+	}, [
+		isInAnonymousWaitingQueuePhase,
+		activeSession.item?.id,
+		activeSession.item?.matrixRoomId,
+		reloadActiveSession,
+		enquiryClosed
+	]);
 
 	/**
-	 * When an anonymous asker leaves (logout, navigate away, tab close), finish the
-	 * session immediately so the waiting queue count drops for everyone else.
+	 * When an anonymous asker logs out, finish the session so the waiting
+	 * queue count drops for everyone else.
+	 *
+	 * Deliberately NOT bound to pagehide/unload: pagehide also fires on a
+	 * plain page refresh or navigation, and finishing there sets the session
+	 * to DONE and deactivates the anonymous Keycloak user — permanently
+	 * removing the enquiry from the consultant queue while the asker is
+	 * still waiting. Abandoned sessions are expired server-side by the
+	 * anonymous deactivate workflow instead.
 	 */
 	useEffect(() => {
 		ensureAnonymousChatPreLogoutCleanup();
@@ -2024,8 +2068,6 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				: activeSession.item?.matrixRoomId,
 			userData?.userName
 		);
-
-		return bindAnonymousChatUnloadCleanup(activeSession.item.id);
 	}, [
 		isAnonymousAskerExperience,
 		activeSession.item?.id,
@@ -2099,10 +2141,20 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	}, []);
 
 	const handleStartAcceptedChat = useCallback(() => {
+		/* Safety net: if the accepted session still lacks its Matrix room
+		   id (reload raced the room provisioning), fetch it again now so
+		   the unlocked composer can actually send. */
+		if (!activeSession.item?.matrixRoomId) {
+			reloadActiveSession?.();
+		}
 		void import('../messageSubmitInterface/messageSubmitInterfaceComponent')
 			.then(() => setWaitingGateDismissed(true))
 			.catch(() => setWaitingGateDismissed(true));
-	}, [setWaitingGateDismissed]);
+	}, [
+		activeSession.item?.matrixRoomId,
+		reloadActiveSession,
+		setWaitingGateDismissed
+	]);
 
 	useEffect(() => {
 		if (!shouldShowRobotMessages) {
@@ -4891,8 +4943,23 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				</div>
 			)}
 
+			{shouldShowPseudonymGate && pseudonymConfirmed && enquiryClosed && (
+				<div className="session__pseudonymActionBarSlot">
+					<div
+						className="session__anonymousEnquiryClosedNote"
+						role="status"
+					>
+						{translate(
+							'anonymousChat.enquiryClosed',
+							'Dieser Live-Chat wurde beendet. Um einen neuen Chat zu starten, öffnen Sie bitte Ihren Einladungslink erneut.'
+						)}
+					</div>
+				</div>
+			)}
+
 			{shouldShowPseudonymGate &&
 				pseudonymConfirmed &&
+				!enquiryClosed &&
 				!consultantAccepted && (
 					<div className="session__pseudonymActionBarSlot">
 						<WaitingQueueActionBar
@@ -4904,6 +4971,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 			{shouldShowPseudonymGate &&
 				pseudonymConfirmed &&
+				!enquiryClosed &&
 				consultantAccepted && (
 					<div className="session__pseudonymActionBarSlot">
 						<ConsultantAcceptedActionBar

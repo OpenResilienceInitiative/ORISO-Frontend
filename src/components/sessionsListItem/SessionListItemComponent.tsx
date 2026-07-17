@@ -87,6 +87,10 @@ import {
 	isCaseHandoverDenied,
 	isCaseHandoverPending
 } from '../session/caseHandoverHelpers';
+import {
+	CaseHandoverActionButton,
+	CaseHandoverActionState
+} from './CaseHandoverActionButton';
 interface SessionListItemProps {
 	defaultLanguage: string;
 	itemRef?: any;
@@ -97,6 +101,9 @@ interface SessionListItemProps {
 	caseHandoverBatchMode?: boolean;
 	caseHandoverSelected?: boolean;
 	onCaseHandoverSelect?: (sessionId: number) => void;
+	onCaseHandoverBatchStart?: () => void;
+	onCaseHandoverBatchConfirm?: () => void;
+	onCaseHandoverBatchClose?: () => void;
 }
 
 export const SessionListItemComponent = ({
@@ -108,7 +115,10 @@ export const SessionListItemComponent = ({
 	isAfterActive = false,
 	caseHandoverBatchMode = false,
 	caseHandoverSelected = false,
-	onCaseHandoverSelect
+	onCaseHandoverSelect,
+	onCaseHandoverBatchStart,
+	onCaseHandoverBatchConfirm,
+	onCaseHandoverBatchClose
 }: SessionListItemProps) => {
 	const { t: translate } = useTranslation(['common']);
 	const location = useLocation();
@@ -324,18 +334,14 @@ export const SessionListItemComponent = ({
 		!isAsker &&
 		!!activeSession?.consultant?.id &&
 		activeSession.consultant.id !== userData.userId;
-	const caseHandoverListLabel = (() => {
-		if (caseHandoverStatus?.canViewContent) {
-			return translate('caseHandover.list.accessGranted');
-		}
-		if (isCaseHandoverPending(caseHandoverStatus?.status)) {
-			return translate('caseHandover.list.awaitingApproval');
-		}
-		if (isCaseHandoverDenied(caseHandoverStatus?.status)) {
-			return translate('caseHandover.list.accessDenied');
-		}
-		return translate('caseHandover.list.requestAccess');
-	})();
+	const caseHandoverActionState: CaseHandoverActionState =
+		caseHandoverStatus?.canViewContent
+			? 'accessGranted'
+			: isCaseHandoverPending(caseHandoverStatus?.status)
+				? 'awaitingApproval'
+				: isCaseHandoverDenied(caseHandoverStatus?.status)
+					? 'accessDenied'
+					: 'requestAccess';
 	const canBatchSelectCaseHandover =
 		caseHandoverBatchMode &&
 		caseHandoverCandidate &&
@@ -345,7 +351,8 @@ export const SessionListItemComponent = ({
 	const canShowCaseHandoverAction =
 		caseHandoverCandidate &&
 		!caseHandoverStatusLoading &&
-		!caseHandoverStatus?.canViewContent;
+		(!caseHandoverStatus?.canViewContent ||
+			Boolean(caseHandoverStatus?.requestId));
 
 	const displayLastMessage = useMemo(() => {
 		if (!plainTextLastMessage) return plainTextLastMessage;
@@ -538,17 +545,6 @@ export const SessionListItemComponent = ({
 				})
 			);
 		}
-	};
-
-	const handleCaseHandoverActionClick = (
-		event: React.MouseEvent<HTMLButtonElement>
-	) => {
-		event.stopPropagation();
-		if (canBatchSelectCaseHandover && onCaseHandoverSelect) {
-			onCaseHandoverSelect(activeSession.item.id);
-			return;
-		}
-		handleOnClick();
 	};
 
 	const isMenuInteractionTarget = (target: EventTarget | null) =>
@@ -1519,54 +1515,59 @@ export const SessionListItemComponent = ({
 							/>
 						)}
 					{canShowCaseHandoverAction ? (
-						<button
-							type="button"
-							className={clsx(
-								'sessionsListItem__caseHandoverButton',
-								isCaseHandoverPending(
-									caseHandoverStatus?.status
-								) &&
-									'sessionsListItem__caseHandoverButton--pending',
-								isCaseHandoverDenied(
-									caseHandoverStatus?.status
-								) &&
-									'sessionsListItem__caseHandoverButton--denied',
-								caseHandoverSelected &&
-									'sessionsListItem__caseHandoverButton--selected'
-							)}
-							onClick={handleCaseHandoverActionClick}
-							onKeyDown={(event) => {
-								if (
-									event.key === 'Enter' ||
-									event.key === ' '
-								) {
-									event.stopPropagation();
-								}
+						<CaseHandoverActionButton
+							labels={{
+								requestAccess: translate(
+									'caseHandover.list.requestAccess'
+								),
+								awaitingApproval: translate(
+									'caseHandover.list.awaitingApproval'
+								),
+								accessGranted: translate(
+									'caseHandover.list.accessGranted'
+								),
+								accessDenied: translate(
+									'caseHandover.list.accessDenied'
+								),
+								selectCase: translate(
+									'caseHandover.batch.selectCase'
+								),
+								menuLabel: translate('caseHandover.menu.label'),
+								selectMultipleTitle: translate(
+									'caseHandover.menu.selectMultiple.title'
+								),
+								selectMultipleDescription: translate(
+									'caseHandover.menu.selectMultiple.description'
+								),
+								confirmSelectionTitle: translate(
+									'caseHandover.menu.confirmSelection.title'
+								),
+								confirmSelectionDescription: translate(
+									'caseHandover.menu.confirmSelection.description'
+								),
+								deselectTitle: translate(
+									'caseHandover.menu.deselect.title'
+								),
+								deselectDescription: translate(
+									'caseHandover.menu.deselect.description'
+								)
 							}}
+							state={caseHandoverActionState}
+							active={isChatActive}
+							batchMode={caseHandoverBatchMode}
+							selected={caseHandoverSelected}
 							disabled={
 								caseHandoverBatchMode &&
 								!canBatchSelectCaseHandover
 							}
-							aria-pressed={
-								caseHandoverBatchMode
-									? caseHandoverSelected
-									: undefined
+							onRequestAccess={handleOnClick}
+							onToggleSelect={() =>
+								onCaseHandoverSelect?.(activeSession.item.id)
 							}
-						>
-							{caseHandoverBatchMode && (
-								<span
-									className={clsx(
-										'sessionsListItem__caseHandoverCheckbox',
-										caseHandoverSelected &&
-											'sessionsListItem__caseHandoverCheckbox--selected'
-									)}
-									aria-hidden
-								/>
-							)}
-							{caseHandoverBatchMode
-								? translate('caseHandover.batch.selectCase')
-								: caseHandoverListLabel}
-						</button>
+							onSelectMultiple={onCaseHandoverBatchStart}
+							onConfirmSelection={onCaseHandoverBatchConfirm}
+							onDeselectAndClose={onCaseHandoverBatchClose}
+						/>
 					) : (
 						<>
 							{modality === Modality.LIVE_CHAT && (

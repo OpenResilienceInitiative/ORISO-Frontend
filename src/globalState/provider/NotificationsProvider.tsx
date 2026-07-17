@@ -21,6 +21,7 @@ import {
 import { getValueFromCookie } from '../../components/sessionCookie/accessSessionCookie';
 import { EventActionParams } from '../../components/notificationsCenter/eventDescriptors';
 import { parseEventActionParams } from '../../components/notificationsCenter/notificationActionTarget';
+import { messageEventEmitter } from '../../services/messageEventEmitter';
 
 export const NOTIFICATION_DEFAULT_TIMEOUT = 3000;
 
@@ -178,6 +179,26 @@ export function NotificationsProvider(props) {
 		refreshNotificationFeedSafe();
 		const interval = window.setInterval(refreshNotificationFeedSafe, 15000);
 		return () => window.clearInterval(interval);
+	}, [refreshNotificationFeedSafe]);
+
+	// Real-time backbone: the backend fires a `directMessage` live event to the
+	// recipient whenever a notification is persisted (ORISO-UserService
+	// EventNotificationService), and WebsocketHandler re-emits it on
+	// messageEventEmitter. Refresh the feed on that signal instead of waiting for
+	// the 15s fallback poll above. Debounced so a burst of events (e.g. one live
+	// message fanning out to several notifications) collapses into a single
+	// refetch.
+	useEffect(() => {
+		let debounceTimer: number | undefined;
+		const onLiveEvent = () => {
+			window.clearTimeout(debounceTimer);
+			debounceTimer = window.setTimeout(refreshNotificationFeedSafe, 400);
+		};
+		messageEventEmitter.on(onLiveEvent);
+		return () => {
+			messageEventEmitter.off(onLiveEvent);
+			window.clearTimeout(debounceTimer);
+		};
 	}, [refreshNotificationFeedSafe]);
 
 	const hasNotification = useCallback(

@@ -148,7 +148,7 @@ export const NavigationBar = ({
 	 * links to the video-conference page; it simply flips a stored flag that
 	 * controls whether anonymous enquiries appear in the consultant's list.
 	 */
-	const showLiveChatNav = isConsultant && fromL;
+	const showLiveChatNav = isConsultant;
 	const [animateNavIcon, setAnimateNavIcon] = useState(false);
 	const [hoveredNavItem, setHoveredNavItem] = useState<string | null>(null);
 	const [isLanguageSelected, setIsLanguageSelected] = useState(false);
@@ -336,8 +336,13 @@ export const NavigationBar = ({
 										pathsToShowUnreadMessageNotification
 									).includes(item.to) && unreadCount > 0;
 								const label = translate(item.titleKeys.large);
+								/* Rail labels get hyphenated line breaks to fit
+								   the narrow desktop rail; the mobile bottom bar
+								   shows plain single-line labels (M3 nav bar). */
 								const visibleLabel = useFigmaSlot
-									? getFigmaRailLabel(item.to, label)
+									? fromL
+										? getFigmaRailLabel(item.to, label)
+										: stripLocalePrefix(label.trim())
 									: label;
 								const isChatNav =
 									item.to ===
@@ -499,7 +504,7 @@ export const NavigationBar = ({
 								liveChatAvailable && 'navigation__item--active'
 							)}
 							ref={ref_live_chat}
-							tabIndex={-1}
+							tabIndex={0}
 							role="switch"
 							aria-checked={liveChatAvailable}
 							aria-label={translate(

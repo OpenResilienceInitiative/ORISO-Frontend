@@ -11,6 +11,7 @@ import {
 } from '../../globalState';
 import { SESSION_LIST_TYPES } from './sessionHelpers';
 import { SessionStream } from './SessionStream';
+import { chatTransportService } from '../../services/chatTransportService';
 
 const ROOM_ID = '!session:matrix.oriso.org';
 const LIST_PATH = '/sessions/user/view';
@@ -36,7 +37,19 @@ const mocks = vi.hoisted(() => {
 			matrixRoomId: ROOM_ID,
 			sessionId: 1
 		})),
-		sessionItemProps: null as any
+		sessionItemProps: null as any,
+		clientChangeListeners: [] as ((client: unknown) => void)[],
+		matrixClientService: {
+			getClient: () => null,
+			onClientChange: (listener: (client: unknown) => void) => {
+				mocks.clientChangeListeners.push(listener);
+				return () => {
+					const index = mocks.clientChangeListeners.indexOf(listener);
+					if (index >= 0)
+						mocks.clientChangeListeners.splice(index, 1);
+				};
+			}
+		} as any
 	};
 });
 
@@ -111,12 +124,15 @@ vi.mock('../../globalState', async () => {
 		}),
 		SessionTypeContext: ReactModule.createContext(null),
 		UserDataContext: ReactModule.createContext(null),
-		ActiveSessionContext: ReactModule.createContext(null)
+		ActiveSessionContext: ReactModule.createContext(null),
+		useTopic: () => null
 	};
 });
 
 vi.mock('../../globalState/context/MatrixClientContext', () => ({
-	useMatrixClient: () => ({ matrixClientService: null })
+	useMatrixClient: () => ({
+		matrixClientService: mocks.matrixClientService
+	})
 }));
 
 vi.mock('./SessionItemComponent', () => ({
@@ -215,6 +231,7 @@ describe('SessionStream Matrix room lifecycle', () => {
 		vi.clearAllMocks();
 		mocks.lifecycleListeners.length = 0;
 		mocks.timelineListeners.length = 0;
+		mocks.clientChangeListeners.length = 0;
 		mocks.sessionItemProps = null;
 	});
 
@@ -259,6 +276,46 @@ describe('SessionStream Matrix room lifecycle', () => {
 			);
 		});
 		expect(mocks.navigate).not.toHaveBeenCalled();
+	});
+
+	it('re-attaches room listeners after a token refresh swaps the Matrix client', async () => {
+		renderSessionStream({ isGroup: true });
+
+		await waitFor(() => {
+			expect(mocks.lifecycleListeners.length).toBeGreaterThan(0);
+		});
+		const lifecycleAttachesBefore = vi.mocked(
+			chatTransportService.onMatrixRoomLifecycle
+		).mock.calls.length;
+		const timelineAttachesBefore = vi.mocked(
+			chatTransportService.onMatrixTimeline
+		).mock.calls.length;
+
+		// A token refresh replaces the matrix-js-sdk client instance; the old
+		// one got removeAllListeners(), so SessionStream must re-attach every
+		// room listener to the replacement client.
+		act(() => {
+			mocks.clientChangeListeners.forEach((listener) => listener({}));
+		});
+
+		await waitFor(() => {
+			expect(
+				vi.mocked(chatTransportService.onMatrixRoomLifecycle).mock.calls
+					.length
+			).toBeGreaterThan(lifecycleAttachesBefore);
+		});
+		expect(
+			vi.mocked(chatTransportService.onMatrixTimeline).mock.calls.length
+		).toBeGreaterThan(timelineAttachesBefore);
+		expect(mocks.detachLifecycle).toHaveBeenCalled();
+
+		// The freshly attached listener must still drive the stopped overlay.
+		emitLifecycle({ type: 'tombstoned' });
+		await waitFor(() => {
+			expect(screen.getByTestId('overlay').textContent).toBe(
+				'groupChat.stopped.overlay.headline'
+			);
+		});
 	});
 
 	it('suppresses the overlay when this user initiated the stop/leave themselves', async () => {
