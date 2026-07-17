@@ -10,6 +10,7 @@ import { buildMatrixCryptoStorePrefix } from './matrixCrypto';
 import { applyDeviceIsolationMode } from './matrixDeviceIsolation';
 import { appConfig } from '../utils/appConfig';
 import { matrixLiveEventBridge } from './matrixLiveEventBridge';
+import { startDeviceDehydration } from './matrixDeviceDehydration';
 import { encryptMatrixAttachment } from '../utils/matrixEncryptedAttachment';
 import { buildMatrixRoomEncryptionInitialState } from '../utils/matrixRoomEncryption';
 
@@ -422,6 +423,15 @@ export class MatrixClientService {
 		matrixCallService.initialize(client);
 		matrixLiveEventBridge.initialize(client);
 		this.initializedServicesClient = client;
+
+		// #439 MSC3814: rehydrate the parked device (reads Megolm keys sent
+		// during the login gap) and re-park a fresh one. Fire-and-forget and
+		// best-effort — no-ops unless the toggle is on, the server supports
+		// MSC3814, and secret storage (#437) is set up. Never blocks startup.
+		void startDeviceDehydration(
+			client,
+			appConfig?.releaseToggles?.enableDeviceDehydration === true
+		);
 	}
 
 	private scheduleTokenRefresh(loginData: MatrixLoginData): void {
