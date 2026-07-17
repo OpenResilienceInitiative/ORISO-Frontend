@@ -495,4 +495,69 @@ describe('initUtdTracking', () => {
 			expect(event.listenerCount()).toBe(1);
 		});
 	});
+
+	// #440 task 5 — a named, executable guard for the incident that motivated
+	// this tracker (#412): a Megolm key that arrives seconds late made messages
+	// briefly undecryptable, then self-healed. That transient must NOT register
+	// as a UTD, or the SigNoz signal drowns in false positives; but a key that
+	// genuinely never arrives MUST register. The grace-period logic already
+	// covers both, this pins it to the concrete incident narrative + timing.
+	describe('#412 regression: delayed Megolm key self-heals within the grace period', () => {
+		it('does not count a key that arrives ~30s late (well inside the 5-minute grace)', async () => {
+			const { initUtdTracking, setMatrixClientServiceRef } =
+				await loadModules();
+			initUtdTracking();
+
+			const client = createFakeMatrixClient();
+			setMatrixClientServiceRef({ getClient: () => client } as any);
+			flushClientPoll();
+
+			const event = createFakeEncryptedEvent('$delayed-key');
+			client.emit('Room.timeline', event);
+
+			// #412 symptom: the inbound Megolm session isn't known yet.
+			event.simulateFailure(
+				DecryptionFailureCode.MEGOLM_UNKNOWN_INBOUND_SESSION_ID
+			);
+			// The key shows up 30 seconds later — the SDK re-decrypts and the
+			// event type is promoted away from the encrypted envelope.
+			vi.advanceTimersByTime(30 * 1000);
+			event.simulateSuccess();
+			// Let the full grace window elapse to prove the permanent timer was
+			// cancelled, not merely not-yet-fired.
+			vi.advanceTimersByTime(GRACE_PERIOD_MS);
+
+			expect(mockAdd).not.toHaveBeenCalledWith(
+				1,
+				expect.objectContaining({ outcome: 'permanent' })
+			);
+			expect(mockAdd).toHaveBeenCalledWith(1, {
+				outcome: 'transient_resolved',
+				cause: DecryptionFailureCode.MEGOLM_UNKNOWN_INBOUND_SESSION_ID
+			});
+		});
+
+		it('still counts the evil twin — a key that never arrives — as a permanent bug', async () => {
+			const { initUtdTracking, setMatrixClientServiceRef } =
+				await loadModules();
+			initUtdTracking();
+
+			const client = createFakeMatrixClient();
+			setMatrixClientServiceRef({ getClient: () => client } as any);
+			flushClientPoll();
+
+			const event = createFakeEncryptedEvent('$lost-key');
+			client.emit('Room.timeline', event);
+			event.simulateFailure(
+				DecryptionFailureCode.MEGOLM_UNKNOWN_INBOUND_SESSION_ID
+			);
+			vi.advanceTimersByTime(GRACE_PERIOD_MS);
+
+			expect(mockAdd).toHaveBeenCalledWith(1, {
+				outcome: 'permanent',
+				cause: DecryptionFailureCode.MEGOLM_UNKNOWN_INBOUND_SESSION_ID,
+				category: 'bug'
+			});
+		});
+	});
 });
