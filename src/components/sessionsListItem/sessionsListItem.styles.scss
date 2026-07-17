@@ -1018,8 +1018,8 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		position: relative;
 
 		&--selected {
-			background: var(--m3-on-primary, #ffffff);
-			border-color: var(--m3-on-primary, #ffffff);
+			background: var(--m3-surface, #ffffff);
+			border-color: var(--m3-surface, #ffffff);
 
 			&::after {
 				content: '';
