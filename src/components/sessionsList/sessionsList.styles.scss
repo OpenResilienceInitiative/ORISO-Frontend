@@ -212,6 +212,65 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		}
 	}
 
+	&__caseHandoverWizardOverlay {
+		position: fixed;
+		inset: 0;
+		z-index: 120;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 16px;
+		background: rgba(27, 27, 28, 0.4);
+	}
+
+	&__caseHandoverWizardShell {
+		width: min(720px, 100%);
+		max-height: min(86vh, 780px);
+		display: flex;
+		flex-direction: column;
+		border-radius: 24px;
+		overflow: hidden auto;
+		background: var(--m3-surface, #ffffff);
+		box-shadow: 0 12px 40px rgba(0, 0, 0, 0.24);
+
+		.caseHandoverCurtain {
+			padding: 0;
+			background: transparent;
+		}
+
+		.caseHandoverCurtain__card {
+			box-shadow: none;
+			border-radius: 0;
+		}
+	}
+
+	&__caseHandoverWizardBar {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		padding: 14px 20px 0;
+		color: var(--m3-on-surface, #1b1b1c);
+		font-size: 14px;
+
+		span {
+			color: var(--m3-on-surface-variant, #6d747d);
+		}
+	}
+
+	&__caseHandoverWizardClose {
+		margin-left: auto;
+		border: 0;
+		background: transparent;
+		color: var(--m3-primary, #a5000a);
+		font-weight: 700;
+		cursor: pointer;
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 2px;
+		}
+	}
+
 	&__caseHandoverBatchSummary {
 		margin-top: 10px;
 		color: $caseHandoverTextMuted;

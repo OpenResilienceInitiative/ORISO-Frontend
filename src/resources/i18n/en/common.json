@@ -2437,6 +2437,23 @@
 			"back": "Back",
 			"next": "Next",
 			"consentPending": "Client consent is required before access is activated."
+		},
+		"accepted": {
+			"title": "Your inquiry has been accepted by a consultant.",
+			"copy": "{{advisor}} from the counselling centre {{organisation}} is now taking care of your request. All messages remain end-to-end encrypted and visible only to the people involved in your counselling.",
+			"cta": "View conversation",
+			"advisorFallback": "A consultant",
+			"organisationFallback": "your counselling centre"
+		},
+		"systemMessage": {
+			"badge": "System notification",
+			"selectedReason": "Selected reason: {{reason}}",
+			"explanation": "Explanation: {{explanation}}",
+			"tookOverTitle": "New counsellor took over your case",
+			"noActionNeeded": "You don't need to take any action",
+			"importantTitle": "Important notification",
+			"supervisionTitle": "Supervision activated!",
+			"supervisionBody": "{{advisor}} has been added to this chat as a supervising advisor."
 		}
 	},
 	"session": {
