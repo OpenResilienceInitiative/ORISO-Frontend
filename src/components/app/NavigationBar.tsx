@@ -504,7 +504,7 @@ export const NavigationBar = ({
 								liveChatAvailable && 'navigation__item--active'
 							)}
 							ref={ref_live_chat}
-							tabIndex={-1}
+							tabIndex={0}
 							role="switch"
 							aria-checked={liveChatAvailable}
 							aria-label={translate(

@@ -352,7 +352,7 @@ export const MobileBottomBarConsultant: Story = {
 		const liveChatToggle = canvasElement.querySelector(
 			'.navigation__item--liveChatToggle'
 		);
-		await expect(liveChatToggle).not.toBeNull();
+		await expect(liveChatToggle).toBeVisible();
 		await expect(liveChatToggle).toHaveAttribute('aria-checked', 'false');
 	}
 };

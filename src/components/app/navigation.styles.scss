@@ -788,6 +788,9 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 	}
 
 	.navigation__item__bottom {
+		display: flex;
+		flex-direction: row;
+
 		@include breakpoint($fromLarge) {
 			flex: 0 0 auto;
 			margin-top: auto !important;
