@@ -2,8 +2,8 @@
 
 ## Parent Router First
 
-- This file is a repo-local supplement for `/Users/frankgerhardt/ORISO/ORISO-Frontend`.
-- Before using these repo-specific rules, load `/Users/frankgerhardt/ORISO/AGENTS.md` and the ORISO parent project files it points to.
+- This file is a repo-local supplement for `${PROJECT_ORISO_ROOT}/ORISO-Frontend`.
+- Before using these repo-specific rules, load `${PROJECT_ORISO_ROOT}/AGENTS.md` and the ORISO parent project files it points to. Resolve `PROJECT_ORISO_ROOT` through the machine-local routing configuration described by the parent router.
 - Keep durable cross-project ORISO rules in the parent project files or parent `skills/`, not in this repo-local supplement.
 
 ## Orchestration

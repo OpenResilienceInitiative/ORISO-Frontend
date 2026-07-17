@@ -62,49 +62,6 @@ _Avoid_: per-component active state, local `isActive` flags duplicated across li
 
 ## Self-Help Group Chat & Lobby
 
-_(Cross-repo feature. Canonical write model starts in **ORISO-UserService** (`Chat` + `GroupChatParticipant`); this section is the shared glossary. Decisions: extend the existing Group Chat feature; Matrix-only runtime; real E2EE via SDK **Megolm-first** after ADR-005; red-green TDD.)_
-
-**Self-Help Group Chat** (Selbsthilfe-Gruppen-Chat):
-The scheduled, consultant-owned, multi-participant chat. It extends the existing UserService `Chat` aggregate and Frontend Group Chat UI.
-_Avoid_: “peer chat”; “conversation” (reserve for the consulting-type/registration concept).
-
-**Group Chat Series vs. Occurrence** (model A):
-A **Series** is the source-of-truth rule (`start`, `interval`, finite **`repeatCount`**). **Occurrences are computed virtually**; a Matrix room is materialized only for the imminent/active occurrence. The first finite, non-recurring user slice is still represented as a Series with `repeatCount=1`.
-_Interval_: expand `Chat.ChatInterval` from `WEEKLY` to `DAILY | WEEKLY | BIWEEKLY | MONTHLY | QUARTERLY | YEARLY`.
-
-**Occurrence Exception / Override**:
-An EXDATE-style record that skips one virtual occurrence. A changed occurrence is represented by skip + standalone one-off Series; “this and following” splitting is out of scope.
-
-**Future Timeline & the “Now” divider**:
-Group chats remain in Gespräche/Chats, not in the enquiry/request flow. The same list can reveal upcoming group-chat occurrences and appointments below a horizontal “now” divider. Default ordering remains unchanged; the future projection is chronological, bounded to roughly three months per page, has “load more,” and respects `SessionToolbarChipFilter`. Dragging requires a keyboard/toggle equivalent.
-_Avoid_: a separate Lobby list; conflating the Future Timeline with the per-occurrence Waiting Area.
-
-**Waiting Area** (Wartebereich):
-The pre-open holding screen reached through the existing `?gcid=` join path. It reuses `WaitingRoom` and shows a multilingual welcome message, countdown, and cycling Netiquette Rules. If the moderator is late, the countdown may continue below zero until the planned end.
-
-**Occurrence lifecycle end**:
-An occurrence closes at its planned end (`occurrenceStart + duration`) or through an idempotent manual “Event beenden” action available to Owner/Co-Moderator roles. This is stricter than today's stale-close implementation, which uses `updateDate`, duration, and scheduler grace.
-
-**Netiquette Rule** (= Spielregel = `groupChatRules`):
-A short (≤120 characters), author-configured, multilingual conduct message on the Series. Existing ConsultingType rules are defaults/fallbacks, not the new source of truth. It is distinct from the welcome/system message (`hintMessage`).
-
-**Config-text translation**:
-Netiquette Rules and the welcome message reuse TenantService `TranslationFacade`. Only author-written configuration text may leave the client for translation — never chat content or PII. Display fallback: requested language → English → creator source language → canned phrase.
-
-**Participant identity**:
-Every participant has a real Matrix identity. The existing disposable `anon_` account is the low-threshold default; a user may opt in to a persistent pseudonym. There is no credential-less session.
-
-**Roles and ownership**:
-Roles are Owner, Co-Moderator, and Participant, with tenant-scoped invitation policy. Membership is Series-scoped; current-occurrence Matrix membership is its runtime projection. The migration adds a nullable `series_id` foreign key and role while preserving the legacy Session ID in `chat_id` until compatibility data is retired. A Series always has an Owner. Primary-owner transfer replaces the initiating primary Owner with the target; other Owners remain. The last Owner cannot be removed or demoted. `Chat.chatOwner` remains the primary-owner projection during migration.
-
-**Reachable Email**:
-Optional identity/recovery data belongs to Keycloak/UserService, encrypted at rest and never in the Matrix room. It is a separate global work package linked from the Group Chat epic, not a small room-UI field.
-
-**Confidentiality-neutral comms**:
-Calendar and teaser/recovery email content carries no topic, no provider branding, and no sensitive category. Calendar generation is client-side (ICS + Google/Outlook URL templates, no third-party widget).
-
-## Self-Help Group Chat & Lobby
-
 _(Cross-repo feature. Canonical write model lives in **ORISO-UserService** (`Chat` + `GroupChatParticipant`); this section is the shared glossary. Decisions: extend the existing Group Chat feature + refactor in the touched radius; Matrix-only (no Rocket.Chat remnants); real E2EE via SDK **Megolm-first** (ADR-004/005); red-green TDD.)_
 
 **Self-Help Group Chat** (Selbsthilfe-Gruppen-Chat):
