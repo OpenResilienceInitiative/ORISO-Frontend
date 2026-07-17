@@ -7,6 +7,8 @@ import {
 } from '../components/sessionCookie/getMatrixAccessToken';
 import { matrixCallService } from './matrixCallService';
 import { buildMatrixCryptoStorePrefix } from './matrixCrypto';
+import { applyDeviceIsolationMode } from './matrixDeviceIsolation';
+import { appConfig } from '../utils/appConfig';
 import { matrixLiveEventBridge } from './matrixLiveEventBridge';
 import { encryptMatrixAttachment } from '../utils/matrixEncryptedAttachment';
 import { buildMatrixRoomEncryptionInitialState } from '../utils/matrixRoomEncryption';
@@ -121,6 +123,14 @@ export class MatrixClientService {
 			this.stopCurrentClient();
 			throw error;
 		}
+
+		// #438 MSC4153 invisible crypto: once the rust crypto stack is up, share
+		// Megolm keys only with cross-signed devices when the toggle is on.
+		// Best-effort — never breaks client startup.
+		applyDeviceIsolationMode(
+			client,
+			appConfig?.releaseToggles?.enableInvisibleCrypto === true
+		);
 
 		(client as any).on(
 			'sync',

@@ -72,4 +72,11 @@ interface ReleaseToggles {
 	enableNewNotifications?: boolean;
 	featureVideoGroupChatsEnabled?: boolean;
 	enableMagicLinksLogin?: boolean;
+	/**
+	 * #438 MSC4153 "invisible crypto": when on, Megolm keys are shared only with
+	 * cross-signed devices (`OnlySignedDevicesIsolationMode`) — unverified
+	 * devices receive no keys and see undecryptable noise. Hard-depends on the
+	 * key-backup/recovery onboarding (#437) so legitimate users can verify.
+	 */
+	enableInvisibleCrypto?: boolean;
 }
