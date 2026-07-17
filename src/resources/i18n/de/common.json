@@ -1264,6 +1264,30 @@
 		"resetPasswort": {
 			"label": "Passwort vergessen?"
 		},
+		"resetPassword": {
+			"request": {
+				"headline": "Passwort vergessen?",
+				"text": "Wenn Sie Ihre E-Mail-Adresse angegeben haben, können Sie Ihr Passwort zurücksetzen. Geben Sie dazu Ihre E-Mail-Adresse ein und drücken Sie auf absenden. Wir senden Ihnen anschließend einen Link zu, mit dem Sie Ihr Passwort zurücksetzen können.",
+				"usernameLabel": "E-Mail",
+				"submitLabel": "Absenden",
+				"usernameRequired": "Bitte geben Sie zuerst Ihre E-Mail ein.",
+				"notEnabled": "Für dieses Konto ist das Zurücksetzen des Passworts derzeit nicht möglich."
+			},
+			"sent": {
+				"headline": "Eine E-Mail mit weiteren Anweisungen wurde an Sie versendet.",
+				"text": "Sie sollten in Kürze eine E-Mail mit weiteren Instruktionen erhalten."
+			},
+			"backToLogin": "Zurück zum Login",
+			"setNew": {
+				"headline": "Neues Passwort festlegen",
+				"text": "Bitte geben Sie Ihr neues Passwort ein.",
+				"newLabel": "Neues Passwort",
+				"confirmLabel": "Neues Passwort bestätigen",
+				"submitLabel": "Passwort speichern",
+				"success": "Ihr Passwort wurde erfolgreich geändert. Sie können sich nun anmelden.",
+				"invalidToken": "Dieser Link ist ungültig oder abgelaufen. Bitte fordern Sie einen neuen Link an."
+			}
+		},
 		"magicLink": {
 			"label": "Mit Magic Link anmelden",
 			"submitLabel": "Magic Link senden",

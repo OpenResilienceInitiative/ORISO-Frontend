@@ -49,6 +49,7 @@ const mockUserData = {
 	}
 } as any;
 import { UrlParamsContext } from '../src/globalState/provider/UrlParamsProvider';
+import { AgencySpecificContext } from '../src/globalState/provider/AgencySpecificProvider';
 import type {
 	AgencyDataInterface,
 	ConsultingTypeInterface,
@@ -776,79 +777,91 @@ function MuiStoryShell({
 							reloadUserData: async () => null as any
 						}}
 					>
-						<UrlParamsContext.Provider
+						<AgencySpecificContext.Provider
 							value={{
-								agency: null,
-								consultingType: null,
-								consultant: null,
-								topic: null,
-								loaded: true,
-								slugFallback: '',
-								zipcode: ''
+								specificAgency: null,
+								setSpecificAgency: () => {}
 							}}
 						>
-							<E2EEContext.Provider
+							<UrlParamsContext.Provider
 								value={{
-									key: '',
-									reloadPrivateKey: () => {},
-									isE2eeEnabled: false,
-									e2EEReady: true
+									agency: null,
+									consultingType: null,
+									consultant: null,
+									topic: null,
+									loaded: true,
+									slugFallback: '',
+									zipcode: ''
 								}}
 							>
-								<NotificationsContext.Provider
+								<E2EEContext.Provider
 									value={{
-										notifications: [],
-										notificationFeed: [],
-										unreadNotificationCount: 0,
-										setNotifications: () => {},
-										hasNotification: () => false,
-										addNotification: () => {},
-										addEventNotification: () => {},
-										refreshNotificationFeed: () => {},
-										removeNotification: () => {},
-										markNotificationAsRead: () => {},
-										markAllNotificationsAsRead: () => {},
-										clearNotificationFeed: () => {}
+										key: '',
+										reloadPrivateKey: () => {},
+										isE2eeEnabled: false,
+										e2EEReady: true
 									}}
 								>
-									<RegistrationContext.Provider
+									<NotificationsContext.Provider
 										value={{
-											setDisabledNextButton: () => null,
-											registrationData: {
-												agency: null,
-												agencyId: null,
-												username: null,
-												password: null,
-												zipcode: '50667',
-												mainTopic: storybookTopics[0],
-												mainTopicId:
-													storybookTopics[0].id,
-												topicGroupId: 10001
-											}
+											notifications: [],
+											notificationFeed: [],
+											unreadNotificationCount: 0,
+											setNotifications: () => {},
+											hasNotification: () => false,
+											addNotification: () => {},
+											addEventNotification: () => {},
+											refreshNotificationFeed: () => {},
+											removeNotification: () => {},
+											markNotificationAsRead: () => {},
+											markAllNotificationsAsRead:
+												() => {},
+											clearNotificationFeed: () => {}
 										}}
 									>
-										<ThemeProvider theme={theme}>
-											<LegalLinksProvider legalLinks={[]}>
-												<SessionTypeContext.Provider
-													value={{
-														type: 'MY_SESSION' as any,
-														path: '/sessions/consultant/sessionView'
-													}}
+										<RegistrationContext.Provider
+											value={{
+												setDisabledNextButton: () =>
+													null,
+												registrationData: {
+													agency: null,
+													agencyId: null,
+													username: null,
+													password: null,
+													zipcode: '50667',
+													mainTopic:
+														storybookTopics[0],
+													mainTopicId:
+														storybookTopics[0].id,
+													topicGroupId: 10001
+												}
+											}}
+										>
+											<ThemeProvider theme={theme}>
+												<LegalLinksProvider
+													legalLinks={[]}
 												>
-													<StoryErrorBoundary>
-														{needsLiveData ? (
-															<NeedsLiveDataPanel />
-														) : (
-															<Story />
-														)}
-													</StoryErrorBoundary>
-												</SessionTypeContext.Provider>
-											</LegalLinksProvider>
-										</ThemeProvider>
-									</RegistrationContext.Provider>
-								</NotificationsContext.Provider>
-							</E2EEContext.Provider>
-						</UrlParamsContext.Provider>
+													<SessionTypeContext.Provider
+														value={{
+															type: 'MY_SESSION' as any,
+															path: '/sessions/consultant/sessionView'
+														}}
+													>
+														<StoryErrorBoundary>
+															{needsLiveData ? (
+																<NeedsLiveDataPanel />
+															) : (
+																<Story />
+															)}
+														</StoryErrorBoundary>
+													</SessionTypeContext.Provider>
+												</LegalLinksProvider>
+											</ThemeProvider>
+										</RegistrationContext.Provider>
+									</NotificationsContext.Provider>
+								</E2EEContext.Provider>
+							</UrlParamsContext.Provider>
+						</AgencySpecificContext.Provider>
 					</UserDataContext.Provider>
 				</TenantContext.Provider>
 			</LocaleContext.Provider>
