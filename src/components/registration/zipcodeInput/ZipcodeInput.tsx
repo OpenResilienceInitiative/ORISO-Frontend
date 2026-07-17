@@ -29,11 +29,18 @@ export const ZipcodeInput: FC<{
 	useEffect(() => {
 		if (REGISTRATION_DATA_VALIDATION.zipcode.validation(value)) {
 			setDisabledNextButton(false);
-			onChange({
-				zipcode: value,
-				agencyId: undefined,
-				agency: undefined
-			});
+			/* Only invalidate a chosen agency when the zipcode actually
+			   changed — merely revisiting this step (free stepper navigation)
+			   must not erase the agency selection on commit. */
+			onChange(
+				value === registrationData.zipcode
+					? { zipcode: value }
+					: {
+							zipcode: value,
+							agencyId: undefined,
+							agency: undefined
+						}
+			);
 		} else {
 			setDisabledNextButton(true);
 			onChange({
@@ -42,7 +49,7 @@ export const ZipcodeInput: FC<{
 				agency: undefined
 			});
 		}
-	}, [setDisabledNextButton, onChange, value]);
+	}, [setDisabledNextButton, onChange, value, registrationData.zipcode]);
 
 	return (
 		<Box
