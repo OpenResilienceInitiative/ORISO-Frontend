@@ -212,7 +212,10 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 	);
 
 	useEffect(() => {
-		const { topic, mainTopic, agency, ...sessionStorageData } =
+		// The password stays in memory only — with free stepper navigation the
+		// account step's values are committed on back-navigation too, and a
+		// plaintext password must never be written to sessionStorage.
+		const { topic, mainTopic, agency, password, ...sessionStorageData } =
 			registrationData || {};
 
 		setSessionStorageData({
