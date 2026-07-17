@@ -2464,7 +2464,22 @@
 		},
 		"submit": "Zugriff anfragen",
 		"submitSending": "Wird gesendet",
-		"title": "Zugriff anfragen"
+		"title": "Zugriff anfragen",
+		"menu": {
+			"label": "Optionen zur Fallübergabe",
+			"selectMultiple": {
+				"title": "Mehrere Gespräche auswählen",
+				"description": "Wähle mehrere Fälle aus dem Chatverlauf aus und stelle die Übergabe-Anfrage für alle gleichzeitig."
+			},
+			"confirmSelection": {
+				"title": "Auswahl bestätigen",
+				"description": "Fahre mit den ausgewählten Fällen fort, um die Übergabe anzufragen."
+			},
+			"deselect": {
+				"title": "Auswahl aufheben und schließen",
+				"description": "Hebt die Auswahl auf und beendet den Mehrfachmodus."
+			}
+		}
 	},
 	"session": {
 		"waitingMiniGame": {

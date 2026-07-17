@@ -2404,7 +2404,22 @@
 		},
 		"submit": "Request access",
 		"submitSending": "Sending",
-		"title": "Request access"
+		"title": "Request access",
+		"menu": {
+			"label": "Case handover options",
+			"selectMultiple": {
+				"title": "Select multiple conversations",
+				"description": "You can instantly select several cases from the chat history and apply a case handover at once."
+			},
+			"confirmSelection": {
+				"title": "Confirm selection",
+				"description": "Proceed with your currently selected items to request a case handover."
+			},
+			"deselect": {
+				"title": "Deselect and close",
+				"description": "Deselects everything and closes the batch mode."
+			}
+		}
 	},
 	"session": {
 		"waitingMiniGame": {

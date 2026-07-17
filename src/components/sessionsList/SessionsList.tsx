@@ -80,7 +80,6 @@ import {
 	DRAFTS_UPDATED_EVENT,
 	REMOTE_DRAFT_INDEX_SCOPE
 } from '../../services/draftStore';
-import { isCaseHandoverCandidate } from '../session/caseHandoverHelpers';
 import { FutureTimelinePanel } from './FutureTimelinePanel';
 import { canModerateGroupChat } from '../groupChat/groupChatHelpers';
 import { ChatOccurrence } from '../../api/apiGetChatOccurrences';
@@ -396,6 +395,7 @@ export const SessionsList = ({
 		useState<ListItemInterface[]>([]);
 	const [userDrafts, setUserDrafts] = useState<IUserDraftItem[]>([]);
 	const [caseHandoverBatchMode, setCaseHandoverBatchMode] = useState(false);
+	const [caseHandoverReviewOpen, setCaseHandoverReviewOpen] = useState(false);
 	const [caseHandoverSelectedIds, setCaseHandoverSelectedIds] = useState<
 		number[]
 	>([]);
@@ -1605,26 +1605,7 @@ export const SessionsList = ({
 	const sortedSessions = sessionToolbarFilteredPairs
 		.map(({ extended }) => extended)
 		.sort(sortSessions);
-	const caseHandoverSelectableIds = React.useMemo(
-		() =>
-			sortedSessions
-				.filter((session) =>
-					isCaseHandoverCandidate({
-						activeSession: session,
-						userData,
-						type,
-						sessionListTab
-					})
-				)
-				.map((session) => session.item.id)
-				.filter(
-					(sessionId): sessionId is number =>
-						typeof sessionId === 'number'
-				),
-		[sessionListTab, sortedSessions, type, userData]
-	);
 	const handleCaseHandoverSelect = useCallback((sessionId: number) => {
-		setCaseHandoverBatchSummary('');
 		setCaseHandoverSelectedIds((current) =>
 			current.includes(sessionId)
 				? current.filter((id) => id !== sessionId)
@@ -1633,6 +1614,7 @@ export const SessionsList = ({
 	}, []);
 	const handleCloseCaseHandoverBatch = useCallback(() => {
 		setCaseHandoverBatchMode(false);
+		setCaseHandoverReviewOpen(false);
 		setCaseHandoverSelectedIds([]);
 		setCaseHandoverExplanation('');
 		setCaseHandoverBatchSummary('');
@@ -1859,21 +1841,10 @@ export const SessionsList = ({
 					onDuplicateOccurrence={handleDuplicateOccurrence}
 				/>
 			)}
-			{showCaseHandoverBatchUi && (
-				<div className="sessionsList__caseHandoverBatch">
-					{!caseHandoverBatchMode ? (
-						<button
-							type="button"
-							className="sessionsList__caseHandoverBatchToggle"
-							onClick={() => {
-								setCaseHandoverBatchMode(true);
-								setCaseHandoverBatchSummary('');
-							}}
-							disabled={caseHandoverSelectableIds.length === 0}
-						>
-							{translate('caseHandover.batch.start')}
-						</button>
-					) : (
+			{showCaseHandoverBatchUi &&
+				caseHandoverBatchMode &&
+				caseHandoverReviewOpen && (
+					<div className="sessionsList__caseHandoverBatch">
 						<div className="sessionsList__caseHandoverBatchPanel">
 							<div className="sessionsList__caseHandoverBatchHeader">
 								<strong>
@@ -1966,9 +1937,8 @@ export const SessionsList = ({
 								</div>
 							)}
 						</div>
-					)}
-				</div>
-			)}
+					</div>
+				)}
 			<div className="sessionsList__scrollArea">
 				<div
 					className={clsx('sessionsList__scrollContainer', {
@@ -2020,6 +1990,17 @@ export const SessionsList = ({
 										)}
 										onCaseHandoverSelect={
 											handleCaseHandoverSelect
+										}
+										onCaseHandoverBatchStart={() => {
+											setCaseHandoverBatchMode(true);
+											setCaseHandoverReviewOpen(false);
+											setCaseHandoverBatchSummary('');
+										}}
+										onCaseHandoverBatchConfirm={() =>
+											setCaseHandoverReviewOpen(true)
+										}
+										onCaseHandoverBatchClose={
+											handleCloseCaseHandoverBatch
 										}
 									/>
 								</ActiveSessionProvider>
