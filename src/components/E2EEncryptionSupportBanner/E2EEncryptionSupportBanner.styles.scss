@@ -32,3 +32,14 @@
 		}
 	}
 }
+
+// #437 login-time key-backup recovery prompt — reuses the .encryption-banner
+// shell; the inline link deep-links into the profile Sicherheit panel.
+.keyBackupPrompt__text {
+	a {
+		color: inherit;
+		font-weight: bold;
+		text-decoration: underline;
+		white-space: nowrap;
+	}
+}
