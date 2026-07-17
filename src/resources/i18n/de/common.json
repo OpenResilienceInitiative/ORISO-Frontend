@@ -2479,6 +2479,41 @@
 				"title": "Auswahl aufheben und schließen",
 				"description": "Hebt die Auswahl auf und beendet den Mehrfachmodus."
 			}
+		},
+		"curtain": {
+			"intro": {
+				"title": "Wie sehe ich die Anfrage hier?",
+				"copy": "Nutze zuerst die Suche, um eine Berater:in oder deine Fachabteilung auszuwählen. Wähle dann das Gespräch aus. Tipp: Über das Menü kannst du mehrere Fälle gleichzeitig auswählen.",
+				"cta": "Schritt für Schritt zeigen"
+			},
+			"reason": {
+				"title": "Bitte wähle einen Grund",
+				"subtitle": "Bevor du fortfährst, musst du einen Grund für deine Anfrage auswählen."
+			},
+			"describe": {
+				"title": "Bitte beschreibe den Grund",
+				"subtitle": "Bitte erläutere kurz, warum du Zugriff auf diesen Fall benötigst."
+			},
+			"back": "Zurück",
+			"next": "Weiter",
+			"consentPending": "Klient:innen-Zustimmung ist erforderlich, bevor der Zugriff aktiviert wird."
+		},
+		"accepted": {
+			"title": "Deine Anfrage wurde von einer Berater:in angenommen.",
+			"copy": "{{advisor}} aus der Beratungsstelle {{organisation}} kümmert sich ab jetzt um dein Anliegen. Alle Nachrichten bleiben Ende-zu-Ende verschlüsselt und nur für die an deiner Beratung beteiligten Personen sichtbar.",
+			"cta": "Zum Gespräch",
+			"advisorFallback": "Eine Berater:in",
+			"organisationFallback": "deiner Beratungsstelle"
+		},
+		"systemMessage": {
+			"badge": "System-Benachrichtigung",
+			"selectedReason": "Ausgewählter Grund: {{reason}}",
+			"explanation": "Erläuterung: {{explanation}}",
+			"tookOverTitle": "Neue Berater:in hat deinen Fall übernommen",
+			"noActionNeeded": "Du musst nichts weiter tun",
+			"importantTitle": "Wichtige Mitteilung",
+			"supervisionTitle": "Supervision aktiviert!",
+			"supervisionBody": "{{advisor}} wurde diesem Chat als beratende Supervisor:in hinzugefügt."
 		}
 	},
 	"session": {

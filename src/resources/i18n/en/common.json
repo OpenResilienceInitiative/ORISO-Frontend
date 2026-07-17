@@ -2419,6 +2419,41 @@
 				"title": "Deselect and close",
 				"description": "Deselects everything and closes the batch mode."
 			}
+		},
+		"curtain": {
+			"intro": {
+				"title": "How can I see the inquiry here?",
+				"copy": "Start by using the search bar to choose either the counselor you need or your agency department. Then, select the conversation. Quick tip: use the bulk option in the menu to select multiple items.",
+				"cta": "Show me step by step"
+			},
+			"reason": {
+				"title": "Please select a reason",
+				"subtitle": "Before you proceed, you need to select a reason to send an inquiry"
+			},
+			"describe": {
+				"title": "Please describe the reason",
+				"subtitle": "Please briefly explain why you need access to this case."
+			},
+			"back": "Back",
+			"next": "Next",
+			"consentPending": "Client consent is required before access is activated."
+		},
+		"accepted": {
+			"title": "Your inquiry has been accepted by a consultant.",
+			"copy": "{{advisor}} from the counselling centre {{organisation}} is now taking care of your request. All messages remain end-to-end encrypted and visible only to the people involved in your counselling.",
+			"cta": "View conversation",
+			"advisorFallback": "A consultant",
+			"organisationFallback": "your counselling centre"
+		},
+		"systemMessage": {
+			"badge": "System notification",
+			"selectedReason": "Selected reason: {{reason}}",
+			"explanation": "Explanation: {{explanation}}",
+			"tookOverTitle": "New counsellor took over your case",
+			"noActionNeeded": "You don't need to take any action",
+			"importantTitle": "Important notification",
+			"supervisionTitle": "Supervision activated!",
+			"supervisionBody": "{{advisor}} has been added to this chat as a supervising advisor."
 		}
 	},
 	"session": {

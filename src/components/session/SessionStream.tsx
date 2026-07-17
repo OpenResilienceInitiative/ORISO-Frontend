@@ -15,7 +15,8 @@ import {
 	hasUserAuthority,
 	SessionTypeContext,
 	UserDataContext,
-	ActiveSessionContext
+	ActiveSessionContext,
+	useTopic
 } from '../../globalState';
 import {
 	apiGetAgencyConsultantList,
@@ -49,7 +50,7 @@ import {
 	MatrixRoomLifecycleChange
 } from '../../services/chatTransportService';
 import { formatMatrixTimelineEvent } from '../../utils/matrixTimelineEventFormatter';
-import { CaseHandoverGate } from './CaseHandoverGate';
+import { CaseHandoverCurtain } from './CaseHandoverCurtain';
 import { isCaseHandoverAccessControlled } from './caseHandoverHelpers';
 
 interface SessionStreamProps {
@@ -887,6 +888,11 @@ export const SessionStream = ({
 	// activeSessionId: activeSession?.item?.id
 	// });
 
+	const caseHandoverTopicId =
+		(activeSession?.item?.topic as { id?: number })?.id ?? null;
+	const caseHandoverTopic = useTopic(caseHandoverTopicId);
+	const caseHandoverTopicLabel = caseHandoverTopic?.name;
+
 	if (caseHandoverGateNeeded && caseHandoverStatusLoading) {
 		return <Loading />;
 	}
@@ -919,10 +925,11 @@ export const SessionStream = ({
 	if (caseHandoverGateNeeded && !caseHandoverStatus?.canViewContent) {
 		return (
 			<div className="session__wrapper">
-				<CaseHandoverGate
+				<CaseHandoverCurtain
 					sessionId={activeSession.item.id}
 					status={caseHandoverStatus}
 					onStatusChange={handleCaseHandoverStatusChange}
+					topicLabel={caseHandoverTopicLabel}
 				/>
 			</div>
 		);
