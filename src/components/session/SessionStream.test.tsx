@@ -111,7 +111,8 @@ vi.mock('../../globalState', async () => {
 		}),
 		SessionTypeContext: ReactModule.createContext(null),
 		UserDataContext: ReactModule.createContext(null),
-		ActiveSessionContext: ReactModule.createContext(null)
+		ActiveSessionContext: ReactModule.createContext(null),
+		useTopic: () => null
 	};
 });
 

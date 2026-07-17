@@ -2419,6 +2419,24 @@
 				"title": "Deselect and close",
 				"description": "Deselects everything and closes the batch mode."
 			}
+		},
+		"curtain": {
+			"intro": {
+				"title": "How can I see the inquiry here?",
+				"copy": "Start by using the search bar to choose either the counselor you need or your agency department. Then, select the conversation. Quick tip: use the bulk option in the menu to select multiple items.",
+				"cta": "Show me step by step"
+			},
+			"reason": {
+				"title": "Please select a reason",
+				"subtitle": "Before you proceed, you need to select a reason to send an inquiry"
+			},
+			"describe": {
+				"title": "Please describe the reason",
+				"subtitle": "Please briefly explain why you need access to this case."
+			},
+			"back": "Back",
+			"next": "Next",
+			"consentPending": "Client consent is required before access is activated."
 		}
 	},
 	"session": {

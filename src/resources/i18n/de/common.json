@@ -2479,6 +2479,24 @@
 				"title": "Auswahl aufheben und schließen",
 				"description": "Hebt die Auswahl auf und beendet den Mehrfachmodus."
 			}
+		},
+		"curtain": {
+			"intro": {
+				"title": "Wie sehe ich die Anfrage hier?",
+				"copy": "Nutze zuerst die Suche, um eine Berater:in oder deine Fachabteilung auszuwählen. Wähle dann das Gespräch aus. Tipp: Über das Menü kannst du mehrere Fälle gleichzeitig auswählen.",
+				"cta": "Schritt für Schritt zeigen"
+			},
+			"reason": {
+				"title": "Bitte wähle einen Grund",
+				"subtitle": "Bevor du fortfährst, musst du einen Grund für deine Anfrage auswählen."
+			},
+			"describe": {
+				"title": "Bitte beschreibe den Grund",
+				"subtitle": "Bitte erläutere kurz, warum du Zugriff auf diesen Fall benötigst."
+			},
+			"back": "Zurück",
+			"next": "Weiter",
+			"consentPending": "Klient:innen-Zustimmung ist erforderlich, bevor der Zugriff aktiviert wird."
 		}
 	},
 	"session": {
