@@ -50,3 +50,58 @@ if (typeof Element !== 'undefined') {
 		Element.prototype.scrollIntoView = () => {};
 	}
 }
+
+/**
+ * Node >= 22 ships its own `localStorage`/`sessionStorage` globals (behind
+ * `--localstorage-file`; enabled by default in recent versions). Without that
+ * flag the global is a getter that returns `undefined`. Vitest's jsdom
+ * environment only copies window keys onto `globalThis` when they are absent
+ * there or on its known-keys allowlist — and the Web Storage globals are on
+ * neither (vitest 3.2.x), so Node's undefined-returning getter shadows
+ * jsdom's working implementation. Any test (or module under test) touching
+ * bare `localStorage` then crashes with
+ * "Cannot read properties of undefined (reading 'getItem')".
+ *
+ * Bridge the gap with an in-memory Storage — same semantics jsdom would have
+ * provided. Guarded so it is a no-op under the node environment and on
+ * runtimes where the environment already supplies a real Storage.
+ */
+class MemoryStorage {
+	private store = new Map<string, string>();
+	get length(): number {
+		return this.store.size;
+	}
+	clear(): void {
+		this.store.clear();
+	}
+	getItem(key: string): string | null {
+		return this.store.get(String(key)) ?? null;
+	}
+	key(index: number): string | null {
+		return [...this.store.keys()][index] ?? null;
+	}
+	removeItem(key: string): void {
+		this.store.delete(String(key));
+	}
+	setItem(key: string, value: string): void {
+		this.store.set(String(key), String(value));
+	}
+}
+
+if (typeof document !== 'undefined') {
+	for (const key of ['localStorage', 'sessionStorage'] as const) {
+		let storageMissing = false;
+		try {
+			storageMissing = globalThis[key] === undefined;
+		} catch {
+			storageMissing = true;
+		}
+		if (storageMissing) {
+			Object.defineProperty(globalThis, key, {
+				value: new MemoryStorage(),
+				configurable: true,
+				writable: true
+			});
+		}
+	}
+}

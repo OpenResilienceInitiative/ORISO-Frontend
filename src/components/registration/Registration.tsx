@@ -53,6 +53,7 @@ import {
 	registrationMd3,
 	registrationMotion
 } from './registrationDesign/registrationDesign';
+import { clearAccountDataDraft } from './accountData/accountDataDraft';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
@@ -69,6 +70,8 @@ import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
  * For Caritas there is no consultingType tenant relation and every tenant could have different consultingType depending on agency. So before agency is selected no idea which consultingType settings to load before agency is selected
  * @constructor
  */
+
+const registrationMaxStepSessionStorageKey = 'registrationMaxStepReached';
 
 export const Registration = () => {
 	const { t } = useTranslation(['common', 'consultingTypes', 'agencies']);
@@ -138,6 +141,62 @@ export const Registration = () => {
 		[availableSteps, step]
 	);
 
+	/* Highest step the user has reached so far (prototype parity): the stepper
+	   is clickable back AND forth up to this step, so users can freely move
+	   between steps without losing anything. Persisted per tab so a reload
+	   within the registration keeps the reached range. */
+	const [maxReachedStepName, setMaxReachedStepName] = useState<string | null>(
+		() => {
+			try {
+				return sessionStorage.getItem(
+					registrationMaxStepSessionStorageKey
+				);
+			} catch {
+				return null;
+			}
+		}
+	);
+
+	const persistMaxReachedStepName = useCallback((name: string | null) => {
+		setMaxReachedStepName(name);
+		try {
+			if (name) {
+				sessionStorage.setItem(
+					registrationMaxStepSessionStorageKey,
+					name
+				);
+			} else {
+				sessionStorage.removeItem(registrationMaxStepSessionStorageKey);
+			}
+		} catch {
+			/* non-fatal — navigation still works, just not across reloads */
+		}
+	}, []);
+
+	const maxReachedStepIndex = useMemo(() => {
+		const storedIndex = availableSteps.findIndex(
+			({ name }) => name === maxReachedStepName
+		);
+		return Math.max(storedIndex, currStepIndex);
+	}, [availableSteps, maxReachedStepName, currStepIndex]);
+
+	useEffect(() => {
+		if (currStepIndex < 0) {
+			return;
+		}
+		const storedIndex = availableSteps.findIndex(
+			({ name }) => name === maxReachedStepName
+		);
+		if (currStepIndex > storedIndex) {
+			persistMaxReachedStepName(availableSteps[currStepIndex].name);
+		}
+	}, [
+		availableSteps,
+		currStepIndex,
+		maxReachedStepName,
+		persistMaxReachedStepName
+	]);
+
 	// The step form renders only for a real step; bare /registration (no/unknown
 	// :step) redirects to the first step — dev's stabilized entry, no separate
 	// welcome screen.
@@ -192,17 +251,24 @@ export const Registration = () => {
 			? t('registration.topicInstruction', 'Wählen Sie ein Thema aus.')
 			: noneSelectedLabel;
 
-	const onNextClick = useCallback(() => {
+	/* Navigating between steps must never discard what was entered: merge the
+	   current step's data into the registration context instead of throwing it
+	   away (prototype parity — moving back and forth keeps every value). */
+	const commitStepData = useCallback(() => {
 		updateRegistrationData(stepData);
 		setStepData({});
+	}, [updateRegistrationData, stepData]);
+
+	const onNextClick = useCallback(() => {
+		commitStepData();
 		if (nextStepUrl) {
 			navigate(nextStepUrl);
 		}
-	}, [updateRegistrationData, stepData, navigate, nextStepUrl]);
+	}, [commitStepData, navigate, nextStepUrl]);
 
 	const onPrevClick = useCallback(() => {
-		setStepData({});
-	}, []);
+		commitStepData();
+	}, [commitStepData]);
 
 	const onClearSelection = useCallback(() => {
 		setStepData({});
@@ -277,12 +343,36 @@ export const Registration = () => {
 		selectedTopicLabel
 	]);
 
+	/* Forward navigation is additionally capped by data validity: once an
+	   earlier step's mandatory value was cleared (chip ✕), later steps stop
+	   being clickable until the flow is completed again. The missing step
+	   itself stays clickable so it can be fixed directly. */
+	const maxNavigableStepIndex = useMemo(() => {
+		const firstMissingIndex = availableSteps.findIndex(
+			({ mandatoryFields }, index) =>
+				index < maxReachedStepIndex &&
+				mandatoryFields?.some(
+					(field) => mergedRegistrationData?.[field] === undefined
+				)
+		);
+		return firstMissingIndex >= 0
+			? Math.min(maxReachedStepIndex, firstMissingIndex)
+			: maxReachedStepIndex;
+	}, [availableSteps, maxReachedStepIndex, mergedRegistrationData]);
+
+	/* Every step already reached is clickable — back AND forth (prototype
+	   parity). The missing-mandatory-fields effect below still bounces the
+	   user back if an earlier step was cleared in the meantime. */
 	const clickableStepperStepNames = useMemo(
 		() =>
 			availableSteps
-				.slice(0, Math.max(currStepIndex, 0))
+				.filter(
+					(_, index) =>
+						index <= maxNavigableStepIndex &&
+						index !== currStepIndex
+				)
 				.map(({ name }) => name),
-		[availableSteps, currStepIndex]
+		[availableSteps, maxNavigableStepIndex, currStepIndex]
 	);
 
 	const onStepperClick = useCallback(
@@ -291,14 +381,23 @@ export const Registration = () => {
 				({ name }) => name === targetStepName
 			);
 
-			if (targetStepIndex < 0 || targetStepIndex > currStepIndex) {
+			if (
+				targetStepIndex < 0 ||
+				targetStepIndex > maxNavigableStepIndex
+			) {
 				return;
 			}
 
-			setStepData({});
+			commitStepData();
 			navigate(makeStepUrl(targetStepName));
 		},
-		[availableSteps, currStepIndex, navigate, makeStepUrl]
+		[
+			availableSteps,
+			maxNavigableStepIndex,
+			commitStepData,
+			navigate,
+			makeStepUrl
+		]
 	);
 
 	useEffect(() => {
@@ -392,6 +491,10 @@ export const Registration = () => {
 			)
 				.then(() => {
 					sessionStorage.removeItem(registrationSessionStorageKey);
+					sessionStorage.removeItem(
+						registrationMaxStepSessionStorageKey
+					);
+					clearAccountDataDraft();
 					// Skip the manual "registration successful" overlay: flag the app
 					// to play the welcome loading animation and go straight into the
 					// chat room (autoLogin already ran inside apiPostRegistration).

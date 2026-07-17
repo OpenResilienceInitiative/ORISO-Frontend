@@ -796,7 +796,8 @@
 			}
 		},
 		"edit": {
-			"title": "Chat-Einstellungen"
+			"title": "Chat-Einstellungen",
+			"subtitle": "Zeitplan und Inhalte dieser Serie ändern"
 		},
 		"info": {
 			"headline": "Chat-Info",
