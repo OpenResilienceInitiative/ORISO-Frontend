@@ -60,7 +60,7 @@
 		width: 25px;
 		height: 25px;
 
-		@media (min-resolution: 1.5dppx), (min-width: 1920px) {
+		@media (resolution >= 1.5dppx), (width >= 1920px) {
 			width: 29px;
 			height: 29px;
 		}
