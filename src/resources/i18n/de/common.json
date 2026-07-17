@@ -752,6 +752,37 @@
 				}
 			}
 		},
+		"format": {
+			"back": "Zurück",
+			"headerTitle": "Neue Unterhaltung erstellen",
+			"subtitle": "Wir bieten verschiedene spezialisierte Gesprächsformate für Sie und die Ratsuchenden an. Die Auswahl ist von den Trägern und Ihrer Beratungsstelle frei konfigurierbar.",
+			"title": "Gesprächsformat wählen"
+		},
+		"internal": {
+			"addPerson": "Person hinzufügen",
+			"createLabel": "Interna erstellen",
+			"deselectPerson": "{{name}} entfernen",
+			"nameLabel": "Name Interna",
+			"personCount": "{{count}}x Person hinzugefügt",
+			"removePerson": "{{name}} entfernen",
+			"selectPerson": "{{name}} auswählen",
+			"subtitle": "mit Ihren Kolleg:innen",
+			"supportText": "Stimmen Sie sich innerhalb Ihrer Beratungsstelle ab. Egal ob einzeln oder im Team, per Audio, Video im Chat oder alles nach Bedarf.",
+			"title": "Interna besprechen",
+			"togglePersonList": "Personenliste öffnen oder schließen"
+		},
+		"circle": {
+			"cardHeadline": "Anonyme Selbsthilfegruppen",
+			"cardText": "in Ihrem Fachbereich initiieren. Einmalig oder regelmäßig: Wählen Sie das passende Medium und teilen Sie den Kreis mit den Teilnehmenden.",
+			"createLabel": "Erstellen",
+			"noTopics": "Keine Themen verfügbar",
+			"settingsSubtitle": "Passen Sie nun Begrüßungstext, Format, Regeln, Intervalle und die Sprache an, in welcher der Kreis primär stattfinden soll.",
+			"settingsTitle": "Gesprächskreis Einstellungen",
+			"subtitle": "moderiert durch Berater:innen",
+			"title": "Gesprächskreis",
+			"toggleTopicList": "Themenliste öffnen oder schließen",
+			"topicLabel": "Thema / Fachbereich"
+		},
 		"createError": {
 			"overlay": {
 				"buttonLabel": "Schließen",

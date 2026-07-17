@@ -21,7 +21,9 @@ vi.mock('../sessionsList/SessionsListWrapper', () => ({
 vi.mock('../askerInfo/AskerInfo', () => ({ AskerInfo: Stub }));
 vi.mock('../profile/Profile', () => ({ Profile: Stub }));
 vi.mock('../session/SessionViewEmpty', () => ({ SessionViewEmpty: Stub }));
-vi.mock('../groupChat/CreateChatView', () => ({ CreateGroupChatView: Stub }));
+vi.mock('../conversationCreate/CreateConversationView', () => ({
+	CreateConversationView: Stub
+}));
 vi.mock('../groupChat/GroupChatInfo', () => ({ GroupChatInfo: Stub }));
 vi.mock('../appointment/Appointments', () => ({ Appointments: Stub }));
 vi.mock('../videoConference/VideoConference', () => ({ default: Stub }));

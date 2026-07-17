@@ -13,12 +13,18 @@ interface GroupChatAuthorContentFieldsProps {
 	activeLanguages: string[];
 	value: GroupChatAuthorContentDraft;
 	onChange: (value: GroupChatAuthorContentDraft) => void;
+	/**
+	 * Hide the translate action when no translation API key is configured
+	 * in the background (Figma flow 8482-30552). Defaults to true.
+	 */
+	translationAvailable?: boolean;
 }
 
 export const GroupChatAuthorContentFields = ({
 	activeLanguages,
 	value,
-	onChange
+	onChange,
+	translationAvailable = true
 }: GroupChatAuthorContentFieldsProps) => {
 	const { t } = useTranslation();
 	const languages = useMemo(
@@ -217,15 +223,17 @@ export const GroupChatAuthorContentFields = ({
 					)}
 				</div>
 			</div>
-			<button
-				type="button"
-				disabled={isTranslating}
-				onClick={translateContent}
-			>
-				{isTranslating
-					? t('groupChat.create.authorContent.translating')
-					: t('groupChat.create.authorContent.translate')}
-			</button>
+			{translationAvailable && (
+				<button
+					type="button"
+					disabled={isTranslating}
+					onClick={translateContent}
+				>
+					{isTranslating
+						? t('groupChat.create.authorContent.translating')
+						: t('groupChat.create.authorContent.translate')}
+				</button>
+			)}
 			{translationError && (
 				<p role="alert">
 					{t('groupChat.create.authorContent.translationError')}
