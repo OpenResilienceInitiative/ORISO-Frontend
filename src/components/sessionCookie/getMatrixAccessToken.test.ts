@@ -10,6 +10,7 @@ import { fetchData } from '../../api/fetchData';
 import { getMatrixHomeserverUrl } from '../../resources/scripts/runtimeConfig';
 import { createClient } from 'matrix-js-sdk';
 import { getMatrixClientLogger } from '../../utils/matrixLogging';
+import { secretStorageKeyCallback } from '../../services/matrixKeyBackupService';
 
 vi.mock('../../resources/scripts/endpoints', () => ({
 	endpoints: {
@@ -224,7 +225,10 @@ describe('getMatrixAccessToken', () => {
 			userId: '@consultant:matrix.example.test',
 			deviceId: 'ORISO_WEB_TEST_DEVICE',
 			fallbackICEServerAllowed: true,
-			logger: getMatrixClientLogger()
+			logger: getMatrixClientLogger(),
+			cryptoCallbacks: {
+				getSecretStorageKey: secretStorageKeyCallback
+			}
 		});
 		expect(client).toEqual({
 			config: {
@@ -233,7 +237,10 @@ describe('getMatrixAccessToken', () => {
 				userId: '@consultant:matrix.example.test',
 				deviceId: 'ORISO_WEB_TEST_DEVICE',
 				fallbackICEServerAllowed: true,
-				logger: getMatrixClientLogger()
+				logger: getMatrixClientLogger(),
+				cryptoCallbacks: {
+					getSecretStorageKey: secretStorageKeyCallback
+				}
 			}
 		});
 	});
