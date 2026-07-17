@@ -3,6 +3,7 @@ import { endpoints } from '../../resources/scripts/endpoints';
 import { getMatrixHomeserverUrl } from '../../resources/scripts/runtimeConfig';
 import { fetchData, FETCH_ERRORS, FETCH_METHODS } from '../../api/fetchData';
 import { getMatrixClientLogger } from '../../utils/matrixLogging';
+import { secretStorageKeyCallback } from '../../services/matrixKeyBackupService';
 
 export interface MatrixLoginData {
 	accessToken: string;
@@ -189,6 +190,12 @@ export const createMatrixClient = (
 		userId: loginData.userId,
 		deviceId: loginData.deviceId,
 		fallbackICEServerAllowed: true,
-		logger: getMatrixClientLogger()
+		logger: getMatrixClientLogger(),
+		// #437 key backup + recovery: the SDK pulls the secret-storage key
+		// through this callback during setup/recovery flows (one-shot in-memory
+		// cache, never persisted).
+		cryptoCallbacks: {
+			getSecretStorageKey: secretStorageKeyCallback
+		}
 	});
 };

@@ -987,7 +987,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		justify-content: center;
 		min-width: 34px;
 		border: 0;
-		border-left: 1px solid rgb(255 255 255 / 35%);
+		border-left: 1px solid rgba(255, 255, 255, 0.35);
 		border-radius: 0 19px 19px 0;
 		background: transparent;
 		color: inherit;
@@ -1005,7 +1005,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 
 	&__handoverAction--status &__handoverActionToggle,
 	&__handoverAction--denied &__handoverActionToggle {
-		border-left-color: rgb(0 0 0 / 12%);
+		border-left-color: rgba(0, 0, 0, 0.12);
 	}
 
 	&__handoverActionCheckbox {
@@ -1018,7 +1018,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		position: relative;
 
 		&--selected {
-			background: var(--m3-on-primary, #ffffff);
+			background: var(--m3-surface, #ffffff);
 			border-color: var(--m3-on-primary, #ffffff);
 
 			&::after {
@@ -1045,7 +1045,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		border-radius: 14px;
 		border: 1px solid var(--m3-primary, #a5000a);
 		background: var(--m3-surface, #ffffff);
-		box-shadow: 0 8px 24px rgb(0 0 0 / 16%);
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
 	}
 
 	&__handoverActionMenuItem {
