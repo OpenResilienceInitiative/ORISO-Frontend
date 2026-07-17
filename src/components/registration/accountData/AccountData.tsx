@@ -249,15 +249,16 @@ export const AccountData: FC<{
 		onChange
 	]);
 
-	const { hasError: usernameHasError, helperTextKey: usernameHelperTextKey } =
-		getUsernameFeedback({
-			wasBlurred: usernameWasBlurred,
-			isLongEnough: isUsernameLongEnough,
-			isAvailable: isUsernameAvailable,
-			availabilityChecked: usernameAvailabilityChecked,
-			availabilityCheckFailed: usernameAvailabilityFailed
-		});
-	const usernameHelperText = t(usernameHelperTextKey);
+	const { hasError: usernameHasError, helperTextKey } = getUsernameFeedback({
+		wasBlurred: usernameWasBlurred,
+		isLongEnough: isUsernameLongEnough,
+		isAvailable: isUsernameAvailable,
+		availabilityChecked: usernameAvailabilityChecked,
+		availabilityCheckFailed: usernameAvailabilityFailed
+	});
+
+	const usernameHelperText = t(helperTextKey);
+
 	const visibilityButtonSx = {
 		'color': registrationMd3.onSurfaceVariant,
 		'&:hover': {

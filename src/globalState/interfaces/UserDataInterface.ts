@@ -21,6 +21,9 @@ export interface UserDataInterface {
 	isWalkThroughEnabled?: boolean;
 	languages?: string[];
 	lastName?: string;
+	publicSlug?: string;
+	pendingPublicSlug?: string;
+	publicSlugStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
 	preferredLanguage: string;
 	twoFactorAuth?: TwoFactorAuthInterface;
 	userId: string;
