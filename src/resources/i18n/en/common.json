@@ -753,6 +753,7 @@
 			}
 		},
 		"edit.title": "Chat settings",
+		"edit.subtitle": "Change this series' schedule and content",
 		"info": {
 			"headline": "Chat-Info",
 			"settings": {
@@ -1674,6 +1675,22 @@
 					"text": "Copy contact link",
 					"title": "Copy contact link to clipboard",
 					"tooltip": "Share your personal contact link with someone so they can start an online consultation directly with you."
+				}
+			},
+			"publicSlug": {
+				"info": "Use lowercase letters and hyphens only. New slugs become active after admin approval.",
+				"input": "Public contact link name",
+				"label": "Public contact link",
+				"notification": {
+					"error": "The contact link name could not be saved. Please check the format or choose another name.",
+					"text": "The contact link name was submitted for approval.",
+					"title": "Request saved"
+				},
+				"status": {
+					"active": "Active link name: {{slug}}",
+					"empty": "No public link name is active yet. The UUID link is still used.",
+					"pending": "Waiting for admin approval: {{slug}}",
+					"rejected": "The last requested link name was rejected."
 				}
 			},
 			"profileIcon": "Profile icon",
@@ -3357,7 +3374,8 @@
 			"consultantAccepted": "Your counselor is now expecting you in the chat.",
 			"startChatNow": "Start chat now",
 			"dismissAcceptedBanner": "Dismiss notice"
-		}
+		},
+		"enquiryClosed": "This live chat has ended. To start a new chat, please open your invite link again."
 	},
 	"sessionHeader": {
 		"anonymous": {

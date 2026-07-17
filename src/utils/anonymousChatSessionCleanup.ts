@@ -1,11 +1,5 @@
 import { apiFinishAnonymousConversation } from '../api/apiFinishAnonymousConversation';
 import { FETCH_ERRORS } from '../api/fetchData';
-import { endpoints } from '../resources/scripts/endpoints';
-import {
-	getValueFromCookie,
-	setValueInCookie
-} from '../components/sessionCookie/accessSessionCookie';
-import { generateCsrfToken } from './generateCsrfToken';
 import { addEventListener, removeEventListener } from './eventHandler';
 import { EVENT_PRE_LOGOUT } from '../components/logout/logout';
 import {
@@ -43,32 +37,6 @@ export const registerAnonymousChatSessionForCleanup = (
 		return;
 	}
 	pendingSessionId = sessionId;
-};
-
-export const finishAnonymousChatSessionKeepalive = (
-	sessionId: number
-): void => {
-	const accessToken = getValueFromCookie('keycloak');
-	if (!accessToken) {
-		return;
-	}
-
-	const csrfToken = getValueFromCookie('CSRF-TOKEN') || generateCsrfToken();
-	if (!getValueFromCookie('CSRF-TOKEN')) {
-		setValueInCookie('CSRF-TOKEN', csrfToken);
-	}
-
-	void fetch(endpoints.finishAnonymousConversation(sessionId), {
-		method: 'PUT',
-		keepalive: true,
-		headers: {
-			'Content-Type': 'application/json',
-			'Authorization': `Bearer ${accessToken}`,
-			'X-CSRF-TOKEN': csrfToken
-		}
-	}).catch(() => {
-		/* best-effort on tab close */
-	});
 };
 
 export const finishPendingAnonymousChatSession = async (): Promise<void> => {
@@ -111,17 +79,14 @@ export const teardownAnonymousChatPreLogoutCleanup = (): void => {
 	preLogoutListenerRegistered = false;
 };
 
-export const bindAnonymousChatUnloadCleanup = (
-	sessionId: number | null | undefined
-): (() => void) => {
-	const onPageHide = () => {
-		if (sessionId != null) {
-			finishAnonymousChatSessionKeepalive(sessionId);
-		}
-	};
-
-	window.addEventListener('pagehide', onPageHide);
-	return () => window.removeEventListener('pagehide', onPageHide);
-};
+/*
+ * NOTE: there is intentionally no pagehide/unload hook here. pagehide fires
+ * on plain page refreshes and navigations too, and finishing the anonymous
+ * conversation there sets the session to DONE and deactivates the anonymous
+ * Keycloak user — silently destroying an enquiry that is still waiting in
+ * the consultant queue. Abandoned sessions are expired server-side by the
+ * anonymous deactivate workflow; the client finishes only on explicit
+ * logout (EVENT_PRE_LOGOUT above).
+ */
 
 export { STATUS_FINISHED, isOpenAnonymousSessionStatus };
