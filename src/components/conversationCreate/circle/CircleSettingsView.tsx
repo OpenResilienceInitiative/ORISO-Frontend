@@ -27,6 +27,7 @@ import {
 	loadCircleDefaults,
 	saveCircleDefaults
 } from './circleDefaults';
+import '../../groupChat/createChat.styles.scss';
 
 /**
  * "Gesprächskreis Einstellungen" (Figma flow 8482-30552, second screen).
