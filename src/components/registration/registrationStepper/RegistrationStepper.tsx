@@ -6,6 +6,8 @@ import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
 import ApartmentRoundedIcon from '@mui/icons-material/ApartmentRounded';
 import HowToRegRoundedIcon from '@mui/icons-material/HowToRegRounded';
 import ChatBubbleRoundedIcon from '@mui/icons-material/ChatBubbleRounded';
+import CakeRoundedIcon from '@mui/icons-material/CakeRounded';
+import PublicRoundedIcon from '@mui/icons-material/PublicRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import { SvgIconComponent } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
@@ -39,6 +41,18 @@ const CANONICAL_STEPS: {
 		Icon: ApartmentRoundedIcon
 	},
 	{
+		name: 'age',
+		labelKey: 'registration.age.headline',
+		fallback: 'Alter',
+		Icon: CakeRoundedIcon
+	},
+	{
+		name: 'state',
+		labelKey: 'registration.state.headline',
+		fallback: 'Bundesland',
+		Icon: PublicRoundedIcon
+	},
+	{
 		name: 'account-data',
 		labelKey: 'registration.md3.stepNames.register',
 		fallback: 'Registrieren',
@@ -54,10 +68,12 @@ const CANONICAL_STEPS: {
 
 export const RegistrationStepper = ({
 	currentStepName,
+	visibleStepNames,
 	onStepClick,
 	clickableStepNames = []
 }: {
 	currentStepName: string;
+	visibleStepNames?: string[];
 	onStepClick?: (stepName: string) => void;
 	clickableStepNames?: string[];
 }) => {
@@ -67,12 +83,22 @@ export const RegistrationStepper = ({
 		() => new Set(clickableStepNames),
 		[clickableStepNames]
 	);
+	const visibleSteps = useMemo(() => {
+		if (!visibleStepNames?.length) {
+			return CANONICAL_STEPS;
+		}
+
+		const visibleStepNameSet = new Set(visibleStepNames);
+		return CANONICAL_STEPS.filter(({ name }) =>
+			visibleStepNameSet.has(name)
+		);
+	}, [visibleStepNames]);
 	const currentIndex = useMemo(() => {
-		const index = CANONICAL_STEPS.findIndex(
+		const index = visibleSteps.findIndex(
 			({ name }) => name === currentStepName
 		);
 		return index >= 0 ? index : 0;
-	}, [currentStepName]);
+	}, [currentStepName, visibleSteps]);
 
 	useEffect(() => {
 		activeRef.current?.scrollIntoView({
@@ -146,138 +172,133 @@ export const RegistrationStepper = ({
 					'&::-webkit-scrollbar': { display: 'none' }
 				}}
 			>
-				{CANONICAL_STEPS.map(
-					({ name, labelKey, fallback, Icon }, i) => {
-						const done = i < currentIndex;
-						const active = i === currentIndex;
-						const clickable =
-							Boolean(onStepClick) &&
-							clickableStepNameSet.has(name);
-						const label = t(labelKey, fallback);
+				{visibleSteps.map(({ name, labelKey, fallback, Icon }, i) => {
+					const done = i < currentIndex;
+					const active = i === currentIndex;
+					const clickable =
+						Boolean(onStepClick) && clickableStepNameSet.has(name);
+					const label = t(labelKey, fallback);
 
-						return (
-							<Box key={name} sx={{ display: 'contents' }}>
-								<Box
-									ref={active ? activeRef : undefined}
-									aria-current={active ? 'step' : undefined}
-									aria-label={clickable ? label : undefined}
-									onClick={
+					return (
+						<Box key={name} sx={{ display: 'contents' }}>
+							<Box
+								ref={active ? activeRef : undefined}
+								aria-current={active ? 'step' : undefined}
+								aria-label={clickable ? label : undefined}
+								onClick={
+									clickable
+										? () => onStepClick?.(name)
+										: undefined
+								}
+								onKeyDown={
+									clickable
+										? (event) => {
+												if (
+													event.key === 'Enter' ||
+													event.key === ' '
+												) {
+													event.preventDefault();
+													onStepClick?.(name);
+												}
+											}
+										: undefined
+								}
+								role={clickable ? 'button' : undefined}
+								tabIndex={clickable ? 0 : undefined}
+								sx={{
+									'display': 'flex',
+									'flexDirection': 'column',
+									'alignItems': 'center',
+									'gap': 0.5,
+									'width': { xs: 86, md: 112 },
+									'flexShrink': 0,
+									'borderRadius': 2,
+									'cursor': clickable ? 'pointer' : 'default',
+									'outline': 'none',
+									'&:focus-visible': {
+										boxShadow: `0 0 0 3px ${registrationMd3.focusLayer}`
+									},
+									'&:hover .registration-stepper-dot':
 										clickable
-											? () => onStepClick?.(name)
-											: undefined
-									}
-									onKeyDown={
-										clickable
-											? (event) => {
-													if (
-														event.key === 'Enter' ||
-														event.key === ' '
-													) {
-														event.preventDefault();
-														onStepClick?.(name);
-													}
+											? {
+													transform: active
+														? 'scale(1.03)'
+														: 'scale(1.06)'
 												}
 											: undefined
-									}
-									role={clickable ? 'button' : undefined}
-									tabIndex={clickable ? 0 : undefined}
+								}}
+							>
+								<Box
+									className="registration-stepper-dot"
 									sx={{
-										'display': 'flex',
-										'flexDirection': 'column',
-										'alignItems': 'center',
-										'gap': 0.5,
-										'width': { xs: 86, md: 112 },
-										'flexShrink': 0,
-										'borderRadius': 2,
-										'cursor': clickable
-											? 'pointer'
-											: 'default',
-										'outline': 'none',
-										'&:focus-visible': {
-											boxShadow: `0 0 0 3px ${registrationMd3.focusLayer}`
-										},
-										'&:hover .registration-stepper-dot':
-											clickable
-												? {
-														transform: active
-															? 'scale(1.03)'
-															: 'scale(1.06)'
-													}
-												: undefined
+										width: { xs: 36, md: 44 },
+										height: { xs: 36, md: 44 },
+										borderRadius: '50%',
+										display: 'flex',
+										alignItems: 'center',
+										justifyContent: 'center',
+										bgcolor:
+											done || active
+												? registrationMd3.primary
+												: registrationMd3.surfaceContainerHigh,
+										color:
+											done || active
+												? '#fff'
+												: registrationMd3.onSurfaceVariant,
+										border:
+											done || active
+												? 'none'
+												: `1.5px solid ${registrationMd3.outlineVariant}`,
+										boxShadow: active
+											? `0 0 0 5px ${registrationMd3.selectedLayer}`
+											: 'none',
+										transition:
+											'transform 180ms ease, background-color 200ms ease, color 200ms ease, border-color 200ms ease, box-shadow 200ms ease'
 									}}
 								>
-									<Box
-										className="registration-stepper-dot"
-										sx={{
-											width: { xs: 36, md: 44 },
-											height: { xs: 36, md: 44 },
-											borderRadius: '50%',
-											display: 'flex',
-											alignItems: 'center',
-											justifyContent: 'center',
-											bgcolor:
-												done || active
-													? registrationMd3.primary
-													: registrationMd3.surfaceContainerHigh,
-											color:
-												done || active
-													? '#fff'
-													: registrationMd3.onSurfaceVariant,
-											border:
-												done || active
-													? 'none'
-													: `1.5px solid ${registrationMd3.outlineVariant}`,
-											boxShadow: active
-												? `0 0 0 5px ${registrationMd3.selectedLayer}`
-												: 'none',
-											transition:
-												'transform 180ms ease, background-color 200ms ease, color 200ms ease, border-color 200ms ease, box-shadow 200ms ease'
-										}}
-									>
-										{done ? (
-											<CheckRoundedIcon
-												sx={{ fontSize: 22 }}
-											/>
-										) : (
-											<Icon sx={{ fontSize: 22 }} />
-										)}
-									</Box>
-									<Typography
-										sx={{
-											fontSize: { xs: 11, md: 13 },
-											fontWeight: active ? 700 : 600,
-											color: active
-												? registrationMd3.primary
-												: registrationMd3.onSurfaceVariant,
-											lineHeight: 1.15,
-											textAlign: 'center',
-											overflowWrap: 'normal',
-											wordBreak: 'keep-all',
-											hyphens: 'none'
-										}}
-									>
-										{label}
-									</Typography>
+									{done ? (
+										<CheckRoundedIcon
+											sx={{ fontSize: 22 }}
+										/>
+									) : (
+										<Icon sx={{ fontSize: 22 }} />
+									)}
 								</Box>
-								{i < CANONICAL_STEPS.length - 1 && (
-									<Box
-										aria-hidden
-										sx={{
-											flexGrow: 1,
-											flexShrink: 0,
-											minWidth: { xs: 18, md: 24 },
-											mt: { xs: '17px', md: '21px' },
-											mx: 0.5,
-											borderTop: done
-												? `3px solid ${registrationMd3.primary}`
-												: `2.5px dotted ${registrationMd3.outlineVariant}`
-										}}
-									/>
-								)}
+								<Typography
+									sx={{
+										fontSize: { xs: 11, md: 13 },
+										fontWeight: active ? 700 : 600,
+										color: active
+											? registrationMd3.primary
+											: registrationMd3.onSurfaceVariant,
+										lineHeight: 1.15,
+										textAlign: 'center',
+										overflowWrap: 'normal',
+										wordBreak: 'keep-all',
+										hyphens: 'none'
+									}}
+								>
+									{label}
+								</Typography>
 							</Box>
-						);
-					}
-				)}
+							{i < visibleSteps.length - 1 && (
+								<Box
+									aria-hidden
+									sx={{
+										flexGrow: 1,
+										flexShrink: 0,
+										minWidth: { xs: 18, md: 24 },
+										mt: { xs: '17px', md: '21px' },
+										mx: 0.5,
+										borderTop: done
+											? `3px solid ${registrationMd3.primary}`
+											: `2.5px dotted ${registrationMd3.outlineVariant}`
+									}}
+								/>
+							)}
+						</Box>
+					);
+				})}
 			</Box>
 		</Box>
 	);
