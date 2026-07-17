@@ -7,7 +7,10 @@ import {
 } from '../components/sessionCookie/getMatrixAccessToken';
 import { matrixCallService } from './matrixCallService';
 import { buildMatrixCryptoStorePrefix } from './matrixCrypto';
+import { applyDeviceIsolationMode } from './matrixDeviceIsolation';
+import { appConfig } from '../utils/appConfig';
 import { matrixLiveEventBridge } from './matrixLiveEventBridge';
+import { startDeviceDehydration } from './matrixDeviceDehydration';
 import { encryptMatrixAttachment } from '../utils/matrixEncryptedAttachment';
 import { buildMatrixRoomEncryptionInitialState } from '../utils/matrixRoomEncryption';
 
@@ -98,6 +101,9 @@ export class MatrixClientService {
 	private syncState: string | null = null;
 	private initializedServicesClient: MatrixClient | null = null;
 	private syncStateListeners = new Set<(state: string | null) => void>();
+	private clientChangeListeners = new Set<
+		(client: MatrixClient | null) => void
+	>();
 
 	// Initialize client with login data
 	public async initializeClient(loginData: MatrixLoginData): Promise<void> {
@@ -108,6 +114,9 @@ export class MatrixClientService {
 		this.initializedServicesClient = null;
 		this.notifySyncStateListeners();
 		this.scheduleTokenRefresh(loginData);
+		// Announce the replacement client before sync starts so consumers
+		// (e.g. SessionStream room listeners) re-attach without missing events.
+		this.notifyClientChangeListeners();
 
 		// CRITICAL: Start client with sync configuration (EXACTLY like Element does!)
 		// NOTE: TURN/STUN servers are fetched automatically from Matrix homeserver
@@ -123,9 +132,19 @@ export class MatrixClientService {
 				)
 			});
 		} catch (error) {
-			this.stopCurrentClient();
+			// The failed client was already announced above, so tear down via
+			// the notifying path to hand subscribers the resulting null.
+			this.stopAndCleanup();
 			throw error;
 		}
+
+		// #438 MSC4153 invisible crypto: once the rust crypto stack is up, share
+		// Megolm keys only with cross-signed devices when the toggle is on.
+		// Best-effort — never breaks client startup.
+		applyDeviceIsolationMode(
+			client,
+			appConfig?.releaseToggles?.enableInvisibleCrypto === true
+		);
 
 		(client as any).on(
 			'sync',
@@ -170,6 +189,21 @@ export class MatrixClientService {
 
 		return () => {
 			this.syncStateListeners.delete(callback);
+		};
+	}
+
+	/**
+	 * Subscribe to client instance swaps. A token refresh replaces the
+	 * matrix-js-sdk client (the old one gets removeAllListeners()), so
+	 * consumers holding room listeners must re-attach on every change.
+	 */
+	public onClientChange(
+		listener: (client: MatrixClient | null) => void
+	): () => void {
+		this.clientChangeListeners.add(listener);
+
+		return () => {
+			this.clientChangeListeners.delete(listener);
 		};
 	}
 
@@ -389,6 +423,15 @@ export class MatrixClientService {
 		matrixCallService.initialize(client);
 		matrixLiveEventBridge.initialize(client);
 		this.initializedServicesClient = client;
+
+		// #439 MSC3814: rehydrate the parked device (reads Megolm keys sent
+		// during the login gap) and re-park a fresh one. Fire-and-forget and
+		// best-effort — no-ops unless the toggle is on, the server supports
+		// MSC3814, and secret storage (#437) is set up. Never blocks startup.
+		void startDeviceDehydration(
+			client,
+			appConfig?.releaseToggles?.enableDeviceDehydration === true
+		);
 	}
 
 	private scheduleTokenRefresh(loginData: MatrixLoginData): void {
@@ -419,12 +462,22 @@ export class MatrixClientService {
 		}
 	}
 
+	// Teardown on the re-initialization path: the replacement client is
+	// announced by initializeClient itself, so skip the null notification.
 	private stopCurrentClient(): void {
-		this.stopAndCleanup();
+		this.teardownClient();
 	}
 
 	/** Stops sync, removes listeners, and tears down bridge/call services (no Matrix logout API). */
 	public stopAndCleanup(): void {
+		const hadClient = this.client !== null;
+		this.teardownClient();
+		if (hadClient) {
+			this.notifyClientChangeListeners();
+		}
+	}
+
+	private teardownClient(): void {
 		this.clearRefreshTimer();
 
 		if (this.client) {
@@ -489,6 +542,12 @@ export class MatrixClientService {
 	private notifySyncStateListeners(): void {
 		this.syncStateListeners.forEach((listener) => {
 			listener(this.syncState);
+		});
+	}
+
+	private notifyClientChangeListeners(): void {
+		this.clientChangeListeners.forEach((listener) => {
+			listener(this.client);
 		});
 	}
 }

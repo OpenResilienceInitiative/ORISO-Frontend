@@ -22,6 +22,7 @@
 
 	&.normal {
 		width: min(460px, calc(100vw - 32px));
+
 		/* Height is driven by inline stageSize; avoid min-height fighting auto-fit/resize */
 		min-height: 0;
 		height: auto;
@@ -351,10 +352,11 @@
 	}
 }
 
-@media (max-width: 480px) {
+@media (width <= 480px) {
 	.floating-call-widget.normal {
 		width: calc(100vw - 16px) !important;
 		max-width: calc(100vw - 16px);
+
 		/* Keep JS-driven height; only constrain width on narrow screens */
 
 		.call-video-area {

@@ -245,3 +245,15 @@ export const mockSystemNotificationMessage = `[SYSTEM_NOTIFICATION]${JSON.string
 		type: 'INFO'
 	}
 )}`;
+
+export const mockCaseHandoverGrantedMessage = `[SYSTEM_NOTIFICATION]${JSON.stringify(
+	{
+		type: 'CASE_HANDOVER_GRANTED',
+		username: 'Kim G.',
+		description:
+			'Deine bisherige Berater:in ist leider erkrankt. Damit du nicht warten musst, hat Kim G. deinen Fall übernommen.',
+		reasonLabel: 'Counsellor is ill',
+		explanation:
+			'My colleague is ill, so I decided it is better if I take care of this client.'
+	}
+)}`;

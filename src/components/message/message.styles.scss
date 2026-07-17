@@ -4,6 +4,7 @@ $message-lineheight: 21px;
 $message-attachment-color: $secondary !default;
 $message-avatar-ring: #ebe2e2;
 $message-incoming-bg: var(--m3-surface-container-high, #eae7e8);
+
 // Use the always-light `primary-fixed` (tonal palette tone 90) rather than
 // `on-primary-container`. The latter is a foreground/contrast role whose
 // lightness flips with the tenant seed brightness, so bright-red tenants
@@ -640,7 +641,7 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 		width: 15px;
 		height: 15px;
 
-		@media (min-resolution: 1.5dppx), (min-width: 1920px) {
+		@media (resolution >= 1.5dppx), (width >= 1920px) {
 			width: 19px;
 			height: 19px;
 		}

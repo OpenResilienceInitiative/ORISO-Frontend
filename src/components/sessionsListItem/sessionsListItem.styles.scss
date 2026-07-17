@@ -917,57 +917,172 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		margin-left: $grid-base;
 	}
 
-	&__caseHandoverButton {
+	// Case-handover split button (Figma Section 05 states board)
+	&__handoverAction {
+		position: relative;
+		display: inline-flex;
+		align-items: stretch;
+		margin: 8px 16px 8px 8px;
+		border-radius: 19px;
+		background: var(--m3-secondary, #4b515a);
+		color: var(--m3-on-primary, #ffffff);
+		flex-shrink: 0;
+
+		&--active,
+		&--selected {
+			background: var(--m3-primary, #a5000a);
+		}
+
+		&--status {
+			background: var(--m3-surface-variant, #e0e2e5);
+			color: var(--m3-on-surface-variant, #5c6167);
+		}
+
+		&--denied {
+			background: var(--m3-surface-variant, #e0e2e5);
+			color: var(--m3-primary, #a5000a);
+		}
+
+		&--disabled {
+			background: var(--m3-surface-variant, #e7e8ea);
+			color: var(--m3-outline, #9ca1a6);
+		}
+	}
+
+	&__handoverActionPrimary {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
 		gap: 8px;
-		min-width: 142px;
 		min-height: 38px;
-		margin: 8px 16px 8px 8px;
-		padding: 0 14px;
+		min-width: 116px;
+		padding: 0 8px 0 14px;
 		border: 0;
-		border-radius: 18px;
-		background: $case-handover-action;
-		color: #ffffff;
+		border-radius: 19px 0 0 19px;
+		background: transparent;
+		color: inherit;
 		font-family: $font-family-sans-serif;
 		font-size: 13px;
 		font-weight: 700;
 		line-height: 1;
 		cursor: pointer;
-		flex-shrink: 0;
 
 		&:disabled {
-			background: $case-handover-action-disabled;
-			color: $case-handover-status-muted;
-			cursor: not-allowed;
+			cursor: default;
 		}
 
-		&--pending {
-			background: $case-handover-status-muted;
-		}
-
-		&--denied {
-			background: $case-handover-denied-bg;
-			color: $case-handover-denied-text;
-		}
-
-		&--selected {
-			background: $case-handover-action-hover;
+		&:focus-visible {
+			outline: 2px solid var(--m3-on-surface, #1b1b1c);
+			outline-offset: -2px;
 		}
 	}
 
-	&__caseHandoverCheckbox {
-		width: 14px;
-		height: 14px;
+	&__handoverActionLabel {
+		white-space: nowrap;
+	}
+
+	&__handoverActionToggle {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 34px;
+		border: 0;
+		border-left: 1px solid rgba(255, 255, 255, 0.35);
+		border-radius: 0 19px 19px 0;
+		background: transparent;
+		color: inherit;
+		cursor: pointer;
+
+		&:disabled {
+			cursor: default;
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-on-surface, #1b1b1c);
+			outline-offset: -2px;
+		}
+	}
+
+	&__handoverAction--status &__handoverActionToggle,
+	&__handoverAction--denied &__handoverActionToggle {
+		border-left-color: rgba(0, 0, 0, 0.12);
+	}
+
+	&__handoverActionCheckbox {
+		width: 15px;
+		height: 15px;
 		border: 2px solid currentcolor;
 		border-radius: 3px;
 		background: transparent;
+		flex-shrink: 0;
+		position: relative;
 
 		&--selected {
-			background: currentcolor;
-			box-shadow: inset 0 0 0 3px $case-handover-action-hover;
+			background: var(--m3-surface, #ffffff);
+			border-color: var(--m3-on-primary, #ffffff);
+
+			&::after {
+				content: '';
+				position: absolute;
+				left: 3px;
+				top: 0;
+				width: 4px;
+				height: 7px;
+				border: solid var(--m3-primary, #a5000a);
+				border-width: 0 2px 2px 0;
+				transform: rotate(45deg);
+			}
 		}
+	}
+
+	&__handoverActionMenu {
+		position: absolute;
+		top: calc(100% + 6px);
+		right: 0;
+		z-index: 40;
+		min-width: 236px;
+		padding: 6px;
+		border-radius: 14px;
+		border: 1px solid var(--m3-primary, #a5000a);
+		background: var(--m3-surface, #ffffff);
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+	}
+
+	&__handoverActionMenuItem {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		width: 100%;
+		padding: 10px 12px;
+		border: 0;
+		border-radius: 10px;
+		background: transparent;
+		text-align: left;
+		cursor: pointer;
+
+		&:hover,
+		&:focus-visible {
+			background: var(--m3-surface-container-low, #f5f2f3);
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: -2px;
+		}
+	}
+
+	&__handoverActionMenuItemTitle {
+		font-family: $font-family-sans-serif;
+		font-size: 13px;
+		font-weight: 700;
+		color: var(--m3-on-surface, #1b1b1c);
+	}
+
+	&__handoverActionMenuItemDescription {
+		font-family: $font-family-sans-serif;
+		font-size: 12px;
+		line-height: 16px;
+		color: var(--m3-on-surface-variant, #5c6167);
 	}
 }
 

@@ -212,6 +212,65 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		}
 	}
 
+	&__caseHandoverWizardOverlay {
+		position: fixed;
+		inset: 0;
+		z-index: 120;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 16px;
+		background: rgba(27, 27, 28, 0.4);
+	}
+
+	&__caseHandoverWizardShell {
+		width: min(720px, 100%);
+		max-height: min(86vh, 780px);
+		display: flex;
+		flex-direction: column;
+		border-radius: 24px;
+		overflow: hidden auto;
+		background: var(--m3-surface, #ffffff);
+		box-shadow: 0 12px 40px rgba(0, 0, 0, 0.24);
+
+		.caseHandoverCurtain {
+			padding: 0;
+			background: transparent;
+		}
+
+		.caseHandoverCurtain__card {
+			box-shadow: none;
+			border-radius: 0;
+		}
+	}
+
+	&__caseHandoverWizardBar {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		padding: 14px 20px 0;
+		color: var(--m3-on-surface, #1b1b1c);
+		font-size: 14px;
+
+		span {
+			color: var(--m3-on-surface-variant, #6d747d);
+		}
+	}
+
+	&__caseHandoverWizardClose {
+		margin-left: auto;
+		border: 0;
+		background: transparent;
+		color: var(--m3-primary, #a5000a);
+		font-weight: 700;
+		cursor: pointer;
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 2px;
+		}
+	}
+
 	&__caseHandoverBatchSummary {
 		margin-top: 10px;
 		color: $caseHandoverTextMuted;
@@ -1167,7 +1226,9 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 	&__searchModalTab {
 		border: none;
 		background: transparent;
-		padding: 10px 12px 6px;
+		flex: 1 1 0;
+		min-width: 0;
+		padding: 10px 8px 6px;
 		font-size: 14px;
 		line-height: 20px;
 		font-weight: 500;
@@ -1200,6 +1261,10 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		font-size: 14px;
 		line-height: 20px;
 		font-weight: 500;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		max-width: 100%;
 	}
 
 	&__searchModalTabIconWithDot {
@@ -1278,13 +1343,13 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		width: 18px;
 		height: 18px;
 		border-radius: 3px;
-		border: 2px solid #444748;
+		border: 2px solid var(--m3-on-surface-variant, #444748);
 		flex-shrink: 0;
 	}
 
 	&__personCheckbox--selected {
-		background: #a5000a;
-		border-color: #a5000a;
+		background: var(--m3-primary, #a5000a);
+		border-color: var(--m3-primary, #a5000a);
 		position: relative;
 
 		&::after {
@@ -1297,6 +1362,58 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 			border: solid #fff;
 			border-width: 0 2px 2px 0;
 			transform: rotate(45deg);
+		}
+	}
+
+	&__personRadio {
+		width: 20px;
+		height: 20px;
+		border-radius: 999px;
+		border: 2px solid var(--m3-on-surface-variant, #444748);
+		flex-shrink: 0;
+		position: relative;
+	}
+
+	&__personRadio--selected {
+		border-color: var(--m3-primary, #a5000a);
+
+		&::after {
+			content: '';
+			position: absolute;
+			inset: 3px;
+			border-radius: 999px;
+			background: var(--m3-primary, #a5000a);
+		}
+	}
+
+	&__searchRefineHint {
+		padding: 10px 16px 8px;
+		font-size: 13px;
+		line-height: 18px;
+		color: var(--m3-on-surface-variant, #444748);
+		background: var(--m3-surface-container-low, #f5f2f3);
+		border-bottom: 1px solid var(--m3-outline-variant, #d9d6d7);
+	}
+
+	&__searchConfirmButton {
+		width: 40px;
+		height: 40px;
+		border: none;
+		border-radius: 999px;
+		background: var(--m3-primary, #a5000a);
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		cursor: pointer;
+		flex-shrink: 0;
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-on-surface, #1b1b1c);
+			outline-offset: 2px;
+		}
+
+		svg path {
+			fill: var(--m3-on-primary, #ffffff);
 		}
 	}
 

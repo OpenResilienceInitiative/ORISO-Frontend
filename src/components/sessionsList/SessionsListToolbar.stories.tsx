@@ -68,6 +68,9 @@ function SessionsListToolbarPlayground({
 	const [selectedPersonIds, setSelectedPersonIds] = useState<string[]>(
 		initialSelectedPersonIds
 	);
+	const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
+	const [selectedTypeId, setSelectedTypeId] = useState<string | null>(null);
+	const [archiveOnly, setArchiveOnly] = useState(false);
 
 	return (
 		<div style={shell}>
@@ -78,6 +81,30 @@ function SessionsListToolbarPlayground({
 				searchPeopleResults={searchPeopleResults}
 				selectedPersonIds={selectedPersonIds}
 				onSelectedPersonIdsChange={setSelectedPersonIds}
+				searchTopicResults={[
+					{
+						id: 'schulden',
+						label: 'Schulden',
+						subtitle: 'Mainz 30232'
+					},
+					{
+						id: 'suchtberatung',
+						label: 'Suchtberatung',
+						subtitle: 'Mainz 30232'
+					}
+				]}
+				selectedTopicId={selectedTopicId}
+				onSelectedTopicIdChange={setSelectedTopicId}
+				searchTypeResults={[
+					{ id: 'oneToOne', label: '1-1 Beratung' },
+					{ id: 'liveChat', label: 'Live Chat' },
+					{ id: 'nearby', label: 'Nähe' }
+				]}
+				selectedTypeId={selectedTypeId}
+				onSelectedTypeIdChange={setSelectedTypeId}
+				searchArchiveOnly={archiveOnly}
+				onSearchArchiveOnlyChange={setArchiveOnly}
+				onSearchConfirm={() => {}}
 				activeChip={activeChip}
 				onChipToggle={(chip) =>
 					setActiveChip((prev) => (prev === chip ? null : chip))
