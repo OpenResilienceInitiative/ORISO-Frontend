@@ -76,8 +76,13 @@ export const isMatrixExpiredTokenError = (error: unknown): boolean => {
 	const message = typeof rawMessage === 'string' ? rawMessage : '';
 	const httpStatus = matrixError?.httpStatus || matrixError?.statusCode;
 
+	// Synapse rejects an invalidated token (hard TTL hit, or a newer login
+	// re-used the same device_id) with M_UNKNOWN_TOKEN and "Invalid access
+	// token passed." — recoverable by re-fetching a token from the backend.
 	return (
 		message.includes('Access token has expired') ||
+		matrixError?.errcode === 'M_UNKNOWN_TOKEN' ||
+		matrixError?.data?.errcode === 'M_UNKNOWN_TOKEN' ||
 		(httpStatus === 401 &&
 			(message.toLowerCase().includes('expired') ||
 				matrixError?.errcode === 'M_UNKNOWN' ||

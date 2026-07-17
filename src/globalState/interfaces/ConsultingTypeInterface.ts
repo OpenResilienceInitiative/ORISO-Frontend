@@ -42,6 +42,10 @@ export interface ConsultingTypeBasicInterface {
 		autoSelectAgency: boolean;
 		autoSelectPostcode: boolean;
 		notes: RegistrationNotesInterface;
+		mandatoryFields?: {
+			age?: boolean;
+			state?: boolean;
+		};
 	};
 	groupChat: {
 		isGroupChat: boolean;

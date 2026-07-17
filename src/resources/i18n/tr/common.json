@@ -680,7 +680,8 @@
 			}
 		},
 		"edit": {
-			"title": "Sohbet ayarları"
+			"title": "Sohbet ayarları",
+			"subtitle": "Bu serinin programını ve içeriğini değiştirin"
 		},
 		"info": {
 			"headline": "Sohbet bilgileri",

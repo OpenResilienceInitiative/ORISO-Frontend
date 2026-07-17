@@ -261,11 +261,38 @@ export const TopicSelection: FC<{
 	}, [topics, onChange]);
 
 	useEffect(() => {
-		const filterConsultantTopics = (t: TopicsDataInterface) =>
-			!preselectedConsultant ||
-			preselectedConsultant.agencies.some((a) =>
-				a.topicIds?.includes(t.id)
-			);
+		if (!registrationData?.mainTopic?.id) {
+			return;
+		}
+
+		setValue(registrationData.mainTopic.id);
+		setDisabledNextButton(false);
+	}, [registrationData?.mainTopic, setDisabledNextButton]);
+
+	useEffect(() => {
+		const consultantTopicIds = [
+			...new Set(
+				(preselectedConsultant?.agencies || []).flatMap(
+					(agency) => agency.topicIds ?? []
+				)
+			)
+		];
+		const effectiveTopicIds =
+			consultantTopicIds.length > 0
+				? consultantTopicIds
+				: registrationData?.agency?.topicIds || [];
+
+		const filterConsultantTopics = (t: TopicsDataInterface) => {
+			if (!preselectedConsultant) {
+				return true;
+			}
+
+			if (effectiveTopicIds.length === 0) {
+				return false;
+			}
+
+			return effectiveTopicIds.includes(t.id);
+		};
 
 		const filterAgencyTopics = (t: TopicsDataInterface) =>
 			!preselectedAgency || preselectedAgency.topicIds?.includes(t.id);
@@ -337,6 +364,7 @@ export const TopicSelection: FC<{
 		preselectedConsultant,
 		preselectedAgency,
 		preselectedTopic,
+		registrationData?.agency?.topicIds,
 		reloadKey
 	]);
 

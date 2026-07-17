@@ -29,5 +29,11 @@ export const REGISTRATION_DATA_VALIDATION: RegistrationDataValidation = {
 			const usernameRegex = /^[a-z0-9_-]+$/;
 			return val.length > 4 && usernameRegex.test(val);
 		}
+	},
+	age: {
+		validation: (val = '') => /^\d+$/.test(val)
+	},
+	state: {
+		validation: (val = '') => /^([0-9]|1[0-6])$/.test(val)
 	}
 };

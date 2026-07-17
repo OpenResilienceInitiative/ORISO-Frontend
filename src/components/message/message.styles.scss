@@ -25,7 +25,7 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 .messageItem {
 	display: flex;
 	flex-direction: column;
-	margin-bottom: $grid-base-two;
+	margin-bottom: 32px;
 	opacity: 0;
 	animation: appearMessageItem 150ms ease forwards;
 
@@ -197,33 +197,46 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 	}
 
 	&__sideColumn {
-		display: inline-flex;
+		display: flex;
 		flex-direction: column;
+		justify-content: space-between;
 		align-items: center;
 		flex-shrink: 0;
 		margin-top: 0;
 		position: relative;
 		z-index: 6;
+		height: stretch;
 	}
 
 	&__sideColumn--left,
 	&__sideColumn--right {
 		align-items: center;
-		justify-content: center;
 		margin-bottom: 0;
 	}
 
 	&__sideColumn--left {
-		left: 4px;
-		top: -18px;
 		z-index: 5;
 	}
 
 	&__sideColumn--right {
 		position: absolute;
 		right: -32px;
-		bottom: -18px;
+		bottom: -14px;
 		z-index: 5;
+	}
+
+	&__sideColumnGroup {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+
+		&--left {
+			translate: 0% -25%;
+		}
+
+		&--right {
+			margin-top: auto;
+		}
 	}
 
 	&--right {
@@ -398,11 +411,15 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 	}
 
 	&__visibilityChip--incoming {
+		bottom: -16px;
 		margin-top: -2px;
+		translate: 0% 50%;
 	}
 
 	&__visibilityChip--outgoing {
+		top: -16px;
 		margin-bottom: -2px;
+		translate: 0% -50%;
 	}
 
 	&__visibilityMenu {
@@ -931,6 +948,7 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 		gap: 6px;
 		flex-wrap: wrap;
 		margin: 2px 0 6px;
+		padding-left: 20px;
 	}
 
 	&__visibleOnlyLabel {
