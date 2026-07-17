@@ -210,6 +210,51 @@ describe('MatrixClientService', () => {
 		expect(getMatrixAccessToken).toHaveBeenCalledOnce();
 	});
 
+	it('notifies client-change subscribers when a token refresh swaps the client', async () => {
+		const service = new MatrixClientService();
+		const seenClients: unknown[] = [];
+		service.onClientChange((client) => {
+			seenClients.push(client);
+		});
+
+		await service.initializeClient({
+			userId: '@alice:matrix.localhost',
+			accessToken: 'first-token',
+			deviceId: 'DEVICE_ONE',
+			homeserverUrl: 'http://matrix.localhost:18008'
+		});
+		await service.initializeClient({
+			userId: '@alice:matrix.localhost',
+			accessToken: 'second-token',
+			deviceId: 'DEVICE_ONE',
+			homeserverUrl: 'http://matrix.localhost:18008'
+		});
+		service.stopAndCleanup();
+
+		// One notification per new client instance, one for the final teardown.
+		expect(seenClients).toEqual([
+			mockedMatrixClient,
+			mockedMatrixClient,
+			null
+		]);
+	});
+
+	it('unsubscribes client-change listeners via the returned detach function', async () => {
+		const service = new MatrixClientService();
+		const listener = vi.fn();
+		const detach = service.onClientChange(listener);
+		detach();
+
+		await service.initializeClient({
+			userId: '@alice:matrix.localhost',
+			accessToken: 'first-token',
+			deviceId: 'DEVICE_ONE',
+			homeserverUrl: 'http://matrix.localhost:18008'
+		});
+
+		expect(listener).not.toHaveBeenCalled();
+	});
+
 	it('sends Matrix messages in migration rooms without native Matrix encryption state', async () => {
 		const sendMessage = vi.fn(() =>
 			Promise.resolve({ event_id: '$event' })
