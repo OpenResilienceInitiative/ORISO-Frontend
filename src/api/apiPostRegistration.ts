@@ -1,6 +1,7 @@
 import { autoLogin } from '../components/registration/autoLogin';
 import { removeAllCookies } from '../components/sessionCookie/accessSessionCookie';
 import { TenantDataInterface } from '../globalState/interfaces';
+import { normalizePreferredLanguage } from '../utils/normalizePreferredLanguage';
 import { FETCH_ERRORS, FETCH_METHODS, fetchData } from './fetchData';
 import { COOKIE_KEY } from '../globalState';
 
@@ -21,6 +22,11 @@ export const apiPostRegistration = (
 		...data,
 		...(typeof data.password === 'string' && {
 			password: encodeURIComponent(data.password)
+		}),
+		...(typeof data.preferredLanguage === 'string' && {
+			preferredLanguage: normalizePreferredLanguage(
+				data.preferredLanguage
+			)
 		})
 	};
 

@@ -1921,8 +1921,9 @@ declare namespace UserService {
 			email: string; // email
 			/**
 			 * example:
-			 * de, en
+			 * nikunj-rohit
 			 */
+			publicSlug?: string;
 			languages?: /* ISO 639-1 code */ LanguageCode[];
 			/**
 			 * Flag that indicates has the user accepted new terms and conditions text
@@ -2199,6 +2200,17 @@ declare namespace UserService {
 			 */
 			isInTeamAgency?: boolean;
 			agencies?: AgencyDTO[];
+			/**
+			 * example:
+			 * nikunj-rohit
+			 */
+			publicSlug?: string;
+			/**
+			 * example:
+			 * nikunj-rohit
+			 */
+			pendingPublicSlug?: string;
+			publicSlugStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
 			userRoles?: string[];
 			grantedAuthorities?: string[];
 			twoFactorAuth?: TwoFactorAuthDTO;

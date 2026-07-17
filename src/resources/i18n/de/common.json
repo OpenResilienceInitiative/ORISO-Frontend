@@ -765,7 +765,8 @@
 			}
 		},
 		"edit": {
-			"title": "Chat-Einstellungen"
+			"title": "Chat-Einstellungen",
+			"subtitle": "Zeitplan und Inhalte dieser Serie ändern"
 		},
 		"info": {
 			"headline": "Chat-Info",
@@ -1701,6 +1702,22 @@
 					"tooltip": "Teilen Sie Ihren persönlichen Kontakt-Link mit jemanden, damit diese Person eine Onlineberatung direkt mit Ihnen starten kann."
 				}
 			},
+			"publicSlug": {
+				"info": "Verwenden Sie nur Kleinbuchstaben und Bindestriche. Neue Namen werden erst nach Freigabe durch eine Administration aktiv.",
+				"input": "Name des öffentlichen Kontakt-Links",
+				"label": "Öffentlicher Kontakt-Link",
+				"notification": {
+					"error": "Der Name des Kontakt-Links konnte nicht gespeichert werden. Bitte prüfen Sie das Format oder wählen Sie einen anderen Namen.",
+					"text": "Der Name des Kontakt-Links wurde zur Freigabe eingereicht.",
+					"title": "Anfrage gespeichert"
+				},
+				"status": {
+					"active": "Aktiver Link-Name: {{slug}}",
+					"empty": "Es ist noch kein öffentlicher Link-Name aktiv. Der UUID-Link wird weiterhin verwendet.",
+					"pending": "Wartet auf Freigabe durch eine Administration: {{slug}}",
+					"rejected": "Der zuletzt angefragte Link-Name wurde abgelehnt."
+				}
+			},
 			"profileIcon": "Profilbild",
 			"register": {
 				"button": {
@@ -2447,7 +2464,57 @@
 		},
 		"submit": "Zugriff anfragen",
 		"submitSending": "Wird gesendet",
-		"title": "Zugriff anfragen"
+		"title": "Zugriff anfragen",
+		"menu": {
+			"label": "Optionen zur Fallübergabe",
+			"selectMultiple": {
+				"title": "Mehrere Gespräche auswählen",
+				"description": "Wähle mehrere Fälle aus dem Chatverlauf aus und stelle die Übergabe-Anfrage für alle gleichzeitig."
+			},
+			"confirmSelection": {
+				"title": "Auswahl bestätigen",
+				"description": "Fahre mit den ausgewählten Fällen fort, um die Übergabe anzufragen."
+			},
+			"deselect": {
+				"title": "Auswahl aufheben und schließen",
+				"description": "Hebt die Auswahl auf und beendet den Mehrfachmodus."
+			}
+		},
+		"curtain": {
+			"intro": {
+				"title": "Wie sehe ich die Anfrage hier?",
+				"copy": "Nutze zuerst die Suche, um eine Berater:in oder deine Fachabteilung auszuwählen. Wähle dann das Gespräch aus. Tipp: Über das Menü kannst du mehrere Fälle gleichzeitig auswählen.",
+				"cta": "Schritt für Schritt zeigen"
+			},
+			"reason": {
+				"title": "Bitte wähle einen Grund",
+				"subtitle": "Bevor du fortfährst, musst du einen Grund für deine Anfrage auswählen."
+			},
+			"describe": {
+				"title": "Bitte beschreibe den Grund",
+				"subtitle": "Bitte erläutere kurz, warum du Zugriff auf diesen Fall benötigst."
+			},
+			"back": "Zurück",
+			"next": "Weiter",
+			"consentPending": "Klient:innen-Zustimmung ist erforderlich, bevor der Zugriff aktiviert wird."
+		},
+		"accepted": {
+			"title": "Deine Anfrage wurde von einer Berater:in angenommen.",
+			"copy": "{{advisor}} aus der Beratungsstelle {{organisation}} kümmert sich ab jetzt um dein Anliegen. Alle Nachrichten bleiben Ende-zu-Ende verschlüsselt und nur für die an deiner Beratung beteiligten Personen sichtbar.",
+			"cta": "Zum Gespräch",
+			"advisorFallback": "Eine Berater:in",
+			"organisationFallback": "deiner Beratungsstelle"
+		},
+		"systemMessage": {
+			"badge": "System-Benachrichtigung",
+			"selectedReason": "Ausgewählter Grund: {{reason}}",
+			"explanation": "Erläuterung: {{explanation}}",
+			"tookOverTitle": "Neue Berater:in hat deinen Fall übernommen",
+			"noActionNeeded": "Du musst nichts weiter tun",
+			"importantTitle": "Wichtige Mitteilung",
+			"supervisionTitle": "Supervision aktiviert!",
+			"supervisionBody": "{{advisor}} wurde diesem Chat als beratende Supervisor:in hinzugefügt."
+		}
 	},
 	"session": {
 		"waitingMiniGame": {
@@ -2741,7 +2808,20 @@
 		"toolbar": {
 			"search": {
 				"label": "Beratungen durchsuchen",
-				"placeholder": "Suche"
+				"placeholder": "Suche",
+				"refineHint": "Verfeinere deine Suche durch Filter weiter",
+				"confirm": "Auswahl bestätigen",
+				"close": "Suche schließen",
+				"clear": "Suche leeren",
+				"emptyPeople": "Keine passenden Personen gefunden.",
+				"emptyTypes": "Keine Chat-Typen verfügbar.",
+				"emptyTopics": "Keine Themen für deine Beratungsstellen gefunden.",
+				"tabs": {
+					"people": "Personen",
+					"type": "Nach Typ",
+					"centre": "Beratungsstelle",
+					"archiveOnly": "Nur Archiv"
+				}
 			},
 			"menu": {
 				"ariaLabel": "Listenoptionen"
@@ -3455,7 +3535,8 @@
 			"consultantAccepted": "Sie werden jetzt von ihrer Berater_in im Chat erwartet.",
 			"startChatNow": "Jetzt Chat starten",
 			"dismissAcceptedBanner": "Hinweis ausblenden"
-		}
+		},
+		"enquiryClosed": "Dieser Live-Chat wurde beendet. Um einen neuen Chat zu starten, öffnen Sie bitte Ihren Einladungslink erneut."
 	},
 	"sessionHeader": {
 		"anonymous": {

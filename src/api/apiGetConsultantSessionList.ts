@@ -67,10 +67,16 @@ export const apiGetConsultantSessionList = async ({
 	const [registered, anonymous] = await Promise.all([
 		fetchListUrl(registeredUrl, signal),
 		// The anonymous queue is best-effort: a failure there must not hide the
-		// registered enquiries a consultant is responsible for.
-		fetchListUrl(anonymousUrl, signal).catch(
-			() => ({ sessions: [] }) as ListItemsResponseInterface
-		)
+		// registered enquiries a consultant is responsible for. It must be
+		// loud, though — a silent empty result is indistinguishable from
+		// "no live chat enquiries" and hides backend 500s from diagnosis.
+		fetchListUrl(anonymousUrl, signal).catch((error) => {
+			console.error(
+				'Anonymous enquiry feed failed — live chat enquiries may be missing from the list:',
+				error
+			);
+			return { sessions: [] } as ListItemsResponseInterface;
+		})
 	]);
 
 	return mergeEnquiryFeeds(registered, anonymous);

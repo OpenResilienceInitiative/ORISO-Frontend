@@ -15,7 +15,8 @@ import {
 	hasUserAuthority,
 	SessionTypeContext,
 	UserDataContext,
-	ActiveSessionContext
+	ActiveSessionContext,
+	useTopic
 } from '../../globalState';
 import {
 	apiGetAgencyConsultantList,
@@ -49,7 +50,7 @@ import {
 	MatrixRoomLifecycleChange
 } from '../../services/chatTransportService';
 import { formatMatrixTimelineEvent } from '../../utils/matrixTimelineEventFormatter';
-import { CaseHandoverGate } from './CaseHandoverGate';
+import { CaseHandoverCurtain } from './CaseHandoverCurtain';
 import { isCaseHandoverAccessControlled } from './caseHandoverHelpers';
 
 interface SessionStreamProps {
@@ -83,10 +84,24 @@ export const SessionStream = ({
 	}, []);
 
 	const subscribed = useRef(false);
+	// Bumped whenever a token refresh swaps the matrix-js-sdk client: the old
+	// instance got removeAllListeners(), so every effect holding room
+	// listeners depends on this generation to re-attach to the new client.
+	const [matrixClientGeneration, setMatrixClientGeneration] = useState(0);
 	const [messagesItem, setMessagesItem] = useState(null);
 	const [overlayItem, setOverlayItem] = useState<OverlayItem>(null);
 	const [isOverlayActive, setIsOverlayActive] = useState(false);
 	const [loading, setLoading] = useState(true);
+
+	useEffect(() => {
+		if (!matrixClientService?.onClientChange) {
+			return;
+		}
+
+		return matrixClientService.onClientChange(() => {
+			setMatrixClientGeneration((generation) => generation + 1);
+		});
+	}, [matrixClientService]);
 
 	const { activeSession, readActiveSession } =
 		useContext(ActiveSessionContext);
@@ -494,11 +509,13 @@ export const SessionStream = ({
 			detachTimelineListeners.forEach((detach) => detach());
 		};
 		// matrixRoomId is derived from resolvedChatSession (already a dep).
+		// matrixClientGeneration re-attaches after a token-refresh client swap.
 	}, [
 		resolvedChatSession,
 		supervisionRoomId,
 		fetchSessionMessages,
-		matrixRoomId
+		matrixRoomId,
+		matrixClientGeneration
 	]);
 
 	const groupChatStoppedOverlay: OverlayItem = useMemo(
@@ -602,7 +619,13 @@ export const SessionStream = ({
 			}
 			detachLifecycleListener?.();
 		};
-	}, [isMatrixSession, matrixRoomId, handleMatrixRoomLifecycle]);
+		// matrixClientGeneration re-attaches after a token-refresh client swap.
+	}, [
+		isMatrixSession,
+		matrixRoomId,
+		handleMatrixRoomLifecycle,
+		matrixClientGeneration
+	]);
 
 	useEffect(() => {
 		if (!isMatrixSession || !matrixRoomId) {
@@ -696,11 +719,13 @@ export const SessionStream = ({
 			matrixTypingActivity.clear();
 			setMatrixTypingUsers([]);
 		};
+		// matrixClientGeneration re-attaches after a token-refresh client swap.
 	}, [
 		isMatrixSession,
 		matrixRoomId,
 		MATRIX_TYPING_STALE_MS,
-		matrixClientService
+		matrixClientService,
+		matrixClientGeneration
 	]);
 
 	useEffect(() => {
@@ -863,6 +888,11 @@ export const SessionStream = ({
 	// activeSessionId: activeSession?.item?.id
 	// });
 
+	const caseHandoverTopicId =
+		(activeSession?.item?.topic as { id?: number })?.id ?? null;
+	const caseHandoverTopic = useTopic(caseHandoverTopicId);
+	const caseHandoverTopicLabel = caseHandoverTopic?.name;
+
 	if (caseHandoverGateNeeded && caseHandoverStatusLoading) {
 		return <Loading />;
 	}
@@ -895,10 +925,11 @@ export const SessionStream = ({
 	if (caseHandoverGateNeeded && !caseHandoverStatus?.canViewContent) {
 		return (
 			<div className="session__wrapper">
-				<CaseHandoverGate
+				<CaseHandoverCurtain
 					sessionId={activeSession.item.id}
 					status={caseHandoverStatus}
 					onStatusChange={handleCaseHandoverStatusChange}
+					topicLabel={caseHandoverTopicLabel}
 				/>
 			</div>
 		);
