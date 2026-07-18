@@ -67,12 +67,17 @@ export const ChatroomMainInteractionIcon = ({
 						{addContent}
 					</button>
 				) : (
-					<span
-						className="chatroomMainInteractionIcon__add"
-						aria-hidden="true"
+					/* FE#513: never a dead decorative element — a real
+					   disabled button with an honest tooltip. */
+					<button
+						type="button"
+						className="chatroomMainInteractionIcon__add chatroomMainInteractionIcon__add--disabled"
+						aria-label={addLabel}
+						title={addLabel}
+						disabled
 					>
 						{addContent}
-					</span>
+					</button>
 				))}
 			<span
 				className="chatroomMainInteractionIcon__type"
