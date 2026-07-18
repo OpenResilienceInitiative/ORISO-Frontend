@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
 	getAvailableFormats,
 	getConversationFormatAvailability,
-	isGroupChatTranslationAvailable
+	isGroupChatTranslationAvailable,
+	resolveInitialStep
 } from './formatAvailability';
 
 describe('getConversationFormatAvailability', () => {
@@ -72,5 +73,36 @@ describe('isGroupChatTranslationAvailable', () => {
 				settings: { featureGroupChatTranslationEnabled: false } as any
 			})
 		).toBe(false);
+	});
+});
+
+describe('resolveInitialStep', () => {
+	const both = { internal: true, circle: true };
+	const internalOnly = { internal: true, circle: false };
+	const circleOnly = { internal: false, circle: true };
+
+	it('forces the circle step for a duplicate occurrence only when circle is available', () => {
+		expect(resolveInitialStep(both, ['internal', 'circle'], true)).toBe(
+			'circle'
+		);
+		// Finding 7: a duplicate must not force circle when it is disabled.
+		expect(resolveInitialStep(internalOnly, ['internal'], true)).toBe(
+			'internal'
+		);
+	});
+
+	it('skips the picker when a single format is available', () => {
+		expect(resolveInitialStep(internalOnly, ['internal'], false)).toBe(
+			'internal'
+		);
+		expect(resolveInitialStep(circleOnly, ['circle'], false)).toBe(
+			'circle'
+		);
+	});
+
+	it('opens the picker when several formats are available', () => {
+		expect(resolveInitialStep(both, ['internal', 'circle'], false)).toBe(
+			'picker'
+		);
 	});
 });

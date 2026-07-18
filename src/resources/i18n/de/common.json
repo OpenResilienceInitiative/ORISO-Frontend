@@ -762,8 +762,9 @@
 			"addPerson": "Person hinzufügen",
 			"createLabel": "Interna erstellen",
 			"deselectPerson": "{{name}} entfernen",
-			"nameLabel": "Name Interna",
-			"personCount": "{{count}}x Person hinzugefügt",
+			"nameLabel": "Name des internen Chats",
+			"personCount_one": "{{count}} Person hinzugefügt",
+			"personCount_other": "{{count}} Personen hinzugefügt",
 			"removePerson": "{{name}} entfernen",
 			"selectPerson": "{{name}} auswählen",
 			"subtitle": "mit Ihren Kolleg:innen",
@@ -776,8 +777,9 @@
 			"cardText": "in Ihrem Fachbereich initiieren. Einmalig oder regelmäßig: Wählen Sie das passende Medium und teilen Sie den Kreis mit den Teilnehmenden.",
 			"createLabel": "Erstellen",
 			"noTopics": "Keine Themen verfügbar",
+			"saveLabel": "Speichern",
 			"settingsSubtitle": "Passen Sie nun Begrüßungstext, Format, Regeln, Intervalle und die Sprache an, in welcher der Kreis primär stattfinden soll.",
-			"settingsTitle": "Gesprächskreis Einstellungen",
+			"settingsTitle": "Einstellungen für den Gesprächskreis",
 			"subtitle": "moderiert durch Berater:innen",
 			"title": "Gesprächskreis",
 			"toggleTopicList": "Themenliste öffnen oder schließen",
@@ -788,6 +790,11 @@
 				"buttonLabel": "Schließen",
 				"headline": "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut."
 			}
+		},
+		"loadError": {
+			"consultants": "Die Kolleg:innen konnten nicht geladen werden.",
+			"retry": "Erneut versuchen",
+			"topics": "Die Themen konnten nicht geladen werden."
 		},
 		"createSuccess": {
 			"overlay": {

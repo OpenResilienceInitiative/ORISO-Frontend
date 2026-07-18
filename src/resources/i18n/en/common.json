@@ -751,7 +751,8 @@
 			"createLabel": "Create internal chat",
 			"deselectPerson": "Remove {{name}}",
 			"nameLabel": "Internal chat name",
-			"personCount": "{{count}}x person added",
+			"personCount_one": "{{count}} person added",
+			"personCount_other": "{{count}} people added",
 			"removePerson": "Remove {{name}}",
 			"selectPerson": "Select {{name}}",
 			"subtitle": "with your colleagues",
@@ -764,6 +765,7 @@
 			"cardText": "initiate in your subject area. One-off or recurring: choose the right medium and share the circle with the participants.",
 			"createLabel": "Create",
 			"noTopics": "No topics available",
+			"saveLabel": "Save",
 			"settingsSubtitle": "Now adjust the welcome text, format, rules, intervals and the language in which the circle will primarily take place.",
 			"settingsTitle": "Circle settings",
 			"subtitle": "moderated by counsellors",
@@ -776,6 +778,11 @@
 				"buttonLabel": "Close",
 				"headline": "An error has occurred. Please try again."
 			}
+		},
+		"loadError": {
+			"consultants": "The colleagues could not be loaded.",
+			"retry": "Try again",
+			"topics": "The topics could not be loaded."
 		},
 		"createSuccess": {
 			"overlay": {

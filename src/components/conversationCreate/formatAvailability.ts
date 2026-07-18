@@ -34,8 +34,7 @@ export const getConversationFormatAvailability = (
 	const settings = settingsOf(tenant);
 	const groupChatEnabled = settings.featureGroupChatV2Enabled === true;
 	return {
-		internal:
-			settings.featureInternalGroupChatEnabled ?? groupChatEnabled,
+		internal: settings.featureInternalGroupChatEnabled ?? groupChatEnabled,
 		circle: settings.featureSelfHelpGroupsEnabled ?? groupChatEnabled
 	};
 };
@@ -51,6 +50,28 @@ export const getAvailableFormats = (
 		formats.push('circle');
 	}
 	return formats;
+};
+
+export type CreateStep = 'picker' | 'internal' | 'circle';
+
+/**
+ * Which step the create flow opens on. A duplicate occurrence only forces the
+ * circle settings when the circle format is actually available for the agency —
+ * otherwise a disabled format would render an empty settings screen. With a
+ * single available format the picker is skipped; otherwise the picker shows.
+ */
+export const resolveInitialStep = (
+	availability: ConversationFormatAvailability,
+	availableFormats: ConversationFormat[],
+	hasDuplicateOccurrence: boolean
+): CreateStep => {
+	if (hasDuplicateOccurrence && availability.circle) {
+		return 'circle';
+	}
+	if (availableFormats.length === 1) {
+		return availableFormats[0] === 'internal' ? 'internal' : 'circle';
+	}
+	return 'picker';
 };
 
 /**

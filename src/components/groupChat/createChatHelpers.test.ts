@@ -3,8 +3,33 @@ import {
 	buildGroupChatEditDraft,
 	buildGroupChatSeriesRequest,
 	buildOneOffDuplicateFields,
-	isGroupChatFeatureEnabled
+	isGroupChatFeatureEnabled,
+	isGroupChatTopicLengthValid,
+	TOPIC_LENGTHS
 } from './createChatHelpers';
+
+describe('isGroupChatTopicLengthValid', () => {
+	it('rejects names shorter than the minimum', () => {
+		expect(isGroupChatTopicLengthValid('ab')).toBe(false);
+		expect(isGroupChatTopicLengthValid('   ')).toBe(false);
+	});
+
+	it('accepts a name that hits the exact maximum length (finding 8)', () => {
+		const exactMax = 'x'.repeat(TOPIC_LENGTHS.MAX);
+		expect(exactMax).toHaveLength(TOPIC_LENGTHS.MAX);
+		expect(isGroupChatTopicLengthValid(exactMax)).toBe(true);
+	});
+
+	it('rejects a name past the maximum length', () => {
+		expect(
+			isGroupChatTopicLengthValid('x'.repeat(TOPIC_LENGTHS.MAX + 1))
+		).toBe(false);
+	});
+
+	it('trims before measuring', () => {
+		expect(isGroupChatTopicLengthValid('  abc  ')).toBe(true);
+	});
+});
 
 describe('isGroupChatFeatureEnabled', () => {
 	it('fails closed unless the tenant explicitly enables group chat v2', () => {
