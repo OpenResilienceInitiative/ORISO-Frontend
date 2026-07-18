@@ -641,16 +641,13 @@ export const SessionsListToolbar = ({
 					{filterChipsBeforeArchive.map(renderFilterChip)}
 					{showConsultantActions && (
 						<Link
-							className={clsx(
-								'sessionsListToolbar__chip',
-								'walkthrough_step_4',
-								{
-									'sessionsListToolbar__chip--iconOnly':
-										!archiveTabActive,
-									'sessionsListToolbar__chip--active':
-										archiveTabActive
-								}
-							)}
+							className={clsx('sessionsListToolbar__chip', {
+								'sessionsListToolbar__chip--iconOnly':
+									!archiveTabActive,
+								'sessionsListToolbar__chip--active':
+									archiveTabActive
+							})}
+							data-tour-target="sessions-archive-tab"
 							to={archiveTabPath}
 							aria-label={translate(
 								'sessionList.view.archive.tab'
