@@ -14,6 +14,7 @@ import clsx from 'clsx';
 import { scrollToEnd, isMyMessage, SESSION_LIST_TYPES } from './sessionHelpers';
 import { getModality, Modality } from './getModality';
 import { formatToHHMM } from '../../utils/dateHelpers';
+import { hasMediaUploadFeature } from '../../utils/mediaUploadHelpers';
 import {
 	isMatrixRoom,
 	isMatrixRoomIdHeuristic
@@ -4784,8 +4785,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						</Suspense>
 					)}
 					{areRobotMessagesComplete &&
-						!tenantData?.settings
-							?.featureAttachmentUploadDisabled && (
+						hasMediaUploadFeature(
+							tenantData?.settings,
+							chatType
+						) && (
 							<DragAndDropArea
 								onFileDragged={onFileDragged}
 								isDragging={isDragging}
