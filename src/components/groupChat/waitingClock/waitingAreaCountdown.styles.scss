@@ -6,7 +6,9 @@
 		position: relative;
 		flex-shrink: 0;
 		box-sizing: border-box;
-		border: 1.5px solid var(--m3-surface-container-lowest, #fff);
+		// Part of the fixed neumorphic look (like the gradients below) — not a
+		// themed surface role.
+		border: 1.5px solid #fff;
 		border-radius: 50%;
 		background: linear-gradient(225deg, #dcdcdc 10%, #fff);
 		box-shadow:
