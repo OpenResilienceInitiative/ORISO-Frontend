@@ -16,8 +16,15 @@ $cc-elevation-1:
 	0px 1px 3px 1px rgba(0, 0, 0, 0.15);
 
 /* M3 motion tokens (short2 / standard easing) with static fallbacks. */
-$cc-motion-duration: var(--m3-motion-duration-short2, 160ms);
-$cc-motion-easing: var(--m3-motion-easing-standard, cubic-bezier(0.2, 0, 0, 1));
+
+/* --oriso-motion-* deliberately, not --m3-*: the OrisoScheme engine is a
+   colour-only token map (its golden-lock test asserts #rrggbb values), so
+   motion tokens live outside the generated --m3 contract. */
+$cc-motion-duration: var(--oriso-motion-duration-short2, 160ms);
+$cc-motion-easing: var(
+	--oriso-motion-easing-standard,
+	cubic-bezier(0.2, 0, 0, 1)
+);
 
 .conversationCreate {
 	display: flex;
