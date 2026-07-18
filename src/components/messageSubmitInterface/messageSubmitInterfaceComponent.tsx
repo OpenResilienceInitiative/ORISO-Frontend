@@ -11,6 +11,7 @@ import { createPortal } from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 import { SendButton } from './inputField/SendButton';
+import { hasMediaUploadFeature } from '../../utils/mediaUploadHelpers';
 import { deriveSendButtonState } from './inputField/sendButtonState';
 import { DragHandle } from './inputField/DragHandle';
 import { ComposerToolbar } from './inputField/ComposerToolbar';
@@ -1726,8 +1727,6 @@ export const MessageSubmitInterfaceComponent = ({
 		navigate('/booking/');
 	}, [navigate]);
 
-	const hasUploadFunctionality =
-		!isAskerEnquiry && !tenant?.settings?.featureAttachmentUploadDisabled;
 	const currentChatType: 'anonymous' | 'oneOnOne' | 'group' | 'supervision' =
 		isSupervisor
 			? 'supervision'
@@ -1736,6 +1735,9 @@ export const MessageSubmitInterfaceComponent = ({
 				: isAnonymousChat
 					? 'anonymous'
 					: 'oneOnOne';
+	const hasUploadFunctionality =
+		!isAskerEnquiry &&
+		hasMediaUploadFeature(tenant?.settings, currentChatType);
 	const {
 		featureVoiceMessagesEnabled = true,
 		featureVoiceMessagesAnonymousChatsEnabled = true,
