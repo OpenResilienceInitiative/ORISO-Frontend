@@ -47,58 +47,48 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Future4a: Story = {
-	render: () => (
-		<WaitingAreaCountdown
-			plannedStart={
-				new Date(
-					Date.now() + (2 * 86400 + 3 * 3600 + 21 * 60 + 50) * 1000
-				)
-			}
-			welcomeText={WELCOME}
-			rules={RULES}
-			calendarSlot={
-				<button
-					type="button"
-					style={{
-						background: 'var(--m3-primary-fixed, #fbdddd)',
-						color: 'var(--m3-on-primary-fixed-variant, #8c1513)',
-						border: 'none',
-						borderRadius: 20,
-						padding: '10px 18px',
-						fontFamily: 'inherit',
-						fontSize: 13,
-						fontWeight: 600,
-						cursor: 'pointer'
-					}}
-				>
-					Zum Kalender hinzufügen
-				</button>
-			}
-		/>
-	)
+	args: {
+		plannedStart: new Date(
+			Date.now() + (2 * 86400 + 3 * 3600 + 21 * 60 + 50) * 1000
+		),
+		welcomeText: WELCOME,
+		rules: RULES,
+		calendarSlot: (
+			<button
+				type="button"
+				style={{
+					background: 'var(--m3-primary-fixed, #fbdddd)',
+					color: 'var(--m3-on-primary-fixed-variant, #8c1513)',
+					border: 'none',
+					borderRadius: 20,
+					padding: '10px 18px',
+					fontFamily: 'inherit',
+					fontSize: 13,
+					fontWeight: 600,
+					cursor: 'pointer'
+				}}
+			>
+				Zum Kalender hinzufügen
+			</button>
+		)
+	}
 };
 
 export const Overdue4b: Story = {
-	render: () => (
-		<WaitingAreaCountdown
-			plannedStart={new Date(Date.now() - 252 * 1000)}
-			welcomeText={WELCOME}
-			rules={RULES}
-		/>
-	)
+	args: {
+		plannedStart: new Date(Date.now() - 252 * 1000),
+		welcomeText: WELCOME,
+		rules: RULES
+	}
 };
 
 export const ReducedMotion: Story = {
-	render: () => (
-		<WaitingAreaCountdown
-			plannedStart={
-				new Date(
-					Date.now() + (2 * 86400 + 3 * 3600 + 21 * 60 + 50) * 1000
-				)
-			}
-			welcomeText={WELCOME}
-			rules={RULES}
-			reducedMotion
-		/>
-	)
+	args: {
+		plannedStart: new Date(
+			Date.now() + (2 * 86400 + 3 * 3600 + 21 * 60 + 50) * 1000
+		),
+		welcomeText: WELCOME,
+		rules: RULES,
+		reducedMotion: true
+	}
 };
