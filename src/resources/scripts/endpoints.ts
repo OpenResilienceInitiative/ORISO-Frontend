@@ -98,6 +98,10 @@ export const endpoints = {
 		),
 	magicLinkRequest: userServiceOrigin + '/service/users/magic-link/request',
 	magicLinkConsume: userServiceOrigin + '/service/users/magic-link/consume',
+	passwordResetRequest:
+		userServiceOrigin + '/service/users/password-reset/request',
+	passwordResetConfirm:
+		userServiceOrigin + '/service/users/password-reset/confirm',
 	matrixAccessToken: userServiceOrigin + '/service/matrix/me/token',
 	matrixSyncRegister: (sessionId: number) =>
 		userServiceOrigin + `/service/matrix/sync/register/${sessionId}`,

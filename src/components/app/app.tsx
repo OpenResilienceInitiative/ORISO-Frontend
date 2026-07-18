@@ -55,6 +55,16 @@ const DpaSign = lazy(() =>
 		default: m.DpaSign
 	}))
 );
+const RequestPasswordReset = lazy(() =>
+	import('../passwordResetRequest/RequestPasswordReset').then((m) => ({
+		default: m.RequestPasswordReset
+	}))
+);
+const SetNewPassword = lazy(() =>
+	import('../passwordResetRequest/SetNewPassword').then((m) => ({
+		default: m.SetNewPassword
+	}))
+);
 
 const VideoConference = lazy(
 	() => import('../videoConference/VideoConference')
@@ -197,6 +207,22 @@ const RouterWrapper = ({ extraRoutes }: RouterWrapperProps) => {
 									element={
 										<UrlParamsProvider>
 											<Login />
+										</UrlParamsProvider>
+									}
+								/>
+								<Route
+									path="/password-reset"
+									element={
+										<UrlParamsProvider>
+											<RequestPasswordReset />
+										</UrlParamsProvider>
+									}
+								/>
+								<Route
+									path="/password-reset/confirm"
+									element={
+										<UrlParamsProvider>
+											<SetNewPassword />
 										</UrlParamsProvider>
 									}
 								/>
