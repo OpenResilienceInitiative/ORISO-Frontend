@@ -142,7 +142,7 @@
 		flex: 0 0 min(260px, 80vw);
 		gap: $grid-base;
 		padding: $grid-base-two;
-		border: 1px solid var(--m3-surface-variant, $form-input-border);
+		border: 1px solid var(--m3-outline-variant, $form-input-border);
 		border-radius: $button-border-radius;
 		background-color: var(--m3-surface, $white);
 		scroll-snap-align: start;
