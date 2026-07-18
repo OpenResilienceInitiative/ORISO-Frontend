@@ -1,7 +1,18 @@
 import * as React from 'react';
 import { digitCells, twoDigits } from './waitingClockDigits';
 
-const HAND_COLOR = '#CC1E1C';
+const HAND_COLOR = 'var(--m3-primary-container, #cc1e1c)';
+const MAGNET_RADIUS_PX = 80;
+const MAGNET_THROTTLE_MS = 70;
+
+/** One cell of the grid temporarily replaced by a popping emoji (overdue fun). */
+export interface ClockDigitsPop {
+	/** Which of the two digits (0 = tens, 1 = ones). */
+	digit: number;
+	/** Cell index 0–23 inside that digit's 4×6 grid. */
+	cell: number;
+	emoji: string;
+}
 
 export interface ClockDigitsProps {
 	/** 0–99, rendered as two "clock made of clocks" digits. */
@@ -12,6 +23,12 @@ export interface ClockDigitsProps {
 	reducedMotion?: boolean;
 	/** These digits are decorative (a label/aria elsewhere describes the value). */
 	ariaHidden?: boolean;
+	/** Warm error tint for the overdue state. */
+	tint?: boolean;
+	/** Mini-clocks near the cursor point their hands at it (fixed 80px radius). */
+	magnet?: boolean;
+	/** Cell currently showing a popped-in emoji instead of its clock. */
+	pop?: ClockDigitsPop | null;
 }
 
 /**
@@ -19,18 +36,26 @@ export interface ClockDigitsProps {
  *
  * Hand angles accumulate forward-only across renders (a clock never rewinds) via
  * a ref, and the grid assembles from random start angles for ~0.9s on mount.
- * This is the shared primitive behind both the standalone clock and the
- * flip-behind-numbers waiting screen.
+ * With `magnet`, mini-clocks within 80px of the cursor swing both hands towards
+ * it (the design's playful magnet interaction). This is the shared primitive
+ * behind the waiting-area countdown.
  */
 export const ClockDigits = ({
 	value,
 	size = 30,
 	reducedMotion = false,
-	ariaHidden = true
+	ariaHidden = true,
+	tint = false,
+	magnet = false,
+	pop = null
 }: ClockDigitsProps) => {
 	const prev = React.useRef<Record<string, number>>({});
 	const rand = React.useRef<Record<string, [number, number]>>({});
+	const lastMove = React.useRef(0);
 	const [initial, setInitial] = React.useState(!reducedMotion);
+	const [cursor, setCursor] = React.useState<{ x: number; y: number } | null>(
+		null
+	);
 
 	React.useEffect(() => {
 		if (reducedMotion) {
@@ -47,7 +72,7 @@ export const ClockDigits = ({
 				style={{
 					fontSize: size * 1.8,
 					fontWeight: 700,
-					color: '#1A1A1A',
+					color: 'var(--m3-on-surface, #1a1c1e)',
 					letterSpacing: '-0.02em',
 					lineHeight: 1,
 					fontVariantNumeric: 'tabular-nums'
@@ -69,14 +94,76 @@ export const ClockDigits = ({
 
 	const thickness = size >= 20 ? 2.5 : 2;
 	const length = size * 0.47;
-	const transition = initial
-		? 'transform 1s ease-in-out'
-		: 'transform .5s ease-in-out';
+	const gap = Math.max(2, Math.round(size * 0.1));
+	const digitW = size * 4 + gap * 3;
+	const digitGap = Math.round(size * 0.35);
 
-	const renderCell = (key: string, h: number, m: number) => {
+	const renderCell = (
+		key: string,
+		digitIndex: number,
+		cellIndex: number,
+		h: number,
+		m: number
+	) => {
+		const circle: React.CSSProperties = {
+			position: 'relative',
+			width: size,
+			height: size,
+			borderRadius: '50%',
+			flexShrink: 0,
+			border: '1.5px solid #fff',
+			background: tint
+				? 'linear-gradient(225deg,#f4c9c9 10%,#fff)'
+				: 'linear-gradient(225deg,#dcdcdc 10%,#fff)',
+			boxShadow: tint
+				? '-2px 2px 5px #efc5c5,2px -2px 5px #ffffff'
+				: '-2px 2px 5px #dcdcdc,2px -2px 5px #ffffff',
+			boxSizing: 'border-box'
+		};
+		if (pop && pop.digit === digitIndex && pop.cell === cellIndex) {
+			return (
+				<div
+					key={key}
+					style={{
+						...circle,
+						display: 'flex',
+						alignItems: 'center',
+						justifyContent: 'center',
+						fontSize: size * 0.72,
+						animation:
+							'orisoClockPopIn .5s cubic-bezier(.34,1.56,.64,1) both'
+					}}
+				>
+					{pop.emoji}
+				</div>
+			);
+		}
 		let ah: number;
 		let am: number;
-		if (initial) {
+		let transition = initial
+			? 'transform 1s ease-in-out'
+			: 'transform .5s ease-in-out';
+		// Cell centre inside this component's own box — the grid layout is fully
+		// deterministic, so no per-cell rect measuring is needed.
+		const cx =
+			digitIndex * (digitW + digitGap) +
+			(cellIndex % 4) * (size + gap) +
+			size / 2;
+		const cy = Math.floor(cellIndex / 4) * (size + gap) + size / 2;
+		if (
+			magnet &&
+			cursor &&
+			!initial &&
+			Math.hypot(cursor.x - cx, cursor.y - cy) <= MAGNET_RADIUS_PX
+		) {
+			const theta =
+				(Math.atan2(cursor.y - cy, cursor.x - cx) * 180) / Math.PI;
+			ah = theta;
+			am = theta;
+			prev.current[`${key}h`] = theta;
+			prev.current[`${key}m`] = theta;
+			transition = 'transform .5s cubic-bezier(.34,1.45,.64,1)';
+		} else if (initial) {
 			if (!rand.current[key]) {
 				rand.current[key] = [Math.random() * 360, Math.random() * 360];
 			}
@@ -103,39 +190,25 @@ export const ClockDigits = ({
 			/>
 		);
 		return (
-			<div
-				key={key}
-				style={{
-					position: 'relative',
-					width: size,
-					height: size,
-					borderRadius: '50%',
-					flexShrink: 0,
-					border: '1.5px solid #fff',
-					background: 'linear-gradient(225deg,#dcdcdc 10%,#fff)',
-					boxShadow: '-2px 2px 5px #dcdcdc,2px -2px 5px #ffffff',
-					boxSizing: 'border-box'
-				}}
-			>
+			<div key={key} style={circle}>
 				{hand(ah, 'h')}
 				{hand(am, 'm')}
 			</div>
 		);
 	};
 
-	const gap = Math.max(2, Math.round(size * 0.1));
-	const renderDigit = (key: string, d: number) => (
+	const renderDigit = (key: string, digitIndex: number, d: number) => (
 		<div
 			key={key}
 			style={{
 				display: 'flex',
 				flexWrap: 'wrap',
 				gap,
-				width: size * 4 + gap * 3
+				width: digitW
 			}}
 		>
 			{digitCells(d).map((cell, i) =>
-				renderCell(`${key}-${i}`, cell.h, cell.m)
+				renderCell(`${key}-${i}`, digitIndex, i, cell.h, cell.m)
 			)}
 		</div>
 	);
@@ -143,9 +216,27 @@ export const ClockDigits = ({
 	return (
 		<div
 			aria-hidden={ariaHidden}
-			style={{ display: 'flex', gap: Math.round(size * 0.35) }}
+			onMouseMove={
+				magnet
+					? (e) => {
+							const now = performance.now();
+							if (now - lastMove.current < MAGNET_THROTTLE_MS) {
+								return;
+							}
+							lastMove.current = now;
+							const rect =
+								e.currentTarget.getBoundingClientRect();
+							setCursor({
+								x: e.clientX - rect.left,
+								y: e.clientY - rect.top
+							});
+						}
+					: undefined
+			}
+			onMouseLeave={magnet ? () => setCursor(null) : undefined}
+			style={{ display: 'flex', gap: digitGap }}
 		>
-			{twoDigits(value).map((d, i) => renderDigit(`d${i}`, d))}
+			{twoDigits(value).map((d, i) => renderDigit(`d${i}`, i, d))}
 		</div>
 	);
 };

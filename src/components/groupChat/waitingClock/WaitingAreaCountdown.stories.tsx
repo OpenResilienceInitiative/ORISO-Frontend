@@ -1,31 +1,15 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import { WaitingAreaCountdown, WaitingRule } from './WaitingAreaCountdown';
+import { WaitingAreaCountdown } from './WaitingAreaCountdown';
 
 const WELCOME =
 	'Hallo und herzlich willkommen! Schön, dass du da bist. Mach es dir bequem — ich öffne den Raum pünktlich für uns alle.';
 
-const RULES: WaitingRule[] = [
-	{
-		no: '1',
-		title: 'Alles bleibt in diesem Raum',
-		text: 'Was hier geteilt wird, bleibt unter uns. So kann jede:r offen sprechen, ohne sich Sorgen machen zu müssen.'
-	},
-	{
-		no: '2',
-		title: 'Du entscheidest, was du teilst',
-		text: 'Es gibt kein Muss. Erzähl nur, was sich für dich richtig anfühlt — zuhören ist genauso wertvoll.'
-	},
-	{
-		no: '3',
-		title: 'Wir lassen einander ausreden',
-		text: 'Jede Nachricht bekommt Raum. Wir antworten mit Respekt und ohne Bewertung.'
-	},
-	{
-		no: '4',
-		title: 'Schwere Momente sind okay',
-		text: 'Wenn es dir gerade nicht gut geht, sag es gern. Deine Beratung und die Gruppe sind für dich da.'
-	}
+const RULES = [
+	'Was hier geteilt wird, bleibt unter uns. So kann jede:r offen sprechen, ohne sich Sorgen machen zu müssen.',
+	'Es gibt kein Muss. Erzähl nur, was sich für dich richtig anfühlt — zuhören ist genauso wertvoll.',
+	'Jede Nachricht bekommt Raum. Wir antworten mit Respekt und ohne Bewertung.',
+	'Wenn es dir gerade nicht gut geht, sag es gern. Deine Beratung und die Gruppe sind für dich da.'
 ];
 
 const meta = {
@@ -37,7 +21,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'The self-help group-chat waiting area (ORISO Design variant 4a) — only the content of the white box. The "clock made of clocks" number groups flip on click to reveal the counsellor greeting (behind days) and netiquette rules (behind hours/minutes/seconds). The toggle switches to a calm, motion-free view.'
+					'The self-help group-chat waiting area (ORISO Design variants 4a/4b) — only the content of the white box. The "clock made of clocks" number groups flip on click to reveal the counsellor greeting (behind days) and netiquette rules (behind hours/minutes/seconds); mini-clocks near the cursor magnetically point at it. Once the planned start passes, the box counts up with an error tint, a leading "+", and smileys popping into single mini-clocks. The toggle (and OS `prefers-reduced-motion`) switches to a calm, motion-free view.'
 			}
 		}
 	},
@@ -72,7 +56,34 @@ export const Future4a: Story = {
 			}
 			welcomeText={WELCOME}
 			rules={RULES}
-			onAddToCalendar={() => undefined}
+			calendarSlot={
+				<button
+					type="button"
+					style={{
+						background: 'var(--m3-primary-fixed, #fbdddd)',
+						color: 'var(--m3-on-primary-fixed-variant, #8c1513)',
+						border: 'none',
+						borderRadius: 20,
+						padding: '10px 18px',
+						fontFamily: 'inherit',
+						fontSize: 13,
+						fontWeight: 600,
+						cursor: 'pointer'
+					}}
+				>
+					Zum Kalender hinzufügen
+				</button>
+			}
+		/>
+	)
+};
+
+export const Overdue4b: Story = {
+	render: () => (
+		<WaitingAreaCountdown
+			plannedStart={new Date(Date.now() - 252 * 1000)}
+			welcomeText={WELCOME}
+			rules={RULES}
 		/>
 	)
 };
@@ -88,16 +99,6 @@ export const ReducedMotion: Story = {
 			welcomeText={WELCOME}
 			rules={RULES}
 			reducedMotion
-		/>
-	)
-};
-
-export const Overdue: Story = {
-	render: () => (
-		<WaitingAreaCountdown
-			plannedStart={new Date(Date.now() - 252 * 1000)}
-			welcomeText={WELCOME}
-			rules={RULES}
 		/>
 	)
 };

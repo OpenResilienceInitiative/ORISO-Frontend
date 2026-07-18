@@ -1,0 +1,12 @@
+/* Pop-in for the smileys that take over single mini-clocks in the overdue state. */
+@keyframes orisoClockPopIn {
+	0% {
+		transform: scale(0);
+		opacity: 0;
+	}
+
+	100% {
+		transform: scale(1);
+		opacity: 1;
+	}
+}

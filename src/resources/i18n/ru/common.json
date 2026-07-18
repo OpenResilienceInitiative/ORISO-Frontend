@@ -709,6 +709,33 @@
 			}
 		},
 		"join": {
+			"waitingArea": {
+				"countdown": {
+					"etaDay": "через 1 день",
+					"etaDays": "через {{count}} дн.",
+					"etaHour": "через 1 час",
+					"etaHours": "через {{count}} ч.",
+					"etaMinute": "через 1 минуту",
+					"etaMinutes": "через {{count}} мин.",
+					"etaSoon": "совсем скоро",
+					"flipAria": "{{label}}: {{value}}. Переверните, чтобы прочитать.",
+					"flipHint": "нажмите, чтобы перевернуть",
+					"greetingLabel": "Приветствие вашего консультанта",
+					"headline": "Ваш групповой чат начнётся {{eta}}.",
+					"netiquetteLabel": "Нетикет · правило {{no}}",
+					"overdueCaption": "Ожидание становится немного неловким …",
+					"overdueHeadline": "Мы будем с вами через мгновение.",
+					"overdueSubtitle": "Ваш консультант вот-вот откроет комнату — пожалуйста, подождите ещё немного.",
+					"subtitle": "Нажмите на число — за ним вас ждут приветствие и правила общения.",
+					"timerAriaFuture": "До начала: {{days}} дн., {{hours}} ч., {{minutes}} мин. и {{seconds}} сек.",
+					"timerAriaOverdue": "С запланированного начала: {{minutes}} мин. и {{seconds}} сек.",
+					"toggleLabel": "Отключить анимацию",
+					"unitDays": "Дни",
+					"unitHours": "Часы",
+					"unitMinutes": "Минуты",
+					"unitSeconds": "Секунды"
+				}
+			},
 			"button": {
 				"label": {
 					"join": "Участвуйте",

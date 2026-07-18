@@ -709,6 +709,33 @@
 			}
 		},
 		"join": {
+			"waitingArea": {
+				"countdown": {
+					"etaDay": "dans 1 jour",
+					"etaDays": "dans {{count}} jours",
+					"etaHour": "dans 1 heure",
+					"etaHours": "dans {{count}} heures",
+					"etaMinute": "dans 1 minute",
+					"etaMinutes": "dans {{count}} minutes",
+					"etaSoon": "dans un instant",
+					"flipAria": "{{label}} : {{value}}. Retourner pour lire.",
+					"flipHint": "cliquer pour retourner",
+					"greetingLabel": "Mot de bienvenue de votre conseiller·ère",
+					"headline": "Votre chat de groupe commence {{eta}}.",
+					"netiquetteLabel": "Nétiquette · règle {{no}}",
+					"overdueCaption": "L'attente devient un peu gênante …",
+					"overdueHeadline": "Nous sommes à vous dans un instant.",
+					"overdueSubtitle": "Votre conseiller·ère va ouvrir la salle — merci de patienter encore un peu.",
+					"subtitle": "Cliquez sur un chiffre — le mot de bienvenue et la nétiquette vous attendent derrière.",
+					"timerAriaFuture": "Encore {{days}} jours, {{hours}} heures, {{minutes}} minutes et {{seconds}} secondes avant le début",
+					"timerAriaOverdue": "Depuis le début prévu : {{minutes}} minutes et {{seconds}} secondes",
+					"toggleLabel": "Désactiver l'animation",
+					"unitDays": "Jours",
+					"unitHours": "Heures",
+					"unitMinutes": "Minutes",
+					"unitSeconds": "Secondes"
+				}
+			},
 			"button": {
 				"label": {
 					"join": "Participer",

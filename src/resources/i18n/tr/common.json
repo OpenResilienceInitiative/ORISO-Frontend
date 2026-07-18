@@ -709,6 +709,33 @@
 			}
 		},
 		"join": {
+			"waitingArea": {
+				"countdown": {
+					"etaDay": "1 gün içinde",
+					"etaDays": "{{count}} gün içinde",
+					"etaHour": "1 saat içinde",
+					"etaHours": "{{count}} saat içinde",
+					"etaMinute": "1 dakika içinde",
+					"etaMinutes": "{{count}} dakika içinde",
+					"etaSoon": "birazdan",
+					"flipAria": "{{label}}: {{value}}. Okumak için çevirin.",
+					"flipHint": "çevirmek için tıklayın",
+					"greetingLabel": "Danışmanınızdan karşılama mesajı",
+					"headline": "Grup sohbetiniz {{eta}} başlıyor.",
+					"netiquetteLabel": "Sohbet kuralları · kural {{no}}",
+					"overdueCaption": "Bekleyiş biraz tuhaflaşmaya başladı …",
+					"overdueHeadline": "Birazdan sizinleyiz.",
+					"overdueSubtitle": "Danışmanınız odayı birazdan açacak — lütfen biraz daha bekleyin.",
+					"subtitle": "Bir sayıya tıklayın — arkasında karşılama mesajı ve sohbet kuralları sizi bekliyor.",
+					"timerAriaFuture": "Başlangıca {{days}} gün, {{hours}} saat, {{minutes}} dakika ve {{seconds}} saniye kaldı",
+					"timerAriaOverdue": "Planlanan başlangıçtan bu yana: {{minutes}} dakika ve {{seconds}} saniye",
+					"toggleLabel": "Animasyonu kapatın",
+					"unitDays": "Gün",
+					"unitHours": "Saat",
+					"unitMinutes": "Dakika",
+					"unitSeconds": "Saniye"
+				}
+			},
 			"button": {
 				"label": {
 					"join": "Katılmak",
