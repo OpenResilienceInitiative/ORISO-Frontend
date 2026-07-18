@@ -11,7 +11,7 @@ import {
 import { AskerInfo } from '../askerInfo/AskerInfo';
 import { Profile } from '../profile/Profile';
 import { SessionViewEmpty } from '../session/SessionViewEmpty';
-import { CreateGroupChatView } from '../groupChat/CreateChatView';
+import { CreateConversationView } from '../conversationCreate/CreateConversationView';
 import { GroupChatInfo } from '../groupChat/GroupChatInfo';
 import { Appointments } from '../appointment/Appointments';
 import VideoConference from '../videoConference/VideoConference';
@@ -394,12 +394,12 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 			},
 			{
 				path: '/sessions/consultant/sessionView/createGroupChat/',
-				component: CreateGroupChatView,
+				component: CreateConversationView,
 				type: SESSION_LIST_TYPES.MY_SESSION
 			},
 			{
 				path: '/sessions/consultant/sessionView/:rcGroupId/:sessionId/editGroupChat',
-				component: CreateGroupChatView,
+				component: CreateConversationView,
 				type: SESSION_LIST_TYPES.MY_SESSION
 			}
 		],

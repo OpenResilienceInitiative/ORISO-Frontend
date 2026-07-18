@@ -90,6 +90,16 @@ export const TOPIC_LENGTHS = {
 	MAX: 50
 };
 
+/**
+ * A chat name / topic is valid once it is at least MIN and at most MAX
+ * characters long (trimmed). The upper bound is inclusive so a name that
+ * hits the exact maxLength of the input is accepted rather than rejected.
+ */
+export const isGroupChatTopicLengthValid = (value: string): boolean => {
+	const length = value.trim().length;
+	return length >= TOPIC_LENGTHS.MIN && length <= TOPIC_LENGTHS.MAX;
+};
+
 export const durationSelectOptionsSet = [
 	{
 		value: '30',

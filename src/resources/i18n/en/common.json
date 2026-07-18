@@ -740,11 +740,49 @@
 				}
 			}
 		},
+		"format": {
+			"back": "Back",
+			"headerTitle": "Create new conversation",
+			"subtitle": "We offer different specialised conversation formats for you and the advice seekers. The selection is freely configurable by the organisations and your counselling centre.",
+			"title": "Choose conversation format"
+		},
+		"internal": {
+			"addPerson": "Add person",
+			"createLabel": "Create internal chat",
+			"deselectPerson": "Remove {{name}}",
+			"nameLabel": "Internal chat name",
+			"personCount_one": "{{count}} person added",
+			"personCount_other": "{{count}} people added",
+			"removePerson": "Remove {{name}}",
+			"selectPerson": "Select {{name}}",
+			"subtitle": "with your colleagues",
+			"supportText": "Coordinate within your counselling centre. Individually or as a team, via audio, video, chat or everything as needed.",
+			"title": "Internal discussion",
+			"togglePersonList": "Open or close the person list"
+		},
+		"circle": {
+			"cardHeadline": "Anonymous self-help groups",
+			"cardText": "initiate in your subject area. One-off or recurring: choose the right medium and share the circle with the participants.",
+			"createLabel": "Create",
+			"noTopics": "No topics available",
+			"saveLabel": "Save",
+			"settingsSubtitle": "Now adjust the welcome text, format, rules, intervals and the language in which the circle will primarily take place.",
+			"settingsTitle": "Circle settings",
+			"subtitle": "moderated by counsellors",
+			"title": "Conversation circle",
+			"toggleTopicList": "Open or close the topic list",
+			"topicLabel": "Topic / subject area"
+		},
 		"createError": {
 			"overlay": {
 				"buttonLabel": "Close",
 				"headline": "An error has occurred. Please try again."
 			}
+		},
+		"loadError": {
+			"consultants": "The colleagues could not be loaded.",
+			"retry": "Try again",
+			"topics": "The topics could not be loaded."
 		},
 		"createSuccess": {
 			"overlay": {
