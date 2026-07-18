@@ -6,7 +6,7 @@
 import * as React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { TeamDiscussionPanelView } from './TeamDiscussionPanel';
+import { TeamDiscussionPanelView } from './TeamDiscussionPanelView';
 import type { TeamDiscussionMessage } from './teamDiscussionHelpers';
 
 vi.mock('react-i18next', () => ({
