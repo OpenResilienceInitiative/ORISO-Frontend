@@ -61,6 +61,7 @@ import { MessageSubmitErrorBoundary } from '../messageSubmitInterface/MessageSub
 import { EncryptionBanner } from './EncryptionBanner';
 import { apiGetSessionSupervisors } from '../../api/apiGetSessionSupervisors';
 import { apiPatchNotificationActiveView } from '../../api/apiPatchNotificationActiveView';
+import { apiRegisterMatrixRoomForSync } from '../../api/apiMatrixSyncRegister';
 import { apiPatchUserData } from '../../api/apiPatchUserData';
 import { apiGetUserData } from '../../api/apiGetUserData';
 import { apiGetAnonymousEnquiryDetails } from '../../api/apiGetAnonymousEnquiryDetails';
@@ -2933,6 +2934,19 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			handleCloseThread();
 		}
 	}, [isThreadsEnabled, activeThreadRootId, handleCloseThread]);
+
+	// Register the session's Matrix room with the backend event listener
+	// (fire-and-forget, deduped per app lifetime). The listener syncs as its
+	// technical admin and only sees rooms it has joined — the backend heals
+	// that membership on registration, which is what makes message
+	// notifications work for this session at all.
+	useEffect(() => {
+		const sessionId = activeSession.item?.id;
+		if (!sessionId || activeSession.isGroup) {
+			return;
+		}
+		apiRegisterMatrixRoomForSync(sessionId);
+	}, [activeSession.item?.id, activeSession.isGroup]);
 
 	useEffect(() => {
 		if (isAskerUser && !isConsultantUser) {
