@@ -10,7 +10,7 @@ interface CapturedJoyrideProps {
 	run: boolean;
 	stepIndex: number;
 	steps: any[];
-	callback: (data: any) => void;
+	onEvent: (data: any) => void;
 	tooltipComponent?: any;
 	locale?: any;
 	disableScrolling?: boolean;
@@ -22,7 +22,7 @@ vi.mock('react-joyride', async () => {
 	const actual: any = await vi.importActual('react-joyride');
 	return {
 		...actual,
-		default: (props: any) => {
+		Joyride: (props: any) => {
 			joyrideProps = props;
 			return null;
 		}
@@ -133,7 +133,7 @@ describe('ProductTourAdapter', () => {
 		await waitFor(() => expect(joyrideProps).not.toBeNull());
 
 		act(() => {
-			joyrideProps!.callback({
+			joyrideProps!.onEvent({
 				action: 'next',
 				index: 0,
 				status: 'running',
@@ -155,7 +155,7 @@ describe('ProductTourAdapter', () => {
 
 		// advance to step 1 whose target is missing -> should end on step 2
 		act(() => {
-			joyrideProps!.callback({
+			joyrideProps!.onEvent({
 				action: 'next',
 				index: 0,
 				status: 'running',
@@ -179,7 +179,7 @@ describe('ProductTourAdapter', () => {
 		await waitFor(() => expect(joyrideProps).not.toBeNull());
 
 		act(() => {
-			joyrideProps!.callback({
+			joyrideProps!.onEvent({
 				action: 'next',
 				index: 2,
 				status: 'running',
@@ -203,7 +203,7 @@ describe('ProductTourAdapter', () => {
 		await waitFor(() => expect(joyrideProps).not.toBeNull());
 
 		act(() => {
-			joyrideProps!.callback({
+			joyrideProps!.onEvent({
 				action: 'close',
 				index: 0,
 				status: 'running',

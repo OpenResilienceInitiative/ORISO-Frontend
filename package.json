@@ -136,6 +136,7 @@
 		"@dtsgenerator/replace-namespace": "^1.6.0",
 		"@playwright/test": "^1.58.2",
 		"@pmmmwh/react-refresh-webpack-plugin": "^0.5.11",
+		"@storybook/addon-a11y": "^10.5.2",
 		"@storybook/react": "^10.4.6",
 		"@svgr/webpack": "^8.0.1",
 		"@takuma-ru/auto-story-generator": "^0.4.0",

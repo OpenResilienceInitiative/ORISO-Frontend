@@ -1,7 +1,7 @@
 import * as React from 'react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Joyride from 'react-joyride';
-import type { CallBackProps } from 'react-joyride';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { Joyride } from 'react-joyride';
+import type { EventData } from 'react-joyride';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -137,7 +137,7 @@ export const ProductTourAdapter = ({
 	);
 
 	const handleCallback = useCallback(
-		(data: CallBackProps) => {
+		(data: EventData) => {
 			const stepForIndex = (index: number): TourStep | undefined =>
 				steps[index];
 
@@ -192,9 +192,7 @@ export const ProductTourAdapter = ({
 			run={runState.run && !paused}
 			stepIndex={readyIndex}
 			continuous
-			showSkipButton={false}
-			disableScrolling={false}
-			callback={handleCallback}
+			onEvent={handleCallback}
 			tooltipComponent={tooltipComponent}
 			locale={{
 				back: translate('walkthrough.step.prev'),
@@ -203,10 +201,10 @@ export const ProductTourAdapter = ({
 				close: translate('walkthrough.step.done'),
 				skip: translate('walkthrough.step.done')
 			}}
-			styles={{
-				options: {
-					zIndex: 53
-				}
+			options={{
+				skipBeacon: true,
+				closeButtonAction: 'skip',
+				zIndex: 53
 			}}
 		/>
 	);

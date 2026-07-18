@@ -7,9 +7,9 @@ export const tourTargetSelector = (target: string) =>
 
 export const mapStepsToJoyride = (steps: TourStep[]): Step[] =>
 	steps.map((step) => ({
+		id: step.id,
 		target: step.target ? tourTargetSelector(step.target) : 'body',
 		placement: step.placement ?? (step.target ? 'bottom' : 'center'),
-		disableBeacon: true,
 		title: step.titleKey,
 		content: step.contentKey
 	}));

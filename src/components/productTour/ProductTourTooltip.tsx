@@ -16,9 +16,7 @@ export const ProductTourTooltip = ({
 	size,
 	isLastStep,
 	step,
-	backProps,
-	closeProps,
-	primaryProps,
+	controls,
 	tooltipProps
 }: TooltipRenderProps) => {
 	const { t: translate } = useTranslation();
@@ -41,7 +39,7 @@ export const ProductTourTooltip = ({
 				<button
 					type="button"
 					className="productTourTooltip__close"
-					onClick={closeProps.onClick as any}
+					onClick={() => controls.skip('button_close')}
 					aria-label={translate('walkthrough.close')}
 				>
 					<CloseIcon aria-hidden="true" focusable="false" />
@@ -60,7 +58,7 @@ export const ProductTourTooltip = ({
 							label: translate('walkthrough.step.prev'),
 							type: BUTTON_TYPES.SECONDARY
 						}}
-						buttonHandle={backProps.onClick as any}
+						buttonHandle={() => controls.prev()}
 						className="productTourTooltip__back"
 					/>
 				)}
@@ -69,7 +67,7 @@ export const ProductTourTooltip = ({
 						label: nextLabel,
 						type: BUTTON_TYPES.PRIMARY
 					}}
-					buttonHandle={primaryProps.onClick as any}
+					buttonHandle={() => controls.next()}
 					className="productTourTooltip__next"
 				/>
 			</div>

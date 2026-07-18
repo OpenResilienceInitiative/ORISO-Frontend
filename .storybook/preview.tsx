@@ -904,6 +904,21 @@ init(config.i18n, null);
 const preview: Preview = {
 	parameters: {
 		i18n,
+		a11y: {
+			options: {
+				runOnly: {
+					type: 'tag',
+					values: [
+						'wcag2a',
+						'wcag2aa',
+						'wcag21a',
+						'wcag21aa',
+						'wcag22aa'
+					]
+				}
+			},
+			test: 'error'
+		},
 		controls: {
 			matchers: {
 				color: /(background|color)$/i,

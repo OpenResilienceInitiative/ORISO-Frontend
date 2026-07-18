@@ -24,7 +24,7 @@ describe('mapStepsToJoyride', () => {
 		expect(joyrideSteps).toHaveLength(1);
 		expect(joyrideSteps[0].target).toBe('body');
 		expect(joyrideSteps[0].placement).toBe('center');
-		expect(joyrideSteps[0].disableBeacon).toBe(true);
+		expect(joyrideSteps[0].id).toBe('intro');
 	});
 
 	it('maps a semantic target name to a data-tour-target selector', () => {

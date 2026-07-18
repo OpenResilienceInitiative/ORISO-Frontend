@@ -45,6 +45,12 @@ const baseProps = (over: Record<string, any> = {}) => ({
 	primaryProps: { 'onClick': vi.fn(), 'aria-label': 'primary' },
 	skipProps: { 'onClick': vi.fn(), 'aria-label': 'skip' },
 	tooltipProps: { 'aria-modal': true },
+	controls: {
+		next: vi.fn(),
+		prev: vi.fn(),
+		skip: vi.fn(),
+		close: vi.fn()
+	},
 	...over
 });
 
@@ -82,7 +88,7 @@ describe('ProductTourTooltip', () => {
 		expect(screen.getByText('Weiter')).toBeTruthy();
 	});
 
-	it('wires next, back and close to the joyride handlers', () => {
+	it('wires next, back and close to the joyride tour controls', () => {
 		const props = baseProps();
 		render(<ProductTourTooltip {...(props as any)} />);
 
@@ -90,9 +96,9 @@ describe('ProductTourTooltip', () => {
 		fireEvent.click(screen.getByText('Zurück'));
 		fireEvent.click(screen.getByLabelText('Rundgang schließen'));
 
-		expect(props.primaryProps.onClick).toHaveBeenCalled();
-		expect(props.backProps.onClick).toHaveBeenCalled();
-		expect(props.closeProps.onClick).toHaveBeenCalled();
+		expect(props.controls.next).toHaveBeenCalled();
+		expect(props.controls.prev).toHaveBeenCalled();
+		expect(props.controls.skip).toHaveBeenCalled();
 	});
 
 	it('labels the final step with the done label', () => {
