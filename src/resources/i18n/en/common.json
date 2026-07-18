@@ -820,6 +820,31 @@
 		"join": {
 			"timeConversions": "Playful time conversions",
 			"waitingArea": {
+				"countdown": {
+					"etaDay": "in 1 day",
+					"etaDays": "in {{count}} days",
+					"etaHour": "in 1 hour",
+					"etaHours": "in {{count}} hours",
+					"etaMinute": "in 1 minute",
+					"etaMinutes": "in {{count}} minutes",
+					"etaSoon": "any moment now",
+					"flipAria": "{{label}}: {{value}}. Flip to read.",
+					"flipHint": "click to flip",
+					"greetingLabel": "A welcome from your counsellor",
+					"headline": "Your group chat starts {{eta}}.",
+					"netiquetteLabel": "Netiquette · rule {{no}}",
+					"overdueCaption": "The wait is getting a little awkward …",
+					"overdueHeadline": "We'll be with you in a moment.",
+					"overdueSubtitle": "Your counsellor is about to open the room — please hang on a little longer.",
+					"subtitle": "Click a number — the greeting and netiquette are waiting behind it.",
+					"timerAriaFuture": "Until the start — days: {{days}}, hours: {{hours}}, minutes: {{minutes}}, seconds: {{seconds}}",
+					"timerAriaOverdue": "Since the planned start — minutes: {{minutes}}, seconds: {{seconds}}",
+					"toggleLabel": "Turn off animation",
+					"unitDays": "Days",
+					"unitHours": "Hours",
+					"unitMinutes": "Minutes",
+					"unitSeconds": "Seconds"
+				},
 				"catMinutes": "{{value}} cat minutes",
 				"discomfort": {
 					"late": "late",
