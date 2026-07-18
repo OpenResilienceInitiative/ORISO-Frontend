@@ -205,6 +205,32 @@ describe('ProductTourAdapter', () => {
 		);
 	});
 
+	it('waits for a delayed first-step target before running joyride', async () => {
+		const delayedTour: TourDefinition = {
+			...tour,
+			steps: [
+				{
+					id: 'late-first',
+					target: 'late-first-target',
+					titleKey: 't0',
+					contentKey: 'c0'
+				}
+			]
+		};
+		renderAdapter({ tour: delayedTour });
+		await waitFor(() => expect(joyrideProps).not.toBeNull());
+		expect(joyrideProps!.run).toBe(false);
+
+		const el = document.createElement('div');
+		el.setAttribute('data-tour-target', 'late-first-target');
+		document.body.appendChild(el);
+
+		await waitFor(() => expect(joyrideProps!.run).toBe(true), {
+			timeout: 3000
+		});
+		expect(joyrideProps!.stepIndex).toBe(0);
+	});
+
 	it('persists skipped when the user closes the tour mid-way', async () => {
 		const { onTerminal } = renderAdapter();
 		await waitFor(() => expect(joyrideProps).not.toBeNull());

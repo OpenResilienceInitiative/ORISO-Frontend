@@ -42,3 +42,11 @@ describe('waitForTarget', () => {
 		expect(found).toBe(false);
 	});
 });
+
+describe('waitForTarget malformed selectors', () => {
+	it('resolves false instead of rejecting on an invalid selector', async () => {
+		await expect(
+			waitForTarget(':::not-a-selector', { timeoutMs: 40 })
+		).resolves.toBe(false);
+	});
+});

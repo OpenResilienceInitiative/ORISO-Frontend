@@ -27,11 +27,21 @@ export const effectivePlacement = (
 	if (!targetRect || placement === 'center') {
 		return placement;
 	}
-	const coverage =
-		(Math.min(targetRect.width, viewport.width) *
-			Math.min(targetRect.height, viewport.height)) /
-		(viewport.width * viewport.height);
-	return coverage >= 0.6 ? 'center' : placement;
+	const widthCoverage =
+		Math.min(targetRect.width, viewport.width) / viewport.width;
+	const heightCoverage =
+		Math.min(targetRect.height, viewport.height) / viewport.height;
+	// A side placement needs horizontal room, top/bottom need vertical room;
+	// 'auto' can use whichever axis still has space.
+	let coverage;
+	if (placement === 'left' || placement === 'right') {
+		coverage = widthCoverage;
+	} else if (placement === 'top' || placement === 'bottom') {
+		coverage = heightCoverage;
+	} else {
+		coverage = Math.min(widthCoverage, heightCoverage);
+	}
+	return coverage >= 0.85 ? 'center' : placement;
 };
 
 export interface TourRunState {
@@ -71,7 +81,7 @@ export const reduceTourCallback = (
 	stepCount: number
 ): TourReduction => {
 	const events: TourEvent[] = [];
-	let next = { ...state };
+	const next = { ...state };
 	const isLastStep = cb.index >= stepCount - 1;
 
 	if (cb.type === EVENTS.TOUR_START) {
@@ -88,10 +98,14 @@ export const reduceTourCallback = (
 
 	if (cb.type === EVENTS.TARGET_NOT_FOUND) {
 		events.push('target_missing');
-		if (isLastStep) {
+		const direction = cb.action === ACTIONS.PREV ? -1 : 1;
+		const nextIndex = cb.index + direction;
+		if (nextIndex < 0 || nextIndex >= stepCount) {
+			// No presentable step in that direction: close without a terminal
+			// status so the tour stays resumable.
 			next.run = false;
 		} else {
-			next.stepIndex = cb.index + 1;
+			next.stepIndex = nextIndex;
 		}
 		return { state: next, events };
 	}

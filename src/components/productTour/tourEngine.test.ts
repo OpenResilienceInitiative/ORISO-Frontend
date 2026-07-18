@@ -244,3 +244,78 @@ describe('effectivePlacement', () => {
 		).toBe('center');
 	});
 });
+
+describe('reduceTourCallback target_missing direction', () => {
+	const cb = (over: Record<string, any>) => ({
+		action: ACTIONS.UPDATE,
+		index: 0,
+		status: STATUS.RUNNING,
+		type: EVENTS.TOOLTIP,
+		...over
+	});
+
+	it('moves backward when the missing target was reached via prev', () => {
+		const { state, events } = reduceTourCallback(
+			{ status: 'in_progress', stepIndex: 2, run: true },
+			cb({
+				type: EVENTS.TARGET_NOT_FOUND,
+				action: ACTIONS.PREV,
+				index: 2
+			}),
+			5
+		);
+
+		expect(events).toContain('target_missing');
+		expect(state.stepIndex).toBe(1);
+		expect(state.run).toBe(true);
+	});
+
+	it('closes without terminal status when prev hits a missing first step', () => {
+		const { state } = reduceTourCallback(
+			{ status: 'in_progress', stepIndex: 0, run: true },
+			cb({
+				type: EVENTS.TARGET_NOT_FOUND,
+				action: ACTIONS.PREV,
+				index: 0
+			}),
+			5
+		);
+
+		expect(state.run).toBe(false);
+		expect(state.status).toBe('in_progress');
+	});
+});
+
+describe('effectivePlacement axis-specific coverage', () => {
+	it('centers a side placement when the target spans the viewport width', () => {
+		// Full-width, half-height list on mobile: no horizontal space for a
+		// right-anchored tooltip even though total area coverage is < 0.6.
+		expect(
+			effectivePlacement(
+				'right',
+				{ width: 390, height: 400 },
+				{ width: 390, height: 844 }
+			)
+		).toBe('center');
+	});
+
+	it('keeps a bottom placement for a wide but flat target', () => {
+		expect(
+			effectivePlacement(
+				'bottom',
+				{ width: 390, height: 120 },
+				{ width: 390, height: 844 }
+			)
+		).toBe('bottom');
+	});
+
+	it('centers a bottom placement when the target spans the viewport height', () => {
+		expect(
+			effectivePlacement(
+				'bottom',
+				{ width: 200, height: 820 },
+				{ width: 390, height: 844 }
+			)
+		).toBe('center');
+	});
+});

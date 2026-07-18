@@ -1,4 +1,5 @@
 import * as React from 'react';
+import sanitizeHtml from 'sanitize-html';
 import type { TooltipRenderProps } from 'react-joyride';
 import { useTranslation } from 'react-i18next';
 import { Button, BUTTON_TYPES } from '../button/Button';
@@ -48,7 +49,12 @@ export const ProductTourTooltip = ({
 			<div
 				className="productTourTooltip__content"
 				dangerouslySetInnerHTML={{
-					__html: translate(String(step.content))
+					// Step copy comes from the i18n bundles, but harden the
+					// surface anyway: only inline formatting survives.
+					__html: sanitizeHtml(translate(String(step.content)), {
+						allowedTags: ['br', 'b', 'strong', 'i', 'em'],
+						allowedAttributes: {}
+					})
 				}}
 			/>
 			<div className="productTourTooltip__actions">

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Joyride } from 'react-joyride';
 import type { EventData } from 'react-joyride';
 import { useTranslation } from 'react-i18next';
@@ -50,10 +50,9 @@ export const ProductTourAdapter = ({
 	const navigate = useNavigate();
 	const location = useLocation();
 
-	const [runState, setRunState] = useState<TourRunState>({
-		...initialTourRunState,
-		run: true
-	});
+	// Joyride starts only after the first step's route and target are ready,
+	// so every step follows the same preparation flow.
+	const [runState, setRunState] = useState<TourRunState>(initialTourRunState);
 	// The index Joyride actually shows; advanced only after route + target
 	// for that step are ready.
 	const [readyIndex, setReadyIndex] = useState(0);
@@ -63,13 +62,23 @@ export const ProductTourAdapter = ({
 		Record<number, TourPlacement | undefined>
 	>({});
 
+	// Callback handling reads and writes through this ref so side effects
+	// (events, navigation, persistence) never live inside a React state
+	// updater, which may replay updaters and duplicate them.
+	const runStateRef = useRef<TourRunState>(runState);
 	const startedAtRef = useRef<string | undefined>(undefined);
 	const terminalReportedRef = useRef(false);
 	const prepareTokenRef = useRef(0);
+	const startedPreparingRef = useRef(false);
 	const locationRef = useRef(location);
 	locationRef.current = location;
 
-	const steps = tour.steps;
+	const applyRunState = useCallback((next: TourRunState) => {
+		runStateRef.current = next;
+		setRunState(next);
+	}, []);
+
+	const { steps } = tour;
 	const joyrideSteps = useMemo(() => {
 		const mapped = mapStepsToJoyride(steps);
 		return mapped.map((step, index) =>
@@ -111,13 +120,16 @@ export const ProductTourAdapter = ({
 
 	/**
 	 * Makes step `index` presentable: navigates to its route when needed and
-	 * waits (bounded) for its target. A missing target is skipped safely; if
-	 * no presentable step remains the tour closes without completion.
+	 * waits (bounded) for its target. A missing target is skipped safely in
+	 * the direction of travel; if no presentable step remains the tour closes
+	 * without completion. Resolves true when a step became presentable.
 	 */
 	const prepareStep = useCallback(
-		async (index: number) => {
-			const token = ++prepareTokenRef.current;
-			for (let i = index; i < steps.length; i++) {
+		async (index: number, direction: 1 | -1 = 1): Promise<boolean> => {
+			prepareTokenRef.current += 1;
+			const token = prepareTokenRef.current;
+			/* eslint-disable no-await-in-loop, no-continue -- steps are prepared strictly sequentially; a skipped target falls through to the neighboring step */
+			for (let i = index; i >= 0 && i < steps.length; i += direction) {
 				const step = steps[i];
 				if (step.route) {
 					const current =
@@ -133,7 +145,7 @@ export const ProductTourAdapter = ({
 						{ timeoutMs: targetTimeoutMs }
 					);
 					if (prepareTokenRef.current !== token) {
-						return;
+						return false;
 					}
 					if (!found) {
 						emit('target_missing', step);
@@ -159,59 +171,75 @@ export const ProductTourAdapter = ({
 					);
 				}
 				setReadyIndex(i);
-				setRunState((prev) => ({ ...prev, stepIndex: i }));
-				return;
+				applyRunState({ ...runStateRef.current, stepIndex: i });
+				return true;
 			}
+			/* eslint-enable no-await-in-loop, no-continue */
 			// No presentable step left: close without recording completion.
-			setRunState((prev) => ({ ...prev, run: false }));
+			applyRunState({ ...runStateRef.current, run: false });
+			return false;
 		},
-		[emit, navigate, steps, targetTimeoutMs]
+		[applyRunState, emit, navigate, steps, targetTimeoutMs]
 	);
+
+	// Gate the initial run: prepare step 0 (route + target) before Joyride
+	// ever positions against the page.
+	useEffect(() => {
+		if (!active || startedPreparingRef.current) {
+			return;
+		}
+		startedPreparingRef.current = true;
+		prepareStep(0).then((prepared) => {
+			if (prepared) {
+				applyRunState({ ...runStateRef.current, run: true });
+			}
+		});
+	}, [active, applyRunState, prepareStep]);
 
 	const handleCallback = useCallback(
 		(data: EventData) => {
 			const stepForIndex = (index: number): TourStep | undefined =>
 				steps[index];
 
-			setRunState((prev) => {
-				const { state, events } = reduceTourCallback(
-					prev,
-					{
-						action: data.action,
-						index: data.index,
-						status: data.status,
-						type: data.type
-					},
-					steps.length
-				);
+			const prev = runStateRef.current;
+			const { state, events } = reduceTourCallback(
+				prev,
+				{
+					action: data.action,
+					index: data.index,
+					status: data.status,
+					type: data.type
+				},
+				steps.length
+			);
 
-				events.forEach((event) => {
-					if (event === 'tour_started') {
-						startedAtRef.current = new Date().toISOString();
-					}
-					emit(event, stepForIndex(data.index));
-				});
-
-				if (state.status === 'completed' && events.length) {
-					reportTerminal('completed', stepForIndex(data.index)?.id);
+			events.forEach((event) => {
+				if (event === 'tour_started') {
+					startedAtRef.current = new Date().toISOString();
 				}
-				if (
-					state.status === 'skipped' &&
-					events.includes('tour_skipped')
-				) {
-					reportTerminal('skipped', stepForIndex(data.index)?.id);
-				}
-
-				if (state.run && state.stepIndex !== prev.stepIndex) {
-					// Advance asynchronously once route + target are ready.
-					prepareStep(state.stepIndex);
-					// Keep showing the previous step until prepared.
-					return { ...state, stepIndex: prev.stepIndex };
-				}
-				return state;
+				emit(event, stepForIndex(data.index));
 			});
+
+			if (state.status === 'completed' && events.length) {
+				reportTerminal('completed', stepForIndex(data.index)?.id);
+			}
+			if (state.status === 'skipped' && events.includes('tour_skipped')) {
+				reportTerminal('skipped', stepForIndex(data.index)?.id);
+			}
+
+			if (state.run && state.stepIndex !== prev.stepIndex) {
+				// Advance asynchronously once route + target are ready; keep
+				// showing the previous step until prepared.
+				applyRunState({ ...state, stepIndex: prev.stepIndex });
+				prepareStep(
+					state.stepIndex,
+					state.stepIndex < prev.stepIndex ? -1 : 1
+				);
+				return;
+			}
+			applyRunState(state);
 		},
-		[emit, prepareStep, reportTerminal, steps]
+		[applyRunState, emit, prepareStep, reportTerminal, steps]
 	);
 
 	if (!active) {

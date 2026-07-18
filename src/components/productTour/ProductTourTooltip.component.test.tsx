@@ -101,6 +101,24 @@ describe('ProductTourTooltip', () => {
 		expect(props.controls.skip).toHaveBeenCalled();
 	});
 
+	it('strips scriptable markup from translated content', () => {
+		translations['t.evil'] =
+			'Sicher<br /><script>window.hacked = true;</script><img src=x onerror="window.hacked=true" />';
+		render(
+			<ProductTourTooltip
+				{...(baseProps({
+					step: { title: 't.title', content: 't.evil' }
+				}) as any)}
+			/>
+		);
+
+		const content = document.querySelector('.productTourTooltip__content')!;
+		expect(content.innerHTML).not.toContain('<script');
+		expect(content.innerHTML).not.toContain('onerror');
+		expect(content.innerHTML).toContain('<br');
+		expect((window as any).hacked).toBeUndefined();
+	});
+
 	it('labels the final step with the done label', () => {
 		render(
 			<ProductTourTooltip

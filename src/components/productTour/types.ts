@@ -57,6 +57,11 @@ export interface TourProgress {
 	status: TourStatus;
 	currentStepId?: string;
 	startedAt?: string;
+	/**
+	 * Timestamp of reaching a terminal status — set for BOTH 'completed' and
+	 * 'skipped'. `status` is the single source of truth for the outcome;
+	 * consumers must never infer completion from this field alone.
+	 */
 	completedAt?: string;
 }
 
