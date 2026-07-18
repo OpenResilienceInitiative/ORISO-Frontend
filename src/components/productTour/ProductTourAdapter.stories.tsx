@@ -126,12 +126,15 @@ const meta = {
 					'Controlled React Joyride adapter for the ORISO product-tour contract: route-spanning steps, bounded target waiting, domain events and the Frontend tooltip. The event log panel shows the emitted TourEvents live.'
 			}
 		},
-		// The Joyride overlay intentionally dims the page; axe flags the
-		// backdrop contrast of the decorative demo anchor behind it.
+		// The Joyride overlay intentionally dims the page, so contrast is
+		// only meaningful inside the tooltip surface itself.
 		a11y: {
 			config: {
 				rules: [
-					{ id: 'color-contrast', selector: '*:not(.__floater *)' }
+					{
+						id: 'color-contrast',
+						selector: '.productTourTooltip, .productTourTooltip *'
+					}
 				]
 			}
 		}
