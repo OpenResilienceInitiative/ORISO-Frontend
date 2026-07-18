@@ -1586,6 +1586,10 @@
 			"appointmentBriefing": {
 				"title": "Appointments briefing",
 				"text": "A briefing of your upcoming appointments is ready."
+			},
+			"teamDiscussionNew": {
+				"title": "Team discussion",
+				"text": "{{senderDisplayName}} posted in the team discussion"
 			}
 		},
 		"error": "failed",
@@ -3681,6 +3685,22 @@
 			"option": "Option",
 			"ctrl": "Ctrl",
 			"cmd": "Cmd"
+		}
+	},
+	"teamDiscussion": {
+		"title": "Team discussion",
+		"startHint": "Start discussion",
+		"postCount": "{{count}} posts",
+		"postCount_one": "1 post",
+		"archivedChip": "Archived",
+		"teamOnlyMarker": "Visible to the team only – advice seekers cannot see this area.",
+		"archivedBanner": "This discussion was closed when the enquiry was accepted ({{date}}) and is read-only.",
+		"empty": "No posts yet. Coordinate with your team about this enquiry here.",
+		"placeholder": "Message to the team …",
+		"send": "Send",
+		"error": {
+			"open": "The team discussion could not be opened.",
+			"send": "The message could not be sent."
 		}
 	}
 }

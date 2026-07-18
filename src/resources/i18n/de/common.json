@@ -1610,6 +1610,10 @@
 			"appointmentBriefing": {
 				"title": "Termin-Briefing",
 				"text": "Eine Übersicht Ihrer anstehenden Termine liegt bereit."
+			},
+			"teamDiscussionNew": {
+				"title": "Team-Besprechung",
+				"text": "{{senderDisplayName}} hat in der Team-Besprechung geschrieben"
 			}
 		},
 		"error": "Fehlgeschlagen",
@@ -3779,6 +3783,22 @@
 			"option": "Option",
 			"ctrl": "Strg",
 			"cmd": "Cmd"
+		}
+	},
+	"teamDiscussion": {
+		"title": "Team-Besprechung",
+		"startHint": "Besprechung starten",
+		"postCount": "{{count}} Beiträge",
+		"postCount_one": "1 Beitrag",
+		"archivedChip": "Archiviert",
+		"teamOnlyMarker": "Nur für das Team sichtbar – Ratsuchende sehen diesen Bereich nicht.",
+		"archivedBanner": "Diese Besprechung wurde bei Annahme der Anfrage geschlossen ({{date}}) und ist nur noch lesbar.",
+		"empty": "Noch keine Beiträge. Stimmen Sie sich hier mit Ihrem Team zur Anfrage ab.",
+		"placeholder": "Nachricht an das Team …",
+		"send": "Senden",
+		"error": {
+			"open": "Die Team-Besprechung konnte nicht geöffnet werden.",
+			"send": "Die Nachricht konnte nicht gesendet werden."
 		}
 	}
 }

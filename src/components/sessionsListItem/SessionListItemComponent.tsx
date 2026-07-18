@@ -55,6 +55,7 @@ import './sessionsListItem.styles';
 import { SessionListItemVideoCall } from './SessionListItemVideoCall';
 import { SessionListItemAttachment } from './SessionListItemAttachment';
 import clsx from 'clsx';
+import { TeamDiscussionBadge } from '../teamDiscussion/TeamDiscussionBadge';
 import {
 	decryptText,
 	MissingKeyError,
@@ -1644,6 +1645,16 @@ export const SessionListItemComponent = ({
 									</span>
 								</div>
 							)}
+							{/* FE#514: team-only discussion exists on this
+							    enquiry (consultants only, ADR-016). */}
+							{!isAsker &&
+								activeSession.isEnquiry &&
+								modality === Modality.AGENCY_COUNSELLING &&
+								activeSession.item?.id && (
+									<TeamDiscussionBadge
+										sessionId={activeSession.item.id}
+									/>
+								)}
 							{modality === Modality.SELF_HELP && (
 								<div
 									className={clsx(

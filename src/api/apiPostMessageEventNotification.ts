@@ -9,6 +9,8 @@ export interface MessageEventNotificationInput {
 	supervisorMessage?: boolean;
 	senderDisplayName?: string | null;
 	threadParentPreview?: string | null;
+	teamDiscussion?: boolean;
+	mentionedUserIds?: string[] | null;
 }
 
 export interface MessageEventNotificationBody {
@@ -19,6 +21,8 @@ export interface MessageEventNotificationBody {
 	supervisorMessage: boolean;
 	senderDisplayName: string | null;
 	threadParentPreview: string | null;
+	teamDiscussion: boolean;
+	mentionedUserIds: string[] | null;
 }
 
 const MAX_LEGACY_MESSAGE_PREVIEW_LENGTH = 100;
@@ -30,7 +34,9 @@ export const buildMessageEventNotificationBody = ({
 	threadRootId,
 	supervisorMessage = false,
 	senderDisplayName,
-	threadParentPreview
+	threadParentPreview,
+	teamDiscussion = false,
+	mentionedUserIds
 }: MessageEventNotificationInput): MessageEventNotificationBody => {
 	const canIncludePlaintextPreview = matrixRoom === false;
 	return {
@@ -44,7 +50,9 @@ export const buildMessageEventNotificationBody = ({
 		senderDisplayName: senderDisplayName || null,
 		threadParentPreview: canIncludePlaintextPreview
 			? threadParentPreview || null
-			: null
+			: null,
+		teamDiscussion,
+		mentionedUserIds: mentionedUserIds?.length ? mentionedUserIds : null
 	};
 };
 

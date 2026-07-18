@@ -65,6 +65,7 @@ export type EventIconId =
 	| 'appointmentCancelled'
 	| 'appointmentBriefing'
 	| 'waitingRoom'
+	| 'teamDiscussion'
 	| 'system';
 
 /**

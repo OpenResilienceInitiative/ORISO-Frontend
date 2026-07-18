@@ -45,6 +45,9 @@ import { useTranslation } from 'react-i18next';
 import { prepareConsultantDataForSelect } from '../sessionAssign/sessionAssignHelper';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
+import { getModality, Modality } from './getModality';
+import { TeamDiscussionPanel } from '../teamDiscussion/TeamDiscussionPanel';
+import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import {
 	chatTransportService,
 	MatrixRoomLifecycleChange
@@ -935,8 +938,25 @@ export const SessionStream = ({
 		);
 	}
 
+	// FE#514 / ADR-016: the Team-Besprechung exists for consultants on
+	// Agency-Counselling enquiries only (Live Chat + groups excluded). The
+	// panel itself keeps working read-only when an archived discussion exists.
+	const { featureTeamDiscussionEnabled = true } = getTenantSettings();
+	const showTeamDiscussion =
+		featureTeamDiscussionEnabled &&
+		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
+		!activeSession.isGroup &&
+		getModality(activeSession) === Modality.AGENCY_COUNSELLING &&
+		!!activeSession.item?.id;
+
 	return (
 		<div className="session__wrapper">
+			{showTeamDiscussion && (
+				<TeamDiscussionPanel
+					sessionId={activeSession.item.id}
+					allowCreate={activeSession.isEnquiry}
+				/>
+			)}
 			<SessionItemComponent
 				hasUserInitiatedStopOrLeaveRequest={
 					hasUserInitiatedStopOrLeaveRequest
