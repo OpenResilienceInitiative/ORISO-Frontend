@@ -5,7 +5,10 @@ import { ReactComponent as GroupChatAvatarIcon } from '../../../resources/img/ic
 import { ReactComponent as TeamIllustration } from '../../../resources/img/illustrations/Team.svg';
 import { OrisoTextField } from '../../form/OrisoTextField';
 import { OrisoSelect } from '../../form/OrisoSelect';
-import { TOPIC_LENGTHS } from '../../groupChat/createChatHelpers';
+import {
+	isGroupChatTopicLengthValid,
+	TOPIC_LENGTHS
+} from '../../groupChat/createChatHelpers';
 import { FormatCard } from '../FormatCard';
 import { M3SplitButton } from '../M3SplitButton';
 import { PersonChipGrid } from './PersonChipGrid';
@@ -79,9 +82,7 @@ export const InternalChatCreateCard = ({
 
 	const { name, selectedIds } = draft;
 	const selectedCount = selectedIds.length;
-	const isNameValid =
-		name.trim().length >= TOPIC_LENGTHS.MIN &&
-		name.trim().length < TOPIC_LENGTHS.MAX;
+	const isNameValid = isGroupChatTopicLengthValid(name);
 	const isReady = isNameValid && selectedCount > 0 && !isSubmitting;
 
 	const peopleById = useMemo(
