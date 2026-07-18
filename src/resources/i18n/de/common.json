@@ -3630,6 +3630,11 @@
 			},
 			"remove": {
 				"confirm": "Möchten Sie diesen Supervisor wirklich entfernen?"
+			},
+			"add": {
+				"disabledAsker": "Supervision wird vom Beratungsteam verwaltet",
+				"disabledMobile": "Supervisor hinzufügen – am Desktop verfügbar",
+				"disabledUnavailable": "Supervisor hinzufügen – hier nicht verfügbar"
 			}
 		}
 	},

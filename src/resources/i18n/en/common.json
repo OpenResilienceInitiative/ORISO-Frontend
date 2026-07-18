@@ -3532,6 +3532,11 @@
 			},
 			"remove": {
 				"confirm": "Are you sure you want to remove this supervisor?"
+			},
+			"add": {
+				"disabledAsker": "Supervision is managed by the counselling team",
+				"disabledMobile": "Add supervisor – available on desktop",
+				"disabledUnavailable": "Add supervisor – not available here"
 			}
 		}
 	},
