@@ -77,9 +77,21 @@ export const TeamDiscussionPanel = ({
 		let cancelled = false;
 		apiGetTeamDiscussion(sessionId)
 			.then((result) => {
-				if (!cancelled) {
-					setDiscussion(result);
-					setDiscussionLoaded(true);
+				if (cancelled) {
+					return;
+				}
+				setDiscussion(result);
+				setDiscussionLoaded(true);
+				// Deep-link (?teamDiscussion=1): the panel starts expanded, so
+				// join the room right away — otherwise the feed stays empty
+				// until the first manual toggle. Idempotent on the backend.
+				if (result && initiallyOpen) {
+					apiOpenTeamDiscussion(sessionId)
+						.then(
+							(joined) =>
+								!cancelled && joined && setDiscussion(joined)
+						)
+						.catch(() => undefined);
 				}
 			})
 			.catch(() => {
@@ -90,6 +102,7 @@ export const TeamDiscussionPanel = ({
 		return () => {
 			cancelled = true;
 		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- initiallyOpen is a mount-time deep-link signal
 	}, [sessionId]);
 
 	const refreshMessages = useCallback((matrixRoomId: string) => {
