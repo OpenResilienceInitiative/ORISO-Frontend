@@ -4,14 +4,16 @@ export const SYSTEM_NOTIFICATION_USER_LEFT_CHAT = 'USER_LEFT_CHAT';
 export const SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED =
 	'CASE_HANDOVER_GRANTED';
 export const VISIBLE_TO_PREFIX = '[VISIBLE_TO:';
-export const THREAD_PREFIX = '[THREAD:';
-export const THREAD_SUFFIX = ']';
+const PREFIX_SUFFIX = ']';
 
-export const buildThreadPrefix = (rootId: string) =>
-	`${THREAD_PREFIX}${rootId}${THREAD_SUFFIX}`;
+// ADR-017 hard cut: `[THREAD:…]` is no longer a thread-identity carrier —
+// thread membership lives solely in the native `m.thread` relation. The only
+// remnant is a cosmetic strip (in parseMessagePrefixes) so leftover pre-dev
+// prefix events don't render the raw token; it produces no thread semantics.
+const LEGACY_THREAD_PREFIX = '[THREAD:';
 
 export const buildVisibleToPrefix = (recipientIds: string[]) =>
-	`${VISIBLE_TO_PREFIX}${recipientIds.join(',')}${THREAD_SUFFIX}`;
+	`${VISIBLE_TO_PREFIX}${recipientIds.join(',')}${PREFIX_SUFFIX}`;
 
 export const parseMessagePrefixes = (message?: string | null) => {
 	if (!message) {
@@ -25,9 +27,7 @@ export const parseMessagePrefixes = (message?: string | null) => {
 			systemNotificationUsername: '',
 			systemNotificationReasonLabel: '',
 			systemNotificationExplanation: '',
-			visibleToUserIds: [] as string[],
-			isThreadMessage: false,
-			threadRootId: null as string | null
+			visibleToUserIds: [] as string[]
 		};
 	}
 
@@ -41,19 +41,17 @@ export const parseMessagePrefixes = (message?: string | null) => {
 	let systemNotificationReasonLabel = '';
 	let systemNotificationExplanation = '';
 	let visibleToUserIds: string[] = [];
-	let threadRootId: string | null = null;
 
 	let keepParsingPrefixes = true;
 	while (keepParsingPrefixes) {
 		keepParsingPrefixes = false;
 
-		if (!threadRootId && cleanedMessage.startsWith(THREAD_PREFIX)) {
-			const endIndex = cleanedMessage.indexOf(THREAD_SUFFIX);
-			if (endIndex > THREAD_PREFIX.length) {
-				threadRootId = cleanedMessage.substring(
-					THREAD_PREFIX.length,
-					endIndex
-				);
+		// ADR-017: cosmetically strip a leading [THREAD:…] token from leftover
+		// pre-dev events so the raw marker never shows. No thread semantics are
+		// derived — the token is simply discarded.
+		if (cleanedMessage.startsWith(LEGACY_THREAD_PREFIX)) {
+			const endIndex = cleanedMessage.indexOf(PREFIX_SUFFIX);
+			if (endIndex > LEGACY_THREAD_PREFIX.length) {
 				cleanedMessage = cleanedMessage
 					.substring(endIndex + 1)
 					.trimStart();
@@ -63,7 +61,7 @@ export const parseMessagePrefixes = (message?: string | null) => {
 		}
 
 		if (cleanedMessage.startsWith(VISIBLE_TO_PREFIX)) {
-			const endIndex = cleanedMessage.indexOf(THREAD_SUFFIX);
+			const endIndex = cleanedMessage.indexOf(PREFIX_SUFFIX);
 			if (endIndex > VISIBLE_TO_PREFIX.length) {
 				const recipients = cleanedMessage
 					.substring(VISIBLE_TO_PREFIX.length, endIndex)
@@ -134,8 +132,6 @@ export const parseMessagePrefixes = (message?: string | null) => {
 		systemNotificationUsername,
 		systemNotificationReasonLabel,
 		systemNotificationExplanation,
-		visibleToUserIds,
-		isThreadMessage: !!threadRootId,
-		threadRootId
+		visibleToUserIds
 	};
 };

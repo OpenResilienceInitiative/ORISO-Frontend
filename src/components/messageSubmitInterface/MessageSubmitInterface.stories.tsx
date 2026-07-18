@@ -112,6 +112,33 @@ export const ReadyToSend: Story = {
 	}
 };
 
+export const ReplyingToMessage: Story = {
+	name: 'Replying (m.in_reply_to preview)',
+	render: () => (
+		<ComposerShell
+			replyTo={{
+				eventId: '$orig:matrix.oriso.org',
+				author: 'Maria K.',
+				text: 'Ich habe seit letzter Woche große Probleme mit meinem Vermieter und weiß nicht weiter.'
+			}}
+			onCancelReply={() => {}}
+		/>
+	)
+};
+
+export const EditingMessage: Story = {
+	name: 'Editing (m.replace preview)',
+	render: () => (
+		<ComposerShell
+			editingMessage={{
+				eventId: '$orig:matrix.oriso.org',
+				text: 'Ich habe seit letzter Woche große Problem mit meinem Vermieter und weiß nicht weiter.'
+			}}
+			onCancelEdit={() => {}}
+		/>
+	)
+};
+
 export const GroupChat: Story = {
 	name: 'Group chat (multiple recipients)',
 	render: () => (

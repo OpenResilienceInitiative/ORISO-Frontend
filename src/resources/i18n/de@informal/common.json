@@ -438,6 +438,12 @@
 		},
 		"video": {
 			"description": "Du kannst jetzt an der Videokonferenz teilnehmen"
+		},
+		"reply": {
+			"previewLabel": "Antwort an",
+			"cancel": "Antwort verwerfen",
+			"quoteLabel": "Antwort auf",
+			"quoteUnknown": "Frühere Nachricht"
 		}
 	},
 	"notifications": {

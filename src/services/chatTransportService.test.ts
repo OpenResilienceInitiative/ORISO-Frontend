@@ -441,7 +441,14 @@ describe('chatTransportService sendTextMessage (Matrix-only transport)', () => {
 		});
 
 		expect(apiGetSessionRoomBySessionId).toHaveBeenCalledWith(42);
-		expect(sendMessage).toHaveBeenCalledWith(ROOM_ID, 'hello after accept');
+		expect(sendMessage).toHaveBeenCalledWith(
+			ROOM_ID,
+			'hello after accept',
+			{
+				replyToEventId: null,
+				threadRootId: null
+			}
+		);
 	});
 
 	it('rejects when refreshing a stale session still returns no Matrix room', async () => {
@@ -481,7 +488,10 @@ describe('chatTransportService sendTextMessage (Matrix-only transport)', () => {
 			matrixClientServiceOverride: override
 		});
 
-		expect(sendMessage).toHaveBeenCalledWith(ROOM_ID, 'hello world');
+		expect(sendMessage).toHaveBeenCalledWith(ROOM_ID, 'hello world', {
+			replyToEventId: null,
+			threadRootId: null
+		});
 		expect(result).toEqual({
 			success: true,
 			event_id: '$evt:matrix.oriso.org'
@@ -572,5 +582,189 @@ describe('chatTransportService markRoomAsRead', () => {
 		await expect(
 			chatTransportService.markRoomAsRead(ROOM_ID)
 		).resolves.toBeUndefined();
+	});
+});
+
+describe('chatTransportService reply relation (#435)', () => {
+	beforeEach(() => {
+		apiPostMessageEventNotification.mockClear();
+	});
+
+	const makeServiceFake = () => {
+		const sendMessage = vi.fn(async () => ({ event_id: '$new:hs' }));
+		return {
+			fake: {
+				getClient: () => ({}) as any,
+				sendMessage
+			} as any,
+			sendMessage
+		};
+	};
+
+	it('passes replyToEventId through to the Matrix send as an option', async () => {
+		const { fake, sendMessage } = makeServiceFake();
+		const result = await chatTransportService.sendTextMessage({
+			roomIdOrSessionId: ROOM_ID,
+			message: 'antwort',
+			sendMailNotification: false,
+			isEncrypted: true,
+			matrixRoomId: ROOM_ID,
+			replyToEventId: '$orig:hs',
+			matrixClientServiceOverride: fake
+		});
+		expect(sendMessage).toHaveBeenCalledWith(ROOM_ID, 'antwort', {
+			replyToEventId: '$orig:hs',
+			threadRootId: null
+		});
+		expect(result).toEqual({ success: true, event_id: '$new:hs' });
+	});
+
+	it('sends without reply options when not replying', async () => {
+		const { fake, sendMessage } = makeServiceFake();
+		await chatTransportService.sendTextMessage({
+			roomIdOrSessionId: ROOM_ID,
+			message: 'normal',
+			sendMailNotification: false,
+			isEncrypted: true,
+			matrixRoomId: ROOM_ID,
+			matrixClientServiceOverride: fake
+		});
+		expect(sendMessage).toHaveBeenCalledWith(ROOM_ID, 'normal', {
+			replyToEventId: null,
+			threadRootId: null
+		});
+	});
+
+	it('FE-H01: the metadata notification never carries reply content or ids beyond metadata', async () => {
+		const { fake } = makeServiceFake();
+		await chatTransportService.sendTextMessage({
+			roomIdOrSessionId: ROOM_ID,
+			message: 'geheime antwort',
+			sendMailNotification: false,
+			isEncrypted: true,
+			matrixRoomId: ROOM_ID,
+			replyToEventId: '$orig:hs',
+			matrixClientServiceOverride: fake
+		});
+		expect(apiPostMessageEventNotification).toHaveBeenCalledTimes(1);
+		const payload = apiPostMessageEventNotification.mock
+			.calls[0][0] as Record<string, unknown>;
+		const serialized = JSON.stringify(payload);
+		expect(serialized).not.toContain('geheime antwort');
+		expect(serialized).not.toContain('$orig:hs');
+	});
+});
+
+describe('chatTransportService editing + reactions (#435)', () => {
+	afterEach(() => {
+		setMatrixClientServiceRef(null);
+	});
+
+	it('editTextMessage sends an m.replace edit via the Matrix client', async () => {
+		const editMessage = vi.fn(async () => ({ event_id: '$edit:hs' }));
+		const override = { getClient: () => ({}), editMessage } as any;
+
+		const result = await chatTransportService.editTextMessage({
+			matrixRoomId: ROOM_ID,
+			targetEventId: '$orig:hs',
+			message: 'korrigiert',
+			matrixClientServiceOverride: override
+		});
+
+		expect(editMessage).toHaveBeenCalledWith(
+			ROOM_ID,
+			'$orig:hs',
+			'korrigiert'
+		);
+		expect(result).toEqual({ success: true, event_id: '$edit:hs' });
+	});
+
+	it('editTextMessage rejects when the Matrix client is not initialized', async () => {
+		const override = { getClient: () => null } as any;
+
+		await expect(
+			chatTransportService.editTextMessage({
+				matrixRoomId: ROOM_ID,
+				targetEventId: '$orig:hs',
+				message: 'korrigiert',
+				matrixClientServiceOverride: override
+			})
+		).rejects.toThrow('Matrix client not initialized');
+	});
+
+	it('sendReaction sends an m.annotation reaction via the Matrix client', async () => {
+		const sendReaction = vi.fn(async () => ({ event_id: '$reaction:hs' }));
+		const override = { getClient: () => ({}), sendReaction } as any;
+
+		const result = await chatTransportService.sendReaction({
+			matrixRoomId: ROOM_ID,
+			targetEventId: '$msg:hs',
+			key: '👍',
+			matrixClientServiceOverride: override
+		});
+
+		expect(sendReaction).toHaveBeenCalledWith(ROOM_ID, '$msg:hs', '👍');
+		expect(result).toEqual({ success: true, event_id: '$reaction:hs' });
+	});
+
+	it('removeReaction redacts the reaction event via the Matrix client', async () => {
+		const redactEvent = vi.fn(async () => ({ event_id: '$redaction:hs' }));
+		const override = { getClient: () => ({}), redactEvent } as any;
+
+		const result = await chatTransportService.removeReaction({
+			matrixRoomId: ROOM_ID,
+			reactionEventId: '$reaction:hs',
+			matrixClientServiceOverride: override
+		});
+
+		expect(redactEvent).toHaveBeenCalledWith(ROOM_ID, '$reaction:hs');
+		expect(result).toEqual({ success: true, event_id: '$redaction:hs' });
+	});
+});
+
+describe('chatTransportService sendTextMessage mentions (#435)', () => {
+	beforeEach(() => {
+		apiPostMessageEventNotification.mockClear();
+	});
+
+	it('passes mentionedUserIds through to the Matrix send as an option', async () => {
+		const sendMessage = vi.fn(async () => ({ event_id: '$new:hs' }));
+		const fake = { getClient: () => ({}), sendMessage } as any;
+
+		await chatTransportService.sendTextMessage({
+			roomIdOrSessionId: ROOM_ID,
+			message: 'Hallo @Anna',
+			sendMailNotification: false,
+			isEncrypted: true,
+			matrixRoomId: ROOM_ID,
+			mentionedUserIds: ['@anna:hs'],
+			matrixClientServiceOverride: fake
+		});
+
+		expect(sendMessage).toHaveBeenCalledWith(ROOM_ID, 'Hallo @Anna', {
+			replyToEventId: null,
+			threadRootId: null,
+			mentionedUserIds: ['@anna:hs']
+		});
+	});
+
+	it('sends without a mentions option when nobody was mentioned', async () => {
+		const sendMessage = vi.fn(async () => ({ event_id: '$new:hs' }));
+		const fake = { getClient: () => ({}), sendMessage } as any;
+
+		await chatTransportService.sendTextMessage({
+			roomIdOrSessionId: ROOM_ID,
+			message: 'normal',
+			sendMailNotification: false,
+			isEncrypted: true,
+			matrixRoomId: ROOM_ID,
+			matrixClientServiceOverride: fake
+		});
+
+		expect(sendMessage).toHaveBeenCalledWith(ROOM_ID, 'normal', {
+			replyToEventId: null,
+			threadRootId: null,
+			mentionedUserIds: undefined
+		});
 	});
 });

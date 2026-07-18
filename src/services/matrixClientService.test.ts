@@ -280,6 +280,70 @@ describe('MatrixClientService', () => {
 		});
 	});
 
+	it('edits a message via m.replace, targeting the original event', async () => {
+		const sendMessage = vi.fn(() =>
+			Promise.resolve({ event_id: '$edit:example.org' })
+		);
+		const service = new MatrixClientService();
+		setClient(service, { sendMessage });
+
+		await expect(
+			service.editMessage(
+				'!room:example.org',
+				'$orig:example.org',
+				'korrigiert'
+			)
+		).resolves.toEqual({ event_id: '$edit:example.org' });
+		expect(sendMessage).toHaveBeenCalledWith('!room:example.org', {
+			'msgtype': 'm.text',
+			'body': '* korrigiert',
+			'm.new_content': { msgtype: 'm.text', body: 'korrigiert' },
+			'm.relates_to': {
+				rel_type: 'm.replace',
+				event_id: '$orig:example.org'
+			}
+		});
+	});
+
+	it('sends a reaction via m.annotation using sendEvent', async () => {
+		const sendEvent = vi.fn(() =>
+			Promise.resolve({ event_id: '$reaction:example.org' })
+		);
+		const service = new MatrixClientService();
+		setClient(service, { sendEvent });
+
+		await expect(
+			service.sendReaction('!room:example.org', '$msg:example.org', '👍')
+		).resolves.toEqual({ event_id: '$reaction:example.org' });
+		expect(sendEvent).toHaveBeenCalledWith(
+			'!room:example.org',
+			'm.reaction',
+			{
+				'm.relates_to': {
+					rel_type: 'm.annotation',
+					event_id: '$msg:example.org',
+					key: '👍'
+				}
+			}
+		);
+	});
+
+	it('redacts an event (used to un-react)', async () => {
+		const redactEvent = vi.fn(() =>
+			Promise.resolve({ event_id: '$redaction:example.org' })
+		);
+		const service = new MatrixClientService();
+		setClient(service, { redactEvent });
+
+		await expect(
+			service.redactEvent('!room:example.org', '$reaction:example.org')
+		).resolves.toEqual({ event_id: '$redaction:example.org' });
+		expect(redactEvent).toHaveBeenCalledWith(
+			'!room:example.org',
+			'$reaction:example.org'
+		);
+	});
+
 	it('joins a newly accepted room that is not yet present in the running client', async () => {
 		const callOrder: string[] = [];
 		const joinRoom = vi.fn(async () => {

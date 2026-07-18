@@ -1445,7 +1445,13 @@
 		"today": "Today",
 		"tomorrow": "Tomorrow",
 		"unread": "unread",
-		"yesterday": "Yesterday"
+		"yesterday": "Yesterday",
+		"reply": {
+			"previewLabel": "Replying to",
+			"cancel": "Discard reply",
+			"quoteLabel": "In reply to",
+			"quoteUnknown": "Earlier message"
+		}
 	},
 	"navigation": {
 		"appointments": "Video dates",
