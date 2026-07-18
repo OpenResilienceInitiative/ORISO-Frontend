@@ -2707,8 +2707,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			if (knownMessageIdsRef.current.has(message._id)) {
 				return false;
 			}
-			const parsed = parseMessagePrefixes(message.message);
-			const rootId = message.threadRootEventId || parsed.threadRootId;
+			// ADR-017 hard cut: thread identity is the m.thread relation only.
+			const rootId = message.threadRootEventId;
 			if (!rootId) {
 				return false;
 			}
@@ -2723,7 +2723,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 		newThreadReplies.forEach((message) => {
 			const parsed = parseMessagePrefixes(message.message);
-			const rootId = message.threadRootEventId || parsed.threadRootId;
+			const rootId = message.threadRootEventId;
 			const params = new URLSearchParams(location.search);
 			if (rootId) {
 				params.set('threadRootId', rootId);

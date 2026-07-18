@@ -1900,10 +1900,10 @@ export const MessageItemComponent = ({
 		}
 	}
 
-	// MSC3440 (#435): thread membership comes from the m.thread relation;
-	// legacy [THREAD:...] prefixes keep working as a read-only fallback.
-	const effectiveThreadRootId =
-		threadRootEventId || parsedMessage.threadRootId || null;
+	// MSC3440 (#435) / ADR-017 hard cut: thread membership comes ONLY from the
+	// m.thread relation. Legacy [THREAD:...] prefix messages carry no thread
+	// semantics anymore and render flat.
+	const effectiveThreadRootId = threadRootEventId || null;
 	const isThreadReply = Boolean(effectiveThreadRootId);
 	if (!forceShow) {
 		if (renderMode === 'main' && threadsEnabled && isThreadReply) {

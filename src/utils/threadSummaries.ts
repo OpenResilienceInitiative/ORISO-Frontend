@@ -1,7 +1,8 @@
 /**
  * Thread-panel-UX (#435) — pure summary computation extracted from
- * SessionItemComponent so it is unit-testable. Same relation-first,
- * legacy-[THREAD:]-prefix-fallback read as the rest of the relations work.
+ * SessionItemComponent so it is unit-testable. Thread identity comes ONLY
+ * from the native `m.thread` relation (ADR-017 hard cut): the message's
+ * `threadRootEventId`. No legacy `[THREAD:]`-prefix fallback.
  */
 
 import { parseMessagePrefixes } from '../components/message/messageConstants';
@@ -27,8 +28,7 @@ export const computeThreadSummaries = (
 	const map = new Map<string, ThreadSummary>();
 
 	messages.forEach((message) => {
-		const parsed = parseMessagePrefixes(message.message);
-		const rootId = message.threadRootEventId || parsed.threadRootId;
+		const rootId = message.threadRootEventId;
 		if (!rootId) {
 			return;
 		}

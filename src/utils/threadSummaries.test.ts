@@ -38,7 +38,7 @@ describe('computeThreadSummaries', () => {
 		});
 	});
 
-	it('falls back to the legacy [THREAD:rootId] prefix when there is no relation', () => {
+	it('ignores a legacy [THREAD:rootId] prefix message that has no relation (ADR-017 hard cut)', () => {
 		const messages = [
 			{
 				_id: '$root:hs',
@@ -52,9 +52,9 @@ describe('computeThreadSummaries', () => {
 			}
 		];
 
-		const summaries = computeThreadSummaries(messages);
-
-		expect(summaries.get('$root:hs')?.replyCount).toBe(1);
+		// Thread identity comes solely from the m.thread relation now; a bare
+		// prefix carries no thread semantics, so it produces no summary.
+		expect(computeThreadSummaries(messages).size).toBe(0);
 	});
 
 	it('returns an empty map for a flat conversation with no thread replies', () => {
