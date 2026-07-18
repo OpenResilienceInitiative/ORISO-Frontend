@@ -47,6 +47,7 @@ export interface SendTextMessageOptions {
 	mentionedUserIds?: string[];
 	supervisorMessage?: boolean;
 	senderDisplayName?: string | null;
+	teamDiscussion?: boolean;
 	matrixClientServiceOverride?: MatrixClientService | null;
 }
 
@@ -127,6 +128,7 @@ class ChatTransportService {
 		mentionedUserIds,
 		supervisorMessage,
 		senderDisplayName,
+		teamDiscussion,
 		matrixClientServiceOverride
 	}: SendTextMessageOptions): Promise<any> {
 		let resolvedMatrixRoomId = matrixRoomId;
@@ -170,7 +172,9 @@ class ChatTransportService {
 			matrixRoom: true,
 			threadRootId: threadRootId || null,
 			supervisorMessage: !!supervisorMessage,
-			senderDisplayName: senderDisplayName || null
+			senderDisplayName: senderDisplayName || null,
+			teamDiscussion: !!teamDiscussion,
+			mentionedUserIds: mentionedUserIds || null
 		}).catch(() => undefined);
 
 		return { success: true, event_id: response.event_id };

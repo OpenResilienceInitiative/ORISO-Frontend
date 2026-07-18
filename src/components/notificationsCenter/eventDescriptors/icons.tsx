@@ -35,6 +35,7 @@ import { ReactComponent as AppointmentCancelledIcon } from '../../../resources/i
 import { ReactComponent as AppointmentScheduledIcon } from '../../../resources/img/icons/timeline-pin-drop.svg';
 import { ReactComponent as AppointmentBriefingIcon } from '../../../resources/img/icons/timeline-schedule.svg';
 import { ReactComponent as WaitingRoomIcon } from '../../../resources/img/icons/timeline-hourglass-top.svg';
+import { ReactComponent as TeamDiscussionIcon } from '../../../resources/img/icons/speech-bubble-team.svg';
 import { EventIconId } from './types';
 
 type SvgIcon = React.ComponentType<React.SVGProps<SVGSVGElement>>;
@@ -62,6 +63,7 @@ export const EVENT_ICONS: Record<EventIconId, SvgIcon> = {
 	appointmentCancelled: AppointmentCancelledIcon,
 	appointmentBriefing: AppointmentBriefingIcon,
 	waitingRoom: WaitingRoomIcon,
+	teamDiscussion: TeamDiscussionIcon,
 	system: SystemIcon
 };
 

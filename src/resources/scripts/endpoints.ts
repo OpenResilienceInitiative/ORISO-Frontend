@@ -122,6 +122,9 @@ export const endpoints = {
 	sendMessage: userServiceOrigin + '/service/messages/new',
 	sessionBase: userServiceOrigin + '/service/users/sessions',
 	sessionRooms: userServiceOrigin + '/service/users/sessions/room',
+	teamDiscussion: (sessionId: number) =>
+		userServiceOrigin +
+		`/service/users/sessions/${sessionId}/team-discussion`,
 	setAbsence: userServiceOrigin + '/service/users/consultants/absences',
 	startVideoCall: apiUrl + '/service/videocalls/new',
 	tenantServiceBase: tenantServiceOrigin + '/service/tenant',

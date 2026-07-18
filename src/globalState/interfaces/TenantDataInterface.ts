@@ -68,6 +68,7 @@ export interface TenantDataSettingsInterface {
 	featureVideoCallsGroupChatsEnabled?: boolean;
 	featureVideoCallsSupervisionChatsEnabled?: boolean;
 	featureThreadsEnabled?: boolean;
+	featureTeamDiscussionEnabled?: boolean;
 	featureThreadsAnonymousChatsEnabled?: boolean;
 	featureThreadsGroupChatsEnabled?: boolean;
 	featureThreadsOneOnOneEnabled?: boolean;
