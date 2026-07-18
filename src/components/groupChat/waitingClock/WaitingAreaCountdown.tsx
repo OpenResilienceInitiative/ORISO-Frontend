@@ -96,7 +96,8 @@ export const WaitingAreaCountdown = ({
 	const m = Math.floor(rem / 60) % 60;
 	const s = Math.floor(rem) % 60;
 	const elapsed = Math.max(0, -remaining);
-	const oM = Math.floor(elapsed / 60) % 60;
+	// Total elapsed minutes — an hour-late chat must read 60+, never wrap to 0.
+	const oM = Math.floor(elapsed / 60);
 	const oS = Math.floor(elapsed) % 60;
 	const overdueEmoji =
 		OVERDUE_EMOJIS[
@@ -129,7 +130,6 @@ export const WaitingAreaCountdown = ({
 	}, [isOverdue, motionless, overdueEmoji]);
 
 	const hasWelcome = !!welcomeText;
-	const flippable = hasWelcome || rules.length > 0;
 
 	const flip = (key: string, isRule: boolean) => {
 		setFlips((prev) => {
@@ -150,7 +150,7 @@ export const WaitingAreaCountdown = ({
 	const backCard = (key: string, isRule: boolean) => {
 		const ruleIndex = backRule[key] ?? 0;
 		const label = isRule
-			? tr('netiquetteLabel', `Nettikette · Regel ${ruleIndex + 1}`, {
+			? tr('netiquetteLabel', `Netiquette · Regel ${ruleIndex + 1}`, {
 					no: ruleIndex + 1
 				})
 			: greetingLabel;
@@ -202,6 +202,9 @@ export const WaitingAreaCountdown = ({
 		options: { rule?: boolean; tint?: boolean }
 	) => {
 		const isRule = options.rule ?? true;
+		// A card only flips when its own back has content — rule cards need
+		// rules, the greeting card needs a welcome text.
+		const canFlip = isRule ? rules.length > 0 : hasWelcome;
 		const flipped = !!flips[unit.key];
 		const isHover = hover === unit.key;
 		// Box must fit two clock-made-of-clocks digits (each 4×6 cells) plus label.
@@ -268,7 +271,7 @@ export const WaitingAreaCountdown = ({
 				</div>
 			</>
 		);
-		if (!flippable) {
+		if (!canFlip) {
 			return (
 				<div
 					key={unit.key}
@@ -429,7 +432,7 @@ export const WaitingAreaCountdown = ({
 			)
 		: tr(
 				'subtitle',
-				'Klick auf eine Zahl — dahinter warten Begrüßung und Nettikette.'
+				'Klick auf eine Zahl — dahinter warten Begrüßung und Netiquette.'
 			);
 
 	const units: Array<{ unit: Unit; rule: boolean; tint?: boolean }> =
@@ -489,15 +492,17 @@ export const WaitingAreaCountdown = ({
 					}
 				];
 
+	// "unit: value" phrasing stays grammatical for every count in every locale
+	// (no plural agreement needed).
 	const timerAria = isOverdue
 		? tr(
 				'timerAriaOverdue',
-				`Seit dem geplanten Beginn: ${oM} Minuten und ${oS} Sekunden`,
+				`Seit dem geplanten Beginn — Minuten: ${oM}, Sekunden: ${oS}`,
 				{ minutes: oM, seconds: oS }
 			)
 		: tr(
 				'timerAriaFuture',
-				`Noch ${d} Tage, ${h} Stunden, ${m} Minuten und ${s} Sekunden bis zum Beginn`,
+				`Bis zum Beginn — Tage: ${d}, Stunden: ${h}, Minuten: ${m}, Sekunden: ${s}`,
 				{ days: d, hours: h, minutes: m, seconds: s }
 			);
 
@@ -636,11 +641,7 @@ export const WaitingAreaCountdown = ({
 				<div
 					role="timer"
 					aria-label={timerAria}
-					style={{
-						display: 'flex',
-						gap: 28,
-						justifyContent: 'center'
-					}}
+					className="waitingClock__timerOverdue"
 				>
 					{plusSign}
 					{units.map(({ unit, rule, tint }) =>
@@ -651,12 +652,7 @@ export const WaitingAreaCountdown = ({
 				<div
 					role="timer"
 					aria-label={timerAria}
-					style={{
-						display: 'grid',
-						gridTemplateColumns: 'repeat(2, auto)',
-						gap: '30px 36px',
-						justifyContent: 'center'
-					}}
+					className="waitingClock__timer"
 				>
 					{units.map(({ unit, rule }) => flipGroup(unit, { rule }))}
 				</div>

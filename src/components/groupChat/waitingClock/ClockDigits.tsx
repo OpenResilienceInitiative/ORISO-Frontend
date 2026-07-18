@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { digitCells, twoDigits } from './waitingClockDigits';
+import './waitingAreaCountdown.styles';
 
-const HAND_COLOR = 'var(--m3-primary-container, #cc1e1c)';
 const MAGNET_RADIUS_PX = 80;
 const MAGNET_THROTTLE_MS = 70;
 
@@ -105,34 +105,18 @@ export const ClockDigits = ({
 		h: number,
 		m: number
 	) => {
-		const circle: React.CSSProperties = {
-			position: 'relative',
-			width: size,
-			height: size,
-			borderRadius: '50%',
-			flexShrink: 0,
-			border: '1.5px solid #fff',
-			background: tint
-				? 'linear-gradient(225deg,#f4c9c9 10%,#fff)'
-				: 'linear-gradient(225deg,#dcdcdc 10%,#fff)',
-			boxShadow: tint
-				? '-2px 2px 5px #efc5c5,2px -2px 5px #ffffff'
-				: '-2px 2px 5px #dcdcdc,2px -2px 5px #ffffff',
-			boxSizing: 'border-box'
-		};
+		// Visuals live in waitingAreaCountdown.styles.scss; only the
+		// size-dependent geometry stays inline.
+		const cellClass = `waitingClock__cell${
+			tint ? ' waitingClock__cell--tint' : ''
+		}`;
+		const cellSize: React.CSSProperties = { width: size, height: size };
 		if (pop && pop.digit === digitIndex && pop.cell === cellIndex) {
 			return (
 				<div
 					key={key}
-					style={{
-						...circle,
-						display: 'flex',
-						alignItems: 'center',
-						justifyContent: 'center',
-						fontSize: size * 0.72,
-						animation:
-							'orisoClockPopIn .5s cubic-bezier(.34,1.56,.64,1) both'
-					}}
+					className={`${cellClass} waitingClock__cell--pop`}
+					style={{ ...cellSize, fontSize: size * 0.72 }}
 				>
 					{pop.emoji}
 				</div>
@@ -175,22 +159,18 @@ export const ClockDigits = ({
 		const hand = (angle: number, id: string) => (
 			<div
 				key={id}
+				className="waitingClock__hand"
 				style={{
-					position: 'absolute',
 					top: size / 2 - thickness / 2,
-					left: '50%',
 					width: length,
 					height: thickness,
-					background: HAND_COLOR,
-					borderRadius: 99,
-					transformOrigin: '0% 50%',
 					transform: `rotate(${angle}deg)`,
 					transition
 				}}
 			/>
 		);
 		return (
-			<div key={key} style={circle}>
+			<div key={key} className={cellClass} style={cellSize}>
 				{hand(ah, 'h')}
 				{hand(am, 'm')}
 			</div>

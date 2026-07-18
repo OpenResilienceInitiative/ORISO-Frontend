@@ -25,6 +25,7 @@
 
 	&__warning-message {
 		max-width: $grid-base * 56;
+
 		// AA contrast on the app background ($light-grey fails 4.5:1).
 		color: var(--m3-on-surface-variant, $tertiary);
 		font-family: $font-family-divider;

@@ -53,7 +53,7 @@ describe('WaitingAreaCountdown', () => {
 			4 // the four flip groups
 		);
 		expect(screen.getByRole('timer').getAttribute('aria-label')).toContain(
-			'Noch 2 Tage, 3 Stunden, 21 Minuten'
+			'Tage: 2, Stunden: 3, Minuten: 21'
 		);
 	});
 
@@ -81,7 +81,7 @@ describe('WaitingAreaCountdown', () => {
 		fireEvent.click(screen.getByRole('button', { name: /Stunden: 5\./ }));
 
 		const shownLabels = screen
-			.getAllByText(/Nettikette · Regel \d/)
+			.getAllByText(/Netiquette · Regel \d/)
 			.filter(isShown);
 		expect(shownLabels).toHaveLength(1);
 		const shownRule = RULES.some((rule) =>
@@ -121,11 +121,19 @@ describe('WaitingAreaCountdown', () => {
 		).toBeTruthy();
 		expect(screen.getByText('+')).toBeTruthy();
 		expect(screen.getByRole('timer').getAttribute('aria-label')).toContain(
-			'4 Minuten und 12 Sekunden'
+			'Minuten: 4, Sekunden: 12'
 		);
 		expect(screen.getByText('Minuten')).toBeTruthy();
 		expect(screen.getByText('Sekunden')).toBeTruthy();
 		expect(screen.queryByText('Tage')).toBeNull();
+	});
+
+	it('does not wrap overdue minutes at 60', () => {
+		renderCountdown(-(65 * 60 + 5)); // 65m 5s late
+
+		expect(screen.getByRole('timer').getAttribute('aria-label')).toContain(
+			'Minuten: 65, Sekunden: 5'
+		);
 	});
 
 	it('falls back to rules behind the days when no welcome text exists', () => {
@@ -134,10 +142,20 @@ describe('WaitingAreaCountdown', () => {
 		fireEvent.click(screen.getByRole('button', { name: /Tage: 2\./ }));
 
 		const shownLabels = screen
-			.getAllByText(/Nettikette · Regel \d/)
+			.getAllByText(/Netiquette · Regel \d/)
 			.filter(isShown);
 		expect(shownLabels.length).toBeGreaterThan(0);
 		expect(screen.queryByText('Begrüßung deiner Beratung')).toBeNull();
+	});
+
+	it('only flips the greeting card when rules are missing', () => {
+		renderCountdown(2 * 86400, { rules: [] });
+
+		// Rule cards have no content to show — only the days card is a button.
+		const buttons = screen.getAllByRole('button');
+		expect(buttons).toHaveLength(1);
+		fireEvent.click(buttons[0]);
+		expect(isShown(screen.getByText(WELCOME))).toBe(true);
 	});
 
 	it('renders unflippable digits when neither welcome nor rules exist', () => {
