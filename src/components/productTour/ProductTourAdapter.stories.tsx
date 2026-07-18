@@ -138,6 +138,12 @@ const meta = {
 				]
 			}
 		}
+	},
+	// Every story renders through TourPlayground; these args only satisfy the
+	// component's required props for Storybook's type-level args contract.
+	args: {
+		tour: consultantWalkthroughTour,
+		active: true
 	}
 } satisfies Meta<typeof ProductTourAdapter>;
 
