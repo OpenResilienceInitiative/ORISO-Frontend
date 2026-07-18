@@ -52,7 +52,11 @@ import {
 	chatTransportService,
 	MatrixRoomLifecycleChange
 } from '../../services/chatTransportService';
-import { formatMatrixTimelineEvent } from '../../utils/matrixTimelineEventFormatter';
+import {
+	formatMatrixTimelineEvent,
+	extractReactionEvents
+} from '../../utils/matrixTimelineEventFormatter';
+import { applyMessageEdits } from '../../utils/messageRelations';
 import { CaseHandoverCurtain } from './CaseHandoverCurtain';
 import { isCaseHandoverAccessControlled } from './caseHandoverHelpers';
 
@@ -272,14 +276,24 @@ export const SessionStream = ({
 					'e2ee.message.encryption.text'
 				);
 
-				const loadRoomMessages = (roomId?: string | null) => {
+				const loadRoomEvents = (roomId?: string | null) => {
 					if (!roomId) {
 						return [];
 					}
-					const matrixRoom =
-						chatTransportService.getMatrixRoom(roomId);
-					return chatTransportService
-						.getMatrixRoomMessages(roomId, 100)
+					return chatTransportService.getMatrixRoomMessages(
+						roomId,
+						100
+					);
+				};
+
+				const formatRoomMessages = (
+					events: any[],
+					roomId?: string | null
+				) => {
+					const matrixRoom = roomId
+						? chatTransportService.getMatrixRoom(roomId)
+						: null;
+					return events
 						.map((event: any) =>
 							formatMatrixTimelineEvent(
 								event,
@@ -290,20 +304,29 @@ export const SessionStream = ({
 						.filter(Boolean);
 				};
 
-				const clientMessages = loadRoomMessages(resolvedMatrixRoomId);
+				const clientEvents = loadRoomEvents(resolvedMatrixRoomId);
 				// ADR-008: merge the supervision side room's asides so they
 				// render for members. The client is never a member of the side
 				// room, so it never loads these.
-				const supervisionMessages = supervisionRoomId
-					? loadRoomMessages(supervisionRoomId)
+				const supervisionEvents = supervisionRoomId
+					? loadRoomEvents(supervisionRoomId)
 					: [];
 				const formattedMessages = mergeMatrixMessages(
-					clientMessages,
-					supervisionMessages
+					formatRoomMessages(clientEvents, resolvedMatrixRoomId),
+					formatRoomMessages(supervisionEvents, supervisionRoomId)
 				);
+				// Reactions (m.annotation, #435): a distinct event type,
+				// collected separately from the formatted message list.
+				const reactionEvents = [
+					...extractReactionEvents(clientEvents),
+					...extractReactionEvents(supervisionEvents)
+				];
 
 				setMessagesItem({
-					messages: prepareMessages(formattedMessages)
+					messages: prepareMessages(
+						applyMessageEdits(formattedMessages)
+					),
+					reactionEvents
 				});
 				setLoading(false);
 				return Promise.resolve(true);
@@ -442,7 +465,12 @@ export const SessionStream = ({
 				const eventType = event?.getType?.();
 				if (
 					eventType !== 'm.room.message' &&
-					eventType !== 'm.room.encrypted'
+					eventType !== 'm.room.encrypted' &&
+					// Reactions (m.annotation, #435): a reaction add/remove is
+					// not a message, but still needs a live refresh so
+					// aggregateReactions() picks it up for other members.
+					eventType !== 'm.reaction' &&
+					eventType !== 'm.room.redaction'
 				) {
 					return;
 				}
@@ -964,6 +992,7 @@ export const SessionStream = ({
 				isTyping={handleSessionTyping}
 				typingUsers={matrixTypingUsers}
 				messages={messagesItem?.messages}
+				reactionEvents={messagesItem?.reactionEvents || []}
 				bannedUsers={bannedUsers}
 				refreshMessages={fetchSessionMessages}
 			/>

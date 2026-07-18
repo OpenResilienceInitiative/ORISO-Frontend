@@ -13,6 +13,12 @@ import { matrixLiveEventBridge } from './matrixLiveEventBridge';
 import { startDeviceDehydration } from './matrixDeviceDehydration';
 import { encryptMatrixAttachment } from '../utils/matrixEncryptedAttachment';
 import { buildMatrixRoomEncryptionInitialState } from '../utils/matrixRoomEncryption';
+import {
+	TextMessageContentOptions,
+	buildTextMessageContent,
+	buildEditContent,
+	buildReactionContent
+} from '../utils/messageRelations';
 
 const TOKEN_REFRESH_BUFFER_MS = 2 * 60 * 1000;
 
@@ -238,13 +244,16 @@ export class MatrixClientService {
 	}
 
 	// Send message to a room
-	public async sendMessage(roomId: string, message: string): Promise<any> {
+	public async sendMessage(
+		roomId: string,
+		message: string,
+		options?: TextMessageContentOptions
+	): Promise<any> {
 		await this.ensureFreshToken();
 
-		const content = {
-			msgtype: 'm.text',
-			body: message
-		} as any;
+		// Relations foundation (#435): a reply/thread is the spec relation on the
+		// content (m.relates_to / m.in_reply_to / m.thread), built by the pure helper.
+		const content = buildTextMessageContent(message, options) as any;
 		const sendToRoom = async () => {
 			const client = this.client;
 			if (!client) {
@@ -268,20 +277,79 @@ export class MatrixClientService {
 		}
 	}
 
+	// Edit a previously sent message (m.replace)
 	public async editMessage(
 		roomId: string,
-		eventId: string,
+		targetEventId: string,
 		message: string
 	): Promise<any> {
 		await this.ensureFreshToken();
-		if (!this.client) throw new Error('Matrix client not initialized');
-		const content = {
-			'msgtype': 'm.text',
-			'body': `* ${message}`,
-			'm.new_content': { msgtype: 'm.text', body: message },
-			'm.relates_to': { rel_type: 'm.replace', event_id: eventId }
-		};
-		return this.client.sendMessage(roomId, content as any);
+
+		if (!this.client) {
+			throw new Error('Matrix client not initialized');
+		}
+
+		const content = buildEditContent(message, targetEventId) as any;
+
+		try {
+			return await this.client.sendMessage(roomId, content);
+		} catch (error) {
+			if (!isMatrixExpiredTokenError(error)) {
+				throw error;
+			}
+
+			await this.refreshMatrixToken();
+			if (!this.client) {
+				throw new Error('Matrix client not initialized');
+			}
+
+			return this.client.sendMessage(roomId, content);
+		}
+	}
+
+	// React to a message (m.annotation)
+	public async sendReaction(
+		roomId: string,
+		targetEventId: string,
+		key: string
+	): Promise<any> {
+		await this.ensureFreshToken();
+
+		if (!this.client) {
+			throw new Error('Matrix client not initialized');
+		}
+
+		const content = buildReactionContent(targetEventId, key) as any;
+
+		try {
+			return await this.client.sendEvent(
+				roomId,
+				'm.reaction' as any,
+				content
+			);
+		} catch (error) {
+			if (!isMatrixExpiredTokenError(error)) {
+				throw error;
+			}
+
+			await this.refreshMatrixToken();
+			if (!this.client) {
+				throw new Error('Matrix client not initialized');
+			}
+
+			return this.client.sendEvent(roomId, 'm.reaction' as any, content);
+		}
+	}
+
+	// Redact an event (used to remove a reaction)
+	public async redactEvent(roomId: string, eventId: string): Promise<any> {
+		await this.ensureFreshToken();
+
+		if (!this.client) {
+			throw new Error('Matrix client not initialized');
+		}
+
+		return this.client.redactEvent(roomId, eventId);
 	}
 
 	public async sendFileMessage(

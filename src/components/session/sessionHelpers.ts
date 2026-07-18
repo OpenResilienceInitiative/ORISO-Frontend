@@ -204,7 +204,11 @@ export const prepareMessages = (messagesData): MessageItem[] => {
 				file: message.file,
 				t: message.t,
 				rid: message.rid,
-				isVideoActive: i === lastVideoCallIndex
+				isVideoActive: i === lastVideoCallIndex,
+				// Relations foundation (#435): relations survive the mapping.
+				replyToEventId: message.replyToEventId || null,
+				threadRootEventId: message.threadRootEventId || null,
+				isEdited: !!message.isEdited
 			};
 		})
 		.filter((item) => {

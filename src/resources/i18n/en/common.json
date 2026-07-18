@@ -820,6 +820,31 @@
 		"join": {
 			"timeConversions": "Playful time conversions",
 			"waitingArea": {
+				"countdown": {
+					"etaDay": "in 1 day",
+					"etaDays": "in {{count}} days",
+					"etaHour": "in 1 hour",
+					"etaHours": "in {{count}} hours",
+					"etaMinute": "in 1 minute",
+					"etaMinutes": "in {{count}} minutes",
+					"etaSoon": "any moment now",
+					"flipAria": "{{label}}: {{value}}. Flip to read.",
+					"flipHint": "click to flip",
+					"greetingLabel": "A welcome from your counsellor",
+					"headline": "Your group chat starts {{eta}}.",
+					"netiquetteLabel": "Netiquette · rule {{no}}",
+					"overdueCaption": "The wait is getting a little awkward …",
+					"overdueHeadline": "We'll be with you in a moment.",
+					"overdueSubtitle": "Your counsellor is about to open the room — please hang on a little longer.",
+					"subtitle": "Click a number — the greeting and netiquette are waiting behind it.",
+					"timerAriaFuture": "Until the start — days: {{days}}, hours: {{hours}}, minutes: {{minutes}}, seconds: {{seconds}}",
+					"timerAriaOverdue": "Since the planned start — minutes: {{minutes}}, seconds: {{seconds}}",
+					"toggleLabel": "Turn off animation",
+					"unitDays": "Days",
+					"unitHours": "Hours",
+					"unitMinutes": "Minutes",
+					"unitSeconds": "Seconds"
+				},
 				"catMinutes": "{{value}} cat minutes",
 				"discomfort": {
 					"late": "late",
@@ -1288,6 +1313,30 @@
 		"resetPasswort": {
 			"label": "Forgot password?"
 		},
+		"resetPassword": {
+			"request": {
+				"headline": "Forgot password?",
+				"text": "If you have provided your email address, you can reset your password. Enter your email address and press submit. We will then send you a link that you can use to reset your password.",
+				"usernameLabel": "Email",
+				"submitLabel": "Submit",
+				"usernameRequired": "Please enter your email first.",
+				"notEnabled": "Resetting the password is currently not possible for this account."
+			},
+			"sent": {
+				"headline": "An email with further instructions has been sent to you.",
+				"text": "You should receive an email with further instructions shortly."
+			},
+			"backToLogin": "Back to login",
+			"setNew": {
+				"headline": "Set a new password",
+				"text": "Please enter your new password.",
+				"newLabel": "New password",
+				"confirmLabel": "Confirm new password",
+				"submitLabel": "Save password",
+				"success": "Your password has been changed successfully. You can now log in.",
+				"invalidToken": "This link is invalid or has expired. Please request a new one."
+			}
+		},
 		"magicLink": {
 			"label": "Login with magic link",
 			"submitLabel": "Send magic link",
@@ -1420,7 +1469,13 @@
 		"today": "Today",
 		"tomorrow": "Tomorrow",
 		"unread": "unread",
-		"yesterday": "Yesterday"
+		"yesterday": "Yesterday",
+		"reply": {
+			"previewLabel": "Replying to",
+			"cancel": "Discard reply",
+			"quoteLabel": "In reply to",
+			"quoteUnknown": "Earlier message"
+		}
 	},
 	"navigation": {
 		"appointments": "Video dates",

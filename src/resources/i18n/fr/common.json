@@ -709,6 +709,33 @@
 			}
 		},
 		"join": {
+			"waitingArea": {
+				"countdown": {
+					"etaDay": "dans 1 jour",
+					"etaDays": "dans {{count}} jours",
+					"etaHour": "dans 1 heure",
+					"etaHours": "dans {{count}} heures",
+					"etaMinute": "dans 1 minute",
+					"etaMinutes": "dans {{count}} minutes",
+					"etaSoon": "dans un instant",
+					"flipAria": "{{label}} : {{value}}. Retourner pour lire.",
+					"flipHint": "cliquer pour retourner",
+					"greetingLabel": "Mot de bienvenue de votre conseiller·ère",
+					"headline": "Votre chat de groupe commence {{eta}}.",
+					"netiquetteLabel": "Nétiquette · règle {{no}}",
+					"overdueCaption": "L'attente devient un peu gênante …",
+					"overdueHeadline": "Nous serons avec vous dans un instant.",
+					"overdueSubtitle": "Votre conseiller·ère va ouvrir la salle — merci de patienter encore un peu.",
+					"subtitle": "Cliquez sur un chiffre — le mot de bienvenue et la nétiquette vous attendent derrière.",
+					"timerAriaFuture": "Avant le début — jours : {{days}}, heures : {{hours}}, minutes : {{minutes}}, secondes : {{seconds}}",
+					"timerAriaOverdue": "Depuis le début prévu — minutes : {{minutes}}, secondes : {{seconds}}",
+					"toggleLabel": "Désactiver l'animation",
+					"unitDays": "Jours",
+					"unitHours": "Heures",
+					"unitMinutes": "Minutes",
+					"unitSeconds": "Secondes"
+				}
+			},
 			"button": {
 				"label": {
 					"join": "Participer",
@@ -1161,6 +1188,30 @@
 		},
 		"resetPasswort": {
 			"label": "Mot de passe oublié ?"
+		},
+		"resetPassword": {
+			"request": {
+				"headline": "Mot de passe oublié ?",
+				"text": "Si vous avez indiqué votre adresse e-mail, vous pouvez réinitialiser votre mot de passe. Saisissez votre adresse e-mail puis cliquez sur envoyer. Nous vous enverrons ensuite un lien permettant de réinitialiser votre mot de passe.",
+				"usernameLabel": "E-mail",
+				"submitLabel": "Envoyer",
+				"usernameRequired": "Veuillez d'abord saisir votre e-mail.",
+				"notEnabled": "La réinitialisation du mot de passe n'est actuellement pas possible pour ce compte."
+			},
+			"sent": {
+				"headline": "Un e-mail contenant des instructions supplémentaires vous a été envoyé.",
+				"text": "Vous devriez recevoir sous peu un e-mail avec des instructions supplémentaires."
+			},
+			"backToLogin": "Retour à la connexion",
+			"setNew": {
+				"headline": "Définir un nouveau mot de passe",
+				"text": "Veuillez saisir votre nouveau mot de passe.",
+				"newLabel": "Nouveau mot de passe",
+				"confirmLabel": "Confirmer le nouveau mot de passe",
+				"submitLabel": "Enregistrer le mot de passe",
+				"success": "Votre mot de passe a été modifié avec succès. Vous pouvez maintenant vous connecter.",
+				"invalidToken": "Ce lien est invalide ou a expiré. Veuillez en demander un nouveau."
+			}
 		},
 		"seperator": "ou",
 		"user": {

@@ -709,6 +709,33 @@
 			}
 		},
 		"join": {
+			"waitingArea": {
+				"countdown": {
+					"etaDay": "ኣብ ሓደ መዓልቲ",
+					"etaDays": "ኣብ {{count}} መዓልታት",
+					"etaHour": "ኣብ ሓደ ሰዓት",
+					"etaHours": "ኣብ {{count}} ሰዓታት",
+					"etaMinute": "ኣብ ሓደ ደቒቕ",
+					"etaMinutes": "ኣብ {{count}} ደቓይቕ",
+					"etaSoon": "ሕጂ ቀረባ",
+					"flipAria": "{{label}}: {{value}}። ንምንባብ ግልብጦ።",
+					"flipHint": "ንምግልባጥ ጠውቕ",
+					"greetingLabel": "ሰላምታ ካብ ኣማኻሪኻ",
+					"headline": "ጉጅለ ቻትካ {{eta}} ክጅምር እዩ።",
+					"netiquetteLabel": "ሕጊ ዝርርብ · ሕጊ {{no}}",
+					"overdueCaption": "እቲ ምጽባይ ቁሩብ ዘሕፍር ይኸውን ኣሎ …",
+					"overdueHeadline": "ሕጂ ንመጸካ ኢና።",
+					"overdueSubtitle": "ኣማኻሪኻ ነቲ ክፍሊ ቀረባ ግዜ ክኸፍቶ እዩ — በጃኻ ቁሩብ ተጸበ።",
+					"subtitle": "ኣብ ሓደ ቁጽሪ ጠውቕ — ብድሕሪኡ ሰላምታን ሕግታት ዝርርብን ኣለዉ።",
+					"timerAriaFuture": "ክሳብ መጀመርታ — መዓልታት: {{days}}፣ ሰዓታት: {{hours}}፣ ደቓይቕ: {{minutes}}፣ ካልኢታት: {{seconds}}",
+					"timerAriaOverdue": "ካብቲ እተመደበ መጀመርታ — ደቓይቕ: {{minutes}}፣ ካልኢታት: {{seconds}}",
+					"toggleLabel": "ምንቅስቓስ ኣጥፍእ",
+					"unitDays": "መዓልታት",
+					"unitHours": "ሰዓታት",
+					"unitMinutes": "ደቓይቕ",
+					"unitSeconds": "ካልኢታት"
+				}
+			},
 			"button": {
 				"label": {
 					"join": "ምስታፍ",
@@ -1161,6 +1188,30 @@
 		},
 		"resetPasswort": {
 			"label": "ፓስዎርድካ ረሲዕካዮ?"
+		},
+		"resetPassword": {
+			"request": {
+				"headline": "ፓስዎርድካ ረሲዕካዮ?",
+				"text": "ኢመይልካ ሂብካ እንተኾንካ፣ ፓስዎርድካ ዳግማይ ክትሰርዖ ትኽእል ኢኻ። ኢመይልካ ኣእቱ እሞ ስደድ ጠውቕ። ብድሕሪኡ ፓስዎርድካ ዳግማይ እትሰርዓሉ ሊንክ ክንሰደልካ ኢና።",
+				"usernameLabel": "ኢመይል",
+				"submitLabel": "ስደድ",
+				"usernameRequired": "በጃኻ ቅድም ኢመይልካ ኣእቱ።",
+				"notEnabled": "ንዚ ኣካውንት እዚ ፓስዎርድ ዳግማይ ምስራዕ ሕጂ ኣይክኣልን እዩ።"
+			},
+			"sent": {
+				"headline": "ተወሳኺ መምርሒታት ዘለዎ ኢመይል ተሰዲዱልካ ኣሎ።",
+				"text": "ኣብ ቀረባ ግዜ ተወሳኺ መምርሒታት ዘለዎ ኢመይል ክትቕበል ኢኻ።"
+			},
+			"backToLogin": "ናብ መእተዊ ተመለስ",
+			"setNew": {
+				"headline": "ሓድሽ ፓስዎርድ ኣቐምጥ",
+				"text": "በጃኻ ሓድሽ ፓስዎርድካ ኣእቱ።",
+				"newLabel": "ሓድሽ ፓስዎርድ",
+				"confirmLabel": "ሓድሽ ፓስዎርድ ኣረጋግጽ",
+				"submitLabel": "ፓስዎርድ ኣቐምጥ",
+				"success": "ፓስዎርድካ ብዓወት ተቐይሩ ኣሎ። ሕጂ ክትኣቱ ትኽእል ኢኻ።",
+				"invalidToken": "እዚ ሊንክ እዚ ጌጋ ወይ ጊዜኡ ኣኺሉ እዩ። በጃኻ ሓድሽ ሊንክ ሕተት።"
+			}
 		},
 		"seperator": "ወይ",
 		"user": {

@@ -1,3 +1,12 @@
+import {
+	getReplyToEventId,
+	getThreadRootId,
+	getReplaceTargetId,
+	getEditedBody,
+	stripReplyFallback
+} from './messageRelations';
+import { getMentionedUserIdsFromContent } from './messageMentions';
+
 const getMatrixMediaDownloadPath = (contentUrl: string): string => {
 	if (!contentUrl.startsWith('mxc://')) {
 		return contentUrl;
@@ -25,12 +34,19 @@ export const formatMatrixTimelineEvent = (
 		senderMember?.name || senderMember?.rawDisplayName || senderUsername;
 	const isUndecryptedEvent =
 		eventType === 'm.room.encrypted' && !content?.msgtype;
-	const textMessageContent =
+	// Relations foundation (#435): replies are the m.in_reply_to relation.
+	// The legacy Element quote-fallback in the body would duplicate the quote
+	// we render from the relation, so it is stripped for reply events.
+	const replyToEventId = getReplyToEventId(content);
+	const rawTextContent =
 		content?.msgtype === 'm.text'
 			? content?.formatted_body || content?.body || ''
 			: isUndecryptedEvent
 				? encryptedFallbackText
 				: content?.body || '';
+	const textMessageContent = replyToEventId
+		? stripReplyFallback(rawTextContent)
+		: rawTextContent;
 	const baseMessage: any = {
 		_id:
 			event?.getId?.() || `${senderId}-${event?.getTs?.() || Date.now()}`,
@@ -42,6 +58,27 @@ export const formatMatrixTimelineEvent = (
 			name: senderDisplayName
 		}
 	};
+	if (replyToEventId) {
+		baseMessage.replyToEventId = replyToEventId;
+	}
+	const threadRootEventId = getThreadRootId(content);
+	if (threadRootEventId) {
+		baseMessage.threadRootEventId = threadRootEventId;
+	}
+	// Relations foundation (#435): edits (m.replace) are folded onto the
+	// original message by applyMessageEdits(); they are not messages on
+	// their own, so callers filter them out using replaceTargetId.
+	const replaceTargetId = getReplaceTargetId(content);
+	if (replaceTargetId) {
+		baseMessage.replaceTargetId = replaceTargetId;
+		baseMessage.editedBody = getEditedBody(content);
+	}
+	// Intentional mentions (#435): exposed for downstream UI (e.g. the
+	// timeline @mentions filter chip, #420) to test membership against.
+	const mentionedUserIds = getMentionedUserIdsFromContent(content);
+	if (mentionedUserIds.length > 0) {
+		baseMessage.mentionedUserIds = mentionedUserIds;
+	}
 
 	const mediaUrl = content?.file?.url || content?.url;
 	if (mediaUrl && content?.msgtype !== 'm.text') {
@@ -72,3 +109,24 @@ export const formatMatrixTimelineEvent = (
 
 	return baseMessage;
 };
+
+export interface RawReactionEvent {
+	eventId: string;
+	senderId: string;
+	content: unknown;
+}
+
+/**
+ * Pick `m.reaction` events out of a raw Matrix room timeline. Reactions are
+ * a distinct event type (not `m.room.message`), so they never pass through
+ * formatMatrixTimelineEvent and are collected separately for
+ * aggregateReactions().
+ */
+export const extractReactionEvents = (events: any[]): RawReactionEvent[] =>
+	(events || [])
+		.filter((event) => event?.getType?.() === 'm.reaction')
+		.map((event) => ({
+			eventId: event.getId?.(),
+			senderId: event.getSender?.(),
+			content: event.getContent?.()
+		}));

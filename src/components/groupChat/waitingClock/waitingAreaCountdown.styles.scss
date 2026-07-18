@@ -1,0 +1,74 @@
+// Shared visuals for the "clock made of clocks" waiting area
+// (ClockDigits + WaitingAreaCountdown). Size-dependent geometry stays inline
+// in the components; the static look lives here on the M3 tokens.
+.waitingClock {
+	&__cell {
+		position: relative;
+		flex-shrink: 0;
+		box-sizing: border-box;
+		// Part of the fixed neumorphic look (like the gradients below) — not a
+		// themed surface role.
+		border: 1.5px solid #fff;
+		border-radius: 50%;
+		background: linear-gradient(225deg, #dcdcdc 10%, #fff);
+		box-shadow:
+			-2px 2px 5px #dcdcdc,
+			2px -2px 5px #fff;
+
+		&--tint {
+			background: linear-gradient(225deg, #f4c9c9 10%, #fff);
+			box-shadow:
+				-2px 2px 5px #efc5c5,
+				2px -2px 5px #fff;
+		}
+
+		&--pop {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			animation: oriso-clock-pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)
+				both;
+		}
+	}
+
+	&__hand {
+		position: absolute;
+		left: 50%;
+		border-radius: 99px;
+		background: var(--m3-primary-container, #cc1e1c);
+		transform-origin: 0% 50%;
+	}
+
+	// Future state: single column on small screens, the 2×2 quad from medium up.
+	&__timer {
+		display: grid;
+		grid-template-columns: auto;
+		gap: 30px 36px;
+		justify-content: center;
+
+		@include breakpoint($fromMedium) {
+			grid-template-columns: repeat(2, auto);
+		}
+	}
+
+	// Overdue state: the "+" and both groups wrap on narrow screens.
+	&__timerOverdue {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 28px;
+		justify-content: center;
+	}
+}
+
+// Pop-in for the smileys that take over single mini-clocks in the overdue state.
+@keyframes oriso-clock-pop-in {
+	0% {
+		transform: scale(0);
+		opacity: 0;
+	}
+
+	100% {
+		transform: scale(1);
+		opacity: 1;
+	}
+}
