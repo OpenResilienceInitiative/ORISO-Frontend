@@ -81,17 +81,13 @@ import { formatMessagePersonName } from './messageNameUtils';
 import { useMatrixRoomUsers } from '../../hooks/useMatrixRoomUsers';
 import { ConsultantListContext } from '../../globalState/provider/ConsultantListProvider';
 import { AggregatedReaction } from '../../utils/messageRelations';
+import { ReactComponent as CheckmarkIcon } from '../../resources/img/icons/checkmark.svg';
 
 const QUICK_REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
 
-const AddReactionIcon = () => (
-	<svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden>
-		<path
-			d="M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16Zm0-1.5a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13ZM7 9.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm6 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm-6.5 2h7a3.5 3.5 0 0 1-7 0Z"
-			fill="#4B515A"
-		/>
-	</svg>
-);
+// Slack-style long-press on the bubble opens the message action menu.
+const LONG_PRESS_MS = 500;
+const LONG_PRESS_MOVE_TOLERANCE_PX = 10;
 
 const logger = getMatrixClientLogger();
 
@@ -422,9 +418,12 @@ export const MessageItemComponent = ({
 		left: number;
 	} | null>(null);
 	const visibilityMenuRef = React.useRef<HTMLDivElement | null>(null);
-	// Reactions (m.annotation, #435): quick-react emoji picker.
-	const [isReactionPickerOpen, setIsReactionPickerOpen] = useState(false);
-	const reactionPickerRef = React.useRef<HTMLDivElement | null>(null);
+	// Slack-style long-press on the bubble opens the action menu (mobile).
+	const longPressTimerRef = React.useRef<number | null>(null);
+	const longPressStartRef = React.useRef<{ x: number; y: number } | null>(
+		null
+	);
+	const longPressFiredRef = React.useRef(false);
 	const [expandedVisibilitySections, setExpandedVisibilitySections] =
 		useState<{
 			clients: boolean;
@@ -483,23 +482,14 @@ export const MessageItemComponent = ({
 			document.removeEventListener('mousedown', handleOutsideClick);
 	}, [isVisibilityMenuOpen]);
 
-	useEffect(() => {
-		if (!isReactionPickerOpen) {
-			return;
-		}
-		const handleOutsideClick = (event: MouseEvent) => {
-			const target = event.target as Node | null;
-			if (!target) {
-				return;
+	useEffect(
+		() => () => {
+			if (longPressTimerRef.current !== null) {
+				window.clearTimeout(longPressTimerRef.current);
 			}
-			if (!reactionPickerRef.current?.contains(target)) {
-				setIsReactionPickerOpen(false);
-			}
-		};
-		document.addEventListener('mousedown', handleOutsideClick);
-		return () =>
-			document.removeEventListener('mousedown', handleOutsideClick);
-	}, [isReactionPickerOpen]);
+		},
+		[]
+	);
 
 	useEffect((): void => {
 		if (isE2eeEnabled && message) {
@@ -1159,22 +1149,11 @@ export const MessageItemComponent = ({
 		[onOpenThread, onReplyDirect, onEditDirect]
 	);
 
-	const toggleActionMenu = useCallback(
-		(
-			event: React.MouseEvent<HTMLButtonElement>,
-			side: 'left' | 'right'
-		) => {
-			event.preventDefault();
-			event.stopPropagation();
-			const triggerRect = event.currentTarget.getBoundingClientRect();
+	const openActionMenuAt = useCallback(
+		(preferredLeft: number, preferredTop: number) => {
 			const menuWidth = 210;
 			const menuHeight = 300;
 			const viewportPadding = 12;
-			const gap = 10;
-			const preferredLeft =
-				side === 'left'
-					? triggerRect.right + gap
-					: triggerRect.left - menuWidth - gap;
 			const computedLeft = Math.max(
 				viewportPadding,
 				Math.min(
@@ -1185,15 +1164,10 @@ export const MessageItemComponent = ({
 			const computedTop = Math.max(
 				viewportPadding,
 				Math.min(
-					triggerRect.top - 12,
+					preferredTop,
 					window.innerHeight - menuHeight - viewportPadding
 				)
 			);
-			if (isActionMenuOpen) {
-				setIsActionMenuOpen(false);
-				setActionMenuPosition(null);
-				return;
-			}
 			setIsVisibilityMenuOpen(false);
 			setVisibilityMenuPosition(null);
 			setActionMenuPosition({
@@ -1201,6 +1175,98 @@ export const MessageItemComponent = ({
 				left: computedLeft
 			});
 			setIsActionMenuOpen(true);
+		},
+		[]
+	);
+
+	const toggleActionMenu = useCallback(
+		(
+			event: React.MouseEvent<HTMLButtonElement>,
+			side: 'left' | 'right'
+		) => {
+			event.preventDefault();
+			event.stopPropagation();
+			const triggerRect = event.currentTarget.getBoundingClientRect();
+			const menuWidth = 210;
+			const gap = 10;
+			const preferredLeft =
+				side === 'left'
+					? triggerRect.right + gap
+					: triggerRect.left - menuWidth - gap;
+			if (isActionMenuOpen) {
+				setIsActionMenuOpen(false);
+				setActionMenuPosition(null);
+				return;
+			}
+			openActionMenuAt(preferredLeft, triggerRect.top - 12);
+		},
+		[isActionMenuOpen, openActionMenuAt]
+	);
+
+	// Slack-style long-press on the message bubble opens the action menu at
+	// the press position (touch and mouse alike).
+	const cancelLongPress = useCallback(() => {
+		if (longPressTimerRef.current !== null) {
+			window.clearTimeout(longPressTimerRef.current);
+			longPressTimerRef.current = null;
+		}
+		longPressStartRef.current = null;
+	}, []);
+
+	const handleBubblePointerDown = useCallback(
+		(event: React.PointerEvent<HTMLDivElement>) => {
+			if (
+				isActionMenuOpen ||
+				alias?.messageType ||
+				isSystemNotification
+			) {
+				return;
+			}
+			const { clientX, clientY } = event;
+			longPressFiredRef.current = false;
+			longPressStartRef.current = { x: clientX, y: clientY };
+			if (longPressTimerRef.current !== null) {
+				window.clearTimeout(longPressTimerRef.current);
+			}
+			longPressTimerRef.current = window.setTimeout(() => {
+				longPressTimerRef.current = null;
+				longPressStartRef.current = null;
+				longPressFiredRef.current = true;
+				openActionMenuAt(clientX, clientY);
+			}, LONG_PRESS_MS);
+		},
+		[
+			isActionMenuOpen,
+			alias?.messageType,
+			isSystemNotification,
+			openActionMenuAt
+		]
+	);
+
+	const handleBubblePointerMove = useCallback(
+		(event: React.PointerEvent<HTMLDivElement>) => {
+			const start = longPressStartRef.current;
+			if (!start) {
+				return;
+			}
+			if (
+				Math.abs(event.clientX - start.x) >
+					LONG_PRESS_MOVE_TOLERANCE_PX ||
+				Math.abs(event.clientY - start.y) > LONG_PRESS_MOVE_TOLERANCE_PX
+			) {
+				cancelLongPress();
+			}
+		},
+		[cancelLongPress]
+	);
+
+	const handleBubbleContextMenu = useCallback(
+		(event: React.MouseEvent<HTMLDivElement>) => {
+			// Long-press on touch devices fires contextmenu; swallow it once
+			// the menu has been opened via the long-press timer.
+			if (longPressFiredRef.current || isActionMenuOpen) {
+				event.preventDefault();
+			}
 		},
 		[isActionMenuOpen]
 	);
@@ -1316,6 +1382,24 @@ export const MessageItemComponent = ({
 		videoCallMessage?.eventType === 'IGNORED_CALL' &&
 		activeSession?.isGroup;
 
+	// Delivery status per Figma (node 8498-32645): single red checkmark next
+	// to the bubble time = "zugestellt", double checkmark = "gelesen".
+	const deliveryStatusLabel = translate(
+		isNotRead ? 'message.sent' : 'message.read'
+	);
+	const deliveryStatusInBubble =
+		isMyMessage && t !== 'rm' ? (
+			<span
+				className="messageItem__deliveryStatus"
+				role="img"
+				aria-label={deliveryStatusLabel}
+				title={deliveryStatusLabel}
+			>
+				<CheckmarkIcon aria-hidden focusable="false" />
+				{!isNotRead && <CheckmarkIcon aria-hidden focusable="false" />}
+			</span>
+		) : null;
+
 	const messageTimeInBubble = messageTime ? (
 		<span
 			className={clsx(
@@ -1324,6 +1408,7 @@ export const MessageItemComponent = ({
 			)}
 		>
 			{formatToHHMM(messageTime)}
+			{deliveryStatusInBubble}
 			{/* Editing (m.replace, #435): marker next to the bubble timestamp. */}
 			{isEdited && (
 				<span
@@ -1530,6 +1615,12 @@ export const MessageItemComponent = ({
 									? 'messageItem__message messageItem__message--myMessage'
 									: 'messageItem__message'
 							} ${isSystemNotification ? 'messageItem__message--systemNotification' : ''}`}
+							onPointerDown={handleBubblePointerDown}
+							onPointerMove={handleBubblePointerMove}
+							onPointerUp={cancelLongPress}
+							onPointerLeave={cancelLongPress}
+							onPointerCancel={cancelLongPress}
+							onContextMenu={handleBubbleContextMenu}
 						>
 							{isSystemNotification &&
 								isCaseHandoverGrantedEvent && (
@@ -2100,10 +2191,12 @@ export const MessageItemComponent = ({
 
 				<div className="messageItem__content">
 					{messageContent()}
-					{/* Reactions (m.annotation, #435): aggregated pills + quick-react picker. */}
+					{/* Reactions (m.annotation, #435): aggregated pills. Adding a
+					    reaction lives in the message action menu (long-press). */}
 					{!alias?.messageType &&
 						!isSystemNotification &&
-						((reactions && reactions.length > 0) || onReact) && (
+						reactions &&
+						reactions.length > 0 && (
 							<div
 								className={clsx(
 									'messageItem__reactions',
@@ -2142,53 +2235,6 @@ export const MessageItemComponent = ({
 										</span>
 									</button>
 								))}
-								{onReact && (
-									<div
-										className="messageItem__reactionAdd"
-										ref={reactionPickerRef}
-									>
-										<button
-											type="button"
-											className="messageItem__reactionAddButton"
-											aria-label={translate(
-												'message.reaction.add',
-												'React'
-											)}
-											onClick={() =>
-												setIsReactionPickerOpen(
-													(open) => !open
-												)
-											}
-										>
-											<AddReactionIcon />
-										</button>
-										{isReactionPickerOpen && (
-											<div
-												className="messageItem__reactionPicker"
-												role="menu"
-											>
-												{QUICK_REACTION_EMOJIS.map(
-													(emoji) => (
-														<button
-															key={emoji}
-															type="button"
-															className="messageItem__reactionPickerEmoji"
-															role="menuitem"
-															onClick={() => {
-																onReact(emoji);
-																setIsReactionPickerOpen(
-																	false
-																);
-															}}
-														>
-															{emoji}
-														</button>
-													)
-												)}
-											</div>
-										)}
-									</div>
-								)}
 							</div>
 						)}
 					{isMyMessage && formattedName && !alias?.messageType && (
@@ -2221,6 +2267,52 @@ export const MessageItemComponent = ({
 								zIndex: 99999
 							}}
 						>
+							{onReact && (
+								<div
+									className="messageItem__actionMenuReactions"
+									role="group"
+									aria-label={translate(
+										'message.reaction.add',
+										'React'
+									)}
+								>
+									{QUICK_REACTION_EMOJIS.map((emoji) => {
+										const ownReaction = (
+											reactions || []
+										).find(
+											(reaction) =>
+												reaction.key === emoji &&
+												reaction.ownEventId
+										);
+										return (
+											<button
+												key={emoji}
+												type="button"
+												role="menuitem"
+												className={clsx(
+													'messageItem__actionMenuReactionEmoji',
+													ownReaction &&
+														'messageItem__actionMenuReactionEmoji--mine'
+												)}
+												onClick={() => {
+													if (
+														ownReaction?.ownEventId
+													) {
+														onUnreact?.(
+															ownReaction.ownEventId
+														);
+													} else {
+														onReact(emoji);
+													}
+													setIsActionMenuOpen(false);
+												}}
+											>
+												{emoji}
+											</button>
+										);
+									})}
+								</div>
+							)}
 							{actionMenuItems.map((item) => (
 								<button
 									key={item.key}

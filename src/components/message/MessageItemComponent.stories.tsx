@@ -25,6 +25,7 @@ import {
 	mockMessageItemComponentProps,
 	mockServerSettingsContext,
 	mockCaseHandoverGrantedMessage,
+	mockReactions,
 	mockSystemNotificationMessage,
 	mockUserData,
 	mockVisibilityMessage
@@ -302,6 +303,90 @@ export const LongMessage: Story = {
 			askerRcId: MOCK_ASKER_RC_ID,
 			message: mockLongGermanMessage
 		}),
+		...baseHandlers
+	}
+};
+
+export const IncomingWithReactions: Story = {
+	name: 'Incoming with reactions',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_ASKER_RC_ID,
+			askerRcId: MOCK_ASKER_RC_ID,
+			displayName: 'Sanftes Alpaka Kala',
+			username: 'sanftes.alpaka.kala@oriso.invalid'
+		}),
+		reactions: mockReactions(),
+		onReact: () => {},
+		onUnreact: () => {},
+		...baseHandlers
+	}
+};
+
+export const OutgoingWithReactions: Story = {
+	name: 'Outgoing with reactions (delivered)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: true,
+			userId: MOCK_CONSULTANT_RC_ID,
+			displayName: 'Karina P',
+			username: 'karina.p@oriso.invalid',
+			isNotRead: true,
+			message:
+				'Danke für deine Offenheit. Wir schauen uns das morgen gemeinsam an.'
+		}),
+		reactions: mockReactions(),
+		onReact: () => {},
+		onUnreact: () => {},
+		...baseHandlers
+	}
+};
+
+export const OutgoingDelivered: Story = {
+	name: 'Outgoing delivered (single checkmark)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: true,
+			userId: MOCK_CONSULTANT_RC_ID,
+			displayName: 'Karina P',
+			username: 'karina.p@oriso.invalid',
+			isNotRead: true,
+			message: 'Diese Nachricht ist zugestellt, aber noch nicht gelesen.'
+		}),
+		onReact: () => {},
+		...baseHandlers
+	}
+};
+
+export const OutgoingRead: Story = {
+	name: 'Outgoing read (double checkmark)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: true,
+			userId: MOCK_CONSULTANT_RC_ID,
+			displayName: 'Karina P',
+			username: 'karina.p@oriso.invalid',
+			isNotRead: false,
+			message: 'Diese Nachricht wurde bereits gelesen.'
+		}),
+		onReact: () => {},
 		...baseHandlers
 	}
 };

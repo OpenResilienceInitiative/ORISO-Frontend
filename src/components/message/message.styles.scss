@@ -65,7 +65,9 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 			border-color: $message-outgoing-bg;
 			color: $message-outgoing-text;
 			margin: 4px 0;
-			border-radius: 16px 4px 16px 16px;
+
+			// Figma 8498-32645: squared corner toward the bottom-right avatar.
+			border-radius: 12px 12px 0 12px;
 		}
 
 		.messageItem__message a,
@@ -75,6 +77,13 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 
 		.messageItem__divider {
 			align-self: center;
+		}
+
+		// The right avatar column sits in flow — no overlap, so reactions and
+		// sender info stay fully visible next to the avatar.
+		.messageItem__content {
+			margin-left: 0;
+			align-items: flex-end;
 		}
 	}
 
@@ -227,10 +236,12 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 		z-index: 5;
 	}
 
+	// Figma 8498-32645: own-message column sits in flow right of the bubble
+	// (kebab above the avatar, bottom-aligned) — nothing may overflow the
+	// viewport edge anymore.
 	&__sideColumn--right {
-		position: absolute;
-		right: -32px;
-		bottom: -14px;
+		justify-content: flex-end;
+		align-self: flex-end;
 		z-index: 5;
 	}
 
@@ -705,7 +716,9 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 		line-height: $message-lineheight;
 		background-color: $message-incoming-bg;
 		border: 1px solid $message-incoming-bg;
-		border-radius: 4px 16px 16px 16px;
+
+		// Figma 8498-32645: 12px radii, squared corner toward the avatar.
+		border-radius: 0 12px 12px 12px;
 		margin: 4px 0;
 		padding: $grid-base-two;
 		text-align: left;
@@ -825,9 +838,13 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 		}
 
 		.messageItem__messageTime {
-			display: block;
+			display: flex;
+			align-items: center;
+			justify-content: flex-end;
+			gap: 4px;
 			width: 100%;
 			margin-top: 4px;
+			padding-top: 4px;
 			line-height: 1;
 			font-size: $font-size-secondary;
 			color: var(--m3-on-surface-variant, $tertiary);
@@ -835,7 +852,28 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 			text-align: right;
 
 			&--outgoing {
+				justify-content: flex-start;
 				text-align: left;
+			}
+		}
+
+		// Delivery status (Figma 8498-32645): red checkmark(s) next to the
+		// bubble time — one = zugestellt, two = gelesen.
+		.messageItem__deliveryStatus {
+			display: inline-flex;
+			align-items: center;
+
+			svg {
+				width: 12px;
+				height: 12px;
+
+				path {
+					fill: var(--m3-primary-container, #cc1e1c);
+				}
+			}
+
+			svg + svg {
+				margin-left: -6px;
 			}
 		}
 
@@ -1562,6 +1600,8 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 	align-items: center;
 	gap: 4px;
 	margin-top: 4px;
+	max-width: 100%;
+	min-width: 0;
 
 	&--right {
 		justify-content: flex-end;
@@ -1585,8 +1625,10 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 		}
 
 		&--mine {
+			// primary-fixed keeps the branded tint light for every tenant
+			// seed (see $message-outgoing-bg above).
 			border-color: var(--m3-primary, #a5000a);
-			background: var(--m3-primary-container, rgba(165, 0, 10, 0.1));
+			background: var(--m3-primary-fixed, rgba(165, 0, 10, 0.1));
 		}
 
 		.messageItem__reactionPillCount {
@@ -1594,53 +1636,36 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 			font-size: 12px;
 		}
 	}
+}
 
-	.messageItem__reactionAdd {
-		position: relative;
-	}
+// Quick-react emoji row inside the message action menu (long-press / kebab),
+// Slack-style. Lives in a portal, hence outside .messageItem.
+.messageItem__actionMenuReactions {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 2px;
+	padding: 4px 12px 8px;
+	margin-bottom: 4px;
+	border-bottom: 1px solid var(--m3-outline-variant, rgba(0, 0, 0, 0.12));
 
-	.messageItem__reactionAddButton {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		width: 24px;
-		height: 24px;
-		border: 1px solid var(--m3-outline-variant, rgba(0, 0, 0, 0.15));
-		border-radius: 999px;
-		background: transparent;
+	.messageItem__actionMenuReactionEmoji {
+		border: none;
+		background: none;
+		font-size: 18px;
+		line-height: 1;
+		padding: 5px;
 		cursor: pointer;
+		border-radius: 999px;
 
 		&:hover,
 		&:focus-visible {
 			background: var(--m3-surface-container, rgba(0, 0, 0, 0.05));
 		}
-	}
 
-	.messageItem__reactionPicker {
-		position: absolute;
-		bottom: calc(100% + 4px);
-		left: 0;
-		display: flex;
-		gap: 4px;
-		padding: 6px;
-		border-radius: 8px;
-		background: var(--m3-surface-container-high, #fff);
-		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-		z-index: 100;
-
-		.messageItem__reactionPickerEmoji {
-			border: none;
-			background: none;
-			font-size: 18px;
-			line-height: 1;
-			padding: 4px;
-			cursor: pointer;
-			border-radius: 4px;
-
-			&:hover,
-			&:focus-visible {
-				background: var(--m3-surface-container, rgba(0, 0, 0, 0.05));
-			}
+		&--mine {
+			background: var(--m3-primary-container-bg, rgba(165, 0, 10, 0.1));
+			box-shadow: inset 0 0 0 1px var(--m3-primary, #a5000a);
 		}
 	}
 }

@@ -14,6 +14,22 @@ const normalizeMatrixLikeValue = (rawValue?: string) => {
 	return normalized.trim();
 };
 
+// Technical usernames ("free_bee_frankie_821") must never surface in the chat
+// UI — turn them into a readable name ("free bee frankie") instead.
+const humanizeTechnicalName = (value: string) => {
+	if (!/[_.]/.test(value)) {
+		return value;
+	}
+	const words = value
+		.split(/[_.]+/)
+		.map((word) => word.trim())
+		.filter(Boolean);
+	if (words.length > 1 && /^\d+$/.test(words[words.length - 1])) {
+		words.pop();
+	}
+	return words.join(' ') || value;
+};
+
 const resolvePreferredName = (
 	rawDisplayName?: string,
 	rawUsername?: string,
@@ -30,10 +46,10 @@ const resolvePreferredName = (
 
 	const normalizedDisplayName = normalizeMatrixLikeValue(rawDisplayName);
 	if (normalizedDisplayName) {
-		return normalizedDisplayName;
+		return humanizeTechnicalName(normalizedDisplayName);
 	}
 
-	return normalizeMatrixLikeValue(rawUsername);
+	return humanizeTechnicalName(normalizeMatrixLikeValue(rawUsername));
 };
 
 export const formatMessagePersonName = (
