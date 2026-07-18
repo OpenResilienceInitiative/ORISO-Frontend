@@ -67,8 +67,26 @@ $inputSpacing: 32px;
 			padding: $grid-base-two;
 			width: 100%;
 		}
+	}
 
-		/* WCAG target size for the add/remove rule actions (Figma: 48x48). */
+	/* The add/remove-rule and translate actions reuse the shared button
+	   variant (button__item button__tertiary) rather than a one-off style;
+	   only the local WCAG 48px target and disabled affordance are set here. */
+	&__editorButton {
+		min-height: 48px;
+
+		&:disabled {
+			cursor: default;
+			opacity: 0.38;
+		}
+	}
+
+	&__languageTabs {
+		display: flex;
+		flex-wrap: wrap;
+		gap: $grid-base;
+		margin-top: $grid-base-two;
+
 		button {
 			background: none;
 			border: 1px solid var(--m3-outline-variant, #c8c5ca);
@@ -82,27 +100,19 @@ $inputSpacing: 32px;
 				background-color: rgba(27, 27, 28, 0.04);
 			}
 
-			&:disabled {
-				cursor: default;
-				opacity: 0.38;
-			}
-
 			&:focus-visible {
 				outline: 3px solid var(--m3-primary, $primary);
 				outline-offset: 2px;
 			}
 		}
-	}
-
-	&__languageTabs {
-		display: flex;
-		flex-wrap: wrap;
-		gap: $grid-base;
-		margin-top: $grid-base-two;
 
 		button[aria-selected='true'] {
+			/* Bold weight in addition to colour so the active language tab is
+			   distinguishable without colour perception (WCAG 1.4.1). */
 			border-color: var(--m3-primary, $primary);
+			border-width: 2px;
 			color: var(--m3-primary, $primary);
+			font-weight: 700;
 		}
 	}
 }

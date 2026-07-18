@@ -15,6 +15,10 @@ $cc-elevation-1:
 	0px 1px 2px 0px rgba(0, 0, 0, 0.3),
 	0px 1px 3px 1px rgba(0, 0, 0, 0.15);
 
+/* M3 motion tokens (short2 / standard easing) with static fallbacks. */
+$cc-motion-duration: var(--m3-motion-duration-short2, 160ms);
+$cc-motion-easing: var(--m3-motion-easing-standard, cubic-bezier(0.2, 0, 0, 1));
+
 .conversationCreate {
 	display: flex;
 	flex-direction: column;
@@ -144,7 +148,11 @@ $cc-elevation-1:
 			}
 
 			&[aria-selected='true'] {
+				/* Weight + inset border so the selection reads without colour
+				   perception (WCAG 1.4.1). */
+				box-shadow: inset 3px 0 0 0 $cc-primary;
 				color: $cc-primary;
+				font-weight: 700;
 			}
 
 			&:disabled {
@@ -252,7 +260,9 @@ body.conversationCreate--active .navigation__wrapper {
 		display: flex;
 		height: 100%;
 		justify-content: center;
-		transition: filter 200ms ease, opacity 200ms ease;
+		transition:
+			filter 200ms ease,
+			opacity 200ms ease;
 		width: 100%;
 
 		svg,
@@ -327,6 +337,14 @@ body.conversationCreate--active .navigation__wrapper {
 	&__icon {
 		display: flex;
 		flex-shrink: 0;
+	}
+
+	&__chevron {
+		transition: transform $cc-motion-duration $cc-motion-easing;
+
+		&--up {
+			transform: rotate(180deg);
+		}
 	}
 
 	&__label {
@@ -667,8 +685,7 @@ body.conversationCreate--active .navigation__wrapper {
 
 @media (prefers-reduced-motion: reduce) {
 	.formatCard__mediaContent,
-	.m3SplitButton__leading svg,
-	.m3SplitButton__trailing svg {
+	.m3SplitButton__chevron {
 		transition: none !important;
 	}
 }
