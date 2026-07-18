@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { decideMenuPlacement, MenuPlacement } from '../menuDirection';
+import { resolveListboxKey } from '../listboxKeyboard';
 
 /**
  * Person selection menu (Figma "Menu Selection List", node 8482:25911).
@@ -71,20 +72,54 @@ export const PersonSelectMenu = ({
 				onClose();
 			}
 		};
-		const handleEscape = (event: KeyboardEvent) => {
-			if (event.key === 'Escape') {
-				onClose();
-			}
-		};
 		document.addEventListener('mousedown', handleOutsidePointer);
 		document.addEventListener('touchstart', handleOutsidePointer);
-		document.addEventListener('keydown', handleEscape);
 		return () => {
 			document.removeEventListener('mousedown', handleOutsidePointer);
 			document.removeEventListener('touchstart', handleOutsidePointer);
-			document.removeEventListener('keydown', handleEscape);
 		};
 	}, [anchorRef, onClose]);
+
+	const optionButtons = () =>
+		Array.from(
+			menuRef.current?.querySelectorAll<HTMLButtonElement>(
+				'button[role="option"]'
+			) ?? []
+		);
+
+	// Move focus into the popup on open so the option list is operable by
+	// keyboard (WCAG listbox contract).
+	useEffect(() => {
+		optionButtons()[0]?.focus();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
+	const returnFocusToAnchor = () => {
+		const anchor = anchorRef.current;
+		(anchor?.querySelector('button') as HTMLButtonElement | null)?.focus();
+	};
+
+	const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+		const buttons = optionButtons();
+		const currentIndex = buttons.findIndex(
+			(button) => button === document.activeElement
+		);
+		const result = resolveListboxKey(
+			event.key,
+			currentIndex,
+			buttons.length
+		);
+		if (result === null) {
+			return;
+		}
+		event.preventDefault();
+		if (result === 'close') {
+			onClose();
+			returnFocusToAnchor();
+			return;
+		}
+		buttons[result]?.focus();
+	};
 
 	return (
 		<div
@@ -94,6 +129,7 @@ export const PersonSelectMenu = ({
 			role="listbox"
 			aria-multiselectable
 			aria-labelledby={labelledBy}
+			onKeyDown={handleKeyDown}
 		>
 			{options.map((option) => {
 				const stateClass = option.vacated

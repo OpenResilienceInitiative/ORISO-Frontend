@@ -8,6 +8,7 @@ import {
 	GroupChatAuthorContentDraft,
 	normalizeGroupChatLanguages
 } from './groupChatAuthorContent';
+import '../button/button.styles.scss';
 
 interface GroupChatAuthorContentFieldsProps {
 	activeLanguages: string[];
@@ -200,6 +201,7 @@ export const GroupChatAuthorContentFields = ({
 							/>
 							<button
 								type="button"
+								className="button__item button__tertiary createChat__editorButton"
 								onClick={() =>
 									updateRules(
 										rules.filter(
@@ -216,6 +218,7 @@ export const GroupChatAuthorContentFields = ({
 					{rules.length < 10 && (
 						<button
 							type="button"
+							className="button__item button__tertiary createChat__editorButton"
 							onClick={() => updateRules([...rules, ''])}
 						>
 							{t('groupChat.create.authorContent.addRule')}
@@ -226,6 +229,7 @@ export const GroupChatAuthorContentFields = ({
 			{translationAvailable && (
 				<button
 					type="button"
+					className="button__item button__tertiary createChat__editorButton"
 					disabled={isTranslating}
 					onClick={translateContent}
 				>

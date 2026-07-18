@@ -19,6 +19,12 @@ interface M3SplitButtonProps {
 	onTrailingClick: () => void;
 	trailingAriaLabel: string;
 	id?: string;
+	/**
+	 * Whether the leading action opens the attached listbox. When it triggers
+	 * a different action (e.g. continue to the next screen), the leading button
+	 * must not advertise a popup it does not control (WCAG 4.1.2).
+	 */
+	leadingOpensMenu?: boolean;
 }
 
 const ChevronIcon = ({ up }: { up: boolean }) => (
@@ -28,10 +34,9 @@ const ChevronIcon = ({ up }: { up: boolean }) => (
 		viewBox="0 0 24 24"
 		fill="none"
 		aria-hidden
-		style={{
-			transform: up ? 'rotate(180deg)' : 'none',
-			transition: 'transform 160ms ease'
-		}}
+		className={`m3SplitButton__chevron${
+			up ? ' m3SplitButton__chevron--up' : ''
+		}`}
 	>
 		<path
 			d="M7 10L12 15L17 10"
@@ -57,7 +62,8 @@ export const M3SplitButton = React.forwardRef<
 			onLeadingClick,
 			onTrailingClick,
 			trailingAriaLabel,
-			id
+			id,
+			leadingOpensMenu = true
 		},
 		ref
 	) => (
@@ -73,8 +79,8 @@ export const M3SplitButton = React.forwardRef<
 				className="m3SplitButton__leading"
 				onClick={onLeadingClick}
 				disabled={disabled}
-				aria-expanded={open}
-				aria-haspopup="listbox"
+				aria-expanded={leadingOpensMenu ? open : undefined}
+				aria-haspopup={leadingOpensMenu ? 'listbox' : undefined}
 			>
 				{leadingIcon && (
 					<span className="m3SplitButton__icon" aria-hidden>

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ReactComponent as PersonsIcon } from '../../../resources/img/icons/persons.svg';
 import { ReactComponent as GroupIllustration } from '../../../resources/img/illustrations/active-createGroup.svg';
@@ -18,6 +18,7 @@ import {
 	buildGroupChatSeriesRequest,
 	getValidDateFormatForSelectedDate,
 	getValidTimeFormatForSelectedTime,
+	isGroupChatTopicLengthValid,
 	TOPIC_LENGTHS
 } from '../../groupChat/createChatHelpers';
 import { FormatCard } from '../FormatCard';
@@ -45,6 +46,12 @@ export interface CircleSettingsPrefill {
 	repeatCount?: number;
 	interval?: GroupChatSeriesFieldsValue['interval'];
 	modality?: GroupChatSeriesFieldsValue['modality'];
+	/** Edit mode: the persisted welcome text / rules to round-trip verbatim. */
+	authorContent?: GroupChatAuthorContentDraft;
+	/** Edit mode: the existing participants to preserve on update. */
+	consultantIds?: string[];
+	/** Edit mode: the agency the persisted series belongs to. */
+	agencyId?: number | null;
 }
 
 interface CircleSettingsViewProps {
@@ -55,6 +62,12 @@ interface CircleSettingsViewProps {
 	translationAvailable: boolean;
 	prefill?: CircleSettingsPrefill;
 	topicOptions?: { value: string; label: string }[];
+	/**
+	 * When set, the form updates this existing chat instead of creating one.
+	 * The parent only mounts this view once the series has been loaded and the
+	 * prefill built, so the useState initializers below hydrate every field.
+	 */
+	editChatId?: number | null;
 }
 
 const buildSeriesDefaults = (
@@ -78,11 +91,13 @@ export const CircleSettingsView = ({
 	activeLanguages,
 	translationAvailable,
 	prefill,
-	topicOptions
+	topicOptions,
+	editChatId
 }: CircleSettingsViewProps) => {
 	const { t: translate } = useTranslation();
 	const { submit, isSubmitting, hasError, clearError } =
 		useCreateChatSubmit();
+	const isEditMode = editChatId != null;
 	const storedDefaults = useMemo(
 		() => loadCircleDefaults(selectedAgency),
 		[selectedAgency]
@@ -96,21 +111,41 @@ export const CircleSettingsView = ({
 	const [authorContent, setAuthorContent] =
 		useState<GroupChatAuthorContentDraft>(
 			() =>
+				prefill?.authorContent ||
 				storedDefaults?.authorContent ||
 				buildInitialAuthorContent(activeLanguages)
 		);
+	const consultantIds = prefill?.consultantIds ?? [];
+
 	useEffect(() => {
 		setAuthorContent((current) =>
 			syncGroupChatAuthorContentLanguages(current, activeLanguages)
 		);
 	}, [activeLanguages]);
 
-	const timezone =
-		Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+	// Re-sync the schedule and author content when the counsellor switches
+	// agency, so the fields reflect the last saved configuration of the newly
+	// selected agency (Figma: defaults are per agency). Skipped on the initial
+	// render and in edit mode, where the loaded series owns the fields.
+	const prevAgencyRef = useRef(selectedAgency);
+	useEffect(() => {
+		if (isEditMode) {
+			return;
+		}
+		if (prevAgencyRef.current === selectedAgency) {
+			return;
+		}
+		prevAgencyRef.current = selectedAgency;
+		setSeriesFields(buildSeriesDefaults(prefill, storedDefaults));
+		setAuthorContent(
+			storedDefaults?.authorContent ||
+				buildInitialAuthorContent(activeLanguages)
+		);
+	}, [isEditMode, selectedAgency, storedDefaults, prefill, activeLanguages]);
 
-	const isTopicValid =
-		topic.trim().length >= TOPIC_LENGTHS.MIN &&
-		topic.trim().length < TOPIC_LENGTHS.MAX;
+	const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+
+	const isTopicValid = isGroupChatTopicLengthValid(topic);
 	const isReady =
 		isTopicValid &&
 		selectedAgency !== null &&
@@ -140,13 +175,13 @@ export const CircleSettingsView = ({
 						authorContent.sourceLanguage
 					] || '',
 				sourceLanguage: authorContent.sourceLanguage,
-				hintMessageTranslations:
-					authorContent.hintMessageTranslations,
+				hintMessageTranslations: authorContent.hintMessageTranslations,
 				groupChatRulesTranslations:
 					authorContent.groupChatRulesTranslations,
-				consultantIds: []
+				consultantIds
 			}),
 			{
+				groupChatId: editChatId ?? undefined,
 				onSuccess: () =>
 					saveCircleDefaults(selectedAgency, {
 						series: {
@@ -244,7 +279,11 @@ export const CircleSettingsView = ({
 						disabled={!isReady}
 						onClick={handleCreate}
 					>
-						{translate('groupChat.circle.createLabel')}
+						{translate(
+							isEditMode
+								? 'groupChat.circle.saveLabel'
+								: 'groupChat.circle.createLabel'
+						)}
 					</button>
 				</div>
 			</div>
