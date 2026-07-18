@@ -26,6 +26,21 @@ describe('consultantWalkthroughTour', () => {
 		]);
 	});
 
+	it('positions tooltips inside the fixed-viewport app layout', () => {
+		const placements = consultantWalkthroughTour.steps.map(
+			(s) => s.placement
+		);
+		// Full-height list columns need a side placement, the archive chip
+		// sits at the top, and the profile step is overlay-centered.
+		expect(placements).toEqual([
+			'center',
+			'right',
+			'right',
+			'bottom',
+			'center'
+		]);
+	});
+
 	it('opens with a centered step and anchors the rest on semantic targets', () => {
 		const [intro, ...anchored] = consultantWalkthroughTour.steps;
 		expect(intro.target).toBe('');

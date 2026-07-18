@@ -24,6 +24,7 @@ export const consultantWalkthroughTour: TourDefinition = {
 			id: 'enquiries',
 			route: '/sessions/consultant/sessionPreview',
 			target: 'consultant-enquiries-list',
+			placement: 'right',
 			titleKey: 'walkthrough.step.1.title',
 			contentKey: 'walkthrough.step.1.intro'
 		},
@@ -31,6 +32,7 @@ export const consultantWalkthroughTour: TourDefinition = {
 			id: 'my-sessions',
 			route: '/sessions/consultant/sessionView',
 			target: 'consultant-sessions-list',
+			placement: 'right',
 			titleKey: 'walkthrough.step.3.title',
 			contentKey: 'walkthrough.step.3.intro'
 		},
@@ -38,6 +40,7 @@ export const consultantWalkthroughTour: TourDefinition = {
 			id: 'archive',
 			route: '/sessions/consultant/sessionView?sessionListTab=archive',
 			target: 'sessions-archive-tab',
+			placement: 'bottom',
 			titleKey: 'walkthrough.step.4.title',
 			contentKey: 'walkthrough.step.4.intro'
 		},
@@ -45,6 +48,7 @@ export const consultantWalkthroughTour: TourDefinition = {
 			id: 'profile',
 			route: '/profile/allgemeines',
 			target: 'profile-overview',
+			placement: 'center',
 			titleKey: 'walkthrough.step.6.title',
 			contentKey: 'walkthrough.step.6.intro'
 		}

@@ -5,6 +5,7 @@ import type { EventData } from 'react-joyride';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
+	effectivePlacement,
 	initialTourRunState,
 	mapStepsToJoyride,
 	reduceTourCallback,
@@ -15,6 +16,7 @@ import { waitForTarget } from './targetReadiness';
 import type {
 	TourDefinition,
 	TourEvent,
+	TourPlacement,
 	TourProgress,
 	TourStep
 } from './types';
@@ -55,6 +57,11 @@ export const ProductTourAdapter = ({
 	// The index Joyride actually shows; advanced only after route + target
 	// for that step are ready.
 	const [readyIndex, setReadyIndex] = useState(0);
+	// Per-step placement corrections measured against the real target size
+	// (a full-viewport target falls back to a centered tooltip).
+	const [placementOverrides, setPlacementOverrides] = useState<
+		Record<number, TourPlacement | undefined>
+	>({});
 
 	const startedAtRef = useRef<string | undefined>(undefined);
 	const terminalReportedRef = useRef(false);
@@ -63,7 +70,14 @@ export const ProductTourAdapter = ({
 	locationRef.current = location;
 
 	const steps = tour.steps;
-	const joyrideSteps = useMemo(() => mapStepsToJoyride(steps), [steps]);
+	const joyrideSteps = useMemo(() => {
+		const mapped = mapStepsToJoyride(steps);
+		return mapped.map((step, index) =>
+			placementOverrides[index]
+				? { ...step, placement: placementOverrides[index] }
+				: step
+		);
+	}, [placementOverrides, steps]);
 
 	const emit = useCallback(
 		(event: TourEvent, step?: TourStep) => {
@@ -125,6 +139,24 @@ export const ProductTourAdapter = ({
 						emit('target_missing', step);
 						continue;
 					}
+					const rect = document
+						.querySelector(tourTargetSelector(step.target))
+						?.getBoundingClientRect();
+					const placement = effectivePlacement(
+						step.placement ?? 'bottom',
+						rect
+							? { width: rect.width, height: rect.height }
+							: null,
+						{
+							width: window.innerWidth,
+							height: window.innerHeight
+						}
+					);
+					setPlacementOverrides((prev) =>
+						prev[i] === placement
+							? prev
+							: { ...prev, [i]: placement }
+					);
 				}
 				setReadyIndex(i);
 				setRunState((prev) => ({ ...prev, stepIndex: i }));
@@ -204,6 +236,9 @@ export const ProductTourAdapter = ({
 			options={{
 				skipBeacon: true,
 				closeButtonAction: 'skip',
+				// The app shell is a fixed-viewport layout; scrolling the
+				// window would break it and every tour target is in view.
+				skipScroll: true,
 				zIndex: 53
 			}}
 		/>

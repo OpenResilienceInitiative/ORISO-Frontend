@@ -117,6 +117,13 @@ describe('ProductTourAdapter', () => {
 		expect(joyrideProps!.run).toBe(true);
 	});
 
+	it('never scrolls the fixed-viewport app window', async () => {
+		renderAdapter();
+
+		await waitFor(() => expect(joyrideProps).not.toBeNull());
+		expect((joyrideProps as any).options.skipScroll).toBe(true);
+	});
+
 	it('does not run while paused', async () => {
 		renderAdapter({ paused: true });
 

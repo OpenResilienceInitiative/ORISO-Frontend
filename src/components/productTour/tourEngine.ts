@@ -14,6 +14,26 @@ export const mapStepsToJoyride = (steps: TourStep[]): Step[] =>
 		content: step.contentKey
 	}));
 
+/**
+ * A side placement is meaningless when the target effectively fills the
+ * viewport (e.g. the session list column on mobile) — the tooltip would be
+ * positioned off-screen. Fall back to a centered overlay in that case.
+ */
+export const effectivePlacement = (
+	placement: TourStep['placement'],
+	targetRect: { width: number; height: number } | null,
+	viewport: { width: number; height: number }
+): TourStep['placement'] => {
+	if (!targetRect || placement === 'center') {
+		return placement;
+	}
+	const coverage =
+		(Math.min(targetRect.width, viewport.width) *
+			Math.min(targetRect.height, viewport.height)) /
+		(viewport.width * viewport.height);
+	return coverage >= 0.6 ? 'center' : placement;
+};
+
 export interface TourRunState {
 	status: TourStatus;
 	stepIndex: number;

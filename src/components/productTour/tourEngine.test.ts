@@ -1,6 +1,7 @@
 import { ACTIONS, EVENTS, STATUS } from 'react-joyride';
 import { describe, expect, it } from 'vitest';
 import {
+	effectivePlacement,
 	initialTourRunState,
 	mapStepsToJoyride,
 	reduceTourCallback
@@ -209,5 +210,37 @@ describe('reduceTourCallback', () => {
 
 		expect(state.status).toBe('completed');
 		expect(events).not.toContain('tour_completed');
+	});
+});
+
+describe('effectivePlacement', () => {
+	it('keeps the configured placement for a normal-sized target', () => {
+		expect(
+			effectivePlacement(
+				'right',
+				{ width: 300, height: 400 },
+				{ width: 1440, height: 900 }
+			)
+		).toBe('right');
+	});
+
+	it('centers the tooltip when the target dominates the viewport', () => {
+		expect(
+			effectivePlacement(
+				'right',
+				{ width: 390, height: 700 },
+				{ width: 390, height: 844 }
+			)
+		).toBe('center');
+	});
+
+	it('keeps center as center', () => {
+		expect(
+			effectivePlacement(
+				'center',
+				{ width: 100, height: 100 },
+				{ width: 1440, height: 900 }
+			)
+		).toBe('center');
 	});
 });
