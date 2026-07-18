@@ -3455,6 +3455,22 @@
 	},
 	"walkthrough": {
 		"close": "Close tour",
+		"overview": {
+			"title": "My tours",
+			"subtitle": "Start or continue guided tours through the application.",
+			"empty": "There are currently no tours available for you.",
+			"status": {
+				"not_started": "Not started",
+				"in_progress": "In progress",
+				"completed": "Completed",
+				"skipped": "Skipped"
+			},
+			"action": {
+				"start": "Start",
+				"continue": "Continue",
+				"restart": "Restart"
+			}
+		},
 		"step": {
 			"0": {
 				"intro": "To explain the individual functions, we have prepared a short tour for you. <br /><br /> They can cancel it at any time or start it again in their profile.",

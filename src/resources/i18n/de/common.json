@@ -3513,6 +3513,22 @@
 	},
 	"walkthrough": {
 		"close": "Rundgang schließen",
+		"overview": {
+			"title": "Meine Rundgänge",
+			"subtitle": "Starten Sie Rundgänge durch die Anwendung oder setzen Sie sie fort.",
+			"empty": "Aktuell sind keine Rundgänge für Sie verfügbar.",
+			"status": {
+				"not_started": "Nicht gestartet",
+				"in_progress": "In Bearbeitung",
+				"completed": "Abgeschlossen",
+				"skipped": "Übersprungen"
+			},
+			"action": {
+				"start": "Starten",
+				"continue": "Fortsetzen",
+				"restart": "Neu starten"
+			}
+		},
 		"step": {
 			"0": {
 				"intro": "Um Ihnen die einzelnen Funktionen zu erklären, haben wir einen kurzen Rundgang für Sie vorbereitet. <br /><br /> Sie können ihn jederzeit abbrechen oder in ihrem Profil erneut starten.",
