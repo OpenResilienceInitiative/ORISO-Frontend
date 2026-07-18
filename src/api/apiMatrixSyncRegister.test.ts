@@ -1,16 +1,15 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-
-const fetchDataMock = vi.fn();
-vi.mock('./fetchData', () => ({
-	fetchData: (args: unknown) => fetchDataMock(args),
-	FETCH_METHODS: { POST: 'POST' }
-}));
-
 import {
 	apiRegisterMatrixRoomForSync,
 	__resetMatrixSyncRegistrationCache
 } from './apiMatrixSyncRegister';
+
+const { fetchDataMock } = vi.hoisted(() => ({ fetchDataMock: vi.fn() }));
+vi.mock('./fetchData', () => ({
+	fetchData: (args: unknown) => fetchDataMock(args),
+	FETCH_METHODS: { POST: 'POST' }
+}));
 
 describe('apiRegisterMatrixRoomForSync', () => {
 	beforeEach(() => {
