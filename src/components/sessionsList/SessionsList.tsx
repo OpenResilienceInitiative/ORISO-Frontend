@@ -1822,7 +1822,14 @@ export const SessionsList = ({
 	);
 
 	return (
-		<div className="sessionsList__innerWrapper">
+		<div
+			className="sessionsList__innerWrapper"
+			data-tour-target={
+				type === SESSION_LIST_TYPES.ENQUIRY
+					? 'consultant-enquiries-list'
+					: 'consultant-sessions-list'
+			}
+		>
 			{/* {showEnquiryFilterChips && (
 				<EnquiryFilterChips
 					translate={translate}

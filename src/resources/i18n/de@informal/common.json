@@ -1400,6 +1400,7 @@
 		}
 	},
 	"walkthrough": {
+		"close": "Rundgang schließen",
 		"step": {
 			"0": {
 				"intro": "Um Dir die einzelnen Funktionen zu erklären, haben wir einen kurzen Rundgang für Dich vorbereitet. <br /><br /> Du kannst ihn jederzeit abbrechen oder in Deinem Profil erneut starten."

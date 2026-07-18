@@ -24,7 +24,11 @@ const config: StorybookConfig = {
 	],
 	// SB7 served these (compound-web.css etc. referenced by preview-head.html)
 	staticDirs: ['./static', '../public'],
-	addons: ['@storybook/addon-mcp', '@storybook/addon-designs'],
+	addons: [
+		'@storybook/addon-mcp',
+		'@storybook/addon-designs',
+		'@storybook/addon-a11y'
+	],
 	framework: { name: '@storybook/react-vite', options: {} },
 	async viteFinal(cfg) {
 		return mergeConfig(cfg, {

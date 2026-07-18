@@ -3454,6 +3454,7 @@
 		}
 	},
 	"walkthrough": {
+		"close": "Close tour",
 		"step": {
 			"0": {
 				"intro": "To explain the individual functions, we have prepared a short tour for you. <br /><br /> They can cancel it at any time or start it again in their profile.",
