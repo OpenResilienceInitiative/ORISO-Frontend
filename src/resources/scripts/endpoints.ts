@@ -99,6 +99,8 @@ export const endpoints = {
 	magicLinkRequest: userServiceOrigin + '/service/users/magic-link/request',
 	magicLinkConsume: userServiceOrigin + '/service/users/magic-link/consume',
 	matrixAccessToken: userServiceOrigin + '/service/matrix/me/token',
+	matrixSyncRegister: (sessionId: number) =>
+		userServiceOrigin + `/service/matrix/sync/register/${sessionId}`,
 	messages: {
 		get: userServiceOrigin + '/service/messages',
 		delete: userServiceOrigin + '/service/messages/:messageId'
