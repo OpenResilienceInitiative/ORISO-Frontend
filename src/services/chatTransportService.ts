@@ -48,7 +48,6 @@ export interface SendTextMessageOptions {
 	supervisorMessage?: boolean;
 	senderDisplayName?: string | null;
 	teamDiscussion?: boolean;
-	mentionedUserIds?: string[] | null;
 	matrixClientServiceOverride?: MatrixClientService | null;
 }
 
@@ -130,7 +129,6 @@ class ChatTransportService {
 		supervisorMessage,
 		senderDisplayName,
 		teamDiscussion,
-		mentionedUserIds,
 		matrixClientServiceOverride
 	}: SendTextMessageOptions): Promise<any> {
 		let resolvedMatrixRoomId = matrixRoomId;
