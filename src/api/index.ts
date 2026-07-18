@@ -47,3 +47,4 @@ export * from './apiUpdatePassword';
 export * from './apiMatrixUpload';
 export * from './fetchData';
 export * from './apiDeleteUserFromRoom';
+export * from './apiTutorialProgress';

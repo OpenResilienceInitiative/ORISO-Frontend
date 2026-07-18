@@ -124,3 +124,61 @@
 		}
 	}
 }
+
+.tourOverview {
+	&__list {
+		display: flex;
+		gap: $grid-base-two;
+		margin: $grid-base-two 0 0;
+		padding: 0 0 $grid-base;
+		list-style: none;
+		overflow-x: auto;
+		scroll-snap-type: x proximity;
+	}
+
+	&__card {
+		display: flex;
+		flex-direction: column;
+		flex: 0 0 min(260px, 80vw);
+		gap: $grid-base;
+		padding: $grid-base-two;
+		border: 1px solid var(--m3-outline-variant, $form-input-border);
+		border-radius: $button-border-radius;
+		background-color: var(--m3-surface, $white);
+		scroll-snap-align: start;
+	}
+
+	&__status {
+		align-self: flex-start;
+		padding: 2px $grid-base;
+		border-radius: $button-border-radius;
+		font-size: $font-size-secondary;
+		background-color: var(--m3-surface-variant, $form-input-border);
+		color: var(--m3-on-surface, $primary);
+
+		&--completed {
+			background-color: var(--m3-primary, $primary);
+			color: var(--m3-on-primary, $white);
+		}
+	}
+
+	&__cardTitle {
+		margin: 0;
+		font-size: $font-size-h5;
+		font-weight: $font-weight-bold;
+	}
+
+	&__cardSummary {
+		margin: 0;
+		flex: 1 1 auto;
+		font-size: $font-size-primary;
+		line-height: $line-height-primary;
+	}
+
+	&__action {
+		.button__item {
+			min-width: 0;
+			width: 100%;
+		}
+	}
+}
