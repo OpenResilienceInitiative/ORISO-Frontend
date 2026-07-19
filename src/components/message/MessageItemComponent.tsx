@@ -1403,12 +1403,22 @@ export const MessageItemComponent = ({
 		sendFailed || encryptionBroke ? 'failed' : isNotRead ? 'sent' : 'read';
 	const deliveryStatusLabel =
 		deliveryState === 'failed'
-			? translate('message.sendFailed.status', 'nicht zugestellt')
+			? encryptionBroke
+				? translate(
+						'message.encryptionBroke.status',
+						'Verschlüsselung gebrochen'
+					)
+				: translate('message.sendFailed.status', 'nicht zugestellt')
 			: translate(
 					deliveryState === 'sent' ? 'message.sent' : 'message.read'
 				);
+	// The delivery cross for a broken decryption belongs on the affected
+	// message whether or not it is ours: you can always decrypt your own
+	// sends, so `encryptionBroke` in practice flags an INCOMING message the
+	// recipient's client could not decrypt. Own-message sent/read status stays
+	// own-only as before.
 	const deliveryStatusInBubble =
-		isMyMessage && t !== 'rm' ? (
+		t !== 'rm' && (isMyMessage || encryptionBroke) ? (
 			<span
 				className={clsx(
 					'messageItem__deliveryStatus',

@@ -1419,6 +1419,9 @@
 				"headline": "Delete message"
 			}
 		},
+		"encryptionBroke": {
+			"status": "encryption failed"
+		},
 		"groupChat": "Group chat",
 		"isMyMessage": {
 			"name": "Me"

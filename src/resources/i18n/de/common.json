@@ -1434,6 +1434,9 @@
 				"headline": "Nachricht löschen"
 			}
 		},
+		"encryptionBroke": {
+			"status": "Verschlüsselung gebrochen"
+		},
 		"groupChat": "Gruppenchat",
 		"isMyMessage": {
 			"name": "Ich"

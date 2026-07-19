@@ -23,6 +23,7 @@ import {
 	MessageItem,
 	MessageItemComponent
 } from '../message/MessageItemComponent';
+import { useMatrixDecryptionFailures } from '../../hooks/useMatrixDecryptionFailures';
 import {
 	ReactionEvent,
 	AggregatedReaction,
@@ -1619,6 +1620,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const resolvedMatrixRoomId = isMatrixRoom(activeSession.rid)
 		? activeSession.rid
 		: activeSession.item?.matrixRoomId || activeSession.rid;
+	// "Encryption broke" delivery status: event ids in this room whose Megolm
+	// decryption permanently failed, so the affected message can show the red
+	// cross (Figma 7086-57415). Keyed by event id === message._id.
+	const decryptionFailures =
+		useMatrixDecryptionFailures(resolvedMatrixRoomId);
 	// Reactions (m.annotation, #435).
 	const reactionEvents = useMemo(
 		() => props.reactionEvents || [],
@@ -4734,6 +4740,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										}
 										onUnreact={handleUnreact}
 										{...message}
+										encryptionBroke={decryptionFailures.has(
+											message._id
+										)}
 									/>
 								</React.Fragment>
 							))}
@@ -4847,6 +4856,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 								threadsEnabled={true}
 								forceShow={true}
 								{...activeThreadRootMessage}
+								encryptionBroke={decryptionFailures.has(
+									activeThreadRootMessage._id
+								)}
 							/>
 						)}
 						{messages &&
@@ -4901,6 +4913,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										}
 										onUnreact={handleUnreact}
 										{...message}
+										encryptionBroke={decryptionFailures.has(
+											message._id
+										)}
 									/>
 								</React.Fragment>
 							))}
