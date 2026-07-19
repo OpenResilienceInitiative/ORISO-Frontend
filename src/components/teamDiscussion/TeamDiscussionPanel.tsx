@@ -12,7 +12,7 @@
  * exercises every state without network.
  */
 import * as React from 'react';
-import { useCallback, useContext, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
 	apiGetTeamDiscussion,
@@ -63,7 +63,7 @@ export const TeamDiscussionPanel = ({
 	const { t: translate } = useTranslation();
 	const { userData } = useContext(UserDataContext);
 
-	const [isOpen, setIsOpen] = useState(initiallyOpen);
+	const [isOpen, setIsOpen] = useState(false);
 	const [discussion, setDiscussion] = useState<TeamDiscussion | null>(null);
 	const [discussionLoaded, setDiscussionLoaded] = useState(false);
 	const [messages, setMessages] = useState<TeamDiscussionMessage[]>([]);
@@ -77,21 +77,9 @@ export const TeamDiscussionPanel = ({
 		let cancelled = false;
 		apiGetTeamDiscussion(sessionId)
 			.then((result) => {
-				if (cancelled) {
-					return;
-				}
-				setDiscussion(result);
-				setDiscussionLoaded(true);
-				// Deep-link (?teamDiscussion=1): the panel starts expanded, so
-				// join the room right away — otherwise the feed stays empty
-				// until the first manual toggle. Idempotent on the backend.
-				if (result && initiallyOpen) {
-					apiOpenTeamDiscussion(sessionId)
-						.then(
-							(joined) =>
-								!cancelled && joined && setDiscussion(joined)
-						)
-						.catch(() => undefined);
+				if (!cancelled) {
+					setDiscussion(result);
+					setDiscussionLoaded(true);
 				}
 			})
 			.catch(() => {
@@ -102,8 +90,31 @@ export const TeamDiscussionPanel = ({
 		return () => {
 			cancelled = true;
 		};
-		// eslint-disable-next-line react-hooks/exhaustive-deps -- initiallyOpen is a mount-time deep-link signal
 	}, [sessionId]);
+
+	// Deep-link (?teamDiscussion=1): reactive, not mount-time only — a
+	// notification click while already viewing the session updates the URL
+	// without remounting. Opens the panel and joins the room; join failures
+	// surface as the regular open error instead of being swallowed.
+	const deepLinkHandledRef = useRef(false);
+	useEffect(() => {
+		deepLinkHandledRef.current = false;
+	}, [sessionId]);
+	useEffect(() => {
+		if (
+			!initiallyOpen ||
+			!discussionLoaded ||
+			!discussion ||
+			deepLinkHandledRef.current
+		) {
+			return;
+		}
+		deepLinkHandledRef.current = true;
+		setIsOpen(true);
+		apiOpenTeamDiscussion(sessionId)
+			.then((joined) => joined && setDiscussion(joined))
+			.catch(() => setError(translate('teamDiscussion.error.open')));
+	}, [initiallyOpen, discussionLoaded, discussion, sessionId, translate]);
 
 	const refreshMessages = useCallback((matrixRoomId: string) => {
 		const ownMatrixUserId =

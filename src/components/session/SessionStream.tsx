@@ -984,6 +984,7 @@ export const SessionStream = ({
 		<div className="session__wrapper">
 			{showTeamDiscussion && (
 				<TeamDiscussionPanel
+					key={activeSession.item.id}
 					sessionId={activeSession.item.id}
 					allowCreate={activeSession.isEnquiry}
 					initiallyOpen={teamDiscussionParam === '1'}
