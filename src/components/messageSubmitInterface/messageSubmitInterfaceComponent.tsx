@@ -194,6 +194,13 @@ export interface MessageSubmitInterfaceComponentProps {
 	onLocalMessageEdit?: (messageId: string, newText: string) => void;
 	/** Prefer Matrix-aware ownership from SessionItem when provided. */
 	isOwnMessage?: (userId: string) => boolean;
+	/**
+	 * Called when a send attempt fails (the message never reached the server /
+	 * encryption broke). The parent surfaces a "Sending message failed"
+	 * notification in the timeline. The composer keeps the typed text so the
+	 * user can simply resend.
+	 */
+	onSendError?: (message: string, ts: number) => void;
 }
 
 export const MessageSubmitInterfaceComponent = ({
@@ -222,7 +229,8 @@ export const MessageSubmitInterfaceComponent = ({
 	messages,
 	onCloseThread,
 	onLocalMessageEdit,
-	isOwnMessage
+	isOwnMessage,
+	onSendError
 }: MessageSubmitInterfaceComponentProps) => {
 	const ComposerMobileBackIcon = () => (
 		<svg
@@ -1387,6 +1395,10 @@ export const MessageSubmitInterfaceComponent = ({
 					})
 					.catch((error) => {
 						setIsRequestInProgress(false);
+						// Surface the failure in the timeline ("Sending message
+						// failed"); the composer keeps the text so the user can
+						// resend without retyping.
+						onSendError?.(message, Date.now());
 						apiPostError({
 							name: error?.name || 'MatrixMessageSendError',
 							message:
@@ -1415,6 +1427,7 @@ export const MessageSubmitInterfaceComponent = ({
 			isSupervisor,
 			matrixClientService,
 			onSendButton,
+			onSendError,
 			resolvedChatSession,
 			setE2EEState,
 			supervisionRoomId,
