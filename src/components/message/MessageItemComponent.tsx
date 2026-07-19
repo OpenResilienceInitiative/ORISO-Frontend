@@ -1424,6 +1424,63 @@ export const MessageItemComponent = ({
 		</span>
 	) : null;
 
+	// Reactions (Figma 336-12244 / 336-12225): white chips inside the bubble,
+	// sharing one rail with the timestamp. Adding happens via the action menu.
+	const reactionChips =
+		reactions && reactions.length > 0 ? (
+			<div
+				className={clsx(
+					'messageItem__reactions',
+					isMyMessage && 'messageItem__reactions--right'
+				)}
+			>
+				{reactions.map((reaction) => (
+					<button
+						key={reaction.key}
+						type="button"
+						className={clsx(
+							'messageItem__reactionPill',
+							reaction.ownEventId &&
+								'messageItem__reactionPill--mine'
+						)}
+						onClick={() =>
+							reaction.ownEventId
+								? onUnreact?.(reaction.ownEventId)
+								: onReact?.(reaction.key)
+						}
+						aria-label={translate(
+							'message.reaction.count',
+							'{{key}} reacted by {{count}}',
+							{
+								key: reaction.key,
+								count: reaction.count
+							}
+						)}
+					>
+						<span aria-hidden>{reaction.key}</span>
+						<span className="messageItem__reactionPillCount">
+							{reaction.count}
+						</span>
+					</button>
+				))}
+			</div>
+		) : null;
+
+	// "Time + Emoji Rail" (Figma): incoming = chips left / time right,
+	// outgoing = time left / chips right.
+	const timeRailInBubble = (
+		<div
+			className={clsx(
+				'messageItem__timeRail',
+				isMyMessage && 'messageItem__timeRail--outgoing'
+			)}
+		>
+			{!isMyMessage && reactionChips}
+			{messageTimeInBubble}
+			{isMyMessage && reactionChips}
+		</div>
+	);
+
 	const messageContent = (): React.ReactElement => {
 		switch (true) {
 			case isMasterKeyLostMessage:
@@ -1534,7 +1591,7 @@ export const MessageItemComponent = ({
 								)}
 							</div>
 						</div>
-						{messageTimeInBubble}
+						{timeRailInBubble}
 					</div>
 				);
 			default:
@@ -1917,7 +1974,7 @@ export const MessageItemComponent = ({
 										hasRenderedMessage={hasRenderedMessage}
 									/>
 								))}
-							{!isSystemNotification && messageTimeInBubble}
+							{!isSystemNotification && timeRailInBubble}
 						</div>
 						{showVisibleAudience && !isMyMessage && (
 							<div className="messageItem__visibleOnly">
@@ -2191,52 +2248,6 @@ export const MessageItemComponent = ({
 
 				<div className="messageItem__content">
 					{messageContent()}
-					{/* Reactions (m.annotation, #435): aggregated pills. Adding a
-					    reaction lives in the message action menu (long-press). */}
-					{!alias?.messageType &&
-						!isSystemNotification &&
-						reactions &&
-						reactions.length > 0 && (
-							<div
-								className={clsx(
-									'messageItem__reactions',
-									isMyMessage &&
-										'messageItem__reactions--right'
-								)}
-							>
-								{(reactions || []).map((reaction) => (
-									<button
-										key={reaction.key}
-										type="button"
-										className={clsx(
-											'messageItem__reactionPill',
-											reaction.ownEventId &&
-												'messageItem__reactionPill--mine'
-										)}
-										onClick={() =>
-											reaction.ownEventId
-												? onUnreact?.(
-														reaction.ownEventId
-													)
-												: onReact?.(reaction.key)
-										}
-										aria-label={translate(
-											'message.reaction.count',
-											'{{key}} reacted by {{count}}',
-											{
-												key: reaction.key,
-												count: reaction.count
-											}
-										)}
-									>
-										<span aria-hidden>{reaction.key}</span>
-										<span className="messageItem__reactionPillCount">
-											{reaction.count}
-										</span>
-									</button>
-								))}
-							</div>
-						)}
 					{isMyMessage && formattedName && !alias?.messageType && (
 						<div className="messageItem__senderInfo">
 							<div className="messageItem__senderInfoPrimary">

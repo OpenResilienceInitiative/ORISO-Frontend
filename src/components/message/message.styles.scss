@@ -837,24 +837,32 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 			display: inline;
 		}
 
-		.messageItem__messageTime {
+		// "Time + Emoji Rail" (Figma 336-12244 / 336-12225): timestamp and
+		// reaction chips share one row at the bubble bottom. Incoming: chips
+		// left, time right. Outgoing: time left, chips right.
+		.messageItem__timeRail {
 			display: flex;
-			align-items: center;
+			align-items: flex-end;
 			justify-content: flex-end;
 			gap: 4px;
 			width: 100%;
 			margin-top: 4px;
-			padding-top: 4px;
+
+			&--outgoing {
+				justify-content: flex-start;
+			}
+		}
+
+		.messageItem__messageTime {
+			display: inline-flex;
+			align-items: center;
+			flex-shrink: 0;
+			gap: 4px;
+			padding-top: 8px;
 			line-height: 1;
 			font-size: $font-size-secondary;
 			color: var(--m3-on-surface-variant, $tertiary);
 			white-space: nowrap;
-			text-align: right;
-
-			&--outgoing {
-				justify-content: flex-start;
-				text-align: left;
-			}
 		}
 
 		// Delivery status (Figma 8498-32645): red checkmark(s) next to the
@@ -1593,15 +1601,16 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 	}
 }
 
-// Reactions (m.annotation, #435): aggregated pills + quick-react picker.
+// Reactions (Figma 336-12244 / 336-12225): white M3 assist chips inside the
+// bubble, sharing the time rail. Own reaction = red count.
 .messageItem__reactions {
 	display: flex;
+	flex: 1;
 	flex-wrap: wrap;
 	align-items: center;
-	gap: 4px;
-	margin-top: 4px;
-	max-width: 100%;
+	gap: 8px;
 	min-width: 0;
+	padding-top: 4px;
 
 	&--right {
 		justify-content: flex-end;
@@ -1611,29 +1620,30 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 		display: inline-flex;
 		align-items: center;
 		gap: 4px;
-		padding: 2px 8px;
-		border: 1px solid var(--m3-outline-variant, rgba(0, 0, 0, 0.15));
-		border-radius: 999px;
-		background: var(--m3-surface-container, rgba(0, 0, 0, 0.05));
-		font-size: 13px;
-		line-height: 1.4;
+		height: 32px;
+		padding: 6px 8px;
+		border: 1px solid var(--m3-outline-variant-light, #fff);
+		border-radius: 8px;
+		background: #fff;
+		font-size: 16px;
+		line-height: 1;
 		cursor: pointer;
 
 		&:hover,
 		&:focus-visible {
-			background: var(--m3-surface-container-high, rgba(0, 0, 0, 0.1));
-		}
-
-		&--mine {
-			// primary-fixed keeps the branded tint light for every tenant
-			// seed (see $message-outgoing-bg above).
-			border-color: var(--m3-primary, #a5000a);
-			background: var(--m3-primary-fixed, rgba(165, 0, 10, 0.1));
+			box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
 		}
 
 		.messageItem__reactionPillCount {
-			color: var(--m3-on-surface-variant, #4c555f);
-			font-size: 12px;
+			color: var(--m3-on-surface, #1b1b1c);
+			font-size: 14px;
+			font-weight: 500;
+			line-height: 20px;
+			letter-spacing: 0.1px;
+		}
+
+		&--mine .messageItem__reactionPillCount {
+			color: var(--m3-primary, #a5000a);
 		}
 	}
 }
