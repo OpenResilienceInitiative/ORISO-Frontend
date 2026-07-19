@@ -53,6 +53,8 @@ describe('auth helpers', () => {
 		['/login', true],
 		['/registration', true],
 		['/tenant-a/registration', true],
+		['/invite/token', true],
+		['/invite/token/U25%20Suizidpr%C3%A4vention', true],
 		['/error.401.html', true],
 		['/sessions/consultant/sessionView', false]
 	])('detects public auth route %s', (path, expected) => {
