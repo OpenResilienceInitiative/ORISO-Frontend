@@ -3000,8 +3000,28 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		onDragLeave();
 	};
 
+	// "Sending message failed" notifications (Figma 7086-57415): a send that
+	// never reached the server surfaces a card at the bottom of the timeline.
+	// They are cleared once a later send succeeds (the composer keeps the text,
+	// so a successful resend means the failures are resolved).
+	const [failedSends, setFailedSends] = useState<
+		{ id: string; ts: number }[]
+	>([]);
+	const handleSendError = useCallback((_message: string, ts: number) => {
+		setFailedSends((previous) => [
+			...previous,
+			{ id: `send-failed-${ts}`, ts }
+		]);
+	}, []);
+
+	// Drop stale failure cards when the conversation changes.
+	useEffect(() => {
+		setFailedSends([]);
+	}, [activeSession?.rid]);
+
 	const handleMessageSendSuccess = () => {
 		setDraggedFile(null);
+		setFailedSends([]);
 
 		if (props.refreshMessages) {
 			setTimeout(() => {
@@ -4758,6 +4778,14 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									)}
 								</React.Fragment>
 							))}
+						{/* "Sending message failed" cards for sends that never
+						    reached the server (Figma 7086-57415). */}
+						{failedSends.map((failed) => (
+							<MessageSendFailed
+								key={failed.id}
+								messageTime={String(failed.ts)}
+							/>
+						))}
 						{shouldShowInlineTypingIndicator && (
 							<div className="messageItem session__inlineTypingIndicator">
 								<div className="messageItem__messageWrap">
@@ -4942,6 +4970,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							)}
 							typingUsers={props.typingUsers}
 							handleMessageSendSuccess={handleMessageSendSuccess}
+							onSendError={handleSendError}
 							isSupervisor={isSupervisor}
 							supervisionRoomId={supervisionRoomId}
 							threadRootId={activeThreadRootId}
@@ -5082,6 +5111,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									handleMessageSendSuccess={
 										handleMessageSendSuccess
 									}
+									onSendError={handleSendError}
 									isSupervisor={isSupervisor}
 									supervisionRoomId={supervisionRoomId}
 									replyTo={replyTo}
