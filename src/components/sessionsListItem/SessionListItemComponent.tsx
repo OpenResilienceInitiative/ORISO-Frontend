@@ -13,6 +13,8 @@ import {
 import { isMatrixRoomIdHeuristic } from '../../utils/matrixRoomUtils';
 import { resolveAnonymousChatDisplayName } from '../../utils/anonymousChatDisplayName';
 import { UserAvatar } from '../message/UserAvatar';
+import { MessageAvatar } from '../message/MessageAvatar';
+import { formatMessagePersonName } from '../message/messageNameUtils';
 import { ConsultantSearchLoader } from '../sessionHeader/ConsultantSearchLoader';
 import { MenuVerticalIcon, ShowPasswordIcon } from '../../resources/img/icons';
 import { config } from '../../resources/scripts/config';
@@ -503,7 +505,11 @@ export const SessionListItemComponent = ({
 						marginBottom: '8px'
 					}}
 				>
-					🔔 {activeSession.user?.username || 'Unknown User'}
+					🔔{' '}
+					{formatMessagePersonName(
+						undefined,
+						activeSession.user?.username
+					) || 'Unknown User'}
 				</div>
 				<div style={{ fontSize: '12px', color: '#666' }}>
 					Session ID: {activeSession.item.id} | Postcode:{' '}
@@ -721,7 +727,10 @@ export const SessionListItemComponent = ({
 					<div className="sessionsListItem__row">
 						<div className="sessionsListItem__icon">📋</div>
 						<div className="sessionsListItem__username">
-							{activeSession.user?.username || 'Unknown User'}
+							{formatMessagePersonName(
+								undefined,
+								activeSession.user?.username
+							) || 'Unknown User'}
 						</div>
 					</div>
 					<div className="sessionsListItem__row">
@@ -897,20 +906,25 @@ export const SessionListItemComponent = ({
 	const hasConsultantData = !!activeSession.consultant;
 	let sessionTopic = '';
 
+	// Card title: never surface raw technical usernames
+	// ("ruhiges_Yak_Kim_234", "testuser@example.invalid") — humanize via the
+	// same name pipeline the chat messages use.
 	if (isAsker) {
 		if (hasConsultantData) {
-			sessionTopic =
-				activeSession.consultant.displayName ||
-				activeSession.consultant.username;
+			sessionTopic = formatMessagePersonName(
+				activeSession.consultant.displayName,
+				activeSession.consultant.username
+			);
 		} else if (activeSession.isEmptyEnquiry) {
 			sessionTopic = translate('sessionList.user.writeEnquiry');
 		} else {
 			sessionTopic = translate('sessionList.user.consultantUnknown');
 		}
 	} else {
-		sessionTopic =
-			resolveAnonymousChatDisplayName(activeSession.user) ||
-			activeSession.user.username;
+		sessionTopic = formatMessagePersonName(
+			resolveAnonymousChatDisplayName(activeSession.user) || undefined,
+			activeSession.user.username
+		);
 	}
 
 	const postcodeLabel = getDisplayablePostcode(activeSession.item.postcode);
@@ -1437,21 +1451,30 @@ export const SessionListItemComponent = ({
 							</div>
 						) : isAsker && !hasConsultantData ? (
 							<ConsultantSearchLoader size="32px" />
+						) : !isAsker ? (
+							// Restored username+icon linkage: the asker card
+							// shows the SAME animal avatar the chat derives
+							// from the rc user id (generateAvatarForUser).
+							<MessageAvatar
+								isGroup={!!activeSession.isGroup}
+								isSystemNotification={false}
+								userId={
+									activeSession.item.askerRcId ||
+									activeSession.user?.username ||
+									'unknown'
+								}
+								username={activeSession.user?.username || ''}
+								displayName={sessionTopic}
+								size={32}
+							/>
 						) : (
 							<UserAvatar
 								username={
-									activeSession.user?.username ||
-									activeSession.consultant?.username ||
-									'User'
+									activeSession.consultant?.username || 'User'
 								}
-								displayName={
-									activeSession.user?.username ||
-									activeSession.consultant?.displayName
-								}
+								displayName={sessionTopic}
 								userId={
-									activeSession.user?.username ||
-									activeSession.consultant?.id ||
-									'unknown'
+									activeSession.consultant?.id || 'unknown'
 								}
 								size="32px"
 							/>

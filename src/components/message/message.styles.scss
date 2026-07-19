@@ -1718,17 +1718,24 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 	margin-bottom: 4px;
 }
 
+// The content column overlaps the avatar column by 19px (like every
+// incoming message) — indent the header text so it clears the avatar ring.
+.messageItem--sendFailed .messageItem__header {
+	padding-left: 24px;
+}
+
+// Inner 48px black circle inside the standard ringed avatar frame.
 .messageItem__sendFailedAvatar {
-	width: 32px;
-	height: 32px;
-	min-width: 32px;
+	width: 48px;
+	height: 48px;
+	min-width: 48px;
 	border-radius: 50%;
 	background: #17191c;
 	color: #fff;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	font-size: 18px;
+	font-size: 22px;
 	font-weight: 700;
 	line-height: 1;
 }

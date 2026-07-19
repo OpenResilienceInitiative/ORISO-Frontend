@@ -38,6 +38,12 @@ describe('formatMessagePersonName', () => {
 			formatMessagePersonName(undefined, '@free_bee_frankie_821:oriso.de')
 		).toBe('free bee frankie');
 	});
+
+	it('keeps only the local part of email-style identifiers', () => {
+		expect(
+			formatMessagePersonName(undefined, 'testuser@example.invalid')
+		).toBe('testuser');
+	});
 });
 
 describe('getMessagePersonInitials', () => {

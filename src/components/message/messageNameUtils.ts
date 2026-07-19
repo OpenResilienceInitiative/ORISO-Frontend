@@ -11,6 +11,10 @@ const normalizeMatrixLikeValue = (rawValue?: string) => {
 	if (normalized.includes(':')) {
 		normalized = normalized.split(':')[0];
 	}
+	// Email-style identifiers (testuser@example.invalid): keep the local part.
+	if (normalized.includes('@')) {
+		normalized = normalized.split('@')[0];
+	}
 	return normalized.trim();
 };
 
