@@ -20,22 +20,42 @@ interface SessionsListWrapperProps {
 export const SessionsListWrapper = ({
 	sessionTypes
 }: SessionsListWrapperProps) => {
-	const { ICON_ONLY_THRESHOLD, SNAP_THRESHOLD } = SESSIONS_LIST_RESIZE;
+	const {
+		ICON_ONLY_THRESHOLD,
+		SNAP_THRESHOLD,
+		EXPANDED_MIN_WIDTH,
+		EXPANDED_MAX_WIDTH,
+		EXPANDED_SNAP_THRESHOLD
+	} = SESSIONS_LIST_RESIZE;
 	const MIN_WIDTH = 80;
 	const { fromL } = useResponsive();
 	const { fixed: fixedLanguages } = useContext(LanguagesContext);
 	const { userData } = useContext(UserDataContext);
 	const listScrollRef = useRef<HTMLDivElement | null>(null);
 
-	// Resizable sidebar width
+	// Resizable sidebar width. Default sits inside the expanded desktop band
+	// (Figma node 115: min 397 / max 500).
 	const [sidebarWidth, setSidebarWidth] = useState<number>(() => {
 		const saved = localStorage.getItem('sessionsList_width');
-		const width = saved ? Number.parseInt(saved, 10) : 380;
+		const width = saved ? Number.parseInt(saved, 10) : 420;
 
 		// Snap to proper size if in awkward range (prevent text truncation)
 		if (width > MIN_WIDTH && width < ICON_ONLY_THRESHOLD) {
 			// Snap to appropriate size
 			return width < SNAP_THRESHOLD ? MIN_WIDTH : ICON_ONLY_THRESHOLD;
+		}
+
+		// Snap the icon-only → expanded gap so the list is either compact or at
+		// least the expanded minimum, never stranded mid-range.
+		if (width > ICON_ONLY_THRESHOLD && width < EXPANDED_MIN_WIDTH) {
+			return width < EXPANDED_SNAP_THRESHOLD
+				? ICON_ONLY_THRESHOLD
+				: EXPANDED_MIN_WIDTH;
+		}
+
+		// Clamp anything above the expanded maximum.
+		if (width > EXPANDED_MAX_WIDTH) {
+			return EXPANDED_MAX_WIDTH;
 		}
 
 		return width;
@@ -67,6 +87,7 @@ export const SessionsListWrapper = ({
 					currentWidth={sidebarWidth}
 					onResize={handleResize}
 					scrollTargetRef={listScrollRef}
+					maxWidth={EXPANDED_MAX_WIDTH}
 				/>
 			</div>
 		);
@@ -89,6 +110,7 @@ export const SessionsListWrapper = ({
 				currentWidth={sidebarWidth}
 				onResize={handleResize}
 				scrollTargetRef={listScrollRef}
+				maxWidth={EXPANDED_MAX_WIDTH}
 			/>
 		</div>
 	);

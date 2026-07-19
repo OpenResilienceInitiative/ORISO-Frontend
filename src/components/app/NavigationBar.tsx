@@ -39,12 +39,12 @@ import { useResponsive } from '../../hooks/useResponsive';
 import { MENUPLACEMENT_RIGHT } from '../select/SelectDropdown';
 import {
 	useLiveChatAvailable,
-	setLiveChatAvailable
+	useLiveChatViaSidebar
 } from '../../utils/liveChatToggle';
 import { apiSetLiveChatAvailability } from '../../api/apiSetLiveChatAvailability';
 import {
-	LiveChatToggleInactiveIcon,
-	LiveChatToggleActiveIcon
+	LiveChatToggleActiveIcon,
+	LiveChatToggleInactiveIcon
 } from './LiveChatToggleIcons';
 
 export interface NavigationBarProps {
@@ -99,7 +99,8 @@ export const NavigationBar = ({
 		AUTHORITIES.CONSULTANT_DEFAULT,
 		userData
 	);
-	const [liveChatAvailable] = useLiveChatAvailable();
+	const [liveChatAvailable, setLiveChatAvailable] = useLiveChatAvailable();
+	const [liveChatViaSidebar] = useLiveChatViaSidebar();
 
 	/*
 	 * Resync persisted Live Chat availability to the backend after login/reload.
@@ -118,7 +119,6 @@ export const NavigationBar = ({
 	const ref_local = useRef<any>(null);
 	const ref_logout = useRef<any>(null);
 	const ref_select = useRef<any>(null);
-	const ref_live_chat = useRef<any>(null);
 
 	const handleLogout = useCallback(() => {
 		onLogout();
@@ -128,11 +128,11 @@ export const NavigationBar = ({
 	const navigate = useNavigate();
 
 	/**
-	 * Toggle live-chat availability. When turning ON we push the consultant
-	 * to the Anfragen (sessionPreview) tab with `?chip=liveChat` so they
-	 * land on the anonymous enquiry queue with the filter already active.
-	 * `sessionPreview` is the enquiries list; `sessionView` is Gespräch —
-	 * the intent here is enquiries.
+	 * Rail Live Chat toggle (only shown when the consultant opted into
+	 * "control from the menu bar" in My-Profile). Flips availability; on
+	 * turning ON we push to the anonymous enquiry queue with the filter active,
+	 * matching the original 1.0 behaviour. The rail icon stays visible in both
+	 * states — only its active/inactive styling changes.
 	 */
 	const handleLiveChatToggle = useCallback(() => {
 		const nextActive = !liveChatAvailable;
@@ -140,15 +140,9 @@ export const NavigationBar = ({
 		if (nextActive) {
 			navigate('/sessions/consultant/sessionPreview?chip=liveChat');
 		}
-	}, [liveChatAvailable, navigate]);
+	}, [liveChatAvailable, navigate, setLiveChatAvailable]);
 
 	const figmaConsultantNav = true;
-	/**
-	 * Live-chat toggle is a consultant-only availability switch. It no longer
-	 * links to the video-conference page; it simply flips a stored flag that
-	 * controls whether anonymous enquiries appear in the consultant's list.
-	 */
-	const showLiveChatNav = isConsultant;
 	const [animateNavIcon, setAnimateNavIcon] = useState(false);
 	const [hoveredNavItem, setHoveredNavItem] = useState<string | null>(null);
 	const [isLanguageSelected, setIsLanguageSelected] = useState(false);
@@ -494,7 +488,13 @@ export const NavigationBar = ({
 							)
 					})}
 				>
-					{showLiveChatNav && (
+					{/* Live Chat availability is activated in the My-Profile
+					    menu. Only when the consultant enables "Live Chat über
+					    Menü Leiste aktivieren" there does this rail toggle
+					    appear — and it then drives availability on/off directly,
+					    staying visible in both states (Frank feedback
+					    2026-07-19). */}
+					{isConsultant && liveChatViaSidebar && (
 						<button
 							type="button"
 							className={clsx(
@@ -503,7 +503,6 @@ export const NavigationBar = ({
 								'navigation__item--liveChatToggle',
 								liveChatAvailable && 'navigation__item--active'
 							)}
-							ref={ref_live_chat}
 							tabIndex={0}
 							role="switch"
 							aria-checked={liveChatAvailable}
@@ -526,26 +525,17 @@ export const NavigationBar = ({
 									{liveChatAvailable ? (
 										<LiveChatToggleActiveIcon
 											className="navigation__liveChatToggleIcon navigation__liveChatToggleIcon--active"
-											aria-label={translate(
-												'navigation.liveChatToggleActive'
-											)}
+											aria-hidden
 										/>
 									) : (
 										<LiveChatToggleInactiveIcon
 											className="navigation__liveChatToggleIcon"
-											aria-label={translate(
-												'navigation.liveChatToggleInactive'
-											)}
+											aria-hidden
 										/>
 									)}
 								</div>
 							</div>
-							<span
-								className={clsx(
-									'navigation__title',
-									'navigation__title--figma'
-								)}
-							>
+							<span className="navigation__title navigation__title--figma">
 								{translate('navigation.liveChat')}
 							</span>
 						</button>

@@ -90,13 +90,17 @@ const settings = {
 } as any;
 
 describe('RouterConfigConsultant navigation', () => {
-	it('exposes the existing drafts center in the consultant rail', () => {
+	it('keeps drafts as a route but not as a top-level rail item', () => {
 		const routerConfig = RouterConfigConsultant(settings);
 		const navigation = routerConfig.navigation;
 
+		// Drafts moved into the individual sections — no longer a rail item.
 		expect(navigation.map((item) => item.to)).toEqual(
-			expect.arrayContaining(['/notifications', '/drafts', '/profile'])
+			expect.arrayContaining(['/notifications', '/profile'])
 		);
+		expect(navigation.map((item) => item.to)).not.toContain('/drafts');
+
+		// The DraftsCenter page itself stays reachable via its route.
 		expect(routerConfig.profileRoutes).toEqual(
 			expect.arrayContaining([
 				expect.objectContaining({
@@ -109,20 +113,10 @@ describe('RouterConfigConsultant navigation', () => {
 		const notificationIndex = navigation.findIndex(
 			(item) => item.to === '/notifications'
 		);
-		const draftsIndex = navigation.findIndex(
-			(item) => item.to === '/drafts'
-		);
 		const profileIndex = navigation.findIndex(
 			(item) => item.to === '/profile'
 		);
-
-		expect(draftsIndex).toBeGreaterThan(notificationIndex);
-		expect(draftsIndex).toBeLessThan(profileIndex);
-		expect(navigation[draftsIndex]).toMatchObject({
-			navSlot: 'row',
-			titleKeys: {
-				large: 'navigation.drafts'
-			}
-		});
+		expect(notificationIndex).toBeGreaterThanOrEqual(0);
+		expect(profileIndex).toBeGreaterThan(notificationIndex);
 	});
 });
