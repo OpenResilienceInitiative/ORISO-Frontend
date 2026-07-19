@@ -1,0 +1,27 @@
+// Zeitleiste (Figma 7539-29134): divider lines + pink date pill.
+.messageDateDivider {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	width: 100%;
+	padding: 0 8px;
+	margin: 0 0 8px;
+
+	&__line {
+		flex: 1;
+		border-top: 1px solid #dedede;
+	}
+
+	&__pill {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: 3px 18px;
+		border-radius: 9999px;
+		background: var(--m3-primary-fixed-dim, #ffd1d1);
+		color: var(--m3-secondary, #4c555f);
+		font-size: 12px;
+		line-height: 16px;
+		white-space: nowrap;
+	}
+}

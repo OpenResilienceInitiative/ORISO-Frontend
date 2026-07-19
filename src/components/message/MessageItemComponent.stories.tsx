@@ -25,6 +25,7 @@ import {
 	mockMessageItemComponentProps,
 	mockServerSettingsContext,
 	mockCaseHandoverGrantedMessage,
+	mockManyReactions,
 	mockReactions,
 	mockSystemNotificationMessage,
 	mockUserData,
@@ -67,7 +68,7 @@ function MessageItemContextDecorator({
 							<div
 								style={{
 									maxWidth: 720,
-									padding: '32px 40px',
+									padding: '24px 16px',
 									background: '#ffffff'
 								}}
 							>
@@ -345,6 +346,49 @@ export const OutgoingWithReactions: Story = {
 				'Danke für deine Offenheit. Wir schauen uns das morgen gemeinsam an.'
 		}),
 		reactions: mockReactions(),
+		onReact: () => {},
+		onUnreact: () => {},
+		...baseHandlers
+	}
+};
+
+export const OutgoingWithManyReactions: Story = {
+	name: 'Outgoing with many reactions (horizontal scroll)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: true,
+			userId: MOCK_CONSULTANT_RC_ID,
+			displayName: 'Karina P',
+			username: 'karina.p@oriso.invalid',
+			isNotRead: true,
+			message: 'Viele Reaktionen: die Chip-Leiste scrollt horizontal.'
+		}),
+		reactions: mockManyReactions(),
+		onReact: () => {},
+		onUnreact: () => {},
+		...baseHandlers
+	}
+};
+
+export const IncomingWithManyReactions: Story = {
+	name: 'Incoming with many reactions (horizontal scroll)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_ASKER_RC_ID,
+			askerRcId: MOCK_ASKER_RC_ID,
+			displayName: 'Sanftes Alpaka Kala',
+			username: 'sanftes.alpaka.kala@oriso.invalid'
+		}),
+		reactions: mockManyReactions(),
 		onReact: () => {},
 		onUnreact: () => {},
 		...baseHandlers

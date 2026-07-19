@@ -254,6 +254,17 @@ export function mockReactions(
 		: base;
 }
 
+export function mockManyReactions(): AggregatedReaction[] {
+	return ['👍', '❤️', '😂', '😮', '😢', '🙏', '🎉', '🔥', '💡', '✅'].map(
+		(key, index) => ({
+			key,
+			count: ((index * 7) % 12) + 1,
+			senderIds: [MOCK_ASKER_RC_ID],
+			ownEventId: index === 3 ? '$own-reaction-many' : null
+		})
+	);
+}
+
 export const mockAppointmentAliasContent = JSON.stringify({
 	title: 'Erstgespräch Suchtberatung',
 	user: 'sanftes.alpaka.kala',

@@ -27,7 +27,6 @@ import {
 import { VideoCallMessage } from './VideoCallMessage';
 import { FurtherSteps } from './FurtherSteps';
 import { MessageAttachment } from './MessageAttachment';
-import { Text } from '../text/Text';
 import './message.styles';
 import { Appointment } from './Appointment';
 import { decryptText, MissingKeyError } from '../../utils/encryptionHelpers';
@@ -82,6 +81,7 @@ import { useMatrixRoomUsers } from '../../hooks/useMatrixRoomUsers';
 import { ConsultantListContext } from '../../globalState/provider/ConsultantListProvider';
 import { AggregatedReaction } from '../../utils/messageRelations';
 import { ReactComponent as CheckmarkIcon } from '../../resources/img/icons/checkmark.svg';
+import { MessageDateDivider } from './MessageDateDivider';
 
 const QUICK_REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
 
@@ -995,14 +995,11 @@ export const MessageItemComponent = ({
 	const getMessageDate = () => {
 		if (messageDate.str || messageDate.date) {
 			return (
-				<div className="messageItem__divider">
-					<Text
-						text={translate(
-							messageDate.str ? messageDate.str : messageDate.date
-						)}
-						type="divider"
-					/>
-				</div>
+				<MessageDateDivider
+					label={translate(
+						messageDate.str ? messageDate.str : messageDate.date
+					)}
+				/>
 			);
 		}
 		return null;
@@ -2123,7 +2120,7 @@ export const MessageItemComponent = ({
 										lastName={
 											resolvedIncomingNameParts.lastName
 										}
-										size={32}
+										size={44}
 									/>
 								</div>
 								<button
@@ -2239,7 +2236,7 @@ export const MessageItemComponent = ({
 										displayName={displayName}
 										firstName={userData?.firstName}
 										lastName={userData?.lastName}
-										size={32}
+										size={44}
 									/>
 								</div>
 							</div>

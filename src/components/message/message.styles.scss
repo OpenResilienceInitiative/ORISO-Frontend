@@ -79,10 +79,12 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 			align-self: center;
 		}
 
-		// The right avatar column sits in flow — no overlap, so reactions and
-		// sender info stay fully visible next to the avatar.
+		// Improvement report: the avatar must "cut" the bubble corner — the
+		// bubble tucks 19px under the in-flow avatar column. Safe since the
+		// reaction chips live inside the bubble now.
 		.messageItem__content {
 			margin-left: 0;
+			margin-right: -19px;
 			align-items: flex-end;
 		}
 	}
@@ -155,7 +157,12 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 		flex-direction: row;
 		align-items: flex-start;
 		gap: 8px;
-		max-width: min(71%, 600px);
+
+		// Figma 7539-29134: at 440px viewport the own bubble is ~345px wide —
+		// the wrap keeps only 18px opposite-side breathing room (the avatar
+		// column + overlap consume the rest), capped per the desktop spec
+		// (bubble max 720px + avatar column).
+		max-width: min(calc(100% - 18px), 760px);
 		position: relative;
 
 		&--left,
@@ -184,12 +191,14 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 		}
 	}
 
+	// Figma 7539-29134: the animal/graphic fills the 48px circle; the white
+	// ring is a thin 2px border, not an 8px inset.
 	&__avatar {
 		width: 48px;
 		height: 48px;
 		min-width: 48px;
 		min-height: 48px;
-		border: 8px solid #fff;
+		border: 2px solid #fff;
 		border-radius: 999px;
 		background: #fff;
 		overflow: hidden;
@@ -201,11 +210,11 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 
 		// Force Compound avatar to render properly
 		span[class*='_avatar_'] {
-			width: 32px !important;
-			height: 32px !important;
-			min-width: 32px !important;
-			min-height: 32px !important;
-			font-size: 16px !important;
+			width: 44px !important;
+			height: 44px !important;
+			min-width: 44px !important;
+			min-height: 44px !important;
+			font-size: 18px !important;
 			font-weight: 600 !important;
 			display: flex !important;
 			align-items: center !important;
@@ -1606,19 +1615,29 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 .messageItem__reactions {
 	display: flex;
 	flex: 1;
-	flex-wrap: wrap;
+
+	// Improvement report: on overflow the chip rail scrolls horizontally —
+	// chips are never stacked into multiple rows.
+	flex-wrap: nowrap;
 	align-items: center;
 	gap: 8px;
 	min-width: 0;
 	padding-top: 4px;
+	overflow-x: auto;
+	overscroll-behavior-x: contain;
+	-webkit-overflow-scrolling: touch;
+	scrollbar-width: thin;
 
-	&--right {
-		justify-content: flex-end;
+	// Right-align via auto margin instead of justify-content: flex-end —
+	// flex-end would make the overflowing start unreachable when scrolling.
+	&--right .messageItem__reactionPill:first-child {
+		margin-left: auto;
 	}
 
 	.messageItem__reactionPill {
 		display: inline-flex;
 		align-items: center;
+		flex-shrink: 0;
 		gap: 4px;
 		height: 32px;
 		padding: 6px 8px;
