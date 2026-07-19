@@ -1462,25 +1462,33 @@ export const SessionListItemComponent = ({
 					</div>
 				</div>
 				<div className="sessionsListItem__row">
-					<SessionListItemLastMessage
-						lastMessage={
-							caseHandoverContentLocked
-								? translate('caseHandover.list.hiddenPreview')
-								: displayLastMessage
-						}
-						lastMessageType={
-							caseHandoverContentLocked
-								? null
-								: activeSession.item.lastMessageType
-						}
-						language={language}
-						showLanguage={
-							language &&
-							activeSession.isEnquiry &&
-							!activeSession.isEmptyEnquiry
-						}
-						showSpan={activeSession.isEmptyEnquiry}
-					/>
+					{/* Figma nodes 115/1139/312: when the case-handover action
+					    button is shown it takes the place of the last-message
+					    preview (the text sits "under" the button). Without a
+					    button the normal last message is shown. */}
+					{!canShowCaseHandoverAction && (
+						<SessionListItemLastMessage
+							lastMessage={
+								caseHandoverContentLocked
+									? translate(
+											'caseHandover.list.hiddenPreview'
+										)
+									: displayLastMessage
+							}
+							lastMessageType={
+								caseHandoverContentLocked
+									? null
+									: activeSession.item.lastMessageType
+							}
+							language={language}
+							showLanguage={
+								language &&
+								activeSession.isEnquiry &&
+								!activeSession.isEmptyEnquiry
+							}
+							showSpan={activeSession.isEmptyEnquiry}
+						/>
+					)}
 					{!caseHandoverContentLocked &&
 						activeSession.item.attachment && (
 							<SessionListItemAttachment
@@ -1500,7 +1508,7 @@ export const SessionListItemComponent = ({
 								listItemAskerRcId={activeSession.item.askerRcId}
 							/>
 						)}
-					{canShowCaseHandoverAction ? (
+					{canShowCaseHandoverAction && (
 						<CaseHandoverActionButton
 							labels={{
 								requestAccess: translate(
@@ -1554,7 +1562,11 @@ export const SessionListItemComponent = ({
 							onConfirmSelection={onCaseHandoverBatchConfirm}
 							onDeselectAndClose={onCaseHandoverBatchClose}
 						/>
-					) : (
+					)}
+					{/* Consulting-type modality icon (Nähe / Live Chat / Interna
+					    / Gesprächskreis) — always shown, including alongside the
+					    case-handover action button (Figma node 115). */}
+					{
 						<>
 							{modality === Modality.LIVE_CHAT && (
 								<div
@@ -1664,7 +1676,7 @@ export const SessionListItemComponent = ({
 								</div>
 							)}
 						</>
-					)}
+					}
 				</div>
 			</div>
 			{overlayActive && overlayItem && (

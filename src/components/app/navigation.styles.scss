@@ -728,11 +728,16 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 	padding-bottom: env(safe-area-inset-bottom, 0);
 
 	@include breakpoint($fromLarge) {
-		flex: 0 0 73px !important;
-		width: 73px !important;
-		min-width: 73px !important;
-		max-width: 73px !important;
-		height: 100%;
+		/* Figma App.Oriso rail: 85px wide (was 73px). */
+		flex: 0 0 85px !important;
+		width: 85px !important;
+		min-width: 85px !important;
+		max-width: 85px !important;
+
+		/* Always fill the full screen height so the rail (and its pinned
+		   footer) reach the absolute bottom, independent of the parent height. */
+		height: 100vh;
+		min-height: 100vh;
 		border-top: 0;
 		border-right: 0;
 		background-color: var(--oriso-nav-background);
@@ -754,11 +759,16 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 		@include breakpoint($fromLarge) {
 			flex-direction: column;
 			align-items: center;
-			justify-content: space-between;
+			justify-content: flex-start;
 			gap: 0;
 			height: 100%;
-			padding: 24px 12px;
-			overflow: visible;
+
+			/* No horizontal padding: the item groups span the full 85px rail so
+			   the labels (wider than the items) are never clipped when the top
+			   group scrolls. The side gutter comes from centering the items.
+			   24px bottom keeps the pinned Logout off the floor (Figma). */
+			padding: 24px 0;
+			overflow: hidden;
 		}
 	}
 
@@ -783,7 +793,18 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 
 	.navigation__item__top {
 		@include breakpoint($fromLarge) {
-			flex: 0 1 auto;
+			/* Body of the rail: fills the space above the pinned footer and
+			   scrolls vertically when the items don't all fit. It spans the
+			   full 73px rail, so labels are not clipped on the right. */
+			flex: 1 1 auto;
+			min-height: 0;
+			overflow-y: auto;
+			scrollbar-width: none;
+
+			&::-webkit-scrollbar {
+				width: 0;
+				height: 0;
+			}
 		}
 	}
 
@@ -792,10 +813,23 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 		flex-direction: row;
 
 		@include breakpoint($fromLarge) {
+			/* Desktop rail: stack Language + Logout vertically. `row` is the
+			   mobile bottom-bar layout; left on the desktop rail it is wider
+			   than the 73px column and, with `align-items: center`, shoves the
+			   whole item column off-screen to the left (regression from the
+			   mobile-nav rebuild). */
 			flex-direction: column;
+
+			/* Pinned footer: never shrinks or scrolls, so Language + Logout are
+			   permanently stuck to the rail floor while the top group scrolls
+			   above them (same principle as the mobile bar). */
 			flex: 0 0 auto;
 			margin-top: auto !important;
 			padding-top: 12px;
+
+			/* Rail fill so scrolled top items never bleed through behind the
+			   pinned footer. */
+			background: var(--oriso-nav-background, #eae7e8);
 		}
 	}
 
@@ -822,16 +856,68 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 
 		@include breakpoint($fromLarge) {
 			flex: 0 0 auto;
-			width: 49px;
-			min-width: 49px;
+
+			/* Pin the item box to the 48px icon width (min-width: 0 stops the
+			   wider label from stretching it) so the icon lands exactly at the
+			   left margin; the wider label just overflows the box, centred. */
+			width: 48px;
+			min-width: 0;
 			padding: 0;
 			border-radius: 12px;
 			justify-content: flex-start;
+
+			/* Figma: icon column sits 13.5px from the left of the 85px rail
+			   (left-biased, not centred). The label keeps the item box ~57px
+			   wide, so the 48px icon centres with a ~4.5px offset inside it —
+			   9px left margin lands the icon at ~13.5px from the rail edge. */
+			align-self: flex-start;
+			margin-left: 9px;
 		}
 
 		&:hover {
 			background: transparent !important;
 			color: var(--oriso-nav-foreground);
+		}
+	}
+
+	/* Mobile bottom bar: mirror the desktop rail's pinned-bottom logic
+	   horizontally. Middle items keep a minimum size and scroll sideways when
+	   they don't all fit; Logout stays pinned to the right edge with a fill so
+	   it is always reachable (Language is hidden on mobile). When everything
+	   fits, flex-grow still spreads the items across the bar. */
+	@media screen and (width < 900px) {
+		.navigation__itemContainer {
+			justify-content: flex-start;
+			overflow-x: auto;
+			overflow-y: hidden;
+			scrollbar-width: none;
+
+			&::-webkit-scrollbar {
+				height: 0;
+			}
+		}
+
+		.navigation__item {
+			flex: 1 0 auto;
+			min-width: 64px;
+		}
+
+		.navigation__item--nav-logout {
+			position: sticky;
+			right: 0;
+			z-index: 2;
+			flex: 0 0 auto;
+
+			/* `!important` to beat `.navigation__item { background: transparent
+			   !important }` — without it the Logout box stays transparent and
+			   the items sliding underneath show through. Matches the bar fill so
+			   the pinned Logout cleanly masks whatever scrolls behind it. */
+			background: var(--oriso-nav-background, #eae7e8) !important;
+
+			/* Fill extended a little to the left so the item tucking under the
+			   pinned Logout fades cleanly into the bar instead of its label
+			   colliding with "Abmelden". */
+			box-shadow: -12px 0 0 var(--oriso-nav-background, #eae7e8);
 		}
 	}
 

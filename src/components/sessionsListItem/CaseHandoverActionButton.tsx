@@ -89,6 +89,31 @@ const IconLockedSmall = () => (
 	</svg>
 );
 
+// Menu-item leading icons (ORISO icon master file):
+// check_box_400_24px for "Confirm selection", X square_400_24px for
+// "Deselect and close". currentColor so they inherit the menu text colour.
+const IconCheckBoxMenu = () => (
+	<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden>
+		<path
+			d="M8.83333 13.5L14.7083 7.625L13.5417 6.45833L8.83333 11.1667L6.45833 8.79167L5.29167 9.95833L8.83333 13.5ZM4.16667 17.5C3.70833 17.5 3.31597 17.3368 2.98958 17.0104C2.66319 16.684 2.5 16.2917 2.5 15.8333V4.16667C2.5 3.70833 2.66319 3.31597 2.98958 2.98958C3.31597 2.66319 3.70833 2.5 4.16667 2.5H15.8333C16.2917 2.5 16.684 2.66319 17.0104 2.98958C17.3368 3.31597 17.5 3.70833 17.5 4.16667V15.8333C17.5 16.2917 17.3368 16.684 17.0104 17.0104C16.684 17.3368 16.2917 17.5 15.8333 17.5H4.16667Z"
+			fill="currentColor"
+		/>
+	</svg>
+);
+
+const IconXSquareMenu = () => (
+	<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden>
+		<path
+			d="M7.5 7.5L12.5 12.5M12.5 7.5L7.5 12.5M4.16667 2.5H15.8333C16.7538 2.5 17.5 3.24619 17.5 4.16667V15.8333C17.5 16.7538 16.7538 17.5 15.8333 17.5H4.16667C3.24619 17.5 2.5 16.7538 2.5 15.8333V4.16667C2.5 3.24619 3.24619 2.5 4.16667 2.5Z"
+			fill="none"
+			stroke="currentColor"
+			strokeWidth="2"
+			strokeLinecap="round"
+			strokeLinejoin="round"
+		/>
+	</svg>
+);
+
 const CheckboxGlyph = ({ selected }: { selected: boolean }) => (
 	<span
 		className={clsx(
@@ -171,12 +196,14 @@ export const CaseHandoverActionButton = ({
 					key: 'confirm',
 					title: labels.confirmSelectionTitle,
 					description: labels.confirmSelectionDescription,
+					Icon: IconCheckBoxMenu,
 					onSelect: onConfirmSelection
 				},
 				{
 					key: 'deselect',
 					title: labels.deselectTitle,
 					description: labels.deselectDescription,
+					Icon: IconXSquareMenu,
 					onSelect: onDeselectAndClose
 				}
 			]
@@ -185,6 +212,7 @@ export const CaseHandoverActionButton = ({
 					key: 'selectMultiple',
 					title: labels.selectMultipleTitle,
 					description: labels.selectMultipleDescription,
+					Icon: IconCheckBoxMenu,
 					onSelect: onSelectMultiple
 				}
 			];
@@ -281,11 +309,18 @@ export const CaseHandoverActionButton = ({
 							}}
 							data-cy={`case-handover-menu-${item.key}`}
 						>
-							<span className="sessionsListItem__handoverActionMenuItemTitle">
-								{item.title}
-							</span>
-							<span className="sessionsListItem__handoverActionMenuItemDescription">
-								{item.description}
+							{item.Icon && (
+								<span className="sessionsListItem__handoverActionMenuItemIcon">
+									<item.Icon />
+								</span>
+							)}
+							<span className="sessionsListItem__handoverActionMenuItemText">
+								<span className="sessionsListItem__handoverActionMenuItemTitle">
+									{item.title}
+								</span>
+								<span className="sessionsListItem__handoverActionMenuItemDescription">
+									{item.description}
+								</span>
 							</span>
 						</button>
 					))}

@@ -1877,7 +1877,11 @@
 			"liveChat": {
 				"title": "My Live-Chat availability",
 				"description": "Enable your availability and you will see waiting anonymous advice seekers under “Live-Chat requests” in First enquiries.",
-				"toggleLabel": "I'm available"
+				"toggleLabel": "I'm available",
+				"viaSidebar": {
+					"label": "Activate Live Chat via the menu bar",
+					"description": "When enabled, you switch your Live Chat availability on and off from the menu bar (sidebar) instead of here. The availability toggle above is then disabled, and the Live Chat icon stays permanently visible in the sidebar — clicking it only changes its state, it never disappears. When disabled, Live Chat is controlled here in My Profile as before."
+				}
 			},
 			"masterKey": {
 				"saveError": "A problem occurred while changing the password. Please try again."

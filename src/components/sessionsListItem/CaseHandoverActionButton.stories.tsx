@@ -36,7 +36,13 @@ const shell: React.CSSProperties = {
 	maxWidth: 420,
 	margin: '0 auto',
 	display: 'flex',
-	justifyContent: 'flex-end'
+	justifyContent: 'flex-end',
+	// The `.sessionsListItem` card class carries an entrance animation that
+	// starts at opacity:0; in this static button story it only makes the
+	// interaction play-test flaky (jest-dom toBeVisible reads opacity:0
+	// mid-animation). Neutralise it here — it is irrelevant to this story.
+	opacity: 1,
+	animation: 'none'
 };
 
 const Frame = ({ children }: { children: React.ReactNode }) => (

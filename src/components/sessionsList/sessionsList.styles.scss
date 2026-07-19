@@ -298,12 +298,16 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		flex: 1;
 		padding-right: 0;
 		scrollbar-width: none; // Firefox: hide native scrollbar
-		margin-left: 25px;
-		margin-right: 25px;
+		// Mobile: 6px gutter left/right of the chat cards (Frank feedback
+		// 2026-07-19); desktop widens to the 12px Figma gutter below.
+		margin-left: 6px;
+		margin-right: 6px;
 
 		@include breakpoint($fromLarge) {
 			margin-top: 0;
 			padding-top: 0;
+			margin-left: 12px;
+			margin-right: 12px;
 		}
 
 		// WebKit: hide native scrollbar (we render a custom one)
@@ -546,6 +550,26 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		}
 	}
 
+	// Empty state (Figma node 7108-45494): stacked cards each carry a 1px white
+	// frame, which reads as a continuous white hairline down the left and right
+	// column edges. With no cards those hairlines disappear, so the empty state
+	// re-draws them itself and stretches to fill the column height.
+	&__emptyState {
+		flex: 1 1 auto;
+		align-self: stretch;
+		box-sizing: border-box;
+
+		// Align the hairlines with the card gutter: 6px on mobile, 12px on
+		// desktop (matches the scrollContainer margins above).
+		margin: 0 6px;
+		border-left: 1px solid #fff;
+		border-right: 1px solid #fff;
+
+		@include breakpoint($fromLarge) {
+			margin: 0 12px;
+		}
+	}
+
 	&__reloadWrapper {
 		margin: $grid-base-three auto;
 
@@ -715,12 +739,15 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 	$toolbar-chip-selected-fg: #ffffff;
 
 	flex: 0;
-	padding: $grid-base-three $grid-base-three 0;
+
+	// Mobile: 6px outer gutter around the search bar (Frank feedback
+	// 2026-07-19). Desktop widens to the 12px Figma gutter below the rail.
+	padding: 6px 6px 0;
 	background-color: $sessionShellSurface;
 	z-index: 5;
 
 	@include breakpoint($fromLarge) {
-		padding: 0 $grid-base-three 0;
+		padding: 0 12px 0;
 	}
 
 	/* Enquiry tab gets a compact chip row (Chats + Live Chat) — no search,
