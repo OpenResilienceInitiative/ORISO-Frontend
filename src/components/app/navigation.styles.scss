@@ -733,7 +733,11 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 		width: 85px !important;
 		min-width: 85px !important;
 		max-width: 85px !important;
-		height: 100%;
+
+		/* Always fill the full screen height so the rail (and its pinned
+		   footer) reach the absolute bottom, independent of the parent height. */
+		height: 100vh;
+		min-height: 100vh;
 		border-top: 0;
 		border-right: 0;
 		background-color: var(--oriso-nav-background);

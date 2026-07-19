@@ -217,8 +217,7 @@ function RuntimeNavigation({
 									{`
 										.navigationSidebarStory {
 											width: 85px;
-											height: 860px;
-											min-height: 720px;
+											height: 100vh;
 											background: #eae7e8;
 											overflow: hidden;
 										}
