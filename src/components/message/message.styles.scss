@@ -1738,8 +1738,11 @@ $message-avatar-overlap: -19px;
 	height: 48px;
 	min-width: 48px;
 	border-radius: 50%;
-	background: var(--m3-on-surface, #17191c);
-	color: #fff;
+
+	// inverse-surface is the M3 surface role for dark-on-light emphasis —
+	// `on-*` roles are foreground-only (m3Sweep lint).
+	background: var(--m3-inverse-surface, #17191c);
+	color: var(--m3-inverse-on-surface, #fff);
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
