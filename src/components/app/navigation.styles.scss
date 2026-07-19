@@ -824,6 +824,7 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 			   permanently stuck to the rail floor while the top group scrolls
 			   above them (same principle as the mobile bar). */
 			flex: 0 0 auto;
+			margin-top: auto !important;
 			padding-top: 12px;
 
 			/* Rail fill so scrolled top items never bleed through behind the

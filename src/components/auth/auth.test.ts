@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	handleTokenRefresh,
 	hasActiveAuthSession,
+	isInviteRoute,
 	isPublicAuthRoute,
 	setTokens
 } from './auth';
@@ -40,6 +41,16 @@ vi.mock('../../utils/appConfig', () => ({
 }));
 
 describe('auth helpers', () => {
+	it.each([
+		['/invite/token', true],
+		['/invite/token/U25%20Suizidpr%C3%A4vention', true],
+		['/invited', false],
+		['/login', false]
+	])('detects invite route %s', (path, expected) => {
+		window.history.replaceState({}, '', path);
+		expect(isInviteRoute()).toBe(expected);
+	});
+
 	beforeEach(() => {
 		vi.clearAllMocks();
 		window.history.replaceState({}, '', '/login');
@@ -53,6 +64,8 @@ describe('auth helpers', () => {
 		['/login', true],
 		['/registration', true],
 		['/tenant-a/registration', true],
+		['/invite/token', true],
+		['/invite/token/U25%20Suizidpr%C3%A4vention', true],
 		['/error.401.html', true],
 		['/sessions/consultant/sessionView', false]
 	])('detects public auth route %s', (path, expected) => {

@@ -33,7 +33,10 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 	}
 	display: flex;
 	color: $body-font-color;
-	margin-bottom: 0px;
+
+	// Figma 8609-31260: cards sit flush in a stacked group; ONLY the active
+	// card gets 6px breathing room (its Figma frame carries py-6).
+	margin-bottom: 0;
 	transition:
 		background-color 160ms ease,
 		border-color 160ms ease,
@@ -47,10 +50,12 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		}
 	}
 
-	&:first-of-type {
+	// Exclude the active card so its 6px boundary gap (see &--active) is not
+	// overridden by the higher-specificity :first-of-type / :last-child rules.
+	&:first-of-type:not(.sessionsListItem--active) {
 		margin-top: 0px;
 	}
-	&:last-child {
+	&:last-child:not(.sessionsListItem--active) {
 		margin-bottom: 15px;
 	}
 
@@ -67,6 +72,8 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 	}
 
 	&--active {
+		// 6px gap above and below the selected card only.
+		margin: 6px 0;
 		transition:
 			background-color 160ms ease,
 			border-color 160ms ease,
@@ -176,12 +183,15 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		max-width: 100%;
 		min-width: 0;
 		box-sizing: border-box;
-		min-height: 112px;
+
+		// Figma 8609-31260: 160px card height; corners come from the stacked
+		// group (first/last/active rules below), flush cards stay square.
+		min-height: 160px;
 		padding: 0;
 		margin: 0;
 		background-color: $session-card-bg;
 		border: 1px solid $session-light-border;
-		border-radius: 0px;
+		border-radius: 0;
 		transition:
 			background-color 160ms ease,
 			border-color 160ms ease,
@@ -243,6 +253,9 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		border-color: #ffd8d4;
 	}
 
+	// Stacked-group corners (Figma 8609-31260): the group opens and closes
+	// with 24px corners; the active card carries its own full radius and its
+	// neighbours close the group edges around it.
 	&:first-child:not(.sessionsListItem--active) .sessionsListItem__content {
 		border-top-left-radius: 24px;
 		border-top-right-radius: 24px;
@@ -291,7 +304,9 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		&:last-child {
 			justify-content: space-between;
 			align-items: flex-end;
-			min-height: 36px;
+
+			// Figma 8609-31260: 48px-high bottom action row.
+			min-height: 48px;
 		}
 
 		&:not(:last-child) {

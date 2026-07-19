@@ -1428,6 +1428,12 @@
 			"title": "Note"
 		},
 		"read": "read",
+		"sendFailed": {
+			"body": "There was a problem with sending the message, likely due to encryption or a transfer error. Please copy it and try again. Check the status: one check means sent, two checks mean read, and a cross means it didn’t reach the server.",
+			"status": "not delivered",
+			"subtitle": "Resend your message again",
+			"title": "Sending message failed"
+		},
 		"sent": "sent",
 		"submit": {
 			"booking": {
@@ -2838,6 +2844,7 @@
 			"consultantUnknown": "Request stage",
 			"headline": "My consultations",
 			"peer": "Peer",
+			"unknown": "Unknown",
 			"writeEnquiry": "Write message now"
 		},
 		"view": {

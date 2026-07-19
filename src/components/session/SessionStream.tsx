@@ -81,6 +81,9 @@ export const SessionStream = ({
 	const { userData } = useContext(UserDataContext);
 	const { matrixClientService } = useMatrixClient();
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
+	// FE#514 follow-up: `team.discussion.new` notifications deep-link with
+	// ?teamDiscussion=1 — the panel then opens expanded instead of collapsed.
+	const teamDiscussionParam = useSearchParam<string>('teamDiscussion');
 
 	// MATRIX MIGRATION: Track component mount/unmount
 	useEffect(() => {
@@ -981,8 +984,10 @@ export const SessionStream = ({
 		<div className="session__wrapper">
 			{showTeamDiscussion && (
 				<TeamDiscussionPanel
+					key={activeSession.item.id}
 					sessionId={activeSession.item.id}
 					allowCreate={activeSession.isEnquiry}
+					initiallyOpen={teamDiscussionParam === '1'}
 				/>
 			)}
 			<SessionItemComponent

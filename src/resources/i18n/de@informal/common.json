@@ -401,19 +401,6 @@
 		"appointmentSet": {
 			"title": "Dein Termin wurde erstellt"
 		},
-		"delete": {
-			"deleted": {
-				"own": "Du hast diese Nachricht gelöscht."
-			},
-			"overlay": {
-				"copy": "Möchtest Du die Nachricht wirklich löschen?"
-			}
-		},
-		"submit": {
-			"booking": {
-				"headline": "Oder vereinbaren Sie jetzt einen Termin"
-			}
-		},
 		"audience": {
 			"all": "Alle",
 			"multiCount": "{{count}} Personen",
@@ -436,14 +423,31 @@
 			"toggleSection": "Bereich umschalten",
 			"selectAllBottom": "Select All"
 		},
-		"video": {
-			"description": "Du kannst jetzt an der Videokonferenz teilnehmen"
+		"delete": {
+			"deleted": {
+				"own": "Du hast diese Nachricht gelöscht."
+			},
+			"overlay": {
+				"copy": "Möchtest Du die Nachricht wirklich löschen?"
+			}
 		},
 		"reply": {
 			"previewLabel": "Antwort an",
 			"cancel": "Antwort verwerfen",
 			"quoteLabel": "Antwort auf",
 			"quoteUnknown": "Frühere Nachricht"
+		},
+		"sendFailed": {
+			"body": "Beim Senden der Nachricht gab es ein Problem, vermutlich durch die Verschlüsselung oder einen Übertragungsfehler. Bitte kopiere sie und versuche es erneut. Prüfe den Status: Ein Haken bedeutet gesendet, zwei Haken bedeuten gelesen, und ein Kreuz bedeutet, dass sie den Server nicht erreicht hat.",
+			"subtitle": "Sende deine Nachricht erneut"
+		},
+		"submit": {
+			"booking": {
+				"headline": "Oder vereinbaren Sie jetzt einen Termin"
+			}
+		},
+		"video": {
+			"description": "Du kannst jetzt an der Videokonferenz teilnehmen"
 		}
 	},
 	"notifications": {

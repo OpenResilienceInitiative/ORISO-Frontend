@@ -1,5 +1,5 @@
 import { endpoints } from '../resources/scripts/endpoints';
-import { fetchData, FETCH_METHODS } from './fetchData';
+import { fetchData, FETCH_ERRORS, FETCH_METHODS } from './fetchData';
 
 /**
  * Registers a session's Matrix room with the backend event listener
@@ -27,7 +27,11 @@ export const apiRegisterMatrixRoomForSync = async (
 	try {
 		await fetchData({
 			url: endpoints.matrixSyncRegister(sessionId),
-			method: FETCH_METHODS.POST
+			method: FETCH_METHODS.POST,
+			// A newly redeemed session can be rendered before its Matrix room is
+			// available. Registration is best-effort, so keep that expected 404
+			// local instead of letting fetchData redirect the whole app.
+			responseHandling: [FETCH_ERRORS.CATCH_ALL]
 		});
 	} catch (_error) {
 		// Best-effort: allow a retry the next time the session is opened.

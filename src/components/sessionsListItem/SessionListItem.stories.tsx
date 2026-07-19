@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { MenuVerticalIcon } from '../../resources/img/icons';
+import { MessageAvatar } from '../message/MessageAvatar';
+import { formatMessagePersonName } from '../message/messageNameUtils';
 import { ReactComponent as ArchiveIcon } from '../../resources/img/icons/inbox.svg';
 import { ReactComponent as BellOffIcon } from '../../resources/img/icons/bell-off.svg';
 import { ReactComponent as HelpIcon } from '../../resources/img/icons/i.svg';
@@ -443,8 +445,22 @@ function ConsultantCardMock({
 					</div>
 				</div>
 				<div className="sessionsListItem__row">
-					<MockAvatar letter="S" bg="#e8b4f0" />
-					<div className="sessionsListItem__username">{user}</div>
+					<div className="sessionsListItem__icon">
+						<MessageAvatar
+							isGroup={false}
+							isSystemNotification={false}
+							userId={user}
+							username={user}
+							displayName={formatMessagePersonName(
+								undefined,
+								user
+							)}
+							size={32}
+						/>
+					</div>
+					<div className="sessionsListItem__username">
+						{formatMessagePersonName(undefined, user)}
+					</div>
 				</div>
 				<div className="sessionsListItem__row">
 					<div className="sessionsListItem__subject sessionsListItem__subject--aliasMessage">
