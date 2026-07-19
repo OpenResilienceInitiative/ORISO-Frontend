@@ -24,6 +24,7 @@ import {
 	MessageItemComponent
 } from '../message/MessageItemComponent';
 import { useMatrixDecryptionFailures } from '../../hooks/useMatrixDecryptionFailures';
+import { MessageSendFailed } from '../message/MessageSendFailed';
 import {
 	ReactionEvent,
 	AggregatedReaction,
@@ -4744,6 +4745,17 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											message._id
 										)}
 									/>
+									{/* A message whose Megolm decryption broke gets
+									    the same standard "Sending message failed"
+									    card as a failed send (Figma 7086-57415) —
+									    its body already names encryption as the
+									    likely cause, so both failure modes share
+									    one notification. */}
+									{decryptionFailures.has(message._id) && (
+										<MessageSendFailed
+											messageTime={message.messageTime}
+										/>
+									)}
 								</React.Fragment>
 							))}
 						{shouldShowInlineTypingIndicator && (
