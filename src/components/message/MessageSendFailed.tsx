@@ -7,16 +7,54 @@ import './message.styles.scss';
 interface MessageSendFailedProps {
 	/** Timestamp of the send attempt (ms epoch as string, like MessageItem). */
 	messageTime?: string;
+	/** Render copy for an incoming event that could not be decrypted. */
+	isDecryptionFailure?: boolean;
 }
 
 /**
- * "Sending message failed" chat notification (Figma 8498-32373): identical
- * layout to a regular incoming message — avatar column with ring, header
- * next to it, indented bubble — only the avatar glyph ("!") and the red
- * cross in the time rail differ.
+ * Failure notification for an outgoing send or an incoming message that could
+ * not be decrypted. Both variants share the same chat-card presentation while
+ * keeping their instructions specific to what the user can actually do.
  */
-export const MessageSendFailed = ({ messageTime }: MessageSendFailedProps) => {
+export const MessageSendFailed = ({
+	messageTime,
+	isDecryptionFailure = false
+}: MessageSendFailedProps) => {
 	const { t: translate } = useTranslation();
+	const copy = isDecryptionFailure
+		? {
+				title: translate(
+					'message.decryptionFailed.title',
+					'Message decryption failed'
+				),
+				subtitle: translate(
+					'message.decryptionFailed.subtitle',
+					'Incoming message unavailable'
+				),
+				body: translate(
+					'message.decryptionFailed.body',
+					'This incoming message could not be decrypted. Ask the sender to send it again, or try reloading the conversation.'
+				),
+				status: translate(
+					'message.decryptionFailed.status',
+					'could not be decrypted'
+				)
+			}
+		: {
+				title: translate(
+					'message.sendFailed.title',
+					'Sending message failed'
+				),
+				subtitle: translate(
+					'message.sendFailed.subtitle',
+					'Resend your message again'
+				),
+				body: translate(
+					'message.sendFailed.body',
+					'There was a problem with sending the message, likely due to encryption or a transfer error. Please copy it and try again. Check the status: one check means sent, two checks mean read, and a cross means it didn’t reach the server.'
+				),
+				status: translate('message.sendFailed.status', 'not delivered')
+			};
 
 	return (
 		<div className="messageItem messageItem--sendFailed">
@@ -37,38 +75,23 @@ export const MessageSendFailed = ({ messageTime }: MessageSendFailedProps) => {
 					<div className="messageItem__header">
 						<div className="messageItem__sendFailedHeaderText">
 							<div className="messageItem__sendFailedTitle">
-								{translate(
-									'message.sendFailed.title',
-									'Sending message failed'
-								)}
+								{copy.title}
 							</div>
 							<div className="messageItem__sendFailedSubtitle">
-								{translate(
-									'message.sendFailed.subtitle',
-									'Resend your message again'
-								)}
+								{copy.subtitle}
 							</div>
 						</div>
 					</div>
 					<div className="messageItem__message">
-						{translate(
-							'message.sendFailed.body',
-							'There was a problem with sending the message, likely due to encryption or a transfer error. Please copy it and try again. Check the status: one check means sent, two checks mean read, and a cross means it didn’t reach the server.'
-						)}
+						{copy.body}
 						<div className="messageItem__timeRail">
 							<span className="messageItem__messageTime">
 								{messageTime ? formatToHHMM(messageTime) : null}
 								<span
 									className="messageItem__deliveryStatus messageItem__deliveryStatus--failed"
 									role="img"
-									aria-label={translate(
-										'message.sendFailed.status',
-										'nicht zugestellt'
-									)}
-									title={translate(
-										'message.sendFailed.status',
-										'nicht zugestellt'
-									)}
+									aria-label={copy.status}
+									title={copy.status}
 								>
 									<DeliveryFailedIcon
 										aria-hidden

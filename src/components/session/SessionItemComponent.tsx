@@ -4765,17 +4765,16 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											message._id
 										)}
 									/>
-									{/* A message whose Megolm decryption broke gets
-									    the same standard "Sending message failed"
-									    card as a failed send (Figma 7086-57415) —
-									    its body already names encryption as the
-									    likely cause, so both failure modes share
-									    one notification. */}
-									{decryptionFailures.has(message._id) && (
-										<MessageSendFailed
-											messageTime={message.messageTime}
-										/>
-									)}
+									{decryptionFailures.has(message._id) &&
+										(!isThreadsEnabled ||
+											!message.threadRootEventId) && (
+											<MessageSendFailed
+												messageTime={
+													message.messageTime
+												}
+												isDecryptionFailure
+											/>
+										)}
 								</React.Fragment>
 							))}
 						{/* "Sending message failed" cards for sends that never
@@ -4901,6 +4900,17 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 								)}
 							/>
 						)}
+						{activeThreadRootMessage &&
+							decryptionFailures.has(
+								activeThreadRootMessage._id
+							) && (
+								<MessageSendFailed
+									messageTime={
+										activeThreadRootMessage.messageTime
+									}
+									isDecryptionFailure
+								/>
+							)}
 						{messages &&
 							(ready || !activeSession.rid) &&
 							messages.map((message: MessageItem, index) => (
@@ -4957,6 +4967,16 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											message._id
 										)}
 									/>
+									{decryptionFailures.has(message._id) &&
+										message.threadRootEventId ===
+											activeThreadRootId && (
+											<MessageSendFailed
+												messageTime={
+													message.messageTime
+												}
+												isDecryptionFailure
+											/>
+										)}
 								</React.Fragment>
 							))}
 					</div>

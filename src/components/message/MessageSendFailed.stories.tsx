@@ -19,3 +19,11 @@ export const Default: Story = {
 		messageTime: String(new Date('2026-07-10T12:54:00').getTime())
 	}
 };
+
+export const DecryptionFailure: Story = {
+	name: 'Incoming message decryption failed',
+	args: {
+		messageTime: String(new Date('2026-07-10T12:54:00').getTime()),
+		isDecryptionFailure: true
+	}
+};

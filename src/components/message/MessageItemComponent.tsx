@@ -310,9 +310,9 @@ interface MessageItemComponentProps extends MessageItem {
 	/** Send failure: cross instead of checkmarks in the bubble time rail. */
 	sendFailed?: boolean;
 	/**
-	 * End-to-end encryption failed for the recipient (Matrix UTD:
-	 * `event.isEncrypted() && event.isDecryptionFailure()`). Rendered with the
-	 * same cross as `sendFailed` — to the user both mean "not delivered".
+	 * This client could not decrypt the Matrix event (UTD). Rendered with the
+	 * failure cross while the adjacent decryption card explains that the
+	 * incoming message is unavailable.
 	 */
 	encryptionBroke?: boolean;
 	handleDecryptionErrors: (

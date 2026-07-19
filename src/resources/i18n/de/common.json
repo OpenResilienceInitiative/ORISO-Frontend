@@ -1437,6 +1437,12 @@
 		"encryptionBroke": {
 			"status": "Verschlüsselung gebrochen"
 		},
+		"decryptionFailed": {
+			"body": "Diese eingehende Nachricht konnte nicht entschlüsselt werden. Bitten Sie die absendende Person, sie erneut zu senden, oder laden Sie die Unterhaltung neu.",
+			"status": "konnte nicht entschlüsselt werden",
+			"subtitle": "Eingehende Nachricht nicht verfügbar",
+			"title": "Nachricht konnte nicht entschlüsselt werden"
+		},
 		"groupChat": "Gruppenchat",
 		"isMyMessage": {
 			"name": "Ich"
