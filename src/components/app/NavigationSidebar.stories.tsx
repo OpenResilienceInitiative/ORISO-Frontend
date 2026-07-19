@@ -293,15 +293,19 @@ export const RuntimeConsultantRail: Story = {
 
 		const navigationRail = canvasElement.querySelector(
 			'.navigation__wrapper--figma-consultant'
-		) as HTMLElement;
+		);
+		await expect(navigationRail).not.toBeNull();
+
 		const bottomActions = canvasElement.querySelector(
 			'.navigation__item__bottom'
-		) as HTMLElement;
-		await expect(getComputedStyle(bottomActions).flexDirection).toBe(
-			'column'
 		);
+		await expect(bottomActions).not.toBeNull();
 
-		const railBounds = navigationRail.getBoundingClientRect();
+		await expect(
+			getComputedStyle(bottomActions as Element).flexDirection
+		).toBe('column');
+
+		const railBounds = (navigationRail as Element).getBoundingClientRect();
 		const logoutBounds = (
 			logoutAction as HTMLElement
 		).getBoundingClientRect();
