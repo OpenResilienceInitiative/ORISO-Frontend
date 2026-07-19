@@ -176,4 +176,38 @@ describe('formatMatrixTimelineEvent m.image dimensions (WP-4)', () => {
 		expect(message.attachments[0]).not.toHaveProperty('image_w');
 		expect(message.attachments[0]).not.toHaveProperty('image_h');
 	});
+
+	it('threads through only a blocked media-check verdict', () => {
+		const blocked = formatMatrixTimelineEvent(
+			makeEvent({
+				msgtype: 'm.image',
+				body: 'blocked.png',
+				file: { url: 'mxc://hs/media-3' },
+				info: {
+					'mimetype': 'image/png',
+					'org.oriso.media_check_state': 'blocked'
+				}
+			}),
+			null,
+			'encrypted'
+		);
+		const selfAssertedSafe = formatMatrixTimelineEvent(
+			makeEvent({
+				msgtype: 'm.image',
+				body: 'safe.png',
+				file: { url: 'mxc://hs/media-4' },
+				info: {
+					'mimetype': 'image/png',
+					'org.oriso.media_check_state': 'safe'
+				}
+			}),
+			null,
+			'encrypted'
+		);
+
+		expect(blocked.attachments[0].media_check_state).toBe('blocked');
+		expect(selfAssertedSafe.attachments[0]).not.toHaveProperty(
+			'media_check_state'
+		);
+	});
 });

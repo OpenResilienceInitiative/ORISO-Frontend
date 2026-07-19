@@ -1086,10 +1086,21 @@ export const MessageItemComponent = ({
 		: isLiveChatModality
 			? 'anonymous'
 			: 'oneOnOne';
-	const attachmentMediaCheckState: MediaCheckState =
-		isLiveChatModality && !isMyMessage && isUserMessage()
+	const getAttachmentMediaCheckState = (
+		attachment: MessageService.Schemas.AttachmentDTO
+	): MediaCheckState => {
+		const scannerState = (
+			attachment as MessageService.Schemas.AttachmentDTO & {
+				media_check_state?: string;
+			}
+		).media_check_state;
+		if (scannerState === 'blocked') {
+			return 'blocked';
+		}
+		return isLiveChatModality && !isMyMessage && isUserMessage()
 			? 'unchecked'
 			: 'safe';
+	};
 	const attachmentInlineDisplayEnabled = hasMediaInlineDisplayFeature(
 		tenant?.settings,
 		mediaChatType
@@ -2035,9 +2046,9 @@ export const MessageItemComponent = ({
 										file={file}
 										t={t}
 										hasRenderedMessage={hasRenderedMessage}
-										mediaCheckState={
-											attachmentMediaCheckState
-										}
+										mediaCheckState={getAttachmentMediaCheckState(
+											attachment
+										)}
 										inlineDisplayEnabled={
 											attachmentInlineDisplayEnabled
 										}

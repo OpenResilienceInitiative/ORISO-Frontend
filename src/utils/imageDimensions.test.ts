@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { getImageDimensions } from './imageDimensions';
 
@@ -43,5 +44,20 @@ describe('getImageDimensions', () => {
 		vi.stubGlobal('Image', FailingImage);
 		const file = new File(['x'], 'a.png', { type: 'image/png' });
 		expect(await getImageDimensions(file)).toBeNull();
+	});
+
+	it('times out instead of blocking when image decoding never settles', async () => {
+		vi.useFakeTimers();
+		vi.stubGlobal(
+			'createImageBitmap',
+			vi.fn(() => new Promise(() => {}))
+		);
+		const file = new File(['x'], 'a.png', { type: 'image/png' });
+
+		const dimensions = getImageDimensions(file);
+		await vi.advanceTimersByTimeAsync(6000);
+
+		await expect(dimensions).resolves.toBeNull();
+		vi.useRealTimers();
 	});
 });

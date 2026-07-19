@@ -975,8 +975,8 @@ $message-avatar-overlap: -19px;
 					border-radius: 0;
 				}
 
-				// Media check state "unchecked" (WP-4): the image stays
-				// blurred until the counsellor deliberately reveals it.
+				// Media check state "unchecked" (WP-4): this styles the
+				// no-source placeholder shown before deliberate reveal.
 				&--blurred {
 					img {
 						filter: blur(24px);

@@ -18,9 +18,8 @@ import { getIconForAttachmentType } from './messageHelpers';
 
 /**
  * Media check state of an attachment (WP-4, epic ORISO-Admin#366):
- * `unchecked` renders images blurred until revealed (phase 1: the counsellor's
- * click is the verdict; later the content scanner sets it), `blocked` never
- * renders or links the file, `safe` renders normally.
+ * `unchecked` keeps images unloaded until explicitly revealed, `blocked`
+ * never renders or links the file, and `safe` renders normally.
  */
 export type MediaCheckState = 'unchecked' | 'safe' | 'blocked';
 
@@ -178,27 +177,23 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 	const effectiveMediaState: MediaCheckState =
 		mediaCheckState === 'unchecked' && revealed ? 'safe' : mediaCheckState;
 	const showImagePreview = isImage && inlineDisplayEnabled;
-	const isBlurred = showImagePreview && effectiveMediaState === 'unchecked';
+	const isAwaitingReveal =
+		isImage && effectiveMediaState === 'unchecked' && !revealed;
 	const attachmentDimensions = props.attachment as unknown as {
 		image_w?: number;
 		image_h?: number;
 	};
 
-	// Reveal instead of download while an image is still unchecked.
-	const guardUncheckedClick = (event: React.MouseEvent) => {
-		if (isBlurred) {
-			event.preventDefault();
-			setRevealed(true);
+	const revealUncheckedImage = () => {
+		setRevealed(true);
+		if (isEncryptedAttachment && attachmentStatus === ENCRYPTED) {
+			void decryptFile(buildUrl(props.attachment.title_link));
 		}
 	};
 
 	const renderImagePreview = (src: string) => (
 		<div
-			className={`messageItem__message__attachment__preview${
-				isBlurred
-					? ' messageItem__message__attachment__preview--blurred'
-					: ''
-			}`}
+			className="messageItem__message__attachment__preview"
 			style={
 				attachmentDimensions.image_w && attachmentDimensions.image_h
 					? {
@@ -207,27 +202,7 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 					: undefined
 			}
 		>
-			<img
-				src={src}
-				alt={
-					isBlurred
-						? translate('attachments.mediaCheck.unchecked')
-						: props.attachment.title
-				}
-			/>
-			{isBlurred && (
-				<button
-					type="button"
-					className="messageItem__message__attachment__reveal"
-					onClick={(event) => {
-						event.preventDefault();
-						event.stopPropagation();
-						setRevealed(true);
-					}}
-				>
-					{translate('attachments.mediaCheck.reveal')}
-				</button>
-			)}
+			<img src={src} alt={props.attachment.title} />
 		</div>
 	);
 
@@ -387,6 +362,23 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 		);
 	}
 
+	if (isAwaitingReveal) {
+		return (
+			<div className="messageItem__message__attachment messageItem__message__attachment--unchecked">
+				<div className="messageItem__message__attachment__preview messageItem__message__attachment__preview--blurred">
+					<p>{translate('attachments.mediaCheck.unchecked')}</p>
+					<button
+						type="button"
+						className="messageItem__message__attachment__reveal"
+						onClick={revealUncheckedImage}
+					>
+						{translate('attachments.mediaCheck.reveal')}
+					</button>
+				</div>
+			</div>
+		);
+	}
+
 	return (
 		<>
 			{!isEncryptedAttachment ? (
@@ -398,7 +390,6 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 						download={props.file.name}
 						rel="noopener noreferrer"
 						className="messageItem__message__attachment"
-						onClick={guardUncheckedClick}
 						style={{
 							textDecoration: 'none',
 							color: 'inherit',
@@ -454,7 +445,6 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 						download={props.file.name}
 						rel="noopener noreferrer"
 						className="messageItem__message__attachment"
-						onClick={guardUncheckedClick}
 						style={{
 							textDecoration: 'none',
 							color: 'inherit',

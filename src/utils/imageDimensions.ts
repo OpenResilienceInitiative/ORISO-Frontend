@@ -12,9 +12,17 @@ export const getImageDimensions = async (
 	}
 	try {
 		if (typeof createImageBitmap === 'function') {
-			const bitmap = await createImageBitmap(file);
-			const dimensions = { w: bitmap.width, h: bitmap.height };
-			bitmap.close();
+			const dimensionsPromise = createImageBitmap(file).then((bitmap) => {
+				const dimensions = { w: bitmap.width, h: bitmap.height };
+				bitmap.close();
+				return dimensions;
+			});
+			const dimensions = await Promise.race([
+				dimensionsPromise,
+				new Promise<null>((resolve) =>
+					window.setTimeout(() => resolve(null), 3000)
+				)
+			]);
 			return dimensions;
 		}
 	} catch {
@@ -23,13 +31,20 @@ export const getImageDimensions = async (
 	return new Promise((resolve) => {
 		const objectUrl = URL.createObjectURL(file);
 		const probe = new Image();
-		probe.onload = () => {
+		let settled = false;
+		const finish = (dimensions: { w: number; h: number } | null) => {
+			if (settled) return;
+			settled = true;
+			window.clearTimeout(timeoutId);
 			URL.revokeObjectURL(objectUrl);
-			resolve({ w: probe.naturalWidth, h: probe.naturalHeight });
+			resolve(dimensions);
+		};
+		const timeoutId = window.setTimeout(() => finish(null), 3000);
+		probe.onload = () => {
+			finish({ w: probe.naturalWidth, h: probe.naturalHeight });
 		};
 		probe.onerror = () => {
-			URL.revokeObjectURL(objectUrl);
-			resolve(null);
+			finish(null);
 		};
 		probe.src = objectUrl;
 	});

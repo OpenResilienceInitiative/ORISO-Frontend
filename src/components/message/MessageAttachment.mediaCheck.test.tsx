@@ -1,9 +1,8 @@
 // @vitest-environment jsdom
 /**
  * WP-4 media check states (epic ORISO-Admin#366): images from anonymous
- * live-chat guests render blurred until the counsellor reveals them, blocked
- * media never renders, and inline display can be switched off per chat type
- * (media then arrives as a plain file card).
+ * live-chat guests are not loaded until the counsellor reveals them, blocked
+ * media never renders, and inline display can be switched off per chat type.
  */
 import * as React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
@@ -77,13 +76,11 @@ describe('MessageAttachment media check states', () => {
 		).toBeNull();
 	});
 
-	it('blurs unchecked guest images until the counsellor reveals them', () => {
+	it('does not load or link unchecked guest images until reveal', () => {
 		renderAttachment({ mediaCheckState: 'unchecked' });
 
-		const preview = document.querySelector(
-			'.messageItem__message__attachment__preview--blurred'
-		);
-		expect(preview).not.toBeNull();
+		expect(screen.queryByRole('img')).toBeNull();
+		expect(document.querySelector('a')).toBeNull();
 
 		fireEvent.click(
 			screen.getByRole('button', {
@@ -91,12 +88,8 @@ describe('MessageAttachment media check states', () => {
 			})
 		);
 
-		expect(
-			document.querySelector(
-				'.messageItem__message__attachment__preview--blurred'
-			)
-		).toBeNull();
-		expect(screen.getByRole('img')).toBeTruthy();
+		const img = screen.getByRole('img');
+		expect(img.getAttribute('src')).toContain('media-1');
 	});
 
 	it('renders a blocked tile without image or download link', () => {

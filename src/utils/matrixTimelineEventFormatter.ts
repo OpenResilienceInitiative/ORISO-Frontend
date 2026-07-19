@@ -107,6 +107,11 @@ export const formatMatrixTimelineEvent = (
 		if (isEncryptedMedia) {
 			attachment.matrix_encrypted_file = content.file;
 		}
+		// Only a fail-closed verdict is accepted from event metadata. A sender
+		// cannot mark their own media safe and bypass the recipient-side gate.
+		if (content.info?.['org.oriso.media_check_state'] === 'blocked') {
+			attachment.media_check_state = 'blocked';
+		}
 		baseMessage.file = {
 			name: content.body,
 			type: content.info?.mimetype || 'application/octet-stream'

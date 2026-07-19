@@ -138,7 +138,7 @@ const uncheckedImageArgs = {
 	t: undefined
 };
 
-/** Image from an anonymous live-chat guest: blurred until the counsellor reveals it. */
+/** Image from an anonymous live-chat guest: unloaded until the counsellor reveals it. */
 export const UncheckedBlurred: Story = {
 	args: {
 		...uncheckedImageArgs,
