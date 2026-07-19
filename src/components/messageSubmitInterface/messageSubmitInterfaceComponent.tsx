@@ -96,6 +96,7 @@ import {
 } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
 import { getIconForAttachmentType } from '../message/messageHelpers';
 import { TipTapComposer, TipTapComposerRef } from './TipTapComposer';
+import { useImagePreviewUrl } from './useImagePreviewUrl';
 import { HIGHLIGHT_SNIPPET_SELECTED_EVENT } from './highlightSnippetEvents';
 import { isMyMessage } from '../session/sessionHelpers';
 import { transportMarkupToComposerHtml } from './transportMarkupToComposerHtml';
@@ -1661,21 +1662,10 @@ export const MessageSubmitInterfaceComponent = ({
 		};
 	}, [cleanupVoiceRecorder]);
 
-	// Image thumbnail for the pre-send attachment card (revoked on change/unmount).
-	const attachmentPreviewUrl = useMemo(
-		() =>
-			attachmentSelected?.type?.startsWith('image/')
-				? URL.createObjectURL(attachmentSelected)
-				: null,
-		[attachmentSelected]
-	);
-	useEffect(() => {
-		return () => {
-			if (attachmentPreviewUrl) {
-				URL.revokeObjectURL(attachmentPreviewUrl);
-			}
-		};
-	}, [attachmentPreviewUrl]);
+	// Image thumbnail for the pre-send attachment card. Create/revoke are paired
+	// inside the hook's effect so StrictMode's mount → cleanup → mount recreates
+	// a fresh URL instead of leaving the <img> on a revoked blob (broken thumb).
+	const attachmentPreviewUrl = useImagePreviewUrl(attachmentSelected);
 
 	const handleAttachmentRemoval = useCallback(() => {
 		if (uploadProgress && attachmentUpload) {
