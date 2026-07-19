@@ -65,6 +65,11 @@
 				"received": "Du hast eine Datei erhalten.",
 				"sent": "Du hast eine Datei gesendet."
 			}
+		},
+		"mediaCheck": {
+			"unchecked": "Bild aus anonymem Chat – noch nicht geprüft",
+			"reveal": "Bild anzeigen",
+			"blocked": "Von der Sicherheitsprüfung blockiert"
 		}
 	},
 	"banUser": {

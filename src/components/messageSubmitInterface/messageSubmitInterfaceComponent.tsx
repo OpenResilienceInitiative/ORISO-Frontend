@@ -1627,6 +1627,21 @@ export const MessageSubmitInterfaceComponent = ({
 			: displayAttachmentToUpload(attachment);
 	}, [displayAttachmentToUpload, handleLargeAttachments]);
 
+	/** Files dropped/pasted into the TipTap editor (WP-4): same single-attachment flow. */
+	const handleComposerFilesSelected = useCallback(
+		(files: File[]) => {
+			const attachment = files[0];
+			if (!attachment) {
+				return;
+			}
+			const attachmentSizeMB = getAttachmentSizeMBForKB(attachment.size);
+			attachmentSizeMB > ATTACHMENT_MAX_SIZE_IN_MB
+				? handleLargeAttachments()
+				: displayAttachmentToUpload(attachment);
+		},
+		[displayAttachmentToUpload, handleLargeAttachments]
+	);
+
 	const handlePreselectedAttachmentChange = useCallback(() => {
 		const attachment = preselectedFile;
 		const attachmentSizeMB = getAttachmentSizeMBForKB(attachment.size);
@@ -1645,6 +1660,22 @@ export const MessageSubmitInterfaceComponent = ({
 			cleanupVoiceRecorder();
 		};
 	}, [cleanupVoiceRecorder]);
+
+	// Image thumbnail for the pre-send attachment card (revoked on change/unmount).
+	const attachmentPreviewUrl = useMemo(
+		() =>
+			attachmentSelected?.type?.startsWith('image/')
+				? URL.createObjectURL(attachmentSelected)
+				: null,
+		[attachmentSelected]
+	);
+	useEffect(() => {
+		return () => {
+			if (attachmentPreviewUrl) {
+				URL.revokeObjectURL(attachmentPreviewUrl);
+			}
+		};
+	}, [attachmentPreviewUrl]);
 
 	const handleAttachmentRemoval = useCallback(() => {
 		if (uploadProgress && attachmentUpload) {
@@ -3894,11 +3925,21 @@ export const MessageSubmitInterfaceComponent = ({
 								{attachmentSelected ? (
 									<div className="textarea__attachmentMode">
 										<div className="textarea__attachmentModeCard">
-											<span className="textarea__attachmentModeIcon">
-												{getAttachmentIcon(
-													attachmentSelected.type
-												)}
-											</span>
+											{attachmentPreviewUrl ? (
+												<img
+													className="textarea__attachmentModeThumb"
+													src={attachmentPreviewUrl}
+													alt={
+														attachmentSelected.name
+													}
+												/>
+											) : (
+												<span className="textarea__attachmentModeIcon">
+													{getAttachmentIcon(
+														attachmentSelected.type
+													)}
+												</span>
+											)}
 											<div className="textarea__attachmentModeInfo">
 												<p className="textarea__attachmentModeName">
 													{attachmentSelected.name}
@@ -4055,6 +4096,11 @@ export const MessageSubmitInterfaceComponent = ({
 											onEditLast={handleEditLast}
 											onCancel={handleCancelEdit}
 											onUpload={handleUpload}
+											onFilesSelected={
+												hasUploadFunctionality
+													? handleComposerFilesSelected
+													: undefined
+											}
 											onSubmitShortcut={() => {
 												if (
 													!uploadProgress &&

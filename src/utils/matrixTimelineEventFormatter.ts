@@ -94,6 +94,16 @@ export const formatMatrixTimelineEvent = (
 		if (content.msgtype === 'm.image' && !isEncryptedMedia) {
 			attachment.image_url = downloadPath;
 		}
+		// Intrinsic pixel size (sender-provided, WP-4): lets the renderer
+		// reserve a correctly-scaled thumbnail box before the image loads.
+		if (
+			content.msgtype === 'm.image' &&
+			typeof content.info?.w === 'number' &&
+			typeof content.info?.h === 'number'
+		) {
+			attachment.image_w = content.info.w;
+			attachment.image_h = content.info.h;
+		}
 		if (isEncryptedMedia) {
 			attachment.matrix_encrypted_file = content.file;
 		}

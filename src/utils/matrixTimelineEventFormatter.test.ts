@@ -140,3 +140,40 @@ describe('extractReactionEvents', () => {
 		expect(extractReactionEvents([])).toEqual([]);
 	});
 });
+
+describe('formatMatrixTimelineEvent m.image dimensions (WP-4)', () => {
+	it('threads intrinsic w/h into the attachment for scaled thumbnails', () => {
+		const message = formatMatrixTimelineEvent(
+			makeEvent({
+				msgtype: 'm.image',
+				body: 'photo.png',
+				file: { url: 'mxc://hs/media-1' },
+				info: { mimetype: 'image/png', size: 512, w: 120, h: 72 }
+			}),
+			null,
+			'encrypted'
+		);
+
+		expect(message.attachments[0]).toMatchObject({
+			type: 'image',
+			image_w: 120,
+			image_h: 72
+		});
+	});
+
+	it('omits dimensions when the sender did not provide them', () => {
+		const message = formatMatrixTimelineEvent(
+			makeEvent({
+				msgtype: 'm.image',
+				body: 'photo.png',
+				file: { url: 'mxc://hs/media-2' },
+				info: { mimetype: 'image/png', size: 512 }
+			}),
+			null,
+			'encrypted'
+		);
+
+		expect(message.attachments[0]).not.toHaveProperty('image_w');
+		expect(message.attachments[0]).not.toHaveProperty('image_h');
+	});
+});
