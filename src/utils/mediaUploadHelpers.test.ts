@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { hasMediaUploadFeature } from './mediaUploadHelpers';
+import {
+	hasMediaInlineDisplayFeature,
+	hasMediaUploadFeature
+} from './mediaUploadHelpers';
 
 describe('hasMediaUploadFeature', () => {
 	it('defaults to enabled when settings are missing or empty', () => {
@@ -44,5 +47,30 @@ describe('hasMediaUploadFeature', () => {
 				'oneOnOne'
 			)
 		).toBe(false);
+	});
+});
+
+describe('hasMediaInlineDisplayFeature', () => {
+	it('defaults to enabled when settings are missing or empty', () => {
+		expect(hasMediaInlineDisplayFeature(undefined, 'oneOnOne')).toBe(true);
+		expect(hasMediaInlineDisplayFeature({}, 'anonymous')).toBe(true);
+	});
+
+	it('disables every chat type when the family master is off', () => {
+		const settings = { featureMediaInlineDisplayEnabled: false };
+		expect(hasMediaInlineDisplayFeature(settings, 'oneOnOne')).toBe(false);
+		expect(hasMediaInlineDisplayFeature(settings, 'anonymous')).toBe(false);
+		expect(hasMediaInlineDisplayFeature(settings, 'group')).toBe(false);
+		expect(hasMediaInlineDisplayFeature(settings, 'supervision')).toBe(
+			false
+		);
+	});
+
+	it('disables only the chat type whose variant is off', () => {
+		const settings = {
+			featureMediaInlineDisplayAnonymousChatsEnabled: false
+		};
+		expect(hasMediaInlineDisplayFeature(settings, 'anonymous')).toBe(false);
+		expect(hasMediaInlineDisplayFeature(settings, 'group')).toBe(true);
 	});
 });

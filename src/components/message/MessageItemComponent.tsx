@@ -9,7 +9,8 @@ import {
 	AUTHORITIES,
 	E2EEContext,
 	ServerSettingsContext,
-	ActiveSessionContext
+	ActiveSessionContext,
+	useTenant
 } from '../../globalState';
 import { STATUS_ARCHIVED } from '../../globalState/interfaces';
 import { isUserModerator } from '../session/sessionHelpers';
@@ -27,6 +28,12 @@ import {
 import { VideoCallMessage } from './VideoCallMessage';
 import { FurtherSteps } from './FurtherSteps';
 import { MessageAttachment } from './MessageAttachment';
+import type { MediaCheckState } from './MessageAttachment';
+import { getModality, Modality } from '../session/getModality';
+import {
+	hasMediaInlineDisplayFeature,
+	type MediaChatType
+} from '../../utils/mediaUploadHelpers';
 import './message.styles';
 import { Appointment } from './Appointment';
 import { decryptText, MissingKeyError } from '../../utils/encryptionHelpers';
@@ -367,6 +374,7 @@ export const MessageItemComponent = ({
 	const { activeSession, reloadActiveSession } =
 		useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
+	const tenant = useTenant();
 	const rcUsersContext = useMatrixRoomUsers();
 	const consultantContext = useContext(ConsultantListContext);
 	const getComparableRecipientIds = useCallback(
@@ -1067,6 +1075,36 @@ export const MessageItemComponent = ({
 		userId === askerRcId ||
 		(activeSession.isGroup &&
 			!activeSession.item.moderators?.includes(userId));
+
+	// WP-4 media check (epic ORISO-Admin#366): images from anonymous live-chat
+	// guests render blurred until the counsellor reveals them (phase 1: the
+	// human is the check); inline display is a per-chat-type tenant switch.
+	const isLiveChatModality =
+		getModality(activeSession) === Modality.LIVE_CHAT;
+	const mediaChatType: MediaChatType = activeSession?.isGroup
+		? 'group'
+		: isLiveChatModality
+			? 'anonymous'
+			: 'oneOnOne';
+	const getAttachmentMediaCheckState = (
+		attachment: MessageService.Schemas.AttachmentDTO
+	): MediaCheckState => {
+		const scannerState = (
+			attachment as MessageService.Schemas.AttachmentDTO & {
+				media_check_state?: string;
+			}
+		).media_check_state;
+		if (scannerState === 'blocked') {
+			return 'blocked';
+		}
+		return isLiveChatModality && !isMyMessage && isUserMessage()
+			? 'unchecked'
+			: 'safe';
+	};
+	const attachmentInlineDisplayEnabled = hasMediaInlineDisplayFeature(
+		tenant?.settings,
+		mediaChatType
+	);
 
 	const videoCallMessage: VideoCallMessageDTO = alias?.videoCallMessageDTO;
 	const isFurtherStepsMessage =
@@ -2008,6 +2046,12 @@ export const MessageItemComponent = ({
 										file={file}
 										t={t}
 										hasRenderedMessage={hasRenderedMessage}
+										mediaCheckState={getAttachmentMediaCheckState(
+											attachment
+										)}
+										inlineDisplayEnabled={
+											attachmentInlineDisplayEnabled
+										}
 									/>
 								))}
 							{!isSystemNotification && timeRailInBubble}

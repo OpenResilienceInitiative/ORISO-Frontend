@@ -94,8 +94,23 @@ export const formatMatrixTimelineEvent = (
 		if (content.msgtype === 'm.image' && !isEncryptedMedia) {
 			attachment.image_url = downloadPath;
 		}
+		// Intrinsic pixel size (sender-provided, WP-4): lets the renderer
+		// reserve a correctly-scaled thumbnail box before the image loads.
+		if (
+			content.msgtype === 'm.image' &&
+			typeof content.info?.w === 'number' &&
+			typeof content.info?.h === 'number'
+		) {
+			attachment.image_w = content.info.w;
+			attachment.image_h = content.info.h;
+		}
 		if (isEncryptedMedia) {
 			attachment.matrix_encrypted_file = content.file;
+		}
+		// Only a fail-closed verdict is accepted from event metadata. A sender
+		// cannot mark their own media safe and bypass the recipient-side gate.
+		if (content.info?.['org.oriso.media_check_state'] === 'blocked') {
+			attachment.media_check_state = 'blocked';
 		}
 		baseMessage.file = {
 			name: content.body,
