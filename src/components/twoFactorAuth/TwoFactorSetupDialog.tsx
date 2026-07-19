@@ -309,7 +309,7 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 	}, [isRequestInProgress]);
 
 	const finishSetup = useCallback(
-		async (nextStep: TwoFactorSetupStep, syncErrorKey: string) => {
+		async (nextStep: TwoFactorSetupStep) => {
 			setOtp('');
 			setErrorKey('');
 			setHelperKey('');
@@ -322,11 +322,14 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 
 			try {
 				await onSetupComplete();
-				setStep(nextStep);
 			} catch {
+				// The 2FA credential is already active at this point. User data can
+				// still be stale until the next login (especially after changing the
+				// account e-mail), so a failed refresh must not report setup failure.
 				onSetupAborted?.();
-				setErrorKey(syncErrorKey);
 			}
+
+			setStep(nextStep);
 		},
 		[onSetupAborted, onSetupComplete]
 	);
@@ -371,10 +374,7 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 
 		try {
 			await apiPutTwoFactorAuthApp({ secret, otp });
-			await finishSetup(
-				'app-success',
-				'twoFactorAuth.setupDialog.error.appSetup'
-			);
+			await finishSetup('app-success');
 		} catch (error) {
 			onSetupAborted?.();
 			setFetchError(
@@ -397,10 +397,7 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 
 		try {
 			await apiPostTwoFactorAuthEmailWithCode(otp);
-			await finishSetup(
-				'email-success',
-				'twoFactorAuth.setupDialog.error.emailSetup'
-			);
+			await finishSetup('email-success');
 		} catch (error) {
 			onSetupAborted?.();
 			setFetchError(
