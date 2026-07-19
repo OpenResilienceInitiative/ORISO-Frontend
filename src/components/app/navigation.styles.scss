@@ -792,6 +792,7 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 		flex-direction: row;
 
 		@include breakpoint($fromLarge) {
+			flex-direction: column;
 			flex: 0 0 auto;
 			margin-top: auto !important;
 			padding-top: 12px;
