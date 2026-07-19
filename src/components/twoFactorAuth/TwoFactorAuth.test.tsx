@@ -14,7 +14,7 @@ vi.mock('react-i18next', () => ({
 
 vi.mock('react-router-dom', () => ({
 	useLocation: () => ({
-		state: { isEditMode: true, openTwoFactor: true }
+		state: { openTwoFactor: true }
 	})
 }));
 
@@ -28,9 +28,7 @@ vi.mock('../../globalState', async () => {
 	const ReactModule = await import('react');
 
 	return {
-		AUTHORITIES: { CONSULTANT_DEFAULT: 'CONSULTANT_DEFAULT' },
-		UserDataContext: ReactModule.createContext(undefined),
-		hasUserAuthority: () => true
+		UserDataContext: ReactModule.createContext(undefined)
 	};
 });
 
@@ -55,7 +53,7 @@ describe('TwoFactorAuth', () => {
 		setupDialogMock.mockClear();
 	});
 
-	it('allows an active consultant to disable mandatory two-factor authentication', () => {
+	it('keeps mandatory two-factor authentication setup dismissible', () => {
 		const contextValue = {
 			userData: {
 				email: 'consultant@example.org',
@@ -76,6 +74,7 @@ describe('TwoFactorAuth', () => {
 		expect(setupDialogMock).toHaveBeenLastCalledWith(
 			expect.objectContaining({
 				canDisable: true,
+				canClose: true,
 				open: true
 			})
 		);
