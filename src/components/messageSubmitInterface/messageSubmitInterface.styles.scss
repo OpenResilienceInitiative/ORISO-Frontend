@@ -1667,6 +1667,9 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			object-fit: cover;
 			border-radius: 8px;
 			flex-shrink: 0;
+			// Clip the alt text if an image ever fails to load, so it can
+			// never spill out of the thumbnail box.
+			overflow: hidden;
 		}
 
 		&__attachmentModeIcon {
