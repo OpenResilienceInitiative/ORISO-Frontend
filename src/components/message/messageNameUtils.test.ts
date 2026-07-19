@@ -29,8 +29,15 @@ describe('formatMessagePersonName', () => {
 		);
 	});
 
-	it('keeps the numeric suffix when it is the only distinguishing part', () => {
+	it('strips the numeric suffix even when a single word remains', () => {
 		expect(formatMessagePersonName(undefined, 'user_821')).toBe('user');
+	});
+
+	it('leaves user-configured display names with punctuation untouched', () => {
+		expect(formatMessagePersonName('Dr. Kim', undefined)).toBe('Dr. Kim');
+		expect(formatMessagePersonName('A. Einstein', undefined)).toBe(
+			'A. Einstein'
+		);
 	});
 
 	it('strips matrix domain and @ prefix', () => {

@@ -19,9 +19,12 @@ const normalizeMatrixLikeValue = (rawValue?: string) => {
 };
 
 // Technical usernames ("free_bee_frankie_821") must never surface in the chat
-// UI — turn them into a readable name ("free bee frankie") instead.
+// UI — turn them into a readable name ("free bee frankie") instead. Names
+// that already contain a space are user-configured display names (technical
+// Matrix identifiers cannot contain spaces) — leave their punctuation alone
+// ("Dr. Kim" stays "Dr. Kim").
 const humanizeTechnicalName = (value: string) => {
-	if (!/[_.]/.test(value)) {
+	if (/\s/.test(value) || !/[_.]/.test(value)) {
 		return value;
 	}
 	const words = value

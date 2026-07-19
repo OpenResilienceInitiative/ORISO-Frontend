@@ -14,6 +14,10 @@ $message-incoming-bg: var(--m3-surface-container-high, #eae7e8);
 $message-outgoing-bg: var(--m3-primary-fixed, #ffdad5);
 $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 
+// How far the bubble tucks under the in-flow avatar column on either side —
+// keep in sync with the avatar geometry above, never hardcode per side.
+$message-avatar-overlap: -19px;
+
 .messageItem__mention {
 	padding: 0 4px;
 	border-radius: 6px;
@@ -84,7 +88,7 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 		// reaction chips live inside the bubble now.
 		.messageItem__content {
 			margin-left: 0;
-			margin-right: -19px;
+			margin-right: $message-avatar-overlap;
 			align-items: flex-end;
 		}
 	}
@@ -696,7 +700,7 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 		min-width: 0;
 		display: flex;
 		flex-direction: column;
-		margin-left: -19px;
+		margin-left: $message-avatar-overlap;
 	}
 
 	&__divider {
@@ -1682,7 +1686,9 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 		height: 32px;
 		padding: 6px 8px;
 
-		// Figma outline-variant-light is plain white — no engine token needed.
+		// M3 outlined chips stroke with `outline-variant`; this design uses
+		// the custom Figma role `outline-variant-light`, which is fixed white
+		// and NOT emitted by the OrisoScheme engine — hence the literal.
 		border: 1px solid #fff;
 		border-radius: 8px;
 		background: #fff;
@@ -1732,7 +1738,7 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 	height: 48px;
 	min-width: 48px;
 	border-radius: 50%;
-	background: #17191c;
+	background: var(--m3-on-surface, #17191c);
 	color: #fff;
 	display: inline-flex;
 	align-items: center;
@@ -1746,7 +1752,7 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 	font-size: 14px;
 	line-height: 14px;
 	font-weight: 600;
-	color: #1f2937;
+	color: var(--m3-on-surface, #1f2937);
 }
 
 .messageItem__sendFailedSubtitle {

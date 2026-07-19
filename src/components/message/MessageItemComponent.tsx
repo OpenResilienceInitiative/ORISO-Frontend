@@ -1496,8 +1496,11 @@ export const MessageItemComponent = ({
 
 	// Desktop conditional width (Figma note): bubbles stay at 460px; texts
 	// that would exceed ~4 lines at that width widen to 770px. Applied via
-	// CSS only from the large breakpoint up.
-	const isWideMessage = (message || '').replace(/<[^>]+>/g, '').length > 220;
+	// CSS only from the large breakpoint up. Measure the RENDERED text (like
+	// the MESSAGE_CHAR_LIMIT truncation does) so markdown/HTML syntax does
+	// not inflate the count; fall back to the raw source until rendered.
+	const isWideMessage =
+		(renderedMessage ?? message ?? '').replace(/<[^>]+>/g, '').length > 220;
 
 	// "Time + Emoji Rail" (Figma): incoming = chips left / time right,
 	// outgoing = time left / chips right.
