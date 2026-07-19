@@ -34,8 +34,9 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 	display: flex;
 	color: $body-font-color;
 
-	// Improvement report (Figma 8609-31260): 6px gap between cards.
-	margin-bottom: 6px;
+	// Figma 8609-31260: cards sit flush in a stacked group; ONLY the active
+	// card gets 6px breathing room (its Figma frame carries py-6).
+	margin-bottom: 0;
 	transition:
 		background-color 160ms ease,
 		border-color 160ms ease,
@@ -69,6 +70,8 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 	}
 
 	&--active {
+		// 6px gap above and below the selected card only.
+		margin: 6px 0;
 		transition:
 			background-color 160ms ease,
 			border-color 160ms ease,
@@ -177,14 +180,14 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		min-width: 0;
 		box-sizing: border-box;
 
-		// Improvement report (Figma 8609-31260): 160px card height and the
-		// 24px radius on EVERY card, not only first/last/active.
+		// Figma 8609-31260: 160px card height; corners come from the stacked
+		// group (first/last/active rules below), flush cards stay square.
 		min-height: 160px;
 		padding: 0;
 		margin: 0 9px;
 		background-color: $session-card-bg;
 		border: 1px solid $session-light-border;
-		border-radius: 24px;
+		border-radius: 0;
 		transition:
 			background-color 160ms ease,
 			border-color 160ms ease,
@@ -246,8 +249,29 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		border-color: #ffd8d4;
 	}
 
-	// Every card carries the full 24px radius now (see &__content), so the
-	// old first/last/around-active corner special-casing is gone.
+	// Stacked-group corners (Figma 8609-31260): the group opens and closes
+	// with 24px corners; the active card carries its own full radius and its
+	// neighbours close the group edges around it.
+	&:first-child:not(.sessionsListItem--active) .sessionsListItem__content {
+		border-top-left-radius: 24px;
+		border-top-right-radius: 24px;
+	}
+
+	&:last-child:not(.sessionsListItem--active) .sessionsListItem__content {
+		border-bottom-left-radius: 24px;
+		border-bottom-right-radius: 24px;
+	}
+
+	&.sessionsListItem--beforeActive .sessionsListItem__content {
+		border-bottom-left-radius: 24px;
+		border-bottom-right-radius: 24px;
+	}
+
+	&.sessionsListItem--afterActive .sessionsListItem__content {
+		border-top-left-radius: 24px;
+		border-top-right-radius: 24px;
+		border-top: 1px solid $session-light-border;
+	}
 
 	&.sessionsListItem--active .sessionsListItem__content:focus-visible {
 		border: 2px solid $session-active-border !important;
