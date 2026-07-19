@@ -67,7 +67,7 @@ function MessageItemContextDecorator({
 						>
 							<div
 								style={{
-									maxWidth: 720,
+									maxWidth: 1000,
 									padding: '24px 16px',
 									background: '#ffffff'
 								}}
@@ -431,6 +431,45 @@ export const OutgoingRead: Story = {
 			message: 'Diese Nachricht wurde bereits gelesen.'
 		}),
 		onReact: () => {},
+		...baseHandlers
+	}
+};
+
+export const OutgoingSendFailed: Story = {
+	name: 'Outgoing send failed (cross)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: true,
+			userId: MOCK_CONSULTANT_RC_ID,
+			displayName: 'Karina P',
+			username: 'karina.p@oriso.invalid',
+			isNotRead: true,
+			message: 'Diese Nachricht hat den Server nicht erreicht.'
+		}),
+		sendFailed: true,
+		onReact: () => {},
+		...baseHandlers
+	}
+};
+
+export const WideLongMessageDesktop: Story = {
+	name: 'Long text widens bubble (desktop 770px)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_ASKER_RC_ID,
+			askerRcId: MOCK_ASKER_RC_ID,
+			message:
+				'Hier ist das folgende Problem mit der Länge der Chatnachrichten: Oft sind die natürlich wie in einem Chat nicht so lang, weil sie eine direkte Unterhaltung sind. Manchmal sind das aber riesige Textbrocken, und da wäre auf dem Desktop besser, wenn die eher die breite Variante nutzen, damit die Zeilen nicht endlos umbrechen und der Text gut lesbar bleibt.'
+		}),
 		...baseHandlers
 	}
 };

@@ -158,11 +158,10 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 		align-items: flex-start;
 		gap: 8px;
 
-		// Figma 7539-29134: at 440px viewport the own bubble is ~345px wide —
-		// the wrap keeps only 18px opposite-side breathing room (the avatar
-		// column + overlap consume the rest), capped per the desktop spec
-		// (bubble max 720px + avatar column).
-		max-width: min(calc(100% - 18px), 760px);
+		// Figma 7539-29191: 41px breathing room on the opposite side (the
+		// 60px avatar column minus 19px overlap gives the same 41px on the
+		// avatar side). Desktop cap = wide bubble 770px + avatar column.
+		max-width: min(calc(100% - 41px), 834px);
 		position: relative;
 
 		&--left,
@@ -191,14 +190,16 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 		}
 	}
 
-	// Figma 7539-29134: the animal/graphic fills the 48px circle; the white
-	// ring is a thin 2px border, not an 8px inset.
+	// Figma 7539-29194: the 48px avatar sits in a 60px frame — the white
+	// ring got thicker by growing OUTWARD into that frame space (6px ring),
+	// so the visible avatar stays 48px and the ring cuts into the bubble
+	// corner without touching the kebab.
 	&__avatar {
-		width: 48px;
-		height: 48px;
-		min-width: 48px;
-		min-height: 48px;
-		border: 2px solid #fff;
+		width: 60px;
+		height: 60px;
+		min-width: 60px;
+		min-height: 60px;
+		border: 6px solid #fff;
 		border-radius: 999px;
 		background: #fff;
 		overflow: hidden;
@@ -210,10 +211,10 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 
 		// Force Compound avatar to render properly
 		span[class*='_avatar_'] {
-			width: 44px !important;
-			height: 44px !important;
-			min-width: 44px !important;
-			min-height: 44px !important;
+			width: 48px !important;
+			height: 48px !important;
+			min-width: 48px !important;
+			min-height: 48px !important;
 			font-size: 18px !important;
 			font-weight: 600 !important;
 			display: flex !important;
@@ -281,15 +282,17 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		width: 24px;
-		height: 24px;
+
+		// Figma "Message Menu" (772:18407): 32x32 touch zone.
+		width: 32px;
+		height: 32px;
 		cursor: pointer;
 		opacity: 1;
 		z-index: 7;
 
 		svg {
-			width: 16px;
-			height: 16px;
+			width: 20px;
+			height: 20px;
 		}
 
 		path,
@@ -303,8 +306,8 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 	}
 
 	&__kebabIconDefault {
-		width: 16px !important;
-		height: 16px !important;
+		width: 20px !important;
+		height: 20px !important;
 	}
 
 	&__kebabButton--left {
@@ -665,13 +668,22 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 		z-index: 5;
 	}
 
+	// Bot avatar (reused Carimat robot from the live-chat onboarding).
 	&__systemAvatarIcon {
-		width: 15px;
-		height: 15px;
+		width: 16px;
+		height: 16px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
 
 		@media (resolution >= 1.5dppx), (width >= 1920px) {
-			width: 19px;
-			height: 19px;
+			width: 20px;
+			height: 20px;
+		}
+
+		svg {
+			width: auto;
+			height: 100%;
 		}
 
 		* {
@@ -735,7 +747,18 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 		position: relative;
 		display: inline-block;
 		max-width: 100%;
-		min-width: 180px;
+		min-width: 200px;
+
+		// Improvement report (desktop): bubbles default to 460px so lines
+		// stay readable; texts beyond ~4 lines widen to 770px. Mobile keeps
+		// the fluid width from the wrap.
+		@media (width >= 900px) {
+			max-width: 460px;
+
+			&--wide {
+				max-width: 770px;
+			}
+		}
 
 		/* Reduce padding for messages with attachments */
 		&:has(&__attachment) {
@@ -859,6 +882,10 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 
 			&--outgoing {
 				justify-content: flex-start;
+
+				// Figma 336-12225: extra clearance so chips never sit under
+				// the overlapping avatar ring at the bubble corner.
+				padding-right: 12px;
 			}
 		}
 
@@ -874,23 +901,36 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 			white-space: nowrap;
 		}
 
-		// Delivery status (Figma 8498-32645): red checkmark(s) next to the
-		// bubble time — one = zugestellt, two = gelesen.
+		// Delivery status (Figma 7086-57415): the bubble time rail carries one
+		// of three states next to the timestamp. Each state is a single glyph
+		// (the double check ships as one SVG), so height is fixed and width is
+		// left to `auto` to preserve each icon's own aspect ratio.
 		.messageItem__deliveryStatus {
 			display: inline-flex;
 			align-items: center;
 
 			svg {
-				width: 12px;
-				height: 12px;
-
-				path {
-					fill: var(--m3-primary-container, #cc1e1c);
-				}
+				display: block;
+				height: 10px;
+				width: auto;
 			}
 
-			svg + svg {
-				margin-left: -6px;
+			// Figma (7539-29191/-29194 and the annotated Chat Room frames)
+			// renders ALL delivery glyphs in the brand red — single check
+			// (zugestellt), double check (gelesen) and the failure cross.
+			&--sent svg path,
+			&--read svg path {
+				fill: var(--m3-primary, #a5000a);
+			}
+
+			// Not delivered: red cross, a touch larger to match the denser
+			// icon.
+			&--failed svg {
+				height: 14px;
+
+				path {
+					fill: var(--m3-primary, #a5000a);
+				}
 			}
 		}
 
@@ -1665,6 +1705,47 @@ $message-outgoing-text: var(--m3-on-surface, #1a1c1e);
 			color: var(--m3-primary, #a5000a);
 		}
 	}
+}
+
+// "Sending message failed" notification (Figma Chat Room frames): error
+// avatar + bold title/subtitle header above a grey explanation bubble. The
+// failure cross inherits the shared `.messageItem__deliveryStatus--failed`
+// styling (M3 error colour), so no colour override is needed here.
+.messageItem__sendFailedHeader {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin-bottom: 4px;
+}
+
+.messageItem__sendFailedAvatar {
+	width: 32px;
+	height: 32px;
+	min-width: 32px;
+	border-radius: 50%;
+	background: #17191c;
+	color: #fff;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 18px;
+	font-weight: 700;
+	line-height: 1;
+}
+
+.messageItem__sendFailedTitle {
+	font-size: 14px;
+	line-height: 14px;
+	font-weight: 600;
+	color: #1f2937;
+}
+
+.messageItem__sendFailedSubtitle {
+	margin-top: 4px;
+	font-size: 12px;
+	line-height: 12px;
+	font-weight: 500;
+	color: var(--m3-secondary-container, #646d78);
 }
 
 // Quick-react emoji row inside the message action menu (long-press / kebab),

@@ -73,14 +73,16 @@ import {
 } from './messageConstants';
 import { CaseHandoverSystemMessageCard } from '../caseHandover/CaseHandoverClientCards';
 import { createPortal } from 'react-dom';
-import { ReactComponent as NotificationBellIcon } from '../../resources/img/icons/notification_bell.svg';
 import { ReactComponent as StackVerticalIcon } from '../../resources/img/icons/stack-vertical.svg';
 import { ReactComponent as EyeIcon } from '../../resources/img/icons/eye.svg';
 import { formatMessagePersonName } from './messageNameUtils';
 import { useMatrixRoomUsers } from '../../hooks/useMatrixRoomUsers';
 import { ConsultantListContext } from '../../globalState/provider/ConsultantListProvider';
 import { AggregatedReaction } from '../../utils/messageRelations';
-import { ReactComponent as CheckmarkIcon } from '../../resources/img/icons/checkmark.svg';
+import { ReactComponent as DeliverySentIcon } from '../../resources/img/icons/delivery-sent.svg';
+import { ReactComponent as DeliveryReadIcon } from '../../resources/img/icons/delivery-read.svg';
+import { ReactComponent as DeliveryFailedIcon } from '../../resources/img/icons/delivery-failed.svg';
+import { CarimatRobotIcon } from '../pseudonym/PrivacyMessageCard';
 import { MessageDateDivider } from './MessageDateDivider';
 
 const QUICK_REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
@@ -305,6 +307,14 @@ interface MessageItemComponentProps extends MessageItem {
 	onReact?: (key: string) => void;
 	/** Remove own reaction by redacting the given reaction event id. */
 	onUnreact?: (reactionEventId: string) => void;
+	/** Send failure: cross instead of checkmarks in the bubble time rail. */
+	sendFailed?: boolean;
+	/**
+	 * End-to-end encryption failed for the recipient (Matrix UTD:
+	 * `event.isEncrypted() && event.isDecryptionFailure()`). Rendered with the
+	 * same cross as `sendFailed` — to the user both mean "not delivered".
+	 */
+	encryptionBroke?: boolean;
 	handleDecryptionErrors: (
 		id: string,
 		messageTime: string,
@@ -349,7 +359,9 @@ export const MessageItemComponent = ({
 	onEditDirect,
 	reactions,
 	onReact,
-	onUnreact
+	onUnreact,
+	sendFailed,
+	encryptionBroke
 }: MessageItemComponentProps) => {
 	const { t: translate } = useTranslation();
 	const { activeSession, reloadActiveSession } =
@@ -1379,21 +1391,40 @@ export const MessageItemComponent = ({
 		videoCallMessage?.eventType === 'IGNORED_CALL' &&
 		activeSession?.isGroup;
 
-	// Delivery status per Figma (node 8498-32645): single red checkmark next
-	// to the bubble time = "zugestellt", double checkmark = "gelesen".
-	const deliveryStatusLabel = translate(
-		isNotRead ? 'message.sent' : 'message.read'
-	);
+	// Delivery status per Figma (node 7086-57415): the bubble time rail carries
+	// one of three states for own messages —
+	//   • Send Success    → single grey check (reached the server, not yet read)
+	//   • Recipient Read   → double red check ("gelesen")
+	//   • Encryption broke → red cross (the message never reached the server, or
+	//     end-to-end encryption failed for the recipient).
+	// `sendFailed` and `encryptionBroke` both resolve to the cross: to the user
+	// they mean the same thing — "this did not get delivered, resend it".
+	const deliveryState: 'failed' | 'read' | 'sent' =
+		sendFailed || encryptionBroke ? 'failed' : isNotRead ? 'sent' : 'read';
+	const deliveryStatusLabel =
+		deliveryState === 'failed'
+			? translate('message.sendFailed.status', 'nicht zugestellt')
+			: translate(
+					deliveryState === 'sent' ? 'message.sent' : 'message.read'
+				);
 	const deliveryStatusInBubble =
 		isMyMessage && t !== 'rm' ? (
 			<span
-				className="messageItem__deliveryStatus"
+				className={clsx(
+					'messageItem__deliveryStatus',
+					`messageItem__deliveryStatus--${deliveryState}`
+				)}
 				role="img"
 				aria-label={deliveryStatusLabel}
 				title={deliveryStatusLabel}
 			>
-				<CheckmarkIcon aria-hidden focusable="false" />
-				{!isNotRead && <CheckmarkIcon aria-hidden focusable="false" />}
+				{deliveryState === 'failed' ? (
+					<DeliveryFailedIcon aria-hidden focusable="false" />
+				) : deliveryState === 'sent' ? (
+					<DeliverySentIcon aria-hidden focusable="false" />
+				) : (
+					<DeliveryReadIcon aria-hidden focusable="false" />
+				)}
 			</span>
 		) : null;
 
@@ -1462,6 +1493,11 @@ export const MessageItemComponent = ({
 				))}
 			</div>
 		) : null;
+
+	// Desktop conditional width (Figma note): bubbles stay at 460px; texts
+	// that would exceed ~4 lines at that width widen to 770px. Applied via
+	// CSS only from the large breakpoint up.
+	const isWideMessage = (message || '').replace(/<[^>]+>/g, '').length > 220;
 
 	// "Time + Emoji Rail" (Figma): incoming = chips left / time right,
 	// outgoing = time left / chips right.
@@ -1668,7 +1704,7 @@ export const MessageItemComponent = ({
 								isMyMessage
 									? 'messageItem__message messageItem__message--myMessage'
 									: 'messageItem__message'
-							} ${isSystemNotification ? 'messageItem__message--systemNotification' : ''}`}
+							} ${isSystemNotification ? 'messageItem__message--systemNotification' : ''} ${isWideMessage ? 'messageItem__message--wide' : ''}`}
 							onPointerDown={handleBubblePointerDown}
 							onPointerMove={handleBubblePointerMove}
 							onPointerUp={cancelLongPress}
@@ -2176,7 +2212,9 @@ export const MessageItemComponent = ({
 							className="messageItem__systemAvatar"
 							aria-hidden="true"
 						>
-							<NotificationBellIcon className="messageItem__systemAvatarIcon" />
+							<span className="messageItem__systemAvatarIcon">
+								<CarimatRobotIcon />
+							</span>
 						</div>
 					)}
 				{!alias?.messageType &&

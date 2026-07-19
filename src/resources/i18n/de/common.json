@@ -1443,6 +1443,12 @@
 			"title": "Notiz"
 		},
 		"read": "gelesen",
+		"sendFailed": {
+			"body": "Beim Senden der Nachricht gab es ein Problem, vermutlich durch die Verschlüsselung oder einen Übertragungsfehler. Bitte kopiere sie und versuche es erneut. Prüfe den Status: ein Haken bedeutet gesendet, zwei Haken bedeuten gelesen, und ein Kreuz bedeutet, dass sie den Server nicht erreicht hat.",
+			"status": "nicht zugestellt",
+			"subtitle": "Sende deine Nachricht erneut",
+			"title": "Senden fehlgeschlagen"
+		},
 		"sent": "zugestellt",
 		"submit": {
 			"booking": {
