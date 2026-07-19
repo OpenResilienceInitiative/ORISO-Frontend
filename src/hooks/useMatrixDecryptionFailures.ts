@@ -80,18 +80,36 @@ export const useMatrixDecryptionFailures = (
 			}
 		};
 
-		const evaluate = (eventId: string, event: MatrixEvent): void => {
+		const untrack = (eventId: string): void => {
 			const entry = tracked.get(eventId);
-			// Decrypted successfully — the SDK promoted the type away from the
-			// encrypted envelope. Cancel any pending grace timer and clear.
-			if (event.getType() !== 'm.room.encrypted') {
-				if (entry?.timer) {
-					window.clearTimeout(entry.timer);
-					entry.timer = null;
-				}
-				clearFailed(eventId);
+			if (!entry) {
 				return;
 			}
+			if (entry.timer) {
+				window.clearTimeout(entry.timer);
+				entry.timer = null;
+			}
+			try {
+				(entry.event as any).off(
+					MatrixEventEvent.Decrypted,
+					entry.onDecrypted
+				);
+			} catch {
+				// best-effort listener cleanup
+			}
+			tracked.delete(eventId);
+		};
+
+		const evaluate = (eventId: string, event: MatrixEvent): void => {
+			// Decrypted successfully — the SDK promoted the type away from the
+			// encrypted envelope. It can never become encrypted again, so cancel
+			// pending work, clear the UI state, and release the event immediately.
+			if (event.getType() !== 'm.room.encrypted') {
+				clearFailed(eventId);
+				untrack(eventId);
+				return;
+			}
+			const entry = tracked.get(eventId);
 			if (event.isDecryptionFailure()) {
 				if (!entry || entry.timer || failed.has(eventId)) {
 					return; // already counting down or already surfaced
