@@ -509,7 +509,7 @@ export const SessionListItemComponent = ({
 					{formatMessagePersonName(
 						undefined,
 						activeSession.user?.username
-					) || 'Unknown User'}
+					) || translate('sessionList.user.unknown')}
 				</div>
 				<div style={{ fontSize: '12px', color: '#666' }}>
 					Session ID: {activeSession.item.id} | Postcode:{' '}
@@ -701,47 +701,9 @@ export const SessionListItemComponent = ({
 	// 	return null;
 	// }
 
-	// MATRIX MIGRATION: Render fallback if consulting type is missing
-	if (!consultingType && !activeSession.isGroup) {
-		return (
-			<div
-				onClick={() =>
-					navigate(
-						`${listPath}/sessionView/${activeSession.item.id}${getSessionListTab()}`
-					)
-				}
-				className="sessionsListItem"
-				data-cy="session-list-item"
-			>
-				<div className="sessionsListItem__content">
-					<div className="sessionsListItem__row">
-						<div className="sessionsListItem__consultingType">
-							{activeSession.item.postcode || 'N/A'}
-						</div>
-						<div className="sessionsListItem__date">
-							{new Date(
-								activeSession.item.createDate
-							).toLocaleDateString('de-DE')}
-						</div>
-					</div>
-					<div className="sessionsListItem__row">
-						<div className="sessionsListItem__icon">📋</div>
-						<div className="sessionsListItem__username">
-							{formatMessagePersonName(
-								undefined,
-								activeSession.user?.username
-							) || 'Unknown User'}
-						</div>
-					</div>
-					<div className="sessionsListItem__row">
-						<div className="sessionsListItem__subject">
-							Agency: {activeSession.item.agencyId} • Status: NEW
-						</div>
-					</div>
-				</div>
-			</div>
-		);
-	}
+	// MATRIX MIGRATION: the `if (!consultingType)` early return above already
+	// handles the missing-consulting-type case, so the previous fallback block
+	// here was unreachable and has been removed.
 
 	if (activeSession.isGroup) {
 		const isMyChat = () =>
@@ -923,7 +885,7 @@ export const SessionListItemComponent = ({
 	} else {
 		sessionTopic = formatMessagePersonName(
 			resolveAnonymousChatDisplayName(activeSession.user) || undefined,
-			activeSession.user.username
+			activeSession.user?.username
 		);
 	}
 

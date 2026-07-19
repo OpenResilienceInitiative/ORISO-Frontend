@@ -2840,6 +2840,7 @@
 			"consultantUnknown": "Request stage",
 			"headline": "My consultations",
 			"peer": "Peer",
+			"unknown": "Unknown",
 			"writeEnquiry": "Write message now"
 		},
 		"view": {

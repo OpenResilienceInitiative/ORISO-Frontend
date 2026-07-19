@@ -50,10 +50,12 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		}
 	}
 
-	&:first-of-type {
+	// Exclude the active card so its 6px boundary gap (see &--active) is not
+	// overridden by the higher-specificity :first-of-type / :last-child rules.
+	&:first-of-type:not(.sessionsListItem--active) {
 		margin-top: 0px;
 	}
-	&:last-child {
+	&:last-child:not(.sessionsListItem--active) {
 		margin-bottom: 15px;
 	}
 
