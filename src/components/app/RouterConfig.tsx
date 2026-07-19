@@ -32,9 +32,6 @@ import {
 	NavActivityIcon,
 	NavActivityIconHover,
 	NavActivityIconFilled,
-	NavDraftsIcon,
-	NavDraftsIconHover,
-	NavDraftsIconFilled,
 	NavProfileIcon,
 	NavProfileIconHover,
 	NavProfileIconFilled
@@ -293,16 +290,9 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 					large: 'navigation.activity'
 				}
 			},
-			{
-				to: '/drafts',
-				icon: NavDraftsIcon,
-				iconHover: NavDraftsIconHover,
-				iconFilled: NavDraftsIconFilled,
-				navSlot: 'row' as const,
-				titleKeys: {
-					large: 'navigation.drafts'
-				}
-			},
+			// Drafts moved into the individual sections — it is no longer a
+			// top-level rail item (Frank feedback 2026-07-19). The `/drafts`
+			// route + DraftsCenter page below remain reachable from sections.
 			{
 				to: '/profile',
 				icon: NavProfileIcon,

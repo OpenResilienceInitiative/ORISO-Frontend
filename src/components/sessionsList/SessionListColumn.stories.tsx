@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { SessionsListToolbar } from './SessionsListToolbar';
 import type { SessionToolbarChipFilter } from './sessionToolbarFilters';
 import { SessionListCreateChat } from './SessionListCreateChat';
+import { EmptyState } from '../emptyState/EmptyState';
 import { MenuVerticalIcon } from '../../resources/img/icons';
 import oneOnOneImage from '../../resources/img/illustrations/one-on-one.svg';
 import teamImage from '../../resources/img/illustrations/Team.svg';
@@ -242,4 +243,49 @@ function ToolbarCreateChatColumn() {
 
 export const ToolbarCreateChatAndCards: Story = {
 	render: () => <ToolbarCreateChatColumn />
+};
+
+/**
+ * Empty column (Figma node 7108-45494). Verifies that the 1px white side
+ * hairlines the stacked cards normally draw down the column edges are kept
+ * when there are no conversations (`sessionsList__emptyState`).
+ */
+function EmptyColumn() {
+	const { t } = useTranslation();
+	const [search, setSearch] = useState('');
+	return (
+		<div
+			style={{
+				...column,
+				display: 'flex',
+				flexDirection: 'column'
+			}}
+		>
+			<div style={{ padding: '0 8px' }}>
+				<SessionsListToolbar
+					translate={t}
+					searchValue={search}
+					onSearchChange={setSearch}
+					activeChip={null}
+					onChipToggle={() => {}}
+					showConsultantActions
+					showCreateGroupChatAction
+					showSupervisionChip={false}
+					createGroupChatPath="/sessions/consultant/sessionView/createGroupChat"
+					archiveTabPath="/sessions/consultant/sessionView?sessionListTab=archive"
+					archiveTabActive={false}
+					createGroupChatActive={false}
+				/>
+			</div>
+			<EmptyState
+				className="sessionsList__emptyState"
+				headline="No conversations available"
+				variant="no-conversations"
+			/>
+		</div>
+	);
+}
+
+export const EmptyWithSideHairlines: Story = {
+	render: () => <EmptyColumn />
 };

@@ -27,6 +27,10 @@ const M3_NAV_BAR_LIVE_CHAT_FIGMA_URL =
 	'https://www.figma.com/design/RTUi1rcrEWECXz8rNFmj7Q/Design-System-M3_ORISO?node-id=61216-2651&m=dev';
 
 const LIVE_CHAT_STORAGE_KEY = 'caritas_liveChatAvailability';
+// The Live Chat nav item only appears once the consultant enabled "Live Chat
+// über Menü Leiste aktivieren" in My-Profile (rail + mobile bar alike), so the
+// live-chat-active story must set this placement flag too.
+const LIVE_CHAT_VIA_SIDEBAR_KEY = 'caritas_liveChatViaSidebar';
 
 const baseUserData = {
 	agencies: [],
@@ -111,35 +115,44 @@ function RuntimeNavigation({
 	/* Deterministic live-chat state: the NavigationBar reads the
 	   localStorage-backed flag on first render, so it must be set before
 	   mounting the child — an effect would run too late. */
-	const [previousLiveChat] = useState<string | null>(() => {
-		let previous: string | null = null;
+	const [previousLiveChat] = useState<[string | null, string | null]>(() => {
+		let previousAvail: string | null = null;
+		let previousViaSidebar: string | null = null;
 		try {
-			previous = localStorage.getItem(LIVE_CHAT_STORAGE_KEY);
+			previousAvail = localStorage.getItem(LIVE_CHAT_STORAGE_KEY);
+			previousViaSidebar = localStorage.getItem(
+				LIVE_CHAT_VIA_SIDEBAR_KEY
+			);
 			if (liveChatActive) {
+				// Show Live Chat in the rail/bar: it is gated on the "via menu
+				// bar" placement flag and reflects the availability state.
+				localStorage.setItem(LIVE_CHAT_VIA_SIDEBAR_KEY, '1');
 				localStorage.setItem(LIVE_CHAT_STORAGE_KEY, '1');
 			} else {
 				localStorage.removeItem(LIVE_CHAT_STORAGE_KEY);
+				localStorage.removeItem(LIVE_CHAT_VIA_SIDEBAR_KEY);
 			}
 		} catch {
 			/* Storybook determinism only. */
 		}
-		return previous;
+		return [previousAvail, previousViaSidebar];
 	});
 
 	useEffect(() => {
 		return () => {
-			try {
-				if (previousLiveChat == null) {
-					localStorage.removeItem(LIVE_CHAT_STORAGE_KEY);
-				} else {
-					localStorage.setItem(
-						LIVE_CHAT_STORAGE_KEY,
-						previousLiveChat
-					);
+			const restore = (key: string, value: string | null) => {
+				try {
+					if (value == null) {
+						localStorage.removeItem(key);
+					} else {
+						localStorage.setItem(key, value);
+					}
+				} catch {
+					/* Storybook cleanup only. */
 				}
-			} catch {
-				/* Storybook cleanup only. */
-			}
+			};
+			restore(LIVE_CHAT_STORAGE_KEY, previousLiveChat[0]);
+			restore(LIVE_CHAT_VIA_SIDEBAR_KEY, previousLiveChat[1]);
 		};
 	}, [previousLiveChat]);
 
@@ -204,8 +217,7 @@ function RuntimeNavigation({
 									{`
 										.navigationSidebarStory {
 											width: 85px;
-											height: 860px;
-											min-height: 720px;
+											height: 100vh;
 											background: #eae7e8;
 											overflow: hidden;
 										}
