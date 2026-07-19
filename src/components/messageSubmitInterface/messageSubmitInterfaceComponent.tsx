@@ -1483,8 +1483,14 @@ export const MessageSubmitInterfaceComponent = ({
 		if (prefixParts.length && message.length > 0) {
 			message = `${prefixParts.join(' ')} ${message}`;
 		}
-		// Legacy Rocket.Chat client-side message encryption is removed;
-		// Matrix messages go through the SDK path unencrypted (ADR-004).
+		// Legacy Rocket.Chat client-side message encryption is removed. This
+		// `isEncrypted` flag is the vestigial remnant of that path and no
+		// longer controls Matrix encryption: with Rust crypto initialized
+		// unconditionally (matrixClientService.initRustCrypto) and rooms
+		// created with `m.room.encryption`, the SDK Megolm-encrypts every send
+		// automatically (ADR-004, durable since the ADR-005 homeserver
+		// rebuild). The flag is a no-op pass-through kept only for the
+		// chatTransportService signature.
 		const isEncrypted = false;
 
 		if (isAskerEnquiry) {
