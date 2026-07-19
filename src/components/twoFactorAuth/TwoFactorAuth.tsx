@@ -14,10 +14,6 @@ import { Switch } from '../Switch';
 import { Text } from '../text/Text';
 import { PenIcon } from '../../resources/img/icons';
 import { useAppConfig } from '../../hooks/useAppConfig';
-import {
-	STORAGE_KEY_DISABLE_2FA_DUTY,
-	useDevToolbar
-} from '../devToolbar/DevToolbar';
 import { TwoFactorSetupDialog } from './TwoFactorSetupDialog';
 import { TWO_FACTOR_TYPES } from './twoFactorAuthConstants';
 import './twoFactorAuth.styles';
@@ -35,7 +31,6 @@ export const TwoFactorAuth = () => {
 	};
 	const { userData, reloadUserData } = useContext(UserDataContext);
 	const settings = useAppConfig();
-	const { getDevToolbarOption } = useDevToolbar();
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
 	const [isEditMode, setIsEditMode] = useState(
 		locationState.isEditMode ?? false
@@ -51,11 +46,7 @@ export const TwoFactorAuth = () => {
 	const isTwoFactorBinding =
 		new Date() >= settings.twofactor.dateTwoFactorObligatory;
 	const isForcedSetup = isTwoFactorBinding && !isEditMode && isConsultant;
-	const canDisable =
-		(!isConsultant ||
-			(process.env.NODE_ENV !== 'production' &&
-				getDevToolbarOption(STORAGE_KEY_DISABLE_2FA_DUTY) === '1')) &&
-		userData.twoFactorAuth.isActive;
+	const canDisable = userData.twoFactorAuth.isActive;
 
 	useEffect(() => {
 		if (locationState.openTwoFactor) {
