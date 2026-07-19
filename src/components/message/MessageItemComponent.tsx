@@ -27,7 +27,6 @@ import {
 import { VideoCallMessage } from './VideoCallMessage';
 import { FurtherSteps } from './FurtherSteps';
 import { MessageAttachment } from './MessageAttachment';
-import { Text } from '../text/Text';
 import './message.styles';
 import { Appointment } from './Appointment';
 import { decryptText, MissingKeyError } from '../../utils/encryptionHelpers';
@@ -74,24 +73,23 @@ import {
 } from './messageConstants';
 import { CaseHandoverSystemMessageCard } from '../caseHandover/CaseHandoverClientCards';
 import { createPortal } from 'react-dom';
-import { ReactComponent as NotificationBellIcon } from '../../resources/img/icons/notification_bell.svg';
 import { ReactComponent as StackVerticalIcon } from '../../resources/img/icons/stack-vertical.svg';
 import { ReactComponent as EyeIcon } from '../../resources/img/icons/eye.svg';
 import { formatMessagePersonName } from './messageNameUtils';
 import { useMatrixRoomUsers } from '../../hooks/useMatrixRoomUsers';
 import { ConsultantListContext } from '../../globalState/provider/ConsultantListProvider';
 import { AggregatedReaction } from '../../utils/messageRelations';
+import { ReactComponent as DeliverySentIcon } from '../../resources/img/icons/delivery-sent.svg';
+import { ReactComponent as DeliveryReadIcon } from '../../resources/img/icons/delivery-read.svg';
+import { ReactComponent as DeliveryFailedIcon } from '../../resources/img/icons/delivery-failed.svg';
+import { CarimatRobotIcon } from '../pseudonym/PrivacyMessageCard';
+import { MessageDateDivider } from './MessageDateDivider';
 
 const QUICK_REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
 
-const AddReactionIcon = () => (
-	<svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden>
-		<path
-			d="M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16Zm0-1.5a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13ZM7 9.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm6 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm-6.5 2h7a3.5 3.5 0 0 1-7 0Z"
-			fill="#4B515A"
-		/>
-	</svg>
-);
+// Slack-style long-press on the bubble opens the message action menu.
+const LONG_PRESS_MS = 500;
+const LONG_PRESS_MOVE_TOLERANCE_PX = 10;
 
 const logger = getMatrixClientLogger();
 
@@ -309,6 +307,14 @@ interface MessageItemComponentProps extends MessageItem {
 	onReact?: (key: string) => void;
 	/** Remove own reaction by redacting the given reaction event id. */
 	onUnreact?: (reactionEventId: string) => void;
+	/** Send failure: cross instead of checkmarks in the bubble time rail. */
+	sendFailed?: boolean;
+	/**
+	 * End-to-end encryption failed for the recipient (Matrix UTD:
+	 * `event.isEncrypted() && event.isDecryptionFailure()`). Rendered with the
+	 * same cross as `sendFailed` — to the user both mean "not delivered".
+	 */
+	encryptionBroke?: boolean;
 	handleDecryptionErrors: (
 		id: string,
 		messageTime: string,
@@ -353,7 +359,9 @@ export const MessageItemComponent = ({
 	onEditDirect,
 	reactions,
 	onReact,
-	onUnreact
+	onUnreact,
+	sendFailed,
+	encryptionBroke
 }: MessageItemComponentProps) => {
 	const { t: translate } = useTranslation();
 	const { activeSession, reloadActiveSession } =
@@ -422,9 +430,12 @@ export const MessageItemComponent = ({
 		left: number;
 	} | null>(null);
 	const visibilityMenuRef = React.useRef<HTMLDivElement | null>(null);
-	// Reactions (m.annotation, #435): quick-react emoji picker.
-	const [isReactionPickerOpen, setIsReactionPickerOpen] = useState(false);
-	const reactionPickerRef = React.useRef<HTMLDivElement | null>(null);
+	// Slack-style long-press on the bubble opens the action menu (mobile).
+	const longPressTimerRef = React.useRef<number | null>(null);
+	const longPressStartRef = React.useRef<{ x: number; y: number } | null>(
+		null
+	);
+	const longPressFiredRef = React.useRef(false);
 	const [expandedVisibilitySections, setExpandedVisibilitySections] =
 		useState<{
 			clients: boolean;
@@ -483,23 +494,14 @@ export const MessageItemComponent = ({
 			document.removeEventListener('mousedown', handleOutsideClick);
 	}, [isVisibilityMenuOpen]);
 
-	useEffect(() => {
-		if (!isReactionPickerOpen) {
-			return;
-		}
-		const handleOutsideClick = (event: MouseEvent) => {
-			const target = event.target as Node | null;
-			if (!target) {
-				return;
+	useEffect(
+		() => () => {
+			if (longPressTimerRef.current !== null) {
+				window.clearTimeout(longPressTimerRef.current);
 			}
-			if (!reactionPickerRef.current?.contains(target)) {
-				setIsReactionPickerOpen(false);
-			}
-		};
-		document.addEventListener('mousedown', handleOutsideClick);
-		return () =>
-			document.removeEventListener('mousedown', handleOutsideClick);
-	}, [isReactionPickerOpen]);
+		},
+		[]
+	);
 
 	useEffect((): void => {
 		if (isE2eeEnabled && message) {
@@ -1005,14 +1007,11 @@ export const MessageItemComponent = ({
 	const getMessageDate = () => {
 		if (messageDate.str || messageDate.date) {
 			return (
-				<div className="messageItem__divider">
-					<Text
-						text={translate(
-							messageDate.str ? messageDate.str : messageDate.date
-						)}
-						type="divider"
-					/>
-				</div>
+				<MessageDateDivider
+					label={translate(
+						messageDate.str ? messageDate.str : messageDate.date
+					)}
+				/>
 			);
 		}
 		return null;
@@ -1159,22 +1158,11 @@ export const MessageItemComponent = ({
 		[onOpenThread, onReplyDirect, onEditDirect]
 	);
 
-	const toggleActionMenu = useCallback(
-		(
-			event: React.MouseEvent<HTMLButtonElement>,
-			side: 'left' | 'right'
-		) => {
-			event.preventDefault();
-			event.stopPropagation();
-			const triggerRect = event.currentTarget.getBoundingClientRect();
+	const openActionMenuAt = useCallback(
+		(preferredLeft: number, preferredTop: number) => {
 			const menuWidth = 210;
 			const menuHeight = 300;
 			const viewportPadding = 12;
-			const gap = 10;
-			const preferredLeft =
-				side === 'left'
-					? triggerRect.right + gap
-					: triggerRect.left - menuWidth - gap;
 			const computedLeft = Math.max(
 				viewportPadding,
 				Math.min(
@@ -1185,15 +1173,10 @@ export const MessageItemComponent = ({
 			const computedTop = Math.max(
 				viewportPadding,
 				Math.min(
-					triggerRect.top - 12,
+					preferredTop,
 					window.innerHeight - menuHeight - viewportPadding
 				)
 			);
-			if (isActionMenuOpen) {
-				setIsActionMenuOpen(false);
-				setActionMenuPosition(null);
-				return;
-			}
 			setIsVisibilityMenuOpen(false);
 			setVisibilityMenuPosition(null);
 			setActionMenuPosition({
@@ -1201,6 +1184,98 @@ export const MessageItemComponent = ({
 				left: computedLeft
 			});
 			setIsActionMenuOpen(true);
+		},
+		[]
+	);
+
+	const toggleActionMenu = useCallback(
+		(
+			event: React.MouseEvent<HTMLButtonElement>,
+			side: 'left' | 'right'
+		) => {
+			event.preventDefault();
+			event.stopPropagation();
+			const triggerRect = event.currentTarget.getBoundingClientRect();
+			const menuWidth = 210;
+			const gap = 10;
+			const preferredLeft =
+				side === 'left'
+					? triggerRect.right + gap
+					: triggerRect.left - menuWidth - gap;
+			if (isActionMenuOpen) {
+				setIsActionMenuOpen(false);
+				setActionMenuPosition(null);
+				return;
+			}
+			openActionMenuAt(preferredLeft, triggerRect.top - 12);
+		},
+		[isActionMenuOpen, openActionMenuAt]
+	);
+
+	// Slack-style long-press on the message bubble opens the action menu at
+	// the press position (touch and mouse alike).
+	const cancelLongPress = useCallback(() => {
+		if (longPressTimerRef.current !== null) {
+			window.clearTimeout(longPressTimerRef.current);
+			longPressTimerRef.current = null;
+		}
+		longPressStartRef.current = null;
+	}, []);
+
+	const handleBubblePointerDown = useCallback(
+		(event: React.PointerEvent<HTMLDivElement>) => {
+			if (
+				isActionMenuOpen ||
+				alias?.messageType ||
+				isSystemNotification
+			) {
+				return;
+			}
+			const { clientX, clientY } = event;
+			longPressFiredRef.current = false;
+			longPressStartRef.current = { x: clientX, y: clientY };
+			if (longPressTimerRef.current !== null) {
+				window.clearTimeout(longPressTimerRef.current);
+			}
+			longPressTimerRef.current = window.setTimeout(() => {
+				longPressTimerRef.current = null;
+				longPressStartRef.current = null;
+				longPressFiredRef.current = true;
+				openActionMenuAt(clientX, clientY);
+			}, LONG_PRESS_MS);
+		},
+		[
+			isActionMenuOpen,
+			alias?.messageType,
+			isSystemNotification,
+			openActionMenuAt
+		]
+	);
+
+	const handleBubblePointerMove = useCallback(
+		(event: React.PointerEvent<HTMLDivElement>) => {
+			const start = longPressStartRef.current;
+			if (!start) {
+				return;
+			}
+			if (
+				Math.abs(event.clientX - start.x) >
+					LONG_PRESS_MOVE_TOLERANCE_PX ||
+				Math.abs(event.clientY - start.y) > LONG_PRESS_MOVE_TOLERANCE_PX
+			) {
+				cancelLongPress();
+			}
+		},
+		[cancelLongPress]
+	);
+
+	const handleBubbleContextMenu = useCallback(
+		(event: React.MouseEvent<HTMLDivElement>) => {
+			// Long-press on touch devices fires contextmenu; swallow it once
+			// the menu has been opened via the long-press timer.
+			if (longPressFiredRef.current || isActionMenuOpen) {
+				event.preventDefault();
+			}
 		},
 		[isActionMenuOpen]
 	);
@@ -1316,6 +1391,43 @@ export const MessageItemComponent = ({
 		videoCallMessage?.eventType === 'IGNORED_CALL' &&
 		activeSession?.isGroup;
 
+	// Delivery status per Figma (node 7086-57415): the bubble time rail carries
+	// one of three states for own messages —
+	//   • Send Success    → single grey check (reached the server, not yet read)
+	//   • Recipient Read   → double red check ("gelesen")
+	//   • Encryption broke → red cross (the message never reached the server, or
+	//     end-to-end encryption failed for the recipient).
+	// `sendFailed` and `encryptionBroke` both resolve to the cross: to the user
+	// they mean the same thing — "this did not get delivered, resend it".
+	const deliveryState: 'failed' | 'read' | 'sent' =
+		sendFailed || encryptionBroke ? 'failed' : isNotRead ? 'sent' : 'read';
+	const deliveryStatusLabel =
+		deliveryState === 'failed'
+			? translate('message.sendFailed.status', 'nicht zugestellt')
+			: translate(
+					deliveryState === 'sent' ? 'message.sent' : 'message.read'
+				);
+	const deliveryStatusInBubble =
+		isMyMessage && t !== 'rm' ? (
+			<span
+				className={clsx(
+					'messageItem__deliveryStatus',
+					`messageItem__deliveryStatus--${deliveryState}`
+				)}
+				role="img"
+				aria-label={deliveryStatusLabel}
+				title={deliveryStatusLabel}
+			>
+				{deliveryState === 'failed' ? (
+					<DeliveryFailedIcon aria-hidden focusable="false" />
+				) : deliveryState === 'sent' ? (
+					<DeliverySentIcon aria-hidden focusable="false" />
+				) : (
+					<DeliveryReadIcon aria-hidden focusable="false" />
+				)}
+			</span>
+		) : null;
+
 	const messageTimeInBubble = messageTime ? (
 		<span
 			className={clsx(
@@ -1324,6 +1436,7 @@ export const MessageItemComponent = ({
 			)}
 		>
 			{formatToHHMM(messageTime)}
+			{deliveryStatusInBubble}
 			{/* Editing (m.replace, #435): marker next to the bubble timestamp. */}
 			{isEdited && (
 				<span
@@ -1338,6 +1451,71 @@ export const MessageItemComponent = ({
 			)}
 		</span>
 	) : null;
+
+	// Reactions (Figma 336-12244 / 336-12225): white chips inside the bubble,
+	// sharing one rail with the timestamp. Adding happens via the action menu.
+	const reactionChips =
+		reactions && reactions.length > 0 ? (
+			<div
+				className={clsx(
+					'messageItem__reactions',
+					isMyMessage && 'messageItem__reactions--right'
+				)}
+			>
+				{reactions.map((reaction) => (
+					<button
+						key={reaction.key}
+						type="button"
+						className={clsx(
+							'messageItem__reactionPill',
+							reaction.ownEventId &&
+								'messageItem__reactionPill--mine'
+						)}
+						onClick={() =>
+							reaction.ownEventId
+								? onUnreact?.(reaction.ownEventId)
+								: onReact?.(reaction.key)
+						}
+						aria-label={translate(
+							'message.reaction.count',
+							'{{key}} reacted by {{count}}',
+							{
+								key: reaction.key,
+								count: reaction.count
+							}
+						)}
+					>
+						<span aria-hidden>{reaction.key}</span>
+						<span className="messageItem__reactionPillCount">
+							{reaction.count}
+						</span>
+					</button>
+				))}
+			</div>
+		) : null;
+
+	// Desktop conditional width (Figma note): bubbles stay at 460px; texts
+	// that would exceed ~4 lines at that width widen to 770px. Applied via
+	// CSS only from the large breakpoint up. Measure the RENDERED text (like
+	// the MESSAGE_CHAR_LIMIT truncation does) so markdown/HTML syntax does
+	// not inflate the count; fall back to the raw source until rendered.
+	const isWideMessage =
+		(renderedMessage ?? message ?? '').replace(/<[^>]+>/g, '').length > 220;
+
+	// "Time + Emoji Rail" (Figma): incoming = chips left / time right,
+	// outgoing = time left / chips right.
+	const timeRailInBubble = (
+		<div
+			className={clsx(
+				'messageItem__timeRail',
+				isMyMessage && 'messageItem__timeRail--outgoing'
+			)}
+		>
+			{!isMyMessage && reactionChips}
+			{messageTimeInBubble}
+			{isMyMessage && reactionChips}
+		</div>
+	);
 
 	const messageContent = (): React.ReactElement => {
 		switch (true) {
@@ -1449,7 +1627,7 @@ export const MessageItemComponent = ({
 								)}
 							</div>
 						</div>
-						{messageTimeInBubble}
+						{timeRailInBubble}
 					</div>
 				);
 			default:
@@ -1529,7 +1707,13 @@ export const MessageItemComponent = ({
 								isMyMessage
 									? 'messageItem__message messageItem__message--myMessage'
 									: 'messageItem__message'
-							} ${isSystemNotification ? 'messageItem__message--systemNotification' : ''}`}
+							} ${isSystemNotification ? 'messageItem__message--systemNotification' : ''} ${isWideMessage ? 'messageItem__message--wide' : ''}`}
+							onPointerDown={handleBubblePointerDown}
+							onPointerMove={handleBubblePointerMove}
+							onPointerUp={cancelLongPress}
+							onPointerLeave={cancelLongPress}
+							onPointerCancel={cancelLongPress}
+							onContextMenu={handleBubbleContextMenu}
 						>
 							{isSystemNotification &&
 								isCaseHandoverGrantedEvent && (
@@ -1826,7 +2010,7 @@ export const MessageItemComponent = ({
 										hasRenderedMessage={hasRenderedMessage}
 									/>
 								))}
-							{!isSystemNotification && messageTimeInBubble}
+							{!isSystemNotification && timeRailInBubble}
 						</div>
 						{showVisibleAudience && !isMyMessage && (
 							<div className="messageItem__visibleOnly">
@@ -1975,7 +2159,7 @@ export const MessageItemComponent = ({
 										lastName={
 											resolvedIncomingNameParts.lastName
 										}
-										size={32}
+										size={44}
 									/>
 								</div>
 								<button
@@ -2031,7 +2215,9 @@ export const MessageItemComponent = ({
 							className="messageItem__systemAvatar"
 							aria-hidden="true"
 						>
-							<NotificationBellIcon className="messageItem__systemAvatarIcon" />
+							<span className="messageItem__systemAvatarIcon">
+								<CarimatRobotIcon />
+							</span>
 						</div>
 					)}
 				{!alias?.messageType &&
@@ -2091,7 +2277,7 @@ export const MessageItemComponent = ({
 										displayName={displayName}
 										firstName={userData?.firstName}
 										lastName={userData?.lastName}
-										size={32}
+										size={44}
 									/>
 								</div>
 							</div>
@@ -2100,97 +2286,6 @@ export const MessageItemComponent = ({
 
 				<div className="messageItem__content">
 					{messageContent()}
-					{/* Reactions (m.annotation, #435): aggregated pills + quick-react picker. */}
-					{!alias?.messageType &&
-						!isSystemNotification &&
-						((reactions && reactions.length > 0) || onReact) && (
-							<div
-								className={clsx(
-									'messageItem__reactions',
-									isMyMessage &&
-										'messageItem__reactions--right'
-								)}
-							>
-								{(reactions || []).map((reaction) => (
-									<button
-										key={reaction.key}
-										type="button"
-										className={clsx(
-											'messageItem__reactionPill',
-											reaction.ownEventId &&
-												'messageItem__reactionPill--mine'
-										)}
-										onClick={() =>
-											reaction.ownEventId
-												? onUnreact?.(
-														reaction.ownEventId
-													)
-												: onReact?.(reaction.key)
-										}
-										aria-label={translate(
-											'message.reaction.count',
-											'{{key}} reacted by {{count}}',
-											{
-												key: reaction.key,
-												count: reaction.count
-											}
-										)}
-									>
-										<span aria-hidden>{reaction.key}</span>
-										<span className="messageItem__reactionPillCount">
-											{reaction.count}
-										</span>
-									</button>
-								))}
-								{onReact && (
-									<div
-										className="messageItem__reactionAdd"
-										ref={reactionPickerRef}
-									>
-										<button
-											type="button"
-											className="messageItem__reactionAddButton"
-											aria-label={translate(
-												'message.reaction.add',
-												'React'
-											)}
-											onClick={() =>
-												setIsReactionPickerOpen(
-													(open) => !open
-												)
-											}
-										>
-											<AddReactionIcon />
-										</button>
-										{isReactionPickerOpen && (
-											<div
-												className="messageItem__reactionPicker"
-												role="menu"
-											>
-												{QUICK_REACTION_EMOJIS.map(
-													(emoji) => (
-														<button
-															key={emoji}
-															type="button"
-															className="messageItem__reactionPickerEmoji"
-															role="menuitem"
-															onClick={() => {
-																onReact(emoji);
-																setIsReactionPickerOpen(
-																	false
-																);
-															}}
-														>
-															{emoji}
-														</button>
-													)
-												)}
-											</div>
-										)}
-									</div>
-								)}
-							</div>
-						)}
 					{isMyMessage && formattedName && !alias?.messageType && (
 						<div className="messageItem__senderInfo">
 							<div className="messageItem__senderInfoPrimary">
@@ -2221,6 +2316,52 @@ export const MessageItemComponent = ({
 								zIndex: 99999
 							}}
 						>
+							{onReact && (
+								<div
+									className="messageItem__actionMenuReactions"
+									role="group"
+									aria-label={translate(
+										'message.reaction.add',
+										'React'
+									)}
+								>
+									{QUICK_REACTION_EMOJIS.map((emoji) => {
+										const ownReaction = (
+											reactions || []
+										).find(
+											(reaction) =>
+												reaction.key === emoji &&
+												reaction.ownEventId
+										);
+										return (
+											<button
+												key={emoji}
+												type="button"
+												role="menuitem"
+												className={clsx(
+													'messageItem__actionMenuReactionEmoji',
+													ownReaction &&
+														'messageItem__actionMenuReactionEmoji--mine'
+												)}
+												onClick={() => {
+													if (
+														ownReaction?.ownEventId
+													) {
+														onUnreact?.(
+															ownReaction.ownEventId
+														);
+													} else {
+														onReact(emoji);
+													}
+													setIsActionMenuOpen(false);
+												}}
+											>
+												{emoji}
+											</button>
+										);
+									})}
+								</div>
+							)}
 							{actionMenuItems.map((item) => (
 								<button
 									key={item.key}
