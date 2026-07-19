@@ -3,11 +3,7 @@ import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import { apiDeleteTwoFactorAuth } from '../../api';
-import {
-	AUTHORITIES,
-	hasUserAuthority,
-	UserDataContext
-} from '../../globalState';
+import { UserDataContext } from '../../globalState';
 import { Button, BUTTON_TYPES } from '../button/Button';
 import { Headline } from '../headline/Headline';
 import { Switch } from '../Switch';
@@ -26,26 +22,17 @@ export const TwoFactorAuth = () => {
 	// v7 dropped the useLocation<T>() generic; cast the nav state back to a
 	// known shape so these reads stay type-checked.
 	const locationState = (location.state ?? {}) as {
-		isEditMode?: boolean;
 		openTwoFactor?: boolean;
 	};
 	const { userData, reloadUserData } = useContext(UserDataContext);
 	const settings = useAppConfig();
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
-	const [isEditMode, setIsEditMode] = useState(
-		locationState.isEditMode ?? false
-	);
 	const [isSwitchChecked, setIsSwitchChecked] = useState<boolean>(
 		userData.twoFactorAuth.isActive
 	);
 
-	const isConsultant = hasUserAuthority(
-		AUTHORITIES.CONSULTANT_DEFAULT,
-		userData
-	);
 	const isTwoFactorBinding =
 		new Date() >= settings.twofactor.dateTwoFactorObligatory;
-	const isForcedSetup = isTwoFactorBinding && !isEditMode && isConsultant;
 	const canDisable = userData.twoFactorAuth.isActive;
 
 	useEffect(() => {
@@ -60,7 +47,6 @@ export const TwoFactorAuth = () => {
 
 	const closeDialog = useCallback(() => {
 		setIsDialogOpen(false);
-		setIsEditMode(false);
 		setIsSwitchChecked(userData.twoFactorAuth.isActive);
 	}, [userData.twoFactorAuth.isActive]);
 
@@ -78,7 +64,6 @@ export const TwoFactorAuth = () => {
 		await reloadUserData();
 		setIsSwitchChecked(false);
 		setIsDialogOpen(false);
-		setIsEditMode(false);
 	}, [reloadUserData]);
 
 	const handleSwitchChange = () => {
@@ -96,7 +81,6 @@ export const TwoFactorAuth = () => {
 
 	const handleEditButton = () => {
 		setIsDialogOpen(true);
-		setIsEditMode(true);
 	};
 
 	return (
@@ -169,7 +153,7 @@ export const TwoFactorAuth = () => {
 					</p>
 				)}
 			<TwoFactorSetupDialog
-				canClose={!isForcedSetup}
+				canClose
 				canDisable={canDisable}
 				currentType={userData.twoFactorAuth.type}
 				email={userData.email}
