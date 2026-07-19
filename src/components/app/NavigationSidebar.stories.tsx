@@ -290,6 +290,28 @@ export const RuntimeConsultantRail: Story = {
 			'.navigation__item--nav-logout'
 		);
 		await expect(logoutAction).not.toBeNull();
+
+		const navigationRail = canvasElement.querySelector(
+			'.navigation__wrapper--figma-consultant'
+		);
+		await expect(navigationRail).not.toBeNull();
+
+		const bottomActions = canvasElement.querySelector(
+			'.navigation__item__bottom'
+		);
+		await expect(bottomActions).not.toBeNull();
+
+		await expect(
+			getComputedStyle(bottomActions as Element).flexDirection
+		).toBe('column');
+
+		const railBounds = (navigationRail as Element).getBoundingClientRect();
+		const logoutBounds = (
+			logoutAction as HTMLElement
+		).getBoundingClientRect();
+		await expect(logoutBounds.left).toBeGreaterThanOrEqual(railBounds.left);
+		await expect(logoutBounds.right).toBeLessThanOrEqual(railBounds.right);
+
 		await userEvent.click(logoutAction as HTMLElement);
 		await expect(storyShell).toHaveAttribute('data-logout-clicked', 'true');
 	}
