@@ -960,6 +960,7 @@ $message-avatar-overlap: -19px;
 				margin: 0;
 				width: 100%;
 				position: relative;
+
 				// Reserve the box via the sender-provided intrinsic ratio
 				// (inline aspect-ratio style) but never grow past the bubble.
 				max-height: 320px;

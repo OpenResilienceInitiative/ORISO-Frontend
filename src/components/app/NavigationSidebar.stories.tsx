@@ -95,7 +95,7 @@ function RuntimeNavigationRail({
 
 const meta = {
 	title: 'Components/Layout/NavigationSidebar',
-	component: RuntimeNavigation,
+	component: RuntimeNavigationRail,
 	tags: ['autodocs'],
 	args: {
 		role: 'consultant' as const,
@@ -117,6 +117,21 @@ const meta = {
 				type: 'figma',
 				name: 'Design System M3 ORISO',
 				url: ORISO_M3_FIGMA_URL
+			},
+			{
+				type: 'figma',
+				name: 'M3 nav bar (client)',
+				url: M3_NAV_BAR_CLIENT_FIGMA_URL
+			},
+			{
+				type: 'figma',
+				name: 'M3 nav bar (consultant)',
+				url: M3_NAV_BAR_CONSULTANT_FIGMA_URL
+			},
+			{
+				type: 'figma',
+				name: 'M3 nav bar (live chat)',
+				url: M3_NAV_BAR_LIVE_CHAT_FIGMA_URL
 			}
 		],
 		docs: {
@@ -126,7 +141,7 @@ const meta = {
 			}
 		}
 	}
-} satisfies Meta<typeof RuntimeNavigation>;
+} satisfies Meta<typeof RuntimeNavigationRail>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
