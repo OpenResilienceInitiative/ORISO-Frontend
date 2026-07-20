@@ -328,10 +328,16 @@ export const JoinGroupChatView = ({
 				bannedUsers={bannedUsers}
 			/>
 			<div className="joinChat__content session__content">
-				<Headline
-					text={translate('groupChat.join.content.headline')}
-					semanticLevel="4"
-				/>
+				{/* The scheduled-chat countdown carries its own headline
+				    ("Dein Gruppen-Chat beginnt in …"); a second static heading
+				    above it just repeats the frame. Only show the standalone
+				    "Spielregeln"-headline in the no-countdown (hint message) view. */}
+				{!plannedStart && (
+					<Headline
+						text={translate('groupChat.join.content.headline')}
+						semanticLevel="4"
+					/>
+				)}
 				{!!authorContent.hintMessage && !plannedStart && (
 					<Text text={authorContent.hintMessage} type="standard" />
 				)}
