@@ -83,6 +83,7 @@ import {
 	ChatroomConversationIconType,
 	ChatroomMainInteractionIcon
 } from './ChatroomMainInteractionIcon';
+import { getSupervisorAddState } from './getSupervisorAddState';
 export interface SessionHeaderProps {
 	consultantAbsent?: SessionConsultantInterface;
 	hasUserInitiatedStopOrLeaveRequest?: React.MutableRefObject<boolean>;
@@ -976,19 +977,30 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					{(() => {
 						/* The Figma pill always carries the conversation
 						   type. When supervision management is available,
-						   the plus part remains the only clickable area. */
-						const canOpenSupervisorModal =
-							isSupervisionEnabledForCurrentChat &&
-							hasUserAuthority(
+						   the plus part remains the only clickable area.
+						   FE#513: when it cannot act, the plus renders as a
+						   disabled button with an honest label — for every
+						   role, including askers (grey out, never hide). */
+						const supervisorAddState = getSupervisorAddState({
+							isAsker: hasUserAuthority(
+								AUTHORITIES.ASKER_DEFAULT,
+								userData
+							),
+							isConsultant: hasUserAuthority(
 								AUTHORITIES.CONSULTANT_DEFAULT,
 								userData
-							) &&
-							!activeSession.isGroup &&
-							!isSupervisor &&
-							!activeSession.isEnquiry &&
-							!untilL;
+							),
+							isSupervisionEnabled:
+								isSupervisionEnabledForCurrentChat &&
+								!activeSession.isGroup &&
+								!activeSession.isEnquiry,
+							isSupervisor,
+							isMobile: untilL
+						});
+						const canOpenSupervisorModal =
+							supervisorAddState.mode === 'interactive';
 						return (
-							<div className="sessionInfo__memberStack">
+							<div className="sessionInfo__memberStack sessionInfo__memberStack--single">
 								<ChatroomMainInteractionIcon
 									type={sessionHeaderConversationIconType}
 									showAddIcon={
@@ -996,8 +1008,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 										!activeSession.isEnquiry
 									}
 									addLabel={translate(
-										'sessionHeader.supervisor.modal.title',
-										'Supervisor hinzufügen'
+										supervisorAddState.labelKey
 									)}
 									onAddClick={
 										canOpenSupervisorModal

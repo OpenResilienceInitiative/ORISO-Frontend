@@ -29,6 +29,10 @@ import {
 	ChevronRight
 } from '@mui/icons-material';
 import { useChatComposerShortcuts } from '../../features/keyboard-shortcuts/hooks/useChatComposerShortcuts';
+import {
+	filesFromDataTransfer,
+	hasComposerFiles
+} from './composerFileDropPaste';
 import './TipTapComposer.styles.scss';
 
 const isMentionSuggestionOpen = (): boolean =>
@@ -78,6 +82,12 @@ interface TipTapComposerProps {
 	onOpenEmoji?: () => boolean;
 	/** True when the composer has no text and no attachment. */
 	isComposerEmpty?: boolean;
+	/**
+	 * Files dropped or pasted into the editor (WP-4): routed into the
+	 * existing attachment flow by the parent. Absent = files fall through
+	 * to the browser default.
+	 */
+	onFilesSelected?: (files: File[]) => void;
 }
 
 const getEditorPlainTextLength = (editorLike: any): number =>
@@ -164,7 +174,8 @@ export const TipTapComposer = forwardRef<
 			onCancel,
 			onUpload,
 			onOpenEmoji,
-			isComposerEmpty
+			isComposerEmpty,
+			onFilesSelected
 		},
 		ref
 	) => {
@@ -182,6 +193,8 @@ export const TipTapComposer = forwardRef<
 		});
 		const shortcutHandlerRef = useRef(handleComposerKeyDown);
 		shortcutHandlerRef.current = handleComposerKeyDown;
+		const onFilesSelectedRef = useRef(onFilesSelected);
+		onFilesSelectedRef.current = onFilesSelected;
 
 		const editor = useEditor({
 			extensions: useMemo(
@@ -244,7 +257,32 @@ export const TipTapComposer = forwardRef<
 					);
 					return true;
 				},
+				handleDrop: (_view, event, _slice, moved) => {
+					if (moved || !onFilesSelectedRef.current) {
+						return false;
+					}
+					if (!hasComposerFiles(event.dataTransfer)) {
+						return false;
+					}
+					event.preventDefault();
+					onFilesSelectedRef.current(
+						filesFromDataTransfer(event.dataTransfer)
+					);
+					return true;
+				},
 				handlePaste: (view, event) => {
+					// Files first (e.g. a pasted screenshot): route into the
+					// attachment flow instead of inserting anything.
+					if (
+						onFilesSelectedRef.current &&
+						hasComposerFiles(event.clipboardData)
+					) {
+						event.preventDefault();
+						onFilesSelectedRef.current(
+							filesFromDataTransfer(event.clipboardData)
+						);
+						return true;
+					}
 					const pastedText =
 						event.clipboardData?.getData('text/plain') || '';
 					if (!pastedText) {

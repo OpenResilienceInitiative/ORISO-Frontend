@@ -16,6 +16,12 @@ const APP_ORISO_CHAT_FIGMA_URL =
 	'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=316-17725&t=XHH5HQNmA8DUWl2U-0';
 const ORISO_M3_FIGMA_URL =
 	'https://www.figma.com/design/RTUi1rcrEWECXz8rNFmj7Q/Design-System-M3_ORISO?node-id=60853-24182&p=f&t=ieIskw4Lz5hlc7iM-0';
+const M3_NAV_BAR_CLIENT_FIGMA_URL =
+	'https://www.figma.com/design/RTUi1rcrEWECXz8rNFmj7Q/Design-System-M3_ORISO?node-id=61212-3707&m=dev';
+const M3_NAV_BAR_CONSULTANT_FIGMA_URL =
+	'https://www.figma.com/design/RTUi1rcrEWECXz8rNFmj7Q/Design-System-M3_ORISO?node-id=61212-3732&m=dev';
+const M3_NAV_BAR_LIVE_CHAT_FIGMA_URL =
+	'https://www.figma.com/design/RTUi1rcrEWECXz8rNFmj7Q/Design-System-M3_ORISO?node-id=61216-2651&m=dev';
 
 function RuntimeNavigationRail({
 	role,
@@ -89,7 +95,7 @@ function RuntimeNavigationRail({
 
 const meta = {
 	title: 'Components/Layout/NavigationSidebar',
-	component: RuntimeNavigationRail,
+	component: RuntimeNavigation,
 	tags: ['autodocs'],
 	args: {
 		role: 'consultant' as const,
@@ -120,7 +126,7 @@ const meta = {
 			}
 		}
 	}
-} satisfies Meta<typeof RuntimeNavigationRail>;
+} satisfies Meta<typeof RuntimeNavigation>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -146,6 +152,28 @@ export const RuntimeConsultantRail: Story = {
 			'.navigation__item--nav-logout'
 		);
 		await expect(logoutAction).not.toBeNull();
+
+		const navigationRail = canvasElement.querySelector(
+			'.navigation__wrapper--figma-consultant'
+		);
+		await expect(navigationRail).not.toBeNull();
+
+		const bottomActions = canvasElement.querySelector(
+			'.navigation__item__bottom'
+		);
+		await expect(bottomActions).not.toBeNull();
+
+		await expect(
+			getComputedStyle(bottomActions as Element).flexDirection
+		).toBe('column');
+
+		const railBounds = (navigationRail as Element).getBoundingClientRect();
+		const logoutBounds = (
+			logoutAction as HTMLElement
+		).getBoundingClientRect();
+		await expect(logoutBounds.left).toBeGreaterThanOrEqual(railBounds.left);
+		await expect(logoutBounds.right).toBeLessThanOrEqual(railBounds.right);
+
 		await userEvent.click(logoutAction as HTMLElement);
 		await expect(storyShell).toHaveAttribute('data-logout-clicked', 'true');
 	}

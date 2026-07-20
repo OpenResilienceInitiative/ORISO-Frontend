@@ -37,8 +37,37 @@ export interface SendTextMessageOptions {
 	sessionId?: number;
 	matrixRoomId?: string;
 	threadRootId?: string | null;
+	/**
+	 * Relations foundation (#435): event id of the message being replied to.
+	 * Sent as `m.relates_to`/`m.in_reply_to` on the Matrix event content —
+	 * never forwarded to the metadata notification (FE-H01 boundary).
+	 */
+	replyToEventId?: string | null;
+	/** Intentional mentions (#435): resolved Matrix user ids, sent as m.mentions. */
+	mentionedUserIds?: string[];
 	supervisorMessage?: boolean;
 	senderDisplayName?: string | null;
+	teamDiscussion?: boolean;
+	matrixClientServiceOverride?: MatrixClientService | null;
+}
+
+export interface EditTextMessageOptions {
+	matrixRoomId: string;
+	targetEventId: string;
+	message: string;
+	matrixClientServiceOverride?: MatrixClientService | null;
+}
+
+export interface SendReactionOptions {
+	matrixRoomId: string;
+	targetEventId: string;
+	key: string;
+	matrixClientServiceOverride?: MatrixClientService | null;
+}
+
+export interface RemoveReactionOptions {
+	matrixRoomId: string;
+	reactionEventId: string;
 	matrixClientServiceOverride?: MatrixClientService | null;
 }
 
@@ -95,8 +124,11 @@ class ChatTransportService {
 		matrixRoomId,
 		sessionId,
 		threadRootId,
+		replyToEventId,
+		mentionedUserIds,
 		supervisorMessage,
 		senderDisplayName,
+		teamDiscussion,
 		matrixClientServiceOverride
 	}: SendTextMessageOptions): Promise<any> {
 		let resolvedMatrixRoomId = matrixRoomId;
@@ -124,7 +156,12 @@ class ChatTransportService {
 
 		const response = await matrixClientService.sendMessage(
 			resolvedMatrixRoomId,
-			message
+			message,
+			{
+				replyToEventId: replyToEventId || null,
+				threadRootId: threadRootId || null,
+				mentionedUserIds
+			}
 		);
 
 		// SECURITY (FE-H01): never forward plaintext message content
@@ -135,8 +172,74 @@ class ChatTransportService {
 			matrixRoom: true,
 			threadRootId: threadRootId || null,
 			supervisorMessage: !!supervisorMessage,
-			senderDisplayName: senderDisplayName || null
+			senderDisplayName: senderDisplayName || null,
+			teamDiscussion: !!teamDiscussion,
+			mentionedUserIds: mentionedUserIds || null
 		}).catch(() => undefined);
+
+		return { success: true, event_id: response.event_id };
+	}
+
+	/** Edit a previously sent message (m.replace), same relations mechanic as reply/thread. */
+	public async editTextMessage({
+		matrixRoomId,
+		targetEventId,
+		message,
+		matrixClientServiceOverride
+	}: EditTextMessageOptions): Promise<any> {
+		const matrixClientService =
+			matrixClientServiceOverride || getMatrixClientService();
+		if (!matrixClientService?.getClient()) {
+			return Promise.reject(new Error('Matrix client not initialized'));
+		}
+
+		const response = await matrixClientService.editMessage(
+			matrixRoomId,
+			targetEventId,
+			message
+		);
+
+		return { success: true, event_id: response.event_id };
+	}
+
+	/** React to a message (m.annotation). */
+	public async sendReaction({
+		matrixRoomId,
+		targetEventId,
+		key,
+		matrixClientServiceOverride
+	}: SendReactionOptions): Promise<any> {
+		const matrixClientService =
+			matrixClientServiceOverride || getMatrixClientService();
+		if (!matrixClientService?.getClient()) {
+			return Promise.reject(new Error('Matrix client not initialized'));
+		}
+
+		const response = await matrixClientService.sendReaction(
+			matrixRoomId,
+			targetEventId,
+			key
+		);
+
+		return { success: true, event_id: response.event_id };
+	}
+
+	/** Remove a reaction by redacting the reaction event (un-react). */
+	public async removeReaction({
+		matrixRoomId,
+		reactionEventId,
+		matrixClientServiceOverride
+	}: RemoveReactionOptions): Promise<any> {
+		const matrixClientService =
+			matrixClientServiceOverride || getMatrixClientService();
+		if (!matrixClientService?.getClient()) {
+			return Promise.reject(new Error('Matrix client not initialized'));
+		}
+
+		const response = await matrixClientService.redactEvent(
+			matrixRoomId,
+			reactionEventId
+		);
 
 		return { success: true, event_id: response.event_id };
 	}

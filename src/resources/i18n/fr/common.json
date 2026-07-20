@@ -174,6 +174,11 @@
 				"png": "PNG",
 				"xlsx": "XLSX"
 			}
+		},
+		"mediaCheck": {
+			"unchecked": "Image d'un chat anonyme – pas encore vérifiée",
+			"reveal": "Afficher l'image",
+			"blocked": "Bloquée par le contrôle de sécurité"
 		}
 	},
 	"banner": {
@@ -680,7 +685,8 @@
 			}
 		},
 		"edit": {
-			"title": "Paramètres de chat"
+			"title": "Paramètres de chat",
+			"subtitle": "Modifier le calendrier et le contenu de cette série"
 		},
 		"info": {
 			"headline": "Infos sur le chat",
@@ -708,6 +714,33 @@
 			}
 		},
 		"join": {
+			"waitingArea": {
+				"countdown": {
+					"etaDay": "dans 1 jour",
+					"etaDays": "dans {{count}} jours",
+					"etaHour": "dans 1 heure",
+					"etaHours": "dans {{count}} heures",
+					"etaMinute": "dans 1 minute",
+					"etaMinutes": "dans {{count}} minutes",
+					"etaSoon": "dans un instant",
+					"flipAria": "{{label}} : {{value}}. Retourner pour lire.",
+					"flipHint": "cliquer pour retourner",
+					"greetingLabel": "Mot de bienvenue de votre conseiller·ère",
+					"headline": "Votre chat de groupe commence {{eta}}.",
+					"netiquetteLabel": "Nétiquette · règle {{no}}",
+					"overdueCaption": "L'attente devient un peu gênante …",
+					"overdueHeadline": "Nous serons avec vous dans un instant.",
+					"overdueSubtitle": "Votre conseiller·ère va ouvrir la salle — merci de patienter encore un peu.",
+					"subtitle": "Cliquez sur un chiffre — le mot de bienvenue et la nétiquette vous attendent derrière.",
+					"timerAriaFuture": "Avant le début — jours : {{days}}, heures : {{hours}}, minutes : {{minutes}}, secondes : {{seconds}}",
+					"timerAriaOverdue": "Depuis le début prévu — minutes : {{minutes}}, secondes : {{seconds}}",
+					"toggleLabel": "Désactiver l'animation",
+					"unitDays": "Jours",
+					"unitHours": "Heures",
+					"unitMinutes": "Minutes",
+					"unitSeconds": "Secondes"
+				}
+			},
 			"button": {
 				"label": {
 					"join": "Participer",

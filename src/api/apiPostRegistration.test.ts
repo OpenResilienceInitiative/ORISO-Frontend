@@ -58,4 +58,26 @@ describe('apiPostRegistration', () => {
 			})
 		);
 	});
+
+	it('normalizes regional preferredLanguage values before posting', async () => {
+		await apiPostRegistration(
+			'/service/users/askers/new',
+			{
+				username: 'tender_frog_784',
+				password: 'TestPass123!',
+				agencyId: '3',
+				postcode: '12043',
+				termsAccepted: 'true',
+				consultingType: '0',
+				preferredLanguage: 'en-IN'
+			},
+			false,
+			{} as any
+		);
+
+		const body = JSON.parse(
+			vi.mocked(fetchData).mock.calls.at(-1)?.[0].bodyData as string
+		);
+		expect(body.preferredLanguage).toBe('en');
+	});
 });

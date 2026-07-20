@@ -220,7 +220,11 @@ export const Profile = () => {
 	};
 
 	return (
-		<div className="profile__wrapper" ref={scrollContainer}>
+		<div
+			className="profile__wrapper"
+			data-tour-target="profile-overview"
+			ref={scrollContainer}
+		>
 			<div className="profile__header">
 				<div className="profile__header__wrapper flex flex--jc-sb flex-l--fd-column flex-xl--fd-row">
 					<div

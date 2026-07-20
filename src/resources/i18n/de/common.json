@@ -177,6 +177,11 @@
 				"png": "PNG",
 				"xlsx": "XLSX"
 			}
+		},
+		"mediaCheck": {
+			"unchecked": "Bild aus anonymem Chat – noch nicht geprüft",
+			"reveal": "Bild anzeigen",
+			"blocked": "Von der Sicherheitsprüfung blockiert"
 		}
 	},
 	"banUser": {
@@ -752,11 +757,49 @@
 				}
 			}
 		},
+		"format": {
+			"back": "Zurück",
+			"headerTitle": "Neue Unterhaltung erstellen",
+			"subtitle": "Wir bieten verschiedene spezialisierte Gesprächsformate für Sie und die Ratsuchenden an. Die Auswahl ist von den Trägern und Ihrer Beratungsstelle frei konfigurierbar.",
+			"title": "Gesprächsformat wählen"
+		},
+		"internal": {
+			"addPerson": "Person hinzufügen",
+			"createLabel": "Interna erstellen",
+			"deselectPerson": "{{name}} entfernen",
+			"nameLabel": "Name des internen Chats",
+			"personCount_one": "{{count}} Person hinzugefügt",
+			"personCount_other": "{{count}} Personen hinzugefügt",
+			"removePerson": "{{name}} entfernen",
+			"selectPerson": "{{name}} auswählen",
+			"subtitle": "mit Ihren Kolleg:innen",
+			"supportText": "Stimmen Sie sich innerhalb Ihrer Beratungsstelle ab. Egal ob einzeln oder im Team, per Audio, Video im Chat oder alles nach Bedarf.",
+			"title": "Interna besprechen",
+			"togglePersonList": "Personenliste öffnen oder schließen"
+		},
+		"circle": {
+			"cardHeadline": "Anonyme Selbsthilfegruppen",
+			"cardText": "in Ihrem Fachbereich initiieren. Einmalig oder regelmäßig: Wählen Sie das passende Medium und teilen Sie den Kreis mit den Teilnehmenden.",
+			"createLabel": "Erstellen",
+			"noTopics": "Keine Themen verfügbar",
+			"saveLabel": "Speichern",
+			"settingsSubtitle": "Passen Sie nun Begrüßungstext, Format, Regeln, Intervalle und die Sprache an, in welcher der Kreis primär stattfinden soll.",
+			"settingsTitle": "Einstellungen für den Gesprächskreis",
+			"subtitle": "moderiert durch Berater:innen",
+			"title": "Gesprächskreis",
+			"toggleTopicList": "Themenliste öffnen oder schließen",
+			"topicLabel": "Thema / Fachbereich"
+		},
 		"createError": {
 			"overlay": {
 				"buttonLabel": "Schließen",
 				"headline": "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut."
 			}
+		},
+		"loadError": {
+			"consultants": "Die Kolleg:innen konnten nicht geladen werden.",
+			"retry": "Erneut versuchen",
+			"topics": "Die Themen konnten nicht geladen werden."
 		},
 		"createSuccess": {
 			"overlay": {
@@ -765,7 +808,8 @@
 			}
 		},
 		"edit": {
-			"title": "Chat-Einstellungen"
+			"title": "Chat-Einstellungen",
+			"subtitle": "Zeitplan und Inhalte dieser Serie ändern"
 		},
 		"info": {
 			"headline": "Chat-Info",
@@ -795,6 +839,31 @@
 		"join": {
 			"timeConversions": "Spielerische Zeitangaben",
 			"waitingArea": {
+				"countdown": {
+					"etaDay": "in einem Tag",
+					"etaDays": "in {{count}} Tagen",
+					"etaHour": "in einer Stunde",
+					"etaHours": "in {{count}} Stunden",
+					"etaMinute": "in einer Minute",
+					"etaMinutes": "in {{count}} Minuten",
+					"etaSoon": "gleich",
+					"flipAria": "{{label}}: {{value}}. Umdrehen zum Lesen.",
+					"flipHint": "klicken zum Umdrehen",
+					"greetingLabel": "Begrüßung Ihrer Beratung",
+					"headline": "Ihr Gruppen-Chat beginnt {{eta}}.",
+					"netiquetteLabel": "Netiquette · Regel {{no}}",
+					"overdueCaption": "Das Warten wird langsam etwas unangenehm …",
+					"overdueHeadline": "Wir sind gleich für Sie da.",
+					"overdueSubtitle": "Ihre Beratung öffnet den Raum gleich — bitte haben Sie noch einen Moment Geduld.",
+					"subtitle": "Klicken Sie auf eine Zahl — dahinter warten Begrüßung und Netiquette.",
+					"timerAriaFuture": "Bis zum Beginn — Tage: {{days}}, Stunden: {{hours}}, Minuten: {{minutes}}, Sekunden: {{seconds}}",
+					"timerAriaOverdue": "Seit dem geplanten Beginn — Minuten: {{minutes}}, Sekunden: {{seconds}}",
+					"toggleLabel": "Animation abschalten",
+					"unitDays": "Tage",
+					"unitHours": "Stunden",
+					"unitMinutes": "Minuten",
+					"unitSeconds": "Sekunden"
+				},
 				"catMinutes": "{{value}} Katzenminuten",
 				"discomfort": {
 					"late": "verspätet",
@@ -1379,6 +1448,12 @@
 			"title": "Notiz"
 		},
 		"read": "gelesen",
+		"sendFailed": {
+			"body": "Beim Senden der Nachricht gab es ein Problem, vermutlich durch die Verschlüsselung oder einen Übertragungsfehler. Bitte kopieren Sie sie und versuchen Sie es erneut. Prüfen Sie den Status: Ein Haken bedeutet gesendet, zwei Haken bedeuten gelesen, und ein Kreuz bedeutet, dass sie den Server nicht erreicht hat.",
+			"status": "nicht zugestellt",
+			"subtitle": "Senden Sie Ihre Nachricht erneut",
+			"title": "Senden fehlgeschlagen"
+		},
 		"sent": "zugestellt",
 		"submit": {
 			"booking": {
@@ -1427,7 +1502,13 @@
 			"moderatorEndedTitle": "Videokonferenz wurde beendet: {{time}}",
 			"moderatorStartedTitle": "Moderator:in {{name}} hat eine Videokonferenz gestartet"
 		},
-		"yesterday": "Gestern"
+		"yesterday": "Gestern",
+		"reply": {
+			"previewLabel": "Antwort an",
+			"cancel": "Antwort verwerfen",
+			"quoteLabel": "Antwort auf",
+			"quoteUnknown": "Frühere Nachricht"
+		}
 	},
 	"navigation": {
 		"appointments": "Video - Termine",
@@ -1595,6 +1676,10 @@
 			"appointmentBriefing": {
 				"title": "Termin-Briefing",
 				"text": "Eine Übersicht Ihrer anstehenden Termine liegt bereit."
+			},
+			"teamDiscussionNew": {
+				"title": "Team-Besprechung",
+				"text": "{{senderDisplayName}} hat in der Team-Besprechung geschrieben"
 			}
 		},
 		"error": "Fehlgeschlagen",
@@ -1725,6 +1810,22 @@
 					"tooltip": "Teilen Sie Ihren persönlichen Kontakt-Link mit jemanden, damit diese Person eine Onlineberatung direkt mit Ihnen starten kann."
 				}
 			},
+			"publicSlug": {
+				"info": "Verwenden Sie nur Kleinbuchstaben und Bindestriche. Neue Namen werden erst nach Freigabe durch eine Administration aktiv.",
+				"input": "Name des öffentlichen Kontakt-Links",
+				"label": "Öffentlicher Kontakt-Link",
+				"notification": {
+					"error": "Der Name des Kontakt-Links konnte nicht gespeichert werden. Bitte prüfen Sie das Format oder wählen Sie einen anderen Namen.",
+					"text": "Der Name des Kontakt-Links wurde zur Freigabe eingereicht.",
+					"title": "Anfrage gespeichert"
+				},
+				"status": {
+					"active": "Aktiver Link-Name: {{slug}}",
+					"empty": "Es ist noch kein öffentlicher Link-Name aktiv. Der UUID-Link wird weiterhin verwendet.",
+					"pending": "Wartet auf Freigabe durch eine Administration: {{slug}}",
+					"rejected": "Der zuletzt angefragte Link-Name wurde abgelehnt."
+				}
+			},
 			"profileIcon": "Profilbild",
 			"register": {
 				"button": {
@@ -1801,7 +1902,11 @@
 			"liveChat": {
 				"title": "Meine Live-Chat Verfügbarkeit",
 				"description": "Aktivieren Sie Ihre Verfügbarkeit und sehen Sie in den Erstanfragen unter „Live-Chat Anfragen“ die wartenden anoymen Ratsuchenden.",
-				"toggleLabel": "Bin verfügbar"
+				"toggleLabel": "Bin verfügbar",
+				"viaSidebar": {
+					"label": "Live Chat über Menü Leiste aktivieren",
+					"description": "Wenn aktiviert, schalten Sie Ihre Live-Chat-Verfügbarkeit über die Menü-Leiste (Seitenleiste) statt hier ein und aus. Der Verfügbarkeits-Schalter oben wird dann deaktiviert und das Live-Chat-Symbol bleibt dauerhaft in der Seitenleiste sichtbar – ein Klick ändert nur seinen Status, das Symbol verschwindet nicht. Ist diese Option aus, wird der Live Chat wie bisher nur hier in Mein Profil gesteuert."
+				}
 			},
 			"masterKey": {
 				"saveError": "Beim Passwort Ändern ist ein Problem aufgetaucht. Bitte versuchen Sie es erneut."
@@ -2471,7 +2576,57 @@
 		},
 		"submit": "Zugriff anfragen",
 		"submitSending": "Wird gesendet",
-		"title": "Zugriff anfragen"
+		"title": "Zugriff anfragen",
+		"menu": {
+			"label": "Optionen zur Fallübergabe",
+			"selectMultiple": {
+				"title": "Mehrere Gespräche auswählen",
+				"description": "Wähle mehrere Fälle aus dem Chatverlauf aus und stelle die Übergabe-Anfrage für alle gleichzeitig."
+			},
+			"confirmSelection": {
+				"title": "Auswahl bestätigen",
+				"description": "Fahre mit den ausgewählten Fällen fort, um die Übergabe anzufragen."
+			},
+			"deselect": {
+				"title": "Auswahl aufheben und schließen",
+				"description": "Hebt die Auswahl auf und beendet den Mehrfachmodus."
+			}
+		},
+		"curtain": {
+			"intro": {
+				"title": "Wie sehe ich die Anfrage hier?",
+				"copy": "Nutze zuerst die Suche, um eine Berater:in oder deine Fachabteilung auszuwählen. Wähle dann das Gespräch aus. Tipp: Über das Menü kannst du mehrere Fälle gleichzeitig auswählen.",
+				"cta": "Schritt für Schritt zeigen"
+			},
+			"reason": {
+				"title": "Bitte wähle einen Grund",
+				"subtitle": "Bevor du fortfährst, musst du einen Grund für deine Anfrage auswählen."
+			},
+			"describe": {
+				"title": "Bitte beschreibe den Grund",
+				"subtitle": "Bitte erläutere kurz, warum du Zugriff auf diesen Fall benötigst."
+			},
+			"back": "Zurück",
+			"next": "Weiter",
+			"consentPending": "Klient:innen-Zustimmung ist erforderlich, bevor der Zugriff aktiviert wird."
+		},
+		"accepted": {
+			"title": "Deine Anfrage wurde von einer Berater:in angenommen.",
+			"copy": "{{advisor}} aus der Beratungsstelle {{organisation}} kümmert sich ab jetzt um dein Anliegen. Alle Nachrichten bleiben Ende-zu-Ende verschlüsselt und nur für die an deiner Beratung beteiligten Personen sichtbar.",
+			"cta": "Zum Gespräch",
+			"advisorFallback": "Eine Berater:in",
+			"organisationFallback": "deiner Beratungsstelle"
+		},
+		"systemMessage": {
+			"badge": "System-Benachrichtigung",
+			"selectedReason": "Ausgewählter Grund: {{reason}}",
+			"explanation": "Erläuterung: {{explanation}}",
+			"tookOverTitle": "Neue Berater:in hat deinen Fall übernommen",
+			"noActionNeeded": "Du musst nichts weiter tun",
+			"importantTitle": "Wichtige Mitteilung",
+			"supervisionTitle": "Supervision aktiviert!",
+			"supervisionBody": "{{advisor}} wurde diesem Chat als beratende Supervisor:in hinzugefügt."
+		}
 	},
 	"session": {
 		"waitingMiniGame": {
@@ -2751,6 +2906,7 @@
 			"consultantUnknown": "Anfragephase",
 			"headline": "Meine Beratungen",
 			"peer": "Peer",
+			"unknown": "Unbekannt",
 			"writeEnquiry": "Jetzt Nachricht schreiben"
 		},
 		"view": {
@@ -2765,7 +2921,20 @@
 		"toolbar": {
 			"search": {
 				"label": "Beratungen durchsuchen",
-				"placeholder": "Suche"
+				"placeholder": "Suche",
+				"refineHint": "Verfeinere deine Suche durch Filter weiter",
+				"confirm": "Auswahl bestätigen",
+				"close": "Suche schließen",
+				"clear": "Suche leeren",
+				"emptyPeople": "Keine passenden Personen gefunden.",
+				"emptyTypes": "Keine Chat-Typen verfügbar.",
+				"emptyTopics": "Keine Themen für deine Beratungsstellen gefunden.",
+				"tabs": {
+					"people": "Personen",
+					"type": "Nach Typ",
+					"centre": "Beratungsstelle",
+					"archiveOnly": "Nur Archiv"
+				}
 			},
 			"menu": {
 				"ariaLabel": "Listenoptionen"
@@ -3359,6 +3528,23 @@
 		}
 	},
 	"walkthrough": {
+		"close": "Rundgang schließen",
+		"overview": {
+			"title": "Meine Rundgänge",
+			"subtitle": "Starten Sie Rundgänge durch die Anwendung oder setzen Sie sie fort.",
+			"empty": "Aktuell sind keine Rundgänge für Sie verfügbar.",
+			"status": {
+				"not_started": "Nicht gestartet",
+				"in_progress": "In Bearbeitung",
+				"completed": "Abgeschlossen",
+				"skipped": "Übersprungen"
+			},
+			"action": {
+				"start": "Starten",
+				"continue": "Fortsetzen",
+				"restart": "Neu starten"
+			}
+		},
 		"step": {
 			"0": {
 				"intro": "Um Ihnen die einzelnen Funktionen zu erklären, haben wir einen kurzen Rundgang für Sie vorbereitet. <br /><br /> Sie können ihn jederzeit abbrechen oder in ihrem Profil erneut starten.",
@@ -3479,7 +3665,8 @@
 			"consultantAccepted": "Sie werden jetzt von ihrer Berater_in im Chat erwartet.",
 			"startChatNow": "Jetzt Chat starten",
 			"dismissAcceptedBanner": "Hinweis ausblenden"
-		}
+		},
+		"enquiryClosed": "Dieser Live-Chat wurde beendet. Um einen neuen Chat zu starten, öffnen Sie bitte Ihren Einladungslink erneut."
 	},
 	"sessionHeader": {
 		"anonymous": {
@@ -3573,6 +3760,11 @@
 			},
 			"remove": {
 				"confirm": "Möchten Sie diesen Supervisor wirklich entfernen?"
+			},
+			"add": {
+				"disabledAsker": "Supervision wird vom Beratungsteam verwaltet",
+				"disabledMobile": "Supervisor hinzufügen – am Desktop verfügbar",
+				"disabledUnavailable": "Supervisor hinzufügen – hier nicht verfügbar"
 			}
 		}
 	},
@@ -3679,6 +3871,22 @@
 			"option": "Option",
 			"ctrl": "Strg",
 			"cmd": "Cmd"
+		}
+	},
+	"teamDiscussion": {
+		"title": "Team-Besprechung",
+		"startHint": "Besprechung starten",
+		"postCount": "{{count}} Beiträge",
+		"postCount_one": "1 Beitrag",
+		"archivedChip": "Archiviert",
+		"teamOnlyMarker": "Nur für das Team sichtbar – Ratsuchende sehen diesen Bereich nicht.",
+		"archivedBanner": "Diese Besprechung wurde bei Annahme der Anfrage geschlossen ({{date}}) und ist nur noch lesbar.",
+		"empty": "Noch keine Beiträge. Stimmen Sie sich hier mit Ihrem Team zur Anfrage ab.",
+		"placeholder": "Nachricht an das Team …",
+		"send": "Senden",
+		"error": {
+			"open": "Die Team-Besprechung konnte nicht geöffnet werden.",
+			"send": "Die Nachricht konnte nicht gesendet werden."
 		}
 	}
 }

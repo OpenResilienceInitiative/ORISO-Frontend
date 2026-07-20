@@ -11,6 +11,7 @@ import { createPortal } from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 import { SendButton } from './inputField/SendButton';
+import { hasMediaUploadFeature } from '../../utils/mediaUploadHelpers';
 import { deriveSendButtonState } from './inputField/sendButtonState';
 import { DragHandle } from './inputField/DragHandle';
 import { ComposerToolbar } from './inputField/ComposerToolbar';
@@ -27,6 +28,7 @@ import { isAskerEnquirySubmission } from './messageEncryptionMode';
 import { resolveAsideTargetRoomId } from './asideRouting';
 import { reloadSessionAfterSendIfNeeded } from './sessionRefreshAfterSend';
 import { chatTransportService } from '../../services/chatTransportService';
+import { extractMentionedUserIds } from '../../utils/messageMentions';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { getModality, Modality } from '../session/getModality';
 import { STATUS_ENQUIRY } from '../../globalState/interfaces/SessionsDataInterface';
@@ -78,8 +80,7 @@ import { Headline } from '../headline/Headline';
 import { useTranslation } from 'react-i18next';
 import {
 	SUPERVISOR_FEEDBACK_PREFIX,
-	buildVisibleToPrefix,
-	buildThreadPrefix
+	buildVisibleToPrefix
 } from '../message/messageConstants';
 import { useE2EE } from '../../hooks/useE2EE';
 import { apiPostError, ERROR_LEVEL_WARN } from '../../api/apiPostError';
@@ -166,6 +167,20 @@ export interface MessageSubmitInterfaceComponentProps {
 	supervisionRoomId?: string;
 	threadRootId?: string | null;
 	threadParentPreview?: string | null;
+	/**
+	 * Relations foundation (#435): direct-reply context. When set, the next
+	 * send carries an m.in_reply_to relation to this event and the composer
+	 * shows a cancelable quote preview.
+	 */
+	replyTo?: { eventId: string; author: string; text: string } | null;
+	onCancelReply?: () => void;
+	/**
+	 * Editing (m.replace, #435): when set, the composer prefills this
+	 * message's text and the next send edits it in place instead of sending
+	 * a new message.
+	 */
+	editingMessage?: { eventId: string; text: string } | null;
+	onCancelEdit?: () => void;
 	mobileUnreadCount?: number;
 	mobileIsScrolledToBottom?: boolean;
 	onMobileNavigateBack?: () => void;
@@ -179,6 +194,13 @@ export interface MessageSubmitInterfaceComponentProps {
 	onLocalMessageEdit?: (messageId: string, newText: string) => void;
 	/** Prefer Matrix-aware ownership from SessionItem when provided. */
 	isOwnMessage?: (userId: string) => boolean;
+	/**
+	 * Called when a send attempt fails (the message never reached the server /
+	 * encryption broke). The parent surfaces a "Sending message failed"
+	 * notification in the timeline. The composer keeps the typed text so the
+	 * user can simply resend.
+	 */
+	onSendError?: (message: string, ts: number) => void;
 }
 
 export const MessageSubmitInterfaceComponent = ({
@@ -195,6 +217,10 @@ export const MessageSubmitInterfaceComponent = ({
 	supervisionRoomId,
 	threadRootId,
 	threadParentPreview,
+	replyTo,
+	onCancelReply,
+	editingMessage,
+	onCancelEdit,
 	mobileUnreadCount = 0,
 	mobileIsScrolledToBottom = false,
 	onMobileNavigateBack,
@@ -203,7 +229,8 @@ export const MessageSubmitInterfaceComponent = ({
 	messages,
 	onCloseThread,
 	onLocalMessageEdit,
-	isOwnMessage
+	isOwnMessage,
+	onSendError
 }: MessageSubmitInterfaceComponentProps) => {
 	const ComposerMobileBackIcon = () => (
 		<svg
@@ -579,6 +606,20 @@ export const MessageSubmitInterfaceComponent = ({
 		},
 		[normalizeInitialAlignment]
 	);
+
+	// Editing (#435): prefill the composer with the message being edited.
+	// Depend on the specific fields (not the object identity) so a new
+	// editingMessage reference with the same content doesn't re-run the effect.
+	const editingMessageEventId = editingMessage?.eventId;
+	const editingMessageText = editingMessage?.text;
+	useEffect(() => {
+		if (editingMessageText === undefined) {
+			return;
+		}
+		setComposerText(editingMessageText);
+		composerRef.current?.setText(editingMessageText);
+		composerRef.current?.focus();
+	}, [editingMessageEventId, editingMessageText]);
 
 	const isAnonymousEnquiryComposer =
 		type === SESSION_LIST_TYPES.ENQUIRY && isAnonymousChat;
@@ -1217,6 +1258,44 @@ export const MessageSubmitInterfaceComponent = ({
 			const matrixRoomId = asideRouting.targetRoomId ?? undefined;
 			const getSendMailNotificationStatus = () => !activeSession.isGroup;
 
+			// Editing (m.replace, #435): replaces the target event's content;
+			// no attachments, prefixes, or reply/thread relations apply.
+			if (editingMessage) {
+				if (!matrixRoomId) {
+					setIsRequestInProgress(false);
+					apiPostError({
+						name: 'MatrixMessageEditError',
+						message:
+							'Cannot edit message: session has no Matrix room',
+						level: ERROR_LEVEL_WARN
+					}).then();
+					return;
+				}
+				await chatTransportService
+					.editTextMessage({
+						matrixRoomId,
+						targetEventId: editingMessage.eventId,
+						message
+					})
+					.then(() => {
+						onSendButton && onSendButton();
+						handleMessageSendSuccess();
+						onCancelEdit && onCancelEdit();
+					})
+					.catch((error) => {
+						setIsRequestInProgress(false);
+						apiPostError({
+							name: error?.name || 'MatrixMessageEditError',
+							message:
+								error?.message ||
+								'Failed to edit Matrix chat message',
+							stack: error?.stack,
+							level: ERROR_LEVEL_WARN
+						}).then();
+					});
+				return;
+			}
+
 			if (attachment) {
 				// Matrix attachments stay on the SDK media path.
 				if (matrixSessionId) {
@@ -1282,6 +1361,12 @@ export const MessageSubmitInterfaceComponent = ({
 				hasTextContent && (!attachment || !matrixSessionId);
 
 			if (shouldSendTextMessage) {
+				// Intentional mentions (#435): read from the composer's own
+				// HTML (mention pills carry data-mention-matrix-id there)
+				// before it is cleared by handleMessageSendSuccess.
+				const mentionedUserIds = extractMentionedUserIds(
+					composerRef.current?.getHTML()
+				);
 				// MATRIX MIGRATION: For group chats, Matrix room ID is in activeSession.rid
 				await apiSendMessage(
 					message,
@@ -1296,16 +1381,24 @@ export const MessageSubmitInterfaceComponent = ({
 						userData?.userName ||
 						`${userData?.firstName || ''} ${userData?.lastName || ''}`.trim() ||
 						'User',
-					matrixClientService
+					matrixClientService,
+					replyTo?.eventId || null,
+					mentionedUserIds
 				)
 					.then(() => encryptRoom(setE2EEState))
 					.then(() => {
 						onSendButton && onSendButton();
 						handleMessageSendSuccess();
 						cleanupAttachment();
+						// Reply context is consumed by the send (#435).
+						onCancelReply && onCancelReply();
 					})
 					.catch((error) => {
 						setIsRequestInProgress(false);
+						// Surface the failure in the timeline ("Sending message
+						// failed"); the composer keeps the text so the user can
+						// resend without retyping.
+						onSendError?.(message, Date.now());
 						apiPostError({
 							name: error?.name || 'MatrixMessageSendError',
 							message:
@@ -1334,10 +1427,15 @@ export const MessageSubmitInterfaceComponent = ({
 			isSupervisor,
 			matrixClientService,
 			onSendButton,
+			onSendError,
 			resolvedChatSession,
 			setE2EEState,
 			supervisionRoomId,
 			threadRootId,
+			replyTo?.eventId,
+			onCancelReply,
+			editingMessage,
+			onCancelEdit,
 			userData?.displayName,
 			userData?.firstName,
 			userData?.lastName,
@@ -1368,9 +1466,10 @@ export const MessageSubmitInterfaceComponent = ({
 			encodeHighlightColorsForTransport(currentTypedMessage)
 		).trim();
 		const prefixParts: string[] = [];
-		if (threadRootId) {
-			prefixParts.push(buildThreadPrefix(threadRootId));
-		}
+		// Relations foundation (#435): thread membership travels as the
+		// MSC3440 m.thread relation on the event (see chatTransportService),
+		// not as a [THREAD:...] text prefix anymore. Old messages with the
+		// prefix keep rendering via the legacy parse fallback.
 		// VISIBLE_TO recipient targeting is an opt-in supervisor/coordinator aside
 		// (ADR-008) and only exists when the audience selector is actually shown —
 		// i.e. there is more than one human counterpart (group / supervision). In a
@@ -1397,8 +1496,14 @@ export const MessageSubmitInterfaceComponent = ({
 		if (prefixParts.length && message.length > 0) {
 			message = `${prefixParts.join(' ')} ${message}`;
 		}
-		// Legacy Rocket.Chat client-side message encryption is removed;
-		// Matrix messages go through the SDK path unencrypted (ADR-004).
+		// Legacy Rocket.Chat client-side message encryption is removed. This
+		// `isEncrypted` flag is the vestigial remnant of that path and no
+		// longer controls Matrix encryption: with Rust crypto initialized
+		// unconditionally (matrixClientService.initRustCrypto) and rooms
+		// created with `m.room.encryption`, the SDK Megolm-encrypts every send
+		// automatically (ADR-004, durable since the ADR-005 homeserver
+		// rebuild). The flag is a no-op pass-through kept only for the
+		// chatTransportService signature.
 		const isEncrypted = false;
 
 		if (isAskerEnquiry) {
@@ -1444,8 +1549,7 @@ export const MessageSubmitInterfaceComponent = ({
 		sendMessage,
 		selectedAudienceValues,
 		audienceOptions,
-		isSupervisor,
-		threadRootId
+		isSupervisor
 	]);
 
 	const handleButtonClick = useCallback(() => {
@@ -1542,6 +1646,21 @@ export const MessageSubmitInterfaceComponent = ({
 			: displayAttachmentToUpload(attachment);
 	}, [displayAttachmentToUpload, handleLargeAttachments]);
 
+	/** Files dropped/pasted into the TipTap editor (WP-4): same single-attachment flow. */
+	const handleComposerFilesSelected = useCallback(
+		(files: File[]) => {
+			const attachment = files[0];
+			if (!attachment) {
+				return;
+			}
+			const attachmentSizeMB = getAttachmentSizeMBForKB(attachment.size);
+			attachmentSizeMB > ATTACHMENT_MAX_SIZE_IN_MB
+				? handleLargeAttachments()
+				: displayAttachmentToUpload(attachment);
+		},
+		[displayAttachmentToUpload, handleLargeAttachments]
+	);
+
 	const handlePreselectedAttachmentChange = useCallback(() => {
 		const attachment = preselectedFile;
 		const attachmentSizeMB = getAttachmentSizeMBForKB(attachment.size);
@@ -1560,6 +1679,22 @@ export const MessageSubmitInterfaceComponent = ({
 			cleanupVoiceRecorder();
 		};
 	}, [cleanupVoiceRecorder]);
+
+	// Image thumbnail for the pre-send attachment card (revoked on change/unmount).
+	const attachmentPreviewUrl = useMemo(
+		() =>
+			attachmentSelected?.type?.startsWith('image/')
+				? URL.createObjectURL(attachmentSelected)
+				: null,
+		[attachmentSelected]
+	);
+	useEffect(() => {
+		return () => {
+			if (attachmentPreviewUrl) {
+				URL.revokeObjectURL(attachmentPreviewUrl);
+			}
+		};
+	}, [attachmentPreviewUrl]);
 
 	const handleAttachmentRemoval = useCallback(() => {
 		if (uploadProgress && attachmentUpload) {
@@ -1642,8 +1777,6 @@ export const MessageSubmitInterfaceComponent = ({
 		navigate('/booking/');
 	}, [navigate]);
 
-	const hasUploadFunctionality =
-		!isAskerEnquiry && !tenant?.settings?.featureAttachmentUploadDisabled;
 	const currentChatType: 'anonymous' | 'oneOnOne' | 'group' | 'supervision' =
 		isSupervisor
 			? 'supervision'
@@ -1652,6 +1785,9 @@ export const MessageSubmitInterfaceComponent = ({
 				: isAnonymousChat
 					? 'anonymous'
 					: 'oneOnOne';
+	const hasUploadFunctionality =
+		!isAskerEnquiry &&
+		hasMediaUploadFeature(tenant?.settings, currentChatType);
 	const {
 		featureVoiceMessagesEnabled = true,
 		featureVoiceMessagesAnonymousChatsEnabled = true,
@@ -2975,6 +3111,7 @@ export const MessageSubmitInterfaceComponent = ({
 	const mentionDataRef = useRef({
 		directory: agencyConsultantDirectory,
 		inRoomValues: new Set<string>(),
+		matrixUserIdByComparableId: new Map<string, string>(),
 		selfId: userData?.userId as string | undefined
 	});
 	mentionDataRef.current = {
@@ -2987,6 +3124,31 @@ export const MessageSubmitInterfaceComponent = ({
 					...Array.from(getComparableAudienceIds(option.label))
 				])
 		),
+		// Intentional mentions (#435): audienceOptions already resolves room
+		// members to their real Matrix user id (option.value is member.userId
+		// for room members — see the audience-options effect above). Reusing
+		// that instead of a second room-member fetch keeps this a single
+		// source of truth, and only ever a *resolved* member id ends up here.
+		matrixUserIdByComparableId: new Map(
+			audienceOptions
+				.filter(
+					(option) =>
+						option.value !== '__all__' &&
+						/^@[^:@\s]+:.+$/.test(option.value)
+				)
+				.flatMap((option) =>
+					Array.from(
+						new Set([
+							...Array.from(
+								getComparableAudienceIds(option.value)
+							),
+							...Array.from(
+								getComparableAudienceIds(option.label)
+							)
+						])
+					).map((id): [string, string] => [id, option.value])
+				)
+		),
 		selfId: userData?.userId
 	};
 
@@ -2998,16 +3160,26 @@ export const MessageSubmitInterfaceComponent = ({
 				'nicht im Chat'
 			),
 			getCandidates: () => {
-				const { directory, inRoomValues } = mentionDataRef.current;
+				const { directory, inRoomValues, matrixUserIdByComparableId } =
+					mentionDataRef.current;
 				return Array.from(directory.entries()).map(
-					([consultantId, info]) => ({
-						id: consultantId,
-						displayName: info.displayName,
-						username: info.username,
-						isInRoom: Array.from(
-							getComparableAudienceIds(info.username)
-						).some((id) => inRoomValues.has(id))
-					})
+					([consultantId, info]) => {
+						const comparableIds = getComparableAudienceIds(
+							info.username
+						);
+						const matrixUserId = Array.from(comparableIds)
+							.map((id) => matrixUserIdByComparableId.get(id))
+							.find(Boolean);
+						return {
+							id: consultantId,
+							displayName: info.displayName,
+							username: info.username,
+							matrixUserId,
+							isInRoom: Array.from(comparableIds).some((id) =>
+								inRoomValues.has(id)
+							)
+						};
+					}
 				);
 			}
 		}),
@@ -3185,6 +3357,58 @@ export const MessageSubmitInterfaceComponent = ({
 			)}
 
 			<form className="textarea" onSubmit={handleFormSubmit}>
+				{/* Relations foundation (#435): cancelable reply-quote preview,
+				    docked inside the composer box above the input. */}
+				{replyTo && (
+					<div className="messageSubmit__replyPreview" role="status">
+						<div className="messageSubmit__replyPreviewContent">
+							<span className="messageSubmit__replyPreviewLabel">
+								{translate(
+									'message.reply.previewLabel',
+									'Antwort an'
+								)}{' '}
+								<strong>{replyTo.author}</strong>
+							</span>
+							<span className="messageSubmit__replyPreviewText">
+								{replyTo.text}
+							</span>
+						</div>
+						<button
+							type="button"
+							className="messageSubmit__replyPreviewCancel"
+							onClick={() => onCancelReply && onCancelReply()}
+							aria-label={translate(
+								'message.reply.cancel',
+								'Antwort verwerfen'
+							)}
+						>
+							×
+						</button>
+					</div>
+				)}
+				{/* Editing (m.replace, #435): cancelable edit-in-progress banner,
+				    same dock as the reply preview. */}
+				{editingMessage && (
+					<div className="messageSubmit__editPreview" role="status">
+						<span className="messageSubmit__editPreviewLabel">
+							{translate(
+								'message.edit.previewLabel',
+								'Nachricht bearbeiten'
+							)}
+						</span>
+						<button
+							type="button"
+							className="messageSubmit__editPreviewCancel"
+							onClick={() => onCancelEdit && onCancelEdit()}
+							aria-label={translate(
+								'message.edit.cancel',
+								'Bearbeiten abbrechen'
+							)}
+						>
+							×
+						</button>
+					</div>
+				)}
 				<div
 					className={clsx(
 						'textarea__wrapper',
@@ -3720,11 +3944,21 @@ export const MessageSubmitInterfaceComponent = ({
 								{attachmentSelected ? (
 									<div className="textarea__attachmentMode">
 										<div className="textarea__attachmentModeCard">
-											<span className="textarea__attachmentModeIcon">
-												{getAttachmentIcon(
-													attachmentSelected.type
-												)}
-											</span>
+											{attachmentPreviewUrl ? (
+												<img
+													className="textarea__attachmentModeThumb"
+													src={attachmentPreviewUrl}
+													alt={
+														attachmentSelected.name
+													}
+												/>
+											) : (
+												<span className="textarea__attachmentModeIcon">
+													{getAttachmentIcon(
+														attachmentSelected.type
+													)}
+												</span>
+											)}
 											<div className="textarea__attachmentModeInfo">
 												<p className="textarea__attachmentModeName">
 													{attachmentSelected.name}
@@ -3881,6 +4115,11 @@ export const MessageSubmitInterfaceComponent = ({
 											onEditLast={handleEditLast}
 											onCancel={handleCancelEdit}
 											onUpload={handleUpload}
+											onFilesSelected={
+												hasUploadFunctionality
+													? handleComposerFilesSelected
+													: undefined
+											}
 											onSubmitShortcut={() => {
 												if (
 													!uploadProgress &&

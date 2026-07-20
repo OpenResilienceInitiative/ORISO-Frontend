@@ -21,8 +21,7 @@ export const getKeycloakAccessToken = (
 		const req = new Request(url, {
 			method: 'POST',
 			headers: {
-				'Content-Type': 'application/x-www-form-urlencoded',
-				'cache-control': 'no-cache'
+				'Content-Type': 'application/x-www-form-urlencoded'
 			},
 			// The password grant is authenticated by the form body. Do not send
 			// stale browser auth cookies to Keycloak's token endpoint.

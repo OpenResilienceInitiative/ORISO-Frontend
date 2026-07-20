@@ -174,6 +174,11 @@
 				"png": "PNG",
 				"xlsx": "XLSX"
 			}
+		},
+		"mediaCheck": {
+			"unchecked": "Image from anonymous chat – not yet checked",
+			"reveal": "Show image",
+			"blocked": "Blocked by the security check"
 		}
 	},
 	"banner": {
@@ -740,11 +745,49 @@
 				}
 			}
 		},
+		"format": {
+			"back": "Back",
+			"headerTitle": "Create new conversation",
+			"subtitle": "We offer different specialised conversation formats for you and the advice seekers. The selection is freely configurable by the organisations and your counselling centre.",
+			"title": "Choose conversation format"
+		},
+		"internal": {
+			"addPerson": "Add person",
+			"createLabel": "Create internal chat",
+			"deselectPerson": "Remove {{name}}",
+			"nameLabel": "Internal chat name",
+			"personCount_one": "{{count}} person added",
+			"personCount_other": "{{count}} people added",
+			"removePerson": "Remove {{name}}",
+			"selectPerson": "Select {{name}}",
+			"subtitle": "with your colleagues",
+			"supportText": "Coordinate within your counselling centre. Individually or as a team, via audio, video, chat or everything as needed.",
+			"title": "Internal discussion",
+			"togglePersonList": "Open or close the person list"
+		},
+		"circle": {
+			"cardHeadline": "Anonymous self-help groups",
+			"cardText": "initiate in your subject area. One-off or recurring: choose the right medium and share the circle with the participants.",
+			"createLabel": "Create",
+			"noTopics": "No topics available",
+			"saveLabel": "Save",
+			"settingsSubtitle": "Now adjust the welcome text, format, rules, intervals and the language in which the circle will primarily take place.",
+			"settingsTitle": "Circle settings",
+			"subtitle": "moderated by counsellors",
+			"title": "Conversation circle",
+			"toggleTopicList": "Open or close the topic list",
+			"topicLabel": "Topic / subject area"
+		},
 		"createError": {
 			"overlay": {
 				"buttonLabel": "Close",
 				"headline": "An error has occurred. Please try again."
 			}
+		},
+		"loadError": {
+			"consultants": "The colleagues could not be loaded.",
+			"retry": "Try again",
+			"topics": "The topics could not be loaded."
 		},
 		"createSuccess": {
 			"overlay": {
@@ -753,6 +796,7 @@
 			}
 		},
 		"edit.title": "Chat settings",
+		"edit.subtitle": "Change this series' schedule and content",
 		"info": {
 			"headline": "Chat-Info",
 			"settings": {
@@ -781,6 +825,31 @@
 		"join": {
 			"timeConversions": "Playful time conversions",
 			"waitingArea": {
+				"countdown": {
+					"etaDay": "in 1 day",
+					"etaDays": "in {{count}} days",
+					"etaHour": "in 1 hour",
+					"etaHours": "in {{count}} hours",
+					"etaMinute": "in 1 minute",
+					"etaMinutes": "in {{count}} minutes",
+					"etaSoon": "any moment now",
+					"flipAria": "{{label}}: {{value}}. Flip to read.",
+					"flipHint": "click to flip",
+					"greetingLabel": "A welcome from your counsellor",
+					"headline": "Your group chat starts {{eta}}.",
+					"netiquetteLabel": "Netiquette · rule {{no}}",
+					"overdueCaption": "The wait is getting a little awkward …",
+					"overdueHeadline": "We'll be with you in a moment.",
+					"overdueSubtitle": "Your counsellor is about to open the room — please hang on a little longer.",
+					"subtitle": "Click a number — the greeting and netiquette are waiting behind it.",
+					"timerAriaFuture": "Until the start — days: {{days}}, hours: {{hours}}, minutes: {{minutes}}, seconds: {{seconds}}",
+					"timerAriaOverdue": "Since the planned start — minutes: {{minutes}}, seconds: {{seconds}}",
+					"toggleLabel": "Turn off animation",
+					"unitDays": "Days",
+					"unitHours": "Hours",
+					"unitMinutes": "Minutes",
+					"unitSeconds": "Seconds"
+				},
 				"catMinutes": "{{value}} cat minutes",
 				"discomfort": {
 					"late": "late",
@@ -1364,6 +1433,12 @@
 			"title": "Note"
 		},
 		"read": "read",
+		"sendFailed": {
+			"body": "There was a problem with sending the message, likely due to encryption or a transfer error. Please copy it and try again. Check the status: one check means sent, two checks mean read, and a cross means it didn’t reach the server.",
+			"status": "not delivered",
+			"subtitle": "Resend your message again",
+			"title": "Sending message failed"
+		},
 		"sent": "sent",
 		"submit": {
 			"booking": {
@@ -1405,7 +1480,13 @@
 		"today": "Today",
 		"tomorrow": "Tomorrow",
 		"unread": "unread",
-		"yesterday": "Yesterday"
+		"yesterday": "Yesterday",
+		"reply": {
+			"previewLabel": "Replying to",
+			"cancel": "Discard reply",
+			"quoteLabel": "In reply to",
+			"quoteUnknown": "Earlier message"
+		}
 	},
 	"navigation": {
 		"appointments": "Video dates",
@@ -1571,6 +1652,10 @@
 			"appointmentBriefing": {
 				"title": "Appointments briefing",
 				"text": "A briefing of your upcoming appointments is ready."
+			},
+			"teamDiscussionNew": {
+				"title": "Team discussion",
+				"text": "{{senderDisplayName}} posted in the team discussion"
 			}
 		},
 		"error": "failed",
@@ -1700,6 +1785,22 @@
 					"tooltip": "Share your personal contact link with someone so they can start an online consultation directly with you."
 				}
 			},
+			"publicSlug": {
+				"info": "Use lowercase letters and hyphens only. New slugs become active after admin approval.",
+				"input": "Public contact link name",
+				"label": "Public contact link",
+				"notification": {
+					"error": "The contact link name could not be saved. Please check the format or choose another name.",
+					"text": "The contact link name was submitted for approval.",
+					"title": "Request saved"
+				},
+				"status": {
+					"active": "Active link name: {{slug}}",
+					"empty": "No public link name is active yet. The UUID link is still used.",
+					"pending": "Waiting for admin approval: {{slug}}",
+					"rejected": "The last requested link name was rejected."
+				}
+			},
 			"profileIcon": "Profile icon",
 			"register": {
 				"button": {
@@ -1776,7 +1877,11 @@
 			"liveChat": {
 				"title": "My Live-Chat availability",
 				"description": "Enable your availability and you will see waiting anonymous advice seekers under “Live-Chat requests” in First enquiries.",
-				"toggleLabel": "I'm available"
+				"toggleLabel": "I'm available",
+				"viaSidebar": {
+					"label": "Activate Live Chat via the menu bar",
+					"description": "When enabled, you switch your Live Chat availability on and off from the menu bar (sidebar) instead of here. The availability toggle above is then disabled, and the Live Chat icon stays permanently visible in the sidebar — clicking it only changes its state, it never disappears. When disabled, Live Chat is controlled here in My Profile as before."
+				}
 			},
 			"masterKey": {
 				"saveError": "A problem occurred while changing the password. Please try again."
@@ -2411,7 +2516,57 @@
 		},
 		"submit": "Request access",
 		"submitSending": "Sending",
-		"title": "Request access"
+		"title": "Request access",
+		"menu": {
+			"label": "Case handover options",
+			"selectMultiple": {
+				"title": "Select multiple conversations",
+				"description": "You can instantly select several cases from the chat history and apply a case handover at once."
+			},
+			"confirmSelection": {
+				"title": "Confirm selection",
+				"description": "Proceed with your currently selected items to request a case handover."
+			},
+			"deselect": {
+				"title": "Deselect and close",
+				"description": "Deselects everything and closes the batch mode."
+			}
+		},
+		"curtain": {
+			"intro": {
+				"title": "How can I see the inquiry here?",
+				"copy": "Start by using the search bar to choose either the counselor you need or your agency department. Then, select the conversation. Quick tip: use the bulk option in the menu to select multiple items.",
+				"cta": "Show me step by step"
+			},
+			"reason": {
+				"title": "Please select a reason",
+				"subtitle": "Before you proceed, you need to select a reason to send an inquiry"
+			},
+			"describe": {
+				"title": "Please describe the reason",
+				"subtitle": "Please briefly explain why you need access to this case."
+			},
+			"back": "Back",
+			"next": "Next",
+			"consentPending": "Client consent is required before access is activated."
+		},
+		"accepted": {
+			"title": "Your inquiry has been accepted by a consultant.",
+			"copy": "{{advisor}} from the counselling centre {{organisation}} is now taking care of your request. All messages remain end-to-end encrypted and visible only to the people involved in your counselling.",
+			"cta": "View conversation",
+			"advisorFallback": "A consultant",
+			"organisationFallback": "your counselling centre"
+		},
+		"systemMessage": {
+			"badge": "System notification",
+			"selectedReason": "Selected reason: {{reason}}",
+			"explanation": "Explanation: {{explanation}}",
+			"tookOverTitle": "New counsellor took over your case",
+			"noActionNeeded": "You don't need to take any action",
+			"importantTitle": "Important notification",
+			"supervisionTitle": "Supervision activated!",
+			"supervisionBody": "{{advisor}} has been added to this chat as a supervising advisor."
+		}
 	},
 	"session": {
 		"waitingMiniGame": {
@@ -2694,6 +2849,7 @@
 			"consultantUnknown": "Request stage",
 			"headline": "My consultations",
 			"peer": "Peer",
+			"unknown": "Unknown",
 			"writeEnquiry": "Write message now"
 		},
 		"view": {
@@ -2708,7 +2864,20 @@
 		"toolbar": {
 			"search": {
 				"label": "Search consultations",
-				"placeholder": "Search"
+				"placeholder": "Search",
+				"refineHint": "Refine your search further using filters",
+				"confirm": "Confirm selection",
+				"close": "Close search",
+				"clear": "Clear search",
+				"emptyPeople": "No matching people found.",
+				"emptyTypes": "No chat types available.",
+				"emptyTopics": "No topics found for your counseling centers.",
+				"tabs": {
+					"people": "People",
+					"type": "By type",
+					"centre": "Counseling center",
+					"archiveOnly": "Archive only"
+				}
 			},
 			"menu": {
 				"ariaLabel": "List options"
@@ -3301,6 +3470,23 @@
 		}
 	},
 	"walkthrough": {
+		"close": "Close tour",
+		"overview": {
+			"title": "My tours",
+			"subtitle": "Start or continue guided tours through the application.",
+			"empty": "There are currently no tours available for you.",
+			"status": {
+				"not_started": "Not started",
+				"in_progress": "In progress",
+				"completed": "Completed",
+				"skipped": "Skipped"
+			},
+			"action": {
+				"start": "Start",
+				"continue": "Continue",
+				"restart": "Restart"
+			}
+		},
 		"step": {
 			"0": {
 				"intro": "To explain the individual functions, we have prepared a short tour for you. <br /><br /> They can cancel it at any time or start it again in their profile.",
@@ -3381,7 +3567,8 @@
 			"consultantAccepted": "Your counselor is now expecting you in the chat.",
 			"startChatNow": "Start chat now",
 			"dismissAcceptedBanner": "Dismiss notice"
-		}
+		},
+		"enquiryClosed": "This live chat has ended. To start a new chat, please open your invite link again."
 	},
 	"sessionHeader": {
 		"anonymous": {
@@ -3475,6 +3662,11 @@
 			},
 			"remove": {
 				"confirm": "Are you sure you want to remove this supervisor?"
+			},
+			"add": {
+				"disabledAsker": "Supervision is managed by the counselling team",
+				"disabledMobile": "Add supervisor – available on desktop",
+				"disabledUnavailable": "Add supervisor – not available here"
 			}
 		}
 	},
@@ -3581,6 +3773,22 @@
 			"option": "Option",
 			"ctrl": "Ctrl",
 			"cmd": "Cmd"
+		}
+	},
+	"teamDiscussion": {
+		"title": "Team discussion",
+		"startHint": "Start discussion",
+		"postCount": "{{count}} posts",
+		"postCount_one": "1 post",
+		"archivedChip": "Archived",
+		"teamOnlyMarker": "Visible to the team only – advice seekers cannot see this area.",
+		"archivedBanner": "This discussion was closed when the enquiry was accepted ({{date}}) and is read-only.",
+		"empty": "No posts yet. Coordinate with your team about this enquiry here.",
+		"placeholder": "Message to the team …",
+		"send": "Send",
+		"error": {
+			"open": "The team discussion could not be opened.",
+			"send": "The message could not be sent."
 		}
 	}
 }

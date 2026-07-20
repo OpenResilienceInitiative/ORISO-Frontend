@@ -15,7 +15,8 @@ import {
 	hasUserAuthority,
 	SessionTypeContext,
 	UserDataContext,
-	ActiveSessionContext
+	ActiveSessionContext,
+	useTopic
 } from '../../globalState';
 import {
 	apiGetAgencyConsultantList,
@@ -44,12 +45,19 @@ import { useTranslation } from 'react-i18next';
 import { prepareConsultantDataForSelect } from '../sessionAssign/sessionAssignHelper';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
+import { getModality, Modality } from './getModality';
+import { TeamDiscussionPanel } from '../teamDiscussion/TeamDiscussionPanel';
+import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import {
 	chatTransportService,
 	MatrixRoomLifecycleChange
 } from '../../services/chatTransportService';
-import { formatMatrixTimelineEvent } from '../../utils/matrixTimelineEventFormatter';
-import { CaseHandoverGate } from './CaseHandoverGate';
+import {
+	formatMatrixTimelineEvent,
+	extractReactionEvents
+} from '../../utils/matrixTimelineEventFormatter';
+import { applyMessageEdits } from '../../utils/messageRelations';
+import { CaseHandoverCurtain } from './CaseHandoverCurtain';
 import { isCaseHandoverAccessControlled } from './caseHandoverHelpers';
 
 interface SessionStreamProps {
@@ -73,6 +81,9 @@ export const SessionStream = ({
 	const { userData } = useContext(UserDataContext);
 	const { matrixClientService } = useMatrixClient();
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
+	// FE#514 follow-up: `team.discussion.new` notifications deep-link with
+	// ?teamDiscussion=1 — the panel then opens expanded instead of collapsed.
+	const teamDiscussionParam = useSearchParam<string>('teamDiscussion');
 
 	// MATRIX MIGRATION: Track component mount/unmount
 	useEffect(() => {
@@ -83,10 +94,24 @@ export const SessionStream = ({
 	}, []);
 
 	const subscribed = useRef(false);
+	// Bumped whenever a token refresh swaps the matrix-js-sdk client: the old
+	// instance got removeAllListeners(), so every effect holding room
+	// listeners depends on this generation to re-attach to the new client.
+	const [matrixClientGeneration, setMatrixClientGeneration] = useState(0);
 	const [messagesItem, setMessagesItem] = useState(null);
 	const [overlayItem, setOverlayItem] = useState<OverlayItem>(null);
 	const [isOverlayActive, setIsOverlayActive] = useState(false);
 	const [loading, setLoading] = useState(true);
+
+	useEffect(() => {
+		if (!matrixClientService?.onClientChange) {
+			return;
+		}
+
+		return matrixClientService.onClientChange(() => {
+			setMatrixClientGeneration((generation) => generation + 1);
+		});
+	}, [matrixClientService]);
 
 	const { activeSession, readActiveSession } =
 		useContext(ActiveSessionContext);
@@ -254,14 +279,24 @@ export const SessionStream = ({
 					'e2ee.message.encryption.text'
 				);
 
-				const loadRoomMessages = (roomId?: string | null) => {
+				const loadRoomEvents = (roomId?: string | null) => {
 					if (!roomId) {
 						return [];
 					}
-					const matrixRoom =
-						chatTransportService.getMatrixRoom(roomId);
-					return chatTransportService
-						.getMatrixRoomMessages(roomId, 100)
+					return chatTransportService.getMatrixRoomMessages(
+						roomId,
+						100
+					);
+				};
+
+				const formatRoomMessages = (
+					events: any[],
+					roomId?: string | null
+				) => {
+					const matrixRoom = roomId
+						? chatTransportService.getMatrixRoom(roomId)
+						: null;
+					return events
 						.map((event: any) =>
 							formatMatrixTimelineEvent(
 								event,
@@ -272,20 +307,29 @@ export const SessionStream = ({
 						.filter(Boolean);
 				};
 
-				const clientMessages = loadRoomMessages(resolvedMatrixRoomId);
+				const clientEvents = loadRoomEvents(resolvedMatrixRoomId);
 				// ADR-008: merge the supervision side room's asides so they
 				// render for members. The client is never a member of the side
 				// room, so it never loads these.
-				const supervisionMessages = supervisionRoomId
-					? loadRoomMessages(supervisionRoomId)
+				const supervisionEvents = supervisionRoomId
+					? loadRoomEvents(supervisionRoomId)
 					: [];
 				const formattedMessages = mergeMatrixMessages(
-					clientMessages,
-					supervisionMessages
+					formatRoomMessages(clientEvents, resolvedMatrixRoomId),
+					formatRoomMessages(supervisionEvents, supervisionRoomId)
 				);
+				// Reactions (m.annotation, #435): a distinct event type,
+				// collected separately from the formatted message list.
+				const reactionEvents = [
+					...extractReactionEvents(clientEvents),
+					...extractReactionEvents(supervisionEvents)
+				];
 
 				setMessagesItem({
-					messages: prepareMessages(formattedMessages)
+					messages: prepareMessages(
+						applyMessageEdits(formattedMessages)
+					),
+					reactionEvents
 				});
 				setLoading(false);
 				return Promise.resolve(true);
@@ -424,7 +468,12 @@ export const SessionStream = ({
 				const eventType = event?.getType?.();
 				if (
 					eventType !== 'm.room.message' &&
-					eventType !== 'm.room.encrypted'
+					eventType !== 'm.room.encrypted' &&
+					// Reactions (m.annotation, #435): a reaction add/remove is
+					// not a message, but still needs a live refresh so
+					// aggregateReactions() picks it up for other members.
+					eventType !== 'm.reaction' &&
+					eventType !== 'm.room.redaction'
 				) {
 					return;
 				}
@@ -494,11 +543,13 @@ export const SessionStream = ({
 			detachTimelineListeners.forEach((detach) => detach());
 		};
 		// matrixRoomId is derived from resolvedChatSession (already a dep).
+		// matrixClientGeneration re-attaches after a token-refresh client swap.
 	}, [
 		resolvedChatSession,
 		supervisionRoomId,
 		fetchSessionMessages,
-		matrixRoomId
+		matrixRoomId,
+		matrixClientGeneration
 	]);
 
 	const groupChatStoppedOverlay: OverlayItem = useMemo(
@@ -602,7 +653,13 @@ export const SessionStream = ({
 			}
 			detachLifecycleListener?.();
 		};
-	}, [isMatrixSession, matrixRoomId, handleMatrixRoomLifecycle]);
+		// matrixClientGeneration re-attaches after a token-refresh client swap.
+	}, [
+		isMatrixSession,
+		matrixRoomId,
+		handleMatrixRoomLifecycle,
+		matrixClientGeneration
+	]);
 
 	useEffect(() => {
 		if (!isMatrixSession || !matrixRoomId) {
@@ -696,11 +753,13 @@ export const SessionStream = ({
 			matrixTypingActivity.clear();
 			setMatrixTypingUsers([]);
 		};
+		// matrixClientGeneration re-attaches after a token-refresh client swap.
 	}, [
 		isMatrixSession,
 		matrixRoomId,
 		MATRIX_TYPING_STALE_MS,
-		matrixClientService
+		matrixClientService,
+		matrixClientGeneration
 	]);
 
 	useEffect(() => {
@@ -863,6 +922,11 @@ export const SessionStream = ({
 	// activeSessionId: activeSession?.item?.id
 	// });
 
+	const caseHandoverTopicId =
+		(activeSession?.item?.topic as { id?: number })?.id ?? null;
+	const caseHandoverTopic = useTopic(caseHandoverTopicId);
+	const caseHandoverTopicLabel = caseHandoverTopic?.name;
+
 	if (caseHandoverGateNeeded && caseHandoverStatusLoading) {
 		return <Loading />;
 	}
@@ -895,17 +959,37 @@ export const SessionStream = ({
 	if (caseHandoverGateNeeded && !caseHandoverStatus?.canViewContent) {
 		return (
 			<div className="session__wrapper">
-				<CaseHandoverGate
+				<CaseHandoverCurtain
 					sessionId={activeSession.item.id}
 					status={caseHandoverStatus}
 					onStatusChange={handleCaseHandoverStatusChange}
+					topicLabel={caseHandoverTopicLabel}
 				/>
 			</div>
 		);
 	}
 
+	// FE#514 / ADR-016: the Team-Besprechung exists for consultants on
+	// Agency-Counselling enquiries only (Live Chat + groups excluded). The
+	// panel itself keeps working read-only when an archived discussion exists.
+	const { featureTeamDiscussionEnabled = true } = getTenantSettings();
+	const showTeamDiscussion =
+		featureTeamDiscussionEnabled &&
+		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
+		!activeSession.isGroup &&
+		getModality(activeSession) === Modality.AGENCY_COUNSELLING &&
+		!!activeSession.item?.id;
+
 	return (
 		<div className="session__wrapper">
+			{showTeamDiscussion && (
+				<TeamDiscussionPanel
+					key={activeSession.item.id}
+					sessionId={activeSession.item.id}
+					allowCreate={activeSession.isEnquiry}
+					initiallyOpen={teamDiscussionParam === '1'}
+				/>
+			)}
 			<SessionItemComponent
 				hasUserInitiatedStopOrLeaveRequest={
 					hasUserInitiatedStopOrLeaveRequest
@@ -913,6 +997,7 @@ export const SessionStream = ({
 				isTyping={handleSessionTyping}
 				typingUsers={matrixTypingUsers}
 				messages={messagesItem?.messages}
+				reactionEvents={messagesItem?.reactionEvents || []}
 				bannedUsers={bannedUsers}
 				refreshMessages={fetchSessionMessages}
 			/>

@@ -80,6 +80,7 @@ export const endpoints = {
 	deleteAskerAccount: userServiceOrigin + '/service/users/account',
 	draftMessages: userServiceOrigin + '/service/messages/draft',
 	userDrafts: userServiceOrigin + '/service/users/drafts',
+	tutorialProgress: userServiceOrigin + '/service/users/tutorials/progress',
 	email: userServiceOrigin + '/service/users/email',
 	// logstash intake was retired; client crash reports now go to UserService's
 	// OBS-P3 error-intake endpoint, which logs them into SigNoz (ORISO-Helm#62).
@@ -103,6 +104,8 @@ export const endpoints = {
 	passwordResetConfirm:
 		userServiceOrigin + '/service/users/password-reset/confirm',
 	matrixAccessToken: userServiceOrigin + '/service/matrix/me/token',
+	matrixSyncRegister: (sessionId: number) =>
+		userServiceOrigin + `/service/matrix/sync/register/${sessionId}`,
 	messages: {
 		get: userServiceOrigin + '/service/messages',
 		delete: userServiceOrigin + '/service/messages/:messageId'
@@ -120,6 +123,9 @@ export const endpoints = {
 	sendMessage: userServiceOrigin + '/service/messages/new',
 	sessionBase: userServiceOrigin + '/service/users/sessions',
 	sessionRooms: userServiceOrigin + '/service/users/sessions/room',
+	teamDiscussion: (sessionId: number) =>
+		userServiceOrigin +
+		`/service/users/sessions/${sessionId}/team-discussion`,
 	setAbsence: userServiceOrigin + '/service/users/consultants/absences',
 	startVideoCall: apiUrl + '/service/videocalls/new',
 	tenantServiceBase: tenantServiceOrigin + '/service/tenant',

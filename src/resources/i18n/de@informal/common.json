@@ -65,6 +65,11 @@
 				"received": "Du hast eine Datei erhalten.",
 				"sent": "Du hast eine Datei gesendet."
 			}
+		},
+		"mediaCheck": {
+			"unchecked": "Bild aus anonymem Chat – noch nicht geprüft",
+			"reveal": "Bild anzeigen",
+			"blocked": "Von der Sicherheitsprüfung blockiert"
 		}
 	},
 	"banUser": {
@@ -239,6 +244,15 @@
 			}
 		},
 		"join": {
+			"waitingArea": {
+				"countdown": {
+					"greetingLabel": "Begrüßung deiner Beratung",
+					"headline": "Dein Gruppen-Chat beginnt {{eta}}.",
+					"overdueHeadline": "Wir sind gleich für dich da.",
+					"overdueSubtitle": "Deine Beratung öffnet den Raum gleich — bitte hab noch einen Moment Geduld.",
+					"subtitle": "Klick auf eine Zahl — dahinter warten Begrüßung und Netiquette."
+				}
+			},
 			"consultant": {
 				"message": "Dein_e Moderator_in hat den Chat noch nicht gestartet. Sobald Dein_e Moderator_in den Chat gestartet hat, kannst Du mit uns chatten. Bitte habe noch etwas Geduld."
 			},
@@ -392,19 +406,6 @@
 		"appointmentSet": {
 			"title": "Dein Termin wurde erstellt"
 		},
-		"delete": {
-			"deleted": {
-				"own": "Du hast diese Nachricht gelöscht."
-			},
-			"overlay": {
-				"copy": "Möchtest Du die Nachricht wirklich löschen?"
-			}
-		},
-		"submit": {
-			"booking": {
-				"headline": "Oder vereinbaren Sie jetzt einen Termin"
-			}
-		},
 		"audience": {
 			"all": "Alle",
 			"multiCount": "{{count}} Personen",
@@ -426,6 +427,29 @@
 			"moderatorsEmpty": "No moderators are in this room",
 			"toggleSection": "Bereich umschalten",
 			"selectAllBottom": "Select All"
+		},
+		"delete": {
+			"deleted": {
+				"own": "Du hast diese Nachricht gelöscht."
+			},
+			"overlay": {
+				"copy": "Möchtest Du die Nachricht wirklich löschen?"
+			}
+		},
+		"reply": {
+			"previewLabel": "Antwort an",
+			"cancel": "Antwort verwerfen",
+			"quoteLabel": "Antwort auf",
+			"quoteUnknown": "Frühere Nachricht"
+		},
+		"sendFailed": {
+			"body": "Beim Senden der Nachricht gab es ein Problem, vermutlich durch die Verschlüsselung oder einen Übertragungsfehler. Bitte kopiere sie und versuche es erneut. Prüfe den Status: Ein Haken bedeutet gesendet, zwei Haken bedeuten gelesen, und ein Kreuz bedeutet, dass sie den Server nicht erreicht hat.",
+			"subtitle": "Sende deine Nachricht erneut"
+		},
+		"submit": {
+			"booking": {
+				"headline": "Oder vereinbaren Sie jetzt einen Termin"
+			}
 		},
 		"video": {
 			"description": "Du kannst jetzt an der Videokonferenz teilnehmen"
@@ -485,6 +509,10 @@
 			"appointmentBriefing": {
 				"title": "Termin-Briefing",
 				"text": "Eine Übersicht deiner anstehenden Termine liegt bereit."
+			},
+			"teamDiscussionNew": {
+				"title": "Team-Besprechung",
+				"text": "{{senderDisplayName}} hat in der Team-Besprechung geschrieben"
 			}
 		}
 	},
@@ -527,6 +555,12 @@
 			"personal": {
 				"registrationLink": {
 					"tooltip": "Teile Deinen persönlichen Kontakt-Link mit jemanden, damit diese Person eine Onlineberatung direkt mit Dir starten kann."
+				}
+			},
+			"publicSlug": {
+				"info": "Verwende nur Kleinbuchstaben und Bindestriche. Neue Namen werden erst nach Freigabe durch eine Administration aktiv.",
+				"notification": {
+					"error": "Der Name des Kontakt-Links konnte nicht gespeichert werden. Bitte prüfe das Format oder wähle einen anderen Namen."
 				}
 			},
 			"register": {
@@ -1067,7 +1101,20 @@
 		"toolbar": {
 			"search": {
 				"label": "Beratungen durchsuchen",
-				"placeholder": "Suche"
+				"placeholder": "Suche",
+				"refineHint": "Verfeinere deine Suche durch Filter weiter",
+				"confirm": "Auswahl bestätigen",
+				"close": "Suche schließen",
+				"clear": "Suche leeren",
+				"emptyPeople": "Keine passenden Personen gefunden.",
+				"emptyTypes": "Keine Chat-Typen verfügbar.",
+				"emptyTopics": "Keine Themen für deine Beratungsstellen gefunden.",
+				"tabs": {
+					"people": "Personen",
+					"type": "Nach Typ",
+					"centre": "Beratungsstelle",
+					"archiveOnly": "Nur Archiv"
+				}
 			},
 			"menu": {
 				"ariaLabel": "Listenoptionen"
@@ -1362,6 +1409,23 @@
 		}
 	},
 	"walkthrough": {
+		"close": "Rundgang schließen",
+		"overview": {
+			"title": "Meine Rundgänge",
+			"subtitle": "Starte Rundgänge durch die Anwendung oder setze sie fort.",
+			"empty": "Aktuell sind keine Rundgänge für dich verfügbar.",
+			"status": {
+				"not_started": "Nicht gestartet",
+				"in_progress": "In Bearbeitung",
+				"completed": "Abgeschlossen",
+				"skipped": "Übersprungen"
+			},
+			"action": {
+				"start": "Starten",
+				"continue": "Fortsetzen",
+				"restart": "Neu starten"
+			}
+		},
 		"step": {
 			"0": {
 				"intro": "Um Dir die einzelnen Funktionen zu erklären, haben wir einen kurzen Rundgang für Dich vorbereitet. <br /><br /> Du kannst ihn jederzeit abbrechen oder in Deinem Profil erneut starten."
@@ -1443,7 +1507,8 @@
 			"consultantAccepted": "Du wirst jetzt von deiner/deinem Berater_in im Chat erwartet.",
 			"startChatNow": "Jetzt Chat starten",
 			"dismissAcceptedBanner": "Hinweis ausblenden"
-		}
+		},
+		"enquiryClosed": "Dieser Live-Chat wurde beendet. Um einen neuen Chat zu starten, öffne bitte deinen Einladungslink erneut."
 	},
 	"sessionHeader": {
 		"anonymous": {
@@ -1524,6 +1589,11 @@
 			},
 			"remove": {
 				"confirm": "Möchtest du diesen Supervisor wirklich entfernen?"
+			},
+			"add": {
+				"disabledAsker": "Supervision wird vom Beratungsteam verwaltet",
+				"disabledMobile": "Supervisor hinzufügen – am Desktop verfügbar",
+				"disabledUnavailable": "Supervisor hinzufügen – hier nicht verfügbar"
 			}
 		}
 	},
@@ -1644,6 +1714,22 @@
 			"option": "Option",
 			"ctrl": "Strg",
 			"cmd": "Cmd"
+		}
+	},
+	"teamDiscussion": {
+		"title": "Team-Besprechung",
+		"startHint": "Besprechung starten",
+		"postCount": "{{count}} Beiträge",
+		"postCount_one": "1 Beitrag",
+		"archivedChip": "Archiviert",
+		"teamOnlyMarker": "Nur für das Team sichtbar – Ratsuchende sehen diesen Bereich nicht.",
+		"archivedBanner": "Diese Besprechung wurde bei Annahme der Anfrage geschlossen ({{date}}) und ist nur noch lesbar.",
+		"empty": "Noch keine Beiträge. Stimmen Sie sich hier mit Ihrem Team zur Anfrage ab.",
+		"placeholder": "Nachricht an das Team …",
+		"send": "Senden",
+		"error": {
+			"open": "Die Team-Besprechung konnte nicht geöffnet werden.",
+			"send": "Die Nachricht konnte nicht gesendet werden."
 		}
 	}
 }

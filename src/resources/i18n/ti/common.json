@@ -174,6 +174,11 @@
 				"png": "ፒኤንጂ",
 				"xlsx": "XLSX"
 			}
+		},
+		"mediaCheck": {
+			"unchecked": "Image from anonymous chat – not yet checked",
+			"reveal": "Show image",
+			"blocked": "Blocked by the security check"
 		}
 	},
 	"banner": {
@@ -680,7 +685,8 @@
 			}
 		},
 		"edit": {
-			"title": "ቅጥዕታት ዕላል"
+			"title": "ቅጥዕታት ዕላል",
+			"subtitle": "ናይዚ ዕላል መደብን ትሕዝቶን ቀይር"
 		},
 		"info": {
 			"headline": "ናይ ዕላል ሓበሬታ",
@@ -708,6 +714,33 @@
 			}
 		},
 		"join": {
+			"waitingArea": {
+				"countdown": {
+					"etaDay": "ኣብ ሓደ መዓልቲ",
+					"etaDays": "ኣብ {{count}} መዓልታት",
+					"etaHour": "ኣብ ሓደ ሰዓት",
+					"etaHours": "ኣብ {{count}} ሰዓታት",
+					"etaMinute": "ኣብ ሓደ ደቒቕ",
+					"etaMinutes": "ኣብ {{count}} ደቓይቕ",
+					"etaSoon": "ሕጂ ቀረባ",
+					"flipAria": "{{label}}: {{value}}። ንምንባብ ግልብጦ።",
+					"flipHint": "ንምግልባጥ ጠውቕ",
+					"greetingLabel": "ሰላምታ ካብ ኣማኻሪኻ",
+					"headline": "ጉጅለ ቻትካ {{eta}} ክጅምር እዩ።",
+					"netiquetteLabel": "ሕጊ ዝርርብ · ሕጊ {{no}}",
+					"overdueCaption": "እቲ ምጽባይ ቁሩብ ዘሕፍር ይኸውን ኣሎ …",
+					"overdueHeadline": "ሕጂ ንመጸካ ኢና።",
+					"overdueSubtitle": "ኣማኻሪኻ ነቲ ክፍሊ ቀረባ ግዜ ክኸፍቶ እዩ — በጃኻ ቁሩብ ተጸበ።",
+					"subtitle": "ኣብ ሓደ ቁጽሪ ጠውቕ — ብድሕሪኡ ሰላምታን ሕግታት ዝርርብን ኣለዉ።",
+					"timerAriaFuture": "ክሳብ መጀመርታ — መዓልታት: {{days}}፣ ሰዓታት: {{hours}}፣ ደቓይቕ: {{minutes}}፣ ካልኢታት: {{seconds}}",
+					"timerAriaOverdue": "ካብቲ እተመደበ መጀመርታ — ደቓይቕ: {{minutes}}፣ ካልኢታት: {{seconds}}",
+					"toggleLabel": "ምንቅስቓስ ኣጥፍእ",
+					"unitDays": "መዓልታት",
+					"unitHours": "ሰዓታት",
+					"unitMinutes": "ደቓይቕ",
+					"unitSeconds": "ካልኢታት"
+				}
+			},
 			"button": {
 				"label": {
 					"join": "ምስታፍ",

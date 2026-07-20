@@ -23,6 +23,8 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 	const {
 		ICON_ONLY_THRESHOLD,
 		SNAP_THRESHOLD,
+		EXPANDED_MIN_WIDTH,
+		EXPANDED_SNAP_THRESHOLD,
 		SCROLL_THUMB_MIN_PX,
 		SCROLL_THUMB_MAX_PX
 	} = SESSIONS_LIST_RESIZE;
@@ -119,9 +121,29 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 					nextWidth < SNAP_THRESHOLD ? minWidth : ICON_ONLY_THRESHOLD;
 			}
 
+			// Snap the gap between the icon-only rail and the expanded desktop
+			// minimum (Figma node 115): the list is either compact (icon-only)
+			// or at least `EXPANDED_MIN_WIDTH` wide — never stranded between.
+			if (
+				nextWidth > ICON_ONLY_THRESHOLD &&
+				nextWidth < EXPANDED_MIN_WIDTH
+			) {
+				nextWidth =
+					nextWidth < EXPANDED_SNAP_THRESHOLD
+						? ICON_ONLY_THRESHOLD
+						: EXPANDED_MIN_WIDTH;
+			}
+
 			return nextWidth;
 		},
-		[ICON_ONLY_THRESHOLD, SNAP_THRESHOLD, maxWidth, minWidth]
+		[
+			EXPANDED_MIN_WIDTH,
+			EXPANDED_SNAP_THRESHOLD,
+			ICON_ONLY_THRESHOLD,
+			SNAP_THRESHOLD,
+			maxWidth,
+			minWidth
+		]
 	);
 
 	const applyClientXToWidth = useCallback(

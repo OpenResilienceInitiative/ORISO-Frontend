@@ -112,6 +112,78 @@ export const ReadyToSend: Story = {
 	}
 };
 
+/** WP-4: pasting an image into the editor routes into the attachment flow
+ *  and the pre-send card shows a real thumbnail instead of a file icon. */
+export const ImageAttachmentPreview: Story = {
+	name: 'Image attachment preview (pasted)',
+	render: () => <ComposerShell />,
+	play: async ({ canvasElement }) => {
+		const editor = await waitFor(() => {
+			const node = canvasElement.querySelector<HTMLElement>(
+				'[contenteditable="true"]'
+			);
+			if (!node) {
+				throw new Error('composer editor not mounted yet');
+			}
+			return node;
+		});
+
+		const pngBytes = Uint8Array.from(
+			atob(
+				'iVBORw0KGgoAAAANSUhEUgAAAHgAAABICAYAAAA9HjF/AAAAwElEQVR4nO3RsQkAIBDAwK/dfwXn1DGEeMX1gcyedeia1wEYjMEY/CmD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjuAl4Hs8nHnWSXAAAAAElFTkSuQmCC'
+			),
+			(char) => char.charCodeAt(0)
+		);
+		const clipboardData = new DataTransfer();
+		clipboardData.items.add(
+			new File([pngBytes], 'pasted.png', { type: 'image/png' })
+		);
+		editor.dispatchEvent(
+			new ClipboardEvent('paste', {
+				clipboardData,
+				bubbles: true,
+				cancelable: true
+			})
+		);
+
+		await waitFor(() => {
+			const thumb = canvasElement.querySelector(
+				'.textarea__attachmentModeThumb'
+			);
+			if (!thumb) {
+				throw new Error('attachment thumbnail not rendered yet');
+			}
+		});
+	}
+};
+
+export const ReplyingToMessage: Story = {
+	name: 'Replying (m.in_reply_to preview)',
+	render: () => (
+		<ComposerShell
+			replyTo={{
+				eventId: '$orig:matrix.oriso.org',
+				author: 'Maria K.',
+				text: 'Ich habe seit letzter Woche große Probleme mit meinem Vermieter und weiß nicht weiter.'
+			}}
+			onCancelReply={() => {}}
+		/>
+	)
+};
+
+export const EditingMessage: Story = {
+	name: 'Editing (m.replace preview)',
+	render: () => (
+		<ComposerShell
+			editingMessage={{
+				eventId: '$orig:matrix.oriso.org',
+				text: 'Ich habe seit letzter Woche große Problem mit meinem Vermieter und weiß nicht weiter.'
+			}}
+			onCancelEdit={() => {}}
+		/>
+	)
+};
+
 export const GroupChat: Story = {
 	name: 'Group chat (multiple recipients)',
 	render: () => (

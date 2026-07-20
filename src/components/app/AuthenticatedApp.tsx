@@ -24,6 +24,7 @@ import { useJoinGroupChat } from '../../hooks/useJoinGroupChat';
 import { useCall } from '../../globalState/provider/CallProvider';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { E2EEncryptionSupportBanner } from '../E2EEncryptionSupportBanner/E2EEncryptionSupportBanner';
+import { KeyBackupRecoveryPrompt } from '../E2EEncryptionSupportBanner/KeyBackupRecoveryPrompt';
 import { getMatrixHomeserverUrl } from '../../resources/scripts/runtimeConfig';
 import {
 	getMatrixAccessToken,
@@ -263,6 +264,7 @@ export const AuthenticatedApp = ({
 		return (
 			<>
 				<E2EEncryptionSupportBanner />
+				<KeyBackupRecoveryPrompt />
 				<Routing logout={handleLogout} />
 			</>
 		);

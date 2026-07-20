@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import {
 	AUTHORITIES,
 	ConsultingTypesContext,
@@ -98,25 +98,53 @@ export function NavigationStoryProviders({
 }) {
 	const userData = role === 'consultant' ? consultantUserData : askerUserData;
 
-	useEffect(() => {
-		let previousLiveChatAvailability: string | null = null;
+	/* Set before first child paint so useLiveChatViaSidebar() reads correctly. */
+	const previousLiveChatKeys = useRef<
+		| {
+				availability: string | null;
+				viaSidebar: string | null;
+		  }
+		| undefined
+	>(undefined);
+	if (previousLiveChatKeys.current === undefined) {
 		try {
-			previousLiveChatAvailability = localStorage.getItem(
-				'caritas_liveChatAvailability'
-			);
+			previousLiveChatKeys.current = {
+				availability: localStorage.getItem(
+					'caritas_liveChatAvailability'
+				),
+				viaSidebar: localStorage.getItem('caritas_liveChatViaSidebar')
+			};
 			localStorage.removeItem('caritas_liveChatAvailability');
+			localStorage.setItem('caritas_liveChatViaSidebar', '1');
 		} catch {
-			/* Storybook determinism only. */
+			previousLiveChatKeys.current = {
+				availability: null,
+				viaSidebar: null
+			};
 		}
+	}
 
+	useEffect(() => {
 		return () => {
+			const previous = previousLiveChatKeys.current;
+			if (!previous) {
+				return;
+			}
 			try {
-				if (previousLiveChatAvailability == null) {
+				if (previous.availability == null) {
 					localStorage.removeItem('caritas_liveChatAvailability');
 				} else {
 					localStorage.setItem(
 						'caritas_liveChatAvailability',
-						previousLiveChatAvailability
+						previous.availability
+					);
+				}
+				if (previous.viaSidebar == null) {
+					localStorage.removeItem('caritas_liveChatViaSidebar');
+				} else {
+					localStorage.setItem(
+						'caritas_liveChatViaSidebar',
+						previous.viaSidebar
 					);
 				}
 			} catch {

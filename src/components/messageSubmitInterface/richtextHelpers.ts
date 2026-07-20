@@ -165,7 +165,8 @@ export const sanitizeHtmlDefaultOptions = {
 			'class',
 			'data-color',
 			'data-mention-id',
-			'data-mention-username'
+			'data-mention-username',
+			'data-mention-matrix-id'
 		],
 		img: [
 			'src',

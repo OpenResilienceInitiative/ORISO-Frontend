@@ -5,12 +5,17 @@ import { useNavigate } from 'react-router-dom';
 import { Headline } from '../headline/Headline';
 import { Switch } from '../Switch';
 import { Text } from '../text/Text';
-import { useLiveChatAvailable } from '../../utils/liveChatToggle';
+import { Checkbox } from '../checkbox/Checkbox';
+import {
+	useLiveChatAvailable,
+	useLiveChatViaSidebar
+} from '../../utils/liveChatToggle';
 
 export const LiveChatAvailability = () => {
 	const { t: translate } = useTranslation();
 	const navigate = useNavigate();
 	const [liveChatAvailable, setLiveChatAvailable] = useLiveChatAvailable();
+	const [liveChatViaSidebar, setLiveChatViaSidebar] = useLiveChatViaSidebar();
 
 	const handleToggle = useCallback(
 		(checked: boolean) => {
@@ -35,11 +40,16 @@ export const LiveChatAvailability = () => {
 					text={translate('profile.functions.liveChat.description')}
 					type="infoLargeAlternative"
 				/>
+				{/* Original 1.0 availability toggle. When the consultant chooses
+				    to control availability from the navigation rail (checkbox
+				    below), this toggle is disabled — it then only mirrors the
+				    current state, and the rail becomes the control. */}
 				<div className="flex">
 					<Switch
 						className="mr--1"
 						onChange={handleToggle}
 						checked={liveChatAvailable}
+						disabled={liveChatViaSidebar}
 						aria-label={translate(
 							'profile.functions.liveChat.toggleLabel'
 						)}
@@ -49,6 +59,25 @@ export const LiveChatAvailability = () => {
 							'profile.functions.liveChat.toggleLabel'
 						)}
 						type="standard"
+					/>
+				</div>
+				{/* New preference: move the availability control into the nav
+				    rail. See the description text for the exact behaviour. */}
+				<div style={{ marginTop: '16px' }}>
+					<Checkbox
+						inputId="liveChatViaSidebar"
+						name="liveChatViaSidebar"
+						labelId="liveChatViaSidebarLabel"
+						label={translate(
+							'profile.functions.liveChat.viaSidebar.label'
+						)}
+						description={translate(
+							'profile.functions.liveChat.viaSidebar.description'
+						)}
+						checked={liveChatViaSidebar}
+						checkboxHandle={() =>
+							setLiveChatViaSidebar(!liveChatViaSidebar)
+						}
 					/>
 				</div>
 			</div>
