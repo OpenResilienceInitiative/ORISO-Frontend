@@ -177,6 +177,49 @@ describe('CreateConversationView edit mode (finding 1)', () => {
 		expect(apiCreateGroupChat).not.toHaveBeenCalled();
 	});
 
+	it('lets the owner add a co-moderator while editing a circle', async () => {
+		vi.mocked(useSession).mockReturnValue({
+			session: { item: editSeriesItem } as any,
+			reload: vi.fn(),
+			read: vi.fn(),
+			ready: true
+		});
+		vi.mocked(apiGetTenantConsultantList).mockResolvedValue([
+			{
+				consultantId: 'c-2',
+				firstName: 'Casey',
+				lastName: 'Co-Moderator'
+			}
+		] as any);
+		vi.mocked(apiUpdateGroupChat).mockResolvedValue({ groupId: 'rc-1' });
+		vi.mocked(apiGetSessionRoomsByGroupIds).mockResolvedValue({
+			sessions: []
+		} as any);
+
+		renderInUserContext();
+
+		fireEvent.click(
+			await screen.findByRole('button', {
+				name: 'groupChat.circle.toggleModeratorList'
+			})
+		);
+		fireEvent.click(
+			await screen.findByRole('option', {
+				name: 'groupChat.circle.selectModerator'
+			})
+		);
+		fireEvent.click(
+			screen.getByRole('button', { name: 'groupChat.circle.saveLabel' })
+		);
+
+		await waitFor(() =>
+			expect(apiUpdateGroupChat).toHaveBeenCalledTimes(1)
+		);
+		expect(apiUpdateGroupChat.mock.calls[0][1]).toMatchObject({
+			consultantIds: ['c-9', 'c-2']
+		});
+	});
+
 	it('shows a loading state until the series has hydrated', () => {
 		vi.mocked(useSession).mockReturnValue({
 			session: null as any,

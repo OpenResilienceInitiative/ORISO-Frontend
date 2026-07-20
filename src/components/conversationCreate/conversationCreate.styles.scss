@@ -629,6 +629,22 @@ body.conversationCreate--active .navigation__wrapper {
 		min-width: 280px;
 	}
 
+	&__moderators {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+
+		> p {
+			color: $cc-on-surface-variant;
+			font-size: 14px;
+			margin: 0;
+		}
+	}
+
+	&__moderatorPicker {
+		position: relative;
+	}
+
 	&__error {
 		align-items: center;
 		background: var(--m3-error-container, #ffdad6);

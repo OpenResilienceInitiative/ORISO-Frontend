@@ -766,15 +766,23 @@
 			"togglePersonList": "Open or close the person list"
 		},
 		"circle": {
+			"addModerator": "Add co-moderator",
 			"cardHeadline": "Anonymous self-help groups",
 			"cardText": "initiate in your subject area. One-off or recurring: choose the right medium and share the circle with the participants.",
 			"createLabel": "Create",
+			"deselectModerator": "Remove {{name}}",
+			"moderatorCount_one": "{{count}} co-moderator added",
+			"moderatorCount_other": "{{count}} co-moderators added",
+			"moderatorsLabel": "Additional moderation",
 			"noTopics": "No topics available",
+			"removeModerator": "Remove {{name}}",
 			"saveLabel": "Save",
 			"settingsSubtitle": "Now adjust the welcome text, format, rules, intervals and the language in which the circle will primarily take place.",
 			"settingsTitle": "Circle settings",
 			"subtitle": "moderated by counsellors",
+			"selectModerator": "Select {{name}}",
 			"title": "Conversation circle",
+			"toggleModeratorList": "Open or close the co-moderator list",
 			"toggleTopicList": "Open or close the topic list",
 			"topicLabel": "Topic / subject area"
 		},

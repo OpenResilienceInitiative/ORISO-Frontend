@@ -247,7 +247,10 @@ const CreateConversationFlow = () => {
 	// People for the internal card: agency colleagues without the current
 	// user, deduplicated by consultantId.
 	const loadConsultants = useCallback(() => {
-		if (!selectedAgency || !availability.internal) {
+		if (
+			!selectedAgency ||
+			(!availability.internal && !availability.circle)
+		) {
 			setAvailableConsultants([]);
 			setConsultantsLoadFailed(false);
 			return;
@@ -277,7 +280,7 @@ const CreateConversationFlow = () => {
 				setAvailableConsultants([]);
 				setConsultantsLoadFailed(true);
 			});
-	}, [availability.internal, selectedAgency, userData]);
+	}, [availability.circle, availability.internal, selectedAgency, userData]);
 
 	useEffect(() => {
 		loadConsultants();
@@ -604,6 +607,7 @@ const CreateConversationFlow = () => {
 							topicOptions.length ? topicOptions : undefined
 						}
 						editChatId={editChatId}
+						people={people}
 					/>
 				)
 			) : step === 'internal' ? (
