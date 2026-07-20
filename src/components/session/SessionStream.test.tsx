@@ -32,6 +32,7 @@ const mocks = vi.hoisted(() => {
 		) => void)[],
 		detachLifecycle: vi.fn(),
 		getMatrixRoomMessages: vi.fn(() => []),
+		getSessionSupervisors: vi.fn(() => Promise.resolve([])),
 		resolveSession: vi.fn(() => ({
 			isMatrixSession: true,
 			matrixRoomId: ROOM_ID,
@@ -67,6 +68,7 @@ vi.mock('react-router-dom', async (importOriginal) => {
 
 vi.mock('../../api', () => ({
 	apiGetAgencyConsultantList: vi.fn(() => Promise.resolve([])),
+	apiGetSessionSupervisors: mocks.getSessionSupervisors,
 	apiGetCaseHandoverStatus: vi.fn(() =>
 		Promise.resolve({
 			sessionId: 1,
@@ -144,6 +146,10 @@ vi.mock('./SessionItemComponent', () => ({
 
 vi.mock('./CaseHandoverGate', () => ({
 	CaseHandoverGate: () => <div data-testid="case-handover-gate" />
+}));
+
+vi.mock('./CaseHandoverCurtain', () => ({
+	CaseHandoverCurtain: () => <div data-testid="case-handover-curtain" />
 }));
 
 vi.mock('../overlay/Overlay', () => ({
@@ -383,5 +389,71 @@ describe('SessionStream Matrix room lifecycle', () => {
 			},
 			{ timeout: 500 }
 		);
+	});
+
+	it('does not curtain a backend-authorized session supervisor', async () => {
+		mocks.getSessionSupervisors.mockResolvedValueOnce([
+			{
+				id: 7,
+				supervisorConsultantId: 'supervisor-1',
+				supervisorUsername: 'supervisor@example.invalid',
+				matrixRoomId: '!supervision:matrix.oriso.org'
+			}
+		]);
+		const activeSession = {
+			rid: ROOM_ID,
+			isGroup: false,
+			isSession: true,
+			consultant: { id: 'owner-2' },
+			item: { id: 1, matrixRoomId: ROOM_ID, active: true, status: 2 }
+		} as any;
+		const consultantUserData = {
+			userId: 'supervisor-1',
+			grantedAuthorities: ['AUTHORIZATION_CONSULTANT_DEFAULT']
+		} as any;
+
+		render(
+			<MemoryRouter>
+				<UserDataContext.Provider
+					value={{ userData: consultantUserData } as any}
+				>
+					<SessionTypeContext.Provider
+						value={{
+							type: SESSION_LIST_TYPES.MY_SESSION,
+							path: LIST_PATH
+						}}
+					>
+						<ConsultantListContext.Provider
+							value={
+								{
+									consultantList: [],
+									setConsultantList: () => {}
+								} as any
+							}
+						>
+							<ActiveSessionContext.Provider
+								value={
+									{
+										activeSession,
+										readActiveSession: () => {}
+									} as any
+								}
+							>
+								<SessionStream
+									readonly={false}
+									checkMutedUserForThisSession={() => {}}
+									bannedUsers={[]}
+								/>
+							</ActiveSessionContext.Provider>
+						</ConsultantListContext.Provider>
+					</SessionTypeContext.Provider>
+				</UserDataContext.Provider>
+			</MemoryRouter>
+		);
+
+		await waitFor(() =>
+			expect(screen.getByTestId('session-item')).toBeDefined()
+		);
+		expect(screen.queryByTestId('case-handover-curtain')).toBeNull();
 	});
 });

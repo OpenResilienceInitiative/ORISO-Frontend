@@ -131,6 +131,7 @@ export const SessionStream = ({
 	const [supervisionRoomId, setSupervisionRoomId] = useState<
 		string | undefined
 	>(undefined);
+	const [hasSupervisionAccess, setHasSupervisionAccess] = useState(false);
 	const [matrixTypingUsers, setMatrixTypingUsers] = useState<string[]>([]);
 	const matrixTypingTimeoutRef = useRef<number | null>(null);
 	const matrixTypingLastTriggerRef = useRef(0);
@@ -211,6 +212,8 @@ export const SessionStream = ({
 			}),
 		[activeSession, type, userData]
 	);
+	const caseHandoverCurtainNeeded =
+		caseHandoverGateNeeded && !hasSupervisionAccess;
 
 	// ADR-008: resolve the per-session supervision side room id for members.
 	// The backend only returns supervisor entries (with the side room id) to
@@ -221,6 +224,7 @@ export const SessionStream = ({
 		const sessionId = activeSession.item?.id;
 
 		setSupervisionRoomId(undefined);
+		setHasSupervisionAccess(false);
 
 		if (
 			!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) ||
@@ -239,10 +243,18 @@ export const SessionStream = ({
 				const sideRoomId = supervisors.find(
 					(s) => s.matrixRoomId
 				)?.matrixRoomId;
+				setHasSupervisionAccess(
+					supervisors.some(
+						(supervisor) =>
+							String(supervisor.supervisorConsultantId) ===
+							String(userData.userId)
+					)
+				);
 				setSupervisionRoomId(sideRoomId || undefined);
 			})
 			.catch(() => {
 				if (!cancelled) {
+					setHasSupervisionAccess(false);
 					setSupervisionRoomId(undefined);
 				}
 			});
@@ -261,7 +273,7 @@ export const SessionStream = ({
 			abortController.current = new AbortController();
 
 			if (
-				caseHandoverGateNeeded &&
+				caseHandoverCurtainNeeded &&
 				!forceCaseHandoverAccess &&
 				!caseHandoverStatus?.canViewContent
 			) {
@@ -342,7 +354,7 @@ export const SessionStream = ({
 			return Promise.resolve(true);
 		},
 		[
-			caseHandoverGateNeeded,
+			caseHandoverCurtainNeeded,
 			caseHandoverStatus?.canViewContent,
 			resolvedChatSession,
 			supervisionRoomId,
@@ -375,7 +387,17 @@ export const SessionStream = ({
 		setCaseHandoverStatus(null);
 		setMessagesItem({ messages: [] });
 
-		if (!caseHandoverGateNeeded || !sessionId) {
+		if (!caseHandoverCurtainNeeded || !sessionId) {
+			if (caseHandoverGateNeeded && hasSupervisionAccess && sessionId) {
+				setCaseHandoverStatus({
+					sessionId,
+					status: 'AUTHORIZED_SUPERVISOR',
+					canViewContent: true,
+					clientConsentRequired: false,
+					auditOutcome: 'AUTHORIZED_SUPERVISOR'
+				});
+				void loadAfterCaseHandoverGranted();
+			}
 			setCaseHandoverStatusLoading(false);
 			return () => {
 				cancelled = true;
@@ -420,7 +442,9 @@ export const SessionStream = ({
 		};
 	}, [
 		activeSession.item?.id,
+		caseHandoverCurtainNeeded,
 		caseHandoverGateNeeded,
+		hasSupervisionAccess,
 		loadAfterCaseHandoverGranted
 	]);
 
@@ -927,7 +951,7 @@ export const SessionStream = ({
 	const caseHandoverTopic = useTopic(caseHandoverTopicId);
 	const caseHandoverTopicLabel = caseHandoverTopic?.name;
 
-	if (caseHandoverGateNeeded && caseHandoverStatusLoading) {
+	if (caseHandoverCurtainNeeded && caseHandoverStatusLoading) {
 		return <Loading />;
 	}
 
@@ -956,7 +980,7 @@ export const SessionStream = ({
 		}
 	};
 
-	if (caseHandoverGateNeeded && !caseHandoverStatus?.canViewContent) {
+	if (caseHandoverCurtainNeeded && !caseHandoverStatus?.canViewContent) {
 		return (
 			<div className="session__wrapper">
 				<CaseHandoverCurtain
