@@ -1747,10 +1747,6 @@ export const LANGUAGE_DATA: Record<string, NickLang> = {
 						svg: 'trout.svg'
 					},
 					{
-						label: 'Жирафа',
-						svg: 'giraffe.svg'
-					},
-					{
 						label: 'Сорока',
 						svg: 'magpie.svg'
 					},
@@ -1981,6 +1977,10 @@ export const LANGUAGE_DATA: Record<string, NickLang> = {
 					{
 						label: 'Волк',
 						svg: 'wolf.svg'
+					},
+					{
+						label: 'Жираф',
+						svg: 'giraffe.svg'
 					}
 				]
 			}
@@ -2144,10 +2144,6 @@ export const LANGUAGE_DATA: Record<string, NickLang> = {
 					{
 						label: 'Ластівка',
 						svg: 'swallow.svg'
-					},
-					{
-						label: 'Кобила',
-						svg: 'horse.svg'
 					},
 					{
 						label: 'Зебра',
@@ -2368,6 +2364,10 @@ export const LANGUAGE_DATA: Record<string, NickLang> = {
 					{
 						label: 'Вовк',
 						svg: 'wolf.svg'
+					},
+					{
+						label: 'Кінь',
+						svg: 'horse.svg'
 					}
 				]
 			}
