@@ -31,6 +31,12 @@ import {
 	TopicsDataInterface
 } from '../../globalState/interfaces';
 import { apiPostRegistration } from '../../api/apiPostRegistration';
+import {
+	generatePseudonym,
+	generatePassword,
+	type Pseudonym
+} from '../../utils/anonName/engine';
+import { toRegistrationUsername } from '../registration/accountData/registrationUsername';
 import { redirectToApp } from '../registration/autoLogin';
 import { endpoints } from '../../resources/scripts/endpoints';
 import { useAppConfig } from '../../hooks/useAppConfig';
@@ -81,6 +87,9 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 		new Set()
 	);
 	const [isRegistering, setIsRegistering] = useState<boolean>(false);
+	// Same anonymous identity as the normal registration: a friendly animal
+	// pseudonym (e.g. "katze_mika_1234"), NOT an "Anonymous-<timestamp>" handle.
+	const [identity] = useState<Pseudonym>(() => generatePseudonym(locale));
 	const [username, setUsername] = useState<string>('');
 	const [password, setPassword] = useState<string>('');
 	const [noAvailabilityModalTopic, setNoAvailabilityModalTopic] =
@@ -93,23 +102,12 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 	// updater to show the no-availability modal once per topic.
 	const [, setShownNoAvailabilityTopics] = useState<Set<number>>(new Set());
 
-	// Generate username and 8-character random password on mount
+	// Derive the login username and password from the shared anonymous-name
+	// engine — the exact same structure as the normal registration flow.
 	useEffect(() => {
-		const timestamp = Date.now();
-		const generatedUsername = `Anonymous-${timestamp}`;
-		setUsername(generatedUsername);
-
-		// Generate 8-character random password
-		const chars =
-			'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-		let generatedPassword = '';
-		for (let i = 0; i < 8; i++) {
-			generatedPassword += chars.charAt(
-				Math.floor(Math.random() * chars.length)
-			);
-		}
-		setPassword(generatedPassword);
-	}, []);
+		setUsername(toRegistrationUsername(identity));
+		setPassword(generatePassword());
+	}, [identity]);
 
 	// Fetch all topics on mount
 	useEffect(() => {

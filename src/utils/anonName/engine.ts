@@ -12,44 +12,67 @@
 
 import { LANGUAGE_DATA, type NickLang } from './data';
 
-// The widget's 35-colour pastel palette (24 light + 11 dark). One random pick
-// per generation; the animal is recoloured to contrast it.
-const PASTEL_COLORS = [
-	'#FFB3BA',
-	'#FFDFBA',
-	'#FFFFBA',
-	'#BAFFC9',
-	'#BAE1FF',
-	'#E8BAFF',
-	'#FFC9DE',
-	'#C9FFE5',
-	'#D4C9FF',
-	'#FFE4C9',
-	'#B5EAD7',
-	'#C7CEEA',
-	'#FFDAC1',
-	'#FF9AA2',
-	'#F0E6EF',
-	'#D5AAFF',
-	'#85E3FF',
-	'#BFFCC6',
-	'#DBCDF0',
-	'#F2C6DE',
-	'#A0CED9',
-	'#FFC6FF',
-	'#CAFFBF',
-	'#9BF6FF',
-	'#FFD6A5',
-	'#2D4A3E',
-	'#4A2D3E',
-	'#2D3E4A',
-	'#5C3A21',
-	'#3E2D4A',
-	'#1B3A4B',
-	'#4B1B3A',
-	'#3A4B1B',
-	'#6B3FA0',
-	'#A03F6B'
+// Curated 52-colour avatar palette drawn from traditional Japanese (和色) and
+// British/English heritage colours, spanning light AND deep-dark tones for
+// variety. Every colour is vetted so that either near-black (#1a1a1a) or white
+// reaches a WCAG contrast ratio ≥ 4.5 against it (see pickIconColor); muddy
+// mid-tones where neither is crisp were deliberately excluded. One random pick
+// per generation; the animal is recoloured to contrast the background.
+const AVATAR_COLORS = [
+	// --- Light (pairs with a near-black animal) ---
+	'#FCE7E6', // JP Sakura
+	'#F6BFBC', // JP Toki
+	'#EEBBCB', // JP Nadeshiko
+	'#F0908D', // JP Usubeni
+	'#FCE2C4', // JP Tamago
+	'#EAD56B', // JP Kariyasu
+	'#D6E9CA', // JP Byakuroku
+	'#D8E698', // JP Wakana
+	'#EBF6F7', // JP Aijiro
+	'#BBBCDE', // JP Fuji
+	'#BCE2E8', // JP Mizu
+	'#FABF14', // JP Ukon
+	'#A3C1AD', // UK Cambridge Blue
+	'#B0E0E6', // UK Powder Blue
+	'#96C8A2', // UK Eton Blue
+	'#B2AC88', // UK Sage
+	'#F0DC82', // UK Buff
+	'#F6DE9B', // UK Primrose
+	'#F7CAC9', // UK Rose Quartz
+	'#C6D3E3', // UK Wedgwood
+	'#C9E4DE', // UK Duck Egg
+	'#C3B1D0', // UK Heather
+	// --- Dark (pairs with a white animal) ---
+	'#165E83', // JP Ai (indigo)
+	'#223A70', // JP Kon
+	'#1E50A2', // JP Ruri
+	'#19448E', // JP Rurikon
+	'#4C6CB3', // JP Gunjo
+	'#007B43', // JP Tokiwa (green)
+	'#B7282E', // JP Akane
+	'#C9171E', // JP Kurenai
+	'#6C2C2F', // JP Ebicha
+	'#745399', // JP Edomurasaki
+	'#5E4491', // JP Sumire
+	'#4F284B', // JP Murasaki
+	'#1D697C', // JP Nando
+	'#2C4F54', // JP Onando
+	'#181B39', // JP Kachi
+	'#A22041', // JP Botan
+	'#211915', // JP Kurotsurubami
+	'#004225', // UK British Racing Green
+	'#002147', // UK Oxford Blue
+	'#003153', // UK Prussian Blue
+	'#7F1734', // UK Claret
+	'#800020', // UK Burgundy
+	'#355E3B', // UK Hunter Green
+	'#005F6A', // UK Teal
+	'#1B1F3B', // UK Navy
+	'#472D47', // UK Aubergine
+	'#4B2E44', // UK Damson
+	'#48586A', // UK Slate
+	'#5C2A4B', // UK Mulberry
+	'#093824' // UK Bottle Green
 ];
 
 const secureRandomInt = (maxExclusive: number): number => {
@@ -82,13 +105,37 @@ const secureRandomInt = (maxExclusive: number): number => {
 
 const pick = <T>(arr: T[]): T => arr[secureRandomInt(arr.length)];
 
-/** Perceived luminance (0–1) of a #rrggbb colour (same weights as the widget). */
+/** WCAG relative luminance (0–1) of a #rrggbb colour (gamma-correct sRGB). */
 export function luminance(hex: string): number {
 	const n = parseInt(hex.slice(1), 16);
-	const r = (n >> 16) & 255;
-	const g = (n >> 8) & 255;
-	const b = n & 255;
-	return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+	const channel = (c: number) => {
+		const s = c / 255;
+		return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+	};
+	const r = channel((n >> 16) & 255);
+	const g = channel((n >> 8) & 255);
+	const b = channel(n & 255);
+	return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+/** WCAG contrast ratio (1–21) between two relative luminances. */
+function contrastRatio(l1: number, l2: number): number {
+	const [hi, lo] = l1 >= l2 ? [l1, l2] : [l2, l1];
+	return (hi + 0.05) / (lo + 0.05);
+}
+
+const ICON_DARK = '#1a1a1a';
+const ICON_LIGHT = '#ffffff';
+const L_ICON_DARK = luminance(ICON_DARK);
+const L_ICON_LIGHT = luminance(ICON_LIGHT);
+
+/** Pick the animal colour (near-black or white) that maximises WCAG contrast
+ *  against the given background — legible on any palette entry. */
+export function pickIconColor(bg: string): string {
+	const l = luminance(bg);
+	return contrastRatio(l, L_ICON_DARK) >= contrastRatio(l, L_ICON_LIGHT)
+		? ICON_DARK
+		: ICON_LIGHT;
 }
 
 export interface Avatar {
@@ -104,6 +151,11 @@ export interface Pseudonym {
 	/** Display name, e.g. "freundliche Katze Mika" (never the identity/User-ID). */
 	displayName: string;
 	avatar: Avatar;
+	/** Animal label of the display name, e.g. "Katze". Used to build a short
+	 *  login username (animal + name, without the adjective). */
+	animalLabel: string;
+	/** Given name of the display name, e.g. "Mika". */
+	name: string;
 }
 
 /** Languages the engine ships (others should fall back to one of these). */
@@ -120,8 +172,8 @@ const dataFor = (lang: string): NickLang => {
 };
 
 const avatarFor = (file: string): Avatar => {
-	const bg = pick(PASTEL_COLORS);
-	return { file, bg, iconColor: luminance(bg) < 0.5 ? '#ffffff' : '#1a1a1a' };
+	const bg = pick(AVATAR_COLORS);
+	return { file, bg, iconColor: pickIconColor(bg) };
 };
 
 /** A display-name pseudonym + its matching avatar, in the given language. */
@@ -133,7 +185,9 @@ export function generatePseudonym(lang = 'de'): Pseudonym {
 	const name = pick(data.names);
 	return {
 		displayName: `${adjective} ${animal.label} ${name}`,
-		avatar: avatarFor(animal.svg)
+		avatar: avatarFor(animal.svg),
+		animalLabel: animal.label,
+		name
 	};
 }
 
@@ -175,8 +229,8 @@ function hashUserId(userId: string): number {
 /** Deterministic avatar derived from a stable user identifier. */
 export function generateAvatarForUser(userId: string): Avatar {
 	const absHash = hashUserId(userId);
-	const bg = PASTEL_COLORS[absHash % PASTEL_COLORS.length];
-	const iconColor = luminance(bg) < 0.5 ? '#ffffff' : '#1a1a1a';
+	const bg = AVATAR_COLORS[absHash % AVATAR_COLORS.length];
+	const iconColor = pickIconColor(bg);
 	const animalFile =
 		ALL_ANIMAL_FILES[absHash % ALL_ANIMAL_FILES.length] ??
 		ALL_ANIMAL_FILES[0];

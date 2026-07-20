@@ -34,6 +34,22 @@ describe('anonymous name engine', () => {
 		);
 	});
 
+	it('exposes the structured animal + name parts of the display name', () => {
+		vi.spyOn(crypto, 'getRandomValues').mockImplementation((array) => {
+			const values = array as Uint32Array;
+			values.fill(0);
+			return array;
+		});
+
+		const de = LANGUAGE_DATA.de;
+		const pseudonym = generatePseudonym('de');
+
+		expect(pseudonym.animalLabel).toBe(de.groups[0].animals[0].label);
+		expect(pseudonym.name).toBe(de.names[0]);
+		expect(pseudonym.displayName).toContain(pseudonym.animalLabel);
+		expect(pseudonym.displayName).toContain(pseudonym.name);
+	});
+
 	it('uses crypto randomness for generated passwords', () => {
 		const getRandomValues = vi
 			.spyOn(crypto, 'getRandomValues')
