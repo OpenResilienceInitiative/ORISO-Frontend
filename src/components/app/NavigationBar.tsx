@@ -36,7 +36,10 @@ import { userHasBudibaseTools } from '../../api/apiGetTools';
 import { browserNotificationsSettings } from '../../utils/notificationHelpers';
 import useIsFirstVisit from '../../utils/useIsFirstVisit';
 import { useResponsive } from '../../hooks/useResponsive';
-import { MENUPLACEMENT_RIGHT } from '../select/SelectDropdown';
+import {
+	MENUPLACEMENT_RIGHT,
+	MENUPLACEMENT_TOP
+} from '../select/SelectDropdown';
 import {
 	useLiveChatAvailable,
 	setLiveChatAvailable
@@ -148,7 +151,12 @@ export const NavigationBar = ({
 	 * links to the video-conference page; it simply flips a stored flag that
 	 * controls whether anonymous enquiries appear in the consultant's list.
 	 */
-	const showLiveChatNav = isConsultant && fromL;
+	/* Live-chat availability is consultant-only; show on all breakpoints so
+	 * mobile/tablet can reach it via the scrollable bottom bar. */
+	const showLiveChatNav = isConsultant;
+	const languageMenuPlacement = fromL
+		? MENUPLACEMENT_RIGHT
+		: MENUPLACEMENT_TOP;
 	const [animateNavIcon, setAnimateNavIcon] = useState(false);
 	const [hoveredNavItem, setHoveredNavItem] = useState<string | null>(null);
 	const [isLanguageSelected, setIsLanguageSelected] = useState(false);
@@ -336,8 +344,12 @@ export const NavigationBar = ({
 										pathsToShowUnreadMessageNotification
 									).includes(item.to) && unreadCount > 0;
 								const label = translate(item.titleKeys.large);
+								// Desktop rail may hyphenate/wrap; mobile bottom bar
+								// must stay single-line to avoid overlapping neighbors.
 								const visibleLabel = useFigmaSlot
-									? getFigmaRailLabel(item.to, label)
+									? fromL
+										? getFigmaRailLabel(item.to, label)
+										: stripLocalePrefix(label.trim())
 									: label;
 								const isChatNav =
 									item.to ===
@@ -589,7 +601,9 @@ export const NavigationBar = ({
 											label={translate(
 												'navigation.language'
 											)}
-											menuPlacement={MENUPLACEMENT_RIGHT}
+											menuPlacement={
+												languageMenuPlacement
+											}
 											color="currentColor"
 											colorHover="currentColor"
 											selectRef={(el) =>
@@ -622,7 +636,7 @@ export const NavigationBar = ({
 									vertical
 									iconSize={24}
 									label={translate('navigation.language')}
-									menuPlacement={MENUPLACEMENT_RIGHT}
+									menuPlacement={languageMenuPlacement}
 									selectRef={(el) =>
 										(ref_select.current = el)
 									}
@@ -733,12 +747,7 @@ const NavGroup = ({
 	children,
 	className
 }: PropsWithChildren<{ className: string }>) => {
-	const { fromL } = useResponsive();
-	if (fromL) {
-		return <div className={className}>{children}</div>;
-	}
-
-	return <>{children}</>;
+	return <div className={className}>{children}</div>;
 };
 
 const NavigationUnreadIndicator = ({

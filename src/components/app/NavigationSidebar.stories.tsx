@@ -1,182 +1,89 @@
 import * as React from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent } from 'storybook/test';
 import { NavigationBar } from './NavigationBar';
-import { RouterConfigConsultant } from './RouterConfig';
+import { RouterConfigConsultant, RouterConfigUser } from './RouterConfig';
 import { config } from '../../resources/scripts/config';
 import {
-	AUTHORITIES,
-	ConsultingTypesContext,
-	LocaleContext,
-	SessionsDataContext,
-	TenantContext,
-	UserDataContext
-} from '../../globalState';
+	NavigationStoryProviders,
+	storybookSettings
+} from './navigationStoryHelpers';
 import './navigation.styles.scss';
+import './authenticatedApp.styles.scss';
 
 const APP_ORISO_CHAT_FIGMA_URL =
 	'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=316-17725&t=XHH5HQNmA8DUWl2U-0';
 const ORISO_M3_FIGMA_URL =
 	'https://www.figma.com/design/RTUi1rcrEWECXz8rNFmj7Q/Design-System-M3_ORISO?node-id=60853-24182&p=f&t=ieIskw4Lz5hlc7iM-0';
 
-const consultantUserData = {
-	userId: 'consultant-storybook',
-	userName: 'beraterin@example.invalid',
-	displayName: 'Beraterin ORISO',
-	grantedAuthorities: [AUTHORITIES.CONSULTANT_DEFAULT],
-	agencies: [],
-	appointmentFeatureEnabled: false,
-	available: false,
-	consultingTypes: {},
-	e2eEncryptionEnabled: false,
-	emailToggles: [],
-	formalLanguage: false,
-	hasArchive: true,
-	isDisplayNameEditable: true,
-	isWalkThroughEnabled: false,
-	languages: ['de', 'en'],
-	preferredLanguage: 'de',
-	userRoles: ['CONSULTANT'],
-	termsAndConditionsConfirmation: '',
-	dataPrivacyConfirmation: '',
-	twoFactorAuth: {
-		isEnabled: false,
-		isActive: false,
-		isShown: false,
-		isToBeActivated: false,
-		secret: '',
-		qrCode: ''
-	}
-} as any;
-
-const consultingTypes = [
-	{
-		id: 1,
-		showAskerProfile: true,
-		isVideoCallAllowed: true,
-		titles: {
-			default: '1-1 Beratung',
-			short: '1-1',
-			long: '1-1 Beratung',
-			welcome: 'Willkommen',
-			registrationDropdown: '1-1 Beratung'
-		}
-	}
-] as any;
-
-const storybookSettings = {
-	...config,
-	disableVideoAppointments: true,
-	useOverviewPage: false
-} as any;
-
-function RuntimeNavigationRail() {
+function RuntimeNavigationRail({
+	role,
+	layout = 'desktop',
+	railHeightPx
+}: {
+	role: 'consultant' | 'asker';
+	layout?: 'desktop' | 'mobile';
+	/** Desktop only: force a short rail to exercise vertical scroll + pinned logout */
+	railHeightPx?: number;
+}) {
 	const [logoutClicked, setLogoutClicked] = useState(false);
-
-	useEffect(() => {
-		let previousLiveChatAvailability: string | null = null;
-		try {
-			previousLiveChatAvailability = localStorage.getItem(
-				'caritas_liveChatAvailability'
-			);
-			localStorage.removeItem('caritas_liveChatAvailability');
-		} catch {
-			/* Storybook determinism only. */
-		}
-
-		return () => {
-			try {
-				if (previousLiveChatAvailability == null) {
-					localStorage.removeItem('caritas_liveChatAvailability');
-				} else {
-					localStorage.setItem(
-						'caritas_liveChatAvailability',
-						previousLiveChatAvailability
-					);
-				}
-			} catch {
-				/* Storybook cleanup only. */
-			}
-		};
-	}, []);
+	const isDesktop = layout === 'desktop';
+	const desktopHeight = railHeightPx ?? 860;
 
 	const routerConfig = useMemo(() => {
-		return RouterConfigConsultant(storybookSettings);
-	}, []);
+		const settings = { ...config, ...storybookSettings };
+		return role === 'consultant'
+			? RouterConfigConsultant(settings)
+			: RouterConfigUser(settings, false);
+	}, [role]);
+
+	const shellStyle = isDesktop
+		? {
+				width: '85px',
+				height: `${desktopHeight}px`,
+				minHeight: railHeightPx ? `${railHeightPx}px` : '720px',
+				background: '#eae7e8',
+				overflow: 'hidden'
+			}
+		: {
+				width: '100%',
+				maxWidth: '375px',
+				height: '76px',
+				background: '#eae7e8',
+				overflow: 'hidden'
+			};
 
 	return (
-		<UserDataContext.Provider
-			value={{
-				userData: consultantUserData,
-				setUserData: () => {},
-				reloadUserData: async () => consultantUserData
-			}}
-		>
-			<ConsultingTypesContext.Provider
-				value={{
-					consultingTypes,
-					setConsultingTypes: () => {}
-				}}
+		<NavigationStoryProviders role={role}>
+			{/*
+			  app__wrapper is required so production shell + figma nav rules
+			  (authenticatedApp + app-scoped navigation styles) apply in Storybook.
+			*/}
+			<div
+				className="app__wrapper navigationSidebarStory"
+				data-logout-clicked={logoutClicked}
+				style={shellStyle}
 			>
-				<SessionsDataContext.Provider
-					value={{
-						ready: true,
-						sessions: [],
-						dispatch: () => {}
-					}}
-				>
-					<TenantContext.Provider
-						value={{
-							tenant: {
-								id: 1,
-								name: 'ORISO Storybook',
-								settings: {
-									featureToolsEnabled: false
-								}
-							} as any,
-							setTenant: () => {}
-						}}
-					>
-						<LocaleContext.Provider
-							value={{
-								locale: 'de',
-								locales: ['de', 'en'],
-								selectableLocales: ['de', 'en'],
-								setLocale: () => {},
-								initLocale: 'de'
-							}}
-						>
-							<div
-								className="navigationSidebarStory"
-								data-logout-clicked={logoutClicked}
-							>
-								<style>
-									{`
-										.navigationSidebarStory {
-											width: 85px;
-											height: 860px;
-											min-height: 720px;
-											background: #eae7e8;
-											overflow: hidden;
-										}
+				<style>
+					{`
+						.navigationSidebarStory.app__wrapper {
+							display: flex;
+							flex-direction: ${isDesktop ? 'row' : 'column'};
+						}
 
-										.navigationSidebarStory .navigation__wrapper {
-											width: 85px;
-											height: 100%;
-										}
-									`}
-								</style>
-								<NavigationBar
-									routerConfig={routerConfig}
-									onLogout={() => setLogoutClicked(true)}
-								/>
-							</div>
-						</LocaleContext.Provider>
-					</TenantContext.Provider>
-				</SessionsDataContext.Provider>
-			</ConsultingTypesContext.Provider>
-		</UserDataContext.Provider>
+						.navigationSidebarStory .navigation__wrapper {
+							width: ${isDesktop ? '85px' : '100%'};
+							height: 100%;
+						}
+					`}
+				</style>
+				<NavigationBar
+					routerConfig={routerConfig}
+					onLogout={() => setLogoutClicked(true)}
+				/>
+			</div>
+		</NavigationStoryProviders>
 	);
 }
 
@@ -184,6 +91,10 @@ const meta = {
 	title: 'Components/Layout/NavigationSidebar',
 	component: RuntimeNavigationRail,
 	tags: ['autodocs'],
+	args: {
+		role: 'consultant' as const,
+		layout: 'desktop' as const
+	},
 	parameters: {
 		layout: 'fullscreen',
 		backgrounds: { default: 'gray' },
@@ -205,7 +116,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'Runtime Storybook target for the actual `NavigationBar` consultant rail used by the app. This replaces the previous documentation-only placeholder so Storybook MCP renders the real navigation classes, RouterConfig labels, locale switch, live-chat switch, active route state, and logout action.'
+					'Runtime Storybook target for the shared `NavigationBar` (asker + consultant). Desktop: top routes scroll vertically; logout/actions stay pinned. Mobile: routes, Live Chat, language, and logout scroll together in one smooth horizontal bar.'
 			}
 		}
 	}
@@ -215,7 +126,10 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const RuntimeConsultantRail: Story = {
-	render: () => <RuntimeNavigationRail />,
+	args: {
+		role: 'consultant',
+		layout: 'desktop'
+	},
 	play: async ({ canvasElement }) => {
 		const storyShell = canvasElement.querySelector(
 			'.navigationSidebarStory'
@@ -234,5 +148,115 @@ export const RuntimeConsultantRail: Story = {
 		await expect(logoutAction).not.toBeNull();
 		await userEvent.click(logoutAction as HTMLElement);
 		await expect(storyShell).toHaveAttribute('data-logout-clicked', 'true');
+	}
+};
+
+export const RuntimeConsultantRailShort: Story = {
+	args: {
+		role: 'consultant',
+		layout: 'desktop',
+		railHeightPx: 420
+	},
+	play: async ({ canvasElement }) => {
+		const topGroup = canvasElement.querySelector('.navigation__item__top');
+		const logoutAction = canvasElement.querySelector(
+			'.navigation__item--nav-logout'
+		);
+		await expect(topGroup).not.toBeNull();
+		await expect(logoutAction).not.toBeNull();
+
+		const topStyles = window.getComputedStyle(topGroup as Element);
+		await expect(topStyles.overflowY).toBe('auto');
+
+		const logoutRect = (
+			logoutAction as HTMLElement
+		).getBoundingClientRect();
+		const shell = canvasElement.querySelector(
+			'.navigationSidebarStory'
+		) as HTMLElement;
+		const shellRect = shell.getBoundingClientRect();
+		// Logout stays inside the visible shell (pinned), not scrolled away.
+		await expect(logoutRect.bottom).toBeLessThanOrEqual(
+			shellRect.bottom + 1
+		);
+		await expect(logoutRect.top).toBeGreaterThanOrEqual(shellRect.top - 1);
+	}
+};
+
+export const RuntimeAskerRail: Story = {
+	args: {
+		role: 'asker',
+		layout: 'desktop'
+	},
+	parameters: {
+		router: {
+			initialPath: '/sessions/user/view/session/123'
+		}
+	}
+};
+
+export const RuntimeConsultantMobile: Story = {
+	args: {
+		role: 'consultant',
+		layout: 'mobile'
+	},
+	parameters: {
+		viewport: {
+			defaultViewport: 'mobile1'
+		}
+	},
+	play: async ({ canvasElement }) => {
+		const itemContainer = canvasElement.querySelector(
+			'.navigation__itemContainer'
+		);
+		const bottomGroup = canvasElement.querySelector(
+			'.navigation__item__bottom'
+		);
+		const logoutAction = canvasElement.querySelector(
+			'.navigation__item--nav-logout'
+		);
+		const liveChat = canvasElement.querySelector(
+			'.navigation__item--liveChatToggle'
+		);
+		const language = canvasElement.querySelector(
+			'.navigation__item__language'
+		);
+
+		await expect(itemContainer).not.toBeNull();
+		await expect(bottomGroup).not.toBeNull();
+		await expect(logoutAction).not.toBeNull();
+		await expect(liveChat).not.toBeNull();
+		await expect(language).not.toBeNull();
+
+		const containerStyles = window.getComputedStyle(
+			itemContainer as Element
+		);
+		await expect(containerStyles.overflowX).toBe('auto');
+
+		const liveStyles = window.getComputedStyle(liveChat as Element);
+		const languageStyles = window.getComputedStyle(language as Element);
+		await expect(liveStyles.display).not.toBe('none');
+		await expect(languageStyles.display).not.toBe('none');
+
+		// Whole row (routes + actions + logout) scrolls as one strip.
+		const container = itemContainer as HTMLElement;
+		await expect(container.scrollWidth).toBeGreaterThan(
+			container.clientWidth
+		);
+	}
+};
+
+export const RuntimeAskerMobile: Story = {
+	args: {
+		role: 'asker',
+		layout: 'mobile'
+	},
+	parameters: {
+		viewport: {
+			defaultViewport: 'mobile1'
+		},
+		router: {
+			initialPath: '/sessions/user/view/session/123'
+		}
 	}
 };
