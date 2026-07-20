@@ -77,6 +77,7 @@ import { apiGetSessionSupervisors } from '../../api/apiGetSessionSupervisors';
 import { apiPatchNotificationActiveView } from '../../api/apiPatchNotificationActiveView';
 import { apiRegisterMatrixRoomForSync } from '../../api/apiMatrixSyncRegister';
 import { apiPatchUserData } from '../../api/apiPatchUserData';
+import { apiPutSessionData } from '../../api/apiPutSessionData';
 import { apiGetUserData } from '../../api/apiGetUserData';
 import { apiGetAnonymousEnquiryDetails } from '../../api/apiGetAnonymousEnquiryDetails';
 import {
@@ -1930,14 +1931,18 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	}, [isAnonymousAskerExperience, pseudonymStorageKey]);
 
 	/**
-	 * Confirm the chosen pseudonym. Updates ONLY the display name
-	 * via apiPatchUserData — the Matrix username stays "Anonymous-<ts>"
-	 * so the room membership and key chain stay intact.
+	 * Confirm the chosen pseudonym for this live-chat session. The Matrix
+	 * username stays "Anonymous-<ts>" so room membership and keys stay intact.
 	 */
 	const handleConfirmPseudonym = useCallback(() => {
 		if (pseudonymSaving) return;
 		setPseudonymSaving(true);
-		apiPatchUserData({ displayName: currentPseudonym.displayName })
+		apiPutSessionData(activeSession.item.id, {
+			displayName: currentPseudonym.displayName
+		})
+			.then(() =>
+				apiPatchUserData({ displayName: currentPseudonym.displayName })
+			)
 			.then(() => apiGetUserData().then((fresh) => setUserData(fresh)))
 			.then(() => {
 				setPseudonymConfirmed(true);
