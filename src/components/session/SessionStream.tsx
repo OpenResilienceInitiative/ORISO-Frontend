@@ -220,6 +220,9 @@ export const SessionStream = ({
 	);
 	const caseHandoverCurtainNeeded =
 		caseHandoverGateNeeded && !hasSupervisionAccess;
+	const mayRequestHistoryKeys =
+		!caseHandoverCurtainNeeded ||
+		caseHandoverStatus?.canViewContent === true;
 
 	// ADR-008: resolve the per-session supervision side room id for members.
 	// The backend only returns supervisor entries (with the side room id) to
@@ -326,23 +329,27 @@ export const SessionStream = ({
 				};
 
 				const clientEvents = loadRoomEvents(resolvedMatrixRoomId);
-				const hasUndecryptedHistory = clientEvents.some(
-					isUndecryptedRoomEvent
-				);
-				if (hasUndecryptedHistory && resolvedMatrixRoomId) {
-					// A newly-authorised case owner joined after the old Megolm
-					// sessions were created. Ask existing member devices for only
-					// this room's keys over encrypted to-device messages.
-					void matrixRoomHistoryKeyTransfer.requestKeys(
-						resolvedMatrixRoomId
-					);
-				}
 				// ADR-008: merge the supervision side room's asides so they
 				// render for members. The client is never a member of the side
 				// room, so it never loads these.
 				const supervisionEvents = supervisionRoomId
 					? loadRoomEvents(supervisionRoomId)
 					: [];
+				if (mayRequestHistoryKeys) {
+					[
+						[resolvedMatrixRoomId, clientEvents],
+						[supervisionRoomId, supervisionEvents]
+					].forEach(([roomId, events]) => {
+						if (
+							roomId &&
+							(events as any[]).some(isUndecryptedRoomEvent)
+						) {
+							void matrixRoomHistoryKeyTransfer.requestKeys(
+								roomId as string
+							);
+						}
+					});
+				}
 				const formattedMessages = mergeMatrixMessages(
 					formatRoomMessages(clientEvents, resolvedMatrixRoomId),
 					formatRoomMessages(supervisionEvents, supervisionRoomId)
@@ -373,6 +380,7 @@ export const SessionStream = ({
 		[
 			caseHandoverCurtainNeeded,
 			caseHandoverStatus?.canViewContent,
+			mayRequestHistoryKeys,
 			resolvedChatSession,
 			supervisionRoomId,
 			translate
@@ -383,7 +391,11 @@ export const SessionStream = ({
 	useEffect(() => {
 		const onHistoryKeysImported = (rawEvent: Event) => {
 			const importedRoomId = (rawEvent as CustomEvent)?.detail?.roomId;
-			if (importedRoomId === resolvedChatSession.matrixRoomId) {
+			if (
+				[resolvedChatSession.matrixRoomId, supervisionRoomId].includes(
+					importedRoomId
+				)
+			) {
 				void fetchSessionMessagesRef.current(true);
 			}
 		};
@@ -396,7 +408,11 @@ export const SessionStream = ({
 				MATRIX_HISTORY_KEYS_IMPORTED_EVENT,
 				onHistoryKeysImported
 			);
-	}, [fetchSessionMessagesRef, resolvedChatSession.matrixRoomId]);
+	}, [
+		fetchSessionMessagesRef,
+		resolvedChatSession.matrixRoomId,
+		supervisionRoomId
+	]);
 
 	const setSessionRead = useCallback(() => {
 		if (readonly) {
@@ -494,6 +510,9 @@ export const SessionStream = ({
 		if (!clientRoomId) {
 			return;
 		}
+		if (!mayRequestHistoryKeys) {
+			return;
+		}
 
 		// ADR-008: listen on the client room AND (for members) the supervision
 		// side room, so newly-sent asides appear live for authorized viewers.
@@ -576,7 +595,10 @@ export const SessionStream = ({
 				// time React sees it. Request this room's existing keys once per
 				// client generation instead of depending on a particular failure
 				// event shape.
-				void matrixRoomHistoryKeyTransfer.requestKeys(clientRoomId);
+				watchedRoomIds.forEach(
+					(roomId) =>
+						void matrixRoomHistoryKeyTransfer.requestKeys(roomId)
+				);
 				refreshMessages();
 			}
 			return true;
@@ -624,7 +646,8 @@ export const SessionStream = ({
 		supervisionRoomId,
 		fetchSessionMessages,
 		matrixRoomId,
-		matrixClientGeneration
+		matrixClientGeneration,
+		mayRequestHistoryKeys
 	]);
 
 	const groupChatStoppedOverlay: OverlayItem = useMemo(

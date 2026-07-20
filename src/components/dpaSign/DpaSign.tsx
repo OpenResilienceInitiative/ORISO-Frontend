@@ -44,6 +44,8 @@ const INITIAL_FORM_STATE: FormState = {
 	accepted: false
 };
 
+const DPA_DATE_FORMATTERS = new Map<string, Intl.DateTimeFormat>();
+
 export const DpaSign = () => {
 	const { token } = useParams<{ token: string }>();
 	const { t } = useTranslation();
@@ -434,10 +436,17 @@ const formatDpaDate = (value: string, language: string) => {
 		return value;
 	}
 
-	return new Intl.DateTimeFormat(language === 'en' ? 'en-GB' : 'de-DE', {
-		dateStyle: 'long',
-		timeStyle: 'short'
-	}).format(date);
+	const locale = language === 'en' ? 'en-GB' : 'de-DE';
+	let formatter = DPA_DATE_FORMATTERS.get(locale);
+	if (!formatter) {
+		formatter = new Intl.DateTimeFormat(locale, {
+			dateStyle: 'long',
+			timeStyle: 'short'
+		});
+		DPA_DATE_FORMATTERS.set(locale, formatter);
+	}
+
+	return formatter.format(date);
 };
 
 const resolveErrorMessage = (

@@ -2,10 +2,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ClientEvent } from 'matrix-js-sdk';
 import {
+	MATRIX_HISTORY_KEYS_DIAGNOSTIC_EVENT,
 	MATRIX_HISTORY_KEYS_IMPORTED_EVENT,
 	MatrixRoomHistoryKeyTransfer,
 	isUndecryptedRoomEvent
 } from './matrixRoomHistoryKeyTransfer';
+import { applyDeviceIsolationMode } from './matrixDeviceIsolation';
 
 const ROOM_ID = '!case:matrix';
 const ME = '@new:matrix';
@@ -32,6 +34,10 @@ const buildHarness = () => {
 		)
 	};
 	const crypto = {
+		setDeviceIsolationMode: vi.fn(),
+		getDeviceVerificationStatus: vi.fn().mockResolvedValue({
+			isVerified: () => true
+		}),
 		getUserDeviceInfo: vi
 			.fn()
 			.mockResolvedValue(
@@ -95,6 +101,16 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 				requester_device_id: 'NEW1'
 			})
 		);
+	});
+
+	it('throttles repeated outgoing room-key requests', async () => {
+		const harness = buildHarness();
+		const service = new MatrixRoomHistoryKeyTransfer();
+		service.initialize(harness.client as any);
+
+		expect(await service.requestKeys(ROOM_ID)).toBe(true);
+		expect(await service.requestKeys(ROOM_ID)).toBe(false);
+		expect(harness.client.encryptAndSendToDevice).toHaveBeenCalledTimes(1);
 	});
 
 	it('still requests from valid devices when another device has no Olm session', async () => {
@@ -205,6 +221,116 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 		);
 	});
 
+	it('rejects an unverified requester device when invisible crypto is enabled', async () => {
+		const harness = buildHarness();
+		harness.crypto.getDeviceVerificationStatus.mockResolvedValue({
+			isVerified: () => false
+		});
+		applyDeviceIsolationMode(harness.client as any, true);
+		const service = new MatrixRoomHistoryKeyTransfer();
+		service.initialize(harness.client as any);
+
+		harness.emitToDevice(
+			event('org.oriso.room_history_key_request', PEER, {
+				room_id: ROOM_ID,
+				request_id: 'unverified-request',
+				requester_user_id: PEER,
+				requester_device_id: 'ASKER1'
+			})
+		);
+		await vi.waitFor(() =>
+			expect(
+				harness.crypto.getDeviceVerificationStatus
+			).toHaveBeenCalledWith(PEER, 'ASKER1')
+		);
+
+		expect(harness.crypto.exportRoomKeys).not.toHaveBeenCalled();
+	});
+
+	it('throttles repeated incoming requests before exporting all account keys', async () => {
+		const harness = buildHarness();
+		const service = new MatrixRoomHistoryKeyTransfer();
+		service.initialize(harness.client as any);
+		const request = event('org.oriso.room_history_key_request', PEER, {
+			room_id: ROOM_ID,
+			request_id: 'request-1',
+			requester_user_id: PEER,
+			requester_device_id: 'ASKER1'
+		});
+
+		harness.emitToDevice(request);
+		await vi.waitFor(() =>
+			expect(harness.crypto.exportRoomKeys).toHaveBeenCalledTimes(1)
+		);
+		harness.emitToDevice(request);
+		await Promise.resolve();
+
+		expect(harness.crypto.exportRoomKeys).toHaveBeenCalledTimes(1);
+	});
+
+	it('does not send an oversized exported key bundle', async () => {
+		const harness = buildHarness();
+		harness.crypto.exportRoomKeys.mockResolvedValue(
+			Array.from({ length: 5_001 }, (_, index) => ({
+				room_id: ROOM_ID,
+				session_id: `session-${index}`
+			}))
+		);
+		const service = new MatrixRoomHistoryKeyTransfer();
+		service.initialize(harness.client as any);
+
+		harness.emitToDevice(
+			event('org.oriso.room_history_key_request', PEER, {
+				room_id: ROOM_ID,
+				request_id: 'oversized-export',
+				requester_user_id: PEER,
+				requester_device_id: 'ASKER1'
+			})
+		);
+		await vi.waitFor(() =>
+			expect(harness.crypto.exportRoomKeys).toHaveBeenCalledOnce()
+		);
+
+		expect(harness.client.encryptAndSendToDevice).not.toHaveBeenCalled();
+	});
+
+	it('emits a minimal diagnostic when an incoming request handler fails', async () => {
+		const harness = buildHarness();
+		harness.crypto.exportRoomKeys.mockRejectedValue(
+			new Error('sensitive crypto detail')
+		);
+		const diagnostic = vi.fn();
+		window.addEventListener(
+			MATRIX_HISTORY_KEYS_DIAGNOSTIC_EVENT,
+			diagnostic
+		);
+		const service = new MatrixRoomHistoryKeyTransfer();
+		service.initialize(harness.client as any);
+
+		harness.emitToDevice(
+			event('org.oriso.room_history_key_request', PEER, {
+				room_id: ROOM_ID,
+				request_id: 'failed-export',
+				requester_user_id: PEER,
+				requester_device_id: 'ASKER1'
+			})
+		);
+		await vi.waitFor(() =>
+			expect(diagnostic).toHaveBeenCalledWith(
+				expect.objectContaining({
+					detail: { stage: 'request-handler-failed' }
+				})
+			)
+		);
+		expect(JSON.stringify(diagnostic.mock.calls)).not.toContain(
+			'sensitive crypto detail'
+		);
+		window.removeEventListener(
+			MATRIX_HISTORY_KEYS_DIAGNOSTIC_EVENT,
+			diagnostic
+		);
+	});
+
 	it('loads lazy room members before authorising a requester', async () => {
 		const harness = buildHarness();
 		let membersLoaded = false;
@@ -259,6 +385,62 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 			{ room_id: ROOM_ID, session_id: 'wanted' }
 		]);
 		expect(imported).toHaveBeenCalledOnce();
+	});
+
+	it('rejects oversized key bundles before import', async () => {
+		const harness = buildHarness();
+		const service = new MatrixRoomHistoryKeyTransfer();
+		service.initialize(harness.client as any);
+		harness.emitToDevice(
+			event('org.oriso.room_history_key_bundle', PEER, {
+				room_id: ROOM_ID,
+				request_id: 'oversized',
+				keys: Array.from({ length: 5_001 }, (_, index) => ({
+					room_id: ROOM_ID,
+					session_id: `session-${index}`
+				}))
+			})
+		);
+		await Promise.resolve();
+
+		expect(harness.crypto.importRoomKeys).not.toHaveBeenCalled();
+	});
+
+	it('does not import from a sender who is no longer a room member', async () => {
+		const harness = buildHarness();
+		harness.memberships.set(PEER, member(PEER, 'ban'));
+		const service = new MatrixRoomHistoryKeyTransfer();
+		service.initialize(harness.client as any);
+		harness.emitToDevice(
+			event('org.oriso.room_history_key_bundle', PEER, {
+				room_id: ROOM_ID,
+				request_id: 'blocked-sender',
+				keys: [{ room_id: ROOM_ID, session_id: 'blocked' }]
+			})
+		);
+		await Promise.resolve();
+
+		expect(harness.crypto.importRoomKeys).not.toHaveBeenCalled();
+	});
+
+	it('does not broadcast diagnostics for unrelated to-device events', async () => {
+		const harness = buildHarness();
+		const diagnostic = vi.fn();
+		window.addEventListener(
+			MATRIX_HISTORY_KEYS_DIAGNOSTIC_EVENT,
+			diagnostic
+		);
+		const service = new MatrixRoomHistoryKeyTransfer();
+		service.initialize(harness.client as any);
+
+		harness.emitToDevice(event('m.dummy', PEER, {}));
+		await Promise.resolve();
+
+		expect(diagnostic).not.toHaveBeenCalled();
+		window.removeEventListener(
+			MATRIX_HISTORY_KEYS_DIAGNOSTIC_EVENT,
+			diagnostic
+		);
 	});
 
 	it('does not export keys to a sender who is not joined', async () => {

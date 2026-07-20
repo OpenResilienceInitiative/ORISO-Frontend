@@ -33,6 +33,15 @@ const mocks = vi.hoisted(() => {
 		detachLifecycle: vi.fn(),
 		getMatrixRoomMessages: vi.fn(() => []),
 		getSessionSupervisors: vi.fn(() => Promise.resolve([])),
+		getCaseHandoverStatus: vi.fn(() =>
+			Promise.resolve({
+				sessionId: 1,
+				status: 'GRANTED',
+				canViewContent: true,
+				clientConsentRequired: false,
+				auditOutcome: 'ACCESS_GRANTED'
+			})
+		),
 		resolveSession: vi.fn(() => ({
 			isMatrixSession: true,
 			matrixRoomId: ROOM_ID,
@@ -50,7 +59,8 @@ const mocks = vi.hoisted(() => {
 						mocks.clientChangeListeners.splice(index, 1);
 				};
 			}
-		} as any
+		} as any,
+		requestHistoryKeys: vi.fn(() => Promise.resolve(true))
 	};
 });
 
@@ -69,15 +79,7 @@ vi.mock('react-router-dom', async (importOriginal) => {
 vi.mock('../../api', () => ({
 	apiGetAgencyConsultantList: vi.fn(() => Promise.resolve([])),
 	apiGetSessionSupervisors: mocks.getSessionSupervisors,
-	apiGetCaseHandoverStatus: vi.fn(() =>
-		Promise.resolve({
-			sessionId: 1,
-			status: 'GRANTED',
-			canViewContent: true,
-			clientConsentRequired: false,
-			auditOutcome: 'ACCESS_GRANTED'
-		})
-	),
+	apiGetCaseHandoverStatus: mocks.getCaseHandoverStatus,
 	FETCH_ERRORS: { ABORT: 'ABORT' }
 }));
 
@@ -108,6 +110,19 @@ vi.mock('../../services/chatTransportService', () => ({
 		)
 	}
 }));
+
+vi.mock(
+	'../../services/matrixRoomHistoryKeyTransfer',
+	async (importOriginal) => {
+		const actual = await importOriginal<any>();
+		return {
+			...actual,
+			matrixRoomHistoryKeyTransfer: {
+				requestKeys: mocks.requestHistoryKeys
+			}
+		};
+	}
+);
 
 // The globalState barrel drags in the entire registration UI; provide just
 // the contexts and helpers SessionStream consumes.
@@ -239,6 +254,13 @@ describe('SessionStream Matrix room lifecycle', () => {
 		mocks.timelineListeners.length = 0;
 		mocks.clientChangeListeners.length = 0;
 		mocks.sessionItemProps = null;
+		mocks.getCaseHandoverStatus.mockResolvedValue({
+			sessionId: 1,
+			status: 'GRANTED',
+			canViewContent: true,
+			clientConsentRequired: false,
+			auditOutcome: 'ACCESS_GRANTED'
+		});
 	});
 
 	afterEach(() => {
@@ -409,6 +431,7 @@ describe('SessionStream Matrix room lifecycle', () => {
 				mocks.getMatrixRoomMessages.mock.calls.length
 			).toBeGreaterThan(callsAtAttach)
 		);
+		expect(mocks.requestHistoryKeys).toHaveBeenCalledWith(ROOM_ID);
 	});
 
 	it('does not curtain a backend-authorized session supervisor', async () => {
@@ -475,5 +498,77 @@ describe('SessionStream Matrix room lifecycle', () => {
 			expect(screen.getByTestId('session-item')).toBeDefined()
 		);
 		expect(screen.queryByTestId('case-handover-curtain')).toBeNull();
+		await waitFor(() => {
+			expect(mocks.requestHistoryKeys).toHaveBeenCalledWith(ROOM_ID);
+			expect(mocks.requestHistoryKeys).toHaveBeenCalledWith(
+				'!supervision:matrix.oriso.org'
+			);
+		});
+	});
+
+	it('does not attach or request history before case handover is granted', async () => {
+		mocks.getCaseHandoverStatus.mockResolvedValueOnce({
+			sessionId: 1,
+			status: 'PENDING',
+			canViewContent: false,
+			clientConsentRequired: true,
+			auditOutcome: 'CONSENT_REQUIRED'
+		});
+		const activeSession = {
+			rid: ROOM_ID,
+			isGroup: false,
+			isSession: true,
+			consultant: { id: 'owner-2' },
+			item: { id: 1, matrixRoomId: ROOM_ID, active: true, status: 2 }
+		} as any;
+		const consultantUserData = {
+			userId: 'consultant-1',
+			grantedAuthorities: ['AUTHORIZATION_CONSULTANT_DEFAULT']
+		} as any;
+
+		render(
+			<MemoryRouter>
+				<UserDataContext.Provider
+					value={{ userData: consultantUserData } as any}
+				>
+					<SessionTypeContext.Provider
+						value={{
+							type: SESSION_LIST_TYPES.MY_SESSION,
+							path: LIST_PATH
+						}}
+					>
+						<ConsultantListContext.Provider
+							value={
+								{
+									consultantList: [],
+									setConsultantList: () => {}
+								} as any
+							}
+						>
+							<ActiveSessionContext.Provider
+								value={
+									{
+										activeSession,
+										readActiveSession: () => {}
+									} as any
+								}
+							>
+								<SessionStream
+									readonly={false}
+									checkMutedUserForThisSession={() => {}}
+									bannedUsers={[]}
+								/>
+							</ActiveSessionContext.Provider>
+						</ConsultantListContext.Provider>
+					</SessionTypeContext.Provider>
+				</UserDataContext.Provider>
+			</MemoryRouter>
+		);
+
+		await waitFor(() =>
+			expect(screen.getByTestId('case-handover-curtain')).toBeDefined()
+		);
+		expect(mocks.requestHistoryKeys).not.toHaveBeenCalled();
+		expect(chatTransportService.onMatrixTimeline).not.toHaveBeenCalled();
 	});
 });

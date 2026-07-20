@@ -109,4 +109,29 @@ describe('LegalContentRenderer', () => {
 		expect(screen.getByText('English contract')).toBeDefined();
 		expect(screen.queryByText('Deutscher Vertrag')).toBeNull();
 	});
+
+	it('removes active markup while preserving legal formatting', () => {
+		const { container } = render(
+			<LegalContentRenderer
+				content={map({
+					de: [
+						'<h2>Vertrag</h2>',
+						'<p onclick="window.__xss = true"><strong>Sicherer Text</strong></p>',
+						'<script>window.__xss = true</script>',
+						'<a href="javascript:alert(1)">Unsicher</a>',
+						'<a href="https://oriso.org/legal">Sicher</a>'
+					].join('')
+				})}
+			/>
+		);
+
+		expect(screen.getByRole('heading', { name: 'Vertrag' })).toBeDefined();
+		expect(screen.getByText('Sicherer Text').tagName).toBe('STRONG');
+		expect(container.querySelector('script')).toBeNull();
+		expect(container.querySelector('[onclick]')).toBeNull();
+		expect(screen.getByText('Unsicher').getAttribute('href')).toBeNull();
+		expect(screen.getByText('Sicher').getAttribute('href')).toBe(
+			'https://oriso.org/legal'
+		);
+	});
 });

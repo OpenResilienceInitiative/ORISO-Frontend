@@ -1,5 +1,6 @@
 import { ClientEvent, MatrixClient, MatrixEvent } from 'matrix-js-sdk';
 import type { IMegolmSessionData } from 'matrix-js-sdk/lib/@types/crypto';
+import { isInvisibleCryptoEnabledForClient } from './matrixDeviceIsolation';
 
 const KEY_REQUEST_EVENT = 'org.oriso.room_history_key_request';
 const KEY_BUNDLE_EVENT = 'org.oriso.room_history_key_bundle';
@@ -60,6 +61,7 @@ export const isUndecryptedRoomEvent = (event: any): boolean => {
 export class MatrixRoomHistoryKeyTransfer {
 	private client: MatrixClient | null = null;
 	private readonly lastRequestAt = new Map<string, number>();
+	private readonly lastHandledRequestAt = new Map<string, number>();
 	private readonly pendingRooms = new Set<string>();
 
 	public initialize(client: MatrixClient): void {
@@ -90,16 +92,19 @@ export class MatrixRoomHistoryKeyTransfer {
 		const deviceId = client?.getDeviceId();
 		const room = client?.getRoom(roomId);
 		if (!client || !crypto || !userId || !deviceId || !room) {
+			emitDiagnostic('request-prerequisite-missing');
 			this.pendingRooms.add(roomId);
 			return false;
 		}
 		if (room.getMember(userId)?.membership !== 'join') {
+			emitDiagnostic('request-membership-rejected');
 			this.pendingRooms.add(roomId);
 			return false;
 		}
 
 		const now = Date.now();
 		if (now - (this.lastRequestAt.get(roomId) || 0) < REQUEST_THROTTLE_MS) {
+			emitDiagnostic('request-throttled');
 			return false;
 		}
 
@@ -107,7 +112,10 @@ export class MatrixRoomHistoryKeyTransfer {
 			.getJoinedMembers()
 			.map((member) => member.userId)
 			.filter((memberUserId) => memberUserId !== userId);
-		if (otherUsers.length === 0) return false;
+		if (otherUsers.length === 0) {
+			emitDiagnostic('request-no-peer');
+			return false;
+		}
 
 		const deviceMap = await crypto.getUserDeviceInfo(otherUsers, true);
 		const targets = otherUsers.flatMap((memberUserId) =>
@@ -118,7 +126,10 @@ export class MatrixRoomHistoryKeyTransfer {
 				})
 			)
 		);
-		if (targets.length === 0) return false;
+		if (targets.length === 0) {
+			emitDiagnostic('request-no-target-device');
+			return false;
+		}
 
 		const requestId =
 			typeof globalThis.crypto?.randomUUID === 'function'
@@ -143,7 +154,10 @@ export class MatrixRoomHistoryKeyTransfer {
 		const deliveredTargetCount = deliveryResults.filter(
 			(result) => result.status === 'fulfilled'
 		).length;
-		if (deliveredTargetCount === 0) return false;
+		if (deliveredTargetCount === 0) {
+			emitDiagnostic('request-delivery-failed');
+			return false;
+		}
 		window.dispatchEvent(
 			new CustomEvent(MATRIX_HISTORY_KEYS_REQUESTED_EVENT, {
 				detail: {
@@ -160,16 +174,21 @@ export class MatrixRoomHistoryKeyTransfer {
 	private onReceivedToDeviceMessage = (payload: any): void => {
 		const message = payload?.message;
 		if (!message) return;
-		emitDiagnostic('received', { eventType: message.type });
 		const event = {
 			getType: () => message.type,
 			getSender: () => message.sender,
 			getContent: () => message.content
 		} as MatrixEvent;
 		if (event.getType() === KEY_REQUEST_EVENT) {
-			void this.handleKeyRequest(event).catch(() => undefined);
+			emitDiagnostic('received', { eventType: KEY_REQUEST_EVENT });
+			void this.handleKeyRequest(event).catch(() =>
+				emitDiagnostic('request-handler-failed')
+			);
 		} else if (event.getType() === KEY_BUNDLE_EVENT) {
-			void this.handleKeyBundle(event).catch(() => undefined);
+			emitDiagnostic('received', { eventType: KEY_BUNDLE_EVENT });
+			void this.handleKeyBundle(event).catch(() =>
+				emitDiagnostic('bundle-handler-failed')
+			);
 		}
 	};
 
@@ -207,16 +226,6 @@ export class MatrixRoomHistoryKeyTransfer {
 			return;
 		}
 
-		const keys = (await crypto.exportRoomKeys()).filter(
-			(key) => key.room_id === content.room_id
-		);
-		if (keys.length === 0 || keys.length > MAX_KEY_BUNDLE_COUNT) {
-			emitDiagnostic('request-key-count-rejected', {
-				keyCount: keys.length
-			});
-			return;
-		}
-
 		// The requester may have logged in only seconds ago. Refresh its device
 		// list before Olm encryption; otherwise Rust Crypto can silently build an
 		// empty to-device batch for the not-yet-cached device.
@@ -230,6 +239,37 @@ export class MatrixRoomHistoryKeyTransfer {
 				?.has(content.requester_device_id)
 		) {
 			emitDiagnostic('requester-device-missing');
+			return;
+		}
+		if (isInvisibleCryptoEnabledForClient(client)) {
+			const verification = await crypto.getDeviceVerificationStatus(
+				content.requester_user_id,
+				content.requester_device_id
+			);
+			if (!verification?.isVerified()) {
+				emitDiagnostic('requester-device-unverified');
+				return;
+			}
+		}
+
+		const handledRequestKey = `${content.room_id}:${content.requester_user_id}:${content.requester_device_id}`;
+		const now = Date.now();
+		if (
+			now - (this.lastHandledRequestAt.get(handledRequestKey) || 0) <
+			REQUEST_THROTTLE_MS
+		) {
+			emitDiagnostic('request-handler-throttled');
+			return;
+		}
+		this.lastHandledRequestAt.set(handledRequestKey, now);
+
+		const keys = (await crypto.exportRoomKeys()).filter(
+			(key) => key.room_id === content.room_id
+		);
+		if (keys.length === 0 || keys.length > MAX_KEY_BUNDLE_COUNT) {
+			emitDiagnostic('request-key-count-rejected', {
+				keyCount: keys.length
+			});
 			return;
 		}
 
@@ -269,6 +309,7 @@ export class MatrixRoomHistoryKeyTransfer {
 			content.keys.length === 0 ||
 			content.keys.length > MAX_KEY_BUNDLE_COUNT
 		) {
+			emitDiagnostic('bundle-invalid');
 			return;
 		}
 
@@ -281,13 +322,17 @@ export class MatrixRoomHistoryKeyTransfer {
 				room.getMember(sender)?.membership || ''
 			)
 		) {
+			emitDiagnostic('bundle-membership-rejected');
 			return;
 		}
 
 		const roomKeys = content.keys.filter(
 			(key) => key && key.room_id === content.room_id
 		);
-		if (roomKeys.length === 0) return;
+		if (roomKeys.length === 0) {
+			emitDiagnostic('bundle-room-mismatch');
+			return;
+		}
 		await crypto.importRoomKeys(roomKeys);
 		window.dispatchEvent(
 			new CustomEvent(MATRIX_HISTORY_KEYS_IMPORTED_EVENT, {

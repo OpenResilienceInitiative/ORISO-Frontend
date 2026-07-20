@@ -14,7 +14,7 @@ vi.mock('../resources/scripts/endpoints', () => ({
 	}
 }));
 
-describe('apiConfirmDpaSignature', () => {
+describe('apiGetDpaSignPreview', () => {
 	it('loads the exact contract preview before the signer can confirm', async () => {
 		const preview = {
 			tenantName: 'Träger Nord',
@@ -42,7 +42,9 @@ describe('apiConfirmDpaSignature', () => {
 			}
 		);
 	});
+});
 
+describe('apiConfirmDpaSignature', () => {
 	it('posts the public DPA signature payload to the token endpoint', async () => {
 		const fetchMock = vi.fn().mockResolvedValue(
 			new Response(JSON.stringify({ status: 'SIGNED' }), {
