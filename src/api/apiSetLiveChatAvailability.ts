@@ -1,19 +1,30 @@
 import { endpoints } from '../resources/scripts/endpoints';
-import { fetchData, FETCH_METHODS, FETCH_ERRORS } from './fetchData';
+import { fetchData, FETCH_METHODS } from './fetchData';
 
 /**
  * Tells the backend whether the current consultant is available for live chat.
  *
- * Driven by the Live Chat toggle and by logout so the anonymous availability count
- * updates immediately. Best-effort: failures are swallowed (the backend heartbeat
- * window will reconcile state) so this never blocks the toggle or logout flow.
+ * The promise rejects when Redis-backed availability was not acknowledged. Callers
+ * must not present or persist the requested state before this resolves.
  */
 export const apiSetLiveChatAvailability = (available: boolean): Promise<void> =>
 	fetchData({
 		url: endpoints.consultantLiveChatAvailability,
 		method: FETCH_METHODS.PUT,
-		bodyData: JSON.stringify({ available }),
-		responseHandling: [FETCH_ERRORS.CATCH_ALL]
-	})
-		.then(() => undefined)
-		.catch(() => undefined);
+		bodyData: JSON.stringify({ available })
+	}).then(() => undefined);
+
+export const apiGetLiveChatAvailability = (): Promise<boolean> =>
+	fetchData({
+		url: endpoints.consultantLiveChatAvailability,
+		method: FETCH_METHODS.GET
+	}).then((response: { available?: boolean }) =>
+		Boolean(response?.available)
+	);
+
+/** Refreshes an existing backend lease and can never enable availability. */
+export const apiHeartbeatLiveChatAvailability = (): Promise<void> =>
+	fetchData({
+		url: endpoints.consultantLiveChatAvailabilityHeartbeat,
+		method: FETCH_METHODS.POST
+	}).then(() => undefined);

@@ -14,14 +14,24 @@ import {
 export const LiveChatAvailability = () => {
 	const { t: translate } = useTranslation();
 	const navigate = useNavigate();
-	const [liveChatAvailable, setLiveChatAvailable] = useLiveChatAvailable();
+	const [
+		liveChatAvailable,
+		setLiveChatAvailable,
+		{ loading, pending, error }
+	] = useLiveChatAvailable();
 	const [liveChatViaSidebar, setLiveChatViaSidebar] = useLiveChatViaSidebar();
 
 	const handleToggle = useCallback(
-		(checked: boolean) => {
-			setLiveChatAvailable(checked);
-			if (checked) {
-				navigate('/sessions/consultant/sessionPreview?chip=liveChat');
+		async (checked: boolean) => {
+			try {
+				await setLiveChatAvailable(checked);
+				if (checked) {
+					navigate(
+						'/sessions/consultant/sessionPreview?chip=liveChat'
+					);
+				}
+			} catch {
+				// Keep the backend-acknowledged state; the message below is localized.
 			}
 		},
 		[navigate, setLiveChatAvailable]
@@ -49,7 +59,7 @@ export const LiveChatAvailability = () => {
 						className="mr--1"
 						onChange={handleToggle}
 						checked={liveChatAvailable}
-						disabled={liveChatViaSidebar}
+						disabled={liveChatViaSidebar || loading || pending}
 						aria-label={translate(
 							'profile.functions.liveChat.toggleLabel'
 						)}
@@ -60,6 +70,14 @@ export const LiveChatAvailability = () => {
 						)}
 						type="standard"
 					/>
+					{error && (
+						<Text
+							text={translate(
+								'error.statusCodes.500.description'
+							)}
+							type="standard"
+						/>
+					)}
 				</div>
 				{/* New preference: move the availability control into the nav
 				    rail. See the description text for the exact behaviour. */}

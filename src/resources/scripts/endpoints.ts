@@ -64,6 +64,9 @@ export const endpoints = {
 		userServiceOrigin + '/service/conversations/consultants/enquiries/',
 	consultantLiveChatAvailability:
 		userServiceOrigin + '/service/conversations/consultants/availability',
+	consultantLiveChatAvailabilityHeartbeat:
+		userServiceOrigin +
+		'/service/conversations/consultants/availability/heartbeat',
 	consultantSessions:
 		userServiceOrigin + '/service/users/sessions/consultants?status=2&',
 	consultantStatistics:
