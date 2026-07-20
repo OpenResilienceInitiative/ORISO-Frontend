@@ -56,6 +56,9 @@ interface SessionsListToolbarProps {
 	showSupervisionChip: boolean;
 	/** Show the "Live-Chat" filter chip (tied to the sidebar availability toggle). */
 	showLiveChatChip?: boolean;
+	/** Show group-session filters only when their tenant modules are enabled. */
+	showGroupChip?: boolean;
+	showInternalGroupChip?: boolean;
 	/** Show create/archive route chips. This is intentionally limited to Gespräch. */
 	createGroupChatPath: string;
 	archiveTabPath: string;
@@ -262,6 +265,8 @@ export const SessionsListToolbar = ({
 	showCreateGroupChatAction,
 	showSupervisionChip,
 	showLiveChatChip = false,
+	showGroupChip = false,
+	showInternalGroupChip = false,
 	createGroupChatPath,
 	archiveTabPath,
 	archiveTabActive,
@@ -384,9 +389,20 @@ export const SessionsListToolbar = ({
 				if (chip.id === 'supervision') {
 					return showSupervisionChip;
 				}
+				if (chip.id === 'groups') {
+					return showGroupChip;
+				}
+				if (chip.id === 'internalGroup') {
+					return showInternalGroupChip;
+				}
 				return true;
 			}),
-		[showLiveChatChip, showSupervisionChip]
+		[
+			showGroupChip,
+			showInternalGroupChip,
+			showLiveChatChip,
+			showSupervisionChip
+		]
 	);
 	const archiveInsertIndex = Math.max(
 		visibleFilterChips.findIndex((chip) => chip.id === 'internalGroup'),

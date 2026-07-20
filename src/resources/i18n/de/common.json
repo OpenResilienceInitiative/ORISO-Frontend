@@ -778,15 +778,23 @@
 			"togglePersonList": "Personenliste öffnen oder schließen"
 		},
 		"circle": {
+			"addModerator": "Co-Moderator:in hinzufügen",
 			"cardHeadline": "Anonyme Selbsthilfegruppen",
 			"cardText": "in Ihrem Fachbereich initiieren. Einmalig oder regelmäßig: Wählen Sie das passende Medium und teilen Sie den Kreis mit den Teilnehmenden.",
 			"createLabel": "Erstellen",
+			"deselectModerator": "{{name}} entfernen",
+			"moderatorCount_one": "{{count}} Co-Moderator:in hinzugefügt",
+			"moderatorCount_other": "{{count}} Co-Moderator:innen hinzugefügt",
+			"moderatorsLabel": "Weitere Moderation",
 			"noTopics": "Keine Themen verfügbar",
+			"removeModerator": "{{name}} entfernen",
 			"saveLabel": "Speichern",
 			"settingsSubtitle": "Passen Sie nun Begrüßungstext, Format, Regeln, Intervalle und die Sprache an, in welcher der Kreis primär stattfinden soll.",
 			"settingsTitle": "Einstellungen für den Gesprächskreis",
 			"subtitle": "moderiert durch Berater:innen",
+			"selectModerator": "{{name}} auswählen",
 			"title": "Gesprächskreis",
+			"toggleModeratorList": "Liste der Co-Moderator:innen öffnen oder schließen",
 			"toggleTopicList": "Themenliste öffnen oder schließen",
 			"topicLabel": "Thema / Fachbereich"
 		},
