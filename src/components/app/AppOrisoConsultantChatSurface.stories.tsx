@@ -917,12 +917,26 @@ function AppOrisoRuntimeProviders({ children }: { children: React.ReactNode }) {
 	);
 }
 
+/** Matches SessionsList neighbour-corner wiring for the stacked card group. */
+const STORY_ACTIVE_SESSION_ID = 3363;
+
+function isRuntimeSessionActive(session: ListItemInterface) {
+	return (
+		session.session?.id === STORY_ACTIVE_SESSION_ID ||
+		session.chat?.id === STORY_ACTIVE_SESSION_ID
+	);
+}
+
 function RealSessionListItem({
 	session,
-	index
+	index,
+	isBeforeActive = false,
+	isAfterActive = false
 }: {
 	session: ListItemInterface;
 	index: number;
+	isBeforeActive?: boolean;
+	isAfterActive?: boolean;
 }) {
 	const activeSession = buildExtendedSession(session, '');
 
@@ -938,6 +952,8 @@ function RealSessionListItem({
 				defaultLanguage="de"
 				handleKeyDownLisItemContent={() => {}}
 				index={index}
+				isBeforeActive={isBeforeActive}
+				isAfterActive={isAfterActive}
 			/>
 		</ActiveSessionContext.Provider>
 	);
@@ -951,45 +967,66 @@ function SessionListPanel() {
 	return (
 		<aside style={styles.listPanel}>
 			<AppOrisoRuntimeProviders>
-				<SessionsListToolbar
-					translate={translate}
-					searchValue={search}
-					onSearchChange={setSearch}
-					searchPeopleResults={searchPeopleResults}
-					selectedPersonIds={selectedPeople}
-					onSelectedPersonIdsChange={setSelectedPeople}
-					activeChip={chip}
-					onChipToggle={(nextChip) =>
-						setChip((previousChip) =>
-							previousChip === nextChip ? null : nextChip
-						)
-					}
-					showConsultantActions
-					showCreateGroupChatAction
-					showSupervisionChip
-					showLiveChatChip
-					createGroupChatPath="/sessions/consultant/sessionView/createGroupChat"
-					archiveTabPath="/sessions/consultant/sessionView?sessionListTab=archive"
-					archiveTabActive={false}
-					createGroupChatActive={false}
-					chipCounts={{
-						unread: 4,
-						drafts: 2,
-						groups: 3,
-						liveChat: 1,
-						supervision: 1
-					}}
-				/>
-				<div style={styles.listScroll}>
-					{runtimeSessions.map((session, index) => (
-						<RealSessionListItem
-							key={
-								session.session?.id ?? session.chat?.id ?? index
-							}
-							session={session}
-							index={index}
-						/>
-					))}
+				<div className="sessionsList__innerWrapper">
+					<SessionsListToolbar
+						translate={translate}
+						searchValue={search}
+						onSearchChange={setSearch}
+						searchPeopleResults={searchPeopleResults}
+						selectedPersonIds={selectedPeople}
+						onSelectedPersonIdsChange={setSelectedPeople}
+						activeChip={chip}
+						onChipToggle={(nextChip) =>
+							setChip((previousChip) =>
+								previousChip === nextChip ? null : nextChip
+							)
+						}
+						showConsultantActions
+						showCreateGroupChatAction
+						showSupervisionChip
+						showLiveChatChip
+						createGroupChatPath="/sessions/consultant/sessionView/createGroupChat"
+						archiveTabPath="/sessions/consultant/sessionView?sessionListTab=archive"
+						archiveTabActive={false}
+						createGroupChatActive={false}
+						chipCounts={{
+							unread: 4,
+							drafts: 2,
+							groups: 3,
+							liveChat: 1,
+							supervision: 1
+						}}
+					/>
+					<div className="sessionsList__scrollArea">
+						<div
+							className="sessionsList__scrollContainer sessionsList__scrollContainer--hasToolbar"
+							style={styles.listScroll}
+						>
+							{runtimeSessions.map((session, index) => (
+								<RealSessionListItem
+									key={
+										session.session?.id ??
+										session.chat?.id ??
+										index
+									}
+									session={session}
+									index={index}
+									isBeforeActive={
+										!!runtimeSessions[index + 1] &&
+										isRuntimeSessionActive(
+											runtimeSessions[index + 1]
+										)
+									}
+									isAfterActive={
+										!!runtimeSessions[index - 1] &&
+										isRuntimeSessionActive(
+											runtimeSessions[index - 1]
+										)
+									}
+								/>
+							))}
+						</div>
+					</div>
 				</div>
 			</AppOrisoRuntimeProviders>
 		</aside>
@@ -1369,14 +1406,15 @@ const styles = {
 	} satisfies React.CSSProperties,
 	listPanel: {
 		background: '#EAE7E8',
-		padding: '16px 0 0',
-		overflow: 'hidden'
+		overflow: 'hidden',
+		minHeight: 0,
+		display: 'flex',
+		flexDirection: 'column'
 	} satisfies React.CSSProperties,
+	// Height only — gutters/radius come from sessionsList__scrollContainer.
 	listScroll: {
 		height: 'calc(100% - 118px)',
-		overflow: 'hidden auto',
-		padding: '0',
-		scrollbarWidth: 'none'
+		minHeight: 0
 	} satisfies React.CSSProperties,
 	consultingTypeLabel: {
 		marginLeft: 4,
