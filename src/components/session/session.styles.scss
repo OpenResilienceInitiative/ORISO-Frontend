@@ -142,11 +142,13 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		bottom: 0;
 		overflow-x: hidden;
 		overflow-y: auto;
-		padding: $grid-base-three $grid-base-two 240px;
+		// Figma 8641-34699: 16px inset inside the chat card (sides + top).
+		// Large bottom padding keeps the last message above the absolute composer.
+		padding: 16px 16px 240px;
 		background-color: var(--m3-surface-container-lowest, #ffffff);
 
 		@include breakpoint($fromMedium) {
-			padding: $grid-base-three $grid-base-three 240px;
+			padding: 16px 16px 240px;
 		}
 
 		@media screen and (width <= 1366px) {
@@ -156,7 +158,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 
 		@media screen and (width <= 899px) {
 			// Leave extra scrollable space so the latest message "Reply" stays above composer.
-			padding-bottom: calc(340px + env(safe-area-inset-bottom, 0));
+			padding-bottom: calc(300px + env(safe-area-inset-bottom, 0));
 		}
 	}
 

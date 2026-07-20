@@ -6,18 +6,14 @@ $iconSize: 24px;
 	display: flex;
 	flex-direction: column;
 	align-items: stretch;
-	padding: 10px 14px 6px;
+	// Figma 8641-34699: 16px inset from the chat card edges (matches composer).
+	padding: 16px 16px 6px;
 	min-height: 75px;
 	background-color: #fff;
 	box-sizing: border-box;
 
-	@media (width >= 768px) {
-		margin-left: 40px;
-		margin-right: 40px;
-	}
-
 	@include breakpoint($fromMedium) {
-		padding: 10px 18px 6px;
+		padding: 16px 16px 6px;
 	}
 
 	@include breakpoint($fromLarge) {
