@@ -69,11 +69,23 @@ describe('SessionsListToolbar group-chat feature gate', () => {
 	it('shows Create when the tenant enables the feature', () => {
 		renderToolbar(true);
 
+		const createLink = screen.getByRole('link', {
+			name: 'sessionList.createChat.buttonTitle'
+		});
+
+		expect(createLink).toBeTruthy();
+		expect(createLink.classList).not.toContain(
+			'sessionsListToolbar__chip--iconOnly'
+		);
 		expect(
-			screen.getByRole('link', {
-				name: 'sessionList.createChat.buttonTitle'
-			})
-		).toBeTruthy();
+			createLink.querySelector('.sessionsListToolbar__chipLabel')
+				?.textContent
+		).toBe('Create');
+		expect(
+			createLink
+				.querySelector('.sessionsListToolbar__chipLabel')
+				?.hasAttribute('aria-hidden')
+		).toBe(false);
 	});
 
 	it('hides group filters when their tenant modules are disabled', () => {

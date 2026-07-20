@@ -12,6 +12,12 @@ interface ResizableHandleProps {
 	maxWidth?: number;
 }
 
+export const getToggledSidebarWidth = (
+	currentWidth: number,
+	minWidth: number,
+	expandedMinWidth: number
+) => (currentWidth <= minWidth + 1 ? expandedMinWidth : minWidth);
+
 export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 	onResize,
 	currentWidth,
@@ -177,10 +183,15 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 	);
 
 	const toggleCollapsed = useCallback(() => {
-		const next =
-			currentWidth <= minWidth + 1 ? ICON_ONLY_THRESHOLD : minWidth;
+		const next = getToggledSidebarWidth(
+			currentWidth,
+			minWidth,
+			EXPANDED_MIN_WIDTH
+		);
 		onResize(normalizeWidth(next));
-	}, [ICON_ONLY_THRESHOLD, currentWidth, minWidth, normalizeWidth, onResize]);
+	}, [EXPANDED_MIN_WIDTH, currentWidth, minWidth, normalizeWidth, onResize]);
+
+	const isCollapsed = currentWidth <= minWidth + 1;
 
 	const handlePointerUp = useCallback(() => {
 		pointerIdRef.current = null;
@@ -448,6 +459,26 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 			}}
 		>
 			<span className="sessionsList__resizeHandlePill" />
+			<button
+				type="button"
+				className="sessionsList__resizeToggle"
+				aria-label={t(
+					isCollapsed
+						? 'sessionList.resizeHandle.expand'
+						: 'sessionList.resizeHandle.collapse',
+					isCollapsed
+						? 'Expand chat list'
+						: 'Collapse chat list to enlarge the chat room'
+				)}
+				onPointerDown={(event) => event.stopPropagation()}
+				onClick={(event) => {
+					event.preventDefault();
+					event.stopPropagation();
+					toggleCollapsed();
+				}}
+			>
+				<span aria-hidden>{isCollapsed ? '›' : '‹'}</span>
+			</button>
 		</div>
 	);
 };
