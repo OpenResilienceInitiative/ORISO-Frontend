@@ -59,6 +59,11 @@ import {
 import { applyMessageEdits } from '../../utils/messageRelations';
 import { CaseHandoverCurtain } from './CaseHandoverCurtain';
 import { isCaseHandoverAccessControlled } from './caseHandoverHelpers';
+import {
+	MATRIX_HISTORY_KEYS_IMPORTED_EVENT,
+	isUndecryptedRoomEvent,
+	matrixRoomHistoryKeyTransfer
+} from '../../services/matrixRoomHistoryKeyTransfer';
 
 interface SessionStreamProps {
 	readonly: boolean;
@@ -98,6 +103,7 @@ export const SessionStream = ({
 	// instance got removeAllListeners(), so every effect holding room
 	// listeners depends on this generation to re-attach to the new client.
 	const [matrixClientGeneration, setMatrixClientGeneration] = useState(0);
+	const initialTimelineHydrationKeyRef = useRef('');
 	const [messagesItem, setMessagesItem] = useState(null);
 	const [overlayItem, setOverlayItem] = useState<OverlayItem>(null);
 	const [isOverlayActive, setIsOverlayActive] = useState(false);
@@ -320,6 +326,17 @@ export const SessionStream = ({
 				};
 
 				const clientEvents = loadRoomEvents(resolvedMatrixRoomId);
+				const hasUndecryptedHistory = clientEvents.some(
+					isUndecryptedRoomEvent
+				);
+				if (hasUndecryptedHistory && resolvedMatrixRoomId) {
+					// A newly-authorised case owner joined after the old Megolm
+					// sessions were created. Ask existing member devices for only
+					// this room's keys over encrypted to-device messages.
+					void matrixRoomHistoryKeyTransfer.requestKeys(
+						resolvedMatrixRoomId
+					);
+				}
 				// ADR-008: merge the supervision side room's asides so they
 				// render for members. The client is never a member of the side
 				// room, so it never loads these.
@@ -362,6 +379,24 @@ export const SessionStream = ({
 		]
 	);
 	const fetchSessionMessagesRef = useUpdatingRef(fetchSessionMessages);
+
+	useEffect(() => {
+		const onHistoryKeysImported = (rawEvent: Event) => {
+			const importedRoomId = (rawEvent as CustomEvent)?.detail?.roomId;
+			if (importedRoomId === resolvedChatSession.matrixRoomId) {
+				void fetchSessionMessagesRef.current(true);
+			}
+		};
+		window.addEventListener(
+			MATRIX_HISTORY_KEYS_IMPORTED_EVENT,
+			onHistoryKeysImported
+		);
+		return () =>
+			window.removeEventListener(
+				MATRIX_HISTORY_KEYS_IMPORTED_EVENT,
+				onHistoryKeysImported
+			);
+	}, [fetchSessionMessagesRef, resolvedChatSession.matrixRoomId]);
 
 	const setSessionRead = useCallback(() => {
 		if (readonly) {
@@ -465,6 +500,7 @@ export const SessionStream = ({
 		const watchedRoomIds = supervisionRoomId
 			? [clientRoomId, supervisionRoomId]
 			: [clientRoomId];
+		const initialHydrationKey = `${matrixClientGeneration}:${watchedRoomIds.join('|')}`;
 
 		let retryTimer: number | null = null;
 		let detachTimelineListeners: Array<() => void> = [];
@@ -528,6 +564,21 @@ export const SessionStream = ({
 			}
 
 			detachTimelineListeners = detachers;
+			// Initial-sync events arrive with toStartOfTimeline=true and are
+			// intentionally ignored by the live handler. Hydrate once after every
+			// successful attachment so late-join decryption failures can trigger
+			// their room-key request after the Matrix room actually exists.
+			if (
+				initialTimelineHydrationKeyRef.current !== initialHydrationKey
+			) {
+				initialTimelineHydrationKeyRef.current = initialHydrationKey;
+				// The initial timeline can be empty or already SDK-normalised by the
+				// time React sees it. Request this room's existing keys once per
+				// client generation instead of depending on a particular failure
+				// event shape.
+				void matrixRoomHistoryKeyTransfer.requestKeys(clientRoomId);
+				refreshMessages();
+			}
 			return true;
 		};
 

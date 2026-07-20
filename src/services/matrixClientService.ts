@@ -11,6 +11,7 @@ import { applyDeviceIsolationMode } from './matrixDeviceIsolation';
 import { appConfig } from '../utils/appConfig';
 import { matrixLiveEventBridge } from './matrixLiveEventBridge';
 import { startDeviceDehydration } from './matrixDeviceDehydration';
+import { matrixRoomHistoryKeyTransfer } from './matrixRoomHistoryKeyTransfer';
 import { encryptMatrixAttachment } from '../utils/matrixEncryptedAttachment';
 import { buildMatrixRoomEncryptionInitialState } from '../utils/matrixRoomEncryption';
 import {
@@ -496,6 +497,7 @@ export class MatrixClientService {
 
 		matrixCallService.initialize(client);
 		matrixLiveEventBridge.initialize(client);
+		matrixRoomHistoryKeyTransfer.initialize(client);
 		this.initializedServicesClient = client;
 
 		// #439 MSC3814: rehydrate the parked device (reads Megolm keys sent
@@ -565,6 +567,7 @@ export class MatrixClientService {
 		this.initializedServicesClient = null;
 		matrixLiveEventBridge.detach();
 		matrixCallService.detach();
+		matrixRoomHistoryKeyTransfer.detach();
 		this.notifySyncStateListeners();
 	}
 

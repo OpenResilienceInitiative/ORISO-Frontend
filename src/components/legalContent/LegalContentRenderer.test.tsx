@@ -94,4 +94,19 @@ describe('LegalContentRenderer', () => {
 		expect(container.textContent).not.toContain('src');
 		expect(screen.getByText('Hallo')).toBeDefined();
 	});
+
+	it('uses an explicit public-flow language instead of the global UI language', () => {
+		render(
+			<LegalContentRenderer
+				language="en"
+				content={map({
+					de: '<p>Deutscher Vertrag</p>',
+					en: '<p>English contract</p>'
+				})}
+			/>
+		);
+
+		expect(screen.getByText('English contract')).toBeDefined();
+		expect(screen.queryByText('Deutscher Vertrag')).toBeNull();
+	});
 });

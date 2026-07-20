@@ -16,6 +16,8 @@ export interface LegalContentRendererProps {
 	 */
 	content: string | null | undefined;
 	className?: string;
+	/** Optional explicit language for public legal flows that provide their own selector. */
+	language?: string;
 }
 
 /**
@@ -29,12 +31,13 @@ export interface LegalContentRendererProps {
  */
 export const LegalContentRenderer = ({
 	content,
-	className
+	className,
+	language
 }: LegalContentRendererProps) => {
 	const { t, i18n } = useTranslation();
 	const [showOriginal, setShowOriginal] = useState(false);
 
-	const uiLang = normalizeLegalLang(i18n?.language);
+	const uiLang = normalizeLegalLang(language ?? i18n?.language);
 	const resolved = useMemo(
 		() => resolveLegalContent(content, uiLang),
 		[content, uiLang]

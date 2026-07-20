@@ -391,6 +391,26 @@ describe('SessionStream Matrix room lifecycle', () => {
 		);
 	});
 
+	it('hydrates the initial timeline after its listener attaches', async () => {
+		let callsAtAttach = -1;
+		vi.mocked(chatTransportService.onMatrixTimeline).mockImplementationOnce(
+			(_roomId: string, listener: any) => {
+				callsAtAttach = mocks.getMatrixRoomMessages.mock.calls.length;
+				mocks.timelineListeners.push(listener);
+				return () => undefined;
+			}
+		);
+
+		renderSessionStream({ isGroup: true });
+
+		await waitFor(() => expect(callsAtAttach).toBeGreaterThanOrEqual(0));
+		await waitFor(() =>
+			expect(
+				mocks.getMatrixRoomMessages.mock.calls.length
+			).toBeGreaterThan(callsAtAttach)
+		);
+	});
+
 	it('does not curtain a backend-authorized session supervisor', async () => {
 		mocks.getSessionSupervisors.mockResolvedValueOnce([
 			{
