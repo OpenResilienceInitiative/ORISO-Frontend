@@ -58,23 +58,7 @@ import genKeyIcon from '../../../resources/img/registration-md3/icons/gen-key.sv
 import genAvatarIcon from '../../../resources/img/registration-md3/icons/gen-avatar.svg';
 import genDiceIcon from '../../../resources/img/registration-md3/icons/gen-dice.svg';
 import { DepartmentLegalSection } from '../../departmentLegal/DepartmentLegalSection';
-
-const toRegistrationUsername = (displayName: string) => {
-	const normalized = displayName
-		.normalize('NFD')
-		.replace(/[\u0300-\u036f]/g, '')
-		.toLowerCase()
-		.replace(/ß/g, 'ss')
-		.replace(/[^a-z0-9]+/g, '_')
-		.replace(/^_+|_+$/g, '')
-		.replace(/_{2,}/g, '_');
-	const safeBase = normalized || 'oriso';
-	const suffix = Math.floor(100 + Math.random() * 900);
-	const suffixText = `_${suffix}`;
-	const maxBaseLength = 48 - suffixText.length;
-
-	return `${safeBase.slice(0, maxBaseLength)}${suffixText}`;
-};
+import { toRegistrationUsername } from './registrationUsername';
 
 const suggestButtonSx = (filled: boolean) =>
 	({
@@ -175,7 +159,7 @@ export const AccountData: FC<{
 	const applyGeneratedUsername = useCallback(
 		(nextIdentity: Pseudonym) => {
 			setIdentity(nextIdentity);
-			setUsername(toRegistrationUsername(nextIdentity.displayName));
+			setUsername(toRegistrationUsername(nextIdentity));
 			resetUsernameAvailability();
 		},
 		[resetUsernameAvailability]
