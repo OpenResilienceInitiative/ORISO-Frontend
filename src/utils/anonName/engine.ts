@@ -118,24 +118,80 @@ export function luminance(hex: string): number {
 	return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }
 
-/** WCAG contrast ratio (1–21) between two relative luminances. */
-function contrastRatio(l1: number, l2: number): number {
-	const [hi, lo] = l1 >= l2 ? [l1, l2] : [l2, l1];
+/** WCAG contrast ratio (1–21) between two colours (given as #rrggbb). */
+export function contrastRatio(a: string, b: string): number {
+	const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
 	return (hi + 0.05) / (lo + 0.05);
 }
 
 const ICON_DARK = '#1a1a1a';
 const ICON_LIGHT = '#ffffff';
-const L_ICON_DARK = luminance(ICON_DARK);
-const L_ICON_LIGHT = luminance(ICON_LIGHT);
+
+/** Minimum WCAG contrast an animal colour must reach against its background so
+ *  the silhouette stays clearly legible. */
+const MIN_ICON_CONTRAST = 4.5;
+
+/** How many complementary palette colours to offer per background (the most
+ *  hue-distant, contrast-passing ones). Black + white are always added on top,
+ *  so they stay part of the mix. */
+const COMPLEMENTARY_ICON_LIMIT = 6;
+
+/** Hue angle (0–360) of a #rrggbb colour. */
+function hueOf(hex: string): number {
+	const n = parseInt(hex.slice(1), 16);
+	const r = ((n >> 16) & 255) / 255;
+	const g = ((n >> 8) & 255) / 255;
+	const b = (n & 255) / 255;
+	const max = Math.max(r, g, b);
+	const min = Math.min(r, g, b);
+	const d = max - min;
+	if (d === 0) return 0;
+	let h: number;
+	if (max === r) h = ((g - b) / d) % 6;
+	else if (max === g) h = (b - r) / d + 2;
+	else h = (r - g) / d + 4;
+	h *= 60;
+	return h < 0 ? h + 360 : h;
+}
+
+/** Shortest angular distance (0–180) between two hues. */
+function hueDistance(a: number, b: number): number {
+	const d = Math.abs(a - b) % 360;
+	return d > 180 ? 360 - d : d;
+}
+
+const PALETTE_META = AVATAR_COLORS.map((hex) => ({ hex, hue: hueOf(hex) }));
 
 /** Pick the animal colour (near-black or white) that maximises WCAG contrast
  *  against the given background — legible on any palette entry. */
 export function pickIconColor(bg: string): string {
-	const l = luminance(bg);
-	return contrastRatio(l, L_ICON_DARK) >= contrastRatio(l, L_ICON_LIGHT)
+	return contrastRatio(bg, ICON_DARK) >= contrastRatio(bg, ICON_LIGHT)
 		? ICON_DARK
 		: ICON_LIGHT;
+}
+
+/**
+ * All animal-colour options that stay legible on `bg` (WCAG ≥ 4.5): the
+ * black/white that pass, PLUS the most hue-distant ("complementary") colours
+ * from the same curated palette. Black/white remain in the pool so the classic
+ * high-contrast look still appears. Always returns at least one entry.
+ */
+export function iconCandidates(bg: string): string[] {
+	const bw = [ICON_DARK, ICON_LIGHT].filter(
+		(c) => contrastRatio(bg, c) >= MIN_ICON_CONTRAST
+	);
+	const bgHue = hueOf(bg);
+	const complementary = PALETTE_META.filter(
+		(p) => p.hex.toLowerCase() !== bg.toLowerCase()
+	)
+		.map((p) => ({ hex: p.hex, dist: hueDistance(bgHue, p.hue) }))
+		.filter((p) => contrastRatio(bg, p.hex) >= MIN_ICON_CONTRAST)
+		.sort((x, y) => y.dist - x.dist)
+		.slice(0, COMPLEMENTARY_ICON_LIMIT)
+		.map((p) => p.hex);
+
+	const pool = [...bw, ...complementary];
+	return pool.length > 0 ? pool : [pickIconColor(bg)];
 }
 
 export interface Avatar {
@@ -173,7 +229,7 @@ const dataFor = (lang: string): NickLang => {
 
 const avatarFor = (file: string): Avatar => {
 	const bg = pick(AVATAR_COLORS);
-	return { file, bg, iconColor: pickIconColor(bg) };
+	return { file, bg, iconColor: pick(iconCandidates(bg)) };
 };
 
 /** A display-name pseudonym + its matching avatar, in the given language. */
@@ -230,7 +286,11 @@ function hashUserId(userId: string): number {
 export function generateAvatarForUser(userId: string): Avatar {
 	const absHash = hashUserId(userId);
 	const bg = AVATAR_COLORS[absHash % AVATAR_COLORS.length];
-	const iconColor = pickIconColor(bg);
+	// Deterministic icon colour from the same candidate pool as the random path
+	// (a shifted hash slice so it doesn't track the bg index).
+	const candidates = iconCandidates(bg);
+	const iconColor =
+		candidates[Math.floor(absHash / AVATAR_COLORS.length) % candidates.length];
 	const animalFile =
 		ALL_ANIMAL_FILES[absHash % ALL_ANIMAL_FILES.length] ??
 		ALL_ANIMAL_FILES[0];

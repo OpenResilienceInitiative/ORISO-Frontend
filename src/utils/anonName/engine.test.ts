@@ -2,9 +2,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LANGUAGE_DATA } from './data';
 import {
+	contrastRatio,
 	generateAvatarForUser,
 	generatePassword,
-	generatePseudonym
+	generatePseudonym,
+	iconCandidates
 } from './engine';
 import { allPasswordCriteriaPass } from '../../components/registration/accountData/passwordRules';
 
@@ -84,6 +86,27 @@ describe('anonymous name engine', () => {
 		expect(other).not.toEqual(first);
 		expect(first.file).toBeTruthy();
 		expect(first.bg).toMatch(/^#[0-9A-Fa-f]{6}$/);
-		expect(['#ffffff', '#1a1a1a']).toContain(first.iconColor);
+		// Icon colour may now be black/white OR a complementary palette colour,
+		// but must always be a valid hex from the candidate pool.
+		expect(first.iconColor).toMatch(/^#[0-9A-Fa-f]{6}$/);
+		expect(iconCandidates(first.bg)).toContain(first.iconColor);
+	});
+
+	it('every icon candidate stays legible and keeps black/white in the pool', () => {
+		for (let i = 0; i < 40; i++) {
+			const { bg, iconColor } = generateAvatarForUser(`user-${i}`);
+			const candidates = iconCandidates(bg);
+			expect(candidates.length).toBeGreaterThan(0);
+			// all candidates meet the WCAG floor
+			candidates.forEach((c) =>
+				expect(contrastRatio(bg, c)).toBeGreaterThanOrEqual(4.5)
+			);
+			// the classic high-contrast black/white is still offered
+			expect(
+				candidates.some((c) => c === '#1a1a1a' || c === '#ffffff')
+			).toBe(true);
+			// the chosen colour is legible
+			expect(contrastRatio(bg, iconColor)).toBeGreaterThanOrEqual(4.5);
+		}
 	});
 });
