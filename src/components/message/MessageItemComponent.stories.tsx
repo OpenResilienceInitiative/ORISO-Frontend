@@ -456,6 +456,30 @@ export const OutgoingSendFailed: Story = {
 	}
 };
 
+export const IncomingEncryptionBroke: Story = {
+	name: 'Incoming encryption broke (cross)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_CONSULTANT_RC_ID,
+			displayName: 'Leila Pavlov',
+			username: 'leila.p@oriso.invalid',
+			isNotRead: true,
+			message: 'Diese Nachricht konnte nicht entschlüsselt werden.'
+		}),
+		// Incoming message whose Megolm decryption failed: the red cross shows
+		// on the received message (not own-message-only), labelled
+		// "Verschlüsselung gebrochen".
+		encryptionBroke: true,
+		onReact: () => {},
+		...baseHandlers
+	}
+};
+
 export const WideLongMessageDesktop: Story = {
 	name: 'Long text widens bubble (desktop 770px)',
 	parameters: {

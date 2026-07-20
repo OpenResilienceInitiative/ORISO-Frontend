@@ -317,9 +317,9 @@ interface MessageItemComponentProps extends MessageItem {
 	/** Send failure: cross instead of checkmarks in the bubble time rail. */
 	sendFailed?: boolean;
 	/**
-	 * End-to-end encryption failed for the recipient (Matrix UTD:
-	 * `event.isEncrypted() && event.isDecryptionFailure()`). Rendered with the
-	 * same cross as `sendFailed` — to the user both mean "not delivered".
+	 * This client could not decrypt the Matrix event (UTD). Rendered with the
+	 * failure cross while the adjacent decryption card explains that the
+	 * incoming message is unavailable.
 	 */
 	encryptionBroke?: boolean;
 	handleDecryptionErrors: (
@@ -1441,12 +1441,22 @@ export const MessageItemComponent = ({
 		sendFailed || encryptionBroke ? 'failed' : isNotRead ? 'sent' : 'read';
 	const deliveryStatusLabel =
 		deliveryState === 'failed'
-			? translate('message.sendFailed.status', 'nicht zugestellt')
+			? encryptionBroke
+				? translate(
+						'message.encryptionBroke.status',
+						'Verschlüsselung gebrochen'
+					)
+				: translate('message.sendFailed.status', 'nicht zugestellt')
 			: translate(
 					deliveryState === 'sent' ? 'message.sent' : 'message.read'
 				);
+	// The delivery cross for a broken decryption belongs on the affected
+	// message whether or not it is ours: you can always decrypt your own
+	// sends, so `encryptionBroke` in practice flags an INCOMING message the
+	// recipient's client could not decrypt. Own-message sent/read status stays
+	// own-only as before.
 	const deliveryStatusInBubble =
-		isMyMessage && t !== 'rm' ? (
+		t !== 'rm' && (isMyMessage || encryptionBroke) ? (
 			<span
 				className={clsx(
 					'messageItem__deliveryStatus',

@@ -1424,6 +1424,15 @@
 				"headline": "Delete message"
 			}
 		},
+		"encryptionBroke": {
+			"status": "encryption failed"
+		},
+		"decryptionFailed": {
+			"body": "This incoming message could not be decrypted. Ask the sender to send it again, or try reloading the conversation.",
+			"status": "could not be decrypted",
+			"subtitle": "Incoming message unavailable",
+			"title": "Message decryption failed"
+		},
 		"groupChat": "Group chat",
 		"isMyMessage": {
 			"name": "Me"

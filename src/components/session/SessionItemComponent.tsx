@@ -23,6 +23,7 @@ import {
 	MessageItem,
 	MessageItemComponent
 } from '../message/MessageItemComponent';
+import { useMatrixDecryptionFailures } from '../../hooks/useMatrixDecryptionFailures';
 import { MessageSendFailed } from '../message/MessageSendFailed';
 import {
 	ReactionEvent,
@@ -1620,6 +1621,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const resolvedMatrixRoomId = isMatrixRoom(activeSession.rid)
 		? activeSession.rid
 		: activeSession.item?.matrixRoomId || activeSession.rid;
+	// "Encryption broke" delivery status: event ids in this room whose Megolm
+	// decryption permanently failed, so the affected message can show the red
+	// cross (Figma 7086-57415). Keyed by event id === message._id.
+	const decryptionFailures =
+		useMatrixDecryptionFailures(resolvedMatrixRoomId);
 	// Reactions (m.annotation, #435).
 	const reactionEvents = useMemo(
 		() => props.reactionEvents || [],
@@ -4755,7 +4761,20 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										}
 										onUnreact={handleUnreact}
 										{...message}
+										encryptionBroke={decryptionFailures.has(
+											message._id
+										)}
 									/>
+									{decryptionFailures.has(message._id) &&
+										(!isThreadsEnabled ||
+											!message.threadRootEventId) && (
+											<MessageSendFailed
+												messageTime={
+													message.messageTime
+												}
+												isDecryptionFailure
+											/>
+										)}
 								</React.Fragment>
 							))}
 						{/* "Sending message failed" cards for sends that never
@@ -4876,8 +4895,22 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 								threadsEnabled={true}
 								forceShow={true}
 								{...activeThreadRootMessage}
+								encryptionBroke={decryptionFailures.has(
+									activeThreadRootMessage._id
+								)}
 							/>
 						)}
+						{activeThreadRootMessage &&
+							decryptionFailures.has(
+								activeThreadRootMessage._id
+							) && (
+								<MessageSendFailed
+									messageTime={
+										activeThreadRootMessage.messageTime
+									}
+									isDecryptionFailure
+								/>
+							)}
 						{messages &&
 							(ready || !activeSession.rid) &&
 							messages.map((message: MessageItem, index) => (
@@ -4930,7 +4963,20 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										}
 										onUnreact={handleUnreact}
 										{...message}
+										encryptionBroke={decryptionFailures.has(
+											message._id
+										)}
 									/>
+									{decryptionFailures.has(message._id) &&
+										message.threadRootEventId ===
+											activeThreadRootId && (
+											<MessageSendFailed
+												messageTime={
+													message.messageTime
+												}
+												isDecryptionFailure
+											/>
+										)}
 								</React.Fragment>
 							))}
 					</div>

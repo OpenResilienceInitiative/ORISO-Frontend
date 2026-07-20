@@ -436,6 +436,12 @@
 				"copy": "Möchtest Du die Nachricht wirklich löschen?"
 			}
 		},
+		"decryptionFailed": {
+			"body": "Diese eingehende Nachricht konnte nicht entschlüsselt werden. Bitte die absendende Person, sie erneut zu senden, oder lade die Unterhaltung neu.",
+			"status": "konnte nicht entschlüsselt werden",
+			"subtitle": "Eingehende Nachricht nicht verfügbar",
+			"title": "Nachricht konnte nicht entschlüsselt werden"
+		},
 		"reply": {
 			"previewLabel": "Antwort an",
 			"cancel": "Antwort verwerfen",
