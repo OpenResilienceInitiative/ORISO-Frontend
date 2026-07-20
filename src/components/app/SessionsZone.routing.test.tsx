@@ -95,6 +95,17 @@ describe('SessionsZone v7 routing — consultant', () => {
 		expect(screen.getByTestId('list')).toBeDefined();
 	});
 
+	it('slides the list column away when a mobile detail route is active', () => {
+		renderAt('/sessions/consultant/sessionView/session/42');
+
+		expect(screen.getByTestId('list').parentElement?.classList).toContain(
+			'contentWrapper__list--smallInactive'
+		);
+		expect(
+			screen.getByTestId('sessionView').parentElement?.classList
+		).not.toContain('contentWrapper__detail--smallInactive');
+	});
+
 	it('matches the Matrix-only detail route (session/:id)', () => {
 		renderAt('/sessions/consultant/sessionView/session/42');
 		expect(screen.getByTestId('sessionView')).toBeDefined();
@@ -115,6 +126,12 @@ describe('SessionsZone v7 routing — consultant', () => {
 	it('renders the empty session view on the bare list path', () => {
 		renderAt('/sessions/consultant/sessionView/');
 		expect(screen.getByTestId('empty')).toBeDefined();
+		expect(
+			screen.getByTestId('list').parentElement?.classList
+		).not.toContain('contentWrapper__list--smallInactive');
+		expect(screen.getByTestId('empty').parentElement?.classList).toContain(
+			'contentWrapper__detail--smallInactive'
+		);
 	});
 });
 
