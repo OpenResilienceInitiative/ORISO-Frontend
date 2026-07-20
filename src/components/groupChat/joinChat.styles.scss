@@ -42,15 +42,14 @@
 		}
 	}
 
-	// The ORISO Design waiting box (variant 4a/4b): the white card that hosts
-	// the clock-made-of-clocks countdown (WaitingAreaCountdown).
+	// The ORISO Design waiting box (variant 4a/4b) hosts the clock-made-of-clocks
+	// countdown (WaitingAreaCountdown). It is a transparent spacing wrapper only —
+	// the surrounding room container already supplies the white surface and the
+	// #ffb4aa outline, so drawing our own card here would double the frame.
 	&__waitingBox {
 		width: min(100%, $grid-base * 96);
 		margin: $grid-base-two 0;
-		padding: $grid-base-four $grid-base-four $grid-base-two;
-		background: var(--m3-surface-container-lowest, #fff);
-		border: 1px solid var(--m3-primary-fixed-dim, #ffb4aa);
-		border-radius: 20px;
+		padding: $grid-base-two 0;
 		box-sizing: border-box;
 	}
 
