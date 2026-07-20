@@ -15,7 +15,7 @@ import {
 	TextField,
 	Dialog
 } from '@mui/material';
-import PersonIcon from '@mui/icons-material/Person';
+import { AnimalAvatar } from '../pseudonym/AnimalAvatar';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import AccessTimeOutlinedIcon from '@mui/icons-material/AccessTimeOutlined';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
@@ -478,7 +478,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 									gap: '12px'
 								}}
 							>
-								<PersonIcon sx={{ color: '#c62828' }} />
+								<AnimalAvatar avatar={identity.avatar} size={48} />
 								<Box sx={{ flex: 1 }}>
 									<Typography
 										variant="body2"
