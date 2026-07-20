@@ -128,14 +128,17 @@ export const useLiveChatAvailabilityHeartbeat = (
 	useEffect(() => {
 		if (!enabled || !active) return;
 		const heartbeat = window.setInterval(() => {
+			const requestedAtRevision = availabilityRevision;
 			void apiHeartbeatLiveChatAvailability()
 				.then((leaseActive) => {
+					if (requestedAtRevision !== availabilityRevision) return;
 					if (!leaseActive) {
 						availabilityRevision += 1;
 						persistLiveChatAvailabilityPreference(false);
 					}
 				})
 				.catch(() => {
+					if (requestedAtRevision !== availabilityRevision) return;
 					availabilityRevision += 1;
 					window.dispatchEvent(
 						new CustomEvent(LIVE_CHAT_AVAILABILITY_CHANGE_EVENT, {

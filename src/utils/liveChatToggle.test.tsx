@@ -159,4 +159,28 @@ describe('live-chat availability state', () => {
 		expect(result.current[0]).toBe(false);
 		expect(localStorage.getItem('caritas_liveChatAvailability')).toBeNull();
 	});
+
+	it('ignores a stale heartbeat result after a newly acknowledged enable', async () => {
+		vi.useFakeTimers();
+		vi.mocked(apiGetLiveChatAvailability).mockResolvedValue(true);
+		let resolveHeartbeat: (available: boolean) => void = () => undefined;
+		vi.mocked(apiHeartbeatLiveChatAvailability).mockReturnValueOnce(
+			new Promise((resolve) => {
+				resolveHeartbeat = resolve;
+			})
+		);
+		const { result } = renderHook(() => {
+			const availability = useLiveChatAvailable();
+			useLiveChatAvailabilityHeartbeat(true, availability[0]);
+			return availability;
+		});
+		await act(async () => Promise.resolve());
+		await act(async () => vi.advanceTimersByTimeAsync(45_000));
+
+		await act(async () => result.current[1](true));
+		await act(async () => resolveHeartbeat(false));
+
+		expect(result.current[0]).toBe(true);
+		expect(localStorage.getItem('caritas_liveChatAvailability')).toBe('1');
+	});
 });
