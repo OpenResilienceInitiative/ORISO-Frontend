@@ -23,8 +23,10 @@ export const apiGetLiveChatAvailability = (): Promise<boolean> =>
 	);
 
 /** Refreshes an existing backend lease and can never enable availability. */
-export const apiHeartbeatLiveChatAvailability = (): Promise<void> =>
+export const apiHeartbeatLiveChatAvailability = (): Promise<boolean> =>
 	fetchData({
 		url: endpoints.consultantLiveChatAvailabilityHeartbeat,
 		method: FETCH_METHODS.POST
-	}).then(() => undefined);
+	}).then((response: { available?: boolean }) =>
+		Boolean(response?.available)
+	);

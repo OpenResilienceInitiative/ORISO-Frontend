@@ -22,9 +22,7 @@ describe('live-chat availability state', () => {
 		localStorage.clear();
 		vi.mocked(apiGetLiveChatAvailability).mockResolvedValue(false);
 		vi.mocked(apiSetLiveChatAvailability).mockResolvedValue(undefined);
-		vi.mocked(apiHeartbeatLiveChatAvailability).mockResolvedValue(
-			undefined
-		);
+		vi.mocked(apiHeartbeatLiveChatAvailability).mockResolvedValue(true);
 	});
 
 	afterEach(() => {
@@ -92,6 +90,22 @@ describe('live-chat availability state', () => {
 		await waitFor(() => expect(result.current[0]).toBe(true));
 	});
 
+	it('does not let a stale GET overwrite an acknowledged toggle', async () => {
+		let resolveGet: (available: boolean) => void = () => undefined;
+		vi.mocked(apiGetLiveChatAvailability).mockReturnValueOnce(
+			new Promise((resolve) => {
+				resolveGet = resolve;
+			})
+		);
+		const { result } = renderHook(() => useLiveChatAvailable());
+
+		await act(async () => result.current[1](true));
+		await act(async () => resolveGet(false));
+
+		expect(result.current[0]).toBe(true);
+		expect(localStorage.getItem('caritas_liveChatAvailability')).toBe('1');
+	});
+
 	it('heartbeats while active and stops after unmount', async () => {
 		vi.useFakeTimers();
 		const { unmount } = renderHook(() =>
@@ -126,5 +140,23 @@ describe('live-chat availability state', () => {
 		rerender({ active: false });
 		await act(async () => vi.advanceTimersByTimeAsync(90_000));
 		expect(apiHeartbeatLiveChatAvailability).toHaveBeenCalledTimes(1);
+	});
+
+	it('deactivates all consumers when the backend reports an expired heartbeat lease', async () => {
+		vi.useFakeTimers();
+		vi.mocked(apiGetLiveChatAvailability).mockResolvedValue(true);
+		vi.mocked(apiHeartbeatLiveChatAvailability).mockResolvedValue(false);
+		const { result } = renderHook(() => {
+			const availability = useLiveChatAvailable();
+			useLiveChatAvailabilityHeartbeat(true, availability[0]);
+			return availability;
+		});
+		await act(async () => Promise.resolve());
+		expect(result.current[0]).toBe(true);
+
+		await act(async () => vi.advanceTimersByTimeAsync(45_000));
+
+		expect(result.current[0]).toBe(false);
+		expect(localStorage.getItem('caritas_liveChatAvailability')).toBeNull();
 	});
 });

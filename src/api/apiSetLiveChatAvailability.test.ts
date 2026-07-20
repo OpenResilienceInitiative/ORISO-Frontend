@@ -39,9 +39,9 @@ describe('live-chat availability API', () => {
 	});
 
 	it('uses the refresh-only heartbeat endpoint', async () => {
-		vi.mocked(fetchData).mockResolvedValueOnce(undefined);
+		vi.mocked(fetchData).mockResolvedValueOnce({ available: false });
 
-		await apiHeartbeatLiveChatAvailability();
+		await expect(apiHeartbeatLiveChatAvailability()).resolves.toBe(false);
 		expect(fetchData).toHaveBeenCalledWith({
 			url: endpoints.consultantLiveChatAvailabilityHeartbeat,
 			method: FETCH_METHODS.POST

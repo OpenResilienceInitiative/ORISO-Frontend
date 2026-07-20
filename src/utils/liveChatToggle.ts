@@ -29,6 +29,7 @@ import {
  */
 const SIDEBAR_STORAGE_KEY = 'caritas_liveChatViaSidebar';
 const SIDEBAR_CHANGE_EVENT = 'caritas:liveChatViaSidebarChange';
+let availabilityRevision = 0;
 
 export const isLiveChatAvailable = (): boolean => {
 	return readLiveChatAvailabilityPreference();
@@ -36,6 +37,7 @@ export const isLiveChatAvailable = (): boolean => {
 
 export const setLiveChatAvailable = async (active: boolean): Promise<void> => {
 	await apiSetLiveChatAvailability(active);
+	availabilityRevision += 1;
 	persistLiveChatAvailabilityPreference(active);
 };
 
@@ -59,14 +61,15 @@ export const useLiveChatAvailable = (): [
 	useEffect(() => {
 		let mounted = true;
 		const reconcile = async () => {
+			const requestedAtRevision = availabilityRevision;
 			try {
 				const backendActive = await apiGetLiveChatAvailability();
-				if (mounted) {
+				if (mounted && requestedAtRevision === availabilityRevision) {
 					setActive(backendActive);
 					setError(false);
 				}
 			} catch {
-				if (mounted) {
+				if (mounted && requestedAtRevision === availabilityRevision) {
 					setActive(false);
 					setError(true);
 				}
@@ -75,8 +78,13 @@ export const useLiveChatAvailable = (): [
 			}
 		};
 		const onChange = (event: Event) => {
-			const detail = (event as CustomEvent<{ active: boolean }>).detail;
-			if (detail) setActive(detail.active);
+			const detail = (
+				event as CustomEvent<{ active: boolean; error?: boolean }>
+			).detail;
+			if (detail) {
+				setActive(detail.active);
+				setError(Boolean(detail.error));
+			}
 		};
 		const onStorage = (event: StorageEvent) => {
 			if (event.key === LIVE_CHAT_AVAILABILITY_STORAGE_KEY)
@@ -120,7 +128,21 @@ export const useLiveChatAvailabilityHeartbeat = (
 	useEffect(() => {
 		if (!enabled || !active) return;
 		const heartbeat = window.setInterval(() => {
-			void apiHeartbeatLiveChatAvailability().catch(() => undefined);
+			void apiHeartbeatLiveChatAvailability()
+				.then((leaseActive) => {
+					if (!leaseActive) {
+						availabilityRevision += 1;
+						persistLiveChatAvailabilityPreference(false);
+					}
+				})
+				.catch(() => {
+					availabilityRevision += 1;
+					window.dispatchEvent(
+						new CustomEvent(LIVE_CHAT_AVAILABILITY_CHANGE_EVENT, {
+							detail: { active: false, error: true }
+						})
+					);
+				});
 		}, 45_000);
 		return () => window.clearInterval(heartbeat);
 	}, [active, enabled]);
