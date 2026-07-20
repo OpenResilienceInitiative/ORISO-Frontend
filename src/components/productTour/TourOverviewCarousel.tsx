@@ -23,6 +23,19 @@ export interface TourOverviewCarouselProps {
 	onStartTour: (tour: TourDefinition, mode: TourStartMode) => void;
 }
 
+/**
+ * Tour copy is shared with the tooltip, where it is rendered as sanitized HTML.
+ * The compact card renders plain text, so inline markup from the legacy
+ * walkthrough keys (e.g. `<br />`) would otherwise be printed literally — seen
+ * on Pre-Dev during gate run e2e-20260720-1507. Tags are dropped rather than
+ * rendered so the card never becomes an HTML sink.
+ */
+const toPlainText = (value: string): string =>
+	value
+		.replace(/<[^>]*>/g, ' ')
+		.replace(/\s+/g, ' ')
+		.trim();
+
 const actionForStatus = (status: TourStatus): TourStartMode => {
 	if (status === 'in_progress') {
 		return 'continue';
@@ -128,7 +141,7 @@ export const TourOverviewCarousel = ({
 									{translate(tour.titleKey)}
 								</h3>
 								<p className="tourOverview__cardSummary">
-									{translate(tour.summaryKey)}
+									{toPlainText(translate(tour.summaryKey))}
 								</p>
 								<Button
 									item={{
