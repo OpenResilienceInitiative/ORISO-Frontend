@@ -37,10 +37,7 @@ export const PersonChipGrid = ({
 						entries.length
 					)}`}
 				>
-					<span
-						className="personChipGrid__label"
-						title={entry.label}
-					>
+					<span className="personChipGrid__label" title={entry.label}>
 						{entry.label}
 					</span>
 					<button

@@ -104,27 +104,27 @@ const StackedCardWithChipsDemo = () => {
 	const [entries, setEntries] = useState(PEOPLE);
 	return (
 		<FormatCard
-				title="Interna besprechen"
-				subtitle="mit Ihren Kolleg:innen"
-				avatar={<Avatar />}
-				media={<Media />}
-				mediaDimmed={entries.length > 0}
-				mediaOverlay={
-					<PersonChipGrid
-						entries={entries}
-						onRemove={(id) =>
-							setEntries((prev) =>
-								prev.filter((entry) => entry.id !== id)
-							)
-						}
-						removeLabel={(label) => `${label} entfernen`}
-					/>
-				}
-			>
+			title="Interna besprechen"
+			subtitle="mit Ihren Kolleg:innen"
+			avatar={<Avatar />}
+			media={<Media />}
+			mediaDimmed={entries.length > 0}
+			mediaOverlay={
+				<PersonChipGrid
+					entries={entries}
+					onRemove={(id) =>
+						setEntries((prev) =>
+							prev.filter((entry) => entry.id !== id)
+						)
+					}
+					removeLabel={(label) => `${label} entfernen`}
+				/>
+			}
+		>
 			<p style={{ margin: 0 }}>
-				Chips teilen die Reihen gleichmäßig, Namen werden gekürzt
-				statt umbrochen; eine ungerade Anzahl bekommt die volle
-				Breite für den letzten Chip.
+				Chips teilen die Reihen gleichmäßig, Namen werden gekürzt statt
+				umbrochen; eine ungerade Anzahl bekommt die volle Breite für den
+				letzten Chip.
 			</p>
 		</FormatCard>
 	);

@@ -36,7 +36,10 @@ import { userHasBudibaseTools } from '../../api/apiGetTools';
 import { browserNotificationsSettings } from '../../utils/notificationHelpers';
 import useIsFirstVisit from '../../utils/useIsFirstVisit';
 import { useResponsive } from '../../hooks/useResponsive';
-import { MENUPLACEMENT_RIGHT } from '../select/SelectDropdown';
+import {
+	MENUPLACEMENT_RIGHT,
+	MENUPLACEMENT_TOP
+} from '../select/SelectDropdown';
 import {
 	useLiveChatAvailable,
 	useLiveChatViaSidebar
@@ -143,6 +146,17 @@ export const NavigationBar = ({
 	}, [liveChatAvailable, navigate, setLiveChatAvailable]);
 
 	const figmaConsultantNav = true;
+	/**
+	 * Live Chat rail toggle:
+	 * - Desktop: only when the consultant opted into "control from the menu
+	 *   bar" in My Profile (Frank / viaSidebar preference).
+	 * - Mobile/tablet: always for consultants so Live Chat stays reachable in
+	 *   the scrollable bottom bar without hunting through Profile.
+	 */
+	const showLiveChatNav = isConsultant && (liveChatViaSidebar || !fromL);
+	const languageMenuPlacement = fromL
+		? MENUPLACEMENT_RIGHT
+		: MENUPLACEMENT_TOP;
 	const [animateNavIcon, setAnimateNavIcon] = useState(false);
 	const [hoveredNavItem, setHoveredNavItem] = useState<string | null>(null);
 	const [isLanguageSelected, setIsLanguageSelected] = useState(false);
@@ -330,9 +344,8 @@ export const NavigationBar = ({
 										pathsToShowUnreadMessageNotification
 									).includes(item.to) && unreadCount > 0;
 								const label = translate(item.titleKeys.large);
-								/* Rail labels get hyphenated line breaks to fit
-								   the narrow desktop rail; the mobile bottom bar
-								   shows plain single-line labels (M3 nav bar). */
+								// Desktop rail may hyphenate/wrap; mobile bottom bar
+								// must stay single-line to avoid overlapping neighbors.
 								const visibleLabel = useFigmaSlot
 									? fromL
 										? getFigmaRailLabel(item.to, label)
@@ -488,13 +501,7 @@ export const NavigationBar = ({
 							)
 					})}
 				>
-					{/* Live Chat availability is activated in the My-Profile
-					    menu. Only when the consultant enables "Live Chat über
-					    Menü Leiste aktivieren" there does this rail toggle
-					    appear — and it then drives availability on/off directly,
-					    staying visible in both states (Frank feedback
-					    2026-07-19). */}
-					{isConsultant && liveChatViaSidebar && (
+					{showLiveChatNav && (
 						<button
 							type="button"
 							className={clsx(
@@ -584,7 +591,9 @@ export const NavigationBar = ({
 											label={translate(
 												'navigation.language'
 											)}
-											menuPlacement={MENUPLACEMENT_RIGHT}
+											menuPlacement={
+												languageMenuPlacement
+											}
 											color="currentColor"
 											colorHover="currentColor"
 											selectRef={(el) =>
@@ -617,7 +626,7 @@ export const NavigationBar = ({
 									vertical
 									iconSize={24}
 									label={translate('navigation.language')}
-									menuPlacement={MENUPLACEMENT_RIGHT}
+									menuPlacement={languageMenuPlacement}
 									selectRef={(el) =>
 										(ref_select.current = el)
 									}
@@ -728,12 +737,7 @@ const NavGroup = ({
 	children,
 	className
 }: PropsWithChildren<{ className: string }>) => {
-	const { fromL } = useResponsive();
-	if (fromL) {
-		return <div className={className}>{children}</div>;
-	}
-
-	return <>{children}</>;
+	return <div className={className}>{children}</div>;
 };
 
 const NavigationUnreadIndicator = ({
