@@ -10,7 +10,7 @@ import {
 
 export const apiUrl = getApiBaseUrl();
 const userServiceOrigin = getUserServiceOrigin(apiUrl);
-const tenantServiceOrigin = getTenantServiceOrigin(apiUrl);
+export const tenantServiceOrigin = getTenantServiceOrigin(apiUrl);
 const agencyServiceOrigin = getAgencyServiceOrigin(apiUrl);
 const consultingTypeServiceOrigin = getConsultingTypeServiceOrigin(apiUrl);
 const keycloakOrigin = getKeycloakOrigin(apiUrl);
