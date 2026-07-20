@@ -1014,6 +1014,13 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 			display: flex !important;
 		}
 
+		.navigation__item--nav-language {
+			position: sticky;
+			right: 72px;
+			z-index: 2;
+			background: var(--oriso-nav-bar-background, #f0edee) !important;
+		}
+
 		.navigation__item--nav-logout {
 			position: sticky;
 			right: 0;
@@ -1035,11 +1042,16 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 		}
 
 		.navigation__item,
-		.navigation__item--nav-logout {
+		.navigation__item--nav-logout,
+		.navigation__item--nav-language {
 			flex-basis: 80px;
 			width: 80px;
 			min-width: 80px;
 			max-width: 80px;
+		}
+
+		.navigation__item--nav-language {
+			right: 80px;
 		}
 	}
 

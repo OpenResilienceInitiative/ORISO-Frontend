@@ -628,8 +628,6 @@ export const SessionsListToolbar = ({
 					{showCreateGroupChatAction && (
 						<Link
 							className={clsx('sessionsListToolbar__chip', {
-								'sessionsListToolbar__chip--iconOnly':
-									!createGroupChatActive,
 								'sessionsListToolbar__chip--active':
 									createGroupChatActive
 							})}
@@ -643,10 +641,7 @@ export const SessionsListToolbar = ({
 							data-cy="sessions-list-chip-create"
 						>
 							<CreateChatFilterIcon className="sessionsListToolbar__chipIconSvg" />
-							<span
-								className="sessionsListToolbar__chipLabel"
-								aria-hidden={!createGroupChatActive}
-							>
+							<span className="sessionsListToolbar__chipLabel">
 								{tr(
 									'sessionList.toolbar.chips.create',
 									'Create'
