@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { StrictMode } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { MessageSubmitInterfaceComponent } from './messageSubmitInterfaceComponent';
@@ -116,7 +117,13 @@ export const ReadyToSend: Story = {
  *  and the pre-send card shows a real thumbnail instead of a file icon. */
 export const ImageAttachmentPreview: Story = {
 	name: 'Image attachment preview (pasted)',
-	render: () => <ComposerShell />,
+	// Wrapped in StrictMode: the pre-send thumbnail must survive the
+	// mount → cleanup → mount object-URL cycle (the 1146 KB broken-thumb fix).
+	render: () => (
+		<StrictMode>
+			<ComposerShell />
+		</StrictMode>
+	),
 	play: async ({ canvasElement }) => {
 		const editor = await waitFor(() => {
 			const node = canvasElement.querySelector<HTMLElement>(
