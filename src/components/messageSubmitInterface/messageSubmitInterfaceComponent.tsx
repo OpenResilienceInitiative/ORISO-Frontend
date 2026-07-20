@@ -58,7 +58,8 @@ import {
 } from './MessageSubmitInfo';
 import {
 	ATTACHMENT_MAX_SIZE_IN_MB,
-	getAttachmentSizeMBForKB
+	getAttachmentSizeMBForKB,
+	isSupportedAttachment
 } from './attachmentHelpers';
 import { ContentState, convertToRaw, EditorState } from 'draft-js';
 import { draftToMarkdown } from 'markdown-draft-js';
@@ -95,6 +96,7 @@ import {
 	OVERLAY_REQUEST
 } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
 import { getIconForAttachmentType } from '../message/messageHelpers';
+import { resolveAttachmentForSend } from './resolveAttachmentForSend';
 import { TipTapComposer, TipTapComposerRef } from './TipTapComposer';
 import { HIGHLIGHT_SNIPPET_SELECTED_EVENT } from './highlightSnippetEvents';
 import { isMyMessage } from '../session/sessionHelpers';
@@ -1446,7 +1448,11 @@ export const MessageSubmitInterfaceComponent = ({
 	const prepareAndSendMessage = useCallback(async () => {
 		const attachmentInput: any = attachmentInputRef.current;
 		const selectedFile = attachmentInput && attachmentInput.files[0];
-		const attachment = preselectedFile || selectedFile;
+		const attachment = resolveAttachmentForSend(
+			preselectedFile,
+			selectedFile,
+			attachmentSelected
+		);
 
 		const currentTypedMessage = getTypedMarkdownMessage();
 		if (
@@ -1544,6 +1550,7 @@ export const MessageSubmitInterfaceComponent = ({
 		matrixClientService,
 		onLocalMessageEdit,
 		preselectedFile,
+		attachmentSelected,
 		resolvedChatSession,
 		sendEnquiry,
 		sendMessage,
@@ -1637,14 +1644,27 @@ export const MessageSubmitInterfaceComponent = ({
 		setActiveInfo(INFO_TYPES.ATTACHMENT_SIZE_ERROR);
 	}, [removeSelectedAttachment]);
 
+	const handleUnsupportedAttachments = useCallback(() => {
+		removeSelectedAttachment();
+		setActiveInfo(INFO_TYPES.ATTACHMENT_FORMAT_ERROR);
+	}, [removeSelectedAttachment]);
+
 	const handleAttachmentChange = useCallback(() => {
 		const attachmentInput: any = attachmentInputRef.current;
 		const attachment = attachmentInput.files[0];
+		if (!attachment || !isSupportedAttachment(attachment)) {
+			handleUnsupportedAttachments();
+			return;
+		}
 		const attachmentSizeMB = getAttachmentSizeMBForKB(attachment.size);
 		attachmentSizeMB > ATTACHMENT_MAX_SIZE_IN_MB
 			? handleLargeAttachments()
 			: displayAttachmentToUpload(attachment);
-	}, [displayAttachmentToUpload, handleLargeAttachments]);
+	}, [
+		displayAttachmentToUpload,
+		handleLargeAttachments,
+		handleUnsupportedAttachments
+	]);
 
 	/** Files dropped/pasted into the TipTap editor (WP-4): same single-attachment flow. */
 	const handleComposerFilesSelected = useCallback(
@@ -1653,21 +1673,38 @@ export const MessageSubmitInterfaceComponent = ({
 			if (!attachment) {
 				return;
 			}
+			if (!isSupportedAttachment(attachment)) {
+				handleUnsupportedAttachments();
+				return;
+			}
 			const attachmentSizeMB = getAttachmentSizeMBForKB(attachment.size);
 			attachmentSizeMB > ATTACHMENT_MAX_SIZE_IN_MB
 				? handleLargeAttachments()
 				: displayAttachmentToUpload(attachment);
 		},
-		[displayAttachmentToUpload, handleLargeAttachments]
+		[
+			displayAttachmentToUpload,
+			handleLargeAttachments,
+			handleUnsupportedAttachments
+		]
 	);
 
 	const handlePreselectedAttachmentChange = useCallback(() => {
 		const attachment = preselectedFile;
+		if (!attachment || !isSupportedAttachment(attachment)) {
+			handleUnsupportedAttachments();
+			return;
+		}
 		const attachmentSizeMB = getAttachmentSizeMBForKB(attachment.size);
 		attachmentSizeMB > ATTACHMENT_MAX_SIZE_IN_MB
 			? handleLargeAttachments()
 			: displayAttachmentToUpload(attachment);
-	}, [displayAttachmentToUpload, handleLargeAttachments, preselectedFile]);
+	}, [
+		displayAttachmentToUpload,
+		handleLargeAttachments,
+		handleUnsupportedAttachments,
+		preselectedFile
+	]);
 
 	useEffect(() => {
 		if (!preselectedFile) return;
