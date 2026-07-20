@@ -5,7 +5,7 @@ import {
 	apiHeartbeatLiveChatAvailability,
 	apiSetLiveChatAvailability
 } from './apiSetLiveChatAvailability';
-import { fetchData, FETCH_METHODS } from './fetchData';
+import { fetchData, FETCH_METHODS, FETCH_SUCCESS } from './fetchData';
 import { endpoints } from '../resources/scripts/endpoints';
 
 vi.mock('./fetchData', async () => {
@@ -44,7 +44,8 @@ describe('live-chat availability API', () => {
 		await expect(apiHeartbeatLiveChatAvailability()).resolves.toBe(false);
 		expect(fetchData).toHaveBeenCalledWith({
 			url: endpoints.consultantLiveChatAvailabilityHeartbeat,
-			method: FETCH_METHODS.POST
+			method: FETCH_METHODS.POST,
+			responseHandling: [FETCH_SUCCESS.CONTENT]
 		});
 	});
 });

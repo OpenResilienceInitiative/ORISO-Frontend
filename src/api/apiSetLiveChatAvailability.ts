@@ -1,5 +1,5 @@
 import { endpoints } from '../resources/scripts/endpoints';
-import { fetchData, FETCH_METHODS } from './fetchData';
+import { fetchData, FETCH_METHODS, FETCH_SUCCESS } from './fetchData';
 
 /**
  * Tells the backend whether the current consultant is available for live chat.
@@ -26,7 +26,8 @@ export const apiGetLiveChatAvailability = (): Promise<boolean> =>
 export const apiHeartbeatLiveChatAvailability = (): Promise<boolean> =>
 	fetchData({
 		url: endpoints.consultantLiveChatAvailabilityHeartbeat,
-		method: FETCH_METHODS.POST
+		method: FETCH_METHODS.POST,
+		responseHandling: [FETCH_SUCCESS.CONTENT]
 	}).then((response: { available?: boolean }) =>
 		Boolean(response?.available)
 	);
