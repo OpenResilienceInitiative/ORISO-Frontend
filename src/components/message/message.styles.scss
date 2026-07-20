@@ -1306,8 +1306,8 @@ $message-avatar-overlap: -19px;
 		max-width: 360px;
 		padding: 8px 10px;
 		border-radius: 999px;
-		background: #32b86c;
-		color: #fff;
+		background: var(--m3-primary-container, #cc1e1c);
+		color: var(--m3-on-primary-container, #ffe2de);
 
 		audio {
 			display: none;
@@ -1316,8 +1316,8 @@ $message-avatar-overlap: -19px;
 
 	&__voiceNote__play {
 		border: none;
-		background: rgba(0, 0, 0, 0.18);
-		color: #fff;
+		background: var(--m3-primary, #a5000a);
+		color: var(--m3-on-primary, #ffffff);
 		width: 32px;
 		height: 32px;
 		border-radius: 50%;
@@ -1328,6 +1328,15 @@ $message-avatar-overlap: -19px;
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
+
+		&:hover {
+			background: var(--m3-primary-hover, #820006);
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-on-primary-container, #ffe2de);
+			outline-offset: 2px;
+		}
 	}
 
 	&__voiceNote__wave {
@@ -1337,7 +1346,7 @@ $message-avatar-overlap: -19px;
 		border-radius: 10px;
 		background-image: repeating-linear-gradient(
 			90deg,
-			rgba(255, 255, 255, 0.28) 0 3px,
+			var(--m3-primary-fixed-dim, #ffb4aa) 0 3px,
 			transparent 3px 7px
 		);
 		opacity: 1;
@@ -1353,7 +1362,7 @@ $message-avatar-overlap: -19px;
 		border-radius: 10px;
 		background-image: repeating-linear-gradient(
 			90deg,
-			rgba(255, 255, 255, 0.95) 0 3px,
+			var(--m3-on-primary-container, #ffe2de) 0 3px,
 			transparent 3px 7px
 		);
 		transition: width 120ms linear;
