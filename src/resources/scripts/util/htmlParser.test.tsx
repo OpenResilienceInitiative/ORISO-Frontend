@@ -2,13 +2,13 @@
 import * as React from 'react';
 import { render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import htmlParser from './htmlParser';
 
 // The media origin the parser resolves against (mirror the split-host prod case).
+// vitest hoists vi.mock above the htmlParser import at runtime.
 vi.mock('../endpoints', () => ({
 	tenantServiceOrigin: 'https://api.oriso-dev.site'
 }));
-
-import htmlParser from './htmlParser';
 
 describe('htmlParser media rewrite', () => {
 	it('rewrites a root-relative /media img src to the tenant origin', () => {
