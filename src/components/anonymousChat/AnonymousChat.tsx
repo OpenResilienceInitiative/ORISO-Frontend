@@ -89,9 +89,11 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 	const [isRegistering, setIsRegistering] = useState<boolean>(false);
 	// Same anonymous identity as the normal registration: a friendly animal
 	// pseudonym (e.g. "katze_mika_1234"), NOT an "Anonymous-<timestamp>" handle.
+	// Username + password are derived synchronously from the shared anon-name
+	// engine on first render (same structure as normal registration).
 	const [identity] = useState<Pseudonym>(() => generatePseudonym(locale));
-	const [username, setUsername] = useState<string>('');
-	const [password, setPassword] = useState<string>('');
+	const [username] = useState<string>(() => toRegistrationUsername(identity));
+	const [password] = useState<string>(() => generatePassword());
 	const [noAvailabilityModalTopic, setNoAvailabilityModalTopic] =
 		useState<TopicsDataInterface | null>(null);
 	const [noAvailabilityModalOpen, setNoAvailabilityModalOpen] =
@@ -102,12 +104,6 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 	// updater to show the no-availability modal once per topic.
 	const [, setShownNoAvailabilityTopics] = useState<Set<number>>(new Set());
 
-	// Derive the login username and password from the shared anonymous-name
-	// engine — the exact same structure as the normal registration flow.
-	useEffect(() => {
-		setUsername(toRegistrationUsername(identity));
-		setPassword(generatePassword());
-	}, [identity]);
 
 	// Fetch all topics on mount
 	useEffect(() => {

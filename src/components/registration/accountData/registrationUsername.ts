@@ -6,7 +6,7 @@ import { USERNAME_MAX_LENGTH } from '../registrationDataValidation';
 const slugify = (value: string): string =>
 	value
 		.normalize('NFD')
-		.replace(/[̀-ͯ]/g, '')
+		.replace(/[\u0300-\u036f]/g, '')
 		.toLowerCase()
 		.replace(/ß/g, 'ss')
 		.replace(/[^a-z0-9]+/g, '_')
