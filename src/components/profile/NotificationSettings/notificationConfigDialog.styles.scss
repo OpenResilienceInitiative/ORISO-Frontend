@@ -96,6 +96,7 @@
 		position: relative;
 		display: flex;
 		align-items: center;
+		gap: 8px;
 		border: 1px solid #cfd4da;
 		border-radius: 8px;
 		padding: 0 12px;
@@ -103,44 +104,32 @@
 		flex: 1;
 	}
 
-	// Large, plain play button — pressed to hear the chosen tone.
-	&__play {
+	// State icon INSIDE the field (left), per the Figma.
+	&__fieldIcon {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
 		flex: 0 0 auto;
-		width: 44px;
-		height: 44px;
-		border: none;
-		border-radius: 50%;
-		background: transparent;
-		color: var(--m3-primary, #a5000a);
+		width: 24px;
+		height: 24px;
 		padding: 0;
-		cursor: pointer;
-
-		svg {
-			width: 40px;
-			height: 40px;
-		}
-
-		&:hover {
-			background: rgba(165, 0, 10, 0.08);
-		}
-	}
-
-	// No tone chosen → the crossed-out (muted) icon, not interactive.
-	&__mute {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		flex: 0 0 auto;
-		width: 44px;
-		height: 44px;
-		color: #9aa1a9;
 
 		svg {
 			width: 24px;
 			height: 24px;
+		}
+
+		// A tone is chosen → a plain play button to preview it.
+		&--play {
+			border: none;
+			background: transparent;
+			color: var(--m3-primary, #a5000a);
+			cursor: pointer;
+		}
+
+		// No tone → the crossed-out (muted) icon, not interactive.
+		&--mute {
+			color: #9aa1a9;
 		}
 	}
 

@@ -97,6 +97,28 @@ const KindRow = ({
 				</div>
 
 				<div className="notifConfig__selectWrap">
+					{/* Icon lives INSIDE the field (left), per the Figma: a
+					    chosen tone → a play button to hear it; no sound →
+					    the crossed-out (muted) icon, not clickable. */}
+					{hasSound ? (
+						<button
+							type="button"
+							className="notifConfig__fieldIcon notifConfig__fieldIcon--play"
+							aria-label={t('profile.notifications.config.play')}
+							onClick={() => onPreview(value.sound, value.volume)}
+							data-cy={`notif-play-${area}-${kind}`}
+						>
+							<PlayCircleIcon />
+						</button>
+					) : (
+						<span
+							className="notifConfig__fieldIcon notifConfig__fieldIcon--mute"
+							aria-hidden="true"
+							data-cy={`notif-muted-${area}-${kind}`}
+						>
+							<NotificationAudioOffIcon />
+						</span>
+					)}
 					<select
 						className="notifConfig__select"
 						aria-label={t(
@@ -124,28 +146,6 @@ const KindRow = ({
 						))}
 					</select>
 				</div>
-
-				{/* A tone is chosen → a plain, large play button to hear it.
-				    No sound → the crossed-out (muted) icon, not clickable. */}
-				{hasSound ? (
-					<button
-						type="button"
-						className="notifConfig__play"
-						aria-label={t('profile.notifications.config.play')}
-						onClick={() => onPreview(value.sound, value.volume)}
-						data-cy={`notif-play-${area}-${kind}`}
-					>
-						<PlayCircleIcon />
-					</button>
-				) : (
-					<span
-						className="notifConfig__mute"
-						aria-hidden="true"
-						data-cy={`notif-muted-${area}-${kind}`}
-					>
-						<NotificationAudioOffIcon />
-					</span>
-				)}
 			</div>
 			<label className="notifConfig__email">
 				<input
@@ -301,6 +301,7 @@ export const NotificationConfigDialog = ({
 			icon={<NotificationSettingsIcon />}
 			maxWidth="620px"
 			height="auto"
+			hideActions
 		>
 			<NotificationConfigView
 				config={draft}
