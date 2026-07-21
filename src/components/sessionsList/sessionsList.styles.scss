@@ -615,6 +615,14 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 	}
 }
 
+// Issue #564: white list↔chat separator pill is only for the empty
+// (no conversation) layout. SessionsZone adds --smallInactive on the list
+// column when a session detail route is active — hide the pill then.
+// Resize hit-target stays; only the decorative white pill is suppressed.
+.contentWrapper__list--smallInactive .sessionsList__resizeHandlePill {
+	opacity: 0;
+}
+
 .sessionsList {
 	&__headline {
 		align-self: center;
