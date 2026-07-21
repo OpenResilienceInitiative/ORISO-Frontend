@@ -640,6 +640,7 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 
 	const renderOtpInput = (labelKey: string) => (
 		<TextField
+			key={`otp-${labelKey}`}
 			autoFocus
 			className="twoFactorSetupDialog__input"
 			error={Boolean(errorKey)}
@@ -656,11 +657,12 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 	);
 
 	const renderEmailSelect = () => (
-		<div className="twoFactorSetupDialog__emailSelect">
+		<div key="email-select" className="twoFactorSetupDialog__emailSelect">
 			<Typography className="twoFactorSetupDialog__copy">
 				{translate('twoFactorAuth.setupDialog.email.select.copy')}
 			</Typography>
 			<TextField
+				key="tfa-email-select-input"
 				autoFocus
 				className="twoFactorSetupDialog__input"
 				error={
@@ -682,7 +684,7 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 	);
 
 	const renderEmailConnect = () => (
-		<div className="twoFactorSetupDialog__emailCode">
+		<div key="email-connect" className="twoFactorSetupDialog__emailCode">
 			<Typography className="twoFactorSetupDialog__copy">
 				{translate('twoFactorAuth.setupDialog.email.connect.copy', {
 					email
