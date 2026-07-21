@@ -9,6 +9,7 @@ import { TwoFactorNag } from './TwoFactorNag';
 
 const overlayMock = vi.fn();
 const stableMocks = vi.hoisted(() => ({
+	openTwoFactorSettings: vi.fn(),
 	appConfig: {
 		twofactor: {
 			startObligatoryHint: new Date(0),
@@ -40,7 +41,7 @@ vi.mock('react-router-dom', () => ({
 }));
 
 vi.mock('../../hooks/useOpenTwoFactorSettings', () => ({
-	useOpenTwoFactorSettings: () => vi.fn()
+	useOpenTwoFactorSettings: () => stableMocks.openTwoFactorSettings
 }));
 
 vi.mock('../../hooks/useAppConfig', () => ({
@@ -75,9 +76,33 @@ vi.mock('./twoFactorNag.styles', () => ({}));
 describe('TwoFactorNag', () => {
 	beforeEach(() => {
 		overlayMock.mockClear();
+		stableMocks.openTwoFactorSettings.mockClear();
+		stableMocks.appConfig.twofactor.dateTwoFactorObligatory = new Date(0);
 	});
 
-	it('allows the mandatory login reminder to be dismissed', async () => {
+	it('opens mandatory two-factor setup directly without showing the reminder', async () => {
+		const contextValue = {
+			userData: {
+				twoFactorAuth: { isActive: false, isEnabled: true }
+			}
+		} as React.ContextType<typeof UserDataContext>;
+
+		render(
+			<UserDataContext.Provider value={contextValue}>
+				<TwoFactorNag />
+			</UserDataContext.Provider>
+		);
+
+		await waitFor(() =>
+			expect(stableMocks.openTwoFactorSettings).toHaveBeenCalledOnce()
+		);
+		expect(overlayMock).not.toHaveBeenCalled();
+	});
+
+	it('keeps the dismissible reminder before two-factor setup becomes mandatory', async () => {
+		stableMocks.appConfig.twofactor.dateTwoFactorObligatory = new Date(
+			Date.now() + 86_400_000
+		);
 		const contextValue = {
 			userData: {
 				twoFactorAuth: { isActive: false, isEnabled: true }
@@ -91,6 +116,7 @@ describe('TwoFactorNag', () => {
 		);
 
 		await waitFor(() => expect(overlayMock).toHaveBeenCalled());
+		expect(stableMocks.openTwoFactorSettings).not.toHaveBeenCalled();
 
 		const props = overlayMock.mock.lastCall?.[0] as {
 			handleOverlayClose: unknown;

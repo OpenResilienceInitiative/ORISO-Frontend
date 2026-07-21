@@ -351,7 +351,9 @@
 
 	@media (width <= 520px) {
 		&__paper {
-			width: min(368px, calc(100vw - 22px));
+			width: min(368px, calc(100vw - 22px)) !important;
+			max-width: calc(100vw - 22px) !important;
+			margin: 11px !important;
 			padding: 32px 28px;
 		}
 
@@ -366,9 +368,22 @@
 		}
 
 		&__stepper {
-			grid-auto-columns: minmax(58px, 1fr);
+			grid-auto-columns: 56px;
+			column-gap: 8px;
 			overflow-x: auto;
 			padding-bottom: 4px;
+		}
+
+		&__stepUnit::after {
+			left: calc(50% + 18px);
+			right: calc(-50% + 10px);
+		}
+
+		&__stepLabel {
+			font-size: 9px !important;
+			line-height: 12px !important;
+			white-space: normal;
+			overflow-wrap: anywhere;
 		}
 
 		&__downloadGrid,
