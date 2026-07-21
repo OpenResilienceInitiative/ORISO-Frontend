@@ -11,18 +11,20 @@ import {
 } from '../../../utils/notificationSettings/model';
 import { soundAssetFor } from '../../../utils/notificationSettings/soundPlayback';
 import {
+	clampVolume,
 	DISABLED_AREAS,
 	KindConfig,
 	NOTIFICATION_AREAS,
 	NOTIFICATION_KINDS,
 	NotificationArea,
 	NotificationConfig,
-	NotificationKind
+	NotificationKind,
+	VOLUME_STEP
 } from '../../../utils/notificationSettings/notificationConfig';
 import './notificationConfigDialog.styles.scss';
 
 /* ------------------------------------------------------------------ *
- * A single kind row: sound dropdown + "send by email"
+ * A single kind row: volume arrows + sound dropdown (with play/mute) + email
  * ------------------------------------------------------------------ */
 
 const KindRow = ({
@@ -39,9 +41,9 @@ const KindRow = ({
 		area: NotificationArea,
 		kind: NotificationKind,
 		field: keyof KindConfig,
-		value: SoundId | boolean
+		value: SoundId | boolean | number
 	) => void;
-	onPreview: (soundId: SoundId) => void;
+	onPreview: (soundId: SoundId, volume: number) => void;
 }) => {
 	const { t } = useTranslation();
 	const hasSound = value.sound !== 'none' && !!soundAssetFor(value.sound);
@@ -50,37 +52,105 @@ const KindRow = ({
 			<label className="notifConfig__label">
 				{t(`profile.notifications.config.kind.${kind}`)}
 			</label>
-			<div className="notifConfig__selectWrap">
-				<span className="notifConfig__selectIcon" aria-hidden="true">
-					{hasSound ? (
-						<NotificationAudioIcon />
-					) : (
-						<NotificationAudioOffIcon />
-					)}
-				</span>
-				<select
-					className="notifConfig__select"
-					aria-label={t(`profile.notifications.config.kind.${kind}`)}
-					value={value.sound}
-					onChange={(e) => {
-						const sound = e.target.value as SoundId;
-						onChange(area, kind, 'sound', sound);
-						if (sound !== 'none') {
-							onPreview(sound);
-						}
-					}}
+			<div className="notifConfig__rowControls">
+				{/* Volume up/down — the react-sounds volume, per kind. */}
+				<div
+					className="notifConfig__volume"
+					data-cy={`notif-volume-${area}-${kind}`}
 				>
-					<option value="none">
-						{t('profile.notifications.config.noSound')}
-					</option>
-					{NOTIFICATION_TONE_IDS.map((id, index) => (
-						<option key={id} value={id}>
-							{t('profile.notifications.config.tone', {
-								number: index + 1
-							})}
+					<button
+						type="button"
+						className="notifConfig__volumeBtn"
+						aria-label={t('profile.notifications.config.volumeUp')}
+						disabled={value.volume >= 1}
+						onClick={() =>
+							onChange(
+								area,
+								kind,
+								'volume',
+								clampVolume(value.volume + VOLUME_STEP)
+							)
+						}
+						data-cy={`notif-volume-up-${area}-${kind}`}
+					>
+						▲
+					</button>
+					<button
+						type="button"
+						className="notifConfig__volumeBtn"
+						aria-label={t(
+							'profile.notifications.config.volumeDown'
+						)}
+						disabled={value.volume <= 0}
+						onClick={() =>
+							onChange(
+								area,
+								kind,
+								'volume',
+								clampVolume(value.volume - VOLUME_STEP)
+							)
+						}
+						data-cy={`notif-volume-down-${area}-${kind}`}
+					>
+						▼
+					</button>
+				</div>
+
+				<div className="notifConfig__selectWrap">
+					{/* Sound chosen → a play button to preview it;
+					    no sound → the crossed-out (muted) icon. */}
+					{hasSound ? (
+						<button
+							type="button"
+							className="notifConfig__play"
+							aria-label={t('profile.notifications.config.play')}
+							onClick={() => onPreview(value.sound, value.volume)}
+							data-cy={`notif-play-${area}-${kind}`}
+						>
+							<NotificationAudioIcon />
+							<span
+								className="notifConfig__playTriangle"
+								aria-hidden="true"
+							>
+								▶
+							</span>
+						</button>
+					) : (
+						<span
+							className="notifConfig__selectIcon notifConfig__selectIcon--muted"
+							aria-hidden="true"
+							data-cy={`notif-muted-${area}-${kind}`}
+						>
+							<NotificationAudioOffIcon />
+						</span>
+					)}
+					<select
+						className="notifConfig__select"
+						aria-label={t(
+							`profile.notifications.config.kind.${kind}`
+						)}
+						value={value.sound}
+						onChange={(e) =>
+							onChange(
+								area,
+								kind,
+								'sound',
+								e.target.value as SoundId
+							)
+						}
+					>
+						<option value="none">
+							{t('profile.notifications.config.noSound')}
 						</option>
-					))}
-				</select>
+						{NOTIFICATION_TONE_IDS.map((id, index) => (
+							<option key={id} value={id}>
+								{t('profile.notifications.config.tone', {
+									number: index + 1
+								})}
+							</option>
+						))}
+					</select>
+				</div>
 			</div>
 			<label className="notifConfig__email">
 				<input
@@ -109,9 +179,9 @@ export interface NotificationConfigViewProps {
 		area: NotificationArea,
 		kind: NotificationKind,
 		field: keyof KindConfig,
-		value: SoundId | boolean
+		value: SoundId | boolean | number
 	) => void;
-	onPreview: (soundId: SoundId) => void;
+	onPreview: (soundId: SoundId, volume: number) => void;
 }
 
 export const NotificationConfigView = ({
@@ -206,7 +276,7 @@ export const NotificationConfigDialog = ({
 			area: NotificationArea,
 			kind: NotificationKind,
 			field: keyof KindConfig,
-			value: SoundId | boolean
+			value: SoundId | boolean | number
 		) => {
 			setDraft((prev) => ({
 				...prev,
@@ -219,11 +289,11 @@ export const NotificationConfigDialog = ({
 		[]
 	);
 
-	const handlePreview = useCallback((soundId: SoundId) => {
+	const handlePreview = useCallback((soundId: SoundId, volume: number) => {
 		const asset = soundAssetFor(soundId);
 		if (asset && 'Audio' in window) {
 			const audio = new Audio(asset);
-			audio.volume = 0.5;
+			audio.volume = Math.max(0, Math.min(1, volume));
 			audio.play().catch(() => undefined);
 		}
 	}, []);

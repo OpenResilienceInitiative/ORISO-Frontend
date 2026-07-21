@@ -2054,7 +2054,10 @@
 					"new": "New Request",
 					"standard": "Standard Notification",
 					"mention": "@ Mentioning"
-				}
+				},
+				"play": "Preview sound",
+				"volumeUp": "Louder",
+				"volumeDown": "Quieter"
 			}
 		},
 		"routes": {

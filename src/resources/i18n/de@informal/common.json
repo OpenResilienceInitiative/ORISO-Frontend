@@ -708,7 +708,10 @@
 					"new": "Neue Anfrage",
 					"standard": "Standard-Benachrichtigung",
 					"mention": "@ Erwähnung"
-				}
+				},
+				"play": "Ton vorhören",
+				"volumeUp": "Lauter",
+				"volumeDown": "Leiser"
 			}
 		},
 		"spokenLanguages": {

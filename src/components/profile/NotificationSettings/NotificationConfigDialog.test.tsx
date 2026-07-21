@@ -113,4 +113,50 @@ describe('NotificationConfigView', () => {
 		expect(select.options[0].value).toBe('none');
 		expect(select.options[1].value).toBe('ton-1');
 	});
+
+	it('shows the muted icon and no play button when no sound is chosen', () => {
+		render(<NotificationConfigView {...baseProps} />);
+		expect(screen.queryByTestId('notif-muted-requests-new')).toBeTruthy();
+		expect(screen.queryByTestId('notif-play-requests-new')).toBeNull();
+	});
+
+	it('shows a play button (not the muted icon) when a tone is chosen, and previews at volume', () => {
+		const onPreview = vi.fn();
+		const config = {
+			...DEFAULT_NOTIFICATION_CONFIG,
+			requests: {
+				...DEFAULT_NOTIFICATION_CONFIG.requests,
+				new: { sound: 'ton-5', email: true, volume: 0.75 }
+			}
+		};
+		render(
+			<NotificationConfigView
+				{...baseProps}
+				config={config as never}
+				onPreview={onPreview}
+			/>
+		);
+		expect(screen.queryByTestId('notif-muted-requests-new')).toBeNull();
+		fireEvent.click(screen.getByTestId('notif-play-requests-new'));
+		expect(onPreview).toHaveBeenCalledWith('ton-5', 0.75);
+	});
+
+	it('volume arrows change the volume', () => {
+		const onChange = vi.fn();
+		render(<NotificationConfigView {...baseProps} onChange={onChange} />);
+		fireEvent.click(screen.getByTestId('notif-volume-up-requests-new'));
+		expect(onChange).toHaveBeenCalledWith(
+			'requests',
+			'new',
+			'volume',
+			0.75
+		);
+		fireEvent.click(screen.getByTestId('notif-volume-down-requests-new'));
+		expect(onChange).toHaveBeenCalledWith(
+			'requests',
+			'new',
+			'volume',
+			0.25
+		);
+	});
 });

@@ -22,14 +22,27 @@ export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
 export interface KindConfig {
 	sound: SoundId;
 	email: boolean;
+	/** Preview/playback volume 0..1 for this kind (adjusted by the up/down arrows). */
+	volume: number;
 }
+
+export const VOLUME_STEP = 0.25;
+export const DEFAULT_VOLUME = 0.5;
+
+/** Clamp a volume into [0, 1] and round to the arrow step. */
+export const clampVolume = (v: number): number =>
+	Math.max(0, Math.min(1, Math.round(v / VOLUME_STEP) * VOLUME_STEP));
 
 export type NotificationConfig = Record<
 	NotificationArea,
 	Record<NotificationKind, KindConfig>
 >;
 
-const defaultKind = (email: boolean): KindConfig => ({ sound: 'none', email });
+const defaultKind = (email: boolean): KindConfig => ({
+	sound: 'none',
+	email,
+	volume: DEFAULT_VOLUME
+});
 
 const defaultArea = (): Record<NotificationKind, KindConfig> => ({
 	new: defaultKind(true),
@@ -66,7 +79,11 @@ export const parseNotificationConfig = (raw: unknown): NotificationConfig => {
 				email:
 					typeof kindSrc.email === 'boolean'
 						? kindSrc.email
-						: fallback.email
+						: fallback.email,
+				volume:
+					typeof kindSrc.volume === 'number'
+						? clampVolume(kindSrc.volume)
+						: fallback.volume
 			};
 		}
 	}

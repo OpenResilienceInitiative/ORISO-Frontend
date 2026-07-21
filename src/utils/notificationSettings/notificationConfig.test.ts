@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+	clampVolume,
 	DEFAULT_NOTIFICATION_CONFIG,
 	DISABLED_AREAS,
 	parseNotificationConfig,
@@ -13,6 +14,7 @@ describe('notificationConfig', () => {
 		expect(r.new.email).toBe(true);
 		expect(r.standard.email).toBe(true);
 		expect(r.mention.email).toBe(false);
+		expect(r.new.volume).toBe(0.5);
 	});
 
 	it('appointments is a disabled area', () => {
@@ -61,5 +63,27 @@ describe('notificationConfig', () => {
 		);
 		expect(next.conversations.mention.email).toBe(true);
 		expect(next.requests.mention.email).toBe(false);
+	});
+
+	it('clampVolume rounds to the arrow step and stays within [0,1]', () => {
+		expect(clampVolume(-1)).toBe(0);
+		expect(clampVolume(2)).toBe(1);
+		expect(clampVolume(0.5)).toBe(0.5);
+		expect(clampVolume(0.6)).toBe(0.5);
+		expect(clampVolume(0.75)).toBe(0.75);
+	});
+
+	it('setKindField updates volume immutably', () => {
+		const next = setKindField(
+			DEFAULT_NOTIFICATION_CONFIG,
+			'conversations',
+			'standard',
+			'volume',
+			0.75
+		);
+		expect(next.conversations.standard.volume).toBe(0.75);
+		expect(DEFAULT_NOTIFICATION_CONFIG.conversations.standard.volume).toBe(
+			0.5
+		);
 	});
 });
