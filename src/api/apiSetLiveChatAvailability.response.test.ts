@@ -1,6 +1,10 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { apiHeartbeatLiveChatAvailability } from './apiSetLiveChatAvailability';
+import {
+	apiHeartbeatLiveChatAvailability,
+	apiSetLiveChatAvailability
+} from './apiSetLiveChatAvailability';
+import { FETCH_ERRORS } from './fetchData';
 
 describe('live-chat heartbeat response parsing', () => {
 	afterEach(() => {
@@ -25,5 +29,25 @@ describe('live-chat heartbeat response parsing', () => {
 
 		await expect(apiHeartbeatLiveChatAvailability()).resolves.toBe(true);
 		expect(response.json).toHaveBeenCalledOnce();
+	});
+
+	it('rejects an availability write failure for inline recovery', async () => {
+		vi.stubGlobal(
+			'Request',
+			class {
+				constructor(
+					public url: string,
+					public init?: RequestInit
+				) {}
+			}
+		);
+		vi.stubGlobal(
+			'fetch',
+			vi.fn().mockResolvedValue({ status: 500 } as Response)
+		);
+
+		await expect(apiSetLiveChatAvailability(true)).rejects.toThrow(
+			FETCH_ERRORS.CATCH_ALL
+		);
 	});
 });

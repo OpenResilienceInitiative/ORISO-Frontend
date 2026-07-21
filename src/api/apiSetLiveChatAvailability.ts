@@ -1,5 +1,10 @@
 import { endpoints } from '../resources/scripts/endpoints';
-import { fetchData, FETCH_METHODS, FETCH_SUCCESS } from './fetchData';
+import {
+	fetchData,
+	FETCH_ERRORS,
+	FETCH_METHODS,
+	FETCH_SUCCESS
+} from './fetchData';
 
 /**
  * Tells the backend whether the current consultant is available for live chat.
@@ -11,7 +16,8 @@ export const apiSetLiveChatAvailability = (available: boolean): Promise<void> =>
 	fetchData({
 		url: endpoints.consultantLiveChatAvailability,
 		method: FETCH_METHODS.PUT,
-		bodyData: JSON.stringify({ available })
+		bodyData: JSON.stringify({ available }),
+		responseHandling: [FETCH_ERRORS.CATCH_ALL]
 	}).then(() => undefined);
 
 export const apiGetLiveChatAvailability = (): Promise<boolean> =>
