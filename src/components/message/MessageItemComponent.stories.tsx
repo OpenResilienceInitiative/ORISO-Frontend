@@ -432,11 +432,47 @@ export const OutgoingWithReactions: Story = {
 	}
 };
 
+async function assertReactionRailScrollsHorizontally(
+	canvasElement: HTMLElement
+) {
+	await waitFor(() => {
+		const rail = canvasElement.querySelector(
+			'.messageItem__reactions'
+		) as HTMLElement | null;
+		expect(rail).toBeTruthy();
+		const pills = Array.from(
+			rail!.querySelectorAll('.messageItem__reactionPill')
+		) as HTMLElement[];
+		expect(pills.length).toBeGreaterThan(3);
+
+		// Single row: every pill shares the same top edge (no vertical stack).
+		const firstTop = pills[0].offsetTop;
+		pills.forEach((pill) => {
+			expect(pill.offsetTop).toBe(firstTop);
+			expect(getComputedStyle(pill).flexShrink).toBe('0');
+		});
+
+		const style = getComputedStyle(rail!);
+		expect(style.flexWrap).toBe('nowrap');
+		expect(style.overflowX).toMatch(/auto|scroll/);
+		expect(style.overflowY).toBe('hidden');
+		// Overflow content must be wider than the visible rail (scrollable).
+		expect(rail!.scrollWidth).toBeGreaterThan(rail!.clientWidth);
+	});
+}
+
 export const OutgoingWithManyReactions: Story = {
 	name: 'Outgoing with many reactions (horizontal scroll)',
 	parameters: {
 		activeSession: mockActiveSession1on1(),
-		userData: mockUserData()
+		userData: mockUserData(),
+		// Narrow shell so the chip rail overflows and must scroll (#564).
+		compactShell: true,
+		docs: {
+			description: {
+				story: 'Many reaction chips stay on one row and scroll horizontally (`overflow-x: auto`) instead of wrapping.'
+			}
+		}
 	},
 	args: {
 		...mockMessageItemComponentProps({
@@ -451,6 +487,9 @@ export const OutgoingWithManyReactions: Story = {
 		onReact: () => {},
 		onUnreact: () => {},
 		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		await assertReactionRailScrollsHorizontally(canvasElement);
 	}
 };
 
@@ -458,7 +497,13 @@ export const IncomingWithManyReactions: Story = {
 	name: 'Incoming with many reactions (horizontal scroll)',
 	parameters: {
 		activeSession: mockActiveSession1on1(),
-		userData: mockUserData()
+		userData: mockUserData(),
+		compactShell: true,
+		docs: {
+			description: {
+				story: 'Many reaction chips stay on one row and scroll horizontally (`overflow-x: auto`) instead of wrapping.'
+			}
+		}
 	},
 	args: {
 		...mockMessageItemComponentProps({
@@ -472,6 +517,9 @@ export const IncomingWithManyReactions: Story = {
 		onReact: () => {},
 		onUnreact: () => {},
 		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		await assertReactionRailScrollsHorizontally(canvasElement);
 	}
 };
 

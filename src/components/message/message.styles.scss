@@ -895,10 +895,12 @@ $message-avatar-overlap: -19px;
 		// left, time right. Outgoing: time left, chips right.
 		.messageItem__timeRail {
 			display: flex;
+			flex-wrap: nowrap;
 			align-items: flex-end;
 			justify-content: flex-end;
 			gap: 4px;
 			width: 100%;
+			min-width: 0;
 			margin-top: 4px;
 
 			&--outgoing {
@@ -1717,18 +1719,20 @@ $message-avatar-overlap: -19px;
 
 // Reactions (Figma 336-12244 / 336-12225): white M3 assist chips inside the
 // bubble, sharing the time rail. Own reaction = red count.
+// Issue #564: overflow must scroll horizontally — never wrap/stack.
 .messageItem__reactions {
 	display: flex;
-	flex: 1;
-
-	// Improvement report: on overflow the chip rail scrolls horizontally —
-	// chips are never stacked into multiple rows.
+	flex: 1 1 auto;
+	flex-direction: row;
 	flex-wrap: nowrap;
 	align-items: center;
 	gap: 8px;
 	min-width: 0;
+	max-width: 100%;
 	padding-top: 4px;
 	overflow-x: auto;
+	overflow-y: hidden;
+	white-space: nowrap;
 	overscroll-behavior-x: contain;
 	-webkit-overflow-scrolling: touch;
 	scrollbar-width: thin;
@@ -1746,6 +1750,7 @@ $message-avatar-overlap: -19px;
 		gap: 4px;
 		height: 32px;
 		padding: 6px 8px;
+		white-space: nowrap;
 
 		// M3 outlined chips stroke with `outline-variant`; this design uses
 		// the custom Figma role `outline-variant-light`, which is fixed white
