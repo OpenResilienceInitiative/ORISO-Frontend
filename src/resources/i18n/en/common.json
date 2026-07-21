@@ -2019,6 +2019,22 @@
 			"toggleError": {
 				"description": "Unfortunately, we cannot activate your notifications at this time. Please try again later.",
 				"title": "Something went wrong."
+			},
+			"sounds": {
+				"title": "Notification sounds",
+				"intro": "Choose sounds for new messages and for mentions. Sounds apply on all your devices.",
+				"preview": "Preview",
+				"slot": {
+					"message": "New messages",
+					"mention": "Mentions"
+				},
+				"choice": {
+					"none": "No sound",
+					"chime": "Chime",
+					"ding": "Ding",
+					"soft": "Soft",
+					"default": "Same as messages"
+				}
 			}
 		},
 		"routes": {

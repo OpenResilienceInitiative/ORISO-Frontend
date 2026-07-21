@@ -33,10 +33,29 @@ export interface OrisoNotificationSettings {
 		showMessagePreview: boolean;
 	};
 	sounds: {
-		/** Whether notification sounds play at all. */
-		enabled: boolean;
+		/** Sound played for new messages. */
+		message: SoundId;
+		/** Sound played for @-mentions ('default' = same as messages). */
+		mention: SoundId;
 	};
 }
+
+/** A curated sound choice; 'none' is silent, 'default' inherits the message sound. */
+export type SoundId = 'none' | 'chime' | 'ding' | 'soft' | 'default';
+
+export const SOUND_IDS: ReadonlyArray<SoundId> = [
+	'none',
+	'chime',
+	'ding',
+	'soft',
+	'default'
+];
+
+const asSoundId = (value: unknown, fallback: SoundId): SoundId =>
+	typeof value === 'string' &&
+	(SOUND_IDS as ReadonlyArray<string>).includes(value)
+		? (value as SoundId)
+		: fallback;
 
 export const ALL_FAMILIES: ReadonlyArray<EventFamily> = [
 	'requests',
@@ -62,7 +81,8 @@ export const DEFAULT_NOTIFICATION_SETTINGS: OrisoNotificationSettings = {
 		showMessagePreview: false
 	},
 	sounds: {
-		enabled: true
+		message: 'chime',
+		mention: 'default'
 	}
 };
 
@@ -115,9 +135,13 @@ export const parseNotificationSettings = (
 			)
 		},
 		sounds: {
-			enabled: asBoolean(
-				source.sounds?.enabled,
-				DEFAULT_NOTIFICATION_SETTINGS.sounds.enabled
+			message: asSoundId(
+				source.sounds?.message,
+				DEFAULT_NOTIFICATION_SETTINGS.sounds.message
+			),
+			mention: asSoundId(
+				source.sounds?.mention,
+				DEFAULT_NOTIFICATION_SETTINGS.sounds.mention
 			)
 		}
 	};

@@ -5,6 +5,7 @@ import {
 	ReactNode,
 	useEffect,
 	useCallback,
+	useRef,
 	useState
 } from 'react';
 import { v4 as uuid } from 'uuid';
@@ -22,6 +23,9 @@ import { getValueFromCookie } from '../../components/sessionCookie/accessSession
 import { EventActionParams } from '../../components/notificationsCenter/eventDescriptors';
 import { parseEventActionParams } from '../../components/notificationsCenter/notificationActionTarget';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
+import { playNotificationSound } from '../../utils/notificationSettings/soundPlayback';
+import { notificationSettingsStore } from '../../utils/notificationSettings/store';
+import { getEventDescriptor } from '../../components/notificationsCenter/eventDescriptors';
 
 export const NOTIFICATION_DEFAULT_TIMEOUT = 3000;
 
@@ -125,6 +129,33 @@ export function NotificationsProvider(props) {
 		NotificationFeedItem[]
 	>([]);
 	const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+	// #576: id of the newest unread event we already played a sound for, so a
+	// feed refresh only announces genuinely new events (not every poll).
+	const lastAnnouncedEventIdRef = useRef<string | null>(null);
+
+	// #576: play the configured sound for a genuinely new, unread top event —
+	// decoupled from the OS popup, so it also sounds with the tab focused. The
+	// sound routes through the single suppression gate (DND, per-conversation
+	// level, mute, family-off) inside playNotificationSound.
+	const maybePlaySoundForNewEvent = useCallback(
+		(feed: NotificationFeedItem[]) => {
+			const newest = feed.find((item) => !item.readAt);
+			// First load only seeds the marker — never announce backlog on mount.
+			if (lastAnnouncedEventIdRef.current === null) {
+				lastAnnouncedEventIdRef.current = newest ? newest.id : '';
+				return;
+			}
+			if (!newest || newest.id === lastAnnouncedEventIdRef.current) {
+				return;
+			}
+			lastAnnouncedEventIdRef.current = newest.id;
+			const { settings, device } = notificationSettingsStore.getState();
+			const family = getEventDescriptor(newest.eventType).family;
+			const isMention = newest.params?.mentioned === true;
+			playNotificationSound(settings, device, family, isMention);
+		},
+		[]
+	);
 
 	const refreshNotificationFeed = useCallback(async () => {
 		const accessToken = getValueFromCookie('keycloak');
@@ -162,6 +193,7 @@ export function NotificationsProvider(props) {
 				params: parseEventActionParams(item.params),
 				category: item.category === 'message' ? 'message' : 'system'
 			}));
+			maybePlaySoundForNewEvent(normalized);
 			setNotificationFeed(normalized);
 			setUnreadNotificationCount(Number(response?.unreadCount || 0));
 		} catch (error) {
@@ -169,7 +201,7 @@ export function NotificationsProvider(props) {
 			// eslint-disable-next-line no-console
 			console.warn('Failed to refresh notification feed', error);
 		}
-	}, []);
+	}, [maybePlaySoundForNewEvent]);
 
 	const refreshNotificationFeedSafe = useCallback(() => {
 		void refreshNotificationFeed();

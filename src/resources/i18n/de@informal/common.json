@@ -673,6 +673,22 @@
 			"subtitle": "Wir benachrichtigen Dich, wenn Du:",
 			"toggleError": {
 				"description": "Leider können wir Deine Benachrichtigungen zurzeit nicht aktivieren. Bitte versuche es später noch einmal."
+			},
+			"sounds": {
+				"title": "Benachrichtigungstöne",
+				"intro": "Wähle Töne für neue Nachrichten und für Erwähnungen. Die Töne gelten auf allen Geräten.",
+				"preview": "Vorhören",
+				"slot": {
+					"message": "Neue Nachrichten",
+					"mention": "Erwähnungen"
+				},
+				"choice": {
+					"none": "Kein Ton",
+					"chime": "Chime",
+					"ding": "Ding",
+					"soft": "Sanft",
+					"default": "Wie Nachrichten"
+				}
 			}
 		},
 		"spokenLanguages": {
