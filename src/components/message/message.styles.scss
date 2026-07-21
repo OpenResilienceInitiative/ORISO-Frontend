@@ -270,6 +270,7 @@ $message-avatar-overlap: -19px;
 
 		&--right {
 			margin-top: auto;
+			translate: 0% 25%;
 		}
 	}
 
@@ -286,10 +287,15 @@ $message-avatar-overlap: -19px;
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
+		box-sizing: border-box;
+		flex-shrink: 0;
 
-		// Figma "Message Menu" (772:18407): 32x32 touch zone.
+		// Figma "Message Menu" (772:18407) + Android Compact (#564):
+		// 32×32px touch zone (icon stays 20px centered inside).
 		width: 32px;
 		height: 32px;
+		min-width: 32px;
+		min-height: 32px;
 		cursor: pointer;
 		opacity: 1;
 		z-index: 7;
@@ -297,6 +303,8 @@ $message-avatar-overlap: -19px;
 		svg {
 			width: 20px;
 			height: 20px;
+			flex-shrink: 0;
+			pointer-events: none;
 		}
 
 		path,
@@ -306,6 +314,15 @@ $message-avatar-overlap: -19px;
 
 		&:hover {
 			opacity: 1;
+		}
+
+		// Reinforce touch target on Android Compact / mobile viewports.
+		@media screen and (width <= 899px) {
+			width: 32px;
+			height: 32px;
+			min-width: 32px;
+			min-height: 32px;
+			padding: 0;
 		}
 	}
 
