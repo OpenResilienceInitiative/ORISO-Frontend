@@ -1804,16 +1804,14 @@ $message-avatar-overlap: -19px;
 	padding-left: 24px;
 }
 
-// Inner 48px black circle inside the standard ringed avatar frame.
+// Inner 48px circle inside the standard ringed avatar frame.
 .messageItem__sendFailedAvatar {
 	width: 48px;
 	height: 48px;
 	min-width: 48px;
 	border-radius: 50%;
 
-	// inverse-surface is the M3 surface role for dark-on-light emphasis —
-	// `on-*` roles are foreground-only (m3Sweep lint).
-	background: var(--m3-inverse-surface, #17191c);
+	background: #410001;
 	color: var(--m3-inverse-on-surface, #fff);
 	display: inline-flex;
 	align-items: center;
