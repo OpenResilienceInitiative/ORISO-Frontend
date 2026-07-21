@@ -9,6 +9,12 @@ interface MessageSendFailedProps {
 	messageTime?: string;
 	/** Render copy for an incoming event that could not be decrypted. */
 	isDecryptionFailure?: boolean;
+	/** Retry this outgoing message once through the normal send pipeline. */
+	onRetry?: () => void;
+	/** Prevent concurrent retry clicks while the send is in flight. */
+	retryPending?: boolean;
+	/** Disable this entry while a different failed message is retrying. */
+	retryDisabled?: boolean;
 }
 
 /**
@@ -18,7 +24,10 @@ interface MessageSendFailedProps {
  */
 export const MessageSendFailed = ({
 	messageTime,
-	isDecryptionFailure = false
+	isDecryptionFailure = false,
+	onRetry,
+	retryPending = false,
+	retryDisabled = false
 }: MessageSendFailedProps) => {
 	const { t: translate } = useTranslation();
 	const copy = isDecryptionFailure
@@ -51,7 +60,7 @@ export const MessageSendFailed = ({
 				),
 				body: translate(
 					'message.sendFailed.body',
-					'There was a problem with sending the message, likely due to encryption or a transfer error. Please copy it and try again. Check the status: one check means sent, two checks mean read, and a cross means it didn’t reach the server.'
+					'There was a problem with sending the message, likely due to encryption or a transfer error. Select Try again to retry once. Check the status: one check means sent, two checks mean read, and a cross means it didn’t reach the server.'
 				),
 				status: translate('message.sendFailed.status', 'not delivered')
 			};
@@ -85,6 +94,19 @@ export const MessageSendFailed = ({
 					<div className="messageItem__message">
 						{copy.body}
 						<div className="messageItem__timeRail">
+							{!isDecryptionFailure && onRetry && (
+								<button
+									type="button"
+									className="messageItem__sendFailedRetry"
+									onClick={onRetry}
+									disabled={retryPending || retryDisabled}
+								>
+									{translate(
+										'message.sendFailed.retry',
+										'Try again'
+									)}
+								</button>
+							)}
 							<span className="messageItem__messageTime">
 								{messageTime ? formatToHHMM(messageTime) : null}
 								<span

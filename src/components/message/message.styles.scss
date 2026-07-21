@@ -1819,6 +1819,45 @@ $message-avatar-overlap: -19px;
 	color: var(--m3-secondary-container, #646d78);
 }
 
+.messageItem__sendFailedRetry {
+	display: inline-flex;
+	align-items: center;
+	min-height: 36px;
+	margin: 0;
+	padding: 6px 8px;
+	border: 0;
+	border-radius: 18px;
+	background: transparent;
+	color: var(--m3-primary, #a5000a);
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+
+	&:hover:not(:disabled) {
+		background: color-mix(
+			in srgb,
+			var(--m3-primary, #a5000a) 8%,
+			transparent
+		);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary, #a5000a);
+		outline-offset: 2px;
+	}
+
+	&:disabled {
+		opacity: 0.38;
+		cursor: default;
+	}
+}
+
+.messageItem--sendFailed .messageItem__timeRail {
+	align-items: center;
+	justify-content: space-between;
+	margin-top: 8px;
+}
+
 // Quick-react emoji row inside the message action menu (long-press / kebab),
 // Slack-style. Lives in a portal, hence outside .messageItem.
 .messageItem__actionMenuReactions {

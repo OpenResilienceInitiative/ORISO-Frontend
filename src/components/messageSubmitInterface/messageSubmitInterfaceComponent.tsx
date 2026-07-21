@@ -68,7 +68,10 @@ import {
 	INPUT_MAX_LENGTH,
 	normalizeHighlightColor
 } from './richtextHelpers';
-import { resolveComposerMessageSnapshot } from './composerMessageSnapshot';
+import {
+	resolveComposerMessageSnapshot,
+	shouldPreserveComposerAfterRetry
+} from './composerMessageSnapshot';
 import { ReactComponent as AudioOnIcon } from '../../resources/img/icons/audio-on.svg';
 import { ReactComponent as RemoveIcon } from '../../resources/img/icons/x.svg';
 import { ReactComponent as CalendarMonthIcon } from '../../resources/img/icons/calendar-month-navigation.svg';
@@ -203,7 +206,28 @@ export interface MessageSubmitInterfaceComponentProps {
 	 * notification in the timeline. The composer keeps the typed text so the
 	 * user can simply resend.
 	 */
-	onSendError?: (message: string, ts: number) => void;
+	onSendError?: (
+		message: string,
+		ts: number,
+		retryOfId?: string,
+		threadRootId?: string | null,
+		transportMessage?: string,
+		isAside?: boolean,
+		replyToEventId?: string | null,
+		mentionedUserIds?: string[]
+	) => void;
+	/** A user-triggered retry. One request id is handled at most once. */
+	retryRequest?: {
+		requestId: string;
+		failedSendId: string;
+		message: string;
+		threadRootId?: string | null;
+		transportMessage: string;
+		isAside: boolean;
+		replyToEventId?: string | null;
+		mentionedUserIds: string[];
+	} | null;
+	onRetrySettled?: (requestId: string) => void;
 }
 
 export const MessageSubmitInterfaceComponent = ({
@@ -233,7 +257,9 @@ export const MessageSubmitInterfaceComponent = ({
 	onCloseThread,
 	onLocalMessageEdit,
 	isOwnMessage,
-	onSendError
+	onSendError,
+	retryRequest,
+	onRetrySettled
 }: MessageSubmitInterfaceComponentProps) => {
 	const ComposerMobileBackIcon = () => (
 		<svg
@@ -1180,54 +1206,71 @@ export const MessageSubmitInterfaceComponent = ({
 		]
 	);
 
-	const handleMessageSendSuccess = useCallback(() => {
-		reloadSessionAfterSendIfNeeded(
-			{
-				isMatrixSession: resolvedChatSession.isMatrixSession,
-				clientRoomId: resolvedChatSession.matrixRoomId
-			},
-			reloadActiveSession
-		);
-		onMessageSendSuccess?.();
-		setEditorState(EditorState.createEmpty());
-		setComposerText('');
-		composerRef.current?.clear();
-		setSelectedAudienceValues(
-			audienceOptions.some((option) => option.value === '__all__')
-				? ['__all__']
-				: audienceOptions[0]?.value
-					? [audienceOptions[0].value]
-					: ['__all__']
-		);
-		setIsAudienceMenuOpen(false);
-		clearDraftMessage();
-		setActiveInfo('');
-		// Force reset to default height after clearing - use multiple timeouts to ensure DOM updates
-		setTimeout(() => {
-			resizeTextarea();
-		}, 0);
-		setTimeout(() => {
-			resizeTextarea();
-		}, 50);
-		setTimeout(() => {
-			resizeTextarea();
-		}, 100);
-		setTimeout(() => {
-			resizeTextarea();
-		}, 200);
-		setTimeout(() => setIsRequestInProgress(false), 1200);
-	}, [
-		audienceOptions,
-		clearDraftMessage,
-		onMessageSendSuccess,
-		reloadActiveSession,
-		resolvedChatSession.isMatrixSession,
-		resolvedChatSession.matrixRoomId,
-		resizeTextarea
-	]);
+	const handleMessageSendSuccess = useCallback(
+		(preserveComposer = false) => {
+			reloadSessionAfterSendIfNeeded(
+				{
+					isMatrixSession: resolvedChatSession.isMatrixSession,
+					clientRoomId: resolvedChatSession.matrixRoomId
+				},
+				reloadActiveSession
+			);
+			onMessageSendSuccess?.();
+			if (preserveComposer) {
+				setIsRequestInProgress(false);
+				return;
+			}
+			setEditorState(EditorState.createEmpty());
+			setComposerText('');
+			composerRef.current?.clear();
+			setSelectedAudienceValues(
+				audienceOptions.some((option) => option.value === '__all__')
+					? ['__all__']
+					: audienceOptions[0]?.value
+						? [audienceOptions[0].value]
+						: ['__all__']
+			);
+			setIsAudienceMenuOpen(false);
+			clearDraftMessage();
+			setActiveInfo('');
+			// Force reset to default height after clearing - use multiple timeouts to ensure DOM updates
+			setTimeout(() => {
+				resizeTextarea();
+			}, 0);
+			setTimeout(() => {
+				resizeTextarea();
+			}, 50);
+			setTimeout(() => {
+				resizeTextarea();
+			}, 100);
+			setTimeout(() => {
+				resizeTextarea();
+			}, 200);
+			setTimeout(() => setIsRequestInProgress(false), 1200);
+		},
+		[
+			audienceOptions,
+			clearDraftMessage,
+			onMessageSendSuccess,
+			reloadActiveSession,
+			resolvedChatSession.isMatrixSession,
+			resolvedChatSession.matrixRoomId,
+			resizeTextarea
+		]
+	);
 
 	const sendMessage = useCallback(
-		async (message, attachment: File, isEncrypted, isAside = false) => {
+		async (
+			message,
+			attachment: File,
+			isEncrypted,
+			isAside = false,
+			retryOfId?: string,
+			rawMessage?: string,
+			preserveComposerOnSuccess = false,
+			retryReplyToEventId?: string | null,
+			retryMentionedUserIds?: string[]
+		) => {
 			const sendToRoomWithId = activeSession.rid || activeSession.item.id;
 			// Determine if this is a Matrix-backed session.
 			// Some sessions still have a legacy rid while exposing matrixRoomId.
@@ -1263,7 +1306,7 @@ export const MessageSubmitInterfaceComponent = ({
 
 			// Editing (m.replace, #435): replaces the target event's content;
 			// no attachments, prefixes, or reply/thread relations apply.
-			if (editingMessage) {
+			if (editingMessage && !retryOfId) {
 				if (!matrixRoomId) {
 					setIsRequestInProgress(false);
 					apiPostError({
@@ -1282,7 +1325,7 @@ export const MessageSubmitInterfaceComponent = ({
 					})
 					.then(() => {
 						onSendButton && onSendButton();
-						handleMessageSendSuccess();
+						handleMessageSendSuccess(preserveComposerOnSuccess);
 						onCancelEdit && onCancelEdit();
 					})
 					.catch((error) => {
@@ -1359,7 +1402,9 @@ export const MessageSubmitInterfaceComponent = ({
 
 			// For Matrix: if we uploaded an attachment, the message was already sent with it
 			// Only send a separate text message if there's text and no attachment
-			const hasTextContent = hasMessageContent(getTypedMarkdownMessage());
+			// Retry requests carry the preserved original explicitly. Do not depend
+			// on the editor state having committed before deciding whether to send.
+			const hasTextContent = hasMessageContent(message);
 			const shouldSendTextMessage =
 				hasTextContent && (!attachment || !matrixSessionId);
 
@@ -1367,9 +1412,9 @@ export const MessageSubmitInterfaceComponent = ({
 				// Intentional mentions (#435): read from the composer's own
 				// HTML (mention pills carry data-mention-matrix-id there)
 				// before it is cleared by handleMessageSendSuccess.
-				const mentionedUserIds = extractMentionedUserIds(
-					composerRef.current?.getHTML()
-				);
+				const mentionedUserIds = retryOfId
+					? retryMentionedUserIds || []
+					: extractMentionedUserIds(composerRef.current?.getHTML());
 				// MATRIX MIGRATION: For group chats, Matrix room ID is in activeSession.rid
 				await apiSendMessage(
 					message,
@@ -1385,23 +1430,38 @@ export const MessageSubmitInterfaceComponent = ({
 						`${userData?.firstName || ''} ${userData?.lastName || ''}`.trim() ||
 						'User',
 					matrixClientService,
-					replyTo?.eventId || null,
+					retryOfId
+						? retryReplyToEventId || null
+						: replyTo?.eventId || null,
 					mentionedUserIds
 				)
 					.then(() => encryptRoom(setE2EEState))
 					.then(() => {
 						onSendButton && onSendButton();
-						handleMessageSendSuccess();
+						handleMessageSendSuccess(preserveComposerOnSuccess);
 						cleanupAttachment();
 						// Reply context is consumed by the send (#435).
-						onCancelReply && onCancelReply();
+						if (!retryOfId) {
+							onCancelReply && onCancelReply();
+						}
 					})
 					.catch((error) => {
 						setIsRequestInProgress(false);
 						// Surface the failure in the timeline ("Sending message
 						// failed"); the composer keeps the text so the user can
 						// resend without retyping.
-						onSendError?.(message, Date.now());
+						onSendError?.(
+							rawMessage ?? message,
+							Date.now(),
+							retryOfId,
+							threadRootId || null,
+							message,
+							Boolean(isAside),
+							retryOfId
+								? retryReplyToEventId || null
+								: replyTo?.eventId || null,
+							mentionedUserIds
+						);
 						apiPostError({
 							name: error?.name || 'MatrixMessageSendError',
 							message:
@@ -1423,7 +1483,6 @@ export const MessageSubmitInterfaceComponent = ({
 			activeSession,
 			cleanupAttachment,
 			encryptRoom,
-			getTypedMarkdownMessage,
 			hasMessageContent,
 			handleAttachmentUploadError,
 			handleMessageSendSuccess,
@@ -1446,119 +1505,158 @@ export const MessageSubmitInterfaceComponent = ({
 		]
 	);
 
-	const prepareAndSendMessage = useCallback(async () => {
-		const attachmentInput: any = attachmentInputRef.current;
-		const selectedFile = attachmentInput && attachmentInput.files[0];
-		const attachment = resolveAttachmentForSend(
-			preselectedFile,
-			selectedFile,
-			attachmentSelected
-		);
-
-		const currentTypedMessage = getTypedMarkdownMessage();
-		if (
-			getPlainTextFromComposerValue(currentTypedMessage).length >
-			INPUT_MAX_LENGTH
-		) {
-			return null;
-		}
-
-		if (hasMessageContent(currentTypedMessage) || attachment) {
-			setIsRequestInProgress(true);
-		} else {
-			return null;
-		}
-
-		let message = encodeAlignmentForTransport(
-			encodeHighlightColorsForTransport(currentTypedMessage)
-		).trim();
-		const prefixParts: string[] = [];
-		// Relations foundation (#435): thread membership travels as the
-		// MSC3440 m.thread relation on the event (see chatTransportService),
-		// not as a [THREAD:...] text prefix anymore. Old messages with the
-		// prefix keep rendering via the legacy parse fallback.
-		// VISIBLE_TO recipient targeting is an opt-in supervisor/coordinator aside
-		// (ADR-008) and only exists when the audience selector is actually shown —
-		// i.e. there is more than one human counterpart (group / supervision). In a
-		// 1:1 conversation the selector is hidden, so a reply must never carry a
-		// VISIBLE_TO prefix, regardless of any stale selection state.
-		const humanTargetCount = audienceOptions.filter(
-			(option) => option.value !== '__all__'
-		).length;
-		const explicitAudience = selectedAudienceValues.filter(
-			(value) => value !== '__all__'
-		);
-		const hasExplicitAudience =
-			humanTargetCount > 1 && explicitAudience.length > 0;
-		if (hasExplicitAudience) {
-			prefixParts.push(buildVisibleToPrefix(explicitAudience));
-		}
-		if (isSupervisor) {
-			prefixParts.push(SUPERVISOR_FEEDBACK_PREFIX);
-		}
-		// ADR-008: any message carrying an aside (supervisor feedback OR an
-		// explicit VISIBLE_TO audience) must be routed to the supervision side
-		// room, never the client-facing room.
-		const isAside = Boolean(isSupervisor) || hasExplicitAudience;
-		if (prefixParts.length && message.length > 0) {
-			message = `${prefixParts.join(' ')} ${message}`;
-		}
-		// Legacy Rocket.Chat client-side message encryption is removed. This
-		// `isEncrypted` flag is the vestigial remnant of that path and no
-		// longer controls Matrix encryption: with Rust crypto initialized
-		// unconditionally (matrixClientService.initRustCrypto) and rooms
-		// created with `m.room.encryption`, the SDK Megolm-encrypts every send
-		// automatically (ADR-004, durable since the ADR-005 homeserver
-		// rebuild). The flag is a no-op pass-through kept only for the
-		// chatTransportService signature.
-		const isEncrypted = false;
-
-		if (isAskerEnquiry) {
-			await sendEnquiry(message, isEncrypted);
-			return;
-		}
-
-		// Shortcut: edit an existing message via Matrix m.replace
-		if (editingMessageId) {
-			const matrixRoomId = resolvedChatSession.matrixRoomId;
-			if (matrixRoomId && matrixClientService) {
-				try {
-					await matrixClientService.editMessage(
-						matrixRoomId,
-						editingMessageId,
-						getPlainTextFromComposerValue(message) || message
+	const prepareAndSendMessage = useCallback(
+		async (
+			messageOverride?: string,
+			retryOfId?: string,
+			retryContext?: {
+				transportMessage: string;
+				isAside: boolean;
+				replyToEventId?: string | null;
+				mentionedUserIds: string[];
+			}
+		) => {
+			const attachmentInput: any = attachmentInputRef.current;
+			const selectedFile = attachmentInput && attachmentInput.files[0];
+			const attachment = retryOfId
+				? null
+				: resolveAttachmentForSend(
+						preselectedFile,
+						selectedFile,
+						attachmentSelected
 					);
-					onLocalMessageEdit?.(editingMessageId, message);
-				} catch {
-					// Editing failed silently — fall through to clear state
+
+			const composerMessageBeforeSend = getTypedMarkdownMessage();
+			const currentTypedMessage =
+				messageOverride ?? composerMessageBeforeSend;
+			const preserveComposerOnSuccess = Boolean(
+				retryOfId &&
+					messageOverride !== undefined &&
+					shouldPreserveComposerAfterRetry(
+						composerMessageBeforeSend,
+						messageOverride
+					)
+			);
+			if (
+				getPlainTextFromComposerValue(currentTypedMessage).length >
+				INPUT_MAX_LENGTH
+			) {
+				return null;
+			}
+
+			if (hasMessageContent(currentTypedMessage) || attachment) {
+				setIsRequestInProgress(true);
+			} else {
+				return null;
+			}
+
+			let message = retryContext
+				? retryContext.transportMessage
+				: encodeAlignmentForTransport(
+						encodeHighlightColorsForTransport(currentTypedMessage)
+					).trim();
+			let isAside = retryContext?.isAside || false;
+			const prefixParts: string[] = [];
+			// Relations foundation (#435): thread membership travels as the
+			// MSC3440 m.thread relation on the event (see chatTransportService),
+			// not as a [THREAD:...] text prefix anymore. Old messages with the
+			// prefix keep rendering via the legacy parse fallback.
+			// VISIBLE_TO recipient targeting is an opt-in supervisor/coordinator aside
+			// (ADR-008) and only exists when the audience selector is actually shown —
+			// i.e. there is more than one human counterpart (group / supervision). In a
+			// 1:1 conversation the selector is hidden, so a reply must never carry a
+			// VISIBLE_TO prefix, regardless of any stale selection state.
+			if (!retryContext) {
+				const humanTargetCount = audienceOptions.filter(
+					(option) => option.value !== '__all__'
+				).length;
+				const explicitAudience = selectedAudienceValues.filter(
+					(value) => value !== '__all__'
+				);
+				const hasExplicitAudience =
+					humanTargetCount > 1 && explicitAudience.length > 0;
+				if (hasExplicitAudience) {
+					prefixParts.push(buildVisibleToPrefix(explicitAudience));
+				}
+				if (isSupervisor) {
+					prefixParts.push(SUPERVISOR_FEEDBACK_PREFIX);
+				}
+				// ADR-008: any message carrying an aside (supervisor feedback OR an
+				// explicit VISIBLE_TO audience) must be routed to the supervision side
+				// room, never the client-facing room.
+				isAside = Boolean(isSupervisor) || hasExplicitAudience;
+				if (prefixParts.length && message.length > 0) {
+					message = `${prefixParts.join(' ')} ${message}`;
 				}
 			}
-			setEditingMessageId(null);
-			setIsRequestInProgress(false);
-			composerRef.current?.clear();
-			setComposerText('');
-			return;
-		}
+			// Legacy Rocket.Chat client-side message encryption is removed. This
+			// `isEncrypted` flag is the vestigial remnant of that path and no
+			// longer controls Matrix encryption: with Rust crypto initialized
+			// unconditionally (matrixClientService.initRustCrypto) and rooms
+			// created with `m.room.encryption`, the SDK Megolm-encrypts every send
+			// automatically (ADR-004, durable since the ADR-005 homeserver
+			// rebuild). The flag is a no-op pass-through kept only for the
+			// chatTransportService signature.
+			const isEncrypted = false;
 
-		await sendMessage(message, attachment, isEncrypted, isAside);
-	}, [
-		editingMessageId,
-		encodeAlignmentForTransport,
-		encodeHighlightColorsForTransport,
-		getTypedMarkdownMessage,
-		hasMessageContent,
-		isAskerEnquiry,
-		matrixClientService,
-		onLocalMessageEdit,
-		preselectedFile,
-		attachmentSelected,
-		resolvedChatSession,
-		sendEnquiry,
-		sendMessage,
-		selectedAudienceValues,
-		audienceOptions,
-		isSupervisor
-	]);
+			if (isAskerEnquiry) {
+				await sendEnquiry(message, isEncrypted);
+				return;
+			}
+
+			// Shortcut: edit an existing message via Matrix m.replace
+			if (editingMessageId && !retryOfId) {
+				const matrixRoomId = resolvedChatSession.matrixRoomId;
+				if (matrixRoomId && matrixClientService) {
+					try {
+						await matrixClientService.editMessage(
+							matrixRoomId,
+							editingMessageId,
+							getPlainTextFromComposerValue(message) || message
+						);
+						onLocalMessageEdit?.(editingMessageId, message);
+					} catch {
+						// Editing failed silently — fall through to clear state
+					}
+				}
+				setEditingMessageId(null);
+				setIsRequestInProgress(false);
+				composerRef.current?.clear();
+				setComposerText('');
+				return;
+			}
+
+			await sendMessage(
+				message,
+				attachment,
+				isEncrypted,
+				isAside,
+				retryOfId,
+				currentTypedMessage,
+				preserveComposerOnSuccess,
+				retryContext?.replyToEventId || null,
+				retryContext?.mentionedUserIds || []
+			);
+		},
+		[
+			attachmentSelected,
+			audienceOptions,
+			editingMessageId,
+			encodeAlignmentForTransport,
+			encodeHighlightColorsForTransport,
+			getTypedMarkdownMessage,
+			hasMessageContent,
+			isAskerEnquiry,
+			isSupervisor,
+			matrixClientService,
+			onLocalMessageEdit,
+			preselectedFile,
+			resolvedChatSession,
+			selectedAudienceValues,
+			sendEnquiry,
+			sendMessage
+		]
+	);
 
 	const handleButtonClick = useCallback(() => {
 		if (uploadProgress || isRequestInProgress) {
@@ -1625,6 +1723,37 @@ export const MessageSubmitInterfaceComponent = ({
 		},
 		[handleButtonClick]
 	);
+
+	const handledRetryRequestRef = useRef<string | null>(null);
+	useEffect(() => {
+		if (
+			!retryRequest ||
+			handledRetryRequestRef.current === retryRequest.requestId ||
+			isRequestInProgress ||
+			uploadProgress
+		) {
+			return;
+		}
+
+		handledRetryRequestRef.current = retryRequest.requestId;
+		prepareAndSendMessage(retryRequest.message, retryRequest.failedSendId, {
+			transportMessage: retryRequest.transportMessage,
+			isAside: retryRequest.isAside,
+			replyToEventId: retryRequest.replyToEventId,
+			mentionedUserIds: retryRequest.mentionedUserIds
+		})
+			.catch(() => {
+				// Send failures are surfaced through onSendError. This catch only
+				// prevents an unexpected rejected promise from going unhandled.
+			})
+			.finally(() => onRetrySettled?.(retryRequest.requestId));
+	}, [
+		isRequestInProgress,
+		onRetrySettled,
+		prepareAndSendMessage,
+		retryRequest,
+		uploadProgress
+	]);
 
 	const handleAttachmentSelect = useCallback(() => {
 		const attachmentInput: any = attachmentInputRef.current;

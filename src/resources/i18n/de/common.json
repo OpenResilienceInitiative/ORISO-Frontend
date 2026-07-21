@@ -1466,7 +1466,8 @@
 		},
 		"read": "gelesen",
 		"sendFailed": {
-			"body": "Beim Senden der Nachricht gab es ein Problem, vermutlich durch die Verschlüsselung oder einen Übertragungsfehler. Bitte kopieren Sie sie und versuchen Sie es erneut. Prüfen Sie den Status: Ein Haken bedeutet gesendet, zwei Haken bedeuten gelesen, und ein Kreuz bedeutet, dass sie den Server nicht erreicht hat.",
+			"body": "Beim Senden der Nachricht gab es ein Problem, vermutlich durch die Verschlüsselung oder einen Übertragungsfehler. Mit „Erneut senden“ können Sie die Nachricht einmal wiederholen. Prüfen Sie den Status: Ein Haken bedeutet gesendet, zwei Haken bedeuten gelesen, und ein Kreuz bedeutet, dass sie den Server nicht erreicht hat.",
+			"retry": "Erneut senden",
 			"status": "nicht zugestellt",
 			"subtitle": "Senden Sie Ihre Nachricht erneut",
 			"title": "Senden fehlgeschlagen"
