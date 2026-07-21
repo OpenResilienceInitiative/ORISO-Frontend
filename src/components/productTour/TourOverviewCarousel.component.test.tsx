@@ -13,7 +13,9 @@ import type { TourDefinition } from './types';
 
 const translations: Record<string, string> = {
 	'walkthrough.title': 'Rundgang',
-	'walkthrough.subtitle': 'Kurzer Rundgang durch die Anwendung.',
+	// The legacy walkthrough copy carries inline HTML — the card must not print it.
+	'walkthrough.subtitle':
+		'Kurzer Rundgang durch die Anwendung. <br /> Jederzeit erneut startbar.',
 	'walkthrough.overview.title': 'Meine Rundgänge',
 	'walkthrough.overview.subtitle': 'Tutorials starten und fortsetzen.',
 	'walkthrough.overview.empty': 'Keine Rundgänge verfügbar.',
@@ -61,6 +63,29 @@ afterEach(() => {
 });
 
 describe('TourOverviewCarousel', () => {
+	it('renders the summary as readable text, never as raw markup', async () => {
+		// Found on Pre-Dev during gate run e2e-20260720-1507: the card printed a
+		// literal "<br />" because the shared legacy copy contains inline HTML.
+		render(
+			<TourOverviewCarousel
+				tours={[consultantTour]}
+				audience="consultant"
+				loadProgress={() => Promise.resolve([])}
+				onStartTour={() => {}}
+			/>
+		);
+
+		await waitFor(() => expect(screen.getByText('Rundgang')).toBeTruthy());
+		const summary = document.querySelector(
+			'.tourOverview__cardSummary'
+		) as HTMLElement;
+		expect(summary.textContent).not.toContain('<br');
+		expect(summary.textContent).toContain(
+			'Kurzer Rundgang durch die Anwendung.'
+		);
+		expect(summary.textContent).toContain('Jederzeit erneut startbar.');
+	});
+
 	it('lists only tours matching the audience with their progress status', async () => {
 		render(
 			<TourOverviewCarousel
