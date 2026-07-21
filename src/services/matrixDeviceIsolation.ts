@@ -4,6 +4,12 @@ import {
 	OnlySignedDevicesIsolationMode
 } from 'matrix-js-sdk/lib/crypto-api';
 
+const invisibleCryptoClients = new WeakSet<MatrixClient>();
+
+export const isInvisibleCryptoEnabledForClient = (
+	client: MatrixClient
+): boolean => invisibleCryptoClients.has(client);
+
 /**
  * #438 MSC4153 "invisible crypto". When enabled, the SDK shares Megolm keys
  * only with cross-signed devices (`OnlySignedDevicesIsolationMode`): an
@@ -39,8 +45,14 @@ export const applyDeviceIsolationMode = (
 				? new OnlySignedDevicesIsolationMode()
 				: new AllDevicesIsolationMode(false)
 		);
+		if (invisibleCryptoEnabled) {
+			invisibleCryptoClients.add(client);
+		} else {
+			invisibleCryptoClients.delete(client);
+		}
 		return true;
 	} catch {
+		invisibleCryptoClients.delete(client);
 		// Only supported by the rust crypto stack; never break startup on it.
 		return false;
 	}

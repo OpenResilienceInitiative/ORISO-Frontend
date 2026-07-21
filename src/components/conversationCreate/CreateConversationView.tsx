@@ -137,14 +137,18 @@ const CreateConversationFlow = () => {
 				interval: draft.seriesFields.interval,
 				modality: draft.seriesFields.modality,
 				authorContent: draft.authorContent,
-				consultantIds: draft.consultantIds,
+				// The API returns the OWNER in the participant list as well. The
+				// co-moderator picker must never render or submit the current owner.
+				consultantIds: draft.consultantIds.filter(
+					(consultantId) => consultantId !== userData?.userId
+				),
 				agencyId: draft.agencyId
 			};
 		} catch {
 			// Invalid persisted start etc. — keep the form gated (no prefill).
 			return undefined;
 		}
-	}, [isEditMode, editSession]);
+	}, [isEditMode, editSession, userData?.userId]);
 
 	const [step, setStep] = useState<CreateStep>(() =>
 		isEditMode

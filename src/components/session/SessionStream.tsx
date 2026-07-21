@@ -59,6 +59,11 @@ import {
 import { applyMessageEdits } from '../../utils/messageRelations';
 import { CaseHandoverCurtain } from './CaseHandoverCurtain';
 import { isCaseHandoverAccessControlled } from './caseHandoverHelpers';
+import {
+	MATRIX_HISTORY_KEYS_IMPORTED_EVENT,
+	isUndecryptedRoomEvent,
+	matrixRoomHistoryKeyTransfer
+} from '../../services/matrixRoomHistoryKeyTransfer';
 
 interface SessionStreamProps {
 	readonly: boolean;
@@ -98,6 +103,7 @@ export const SessionStream = ({
 	// instance got removeAllListeners(), so every effect holding room
 	// listeners depends on this generation to re-attach to the new client.
 	const [matrixClientGeneration, setMatrixClientGeneration] = useState(0);
+	const initialTimelineHydrationKeyRef = useRef('');
 	const [messagesItem, setMessagesItem] = useState(null);
 	const [overlayItem, setOverlayItem] = useState<OverlayItem>(null);
 	const [isOverlayActive, setIsOverlayActive] = useState(false);
@@ -214,6 +220,9 @@ export const SessionStream = ({
 	);
 	const caseHandoverCurtainNeeded =
 		caseHandoverGateNeeded && !hasSupervisionAccess;
+	const mayRequestHistoryKeys =
+		!caseHandoverCurtainNeeded ||
+		caseHandoverStatus?.canViewContent === true;
 
 	// ADR-008: resolve the per-session supervision side room id for members.
 	// The backend only returns supervisor entries (with the side room id) to
@@ -326,6 +335,21 @@ export const SessionStream = ({
 				const supervisionEvents = supervisionRoomId
 					? loadRoomEvents(supervisionRoomId)
 					: [];
+				if (mayRequestHistoryKeys) {
+					[
+						[resolvedMatrixRoomId, clientEvents],
+						[supervisionRoomId, supervisionEvents]
+					].forEach(([roomId, events]) => {
+						if (
+							roomId &&
+							(events as any[]).some(isUndecryptedRoomEvent)
+						) {
+							void matrixRoomHistoryKeyTransfer.requestKeys(
+								roomId as string
+							);
+						}
+					});
+				}
 				const formattedMessages = mergeMatrixMessages(
 					formatRoomMessages(clientEvents, resolvedMatrixRoomId),
 					formatRoomMessages(supervisionEvents, supervisionRoomId)
@@ -356,12 +380,39 @@ export const SessionStream = ({
 		[
 			caseHandoverCurtainNeeded,
 			caseHandoverStatus?.canViewContent,
+			mayRequestHistoryKeys,
 			resolvedChatSession,
 			supervisionRoomId,
 			translate
 		]
 	);
 	const fetchSessionMessagesRef = useUpdatingRef(fetchSessionMessages);
+
+	useEffect(() => {
+		const onHistoryKeysImported = (rawEvent: Event) => {
+			const importedRoomId = (rawEvent as CustomEvent)?.detail?.roomId;
+			if (
+				[resolvedChatSession.matrixRoomId, supervisionRoomId].includes(
+					importedRoomId
+				)
+			) {
+				void fetchSessionMessagesRef.current(true);
+			}
+		};
+		window.addEventListener(
+			MATRIX_HISTORY_KEYS_IMPORTED_EVENT,
+			onHistoryKeysImported
+		);
+		return () =>
+			window.removeEventListener(
+				MATRIX_HISTORY_KEYS_IMPORTED_EVENT,
+				onHistoryKeysImported
+			);
+	}, [
+		fetchSessionMessagesRef,
+		resolvedChatSession.matrixRoomId,
+		supervisionRoomId
+	]);
 
 	const setSessionRead = useCallback(() => {
 		if (readonly) {
@@ -459,12 +510,16 @@ export const SessionStream = ({
 		if (!clientRoomId) {
 			return;
 		}
+		if (!mayRequestHistoryKeys) {
+			return;
+		}
 
 		// ADR-008: listen on the client room AND (for members) the supervision
 		// side room, so newly-sent asides appear live for authorized viewers.
 		const watchedRoomIds = supervisionRoomId
 			? [clientRoomId, supervisionRoomId]
 			: [clientRoomId];
+		const initialHydrationKey = `${matrixClientGeneration}:${watchedRoomIds.join('|')}`;
 
 		let retryTimer: number | null = null;
 		let detachTimelineListeners: Array<() => void> = [];
@@ -528,6 +583,24 @@ export const SessionStream = ({
 			}
 
 			detachTimelineListeners = detachers;
+			// Initial-sync events arrive with toStartOfTimeline=true and are
+			// intentionally ignored by the live handler. Hydrate once after every
+			// successful attachment so late-join decryption failures can trigger
+			// their room-key request after the Matrix room actually exists.
+			if (
+				initialTimelineHydrationKeyRef.current !== initialHydrationKey
+			) {
+				initialTimelineHydrationKeyRef.current = initialHydrationKey;
+				// The initial timeline can be empty or already SDK-normalised by the
+				// time React sees it. Request this room's existing keys once per
+				// client generation instead of depending on a particular failure
+				// event shape.
+				watchedRoomIds.forEach(
+					(roomId) =>
+						void matrixRoomHistoryKeyTransfer.requestKeys(roomId)
+				);
+				refreshMessages();
+			}
 			return true;
 		};
 
@@ -573,7 +646,8 @@ export const SessionStream = ({
 		supervisionRoomId,
 		fetchSessionMessages,
 		matrixRoomId,
-		matrixClientGeneration
+		matrixClientGeneration,
+		mayRequestHistoryKeys
 	]);
 
 	const groupChatStoppedOverlay: OverlayItem = useMemo(

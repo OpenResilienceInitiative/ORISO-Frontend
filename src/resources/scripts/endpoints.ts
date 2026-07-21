@@ -132,6 +132,9 @@ export const endpoints = {
 	dpaSignatureConfirm: (token: string) =>
 		tenantServiceOrigin +
 		`/service/tenant/public/dpa/confirm/${encodeURIComponent(token)}`,
+	dpaSignaturePreview: (token: string) =>
+		tenantServiceOrigin +
+		`/service/tenant/public/dpa/confirm/${encodeURIComponent(token)}`,
 	topicGroups: consultingTypeServiceOrigin + '/service/topic-groups',
 	topicsData: consultingTypeServiceOrigin + '/service/topic/public',
 	twoFactorAuth: userServiceOrigin + '/service/users/2fa',

@@ -117,7 +117,10 @@ const editSeriesItem = {
 	sourceLanguage: 'de',
 	hintMessageTranslations: { de: 'Welcome' },
 	groupChatRulesTranslations: { de: ['Be kind'] },
-	participants: [{ consultantId: 'c-9' }],
+	participants: [
+		{ consultantId: 'me', role: 'OWNER' },
+		{ consultantId: 'c-9', role: 'CO_MODERATOR' }
+	],
 	assignedAgencies: [{ id: 5 }]
 };
 
@@ -218,6 +221,9 @@ describe('CreateConversationView edit mode (finding 1)', () => {
 		expect(apiUpdateGroupChat.mock.calls[0][1]).toMatchObject({
 			consultantIds: ['c-9', 'c-2']
 		});
+		expect(
+			screen.queryByText('me', { selector: '.personChip__name' })
+		).toBeNull();
 	});
 
 	it('shows a loading state until the series has hydrated', () => {
