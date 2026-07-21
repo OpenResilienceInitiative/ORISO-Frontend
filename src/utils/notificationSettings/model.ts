@@ -36,6 +36,13 @@ export interface OrisoNotificationSettings {
 		/** Whether notification sounds play at all. */
 		enabled: boolean;
 	};
+	/**
+	 * Global do-not-disturb: ISO timestamp until which all announcements
+	 * (toast/sound/push) are silenced, or null. Authoritative copy lives in
+	 * UserService (cross-device); auto-reverts once passed. The persisted
+	 * activity feed still fills while active.
+	 */
+	dndUntil: string | null;
 }
 
 export const ALL_FAMILIES: ReadonlyArray<EventFamily> = [
@@ -56,6 +63,7 @@ const defaultFamilies = (): FamilyToggles =>
 
 export const DEFAULT_NOTIFICATION_SETTINGS: OrisoNotificationSettings = {
 	globalMute: false,
+	dndUntil: null,
 	families: defaultFamilies(),
 	browserNotifications: {
 		enabled: false,
@@ -119,7 +127,8 @@ export const parseNotificationSettings = (
 				source.sounds?.enabled,
 				DEFAULT_NOTIFICATION_SETTINGS.sounds.enabled
 			)
-		}
+		},
+		dndUntil: typeof source.dndUntil === 'string' ? source.dndUntil : null
 	};
 };
 
@@ -140,6 +149,7 @@ export type NotificationSettingsUpdate = {
 		OrisoNotificationSettings['browserNotifications']
 	>;
 	sounds?: Partial<OrisoNotificationSettings['sounds']>;
+	dndUntil?: string | null;
 };
 
 /** Immutably merge a partial update into full settings. */
@@ -153,7 +163,8 @@ export const mergeNotificationSettings = (
 		...current.browserNotifications,
 		...(update.browserNotifications || {})
 	},
-	sounds: { ...current.sounds, ...(update.sounds || {}) }
+	sounds: { ...current.sounds, ...(update.sounds || {}) },
+	dndUntil: update.dndUntil !== undefined ? update.dndUntil : current.dndUntil
 });
 
 /**
@@ -161,9 +172,29 @@ export const mergeNotificationSettings = (
  * sound, later push) asks this one question. Suppressed when the account is
  * muted, this device is silenced, or the event's family is switched off.
  */
+/**
+ * Global do-not-disturb is active while {@code dndUntil} lies in the future.
+ * Pure and time-injectable so it is deterministically testable; auto-reverts
+ * once the timestamp passes without any cleanup.
+ */
+export const isDoNotDisturbActive = (
+	dndUntil: string | null | undefined,
+	now: Date = new Date()
+): boolean => {
+	if (!dndUntil) {
+		return false;
+	}
+	const until = new Date(dndUntil).getTime();
+	return !Number.isNaN(until) && until > now.getTime();
+};
+
 export const isNotificationSuppressed = (
 	settings: OrisoNotificationSettings,
 	device: LocalDeviceNotificationSettings,
-	family: EventFamily
+	family: EventFamily,
+	now: Date = new Date()
 ): boolean =>
-	settings.globalMute || device.silenced || !settings.families[family];
+	isDoNotDisturbActive(settings.dndUntil, now) ||
+	settings.globalMute ||
+	device.silenced ||
+	!settings.families[family];

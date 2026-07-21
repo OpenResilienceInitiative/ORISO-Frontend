@@ -8,6 +8,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
 	DEFAULT_NOTIFICATION_SETTINGS,
+	isDoNotDisturbActive,
 	isNotificationSuppressed,
 	mergeNotificationSettings,
 	parseLocalDeviceSettings,
@@ -219,5 +220,54 @@ describe('WP-06 Slice 6a — notification settings store', () => {
 			localStorage.getItem('ORISO_NOTIFICATION_SETTINGS') || '{}'
 		);
 		expect(mirrored.sounds.enabled).toBe(false);
+	});
+});
+
+describe('global do-not-disturb', () => {
+	it('isDoNotDisturbActive is true while dndUntil is in the future', () => {
+		const now = new Date('2026-07-18T10:00:00Z');
+		expect(isDoNotDisturbActive('2026-07-18T11:00:00Z', now)).toBe(true);
+	});
+
+	it('isDoNotDisturbActive auto-reverts once dndUntil has passed', () => {
+		const now = new Date('2026-07-18T10:00:00Z');
+		expect(isDoNotDisturbActive('2026-07-18T09:00:00Z', now)).toBe(false);
+	});
+
+	it('isDoNotDisturbActive is false for null/empty', () => {
+		expect(isDoNotDisturbActive(null, new Date())).toBe(false);
+		expect(isDoNotDisturbActive('', new Date())).toBe(false);
+	});
+
+	it('suppresses every family while DND is active, even with mute off and family on', () => {
+		const now = new Date('2026-07-18T10:00:00Z');
+		const settings = {
+			...DEFAULT_NOTIFICATION_SETTINGS,
+			dndUntil: '2026-07-18T11:00:00Z'
+		};
+		expect(
+			isNotificationSuppressed(
+				settings,
+				{ silenced: false },
+				'messages',
+				now
+			)
+		).toBe(true);
+	});
+
+	it('does not suppress once DND has expired (family still on)', () => {
+		const now = new Date('2026-07-18T10:00:00Z');
+		const settings = {
+			...DEFAULT_NOTIFICATION_SETTINGS,
+			dndUntil: '2026-07-18T09:00:00Z'
+		};
+		expect(
+			isNotificationSuppressed(
+				settings,
+				{ silenced: false },
+				'messages',
+				now
+			)
+		).toBe(false);
 	});
 });

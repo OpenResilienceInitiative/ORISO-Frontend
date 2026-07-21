@@ -2057,6 +2057,17 @@
 				"title": "System-Benachrichtigungen",
 				"description": "Hier sehen Sie alle System-Benachrichtigungen.",
 				"empty": "Noch keine Benachrichtigungen vorhanden."
+			},
+			"dnd": {
+				"title": "Nicht stören",
+				"description": "Pausieren Sie alle Benachrichtigungen (Ton, Pop-ups, E-Mails) für eine gewählte Zeit. Ihr Verlauf füllt sich weiter.",
+				"activeUntil": "Aktiv bis {{time}}",
+				"option": {
+					"off": "Aus",
+					"1h": "1 Stunde",
+					"8h": "8 Stunden",
+					"tomorrow": "Bis morgen früh"
+				}
 			}
 		},
 		"routes": {
