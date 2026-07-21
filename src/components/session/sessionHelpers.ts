@@ -10,7 +10,7 @@ import {
 import { MessageItem } from '../message/MessageItemComponent';
 import {
 	formatToDDMMYYYY,
-	getPrettyDateFromMessageDate
+	getChatMessageDateDivider
 } from '../../utils/dateHelpers';
 import { getValueFromCookie } from '../sessionCookie/accessSessionCookie';
 import { decodeUsername } from '../../utils/encryptionHelpers';
@@ -187,7 +187,8 @@ export const prepareMessages = (messagesData): MessageItem[] => {
 
 			if (lastDate !== dateFormated) {
 				lastDate = dateFormated;
-				lastDateStr = getPrettyDateFromMessageDate(date / 1000);
+				// Explicit dates → "7th of July 2026"; relative → message.today etc.
+				lastDateStr = getChatMessageDateDivider(date / 1000);
 			}
 
 			return {

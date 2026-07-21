@@ -1,3 +1,8 @@
+import dayjs from 'dayjs';
+import advancedFormat from 'dayjs/plugin/advancedFormat';
+
+dayjs.extend(advancedFormat);
+
 export const MILLISECONDS_PER_SECOND = 1000;
 export const MILLISECONDS_PER_MINUTE = 60 * MILLISECONDS_PER_SECOND;
 export const MILLISECONDS_PER_HOUR = 60 * MILLISECONDS_PER_MINUTE;
@@ -19,6 +24,13 @@ export interface PrettyDate {
 	str: string;
 	date: string | null;
 }
+
+/**
+ * Explicit chat date-pill label only (#564): "7th of July 2026".
+ * Relative labels (Heute / Today / …) stay on i18n keys — do not use this for those.
+ */
+export const formatChatMessageDateDivider = (msSinceEpoch: number): string =>
+	dayjs(msSinceEpoch).format('Do [of] MMMM YYYY');
 
 const printPrettyDate = (
 	messageDate: number,
@@ -85,6 +97,24 @@ export const getPrettyDateFromMessageDate = (
 	twoDigits: boolean = false
 ) => {
 	return printPrettyDate(messageDate * 1000, showDayOfTheWeek, twoDigits);
+};
+
+/**
+ * Chat timeline date pill: keeps relative i18n keys (message.today, …);
+ * only replaces the explicit calendar `date` with ordinal English (#564).
+ * Session list / bookings still use {@link getPrettyDateFromMessageDate}.
+ */
+export const getChatMessageDateDivider = (unixSeconds: number): PrettyDate => {
+	const pretty = getPrettyDateFromMessageDate(unixSeconds);
+	if (!pretty.date) {
+		return pretty;
+	}
+	return {
+		...pretty,
+		date: formatChatMessageDateDivider(
+			unixSeconds * MILLISECONDS_PER_SECOND
+		)
+	};
 };
 
 export const formatToHHMM = (timestamp: string) => {

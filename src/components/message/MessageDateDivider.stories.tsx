@@ -24,7 +24,7 @@ export const Today: Story = {
 
 export const ExplicitDate: Story = {
 	name: 'Explicit date',
-	args: { label: '7. Juli 2026' }
+	args: { label: '7th of July 2026' }
 };
 
 export const LongLabel: Story = {
