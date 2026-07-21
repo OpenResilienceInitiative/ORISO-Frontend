@@ -1792,6 +1792,12 @@ $message-avatar-overlap: -19px;
 	margin-bottom: 4px;
 }
 
+// Avoid `.sideColumnGroup--left` (-25% for kebab+avatar). Send-failed has
+// avatar only, so use a lighter lift.
+.messageItem--sendFailed .messageItem__sideColumnGroup {
+	translate: 0% -5%;
+}
+
 // The content column overlaps the avatar column by 19px (like every
 // incoming message) — indent the header text so it clears the avatar ring.
 .messageItem--sendFailed .messageItem__header {

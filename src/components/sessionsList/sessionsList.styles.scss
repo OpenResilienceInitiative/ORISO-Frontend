@@ -379,7 +379,7 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 
 	&__resizeHandle {
 		position: absolute;
-		right: 0;
+		right: -12px;
 		top: 0;
 		bottom: 0;
 		width: 24px;
@@ -595,7 +595,6 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		// Align the hairlines with the card gutter: 6px on mobile, 12px on
 		// desktop (matches the scrollContainer margins above).
 		margin: 0 6px;
-		border-left: 1px solid #fff;
 		border-right: 1px solid #fff;
 
 		@include breakpoint($fromLarge) {
