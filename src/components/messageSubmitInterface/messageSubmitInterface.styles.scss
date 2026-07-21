@@ -1661,6 +1661,17 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 		}
 
+		&__attachmentModeThumb {
+			width: 48px;
+			height: 48px;
+			object-fit: cover;
+			border-radius: 8px;
+			flex-shrink: 0;
+			// Clip the alt text if an image ever fails to load, so it can
+			// never spill out of the thumbnail box.
+			overflow: hidden;
+		}
+
 		&__attachmentModeIcon {
 			display: inline-flex;
 			align-items: center;

@@ -65,6 +65,67 @@ describe('apiGetConsultantSessionList', () => {
 		expect(result.sessions.map((s: any) => s.session.id)).toEqual([7]);
 	});
 
+	it('keeps live-chat enquiries when the registered feed is empty (204/EMPTY)', async () => {
+		vi.mocked(fetchData).mockImplementation((async ({ url }: any) => {
+			if (url.includes('/registered')) {
+				throw new Error('EMPTY');
+			}
+			return {
+				sessions: [{ session: { id: 42 } }],
+				offset: 0,
+				count: 1,
+				total: 1
+			};
+		}) as any);
+
+		const result = await apiGetConsultantSessionList({
+			type: SESSION_LIST_TYPES.ENQUIRY
+		});
+
+		// Regression: an empty registered feed must not discard the anonymous
+		// live-chat queue ("Aktuell liegen keine Erstanfragen vor" bug).
+		expect(result.sessions.map((s: any) => s.session.id)).toEqual([42]);
+		expect(result.total).toBe(1);
+	});
+
+	it('keeps registered enquiries when the anonymous feed is empty (204/EMPTY)', async () => {
+		vi.mocked(fetchData).mockImplementation((async ({ url }: any) => {
+			if (url.includes('/anonymous')) {
+				throw new Error('EMPTY');
+			}
+			return { sessions: [{ session: { id: 7 } }], total: 1 };
+		}) as any);
+
+		const result = await apiGetConsultantSessionList({
+			type: SESSION_LIST_TYPES.ENQUIRY
+		});
+
+		expect(result.sessions.map((s: any) => s.session.id)).toEqual([7]);
+	});
+
+	it('rethrows EMPTY only when both enquiry feeds are empty', async () => {
+		vi.mocked(fetchData).mockImplementation((async () => {
+			throw new Error('EMPTY');
+		}) as any);
+
+		await expect(
+			apiGetConsultantSessionList({ type: SESSION_LIST_TYPES.ENQUIRY })
+		).rejects.toThrow('EMPTY');
+	});
+
+	it('propagates hard failures of the registered feed', async () => {
+		vi.mocked(fetchData).mockImplementation((async ({ url }: any) => {
+			if (url.includes('/registered')) {
+				throw new Error('Internal Server Error');
+			}
+			return { sessions: [{ session: { id: 2 } }] };
+		}) as any);
+
+		await expect(
+			apiGetConsultantSessionList({ type: SESSION_LIST_TYPES.ENQUIRY })
+		).rejects.toThrow('Internal Server Error');
+	});
+
 	it('loads consultant sessions with pagination', async () => {
 		vi.mocked(fetchData).mockResolvedValue({ sessions: [] });
 

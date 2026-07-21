@@ -117,7 +117,10 @@ const editSeriesItem = {
 	sourceLanguage: 'de',
 	hintMessageTranslations: { de: 'Welcome' },
 	groupChatRulesTranslations: { de: ['Be kind'] },
-	participants: [{ consultantId: 'c-9' }],
+	participants: [
+		{ consultantId: 'me', role: 'OWNER' },
+		{ consultantId: 'c-9', role: 'CO_MODERATOR' }
+	],
 	assignedAgencies: [{ id: 5 }]
 };
 
@@ -175,6 +178,52 @@ describe('CreateConversationView edit mode (finding 1)', () => {
 			topic: 'Existing circle'
 		});
 		expect(apiCreateGroupChat).not.toHaveBeenCalled();
+	});
+
+	it('lets the owner add a co-moderator while editing a circle', async () => {
+		vi.mocked(useSession).mockReturnValue({
+			session: { item: editSeriesItem } as any,
+			reload: vi.fn(),
+			read: vi.fn(),
+			ready: true
+		});
+		vi.mocked(apiGetTenantConsultantList).mockResolvedValue([
+			{
+				consultantId: 'c-2',
+				firstName: 'Casey',
+				lastName: 'Co-Moderator'
+			}
+		] as any);
+		vi.mocked(apiUpdateGroupChat).mockResolvedValue({ groupId: 'rc-1' });
+		vi.mocked(apiGetSessionRoomsByGroupIds).mockResolvedValue({
+			sessions: []
+		} as any);
+
+		renderInUserContext();
+
+		fireEvent.click(
+			await screen.findByRole('button', {
+				name: 'groupChat.circle.toggleModeratorList'
+			})
+		);
+		fireEvent.click(
+			await screen.findByRole('option', {
+				name: 'groupChat.circle.selectModerator'
+			})
+		);
+		fireEvent.click(
+			screen.getByRole('button', { name: 'groupChat.circle.saveLabel' })
+		);
+
+		await waitFor(() =>
+			expect(apiUpdateGroupChat).toHaveBeenCalledTimes(1)
+		);
+		expect(apiUpdateGroupChat.mock.calls[0][1]).toMatchObject({
+			consultantIds: ['c-9', 'c-2']
+		});
+		expect(
+			screen.queryByText('me', { selector: '.personChip__name' })
+		).toBeNull();
 	});
 
 	it('shows a loading state until the series has hydrated', () => {

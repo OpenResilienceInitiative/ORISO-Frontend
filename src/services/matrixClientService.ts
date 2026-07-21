@@ -11,6 +11,7 @@ import { applyDeviceIsolationMode } from './matrixDeviceIsolation';
 import { appConfig } from '../utils/appConfig';
 import { matrixLiveEventBridge } from './matrixLiveEventBridge';
 import { startDeviceDehydration } from './matrixDeviceDehydration';
+import { matrixRoomHistoryKeyTransfer } from './matrixRoomHistoryKeyTransfer';
 import { encryptMatrixAttachment } from '../utils/matrixEncryptedAttachment';
 import { buildMatrixRoomEncryptionInitialState } from '../utils/matrixRoomEncryption';
 import {
@@ -19,6 +20,8 @@ import {
 	buildEditContent,
 	buildReactionContent
 } from '../utils/messageRelations';
+
+import { getImageDimensions } from '../utils/imageDimensions';
 
 const TOKEN_REFRESH_BUFFER_MS = 2 * 60 * 1000;
 
@@ -41,9 +44,10 @@ const getMatrixFileMessageType = (file: File): string => {
 	return 'm.file';
 };
 
-const buildMatrixFileMessageContent = (
+export const buildMatrixFileMessageContent = (
 	file: File,
-	encryptedFile: Awaited<ReturnType<typeof encryptMatrixAttachment>>['file']
+	encryptedFile: Awaited<ReturnType<typeof encryptMatrixAttachment>>['file'],
+	dimensions?: { w: number; h: number } | null
 ): Record<string, unknown> => ({
 	body: file.name,
 	filename: file.name,
@@ -51,7 +55,10 @@ const buildMatrixFileMessageContent = (
 	file: encryptedFile,
 	info: {
 		mimetype: file.type || 'application/octet-stream',
-		size: file.size
+		size: file.size,
+		// m.image only: intrinsic pixel size so receivers can reserve a
+		// correctly-scaled thumbnail box before decrypting (WP-4).
+		...(dimensions ? { w: dimensions.w, h: dimensions.h } : {})
 	}
 });
 
@@ -490,6 +497,7 @@ export class MatrixClientService {
 
 		matrixCallService.initialize(client);
 		matrixLiveEventBridge.initialize(client);
+		matrixRoomHistoryKeyTransfer.initialize(client);
 		this.initializedServicesClient = client;
 
 		// #439 MSC3814: rehydrate the parked device (reads Megolm keys sent
@@ -559,6 +567,7 @@ export class MatrixClientService {
 		this.initializedServicesClient = null;
 		matrixLiveEventBridge.detach();
 		matrixCallService.detach();
+		matrixRoomHistoryKeyTransfer.detach();
 		this.notifySyncStateListeners();
 	}
 
@@ -574,6 +583,7 @@ export class MatrixClientService {
 			throw new Error('Matrix client not initialized');
 		}
 
+		const dimensions = await getImageDimensions(file);
 		const encryptedAttachment = await encryptMatrixAttachment(file);
 		const uploadResponse = await this.client.uploadContent(
 			encryptedAttachment.encryptedBlob,
@@ -594,10 +604,14 @@ export class MatrixClientService {
 
 		options.uploadProgress?.(100);
 
-		return buildMatrixFileMessageContent(file, {
-			...encryptedAttachment.file,
-			url: uploadResponse.content_uri
-		});
+		return buildMatrixFileMessageContent(
+			file,
+			{
+				...encryptedAttachment.file,
+				url: uploadResponse.content_uri
+			},
+			dimensions
+		);
 	}
 
 	private getStoredTokenExpiresAt(): number | null {

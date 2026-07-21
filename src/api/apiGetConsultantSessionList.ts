@@ -64,28 +64,47 @@ export const apiGetConsultantSessionList = async ({
 	const registeredUrl = `${endpoints.consultantEnquiriesBase}registered?${query}`;
 	const anonymousUrl = `${endpoints.consultantEnquiriesBase}anonymous?${query}`;
 
+	/*
+	 * Each feed answers 204 (rejected as FETCH_ERRORS.EMPTY) when IT is empty.
+	 * One empty feed must not fail the merge: a consultant with zero
+	 * registered enquiries but a filled live-chat topic queue would otherwise
+	 * see "no enquiries" although the anonymous feed returned sessions.
+	 * Only when BOTH feeds are empty the merged list is genuinely empty and
+	 * the EMPTY error is re-thrown so the existing empty-state handling runs.
+	 */
 	const [registered, anonymous] = await Promise.all([
-		fetchListUrl(registeredUrl, signal),
+		fetchListUrl(registeredUrl, signal).catch((error) => {
+			if (error?.message === FETCH_ERRORS.EMPTY) {
+				return null;
+			}
+			throw error;
+		}),
 		// The anonymous queue is best-effort: a failure there must not hide the
 		// registered enquiries a consultant is responsible for. It must be
 		// loud, though — a silent empty result is indistinguishable from
 		// "no live chat enquiries" and hides backend 500s from diagnosis.
 		fetchListUrl(anonymousUrl, signal).catch((error) => {
-			console.error(
-				'Anonymous enquiry feed failed — live chat enquiries may be missing from the list:',
-				error
-			);
-			return { sessions: [] } as ListItemsResponseInterface;
+			if (error?.message !== FETCH_ERRORS.EMPTY) {
+				console.error(
+					'Anonymous enquiry feed failed — live chat enquiries may be missing from the list:',
+					error
+				);
+			}
+			return null;
 		})
 	]);
+
+	if (!registered && !anonymous) {
+		throw new Error(FETCH_ERRORS.EMPTY);
+	}
 
 	return mergeEnquiryFeeds(registered, anonymous);
 };
 
 /** Merge two enquiry feeds, de-duplicating by session id (registered wins on conflict). */
 const mergeEnquiryFeeds = (
-	registered: ListItemsResponseInterface,
-	anonymous: ListItemsResponseInterface
+	registered: ListItemsResponseInterface | null,
+	anonymous: ListItemsResponseInterface | null
 ): ListItemsResponseInterface => {
 	const registeredSessions = registered?.sessions ?? [];
 	const anonymousSessions = anonymous?.sessions ?? [];
@@ -96,5 +115,9 @@ const mergeEnquiryFeeds = (
 		...registeredSessions,
 		...anonymousSessions.filter((item: any) => !seen.has(item?.session?.id))
 	];
-	return { ...registered, sessions: merged };
+	/* Base the pagination envelope (offset/count/total) on whichever feed
+	 * actually answered — with an empty registered feed the anonymous feed
+	 * carries the only valid envelope. */
+	const base = registered ?? anonymous ?? ({} as ListItemsResponseInterface);
+	return { ...base, sessions: merged };
 };

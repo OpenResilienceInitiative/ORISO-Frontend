@@ -13,6 +13,8 @@ import {
 import { isMatrixRoomIdHeuristic } from '../../utils/matrixRoomUtils';
 import { resolveAnonymousChatDisplayName } from '../../utils/anonymousChatDisplayName';
 import { UserAvatar } from '../message/UserAvatar';
+import { MessageAvatar } from '../message/MessageAvatar';
+import { formatMessagePersonName } from '../message/messageNameUtils';
 import { ConsultantSearchLoader } from '../sessionHeader/ConsultantSearchLoader';
 import { MenuVerticalIcon, ShowPasswordIcon } from '../../resources/img/icons';
 import { config } from '../../resources/scripts/config';
@@ -503,7 +505,11 @@ export const SessionListItemComponent = ({
 						marginBottom: '8px'
 					}}
 				>
-					🔔 {activeSession.user?.username || 'Unknown User'}
+					🔔{' '}
+					{formatMessagePersonName(
+						undefined,
+						activeSession.user?.username
+					) || translate('sessionList.user.unknown')}
 				</div>
 				<div style={{ fontSize: '12px', color: '#666' }}>
 					Session ID: {activeSession.item.id} | Postcode:{' '}
@@ -695,44 +701,9 @@ export const SessionListItemComponent = ({
 	// 	return null;
 	// }
 
-	// MATRIX MIGRATION: Render fallback if consulting type is missing
-	if (!consultingType && !activeSession.isGroup) {
-		return (
-			<div
-				onClick={() =>
-					navigate(
-						`${listPath}/sessionView/${activeSession.item.id}${getSessionListTab()}`
-					)
-				}
-				className="sessionsListItem"
-				data-cy="session-list-item"
-			>
-				<div className="sessionsListItem__content">
-					<div className="sessionsListItem__row">
-						<div className="sessionsListItem__consultingType">
-							{activeSession.item.postcode || 'N/A'}
-						</div>
-						<div className="sessionsListItem__date">
-							{new Date(
-								activeSession.item.createDate
-							).toLocaleDateString('de-DE')}
-						</div>
-					</div>
-					<div className="sessionsListItem__row">
-						<div className="sessionsListItem__icon">📋</div>
-						<div className="sessionsListItem__username">
-							{activeSession.user?.username || 'Unknown User'}
-						</div>
-					</div>
-					<div className="sessionsListItem__row">
-						<div className="sessionsListItem__subject">
-							Agency: {activeSession.item.agencyId} • Status: NEW
-						</div>
-					</div>
-				</div>
-			</div>
-		);
-	}
+	// MATRIX MIGRATION: the `if (!consultingType)` early return above already
+	// handles the missing-consulting-type case, so the previous fallback block
+	// here was unreachable and has been removed.
 
 	if (activeSession.isGroup) {
 		const isMyChat = () =>
@@ -897,20 +868,25 @@ export const SessionListItemComponent = ({
 	const hasConsultantData = !!activeSession.consultant;
 	let sessionTopic = '';
 
+	// Card title: never surface raw technical usernames
+	// ("ruhiges_Yak_Kim_234", "testuser@example.invalid") — humanize via the
+	// same name pipeline the chat messages use.
 	if (isAsker) {
 		if (hasConsultantData) {
-			sessionTopic =
-				activeSession.consultant.displayName ||
-				activeSession.consultant.username;
+			sessionTopic = formatMessagePersonName(
+				activeSession.consultant.displayName,
+				activeSession.consultant.username
+			);
 		} else if (activeSession.isEmptyEnquiry) {
 			sessionTopic = translate('sessionList.user.writeEnquiry');
 		} else {
 			sessionTopic = translate('sessionList.user.consultantUnknown');
 		}
 	} else {
-		sessionTopic =
-			resolveAnonymousChatDisplayName(activeSession.user) ||
-			activeSession.user.username;
+		sessionTopic = formatMessagePersonName(
+			resolveAnonymousChatDisplayName(activeSession.user) || undefined,
+			activeSession.user?.username
+		);
 	}
 
 	const postcodeLabel = getDisplayablePostcode(activeSession.item.postcode);
@@ -1437,21 +1413,30 @@ export const SessionListItemComponent = ({
 							</div>
 						) : isAsker && !hasConsultantData ? (
 							<ConsultantSearchLoader size="32px" />
+						) : !isAsker ? (
+							// Restored username+icon linkage: the asker card
+							// shows the SAME animal avatar the chat derives
+							// from the rc user id (generateAvatarForUser).
+							<MessageAvatar
+								isGroup={!!activeSession.isGroup}
+								isSystemNotification={false}
+								userId={
+									activeSession.item.askerRcId ||
+									activeSession.user?.username ||
+									'unknown'
+								}
+								username={activeSession.user?.username || ''}
+								displayName={sessionTopic}
+								size={32}
+							/>
 						) : (
 							<UserAvatar
 								username={
-									activeSession.user?.username ||
-									activeSession.consultant?.username ||
-									'User'
+									activeSession.consultant?.username || 'User'
 								}
-								displayName={
-									activeSession.user?.username ||
-									activeSession.consultant?.displayName
-								}
+								displayName={sessionTopic}
 								userId={
-									activeSession.user?.username ||
-									activeSession.consultant?.id ||
-									'unknown'
+									activeSession.consultant?.id || 'unknown'
 								}
 								size="32px"
 							/>
@@ -1477,25 +1462,33 @@ export const SessionListItemComponent = ({
 					</div>
 				</div>
 				<div className="sessionsListItem__row">
-					<SessionListItemLastMessage
-						lastMessage={
-							caseHandoverContentLocked
-								? translate('caseHandover.list.hiddenPreview')
-								: displayLastMessage
-						}
-						lastMessageType={
-							caseHandoverContentLocked
-								? null
-								: activeSession.item.lastMessageType
-						}
-						language={language}
-						showLanguage={
-							language &&
-							activeSession.isEnquiry &&
-							!activeSession.isEmptyEnquiry
-						}
-						showSpan={activeSession.isEmptyEnquiry}
-					/>
+					{/* Figma nodes 115/1139/312: when the case-handover action
+					    button is shown it takes the place of the last-message
+					    preview (the text sits "under" the button). Without a
+					    button the normal last message is shown. */}
+					{!canShowCaseHandoverAction && (
+						<SessionListItemLastMessage
+							lastMessage={
+								caseHandoverContentLocked
+									? translate(
+											'caseHandover.list.hiddenPreview'
+										)
+									: displayLastMessage
+							}
+							lastMessageType={
+								caseHandoverContentLocked
+									? null
+									: activeSession.item.lastMessageType
+							}
+							language={language}
+							showLanguage={
+								language &&
+								activeSession.isEnquiry &&
+								!activeSession.isEmptyEnquiry
+							}
+							showSpan={activeSession.isEmptyEnquiry}
+						/>
+					)}
 					{!caseHandoverContentLocked &&
 						activeSession.item.attachment && (
 							<SessionListItemAttachment
@@ -1515,7 +1508,7 @@ export const SessionListItemComponent = ({
 								listItemAskerRcId={activeSession.item.askerRcId}
 							/>
 						)}
-					{canShowCaseHandoverAction ? (
+					{canShowCaseHandoverAction && (
 						<CaseHandoverActionButton
 							labels={{
 								requestAccess: translate(
@@ -1569,7 +1562,11 @@ export const SessionListItemComponent = ({
 							onConfirmSelection={onCaseHandoverBatchConfirm}
 							onDeselectAndClose={onCaseHandoverBatchClose}
 						/>
-					) : (
+					)}
+					{/* Consulting-type modality icon (Nähe / Live Chat / Interna
+					    / Gesprächskreis) — always shown, including alongside the
+					    case-handover action button (Figma node 115). */}
+					{
 						<>
 							{modality === Modality.LIVE_CHAT && (
 								<div
@@ -1679,7 +1676,7 @@ export const SessionListItemComponent = ({
 								</div>
 							)}
 						</>
-					)}
+					}
 				</div>
 			</div>
 			{overlayActive && overlayItem && (

@@ -33,7 +33,10 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 	}
 	display: flex;
 	color: $body-font-color;
-	margin-bottom: 0px;
+
+	// Figma 8609-31260: cards sit flush in a stacked group; ONLY the active
+	// card gets 6px breathing room (its Figma frame carries py-6).
+	margin-bottom: 0;
 	transition:
 		background-color 160ms ease,
 		border-color 160ms ease,
@@ -47,10 +50,12 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		}
 	}
 
-	&:first-of-type {
+	// Exclude the active card so its 6px boundary gap (see &--active) is not
+	// overridden by the higher-specificity :first-of-type / :last-child rules.
+	&:first-of-type:not(.sessionsListItem--active) {
 		margin-top: 0px;
 	}
-	&:last-child {
+	&:last-child:not(.sessionsListItem--active) {
 		margin-bottom: 15px;
 	}
 
@@ -67,6 +72,8 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 	}
 
 	&--active {
+		// 6px gap above and below the selected card only.
+		margin: 6px 0;
 		transition:
 			background-color 160ms ease,
 			border-color 160ms ease,
@@ -170,16 +177,21 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 	}
 
 	&__content {
-		width: calc(100% - 18px);
-		max-width: calc(100% - 18px);
+		// Cards fill the 12px column gutter (set on .sessionsList__scrollContainer)
+		// instead of adding their own side margin.
+		width: 100%;
+		max-width: 100%;
 		min-width: 0;
 		box-sizing: border-box;
-		min-height: 112px;
+
+		// Figma 8609-31260: 160px card height; corners come from the stacked
+		// group (first/last/active rules below), flush cards stay square.
+		min-height: 160px;
 		padding: 0;
-		margin: 0 9px;
+		margin: 0;
 		background-color: $session-card-bg;
 		border: 1px solid $session-light-border;
-		border-radius: 0px;
+		border-radius: 0;
 		transition:
 			background-color 160ms ease,
 			border-color 160ms ease,
@@ -241,6 +253,9 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		border-color: #ffd8d4;
 	}
 
+	// Stacked-group corners (Figma 8609-31260): the group opens and closes
+	// with 24px corners; the active card carries its own full radius and its
+	// neighbours close the group edges around it.
 	&:first-child:not(.sessionsListItem--active) .sessionsListItem__content {
 		border-top-left-radius: 24px;
 		border-top-right-radius: 24px;
@@ -289,7 +304,9 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		&:last-child {
 			justify-content: space-between;
 			align-items: flex-end;
-			min-height: 36px;
+
+			// Figma 8609-31260: 48px-high bottom action row.
+			min-height: 48px;
 		}
 
 		&:not(:last-child) {
@@ -917,35 +934,42 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		margin-left: $grid-base;
 	}
 
-	// Case-handover split button (Figma Section 05 states board)
+	// Case-handover split button — M3 "split button" (Figma node 115-27170):
+	// two segments separated by a 2px gap, outer corners 20px, inner corners
+	// 4px. The per-state background colour is set once on the container as a
+	// CSS custom property and inherited by both segments.
 	&__handoverAction {
 		position: relative;
 		display: inline-flex;
 		align-items: stretch;
+		gap: 2px;
 		margin: 8px 16px 8px 8px;
-		border-radius: 19px;
-		background: var(--m3-secondary, #4b515a);
+		background: transparent;
 		color: var(--m3-on-primary, #ffffff);
 		flex-shrink: 0;
 
+		--handover-segment-bg: var(--m3-secondary, #4b515a);
+		--handover-segment-fg: var(--m3-on-primary, #ffffff);
+
 		&--active,
 		&--selected {
-			background: var(--m3-primary, #a5000a);
+			--handover-segment-bg: var(--m3-primary, #a5000a);
+			--handover-segment-fg: var(--m3-on-primary, #ffffff);
 		}
 
 		&--status {
-			background: var(--m3-surface-variant, #e0e2e5);
-			color: var(--m3-on-surface-variant, #5c6167);
+			--handover-segment-bg: var(--m3-surface-variant, #e0e2e5);
+			--handover-segment-fg: var(--m3-on-surface-variant, #5c6167);
 		}
 
 		&--denied {
-			background: var(--m3-surface-variant, #e0e2e5);
-			color: var(--m3-primary, #a5000a);
+			--handover-segment-bg: var(--m3-surface-variant, #e0e2e5);
+			--handover-segment-fg: var(--m3-primary, #a5000a);
 		}
 
 		&--disabled {
-			background: var(--m3-surface-variant, #e7e8ea);
-			color: var(--m3-outline, #9ca1a6);
+			--handover-segment-bg: var(--m3-surface-variant, #e7e8ea);
+			--handover-segment-fg: var(--m3-outline, #9ca1a6);
 		}
 	}
 
@@ -954,25 +978,35 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		align-items: center;
 		justify-content: center;
 		gap: 8px;
-		min-height: 38px;
+		min-height: 40px;
 		min-width: 116px;
-		padding: 0 8px 0 14px;
+		padding: 0 12px 0 16px;
 		border: 0;
-		border-radius: 19px 0 0 19px;
-		background: transparent;
-		color: inherit;
+		border-radius: 20px 4px 4px 20px;
+		background: var(--handover-segment-bg);
+		color: var(--handover-segment-fg);
 		font-family: $font-family-sans-serif;
 		font-size: 13px;
 		font-weight: 700;
 		line-height: 1;
 		cursor: pointer;
+		-webkit-tap-highlight-color: transparent;
+		transition: filter 120ms ease;
 
 		&:disabled {
 			cursor: default;
 		}
 
+		// Pressed feedback: a gentle darken of the segment colour (M3 state
+		// layer) — never a hard black overlay/ring.
+		&:active:not(:disabled) {
+			filter: brightness(0.94);
+		}
+
+		// Focus ring uses the segment foreground so it reads white on the red
+		// button and dark on the muted/status button — never a black circle.
 		&:focus-visible {
-			outline: 2px solid var(--m3-on-surface, #1b1b1c);
+			outline: 2px solid var(--handover-segment-fg, #1b1b1c);
 			outline-offset: -2px;
 		}
 	}
@@ -985,27 +1019,27 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		min-width: 34px;
+		min-width: 48px;
 		border: 0;
-		border-left: 1px solid rgba(255, 255, 255, 0.35);
-		border-radius: 0 19px 19px 0;
-		background: transparent;
-		color: inherit;
+		border-radius: 4px 20px 20px 4px;
+		background: var(--handover-segment-bg);
+		color: var(--handover-segment-fg);
 		cursor: pointer;
+		-webkit-tap-highlight-color: transparent;
+		transition: filter 120ms ease;
 
 		&:disabled {
 			cursor: default;
 		}
 
+		&:active:not(:disabled) {
+			filter: brightness(0.94);
+		}
+
 		&:focus-visible {
-			outline: 2px solid var(--m3-on-surface, #1b1b1c);
+			outline: 2px solid var(--handover-segment-fg, #1b1b1c);
 			outline-offset: -2px;
 		}
-	}
-
-	&__handoverAction--status &__handoverActionToggle,
-	&__handoverAction--denied &__handoverActionToggle {
-		border-left-color: rgba(0, 0, 0, 0.12);
 	}
 
 	&__handoverActionCheckbox {
@@ -1050,8 +1084,9 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 
 	&__handoverActionMenuItem {
 		display: flex;
-		flex-direction: column;
-		gap: 2px;
+		flex-direction: row;
+		align-items: flex-start;
+		gap: 12px;
 		width: 100%;
 		padding: 10px 12px;
 		border: 0;
@@ -1069,6 +1104,26 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 			outline: 2px solid var(--m3-primary, #a5000a);
 			outline-offset: -2px;
 		}
+	}
+
+	&__handoverActionMenuItemIcon {
+		flex-shrink: 0;
+		display: inline-flex;
+		margin-top: 1px;
+		color: var(--m3-on-surface, #1b1b1c);
+
+		svg {
+			display: block;
+			width: 20px;
+			height: 20px;
+		}
+	}
+
+	&__handoverActionMenuItemText {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		min-width: 0;
 	}
 
 	&__handoverActionMenuItemTitle {

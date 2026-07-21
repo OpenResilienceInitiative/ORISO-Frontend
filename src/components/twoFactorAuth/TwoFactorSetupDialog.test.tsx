@@ -488,6 +488,38 @@ describe('TwoFactorSetupDialog', () => {
 		).toBeTruthy();
 	});
 
+	it('shows email success when refreshed user data is still stale', async () => {
+		apiPutTwoFactorAuthEmailMock.mockResolvedValue(undefined);
+		apiPostTwoFactorAuthEmailWithCodeMock.mockResolvedValue(undefined);
+		apiPatchTwoFactorAuthEncourageMock.mockResolvedValue(undefined);
+		const { onSetupAborted, onSetupComplete } = renderDialog();
+		onSetupComplete.mockRejectedValue(new Error('STALE_USER_DATA'));
+
+		await screen.findByText('twoFactorAuth.setupDialog.decision.email');
+		clickButton('twoFactorAuth.setupDialog.decision.email');
+		clickButton('twoFactorAuth.setupDialog.action.next');
+		await screen.findByLabelText(
+			'twoFactorAuth.setupDialog.email.connect.input'
+		);
+		fireEvent.change(
+			screen.getByLabelText(
+				'twoFactorAuth.setupDialog.email.connect.input'
+			),
+			{ target: { value: '614805' } }
+		);
+		clickButton('twoFactorAuth.setupDialog.action.confirm');
+
+		expect(
+			await screen.findByText(
+				'twoFactorAuth.setupDialog.email.success.title'
+			)
+		).toBeTruthy();
+		expect(onSetupAborted).toHaveBeenCalledTimes(1);
+		expect(
+			screen.queryByText('twoFactorAuth.setupDialog.error.emailSetup')
+		).toBeNull();
+	});
+
 	it('shows success when post-activation encourage fails', async () => {
 		apiPutTwoFactorAuthAppMock.mockResolvedValue(undefined);
 		apiPatchTwoFactorAuthEncourageMock.mockRejectedValue(
@@ -518,7 +550,7 @@ describe('TwoFactorSetupDialog', () => {
 		).toBeNull();
 	});
 
-	it('does not show success when user data refresh fails after app activation', async () => {
+	it('shows app success when user data refresh fails after activation', async () => {
 		apiPutTwoFactorAuthAppMock.mockResolvedValue(undefined);
 		apiPatchTwoFactorAuthEncourageMock.mockResolvedValue(undefined);
 		const onSetupComplete = vi
@@ -540,10 +572,12 @@ describe('TwoFactorSetupDialog', () => {
 
 		await waitFor(() => expect(onSetupAborted).toHaveBeenCalledTimes(1));
 		expect(
-			await screen.findByText('twoFactorAuth.setupDialog.error.appSetup')
+			await screen.findByText(
+				'twoFactorAuth.setupDialog.app.success.title'
+			)
 		).toBeTruthy();
 		expect(
-			screen.queryByText('twoFactorAuth.setupDialog.app.success.title')
+			screen.queryByText('twoFactorAuth.setupDialog.error.appSetup')
 		).toBeNull();
 	});
 

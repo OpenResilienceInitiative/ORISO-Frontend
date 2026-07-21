@@ -23,6 +23,8 @@ import {
 	MessageItem,
 	MessageItemComponent
 } from '../message/MessageItemComponent';
+import { useMatrixDecryptionFailures } from '../../hooks/useMatrixDecryptionFailures';
+import { MessageSendFailed } from '../message/MessageSendFailed';
 import {
 	ReactionEvent,
 	AggregatedReaction,
@@ -76,6 +78,7 @@ import { apiGetSessionSupervisors } from '../../api/apiGetSessionSupervisors';
 import { apiPatchNotificationActiveView } from '../../api/apiPatchNotificationActiveView';
 import { apiRegisterMatrixRoomForSync } from '../../api/apiMatrixSyncRegister';
 import { apiPatchUserData } from '../../api/apiPatchUserData';
+import { apiPutSessionData } from '../../api/apiPutSessionData';
 import { apiGetUserData } from '../../api/apiGetUserData';
 import { apiGetAnonymousEnquiryDetails } from '../../api/apiGetAnonymousEnquiryDetails';
 import {
@@ -1619,6 +1622,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const resolvedMatrixRoomId = isMatrixRoom(activeSession.rid)
 		? activeSession.rid
 		: activeSession.item?.matrixRoomId || activeSession.rid;
+	// "Encryption broke" delivery status: event ids in this room whose Megolm
+	// decryption permanently failed, so the affected message can show the red
+	// cross (Figma 7086-57415). Keyed by event id === message._id.
+	const decryptionFailures =
+		useMatrixDecryptionFailures(resolvedMatrixRoomId);
 	// Reactions (m.annotation, #435).
 	const reactionEvents = useMemo(
 		() => props.reactionEvents || [],
@@ -1929,14 +1937,18 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	}, [isAnonymousAskerExperience, pseudonymStorageKey]);
 
 	/**
-	 * Confirm the chosen pseudonym. Updates ONLY the display name
-	 * via apiPatchUserData — the Matrix username stays "Anonymous-<ts>"
-	 * so the room membership and key chain stay intact.
+	 * Confirm the chosen pseudonym for this live-chat session. The Matrix
+	 * username stays "Anonymous-<ts>" so room membership and keys stay intact.
 	 */
 	const handleConfirmPseudonym = useCallback(() => {
 		if (pseudonymSaving) return;
 		setPseudonymSaving(true);
-		apiPatchUserData({ displayName: currentPseudonym.displayName })
+		apiPutSessionData(activeSession.item.id, {
+			displayName: currentPseudonym.displayName
+		})
+			.then(() =>
+				apiPatchUserData({ displayName: currentPseudonym.displayName })
+			)
 			.then(() => apiGetUserData().then((fresh) => setUserData(fresh)))
 			.then(() => {
 				setPseudonymConfirmed(true);
@@ -2993,8 +3005,28 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		onDragLeave();
 	};
 
+	// "Sending message failed" notifications (Figma 7086-57415): a send that
+	// never reached the server surfaces a card at the bottom of the timeline.
+	// They are cleared once a later send succeeds (the composer keeps the text,
+	// so a successful resend means the failures are resolved).
+	const [failedSends, setFailedSends] = useState<
+		{ id: string; ts: number }[]
+	>([]);
+	const handleSendError = useCallback((_message: string, ts: number) => {
+		setFailedSends((previous) => [
+			...previous,
+			{ id: `send-failed-${ts}`, ts }
+		]);
+	}, []);
+
+	// Drop stale failure cards when the conversation changes.
+	useEffect(() => {
+		setFailedSends([]);
+	}, [activeSession?.rid]);
+
 	const handleMessageSendSuccess = () => {
 		setDraggedFile(null);
+		setFailedSends([]);
 
 		if (props.refreshMessages) {
 			setTimeout(() => {
@@ -4734,9 +4766,30 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										}
 										onUnreact={handleUnreact}
 										{...message}
+										encryptionBroke={decryptionFailures.has(
+											message._id
+										)}
 									/>
+									{decryptionFailures.has(message._id) &&
+										(!isThreadsEnabled ||
+											!message.threadRootEventId) && (
+											<MessageSendFailed
+												messageTime={
+													message.messageTime
+												}
+												isDecryptionFailure
+											/>
+										)}
 								</React.Fragment>
 							))}
+						{/* "Sending message failed" cards for sends that never
+						    reached the server (Figma 7086-57415). */}
+						{failedSends.map((failed) => (
+							<MessageSendFailed
+								key={failed.id}
+								messageTime={String(failed.ts)}
+							/>
+						))}
 						{shouldShowInlineTypingIndicator && (
 							<div className="messageItem session__inlineTypingIndicator">
 								<div className="messageItem__messageWrap">
@@ -4847,8 +4900,22 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 								threadsEnabled={true}
 								forceShow={true}
 								{...activeThreadRootMessage}
+								encryptionBroke={decryptionFailures.has(
+									activeThreadRootMessage._id
+								)}
 							/>
 						)}
+						{activeThreadRootMessage &&
+							decryptionFailures.has(
+								activeThreadRootMessage._id
+							) && (
+								<MessageSendFailed
+									messageTime={
+										activeThreadRootMessage.messageTime
+									}
+									isDecryptionFailure
+								/>
+							)}
 						{messages &&
 							(ready || !activeSession.rid) &&
 							messages.map((message: MessageItem, index) => (
@@ -4901,7 +4968,20 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										}
 										onUnreact={handleUnreact}
 										{...message}
+										encryptionBroke={decryptionFailures.has(
+											message._id
+										)}
 									/>
+									{decryptionFailures.has(message._id) &&
+										message.threadRootEventId ===
+											activeThreadRootId && (
+											<MessageSendFailed
+												messageTime={
+													message.messageTime
+												}
+												isDecryptionFailure
+											/>
+										)}
 								</React.Fragment>
 							))}
 					</div>
@@ -4915,6 +4995,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							)}
 							typingUsers={props.typingUsers}
 							handleMessageSendSuccess={handleMessageSendSuccess}
+							onSendError={handleSendError}
 							isSupervisor={isSupervisor}
 							supervisionRoomId={supervisionRoomId}
 							threadRootId={activeThreadRootId}
@@ -5055,6 +5136,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									handleMessageSendSuccess={
 										handleMessageSendSuccess
 									}
+									onSendError={handleSendError}
 									isSupervisor={isSupervisor}
 									supervisionRoomId={supervisionRoomId}
 									replyTo={replyTo}

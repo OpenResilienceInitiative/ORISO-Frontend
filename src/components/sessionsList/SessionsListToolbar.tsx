@@ -56,6 +56,9 @@ interface SessionsListToolbarProps {
 	showSupervisionChip: boolean;
 	/** Show the "Live-Chat" filter chip (tied to the sidebar availability toggle). */
 	showLiveChatChip?: boolean;
+	/** Show group-session filters only when their tenant modules are enabled. */
+	showGroupChip?: boolean;
+	showInternalGroupChip?: boolean;
 	/** Show create/archive route chips. This is intentionally limited to Gespräch. */
 	createGroupChatPath: string;
 	archiveTabPath: string;
@@ -262,6 +265,8 @@ export const SessionsListToolbar = ({
 	showCreateGroupChatAction,
 	showSupervisionChip,
 	showLiveChatChip = false,
+	showGroupChip = false,
+	showInternalGroupChip = false,
 	createGroupChatPath,
 	archiveTabPath,
 	archiveTabActive,
@@ -384,9 +389,20 @@ export const SessionsListToolbar = ({
 				if (chip.id === 'supervision') {
 					return showSupervisionChip;
 				}
+				if (chip.id === 'groups') {
+					return showGroupChip;
+				}
+				if (chip.id === 'internalGroup') {
+					return showInternalGroupChip;
+				}
 				return true;
 			}),
-		[showLiveChatChip, showSupervisionChip]
+		[
+			showGroupChip,
+			showInternalGroupChip,
+			showLiveChatChip,
+			showSupervisionChip
+		]
 	);
 	const archiveInsertIndex = Math.max(
 		visibleFilterChips.findIndex((chip) => chip.id === 'internalGroup'),
@@ -612,8 +628,6 @@ export const SessionsListToolbar = ({
 					{showCreateGroupChatAction && (
 						<Link
 							className={clsx('sessionsListToolbar__chip', {
-								'sessionsListToolbar__chip--iconOnly':
-									!createGroupChatActive,
 								'sessionsListToolbar__chip--active':
 									createGroupChatActive
 							})}
@@ -627,10 +641,7 @@ export const SessionsListToolbar = ({
 							data-cy="sessions-list-chip-create"
 						>
 							<CreateChatFilterIcon className="sessionsListToolbar__chipIconSvg" />
-							<span
-								className="sessionsListToolbar__chipLabel"
-								aria-hidden={!createGroupChatActive}
-							>
+							<span className="sessionsListToolbar__chipLabel">
 								{tr(
 									'sessionList.toolbar.chips.create',
 									'Create'
@@ -641,16 +652,13 @@ export const SessionsListToolbar = ({
 					{filterChipsBeforeArchive.map(renderFilterChip)}
 					{showConsultantActions && (
 						<Link
-							className={clsx(
-								'sessionsListToolbar__chip',
-								'walkthrough_step_4',
-								{
-									'sessionsListToolbar__chip--iconOnly':
-										!archiveTabActive,
-									'sessionsListToolbar__chip--active':
-										archiveTabActive
-								}
-							)}
+							className={clsx('sessionsListToolbar__chip', {
+								'sessionsListToolbar__chip--iconOnly':
+									!archiveTabActive,
+								'sessionsListToolbar__chip--active':
+									archiveTabActive
+							})}
+							data-tour-target="sessions-archive-tab"
 							to={archiveTabPath}
 							aria-label={translate(
 								'sessionList.view.archive.tab'

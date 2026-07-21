@@ -46,6 +46,10 @@ import { RouterConfigConsultant } from './RouterConfig';
 import { Routing } from './Routing';
 import { config } from '../../resources/scripts/config';
 import { MenuVerticalIcon } from '../../resources/img/icons';
+import {
+	NavigationStoryProviders,
+	storybookSettings as navigationStorybookSettings
+} from './navigationStoryHelpers';
 import './authenticatedApp.styles.scss';
 import './navigation.styles.scss';
 import '../sessionsList/sessionsList.styles.scss';
@@ -832,35 +836,13 @@ class ComposerBoundary extends React.Component<
 }
 
 function RuntimeSidebar() {
-	useEffect(() => {
-		let previousLiveChatAvailability: string | null = null;
-		try {
-			previousLiveChatAvailability = localStorage.getItem(
-				'caritas_liveChatAvailability'
-			);
-			localStorage.removeItem('caritas_liveChatAvailability');
-		} catch {
-			/* Storybook determinism only. */
-		}
-		return () => {
-			try {
-				if (previousLiveChatAvailability == null) {
-					localStorage.removeItem('caritas_liveChatAvailability');
-				} else {
-					localStorage.setItem(
-						'caritas_liveChatAvailability',
-						previousLiveChatAvailability
-					);
-				}
-			} catch {
-				/* Storybook cleanup only. */
-			}
-		};
+	const routerConfig = useMemo(() => {
+		return RouterConfigConsultant({
+			...config,
+			...navigationStorybookSettings
+		});
 	}, []);
 
-	const routerConfig = useMemo(() => {
-		return RouterConfigConsultant(appOrisoRouterSettings);
-	}, []);
 	return (
 		<div className="appOrisoRuntimeRail" style={styles.navigationRail}>
 			<style>
@@ -871,12 +853,12 @@ function RuntimeSidebar() {
 					}
 				`}
 			</style>
-			<AppOrisoRuntimeProviders>
+			<NavigationStoryProviders role="consultant">
 				<NavigationBar
 					routerConfig={routerConfig}
 					onLogout={() => {}}
 				/>
-			</AppOrisoRuntimeProviders>
+			</NavigationStoryProviders>
 		</div>
 	);
 }

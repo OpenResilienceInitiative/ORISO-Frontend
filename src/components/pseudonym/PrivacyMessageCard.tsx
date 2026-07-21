@@ -4,8 +4,9 @@ import { TypewriterText, TypingReveal } from './BotMessageAnimation';
 import './PseudonymCard.styles.scss';
 import './PrivacyMessageCard.styles.scss';
 
-/** Carimat robot_2 icon — exact path from Figma node 1320:38837. */
-const CarimatRobotIcon: React.FC = () => (
+/** Carimat robot_2 icon — exact path from Figma node 1320:38837.
+ *  Exported for reuse as the bot avatar on chat system notifications. */
+export const CarimatRobotIcon: React.FC = () => (
 	<svg
 		width="32"
 		height="36"

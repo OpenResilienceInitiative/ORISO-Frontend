@@ -10,7 +10,7 @@ import {
 
 export const apiUrl = getApiBaseUrl();
 const userServiceOrigin = getUserServiceOrigin(apiUrl);
-const tenantServiceOrigin = getTenantServiceOrigin(apiUrl);
+export const tenantServiceOrigin = getTenantServiceOrigin(apiUrl);
 const agencyServiceOrigin = getAgencyServiceOrigin(apiUrl);
 const consultingTypeServiceOrigin = getConsultingTypeServiceOrigin(apiUrl);
 const keycloakOrigin = getKeycloakOrigin(apiUrl);
@@ -64,6 +64,9 @@ export const endpoints = {
 		userServiceOrigin + '/service/conversations/consultants/enquiries/',
 	consultantLiveChatAvailability:
 		userServiceOrigin + '/service/conversations/consultants/availability',
+	consultantLiveChatAvailabilityHeartbeat:
+		userServiceOrigin +
+		'/service/conversations/consultants/availability/heartbeat',
 	consultantSessions:
 		userServiceOrigin + '/service/users/sessions/consultants?status=2&',
 	consultantStatistics:
@@ -80,6 +83,7 @@ export const endpoints = {
 	deleteAskerAccount: userServiceOrigin + '/service/users/account',
 	draftMessages: userServiceOrigin + '/service/messages/draft',
 	userDrafts: userServiceOrigin + '/service/users/drafts',
+	tutorialProgress: userServiceOrigin + '/service/users/tutorials/progress',
 	email: userServiceOrigin + '/service/users/email',
 	// logstash intake was retired; client crash reports now go to UserService's
 	// OBS-P3 error-intake endpoint, which logs them into SigNoz (ORISO-Helm#62).
@@ -129,6 +133,9 @@ export const endpoints = {
 	startVideoCall: apiUrl + '/service/videocalls/new',
 	tenantServiceBase: tenantServiceOrigin + '/service/tenant',
 	dpaSignatureConfirm: (token: string) =>
+		tenantServiceOrigin +
+		`/service/tenant/public/dpa/confirm/${encodeURIComponent(token)}`,
+	dpaSignaturePreview: (token: string) =>
 		tenantServiceOrigin +
 		`/service/tenant/public/dpa/confirm/${encodeURIComponent(token)}`,
 	topicGroups: consultingTypeServiceOrigin + '/service/topic-groups',

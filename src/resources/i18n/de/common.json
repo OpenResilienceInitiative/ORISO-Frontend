@@ -177,6 +177,11 @@
 				"png": "PNG",
 				"xlsx": "XLSX"
 			}
+		},
+		"mediaCheck": {
+			"unchecked": "Bild aus anonymem Chat – noch nicht geprüft",
+			"reveal": "Bild anzeigen",
+			"blocked": "Von der Sicherheitsprüfung blockiert"
 		}
 	},
 	"banUser": {
@@ -773,15 +778,23 @@
 			"togglePersonList": "Personenliste öffnen oder schließen"
 		},
 		"circle": {
+			"addModerator": "Co-Moderator:in hinzufügen",
 			"cardHeadline": "Anonyme Selbsthilfegruppen",
 			"cardText": "in Ihrem Fachbereich initiieren. Einmalig oder regelmäßig: Wählen Sie das passende Medium und teilen Sie den Kreis mit den Teilnehmenden.",
 			"createLabel": "Erstellen",
+			"deselectModerator": "{{name}} entfernen",
+			"moderatorCount_one": "{{count}} Co-Moderator:in hinzugefügt",
+			"moderatorCount_other": "{{count}} Co-Moderator:innen hinzugefügt",
+			"moderatorsLabel": "Weitere Moderation",
 			"noTopics": "Keine Themen verfügbar",
+			"removeModerator": "{{name}} entfernen",
 			"saveLabel": "Speichern",
 			"settingsSubtitle": "Passen Sie nun Begrüßungstext, Format, Regeln, Intervalle und die Sprache an, in welcher der Kreis primär stattfinden soll.",
 			"settingsTitle": "Einstellungen für den Gesprächskreis",
 			"subtitle": "moderiert durch Berater:innen",
+			"selectModerator": "{{name}} auswählen",
 			"title": "Gesprächskreis",
+			"toggleModeratorList": "Liste der Co-Moderator:innen öffnen oder schließen",
 			"toggleTopicList": "Themenliste öffnen oder schließen",
 			"topicLabel": "Thema / Fachbereich"
 		},
@@ -1434,6 +1447,15 @@
 				"headline": "Nachricht löschen"
 			}
 		},
+		"encryptionBroke": {
+			"status": "Verschlüsselung gebrochen"
+		},
+		"decryptionFailed": {
+			"body": "Diese eingehende Nachricht konnte nicht entschlüsselt werden. Bitten Sie die absendende Person, sie erneut zu senden, oder laden Sie die Unterhaltung neu.",
+			"status": "konnte nicht entschlüsselt werden",
+			"subtitle": "Eingehende Nachricht nicht verfügbar",
+			"title": "Nachricht konnte nicht entschlüsselt werden"
+		},
 		"groupChat": "Gruppenchat",
 		"isMyMessage": {
 			"name": "Ich"
@@ -1443,6 +1465,12 @@
 			"title": "Notiz"
 		},
 		"read": "gelesen",
+		"sendFailed": {
+			"body": "Beim Senden der Nachricht gab es ein Problem, vermutlich durch die Verschlüsselung oder einen Übertragungsfehler. Bitte kopieren Sie sie und versuchen Sie es erneut. Prüfen Sie den Status: Ein Haken bedeutet gesendet, zwei Haken bedeuten gelesen, und ein Kreuz bedeutet, dass sie den Server nicht erreicht hat.",
+			"status": "nicht zugestellt",
+			"subtitle": "Senden Sie Ihre Nachricht erneut",
+			"title": "Senden fehlgeschlagen"
+		},
 		"sent": "zugestellt",
 		"submit": {
 			"booking": {
@@ -1891,7 +1919,11 @@
 			"liveChat": {
 				"title": "Meine Live-Chat Verfügbarkeit",
 				"description": "Aktivieren Sie Ihre Verfügbarkeit und sehen Sie in den Erstanfragen unter „Live-Chat Anfragen“ die wartenden anoymen Ratsuchenden.",
-				"toggleLabel": "Bin verfügbar"
+				"toggleLabel": "Bin verfügbar",
+				"viaSidebar": {
+					"label": "Live Chat über Menü Leiste aktivieren",
+					"description": "Wenn aktiviert, schalten Sie Ihre Live-Chat-Verfügbarkeit über die Menü-Leiste (Seitenleiste) statt hier ein und aus. Der Verfügbarkeits-Schalter oben wird dann deaktiviert und das Live-Chat-Symbol bleibt dauerhaft in der Seitenleiste sichtbar – ein Klick ändert nur seinen Status, das Symbol verschwindet nicht. Ist diese Option aus, wird der Live Chat wie bisher nur hier in Mein Profil gesteuert."
+				}
 			},
 			"masterKey": {
 				"saveError": "Beim Passwort Ändern ist ein Problem aufgetaucht. Bitte versuchen Sie es erneut."
@@ -2891,6 +2923,7 @@
 			"consultantUnknown": "Anfragephase",
 			"headline": "Meine Beratungen",
 			"peer": "Peer",
+			"unknown": "Unbekannt",
 			"writeEnquiry": "Jetzt Nachricht schreiben"
 		},
 		"view": {
@@ -3512,6 +3545,23 @@
 		}
 	},
 	"walkthrough": {
+		"close": "Rundgang schließen",
+		"overview": {
+			"title": "Meine Rundgänge",
+			"subtitle": "Starten Sie Rundgänge durch die Anwendung oder setzen Sie sie fort.",
+			"empty": "Aktuell sind keine Rundgänge für Sie verfügbar.",
+			"status": {
+				"not_started": "Nicht gestartet",
+				"in_progress": "In Bearbeitung",
+				"completed": "Abgeschlossen",
+				"skipped": "Übersprungen"
+			},
+			"action": {
+				"start": "Starten",
+				"continue": "Fortsetzen",
+				"restart": "Neu starten"
+			}
+		},
 		"step": {
 			"0": {
 				"intro": "Um Ihnen die einzelnen Funktionen zu erklären, haben wir einen kurzen Rundgang für Sie vorbereitet. <br /><br /> Sie können ihn jederzeit abbrechen oder in ihrem Profil erneut starten.",

@@ -1,4 +1,5 @@
 // Shim for react-dom to provide findDOMNode compatibility with React 19
+// (webpack aliases react-dom$ here for third-party libraries that still call it)
 import * as ReactDOM from '../node_modules/react-dom/index.js';
 
 // Polyfill findDOMNode for React 19 compatibility

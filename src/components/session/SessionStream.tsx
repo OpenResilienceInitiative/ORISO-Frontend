@@ -59,6 +59,11 @@ import {
 import { applyMessageEdits } from '../../utils/messageRelations';
 import { CaseHandoverCurtain } from './CaseHandoverCurtain';
 import { isCaseHandoverAccessControlled } from './caseHandoverHelpers';
+import {
+	MATRIX_HISTORY_KEYS_IMPORTED_EVENT,
+	isUndecryptedRoomEvent,
+	matrixRoomHistoryKeyTransfer
+} from '../../services/matrixRoomHistoryKeyTransfer';
 
 interface SessionStreamProps {
 	readonly: boolean;
@@ -81,6 +86,9 @@ export const SessionStream = ({
 	const { userData } = useContext(UserDataContext);
 	const { matrixClientService } = useMatrixClient();
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
+	// FE#514 follow-up: `team.discussion.new` notifications deep-link with
+	// ?teamDiscussion=1 — the panel then opens expanded instead of collapsed.
+	const teamDiscussionParam = useSearchParam<string>('teamDiscussion');
 
 	// MATRIX MIGRATION: Track component mount/unmount
 	useEffect(() => {
@@ -95,6 +103,7 @@ export const SessionStream = ({
 	// instance got removeAllListeners(), so every effect holding room
 	// listeners depends on this generation to re-attach to the new client.
 	const [matrixClientGeneration, setMatrixClientGeneration] = useState(0);
+	const initialTimelineHydrationKeyRef = useRef('');
 	const [messagesItem, setMessagesItem] = useState(null);
 	const [overlayItem, setOverlayItem] = useState<OverlayItem>(null);
 	const [isOverlayActive, setIsOverlayActive] = useState(false);
@@ -128,6 +137,7 @@ export const SessionStream = ({
 	const [supervisionRoomId, setSupervisionRoomId] = useState<
 		string | undefined
 	>(undefined);
+	const [hasSupervisionAccess, setHasSupervisionAccess] = useState(false);
 	const [matrixTypingUsers, setMatrixTypingUsers] = useState<string[]>([]);
 	const matrixTypingTimeoutRef = useRef<number | null>(null);
 	const matrixTypingLastTriggerRef = useRef(0);
@@ -208,6 +218,11 @@ export const SessionStream = ({
 			}),
 		[activeSession, type, userData]
 	);
+	const caseHandoverCurtainNeeded =
+		caseHandoverGateNeeded && !hasSupervisionAccess;
+	const mayRequestHistoryKeys =
+		!caseHandoverCurtainNeeded ||
+		caseHandoverStatus?.canViewContent === true;
 
 	// ADR-008: resolve the per-session supervision side room id for members.
 	// The backend only returns supervisor entries (with the side room id) to
@@ -218,6 +233,7 @@ export const SessionStream = ({
 		const sessionId = activeSession.item?.id;
 
 		setSupervisionRoomId(undefined);
+		setHasSupervisionAccess(false);
 
 		if (
 			!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) ||
@@ -236,10 +252,18 @@ export const SessionStream = ({
 				const sideRoomId = supervisors.find(
 					(s) => s.matrixRoomId
 				)?.matrixRoomId;
+				setHasSupervisionAccess(
+					supervisors.some(
+						(supervisor) =>
+							String(supervisor.supervisorConsultantId) ===
+							String(userData.userId)
+					)
+				);
 				setSupervisionRoomId(sideRoomId || undefined);
 			})
 			.catch(() => {
 				if (!cancelled) {
+					setHasSupervisionAccess(false);
 					setSupervisionRoomId(undefined);
 				}
 			});
@@ -258,7 +282,7 @@ export const SessionStream = ({
 			abortController.current = new AbortController();
 
 			if (
-				caseHandoverGateNeeded &&
+				caseHandoverCurtainNeeded &&
 				!forceCaseHandoverAccess &&
 				!caseHandoverStatus?.canViewContent
 			) {
@@ -311,6 +335,21 @@ export const SessionStream = ({
 				const supervisionEvents = supervisionRoomId
 					? loadRoomEvents(supervisionRoomId)
 					: [];
+				if (mayRequestHistoryKeys) {
+					[
+						[resolvedMatrixRoomId, clientEvents],
+						[supervisionRoomId, supervisionEvents]
+					].forEach(([roomId, events]) => {
+						if (
+							roomId &&
+							(events as any[]).some(isUndecryptedRoomEvent)
+						) {
+							void matrixRoomHistoryKeyTransfer.requestKeys(
+								roomId as string
+							);
+						}
+					});
+				}
 				const formattedMessages = mergeMatrixMessages(
 					formatRoomMessages(clientEvents, resolvedMatrixRoomId),
 					formatRoomMessages(supervisionEvents, supervisionRoomId)
@@ -339,14 +378,41 @@ export const SessionStream = ({
 			return Promise.resolve(true);
 		},
 		[
-			caseHandoverGateNeeded,
+			caseHandoverCurtainNeeded,
 			caseHandoverStatus?.canViewContent,
+			mayRequestHistoryKeys,
 			resolvedChatSession,
 			supervisionRoomId,
 			translate
 		]
 	);
 	const fetchSessionMessagesRef = useUpdatingRef(fetchSessionMessages);
+
+	useEffect(() => {
+		const onHistoryKeysImported = (rawEvent: Event) => {
+			const importedRoomId = (rawEvent as CustomEvent)?.detail?.roomId;
+			if (
+				[resolvedChatSession.matrixRoomId, supervisionRoomId].includes(
+					importedRoomId
+				)
+			) {
+				void fetchSessionMessagesRef.current(true);
+			}
+		};
+		window.addEventListener(
+			MATRIX_HISTORY_KEYS_IMPORTED_EVENT,
+			onHistoryKeysImported
+		);
+		return () =>
+			window.removeEventListener(
+				MATRIX_HISTORY_KEYS_IMPORTED_EVENT,
+				onHistoryKeysImported
+			);
+	}, [
+		fetchSessionMessagesRef,
+		resolvedChatSession.matrixRoomId,
+		supervisionRoomId
+	]);
 
 	const setSessionRead = useCallback(() => {
 		if (readonly) {
@@ -372,7 +438,17 @@ export const SessionStream = ({
 		setCaseHandoverStatus(null);
 		setMessagesItem({ messages: [] });
 
-		if (!caseHandoverGateNeeded || !sessionId) {
+		if (!caseHandoverCurtainNeeded || !sessionId) {
+			if (caseHandoverGateNeeded && hasSupervisionAccess && sessionId) {
+				setCaseHandoverStatus({
+					sessionId,
+					status: 'AUTHORIZED_SUPERVISOR',
+					canViewContent: true,
+					clientConsentRequired: false,
+					auditOutcome: 'AUTHORIZED_SUPERVISOR'
+				});
+				void loadAfterCaseHandoverGranted();
+			}
 			setCaseHandoverStatusLoading(false);
 			return () => {
 				cancelled = true;
@@ -417,7 +493,9 @@ export const SessionStream = ({
 		};
 	}, [
 		activeSession.item?.id,
+		caseHandoverCurtainNeeded,
 		caseHandoverGateNeeded,
+		hasSupervisionAccess,
 		loadAfterCaseHandoverGranted
 	]);
 
@@ -432,12 +510,16 @@ export const SessionStream = ({
 		if (!clientRoomId) {
 			return;
 		}
+		if (!mayRequestHistoryKeys) {
+			return;
+		}
 
 		// ADR-008: listen on the client room AND (for members) the supervision
 		// side room, so newly-sent asides appear live for authorized viewers.
 		const watchedRoomIds = supervisionRoomId
 			? [clientRoomId, supervisionRoomId]
 			: [clientRoomId];
+		const initialHydrationKey = `${matrixClientGeneration}:${watchedRoomIds.join('|')}`;
 
 		let retryTimer: number | null = null;
 		let detachTimelineListeners: Array<() => void> = [];
@@ -501,6 +583,24 @@ export const SessionStream = ({
 			}
 
 			detachTimelineListeners = detachers;
+			// Initial-sync events arrive with toStartOfTimeline=true and are
+			// intentionally ignored by the live handler. Hydrate once after every
+			// successful attachment so late-join decryption failures can trigger
+			// their room-key request after the Matrix room actually exists.
+			if (
+				initialTimelineHydrationKeyRef.current !== initialHydrationKey
+			) {
+				initialTimelineHydrationKeyRef.current = initialHydrationKey;
+				// The initial timeline can be empty or already SDK-normalised by the
+				// time React sees it. Request this room's existing keys once per
+				// client generation instead of depending on a particular failure
+				// event shape.
+				watchedRoomIds.forEach(
+					(roomId) =>
+						void matrixRoomHistoryKeyTransfer.requestKeys(roomId)
+				);
+				refreshMessages();
+			}
 			return true;
 		};
 
@@ -546,7 +646,8 @@ export const SessionStream = ({
 		supervisionRoomId,
 		fetchSessionMessages,
 		matrixRoomId,
-		matrixClientGeneration
+		matrixClientGeneration,
+		mayRequestHistoryKeys
 	]);
 
 	const groupChatStoppedOverlay: OverlayItem = useMemo(
@@ -924,7 +1025,7 @@ export const SessionStream = ({
 	const caseHandoverTopic = useTopic(caseHandoverTopicId);
 	const caseHandoverTopicLabel = caseHandoverTopic?.name;
 
-	if (caseHandoverGateNeeded && caseHandoverStatusLoading) {
+	if (caseHandoverCurtainNeeded && caseHandoverStatusLoading) {
 		return <Loading />;
 	}
 
@@ -953,7 +1054,7 @@ export const SessionStream = ({
 		}
 	};
 
-	if (caseHandoverGateNeeded && !caseHandoverStatus?.canViewContent) {
+	if (caseHandoverCurtainNeeded && !caseHandoverStatus?.canViewContent) {
 		return (
 			<div className="session__wrapper">
 				<CaseHandoverCurtain
@@ -981,8 +1082,10 @@ export const SessionStream = ({
 		<div className="session__wrapper">
 			{showTeamDiscussion && (
 				<TeamDiscussionPanel
+					key={activeSession.item.id}
 					sessionId={activeSession.item.id}
 					allowCreate={activeSession.isEnquiry}
+					initiallyOpen={teamDiscussionParam === '1'}
 				/>
 			)}
 			<SessionItemComponent

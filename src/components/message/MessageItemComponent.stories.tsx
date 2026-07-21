@@ -25,6 +25,8 @@ import {
 	mockMessageItemComponentProps,
 	mockServerSettingsContext,
 	mockCaseHandoverGrantedMessage,
+	mockManyReactions,
+	mockReactions,
 	mockSystemNotificationMessage,
 	mockUserData,
 	mockVisibilityMessage
@@ -65,8 +67,8 @@ function MessageItemContextDecorator({
 						>
 							<div
 								style={{
-									maxWidth: 720,
-									padding: '32px 40px',
+									maxWidth: 1000,
+									padding: '24px 16px',
 									background: '#ffffff'
 								}}
 							>
@@ -301,6 +303,196 @@ export const LongMessage: Story = {
 			userId: MOCK_ASKER_RC_ID,
 			askerRcId: MOCK_ASKER_RC_ID,
 			message: mockLongGermanMessage
+		}),
+		...baseHandlers
+	}
+};
+
+export const IncomingWithReactions: Story = {
+	name: 'Incoming with reactions',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_ASKER_RC_ID,
+			askerRcId: MOCK_ASKER_RC_ID,
+			displayName: 'Sanftes Alpaka Kala',
+			username: 'sanftes.alpaka.kala@oriso.invalid'
+		}),
+		reactions: mockReactions(),
+		onReact: () => {},
+		onUnreact: () => {},
+		...baseHandlers
+	}
+};
+
+export const OutgoingWithReactions: Story = {
+	name: 'Outgoing with reactions (delivered)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: true,
+			userId: MOCK_CONSULTANT_RC_ID,
+			displayName: 'Karina P',
+			username: 'karina.p@oriso.invalid',
+			isNotRead: true,
+			message:
+				'Danke für deine Offenheit. Wir schauen uns das morgen gemeinsam an.'
+		}),
+		reactions: mockReactions(),
+		onReact: () => {},
+		onUnreact: () => {},
+		...baseHandlers
+	}
+};
+
+export const OutgoingWithManyReactions: Story = {
+	name: 'Outgoing with many reactions (horizontal scroll)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: true,
+			userId: MOCK_CONSULTANT_RC_ID,
+			displayName: 'Karina P',
+			username: 'karina.p@oriso.invalid',
+			isNotRead: true,
+			message: 'Viele Reaktionen: die Chip-Leiste scrollt horizontal.'
+		}),
+		reactions: mockManyReactions(),
+		onReact: () => {},
+		onUnreact: () => {},
+		...baseHandlers
+	}
+};
+
+export const IncomingWithManyReactions: Story = {
+	name: 'Incoming with many reactions (horizontal scroll)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_ASKER_RC_ID,
+			askerRcId: MOCK_ASKER_RC_ID,
+			displayName: 'Sanftes Alpaka Kala',
+			username: 'sanftes.alpaka.kala@oriso.invalid'
+		}),
+		reactions: mockManyReactions(),
+		onReact: () => {},
+		onUnreact: () => {},
+		...baseHandlers
+	}
+};
+
+export const OutgoingDelivered: Story = {
+	name: 'Outgoing delivered (single checkmark)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: true,
+			userId: MOCK_CONSULTANT_RC_ID,
+			displayName: 'Karina P',
+			username: 'karina.p@oriso.invalid',
+			isNotRead: true,
+			message: 'Diese Nachricht ist zugestellt, aber noch nicht gelesen.'
+		}),
+		onReact: () => {},
+		...baseHandlers
+	}
+};
+
+export const OutgoingRead: Story = {
+	name: 'Outgoing read (double checkmark)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: true,
+			userId: MOCK_CONSULTANT_RC_ID,
+			displayName: 'Karina P',
+			username: 'karina.p@oriso.invalid',
+			isNotRead: false,
+			message: 'Diese Nachricht wurde bereits gelesen.'
+		}),
+		onReact: () => {},
+		...baseHandlers
+	}
+};
+
+export const OutgoingSendFailed: Story = {
+	name: 'Outgoing send failed (cross)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: true,
+			userId: MOCK_CONSULTANT_RC_ID,
+			displayName: 'Karina P',
+			username: 'karina.p@oriso.invalid',
+			isNotRead: true,
+			message: 'Diese Nachricht hat den Server nicht erreicht.'
+		}),
+		sendFailed: true,
+		onReact: () => {},
+		...baseHandlers
+	}
+};
+
+export const IncomingEncryptionBroke: Story = {
+	name: 'Incoming encryption broke (cross)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_CONSULTANT_RC_ID,
+			displayName: 'Leila Pavlov',
+			username: 'leila.p@oriso.invalid',
+			isNotRead: true,
+			message: 'Diese Nachricht konnte nicht entschlüsselt werden.'
+		}),
+		// Incoming message whose Megolm decryption failed: the red cross shows
+		// on the received message (not own-message-only), labelled
+		// "Verschlüsselung gebrochen".
+		encryptionBroke: true,
+		onReact: () => {},
+		...baseHandlers
+	}
+};
+
+export const WideLongMessageDesktop: Story = {
+	name: 'Long text widens bubble (desktop 770px)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_ASKER_RC_ID,
+			askerRcId: MOCK_ASKER_RC_ID,
+			message:
+				'Hier ist das folgende Problem mit der Länge der Chatnachrichten: Oft sind die natürlich wie in einem Chat nicht so lang, weil sie eine direkte Unterhaltung sind. Manchmal sind das aber riesige Textbrocken, und da wäre auf dem Desktop besser, wenn die eher die breite Variante nutzen, damit die Zeilen nicht endlos umbrechen und der Text gut lesbar bleibt.'
 		}),
 		...baseHandlers
 	}

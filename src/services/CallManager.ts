@@ -577,6 +577,24 @@ class CallManager {
 		this.notifyListeners();
 	}
 
+	/**
+	 * End a remotely-hung-up call only when the signalling event belongs to
+	 * the call that is still active. A delayed hangup from a previous call must
+	 * never tear down a newer call in the same conversation room.
+	 */
+	public endCallIfMatching(callId?: string): boolean {
+		if (
+			!callId ||
+			!this.currentCall ||
+			this.currentCall.callId !== callId
+		) {
+			return false;
+		}
+
+		this.endCall(false);
+		return true;
+	}
+
 	private sendElementCallHangup(callData: CallData): void {
 		try {
 			const matrixClientService = getMatrixClientService();

@@ -11,7 +11,30 @@ const normalizeMatrixLikeValue = (rawValue?: string) => {
 	if (normalized.includes(':')) {
 		normalized = normalized.split(':')[0];
 	}
+	// Email-style identifiers (testuser@example.invalid): keep the local part.
+	if (normalized.includes('@')) {
+		normalized = normalized.split('@')[0];
+	}
 	return normalized.trim();
+};
+
+// Technical usernames ("free_bee_frankie_821") must never surface in the chat
+// UI — turn them into a readable name ("free bee frankie") instead. Names
+// that already contain a space are user-configured display names (technical
+// Matrix identifiers cannot contain spaces) — leave their punctuation alone
+// ("Dr. Kim" stays "Dr. Kim").
+const humanizeTechnicalName = (value: string) => {
+	if (/\s/.test(value) || !/[_.]/.test(value)) {
+		return value;
+	}
+	const words = value
+		.split(/[_.]+/)
+		.map((word) => word.trim())
+		.filter(Boolean);
+	if (words.length > 1 && /^\d+$/.test(words[words.length - 1])) {
+		words.pop();
+	}
+	return words.join(' ') || value;
 };
 
 const resolvePreferredName = (
@@ -30,10 +53,10 @@ const resolvePreferredName = (
 
 	const normalizedDisplayName = normalizeMatrixLikeValue(rawDisplayName);
 	if (normalizedDisplayName) {
-		return normalizedDisplayName;
+		return humanizeTechnicalName(normalizedDisplayName);
 	}
 
-	return normalizeMatrixLikeValue(rawUsername);
+	return humanizeTechnicalName(normalizeMatrixLikeValue(rawUsername));
 };
 
 export const formatMessagePersonName = (

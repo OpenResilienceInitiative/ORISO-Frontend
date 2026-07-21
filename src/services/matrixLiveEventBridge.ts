@@ -208,7 +208,7 @@ export class MatrixLiveEventBridge {
 	private handleCallInvite(
 		event: MatrixEvent,
 		room: Room,
-		fromDecryptionRetry = false
+		_fromDecryptionRetry = false
 	): void {
 		const sender = event.getSender();
 		const content = event.getContent();
@@ -230,7 +230,7 @@ export class MatrixLiveEventBridge {
 
 		// CRITICAL: Ignore old call invites (> 10 seconds = from history/replay!)
 		// This prevents phantom notifications on login/reload
-		if (!fromDecryptionRetry && ageSeconds > 10) {
+		if (ageSeconds > 10) {
 			// console.log("🚫 IGNORING OLD CALL INVITE (from history, not a new call!)");
 			// console.log("═══════════════════════════════════════════════");
 			this.processedCallInvites.add(callId);
@@ -340,9 +340,10 @@ export class MatrixLiveEventBridge {
 		// console.log("📴 Call ended by", sender);
 		// console.log("═══════════════════════════════════════════════");
 
-		// Use CallManager directly (clean architecture!)
-		// console.log("🔔 CALLING CallManager.endCall()");
-		getCallManager().endCall(false);
+		// A fresh hangup can still belong to a call that ended moments before a
+		// replacement call started. Match the Matrix call_id before mutating the
+		// singleton so delayed teardown cannot kill the new call.
+		getCallManager().endCallIfMatching(event.getContent().call_id);
 	}
 
 	/**

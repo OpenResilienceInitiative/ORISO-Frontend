@@ -58,7 +58,8 @@ import {
 } from './MessageSubmitInfo';
 import {
 	ATTACHMENT_MAX_SIZE_IN_MB,
-	getAttachmentSizeMBForKB
+	getAttachmentSizeMBForKB,
+	isSupportedAttachment
 } from './attachmentHelpers';
 import { ContentState, convertToRaw, EditorState } from 'draft-js';
 import { draftToMarkdown } from 'markdown-draft-js';
@@ -95,7 +96,9 @@ import {
 	OVERLAY_REQUEST
 } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
 import { getIconForAttachmentType } from '../message/messageHelpers';
+import { resolveAttachmentForSend } from './resolveAttachmentForSend';
 import { TipTapComposer, TipTapComposerRef } from './TipTapComposer';
+import { useImagePreviewUrl } from './useImagePreviewUrl';
 import { HIGHLIGHT_SNIPPET_SELECTED_EVENT } from './highlightSnippetEvents';
 import { isMyMessage } from '../session/sessionHelpers';
 import { transportMarkupToComposerHtml } from './transportMarkupToComposerHtml';
@@ -194,6 +197,13 @@ export interface MessageSubmitInterfaceComponentProps {
 	onLocalMessageEdit?: (messageId: string, newText: string) => void;
 	/** Prefer Matrix-aware ownership from SessionItem when provided. */
 	isOwnMessage?: (userId: string) => boolean;
+	/**
+	 * Called when a send attempt fails (the message never reached the server /
+	 * encryption broke). The parent surfaces a "Sending message failed"
+	 * notification in the timeline. The composer keeps the typed text so the
+	 * user can simply resend.
+	 */
+	onSendError?: (message: string, ts: number) => void;
 }
 
 export const MessageSubmitInterfaceComponent = ({
@@ -222,7 +232,8 @@ export const MessageSubmitInterfaceComponent = ({
 	messages,
 	onCloseThread,
 	onLocalMessageEdit,
-	isOwnMessage
+	isOwnMessage,
+	onSendError
 }: MessageSubmitInterfaceComponentProps) => {
 	const ComposerMobileBackIcon = () => (
 		<svg
@@ -1387,6 +1398,10 @@ export const MessageSubmitInterfaceComponent = ({
 					})
 					.catch((error) => {
 						setIsRequestInProgress(false);
+						// Surface the failure in the timeline ("Sending message
+						// failed"); the composer keeps the text so the user can
+						// resend without retyping.
+						onSendError?.(message, Date.now());
 						apiPostError({
 							name: error?.name || 'MatrixMessageSendError',
 							message:
@@ -1415,6 +1430,7 @@ export const MessageSubmitInterfaceComponent = ({
 			isSupervisor,
 			matrixClientService,
 			onSendButton,
+			onSendError,
 			resolvedChatSession,
 			setE2EEState,
 			supervisionRoomId,
@@ -1433,7 +1449,11 @@ export const MessageSubmitInterfaceComponent = ({
 	const prepareAndSendMessage = useCallback(async () => {
 		const attachmentInput: any = attachmentInputRef.current;
 		const selectedFile = attachmentInput && attachmentInput.files[0];
-		const attachment = preselectedFile || selectedFile;
+		const attachment = resolveAttachmentForSend(
+			preselectedFile,
+			selectedFile,
+			attachmentSelected
+		);
 
 		const currentTypedMessage = getTypedMarkdownMessage();
 		if (
@@ -1483,8 +1503,14 @@ export const MessageSubmitInterfaceComponent = ({
 		if (prefixParts.length && message.length > 0) {
 			message = `${prefixParts.join(' ')} ${message}`;
 		}
-		// Legacy Rocket.Chat client-side message encryption is removed;
-		// Matrix messages go through the SDK path unencrypted (ADR-004).
+		// Legacy Rocket.Chat client-side message encryption is removed. This
+		// `isEncrypted` flag is the vestigial remnant of that path and no
+		// longer controls Matrix encryption: with Rust crypto initialized
+		// unconditionally (matrixClientService.initRustCrypto) and rooms
+		// created with `m.room.encryption`, the SDK Megolm-encrypts every send
+		// automatically (ADR-004, durable since the ADR-005 homeserver
+		// rebuild). The flag is a no-op pass-through kept only for the
+		// chatTransportService signature.
 		const isEncrypted = false;
 
 		if (isAskerEnquiry) {
@@ -1525,6 +1551,7 @@ export const MessageSubmitInterfaceComponent = ({
 		matrixClientService,
 		onLocalMessageEdit,
 		preselectedFile,
+		attachmentSelected,
 		resolvedChatSession,
 		sendEnquiry,
 		sendMessage,
@@ -1618,22 +1645,67 @@ export const MessageSubmitInterfaceComponent = ({
 		setActiveInfo(INFO_TYPES.ATTACHMENT_SIZE_ERROR);
 	}, [removeSelectedAttachment]);
 
+	const handleUnsupportedAttachments = useCallback(() => {
+		removeSelectedAttachment();
+		setActiveInfo(INFO_TYPES.ATTACHMENT_FORMAT_ERROR);
+	}, [removeSelectedAttachment]);
+
 	const handleAttachmentChange = useCallback(() => {
 		const attachmentInput: any = attachmentInputRef.current;
 		const attachment = attachmentInput.files[0];
+		if (!attachment || !isSupportedAttachment(attachment)) {
+			handleUnsupportedAttachments();
+			return;
+		}
 		const attachmentSizeMB = getAttachmentSizeMBForKB(attachment.size);
 		attachmentSizeMB > ATTACHMENT_MAX_SIZE_IN_MB
 			? handleLargeAttachments()
 			: displayAttachmentToUpload(attachment);
-	}, [displayAttachmentToUpload, handleLargeAttachments]);
+	}, [
+		displayAttachmentToUpload,
+		handleLargeAttachments,
+		handleUnsupportedAttachments
+	]);
+
+	/** Files dropped/pasted into the TipTap editor (WP-4): same single-attachment flow. */
+	const handleComposerFilesSelected = useCallback(
+		(files: File[]) => {
+			const attachment = files[0];
+			if (!attachment) {
+				return;
+			}
+			if (!isSupportedAttachment(attachment)) {
+				handleUnsupportedAttachments();
+				return;
+			}
+			const attachmentSizeMB = getAttachmentSizeMBForKB(attachment.size);
+			attachmentSizeMB > ATTACHMENT_MAX_SIZE_IN_MB
+				? handleLargeAttachments()
+				: displayAttachmentToUpload(attachment);
+		},
+		[
+			displayAttachmentToUpload,
+			handleLargeAttachments,
+			handleUnsupportedAttachments
+		]
+	);
 
 	const handlePreselectedAttachmentChange = useCallback(() => {
 		const attachment = preselectedFile;
+		if (!attachment || !isSupportedAttachment(attachment)) {
+			handleUnsupportedAttachments();
+			return;
+		}
 		const attachmentSizeMB = getAttachmentSizeMBForKB(attachment.size);
 		attachmentSizeMB > ATTACHMENT_MAX_SIZE_IN_MB
 			? handleLargeAttachments()
 			: displayAttachmentToUpload(attachment);
-	}, [displayAttachmentToUpload, handleLargeAttachments, preselectedFile]);
+	}, [
+		displayAttachmentToUpload,
+		handleLargeAttachments,
+		handleUnsupportedAttachments,
+		preselectedFile
+	]);
 
 	useEffect(() => {
 		if (!preselectedFile) return;
@@ -1645,6 +1717,11 @@ export const MessageSubmitInterfaceComponent = ({
 			cleanupVoiceRecorder();
 		};
 	}, [cleanupVoiceRecorder]);
+
+	// Image thumbnail for the pre-send attachment card. Create/revoke are paired
+	// inside the hook's effect so StrictMode's mount → cleanup → mount recreates
+	// a fresh URL instead of leaving the <img> on a revoked blob (broken thumb).
+	const attachmentPreviewUrl = useImagePreviewUrl(attachmentSelected);
 
 	const handleAttachmentRemoval = useCallback(() => {
 		if (uploadProgress && attachmentUpload) {
@@ -3894,11 +3971,21 @@ export const MessageSubmitInterfaceComponent = ({
 								{attachmentSelected ? (
 									<div className="textarea__attachmentMode">
 										<div className="textarea__attachmentModeCard">
-											<span className="textarea__attachmentModeIcon">
-												{getAttachmentIcon(
-													attachmentSelected.type
-												)}
-											</span>
+											{attachmentPreviewUrl ? (
+												<img
+													className="textarea__attachmentModeThumb"
+													src={attachmentPreviewUrl}
+													alt={
+														attachmentSelected.name
+													}
+												/>
+											) : (
+												<span className="textarea__attachmentModeIcon">
+													{getAttachmentIcon(
+														attachmentSelected.type
+													)}
+												</span>
+											)}
 											<div className="textarea__attachmentModeInfo">
 												<p className="textarea__attachmentModeName">
 													{attachmentSelected.name}
@@ -4055,6 +4142,11 @@ export const MessageSubmitInterfaceComponent = ({
 											onEditLast={handleEditLast}
 											onCancel={handleCancelEdit}
 											onUpload={handleUpload}
+											onFilesSelected={
+												hasUploadFunctionality
+													? handleComposerFilesSelected
+													: undefined
+											}
 											onSubmitShortcut={() => {
 												if (
 													!uploadProgress &&

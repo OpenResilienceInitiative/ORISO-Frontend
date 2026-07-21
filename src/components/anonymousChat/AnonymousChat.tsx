@@ -15,7 +15,7 @@ import {
 	TextField,
 	Dialog
 } from '@mui/material';
-import PersonIcon from '@mui/icons-material/Person';
+import { AnimalAvatar } from '../pseudonym/AnimalAvatar';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import AccessTimeOutlinedIcon from '@mui/icons-material/AccessTimeOutlined';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
@@ -31,6 +31,12 @@ import {
 	TopicsDataInterface
 } from '../../globalState/interfaces';
 import { apiPostRegistration } from '../../api/apiPostRegistration';
+import {
+	generatePseudonym,
+	generatePassword,
+	type Pseudonym
+} from '../../utils/anonName/engine';
+import { toRegistrationUsername } from '../registration/accountData/registrationUsername';
 import { redirectToApp } from '../registration/autoLogin';
 import { endpoints } from '../../resources/scripts/endpoints';
 import { useAppConfig } from '../../hooks/useAppConfig';
@@ -81,8 +87,13 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 		new Set()
 	);
 	const [isRegistering, setIsRegistering] = useState<boolean>(false);
-	const [username, setUsername] = useState<string>('');
-	const [password, setPassword] = useState<string>('');
+	// Same anonymous identity as the normal registration: a friendly animal
+	// pseudonym (e.g. "katze_mika_1234"), NOT an "Anonymous-<timestamp>" handle.
+	// Username + password are derived synchronously from the shared anon-name
+	// engine on first render (same structure as normal registration).
+	const [identity] = useState<Pseudonym>(() => generatePseudonym(locale));
+	const [username] = useState<string>(() => toRegistrationUsername(identity));
+	const [password] = useState<string>(() => generatePassword());
 	const [noAvailabilityModalTopic, setNoAvailabilityModalTopic] =
 		useState<TopicsDataInterface | null>(null);
 	const [noAvailabilityModalOpen, setNoAvailabilityModalOpen] =
@@ -93,23 +104,6 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 	// updater to show the no-availability modal once per topic.
 	const [, setShownNoAvailabilityTopics] = useState<Set<number>>(new Set());
 
-	// Generate username and 8-character random password on mount
-	useEffect(() => {
-		const timestamp = Date.now();
-		const generatedUsername = `Anonymous-${timestamp}`;
-		setUsername(generatedUsername);
-
-		// Generate 8-character random password
-		const chars =
-			'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-		let generatedPassword = '';
-		for (let i = 0; i < 8; i++) {
-			generatedPassword += chars.charAt(
-				Math.floor(Math.random() * chars.length)
-			);
-		}
-		setPassword(generatedPassword);
-	}, []);
 
 	// Fetch all topics on mount
 	useEffect(() => {
@@ -480,7 +474,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 									gap: '12px'
 								}}
 							>
-								<PersonIcon sx={{ color: '#c62828' }} />
+								<AnimalAvatar avatar={identity.avatar} size={48} />
 								<Box sx={{ flex: 1 }}>
 									<Typography
 										variant="body2"

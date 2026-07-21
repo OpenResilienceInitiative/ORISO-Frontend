@@ -59,7 +59,7 @@ a {
 	.navigation__wrapper {
 		display: flex;
 		flex-direction: row;
-		justify-content: space-around;
+		justify-content: flex-start;
 		width: $maxWidth;
 		height: $navHeight;
 		order: 3;
@@ -79,6 +79,8 @@ a {
 
 		/* Fixed 85px width for figma nav (all desktop users, consultant + asker) */
 		&--figma-consultant {
+			justify-content: flex-start;
+
 			@include breakpoint($fromLarge) {
 				flex: 0 0 85px !important;
 				width: 85px !important;

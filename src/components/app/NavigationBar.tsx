@@ -36,15 +36,18 @@ import { userHasBudibaseTools } from '../../api/apiGetTools';
 import { browserNotificationsSettings } from '../../utils/notificationHelpers';
 import useIsFirstVisit from '../../utils/useIsFirstVisit';
 import { useResponsive } from '../../hooks/useResponsive';
-import { MENUPLACEMENT_RIGHT } from '../select/SelectDropdown';
+import {
+	MENUPLACEMENT_RIGHT,
+	MENUPLACEMENT_TOP
+} from '../select/SelectDropdown';
 import {
 	useLiveChatAvailable,
-	setLiveChatAvailable
+	useLiveChatAvailabilityHeartbeat,
+	useLiveChatViaSidebar
 } from '../../utils/liveChatToggle';
-import { apiSetLiveChatAvailability } from '../../api/apiSetLiveChatAvailability';
 import {
-	LiveChatToggleInactiveIcon,
-	LiveChatToggleActiveIcon
+	LiveChatToggleActiveIcon,
+	LiveChatToggleInactiveIcon
 } from './LiveChatToggleIcons';
 
 export interface NavigationBarProps {
@@ -99,26 +102,23 @@ export const NavigationBar = ({
 		AUTHORITIES.CONSULTANT_DEFAULT,
 		userData
 	);
-	const [liveChatAvailable] = useLiveChatAvailable();
-
-	/*
-	 * Resync persisted Live Chat availability to the backend after login/reload.
-	 * The flag lives in localStorage, so on a fresh session (or after a backend
-	 * restart) the server doesn't yet know this consultant is available. Re-assert
-	 * it so the anonymous availability count is correct without a manual re-toggle.
-	 */
-	useEffect(() => {
-		if (isConsultant && liveChatAvailable) {
-			void apiSetLiveChatAvailability(true);
+	const [
+		liveChatAvailable,
+		setLiveChatAvailable,
+		{
+			loading: liveChatLoading,
+			pending: liveChatPending,
+			error: liveChatError
 		}
-	}, [isConsultant, liveChatAvailable]);
+	] = useLiveChatAvailable();
+	const [liveChatViaSidebar] = useLiveChatViaSidebar();
+	useLiveChatAvailabilityHeartbeat(isConsultant, liveChatAvailable);
 	const { tenant } = useContext(TenantContext);
 
 	const ref_menu = useRef<any[]>([]);
 	const ref_local = useRef<any>(null);
 	const ref_logout = useRef<any>(null);
 	const ref_select = useRef<any>(null);
-	const ref_live_chat = useRef<any>(null);
 
 	const handleLogout = useCallback(() => {
 		onLogout();
@@ -128,27 +128,36 @@ export const NavigationBar = ({
 	const navigate = useNavigate();
 
 	/**
-	 * Toggle live-chat availability. When turning ON we push the consultant
-	 * to the Anfragen (sessionPreview) tab with `?chip=liveChat` so they
-	 * land on the anonymous enquiry queue with the filter already active.
-	 * `sessionPreview` is the enquiries list; `sessionView` is Gespräch —
-	 * the intent here is enquiries.
+	 * Rail Live Chat toggle (only shown when the consultant opted into
+	 * "control from the menu bar" in My-Profile). Flips availability; on
+	 * turning ON we push to the anonymous enquiry queue with the filter active,
+	 * matching the original 1.0 behaviour. The rail icon stays visible in both
+	 * states — only its active/inactive styling changes.
 	 */
-	const handleLiveChatToggle = useCallback(() => {
+	const handleLiveChatToggle = useCallback(async () => {
 		const nextActive = !liveChatAvailable;
-		setLiveChatAvailable(nextActive);
-		if (nextActive) {
-			navigate('/sessions/consultant/sessionPreview?chip=liveChat');
+		try {
+			await setLiveChatAvailable(nextActive);
+			if (nextActive) {
+				navigate('/sessions/consultant/sessionPreview?chip=liveChat');
+			}
+		} catch {
+			// The hook retains the acknowledged state and exposes a localized error.
 		}
-	}, [liveChatAvailable, navigate]);
+	}, [liveChatAvailable, navigate, setLiveChatAvailable]);
 
 	const figmaConsultantNav = true;
 	/**
-	 * Live-chat toggle is a consultant-only availability switch. It no longer
-	 * links to the video-conference page; it simply flips a stored flag that
-	 * controls whether anonymous enquiries appear in the consultant's list.
+	 * Live Chat rail toggle:
+	 * - Desktop: only when the consultant opted into "control from the menu
+	 *   bar" in My Profile (Frank / viaSidebar preference).
+	 * - Mobile/tablet: always for consultants so Live Chat stays reachable in
+	 *   the scrollable bottom bar without hunting through Profile.
 	 */
-	const showLiveChatNav = isConsultant;
+	const showLiveChatNav = isConsultant && (liveChatViaSidebar || !fromL);
+	const languageMenuPlacement = fromL
+		? MENUPLACEMENT_RIGHT
+		: MENUPLACEMENT_TOP;
 	const [animateNavIcon, setAnimateNavIcon] = useState(false);
 	const [hoveredNavItem, setHoveredNavItem] = useState<string | null>(null);
 	const [isLanguageSelected, setIsLanguageSelected] = useState(false);
@@ -336,9 +345,8 @@ export const NavigationBar = ({
 										pathsToShowUnreadMessageNotification
 									).includes(item.to) && unreadCount > 0;
 								const label = translate(item.titleKeys.large);
-								/* Rail labels get hyphenated line breaks to fit
-								   the narrow desktop rail; the mobile bottom bar
-								   shows plain single-line labels (M3 nav bar). */
+								// Desktop rail may hyphenate/wrap; mobile bottom bar
+								// must stay single-line to avoid overlapping neighbors.
 								const visibleLabel = useFigmaSlot
 									? fromL
 										? getFigmaRailLabel(item.to, label)
@@ -503,7 +511,6 @@ export const NavigationBar = ({
 								'navigation__item--liveChatToggle',
 								liveChatAvailable && 'navigation__item--active'
 							)}
-							ref={ref_live_chat}
 							tabIndex={0}
 							role="switch"
 							aria-checked={liveChatAvailable}
@@ -512,6 +519,15 @@ export const NavigationBar = ({
 									? 'navigation.liveChatToggleActive'
 									: 'navigation.liveChatToggleInactive'
 							)}
+							aria-busy={liveChatPending}
+							disabled={liveChatLoading || liveChatPending}
+							title={
+								liveChatError
+									? translate(
+											'error.statusCodes.500.description'
+										)
+									: undefined
+							}
 							onClick={handleLiveChatToggle}
 						>
 							<div
@@ -526,26 +542,17 @@ export const NavigationBar = ({
 									{liveChatAvailable ? (
 										<LiveChatToggleActiveIcon
 											className="navigation__liveChatToggleIcon navigation__liveChatToggleIcon--active"
-											aria-label={translate(
-												'navigation.liveChatToggleActive'
-											)}
+											aria-hidden
 										/>
 									) : (
 										<LiveChatToggleInactiveIcon
 											className="navigation__liveChatToggleIcon"
-											aria-label={translate(
-												'navigation.liveChatToggleInactive'
-											)}
+											aria-hidden
 										/>
 									)}
 								</div>
 							</div>
-							<span
-								className={clsx(
-									'navigation__title',
-									'navigation__title--figma'
-								)}
-							>
+							<span className="navigation__title navigation__title--figma">
 								{translate('navigation.liveChat')}
 							</span>
 						</button>
@@ -594,7 +601,9 @@ export const NavigationBar = ({
 											label={translate(
 												'navigation.language'
 											)}
-											menuPlacement={MENUPLACEMENT_RIGHT}
+											menuPlacement={
+												languageMenuPlacement
+											}
 											color="currentColor"
 											colorHover="currentColor"
 											selectRef={(el) =>
@@ -627,7 +636,7 @@ export const NavigationBar = ({
 									vertical
 									iconSize={24}
 									label={translate('navigation.language')}
-									menuPlacement={MENUPLACEMENT_RIGHT}
+									menuPlacement={languageMenuPlacement}
 									selectRef={(el) =>
 										(ref_select.current = el)
 									}
@@ -738,12 +747,7 @@ const NavGroup = ({
 	children,
 	className
 }: PropsWithChildren<{ className: string }>) => {
-	const { fromL } = useResponsive();
-	if (fromL) {
-		return <div className={className}>{children}</div>;
-	}
-
-	return <>{children}</>;
+	return <div className={className}>{children}</div>;
 };
 
 const NavigationUnreadIndicator = ({

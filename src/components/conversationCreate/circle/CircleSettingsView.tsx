@@ -22,6 +22,10 @@ import {
 	TOPIC_LENGTHS
 } from '../../groupChat/createChatHelpers';
 import { FormatCard } from '../FormatCard';
+import { M3SplitButton } from '../M3SplitButton';
+import { InternalChatPerson } from '../internal/InternalChatCreateCard';
+import { PersonChipGrid } from '../internal/PersonChipGrid';
+import { PersonOption, PersonSelectMenu } from '../internal/PersonSelectMenu';
 import { useCreateChatSubmit } from '../useCreateChatSubmit';
 import {
 	buildInitialAuthorContent,
@@ -62,6 +66,7 @@ interface CircleSettingsViewProps {
 	translationAvailable: boolean;
 	prefill?: CircleSettingsPrefill;
 	topicOptions?: { value: string; label: string }[];
+	people?: InternalChatPerson[];
 	/**
 	 * When set, the form updates this existing chat instead of creating one.
 	 * The parent only mounts this view once the series has been loaded and the
@@ -92,6 +97,7 @@ export const CircleSettingsView = ({
 	translationAvailable,
 	prefill,
 	topicOptions,
+	people = [],
 	editChatId
 }: CircleSettingsViewProps) => {
 	const { t: translate } = useTranslation();
@@ -115,7 +121,43 @@ export const CircleSettingsView = ({
 				storedDefaults?.authorContent ||
 				buildInitialAuthorContent(activeLanguages)
 		);
-	const consultantIds = prefill?.consultantIds ?? [];
+	const [consultantIds, setConsultantIds] = useState<string[]>(
+		() => prefill?.consultantIds ?? []
+	);
+	const [moderatorMenuOpen, setModeratorMenuOpen] = useState(false);
+	const moderatorButtonRef = useRef<HTMLDivElement | null>(null);
+	const peopleById = useMemo(
+		() => new Map(people.map((person) => [person.id, person])),
+		[people]
+	);
+	const moderatorOptions = useMemo<PersonOption[]>(() => {
+		const vacatedSelected = consultantIds
+			.filter((id) => !peopleById.has(id))
+			.map((id) => ({ id, label: id, selected: true, vacated: true }));
+		return [
+			...vacatedSelected,
+			...people.map((person) => ({
+				id: person.id,
+				label: person.label,
+				selected: consultantIds.includes(person.id),
+				vacated: person.vacated
+			}))
+		];
+	}, [consultantIds, people, peopleById]);
+	const moderatorChips = useMemo(
+		() =>
+			consultantIds.map((id) => ({
+				id,
+				label: peopleById.get(id)?.label ?? id
+			})),
+		[consultantIds, peopleById]
+	);
+	const toggleModerator = (id: string) =>
+		setConsultantIds((current) =>
+			current.includes(id)
+				? current.filter((consultantId) => consultantId !== id)
+				: [...current, id]
+		);
 
 	useEffect(() => {
 		setAuthorContent((current) =>
@@ -249,6 +291,62 @@ export const CircleSettingsView = ({
 						value={seriesFields}
 						onChange={setSeriesFields}
 					/>
+					<div className="circleSettings__moderators">
+						<p>{translate('groupChat.circle.moderatorsLabel')}</p>
+						<PersonChipGrid
+							entries={moderatorChips}
+							onRemove={toggleModerator}
+							removeLabel={(label) =>
+								translate('groupChat.circle.removeModerator', {
+									name: label
+								})
+							}
+						/>
+						<div className="circleSettings__moderatorPicker">
+							<M3SplitButton
+								ref={moderatorButtonRef}
+								id="circleModeratorButton"
+								label={
+									consultantIds.length > 0
+										? translate(
+												'groupChat.circle.moderatorCount',
+												{ count: consultantIds.length }
+											)
+										: translate(
+												'groupChat.circle.addModerator'
+											)
+								}
+								selected={consultantIds.length > 0}
+								open={moderatorMenuOpen}
+								onLeadingClick={() =>
+									setModeratorMenuOpen((current) => !current)
+								}
+								onTrailingClick={() =>
+									setModeratorMenuOpen((current) => !current)
+								}
+								trailingAriaLabel={translate(
+									'groupChat.circle.toggleModeratorList'
+								)}
+							/>
+							{moderatorMenuOpen && (
+								<PersonSelectMenu
+									options={moderatorOptions}
+									onToggle={toggleModerator}
+									anchorRef={moderatorButtonRef}
+									onClose={() => setModeratorMenuOpen(false)}
+									labelledBy="circleModeratorButton"
+									toggleLabel={(label, selected) =>
+										translate(
+											selected
+												? 'groupChat.circle.deselectModerator'
+												: 'groupChat.circle.selectModerator',
+											{ name: label }
+										)
+									}
+								/>
+							)}
+						</div>
+					</div>
 				</FormatCard>
 				<div className="circleSettings__authorColumn">
 					<GroupChatAuthorContentFields

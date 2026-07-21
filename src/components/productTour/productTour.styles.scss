@@ -1,0 +1,184 @@
+.productTourTooltip {
+	box-sizing: border-box;
+	width: min(400px, calc(100vw - #{$grid-base-four}));
+	background-color: var(--m3-surface, $white);
+	color: var(--m3-on-surface, $primary);
+	border-radius: $button-border-radius;
+	padding: $grid-base-three;
+	display: flex;
+	flex-direction: column;
+	gap: $grid-base-two;
+	font-family: $font-family-sans-serif;
+
+	@include rounded-drop-shadow;
+
+	&__header {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		column-gap: $grid-base-two;
+	}
+
+	&__title {
+		margin: 0;
+		font-size: $font-size-h5;
+		font-weight: $font-weight-bold;
+		color: var(--m3-on-surface, $primary);
+	}
+
+	&__close {
+		appearance: none;
+		border: none;
+		background: transparent;
+		cursor: pointer;
+		padding: $grid-base * 0.5;
+		line-height: 0;
+		border-radius: 50%;
+		color: var(--m3-on-surface-variant, $tertiary);
+
+		svg {
+			width: $grid-base-two;
+			height: $grid-base-two;
+			fill: currentColor;
+		}
+
+		&:hover {
+			color: var(--m3-primary, $primary);
+		}
+
+		&:focus {
+			outline: $focus-outline;
+			outline-offset: 2px;
+		}
+
+		&:focus:not(:focus-visible) {
+			outline: none;
+		}
+	}
+
+	&__content {
+		font-size: $font-size-primary;
+		line-height: $line-height-primary;
+		overflow-wrap: anywhere;
+	}
+
+	&__actions {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: flex-end;
+		gap: $grid-base;
+
+		.button__wrapper {
+			flex: 1 1 auto;
+		}
+
+		.button__item {
+			min-width: 0;
+			width: 100%;
+		}
+	}
+
+	&__footer {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		column-gap: $grid-base-two;
+	}
+
+	&__progress {
+		font-size: $font-size-secondary;
+		color: var(--m3-on-surface-variant, $tertiary);
+	}
+
+	&__bullets {
+		display: flex;
+		gap: $grid-base * 0.5;
+	}
+
+	&__bullet {
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		background-color: var(--m3-surface-variant, $form-input-border);
+
+		&--active {
+			background-color: var(--m3-primary, $primary);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		transition: none;
+	}
+}
+
+@media (max-width: $fromSmall) {
+	.productTourTooltip {
+		padding: $grid-base-two;
+
+		&__actions {
+			flex-direction: column-reverse;
+
+			.button__wrapper {
+				width: 100%;
+			}
+		}
+	}
+}
+
+.tourOverview {
+	&__list {
+		display: flex;
+		gap: $grid-base-two;
+		margin: $grid-base-two 0 0;
+		padding: 0 0 $grid-base;
+		list-style: none;
+		overflow-x: auto;
+		scroll-snap-type: x proximity;
+	}
+
+	&__card {
+		display: flex;
+		flex-direction: column;
+		flex: 0 0 min(260px, 80vw);
+		gap: $grid-base;
+		padding: $grid-base-two;
+		border: 1px solid var(--m3-outline-variant, $form-input-border);
+		border-radius: $button-border-radius;
+		background-color: var(--m3-surface, $white);
+		scroll-snap-align: start;
+	}
+
+	&__status {
+		align-self: flex-start;
+		padding: 2px $grid-base;
+		border-radius: $button-border-radius;
+		font-size: $font-size-secondary;
+		background-color: var(--m3-surface-variant, $form-input-border);
+		color: var(--m3-on-surface, $primary);
+
+		&--completed {
+			background-color: var(--m3-primary, $primary);
+			color: var(--m3-on-primary, $white);
+		}
+	}
+
+	&__cardTitle {
+		margin: 0;
+		font-size: $font-size-h5;
+		font-weight: $font-weight-bold;
+	}
+
+	&__cardSummary {
+		margin: 0;
+		flex: 1 1 auto;
+		font-size: $font-size-primary;
+		line-height: $line-height-primary;
+	}
+
+	&__action {
+		.button__item {
+			min-width: 0;
+			width: 100%;
+		}
+	}
+}

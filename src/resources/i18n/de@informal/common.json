@@ -65,6 +65,11 @@
 				"received": "Du hast eine Datei erhalten.",
 				"sent": "Du hast eine Datei gesendet."
 			}
+		},
+		"mediaCheck": {
+			"unchecked": "Bild aus anonymem Chat – noch nicht geprüft",
+			"reveal": "Bild anzeigen",
+			"blocked": "Von der Sicherheitsprüfung blockiert"
 		}
 	},
 	"banUser": {
@@ -401,19 +406,6 @@
 		"appointmentSet": {
 			"title": "Dein Termin wurde erstellt"
 		},
-		"delete": {
-			"deleted": {
-				"own": "Du hast diese Nachricht gelöscht."
-			},
-			"overlay": {
-				"copy": "Möchtest Du die Nachricht wirklich löschen?"
-			}
-		},
-		"submit": {
-			"booking": {
-				"headline": "Oder vereinbaren Sie jetzt einen Termin"
-			}
-		},
 		"audience": {
 			"all": "Alle",
 			"multiCount": "{{count}} Personen",
@@ -436,14 +428,37 @@
 			"toggleSection": "Bereich umschalten",
 			"selectAllBottom": "Select All"
 		},
-		"video": {
-			"description": "Du kannst jetzt an der Videokonferenz teilnehmen"
+		"delete": {
+			"deleted": {
+				"own": "Du hast diese Nachricht gelöscht."
+			},
+			"overlay": {
+				"copy": "Möchtest Du die Nachricht wirklich löschen?"
+			}
+		},
+		"decryptionFailed": {
+			"body": "Diese eingehende Nachricht konnte nicht entschlüsselt werden. Bitte die absendende Person, sie erneut zu senden, oder lade die Unterhaltung neu.",
+			"status": "konnte nicht entschlüsselt werden",
+			"subtitle": "Eingehende Nachricht nicht verfügbar",
+			"title": "Nachricht konnte nicht entschlüsselt werden"
 		},
 		"reply": {
 			"previewLabel": "Antwort an",
 			"cancel": "Antwort verwerfen",
 			"quoteLabel": "Antwort auf",
 			"quoteUnknown": "Frühere Nachricht"
+		},
+		"sendFailed": {
+			"body": "Beim Senden der Nachricht gab es ein Problem, vermutlich durch die Verschlüsselung oder einen Übertragungsfehler. Bitte kopiere sie und versuche es erneut. Prüfe den Status: Ein Haken bedeutet gesendet, zwei Haken bedeuten gelesen, und ein Kreuz bedeutet, dass sie den Server nicht erreicht hat.",
+			"subtitle": "Sende deine Nachricht erneut"
+		},
+		"submit": {
+			"booking": {
+				"headline": "Oder vereinbaren Sie jetzt einen Termin"
+			}
+		},
+		"video": {
+			"description": "Du kannst jetzt an der Videokonferenz teilnehmen"
 		}
 	},
 	"notifications": {
@@ -1400,6 +1415,23 @@
 		}
 	},
 	"walkthrough": {
+		"close": "Rundgang schließen",
+		"overview": {
+			"title": "Meine Rundgänge",
+			"subtitle": "Starte Rundgänge durch die Anwendung oder setze sie fort.",
+			"empty": "Aktuell sind keine Rundgänge für dich verfügbar.",
+			"status": {
+				"not_started": "Nicht gestartet",
+				"in_progress": "In Bearbeitung",
+				"completed": "Abgeschlossen",
+				"skipped": "Übersprungen"
+			},
+			"action": {
+				"start": "Starten",
+				"continue": "Fortsetzen",
+				"restart": "Neu starten"
+			}
+		},
 		"step": {
 			"0": {
 				"intro": "Um Dir die einzelnen Funktionen zu erklären, haben wir einen kurzen Rundgang für Dich vorbereitet. <br /><br /> Du kannst ihn jederzeit abbrechen oder in Deinem Profil erneut starten."

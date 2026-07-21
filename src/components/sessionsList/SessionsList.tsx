@@ -1211,6 +1211,12 @@ export const SessionsList = ({
 	const showCreateGroupChatAction =
 		showConsultantToolbarActions &&
 		tenantData?.settings?.featureGroupChatV2Enabled === true;
+	const showGroupChip =
+		showConsultantToolbarActions &&
+		tenantData?.settings?.featureGroupChatV2Enabled === true;
+	const showInternalGroupChip =
+		showConsultantToolbarActions &&
+		tenantData?.settings?.featureSupervisionEnabled === true;
 	const showCaseHandoverBatchUi =
 		showConsultantToolbarActions &&
 		sessionListTab !== SESSION_LIST_TAB_ARCHIVE;
@@ -1822,7 +1828,14 @@ export const SessionsList = ({
 	);
 
 	return (
-		<div className="sessionsList__innerWrapper">
+		<div
+			className="sessionsList__innerWrapper"
+			data-tour-target={
+				type === SESSION_LIST_TYPES.ENQUIRY
+					? 'consultant-enquiries-list'
+					: 'consultant-sessions-list'
+			}
+		>
 			{/* {showEnquiryFilterChips && (
 				<EnquiryFilterChips
 					translate={translate}
@@ -1844,6 +1857,8 @@ export const SessionsList = ({
 					showConsultantActions={showConsultantToolbarActions}
 					showCreateGroupChatAction={showCreateGroupChatAction}
 					showSupervisionChip={showSupervisionChip}
+					showGroupChip={showGroupChip}
+					showInternalGroupChip={showInternalGroupChip}
 					/* Live-Chat chip shows on Gespräch too once the sidebar
 					   availability toggle is ON — it narrows the
 					   my-sessions list to anonymous-asker chats using the

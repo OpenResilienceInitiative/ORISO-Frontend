@@ -8,7 +8,8 @@ import {
 const { fetchDataMock } = vi.hoisted(() => ({ fetchDataMock: vi.fn() }));
 vi.mock('./fetchData', () => ({
 	fetchData: (args: unknown) => fetchDataMock(args),
-	FETCH_METHODS: { POST: 'POST' }
+	FETCH_METHODS: { POST: 'POST' },
+	FETCH_ERRORS: { CATCH_ALL: 'CATCH_ALL' }
 }));
 
 describe('apiRegisterMatrixRoomForSync', () => {
@@ -25,6 +26,7 @@ describe('apiRegisterMatrixRoomForSync', () => {
 		const call = fetchDataMock.mock.calls[0][0];
 		expect(call.url).toContain('/service/matrix/sync/register/103293');
 		expect(call.method).toBe('POST');
+		expect(call.responseHandling).toEqual(['CATCH_ALL']);
 	});
 
 	it('registers each session only once per app lifetime', async () => {

@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { StrictMode } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { MessageSubmitInterfaceComponent } from './messageSubmitInterfaceComponent';
@@ -108,6 +109,57 @@ export const ReadyToSend: Story = {
 				name: /senden|send/i
 			});
 			await expect(sendButton).toBeEnabled();
+		});
+	}
+};
+
+/** WP-4: pasting an image into the editor routes into the attachment flow
+ *  and the pre-send card shows a real thumbnail instead of a file icon. */
+export const ImageAttachmentPreview: Story = {
+	name: 'Image attachment preview (pasted)',
+	// Wrapped in StrictMode: the pre-send thumbnail must survive the
+	// mount → cleanup → mount object-URL cycle (the 1146 KB broken-thumb fix).
+	render: () => (
+		<StrictMode>
+			<ComposerShell />
+		</StrictMode>
+	),
+	play: async ({ canvasElement }) => {
+		const editor = await waitFor(() => {
+			const node = canvasElement.querySelector<HTMLElement>(
+				'[contenteditable="true"]'
+			);
+			if (!node) {
+				throw new Error('composer editor not mounted yet');
+			}
+			return node;
+		});
+
+		const pngBytes = Uint8Array.from(
+			atob(
+				'iVBORw0KGgoAAAANSUhEUgAAAHgAAABICAYAAAA9HjF/AAAAwElEQVR4nO3RsQkAIBDAwK/dfwXn1DGEeMX1gcyedeia1wEYjMEY/CmD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjO4DiD4wyOMzjuAl4Hs8nHnWSXAAAAAElFTkSuQmCC'
+			),
+			(char) => char.charCodeAt(0)
+		);
+		const clipboardData = new DataTransfer();
+		clipboardData.items.add(
+			new File([pngBytes], 'pasted.png', { type: 'image/png' })
+		);
+		editor.dispatchEvent(
+			new ClipboardEvent('paste', {
+				clipboardData,
+				bubbles: true,
+				cancelable: true
+			})
+		);
+
+		await waitFor(() => {
+			const thumb = canvasElement.querySelector(
+				'.textarea__attachmentModeThumb'
+			);
+			if (!thumb) {
+				throw new Error('attachment thumbnail not rendered yet');
+			}
 		});
 	}
 };

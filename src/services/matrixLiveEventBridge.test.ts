@@ -23,6 +23,7 @@ vi.hoisted(() => {
 // still in place before any test triggers a handler.
 const receiveCall = vi.fn();
 const endCall = vi.fn();
+const endCallIfMatching = vi.fn();
 const isVideoCallFromMatrixInviteContent = vi.fn(
 	(_content: unknown): boolean => false
 );
@@ -39,7 +40,9 @@ Module._load = function patchedLoad(this: unknown, ...args: unknown[]) {
 			callManager: {
 				receiveCall: (...callArgs: unknown[]) =>
 					receiveCall(...callArgs),
-				endCall: (...callArgs: unknown[]) => endCall(...callArgs)
+				endCall: (...callArgs: unknown[]) => endCall(...callArgs),
+				endCallIfMatching: (...callArgs: unknown[]) =>
+					endCallIfMatching(...callArgs)
 			}
 		};
 	}
@@ -132,6 +135,7 @@ describe('MatrixLiveEventBridge initialize / timeline binding', () => {
 	beforeEach(() => {
 		receiveCall.mockClear();
 		endCall.mockClear();
+		endCallIfMatching.mockClear();
 		isVideoCallFromMatrixInviteContent.mockClear();
 		isVideoCallFromMatrixInviteContent.mockReturnValue(false);
 		bridge = new MatrixLiveEventBridge();
@@ -218,6 +222,7 @@ describe('MatrixLiveEventBridge call-invite de-dupe & stale handling', () => {
 	beforeEach(() => {
 		receiveCall.mockClear();
 		endCall.mockClear();
+		endCallIfMatching.mockClear();
 		isVideoCallFromMatrixInviteContent.mockClear();
 		isVideoCallFromMatrixInviteContent.mockReturnValue(false);
 		bridge = new MatrixLiveEventBridge();
@@ -287,7 +292,7 @@ describe('MatrixLiveEventBridge call-invite de-dupe & stale handling', () => {
 		expect(args[4]).toBe(true); // isGroupCall
 	});
 
-	it('routes an encrypted group-call invite after a later successful decryption', () => {
+	it('ignores an encrypted group-call invite that only decrypts after its freshness window', () => {
 		const event = makeEvent({
 			type: 'm.room.encrypted',
 			ts: Date.now() - 11_000
@@ -312,21 +317,12 @@ describe('MatrixLiveEventBridge call-invite de-dupe & stale handling', () => {
 			}
 		});
 
-		expect(receiveCall).toHaveBeenCalledTimes(1);
-		expect(receiveCall).toHaveBeenCalledWith(
-			'!element:matrix.oriso.org',
-			true,
-			'call-encrypted',
-			OTHER_USER_ID,
-			true,
-			ROOM_ID,
-			true
-		);
+		expect(receiveCall).not.toHaveBeenCalled();
 
 		// Further SDK notifications for the same MatrixEvent must not dispatch it
 		// again after the bridge has consumed the successful decryption.
 		event.emitDecrypted();
-		expect(receiveCall).toHaveBeenCalledTimes(1);
+		expect(receiveCall).not.toHaveBeenCalled();
 	});
 
 	it('ignores stale hangups but ends the call for a fresh hangup', () => {
@@ -340,7 +336,7 @@ describe('MatrixLiveEventBridge call-invite de-dupe & stale handling', () => {
 			room,
 			false
 		);
-		expect(endCall).not.toHaveBeenCalled();
+		expect(endCallIfMatching).not.toHaveBeenCalled();
 
 		client.emit(
 			'Room.timeline',
@@ -352,7 +348,8 @@ describe('MatrixLiveEventBridge call-invite de-dupe & stale handling', () => {
 			room,
 			false
 		);
-		expect(endCall).toHaveBeenCalledTimes(1);
-		expect(endCall).toHaveBeenCalledWith(false);
+		expect(endCallIfMatching).toHaveBeenCalledTimes(1);
+		expect(endCallIfMatching).toHaveBeenCalledWith('c');
+		expect(endCall).not.toHaveBeenCalled();
 	});
 });
