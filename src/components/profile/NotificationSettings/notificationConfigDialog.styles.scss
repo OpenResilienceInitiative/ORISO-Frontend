@@ -103,41 +103,45 @@
 		flex: 1;
 	}
 
-	&__selectIcon {
-		display: inline-flex;
-		color: #4c555f;
-		margin-right: 8px;
-
-		svg {
-			width: 20px;
-			height: 20px;
-		}
-	}
-
+	// Large, plain play button — pressed to hear the chosen tone.
 	&__play {
-		position: relative;
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
+		flex: 0 0 auto;
+		width: 44px;
+		height: 44px;
 		border: none;
+		border-radius: 50%;
 		background: transparent;
 		color: var(--m3-primary, #a5000a);
-		margin-right: 8px;
 		padding: 0;
 		cursor: pointer;
 
 		svg {
-			width: 20px;
-			height: 20px;
+			width: 40px;
+			height: 40px;
+		}
+
+		&:hover {
+			background: rgba(165, 0, 10, 0.08);
 		}
 	}
 
-	&__playTriangle {
-		position: absolute;
-		right: -6px;
-		bottom: -2px;
-		font-size: 9px;
-		line-height: 1;
+	// No tone chosen → the crossed-out (muted) icon, not interactive.
+	&__mute {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		flex: 0 0 auto;
+		width: 44px;
+		height: 44px;
+		color: #9aa1a9;
+
+		svg {
+			width: 24px;
+			height: 24px;
+		}
 	}
 
 	&__select {

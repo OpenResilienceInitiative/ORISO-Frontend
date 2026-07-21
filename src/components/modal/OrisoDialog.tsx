@@ -97,8 +97,14 @@ export const OrisoDialog = ({
 							'alignItems': 'center',
 							'justifyContent': 'center',
 							'color': '#1B1B1C',
+							// Raw SVG hero icons have fixed width/height attributes
+							// and ignore MUI fontSize; size them explicitly,
+							// preserving aspect ratio.
 							'& svg': {
-								fontSize: 88
+								width: 'auto',
+								height: 64,
+								maxWidth: 88,
+								fontSize: 64
 							}
 						}}
 						aria-hidden="true"

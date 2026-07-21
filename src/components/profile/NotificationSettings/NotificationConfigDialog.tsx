@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { OrisoDialog } from '../../modal/OrisoDialog';
 import { ReactComponent as NotificationSettingsIcon } from '../../../resources/img/icons/notification_settings.svg';
 import { ReactComponent as NotificationAudioOffIcon } from '../../../resources/img/icons/notification_audio_off.svg';
-import { ReactComponent as NotificationAudioIcon } from '../../../resources/img/icons/notification_audio.svg';
+import { ReactComponent as PlayCircleIcon } from '../../../resources/img/icons/play-circle.svg';
 import {
 	NOTIFICATION_TONE_IDS,
 	SoundId
@@ -97,33 +97,6 @@ const KindRow = ({
 				</div>
 
 				<div className="notifConfig__selectWrap">
-					{/* Sound chosen → a play button to preview it;
-					    no sound → the crossed-out (muted) icon. */}
-					{hasSound ? (
-						<button
-							type="button"
-							className="notifConfig__play"
-							aria-label={t('profile.notifications.config.play')}
-							onClick={() => onPreview(value.sound, value.volume)}
-							data-cy={`notif-play-${area}-${kind}`}
-						>
-							<NotificationAudioIcon />
-							<span
-								className="notifConfig__playTriangle"
-								aria-hidden="true"
-							>
-								▶
-							</span>
-						</button>
-					) : (
-						<span
-							className="notifConfig__selectIcon notifConfig__selectIcon--muted"
-							aria-hidden="true"
-							data-cy={`notif-muted-${area}-${kind}`}
-						>
-							<NotificationAudioOffIcon />
-						</span>
-					)}
 					<select
 						className="notifConfig__select"
 						aria-label={t(
@@ -151,6 +124,28 @@ const KindRow = ({
 						))}
 					</select>
 				</div>
+
+				{/* A tone is chosen → a plain, large play button to hear it.
+				    No sound → the crossed-out (muted) icon, not clickable. */}
+				{hasSound ? (
+					<button
+						type="button"
+						className="notifConfig__play"
+						aria-label={t('profile.notifications.config.play')}
+						onClick={() => onPreview(value.sound, value.volume)}
+						data-cy={`notif-play-${area}-${kind}`}
+					>
+						<PlayCircleIcon />
+					</button>
+				) : (
+					<span
+						className="notifConfig__mute"
+						aria-hidden="true"
+						data-cy={`notif-muted-${area}-${kind}`}
+					>
+						<NotificationAudioOffIcon />
+					</span>
+				)}
 			</div>
 			<label className="notifConfig__email">
 				<input

@@ -32,7 +32,7 @@ vi.mock('../../../resources/img/icons/notification_settings.svg', () => ({
 vi.mock('../../../resources/img/icons/notification_audio_off.svg', () => ({
 	ReactComponent: () => null
 }));
-vi.mock('../../../resources/img/icons/notification_audio.svg', () => ({
+vi.mock('../../../resources/img/icons/play-circle.svg', () => ({
 	ReactComponent: () => null
 }));
 
