@@ -1,18 +1,25 @@
-import { useEffect, useState } from 'react';
-import { apiSetLiveChatAvailability } from '../api/apiSetLiveChatAvailability';
+import { useCallback, useEffect, useState } from 'react';
+import {
+	apiGetLiveChatAvailability,
+	apiHeartbeatLiveChatAvailability,
+	apiSetLiveChatAvailability
+} from '../api/apiSetLiveChatAvailability';
+import {
+	LIVE_CHAT_AVAILABILITY_CHANGE_EVENT,
+	LIVE_CHAT_AVAILABILITY_STORAGE_KEY,
+	persistLiveChatAvailabilityPreference,
+	readLiveChatAvailabilityPreference
+} from './liveChatAvailabilityStorage';
 
 /**
- * LocalStorage-backed toggle for whether the consultant is "live-chat
- * available". When on, anonymous enquiries are fetched and merged into the
- * consultant's enquiry list; when off, only registered enquiries are shown.
+ * Backend-authoritative state for whether the consultant is "live-chat
+ * available". LocalStorage keeps only the consultant's desired preference;
+ * it must never make the visible or routing state active by itself.
  *
  * Exposed as a plain util + a tiny hook so both the NavigationBar (owner of
  * the button) and the SessionsList (consumer of the state) stay in sync
  * without threading another context through the app.
  */
-const STORAGE_KEY = 'caritas_liveChatAvailability';
-const CHANGE_EVENT = 'caritas:liveChatAvailabilityChange';
-
 /**
  * Separate, UI-only preference: whether the consultant drives their Live Chat
  * availability from the navigation rail ("Live Chat über Menü Leiste
@@ -22,47 +29,126 @@ const CHANGE_EVENT = 'caritas:liveChatAvailabilityChange';
  */
 const SIDEBAR_STORAGE_KEY = 'caritas_liveChatViaSidebar';
 const SIDEBAR_CHANGE_EVENT = 'caritas:liveChatViaSidebarChange';
+let availabilityRevision = 0;
 
 export const isLiveChatAvailable = (): boolean => {
-	try {
-		return localStorage.getItem(STORAGE_KEY) === '1';
-	} catch {
-		return false;
-	}
+	return readLiveChatAvailabilityPreference();
 };
 
-export const setLiveChatAvailable = (active: boolean): void => {
-	try {
-		if (active) {
-			localStorage.setItem(STORAGE_KEY, '1');
-		} else {
-			localStorage.removeItem(STORAGE_KEY);
-		}
-	} catch {
-		/* storage errors are non-fatal — the toggle just won't persist */
-	}
-	/* Tell the backend immediately so the anonymous availability count reflects
-	 * this consultant going available/unavailable without waiting for a poll. */
-	void apiSetLiveChatAvailability(active);
-	window.dispatchEvent(new CustomEvent(CHANGE_EVENT, { detail: { active } }));
+export const setLiveChatAvailable = async (active: boolean): Promise<void> => {
+	await apiSetLiveChatAvailability(active);
+	availabilityRevision += 1;
+	persistLiveChatAvailabilityPreference(active);
 };
 
-/** Hook: keeps UI in sync with the storage-backed flag. */
-export const useLiveChatAvailable = (): [boolean, (v: boolean) => void] => {
-	const [active, setActive] = useState<boolean>(() => isLiveChatAvailable());
+export interface LiveChatAvailabilityState {
+	loading: boolean;
+	pending: boolean;
+	error: boolean;
+}
+
+/** Hook: visible state always starts from and reconciles with the backend. */
+export const useLiveChatAvailable = (): [
+	boolean,
+	(v: boolean) => Promise<void>,
+	LiveChatAvailabilityState
+] => {
+	const [active, setActive] = useState(false);
+	const [loading, setLoading] = useState(true);
+	const [pending, setPending] = useState(false);
+	const [error, setError] = useState(false);
 
 	useEffect(() => {
-		const onChange = () => setActive(isLiveChatAvailable());
-		window.addEventListener(CHANGE_EVENT, onChange);
-		/* Also listen to cross-tab updates via the native storage event. */
-		window.addEventListener('storage', onChange);
+		let mounted = true;
+		const reconcile = async () => {
+			const requestedAtRevision = availabilityRevision;
+			try {
+				const backendActive = await apiGetLiveChatAvailability();
+				if (mounted && requestedAtRevision === availabilityRevision) {
+					setActive(backendActive);
+					setError(false);
+				}
+			} catch {
+				if (mounted && requestedAtRevision === availabilityRevision) {
+					setActive(false);
+					setError(true);
+				}
+			} finally {
+				if (mounted) setLoading(false);
+			}
+		};
+		const onChange = (event: Event) => {
+			const detail = (
+				event as CustomEvent<{ active: boolean; error?: boolean }>
+			).detail;
+			if (detail) {
+				setActive(detail.active);
+				setError(Boolean(detail.error));
+			}
+		};
+		const onStorage = (event: StorageEvent) => {
+			if (event.key === LIVE_CHAT_AVAILABILITY_STORAGE_KEY)
+				void reconcile();
+		};
+		void reconcile();
+		window.addEventListener(LIVE_CHAT_AVAILABILITY_CHANGE_EVENT, onChange);
+		window.addEventListener('storage', onStorage);
 		return () => {
-			window.removeEventListener(CHANGE_EVENT, onChange);
-			window.removeEventListener('storage', onChange);
+			mounted = false;
+			window.removeEventListener(
+				LIVE_CHAT_AVAILABILITY_CHANGE_EVENT,
+				onChange
+			);
+			window.removeEventListener('storage', onStorage);
 		};
 	}, []);
 
-	return [active, setLiveChatAvailable];
+	const update = useCallback(async (nextActive: boolean) => {
+		setPending(true);
+		setError(false);
+		try {
+			await setLiveChatAvailable(nextActive);
+			setActive(nextActive);
+		} catch (updateError) {
+			setError(true);
+			throw updateError;
+		} finally {
+			setPending(false);
+		}
+	}, []);
+
+	return [active, update, { loading, pending, error }];
+};
+
+/** Mounted exactly once by the consultant navigation shell. */
+export const useLiveChatAvailabilityHeartbeat = (
+	enabled: boolean,
+	active: boolean
+): void => {
+	useEffect(() => {
+		if (!enabled || !active) return;
+		const heartbeat = window.setInterval(() => {
+			const requestedAtRevision = availabilityRevision;
+			void apiHeartbeatLiveChatAvailability()
+				.then((leaseActive) => {
+					if (requestedAtRevision !== availabilityRevision) return;
+					if (!leaseActive) {
+						availabilityRevision += 1;
+						persistLiveChatAvailabilityPreference(false);
+					}
+				})
+				.catch(() => {
+					if (requestedAtRevision !== availabilityRevision) return;
+					availabilityRevision += 1;
+					window.dispatchEvent(
+						new CustomEvent(LIVE_CHAT_AVAILABILITY_CHANGE_EVENT, {
+							detail: { active: false, error: true }
+						})
+					);
+				});
+		}, 45_000);
+		return () => window.clearInterval(heartbeat);
+	}, [active, enabled]);
 };
 
 export const isLiveChatViaSidebar = (): boolean => {

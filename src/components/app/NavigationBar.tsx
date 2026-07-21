@@ -42,9 +42,9 @@ import {
 } from '../select/SelectDropdown';
 import {
 	useLiveChatAvailable,
+	useLiveChatAvailabilityHeartbeat,
 	useLiveChatViaSidebar
 } from '../../utils/liveChatToggle';
-import { apiSetLiveChatAvailability } from '../../api/apiSetLiveChatAvailability';
 import {
 	LiveChatToggleActiveIcon,
 	LiveChatToggleInactiveIcon
@@ -102,20 +102,17 @@ export const NavigationBar = ({
 		AUTHORITIES.CONSULTANT_DEFAULT,
 		userData
 	);
-	const [liveChatAvailable, setLiveChatAvailable] = useLiveChatAvailable();
-	const [liveChatViaSidebar] = useLiveChatViaSidebar();
-
-	/*
-	 * Resync persisted Live Chat availability to the backend after login/reload.
-	 * The flag lives in localStorage, so on a fresh session (or after a backend
-	 * restart) the server doesn't yet know this consultant is available. Re-assert
-	 * it so the anonymous availability count is correct without a manual re-toggle.
-	 */
-	useEffect(() => {
-		if (isConsultant && liveChatAvailable) {
-			void apiSetLiveChatAvailability(true);
+	const [
+		liveChatAvailable,
+		setLiveChatAvailable,
+		{
+			loading: liveChatLoading,
+			pending: liveChatPending,
+			error: liveChatError
 		}
-	}, [isConsultant, liveChatAvailable]);
+	] = useLiveChatAvailable();
+	const [liveChatViaSidebar] = useLiveChatViaSidebar();
+	useLiveChatAvailabilityHeartbeat(isConsultant, liveChatAvailable);
 	const { tenant } = useContext(TenantContext);
 
 	const ref_menu = useRef<any[]>([]);
@@ -137,11 +134,15 @@ export const NavigationBar = ({
 	 * matching the original 1.0 behaviour. The rail icon stays visible in both
 	 * states — only its active/inactive styling changes.
 	 */
-	const handleLiveChatToggle = useCallback(() => {
+	const handleLiveChatToggle = useCallback(async () => {
 		const nextActive = !liveChatAvailable;
-		setLiveChatAvailable(nextActive);
-		if (nextActive) {
-			navigate('/sessions/consultant/sessionPreview?chip=liveChat');
+		try {
+			await setLiveChatAvailable(nextActive);
+			if (nextActive) {
+				navigate('/sessions/consultant/sessionPreview?chip=liveChat');
+			}
+		} catch {
+			// The hook retains the acknowledged state and exposes a localized error.
 		}
 	}, [liveChatAvailable, navigate, setLiveChatAvailable]);
 
@@ -518,6 +519,15 @@ export const NavigationBar = ({
 									? 'navigation.liveChatToggleActive'
 									: 'navigation.liveChatToggleInactive'
 							)}
+							aria-busy={liveChatPending}
+							disabled={liveChatLoading || liveChatPending}
+							title={
+								liveChatError
+									? translate(
+											'error.statusCodes.500.description'
+										)
+									: undefined
+							}
 							onClick={handleLiveChatToggle}
 						>
 							<div
