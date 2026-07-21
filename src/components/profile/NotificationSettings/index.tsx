@@ -6,8 +6,8 @@ import { Text } from '../../text/Text';
 import { Switch } from '../../Switch';
 import { NotificationDenied } from '../BrowserNotifications/NotificationDenied';
 import { useNotificationSettings } from '../../../hooks/useNotificationSettings';
-import { SoundSettingsDialog, SoundSlot } from './SoundSettingsDialog';
-import { ReactComponent as AudioOnIcon } from '../../../resources/img/icons/audio-on.svg';
+import { NotificationConfigDialog } from './NotificationConfigDialog';
+import { ReactComponent as NotificationSettingsIcon } from '../../../resources/img/icons/notification_settings.svg';
 import { ALL_FAMILIES } from '../../../utils/notificationSettings/model';
 import { familyLabelKey } from '../../notificationsCenter/eventDescriptors';
 import {
@@ -33,7 +33,7 @@ export const NotificationSettingsPanel = () => {
 
 	// Browser permission handling mirrors the legacy panel: enabling asks for
 	// permission first; a hard "denied" shows the recovery hint instead.
-	const [soundDialogOpen, setSoundDialogOpen] = useState(false);
+	const [configDialogOpen, setConfigDialogOpen] = useState(false);
 	const [permission, setPermission] = useState<NotificationPermission>(
 		isSupported() ? Notification.permission : 'denied'
 	);
@@ -119,20 +119,20 @@ export const NotificationSettingsPanel = () => {
 			<button
 				type="button"
 				className="notificationSettings__soundEntry"
-				onClick={() => setSoundDialogOpen(true)}
-				data-cy="sound-settings-entry"
+				onClick={() => setConfigDialogOpen(true)}
+				data-cy="notif-config-entry"
 			>
-				<AudioOnIcon />
-				<span>{t('profile.notifications.sounds.title')}</span>
+				<NotificationSettingsIcon />
+				<span>{t('profile.notifications.config.title')}</span>
 			</button>
-			<SoundSettingsDialog
-				open={soundDialogOpen}
-				messageSound={settings.sounds.message}
-				mentionSound={settings.sounds.mention}
-				onChange={(slot: SoundSlot, soundId) =>
-					updateSettings({ sounds: { [slot]: soundId } })
-				}
-				onClose={() => setSoundDialogOpen(false)}
+			<NotificationConfigDialog
+				open={configDialogOpen}
+				config={settings.notificationConfig}
+				onConfirm={(notificationConfig) => {
+					updateSettings({ notificationConfig });
+					setConfigDialogOpen(false);
+				}}
+				onClose={() => setConfigDialogOpen(false)}
 			/>
 
 			<hr />

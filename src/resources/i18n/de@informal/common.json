@@ -689,6 +689,26 @@
 					"soft": "Sanft",
 					"default": "Wie Nachrichten"
 				}
+			},
+			"config": {
+				"title": "Benachrichtigungen einstellen",
+				"intro": "Wähle deine Benachrichtigungstöne für jeden Bereich getrennt.",
+				"emailNote": "E-Mails werden nur gesendet, wenn du nicht innerhalb von fünf Minuten nach dem Ereignis reagierst.",
+				"noSound": "Kein Ton gewählt",
+				"tone": "Ton #{{number}}",
+				"sendByEmail": "Per E-Mail senden",
+				"confirm": "Bestätigen",
+				"cancel": "Abbrechen",
+				"area": {
+					"requests": "Anfrage",
+					"conversations": "Gespräch",
+					"appointments": "Termine"
+				},
+				"kind": {
+					"new": "Neue Anfrage",
+					"standard": "Standard-Benachrichtigung",
+					"mention": "@ Erwähnung"
+				}
 			}
 		},
 		"spokenLanguages": {

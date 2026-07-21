@@ -5,6 +5,18 @@
  */
 import incomingNotification from '../../resources/audio/incomingNotification.mp3';
 import incomingCall from '../../resources/audio/incomingCall.mp3';
+import ton1 from '../../resources/audio/notifications/ton-1.mp3';
+import ton2 from '../../resources/audio/notifications/ton-2.mp3';
+import ton3 from '../../resources/audio/notifications/ton-3.mp3';
+import ton4 from '../../resources/audio/notifications/ton-4.mp3';
+import ton5 from '../../resources/audio/notifications/ton-5.mp3';
+import ton6 from '../../resources/audio/notifications/ton-6.mp3';
+import ton7 from '../../resources/audio/notifications/ton-7.mp3';
+import ton8 from '../../resources/audio/notifications/ton-8.mp3';
+import ton9 from '../../resources/audio/notifications/ton-9.mp3';
+import ton10 from '../../resources/audio/notifications/ton-10.mp3';
+import ton11 from '../../resources/audio/notifications/ton-11.mp3';
+import ton12 from '../../resources/audio/notifications/ton-12.mp3';
 import { EventFamily } from '../../components/notificationsCenter/eventDescriptors/types';
 import {
 	isNotificationSuppressed,
@@ -33,7 +45,25 @@ export const resolveEventSound = (
  * placeholders for now (only two exist) — swap the map when a curated library
  * lands; the choice model and UI already carry the distinct ids.
  */
+const TONE_ASSETS: Record<string, string> = {
+	'ton-1': ton1,
+	'ton-2': ton2,
+	'ton-3': ton3,
+	'ton-4': ton4,
+	'ton-5': ton5,
+	'ton-6': ton6,
+	'ton-7': ton7,
+	'ton-8': ton8,
+	'ton-9': ton9,
+	'ton-10': ton10,
+	'ton-11': ton11,
+	'ton-12': ton12
+};
+
 export const soundAssetFor = (soundId: SoundId): string | null => {
+	if (soundId in TONE_ASSETS) {
+		return TONE_ASSETS[soundId];
+	}
 	switch (soundId) {
 		case 'chime':
 		case 'ding':
