@@ -104,6 +104,8 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 					flex: 1 1 auto;
 					min-height: 0;
 					min-width: 0;
+					padding: 6px 0;
+					box-sizing: border-box;
 					overflow-x: hidden;
 					overflow-y: auto;
 					flex-direction: column;
@@ -525,34 +527,35 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 			padding: 0;
 		}
 
-		&:focus {
-			outline: $focus-outline;
-			outline-offset: 4px;
-			border-radius: 12px;
-			transition: all 0.3s ease;
-		}
-
-		&:focus:not(:focus-visible) {
+		/* Keyboard-only ring scoped to the icon slot so the ring centers on
+		   the squircle, not the whole item (slot + label column). */
+		&:focus,
+		&:focus-visible {
 			outline: none;
 		}
 
-		/* Live-chat toggle is a <button> — the default shared focus halo
-		   (2px offset:4px black outline) boxes the whole cell after each
-		   click on Chrome/Firefox. Suppress it; the grey↔black slot itself
-		   conveys the state, and keyboard users still get a softer ring
-		   scoped to the slot on :focus-visible. */
+		&:focus-visible .navigation__icon-slot {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 2px;
+		}
+
+		/* Legacy icon-only items (no Figma slot): keep a cell-level ring. */
+		&:focus-visible:not(:has(.navigation__icon-slot)) {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 4px;
+			border-radius: 12px;
+		}
+
+		/* Live-chat toggle: grey↔black slot conveys state; softer slot ring
+		   for keyboard users instead of the shared M3 outline. */
 		&--liveChatToggle {
 			background: transparent;
 			border: none;
 			padding: 0;
 			-webkit-tap-highlight-color: transparent;
 
-			&:focus,
-			&:focus-visible {
-				outline: none;
-			}
-
 			&:focus-visible .navigation__icon-slot--live {
+				outline: none;
 				box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.35);
 			}
 		}
@@ -889,6 +892,8 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 			flex: 1 1 auto;
 			min-height: 0;
 			min-width: 0;
+			padding: 6px 0;
+			box-sizing: border-box;
 			overflow-y: auto;
 			overflow-x: hidden;
 			scrollbar-width: thin;
@@ -954,24 +959,30 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 		color: var(--oriso-nav-foreground);
 		overflow: hidden;
 		text-decoration: none;
+		align-self: center;
 
 		@include breakpoint($fromMedium) {
 			flex-basis: 80px;
 			width: 80px;
 			min-width: 80px;
 			max-width: 80px;
+			align-self: center;
 		}
 
 		@include breakpoint($fromLarge) {
+			/* Full rail click target; 49px was narrower than the 48px slot +
+			   56px label, so flex auto-margins collapsed and children sat left. */
 			flex: 0 0 auto;
-			width: 49px;
-			min-width: 49px;
-			max-width: none;
+			width: 100%;
+			min-width: 0;
+			max-width: 100%;
 			height: auto;
 			min-height: 0;
+			padding: 0;
 			justify-content: flex-start;
 			overflow: visible;
 			gap: 4px;
+			align-self: stretch;
 		}
 
 		&:hover {
@@ -1079,14 +1090,14 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 
 		@include breakpoint($fromLarge) {
 			order: 2;
-			width: 56px;
-			max-width: 56px;
+			width: 100%;
+			max-width: 100%;
 			min-height: 16px;
 			padding: 0;
-			overflow: visible;
+			overflow: hidden;
 			font-size: 11px;
 			line-height: 16px;
-			text-overflow: unset;
+			text-overflow: ellipsis;
 			white-space: pre-line;
 			color: var(--oriso-nav-foreground);
 		}
@@ -1125,7 +1136,10 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		margin: 0 auto;
+
+		/* Flex parent centers on the cross-axis; auto margins collapse when
+		   the item is tighter than the slot/label and shove content left. */
+		margin: 0;
 		padding: 0;
 		border: 1px solid transparent;
 		border-radius: 16px;
