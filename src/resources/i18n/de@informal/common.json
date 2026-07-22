@@ -673,6 +673,45 @@
 			"subtitle": "Wir benachrichtigen Dich, wenn Du:",
 			"toggleError": {
 				"description": "Leider können wir Deine Benachrichtigungen zurzeit nicht aktivieren. Bitte versuche es später noch einmal."
+			},
+			"sounds": {
+				"title": "Benachrichtigungstöne",
+				"intro": "Wähle Töne für neue Nachrichten und für Erwähnungen. Die Töne gelten auf allen Geräten.",
+				"preview": "Vorhören",
+				"slot": {
+					"message": "Neue Nachrichten",
+					"mention": "Erwähnungen"
+				},
+				"choice": {
+					"none": "Kein Ton",
+					"chime": "Chime",
+					"ding": "Ding",
+					"soft": "Sanft",
+					"default": "Wie Nachrichten"
+				}
+			},
+			"config": {
+				"title": "Benachrichtigungen einstellen",
+				"intro": "Wähle deine Benachrichtigungstöne für jeden Bereich getrennt.",
+				"emailNote": "E-Mails werden nur gesendet, wenn du nicht innerhalb von fünf Minuten nach dem Ereignis reagierst.",
+				"noSound": "Kein Ton gewählt",
+				"tone": "Ton #{{number}}",
+				"sendByEmail": "Per E-Mail senden",
+				"confirm": "Bestätigen",
+				"cancel": "Abbrechen",
+				"area": {
+					"requests": "Anfrage",
+					"conversations": "Gespräch",
+					"appointments": "Termine"
+				},
+				"kind": {
+					"new": "Neue Anfrage",
+					"standard": "Standard-Benachrichtigung",
+					"mention": "@ Erwähnung"
+				},
+				"play": "Ton vorhören",
+				"volumeUp": "Lauter",
+				"volumeDown": "Leiser"
 			}
 		},
 		"spokenLanguages": {

@@ -1,16 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
-import incomingNotification from '../resources/audio/incomingNotification.mp3';
 import { isNotificationSuppressed } from './notificationSettings/model';
 import { notificationSettingsStore } from './notificationSettings/store';
 import { EventFamily } from '../components/notificationsCenter/eventDescriptors/types';
-
-const audio =
-	'Audio' in window
-		? new Audio(
-				process.env.AUDIO_FILE_INCOMING_NOTIFICATION ??
-					incomingNotification
-			)
-		: null;
 
 type ExtraNotificationOptions = {
 	showAlways?: boolean;
@@ -84,9 +75,8 @@ export const sendNotification = (
 
 	notification.onshow = () => {
 		// Sound obeys its own cross-device toggle (Slice 6a).
-		if (audio && settings.sounds.enabled) {
-			audio.play().then();
-		}
+		// Sound is now driven decoupled from the OS popup (see soundPlayback.ts,
+		// issue #576) so it also plays with the tab focused; no sound here.
 		options.onshow && options.onshow(notification);
 	};
 

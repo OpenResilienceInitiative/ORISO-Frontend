@@ -2019,6 +2019,45 @@
 			"toggleError": {
 				"description": "Unfortunately, we cannot activate your notifications at this time. Please try again later.",
 				"title": "Something went wrong."
+			},
+			"sounds": {
+				"title": "Notification sounds",
+				"intro": "Choose sounds for new messages and for mentions. Sounds apply on all your devices.",
+				"preview": "Preview",
+				"slot": {
+					"message": "New messages",
+					"mention": "Mentions"
+				},
+				"choice": {
+					"none": "No sound",
+					"chime": "Chime",
+					"ding": "Ding",
+					"soft": "Soft",
+					"default": "Same as messages"
+				}
+			},
+			"config": {
+				"title": "Configure your notifications",
+				"intro": "Choose your notification sounds for each area seperately.",
+				"emailNote": "Emails are sent only if you do not respond within five minutes after the event.",
+				"noSound": "No Sound Selected",
+				"tone": "Sound #{{number}}",
+				"sendByEmail": "Send by Email",
+				"confirm": "Confirm",
+				"cancel": "Cancel",
+				"area": {
+					"requests": "Anfrage",
+					"conversations": "Gespräch",
+					"appointments": "Termine"
+				},
+				"kind": {
+					"new": "New Request",
+					"standard": "Standard Notification",
+					"mention": "@ Mentioning"
+				},
+				"play": "Preview sound",
+				"volumeUp": "Louder",
+				"volumeDown": "Quieter"
 			}
 		},
 		"routes": {

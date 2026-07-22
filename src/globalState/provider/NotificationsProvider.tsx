@@ -5,6 +5,7 @@ import {
 	ReactNode,
 	useEffect,
 	useCallback,
+	useRef,
 	useState
 } from 'react';
 import { v4 as uuid } from 'uuid';
@@ -22,6 +23,12 @@ import { getValueFromCookie } from '../../components/sessionCookie/accessSession
 import { EventActionParams } from '../../components/notificationsCenter/eventDescriptors';
 import { parseEventActionParams } from '../../components/notificationsCenter/notificationActionTarget';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
+import {
+	playNotificationSound,
+	selectEventToAnnounce
+} from '../../utils/notificationSettings/soundPlayback';
+import { notificationSettingsStore } from '../../utils/notificationSettings/store';
+import { getEventDescriptor } from '../../components/notificationsCenter/eventDescriptors';
 
 export const NOTIFICATION_DEFAULT_TIMEOUT = 3000;
 
@@ -125,6 +132,32 @@ export function NotificationsProvider(props) {
 		NotificationFeedItem[]
 	>([]);
 	const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+	// #576: id of the newest event slot we already reconciled, so a feed refresh
+	// only announces a genuinely newer event (not every poll, and never on the
+	// backlog surfaced when an event above it is read).
+	const lastAnnouncedEventIdRef = useRef<string | null>(null);
+
+	// #576: play the configured sound for a genuinely new, unread top event —
+	// decoupled from the OS popup, so it also sounds with the tab focused. The
+	// sound routes through the single suppression gate (DND, per-conversation
+	// level, mute, family-off) inside playNotificationSound.
+	const maybePlaySoundForNewEvent = useCallback(
+		(feed: NotificationFeedItem[]) => {
+			const { announce, nextMarker } = selectEventToAnnounce(
+				feed,
+				lastAnnouncedEventIdRef.current
+			);
+			lastAnnouncedEventIdRef.current = nextMarker;
+			if (!announce) {
+				return;
+			}
+			const { settings, device } = notificationSettingsStore.getState();
+			const family = getEventDescriptor(announce.eventType).family;
+			const isMention = announce.params?.mentioned === true;
+			playNotificationSound(settings, device, family, isMention);
+		},
+		[]
+	);
 
 	const refreshNotificationFeed = useCallback(async () => {
 		const accessToken = getValueFromCookie('keycloak');
@@ -162,6 +195,7 @@ export function NotificationsProvider(props) {
 				params: parseEventActionParams(item.params),
 				category: item.category === 'message' ? 'message' : 'system'
 			}));
+			maybePlaySoundForNewEvent(normalized);
 			setNotificationFeed(normalized);
 			setUnreadNotificationCount(Number(response?.unreadCount || 0));
 		} catch (error) {
@@ -169,7 +203,7 @@ export function NotificationsProvider(props) {
 			// eslint-disable-next-line no-console
 			console.warn('Failed to refresh notification feed', error);
 		}
-	}, []);
+	}, [maybePlaySoundForNewEvent]);
 
 	const refreshNotificationFeedSafe = useCallback(() => {
 		void refreshNotificationFeed();

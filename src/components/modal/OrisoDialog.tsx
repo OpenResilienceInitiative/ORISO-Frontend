@@ -15,6 +15,11 @@ export type OrisoDialogProps = {
 	confirmLabel?: string;
 	maxWidth?: string;
 	height?: string;
+	/**
+	 * Hide the built-in back/confirm footer so the caller can supply its own
+	 * action row (e.g. the Figma "✕ / Confirm" footer). Defaults to false.
+	 */
+	hideActions?: boolean;
 };
 
 export const OrisoDialog = ({
@@ -27,7 +32,8 @@ export const OrisoDialog = ({
 	backLabel = 'Zurück',
 	confirmLabel = 'Verstanden',
 	maxWidth = '554px',
-	height = '680px'
+	height = '680px',
+	hideActions = false
 }: OrisoDialogProps) => (
 	<Dialog
 		open={open}
@@ -97,8 +103,14 @@ export const OrisoDialog = ({
 							'alignItems': 'center',
 							'justifyContent': 'center',
 							'color': '#1B1B1C',
+							// Raw SVG hero icons have fixed width/height attributes
+							// and ignore MUI fontSize; size them explicitly,
+							// preserving aspect ratio.
 							'& svg': {
-								fontSize: 88
+								width: 'auto',
+								height: 64,
+								maxWidth: 88,
+								fontSize: 64
 							}
 						}}
 						aria-hidden="true"
@@ -144,54 +156,56 @@ export const OrisoDialog = ({
 				{children}
 			</Box>
 
-			<Box sx={{ display: 'flex', gap: '8px', width: '100%' }}>
-				<Button
-					fullWidth
-					variant="outlined"
-					onClick={onBack || onClose}
-					startIcon={<ArrowBackIcon />}
-					sx={{
-						'borderRadius': '24px',
-						'borderColor': 'transparent',
-						'backgroundColor': '#F0EDEE',
-						'color': '#4C555F',
-						'textTransform': 'none',
-						'fontSize': '14px',
-						'fontWeight': 500,
-						'lineHeight': '20px',
-						'py': '10px',
-						'&:hover': {
-							borderColor: 'transparent',
-							backgroundColor: '#E5E1E2'
-						}
-					}}
-				>
-					{backLabel}
-				</Button>
-				<Button
-					fullWidth
-					variant="contained"
-					onClick={onClose}
-					startIcon={<CheckIcon />}
-					sx={{
-						'borderRadius': '8px',
-						'backgroundColor': '#4C555F',
-						'color': '#FFFFFF',
-						'textTransform': 'none',
-						'fontSize': '14px',
-						'fontWeight': 500,
-						'lineHeight': '20px',
-						'py': '10px',
-						'boxShadow': 'none',
-						'&:hover': {
-							backgroundColor: '#3F4851',
-							boxShadow: 'none'
-						}
-					}}
-				>
-					{confirmLabel}
-				</Button>
-			</Box>
+			{!hideActions && (
+				<Box sx={{ display: 'flex', gap: '8px', width: '100%' }}>
+					<Button
+						fullWidth
+						variant="outlined"
+						onClick={onBack || onClose}
+						startIcon={<ArrowBackIcon />}
+						sx={{
+							'borderRadius': '24px',
+							'borderColor': 'transparent',
+							'backgroundColor': '#F0EDEE',
+							'color': '#4C555F',
+							'textTransform': 'none',
+							'fontSize': '14px',
+							'fontWeight': 500,
+							'lineHeight': '20px',
+							'py': '10px',
+							'&:hover': {
+								borderColor: 'transparent',
+								backgroundColor: '#E5E1E2'
+							}
+						}}
+					>
+						{backLabel}
+					</Button>
+					<Button
+						fullWidth
+						variant="contained"
+						onClick={onClose}
+						startIcon={<CheckIcon />}
+						sx={{
+							'borderRadius': '8px',
+							'backgroundColor': '#4C555F',
+							'color': '#FFFFFF',
+							'textTransform': 'none',
+							'fontSize': '14px',
+							'fontWeight': 500,
+							'lineHeight': '20px',
+							'py': '10px',
+							'boxShadow': 'none',
+							'&:hover': {
+								backgroundColor: '#3F4851',
+								boxShadow: 'none'
+							}
+						}}
+					>
+						{confirmLabel}
+					</Button>
+				</Box>
+			)}
 		</Box>
 	</Dialog>
 );
