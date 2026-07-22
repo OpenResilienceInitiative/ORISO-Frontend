@@ -8,6 +8,8 @@ import {
 	requestNotificationPermissionSafe,
 	sendNotification
 } from './notificationHelpers';
+import { notificationSettingsStore } from './notificationSettings/store';
+import { setKindField } from './notificationSettings/notificationConfig';
 
 const constructed: Array<{ title: string; options: any }> = [];
 
@@ -59,6 +61,41 @@ describe('sendNotification permission gate', () => {
 		// default localStorage → enabled: false
 		sendNotification('Hallo', { showAlways: true });
 		expect(constructed).toHaveLength(0);
+	});
+
+	it('banner channel off for the event row suppresses the OS popup', () => {
+		stubNotification('granted');
+		localStorage.setItem(
+			'BROWSER_NOTIFICATIONS',
+			JSON.stringify({ enabled: true })
+		);
+		const { settings } = notificationSettingsStore.getState();
+		notificationSettingsStore.updateSettings({
+			notificationConfig: setKindField(
+				settings.notificationConfig,
+				'conversations',
+				'standard',
+				'banner',
+				false
+			)
+		});
+		sendNotification('Hallo', {
+			showAlways: true,
+			family: 'messages',
+			eventType: 'message.new'
+		});
+		expect(constructed).toHaveLength(0);
+		// restore for later tests
+		notificationSettingsStore.updateSettings({
+			notificationConfig: setKindField(
+				notificationSettingsStore.getState().settings
+					.notificationConfig,
+				'conversations',
+				'standard',
+				'banner',
+				true
+			)
+		});
 	});
 
 	it('creates one when permission granted AND user opted in', () => {

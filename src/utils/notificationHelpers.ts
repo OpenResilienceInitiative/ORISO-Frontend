@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { isNotificationSuppressed } from './notificationSettings/model';
+import { soundSettingForEvent } from './notificationSettings/notificationConfig';
 import { notificationSettingsStore } from './notificationSettings/store';
 import { EventFamily } from '../components/notificationsCenter/eventDescriptors/types';
 
@@ -14,6 +15,10 @@ type ExtraNotificationOptions = {
 	 * device silence). Defaults to `messages` for the legacy call sites.
 	 */
 	family?: EventFamily;
+	/** The concrete event type — routes the banner to its config row. */
+	eventType?: string;
+	/** Whether the user was @-mentioned (selects the mention row). */
+	mentioned?: boolean;
 };
 
 export const PERMISSION_GRANTED = 'granted';
@@ -80,10 +85,22 @@ export const sendNotification = (
 	// WP-06 Slice 6a: honour the cross-device settings (account-wide mute,
 	// per-family toggles and the per-device silence switch).
 	const { settings, device } = notificationSettingsStore.getState();
-	if (
-		isNotificationSuppressed(settings, device, options.family || 'messages')
-	) {
+	const family = options.family || 'messages';
+	if (isNotificationSuppressed(settings, device, family)) {
 		return;
+	}
+	// Harmonised model: the banner channel of the event's config row decides
+	// whether an OS popup may show (system stays outside the tabs).
+	if (family !== 'system') {
+		const kindConfig = soundSettingForEvent(
+			settings.notificationConfig,
+			family,
+			options.eventType || '',
+			options.mentioned === true
+		);
+		if (!kindConfig.banner) {
+			return;
+		}
 	}
 
 	// If always is false and window has the focus do not send any notification

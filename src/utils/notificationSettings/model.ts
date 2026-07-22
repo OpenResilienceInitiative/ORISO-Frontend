@@ -51,6 +51,7 @@ export interface OrisoNotificationSettings {
 export type SoundId =
 	| 'none'
 	| 'default'
+	| 'ring'
 	| 'chime'
 	| 'ding'
 	| 'soft'
@@ -70,6 +71,7 @@ export type SoundId =
 export const SOUND_IDS: ReadonlyArray<SoundId> = [
 	'none',
 	'default',
+	'ring',
 	'chime',
 	'ding',
 	'soft',
@@ -248,5 +250,18 @@ export const isNotificationSuppressed = (
 	settings: OrisoNotificationSettings,
 	device: LocalDeviceNotificationSettings,
 	family: EventFamily
-): boolean =>
-	settings.globalMute || device.silenced || !settings.families[family];
+): boolean => {
+	if (settings.globalMute || device.silenced) {
+		return true;
+	}
+	// Harmonised model (2026-07-22): drafts never notify; system keeps its
+	// single global switch; every other family is governed per-channel by
+	// the notification config (banner / sound / email), not suppressed here.
+	if (family === 'drafts') {
+		return true;
+	}
+	if (family === 'system') {
+		return !settings.families.system;
+	}
+	return false;
+};

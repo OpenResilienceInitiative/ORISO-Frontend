@@ -13,11 +13,11 @@ import {
 } from '../../../utils/notificationSettings/model';
 import { soundAssetFor } from '../../../utils/notificationSettings/soundPlayback';
 import {
+	AREA_KINDS,
 	clampVolume,
 	DISABLED_AREAS,
 	KindConfig,
 	NOTIFICATION_AREAS,
-	NOTIFICATION_KINDS,
 	NotificationArea,
 	NotificationConfig,
 	NotificationKind,
@@ -139,6 +139,9 @@ const KindRow = ({
 						<option value="none">
 							{t('profile.notifications.config.noSound')}
 						</option>
+						<option value="ring">
+							{t('profile.notifications.config.ringTone')}
+						</option>
 						{NOTIFICATION_TONE_IDS.map((id, index) => (
 							<option key={id} value={id}>
 								{t('profile.notifications.config.tone', {
@@ -149,6 +152,17 @@ const KindRow = ({
 					</select>
 				</div>
 			</div>
+			<label className="notifConfig__email">
+				<input
+					type="checkbox"
+					checked={value.banner}
+					onChange={(e) =>
+						onChange(area, kind, 'banner', e.target.checked)
+					}
+					data-cy={`notif-banner-${area}-${kind}`}
+				/>
+				<span>{t('profile.notifications.config.showBanner')}</span>
+			</label>
 			<label className="notifConfig__email">
 				<input
 					type="checkbox"
@@ -225,7 +239,7 @@ export const NotificationConfigView = ({
 			</div>
 
 			<div className="notifConfig__rows">
-				{NOTIFICATION_KINDS.map((kind) => (
+				{AREA_KINDS[activeArea].map((kind) => (
 					<KindRow
 						key={kind}
 						area={activeArea}
@@ -236,6 +250,52 @@ export const NotificationConfigView = ({
 					/>
 				))}
 			</div>
+
+			{/* Feature-signal dummy (FE#590): alarm-clock mode micro-survey.
+			    Votes are a UI demo — the backend vote API is US#544. */}
+			{activeArea === 'timeCritical' && <WeckerSignalCard />}
+		</div>
+	);
+};
+
+const WeckerSignalCard = () => {
+	const { t } = useTranslation();
+	const [voted, setVoted] = useState(false);
+	return (
+		<div className="notifConfig__signalCard" data-cy="notif-wecker-card">
+			<strong className="notifConfig__signalTitle">
+				{t('profile.notifications.config.wecker.title')}
+			</strong>
+			<p className="notifConfig__signalText">
+				{t('profile.notifications.config.wecker.text')}
+			</p>
+			{voted ? (
+				<p
+					className="notifConfig__signalThanks"
+					data-cy="notif-wecker-thanks"
+				>
+					{t('profile.notifications.config.wecker.thanks')}
+				</p>
+			) : (
+				<div className="notifConfig__signalVotes">
+					<button
+						type="button"
+						className="notifConfig__signalVote"
+						onClick={() => setVoted(true)}
+						data-cy="notif-wecker-up"
+					>
+						👍 {t('profile.notifications.config.wecker.upvote')}
+					</button>
+					<button
+						type="button"
+						className="notifConfig__signalVote"
+						onClick={() => setVoted(true)}
+						data-cy="notif-wecker-down"
+					>
+						👎 {t('profile.notifications.config.wecker.downvote')}
+					</button>
+				</div>
+			)}
 		</div>
 	);
 };

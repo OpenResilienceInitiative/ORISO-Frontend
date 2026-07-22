@@ -2046,18 +2046,30 @@
 				"confirm": "Confirm",
 				"cancel": "Cancel",
 				"area": {
-					"requests": "Anfrage",
-					"conversations": "Gespräch",
-					"appointments": "Termine"
+					"requests": "Requests",
+					"conversations": "Conversation",
+					"timeCritical": "Time-critical"
 				},
 				"kind": {
-					"new": "New Request",
-					"standard": "Standard Notification",
-					"mention": "@ Mentioning"
+					"new": "New request",
+					"standard": "Standard notification",
+					"mention": "@ Mention",
+					"handover": "Handover",
+					"call": "Incoming call",
+					"appointment": "Appointment"
 				},
 				"play": "Preview sound",
 				"volumeUp": "Louder",
-				"volumeDown": "Quieter"
+				"volumeDown": "Quieter",
+				"showBanner": "Show banner",
+				"ringTone": "Ring tone",
+				"wecker": {
+					"title": "Alarm-clock mode (planned)",
+					"text": "Time-critical events keep ringing aggressively — even across mutes, as far as the browser allows. Would this help you?",
+					"upvote": "I'd like this",
+					"downvote": "Not for me",
+					"thanks": "Thanks for your feedback!"
+				}
 			}
 		},
 		"routes": {

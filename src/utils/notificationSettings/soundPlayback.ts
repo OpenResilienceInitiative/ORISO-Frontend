@@ -66,6 +66,8 @@ export const soundAssetFor = (soundId: SoundId): string | null => {
 		return TONE_ASSETS[soundId];
 	}
 	switch (soundId) {
+		case 'ring':
+			return incomingCall;
 		case 'chime':
 		case 'ding':
 		case 'soft':
@@ -104,7 +106,6 @@ export const createSoundThrottle = (minGapMs: number) => {
 	};
 };
 
-const DEFAULT_VOLUME = 0.5;
 const throttle = createSoundThrottle(2000);
 
 /* ------------------------------------------------------------------ *
@@ -169,20 +170,16 @@ export const playNotificationSound = (
 	if (isNotificationSuppressed(settings, device, family)) {
 		return;
 	}
-	let asset: string | null;
-	let volume = DEFAULT_VOLUME;
-	if (family === 'calls') {
-		asset = incomingCall;
-	} else {
-		const kindConfig = soundSettingForEvent(
-			settings.notificationConfig,
-			family,
-			eventType,
-			isMention
-		);
-		asset = soundAssetFor(kindConfig.sound);
-		volume = kindConfig.volume;
-	}
+	// Harmonised model: EVERY family (incl. calls, which default to the
+	// dedicated ring) resolves through the config tabs.
+	const kindConfig = soundSettingForEvent(
+		settings.notificationConfig,
+		family,
+		eventType,
+		isMention
+	);
+	const asset = soundAssetFor(kindConfig.sound);
+	const volume = kindConfig.volume;
 	if (!asset || !('Audio' in window)) {
 		return;
 	}

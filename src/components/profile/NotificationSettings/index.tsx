@@ -6,10 +6,13 @@ import { Text } from '../../text/Text';
 import { Switch } from '../../Switch';
 import { NotificationDenied } from '../BrowserNotifications/NotificationDenied';
 import { useNotificationSettings } from '../../../hooks/useNotificationSettings';
-import { NotificationConfigDialog } from './NotificationConfigDialog';
-import { ReactComponent as NotificationSettingsIcon } from '../../../resources/img/icons/notification_settings.svg';
-import { ALL_FAMILIES } from '../../../utils/notificationSettings/model';
+import { NotificationConfigView } from './NotificationConfigDialog';
 import { familyLabelKey } from '../../notificationsCenter/eventDescriptors';
+import {
+	NotificationArea,
+	setKindField
+} from '../../../utils/notificationSettings/notificationConfig';
+import { soundAssetFor } from '../../../utils/notificationSettings/soundPlayback';
 import {
 	PERMISSION_GRANTED,
 	hasPermissions,
@@ -35,7 +38,7 @@ export const NotificationSettingsPanel = () => {
 
 	// Browser permission handling mirrors the legacy panel: enabling asks for
 	// permission first; a hard "denied" shows the recovery hint instead.
-	const [configDialogOpen, setConfigDialogOpen] = useState(false);
+	const [activeArea, setActiveArea] = useState<NotificationArea>('requests');
 	const [permission, setPermission] = useState<NotificationPermission>(
 		isSupported() ? Notification.permission : 'denied'
 	);
@@ -120,54 +123,47 @@ export const NotificationSettingsPanel = () => {
 					})
 				}
 			/>
-			<button
-				type="button"
-				className="notificationSettings__soundEntry"
-				onClick={() => setConfigDialogOpen(true)}
-				data-cy="notif-config-entry"
-			>
-				<NotificationSettingsIcon />
-				<span>{t('profile.notifications.config.title')}</span>
-			</button>
-			<NotificationConfigDialog
-				open={configDialogOpen}
+			<hr />
+
+			{/* Harmonised model (2026-07-22): the config tabs live INLINE here
+			    and replace the old flat per-family toggle list. Changes save
+			    immediately, like every other switch on this page. The dialog
+			    wrapper stays as the quick access from a conversation's menu. */}
+			<NotificationConfigView
 				config={settings.notificationConfig}
-				onConfirm={(notificationConfig) => {
-					updateSettings({ notificationConfig });
-					setConfigDialogOpen(false);
+				activeArea={activeArea}
+				onAreaChange={setActiveArea}
+				onChange={(area, kind, field, value) =>
+					updateSettings({
+						notificationConfig: setKindField(
+							settings.notificationConfig,
+							area,
+							kind,
+							field,
+							value as never
+						)
+					})
+				}
+				onPreview={(soundId, volume) => {
+					const asset = soundAssetFor(soundId);
+					if (asset && 'Audio' in window) {
+						const audio = new Audio(asset);
+						audio.volume = Math.max(0, Math.min(1, volume));
+						audio.play().catch(() => undefined);
+					}
 				}}
-				onClose={() => setConfigDialogOpen(false)}
 			/>
 
 			<hr />
 
-			<div className="profile__content__title">
-				<Headline
-					text={t(
-						'profile.notificationSettings.families.title',
-						'Benachrichtigen bei'
-					)}
-					semanticLevel="5"
-				/>
-				<Text
-					text={t(
-						'profile.notificationSettings.families.description',
-						'Wählen Sie, welche Ereignis-Familien Benachrichtigungen auslösen dürfen.'
-					)}
-					type="standard"
-					className="tertiary"
-				/>
-			</div>
-			{ALL_FAMILIES.map((family) => (
-				<Switch
-					key={family}
-					titleKey={familyLabelKey(family)}
-					checked={settings.families[family]}
-					onChange={(checked) =>
-						updateSettings({ families: { [family]: checked } })
-					}
-				/>
-			))}
+			{/* System notifications stay a single global switch, outside the tabs. */}
+			<Switch
+				titleKey={familyLabelKey('system')}
+				checked={settings.families.system}
+				onChange={(checked) =>
+					updateSettings({ families: { system: checked } })
+				}
+			/>
 		</div>
 	);
 };

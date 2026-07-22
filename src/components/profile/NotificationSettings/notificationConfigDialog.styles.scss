@@ -170,6 +170,53 @@
 		}
 	}
 
+	// Feature-signal micro-survey card (FE#590 dummy)
+	&__signalCard {
+		margin-top: 20px;
+		padding: 14px 16px;
+		border: 1px dashed #cfd4da;
+		border-radius: 10px;
+		background: #fafafa;
+	}
+
+	&__signalTitle {
+		display: block;
+		font-size: 14px;
+		color: #1a1a1a;
+		margin-bottom: 4px;
+	}
+
+	&__signalText {
+		margin: 0 0 10px;
+		font-size: 13px;
+		color: #4c555f;
+	}
+
+	&__signalThanks {
+		margin: 0;
+		font-size: 13px;
+		color: var(--m3-primary, #a5000a);
+		font-weight: 600;
+	}
+
+	&__signalVotes {
+		display: flex;
+		gap: 10px;
+	}
+
+	&__signalVote {
+		border: 1px solid #cfd4da;
+		border-radius: 8px;
+		background: #fff;
+		padding: 8px 14px;
+		font-size: 13px;
+		cursor: pointer;
+
+		&:hover {
+			background: #f4f5f6;
+		}
+	}
+
 	&__footer {
 		display: flex;
 		gap: 12px;
