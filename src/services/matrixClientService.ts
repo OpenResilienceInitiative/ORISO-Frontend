@@ -269,7 +269,37 @@ export class MatrixClientService {
 			if (!client.getRoom(roomId)) {
 				await client.joinRoom(roomId);
 			}
-			return client.sendMessage(roomId, content);
+			// Every real matrix-js-sdk client provides makeTxnId(). The guard also
+			// keeps deliberately minimal test doubles and adapters compatible.
+			const txnId = client.makeTxnId?.();
+			try {
+				return await (txnId
+					? client.sendMessage(roomId, content, txnId)
+					: client.sendMessage(roomId, content));
+			} catch (error) {
+				// matrix-js-sdk keeps a rejected send as a NOT_SENT local echo.
+				// The ORISO timeline owns failed-message presentation and retry,
+				// so retaining the SDK echo as well would reveal two copies after
+				// the user successfully retries with a fresh transaction.
+				const room = client.getRoom(roomId);
+				const errorEvent = (error as { event?: MatrixEvent })?.event;
+				const failedLocalEcho = txnId
+					? errorEvent?.getTxnId?.() === txnId
+						? errorEvent
+						: room?.timeline?.find(
+								(event) => event.getTxnId?.() === txnId
+							)
+					: undefined;
+				if (failedLocalEcho) {
+					try {
+						client.cancelPendingEvent(failedLocalEcho);
+					} catch {
+						// Preserve the original transport error. A status race must not
+						// turn failed-send recovery into a second exception.
+					}
+				}
+				throw error;
+			}
 		};
 
 		try {

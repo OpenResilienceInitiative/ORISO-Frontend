@@ -4,10 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 const sessionStyles = () =>
 	fs.readFileSync(
-		path.join(
-			process.cwd(),
-			'src/components/session/session.styles.scss'
-		),
+		path.join(process.cwd(), 'src/components/session/session.styles.scss'),
 		'utf8'
 	);
 

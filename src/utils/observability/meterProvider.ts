@@ -5,24 +5,22 @@ import {
 import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http';
 import { resourceFromAttributes } from '@opentelemetry/resources';
 import { metrics } from '@opentelemetry/api';
+import { getObservabilityConfig } from '../../resources/scripts/runtimeConfig';
 
 /**
  * Browser-side OpenTelemetry MeterProvider for Real User Monitoring
  * (OBS-P8, ORISO-Helm#62). Exports metrics -- currently Core Web Vitals,
  * see `webVitals.ts` -- to our self-hosted SigNoz collector.
  *
- * `service.name` and the exporter URL/interval intentionally match the
- * SigNoz "web vitals with metrics" contract exactly: the SigNoz dashboard
- * we're importing queries these names, so don't rename them.
+ * `service.name` intentionally matches the SigNoz "web vitals with metrics"
+ * contract. The exporter endpoint and interval come from container runtime
+ * configuration so one image can safely run in every environment.
  *
  * Deliberately NOT included (see PR description): any per-user identifier
  * (e.g. `user.id` from localStorage) or browser/user-agent attribute that
  * SigNoz's docs show as an optional variant. This app treats SigNoz as
  * developer/ops tooling only, never per-user tracking (ADR-011).
  */
-const SIGNOZ_METRICS_URL = 'https://signoz.oriso-dev.site/v1/metrics';
-const EXPORT_INTERVAL_MILLIS = 10000;
-
 export const OBSERVABILITY_RESOURCE_ATTRIBUTES = {
 	'service.name': 'frontend'
 } as const;
@@ -48,14 +46,19 @@ export const initMeterProvider = (): void => {
 		return;
 	}
 
+	const observability = getObservabilityConfig();
+	if (!observability.enabled || !observability.metricsUrl) {
+		return;
+	}
+
 	try {
 		const resource = resourceFromAttributes(
 			OBSERVABILITY_RESOURCE_ATTRIBUTES
 		);
 
 		const metricReader = new PeriodicExportingMetricReader({
-			exporter: new OTLPMetricExporter({ url: SIGNOZ_METRICS_URL }),
-			exportIntervalMillis: EXPORT_INTERVAL_MILLIS
+			exporter: new OTLPMetricExporter({ url: observability.metricsUrl }),
+			exportIntervalMillis: observability.exportIntervalMillis
 		});
 
 		meterProvider = new MeterProvider({

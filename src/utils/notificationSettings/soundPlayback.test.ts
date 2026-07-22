@@ -12,6 +12,7 @@ import {
 	installAudioUnlock,
 	playNotificationSound,
 	resolveEventSound,
+	selectEventToAnnounce,
 	soundAssetFor
 } from './soundPlayback';
 
@@ -211,5 +212,58 @@ describe('playNotificationSound (config-driven)', () => {
 		target.dispatchEvent(new Event('pointerdown'));
 		expect(played).toHaveLength(1);
 		remove();
+	});
+});
+
+describe('selectEventToAnnounce', () => {
+	const unread = (id: string) => ({ id, readAt: null });
+	const read = (id: string) => ({ id, readAt: '2026-01-01T00:00:00Z' });
+
+	it('seeds the marker on first load without announcing backlog', () => {
+		const { announce, nextMarker } = selectEventToAnnounce(
+			[unread('b'), unread('a')],
+			null
+		);
+		expect(announce).toBeNull();
+		expect(nextMarker).toBe('b');
+	});
+
+	it('announces a genuinely newer unread top event and advances the marker', () => {
+		const { announce, nextMarker } = selectEventToAnnounce(
+			[unread('c'), unread('b'), unread('a')],
+			'b'
+		);
+		expect(announce?.id).toBe('c');
+		expect(nextMarker).toBe('c');
+	});
+
+	it('stays silent when the top event is unchanged', () => {
+		const { announce, nextMarker } = selectEventToAnnounce(
+			[unread('b'), unread('a')],
+			'b'
+		);
+		expect(announce).toBeNull();
+		expect(nextMarker).toBe('b');
+	});
+
+	// Regression (#576): reading the top event must not re-announce the older
+	// unread now surfaced beneath it. Keying on the newest slot (feed[0]), not
+	// the first unread, keeps it silent.
+	it('does not announce backlog when the newest event is read', () => {
+		const { announce, nextMarker } = selectEventToAnnounce(
+			[read('b'), unread('a')],
+			'b'
+		);
+		expect(announce).toBeNull();
+		expect(nextMarker).toBe('b');
+	});
+
+	it('advances the marker without a sound for a new-but-already-read top event', () => {
+		const { announce, nextMarker } = selectEventToAnnounce(
+			[read('c'), unread('a')],
+			'a'
+		);
+		expect(announce).toBeNull();
+		expect(nextMarker).toBe('c');
 	});
 });

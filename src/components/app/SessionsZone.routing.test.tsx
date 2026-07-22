@@ -133,6 +133,23 @@ describe('SessionsZone v7 routing — consultant', () => {
 			'contentWrapper__detail--smallInactive'
 		);
 	});
+
+	it('toggles list --smallInactive with detail vs empty routes ', () => {
+		// Active conversation → list flagged inactive → CSS hides white pill.
+		const { unmount } = renderAt(
+			'/sessions/consultant/sessionView/session/42'
+		);
+		expect(screen.getByTestId('list').parentElement?.classList).toContain(
+			'contentWrapper__list--smallInactive'
+		);
+		unmount();
+
+		// Empty desk → no --smallInactive → pill stays visible.
+		renderAt('/sessions/consultant/sessionView/');
+		expect(
+			screen.getByTestId('list').parentElement?.classList
+		).not.toContain('contentWrapper__list--smallInactive');
+	});
 });
 
 // Asker (user) role — the post-registration "Anfrage stellen" enquiry flow and

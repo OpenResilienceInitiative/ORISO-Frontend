@@ -6,6 +6,7 @@ import { Text } from '../../text/Text';
 import { Switch } from '../../Switch';
 import { NotificationDenied } from '../BrowserNotifications/NotificationDenied';
 import { useNotificationSettings } from '../../../hooks/useNotificationSettings';
+import { DoNotDisturbControl } from './DoNotDisturbControl';
 import { NotificationConfigView } from './NotificationConfigDialog';
 import { familyLabelKey } from '../../notificationsCenter/eventDescriptors/registry';
 import {
@@ -89,6 +90,10 @@ export const NotificationSettingsPanel = () => {
 					className="tertiary"
 				/>
 			</div>
+			<DoNotDisturbControl
+				dndUntil={settings.dndUntil}
+				onChange={(dndUntil) => updateSettings({ dndUntil })}
+			/>
 
 			<Switch
 				titleKey="profile.notificationSettings.globalMute"

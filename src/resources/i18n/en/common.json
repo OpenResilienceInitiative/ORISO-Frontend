@@ -1451,7 +1451,8 @@
 		},
 		"read": "read",
 		"sendFailed": {
-			"body": "There was a problem with sending the message, likely due to encryption or a transfer error. Please copy it and try again. Check the status: one check means sent, two checks mean read, and a cross means it didn’t reach the server.",
+			"body": "There was a problem with sending the message, likely due to encryption or a transfer error. Select Try again to retry once. Check the status: one check means sent, two checks mean read, and a cross means it didn’t reach the server.",
+			"retry": "Try again",
 			"status": "not delivered",
 			"subtitle": "Resend your message again",
 			"title": "Sending message failed"
@@ -2019,6 +2020,17 @@
 			"toggleError": {
 				"description": "Unfortunately, we cannot activate your notifications at this time. Please try again later.",
 				"title": "Something went wrong."
+			},
+			"dnd": {
+				"title": "Do not disturb",
+				"description": "Pause all notifications (sound, pop-ups, emails) for a chosen time. Your history keeps filling.",
+				"activeUntil": "Active until {{time}}",
+				"option": {
+					"off": "Off",
+					"1h": "1 hour",
+					"8h": "8 hours",
+					"tomorrow": "Until tomorrow morning"
+				}
 			},
 			"sounds": {
 				"title": "Notification sounds",

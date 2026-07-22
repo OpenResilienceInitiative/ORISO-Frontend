@@ -47,25 +47,27 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 	.textarea {
 		z-index: 100;
-		background-color: transparent;
-		padding: 20px $grid-base-two;
+		// Figma 8641-34699: dock must be opaque so scrolled history cannot show through.
+		background-color: var(--m3-surface-container-lowest, #ffffff);
+		// Figma 8641-34699: 16px inset between chat card edge and composer.
+		padding: 16px;
 		width: 100%;
 		position: absolute;
 		bottom: 0;
 
 		@include breakpoint($fromMedium) {
-			padding: 20px $grid-base-three;
+			padding: 16px;
 		}
 
 		// On mobile, ensure no extra spacing and proper positioning
 		@media screen and (width <= 899px) {
-			padding: 12px 12px;
-			padding-bottom: calc(12px + env(safe-area-inset-bottom, 0));
+			padding: 16px;
+			padding-bottom: calc(16px + env(safe-area-inset-bottom, 0));
 			position: absolute;
 			bottom: 0;
 			left: 0;
 			right: 0;
-			background-color: #ffffff;
+			background-color: var(--m3-surface-container-lowest, #ffffff);
 		}
 
 		.checkbox {

@@ -1294,6 +1294,13 @@
 			"title": "Not"
 		},
 		"read": "Okuyun",
+		"sendFailed": {
+			"body": "Mesaj gönderilirken muhtemelen şifreleme veya aktarım hatasından kaynaklanan bir sorun oluştu. Tekrar denemek için “Yeniden gönder” seçeneğini kullanın. Durumu kontrol edin: bir onay işareti gönderildi, iki onay işareti okundu, çarpı ise mesajın sunucuya ulaşmadığı anlamına gelir.",
+			"retry": "Yeniden gönder",
+			"status": "teslim edilmedi",
+			"subtitle": "Mesajınızı yeniden gönderin",
+			"title": "Mesaj gönderilemedi"
+		},
 		"sent": "teslim edildi",
 		"submit": {
 			"booking": {

@@ -1294,6 +1294,13 @@
 			"title": "Note"
 		},
 		"read": "lu",
+		"sendFailed": {
+			"body": "Un problème est survenu lors de l’envoi du message, probablement en raison du chiffrement ou d’une erreur de transmission. Utilisez « Renvoyer » pour réessayer. Vérifiez le statut : une coche signifie envoyé, deux coches signifient lu et une croix signifie que le message n’a pas atteint le serveur.",
+			"retry": "Renvoyer",
+			"status": "non distribué",
+			"subtitle": "Renvoyez votre message",
+			"title": "Échec de l’envoi"
+		},
 		"sent": "livré",
 		"submit": {
 			"booking": {
