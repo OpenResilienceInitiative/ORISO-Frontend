@@ -10,6 +10,15 @@ const mockResourceFromAttributes = vi.fn((attributes: unknown) => ({
 const mockOTLPMetricExporter = vi.fn();
 const mockPeriodicExportingMetricReader = vi.fn();
 const mockMeterProvider = vi.fn();
+let mockObservabilityConfig = {
+	enabled: true,
+	metricsUrl: 'https://collector.example.test/v1/metrics',
+	exportIntervalMillis: 60000
+};
+
+vi.mock('../../resources/scripts/runtimeConfig', () => ({
+	getObservabilityConfig: () => mockObservabilityConfig
+}));
 
 vi.mock('@opentelemetry/api', () => ({
 	metrics: { setGlobalMeterProvider: mockSetGlobalMeterProvider }
@@ -41,6 +50,32 @@ describe('initMeterProvider', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		vi.resetModules();
+		mockObservabilityConfig = {
+			enabled: true,
+			metricsUrl: 'https://collector.example.test/v1/metrics',
+			exportIntervalMillis: 60000
+		};
+	});
+
+	it('does not initialize or export when browser telemetry is disabled', async () => {
+		mockObservabilityConfig.enabled = false;
+		const { initMeterProvider } = await import('./meterProvider');
+
+		initMeterProvider();
+
+		expect(mockOTLPMetricExporter).not.toHaveBeenCalled();
+		expect(mockMeterProvider).not.toHaveBeenCalled();
+		expect(mockSetGlobalMeterProvider).not.toHaveBeenCalled();
+	});
+
+	it('does not initialize when the runtime endpoint is missing', async () => {
+		mockObservabilityConfig.metricsUrl = '';
+		const { initMeterProvider } = await import('./meterProvider');
+
+		initMeterProvider();
+
+		expect(mockOTLPMetricExporter).not.toHaveBeenCalled();
+		expect(mockMeterProvider).not.toHaveBeenCalled();
 	});
 
 	it('builds the resource with service.name "frontend"', async () => {
@@ -53,23 +88,23 @@ describe('initMeterProvider', () => {
 		});
 	});
 
-	it('configures the OTLP exporter with the SigNoz metrics endpoint', async () => {
+	it('configures the OTLP exporter with the runtime metrics endpoint', async () => {
 		const { initMeterProvider } = await import('./meterProvider');
 
 		initMeterProvider();
 
 		expect(mockOTLPMetricExporter).toHaveBeenCalledWith({
-			url: 'https://signoz.oriso-dev.site/v1/metrics'
+			url: 'https://collector.example.test/v1/metrics'
 		});
 	});
 
-	it('exports every 10 seconds', async () => {
+	it('uses the runtime export interval', async () => {
 		const { initMeterProvider } = await import('./meterProvider');
 
 		initMeterProvider();
 
 		expect(mockPeriodicExportingMetricReader).toHaveBeenCalledWith(
-			expect.objectContaining({ exportIntervalMillis: 10000 })
+			expect.objectContaining({ exportIntervalMillis: 60000 })
 		);
 	});
 
