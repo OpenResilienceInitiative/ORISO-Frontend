@@ -675,6 +675,17 @@
 			"toggleError": {
 				"description": "Leider können wir Deine Benachrichtigungen zurzeit nicht aktivieren. Bitte versuche es später noch einmal."
 			},
+			"dnd": {
+				"title": "Nicht stören",
+				"description": "Pausiere alle Benachrichtigungen (Ton, Pop-ups, E-Mails) für eine gewählte Zeit. Dein Verlauf füllt sich weiter.",
+				"activeUntil": "Aktiv bis {{time}}",
+				"option": {
+					"off": "Aus",
+					"1h": "1 Stunde",
+					"8h": "8 Stunden",
+					"tomorrow": "Bis morgen früh"
+				}
+			},
 			"sounds": {
 				"title": "Benachrichtigungstöne",
 				"intro": "Wähle Töne für neue Nachrichten und für Erwähnungen. Die Töne gelten auf allen Geräten.",

@@ -6,6 +6,7 @@ import { Text } from '../../text/Text';
 import { Switch } from '../../Switch';
 import { NotificationDenied } from '../BrowserNotifications/NotificationDenied';
 import { useNotificationSettings } from '../../../hooks/useNotificationSettings';
+import { DoNotDisturbControl } from './DoNotDisturbControl';
 import { NotificationConfigDialog } from './NotificationConfigDialog';
 import { ReactComponent as NotificationSettingsIcon } from '../../../resources/img/icons/notification_settings.svg';
 import { ALL_FAMILIES } from '../../../utils/notificationSettings/model';
@@ -79,6 +80,10 @@ export const NotificationSettingsPanel = () => {
 					className="tertiary"
 				/>
 			</div>
+			<DoNotDisturbControl
+				dndUntil={settings.dndUntil}
+				onChange={(dndUntil) => updateSettings({ dndUntil })}
+			/>
 
 			<Switch
 				titleKey="profile.notificationSettings.globalMute"
