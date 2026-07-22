@@ -3031,6 +3031,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		replyToEventId?: string | null;
 		mentionedUserIds: string[];
 	} | null>(null);
+	// Read the live retry request inside the (non-memoised) success handler,
+	// which the composer may invoke from a closure captured a render earlier.
+	const retryRequestRef = useRef(retryRequest);
+	retryRequestRef.current = retryRequest;
 	const handleSendError = useCallback(
 		(
 			message: string,
@@ -3169,7 +3173,17 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			return;
 		}
 		setDraggedFile(null);
-		setFailedSends([]);
+		// A retry that succeeded resolves only its own card; a fresh successful
+		// send must leave any other preserved failure cards intact — each holds
+		// the sole copy of an un-sent message the user may still want to retry.
+		const resolvedRetry = retryRequestRef.current;
+		if (resolvedRetry) {
+			setFailedSends((previous) =>
+				previous.filter(
+					(failed) => failed.id !== resolvedRetry.failedSendId
+				)
+			);
+		}
 		setRetryRequest(null);
 
 		if (props.refreshMessages) {
