@@ -1,7 +1,4 @@
-import dayjs from 'dayjs';
-import advancedFormat from 'dayjs/plugin/advancedFormat';
-
-dayjs.extend(advancedFormat);
+import i18n from 'i18next';
 
 export const MILLISECONDS_PER_SECOND = 1000;
 export const MILLISECONDS_PER_MINUTE = 60 * MILLISECONDS_PER_SECOND;
@@ -25,12 +22,23 @@ export interface PrettyDate {
 	date: string | null;
 }
 
+/** Active UI locale as a BCP-47 tag ('de@informal' → 'de'), for Intl date APIs. */
+const resolveDateLocale = (): string => (i18n.language || 'de').split('@')[0];
+
 /**
- * Explicit chat date-pill label only (#564): "7th of July 2026".
- * Relative labels (Heute / Today / …) stay on i18n keys — do not use this for those.
+ * Explicit chat date-pill label only (#564), localized to the active UI
+ * language: "7. Juli 2026" (de), "July 7, 2026" (en). Relative labels
+ * (Heute / Today / …) stay on i18n keys — do not use this for those.
  */
-export const formatChatMessageDateDivider = (msSinceEpoch: number): string =>
-	dayjs(msSinceEpoch).format('Do [of] MMMM YYYY');
+export const formatChatMessageDateDivider = (
+	msSinceEpoch: number,
+	locale: string = resolveDateLocale()
+): string =>
+	new Date(msSinceEpoch).toLocaleDateString(locale, {
+		day: 'numeric',
+		month: 'long',
+		year: 'numeric'
+	});
 
 const printPrettyDate = (
 	messageDate: number,
@@ -101,10 +109,13 @@ export const getPrettyDateFromMessageDate = (
 
 /**
  * Chat timeline date pill: keeps relative i18n keys (message.today, …);
- * only replaces the explicit calendar `date` with ordinal English (#564).
- * Session list / bookings still use {@link getPrettyDateFromMessageDate}.
+ * only replaces the explicit calendar `date` with the long, locale-aware form
+ * (#564). Session list / bookings still use {@link getPrettyDateFromMessageDate}.
  */
-export const getChatMessageDateDivider = (unixSeconds: number): PrettyDate => {
+export const getChatMessageDateDivider = (
+	unixSeconds: number,
+	locale?: string
+): PrettyDate => {
 	const pretty = getPrettyDateFromMessageDate(unixSeconds);
 	if (!pretty.date) {
 		return pretty;
@@ -112,7 +123,8 @@ export const getChatMessageDateDivider = (unixSeconds: number): PrettyDate => {
 	return {
 		...pretty,
 		date: formatChatMessageDateDivider(
-			unixSeconds * MILLISECONDS_PER_SECOND
+			unixSeconds * MILLISECONDS_PER_SECOND,
+			locale
 		)
 	};
 };

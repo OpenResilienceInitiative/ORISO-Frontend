@@ -187,7 +187,7 @@ export const prepareMessages = (messagesData): MessageItem[] => {
 
 			if (lastDate !== dateFormated) {
 				lastDate = dateFormated;
-				// Explicit dates → "7th of July 2026"; relative → message.today etc.
+				// Explicit dates → localized long form ("7. Juli 2026"); relative → message.today etc.
 				lastDateStr = getChatMessageDateDivider(date / 1000);
 			}
 

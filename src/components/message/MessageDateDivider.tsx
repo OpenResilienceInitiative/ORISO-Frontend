@@ -2,7 +2,7 @@ import * as React from 'react';
 import './messageDateDivider.styles.scss';
 
 export interface MessageDateDividerProps {
-	/** Already-translated label, e.g. "Heute" or "7th of July 2026". */
+	/** Already-translated label, e.g. "Heute" or "7. Juli 2026". */
 	label: string;
 }
 
