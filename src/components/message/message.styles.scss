@@ -270,6 +270,7 @@ $message-avatar-overlap: -19px;
 
 		&--right {
 			margin-top: auto;
+			translate: 0% 25%;
 		}
 	}
 
@@ -286,10 +287,15 @@ $message-avatar-overlap: -19px;
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
+		box-sizing: border-box;
+		flex-shrink: 0;
 
-		// Figma "Message Menu" (772:18407): 32x32 touch zone.
+		// Figma "Message Menu" (772:18407) + Android Compact (#564):
+		// 32×32px touch zone (icon stays 20px centered inside).
 		width: 32px;
 		height: 32px;
+		min-width: 32px;
+		min-height: 32px;
 		cursor: pointer;
 		opacity: 1;
 		z-index: 7;
@@ -297,6 +303,8 @@ $message-avatar-overlap: -19px;
 		svg {
 			width: 20px;
 			height: 20px;
+			flex-shrink: 0;
+			pointer-events: none;
 		}
 
 		path,
@@ -306,6 +314,15 @@ $message-avatar-overlap: -19px;
 
 		&:hover {
 			opacity: 1;
+		}
+
+		// Reinforce touch target on Android Compact / mobile viewports.
+		@media screen and (width <= 899px) {
+			width: 32px;
+			height: 32px;
+			min-width: 32px;
+			min-height: 32px;
+			padding: 0;
 		}
 	}
 
@@ -878,10 +895,12 @@ $message-avatar-overlap: -19px;
 		// left, time right. Outgoing: time left, chips right.
 		.messageItem__timeRail {
 			display: flex;
+			flex-wrap: nowrap;
 			align-items: flex-end;
 			justify-content: flex-end;
 			gap: 4px;
 			width: 100%;
+			min-width: 0;
 			margin-top: 4px;
 
 			&--outgoing {
@@ -1709,18 +1728,20 @@ $message-avatar-overlap: -19px;
 
 // Reactions (Figma 336-12244 / 336-12225): white M3 assist chips inside the
 // bubble, sharing the time rail. Own reaction = red count.
+// Issue #564: overflow must scroll horizontally — never wrap/stack.
 .messageItem__reactions {
 	display: flex;
-	flex: 1;
-
-	// Improvement report: on overflow the chip rail scrolls horizontally —
-	// chips are never stacked into multiple rows.
+	flex: 1 1 auto;
+	flex-direction: row;
 	flex-wrap: nowrap;
 	align-items: center;
 	gap: 8px;
 	min-width: 0;
+	max-width: 100%;
 	padding-top: 4px;
 	overflow-x: auto;
+	overflow-y: hidden;
+	white-space: nowrap;
 	overscroll-behavior-x: contain;
 	-webkit-overflow-scrolling: touch;
 	scrollbar-width: thin;
@@ -1738,6 +1759,7 @@ $message-avatar-overlap: -19px;
 		gap: 4px;
 		height: 32px;
 		padding: 6px 8px;
+		white-space: nowrap;
 
 		// M3 outlined chips stroke with `outline-variant`; this design uses
 		// the custom Figma role `outline-variant-light`, which is fixed white
@@ -1779,22 +1801,26 @@ $message-avatar-overlap: -19px;
 	margin-bottom: 4px;
 }
 
+// Avoid `.sideColumnGroup--left` (-25% for kebab+avatar). Send-failed has
+// avatar only, so use a lighter lift.
+.messageItem--sendFailed .messageItem__sideColumnGroup {
+	translate: 0% -5%;
+}
+
 // The content column overlaps the avatar column by 19px (like every
 // incoming message) — indent the header text so it clears the avatar ring.
 .messageItem--sendFailed .messageItem__header {
 	padding-left: 24px;
 }
 
-// Inner 48px black circle inside the standard ringed avatar frame.
+// Inner 48px circle inside the standard ringed avatar frame.
 .messageItem__sendFailedAvatar {
 	width: 48px;
 	height: 48px;
 	min-width: 48px;
 	border-radius: 50%;
 
-	// inverse-surface is the M3 surface role for dark-on-light emphasis —
-	// `on-*` roles are foreground-only (m3Sweep lint).
-	background: var(--m3-inverse-surface, #17191c);
+	background: #410001;
 	color: var(--m3-inverse-on-surface, #fff);
 	display: inline-flex;
 	align-items: center;
