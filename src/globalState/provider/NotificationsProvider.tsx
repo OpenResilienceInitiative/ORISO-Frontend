@@ -23,7 +23,10 @@ import { getValueFromCookie } from '../../components/sessionCookie/accessSession
 import { EventActionParams } from '../../components/notificationsCenter/eventDescriptors';
 import { parseEventActionParams } from '../../components/notificationsCenter/notificationActionTarget';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
-import { playNotificationSound } from '../../utils/notificationSettings/soundPlayback';
+import {
+	playNotificationSound,
+	selectEventToAnnounce
+} from '../../utils/notificationSettings/soundPlayback';
 import { notificationSettingsStore } from '../../utils/notificationSettings/store';
 import { getEventDescriptor } from '../../components/notificationsCenter/eventDescriptors';
 
@@ -129,8 +132,9 @@ export function NotificationsProvider(props) {
 		NotificationFeedItem[]
 	>([]);
 	const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
-	// #576: id of the newest unread event we already played a sound for, so a
-	// feed refresh only announces genuinely new events (not every poll).
+	// #576: id of the newest event slot we already reconciled, so a feed refresh
+	// only announces a genuinely newer event (not every poll, and never on the
+	// backlog surfaced when an event above it is read).
 	const lastAnnouncedEventIdRef = useRef<string | null>(null);
 
 	// #576: play the configured sound for a genuinely new, unread top event —
@@ -139,19 +143,17 @@ export function NotificationsProvider(props) {
 	// level, mute, family-off) inside playNotificationSound.
 	const maybePlaySoundForNewEvent = useCallback(
 		(feed: NotificationFeedItem[]) => {
-			const newest = feed.find((item) => !item.readAt);
-			// First load only seeds the marker — never announce backlog on mount.
-			if (lastAnnouncedEventIdRef.current === null) {
-				lastAnnouncedEventIdRef.current = newest ? newest.id : '';
+			const { announce, nextMarker } = selectEventToAnnounce(
+				feed,
+				lastAnnouncedEventIdRef.current
+			);
+			lastAnnouncedEventIdRef.current = nextMarker;
+			if (!announce) {
 				return;
 			}
-			if (!newest || newest.id === lastAnnouncedEventIdRef.current) {
-				return;
-			}
-			lastAnnouncedEventIdRef.current = newest.id;
 			const { settings, device } = notificationSettingsStore.getState();
-			const family = getEventDescriptor(newest.eventType).family;
-			const isMention = newest.params?.mentioned === true;
+			const family = getEventDescriptor(announce.eventType).family;
+			const isMention = announce.params?.mentioned === true;
 			playNotificationSound(settings, device, family, isMention);
 		},
 		[]

@@ -88,6 +88,45 @@ export const assetForEvent = (
 	return soundAssetFor(resolveEventSound(settings, isMention));
 };
 
+/** Minimal shape the announce selector needs from a feed item. */
+export interface AnnounceableEvent {
+	id: string;
+	readAt?: string | null;
+}
+
+/**
+ * Decide whether a feed refresh should announce (play a sound for) its newest
+ * event, given the id last announced. Pure, so the *trigger* — not just the
+ * playback — is testable.
+ *
+ * Keys on the newest event slot (feed[0]) by identity, NOT the first unread.
+ * Keying on the first unread re-announces an older, already-present backlog
+ * event the moment a newer one above it is read (#576): reading your inbox
+ * top-down would ping a sound for every unread beneath. Tracking the top slot
+ * means only a genuinely newer event announces, and read-state churn below it
+ * stays silent.
+ *
+ * Returns the event to announce (the new top slot, if still unread) or null,
+ * plus the marker to persist next.
+ */
+export const selectEventToAnnounce = <T extends AnnounceableEvent>(
+	feed: ReadonlyArray<T>,
+	lastAnnouncedId: string | null
+): { announce: T | null; nextMarker: string } => {
+	const newest = feed[0] ?? null;
+	// First load only seeds the marker — never announce backlog on mount.
+	if (lastAnnouncedId === null) {
+		return { announce: null, nextMarker: newest ? newest.id : '' };
+	}
+	if (!newest || newest.id === lastAnnouncedId) {
+		return { announce: null, nextMarker: lastAnnouncedId };
+	}
+	// A brand-new top event advances the marker; it only sounds if it is still
+	// unread (a new-but-already-read top event, e.g. the user is in that
+	// conversation, stays silent).
+	return { announce: newest.readAt ? null : newest, nextMarker: newest.id };
+};
+
 /**
  * A minimum-gap throttle so a burst of events plays at most one sound per
  * window. Pure and time-injectable.
