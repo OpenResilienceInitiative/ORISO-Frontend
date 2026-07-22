@@ -26,6 +26,10 @@ import {
 import { useMatrixDecryptionFailures } from '../../hooks/useMatrixDecryptionFailures';
 import { MessageSendFailed } from '../message/MessageSendFailed';
 import {
+	FailedSend,
+	FailedSendTimelineEntry
+} from '../message/FailedSendTimelineEntry';
+import {
 	ReactionEvent,
 	AggregatedReaction,
 	aggregateReactions
@@ -3007,26 +3011,180 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	// "Sending message failed" notifications (Figma 7086-57415): a send that
 	// never reached the server surfaces a card at the bottom of the timeline.
-	// They are cleared once a later send succeeds (the composer keeps the text,
-	// so a successful resend means the failures are resolved).
-	const [failedSends, setFailedSends] = useState<
-		{ id: string; ts: number }[]
-	>([]);
-	const handleSendError = useCallback((_message: string, ts: number) => {
-		setFailedSends((previous) => [
-			...previous,
-			{ id: `send-failed-${ts}`, ts }
-		]);
-	}, []);
+	// They are cleared once a later send succeeds. A user-triggered retry is
+	// routed through the same composer send pipeline and never loops by itself.
+	const [failedSends, setFailedSends] = useState<FailedSend[]>([]);
+	const failedSendSequenceRef = useRef(0);
+	const activeSessionIdentity = `${activeSession?.rid || 'no-room'}:${
+		activeSession?.item?.id || 'no-session'
+	}`;
+	const activeSessionIdentityRef = useRef(activeSessionIdentity);
+	activeSessionIdentityRef.current = activeSessionIdentity;
+	const [retryRequest, setRetryRequest] = useState<{
+		requestId: string;
+		failedSendId: string;
+		message: string;
+		threadRootId?: string | null;
+		sessionIdentity: string;
+		transportMessage: string;
+		isAside: boolean;
+		replyToEventId?: string | null;
+		mentionedUserIds: string[];
+	} | null>(null);
+	// Read the live retry request inside the (non-memoised) success handler,
+	// which the composer may invoke from a closure captured a render earlier.
+	const retryRequestRef = useRef(retryRequest);
+	retryRequestRef.current = retryRequest;
+	const handleSendError = useCallback(
+		(
+			message: string,
+			ts: number,
+			retryOfId?: string,
+			threadRootId?: string | null,
+			sessionIdentity?: string,
+			transportMessage = message,
+			isAside = false,
+			replyToEventId?: string | null,
+			mentionedUserIds: string[] = []
+		) => {
+			if (
+				sessionIdentity &&
+				sessionIdentity !== activeSessionIdentityRef.current
+			) {
+				return;
+			}
+			failedSendSequenceRef.current += 1;
+			const nextFailureId = `send-failed-${ts}-${failedSendSequenceRef.current}`;
+			setFailedSends((previous) => {
+				if (retryOfId) {
+					const retryTargetExists = previous.some(
+						(failed) => failed.id === retryOfId
+					);
+					if (retryTargetExists) {
+						return previous.map((failed) =>
+							failed.id === retryOfId
+								? {
+										...failed,
+										message,
+										ts,
+										transportMessage,
+										isAside,
+										replyToEventId,
+										mentionedUserIds
+									}
+								: failed
+						);
+					}
+				}
+				return [
+					...previous,
+					{
+						id: nextFailureId,
+						message,
+						ts,
+						threadRootId: threadRootId || null,
+						transportMessage,
+						isAside,
+						replyToEventId: replyToEventId || null,
+						mentionedUserIds
+					}
+				];
+			});
+		},
+		[]
+	);
+	const handleRetryFailedSend = useCallback(
+		(failedSendId: string) => {
+			setRetryRequest((current) => {
+				if (current) {
+					return current;
+				}
+				const failed = failedSends.find(
+					(entry) => entry.id === failedSendId
+				);
+				return failed
+					? {
+							requestId: `retry-${failedSendId}-${Date.now()}`,
+							failedSendId,
+							message: failed.message,
+							threadRootId: failed.threadRootId || null,
+							sessionIdentity: activeSessionIdentityRef.current,
+							transportMessage: failed.transportMessage,
+							isAside: failed.isAside,
+							replyToEventId: failed.replyToEventId || null,
+							mentionedUserIds: failed.mentionedUserIds
+						}
+					: null;
+			});
+		},
+		[failedSends]
+	);
+	const handleRetrySettled = useCallback(
+		(requestId: string, sessionIdentity: string) => {
+			if (sessionIdentity !== activeSessionIdentityRef.current) {
+				return;
+			}
+			setRetryRequest((current) =>
+				current?.requestId === requestId ? null : current
+			);
+		},
+		[]
+	);
+	const handleComposerSendError = useCallback(
+		(
+			message: string,
+			ts: number,
+			retryOfId?: string,
+			threadRootId?: string | null,
+			transportMessage?: string,
+			isAside?: boolean,
+			replyToEventId?: string | null,
+			mentionedUserIds?: string[]
+		) =>
+			handleSendError(
+				message,
+				ts,
+				retryOfId,
+				threadRootId,
+				activeSessionIdentity,
+				transportMessage,
+				isAside,
+				replyToEventId,
+				mentionedUserIds
+			),
+		[activeSessionIdentity, handleSendError]
+	);
+	const handleComposerRetrySettled = useCallback(
+		(requestId: string) =>
+			handleRetrySettled(requestId, activeSessionIdentity),
+		[activeSessionIdentity, handleRetrySettled]
+	);
 
 	// Drop stale failure cards when the conversation changes.
 	useEffect(() => {
 		setFailedSends([]);
-	}, [activeSession?.rid]);
+		setRetryRequest(null);
+	}, [activeSessionIdentity]);
 
-	const handleMessageSendSuccess = () => {
+	const handleMessageSendSuccess = (
+		sessionIdentity = activeSessionIdentity
+	) => {
+		if (sessionIdentity !== activeSessionIdentityRef.current) {
+			return;
+		}
 		setDraggedFile(null);
-		setFailedSends([]);
+		// A retry that succeeded resolves only its own card; a fresh successful
+		// send must leave any other preserved failure cards intact — each holds
+		// the sole copy of an un-sent message the user may still want to retry.
+		const resolvedRetry = retryRequestRef.current;
+		if (resolvedRetry) {
+			setFailedSends((previous) =>
+				previous.filter(
+					(failed) => failed.id !== resolvedRetry.failedSendId
+				)
+			);
+		}
+		setRetryRequest(null);
 
 		if (props.refreshMessages) {
 			setTimeout(() => {
@@ -4784,12 +4942,56 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							))}
 						{/* "Sending message failed" cards for sends that never
 						    reached the server (Figma 7086-57415). */}
-						{failedSends.map((failed) => (
-							<MessageSendFailed
-								key={failed.id}
-								messageTime={String(failed.ts)}
-							/>
-						))}
+						{failedSends
+							.filter((failed) => !failed.threadRootId)
+							.map((failed) => (
+								<FailedSendTimelineEntry
+									key={failed.id}
+									failed={failed}
+									messageProps={{
+										clientName:
+											getContact(activeSession)
+												?.username ||
+											translate(
+												'sessionList.user.consultantUnknown'
+											),
+										isMyMessage: true,
+										isUserBanned: false,
+										handleDecryptionErrors,
+										handleDecryptionSuccess,
+										e2eeParams: {
+											key,
+											keyID,
+											encrypted,
+											subscriptionKeyLost
+										},
+										renderMode: 'main',
+										threadsEnabled: false,
+										forceShow: true,
+										displayName:
+											userData?.displayName ||
+											userData?.userName ||
+											'',
+										username: userData?.userName || '',
+										userId:
+											userData?.userId ||
+											userData?.userName ||
+											'local-user',
+										isNotRead: false,
+										t: null,
+										rid: resolvedMatrixRoomId || ''
+									}}
+									onRetry={handleRetryFailedSend}
+									retryPending={
+										retryRequest?.failedSendId === failed.id
+									}
+									retryDisabled={Boolean(
+										retryRequest &&
+											retryRequest.failedSendId !==
+												failed.id
+									)}
+								/>
+							))}
 						{shouldShowInlineTypingIndicator && (
 							<div className="messageItem session__inlineTypingIndicator">
 								<div className="messageItem__messageWrap">
@@ -4984,6 +5186,60 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										)}
 								</React.Fragment>
 							))}
+						{failedSends
+							.filter(
+								(failed) =>
+									failed.threadRootId === activeThreadRootId
+							)
+							.map((failed) => (
+								<FailedSendTimelineEntry
+									key={failed.id}
+									failed={failed}
+									messageProps={{
+										clientName:
+											getContact(activeSession)
+												?.username ||
+											translate(
+												'sessionList.user.consultantUnknown'
+											),
+										isMyMessage: true,
+										isUserBanned: false,
+										handleDecryptionErrors,
+										handleDecryptionSuccess,
+										e2eeParams: {
+											key,
+											keyID,
+											encrypted,
+											subscriptionKeyLost
+										},
+										renderMode: 'thread',
+										threadsEnabled: false,
+										threadRootId: activeThreadRootId,
+										forceShow: true,
+										displayName:
+											userData?.displayName ||
+											userData?.userName ||
+											'',
+										username: userData?.userName || '',
+										userId:
+											userData?.userId ||
+											userData?.userName ||
+											'local-user',
+										isNotRead: false,
+										t: null,
+										rid: resolvedMatrixRoomId || ''
+									}}
+									onRetry={handleRetryFailedSend}
+									retryPending={
+										retryRequest?.failedSendId === failed.id
+									}
+									retryDisabled={Boolean(
+										retryRequest &&
+											retryRequest.failedSendId !==
+												failed.id
+									)}
+								/>
+							))}
 					</div>
 					<div className="session__threadInput">
 						<MessageSubmitInterfaceComponent
@@ -4995,7 +5251,14 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							)}
 							typingUsers={props.typingUsers}
 							handleMessageSendSuccess={handleMessageSendSuccess}
-							onSendError={handleSendError}
+							onSendError={handleComposerSendError}
+							retryRequest={
+								retryRequest?.threadRootId ===
+								activeThreadRootId
+									? retryRequest
+									: null
+							}
+							onRetrySettled={handleComposerRetrySettled}
 							isSupervisor={isSupervisor}
 							supervisionRoomId={supervisionRoomId}
 							threadRootId={activeThreadRootId}
@@ -5136,7 +5399,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									handleMessageSendSuccess={
 										handleMessageSendSuccess
 									}
-									onSendError={handleSendError}
+									onSendError={handleComposerSendError}
+									retryRequest={
+										retryRequest?.threadRootId
+											? null
+											: retryRequest
+									}
+									onRetrySettled={handleComposerRetrySettled}
 									isSupervisor={isSupervisor}
 									supervisionRoomId={supervisionRoomId}
 									replyTo={replyTo}

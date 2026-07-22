@@ -449,7 +449,8 @@
 			"quoteUnknown": "Frühere Nachricht"
 		},
 		"sendFailed": {
-			"body": "Beim Senden der Nachricht gab es ein Problem, vermutlich durch die Verschlüsselung oder einen Übertragungsfehler. Bitte kopiere sie und versuche es erneut. Prüfe den Status: Ein Haken bedeutet gesendet, zwei Haken bedeuten gelesen, und ein Kreuz bedeutet, dass sie den Server nicht erreicht hat.",
+			"body": "Beim Senden der Nachricht gab es ein Problem, vermutlich durch die Verschlüsselung oder einen Übertragungsfehler. Mit „Erneut senden“ kannst du die Nachricht einmal wiederholen. Prüfe den Status: Ein Haken bedeutet gesendet, zwei Haken bedeuten gelesen, und ein Kreuz bedeutet, dass sie den Server nicht erreicht hat.",
+			"retry": "Erneut senden",
 			"subtitle": "Sende deine Nachricht erneut"
 		},
 		"submit": {
