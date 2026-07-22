@@ -13,8 +13,10 @@ import { familyLabelKey } from '../../notificationsCenter/eventDescriptors';
 import {
 	PERMISSION_GRANTED,
 	hasPermissions,
-	isSupported
+	isSupported,
+	requestNotificationPermissionSafe
 } from '../../../utils/notificationHelpers';
+import './notificationSettingsPanel.styles.scss';
 
 /**
  * WP-06 Slice 6b — cross-device notification settings panel.
@@ -48,7 +50,9 @@ export const NotificationSettingsPanel = () => {
 				updateSettings({ browserNotifications: { enabled: true } });
 				return;
 			}
-			Notification.requestPermission().then((result) => {
+			// Safe wrapper: resolves in promise AND legacy-callback browsers
+			// (old Safari) and never throws.
+			requestNotificationPermissionSafe().then((result) => {
 				setPermission(result);
 				updateSettings({
 					browserNotifications: {

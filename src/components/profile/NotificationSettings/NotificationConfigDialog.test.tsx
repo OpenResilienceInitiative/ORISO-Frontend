@@ -35,6 +35,12 @@ vi.mock('../../../resources/img/icons/notification_audio_off.svg', () => ({
 vi.mock('../../../resources/img/icons/play-circle.svg', () => ({
 	ReactComponent: () => null
 }));
+vi.mock('../../../resources/img/icons/keyboard_arrow_up.svg', () => ({
+	ReactComponent: () => null
+}));
+vi.mock('../../../resources/img/icons/keyboard_arrow_down.svg', () => ({
+	ReactComponent: () => null
+}));
 
 const baseProps = {
 	config: DEFAULT_NOTIFICATION_CONFIG,

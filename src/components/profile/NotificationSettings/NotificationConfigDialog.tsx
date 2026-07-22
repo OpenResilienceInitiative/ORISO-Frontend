@@ -5,6 +5,8 @@ import { OrisoDialog } from '../../modal/OrisoDialog';
 import { ReactComponent as NotificationSettingsIcon } from '../../../resources/img/icons/notification_settings.svg';
 import { ReactComponent as NotificationAudioOffIcon } from '../../../resources/img/icons/notification_audio_off.svg';
 import { ReactComponent as PlayCircleIcon } from '../../../resources/img/icons/play-circle.svg';
+import { ReactComponent as ArrowUpIcon } from '../../../resources/img/icons/keyboard_arrow_up.svg';
+import { ReactComponent as ArrowDownIcon } from '../../../resources/img/icons/keyboard_arrow_down.svg';
 import {
 	NOTIFICATION_TONE_IDS,
 	SoundId
@@ -73,7 +75,7 @@ const KindRow = ({
 						}
 						data-cy={`notif-volume-up-${area}-${kind}`}
 					>
-						▲
+						<ArrowUpIcon />
 					</button>
 					<button
 						type="button"
@@ -92,7 +94,7 @@ const KindRow = ({
 						}
 						data-cy={`notif-volume-down-${area}-${kind}`}
 					>
-						▼
+						<ArrowDownIcon />
 					</button>
 				</div>
 

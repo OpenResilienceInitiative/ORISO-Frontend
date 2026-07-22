@@ -24,6 +24,7 @@ import {
 	OrisoNotificationSettings,
 	SoundId
 } from './model';
+import { soundSettingForEvent } from './notificationConfig';
 
 /**
  * The SoundId to play for one event: the mention slot for @-mentions (with
@@ -106,30 +107,93 @@ export const createSoundThrottle = (minGapMs: number) => {
 const DEFAULT_VOLUME = 0.5;
 const throttle = createSoundThrottle(2000);
 
+/* ------------------------------------------------------------------ *
+ * Safari audio unlock. Safari's autoplay policy rejects play() calls
+ * that don't originate from a user gesture — but an element that WAS
+ * played from a gesture may be replayed programmatically later. We
+ * prime one shared element with a silent WAV on the first gesture and
+ * reuse it for every event sound. Chromium/Firefox work either way.
+ * ------------------------------------------------------------------ */
+
+// 44-byte silent WAV (0 samples) — no network, no audible output.
+const SILENT_WAV =
+	'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
+
+let sharedAudio: HTMLAudioElement | null = null;
+
+/** Prime the shared element — call from within a user gesture. */
+export const primeAudioPlayback = (): void => {
+	if (!('Audio' in window) || sharedAudio) {
+		return;
+	}
+	sharedAudio = new Audio(SILENT_WAV);
+	sharedAudio.play().catch(() => undefined);
+};
+
+/**
+ * One-time listeners that prime audio on the first pointer/keyboard
+ * gesture. Returns a cleanup function. Install once at app level.
+ */
+export const installAudioUnlock = (
+	target: EventTarget = window
+): (() => void) => {
+	const remove = () => {
+		target.removeEventListener('pointerdown', unlock, true);
+		target.removeEventListener('keydown', unlock, true);
+	};
+	const unlock = () => {
+		primeAudioPlayback();
+		remove();
+	};
+	target.addEventListener('pointerdown', unlock, true);
+	target.addEventListener('keydown', unlock, true);
+	return remove;
+};
+
 /**
  * Play the configured notification sound for an event — independent of window
- * focus and browser-notification permission. Silenced by the same gate that
- * fronts every surface (DND, per-conversation level, mute, family-off), and
- * rate-limited so bursts don't rattle.
+ * focus and browser-notification permission. The sound and volume come from
+ * the per-area config dialog (area×kind, issue #576); calls keep their
+ * dedicated ring. Silenced by the same gate that fronts every surface (DND,
+ * per-conversation level, mute, family-off), and rate-limited so bursts
+ * don't rattle.
  */
 export const playNotificationSound = (
 	settings: OrisoNotificationSettings,
 	device: LocalDeviceNotificationSettings,
 	family: EventFamily,
+	eventType: string,
 	isMention: boolean,
 	now: number = Date.now()
 ): void => {
 	if (isNotificationSuppressed(settings, device, family)) {
 		return;
 	}
-	const asset = assetForEvent(settings, family, isMention);
+	let asset: string | null;
+	let volume = DEFAULT_VOLUME;
+	if (family === 'calls') {
+		asset = incomingCall;
+	} else {
+		const kindConfig = soundSettingForEvent(
+			settings.notificationConfig,
+			family,
+			eventType,
+			isMention
+		);
+		asset = soundAssetFor(kindConfig.sound);
+		volume = kindConfig.volume;
+	}
 	if (!asset || !('Audio' in window)) {
 		return;
 	}
 	if (!throttle(now)) {
 		return;
 	}
-	const audio = new Audio(asset);
-	audio.volume = DEFAULT_VOLUME;
+	// Reuse the gesture-primed element when we have one (Safari), else a
+	// fresh element (fine in Chromium/Firefox).
+	const audio = sharedAudio ?? new Audio();
+	audio.src = asset;
+	audio.muted = false;
+	audio.volume = Math.max(0, Math.min(1, volume));
 	audio.play().catch(() => undefined);
 };

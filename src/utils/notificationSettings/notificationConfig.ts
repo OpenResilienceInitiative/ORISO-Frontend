@@ -90,6 +90,52 @@ export const parseNotificationConfig = (raw: unknown): NotificationConfig => {
 	return result;
 };
 
+/* ------------------------------------------------------------------ *
+ * Event → (area, kind) mapping — how a backend event finds its row in
+ * the config dialog. Kept here so playback and UI share one truth.
+ * ------------------------------------------------------------------ */
+
+/** Event families that land in the "Anfrage" tab. */
+export const areaForFamily = (family: string): NotificationArea => {
+	if (family === 'requests') {
+		return 'requests';
+	}
+	if (family === 'appointments') {
+		return 'appointments';
+	}
+	// messages, drafts, handover, system → "Gespräch"
+	return 'conversations';
+};
+
+/** Arrival events — something genuinely NEW begins (dialog row "Neu"). */
+const NEW_KIND_EVENTS: ReadonlyArray<string> = [
+	'request.new',
+	'team.discussion.new',
+	'waiting_room.client.joined'
+];
+
+export const kindForEvent = (
+	eventType: string,
+	isMention: boolean
+): NotificationKind => {
+	if (isMention) {
+		return 'mention';
+	}
+	if (NEW_KIND_EVENTS.includes(eventType)) {
+		return 'new';
+	}
+	return 'standard';
+};
+
+/** The configured sound/email/volume entry for one concrete event. */
+export const soundSettingForEvent = (
+	config: NotificationConfig,
+	family: string,
+	eventType: string,
+	isMention: boolean
+): KindConfig =>
+	config[areaForFamily(family)][kindForEvent(eventType, isMention)];
+
 /** Immutably set one field of one area+kind. */
 export const setKindField = <K extends keyof KindConfig>(
 	config: NotificationConfig,

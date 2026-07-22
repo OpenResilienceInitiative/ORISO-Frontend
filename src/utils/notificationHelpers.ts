@@ -27,10 +27,34 @@ export const hasPermissions = (permission: NotificationPermission) => {
 	return Notification.permission === permission;
 };
 
+/**
+ * Promise/callback-safe permission request. Old Safari implemented only the
+ * callback form of `Notification.requestPermission`; modern browsers return a
+ * promise. This resolves in both worlds and never throws.
+ */
+export const requestNotificationPermissionSafe =
+	(): Promise<NotificationPermission> =>
+		new Promise((resolve) => {
+			if (!isSupported()) {
+				resolve('denied');
+				return;
+			}
+			try {
+				const maybePromise = Notification.requestPermission(resolve);
+				if (maybePromise && typeof maybePromise.then === 'function') {
+					maybePromise
+						.then(resolve)
+						.catch(() => resolve(Notification.permission));
+				}
+			} catch {
+				resolve('denied');
+			}
+		});
+
 export const requestPermissions = () => {
 	// Only ask for notification if not denied or granted already
 	if (isSupported() && hasPermissions(PERMISSION_DEFAULT)) {
-		Notification.requestPermission().then((permission) => {
+		requestNotificationPermissionSafe().then((permission) => {
 			if (permission === PERMISSION_GRANTED) {
 				sendNotification('Benachrichtigungen aktiviert!');
 			}

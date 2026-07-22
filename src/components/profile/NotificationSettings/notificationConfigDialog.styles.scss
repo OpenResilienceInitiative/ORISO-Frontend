@@ -75,16 +75,28 @@
 		flex: 0 0 auto;
 	}
 
+	// Bare up/down arrows (Frank's keyboard_arrow icons); hover turns black
+	// so it is obvious they are pressable.
 	&__volumeBtn {
-		width: 22px;
-		height: 22px;
-		border: 1px solid #cfd4da;
-		border-radius: 6px;
-		background: #fff;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 24px;
+		height: 24px;
+		border: none;
+		background: transparent;
 		color: #4c555f;
-		font-size: 10px;
-		line-height: 1;
+		padding: 0;
 		cursor: pointer;
+
+		svg {
+			width: 24px;
+			height: 24px;
+		}
+
+		&:hover:not(:disabled) {
+			color: #000;
+		}
 
 		&:disabled {
 			opacity: 0.35;

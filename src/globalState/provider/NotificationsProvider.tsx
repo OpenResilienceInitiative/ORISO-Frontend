@@ -23,7 +23,10 @@ import { getValueFromCookie } from '../../components/sessionCookie/accessSession
 import { EventActionParams } from '../../components/notificationsCenter/eventDescriptors';
 import { parseEventActionParams } from '../../components/notificationsCenter/notificationActionTarget';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
-import { playNotificationSound } from '../../utils/notificationSettings/soundPlayback';
+import {
+	installAudioUnlock,
+	playNotificationSound
+} from '../../utils/notificationSettings/soundPlayback';
 import { notificationSettingsStore } from '../../utils/notificationSettings/store';
 import { getEventDescriptor } from '../../components/notificationsCenter/eventDescriptors';
 
@@ -152,7 +155,13 @@ export function NotificationsProvider(props) {
 			const { settings, device } = notificationSettingsStore.getState();
 			const family = getEventDescriptor(newest.eventType).family;
 			const isMention = newest.params?.mentioned === true;
-			playNotificationSound(settings, device, family, isMention);
+			playNotificationSound(
+				settings,
+				device,
+				family,
+				newest.eventType,
+				isMention
+			);
 		},
 		[]
 	);
@@ -212,6 +221,10 @@ export function NotificationsProvider(props) {
 		const interval = window.setInterval(refreshNotificationFeedSafe, 15000);
 		return () => window.clearInterval(interval);
 	}, [refreshNotificationFeedSafe]);
+
+	// Safari: programmatic audio.play() is only allowed on an element that was
+	// played from a user gesture — prime one on the first pointer/keydown.
+	useEffect(() => installAudioUnlock(), []);
 
 	// Real-time backbone: the backend fires a `directMessage` live event to the
 	// recipient whenever a notification is persisted (ORISO-UserService

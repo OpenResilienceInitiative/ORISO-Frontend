@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
+	areaForFamily,
 	clampVolume,
 	DEFAULT_NOTIFICATION_CONFIG,
 	DISABLED_AREAS,
+	kindForEvent,
 	parseNotificationConfig,
-	setKindField
+	setKindField,
+	soundSettingForEvent
 } from './notificationConfig';
 
 describe('notificationConfig', () => {
@@ -71,6 +74,51 @@ describe('notificationConfig', () => {
 		expect(clampVolume(0.5)).toBe(0.5);
 		expect(clampVolume(0.6)).toBe(0.5);
 		expect(clampVolume(0.75)).toBe(0.75);
+	});
+
+	it('maps event families onto the three config areas', () => {
+		expect(areaForFamily('requests')).toBe('requests');
+		expect(areaForFamily('appointments')).toBe('appointments');
+		// everything conversation-shaped lands in "Gespräch"
+		expect(areaForFamily('messages')).toBe('conversations');
+		expect(areaForFamily('drafts')).toBe('conversations');
+		expect(areaForFamily('handover')).toBe('conversations');
+		expect(areaForFamily('system')).toBe('conversations');
+	});
+
+	it('maps events onto kinds: mention wins, arrival events are "new", rest standard', () => {
+		expect(kindForEvent('message.new', true)).toBe('mention');
+		expect(kindForEvent('request.new', false)).toBe('new');
+		expect(kindForEvent('team.discussion.new', false)).toBe('new');
+		expect(kindForEvent('waiting_room.client.joined', false)).toBe('new');
+		expect(kindForEvent('message.new', false)).toBe('standard');
+		expect(kindForEvent('handover.requested', false)).toBe('standard');
+	});
+
+	it('soundSettingForEvent returns the configured kind entry for the event', () => {
+		const config = setKindField(
+			DEFAULT_NOTIFICATION_CONFIG,
+			'requests',
+			'new',
+			'sound',
+			'ton-7'
+		);
+		const hit = soundSettingForEvent(
+			config,
+			'requests',
+			'request.new',
+			false
+		);
+		expect(hit.sound).toBe('ton-7');
+		expect(hit.volume).toBe(0.5);
+		// a message mention reads conversations.mention
+		const mention = soundSettingForEvent(
+			config,
+			'messages',
+			'message.new',
+			true
+		);
+		expect(mention).toBe(config.conversations.mention);
 	});
 
 	it('setKindField updates volume immutably', () => {
