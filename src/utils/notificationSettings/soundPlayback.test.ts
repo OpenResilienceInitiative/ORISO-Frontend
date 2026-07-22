@@ -6,6 +6,7 @@ import {
 } from './model';
 import { setKindField } from './notificationConfig';
 import {
+	__resetSharedAudioForTests,
 	assetForEvent,
 	createSoundThrottle,
 	installAudioUnlock,
@@ -105,6 +106,8 @@ describe('playNotificationSound (config-driven)', () => {
 	});
 	afterEach(() => {
 		vi.unstubAllGlobals();
+		// keep specs order-independent: never leak the primed singleton
+		__resetSharedAudioForTests();
 	});
 
 	const settingsWith = (

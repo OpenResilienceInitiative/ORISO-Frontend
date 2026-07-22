@@ -11,7 +11,10 @@ import {
 	NOTIFICATION_TONE_IDS,
 	SoundId
 } from '../../../utils/notificationSettings/model';
-import { soundAssetFor } from '../../../utils/notificationSettings/soundPlayback';
+import {
+	previewNotificationSound,
+	soundAssetFor
+} from '../../../utils/notificationSettings/soundPlayback';
 import { M3Checkbox } from '../../M3Checkbox';
 import {
 	AREA_KINDS,
@@ -77,7 +80,7 @@ const KindRow = ({
 						}
 						data-cy={`notif-volume-up-${area}-${kind}`}
 					>
-						<ArrowUpIcon />
+						<ArrowUpIcon aria-hidden="true" />
 					</button>
 					<button
 						type="button"
@@ -96,7 +99,7 @@ const KindRow = ({
 						}
 						data-cy={`notif-volume-down-${area}-${kind}`}
 					>
-						<ArrowDownIcon />
+						<ArrowDownIcon aria-hidden="true" />
 					</button>
 				</div>
 
@@ -112,7 +115,7 @@ const KindRow = ({
 							onClick={() => onPreview(value.sound, value.volume)}
 							data-cy={`notif-play-${area}-${kind}`}
 						>
-							<PlayCircleIcon />
+							<PlayCircleIcon aria-hidden="true" />
 						</button>
 					) : (
 						<span
@@ -369,12 +372,7 @@ export const NotificationConfigDialog = ({
 	);
 
 	const handlePreview = useCallback((soundId: SoundId, volume: number) => {
-		const asset = soundAssetFor(soundId);
-		if (asset && 'Audio' in window) {
-			const audio = new Audio(asset);
-			audio.volume = Math.max(0, Math.min(1, volume));
-			audio.play().catch(() => undefined);
-		}
+		previewNotificationSound(soundId, volume);
 	}, []);
 
 	return (

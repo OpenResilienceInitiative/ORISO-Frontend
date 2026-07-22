@@ -160,6 +160,32 @@ describe('requestNotificationPermissionSafe', () => {
 		);
 	});
 
+	it('resolves even when requestPermission throws synchronously', async () => {
+		class ThrowingNotification {
+			static permission: NotificationPermission = 'default';
+			static requestPermission() {
+				throw new Error('boom');
+			}
+		}
+		vi.stubGlobal('Notification', ThrowingNotification);
+		await expect(requestNotificationPermissionSafe()).resolves.toBe(
+			'denied'
+		);
+	});
+
+	it('falls back to the current permission when the promise rejects', async () => {
+		class RejectingNotification {
+			static permission: NotificationPermission = 'default';
+			static requestPermission() {
+				return Promise.reject(new Error('boom'));
+			}
+		}
+		vi.stubGlobal('Notification', RejectingNotification);
+		await expect(requestNotificationPermissionSafe()).resolves.toBe(
+			'default'
+		);
+	});
+
 	it("resolves 'denied' when notifications are unsupported", async () => {
 		vi.stubGlobal('Notification', undefined);
 		// isSupported() checks 'Notification' in window — delete outright

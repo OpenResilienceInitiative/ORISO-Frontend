@@ -18,6 +18,7 @@ import {
 	NotificationConfig,
 	parseNotificationConfig
 } from './notificationConfig';
+import { NEVER_NOTIFY_FAMILIES } from './notificationConfig';
 
 /** Per-family on/off switches — mirrors the timeline's event families. */
 export type FamilyToggles = Record<EventFamily, boolean>;
@@ -254,10 +255,10 @@ export const isNotificationSuppressed = (
 	if (settings.globalMute || device.silenced) {
 		return true;
 	}
-	// Harmonised model (2026-07-22): drafts never notify; system keeps its
-	// single global switch; every other family is governed per-channel by
-	// the notification config (banner / sound / email), not suppressed here.
-	if (family === 'drafts') {
+	// Harmonised model (2026-07-22): some families never notify (drafts);
+	// system keeps its single global switch; every other family is governed
+	// per-channel by the notification config (banner / sound / email).
+	if (NEVER_NOTIFY_FAMILIES.includes(family)) {
 		return true;
 	}
 	if (family === 'system') {

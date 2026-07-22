@@ -6,7 +6,7 @@
 	gap: 4px;
 	cursor: pointer;
 	font-size: 14px;
-	color: #1b1b1c;
+	color: var(--m3-on-surface, #1b1b1c);
 
 	&__target {
 		position: relative;
@@ -35,7 +35,7 @@
 		justify-content: center;
 		width: 18px;
 		height: 18px;
-		border: 2px solid #4c555f;
+		border: 2px solid var(--m3-secondary, #4c555f);
 		border-radius: 2px;
 		background: transparent;
 		color: #fff;

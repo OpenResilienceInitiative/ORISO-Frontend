@@ -7,12 +7,12 @@ import { Switch } from '../../Switch';
 import { NotificationDenied } from '../BrowserNotifications/NotificationDenied';
 import { useNotificationSettings } from '../../../hooks/useNotificationSettings';
 import { NotificationConfigView } from './NotificationConfigDialog';
-import { familyLabelKey } from '../../notificationsCenter/eventDescriptors';
+import { familyLabelKey } from '../../notificationsCenter/eventDescriptors/registry';
 import {
 	NotificationArea,
 	setKindField
 } from '../../../utils/notificationSettings/notificationConfig';
-import { soundAssetFor } from '../../../utils/notificationSettings/soundPlayback';
+import { previewNotificationSound } from '../../../utils/notificationSettings/soundPlayback';
 import { useNotifStatusViaSidebar } from '../../../utils/notificationStatusToggle';
 import {
 	PERMISSION_GRANTED,
@@ -155,14 +155,7 @@ export const NotificationSettingsPanel = () => {
 						)
 					})
 				}
-				onPreview={(soundId, volume) => {
-					const asset = soundAssetFor(soundId);
-					if (asset && 'Audio' in window) {
-						const audio = new Audio(asset);
-						audio.volume = Math.max(0, Math.min(1, volume));
-						audio.play().catch(() => undefined);
-					}
-				}}
+				onPreview={previewNotificationSound}
 			/>
 
 			<hr />

@@ -155,21 +155,6 @@
 		color: #1a1a1a;
 	}
 
-	&__email {
-		display: inline-flex;
-		align-items: center;
-		gap: 8px;
-		font-size: 14px;
-		color: #1a1a1a;
-		cursor: pointer;
-
-		input {
-			width: 18px;
-			height: 18px;
-			accent-color: var(--m3-primary, #a5000a);
-		}
-	}
-
 	// Channel row: banner mode select + M3 email checkbox
 	&__channels {
 		display: flex;
@@ -193,7 +178,11 @@
 		font-size: 13px;
 		padding: 4px 8px;
 		color: #1a1a1a;
-		outline: none;
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 1px;
+		}
 	}
 
 	// Feature-signal micro-survey card (FE#590 dummy)

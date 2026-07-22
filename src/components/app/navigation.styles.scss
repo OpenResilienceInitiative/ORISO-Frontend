@@ -1320,9 +1320,9 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 .navigation__notifStatusIcon {
 	width: 24px;
 	height: 24px;
-	color: #4c555f;
+	color: var(--oriso-nav-foreground, #4c555f);
 
 	&--muted {
-		color: var(--m3-primary, #a5000a);
+		color: var(--oriso-nav-active-foreground, var(--m3-primary, #a5000a));
 	}
 }

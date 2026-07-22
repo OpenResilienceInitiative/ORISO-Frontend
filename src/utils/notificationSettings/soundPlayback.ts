@@ -25,6 +25,7 @@ import {
 	SoundId
 } from './model';
 import { soundSettingForEvent } from './notificationConfig';
+import { onFirstUserGesture } from '../onFirstUserGesture';
 
 /**
  * The SoundId to play for one event: the mention slot for @-mentions (with
@@ -137,18 +138,29 @@ export const primeAudioPlayback = (): void => {
  */
 export const installAudioUnlock = (
 	target: EventTarget = window
-): (() => void) => {
-	const remove = () => {
-		target.removeEventListener('pointerdown', unlock, true);
-		target.removeEventListener('keydown', unlock, true);
-	};
-	const unlock = () => {
-		primeAudioPlayback();
-		remove();
-	};
-	target.addEventListener('pointerdown', unlock, true);
-	target.addEventListener('keydown', unlock, true);
-	return remove;
+): (() => void) => onFirstUserGesture(primeAudioPlayback, target);
+
+/** Test-only: clear the primed singleton so specs stay order-independent. */
+export const __resetSharedAudioForTests = (): void => {
+	sharedAudio = null;
+};
+
+/**
+ * Preview one sound at one volume — the shared handler behind every play
+ * button (settings page, config dialog, stories). Click-driven, so it is
+ * allowed by every browser's autoplay policy.
+ */
+export const previewNotificationSound = (
+	soundId: SoundId,
+	volume: number
+): void => {
+	const asset = soundAssetFor(soundId);
+	if (!asset || !('Audio' in window)) {
+		return;
+	}
+	const audio = new Audio(asset);
+	audio.volume = Math.max(0, Math.min(1, volume));
+	audio.play().catch(() => undefined);
 };
 
 /**

@@ -3,6 +3,7 @@ import {
 	PERMISSION_DEFAULT,
 	requestNotificationPermissionSafe
 } from '../utils/notificationHelpers';
+import { onFirstUserGesture } from '../utils/onFirstUserGesture';
 
 /**
  * Ask for browser-notification permission — needed e.g. for incoming-call
@@ -19,24 +20,18 @@ export const useNotificationPermission = () => {
 
 	useEffect(() => {
 		if (!('Notification' in window)) {
+			// Unsupported browsers cannot be asked — report a hard 'denied'
+			// so consumers never treat them as requestable (#586 review).
+			setPermissionStatus('denied');
 			return;
 		}
 		setPermissionStatus(Notification.permission);
 		if (Notification.permission !== PERMISSION_DEFAULT) {
 			return;
 		}
-
-		const remove = () => {
-			window.removeEventListener('pointerdown', ask, true);
-			window.removeEventListener('keydown', ask, true);
-		};
-		const ask = () => {
-			remove();
+		return onFirstUserGesture(() => {
 			requestNotificationPermissionSafe().then(setPermissionStatus);
-		};
-		window.addEventListener('pointerdown', ask, true);
-		window.addEventListener('keydown', ask, true);
-		return remove;
+		});
 	}, []);
 
 	return permissionStatus;

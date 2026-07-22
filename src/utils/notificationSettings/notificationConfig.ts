@@ -8,7 +8,7 @@
  * switch outside the tabs). Pure and serialisable — persisted in the same
  * cross-device settings store as the other preferences.
  */
-import { SoundId } from './model';
+import type { SoundId } from './model';
 
 export const NOTIFICATION_AREAS = [
 	'requests',

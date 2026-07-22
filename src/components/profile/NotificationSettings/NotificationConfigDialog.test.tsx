@@ -55,12 +55,15 @@ describe('NotificationConfigView', () => {
 
 	it('renders the three harmonised area tabs, all enabled', () => {
 		render(<NotificationConfigView {...baseProps} />);
-		expect(screen.getByTestId('notif-tab-requests')).toBeTruthy();
-		expect(screen.getByTestId('notif-tab-conversations')).toBeTruthy();
-		expect(
-			(screen.getByTestId('notif-tab-timeCritical') as HTMLButtonElement)
-				.disabled
-		).toBe(false);
+		for (const tab of [
+			'notif-tab-requests',
+			'notif-tab-conversations',
+			'notif-tab-timeCritical'
+		]) {
+			expect(
+				(screen.getByTestId(tab) as HTMLButtonElement).disabled
+			).toBe(false);
+		}
 	});
 
 	it('conversations tab shows the handover row; time-critical shows call+appointment and the wecker card', () => {

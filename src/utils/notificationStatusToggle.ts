@@ -38,12 +38,22 @@ export const useNotifStatusViaSidebar = (): [boolean, (v: boolean) => void] => {
 	);
 
 	useEffect(() => {
-		const onChange = () => setActive(isNotifStatusViaSidebar());
-		window.addEventListener(CHANGE_EVENT, onChange);
-		window.addEventListener('storage', onChange);
+		// The custom event carries the requested value so the in-tab state
+		// survives even when storage writes fail (restricted-storage Safari).
+		const onCustom = (e: Event) => {
+			const detail = (e as CustomEvent<{ active?: boolean }>).detail;
+			setActive(
+				typeof detail?.active === 'boolean'
+					? detail.active
+					: isNotifStatusViaSidebar()
+			);
+		};
+		const onStorage = () => setActive(isNotifStatusViaSidebar());
+		window.addEventListener(CHANGE_EVENT, onCustom);
+		window.addEventListener('storage', onStorage);
 		return () => {
-			window.removeEventListener(CHANGE_EVENT, onChange);
-			window.removeEventListener('storage', onChange);
+			window.removeEventListener(CHANGE_EVENT, onCustom);
+			window.removeEventListener('storage', onStorage);
 		};
 	}, []);
 

@@ -11,7 +11,7 @@ import {
 	NotificationConfig
 } from '../../../utils/notificationSettings/notificationConfig';
 import type { SoundId } from '../../../utils/notificationSettings/model';
-import { soundAssetFor } from '../../../utils/notificationSettings/soundPlayback';
+import { previewNotificationSound } from '../../../utils/notificationSettings/soundPlayback';
 import './notificationConfigDialog.styles.scss';
 
 const meta: Meta<typeof NotificationConfigDialog> = {
@@ -86,14 +86,7 @@ const InteractiveBody = () => {
 						}
 					}))
 				}
-				onPreview={(soundId, volume) => {
-					const asset = soundAssetFor(soundId);
-					if (asset && 'Audio' in window) {
-						const audio = new Audio(asset);
-						audio.volume = Math.max(0, Math.min(1, volume));
-						audio.play().catch(() => undefined);
-					}
-				}}
+				onPreview={previewNotificationSound}
 			/>
 		</div>
 	);
