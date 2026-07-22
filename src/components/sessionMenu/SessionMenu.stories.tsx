@@ -79,6 +79,10 @@ function MenuTriggerShapeDemo() {
 
 export const MenuTriggerShape: Story = {
 	tags: ['autodocs'],
+	args: {
+		hasUserInitiatedStopOrLeaveRequest,
+		isAskerInfoAvailable: true
+	},
 	render: () => <MenuTriggerShapeDemo />
 };
 
