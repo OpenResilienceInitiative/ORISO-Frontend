@@ -142,10 +142,11 @@ describe('sessionHelpers', () => {
 		]);
 		expect(prepared[0].displayName).toBe('decoded:User One');
 		expect(prepared[2].isVideoActive).toBe(true);
-		// Explicit chat date only (#564) — relative days still use message.today etc.
+		// Explicit chat date only (#564), localized to the default (de) locale —
+		// relative days still use message.today etc.
 		expect(prepared[0].messageDate).toEqual({
 			str: null,
-			date: '29th of June 2026'
+			date: '29. Juni 2026'
 		});
 		expect(prepared[1].messageDate).toEqual({ str: '', date: null });
 	});
