@@ -40,9 +40,21 @@ export const AREA_KINDS: Record<
 	timeCritical: ['call', 'appointment']
 };
 
+/**
+ * Banner behaviour per kind. 'persistent' uses the Notification API's
+ * `requireInteraction` (stays until dismissed) — honoured by Chromium;
+ * Firefox/Safari fall back to a temporary banner (#576 Safari review).
+ */
+export type BannerMode = 'off' | 'temporary' | 'persistent';
+export const BANNER_MODES: ReadonlyArray<BannerMode> = [
+	'off',
+	'temporary',
+	'persistent'
+];
+
 export interface KindConfig {
 	/** Browser popup / OS banner for this kind. */
-	banner: boolean;
+	banner: BannerMode;
 	sound: SoundId;
 	email: boolean;
 	/** Playback volume 0..1 for this kind (adjusted by the up/down arrows). */
@@ -62,7 +74,7 @@ export type NotificationConfig = Record<
 >;
 
 const kind = (partial: Partial<KindConfig> = {}): KindConfig => ({
-	banner: true,
+	banner: 'temporary',
 	sound: 'none',
 	email: true,
 	volume: DEFAULT_VOLUME,
@@ -101,10 +113,15 @@ export const parseNotificationConfig = (raw: unknown): NotificationConfig => {
 			const kindSrc = (areaSrc[kindName] ?? {}) as Record<string, any>;
 			const fallback = DEFAULT_NOTIFICATION_CONFIG[area][kindName];
 			result[area][kindName] = {
+				// legacy boolean (pre-3-state) parses tolerantly
 				banner:
 					typeof kindSrc.banner === 'boolean'
 						? kindSrc.banner
-						: fallback.banner,
+							? 'temporary'
+							: 'off'
+						: BANNER_MODES.includes(kindSrc.banner)
+							? (kindSrc.banner as BannerMode)
+							: fallback.banner,
 				sound:
 					typeof kindSrc.sound === 'string'
 						? (kindSrc.sound as SoundId)

@@ -723,6 +723,18 @@
 					"upvote": "Fände ich gut",
 					"downvote": "Brauche ich nicht",
 					"thanks": "Danke für dein Feedback!"
+				},
+				"banner": {
+					"label": "Banner",
+					"off": "Aus",
+					"temporary": "Temporär",
+					"persistent": "Bleibt bis zum Wegklicken"
+				},
+				"statusButton": {
+					"sidebarToggle": "Benachrichtigungs-Status in der Menüleiste anzeigen",
+					"sidebarToggleDescription": "Ein Knopf in der Seitenleiste, der alle Benachrichtigungen mit einem Klick stummschaltet oder wieder aktiviert.",
+					"active": "Benachrichtigungen aktiv — klicke zum Stummschalten",
+					"muted": "Alle Benachrichtigungen stumm — klicke zum Aktivieren"
 				}
 			}
 		},

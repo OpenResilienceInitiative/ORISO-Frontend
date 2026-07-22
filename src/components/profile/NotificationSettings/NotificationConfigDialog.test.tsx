@@ -83,15 +83,17 @@ describe('NotificationConfigView', () => {
 		expect(screen.getByTestId('notif-wecker-thanks')).toBeTruthy();
 	});
 
-	it('reports a banner toggle', () => {
+	it('reports a banner mode change (off / temporary / persistent)', () => {
 		const onChange = vi.fn();
 		render(<NotificationConfigView {...baseProps} onChange={onChange} />);
-		fireEvent.click(screen.getByTestId('notif-banner-requests-new'));
+		fireEvent.change(screen.getByTestId('notif-banner-requests-new'), {
+			target: { value: 'persistent' }
+		});
 		expect(onChange).toHaveBeenCalledWith(
 			'requests',
 			'new',
 			'banner',
-			false
+			'persistent'
 		);
 	});
 

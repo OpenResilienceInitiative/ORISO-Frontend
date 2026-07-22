@@ -45,6 +45,10 @@ import {
 	useLiveChatAvailabilityHeartbeat,
 	useLiveChatViaSidebar
 } from '../../utils/liveChatToggle';
+import { useNotifStatusViaSidebar } from '../../utils/notificationStatusToggle';
+import { useNotificationSettings } from '../../hooks/useNotificationSettings';
+import { ReactComponent as NotifStatusOnIcon } from '../../resources/img/icons/notification_bell.svg';
+import { ReactComponent as NotifStatusOffIcon } from '../../resources/img/icons/bell-off.svg';
 import {
 	LiveChatToggleActiveIcon,
 	LiveChatToggleInactiveIcon
@@ -112,6 +116,13 @@ export const NavigationBar = ({
 		}
 	] = useLiveChatAvailable();
 	const [liveChatViaSidebar] = useLiveChatViaSidebar();
+	// #576: optional global notification-status button in the rail — flips the
+	// account-wide mute (the one switch that overrides everything). Placement
+	// is opt-in from the settings page, like the Live Chat rail toggle.
+	const [notifStatusViaSidebar] = useNotifStatusViaSidebar();
+	const { settings: notifSettings, updateSettings: updateNotifSettings } =
+		useNotificationSettings();
+	const notifMuted = notifSettings.globalMute;
 	useLiveChatAvailabilityHeartbeat(isConsultant, liveChatAvailable);
 	const { tenant } = useContext(TenantContext);
 
@@ -502,6 +513,51 @@ export const NavigationBar = ({
 							)
 					})}
 				>
+					{notifStatusViaSidebar && (
+						<button
+							type="button"
+							className={clsx(
+								'navigation__item',
+								'navigation__item--notifStatus',
+								notifMuted && 'navigation__item--muted'
+							)}
+							tabIndex={0}
+							role="switch"
+							aria-checked={!notifMuted}
+							aria-label={translate(
+								notifMuted
+									? 'profile.notifications.config.statusButton.muted'
+									: 'profile.notifications.config.statusButton.active'
+							)}
+							title={translate(
+								notifMuted
+									? 'profile.notifications.config.statusButton.muted'
+									: 'profile.notifications.config.statusButton.active'
+							)}
+							onClick={() =>
+								updateNotifSettings({
+									globalMute: !notifMuted
+								})
+							}
+							data-cy="nav-notif-status"
+						>
+							<div className="navigation__icon-slot">
+								<div className="navigation__icon-slot__inner">
+									{notifMuted ? (
+										<NotifStatusOffIcon
+											className="navigation__notifStatusIcon navigation__notifStatusIcon--muted"
+											aria-hidden
+										/>
+									) : (
+										<NotifStatusOnIcon
+											className="navigation__notifStatusIcon"
+											aria-hidden
+										/>
+									)}
+								</div>
+							</div>
+						</button>
+					)}
 					{showLiveChatNav && (
 						<button
 							type="button"

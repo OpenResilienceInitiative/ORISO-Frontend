@@ -63,6 +63,41 @@ describe('sendNotification permission gate', () => {
 		expect(constructed).toHaveLength(0);
 	});
 
+	it('persistent banner mode sets requireInteraction on the OS popup', () => {
+		stubNotification('granted');
+		localStorage.setItem(
+			'BROWSER_NOTIFICATIONS',
+			JSON.stringify({ enabled: true })
+		);
+		notificationSettingsStore.updateSettings({
+			notificationConfig: setKindField(
+				notificationSettingsStore.getState().settings
+					.notificationConfig,
+				'conversations',
+				'standard',
+				'banner',
+				'persistent'
+			)
+		});
+		sendNotification('Hallo', {
+			showAlways: true,
+			family: 'messages',
+			eventType: 'message.new'
+		});
+		expect(constructed).toHaveLength(1);
+		expect(constructed[0].options.requireInteraction).toBe(true);
+		notificationSettingsStore.updateSettings({
+			notificationConfig: setKindField(
+				notificationSettingsStore.getState().settings
+					.notificationConfig,
+				'conversations',
+				'standard',
+				'banner',
+				'temporary'
+			)
+		});
+	});
+
 	it('banner channel off for the event row suppresses the OS popup', () => {
 		stubNotification('granted');
 		localStorage.setItem(
@@ -76,7 +111,7 @@ describe('sendNotification permission gate', () => {
 				'conversations',
 				'standard',
 				'banner',
-				false
+				'off'
 			)
 		});
 		sendNotification('Hallo', {
@@ -93,7 +128,7 @@ describe('sendNotification permission gate', () => {
 				'conversations',
 				'standard',
 				'banner',
-				true
+				'temporary'
 			)
 		});
 	});

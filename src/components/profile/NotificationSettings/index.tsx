@@ -13,6 +13,7 @@ import {
 	setKindField
 } from '../../../utils/notificationSettings/notificationConfig';
 import { soundAssetFor } from '../../../utils/notificationSettings/soundPlayback';
+import { useNotifStatusViaSidebar } from '../../../utils/notificationStatusToggle';
 import {
 	PERMISSION_GRANTED,
 	hasPermissions,
@@ -39,6 +40,8 @@ export const NotificationSettingsPanel = () => {
 	// Browser permission handling mirrors the legacy panel: enabling asks for
 	// permission first; a hard "denied" shows the recovery hint instead.
 	const [activeArea, setActiveArea] = useState<NotificationArea>('requests');
+	const [notifStatusViaSidebar, setNotifStatusViaSidebar] =
+		useNotifStatusViaSidebar();
 	const [permission, setPermission] = useState<NotificationPermission>(
 		isSupported() ? Notification.permission : 'denied'
 	);
@@ -97,6 +100,14 @@ export const NotificationSettingsPanel = () => {
 				descriptionKey="profile.notificationSettings.deviceSilence.description"
 				checked={deviceSilenced}
 				onChange={setDeviceSilenced}
+			/>
+			{/* Opt-in: global status button in the navigation rail (like the
+			    Live Chat rail toggle) — flips the account-wide mute. */}
+			<Switch
+				titleKey="profile.notifications.config.statusButton.sidebarToggle"
+				descriptionKey="profile.notifications.config.statusButton.sidebarToggleDescription"
+				checked={notifStatusViaSidebar}
+				onChange={setNotifStatusViaSidebar}
 			/>
 
 			<hr />

@@ -1,6 +1,9 @@
 import { v4 as uuidv4 } from 'uuid';
 import { isNotificationSuppressed } from './notificationSettings/model';
-import { soundSettingForEvent } from './notificationSettings/notificationConfig';
+import {
+	BannerMode,
+	soundSettingForEvent
+} from './notificationSettings/notificationConfig';
 import { notificationSettingsStore } from './notificationSettings/store';
 import { EventFamily } from '../components/notificationsCenter/eventDescriptors/types';
 
@@ -90,7 +93,9 @@ export const sendNotification = (
 		return;
 	}
 	// Harmonised model: the banner channel of the event's config row decides
-	// whether an OS popup may show (system stays outside the tabs).
+	// whether an OS popup may show and how long it stays (system stays
+	// outside the tabs).
+	let bannerMode: BannerMode = 'temporary';
 	if (family !== 'system') {
 		const kindConfig = soundSettingForEvent(
 			settings.notificationConfig,
@@ -98,9 +103,10 @@ export const sendNotification = (
 			options.eventType || '',
 			options.mentioned === true
 		);
-		if (!kindConfig.banner) {
+		if (kindConfig.banner === 'off') {
 			return;
 		}
+		bannerMode = kindConfig.banner;
 	}
 
 	// If always is false and window has the focus do not send any notification
@@ -111,7 +117,10 @@ export const sendNotification = (
 	const notification = new Notification(title, {
 		...options,
 		tag: uuidv4(),
-		icon: '/logo192.png'
+		icon: '/logo192.png',
+		// 'persistent' keeps the banner until dismissed (Chromium honours
+		// requireInteraction; Firefox/Safari fall back to temporary).
+		requireInteraction: bannerMode === 'persistent'
 	});
 
 	notification.onshow = () => {

@@ -170,6 +170,32 @@
 		}
 	}
 
+	// Channel row: banner mode select + M3 email checkbox
+	&__channels {
+		display: flex;
+		align-items: center;
+		gap: 16px;
+		flex-wrap: wrap;
+	}
+
+	&__banner {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		font-size: 14px;
+		color: #1a1a1a;
+	}
+
+	&__bannerSelect {
+		border: 1px solid #cfd4da;
+		border-radius: 6px;
+		background: #fff;
+		font-size: 13px;
+		padding: 4px 8px;
+		color: #1a1a1a;
+		outline: none;
+	}
+
 	// Feature-signal micro-survey card (FE#590 dummy)
 	&__signalCard {
 		margin-top: 20px;

@@ -35,6 +35,16 @@ describe('notificationConfig', () => {
 		expect(parsed.conversations.new.email).toBe(true);
 	});
 
+	it('parses legacy boolean banner values into the 3-state mode', () => {
+		const parsed = parseNotificationConfig({
+			requests: { new: { banner: false }, standard: { banner: true } },
+			conversations: { mention: { banner: 'persistent' } }
+		});
+		expect(parsed.requests.new.banner).toBe('off');
+		expect(parsed.requests.standard.banner).toBe('temporary');
+		expect(parsed.conversations.mention.banner).toBe('persistent');
+	});
+
 	it('parse tolerates garbage', () => {
 		const parsed = parseNotificationConfig({ requests: { new: 42 } });
 		expect(parsed.requests.new.sound).toBe('none');
@@ -107,8 +117,10 @@ describe('notificationConfig', () => {
 		expect(NEVER_NOTIFY_FAMILIES).toContain('drafts');
 		const call = DEFAULT_NOTIFICATION_CONFIG.timeCritical.call;
 		expect(call.sound).toBe('ring');
-		expect(call.banner).toBe(true);
-		expect(DEFAULT_NOTIFICATION_CONFIG.requests.new.banner).toBe(true);
+		expect(call.banner).toBe('temporary');
+		expect(DEFAULT_NOTIFICATION_CONFIG.requests.new.banner).toBe(
+			'temporary'
+		);
 	});
 
 	it('soundSettingForEvent returns the configured kind entry for the event', () => {

@@ -12,8 +12,10 @@ import {
 	SoundId
 } from '../../../utils/notificationSettings/model';
 import { soundAssetFor } from '../../../utils/notificationSettings/soundPlayback';
+import { M3Checkbox } from '../../M3Checkbox';
 import {
 	AREA_KINDS,
+	BannerMode,
 	clampVolume,
 	DISABLED_AREAS,
 	KindConfig,
@@ -43,7 +45,7 @@ const KindRow = ({
 		area: NotificationArea,
 		kind: NotificationKind,
 		field: keyof KindConfig,
-		value: SoundId | boolean | number
+		value: SoundId | BannerMode | boolean | number
 	) => void;
 	onPreview: (soundId: SoundId, volume: number) => void;
 }) => {
@@ -152,28 +154,48 @@ const KindRow = ({
 					</select>
 				</div>
 			</div>
-			<label className="notifConfig__email">
-				<input
-					type="checkbox"
-					checked={value.banner}
-					onChange={(e) =>
-						onChange(area, kind, 'banner', e.target.checked)
-					}
-					data-cy={`notif-banner-${area}-${kind}`}
-				/>
-				<span>{t('profile.notifications.config.showBanner')}</span>
-			</label>
-			<label className="notifConfig__email">
-				<input
-					type="checkbox"
+			<div className="notifConfig__channels">
+				{/* Banner: off / temporary / persistent (requireInteraction —
+				    Chromium only; Firefox/Safari fall back to temporary). */}
+				<label className="notifConfig__banner">
+					<span>
+						{t('profile.notifications.config.banner.label')}
+					</span>
+					<select
+						className="notifConfig__bannerSelect"
+						value={value.banner}
+						onChange={(e) =>
+							onChange(
+								area,
+								kind,
+								'banner',
+								e.target.value as BannerMode
+							)
+						}
+						data-cy={`notif-banner-${area}-${kind}`}
+					>
+						<option value="off">
+							{t('profile.notifications.config.banner.off')}
+						</option>
+						<option value="temporary">
+							{t('profile.notifications.config.banner.temporary')}
+						</option>
+						<option value="persistent">
+							{t(
+								'profile.notifications.config.banner.persistent'
+							)}
+						</option>
+					</select>
+				</label>
+				<M3Checkbox
 					checked={value.email}
-					onChange={(e) =>
-						onChange(area, kind, 'email', e.target.checked)
+					onChange={(checked) =>
+						onChange(area, kind, 'email', checked)
 					}
-					data-cy={`notif-email-${area}-${kind}`}
+					label={t('profile.notifications.config.sendByEmail')}
+					dataCy={`notif-email-${area}-${kind}`}
 				/>
-				<span>{t('profile.notifications.config.sendByEmail')}</span>
-			</label>
+			</div>
 		</div>
 	);
 };
@@ -190,7 +212,7 @@ export interface NotificationConfigViewProps {
 		area: NotificationArea,
 		kind: NotificationKind,
 		field: keyof KindConfig,
-		value: SoundId | boolean | number
+		value: SoundId | BannerMode | boolean | number
 	) => void;
 	onPreview: (soundId: SoundId, volume: number) => void;
 }
@@ -333,7 +355,7 @@ export const NotificationConfigDialog = ({
 			area: NotificationArea,
 			kind: NotificationKind,
 			field: keyof KindConfig,
-			value: SoundId | boolean | number
+			value: SoundId | BannerMode | boolean | number
 		) => {
 			setDraft((prev) => ({
 				...prev,

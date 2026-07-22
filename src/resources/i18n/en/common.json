@@ -2069,6 +2069,18 @@
 					"upvote": "I'd like this",
 					"downvote": "Not for me",
 					"thanks": "Thanks for your feedback!"
+				},
+				"banner": {
+					"label": "Banner",
+					"off": "Off",
+					"temporary": "Temporary",
+					"persistent": "Stays until dismissed"
+				},
+				"statusButton": {
+					"sidebarToggle": "Show notification status in the menu bar",
+					"sidebarToggleDescription": "A button in the sidebar that mutes or re-enables all notifications with one click.",
+					"active": "Notifications active — click to mute",
+					"muted": "All notifications muted — click to enable"
 				}
 			}
 		},
