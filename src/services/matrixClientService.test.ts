@@ -280,6 +280,36 @@ describe('MatrixClientService', () => {
 		});
 	});
 
+	it('removes the rejected Matrix local echo before the UI offers a fresh retry', async () => {
+		const failedLocalEcho = {
+			getTxnId: () => 'txn-failed-send'
+		};
+		const sendError = new Error('network unavailable');
+		const sendMessage = vi.fn(() => Promise.reject(sendError));
+		const cancelPendingEvent = vi.fn();
+		const service = new MatrixClientService();
+		setClient(service, {
+			makeTxnId: () => 'txn-failed-send',
+			sendMessage,
+			cancelPendingEvent,
+			getRoom: () => ({
+				timeline: [failedLocalEcho]
+			})
+		});
+
+		await expect(
+			service.sendMessage('!room:example.org', 'Retry me once')
+		).rejects.toBe(sendError);
+
+		expect(sendMessage).toHaveBeenCalledWith(
+			'!room:example.org',
+			{ msgtype: 'm.text', body: 'Retry me once' },
+			'txn-failed-send'
+		);
+		expect(cancelPendingEvent).toHaveBeenCalledOnce();
+		expect(cancelPendingEvent).toHaveBeenCalledWith(failedLocalEcho);
+	});
+
 	it('edits a message via m.replace, targeting the original event', async () => {
 		const sendMessage = vi.fn(() =>
 			Promise.resolve({ event_id: '$edit:example.org' })
