@@ -449,7 +449,8 @@
 			"quoteUnknown": "Frühere Nachricht"
 		},
 		"sendFailed": {
-			"body": "Beim Senden der Nachricht gab es ein Problem, vermutlich durch die Verschlüsselung oder einen Übertragungsfehler. Bitte kopiere sie und versuche es erneut. Prüfe den Status: Ein Haken bedeutet gesendet, zwei Haken bedeuten gelesen, und ein Kreuz bedeutet, dass sie den Server nicht erreicht hat.",
+			"body": "Beim Senden der Nachricht gab es ein Problem, vermutlich durch die Verschlüsselung oder einen Übertragungsfehler. Mit „Erneut senden“ kannst du die Nachricht einmal wiederholen. Prüfe den Status: Ein Haken bedeutet gesendet, zwei Haken bedeuten gelesen, und ein Kreuz bedeutet, dass sie den Server nicht erreicht hat.",
+			"retry": "Erneut senden",
 			"subtitle": "Sende deine Nachricht erneut"
 		},
 		"submit": {
@@ -684,6 +685,45 @@
 					"8h": "8 Stunden",
 					"tomorrow": "Bis morgen früh"
 				}
+			},
+			"sounds": {
+				"title": "Benachrichtigungstöne",
+				"intro": "Wähle Töne für neue Nachrichten und für Erwähnungen. Die Töne gelten auf allen Geräten.",
+				"preview": "Vorhören",
+				"slot": {
+					"message": "Neue Nachrichten",
+					"mention": "Erwähnungen"
+				},
+				"choice": {
+					"none": "Kein Ton",
+					"chime": "Chime",
+					"ding": "Ding",
+					"soft": "Sanft",
+					"default": "Wie Nachrichten"
+				}
+			},
+			"config": {
+				"title": "Benachrichtigungen einstellen",
+				"intro": "Wähle deine Benachrichtigungstöne für jeden Bereich getrennt.",
+				"emailNote": "E-Mails werden nur gesendet, wenn du nicht innerhalb von fünf Minuten nach dem Ereignis reagierst.",
+				"noSound": "Kein Ton gewählt",
+				"tone": "Ton #{{number}}",
+				"sendByEmail": "Per E-Mail senden",
+				"confirm": "Bestätigen",
+				"cancel": "Abbrechen",
+				"area": {
+					"requests": "Anfrage",
+					"conversations": "Gespräch",
+					"appointments": "Termine"
+				},
+				"kind": {
+					"new": "Neue Anfrage",
+					"standard": "Standard-Benachrichtigung",
+					"mention": "@ Erwähnung"
+				},
+				"play": "Ton vorhören",
+				"volumeUp": "Lauter",
+				"volumeDown": "Leiser"
 			}
 		},
 		"spokenLanguages": {

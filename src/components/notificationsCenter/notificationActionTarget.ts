@@ -47,6 +47,9 @@ export const parseEventActionParams = (raw: unknown): EventActionParams => {
 	if (typeof source.isVideo === 'boolean' || source.isVideo === null) {
 		params.isVideo = source.isVideo as boolean | null;
 	}
+	if (typeof source.mentioned === 'boolean') {
+		params.mentioned = source.mentioned;
+	}
 	return params;
 };
 

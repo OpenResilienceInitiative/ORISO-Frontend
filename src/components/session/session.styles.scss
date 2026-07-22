@@ -53,7 +53,11 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		flex: 0 0 auto; /* Header stays fixed height */
 	}
 
-	& > div:nth-child(2) {
+	// Keep the timeline in normal flex flow regardless of optional siblings
+	// such as the thread-list toolbar. An nth-child selector made the timeline
+	// absolute whenever that toolbar preceded it, allowing message controls to
+	// cover and intercept clicks on the session header.
+	& > .session__content {
 		flex: 1; /* Content takes remaining space */
 		min-height: 0;
 		position: relative;

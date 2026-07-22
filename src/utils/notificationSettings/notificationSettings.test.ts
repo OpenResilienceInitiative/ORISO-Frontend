@@ -51,11 +51,11 @@ describe('WP-06 Slice 6a — notification settings model', () => {
 	it('merges deep-partial updates immutably', () => {
 		const merged = mergeNotificationSettings(
 			DEFAULT_NOTIFICATION_SETTINGS,
-			{ families: { calls: false }, sounds: { enabled: false } }
+			{ families: { calls: false }, sounds: { message: 'none' } }
 		);
 		expect(merged.families.calls).toBe(false);
 		expect(merged.families.messages).toBe(true);
-		expect(merged.sounds.enabled).toBe(false);
+		expect(merged.sounds.message).toBe('none');
 		expect(DEFAULT_NOTIFICATION_SETTINGS.families.calls).toBe(true);
 	});
 
@@ -211,15 +211,52 @@ describe('WP-06 Slice 6a — notification settings store', () => {
 
 	it('works without a client (mirror/defaults) and mirrors to localStorage', () => {
 		notificationSettingsStore.updateSettings({
-			sounds: { enabled: false }
+			sounds: { message: 'none' }
 		});
 		expect(
-			notificationSettingsStore.getState().settings.sounds.enabled
-		).toBe(false);
+			notificationSettingsStore.getState().settings.sounds.message
+		).toBe('none');
 		const mirrored = JSON.parse(
 			localStorage.getItem('ORISO_NOTIFICATION_SETTINGS') || '{}'
 		);
-		expect(mirrored.sounds.enabled).toBe(false);
+		expect(mirrored.sounds.message).toBe('none');
+	});
+});
+
+describe('notification sound slots (two global slots)', () => {
+	it('parse defaults to chime for messages and default for mentions', () => {
+		const parsed = parseNotificationSettings({});
+		expect(parsed.sounds.message).toBe('chime');
+		expect(parsed.sounds.mention).toBe('default');
+	});
+
+	it('parse keeps a valid stored SoundId per slot', () => {
+		const parsed = parseNotificationSettings({
+			sounds: { message: 'ding', mention: 'none' }
+		});
+		expect(parsed.sounds.message).toBe('ding');
+		expect(parsed.sounds.mention).toBe('none');
+	});
+
+	it('parse falls back to the default for an unknown SoundId', () => {
+		const parsed = parseNotificationSettings({
+			sounds: { message: 'wobble', mention: 42 }
+		});
+		expect(parsed.sounds.message).toBe('chime');
+		expect(parsed.sounds.mention).toBe('default');
+	});
+
+	it('merge updates a single slot immutably', () => {
+		const merged = mergeNotificationSettings(
+			DEFAULT_NOTIFICATION_SETTINGS,
+			{
+				sounds: { message: 'soft' }
+			}
+		);
+		expect(merged.sounds.message).toBe('soft');
+		expect(merged.sounds.mention).toBe(
+			DEFAULT_NOTIFICATION_SETTINGS.sounds.mention
+		);
 	});
 });
 

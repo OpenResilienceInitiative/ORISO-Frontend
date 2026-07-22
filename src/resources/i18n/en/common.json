@@ -1451,7 +1451,8 @@
 		},
 		"read": "read",
 		"sendFailed": {
-			"body": "There was a problem with sending the message, likely due to encryption or a transfer error. Please copy it and try again. Check the status: one check means sent, two checks mean read, and a cross means it didn’t reach the server.",
+			"body": "There was a problem with sending the message, likely due to encryption or a transfer error. Select Try again to retry once. Check the status: one check means sent, two checks mean read, and a cross means it didn’t reach the server.",
+			"retry": "Try again",
 			"status": "not delivered",
 			"subtitle": "Resend your message again",
 			"title": "Sending message failed"
@@ -2030,6 +2031,45 @@
 					"8h": "8 hours",
 					"tomorrow": "Until tomorrow morning"
 				}
+			},
+			"sounds": {
+				"title": "Notification sounds",
+				"intro": "Choose sounds for new messages and for mentions. Sounds apply on all your devices.",
+				"preview": "Preview",
+				"slot": {
+					"message": "New messages",
+					"mention": "Mentions"
+				},
+				"choice": {
+					"none": "No sound",
+					"chime": "Chime",
+					"ding": "Ding",
+					"soft": "Soft",
+					"default": "Same as messages"
+				}
+			},
+			"config": {
+				"title": "Configure your notifications",
+				"intro": "Choose your notification sounds for each area seperately.",
+				"emailNote": "Emails are sent only if you do not respond within five minutes after the event.",
+				"noSound": "No Sound Selected",
+				"tone": "Sound #{{number}}",
+				"sendByEmail": "Send by Email",
+				"confirm": "Confirm",
+				"cancel": "Cancel",
+				"area": {
+					"requests": "Anfrage",
+					"conversations": "Gespräch",
+					"appointments": "Termine"
+				},
+				"kind": {
+					"new": "New Request",
+					"standard": "Standard Notification",
+					"mention": "@ Mentioning"
+				},
+				"play": "Preview sound",
+				"volumeUp": "Louder",
+				"volumeDown": "Quieter"
 			}
 		},
 		"routes": {
