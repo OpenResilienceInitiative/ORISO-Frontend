@@ -1,9 +1,10 @@
 /*
  * Send button — Figma "Nachricht senden" (node 489:16565).
  * 48×48, radius bottom-left 24 / top-right 4 (mirrors the input container
- * notch). One paper plane throughout: at rest on primary-fixed when empty,
- * rotated up on primary-container when ready. The empty → ready change
- * rotates the plane; sending flies it out, then it settles back.
+ * notch). One paper plane throughout: white icon on primary-fixed-dim when
+ * the composer is not selected / empty; rotated up on primary-container when
+ * ready. The empty → ready change rotates the plane; sending flies it out,
+ * then it settles back.
  */
 .sendButton {
 	position: relative;
@@ -16,7 +17,8 @@
 	appearance: none;
 	cursor: pointer;
 	overflow: hidden;
-	background-color: var(--m3-primary-fixed, #ffdad5);
+	// #597: resting / not-selected composer — #FFB4AA
+	background-color: var(--m3-primary-fixed-dim, #ffb4aa);
 	transition: background-color 250ms cubic-bezier(0.2, 0, 0, 1);
 
 	&__plane {
@@ -47,13 +49,6 @@
 	&--ready &__plane,
 	&--sending &__plane {
 		transform: rotate(-45deg);
-	}
-
-	// Empty / disabled: plane sits on the pale container with a muted tint so
-	// a white plane stays legible; not interactive.
-	&--empty &__plane,
-	&--disabled &__plane {
-		color: var(--m3-primary-container, #cc1e1c);
 	}
 
 	&--flyout &__plane {

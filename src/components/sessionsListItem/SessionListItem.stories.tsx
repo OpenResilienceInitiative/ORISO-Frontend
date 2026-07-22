@@ -977,7 +977,10 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'Runtime story plus visual reference states for session list rows. `RuntimeComponent` renders the real `SessionListItemComponent` with Storybook fixture providers; the other stories document edge-state layout using the same BEM classes.'
+					'Runtime story plus visual reference states for session list rows. ' +
+					'#597: `ConsultantSelected` shows `2px solid var(--m3-primary)`; ' +
+					'`ConsultantMenuOpen` shows vertical 32×48 menu trigger + active menu borders. ' +
+					'`RuntimeComponent` mounts the real `SessionListItemComponent` with fixture providers.'
 			}
 		}
 	}
@@ -1002,6 +1005,15 @@ export const ConsultantSelected: Story = {
 	render: () => (
 		<div style={listShell}>
 			<ConsultantCardMock active />
+		</div>
+	)
+};
+
+/** #597: menu open → vertical 32×48 trigger + 2px primary-container borders. */
+export const ConsultantMenuOpen: Story = {
+	render: () => (
+		<div style={listShell}>
+			<ConsultantCardMock active menuOpen />
 		</div>
 	)
 };

@@ -10,6 +10,8 @@ import {
 	storybookGroupRoomMembers
 } from './__storybook__/composerStoryDecorator';
 import './messageSubmitInterface.styles.scss';
+import '../session/session.styles.scss';
+import { focusSessionChromeOnPointerDown } from '../session/focusSessionChrome';
 
 const INPUT_FIELD_FIGMA_URL =
 	'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=18-1989';
@@ -25,7 +27,11 @@ const shellStyle: React.CSSProperties = {
 	boxSizing: 'border-box',
 	display: 'flex',
 	flexDirection: 'column',
-	justifyContent: 'flex-end'
+	justifyContent: 'flex-end',
+	// Story layout only — `.session` supplies resting/active borders (#597)
+	margin: 0,
+	borderRadius: 28,
+	overflow: 'hidden'
 };
 
 function ComposerShell({
@@ -37,7 +43,12 @@ function ComposerShell({
 	roomMembers?: Array<{ userId: string; name: string }>;
 } & Partial<React.ComponentProps<typeof MessageSubmitInterfaceComponent>>) {
 	return (
-		<div className="session" style={shellStyle}>
+		<div
+			className="session"
+			tabIndex={-1}
+			onMouseDown={focusSessionChromeOnPointerDown}
+			style={shellStyle}
+		>
 			<ComposerStoryDecorator
 				activeSession={activeSession}
 				roomMembers={roomMembers}
@@ -84,6 +95,32 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
 	name: 'Default (empty)',
 	render: () => <ComposerShell />
+};
+
+/** #597: focus the editor so `--selected` applies (2px primary-container + send styles). */
+export const Selected: Story = {
+	name: 'Selected (composer focused)',
+	render: () => <ComposerShell />,
+	play: async ({ canvasElement }) => {
+		const editor = await waitFor(() => {
+			const node = canvasElement.querySelector<HTMLElement>(
+				'[contenteditable="true"]'
+			);
+			if (!node) {
+				throw new Error('composer editor not mounted yet');
+			}
+			return node;
+		});
+
+		await userEvent.click(editor);
+
+		await waitFor(async () => {
+			const selected = canvasElement.querySelector(
+				'.textarea__wrapper-send-message--selected'
+			);
+			await expect(selected).toBeTruthy();
+		});
+	}
 };
 
 export const ReadyToSend: Story = {

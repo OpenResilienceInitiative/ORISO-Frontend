@@ -16,12 +16,26 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	min-width: 0;
 	background-color: var(--m3-surface-container-lowest, #ffffff);
 	overflow: hidden;
+	box-sizing: border-box;
+	transition: border-color 160ms ease;
 
 	@include breakpoint($fromLarge) {
 		margin: 24px;
 		border: 1px solid var(--oriso-primary-fixed-dim, #ffb4aa);
 		border-radius: 28px;
-		box-sizing: border-box;
+	}
+
+	// Border is the active indicator — suppress the default focus outline.
+	&:focus {
+		outline: none;
+	}
+
+	// #597: active border when the session/chat chrome is focused/clicked,
+	// but not when the composer text area is selected.
+	&:focus-within:not(:has(.textarea__wrapper-send-message--selected)) {
+		@include breakpoint($fromLarge) {
+			border: 2px solid var(--m3-primary-container, #cc1e1c);
+		}
 	}
 
 	.messageSubmit__wrapper {
@@ -127,6 +141,13 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 			border: 0;
 			border-radius: 0;
 		}
+
+		&:focus-within:not(:has(.textarea__wrapper-send-message--selected)),
+		&:has(.textarea__wrapper-send-message--selected) {
+			@include breakpoint($fromLarge) {
+				border: 0;
+			}
+		}
 	}
 
 	&__emptyState {
@@ -146,6 +167,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		bottom: 0;
 		overflow-x: hidden;
 		overflow-y: auto;
+
 		// Figma 8641-34699: 16px inset inside the chat card (sides + top).
 		// Large bottom padding keeps the last message above the absolute composer.
 		padding: 16px 16px 240px;

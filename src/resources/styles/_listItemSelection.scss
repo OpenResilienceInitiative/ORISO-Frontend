@@ -15,6 +15,14 @@ $list-item-accent-ring-width: 2px !default; // canonical selection ring width
 $list-item-action-color: #d93025 !default; // red action-target button colour
 $list-item-resting-border: rgba(0, 0, 0, 0.12) !default; // 1px secondary border
 $list-item-focus-ring: rgba(185, 54, 45, 0.35) !default; // a11y focus ring
+// M3 selected border (session list / interactive chat cards) — #597
+$list-item-selected-border-width: 2px !default;
+$list-item-selected-border-color: var(--m3-primary, #a5000a) !default;
+$list-item-active-menu-border-width: 2px !default;
+$list-item-active-menu-border-color: var(
+	--m3-primary-container,
+	#cc1e1c
+) !default;
 
 // --- Mixins ---
 
@@ -24,6 +32,34 @@ $list-item-focus-ring: rgba(185, 54, 45, 0.35) !default; // a11y focus ring
 @mixin list-item-active-treatment {
 	background-color: $list-item-selected-bg;
 	box-shadow: inset 0 0 0 $list-item-accent-ring-width $list-item-accent-ring;
+}
+
+// Selected (clicked) ring for chat session cards — Figma #597.
+// Distinct from keyboard focus (`list-item-focus-treatment`) and from the
+// inset accent treatment used by Activity Timeline.
+@mixin list-item-selected-border($important: false) {
+	@if $important {
+		border: $list-item-selected-border-width
+			solid
+			$list-item-selected-border-color !important;
+	} @else {
+		border: $list-item-selected-border-width
+			solid
+			$list-item-selected-border-color;
+	}
+}
+
+// Active / open menu panel or menu trigger border — Figma #597.
+@mixin list-item-active-menu-border($important: false) {
+	@if $important {
+		border: $list-item-active-menu-border-width
+			solid
+			$list-item-active-menu-border-color !important;
+	} @else {
+		border: $list-item-active-menu-border-width
+			solid
+			$list-item-active-menu-border-color;
+	}
 }
 
 // Keyboard focus is independent of selection and layers on top.

@@ -63,6 +63,7 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import * as Tone from 'tone';
 import './session.styles';
+import { focusSessionChromeOnPointerDown } from './focusSessionChrome';
 import { useDebouncedCallback } from 'use-debounce';
 import { ReactComponent as ArrowDoubleDownIcon } from '../../resources/img/icons/arrow-double-down.svg';
 import { ReactComponent as NotificationBellIcon } from '../../resources/img/icons/notification_bell.svg';
@@ -3421,6 +3422,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				'session',
 				shouldFadeSessionChrome && 'session--gameFocus'
 			)}
+			tabIndex={-1}
+			onMouseDown={focusSessionChromeOnPointerDown}
 		>
 			<div
 				ref={headerRef}

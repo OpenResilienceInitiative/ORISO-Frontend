@@ -56,6 +56,10 @@ import '../sessionsList/sessionsList.styles.scss';
 import '../sessionsListItem/sessionsListItem.styles.scss';
 import '../message/message.styles.scss';
 import '../messageSubmitInterface/messageSubmitInterface.styles';
+import '../session/session.styles.scss';
+import '../sessionMenu/sessionMenu.styles.scss';
+import '../chatMenuDropdown/chatMenuDropdown.styles.scss';
+import { focusSessionChromeOnPointerDown } from '../session/focusSessionChrome';
 
 const APP_ORISO_CHAT_FIGMA_URL =
 	'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=316-17725&t=XHH5HQNmA8DUWl2U-0';
@@ -1116,8 +1120,16 @@ function ComposerPreview() {
 }
 
 function ChatPanel() {
+	const [menuExpanded, setMenuExpanded] = useState(false);
+
 	return (
-		<section style={styles.chatPanel}>
+		<section
+			className="session"
+			tabIndex={-1}
+			onMouseDown={focusSessionChromeOnPointerDown}
+			style={styles.chatPanel}
+			aria-label="Chatraum"
+		>
 			<header style={styles.chatHeader}>
 				<div style={styles.chatTitleCluster}>
 					<UserAvatar
@@ -1166,12 +1178,11 @@ function ChatPanel() {
 					</button>
 					<button
 						type="button"
-						aria-label="More actions preview"
-						disabled
-						style={{
-							...styles.headerAction,
-							...styles.previewAction
-						}}
+						className="sessionMenu__icon sessionMenu__icon--desktop"
+						aria-label="More actions"
+						aria-expanded={menuExpanded}
+						onClick={() => setMenuExpanded((open) => !open)}
+						style={styles.headerMenuTrigger}
 					>
 						<MenuVerticalIcon />
 					</button>
@@ -1306,7 +1317,12 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'Storybook MCP target for the App.Oriso consultant chat frame. The composite story keeps the Figma frame inspectable with real ORISO subcomponents; the runtime shell story mounts the real Routing/SessionsZone path with deterministic session fixtures so product-code drift is visible.'
+					'Storybook MCP target for the App.Oriso consultant chat frame. ' +
+					'Uses production SCSS for #597 focus rings: session list selected (`2px --m3-primary`), ' +
+					'chat panel `.session` active border on chrome focus (not composer selected), ' +
+					'session menu trigger shape on `aria-expanded`, and composer/send styles from ' +
+					'`messageSubmitInterface` / `sendButton`. The runtime shell mounts Routing/SessionsZone ' +
+					'with deterministic fixtures so product-code drift stays visible.'
 			}
 		}
 	}
@@ -1426,12 +1442,11 @@ const styles = {
 	chatPanel: {
 		display: 'grid',
 		gridTemplateRows: '58px auto minmax(0, 1fr) auto',
+		// Layout only — resting/active borders come from `.session` (#597)
 		margin: '16px 8px 16px 0',
-		background: '#FFFFFF',
-		border: '1px solid #FFB4AA',
-		borderRadius: 28,
-		overflow: 'hidden',
-		minWidth: 0
+		minWidth: 0,
+		minHeight: 0,
+		height: '100%'
 	} satisfies React.CSSProperties,
 	chatHeader: {
 		display: 'flex',
@@ -1456,6 +1471,11 @@ const styles = {
 		display: 'flex',
 		alignItems: 'center',
 		gap: 8
+	} satisfies React.CSSProperties,
+	headerMenuTrigger: {
+		// Force visible in Storybook; production toggles via breakpoint
+		display: 'inline-flex',
+		marginLeft: 0
 	} satisfies React.CSSProperties,
 	headerAction: {
 		width: 32,
@@ -1584,7 +1604,8 @@ const styles = {
 		borderRadius: 22,
 		border: 0,
 		padding: '0 18px',
-		background: '#CC1E1C',
+		// #597: resting send matches production empty state
+		background: 'var(--m3-primary-fixed-dim, #ffb4aa)',
 		color: '#FFFFFF',
 		fontWeight: 700,
 		display: 'inline-flex',

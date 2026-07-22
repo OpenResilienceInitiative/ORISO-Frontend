@@ -23,6 +23,7 @@ import {
 import { ReactComponent as EnvelopeCheckIcon } from '../../resources/img/illustrations/envelope-check.svg';
 import { ReactComponent as WelcomeIcon } from '../../resources/img/illustrations/welcome.svg';
 import './enquiry.styles';
+import { focusSessionChromeOnPointerDown } from '../session/focusSessionChrome';
 import { Headline } from '../headline/Headline';
 import { Text } from '../text/Text';
 import { EnquiryLanguageSelection } from './EnquiryLanguageSelection';
@@ -182,7 +183,11 @@ export const WriteEnquiry: React.FC = () => {
 	const isUnassignedSession = activeSession && !activeSession?.consultant;
 
 	return (
-		<div className="enquiry__wrapper">
+		<div
+			className="enquiry__wrapper"
+			tabIndex={-1}
+			onMouseDown={focusSessionChromeOnPointerDown}
+		>
 			<div className="enquiry__contentWrapper">
 				<div className="enquiry__infoWrapper">
 					<div className="enquiry__text">

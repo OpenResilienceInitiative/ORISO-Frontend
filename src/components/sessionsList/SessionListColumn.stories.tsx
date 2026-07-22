@@ -221,7 +221,9 @@ const meta: Meta = {
 		docs: {
 			description: {
 				component:
-					'**Composite:** toolbar + sample cards using production `sessionsList*` / `sessionsListItem*` classes (6px active gap, 24px stacked corners, MessageAvatar username row). Does not include `ResizableHandle` or real data providers.'
+					'**Composite:** toolbar + sample cards using production `sessionsList*` / `sessionsListItem*` classes ' +
+					'(6px active gap, 24px stacked corners, MessageAvatar username row, #597 selected `2px --m3-primary`). ' +
+					'Does not include `ResizableHandle` or real data providers.'
 			}
 		}
 	}
