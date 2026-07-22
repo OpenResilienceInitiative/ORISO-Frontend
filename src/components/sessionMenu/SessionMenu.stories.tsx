@@ -39,45 +39,47 @@ export const Default: Story = {
 };
 
 /** Isolated #597 trigger shape (closed vs open) without full session providers. */
+function MenuTriggerShapeDemo() {
+	const [expanded, setExpanded] = useState(false);
+	return (
+		<div
+			style={{
+				display: 'flex',
+				gap: 24,
+				alignItems: 'center',
+				padding: 24,
+				background: '#eae7e8'
+			}}
+		>
+			<button
+				type="button"
+				className="sessionMenu__icon sessionMenu__icon--desktop"
+				aria-expanded={false}
+				aria-label="Menu closed"
+				style={{ display: 'inline-flex' }}
+			>
+				<MenuVerticalIcon />
+			</button>
+			<button
+				type="button"
+				className="sessionMenu__icon sessionMenu__icon--desktop"
+				aria-expanded={expanded}
+				aria-label="Menu open toggle"
+				style={{ display: 'inline-flex' }}
+				onClick={() => setExpanded((v) => !v)}
+			>
+				<MenuVerticalIcon />
+			</button>
+			<span style={{ fontSize: 12, color: '#4C555F' }}>
+				Closed 48×32 · click right for open 32×48
+			</span>
+		</div>
+	);
+}
+
 export const MenuTriggerShape: Story = {
 	tags: ['autodocs'],
-	render: () => {
-		const [expanded, setExpanded] = useState(false);
-		return (
-			<div
-				style={{
-					display: 'flex',
-					gap: 24,
-					alignItems: 'center',
-					padding: 24,
-					background: '#eae7e8'
-				}}
-			>
-				<button
-					type="button"
-					className="sessionMenu__icon sessionMenu__icon--desktop"
-					aria-expanded={false}
-					aria-label="Menu closed"
-					style={{ display: 'inline-flex' }}
-				>
-					<MenuVerticalIcon />
-				</button>
-				<button
-					type="button"
-					className="sessionMenu__icon sessionMenu__icon--desktop"
-					aria-expanded={expanded}
-					aria-label="Menu open toggle"
-					style={{ display: 'inline-flex' }}
-					onClick={() => setExpanded((v) => !v)}
-				>
-					<MenuVerticalIcon />
-				</button>
-				<span style={{ fontSize: 12, color: '#4C555F' }}>
-					Closed 48×32 · click right for open 32×48
-				</span>
-			</div>
-		);
-	}
+	render: () => <MenuTriggerShapeDemo />
 };
 
 export const AnonymousMobileActions: Story = {
