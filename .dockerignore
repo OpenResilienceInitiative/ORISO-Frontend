@@ -15,3 +15,8 @@ app/resources/bower_components
 /typings
 yarn-error.log
 settings.json
+
+# A stale local storybook-static/ (with its releases/ dir) copied into the
+# build context collides with the fresh build-storybook static copy —
+# Node fs.cp throws EEXIST on mkdir storybook-static/releases.
+/storybook-static

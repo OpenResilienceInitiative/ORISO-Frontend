@@ -60,7 +60,6 @@ This file is orchestration-heavy and should stay focused on composition rather t
 - locale and informal-language setup
 - notification reset and permission flow
 - Matrix bootstrap
-- Rocket.Chat compatibility providers
 - group chat join behavior
 
 This is one of the highest-coupling areas in the repo.
@@ -81,7 +80,7 @@ The current provider graph includes concerns such as:
 - modal state
 - agency-specific state
 - websocket-related state
-- Rocket.Chat global settings
+- chat-related server settings
 
 This architecture favors React context over a single external store.
 
@@ -147,8 +146,7 @@ Important npm scripts from `package.json`:
 The frontend currently integrates with:
 
 - backend REST APIs
-- Matrix
-- Rocket.Chat compatibility paths still present during migration
+- Matrix (the only chat transport; Rocket.Chat is removed)
 - Keycloak-style token and session handling
 - Jitsi and LiveKit-related dependencies
 - Cal.com embedding
@@ -156,14 +154,17 @@ The frontend currently integrates with:
 
 ## Known Architectural Risks
 
-### Matrix And Rocket.Chat Crossover
+### Legacy Chat-Credential Header Shim
 
-The repo still contains migration-era compatibility behavior. For example, `src/api/fetchData.ts` still supports Rocket.Chat-compatible headers for backend compatibility.
+Rocket.Chat itself is removed. One migration-era wire shim remains:
+`src/api/fetchData.ts` still sends `rcToken`/`rcUid` headers (filled with
+Matrix credentials from the `rc_token`/`rc_uid` cookies) because the
+backend API contract still expects those header names.
 
 Guidance:
 
-- keep migration shims near APIs and services
-- do not spread transport-specific compatibility logic across UI files
+- keep this shim inside `src/api/fetchData.ts`
+- remove it together with the backend when the header contract changes
 
 ### Heavy Startup Coupling
 

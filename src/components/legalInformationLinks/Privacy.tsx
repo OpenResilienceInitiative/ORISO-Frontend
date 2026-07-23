@@ -10,9 +10,14 @@ export const Privacy = () => {
 	useDocumentTitle(t('profile.footer.dataprotection'));
 	return (
 		<LegalPageWrapper
-			content={
-				tenant?.content?.privacy || t('profile.footer.dataprotection')
-			}
+			// Raw language map (new TenantService field) preferred: enables
+			// client-side language resolution incl. machine-translation and
+			// original-language notices. Falls back to the server-resolved
+			// string on older backends; a missing/empty text shows the
+			// placeholder warning instead of silently rendering nothing.
+			content={tenant?.content?.privacy}
+			rawContent={tenant?.content?.privacyLanguages}
+			loading={!tenant}
 			className={'terms'}
 		/>
 	);

@@ -5,10 +5,8 @@ export interface ConsultantStatisticsDTO {
 	startDate: string;
 	endDate: string;
 	numberOfAssignedSessions: number;
+	numberOfActiveSessions: number;
 	numberOfSentMessages: number;
-	numberOfSessionsWhereConsultantWasActive: number;
-	videoCallDuration: number;
-	numberOfAppointments: number;
 }
 
 export interface ApiGetConsultantStatisticsInterface {

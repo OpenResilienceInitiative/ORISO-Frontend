@@ -1,0 +1,83 @@
+/*
+ * Recipient split button — Figma M3 split button (1168:23016).
+ * Leading: primary-container, person icon + name, radius 16/4/16/4.
+ * Trailing: 48x32, radius 4/16/4/16, keyboard_arrow_up.
+ */
+.recipientSplitButton {
+	display: inline-flex;
+	align-items: center;
+	gap: 2px;
+	height: 32px;
+
+	&__leading,
+	&__trailing {
+		height: 32px;
+		border: 0;
+		background: var(--m3-primary-container, #cc1e1c);
+		color: var(--m3-on-primary, #fff);
+		cursor: pointer;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		transition: filter 120ms ease;
+
+		&:hover {
+			filter: brightness(0.94);
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary-outline, #930008);
+			outline-offset: 2px;
+		}
+	}
+
+	&__leading {
+		max-width: 186px;
+		padding: 0 10px 0 12px;
+		gap: 4px;
+		border-radius: 16px 4px 16px 4px;
+	}
+
+	&__trailing {
+		width: 48px;
+		border-radius: 4px 16px 4px 16px;
+	}
+
+	&__icon {
+		display: inline-flex;
+		align-items: center;
+
+		svg {
+			width: 20px;
+			height: 20px;
+		}
+	}
+
+	&__label {
+		font-size: 14px;
+		font-weight: 500;
+		line-height: 20px;
+		letter-spacing: 0.1px;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+
+		&--multi {
+			font-variant-numeric: tabular-nums;
+		}
+	}
+
+	&__chevron {
+		transition: transform 160ms ease;
+
+		&--open {
+			transform: rotate(180deg);
+		}
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.recipientSplitButton__chevron {
+		transition: none;
+	}
+}

@@ -10,7 +10,7 @@ import {
 import { MessageItem } from '../message/MessageItemComponent';
 import {
 	formatToDDMMYYYY,
-	getPrettyDateFromMessageDate
+	getChatMessageDateDivider
 } from '../../utils/dateHelpers';
 import { getValueFromCookie } from '../sessionCookie/accessSessionCookie';
 import { decodeUsername } from '../../utils/encryptionHelpers';
@@ -148,6 +148,32 @@ const findLastVideoCallIndex = (messagesData) =>
 					'IGNORED_CALL')
 	);
 
+/**
+ * ADR-008: merge the client-room timeline with the supervision side-room
+ * timeline into a single ordered stream. Messages are formatted Matrix events
+ * ({ _id, ts, ... }). Deduped by event id (`_id`) and sorted ascending by
+ * timestamp so asides interleave with client messages in chronological order.
+ */
+export const mergeMatrixMessages = (
+	clientMessages: any[],
+	supervisionMessages: any[]
+): any[] => {
+	const byId = new Map<string, any>();
+	[...(clientMessages || []), ...(supervisionMessages || [])].forEach(
+		(message) => {
+			if (message && message._id != null && !byId.has(message._id)) {
+				byId.set(message._id, message);
+			}
+		}
+	);
+
+	return Array.from(byId.values()).sort((a, b) => {
+		const aTs = new Date(a?.ts ?? 0).getTime();
+		const bTs = new Date(b?.ts ?? 0).getTime();
+		return aTs - bTs;
+	});
+};
+
 export const prepareMessages = (messagesData): MessageItem[] => {
 	let lastDate = '';
 	let userLeftChatShown = false;
@@ -161,7 +187,8 @@ export const prepareMessages = (messagesData): MessageItem[] => {
 
 			if (lastDate !== dateFormated) {
 				lastDate = dateFormated;
-				lastDateStr = getPrettyDateFromMessageDate(date / 1000);
+				// Explicit dates → localized long form ("7. Juli 2026"); relative → message.today etc.
+				lastDateStr = getChatMessageDateDivider(date / 1000);
 			}
 
 			return {
@@ -178,7 +205,11 @@ export const prepareMessages = (messagesData): MessageItem[] => {
 				file: message.file,
 				t: message.t,
 				rid: message.rid,
-				isVideoActive: i === lastVideoCallIndex
+				isVideoActive: i === lastVideoCallIndex,
+				// Relations foundation (#435): relations survive the mapping.
+				replyToEventId: message.replyToEventId || null,
+				threadRootEventId: message.threadRootEventId || null,
+				isEdited: !!message.isEdited
 			};
 		})
 		.filter((item) => {

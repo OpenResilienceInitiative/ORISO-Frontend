@@ -10,7 +10,6 @@ import {
 	useTenant,
 	LocaleContext
 } from '../../globalState';
-import { ReactComponent as PersonIcon } from '../../resources/img/icons/person.svg';
 import { ReactComponent as LogoutIcon } from '../../resources/img/icons/out.svg';
 import { ReactComponent as BackIcon } from '../../resources/img/icons/arrow-left.svg';
 import { Text } from '../text/Text';
@@ -20,9 +19,9 @@ import profileRoutes from './profile.routes';
 import {
 	Link,
 	NavLink,
-	Redirect,
+	Navigate,
 	Route,
-	Switch,
+	Routes,
 	useLocation,
 	generatePath
 } from 'react-router-dom';
@@ -221,7 +220,11 @@ export const Profile = () => {
 	};
 
 	return (
-		<div className="profile__wrapper" ref={scrollContainer}>
+		<div
+			className="profile__wrapper"
+			data-tour-target="profile-overview"
+			ref={scrollContainer}
+		>
 			<div className="profile__header">
 				<div className="profile__header__wrapper flex flex--jc-sb flex-l--fd-column flex-xl--fd-row">
 					<div
@@ -229,21 +232,24 @@ export const Profile = () => {
 							(fromL || subpage) && 'flex__col--25p'
 						}`}
 					>
-					{fromL || !subpage ? (
-						<>
-							<div className="profile__icon profile__icon--avatar flex__col--no-grow">
-								<UserAvatar
-									username={userData.userName}
-									displayName={userData.displayName || userData.userName}
-									userId={userData.userId}
-									size="56px"
-								/>
-							</div>
-							<h3 className="text--nowrap text--ellipsis">
-								{headline}
-							</h3>
-						</>
-					) : (
+						{fromL || !subpage ? (
+							<>
+								<div className="profile__icon profile__icon--avatar flex__col--no-grow">
+									<UserAvatar
+										username={userData.userName}
+										displayName={
+											userData.displayName ||
+											userData.userName
+										}
+										userId={userData.userId}
+										size="56px"
+									/>
+								</div>
+								<h3 className="text--nowrap text--ellipsis">
+									{headline}
+								</h3>
+							</>
+						) : (
 							<Link to={`/profile`}>
 								<BackIcon
 									title={translate('app.back')}
@@ -279,11 +285,14 @@ export const Profile = () => {
 												to={generatePath(
 													`/profile${tab.url}`
 												)}
-												activeClassName="active"
+												className={({ isActive }) =>
+													isActive ? 'active' : ''
+												}
 												role="tab"
 												tabIndex={index === 0 ? 0 : -1}
 												ref={(el) => {
-													ref_tabs.current[index] = el;
+													ref_tabs.current[index] =
+														el;
 												}}
 												onKeyDown={(e) =>
 													handleKeyDownTabs(e, index)
@@ -323,67 +332,10 @@ export const Profile = () => {
 			</div>
 			<div className="profile__innerWrapper">
 				<div>
-					<Switch>
-						{fromL ? (
-							// Render tabs for desktop
-							profileRoutes(
-								settings,
-								tenant,
-								selectableLocales,
-								isFirstVisit
-							)
-								.filter((tab) =>
-									solveTabConditions(
-										tab,
-										userData,
-										consultingTypes ?? []
-									)
-								)
-								.map((tab) => (
-									<Route
-										path={`/profile${tab.url}`}
-										key={`/profile${tab.url}`}
-									>
-										<div className="profile__content">
-											{tab.elements
-												.reduce(
-													(
-														acc: SingleComponentType[],
-														element
-													) =>
-														acc.concat(
-															isTabGroup(element)
-																? element.elements
-																: element
-														),
-													[]
-												)
-												.filter((element) =>
-													solveCondition(
-														element.condition,
-														userData,
-														consultingTypes ?? []
-													)
-												)
-												.sort(
-													(a, b) =>
-														(a?.order || 99) -
-														(b?.order || 99)
-												)
-												.map((element, i) => (
-													<ProfileItem
-														key={i}
-														element={element}
-														index={i}
-													/>
-												))}
-										</div>
-									</Route>
-								))
-						) : (
-							// Render submenu for mobile
-							<Route
-								path={profileRoutes(
+					<Routes>
+						{fromL
+							? // Render tabs for desktop
+								profileRoutes(
 									settings,
 									tenant,
 									selectableLocales,
@@ -396,14 +348,81 @@ export const Profile = () => {
 											consultingTypes ?? []
 										)
 									)
-									.map((tab) => `/profile${tab.url}`)}
-								exact
-							>
-								<div className="profile__content">
-									<LinkMenu items={mobileMenu} />
-								</div>
-							</Route>
-						)}
+									.map((tab) => (
+										<Route
+											path={`${tab.url.replace(/^\//, '')}/*`}
+											key={`/profile${tab.url}`}
+											element={
+												<div className="profile__content">
+													{tab.elements
+														.reduce(
+															(
+																acc: SingleComponentType[],
+																element
+															) =>
+																acc.concat(
+																	isTabGroup(
+																		element
+																	)
+																		? element.elements
+																		: element
+																),
+															[]
+														)
+														.filter((element) =>
+															solveCondition(
+																element.condition,
+																userData,
+																consultingTypes ??
+																	[]
+															)
+														)
+														.sort(
+															(a, b) =>
+																(a?.order ||
+																	99) -
+																(b?.order || 99)
+														)
+														.map((element, i) => (
+															<ProfileItem
+																key={i}
+																element={
+																	element
+																}
+																index={i}
+															/>
+														))}
+												</div>
+											}
+										/>
+									))
+							: // Render submenu for mobile (one route per tab base)
+								profileRoutes(
+									settings,
+									tenant,
+									selectableLocales,
+									isFirstVisit
+								)
+									.filter((tab) =>
+										solveTabConditions(
+											tab,
+											userData,
+											consultingTypes ?? []
+										)
+									)
+									.map((tab) => (
+										<Route
+											path={tab.url.replace(/^\//, '')}
+											key={`menu/profile${tab.url}`}
+											element={
+												<div className="profile__content">
+													<LinkMenu
+														items={mobileMenu}
+													/>
+												</div>
+											}
+										/>
+									))}
 
 						{!fromL &&
 							// Render groups as routes for mobile
@@ -432,38 +451,52 @@ export const Profile = () => {
 										.map((element) =>
 											isTabGroup(element) ? (
 												<Route
-													path={`/profile${tab.url}${element.url}`}
+													path={`${tab.url.replace(
+														/^\//,
+														''
+													)}${element.url}`}
 													key={`/profile${tab.url}${element.url}`}
-												>
-													<div className="profile__content">
-														<ProfileGroup
-															group={element}
-															key={`/profile${tab.url}${element.url}`}
-														/>
-													</div>
-												</Route>
+													element={
+														<div className="profile__content">
+															<ProfileGroup
+																group={element}
+																key={`/profile${tab.url}${element.url}`}
+															/>
+														</div>
+													}
+												/>
 											) : (
 												<Route
-													path={`/profile${tab.url}`}
+													path={tab.url.replace(
+														/^\//,
+														''
+													)}
 													key={`/profile${tab.url}`}
-												>
-													<element.component />
-												</Route>
+													element={
+														<element.component />
+													}
+												/>
 											)
 										);
 								})}
 
-						<Redirect
-							to={`/profile${
-								profileRoutes(
-									settings,
-									tenant,
-									selectableLocales,
-									isFirstVisit
-								)[0].url
-							}`}
+						<Route
+							path="*"
+							element={
+								<Navigate
+									to={`/profile${
+										profileRoutes(
+											settings,
+											tenant,
+											selectableLocales,
+											isFirstVisit
+										)[0].url
+									}`}
+									replace
+								/>
+							}
 						/>
-					</Switch>
+					</Routes>
 				</div>
 				<div className="profile__footer">
 					<LegalLinks

@@ -1,0 +1,45 @@
+/*
+ * Emoji picker popup — anchored above/below the emoji toolbar button,
+ * themed to the M3 palette via emoji-picker-react CSS variables.
+ */
+.emojiPickerPopup {
+	position: absolute;
+	left: 0;
+	z-index: 70;
+
+	&--up {
+		bottom: calc(100% + 8px);
+	}
+
+	&--down {
+		top: calc(100% + 4px);
+	}
+
+	&__loading {
+		width: 320px;
+		height: 380px;
+		display: grid;
+		place-items: center;
+		background: #fff;
+		border-radius: 12px;
+		box-shadow:
+			0 4px 8px 3px rgba(0, 0, 0, 0.08),
+			0 1px 3px rgba(0, 0, 0, 0.2);
+	}
+
+	.EmojiPickerReact {
+		--epr-emoji-size: 22px;
+		--epr-hover-bg-color: var(--m3-primary-fixed, #ffdad5);
+		--epr-focus-bg-color: var(--m3-primary-fixed, #ffdad5);
+		--epr-highlight-color: var(--m3-primary-container, #cc1e1c);
+		--epr-category-icon-active-color: var(--m3-primary-container, #cc1e1c);
+		--epr-text-color: var(--m3-secondary, #4c555f);
+		--epr-search-border-color: var(--m3-primary-fixed-dim, #ffb4aa);
+		--epr-picker-border-radius: 12px;
+
+		box-shadow:
+			0 4px 8px 3px rgba(0, 0, 0, 0.08),
+			0 1px 3px rgba(0, 0, 0, 0.2);
+		border: 0;
+	}
+}

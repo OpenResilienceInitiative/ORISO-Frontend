@@ -1,5 +1,5 @@
 import { ConsultingTypeInterface } from './ConsultingTypeInterface';
-import { TWO_FACTOR_TYPES } from '../../components/twoFactorAuth/TwoFactorAuth';
+import { TWO_FACTOR_TYPES } from '../../components/twoFactorAuth/twoFactorAuthConstants';
 
 export interface UserDataInterface {
 	absenceMessage?: string;
@@ -21,6 +21,9 @@ export interface UserDataInterface {
 	isWalkThroughEnabled?: boolean;
 	languages?: string[];
 	lastName?: string;
+	publicSlug?: string;
+	pendingPublicSlug?: string;
+	publicSlugStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
 	preferredLanguage: string;
 	twoFactorAuth?: TwoFactorAuthInterface;
 	userId: string;
@@ -52,6 +55,18 @@ export interface AgencyDataInterface {
 	consultingTypeRel?: ConsultingTypeInterface;
 	topicIds?: number[];
 	agencyLogo?: string | null;
+	/**
+	 * The agency's departments (one per assigned topic) with the publication
+	 * state of their own legal texts. Only present on backends with
+	 * AgencyService #90 - older backends simply never send it.
+	 */
+	departments?: AgencyDepartmentDataInterface[];
+}
+
+export interface AgencyDepartmentDataInterface {
+	topicId: number;
+	hasPublishedDpp?: boolean;
+	hasPublishedImprint?: boolean;
 }
 
 export interface ConsultingTypeDataInterface {

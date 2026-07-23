@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useCallback, useContext } from 'react';
-import { generatePath, useHistory } from 'react-router-dom';
+import { generatePath, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import '../booking.styles';
 import { Box } from '../../../../components/box/Box';
@@ -37,7 +37,7 @@ interface EventProps {
 
 export const Event: React.FC<EventProps> = ({ event, bookingStatus }) => {
 	const { t: translate } = useTranslation();
-	const history = useHistory();
+	const navigate = useNavigate();
 	const { addNotification } = useContext(NotificationsContext);
 	const { userData } = useContext(UserDataContext);
 	const isConsultant = hasUserAuthority(
@@ -78,15 +78,11 @@ export const Event: React.FC<EventProps> = ({ event, bookingStatus }) => {
 	);
 
 	const handleCancellationAppointment = (event: BookingEventUiInterface) => {
-		history.push({
-			pathname: '/booking/cancellation',
-			state: { uid: event.uid }
-		});
+		navigate('/booking/cancellation', { state: { uid: event.uid } });
 	};
 
 	const handleRescheduleAppointment = (event: BookingEventUiInterface) => {
-		history.push({
-			pathname: '/booking/reschedule',
+		navigate('/booking/reschedule', {
 			state: {
 				rescheduleLink: event.rescheduleLink,
 				bookingId: event.id,
@@ -138,9 +134,11 @@ export const Event: React.FC<EventProps> = ({ event, bookingStatus }) => {
 					{activeBookings && (
 						<div className="bookingEvents__ics--mobile bookingEvents--flex bookingEvents--pointer">
 							<DownloadICSFile
-								date={event.date}
-								duration={event.duration}
+								start={event.startTime}
+								end={event.endTime}
 								title={event.title}
+								description={event.description}
+								uid={event.uid}
 							/>
 						</div>
 					)}
@@ -195,9 +193,11 @@ export const Event: React.FC<EventProps> = ({ event, bookingStatus }) => {
 				{activeBookings && (
 					<div className="bookingEvents__ics bookingEvents--flex bookingEvents--pointer">
 						<DownloadICSFile
-							date={event.date}
-							duration={event.duration}
+							start={event.startTime}
+							end={event.endTime}
 							title={event.title}
+							description={event.description}
+							uid={event.uid}
 						/>
 					</div>
 				)}

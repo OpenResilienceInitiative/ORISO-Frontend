@@ -52,7 +52,7 @@ function ResizeDemo({
 					width,
 					position: 'relative',
 					flexShrink: 0,
-					background: '#f5f5f5',
+					background: '#eae7e8',
 					border: '1px solid #e0e0e0',
 					padding: 12,
 					boxSizing: 'border-box'
@@ -87,19 +87,51 @@ function ResizeDemo({
 }
 
 export const Default: Story = {
+	name: 'Empty desk — pill visible',
 	args: {
 		currentWidth: 320,
 		minWidth: 80,
-		maxWidth: 600
+		maxWidth: 600,
+		onResize: () => {}
+	},
+	parameters: {
+		docs: {
+			description: {
+				story: 'No conversation selected: white `.sessionsList__resizeHandlePill` is visible (list↔chat separator).'
+			}
+		}
 	},
 	render: (args) => <ResizeDemo {...args} />
+};
+
+export const ChatActivePillHidden: Story = {
+	name: 'Chat active — pill hidden',
+	args: {
+		currentWidth: 320,
+		minWidth: 80,
+		maxWidth: 600,
+		onResize: () => {}
+	},
+	parameters: {
+		docs: {
+			description: {
+				story: 'When `SessionsZone` marks the list as `contentWrapper__list--smallInactive` (session detail route), the white separator pill is hidden (`opacity: 0`).'
+			}
+		}
+	},
+	render: (args) => (
+		<div className="contentWrapper__list contentWrapper__list--smallInactive">
+			<ResizeDemo {...args} />
+		</div>
+	)
 };
 
 export const NarrowMin: Story = {
 	args: {
 		currentWidth: 320,
 		minWidth: 120,
-		maxWidth: 400
+		maxWidth: 400,
+		onResize: () => {}
 	},
 	render: (args) => <ResizeDemo {...args} />
 };

@@ -1,6 +1,19 @@
 import { MatrixClient, Room, MatrixEvent } from 'matrix-js-sdk';
-import { callManager } from './CallManager';
-import { isVideoCallFromMatrixInviteContent } from '../utils/videoCallHelpers';
+
+type CallManagerModule = typeof import('./CallManager');
+
+const getCallManager = (): CallManagerModule['callManager'] => {
+	// Lazy load to avoid circular import with matrixClientService at module init.
+	// eslint-disable-next-line @typescript-eslint/no-require-imports
+	return require('./CallManager').callManager;
+};
+
+const isVideoCallInvite = (content: Record<string, unknown>): boolean => {
+	// eslint-disable-next-line @typescript-eslint/no-require-imports
+	const { isVideoCallFromMatrixInviteContent } =
+		require('../utils/videoCallHelpers') as typeof import('../utils/videoCallHelpers');
+	return isVideoCallFromMatrixInviteContent(content);
+};
 
 /**
  * Bridge between Matrix events and the existing LiveService WebSocket system.
@@ -12,18 +25,36 @@ export class MatrixLiveEventBridge {
 	private eventCallbacks: Map<string, Set<(event: any) => void>> = new Map();
 	private initialized: boolean = false;
 	private processedCallInvites: Set<string> = new Set(); // Track processed call IDs
+	private pendingEncryptedEvents = new Map<
+		MatrixEvent,
+		{
+			listener: (event: MatrixEvent, error?: Error) => void;
+			timeout: ReturnType<typeof setTimeout>;
+		}
+	>();
 
 	/**
 	 * Initialize the bridge with a Matrix client.
 	 * This sets up event listeners for real-time Matrix events.
 	 */
 	public initialize(client: MatrixClient): void {
-		if (this.initialized) {
-			// console.warn("⚠️ MatrixLiveEventBridge already initialized");
+		this.reinitialize(client);
+	}
+
+	/** Detach from the previous client and bind listeners to the active client. */
+	public reinitialize(client: MatrixClient): void {
+		if (this.client === client && this.initialized) {
 			return;
 		}
 
+		if (this.client && this.client !== client) {
+			this.client.removeAllListeners('Room.timeline' as any);
+			this.client.removeAllListeners('sync' as any);
+			this.clearPendingEncryptedEvents();
+		}
+
 		this.client = client;
+		this.processedCallInvites.clear();
 		this.setupEventListeners();
 		this.initialized = true;
 
@@ -47,42 +78,7 @@ export class MatrixLiveEventBridge {
 					return;
 				}
 
-				const eventType = event.getType();
-				const roomId = room.roomId;
-				const senderId = event.getSender();
-
-				// console.log("📩 Matrix event:", {
-				// type: eventType,
-				// roomId: roomId,
-				// sender: senderId,
-				// timestamp: event.getTs()
-				// });
-
-				// Handle different event types
-				switch (eventType) {
-					case 'm.room.message':
-					case 'm.room.encrypted':
-						this.handleRoomMessage(event, room);
-						break;
-
-					case 'm.call.invite':
-					case 'org.oriso.call.invite':
-						this.handleCallInvite(event, room);
-						break;
-
-					case 'm.call.answer':
-						this.handleCallAnswer(event, room);
-						break;
-
-					case 'm.call.hangup':
-					case 'org.oriso.call.hangup':
-						this.handleCallHangup(event, room);
-						break;
-
-					default:
-						// Ignore other events
-						break;
-				}
+				this.dispatchTimelineEvent(event, room);
 			}
 		);
 
@@ -95,28 +91,112 @@ export class MatrixLiveEventBridge {
 		);
 	}
 
+	private dispatchTimelineEvent(
+		event: MatrixEvent,
+		room: Room,
+		fromDecryptionRetry = false
+	): void {
+		switch (event.getType()) {
+			case 'm.room.message':
+				if (!fromDecryptionRetry) {
+					this.handleRoomMessage(event, room);
+				}
+				break;
+
+			case 'm.room.encrypted':
+				// Room.timeline can fire before Rust-Crypto has the Megolm key.
+				// Keep the existing metadata refresh, but also redispatch the clear
+				// event when a later decryption retry succeeds.
+				this.handleRoomMessage(event, room);
+				this.waitForSuccessfulDecryption(event, room);
+				break;
+
+			case 'm.call.invite':
+			case 'org.oriso.call.invite':
+				this.handleCallInvite(event, room, fromDecryptionRetry);
+				break;
+
+			case 'm.call.hangup':
+			case 'org.oriso.call.hangup':
+				this.handleCallHangup(event, room);
+				break;
+
+			default:
+				break;
+		}
+	}
+
+	private waitForSuccessfulDecryption(event: MatrixEvent, room: Room): void {
+		if (this.pendingEncryptedEvents.has(event)) return;
+
+		let completed = false;
+		let timeout: ReturnType<typeof setTimeout>;
+		const cleanup = () => {
+			event.off('Event.decrypted' as any, listener as any);
+			clearTimeout(timeout);
+			this.pendingEncryptedEvents.delete(event);
+		};
+		const listener = (decryptedEvent: MatrixEvent, error?: Error) => {
+			// Rust-Crypto emits Event.decrypted for a failed attempt too. Keep
+			// listening so receipt of a delayed room key can retry successfully.
+			if (
+				completed ||
+				error ||
+				decryptedEvent.getType() === 'm.room.encrypted'
+			) {
+				return;
+			}
+
+			completed = true;
+			cleanup();
+			this.dispatchTimelineEvent(decryptedEvent, room, true);
+		};
+
+		event.on('Event.decrypted' as any, listener as any);
+		timeout = setTimeout(
+			() => {
+				completed = true;
+				cleanup();
+			},
+			5 * 60 * 1000
+		);
+		this.pendingEncryptedEvents.set(event, { listener, timeout });
+
+		// Close the small race where decryption finishes between the initial
+		// type check and listener registration.
+		if (event.getType() !== 'm.room.encrypted') {
+			listener(event);
+		}
+	}
+
+	private clearPendingEncryptedEvents(): void {
+		this.pendingEncryptedEvents.forEach(({ listener, timeout }, event) => {
+			event.off('Event.decrypted' as any, listener as any);
+			clearTimeout(timeout);
+		});
+		this.pendingEncryptedEvents.clear();
+	}
+
 	/**
 	 * Handle m.room.message events (new messages).
 	 */
 	private handleRoomMessage(event: MatrixEvent, room: Room): void {
 		const sender = event.getSender();
-		const content = event.getContent();
-		const msgtype = content.msgtype;
-		const body = content.body;
+		const { msgtype } = event.getContent();
 
 		const myUserId = this.client?.getUserId();
 		const isOwnMessage = sender === myUserId;
 
 		// console.log("📬 New message from", sender, "in room", room.roomId);
-		// console.log("   Content:", body?.substring(0, 100));
 
-		// Trigger 'directMessage' event (simulating LiveService)
+		// Trigger only metadata needed to refresh/touch lists. Matrix message
+		// bodies stay inside the Matrix session renderer and are never bridged
+		// into legacy LiveService-style events.
 		this.triggerEvent('directMessage', {
 			roomId: room.roomId,
 			sender: sender,
 			isOwnMessage: isOwnMessage,
 			msgtype: msgtype,
-			body: body,
 			eventId: event.getId(),
 			timestamp: event.getTs()
 		});
@@ -125,7 +205,11 @@ export class MatrixLiveEventBridge {
 	/**
 	 * Handle m.call.invite events (incoming calls).
 	 */
-	private handleCallInvite(event: MatrixEvent, room: Room): void {
+	private handleCallInvite(
+		event: MatrixEvent,
+		room: Room,
+		_fromDecryptionRetry = false
+	): void {
 		const sender = event.getSender();
 		const content = event.getContent();
 		const callId = content.call_id;
@@ -176,7 +260,7 @@ export class MatrixLiveEventBridge {
 		const isElementCall = content.is_element_call === true || isGroupCall;
 		const isVideo = isElementCall
 			? content.is_video !== false
-			: isVideoCallFromMatrixInviteContent(content);
+			: isVideoCallInvite(content);
 
 		if (isElementCall) {
 			// console.log("✅ LIVEKIT GROUP CALL DETECTED!");
@@ -193,7 +277,7 @@ export class MatrixLiveEventBridge {
 			// console.log("🔔 CALLING CallManager.receiveCall()");
 			// console.log("═══════════════════════════════════════════════");
 
-			callManager.receiveCall(
+			getCallManager().receiveCall(
 				callRoomId,
 				isVideo,
 				callId,
@@ -217,7 +301,7 @@ export class MatrixLiveEventBridge {
 		// console.log("🔔 CALLING CallManager.receiveCall()");
 		// console.log("═══════════════════════════════════════════════");
 
-		callManager.receiveCall(
+		getCallManager().receiveCall(
 			room.roomId,
 			isVideo,
 			callId,
@@ -228,29 +312,9 @@ export class MatrixLiveEventBridge {
 	}
 
 	/**
-	 * Handle m.call.answer events.
-	 */
-	private handleCallAnswer(event: MatrixEvent, room: Room): void {
-		const sender = event.getSender();
-		const content = event.getContent();
-		const callId = content.call_id;
-
-		// console.log("📞 Call answered by", sender, "in room", room.roomId);
-
-		this.triggerEvent('callAnswered', {
-			roomId: room.roomId,
-			sender: sender,
-			callId: callId
-		});
-	}
-
-	/**
 	 * Handle m.call.hangup events.
 	 */
 	private handleCallHangup(event: MatrixEvent, room: Room): void {
-		const sender = event.getSender();
-		const content = event.getContent();
-		const callId = content.call_id;
 		const eventTimestamp = event.getTs();
 		const now = Date.now();
 		const ageSeconds = Math.floor((now - eventTimestamp) / 1000);
@@ -258,8 +322,8 @@ export class MatrixLiveEventBridge {
 		// console.log("═══════════════════════════════════════════════");
 		// console.log("📴 CALL HANGUP EVENT RECEIVED");
 		// console.log("═══════════════════════════════════════════════");
-		// console.log("📞 Call ID:", callId);
-		// console.log("👤 Sender:", sender);
+		// console.log("📞 Call ID:", event.getContent().call_id);
+		// console.log("👤 Sender:", event.getSender());
 		// console.log("🏠 Room:", room.roomId);
 		// console.log("⏰ Event timestamp:", new Date(eventTimestamp).toISOString());
 		// console.log("⏱️  Age:", ageSeconds, "seconds old");
@@ -276,9 +340,10 @@ export class MatrixLiveEventBridge {
 		// console.log("📴 Call ended by", sender);
 		// console.log("═══════════════════════════════════════════════");
 
-		// Use CallManager directly (clean architecture!)
-		// console.log("🔔 CALLING CallManager.endCall()");
-		callManager.endCall(false);
+		// A fresh hangup can still belong to a call that ended moments before a
+		// replacement call started. Match the Matrix call_id before mutating the
+		// singleton so delayed teardown cannot kill the new call.
+		getCallManager().endCallIfMatching(event.getContent().call_id);
 	}
 
 	/**
@@ -338,16 +403,25 @@ export class MatrixLiveEventBridge {
 	}
 
 	/**
-	 * Clean up and remove all listeners.
+	 * Remove listeners and detach from the current client without dropping subscribers.
 	 */
-	public destroy(): void {
+	public detach(): void {
 		if (this.client) {
 			this.client.removeAllListeners('Room.timeline' as any);
 			this.client.removeAllListeners('sync' as any);
 		}
-		this.eventCallbacks.clear();
+		this.clearPendingEncryptedEvents();
+		this.processedCallInvites.clear();
 		this.initialized = false;
 		this.client = null;
+	}
+
+	/**
+	 * Clean up and remove all listeners.
+	 */
+	public destroy(): void {
+		this.detach();
+		this.eventCallbacks.clear();
 
 		// console.log("🧹 MatrixLiveEventBridge destroyed");
 	}
