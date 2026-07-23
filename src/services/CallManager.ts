@@ -7,6 +7,11 @@
  */
 
 import { MatrixCall } from 'matrix-js-sdk/lib/webrtc/call';
+import { getMatrixClientService } from './matrixClientRegistry';
+import {
+	assertMatrixRoomEncrypted,
+	buildMatrixRoomEncryptionInitialState
+} from '../utils/matrixRoomEncryption';
 
 export type CallState =
 	| 'idle'
@@ -129,8 +134,8 @@ class CallManager {
 		} else {
 			// Auto-detect based on room member count
 			try {
-				const matrixClientService = (window as any).matrixClientService;
-				const client = matrixClientService?.getClient();
+				const matrixClientService = getMatrixClientService();
+				const client = matrixClientService?.getClient?.();
 				// console.log(`   Matrix client available: ${!!client}`);
 
 				if (client) {
@@ -240,8 +245,8 @@ class CallManager {
 	 * use-case (notably the power levels for `org.matrix.msc3401.call.member`).
 	 */
 	private async createElementCallRoom(sourceRoomId: string): Promise<string> {
-		const matrixClientService = (window as any).matrixClientService;
-		const client = matrixClientService?.getClient();
+		const matrixClientService = getMatrixClientService();
+		const client = matrixClientService?.getClient?.();
 
 		if (!client) {
 			throw new Error(
@@ -259,6 +264,7 @@ class CallManager {
 			// Same as Element Call: a room suitable for group chats
 			preset: 'public_chat',
 			name,
+			initial_state: [buildMatrixRoomEncryptionInitialState()],
 			power_level_content_override: {
 				invite: 100,
 				kick: 100,
@@ -308,13 +314,14 @@ class CallManager {
 	 */
 	private async ensureGroupCallPermissions(roomId: string): Promise<void> {
 		try {
-			const matrixClientService = (window as any).matrixClientService;
-			const client = matrixClientService?.getClient();
+			const matrixClientService = getMatrixClientService();
+			const client = matrixClientService?.getClient?.();
 
 			if (!client) {
 				// console.warn("⚠️  Matrix client not available, cannot adjust power levels for group call");
 				return;
 			}
+			assertMatrixRoomEncrypted(client, roomId);
 
 			const room = client.getRoom(roomId);
 			if (!room) {
@@ -358,9 +365,10 @@ class CallManager {
 
 			// matrix-js-sdk signature: sendStateEvent(roomId, eventType, content, stateKey?)
 			// We must NOT pass the content as the stateKey (it becomes "[object Object]" in the URL).
+			// Custom ORISO event type — not in matrix-js-sdk typings
 			await client.sendStateEvent(
 				roomId,
-				'm.room.power_levels',
+				'm.room.power_levels' as any,
 				updatedContent,
 				''
 			);
@@ -386,8 +394,8 @@ class CallManager {
 		isGroupCall: boolean = false
 	): void {
 		try {
-			const matrixClientService = (window as any).matrixClientService;
-			const client = matrixClientService?.getClient();
+			const matrixClientService = getMatrixClientService();
+			const client = matrixClientService?.getClient?.();
 
 			if (!client) {
 				// console.error('❌ Matrix client not available to send call invite');
@@ -397,8 +405,9 @@ class CallManager {
 			// console.log('📤 Sending m.call.invite to Matrix room:', signallingRoomId);
 
 			// Send m.call.invite event
+			// Custom ORISO event type — not in matrix-js-sdk typings
 			client
-				.sendEvent(signallingRoomId, 'org.oriso.call.invite', {
+				.sendEvent(signallingRoomId, 'org.oriso.call.invite' as any, {
 					call_id: callId,
 					version: '1',
 					lifetime: 60000, // 60 seconds
@@ -535,60 +544,68 @@ class CallManager {
 	 * End the current call
 	 */
 	public endCall(notifyRemote: boolean = true): void {
-		// console.log("═══════════════════════════════════════════════");
-		// console.log("📴 CallManager.endCall()");
-		// console.log("═══════════════════════════════════════════════");
-
-		if (!this.currentCall) {
-			// console.log("ℹ️  No active call to end");
+		// Snapshot + clear first so nested hangup → state:ended → endCall()
+		// (and late oriso-call-ended messages) cannot read null.matrixCall.
+		const call = this.currentCall;
+		if (!call) {
 			return;
 		}
+		this.currentCall = null;
 
-		if (notifyRemote && this.currentCall.usesElementCall) {
-			this.sendElementCallHangup(this.currentCall);
+		if (notifyRemote && call.usesElementCall) {
+			this.sendElementCallHangup(call);
 		}
 
 		// Hangup Matrix call (this will send m.call.hangup event to other side)
-		if (this.currentCall.matrixCall) {
-			// console.log("📞 Hanging up Matrix call object...");
+		if (call.matrixCall) {
 			try {
-				(this.currentCall.matrixCall as any).hangup();
-				// console.log("✅ Matrix call hangup sent (other side will receive it)");
-			} catch (err) {
-				// console.error("❌ Error hanging up Matrix call:", err);
+				(call.matrixCall as any).hangup();
+			} catch {
+				// Hangup can throw if the call is already tearing down
 			}
 		}
 
 		// Stop local media streams
 		const stream = (window as any).__activeMediaStream;
 		if (stream) {
-			// console.log("🧹 Stopping local media stream...");
 			stream.getTracks().forEach((track: any) => {
 				track.stop();
-				// console.log(`   Stopped ${track.kind} track`);
 			});
 			delete (window as any).__activeMediaStream;
-			// console.log("✅ Local media stream stopped");
 		}
-
-		this.currentCall = null;
-
-		// console.log("✅ Call ended and cleared");
-		// console.log("═══════════════════════════════════════════════");
 
 		this.notifyListeners();
 	}
 
+	/**
+	 * End a remotely-hung-up call only when the signalling event belongs to
+	 * the call that is still active. A delayed hangup from a previous call must
+	 * never tear down a newer call in the same conversation room.
+	 */
+	public endCallIfMatching(callId?: string): boolean {
+		if (
+			!callId ||
+			!this.currentCall ||
+			this.currentCall.callId !== callId
+		) {
+			return false;
+		}
+
+		this.endCall(false);
+		return true;
+	}
+
 	private sendElementCallHangup(callData: CallData): void {
 		try {
-			const matrixClientService = (window as any).matrixClientService;
-			const client = matrixClientService?.getClient();
+			const matrixClientService = getMatrixClientService();
+			const client = matrixClientService?.getClient?.();
 			if (!client) return;
 
+			// Custom ORISO event type — not in matrix-js-sdk typings
 			client
 				.sendEvent(
 					callData.signalRoomId || callData.roomId,
-					'org.oriso.call.hangup',
+					'org.oriso.call.hangup' as any,
 					{
 						call_id: callData.callId,
 						version: '1',

@@ -1,0 +1,61 @@
+import { useEffect, useState } from 'react';
+
+/**
+ * Placement preference for the global notification-status button in the
+ * navigation rail (#576 harmonised model). Mirrors the Live-Chat
+ * "via sidebar" pattern: localStorage keeps the UI-only preference, a
+ * custom event keeps every consumer in sync. The button itself flips the
+ * account-wide `globalMute` — the one switch that overrides everything.
+ */
+const STORAGE_KEY = 'oriso_notifStatusViaSidebar';
+const CHANGE_EVENT = 'oriso:notifStatusViaSidebarChange';
+
+export const isNotifStatusViaSidebar = (): boolean => {
+	try {
+		return localStorage.getItem(STORAGE_KEY) === '1';
+	} catch {
+		return false;
+	}
+};
+
+export const setNotifStatusViaSidebar = (active: boolean): void => {
+	try {
+		if (active) {
+			localStorage.setItem(STORAGE_KEY, '1');
+		} else {
+			localStorage.removeItem(STORAGE_KEY);
+		}
+	} catch {
+		/* storage errors are non-fatal — the preference just won't persist */
+	}
+	window.dispatchEvent(new CustomEvent(CHANGE_EVENT, { detail: { active } }));
+};
+
+/** Hook: keeps UI in sync with the "status button in the rail" preference. */
+export const useNotifStatusViaSidebar = (): [boolean, (v: boolean) => void] => {
+	const [active, setActive] = useState<boolean>(() =>
+		isNotifStatusViaSidebar()
+	);
+
+	useEffect(() => {
+		// The custom event carries the requested value so the in-tab state
+		// survives even when storage writes fail (restricted-storage Safari).
+		const onCustom = (e: Event) => {
+			const detail = (e as CustomEvent<{ active?: boolean }>).detail;
+			setActive(
+				typeof detail?.active === 'boolean'
+					? detail.active
+					: isNotifStatusViaSidebar()
+			);
+		};
+		const onStorage = () => setActive(isNotifStatusViaSidebar());
+		window.addEventListener(CHANGE_EVENT, onCustom);
+		window.addEventListener('storage', onStorage);
+		return () => {
+			window.removeEventListener(CHANGE_EVENT, onCustom);
+			window.removeEventListener('storage', onStorage);
+		};
+	}, []);
+
+	return [active, setNotifStatusViaSidebar];
+};

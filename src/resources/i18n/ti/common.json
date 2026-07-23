@@ -174,6 +174,11 @@
 				"png": "ፒኤንጂ",
 				"xlsx": "XLSX"
 			}
+		},
+		"mediaCheck": {
+			"unchecked": "Image from anonymous chat – not yet checked",
+			"reveal": "Show image",
+			"blocked": "Blocked by the security check"
 		}
 	},
 	"banner": {
@@ -680,7 +685,8 @@
 			}
 		},
 		"edit": {
-			"title": "ቅጥዕታት ዕላል"
+			"title": "ቅጥዕታት ዕላል",
+			"subtitle": "ናይዚ ዕላል መደብን ትሕዝቶን ቀይር"
 		},
 		"info": {
 			"headline": "ናይ ዕላል ሓበሬታ",
@@ -708,6 +714,33 @@
 			}
 		},
 		"join": {
+			"waitingArea": {
+				"countdown": {
+					"etaDay": "ኣብ ሓደ መዓልቲ",
+					"etaDays": "ኣብ {{count}} መዓልታት",
+					"etaHour": "ኣብ ሓደ ሰዓት",
+					"etaHours": "ኣብ {{count}} ሰዓታት",
+					"etaMinute": "ኣብ ሓደ ደቒቕ",
+					"etaMinutes": "ኣብ {{count}} ደቓይቕ",
+					"etaSoon": "ሕጂ ቀረባ",
+					"flipAria": "{{label}}: {{value}}። ንምንባብ ግልብጦ።",
+					"flipHint": "ንምግልባጥ ጠውቕ",
+					"greetingLabel": "ሰላምታ ካብ ኣማኻሪኻ",
+					"headline": "ጉጅለ ቻትካ {{eta}} ክጅምር እዩ።",
+					"netiquetteLabel": "ሕጊ ዝርርብ · ሕጊ {{no}}",
+					"overdueCaption": "እቲ ምጽባይ ቁሩብ ዘሕፍር ይኸውን ኣሎ …",
+					"overdueHeadline": "ሕጂ ንመጸካ ኢና።",
+					"overdueSubtitle": "ኣማኻሪኻ ነቲ ክፍሊ ቀረባ ግዜ ክኸፍቶ እዩ — በጃኻ ቁሩብ ተጸበ።",
+					"subtitle": "ኣብ ሓደ ቁጽሪ ጠውቕ — ብድሕሪኡ ሰላምታን ሕግታት ዝርርብን ኣለዉ።",
+					"timerAriaFuture": "ክሳብ መጀመርታ — መዓልታት: {{days}}፣ ሰዓታት: {{hours}}፣ ደቓይቕ: {{minutes}}፣ ካልኢታት: {{seconds}}",
+					"timerAriaOverdue": "ካብቲ እተመደበ መጀመርታ — ደቓይቕ: {{minutes}}፣ ካልኢታት: {{seconds}}",
+					"toggleLabel": "ምንቅስቓስ ኣጥፍእ",
+					"unitDays": "መዓልታት",
+					"unitHours": "ሰዓታት",
+					"unitMinutes": "ደቓይቕ",
+					"unitSeconds": "ካልኢታት"
+				}
+			},
 			"button": {
 				"label": {
 					"join": "ምስታፍ",
@@ -854,6 +887,36 @@
 						"1": "ደረጃ ብደረጃ መምርሒታት",
 						"2": "ድሮ ጉግል ክሮም፡ ማይክሮሶፍት ኤጅ ወይ ሳፋሪ ኣለካ?"
 					}
+				}
+			},
+			"elementCall": {
+				"stackLabel": "Element Call ምስ WebRTCን LiveKitን",
+				"stepsHeadline": "ቪድዮ ጻውዒት ከመይ ይሰርሕ",
+				"troubleshootingHeadline": "ገለ ነገር እንተዘይሰሪሑ",
+				"asker": {
+					"headline": "ቪድዮ ጻውዒት።",
+					"intro": "ቪድዮ ጻውዒታት ሕጂ ብቐጥታ ብ Element Call ይሰርሑ። Element Call WebRTCን LiveKitን ይጥቀም፣ ስለዚ መርበብ ሓበሬታ ምቕያር ወይ ተወሳኺ መተግበሪ ምጽዓን ኣየድልይን።",
+					"steps": {
+						"open": "ናይ ኦንላይን ምኽሪ ከም ቀደሙ ክፈቶ።",
+						"permissions": "መርበብ ሓበሬታኻ ክሓትት ከሎ ንካሜራን ማይክሮፎንን ፍቓድ ሃብ።",
+						"call": "ኣማኻሪኻ ምስ ጀመሮ ነቲ ቪድዮ ጻውዒት ተቐበሎ።",
+						"copyLink": "ነቲ ናይ መእተዊ ሊንክ ኣብ ካልእ መሳርሒ ክትከፍቶ እንተደሊኻ፣ ኣብዚ ቅዳሕዎ:"
+					}
+				},
+				"consultant": {
+					"headline": "ቪድዮ ጻውዒት።",
+					"intro": "ቪድዮ ጻውዒታት ሕጂ ብቐጥታ ብ Element Call ይሰርሑ። Element Call WebRTCን LiveKitን ይጥቀም፣ ስለዚ መርበብ ሓበሬታ ምቕያር ወይ ተወሳኺ መተግበሪ ምጽዓን ኣየድልይን።",
+					"steps": {
+						"open": "ነቲ ምኽሪ ኣብ ORISO ከም ቀደሙ ክፈቶ።",
+						"permissions": "መርበብ ሓበሬታኻ ክሓትት ከሎ ንካሜራን ማይክሮፎንን ፍቓድ ሃብ።",
+						"call": "ነቲ ቪድዮ ጻውዒት ኣብ ቻት ጀምሮ። Element Call ነቲ ጻውዒት ብኣውቶማቲክ ይኸፍቶ።",
+						"copyLink": "ነቲ ናይ መእተዊ ሊንክ ኣብ ካልእ መሳርሒ ክትከፍቶ እንተደሊኻ፣ ኣብዚ ቅዳሕዎ:"
+					}
+				},
+				"troubleshooting": {
+					"permissions": "ካሜራን ማይክሮፎንን ኣብ መርበብ ሓበሬታ ፍቓድ ከም ዘለዎም ፈትሽ።",
+					"device": "ትኽክለኛ ማይክሮፎን፣ ካሜራን ስፒከርን ከም ዝተመርጹ ፈትሽ።",
+					"connection": "ምስሊ ወይ ድምጺ እንተተቋሪጹ ገጹ ኣሐድስ ወይ ናብ ጽኑዕ Wi-Fi ተቐይር።"
 				}
 			},
 			"loginLink": {
@@ -1131,6 +1194,30 @@
 		"resetPasswort": {
 			"label": "ፓስዎርድካ ረሲዕካዮ?"
 		},
+		"resetPassword": {
+			"request": {
+				"headline": "ፓስዎርድካ ረሲዕካዮ?",
+				"text": "ኢመይልካ ሂብካ እንተኾንካ፣ ፓስዎርድካ ዳግማይ ክትሰርዖ ትኽእል ኢኻ። ኢመይልካ ኣእቱ እሞ ስደድ ጠውቕ። ብድሕሪኡ ፓስዎርድካ ዳግማይ እትሰርዓሉ ሊንክ ክንሰደልካ ኢና።",
+				"usernameLabel": "ኢመይል",
+				"submitLabel": "ስደድ",
+				"usernameRequired": "በጃኻ ቅድም ኢመይልካ ኣእቱ።",
+				"notEnabled": "ንዚ ኣካውንት እዚ ፓስዎርድ ዳግማይ ምስራዕ ሕጂ ኣይክኣልን እዩ።"
+			},
+			"sent": {
+				"headline": "ተወሳኺ መምርሒታት ዘለዎ ኢመይል ተሰዲዱልካ ኣሎ።",
+				"text": "ኣብ ቀረባ ግዜ ተወሳኺ መምርሒታት ዘለዎ ኢመይል ክትቕበል ኢኻ።"
+			},
+			"backToLogin": "ናብ መእተዊ ተመለስ",
+			"setNew": {
+				"headline": "ሓድሽ ፓስዎርድ ኣቐምጥ",
+				"text": "በጃኻ ሓድሽ ፓስዎርድካ ኣእቱ።",
+				"newLabel": "ሓድሽ ፓስዎርድ",
+				"confirmLabel": "ሓድሽ ፓስዎርድ ኣረጋግጽ",
+				"submitLabel": "ፓስዎርድ ኣቐምጥ",
+				"success": "ፓስዎርድካ ብዓወት ተቐይሩ ኣሎ። ሕጂ ክትኣቱ ትኽእል ኢኻ።",
+				"invalidToken": "እዚ ሊንክ እዚ ጌጋ ወይ ጊዜኡ ኣኺሉ እዩ። በጃኻ ሓድሽ ሊንክ ሕተት።"
+			}
+		},
 		"seperator": "ወይ",
 		"user": {
 			"label": "ስም ተጠቃሚ/ኢመይል"
@@ -1207,6 +1294,13 @@
 			"title": "መዝገብ"
 		},
 		"read": "ኣንብብ",
+		"sendFailed": {
+			"body": "መልእኽቲ ኣብ ምልኣኽ ጸገም ኣጋጢሙ፣ ምናልባት ብምስጢራዊ ምልክት ወይ ብጌጋ ምትሕልላፍ። እንደገና ንምፍታን «እንደገና ስደድ» ተጠቐም። ኩነታቱ መርምር፦ ሓደ ምልክት ተላኢኹ ማለት እዩ፣ ክልተ ምልክት ተነቢቡ ማለት እዩ፣ መስቀል ድማ ናብ ሰርቨር ከም ዘይበጽሐ የመልክት።",
+			"retry": "እንደገና ስደድ",
+			"status": "ኣይበጽሐን",
+			"subtitle": "መልእኽትኻ እንደገና ስደድ",
+			"title": "መልእኽቲ ምልኣኽ ኣይተኻእለን"
+		},
 		"sent": "ኣብፀሐ",
 		"submit": {
 			"booking": {
@@ -1262,7 +1356,7 @@
 				"small": "ዜና"
 			}
 		},
-		"activity": "ንቅስታት",
+		"activity": "ናይ ግዜ መስመር",
 		"language": "ቋንቋ",
 		"drafts": "መቕረጽቲ",
 		"liveChat": "ቀጥታ ዝርርብ",
@@ -1601,7 +1695,8 @@
 					"changePassword": "ፓስዎርድ ምቕያር",
 					"title": "ድሕንነት"
 				},
-				"title": "ቅጥዕታት"
+				"title": "ቅጥዕታት",
+				"keyboardShortcuts": "Keyboard Shortcuts"
 			}
 		},
 		"spokenLanguages": {
@@ -1689,6 +1784,9 @@
 		}
 	},
 	"registration": {
+		"selectedLabel": "ተመሪጹ",
+		"noneSelected": "ንምቕጻል በጃኹም ሓደ ኣርእስቲ ምረጹ።",
+		"topicInstruction": "ሓደ ኣርእስቲ ምረጹ።",
 		"accordion": {
 			"item": {
 				"continueButton": {
@@ -1714,6 +1812,18 @@
 				},
 				"headline": "ምኽሪ ኣብ ፖስታ ኮድ ዘማእከለ እዩ።",
 				"languages": "እዚ ማእከል ምኽሪ እዚ ብዛዕባ፤"
+			},
+			"details": {
+				"aboutLabel": "ብዛዕባ እዚ ማእከል ምኽሪ",
+				"addressLabel": "ኣድራሻ",
+				"hoursLabel": "ሰዓታት ስራሕ",
+				"languagesLabel": "ቋንቋታት",
+				"less": "ውሑድ",
+				"more": "ተወሳኺ",
+				"navigate": "መንገዲ ጀምር",
+				"openInMaps": "ኣብ ካርታ ክፈት",
+				"phoneLabel": "ተሌፎን",
+				"websiteLabel": "መርበብ ሓበሬታ"
 			},
 			"search": "ዚፕ ኮድ ድለዩ።",
 			"summary": "ማእከል ምኽርኹም፤"
@@ -1818,6 +1928,7 @@
 			},
 			"criteria": {
 				"fulfilled": "ተፈጺሙ",
+				"open": "ክፍት",
 				"length": "እንተወሓደ 9 ፊደላት",
 				"number": "እንተወሓደ ሓደ ቁጽሪ",
 				"specialChar": "እንተወሓደ ሓደ ፍሉይ ገጸ ባህሪ",
@@ -1856,6 +1967,11 @@
 				"16": "ቱሪንጅያ"
 			}
 		},
+		"loader": {
+			"headline": "እንኳዕ ብደሓን መጻእኩም።",
+			"copy": "ውሑስ ናይ ምኽሪ ክፍልኹም ነዳሉ ኣለና …",
+			"ready": "ናይ ምኽሪ ክፍልኹም ድሉው እዩ።"
+		},
 		"stepbar": {
 			"of": "ካብ",
 			"step": "ደረጃ"
@@ -1877,12 +1993,15 @@
 			"summary": "ኣርእስትኻ፤"
 		},
 		"account": {
+			"autoSuggest": "ዝርዝር ብርእሱ ይምክር",
 			"headline": "ዝርዝር መእተዊ ምሓዝ",
 			"password": {
-				"criteria1": "እንተወሓደ 9 ፊደላት",
-				"criteria2": "እንተወሓደ ሓደ ቁጽሪ",
-				"criteria3": "ዓበይቲ/ንእሽቶ ፊደላት",
-				"criteria4": "እንተወሓደ ሓደ ፍሉይ ገጸ ባህሪ",
+				"criteria1": "እንተወሓደ 16 ፊደላት",
+				"criteria2": "1 ቁጽሪ",
+				"criteria3": "1 ዓቢ ፊደል",
+				"criteria4": "1 ንእሽቶ ፊደል",
+				"criteria5": "1 ፍሉይ ገጸ ባህሪ",
+				"criteriaLabel": "ናይ መሕለፊ ቓል ጠለባት",
 				"label": "መሕለፊ ቓል"
 			},
 			"repeatPassword": {
@@ -1890,13 +2009,22 @@
 				"label": "ፓስዎርድ ምድጋም",
 				"success": "ፓስዎርድካ ተመሳሳሊ እዩ።"
 			},
+			"suggest": {
+				"all": "ሰለስቲኦም ብሓባር",
+				"allShort": "ሰለስቲኦም",
+				"avatar": "Avatar",
+				"password": "መሕለፊ ቓል",
+				"username": "ስም ተጠቃሚ"
+			},
 			"subline": "ስምካ ንኸይፍለጥ፡ ትኽክለኛ ስምካ ወይ ቀዳሞት ፊደላትካ ከይትጥቀም ንመክር።",
 			"username": {
 				"error": {
-					"available": "ስም ተጠቃሚኻ ኣዝዩ ሓጺር እዩ።",
-					"unavailable": "እዚ ናይ ተጠቃሚ ስም ድሮ ተወሰደ።"
+					"tooShort": "ስም ተጠቃሚኻ ኣዝዩ ሓጺር እዩ።",
+					"unavailable": "እዚ ናይ ተጠቃሚ ስም ድሮ ተወሰደ።",
+					"retry": "ነዚ ስም ተጠቃሚ ሕጂ ክንፈትሾ ኣይከኣልናን። በጃኹም ደጊምኩም ፈትኑ።"
 				},
-				"hint": "5 ወይ ካብዚ ብዙሕ ፊደላት",
+				"hint": "ስም መእተዊ ዘይፍለጥ። ትኽክለኛ ስም ወይ ቀዳሞት ፊደላት ኣይትጠቀም።",
+				"info": "ስም መእተዊ ዘይፍለጥ። ትኽክለኛ ስም ወይ ቀዳሞት ፊደላት ኣይትጠቀም።",
 				"label": "ስም ተጠቃሚ",
 				"success": "ስም ተጠቃሚኻ ይሰማማዕ እዩ።"
 			}
@@ -1993,8 +2121,8 @@
 			"decreaseExhale": "Decrease exhale seconds",
 			"increaseExhale": "Increase exhale seconds",
 			"robotUsernameFallback": "Ratsuchende_r 9",
-			"robotCard1Title": "Please have a little patience",
-			"robotCard1Body": "All counsellors are currently in session. We will be with you as soon as possible.",
+			"robotCard1Title": "ቅሩብ ጽናሕ፣ በጃኻ",
+			"robotCard1Body": "ኩሎም ኣማኸርቲ ናትና ሕጂ ኣብ ቀጥታ ዝርርብ ኣለዎም። በጃኹም ኣብዚ ናይ ዝርርብ ክፍሊ ቁሩብ ዳጓ ጽናሕ። ኣብ ታሕቲ ክትርኡ ትኽእሉ ክንደይ ሰባት ቅድሜኹም ኣብ መስርዕ ምህላዎም።",
 			"robotCard2TitlePrefix": "Your username is:",
 			"robotCard2Body": "To protect your anonymity, we delete your messages no later than 48 hours after the chat has ended.",
 			"robotCard3Title": "Do you not need an immediate response? And don’t want to wait for a free chat?",
@@ -2130,6 +2258,7 @@
 			"restrictions": ".jpg, .png, .pdf, .docx, .xlsx ክሳብ ዝለዓለ {{attachment_filesize}} MB ዝበጽሕ እዩ።"
 		},
 		"empty": "መልእኽቲ ምረጹ በጃኹም",
+		"emptyAllCaughtUp": "ንእሽቶ ዕረፍቲ ውሰዱ።\nኩሉ ተዛዚሙ ኣሎ።",
 		"groupChat": {
 			"consultant": {
 				"prefix": "ኣካያዲ ስራሕ - "
@@ -2254,12 +2383,20 @@
 			},
 			"chips": {
 				"neu": "Unread",
+				"unread": "Unread",
+				"drafts": "Drafts",
+				"nearby": "ቀረባ",
+				"create": "ፍጠር",
+				"archive": "Archive",
 				"oneToOne": "1-1 ምኽሪ",
 				"liveChat": "ቀጥታዊ ዝርርብ",
-				"groups": "ጉጅለታት",
-				"supervision": "Supervision"
+				"internalGroup": "ውሽጣዊ ናይ ጉጅለ ዝርርብ",
+				"groups": "ናይ ዝርርብ ክበብ",
+				"supervision": "Supervision",
+				"chats": "ቀረባ"
 			},
-			"emptyFilterResult": "ናብ ምድላይ ወይ ፊልተራትካ ዝሰማማዕ ምኽሪ የለን።"
+			"emptyFilterResult": "ናብ ምድላይ ወይ ፊልተራትካ ዝሰማማዕ ምኽሪ የለን።",
+			"draftMetadataOnly": "Unsent message saved."
 		},
 		"anonymous": {
 			"tag": "ስውር"
@@ -2874,6 +3011,111 @@
 			"remove": {
 				"confirm": "እዚ ሱፐርቫይዘር ንምእልፍል እርግጠኛ ዲኻ?"
 			}
+		}
+	},
+	"shortcuts": {
+		"title": "Keyboard Shortcuts",
+		"description": "Customize chat shortcuts. Changes apply immediately and are saved on this device.",
+		"automaticallyConfigured": "automatically configured",
+		"disableShortcut": "Disabled",
+		"restoreDefaults": "Restore Defaults",
+		"restoreDefaultsSuccess": "Default shortcuts restored.",
+		"primaryModifier": "Primary modifier",
+		"help": {
+			"title": "Keyboard shortcuts",
+			"close": "Close"
+		},
+		"palette": {
+			"title": "Command Palette",
+			"close": "Close",
+			"searchPlaceholder": "Search commands…",
+			"allShortcuts": "All shortcuts"
+		},
+		"editingBanner": "Editing message",
+		"editingCancel": "Cancel",
+		"categories": {
+			"messaging": "Messaging",
+			"navigation": "Navigation",
+			"attachments": "Attachments",
+			"emoji": "Emoji and Reactions",
+			"application": "Application"
+		},
+		"actions": {
+			"sendMessage": {
+				"label": "Send Message",
+				"description": "Send the current chat message."
+			},
+			"insertNewLine": {
+				"label": "Insert New Line",
+				"description": "Insert a new line in the message composer. Derived from the send shortcut."
+			},
+			"showShortcutHelp": {
+				"label": "Show Keyboard Shortcuts",
+				"description": "Open the keyboard shortcuts help dialog."
+			},
+			"focusInput": {
+				"label": "Focus Message Input",
+				"description": "Move focus to the message composer."
+			},
+			"uploadFile": {
+				"label": "Upload File",
+				"description": "Open the file attachment picker."
+			},
+			"searchMessages": {
+				"label": "Search Messages",
+				"description": "Search messages in the current conversation."
+			},
+			"editLastMessage": {
+				"label": "Edit Last Message",
+				"description": "Edit your last sent message."
+			},
+			"cancelReplyOrEdit": {
+				"label": "Cancel Reply or Edit",
+				"description": "Cancel the current reply or edit."
+			},
+			"openEmojiPicker": {
+				"label": "Open Emoji Picker",
+				"description": "Open the emoji picker."
+			},
+			"startNewConversation": {
+				"label": "Start New Conversation",
+				"description": "Start a new conversation."
+			},
+			"openCommandPalette": {
+				"label": "Open Command Palette",
+				"description": "Open the command palette."
+			}
+		},
+		"conflicts": {
+			"duplicate": "This shortcut is already assigned.",
+			"reserved": "This shortcut is reserved by the browser.",
+			"browserConflict": "This shortcut conflicts with common browser shortcuts.",
+			"sendNewline": "Send Message and Insert New Line cannot use the same shortcut.",
+			"unsupported": "This shortcut option is not supported.",
+			"cannotDisable": "This shortcut cannot be disabled.",
+			"unsafePlainKey": "This key cannot be used as a shortcut while typing."
+		},
+		"hints": {
+			"enterSends": "Enter sends the message",
+			"shiftEnterNewline": "Shift+Enter inserts a new line",
+			"enterNewline": "Enter inserts a new line",
+			"ctrlEnterSends": "Ctrl+Enter sends the message",
+			"cmdEnterSends": "Cmd+Enter sends the message"
+		},
+		"lockedNewline": "Locked to Shift+Enter while Enter sends the message.",
+		"resetAction": "Reset",
+		"restoreDefaultsConfirm": "Restore all shortcuts to their defaults?",
+		"restoreDefaultsConfirmYes": "Restore",
+		"restoreDefaultsConfirmNo": "Cancel",
+		"keys": {
+			"enter": "Enter",
+			"escape": "Esc",
+			"arrowUp": "↑",
+			"shift": "Shift",
+			"alt": "Alt",
+			"option": "Option",
+			"ctrl": "Ctrl",
+			"cmd": "Cmd"
 		}
 	}
 }

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useState, useEffect, useContext, FC, useCallback } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
 	Typography,
@@ -15,7 +15,7 @@ import {
 	TextField,
 	Dialog
 } from '@mui/material';
-import PersonIcon from '@mui/icons-material/Person';
+import { AnimalAvatar } from '../pseudonym/AnimalAvatar';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import AccessTimeOutlinedIcon from '@mui/icons-material/AccessTimeOutlined';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
@@ -31,6 +31,12 @@ import {
 	TopicsDataInterface
 } from '../../globalState/interfaces';
 import { apiPostRegistration } from '../../api/apiPostRegistration';
+import {
+	generatePseudonym,
+	generatePassword,
+	type Pseudonym
+} from '../../utils/anonName/engine';
+import { toRegistrationUsername } from '../registration/accountData/registrationUsername';
 import { redirectToApp } from '../registration/autoLogin';
 import { endpoints } from '../../resources/scripts/endpoints';
 import { useAppConfig } from '../../hooks/useAppConfig';
@@ -58,7 +64,7 @@ interface AnonymousChatProps {
 
 export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 	const { t } = useTranslation();
-	const history = useHistory();
+	const navigate = useNavigate();
 	const settings = useAppConfig();
 	const { tenant } = useContext(TenantContext);
 	const { Stage } = useContext(GlobalComponentContext);
@@ -81,35 +87,23 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 		new Set()
 	);
 	const [isRegistering, setIsRegistering] = useState<boolean>(false);
-	const [username, setUsername] = useState<string>('');
-	const [password, setPassword] = useState<string>('');
+	// Same anonymous identity as the normal registration: a friendly animal
+	// pseudonym (e.g. "katze_mika_1234"), NOT an "Anonymous-<timestamp>" handle.
+	// Username + password are derived synchronously from the shared anon-name
+	// engine on first render (same structure as normal registration).
+	const [identity] = useState<Pseudonym>(() => generatePseudonym(locale));
+	const [username] = useState<string>(() => toRegistrationUsername(identity));
+	const [password] = useState<string>(() => generatePassword());
 	const [noAvailabilityModalTopic, setNoAvailabilityModalTopic] =
 		useState<TopicsDataInterface | null>(null);
 	const [noAvailabilityModalOpen, setNoAvailabilityModalOpen] =
 		useState<boolean>(false);
 	const [showOpeningHoursHint, setShowOpeningHoursHint] =
 		useState<boolean>(false);
-	const [shownNoAvailabilityTopics, setShownNoAvailabilityTopics] = useState<
-		Set<number>
-	>(new Set());
+	// Only the setter is needed: the current value is read via the functional
+	// updater to show the no-availability modal once per topic.
+	const [, setShownNoAvailabilityTopics] = useState<Set<number>>(new Set());
 
-	// Generate username and 8-character random password on mount
-	useEffect(() => {
-		const timestamp = Date.now();
-		const generatedUsername = `Anonymous-${timestamp}`;
-		setUsername(generatedUsername);
-
-		// Generate 8-character random password
-		const chars =
-			'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-		let generatedPassword = '';
-		for (let i = 0; i < 8; i++) {
-			generatedPassword += chars.charAt(
-				Math.floor(Math.random() * chars.length)
-			);
-		}
-		setPassword(generatedPassword);
-	}, []);
 
 	// Fetch all topics on mount
 	useEffect(() => {
@@ -134,6 +128,9 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 			.finally(() => {
 				setLoadingTopics(false);
 			});
+		// Mount-only fetch; loadAgenciesForTopic changes with agency state and
+		// must not re-trigger the topics request.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	const openNoAvailabilityModal = useCallback(
@@ -315,7 +312,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 			// Build registration data exactly like normal registration
 			const registrationData = {
 				username: username,
-				password: encodeURIComponent(password),
+				password: password,
 				agencyId: selectedAgency.id.toString(),
 				postcode: validPostcode,
 				termsAccepted: 'true',
@@ -477,7 +474,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 									gap: '12px'
 								}}
 							>
-								<PersonIcon sx={{ color: '#c62828' }} />
+								<AnimalAvatar avatar={identity.avatar} size={48} />
 								<Box sx={{ flex: 1 }}>
 									<Typography
 										variant="body2"
@@ -1072,7 +1069,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 					<Button
 						fullWidth
 						variant="contained"
-						onClick={() => history.push('/registration')}
+						onClick={() => navigate('/registration')}
 						sx={{
 							mb: '8px',
 							borderRadius: '999px',

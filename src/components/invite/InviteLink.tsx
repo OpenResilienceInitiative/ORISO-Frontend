@@ -75,7 +75,7 @@ export const InviteLink = () => {
 					endpoints.registerAsker,
 					{
 						username,
-						password: encodeURIComponent(password),
+						password,
 						agencyId: String(data.agencyId),
 						postcode: '00000',
 						termsAccepted: 'true',

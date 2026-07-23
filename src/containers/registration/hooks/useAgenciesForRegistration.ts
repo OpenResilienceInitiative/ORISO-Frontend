@@ -134,8 +134,17 @@ export const useAgenciesForRegistration = ({
 			{
 				...(autoSelectPostcode ? {} : { postcode }),
 				topicId: topic?.id,
-				// Use consultingType.id if available, otherwise use default consulting type 1
-				consultingType: consultingType?.id || 1,
+				// FE#245: the consulting type is no longer hard-coded to 1.
+				// A selected consulting type always wins (including id 0,
+				// which the old `|| 1` silently overrode). Without a
+				// selection the deployment-configurable default applies
+				// (settings.registration.defaultConsultingTypeId). It
+				// defaults to 1 so existing tenants keep their behavior,
+				// but tenants with other modalities can now override it.
+				consultingType:
+					consultingType?.id ??
+					settings.registration?.defaultConsultingTypeId ??
+					1,
 				fetchConsultingTypeDetails: true
 			},
 			abortController.signal
@@ -160,7 +169,8 @@ export const useAgenciesForRegistration = ({
 		consultingType?.id,
 		topic?.id,
 		postcode,
-		topicsEnabledAndUnSelected
+		topicsEnabledAndUnSelected,
+		settings.registration?.defaultConsultingTypeId
 	]);
 
 	return {

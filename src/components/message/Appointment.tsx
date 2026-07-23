@@ -93,7 +93,9 @@ export const Appointment = (param: {
 			/>
 			<div className="appointmentSet">
 				<div className="appointmentSet--flex">
-					{appointmentIcon}
+					<span className="appointmentSet__titleIcon">
+						{appointmentIcon}
+					</span>
 					<Headline
 						semanticLevel="5"
 						text={appointmentTitle}
@@ -153,9 +155,11 @@ export const Appointment = (param: {
 				)}
 				{showAddToCalendarComponent && (
 					<DownloadICSFile
-						date={appointmentDate}
-						duration={appointmentHours}
+						start={parsedData.date}
+						durationMinutes={duration}
 						title={parsedData.title}
+						description={parsedData.note}
+						location={parsedData.location}
 					/>
 				)}
 			</div>

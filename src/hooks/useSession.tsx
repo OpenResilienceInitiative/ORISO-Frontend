@@ -4,8 +4,11 @@ import {
 	apiGetSessionRoomsByGroupIds
 } from '../api/apiGetSessionRooms';
 import { buildExtendedSession, ExtendedSessionInterface } from '../globalState';
-import { apiSetSessionRead, FETCH_ERRORS } from '../api';
+import { FETCH_ERRORS } from '../api';
+import { chatTransportService } from '../services/chatTransportService';
 import { apiGetChatRoomById } from '../api/apiGetChatRoomById';
+import { apiGetCaseHandoverCandidates } from '../api/apiCaseHandover';
+import { getModality, Modality } from '../components/session/getModality';
 
 export const useSession = (
 	rid: string | null,
@@ -22,15 +25,41 @@ export const useSession = (
 	const repetitiveId = useRef(null);
 	const abortController = useRef<AbortController>(null);
 
+	const loadCaseHandoverCandidateSession = useCallback(
+		async (signal?: AbortSignal): Promise<boolean> => {
+			if (sessionId === undefined || sessionId === null) {
+				return false;
+			}
+
+			const { sessions } = await apiGetCaseHandoverCandidates({
+				query: String(sessionId),
+				count: 15,
+				signal
+			});
+			const candidate = (sessions || []).find(
+				(item) => item?.session?.id === sessionId
+			);
+			if (!candidate) {
+				return false;
+			}
+
+			setSession(buildExtendedSession(candidate, rid));
+			setReady(true);
+			return true;
+		},
+		[rid, sessionId]
+	);
+
 	useEffect(() => {
-		repetitiveId.current = session?.item?.repetitive
-			? session.item.id
-			: null;
+		repetitiveId.current =
+			getModality(session) === Modality.SELF_HELP
+				? session.item.id
+				: null;
 	}, [session]);
 
 	const loadSession = useCallback(() => {
 		// console.log('🔍 useSession.loadSession CALLED:', { rid, sessionId, chatId });
-		
+
 		if (abortController.current) {
 			// console.log('🔍 useSession: Aborting previous request');
 			abortController.current.abort();
@@ -40,61 +69,61 @@ export const useSession = (
 
 		let promise;
 
-		if (!rid && !sessionId && !chatId) {
+		if (
+			!rid &&
+			(sessionId === undefined || sessionId === null) &&
+			(chatId === undefined || chatId === null)
+		) {
 			// console.log('⚠️ useSession: No rid, sessionId, or chatId provided - returning early');
 			return;
 		}
 
-		if (chatId) {
+		if (chatId !== undefined && chatId !== null) {
 			// console.log('🔍 useSession: Loading by chatId:', chatId);
 			promise = apiGetChatRoomById(
 				chatId,
 				abortController.current.signal
 			);
-		} else if (sessionId) {
+		} else if (rid) {
+			promise = apiGetSessionRoomsByGroupIds(
+				[rid],
+				abortController.current.signal
+			);
+		} else if (sessionId !== undefined && sessionId !== null) {
 			// console.log('🔍 useSession: Loading by sessionId:', sessionId);
 			promise = apiGetSessionRoomBySessionId(
 				sessionId,
 				abortController.current.signal
 			);
-		} else {
-			// console.log('🔍 useSession: Loading by rid (groupId):', rid);
-			promise = apiGetSessionRoomsByGroupIds(
-				[rid],
-				abortController.current.signal
-			);
 		}
 
 		return promise
-			.then(({ sessions: [activeSession] }) => {
-				// console.log('✅ useSession: API response received:', { 
-				// hasSession: !!activeSession,
-				// sessionData: activeSession 
-				// });
-				
+			.then(async ({ sessions: [activeSession] }) => {
 				if (activeSession) {
-					const extendedSession = buildExtendedSession(activeSession, rid);
-					// console.log('✅ useSession: Extended session built:', extendedSession);
+					const extendedSession = buildExtendedSession(
+						activeSession,
+						rid
+					);
 					setSession(extendedSession);
 				} else {
-					// console.log('⚠️ useSession: No session in response');
+					if (
+						sessionId !== undefined &&
+						sessionId !== null &&
+						(await loadCaseHandoverCandidateSession(
+							abortController.current?.signal
+						).catch(() => false))
+					) {
+						return;
+					}
 				}
 				setReady(true);
 			})
-			.catch((e) => {
-				// console.log('❌ useSession: Error loading session:', {
-				// error: e,
-				// message: e.message,
-				// isAbort: e.message === FETCH_ERRORS.ABORT,
-				// repetitiveId: repetitiveId.current
-				// });
-				
+			.catch(async (e) => {
 				if (e.message === FETCH_ERRORS.ABORT) {
 					return;
 				}
 
 				if (repetitiveId.current) {
-					// console.log('🔄 useSession: Retrying with repetitiveId:', repetitiveId.current);
 					return apiGetChatRoomById(repetitiveId.current).then(
 						({ sessions: [session] }) => {
 							// console.log('✅ useSession: Repetitive session loaded:', session);
@@ -103,11 +132,20 @@ export const useSession = (
 						}
 					);
 				}
+				if (
+					sessionId !== undefined &&
+					sessionId !== null &&
+					(await loadCaseHandoverCandidateSession(
+						abortController.current?.signal
+					).catch(() => false))
+				) {
+					return;
+				}
 				// console.log('❌ useSession: Setting session to null');
 				setSession(null);
 				setReady(true);
 			});
-	}, [rid, sessionId, chatId]);
+	}, [rid, sessionId, chatId, loadCaseHandoverCandidateSession]);
 
 	const readSession = useCallback(() => {
 		if (!session) {
@@ -115,7 +153,15 @@ export const useSession = (
 		}
 
 		if (!session.item.messagesRead) {
-			apiSetSessionRead(session.rid).then();
+			// Matrix read receipt on the latest room event. Sessions without
+			// a Matrix room are a safe no-op (no legacy read call).
+			const { matrixRoomId } =
+				chatTransportService.resolveSession(session);
+			if (matrixRoomId) {
+				chatTransportService
+					.markRoomAsRead(matrixRoomId)
+					.catch(() => {});
+			}
 		}
 	}, [session]);
 

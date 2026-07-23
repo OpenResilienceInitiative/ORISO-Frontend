@@ -1,9 +1,8 @@
 import * as React from 'react';
 import { useCallback, useContext, useEffect, useState } from 'react';
-import { useParams, useHistory } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Loading } from '../app/Loading';
 import {
-	RocketChatContext,
 	SessionTypeContext,
 	UserDataContext,
 	ActiveSessionProvider
@@ -25,11 +24,12 @@ import { useSession } from '../../hooks/useSession';
 import { SessionStream } from './SessionStream';
 import { useSetAtom } from 'jotai';
 import { agencyLogoAtom } from '../../store/agencyLogoAtom';
+import { shouldShowGroupChatJoinView } from '../groupChat/groupChatHelpers';
 
 export const SessionView = () => {
 	const { rcGroupId: groupIdFromParam, sessionId: sessionIdFromParam } =
 		useParams<{ rcGroupId: string; sessionId: string }>();
-	const history = useHistory();
+	const navigate = useNavigate();
 
 	// console.log('🔥 SessionView MOUNTED:', {
 	// groupIdFromParam,
@@ -41,7 +41,6 @@ export const SessionView = () => {
 
 	const { type, path: listPath } = useContext(SessionTypeContext);
 	const { userData } = useContext(UserDataContext);
-	const { ready: rcReady } = useContext(RocketChatContext);
 
 	const [loading, setLoading] = useState(true);
 	const [readonly, setReadonly] = useState(true);
@@ -113,7 +112,6 @@ export const SessionView = () => {
 	}, [checkMutedUserForThisSession]);
 
 	useEffect(() => {
-		// MATRIX MIGRATION: Don't wait for RocketChat to be ready
 		// console.log('🔥 SessionView useEffect:', {
 		// activeSessionReady,
 		// hasActiveSession: !!activeSession,
@@ -122,9 +120,10 @@ export const SessionView = () => {
 
 		if (activeSessionReady && !activeSession) {
 			// console.log('🔥 No active session - redirecting to list');
-			history.push(
+			navigate(
 				listPath +
-					(sessionListTab ? `?sessionListTab=${sessionListTab}` : '')
+					(sessionListTab ? `?sessionListTab=${sessionListTab}` : ''),
+				{ replace: true }
 			);
 			return;
 		} else if (activeSessionReady) {
@@ -135,7 +134,7 @@ export const SessionView = () => {
 			// 	activeSession.rid !== currentGroupId.current &&
 			// 	activeSession.item.id.toString() === currentSessionId.current
 			// ) {
-			// 	history.push(
+			// 	navigate(
 			// 		`${listPath}/${activeSession.rid}/${activeSession.item.id}${
 			// 			sessionListTab
 			// 				? `?sessionListTab=${sessionListTab}`
@@ -165,7 +164,7 @@ export const SessionView = () => {
 		currentSessionId,
 		currentGroupId,
 		listPath,
-		history
+		navigate
 	]);
 
 	useEffect(() => {
@@ -207,9 +206,12 @@ export const SessionView = () => {
 	// });
 
 	if (
-		activeSession.isGroup &&
-		(!activeSession.item.subscribed ||
-			bannedUsers.includes(userData.userName))
+		shouldShowGroupChatJoinView({
+			isGroup: activeSession.isGroup,
+			active: activeSession.item.active,
+			subscribed: activeSession.item.subscribed,
+			isBanned: bannedUsers.includes(userData.userName)
+		})
 	) {
 		// console.log('🔥 Showing JoinGroupChatView');
 		return (

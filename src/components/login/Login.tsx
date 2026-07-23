@@ -1,26 +1,34 @@
 import '../../polyfill';
 import * as React from 'react';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import {
-	InputField,
-	InputFieldItem,
-	InputFieldLabelState
-} from '../inputField/InputField';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { endpoints } from '../../resources/scripts/endpoints';
 import { Button, BUTTON_TYPES, ButtonItem } from '../button/Button';
 import { autoLogin, redirectToApp } from '../registration/autoLogin';
+import {
+	clearAuthSession,
+	CONSULTANT_LOGIN_BLOCKED_ERROR,
+	consumeConsultantLoginBlocked,
+	isConsultantAccessToken
+} from '../auth/consultantLoginBlock';
+import { appConfig } from '../../utils/appConfig';
 import { Text } from '../text/Text';
 import { ReactComponent as PersonIcon } from '../../resources/img/icons/person.svg';
 import { ReactComponent as LockIcon } from '../../resources/img/icons/lock.svg';
 import { ReactComponent as VerifiedIcon } from '../../resources/img/icons/verified.svg';
+import { ReactComponent as ShowPasswordIcon } from '../../resources/img/icons/eye.svg';
+import { ReactComponent as HidePasswordIcon } from '../../resources/img/icons/eye-closed.svg';
 import { StageLayout } from '../stageLayout/StageLayout';
 import { apiGetUserData, FETCH_ERRORS } from '../../api';
-import { OTP_LENGTH, TWO_FACTOR_TYPES } from '../twoFactorAuth/TwoFactorAuth';
+import {
+	OTP_LENGTH,
+	TWO_FACTOR_TYPES,
+	TwoFactorType
+} from '../twoFactorAuth/twoFactorAuthConstants';
 import clsx from 'clsx';
 import {
 	AUTHORITIES,
 	hasUserAuthority,
-	RocketChatGlobalSettingsContext,
 	TenantContext,
 	UserDataContext,
 	LocaleContext
@@ -29,13 +37,9 @@ import { UserDataInterface } from '../../globalState/interfaces';
 import '../../resources/styles/styles';
 import './login.styles';
 import useIsFirstVisit from '../../utils/useIsFirstVisit';
-import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
 import { VALIDITY_INVALID } from '../registration/registrationHelpers';
+import { buildRegistrationLink } from './groupChatRegistrationLink';
 import { TwoFactorAuthResendMail } from '../twoFactorAuth/TwoFactorAuthResendMail';
-import {
-	IBooleanSetting,
-	SETTING_E2E_ENABLE
-} from '../../api/apiRocketChatSettingsPublic';
 import { useTranslation } from 'react-i18next';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import {
@@ -51,22 +55,29 @@ import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { budibaseLogout } from '../budibase/budibaseLogout';
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
 import { UrlParamsContext } from '../../globalState/provider/UrlParamsProvider';
-import { AnonymousChat } from '../anonymousChat/AnonymousChat';
 import { setTokens } from '../auth/auth';
+import { IconButton, InputAdornment } from '@mui/material';
+import { OrisoTextField } from '../form/OrisoTextField';
+import { orisoInputColors } from '../form/orisoInputDesign';
 
 const regexAccountDeletedError = /account disabled/i;
+type LoginFieldLabelState = typeof VALIDITY_INVALID | null;
 
 export const Login = () => {
 	type LoginMethod = 'password' | 'magicLink';
 	const settings = useAppConfig();
 	const { t: translate } = useTranslation();
+	const navigate = useNavigate();
 
 	const { locale, initLocale } = useContext(LocaleContext);
 	const { tenant } = useContext(TenantContext);
-	const { getSetting } = useContext(RocketChatGlobalSettingsContext);
 	const { userData, reloadUserData } = useContext(UserDataContext);
 	const { Stage } = useContext(GlobalComponentContext);
 	const gcid = useSearchParam<string>('gcid');
+	const registrationUrl = buildRegistrationLink(
+		settings.urls.toRegistration,
+		gcid
+	);
 	const magicToken = useSearchParam<string>('magicToken');
 	const isFirstVisit = useIsFirstVisit();
 
@@ -78,11 +89,12 @@ export const Login = () => {
 	const hasTenant = tenant != null;
 
 	const { consultant, loaded: isReady } = useContext(UrlParamsContext);
-	const [labelState, setLabelState] = useState<InputFieldLabelState>(null);
-	const [activeLoginMethod, setActiveLoginMethod] =
-		useState<LoginMethod>('password');
+	const [labelState, setLabelState] = useState<LoginFieldLabelState>(null);
+	const [activeLoginMethod] = useState<LoginMethod>('password');
 	const [username, setUsername] = useState<string>('');
 	const [password, setPassword] = useState<string>('');
+	const passwordInputRef = useRef<HTMLInputElement>(null);
+	const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 	const [magicLinkUsername, setMagicLinkUsername] = useState<string>('');
 	const [isButtonDisabled, setIsButtonDisabled] = useState<boolean>(
 		username.length > 0 && password.length > 0
@@ -97,9 +109,7 @@ export const Login = () => {
 		useState<boolean>(false);
 	const [isMagicTokenLoginAttempted, setIsMagicTokenLoginAttempted] =
 		useState<boolean>(false);
-	const { featureToolsEnabled, featureAnonymousChatEnabled = true } =
-		getTenantSettings();
-	const isAnonymousChatEnabled = featureAnonymousChatEnabled !== false;
+	const { featureToolsEnabled } = getTenantSettings();
 
 	useEffect(() => {
 		// If we're authenticated and have a gcid, redirect to app
@@ -135,61 +145,9 @@ export const Login = () => {
 		}
 	}, [featureToolsEnabled, gcid]);
 
-	const [pwResetOverlayActive, setPwResetOverlayActive] = useState(false);
-	const [twoFactorType, setTwoFactorType] = useState(TWO_FACTOR_TYPES.NONE);
-	const [showAnonymousChat, setShowAnonymousChat] = useState(false);
-
-	useEffect(() => {
-		if (!isAnonymousChatEnabled && showAnonymousChat) {
-			setShowAnonymousChat(false);
-		}
-	}, [isAnonymousChatEnabled, showAnonymousChat]);
-
-	const inputItemUsername: InputFieldItem = {
-		name: 'username',
-		class: 'login',
-		id: 'username',
-		type: 'text',
-		label: translate('login.user.label'),
-		content: username,
-		icon: <PersonIcon />,
-		...(labelState && { labelState })
-	};
-
-	const inputItemMagicLinkUsername: InputFieldItem = {
-		name: 'magicLinkUsername',
-		class: 'login',
-		id: 'magicLinkUsername',
-		type: 'text',
-		label: translate('login.magicLink.usernameLabel'),
-		content: magicLinkUsername,
-		icon: <PersonIcon />
-	};
-
-	const inputItemPassword: InputFieldItem = {
-		name: 'password',
-		id: 'passwordInput',
-		type: 'password',
-		label: translate('login.password.label'),
-		content: password,
-		icon: <LockIcon />,
-		...(labelState && { labelState })
-	};
-
-	const otpInputItem: InputFieldItem = {
-		content: otp,
-		id: 'otp',
-		infoText:
-			twoFactorType === TWO_FACTOR_TYPES.APP
-				? translate(`login.warning.failed.app.otp.missing`)
-				: '',
-		label: translate('twoFactorAuth.activate.otp.input.label.text'),
-		name: 'otp',
-		type: 'text',
-		icon: <VerifiedIcon />,
-		maxLength: OTP_LENGTH,
-		tabIndex: isOtpRequired ? 0 : -1
-	};
+	const [twoFactorType, setTwoFactorType] = useState<TwoFactorType>(
+		TWO_FACTOR_TYPES.NONE
+	);
 
 	const handleUsernameChange = (event) => {
 		setUsername(event.target.value);
@@ -211,28 +169,16 @@ export const Login = () => {
 		setOtp(event.target.value);
 	};
 
-	const handlePwOverlayReset = useCallback(
-		(buttonFunction: string) => {
-			if (buttonFunction === OVERLAY_FUNCTIONS.REDIRECT) {
-				setValueInCookie(
-					'KEYCLOAK_LOCALE',
-					locale,
-					endpoints.loginResetPasswordLink
-						.split('/')
-						.slice(0, -1)
-						.join('/')
-				);
-				window.open(
-					endpoints.loginResetPasswordLink,
-					'_self',
-					'noreferrer'
-				);
-			} else if (buttonFunction === OVERLAY_FUNCTIONS.CLOSE) {
-				setPwResetOverlayActive(false);
-			}
-		},
-		[locale]
-	);
+	const showConsultantLoginBlockedError = useCallback(() => {
+		setShowLoginError(translate('login.warning.failed.consultantBlocked'));
+		setLabelState(VALIDITY_INVALID);
+	}, [translate]);
+
+	useEffect(() => {
+		if (consumeConsultantLoginBlocked()) {
+			showConsultantLoginBlockedError();
+		}
+	}, [showConsultantLoginBlockedError]);
 
 	useEffect(() => {
 		deleteCookieByName('tenantId');
@@ -251,9 +197,12 @@ export const Login = () => {
 				}
 
 				if (
+					appConfig.blockConsultantAppLogin &&
 					hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
 				) {
-					patchedUserData['available'] = false;
+					clearAuthSession();
+					showConsultantLoginBlockedError();
+					throw new Error(CONSULTANT_LOGIN_BLOCKED_ERROR);
 				}
 
 				if (Object.keys(patchedUserData).length > 0) {
@@ -272,7 +221,14 @@ export const Login = () => {
 					return redirectToApp(gcid);
 				}
 			}),
-		[reloadUserData, locale, initLocale, consultant, gcid]
+		[
+			reloadUserData,
+			locale,
+			initLocale,
+			consultant,
+			gcid,
+			showConsultantLoginBlockedError
+		]
 	);
 
 	useEffect(() => {
@@ -295,6 +251,14 @@ export const Login = () => {
 
 		apiConsumeMagicLinkLogin(magicToken)
 			.then((tokenResponse) => {
+				if (
+					appConfig.blockConsultantAppLogin &&
+					isConsultantAccessToken(tokenResponse.access_token)
+				) {
+					clearAuthSession();
+					throw new Error(CONSULTANT_LOGIN_BLOCKED_ERROR);
+				}
+
 				setTokens(
 					tokenResponse.access_token,
 					tokenResponse.expires_in,
@@ -303,9 +267,9 @@ export const Login = () => {
 				);
 				// Magic-token login is complete once tokens are set.
 				// Continue directly into authenticated app bootstrap.
-				redirectToApp(gcid);
+				return postLogin();
 			})
-			.catch(() => {
+			.catch((error) => {
 				setShowLoginError(
 					translate('login.warning.failed.unauthorized.text')
 				);
@@ -313,7 +277,7 @@ export const Login = () => {
 			.finally(() => {
 				setIsRequestInProgress(false);
 			});
-	}, [magicToken, isMagicTokenLoginAttempted, postLogin, translate]);
+	}, [magicToken, isMagicTokenLoginAttempted, postLogin, translate, gcid]);
 
 	const tryLogin = (otp?: string) => {
 		setIsRequestInProgress(true);
@@ -416,47 +380,9 @@ export const Login = () => {
 		}
 	};
 
-	const pwResetOverlay: OverlayItem = useMemo(
-		() => ({
-			headline: translate('login.password.reset.warn.overlay.title'),
-			copy: translate('login.password.reset.warn.overlay.description'),
-			buttonSet: [
-				{
-					label: translate(
-						'login.password.reset.warn.overlay.button.accept'
-					),
-					function: OVERLAY_FUNCTIONS.REDIRECT,
-					type: BUTTON_TYPES.SECONDARY
-				},
-				{
-					label: translate(
-						'login.password.reset.warn.overlay.button.cancel'
-					),
-					function: OVERLAY_FUNCTIONS.CLOSE,
-					type: BUTTON_TYPES.PRIMARY
-				}
-			]
-		}),
-		[translate]
-	);
-
-	const onPasswordResetClick = (e) => {
-		if (getSetting<IBooleanSetting>(SETTING_E2E_ENABLE)?.value) {
-			e.preventDefault();
-			setPwResetOverlayActive(true);
-			return;
-		}
-		setValueInCookie(
-			'KEYCLOAK_LOCALE',
-			locale,
-			endpoints.loginResetPasswordLink.split('/').slice(0, -1).join('/')
-		);
-		window.open(endpoints.loginResetPasswordLink, '_self', 'noreferrer');
+	const onPasswordResetClick = () => {
+		navigate('/password-reset');
 	};
-
-	if (showAnonymousChat && isAnonymousChatEnabled) {
-		return <AnonymousChat onBack={() => setShowAnonymousChat(false)} />;
-	}
 
 	return (
 		<>
@@ -464,6 +390,7 @@ export const Login = () => {
 				stage={<Stage hasAnimation={isFirstVisit} isReady={isReady} />}
 				showLegalLinks
 				showRegistrationLink={hasTenant}
+				registrationUrl={registrationUrl}
 			>
 				<div className="loginForm">
 					<div className="loginForm__inner">
@@ -515,26 +442,146 @@ export const Login = () => {
 									type="infoSmall"
 								/>
 							) : (
-								<InputField
-									item={
+								<OrisoTextField
+									id={
 										activeLoginMethod === 'password'
-											? inputItemUsername
-											: inputItemMagicLinkUsername
+											? 'username'
+											: 'magicLinkUsername'
 									}
-									inputHandle={
+									name={
+										activeLoginMethod === 'password'
+											? 'username'
+											: 'magicLinkUsername'
+									}
+									type="text"
+									value={
+										activeLoginMethod === 'password'
+											? username
+											: magicLinkUsername
+									}
+									onChange={
 										activeLoginMethod === 'password'
 											? handleUsernameChange
 											: handleMagicLinkUsernameChange
 									}
-									keyUpHandle={handleKeyUp}
+									onKeyUp={handleKeyUp}
+									placeholder={
+										activeLoginMethod === 'password'
+											? translate('login.user.label')
+											: translate(
+													'login.magicLink.usernameLabel'
+												)
+									}
+									error={
+										activeLoginMethod === 'password' &&
+										labelState === VALIDITY_INVALID
+									}
+									fullWidth
+									autoComplete="username"
+									inputProps={{
+										'aria-label':
+											activeLoginMethod === 'password'
+												? translate('login.user.label')
+												: translate(
+														'login.magicLink.usernameLabel'
+													)
+									}}
+									InputProps={{
+										startAdornment: (
+											<InputAdornment position="start">
+												<PersonIcon
+													color={
+														orisoInputColors.onSurfaceVariant
+													}
+												/>
+											</InputAdornment>
+										)
+									}}
+									sx={{ mb: '20px' }}
 								/>
 							)}
 							{activeLoginMethod === 'password' && (
 								<>
-									<InputField
-										item={inputItemPassword}
-										inputHandle={handlePasswordChange}
-										keyUpHandle={handleKeyUp}
+									<OrisoTextField
+										id="passwordInput"
+										name="password"
+										type={
+											isPasswordVisible
+												? 'text'
+												: 'password'
+										}
+										value={password}
+										onChange={handlePasswordChange}
+										onKeyUp={handleKeyUp}
+										placeholder={translate(
+											'login.password.label'
+										)}
+										error={labelState === VALIDITY_INVALID}
+										fullWidth
+										autoComplete="current-password"
+										inputRef={passwordInputRef}
+										inputProps={{
+											'aria-label': translate(
+												'login.password.label'
+											)
+										}}
+										InputProps={{
+											startAdornment: (
+												<InputAdornment position="start">
+													<LockIcon
+														color={
+															orisoInputColors.onSurfaceVariant
+														}
+													/>
+												</InputAdornment>
+											),
+											endAdornment: (
+												<InputAdornment position="end">
+													<IconButton
+														type="button"
+														onMouseDown={(event) =>
+															event.preventDefault()
+														}
+														onClick={() => {
+															setIsPasswordVisible(
+																(isVisible) =>
+																	!isVisible
+															);
+															window.requestAnimationFrame(
+																() =>
+																	passwordInputRef.current?.focus()
+															);
+														}}
+														edge="end"
+														aria-label={translate(
+															isPasswordVisible
+																? 'login.password.hide'
+																: 'login.password.show'
+														)}
+														title={translate(
+															isPasswordVisible
+																? 'login.password.hide'
+																: 'login.password.show'
+														)}
+													>
+														{isPasswordVisible ? (
+															<HidePasswordIcon
+																color={
+																	orisoInputColors.onSurfaceVariant
+																}
+															/>
+														) : (
+															<ShowPasswordIcon
+																color={
+																	orisoInputColors.onSurfaceVariant
+																}
+															/>
+														)}
+													</IconButton>
+												</InputAdornment>
+											)
+										}}
+										sx={{ mb: '20px' }}
 									/>
 									<div
 										className={clsx('loginForm__otp', {
@@ -552,10 +599,45 @@ export const Login = () => {
 												type="infoLargeAlternative"
 											/>
 										)}
-										<InputField
-											item={otpInputItem}
-											inputHandle={handleOtpChange}
-											keyUpHandle={handleKeyUp}
+										<OrisoTextField
+											id="otp"
+											name="otp"
+											type="text"
+											value={otp}
+											onChange={handleOtpChange}
+											onKeyUp={handleKeyUp}
+											placeholder={translate(
+												'twoFactorAuth.activate.otp.input.label.text'
+											)}
+											helperText={
+												twoFactorType ===
+												TWO_FACTOR_TYPES.APP
+													? translate(
+															`login.warning.failed.app.otp.missing`
+														)
+													: ''
+											}
+											fullWidth
+											inputProps={{
+												'aria-label': translate(
+													'twoFactorAuth.activate.otp.input.label.text'
+												),
+												'maxLength': OTP_LENGTH,
+												'tabIndex': isOtpRequired
+													? 0
+													: -1
+											}}
+											InputProps={{
+												startAdornment: (
+													<InputAdornment position="start">
+														<VerifiedIcon
+															color={
+																orisoInputColors.onSurfaceVariant
+															}
+														/>
+													</InputAdornment>
+												)
+											}}
 										/>
 										{twoFactorType ===
 											TWO_FACTOR_TYPES.EMAIL && (
@@ -623,35 +705,6 @@ export const Login = () => {
 								)}
 						</div>
 
-						{isAnonymousChatEnabled && (
-							<div className="loginForm__register">
-								<div className="loginForm__register__separator">
-									<span>{translate('login.seperator')}</span>
-								</div>
-								<div className="loginForm__register__content">
-									<Text
-										text={translate(
-											'login.anonymousChat.infoText',
-											'Schnell und anonym beraten lassen?'
-										)}
-										type={'infoMedium'}
-									/>
-									<button
-										onClick={() =>
-											setShowAnonymousChat(true)
-										}
-										className="button-as-link consulting-topics"
-										type="button"
-									>
-										{translate(
-											'login.anonymousChat.label',
-											'Anonyme Beratung starten'
-										)}
-									</button>
-								</div>
-							</div>
-						)}
-
 						{!hasTenant && (
 							<div className="loginForm__register">
 								<div className="loginForm__register__separator">
@@ -667,7 +720,7 @@ export const Login = () => {
 									<button
 										onClick={() =>
 											window.open(
-												settings.urls.toRegistration,
+												registrationUrl,
 												'_self'
 											)
 										}
@@ -713,13 +766,6 @@ export const Login = () => {
 					</div>
 				</div>
 			</StageLayout>
-			{pwResetOverlayActive && (
-				<Overlay
-					item={pwResetOverlay}
-					handleOverlayClose={() => setPwResetOverlayActive(false)}
-					handleOverlay={handlePwOverlayReset}
-				/>
-			)}
 		</>
 	);
 };

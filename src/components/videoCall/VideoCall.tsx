@@ -4,11 +4,11 @@
  */
 
 import React from 'react';
-import { useHistory, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { MatrixCallView } from '../matrixCall/MatrixCallView';
 
 const VideoCall = () => {
-	const history = useHistory();
+	const navigate = useNavigate();
 	const { roomId: encodedRoomId, type } = useParams<{
 		roomId: string;
 		type: string;
@@ -25,7 +25,7 @@ const VideoCall = () => {
 
 	const handleCallEnd = () => {
 		// console.log('📞 Call ended, returning to session');
-		history.goBack();
+		navigate(-1);
 	};
 
 	if (!roomId) {
@@ -47,7 +47,7 @@ const VideoCall = () => {
 					Encoded: {encodedRoomId || 'none'}
 				</p>
 				<button 
-					onClick={() => history.goBack()}
+					onClick={() => navigate(-1)}
 					style={{
 						marginTop: '20px',
 						padding: '10px 20px',

@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - dev
+      - pre-dev
 
 env:
   REGISTRY: ghcr.io

@@ -12,6 +12,12 @@ interface ResizableHandleProps {
 	maxWidth?: number;
 }
 
+export const getToggledSidebarWidth = (
+	currentWidth: number,
+	minWidth: number,
+	expandedMinWidth: number
+) => (currentWidth <= minWidth + 1 ? expandedMinWidth : minWidth);
+
 export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 	onResize,
 	currentWidth,
@@ -23,6 +29,8 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 	const {
 		ICON_ONLY_THRESHOLD,
 		SNAP_THRESHOLD,
+		EXPANDED_MIN_WIDTH,
+		EXPANDED_SNAP_THRESHOLD,
 		SCROLL_THUMB_MIN_PX,
 		SCROLL_THUMB_MAX_PX
 	} = SESSIONS_LIST_RESIZE;
@@ -40,6 +48,7 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 		thumbTopPx: number;
 		thumbHeightPx: number;
 	}>({ thumbTopPx: 0, thumbHeightPx: 56 });
+	const [isScrollable, setIsScrollable] = useState(false);
 	const rafIdRef = useRef<number | null>(null);
 
 	const updateThumbFromScrollTarget = useCallback(() => {
@@ -72,14 +81,12 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 		const trackHeight = Math.max(0, handleHeight - TRACK_PADDING * 2);
 		// Non-scrollable: keep the pill centered (like the reference).
 		if (maxScrollTop <= 0 || trackHeight <= 0) {
-			const thumbHeightPx = 40;
-			const thumbTopPx =
-				trackTopWithinHandle +
-				TRACK_PADDING +
-				Math.max(0, Math.round((trackHeight - thumbHeightPx) / 2));
-			setThumbStyleVars({ thumbTopPx, thumbHeightPx });
+			setIsScrollable(false);
+			setThumbStyleVars({ thumbTopPx: 0, thumbHeightPx: 56 });
 			return;
 		}
+
+		setIsScrollable(true);
 
 		// Figma-like small pill: clamp thumb size so it stays compact.
 		const MIN_THUMB = SCROLL_THUMB_MIN_PX;
@@ -120,9 +127,29 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 					nextWidth < SNAP_THRESHOLD ? minWidth : ICON_ONLY_THRESHOLD;
 			}
 
+			// Snap the gap between the icon-only rail and the expanded desktop
+			// minimum (Figma node 115): the list is either compact (icon-only)
+			// or at least `EXPANDED_MIN_WIDTH` wide — never stranded between.
+			if (
+				nextWidth > ICON_ONLY_THRESHOLD &&
+				nextWidth < EXPANDED_MIN_WIDTH
+			) {
+				nextWidth =
+					nextWidth < EXPANDED_SNAP_THRESHOLD
+						? ICON_ONLY_THRESHOLD
+						: EXPANDED_MIN_WIDTH;
+			}
+
 			return nextWidth;
 		},
-		[ICON_ONLY_THRESHOLD, SNAP_THRESHOLD, maxWidth, minWidth]
+		[
+			EXPANDED_MIN_WIDTH,
+			EXPANDED_SNAP_THRESHOLD,
+			ICON_ONLY_THRESHOLD,
+			SNAP_THRESHOLD,
+			maxWidth,
+			minWidth
+		]
 	);
 
 	const applyClientXToWidth = useCallback(
@@ -156,10 +183,15 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 	);
 
 	const toggleCollapsed = useCallback(() => {
-		const next =
-			currentWidth <= minWidth + 1 ? ICON_ONLY_THRESHOLD : minWidth;
+		const next = getToggledSidebarWidth(
+			currentWidth,
+			minWidth,
+			EXPANDED_MIN_WIDTH
+		);
 		onResize(normalizeWidth(next));
-	}, [ICON_ONLY_THRESHOLD, currentWidth, minWidth, normalizeWidth, onResize]);
+	}, [EXPANDED_MIN_WIDTH, currentWidth, minWidth, normalizeWidth, onResize]);
+
+	const isCollapsed = currentWidth <= minWidth + 1;
 
 	const handlePointerUp = useCallback(() => {
 		pointerIdRef.current = null;
@@ -381,6 +413,7 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 			ref={handleRef}
 			className="sessionsList__resizeHandle"
 			data-dragging={isDragging ? 'true' : 'false'}
+			data-scrollable={isScrollable ? 'true' : 'false'}
 			role="separator"
 			// sonar: role="separator" is an interactive widget when focusable + keyboard-handled
 			tabIndex={0}
@@ -421,11 +454,31 @@ export const ResizableHandle: React.FC<ResizableHandleProps> = ({
 			}}
 			onKeyDown={handleKeyDown}
 			style={{
-				['--sessionsListThumbTop' as any]: `${thumbStyleVars.thumbTopPx}px`,
-				['--sessionsListThumbHeight' as any]: `${thumbStyleVars.thumbHeightPx}px`
+				['--sessions-list-thumb-top' as any]: `${thumbStyleVars.thumbTopPx}px`,
+				['--sessions-list-thumb-height' as any]: `${thumbStyleVars.thumbHeightPx}px`
 			}}
 		>
 			<span className="sessionsList__resizeHandlePill" />
+			<button
+				type="button"
+				className="sessionsList__resizeToggle"
+				aria-label={t(
+					isCollapsed
+						? 'sessionList.resizeHandle.expand'
+						: 'sessionList.resizeHandle.collapse',
+					isCollapsed
+						? 'Expand chat list'
+						: 'Collapse chat list to enlarge the chat room'
+				)}
+				onPointerDown={(event) => event.stopPropagation()}
+				onClick={(event) => {
+					event.preventDefault();
+					event.stopPropagation();
+					toggleCollapsed();
+				}}
+			>
+				<span aria-hidden>{isCollapsed ? '›' : '‹'}</span>
+			</button>
 		</div>
 	);
 };

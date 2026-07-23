@@ -21,6 +21,18 @@ const getRuntimeConfig = (): RuntimeConfig => {
 	return ((window as any).__ORISO_RUNTIME_CONFIG__ as RuntimeConfig) || {};
 };
 
+const getCypressConfig = (): RuntimeConfig => {
+	if (typeof window === 'undefined') {
+		return {};
+	}
+
+	const cypressEnv = (window as any).Cypress?.env;
+
+	return typeof cypressEnv === 'function'
+		? (cypressEnv() as RuntimeConfig) || {}
+		: {};
+};
+
 /**
  * When the container runtime config is incomplete (e.g. production config.js
  * only has REACT_APP_API_URL), derive sibling service URLs from the app host.
@@ -69,15 +81,69 @@ const pickValue = (...keys: string[]): string | undefined => {
 	if (runtimeValue) {
 		return runtimeValue;
 	}
-	const buildValue = firstNonEmpty(process.env as RuntimeConfig, keys);
+	const processEnv =
+		typeof process !== 'undefined' ? (process.env as RuntimeConfig) : {};
+	const buildValue = firstNonEmpty(processEnv, keys);
 	if (buildValue) {
 		return buildValue;
+	}
+	const cypressValue = firstNonEmpty(getCypressConfig(), keys);
+	if (cypressValue) {
+		return cypressValue;
 	}
 	return firstNonEmpty(inferFromAppHostname(), keys);
 };
 
 const stripTrailingSlashes = (value: string): string =>
 	value.replace(/\/+$/, '');
+
+const DEFAULT_OTEL_EXPORT_INTERVAL_MS = 60000;
+
+const parsePositiveInterval = (value?: string): number => {
+	const parsed = Number(value);
+	return Number.isFinite(parsed) && parsed >= 10000
+		? parsed
+		: DEFAULT_OTEL_EXPORT_INTERVAL_MS;
+};
+
+const validHttpUrl = (value?: string): string => {
+	const candidate = String(value || '').trim();
+	if (!candidate) {
+		return '';
+	}
+
+	try {
+		const url = new URL(candidate);
+		return url.protocol === 'http:' || url.protocol === 'https:'
+			? candidate
+			: '';
+	} catch {
+		return '';
+	}
+};
+
+export interface ObservabilityRuntimeConfig {
+	enabled: boolean;
+	metricsUrl: string;
+	exportIntervalMillis: number;
+}
+
+export const getObservabilityConfig = (): ObservabilityRuntimeConfig => ({
+	enabled:
+		pickValue(
+			'REACT_APP_OBSERVABILITY_ENABLED',
+			'VITE_OBSERVABILITY_ENABLED'
+		)?.toLowerCase() === 'true',
+	metricsUrl: validHttpUrl(
+		pickValue('REACT_APP_OTEL_METRICS_URL', 'VITE_OTEL_METRICS_URL')
+	),
+	exportIntervalMillis: parsePositiveInterval(
+		pickValue(
+			'REACT_APP_OTEL_EXPORT_INTERVAL_MS',
+			'VITE_OTEL_EXPORT_INTERVAL_MS'
+		)
+	)
+});
 
 /**
  * Ensure an http(s) URL. Bare hostnames are upgraded to https.
@@ -127,6 +193,67 @@ export const getMatrixHomeserverUrl = (): string =>
 	);
 
 /**
+ * ORISO API base URL (https).
+ */
+export const getRuntimeApiBaseUrl = (): string =>
+	ensureHttps(pickValue('REACT_APP_API_URL', 'VITE_API_URL'));
+
+const isLocalServiceOrigin = (value?: string | null): boolean =>
+	/^(https?:\/\/)?(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/i.test(
+		String(value || '').trim()
+	);
+
+/**
+ * In local dev, remote service origins must stay same-origin so webpack-dev-server
+ * can proxy /service and /auth to REACT_APP_DEV_REMOTE_API_URL. Absolute remote
+ * URLs bypass the proxy and trigger browser CORS failures.
+ */
+const resolveServiceOriginForEnvironment = (origin: string): string => {
+	if (!origin) {
+		return '';
+	}
+
+	const nodeEnv =
+		typeof process !== 'undefined' ? process.env.NODE_ENV : undefined;
+	if (nodeEnv === 'development' && !isLocalServiceOrigin(origin)) {
+		return '';
+	}
+
+	return origin;
+};
+
+const getServiceOrigin = (key: string, fallbackOrigin: string): string =>
+	resolveServiceOriginForEnvironment(
+		stripTrailingSlashes(ensureHttps(pickValue(key) || fallbackOrigin))
+	);
+
+export const getUserServiceOrigin = (
+	fallbackOrigin = getRuntimeApiBaseUrl()
+): string => getServiceOrigin('REACT_APP_USER_SERVICE_ORIGIN', fallbackOrigin);
+
+export const getTenantServiceOrigin = (
+	fallbackOrigin = getRuntimeApiBaseUrl()
+): string =>
+	getServiceOrigin('REACT_APP_TENANT_SERVICE_ORIGIN', fallbackOrigin);
+
+export const getAgencyServiceOrigin = (
+	fallbackOrigin = getRuntimeApiBaseUrl()
+): string =>
+	getServiceOrigin('REACT_APP_AGENCY_SERVICE_ORIGIN', fallbackOrigin);
+
+export const getConsultingTypeServiceOrigin = (
+	fallbackOrigin = getRuntimeApiBaseUrl()
+): string =>
+	getServiceOrigin(
+		'REACT_APP_CONSULTING_TYPE_SERVICE_ORIGIN',
+		fallbackOrigin
+	);
+
+export const getKeycloakOrigin = (
+	fallbackOrigin = getRuntimeApiBaseUrl()
+): string => getServiceOrigin('REACT_APP_KEYCLOAK_ORIGIN', fallbackOrigin);
+
+/**
  * Element Call deployment origin (https), with any trailing slashes removed.
  */
 export const getElementCallBaseUrl = (): string =>
@@ -174,6 +301,9 @@ export const getHostnamesWithoutCookieDomain = (): string[] => {
 		.map((entry) => entry.trim())
 		.filter(Boolean);
 };
+
+export const getLocalTenantId = (): string | undefined =>
+	pickValue('REACT_APP_LOCAL_TENANT_ID');
 
 export const getElementUrl = (): string =>
 	stripTrailingSlashes(
