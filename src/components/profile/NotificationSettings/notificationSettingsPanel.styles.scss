@@ -1,0 +1,14 @@
+// #576 — notification settings panel: consistent section/divider spacing +
+// the "Benachrichtigungen einstellen" entry button (opens the config dialog).
+// Lives next to the component so the panel is complete in Storybook too.
+.notifications__content {
+	hr {
+		border: 0;
+		border-top: 1px solid #e5e7eb;
+		margin: 16px 0;
+	}
+
+	.profile__content__title {
+		margin-bottom: 16px;
+	}
+}

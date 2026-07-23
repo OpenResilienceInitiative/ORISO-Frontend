@@ -105,8 +105,7 @@ export const markdownToDraftDefaultOptions = {
 	remarkablePreset: 'commonmark',
 	remarkableOptions: {
 		html: true,
-		breaks: true,
-		linkify: true
+		breaks: true
 	}
 };
 
@@ -161,8 +160,24 @@ export const sanitizeHtmlDefaultOptions = {
 		h5: ['style'],
 		h6: ['style'],
 		mark: ['style', 'data-color'],
-		span: ['style', 'class', 'data-color'],
-		img: ['src', 'alt', 'title', 'width', 'height', 'loading', 'decoding', 'class']
+		span: [
+			'style',
+			'class',
+			'data-color',
+			'data-mention-id',
+			'data-mention-username',
+			'data-mention-matrix-id'
+		],
+		img: [
+			'src',
+			'alt',
+			'title',
+			'width',
+			'height',
+			'loading',
+			'decoding',
+			'class'
+		]
 	},
 	allowedStyles: {
 		div: {
@@ -199,7 +214,7 @@ export const sanitizeHtmlDefaultOptions = {
 			]
 		},
 		span: {
-			color: [/^#[0-9a-fA-F]{3,8}$/, /^rgb\(/],
+			'color': [/^#[0-9a-fA-F]{3,8}$/, /^rgb\(/],
 			'background-color': [
 				/^#[0-9a-fA-F]{3,8}$/,
 				/^rgb\(/,
@@ -213,10 +228,11 @@ export const sanitizeHtmlDefaultOptions = {
 		mark: (tagName, attribs) => {
 			const dataColor = attribs['data-color'] || '';
 			const extractedFromStyle =
-				attribs.style?.match(
-					/background-color\s*:\s*([^;]+)/i
-				)?.[1] || '';
-			const candidate = normalizeHighlightColor(dataColor || extractedFromStyle);
+				attribs.style?.match(/background-color\s*:\s*([^;]+)/i)?.[1] ||
+				'';
+			const candidate = normalizeHighlightColor(
+				dataColor || extractedFromStyle
+			);
 			if (!candidate) {
 				return { tagName, attribs: { ...attribs } };
 			}
@@ -231,7 +247,9 @@ export const sanitizeHtmlDefaultOptions = {
 	}
 };
 
-export function normalizeHighlightColor(rawValue?: string | null): string | null {
+export function normalizeHighlightColor(
+	rawValue?: string | null
+): string | null {
 	const highlightColorMap: Record<string, string> = {
 		yellow: '#fff59d',
 		orange: '#ffcc80',
@@ -247,9 +265,7 @@ export function normalizeHighlightColor(rawValue?: string | null): string | null
 		return hex;
 	};
 	const toHex = (num: number): string =>
-		Math.max(0, Math.min(255, num))
-			.toString(16)
-			.padStart(2, '0');
+		Math.max(0, Math.min(255, num)).toString(16).padStart(2, '0');
 	const rgbStringToHex = (input: string): string | null => {
 		const rgbMatch = input.match(
 			/^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})(?:\s*,\s*[\d.]+\s*)?\)$/i

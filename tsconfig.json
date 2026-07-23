@@ -21,8 +21,18 @@
 		"downlevelIteration": true,
 		"typeRoots": ["node_modules/@types"]
 	},
-	"include": ["src", ".storybook"],
-	"exclude": ["node_modules", "src/extensions/cypress/**/*.cy.ts"],
+	"include": ["src"],
+	"exclude": [
+		"node_modules",
+		".storybook",
+		"src/**/*.stories.ts",
+		"src/**/*.stories.tsx",
+		"src/**/*.test.ts",
+		"src/**/*.test.tsx",
+		"src/**/*.spec.ts",
+		"src/**/*.spec.tsx",
+		"src/extensions/cypress/**/*.cy.ts"
+	],
 	"ts-node": {
 		"compilerOptions": {
 			"module": "commonjs"

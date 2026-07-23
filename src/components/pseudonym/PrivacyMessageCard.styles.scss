@@ -8,6 +8,7 @@
 
 .privacyMessageCard {
 	margin-top: 4px;
+
 	/* Reserve vertical room when scrollIntoView(block: 'end') aligns the
 	   bubble to the scroll container's bottom, so it doesn't land hidden
 	   behind the floating waiting-queue action bar. */
@@ -31,7 +32,7 @@
 	white-space: pre-wrap;
 }
 
-@media screen and (max-width: 640px) {
+@media screen and (width <= 640px) {
 	.privacyMessageCard__bubble {
 		padding: 18px;
 	}

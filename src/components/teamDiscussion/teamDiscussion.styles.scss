@@ -1,0 +1,164 @@
+/* FE#514 — Team-Besprechung panel (ADR-016). M3 tokens with fallbacks. */
+
+.teamDiscussion {
+	border: 1px solid var(--m3-outline-variant, #d5c3c3);
+	border-radius: 12px;
+	margin: 8px 16px;
+	background: var(--m3-surface, #fff);
+	overflow: hidden;
+
+	&__toggle {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		width: 100%;
+		padding: 10px 16px;
+		border: 0;
+		background: var(--m3-surface-container-low, #faf3f2);
+		cursor: pointer;
+		text-align: left;
+	}
+
+	&__toggleTitle {
+		font-weight: 600;
+		font-size: 14px;
+	}
+
+	&__count,
+	&__archivedChip,
+	&__startHint {
+		font-size: 12px;
+		padding: 2px 8px;
+		border-radius: 10px;
+		background: var(--m3-secondary-container, #efe0df);
+		color: var(--m3-on-secondary-container, #4c3f3e);
+	}
+
+	&__archivedChip {
+		background: var(--m3-surface-variant, #e5e1e0);
+		color: var(--m3-on-surface-variant, #494545);
+	}
+
+	&__startHint {
+		background: transparent;
+		color: var(--m3-on-surface-variant, #736665);
+	}
+
+	&__body {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		padding: 12px 16px 16px;
+	}
+
+	// Permanent, unmissable team-only marker (ADR-016).
+	&__marker {
+		font-size: 12px;
+		font-weight: 600;
+		padding: 6px 10px;
+		border-radius: 8px;
+		background: var(--m3-tertiary-container, #ffe0b8);
+		color: var(--m3-on-tertiary-container, #5b4300);
+	}
+
+	&__archivedBanner {
+		font-size: 12px;
+		padding: 6px 10px;
+		border-radius: 8px;
+		background: var(--m3-surface-variant, #e5e1e0);
+		color: var(--m3-on-surface-variant, #494545);
+	}
+
+	&__feed {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+		max-height: 320px;
+		overflow-y: auto;
+	}
+
+	&__empty {
+		font-size: 13px;
+		color: var(--m3-on-surface-variant, #736665);
+		margin: 4px 0;
+	}
+
+	&__message {
+		display: grid;
+		grid-template-columns: auto 1fr auto;
+		gap: 8px;
+		align-items: baseline;
+		padding: 6px 10px;
+		border-radius: 8px;
+		background: var(--m3-surface-container, #f5eceb);
+		font-size: 13px;
+
+		&--own {
+			background: var(--m3-primary-container, #ffdad7);
+		}
+	}
+
+	&__messageSender {
+		font-weight: 600;
+		white-space: nowrap;
+	}
+
+	&__messageBody {
+		white-space: pre-wrap;
+		word-break: break-word;
+	}
+
+	&__messageTime {
+		font-size: 11px;
+		color: var(--m3-on-surface-variant, #736665);
+		white-space: nowrap;
+	}
+
+	&__composer {
+		display: flex;
+		gap: 8px;
+		align-items: flex-end;
+	}
+
+	&__input {
+		flex: 1;
+		resize: vertical;
+		border: 1px solid var(--m3-outline-variant, #d5c3c3);
+		border-radius: 8px;
+		padding: 8px 10px;
+		font: inherit;
+		font-size: 13px;
+	}
+
+	&__send {
+		border: 0;
+		border-radius: 16px;
+		padding: 8px 16px;
+		background: var(--m3-primary, #a5000a);
+		color: var(--m3-on-primary, #fff);
+		font-weight: 600;
+		cursor: pointer;
+
+		&:disabled {
+			opacity: 0.45;
+			cursor: not-allowed;
+		}
+	}
+
+	&__error {
+		font-size: 12px;
+		color: var(--m3-error, #ba1a1a);
+		margin: 0;
+	}
+}
+
+.teamDiscussionBadge {
+	display: inline-flex;
+	align-items: center;
+	font-size: 12px;
+	padding: 2px 8px;
+	border-radius: 10px;
+	background: var(--m3-tertiary-container, #ffe0b8);
+	color: var(--m3-on-tertiary-container, #5b4300);
+	white-space: nowrap;
+}

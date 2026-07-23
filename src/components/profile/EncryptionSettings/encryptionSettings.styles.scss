@@ -1,0 +1,82 @@
+.encryptionSettings {
+	display: flex;
+	flex-direction: column;
+	gap: $grid-base-two;
+
+	&__error {
+		border-radius: 8px;
+		padding: $grid-base;
+		background-color: var(--m3-error-container, #f9dedc);
+		color: var(--m3-on-error-container, #410e0b);
+	}
+
+	&__key {
+		border-radius: 8px;
+		padding: $grid-base-two;
+		background-color: var(--m3-surface-container, #f3edf7);
+		text-align: center;
+
+		code {
+			font-family: monospace;
+			font-size: 1.1em;
+			letter-spacing: 0.08em;
+			word-break: break-all;
+			color: var(--m3-on-surface, #1d1b20);
+			user-select: all;
+		}
+	}
+
+	&__keyActions {
+		display: flex;
+		gap: $grid-base;
+	}
+
+	&__confirm {
+		display: flex;
+		align-items: center;
+		gap: $grid-base;
+		cursor: pointer;
+
+		input[type='checkbox'] {
+			width: 18px;
+			height: 18px;
+			accent-color: var(--m3-primary, #6750a4);
+		}
+	}
+
+	&__status {
+		border-radius: 8px;
+		padding: $grid-base-two;
+
+		&--ok {
+			background-color: var(--m3-surface-container, #f3edf7);
+		}
+
+		&--warning {
+			background-color: var(--m3-error-container, #f9dedc);
+
+			p {
+				color: var(--m3-on-error-container, #410e0b);
+			}
+		}
+	}
+
+	&__resetConfirm {
+		display: flex;
+		flex-direction: column;
+		gap: $grid-base-two;
+	}
+
+	&__resetActions {
+		display: flex;
+		gap: $grid-base;
+		flex-wrap: wrap;
+	}
+
+	hr {
+		width: 100%;
+		border: none;
+		border-top: 1px solid var(--m3-outline-variant, #cac4d0);
+		margin: $grid-base 0;
+	}
+}

@@ -13,7 +13,7 @@ $imprintHeight: 40px;
 	&__wrapper {
 		display: flex;
 		flex-direction: column;
-		background-color: $background-light;
+		background-color: var(--m3-surface-container-low, $background-light);
 		height: 100%;
 	}
 
@@ -87,7 +87,7 @@ $imprintHeight: 40px;
 
 		svg {
 			margin-right: 0.25rem;
-			fill: $tertiary;
+			fill: var(--m3-on-surface-variant, $tertiary);
 		}
 	}
 

@@ -1,3 +1,4 @@
+import './configureMatrixLogging';
 import './polyfill';
 import * as React from 'react';
 import { createRoot } from 'react-dom/client';
@@ -8,12 +9,35 @@ import { config, routePathNames } from './resources/scripts/config';
 import { ThemeProvider } from '@mui/material';
 import { UrlParamsProvider } from './globalState/provider/UrlParamsProvider';
 import { RegistrationProvider } from './globalState';
-import { lazy } from 'react';
+import { lazy, useEffect, useState } from 'react';
 import './resources/styles/mui-variables-mapping.scss';
-import theme from './resources/scripts/theme';
-import { Redirect } from 'react-router-dom';
+import { createAppTheme } from './resources/scripts/theme';
+import { THEME_APPLIED_EVENT } from './utils/theme/applyTenantTheme';
+import { syncLocalTenantCookie } from './utils/localTenantCookie';
+import { Navigate } from 'react-router-dom';
 import { Privacy } from './components/legalInformationLinks/Privacy';
 import { Imprint } from './components/legalInformationLinks/Imprint';
+import { initMeterProvider } from './utils/observability/meterProvider';
+import { initWebVitals } from './utils/observability/webVitals';
+import { initUtdTracking } from './utils/observability/utdTracker';
+
+// OBS-P8 (ORISO-Helm#62): browser-side Real User Monitoring. Register the
+// MeterProvider before anything else gets a chance to call
+// metrics.getMeter(...) -- a meter obtained before this runs stays a no-op
+// meter forever, even after this later registers a real provider -- then
+// wire up the Web Vitals capture, which only needs to run once per page
+// load. Both are best-effort: see the try/catch in each module.
+initMeterProvider();
+initWebVitals();
+// OBS-P9 (ORISO-Helm#62, ORISO-Frontend#440): Unable-To-Decrypt (UTD)
+// failure tracking for encrypted counselling conversations.
+initUtdTracking();
+
+const ThemeDemo = lazy(() =>
+	import('./components/themeDemo/ThemeDemo').then((m) => ({
+		default: m.ThemeDemo
+	}))
+);
 
 const Registration = lazy(() =>
 	import('./components/registration/Registration').then((m) => ({
@@ -29,20 +53,47 @@ const NewRegistration = () => (
 	</UrlParamsProvider>
 );
 
+// Recreates the MUI theme when the runtime tenant palette lands at
+// :root (THB-05) — theme.jsx reads computed --m3-* values at creation.
+const AppThemeProvider = ({ children }: { children: React.ReactNode }) => {
+	const [theme, setTheme] = useState(() => createAppTheme());
+
+	useEffect(() => {
+		const refresh = () => setTheme(createAppTheme());
+		window.addEventListener(THEME_APPLIED_EVENT, refresh);
+		return () => window.removeEventListener(THEME_APPLIED_EVENT, refresh);
+	}, []);
+
+	return <ThemeProvider theme={theme}>{children}</ThemeProvider>;
+};
+
 // React 19 uses createRoot API
+syncLocalTenantCookie();
+
 const container = document.getElementById('appRoot');
 if (container) {
 	const root = createRoot(container);
 	root.render(
-		<ThemeProvider theme={theme}>
+		<AppThemeProvider>
 			<App
 				config={config}
 				extraRoutes={[
 					{
+						// Auth-free theme demo for the admin's iframe preview
+						// (Frontend#144): real markup, mock content, no API.
+						route: { path: '/theme-demo' },
+						component: ThemeDemo
+					},
+					{
+						// v7 dropped optional params (:step?), so the wizard's
+						// step is captured by explicit routes; Registration reads
+						// it via useParams and renders the WelcomeScreen when absent.
 						route: {
 							path: [
-								'/registration/:step?',
-								'/:topicSlug/registration/:step?'
+								'/registration',
+								'/registration/:step',
+								'/:topicSlug/registration',
+								'/:topicSlug/registration/:step'
 							]
 						},
 						component: NewRegistration
@@ -52,9 +103,9 @@ if (container) {
 							path: '/themen'
 						},
 						component: () => (
-							<Redirect
+							<Navigate
 								to={'/registration/topic-selection'}
-								from={'/themen'}
+								replace
 							/>
 						)
 					},
@@ -62,11 +113,17 @@ if (container) {
 					// 	route: { path: routePathNames.termsAndConditions },
 					// 	component: TermsAndConditions
 					// },
-					{ route: { path: routePathNames.imprint }, component: Imprint },
-					{ route: { path: routePathNames.privacy }, component: Privacy }
+					{
+						route: { path: routePathNames.imprint },
+						component: Imprint
+					},
+					{
+						route: { path: routePathNames.privacy },
+						component: Privacy
+					}
 				]}
 				stageComponent={Stage}
 			/>
-		</ThemeProvider>
+		</AppThemeProvider>
 	);
 }

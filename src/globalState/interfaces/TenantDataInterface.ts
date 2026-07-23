@@ -16,6 +16,13 @@ export interface TenantDataInterface {
 		dataPrivacyConfirmation: string;
 		termsAndConditionsConfirmation: string;
 		renderedPrivacy: string;
+		/**
+		 * Raw stored language->HTML maps incl. `<lang>__meta` machine-
+		 * translation metadata keys (additive TenantService fields; absent
+		 * on older backends). May be empty when no content is stored.
+		 */
+		impressumLanguages?: Record<string, string>;
+		privacyLanguages?: Record<string, string>;
 	};
 	settings?: TenantDataSettingsInterface;
 }
@@ -30,7 +37,21 @@ export interface TenantDataSettingsInterface {
 	featureToolsOICDToken: string;
 	featureTopicsEnabled: boolean;
 	topicsInRegistrationEnabled: boolean;
-	featureAttachmentUploadDisabled: boolean;
+	featureMediaUploadEnabled?: boolean;
+	featureMediaUploadAnonymousChatsEnabled?: boolean;
+	featureMediaUploadOneOnOneChatsEnabled?: boolean;
+	featureMediaUploadGroupChatsEnabled?: boolean;
+	featureMediaUploadSupervisionChatsEnabled?: boolean;
+	featureMediaInlineDisplayEnabled?: boolean;
+	featureMediaInlineDisplayAnonymousChatsEnabled?: boolean;
+	featureMediaInlineDisplayOneOnOneChatsEnabled?: boolean;
+	featureMediaInlineDisplayGroupChatsEnabled?: boolean;
+	featureMediaInlineDisplaySupervisionChatsEnabled?: boolean;
+	featureMediaAiScanEnabled?: boolean;
+	featureMediaAiScanAnonymousChatsEnabled?: boolean;
+	featureMediaAiScanOneOnOneChatsEnabled?: boolean;
+	featureMediaAiScanGroupChatsEnabled?: boolean;
+	featureMediaAiScanSupervisionChatsEnabled?: boolean;
 	featureAnonymousChatEnabled?: boolean;
 	featureCallsEnabled?: boolean;
 	featureSupervisionEnabled?: boolean;
@@ -47,6 +68,7 @@ export interface TenantDataSettingsInterface {
 	featureVideoCallsGroupChatsEnabled?: boolean;
 	featureVideoCallsSupervisionChatsEnabled?: boolean;
 	featureThreadsEnabled?: boolean;
+	featureTeamDiscussionEnabled?: boolean;
 	featureThreadsAnonymousChatsEnabled?: boolean;
 	featureThreadsGroupChatsEnabled?: boolean;
 	featureThreadsOneOnOneEnabled?: boolean;

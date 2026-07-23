@@ -8,10 +8,29 @@ import {
 	useState
 } from 'react';
 import { createPortal } from 'react-dom';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
-import { SendMessageButton } from './SendMessageButton';
+import { SendButton } from './inputField/SendButton';
+import { hasMediaUploadFeature } from '../../utils/mediaUploadHelpers';
+import { deriveSendButtonState } from './inputField/sendButtonState';
+import { DragHandle } from './inputField/DragHandle';
+import { ComposerToolbar } from './inputField/ComposerToolbar';
+import { DefaultActionBar } from './inputField/DefaultActionBar';
+import { EmojiPickerPopup } from './inputField/EmojiPickerPopup';
+import { RecipientSplitButton } from './inputField/RecipientSplitButton';
+import { getMenuDirection } from './inputField/menuDirection';
+import {
+	clampComposerHeight as clampComposerHeightPure,
+	getComposerHeightBounds as getComposerHeightBoundsPure,
+	stepComposerHeight
+} from './inputField/composerResize';
+import { isAskerEnquirySubmission } from './messageEncryptionMode';
+import { resolveAsideTargetRoomId } from './asideRouting';
+import { reloadSessionAfterSendIfNeeded } from './sessionRefreshAfterSend';
+import { chatTransportService } from '../../services/chatTransportService';
+import { extractMentionedUserIds } from '../../utils/messageMentions';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
+import { getModality, Modality } from '../session/getModality';
 import { STATUS_ENQUIRY } from '../../globalState/interfaces/SessionsDataInterface';
 import {
 	AUTHORITIES,
@@ -23,16 +42,15 @@ import {
 	UserDataContext,
 	ActiveSessionContext
 } from '../../globalState';
+import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import { STATUS_ARCHIVED } from '../../globalState/interfaces';
 import {
 	apiGetAgencyConsultantList,
 	apiPutDearchive,
 	apiGetSessionSupervisors,
 	apiSendEnquiry,
-	apiSendMessage,
-	apiUploadAttachment,
-	apiMatrixUploadFile,
-	apiMatrixSendFileMessage
+	apiSendMatrixAttachmentMessage,
+	apiSendMessage
 } from '../../api';
 import {
 	MessageSubmitInfo,
@@ -40,31 +58,20 @@ import {
 } from './MessageSubmitInfo';
 import {
 	ATTACHMENT_MAX_SIZE_IN_MB,
-	getAttachmentSizeMBForKB
+	getAttachmentSizeMBForKB,
+	isSupportedAttachment
 } from './attachmentHelpers';
-import PluginsEditor from '@draft-js-plugins/editor';
-import {
-	ContentState,
-	convertToRaw,
-	DraftHandleValue,
-	EditorState,
-	RichUtils
-} from 'draft-js';
+import { ContentState, convertToRaw, EditorState } from 'draft-js';
 import { draftToMarkdown } from 'markdown-draft-js';
-import createLinkifyPlugin from '@draft-js-plugins/linkify';
-import createToolbarPlugin from '@draft-js-plugins/static-toolbar';
-import {
-	BoldButton,
-	ItalicButton,
-	UnorderedListButton
-} from '@draft-js-plugins/buttons';
 import {
 	escapeMarkdownChars,
-	handleEditorBeforeInput,
-	handleEditorPastedText,
-	normalizeHighlightColor,
-	toolbarCustomClasses
+	INPUT_MAX_LENGTH,
+	normalizeHighlightColor
 } from './richtextHelpers';
+import {
+	resolveComposerMessageSnapshot,
+	shouldPreserveComposerAfterRetry
+} from './composerMessageSnapshot';
 import { ReactComponent as AudioOnIcon } from '../../resources/img/icons/audio-on.svg';
 import { ReactComponent as RemoveIcon } from '../../resources/img/icons/x.svg';
 import { ReactComponent as CalendarMonthIcon } from '../../resources/img/icons/calendar-month-navigation.svg';
@@ -77,15 +84,8 @@ import { Headline } from '../headline/Headline';
 import { useTranslation } from 'react-i18next';
 import {
 	SUPERVISOR_FEEDBACK_PREFIX,
-	buildVisibleToPrefix,
-	buildThreadPrefix
+	buildVisibleToPrefix
 } from '../message/messageConstants';
-import {
-	encryptAttachment,
-	encryptText,
-	getSignature
-} from '../../utils/encryptionHelpers';
-import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import { useE2EE } from '../../hooks/useE2EE';
 import { apiPostError, ERROR_LEVEL_WARN } from '../../api/apiPostError';
 import { useE2EEViewElements } from '../../hooks/useE2EEViewElements';
@@ -95,39 +95,56 @@ import { SubscriptionKeyLost } from '../session/SubscriptionKeyLost';
 import { RoomNotFound } from '../session/RoomNotFound';
 import { useDraftMessage } from './useDraftMessage';
 import {
-	STORAGE_KEY_ATTACHMENT_ENCRYPTION,
-	useDevToolbar
-} from '../devToolbar/DevToolbar';
-import {
 	OVERLAY_E2EE,
 	OVERLAY_REQUEST
 } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
 import { getIconForAttachmentType } from '../message/messageHelpers';
+import { resolveAttachmentForSend } from './resolveAttachmentForSend';
 import { TipTapComposer, TipTapComposerRef } from './TipTapComposer';
+import { useImagePreviewUrl } from './useImagePreviewUrl';
 import { HIGHLIGHT_SNIPPET_SELECTED_EVENT } from './highlightSnippetEvents';
+import { isMyMessage } from '../session/sessionHelpers';
+import { transportMarkupToComposerHtml } from './transportMarkupToComposerHtml';
+import type { MessageItem } from '../message/MessageItemComponent';
+import { useKeyboardShortcuts } from '../../features/keyboard-shortcuts/context/KeyboardShortcutsProvider';
+import {
+	hasOpenModalDialog,
+	resolveEffectiveBinding
+} from '../../features/keyboard-shortcuts/utils/resolveAction';
+import {
+	isImeComposing,
+	matchesShortcut
+} from '../../features/keyboard-shortcuts/utils/match';
 
-//Linkify Plugin
-const omitKey = (key, { [key]: _, ...obj }) => obj;
-const linkifyPlugin = createLinkifyPlugin({
-	component: (props) => {
-		return (
-			/* eslint-disable */
-			<a
-				{...omitKey('blockKey', props)}
-				href={props.href}
-				onClick={() => window.open(props.href, '_blank')}
-			></a>
-			/* eslint-enable */
-		);
-	}
-});
-
-//Static Toolbar Plugin
-const staticToolbarPlugin = createToolbarPlugin({
-	theme: toolbarCustomClasses
-});
-const { Toolbar } = staticToolbarPlugin;
+type AttachmentUploadControl = Pick<XMLHttpRequest, 'abort'>;
 const VOICE_RECORDING_MAX_DURATION_SEC = 180;
+const MESSAGE_LENGTH_WARNING_THRESHOLD = Math.floor(INPUT_MAX_LENGTH * 0.9);
+
+const getPlainTextFromComposerValue = (rawMessage?: string | null): string => {
+	const value = rawMessage || '';
+	if (!value.trim()) {
+		return '';
+	}
+
+	const normalizedValue = value
+		.replace(/<br\s*\/?>/gi, '\n')
+		.replace(/<\/(p|div|li|h[1-6]|blockquote|pre)>/gi, '\n');
+
+	if (typeof document !== 'undefined') {
+		const container = document.createElement('div');
+		container.innerHTML = normalizedValue;
+		return (container.textContent || '')
+			.replace(/\u00a0/g, ' ')
+			.replace(/\u200b/g, '');
+	}
+
+	return normalizedValue
+		.replace(/<[^>]+>/g, ' ')
+		.replace(/&nbsp;/gi, ' ')
+		.replace(/&#160;/gi, ' ')
+		.replace(/\u00a0/g, ' ')
+		.replace(/\u200b/g, '');
+};
 
 const INFO_TYPES = {
 	ABSENT: 'ABSENT',
@@ -136,6 +153,7 @@ const INFO_TYPES = {
 	ATTACHMENT_FORMAT_ERROR: 'ATTACHMENT_FORMAT_ERROR',
 	ATTACHMENT_QUOTA_REACHED_ERROR: 'ATTACHMENT_QUOTA_REACHED_ERROR',
 	ATTACHMENT_OTHER_ERROR: 'ATTACHMENT_OTHER_ERROR',
+	MESSAGE_SEND_ERROR: 'MESSAGE_SEND_ERROR',
 	VOICE_RECORDING_ERROR: 'VOICE_RECORDING_ERROR'
 };
 
@@ -151,13 +169,65 @@ export interface MessageSubmitInterfaceComponentProps {
 	/** Anonymous enquiry after "Jetzt Chat starten" — use live chat send, not enquiry API. */
 	isAnonymousLiveChat?: boolean;
 	isSupervisor?: boolean;
+	/** ADR-008: per-session supervision side room id; aside sends go here, never the client room. */
+	supervisionRoomId?: string;
 	threadRootId?: string | null;
 	threadParentPreview?: string | null;
+	/**
+	 * Relations foundation (#435): direct-reply context. When set, the next
+	 * send carries an m.in_reply_to relation to this event and the composer
+	 * shows a cancelable quote preview.
+	 */
+	replyTo?: { eventId: string; author: string; text: string } | null;
+	onCancelReply?: () => void;
+	/**
+	 * Editing (m.replace, #435): when set, the composer prefills this
+	 * message's text and the next send edits it in place instead of sending
+	 * a new message.
+	 */
+	editingMessage?: { eventId: string; text: string } | null;
+	onCancelEdit?: () => void;
 	mobileUnreadCount?: number;
 	mobileIsScrolledToBottom?: boolean;
 	onMobileNavigateBack?: () => void;
 	onMobileNavigateDown?: () => void;
 	onMobileNavigateBottom?: () => void;
+	/** All messages in the current session — used to find the last own message for editing. */
+	messages?: MessageItem[];
+	/** Close the thread panel (for Escape shortcut). */
+	onCloseThread?: () => void;
+	/** Notify parent of a local optimistic edit (messageId → new text). */
+	onLocalMessageEdit?: (messageId: string, newText: string) => void;
+	/** Prefer Matrix-aware ownership from SessionItem when provided. */
+	isOwnMessage?: (userId: string) => boolean;
+	/**
+	 * Called when a send attempt fails (the message never reached the server /
+	 * encryption broke). The parent surfaces a "Sending message failed"
+	 * notification in the timeline. The composer keeps the typed text so the
+	 * user can simply resend.
+	 */
+	onSendError?: (
+		message: string,
+		ts: number,
+		retryOfId?: string,
+		threadRootId?: string | null,
+		transportMessage?: string,
+		isAside?: boolean,
+		replyToEventId?: string | null,
+		mentionedUserIds?: string[]
+	) => void;
+	/** A user-triggered retry. One request id is handled at most once. */
+	retryRequest?: {
+		requestId: string;
+		failedSendId: string;
+		message: string;
+		threadRootId?: string | null;
+		transportMessage: string;
+		isAside: boolean;
+		replyToEventId?: string | null;
+		mentionedUserIds: string[];
+	} | null;
+	onRetrySettled?: (requestId: string) => void;
 }
 
 export const MessageSubmitInterfaceComponent = ({
@@ -171,610 +241,26 @@ export const MessageSubmitInterfaceComponent = ({
 	handleMessageSendSuccess: onMessageSendSuccess,
 	isAnonymousLiveChat = false,
 	isSupervisor,
+	supervisionRoomId,
 	threadRootId,
 	threadParentPreview,
+	replyTo,
+	onCancelReply,
+	editingMessage,
+	onCancelEdit,
 	mobileUnreadCount = 0,
 	mobileIsScrolledToBottom = false,
 	onMobileNavigateBack,
 	onMobileNavigateDown,
-	onMobileNavigateBottom
+	onMobileNavigateBottom,
+	messages,
+	onCloseThread,
+	onLocalMessageEdit,
+	isOwnMessage,
+	onSendError,
+	retryRequest,
+	onRetrySettled
 }: MessageSubmitInterfaceComponentProps) => {
-	const ToolbarUndoIcon = () => (
-		<svg
-			width="12"
-			height="12"
-			viewBox="0 0 12 12"
-			fill="none"
-			xmlns="http://www.w3.org/2000/svg"
-		>
-			<path
-				fill-rule="evenodd"
-				clip-rule="evenodd"
-				d="M4.47141 1.13807C4.73173 0.87772 4.73173 0.455613 4.47141 0.19526C4.21105 -0.0650867 3.78895 -0.0650867 3.52859 0.19526L0.19526 3.52859C-0.0650867 3.78895 -0.0650867 4.21105 0.19526 4.47141L3.52859 7.80473C3.78895 8.06507 4.21105 8.06507 4.47141 7.80473C4.73173 7.5444 4.73173 7.12227 4.47141 6.86193L2.27614 4.66667H7.66667C8.0606 4.66667 8.45073 4.74427 8.81473 4.89503C9.17867 5.04579 9.5094 5.26677 9.788 5.54533C10.0665 5.82393 10.2875 6.15467 10.4383 6.5186C10.5891 6.8826 10.6667 7.27273 10.6667 7.66667C10.6667 8.0606 10.5891 8.45073 10.4383 8.81473C10.2875 9.17867 10.0665 9.5094 9.788 9.788C9.5094 10.0665 9.17867 10.2875 8.81473 10.4383C8.45073 10.5891 8.0606 10.6667 7.66667 10.6667H5.33333C4.96513 10.6667 4.66667 10.9651 4.66667 11.3333C4.66667 11.7015 4.96513 12 5.33333 12H7.66667C8.23573 12 8.7992 11.8879 9.32493 11.6701C9.85073 11.4524 10.3284 11.1332 10.7308 10.7308C11.1332 10.3284 11.4524 9.85073 11.6701 9.32493C11.8879 8.7992 12 8.23573 12 7.66667C12 7.0976 11.8879 6.53413 11.6701 6.0084C11.4524 5.4826 11.1332 5.00493 10.7308 4.60254C10.3284 4.20015 9.85073 3.88096 9.32493 3.66319C8.7992 3.44542 8.23573 3.33333 7.66667 3.33333H2.27614L4.47141 1.13807Z"
-				fill="#4B515A"
-			/>
-		</svg>
-	);
-
-	const ToolbarRedoIcon = () => (
-		<svg
-			width="12"
-			height="12"
-			viewBox="0 0 12 12"
-			fill="none"
-			xmlns="http://www.w3.org/2000/svg"
-		>
-			<path
-				fill-rule="evenodd"
-				clip-rule="evenodd"
-				d="M8.4714 0.19526C8.21107 -0.0650867 7.78893 -0.0650867 7.5286 0.19526C7.26827 0.455613 7.26827 0.87772 7.5286 1.13807L9.72387 3.33333H4.33333C3.18406 3.33333 2.08186 3.78988 1.26921 4.60254C0.456547 5.4152 0 6.5174 0 7.66667C0 8.23573 0.112087 8.7992 0.329853 9.32493C0.547627 9.85073 0.86682 10.3284 1.26921 10.7308C2.08186 11.5435 3.18406 12 4.33333 12H6.66667C7.03487 12 7.33333 11.7015 7.33333 11.3333C7.33333 10.9651 7.03487 10.6667 6.66667 10.6667H4.33333C3.53769 10.6667 2.77462 10.3506 2.21201 9.788C1.93344 9.5094 1.71246 9.17867 1.56169 8.81473C1.41093 8.45073 1.33333 8.0606 1.33333 7.66667C1.33333 6.871 1.64941 6.10793 2.21201 5.54533C2.77462 4.98274 3.53769 4.66667 4.33333 4.66667H9.72387L7.5286 6.86193C7.26827 7.12227 7.26827 7.5444 7.5286 7.80473C7.78893 8.06507 8.21107 8.06507 8.4714 7.80473L11.8047 4.47141C12.0651 4.21105 12.0651 3.78895 11.8047 3.52859L8.4714 0.19526Z"
-				fill="#646D78"
-			/>
-		</svg>
-	);
-
-	const ToolbarCloseStripIcon = () => (
-		<svg
-			width="16"
-			height="16"
-			viewBox="0 0 16 16"
-			fill="none"
-			aria-hidden="true"
-		>
-			<rect width="16" height="16" rx="4" fill="#4B515A" />
-			<path
-				d="M5.00773 12.3308C4.63812 12.7004 4.03886 12.7004 3.66924 12.3308C3.29963 11.9611 3.29963 11.3619 3.66924 10.9923L6.66151 8L3.66924 5.00773C3.29963 4.63812 3.29963 4.03886 3.66924 3.66924C4.03886 3.29963 4.63812 3.29963 5.00773 3.66924L8 6.66151L10.9923 3.66924C11.3619 3.29963 11.9611 3.29963 12.3308 3.66924C12.7004 4.03886 12.7004 4.63812 12.3308 5.00773L9.33849 8L12.3308 10.9923C12.7004 11.3619 12.7004 11.9611 12.3308 12.3308C11.9611 12.7004 11.3619 12.7004 10.9923 12.3308L8 9.33849L5.00773 12.3308Z"
-				fill="white"
-			/>
-		</svg>
-	);
-
-	const CompactEditIcon = () => (
-		<div className="textarea__compactIconStack" aria-hidden="true">
-			<svg width="11" height="10" viewBox="0 0 11 10" fill="none">
-				<path
-					d="M0 1.2V0.800001C0 0.358173 0.358173 0 0.8 0H10.1474C10.5892 0 10.9474 0.358172 10.9474 0.800001V1.35103C10.9474 1.79286 10.5892 2 10.1474 2H6.4V7.6C6.4 7.2 6.4 7.73624 6.4 7.6L4.21052 10V2H2.4H0.8C0.358172 2 0 2 0 1.2Z"
-					fill="#646D78"
-				/>
-			</svg>
-			<svg width="9" height="10" viewBox="0 0 9 10" fill="none">
-				<path
-					fillRule="evenodd"
-					clipRule="evenodd"
-					d="M0 9.68V7.10875L6.16 0.347875C6.26083 0.236958 6.37771 0.15125 6.51063 0.09075C6.64354 0.03025 6.78333 0 6.93 0C7.07667 0 7.21875 0.03025 7.35625 0.09075C7.49375 0.15125 7.6175 0.242 7.7275 0.363L8.48375 1.21C8.59375 1.32092 8.67396 1.452 8.72438 1.60325C8.77479 1.7545 8.8 1.91079 8.8 2.07213C8.8 2.22338 8.77479 2.3721 8.72438 2.51831C8.67396 2.66452 8.59375 2.79813 8.48375 2.91913L2.3375 9.68H0ZM1.87 8.47H1.1V7.623L5.37625 2.904L6.16 3.76613L1.87 8.47Z"
-					fill="#646D78"
-				/>
-			</svg>
-		</div>
-	);
-
-	const CompactMentionIcon = () => (
-		<svg
-			width="14"
-			height="14"
-			viewBox="0 0 14 14"
-			fill="none"
-			aria-hidden="true"
-		>
-			<path
-				d="M7 14C6.03167 14 5.12167 13.8162 4.27 13.4487C3.41833 13.0812 2.6775 12.5825 2.0475 11.9525C1.4175 11.3225 0.91875 10.5817 0.55125 9.73C0.18375 8.87833 0 7.96833 0 7C0 6.03167 0.18375 5.12167 0.55125 4.27C0.91875 3.41833 1.4175 2.6775 2.0475 2.0475C2.6775 1.4175 3.41833 0.91875 4.27 0.55125C5.12167 0.18375 6.03167 0 7 0C7.96833 0 8.87833 0.18375 9.73 0.55125C10.5817 0.91875 11.3225 1.4175 11.9525 2.0475C12.5825 2.6775 13.0812 3.41833 13.4487 4.27C13.8162 5.12167 14 6.03167 14 7V8.015C14 8.70333 13.7638 9.28958 13.2913 9.77375C12.8188 10.2579 12.2383 10.5 11.55 10.5C11.1417 10.5 10.7567 10.4125 10.395 10.2375C10.0333 10.0625 9.73 9.81167 9.485 9.485C9.14667 9.82333 8.76458 10.0771 8.33875 10.2463C7.91292 10.4154 7.46667 10.5 7 10.5C6.03167 10.5 5.20625 10.1588 4.52375 9.47625C3.84125 8.79375 3.5 7.96833 3.5 7C3.5 6.03167 3.84125 5.20625 4.52375 4.52375C5.20625 3.84125 6.03167 3.5 7 3.5C7.96833 3.5 8.79375 3.84125 9.47625 4.52375C10.1588 5.20625 10.5 6.03167 10.5 7V8.015C10.5 8.31833 10.5992 8.575 10.7975 8.785C10.9958 8.995 11.2467 9.1 11.55 9.1C11.8533 9.1 12.1042 8.995 12.3025 8.785C12.5008 8.575 12.6 8.31833 12.6 8.015V7C12.6 5.43667 12.0575 4.1125 10.9725 3.0275C9.8875 1.9425 8.56333 1.4 7 1.4C5.43667 1.4 4.1125 1.9425 3.0275 3.0275C1.9425 4.1125 1.4 5.43667 1.4 7C1.4 8.56333 1.9425 9.8875 3.0275 10.9725C4.1125 12.0575 5.43667 12.6 7 12.6H10.5V14H7ZM8.4875 8.4875C8.89583 8.07917 9.1 7.58333 9.1 7C9.1 6.41667 8.89583 5.92083 8.4875 5.5125C8.07917 5.10417 7.58333 4.9 7 4.9C6.41667 4.9 5.92083 5.10417 5.5125 5.5125C5.10417 5.92083 4.9 6.41667 4.9 7C4.9 7.58333 5.10417 8.07917 5.5125 8.4875C5.92083 8.89583 6.41667 9.1 7 9.1C7.58333 9.1 8.07917 8.89583 8.4875 8.4875Z"
-				fill="#646D78"
-			/>
-		</svg>
-	);
-
-	const CompactMicIcon = () => (
-		<svg
-			width="16"
-			height="16"
-			viewBox="0 0 16 16"
-			fill="none"
-			aria-hidden="true"
-		>
-			<path
-				d="M8.00065 9.33325C7.4451 9.33325 6.97287 9.13881 6.58398 8.74992C6.1951 8.36103 6.00065 7.88881 6.00065 7.33325V3.33325C6.00065 2.7777 6.1951 2.30547 6.58398 1.91659C6.97287 1.5277 7.4451 1.33325 8.00065 1.33325C8.55621 1.33325 9.02843 1.5277 9.41732 1.91659C9.80621 2.30547 10.0007 2.7777 10.0007 3.33325V7.33325C10.0007 7.88881 9.80621 8.36103 9.41732 8.74992C9.02843 9.13881 8.55621 9.33325 8.00065 9.33325ZM7.33398 13.9999V11.9499C6.17843 11.7944 5.22287 11.2777 4.46732 10.3999C3.71176 9.52214 3.33398 8.49992 3.33398 7.33325H4.66732C4.66732 8.25547 4.99232 9.04159 5.64232 9.69159C6.29232 10.3416 7.07843 10.6666 8.00065 10.6666C8.92287 10.6666 9.70898 10.3416 10.359 9.69159C11.009 9.04159 11.334 8.25547 11.334 7.33325H12.6673C12.6673 8.49992 12.2895 9.52214 11.534 10.3999C10.7784 11.2777 9.82287 11.7944 8.66732 11.9499V13.9999H7.33398ZM8.00065 7.99992C8.18954 7.99992 8.34787 7.93603 8.47565 7.80825C8.60343 7.68047 8.66732 7.52214 8.66732 7.33325V3.33325C8.66732 3.14436 8.60343 2.98603 8.47565 2.85825C8.34787 2.73047 8.18954 2.66659 8.00065 2.66659C7.81176 2.66659 7.65343 2.73047 7.52565 2.85825C7.39787 2.98603 7.33398 3.14436 7.33398 3.33325V7.33325C7.33398 7.52214 7.39787 7.68047 7.52565 7.80825C7.65343 7.93603 7.81176 7.99992 8.00065 7.99992Z"
-				fill="#646D78"
-			/>
-		</svg>
-	);
-
-	const EmojiPanel = () => (
-		<svg
-			width="15"
-			height="14"
-			viewBox="0 0 15 14"
-			fill="none"
-			xmlns="http://www.w3.org/2000/svg"
-		>
-			<path
-				d="M6.66667 14C5.74444 14 4.87778 13.825 4.06667 13.475C3.25556 13.125 2.55 12.65 1.95 12.05C1.35 11.45 0.875 10.7444 0.525 9.93333C0.175 9.12222 0 8.25556 0 7.33333C0 6.41111 0.175 5.54444 0.525 4.73333C0.875 3.92222 1.35 3.21667 1.95 2.61667C2.55 2.01667 3.25556 1.54167 4.06667 1.19167C4.87778 0.841667 5.74444 0.666667 6.66667 0.666667C7.14444 0.666667 7.60556 0.713889 8.05 0.808333C8.35746 0.873668 8.65694 0.958942 8.94844 1.06416C9.18486 1.14949 9.33333 1.37939 9.33333 1.63074C9.33333 2.11461 8.80209 2.42855 8.34334 2.27467C8.25513 2.24509 8.16569 2.21742 8.075 2.19167C7.625 2.06389 7.15556 2 6.66667 2C5.18889 2 3.93056 2.51944 2.89167 3.55833C1.85278 4.59722 1.33333 5.85556 1.33333 7.33333C1.33333 8.81111 1.85278 10.0694 2.89167 11.1083C3.93056 12.1472 5.18889 12.6667 6.66667 12.6667C8.14444 12.6667 9.40278 12.1472 10.4417 11.1083C11.4806 10.0694 12 8.81111 12 7.33333C12 6.97778 11.9639 6.63333 11.8917 6.3C11.8877 6.28155 11.8836 6.26313 11.8794 6.24475C11.7785 5.79763 12.0958 5.33333 12.5542 5.33333C12.8391 5.33333 13.0941 5.51813 13.1592 5.79552C13.1991 5.9657 13.2321 6.13663 13.2583 6.30833C13.3083 6.63611 13.3333 6.97778 13.3333 7.33333C13.3333 8.25556 13.1583 9.12222 12.8083 9.93333C12.4583 10.7444 11.9833 11.45 11.3833 12.05C10.7833 12.65 10.0778 13.125 9.26667 13.475C8.45556 13.825 7.58889 14 6.66667 14ZM12.6667 4C12.2985 4 12 3.70152 12 3.33333V2.66667H11.3333C10.9651 2.66667 10.6667 2.36819 10.6667 2C10.6667 1.63181 10.9651 1.33333 11.3333 1.33333H12V0.666667C12 0.298477 12.2985 0 12.6667 0C13.0349 0 13.3333 0.298477 13.3333 0.666667V1.33333H14C14.3682 1.33333 14.6667 1.63181 14.6667 2C14.6667 2.36819 14.3682 2.66667 14 2.66667H13.3333V3.33333C13.3333 3.70152 13.0349 4 12.6667 4ZM9 6.66667C9.27778 6.66667 9.51389 6.56944 9.70833 6.375C9.90278 6.18056 10 5.94444 10 5.66667C10 5.38889 9.90278 5.15278 9.70833 4.95833C9.51389 4.76389 9.27778 4.66667 9 4.66667C8.72222 4.66667 8.48611 4.76389 8.29167 4.95833C8.09722 5.15278 8 5.38889 8 5.66667C8 5.94444 8.09722 6.18056 8.29167 6.375C8.48611 6.56944 8.72222 6.66667 9 6.66667ZM4.33333 6.66667C4.61111 6.66667 4.84722 6.56944 5.04167 6.375C5.23611 6.18056 5.33333 5.94444 5.33333 5.66667C5.33333 5.38889 5.23611 5.15278 5.04167 4.95833C4.84722 4.76389 4.61111 4.66667 4.33333 4.66667C4.05556 4.66667 3.81944 4.76389 3.625 4.95833C3.43056 5.15278 3.33333 5.38889 3.33333 5.66667C3.33333 5.94444 3.43056 6.18056 3.625 6.375C3.81944 6.56944 4.05556 6.66667 4.33333 6.66667ZM8.725 10.3583C8.92612 10.2188 9.10922 10.0648 9.27429 9.89635C9.7686 9.39186 9.30028 8.66667 8.59398 8.66667H4.73935C4.03305 8.66667 3.56473 9.39186 4.05904 9.89635C4.22411 10.0648 4.40721 10.2188 4.60833 10.3583C5.225 10.7861 5.91111 11 6.66667 11C7.42222 11 8.10833 10.7861 8.725 10.3583Z"
-				fill="#646D78"
-			/>
-		</svg>
-	);
-
-	const CompactPlusIcon = () => (
-		<svg
-			width="16"
-			height="16"
-			viewBox="0 0 16 16"
-			fill="none"
-			aria-hidden="true"
-		>
-			<path
-				d="M8.00065 3.33325V12.6666M3.33398 7.99992H12.6673"
-				stroke="#646D78"
-				strokeWidth="1.4"
-				strokeLinecap="round"
-				strokeLinejoin="round"
-			/>
-		</svg>
-	);
-
-	const CompactExpandIcon = () => (
-		<svg
-			width="12"
-			height="12"
-			viewBox="0 0 12 12"
-			fill="none"
-			aria-hidden="true"
-		>
-			<path
-				d="M0 12V7.33333C0 6.96514 0.298477 6.66667 0.666667 6.66667C1.03486 6.66667 1.33333 6.96514 1.33333 7.33333V9.73333L9.73333 1.33333H7.33333C6.96514 1.33333 6.66667 1.03486 6.66667 0.666667C6.66667 0.298477 6.96514 0 7.33333 0H12V4.66667C12 5.03486 11.7015 5.33333 11.3333 5.33333C10.9651 5.33333 10.6667 5.03486 10.6667 4.66667V2.26667L2.26667 10.6667H4.66667C5.03486 10.6667 5.33333 10.9651 5.33333 11.3333C5.33333 11.7015 5.03486 12 4.66667 12H0Z"
-				fill="#646D78"
-			/>
-		</svg>
-	);
-
-	const ToolbarFilterIcon = () => (
-		<span
-			className="textarea__toolbarCompositeIcon textarea__toolbarCompositeIcon--heading"
-			aria-hidden="true"
-		>
-			<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-				<path
-					d="M4.00065 2C4.36884 2 4.66732 2.29848 4.66732 2.66667V7.33333H11.334V2.66667C11.334 2.29848 11.6325 2 12.0007 2C12.3689 2 12.6673 2.29848 12.6673 2.66667V13.3333C12.6673 13.7015 12.3689 14 12.0007 14C11.6325 14 11.334 13.7015 11.334 13.3333V8.66667H4.66732V13.3333C4.66732 13.7015 4.36884 14 4.00065 14C3.63246 14 3.33398 13.7015 3.33398 13.3333V2.66667C3.33398 2.29848 3.63246 2 4.00065 2Z"
-					fill="currentColor"
-				/>
-			</svg>
-			<svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-				<path
-					fillRule="evenodd"
-					clipRule="evenodd"
-					d="M2.20602 3.45529C2.36874 3.29257 2.63256 3.29257 2.79528 3.45529L5.00065 5.66067L7.20603 3.45529C7.36873 3.29257 7.63257 3.29257 7.79528 3.45529C7.95798 3.61801 7.95798 3.88183 7.79528 4.04455L5.29528 6.54454C5.13257 6.70725 4.86873 6.70725 4.70603 6.54454L2.20602 4.04455C2.04331 3.88183 2.04331 3.61801 2.20602 3.45529Z"
-					fill="currentColor"
-					fillOpacity="0.64"
-				/>
-			</svg>
-		</span>
-	);
-
-	const ToolbarListDropdownIcon = () => (
-		<span
-			className="textarea__toolbarCompositeIcon textarea__toolbarCompositeIcon--list-dropdown"
-			aria-hidden="true"
-		>
-			<svg width="10" height="2" viewBox="0 0 10 2" fill="none">
-				<path
-					fillRule="evenodd"
-					clipRule="evenodd"
-					d="M0 0.666667C0 0.29848 0.29848 0 0.666667 0H9.33333C9.70153 0 10 0.29848 10 0.666667C10 1.03485 9.70153 1.33333 9.33333 1.33333H0.666667C0.29848 1.33333 0 1.03485 0 0.666667Z"
-					fill="currentColor"
-				/>
-			</svg>
-			<svg width="10" height="2" viewBox="0 0 10 2" fill="none">
-				<path
-					fillRule="evenodd"
-					clipRule="evenodd"
-					d="M0 0.666667C0 0.298467 0.29848 0 0.666667 0H9.33333C9.70153 0 10 0.298467 10 0.666667C10 1.03487 9.70153 1.33333 9.33333 1.33333H0.666667C0.29848 1.33333 0 1.03487 0 0.666667Z"
-					fill="currentColor"
-				/>
-			</svg>
-			<svg width="10" height="2" viewBox="0 0 10 2" fill="none">
-				<path
-					fillRule="evenodd"
-					clipRule="evenodd"
-					d="M0 0.666667C0 0.298467 0.29848 0 0.666667 0H9.33333C9.70153 0 10 0.298467 10 0.666667C10 1.03487 9.70153 1.33333 9.33333 1.33333H0.666667C0.29848 1.33333 0 1.03487 0 0.666667Z"
-					fill="currentColor"
-				/>
-			</svg>
-			<svg width="2" height="2" viewBox="0 0 2 2" fill="none">
-				<path
-					fillRule="evenodd"
-					clipRule="evenodd"
-					d="M0 0.666667C0 0.29848 0.29848 0 0.666667 0H0.673333C1.04152 0 1.34 0.29848 1.34 0.666667C1.34 1.03485 1.04152 1.33333 0.673333 1.33333H0.666667C0.29848 1.33333 0 1.03485 0 0.666667Z"
-					fill="currentColor"
-				/>
-			</svg>
-			<svg width="2" height="2" viewBox="0 0 2 2" fill="none">
-				<path
-					fillRule="evenodd"
-					clipRule="evenodd"
-					d="M0 0.666667C0 0.298467 0.29848 0 0.666667 0H0.673333C1.04152 0 1.34 0.298467 1.34 0.666667C1.34 1.03487 1.04152 1.33333 0.673333 1.33333H0.666667C0.29848 1.33333 0 1.03487 0 0.666667Z"
-					fill="currentColor"
-				/>
-			</svg>
-			<svg width="2" height="2" viewBox="0 0 2 2" fill="none">
-				<path
-					fillRule="evenodd"
-					clipRule="evenodd"
-					d="M0 0.666667C0 0.298467 0.29848 0 0.666667 0H0.673333C1.04152 0 1.34 0.298467 1.34 0.666667C1.34 1.03487 1.04152 1.33333 0.673333 1.33333H0.666667C0.29848 1.33333 0 1.03487 0 0.666667Z"
-					fill="currentColor"
-				/>
-			</svg>
-			<svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-				<path
-					fillRule="evenodd"
-					clipRule="evenodd"
-					d="M2.20602 3.45529C2.36874 3.29257 2.63256 3.29257 2.79528 3.45529L5.00065 5.66067L7.20603 3.45529C7.36873 3.29257 7.63257 3.29257 7.79528 3.45529C7.95798 3.61801 7.95798 3.88183 7.79528 4.04455L5.29528 6.54454C5.13257 6.70725 4.86873 6.70725 4.70603 6.54454L2.20602 4.04455C2.04331 3.88183 2.04331 3.61801 2.20602 3.45529Z"
-					fill="currentColor"
-					fillOpacity="0.64"
-				/>
-			</svg>
-		</span>
-	);
-
-	const ToolbarAlignIcon = () => (
-		<span
-			className="textarea__toolbarCompositeIcon textarea__toolbarCompositeIcon--align"
-			aria-hidden="true"
-		>
-			<svg width="6" height="2" viewBox="0 0 6 2" fill="none">
-				<path
-					fillRule="evenodd"
-					clipRule="evenodd"
-					d="M0 0.666667C0 0.29848 0.29848 0 0.666667 0H5.33333C5.70153 0 6 0.29848 6 0.666667C6 1.03485 5.70153 1.33333 5.33333 1.33333H0.666667C0.29848 1.33333 0 1.03485 0 0.666667Z"
-					fill="currentColor"
-				/>
-			</svg>
-			<svg width="2" height="12" viewBox="0 0 2 12" fill="none">
-				<path
-					fillRule="evenodd"
-					clipRule="evenodd"
-					d="M0.666667 0C1.03485 0 1.33333 0.29848 1.33333 0.666667V11.3333C1.33333 11.7015 1.03486 12 0.666667 12C0.29848 12 0 11.7015 0 11.3333V0.666667C0 0.29848 0.29848 0 0.666667 0Z"
-					fill="currentColor"
-				/>
-			</svg>
-			<svg width="9" height="2" viewBox="0 0 9 2" fill="none">
-				<path
-					fillRule="evenodd"
-					clipRule="evenodd"
-					d="M0 0.666667C0 0.298467 0.29848 0 0.666667 0H8C8.3682 0 8.66667 0.298467 8.66667 0.666667C8.66667 1.03487 8.3682 1.33333 8 1.33333H0.666667C0.29848 1.33333 0 1.03487 0 0.666667Z"
-					fill="currentColor"
-				/>
-			</svg>
-			<svg width="6" height="2" viewBox="0 0 6 2" fill="none">
-				<path
-					fillRule="evenodd"
-					clipRule="evenodd"
-					d="M0 0.666667C0 0.298467 0.29848 0 0.666667 0H5.33333C5.70153 0 6 0.298467 6 0.666667C6 1.03487 5.70153 1.33333 5.33333 1.33333H0.666667C0.29848 1.33333 0 1.03487 0 0.666667Z"
-					fill="currentColor"
-				/>
-			</svg>
-		</span>
-	);
-
-	const ToolbarIndentIcon = () => (
-		<span
-			className="textarea__toolbarCompositeIcon textarea__toolbarCompositeIcon--indent"
-			aria-hidden="true"
-		>
-			<svg width="4" height="6" viewBox="0 0 4 6" fill="none">
-				<path
-					fillRule="evenodd"
-					clipRule="evenodd"
-					d="M3.13807 0.19526C3.39842 0.455613 3.39842 0.87772 3.13807 1.13807L1.60947 2.66667L3.13807 4.19526C3.39842 4.45561 3.39842 4.87772 3.13807 5.13807C2.87772 5.3984 2.45561 5.3984 2.19526 5.13807L0.19526 3.13807C-0.0650867 2.87772 -0.0650867 2.45561 0.19526 2.19526L2.19526 0.19526C2.45561 -0.0650867 2.87772 -0.0650867 3.13807 0.19526Z"
-					fill="currentColor"
-				/>
-			</svg>
-			<svg width="4" height="6" viewBox="0 0 4 6" fill="none">
-				<path
-					fillRule="evenodd"
-					clipRule="evenodd"
-					d="M0.195265 0.19526C0.455598 -0.0650867 0.877732 -0.0650867 1.13806 0.19526L3.13807 2.19526C3.3984 2.45561 3.3984 2.87772 3.13807 3.13807L1.13806 5.13807C0.877732 5.3984 0.455598 5.3984 0.195265 5.13807C-0.0650883 4.87772 -0.0650883 4.45561 0.195265 4.19526L1.72387 2.66667L0.195265 1.13807C-0.0650883 0.87772 -0.0650883 0.455613 0.195265 0.19526Z"
-					fill="currentColor"
-				/>
-			</svg>
-			<svg width="14" height="12" viewBox="0 0 14 12" fill="none">
-				<path
-					fillRule="evenodd"
-					clipRule="evenodd"
-					d="M10 0.666667C10 0.29848 10.2985 0 10.6667 0H11.3333C12.4379 0 13.3333 0.895433 13.3333 2V10C13.3333 11.1046 12.4379 12 11.3333 12H2C0.895433 12 0 11.1046 0 10V6C0 5.6318 0.29848 5.33333 0.666667 5.33333C1.03485 5.33333 1.33333 5.6318 1.33333 6V10C1.33333 10.3682 1.63181 10.6667 2 10.6667H11.3333C11.7015 10.6667 12 10.3682 12 10V2C12 1.63181 11.7015 1.33333 11.3333 1.33333H10.6667C10.2985 1.33333 10 1.03485 10 0.666667Z"
-					fill="currentColor"
-				/>
-			</svg>
-		</span>
-	);
-
-	const ToolbarAlignLeftIcon = () => (
-		<span
-			className="textarea__toolbarAlignOptionIcon textarea__toolbarAlignOptionIcon--left"
-			aria-hidden="true"
-		/>
-	);
-
-	const ToolbarAlignCenterIcon = () => (
-		<span
-			className="textarea__toolbarAlignOptionIcon textarea__toolbarAlignOptionIcon--center"
-			aria-hidden="true"
-		/>
-	);
-
-	const ToolbarAlignRightIcon = () => (
-		<span
-			className="textarea__toolbarAlignOptionIcon textarea__toolbarAlignOptionIcon--right"
-			aria-hidden="true"
-		/>
-	);
-
-	const ToolbarNumberedListIcon = () => (
-		<span
-			className="textarea__toolbarNumberedListIcon"
-			aria-hidden="true"
-		/>
-	);
-
-	const ToolbarCodeBlockIcon = () => (
-		<span className="textarea__toolbarCodeBlockIcon" aria-hidden="true" />
-	);
-
-	const ToolbarBoldIcon = () => (
-		<svg
-			width="16"
-			height="16"
-			viewBox="0 0 16 16"
-			fill="none"
-			aria-hidden="true"
-		>
-			<path
-				fillRule="evenodd"
-				clipRule="evenodd"
-				d="M4 1.66675C3.44771 1.66675 3 2.11446 3 2.66675V13.3334C3 13.8857 3.44771 14.3334 4 14.3334H10C10.9725 14.3334 11.9051 13.9471 12.5927 13.2595C13.2803 12.5718 13.6667 11.6392 13.6667 10.6667C13.6667 9.69428 13.2803 8.76168 12.5927 8.07401C12.4521 7.93341 12.3012 7.80535 12.1419 7.69068C12.694 7.03288 13 6.19894 13 5.33341C13 4.36095 12.6137 3.42832 11.9261 2.74069C11.2384 2.05305 10.3058 1.66675 9.33333 1.66675H4ZM9.33333 7.00008C9.77533 7.00008 10.1993 6.82448 10.5119 6.51193C10.8244 6.19937 11 5.77544 11 5.33341C11 4.89139 10.8244 4.46746 10.5119 4.1549C10.1993 3.84234 9.77533 3.66675 9.33333 3.66675H5V7.00008H9.33333ZM5 12.3334V9.00008H10C10.442 9.00008 10.8659 9.17568 11.1785 9.48821C11.4911 9.80081 11.6667 10.2247 11.6667 10.6667C11.6667 11.1087 11.4911 11.5327 11.1785 11.8453C10.8659 12.1578 10.442 12.3334 10 12.3334H5Z"
-				fill="currentColor"
-			/>
-		</svg>
-	);
-
-	const ToolbarListPlusIcon = () => (
-		<span
-			className="textarea__toolbarCompositeIcon textarea__toolbarCompositeIcon--strike"
-			aria-hidden="true"
-		>
-			<svg width="8" height="4" viewBox="0 0 8 4" fill="none">
-				<path
-					d="M2.6679 2.03548e-07H7.33438C7.70258 2.03548e-07 8.00104 0.29848 8.00104 0.666667C8.00104 1.03486 7.70258 1.33333 7.33438 1.33333H2.66772C2.45435 1.33322 2.24372 1.38432 2.0542 1.48233C1.86468 1.58034 1.70144 1.7224 1.57821 1.89658C1.45498 2.07076 1.37534 2.27197 1.346 2.48331C1.31666 2.69465 1.33846 2.90995 1.40959 3.11111C1.53232 3.45825 1.3504 3.83915 1.00327 3.96187C0.656137 4.0846 0.275244 3.90269 0.152511 3.55555C0.0102641 3.15323 -0.0333493 2.72264 0.0253374 2.29996C0.0840174 1.87728 0.243284 1.47486 0.489751 1.12649C0.736211 0.778134 1.06268 0.494007 1.44173 0.297987C1.82068 0.10202 2.24129 -0.000166463 2.6679 2.03548e-07Z"
-					fill="currentColor"
-				/>
-			</svg>
-			<svg width="12" height="7" viewBox="0 0 12 7" fill="none">
-				<path
-					d="M10 1.33333H11.3333C11.7015 1.33333 12 1.03487 12 0.666667C12 0.298467 11.7015 0 11.3333 0H0.666667C0.29848 0 0 0.298467 0 0.666667C0 1.03487 0.29848 1.33333 0.666667 1.33333H7.33333C7.86373 1.33333 8.37247 1.54407 8.74753 1.91913C9.1226 2.2942 9.33333 2.80293 9.33333 3.33333C9.33333 3.86373 9.1226 4.37247 8.74753 4.74753C8.37247 5.1226 7.86373 5.33333 7.33333 5.33333H2C1.63181 5.33333 1.33333 5.6318 1.33333 6C1.33333 6.3682 1.63181 6.66667 2 6.66667H7.33333C8.2174 6.66667 9.06527 6.31547 9.69033 5.69033C10.3155 5.06527 10.6667 4.2174 10.6667 3.33333C10.6667 2.60793 10.4302 1.90693 10 1.33333Z"
-					fill="currentColor"
-				/>
-			</svg>
-		</span>
-	);
-
-	const ToolbarItalicIcon = () => (
-		<svg
-			width="16"
-			height="16"
-			viewBox="0 0 16 16"
-			fill="none"
-			aria-hidden="true"
-		>
-			<path
-				d="M10.0141 1.99992H12.666C13.0342 1.99992 13.3327 2.2984 13.3327 2.66659C13.3327 3.03477 13.0342 3.33325 12.666 3.33325H10.4613L6.96135 12.6666H9.33268C9.70088 12.6666 9.99935 12.9651 9.99935 13.3333C9.99935 13.7015 9.70088 13.9999 9.33268 13.9999H6.01547C6.0047 14.0002 5.99389 14.0002 5.98306 13.9999H3.33268C2.9645 13.9999 2.66602 13.7015 2.66602 13.3333C2.66602 12.9651 2.9645 12.6666 3.33268 12.6666H5.53738L9.03735 3.33325H6.66602C6.29783 3.33325 5.99935 3.03477 5.99935 2.66659C5.99935 2.2984 6.29783 1.99992 6.66602 1.99992H9.98482C9.99455 1.99971 10.0043 1.9997 10.0141 1.99992Z"
-				fill="currentColor"
-			/>
-		</svg>
-	);
-
-	const ToolbarListTextIcon = () => (
-		<svg
-			width="16"
-			height="16"
-			viewBox="0 0 16 16"
-			fill="none"
-			xmlns="http://www.w3.org/2000/svg"
-		>
-			<path
-				d="M10.3025 2.86545C10.4123 2.51402 10.2164 2.14011 9.86505 2.03028C9.51365 1.92046 9.13971 2.11632 9.02985 2.46775L5.69654 13.1344C5.58672 13.4859 5.78258 13.8598 6.13401 13.9696C6.48544 14.0794 6.85938 13.8835 6.96918 13.5321L10.3025 2.86545Z"
-				fill="#4B515A"
-			/>
-			<path
-				d="M4.47076 4.86201C4.7311 5.12236 4.7311 5.54447 4.47076 5.80482L2.27549 8.00008L4.47076 10.1953C4.7311 10.4557 4.7311 10.8778 4.47076 11.1381C4.2104 11.3985 3.7883 11.3985 3.52794 11.1381L0.861276 8.47148C0.600929 8.21115 0.600929 7.78901 0.861276 7.52868L3.52794 4.86201C3.7883 4.60166 4.2104 4.60166 4.47076 4.86201Z"
-				fill="#4B515A"
-			/>
-			<path
-				d="M11.5292 4.86201C11.7896 4.60166 12.2117 4.60166 12.472 4.86201L15.1387 7.52868C15.399 7.78901 15.399 8.21115 15.1387 8.47148L12.472 11.1381C12.2117 11.3985 11.7896 11.3985 11.5292 11.1381C11.2689 10.8778 11.2689 10.4557 11.5292 10.1953L13.7245 8.00008L11.5292 5.80482C11.2689 5.54447 11.2689 5.12236 11.5292 4.86201Z"
-				fill="#4B515A"
-			/>
-		</svg>
-	);
-
-	const ToolbarPenIcon = () => (
-		<svg
-			width="16"
-			height="16"
-			viewBox="0 0 16 16"
-			fill="none"
-			aria-hidden="true"
-		>
-			<path
-				fillRule="evenodd"
-				clipRule="evenodd"
-				d="M4.66667 2.66667C4.66667 2.29848 4.36819 2 4 2C3.63181 2 3.33333 2.29848 3.33333 2.66667V6.66667C3.33333 7.90433 3.825 9.09133 4.70017 9.96647C5.57534 10.8417 6.76233 11.3333 8 11.3333C9.23767 11.3333 10.4247 10.8417 11.2998 9.96647C12.175 9.09133 12.6667 7.90433 12.6667 6.66667V2.66667C12.6667 2.29848 12.3682 2 12 2C11.6318 2 11.3333 2.29848 11.3333 2.66667V6.66667C11.3333 7.55073 10.9821 8.3986 10.357 9.02367C9.73193 9.6488 8.88407 10 8 10C7.11593 10 6.2681 9.6488 5.64298 9.02367C5.01785 8.3986 4.66667 7.55073 4.66667 6.66667V2.66667ZM2.66667 12.6667C2.29848 12.6667 2 12.9651 2 13.3333C2 13.7015 2.29848 14 2.66667 14H13.3333C13.7015 14 14 13.7015 14 13.3333C14 12.9651 13.7015 12.6667 13.3333 12.6667H2.66667Z"
-				fill="currentColor"
-			/>
-		</svg>
-	);
-
-	const ToolbarFacePlusIcon = () => (
-		<svg
-			width="16"
-			height="16"
-			viewBox="0 0 16 16"
-			fill="none"
-			aria-hidden="true"
-		>
-			<path
-				fillRule="evenodd"
-				clipRule="evenodd"
-				d="M9.80545 3.13807C10.0658 2.87772 10.0658 2.45561 9.80545 2.19526C9.54512 1.93491 9.12298 1.93491 8.86265 2.19526L5.79594 5.26191L5.79128 5.26667C5.42482 5.64053 5.21956 6.14316 5.21956 6.66667C5.21956 6.8204 5.23726 6.97227 5.27152 7.11967L1.52924 10.8619C1.40422 10.9869 1.33398 11.1565 1.33398 11.3333V13.3333C1.33398 13.7015 1.63246 14 2.00065 14H8.00065C8.17745 14 8.34705 13.9297 8.47205 13.8047L10.2143 12.0625C10.3617 12.0968 10.5137 12.1145 10.6674 12.1145C11.1909 12.1145 11.6935 11.9093 12.0674 11.5428L15.1388 8.4714C15.3991 8.21107 15.3991 7.78893 15.1388 7.5286C14.8785 7.26827 14.4563 7.26827 14.196 7.5286L11.1321 10.5925C11.0077 10.7135 10.841 10.7811 10.6674 10.7811C10.4938 10.7811 10.3271 10.7135 10.2027 10.5925L6.74152 7.13133C6.6206 7.00693 6.5529 6.84027 6.5529 6.66667C6.5529 6.49309 6.6206 6.32639 6.74152 6.20198L9.80545 3.13807ZM9.05785 11.3333L6.00068 8.27613L2.66732 11.6095V12.6667H7.72452L9.05785 11.3333Z"
-				fill="currentColor"
-			/>
-		</svg>
-	);
-
-	const ToolbarImageAddIcon = () => (
-		<span
-			className="textarea__toolbarCompositeIcon textarea__toolbarCompositeIcon--link"
-			aria-hidden="true"
-		>
-			<svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-				<path
-					d="M5.33053 0.000151198C4.28173 -0.00896214 3.27133 0.394218 2.51687 1.12285L2.51 1.1296L1.36333 2.2696C1.10227 2.52918 1.101 2.9513 1.3606 3.2124C1.6202 3.47351 2.04227 3.47474 2.3034 3.21515L3.44647 2.07873C3.94907 1.59498 4.62127 1.32737 5.31893 1.33344C6.01813 1.33951 6.68693 1.61996 7.18133 2.11438C7.6758 2.6088 7.95627 3.27764 7.96233 3.97683C7.9684 4.6742 7.701 5.34611 7.21767 5.84863L5.222 7.84429C4.9516 8.11476 4.6262 8.32396 4.26793 8.45762C3.90967 8.59122 3.52687 8.64629 3.1454 8.61896C2.764 8.59162 2.39293 8.48263 2.0574 8.29929C1.7218 8.11596 1.4296 7.86262 1.20053 7.55636C0.979999 7.26156 0.562219 7.20136 0.267386 7.42189C-0.0274476 7.64242 -0.0876745 8.06022 0.132866 8.35502C0.476426 8.81436 0.914732 9.19436 1.41813 9.46936C1.92147 9.74436 2.47807 9.90789 3.0502 9.94889C3.62227 9.98989 4.19653 9.90729 4.73393 9.70683C5.27133 9.50636 5.75933 9.19269 6.16487 8.78702L8.1648 6.78709L8.17287 6.77882C8.90153 6.02442 9.30473 5.01403 9.2956 3.96524C9.28647 2.91646 8.8658 1.91321 8.1242 1.17158C7.38253 0.429945 6.37927 0.00926453 5.33053 0.000151198Z"
-					fill="currentColor"
-				/>
-			</svg>
-			<svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-				<path
-					d="M6.24554 0.0102193C5.67345 -0.0307541 5.09922 0.0517926 4.56181 0.252259C4.02444 0.452719 3.53638 0.766473 3.13088 1.17209L1.13097 3.17202L1.12285 3.18029C0.394218 3.93469 -0.00896214 4.94509 0.000151198 5.99389C0.00926453 7.04269 0.429945 8.04589 1.17158 8.78755C1.9132 9.52915 2.91646 9.94982 3.96524 9.95895C5.01403 9.96809 6.02447 9.56489 6.77887 8.83629L6.78714 8.82815L7.92714 7.68815C8.18747 7.42782 8.18747 7.00569 7.92714 6.74535C7.66674 6.48495 7.24467 6.48495 6.98427 6.74535L5.84862 7.88102C5.3461 8.36435 4.67419 8.63175 3.97683 8.62569C3.27764 8.61962 2.6088 8.33915 2.11438 7.84475C1.61996 7.35029 1.33951 6.68149 1.33344 5.98229C1.32738 5.28489 1.59474 4.61302 2.0781 4.11049L4.07386 2.11475C4.3442 1.84429 4.66954 1.63515 5.02781 1.50149C5.38609 1.36789 5.76891 1.31283 6.15034 1.34015C6.53174 1.36749 6.9028 1.47649 7.23834 1.65982C7.57394 1.84315 7.86614 2.09655 8.0952 2.40275C8.31574 2.69755 8.73354 2.75782 9.02834 2.53722C9.3232 2.31669 9.3834 1.89895 9.16287 1.60409C8.81934 1.14479 8.381 0.764739 7.87767 0.489739C7.37427 0.214733 6.81767 0.0511926 6.24554 0.0102193Z"
-					fill="currentColor"
-				/>
-			</svg>
-		</span>
-	);
-
-	const ToolbarToggleIcon = () => (
-		<svg
-			width="16"
-			height="16"
-			viewBox="0 0 16 16"
-			fill="none"
-			xmlns="http://www.w3.org/2000/svg"
-		>
-			<path
-				fill-rule="evenodd"
-				clip-rule="evenodd"
-				d="M2.19526 4.86201C2.45561 4.60166 2.87772 4.60166 3.13807 4.86201L8.4714 10.1953C8.73173 10.4557 8.73173 10.8778 8.4714 11.1381C8.21107 11.3985 7.78893 11.3985 7.5286 11.1381L2.19526 5.80482C1.93491 5.54447 1.93491 5.12236 2.19526 4.86201Z"
-				fill="#4B515A"
-			/>
-			<path
-				fill-rule="evenodd"
-				clip-rule="evenodd"
-				d="M8.4714 4.86201C8.73173 5.12236 8.73173 5.54447 8.4714 5.80482L3.13807 11.1381C2.87772 11.3985 2.45561 11.3985 2.19526 11.1381C1.93491 10.8778 1.93491 10.4557 2.19526 10.1953L7.5286 4.86201C7.78893 4.60166 8.21107 4.60166 8.4714 4.86201Z"
-				fill="#4B515A"
-			/>
-			<path
-				fill-rule="evenodd"
-				clip-rule="evenodd"
-				d="M11.6048 9.59978C12.0185 9.36592 12.4999 9.28125 12.9686 9.35992C13.4373 9.43865 13.8647 9.67598 14.1793 10.0322L14.1848 10.0384C14.4955 10.3992 14.6662 10.8603 14.6662 11.3334C14.6662 12.055 14.2637 12.5602 13.8491 12.8937C13.4622 13.205 12.9901 13.4274 12.6547 13.5854C12.6421 13.5914 12.6296 13.5973 12.6173 13.6031C12.2977 13.7538 12.1865 13.8546 12.1277 13.9454C12.1177 13.9609 12.1075 13.9788 12.0973 14.0001H13.9995C14.3677 14.0001 14.6662 14.2986 14.6662 14.6668C14.6662 15.035 14.3677 15.3334 13.9995 15.3334H11.3329C10.9647 15.3334 10.6662 15.035 10.6662 14.6668C10.6662 14.114 10.7446 13.6288 11.0081 13.2214C11.2726 12.8124 11.6614 12.5798 12.0485 12.3972C12.4181 12.2228 12.7582 12.0602 13.0133 11.8548C13.2554 11.6601 13.3329 11.4986 13.3329 11.3334C13.3329 11.1813 13.2779 11.0302 13.1771 10.9116C13.0651 10.7862 12.9137 10.7027 12.7478 10.6748C12.581 10.6468 12.4097 10.6768 12.2623 10.7597C12.1191 10.842 12.0132 10.97 11.961 11.1168C11.8377 11.4637 11.4565 11.645 11.1095 11.5216C10.7626 11.3982 10.5814 11.017 10.7047 10.6701C10.8657 10.2174 11.186 9.83905 11.6021 9.60132L11.6048 9.59978Z"
-				fill="#4B515A"
-			/>
-		</svg>
-	);
-
-	const ToolbarSuperscriptIcon = () => (
-		<svg
-			width="16"
-			height="16"
-			viewBox="0 0 16 16"
-			fill="none"
-			xmlns="http://www.w3.org/2000/svg"
-		>
-			<path
-				fill-rule="evenodd"
-				clip-rule="evenodd"
-				d="M8.4714 4.86201C8.73173 5.12236 8.73173 5.54447 8.4714 5.80482L3.13807 11.1381C2.87772 11.3985 2.45561 11.3985 2.19526 11.1381C1.93491 10.8778 1.93491 10.4557 2.19526 10.1953L7.5286 4.86201C7.78893 4.60166 8.21107 4.60166 8.4714 4.86201Z"
-				fill="#4B515A"
-			/>
-			<path
-				fill-rule="evenodd"
-				clip-rule="evenodd"
-				d="M2.19526 4.86201C2.45561 4.60166 2.87772 4.60166 3.13807 4.86201L8.4714 10.1953C8.73173 10.4557 8.73173 10.8778 8.4714 11.1381C8.21107 11.3985 7.78893 11.3985 7.5286 11.1381L2.19526 5.80482C1.93491 5.54447 1.93491 5.12236 2.19526 4.86201Z"
-				fill="#4B515A"
-			/>
-			<path
-				fill-rule="evenodd"
-				clip-rule="evenodd"
-				d="M11.6029 0.937713C12.0159 0.70304 12.4971 0.61756 12.9657 0.695627C13.4343 0.773693 13.8617 1.01055 14.1763 1.36647L14.1793 1.36979C14.495 1.73165 14.6662 2.19281 14.6662 2.66802C14.6662 3.39053 14.263 3.89551 13.848 4.22859C13.4639 4.53687 12.9956 4.75783 12.6623 4.91507C12.6471 4.92221 12.6323 4.92922 12.6177 4.9361C12.2987 5.08689 12.1871 5.18768 12.128 5.27896C12.1181 5.29437 12.1079 5.31223 12.0977 5.33335H13.9995C14.3677 5.33335 14.6662 5.63183 14.6662 6.00002C14.6662 6.36821 14.3677 6.66667 13.9995 6.66667H11.3329C10.9647 6.66667 10.6662 6.36821 10.6662 6.00002C10.6662 5.44671 10.7451 4.9617 11.0087 4.55441C11.2733 4.14569 11.6618 3.91314 12.0481 3.73061C12.4183 3.55565 12.7579 3.39383 13.0134 3.18877C13.2554 2.99453 13.3329 2.83351 13.3329 2.66802C13.3329 2.51461 13.2781 2.36577 13.1759 2.24788C13.0641 2.12216 12.9126 2.03849 12.7465 2.01083C12.5799 1.98306 12.4087 2.01345 12.2617 2.09689C12.117 2.17932 12.0123 2.30551 11.9599 2.45038C11.8349 2.79669 11.4529 2.97609 11.1065 2.85108C10.7602 2.72607 10.5808 2.34397 10.7058 1.99766C10.8682 1.54793 11.1877 1.17395 11.6029 0.937713Z"
-				fill="#4B515A"
-			/>
-		</svg>
-	);
-
-	const ToolbarFaceIcon = () => (
-		<svg
-			width="12"
-			height="12"
-			viewBox="0 0 12 12"
-			fill="none"
-			aria-hidden="true"
-		>
-			<path
-				d="M1.33333 8C0.966667 8 0.652778 7.86944 0.391667 7.60833C0.130556 7.34722 0 7.03333 0 6.66667V1.33333C0 0.966667 0.130556 0.652778 0.391667 0.391667C0.652778 0.130556 0.966667 0 1.33333 0H10.6667C11.0333 0 11.3472 0.130556 11.6083 0.391667C11.8694 0.652778 12 0.966667 12 1.33333V6.66667C12 7.03333 11.8694 7.34722 11.6083 7.60833C11.3472 7.86944 11.0333 8 10.6667 8H1.33333ZM1.33333 6.66667H10.6667V1.33333H1.33333V6.66667ZM1.33333 12C0.966667 12 0.652778 11.8694 0.391667 11.6083C0.130556 11.3472 0 11.0333 0 10.6667V10C0 9.63333 0.130556 9.31944 0.391667 9.05833C0.652778 8.79722 0.966667 8.66667 1.33333 8.66667H10.6667C11.0333 8.66667 11.3472 8.79722 11.6083 9.05833C11.8694 9.31944 12 9.63333 12 10V10.6667C12 11.0333 11.8694 11.3472 11.6083 11.6083C11.3472 11.8694 11.0333 12 10.6667 12H1.33333ZM1.33333 10.6667H10.6667V10H1.33333V10.6667Z"
-				fill="currentColor"
-			/>
-		</svg>
-	);
-
-	const ToolbarAddIcon = () => (
-		<svg
-			width="65"
-			height="32"
-			viewBox="0 0 65 32"
-			fill="none"
-			xmlns="http://www.w3.org/2000/svg"
-		>
-			<path
-				fill-rule="evenodd"
-				clip-rule="evenodd"
-				d="M21.333 9.33341C21.333 8.96523 21.0345 8.66675 20.6663 8.66675C20.2981 8.66675 19.9997 8.96523 19.9997 9.33341V10.6667H18.6663C18.2981 10.6667 17.9997 10.9652 17.9997 11.3334C17.9997 11.7016 18.2981 12.0001 18.6663 12.0001H19.9997V13.3334C19.9997 13.7016 20.2981 14.0001 20.6663 14.0001C21.0345 14.0001 21.333 13.7016 21.333 13.3334V12.0001H22.6663C23.0345 12.0001 23.333 11.7016 23.333 11.3334C23.333 10.9652 23.0345 10.6667 22.6663 10.6667H21.333V9.33341ZM11.333 10.6667C11.1562 10.6667 10.9866 10.737 10.8616 10.862C10.7366 10.987 10.6663 11.1566 10.6663 11.3334V20.6667C10.6663 20.8435 10.7366 21.0131 10.8616 21.1381C10.9866 21.2631 11.1562 21.3334 11.333 21.3334H11.7235L17.5857 15.4713C17.9607 15.0963 18.4693 14.8857 18.9997 14.8857C19.53 14.8857 20.0386 15.0963 20.4137 15.4713L21.333 16.3906V16.0001C21.333 15.6319 21.6315 15.3334 21.9997 15.3334C22.3679 15.3334 22.6663 15.6319 22.6663 16.0001V17.9987V18.0014V20.6667C22.6663 21.1972 22.4556 21.7059 22.0805 22.0809C21.7055 22.456 21.1968 22.6667 20.6663 22.6667H12.0011H11.9982H11.333C10.8026 22.6667 10.2939 22.456 9.91879 22.0809C9.54372 21.7059 9.33301 21.1972 9.33301 20.6667V11.3334C9.33301 10.803 9.54372 10.2943 9.91879 9.9192C10.2939 9.54413 10.8026 9.33341 11.333 9.33341H15.9997C16.3679 9.33341 16.6663 9.63189 16.6663 10.0001C16.6663 10.3683 16.3679 10.6667 15.9997 10.6667H11.333ZM13.6092 21.3334H20.6663C20.8431 21.3334 21.0127 21.2631 21.1377 21.1381C21.2627 21.0131 21.333 20.8435 21.333 20.6667V18.2762L19.471 16.4142C19.346 16.2893 19.1764 16.219 18.9997 16.219C18.8229 16.219 18.6534 16.2892 18.5284 16.4141L13.6092 21.3334ZM12.5855 12.5859C12.9605 12.2108 13.4692 12.0001 13.9997 12.0001C14.5301 12.0001 15.0388 12.2108 15.4139 12.5859C15.7889 12.9609 15.9997 13.4696 15.9997 14.0001C15.9997 14.5305 15.7889 15.0392 15.4139 15.4143C15.0388 15.7893 14.5301 16.0001 13.9997 16.0001C13.4692 16.0001 12.9605 15.7893 12.5855 15.4143C12.2104 15.0392 11.9997 14.5305 11.9997 14.0001C11.9997 13.4696 12.2104 12.9609 12.5855 12.5859ZM13.9997 13.3334C13.8229 13.3334 13.6533 13.4037 13.5283 13.5287C13.4032 13.6537 13.333 13.8233 13.333 14.0001C13.333 14.1769 13.4032 14.3465 13.5283 14.4715C13.6533 14.5965 13.8229 14.6667 13.9997 14.6667C14.1765 14.6667 14.3461 14.5965 14.4711 14.4715C14.5961 14.3465 14.6663 14.1769 14.6663 14.0001C14.6663 13.8233 14.5961 13.6537 14.4711 13.5287C14.3461 13.4037 14.1765 13.3334 13.9997 13.3334Z"
-				fill="#4B515A"
-			/>
-			<path
-				d="M31.9787 21H30.348L34.0121 10.8182H35.7869L39.451 21H37.8203L34.9418 12.6676H34.8622L31.9787 21ZM32.2521 17.0128H37.5419V18.3054H32.2521V17.0128ZM43.5376 21.1491C42.9212 21.1491 42.371 20.9917 41.8871 20.6768C41.4065 20.3587 41.0286 19.9062 40.7536 19.3196C40.4818 18.7296 40.3459 18.022 40.3459 17.1967C40.3459 16.3714 40.4834 15.6655 40.7585 15.0788C41.0369 14.4922 41.4181 14.0431 41.902 13.7315C42.3859 13.42 42.9344 13.2642 43.5476 13.2642C44.0215 13.2642 44.4027 13.3438 44.6911 13.5028C44.9827 13.6586 45.2081 13.8409 45.3672 14.0497C45.5296 14.2585 45.6555 14.4425 45.745 14.6016H45.8345V10.8182H47.321V21H45.8693V19.8118H45.745C45.6555 19.9742 45.5263 20.1598 45.3572 20.3686C45.1915 20.5774 44.9628 20.7597 44.6712 20.9155C44.3795 21.0713 44.0017 21.1491 43.5376 21.1491ZM43.8658 19.8814C44.2933 19.8814 44.6546 19.7687 44.9496 19.5433C45.2479 19.3146 45.4732 18.9981 45.6257 18.5938C45.7815 18.1894 45.8594 17.7187 45.8594 17.1818C45.8594 16.6515 45.7831 16.1875 45.6307 15.7898C45.4782 15.392 45.2545 15.0821 44.9595 14.8601C44.6645 14.638 44.3 14.527 43.8658 14.527C43.4183 14.527 43.0455 14.643 42.7472 14.875C42.4489 15.107 42.2235 15.4235 42.071 15.8246C41.9219 16.2256 41.8473 16.678 41.8473 17.1818C41.8473 17.6922 41.9235 18.1513 42.076 18.5589C42.2285 18.9666 42.4538 19.2898 42.7521 19.5284C43.0537 19.7637 43.425 19.8814 43.8658 19.8814ZM52.3013 21.1491C51.6848 21.1491 51.1346 20.9917 50.6507 20.6768C50.1702 20.3587 49.7923 19.9062 49.5172 19.3196C49.2454 18.7296 49.1096 18.022 49.1096 17.1967C49.1096 16.3714 49.2471 15.6655 49.5222 15.0788C49.8006 14.4922 50.1818 14.0431 50.6657 13.7315C51.1496 13.42 51.6981 13.2642 52.3113 13.2642C52.7852 13.2642 53.1664 13.3438 53.4547 13.5028C53.7464 13.6586 53.9718 13.8409 54.1309 14.0497C54.2933 14.2585 54.4192 14.4425 54.5087 14.6016H54.5982V10.8182H56.0847V21H54.633V19.8118H54.5087C54.4192 19.9742 54.29 20.1598 54.1209 20.3686C53.9552 20.5774 53.7265 20.7597 53.4348 20.9155C53.1432 21.0713 52.7653 21.1491 52.3013 21.1491ZM52.6294 19.8814C53.057 19.8814 53.4183 19.7687 53.7132 19.5433C54.0115 19.3146 54.2369 18.9981 54.3894 18.5938C54.5452 18.1894 54.623 17.7187 54.623 17.1818C54.623 16.6515 54.5468 16.1875 54.3944 15.7898C54.2419 15.392 54.0182 15.0821 53.7232 14.8601C53.4282 14.638 53.0636 14.527 52.6294 14.527C52.182 14.527 51.8091 14.643 51.5108 14.875C51.2125 15.107 50.9872 15.4235 50.8347 15.8246C50.6855 16.2256 50.611 16.678 50.611 17.1818C50.611 17.6922 50.6872 18.1513 50.8397 18.5589C50.9921 18.9666 51.2175 19.2898 51.5158 19.5284C51.8174 19.7637 52.1886 19.8814 52.6294 19.8814Z"
-				fill="#4B515A"
-				fill-opacity="0.69"
-			/>
-		</svg>
-	);
-
-	const ToolbarChevronRightIcon = () => (
-		<svg
-			width="12"
-			height="12"
-			viewBox="0 0 12 12"
-			fill="none"
-			xmlns="http://www.w3.org/2000/svg"
-		>
-			<path
-				d="M0 12V7.33333C0 6.96514 0.298477 6.66667 0.666667 6.66667C1.03486 6.66667 1.33333 6.96514 1.33333 7.33333V9.73333L9.73333 1.33333H7.33333C6.96514 1.33333 6.66667 1.03486 6.66667 0.666667C6.66667 0.298477 6.96514 0 7.33333 0H12V4.66667C12 5.03486 11.7015 5.33333 11.3333 5.33333C10.9651 5.33333 10.6667 5.03486 10.6667 4.66667V2.26667L2.26667 10.6667H4.66667C5.03486 10.6667 5.33333 10.9651 5.33333 11.3333C5.33333 11.7015 5.03486 12 4.66667 12H0Z"
-				fill="#4B515A"
-			/>
-		</svg>
-	);
-
-	const ToolbarScrollRightIcon = () => (
-		<svg
-			width="12"
-			height="12"
-			viewBox="0 0 12 12"
-			fill="none"
-			aria-hidden="true"
-		>
-			<path
-				d="M4.5 2L8.5 6L4.5 10"
-				stroke="currentColor"
-				strokeWidth="1.7"
-				strokeLinecap="round"
-				strokeLinejoin="round"
-			/>
-		</svg>
-	);
-
 	const ComposerMobileBackIcon = () => (
 		<svg
 			width="5"
@@ -892,9 +378,8 @@ export const MessageSubmitInterfaceComponent = ({
 		};
 	}, []);
 	const tenant = useTenant();
-	const history = useHistory();
+	const navigate = useNavigate();
 	const location = useLocation();
-	const { getDevToolbarOption } = useDevToolbar();
 
 	const textareaInputRef = useRef<HTMLDivElement>(null);
 	const inputWrapperRef = useRef<HTMLSpanElement>(null);
@@ -913,22 +398,28 @@ export const MessageSubmitInterfaceComponent = ({
 		useContext(ActiveSessionContext);
 	const { type, path: listPath } = useContext(SessionTypeContext);
 	const { isE2eeEnabled } = useContext(E2EEContext);
+	const { matrixClientService } = useMatrixClient();
+	const resolvedChatSession = useMemo(
+		() => chatTransportService.resolveSession(activeSession),
+		[activeSession]
+	);
 
 	const [activeInfo, setActiveInfo] = useState(null);
 	const [attachmentSelected, setAttachmentSelected] = useState<File | null>(
 		null
 	);
-	const [uploadProgress, setUploadProgress] = useState(null);
+	const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
 	const [attachmentUpload, setAttachmentUpload] =
-		useState<XMLHttpRequest | null>(null);
+		useState<AttachmentUploadControl | null>(null);
 	const [editorState, setEditorState] = useState(EditorState.createEmpty());
 	const [composerText, setComposerText] = useState('');
 	const [highlightedSnippet, setHighlightedSnippet] = useState<string | null>(
 		null
 	);
 	const composerRef = useRef<TipTapComposerRef | null>(null);
-	const [isRichtextActive, setIsRichtextActive] = useState(true);
+	// Rich text mode is permanently on; only the value is needed.
+	const [isRichtextActive] = useState(true);
 	const [isConsultantAbsent, setIsConsultantAbsent] = useState(
 		hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
 			activeSession.consultant?.absent
@@ -945,19 +436,27 @@ export const MessageSubmitInterfaceComponent = ({
 		useState(0);
 	const [voicePreviewUrl, setVoicePreviewUrl] = useState<string | null>(null);
 	const [isEmojiStripOpen, setIsEmojiStripOpen] = useState(false);
-	const [isHighlightStripOpen, setIsHighlightStripOpen] = useState(false);
-	const [isHeadingStripOpen, setIsHeadingStripOpen] = useState(false);
-	const [isListStripOpen, setIsListStripOpen] = useState(false);
-	const [isAlignStripOpen, setIsAlignStripOpen] = useState(false);
-	const [isCodeStripOpen, setIsCodeStripOpen] = useState(false);
 	const [isCompactActionStripOpen, setIsCompactActionStripOpen] =
 		useState(true);
+	const [editingMessageId, setEditingMessageId] = useState<string | null>(
+		null
+	);
 	const [isMobileViewport, setIsMobileViewport] = useState<boolean>(() =>
 		typeof window !== 'undefined' ? window.innerWidth <= 899 : false
 	);
 	const [isExpandedComposer, setIsExpandedComposer] = useState(false);
+	const [composerHeight, setComposerHeight] = useState<number | null>(null);
+	const [isComposerResizing, setIsComposerResizing] = useState(false);
+	const [isComposerSelected, setIsComposerSelected] = useState(false);
+	const composerResizeStartRef = useRef<{
+		pointerId: number;
+		startY: number;
+		startHeight: number;
+	} | null>(null);
 	const [isAudienceMenuOpen, setIsAudienceMenuOpen] = useState(false);
-	const [audienceOverlayBounds, setAudienceOverlayBounds] = useState<{
+	// Only the setter is needed while the audience blur overlay is disabled
+	// (see audienceMenuOverlayStyle below).
+	const [, setAudienceOverlayBounds] = useState<{
 		top: number;
 		left: number;
 		width: number;
@@ -989,24 +488,6 @@ export const MessageSubmitInterfaceComponent = ({
 		}
 		return `oriso.audienceSelection.${sessionId}`;
 	}, [activeSession?.item?.id]);
-
-	const scrollToolbarPanelByStep = useCallback(() => {
-		if (window.innerWidth > 899) {
-			return;
-		}
-
-		const activePanel = document.querySelector(
-			'.textarea__figmaToolbarPanel--active'
-		) as HTMLElement | null;
-		if (!activePanel) {
-			return;
-		}
-
-		activePanel.scrollBy({
-			left: 140,
-			behavior: 'smooth'
-		});
-	}, []);
 
 	const normalizeInitialAlignment = useCallback((rawValue: string) => {
 		if (!rawValue) {
@@ -1057,9 +538,6 @@ export const MessageSubmitInterfaceComponent = ({
 	// to groupChat.groupId on group chats
 	// to session.groupId on session chats
 	const {
-		keyID,
-		key,
-		encrypted,
 		subscriptionKeyLost,
 		roomNotFound,
 		encryptRoom,
@@ -1106,12 +584,7 @@ export const MessageSubmitInterfaceComponent = ({
 	}, [location.pathname, location.search, threadRootId]);
 
 	const contact = getContact(activeSession);
-	const isAnonymousChat =
-		activeSession.item.postcode === 0 ||
-		activeSession.item.postcode?.toString() === '00000' ||
-		(activeSession.item as any).registrationType === 'ANONYMOUS' ||
-		contact?.username?.startsWith('Anonymous-') ||
-		activeSession.user?.username?.startsWith('Anonymous-');
+	const isAnonymousChat = getModality(activeSession) === Modality.LIVE_CHAT;
 
 	const draftTitle = useMemo(() => {
 		const topicName =
@@ -1163,8 +636,33 @@ export const MessageSubmitInterfaceComponent = ({
 		[normalizeInitialAlignment]
 	);
 
+	// Editing (#435): prefill the composer with the message being edited.
+	// Depend on the specific fields (not the object identity) so a new
+	// editingMessage reference with the same content doesn't re-run the effect.
+	const editingMessageEventId = editingMessage?.eventId;
+	const editingMessageText = editingMessage?.text;
+	useEffect(() => {
+		if (editingMessageText === undefined) {
+			return;
+		}
+		setComposerText(editingMessageText);
+		composerRef.current?.setText(editingMessageText);
+		composerRef.current?.focus();
+	}, [editingMessageEventId, editingMessageText]);
+
 	const isAnonymousEnquiryComposer =
 		type === SESSION_LIST_TYPES.ENQUIRY && isAnonymousChat;
+	const hasMatrixRoom = Boolean(resolvedChatSession.matrixRoomId);
+	const isAskerEnquiry = isAskerEnquirySubmission({
+		isEnquiryListType: type === SESSION_LIST_TYPES.ENQUIRY,
+		sessionStatus: activeSession.item?.status,
+		hasAskerAuthority: hasUserAuthority(
+			AUTHORITIES.ASKER_DEFAULT,
+			userData
+		),
+		isAnonymousLiveChat,
+		hasMatrixRoom
+	});
 
 	const {
 		onChange: onDraftMessageChange,
@@ -1240,23 +738,11 @@ export const MessageSubmitInterfaceComponent = ({
 	const getTypedMarkdownMessage = useCallback(() => {
 		const liveEditorHtml = composerRef.current?.getHTML();
 		// Use latest editor snapshot first to avoid stale last-action/last-char issues.
-		return (liveEditorHtml ?? composerText).trim();
+		return resolveComposerMessageSnapshot(liveEditorHtml, composerText);
 	}, [composerText]);
 
 	const hasMessageContent = useCallback((rawMessage?: string | null) => {
-		const value = (rawMessage || '').trim();
-		if (!value) {
-			return false;
-		}
-		// TipTap returns structural HTML (for example "<p></p>") even when empty.
-		const plainText = value
-			.replace(/<[^>]+>/g, ' ')
-			.replace(/&nbsp;/gi, ' ')
-			.replace(/&#160;/gi, ' ')
-			.replace(/\u00a0/g, ' ')
-			.replace(/\u200b/g, '')
-			.trim();
-		return plainText.length > 0;
+		return getPlainTextFromComposerValue(rawMessage).trim().length > 0;
 	}, []);
 
 	const encodeHighlightColorsForTransport = useCallback(
@@ -1549,63 +1035,6 @@ export const MessageSubmitInterfaceComponent = ({
 		}
 	}, [editorState, draftLoaded, isRichtextActive, scrollEditorToBottom]);
 
-	const handleEditorChange = useCallback(
-		(currentEditorState) => {
-			if (
-				draftLoaded &&
-				currentEditorState.getCurrentContent() !==
-					editorState.getCurrentContent() &&
-				isTyping
-			) {
-				isTyping(!currentEditorState.getCurrentContent().hasText());
-			}
-			setEditorState(currentEditorState);
-			onDraftMessageChange(getTypedMarkdownMessage());
-			// Auto-scroll to bottom when content changes (new lines, formatting, bullet lists, etc.)
-			// scrollEditorToBottom handles multiple attempts internally to catch DOM updates
-			scrollEditorToBottom();
-		},
-		[
-			draftLoaded,
-			editorState,
-			getTypedMarkdownMessage,
-			isTyping,
-			onDraftMessageChange,
-			scrollEditorToBottom
-		]
-	);
-
-	const handleEditorKeyCommand = useCallback(
-		(command) => {
-			const newState = RichUtils.handleKeyCommand(editorState, command);
-			if (newState) {
-				handleEditorChange(newState);
-				// Auto-scroll after formatting is applied
-				// Use multiple delays to catch DOM updates at different stages
-				// Rich text mode needs more aggressive scrolling due to Draft.js DOM update delays
-				if (isRichtextActive) {
-					setTimeout(() => scrollEditorToBottom(), 0);
-					setTimeout(() => scrollEditorToBottom(), 50);
-					setTimeout(() => scrollEditorToBottom(), 150);
-					setTimeout(() => scrollEditorToBottom(), 300);
-					setTimeout(() => scrollEditorToBottom(), 500);
-					setTimeout(() => scrollEditorToBottom(), 700);
-				} else {
-					setTimeout(() => scrollEditorToBottom(), 0);
-					setTimeout(() => scrollEditorToBottom(), 50);
-				}
-				return 'handled';
-			}
-			return 'not-handled';
-		},
-		[
-			editorState,
-			handleEditorChange,
-			isRichtextActive,
-			scrollEditorToBottom
-		]
-	);
-
 	const resizeTextarea = useCallback(() => {
 		const textInput: any = textareaInputRef.current;
 		if (!textInput) return;
@@ -1624,7 +1053,6 @@ export const MessageSubmitInterfaceComponent = ({
 		} else {
 			textareaMaxHeight = 218;
 		}
-		const richtextHeight = 38;
 		const fileHeight = 48;
 
 		// Default min heights from CSS: mobile 88px, desktop 106px
@@ -1700,20 +1128,7 @@ export const MessageSubmitInterfaceComponent = ({
 
 		// Auto-scroll to bottom after resize completes (especially important for bullet lists)
 		scrollEditorToBottom();
-	}, [
-		attachmentSelected,
-		isRichtextActive,
-		editorState,
-		scrollEditorToBottom
-	]);
-
-	const toggleAbsentMessage = useCallback(() => {
-		//TODO: not react way: use state and based on that set a class
-		const infoWrapper = document.querySelector('.messageSubmitInfoWrapper');
-		if (infoWrapper) {
-			infoWrapper.classList.toggle('messageSubmitInfoWrapper--hidden');
-		}
-	}, []);
+	}, [attachmentSelected, editorState, scrollEditorToBottom]);
 
 	// Keep chat input ready for direct typing when opening/changing chats.
 	useEffect(() => {
@@ -1761,14 +1176,24 @@ export const MessageSubmitInterfaceComponent = ({
 						onSendButton && onSendButton(response);
 					})
 				)
-				.then(() => {
+				.then(async () => {
 					setEditorState(EditorState.createEmpty());
 					setComposerText('');
 					composerRef.current?.clear();
+					await clearDraftMessage();
+					setActiveInfo('');
 				})
 				.then(() => setIsRequestInProgress(false))
 				.catch((error) => {
-					// console.log(error);
+					setIsRequestInProgress(false);
+					setActiveInfo(INFO_TYPES.MESSAGE_SEND_ERROR);
+					apiPostError({
+						name: error?.name || 'EnquiryMessageSendError',
+						message:
+							error?.message || 'Failed to send enquiry message',
+						stack: error?.stack,
+						level: ERROR_LEVEL_WARN
+					}).then();
 				});
 		},
 		[
@@ -1776,90 +1201,185 @@ export const MessageSubmitInterfaceComponent = ({
 			encryptRoom,
 			language,
 			onSendButton,
+			clearDraftMessage,
 			setE2EEState
 		]
 	);
 
-	const handleMessageSendSuccess = useCallback(() => {
-		onMessageSendSuccess?.();
-		setEditorState(EditorState.createEmpty());
-		setComposerText('');
-		composerRef.current?.clear();
-		setSelectedAudienceValues(
-			audienceOptions.some((option) => option.value === '__all__')
-				? ['__all__']
-				: audienceOptions[0]?.value
-					? [audienceOptions[0].value]
-					: ['__all__']
-		);
-		setIsAudienceMenuOpen(false);
-		clearDraftMessage();
-		setActiveInfo('');
-		// Force reset to default height after clearing - use multiple timeouts to ensure DOM updates
-		setTimeout(() => {
-			resizeTextarea();
-		}, 0);
-		setTimeout(() => {
-			resizeTextarea();
-		}, 50);
-		setTimeout(() => {
-			resizeTextarea();
-		}, 100);
-		setTimeout(() => {
-			resizeTextarea();
-		}, 200);
-		setTimeout(() => setIsRequestInProgress(false), 1200);
-	}, [
-		audienceOptions,
-		clearDraftMessage,
-		onMessageSendSuccess,
-		resizeTextarea
-	]);
+	const handleMessageSendSuccess = useCallback(
+		(preserveComposer = false) => {
+			reloadSessionAfterSendIfNeeded(
+				{
+					isMatrixSession: resolvedChatSession.isMatrixSession,
+					clientRoomId: resolvedChatSession.matrixRoomId
+				},
+				reloadActiveSession
+			);
+			onMessageSendSuccess?.();
+			if (preserveComposer) {
+				setIsRequestInProgress(false);
+				return;
+			}
+			setEditorState(EditorState.createEmpty());
+			setComposerText('');
+			composerRef.current?.clear();
+			setSelectedAudienceValues(
+				audienceOptions.some((option) => option.value === '__all__')
+					? ['__all__']
+					: audienceOptions[0]?.value
+						? [audienceOptions[0].value]
+						: ['__all__']
+			);
+			setIsAudienceMenuOpen(false);
+			clearDraftMessage();
+			setActiveInfo('');
+			// Force reset to default height after clearing - use multiple timeouts to ensure DOM updates
+			setTimeout(() => {
+				resizeTextarea();
+			}, 0);
+			setTimeout(() => {
+				resizeTextarea();
+			}, 50);
+			setTimeout(() => {
+				resizeTextarea();
+			}, 100);
+			setTimeout(() => {
+				resizeTextarea();
+			}, 200);
+			setTimeout(() => setIsRequestInProgress(false), 1200);
+		},
+		[
+			audienceOptions,
+			clearDraftMessage,
+			onMessageSendSuccess,
+			reloadActiveSession,
+			resolvedChatSession.isMatrixSession,
+			resolvedChatSession.matrixRoomId,
+			resizeTextarea
+		]
+	);
 
 	const sendMessage = useCallback(
-		async (message, attachment: File, isEncrypted) => {
+		async (
+			message,
+			attachment: File,
+			isEncrypted,
+			isAside = false,
+			retryOfId?: string,
+			rawMessage?: string,
+			preserveComposerOnSuccess = false,
+			retryReplyToEventId?: string | null,
+			retryMentionedUserIds?: string[]
+		) => {
 			const sendToRoomWithId = activeSession.rid || activeSession.item.id;
-			// MATRIX MIGRATION: Determine if this is a Matrix-backed session.
+			// Determine if this is a Matrix-backed session.
 			// Some sessions still have a legacy rid while exposing matrixRoomId.
-			const isMatrixSession =
-				Boolean(activeSession.item?.matrixRoomId) ||
-				Boolean(
-					activeSession.rid &&
-						isMatrixRoom(activeSession.rid) &&
-						activeSession.item?.id
-				);
+			const isMatrixSession = resolvedChatSession.isMatrixSession;
 			const matrixSessionId = isMatrixSession
-				? activeSession.item.id
+				? Number(resolvedChatSession.sessionId) || undefined
 				: undefined;
+			const clientRoomId = isMatrixSession
+				? resolvedChatSession.matrixRoomId
+				: undefined;
+			// ADR-008: aside messages (supervisor feedback / explicit VISIBLE_TO)
+			// go to the supervision side room, never the client-facing room.
+			const asideRouting = resolveAsideTargetRoomId({
+				isAside,
+				clientRoomId,
+				supervisionRoomId
+			});
+			if (asideRouting.abort) {
+				// An aside with no side room must never leak into the client
+				// room — abort the send and surface an error instead.
+				setIsRequestInProgress(false);
+				handleAttachmentUploadError(INFO_TYPES.ATTACHMENT_OTHER_ERROR);
+				apiPostError({
+					name: 'SupervisionAsideRoutingError',
+					message:
+						'Aside message has no supervision side room id; send aborted to avoid leaking into the client room',
+					level: ERROR_LEVEL_WARN
+				}).then();
+				return;
+			}
+			const matrixRoomId = asideRouting.targetRoomId ?? undefined;
 			const getSendMailNotificationStatus = () => !activeSession.isGroup;
 
+			// Editing (m.replace, #435): replaces the target event's content;
+			// no attachments, prefixes, or reply/thread relations apply.
+			if (editingMessage && !retryOfId) {
+				if (!matrixRoomId) {
+					setIsRequestInProgress(false);
+					apiPostError({
+						name: 'MatrixMessageEditError',
+						message:
+							'Cannot edit message: session has no Matrix room',
+						level: ERROR_LEVEL_WARN
+					}).then();
+					return;
+				}
+				await chatTransportService
+					.editTextMessage({
+						matrixRoomId,
+						targetEventId: editingMessage.eventId,
+						message
+					})
+					.then(() => {
+						onSendButton && onSendButton();
+						handleMessageSendSuccess(preserveComposerOnSuccess);
+						onCancelEdit && onCancelEdit();
+					})
+					.catch((error) => {
+						setIsRequestInProgress(false);
+						apiPostError({
+							name: error?.name || 'MatrixMessageEditError',
+							message:
+								error?.message ||
+								'Failed to edit Matrix chat message',
+							stack: error?.stack,
+							level: ERROR_LEVEL_WARN
+						}).then();
+					});
+				return;
+			}
+
 			if (attachment) {
-				let res: any;
-
-				// MATRIX MIGRATION: Use direct Matrix upload for Matrix sessions
+				// Matrix attachments stay on the SDK media path.
 				if (matrixSessionId) {
-					// console.log('📤 Using Matrix direct upload for session:', matrixSessionId);
-
 					try {
-						// Upload file to Matrix via UserService
-						// UserService handles: upload + send message automatically
-						const uploadResult = await apiMatrixUploadFile(
-							attachment,
-							matrixSessionId,
-							setUploadProgress,
-							setAttachmentUpload
-						);
+						if (!matrixRoomId) {
+							throw new Error('Matrix room ID is missing');
+						}
 
-						// console.log('✅ Matrix upload and message sent successfully!', uploadResult);
-						res = { success: true };
+						const abortController = new AbortController();
+						setAttachmentUpload({
+							abort: () => abortController.abort()
+						});
+
+						await apiSendMatrixAttachmentMessage(
+							matrixRoomId,
+							attachment,
+							{
+								abortController,
+								uploadProgress: setUploadProgress,
+								threadRootId: threadRootId || null,
+								supervisorMessage: !!isSupervisor,
+								senderDisplayName:
+									userData?.displayName ||
+									userData?.userName ||
+									`${userData?.firstName || ''} ${userData?.lastName || ''}`.trim() ||
+									'User'
+							}
+						);
 					} catch (error: any) {
-						// console.error('❌ Matrix upload failed:', error);
-						const xhr = error as XMLHttpRequest;
-						if (xhr.status === 413) {
+						const status =
+							error?.status ||
+							error?.httpStatus ||
+							error?.statusCode;
+						if (status === 413) {
 							handleAttachmentUploadError(
 								INFO_TYPES.ATTACHMENT_SIZE_ERROR
 							);
-						} else if (xhr.status === 415) {
+						} else if (status === 415) {
 							handleAttachmentUploadError(
 								INFO_TYPES.ATTACHMENT_FORMAT_ERROR
 							);
@@ -1871,87 +1391,31 @@ export const MessageSubmitInterfaceComponent = ({
 						return;
 					}
 				} else {
-					// Legacy RocketChat upload path
-					const isAttachmentEncryptionEnabledDevTools = parseInt(
-						getDevToolbarOption(STORAGE_KEY_ATTACHMENT_ENCRYPTION)
+					// Sessions without a Matrix room cannot receive
+					// attachments anymore (legacy Rocket.Chat upload removed).
+					handleAttachmentUploadError(
+						INFO_TYPES.ATTACHMENT_OTHER_ERROR
 					);
-					let attachmentFile = attachment;
-					let signature = null;
-					let encryptEnabled =
-						isEncrypted && !!isAttachmentEncryptionEnabledDevTools;
-
-					if (encryptEnabled) {
-						try {
-							signature = await getSignature(attachment);
-							attachmentFile = await encryptAttachment(
-								attachment,
-								keyID,
-								key
-							);
-						} catch (e: any) {
-							encryptEnabled = false;
-
-							apiPostError({
-								name: e.name,
-								message: e.message,
-								stack: e.stack,
-								level: ERROR_LEVEL_WARN
-							}).then();
-						}
-					}
-
-					res = await apiUploadAttachment(
-						attachmentFile,
-						sendToRoomWithId,
-						getSendMailNotificationStatus(),
-						setUploadProgress,
-						setAttachmentUpload,
-						encryptEnabled,
-						signature
-					).catch((res: XMLHttpRequest) => {
-						if (res.status === 413) {
-							handleAttachmentUploadError(
-								INFO_TYPES.ATTACHMENT_SIZE_ERROR
-							);
-						} else if (res.status === 415) {
-							handleAttachmentUploadError(
-								INFO_TYPES.ATTACHMENT_FORMAT_ERROR
-							);
-						} else if (
-							res.status === 403 &&
-							res.getResponseHeader('X-Reason') ===
-								'QUOTA_REACHED'
-						) {
-							handleAttachmentUploadError(
-								INFO_TYPES.ATTACHMENT_QUOTA_REACHED_ERROR
-							);
-						} else {
-							handleAttachmentUploadError(
-								INFO_TYPES.ATTACHMENT_OTHER_ERROR
-							);
-						}
-
-						return null;
-					});
-
-					if (!res) {
-						return;
-					}
+					return;
 				}
 			}
 
 			// For Matrix: if we uploaded an attachment, the message was already sent with it
 			// Only send a separate text message if there's text and no attachment
-			const hasTextContent = hasMessageContent(getTypedMarkdownMessage());
+			// Retry requests carry the preserved original explicitly. Do not depend
+			// on the editor state having committed before deciding whether to send.
+			const hasTextContent = hasMessageContent(message);
 			const shouldSendTextMessage =
 				hasTextContent && (!attachment || !matrixSessionId);
 
 			if (shouldSendTextMessage) {
+				// Intentional mentions (#435): read from the composer's own
+				// HTML (mention pills carry data-mention-matrix-id there)
+				// before it is cleared by handleMessageSendSuccess.
+				const mentionedUserIds = retryOfId
+					? retryMentionedUserIds || []
+					: extractMentionedUserIds(composerRef.current?.getHTML());
 				// MATRIX MIGRATION: For group chats, Matrix room ID is in activeSession.rid
-				const matrixRoomId = isMatrixRoom(activeSession.rid)
-					? activeSession.rid
-					: activeSession.item?.matrixRoomId;
-
 				await apiSendMessage(
 					message,
 					sendToRoomWithId,
@@ -1965,17 +1429,47 @@ export const MessageSubmitInterfaceComponent = ({
 						userData?.userName ||
 						`${userData?.firstName || ''} ${userData?.lastName || ''}`.trim() ||
 						'User',
-					threadParentPreview || null
+					matrixClientService,
+					retryOfId
+						? retryReplyToEventId || null
+						: replyTo?.eventId || null,
+					mentionedUserIds
 				)
 					.then(() => encryptRoom(setE2EEState))
 					.then(() => {
 						onSendButton && onSendButton();
-						handleMessageSendSuccess();
+						handleMessageSendSuccess(preserveComposerOnSuccess);
 						cleanupAttachment();
+						// Reply context is consumed by the send (#435).
+						if (!retryOfId) {
+							onCancelReply && onCancelReply();
+						}
 					})
 					.catch((error) => {
 						setIsRequestInProgress(false);
-						// console.log(error);
+						// Surface the failure in the timeline ("Sending message
+						// failed"); the composer keeps the text so the user can
+						// resend without retyping.
+						onSendError?.(
+							rawMessage ?? message,
+							Date.now(),
+							retryOfId,
+							threadRootId || null,
+							message,
+							Boolean(isAside),
+							retryOfId
+								? retryReplyToEventId || null
+								: replyTo?.eventId || null,
+							mentionedUserIds
+						);
+						apiPostError({
+							name: error?.name || 'MatrixMessageSendError',
+							message:
+								error?.message ||
+								'Failed to send Matrix chat message',
+							stack: error?.stack,
+							level: ERROR_LEVEL_WARN
+						}).then();
 					});
 			} else {
 				// Matrix file upload already sent the message
@@ -1986,103 +1480,183 @@ export const MessageSubmitInterfaceComponent = ({
 			}
 		},
 		[
-			activeSession.isGroup,
-			activeSession.item.id,
-			activeSession.rid,
+			activeSession,
 			cleanupAttachment,
 			encryptRoom,
-			getDevToolbarOption,
-			getTypedMarkdownMessage,
 			hasMessageContent,
 			handleAttachmentUploadError,
 			handleMessageSendSuccess,
-			key,
-			keyID,
+			isSupervisor,
+			matrixClientService,
 			onSendButton,
-			setE2EEState
+			onSendError,
+			resolvedChatSession,
+			setE2EEState,
+			supervisionRoomId,
+			threadRootId,
+			replyTo?.eventId,
+			onCancelReply,
+			editingMessage,
+			onCancelEdit,
+			userData?.displayName,
+			userData?.firstName,
+			userData?.lastName,
+			userData?.userName
 		]
 	);
 
-	const prepareAndSendMessage = useCallback(async () => {
-		const attachmentInput: any = attachmentInputRef.current;
-		const selectedFile = attachmentInput && attachmentInput.files[0];
-		const attachment = preselectedFile || selectedFile;
-
-		if (isE2eeEnabled && encrypted && !keyID) {
-			// console.error("Can't send message without key");
-			return;
-		}
-
-		if (hasMessageContent(getTypedMarkdownMessage()) || attachment) {
-			setIsRequestInProgress(true);
-		} else {
-			return null;
-		}
-
-		let message = encodeAlignmentForTransport(
-			encodeHighlightColorsForTransport(getTypedMarkdownMessage())
-		).trim();
-		const prefixParts: string[] = [];
-		if (threadRootId) {
-			prefixParts.push(buildThreadPrefix(threadRootId));
-		}
-		const explicitAudience = selectedAudienceValues.filter(
-			(value) => value !== '__all__'
-		);
-		if (explicitAudience.length > 0) {
-			prefixParts.push(buildVisibleToPrefix(explicitAudience));
-		}
-		if (isSupervisor) {
-			prefixParts.push(SUPERVISOR_FEEDBACK_PREFIX);
-		}
-		if (prefixParts.length && message.length > 0) {
-			message = `${prefixParts.join(' ')} ${message}`;
-		}
-		let isEncrypted = isE2eeEnabled;
-		if (message.length > 0 && isE2eeEnabled) {
-			try {
-				message = await encryptText(message, keyID, key);
-			} catch (e: any) {
-				apiPostError({
-					name: e.name,
-					message: e.message,
-					stack: e.stack,
-					level: ERROR_LEVEL_WARN
-				}).then();
-
-				isEncrypted = false;
+	const prepareAndSendMessage = useCallback(
+		async (
+			messageOverride?: string,
+			retryOfId?: string,
+			retryContext?: {
+				transportMessage: string;
+				isAside: boolean;
+				replyToEventId?: string | null;
+				mentionedUserIds: string[];
 			}
-		}
+		) => {
+			const attachmentInput: any = attachmentInputRef.current;
+			const selectedFile = attachmentInput && attachmentInput.files[0];
+			const attachment = retryOfId
+				? null
+				: resolveAttachmentForSend(
+						preselectedFile,
+						selectedFile,
+						attachmentSelected
+					);
 
-		if (
-			type === SESSION_LIST_TYPES.ENQUIRY &&
-			hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
-			!isAnonymousLiveChat
-		) {
-			await sendEnquiry(message, isEncrypted);
-			return;
-		}
+			const composerMessageBeforeSend = getTypedMarkdownMessage();
+			const currentTypedMessage =
+				messageOverride ?? composerMessageBeforeSend;
+			const preserveComposerOnSuccess = Boolean(
+				retryOfId &&
+					messageOverride !== undefined &&
+					shouldPreserveComposerAfterRetry(
+						composerMessageBeforeSend,
+						messageOverride
+					)
+			);
+			if (
+				getPlainTextFromComposerValue(currentTypedMessage).length >
+				INPUT_MAX_LENGTH
+			) {
+				return null;
+			}
 
-		await sendMessage(message, attachment, isEncrypted);
-	}, [
-		encrypted,
-		encodeAlignmentForTransport,
-		encodeHighlightColorsForTransport,
-		getTypedMarkdownMessage,
-		hasMessageContent,
-		isE2eeEnabled,
-		key,
-		keyID,
-		isAnonymousLiveChat,
-		preselectedFile,
-		sendEnquiry,
-		sendMessage,
-		selectedAudienceValues,
-		isSupervisor,
-		threadRootId,
-		type,
-		userData
-	]);
+			if (hasMessageContent(currentTypedMessage) || attachment) {
+				setIsRequestInProgress(true);
+			} else {
+				return null;
+			}
+
+			let message = retryContext
+				? retryContext.transportMessage
+				: encodeAlignmentForTransport(
+						encodeHighlightColorsForTransport(currentTypedMessage)
+					).trim();
+			let isAside = retryContext?.isAside || false;
+			const prefixParts: string[] = [];
+			// Relations foundation (#435): thread membership travels as the
+			// MSC3440 m.thread relation on the event (see chatTransportService),
+			// not as a [THREAD:...] text prefix anymore. Old messages with the
+			// prefix keep rendering via the legacy parse fallback.
+			// VISIBLE_TO recipient targeting is an opt-in supervisor/coordinator aside
+			// (ADR-008) and only exists when the audience selector is actually shown —
+			// i.e. there is more than one human counterpart (group / supervision). In a
+			// 1:1 conversation the selector is hidden, so a reply must never carry a
+			// VISIBLE_TO prefix, regardless of any stale selection state.
+			if (!retryContext) {
+				const humanTargetCount = audienceOptions.filter(
+					(option) => option.value !== '__all__'
+				).length;
+				const explicitAudience = selectedAudienceValues.filter(
+					(value) => value !== '__all__'
+				);
+				const hasExplicitAudience =
+					humanTargetCount > 1 && explicitAudience.length > 0;
+				if (hasExplicitAudience) {
+					prefixParts.push(buildVisibleToPrefix(explicitAudience));
+				}
+				if (isSupervisor) {
+					prefixParts.push(SUPERVISOR_FEEDBACK_PREFIX);
+				}
+				// ADR-008: any message carrying an aside (supervisor feedback OR an
+				// explicit VISIBLE_TO audience) must be routed to the supervision side
+				// room, never the client-facing room.
+				isAside = Boolean(isSupervisor) || hasExplicitAudience;
+				if (prefixParts.length && message.length > 0) {
+					message = `${prefixParts.join(' ')} ${message}`;
+				}
+			}
+			// Legacy Rocket.Chat client-side message encryption is removed. This
+			// `isEncrypted` flag is the vestigial remnant of that path and no
+			// longer controls Matrix encryption: with Rust crypto initialized
+			// unconditionally (matrixClientService.initRustCrypto) and rooms
+			// created with `m.room.encryption`, the SDK Megolm-encrypts every send
+			// automatically (ADR-004, durable since the ADR-005 homeserver
+			// rebuild). The flag is a no-op pass-through kept only for the
+			// chatTransportService signature.
+			const isEncrypted = false;
+
+			if (isAskerEnquiry) {
+				await sendEnquiry(message, isEncrypted);
+				return;
+			}
+
+			// Shortcut: edit an existing message via Matrix m.replace
+			if (editingMessageId && !retryOfId) {
+				const matrixRoomId = resolvedChatSession.matrixRoomId;
+				if (matrixRoomId && matrixClientService) {
+					try {
+						await matrixClientService.editMessage(
+							matrixRoomId,
+							editingMessageId,
+							getPlainTextFromComposerValue(message) || message
+						);
+						onLocalMessageEdit?.(editingMessageId, message);
+					} catch {
+						// Editing failed silently — fall through to clear state
+					}
+				}
+				setEditingMessageId(null);
+				setIsRequestInProgress(false);
+				composerRef.current?.clear();
+				setComposerText('');
+				return;
+			}
+
+			await sendMessage(
+				message,
+				attachment,
+				isEncrypted,
+				isAside,
+				retryOfId,
+				currentTypedMessage,
+				preserveComposerOnSuccess,
+				retryContext?.replyToEventId || null,
+				retryContext?.mentionedUserIds || []
+			);
+		},
+		[
+			attachmentSelected,
+			audienceOptions,
+			editingMessageId,
+			encodeAlignmentForTransport,
+			encodeHighlightColorsForTransport,
+			getTypedMarkdownMessage,
+			hasMessageContent,
+			isAskerEnquiry,
+			isSupervisor,
+			matrixClientService,
+			onLocalMessageEdit,
+			preselectedFile,
+			resolvedChatSession,
+			selectedAudienceValues,
+			sendEnquiry,
+			sendMessage
+		]
+	);
 
 	const handleButtonClick = useCallback(() => {
 		if (uploadProgress || isRequestInProgress) {
@@ -2090,6 +1664,12 @@ export const MessageSubmitInterfaceComponent = ({
 		}
 		if (isVoiceRecording) {
 			stopVoiceRecording({ sendAfterStop: true });
+			return null;
+		}
+		if (
+			getPlainTextFromComposerValue(getTypedMarkdownMessage()).length >
+			INPUT_MAX_LENGTH
+		) {
 			return null;
 		}
 
@@ -2104,12 +1684,12 @@ export const MessageSubmitInterfaceComponent = ({
 						// Short timeout to wait for RC events finished
 						setTimeout(() => {
 							if (window.innerWidth >= 900) {
-								history.push(
-									`${listPath}/${activeSession.item.groupId}/${activeSession.item.id}}`
+								navigate(
+									`${listPath}/${activeSession.item.groupId}/${activeSession.item.id}`
 								);
 							} else {
 								mobileListView();
-								history.push(listPath);
+								navigate(listPath);
 							}
 						}, 1000);
 					}
@@ -2123,7 +1703,8 @@ export const MessageSubmitInterfaceComponent = ({
 	}, [
 		activeSession.item.groupId,
 		activeSession.item.id,
-		history,
+		getTypedMarkdownMessage,
+		navigate,
 		isRequestInProgress,
 		isVoiceRecording,
 		isSessionArchived,
@@ -2135,42 +1716,44 @@ export const MessageSubmitInterfaceComponent = ({
 		userData
 	]);
 
-	// Key binding function for Draft.js to handle Ctrl+Enter / Cmd+Enter
-	// Only returns a command when modifier keys are pressed, otherwise returns undefined
-	// to let Draft.js handle Enter normally (create new line)
-	const keyBindingFn = useCallback((e: React.KeyboardEvent) => {
-		// Handle Ctrl+Enter (Windows/Linux) or Cmd+Enter (Mac) to send message
-		if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-			return 'send-message';
-		}
-		// Return undefined (not null) to let Draft.js handle Enter normally
-		return undefined;
-	}, []);
-
-	// Enhanced handleEditorKeyCommand to handle send message shortcut
-	const enhancedHandleEditorKeyCommand = useCallback(
-		(command) => {
-			// Handle send message command (Ctrl+Enter / Cmd+Enter)
-			if (command === 'send-message') {
-				if (!uploadProgress && !isRequestInProgress) {
-					handleButtonClick();
-				}
-				return 'handled';
-			}
-			// If command is null/undefined, return 'not-handled' to let Draft.js handle Enter normally
-			if (command == null) {
-				return 'not-handled';
-			}
-			// For all other commands, delegate to original handler
-			return handleEditorKeyCommand(command);
+	const handleFormSubmit = useCallback(
+		(event: React.FormEvent<HTMLFormElement>) => {
+			event.preventDefault();
+			handleButtonClick();
 		},
-		[
-			handleEditorKeyCommand,
-			uploadProgress,
-			isRequestInProgress,
-			handleButtonClick
-		]
+		[handleButtonClick]
 	);
+
+	const handledRetryRequestRef = useRef<string | null>(null);
+	useEffect(() => {
+		if (
+			!retryRequest ||
+			handledRetryRequestRef.current === retryRequest.requestId ||
+			isRequestInProgress ||
+			uploadProgress
+		) {
+			return;
+		}
+
+		handledRetryRequestRef.current = retryRequest.requestId;
+		prepareAndSendMessage(retryRequest.message, retryRequest.failedSendId, {
+			transportMessage: retryRequest.transportMessage,
+			isAside: retryRequest.isAside,
+			replyToEventId: retryRequest.replyToEventId,
+			mentionedUserIds: retryRequest.mentionedUserIds
+		})
+			.catch(() => {
+				// Send failures are surfaced through onSendError. This catch only
+				// prevents an unexpected rejected promise from going unhandled.
+			})
+			.finally(() => onRetrySettled?.(retryRequest.requestId));
+	}, [
+		isRequestInProgress,
+		onRetrySettled,
+		prepareAndSendMessage,
+		retryRequest,
+		uploadProgress
+	]);
 
 	const handleAttachmentSelect = useCallback(() => {
 		const attachmentInput: any = attachmentInputRef.current;
@@ -2191,22 +1774,67 @@ export const MessageSubmitInterfaceComponent = ({
 		setActiveInfo(INFO_TYPES.ATTACHMENT_SIZE_ERROR);
 	}, [removeSelectedAttachment]);
 
+	const handleUnsupportedAttachments = useCallback(() => {
+		removeSelectedAttachment();
+		setActiveInfo(INFO_TYPES.ATTACHMENT_FORMAT_ERROR);
+	}, [removeSelectedAttachment]);
+
 	const handleAttachmentChange = useCallback(() => {
 		const attachmentInput: any = attachmentInputRef.current;
 		const attachment = attachmentInput.files[0];
+		if (!attachment || !isSupportedAttachment(attachment)) {
+			handleUnsupportedAttachments();
+			return;
+		}
 		const attachmentSizeMB = getAttachmentSizeMBForKB(attachment.size);
 		attachmentSizeMB > ATTACHMENT_MAX_SIZE_IN_MB
 			? handleLargeAttachments()
 			: displayAttachmentToUpload(attachment);
-	}, [displayAttachmentToUpload, handleLargeAttachments]);
+	}, [
+		displayAttachmentToUpload,
+		handleLargeAttachments,
+		handleUnsupportedAttachments
+	]);
+
+	/** Files dropped/pasted into the TipTap editor (WP-4): same single-attachment flow. */
+	const handleComposerFilesSelected = useCallback(
+		(files: File[]) => {
+			const attachment = files[0];
+			if (!attachment) {
+				return;
+			}
+			if (!isSupportedAttachment(attachment)) {
+				handleUnsupportedAttachments();
+				return;
+			}
+			const attachmentSizeMB = getAttachmentSizeMBForKB(attachment.size);
+			attachmentSizeMB > ATTACHMENT_MAX_SIZE_IN_MB
+				? handleLargeAttachments()
+				: displayAttachmentToUpload(attachment);
+		},
+		[
+			displayAttachmentToUpload,
+			handleLargeAttachments,
+			handleUnsupportedAttachments
+		]
+	);
 
 	const handlePreselectedAttachmentChange = useCallback(() => {
 		const attachment = preselectedFile;
+		if (!attachment || !isSupportedAttachment(attachment)) {
+			handleUnsupportedAttachments();
+			return;
+		}
 		const attachmentSizeMB = getAttachmentSizeMBForKB(attachment.size);
 		attachmentSizeMB > ATTACHMENT_MAX_SIZE_IN_MB
 			? handleLargeAttachments()
 			: displayAttachmentToUpload(attachment);
-	}, [displayAttachmentToUpload, handleLargeAttachments, preselectedFile]);
+	}, [
+		displayAttachmentToUpload,
+		handleLargeAttachments,
+		handleUnsupportedAttachments,
+		preselectedFile
+	]);
 
 	useEffect(() => {
 		if (!preselectedFile) return;
@@ -2218,6 +1846,11 @@ export const MessageSubmitInterfaceComponent = ({
 			cleanupVoiceRecorder();
 		};
 	}, [cleanupVoiceRecorder]);
+
+	// Image thumbnail for the pre-send attachment card. Create/revoke are paired
+	// inside the hook's effect so StrictMode's mount → cleanup → mount recreates
+	// a fresh URL instead of leaving the <img> on a revoked blob (broken thumb).
+	const attachmentPreviewUrl = useImagePreviewUrl(attachmentSelected);
 
 	const handleAttachmentRemoval = useCallback(() => {
 		if (uploadProgress && attachmentUpload) {
@@ -2267,6 +1900,12 @@ export const MessageSubmitInterfaceComponent = ({
 				infoHeadline: translate('attachments.error.other.headline'),
 				infoMessage: translate('attachments.error.other.message')
 			};
+		} else if (activeInfo === INFO_TYPES.MESSAGE_SEND_ERROR) {
+			infoData = {
+				isInfo: false,
+				infoHeadline: translate('statusOverlay.error.headline'),
+				infoMessage: translate('statusOverlay.error.text')
+			};
 		} else if (activeInfo === INFO_TYPES.VOICE_RECORDING_ERROR) {
 			infoData = {
 				isInfo: false,
@@ -2291,14 +1930,9 @@ export const MessageSubmitInterfaceComponent = ({
 	}, [activeInfo, activeSession, translate]);
 
 	const handleBookingButton = useCallback(() => {
-		history.push('/booking/');
-	}, [history]);
+		navigate('/booking/');
+	}, [navigate]);
 
-	const hasUploadFunctionality =
-		(type !== SESSION_LIST_TYPES.ENQUIRY ||
-			(type === SESSION_LIST_TYPES.ENQUIRY &&
-				!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData))) &&
-		!tenant?.settings?.featureAttachmentUploadDisabled;
 	const currentChatType: 'anonymous' | 'oneOnOne' | 'group' | 'supervision' =
 		isSupervisor
 			? 'supervision'
@@ -2307,6 +1941,9 @@ export const MessageSubmitInterfaceComponent = ({
 				: isAnonymousChat
 					? 'anonymous'
 					: 'oneOnOne';
+	const hasUploadFunctionality =
+		!isAskerEnquiry &&
+		hasMediaUploadFeature(tenant?.settings, currentChatType);
 	const {
 		featureVoiceMessagesEnabled = true,
 		featureVoiceMessagesAnonymousChatsEnabled = true,
@@ -2324,12 +1961,10 @@ export const MessageSubmitInterfaceComponent = ({
 					? featureVoiceMessagesSupervisionChatsEnabled !== false
 					: featureVoiceMessagesOneOnOneChatsEnabled !== false);
 
-	const getMatrixRoomId = useCallback(() => {
-		if (isMatrixRoom(activeSession?.rid)) {
-			return activeSession.rid;
-		}
-		return activeSession?.item?.matrixRoomId || null;
-	}, [activeSession?.item?.matrixRoomId, activeSession?.rid]);
+	const getMatrixRoomId = useCallback(
+		() => resolvedChatSession.matrixRoomId || null,
+		[resolvedChatSession]
+	);
 
 	const deriveLabelFromUserId = useCallback((rawUserId: string) => {
 		if (!rawUserId) {
@@ -2556,10 +2191,6 @@ export const MessageSubmitInterfaceComponent = ({
 		}
 		const collected = new Map<string, string>();
 		const selfIdentifiers = new Set<string>();
-		const matrixUserIdFromStorage =
-			typeof window !== 'undefined'
-				? window.localStorage?.getItem('matrix_user_id')
-				: '';
 		const matrixUserIdFromCookie =
 			typeof document !== 'undefined'
 				? document.cookie
@@ -2568,7 +2199,6 @@ export const MessageSubmitInterfaceComponent = ({
 						?.split('=')[1] || ''
 				: '';
 		[
-			matrixUserIdFromStorage,
 			matrixUserIdFromCookie,
 			userData?.userName,
 			userData?.displayName
@@ -2578,7 +2208,7 @@ export const MessageSubmitInterfaceComponent = ({
 			);
 		});
 		const roomId = getMatrixRoomId();
-		const matrixClient = (window as any).matrixClientService?.getClient?.();
+		const matrixClient = matrixClientService?.getClient?.();
 		const room =
 			roomId && matrixClient ? matrixClient.getRoom(roomId) : null;
 		const roomMembers =
@@ -2616,7 +2246,10 @@ export const MessageSubmitInterfaceComponent = ({
 			}
 			if (
 				memberId.includes('@system') ||
-				memberId.includes('@caritas.local')
+				memberId.includes('@caritas.local') ||
+				// Agency provisioning/service bots (@agency-<id>-service) are not
+				// human recipients — never offer them as an audience target.
+				/^@agency-\d+-service:/.test(memberId)
 			) {
 				return;
 			}
@@ -2731,6 +2364,11 @@ export const MessageSubmitInterfaceComponent = ({
 				};
 			})
 			.sort((a, b) => a.label.localeCompare(b.label));
+		// The audience selector (and thus any VISIBLE_TO targeting) is meant for
+		// group/supervision conversations with more than one human counterpart.
+		// A 1:1 conversation has no real targets here (the asker is filtered out
+		// by their enc.* member name), so it collapses to zero options and the
+		// selector stays hidden (showAudienceSelector: audienceTargetCount <= 1).
 		const includeAllOption = mapped.length > 1;
 		const nextOptions = includeAllOption
 			? [defaultOption, ...mapped]
@@ -2758,6 +2396,7 @@ export const MessageSubmitInterfaceComponent = ({
 		type,
 		activeSession?.item?.status,
 		activeSession?.consultant?.username,
+		activeSession?.consultant?.displayName,
 		activeSession?.consultant?.id,
 		activeSession?.item?.askerRcId,
 		activeSession?.user?.username,
@@ -2774,7 +2413,8 @@ export const MessageSubmitInterfaceComponent = ({
 		activeSession?.isGroup,
 		translate,
 		userData?.displayName,
-		userData?.userName
+		userData?.userName,
+		matrixClientService
 	]);
 
 	useEffect(() => {
@@ -3360,8 +3000,25 @@ export const MessageSubmitInterfaceComponent = ({
 		return `${String(minutes)}:${String(seconds).padStart(2, '0')}`;
 	}, []);
 	const typedMessage = getTypedMarkdownMessage();
+	const typedMessageLength =
+		getPlainTextFromComposerValue(typedMessage).length;
+	const isMessageLengthWarning =
+		typedMessageLength >= MESSAGE_LENGTH_WARNING_THRESHOLD;
+	const isMessageOverLimit = typedMessageLength > INPUT_MAX_LENGTH;
+	const characterCounterAnnouncement = isMessageOverLimit
+		? translate(
+				'message.submit.characterCounter.overLimit',
+				'Message is over the character limit.'
+			)
+		: isMessageLengthWarning
+			? translate(
+					'message.submit.characterCounter.warning',
+					'Message is approaching the character limit.'
+				)
+			: '';
 	const canSendMessage =
-		!!attachmentSelected || hasMessageContent(typedMessage);
+		(!!attachmentSelected || hasMessageContent(typedMessage)) &&
+		!isMessageOverLimit;
 
 	const handleToolbarAction = useCallback((action: string) => {
 		composerRef.current?.runAction(action);
@@ -3370,111 +3027,177 @@ export const MessageSubmitInterfaceComponent = ({
 	const isToolbarActionSelected = useCallback(
 		(action: string) =>
 			composerRef.current?.isActionActive(action) || false,
+		// composerText is intentionally listed: it forces the toolbar to
+		// re-evaluate the active formatting state as the user types.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[composerText]
 	);
-
-	const emojiOptions = useMemo(
-		() => ['😀', '😂', '😍', '🔥', '👍', '🎉', '🙏', '❤️'],
-		[]
-	);
-
-	const openEmojiStrip = useCallback(() => {
-		setIsEmojiStripOpen(true);
-		setIsHighlightStripOpen(false);
-		setIsHeadingStripOpen(false);
-		setIsListStripOpen(false);
-		setIsAlignStripOpen(false);
-		setIsCodeStripOpen(false);
-		setIsCompactActionStripOpen(false);
-	}, []);
-
-	const closeEmojiStrip = useCallback(() => {
-		setIsEmojiStripOpen(false);
-	}, []);
-
-	const openHighlightStrip = useCallback(() => {
-		setIsHighlightStripOpen(true);
-		setIsEmojiStripOpen(false);
-		setIsHeadingStripOpen(false);
-		setIsListStripOpen(false);
-		setIsAlignStripOpen(false);
-		setIsCodeStripOpen(false);
-		setIsCompactActionStripOpen(false);
-	}, []);
-
-	const closeHighlightStrip = useCallback(() => {
-		setIsHighlightStripOpen(false);
-	}, []);
-
-	const openHeadingStrip = useCallback(() => {
-		setIsHeadingStripOpen(true);
-		setIsListStripOpen(false);
-		setIsAlignStripOpen(false);
-		setIsCodeStripOpen(false);
-		setIsEmojiStripOpen(false);
-		setIsHighlightStripOpen(false);
-		setIsCompactActionStripOpen(false);
-	}, []);
-
-	const closeHeadingStrip = useCallback(() => {
-		setIsHeadingStripOpen(false);
-	}, []);
-
-	const openListStrip = useCallback(() => {
-		setIsListStripOpen(true);
-		setIsHeadingStripOpen(false);
-		setIsAlignStripOpen(false);
-		setIsCodeStripOpen(false);
-		setIsEmojiStripOpen(false);
-		setIsHighlightStripOpen(false);
-		setIsCompactActionStripOpen(false);
-	}, []);
-
-	const closeListStrip = useCallback(() => {
-		setIsListStripOpen(false);
-	}, []);
-
-	const openAlignStrip = useCallback(() => {
-		setIsAlignStripOpen(true);
-		setIsListStripOpen(false);
-		setIsHeadingStripOpen(false);
-		setIsCodeStripOpen(false);
-		setIsEmojiStripOpen(false);
-		setIsHighlightStripOpen(false);
-		setIsCompactActionStripOpen(false);
-	}, []);
-
-	const closeAlignStrip = useCallback(() => {
-		setIsAlignStripOpen(false);
-	}, []);
-
-	const openCodeStrip = useCallback(() => {
-		setIsCodeStripOpen(true);
-		setIsAlignStripOpen(false);
-		setIsListStripOpen(false);
-		setIsHeadingStripOpen(false);
-		setIsEmojiStripOpen(false);
-		setIsHighlightStripOpen(false);
-		setIsCompactActionStripOpen(false);
-	}, []);
-
-	const closeCodeStrip = useCallback(() => {
-		setIsCodeStripOpen(false);
-	}, []);
 
 	const openCompactActionStrip = useCallback(() => {
 		setIsCompactActionStripOpen(true);
 		setIsEmojiStripOpen(false);
-		setIsHighlightStripOpen(false);
-		setIsHeadingStripOpen(false);
-		setIsListStripOpen(false);
-		setIsAlignStripOpen(false);
-		setIsCodeStripOpen(false);
 	}, []);
 
 	const closeCompactActionStrip = useCallback(() => {
 		setIsCompactActionStripOpen(false);
 	}, []);
+
+	// ── Keyboard shortcut handlers ───────────────────────────────────────────
+	// TipTap stores empty docs as markup (e.g. <p></p>) — use plain text.
+	const isComposerEmpty =
+		!hasMessageContent(composerText) && !attachmentSelected;
+
+	const handleEditLast = useCallback((): boolean => {
+		if (!messages || messages.length === 0) {
+			return false;
+		}
+		const owns = isOwnMessage ?? isMyMessage;
+		for (let i = messages.length - 1; i >= 0; i--) {
+			const msg = messages[i];
+			if (!owns(msg.userId)) {
+				continue;
+			}
+			// Skip deleted (t === 'rm') and aliased (system) messages
+			if (msg.t === 'rm' || msg.alias) {
+				continue;
+			}
+			if (!msg.message?.trim()) {
+				continue;
+			}
+			const composerHtml = transportMarkupToComposerHtml(msg.message);
+			if (!hasMessageContent(composerHtml)) {
+				continue;
+			}
+			setEditingMessageId(msg._id);
+			setComposerText(composerHtml);
+			composerRef.current?.setText(composerHtml);
+			requestAnimationFrame(() => composerRef.current?.focus());
+			return true;
+		}
+		return false;
+	}, [messages, isOwnMessage, hasMessageContent]);
+
+	const handleCancelEdit = useCallback((): boolean => {
+		if (isEmojiStripOpen) {
+			setIsEmojiStripOpen(false);
+			return true;
+		}
+		if (editingMessageId) {
+			setEditingMessageId(null);
+			setComposerText('');
+			composerRef.current?.clear();
+			requestAnimationFrame(() => composerRef.current?.focus());
+			return true;
+		}
+		if (highlightedSnippet) {
+			setHighlightedSnippet(null);
+			return true;
+		}
+		if (onCloseThread) {
+			onCloseThread();
+			return true;
+		}
+		if (isExpandedComposer) {
+			setIsExpandedComposer(false);
+			return true;
+		}
+		return false;
+	}, [
+		isEmojiStripOpen,
+		editingMessageId,
+		highlightedSnippet,
+		onCloseThread,
+		isExpandedComposer
+	]);
+
+	const handleUpload = useCallback((): boolean => {
+		if (!hasUploadFunctionality || !!uploadProgress || isVoiceRecording) {
+			return false;
+		}
+		handleAttachmentSelect();
+		return true;
+	}, [
+		hasUploadFunctionality,
+		uploadProgress,
+		isVoiceRecording,
+		handleAttachmentSelect
+	]);
+
+	const handleOpenEmoji = useCallback((): boolean => {
+		if (isEmojiStripOpen) {
+			setIsEmojiStripOpen(false);
+			return true;
+		}
+		openCompactActionStrip();
+		setIsEmojiStripOpen(true);
+		return true;
+	}, [isEmojiStripOpen, openCompactActionStrip]);
+
+	const { preferences: shortcutPreferences, platform: shortcutPlatform } =
+		useKeyboardShortcuts();
+
+	// Window capture so ⌘/Ctrl+E toggles even when focus is inside the picker.
+	useEffect(() => {
+		const onKeyDown = (event: KeyboardEvent) => {
+			if (event.defaultPrevented || isImeComposing(event)) {
+				return;
+			}
+			if (hasOpenModalDialog()) {
+				return;
+			}
+			const binding = resolveEffectiveBinding(
+				shortcutPreferences,
+				'chat.openEmojiPicker',
+				shortcutPlatform
+			);
+			if (
+				!binding ||
+				!matchesShortcut(event, binding, shortcutPlatform)
+			) {
+				return;
+			}
+			event.preventDefault();
+			event.stopPropagation();
+			handleOpenEmoji();
+		};
+		window.addEventListener('keydown', onKeyDown, true);
+		return () => window.removeEventListener('keydown', onKeyDown, true);
+	}, [shortcutPreferences, shortcutPlatform, handleOpenEmoji]);
+
+	// Listen for CustomEvents dispatched from CommandPaletteDialog
+	useEffect(() => {
+		const onUploadEvent = () => {
+			if (
+				hasUploadFunctionality &&
+				!uploadProgress &&
+				!isVoiceRecording
+			) {
+				handleAttachmentSelect();
+			}
+		};
+		const onEmojiEvent = () => {
+			handleOpenEmoji();
+		};
+		window.addEventListener('oriso:shortcut:uploadFile', onUploadEvent);
+		window.addEventListener('oriso:shortcut:openEmoji', onEmojiEvent);
+		return () => {
+			window.removeEventListener(
+				'oriso:shortcut:uploadFile',
+				onUploadEvent
+			);
+			window.removeEventListener(
+				'oriso:shortcut:openEmoji',
+				onEmojiEvent
+			);
+		};
+	}, [
+		hasUploadFunctionality,
+		uploadProgress,
+		isVoiceRecording,
+		handleAttachmentSelect,
+		handleOpenEmoji
+	]);
+	// ── End shortcut handlers ────────────────────────────────────────────────
 
 	const toggleExpandedComposer = useCallback(() => {
 		setIsExpandedComposer((prev) => !prev);
@@ -3525,95 +3248,101 @@ export const MessageSubmitInterfaceComponent = ({
 		*/
 	}, []);
 
-	const highlightOptions = useMemo(
-		() => [
-			{ action: 'highlightYellow', color: '#fff59d', label: 'Yellow' },
-			{ action: 'highlightOrange', color: '#ffcc80', label: 'Orange' },
-			{ action: 'highlightRose', color: '#ffcdd2', label: 'Rose' },
-			{ action: 'highlightMint', color: '#b2f2bb', label: 'Mint' },
-			{ action: 'highlightBlue', color: '#b3e5fc', label: 'Blue' }
-		],
-		[]
-	);
-
-	const headingOptions = useMemo(
-		() => [
-			{ action: 'paragraph', label: 'P' },
-			{ action: 'heading1', label: 'H1' },
-			{ action: 'heading2', label: 'H2' },
-			{ action: 'heading3', label: 'H3' }
-		],
-		[]
-	);
-
-	const listOptions = useMemo(
-		() => [
-			{
-				action: 'bulletList',
-				icon: ToolbarListDropdownIcon,
-				label: 'Bulleted list'
-			},
-			{
-				action: 'orderedList',
-				icon: ToolbarNumberedListIcon,
-				label: 'Ordered list'
-			}
-		],
-		[]
-	);
-
-	const alignOptions = useMemo(
-		() => [
-			{
-				action: 'alignLeft',
-				icon: ToolbarAlignLeftIcon,
-				label: 'Align left'
-			},
-			{
-				action: 'alignCenter',
-				icon: ToolbarAlignCenterIcon,
-				label: 'Align center'
-			},
-			{
-				action: 'alignRight',
-				icon: ToolbarAlignRightIcon,
-				label: 'Align right'
-			}
-		],
-		[]
-	);
-
-	const codeOptions = useMemo(
-		() => [
-			{ action: 'code', icon: ToolbarListTextIcon, label: 'Inline code' },
-			{
-				action: 'codeBlock',
-				icon: ToolbarCodeBlockIcon,
-				label: 'Code block'
-			}
-		],
-		[]
-	);
-
-	const handleHighlightPick = useCallback((action: string) => {
-		if (!action) {
-			return;
-		}
-		composerRef.current?.runAction(action);
-		setIsHighlightStripOpen(false);
-	}, []);
-
 	const handleEmojiPick = useCallback((emoji: string) => {
 		if (!emoji) {
 			return;
 		}
+		// Keep the picker open so users can insert multiple emojis.
 		composerRef.current?.insertText(`${emoji} `);
-		setIsEmojiStripOpen(false);
 	}, []);
 
 	const handleMentionInsert = useCallback(() => {
-		composerRef.current?.insertText('@');
+		composerRef.current?.focus();
+		composerRef.current?.insertMentionTrigger();
 	}, []);
+
+	// Live snapshot for the mention provider — the TipTap extension is created
+	// once on mount, so its getCandidates closure reads through this ref to
+	// always see the current agency directory and room membership.
+	const mentionDataRef = useRef({
+		directory: agencyConsultantDirectory,
+		inRoomValues: new Set<string>(),
+		matrixUserIdByComparableId: new Map<string, string>(),
+		selfId: userData?.userId as string | undefined
+	});
+	mentionDataRef.current = {
+		directory: agencyConsultantDirectory,
+		inRoomValues: new Set(
+			audienceOptions
+				.filter((option) => option.value !== '__all__')
+				.flatMap((option) => [
+					...Array.from(getComparableAudienceIds(option.value)),
+					...Array.from(getComparableAudienceIds(option.label))
+				])
+		),
+		// Intentional mentions (#435): audienceOptions already resolves room
+		// members to their real Matrix user id (option.value is member.userId
+		// for room members — see the audience-options effect above). Reusing
+		// that instead of a second room-member fetch keeps this a single
+		// source of truth, and only ever a *resolved* member id ends up here.
+		matrixUserIdByComparableId: new Map(
+			audienceOptions
+				.filter(
+					(option) =>
+						option.value !== '__all__' &&
+						/^@[^:@\s]+:.+$/.test(option.value)
+				)
+				.flatMap((option) =>
+					Array.from(
+						new Set([
+							...Array.from(
+								getComparableAudienceIds(option.value)
+							),
+							...Array.from(
+								getComparableAudienceIds(option.label)
+							)
+						])
+					).map((id): [string, string] => [id, option.value])
+				)
+		),
+		selfId: userData?.userId
+	};
+
+	const mentionProvider = useMemo(
+		() => ({
+			selfId: userData?.userId,
+			notInChatLabel: translate(
+				'message.mention.notInChat',
+				'nicht im Chat'
+			),
+			getCandidates: () => {
+				const { directory, inRoomValues, matrixUserIdByComparableId } =
+					mentionDataRef.current;
+				return Array.from(directory.entries()).map(
+					([consultantId, info]) => {
+						const comparableIds = getComparableAudienceIds(
+							info.username
+						);
+						const matrixUserId = Array.from(comparableIds)
+							.map((id) => matrixUserIdByComparableId.get(id))
+							.find(Boolean);
+						return {
+							id: consultantId,
+							displayName: info.displayName,
+							username: info.username,
+							matrixUserId,
+							isInRoom: Array.from(comparableIds).some((id) =>
+								inRoomValues.has(id)
+							)
+						};
+					}
+				);
+			}
+		}),
+		// Stable identity: reads live data through the ref.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[]
+	);
 
 	const handleToolbarMouseDown = useCallback(
 		(event: React.MouseEvent<HTMLDivElement>) => {
@@ -3639,48 +3368,116 @@ export const MessageSubmitInterfaceComponent = ({
 	const handleMobileBackNavigation = useCallback(() => {
 		onMobileNavigateBack?.();
 	}, [onMobileNavigateBack]);
-	const handleMobileDownNavigation = useCallback(() => {
-		onMobileNavigateDown?.();
-	}, [onMobileNavigateDown]);
 	const handleMobileBottomNavigation = useCallback(() => {
 		onMobileNavigateBottom?.();
 	}, [onMobileNavigateBottom]);
 
-	const handleComposerDragHandlePointerDown = useCallback(
+	const getComposerHeightBounds = useCallback(
+		() =>
+			getComposerHeightBoundsPure({
+				viewportWidth: window.innerWidth,
+				viewportHeight: window.innerHeight
+			}),
+		[]
+	);
+
+	const clampComposerHeight = useCallback(
+		(height: number) =>
+			clampComposerHeightPure(height, getComposerHeightBounds()),
+		[getComposerHeightBounds]
+	);
+
+	const handleComposerResizePointerDown = useCallback(
 		(e: React.PointerEvent<HTMLButtonElement>) => {
 			if (e.pointerType === 'mouse' && e.button !== 0) return;
+			e.preventDefault();
+			e.stopPropagation();
+
 			const target = e.currentTarget;
+			const composerShell = target.closest(
+				'.textarea__wrapper-send-message'
+			) as HTMLElement | null;
+			const startHeight =
+				composerShell?.getBoundingClientRect().height ||
+				composerHeight ||
+				getComposerHeightBounds().minHeight;
+
+			composerResizeStartRef.current = {
+				pointerId: e.pointerId,
+				startY: e.clientY,
+				startHeight
+			};
+			setIsComposerResizing(true);
+
 			try {
 				target.setPointerCapture(e.pointerId);
 			} catch {}
-			let fired = false;
-			const timer = window.setTimeout(() => {
-				fired = true;
-				setIsExpandedComposer((prev) => !prev);
-			}, 400);
-			const cleanup = () => {
-				window.clearTimeout(timer);
-				target.removeEventListener('pointerup', onEnd);
-				target.removeEventListener('pointercancel', onEnd);
+
+			const handlePointerMove = (event: PointerEvent) => {
+				const start = composerResizeStartRef.current;
+				if (!start || event.pointerId !== start.pointerId) {
+					return;
+				}
+
+				const deltaY = event.clientY - start.startY;
+				setComposerHeight(
+					clampComposerHeight(start.startHeight - deltaY)
+				);
+			};
+
+			const cleanup = (event?: PointerEvent) => {
+				if (
+					event &&
+					composerResizeStartRef.current &&
+					event.pointerId !== composerResizeStartRef.current.pointerId
+				) {
+					return;
+				}
+				document.removeEventListener('pointermove', handlePointerMove);
+				document.removeEventListener('pointerup', cleanup);
+				document.removeEventListener('pointercancel', cleanup);
 				try {
 					target.releasePointerCapture(e.pointerId);
 				} catch {}
+				composerResizeStartRef.current = null;
+				setIsComposerResizing(false);
 			};
-			const onEnd = () => {
-				if (!fired) cleanup();
-				else cleanup();
-			};
-			target.addEventListener('pointerup', onEnd);
-			target.addEventListener('pointercancel', onEnd);
+
+			document.addEventListener('pointermove', handlePointerMove);
+			document.addEventListener('pointerup', cleanup);
+			document.addEventListener('pointercancel', cleanup);
 		},
-		[setIsExpandedComposer]
+		[
+			clampComposerHeight,
+			composerHeight,
+			getComposerHeightBounds,
+			setComposerHeight
+		]
 	);
 
-	const matrixRoomId = isMatrixRoom(activeSession?.rid)
-		? activeSession.rid
-		: isMatrixRoom(activeSession?.item?.matrixRoomId)
-			? activeSession.item.matrixRoomId
-			: null;
+	const handleComposerResizeKeyDown = useCallback(
+		(e: React.KeyboardEvent<HTMLButtonElement>) => {
+			const bounds = getComposerHeightBounds();
+			const nextHeight = stepComposerHeight(
+				composerHeight || bounds.minHeight,
+				{ key: e.key, shiftKey: e.shiftKey },
+				bounds
+			);
+			if (nextHeight === null) {
+				return;
+			}
+			e.preventDefault();
+			setComposerHeight(nextHeight);
+		},
+		[composerHeight, getComposerHeightBounds, setComposerHeight]
+	);
+
+	const composerMenuDirection = getMenuDirection({
+		isExpanded: isExpandedComposer,
+		isMobile: isMobileViewport
+	});
+
+	const matrixRoomId = resolvedChatSession.matrixRoomId || null;
 
 	// MATRIX MIGRATION: legacy RocketChat E2EE gates do not apply to Matrix rooms.
 	if (!e2EEReady && activeSession.rid && !matrixRoomId) {
@@ -3701,7 +3498,8 @@ export const MessageSubmitInterfaceComponent = ({
 				className,
 				'messageSubmit__wrapper',
 				isExpandedComposer && 'messageSubmit__wrapper--expanded',
-				isTypingActive && 'messageSubmit__wrapper--withTyping'
+				isTypingActive && 'messageSubmit__wrapper--withTyping',
+				isComposerResizing && 'messageSubmit__wrapper--resizing'
 			)}
 			style={expandedComposerStyle}
 		>
@@ -3714,7 +3512,59 @@ export const MessageSubmitInterfaceComponent = ({
 				</div>
 			)}
 
-			<form className="textarea">
+			<form className="textarea" onSubmit={handleFormSubmit}>
+				{/* Relations foundation (#435): cancelable reply-quote preview,
+				    docked inside the composer box above the input. */}
+				{replyTo && (
+					<div className="messageSubmit__replyPreview" role="status">
+						<div className="messageSubmit__replyPreviewContent">
+							<span className="messageSubmit__replyPreviewLabel">
+								{translate(
+									'message.reply.previewLabel',
+									'Antwort an'
+								)}{' '}
+								<strong>{replyTo.author}</strong>
+							</span>
+							<span className="messageSubmit__replyPreviewText">
+								{replyTo.text}
+							</span>
+						</div>
+						<button
+							type="button"
+							className="messageSubmit__replyPreviewCancel"
+							onClick={() => onCancelReply && onCancelReply()}
+							aria-label={translate(
+								'message.reply.cancel',
+								'Antwort verwerfen'
+							)}
+						>
+							×
+						</button>
+					</div>
+				)}
+				{/* Editing (m.replace, #435): cancelable edit-in-progress banner,
+				    same dock as the reply preview. */}
+				{editingMessage && (
+					<div className="messageSubmit__editPreview" role="status">
+						<span className="messageSubmit__editPreviewLabel">
+							{translate(
+								'message.edit.previewLabel',
+								'Nachricht bearbeiten'
+							)}
+						</span>
+						<button
+							type="button"
+							className="messageSubmit__editPreviewCancel"
+							onClick={() => onCancelEdit && onCancelEdit()}
+							aria-label={translate(
+								'message.edit.cancel',
+								'Bearbeiten abbrechen'
+							)}
+						>
+							×
+						</button>
+					</div>
+				)}
 				<div
 					className={clsx(
 						'textarea__wrapper',
@@ -3725,10 +3575,38 @@ export const MessageSubmitInterfaceComponent = ({
 					<div
 						className={clsx(
 							'textarea__wrapper-send-message',
+							canSendMessage &&
+								'textarea__wrapper-send-message--ready',
+							isComposerSelected &&
+								'textarea__wrapper-send-message--selected',
 							isExpandedComposer &&
-								'textarea__wrapper-send-message--expanded'
+								'textarea__wrapper-send-message--expanded',
+							isComposerResizing &&
+								'textarea__wrapper-send-message--resizing'
 						)}
+						style={
+							!isExpandedComposer && composerHeight
+								? ({
+										'--composer-height': `${composerHeight}px`
+									} as React.CSSProperties)
+								: undefined
+						}
 					>
+						{!isMobileViewport &&
+							!threadRootId &&
+							!isExpandedComposer && (
+								<DragHandle
+									onPointerDown={
+										handleComposerResizePointerDown
+									}
+									onKeyDown={handleComposerResizeKeyDown}
+									touched={isComposerResizing}
+									ariaLabel={translate(
+										'message.mobileNav.dragToExpand',
+										'Drag to resize composer'
+									)}
+								/>
+							)}
 						{isMobileViewport &&
 							!threadRootId &&
 							!isExpandedComposer && (
@@ -3748,8 +3626,9 @@ export const MessageSubmitInterfaceComponent = ({
 										type="button"
 										className="textarea__mobileNavigatorCenter"
 										onPointerDown={
-											handleComposerDragHandlePointerDown
+											handleComposerResizePointerDown
 										}
+										onKeyDown={handleComposerResizeKeyDown}
 										aria-label={translate(
 											'message.mobileNav.dragToExpand',
 											'Drag to resize composer'
@@ -3787,53 +3666,21 @@ export const MessageSubmitInterfaceComponent = ({
 								)}
 								ref={audienceMenuRef}
 							>
-								<button
-									type="button"
-									className="textarea__audienceSelectorMain"
-									onClick={() =>
+								<RecipientSplitButton
+									label={selectedAudienceChipLabel}
+									icon={selectedAudienceIcon}
+									isOpen={isAudienceMenuOpen}
+									isMulti={isMultiAudienceSelection}
+									onToggle={() =>
 										setIsAudienceMenuOpen(
 											(previousState) => !previousState
 										)
 									}
-									aria-haspopup="listbox"
-									aria-expanded={isAudienceMenuOpen}
-								>
-									<span className="textarea__audienceSelectorIcon">
-										{selectedAudienceIcon}
-									</span>
-									<span
-										className={clsx(
-											'textarea__audienceSelectorName',
-											isMultiAudienceSelection &&
-												'textarea__audienceSelectorName--multi'
-										)}
-									>
-										{selectedAudienceChipLabel}
-									</span>
-								</button>
-								<button
-									type="button"
-									className="textarea__audienceSelectorChevron"
-									onClick={() =>
-										setIsAudienceMenuOpen(
-											(previousState) => !previousState
-										)
-									}
-									aria-label={translate(
+									chevronLabel={translate(
 										'message.audience.openMenu',
 										'Open send-to menu'
 									)}
-									aria-haspopup="listbox"
-									aria-expanded={isAudienceMenuOpen}
-								>
-									<AudienceChipChevronIcon
-										className={clsx(
-											'textarea__audienceSelectorArrow',
-											isAudienceMenuOpen &&
-												'textarea__audienceSelectorArrow--open'
-										)}
-									/>
-								</button>
+								/>
 								{isAudienceMenuOpen && (
 									<>
 										{typeof document !== 'undefined' &&
@@ -3888,9 +3735,9 @@ export const MessageSubmitInterfaceComponent = ({
 														d="M20.0003 12.0001L12.0003 20.0001M12.0003 12.0001L20.0003 20.0001M29.3337 16.0001C29.3337 23.3639 23.3641 29.3334 16.0003 29.3334C8.63653 29.3334 2.66699 23.3639 2.66699 16.0001C2.66699 8.63628 8.63653 2.66675 16.0003 2.66675C23.3641 2.66675 29.3337 8.63628 29.3337 16.0001Z"
 														fill="none"
 														stroke="white"
-														stroke-width="2"
-														stroke-linecap="round"
-														stroke-linejoin="round"
+														strokeWidth="2"
+														strokeLinecap="round"
+														strokeLinejoin="round"
 													/>
 												</svg>
 											</button>
@@ -4196,7 +4043,9 @@ export const MessageSubmitInterfaceComponent = ({
 								className={clsx(
 									'textarea__input',
 									attachmentSelected &&
-										'textarea__input--attachmentMode'
+										'textarea__input--attachmentMode',
+									editingMessageId &&
+										'textarea__input--editing'
 								)}
 								ref={textareaInputRef}
 								onKeyUp={(e) => {
@@ -4251,11 +4100,21 @@ export const MessageSubmitInterfaceComponent = ({
 								{attachmentSelected ? (
 									<div className="textarea__attachmentMode">
 										<div className="textarea__attachmentModeCard">
-											<span className="textarea__attachmentModeIcon">
-												{getAttachmentIcon(
-													attachmentSelected.type
-												)}
-											</span>
+											{attachmentPreviewUrl ? (
+												<img
+													className="textarea__attachmentModeThumb"
+													src={attachmentPreviewUrl}
+													alt={
+														attachmentSelected.name
+													}
+												/>
+											) : (
+												<span className="textarea__attachmentModeIcon">
+													{getAttachmentIcon(
+														attachmentSelected.type
+													)}
+												</span>
+											)}
 											<div className="textarea__attachmentModeInfo">
 												<p className="textarea__attachmentModeName">
 													{attachmentSelected.name}
@@ -4287,672 +4146,114 @@ export const MessageSubmitInterfaceComponent = ({
 									</div>
 								) : (
 									<>
+										{editingMessageId && (
+											<div
+												className="textarea__editingBanner"
+												role="status"
+											>
+												<span className="textarea__editingBanner__label">
+													{translate(
+														'shortcuts.editingBanner'
+													)}
+												</span>
+												<button
+													type="button"
+													className="textarea__editingBanner__cancel"
+													onClick={() => {
+														handleCancelEdit();
+													}}
+												>
+													{translate(
+														'shortcuts.editingCancel'
+													)}
+												</button>
+											</div>
+										)}
 										<div
-											className={`textarea__figmaToolbar ${
-												isEmojiStripOpen ||
-												isHighlightStripOpen ||
-												isHeadingStripOpen ||
-												isListStripOpen ||
-												isAlignStripOpen ||
-												isCodeStripOpen
-													? 'textarea__figmaToolbar--emoji'
-													: ''
-											}`}
+											className="textarea__figmaToolbar"
 											onMouseDown={handleToolbarMouseDown}
 										>
-											<div
-												className={`textarea__figmaToolbarPanel textarea__figmaToolbarPanel--default ${
-													isEmojiStripOpen ||
-													isHighlightStripOpen ||
-													isHeadingStripOpen ||
-													isListStripOpen ||
-													isAlignStripOpen ||
-													isCodeStripOpen ||
-													isCompactActionStripOpen
-														? 'textarea__figmaToolbarPanel--hidden'
-														: 'textarea__figmaToolbarPanel--active'
-												}`}
-											>
-												<button
-													type="button"
-													aria-label="Switch to compact tools"
-													onClick={
-														openCompactActionStrip
-													}
-													className="textarea__toolbarCloseButton"
-												>
-													<ToolbarCloseStripIcon />
-												</button>
-												<span
-													className="textarea__figmaToolbarDivider"
-													aria-hidden="true"
-												/>
-												<button
-													type="button"
-													aria-label="Undo"
-													onClick={() =>
-														handleToolbarAction(
-															'undo'
-														)
-													}
-												>
-													<ToolbarUndoIcon />
-												</button>
-												<button
-													type="button"
-													aria-label="Redo"
-													onClick={() =>
-														handleToolbarAction(
-															'redo'
-														)
-													}
-												>
-													<ToolbarRedoIcon />
-												</button>
-												<span
-													className="textarea__figmaToolbarDivider"
-													aria-hidden="true"
-												/>
-												<button
-													type="button"
-													aria-label="Heading style"
-													onClick={openHeadingStrip}
-													className={clsx(
-														isHeadingStripOpen &&
-															'textarea__toolbarButton--selected'
-													)}
-												>
-													<ToolbarFilterIcon />
-												</button>
-												<button
-													type="button"
-													aria-label="List style"
-													onClick={openListStrip}
-													className={clsx(
-														isListStripOpen &&
-															'textarea__toolbarButton--selected'
-													)}
-												>
-													<ToolbarListDropdownIcon />
-												</button>
-												<button
-													type="button"
-													aria-label="Alignment"
-													onClick={openAlignStrip}
-													className={clsx(
-														isAlignStripOpen &&
-															'textarea__toolbarButton--selected'
-													)}
-												>
-													<ToolbarAlignIcon />
-												</button>
-												<button
-													type="button"
-													aria-label="Quote"
-													onClick={() =>
-														handleToolbarAction(
-															'blockquote'
-														)
-													}
-													className={clsx(
-														isToolbarActionSelected(
-															'blockquote'
-														) &&
-															'textarea__toolbarButton--selected'
-													)}
-												>
-													<ToolbarIndentIcon />
-												</button>
-												<span
-													className="textarea__figmaToolbarDivider"
-													aria-hidden="true"
-												/>
-												<button
-													type="button"
-													aria-label="Bold"
-													onClick={() =>
-														handleToolbarAction(
-															'bold'
-														)
-													}
-													className={clsx(
-														isToolbarActionSelected(
-															'bold'
-														) &&
-															'textarea__toolbarButton--selected'
-													)}
-												>
-													<ToolbarBoldIcon />
-												</button>
-												<button
-													type="button"
-													aria-label="Italic"
-													onClick={() =>
-														handleToolbarAction(
-															'italic'
-														)
-													}
-													className={clsx(
-														isToolbarActionSelected(
-															'italic'
-														) &&
-															'textarea__toolbarButton--selected'
-													)}
-												>
-													<ToolbarItalicIcon />
-												</button>
-												<button
-													type="button"
-													aria-label="Strikethrough"
-													onClick={() =>
-														handleToolbarAction(
-															'strike'
-														)
-													}
-													className={clsx(
-														isToolbarActionSelected(
-															'strike'
-														) &&
-															'textarea__toolbarButton--selected'
-													)}
-												>
-													<ToolbarListPlusIcon />
-												</button>
-												<button
-													type="button"
-													aria-label="Inline code"
-													onClick={openCodeStrip}
-													className={clsx(
-														(isCodeStripOpen ||
-															isToolbarActionSelected(
-																'code'
-															) ||
-															isToolbarActionSelected(
-																'codeBlock'
-															)) &&
-															'textarea__toolbarButton--selected'
-													)}
-												>
-													<ToolbarListTextIcon />
-												</button>
-												<button
-													type="button"
-													aria-label="Pen"
-													onClick={() =>
-														handleToolbarAction(
-															'underline'
-														)
-													}
-													className={clsx(
-														isToolbarActionSelected(
-															'underline'
-														) &&
-															'textarea__toolbarButton--selected'
-													)}
-												>
-													<ToolbarPenIcon />
-												</button>
-												<button
-													type="button"
-													aria-label="Highlight"
-													onClick={openHighlightStrip}
-													className={clsx(
-														isHighlightStripOpen &&
-															'textarea__toolbarButton--selected'
-													)}
-												>
-													<ToolbarFacePlusIcon />
-												</button>
-												<button
-													type="button"
-													aria-label="Link"
-													onClick={() =>
-														handleToolbarAction(
-															'setLink'
-														)
-													}
-													className={clsx(
-														isToolbarActionSelected(
-															'link'
-														) &&
-															'textarea__toolbarButton--linkSelected'
-													)}
-												>
-													<ToolbarImageAddIcon />
-												</button>
-												<span
-													className="textarea__figmaToolbarDivider"
-													aria-hidden="true"
-												/>
-												<button
-													type="button"
-													aria-label="Superscript"
-													onClick={() =>
-														handleToolbarAction(
-															'superscript'
-														)
-													}
-													className={clsx(
-														isToolbarActionSelected(
-															'superscript'
-														) &&
-															'textarea__toolbarButton--selected'
-													)}
-												>
-													<ToolbarSuperscriptIcon />
-												</button>
-												<button
-													type="button"
-													aria-label="Subscript"
-													onClick={() =>
-														handleToolbarAction(
-															'subscript'
-														)
-													}
-													className={clsx(
-														isToolbarActionSelected(
-															'subscript'
-														) &&
-															'textarea__toolbarButton--selected'
-													)}
-												>
-													<ToolbarToggleIcon />
-												</button>
-												<span
-													className="textarea__figmaToolbarDivider"
-													aria-hidden="true"
-												/>
-												<button
-													type="button"
-													aria-label="Add"
-													className="textarea__toolbarAddButton"
-													onClick={() =>
-														handleToolbarAction(
-															'insertImageMarker'
-														)
-													}
-												>
-													<ToolbarAddIcon />
-												</button>
-												<span
-													className="textarea__figmaToolbarDivider"
-													aria-hidden="true"
-												/>
-												<button
-													type="button"
-													aria-label="Insert date time"
-													onClick={() =>
-														handleToolbarAction(
-															'insertDateTime'
-														)
-													}
-												>
-													<ToolbarFaceIcon />
-												</button>
-												<button
-													type="button"
-													aria-label={
-														isExpandedComposer
-															? 'Minimize editor'
-															: 'Maximize editor'
-													}
-													onClick={
-														toggleExpandedComposer
-													}
-													className={clsx(
-														isExpandedComposer &&
-															'textarea__toolbarExpandButton--active'
-													)}
-												>
-													<ToolbarChevronRightIcon />
-												</button>
-											</div>
-											<div
-												className={`textarea__figmaToolbarPanel textarea__figmaToolbarPanel--compact ${
-													isCompactActionStripOpen
-														? 'textarea__figmaToolbarPanel--active'
-														: 'textarea__figmaToolbarPanel--hidden'
-												}`}
-											>
-												<button
-													type="button"
-													aria-label="Back to full editor tools"
-													onClick={
-														closeCompactActionStrip
-													}
-												>
-													<CompactEditIcon />
-												</button>
-												{hasUploadFunctionality &&
-													isVoiceMessageEnabledForCurrentChat && (
-														<button
-															type="button"
-															aria-label="Voice recording"
-															onClick={
-																toggleVoiceRecording
-															}
-															className={clsx(
-																isVoiceRecording &&
-																	'textarea__toolbarButton--selected'
-															)}
-														>
-															<CompactMicIcon />
-														</button>
-													)}
-												<button
-													type="button"
-													aria-label="Emoji panel"
-													onClick={openEmojiStrip}
-													className={clsx(
-														isEmojiStripOpen &&
-															'textarea__toolbarButton--selected'
-													)}
-												>
-													<EmojiPanel />
-												</button>
-												<button
-													type="button"
-													aria-label="Mention"
-													onClick={
-														handleMentionInsert
-													}
-												>
-													<CompactMentionIcon />
-												</button>
-												{hasUploadFunctionality && (
-													<button
-														type="button"
-														aria-label="Add attachment"
-														onClick={
+											{isCompactActionStripOpen ? (
+												<span className="composerToolbar__menuAnchor composerToolbar__menuAnchor--bar">
+													<DefaultActionBar
+														onOpenTools={
+															closeCompactActionStrip
+														}
+														showMic={
+															hasUploadFunctionality &&
+															isVoiceMessageEnabledForCurrentChat
+														}
+														isRecording={
+															isVoiceRecording
+														}
+														onMicClick={
+															toggleVoiceRecording
+														}
+														isEmojiOpen={
+															isEmojiStripOpen
+														}
+														onEmojiClick={() =>
+															setIsEmojiStripOpen(
+																(prev) => !prev
+															)
+														}
+														onMentionClick={
+															handleMentionInsert
+														}
+														showAttachment={
+															hasUploadFunctionality
+														}
+														onAttachmentClick={
 															handleAttachmentSelect
 														}
-													>
-														<CompactPlusIcon />
-													</button>
-												)}
-												<button
-													type="button"
-													aria-label={
-														isExpandedComposer
-															? 'Minimize editor'
-															: 'Maximize editor'
+														isExpanded={
+															isExpandedComposer
+														}
+														onExpandToggle={
+															toggleExpandedComposer
+														}
+														translate={translate}
+													/>
+													{isEmojiStripOpen && (
+														<EmojiPickerPopup
+															direction={
+																composerMenuDirection
+															}
+															onPick={
+																handleEmojiPick
+															}
+															onClose={() =>
+																setIsEmojiStripOpen(
+																	false
+																)
+															}
+														/>
+													)}
+												</span>
+											) : (
+												<ComposerToolbar
+													direction={
+														composerMenuDirection
 													}
-													onClick={
+													isMobile={isMobileViewport}
+													isExpanded={
+														isExpandedComposer
+													}
+													onAction={
+														handleToolbarAction
+													}
+													isActionSelected={
+														isToolbarActionSelected
+													}
+													onCollapse={
+														openCompactActionStrip
+													}
+													onExpandToggle={
 														toggleExpandedComposer
 													}
-													className={clsx(
-														isExpandedComposer &&
-															'textarea__toolbarExpandButton--active'
-													)}
-												>
-													<CompactExpandIcon />
-												</button>
-											</div>
-											<div
-												className={`textarea__figmaToolbarPanel textarea__figmaToolbarPanel--heading ${
-													isHeadingStripOpen
-														? 'textarea__figmaToolbarPanel--active'
-														: 'textarea__figmaToolbarPanel--hidden'
-												}`}
-											>
-												<button
-													type="button"
-													className="textarea__emojiCloseButton"
-													aria-label="Close heading strip"
-													onClick={() => {
-														closeHeadingStrip();
-														openCompactActionStrip();
-													}}
-												>
-													<ToolbarCloseStripIcon />
-												</button>
-												<span
-													className="textarea__figmaToolbarDivider"
-													aria-hidden="true"
+													translate={translate}
 												/>
-												{headingOptions.map(
-													(option) => (
-														<button
-															type="button"
-															key={option.action}
-															onClick={() =>
-																handleToolbarAction(
-																	option.action
-																)
-															}
-															className={clsx(
-																isToolbarActionSelected(
-																	option.action
-																) &&
-																	'textarea__toolbarButton--selected'
-															)}
-														>
-															<span className="textarea__toolbarOptionText">
-																{option.label}
-															</span>
-														</button>
-													)
-												)}
-											</div>
-											<div
-												className={`textarea__figmaToolbarPanel textarea__figmaToolbarPanel--list ${
-													isListStripOpen
-														? 'textarea__figmaToolbarPanel--active'
-														: 'textarea__figmaToolbarPanel--hidden'
-												}`}
-											>
-												<button
-													type="button"
-													className="textarea__emojiCloseButton"
-													aria-label="Close list strip"
-													onClick={() => {
-														closeListStrip();
-														openCompactActionStrip();
-													}}
-												>
-													<ToolbarCloseStripIcon />
-												</button>
-												<span
-													className="textarea__figmaToolbarDivider"
-													aria-hidden="true"
-												/>
-												{listOptions.map((option) => (
-													<button
-														type="button"
-														key={option.action}
-														aria-label={
-															option.label
-														}
-														onClick={() =>
-															handleToolbarAction(
-																option.action
-															)
-														}
-														className={clsx(
-															isToolbarActionSelected(
-																option.action
-															) &&
-																'textarea__toolbarButton--selected'
-														)}
-													>
-														<option.icon />
-													</button>
-												))}
-											</div>
-											<div
-												className={`textarea__figmaToolbarPanel textarea__figmaToolbarPanel--align ${
-													isAlignStripOpen
-														? 'textarea__figmaToolbarPanel--active'
-														: 'textarea__figmaToolbarPanel--hidden'
-												}`}
-											>
-												<button
-													type="button"
-													className="textarea__emojiCloseButton"
-													aria-label="Close align strip"
-													onClick={() => {
-														closeAlignStrip();
-														openCompactActionStrip();
-													}}
-												>
-													<ToolbarCloseStripIcon />
-												</button>
-												<span
-													className="textarea__figmaToolbarDivider"
-													aria-hidden="true"
-												/>
-												{alignOptions.map((option) => (
-													<button
-														type="button"
-														key={option.action}
-														aria-label={
-															option.label
-														}
-														onClick={() =>
-															handleToolbarAction(
-																option.action
-															)
-														}
-														className={clsx(
-															isToolbarActionSelected(
-																option.action
-															) &&
-																'textarea__toolbarButton--selected'
-														)}
-													>
-														<option.icon />
-													</button>
-												))}
-											</div>
-											<div
-												className={`textarea__figmaToolbarPanel textarea__figmaToolbarPanel--code ${
-													isCodeStripOpen
-														? 'textarea__figmaToolbarPanel--active'
-														: 'textarea__figmaToolbarPanel--hidden'
-												}`}
-											>
-												<button
-													type="button"
-													className="textarea__emojiCloseButton"
-													aria-label="Close code strip"
-													onClick={() => {
-														closeCodeStrip();
-														openCompactActionStrip();
-													}}
-												>
-													<ToolbarCloseStripIcon />
-												</button>
-												<span
-													className="textarea__figmaToolbarDivider"
-													aria-hidden="true"
-												/>
-												{codeOptions.map((option) => (
-													<button
-														type="button"
-														key={option.action}
-														aria-label={
-															option.label
-														}
-														onClick={() =>
-															handleToolbarAction(
-																option.action
-															)
-														}
-														className={clsx(
-															isToolbarActionSelected(
-																option.action
-															) &&
-																'textarea__toolbarButton--selected'
-														)}
-													>
-														<option.icon />
-													</button>
-												))}
-											</div>
-											<div
-												className={`textarea__figmaToolbarPanel textarea__figmaToolbarPanel--highlight ${
-													isHighlightStripOpen
-														? 'textarea__figmaToolbarPanel--active'
-														: 'textarea__figmaToolbarPanel--hidden'
-												}`}
-											>
-												<button
-													type="button"
-													className="textarea__emojiCloseButton"
-													aria-label="Close highlight strip"
-													onClick={() => {
-														closeHighlightStrip();
-														openCompactActionStrip();
-													}}
-												>
-													<ToolbarCloseStripIcon />
-												</button>
-												<span
-													className="textarea__figmaToolbarDivider"
-													aria-hidden="true"
-												/>
-												{highlightOptions.map(
-													(option) => (
-														<button
-															type="button"
-															key={option.action}
-															className="textarea__highlightColorButton"
-															aria-label={`Highlight ${option.label}`}
-															onClick={() =>
-																handleHighlightPick(
-																	option.action
-																)
-															}
-														>
-															<span
-																className="textarea__highlightColorSwatch"
-																style={{
-																	backgroundColor:
-																		option.color
-																}}
-															/>
-														</button>
-													)
-												)}
-											</div>
-											<div
-												className={`textarea__figmaToolbarPanel textarea__figmaToolbarPanel--emoji ${
-													isEmojiStripOpen
-														? 'textarea__figmaToolbarPanel--active'
-														: 'textarea__figmaToolbarPanel--hidden'
-												}`}
-											>
-												<button
-													type="button"
-													className="textarea__emojiCloseButton"
-													aria-label="Close emoji strip"
-													onClick={() => {
-														closeEmojiStrip();
-														openCompactActionStrip();
-													}}
-												>
-													<ToolbarCloseStripIcon />
-												</button>
-												<span
-													className="textarea__figmaToolbarDivider"
-													aria-hidden="true"
-												/>
-												{emojiOptions.map((emoji) => (
-													<button
-														type="button"
-														key={emoji}
-														className="textarea__emojiButton"
-														aria-label={`Insert ${emoji}`}
-														onClick={() =>
-															handleEmojiPick(
-																emoji
-															)
-														}
-													>
-														{emoji}
-													</button>
-												))}
-											</div>
+											)}
 										</div>
 										<TipTapComposer
 											ref={composerRef}
@@ -4961,6 +4262,20 @@ export const MessageSubmitInterfaceComponent = ({
 											placeholder={placeholder}
 											showToolbar={false}
 											readOnly={!!uploadProgress}
+											maxLength={INPUT_MAX_LENGTH}
+											onFocusChange={
+												setIsComposerSelected
+											}
+											mentionProvider={mentionProvider}
+											isComposerEmpty={isComposerEmpty}
+											onEditLast={handleEditLast}
+											onCancel={handleCancelEdit}
+											onUpload={handleUpload}
+											onFilesSelected={
+												hasUploadFunctionality
+													? handleComposerFilesSelected
+													: undefined
+											}
 											onSubmitShortcut={() => {
 												if (
 													!uploadProgress &&
@@ -4970,6 +4285,13 @@ export const MessageSubmitInterfaceComponent = ({
 												}
 											}}
 										/>
+										<span
+											className="sr-only"
+											role="status"
+											aria-live="polite"
+										>
+											{characterCounterAnnouncement}
+										</span>
 									</>
 								)}
 							</div>
@@ -5064,26 +4386,15 @@ export const MessageSubmitInterfaceComponent = ({
 								) : null)}
 						</span>
 						<div className="textarea__buttons">
-							<button
-								type="button"
-								className="textarea__toolbarScrollHintButton"
-								onClick={scrollToolbarPanelByStep}
-								aria-label={translate(
-									'message.submit.toolbar.scrollRight',
-									'Scroll toolbar'
-								)}
-							>
-								<ToolbarScrollRightIcon />
-							</button>
-							<SendMessageButton
-								handleSendButton={handleButtonClick}
-								clicked={isRequestInProgress}
-								deactivated={
-									!canSendMessage ||
-									!!uploadProgress ||
-									isVoiceRecording
-								}
-								isEmpty={!canSendMessage}
+							<SendButton
+								type="submit"
+								onSend={handleButtonClick}
+								state={deriveSendButtonState({
+									hasContent: canSendMessage,
+									isSending: isRequestInProgress,
+									isDisabled:
+										!!uploadProgress || isVoiceRecording
+								})}
 							/>
 						</div>
 					</div>

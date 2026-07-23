@@ -1,35 +1,75 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import ReactSwitch from 'react-switch';
-import { ReactSwitchProps } from 'react-switch';
 import { Text } from '../text/Text';
 import styles from './switch.module.scss';
 
-interface SwitchProps extends ReactSwitchProps {
-	titleKey: string;
+export interface SwitchProps
+	extends Omit<
+		React.InputHTMLAttributes<HTMLInputElement>,
+		'type' | 'checked' | 'onChange'
+	> {
+	checked: boolean;
+	onChange: (
+		checked: boolean,
+		event: React.ChangeEvent<HTMLInputElement>
+	) => void;
+	titleKey?: string;
 	descriptionKey?: string;
+	showIcon?: boolean;
 }
 
-export const Switch = ({ titleKey, descriptionKey, ...props }: SwitchProps) => {
+export const Switch = ({
+	titleKey,
+	descriptionKey,
+	showIcon = true,
+	className,
+	checked,
+	onChange,
+	disabled,
+	...props
+}: SwitchProps) => {
 	const { t } = useTranslation();
+	const title = titleKey ? t(titleKey) : undefined;
+
+	const switchClassName = [
+		styles.switch,
+		className,
+		disabled ? styles.disabled : ''
+	]
+		.filter(Boolean)
+		.join(' ');
+
+	const switchControl = (
+		<label className={switchClassName}>
+			<input
+				{...props}
+				aria-label={props['aria-label'] || title}
+				checked={checked}
+				className={styles.input}
+				disabled={disabled}
+				onChange={(event) => onChange(event.target.checked, event)}
+				role="switch"
+				type="checkbox"
+			/>
+			<span className={styles.track} aria-hidden="true">
+				<span className={styles.target}>
+					<span className={styles.handle}>
+						{showIcon && <span className={styles.icon} />}
+					</span>
+				</span>
+			</span>
+		</label>
+	);
+
+	if (!titleKey && !descriptionKey) {
+		return switchControl;
+	}
 
 	return (
 		<div className="mb--2">
 			<div className="flex flex--jc-sb ">
-				<Text text={t(titleKey)} type="standard" />
-				<ReactSwitch
-					className="mr--1"
-					uncheckedIcon={false}
-					checkedIcon={false}
-					width={48}
-					height={26}
-					onColor="#0A882F"
-					offColor="#8C878C"
-					boxShadow="0px 1px 4px rgba(0, 0, 0, 0.6)"
-					handleDiameter={27}
-					activeBoxShadow="none"
-					{...props}
-				/>
+				<Text text={title} type="standard" />
+				{switchControl}
 			</div>
 			{descriptionKey && (
 				<Text

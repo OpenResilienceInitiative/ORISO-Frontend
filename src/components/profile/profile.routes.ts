@@ -9,12 +9,14 @@ import { ConsultantStatistics } from './ConsultantStatistics';
 import { AbsenceFormular } from './AbsenceFormular';
 import { LiveChatAvailability } from './LiveChatAvailability';
 import { EnableWalkthrough } from './EnableWalkthrough';
+import { TourOverviewSection } from '../productTour/TourOverviewSection';
 import { COLUMN_LEFT, COLUMN_RIGHT, TabsType } from '../../utils/tabsHelper';
 import { isDesktop } from 'react-device-detect';
 import { OverviewBookings } from './OverviewMobile/Bookings';
 import { OverviewSessions } from './OverviewMobile/Sessions';
 import { profileRoutesSettings } from './profileSettings.routes';
 import { profileRoutesHelp } from './profileHelp.routes';
+import { NotificationSettingsPanel } from './NotificationSettings';
 import {
 	TenantDataInterface,
 	AppConfigInterface
@@ -104,6 +106,15 @@ const profileRoutes = (
 									userData
 								) && settings.enableWalkthrough,
 							component: EnableWalkthrough,
+							column: COLUMN_RIGHT
+						},
+						{
+							condition: (userData) =>
+								hasUserAuthority(
+									AUTHORITIES.CONSULTANT_DEFAULT,
+									userData
+								) && settings.enableWalkthrough,
+							component: TourOverviewSection,
 							column: COLUMN_RIGHT
 						},
 						{
@@ -231,6 +242,8 @@ const profileRoutes = (
 						isFirstVisit && !browserNotificationsSettings().visited,
 					url: '/browser',
 					elements: [
+						// Legacy per-browser panel (localStorage) while the new
+						// notification system is toggled off …
 						{
 							component: BrowserNotification,
 							column: COLUMN_RIGHT,
@@ -238,7 +251,19 @@ const profileRoutes = (
 								hasUserAuthority(
 									AUTHORITIES.CONSULTANT_DEFAULT,
 									userData
-								)
+								) &&
+								!settings?.releaseToggles
+									?.enableNewNotifications
+						},
+						// … and the WP-06 Slice 6b cross-device panel (Matrix
+						// account data) once it is on. Available to every role:
+						// askers get notified about handover consent & messages.
+						{
+							component: NotificationSettingsPanel,
+							column: COLUMN_RIGHT,
+							condition: () =>
+								!!settings?.releaseToggles
+									?.enableNewNotifications
 						}
 					]
 				}

@@ -11,7 +11,14 @@ export const Imprint = () => {
 
 	return (
 		<LegalPageWrapper
-			content={tenant?.content?.impressum || t('profile.footer.imprint')}
+			// Raw language map (new TenantService field) preferred: enables
+			// client-side language resolution incl. machine-translation and
+			// original-language notices. Falls back to the server-resolved
+			// string on older backends; a missing/empty text shows the
+			// placeholder warning instead of silently rendering nothing.
+			content={tenant?.content?.impressum}
+			rawContent={tenant?.content?.impressumLanguages}
+			loading={!tenant}
 			className={'terms'}
 		/>
 	);

@@ -1,0 +1,39 @@
+import { endpoints } from '../resources/scripts/endpoints';
+import { fetchData, FETCH_ERRORS, FETCH_METHODS } from './fetchData';
+
+export interface DepartmentLegalContent {
+	/**
+	 * Published multilingual content as a JSON language->HTML map string.
+	 * Null when the text is a draft or was never authored.
+	 */
+	content: string | null;
+}
+
+export interface DepartmentLegalData {
+	dpp: DepartmentLegalContent;
+	imprint: DepartmentLegalContent;
+}
+
+/**
+ * Loads the published legal texts (data privacy policy + imprint) of a
+ * department (agency x topic). Public endpoint, no auth.
+ *
+ * Degrades gracefully: resolves to null when the endpoint does not exist
+ * yet (backend without AgencyService #90 answers 404), the department is
+ * unknown, or the request fails - callers then fall back to tenant-level
+ * content, i.e. today's behavior.
+ */
+export const apiGetDepartmentLegal = async (
+	agencyId: number,
+	topicId: number,
+	signal?: AbortSignal
+): Promise<DepartmentLegalData | null> =>
+	fetchData({
+		url: endpoints.agencyDepartmentLegal(agencyId, topicId),
+		method: FETCH_METHODS.GET,
+		skipAuth: true,
+		// NO_MATCH + CATCH_ALL keep fetchData from redirecting to the error
+		// page - any non-2xx simply rejects and is mapped to null here.
+		responseHandling: [FETCH_ERRORS.NO_MATCH, FETCH_ERRORS.CATCH_ALL],
+		...(signal ? { signal } : {})
+	}).catch(() => null);
