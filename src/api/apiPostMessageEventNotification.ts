@@ -1,7 +1,7 @@
 import { endpoints } from '../resources/scripts/endpoints';
 import { fetchData, FETCH_METHODS } from './fetchData';
 
-interface MessageEventNotificationInput {
+export interface MessageEventNotificationInput {
 	roomId: string;
 	messagePreview?: string;
 	matrixRoom?: boolean;
@@ -9,29 +9,59 @@ interface MessageEventNotificationInput {
 	supervisorMessage?: boolean;
 	senderDisplayName?: string | null;
 	threadParentPreview?: string | null;
+	teamDiscussion?: boolean;
+	mentionedUserIds?: string[] | null;
 }
 
-export const apiPostMessageEventNotification = async ({
+export interface MessageEventNotificationBody {
+	roomId: string;
+	messagePreview: string;
+	matrixRoom: boolean;
+	threadRootId: string | null;
+	supervisorMessage: boolean;
+	senderDisplayName: string | null;
+	threadParentPreview: string | null;
+	teamDiscussion: boolean;
+	mentionedUserIds: string[] | null;
+}
+
+const MAX_LEGACY_MESSAGE_PREVIEW_LENGTH = 100;
+
+export const buildMessageEventNotificationBody = ({
 	roomId,
 	messagePreview,
 	matrixRoom = true,
 	threadRootId,
 	supervisorMessage = false,
 	senderDisplayName,
-	threadParentPreview
-}: MessageEventNotificationInput): Promise<any> =>
+	threadParentPreview,
+	teamDiscussion = false,
+	mentionedUserIds
+}: MessageEventNotificationInput): MessageEventNotificationBody => {
+	const canIncludePlaintextPreview = matrixRoom === false;
+	return {
+		roomId,
+		messagePreview: canIncludePlaintextPreview
+			? (messagePreview ?? '').slice(0, MAX_LEGACY_MESSAGE_PREVIEW_LENGTH)
+			: '',
+		matrixRoom,
+		threadRootId: threadRootId || null,
+		supervisorMessage,
+		senderDisplayName: senderDisplayName || null,
+		threadParentPreview: canIncludePlaintextPreview
+			? threadParentPreview || null
+			: null,
+		teamDiscussion,
+		mentionedUserIds: mentionedUserIds?.length ? mentionedUserIds : null
+	};
+};
+
+export const apiPostMessageEventNotification = async (
+	input: MessageEventNotificationInput
+): Promise<any> =>
 	fetchData({
 		url: `${endpoints.eventNotifications}/message-events`,
 		method: FETCH_METHODS.POST,
-		bodyData: JSON.stringify({
-			roomId,
-			messagePreview,
-			matrixRoom,
-			threadRootId: threadRootId || null,
-			supervisorMessage,
-			senderDisplayName: senderDisplayName || null,
-			threadParentPreview: threadParentPreview || null
-		}),
+		bodyData: JSON.stringify(buildMessageEventNotificationBody(input)),
 		responseHandling: []
 	});
-

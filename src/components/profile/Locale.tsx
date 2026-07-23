@@ -5,29 +5,21 @@ import { useTranslation } from 'react-i18next';
 import { ReactComponent as LanguageIcon } from '../../resources/img/icons/language_filled.svg';
 
 import './profile.styles';
-import { SelectDropdown, SelectDropdownItem } from '../select/SelectDropdown';
+import { OrisoSelect } from '../form/OrisoSelect';
 import { LocaleContext } from '../../globalState';
+import { SelectChangeEvent } from '@mui/material/Select';
 
 export const Locale = () => {
 	const { t: translate } = useTranslation(['common', 'languages']);
 	const { locale, setLocale, selectableLocales } = useContext(LocaleContext);
 
-	const languageSelectDropdown: SelectDropdownItem = {
-		handleDropdownSelect: ({ value }) => setLocale(value),
-		id: 'languageSelect',
-		selectedOptions: selectableLocales.map((lng) => ({
-			label: translate([lng, lng], { ns: 'languages' }),
-			value: lng
-		})),
-		useIconOption: false,
-		isSearchable: false,
-		menuPlacement: 'bottom',
-		defaultValue: {
-			value: locale,
-			label: translate([locale, locale], {
-				ns: 'languages'
-			})
-		}
+	const languageOptions = selectableLocales.map((lng) => ({
+		label: translate([lng, lng], { ns: 'languages' }),
+		value: lng
+	}));
+
+	const handleLanguageSelect = (event: SelectChangeEvent<string>) => {
+		setLocale(event.target.value);
 	};
 
 	return (
@@ -46,7 +38,13 @@ export const Locale = () => {
 					className="tertiary"
 				/>
 			</div>
-			<SelectDropdown {...languageSelectDropdown} />
+			<OrisoSelect
+				id="languageSelect"
+				label={translate('profile.appLanguage.title')}
+				options={languageOptions}
+				value={locale}
+				onChange={handleLanguageSelect}
+			/>
 		</div>
 	);
 };

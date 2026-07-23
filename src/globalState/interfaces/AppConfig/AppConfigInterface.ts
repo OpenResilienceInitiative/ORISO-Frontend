@@ -31,8 +31,24 @@ export interface AppConfigInterface extends AppSettingsInterface {
 		};
 	};
 	groupChat?: GroupChatConfig;
+	/**
+	 * Blocks accounts with the `consultant` realm role from the app login.
+	 * Default off: the block (PR #273) keys on the role every counsellor
+	 * carries and locks the whole professional side out of the platform.
+	 * Re-enable only together with an activation-state check.
+	 */
+	blockConsultantAppLogin?: boolean;
 	registration: {
 		useConsultingTypeSlug?: boolean;
+		/**
+		 * Consulting type id used for the public agency search during
+		 * registration when the user has not selected a consulting type
+		 * (FE#245). The backend requires the parameter, so it cannot be
+		 * omitted. Defaults to 1 (the historic hard-coded value) so
+		 * existing tenants keep their behavior; deployments whose agencies
+		 * use another modality can override it here.
+		 */
+		defaultConsultingTypeId?: number;
 		consultingTypeDefaults: {
 			autoSelectPostcode: boolean;
 			autoSelectAgency: boolean;
@@ -56,4 +72,18 @@ interface ReleaseToggles {
 	enableNewNotifications?: boolean;
 	featureVideoGroupChatsEnabled?: boolean;
 	enableMagicLinksLogin?: boolean;
+	/**
+	 * #438 MSC4153 "invisible crypto": when on, Megolm keys are shared only with
+	 * cross-signed devices (`OnlySignedDevicesIsolationMode`) — unverified
+	 * devices receive no keys and see undecryptable noise. Hard-depends on the
+	 * key-backup/recovery onboarding (#437) so legitimate users can verify.
+	 */
+	enableInvisibleCrypto?: boolean;
+	/**
+	 * #439 MSC3814 "dehydrated devices": when on, park a sleeping device
+	 * server-side so Megolm keys sent during a login gap are delivered and the
+	 * gap becomes readable on next login. Hard-depends on the key-backup /
+	 * secret-storage setup (#437) and on the homeserver supporting MSC3814.
+	 */
+	enableDeviceDehydration?: boolean;
 }

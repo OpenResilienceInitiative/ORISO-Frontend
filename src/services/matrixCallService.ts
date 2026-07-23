@@ -7,10 +7,10 @@ import { MatrixClient } from 'matrix-js-sdk';
 import {
 	MatrixCall,
 	CallEvent,
-	CallState,
-	CallType
+	CallState
 } from 'matrix-js-sdk/lib/webrtc/call';
 import { CallFeedEvent } from 'matrix-js-sdk/lib/webrtc/callFeed';
+import { assertMatrixRoomEncrypted } from '../utils/matrixRoomEncryption';
 
 export interface MatrixCallOptions {
 	roomId: string;
@@ -40,6 +40,10 @@ class MatrixCallService {
 		client: MatrixClient,
 		handlers: MatrixCallEventHandlers = {}
 	): void {
+		if (this.client && this.client !== client) {
+			this.client.removeAllListeners('Call.incoming' as any);
+		}
+
 		this.client = client;
 		this.eventHandlers = handlers;
 
@@ -113,6 +117,8 @@ class MatrixCallService {
 				// console.log('✅ Room found immediately!');
 			}
 
+			assertMatrixRoomEncrypted(this.client, options.roomId);
+
 			const call = this.client.createCall(options.roomId) as MatrixCall;
 
 			if (!call) {
@@ -151,6 +157,8 @@ class MatrixCallService {
 	): Promise<void> {
 		try {
 			// console.log('📞 Answering call...');
+
+			assertMatrixRoomEncrypted(this.client, call.roomId);
 
 			this.activeCall = call;
 			this.setupCallEventListeners(call, {
@@ -490,12 +498,19 @@ class MatrixCallService {
 		this.activeMediaOptions = null;
 	}
 
+	public detach(): void {
+		if (this.client) {
+			this.client.removeAllListeners('Call.incoming' as any);
+		}
+		this.hangupCall();
+		this.client = null;
+	}
+
 	/**
 	 * Destroy service and cleanup
 	 */
 	public destroy(): void {
-		this.hangupCall();
-		this.client = null;
+		this.detach();
 		this.eventHandlers = {};
 		// console.log('✅ Matrix Call Service destroyed');
 	}

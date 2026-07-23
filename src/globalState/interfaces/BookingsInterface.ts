@@ -27,6 +27,9 @@ export interface BookingEventUiInterface {
 	uid: string;
 	date: string;
 	duration: string;
+	/** Raw ISO-8601 start/end kept for calendar export (`.ics`). */
+	startTime: string;
+	endTime: string;
 	location:
 		| 'CHAT'
 		| 'PHONE_CALL'

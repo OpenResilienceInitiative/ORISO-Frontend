@@ -3,12 +3,16 @@ name: Reusable Docker build and publish steps
 inputs:
   push_to_ghcr:
     required: true
+    type: boolean
   image_name:
     required: true
+    type: string
   github_token:
     required: true
+    type: string
   dockerfile:
     required: false
+    type: string
     default: Dockerfile
 
 runs:
@@ -34,6 +38,7 @@ runs:
         type=sha
         type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
         type=raw,value=dev,enable=${{ github.ref == 'refs/heads/dev' }}
+        type=raw,value=pre-dev,enable=${{ github.ref == 'refs/heads/pre-dev' }}
 
   - name: Build Docker image and publish when enabled
     id: build

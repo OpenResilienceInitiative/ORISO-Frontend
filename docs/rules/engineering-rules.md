@@ -10,7 +10,7 @@ Use SOLID here as a practical decision framework, not as abstract theory.
 
 - Single Responsibility: components render UI; hooks coordinate one slice of behavior; services manage long-lived integrations; API modules own backend request logic.
 - Open/Closed: extend behavior through composition, feature hooks, and route fragments instead of growing central switch files.
-- Liskov Substitution: UI should depend on stable domain behavior such as "load sessions" or "join call", not on whether Matrix or Rocket.Chat is behind it.
+- Liskov Substitution: UI should depend on stable domain behavior such as "load sessions" or "join call", not on the chat transport behind it.
 - Interface Segregation: avoid giant context contracts when consumers only need a small subset of data.
 - Dependency Inversion: UI should depend on hooks and service boundaries, not on raw `window`, cookies, or transport details.
 
@@ -20,7 +20,7 @@ Do not duplicate knowledge. In this repo, the most dangerous duplication is:
 
 - auth and token behavior
 - request header logic
-- Matrix and Rocket.Chat compatibility rules
+- Matrix transport rules
 - route constants
 - session and booking data transforms
 - notification side effects
@@ -98,7 +98,7 @@ These issues are already visible in the repo and should not spread further:
 - adding more responsibilities to `src/components/app/AuthenticatedApp.tsx`
 - letting `src/components/app/app.tsx` absorb feature logic instead of orchestration
 - placing backend logic directly inside components
-- spreading Matrix or Rocket.Chat compatibility behavior across feature UI
+- spreading Matrix transport behavior across feature UI
 - creating new backup or alternate source files such as `.backup`, `OLD`, `FINAL`, or `BROKEN`
 - documenting future aspirations instead of current implementation truth
 

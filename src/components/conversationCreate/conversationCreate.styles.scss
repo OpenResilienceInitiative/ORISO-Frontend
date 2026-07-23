@@ -1,0 +1,742 @@
+/**
+ * Create-conversation flow (Figma 8482-30552 + 8480-27986).
+ * M3 tokens with static fallbacks matching the OrisoScheme light palette.
+ */
+
+$cc-primary: var(--m3-primary, #a5000a);
+$cc-on-primary: var(--m3-on-primary, #ffffff);
+$cc-surface-container-low: var(--m3-surface-container-low, #f6f3f3);
+$cc-outline-variant: var(--m3-outline-variant, #c4c7c8);
+$cc-on-surface: var(--m3-on-surface, #1b1b1c);
+$cc-on-surface-variant: var(--m3-on-surface-variant, #444748);
+$cc-secondary: var(--m3-secondary, #4c555f);
+$cc-secondary-container: var(--m3-secondary-container, #646d78);
+$cc-elevation-1:
+	0px 1px 2px 0px rgba(0, 0, 0, 0.3),
+	0px 1px 3px 1px rgba(0, 0, 0, 0.15);
+
+/* M3 motion tokens (short2 / standard easing) with static fallbacks. */
+
+/* --oriso-motion-* deliberately, not --m3-*: the OrisoScheme engine is a
+   colour-only token map (its golden-lock test asserts #rrggbb values), so
+   motion tokens live outside the generated --m3 contract. */
+$cc-motion-duration: var(--oriso-motion-duration-short2, 160ms);
+$cc-motion-easing: var(
+	--oriso-motion-easing-standard,
+	cubic-bezier(0.2, 0, 0, 1)
+);
+
+.conversationCreate {
+	display: flex;
+	flex-direction: column;
+	gap: 24px;
+	height: 100%;
+	overflow-y: auto;
+	padding: 16px 24px 32px;
+
+	&__header {
+		align-items: center;
+		display: flex;
+		gap: 12px;
+	}
+
+	&__backButton {
+		align-items: center;
+		background: none;
+		border: none;
+		border-radius: 50%;
+		cursor: pointer;
+		display: flex;
+		height: 48px;
+		justify-content: center;
+		width: 48px;
+
+		&:hover {
+			background-color: rgba(27, 27, 28, 0.04);
+		}
+
+		svg {
+			fill: $cc-on-surface;
+			height: 24px;
+			width: 24px;
+		}
+	}
+
+	&__headerTitle {
+		color: $cc-on-surface;
+		font-size: 16px;
+		font-weight: 500;
+		letter-spacing: 0.15px;
+		line-height: 24px;
+		margin: 0;
+	}
+
+	&__intro {
+		max-width: 640px;
+	}
+
+	&__title {
+		color: $cc-on-surface;
+		font-size: 24px;
+		font-weight: 400;
+		line-height: 32px;
+		margin: 0 0 8px;
+	}
+
+	&__subtitle {
+		color: $cc-on-surface-variant;
+		font-size: 14px;
+		letter-spacing: 0.25px;
+		line-height: 20px;
+		margin: 0;
+	}
+
+	&__cards {
+		align-items: flex-start;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 24px;
+	}
+
+	&__single {
+		display: flex;
+		justify-content: center;
+	}
+
+	&__cardText {
+		color: $cc-on-surface-variant;
+		font-size: 14px;
+		letter-spacing: 0.25px;
+		line-height: 20px;
+		margin: 0;
+
+		strong {
+			color: $cc-on-surface;
+			font-weight: 500;
+		}
+	}
+
+	&__cardActions {
+		position: relative;
+		width: 100%;
+	}
+
+	&__topicMenu {
+		background: var(--m3-surface, #fcf9f9);
+		border: 2px solid $cc-primary;
+		border-radius: 28px;
+		box-shadow: $cc-elevation-1;
+		list-style: none;
+		margin: 8px 0 0;
+		max-height: 320px;
+		overflow-y: auto;
+		padding: 8px 0;
+		position: absolute;
+		width: 100%;
+		z-index: 20;
+
+		button {
+			background: none;
+			border: none;
+			color: $cc-secondary;
+			cursor: pointer;
+			display: block;
+			font-size: 14px;
+			font-weight: 500;
+			letter-spacing: 0.25px;
+			line-height: 20px;
+			min-height: 48px;
+			padding: 14px 16px;
+			text-align: center;
+			width: 100%;
+
+			&:hover:not(:disabled) {
+				background-color: rgba(27, 27, 28, 0.04);
+			}
+
+			&[aria-selected='true'] {
+				/* Weight + inset border so the selection reads without colour
+				   perception (WCAG 1.4.1). */
+				box-shadow: inset 3px 0 0 0 $cc-primary;
+				color: $cc-primary;
+				font-weight: 700;
+			}
+
+			&:disabled {
+				color: $cc-outline-variant;
+				cursor: default;
+			}
+		}
+	}
+
+	&__error {
+		align-items: center;
+		background: var(--m3-error-container, #ffdad6);
+		border-radius: 12px;
+		color: var(--m3-on-error-container, #410002);
+		display: flex;
+		gap: 12px;
+		justify-content: space-between;
+		margin: 0;
+		padding: 12px 16px;
+
+		button {
+			background: none;
+			border: 1px solid currentColor;
+			border-radius: 20px;
+			color: inherit;
+			cursor: pointer;
+			padding: 6px 16px;
+		}
+	}
+}
+
+/* The vertical navigation is disabled while the creation flow is open. */
+body.conversationCreate--active .navigation__wrapper {
+	opacity: 0.38;
+	pointer-events: none;
+}
+
+.formatCard {
+	background: $cc-surface-container-low;
+	border: 1px solid $cc-outline-variant;
+	border-radius: 28px;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	width: 360px;
+
+	&__header {
+		align-items: center;
+		display: flex;
+		gap: 16px;
+		min-height: 72px;
+		padding: 12px 4px 12px 16px;
+	}
+
+	&__avatar {
+		align-items: center;
+		display: flex;
+		flex-shrink: 0;
+		height: 40px;
+		justify-content: center;
+		width: 40px;
+
+		svg {
+			fill: $cc-primary;
+			height: 32px;
+			width: 32px;
+		}
+	}
+
+	&__headerText {
+		flex: 1;
+		min-width: 0;
+	}
+
+	&__title {
+		color: $cc-on-surface;
+		font-size: 16px;
+		font-weight: 500;
+		letter-spacing: 0.15px;
+		line-height: 24px;
+		margin: 0;
+	}
+
+	&__subtitle {
+		color: $cc-on-surface;
+		font-size: 14px;
+		letter-spacing: 0.25px;
+		line-height: 20px;
+		margin: 4px 0 0;
+	}
+
+	&__headerAction {
+		flex-shrink: 0;
+	}
+
+	&__media {
+		height: 188px;
+		overflow: hidden;
+		position: relative;
+		width: 100%;
+	}
+
+	&__mediaContent {
+		align-items: center;
+		display: flex;
+		height: 100%;
+		justify-content: center;
+		transition:
+			filter 200ms ease,
+			opacity 200ms ease;
+		width: 100%;
+
+		svg,
+		img {
+			height: 100%;
+			object-fit: cover;
+			width: 100%;
+		}
+
+		&--dimmed {
+			filter: blur(1px);
+			opacity: 0.5;
+		}
+	}
+
+	&__mediaOverlay {
+		display: flex;
+		flex-direction: column;
+		inset: 0;
+		justify-content: flex-end;
+		position: absolute;
+	}
+
+	&__content {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		padding: 12px;
+	}
+}
+
+.m3SplitButton {
+	display: flex;
+	gap: 2px;
+	width: 100%;
+
+	&__leading {
+		align-items: center;
+		background: none;
+		border: 1px solid $cc-outline-variant;
+		border-radius: 28px 4px 4px 28px;
+		color: $cc-on-surface-variant;
+		cursor: pointer;
+		display: flex;
+		flex: 1;
+		gap: 8px;
+		height: 56px;
+		justify-content: center;
+		min-width: 0;
+		padding: 16px 24px;
+	}
+
+	&__trailing {
+		align-items: center;
+		background: none;
+		border: 1px solid $cc-outline-variant;
+		border-radius: 4px 28px 28px 4px;
+		color: $cc-on-surface-variant;
+		cursor: pointer;
+		display: flex;
+		flex-shrink: 0;
+		height: 56px;
+		justify-content: center;
+		width: 56px;
+	}
+
+	&__leading:hover:not(:disabled),
+	&__trailing:hover:not(:disabled) {
+		background-color: rgba(27, 27, 28, 0.04);
+	}
+
+	&__icon {
+		display: flex;
+		flex-shrink: 0;
+	}
+
+	&__chevron {
+		transition: transform $cc-motion-duration $cc-motion-easing;
+
+		&--up {
+			transform: rotate(180deg);
+		}
+	}
+
+	&__label {
+		font-size: 16px;
+		font-weight: 500;
+		letter-spacing: 0.15px;
+		line-height: 24px;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	&--selected {
+		.m3SplitButton__leading,
+		.m3SplitButton__trailing {
+			background: $cc-primary;
+			border-color: $cc-primary;
+			color: $cc-on-primary;
+		}
+
+		.m3SplitButton__leading:hover:not(:disabled),
+		.m3SplitButton__trailing:hover:not(:disabled) {
+			background: var(--m3-primary-container, #cc1e1c);
+		}
+	}
+
+	&__leading:disabled,
+	&__trailing:disabled {
+		cursor: default;
+		opacity: 0.38;
+	}
+}
+
+.personChipGrid {
+	align-content: flex-end;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	list-style: none;
+	margin: 0;
+	max-height: 100%;
+	overflow-y: auto;
+	padding: 6px 12px;
+
+	&__chip {
+		align-items: center;
+		background: $cc-surface-container-low;
+		border-radius: 8px;
+		box-shadow: $cc-elevation-1;
+		display: flex;
+		gap: 8px;
+		height: 32px;
+		justify-content: center;
+		min-width: 0;
+		padding: 6px 8px 6px 16px;
+
+		&--half {
+			flex: 1 1 calc(50% - 6px);
+		}
+
+		&--full {
+			flex: 1 1 100%;
+		}
+	}
+
+	&__label {
+		color: $cc-on-surface-variant;
+		flex: 1;
+		font-size: 14px;
+		font-weight: 500;
+		letter-spacing: 0.1px;
+		line-height: 20px;
+		overflow: hidden;
+		text-align: center;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	&__remove {
+		align-items: center;
+		background: none;
+		border: none;
+		border-radius: 50%;
+		color: $cc-on-surface-variant;
+		cursor: pointer;
+		display: flex;
+		flex-shrink: 0;
+		height: 18px;
+		justify-content: center;
+		padding: 0;
+		width: 18px;
+	}
+}
+
+.personSelectMenu {
+	background: var(--m3-surface, #ffffff);
+	border: 2px solid $cc-primary;
+	border-radius: 28px;
+	box-shadow: $cc-elevation-1;
+	display: flex;
+	flex-direction: column;
+	left: 0;
+	overflow-y: auto;
+	position: absolute;
+	right: 0;
+	z-index: 30;
+
+	&--down {
+		top: calc(100% + 8px);
+	}
+
+	&--up {
+		bottom: calc(100% + 8px);
+	}
+
+	&__row {
+		align-items: center;
+		background: none;
+		border: none;
+		border-bottom: 1px solid rgba(27, 27, 28, 0.08);
+		cursor: pointer;
+		display: flex;
+		gap: 10px;
+		justify-content: space-between;
+		min-height: 48px;
+		padding: 4px 8px 4px 16px;
+
+		&:last-child {
+			border-bottom: none;
+		}
+
+		&:hover {
+			background-color: rgba(27, 27, 28, 0.04);
+		}
+	}
+
+	&__name {
+		color: $cc-secondary;
+		flex: 1;
+		font-size: 14px;
+		font-weight: 500;
+		letter-spacing: 0.25px;
+		line-height: 20px;
+		text-align: center;
+	}
+
+	&__toggle {
+		align-items: center;
+		background: $cc-secondary-container;
+		border-radius: 50%;
+		color: var(--m3-on-secondary-container, #e7effc);
+		display: flex;
+		flex-shrink: 0;
+		height: 40px;
+		justify-content: center;
+		width: 40px;
+	}
+
+	&__row--selected {
+		.personSelectMenu__name {
+			color: $cc-primary;
+			font-size: 16px;
+			letter-spacing: 0.5px;
+			line-height: 24px;
+		}
+
+		.personSelectMenu__toggle {
+			background: $cc-primary;
+			color: var(--m3-on-primary-container, #ffe2de);
+		}
+	}
+
+	&__row--vacated {
+		.personSelectMenu__name {
+			color: #d4d4d4;
+		}
+
+		.personSelectMenu__toggle {
+			background: rgba(27, 27, 28, 0.1);
+			color: $cc-on-surface-variant;
+			opacity: 0.38;
+		}
+	}
+}
+
+.internalChatCreateCard {
+	&__supportText {
+		color: $cc-on-surface-variant;
+		font-size: 14px;
+		letter-spacing: 0.25px;
+		line-height: 20px;
+		margin: 0;
+	}
+
+	&__actions {
+		align-items: flex-start;
+		display: flex;
+		gap: 4px;
+	}
+
+	&__splitButtonWrap {
+		flex: 1;
+		min-width: 0;
+		position: relative;
+	}
+
+	&__createButton {
+		align-items: center;
+		background: rgba(27, 27, 28, 0.1);
+		border: none;
+		border-radius: 50%;
+		color: $cc-on-surface-variant;
+		cursor: pointer;
+		display: flex;
+		flex-shrink: 0;
+		height: 56px;
+		justify-content: center;
+		opacity: 0.38;
+		width: 56px;
+
+		&:not(:disabled) {
+			background: $cc-primary;
+			color: $cc-on-primary;
+			opacity: 1;
+
+			&:hover {
+				background: var(--m3-primary-container, #cc1e1c);
+			}
+		}
+
+		&:disabled {
+			cursor: default;
+		}
+	}
+}
+
+.circleSettings {
+	display: flex;
+	flex-direction: column;
+	gap: 24px;
+
+	&__title {
+		color: $cc-on-surface;
+		font-size: 24px;
+		font-weight: 400;
+		line-height: 32px;
+		margin: 0 0 8px;
+	}
+
+	&__subtitle {
+		color: $cc-on-surface-variant;
+		font-size: 14px;
+		letter-spacing: 0.25px;
+		line-height: 20px;
+		margin: 0;
+		max-width: 640px;
+	}
+
+	&__columns {
+		align-items: flex-start;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 24px;
+	}
+
+	&__card {
+		flex-shrink: 0;
+	}
+
+	&__authorColumn {
+		display: flex;
+		flex: 1;
+		flex-direction: column;
+		gap: 16px;
+		min-width: 280px;
+	}
+
+	&__moderators {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+
+		> p {
+			color: $cc-on-surface-variant;
+			font-size: 14px;
+			margin: 0;
+		}
+	}
+
+	&__moderatorPicker {
+		position: relative;
+	}
+
+	&__error {
+		align-items: center;
+		background: var(--m3-error-container, #ffdad6);
+		border-radius: 12px;
+		color: var(--m3-on-error-container, #410002);
+		display: flex;
+		gap: 12px;
+		justify-content: space-between;
+		margin: 0;
+		padding: 12px 16px;
+
+		button {
+			background: none;
+			border: 1px solid currentColor;
+			border-radius: 20px;
+			color: inherit;
+			cursor: pointer;
+			padding: 6px 16px;
+		}
+	}
+
+	&__createButton {
+		align-items: center;
+		align-self: flex-end;
+		background: rgba(27, 27, 28, 0.1);
+		border: none;
+		border-radius: 28px;
+		color: $cc-on-surface-variant;
+		cursor: default;
+		display: flex;
+		font-size: 16px;
+		font-weight: 500;
+		height: 56px;
+		justify-content: center;
+		letter-spacing: 0.15px;
+		min-width: 200px;
+		opacity: 0.38;
+		padding: 16px 32px;
+
+		&--primary {
+			background: $cc-primary;
+			color: $cc-on-primary;
+			cursor: pointer;
+			opacity: 1;
+
+			&:hover {
+				background: var(--m3-primary-container, #cc1e1c);
+			}
+		}
+	}
+}
+
+/* Visible keyboard focus across the flow. */
+.conversationCreate button:focus-visible,
+.m3SplitButton button:focus-visible,
+.personSelectMenu__row:focus-visible,
+.personChipGrid__remove:focus-visible {
+	outline: 3px solid $cc-primary;
+	outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.formatCard__mediaContent,
+	.m3SplitButton__chevron {
+		transition: none !important;
+	}
+}
+
+@media (width <= 900px) {
+	.conversationCreate {
+		padding: 8px 12px 24px;
+
+		&__cards {
+			flex-direction: column;
+		}
+	}
+
+	.formatCard {
+		max-width: 400px;
+		width: 100%;
+	}
+
+	.circleSettings__columns {
+		flex-direction: column;
+	}
+
+	.circleSettings__card {
+		max-width: 400px;
+		width: 100%;
+	}
+
+	.circleSettings__createButton {
+		align-self: stretch;
+	}
+}

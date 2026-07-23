@@ -1,3 +1,5 @@
+import i18n from 'i18next';
+
 export const MILLISECONDS_PER_SECOND = 1000;
 export const MILLISECONDS_PER_MINUTE = 60 * MILLISECONDS_PER_SECOND;
 export const MILLISECONDS_PER_HOUR = 60 * MILLISECONDS_PER_MINUTE;
@@ -19,6 +21,24 @@ export interface PrettyDate {
 	str: string;
 	date: string | null;
 }
+
+/** Active UI locale as a BCP-47 tag ('de@informal' → 'de'), for Intl date APIs. */
+const resolveDateLocale = (): string => (i18n.language || 'de').split('@')[0];
+
+/**
+ * Explicit chat date-pill label only (#564), localized to the active UI
+ * language: "7. Juli 2026" (de), "July 7, 2026" (en). Relative labels
+ * (Heute / Today / …) stay on i18n keys — do not use this for those.
+ */
+export const formatChatMessageDateDivider = (
+	msSinceEpoch: number,
+	locale: string = resolveDateLocale()
+): string =>
+	new Date(msSinceEpoch).toLocaleDateString(locale, {
+		day: 'numeric',
+		month: 'long',
+		year: 'numeric'
+	});
 
 const printPrettyDate = (
 	messageDate: number,
@@ -85,6 +105,28 @@ export const getPrettyDateFromMessageDate = (
 	twoDigits: boolean = false
 ) => {
 	return printPrettyDate(messageDate * 1000, showDayOfTheWeek, twoDigits);
+};
+
+/**
+ * Chat timeline date pill: keeps relative i18n keys (message.today, …);
+ * only replaces the explicit calendar `date` with the long, locale-aware form
+ * (#564). Session list / bookings still use {@link getPrettyDateFromMessageDate}.
+ */
+export const getChatMessageDateDivider = (
+	unixSeconds: number,
+	locale?: string
+): PrettyDate => {
+	const pretty = getPrettyDateFromMessageDate(unixSeconds);
+	if (!pretty.date) {
+		return pretty;
+	}
+	return {
+		...pretty,
+		date: formatChatMessageDateDivider(
+			unixSeconds * MILLISECONDS_PER_SECOND,
+			locale
+		)
+	};
 };
 
 export const formatToHHMM = (timestamp: string) => {

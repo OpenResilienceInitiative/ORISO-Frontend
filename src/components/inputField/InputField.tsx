@@ -1,5 +1,7 @@
 import * as React from 'react';
 import { useState } from 'react';
+import { IconButton, InputAdornment } from '@mui/material';
+import { OrisoTextField } from '../form/OrisoTextField';
 import { Text } from '../text/Text';
 import { ReactComponent as ShowPasswordIcon } from '../../resources/img/icons/eye.svg';
 import { ReactComponent as HidePasswordIcon } from '../../resources/img/icons/eye-closed.svg';
@@ -73,55 +75,101 @@ export const InputField = (props: InputFieldProps) => {
 		<div
 			className={`inputField ${
 				inputItem.icon ? `inputField--withIcon` : ``
-			}`}
+			} ${inputItem.class ? ' ' + inputItem.class : ''}`}
 		>
-			{inputItem.icon && (
-				<span className="inputField__icon" aria-hidden="true">
-					{inputItem.icon}
-				</span>
-			)}
-			<input
+			<OrisoTextField
 				onChange={handleInputValidation}
 				id={inputItem.id}
 				type={showPassword ? 'text' : inputItem.type}
-				className={`inputField__input
-					${inputItem.class ? ' ' + inputItem.class : ''}
-					${inputItem.labelState === 'valid' ? ' inputField__input--valid' : ''}
-					${inputItem.labelState === 'invalid' ? ' inputField__input--invalid' : ''}
-					${inputItem.type === 'password' ? ' inputField__input--password' : ''}
+				className={`inputField__textField
+					${inputItem.labelState === 'valid' ? ' inputField__textField--valid' : ''}
+					${inputItem.labelState === 'invalid' ? ' inputField__textField--invalid' : ''}
+					${inputItem.type === 'password' ? ' inputField__textField--password' : ''}
 				`}
 				value={inputItem.content ? inputItem.content : ``}
 				name={inputItem.name}
-				placeholder={inputItem.label}
+				label={inputItem.label}
 				disabled={inputItem.disabled}
 				autoComplete="off"
 				onKeyUp={handleKeyUp}
 				onKeyDown={(e) => (props.onKeyDown ? props.onKeyDown(e) : null)}
 				tabIndex={inputItem.tabIndex}
+				fullWidth
+				inputProps={{
+					maxLength: inputItem.maxLength,
+					pattern: inputItem.pattern
+				}}
+				error={inputItem.labelState === 'invalid'}
+				sx={{
+					'mt': 0,
+					'& .MuiInputAdornment-root': {
+						height: '100%',
+						maxHeight: 'none',
+						marginTop: 0,
+						alignItems: 'center',
+						alignSelf: 'center'
+					},
+					'& .MuiIconButton-root': {
+						width: 40,
+						height: 40,
+						padding: '8px',
+						alignSelf: 'center'
+					},
+					'& .MuiSvgIcon-root, & svg': {
+						width: 24,
+						height: 24,
+						display: 'block'
+					},
+					'& .MuiOutlinedInput-root': {
+						alignItems: 'center'
+					}
+				}}
+				InputProps={{
+					startAdornment: inputItem.icon ? (
+						<InputAdornment position="start">
+							<span
+								className="inputField__icon"
+								aria-hidden="true"
+							>
+								{inputItem.icon}
+							</span>
+						</InputAdornment>
+					) : undefined,
+					endAdornment:
+						inputItem.type === 'password' ? (
+							<InputAdornment position="end">
+								<IconButton
+									onClick={() =>
+										setShowPassword(!showPassword)
+									}
+									className="inputField__passwordToggle"
+									edge="end"
+									aria-label={
+										showPassword
+											? translate('login.password.hide')
+											: translate('login.password.show')
+									}
+								>
+									{showPassword ? (
+										<HidePasswordIcon
+											title={translate(
+												'login.password.hide'
+											)}
+											color={'rgba(0, 0, 0, 0.65)'}
+										/>
+									) : (
+										<ShowPasswordIcon
+											title={translate(
+												'login.password.show'
+											)}
+											color={'rgba(0, 0, 0, 0.65)'}
+										/>
+									)}
+								</IconButton>
+							</InputAdornment>
+						) : undefined
+				}}
 			/>
-			<label className="inputField__label" htmlFor={inputItem.id}>
-				{inputItem.label}
-			</label>
-			{inputItem.type === 'password' && (
-				<span
-					onClick={() => setShowPassword(!showPassword)}
-					className="inputField__passwordToggle"
-				>
-					{showPassword ? (
-						<HidePasswordIcon
-							aria-label={translate('login.password.hide')}
-							title={translate('login.password.hide')}
-							color={'rgba(0, 0, 0, 0.65)'}
-						/>
-					) : (
-						<ShowPasswordIcon
-							aria-label={translate('login.password.show')}
-							title={translate('login.password.show')}
-							color={'rgba(0, 0, 0, 0.65)'}
-						/>
-					)}
-				</span>
-			)}
 			{inputItem.infoText && (
 				<Text
 					className="inputField__infoText"

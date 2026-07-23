@@ -11,6 +11,7 @@ import './select2.styles';
 import { useResponsive } from '../../hooks/useResponsive';
 import { useTranslation } from 'react-i18next';
 import { ReactNode, useMemo, useRef, useEffect, useCallback } from 'react';
+import { orisoInputColors } from '../form/orisoInputDesign';
 
 export interface SelectOption {
 	value: string;
@@ -84,34 +85,41 @@ const colourStyles = (
 		const isMulti = state.selectProps.isMulti;
 		return {
 			...styles,
-			'backgroundColor': 'white',
+			'backgroundColor': orisoInputColors.surface,
 			'border': state.isFocused
-				? '2px solid #3F373F'
-				: '1px solid #8C878C',
-			'borderRadius': undefined,
+				? `3px solid ${orisoInputColors.primary}`
+				: `1px solid ${orisoInputColors.outline}`,
+			'borderRadius': '4px',
 			// ✅ FIXED BIG BOX for multi-select (like textarea)
-			'minHeight': isMulti ? '200px' : '50px',
-			'height': isMulti ? '200px' : '50px', // FIXED 200px height (not flexible!)
-			'maxHeight': isMulti ? '200px' : '50px',
+			'minHeight': isMulti ? '200px' : '56px',
+			'height': isMulti ? '200px' : '56px',
+			'maxHeight': isMulti ? '200px' : '56px',
 			'overflowY': 'visible',
 			'outline': '0',
-			'padding': state.isFocused ? '0 11px' : '0 12px',
-			'color': '#3F373F',
+			'padding': state.isFocused ? '0 13px' : '0 15px',
+			'color': orisoInputColors.onSurface,
 			'boxShadow': undefined,
 			'cursor': 'pointer',
 			'&:hover': {
 				border: state.isFocused
-					? '2px solid #3F373F'
-					: '1px solid #3F373F',
-				padding: state.isFocused ? '0 11px' : '0 12px'
+					? `3px solid ${orisoInputColors.primary}`
+					: `1px solid ${orisoInputColors.outline}`,
+				padding: state.isFocused ? '0 13px' : '0 15px'
 			},
 			'.language-select__inputLabel': {
 				fontSize: state.isFocused || state.hasValue ? '12px' : '16px',
-				top: state.isFocused || state.hasValue ? '0px' : '14px',
+				top: state.isFocused || state.hasValue ? '-8px' : '16px',
 				transition: 'font-size .5s, top .5s',
-				color: 'rgba(0, 0, 0, 0.6)',
+				color: state.isFocused
+					? orisoInputColors.primary
+					: orisoInputColors.onSurfaceVariant,
+				backgroundColor: orisoInputColors.surface,
+				lineHeight: state.isFocused || state.hasValue ? '16px' : '24px',
+				letterSpacing:
+					state.isFocused || state.hasValue ? '0.4px' : '0.5px',
+				padding: state.isFocused || state.hasValue ? '0 4px' : 0,
 				position: 'absolute',
-				marginLeft: '3px',
+				marginLeft: '-7px',
 				cursor: 'pointer'
 			},
 			...(control?.(styles, state) ?? {})
@@ -120,6 +128,7 @@ const colourStyles = (
 	singleValue: (styles, state) => ({
 		...styles,
 		top: '60%',
+		color: orisoInputColors.onSurface,
 		...(singleValue?.(styles, state) ?? {})
 	}),
 	input: (styles, state) => {
@@ -133,6 +142,7 @@ const colourStyles = (
 					...styles,
 					paddingTop: '12px',
 					cursor: 'pointer',
+					color: orisoInputColors.onSurface,
 					...(input?.(styles, state) ?? {})
 				};
 	},
@@ -155,8 +165,10 @@ const colourStyles = (
 			...styles,
 
 			// Use values from stylesheet
-			color: undefined,
-			backgroundColor: undefined,
+			color: orisoInputColors.onSurface,
+			backgroundColor: state.isSelected
+				? orisoInputColors.selectedLayer
+				: orisoInputColors.surface,
 
 			textAlign: 'left',
 			lineHeight: '21px',
@@ -169,7 +181,7 @@ const colourStyles = (
 		...(!fromL && { maxHeight: '150px' }),
 		padding: '0',
 		border: undefined,
-		borderRadius: '4px',
+		borderRadius: '8px',
 		boxShadow: undefined,
 		...(menuList?.(styles, state) ?? {})
 	}),
@@ -194,7 +206,8 @@ const colourStyles = (
 					right:
 						menuPlacement === MENUPLACEMENT_BOTTOM_LEFT ? 0 : 'auto'
 				}),
-		'boxShadow': undefined,
+		'boxShadow':
+			'0 12px 24px rgba(27, 27, 28, 0.14), 0 2px 6px rgba(27, 27, 28, 0.08)',
 		'&:after, &:before': {
 			content: `''`,
 			position: 'absolute',
