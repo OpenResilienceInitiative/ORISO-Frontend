@@ -21,7 +21,9 @@ const meta: Meta<typeof ChatMenuDropdown> = {
 		docs: {
 			description: {
 				component:
-					'Reusable ORISO chat menu matching the App.Oriso Figma menu surface. Used for chat/session action dropdowns.'
+					'Reusable ORISO chat menu matching the App.Oriso Figma menu surface. ' +
+					'Used for chat/session action dropdowns. #597: panel uses ' +
+					'`2px solid var(--m3-primary-container)` via `list-item-active-menu-border`.'
 			}
 		},
 		design: {

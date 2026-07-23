@@ -468,8 +468,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			}
 		}
 
-		// Figma "Selected": the inner textcomponent carries the 2px primary
-		// border while the editor is focused (independent of ready-to-send).
+		// #597: selected composer — text area gets the primary active border
 		&__wrapper-send-message--selected .textarea__input {
 			border: 2px solid var(--m3-primary-container, #cc1e1c);
 		}

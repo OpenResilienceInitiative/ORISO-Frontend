@@ -8,8 +8,10 @@ $session-card-hover-bg: #f0e7e7;
 // unchanged — this only makes them the single canonical source.
 $session-card-selected-bg: #f6f3f3;
 $session-light-border: #fff;
-$session-selected-border: #ffb4aa;
-$session-active-border: #cc1e1c;
+
+// #597: selected ring uses M3 primary (was #ffb4aa / 1px)
+$session-selected-border: var(--m3-primary, #a5000a);
+$session-active-border: var(--m3-primary-container, #cc1e1c);
 $session-focus-ring: #ffdad5;
 $session-topic-chip-bg: #ffb4aa;
 $session-topic-chip-color: #410001;
@@ -73,7 +75,9 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 
 		.sessionsListItem__content {
 			background-color: $session-card-selected-bg !important;
-			border: 1px solid $session-selected-border !important;
+
+			// #597: 2px solid --m3-primary (overrides resting 1px border)
+			@include list-item-selected-border($important: true);
 			box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
 			transition:
 				background-color 160ms ease,
@@ -84,7 +88,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 			&:focus,
 			&:active {
 				background-color: $session-card-selected-bg !important;
-				border-color: $session-selected-border !important;
+				border-color: $list-item-selected-border-color !important;
 			}
 		}
 
@@ -153,11 +157,16 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 	&--menuOpen {
 		.sessionsListItem__content {
 			background-color: #fff6f5 !important;
-			border: 2px solid $session-active-border !important;
+
+			@include list-item-active-menu-border($important: true);
 		}
 
+		// Flyout open: vertical pill (height > width) + 2px primary-container
 		.sessionsListItem__menuIcon {
-			border-color: $session-active-border;
+			width: 32px;
+			height: 48px;
+
+			@include list-item-active-menu-border;
 			color: $session-active-border;
 		}
 
@@ -174,6 +183,9 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		max-width: 100%;
 		min-width: 0;
 		box-sizing: border-box;
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
 
 		// 160px card height; every card keeps a full 24px radius.
 		min-height: 160px;
@@ -244,7 +256,8 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 	}
 
 	&.sessionsListItem--active .sessionsListItem__content:focus-visible {
-		border: 2px solid $session-active-border !important;
+		// Keep selected primary border; layer keyboard halo (#596 / WP-06)
+		@include list-item-selected-border($important: true);
 		box-shadow: 0 0 0 3px $session-focus-ring;
 	}
 
@@ -256,7 +269,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 
 		&:first-child {
 			justify-content: space-between;
-			padding: 12px 16px;
+			padding: 18px 16px 0;
 			color: var(--m3-on-surface-variant, $tertiary);
 			font-size: 12px;
 			line-height: 16px;
@@ -270,6 +283,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		&:last-child {
 			justify-content: space-between;
 			align-items: flex-end;
+			padding: 0 16px 14px 24px;
 
 			// Figma 8609-31260: 48px-high bottom action row.
 			min-height: 48px;
@@ -363,6 +377,11 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		color: #1e1e1e;
 		font: inherit;
 		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+		transition:
+			width 160ms ease,
+			height 160ms ease,
+			border-color 160ms ease,
+			background-color 160ms ease;
 
 		svg {
 			width: 24px;
@@ -385,7 +404,8 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		background: white !important;
 		width: 301px;
 		max-width: calc(100vw - 32px);
-		border: 1px solid var(--m3-primary-container, #cc1e1c);
+
+		@include list-item-active-menu-border;
 		border-radius: 8px;
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 		overflow: auto;
@@ -740,7 +760,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 	}
 
 	&__subject {
-		padding: 8px 16px;
+		// padding: 8px 16px;
 		font-size: 14px;
 		line-height: 20px;
 		letter-spacing: 0.25px;
@@ -785,10 +805,9 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 	}
 
 	&__consultingTypeIcon {
-		padding: 8px 16px 8px 8px;
 		margin-left: auto;
 		display: flex;
-		align-items: center;
+		align-items: end;
 		justify-content: center;
 		flex-shrink: 0;
 		margin-right: 0;

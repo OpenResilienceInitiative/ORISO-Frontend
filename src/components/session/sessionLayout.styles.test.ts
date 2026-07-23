@@ -17,4 +17,12 @@ describe('session header and timeline layout', () => {
 			/& > \.session__content\s*\{[\s\S]*?flex:\s*1;[\s\S]*?min-height:\s*0;[\s\S]*?position:\s*relative;/
 		);
 	});
+
+	it('activates the chat container border on session focus outside the composer', () => {
+		const scss = sessionStyles();
+
+		expect(scss).toMatch(
+			/&:focus-within:not\(:has\(\.textarea__wrapper-send-message--selected\)\)\s*\{[\s\S]*?border:\s*2px solid var\(--m3-primary-container/
+		);
+	});
 });

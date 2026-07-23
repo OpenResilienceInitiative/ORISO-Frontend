@@ -23,9 +23,10 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'Send button per Figma 489:16565. Empty shows the chevron on the pale ' +
-					'container; entering text rotates the paper plane in (arm). Sending ' +
-					'launches the fly-out animation, then the button settles back.'
+					'Send button per Figma 489:16565 / #597. Empty / not-selected uses ' +
+					'`var(--m3-primary-fixed-dim, #ffb4aa)` with a white icon; entering text ' +
+					'rotates the paper plane in (arm) on primary-container. Sending launches ' +
+					'the fly-out animation, then the button settles back.'
 			}
 		}
 	},
