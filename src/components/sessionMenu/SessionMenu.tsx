@@ -53,6 +53,9 @@ import { ReactComponent as MenuVerticalIcon } from '../../resources/img/icons/st
 import { ReactComponent as ArchiveIcon } from '../../resources/img/icons/inbox.svg';
 import { ReactComponent as TrashIcon } from '../../resources/img/icons/trash.svg';
 import { ReactComponent as PrivacyPolicyIcon } from '../../resources/img/icons/privacy-policy.svg';
+import { ReactComponent as NotificationSettingsIcon } from '../../resources/img/icons/notification_settings.svg';
+import { NotificationConfigDialog } from '../profile/NotificationSettings/NotificationConfigDialog';
+import { useNotificationSettings } from '../../hooks/useNotificationSettings';
 import { ReactComponent as ImprintIcon } from '../../resources/img/icons/imprint.svg';
 import '../sessionHeader/sessionHeader.styles';
 import './sessionMenu.styles';
@@ -106,6 +109,12 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 	const [overlayItem, setOverlayItem] = useState(null);
 	const [flyoutOpen, setFlyoutOpen] = useState(null);
+	// #576 harmonised model: quick access to the notification config from the
+	// conversation menu — same component as in the profile settings, wrapped
+	// in the dialog so the user is NOT thrown out of the current room.
+	const [notifConfigOpen, setNotifConfigOpen] = useState(false);
+	const { settings: notifSettings, updateSettings: updateNotifSettings } =
+		useNotificationSettings();
 	const [overlayActive, setOverlayActive] = useState(false);
 	const [legalModal, setLegalModal] = useState<{
 		title: string;
@@ -640,6 +649,22 @@ export const SessionMenu = (props: SessionMenuProps) => {
 							</Link>
 						)}
 
+						<div
+							className="sessionMenu__item chatMenuDropdown__item"
+							onClick={() => {
+								setFlyoutOpen(false);
+								setNotifConfigOpen(true);
+							}}
+							data-cy="session-menu-notification-config"
+						>
+							<SessionMenuItemContent
+								icon={<NotificationSettingsIcon />}
+								title={translate(
+									'profile.notifications.config.title'
+								)}
+							/>
+						</div>
+
 						{props.showMobileSupervisionAction && (
 							<div
 								className="sessionMenu__item chatMenuDropdown__item sessionMenu__item--mobile"
@@ -870,6 +895,15 @@ export const SessionMenu = (props: SessionMenuProps) => {
 					handleOverlay={handleOverlayAction}
 				/>
 			)}
+			<NotificationConfigDialog
+				open={notifConfigOpen}
+				config={notifSettings.notificationConfig}
+				onConfirm={(notificationConfig) => {
+					updateNotifSettings({ notificationConfig });
+					setNotifConfigOpen(false);
+				}}
+				onClose={() => setNotifConfigOpen(false)}
+			/>
 		</div>
 	);
 };

@@ -47,8 +47,10 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 	.textarea {
 		z-index: 100;
+
 		// Figma 8641-34699: dock must be opaque so scrolled history cannot show through.
 		background-color: var(--m3-surface-container-lowest, #ffffff);
+
 		// Figma 8641-34699: 16px inset between chat card edge and composer.
 		padding: 16px;
 		width: 100%;
@@ -1669,6 +1671,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			object-fit: cover;
 			border-radius: 8px;
 			flex-shrink: 0;
+
 			// Clip the alt text if an image ever fails to load, so it can
 			// never spill out of the thumbnail box.
 			overflow: hidden;

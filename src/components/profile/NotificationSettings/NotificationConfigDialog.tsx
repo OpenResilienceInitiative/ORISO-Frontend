@@ -5,17 +5,24 @@ import { OrisoDialog } from '../../modal/OrisoDialog';
 import { ReactComponent as NotificationSettingsIcon } from '../../../resources/img/icons/notification_settings.svg';
 import { ReactComponent as NotificationAudioOffIcon } from '../../../resources/img/icons/notification_audio_off.svg';
 import { ReactComponent as PlayCircleIcon } from '../../../resources/img/icons/play-circle.svg';
+import { ReactComponent as ArrowUpIcon } from '../../../resources/img/icons/keyboard_arrow_up.svg';
+import { ReactComponent as ArrowDownIcon } from '../../../resources/img/icons/keyboard_arrow_down.svg';
 import {
 	NOTIFICATION_TONE_IDS,
 	SoundId
 } from '../../../utils/notificationSettings/model';
-import { soundAssetFor } from '../../../utils/notificationSettings/soundPlayback';
 import {
+	previewNotificationSound,
+	soundAssetFor
+} from '../../../utils/notificationSettings/soundPlayback';
+import { M3Checkbox } from '../../M3Checkbox';
+import {
+	AREA_KINDS,
+	BannerMode,
 	clampVolume,
 	DISABLED_AREAS,
 	KindConfig,
 	NOTIFICATION_AREAS,
-	NOTIFICATION_KINDS,
 	NotificationArea,
 	NotificationConfig,
 	NotificationKind,
@@ -41,7 +48,7 @@ const KindRow = ({
 		area: NotificationArea,
 		kind: NotificationKind,
 		field: keyof KindConfig,
-		value: SoundId | boolean | number
+		value: SoundId | BannerMode | boolean | number
 	) => void;
 	onPreview: (soundId: SoundId, volume: number) => void;
 }) => {
@@ -73,7 +80,7 @@ const KindRow = ({
 						}
 						data-cy={`notif-volume-up-${area}-${kind}`}
 					>
-						▲
+						<ArrowUpIcon aria-hidden="true" />
 					</button>
 					<button
 						type="button"
@@ -92,7 +99,7 @@ const KindRow = ({
 						}
 						data-cy={`notif-volume-down-${area}-${kind}`}
 					>
-						▼
+						<ArrowDownIcon aria-hidden="true" />
 					</button>
 				</div>
 
@@ -108,7 +115,7 @@ const KindRow = ({
 							onClick={() => onPreview(value.sound, value.volume)}
 							data-cy={`notif-play-${area}-${kind}`}
 						>
-							<PlayCircleIcon />
+							<PlayCircleIcon aria-hidden="true" />
 						</button>
 					) : (
 						<span
@@ -137,6 +144,9 @@ const KindRow = ({
 						<option value="none">
 							{t('profile.notifications.config.noSound')}
 						</option>
+						<option value="ring">
+							{t('profile.notifications.config.ringTone')}
+						</option>
 						{NOTIFICATION_TONE_IDS.map((id, index) => (
 							<option key={id} value={id}>
 								{t('profile.notifications.config.tone', {
@@ -147,17 +157,48 @@ const KindRow = ({
 					</select>
 				</div>
 			</div>
-			<label className="notifConfig__email">
-				<input
-					type="checkbox"
+			<div className="notifConfig__channels">
+				{/* Banner: off / temporary / persistent (requireInteraction —
+				    Chromium only; Firefox/Safari fall back to temporary). */}
+				<label className="notifConfig__banner">
+					<span>
+						{t('profile.notifications.config.banner.label')}
+					</span>
+					<select
+						className="notifConfig__bannerSelect"
+						value={value.banner}
+						onChange={(e) =>
+							onChange(
+								area,
+								kind,
+								'banner',
+								e.target.value as BannerMode
+							)
+						}
+						data-cy={`notif-banner-${area}-${kind}`}
+					>
+						<option value="off">
+							{t('profile.notifications.config.banner.off')}
+						</option>
+						<option value="temporary">
+							{t('profile.notifications.config.banner.temporary')}
+						</option>
+						<option value="persistent">
+							{t(
+								'profile.notifications.config.banner.persistent'
+							)}
+						</option>
+					</select>
+				</label>
+				<M3Checkbox
 					checked={value.email}
-					onChange={(e) =>
-						onChange(area, kind, 'email', e.target.checked)
+					onChange={(checked) =>
+						onChange(area, kind, 'email', checked)
 					}
-					data-cy={`notif-email-${area}-${kind}`}
+					label={t('profile.notifications.config.sendByEmail')}
+					dataCy={`notif-email-${area}-${kind}`}
 				/>
-				<span>{t('profile.notifications.config.sendByEmail')}</span>
-			</label>
+			</div>
 		</div>
 	);
 };
@@ -174,7 +215,7 @@ export interface NotificationConfigViewProps {
 		area: NotificationArea,
 		kind: NotificationKind,
 		field: keyof KindConfig,
-		value: SoundId | boolean | number
+		value: SoundId | BannerMode | boolean | number
 	) => void;
 	onPreview: (soundId: SoundId, volume: number) => void;
 }
@@ -223,7 +264,7 @@ export const NotificationConfigView = ({
 			</div>
 
 			<div className="notifConfig__rows">
-				{NOTIFICATION_KINDS.map((kind) => (
+				{AREA_KINDS[activeArea].map((kind) => (
 					<KindRow
 						key={kind}
 						area={activeArea}
@@ -234,6 +275,52 @@ export const NotificationConfigView = ({
 					/>
 				))}
 			</div>
+
+			{/* Feature-signal dummy (FE#590): alarm-clock mode micro-survey.
+			    Votes are a UI demo — the backend vote API is US#544. */}
+			{activeArea === 'timeCritical' && <WeckerSignalCard />}
+		</div>
+	);
+};
+
+const WeckerSignalCard = () => {
+	const { t } = useTranslation();
+	const [voted, setVoted] = useState(false);
+	return (
+		<div className="notifConfig__signalCard" data-cy="notif-wecker-card">
+			<strong className="notifConfig__signalTitle">
+				{t('profile.notifications.config.wecker.title')}
+			</strong>
+			<p className="notifConfig__signalText">
+				{t('profile.notifications.config.wecker.text')}
+			</p>
+			{voted ? (
+				<p
+					className="notifConfig__signalThanks"
+					data-cy="notif-wecker-thanks"
+				>
+					{t('profile.notifications.config.wecker.thanks')}
+				</p>
+			) : (
+				<div className="notifConfig__signalVotes">
+					<button
+						type="button"
+						className="notifConfig__signalVote"
+						onClick={() => setVoted(true)}
+						data-cy="notif-wecker-up"
+					>
+						👍 {t('profile.notifications.config.wecker.upvote')}
+					</button>
+					<button
+						type="button"
+						className="notifConfig__signalVote"
+						onClick={() => setVoted(true)}
+						data-cy="notif-wecker-down"
+					>
+						👎 {t('profile.notifications.config.wecker.downvote')}
+					</button>
+				</div>
+			)}
 		</div>
 	);
 };
@@ -271,7 +358,7 @@ export const NotificationConfigDialog = ({
 			area: NotificationArea,
 			kind: NotificationKind,
 			field: keyof KindConfig,
-			value: SoundId | boolean | number
+			value: SoundId | BannerMode | boolean | number
 		) => {
 			setDraft((prev) => ({
 				...prev,
@@ -285,12 +372,7 @@ export const NotificationConfigDialog = ({
 	);
 
 	const handlePreview = useCallback((soundId: SoundId, volume: number) => {
-		const asset = soundAssetFor(soundId);
-		if (asset && 'Audio' in window) {
-			const audio = new Audio(asset);
-			audio.volume = Math.max(0, Math.min(1, volume));
-			audio.play().catch(() => undefined);
-		}
+		previewNotificationSound(soundId, volume);
 	}, []);
 
 	return (

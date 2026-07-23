@@ -18,6 +18,7 @@ import {
 	NotificationConfig,
 	parseNotificationConfig
 } from './notificationConfig';
+import { NEVER_NOTIFY_FAMILIES } from './notificationConfig';
 
 /** Per-family on/off switches — mirrors the timeline's event families. */
 export type FamilyToggles = Record<EventFamily, boolean>;
@@ -58,6 +59,7 @@ export interface OrisoNotificationSettings {
 export type SoundId =
 	| 'none'
 	| 'default'
+	| 'ring'
 	| 'chime'
 	| 'ding'
 	| 'soft'
@@ -77,6 +79,7 @@ export type SoundId =
 export const SOUND_IDS: ReadonlyArray<SoundId> = [
 	'none',
 	'default',
+	'ring',
 	'chime',
 	'ding',
 	'soft',
@@ -278,8 +281,22 @@ export const isNotificationSuppressed = (
 	device: LocalDeviceNotificationSettings,
 	family: EventFamily,
 	now: Date = new Date()
-): boolean =>
-	isDoNotDisturbActive(settings.dndUntil, now) ||
-	settings.globalMute ||
-	device.silenced ||
-	!settings.families[family];
+): boolean => {
+	if (
+		isDoNotDisturbActive(settings.dndUntil, now) ||
+		settings.globalMute ||
+		device.silenced
+	) {
+		return true;
+	}
+	// Harmonised model (2026-07-22): some families never notify (drafts);
+	// system keeps its single global switch; every other family is governed
+	// per-channel by the notification config (banner / sound / email).
+	if (NEVER_NOTIFY_FAMILIES.includes(family)) {
+		return true;
+	}
+	if (family === 'system') {
+		return !settings.families.system;
+	}
+	return false;
+};

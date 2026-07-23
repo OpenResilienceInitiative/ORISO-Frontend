@@ -1329,3 +1329,14 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 		}
 	}
 }
+
+// #576: global notification-status rail button (opt-in via settings page)
+.navigation__notifStatusIcon {
+	width: 24px;
+	height: 24px;
+	color: var(--oriso-nav-foreground, #4c555f);
+
+	&--muted {
+		color: var(--oriso-nav-active-foreground, var(--m3-primary, #a5000a));
+	}
+}

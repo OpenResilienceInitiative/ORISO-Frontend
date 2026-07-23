@@ -75,16 +75,28 @@
 		flex: 0 0 auto;
 	}
 
+	// Bare up/down arrows (Frank's keyboard_arrow icons); hover turns black
+	// so it is obvious they are pressable.
 	&__volumeBtn {
-		width: 22px;
-		height: 22px;
-		border: 1px solid #cfd4da;
-		border-radius: 6px;
-		background: #fff;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 24px;
+		height: 24px;
+		border: none;
+		background: transparent;
 		color: #4c555f;
-		font-size: 10px;
-		line-height: 1;
+		padding: 0;
 		cursor: pointer;
+
+		svg {
+			width: 24px;
+			height: 24px;
+		}
+
+		&:hover:not(:disabled) {
+			color: #000;
+		}
 
 		&:disabled {
 			opacity: 0.35;
@@ -143,18 +155,80 @@
 		color: #1a1a1a;
 	}
 
-	&__email {
+	// Channel row: banner mode select + M3 email checkbox
+	&__channels {
+		display: flex;
+		align-items: center;
+		gap: 16px;
+		flex-wrap: wrap;
+	}
+
+	&__banner {
 		display: inline-flex;
 		align-items: center;
 		gap: 8px;
 		font-size: 14px;
 		color: #1a1a1a;
+	}
+
+	&__bannerSelect {
+		border: 1px solid #cfd4da;
+		border-radius: 6px;
+		background: #fff;
+		font-size: 13px;
+		padding: 4px 8px;
+		color: #1a1a1a;
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 1px;
+		}
+	}
+
+	// Feature-signal micro-survey card (FE#590 dummy)
+	&__signalCard {
+		margin-top: 20px;
+		padding: 14px 16px;
+		border: 1px dashed #cfd4da;
+		border-radius: 10px;
+		background: #fafafa;
+	}
+
+	&__signalTitle {
+		display: block;
+		font-size: 14px;
+		color: #1a1a1a;
+		margin-bottom: 4px;
+	}
+
+	&__signalText {
+		margin: 0 0 10px;
+		font-size: 13px;
+		color: #4c555f;
+	}
+
+	&__signalThanks {
+		margin: 0;
+		font-size: 13px;
+		color: var(--m3-primary, #a5000a);
+		font-weight: 600;
+	}
+
+	&__signalVotes {
+		display: flex;
+		gap: 10px;
+	}
+
+	&__signalVote {
+		border: 1px solid #cfd4da;
+		border-radius: 8px;
+		background: #fff;
+		padding: 8px 14px;
+		font-size: 13px;
 		cursor: pointer;
 
-		input {
-			width: 18px;
-			height: 18px;
-			accent-color: var(--m3-primary, #a5000a);
+		&:hover {
+			background: #f4f5f6;
 		}
 	}
 

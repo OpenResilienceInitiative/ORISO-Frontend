@@ -35,6 +35,12 @@ vi.mock('../../../resources/img/icons/notification_audio_off.svg', () => ({
 vi.mock('../../../resources/img/icons/play-circle.svg', () => ({
 	ReactComponent: () => null
 }));
+vi.mock('../../../resources/img/icons/keyboard_arrow_up.svg', () => ({
+	ReactComponent: () => null
+}));
+vi.mock('../../../resources/img/icons/keyboard_arrow_down.svg', () => ({
+	ReactComponent: () => null
+}));
 
 const baseProps = {
 	config: DEFAULT_NOTIFICATION_CONFIG,
@@ -47,14 +53,51 @@ const baseProps = {
 describe('NotificationConfigView', () => {
 	afterEach(cleanup);
 
-	it('renders three area tabs and disables Termine', () => {
+	it('renders the three harmonised area tabs, all enabled', () => {
 		render(<NotificationConfigView {...baseProps} />);
-		expect(screen.getByTestId('notif-tab-requests')).toBeTruthy();
-		expect(screen.getByTestId('notif-tab-conversations')).toBeTruthy();
+		for (const tab of [
+			'notif-tab-requests',
+			'notif-tab-conversations',
+			'notif-tab-timeCritical'
+		]) {
+			expect(
+				(screen.getByTestId(tab) as HTMLButtonElement).disabled
+			).toBe(false);
+		}
+	});
+
+	it('conversations tab shows the handover row; time-critical shows call+appointment and the wecker card', () => {
+		const { rerender } = render(
+			<NotificationConfigView {...baseProps} activeArea="conversations" />
+		);
 		expect(
-			(screen.getByTestId('notif-tab-appointments') as HTMLButtonElement)
-				.disabled
-		).toBe(true);
+			screen.getByTestId('notif-row-conversations-handover')
+		).toBeTruthy();
+		rerender(
+			<NotificationConfigView {...baseProps} activeArea="timeCritical" />
+		);
+		expect(screen.getByTestId('notif-row-timeCritical-call')).toBeTruthy();
+		expect(
+			screen.getByTestId('notif-row-timeCritical-appointment')
+		).toBeTruthy();
+		expect(screen.getByTestId('notif-wecker-card')).toBeTruthy();
+		// voting is a dummy: any vote flips to the thanks note
+		fireEvent.click(screen.getByTestId('notif-wecker-up'));
+		expect(screen.getByTestId('notif-wecker-thanks')).toBeTruthy();
+	});
+
+	it('reports a banner mode change (off / temporary / persistent)', () => {
+		const onChange = vi.fn();
+		render(<NotificationConfigView {...baseProps} onChange={onChange} />);
+		fireEvent.change(screen.getByTestId('notif-banner-requests-new'), {
+			target: { value: 'persistent' }
+		});
+		expect(onChange).toHaveBeenCalledWith(
+			'requests',
+			'new',
+			'banner',
+			'persistent'
+		);
 	});
 
 	it('renders the three kind rows for the active area', () => {
@@ -103,15 +146,16 @@ describe('NotificationConfigView', () => {
 		expect(onAreaChange).toHaveBeenCalledWith('conversations');
 	});
 
-	it('offers Sound #1..#12 plus No Sound', () => {
+	it('offers Sound #1..#12 plus No Sound plus the ring tone', () => {
 		render(<NotificationConfigView {...baseProps} />);
 		const select = screen
 			.getByTestId('notif-row-requests-new')
 			.querySelector('select') as HTMLSelectElement;
-		// 12 tones + the "no sound" option
-		expect(select.options.length).toBe(13);
+		// "no sound" + ring + 12 tones
+		expect(select.options.length).toBe(14);
 		expect(select.options[0].value).toBe('none');
-		expect(select.options[1].value).toBe('ton-1');
+		expect(select.options[1].value).toBe('ring');
+		expect(select.options[2].value).toBe('ton-1');
 	});
 
 	it('shows the muted icon and no play button when no sound is chosen', () => {

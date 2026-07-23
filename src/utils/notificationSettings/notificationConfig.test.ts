@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
+	areaForFamily,
+	NEVER_NOTIFY_FAMILIES,
 	clampVolume,
 	DEFAULT_NOTIFICATION_CONFIG,
 	DISABLED_AREAS,
+	kindForEvent,
 	parseNotificationConfig,
-	setKindField
+	setKindField,
+	soundSettingForEvent
 } from './notificationConfig';
 
 describe('notificationConfig', () => {
@@ -17,8 +21,8 @@ describe('notificationConfig', () => {
 		expect(r.new.volume).toBe(0.5);
 	});
 
-	it('appointments is a disabled area', () => {
-		expect(DISABLED_AREAS).toContain('appointments');
+	it('no area is disabled any more (Zeitkritisch is live)', () => {
+		expect(DISABLED_AREAS).toHaveLength(0);
 	});
 
 	it('parse keeps valid stored values and fills the rest with defaults', () => {
@@ -29,6 +33,16 @@ describe('notificationConfig', () => {
 		expect(parsed.conversations.standard.email).toBe(false);
 		// untouched kind keeps its default
 		expect(parsed.conversations.new.email).toBe(true);
+	});
+
+	it('parses legacy boolean banner values into the 3-state mode', () => {
+		const parsed = parseNotificationConfig({
+			requests: { new: { banner: false }, standard: { banner: true } },
+			conversations: { mention: { banner: 'persistent' } }
+		});
+		expect(parsed.requests.new.banner).toBe('off');
+		expect(parsed.requests.standard.banner).toBe('temporary');
+		expect(parsed.conversations.mention.banner).toBe('persistent');
 	});
 
 	it('parse tolerates garbage', () => {
@@ -71,6 +85,68 @@ describe('notificationConfig', () => {
 		expect(clampVolume(0.5)).toBe(0.5);
 		expect(clampVolume(0.6)).toBe(0.5);
 		expect(clampVolume(0.75)).toBe(0.75);
+	});
+
+	it('maps event families onto the three areas (harmonised model)', () => {
+		expect(areaForFamily('requests')).toBe('requests');
+		// time-critical hosts calls AND appointments
+		expect(areaForFamily('appointments')).toBe('timeCritical');
+		expect(areaForFamily('calls')).toBe('timeCritical');
+		// everything conversation-shaped lands in "Gespräch"
+		expect(areaForFamily('messages')).toBe('conversations');
+		expect(areaForFamily('handover')).toBe('conversations');
+	});
+
+	it('maps events onto kinds: family rows first, then mention > new > standard', () => {
+		expect(kindForEvent('calls', 'call.started', false)).toBe('call');
+		expect(
+			kindForEvent('appointments', 'appointment.requested', false)
+		).toBe('appointment');
+		expect(kindForEvent('handover', 'handover.requested', false)).toBe(
+			'handover'
+		);
+		expect(kindForEvent('messages', 'message.new', true)).toBe('mention');
+		expect(kindForEvent('requests', 'request.new', false)).toBe('new');
+		expect(kindForEvent('requests', 'team.discussion.new', false)).toBe(
+			'new'
+		);
+		expect(kindForEvent('messages', 'message.new', false)).toBe('standard');
+	});
+
+	it('drafts never notify; defaults keep calls ringing with banners on', () => {
+		expect(NEVER_NOTIFY_FAMILIES).toContain('drafts');
+		const call = DEFAULT_NOTIFICATION_CONFIG.timeCritical.call;
+		expect(call.sound).toBe('ring');
+		expect(call.banner).toBe('temporary');
+		expect(DEFAULT_NOTIFICATION_CONFIG.requests.new.banner).toBe(
+			'temporary'
+		);
+	});
+
+	it('soundSettingForEvent returns the configured kind entry for the event', () => {
+		const config = setKindField(
+			DEFAULT_NOTIFICATION_CONFIG,
+			'requests',
+			'new',
+			'sound',
+			'ton-7'
+		);
+		const hit = soundSettingForEvent(
+			config,
+			'requests',
+			'request.new',
+			false
+		);
+		expect(hit.sound).toBe('ton-7');
+		expect(hit.volume).toBe(0.5);
+		// a message mention reads conversations.mention
+		const mention = soundSettingForEvent(
+			config,
+			'messages',
+			'message.new',
+			true
+		);
+		expect(mention).toBe(config.conversations.mention);
 	});
 
 	it('setKindField updates volume immutably', () => {

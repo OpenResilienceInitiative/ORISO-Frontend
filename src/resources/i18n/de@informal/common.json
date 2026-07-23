@@ -714,16 +714,40 @@
 				"area": {
 					"requests": "Anfrage",
 					"conversations": "Gespräch",
-					"appointments": "Termine"
+					"timeCritical": "Zeitkritisch"
 				},
 				"kind": {
 					"new": "Neue Anfrage",
 					"standard": "Standard-Benachrichtigung",
-					"mention": "@ Erwähnung"
+					"mention": "@ Erwähnung",
+					"handover": "Übergabe",
+					"call": "Eingehender Anruf",
+					"appointment": "Termin"
 				},
 				"play": "Ton vorhören",
 				"volumeUp": "Lauter",
-				"volumeDown": "Leiser"
+				"volumeDown": "Leiser",
+				"showBanner": "Banner anzeigen",
+				"ringTone": "Klingelton",
+				"wecker": {
+					"title": "Wecker-Modus (geplant)",
+					"text": "Zeitkritische Ereignisse klingeln aggressiv weiter — auch über Stummschaltungen hinweg, soweit dein Browser das zulässt. Würde dir das helfen?",
+					"upvote": "Fände ich gut",
+					"downvote": "Brauche ich nicht",
+					"thanks": "Danke für dein Feedback!"
+				},
+				"banner": {
+					"label": "Banner",
+					"off": "Aus",
+					"temporary": "Temporär",
+					"persistent": "Bleibt bis zum Wegklicken"
+				},
+				"statusButton": {
+					"sidebarToggle": "Benachrichtigungs-Status in der Menüleiste anzeigen",
+					"sidebarToggleDescription": "Ein Knopf in der Seitenleiste, der alle Benachrichtigungen mit einem Klick stummschaltet oder wieder aktiviert.",
+					"active": "Benachrichtigungen aktiv — klicke zum Stummschalten",
+					"muted": "Alle Benachrichtigungen stumm — klicke zum Aktivieren"
+				}
 			}
 		},
 		"spokenLanguages": {

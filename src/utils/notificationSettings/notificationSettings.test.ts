@@ -59,7 +59,7 @@ describe('WP-06 Slice 6a — notification settings model', () => {
 		expect(DEFAULT_NOTIFICATION_SETTINGS.families.calls).toBe(true);
 	});
 
-	it('suppression gate: global mute OR device silence OR family off', () => {
+	it('suppression gate: mute/device/system toggle; drafts always; channels else', () => {
 		const on = DEFAULT_NOTIFICATION_SETTINGS;
 		const dev = { silenced: false };
 		expect(isNotificationSuppressed(on, dev, 'messages')).toBe(false);
@@ -73,13 +73,24 @@ describe('WP-06 Slice 6a — notification settings model', () => {
 		expect(
 			isNotificationSuppressed(on, { silenced: true }, 'messages')
 		).toBe(true);
+		// Harmonised model: drafts never notify …
+		expect(isNotificationSuppressed(on, dev, 'drafts')).toBe(true);
+		// … system keeps its single toggle …
+		expect(
+			isNotificationSuppressed(
+				mergeNotificationSettings(on, { families: { system: false } }),
+				dev,
+				'system'
+			)
+		).toBe(true);
+		// … and other family toggles no longer suppress (channels decide).
 		expect(
 			isNotificationSuppressed(
 				mergeNotificationSettings(on, { families: { calls: false } }),
 				dev,
 				'calls'
 			)
-		).toBe(true);
+		).toBe(false);
 	});
 
 	it('parses device-scoped settings tolerantly', () => {

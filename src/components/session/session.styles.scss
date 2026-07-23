@@ -146,6 +146,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		bottom: 0;
 		overflow-x: hidden;
 		overflow-y: auto;
+
 		// Figma 8641-34699: 16px inset inside the chat card (sides + top).
 		// Large bottom padding keeps the last message above the absolute composer.
 		padding: 16px 16px 240px;
