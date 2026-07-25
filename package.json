@@ -87,6 +87,7 @@
 		"lottie-react": "^2.4.1",
 		"markdown-draft-js": "^2.4.0",
 		"matrix-js-sdk": "^38.4.0",
+		"matrix-widget-api": "^1.13.1",
 		"mini-css-extract-plugin": "^2.7.7",
 		"prompts": "^2.4.2",
 		"qrcode": "^1.5.3",
