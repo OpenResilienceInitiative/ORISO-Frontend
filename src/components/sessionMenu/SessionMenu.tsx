@@ -219,7 +219,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 			setIsRequestInProgress(false);
 		} else if (buttonFunction === OVERLAY_FUNCTIONS.STOP_GROUP_CHAT) {
 			// In order to prevent a possible race condition between the user
-			// service and Rocket.Chat in case of a successful request, this ref
+			// service in case of a successful request, this ref
 			// is reset to `false` in the event handler that handles NOTIFY_USER
 			// events.
 			props.hasUserInitiatedStopOrLeaveRequest.current = true;

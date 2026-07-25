@@ -67,7 +67,7 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 			)
 				return;
 
-			// Legacy Rocket.Chat attachment encryption is removed; those
+			// Attachments are encrypted by Matrix media handling; those
 			// attachments (old pre-migration data) cannot be decrypted.
 			if (isEncryptedAttachment && !isMatrixEncryptedAttachment) {
 				setAttachmentStatus(DECRYPTION_ERROR);

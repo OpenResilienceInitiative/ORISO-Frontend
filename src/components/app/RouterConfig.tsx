@@ -190,7 +190,7 @@ export const RouterConfigUser = (
 				]
 			},
 			{
-				path: '/sessions/user/view/:rcGroupId?/:sessionId?',
+				path: '/sessions/user/view/:groupId?/:sessionId?',
 				component: SessionsListWrapper,
 				exact: false,
 				sessionTypes: [
@@ -207,15 +207,15 @@ export const RouterConfigUser = (
 				component: WriteEnquiry,
 				type: SESSION_LIST_TYPES.ENQUIRY
 			},
-			// MATRIX MIGRATION: Route for sessions without rcGroupId
+			// Sessions that have no group id yet (enquiry not started)
 			{
 				path: '/sessions/user/view/session/:sessionId',
 				component: SessionView,
 				type: SESSION_LIST_TYPES.MY_SESSION
 			},
-			// Original RocketChat route
+			// Sessions addressed by their Matrix group id
 			{
-				path: '/sessions/user/view/:rcGroupId/:sessionId',
+				path: '/sessions/user/view/:groupId/:sessionId',
 				component: SessionView,
 				type: SESSION_LIST_TYPES.MY_SESSION
 			},
@@ -331,14 +331,14 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 		],
 		listRoutes: [
 			{
-				path: '/sessions/consultant/sessionPreview/:rcGroupId?/:sessionId?',
+				path: '/sessions/consultant/sessionPreview/:groupId?/:sessionId?',
 				component: SessionsListWrapper,
 				sessionTypes: [SESSION_TYPE_ENQUIRY],
 				type: SESSION_LIST_TYPES.ENQUIRY,
 				exact: false
 			},
 			{
-				path: '/sessions/consultant/sessionView/:rcGroupId?/:sessionId?',
+				path: '/sessions/consultant/sessionView/:groupId?/:sessionId?',
 				component: SessionsListWrapper,
 				sessionTypes: [
 					SESSION_TYPE_SESSION,
@@ -350,7 +350,7 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 			}
 		],
 		detailRoutes: [
-			// MATRIX MIGRATION: Routes for sessions without rcGroupId (Matrix-only sessions)
+			// Sessions that have no group id yet (enquiry not started)
 			{
 				path: '/sessions/consultant/sessionPreview/session/:sessionId',
 				component: SessionView,
@@ -361,14 +361,14 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 				component: SessionView,
 				type: SESSION_LIST_TYPES.MY_SESSION
 			},
-			// Original RocketChat routes (with rcGroupId)
+			// Sessions addressed by their Matrix group id
 			{
-				path: '/sessions/consultant/sessionPreview/:rcGroupId/:sessionId',
+				path: '/sessions/consultant/sessionPreview/:groupId/:sessionId',
 				component: SessionView,
 				type: SESSION_LIST_TYPES.ENQUIRY
 			},
 			{
-				path: '/sessions/consultant/sessionView/:rcGroupId/:sessionId/',
+				path: '/sessions/consultant/sessionView/:groupId/:sessionId/',
 				component: SessionView,
 				type: SESSION_LIST_TYPES.MY_SESSION
 			},
@@ -388,13 +388,13 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 				type: SESSION_LIST_TYPES.MY_SESSION
 			},
 			{
-				path: '/sessions/consultant/sessionView/:rcGroupId/:sessionId/editGroupChat',
+				path: '/sessions/consultant/sessionView/:groupId/:sessionId/editGroupChat',
 				component: CreateConversationView,
 				type: SESSION_LIST_TYPES.MY_SESSION
 			}
 		],
 		userProfileRoutes: [
-			// MATRIX MIGRATION: Routes for sessions without rcGroupId
+			// Sessions that have no group id yet (enquiry not started)
 			{
 				path: '/sessions/consultant/sessionPreview/session/:sessionId/userProfile',
 				component: AskerInfo,
@@ -405,19 +405,19 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 				component: AskerInfo,
 				type: SESSION_LIST_TYPES.MY_SESSION
 			},
-			// Original RocketChat routes
+			// Sessions addressed by their Matrix group id
 			{
-				path: '/sessions/consultant/sessionPreview/:rcGroupId/:sessionId/userProfile',
+				path: '/sessions/consultant/sessionPreview/:groupId/:sessionId/userProfile',
 				component: AskerInfo,
 				type: SESSION_LIST_TYPES.ENQUIRY
 			},
 			{
-				path: '/sessions/consultant/sessionView/:rcGroupId/:sessionId/userProfile',
+				path: '/sessions/consultant/sessionView/:groupId/:sessionId/userProfile',
 				component: AskerInfo,
 				type: SESSION_LIST_TYPES.MY_SESSION
 			},
 			{
-				path: '/sessions/consultant/sessionView/:rcGroupId/:sessionId/groupChatInfo',
+				path: '/sessions/consultant/sessionView/:groupId/:sessionId/groupChatInfo',
 				component: GroupChatInfo,
 				type: SESSION_LIST_TYPES.MY_SESSION
 			}

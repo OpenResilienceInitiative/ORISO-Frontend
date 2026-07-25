@@ -27,8 +27,6 @@
 
 ```json
 {
-	"rocketchatToken": "string",
-	"rocketchatUserId": "string",
 	"keycloakToken": "string",
 	"keycloakRefreshToken": "string"
 }

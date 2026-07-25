@@ -35,7 +35,6 @@ export * from './apiPutGroupChat';
 export * from './apiPatchConsultantData';
 export * from './apiPutConsultantData';
 export * from './apiPutEmail';
-export * from './apiRejectVideoCall';
 export * from './apiSendEnquiry';
 export * from './apiSendMatrixAttachmentMessage';
 export * from './apiSendMessage';

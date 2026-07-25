@@ -129,7 +129,7 @@ export const SessionView = () => {
 		} else if (activeSessionReady) {
 			// console.log('🔥 Active session ready - setting loading false');
 
-			// MATRIX MIGRATION: Skip RocketChat-specific redirect
+			// Sessions without a group id must not be redirected
 			// if (
 			// 	activeSession.rid !== currentGroupId.current &&
 			// 	activeSession.item.id.toString() === currentSessionId.current

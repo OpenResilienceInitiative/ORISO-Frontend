@@ -1392,7 +1392,7 @@ export const MessageSubmitInterfaceComponent = ({
 					}
 				} else {
 					// Sessions without a Matrix room cannot receive
-					// attachments anymore (legacy Rocket.Chat upload removed).
+					// attachments anymore; uploads go through Matrix media.
 					handleAttachmentUploadError(
 						INFO_TYPES.ATTACHMENT_OTHER_ERROR
 					);
@@ -1589,7 +1589,7 @@ export const MessageSubmitInterfaceComponent = ({
 					message = `${prefixParts.join(' ')} ${message}`;
 				}
 			}
-			// Legacy Rocket.Chat client-side message encryption is removed. This
+			// Message encryption is handled by Matrix, not here. This
 			// `isEncrypted` flag is the vestigial remnant of that path and no
 			// longer controls Matrix encryption: with Rust crypto initialized
 			// unconditionally (matrixClientService.initRustCrypto) and rooms
@@ -3479,7 +3479,7 @@ export const MessageSubmitInterfaceComponent = ({
 
 	const matrixRoomId = resolvedChatSession.matrixRoomId || null;
 
-	// MATRIX MIGRATION: legacy RocketChat E2EE gates do not apply to Matrix rooms.
+	// Matrix rooms carry their own encryption state; no client-side gate here.
 	if (!e2EEReady && activeSession.rid && !matrixRoomId) {
 		return null;
 	}

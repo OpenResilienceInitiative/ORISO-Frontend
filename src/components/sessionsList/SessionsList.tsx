@@ -808,7 +808,7 @@ export const SessionsList = ({
 								// console.log('🚀 Navigating to write view:', targetPath);
 								navigate(targetPath);
 							} else if (groupId && !isMatrixRoomId) {
-								// Original RocketChat behavior: navigate with groupId
+								// Navigate with the group id
 								const targetPath = `${baseListPath}/${groupId}/${sessionId}`;
 								// console.log('🚀 Navigating with groupId:', targetPath);
 								navigate(targetPath);
@@ -893,7 +893,7 @@ export const SessionsList = ({
 			const loadedSessions = sessions;
 			/*
 			Always try to get each subscription from the backend because closed
-			group chats still in sessions but removed in rocket.chat
+			group chats still listed as sessions but no longer backed by a room
 			 */
 			Promise.all(
 				rids.map((rid) => {
@@ -1099,7 +1099,7 @@ export const SessionsList = ({
 
 			// Refresh the backend room state (messagesRead / lastMessage) for
 			// the touched session so unread badges update on Matrix events —
-			// this replaces the removed Rocket.Chat subscription stream.
+			// this is fed by the Matrix sync stream.
 			const touchedSession = sessionsRef.current.find(
 				(s) =>
 					s?.chat?.groupId === roomId ||
@@ -2161,13 +2161,13 @@ const useGroupWatcher = (isLoading: boolean) => {
 			inactiveGroupSessions.map((s) => s.chat.groupId)
 		)
 			.then(({ sessions }) => {
-				// Update sessions which still exists in rocket.chat
+				// Update sessions whose room still exists
 				dispatch({
 					type: UPDATE_SESSIONS,
 					sessions: sessions.filter(hasSessionChanged)
 				});
 
-				// Remove sessions which not exists in rocket.chat anymore and not repetitive chats
+				// Remove sessions whose room is gone and that are not repetitive chats
 				const removedGroupSessions = inactiveGroupSessions.filter(
 					(inactiveGroupSession) =>
 						!sessions.find(
