@@ -548,6 +548,8 @@ export const SessionListItemComponent = ({
 					isGroup: activeSession.isGroup,
 					isAsker,
 					isEmptyEnquiry: activeSession.isEmptyEnquiry,
+					isLiveChat:
+						getModality(activeSession) === Modality.LIVE_CHAT,
 					tabSuffix: getSessionListTab()
 				})
 			);
