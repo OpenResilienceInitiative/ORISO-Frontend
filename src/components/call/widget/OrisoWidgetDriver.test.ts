@@ -1,4 +1,9 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	OpenIDRequestState,
+	SimpleObservable,
+	type IOpenIDUpdate
+} from 'matrix-widget-api';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MatrixClient } from 'matrix-js-sdk';
 
 import { OrisoWidgetDriver } from './OrisoWidgetDriver';
@@ -24,6 +29,154 @@ describe('OrisoWidgetDriver', () => {
 	beforeEach(() => {
 		client = createClient();
 		driver = new OrisoWidgetDriver(client, CALL_ROOM);
+	});
+
+	afterEach(() => {
+		vi.restoreAllMocks();
+	});
+
+	describe('OpenID', () => {
+		const validToken = {
+			access_token: 'openid-token',
+			token_type: 'Bearer',
+			matrix_server_name: 'oriso.example',
+			expires_in: 3600
+		};
+
+		it('allows the trusted call widget with the exact host token', async () => {
+			const token = { ...validToken };
+			const getOpenIdToken = vi.fn().mockResolvedValue(token);
+			driver = new OrisoWidgetDriver(
+				createClient({ getOpenIdToken }),
+				CALL_ROOM
+			);
+			const updates: IOpenIDUpdate[] = [];
+
+			driver.askOpenID(
+				new SimpleObservable((update) => updates.push(update))
+			);
+
+			await vi.waitFor(() => expect(updates).toHaveLength(1));
+			expect(getOpenIdToken).toHaveBeenCalledTimes(1);
+			expect(updates).toEqual([
+				{ state: OpenIDRequestState.Allowed, token }
+			]);
+			expect(updates[0].token).toBe(token);
+		});
+
+		it('blocks a rejected host request without exposing the rejection', async () => {
+			const rejection = new Error('sensitive host failure');
+			const getOpenIdToken = vi.fn().mockRejectedValue(rejection);
+			driver = new OrisoWidgetDriver(
+				createClient({ getOpenIdToken }),
+				CALL_ROOM
+			);
+			const updates: IOpenIDUpdate[] = [];
+			const consoleError = vi
+				.spyOn(console, 'error')
+				.mockImplementation(() => undefined);
+			const consoleWarn = vi
+				.spyOn(console, 'warn')
+				.mockImplementation(() => undefined);
+			const consoleLog = vi
+				.spyOn(console, 'log')
+				.mockImplementation(() => undefined);
+
+			expect(() =>
+				driver.askOpenID(
+					new SimpleObservable((update) => updates.push(update))
+				)
+			).not.toThrow();
+
+			await vi.waitFor(() => expect(updates).toHaveLength(1));
+			expect(getOpenIdToken).toHaveBeenCalledTimes(1);
+			expect(updates).toEqual([
+				{ state: OpenIDRequestState.Blocked }
+			]);
+			expect(consoleError).not.toHaveBeenCalled();
+			expect(consoleWarn).not.toHaveBeenCalled();
+			expect(consoleLog).not.toHaveBeenCalled();
+		});
+
+		it('blocks a synchronous host throw without exposing it', () => {
+			const rejection = new Error('sensitive synchronous failure');
+			const getOpenIdToken = vi.fn(() => {
+				throw rejection;
+			});
+			driver = new OrisoWidgetDriver(
+				createClient({ getOpenIdToken }),
+				CALL_ROOM
+			);
+			const updates: IOpenIDUpdate[] = [];
+			const consoleError = vi
+				.spyOn(console, 'error')
+				.mockImplementation(() => undefined);
+			const consoleWarn = vi
+				.spyOn(console, 'warn')
+				.mockImplementation(() => undefined);
+			const consoleLog = vi
+				.spyOn(console, 'log')
+				.mockImplementation(() => undefined);
+
+			expect(() =>
+				driver.askOpenID(
+					new SimpleObservable((update) => updates.push(update))
+				)
+			).not.toThrow();
+
+			expect(getOpenIdToken).toHaveBeenCalledTimes(1);
+			expect(updates).toEqual([
+				{ state: OpenIDRequestState.Blocked }
+			]);
+			expect(consoleError).not.toHaveBeenCalled();
+			expect(consoleWarn).not.toHaveBeenCalled();
+			expect(consoleLog).not.toHaveBeenCalled();
+		});
+
+		it.each([
+			['empty access token', { ...validToken, access_token: '' }],
+			['non-string access token', { ...validToken, access_token: 42 }],
+			['empty token type', { ...validToken, token_type: '' }],
+			['non-string token type', { ...validToken, token_type: null }],
+			['empty server name', { ...validToken, matrix_server_name: '' }],
+			[
+				'non-string server name',
+				{ ...validToken, matrix_server_name: false }
+			],
+			['zero expiry', { ...validToken, expires_in: 0 }],
+			['negative expiry', { ...validToken, expires_in: -1 }],
+			['infinite expiry', { ...validToken, expires_in: Infinity }],
+			['non-number expiry', { ...validToken, expires_in: '3600' }]
+		])('blocks a malformed token with %s without exposing it', async (_, token) => {
+			const getOpenIdToken = vi.fn().mockResolvedValue(token);
+			driver = new OrisoWidgetDriver(
+				createClient({ getOpenIdToken }),
+				CALL_ROOM
+			);
+			const updates: IOpenIDUpdate[] = [];
+			const consoleError = vi
+				.spyOn(console, 'error')
+				.mockImplementation(() => undefined);
+			const consoleWarn = vi
+				.spyOn(console, 'warn')
+				.mockImplementation(() => undefined);
+			const consoleLog = vi
+				.spyOn(console, 'log')
+				.mockImplementation(() => undefined);
+
+			driver.askOpenID(
+				new SimpleObservable((update) => updates.push(update))
+			);
+
+			await vi.waitFor(() => expect(updates).toHaveLength(1));
+			expect(getOpenIdToken).toHaveBeenCalledTimes(1);
+			expect(updates).toEqual([
+				{ state: OpenIDRequestState.Blocked }
+			]);
+			expect(consoleError).not.toHaveBeenCalled();
+			expect(consoleWarn).not.toHaveBeenCalled();
+			expect(consoleLog).not.toHaveBeenCalled();
+		});
 	});
 
 	describe('room confinement', () => {

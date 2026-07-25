@@ -30,10 +30,14 @@
 
 import {
 	Capability,
+	type IOpenIDCredentials,
+	type IOpenIDUpdate,
 	IRoomEvent,
 	ISendDelayedEventDetails,
 	ISendEventDetails,
 	ITurnServer,
+	OpenIDRequestState,
+	SimpleObservable,
 	UpdateDelayedEventAction,
 	WidgetDriver
 } from 'matrix-widget-api';
@@ -44,6 +48,29 @@ import { isAllowedWidgetCapability } from './orisoWidgetCapabilities';
 /** Matrix events carry more than the widget spec's shape; narrow it here. */
 const toWidgetEvent = (event: MatrixEvent): IRoomEvent =>
 	event.getEffectiveEvent() as unknown as IRoomEvent;
+
+const isNonEmptyString = (value: unknown): value is string =>
+	typeof value === 'string' && value.length > 0;
+
+const isValidOpenIDToken = (token: unknown): token is IOpenIDCredentials => {
+	if (!token || typeof token !== 'object') return false;
+
+	const {
+		access_token,
+		token_type,
+		matrix_server_name,
+		expires_in
+	} = token as Record<string, unknown>;
+
+	return (
+		isNonEmptyString(access_token) &&
+		isNonEmptyString(token_type) &&
+		isNonEmptyString(matrix_server_name) &&
+		typeof expires_in === 'number' &&
+		Number.isFinite(expires_in) &&
+		expires_in > 0
+	);
+};
 
 export class OrisoWidgetDriver extends WidgetDriver {
 	public constructor(
@@ -80,6 +107,25 @@ export class OrisoWidgetDriver extends WidgetDriver {
 			}
 		});
 		return granted;
+	}
+
+	public askOpenID(observer: SimpleObservable<IOpenIDUpdate>): void {
+		try {
+			void this.client.getOpenIdToken().then(
+				(token) =>
+					observer.update(
+						isValidOpenIDToken(token)
+							? {
+									state: OpenIDRequestState.Allowed,
+									token
+								}
+							: { state: OpenIDRequestState.Blocked }
+					),
+				() => observer.update({ state: OpenIDRequestState.Blocked })
+			);
+		} catch {
+			observer.update({ state: OpenIDRequestState.Blocked });
+		}
 	}
 
 	public async sendEvent(
