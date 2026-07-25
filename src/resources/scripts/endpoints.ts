@@ -55,6 +55,9 @@ export const endpoints = {
 	chatRoom: userServiceOrigin + '/service/users/chat/room',
 	anonymousEnquiryDetails: (sessionId: number | string) =>
 		userServiceOrigin + `/service/conversations/anonymous/${sessionId}`,
+	acceptAnonymousEnquiry: (sessionId: number | string) =>
+		userServiceOrigin +
+		`/service/conversations/askers/anonymous/${sessionId}/accept`,
 	finishAnonymousConversation: (sessionId: number | string) =>
 		userServiceOrigin +
 		`/service/conversations/anonymous/${sessionId}/finish`,
