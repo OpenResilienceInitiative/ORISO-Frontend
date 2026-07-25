@@ -13,8 +13,6 @@ import { Profile } from '../profile/Profile';
 import { SessionViewEmpty } from '../session/SessionViewEmpty';
 import { CreateConversationView } from '../conversationCreate/CreateConversationView';
 import { GroupChatInfo } from '../groupChat/GroupChatInfo';
-import { Appointments } from '../appointment/Appointments';
-import VideoConference from '../videoConference/VideoConference';
 import { AUTHORITIES, hasUserAuthority } from '../../globalState';
 import { AppConfigInterface } from '../../globalState/interfaces';
 import { ReactComponent as OverviewIconOutline } from '../../resources/img/icons/overview_outline.svg';
@@ -42,7 +40,6 @@ import { Booking } from '../../containers/bookings/components/Booking/booking';
 import { BookingCancellation } from '../../containers/bookings/components/BookingCancellation/bookingCancellation';
 import { BookingEvents } from '../../containers/bookings/components/BookingEvents/bookingEvents';
 import { BookingReschedule } from '../../containers/bookings/components/BookingReschedule/bookingReschedule';
-import { hasVideoCallFeature } from '../../utils/videoCallHelpers';
 import { NotificationsCenter } from '../notificationsCenter/NotificationsCenter';
 import { DraftsCenter } from '../draftsCenter/DraftsCenter';
 
@@ -64,13 +61,6 @@ const showAppointmentsMenuItem = (userData, hasAssignedConsultant) => {
 
 const showToolsMenuItem = (userData, consultingTypes, sessionsData, hasTools) =>
 	hasTools;
-
-const isVideoAppointmentsEnabled = (
-	userData,
-	consultingTypes,
-	disableVideoAppointments
-) =>
-	!disableVideoAppointments && hasVideoCallFeature(userData, consultingTypes);
 
 const appointmentRoutes = [
 	{
@@ -249,14 +239,7 @@ export const RouterConfigUser = (
 
 export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 	return {
-		plainRoutes: [
-			{
-				condition: hasVideoCallFeature,
-				path: settings.urls.consultantVideoConference,
-				exact: true,
-				component: VideoConference
-			}
-		],
+		plainRoutes: [],
 		navigation: [
 			overviewRoute(settings),
 			{
@@ -301,21 +284,6 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 				navSlot: 'row' as const,
 				titleKeys: {
 					large: 'navigation.myProfile'
-				}
-			},
-			{
-				condition: (userData, consultingTypes) =>
-					isVideoAppointmentsEnabled(
-						userData,
-						consultingTypes,
-						settings.disableVideoAppointments
-					),
-				to: '/termine',
-				icon: CalendarIconOutline,
-				iconFilled: CalendarIconFilled,
-				navSlot: 'row' as const,
-				titleKeys: {
-					large: 'navigation.appointments'
 				}
 			},
 			{
@@ -441,17 +409,6 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 				path: '/profile',
 				exact: false,
 				component: Profile
-			},
-			{
-				condition: (userData, consultingTypes) =>
-					isVideoAppointmentsEnabled(
-						userData,
-						consultingTypes,
-						settings.disableVideoAppointments
-					),
-				path: '/termine',
-				exact: false,
-				component: Appointments
 			}
 		],
 		appointmentRoutes,

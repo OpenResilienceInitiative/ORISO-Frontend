@@ -9,10 +9,8 @@ import usersConsultantsApi from './api/users/consultants';
 import usersDataApi from './api/users/data';
 import usersSessionsApi from './api/users/sessions';
 import apiAgencies from './api/agencies';
-import apiAppointments from './api/appointments';
 import apiConsultingTypes from './api/consultTypes';
 import apiMessages from './api/messages';
-import apiVideocalls from './api/videocalls';
 import loginCommand from './helper/login';
 import fastLoginCommand from './helper/fastLogin';
 import askerSessionsCommand from './helper/askerSessions';
@@ -229,18 +227,15 @@ Cypress.Commands.add('mockApi', () => {
 	usersDataApi(cy, getWillReturn, setWillReturn);
 	usersSessionsApi(cy, getWillReturn, setWillReturn);
 	apiAgencies(cy, getWillReturn, setWillReturn);
-	apiAppointments(cy);
 	apiConsultingTypes(cy, getWillReturn, setWillReturn);
 	apiMessages(cy, getWillReturn, setWillReturn);
 	apiTopics(cy, getWillReturn, setWillReturn);
-	apiVideocalls(cy);
 });
 
 export const USER_ASKER = 'asker';
 export const USER_CONSULTANT = 'consultant';
-export const USER_VIDEO = 'video';
 
 export interface LoginArgs {
-	userId?: typeof USER_ASKER | typeof USER_CONSULTANT | typeof USER_VIDEO;
+	userId?: typeof USER_ASKER | typeof USER_CONSULTANT;
 	auth?: { expires_in: number; refresh_expires_in: number };
 }

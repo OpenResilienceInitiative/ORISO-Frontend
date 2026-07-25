@@ -163,7 +163,6 @@ const mockUserData = {
 
 const appOrisoRouterSettings = {
 	...config,
-	disableVideoAppointments: true,
 	useOverviewPage: false
 } as any;
 

@@ -9,7 +9,6 @@ declare global {
 		mockStompSocket: WebSocket;
 		clipboardData: any;
 		externalApi: any;
-		JitsiMeetExternalAPI: any;
 	}
 }
 
