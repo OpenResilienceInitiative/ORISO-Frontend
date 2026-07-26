@@ -4,6 +4,8 @@ import dtsgenerator, { parseFileContent, parseSchema } from 'dtsgenerator';
 import prettier from 'prettier';
 
 const rawOrgUrl = 'https://raw.githubusercontent.com/OpenResilienceInitiative';
+const userServiceSpecPrefix = 'ORISO-UserService/dev/';
+const localUserServiceRoot = process.env.ORISO_USERSERVICE_SPEC_ROOT;
 
 /**
  * OpenAPI specs are read from the OpenResilienceInitiative service repos
@@ -41,6 +43,17 @@ const services = [
 ];
 
 const fetchSpec = async (specPath: string): Promise<any> => {
+	if (localUserServiceRoot && specPath.startsWith(userServiceSpecPrefix)) {
+		const localPath = path.join(
+			localUserServiceRoot,
+			specPath.slice(userServiceSpecPrefix.length)
+		);
+		return parseFileContent(
+			await fs.readFile(localPath, 'utf8'),
+			localPath
+		);
+	}
+
 	const url = `${rawOrgUrl}/${specPath}`;
 	const res = await fetch(url);
 	if (!res.ok) {
@@ -172,8 +185,18 @@ const mergeRefComponents = (main: any, refSpecs: any[]): void => {
 	try {
 		const prettierConfigFile = await prettier.resolveConfigFile();
 		const prettierConfig = await prettier.resolveConfig(prettierConfigFile);
+		const requestedService =
+			process.env.ORISO_DTSGEN_SERVICE?.toLowerCase();
 
 		for (const service of services) {
+			if (
+				requestedService &&
+				![service.namespace, service.out]
+					.map((value) => value.toLowerCase())
+					.includes(requestedService)
+			) {
+				continue;
+			}
 			const spec = await fetchSpec(service.path);
 			const refSpecs = await Promise.all(
 				(service.refs ?? []).map(fetchSpec)

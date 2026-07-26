@@ -58,6 +58,10 @@ declare namespace UserService {
 			roleInOrg?: string;
 			vacated?: boolean;
 			adminRights?: boolean;
+			/**
+			 * true if this admin also holds a consultant identity on the same account
+			 */
+			hasOtherIdentity?: boolean;
 		}
 		export interface AdminFilter {
 			username?: string;
@@ -310,6 +314,12 @@ declare namespace UserService {
 			 */
 			email?: string;
 		}
+		/**
+		 * Supervision (auto-assigned): the consultant id of this counsellor's standing supervisor, who is automatically attached read-only to every case the counsellor accepts. At most one; the target must itself have isSupervisor = true and may not be the counsellor themselves. Omitted/null leaves the current assignment untouched; an empty string clears it (clearing stops future auto-attachment and does not detach supervisors already on in-flight cases).
+		 * example:
+		 * 8bb2b0a4-2c5b-4f5a-9c3a-1d2e3f4a5b6c
+		 */
+		export type AssignedSupervisorId = string;
 		export interface ChatDTO {
 			/**
 			 * example:
@@ -350,15 +360,38 @@ declare namespace UserService {
 				| 'QUARTERLY'
 				| 'YEARLY';
 			modality?: 'TEXT' | 'AUDIO' | 'VIDEO';
+			/**
+			 * example:
+			 * Europe/Berlin
+			 */
 			timezone?: string;
 			/**
 			 * example:
 			 * Hint
 			 */
 			hintMessage?: string;
+			/**
+			 * example:
+			 * de
+			 */
 			sourceLanguage?: string;
-			hintMessageTranslations?: Record<string, string>;
-			groupChatRulesTranslations?: Record<string, string[]>;
+			hintMessageTranslations?: {
+				[name: string]: string;
+			};
+			groupChatRulesTranslations?: {
+				[name: string]: [
+					string?,
+					string?,
+					string?,
+					string?,
+					string?,
+					string?,
+					string?,
+					string?,
+					string?,
+					string?
+				];
+			};
 		}
 		export interface ChatInfoResponseDTO {
 			/**
@@ -368,9 +401,9 @@ declare namespace UserService {
 			id: number; // int64
 			/**
 			 * example:
-			 * xGklslk2JJKK
+			 * !aBcDeF123:matrix.example
 			 */
-			groupId: string;
+			matrixRoomId: string;
 			/**
 			 * example:
 			 * false
@@ -466,10 +499,27 @@ declare namespace UserService {
 			 * true
 			 */
 			IsSupervisor;
+			assignedSupervisorId?: /**
+			 * Supervision (auto-assigned): the consultant id of this counsellor's standing supervisor, who is automatically attached read-only to every case the counsellor accepts. At most one; the target must itself have isSupervisor = true and may not be the counsellor themselves. Omitted/null leaves the current assignment untouched; an empty string clears it (clearing stops future auto-attachment and does not detach supervisors already on in-flight cases).
+			 * example:
+			 * 8bb2b0a4-2c5b-4f5a-9c3a-1d2e3f4a5b6c
+			 */
+			AssignedSupervisorId;
 			tenantId?: number;
 			tenantName?: string;
 			displayName?: string;
 			publicName?: string;
+			/**
+			 * example:
+			 * nikunj-rohit
+			 */
+			publicSlug?: string;
+			/**
+			 * example:
+			 * nikunj-rohit
+			 */
+			pendingPublicSlug?: string;
+			publicSlugStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
 			roleInOrg?: string;
 			vacated?: boolean;
 			adminRights?: boolean;
@@ -477,6 +527,14 @@ declare namespace UserService {
 			 * topics directly assigned to the consultant, enriched with names
 			 */
 			topics?: ConsultantTopicDTO[];
+			/**
+			 * true if this consultant also holds an admin identity on the same account
+			 */
+			hasOtherIdentity?: boolean;
+			/**
+			 * which admin identities this consultant additionally holds
+			 */
+			otherIdentityTypes?: ('TENANT_ADMIN' | 'AGENCY_ADMIN')[];
 		}
 		export interface ConsultantFilter {
 			username?: string;
@@ -509,6 +567,11 @@ declare namespace UserService {
 			 */
 			lastName?: string;
 			displayName?: string;
+			/**
+			 * example:
+			 * nikunj-rohit
+			 */
+			publicSlug?: string;
 			username?: string;
 			/**
 			 * Flag that indicates if the consultant can be added as a supervisor
@@ -550,11 +613,11 @@ declare namespace UserService {
 			 */
 			postcode?: string;
 			/**
-			 * Rocket.Chat room ID
+			 * Matrix room ID
 			 * example:
-			 * xGklslk2JJKK
+			 * !aBcDeF123:matrix.example
 			 */
-			groupId?: string;
+			matrixRoomId?: string;
 			/**
 			 * keycloak id of assigned consultant
 			 * example:
@@ -562,11 +625,11 @@ declare namespace UserService {
 			 */
 			consultantId?: string;
 			/**
-			 * Rocket.Chat ID of assigned consultant
+			 * Matrix user ID of assigned consultant
 			 * example:
-			 * 8ertjlasdKJA
+			 * @consultant:matrix.example
 			 */
-			consultantRcId?: string;
+			consultantMatrixUserId?: string;
 			/**
 			 * asker keycloak id
 			 * example:
@@ -574,11 +637,11 @@ declare namespace UserService {
 			 */
 			askerId?: string;
 			/**
-			 * asker Rocket.Chat ID
+			 * Matrix user ID of the asker
 			 * example:
-			 * 8ertjlasdKJA
+			 * @asker:matrix.example
 			 */
-			askerRcId?: string;
+			askerMatrixUserId?: string;
 			/**
 			 * asker username
 			 * example:
@@ -652,6 +715,11 @@ declare namespace UserService {
 				[key: string]: any;
 			};
 		}
+		export type ConversationType =
+			| 'AGENCY_COUNSELLING'
+			| 'LIVE_CHAT'
+			| 'INTERNAL_GROUP'
+			| 'SELF_HELP';
 		export interface CreateAdminAgencyRelationDTO {
 			/**
 			 * example:
@@ -700,9 +768,9 @@ declare namespace UserService {
 			creatorDisplayName?: string;
 			/**
 			 * example:
-			 * WCET6GWir78pNMyyD
+			 * !aBcDeF123:matrix.example
 			 */
-			groupId: string;
+			matrixRoomId: string;
 		}
 		export interface CreateConsultantAgencyDTO {
 			/**
@@ -723,7 +791,7 @@ declare namespace UserService {
 			 * example:
 			 * SecurePass123!
 			 */
-			password: string;
+			password: string; // password
 			/**
 			 * example:
 			 * Max
@@ -774,14 +842,29 @@ declare namespace UserService {
 			 * ]
 			 */
 			topicIds?: number /* int64 */[];
+			/**
+			 * ids of agencies assigned atomically with the consultant
+			 * example:
+			 * [
+			 *   5,
+			 *   9
+			 * ]
+			 */
+			agencyIds?: number /* int64 */[];
+			/**
+			 * Optional public slug. Admin-created values go live immediately.
+			 * example:
+			 * nikunj-rohit
+			 */
+			publicSlug?: string;
 		}
 		export interface CreateEnquiryMessageResponseDTO {
 			sessionId?: number; // int64
 			/**
 			 * example:
-			 * fR2Rz7dmWmHdXE8uz
+			 * !aBcDeF123:matrix.example
 			 */
-			rcGroupId?: string;
+			matrixRoomId?: string;
 			t?: string;
 		}
 		export interface Date {}
@@ -795,7 +878,7 @@ declare namespace UserService {
 			 * example:
 			 * p@ssw0rd
 			 */
-			password: string;
+			password: string; // password
 		}
 		export interface DemographicsDTO {
 			/**
@@ -840,9 +923,6 @@ declare namespace UserService {
 			 * 2019-12-02T13:12:08
 			 */
 			updateDate?: string;
-		}
-		export interface E2eKeyDTO {
-			publicKey: string;
 		}
 		export interface EmailDTO {
 			/**
@@ -933,6 +1013,11 @@ declare namespace UserService {
 			 * false
 			 */
 			external?: boolean;
+		}
+		export interface GroupChatParticipantDTO {
+			consultantId: string;
+			role: 'OWNER' | 'CO_MODERATOR' | 'PARTICIPANT';
+			displayName: string;
 		}
 		export interface GroupSessionConsultantDTO {
 			/**
@@ -1218,13 +1303,6 @@ declare namespace UserService {
 			 */
 			token?: string;
 		}
-		export interface NewMessageNotificationDTO {
-			/**
-			 * example:
-			 * fR2Rz7dmWmHdXE8uz
-			 */
-			rcGroupId: string;
-		}
 		export interface NewRegistrationDto {
 			/**
 			 * example:
@@ -1281,7 +1359,7 @@ declare namespace UserService {
 		}
 		export interface NewRegistrationResponseDto {
 			sessionId?: number; // int64
-			rcGroupId?: string;
+			matrixRoomId?: string;
 			status?: HttpStatus;
 		}
 		export interface NotificationsSettingsDTO {
@@ -1306,9 +1384,16 @@ declare namespace UserService {
 			 */
 			appointmentNotificationEnabled?: boolean;
 		}
+		export interface OccurrenceOverrideRequest {
+			originalStartUtc: string; // date-time
+			overrideStartUtc?: string; // date-time
+			duration?: number;
+			capacity?: number;
+			modality?: 'TEXT' | 'AUDIO' | 'VIDEO';
+		}
 		export interface OneTimePasswordDTO {
-			secret: string;
-			otp: string;
+			secret: string; // password
+			otp: string; // password
 		}
 		export type OtpType = 'EMAIL' | 'APP';
 		export interface PaginationLinks {
@@ -1321,12 +1406,12 @@ declare namespace UserService {
 			 * example:
 			 * oldpass@w0rd
 			 */
-			oldPassword: string;
+			oldPassword: string; // password
 			/**
 			 * example:
 			 * newpass@w0rd
 			 */
-			newPassword: string;
+			newPassword: string; // password
 		}
 		export interface PatchAdminDTO {
 			/**
@@ -1416,9 +1501,9 @@ declare namespace UserService {
 		export interface ReassignmentNotificationDTO {
 			/**
 			 * example:
-			 * fR2Rz7dmWmHdXE8uz
+			 * !aBcDeF123:matrix.example
 			 */
-			rcGroupId: string;
+			matrixRoomId: string;
 			toConsultantId: string; // UUID
 			fromConsultantName?: string;
 			/**
@@ -1426,12 +1511,8 @@ declare namespace UserService {
 			 */
 			isConfirmed?: boolean;
 		}
-		export interface RocketChatGroupIdDTO {
-			/**
-			 * example:
-			 * rc123456
-			 */
-			groupId?: string;
+		export interface RoleRequest {
+			role: 'OWNER' | 'CO_MODERATOR' | 'PARTICIPANT';
 		}
 		export interface RootDTO {
 			_links: RootLinks;
@@ -1591,17 +1672,21 @@ declare namespace UserService {
 			 */
 			status: number;
 			/**
+			 * Stable ADR-006 modality. One of AGENCY_COUNSELLING, LIVE_CHAT, INTERNAL_GROUP, SELF_HELP.
+			 * example:
+			 * LIVE_CHAT
+			 */
+			conversationType?:
+				| 'AGENCY_COUNSELLING'
+				| 'LIVE_CHAT'
+				| 'INTERNAL_GROUP'
+				| 'SELF_HELP';
+			/**
 			 * example:
 			 * 79098
 			 */
 			postcode?: string;
 			language?: /* ISO 639-1 code */ LanguageCode;
-			/**
-			 * Rocket.Chat room ID
-			 * example:
-			 * xGklslk2JJKK
-			 */
-			groupId?: string;
 			/**
 			 * Matrix Synapse room ID
 			 * example:
@@ -1609,11 +1694,11 @@ declare namespace UserService {
 			 */
 			matrixRoomId?: string;
 			/**
-			 * asker Rocket.Chat ID
+			 * Matrix user ID of the asker
 			 * example:
-			 * 8ertjlasdKJA
+			 * @asker:matrix.example
 			 */
-			askerRcId?: string;
+			askerMatrixUserId?: string;
 			e2eLastMessage?: LastMessageDTO;
 			lastMessage?: string;
 			lastMessageType?: MessageType;
@@ -1647,6 +1732,12 @@ declare namespace UserService {
 			topic?: SessionTopicDTO;
 		}
 		export interface SessionDataDTO {
+			/**
+			 * Session-scoped pseudonym shown to consultants for anonymous live chat
+			 * example:
+			 * Behutsames Pferd Jules
+			 */
+			displayName?: string;
 			/**
 			 * mandatory depending on the consulting type
 			 * example:
@@ -1699,6 +1790,11 @@ declare namespace UserService {
 			 * max94
 			 */
 			username?: string;
+			/**
+			 * example:
+			 * Behutsames Pferd Jules
+			 */
+			displayName?: string;
 			isDeleted?: boolean;
 			/**
 			 * LinkedHashMap<String, Object>
@@ -1744,6 +1840,9 @@ declare namespace UserService {
 			 */
 			status?: string;
 		}
+		export interface TransferOwnershipRequest {
+			consultantId: string;
+		}
 		export interface TwoFactorAuthDTO {
 			/**
 			 * example:
@@ -1755,7 +1854,7 @@ declare namespace UserService {
 			 * true
 			 */
 			isActive: boolean;
-			secret?: string;
+			secret?: string; // password
 			qrCode?: string;
 			type?: OtpType;
 			/**
@@ -1820,6 +1919,12 @@ declare namespace UserService {
 			 * true
 			 */
 			IsSupervisor;
+			assignedSupervisorId?: /**
+			 * Supervision (auto-assigned): the consultant id of this counsellor's standing supervisor, who is automatically attached read-only to every case the counsellor accepts. At most one; the target must itself have isSupervisor = true and may not be the counsellor themselves. Omitted/null leaves the current assignment untouched; an empty string clears it (clearing stops future auto-attachment and does not detach supervisors already on in-flight cases).
+			 * example:
+			 * 8bb2b0a4-2c5b-4f5a-9c3a-1d2e3f4a5b6c
+			 */
+			AssignedSupervisorId;
 			/**
 			 * replaces the full set of topics assigned to the consultant
 			 * example:
@@ -1830,6 +1935,18 @@ declare namespace UserService {
 			 * ]
 			 */
 			topicIds?: number /* int64 */[];
+			/**
+			 * Optional public slug. Admin edits go live immediately; empty clears it.
+			 * example:
+			 * nikunj-rohit
+			 */
+			publicSlug?: string;
+			/**
+			 * If true, rejects the currently pending public slug without changing the active slug.
+			 * example:
+			 * false
+			 */
+			rejectPendingPublicSlug?: boolean;
 		}
 		export interface UpdateAgencyAdminDTO {
 			/**
@@ -1899,9 +2016,9 @@ declare namespace UserService {
 		export interface UpdateChatResponseDTO {
 			/**
 			 * example:
-			 * WCET6GWir78pNMyyD
+			 * !aBcDeF123:matrix.example
 			 */
-			groupId: string;
+			matrixRoomId: string;
 		}
 		export interface UpdateConsultantDTO {
 			/**
@@ -1920,10 +2037,15 @@ declare namespace UserService {
 			 */
 			email: string; // email
 			/**
+			 * Optional public slug request. Letters and hyphens only.
 			 * example:
 			 * nikunj-rohit
 			 */
 			publicSlug?: string;
+			/**
+			 * example:
+			 * de, en
+			 */
 			languages?: /* ISO 639-1 code */ LanguageCode[];
 			/**
 			 * Flag that indicates has the user accepted new terms and conditions text
@@ -1961,11 +2083,6 @@ declare namespace UserService {
 			 */
 			tenantId?: number;
 		}
-		export interface GroupChatParticipantDTO {
-			consultantId: string;
-			role: 'OWNER' | 'CO_MODERATOR' | 'PARTICIPANT';
-			displayName: string;
-		}
 		export interface UserChatDTO {
 			/**
 			 * example:
@@ -1997,7 +2114,15 @@ declare namespace UserService {
 			 * false
 			 */
 			repetitive: boolean;
+			/**
+			 * example:
+			 * 6
+			 */
 			repeatCount?: number;
+			/**
+			 * example:
+			 * 0
+			 */
 			currentOccurrenceIndex?: number;
 			chatInterval?:
 				| 'DAILY'
@@ -2007,12 +2132,26 @@ declare namespace UserService {
 				| 'QUARTERLY'
 				| 'YEARLY';
 			modality?: 'TEXT' | 'AUDIO' | 'VIDEO';
+			/**
+			 * example:
+			 * Europe/Berlin
+			 */
 			timezone?: string;
 			/**
 			 * example:
 			 * false
 			 */
 			active: boolean;
+			/**
+			 * Stable ADR-006 modality. One of AGENCY_COUNSELLING, LIVE_CHAT, INTERNAL_GROUP, SELF_HELP.
+			 * example:
+			 * SELF_HELP
+			 */
+			conversationType?:
+				| 'AGENCY_COUNSELLING'
+				| 'LIVE_CHAT'
+				| 'INTERNAL_GROUP'
+				| 'SELF_HELP';
 			/**
 			 * example:
 			 * 0
@@ -2036,9 +2175,9 @@ declare namespace UserService {
 			messagesRead?: boolean;
 			/**
 			 * example:
-			 * xGklslk2JJKK
+			 * !aBcDeF123:matrix.example
 			 */
-			groupId: string;
+			matrixRoomId: string;
 			attachment?: SessionAttachmentDTO;
 			/**
 			 * example:
@@ -2059,11 +2198,36 @@ declare namespace UserService {
 			 * Hint
 			 */
 			hintMessage?: string;
+			/**
+			 * example:
+			 * de
+			 */
 			sourceLanguage?: string;
-			hintMessageTranslations?: Record<string, string>;
-			groupChatRulesTranslations?: Record<string, string[]>;
+			hintMessageTranslations?: {
+				[name: string]: string;
+			};
+			groupChatRulesTranslations?: {
+				[name: string]: [
+					string?,
+					string?,
+					string?,
+					string?,
+					string?,
+					string?,
+					string?,
+					string?,
+					string?,
+					string?
+				];
+			};
 		}
 		export interface UserDTO {
+			/**
+			 * Session-scoped pseudonym shown to consultants for anonymous live chat
+			 * example:
+			 * Behutsames Pferd Jules
+			 */
+			displayName?: string;
 			/**
 			 * mandatory depending on the consulting type
 			 * example:
@@ -2152,6 +2316,19 @@ declare namespace UserService {
 			 */
 			displayName?: string;
 			/**
+			 * Active public slug used for consultant registration links
+			 * example:
+			 * nikunj-rohit
+			 */
+			publicSlug?: string;
+			/**
+			 * Consultant-requested slug waiting for admin approval
+			 * example:
+			 * nikunj-rohit
+			 */
+			pendingPublicSlug?: string;
+			publicSlugStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
+			/**
 			 * example:
 			 * Max
 			 */
@@ -2200,17 +2377,6 @@ declare namespace UserService {
 			 */
 			isInTeamAgency?: boolean;
 			agencies?: AgencyDTO[];
-			/**
-			 * example:
-			 * nikunj-rohit
-			 */
-			publicSlug?: string;
-			/**
-			 * example:
-			 * nikunj-rohit
-			 */
-			pendingPublicSlug?: string;
-			publicSlugStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
 			userRoles?: string[];
 			grantedAuthorities?: string[];
 			twoFactorAuth?: TwoFactorAuthDTO;
@@ -2277,12 +2443,11 @@ declare namespace UserService {
 			 * consultant23
 			 */
 			initiatorUserName: string;
-			rcUserId?: string;
 			/**
 			 * example:
-			 * ag89h3tjkerg94t
+			 * @consultant23:matrix.example
 			 */
-			initiatorRcUserId: string;
+			initiatorMatrixUserId: string;
 		}
 		export interface ViolationDTO {
 			violationType?: 'CONSULTANT' | 'ASKER';
@@ -2294,11 +2459,7 @@ declare namespace UserService {
 }
 declare namespace Paths {
 	namespace AcceptEnquiry {
-		export interface HeaderParameters {
-			RCUserId?: Parameters.RCUserId;
-		}
 		namespace Parameters {
-			export type RCUserId = string;
 			export type SessionId = number; // int64
 		}
 		export interface PathParameters {
@@ -2354,10 +2515,10 @@ declare namespace Paths {
 	}
 	namespace AssignChat {
 		namespace Parameters {
-			export type GroupId = string;
+			export type MatrixRoomId = string;
 		}
 		export interface PathParameters {
-			groupId: Parameters.GroupId;
+			matrixRoomId: Parameters.MatrixRoomId;
 		}
 		namespace Responses {
 			export interface $200 {}
@@ -2387,16 +2548,12 @@ declare namespace Paths {
 		}
 	}
 	namespace BanFromChat {
-		export interface HeaderParameters {
-			rcToken: Parameters.RcToken;
-		}
 		namespace Parameters {
 			export type ChatId = number; // int64
-			export type ChatUserId = string;
-			export type RcToken = string;
+			export type MatrixUserId = string;
 		}
 		export interface PathParameters {
-			chatUserId: Parameters.ChatUserId;
+			matrixUserId: Parameters.MatrixUserId;
 			chatId: Parameters.ChatId /* int64 */;
 		}
 		namespace Responses {
@@ -2406,6 +2563,22 @@ declare namespace Paths {
 			export interface $403 {}
 			export interface $404 {}
 			export interface $500 {}
+		}
+	}
+	namespace ChangeChatSeriesParticipantRole {
+		namespace Parameters {
+			export type ConsultantId = string;
+			export type SeriesId = number; // int64
+		}
+		export interface PathParameters {
+			seriesId: Parameters.SeriesId /* int64 */;
+			consultantId: Parameters.ConsultantId;
+		}
+		export type RequestBody = UserService.Schemas.RoleRequest;
+		namespace Responses {
+			export interface $204 {}
+			export interface $401 {}
+			export interface $403 {}
 		}
 	}
 	namespace CreateChatV1 {
@@ -2429,13 +2602,7 @@ declare namespace Paths {
 		}
 	}
 	namespace CreateEnquiryMessage {
-		export interface HeaderParameters {
-			RCToken?: Parameters.RCToken;
-			RCUserId?: Parameters.RCUserId;
-		}
 		namespace Parameters {
-			export type RCToken = string;
-			export type RCUserId = string;
 			export type SessionId = number; // int64
 		}
 		export interface PathParameters {
@@ -2562,12 +2729,8 @@ declare namespace Paths {
 		}
 	}
 	namespace GetChatById {
-		export interface HeaderParameters {
-			RCToken: Parameters.RCToken;
-		}
 		namespace Parameters {
 			export type ChatId = number; // int64
-			export type RCToken = string;
 		}
 		export interface PathParameters {
 			chatId: Parameters.ChatId /* int64 */;
@@ -2598,12 +2761,48 @@ declare namespace Paths {
 			export interface $500 {}
 		}
 	}
-	namespace GetConsultantPublicData {
+	namespace GetChatSeriesConsultants {
+		namespace Responses {
+			export type $200 = UserService.Schemas.ConsultantResponseDTO[];
+			export interface $204 {}
+			export interface $401 {}
+			export interface $403 {}
+		}
+	}
+	namespace GetChatSeriesOccurrences {
 		namespace Parameters {
-			export type ConsultantId = string; // UUID
+			export type From = string; // date-time
+			export type Limit = number;
+			export type SeriesId = number; // int64
+			export type To = string; // date-time
 		}
 		export interface PathParameters {
-			consultantId: Parameters.ConsultantId /* UUID */;
+			seriesId: Parameters.SeriesId /* int64 */;
+		}
+		export interface QueryParameters {
+			from: Parameters.From /* date-time */;
+			to: Parameters.To /* date-time */;
+			limit?: Parameters.Limit;
+		}
+		namespace Responses {
+			export type $200 = {
+				seriesId?: number; // int64
+				occurrenceIndex?: number; // int32
+				originalStart?: string; // date-time
+				start?: string; // date-time
+				duration?: number; // int32
+				capacity?: number; // int32
+				modality?: 'TEXT' | 'AUDIO' | 'VIDEO';
+			}[];
+			export interface $401 {}
+		}
+	}
+	namespace GetConsultantPublicData {
+		namespace Parameters {
+			export type ConsultantId = string;
+		}
+		export interface PathParameters {
+			consultantId: Parameters.ConsultantId;
 		}
 		namespace Responses {
 			export type $200 = UserService.Schemas.ConsultantResponseDTO;
@@ -2644,30 +2843,8 @@ declare namespace Paths {
 			export interface $500 {}
 		}
 	}
-	namespace GetRocketChatGroupId {
-		namespace Parameters {
-			export type AskerId = string;
-			export type ConsultantId = string;
-		}
-		export interface QueryParameters {
-			consultantId: Parameters.ConsultantId;
-			askerId: Parameters.AskerId;
-		}
-		namespace Responses {
-			export type $200 = UserService.Schemas.RocketChatGroupIdDTO;
-			export interface $204 {}
-			export interface $400 {}
-			export interface $401 {}
-			export interface $403 {}
-			export interface $500 {}
-		}
-	}
 	namespace GetSessionForId {
-		export interface HeaderParameters {
-			RCToken?: Parameters.RCToken;
-		}
 		namespace Parameters {
-			export type RCToken = string;
 			export type SessionId = number; // int64
 		}
 		export interface PathParameters {
@@ -2683,14 +2860,10 @@ declare namespace Paths {
 		}
 	}
 	namespace GetSessionsForAuthenticatedConsultant {
-		export interface HeaderParameters {
-			RCToken: Parameters.RCToken;
-		}
 		namespace Parameters {
 			export type Count = number;
 			export type Filter = string;
 			export type Offset = number;
-			export type RCToken = string;
 			export type Status = number;
 		}
 		export interface QueryParameters {
@@ -2709,12 +2882,6 @@ declare namespace Paths {
 		}
 	}
 	namespace GetSessionsForAuthenticatedUser {
-		export interface HeaderParameters {
-			RCToken?: Parameters.RCToken;
-		}
-		namespace Parameters {
-			export type RCToken = string;
-		}
 		namespace Responses {
 			export type $200 = UserService.Schemas.UserSessionListResponseDTO;
 			export interface $204 {}
@@ -2724,16 +2891,12 @@ declare namespace Paths {
 			export interface $500 {}
 		}
 	}
-	namespace GetSessionsForGroupIds {
-		export interface HeaderParameters {
-			RCToken?: Parameters.RCToken;
-		}
+	namespace GetSessionsForRoomIds {
 		namespace Parameters {
-			export type RCToken = string;
-			export type RcGroupIds = string[];
+			export type RoomIds = string[];
 		}
 		export interface QueryParameters {
-			'rcGroupIds[]': Parameters.RcGroupIds;
+			'roomIds[]': Parameters.RoomIds;
 		}
 		namespace Responses {
 			export type $200 = UserService.Schemas.GroupSessionListResponseDTO;
@@ -2745,14 +2908,10 @@ declare namespace Paths {
 		}
 	}
 	namespace GetTeamSessionsForAuthenticatedConsultant {
-		export interface HeaderParameters {
-			RCToken: Parameters.RCToken;
-		}
 		namespace Parameters {
 			export type Count = number;
 			export type Filter = string;
 			export type Offset = number;
-			export type RCToken = string;
 		}
 		export interface QueryParameters {
 			offset: Parameters.Offset;
@@ -2789,22 +2948,6 @@ declare namespace Paths {
 			export interface $400 {}
 			export interface $401 {}
 			export interface $403 {}
-			export interface $500 {}
-		}
-	}
-	namespace ImportAskers {
-		namespace Responses {
-			export interface $200 {}
-			export interface $400 {}
-			export interface $401 {}
-			export interface $500 {}
-		}
-	}
-	namespace ImportAskersWithoutSession {
-		namespace Responses {
-			export interface $200 {}
-			export interface $400 {}
-			export interface $401 {}
 			export interface $500 {}
 		}
 	}
@@ -2850,6 +2993,21 @@ declare namespace Paths {
 			export interface $500 {}
 		}
 	}
+	namespace OverrideChatSeriesOccurrence {
+		namespace Parameters {
+			export type SeriesId = number; // int64
+		}
+		export interface PathParameters {
+			seriesId: Parameters.SeriesId /* int64 */;
+		}
+		export type RequestBody = UserService.Schemas.OccurrenceOverrideRequest;
+		namespace Responses {
+			export interface $204 {}
+			export interface $400 {}
+			export interface $401 {}
+			export interface $403 {}
+		}
+	}
 	namespace PatchUser {
 		export type RequestBody =
 			/* at least one property must be set */ UserService.Schemas.PatchUserDTO;
@@ -2862,14 +3020,6 @@ declare namespace Paths {
 		}
 	}
 	namespace RegisterNewConsultingType {
-		export interface HeaderParameters {
-			RCToken?: Parameters.RCToken;
-			RCUserId?: Parameters.RCUserId;
-		}
-		namespace Parameters {
-			export type RCToken = string;
-			export type RCUserId = string;
-		}
 		export type RequestBody = UserService.Schemas.NewRegistrationDto;
 		namespace Responses {
 			export type $201 = UserService.Schemas.NewRegistrationResponseDto;
@@ -2880,14 +3030,6 @@ declare namespace Paths {
 		}
 	}
 	namespace RegisterNewSession {
-		export interface HeaderParameters {
-			RCToken?: Parameters.RCToken;
-			RCUserId?: Parameters.RCUserId;
-		}
-		namespace Parameters {
-			export type RCToken = string;
-			export type RCUserId = string;
-		}
 		export type RequestBody = UserService.Schemas.NewRegistrationDto;
 		namespace Responses {
 			export type $201 = UserService.Schemas.NewRegistrationResponseDto;
@@ -2905,6 +3047,22 @@ declare namespace Paths {
 			export interface $403 {}
 			export interface $409 {}
 			export interface $500 {}
+		}
+	}
+	namespace RemoveChatSeriesParticipant {
+		namespace Parameters {
+			export type ConsultantId = string;
+			export type SeriesId = number; // int64
+		}
+		export interface PathParameters {
+			seriesId: Parameters.SeriesId /* int64 */;
+			consultantId: Parameters.ConsultantId;
+		}
+		namespace Responses {
+			export interface $204 {}
+			export interface $401 {}
+			export interface $403 {}
+			export interface $409 {}
 		}
 	}
 	namespace RemoveFromSession {
@@ -2954,25 +3112,15 @@ declare namespace Paths {
 	}
 	namespace SendLiveEvent {
 		namespace Parameters {
-			export type RcGroupId = string;
+			export type MatrixRoomId = string;
 		}
 		export interface QueryParameters {
-			rcGroupId: Parameters.RcGroupId;
+			matrixRoomId: Parameters.MatrixRoomId;
 		}
 		namespace Responses {
 			export interface $200 {}
 			export interface $400 {}
 			export interface $403 {}
-			export interface $409 {}
-			export interface $500 {}
-		}
-	}
-	namespace SendNewMessageNotification {
-		export type RequestBody = UserService.Schemas.NewMessageNotificationDTO;
-		namespace Responses {
-			export interface $200 {}
-			export interface $400 {}
-			export interface $401 {}
 			export interface $409 {}
 			export interface $500 {}
 		}
@@ -2985,6 +3133,23 @@ declare namespace Paths {
 			export interface $400 {}
 			export interface $401 {}
 			export interface $500 {}
+		}
+	}
+	namespace SkipChatSeriesOccurrence {
+		namespace Parameters {
+			export type OriginalStartUtc = string; // date-time
+			export type SeriesId = number; // int64
+		}
+		export interface PathParameters {
+			seriesId: Parameters.SeriesId /* int64 */;
+		}
+		export interface QueryParameters {
+			originalStartUtc: Parameters.OriginalStartUtc /* date-time */;
+		}
+		namespace Responses {
+			export interface $204 {}
+			export interface $401 {}
+			export interface $403 {}
 		}
 	}
 	namespace StartChat {
@@ -3031,6 +3196,20 @@ declare namespace Paths {
 			export interface $500 {}
 		}
 	}
+	namespace TransferChatSeriesOwnership {
+		namespace Parameters {
+			export type SeriesId = number; // int64
+		}
+		export interface PathParameters {
+			seriesId: Parameters.SeriesId /* int64 */;
+		}
+		export type RequestBody = UserService.Schemas.TransferOwnershipRequest;
+		namespace Responses {
+			export interface $204 {}
+			export interface $401 {}
+			export interface $403 {}
+		}
+	}
 	namespace UpdateAbsence {
 		export type RequestBody = UserService.Schemas.AbsenceDTO;
 		namespace Responses {
@@ -3065,17 +3244,6 @@ declare namespace Paths {
 			export interface $401 {}
 			export interface $403 {}
 			export interface $409 {}
-			export interface $500 {}
-		}
-	}
-	namespace UpdateE2eInChats {
-		export type RequestBody = UserService.Schemas.E2eKeyDTO;
-		namespace Responses {
-			export interface $202 {}
-			export interface $204 {}
-			export interface $400 {}
-			export interface $401 {}
-			export interface $403 {}
 			export interface $500 {}
 		}
 	}

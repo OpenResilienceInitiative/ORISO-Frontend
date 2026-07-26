@@ -17,6 +17,12 @@ describe('Matrix credential boundary', () => {
 		);
 	});
 
+	it('keeps generated UserService contracts Matrix-only', () => {
+		expect(source('./generated/userservice.d.ts')).not.toMatch(
+			/RocketChat|RCToken|RcId|RcGroup|askerRc|consultantRc|GetRocket/
+		);
+	});
+
 	it('does not disclose chat credentials to the booking provider', () => {
 		expect(
 			source('./containers/bookings/components/Booking/booking.tsx')
