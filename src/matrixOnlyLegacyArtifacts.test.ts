@@ -19,6 +19,47 @@ const collectFiles = (root: string): string[] => {
 };
 
 describe('Matrix-only active frontend artifacts', () => {
+	it('publishes immutable multi-platform images with supply-chain evidence', () => {
+		const buildAction = fs.readFileSync(
+			path.join(repoRoot, '.github/actions/docker-build-push/action.yml'),
+			'utf8'
+		);
+		const mainWorkflow = fs.readFileSync(
+			path.join(repoRoot, '.github/workflows/ci-main.yml'),
+			'utf8'
+		);
+		const releaseWorkflow = fs.readFileSync(
+			path.join(repoRoot, '.github/workflows/release-image.yml'),
+			'utf8'
+		);
+
+		expect(buildAction).toContain('linux/amd64,linux/arm64');
+		expect(buildAction).toContain('provenance: mode=max');
+		expect(buildAction).toContain('sbom: true');
+		expect(buildAction).toContain(
+			'value: ${{ steps.build.outputs.digest }}'
+		);
+
+		for (const workflow of [mainWorkflow, releaseWorkflow]) {
+			expect(workflow).toContain('id-token: write');
+			expect(workflow).toContain('attestations: write');
+			expect(workflow).toContain(
+				'aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25'
+			);
+			expect(workflow).toContain(
+				'actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6'
+			);
+			expect(workflow).toContain('subject-digest: ${{ steps.');
+			expect(workflow).toMatch(
+				/image-ref: .*@\$\{\{ steps\..*\.outputs\.digest \}\}/
+			);
+		}
+
+		expect(releaseWorkflow).toContain('platforms: linux/amd64,linux/arm64');
+		expect(releaseWorkflow).toContain('provenance: mode=max');
+		expect(releaseWorkflow).toContain('sbom: true');
+	});
+
 	it('pins every container base used by the release Dockerfiles', () => {
 		const runtimeDockerfile = fs.readFileSync(
 			path.join(repoRoot, 'Dockerfile'),

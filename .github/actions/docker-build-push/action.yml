@@ -2,22 +2,39 @@ name: Reusable Docker build and publish steps
 
 inputs:
   push_to_ghcr:
+    description: Whether to push the built image to GHCR
     required: true
     type: boolean
   image_name:
+    description: GHCR image name without registry or organization
     required: true
     type: string
   github_token:
+    description: GitHub token used only when publishing is enabled
     required: true
     type: string
   dockerfile:
+    description: Dockerfile path relative to the repository root
     required: false
     type: string
     default: Dockerfile
+  platforms:
+    description: Comma-separated OCI target platforms
+    required: false
+    type: string
+    default: linux/amd64,linux/arm64
+
+outputs:
+  digest:
+    description: Immutable multi-platform image digest
+    value: ${{ steps.build.outputs.digest }}
 
 runs:
   using: 'composite'
   steps:
+  - name: Set up QEMU
+    uses: docker/setup-qemu-action@v4
+
   - name: Set up Docker Buildx
     uses: docker/setup-buildx-action@v4
 
@@ -46,7 +63,10 @@ runs:
     with:
       context: .
       file: ${{ inputs.dockerfile }}
+      platforms: ${{ inputs.platforms }}
       push: ${{ inputs.push_to_ghcr }}
+      provenance: mode=max
+      sbom: true
       tags: ${{ steps.meta.outputs.tags }}
       labels: ${{ steps.meta.outputs.labels }}
       cache-from: type=gha
