@@ -117,8 +117,8 @@ export const useElementCallWidget = (
 
 				// Widget mode reads its configuration from query params. The
 				// widget never receives an access token or a second Matrix
-				// session. Media E2EE is enabled later, tenant-wide, after the
-				// legacy SPA path has been removed.
+				// session. The legacy SPA path is gone, so every participant
+				// uses host-backed per-participant media encryption.
 				elementCallUrl.search = new URLSearchParams({
 					widgetId: widgetIdForRoom(roomId),
 					parentUrl: window.location.origin,
@@ -129,6 +129,7 @@ export const useElementCallWidget = (
 					confineToRoom: 'true',
 					header: 'none',
 					skipLobby: String(skipLobby),
+					perParticipantE2EE: 'true',
 					intent: 'start_call',
 					callIntent: isVideo ? 'video' : 'audio'
 				}).toString();

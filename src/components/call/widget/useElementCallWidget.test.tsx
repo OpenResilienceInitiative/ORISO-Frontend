@@ -149,7 +149,7 @@ describe('useElementCallWidget', () => {
 		expect(url.searchParams.get('deviceId')).toBe('ORISO_WEB_123');
 		expect(url.searchParams.has('accessToken')).toBe(false);
 		expect(url.searchParams.has('enableE2EE')).toBe(false);
-		expect(url.searchParams.has('perParticipantE2EE')).toBe(false);
+		expect(url.searchParams.get('perParticipantE2EE')).toBe('true');
 	});
 
 	it('fails closed when the host cannot join the call room', async () => {
