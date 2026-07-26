@@ -36,8 +36,8 @@ describe('Matrix-only active frontend artifacts', () => {
 		expect(buildAction).toContain('linux/amd64,linux/arm64');
 		expect(buildAction).toContain('provenance: mode=max');
 		expect(buildAction).toContain('sbom: true');
-		expect(buildAction).toContain(
-			'value: ${{ steps.build.outputs.digest }}'
+		expect(buildAction).toMatch(
+			/value: \$\{\{ steps\.build\.outputs\.digest \}\}/
 		);
 
 		for (const workflow of [mainWorkflow, releaseWorkflow]) {
