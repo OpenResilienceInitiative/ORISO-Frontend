@@ -40,7 +40,15 @@ describe('Matrix-only active frontend artifacts', () => {
 		);
 		expect(
 			fs.readFileSync(path.join(repoRoot, '.dockerignore'), 'utf8')
-		).toContain('**/node_modules');
+		).toMatch(/\*\*\/node_modules[\s\S]*proxy\/\*\*\/\*\.test\.js/);
+		expect(
+			fs.existsSync(path.join(repoRoot, 'proxy/routes/index.js.backup'))
+		).toBe(false);
+		expect(
+			fs.existsSync(
+				path.join(repoRoot, 'proxy/routes/weblate.js.backup.original')
+			)
+		).toBe(false);
 	});
 
 	it('does not ship the frozen MessageService API snapshot', () => {

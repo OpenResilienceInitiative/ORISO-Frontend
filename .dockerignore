@@ -11,6 +11,10 @@ app/resources/bower_components
 /nbproject
 /node_modules
 **/node_modules
+proxy/**/*.test.js
+proxy/**/*.backup
+proxy/**/*.backup.*
+proxy/**/*.original
 /npm-debug.log
 .DS_Store
 /typings
