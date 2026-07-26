@@ -308,7 +308,7 @@ class LiveKitService {
 		// Notify subscribers
 		this.notifySubscribers(participants);
 
-		// Also call legacy callback if set
+		// Preserve the direct callback API for consumers not using subscriptions.
 		if (this.onParticipantsChanged) {
 			this.onParticipantsChanged(participants);
 		}

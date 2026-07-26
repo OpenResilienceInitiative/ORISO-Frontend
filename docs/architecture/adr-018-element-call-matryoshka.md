@@ -25,8 +25,9 @@ That design created one security and reliability boundary too many:
   Element Call.
 
 Temporarily forcing unencrypted events or disabling media E2EE would only hide
-those structural faults. Rocket.Chat and Jitsi are retired platforms and must
-not be retained as fallback implementations.
+those structural faults. Rocket.Chat is a retired transport, and the old
+hard-wired Jitsi integration is a retired implementation. Neither is retained
+as a fallback for the native call path.
 
 ## Decision
 
@@ -53,6 +54,16 @@ There is no runtime feature flag or compatibility branch back to SPA mode,
 Rocket.Chat, or Jitsi. Rollback means deploying the previous complete,
 internally consistent release bundle. It does not mean selectively restoring a
 legacy transport inside a new bundle.
+
+This decision does not prohibit future Jitsi, Google Meet, or Microsoft Teams
+integrations. Those providers may be added only behind an explicit,
+provider-neutral video API after the native encrypted baseline has passed its
+runtime gates. A provider adapter is an independent product capability, not a
+fallback: it receives no Matrix access token, device credential, room key, or
+privileged Widget API capability and cannot change the native call-room
+encryption policy. Each provider requires its own security assessment and must
+show its actual encryption guarantees in the UI rather than inheriting ORISO's
+native E2EE claim.
 
 ## Widget Security Contract
 
@@ -191,7 +202,10 @@ Positive consequences:
 - one Matrix device and sync loop serve chat and calls;
 - call events and media keys use the host's working crypto stack;
 - the Element Call fork moves closer to upstream widget behavior;
-- Rocket.Chat and Jitsi cannot silently return as runtime fallbacks; and
+- Rocket.Chat and the old embedded Jitsi implementation cannot silently return
+  as runtime fallbacks;
+- future video-provider adapters remain isolated from Matrix credentials and
+  native media keys; and
 - authorization is enforced at both the widget and MatrixRTC service
   boundaries.
 
@@ -207,7 +221,7 @@ Trade-offs:
 The decision is implemented only when all of the following are true:
 
 - active code, config, generated contracts, CI, Helm templates, and deployed
-  resources contain no Rocket.Chat or Jitsi runtime path;
+  resources contain no Rocket.Chat or legacy embedded-Jitsi runtime path;
 - iframe URLs, browser messages, logs, and traces contain no Matrix access
   token;
 - widget capability, room-scope, origin/source, OpenID, delayed-event, and
@@ -229,6 +243,9 @@ The decision is implemented only when all of the following are true:
   `org.oriso.call.hangup` ringing protocol with `m.rtc.notification`.
 - Removing the separate legacy Matrix `MatrixCall` path for 1:1 calls.
 - Migrating pre-production users, devices, appointments, or chat history.
+- Implementing future isolated Jitsi, Google Meet, or Microsoft Teams provider
+  adapters. Their API, consent, encryption labelling, retention, and audit
+  requirements require separate ADRs and delivery gates.
 
 ## Implementation References
 
