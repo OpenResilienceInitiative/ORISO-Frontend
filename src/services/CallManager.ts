@@ -307,15 +307,24 @@ class CallManager {
 				kick: 100,
 				ban: 100,
 				redact: 50,
-				state_default: 0,
+				// `state_default: 0` used to let ANY joined participant rewrite
+				// `m.room.join_rules` back to `public` — which would have undone
+				// the restricted rule set above from inside the call. State
+				// changes now need the creator's level; the single exception is
+				// the call membership event, granted explicitly below.
+				state_default: 100,
 				events_default: 0,
 				users_default: 0,
 				events: {
 					'm.room.power_levels': 100,
+					'm.room.join_rules': 100,
+					'm.room.guest_access': 100,
 					'm.room.history_visibility': 100,
+					'm.room.canonical_alias': 100,
+					'm.room.server_acl': 100,
 					'm.room.tombstone': 100,
 					'm.room.encryption': 100,
-					'm.room.name': 50,
+					'm.room.name': 100,
 					'm.room.message': 0,
 					'm.room.encrypted': 50,
 					'm.sticker': 50,
@@ -374,6 +383,7 @@ class CallManager {
 		sourceRoomId: string,
 		callRoomId: string
 	): Promise<void> {
+		let failedInvites = 0;
 		const ownUserId = client.getUserId();
 		const members =
 			client
@@ -384,16 +394,22 @@ class CallManager {
 
 		await Promise.all(
 			members.map((userId) =>
-				client.invite(callRoomId, userId).catch((err) => {
-					// One failed invite must not sink the whole call.
-					console.warn(
-						'[call] could not invite participant to call room',
-						userId,
-						err
-					);
+				client.invite(callRoomId, userId).catch(() => {
+					// One failed invite must not sink the whole call. The user id
+					// and the raw error are deliberately not logged: this runs in
+					// production browsers and a Matrix id identifies a person in a
+					// counselling context.
+					failedInvites += 1;
 				})
 			)
 		);
+
+		if (failedInvites > 0) {
+			// A count is enough to notice a broken fallback without naming anyone.
+			console.warn(
+				`[call] ${failedInvites} of ${members.length} participants could not be invited to the call room`
+			);
+		}
 	}
 
 	/**

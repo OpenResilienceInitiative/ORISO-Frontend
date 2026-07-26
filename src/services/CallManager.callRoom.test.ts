@@ -88,6 +88,30 @@ describe('createElementCallRoom', () => {
 		});
 	});
 
+	it('does not let a call participant reopen the room to the public', async () => {
+		// The restricted join rule is worthless if any joined participant can
+		// overwrite it. `state_default: 0` allowed exactly that.
+		const createRoom = vi.fn().mockResolvedValue({ room_id: CALL_ROOM });
+		installClient({
+			createRoom,
+			getUserId: () => OWN_USER,
+			getRoom: () => null,
+			invite: vi.fn()
+		});
+
+		await createCallRoom();
+
+		const levels = (createRoom.mock.calls[0][0] as any)
+			.power_level_content_override;
+		expect(levels.state_default).toBeGreaterThanOrEqual(100);
+		expect(levels.events['m.room.join_rules']).toBe(100);
+		expect(levels.events['m.room.guest_access']).toBe(100);
+		expect(levels.events['m.room.history_visibility']).toBe(100);
+		expect(levels.events['m.room.encryption']).toBe(100);
+		// The one exception: Element Call must publish call membership.
+		expect(levels.events['org.matrix.msc3401.call.member']).toBe(0);
+	});
+
 	it('falls back to invites — never to a public room — on an old homeserver', async () => {
 		const createRoom = vi
 			.fn()

@@ -269,6 +269,24 @@ describe('OrisoWidgetDriver', () => {
 			).rejects.toThrow(/no crypto/);
 		});
 
+		it('refuses to send media keys in the clear even when asked to', async () => {
+			// The iframe controls the `encrypted` flag. If it could set it to
+			// false for a key-bearing type, the media keys the whole call rests
+			// on would go out in plaintext.
+			await expect(
+				driver.sendToDevice('m.call.encryption_keys', false, {
+					'@asker:oriso.example': { DEV1: { key: 'a' } }
+				})
+			).rejects.toThrow(/never travel in plaintext/);
+			expect(client.queueToDevice).not.toHaveBeenCalled();
+
+			await expect(
+				driver.sendToDevice('io.element.call.encryption_keys', false, {
+					'@asker:oriso.example': { DEV1: { key: 'a' } }
+				})
+			).rejects.toThrow(/never travel in plaintext/);
+		});
+
 		it('uses the plain queue only when encryption was not requested', async () => {
 			await driver.sendToDevice('m.call.hangup', false, {
 				'@asker:oriso.example': { DEV1: { reason: 'user_hangup' } }

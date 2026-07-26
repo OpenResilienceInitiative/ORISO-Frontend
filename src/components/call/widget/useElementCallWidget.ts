@@ -18,6 +18,7 @@ import {
 } from 'matrix-js-sdk';
 
 import { OrisoWidgetDriver } from './OrisoWidgetDriver';
+import { ALLOWED_TO_DEVICE_EVENT_TYPES } from './orisoWidgetCapabilities';
 import { getElementCallBaseUrl } from '../../../resources/scripts/runtimeConfig';
 
 export interface ElementCallWidgetOptions {
@@ -154,6 +155,10 @@ export const useElementCallWidget = (
 		};
 
 		const onToDevice = (event: MatrixEvent) => {
+			// The host client receives all to-device traffic, including device
+			// verification and room-key material that has nothing to do with the
+			// call. Forwarding it wholesale would hand that to a separate origin.
+			if (!ALLOWED_TO_DEVICE_EVENT_TYPES.has(event.getType())) return;
 			apiRef.current
 				?.feedToDevice(
 					event.getEffectiveEvent() as never,

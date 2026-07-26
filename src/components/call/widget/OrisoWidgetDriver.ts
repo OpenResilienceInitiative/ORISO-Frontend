@@ -43,7 +43,20 @@ import {
 } from 'matrix-widget-api';
 import { EventTimeline, MatrixClient, MatrixEvent } from 'matrix-js-sdk';
 
-import { isAllowedWidgetCapability } from './orisoWidgetCapabilities';
+import {
+	ALLOWED_TO_DEVICE_EVENT_TYPES,
+	isAllowedWidgetCapability
+} from './orisoWidgetCapabilities';
+
+/**
+ * To-device events that carry per-participant media keys. These may only ever
+ * be sent through Olm, never through the plaintext queue.
+ */
+const KEY_BEARING_TO_DEVICE_TYPES: ReadonlySet<string> = new Set([
+	'io.element.call.encryption_keys',
+	'm.call.encryption_keys',
+	'org.matrix.msc3401.call.encryption_keys'
+]);
 
 /** Matrix events carry more than the widget spec's shape; narrow it here. */
 const toWidgetEvent = (event: MatrixEvent): IRoomEvent =>
@@ -206,6 +219,16 @@ export class OrisoWidgetDriver extends WidgetDriver {
 		encrypted: boolean,
 		contentMap: { [userId: string]: { [deviceId: string]: object } }
 	): Promise<void> {
+		// The media keys are the secret the whole call rests on. Whether they
+		// travel encrypted must not depend on a flag the iframe sets: a widget
+		// asking to send them in the clear is refused outright.
+		if (!encrypted && KEY_BEARING_TO_DEVICE_TYPES.has(eventType)) {
+			throw new Error(
+				`Refusing to send ${eventType} unencrypted: call keys must never ` +
+					'travel in plaintext.'
+			);
+		}
+
 		if (!encrypted) {
 			await this.client.queueToDevice({
 				eventType,
