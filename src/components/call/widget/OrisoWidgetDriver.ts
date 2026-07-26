@@ -43,10 +43,7 @@ import {
 } from 'matrix-widget-api';
 import { EventTimeline, MatrixClient, MatrixEvent } from 'matrix-js-sdk';
 
-import {
-	ALLOWED_TO_DEVICE_EVENT_TYPES,
-	isAllowedWidgetCapability
-} from './orisoWidgetCapabilities';
+import { isAllowedWidgetCapability } from './orisoWidgetCapabilities';
 
 /**
  * To-device events that carry per-participant media keys. These may only ever
