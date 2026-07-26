@@ -36,6 +36,16 @@ export const GroupCallWidget: React.FC = () => {
 	const [elementCallUrl, setElementCallUrl] = useState<string>('');
 	const [isDismissed, setIsDismissed] = useState(false);
 
+	const closeCallSurface = useCallback(() => {
+		setElementCallUrl('');
+		setCallData(null);
+		setCallState(null);
+		setIsDismissed(true);
+		if (callManager.hasActiveCall()) {
+			callManager.endCall();
+		}
+	}, []);
+
 	// Widget mode keeps the Matrix session in this app: the call iframe gets no
 	// access token and registers no device of its own, and asks us to send and
 	// read events for it instead. Off by default until validated on Pre-Dev.
@@ -43,11 +53,18 @@ export const GroupCallWidget: React.FC = () => {
 	const callRoomId = callData
 		? ((callData as any).elementCallRoomId ?? callData.roomId)
 		: null;
+	const shouldPrepareWidget =
+		!!callData &&
+		(!callData.isIncoming ||
+			callState === 'connecting' ||
+			callState === 'in_call');
 	const widget = useElementCallWidget(
 		widgetModeEnabled ? (matrixClientService?.getClient() ?? null) : null,
 		{
-			roomId: widgetModeEnabled ? callRoomId : null,
-			isVideo: callData?.isVideo ?? true
+			roomId:
+				widgetModeEnabled && shouldPrepareWidget ? callRoomId : null,
+			isVideo: callData?.isVideo ?? true,
+			onClose: closeCallSurface
 		}
 	);
 
@@ -190,21 +207,46 @@ export const GroupCallWidget: React.FC = () => {
 	}, []);
 
 	useEffect(() => {
+		if (widgetModeEnabled) return undefined;
 		const handleMessage = (event: MessageEvent) => {
 			const data = event.data;
 			if (!data || typeof data !== 'object') return;
 			if (data.type !== 'oriso-call-ended') return;
-			setElementCallUrl('');
-			setCallData(null);
-			setCallState(null);
-			setIsDismissed(true);
-			if (callManager.hasActiveCall()) {
-				callManager.endCall();
-			}
+			closeCallSurface();
 		};
 		window.addEventListener('message', handleMessage);
 		return () => window.removeEventListener('message', handleMessage);
-	}, []);
+	}, [closeCallSurface, widgetModeEnabled]);
+
+	// Room joining and URL construction are asynchronous in widget mode. Mount
+	// only after the host client is joined; unlike the legacy SPA path there is
+	// no second client inside the iframe that could repair missing membership.
+	useEffect(() => {
+		if (
+			!widgetModeEnabled ||
+			!callData?.usesElementCall ||
+			!shouldPrepareWidget
+		) {
+			return;
+		}
+		if (widget.error) {
+			alert(`Failed to start call: ${widget.error.message}`);
+			closeCallSurface();
+			return;
+		}
+		if (widget.url && elementCallUrl !== widget.url) {
+			setupInProgressRef.current = true;
+			setElementCallUrl(widget.url);
+		}
+	}, [
+		callData?.usesElementCall,
+		closeCallSurface,
+		elementCallUrl,
+		shouldPrepareWidget,
+		widget.error,
+		widget.url,
+		widgetModeEnabled
+	]);
 
 	// Handle incoming call answer: once the call is moving past "ringing",
 	// automatically join the Element Call room for the receiver.
@@ -384,33 +426,36 @@ export const GroupCallWidget: React.FC = () => {
 	const handleEndCall = () => {
 		// console.log('📴 Ending call');
 
-		// Cleanup widget message handler
-		if (
-			iframeRef.current &&
-			(iframeRef.current as any).__widgetMessageHandler
-		) {
-			window.removeEventListener(
-				'message',
+		if (widgetModeEnabled) {
+			void widget.hangup().catch(() => {
+				/* local teardown still completes if the iframe already closed */
+			});
+		} else {
+			// Legacy SPA compatibility only. WP-5 deletes this path after the
+			// widget-mode canary has passed.
+			if (
+				iframeRef.current &&
 				(iframeRef.current as any).__widgetMessageHandler
-			);
-			delete (iframeRef.current as any).__widgetMessageHandler;
-		}
+			) {
+				window.removeEventListener(
+					'message',
+					(iframeRef.current as any).__widgetMessageHandler
+				);
+				delete (iframeRef.current as any).__widgetMessageHandler;
+			}
 
-		if (iframeRef.current?.contentWindow) {
-			iframeRef.current.contentWindow.postMessage(
-				{ type: 'oriso-call-action', action: 'hangup' },
-				'*'
-			);
+			if (iframeRef.current?.contentWindow) {
+				iframeRef.current.contentWindow.postMessage(
+					{ type: 'oriso-call-action', action: 'hangup' },
+					'*'
+				);
+			}
 		}
 
 		if (iframeRef.current) {
 			iframeRef.current.src = 'about:blank';
 		}
-		setElementCallUrl('');
-		setCallData(null);
-		setCallState(null);
-		setIsDismissed(true);
-		callManager.endCall();
+		closeCallSurface();
 	};
 
 	const handleToggleFullscreen = () => {
@@ -683,7 +728,7 @@ export const GroupCallWidget: React.FC = () => {
 							ref={setIframeNode}
 							src={elementCallUrl}
 							className="element-call-iframe"
-							allow="camera; microphone; display-capture; autoplay; fullscreen"
+							allow="camera; microphone; display-capture; autoplay; fullscreen; clipboard-write"
 							allowFullScreen
 							title="Group video call"
 						/>
