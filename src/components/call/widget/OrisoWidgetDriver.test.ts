@@ -306,6 +306,126 @@ describe('OrisoWidgetDriver', () => {
 		});
 	});
 
+	describe('delayed events', () => {
+		// Delayed events implement call-membership expiry: a participant that
+		// crashes still disappears from the call. Untested, a broken one leaves
+		// ghosts in every call.
+		it('schedules a delayed state event in the call room', async () => {
+			const client2 = createClient({
+				_unstable_sendDelayedStateEvent: vi
+					.fn()
+					.mockResolvedValue({ delay_id: 'delay-1' })
+			} as never);
+			const d = new OrisoWidgetDriver(client2, CALL_ROOM);
+
+			const res = await d.sendDelayedEvent(
+				30_000,
+				null,
+				'org.matrix.msc3401.call.member',
+				{ memberships: [] },
+				'@a:oriso.example_DEV1_m.call'
+			);
+
+			expect(res).toEqual({ roomId: CALL_ROOM, delayId: 'delay-1' });
+		});
+
+		it('refuses to schedule into another room', async () => {
+			await expect(
+				driver.sendDelayedEvent(
+					30_000,
+					null,
+					'm.reaction',
+					{},
+					null,
+					OTHER_ROOM
+				)
+			).rejects.toThrow(/confined/);
+		});
+
+		it('passes an update straight through to the client', async () => {
+			const client2 = createClient({
+				_unstable_updateDelayedEvent: vi.fn().mockResolvedValue({})
+			} as never);
+			const d = new OrisoWidgetDriver(client2, CALL_ROOM);
+
+			await d.updateDelayedEvent('delay-1', 'restart' as never);
+
+			expect(client2._unstable_updateDelayedEvent).toHaveBeenCalledWith(
+				'delay-1',
+				'restart'
+			);
+		});
+	});
+
+	describe('reading the timeline', () => {
+		const eventStub = (type: string, id: string, content = {}) => ({
+			getType: () => type,
+			getId: () => id,
+			getStateKey: () => undefined,
+			getContent: () => content,
+			getEffectiveEvent: () => ({ type, event_id: id, content })
+		});
+
+		const clientWithTimeline = (events: unknown[]) =>
+			createClient({
+				getRoom: vi.fn().mockReturnValue({
+					getLiveTimeline: () => ({
+						getEvents: () => events,
+						getState: () => null
+					})
+				})
+			} as never);
+
+		it('filters by event type and honours the limit', async () => {
+			const d = new OrisoWidgetDriver(
+				clientWithTimeline([
+					eventStub('m.reaction', '$1'),
+					eventStub('m.room.message', '$2'),
+					eventStub('m.reaction', '$3'),
+					eventStub('m.reaction', '$4')
+				]),
+				CALL_ROOM
+			);
+
+			const out = await d.readRoomEvents('m.reaction', undefined, 2);
+
+			// Newest last: the limit keeps the most recent matches.
+			expect(
+				out.map((e) => (e as { event_id: string }).event_id)
+			).toEqual(['$3', '$4']);
+		});
+
+		it('returns only what follows `since`', async () => {
+			const d = new OrisoWidgetDriver(
+				clientWithTimeline([
+					eventStub('m.reaction', '$1'),
+					eventStub('m.reaction', '$2'),
+					eventStub('m.reaction', '$3')
+				]),
+				CALL_ROOM
+			);
+
+			const out = await d.readRoomTimeline(
+				CALL_ROOM,
+				'm.reaction',
+				undefined,
+				undefined,
+				0,
+				'$1'
+			);
+
+			expect(
+				out.map((e) => (e as { event_id: string }).event_id)
+			).toEqual(['$2', '$3']);
+		});
+
+		it('refuses to read the timeline of another room', async () => {
+			await expect(
+				driver.readRoomEvents('m.reaction', undefined, 10, [OTHER_ROOM])
+			).rejects.toThrow(/confined/);
+		});
+	});
+
 	describe('state events', () => {
 		it('sends a state event when a state key is given', async () => {
 			await driver.sendEvent(

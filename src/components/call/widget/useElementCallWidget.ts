@@ -45,7 +45,10 @@ export interface ElementCallWidget {
  * so a remount does not orphan the previous messaging channel.
  */
 const widgetIdForRoom = (roomId: string): string =>
-	`oriso-call-${roomId.replace(/[^a-zA-Z0-9]/g, '')}`;
+	// Encode rather than strip: dropping every non-alphanumeric made
+	// `!abc:foo.com` and `!abcfoo:com` collide on the same widget id, which
+	// would let one call's channel answer for another.
+	`oriso-call-${encodeURIComponent(roomId).replace(/%/g, '_')}`;
 
 export const useElementCallWidget = (
 	client: MatrixClient | null,

@@ -4,7 +4,7 @@
  * https://github.com/element-hq/element-call
  */
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import { callManager, CallData } from '../../services/CallManager';
 import {
 	getElementCallBaseUrl,
@@ -80,6 +80,26 @@ export const GroupCallWidget: React.FC = () => {
 	const iframeRef = useRef<HTMLIFrameElement>(null);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const setupInProgressRef = useRef(false);
+
+	// React compares ref callbacks by function identity, not by DOM node: an
+	// inline callback is a new function on every render, so React would detach
+	// (call it with `null`) and re-attach on every drag or resize frame — tearing
+	// down and rebuilding the widget's postMessage channel mid-call. Keep it
+	// stable and let it change only when the widget itself does.
+	const setIframeNode = useCallback(
+		(node: HTMLIFrameElement | null) => {
+			// The ref is shared: the drag/close logic needs the element, and
+			// widget mode additionally opens the postMessage channel against it.
+			(
+				iframeRef as React.MutableRefObject<HTMLIFrameElement | null>
+			).current = node;
+			if (widgetModeEnabled) {
+				widget.attachIframe(node);
+			}
+		},
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[widgetModeEnabled, widget.attachIframe]
+	);
 	const [isFullscreen, setIsFullscreen] = useState(false);
 
 	const getGroupBounds = () => ({
@@ -660,17 +680,7 @@ export const GroupCallWidget: React.FC = () => {
 									: '⤢'}
 						</button>
 						<iframe
-							ref={(node) => {
-								// The ref is shared: the drag/close logic needs the
-								// element, and widget mode additionally opens the
-								// postMessage channel against it.
-								(
-									iframeRef as React.MutableRefObject<HTMLIFrameElement | null>
-								).current = node;
-								if (widgetModeEnabled) {
-									widget.attachIframe(node);
-								}
-							}}
+							ref={setIframeNode}
 							src={elementCallUrl}
 							className="element-call-iframe"
 							allow="camera; microphone; display-capture; autoplay; fullscreen"
