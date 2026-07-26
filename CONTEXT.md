@@ -60,6 +60,26 @@ _Avoid_: per-component active state, local `isActive` flags duplicated across li
   Live **participant count** ("3 in call") is **in scope** (full-calls decision). Recommended source of truth: **Matrix-RTC member state** (`m.call.member`/MSC3401), which ElementCall already maintains via `matrixRTC.getRoomSession()` and the client can subscribe to live; alternative is a backend query of the LiveKit room API. This is the live signal that gates the **Join** overlay.
 - **Rocket.Chat vs Matrix.** Runtime chat transport is Matrix-only after Frontend #359 and UserService #281. The remaining `rc*` names are compatibility wire/database contracts, and `useE2EE` is now an inert compatibility hook. **Branch-qualified reality (2026-07-11):** `dev` still lacks SDK crypto, while `pre-dev` initializes Rust crypto and has real-browser Megolm proof. The current PreDev identity remains disposable until ADR-005's clean DNS-identity rebuild.
 
+## Team-Besprechung (request-area team discussion)
+
+_(Decided 2026-07-18, grill-with-docs session. Related: ADR-002 (silent membership), ADR-008 (side-channel = separate room), `0 - Docs/CONTEXT-conversation-types.md`.)_
+
+**Team-Besprechung** (team discussion):
+A team-only conversation attached to one **open enquiry** in the request area, where the counsellors coordinate _before_ anyone accepts the case ("who takes this, what do you think?"). Guardrail: **team coordination never happens in the client's conversation — not even "hidden"**; the Team-Besprechung lives entirely outside the advice seeker's reach, and the advice seeker never learns its content. It **closes permanently at the moment the enquiry is accepted**; from then on it is reachable **read-only via the archive** (subject to the archive's existing auto-deletion). Coordination on an _active_ case is **Supervision** or **Case Handover** — never a continued Team-Besprechung. Participation right = enquiry visibility right: exactly the counsellors who can see (and could accept) the enquiry, no separate permission layer; a tenant-level feature toggle can switch the whole feature off. Scope: **Agency Counselling** enquiries only (Live Chat is anonymous/ephemeral and excluded; Internal Group Chat and Self-Help Group have no request area). The panel carries a permanent "team-only, invisible to the advice seeker" marker — never letting a counsellor be unsure which side they are writing on.
+_Avoid_: "Team-Chat" (ambiguous with **Internal Group Chat**), "Fallbesprechung" (it happens _before_ the case exists), "thread on the enquiry" as a literal mechanism (the client's room can never hide anything from the client).
+
+**Conversation notification level**:
+A per-conversation, per-user setting with **four levels**: **All** / **Mentions only** / **Muted** / **Snoozed** (muted for a chosen duration — e.g. 1 h, 8 h, until tomorrow morning — then auto-reverts to the previous level). Set via a standard popup dialog reachable from each conversation's ⋮ menu (list item and chat header). Channel choice (toast, email, browser notification) stays **global** in the profile — no per-conversation channel matrix. A global do-not-disturb mode is a separate follow-up, not part of this concept.
+
+**Hybrid notification rule** (Team-Besprechung default):
+The **first** post in a Team-Besprechung notifies the whole eligible circle ("the team is discussing this enquiry"); subsequent posts notify only **participants** (those who wrote or opened it) — plus anyone **mentioned**.
+
+**Mention**:
+An @-reference to a colleague inside a conversation. A mentioned user is notified even at level "Mentions only"; levels **Muted**/**Snoozed** suppress everything, including mentions.
+
+**Notification sound**:
+Globally chosen in the profile (not per conversation): one sound slot for messages, one optional distinct slot for mentions, each including "none". Plays only when the conversation's notification level lets the event through.
+
 ## Self-Help Group Chat & Lobby
 
 _(Cross-repo feature. Canonical write model lives in **ORISO-UserService** (`Chat` + `GroupChatParticipant`); this section is the shared glossary. Decisions: extend the existing Group Chat feature + refactor in the touched radius; Matrix-only (no Rocket.Chat remnants); real E2EE via SDK **Megolm-first** (ADR-004/005); red-green TDD.)_
@@ -118,3 +138,31 @@ Because participation reveals sensitive facts (addiction self-help), all outboun
 > **Frank:** That's a server-owned business fact, so the **activity event** carries its full text. It's not chat content.
 > **Dev:** Clicking it?
 > **Frank:** The **action target** of a handover event is the **conversation**; of a new enquiry it's the **request** view. The button only shows on the **active event**.
+
+# Media Upload & Media Check
+
+Sending images in chats (composer + paperclip) and the safety net around media
+from anonymous guests. Spans **ORISO-Frontend** (composer, rendering, blur
+states), the **Matrix media repo** (storage), and the **content scanner**
+(verdicts). Admin-editor images (legal/help texts) are **not** chat media — they
+live behind the TenantService and are outside this topic.
+
+## Language
+
+**Media check state**:
+The lifecycle state of one chat media file: **Unchecked** (no verdict yet — rendered blurred), **Safe** (cleared — rendered normally), **Blocked** (failed a check — blocked tile, never rendered or downloadable). Set by a **verdict**; identical vocabulary in both repos' components and Storybook stories.
+_Avoid_: "quarantined" as a fourth state (quarantine _is_ Unchecked/Blocked server-side), "pending"
+
+**Verdict**:
+The authoritative decision that moves a file out of **Unchecked**. Two sources, same states: the **counsellor's click-to-reveal** (phase 1 — the human is the check) or the **content scanner** (virus + AI check, fail-closed). A missing or unsure verdict is never treated as Safe.
+
+**Click-to-reveal**:
+The counsellor deliberately unblurring a guest image, taking the human decision the scanner will later automate. Applies only to media **received from anonymous guests**; it is a verdict, not a display preference.
+
+**Media flag families**:
+The three per-chat-type switch families governing media: **Upload allowed** (`featureMediaUpload…`), **Inline display** (`featureMediaInlineDisplay…` — off = file-download-only; the virus scan rides on this switch), **AI scan** (`featureMediaAiScan…`). Chat type is the **only** dimension — there is no logged-in/anonymous axis; anonymous users exist only in the anonymous live chat type.
+_Avoid_: the retired `featureAttachmentUploadDisabled` (replaced, inverted semantics)
+
+**Composer inline preview**:
+The scaled image preview shown inside the TipTap composer before sending. Purely a composer affordance: **on the wire every image is its own `m.image` event** (Element model); received text messages never contain image HTML.
+_Avoid_: "inline image" for received messages
