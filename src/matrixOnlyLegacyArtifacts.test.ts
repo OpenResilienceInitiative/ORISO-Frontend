@@ -19,6 +19,30 @@ const collectFiles = (root: string): string[] => {
 };
 
 describe('Matrix-only active frontend artifacts', () => {
+	it('pins every container base used by the release Dockerfiles', () => {
+		const runtimeDockerfile = fs.readFileSync(
+			path.join(repoRoot, 'Dockerfile'),
+			'utf8'
+		);
+		const storybookDockerfile = fs.readFileSync(
+			path.join(repoRoot, 'Dockerfile.storybook'),
+			'utf8'
+		);
+
+		expect(runtimeDockerfile).toMatch(
+			/ARG NODE_VERSION=[^\s]+@sha256:[a-f0-9]{64}/
+		);
+		expect(storybookDockerfile).toMatch(
+			/ARG NODE_VERSION=[^\s]+@sha256:[a-f0-9]{64}/
+		);
+		expect(storybookDockerfile).toMatch(
+			/FROM nginx:[^\s]+@sha256:[a-f0-9]{64}/
+		);
+		expect(
+			fs.readFileSync(path.join(repoRoot, '.dockerignore'), 'utf8')
+		).toContain('**/node_modules');
+	});
+
 	it('does not ship the frozen MessageService API snapshot', () => {
 		expect(
 			fs.existsSync(

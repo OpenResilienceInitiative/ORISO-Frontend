@@ -10,6 +10,7 @@ app/resources/bower_components
 /bower_components
 /nbproject
 /node_modules
+**/node_modules
 /npm-debug.log
 .DS_Store
 /typings

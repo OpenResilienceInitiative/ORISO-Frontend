@@ -3,6 +3,9 @@ const { parseCookies } = require('./parseCookies');
 const getUserServiceBaseUrl = () =>
 	(process.env.USER_SERVICE_URL || '').replace(/\/+$/, '');
 
+const isMatrixRoomId = (value) =>
+	typeof value === 'string' && /^![^:\s]+:[^\s]+$/.test(value);
+
 const collectRoomIdentifiers = (sessions = []) => {
 	const identifiers = new Set();
 
@@ -10,17 +13,11 @@ const collectRoomIdentifiers = (sessions = []) => {
 		const session = entry?.session;
 		const chat = entry?.chat;
 
-		if (session?.matrixRoomId) {
+		if (isMatrixRoomId(session?.matrixRoomId)) {
 			identifiers.add(session.matrixRoomId);
 		}
-		if (session?.groupId) {
-			identifiers.add(session.groupId);
-		}
-		if (chat?.matrixRoomId) {
+		if (isMatrixRoomId(chat?.matrixRoomId)) {
 			identifiers.add(chat.matrixRoomId);
-		}
-		if (chat?.groupId) {
-			identifiers.add(chat.groupId);
 		}
 	}
 
