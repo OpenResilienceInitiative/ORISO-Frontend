@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { DeviceIsolationModeKind } from 'matrix-js-sdk/lib/crypto-api';
 import { getMatrixAccessToken } from '../components/sessionCookie/getMatrixAccessToken';
 import { buildMatrixCryptoStorePrefix } from './matrixCrypto';
 import {
@@ -6,11 +7,16 @@ import {
 	isMatrixExpiredTokenError
 } from './matrixClientService';
 
+const mockedCrypto = vi.hoisted(() => ({
+	setDeviceIsolationMode: vi.fn()
+}));
+
 const mockedMatrixClient = vi.hoisted(() => ({
 	initRustCrypto: vi.fn(),
 	on: vi.fn(),
 	removeAllListeners: vi.fn(),
 	getRoom: vi.fn(),
+	getCrypto: vi.fn(),
 	joinRoom: vi.fn(),
 	sendMessage: vi.fn(),
 	startClient: vi.fn(),
@@ -55,6 +61,7 @@ describe('MatrixClientService', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockedMatrixClient.initRustCrypto.mockResolvedValue(undefined);
+		mockedMatrixClient.getCrypto.mockReturnValue(mockedCrypto);
 		vi.stubGlobal('localStorage', {
 			getItem: vi.fn(() => null)
 		});
@@ -88,6 +95,49 @@ describe('MatrixClientService', () => {
 				'DEVICE_ONE'
 			)
 		});
+	});
+
+	it('keeps invisible crypto (verified-only) for a non-anonymous user when the toggle is on', async () => {
+		const { setAppConfig } = await import('../utils/appConfig');
+		setAppConfig({
+			releaseToggles: { enableInvisibleCrypto: true }
+		} as any);
+		const service = new MatrixClientService();
+
+		await service.initializeClient({
+			userId: '@consultant:matrix.localhost',
+			accessToken: 'access-token',
+			deviceId: 'DEVICE_ONE',
+			homeserverUrl: 'http://matrix.localhost:18008'
+		});
+
+		expect(mockedCrypto.setDeviceIsolationMode).toHaveBeenCalledTimes(1);
+		expect(mockedCrypto.setDeviceIsolationMode.mock.calls[0][0].kind).toBe(
+			DeviceIsolationModeKind.OnlySignedDevicesIsolationMode
+		);
+		setAppConfig(null as any);
+	});
+
+	it('shares to all devices for an anonymous live-chat user even when invisible crypto is on (#774)', async () => {
+		const { setAppConfig } = await import('../utils/appConfig');
+		setAppConfig({
+			releaseToggles: { enableInvisibleCrypto: true }
+		} as any);
+		const service = new MatrixClientService();
+
+		await service.initializeClient({
+			userId: '@anon_abc:matrix.localhost',
+			accessToken: 'access-token',
+			deviceId: 'DEVICE_ANON',
+			homeserverUrl: 'http://matrix.localhost:18008',
+			isAnonymous: true
+		});
+
+		expect(mockedCrypto.setDeviceIsolationMode).toHaveBeenCalledTimes(1);
+		expect(mockedCrypto.setDeviceIsolationMode.mock.calls[0][0].kind).toBe(
+			DeviceIsolationModeKind.AllDevicesIsolationMode
+		);
+		setAppConfig(null as any);
 	});
 
 	it('surfaces Rust crypto failures without leaving a client running', async () => {

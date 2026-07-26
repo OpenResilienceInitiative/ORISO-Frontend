@@ -153,10 +153,15 @@ export class MatrixClientService {
 
 		// #438 MSC4153 invisible crypto: once the rust crypto stack is up, share
 		// Megolm keys only with cross-signed devices when the toggle is on.
+		// Anonymous live-chat users are exempt: they can never cross-sign the
+		// consultant's device, so verified-only isolation would leave the
+		// consultant seeing only undecryptable noise. They always share to all
+		// devices so the accepted consultant can read the conversation (#774).
 		// Best-effort — never breaks client startup.
 		applyDeviceIsolationMode(
 			client,
-			appConfig?.releaseToggles?.enableInvisibleCrypto === true
+			appConfig?.releaseToggles?.enableInvisibleCrypto === true &&
+				loginData.isAnonymous !== true
 		);
 
 		(client as any).on(
