@@ -45,6 +45,41 @@ describe('isAllowedWidgetCapability', () => {
 		).toBe(false);
 	});
 
+	it('lets the widget read room metadata but never write it', () => {
+		// The widget needs to *see* membership and encryption state to render a
+		// call. It has no reason to change either, and granting write would let
+		// the iframe alter who is in a counselling room as the logged-in user.
+		(
+			[
+				'm.room.member',
+				'm.room.name',
+				'm.room.create',
+				'm.room.encryption'
+			] as const
+		).forEach((type) => {
+			expect(
+				isAllowedWidgetCapability(
+					`org.matrix.msc2762.receive.state_event:${type}`
+				),
+				`${type} must be readable`
+			).toBe(true);
+			expect(
+				isAllowedWidgetCapability(
+					`org.matrix.msc2762.send.state_event:${type}`
+				),
+				`${type} must NOT be writable`
+			).toBe(false);
+		});
+	});
+
+	it('still lets the widget write its own call membership', () => {
+		expect(
+			isAllowedWidgetCapability(
+				'org.matrix.msc2762.send.state_event:org.matrix.msc3401.call.member#@a:hs_DEVICE_m.call'
+			)
+		).toBe(true);
+	});
+
 	it('refuses to let the call widget change who may enter a room', () => {
 		expect(
 			isAllowedWidgetCapability(

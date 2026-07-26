@@ -90,9 +90,7 @@ describe('OrisoWidgetDriver', () => {
 
 			await vi.waitFor(() => expect(updates).toHaveLength(1));
 			expect(getOpenIdToken).toHaveBeenCalledTimes(1);
-			expect(updates).toEqual([
-				{ state: OpenIDRequestState.Blocked }
-			]);
+			expect(updates).toEqual([{ state: OpenIDRequestState.Blocked }]);
 			expect(consoleError).not.toHaveBeenCalled();
 			expect(consoleWarn).not.toHaveBeenCalled();
 			expect(consoleLog).not.toHaveBeenCalled();
@@ -125,9 +123,7 @@ describe('OrisoWidgetDriver', () => {
 			).not.toThrow();
 
 			expect(getOpenIdToken).toHaveBeenCalledTimes(1);
-			expect(updates).toEqual([
-				{ state: OpenIDRequestState.Blocked }
-			]);
+			expect(updates).toEqual([{ state: OpenIDRequestState.Blocked }]);
 			expect(consoleError).not.toHaveBeenCalled();
 			expect(consoleWarn).not.toHaveBeenCalled();
 			expect(consoleLog).not.toHaveBeenCalled();
@@ -147,36 +143,39 @@ describe('OrisoWidgetDriver', () => {
 			['negative expiry', { ...validToken, expires_in: -1 }],
 			['infinite expiry', { ...validToken, expires_in: Infinity }],
 			['non-number expiry', { ...validToken, expires_in: '3600' }]
-		])('blocks a malformed token with %s without exposing it', async (_, token) => {
-			const getOpenIdToken = vi.fn().mockResolvedValue(token);
-			driver = new OrisoWidgetDriver(
-				createClient({ getOpenIdToken }),
-				CALL_ROOM
-			);
-			const updates: IOpenIDUpdate[] = [];
-			const consoleError = vi
-				.spyOn(console, 'error')
-				.mockImplementation(() => undefined);
-			const consoleWarn = vi
-				.spyOn(console, 'warn')
-				.mockImplementation(() => undefined);
-			const consoleLog = vi
-				.spyOn(console, 'log')
-				.mockImplementation(() => undefined);
+		])(
+			'blocks a malformed token with %s without exposing it',
+			async (_, token) => {
+				const getOpenIdToken = vi.fn().mockResolvedValue(token);
+				driver = new OrisoWidgetDriver(
+					createClient({ getOpenIdToken }),
+					CALL_ROOM
+				);
+				const updates: IOpenIDUpdate[] = [];
+				const consoleError = vi
+					.spyOn(console, 'error')
+					.mockImplementation(() => undefined);
+				const consoleWarn = vi
+					.spyOn(console, 'warn')
+					.mockImplementation(() => undefined);
+				const consoleLog = vi
+					.spyOn(console, 'log')
+					.mockImplementation(() => undefined);
 
-			driver.askOpenID(
-				new SimpleObservable((update) => updates.push(update))
-			);
+				driver.askOpenID(
+					new SimpleObservable((update) => updates.push(update))
+				);
 
-			await vi.waitFor(() => expect(updates).toHaveLength(1));
-			expect(getOpenIdToken).toHaveBeenCalledTimes(1);
-			expect(updates).toEqual([
-				{ state: OpenIDRequestState.Blocked }
-			]);
-			expect(consoleError).not.toHaveBeenCalled();
-			expect(consoleWarn).not.toHaveBeenCalled();
-			expect(consoleLog).not.toHaveBeenCalled();
-		});
+				await vi.waitFor(() => expect(updates).toHaveLength(1));
+				expect(getOpenIdToken).toHaveBeenCalledTimes(1);
+				expect(updates).toEqual([
+					{ state: OpenIDRequestState.Blocked }
+				]);
+				expect(consoleError).not.toHaveBeenCalled();
+				expect(consoleWarn).not.toHaveBeenCalled();
+				expect(consoleLog).not.toHaveBeenCalled();
+			}
+		);
 	});
 
 	describe('room confinement', () => {

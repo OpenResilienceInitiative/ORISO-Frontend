@@ -31,10 +31,23 @@ export const ALLOWED_ROOM_EVENT_TYPES: ReadonlySet<string> = new Set([
 	'm.rtc.decline'
 ]);
 
-/** State events Element Call reads and/or writes (call membership + room meta). */
-export const ALLOWED_STATE_EVENT_TYPES: ReadonlySet<string> = new Set([
+/**
+ * State events Element Call is allowed to **write**.
+ *
+ * Deliberately just the call membership event. Element Call's own
+ * `createRoomWidgetClient` call only ever writes `GroupCallMemberPrefix`; the
+ * room metadata below is read-only for it. Granting write on `m.room.member` or
+ * `m.room.name` would let the iframe change who is in a counselling room, or
+ * rename it, as the logged-in user.
+ */
+export const ALLOWED_SEND_STATE_EVENT_TYPES: ReadonlySet<string> = new Set([
 	'org.matrix.msc3401.call.member',
-	'm.call.member',
+	'm.call.member'
+]);
+
+/** State events Element Call is allowed to **read** (call membership + room meta). */
+export const ALLOWED_RECEIVE_STATE_EVENT_TYPES: ReadonlySet<string> = new Set([
+	...ALLOWED_SEND_STATE_EVENT_TYPES,
 	'm.room.create',
 	'm.room.name',
 	'm.room.member',
@@ -74,10 +87,8 @@ const ROOM_EVENT_PREFIXES = [
 	'org.matrix.msc2762.receive.event:',
 	'org.matrix.msc2762.timeline:'
 ];
-const STATE_EVENT_PREFIXES = [
-	'org.matrix.msc2762.send.state_event:',
-	'org.matrix.msc2762.receive.state_event:'
-];
+const SEND_STATE_EVENT_PREFIX = 'org.matrix.msc2762.send.state_event:';
+const RECEIVE_STATE_EVENT_PREFIX = 'org.matrix.msc2762.receive.state_event:';
 const TO_DEVICE_PREFIXES = [
 	'org.matrix.msc3819.send.to_device:',
 	'org.matrix.msc3819.receive.to_device:'
@@ -119,10 +130,16 @@ export const isAllowedWidgetCapability = (capability: string): boolean => {
 		);
 	}
 
-	const statePrefix = matchPrefix(capability, STATE_EVENT_PREFIXES);
-	if (statePrefix) {
-		return ALLOWED_STATE_EVENT_TYPES.has(
-			eventTypeFromCapability(capability, statePrefix)
+	// Send and receive are checked against different sets: the widget may read
+	// room metadata but must not write it.
+	if (capability.startsWith(SEND_STATE_EVENT_PREFIX)) {
+		return ALLOWED_SEND_STATE_EVENT_TYPES.has(
+			eventTypeFromCapability(capability, SEND_STATE_EVENT_PREFIX)
+		);
+	}
+	if (capability.startsWith(RECEIVE_STATE_EVENT_PREFIX)) {
+		return ALLOWED_RECEIVE_STATE_EVENT_TYPES.has(
+			eventTypeFromCapability(capability, RECEIVE_STATE_EVENT_PREFIX)
 		);
 	}
 

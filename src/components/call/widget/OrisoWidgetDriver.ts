@@ -55,12 +55,8 @@ const isNonEmptyString = (value: unknown): value is string =>
 const isValidOpenIDToken = (token: unknown): token is IOpenIDCredentials => {
 	if (!token || typeof token !== 'object') return false;
 
-	const {
-		access_token,
-		token_type,
-		matrix_server_name,
-		expires_in
-	} = token as Record<string, unknown>;
+	const { access_token, token_type, matrix_server_name, expires_in } =
+		token as Record<string, unknown>;
 
 	return (
 		isNonEmptyString(access_token) &&
