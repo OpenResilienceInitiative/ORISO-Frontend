@@ -4,6 +4,8 @@ import { getMatrixHomeserverUrl } from '../../resources/scripts/runtimeConfig';
 import { fetchData, FETCH_ERRORS, FETCH_METHODS } from '../../api/fetchData';
 import { getMatrixClientLogger } from '../../utils/matrixLogging';
 import { secretStorageKeyCallback } from '../../services/matrixKeyBackupService';
+import { getValueFromCookie } from './accessSessionCookie';
+import { parseJwt } from '../../utils/parseJWT';
 
 export interface MatrixLoginData {
 	accessToken: string;
@@ -14,8 +16,22 @@ export interface MatrixLoginData {
 }
 
 const MATRIX_DEVICE_ID_STORAGE_KEY = 'matrix_device_id';
+const MATRIX_SESSION_SUBJECT_STORAGE_KEY = 'matrix_session_subject';
 const MATRIX_DEVICE_ID_PREFIX = 'ORISO_WEB_';
 const MATRIX_DISABLED_ERROR = 'MATRIX_DISABLED';
+const MATRIX_TOKEN_REUSE_BUFFER_MS = 2 * 60 * 1000;
+const MATRIX_DEVICE_ID_PATTERN = /^[A-Za-z0-9._=-]{1,255}$/;
+
+export interface MatrixTokenBootstrapOptions {
+	forceRefresh?: boolean;
+}
+
+interface InFlightTokenBootstrap {
+	promise: Promise<MatrixLoginData>;
+	subject: string | null;
+}
+
+let inFlightTokenBootstrap: InFlightTokenBootstrap | null = null;
 
 const isMatrixTokenBootstrapDisabled = (): boolean =>
 	process.env.REACT_APP_DISABLE_LIVE_WEBSOCKET === '1' ||
@@ -65,14 +81,74 @@ const getOrCreateRequestedDeviceId = (): string => {
 	return deviceId;
 };
 
-export const getMatrixAccessToken = (
-	_username?: string,
-	_password?: string
-): Promise<MatrixLoginData> => {
-	if (isMatrixTokenBootstrapDisabled()) {
-		return Promise.reject(new Error(MATRIX_DISABLED_ERROR));
+const getCurrentAuthSubject = (): string | null => {
+	try {
+		const keycloakToken = getValueFromCookie('keycloak');
+		if (!keycloakToken) {
+			return null;
+		}
+
+		const claims = parseJwt(keycloakToken) as unknown;
+		if (typeof claims !== 'object' || claims === null) {
+			return null;
+		}
+		const authClaims = claims as {
+			exp?: unknown;
+			sub?: unknown;
+		};
+		if (
+			typeof authClaims.sub !== 'string' ||
+			authClaims.sub.length === 0 ||
+			typeof authClaims.exp !== 'number' ||
+			authClaims.exp * 1000 <= Date.now()
+		) {
+			return null;
+		}
+
+		return authClaims.sub;
+	} catch {
+		return null;
+	}
+};
+
+const getPersistedMatrixLoginData = (): MatrixLoginData | null => {
+	const accessToken = localStorage.getItem('matrix_access_token');
+	const userId = localStorage.getItem('matrix_user_id');
+	const deviceId = localStorage.getItem(MATRIX_DEVICE_ID_STORAGE_KEY);
+	const sessionSubject = localStorage.getItem(
+		MATRIX_SESSION_SUBJECT_STORAGE_KEY
+	);
+	const currentAuthSubject = getCurrentAuthSubject();
+	const rawExpiresAt = localStorage.getItem('matrix_token_expires_at');
+	const expiresAt = rawExpiresAt ? Number(rawExpiresAt) : NaN;
+	const remainingLifetimeMs = expiresAt - Date.now();
+	const homeserverUrl = getMatrixHomeserverUrl();
+
+	if (
+		!accessToken ||
+		!userId?.startsWith('@') ||
+		!userId.includes(':') ||
+		!deviceId ||
+		!MATRIX_DEVICE_ID_PATTERN.test(deviceId) ||
+		!sessionSubject ||
+		sessionSubject !== currentAuthSubject ||
+		!Number.isFinite(expiresAt) ||
+		remainingLifetimeMs <= MATRIX_TOKEN_REUSE_BUFFER_MS ||
+		!homeserverUrl
+	) {
+		return null;
 	}
 
+	return {
+		accessToken,
+		userId,
+		deviceId,
+		homeserverUrl,
+		expiresInMs: remainingLifetimeMs
+	};
+};
+
+const requestMatrixAccessToken = (): Promise<MatrixLoginData> => {
 	const requestedDeviceId = getOrCreateRequestedDeviceId();
 	const querySeparator = endpoints.matrixAccessToken.includes('?')
 		? '&'
@@ -80,6 +156,7 @@ export const getMatrixAccessToken = (
 	const tokenUrl = `${endpoints.matrixAccessToken}${querySeparator}deviceId=${encodeURIComponent(
 		requestedDeviceId
 	)}`;
+
 	return fetchData({
 		url: tokenUrl,
 		method: FETCH_METHODS.GET,
@@ -111,6 +188,41 @@ export const getMatrixAccessToken = (
 	});
 };
 
+export const getMatrixAccessToken = (
+	options: MatrixTokenBootstrapOptions = {}
+): Promise<MatrixLoginData> => {
+	if (isMatrixTokenBootstrapDisabled()) {
+		return Promise.reject(new Error(MATRIX_DISABLED_ERROR));
+	}
+
+	const currentAuthSubject = getCurrentAuthSubject();
+	if (
+		currentAuthSubject &&
+		inFlightTokenBootstrap?.subject === currentAuthSubject
+	) {
+		return inFlightTokenBootstrap.promise;
+	}
+
+	if (!options.forceRefresh) {
+		const persistedLogin = getPersistedMatrixLoginData();
+		if (persistedLogin) {
+			return Promise.resolve(persistedLogin);
+		}
+	}
+
+	let bootstrapPromise: Promise<MatrixLoginData>;
+	bootstrapPromise = requestMatrixAccessToken().finally(() => {
+		if (inFlightTokenBootstrap?.promise === bootstrapPromise) {
+			inFlightTokenBootstrap = null;
+		}
+	});
+	inFlightTokenBootstrap = {
+		promise: bootstrapPromise,
+		subject: currentAuthSubject
+	};
+	return bootstrapPromise;
+};
+
 export const persistMatrixLoginData = (loginData: MatrixLoginData): void => {
 	localStorage.setItem('matrix_access_token', loginData.accessToken);
 	localStorage.setItem('matrix_user_id', loginData.userId);
@@ -119,6 +231,15 @@ export const persistMatrixLoginData = (loginData: MatrixLoginData): void => {
 		`${MATRIX_DEVICE_ID_STORAGE_KEY}:${loginData.userId}`,
 		loginData.deviceId
 	);
+	const currentAuthSubject = getCurrentAuthSubject();
+	if (currentAuthSubject) {
+		localStorage.setItem(
+			MATRIX_SESSION_SUBJECT_STORAGE_KEY,
+			currentAuthSubject
+		);
+	} else {
+		localStorage.removeItem(MATRIX_SESSION_SUBJECT_STORAGE_KEY);
+	}
 	if (loginData.expiresInMs) {
 		localStorage.setItem(
 			'matrix_token_expires_at',

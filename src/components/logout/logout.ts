@@ -16,7 +16,8 @@ import {
 const LEGACY_MATRIX_LOCAL_STORAGE_KEYS = [
 	'matrix_user_id',
 	'matrix_access_token',
-	'matrix_token_expires_at'
+	'matrix_token_expires_at',
+	'matrix_session_subject'
 ] as const;
 
 export const EVENT_PRE_LOGOUT = 'pre_logout';

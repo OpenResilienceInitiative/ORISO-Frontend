@@ -225,7 +225,9 @@ export class MatrixClientService {
 			return this.refreshingToken;
 		}
 
-		this.refreshingToken = getMatrixAccessToken()
+		this.refreshingToken = getMatrixAccessToken({
+			forceRefresh: true
+		})
 			.then(async (loginData) => {
 				persistMatrixLoginData(loginData);
 				await this.initializeClient(loginData);
