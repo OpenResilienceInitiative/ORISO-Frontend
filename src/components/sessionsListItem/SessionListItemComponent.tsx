@@ -691,17 +691,6 @@ export const SessionListItemComponent = ({
 		return prettyDate.str ? translate(prettyDate.str) : prettyDate.date;
 	};
 
-	// Hide sessions if consultingType has been switched to group chat.
-	// ToDo: What is with vice versa?
-	// DISABLED FOR MATRIX MIGRATION - This was hiding sessions without groupId
-	// if (activeSession.isSession && consultingType?.groupChat?.isGroupChat) {
-	// 	return null;
-	// }
-
-	// MATRIX MIGRATION: the `if (!consultingType)` early return above already
-	// handles the missing-consulting-type case, so the previous fallback block
-	// here was unreachable and has been removed.
-
 	if (activeSession.isGroup) {
 		const isMyChat = () =>
 			activeSession.consultant &&

@@ -296,28 +296,26 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	//rotate icon to vertical only if EVERY item in flyout
 	//list item icons only shown on outside
 
-	// MATRIX MIGRATION: Handle sessions with and without groupId
-	const hasGroupId = !!activeSession.item.matrixRoomId;
-	const baseUrl = hasGroupId
+	const hasMatrixRoom = !!activeSession.item.matrixRoomId;
+	const baseUrl = hasMatrixRoom
 		? `${listPath}/:groupId/:id/:subRoute?/:extraPath?${getSessionListTab()}`
 		: `${listPath}/session/:id/:subRoute?/:extraPath?${getSessionListTab()}`;
 
-	const groupChatInfoLink = hasGroupId
+	const groupChatInfoLink = hasMatrixRoom
 		? generatePath(baseUrl, {
 				groupId: activeSession.item.matrixRoomId,
 				id: String(activeSession.item.id),
 				subRoute: 'groupChatInfo'
 			})
 		: '';
-	const editGroupChatSettingsLink = hasGroupId
+	const editGroupChatSettingsLink = hasMatrixRoom
 		? generatePath(baseUrl, {
 				groupId: activeSession.item.matrixRoomId,
 				id: String(activeSession.item.id),
 				subRoute: 'editGroupChat'
 			})
 		: '';
-	// MATRIX MIGRATION: Generate userProfileLink based on whether groupId exists
-	const userProfileLink = hasGroupId
+	const userProfileLink = hasMatrixRoom
 		? generatePath(baseUrl, {
 				groupId: activeSession.item.matrixRoomId,
 				id: String(activeSession.item.id),
@@ -961,8 +959,8 @@ const SessionMenuFlyoutGroup = ({
 	const { t: translate } = useTranslation();
 	const { userData } = useContext(UserDataContext);
 	const { activeSession } = useContext(ActiveSessionContext);
-	const rcUsersContext = useMatrixRoomUsers();
-	const moderators = rcUsersContext?.moderators || [];
+	const matrixRoomUsersContext = useMatrixRoomUsers();
+	const moderators = matrixRoomUsersContext?.moderators || [];
 
 	return (
 		<>

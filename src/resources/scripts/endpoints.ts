@@ -124,7 +124,6 @@ export const endpoints = {
 	//todo delete?
 	registerAskerNewConsultingType:
 		userServiceOrigin + '/service/users/askers/consultingType/new',
-	rejectVideoCall: apiUrl + '/service/videocalls/reject',
 	sendAliasMessage: userServiceOrigin + '/service/messages/aliasonly/new',
 	sendMessage: userServiceOrigin + '/service/messages/new',
 	sessionBase: userServiceOrigin + '/service/users/sessions',
@@ -133,7 +132,6 @@ export const endpoints = {
 		userServiceOrigin +
 		`/service/users/sessions/${sessionId}/team-discussion`,
 	setAbsence: userServiceOrigin + '/service/users/consultants/absences',
-	startVideoCall: apiUrl + '/service/videocalls/new',
 	tenantServiceBase: tenantServiceOrigin + '/service/tenant',
 	dpaSignatureConfirm: (token: string) =>
 		tenantServiceOrigin +

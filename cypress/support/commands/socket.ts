@@ -28,11 +28,8 @@ Cypress.Commands.add('waitForSubscriptions', (events: string[]) => {
 Cypress.Commands.add('emitDirectMessage', (index?: number) => {
 	new Cypress.Promise((resolve) => {
 		cy.askerSession({ session: { messagesRead: false } }, index || 0);
-		cy.addMessage({}, index || 0);
-
 		cy.get<() => Server>('@mockSocketServer').then((mockSocketServer) => {
-			// Rocket.Chat is gone (Matrix-only migration): only the
-			// LiveService STOMP event remains for direct messages.
+			// The LiveService STOMP event refreshes the Matrix-backed list.
 			mockSocketServer()
 				.clients()
 				.forEach((client: ExtendedClient) => {

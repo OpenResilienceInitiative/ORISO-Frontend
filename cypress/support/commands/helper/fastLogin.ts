@@ -24,15 +24,6 @@ const fastLoginCommand = (getWillReturn, setWillReturn) =>
 			cy.willReturn('userData', { preferredLanguage: null }, true);
 
 			cy.window().then((window) => {
-				cy.fixture('api.v1.login').then((res) => {
-					if (res.data.authToken) {
-						cy.setCookie('rc_token', res.data.authToken);
-					}
-					if (res.data.userId) {
-						cy.setCookie('rc_uid', res.data.userId);
-					}
-				});
-
 				const tomorrow = new Date();
 				tomorrow.setDate(tomorrow.getDate() + 1);
 

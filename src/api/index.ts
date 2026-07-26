@@ -40,7 +40,6 @@ export * from './apiSendMatrixAttachmentMessage';
 export * from './apiSendMessage';
 export * from './apiSessionAssign';
 export * from './apiSetAbsence';
-export * from './apiStartVideoCall';
 export * from './apiTwoFactorAuth';
 export * from './apiUpdatePassword';
 export * from './apiMatrixUpload';

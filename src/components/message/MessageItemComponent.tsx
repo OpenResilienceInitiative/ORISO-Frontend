@@ -29,6 +29,7 @@ import { VideoCallMessage } from './VideoCallMessage';
 import { FurtherSteps } from './FurtherSteps';
 import { MessageAttachment } from './MessageAttachment';
 import type { MediaCheckState } from './MessageAttachment';
+import type { ChatAttachment, ChatFile } from './chatAttachmentTypes';
 import { getModality, Modality } from '../session/getModality';
 import {
 	hasMediaInlineDisplayFeature,
@@ -273,8 +274,8 @@ export interface MessageItem {
 		content?: string;
 		messageType: ALIAS_MESSAGE_TYPES;
 	};
-	attachments?: MessageService.Schemas.AttachmentDTO[];
-	file?: MessageService.Schemas.FileDTO;
+	attachments?: ChatAttachment[];
+	file?: ChatFile;
 	t: null | 'e2e' | 'rm' | 'room-removed-read-only' | 'room-set-read-only';
 	rid: string;
 	isVideoActive?: boolean;
@@ -375,7 +376,7 @@ export const MessageItemComponent = ({
 		useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
 	const tenant = useTenant();
-	const rcUsersContext = useMatrixRoomUsers();
+	const matrixRoomUsersContext = useMatrixRoomUsers();
 	const consultantContext = useContext(ConsultantListContext);
 	const getComparableRecipientIds = useCallback(
 		(rawValue?: string | null) => {
@@ -550,17 +551,19 @@ export const MessageItemComponent = ({
 		[decryptedMessage]
 	);
 	const roomUser = useMemo(() => {
-		if (!rcUsersContext?.users?.length) {
+		if (!matrixRoomUsersContext?.users?.length) {
 			return null;
 		}
 		return (
-			rcUsersContext.users.find((entry) => entry?._id === userId) ||
-			rcUsersContext.users.find(
+			matrixRoomUsersContext.users.find(
+				(entry) => entry?._id === userId
+			) ||
+			matrixRoomUsersContext.users.find(
 				(entry) => entry?.username === username
 			) ||
 			null
 		);
-	}, [rcUsersContext?.users, userId, username]);
+	}, [matrixRoomUsersContext?.users, userId, username]);
 	const consultantMatch = useMemo(() => {
 		const consultantList = consultantContext?.consultantList || [];
 		if (!consultantList.length) {
@@ -738,7 +741,7 @@ export const MessageItemComponent = ({
 		addCandidate(activeSession?.consultant?.username);
 
 		(activeSession?.item?.moderators || []).forEach((moderatorId) => {
-			const roomMatch = (rcUsersContext?.users || []).find(
+			const roomMatch = (matrixRoomUsersContext?.users || []).find(
 				(entry) => entry?._id === moderatorId
 			);
 			addCandidate(
@@ -791,7 +794,7 @@ export const MessageItemComponent = ({
 		getAudienceRoleFromLabel,
 		normalizeAudienceLabel,
 		parsedMessage.visibleToUserIds,
-		rcUsersContext?.users,
+		matrixRoomUsersContext?.users,
 		activeSession?.isGroup,
 		senderComparableLabels,
 		visibleAudienceLabels
@@ -1081,13 +1084,9 @@ export const MessageItemComponent = ({
 			? 'anonymous'
 			: 'oneOnOne';
 	const getAttachmentMediaCheckState = (
-		attachment: MessageService.Schemas.AttachmentDTO
+		attachment: ChatAttachment
 	): MediaCheckState => {
-		const scannerState = (
-			attachment as MessageService.Schemas.AttachmentDTO & {
-				media_check_state?: string;
-			}
-		).media_check_state;
+		const scannerState = attachment.mediaCheckState;
 		if (scannerState === 'blocked') {
 			return 'blocked';
 		}

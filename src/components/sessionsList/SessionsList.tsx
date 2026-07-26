@@ -44,10 +44,7 @@ import {
 	SESSION_COUNT
 } from '../../api';
 import { useLiveChatAvailable } from '../../utils/liveChatToggle';
-import {
-	isMatrixRoom,
-	isMatrixRoomIdHeuristic
-} from '../../utils/matrixRoomUtils';
+import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import { Button } from '../button/Button';
 import { CaseHandoverCurtainView } from '../session/CaseHandoverCurtain';
 import './sessionsList.styles';
@@ -128,15 +125,13 @@ const getSessionIdentityValues = (
 	raw: ListItemInterface,
 	extended: ExtendedSessionInterface
 ): string[] => {
-	const item = extended.item as any;
+	const item = extended.item;
 	const values = [
 		raw.session?.id,
 		raw.chat?.id,
 		raw.chat?.matrixRoomId,
-		(raw as any)?.session?.groupId,
+		raw.session?.matrixRoomId,
 		item?.id,
-		item?.groupId,
-		item?.rid,
 		item?.matrixRoomId,
 		extended.rid
 	]
@@ -782,7 +777,6 @@ export const SessionsList = ({
 					) {
 						const session = sessions[0];
 						const sessionId = session?.session?.id;
-						const groupId = session?.session?.matrixRoomId;
 						const isEmptyEnquiry =
 							session?.session?.status === STATUS_EMPTY;
 
@@ -799,24 +793,13 @@ export const SessionsList = ({
 							hasAutoOpenedRef.current = true;
 							sessionStorage.setItem(autoOpenKey, 'true');
 
-							// Check if groupId looks like a Matrix room ID (starts with ! or contains :)
-							const isMatrixRoomId =
-								isMatrixRoomIdHeuristic(groupId);
-
 							if (isEmptyEnquiry) {
 								// Empty enquiry: go to write view
 								const targetPath = `${baseListPath}/write/${sessionId}`;
 								// console.log('🚀 Navigating to write view:', targetPath);
 								navigate(targetPath);
-							} else if (groupId && !isMatrixRoomId) {
-								// Navigate with the group id
-								const targetPath = `${baseListPath}/${groupId}/${sessionId}`;
-								// console.log('🚀 Navigating with groupId:', targetPath);
-								navigate(targetPath);
 							} else {
-								// MATRIX MIGRATION FIX: Navigate by session ID for Matrix rooms or sessions without groupId
 								const targetPath = `${baseListPath}/session/${sessionId}`;
-								// console.log('🚀 Navigating by session ID:', targetPath);
 								navigate(targetPath);
 							}
 						}
@@ -1011,9 +994,7 @@ export const SessionsList = ({
 					const existingSession = sessions.find(
 						(s) =>
 							s?.chat?.matrixRoomId === rid ||
-							s?.session?.matrixRoomId === rid ||
-							(s?.session as { matrixRoomId?: string })
-								?.matrixRoomId === rid
+							s?.session?.matrixRoomId === rid
 					);
 					if (!existingSession) {
 						return null;
@@ -1101,18 +1082,13 @@ export const SessionsList = ({
 			// Refresh the backend room state (messagesRead / lastMessage) for
 			// the touched session so unread badges update on Matrix events —
 			// this is fed by the Matrix sync stream.
-			const touchedSession = sessionsRef.current.find(
+			const touchesLoadedSession = sessionsRef.current.some(
 				(s) =>
 					s?.chat?.matrixRoomId === roomId ||
-					s?.session?.matrixRoomId === roomId ||
-					(s?.session as { matrixRoomId?: string })?.matrixRoomId ===
-						roomId
+					s?.session?.matrixRoomId === roomId
 			);
-			const touchedGroupId =
-				touchedSession?.chat?.groupId ||
-				touchedSession?.session?.groupId;
-			if (touchedGroupId) {
-				handleRIDsRef.current([touchedGroupId]);
+			if (touchesLoadedSession) {
+				handleRIDsRef.current([roomId]);
 			}
 		};
 
@@ -1414,11 +1390,10 @@ export const SessionsList = ({
 			}
 
 			const matrixRoomId =
-				(item as { matrixRoomId?: string })?.matrixRoomId ||
-				(typeof item.matrixRoomId === 'string' &&
+				typeof item.matrixRoomId === 'string' &&
 				isMatrixRoom(item.matrixRoomId)
 					? item.matrixRoomId
-					: null);
+					: null;
 			const matrixRoom = matrixRoomId
 				? matrixLiveEventBridge.getClient()?.getRoom(matrixRoomId)
 				: null;

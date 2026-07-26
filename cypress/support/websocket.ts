@@ -1,7 +1,7 @@
 import { WebSocket, Server, Client } from 'mock-socket';
 
-// Rocket.Chat is gone (Matrix-only migration): this mock now only covers the
-// remaining LiveService STOMP websocket. Matrix real-time traffic runs over
+// This mock covers the remaining LiveService STOMP websocket. Matrix
+// real-time traffic runs over
 // HTTP long-polling (/_matrix sync) and is stubbed via cy.intercept instead.
 declare global {
 	interface Window {

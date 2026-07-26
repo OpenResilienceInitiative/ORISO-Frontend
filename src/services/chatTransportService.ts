@@ -24,7 +24,6 @@ export interface ChatTransportSession {
 
 export interface ResolvedChatTransportSession {
 	isMatrixSession: boolean;
-	legacyRoomId?: string | number | null;
 	matrixRoomId?: string | null;
 	sessionId?: string | number | null;
 }
@@ -113,7 +112,6 @@ class ChatTransportService {
 			isMatrixSession: Boolean(
 				matrixRoomId || ((!rid || isMatrixRoom(rid)) && sessionId)
 			),
-			legacyRoomId: rid || sessionId,
 			matrixRoomId,
 			sessionId
 		};

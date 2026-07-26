@@ -19,11 +19,6 @@ declare global {
 				index?: number
 			): Bluebird<unknown>;
 
-			addMessage(
-				props?: { [key: string]: any },
-				index?: number
-			): Bluebird<unknown>;
-
 			mockApi(): Chainable<Element>;
 
 			willReturn(

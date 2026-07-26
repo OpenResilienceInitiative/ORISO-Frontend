@@ -17,11 +17,9 @@ const localUserServiceRoot = process.env.ORISO_USERSERVICE_SPEC_ROOT;
  * into the main spec and the `$ref`s are rewritten to local pointers before
  * generation.
  *
- * Note: the former Rocket.Chat-era services (uploadService, mailService,
- * liveService, videoService) have no ORISO upstream anymore and their unused
- * type files were removed. `src/generated/messageservice.d.ts` is still
- * referenced by the message components and is kept as a frozen legacy
- * snapshot until those DTOs are replaced by Matrix-native types.
+ * Only active ORISO service specifications are generated. Chat timeline and
+ * attachment models are frontend-owned Matrix types, not generated transport
+ * DTO snapshots.
  */
 const services = [
 	{

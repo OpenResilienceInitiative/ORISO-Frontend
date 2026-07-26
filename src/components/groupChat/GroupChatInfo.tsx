@@ -438,9 +438,9 @@ const SubscriberList = ({
 	const { t: translate } = useTranslation();
 
 	const { activeSession } = useContext(ActiveSessionContext);
-	const rcUsersContext = useMatrixRoomUsers();
-	const users = rcUsersContext?.users || [];
-	const moderators = rcUsersContext?.moderators || [];
+	const matrixRoomUsersContext = useMatrixRoomUsers();
+	const users = matrixRoomUsersContext?.users || [];
+	const moderators = matrixRoomUsersContext?.moderators || [];
 
 	const [isUserBanOverlayOpen, setIsUserBanOverlayOpen] =
 		useState<boolean>(false);

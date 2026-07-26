@@ -535,9 +535,7 @@ export const MessageSubmitInterfaceComponent = ({
 		}
 	}, []);
 
-	// This loads the keys for current activeSession.rid which is already set:
-	// to groupChat.matrixRoomId on group chats
-	// to session.groupId on session chats
+	// Load the keys for the current Matrix room.
 	const {
 		subscriptionKeyLost,
 		roomNotFound,
@@ -1418,7 +1416,6 @@ export const MessageSubmitInterfaceComponent = ({
 				const mentionedUserIds = retryOfId
 					? retryMentionedUserIds || []
 					: extractMentionedUserIds(composerRef.current?.getHTML());
-				// MATRIX MIGRATION: For group chats, Matrix room ID is in activeSession.rid
 				await apiSendMessage(
 					message,
 					sendToRoomWithId,
